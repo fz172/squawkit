@@ -13,9 +13,10 @@ Weight & Balance.
 > **email-delivery** capability (a Firebase Functions backend under `backend/`). Weight & Balance remains future work.
 
 > **Proposed pivot.** [`multi_domain_maintenance_PRD.html`](multi_domain_maintenance_PRD.html) proposes generalizing the
-> product from aircraft-only to **any maintainable asset** (boat, car, bicycle, 3D printer, shop equipment) via a
-> per-asset **template** that determines spec fields, component tree, usage meters, and terminology. Nothing in it has
-> shipped; this document still describes the aviation product as built.
+> product from aircraft-only to **any maintainable "Thing"** (airplane, car, motorcycle, bike, boat, home, custom) via a
+> **template configuration system** that drives terminology, spec fields, component structure, usage meters, due
+> calculation, and which actions the UI offers. Nothing in it has shipped; this document still describes the aviation
+> product as built.
 
 ## 2. Scope
 

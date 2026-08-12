@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PRD: Multi-Domain Maintenance — Assets &amp; Templates</title>
+  <title>PRD: Things &amp; Templates — Multi-Domain Maintenance</title>
   <style>
     :root {
       color-scheme: light;
@@ -60,6 +60,10 @@
     th, td { border: 1px solid var(--line); padding: 9px 12px; text-align: left; vertical-align: top; }
     th { background: var(--surface-alt); font-weight: 600; }
     td code { white-space: nowrap; }
+    .matrix td { text-align: center; }
+    .matrix td:first-child { text-align: left; font-weight: 500; }
+    .matrix .y { color: var(--green); font-weight: 700; }
+    .matrix .n { color: var(--muted); }
     .callout { border-radius: 14px; padding: 14px 18px; margin: 16px 0; border: 1px solid var(--line); }
     .callout.note { background: var(--blue-soft); border-color: #bcd6f5; }
     .callout.win { background: var(--green-soft); border-color: #aee0c6; }
@@ -74,12 +78,14 @@
     .meta-grid .card { margin: 0; }
     .kpi { font-size: 1.4rem; font-weight: 700; color: var(--blue); }
     .mock { border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; background: var(--surface); margin: 14px 0; }
-    .mock .row { display: flex; justify-content: space-between; align-items: baseline; padding: 8px 0; border-bottom: 1px solid var(--line); }
+    .mock .row { display: flex; justify-content: space-between; align-items: baseline; padding: 8px 0; border-bottom: 1px solid var(--line); gap: 16px; }
     .mock .row:last-child { border-bottom: 0; }
-    .mock .k { color: var(--muted); font-size: 0.9rem; }
-    .mock .v { font-weight: 600; }
+    .mock .k { color: var(--muted); font-size: 0.9rem; white-space: nowrap; }
+    .mock .v { font-weight: 600; text-align: right; }
     .decision { border-left: 4px solid var(--blue); padding-left: 14px; margin: 14px 0; }
     .decision .label { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--blue); font-weight: 700; }
+    .settled { border-left-color: var(--green); }
+    .settled .label { color: var(--green); }
     @media (max-width: 900px) { .page-shell { grid-template-columns: 1fr; } .toc { position: static; max-height: none; } }
   </style>
 </head>
@@ -89,10 +95,10 @@
     <div>
       <span class="pill amber">Status: Proposed</span>
       <span class="pill">PRD</span>
-      <span class="pill">Product pivot · Data model · Terminology</span>
+      <span class="pill">Product pivot · Template config · Data model · Terminology</span>
     </div>
-    <h1>Multi-Domain Maintenance <span class="muted">— Assets &amp; Templates</span></h1>
-    <p class="lede">SquawkIt is a maintenance system that happens to know a lot about airplanes. This PRD generalizes it into a maintenance system for <b>anything worth maintaining</b> — a boat, a race car, a bicycle, a 3D printer, a shop compressor — without diluting what an aircraft owner gets today. The mechanism is a <b>template</b> chosen when you add a thing: it decides which spec fields exist, what components it has, which usage meters it accumulates, and what everything is <i>called</i>.</p>
+    <h1>Things &amp; Templates <span class="muted">— Multi-Domain Maintenance</span></h1>
+    <p class="lede">SquawkIt is a maintenance system that happens to know a lot about airplanes. This PRD generalizes it into a maintenance system for <b>anything worth maintaining</b> — a boat, a car, a motorcycle, a bike, a house — without diluting what an aircraft owner gets today. The mechanism is a <b>template configuration system</b>: one declarative config per kind of thing that drives the strings, the due calculations, the available actions, and the starter service schedule. Adding a domain becomes authoring a config, not writing a feature.</p>
   </div>
 
   <div class="page-shell">
@@ -100,21 +106,21 @@
 
       <div class="callout note">
         <strong>The thesis in one paragraph</strong>
-        The squawk / task / log triad is domain-independent — <i>something is wrong</i>, <i>something is due</i>, <i>something was done</i>. That is the whole product, and it transfers unchanged. What does <b>not</b> transfer is the aircraft's shape: a fixed <code>Airframe / Engine / Propeller</code> component tree, three hardcoded hour counters, <code>tail_number</code> on the root message, and roughly 150 user-facing strings that say "aircraft," "tail number," "engine hours," or "AOG." Those four things become <b>template-driven</b>. Everything else stays exactly as it is.
+        The squawk / task / log triad is domain-independent — <i>something is wrong</i>, <i>something is due</i>, <i>something was done</i>. That is the whole product, and it transfers unchanged. What does <b>not</b> transfer is the aircraft's shape: a fixed <code>Airframe / Engine / Propeller</code> component tree, three hardcoded hour counters, <code>tail_number</code> on the root message, aviation-tuned due thresholds, and ~150 user-facing strings that say "aircraft," "tail number," "engine hours," or "AOG." All of it moves into a <b>template config</b>. Everything else stays exactly as it is.
       </div>
 
-      <div class="callout warn">
-        <strong>Decisions this PRD asks for before Phase 1</strong>
-        Six choices gate the work: (1) does the <code>Aircraft</code> proto message and its Kotlin identifiers get renamed to <code>Asset</code>; (2) what the multi-asset home surface is called; (3) whether "Squawk" stays universal or becomes a per-template word; (4) whether the Core tier's 1-asset limit survives the pivot; (5) whether custom templates ship in v1; (6) whether an asset's template can be changed after creation. Recommendations are given inline and collected in <a href="#decisions">§15</a>.
+      <div class="callout win">
+        <strong>Settled by product direction</strong>
+        The thing being maintained is called a <b>Thing</b>; the collection of them is <b>Stuff</b>. "Add a new thing" is the create action. The v1 preset catalog is <b>airplane, car, motorcycle, bike, boat, home, custom</b>. See <a href="#naming">§3.2</a> for why "Thing" is a better fit than "Asset" and how an aircraft owner never actually reads the word.
       </div>
 
       <h2 id="problem">1. Problem &amp; Background</h2>
 
-      <p>SquawkIt today is a general-aviation logbook: a fleet of aircraft, each with a maintenance log, a set of compliance tasks with due-status computation, and ad-hoc squawks. The architecture is local-first (SQLDelight <code>EntityStore</code> as the single source of truth, Firestore sync in the background), and the feature set — attachments, export, sharing, technicians, subscription — is mature.</p>
+      <p>SquawkIt today is a general-aviation logbook: a fleet of aircraft, each with a maintenance log, compliance tasks with due-status computation, and ad-hoc squawks. The architecture is local-first (SQLDelight <code>EntityStore</code> as the single source of truth, Firestore sync in the background), and the feature set — attachments, export, sharing, technicians, subscription — is mature.</p>
 
-      <p>The constraint is the market, not the software. General aviation in the US is on the order of 200k active aircraft; the addressable population of people who will pay a subscription to track annuals is small and already served by incumbents. Meanwhile the <i>same person</i> who logs a 100-hour inspection also has a boat that needs its impeller changed, a track car with a brake-fluid interval, a gravel bike whose chain is at 0.7% stretch, and a printer that has put 400 hours on a nozzle. They are tracking all of it in a notes app, a spreadsheet, or nothing.</p>
+      <p>The constraint is the market, not the software. General aviation in the US is on the order of 200k active aircraft; the population that will pay a subscription to track annuals is small and already served by incumbents. Meanwhile the <i>same person</i> who logs a 100-hour inspection also has a boat whose impeller is overdue, a car with a brake-fluid interval, a gravel bike whose chain is at 0.7% stretch, and a house whose gutters need doing before the first freeze. They are tracking all of it in a notes app, a spreadsheet, or nothing.</p>
 
-      <p>Every one of those is the same job: <b>a thing, a service schedule, a record of what was done, and a list of what's wrong with it right now.</b> The app already does this well. It just insists that the thing is an airplane.</p>
+      <p>Every one of those is the same job: <b>a thing, a service schedule, a record of what was done, and a list of what's wrong with it right now.</b> The app already does this well. It just insists the thing is an airplane.</p>
 
       <h4>Where the aircraft assumption is actually baked in</h4>
       <div class="scroll-x">
@@ -123,291 +129,418 @@
         <tr>
           <td>The thing has make / model / serial / <b>tail number</b>, and its powerplant is engines that each carry a propeller</td>
           <td><code>aircraft.proto</code>, <code>engine.proto</code>, <code>propeller.proto</code>, <code>EditAircraftScreen</code> + <code>AirframeSection</code> / <code>EngineSection</code></td>
-          <td>A 3D printer has no serial-bearing engine; a race car has an engine but no propeller; a bike has neither. Tail number is meaningless outside aviation.</td>
+          <td>A race car has an engine but no propeller; a bike has neither; <b>a house has no make, model, or serial at all</b>. Tail number is meaningless outside aviation.</td>
         </tr>
         <tr>
           <td>Components are one of three fixed kinds</td>
           <td><code>ComponentType</code> enum (<code>AIRFRAME</code>/<code>ENGINE</code>/<code>PROPELLER</code>); referenced by <code>MaintenanceLog</code>, <code>MaintenanceTask</code>, and <code>Squawk</code></td>
-          <td>A boat needs hull / outdrive / generator; a printer needs hotend / bed / motion. The enum can't grow per user, and every consumer switches on it.</td>
+          <td>A boat needs hull / outdrive / generator; a home needs HVAC / water heater / roof / appliances. The enum can't grow per user, and every consumer switches on it.</td>
         </tr>
         <tr>
           <td>Usage is measured in exactly three hour counters</td>
           <td><code>MaintenanceLog.engine_hour</code>, <code>.airframe_time</code>, <code>.prop_time</code>; <code>MaintenanceOverview.current_*_time</code>; <code>EngineHourRule</code></td>
-          <td>Cars run on odometer miles, bikes on distance <i>and</i> ride hours, printers on print hours <i>and</i> filament kilograms, generators on run hours and start cycles.</td>
+          <td>Cars run on odometer miles, bikes on distance <i>and</i> ride hours, boats on engine hours <i>and</i> nautical miles — and <b>a house has no usage meter whatsoever</b>.</td>
         </tr>
         <tr>
           <td>Due-soon thresholds are aviation-tuned constants</td>
           <td><code>TaskDueManagerImpl</code>: due-soon = within 1 month, or within <code>+10f</code> of the tracked hour metric</td>
-          <td>"Within 10" is right for tach hours and absurd for odometer miles (10 miles) or filament grams.</td>
+          <td>"Within 10" is right for tach hours and absurd for odometer miles. One month of warning is right for an annual and too long for a 3-month furnace filter.</td>
+        </tr>
+        <tr>
+          <td>Month/year intervals snap to end-of-month</td>
+          <td><code>TaskDueManagerImpl</code>: <code>baseDate.plus(months).endOfMonth()</code></td>
+          <td>Correct and required for an annual inspection (due the last day of the month). Wrong for "flush the water heater 12 months after I last did it."</td>
         </tr>
         <tr>
           <td>The metric a task tracks is inferred from component type</td>
           <td><code>TaskDueManagerImpl</code>: <code>component == AIRFRAME ? airframe_time : engine_hour</code></td>
-          <td>With arbitrary components and arbitrary meters, the task must name its meter explicitly.</td>
+          <td>With arbitrary components and arbitrary meters, a task must name its meter explicitly.</td>
         </tr>
         <tr>
-          <td>Compliance means ADs and Service Bulletins</td>
-          <td><code>ComplianceType</code> enum, <code>compliance_authority</code>, <code>reference_number</code></td>
-          <td>The <i>shape</i> is right everywhere (a mandatory notice from an authority, with a reference number). Only the words are aviation's.</td>
+          <td>Scheduling is interval-from-last-service only</td>
+          <td><code>InspectionRule</code> oneof: time / engine-hour / on-condition / linked / immediate</td>
+          <td>Home upkeep is <b>seasonal</b>, not interval-based: gutters in April and October, sprinkler blowout before the first freeze. No existing rule can express it.</td>
+        </tr>
+        <tr>
+          <td>Compliance means ADs and Service Bulletins; technicians have certificates</td>
+          <td><code>ComplianceType</code> enum, <code>compliance_authority</code>, <code>reference_number</code>, <code>CertificateInputFields</code></td>
+          <td>The <i>shape</i> is right in some domains (a recall on a car) and pure noise in others. A plumber has no A&amp;P number.</td>
         </tr>
         <tr>
           <td>~150 user-facing strings name the domain</td>
           <td>25 <code>strings.xml</code> files, 820 entries: 61 say "aircraft", 19 say "tail", 42 say "engine hour" or "tach", 67 say "squawk", 2 say "AOG"</td>
-          <td>Terminology is the whole felt experience. A bike owner reading "Add aircraft" churns on the first screen.</td>
+          <td>Terminology is the whole felt experience. A homeowner reading "Add aircraft" churns on the first screen.</td>
         </tr>
       </table>
       </div>
 
-      <p>Notably absent from that list: the <b>storage engine, sync engine, attachments, export pipeline, sharing/ACL, technician records, subscription/entitlement, adaptive layout, and the entire squawk lifecycle</b>. None of them know what an aircraft is. That is what makes this pivot tractable.</p>
+      <p>Notably absent: the <b>storage engine, sync engine, attachments, export pipeline, sharing/ACL, technician records, subscription/entitlement, adaptive layout, and the entire squawk lifecycle</b>. None of them know what an aircraft is. That is what makes this pivot tractable.</p>
 
       <h2 id="goals">2. Goals &amp; Non-Goals</h2>
 
       <h4>Goals</h4>
       <ul class="checks">
-        <li>Let a user add <b>any maintainable thing</b> — an aircraft, boat, car, motorcycle, bicycle, 3D printer, or generic shop equipment — and get a first-class squawk / task / log experience for it.</li>
-        <li>Introduce a <b>template</b> (chosen at creation) that determines the asset's spec fields, component tree, usage meters, terminology, and starter service schedule.</li>
-        <li>Generalize the data model so components are an <b>arbitrary tree</b> and usage is an <b>arbitrary set of named meters</b> — with no loss of any capability an aircraft has today.</li>
-        <li>Make terminology <b>data, not code</b>: one lexicon per template, resolved at render time, so an aviation user still reads "squawk," "tail number," and "AOG" while a printer owner reads "fault," "serial," and "down."</li>
-        <li>Ship <b>starter task packs</b> per template so a new asset arrives with a credible service schedule instead of an empty list — the single biggest onboarding lever in the pivot.</li>
-        <li>Guarantee that an existing aviation account sees a <b>bit-identical experience</b> after migration: same fields, same words, same due dates, same export layout.</li>
+        <li>Let a user add <b>any maintainable thing</b> and get a first-class squawk / task / log experience for it.</li>
+        <li>Introduce a <b>template configuration system</b> — one declarative config per kind of thing — that drives terminology, spec fields, component structure, usage meters, <b>due calculation</b>, and <b>which actions and fields the UI offers</b>.</li>
+        <li>Ship <b>seven presets</b>: airplane, car, motorcycle, bike, boat, home, custom.</li>
+        <li>Support <b>meterless and seasonal domains</b> (home) as first-class, not as a degraded aircraft.</li>
+        <li>Make terminology <b>data, not code</b>, so an aviation user still reads "squawk," "tail number," and "AOG" while a homeowner reads "issue," "address," and "emergency."</li>
+        <li>Ship <b>starter task packs</b> per preset so a new thing arrives with a credible schedule instead of an empty list — the single biggest onboarding lever in the pivot.</li>
+        <li>Guarantee an existing aviation account a <b>bit-identical experience</b> after migration: same fields, same words, same due dates, same export layout.</li>
         <li>Keep <b>old and new clients interoperable</b> through the sync engine for the entire mixed-version window.</li>
       </ul>
 
       <h4>Non-Goals</h4>
       <ul class="checks nots">
         <li><b>Parts inventory, purchasing, or cost tracking.</b> Adjacent and tempting; a separate product decision.</li>
-        <li><b>Work orders, customer billing, or multi-tenant shop management.</b> This is not a CMMS for a business; it is a maintenance record for an owner (and the people they trust with their stuff).</li>
-        <li><b>Telemetry / IoT ingestion</b> (OBD-II, OctoPrint, NMEA, engine monitors). Meters are entered by a human in v1. The meter model is designed so automatic readings can be added later without a schema change.</li>
-        <li><b>A template marketplace or template sharing between users.</b> Built-in catalog plus custom templates only.</li>
-        <li><b>Reworking Weight &amp; Balance</b> (still unbuilt) or Intelligent Search (still unbuilt) — both are noted for template-awareness when they are specified.</li>
-        <li><b>Localization of the lexicon.</b> v1 lexicons are English. See <a href="#terminology">§10</a> for the honest limitation this creates.</li>
+        <li><b>Work orders, customer billing, or multi-tenant shop management.</b> This is a maintenance record for an owner, not a CMMS for a business.</li>
+        <li><b>Telemetry / IoT ingestion</b> (OBD-II, NMEA, engine monitors, smart-home hubs). Meters are entered by a human in v1; the meter model leaves room for automatic readings later without a schema change.</li>
+        <li><b>A template marketplace or template sharing between users.</b> Built-in presets plus user-authored custom templates only.</li>
+        <li><b>Per-thing config overrides.</b> Customization happens by forking a preset into a custom template, not by drifting one thing away from its template — see <a href="#resolution">§4.7</a>.</li>
+        <li><b>Localization of the lexicon.</b> v1 lexicons are English. See <a href="#terminology">§10</a> for the ceiling this creates.</li>
       </ul>
 
-      <h2 id="concept">3. The Core Idea: Asset + Template</h2>
+      <h2 id="concept">3. Things &amp; Templates</h2>
 
-      <p>Two concepts replace one.</p>
-
+      <h3 id="core">3.1 The two concepts</h3>
       <div class="card">
-        <p><b>An Asset</b> is the thing being maintained — the row in the home list, the owner of squawks, tasks, and logs. It is today's <code>Aircraft</code>, generalized: a name, a set of spec values, a component tree, and a set of meter readings.</p>
-        <p><b>A Template</b> is the recipe that shapes an asset. It is <i>not</i> stored per asset; the asset holds a <code>template_id</code> and the template is resolved at read time. A template declares five things:</p>
-        <ol>
-          <li><b>Spec fields</b> — what identity/detail fields the asset has, their labels, input types, and validation.</li>
-          <li><b>Component slots</b> — the default component tree (and whether the user may add to it).</li>
-          <li><b>Meters</b> — the usage counters this kind of thing accumulates, with units, precision, and a due-soon threshold.</li>
-          <li><b>Lexicon</b> — the words: what one of these is called, what a defect is called, what "down" is called.</li>
-          <li><b>Starter tasks</b> — an optional recommended service schedule, offered at creation.</li>
-        </ol>
+        <p><b>A Thing</b> is what's being maintained — the row in the Stuff list, the owner of squawks, tasks, and logs. It is today's <code>Aircraft</code>, generalized: a name, a template reference, spec values, a component tree, and meter readings.</p>
+        <p><b>A Template</b> is the configuration that shapes a Thing. It is <i>not</i> copied into the Thing; the Thing holds a <code>template_id</code> and the config is resolved at read time.</p>
       </div>
 
-      <p>The critical property: <b>the template is a lens over a stable schema, never a schema of its own.</b> Two assets with different templates are the same proto message and the same <code>CollectionKind</code>, stored in the same table, synced by the same engine. A template can be edited, versioned, or even deleted without any stored asset becoming unreadable — an unresolvable field key renders as a plain labeled value rather than disappearing. This is what keeps the local-first store and the sync engine untouched.</p>
+      <p>The critical property: <b>a template is a lens over a stable schema, never a schema of its own.</b> Two Things with different templates are the same proto message and the same <code>CollectionKind</code>, in the same table, synced by the same engine. A template can be edited, versioned, or deleted without any stored Thing becoming unreadable — an unresolvable field key renders as a plain labeled value rather than disappearing. This is what keeps the local-first store and the sync engine untouched, and it is the non-negotiable constraint on everything in <a href="#config">§4</a>.</p>
 
-      <h3 id="transfers">3.1 What transfers unchanged</h3>
+      <h3 id="naming">3.2 Why "Thing"</h3>
+      <p>"Asset" is what a finance system calls your stuff. "Thing" is what <i>you</i> call it — "I've got a bunch of things to take care of" is how people actually describe this problem. It makes the create action read naturally (<b>"Add a new thing"</b>), it has an honest plural for the home surface (<b>Stuff</b>), and it stays graceful for the Custom preset, where the app genuinely does not know what the user is tracking.</p>
+
+      <p>The obvious objection is register: <code>PRODUCT.md</code> commits the brand to <b>Dependable, Precise, Calm</b>, and "thing" sounds loose next to a 100-hour inspection. The resolution is that <b>"Thing" is the fallback noun, not a replacement noun.</b> Every preset's lexicon supplies its own word, so the noun is only ever generic where the context genuinely is:</p>
+
+      <div class="mock">
+        <div class="row"><span class="k">Aircraft detail screen</span><span class="v">"Add aircraft" · "2 open squawks" · "AOG"</span></div>
+        <div class="row"><span class="k">Home detail screen</span><span class="v">"Add home" · "2 open issues" · "Emergency"</span></div>
+        <div class="row"><span class="k">Bike detail screen</span><span class="v">"Add bike" · "2 open issues" · "Unrideable"</span></div>
+        <div class="row"><span class="k">Mixed Stuff list / template picker</span><span class="v">"Add a new thing" · "What is it?"</span></div>
+        <div class="row"><span class="k">Custom template, unnamed</span><span class="v">"Add a thing" · "2 open issues" · "Down"</span></div>
+      </div>
+
+      <p>An aircraft owner reads the word "thing" in exactly one place: the create button on a mixed-Stuff account. On an all-aircraft account even that is overridden to "Add aircraft" (<a href="#homelist">§8.2</a>). The playful word buys warmth at the entry point and costs nothing at the places where precision is the product.</p>
+
+      <div class="decision settled">
+        <div class="label">Settled</div>
+        Proto message <code>Aircraft</code> → <code>Thing</code>; Kotlin identifiers follow. <code>CollectionKind.Aircraft.wireName</code> stays <code>"aircraft"</code> — see <a href="#data-model">§6</a>. Subscription's <code>aircraftLimit</code> → <code>thingLimit</code>. The home surface is <b>Stuff</b>.
+      </div>
+
+      <h3 id="transfers">3.3 What transfers unchanged</h3>
       <div class="scroll-x">
       <table>
         <tr><th>Capability</th><th>Change required</th></tr>
-        <tr><td><b>Squawk lifecycle</b> — Open → Addressed / Dismissed, reopen, log↔squawk linkage, dismiss reasons</td><td>None. Priority and dismiss-reason labels come from the lexicon; the enum values and every state transition are untouched.</td></tr>
-        <tr><td><b>Task compliance</b> — rules, force-due, force-complied, linked rules, one-time tasks, due-status computation</td><td><code>EngineHourRule</code> generalizes to <code>MeterRule</code>; due-soon thresholds move from constants to the meter definition. The algorithm is otherwise identical.</td></tr>
-        <tr><td><b>Maintenance logs</b> — CRUD, technician, work description, inspection linkage</td><td>Three hour fields become a repeated meter-reading list. Component reference becomes an ID.</td></tr>
+        <tr><td><b>Squawk lifecycle</b> — Open → Addressed / Dismissed, reopen, log↔squawk linkage, dismiss reasons</td><td>None. Priority and dismiss-reason labels come from the lexicon; enum values and every state transition are untouched.</td></tr>
+        <tr><td><b>Task compliance</b> — force-due, force-complied, linked rules, one-time tasks, due-status computation</td><td><code>EngineHourRule</code> generalizes to <code>MeterRule</code>; a <code>SeasonalRule</code> is added; thresholds and end-of-month snapping move into config. The algorithm's structure is unchanged.</td></tr>
+        <tr><td><b>Maintenance logs</b> — CRUD, technician, work description, inspection linkage</td><td>Three hour fields become a meter-reading list. Component reference becomes an ID.</td></tr>
         <tr><td><b>Attachments</b> (R2) — local blob store, background upload, lazy download</td><td>None.</td></tr>
-        <tr><td><b>Export</b> — PDF / CSV / XLSX / ZIP, email delivery, history</td><td>Column headers and sheet names come from the lexicon and meter set. Pipeline unchanged.</td></tr>
+        <tr><td><b>Export</b> — PDF / CSV / XLSX / ZIP, email delivery, history</td><td>Headers and sheet names come from the lexicon and meter set; layout selected by config. Pipeline unchanged.</td></tr>
         <tr><td><b>Sharing</b> — invite codes, ACL, <code>SharedAircraftRef</code>, foreign-scope sync fan-out</td><td>None functionally; the <code>TECHNICIAN</code> role label comes from the lexicon.</td></tr>
-        <tr><td><b>Technicians</b> — records, certificates, picker</td><td>None. Certificate fields become optional-by-lexicon (a bike mechanic has no A&amp;P number).</td></tr>
+        <tr><td><b>Technicians</b> — records, certificates, picker</td><td>None to the model; certificate fields are shown or hidden by config.</td></tr>
         <tr><td><b>Storage (R1) + Sync</b> — <code>EntityStore</code>, <code>CollectionKind</code>, hydration, pull/push, tombstones</td><td>One new <code>CollectionKind</code> for custom templates. No engine changes.</td></tr>
-        <tr><td><b>Subscription / entitlement</b></td><td><code>aircraftLimit</code> → <code>assetLimit</code> (rename); the limit <i>value</i> is a product decision — see <a href="#subscription">§11</a>.</td></tr>
+        <tr><td><b>Subscription / entitlement</b></td><td>Rename only; the limit <i>value</i> is a product decision — <a href="#subscription">§12</a>.</td></tr>
         <tr><td><b>Adaptive layout, theme, navigation shell</b></td><td>None.</td></tr>
       </table>
       </div>
 
-      <h2 id="template-model">4. The Template Model</h2>
+      <h2 id="config">4. The Template Configuration System</h2>
 
-      <h3>4.1 Spec fields</h3>
-      <p>Every asset has a universal core — <b>name, make, model, serial</b> — because every template we can think of wants at least most of them (and "serial" degrades gracefully to blank). Everything beyond that is a template-declared field, stored as a key/value pair on the asset.</p>
+      <p>This is the heart of the PRD. A template config is a single declarative object with <b>seven blocks</b>. Everything the app does differently for a home versus an airplane is expressed here, and nowhere else.</p>
+
+      <h3 id="blocks">4.1 What a template configures</h3>
+
+      <div class="scroll-x">
+      <table>
+        <tr><th>#</th><th>Block</th><th>Controls</th></tr>
+        <tr><td>1</td><td><b>Identity</b></td><td>Template id, version, display name, icon, sort order in the picker.</td></tr>
+        <tr><td>2</td><td><b>Lexicon</b> (<a href="#lexicon">§4.5</a>)</td><td>Every domain noun and status word: what a Thing is called, what a defect is called, what "down" is called.</td></tr>
+        <tr><td>3</td><td><b>Spec fields</b> (<a href="#spec">§4.2</a>)</td><td>Which identity/detail fields the Thing has, their labels, input types, validation, and grouping on the form.</td></tr>
+        <tr><td>4</td><td><b>Component slots</b> (<a href="#components">§4.3</a>)</td><td>The default component tree, cardinality, and which meters accrue against which slot.</td></tr>
+        <tr><td>5</td><td><b>Meters</b> (<a href="#meters">§4.4</a>)</td><td>Named usage counters with units, precision, monotonicity, and due-soon thresholds. May be empty.</td></tr>
+        <tr><td>6</td><td><b>Scheduling</b> (<a href="#scheduling">§4.6</a>)</td><td>Which rule types are offered, the due-soon window, end-of-month snapping, seasonal anchors.</td></tr>
+        <tr><td>7</td><td><b>Capabilities</b> (<a href="#capabilities">§4.8</a>)</td><td>Which actions, fields, tabs, and buttons exist at all for this kind of Thing.</td></tr>
+      </table>
+      </div>
+      <p>Plus one payload that is content rather than configuration: the <b>starter task pack</b> (<a href="#starter">§4.9</a>).</p>
+
+      <h3 id="spec">4.2 Spec fields</h3>
+      <p>An earlier draft of this design kept <b>make / model / serial</b> hardcoded on the Thing as a "universal core." The <b>home</b> preset kills that idea outright: a house has no make, no model, and no serial number. So <i>every</i> field except the user-chosen <code>name</code> is template-declared. Make/model/serial survive as three <i>conventional keys</i> that most presets declare — and that map onto existing proto fields for storage — not as a privileged core.</p>
 
 <pre><code>message SpecField {
-  string key = 1;              // "tail_number", "vin", "hin", "frame_size"
-  string label = 2;            // "Tail number", "VIN", "Hull ID (HIN)"
-  InputType input = 3;         // TEXT | NUMBER | DATE | ENUM | YEAR
+  string key = 1;              // "make", "tail_number", "vin", "address", "year_built"
+  string label = 2;            // "Make", "Tail number", "VIN", "Address"
+  InputType input = 3;         // TEXT | NUMBER | DATE | YEAR | ENUM | MULTILINE
   bool required = 4;
-  bool monospace = 5;          // render in JetBrains Mono — identifiers, serials
+  bool monospace = 5;          // render in JetBrains Mono — identifiers and serials
   string hint = 6;             // "N12345"
   repeated string enum_values = 7;
-  string group = 8;            // section header on the edit form
+  string group = 8;            // section header on the edit form ("Identity", "Property")
+  bool title_candidate = 9;    // may be offered as the Thing's display name
 }</code></pre>
 
-      <p>Values live on the asset as strings with typed parsing at read. String storage is deliberate: it makes an unknown-to-this-client field round-trip losslessly through an older or newer app version, which matters because two devices on the same account can be on different releases.</p>
+      <p>Values are stored on the Thing as string key/value pairs with typed parsing at read. String storage is deliberate: an unknown-to-this-client field round-trips losslessly through an older or newer app version, which matters because two devices on one account can run different releases.</p>
 
-      <h3>4.2 Component tree</h3>
-      <p>The fixed <code>Aircraft → repeated Engine → Propeller → (hub, blades)</code> shape becomes a recursive tree:</p>
-
-<pre><code>message Component {
-  string id = 1;               // stable UUID, generated on creation — the join key
-  string slot_key = 2;         // "airframe" | "engine" | "propeller" | "hotend" | "hull"
-  string label = 3;            // user-visible; defaults from the template slot
-  string make = 4;
-  string model = 5;
-  string serial = 6;
-  repeated Component children = 7;
-  repeated SpecValue spec = 8; // slot-specific extras (e.g. blade count, nozzle diameter)
-}</code></pre>
-
-      <p>The template declares the default slots and their cardinality:</p>
+      <h3 id="components">4.3 Component slots</h3>
+      <p>The fixed <code>Aircraft → Engine → Propeller → (hub, blades)</code> shape becomes a recursive tree, declared by the template and instantiated per Thing:</p>
 
 <pre><code>message ComponentSlot {
-  string key = 1;
-  string label = 2;            // "Engine", "Hotend", "Drivetrain"
-  Cardinality cardinality = 3; // EXACTLY_ONE | ZERO_OR_ONE | ZERO_OR_MORE
-  bool requires_serial = 4;
-  repeated ComponentSlot children = 5;
-  repeated string meter_keys = 6;  // meters that accrue against this component
+  string key = 1;                  // "airframe" | "engine" | "hvac" | "water_heater"
+  string label = 2;                // "Engine", "Furnace / HVAC", "Water heater"
+  Cardinality cardinality = 3;     // EXACTLY_ONE | ZERO_OR_ONE | ZERO_OR_MORE
+  bool serial_required = 4;
+  repeated string spec_keys = 5;   // which of make/model/serial/etc. this slot shows
+  repeated string meter_keys = 6;  // meters that accrue against this slot
+  repeated ComponentSlot children = 7;
+  bool user_addable = 8;           // may the user create extra components in this slot
 }</code></pre>
+
+      <p>Note that make / model / serial are genuinely universal at the <i>component</i> level even where they are meaningless at the Thing level — a furnace has all three, a house does not. The home preset is the case that proves the tree needs to carry them and the root does not.</p>
 
       <div class="callout note">
         <strong>Why component IDs, not serials</strong>
-        Today a log, task, or squawk points at a component with <code>ComponentType</code> + <code>component_serial</code>. That breaks the moment two components share a blank serial (common on bikes and printers) and it re-points silently when a component is replaced with a new serial. A stable <code>component_id</code> fixes both: replacing an engine creates a new component and the old logs stay attached to the old one, which is exactly the history an owner wants. Legacy fields stay dual-written for the aircraft template through the compatibility window (<a href="#migration">§8</a>).
+        Today a log, task, or squawk points at a component with <code>ComponentType</code> + <code>component_serial</code>. That breaks the moment two components share a blank serial (universal on bikes, common on home fixtures) and it re-points silently when a component is replaced with a new serial. A stable <code>component_id</code> fixes both: replacing a water heater creates a new component and the old records stay attached to the old one, which is exactly the history an owner wants. Legacy fields stay dual-written for the airplane template through the compatibility window (<a href="#migration">§9</a>).
       </div>
 
-      <h3>4.3 Meters</h3>
-      <p>The three hardcoded hour doubles become a declared set of counters. This is the single highest-leverage generalization: it is what makes "every 5,000 miles," "every 500 print hours," and "every 100 tach hours" the same feature.</p>
+      <h3 id="meters">4.4 Meters</h3>
+      <p>The three hardcoded hour doubles become a declared set of counters. This is the highest-leverage generalization: it makes "every 5,000 miles," "every 100 tach hours," and "every 200 ride hours" the same feature.</p>
 
 <pre><code>message Meter {
-  string key = 1;              // "airframe_hours", "odometer", "print_hours", "filament_kg"
-  string label = 2;            // "Airframe time", "Odometer", "Print hours"
-  string unit = 3;             // "hrs", "mi", "km", "kg", "cycles", "nm"
-  int32 decimals = 4;          // 1 for tach, 0 for odometer, 2 for filament
-  double due_soon_threshold = 5; // 10 hrs · 500 mi · 25 print hrs — replaces the +10f constant
-  bool monotonic = 6;          // true for odometers/tach: readings may not decrease
-  bool per_component = 7;      // engine hours are per-engine; airframe time is per-asset
+  string key = 1;                // "airframe_hours", "odometer", "ride_hours"
+  string label = 2;              // "Airframe time", "Odometer", "Ride hours"
+  string unit = 3;               // "hrs", "mi", "km", "nm"
+  int32 decimals = 4;            // 1 for tach, 0 for odometer
+  double due_soon_threshold = 5; // 10 hrs · 500 mi · 25 ride hrs — replaces the +10f constant
+  bool monotonic = 6;            // odometers and tach may not decrease
+  bool per_component = 7;        // engine hours are per-engine; airframe time is per-Thing
+  bool primary = 8;              // shown on the Stuff list row
 }</code></pre>
 
-      <p>A log entry carries <code>repeated MeterReading { string meter_key; string component_id; double value; }</code>. <code>MaintenanceOverview</code>'s three <code>current_*_time</code> fields become <code>repeated MeterReading current</code>, computed the same way (max over logs).</p>
+      <p>A log carries <code>repeated MeterReading { meter_key, component_id, value }</code>. <code>MaintenanceOverview</code>'s three <code>current_*_time</code> fields become <code>repeated MeterReading current</code>, computed the same way (max over logs).</p>
 
-      <p><code>EngineHourRule { interval_hours }</code> generalizes to <code>MeterRule { string meter_key; double interval; }</code>, and the task stops inferring its metric from component type — it names the meter. Multiple rules on one task keep today's semantics (<b>whichever comes first</b>), which now naturally supports "every 6 months or 5,000 miles, whichever comes first" with no new machinery.</p>
+      <div class="callout warn">
+        <strong>The meter list may be empty — and the home preset makes it so</strong>
+        A house accumulates no usage a homeowner would ever record. <b>Home declares zero meters</b>, which must mean: no meter fields on the log form, no meter column in export, no meter rule type in the task editor, and a due-status computation that runs purely on dates. If any of those degrade to a blank "0.0 hrs" field, the config system has failed its first real test. This is the strongest argument for shipping home in v1 rather than as a follow-on: it is the preset that keeps the abstraction honest.
+      </div>
 
-      <h3>4.4 Lexicon</h3>
-      <p>The terminology layer. One lexicon per template, resolved into a <code>CompositionLocal</code> at the asset scope.</p>
+      <h3 id="lexicon">4.5 Lexicon</h3>
+      <p>One lexicon per template, resolved into a <code>CompositionLocal</code> at the Thing scope.</p>
 
 <pre><code>message Noun { string singular = 1; string plural = 2; string article = 3; }  // "a" / "an"
 
 message Lexicon {
-  Noun asset = 1;        // aircraft · boat · car · bike · printer · machine
+  Noun thing = 1;        // aircraft · car · bike · boat · home · thing
   Noun defect = 2;       // squawk · issue · fault
-  Noun task = 3;         // inspection · service · maintenance
-  Noun log = 4;          // logbook entry · service record · maintenance entry
+  Noun task = 3;         // inspection · service · chore
+  Noun log = 4;          // logbook entry · service record · work record
   Noun component = 5;    // component · part · system
-  Noun technician = 6;   // mechanic · technician · shop
-  string ready_status = 7;      // "Airworthy" · "Ready" · "In service"
-  string down_status = 8;       // "AOG" · "Dead in the water" · "Down"
-  string down_status_long = 9;  // "Aircraft on ground" · "Out of service"
-  string home_label = 10;       // "Fleet" · "Garage" · "Workshop"
+  Noun technician = 6;   // mechanic · shop · contractor
+  string ready_status = 7;       // "Airworthy" · "Ready" · "Good"
+  string down_status = 8;        // "AOG" · "Dead in the water" · "Emergency"
+  string down_status_long = 9;   // "Aircraft on ground" · "Out of service"
+  string collection_label = 10;  // "Fleet" · "Garage" · "Stuff"
   string compliance_mandatory = 11;  // "Airworthiness directive" · "Safety recall"
-  string compliance_advisory = 12;   // "Service bulletin" · "TSB" · "Manufacturer notice"
+  string compliance_advisory = 12;   // "Service bulletin" · "TSB"
   string authority_label = 13;       // "FAA" · "NHTSA" · "Manufacturer"
 }</code></pre>
 
-      <h3>4.5 Starter task packs</h3>
-      <p>A template may ship a list of recommended tasks. At asset creation the user is offered them as a single opt-in step ("Add 6 recommended services?") with per-item checkboxes, and can add the pack later from an empty Tasks tab. They are created as ordinary <code>MaintenanceTask</code> rows — editable, deletable, in no way special after creation.</p>
+      <h3 id="scheduling">4.6 Scheduling &amp; due calculation</h3>
+      <p>Three aviation conventions currently live as constants in <code>TaskDueManagerImpl</code> and become config:</p>
 
-      <p>This is where the pivot earns its keep. An aircraft owner already knows their annual is due every 12 months. A person who just bought a used boat does <b>not</b> know the impeller is annual and the zincs are semi-annual, and an app that tells them is worth paying for. Starter packs are also the cheapest possible content moat: they are data, not code.</p>
+<pre><code>message Scheduling {
+  repeated RuleType enabled_rules = 1;   // TIME | METER | SEASONAL | ON_CONDITION | LINKED | IMMEDIATE
+  int32 due_soon_days = 2;               // 30 for aircraft · 14 for home · 30 for car
+  bool month_intervals_snap_to_end_of_month = 3;  // true for aircraft, false elsewhere
+  bool overdue_blocks_ready_status = 4;  // an overdue item makes the Thing "not airworthy"
+}</code></pre>
 
-      <div class="callout warn">
-        <strong>Liability posture on starter packs</strong>
-        Packs are labeled <b>recommendations, not authority</b>, with a one-line disclaimer on the offer step pointing the user to their manufacturer's service manual. For the aviation template specifically, the pack contains only intervals that are regulatory-universal (annual, 100-hour, ELT, transponder, pitot-static) — never aircraft-model-specific intervals, and never an AD or SB, which must remain user-entered.
+      <p><b>End-of-month snapping</b> is the subtlest of the three. Today a month- or year-based interval snaps to the last day of the month it lands in — logged 14 Dec 2025 + 12 months is due 31 Dec 2026. That is correct and legally meaningful for an annual inspection, and simply wrong for "flush the water heater 12 months after I last did it," which should be due on the anniversary. Making it a per-template flag preserves aviation behavior exactly while letting every other domain behave the way a normal person expects.</p>
+
+      <h4 id="seasonal">The new rule type: SeasonalRule</h4>
+      <p>Home upkeep is not interval-from-last-service; it is <b>calendar-anchored</b>. Gutters get cleaned in April and October regardless of when they were last done. Sprinklers get blown out before the first freeze. No existing rule expresses this, so one is added to the <code>InspectionRule</code> oneof:</p>
+
+<pre><code>message SeasonalRule {
+  repeated int32 months = 1;   // 1-12; e.g. [4, 10] for April and October
+  int32 day_of_month = 2;      // 0 = end of the named month
+}</code></pre>
+
+      <p>Semantics: the next due date is the next occurrence of any listed month strictly after the last compliance date (or after the task's creation date if never complied). It slots into the existing rule loop as one more branch producing a candidate date, and the loop's existing "earliest candidate wins" behavior handles a task carrying both a seasonal and a time rule with no new machinery. Seasonal rules are date-only and are unaffected by meters, which is exactly why home works without them.</p>
+
+      <h3 id="resolution">4.7 Resolution, precedence, versioning, validation</h3>
+
+      <h4>Two layers, deliberately not three</h4>
+      <p>Config resolves as <b>base defaults → template</b>. A template omitting a block inherits the base default (generic lexicon, no components, no meters, all rule types, 30-day due-soon window), so a minimal custom template is a few lines rather than a full document.</p>
+      <p>There is no third per-Thing override layer. It is tempting — "let this one bike show a different meter label" — and it is a trap: it makes every Thing a potential schema of one, breaks the promise that a template's config describes its Things, and turns export and search into per-row special cases. Users who need something different <b>fork a preset into a custom template</b>, which is a comprehensible mental model and reuses machinery already needed.</p>
+
+      <h4>Versioning</h4>
+      <p>A Thing records <code>template_id</code> and <code>template_version</code>. Config resolution always uses the <b>current</b> template, not the version recorded at creation — a preset improvement (a better label, a corrected threshold) should reach existing Things. The recorded version exists for two narrower purposes: telling the user a preset has been updated since their Thing was created, and letting a migration target only Things created before a specific revision.</p>
+      <p>Preset changes are governed by one rule: <b>additive and label changes are free; removing a spec field, meter, or slot key is not.</b> Removal orphans stored values. The retirement path is to mark a key <code>deprecated</code>, which hides it from the create form while continuing to render any Thing that already has a value for it.</p>
+
+      <h4>Lenient resolution</h4>
+      <p>If <code>template_id</code> resolves to nothing — a custom template deleted, or an id written by a newer app version — the Thing renders with the <b>custom</b> preset's generic lexicon, and every stored spec value appears under its raw key as a labeled row. Data is never hidden and never dropped. This is the same failure posture as an unknown proto field, and it is what makes templates safe to evolve.</p>
+
+      <h4>Validation</h4>
+      <p>A config is invalid if it enables <code>METER</code> rules while declaring no meters, references a <code>meter_key</code> or <code>spec_key</code> that does not exist, declares a duplicate key, has a starter task referencing an undeclared meter, or ships an empty lexicon noun. Built-in presets are validated by a unit test that loads all of them; custom templates are validated at save time with inline errors.</p>
+
+      <div class="callout note">
+        <strong>Where the config lives</strong>
+        <b>Built-in presets are Kotlin declarations</b> in a new <code>core:template</code> module — type-safe, compile-checked, no parsing, and identical across Android, iOS, and web without a resource-loading path per host. <b>Custom templates are proto</b> (<code>ThingTemplate</code>), stored as a new <code>CollectionKind.ThingTemplate</code> (<code>wireName "thing_template"</code>) and synced like any other entity. Both resolve through one <code>TemplateRegistry</code> interface, so no consumer knows or cares which kind it got.
+        <br><br>
+        <code>core:template</code> depends only on <code>core:model</code> and kotlinx — no Compose, no Firebase — so <code>datamanager</code> layers can depend on it without violating the module rules in <code>AGENTS.md</code>. The Compose side (<code>LocalThingLexicon</code> and the noun formatter) lives in <code>core:ui</code>.
       </div>
 
-      <h3 id="catalog">4.6 Built-in template catalog (v1)</h3>
+      <h3 id="capabilities">4.8 Capabilities — which buttons exist</h3>
+      <p>The block that answers "what actions are available." Everything here is a hard on/off that removes UI rather than disabling it — a homeowner should never see a greyed-out "Engine hours" field.</p>
+
+<pre><code>message Capabilities {
+  bool components = 1;                 // component tree UI, picker, config card
+  bool meters = 2;                     // meter fields on logs; METER rules
+  bool compliance = 3;                 // type chip, reference number, authority
+  bool technicians = 4;                // technician picker on the log form
+  bool technician_certificates = 5;    // certificate fields on the technician record
+  bool component_serial_prompt = 6;    // nag for serials at creation
+  repeated SquawkPriority priorities = 7;  // which priority values are offered
+  repeated Tab tabs = 8;               // which of Overview/Defects/Tasks/Logs appear, and order
+  ExportLayout export_layout = 9;      // LOGBOOK | GENERIC
+  bool weight_balance = 10;            // future, aviation-only
+}</code></pre>
+
+      <div class="scroll-x">
+      <table class="matrix">
+        <tr><th>Capability</th><th>Airplane</th><th>Car</th><th>Moto</th><th>Bike</th><th>Boat</th><th>Home</th><th>Custom</th></tr>
+        <tr><td>Components</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td><td class="n">off</td></tr>
+        <tr><td>Meters</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td><td class="n">—</td><td class="y">✓</td></tr>
+        <tr><td>Compliance (recalls / ADs)</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">off</td></tr>
+        <tr><td>Technician picker</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td></tr>
+        <tr><td>Technician certificates</td><td class="y">✓</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">off</td></tr>
+        <tr><td>Serial prompt at creation</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td><td class="n">—</td><td class="y">✓</td><td class="n">—</td><td class="n">off</td></tr>
+        <tr><td>Seasonal rules</td><td class="n">—</td><td class="n">—</td><td class="y">✓</td><td class="n">—</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td></tr>
+        <tr><td>Export layout</td><td>logbook</td><td>generic</td><td>generic</td><td>generic</td><td>generic</td><td>generic</td><td>generic</td></tr>
+        <tr><td>Due-soon window</td><td>30 d</td><td>30 d</td><td>30 d</td><td>14 d</td><td>30 d</td><td>14 d</td><td>30 d</td></tr>
+        <tr><td>End-of-month snap</td><td class="y">✓</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">—</td></tr>
+      </table>
+      </div>
+
+      <p>Concretely, on the log form: the home template hides the meter fields entirely, drops the serial autofill, and labels the person field "Contractor"; the airplane template shows three meter fields, the certificate-bearing technician picker, and the compliance chip. Same screen, same ViewModel, same proto — one config.</p>
+
+      <h3 id="starter">4.9 Starter task packs</h3>
+      <p>A template may ship a recommended schedule. At creation the user is offered it as one opt-in step ("Add 8 recommended chores?") with per-item checkboxes, and can add it later from an empty Tasks tab. Items are created as ordinary <code>MaintenanceTask</code> rows — editable, deletable, in no way special afterwards.</p>
+
+      <p>This is where the pivot earns its keep. An aircraft owner already knows their annual is due every 12 months. A person who just bought a house does <b>not</b> know the water heater wants an annual flush, the dryer vent is a fire risk, and the sprinklers need blowing out before the first freeze. An app that tells them is worth paying for — and starter packs are the cheapest possible content moat, because they are data.</p>
+
+      <div class="callout warn">
+        <strong>Liability posture</strong>
+        Packs are labeled <b>recommendations, not authority</b>, with a one-line disclaimer pointing to the manufacturer's service manual. The airplane pack contains only regulatory-universal intervals (annual, 100-hour, ELT, transponder, pitot-static) — never model-specific intervals, and never an AD or SB, which must remain user-entered.
+      </div>
+
+      <h2 id="presets">5. The Preset Catalog</h2>
+
       <div class="scroll-x">
       <table>
-        <tr><th>Template</th><th>Spec fields beyond make/model/serial</th><th>Component slots</th><th>Meters</th><th>Defect / down words</th></tr>
+        <tr><th>Preset</th><th>Spec fields</th><th>Component slots</th><th>Meters</th><th>Defect / down words</th></tr>
         <tr>
-          <td><b>Aircraft</b> <span class="pill green">migration target</span></td>
-          <td>Tail number <i>(required, mono)</i></td>
+          <td><b>Airplane</b> <span class="pill green">migration target</span></td>
+          <td>Make · Model · Serial · <b>Tail number</b></td>
           <td>Airframe ×1 · Engine ×N → Propeller ×0-1 → (Hub ×1, Blade ×N)</td>
           <td>Airframe hours · Engine hours <i>(per engine)</i> · Prop hours</td>
           <td>Squawk / AOG</td>
         </tr>
         <tr>
-          <td><b>Boat</b></td>
-          <td>Hull ID (HIN) · Year · Registration · Length</td>
-          <td>Hull ×1 · Engine ×N · Outdrive/Saildrive ×0-N · Generator ×0-N · Rigging ×0-1</td>
-          <td>Engine hours <i>(per engine)</i> · Generator hours · Nautical miles</td>
-          <td>Issue / Dead in the water</td>
-        </tr>
-        <tr>
           <td><b>Car</b></td>
-          <td>VIN <i>(mono)</i> · Year · Plate</td>
+          <td>Make · Model · Year · VIN <i>(mono)</i> · Plate</td>
           <td>Chassis ×1 · Engine ×1 · Transmission ×0-1 · Brakes ×0-1 · Suspension ×0-1 · Tires ×0-N</td>
-          <td>Odometer · Engine hours · Track sessions</td>
+          <td>Odometer <i>(primary)</i> · Engine hours</td>
           <td>Issue / Off the road</td>
         </tr>
         <tr>
           <td><b>Motorcycle</b></td>
-          <td>VIN <i>(mono)</i> · Year · Plate</td>
+          <td>Make · Model · Year · VIN <i>(mono)</i> · Plate</td>
           <td>Frame ×1 · Engine ×1 · Final drive ×0-1 · Brakes ×0-1 · Suspension ×0-1 · Tires ×0-N</td>
-          <td>Odometer · Engine hours</td>
+          <td>Odometer <i>(primary)</i> · Engine hours</td>
           <td>Issue / Off the road</td>
         </tr>
         <tr>
-          <td><b>Bicycle</b></td>
-          <td>Frame number <i>(mono)</i> · Size · Year</td>
+          <td><b>Bike</b></td>
+          <td>Make · Model · Frame number <i>(mono)</i> · Size · Year</td>
           <td>Frame ×1 · Drivetrain ×0-1 · Fork ×0-1 · Rear shock ×0-1 · Brakes ×0-1 · Wheels ×0-N</td>
-          <td>Distance · Ride hours</td>
+          <td>Distance <i>(primary)</i> · Ride hours</td>
           <td>Issue / Unrideable</td>
         </tr>
         <tr>
-          <td><b>3D printer</b></td>
-          <td>Firmware version · Purchase date</td>
-          <td>Printer ×1 · Hotend ×0-N · Extruder ×0-N · Build plate ×0-1 · Motion system ×0-1</td>
-          <td>Print hours · Filament (kg) · Print jobs</td>
-          <td>Fault / Down</td>
+          <td><b>Boat</b></td>
+          <td>Make · Model · Year · Hull ID (HIN) <i>(mono)</i> · Registration · Length</td>
+          <td>Hull ×1 · Engine ×N · Outdrive/Saildrive ×0-N · Generator ×0-N · Rigging ×0-1</td>
+          <td>Engine hours <i>(primary, per engine)</i> · Generator hours · Nautical miles</td>
+          <td>Issue / Dead in the water</td>
         </tr>
         <tr>
-          <td><b>Equipment</b> <span class="muted">(generic)</span></td>
-          <td>Purchase date · Location</td>
-          <td>Equipment ×1 · user-added ×N</td>
-          <td>Run hours · Cycles</td>
-          <td>Issue / Down</td>
+          <td><b>Home</b> <span class="pill amber">no meters</span></td>
+          <td>Address · Year built · Square footage · Purchase date <i>(no make/model/serial)</i></td>
+          <td>HVAC ×0-N · Water heater ×0-N · Roof ×0-1 · Gutters ×0-1 · Appliance ×0-N · Water treatment ×0-1 · Septic ×0-1 · Irrigation ×0-1 · Chimney ×0-N · Deck ×0-1</td>
+          <td><b>None</b></td>
+          <td>Issue / Emergency</td>
         </tr>
         <tr>
           <td><b>Custom</b></td>
-          <td>User-defined</td>
-          <td>User-defined</td>
-          <td>User-defined</td>
-          <td>User-chosen</td>
+          <td>Name only, user-extendable</td>
+          <td>Off by default, user-addable</td>
+          <td>One generic "Usage", renameable</td>
+          <td>Issue / Down</td>
         </tr>
       </table>
       </div>
 
-      <p>Sample starter packs — enough to show the shape, not the final content:</p>
+      <h3 id="home">5.1 The home preset, in detail</h3>
+      <p>Home is the preset that stresses every joint in the design, so it is specified rather than sketched.</p>
+
+      <div class="mock">
+        <div class="row"><span class="k">Lexicon</span><span class="v">thing: home / homes · defect: issue · task: <b>chore</b> · log: work record · component: system · technician: <b>contractor</b></span></div>
+        <div class="row"><span class="k">Status words</span><span class="v">ready: "Good" · down: "Emergency"</span></div>
+        <div class="row"><span class="k">Spec fields</span><span class="v">Address <i>(title candidate)</i> · Year built · Square footage · Purchase date</span></div>
+        <div class="row"><span class="k">Meters</span><span class="v">none — date-only scheduling</span></div>
+        <div class="row"><span class="k">Rules enabled</span><span class="v">TIME · <b>SEASONAL</b> · ON_CONDITION · LINKED · IMMEDIATE <i>(no METER)</i></span></div>
+        <div class="row"><span class="k">Due-soon window</span><span class="v">14 days · no end-of-month snapping</span></div>
+        <div class="row"><span class="k">Capabilities off</span><span class="v">compliance · technician certificates · serial prompt · weight &amp; balance</span></div>
+      </div>
+
+      <p><b>Components</b> are systems and appliances, each carrying make / model / serial — a furnace has all three even though the house has none. Serials are never prompted for, only accepted, because a homeowner adding their house should not be blocked on climbing behind the water heater.</p>
+
+      <p><b>Starter pack</b> (the highest-value pack in the catalog):</p>
       <div class="scroll-x">
       <table>
-        <tr><th>Template</th><th>Starter tasks</th></tr>
-        <tr><td>Aircraft</td><td>Annual inspection (12 mo) · 100-hour inspection (100 hrs) · ELT battery/inspection (12 mo) · Transponder check (24 mo) · Pitot-static (24 mo) · Oil change (50 hrs or 4 mo)</td></tr>
-        <tr><td>Boat</td><td>Engine oil &amp; filter (100 hrs / 12 mo) · Impeller (12 mo) · Anodes/zincs (6 mo) · Fuel filter (100 hrs) · Bottom paint (24 mo) · Safety gear check (12 mo)</td></tr>
-        <tr><td>Car</td><td>Oil &amp; filter (5,000 mi / 6 mo) · Tire rotation (7,500 mi) · Brake fluid (24 mo) · Cabin/engine air filter (15,000 mi) · Coolant (60,000 mi) · Registration/inspection (12 mo)</td></tr>
-        <tr><td>Bicycle</td><td>Chain wear check (500 mi) · Drivetrain clean &amp; lube (200 mi) · Brake pad check (500 mi) · Fork lower service (50 ride hrs) · Full suspension service (200 ride hrs) · Tubeless sealant (3 mo)</td></tr>
-        <tr><td>3D printer</td><td>Nozzle replacement (500 print hrs) · Belt tension (250 print hrs) · Rail lubrication (200 print hrs) · Bed level verify (50 jobs) · PTFE tube (300 print hrs) · Fan clean (500 print hrs)</td></tr>
+        <tr><th>Chore</th><th>Rule</th></tr>
+        <tr><td>HVAC filter</td><td>Time, 3 months</td></tr>
+        <tr><td>HVAC service</td><td>Seasonal, April &amp; October</td></tr>
+        <tr><td>Clean gutters</td><td>Seasonal, April &amp; October</td></tr>
+        <tr><td>Smoke &amp; CO detector batteries</td><td>Time, 12 months</td></tr>
+        <tr><td>Flush water heater</td><td>Time, 12 months</td></tr>
+        <tr><td>Clean dryer vent</td><td>Time, 12 months</td></tr>
+        <tr><td>Sprinkler blowout</td><td>Seasonal, October</td></tr>
+        <tr><td>Chimney sweep &amp; inspection</td><td>Time, 12 months</td></tr>
+        <tr><td>Refrigerator water filter</td><td>Time, 6 months</td></tr>
+        <tr><td>Septic pump-out</td><td>Time, 36 months</td></tr>
       </table>
       </div>
 
-      <h3>4.7 Built-in vs. custom templates</h3>
-      <p>Built-in templates are <b>compiled into the binary</b> and versioned with the app. They are not user data, do not sync, and cannot be corrupted by a bad sync. Custom templates are user data: a new <code>CollectionKind.AssetTemplate</code> (<code>wireName "asset_template"</code>), synced like any other entity, hydrated at sign-in as a top-level kind.</p>
+      <p><b>What home proves about the design:</b> spec fields cannot assume make/model/serial; meters must be genuinely optional rather than zeroed; scheduling needs a calendar-anchored rule; and the aviation end-of-month convention has to be config, not code. Every one of those is a correction the preset forced, and each makes the abstraction more honest rather than more elaborate.</p>
 
-      <p>Template resolution is by <code>template_id</code> with a built-in-wins-then-custom lookup and a <b>lenient fallback</b>: if the id resolves to nothing (custom template deleted, or an id written by a newer app version), the asset renders with the generic <code>equipment</code> lexicon and every stored spec value shown under its raw key as a labeled row. Data is never hidden and never dropped.</p>
+      <h3 id="deferred-presets">5.2 Presets deliberately not in v1</h3>
+      <p><b>3D printer</b> and <b>shop / garage equipment</b> were in the original framing and are covered in v1 by <b>Custom</b>. They are pure data — a config plus a starter pack, no code — so they ship the moment the content is worth shipping. Holding them back keeps the v1 picker to seven legible choices rather than nine, and lets the printer pack be written once there is a user asking for it. Same logic for tractors, HVAC-only rentals, sailplanes, and firearms.</p>
 
-      <div class="decision">
-        <div class="label">Recommendation</div>
-        Ship the <b>seven built-ins in v1</b> and defer <b>custom templates to v1.1</b>. The built-in catalog covers the stated use cases, and a custom-template editor is a substantial UI surface (field builder, slot builder, meter builder) that would gate the pivot on its own timeline. The <code>AssetTemplate</code> proto and <code>CollectionKind</code> ship in v1 so the storage shape is settled; only the editor is deferred.
-      </div>
-
-      <h2 id="data-model">5. Data Model Changes</h2>
+      <h2 id="data-model">6. Data Model Changes</h2>
 
       <p>All changes are <b>additive at the proto level</b>. No field is removed or renumbered in v1; legacy fields are dual-written and deprecated in place.</p>
 
-<pre><code>// aircraft.proto → asset.proto (message renamed; wireName stays "aircraft")
-message Asset {
+<pre><code>// aircraft.proto → thing.proto (message renamed; wireName stays "aircraft")
+message Thing {
   string id = 1;
 
-  // --- legacy, dual-written for template "aircraft" through the compat window ---
+  // --- legacy storage slots, dual-written for template "airplane" ---
+  // Now just the storage location for the conventional spec keys make/model/serial,
+  // and for the airplane preset's engine tree. Not a privileged core.
   string make = 2;
   string model = 3;
   string serial = 4;
@@ -415,122 +548,125 @@ message Asset {
   repeated Engine engine = 6;      // deprecated: mirrored from components
 
   // --- new ---
-  string template_id = 7;          // "aircraft" | "boat" | "car" | ... | custom UUID
-  int32 template_version = 8;      // template revision the asset was created against
-  string name = 9;                 // user-chosen display name ("N12345", "Shop compressor")
-  repeated SpecValue spec = 10;    // template-declared fields, incl. tail_number mirror
+  string template_id = 7;          // "airplane" | "car" | "home" | ... | custom UUID
+  int32 template_version = 8;      // preset revision at creation (informational — see §4.7)
+  string name = 9;                 // user-chosen display name ("N12345", "The house")
+  repeated SpecValue spec = 10;    // template-declared fields, incl. mirrors of 2-5
   repeated Component components = 11;
 }
 
-message SpecValue { string key = 1; string value = 2; }</code></pre>
+message SpecValue { string key = 1; string value = 2; }
+
+message Component {
+  string id = 1;                   // stable UUID — the join key for logs/tasks/squawks
+  string slot_key = 2;             // "airframe" | "engine" | "hvac" | "water_heater"
+  string label = 3;
+  string make = 4;
+  string model = 5;
+  string serial = 6;
+  repeated Component children = 7;
+  repeated SpecValue spec = 8;
+}</code></pre>
 
       <div class="scroll-x">
       <table>
         <tr><th>Message</th><th>Change</th><th>Compatibility</th></tr>
-        <tr><td><code>Aircraft</code> → <code>Asset</code></td><td>Add <code>template_id</code>, <code>template_version</code>, <code>name</code>, <code>spec</code>, <code>components</code>. Keep 2–6.</td><td>Old clients read fields 2–6 and ignore the rest. New clients writing an aircraft-template asset keep 2–6 in sync.</td></tr>
-        <tr><td><code>MaintenanceLog</code></td><td>Add <code>component_id</code> and <code>repeated MeterReading meters</code>. Keep <code>component_type</code>, <code>component_serial</code>, <code>engine_hour</code>, <code>airframe_time</code>, <code>prop_time</code>.</td><td>Dual-written for aircraft-template assets; new-only for other templates (an old client showing a boat log would be nonsense anyway — see the version floor in §8).</td></tr>
-        <tr><td><code>MaintenanceTask</code></td><td>Add <code>component_id</code>, <code>MeterRule</code> to the <code>InspectionRule</code> oneof, and <code>force_due_meter { key, value }</code>. Keep <code>component</code>, <code>engine_hour_rule</code>, <code>force_due_engine_hour</code>.</td><td>An <code>EngineHourRule</code> is read as a <code>MeterRule</code> on the engine-hours meter; writes emit both for aircraft.</td></tr>
+        <tr><td><code>Aircraft</code> → <code>Thing</code></td><td>Add <code>template_id</code>, <code>template_version</code>, <code>name</code>, <code>spec</code>, <code>components</code>. Keep 2–6.</td><td>Old clients read 2–6 and ignore the rest. New clients writing an airplane-template Thing keep 2–6 in sync.</td></tr>
+        <tr><td><code>MaintenanceLog</code></td><td>Add <code>component_id</code> and <code>repeated MeterReading meters</code>. Keep <code>component_type</code>, <code>component_serial</code>, <code>engine_hour</code>, <code>airframe_time</code>, <code>prop_time</code>.</td><td>Dual-written for airplane-template Things; new-only for other templates, gated by the version floor in §9.2.</td></tr>
+        <tr><td><code>MaintenanceTask</code></td><td>Add <code>component_id</code>; add <code>MeterRule</code> and <code>SeasonalRule</code> to the <code>InspectionRule</code> oneof; add <code>force_due_meter { key, value }</code>. Keep <code>component</code>, <code>engine_hour_rule</code>, <code>force_due_engine_hour</code>.</td><td>An <code>EngineHourRule</code> reads as a <code>MeterRule</code> on the engine-hours meter; writes emit both for airplanes. A <code>SeasonalRule</code> is invisible to old clients — see the risk in §9.2.</td></tr>
         <tr><td><code>Squawk</code></td><td>Add <code>component_id</code>. Keep <code>component_type</code>, <code>component_serial</code>.</td><td>Same dual-write rule.</td></tr>
         <tr><td><code>MaintenanceOverview</code></td><td>Add <code>repeated MeterReading current</code> and <code>map&lt;string,uint32&gt; log_count_by_slot</code>. Keep the five legacy counters.</td><td>Recomputed locally from logs; no migration risk.</td></tr>
-        <tr><td><code>ComponentType</code></td><td><b>Frozen, not extended.</b> Retained solely for legacy fields; new code reads <code>slot_key</code>.</td><td>Adding enum values would be a trap — the enum can never cover user-defined slots.</td></tr>
-        <tr><td><code>AssetTemplate</code> <span class="pill">new</span></td><td>New message: id, version, lexicon, spec fields, component slots, meters, starter tasks, icon key.</td><td>New <code>CollectionKind.AssetTemplate</code>; zero-migration per the R1 design (§4.2.1).</td></tr>
+        <tr><td><code>ComponentType</code></td><td><b>Frozen, not extended.</b> Retained only for legacy fields; new code reads <code>slot_key</code>.</td><td>Adding enum values would be a trap — an enum can never cover user-defined slots.</td></tr>
+        <tr><td><code>ThingTemplate</code> <span class="pill">new</span></td><td>The config from §4, as proto, for custom templates.</td><td>New <code>CollectionKind.ThingTemplate</code>; zero-migration per the R1 design (§4.2.1).</td></tr>
       </table>
       </div>
 
       <div class="callout note">
         <strong><code>CollectionKind.Aircraft.wireName</code> stays <code>"aircraft"</code></strong>
-        The wire name is the persisted <code>collection</code> column value and the Firestore subcollection path. Renaming it would require rewriting every stored row and every synced document on every device — for zero user benefit. The <code>schemaName</code> forensic tag becomes <code>"aircraft.Asset"</code>, which is safe because routing goes through <code>fromWire</code>, not <code>schemaName</code>. Expect a permanent, documented mismatch between the wire name "aircraft" and the concept "asset"; it is the cheap side of the trade.
+        The wire name is the persisted <code>collection</code> column value and the Firestore subcollection path. Renaming it would mean rewriting every stored row and every synced document on every device, for zero user benefit. The <code>schemaName</code> forensic tag becomes <code>"aircraft.Thing"</code>, which is safe because routing goes through <code>fromWire</code>, not <code>schemaName</code>. Expect a permanent, documented mismatch between the wire name "aircraft" and the concept "Thing" — the cheap side of the trade, and worth a comment in <code>CollectionKind.kt</code> so the next reader doesn't try to "fix" it.
       </div>
 
-      <h2 id="due">6. Due-Status Generalization</h2>
+      <h2 id="due">7. Due-Status Generalization</h2>
 
-      <p><code>TaskDueManagerImpl</code> keeps its structure and loses three aviation assumptions:</p>
+      <p><code>TaskDueManagerImpl</code> keeps its structure — a loop over rules producing candidate dates and meter values, earliest wins — and loses five aviation assumptions:</p>
       <ol>
-        <li><b>Metric selection.</b> Today: <code>component == AIRFRAME ? airframe_time : engine_hour</code>. New: each <code>MeterRule</code> names its meter; the current value is the max reading for that <code>(meter_key, component_id)</code> pair across the asset's logs. A task with no meter rule is date-only, as today.</li>
-        <li><b>Due-soon thresholds.</b> Today: hardcoded 1 month and <code>+10f</code>. New: the date threshold stays 1 month (domain-independent and well-tuned); the meter threshold comes from <code>Meter.due_soon_threshold</code>. This alone is the difference between "due soon at 10 miles remaining" and a usable car experience.</li>
+        <li><b>Metric selection.</b> Today <code>component == AIRFRAME ? airframe_time : engine_hour</code>. New: each <code>MeterRule</code> names its meter; the current value is the max reading for that <code>(meter_key, component_id)</code> pair across the Thing's logs.</li>
+        <li><b>Due-soon thresholds.</b> Today a hardcoded 1 month and <code>+10f</code>. New: the date window comes from <code>Scheduling.due_soon_days</code>, the meter window from <code>Meter.due_soon_threshold</code>.</li>
+        <li><b>End-of-month snapping.</b> Now <code>Scheduling.month_intervals_snap_to_end_of_month</code>, true only for airplanes.</li>
         <li><b>Force-due.</b> <code>force_due_engine_hour</code> becomes <code>force_due_meter { key, value }</code>, with the legacy float mapped onto the engine-hours meter on read.</li>
+        <li><b>Seasonal scheduling.</b> One new branch in the rule loop producing a candidate date from the next matching month.</li>
       </ol>
-      <p>Everything else — force-complied, linked rules with cycle protection, one-time tasks moving to history, on-condition, immediate — is meter-agnostic already and is not touched.</p>
+      <p>Force-complied, linked rules with cycle protection, one-time tasks moving to history, on-condition, and immediate are all meter-agnostic already and are not touched.</p>
 
       <div class="callout warn">
         <strong>Regression bar for this section</strong>
-        The existing <code>TaskDueManager</code> test suite must pass <b>unmodified</b> against the generalized implementation, with the aircraft template supplying the meters. If a test needs editing to pass, the generalization changed aviation behavior and the change is wrong. This is the cheapest available proof that the pivot is non-destructive.
+        The existing <code>TaskDueManager</code> test suite must pass <b>unmodified</b> against the generalized implementation, with the airplane preset supplying meters and scheduling flags. If a test needs editing to pass, the generalization changed aviation behavior and the change is wrong. This is the cheapest available proof that the pivot is non-destructive.
       </div>
 
-      <h2 id="ux">7. UX Changes, Surface by Surface</h2>
+      <h2 id="ux">8. UX, Surface by Surface</h2>
 
-      <h3>7.1 Creating an asset</h3>
-      <p>Today: <b>Add aircraft</b> → a form with airframe and engine sections. New: a three-step flow, the first step of which is the whole pivot.</p>
+      <h3>8.1 Creating a Thing</h3>
       <div class="mock">
-        <div class="row"><span class="k">Step 1 — Pick a template</span><span class="v">"What are you taking care of?"</span></div>
-        <div class="row"><span class="k"></span><span class="v muted">Icon grid: Aircraft · Boat · Car · Motorcycle · Bicycle · 3D printer · Equipment · Custom</span></div>
-        <div class="row"><span class="k">Step 2 — Identity</span><span class="v">Name + template spec fields, template-labeled</span></div>
-        <div class="row"><span class="k">Step 3 — Components</span><span class="v">Pre-filled slots; required-serial slots flagged; add/remove where cardinality allows</span></div>
-        <div class="row"><span class="k">Step 4 — Starter services</span><span class="v">Optional, per-item checkboxes, "Skip" is a first-class button</span></div>
+        <div class="row"><span class="k">Step 1 — What is it?</span><span class="v">Icon grid: Airplane · Car · Motorcycle · Bike · Boat · Home · Custom</span></div>
+        <div class="row"><span class="k">Step 2 — Identity</span><span class="v">Name + the template's spec fields, template-labeled</span></div>
+        <div class="row"><span class="k">Step 3 — Components</span><span class="v">Pre-filled slots; skipped entirely when <code>capabilities.components</code> is off</span></div>
+        <div class="row"><span class="k">Step 4 — Starter pack</span><span class="v">Per-item checkboxes; "Skip" is a first-class button</span></div>
       </div>
-      <p>Steps 3 and 4 are skippable; an asset with a name and a template is valid. This matters — the current aircraft form's serial-number validation is appropriate for an aircraft and hostile for a bike whose owner has never looked at the frame number.</p>
+      <p>Steps 3 and 4 are skippable; a Thing with a name and a template is valid. This matters — the current aircraft form's serial validation is appropriate for an aircraft and hostile for a house.</p>
+      <p><b>Homogeneous-account shortcut:</b> if every existing Thing shares one template, step 1 pre-selects it with a "change" affordance. An aviation user adding their second aircraft sees today's flow with one extra tap.</p>
 
-      <p><b>Homogeneous-account shortcut:</b> if the account already has assets and they are all one template, step 1 pre-selects that template with a "change" affordance. An aviation user adding their second aircraft sees essentially today's flow with one extra tap.</p>
+      <h3 id="homelist">8.2 The Stuff list</h3>
+      <p>Today's fleet list is homogeneous. It becomes a mixed-type list where each row carries a template icon and a status line in that Thing's own lexicon — "2 open squawks · AOG" sitting above "1 open issue · Gutters due in 9 days". Grouping by template appears once the account holds more than one template type. The primary meter (if any) renders on the row; a home shows its next due chore instead.</p>
+      <p>The surface is titled <b>Stuff</b>, overridden by <code>Lexicon.collection_label</code> when every Thing shares one template — so an all-aircraft account still reads <b>Fleet</b> and an all-car account reads <b>Garage</b>. The create button follows the same rule: "Add a new thing" on a mixed account, "Add aircraft" on an aviation one.</p>
 
-      <h3>7.2 The home surface</h3>
-      <p>Today the fleet list is homogeneous. It becomes a mixed-type list where each row carries a small template icon and its status line uses that asset's lexicon ("2 open squawks · AOG" next to "1 open issue · Due in 300 mi"). Grouping by template is offered once the account holds more than one template type.</p>
+      <h3>8.3 Thing overview</h3>
+      <p>The four-tab layout (Overview → Defects → Tasks → Logs) is preserved; labels come from the lexicon and tab presence from <code>capabilities.tabs</code>. The Overview tab's <code>ConfigurationCard</code> renders the component tree generically instead of hardcoded airframe/engine/prop sections, and <code>AogAlertSection</code> becomes a down-status alert section keyed on <code>Lexicon.down_status</code>.</p>
 
-      <div class="decision">
-        <div class="label">Decision needed — home surface name</div>
-        "Fleet" is wrong for a bike and a printer. Candidates: <b>Workshop</b>, <b>Garage</b>, <b>Shop</b>, <b>Hangar</b>, <b>Things</b>. <b>Recommendation: "Workshop"</b> as the neutral default, with the label overridden by <code>Lexicon.home_label</code> when every asset in the account shares one template — so an all-aircraft account still reads "Fleet" and an all-car account reads "Garage." "Shop" reads commercial; "Things" is too casual for the brand's precision register.
-      </div>
+      <h3>8.4 Log entry</h3>
+      <p>The smart component picker already loads real components and auto-fills serials — preserved and improved, since it now walks the component tree rather than three special cases. The three hour fields become one field per applicable meter, labeled and unit-suffixed from the meter definition, shown only for meters relevant to the selected component — and absent entirely when the template declares none.</p>
 
-      <h3>7.3 Asset overview</h3>
-      <p>The four-tab layout (Overview → Squawks → Tasks → Logs) is preserved exactly; only labels change per lexicon. The Overview tab's <code>ConfigurationCard</code> renders the component tree generically instead of the hardcoded airframe/engine/prop sections, and <code>AogAlertSection</code> becomes a down-status alert section keyed on <code>Lexicon.down_status</code>.</p>
+      <h3>8.5 Export, settings, sharing, technicians</h3>
+      <p>The paper-logbook tab layout becomes the <b>airplane</b> preset's layout, selected by <code>capabilities.export_layout</code>; other presets get a generic layout whose columns derive from the lexicon and meter set. Sheet names, file names, and the README are lexicon-driven. Pipeline, ZIP structure, delivery, and history are untouched. Technician certificate fields are shown or hidden by capability, so a homeowner never sees "A&amp;P / IA".</p>
 
-      <h3>7.4 Log entry</h3>
-      <p>The smart component picker already loads real components and auto-fills serials — that behavior is preserved and improved, since it now walks the component tree rather than three special cases. The three hour fields are replaced by one field per applicable meter, labeled and unit-suffixed from the meter definition, shown only for meters relevant to the selected component.</p>
+      <h2 id="migration">9. Migration &amp; Version Compatibility</h2>
 
-      <h3>7.5 Export</h3>
-      <p>The paper-logbook tab layout becomes the <b>aircraft template's</b> layout. Other templates get a generic layout whose columns are derived from the lexicon and the meter set. Sheet names, file names, and the README are lexicon-driven. The pipeline, ZIP structure, delivery, and history are untouched.</p>
+      <p>The highest-risk section. Two devices on one account can run different app versions against the same synced documents, so a migration that is correct locally can still corrupt data through the sync engine.</p>
 
-      <h3>7.6 Settings, sharing, technicians</h3>
-      <p>Label-only changes. The technician record's certificate fields become conditionally shown based on a lexicon flag, so a bike or printer owner doesn't see "Certificate number / A&amp;P / IA."</p>
-
-      <h2 id="migration">8. Migration &amp; Version Compatibility</h2>
-
-      <p>This is the highest-risk section. Two devices on one account can run different app versions and sync the same documents, so a migration that is correct locally can still corrupt data through the sync engine.</p>
-
-      <h3>8.1 Backfill</h3>
+      <h3>9.1 Backfill</h3>
       <p>On first launch of the new version, a local migration runs over every stored <code>Aircraft</code>:</p>
       <ul>
-        <li><code>template_id = "aircraft"</code>, <code>template_version</code> = shipped version.</li>
+        <li><code>template_id = "airplane"</code>, <code>template_version</code> = shipped revision.</li>
         <li><code>name</code> = <code>tail_number</code> if non-empty, else <code>"$make $model"</code>.</li>
-        <li><code>spec["tail_number"]</code> = <code>tail_number</code>.</li>
-        <li>Component tree built from the legacy fields: one <code>airframe</code> component carrying the asset's own make/model/serial; one <code>engine</code> component per <code>Engine</code>; a <code>propeller</code> child per engine with <code>hub</code> and <code>blade</code> children. IDs are generated deterministically from <code>(asset_id, slot_key, index)</code> so the <b>same IDs are produced on every device independently</b> — no ID reconciliation over sync.</li>
-        <li>Logs, tasks, and squawks get <code>component_id</code> resolved from <code>(component_type, component_serial)</code>; an unmatched serial leaves <code>component_id</code> empty and the row falls back to legacy display. It is never dropped.</li>
-        <li>Log meter readings backfilled: <code>airframe_time</code> → <code>airframe_hours</code>, <code>engine_hour</code> → <code>engine_hours</code>, <code>prop_time</code> → <code>prop_hours</code>.</li>
+        <li><code>spec</code> gains <code>make</code>, <code>model</code>, <code>serial</code>, <code>tail_number</code> mirrors.</li>
+        <li>Component tree built from legacy fields: one <code>airframe</code> component carrying the Thing's own make/model/serial; one <code>engine</code> per <code>Engine</code>; a <code>propeller</code> child per engine with <code>hub</code> and <code>blade</code> children. IDs are generated <b>deterministically</b> from <code>(thing_id, slot_key, index)</code>.</li>
+        <li>Logs, tasks, and squawks get <code>component_id</code> resolved from <code>(component_type, component_serial)</code>; an unmatched serial leaves it empty and the row falls back to legacy display. It is never dropped.</li>
+        <li>Log meters backfilled: <code>airframe_time</code> → <code>airframe_hours</code>, <code>engine_hour</code> → <code>engine_hours</code>, <code>prop_time</code> → <code>prop_hours</code>.</li>
       </ul>
 
       <p>The backfill is <b>idempotent and non-dirtying</b>: it does not mark rows dirty and does not push. Migrated fields are written on the next legitimate edit. This avoids a full-account re-push on upgrade day and keeps the mixed-version window quiet.</p>
 
       <div class="callout risk">
         <strong>Deterministic IDs are load-bearing</strong>
-        If component IDs were random per device, the same aircraft would migrate to different component IDs on a phone and a tablet, and last-writer-wins would silently reassign every log's component. Deriving IDs from <code>(asset_id, slot_key, index)</code> makes the migration a pure function of data that already synced. This must be covered by an explicit test that migrates the same payload twice and asserts identical output.
+        If component IDs were random per device, the same aircraft would migrate to different IDs on a phone and a tablet, and last-writer-wins would silently reassign every log's component. Deriving IDs from <code>(thing_id, slot_key, index)</code> makes migration a pure function of data that already synced. Covered by an explicit test that migrates the same payload twice and asserts identical output.
       </div>
 
-      <h3>8.2 Mixed-version behavior</h3>
+      <h3 id="floor">9.2 Mixed-version behavior</h3>
       <div class="scroll-x">
       <table>
         <tr><th>Scenario</th><th>Behavior</th></tr>
-        <tr><td>Old client reads an aircraft-template asset written by a new client</td><td>Correct. Legacy fields are dual-written; new fields are ignored by Wire.</td></tr>
-        <tr><td>Old client reads a <b>boat</b> written by a new client</td><td>Degraded but safe: it shows an aircraft with the boat's make/model/serial, no tail number, no engines. It must not crash and must not delete anything. Guarded by the version floor below.</td></tr>
-        <tr><td>Old client <b>edits</b> a boat</td><td>The real risk. An old client writing an aircraft-shaped payload could drop <code>components</code> and <code>spec</code> — Wire's unknown-field retention normally preserves them, and this must be <b>verified with a test</b>, not assumed.</td></tr>
-        <tr><td>New client reads a pre-migration asset synced from an old client</td><td>Backfill runs on read; the in-memory model is fully populated.</td></tr>
+        <tr><td>Old client reads an airplane-template Thing written by a new client</td><td>Correct. Legacy fields are dual-written; new fields ignored by Wire.</td></tr>
+        <tr><td>Old client reads a <b>home</b> written by a new client</td><td>Degraded but safe: an aircraft with no tail number and no engines. Must not crash, must not delete. Gated by the version floor below.</td></tr>
+        <tr><td>Old client <b>edits</b> a home</td><td>The real risk. An old client writing an aircraft-shaped payload could drop <code>components</code> and <code>spec</code>. Wire's unknown-field retention normally preserves them; this must be <b>verified with a test</b>, not assumed.</td></tr>
+        <tr><td>Old client evaluates a task carrying a <code>SeasonalRule</code></td><td>Sees a rule oneof it doesn't know, computes no candidate date, and shows the task as never-due. Wrong but non-destructive, and covered by the floor.</td></tr>
+        <tr><td>New client reads a pre-migration Thing synced from an old client</td><td>Backfill runs on read; the in-memory model is fully populated.</td></tr>
       </table>
       </div>
 
-      <p><b>Version floor.</b> Non-aircraft templates are gated on a minimum client version recorded on the account. Until every signed-in device reports at or above the floor, the create-asset flow offers only the aircraft template and shows "Update your other devices to add other kinds of equipment." This is a soft, self-clearing gate — anonymous and single-device accounts never see it — and it retires with the dual-write in Phase 5.</p>
+      <p><b>Version floor.</b> Non-airplane templates are gated on a minimum client version recorded on the account. Until every signed-in device reports at or above the floor, the create flow offers only the airplane preset and explains why. A soft, self-clearing gate — anonymous and single-device accounts never see it — retired along with the dual-write in Phase 5.</p>
 
-      <h2 id="terminology">9. How Terminology Actually Works</h2>
+      <h2 id="terminology">10. How Terminology Actually Works</h2>
 
-      <p>820 strings across 25 <code>strings.xml</code> files; roughly 150 name the domain. They fall into three buckets:</p>
-
+      <p>820 strings across 25 <code>strings.xml</code> files; roughly 150 name the domain, in three buckets:</p>
       <div class="scroll-x">
       <table>
         <tr><th>Bucket</th><th>Count (approx.)</th><th>Treatment</th></tr>
@@ -540,140 +676,139 @@ message SpecValue { string key = 1; string value = 2; }</code></pre>
       </table>
       </div>
 
-      <p>Mechanically: a <code>LocalLexicon</code> <code>CompositionLocal</code> is provided at the asset scope (and at a sensible default for account-level screens), plus a small formatter that handles sentence-case, title-case, plural, and indefinite article. Strings stay in <code>strings.xml</code> — the repo's hard rule is unchanged; they simply gain a placeholder.</p>
+      <p>Mechanically: a <code>LocalThingLexicon</code> <code>CompositionLocal</code> is provided at the Thing scope (with a sensible default for account-level screens), plus a formatter handling sentence-case, title-case, plural, and indefinite article. Strings stay in <code>strings.xml</code> — the repo's hard rule is unchanged; they gain a placeholder.</p>
 
       <div class="callout warn">
         <strong>Honest limitation: noun substitution does not localize</strong>
-        "Add %1$s" + a noun works in English and breaks in languages with grammatical case or gender agreement (German dative, Polish accusative, French gender-dependent articles). The app is English-only today, so this is not a regression — but it is a <b>ceiling we are choosing</b>. When localization lands, the ~110 substitutable strings will need either per-locale noun forms with case variants, or whole-sentence variants keyed by template. The lexicon proto is structured to carry per-locale noun forms later; nothing here forecloses the fix, and nothing here does it.
+        <code>"Add %1$s"</code> + a noun works in English and breaks in languages with grammatical case or gender agreement. The app is English-only today, so this is not a regression — but it is a <b>ceiling we are choosing</b>. When localization lands, the ~110 substitutable strings will need per-locale noun forms with case variants, or whole-sentence variants keyed by template. The <code>Noun</code> message is shaped to carry per-locale forms later; nothing here forecloses the fix, and nothing here does it.
       </div>
 
-      <p><b>What the aviation user sees:</b> nothing. The aircraft lexicon reproduces every current string exactly, and a snapshot test asserts that rendering the aviation lexicon produces byte-identical strings to the current resources. Terminology drift on the existing product would be the most damaging possible outcome of this work, so it is tested, not reviewed.</p>
+      <p><b>What the aviation user sees:</b> nothing. The airplane lexicon reproduces every current string exactly, and a snapshot test asserts that rendering it produces byte-identical strings to today's resources. Terminology drift on the existing product would be the most damaging outcome of this work, so it is tested, not reviewed.</p>
 
-      <h2 id="brand">10. Brand &amp; Naming</h2>
+      <h2 id="brand">11. Brand &amp; Register</h2>
 
-      <p><b>The app name stays SquawkIt.</b> "Squawk" is aviation slang, but "squawk it" already reads as a verb — <i>report the thing that's wrong</i> — to someone who has never flown. Renaming the app would cost the store listing, the ASO history, the domain, and a second identifier migration on a codebase still carrying <code>wingslog</code> from the first one. The brand is an asset; the jargon inside the product is what needs to flex.</p>
+      <p><b>The app name stays SquawkIt.</b> "Squawk" is aviation slang, but "squawk it" already reads as a verb — <i>report the thing that's wrong</i> — to someone who has never flown. Renaming would cost the store listing, ASO history, the domain, and a second identifier migration on a codebase still carrying <code>wingslog</code> from the first one.</p>
 
       <div class="decision">
         <div class="label">Decision needed — is "squawk" universal or per-template?</div>
-        <b>Recommendation: per-template, with "squawk" retained for aviation.</b> The lexicon already carries <code>defect</code>, so this costs nothing structurally. A boat owner reading "3 open squawks" learns a word they didn't ask to learn; the brand still says SquawkIt on the icon, which is where a brand belongs. The counter-argument — that a single universal verb is stronger branding — is real, and if it wins, the change is one lexicon field set identically across templates.
+        <b>Recommendation: per-template, retained for aviation.</b> The lexicon already carries <code>defect</code>, so it costs nothing structurally. A homeowner reading "3 open squawks" learns a word they didn't ask to learn; the brand still says SquawkIt on the icon, which is where a brand belongs. The counter-argument — one universal verb is stronger branding — is real, and if it wins, the change is one lexicon field set identically across presets.
       </div>
 
-      <p><b>Visual identity is unchanged.</b> The aviation palette (Aviation Blue, Instrument Amber ≤10%, semantic forest/amber status), Space Grotesk titles, and JetBrains Mono for identifiers read as <i>precision instrument</i>, not <i>airplane</i>. That register is exactly right for a person servicing a printer or a race car. Dynamic color stays off. <code>PRODUCT.md</code> and <code>DESIGN.md</code> need one revision each: the "Users" section broadens beyond aircraft owners and mechanics, and the reference to "tail numbers, serials, tach times" as the monospace set becomes "identifiers, serials, and meter readings."</p>
+      <p><b>Visual identity is unchanged.</b> The aviation palette (Aviation Blue, Instrument Amber ≤10%, semantic forest/amber status), Space Grotesk titles, and JetBrains Mono for identifiers read as <i>precision instrument</i>, not <i>airplane</i> — exactly the right register for someone servicing a furnace or a race car. Dynamic color stays off.</p>
 
-      <p><b>Store positioning</b> is a genuine tension: one listing must sell to a pilot and a cyclist. Recommendation is to lead with the universal promise ("Maintain anything with the rigor of an aircraft logbook") and use the screenshot set to show breadth, keeping aviation as the credibility proof rather than the headline. This deserves its own treatment before launch and is out of scope here.</p>
+      <p><code>PRODUCT.md</code> and <code>DESIGN.md</code> each need one revision: the "Users" section broadens beyond aircraft owners and mechanics, and the monospace set becomes "identifiers, serials, and meter readings" rather than "tail numbers, serials, tach times". The <b>Refined Minimalism</b> direction and all five design principles carry over unchanged — "Add a new thing" is plain-spoken, not unserious, and plain-spoken has always been the brief.</p>
 
-      <h2 id="subscription">11. Subscription &amp; Entitlement Impact</h2>
+      <p><b>Store positioning</b> is a genuine tension: one listing selling to a pilot and a homeowner. Recommendation is to lead with the universal promise ("Maintain anything with the rigor of an aircraft logbook") and use the screenshot set to show breadth, keeping aviation as the credibility proof rather than the headline. Deserves its own treatment before launch; out of scope here.</p>
 
-      <p>Mechanically trivial: <code>SubscriptionManager.aircraftLimit()</code> → <code>assetLimit()</code>, <code>FREE_AIRCRAFT_LIMIT</code> → <code>FREE_ASSET_LIMIT</code>, and the four upsell strings drop the word "aircraft" in favor of the neutral asset noun. Attachments, email export, and sharing gates are unaffected.</p>
-
+      <h2 id="subscription">12. Subscription &amp; Entitlement Impact</h2>
+      <p>Mechanically trivial: <code>aircraftLimit()</code> → <code>thingLimit()</code>, <code>FREE_AIRCRAFT_LIMIT</code> → <code>FREE_THING_LIMIT</code>, and four upsell strings drop "aircraft" for the neutral noun. Attachment, email-export, and sharing gates are unaffected.</p>
       <div class="decision">
-        <div class="label">Decision needed — does Core stay at one asset?</div>
-        A one-aircraft free tier is coherent: most GA owners own one airplane, so free is a complete product and the paywall triggers on genuine fleet management. In a multi-domain world the same limit reads differently — a person with a bike and a printer hits the wall on day one, before the app has proven anything. <b>Recommendation: raise Core to 3 assets</b> and lean harder on attachments, email export, and sharing as the Heavy differentiators. It trades some immediate conversion pressure for a far better first week, and the multi-asset habit is what makes Heavy worth buying later. This is a revenue decision, not an engineering one, and should be made with whatever conversion data exists rather than from this document.
+        <div class="label">Decision needed — does Core stay at one Thing?</div>
+        A one-aircraft free tier is coherent: most GA owners own one airplane, so free is a complete product and the paywall triggers on genuine fleet management. In a multi-domain world the same limit reads differently — someone with a car and a house hits the wall on day one, before the app has proven anything. <b>Recommendation: raise Core to 3 Things</b> and lean harder on attachments, email export, and sharing as the Heavy differentiators. It trades immediate conversion pressure for a far better first week, and the multi-Thing habit is what makes Heavy worth buying later. A revenue decision, not an engineering one — make it with whatever conversion data exists rather than from this document.
       </div>
 
-      <h2 id="metrics">12. Success Metrics</h2>
+      <h2 id="metrics">13. Success Metrics</h2>
       <div class="meta-grid">
-        <div class="card"><div class="kpi">≥ 40%</div><div class="muted">of new accounts, 90 days post-launch, create a first asset with a <b>non-aircraft</b> template. Below ~20% means the pivot did not reach a new audience and the added complexity is unpaid-for.</div></div>
-        <div class="card"><div class="kpi">≥ 1.8</div><div class="muted">median assets per active account (from ~1.0 today). The multi-domain thesis is that one person maintains several things; this is the direct test.</div></div>
-        <div class="card"><div class="kpi">≥ 60%</div><div class="muted">of new assets accept at least one starter task. Starter packs are the onboarding bet; if they are skipped, the value proposition is not landing.</div></div>
-        <div class="card"><div class="kpi">0 pt</div><div class="muted"><b>Guardrail:</b> no regression in D30 retention or conversion for the pre-launch aviation cohort. This is the metric that can stop the rollout.</div></div>
+        <div class="card"><div class="kpi">≥ 40%</div><div class="muted">of new accounts, 90 days post-launch, create a first Thing with a <b>non-airplane</b> preset. Below ~20% means the pivot did not reach a new audience.</div></div>
+        <div class="card"><div class="kpi">≥ 1.8</div><div class="muted">median Things per active account (from ~1.0 today). The multi-domain thesis is that one person maintains several things; this is the direct test.</div></div>
+        <div class="card"><div class="kpi">≥ 60%</div><div class="muted">of new Things accept at least one starter task. Starter packs are the onboarding bet; if they are skipped, the value proposition is not landing.</div></div>
+        <div class="card"><div class="kpi">0 pt</div><div class="muted"><b>Guardrail:</b> no regression in D30 retention or conversion for the pre-launch aviation cohort. The metric that can stop the rollout.</div></div>
       </div>
-      <p>Instrumentation: <code>template_id</code> becomes a property on asset-scoped analytics events (create, squawk created, task complied, log created, export). No new event types are needed.</p>
+      <p>Instrumentation: <code>template_id</code> becomes a property on Thing-scoped analytics events (create, defect created, task complied, log created, export). No new event types needed.</p>
 
-      <h2 id="risks">13. Risks</h2>
+      <h2 id="risks">14. Risks</h2>
       <div class="scroll-x">
       <table>
         <tr><th>Risk</th><th>Severity</th><th>Mitigation</th></tr>
         <tr>
           <td><b>Dilution.</b> An app for everything is an app for nothing; the aviation product's credibility comes from being specific.</td>
           <td><span class="pill red">High</span></td>
-          <td>Template-driven UI means an aviation user's app is <i>visually and verbally identical</i> to today — not "mostly the same." Enforced by the byte-identical lexicon snapshot test and the unmodified due-status suite. The aviation cohort guardrail metric can halt the rollout.</td>
+          <td>Config-driven UI means an aviation user's app is <i>visually and verbally identical</i> to today — not "mostly the same." Enforced by the byte-identical lexicon snapshot test and the unmodified due-status suite. The aviation guardrail metric can halt the rollout.</td>
         </tr>
         <tr>
-          <td><b>Mixed-version sync corruption.</b> An old client editing a new-template asset drops fields it doesn't understand.</td>
+          <td><b>Mixed-version sync corruption.</b> An old client editing a new-template Thing drops fields it doesn't understand.</td>
           <td><span class="pill red">High</span></td>
-          <td>Dual-write for the aircraft template; version floor gating non-aircraft templates; an explicit round-trip test proving Wire preserves unknown fields through an old-client edit. Verify before Phase 3, not after.</td>
+          <td>Dual-write for the airplane template; version floor gating other presets; an explicit round-trip test proving Wire preserves unknown fields through an old-client edit. Verify before Phase 3, not after.</td>
         </tr>
         <tr>
-          <td><b>Scope.</b> Generic components and meters touch aircraft, logs, tasks, squawks, export, overview, and dashboard — nearly every feature module.</td>
+          <td><b>Config over-generalization.</b> A capability flag per UI element ends in an unreadable config nobody can reason about and a UI that is a matrix of special cases.</td>
           <td><span class="pill amber">Medium</span></td>
-          <td>Phase 1 lands the model generalization with <b>zero UI change</b> and one template that reproduces today. If the phase is correct, the app is byte-identical; if it isn't, that is visible immediately and cheaply.</td>
+          <td>The capability list is <b>closed and small</b> (10 flags), and every flag must be justified by at least two presets differing on it. A flag needed by exactly one preset is a code branch, not config. Reviewed at the end of Phase 1.</td>
         </tr>
         <tr>
-          <td><b>Starter-pack content accuracy.</b> Wrong intervals are worse than no intervals, and carry liability weight in aviation.</td>
+          <td><b>Scope.</b> Generic components, meters, and capabilities touch aircraft, logs, tasks, squawks, export, overview, and dashboard — nearly every feature module.</td>
           <td><span class="pill amber">Medium</span></td>
-          <td>Recommendations-not-authority framing with a manual disclaimer; aviation pack limited to regulatory-universal intervals; no ADs or SBs, ever, in a pack.</td>
+          <td>Phase 1 lands the model and config with <b>zero UI change</b> and one preset reproducing today. If the phase is correct the app is byte-identical; if not, that is visible immediately and cheaply.</td>
         </tr>
         <tr>
-          <td><b>Template catalog maintenance</b> grows without bound as users ask for tractors, HVAC, firearms, sailplanes.</td>
+          <td><b>Starter-pack accuracy.</b> Wrong intervals are worse than none, and carry liability weight in aviation.</td>
           <td><span class="pill amber">Medium</span></td>
-          <td>The generic <code>equipment</code> template plus custom templates (v1.1) absorb the long tail. Built-ins are added only on demonstrated demand.</td>
+          <td>Recommendations-not-authority framing with a manual disclaimer; airplane pack limited to regulatory-universal intervals; no ADs or SBs, ever, in a pack.</td>
+        </tr>
+        <tr>
+          <td><b>Home is a different product.</b> Home upkeep buyers may want reminders and photos, not a logbook — and may not overlap with the vehicle audience at all.</td>
+          <td><span class="pill amber">Medium</span></td>
+          <td>Home ships in v1 precisely to find this out early, on a preset that costs a config and a starter pack rather than a feature branch. Track its D30 separately; if home retains poorly it is cheap to de-emphasize in the picker.</td>
+        </tr>
+        <tr>
+          <td><b>Preset catalog sprawl</b> as users ask for tractors, RVs, sailplanes, firearms.</td>
+          <td><span class="pill">Low</span></td>
+          <td>Custom absorbs the long tail; built-ins added only on demonstrated demand (§5.2).</td>
         </tr>
         <tr>
           <td><b>Localization ceiling</b> from noun substitution.</td>
           <td><span class="pill">Low today</span></td>
-          <td>Accepted and documented (§9). English-only app; the lexicon shape leaves room for per-locale forms.</td>
-        </tr>
-        <tr>
-          <td><b>Store positioning</b> — one listing, two audiences.</td>
-          <td><span class="pill amber">Medium</span></td>
-          <td>Separate pre-launch workstream; not resolved by this PRD.</td>
+          <td>Accepted and documented (§10).</td>
         </tr>
       </table>
       </div>
 
-      <h2 id="rollout">14. Rollout</h2>
+      <h2 id="rollout">15. Rollout</h2>
       <div class="scroll-x">
       <table>
         <tr><th>Phase</th><th>Scope</th><th>User-visible?</th></tr>
-        <tr><td><b>0 — Decisions</b></td><td>Resolve the six open decisions in §15. Nothing is built until the rename and free-tier questions are settled, because both are expensive to reverse.</td><td>No</td></tr>
-        <tr><td><b>1 — Model generalization</b></td><td><code>Asset</code> / <code>Component</code> / <code>Meter</code> / <code>AssetTemplate</code> protos; template resolver; deterministic backfill; generalized <code>TaskDueManager</code>; dual-write. Exactly one template exists: <code>aircraft</code>, reproducing today.</td><td><b>No — by design.</b> The app must be indistinguishable.</td></tr>
-        <tr><td><b>2 — Lexicon plumbing</b></td><td>String parameterization, <code>LocalLexicon</code>, formatter, byte-identical snapshot test. Still aviation-only.</td><td>No</td></tr>
-        <tr><td><b>3 — The pivot ships</b></td><td>Built-in catalog, template picker + create flow, generic component tree UI, meter-driven log form, starter packs, home surface rename, version floor, subscription rename, <code>PRODUCT.md</code>/<code>DESIGN.md</code> revisions.</td><td><b>Yes</b></td></tr>
-        <tr><td><b>4 — Depth</b></td><td>Custom template editor, per-template export layouts, template-aware search, store repositioning.</td><td>Yes</td></tr>
-        <tr><td><b>5 — Cleanup</b></td><td>Retire dual-write and the version floor once the minimum-version floor is met across the installed base; deprecate legacy proto fields in place (never renumber).</td><td>No</td></tr>
+        <tr><td><b>0 — Decisions</b></td><td>Resolve the open decisions in §16. The free-tier limit and the squawk-word question are cheap now and expensive later.</td><td>No</td></tr>
+        <tr><td><b>1 — Config system + model</b></td><td><code>core:template</code> module: config model, <code>TemplateRegistry</code>, resolver, validation. <code>Thing</code> / <code>Component</code> / <code>Meter</code> / <code>ThingTemplate</code> protos. Deterministic backfill. Generalized <code>TaskDueManager</code> incl. <code>SeasonalRule</code>. Dual-write. Exactly one preset exists: <b>airplane</b>, reproducing today.</td><td><b>No — by design.</b> The app must be indistinguishable.</td></tr>
+        <tr><td><b>2 — Lexicon plumbing</b></td><td>String parameterization, <code>LocalThingLexicon</code>, formatter, byte-identical snapshot test. Capability flags wired into the UI, all still on. Aviation-only.</td><td>No</td></tr>
+        <tr><td><b>3 — The pivot ships</b></td><td>Six remaining presets + starter packs, template picker and create flow, generic component tree UI, meter-driven log form, Stuff list, version floor, subscription rename, <code>PRODUCT.md</code>/<code>DESIGN.md</code> revisions.</td><td><b>Yes</b></td></tr>
+        <tr><td><b>4 — Depth</b></td><td>Custom template editor, per-preset export layouts, template-aware search, additional presets (3D printer, equipment), store repositioning.</td><td>Yes</td></tr>
+        <tr><td><b>5 — Cleanup</b></td><td>Retire dual-write and the version floor once the installed base clears the floor; deprecate legacy proto fields in place (never renumber).</td><td>No</td></tr>
       </table>
       </div>
 
-      <h2 id="decisions">15. Open Decisions</h2>
+      <h2 id="decisions">16. Open Decisions</h2>
       <div class="scroll-x">
       <table>
         <tr><th>#</th><th>Decision</th><th>Recommendation</th></tr>
-        <tr>
-          <td>1</td>
-          <td>Rename the <code>Aircraft</code> proto message and its Kotlin identifiers to <code>Asset</code>?</td>
-          <td><b>Yes.</b> Unlike <code>wingslog</code> — a brand name that is merely stale — <code>Aircraft</code> becomes <i>semantically wrong</i> after the pivot, and wrong type names cost every future reader. Mechanical rename in Phase 1; <code>wireName</code> stays <code>"aircraft"</code>, so it is a compile-time-only change with no data risk.</td>
-        </tr>
-        <tr><td>2</td><td>Home surface name</td><td><b>"Workshop"</b>, overridden by <code>Lexicon.home_label</code> for single-template accounts (§7.2).</td></tr>
-        <tr><td>3</td><td>Is "squawk" universal or per-template?</td><td><b>Per-template</b>, retained for aviation (§10).</td></tr>
-        <tr><td>4</td><td>Core tier asset limit</td><td><b>Raise to 3</b>, pending conversion data (§11).</td></tr>
-        <tr><td>5</td><td>Custom templates in v1?</td><td><b>No — v1.1.</b> Proto and <code>CollectionKind</code> ship in v1; the editor does not (§4.7).</td></tr>
-        <tr>
-          <td>6</td>
-          <td>Can an asset's template change after creation?</td>
-          <td><b>Yes, but narrowly:</b> allowed only while the asset has no logs, and always additive — spec values and components whose keys don't exist in the new template are retained and rendered as legacy rows, never deleted. A full re-template with history is a data-loss trap and is out of scope.</td>
-        </tr>
+        <tr><td>1</td><td>Is "squawk" universal or per-template?</td><td><b>Per-template</b>, retained for aviation (§11).</td></tr>
+        <tr><td>2</td><td>Core tier Thing limit</td><td><b>Raise to 3</b>, pending conversion data (§12).</td></tr>
+        <tr><td>3</td><td>Custom template <i>editor</i> in v1?</td><td><b>No — Phase 4.</b> The Custom <i>preset</i> ships in v1 (generic lexicon, user-addable components), and the <code>ThingTemplate</code> proto and <code>CollectionKind</code> ship in v1 so storage is settled. Only the field/slot/meter builder UI is deferred; it is a substantial surface that would gate the pivot on its own timeline.</td></tr>
+        <tr><td>4</td><td>Can a Thing's template change after creation?</td><td><b>Yes, but narrowly:</b> only while the Thing has no logs, and always additively — spec values and components whose keys don't exist in the new template are retained and rendered as legacy rows, never deleted. A full re-template with history is a data-loss trap and is out of scope.</td></tr>
+        <tr><td>5</td><td>Does an overdue task block the "ready" status for every preset?</td><td><b>Config it</b> (<code>overdue_blocks_ready_status</code>), default on. An overdue annual genuinely means not airworthy; an overdue gutter cleaning does not mean the house is unusable, and overstating it trains people to ignore the badge.</td></tr>
+        <tr><td>6</td><td>Ship 3D printer and shop-equipment presets in v1?</td><td><b>No</b> — Custom covers them; they are data-only additions whenever the content is ready (§5.2).</td></tr>
       </table>
       </div>
 
-      <h2 id="appendix">16. Appendix — Worked Example</h2>
-      <p>The same task, expressed under three templates, showing that the underlying rows are identical:</p>
+      <h2 id="appendix">17. Appendix — One Task, Three Templates</h2>
+      <p>The same feature, expressed under three configs, showing that the stored rows are identical:</p>
       <div class="scroll-x">
       <table>
-        <tr><th></th><th>Aircraft</th><th>Car</th><th>3D printer</th></tr>
-        <tr><td>Task title</td><td>Oil change</td><td>Oil &amp; filter</td><td>Nozzle replacement</td></tr>
-        <tr><td>Component</td><td>Engine 1 <span class="muted">(slot <code>engine</code>)</span></td><td>Engine <span class="muted">(slot <code>engine</code>)</span></td><td>Hotend <span class="muted">(slot <code>hotend</code>)</span></td></tr>
-        <tr><td>Rules</td><td><code>MeterRule(engine_hours, 50)</code> + <code>TimeRule(4 mo)</code></td><td><code>MeterRule(odometer, 5000)</code> + <code>TimeRule(6 mo)</code></td><td><code>MeterRule(print_hours, 500)</code></td></tr>
-        <tr><td>Due-soon at</td><td>10 hrs / 1 mo</td><td>500 mi / 1 mo</td><td>25 print hrs</td></tr>
-        <tr><td>Compliance type</td><td>Routine inspection</td><td>Routine service</td><td>Routine service</td></tr>
-        <tr><td>Defect if it fails</td><td>Squawk · AOG</td><td>Issue · Off the road</td><td>Fault · Down</td></tr>
-        <tr><td>Stored as</td><td colspan="3" style="text-align:center"><b>One <code>MaintenanceTask</code> row, one <code>MeterRule</code>, one <code>TimeRule</code> — same table, same sync path, same due algorithm.</b></td></tr>
+        <tr><th></th><th>Airplane</th><th>Car</th><th>Home</th></tr>
+        <tr><td>Task title</td><td>Oil change</td><td>Oil &amp; filter</td><td>Clean gutters</td></tr>
+        <tr><td>Called a…</td><td>Inspection</td><td>Service</td><td>Chore</td></tr>
+        <tr><td>Component</td><td>Engine 1 <span class="muted">(slot <code>engine</code>)</span></td><td>Engine <span class="muted">(slot <code>engine</code>)</span></td><td>Gutters <span class="muted">(slot <code>gutters</code>)</span></td></tr>
+        <tr><td>Rules</td><td><code>MeterRule(engine_hours, 50)</code> + <code>TimeRule(4 mo)</code></td><td><code>MeterRule(odometer, 5000)</code> + <code>TimeRule(6 mo)</code></td><td><code>SeasonalRule([4, 10])</code></td></tr>
+        <tr><td>Due-soon at</td><td>10 hrs / 30 days</td><td>500 mi / 30 days</td><td>14 days</td></tr>
+        <tr><td>Month interval snaps</td><td>end of month</td><td>anniversary</td><td>n/a</td></tr>
+        <tr><td>Person who did it</td><td>Mechanic <span class="muted">(with A&amp;P)</span></td><td>Shop</td><td>Contractor</td></tr>
+        <tr><td>Defect if it fails</td><td>Squawk · AOG</td><td>Issue · Off the road</td><td>Issue · Emergency</td></tr>
+        <tr><td>Stored as</td><td colspan="3" style="text-align:center"><b>One <code>MaintenanceTask</code> row — same table, same sync path, same due algorithm.</b></td></tr>
       </table>
       </div>
 
       <div class="callout win">
         <strong>Why this is the right shape</strong>
-        The product's real insight is that maintaining an airplane and maintaining a printer differ in <i>vocabulary and detail</i>, not in <i>structure</i>. Encoding that as a template — a lens over a stable schema rather than a schema per domain — means each new domain is a data file and a starter pack, not a feature branch.
+        Maintaining an airplane and maintaining a house differ in <i>vocabulary, detail, and which knobs exist</i> — not in <i>structure</i>. Encoding that as a template config — a lens over a stable schema rather than a schema per domain — means each new domain is a config file and a starter pack, not a feature branch. The test of the design is that <b>home</b>, the preset furthest from aviation, needed no new concepts beyond one rule type and one flag.
       </div>
 
       <h4>Related documents</h4>
@@ -681,8 +816,8 @@ message SpecValue { string key = 1; string value = 2; }</code></pre>
         <li><a href="PRD.md">Product PRD</a> — the aviation product this pivots from</li>
         <li><a href="../storage/storage_r1_design.md">Storage R1 design</a> — <code>EntityStore</code>, <code>CollectionKind</code>, sync model</li>
         <li><a href="../squawks/squawk_design.md">Squawk design</a> — the lifecycle that transfers unchanged</li>
-        <li><a href="../subscription/subscription_PRD.html">Subscription PRD</a> — Core / Heavy tiers and the asset limit</li>
-        <li><a href="../export/export_logs_PRD.md">Export PRD</a> — the layout that becomes template-driven</li>
+        <li><a href="../subscription/subscription_PRD.html">Subscription PRD</a> — Core / Heavy tiers and the Thing limit</li>
+        <li><a href="../export/export_logs_PRD.md">Export PRD</a> — the layout that becomes config-selected</li>
         <li><a href="../sharing/aircraft_sharing_PRD.html">Sharing PRD</a> — ACL and roles, unaffected</li>
       </ul>
 
@@ -693,20 +828,21 @@ message SpecValue { string key = 1; string value = 2; }</code></pre>
       <ol>
         <li><a href="#problem">Problem &amp; Background</a></li>
         <li><a href="#goals">Goals &amp; Non-Goals</a></li>
-        <li><a href="#concept">Asset + Template</a></li>
-        <li><a href="#template-model">The Template Model</a></li>
+        <li><a href="#concept">Things &amp; Templates</a></li>
+        <li><a href="#config">Template Config System</a></li>
+        <li><a href="#presets">The Preset Catalog</a></li>
         <li><a href="#data-model">Data Model Changes</a></li>
         <li><a href="#due">Due-Status Generalization</a></li>
         <li><a href="#ux">UX, Surface by Surface</a></li>
         <li><a href="#migration">Migration &amp; Compatibility</a></li>
         <li><a href="#terminology">How Terminology Works</a></li>
-        <li><a href="#brand">Brand &amp; Naming</a></li>
+        <li><a href="#brand">Brand &amp; Register</a></li>
         <li><a href="#subscription">Subscription Impact</a></li>
         <li><a href="#metrics">Success Metrics</a></li>
         <li><a href="#risks">Risks</a></li>
         <li><a href="#rollout">Rollout</a></li>
         <li><a href="#decisions">Open Decisions</a></li>
-        <li><a href="#appendix">Appendix — Worked Example</a></li>
+        <li><a href="#appendix">Appendix — One Task, Three Templates</a></li>
       </ol>
     </nav>
   </div>
