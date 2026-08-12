@@ -355,6 +355,7 @@ message Lexicon {
   int32 due_soon_days = 2;               // 30 for aircraft · 14 for home · 30 for car
   bool month_intervals_snap_to_end_of_month = 3;  // true for aircraft, false elsewhere
   bool overdue_blocks_ready_status = 4;  // an overdue item makes the Thing "not airworthy"
+  string due_engine = 5;                 // which decision engine evaluates this template — see §7.1
 }</code></pre>
 
       <p><b>End-of-month snapping</b> is the subtlest of the three. Today a month- or year-based interval snaps to the last day of the month it lands in — logged 14 Dec 2025 + 12 months is due 31 Dec 2026. That is correct and legally meaningful for an annual inspection, and simply wrong for "flush the water heater 12 months after I last did it," which should be due on the anniversary. Making it a per-template flag preserves aviation behavior exactly while letting every other domain behave the way a normal person expects.</p>
@@ -603,6 +604,66 @@ message Component {
         The existing <code>TaskDueManager</code> test suite must pass <b>unmodified</b> against the generalized implementation, with the airplane preset supplying meters and scheduling flags. If a test needs editing to pass, the generalization changed aviation behavior and the change is wrong. This is the cheapest available proof that the pivot is non-destructive.
       </div>
 
+      <h3 id="engines">7.1 Note for the engineering design doc: keep the decision engine pluggable</h3>
+
+      <div class="callout note">
+        <strong>Carry this into the design doc, not into Phase 1</strong>
+        The config system in <a href="#config">§4</a> handles <b>parametric</b> variation — same algorithm, different numbers, labels, and flags. It does not handle <b>structural</b> variation, where the decision logic differs in kind. When a domain's logic forks hard from aviation's, the answer is <b>not</b> to keep growing <code>TaskDueManagerImpl</code> with template branches. It is to make the decision engine a plugin and let <code>TaskDueManager</code> route to the right one.
+      </div>
+
+      <p>The shape: <code>TaskDueManager</code> stays exactly what it is today — one injected interface, one method, unchanged call sites and ViewModels. Its implementation becomes a thin <b>router</b> that resolves the Thing's template to a <code>TaskDueEngine</code> and delegates:</p>
+
+<pre><code>interface TaskDueEngine {
+  fun computeNextDue(task: MaintenanceTask, logs: List&lt;MaintenanceLog&gt;,
+                     allTasks: List&lt;MaintenanceTask&gt;, config: TemplateConfig): DueMetadata
+}
+
+// The public interface is untouched; only the impl changes shape.
+class TaskDueManagerImpl(
+  private val templates: TemplateRegistry,
+  private val engines: Map&lt;String, TaskDueEngine&gt;,   // keyed by Scheduling.due_engine
+) : TaskDueManager {
+  override fun computeNextDue(...) =
+    engines.getValue(templates.resolve(thing).scheduling.dueEngine)
+           .computeNextDue(...)
+}</code></pre>
+
+      <p>Today's implementation becomes <code>IntervalDueEngine</code> — interval-from-last-service against dates and meters — which serves airplane, boat, car, motorcycle, and bike, because those genuinely are the same algorithm with different meters and thresholds. <b>Home</b> is the candidate for the first split: calendar-anchored scheduling, no meters, seasonal windows, and a different notion of "overdue" (a chore missed in April is not 6 months overdue, it is due again in October). If the seasonal branch starts pulling the shared loop out of shape, that is the signal to lift it into a <code>SeasonalDueEngine</code> rather than to add a sixth flag.</p>
+
+      <h4>When to split</h4>
+      <p>Any one of these is sufficient cause; none of them is "a new domain was added":</p>
+      <ul>
+        <li>A scheduling flag exists to serve <b>exactly one</b> template, and cannot be justified by a second.</li>
+        <li>The rule loop accumulates <code>if (config.x)</code> branches that <b>don't compose</b> — where two flags set together produce a combination nobody designed and no test covers.</li>
+        <li>A domain needs a different <b>notion of due</b>, not a different interval: recurring-window instead of point-in-time, or a status that isn't on the <code>NORMAL / DUE_SOON / OVERDUE / COMPLIED</code> ladder.</li>
+        <li>Adding a domain requires editing the shared implementation rather than adding a config — the direct violation of the system's premise.</li>
+      </ul>
+
+      <h4>What the split buys, and what it must not cost</h4>
+      <ul>
+        <li><b>The aviation engine gets frozen.</b> Once <code>IntervalDueEngine</code> is the only thing computing airworthiness, a change made for home cannot regress it. That is worth more than the deduplication it costs, and it is the real argument for the structure.</li>
+        <li><b>Engines are independently testable</b> against their own fixtures, instead of one suite that has to hold every domain's semantics at once.</li>
+        <li><b>The config stays declarative data.</b> The failure mode this avoids is config becoming a small programming language — conditionals, precedence, escape hatches — which is strictly worse than Kotlin at being Kotlin.</li>
+        <li><b>The engine is still template-selected</b> (<code>Scheduling.due_engine</code>), so the config remains the single place a domain's behavior is declared. Config <i>selects</i> an engine rather than <i>parameterizing</i> one.</li>
+        <li><b>Shared lifecycle stays shared.</b> Force-due, force-complied, linked rules with cycle protection, one-time-task-to-history, and <code>DueStatus</code> mapping belong in a shared base or in the router, not copy-pasted per engine. The split is on the <i>scheduling computation</i> only. Two engines that are 95% identical and drift apart would be a worse outcome than the flag matrix this avoids.</li>
+      </ul>
+
+      <div class="callout warn">
+        <strong>Do not start here</strong>
+        Phase 1 ships <b>one</b> engine plus config, deliberately. Building the plugin structure before a second domain has forced it produces two nearly identical engines, a registry with one entry, and an abstraction shaped by a guess about the future. The <code>due_engine</code> key ships in the config from day one so the seam exists and the migration is a refactor rather than a redesign — but every preset points at <code>"interval"</code> until one of the split triggers above actually fires.
+      </div>
+
+      <h4>The same principle applies beyond due status</h4>
+      <p>Three other surfaces will feel this pressure, and the design doc should apply the identical rule — config until the fork is structural, then a plugin behind the interface that already exists:</p>
+      <div class="scroll-x">
+      <table>
+        <tr><th>Surface</th><th>Config handles</th><th>Plugin when</th></tr>
+        <tr><td><b>Export writers</b></td><td>Column sets, headers, sheet names, which meters appear</td><td>A domain needs a fundamentally different document — the aviation paper-logbook tab layout vs. a generic service history is already two layouts, so this is the most likely second split.</td></tr>
+        <tr><td><b>Create / edit form builder</b></td><td>Field lists, labels, validation, grouping, slot cardinality</td><td>A domain needs a genuinely different flow rather than a different field list (e.g. a wizard step no other template has).</td></tr>
+        <tr><td><b>Overview cards</b></td><td>Which cards appear and their order</td><td>A domain needs a card whose <i>content</i> has no analogue elsewhere (a seasonal calendar strip for home; a W&amp;B envelope for aircraft).</td></tr>
+      </table>
+      </div>
+
       <h2 id="ux">8. UX, Surface by Surface</h2>
 
       <h3>8.1 Creating a Thing</h3>
@@ -733,7 +794,7 @@ message Component {
         <tr>
           <td><b>Config over-generalization.</b> A capability flag per UI element ends in an unreadable config nobody can reason about and a UI that is a matrix of special cases.</td>
           <td><span class="pill amber">Medium</span></td>
-          <td>The capability list is <b>closed and small</b> (10 flags), and every flag must be justified by at least two presets differing on it. A flag needed by exactly one preset is a code branch, not config. Reviewed at the end of Phase 1.</td>
+          <td>The capability list is <b>closed and small</b> (10 flags), and every flag must be justified by at least two presets differing on it. A flag needed by exactly one preset is a code branch, not config. Reviewed at the end of Phase 1. When a fork is structural rather than parametric, the escape hatch is a <b>pluggable decision engine</b> behind the existing interface, not another flag — see <a href="#engines">§7.1</a>, which the engineering design doc should carry forward.</td>
         </tr>
         <tr>
           <td><b>Scope.</b> Generic components, meters, and capabilities touch aircraft, logs, tasks, squawks, export, overview, and dashboard — nearly every feature module.</td>
