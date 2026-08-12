@@ -9,9 +9,10 @@ interface AuthManager {
   suspend fun signInWithGoogle(): FirebaseUser?
 
   /**
-   * Sign in with Apple. Offered on iOS (App Store policy requires it wherever Google is offered)
-   * and on web; Android returns null, since it offers Google only and hides the button via
-   * `AppCapability.isAppleSignInSupported`.
+   * Sign in with Apple. Offered on every platform: iOS presents the native `ASAuthorization` sheet
+   * (App Store policy requires it wherever Google is offered), web uses the Firebase JS popup, and
+   * Android runs Firebase's generic OAuth flow in a Custom Tab (#408) — there is no native Apple
+   * SDK there, so it is a browser flow rather than a system sheet.
    *
    * Returns null when the user cancels or the flow fails — the caller shows a generic error, the
    * same contract as [signInWithGoogle].

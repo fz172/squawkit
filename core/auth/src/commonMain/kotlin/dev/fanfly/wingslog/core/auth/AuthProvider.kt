@@ -23,8 +23,10 @@ enum class AuthProvider {
  * The providers a guest on this platform can upgrade to, in the order they should be offered.
  *
  * Derived from capability flags rather than declared per platform, so the picker only ever offers
- * something that can actually succeed. Android omits Apple — Google is the platform's provider
- * there.
+ * something that can actually succeed. Every platform now offers all three: Android gained Apple in
+ * #408, via Firebase's generic OAuth flow rather than a native SDK, so [isAppleSignInSupported] is
+ * true everywhere today. The parameter stays because the *reason* it could be false has not gone
+ * away — it is a per-platform capability, not a constant.
  *
  * Google and Email are offered everywhere a guest session exists. Google used to be gated on its
  * own `isGoogleUpgradeSupported` flag, because iOS's native provider signed in to Firebase itself

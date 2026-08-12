@@ -150,8 +150,9 @@ fun LoginScreen(
       }
     }
 
-    // Continue with Apple — hidden on Android (see AppCapability.isAppleSignInSupported), where
-    // Google is the platform's primary provider.
+    // Continue with Apple. Still behind AppCapability.isAppleSignInSupported even though every
+    // platform now sets it (Android gained the flow in #408) — the gate describes a capability, and
+    // erasing it would mean rediscovering which platforms can do this the next time one cannot.
     if (appCapability.isAppleSignInSupported) {
       Spacer(Modifier.height(Spacing.medium))
 
