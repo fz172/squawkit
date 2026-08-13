@@ -15,6 +15,7 @@ import dev.fanfly.wingslog.feature.sync.data.blob.BlobUploadDriver
 import dev.fanfly.wingslog.feature.sync.data.blob.HttpsAttachmentBroker
 import dev.fanfly.wingslog.feature.sync.data.blob.WorkManagerUploadScheduler
 import dev.gitlive.firebase.auth.FirebaseAuth
+import dev.gitlive.firebase.functions.FirebaseFunctions
 import dev.gitlive.firebase.storage.FirebaseStorage
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.okhttp.OkHttp
@@ -31,6 +32,9 @@ actual val blobSchedulerModule = module {
       auth = get<FirebaseAuth>(),
       httpClient = get<HttpClient>(),
       appCheck = get<AppCheckTokenProvider>(),
+      // A lambda, not get<FirebaseFunctions>(): this broker is built eagerly, and resolving the
+      // client here would touch Firebase during startup — which NPEs on iOS.
+      functionsProvider = { get<FirebaseFunctions>() },
     )
   }
 

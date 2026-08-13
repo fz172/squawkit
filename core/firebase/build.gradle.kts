@@ -34,6 +34,8 @@ kotlin {
   sourceSets {
     commonMain.dependencies {
       api(libs.gitlive.firebase.storage)
+      api(libs.gitlive.firebase.functions)
+      api(libs.koin.core)
     }
   }
 }

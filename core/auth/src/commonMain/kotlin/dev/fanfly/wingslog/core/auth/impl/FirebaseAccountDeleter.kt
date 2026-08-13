@@ -2,8 +2,7 @@ package dev.fanfly.wingslog.core.auth.impl
 
 import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.core.auth.AccountDeleter
-import dev.gitlive.firebase.Firebase
-import dev.gitlive.firebase.functions.functions
+import dev.gitlive.firebase.functions.FirebaseFunctions
 import kotlinx.coroutines.CancellationException
 
 /**
@@ -18,9 +17,9 @@ import kotlinx.coroutines.CancellationException
  * (`requires-recent-login`) and put a second provider sheet in front of a pilot who has already
  * confirmed once.
  */
-class FirebaseAccountDeleter : AccountDeleter {
-
-  private val functions = Firebase.functions(REGION)
+class FirebaseAccountDeleter(
+  private val functions: FirebaseFunctions,
+) : AccountDeleter {
 
   override suspend fun deleteAccount(): Boolean = try {
     functions.httpsCallable("deleteMyAccount")
@@ -37,7 +36,6 @@ class FirebaseAccountDeleter : AccountDeleter {
   }
 
   private companion object {
-    private const val REGION = "us-central1"
     private val logger = Logger.withTag("AccountDeleter")
   }
 }

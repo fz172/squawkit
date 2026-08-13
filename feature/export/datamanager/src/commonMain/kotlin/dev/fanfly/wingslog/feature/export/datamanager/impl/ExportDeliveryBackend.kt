@@ -1,11 +1,11 @@
 package dev.fanfly.wingslog.feature.export.datamanager.impl
 
-import dev.gitlive.firebase.Firebase
-import dev.gitlive.firebase.functions.functions
+import dev.gitlive.firebase.functions.FirebaseFunctions
 import kotlinx.serialization.Serializable
 
-class ExportDeliveryBackend {
-  private val functions = Firebase.functions("us-central1")
+class ExportDeliveryBackend(
+  private val functions: FirebaseFunctions,
+) {
 
   suspend fun requestExportDelivery(
     exportId: String,

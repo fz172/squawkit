@@ -10,6 +10,7 @@ import dev.fanfly.wingslog.feature.subscription.datamanager.impl.FirebaseEntitle
 import dev.fanfly.wingslog.feature.subscription.datamanager.impl.SubscriptionManagerImpl
 import dev.fanfly.wingslog.feature.subscription.model.BillingManager
 import dev.gitlive.firebase.auth.FirebaseAuth
+import dev.gitlive.firebase.functions.FirebaseFunctions
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -17,7 +18,7 @@ import kotlinx.coroutines.flow.map
 import org.koin.dsl.module
 
 val subscriptionModule = module {
-  single<EntitlementReconciler> { FirebaseEntitlementReconciler() }
+  single<EntitlementReconciler> { FirebaseEntitlementReconciler(get<FirebaseFunctions>()) }
 
   single<SubscriptionManager> {
     SubscriptionManagerImpl(

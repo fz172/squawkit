@@ -1,9 +1,9 @@
 package dev.fanfly.wingslog.feature.sync.data.blob
 
 import co.touchlab.kermit.Logger
-import dev.gitlive.firebase.Firebase
+import dev.fanfly.wingslog.core.firebase.functions.FUNCTIONS_REGION
 import dev.gitlive.firebase.auth.FirebaseAuth
-import dev.gitlive.firebase.functions.functions
+import dev.gitlive.firebase.functions.FirebaseFunctions
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.client.request.header
@@ -22,14 +22,18 @@ class HttpsAttachmentBroker(
   private val auth: FirebaseAuth,
   private val httpClient: HttpClient,
   private val appCheck: AppCheckTokenProvider,
-  private val functionsRegion: String = "us-central1",
+  /**
+   * A provider, not the client itself. This broker is constructed EAGERLY in the Koin graph
+   * (SyncEngine → UploadScheduler → drivers → broker), and touching Firebase during app startup
+   * NPEs on iOS — the reason the instance was lazy here before it was shared. Every other caller of
+   * the shared client is built lazily and injects `FirebaseFunctions` directly.
+   */
+  private val functionsProvider: () -> FirebaseFunctions,
 ) : AttachmentBroker {
 
   private val log = Logger.withTag(TAG)
 
-  // Firebase access is deferred to first use — the broker is constructed EAGERLY in the Koin graph
-  // (SyncEngine → UploadScheduler → drivers → broker), so eager access ran during app startup.
-  private val functions by lazy { Firebase.functions(functionsRegion) }
+  private val functions by lazy { functionsProvider() }
 
   /** `https://{region}-{projectId}.cloudfunctions.net`, resolved on first `streamBlob` download. */
   private val functionsBaseUrl: String by lazy {
@@ -37,7 +41,7 @@ class HttpsAttachmentBroker(
     // eagerly, then failed downloads once lazy). `firebaseProjectId()` reads a platform-safe source.
     val projectId = firebaseProjectId()
     checkNotNull(projectId) { "Firebase projectId is required to reach the attachment broker" }
-    "https://$functionsRegion-$projectId.cloudfunctions.net"
+    "https://$FUNCTIONS_REGION-$projectId.cloudfunctions.net"
   }
 
   override suspend fun upload(
