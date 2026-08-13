@@ -150,54 +150,51 @@ fun LoginScreen(
       }
     }
 
-    // Continue with Apple — hidden on Android (see AppCapability.isAppleSignInSupported), where
-    // Google is the platform's primary provider.
-    if (appCapability.isAppleSignInSupported) {
-      Spacer(Modifier.height(Spacing.medium))
+    // Continue with Apple — offered on every platform since #408 gave Android its Custom Tab flow.
+    Spacer(Modifier.height(Spacing.medium))
 
-      Button(
-        modifier = Modifier
-          .fillMaxWidth()
-          .height(LoginButtonHeight),
-        enabled = signingIn == null,
-        shape = RoundedCornerShape(Spacing.buttonCornerRadius),
-        colors = ButtonDefaults.buttonColors(
-          containerColor = AppleButtonBackground,
-          contentColor = AppleButtonContent,
-          disabledContainerColor = AppleButtonBackground.copy(alpha = 0.4f),
-          disabledContentColor = AppleButtonContent.copy(alpha = 0.4f),
-        ),
-        onClick = {
-          scope.launch {
-            signingIn = PendingSignIn.Apple
-            try {
-              val credential = loginViewModel.loginWithApple()
-              if (credential != null) {
-                onLoginSuccess()
-              } else {
-                error = signInErrorMessage
-              }
-            } finally {
-              signingIn = null
+    Button(
+      modifier = Modifier
+        .fillMaxWidth()
+        .height(LoginButtonHeight),
+      enabled = signingIn == null,
+      shape = RoundedCornerShape(Spacing.buttonCornerRadius),
+      colors = ButtonDefaults.buttonColors(
+        containerColor = AppleButtonBackground,
+        contentColor = AppleButtonContent,
+        disabledContainerColor = AppleButtonBackground.copy(alpha = 0.4f),
+        disabledContentColor = AppleButtonContent.copy(alpha = 0.4f),
+      ),
+      onClick = {
+        scope.launch {
+          signingIn = PendingSignIn.Apple
+          try {
+            val credential = loginViewModel.loginWithApple()
+            if (credential != null) {
+              onLoginSuccess()
+            } else {
+              error = signInErrorMessage
             }
+          } finally {
+            signingIn = null
           }
-        },
-      ) {
-        if (signingIn == PendingSignIn.Apple) {
-          CircularProgressIndicator(
+        }
+      },
+    ) {
+      if (signingIn == PendingSignIn.Apple) {
+        CircularProgressIndicator(
+          modifier = Modifier.size(Spacing.xLarge),
+          strokeWidth = 2.dp,
+          color = AppleButtonContent,
+        )
+      } else {
+        LoginButtonContent(label = stringResource(Res.string.sign_in_with_apple)) {
+          Icon(
+            painter = painterResource(Res.drawable.ic_apple),
+            contentDescription = stringResource(Res.string.apple_logo),
             modifier = Modifier.size(Spacing.xLarge),
-            strokeWidth = 2.dp,
-            color = AppleButtonContent,
+            tint = AppleButtonContent,
           )
-        } else {
-          LoginButtonContent(label = stringResource(Res.string.sign_in_with_apple)) {
-            Icon(
-              painter = painterResource(Res.drawable.ic_apple),
-              contentDescription = stringResource(Res.string.apple_logo),
-              modifier = Modifier.size(Spacing.xLarge),
-              tint = AppleButtonContent,
-            )
-          }
         }
       }
     }

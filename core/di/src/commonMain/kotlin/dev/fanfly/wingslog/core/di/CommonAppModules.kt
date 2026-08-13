@@ -6,6 +6,7 @@ import dev.fanfly.wingslog.core.analytics.di.platformAnalyticsModule
 import dev.fanfly.wingslog.core.auth.di.authModule
 import dev.fanfly.wingslog.core.auth.di.commonAuthModule
 import dev.fanfly.wingslog.core.lifecycle.di.lifecycleModule
+import dev.fanfly.wingslog.core.lifecycle.di.platformLifecycleModule
 import dev.fanfly.wingslog.core.storage.di.platformStorageModule
 import dev.fanfly.wingslog.core.storage.di.storageModule
 import dev.fanfly.wingslog.core.ui.theme.di.appearanceModule
@@ -59,6 +60,10 @@ val commonAppModules: List<Module> = listOf(
   platformAnalyticsModule,
   analyticsPreferenceStoreModule,
   analyticsPreferenceModule,
+  // Ahead of authModule: on Android this supplies the CurrentActivityProvider that AuthManagerImpl
+  // takes. Koin resolves lazily so the order is not required, but the list is read by people and
+  // the dependency direction should be visible. Empty on iOS and web.
+  platformLifecycleModule,
   commonAuthModule,
   authModule,
   storageModule,

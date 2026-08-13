@@ -42,6 +42,11 @@ kotlin {
       implementation(libs.kotlinx.coroutines.core)
       implementation(libs.koin.core)
     }
+    androidMain.dependencies {
+      // androidContext() for CurrentActivityProvider's binding — the Activity and Application types
+      // themselves come from the platform SDK, so there is nothing else to add here.
+      implementation(libs.koin.android)
+    }
   }
 }
 

@@ -21,7 +21,6 @@ data class AppCapability(
   val isStressTestSupported: Boolean,
   val isCameraCaptureSupported: Boolean,
   val isAnonymousLoginSupported: Boolean,
-  val isAppleSignInSupported: Boolean,
   /**
    * Subscriptions / SquawkIt Pro (subscription design §1). The staged-rollout gate, like
    * [isAircraftSharingSupported]: on in dev + dogfood, off in the shipping release until GA.

@@ -8,18 +8,38 @@ import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialCancellationException
 import co.touchlab.kermit.Logger
+import com.google.android.gms.tasks.Task
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
+import dev.fanfly.wingslog.core.lifecycle.CurrentActivityProvider
 import dev.gitlive.firebase.auth.AuthCredential
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.auth.FirebaseAuthUserCollisionException
 import dev.gitlive.firebase.auth.FirebaseUser
 import dev.gitlive.firebase.auth.GoogleAuthProvider
+import dev.gitlive.firebase.auth.android
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
+import com.google.firebase.auth.OAuthProvider as AndroidOAuthProvider
+
+/**
+ * Awaits a Play Services [Task], failing with whatever the task failed with.
+ *
+ * Hand-rolled rather than pulling in `kotlinx-coroutines-play-services` for the two Apple call
+ * sites — the rest of this class goes through GitLive, which already returns suspend functions.
+ */
+private suspend fun <T> Task<T>.awaitResult(): T = suspendCancellableCoroutine { continuation ->
+  addOnSuccessListener { continuation.resume(it) }
+  addOnFailureListener { continuation.resumeWithException(it) }
+  addOnCanceledListener { continuation.cancel() }
+}
 
 class AuthManagerImpl(
   private val context: Context,
   private val authProvider: FirebaseAuth,
+  private val activityProvider: CurrentActivityProvider,
 ) : AuthManager {
   private val credentialManager: CredentialManager =
     CredentialManager.create(context = context)
@@ -97,14 +117,44 @@ class AuthManagerImpl(
   }
 
   /**
-   * Not offered on Android: the platform's primary provider is Google, and `AppCapability`'s
-   * `isAppleSignInSupported` is false here, so the button never renders. This guards the path in
-   * case it is ever invoked.
+   * Sign in with Apple, via Firebase's generic OAuth flow in a Custom Tab (#408).
+   *
+   * Unlike iOS there is no native Apple SDK here, so there is no identity token to build a
+   * credential from: Firebase drives the whole exchange and hands back an `AuthResult`. That is why
+   * this reaches through GitLive to the native SDK — `startActivityForSignInWithProvider` has no
+   * GitLive wrapper — and why it needs an Activity rather than a Context.
+   *
+   * Apple's name is not captured here the way [signInWithApple] does on iOS. Apple returns it only
+   * on the first authorization, and through this flow it arrives (if at all) in
+   * `additionalUserInfo`, not on the user. The onboarding name step is what guarantees the profile
+   * is populated on this platform — see `NameEntryScreen` and the parity matrix.
    */
   override suspend fun signInWithApple(): FirebaseUser? {
-    logger.w { "Apple sign-in is not offered on Android" }
-    return null
+    val activity = activityProvider.current() ?: run {
+      logger.w { "Sign in with Apple: no foreground activity to present from" }
+      return null
+    }
+
+    return try {
+      authProvider.android
+        .startActivityForSignInWithProvider(activity, appleProvider())
+        .awaitResult()
+      // Read the user back through GitLive rather than wrapping the native one: its FirebaseUser
+      // constructor is internal, and the sign-in has already set currentUser by this point.
+      authProvider.currentUser.also { user ->
+        if (user == null) logger.w { "Sign in with Apple completed without a Firebase user" }
+      }
+    } catch (e: Exception) {
+      logger.e(e) { "Sign in with Apple failed" }
+      null
+    }
   }
+
+  /** Scopes come from [APPLE_SCOPES], shared with the web popup — see there for why both. */
+  private fun appleProvider(): AndroidOAuthProvider =
+    AndroidOAuthProvider.newBuilder(APPLE_PROVIDER_ID)
+      .setScopes(APPLE_SCOPES)
+      .build()
 
   private fun processCredential(credential: Credential): GoogleIdTokenCredential? {
     if (credential is CustomCredential && credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
@@ -139,20 +189,50 @@ class AuthManagerImpl(
    * Links [provider] to the current anonymous user, preserving the UID. On a collision (the chosen
    * account already exists), returns the credential so the caller can offer the merge path instead.
    *
-   * Apple is not offered on Android (`AppCapability.isAppleSignInSupported` is false), and email
-   * cannot complete in one call — both are rejected here rather than silently doing something else.
+   * Email cannot complete in one call, so it is rejected here rather than silently doing something
+   * else. Apple is offered on this platform as of #408 and links like Google does, though its
+   * collision path differs — see [upgradeWithApple].
    */
   override suspend fun upgradeAnonymousAccount(
     provider: AuthProvider,
   ): AccountUpgradeResult = when (provider) {
     AuthProvider.Google -> upgradeWithGoogle()
-    AuthProvider.Apple -> AccountUpgradeResult.Failed(
-      "Sign in with Apple is not offered on Android"
-    )
+    AuthProvider.Apple -> upgradeWithApple()
 
     AuthProvider.Email -> AccountUpgradeResult.Failed(
       "Email upgrade completes through completeUpgradeWithEmailLink"
     )
+  }
+
+  /**
+   * Links Sign in with Apple to the current anonymous user, preserving the UID (#408).
+   *
+   * The collision path returns [AccountUpgradeResult.ReauthRequiredToMerge] rather than
+   * [AccountUpgradeResult.CredentialInUse], matching iOS: Firebase drives this exchange itself and
+   * never hands us a credential, so there is nothing to replay into the merge — it has to run the
+   * provider flow again. That is the opposite of Google here, whose ID token we hold and can reuse.
+   */
+  private suspend fun upgradeWithApple(): AccountUpgradeResult {
+    val current = authProvider.currentUser
+      ?: return AccountUpgradeResult.Failed("No signed-in user to upgrade")
+    val activity = activityProvider.current()
+      ?: return AccountUpgradeResult.Failed("No foreground activity to present Apple sign-in")
+
+    return try {
+      current.android
+        .startActivityForLinkWithProvider(activity, appleProvider())
+        .awaitResult()
+      AccountUpgradeResult.Linked(
+        authProvider.currentUser
+          ?: return AccountUpgradeResult.Failed("Linking returned no user")
+      )
+    } catch (e: FirebaseAuthUserCollisionException) {
+      logger.i { "Apple account already in use; merge needs a fresh authorization" }
+      AccountUpgradeResult.ReauthRequiredToMerge(AuthProvider.Apple)
+    } catch (e: Exception) {
+      logger.e(e) { "Account upgrade: Apple linking failed" }
+      AccountUpgradeResult.Failed(e.message ?: "Linking failed")
+    }
   }
 
   override suspend fun completeUpgradeWithEmailLink(
@@ -205,14 +285,38 @@ class AuthManagerImpl(
   }
 
   /**
-   * Not reached on Android: a Google credential can be replayed, so the collision path returns
-   * [AccountUpgradeResult.CredentialInUse] and the merge reuses it — no second account picker.
+   * Runs the Apple flow a second time and signs in to the account that already owns that Apple ID.
+   *
+   * Only Apple reaches this on Android. A Google credential can be replayed, so its collision path
+   * returns [AccountUpgradeResult.CredentialInUse] and the merge reuses it with no second picker;
+   * Apple's exchange is owned by Firebase and yields no credential to replay, so the only way
+   * through is to authorize again. The caller has already told the user why — see
+   * `AccountUpgradeViewModel.askToMerge`.
    */
   override suspend fun mergeIntoExistingAccount(
     provider: AuthProvider,
   ): AccountUpgradeResult {
-    logger.w { "mergeIntoExistingAccount($provider) is not used on Android" }
-    return AccountUpgradeResult.Failed("Re-authorization is not required on Android")
+    if (provider != AuthProvider.Apple) {
+      logger.w { "mergeIntoExistingAccount($provider) is not used on Android" }
+      return AccountUpgradeResult.Failed("Re-authorization is only needed for Apple on Android")
+    }
+    val activity = activityProvider.current()
+      ?: return AccountUpgradeResult.Failed("No foreground activity to present Apple sign-in")
+
+    return try {
+      authProvider.android
+        .startActivityForSignInWithProvider(activity, appleProvider())
+        .awaitResult()
+      val user = authProvider.currentUser
+        ?: return AccountUpgradeResult.Failed("Sign-in returned no user")
+      if (user.isAnonymous) {
+        return AccountUpgradeResult.Failed("Sign-in did not switch to the permanent account")
+      }
+      AccountUpgradeResult.Linked(user.syncProfileFromProvider())
+    } catch (e: Exception) {
+      logger.e(e) { "Merge: second Apple authorization failed" }
+      AccountUpgradeResult.Failed(e.message ?: "Sign-in failed")
+    }
   }
 
   override suspend fun signInToExistingAccount(credential: AuthCredential): AccountUpgradeResult {

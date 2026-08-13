@@ -7,7 +7,6 @@ actual fun createAppCapability(isDeveloperBuild: Boolean) = AppCapability(
   isStressTestSupported = isDeveloperBuild,
   isCameraCaptureSupported = false,
   isAnonymousLoginSupported = false,
-  isAppleSignInSupported = true,
   // Staged rollout: dev + dogfood only until GA. Off = no paywall (everything unlocked).
   isSubscriptionSupported = isDeveloperBuild,
   // Hard `false` for all of v1, not `isDeveloperBuild`: AdMob publishes no browser SDK, so the web

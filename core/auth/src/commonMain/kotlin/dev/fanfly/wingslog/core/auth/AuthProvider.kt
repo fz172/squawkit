@@ -22,23 +22,21 @@ enum class AuthProvider {
 /**
  * The providers a guest on this platform can upgrade to, in the order they should be offered.
  *
- * Derived from capability flags rather than declared per platform, so the picker only ever offers
- * something that can actually succeed. Android omits Apple — Google is the platform's provider
- * there.
+ * Every platform offers all three. Both of the flags that used to prune this list are gone, each
+ * once the limitation it described was fixed rather than left pinned to `true`:
+ * `isGoogleUpgradeSupported`, because iOS's native provider signed in to Firebase itself and could
+ * not hand back a credential to link (#415), and `isAppleSignInSupported`, because Android had no
+ * Apple flow at all until #408 gave it Firebase's generic OAuth one.
  *
- * Google and Email are offered everywhere a guest session exists. Google used to be gated on its
- * own `isGoogleUpgradeSupported` flag, because iOS's native provider signed in to Firebase itself
- * and so could not hand back a credential to link; it now returns the token pair like the Apple
- * one does (#415), and the flag is gone rather than pinned to `true`.
+ * Still a function rather than a constant list: it is the single place that answers "what can a
+ * guest upgrade to here", and the answer has been platform-dependent twice already.
  *
  * **The order matches the full-screen login page** (Google, Apple, then email) and must keep
  * matching it. The picker is the same choice offered in a different place, so a guest who has seen
  * the login screen should find the buttons where they left them.
  */
-fun upgradeProvidersFor(
-  isAppleSignInSupported: Boolean,
-): List<AuthProvider> = buildList {
-  add(AuthProvider.Google)
-  if (isAppleSignInSupported) add(AuthProvider.Apple)
-  add(AuthProvider.Email)
-}
+fun upgradeProvidersFor(): List<AuthProvider> = listOf(
+  AuthProvider.Google,
+  AuthProvider.Apple,
+  AuthProvider.Email,
+)
