@@ -38,6 +38,8 @@ kotlin {
       api(libs.gitlive.firebase.auth)
       api(libs.koin.core)
       implementation(libs.kermit)
+      // AccountDeleter calls the deleteMyAccount callable (#418).
+      implementation(libs.gitlive.firebase.functions)
     }
     jsMain.dependencies {
       // For kotlinx.coroutines' Promise.await() used by the Firebase JS popup sign-in.

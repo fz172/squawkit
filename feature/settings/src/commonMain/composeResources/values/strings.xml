@@ -3,6 +3,13 @@
   <string name="settings_subtitle">Account, appearance &amp; preferences</string>
   <string name="sign_out">Log out</string>
   <string name="settings_logout_subtitle">Sign out of your account on this device</string>
+  <string name="settings_delete_account">Delete Account</string>
+  <string name="settings_delete_account_subtitle">Permanently delete your account and all its records</string>
+  <string name="settings_delete_account_title">Delete your account?</string>
+  <string name="settings_delete_account_body">This permanently deletes your account and every aircraft, log, task, squawk, and attachment in it. Anyone you have shared an aircraft with will lose access to it. This cannot be undone.</string>
+  <string name="settings_delete_account_export_hint">Export your logbook first if you want to keep a copy.</string>
+  <string name="settings_delete_account_confirm">Delete my account</string>
+  <string name="settings_delete_account_failed">Your account could not be deleted. Nothing has been removed — please try again.</string>
   <string name="settings_technicians_subtitle">Manage technician info who performs maintenance work</string>
   <string name="settings_sync_subtitle">Keep your records synced across devices</string>
   <string name="settings_export_subtitle">Export and share your logbook</string>

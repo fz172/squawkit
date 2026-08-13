@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.fanfly.wingslog.core.analytics.AnalyticsPreferenceController
 import dev.fanfly.wingslog.core.appinfo.AppCapability
+import dev.fanfly.wingslog.core.auth.AccountDeleter
 import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.core.storage.DatabaseIntegrityChecker
 import dev.fanfly.wingslog.core.ui.theme.AppearanceController
@@ -18,6 +19,7 @@ import kotlinx.coroutines.launch
 
 class SettingsViewModel(
   private val authManager: AuthManager,
+  private val accountDeleter: AccountDeleter,
   private val attachmentManager: AttachmentManager,
   private val dbChecker: DatabaseIntegrityChecker,
   private val featureLabManager: DeveloperOptionsManager,
@@ -90,6 +92,49 @@ class SettingsViewModel(
     _user.value = _user.value.copy(
       isAnonymous = current?.isAnonymous == true,
     )
+  }
+
+  /** Opens the confirmation. Nothing is destroyed until [confirmDeleteAccount]. */
+  fun askToDeleteAccount() {
+    if (_user.value.deletion == AccountDeletion.Working) return
+    _user.value = _user.value.copy(deletion = AccountDeletion.Confirming)
+  }
+
+  fun cancelDeleteAccount() {
+    if (_user.value.deletion == AccountDeletion.Working) return
+    _user.value = _user.value.copy(deletion = AccountDeletion.Idle)
+  }
+
+  /**
+   * Deletes the account, then this device's copy of its data (#418).
+   *
+   * **The order is the whole safety property.** The local wipe runs only after the server confirms
+   * the account is gone — on failure the account still exists, and its records may live nowhere
+   * else, so wiping would destroy the only copy. That is why [AccountDeleter] returns a boolean
+   * rather than failing silently the way a best-effort call would.
+   *
+   * The Auth user is deleted server-side, so no re-authentication is needed here and the session is
+   * already invalid by the time this returns; signing out is what makes the app notice and route
+   * back to login.
+   */
+  fun confirmDeleteAccount() {
+    if (_user.value.deletion == AccountDeletion.Working) return
+    val uid = authManager.getCurrentUser()?.uid ?: return
+    _user.value = _user.value.copy(deletion = AccountDeletion.Working)
+
+    viewModelScope.launch {
+      if (!accountDeleter.deleteAccount()) {
+        _user.value = _user.value.copy(deletion = AccountDeletion.Failed)
+        return@launch
+      }
+      observeSelfJob?.cancel()
+      // Same ordering as logOut(): sign out first so the SyncEngine releases the write lock the
+      // wipes below need, or they block forever on web.
+      authManager.logOut()
+      _user.value = SettingsUiState(userStatus = UserStatus.LOGGED_OUT)
+      attachmentManager.wipeLocalData(uid)
+      dbChecker.wipeDataForUser(uid)
+    }
   }
 
   /**

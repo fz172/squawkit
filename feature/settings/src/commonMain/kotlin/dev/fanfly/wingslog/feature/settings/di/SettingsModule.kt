@@ -2,6 +2,7 @@ package dev.fanfly.wingslog.feature.settings.di
 
 import dev.fanfly.wingslog.core.analytics.AnalyticsPreferenceController
 import dev.fanfly.wingslog.core.appinfo.AppCapability
+import dev.fanfly.wingslog.core.auth.AccountDeleter
 import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.core.storage.DatabaseIntegrityChecker
 import dev.fanfly.wingslog.core.ui.theme.AppearanceController
@@ -16,6 +17,7 @@ val settingsModule = module {
   viewModel {
     SettingsViewModel(
       get<AuthManager>(),
+      get<AccountDeleter>(),
       get<AttachmentManager>(),
       get<DatabaseIntegrityChecker>(),
       get<DeveloperOptionsManager>(),
