@@ -28,6 +28,17 @@ class CurrentActivityProvider(application: Application) {
   init {
     application.registerActivityLifecycleCallbacks(
       object : Application.ActivityLifecycleCallbacks {
+        // All three of created/started/resumed record, rather than resumed alone: they are
+        // idempotent, and only tracking the last of them means a single missed event leaves this
+        // reporting "no foreground activity" until the user leaves the app and comes back.
+        override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
+          current = WeakReference(activity)
+        }
+
+        override fun onActivityStarted(activity: Activity) {
+          current = WeakReference(activity)
+        }
+
         override fun onActivityResumed(activity: Activity) {
           current = WeakReference(activity)
         }
@@ -36,8 +47,6 @@ class CurrentActivityProvider(application: Application) {
           if (current?.get() === activity) current = null
         }
 
-        override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) = Unit
-        override fun onActivityStarted(activity: Activity) = Unit
         override fun onActivityPaused(activity: Activity) = Unit
         override fun onActivityStopped(activity: Activity) = Unit
         override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) = Unit
