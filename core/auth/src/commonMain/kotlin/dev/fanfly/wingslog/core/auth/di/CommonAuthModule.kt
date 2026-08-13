@@ -1,7 +1,7 @@
 package dev.fanfly.wingslog.core.auth.di
 
 import dev.fanfly.wingslog.core.auth.AccountDeleter
-import dev.fanfly.wingslog.core.auth.FirebaseAccountDeleter
+import dev.fanfly.wingslog.core.auth.impl.FirebaseAccountDeleter
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.auth.auth
