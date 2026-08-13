@@ -8,10 +8,11 @@ import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialCancellationException
 import co.touchlab.kermit.Logger
+import com.google.android.gms.tasks.Task
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
-import com.google.android.gms.tasks.Task
+import dev.fanfly.wingslog.core.lifecycle.CurrentActivityProvider
 import dev.gitlive.firebase.auth.AuthCredential
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.auth.FirebaseAuthUserCollisionException
@@ -149,13 +150,10 @@ class AuthManagerImpl(
     }
   }
 
-  /**
-   * `email` and `name` are requested because Apple only ever returns the user's name on the very
-   * first authorization, and only when asked for.
-   */
+  /** Scopes come from [APPLE_SCOPES], shared with the web popup — see there for why both. */
   private fun appleProvider(): AndroidOAuthProvider =
     AndroidOAuthProvider.newBuilder(APPLE_PROVIDER_ID)
-      .setScopes(listOf("email", "name"))
+      .setScopes(APPLE_SCOPES)
       .build()
 
   private fun processCredential(credential: Credential): GoogleIdTokenCredential? {

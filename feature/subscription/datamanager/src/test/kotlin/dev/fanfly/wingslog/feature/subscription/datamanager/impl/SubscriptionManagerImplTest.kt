@@ -51,7 +51,6 @@ class SubscriptionManagerImplTest {
     isStressTestSupported = false,
     isCameraCaptureSupported = false,
     isAnonymousLoginSupported = false,
-    isAppleSignInSupported = false,
     isSubscriptionSupported = subscription,
     isAdsSupported = ads,
   )

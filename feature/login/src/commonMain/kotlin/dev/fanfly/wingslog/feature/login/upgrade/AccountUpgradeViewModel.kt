@@ -3,7 +3,6 @@ package dev.fanfly.wingslog.feature.login.upgrade
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
-import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.core.auth.AccountUpgradeResult
 import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.core.auth.AuthProvider
@@ -41,7 +40,6 @@ class AccountUpgradeViewModel(
   private val technicianManager: TechnicianManager,
   private val syncEngine: SyncEngine,
   private val emailStore: UpgradeEmailStore,
-  private val appCapability: AppCapability,
 ) : ViewModel() {
 
   private val _state = MutableStateFlow<UpgradeUiState>(UpgradeUiState.Idle)
@@ -76,11 +74,7 @@ class AccountUpgradeViewModel(
   /** Opens the picker. What it contains is derived from platform capability, not hardcoded. */
   fun choose() {
     if (_state.value == UpgradeUiState.Working) return
-    _state.value = UpgradeUiState.ChoosingProvider(
-      upgradeProvidersFor(
-        isAppleSignInSupported = appCapability.isAppleSignInSupported,
-      )
-    )
+    _state.value = UpgradeUiState.ChoosingProvider(upgradeProvidersFor())
   }
 
   /** Picker selection. Email needs an address first; the other two can start immediately. */

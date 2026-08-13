@@ -3,7 +3,7 @@ package dev.fanfly.wingslog.core.auth.di
 import android.app.Application
 import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.core.auth.AuthManagerImpl
-import dev.fanfly.wingslog.core.auth.CurrentActivityProvider
+import dev.fanfly.wingslog.core.lifecycle.CurrentActivityProvider
 import dev.gitlive.firebase.auth.FirebaseAuth
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module

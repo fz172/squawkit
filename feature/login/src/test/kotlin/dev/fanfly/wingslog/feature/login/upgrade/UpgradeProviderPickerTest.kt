@@ -28,15 +28,12 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 
-internal fun testAppCapability(
-  isAppleSignInSupported: Boolean,
-) = AppCapability(
+internal fun testAppCapability() = AppCapability(
   isDeveloperOptionsSupported = false,
   isAircraftSharingSupported = true,
   isStressTestSupported = false,
   isCameraCaptureSupported = false,
   isAnonymousLoginSupported = true,
-  isAppleSignInSupported = isAppleSignInSupported,
   isSubscriptionSupported = false,
   isAdsSupported = false,
 )
@@ -88,49 +85,29 @@ class UpgradeProviderPickerTest {
     Dispatchers.resetMain()
   }
 
-  private fun viewModel(
-    isAppleSignInSupported: Boolean = false,
-  ) = AccountUpgradeViewModel(
+  private fun viewModel() = AccountUpgradeViewModel(
     authManager = authManager,
     migrator = migrator,
     technicianManager = technicianManager,
     syncEngine = syncEngine,
     emailStore = emailStore,
-    appCapability = testAppCapability(isAppleSignInSupported),
   )
 
   /**
-   * The order is asserted, not just the membership: the picker offers the same choice as the
+   * All three providers, on every platform. Both capability gates that used to prune this list are
+   * gone — Google's with #415, Apple's with #408 — each once the limitation it stood for was fixed.
+   *
+   * The **order** is asserted, not just the membership: the picker offers the same choice as the
    * full-screen login page, which lists Google, then Apple, then email. Having the two disagree is
    * what made the sheet feel like a different screen rather than the same one in a different place.
    */
   @Test
-  fun choose_offersAppleOnlyWhereTheAppleButtonIsOffered() = runTest(dispatcher) {
-    val withApple = viewModel(isAppleSignInSupported = true).also { it.choose() }
-    val withoutApple = viewModel(isAppleSignInSupported = false).also { it.choose() }
+  fun choose_offersEveryProviderInTheLoginPagesOrder() = runTest(dispatcher) {
+    val vm = viewModel().also { it.choose() }
 
-    assertThat((withApple.state.value as UpgradeUiState.ChoosingProvider).providers)
+    assertThat((vm.state.value as UpgradeUiState.ChoosingProvider).providers)
       .containsExactly(AuthProvider.Google, AuthProvider.Apple, AuthProvider.Email)
       .inOrder()
-    assertThat((withoutApple.state.value as UpgradeUiState.ChoosingProvider).providers)
-      .containsExactly(AuthProvider.Google, AuthProvider.Email)
-      .inOrder()
-  }
-
-  /**
-   * Google is offered on every platform that has guests (#415). It used to be dropped on iOS,
-   * because the native provider signed in to Firebase itself and so could not hand back a
-   * credential to link; it now returns the token pair like the Apple one does, and the
-   * `isGoogleUpgradeSupported` gate is gone. Apple's presence is the only thing that varies.
-   */
-  @Test
-  fun choose_alwaysOffersGoogle() = runTest(dispatcher) {
-    for (withApple in listOf(true, false)) {
-      val vm = viewModel(isAppleSignInSupported = withApple).also { it.choose() }
-
-      assertThat((vm.state.value as UpgradeUiState.ChoosingProvider).providers)
-        .contains(AuthProvider.Google)
-    }
   }
 
   /**
@@ -232,7 +209,7 @@ class UpgradeProviderPickerTest {
   fun appleCollision_explainsBeforeRePrompting() = runTest(dispatcher) {
     coEvery { authManager.upgradeAnonymousAccount(AuthProvider.Apple) } returns
       AccountUpgradeResult.ReauthRequiredToMerge(AuthProvider.Apple)
-    val vm = viewModel(isAppleSignInSupported = true)
+    val vm = viewModel()
 
     vm.startUpgrade(AuthProvider.Apple)
     advanceUntilIdle()
@@ -250,7 +227,7 @@ class UpgradeProviderPickerTest {
       AccountUpgradeResult.ReauthRequiredToMerge(AuthProvider.Apple)
     coEvery { authManager.mergeIntoExistingAccount(AuthProvider.Apple) } returns
       AccountUpgradeResult.Linked(guest)
-    val vm = viewModel(isAppleSignInSupported = true)
+    val vm = viewModel()
     vm.startUpgrade(AuthProvider.Apple)
     advanceUntilIdle()
 
@@ -266,7 +243,7 @@ class UpgradeProviderPickerTest {
   fun cancellingTheMerge_leavesTheGuestAlone() = runTest(dispatcher) {
     coEvery { authManager.upgradeAnonymousAccount(AuthProvider.Apple) } returns
       AccountUpgradeResult.ReauthRequiredToMerge(AuthProvider.Apple)
-    val vm = viewModel(isAppleSignInSupported = true)
+    val vm = viewModel()
     vm.startUpgrade(AuthProvider.Apple)
     advanceUntilIdle()
 

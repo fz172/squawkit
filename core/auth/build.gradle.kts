@@ -45,6 +45,10 @@ kotlin {
     }
     androidMain.dependencies {
       api(project(":core:model"))
+      // CurrentActivityProvider: Sign in with Apple is a Custom Tab flow here and needs a
+      // foreground Activity (#408). api, not implementation — it is a constructor parameter of
+      // AuthManagerImpl, so the DI module that builds it has to see the type.
+      api(project(":core:lifecycle"))
 
       // Auth & Network
       api(libs.play.services.auth)

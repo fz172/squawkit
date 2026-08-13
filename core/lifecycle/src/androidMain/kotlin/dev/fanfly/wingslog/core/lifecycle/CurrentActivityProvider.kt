@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.core.auth
+package dev.fanfly.wingslog.core.lifecycle
 
 import android.app.Activity
 import android.app.Application

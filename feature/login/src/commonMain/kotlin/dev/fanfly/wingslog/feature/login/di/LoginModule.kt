@@ -1,6 +1,5 @@
 package dev.fanfly.wingslog.feature.login.di
 
-import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.core.storage.DatabaseWriteLock
 import dev.fanfly.wingslog.core.storage.LocalAccountMigrator
@@ -40,7 +39,6 @@ val loginModule = module {
       technicianManager = get<TechnicianManager>(),
       syncEngine = get<SyncEngine>(),
       emailStore = get<UpgradeEmailStore>(),
-      appCapability = get<AppCapability>(),
     )
   }
   single { UpgradeEmailStore(get<WingsLogDatabase>(), get<DatabaseWriteLock>()) }

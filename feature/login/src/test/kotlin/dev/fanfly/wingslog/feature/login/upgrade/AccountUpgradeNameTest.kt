@@ -81,7 +81,6 @@ class AccountUpgradeNameTest {
     technicianManager = technicianManager,
     syncEngine = syncEngine,
     emailStore = emailStore,
-    appCapability = testAppCapability(isAppleSignInSupported = false),
   )
 
   @Test

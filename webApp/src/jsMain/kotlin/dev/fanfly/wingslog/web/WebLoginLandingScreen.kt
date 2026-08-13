@@ -56,7 +56,6 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.core.ui.adaptive.compose.layoutTierFor
 import dev.fanfly.wingslog.core.ui.theme.rememberBrandHeadlineFamily
 import dev.fanfly.wingslog.feature.login.LoginButtonContent
@@ -113,7 +112,6 @@ internal fun WebLoginLandingScreen(
 
   var signingIn by remember { mutableStateOf<PendingSignIn?>(null) }
   var error by remember { mutableStateOf<String?>(null) }
-  val appCapability: AppCapability = koinInject()
 
   // Returning, already-authenticated users skip straight through (mirrors LoginScreen).
   LaunchedEffect(Unit) {
@@ -201,7 +199,6 @@ internal fun WebLoginLandingScreen(
         signingIn = signingIn,
         error = error,
         onGoogle = signInWithGoogle,
-        showApple = appCapability.isAppleSignInSupported,
         onApple = signInWithApple,
         onChooseEmail = onChooseEmail,
       )
@@ -346,7 +343,6 @@ private fun Hero(
   signingIn: PendingSignIn?,
   error: String?,
   onGoogle: () -> Unit,
-  showApple: Boolean,
   onApple: () -> Unit,
   onChooseEmail: () -> Unit,
 ) {
@@ -393,7 +389,6 @@ private fun Hero(
             signingIn = signingIn,
             error = error,
             onGoogle = onGoogle,
-            showApple = showApple,
             onApple = onApple,
             onChooseEmail = onChooseEmail,
           )
@@ -415,8 +410,7 @@ private fun Hero(
               signingIn = signingIn,
               error = error,
               onGoogle = onGoogle,
-              showApple = showApple,
-              onApple = onApple,
+                onApple = onApple,
               onChooseEmail = onChooseEmail,
             )
           }
@@ -529,7 +523,6 @@ private fun LoginCard(
   signingIn: PendingSignIn?,
   error: String?,
   onGoogle: () -> Unit,
-  showApple: Boolean,
   onApple: () -> Unit,
   onChooseEmail: () -> Unit,
 ) {
@@ -578,28 +571,25 @@ private fun LoginCard(
         )
       },
     )
-    // Gated on AppCapability.isAppleSignInSupported, like the shared LoginScreen — the button stays
-    // hidden until the Apple provider is configured in the Firebase console.
-    if (showApple) {
-      Spacer(Modifier.height(12.dp))
-      AuthButton(
-        container = Color.Black,
-        contentColor = Color.White,
-        border = null,
-        enabled = signingIn == null,
-        loading = signingIn == PendingSignIn.Apple,
-        onClick = onApple,
-        label = "Log in with Apple",
-        leading = {
-          Icon(
-            imageVector = AppleLogo,
-            contentDescription = null,
-            modifier = Modifier.size(AuthButtonIconSize),
-            tint = Color.White
-          )
-        },
-      )
-    }
+    // Offered on every platform, like the shared LoginScreen.
+    Spacer(Modifier.height(12.dp))
+    AuthButton(
+      container = Color.Black,
+      contentColor = Color.White,
+      border = null,
+      enabled = signingIn == null,
+      loading = signingIn == PendingSignIn.Apple,
+      onClick = onApple,
+      label = "Log in with Apple",
+      leading = {
+        Icon(
+          imageVector = AppleLogo,
+          contentDescription = null,
+          modifier = Modifier.size(AuthButtonIconSize),
+          tint = Color.White
+        )
+      },
+    )
     Spacer(Modifier.height(12.dp))
     // Passwordless email link — navigates to the shared EmailSignInScreen, leaving the promo page.
     AuthButton(
