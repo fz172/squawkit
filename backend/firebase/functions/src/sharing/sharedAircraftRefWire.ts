@@ -52,6 +52,31 @@ export function sharedAircraftRefWireDoc(
   };
 }
 
+/**
+ * Reads back the host and aircraft a live ref points at, or null for a tombstone or unreadable doc.
+ *
+ * The inverse of [sharedAircraftRefWireDoc]. Needed because a member's refs are the only index of
+ * which shares they belong to: the ACL stores `memberRoles` as a map, which Firestore cannot query
+ * by key, so "every share this user is in" is answerable only from their own tree.
+ *
+ * Returns null rather than throwing on a malformed payload — this feeds account deletion, and one
+ * unreadable ref must not be able to strand the rest of the teardown.
+ */
+export function decodeSharedAircraftRef(
+  doc: DocumentData,
+): { aircraftId: string; hostUid: string } | null {
+  if (doc?.deleted === true) return null;
+  const payload = doc?.payload;
+  if (typeof payload !== "string" || payload.length === 0) return null;
+  try {
+    const ref = SharedAircraftRef.decode(Buffer.from(payload, "base64"));
+    if (!ref.aircraftId || !ref.hostUid) return null;
+    return { aircraftId: ref.aircraftId, hostUid: ref.hostUid };
+  } catch {
+    return null;
+  }
+}
+
 /** A tombstone that tells the ex-member's devices to purge the shared aircraft (no payload needed). */
 export function sharedAircraftRefTombstone(): DocumentData {
   return {

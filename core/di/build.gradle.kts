@@ -30,6 +30,8 @@ kotlin {
 
       implementation(project(":core:analytics"))
       implementation(project(":core:auth"))
+      // functionsModule — the shared Cloud Functions client.
+      implementation(project(":core:firebase"))
       implementation(project(":core:storage"))
       implementation(project(":core:ui:theme"))
       implementation(project(":feature:aircraft:dashboard"))

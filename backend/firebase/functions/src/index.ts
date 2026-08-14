@@ -1,6 +1,7 @@
 import { onCall } from "firebase-functions/v2/https";
 
 import { FUNCTION_REGION } from "./config/env.js";
+import { deleteMyAccount } from "./account/deleteMyAccount.js";
 import { requestExportDelivery } from "./export/requestExportDelivery.js";
 import { cancelAircraftShareInvite } from "./sharing/cancelAircraftShareInvite.js";
 import { createAircraftShareInvite } from "./sharing/createAircraftShareInvite.js";
@@ -45,6 +46,7 @@ export const health_probe = onCall<unknown, HealthProbeResponse>(
 );
 
 export { requestExportDelivery };
+export { deleteMyAccount };
 export { redeemAircraftShareInvite };
 export { revokeAircraftShare };
 export { updateAircraftShareRole };

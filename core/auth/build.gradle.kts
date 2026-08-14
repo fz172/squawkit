@@ -36,6 +36,7 @@ kotlin {
   sourceSets {
     commonMain.dependencies {
       api(libs.gitlive.firebase.auth)
+      api(libs.gitlive.firebase.functions)
       api(libs.koin.core)
       implementation(libs.kermit)
     }

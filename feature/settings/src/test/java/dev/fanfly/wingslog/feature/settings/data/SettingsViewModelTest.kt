@@ -4,6 +4,7 @@ import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.analytics.AnalyticsPreferenceController
 import dev.fanfly.wingslog.core.analytics.AnalyticsPreferenceStore
 import dev.fanfly.wingslog.core.appinfo.AppCapability
+import dev.fanfly.wingslog.core.auth.AccountDeleter
 import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.core.storage.DatabaseIntegrityChecker
 import dev.fanfly.wingslog.core.ui.theme.AppearanceController
@@ -13,6 +14,7 @@ import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.developeroptions.datamanager.DeveloperFlags
 import dev.fanfly.wingslog.feature.developeroptions.datamanager.DeveloperOptionsManager
 import dev.gitlive.firebase.auth.FirebaseUser
+import io.mockk.coEvery
 import io.mockk.coJustRun
 import io.mockk.coVerify
 import io.mockk.every
@@ -37,6 +39,7 @@ class SettingsViewModelTest {
   private val testDispatcher = UnconfinedTestDispatcher()
 
   private lateinit var authManager: AuthManager
+  private lateinit var accountDeleter: AccountDeleter
   private lateinit var attachmentManager: AttachmentManager
   private lateinit var dbChecker: DatabaseIntegrityChecker
   private lateinit var featureLabManager: DeveloperOptionsManager
@@ -67,6 +70,7 @@ class SettingsViewModelTest {
     Dispatchers.setMain(testDispatcher)
 
     authManager = mockk(relaxed = true)
+    accountDeleter = mockk(relaxed = true)
     attachmentManager = mockk(relaxed = true)
     dbChecker = mockk(relaxed = true)
     featureLabManager = mockk(relaxed = true)
@@ -96,6 +100,7 @@ class SettingsViewModelTest {
   fun logOut_wipesUserData_whenUserSignedIn() = runTest(testDispatcher) {
     viewModel = SettingsViewModel(
       authManager,
+      accountDeleter,
       attachmentManager,
       dbChecker,
       featureLabManager,
@@ -122,6 +127,7 @@ class SettingsViewModelTest {
   fun logOut_wipesAttachmentData_whenUserSignedIn() = runTest(testDispatcher) {
     viewModel = SettingsViewModel(
       authManager,
+      accountDeleter,
       attachmentManager,
       dbChecker,
       featureLabManager,
@@ -148,6 +154,7 @@ class SettingsViewModelTest {
   fun logOut_callsAuthManagerLogOut() = runTest(testDispatcher) {
     viewModel = SettingsViewModel(
       authManager,
+      accountDeleter,
       attachmentManager,
       dbChecker,
       featureLabManager,
@@ -175,6 +182,7 @@ class SettingsViewModelTest {
     every { authManager.getCurrentUser() } returns null
     viewModel = SettingsViewModel(
       authManager,
+      accountDeleter,
       attachmentManager,
       dbChecker,
       featureLabManager,
@@ -202,6 +210,7 @@ class SettingsViewModelTest {
   fun logOut_setsStateToLoggedOut() = runTest(testDispatcher) {
     viewModel = SettingsViewModel(
       authManager,
+      accountDeleter,
       attachmentManager,
       dbChecker,
       featureLabManager,
@@ -243,12 +252,13 @@ class SettingsViewModelTest {
   }
 
   @Test
-  fun init_leavesAnonymousFalseForAPermanentAccount() = runTest(testDispatcher) {
-    // setUp() already stubs a non-anonymous user.
-    viewModel = buildViewModel()
+  fun init_leavesAnonymousFalseForAPermanentAccount() =
+    runTest(testDispatcher) {
+      // setUp() already stubs a non-anonymous user.
+      viewModel = buildViewModel()
 
-    assertThat(viewModel.user.value.isAnonymous).isFalse()
-  }
+      assertThat(viewModel.user.value.isAnonymous).isFalse()
+    }
 
   @Test
   fun init_leavesAnonymousFalseWhenThereIsNoUser() = runTest(testDispatcher) {
@@ -259,8 +269,56 @@ class SettingsViewModelTest {
     assertThat(viewModel.user.value.isAnonymous).isFalse()
   }
 
+  /**
+   * The one property that matters most here. A failed delete leaves the account and its records
+   * intact — and those records may exist nowhere else — so wiping the device would destroy the only
+   * copy, in response to an operation that did not happen.
+   */
+  @Test
+  fun deleteAccount_leavesLocalDataAloneWhenTheServerRefuses() =
+    runTest(testDispatcher) {
+      coEvery { accountDeleter.deleteAccount() } returns false
+      viewModel = buildViewModel()
+
+      viewModel.confirmDeleteAccount()
+      advanceUntilIdle()
+
+      assertThat(viewModel.user.value.deletion).isEqualTo(AccountDeletion.Failed)
+      coVerify(exactly = 0) { attachmentManager.wipeLocalData(any()) }
+      coVerify(exactly = 0) { dbChecker.wipeDataForUser(any()) }
+      coVerify(exactly = 0) { authManager.logOut() }
+    }
+
+  @Test
+  fun deleteAccount_wipesTheDeviceOnceTheAccountIsGone() =
+    runTest(testDispatcher) {
+      coEvery { accountDeleter.deleteAccount() } returns true
+      viewModel = buildViewModel()
+
+      viewModel.confirmDeleteAccount()
+      advanceUntilIdle()
+
+      coVerify { authManager.logOut() }
+      coVerify { attachmentManager.wipeLocalData(any()) }
+      coVerify { dbChecker.wipeDataForUser(any()) }
+      assertThat(viewModel.user.value.userStatus).isEqualTo(UserStatus.LOGGED_OUT)
+    }
+
+  /** The row opens a confirmation; it must not delete anything by itself. */
+  @Test
+  fun askingToDelete_destroysNothing() = runTest(testDispatcher) {
+    viewModel = buildViewModel()
+
+    viewModel.askToDeleteAccount()
+    advanceUntilIdle()
+
+    assertThat(viewModel.user.value.deletion).isEqualTo(AccountDeletion.Confirming)
+    coVerify(exactly = 0) { accountDeleter.deleteAccount() }
+  }
+
   private fun buildViewModel() = SettingsViewModel(
     authManager,
+    accountDeleter,
     attachmentManager,
     dbChecker,
     featureLabManager,

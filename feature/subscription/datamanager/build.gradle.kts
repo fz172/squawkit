@@ -35,6 +35,7 @@ kotlin {
 
   sourceSets {
     commonMain.dependencies {
+      implementation(project(":core:firebase"))
       implementation(project(":core:model"))
       implementation(project(":core:storage"))
       implementation(project(":core:appinfo"))

@@ -5,6 +5,7 @@ import dev.fanfly.wingslog.core.analytics.di.analyticsPreferenceStoreModule
 import dev.fanfly.wingslog.core.analytics.di.platformAnalyticsModule
 import dev.fanfly.wingslog.core.auth.di.authModule
 import dev.fanfly.wingslog.core.auth.di.commonAuthModule
+import dev.fanfly.wingslog.core.firebase.functions.functionsModule
 import dev.fanfly.wingslog.core.lifecycle.di.lifecycleModule
 import dev.fanfly.wingslog.core.lifecycle.di.platformLifecycleModule
 import dev.fanfly.wingslog.core.storage.di.platformStorageModule
@@ -64,6 +65,8 @@ val commonAppModules: List<Module> = listOf(
   // takes. Koin resolves lazily so the order is not required, but the list is read by people and
   // the dependency direction should be visible. Empty on iOS and web.
   platformLifecycleModule,
+  // The one Cloud Functions client. Ahead of every callable client that injects it.
+  functionsModule,
   commonAuthModule,
   authModule,
   storageModule,

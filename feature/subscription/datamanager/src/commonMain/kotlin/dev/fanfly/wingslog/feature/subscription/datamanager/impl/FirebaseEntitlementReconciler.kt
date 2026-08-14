@@ -2,8 +2,7 @@ package dev.fanfly.wingslog.feature.subscription.datamanager.impl
 
 import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.feature.subscription.datamanager.EntitlementReconciler
-import dev.gitlive.firebase.Firebase
-import dev.gitlive.firebase.functions.functions
+import dev.gitlive.firebase.functions.FirebaseFunctions
 import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.Serializable
 
@@ -13,9 +12,9 @@ import kotlinx.serialization.Serializable
  * Sends no payload: the server derives the account from the caller's auth token, which is what makes
  * this safe to expose. There is nothing here a client could lie about.
  */
-class FirebaseEntitlementReconciler : EntitlementReconciler {
-
-  private val functions = Firebase.functions(REGION)
+class FirebaseEntitlementReconciler(
+  private val functions: FirebaseFunctions,
+) : EntitlementReconciler {
 
   override suspend fun reconcileNow(): Boolean = try {
     val response = functions
@@ -45,7 +44,6 @@ class FirebaseEntitlementReconciler : EntitlementReconciler {
   )
 
   private companion object {
-    private const val REGION = "us-central1"
     private val logger = Logger.withTag("EntitlementReconciler")
   }
 }

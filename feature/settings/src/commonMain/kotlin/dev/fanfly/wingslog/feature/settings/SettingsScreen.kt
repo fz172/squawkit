@@ -20,6 +20,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.CloudSync
+import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.Engineering
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.Tune
@@ -53,6 +54,8 @@ import wingslog.feature.settings.generated.resources.account_upgrade_link_cta
 import wingslog.feature.settings.generated.resources.account_upgrade_link_subtitle
 import wingslog.feature.settings.generated.resources.app_version
 import wingslog.feature.settings.generated.resources.developer_options
+import wingslog.feature.settings.generated.resources.settings_delete_account
+import wingslog.feature.settings.generated.resources.settings_delete_account_subtitle
 import wingslog.feature.settings.generated.resources.settings_developer_options_subtitle
 import wingslog.feature.settings.generated.resources.settings_export_subtitle
 import wingslog.feature.settings.generated.resources.settings_logout_subtitle
@@ -245,6 +248,19 @@ fun SettingsContent(
                 onClick = { settingsViewModel.logOut() },
               )
             }
+            // Below Log out, and only for a permanent account. Required by App Store Review
+            // Guideline 5.1.1(v) — which applies to any app offering account creation, not just
+            // Apple sign-in (#418). A guest has no account to delete: their exit is the upgrade row
+            // above, and logOut()'s wipe is already off-limits to them (#413).
+            add {
+              SettingsRow(
+                icon = Icons.Default.DeleteForever,
+                title = stringResource(SettingsRes.string.settings_delete_account),
+                subtitle = stringResource(SettingsRes.string.settings_delete_account_subtitle),
+                settingsLevel = SettingsLevel.DANGER,
+                onClick = { settingsViewModel.askToDeleteAccount() },
+              )
+            }
           }
         }
         SettingsRowGroup(generalRows)
@@ -265,6 +281,14 @@ fun SettingsContent(
         )
       }
     }
+
+    // Guideline 5.1.1(v) wants deletion reachable, not easy to do by accident — so the row opens
+    // this rather than acting, and the confirm button is the destructive-coloured one.
+    DeleteAccountDialog(
+      state = user.deletion,
+      onConfirm = settingsViewModel::confirmDeleteAccount,
+      onDismiss = settingsViewModel::cancelDeleteAccount,
+    )
 
     SnackbarHost(
       snackbarHostState,
