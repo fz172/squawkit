@@ -116,7 +116,8 @@ class SqlDelightLocalBlobStore(
       RemoteState.LocalOnly, RemoteState.Uploading, RemoteState.Synced ->
         if (fs.exists(row.relative_path)) fs.uriFor(row.relative_path) else null
 
-      RemoteState.RemoteOnly -> null
+      // Neither has a local file: RemoteOnly has not fetched it yet, RemoteMissing never will.
+      RemoteState.RemoteOnly, RemoteState.RemoteMissing -> null
     }
   }
 
@@ -166,6 +167,24 @@ class SqlDelightLocalBlobStore(
         last_attempt_at = clock.now()
           .toEpochMilliseconds(),
         upload_attempts = row.upload_attempts + 1,
+        id = id.value,
+      )
+    }
+  }
+
+  override suspend fun markRemoteMissing(id: BlobId, cause: Throwable) {
+    val row = requireRow(id)
+    require(row.remote_state == RemoteState.RemoteOnly) {
+      "markRemoteMissing: invalid transition from ${row.remote_state.wireName}"
+    }
+    Logger.w(throwable = cause) { "Remote object missing for blob ${id.value}; giving up" }
+    writeLock.withLock {
+      db.schemaQueries.setBlobRemoteState(
+        remote_state = RemoteState.RemoteMissing,
+        remote_path = row.remote_path,
+        last_attempt_at = clock.now()
+          .toEpochMilliseconds(),
+        upload_attempts = row.upload_attempts,
         id = id.value,
       )
     }

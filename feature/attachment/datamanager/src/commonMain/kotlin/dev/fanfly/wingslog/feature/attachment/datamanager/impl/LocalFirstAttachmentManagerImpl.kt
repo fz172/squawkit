@@ -165,6 +165,14 @@ class LocalFirstAttachmentManagerImpl(
             -> DownloadState.Done
 
           RemoteState.RemoteOnly -> DownloadState.Downloading(0f)
+
+          // Terminal, so the caller fails in milliseconds instead of waiting out
+          // ENSURE_LOCAL_TIMEOUT_MS for bytes that no longer exist (#426).
+          RemoteState.RemoteMissing -> DownloadState.Failed(
+            Exception(
+              "\"${attachment.name.ifBlank { "The attachment" }}\" is no longer available."
+            )
+          )
           // null: row not indexed yet (reconciler still running). If sha256 is known the file
           // exists on the server — stay in Downloading so the flow keeps observing until the
           // REMOTE_ONLY row appears and transitions to Synced.
@@ -209,6 +217,8 @@ class LocalFirstAttachmentManagerImpl(
           RemoteState.Uploading -> AttachmentStatus.Uploading(progress = 0f)
           RemoteState.Synced -> AttachmentStatus.Synced
           RemoteState.RemoteOnly -> AttachmentStatus.RemoteOnly
+          // No dedicated status yet: RemoteOnly is the closest honest answer — not on this device.
+          RemoteState.RemoteMissing -> AttachmentStatus.RemoteOnly
         }
       }
 
@@ -233,6 +243,7 @@ class LocalFirstAttachmentManagerImpl(
     RemoteState.Uploading -> BlobSyncState.Uploading
     RemoteState.Synced -> BlobSyncState.Synced
     RemoteState.RemoteOnly -> BlobSyncState.RemoteOnly
+    RemoteState.RemoteMissing -> BlobSyncState.RemoteOnly
   }
 
   private fun String.toAttachmentType(): AttachmentType = when {
