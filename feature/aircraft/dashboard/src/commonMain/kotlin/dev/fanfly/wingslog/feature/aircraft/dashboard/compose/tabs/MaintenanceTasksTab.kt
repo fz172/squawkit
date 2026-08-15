@@ -81,7 +81,6 @@ fun MaintenanceTasksTab(
         analytics.logScreenView("shell/tasks/${if (it) "complied" else "active"}")
       },
       onCardClick = { onAction(AircraftOverviewAction.TaskCardClick(it)) },
-      onUpsellClick = { onAction(AircraftOverviewAction.ShowSubscription) },
       scrollTargetId = scrollToTaskId,
       onTargetPositioned = { targetCardY = it },
       showHeader = showHeader,

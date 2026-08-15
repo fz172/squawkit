@@ -11,7 +11,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -39,7 +38,6 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import wingslog.feature.ads.sharedassets.generated.resources.Res
 import wingslog.feature.ads.sharedassets.generated.resources.ads_a11y_advertisement
-import wingslog.feature.ads.sharedassets.generated.resources.ads_cta_remove_ads
 import wingslog.feature.ads.sharedassets.generated.resources.ads_sponsored_label
 
 /** `LayoutTier` lives in a Compose module; the placement core deliberately does not depend on it. */
@@ -54,8 +52,8 @@ internal fun LayoutTier.toAdLayoutTier(): AdLayoutTier = when (this) {
  * One ad slot, rendered as a card that sits *in* the record list rather than over it.
  *
  * Owns everything that makes an ad card an ad card — the "Sponsored" label (once per slot, not per
- * unit), the band layout, the upgrade link, collapsing to zero height, and every analytics event.
- * [AdView] owns nothing but the creative.
+ * unit), the band layout, collapsing to zero height, and every analytics event. [AdView] owns
+ * nothing but the creative.
  *
  * **Budget is claimed once per slot and cached for the life of the composition** (N8). Scrolling
  * past the same ad twice therefore neither re-requests nor double-counts — the reservation is keyed
@@ -78,7 +76,6 @@ internal fun LayoutTier.toAdLayoutTier(): AdLayoutTier = when (this) {
 fun AdSlot(
   surface: AdSurface,
   slotIndex: Int,
-  onUpsellClick: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
   val adsManager: AdsManager = koinInject()
@@ -129,7 +126,9 @@ fun AdSlot(
     Column(
       modifier = Modifier
         .fillMaxWidth()
-        .padding(Spacing.medium),
+        // Horizontal padding trimmed from Spacing.medium: the creative is a fixed size regardless
+        // of how wide this card is, so less horizontal inset here means less dead space beside it.
+        .padding(horizontal = Spacing.small, vertical = Spacing.medium),
       verticalArrangement = Arrangement.spacedBy(Spacing.small),
     ) {
       Text(
@@ -141,8 +140,7 @@ fun AdSlot(
       Row(
         modifier = Modifier
           .fillMaxWidth()
-          // One focus group announced as "Advertisement"; the upgrade link stays separately
-          // focusable below, outside this group (N7).
+          // One focus group announced as "Advertisement" (N7).
           .clearAndSetSemantics { contentDescription = advertisement },
         horizontalArrangement = Arrangement.spacedBy(Spacing.medium, Alignment.CenterHorizontally),
         verticalAlignment = Alignment.CenterVertically,
@@ -200,19 +198,6 @@ fun AdSlot(
             },
           )
         }
-      }
-
-      TextButton(
-        onClick = {
-          analytics.logEvent("ad_upsell_tapped", mapOf("surface" to surface.analyticsName))
-          onUpsellClick()
-        },
-        modifier = Modifier.align(Alignment.End),
-      ) {
-        Text(
-          text = stringResource(Res.string.ads_cta_remove_ads),
-          style = MaterialTheme.typography.labelMedium,
-        )
       }
     }
   }

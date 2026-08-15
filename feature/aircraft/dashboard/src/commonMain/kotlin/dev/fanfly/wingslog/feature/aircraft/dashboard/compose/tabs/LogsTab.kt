@@ -29,8 +29,6 @@ fun LogsTab(
   onTaskClick: (taskId: String) -> Unit,
   onSquawkClick: (squawkId: String) -> Unit,
   scrollToLogId: String? = null,
-  /** The ad card's "Subscribe to remove ads" link. */
-  onUpsellClick: () -> Unit = {},
   modifier: Modifier = Modifier,
 ) {
   // Key by aircraftId: in the adaptive shell the switcher swaps aircraft within the same
@@ -54,7 +52,6 @@ fun LogsTab(
   }
 
   MaintenanceLogListContent(
-    onUpsellClick = onUpsellClick,
     uiState = uiState,
     syncStates = syncStates,
     onSearchQueryChange = viewModel::onSearchQueryChange,

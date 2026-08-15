@@ -5,15 +5,6 @@
     squawk, task or log. Shown once per slot, not once per unit (PRD §7.1).
   -->
   <string name="ads_sponsored_label">Sponsored</string>
-  <!--
-    The ad card's low-emphasis footer link to the subscription screen — what makes the ad an argument
-    for the paid tier rather than only a nuisance.
-
-    Deliberately names no tier: the copy outlives a tier rename (the shipped names have already moved
-    once, Free/Pro -> Core/Heavy in #369) and it leads with the benefit a pilot wants rather than the
-    product we want to sell.
-  -->
-  <string name="ads_cta_remove_ads">Subscribe to remove ads</string>
-  <!-- Announced for the ad card as a whole; the upgrade link is separately focusable (N7). -->
+  <!-- Announced for the ad card as a whole (N7). -->
   <string name="ads_a11y_advertisement">Advertisement</string>
 </resources>
