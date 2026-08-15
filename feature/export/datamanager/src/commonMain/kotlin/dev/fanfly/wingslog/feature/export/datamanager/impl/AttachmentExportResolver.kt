@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.export.datamanager.impl
 
+import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.aircraft.Attachment
 import dev.fanfly.wingslog.aircraft.AttachmentType
 import dev.fanfly.wingslog.core.storage.blob.BlobId
@@ -22,6 +23,8 @@ class AttachmentExportResolver(
   private val localBlobStore: LocalBlobStore,
   private val blobFilesystem: BlobFilesystem,
 ) {
+
+  private val log = Logger.withTag("AttachmentExportResolver")
 
   /**
    * Downloads missing binaries when possible and returns the local payloads for [bundle].
@@ -72,6 +75,20 @@ class AttachmentExportResolver(
           is Resolved.Payload -> payloads[attachment.id] = outcome.payload
           is Resolved.Missing -> notes += outcome.note
         }
+      }
+
+      // A partial export used to be silent — it shipped the notes inside the ZIP and said nothing
+      // anywhere a developer would look, which is why #426 was diagnosed from a WorkManager trace
+      // instead of from here. Counts at warn; the per-attachment reasons at debug, since the ids
+      // are noise once the count tells you whether to care.
+      if (notes.isEmpty()) {
+        log.i { "Attachments resolved for ${bundle.aircraft.id}: ${payloads.size}/${targets.size}" }
+      } else {
+        log.w {
+          "Attachments INCOMPLETE for ${bundle.aircraft.id}: " +
+            "${payloads.size}/${targets.size} embedded, ${notes.size} unavailable"
+        }
+        notes.forEach { note -> log.d { note } }
       }
 
       AttachmentExportManifest(
