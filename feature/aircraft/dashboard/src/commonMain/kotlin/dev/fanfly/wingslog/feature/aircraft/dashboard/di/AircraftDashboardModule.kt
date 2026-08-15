@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.feature.aircraft.dashboard.di
 
 import androidx.lifecycle.SavedStateHandle
+import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.storage.AircraftScopeResolver
 import dev.fanfly.wingslog.feature.aircraft.dashboard.data.AircraftOverviewViewModel
@@ -33,6 +34,7 @@ val aircraftDashboardModule = module {
       get<SharingManager>(),
       get<AircraftScopeResolver>(),
       get<FirebaseAuth>(),
+      get<AppCapability>(),
       aircraftId,
     )
   }
