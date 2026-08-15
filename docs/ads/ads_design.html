@@ -84,7 +84,7 @@
 
       <div class="callout note">
         <strong>Implementation Status</strong>
-        Proposed. Nothing built — no <code>feature/ads</code> module, no SDK linked, no <code>isAdsSupported</code> flag. This note will track what actually ships. The PRD's decisions D1–D9 are settled inputs here and are not re-litigated; where this doc contradicts an <em>assumption</em> the PRD made about existing infrastructure, §3 and §5 say so explicitly.
+        P1–P8 shipped (#378–#385): placement core, the session cap, the tier gate, Android AdMob end to end, consent (UMP + ATT), and the iOS ad view via the Swift bridge, with real Android and iOS AdMob app ids and per-surface ad units on both platforms. One gap remains: iOS has no Google UMP form yet — the SPM package P8 added covers Mobile Ads only, and ATT alone backs <code>ensureConsent()</code> there. P9 (store disclosures, flipping <code>isAdsSupported</code> for GA) and P10 (phase 2 web ads) have not started. The PRD's decisions D1–D9 are settled inputs here and are not re-litigated; where this doc contradicts an <em>assumption</em> the PRD made about existing infrastructure, §3 and §5 say so explicitly.
       </div>
 
       <h2 id="overview">1. Overview &amp; Principles</h2>

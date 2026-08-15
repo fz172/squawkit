@@ -7,6 +7,7 @@ import dev.fanfly.wingslog.core.auth.IosGoogleSignInBridge
 import dev.fanfly.wingslog.core.storage.TombstoneGc
 import dev.fanfly.wingslog.di.initKoin
 import dev.fanfly.wingslog.feature.ads.datamanager.impl.IosAdConsentBridge
+import dev.fanfly.wingslog.feature.ads.viewing.IosAdViewBridge
 import dev.fanfly.wingslog.feature.sharing.datamanager.AircraftShareDeepLinks
 import dev.fanfly.wingslog.feature.sync.data.SyncEngine
 import dev.fanfly.wingslog.feature.sync.data.blob.IosAppCheckBridge
@@ -15,6 +16,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.koin.mp.KoinPlatform
+import platform.UIKit.UIView
 import platform.UIKit.UIViewController
 import kotlin.experimental.ExperimentalNativeApi
 
@@ -65,6 +67,25 @@ object MainEntry {
   /** Installs the Settings → "Ad privacy settings" re-presentation of the CMP form. */
   fun installAdPrivacyOptionsPresenter(presenter: (onComplete: () -> Unit) -> Unit) {
     IosAdConsentBridge.installPrivacyOptionsPresenter(presenter)
+  }
+
+  /**
+   * Installs the ad view factory owned by the Swift app (`GoogleMobileAds` is linked there via
+   * SPM, not in Kotlin/Native — see `IosAdViewBridge`'s KDoc). [factory] builds a configured
+   * `GADBannerView` for the given ad unit id and size id (`"BANNER"`/`"LARGE_BANNER"`), wires its
+   * delegate to the three callbacks, and returns it as a `UIView` — or `null` if it fails to build,
+   * which collapses the slot exactly like an unfilled one.
+   */
+  fun installAdViewFactory(
+    factory: (
+      adUnitId: String,
+      sizeId: String,
+      onFilled: () -> Unit,
+      onFailed: (reason: String) -> Unit,
+      onClicked: () -> Unit,
+    ) -> UIView?
+  ) {
+    IosAdViewBridge.install(factory)
   }
 
   /**
