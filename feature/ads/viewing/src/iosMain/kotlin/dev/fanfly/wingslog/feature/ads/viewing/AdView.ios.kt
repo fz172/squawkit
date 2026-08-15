@@ -57,17 +57,17 @@ actual fun AdView(
 /**
  * Which inventory to request for [surface]. Mirrors `AdView.android.kt`'s table — same reasoning:
  * developer builds get Google's public test unit, since impressions/clicks from development are
- * invalid traffic and AdMob suspends accounts for it. iOS has its own ids under its own app id;
- * still to be created for the real ones.
+ * invalid traffic and AdMob suspends accounts for it. iOS has its own ids under its own app id
+ * (`GADApplicationIdentifier` in Info.plist), separate from Android's.
  */
 private fun adUnitIdFor(surface: AdSurface, useTestAds: Boolean): String =
   if (useTestAds) {
     GOOGLE_TEST_BANNER_UNIT_IOS
   } else {
     when (surface) {
-      AdSurface.SQUAWKS -> "ca-app-pub-1367143209408464/0000000001"
-      AdSurface.TASKS -> "ca-app-pub-1367143209408464/0000000002"
-      AdSurface.LOGS -> "ca-app-pub-1367143209408464/0000000003"
+      AdSurface.SQUAWKS -> "ca-app-pub-1367143209408464/7354960967"
+      AdSurface.TASKS -> "ca-app-pub-1367143209408464/3415715954"
+      AdSurface.LOGS -> "ca-app-pub-1367143209408464/4728797628"
     }
   }
 

@@ -26,12 +26,7 @@
 	<key>NSUserTrackingUsageDescription</key>
 	<string>SquawkIt shows the occasional ad on the free tier. Allowing tracking lets those ads be more relevant to you.</string>
 	<key>GADApplicationIdentifier</key>
-	<!-- Google's public sample App ID — no iOS app has been registered in the AdMob console yet
-	     (design §7.2/P8), unlike Android's real ca-app-pub-1367143209408464~7704227598. The SDK
-	     hard-crashes at startup with no GADApplicationIdentifier at all, so this is a placeholder,
-	     not optional: swap it for the real iOS App ID once that AdMob app exists, alongside the
-	     placeholder ad unit ids in AdView.ios.kt. -->
-	<string>ca-app-pub-3940256099942544~1458002511</string>
+	<string>ca-app-pub-1367143209408464~7985516359</string>
     <key>CADisableMinimumFrameDurationOnPhone</key>
     <true/>
     <key>BGTaskSchedulerPermittedIdentifiers</key>
