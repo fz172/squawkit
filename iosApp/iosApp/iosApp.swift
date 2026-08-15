@@ -55,6 +55,9 @@ class AppDelegate: NSObject, UIApplicationDelegate {
       // TODO(#385/P8): present the UMP privacy-options form once the SPM package is linked.
       onComplete()
     }
+    // GoogleMobileAds is now linked (P8) — installs MainEntry.installAdViewFactory. See
+    // AdViewFactory.swift.
+    installAdViewFactory()
     // Register BGProcessingTask identifier "dev.fanfly.wingslog.blob-scan" with the OS.
     // Must be called before this method returns.
     MainEntry.shared.registerBgTasks()
