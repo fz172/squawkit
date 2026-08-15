@@ -11,7 +11,9 @@ import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.core.lifecycle.CurrentActivityProvider
 import dev.fanfly.wingslog.feature.ads.datamanager.AdConsentManager
 import dev.fanfly.wingslog.feature.ads.model.AdConsentState
+import dev.fanfly.wingslog.feature.developeroptions.datamanager.DeveloperOptionsManager
 import kotlin.coroutines.resume
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.suspendCancellableCoroutine
 
 /**
@@ -36,6 +38,7 @@ internal class AndroidAdConsentManager(
   private val application: Application,
   private val activityProvider: CurrentActivityProvider,
   private val appCapability: AppCapability,
+  private val developerOptionsManager: DeveloperOptionsManager,
 ) : AdConsentManager {
 
   override suspend fun ensureConsent(): AdConsentState {
@@ -49,11 +52,16 @@ internal class AndroidAdConsentManager(
     val params = ConsentRequestParameters.Builder()
       .apply {
         // Forces the EEA form path on developer builds so the CMP is exercisable in dev/dogfood
-        // without a real EEA device or IP (design §8 "Done when").
+        // without a real EEA device or IP (design §8 "Done when"). UMP silently ignores this debug
+        // geography on any physical device it doesn't already recognize as a test device — emulators
+        // are exempt, but a real phone needs addTestDeviceHashedId or the form never appears and
+        // ensureConsent() resolves as if debug settings were never set at all.
         if (appCapability.isDeveloperOptionsSupported) {
+          val testDeviceHashedId = developerOptionsManager.observe().first().adConsentTestDeviceHashedId
           setConsentDebugSettings(
             ConsentDebugSettings.Builder(application)
               .setDebugGeography(ConsentDebugSettings.DebugGeography.DEBUG_GEOGRAPHY_EEA)
+              .apply { testDeviceHashedId?.let { addTestDeviceHashedId(it) } }
               .build()
           )
         }

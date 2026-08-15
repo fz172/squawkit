@@ -38,4 +38,13 @@ class DeveloperOptionsViewModel(
     }
   }
 
+  /** Registers this device with Google UMP so the EEA debug-geography override takes effect. */
+  fun setAdConsentTestDeviceHashedId(hashedId: String) {
+    viewModelScope.launch {
+      developerOptionsManager.update(
+        _flags.value.copy(adConsentTestDeviceHashedId = hashedId.ifBlank { null })
+      )
+    }
+  }
+
 }
