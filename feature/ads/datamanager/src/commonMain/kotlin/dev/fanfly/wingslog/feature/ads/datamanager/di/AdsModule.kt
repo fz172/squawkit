@@ -16,9 +16,9 @@ import org.koin.dsl.module
  * builds the same graph (a module added to one host but not the other surfaces as a runtime
  * `NoDefinitionFoundException`, not a compile error).
  *
- * Still to arrive:
- *
- * - `AdConsentManager` (P7) — `expect`/`actual`, no-op on web.
+ * `AdConsentManager`'s binding is `platformAdConsentModule`, registered alongside this one rather
+ * than folded in — it needs no collaborator from here, and keeping it separate mirrors
+ * `platformBillingModule` sitting next to `subscriptionModule`.
  */
 val adsModule: Module = module {
   // `single`, not `factory`: the 5-unit cap is one budget shared by all three surfaces. A second

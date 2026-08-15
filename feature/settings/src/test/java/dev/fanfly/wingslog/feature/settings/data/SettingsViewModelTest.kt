@@ -10,6 +10,7 @@ import dev.fanfly.wingslog.core.storage.DatabaseIntegrityChecker
 import dev.fanfly.wingslog.core.ui.theme.AppearanceController
 import dev.fanfly.wingslog.core.ui.theme.AppearanceMode
 import dev.fanfly.wingslog.core.ui.theme.AppearanceStore
+import dev.fanfly.wingslog.feature.ads.datamanager.AdConsentManager
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.developeroptions.datamanager.DeveloperFlags
 import dev.fanfly.wingslog.feature.developeroptions.datamanager.DeveloperOptionsManager
@@ -45,6 +46,7 @@ class SettingsViewModelTest {
   private lateinit var featureLabManager: DeveloperOptionsManager
   private lateinit var appearanceController: AppearanceController
   private lateinit var analyticsPreferenceController: AnalyticsPreferenceController
+  private lateinit var adConsentManager: AdConsentManager
   private lateinit var viewModel: SettingsViewModel
 
   /** In-memory [AppearanceStore] so the controller needs no platform backing in tests. */
@@ -74,6 +76,7 @@ class SettingsViewModelTest {
     attachmentManager = mockk(relaxed = true)
     dbChecker = mockk(relaxed = true)
     featureLabManager = mockk(relaxed = true)
+    adConsentManager = mockk(relaxed = true)
     appearanceController = AppearanceController(InMemoryAppearanceStore())
     analyticsPreferenceController = AnalyticsPreferenceController(
       InMemoryAnalyticsPreferenceStore(),
@@ -115,6 +118,7 @@ class SettingsViewModelTest {
         isSubscriptionSupported = false,
         isAdsSupported = false,
       ),
+      adConsentManager,
     )
 
     viewModel.logOut()
@@ -142,6 +146,7 @@ class SettingsViewModelTest {
         isSubscriptionSupported = false,
         isAdsSupported = false,
       ),
+      adConsentManager,
     )
 
     viewModel.logOut()
@@ -169,6 +174,7 @@ class SettingsViewModelTest {
         isSubscriptionSupported = false,
         isAdsSupported = false,
       ),
+      adConsentManager,
     )
 
     viewModel.logOut()
@@ -197,6 +203,7 @@ class SettingsViewModelTest {
         isSubscriptionSupported = false,
         isAdsSupported = false,
       ),
+      adConsentManager,
     )
 
     viewModel.logOut()
@@ -225,6 +232,7 @@ class SettingsViewModelTest {
         isSubscriptionSupported = false,
         isAdsSupported = false,
       ),
+      adConsentManager,
     )
 
     viewModel.logOut()
@@ -333,5 +341,6 @@ class SettingsViewModelTest {
       isSubscriptionSupported = false,
       isAdsSupported = false,
     ),
+    adConsentManager,
   )
 }

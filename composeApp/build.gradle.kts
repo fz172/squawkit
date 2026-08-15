@@ -65,6 +65,8 @@ kotlin {
       implementation(project(":feature:shell"))
       implementation(project(":feature:sync:data"))
       implementation(project(":feature:stresstest:config"))
+      // IosAdConsentBridge — wired from MainViewController.kt, same shape as the App Check bridge.
+      implementation(project(":feature:ads:datamanager"))
 
       implementation(libs.compose.ui)
       implementation(libs.material3)

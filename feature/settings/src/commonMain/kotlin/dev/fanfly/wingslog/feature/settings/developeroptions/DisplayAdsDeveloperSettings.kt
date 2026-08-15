@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -14,6 +15,9 @@ import androidx.compose.ui.text.font.FontWeight
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.settings.generated.resources.Res
+import wingslog.feature.settings.generated.resources.developer_options_consent_test_device_placeholder
+import wingslog.feature.settings.generated.resources.developer_options_consent_test_device_subtitle
+import wingslog.feature.settings.generated.resources.developer_options_consent_test_device_title
 import wingslog.feature.settings.generated.resources.developer_options_force_ads_subtitle
 import wingslog.feature.settings.generated.resources.developer_options_force_ads_title
 
@@ -25,6 +29,8 @@ import wingslog.feature.settings.generated.resources.developer_options_force_ads
 fun DisplayAdsDeveloperSettings(
   forceAds: Boolean,
   onToggleForceAds: (Boolean) -> Unit,
+  adConsentTestDeviceHashedId: String?,
+  onAdConsentTestDeviceHashedIdChange: (String) -> Unit,
 ) {
   Row(
     modifier = Modifier
@@ -45,5 +51,31 @@ fun DisplayAdsDeveloperSettings(
       )
     }
     Switch(checked = forceAds, onCheckedChange = onToggleForceAds)
+  }
+
+  Column(
+    modifier = Modifier
+      .fillMaxWidth()
+      .padding(vertical = Spacing.medium),
+  ) {
+    Text(
+      text = stringResource(Res.string.developer_options_consent_test_device_title),
+      style = MaterialTheme.typography.bodyLarge,
+      fontWeight = FontWeight.Medium,
+    )
+    Text(
+      text = stringResource(Res.string.developer_options_consent_test_device_subtitle),
+      style = MaterialTheme.typography.bodySmall,
+      color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    OutlinedTextField(
+      value = adConsentTestDeviceHashedId.orEmpty(),
+      onValueChange = onAdConsentTestDeviceHashedIdChange,
+      placeholder = { Text(stringResource(Res.string.developer_options_consent_test_device_placeholder)) },
+      singleLine = true,
+      modifier = Modifier
+        .fillMaxWidth()
+        .padding(top = Spacing.small),
+    )
   }
 }

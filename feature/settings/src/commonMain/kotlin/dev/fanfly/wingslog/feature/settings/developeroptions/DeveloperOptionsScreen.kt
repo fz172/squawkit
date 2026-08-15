@@ -78,6 +78,8 @@ fun DeveloperOptionsScreen(
         DisplayAdsDeveloperSettings(
           forceAds = flags.forceAds,
           onToggleForceAds = viewModel::setForceAds,
+          adConsentTestDeviceHashedId = flags.adConsentTestDeviceHashedId,
+          onAdConsentTestDeviceHashedIdChange = viewModel::setAdConsentTestDeviceHashedId,
         )
         HorizontalDivider()
 

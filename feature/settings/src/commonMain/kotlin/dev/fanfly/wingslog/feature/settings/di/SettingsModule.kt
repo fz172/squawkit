@@ -6,6 +6,7 @@ import dev.fanfly.wingslog.core.auth.AccountDeleter
 import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.core.storage.DatabaseIntegrityChecker
 import dev.fanfly.wingslog.core.ui.theme.AppearanceController
+import dev.fanfly.wingslog.feature.ads.datamanager.AdConsentManager
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.developeroptions.datamanager.DeveloperOptionsManager
 import dev.fanfly.wingslog.feature.settings.data.SettingsViewModel
@@ -24,6 +25,7 @@ val settingsModule = module {
       get<AppearanceController>(),
       get<AnalyticsPreferenceController>(),
       get<AppCapability>(),
+      get<AdConsentManager>(),
     )
   }
   viewModel { DeveloperOptionsViewModel(get<DeveloperOptionsManager>()) }

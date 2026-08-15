@@ -15,6 +15,7 @@
   <string name="subscription_feature_records">Logs, tasks &amp; squawks</string>
   <string name="subscription_feature_export">Export to this device</string>
   <string name="subscription_feature_backup">Cloud backup &amp; sync</string>
+  <string name="subscription_feature_ads">Ad-free experience</string>
   <string name="subscription_feature_attachments">Photo &amp; file attachments</string>
   <string name="subscription_feature_email">Email a copy of exports</string>
   <string name="subscription_feature_sharing">Share aircraft &amp; collaborate with others</string>

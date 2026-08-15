@@ -22,6 +22,7 @@ class DeveloperOptionsMappingTest {
     val flags = DeveloperFlags(
       forceSubscriptionStatus = Subscription.Status.STATUS_PRO,
       forceAds = true,
+      adConsentTestDeviceHashedId = "33BE2250B43518CCDA7DE426D04EE231",
     )
 
     assertThat(flags.toProto().toDeveloperFlags()).isEqualTo(flags)
@@ -42,6 +43,14 @@ class DeveloperOptionsMappingTest {
 
     val tierOnly = DeveloperFlags(forceSubscriptionStatus = Subscription.Status.STATUS_FREE)
     assertThat(tierOnly.toProto().toDeveloperFlags().forceAds).isFalse()
+  }
+
+  @Test
+  fun `a blank test device hash maps back to null, not empty string`() {
+    assertThat(DeveloperFlags().toProto().toDeveloperFlags().adConsentTestDeviceHashedId).isNull()
+
+    val set = DeveloperFlags(adConsentTestDeviceHashedId = "ABC123")
+    assertThat(set.toProto().toDeveloperFlags().adConsentTestDeviceHashedId).isEqualTo("ABC123")
   }
 
   @Test

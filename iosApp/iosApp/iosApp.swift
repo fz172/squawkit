@@ -2,6 +2,7 @@ import SwiftUI
 import GoogleSignIn
 import FirebaseCore
 import FirebaseAppCheck
+import AppTrackingTransparency
 import ComposeApp
 
 
@@ -33,6 +34,26 @@ class AppDelegate: NSObject, UIApplicationDelegate {
     }
     MainEntry.shared.installAppleSignInHandler { [weak self] in
       self?.appleSignInProvider.signIn()
+    }
+    // ATT is real; the UMP half of consent resolution is TODO(#385/P8) — Google's UMP SDK ships in
+    // the same googleads-mobile-sdk-ios SPM package P8 adds for GADBannerView, which isn't linked on
+    // this target yet. Until then this reports PERSONALIZED/NON_PERSONALIZED off ATT alone, which is
+    // safe: AdView.ios.kt is still a no-op placeholder, so nothing here gates a real ad request yet.
+    MainEntry.shared.installAdConsentProvider { onResult in
+      ATTrackingManager.requestTrackingAuthorization { status in
+        DispatchQueue.main.async {
+          switch status {
+          case .authorized:
+            onResult("PERSONALIZED")
+          default:
+            onResult("NON_PERSONALIZED")
+          }
+        }
+      }
+    }
+    MainEntry.shared.installAdPrivacyOptionsPresenter { onComplete in
+      // TODO(#385/P8): present the UMP privacy-options form once the SPM package is linked.
+      onComplete()
     }
     // Register BGProcessingTask identifier "dev.fanfly.wingslog.blob-scan" with the OS.
     // Must be called before this method returns.

@@ -15,4 +15,12 @@ data class DeveloperFlags(
    * AdsManagerImpl.
    */
   val forceAds: Boolean = false,
+  /**
+   * Registers this device with Google UMP as a debug/test device, so the EEA debug-geography
+   * override `AndroidAdConsentManager` sets on developer builds actually takes effect — the SDK
+   * silently ignores it on any physical device that isn't already a recognized test device
+   * (emulators are exempt). `null`/blank = not registered. See `DisplayAdsDeveloperSettings` for
+   * where to find a device's hash in Logcat.
+   */
+  val adConsentTestDeviceHashedId: String? = null,
 )

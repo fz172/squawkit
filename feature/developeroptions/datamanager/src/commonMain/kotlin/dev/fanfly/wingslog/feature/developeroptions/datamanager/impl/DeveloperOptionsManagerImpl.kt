@@ -60,11 +60,13 @@ class DeveloperOptionsManagerImpl(
 internal fun DeveloperSettings.toDeveloperFlags() = DeveloperFlags(
   forceSubscriptionStatus = force_subscription_status.toSubscriptionStatusOrNull(),
   forceAds = force_ads,
+  adConsentTestDeviceHashedId = ad_consent_test_device_hashed_id.ifBlank { null },
 )
 
 internal fun DeveloperFlags.toProto() = DeveloperSettings(
   force_subscription_status = forceSubscriptionStatus.toForceProto(),
   force_ads = forceAds,
+  ad_consent_test_device_hashed_id = adConsentTestDeviceHashedId.orEmpty(),
 )
 
 private fun DeveloperSettings.ForceSubscriptionStatus.toSubscriptionStatusOrNull(): Subscription.Status? =
