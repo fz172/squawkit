@@ -78,6 +78,15 @@ interface LocalBlobStore {
   suspend fun markFailedPermanent(id: BlobId, cause: Throwable)
 
   /**
+   * REMOTE_ONLY → REMOTE_MISSING. The download found no object at `remote_path` (#426).
+   *
+   * Terminal: unlike [markFailedTransient] this must NOT leave the row in a state the scheduler
+   * picks up again. A 404 from Storage is an answer, not an outage — retrying it forever is what
+   * kept a dead blob waking WorkManager and stalling every export that touched it.
+   */
+  suspend fun markRemoteMissing(id: BlobId, cause: Throwable)
+
+  /**
    * Verify [bytes]'s sha256 matches [expectedSha256], write to disk, flip REMOTE_ONLY → SYNCED.
    * On mismatch returns [Result.failure] with [IntegrityError] and writes nothing — the row stays
    * REMOTE_ONLY so the caller can retry.

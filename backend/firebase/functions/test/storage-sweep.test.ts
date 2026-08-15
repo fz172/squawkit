@@ -15,11 +15,21 @@ const DEFAULTS = { dryRun: false, tombstoneRetentionDays: 30, orphanGraceDays: 7
 const daysAgo = (n: number) => Timestamp.fromMillis(Date.now() - n * 24 * 60 * 60 * 1000);
 const blobPath = (id: string) => `users/${UID}/aircraft/${AC}/blobs/${id}`;
 
-function logPayload(...ids: string[]): Buffer {
+/**
+ * A payload in the shape the CLIENT actually writes: **base64 text**, not bytes.
+ *
+ * This fixture used to return a Buffer, which is what let #428 ship — the sweep decoded Buffers
+ * happily in tests while production handed it a base64 string that silently decoded to an empty
+ * record, so every blob looked unreferenced and was deleted. A fixture that does not match the
+ * wire proves nothing.
+ */
+function logPayload(...ids: string[]): string {
   const attachments = ids.map((id) =>
     Attachment.fromPartial({ id, name: `${id}.jpg`, type: AttachmentType.ATTACHMENT_TYPE_IMAGE }),
   );
-  return Buffer.from(MaintenanceLog.encode(MaintenanceLog.fromPartial({ id: "l", attachments })).finish());
+  return Buffer.from(
+    MaintenanceLog.encode(MaintenanceLog.fromPartial({ id: "l", attachments })).finish(),
+  ).toString("base64");
 }
 
 async function putLog(id: string, opts: { deleted: boolean; ageDays?: number; blobs?: string[] }) {
@@ -125,7 +135,7 @@ describe("orphan blob collection", () => {
     await adminDb.doc(`users/${UID}/aircraft/${AC}/maintenance_log/corrupt`).set({
       deleted: false,
       schema: "aircraft.MaintenanceLog",
-      payload: Buffer.from([0xff, 0xff, 0xff, 0xff]),
+      payload: Buffer.from([0xff, 0xff, 0xff, 0xff]).toString("base64"),
     });
 
     const report = await runStorageSweep({ ...DEFAULTS, orphanGraceDays: 0 });
@@ -133,6 +143,25 @@ describe("orphan blob collection", () => {
     expect(report.aircraftSkipped).toBe(1);
     expect(report.orphanBlobsCollected).toBe(0);
     expect(await blobExists("maybe-orphan")).toBe(true);
+  });
+
+  /**
+   * #428, the one that cost real photos. A payload whose shape the sweep cannot read must skip the
+   * aircraft, never resolve to "references nothing" — because that verdict deletes every blob.
+   */
+  it("SKIPS the aircraft when a payload is not a shape it can read", async () => {
+    await putBlob("keep-me");
+    await adminDb.doc(`users/${UID}/aircraft/${AC}/maintenance_log/weird`).set({
+      deleted: false,
+      schema: "aircraft.MaintenanceLog",
+      payload: 12345, // neither base64 text nor bytes
+    });
+
+    const report = await runStorageSweep({ ...DEFAULTS, orphanGraceDays: 0 });
+
+    expect(report.aircraftSkipped).toBe(1);
+    expect(report.orphanBlobsCollected).toBe(0);
+    expect(await blobExists("keep-me")).toBe(true);
   });
 
   it("leaves a blob younger than the grace window alone", async () => {

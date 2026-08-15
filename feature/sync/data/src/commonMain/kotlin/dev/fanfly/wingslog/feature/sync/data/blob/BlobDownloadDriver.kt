@@ -20,6 +20,9 @@ import io.ktor.client.statement.readRawBytes
  * the sha256 and writes to disk.
  *
  * Returns `true` on terminal success or permanent failure; `false` on transient failure.
+ *
+ * A missing remote object (Storage 404) is a **permanent** failure and moves the row to
+ * `REMOTE_MISSING` (#426) — see [isRemoteObjectMissing].
  */
 class BlobDownloadDriver(
   private val blobs: LocalBlobStore,
@@ -62,6 +65,14 @@ class BlobDownloadDriver(
           .readRawBytes()
       }
     } catch (e: Exception) {
+      // A 404 is an answer, not an outage: the object is gone and no amount of retrying brings it
+      // back (#426). Left as transient it kept WorkManager rescheduling this job for the life of
+      // the install, and made every export wait out ensureLocal's full timeout on the same blob.
+      if (e.isRemoteObjectMissing()) {
+        blobs.markRemoteMissing(id, e)
+        log.w(e) { "download permanent failure for ${id.value}: no object at $remotePath" }
+        return true
+      }
       log.w(e) { "download transient failure for ${id.value}; will retry" }
       return false
     }

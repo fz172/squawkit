@@ -154,7 +154,8 @@ class UrlSessionUploadScheduler(
     }
 
     when (row.remote_state) {
-      RemoteState.Synced, RemoteState.RemoteOnly -> return
+      // RemoteMissing joins them: nothing to upload, and no bytes to upload it from (#426).
+      RemoteState.Synced, RemoteState.RemoteOnly, RemoteState.RemoteMissing -> return
       RemoteState.Uploading -> {
         val existingUri = row.resume_url
         if (existingUri != null) {

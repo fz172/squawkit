@@ -366,6 +366,8 @@ private class RecordingBlobStore : LocalBlobStore {
   override suspend fun markFailedPermanent(id: BlobId, cause: Throwable): Unit =
     notUsed()
 
+  override suspend fun markRemoteMissing(id: BlobId, cause: Throwable): Unit = notUsed()
+
   override suspend fun installDownloaded(
     id: BlobId,
     bytes: ByteArray,

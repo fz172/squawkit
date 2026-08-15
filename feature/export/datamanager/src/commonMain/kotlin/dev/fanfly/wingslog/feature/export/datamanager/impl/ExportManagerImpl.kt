@@ -61,6 +61,15 @@ class ExportManagerImpl(
     val attachmentManifests = bundles.associate { bundle ->
       bundle.aircraft.id to attachmentExportResolver.resolve(bundle)
     }
+    // The one line that says whether this export is whole. Nothing else did: the ZIP carries the
+    // notes, but a pilot reporting "it looks fine" and a log showing nothing were indistinguishable.
+    val embedded = attachmentManifests.values.sumOf { it.byAttachmentId.size }
+    val unavailable = attachmentManifests.values.sumOf { it.notes.size }
+    if (unavailable > 0) {
+      log.w { "Export is PARTIAL: $embedded attachments embedded, $unavailable unavailable" }
+    } else {
+      log.i { "Export attachments complete: $embedded embedded" }
+    }
 
     emit(
       ExportProgress.Running(
