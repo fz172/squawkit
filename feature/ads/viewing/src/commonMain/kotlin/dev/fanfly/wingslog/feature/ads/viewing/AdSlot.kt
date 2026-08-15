@@ -126,10 +126,10 @@ fun AdSlot(
     Column(
       modifier = Modifier
         .fillMaxWidth()
-        // Horizontal padding trimmed from Spacing.medium: the creative is a fixed size regardless
-        // of how wide this card is, so less horizontal inset here means less dead space beside it.
-        .padding(horizontal = Spacing.small, vertical = Spacing.medium),
-      verticalArrangement = Arrangement.spacedBy(Spacing.small),
+        // Both axes trimmed from Spacing.medium: the creative is a fixed size regardless of how
+        // big this card is, so less inset all around means less dead space around it.
+        .padding(horizontal = Spacing.small, vertical = Spacing.small),
+      verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
     ) {
       Text(
         text = stringResource(Res.string.ads_sponsored_label),
