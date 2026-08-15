@@ -27,6 +27,7 @@ mockk = "1.14.11"
 navigationCompose = "2.9.2"
 playServicesAds = "24.6.0"
 playServicesAuth = "21.6.0"
+userMessagingPlatform = "4.0.0"
 purchasesKmp = "3.3.1"
 sqldelight = "2.3.2"
 truth = "1.4.5"
@@ -87,6 +88,7 @@ material3-adaptive-navigation-suite = { module = "org.jetbrains.compose.material
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 play-services-auth = { module = "com.google.android.gms:play-services-auth", version.ref = "playServicesAuth" }
 play-services-ads = { module = "com.google.android.gms:play-services-ads", version.ref = "playServicesAds" }
+user-messaging-platform = { module = "com.google.android.ump:user-messaging-platform", version.ref = "userMessagingPlatform" }
 # RevenueCat KMP — Android + iOS only (no JS variant is published), so these may only be
 # referenced from `feature/subscription/billing`, which does not declare a web target.
 purchases-kmp-core = { module = "com.revenuecat.purchases:purchases-kmp-core", version.ref = "purchasesKmp" }

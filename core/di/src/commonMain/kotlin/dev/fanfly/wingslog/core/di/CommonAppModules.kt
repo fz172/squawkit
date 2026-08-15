@@ -13,6 +13,7 @@ import dev.fanfly.wingslog.core.storage.di.storageModule
 import dev.fanfly.wingslog.core.ui.theme.di.appearanceModule
 import dev.fanfly.wingslog.core.ui.theme.di.appearanceStoreModule
 import dev.fanfly.wingslog.feature.ads.datamanager.di.adsModule
+import dev.fanfly.wingslog.feature.ads.datamanager.di.platformAdConsentModule
 import dev.fanfly.wingslog.feature.aircraft.dashboard.di.aircraftDashboardModule
 import dev.fanfly.wingslog.feature.aircraft.update.di.aircraftUpdateModule
 import dev.fanfly.wingslog.feature.attachment.datamanager.attachmentModule
@@ -90,6 +91,9 @@ val commonAppModules: List<Module> = listOf(
   // Ahead of adsModule: the ad session counter depends on the foreground observer, not the reverse.
   lifecycleModule,
   adsModule,
+  // Google UMP on Android/iOS's Swift bridge; the no-op binding on web. Same shape as
+  // platformBillingModule next to subscriptionModule.
+  platformAdConsentModule,
   technicianDataManagerModule,
   technicianManageModule,
   maintenanceDataManagerModule,

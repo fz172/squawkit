@@ -6,6 +6,7 @@ import dev.fanfly.wingslog.core.auth.IosAppleSignInBridge
 import dev.fanfly.wingslog.core.auth.IosGoogleSignInBridge
 import dev.fanfly.wingslog.core.storage.TombstoneGc
 import dev.fanfly.wingslog.di.initKoin
+import dev.fanfly.wingslog.feature.ads.datamanager.impl.IosAdConsentBridge
 import dev.fanfly.wingslog.feature.sharing.datamanager.AircraftShareDeepLinks
 import dev.fanfly.wingslog.feature.sync.data.SyncEngine
 import dev.fanfly.wingslog.feature.sync.data.blob.IosAppCheckBridge
@@ -49,6 +50,21 @@ object MainEntry {
    */
   fun installAppCheckTokenProvider(provider: (onToken: (String?) -> Unit) -> Unit) {
     IosAppCheckBridge.install(provider)
+  }
+
+  /**
+   * Installs the ad consent resolver owned by the Swift app (App Tracking Transparency, and — once
+   * P8 adds the SPM package — Google UMP, are both Swift-side concerns; see `IosAdConsentBridge`).
+   * [provider] is invoked with a callback that must be called with one of
+   * `"PERSONALIZED"`/`"NON_PERSONALIZED"`/`"DENIED"`.
+   */
+  fun installAdConsentProvider(provider: (onResult: (String) -> Unit) -> Unit) {
+    IosAdConsentBridge.installConsentProvider(provider)
+  }
+
+  /** Installs the Settings → "Ad privacy settings" re-presentation of the CMP form. */
+  fun installAdPrivacyOptionsPresenter(presenter: (onComplete: () -> Unit) -> Unit) {
+    IosAdConsentBridge.installPrivacyOptionsPresenter(presenter)
   }
 
   /**

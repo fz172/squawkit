@@ -9,6 +9,7 @@ import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.core.storage.DatabaseIntegrityChecker
 import dev.fanfly.wingslog.core.ui.theme.AppearanceController
 import dev.fanfly.wingslog.core.ui.theme.AppearanceMode
+import dev.fanfly.wingslog.feature.ads.datamanager.AdConsentManager
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.developeroptions.datamanager.DeveloperOptionsManager
 import kotlinx.coroutines.Job
@@ -26,6 +27,7 @@ class SettingsViewModel(
   private val appearanceController: AppearanceController,
   private val analyticsPreferenceController: AnalyticsPreferenceController,
   private val appCapability: AppCapability,
+  private val adConsentManager: AdConsentManager,
 ) : ViewModel() {
 
   private val _user =
@@ -33,6 +35,7 @@ class SettingsViewModel(
       SettingsUiState(
         isDeveloperOptionsSupported = appCapability.isDeveloperOptionsSupported,
         isSubscriptionSupported = appCapability.isSubscriptionSupported,
+        isAdsSupported = appCapability.isAdsSupported,
       )
     )
   val user: StateFlow<SettingsUiState> = _user.asStateFlow()
@@ -79,7 +82,13 @@ class SettingsViewModel(
       isAnonymous = authManager.getCurrentUser()?.isAnonymous == true,
       isDeveloperOptionsSupported = appCapability.isDeveloperOptionsSupported,
       isSubscriptionSupported = appCapability.isSubscriptionSupported,
+      isAdsSupported = appCapability.isAdsSupported,
     )
+  }
+
+  /** Re-presents the CMP's privacy-options form, for "Ad privacy settings". */
+  fun presentAdPrivacyOptions() {
+    viewModelScope.launch { adConsentManager.presentPrivacyOptions() }
   }
 
   /**

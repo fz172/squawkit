@@ -51,6 +51,13 @@ kotlin {
       // dependency the module has no other use for.
       implementation(libs.koin.core)
     }
+    androidMain.dependencies {
+      // AdConsentManager only — this module never touches Google Mobile Ads itself (design N4
+      // reserves that to feature/ads/viewing). UMP is Google's own consent SDK, not the ads SDK.
+      implementation(libs.user.messaging.platform)
+      // androidContext() in PlatformAdConsentModule.android.kt.
+      implementation(libs.koin.android)
+    }
   }
 }
 

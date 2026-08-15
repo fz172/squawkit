@@ -13,6 +13,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -26,7 +27,9 @@ import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LayoutTier
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.feature.ads.datamanager.AdConsentManager
 import dev.fanfly.wingslog.feature.ads.datamanager.AdsManager
+import dev.fanfly.wingslog.feature.ads.model.AdConsentState
 import dev.fanfly.wingslog.feature.ads.model.AdLayoutTier
 import dev.fanfly.wingslog.feature.ads.model.AdSlotFormat
 import dev.fanfly.wingslog.feature.ads.model.AdSlotKey
@@ -79,11 +82,21 @@ fun AdSlot(
   modifier: Modifier = Modifier,
 ) {
   val adsManager: AdsManager = koinInject()
+  val adConsentManager: AdConsentManager = koinInject()
   val appCapability: AppCapability = koinInject()
   val analytics = LocalAnalytics.current
   val adTier = LocalLayoutTier.current.toAdLayoutTier()
 
   val key = remember(surface, slotIndex) { AdSlotKey(surface, slotIndex) }
+
+  // Consent is resolved before anything else touches the session budget or requests a creative
+  // (design §8's ordering: showsAds() → ensureConsent() → MobileAds.initialize() → first request).
+  // Nothing is claimed or shown while this is unresolved — same zero-height contract as "no unit
+  // granted" below — and a slot the CMP says must not request ads at all never reaches `reserve()`.
+  var consent by remember(key) { mutableStateOf<AdConsentState?>(null) }
+  LaunchedEffect(key) { consent = adConsentManager.ensureConsent() }
+  if (consent == null || consent == AdConsentState.DENIED) return
+
   // The counter, not this composable, owns the grant: a slot disposed by scrolling or a tab switch
   // comes back as a fresh composable, and reserve() is idempotent per key so it gets the same answer
   // rather than paying again — or, at the cap, being refused an ad the pilot has already seen.

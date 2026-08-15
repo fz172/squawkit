@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.feature.subscription.viewing.viewmodel
 
 import com.google.common.truth.Truth.assertThat
+import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.feature.subscription.datamanager.EntitlementReconciler
 import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
@@ -526,11 +527,21 @@ class SubscriptionUiStateTest {
     billingManager: BillingManager = UnsupportedBillingManager,
     isGuest: Boolean = false,
     subscription: Subscription = ALREADY_LINKED,
+    isAdsSupported: Boolean = false,
   ) = SubscriptionViewModel(
     subscriptionManager = FixedSubscriptionManager(status, subscription),
     billingManager = billingManager,
     entitlementReconciler = reconciler,
     authManager = authManager(isGuest),
+    appCapability = AppCapability(
+      isDeveloperOptionsSupported = false,
+      isAircraftSharingSupported = false,
+      isStressTestSupported = false,
+      isCameraCaptureSupported = false,
+      isAnonymousLoginSupported = false,
+      isSubscriptionSupported = false,
+      isAdsSupported = isAdsSupported,
+    ),
     activationGraceMillis = GRACE,
   )
 

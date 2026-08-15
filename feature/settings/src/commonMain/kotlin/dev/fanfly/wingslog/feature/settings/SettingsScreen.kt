@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.CloudSync
 import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.Engineering
 import androidx.compose.material.icons.filled.FileDownload
+import androidx.compose.material.icons.filled.PrivacyTip
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.WorkspacePremium
 import androidx.compose.material3.MaterialTheme
@@ -54,6 +55,8 @@ import wingslog.feature.settings.generated.resources.account_upgrade_link_cta
 import wingslog.feature.settings.generated.resources.account_upgrade_link_subtitle
 import wingslog.feature.settings.generated.resources.app_version
 import wingslog.feature.settings.generated.resources.developer_options
+import wingslog.feature.settings.generated.resources.settings_ad_privacy
+import wingslog.feature.settings.generated.resources.settings_ad_privacy_subtitle
 import wingslog.feature.settings.generated.resources.settings_delete_account
 import wingslog.feature.settings.generated.resources.settings_delete_account_subtitle
 import wingslog.feature.settings.generated.resources.settings_developer_options_subtitle
@@ -189,6 +192,17 @@ fun SettingsContent(
               enabled = firebaseLoggingEnabled,
               onEnabledChange = settingsViewModel::setFirebaseLoggingEnabled,
             )
+          }
+          // Only where this build actually ships ads — otherwise there is no CMP to re-present (#384).
+          if (user.isAdsSupported) {
+            add {
+              SettingsRow(
+                icon = Icons.Default.PrivacyTip,
+                title = stringResource(SettingsRes.string.settings_ad_privacy),
+                subtitle = stringResource(SettingsRes.string.settings_ad_privacy_subtitle),
+                onClick = settingsViewModel::presentAdPrivacyOptions,
+              )
+            }
           }
           // Developer Options is a developer surface: only on debug and dogfood-style builds, never in release.
           if (user.isDeveloperOptionsSupported) {

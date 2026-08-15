@@ -48,6 +48,7 @@ import wingslog.feature.subscription.viewing.generated.resources.subscription_co
 import wingslog.feature.subscription.viewing.generated.resources.subscription_compare_subhead
 import wingslog.feature.subscription.viewing.generated.resources.subscription_cta_caption
 import wingslog.feature.subscription.viewing.generated.resources.subscription_cta_subscribe
+import wingslog.feature.subscription.viewing.generated.resources.subscription_feature_ads
 import wingslog.feature.subscription.viewing.generated.resources.subscription_feature_aircraft
 import wingslog.feature.subscription.viewing.generated.resources.subscription_feature_attachments
 import wingslog.feature.subscription.viewing.generated.resources.subscription_feature_backup
@@ -83,7 +84,7 @@ internal fun ProPaywallContent(
   )
 
   BillingNote()
-  ComparisonTable()
+  ComparisonTable(isAdsSupported = state.isAdsSupported)
 
   Button(
     onClick = onSubscribe,
@@ -168,7 +169,7 @@ private fun BillingNote() {
 }
 
 @Composable
-private fun ComparisonTable() {
+private fun ComparisonTable(isAdsSupported: Boolean) {
   SubscriptionPanel {
     CompareHeader()
     CompareRow(
@@ -191,6 +192,15 @@ private fun ComparisonTable() {
       Cell.Yes,
       Cell.Yes
     )
+    // Only in a build that actually ships ads (#384) — the table has to describe the build the
+    // pilot is holding, not one where this row would be advertising a feature that doesn't exist.
+    if (isAdsSupported) {
+      CompareRow(
+        stringResource(Res.string.subscription_feature_ads),
+        Cell.No,
+        Cell.Yes
+      )
+    }
     CompareRow(
       stringResource(Res.string.subscription_feature_attachments),
       Cell.No,
