@@ -21,6 +21,7 @@
 		3D25BC352F701A7500EFFADF /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = 3D25BC342F701A7500EFFADF /* GoogleSignIn */; };
 		3DE64245300DD3DF000D1143 /* FirebaseAppCheck in Frameworks */ = {isa = PBXBuildFile; productRef = 3DE64244300DD3DF000D1143 /* FirebaseAppCheck */; };
 		F03C4F08C49BAC1B7760B3F8 /* GoogleMobileAds in Frameworks */ = {isa = PBXBuildFile; productRef = 3197832B061154A7275175D9 /* GoogleMobileAds */; };
+		F20FE4608ED8B667DA96EF43 /* GoogleUserMessagingPlatform in Frameworks */ = {isa = PBXBuildFile; productRef = CE3BAAA26B14222FAB28C158 /* GoogleUserMessagingPlatform */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -67,6 +68,7 @@
 				3D25BC182F6FC23100EFFADF /* FirebaseStorageCombine-Community in Frameworks */,
 				3D25BC142F6FC23100EFFADF /* FirebaseFirestoreCombine-Community in Frameworks */,
 				F03C4F08C49BAC1B7760B3F8 /* GoogleMobileAds in Frameworks */,
+				F20FE4608ED8B667DA96EF43 /* GoogleUserMessagingPlatform in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -132,6 +134,7 @@
 				3D25BC342F701A7500EFFADF /* GoogleSignIn */,
 				3DE64244300DD3DF000D1143 /* FirebaseAppCheck */,
 				3197832B061154A7275175D9 /* GoogleMobileAds */,
+				CE3BAAA26B14222FAB28C158 /* GoogleUserMessagingPlatform */,
 			);
 			productName = iosApp;
 			productReference = 3D25BBF32F6FBB7500EFFADF /* iosApp.app */;
@@ -165,6 +168,7 @@
 				3D25BC062F6FC23100EFFADF /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 				3D25BC362F701A7500EFFADF /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
 				320A2DE8195F370A4DAFCAD8 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */,
+				3911BFF1622934C121C5D707 /* XCRemoteSwiftPackageReference "swift-package-manager-google-user-messaging-platform" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 3D25BBF42F6FBB7500EFFADF /* Products */;
@@ -453,6 +457,14 @@
 				minimumVersion = 13.0.0;
 			};
 		};
+		3911BFF1622934C121C5D707 /* XCRemoteSwiftPackageReference "swift-package-manager-google-user-messaging-platform" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/googleads/swift-package-manager-google-user-messaging-platform.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 3.0.0;
+			};
+		};
 		3D25BC062F6FC23100EFFADF /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
@@ -541,6 +553,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 3D25BC062F6FC23100EFFADF /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseAppCheck;
+		};
+		CE3BAAA26B14222FAB28C158 /* GoogleUserMessagingPlatform */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 3911BFF1622934C121C5D707 /* XCRemoteSwiftPackageReference "swift-package-manager-google-user-messaging-platform" */;
+			productName = GoogleUserMessagingPlatform;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
