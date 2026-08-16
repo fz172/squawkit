@@ -14,6 +14,12 @@ enum class AdConsentState {
    */
   NON_PERSONALIZED,
 
-  /** The user declined the CMP outright. Treated identically to [NON_PERSONALIZED] at request time. */
+  /**
+   * The user rejected consent outright (a CMP "reject all"), which necessarily also rejects TCF
+   * Purpose 1 (device storage/access) — the one purpose with no legitimate-interest fallback, so no
+   * ad request has any legal basis. Unlike [NON_PERSONALIZED], no request is made at all; the ad
+   * slot renders nothing (zero-height, per design G5). A partial decline that leaves Purpose 1 and
+   * legitimate-interest-backed purposes intact resolves to [NON_PERSONALIZED] instead, not this.
+   */
   DENIED,
 }

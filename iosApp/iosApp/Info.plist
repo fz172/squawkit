@@ -23,8 +23,6 @@
 	<true/>
 	<key>NSCameraUsageDescription</key>
 	<string>SquawkIt uses the camera to attach photos to logbook entries and squawks.</string>
-	<key>NSUserTrackingUsageDescription</key>
-	<string>SquawkIt shows the occasional ad on the free tier. Allowing tracking lets those ads be more relevant to you.</string>
 	<key>GADApplicationIdentifier</key>
 	<string>ca-app-pub-1367143209408464~7985516359</string>
     <key>CADisableMinimumFrameDurationOnPhone</key>

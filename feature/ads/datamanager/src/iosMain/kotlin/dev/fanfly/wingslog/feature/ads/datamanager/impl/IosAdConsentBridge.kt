@@ -8,13 +8,13 @@ import kotlin.coroutines.resume
 import kotlin.time.Duration.Companion.seconds
 
 /**
- * Bridge for iOS ad consent. UMP and ATT are both Swift-side concerns — App Tracking Transparency is
- * a native framework Swift must call from the app target, and Google UMP has no cinterop path here
- * (`iosApp` has no Podfile; SPM only) — so the host installs providers via
+ * Bridge for iOS ad consent. UMP is a Swift-side concern — it has no cinterop path here (`iosApp`
+ * has no Podfile; SPM only) — so the host installs providers via
  * `MainEntry.installAdConsentProvider`/`installAdPrivacyOptionsPresenter`, exactly as
  * `IosAppCheckBridge` does for the App Check token. Left uninstalled → falls back to
  * [AdConsentState.NON_PERSONALIZED] / a no-op, the same "degrade rather than crash" shape as every
- * other iOS ads actual (design §7.2).
+ * other iOS ads actual (design §7.2). No ATT here by product decision — see
+ * `iosApp/AdConsentPresenter.swift`.
  */
 object IosAdConsentBridge {
   private var consentProvider: ((onResult: (String) -> Unit) -> Unit)? = null

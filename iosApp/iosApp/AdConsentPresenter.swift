@@ -1,17 +1,24 @@
 import ComposeApp
-import AppTrackingTransparency
 import UserMessagingPlatform
 
-/// Real Google UMP + ATT, now that P8 links `googleads-mobile-sdk-ios` (which brings
+/// Real Google UMP, now that P8 links `googleads-mobile-sdk-ios` (which brings
 /// `UserMessagingPlatform` in as a transitive SPM dependency — see that package's `Package.swift`).
 /// Installs `MainEntry.installAdConsentProvider`/`installAdPrivacyOptionsPresenter`, replacing the
 /// ATT-only stub from P7.
 ///
-/// Order matters (design §8): the CMP resolves before ATT is ever requested, since a pilot who
-/// hasn't cleared consent shouldn't be prompted for tracking permission a moment later for the same
-/// underlying purpose. `ConsentForm.loadAndPresentIfRequired`/`presentPrivacyOptionsForm` are
-/// passed a `nil` view controller deliberately — the SDK itself resolves the top view controller of
-/// the key window, the same lookup `NativeGoogleSignInProvider` does by hand for its own sheet.
+/// **No ATT prompt, by product decision.** Apple only requires App Tracking Transparency when an
+/// app actually reads IDFA / tracks a user across other companies' apps or sites for targeted ads
+/// (App Store Review Guideline 5.1.2) — it is not a prerequisite for serving ads at all. Stacking it
+/// after the CMP would ask an EEA/UK pilot two separate consent questions back to back for what
+/// reads to them as the same thing. A declined ATT prompt already collapsed to `NON_PERSONALIZED`
+/// here (identical to a partial CMP decline), so skipping it entirely loses no ad-serving capability
+/// — it only forgoes the IDFA-targeted tier ATT approval would have unlocked. iOS therefore never
+/// resolves to `PERSONALIZED`; only Android does, via UMP consent alone (no ATT-equivalent gate
+/// exists on that platform).
+///
+/// `ConsentForm.loadAndPresentIfRequired`/`presentPrivacyOptionsForm` are passed a `nil` view
+/// controller deliberately — the SDK itself resolves the top view controller of the key window, the
+/// same lookup `NativeGoogleSignInProvider` does by hand for its own sheet.
 func installAdConsentProvider() {
     MainEntry.shared.installAdConsentProvider { onResult in
         let params = RequestParameters()
@@ -31,24 +38,12 @@ func installAdConsentProvider() {
 
         ConsentInformation.shared.requestConsentInfoUpdate(with: params) { error in
             if error != nil {
-                requestTrackingAuthorization { authorized in
-                    onResult(authorized ? "PERSONALIZED" : "NON_PERSONALIZED")
-                }
+                onResult("NON_PERSONALIZED")
                 return
             }
 
             ConsentForm.loadAndPresentIfRequired(from: nil) { _ in
-                guard ConsentInformation.shared.canRequestAds else {
-                    onResult("DENIED")
-                    return
-                }
-                requestTrackingAuthorization { authorized in
-                    let privacyChoiceRequired =
-                        ConsentInformation.shared.privacyOptionsRequirementStatus == .required
-                    onResult(
-                        (privacyChoiceRequired || !authorized) ? "NON_PERSONALIZED" : "PERSONALIZED"
-                    )
-                }
+                onResult(ConsentInformation.shared.canRequestAds ? "NON_PERSONALIZED" : "DENIED")
             }
         }
     }
@@ -65,11 +60,3 @@ func installAdConsentProvider() {
 private let knownTestDeviceIdentifiers = [
     "41D04759-94D5-4CCD-9E1B-509EB6E90639",
 ]
-
-private func requestTrackingAuthorization(onResult: @escaping (Bool) -> Void) {
-    ATTrackingManager.requestTrackingAuthorization { status in
-        DispatchQueue.main.async {
-            onResult(status == .authorized)
-        }
-    }
-}
