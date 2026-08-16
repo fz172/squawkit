@@ -21,7 +21,7 @@ import com.google.android.gms.ads.AdView as GmsAdView
 /**
  * Initialised on first use rather than at app start.
  *
- * A Heavy subscriber's app must never start an ad SDK at all, and nothing reaches this file unless
+ * A Pro subscriber's app must never start an ad SDK at all, and nothing reaches this file unless
  * `AdsManager.showsAds()` already emitted true — so "first ad view composed" is exactly the moment
  * the SDK becomes justified. [AtomicBoolean] because `MobileAds.initialize` is cheap to call twice
  * but not free, and two slots can compose in the same frame.

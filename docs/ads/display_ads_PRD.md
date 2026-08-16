@@ -8,13 +8,12 @@
 > PRD; the app-side row ships with the feature, not before it (advertising "ad-free" while no one
 > sees ads is a lie in the other direction).
 
-> **Tier naming.** Shipped user-facing copy calls the tiers **Core** (free) and **Heavy** (paid) —
-> renamed from "Free" / "SquawkIt Pro" in #369, *display copy only*. The code keeps
-> `Subscription.Status.FREE` / `PRO`, the `subscription_col_free` / `subscription_col_pro` resource
-> ids, and the `SquawkIt Pro` RevenueCat entitlement id. This PRD uses **Core / Heavy for anything a
-> pilot reads** and the enum names when talking about gating. The subscription PRD's HTML table
-> still carries the pre-rename copy, so §9 mirrors it as-is rather than half-renaming someone else's
-> doc.
+> **Tier naming.** Shipped user-facing copy calls the tiers **Basic** (free) and **Pro** (paid) —
+> renamed from "Core" / "Heavy" (which had themselves been renamed from "Free" / "SquawkIt Pro" in
+> #369), *display copy only* each time. The code keeps `Subscription.Status.FREE` / `PRO`, the
+> `subscription_col_free` / `subscription_col_pro` resource ids, and the `SquawkIt Pro` RevenueCat
+> entitlement id — "Pro" as display copy now also matches that entitlement id exactly. This PRD uses
+> **Basic / Pro for anything a pilot reads** and the enum names when talking about gating.
 
 **Owner:** Product · **Status:** Proposed · **Date:** 2026-07-28
 **Revised:** 2026-07-29 — session cap 10 → 5 (D1); AdMob on Android/iOS in v1 (D6); web scheduled as
@@ -34,7 +33,7 @@ three record lists a pilot actually lives in — **squawks**, **maintenance task
 logs** — at a cadence of **one ad every 10 items**, with a single trailing ad for lists shorter than
 10 items and **no ad at all when a list is empty**. Volume is bounded by a hard **cap of 5 ad units
 per session** across all surfaces, and wide layouts render **thin** units — two side by side, or one
-centered — so a full-width slot never becomes a billboard. The paid tier (**Heavy**) remains
+centered — so a full-width slot never becomes a billboard. The paid tier (**Pro**) remains
 completely ad-free, and "Ad-free" becomes a line in the tier comparison table, giving the paywall a
 second, continuously visible argument.
 
@@ -435,7 +434,7 @@ Pro owner's shared aircraft sees ads; the Pro owner does not.
 Ad-free becomes a listed Pro benefit. The canonical table in
 [`subscription_PRD.html`](../subscription/subscription_PRD.html) §3 has been updated to:
 
-| Capability | Free | SquawkIt Pro |
+| Capability | Basic | SquawkIt Pro |
 |---|---|---|
 | Aircraft | **2** | Unlimited |
 | Maintenance logs, tasks & squawks | ✓ | ✓ |
@@ -472,7 +471,7 @@ Three properties of the change worth recording here, since this PRD is what moti
   attachments, email export, sharing, and ad removal carry conversion for that persona instead. Both
   the trigger and the persona rows in `subscription_PRD.html` were updated to say so rather than
   left contradicting the new limit.
-- **User-facing prose deliberately omits the count.** The comparison subhead reads "Core is a
+- **User-facing prose deliberately omits the count.** The comparison subhead reads "Basic is a
   complete logbook, backed up and synced" — the number lives only in the Aircraft table cell
   (`subscription_aircraft_free`). This is why the list above is five places and not more: keep the
   count out of sentences and the next limit change stays a one-cell edit instead of a copy sweep.
@@ -482,7 +481,7 @@ Row order mirrors the shipped HTML table; the *Ad-free* row is inserted after *C
 multi-device sync* and before *Share aircraft & invite others*. Mid-table rather than appended,
 deliberately: "Future premium features" is the table's closing catch-all line, and a concrete,
 shipped benefit should not sit below it. Column headers above are the doc's pre-rename copy; the
-in-app table's columns already read **Core** and **Heavy** (see the tier-naming note at the top),
+in-app table's columns already read **Basic** and **Pro** (see the tier-naming note at the top),
 and this row inherits those headers unchanged.
 
 **In-app parity (ships with the feature, not before).** The same row is added to the

@@ -7,7 +7,7 @@ import dev.fanfly.wingslog.feature.ads.model.AdConsentState
  * first ad request. `expect`/`actual` per platform; a no-op on web, which carries no ads in v1.
  *
  * **Ordering is a hard requirement** (design §8): the gate chain is `showsAds()` → `ensureConsent()`
- * → `MobileAds.initialize()` → first request, and every step is lazy. A Heavy user's app never
+ * → `MobileAds.initialize()` → first request, and every step is lazy. A Pro user's app never
  * starts an ad SDK, never calls a CMP, and never sees an ATT prompt — nothing here runs until a
  * caller has already decided an ad slot will render.
  */

@@ -34,8 +34,8 @@
   <string name="developer_options_force_subscription_title">Force subscription status</string>
   <string name="developer_options_force_subscription_subtitle">Make this account behave as the chosen tier, ignoring the real entitlement.</string>
   <string name="developer_options_force_off">Off</string>
-  <string name="developer_options_force_free">Core</string>
-  <string name="developer_options_force_pro">Heavy</string>
+  <string name="developer_options_force_free">Basic</string>
+  <string name="developer_options_force_pro">Pro</string>
   <string name="developer_options_force_ads_title">Force ads</string>
   <string name="developer_options_force_ads_subtitle">Show display ads on any account, ignoring the tier. Everything else behaves normally, including the limit of 5 ads per session.</string>
   <string name="developer_options_consent_test_device_title">UMP test device hash</string>
