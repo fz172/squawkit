@@ -13,6 +13,12 @@ val revenueCatBillingModule = module {
   single<BillingManager> {
     // `isDeveloperOptionsSupported` is the repo's `isDeveloperBuild` signal (see AppCapability), and
     // it is what picks the Test Store key over the production key.
-    RevenueCatBillingManager(isDeveloperBuild = get<AppCapability>().isDeveloperOptionsSupported)
+    RevenueCatBillingManager(
+      isDeveloperBuild = get<AppCapability>().isDeveloperOptionsSupported,
+      // TEMPORARY (revert before I3): forced on regardless of build type to chase the iOS Customer
+      // Center blank-screen issue via device console logs — see
+      // community.revenuecat.com/sdks-51/customer-center-blank-screen-kmp-6861 (unresolved upstream).
+      verboseLogging = true,
+    )
   }
 }
