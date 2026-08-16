@@ -539,7 +539,6 @@ class SubscriptionUiStateTest {
       isStressTestSupported = false,
       isCameraCaptureSupported = false,
       isAnonymousLoginSupported = false,
-      isSubscriptionSupported = false,
       isAdsSupported = isAdsSupported,
     ),
     activationGraceMillis = GRACE,

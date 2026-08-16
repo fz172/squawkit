@@ -21,7 +21,7 @@ import kotlin.time.Clock
 
 /**
  * Reads the entitlement from the local [EntityStore] on an auth-scoped `flatMapLatest`, resolves the
- * effective tier, and applies the default-open rollout gate and the developer force-status override.
+ * effective tier, and applies the developer force-status override.
  *
  * @param forceStatus a developer override stream; emits a forced tier or `null` for "no override".
  *   Defaults to none; Developer Options wires the real source in P3. Honored only in developer
@@ -76,29 +76,19 @@ class SubscriptionManagerImpl(
   override fun canHostShare(): Flow<Boolean> = gate(Subscription.Status.STATUS_PRO)
 
   override fun aircraftLimit(): Flow<Int?> =
-    // Default-open: no paywall while the capability is off → unlimited.
-    if (!appCapability.isSubscriptionSupported) {
-      flowOf(null)
-    } else {
-      status().map { if (it >= Subscription.Status.STATUS_PRO) null else FREE_AIRCRAFT_LIMIT }
-    }
+    status().map { if (it >= Subscription.Status.STATUS_PRO) null else FREE_AIRCRAFT_LIMIT }
 
   override fun showsAds(): Flow<Boolean> =
-    // Default-CLOSED — the mirror of gate() below. No ads unless we can also sell their removal.
-    if (!appCapability.isAdsSupported || !appCapability.isSubscriptionSupported) {
+    // No ads unless we can also sell their removal.
+    if (!appCapability.isAdsSupported) {
       flowOf(false)
     } else {
       status().map { it < Subscription.Status.STATUS_PRO }
     }
 
   private fun gate(minimum: Subscription.Status): Flow<Boolean> =
-    // Default-open: while the subscription capability is off, every gate reads available.
-    if (!appCapability.isSubscriptionSupported) {
-      flowOf(true)
-    } else {
-      // Proto enums order by declaration (STATUS_FREE < STATUS_PRO), so this is a tier comparison.
-      status().map { it >= minimum }
-    }
+    // Proto enums order by declaration (STATUS_FREE < STATUS_PRO), so this is a tier comparison.
+    status().map { it >= minimum }
 
   companion object {
     private val logger = Logger.withTag("SubscriptionManagerImpl")

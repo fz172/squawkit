@@ -165,17 +165,13 @@ fun SettingsContent(
               onModeChange = settingsViewModel::setAppearance,
             )
           }
-          // Shown only where the subscription capability is on (dev + dogfood today); hidden in the
-          // shipping release until GA, so no user sees a paywall entry before it exists.
-          if (user.isSubscriptionSupported) {
-            add {
-              SettingsRow(
-                icon = Icons.Default.WorkspacePremium,
-                title = stringResource(SettingsRes.string.settings_subscription),
-                subtitle = stringResource(SettingsRes.string.settings_subscription_subtitle),
-                onClick = { detailNav.navigate(Screen.Subscription.route) },
-              )
-            }
+          add {
+            SettingsRow(
+              icon = Icons.Default.WorkspacePremium,
+              title = stringResource(SettingsRes.string.settings_subscription),
+              subtitle = stringResource(SettingsRes.string.settings_subscription_subtitle),
+              onClick = { detailNav.navigate(Screen.Subscription.route) },
+            )
           }
           add {
             SettingsRow(

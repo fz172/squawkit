@@ -282,6 +282,5 @@ private fun appCapability(sharing: Boolean) = AppCapability(
   isStressTestSupported = false,
   isCameraCaptureSupported = false,
   isAnonymousLoginSupported = true,
-  isSubscriptionSupported = false,
   isAdsSupported = false,
 )

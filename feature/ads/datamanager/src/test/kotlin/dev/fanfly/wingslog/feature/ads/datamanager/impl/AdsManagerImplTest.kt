@@ -35,7 +35,6 @@ class AdsManagerImplTest {
 
   private fun capability(
     ads: Boolean = true,
-    subscription: Boolean = true,
     devOptions: Boolean = false,
   ) = AppCapability(
     isDeveloperOptionsSupported = devOptions,
@@ -43,7 +42,6 @@ class AdsManagerImplTest {
     isStressTestSupported = false,
     isCameraCaptureSupported = false,
     isAnonymousLoginSupported = false,
-    isSubscriptionSupported = subscription,
     isAdsSupported = ads,
   )
 
@@ -89,19 +87,6 @@ class AdsManagerImplTest {
     ).isFalse()
   }
 
-  @Test
-  fun `no subscription support means no ads - the inversion`() = runTest {
-    // This is the opposite of every sibling gate, and the one most likely to be "fixed" into a bug.
-    // Every other capability is default-OPEN: with subscriptions off there is no paywall, so they
-    // all read available. Ads are default-CLOSED, because a build that cannot sell Heavy gives a
-    // pilot no way to remove ads.
-    val m = manager(capability(subscription = false), tierShowsAds = true)
-    assertThat(
-      m.showsAds()
-        .first()
-    ).isFalse()
-  }
-
   // -------------------------------------------------------------- developer force
 
   @Test
@@ -131,22 +116,13 @@ class AdsManagerImplTest {
   }
 
   @Test
-  fun `force ads never overrides the capability gates`() = runTest {
-    // Forcing ads onto a Heavy account exercises placement, which is the point. Forcing them into a
+  fun `force ads never overrides the capability gate`() = runTest {
+    // Forcing ads onto a Pro account exercises placement, which is the point. Forcing them into a
     // build with no way to buy removal would be testing a state that must never exist.
     val noAds =
       manager(capability(ads = false, devOptions = true), true, flowOf(true))
-    val noSubs = manager(
-      capability(subscription = false, devOptions = true),
-      true,
-      flowOf(true)
-    )
     assertThat(
       noAds.showsAds()
-        .first()
-    ).isFalse()
-    assertThat(
-      noSubs.showsAds()
         .first()
     ).isFalse()
   }

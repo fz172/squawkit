@@ -8,9 +8,6 @@ import kotlinx.coroutines.flow.Flow
  * store (mirrored there by the sync layer), resolves the effective tier, and exposes the per-feature
  * gates the app enforces. See docs/subscription/subscription_design.html §4.
  *
- * Gating is **default-open**: while `AppCapability.isSubscriptionSupported` is off there is no
- * paywall, so every capability reads available and [aircraftLimit] is unlimited.
- *
  * The types are the `Subscription` proto and its enums — the same model the Cloud Functions and
  * Firestore share — never a forked Kotlin copy.
  */
@@ -37,14 +34,10 @@ interface SubscriptionManager {
   /**
    * Whether the free tier's display ads should be shown.
    *
-   * **This one is default-CLOSED, unlike every gate above it.** The others are default-*open*: while
-   * `isSubscriptionSupported` is off there is no paywall, so they all read available. This reads
-   * `false` when either `isAdsSupported` or `isSubscriptionSupported` is off — because a build that
-   * cannot sell Heavy gives a pilot no way to remove ads, and showing them anyway would be
-   * indefensible.
-   *
-   * True only while the effective tier is below `PRO`. Comparing the status enum rather than a
-   * boolean means any future paid tier is ad-free automatically.
+   * `false` whenever `isAdsSupported` is off — a build that cannot sell Pro gives a pilot no way to
+   * remove ads, and showing them anyway would be indefensible. Otherwise true only while the
+   * effective tier is below `PRO`. Comparing the status enum rather than a boolean means any future
+   * paid tier is ad-free automatically.
    */
   fun showsAds(): Flow<Boolean>
 }

@@ -22,28 +22,13 @@ data class AppCapability(
   val isCameraCaptureSupported: Boolean,
   val isAnonymousLoginSupported: Boolean,
   /**
-   * Subscriptions / SquawkIt Pro (subscription design §1). The staged-rollout gate, like
-   * [isAircraftSharingSupported]: on in dev + dogfood, off in the shipping release until GA.
-   *
-   * A build-time gate rather than a Developer Options flag, because the whole paywall must be able to
-   * ship dark and be turned on later. Crucially, **"off" means unlocked for everyone, not
-   * restricted**: while this is false there is no gating at all — every premium feature is treated
-   * as available and the Subscription entry/page is hidden. GA is flipping this to `true`.
-   */
-  val isSubscriptionSupported: Boolean,
-  /**
    * Free-tier display ads (`docs/ads/ads_design.html` §6). The staged-rollout gate: on in dev +
    * dogfood, off in the shipping release until GA, and `false` on the web host for all of v1.
    *
-   * **Read this before changing it: the polarity is the opposite of every flag above.**
-   * [isSubscriptionSupported] and [isAircraftSharingSupported] are *default-open* — while they are
-   * false there is no paywall and every premium capability reads available. This flag is
-   * **default-closed**: while it is false, or while [isSubscriptionSupported] is false, there are
-   * **no ads at all**.
-   *
-   * The asymmetry is deliberate and load-bearing. A build that cannot sell Heavy has no way for a
-   * pilot to remove ads, so showing them would be indefensible — "off" here means *no ads*, never
-   * "ads for everyone". `SubscriptionManager.showsAds()` enforces both halves; see the design doc §6.
+   * **Default-closed**, unlike [isAircraftSharingSupported]: while this is false there are no ads
+   * at all, never ads shown to everyone. A pilot must always have a way to buy their way out of
+   * ads (subscriptions are unconditional now — see `SubscriptionManager`), so "off" here can only
+   * ever mean *no ads*. `SubscriptionManager.showsAds()` enforces this; see the design doc §6.
    */
   val isAdsSupported: Boolean,
 )

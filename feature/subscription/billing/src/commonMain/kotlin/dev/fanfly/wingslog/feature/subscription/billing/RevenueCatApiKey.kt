@@ -8,9 +8,9 @@ package dev.fanfly.wingslog.feature.subscription.billing
  *
  * - **Test Store key** (`test_…`) — cross-platform, backed by RevenueCat's simulated store. Purchases
  *   behave like real ones (they update `CustomerInfo`, fire entitlements and webhooks) without any
- *   App Store Connect / Play Console product setup, which is exactly what we need while
- *   `AppCapability.isSubscriptionSupported` is still off in the shipping release. Subscriptions renew
- *   on an accelerated clock and expire after 5 renewals.
+ *   App Store Connect / Play Console product setup — useful for developer/dogfood builds that don't
+ *   want real store products. Subscriptions renew on an accelerated clock and expire after 5
+ *   renewals.
  * - **Production keys** (`goog_…` for Play, `appl_…` for the App Store) — platform-specific, and the
  *   only keys allowed in a shipping build.
  *
@@ -31,13 +31,12 @@ object RevenueCatApiKey {
   private const val TEST_STORE_KEY = "test_cyjrLvZCJaTnceyCXOItRlYHWSE"
 
   /**
-   * The platform's production key, or `null` until that store's products are live. Set on Android;
-   * still `null` on iOS.
+   * The platform's production key, or `null` until that store's products are live. Set on both
+   * Android and iOS.
    *
    * `null` is a supported state, not a bug: [dev.fanfly.wingslog.feature.subscription.billing.impl]
-   * skips `Purchases.configure` entirely and the app runs with purchasing unsupported. That matches
-   * the staged rollout — `AppCapability.isSubscriptionSupported` is `false` in the shipping release
-   * until GA, so a release build has no paywall to configure a key for yet.
+   * skips `Purchases.configure` entirely and the app runs with purchasing unsupported — the state a
+   * new platform starts in before its store products go live.
    */
   private val productionKey: String? = platformProductionApiKey
 

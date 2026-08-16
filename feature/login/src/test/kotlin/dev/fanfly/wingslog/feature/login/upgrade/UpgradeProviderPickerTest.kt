@@ -34,7 +34,6 @@ internal fun testAppCapability() = AppCapability(
   isStressTestSupported = false,
   isCameraCaptureSupported = false,
   isAnonymousLoginSupported = true,
-  isSubscriptionSupported = false,
   isAdsSupported = false,
 )
 

@@ -22,17 +22,15 @@ internal class AdsManagerImpl(
 
   // AppCapability is fixed at build time, so these are read once rather than re-evaluated on every
   // emission. They are plain booleans by nature — there is no value change to observe.
-  private val adsPossible =
-    appCapability.isAdsSupported && appCapability.isSubscriptionSupported
+  private val adsPossible = appCapability.isAdsSupported
   private val devOverridesHonored = appCapability.isDeveloperOptionsSupported
 
   /**
-   * **Force overrides the tier check, never the capability checks.**
+   * **Force overrides the tier check, never the capability check.**
    *
-   * A developer forcing ads on a Heavy account is exercising placement, which is the point of the
-   * toggle. A developer forcing ads into a build with no `isAdsSupported` — or worse, no
-   * `isSubscriptionSupported`, where a pilot has no way to buy their way out — would be testing a
-   * state that must never exist. So the capability gate short-circuits before the override is even
+   * A developer forcing ads on a Pro account is exercising placement, which is the point of the
+   * toggle. A developer forcing ads into a build with no `isAdsSupported` would be testing a state
+   * that must never exist. So the capability gate short-circuits before the override is even
    * consulted.
    */
   override fun showsAds(): Flow<Boolean> {

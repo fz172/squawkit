@@ -34,7 +34,6 @@ class SettingsViewModel(
     MutableStateFlow(
       SettingsUiState(
         isDeveloperOptionsSupported = appCapability.isDeveloperOptionsSupported,
-        isSubscriptionSupported = appCapability.isSubscriptionSupported,
         isAdsSupported = appCapability.isAdsSupported,
       )
     )
@@ -81,7 +80,6 @@ class SettingsViewModel(
       userStatus = UserStatus.LOADING,
       isAnonymous = authManager.getCurrentUser()?.isAnonymous == true,
       isDeveloperOptionsSupported = appCapability.isDeveloperOptionsSupported,
-      isSubscriptionSupported = appCapability.isSubscriptionSupported,
       isAdsSupported = appCapability.isAdsSupported,
     )
   }
