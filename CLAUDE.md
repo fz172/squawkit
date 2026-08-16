@@ -32,7 +32,7 @@ CI runs lint → `assembleDebug` → `testDebugUnitTest` and requires the `GOOGL
 ## Before non-trivial changes
 
 - **UI work** — read `PRODUCT.md`, `DESIGN.md`, and `.impeccable/design.json` first. The aviation palette, typography, and brand principles are required (no dynamic color).
-- **Feature work** — check `docs/` for the relevant PRD / design doc. Docs are grouped into per-topic subfolders (e.g. `docs/storage/storage_r1_design.md`, `docs/storage/storage_r2_design.md`, `docs/attachments/attachments_design.md`, `docs/squawks/squawk_design.md`, `docs/export/export_logs_design.md`); see the **Design Docs** section of AGENTS.md for the full map. Each carries an "Implementation Status" note reflecting what has actually shipped. New docs are authored in HTML.
+- **Feature work** — check `docs/` for the relevant PRD / design doc. Docs are grouped into per-topic subfolders (e.g. `docs/storage/storage_r1_design.md`, `docs/storage/storage_r2_design.md`, `docs/attachments/attachments_design.md`, `docs/squawks/squawk_design.md`, `docs/export/export_logs_design.md`); see the **Design Docs** section of AGENTS.md for the full map. Each carries an "Implementation Status" note reflecting what has actually shipped. New docs are authored in **Markdown** (the HTML docs still in `docs/` predate this policy; don't bulk-convert them).
 - **New feature module** — follow `feature/tasks` as the reference; respect the strict dependency rules in AGENTS.md (`sharedassets` carries no feature deps; `datamanager` and `model` never depend on UI). Register the Koin module in `core/di/CommonAppModules.kt` (the single list shared by all hosts), and register routes in `feature/shell`'s shared nav graph.
 
 ## Coding conventions worth repeating

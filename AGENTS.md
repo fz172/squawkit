@@ -240,7 +240,7 @@ Defined in `core:ui`. Follows **Refined Minimalism**: Material 3 color scheme, i
 
 Feature PRDs and architecture design docs live in `docs/`, organized into **per-topic subfolders**:
 
-- `docs/product/` — `PRD.md` (product overview), `platform_feature_parity.html` (Android/iOS/web feature matrix)
+- `docs/product/` — `PRD.md` (product overview), `multi_domain_maintenance_PRD.md` (proposed pivot from aircraft-only to any maintainable "Thing" via a template configuration system), `platform_feature_parity.html` (Android/iOS/web feature matrix)
 - `docs/storage/` — `storage_mode_PRD.md`, `storage_r1_design.md`, `storage_r2_design.md` (local-first)
 - `docs/attachments/` — `attachments_PRD.md`, `attachments_design.md`
 - `docs/squawks/` — `user_squawking_prd.md`, `squawk_design.md`
@@ -259,10 +259,14 @@ Consult the relevant doc before making non-trivial changes to a feature area. Ea
 carries an **Implementation Status** note near the top reflecting what has actually shipped vs. the
 original plan.
 
-**Doc format policy:** all *new* docs are authored in **HTML** (self-contained, styled). Existing
-Markdown docs stay as-is until they're substantially rewritten; do not bulk-convert. When adding a
-doc, place it in the matching subfolder (create a new one if no topic fits) and link related docs
-with relative paths.
+**Doc format policy:** all *new* docs are authored in **Markdown**. (This reverses an earlier
+HTML-first policy — the HTML docs still in `docs/` predate the change.) Existing HTML docs stay
+as-is until they're substantially rewritten; do not bulk-convert. When adding a doc, place it in
+the matching subfolder (create a new one if no topic fits) and link related docs with relative
+paths. `docs/ads/display_ads_PRD.md` and `docs/product/multi_domain_maintenance_PRD.md` are the
+reference examples for house style: an Implementation Status blockquote up top, an
+Owner/Status/Date line, `---` between top-level sections, `## N. Title` headings, and `§N`
+cross-references in prose.
 
 ## Dogfood Builds
 
