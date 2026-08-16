@@ -49,7 +49,28 @@ func installAdConsentProvider() {
     }
 
     MainEntry.shared.installAdPrivacyOptionsPresenter { onComplete in
-        ConsentForm.presentPrivacyOptionsForm(from: nil) { _ in
+        // Google's SDK silently no-ops presentPrivacyOptionsForm when there is nothing to show
+        // (privacyOptionsRequirementStatus != .required) rather than surfacing an error — most
+        // commonly because the last-resolved consent state wasn't EEA/UK (the debug geography
+        // override above only takes effect on a fresh resolve; UMP caches its prior result
+        // on-device, so a stale non-EEA resolution from before the override was in place, or from
+        // a physical device not yet listed in testDeviceIdentifiers, persists across relaunches
+        // until `ConsentInformation.shared.reset()` or a reinstall). Logging both paths here so
+        // "the row does nothing" is diagnosable instead of silent.
+        guard ConsentInformation.shared.privacyOptionsRequirementStatus == .required else {
+            print(
+                "Ad privacy settings: no form to show — " +
+                "privacyOptionsRequirementStatus=\(ConsentInformation.shared.privacyOptionsRequirementStatus.rawValue) " +
+                "(expected .required). Not EEA/UK for this resolve, or a stale cached consent " +
+                "state — see the comment above."
+            )
+            onComplete()
+            return
+        }
+        ConsentForm.presentPrivacyOptionsForm(from: nil) { error in
+            if let error {
+                print("Ad privacy settings: presentPrivacyOptionsForm failed: \(error.localizedDescription)")
+            }
             onComplete()
         }
     }
