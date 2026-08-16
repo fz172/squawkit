@@ -91,7 +91,7 @@
 <main>
   <div class="hero">
     <div>
-      <span class="pill amber">Status: Proposed</span>
+      <span class="pill green">Status: Shipped — GA</span>
       <span class="pill">PRD</span>
       <span class="pill">Entitlement · Billing · Local-first · Sync</span>
     </div>
@@ -106,9 +106,9 @@
         <strong>Decisions locked for this PRD</strong>
         Tier shape: <b>one paid tier</b> above free, monthly billing, but modeled as an extensible <code>SubscriptionStatus</code> enum so more tiers can be added later without reworking gating. Entitlement is <b>server-authoritative and account-scoped</b>, so a purchase on any platform entitles the account everywhere. Feature gating moves off Feature Lab flags onto the <b>subscription status</b>. The old Feature Lab surface becomes <b>Developer Options</b> (dev builds only), keeping <i>Generate fake data</i> and adding a <b>Force subscription status</b> toggle.
       </div>
-      <div class="callout warn">
-        <strong>Deliberately deferred (placeholders in v1)</strong>
-        The <b>billing integration</b> is undecided — native per-platform store integration (StoreKit / Play Billing / Stripe) vs. an aggregator (e.g. RevenueCat). Because of that, the actual <b>purchase / paywall flow</b> and the <b>Manage subscription</b> action are left as placeholders in this PRD and specified once the billing approach is chosen. This PRD commits to the entitlement model, the tier comparison / status page, feature gating, and the developer-options refactor.
+      <div class="callout win">
+        <strong>Resolved and shipped</strong>
+        The billing integration was decided (RevenueCat, wrapping native StoreKit 2 / Play Billing) and built end to end: purchase/paywall flow, Manage-subscription action per platform, entitlement sync, and drift reconciliation. See the <a href="subscription_design.html">Design Doc</a> §7/§11 for the ADR and pipeline.
       </div>
 
       <h2 id="problem">1. Problem &amp; Background</h2>
@@ -416,12 +416,12 @@
         <li><b>No grandfathering</b> — the app hasn't launched, so there is no pre-existing over-limit data. Limits apply uniformly from day one. (R15)</li>
         <li><b>Downgrade over a limit is edit-not-freeze</b> — a lapsed subscriber keeps editing all existing content; only <b>new</b> over-limit actions (add aircraft, new upload, new share) route to a promo. This follows the "gate as promo, don't hide" principle (§8).</li>
         <li><b>Guests can't subscribe</b> — a subscription requires a real (signed-in) account. A guest hitting the paywall is routed through the <a href="../account/account_upgrade_PRD.html">account upgrade</a> first, then to purchase.</li>
-        <li><b>Price &amp; trial</b> — working assumption <b>$9.99 / month</b> with a <b>7-day free trial</b> (tier name: <b>SquawkIt Pro</b>). Confirm before store setup; the model supports any value.</li>
+        <li><b>Price &amp; trial</b> — shipped as <b>$2.99 / month or $31.99 / year</b> (tier name: <b>SquawkIt Pro</b>), no introductory trial. Supersedes the original $9.99/7-day-trial working assumption; the model still supports either shape.</li>
       </ul>
-      <h4>Still open</h4>
+      <h4>Resolved</h4>
       <ul>
-        <li><b>Billing integration (blackbox for now):</b> native per-platform (StoreKit 2 / Play Billing / Stripe) vs. an aggregator (RevenueCat). Deferred to the <b>engineering design doc</b>, which must weigh cost, maintenance, and architecture — including <b>where the entitlement / "member since" lives</b>. Note the client-facing shape is fixed either way: one server-written entitlement record in Firestore, synced to the device (§6); the billing choice only changes what <i>feeds</i> the writer. Blocking for the purchase phase, not for v1's model.</li>
-        <li><b>Web billing (depends on billing choice):</b> if selling on web (Stripe) is disproportionately hard, it is acceptable for <b>web to honor Pro features but not sell the subscription</b> — desktop users subscribe on mobile and web reflects it.</li>
+        <li><b>Billing integration:</b> RevenueCat, wrapping native StoreKit 2 (iOS) and Play Billing (Android). See the engineering design doc §7/§11 for the ADR.</li>
+        <li><b>Web billing:</b> resolved to the anticipated fallback — web honors Pro features (entitlement is account-scoped and server-authoritative) but does not sell the subscription; desktop/web users subscribe on mobile and web reflects it, including a synced Manage-subscription link (design §6, PRD §9).</li>
       </ul>
       <div class="callout note">
         <strong>Cost sanity — infra is not the constraint at $9.99</strong>
@@ -430,7 +430,7 @@
 
       <div class="callout note">
         <strong>Implementation Status</strong>
-        Proposed. Not yet built. A companion Design Doc will specify the entitlement record and <code>CollectionKind</code>, the <code>SubscriptionStatus</code> enum + minimum-tier gating, the server validation/webhook pipeline, the <code>SubscriptionManager</code> gate, and the Feature-Lab→Developer-Options refactor. This note will be updated to reflect what actually ships.
+        Shipped — GA on both Android and iOS. The companion <a href="subscription_design.html">Design Doc</a> covers what was built: the entitlement record and <code>CollectionKind</code>, the <code>SubscriptionStatus</code> enum + minimum-tier gating (now unconditional, not build-gated), the RevenueCat validation/webhook pipeline, the <code>SubscriptionManager</code> gate, and the completed Feature-Lab→Developer-Options refactor.
       </div>
 
     </div>
