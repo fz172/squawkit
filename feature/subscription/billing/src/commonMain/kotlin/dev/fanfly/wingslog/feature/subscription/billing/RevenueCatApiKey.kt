@@ -48,7 +48,13 @@ object RevenueCatApiKey {
    *   from the same signal as [dev.fanfly.wingslog.core.appinfo.AppCapability].
    */
   fun resolve(isDeveloperBuild: Boolean): String? =
-    if (isDeveloperBuild) TEST_STORE_KEY else productionKey
+    // TEMPORARY (revert before I3): always use the production key, even in developer builds, to
+    // test the full purchase / Customer Center loop locally against real App Store Connect
+    // products instead of the Test Store. Still safe to run from Xcode: a Debug/dev-signed build
+    // is not App-Store-distributed, so StoreKit still auto-routes through Sandbox regardless of
+    // which RevenueCat key is configured — see the isDeveloperBuild branch this replaced below.
+    // if (isDeveloperBuild) TEST_STORE_KEY else productionKey
+    productionKey
 }
 
 /**
