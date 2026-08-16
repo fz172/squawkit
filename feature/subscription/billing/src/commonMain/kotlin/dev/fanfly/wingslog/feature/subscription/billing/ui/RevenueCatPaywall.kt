@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.subscription.billing.ui
 
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
@@ -92,11 +93,17 @@ fun RevenueCatProPaywall(
  * Worth using rather than hand-rolling because these paths are mostly store policy, not product
  * decisions, and Apple/Google keep changing them. Shown from the Subscription page when the account
  * is already Pro; a free account sees the paywall instead.
+ *
+ * `fillMaxSize()` isn't cosmetic here: on iOS, `CustomerCenter()` is backed by a
+ * `UIKitViewController` wrapping a native `RCCustomerCenterViewController`. With no explicit size
+ * the interop view gets no layout height and renders blank — [Paywall] doesn't need this because
+ * it sizes itself differently under the hood. See
+ * github.com/RevenueCat/purchases-kmp/issues/682.
  */
 @Composable
 fun RevenueCatCustomerCenter(
   onDismiss: () -> Unit,
-  modifier: Modifier = Modifier,
+  modifier: Modifier = Modifier.fillMaxSize(),
 ) {
   CustomerCenter(modifier = modifier, onDismiss = onDismiss)
 }
