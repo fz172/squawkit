@@ -184,7 +184,6 @@ fun SquawkTab(
           is ListRow.Ad -> AdSlot(
             surface = AdSurface.SQUAWKS,
             slotIndex = row.slotIndex,
-            onUpsellClick = { onAction(AircraftOverviewAction.ShowSubscription) },
           )
 
           is ListRow.Item -> {

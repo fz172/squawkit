@@ -283,9 +283,6 @@ fun AircraftSectionContent(
           is AircraftOverviewAction.ManageAccessClick ->
             navController.navigate(Screen.ManageAccess.createRoute(aircraftId))
 
-          AircraftOverviewAction.ShowSubscription ->
-            navController.navigate(Screen.Subscription.route)
-
           AircraftOverviewAction.BackClick -> Unit
 
           else -> viewModel.onAction(action)
@@ -343,7 +340,6 @@ fun AircraftSectionContent(
         )
 
         ShellSection.LOGS -> LogsTab(
-          onUpsellClick = { navController.navigate(Screen.Subscription.route) },
           aircraftId = aircraftId,
           syncStates = state.syncStates,
           // Route through the same onAction wrapper as every other section, which navigates directly.

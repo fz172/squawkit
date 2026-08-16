@@ -268,9 +268,6 @@ class AircraftOverviewViewModel(
         viewModelScope.launch { _events.send(AircraftOverviewEvent.NavigateBack) }
       }
 
-      // Handled by the navigating layer (AircraftSectionContent); nothing for the VM to do.
-      AircraftOverviewAction.ShowSubscription -> Unit
-
       is AircraftOverviewAction.EditClick -> {
         viewModelScope.launch {
           _events.send(

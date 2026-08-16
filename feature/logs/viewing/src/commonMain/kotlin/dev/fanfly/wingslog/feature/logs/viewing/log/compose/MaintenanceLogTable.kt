@@ -62,7 +62,6 @@ private const val W_TECH = 1.1f
 fun MaintenanceLogTable(
   rows: List<ListRow<MaintenanceLog>>,
   onLogClick: (MaintenanceLog) -> Unit,
-  onUpsellClick: () -> Unit = {},
   listState: LazyListState = rememberLazyListState(),
   modifier: Modifier = Modifier,
 ) {
@@ -99,7 +98,6 @@ fun MaintenanceLogTable(
             is ListRow.Ad -> AdSlot(
               surface = AdSurface.LOGS,
               slotIndex = row.slotIndex,
-              onUpsellClick = onUpsellClick,
               modifier = Modifier.padding(
                 horizontal = Spacing.medium,
                 vertical = Spacing.small,

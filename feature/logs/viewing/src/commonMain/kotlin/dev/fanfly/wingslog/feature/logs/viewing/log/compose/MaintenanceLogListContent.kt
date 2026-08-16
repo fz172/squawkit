@@ -116,8 +116,6 @@ fun MaintenanceLogListContent(
    * tab and drops its scroll position; it should be cleared only once the section is left.
    */
   scrollToLogId: String? = null,
-  /** The ad card's "Subscribe to remove ads" link. */
-  onUpsellClick: () -> Unit = {},
   modifier: Modifier = Modifier,
 ) {
   // Hoisted above the when(uiState) so it is one stable instance across Loading→Success flips and is
@@ -325,7 +323,6 @@ fun MaintenanceLogListContent(
               MaintenanceLogTable(
                 rows = rows,
                 onLogClick = onLogClick,
-                onUpsellClick = onUpsellClick,
                 listState = logListState,
                 modifier = Modifier
                   // fill = false so the bordered table wraps its content height when there are
@@ -366,7 +363,6 @@ fun MaintenanceLogListContent(
                     is ListRow.Ad -> AdSlot(
                       surface = AdSurface.LOGS,
                       slotIndex = row.slotIndex,
-                      onUpsellClick = onUpsellClick,
                     )
 
                     is ListRow.Item -> MaintenanceLogCard(

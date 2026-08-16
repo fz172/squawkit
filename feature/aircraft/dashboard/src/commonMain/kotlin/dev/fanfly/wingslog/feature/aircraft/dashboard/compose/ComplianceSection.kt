@@ -45,8 +45,6 @@ fun ComplianceSection(
   showComplied: Boolean,
   onToggleComplied: (Boolean) -> Unit,
   onCardClick: (MaintenanceTaskWithStatus) -> Unit = {},
-  /** The ad card's "Subscribe to remove ads" link. */
-  onUpsellClick: () -> Unit = {},
   /** Task to report the on-screen position of, so the tab can scroll it into view. */
   scrollTargetId: String? = null,
   onTargetPositioned: (Float) -> Unit = {},
@@ -118,7 +116,6 @@ fun ComplianceSection(
           is ListRow.Ad -> AdSlot(
             surface = AdSurface.TASKS,
             slotIndex = row.slotIndex,
-            onUpsellClick = onUpsellClick,
           )
 
           is ListRow.Item -> {
