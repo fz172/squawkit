@@ -126,20 +126,25 @@ fun AdSlot(
     Column(
       modifier = Modifier
         .fillMaxWidth()
-        // Both axes trimmed from Spacing.medium: the creative is a fixed size regardless of how
-        // big this card is, so less inset all around means less dead space around it.
-        .padding(horizontal = Spacing.small, vertical = Spacing.small),
+        .padding(vertical = Spacing.small),
       verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
     ) {
       Text(
         text = stringResource(Res.string.ads_sponsored_label),
         style = MaterialTheme.typography.labelSmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
+        // Matches a record card's own left inset (Spacing.large — see e.g. SquawkCard) so the label
+        // lines up with card titles above and below it, even though the ad row itself sits much
+        // closer to the edges.
+        modifier = Modifier.padding(horizontal = Spacing.large),
       )
 
       Row(
         modifier = Modifier
           .fillMaxWidth()
+          // Horizontal down to extraSmall — about as tight as it goes before the creative's square
+          // corners crowd the card's rounded ones.
+          .padding(horizontal = Spacing.extraSmall)
           // One focus group announced as "Advertisement" (N7).
           .clearAndSetSemantics { contentDescription = advertisement },
         horizontalArrangement = Arrangement.spacedBy(Spacing.medium, Alignment.CenterHorizontally),
@@ -147,7 +152,10 @@ fun AdSlot(
       ) {
         repeat(granted) { unit ->
           AdView(
-            size = AdUnitSize.BANNER,
+            // Confirmed on-device against real card content (#389's visual spot-check); a full
+            // sweep against the shortest COMPACT-tier cards across all three surfaces is still open
+            // on that issue before calling G10 fully cleared.
+            size = AdUnitSize.LARGE_BANNER,
             surface = surface,
             // Developer builds request test inventory: real impressions from development are
             // invalid traffic, which AdMob suspends accounts for.
