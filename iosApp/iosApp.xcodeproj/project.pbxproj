@@ -19,6 +19,7 @@
 		3D25BC232F6FC42800EFFADF /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 3D25BC222F6FC42800EFFADF /* FirebaseAuth */; };
 		3D25BC332F701A7500EFFADF /* FirebaseFunctions in Frameworks */ = {isa = PBXBuildFile; productRef = 3D25BC322F701A7500EFFADF /* FirebaseFunctions */; };
 		3D25BC352F701A7500EFFADF /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = 3D25BC342F701A7500EFFADF /* GoogleSignIn */; };
+		3D9A96F53031583D00FAF8CC /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3D9A96F43031583D00FAF8CC /* StoreKit.framework */; };
 		3DE64245300DD3DF000D1143 /* FirebaseAppCheck in Frameworks */ = {isa = PBXBuildFile; productRef = 3DE64244300DD3DF000D1143 /* FirebaseAppCheck */; };
 		F03C4F08C49BAC1B7760B3F8 /* GoogleMobileAds in Frameworks */ = {isa = PBXBuildFile; productRef = 3197832B061154A7275175D9 /* GoogleMobileAds */; };
 		F20FE4608ED8B667DA96EF43 /* GoogleUserMessagingPlatform in Frameworks */ = {isa = PBXBuildFile; productRef = CE3BAAA26B14222FAB28C158 /* GoogleUserMessagingPlatform */; };
@@ -26,6 +27,7 @@
 
 /* Begin PBXFileReference section */
 		3D25BBF32F6FBB7500EFFADF /* iosApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iosApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		3D9A96F43031583D00FAF8CC /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -57,6 +59,7 @@
 				3D25BC102F6FC23100EFFADF /* FirebaseDatabase in Frameworks */,
 				3DE64245300DD3DF000D1143 /* FirebaseAppCheck in Frameworks */,
 				3D25BC232F6FC42800EFFADF /* FirebaseAuth in Frameworks */,
+				3D9A96F53031583D00FAF8CC /* StoreKit.framework in Frameworks */,
 				3D25BC332F701A7500EFFADF /* FirebaseFunctions in Frameworks */,
 				3D25BC352F701A7500EFFADF /* GoogleSignIn in Frameworks */,
 				3D25BC082F6FC23100EFFADF /* FirebaseAnalytics in Frameworks */,
@@ -95,6 +98,7 @@
 		3D25BC212F6FC42800EFFADF /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				3D9A96F43031583D00FAF8CC /* StoreKit.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
