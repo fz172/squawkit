@@ -114,6 +114,7 @@
 				3D25BBEF2F6FBB7500EFFADF /* Sources */,
 				3D25BBF02F6FBB7500EFFADF /* Frameworks */,
 				3D25BBF12F6FBB7500EFFADF /* Resources */,
+				87DD4D69C37147118BFC8E00 /* Stamp Version from version.properties */,
 			);
 			buildRules = (
 			);
@@ -212,6 +213,24 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "cd \"$SRCROOT/..\"\n./gradlew :composeApp:embedAndSignAppleFrameworkForXcode\n";
+		};
+		87DD4D69C37147118BFC8E00 /* Stamp Version from version.properties */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Stamp Version from version.properties";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "cd \"$SRCROOT/..\"\nVERSION_FILE=\"version.properties\"\nMAJOR=$(awk -F= '/^major=/{print $2}' \"$VERSION_FILE\")\nMINOR=$(awk -F= '/^minor=/{print $2}' \"$VERSION_FILE\")\nBUILD_DATE=$(awk -F= '/^buildDate=/{print $2}' \"$VERSION_FILE\")\nVERSION_CODE=$(awk -F= '/^versionCode=/{print $2}' \"$VERSION_FILE\")\nif [ -z \"$MAJOR\" ] || [ -z \"$MINOR\" ] || [ -z \"$BUILD_DATE\" ] || [ -z \"$VERSION_CODE\" ]; then\n  echo \"warning: could not parse version.properties, leaving Info.plist version untouched\"\n  exit 0\nfi\nMKT_VERSION=\"$MAJOR.$MINOR.$BUILD_DATE\"\nINFO_PLIST=\"$TARGET_BUILD_DIR/$INFOPLIST_PATH\"\nif [ -f \"$INFO_PLIST\" ]; then\n  /usr/libexec/PlistBuddy -c \"Set :CFBundleShortVersionString $MKT_VERSION\" \"$INFO_PLIST\"\n  /usr/libexec/PlistBuddy -c \"Set :CFBundleVersion $VERSION_CODE\" \"$INFO_PLIST\"\n  echo \"Stamped Info.plist: CFBundleShortVersionString=$MKT_VERSION CFBundleVersion=$VERSION_CODE\"\nfi\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
