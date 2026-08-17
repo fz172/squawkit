@@ -33,6 +33,7 @@ import dev.gitlive.firebase.firestore.toMilliseconds
 import dev.gitlive.firebase.functions.FirebaseFunctions
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -41,6 +42,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.update
 import kotlinx.serialization.Serializable
 import kotlin.time.Clock
 import dev.fanfly.wingslog.core.model.sharing.ShareRole as ProtoShareRole
@@ -101,13 +103,23 @@ class SharingManagerImpl(
     observeHostUid(acId).first()
       ?: error("Not a member of aircraft $acId; cannot resolve its share")
 
+  /**
+   * Bumped after a successful [createInvite] to force the roster listener in [observeShareState]
+   * to resubscribe. A denied `.snapshots()` listener (no ACL yet) is CLOSED by the underlying SDK —
+   * there is no retry once the rules start allowing the read, so without this the very first invite
+   * on a never-shared aircraft would bootstrap the ACL server-side while our still-dead listener
+   * never notices, leaving the roster (and the invite the CODE view is about to show) stuck.
+   */
+  private val rosterRetryTrigger = MutableStateFlow(0)
+
   override fun observeShareState(acId: String): Flow<AircraftShareState> =
-    observeHostUid(acId).flatMapLatest { hostUid ->
-      if (hostUid == null) flowOf(AircraftShareState()) else shareStateIn(
-        hostUid,
-        acId
-      )
-    }
+    combine(observeHostUid(acId), rosterRetryTrigger) { hostUid, _ -> hostUid }
+      .flatMapLatest { hostUid ->
+        if (hostUid == null) flowOf(AircraftShareState()) else shareStateIn(
+          hostUid,
+          acId
+        )
+      }
 
   private fun shareStateIn(
     hostUid: String,
@@ -286,6 +298,11 @@ class SharingManagerImpl(
     writeLock.withLock {
       db.schemaQueries.upsertConfig(uid, inviteCodeKey(res.codeId), res.code)
     }
+
+    // The function just bootstrapped the ACL server-side. If this was the first invite on a
+    // never-shared aircraft, our roster listener was denied before the ACL existed and the SDK
+    // closed it for good — resubscribe so the CODE view about to open can actually see this invite.
+    rosterRetryTrigger.update { it + 1 }
 
     InviteLink(
       code = res.code,
