@@ -81,8 +81,8 @@ makes conversion a tracked guardrail rather than an assumption.
   platform.
 - Enforce ad-free for Pro **reactively** — the moment entitlement resolves to Pro, ads disappear
   without a restart; on downgrade at period end they return.
-- Respect consent (GDPR/UMP, iOS ATT) and never expose aircraft or maintenance data to an ad
-  network.
+- Respect consent (GDPR/UMP) and never expose aircraft or maintenance data to an ad network. iOS
+  deliberately does not also request App Tracking Transparency — see P3.
 
 ## 4. Non-Goals
 
@@ -383,7 +383,7 @@ exists for a browser, this is a constraint rather than a preference.
 | Phase | Host | Ad product | Client seam |
 |---|---|---|---|
 | **v1** | **Android** | AdMob (Google Mobile Ads SDK), fixed `BANNER` (§7.2) | `AdView` in `androidMain` |
-| **v1** | **iOS** | AdMob (`GADBannerView`), fixed `BANNER` (§7.2) | `GADBannerView` in `iosMain`, plus ATT/UMP (§10, P3) |
+| **v1** | **iOS** | AdMob (`GADBannerView`), fixed `BANNER` (§7.2) | `GADBannerView` in `iosMain`, plus UMP, no ATT (§10, P3) |
 | **v1** | **Web** | *None* — no-op slot, renders nothing | `jsMain` actual returns an empty composable |
 | **Phase 2** | **Web** | **Google Ad Manager** (GPT tag, not AdMob) | Ad Manager tag in `jsMain`; see §8.2 |
 
@@ -503,8 +503,8 @@ the pilot is holding.
 | ID | Requirement |
 |---|---|
 | P1 | **No logbook data leaves the app for ad purposes.** Aircraft tail numbers, squawk text, log entries, technician records, attachments, and account identifiers are never passed to an ad SDK as targeting signals, keywords, or custom parameters. |
-| P2 | **Consent gate.** In GDPR/UK-GDPR regions, a CMP (Google UMP or equivalent) collects consent before the first ad request. Declined or unavailable consent → **non-personalized ads**; ad requests are never made in a state that the CMP has not cleared. |
-| P3 | **iOS ATT.** The App Tracking Transparency prompt is requested at first ad-eligible list render, not at launch, and declining is fully supported (non-personalized ads). |
+| P2 | **Consent gate.** In GDPR/UK-GDPR regions, a CMP (Google UMP or equivalent) collects consent before the first ad request. A partial decline (personalization purposes only, leaving TCF Purpose 1 — device storage/access — and legitimate-interest-backed purposes intact, per the AdMob account's "Legitimate interest controls") → **non-personalized ads**. A full "reject all," which necessarily also rejects Purpose 1, leaves no purpose with a legal basis → **no ad request at all**, since Purpose 1 has no legitimate-interest fallback under TCF. Ad requests are never made in a state that the CMP has not cleared. |
+| P3 | **No iOS ATT.** App Tracking Transparency is deliberately never requested. Apple only requires it for apps that read IDFA / track across other companies' apps and sites (App Store Review Guideline 5.1.2), not to serve ads at all — and stacking it after the CMP would ask an EEA/UK pilot two consent prompts for what reads as the same question. Ads always resolve non-personalized on iOS as a result; only Android can reach the personalized tier, via UMP consent alone. |
 | P4 | Consent state is re-presentable from Settings ("Ad privacy settings") wherever the CMP requires it. |
 | P5 | Store privacy disclosures (Play Data Safety, App Store Privacy Nutrition Labels) are updated **before** the first release that ships ads enabled. |
 | P6 | The ad SDK is initialized **lazily**, only once `showsAds()` first emits `true` — a Pro user's app never starts an ad SDK at all. |
@@ -586,8 +586,8 @@ not a config change; at an interval of 10 we should *expect* it to pin for engag
    comparison table row appears in dogfood builds only.
 3. **GA gating.** Ads GA **cannot precede subscription GA** — `isSubscriptionSupported` must be
    `true` first, or free users would see ads with no way to remove them (§8, property 2).
-4. **Staged enable (v1)** per host: **Android** first, then **iOS** after ATT flow validation. Both
-   on AdMob. Web stays off.
+4. **Staged enable (v1)**: **Android and iOS simultaneously**, once the P8 device validation and the
+   N1 scroll-jank measurement have cleared on both. Both on AdMob. Web stays off.
 5. **Phase 2 — web on Ad Manager**, after mobile GA has produced real revenue and retention numbers
    (§8.2). Its long-lead item is the W1 account approval, which can be started in parallel with
    mobile work; the engineering is small next to the approval wait.
@@ -642,7 +642,7 @@ feature/ads/
                   AdSessionCounter (app-scoped single: 5-unit cap, 30-min background reset)
   viewing/        AdSlotCard (common: label, band layout, upsell link) + expect/actual AdView
                     androidMain: Google Mobile Ads fixed BANNER (320x50, §7.2)
-                    iosMain:     GADBannerView + ATT/UMP
+                    iosMain:     GADBannerView + UMP (no ATT — see P3)
                     jsMain:      v1:      no-op (renders nothing)
                                  phase 2: Ad Manager GPT tag (lazy, async, thin) + web CMP
 ```

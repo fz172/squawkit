@@ -58,6 +58,12 @@ kotlin {
       implementation(project(":feature:technician:datamanager"))
       // SyncEngine: the account upgrade hydrates and resyncs after re-keying local data.
       implementation(project(":feature:sync:data"))
+      // The ads-consent priming step: showsAds() (tier gate) + AdConsentManager (background
+      // isConsentRequired() check, then presentConsentForm() from the explainer's Continue).
+      implementation(project(":feature:subscription:datamanager"))
+      implementation(project(":feature:ads:datamanager"))
+      // AdConsentManager.presentConsentForm()'s return type — datamanager doesn't api-export it.
+      implementation(project(":feature:ads:model"))
 
       // Compose resources (this module owns its login strings + Google icon)
       implementation(libs.components.resources)

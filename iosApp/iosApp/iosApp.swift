@@ -34,8 +34,8 @@ class AppDelegate: NSObject, UIApplicationDelegate {
     MainEntry.shared.installAppleSignInHandler { [weak self] in
       self?.appleSignInProvider.signIn()
     }
-    // Real Google UMP + ATT (P8 links googleads-mobile-sdk-ios, which pulls UserMessagingPlatform
-    // in transitively) — installs both installAdConsentProvider and
+    // Real Google UMP, no ATT by product decision (P8 links googleads-mobile-sdk-ios, which pulls
+    // UserMessagingPlatform in transitively) — installs both installAdConsentProvider and
     // installAdPrivacyOptionsPresenter. See AdConsentPresenter.swift.
     installAdConsentProvider()
     // GoogleMobileAds is now linked (P8) — installs MainEntry.installAdViewFactory. See

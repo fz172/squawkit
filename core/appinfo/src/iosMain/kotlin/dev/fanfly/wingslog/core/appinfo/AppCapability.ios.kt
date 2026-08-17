@@ -7,7 +7,7 @@ actual fun createAppCapability(isDeveloperBuild: Boolean) = AppCapability(
   isStressTestSupported = isDeveloperBuild,
   isCameraCaptureSupported = true,
   isAnonymousLoginSupported = true,
-  // Staged rollout: dev + dogfood only until ads GA, which also waits on the P8 Swift-bridge
-  // validation, since iOS has no CI build. Off = NO ads.
-  isAdsSupported = isDeveloperBuild,
+  // GA (#386, P9): was dev + dogfood only until ads GA, gated on the P8 Swift-bridge device
+  // validation (done — see #385) since iOS has no CI build. Off = NO ads.
+  isAdsSupported = true,
 )

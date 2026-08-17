@@ -21,9 +21,10 @@ import kotlinx.coroutines.suspendCancellableCoroutine
  * CMP form is presented directly on it, and `requestConsentInfoUpdate`/the form-show calls take an
  * `Activity`, not an application `Context`.
  *
- * **[ensureConsent] decides whether an ad request may happen at all; it does not hand the caller a
- * targeting flag to thread through to the request.** Once the CMP flow completes, the Google Mobile
- * Ads SDK reads the on-device TCF consent signals UMP just wrote and applies personalization
+ * **[presentConsentForm] (and [ensureConsent], which is just that) decides whether an ad request may
+ * happen at all; neither hands the caller a targeting flag to thread through to the request.**
+ * Once the CMP flow completes, the Google Mobile Ads SDK reads the on-device TCF consent signals
+ * UMP just wrote and applies personalization
  * automatically at request time — a manual "npa" extra on `AdRequest` would only race the SDK's own
  * read of that same signal. That is why `AdView.android.kt` takes no consent parameter: the two SDKs
  * already agree with each other, and this class's only job is to gate the *whether*.
@@ -41,13 +42,44 @@ internal class AndroidAdConsentManager(
   private val developerOptionsManager: DeveloperOptionsManager,
 ) : AdConsentManager {
 
-  override suspend fun ensureConsent(): AdConsentState {
+  override suspend fun ensureConsent(): AdConsentState = presentConsentForm()
+
+  override suspend fun isConsentRequired(): Boolean {
+    val consentInformation = requestConsentInfoUpdateOrNull() ?: return false
+    return consentInformation.consentStatus == ConsentInformation.ConsentStatus.REQUIRED
+  }
+
+  override suspend fun presentConsentForm(): AdConsentState {
     val activity = activityProvider.current()
     if (activity == null) {
-      log.w { "ensureConsent() called with no foreground activity — falling back to non-personalized" }
+      log.w { "presentConsentForm() called with no foreground activity — falling back to non-personalized" }
+      return AdConsentState.NON_PERSONALIZED
+    }
+    val consentInformation = requestConsentInfoUpdateOrNull()
+      ?: return AdConsentState.NON_PERSONALIZED
+
+    val formError = suspendCancellableCoroutine<FormError?> { cont ->
+      UserMessagingPlatform.loadAndShowConsentFormIfRequired(activity) { error -> cont.resume(error) }
+    }
+    if (formError != null) {
+      log.w { "Consent form failed to load/show: ${formError.message}" }
       return AdConsentState.NON_PERSONALIZED
     }
 
+    return deriveConsentState(
+      canRequestAds = consentInformation.canRequestAds(),
+      privacyOptionsRequired = consentInformation.privacyOptionsRequirementStatus ==
+        ConsentInformation.PrivacyOptionsRequirementStatus.REQUIRED,
+    )
+  }
+
+  /**
+   * The `requestConsentInfoUpdate` half shared by [isConsentRequired] and [presentConsentForm] — a
+   * background network call, no UI. `null` on no foreground activity or an SDK failure, logged at
+   * the call site's specific wording rather than here.
+   */
+  private suspend fun requestConsentInfoUpdateOrNull(): ConsentInformation? {
+    val activity = activityProvider.current() ?: return null
     val consentInformation = UserMessagingPlatform.getConsentInformation(application)
     val params = ConsentRequestParameters.Builder()
       .apply {
@@ -55,7 +87,7 @@ internal class AndroidAdConsentManager(
         // without a real EEA device or IP (design §8 "Done when"). UMP silently ignores this debug
         // geography on any physical device it doesn't already recognize as a test device — emulators
         // are exempt, but a real phone needs addTestDeviceHashedId or the form never appears and
-        // ensureConsent() resolves as if debug settings were never set at all.
+        // this resolves as if debug settings were never set at all.
         if (appCapability.isDeveloperOptionsSupported) {
           val testDeviceHashedId = developerOptionsManager.observe().first().adConsentTestDeviceHashedId
           setConsentDebugSettings(
@@ -78,22 +110,9 @@ internal class AndroidAdConsentManager(
     }
     if (updateError != null) {
       log.w { "requestConsentInfoUpdate failed: ${updateError.message}" }
-      return AdConsentState.NON_PERSONALIZED
+      return null
     }
-
-    val formError = suspendCancellableCoroutine<FormError?> { cont ->
-      UserMessagingPlatform.loadAndShowConsentFormIfRequired(activity) { error -> cont.resume(error) }
-    }
-    if (formError != null) {
-      log.w { "Consent form failed to load/show: ${formError.message}" }
-      return AdConsentState.NON_PERSONALIZED
-    }
-
-    return deriveConsentState(
-      canRequestAds = consentInformation.canRequestAds(),
-      privacyOptionsRequired = consentInformation.privacyOptionsRequirementStatus ==
-        ConsentInformation.PrivacyOptionsRequirementStatus.REQUIRED,
-    )
+    return consentInformation
   }
 
   override suspend fun presentPrivacyOptions() {
@@ -110,12 +129,20 @@ internal class AndroidAdConsentManager(
     }
   }
 
+  override suspend fun isPrivacyOptionsAvailable(): Boolean =
+    UserMessagingPlatform.getConsentInformation(application).privacyOptionsRequirementStatus ==
+      ConsentInformation.PrivacyOptionsRequirementStatus.REQUIRED
+
+  override suspend fun resetConsent() {
+    UserMessagingPlatform.getConsentInformation(application).reset()
+  }
+
   private val log = Logger.withTag("AndroidAdConsentManager")
 }
 
 /**
  * Pure mapping, split out for testing (the two inputs otherwise come from a live UMP `Activity`
- * flow, per [AndroidAdConsentManager.ensureConsent]'s KDoc on why the PERSONALIZED/NON_PERSONALIZED
+ * flow, per [AndroidAdConsentManager.presentConsentForm]'s KDoc on why the PERSONALIZED/NON_PERSONALIZED
  * split is informational and DENIED is the only value with teeth).
  */
 internal fun deriveConsentState(

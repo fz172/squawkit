@@ -78,7 +78,7 @@ class SubscriptionManagerImpl(
   override fun aircraftLimit(): Flow<Int?> =
     status().map { if (it >= Subscription.Status.STATUS_PRO) null else FREE_AIRCRAFT_LIMIT }
 
-  override fun showsAds(): Flow<Boolean> =
+  override fun shouldShowAds(): Flow<Boolean> =
     // No ads unless we can also sell their removal.
     if (!appCapability.isAdsSupported) {
       flowOf(false)

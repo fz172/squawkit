@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -20,6 +21,9 @@ import wingslog.feature.settings.generated.resources.developer_options_consent_t
 import wingslog.feature.settings.generated.resources.developer_options_consent_test_device_title
 import wingslog.feature.settings.generated.resources.developer_options_force_ads_subtitle
 import wingslog.feature.settings.generated.resources.developer_options_force_ads_title
+import wingslog.feature.settings.generated.resources.developer_options_reset_ad_consent_action
+import wingslog.feature.settings.generated.resources.developer_options_reset_ad_consent_subtitle
+import wingslog.feature.settings.generated.resources.developer_options_reset_ad_consent_title
 
 /**
  * Shows display ads regardless of the account's tier, so placement can be exercised without a real
@@ -31,6 +35,7 @@ fun DisplayAdsDeveloperSettings(
   onToggleForceAds: (Boolean) -> Unit,
   adConsentTestDeviceHashedId: String?,
   onAdConsentTestDeviceHashedIdChange: (String) -> Unit,
+  onResetAdConsent: () -> Unit,
 ) {
   Row(
     modifier = Modifier
@@ -77,5 +82,28 @@ fun DisplayAdsDeveloperSettings(
         .fillMaxWidth()
         .padding(top = Spacing.small),
     )
+  }
+
+  Row(
+    modifier = Modifier
+      .fillMaxWidth()
+      .padding(vertical = Spacing.medium),
+    verticalAlignment = Alignment.CenterVertically,
+  ) {
+    Column(modifier = Modifier.weight(1f)) {
+      Text(
+        text = stringResource(Res.string.developer_options_reset_ad_consent_title),
+        style = MaterialTheme.typography.bodyLarge,
+        fontWeight = FontWeight.Medium,
+      )
+      Text(
+        text = stringResource(Res.string.developer_options_reset_ad_consent_subtitle),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+      )
+    }
+    OutlinedButton(onClick = onResetAdConsent) {
+      Text(stringResource(Res.string.developer_options_reset_ad_consent_action))
+    }
   }
 }

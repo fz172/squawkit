@@ -55,18 +55,47 @@ object MainEntry {
   }
 
   /**
-   * Installs the ad consent resolver owned by the Swift app (App Tracking Transparency, and — once
-   * P8 adds the SPM package — Google UMP, are both Swift-side concerns; see `IosAdConsentBridge`).
-   * [provider] is invoked with a callback that must be called with one of
-   * `"PERSONALIZED"`/`"NON_PERSONALIZED"`/`"DENIED"`.
+   * Installs the background-only consent-info resolver owned by the Swift app (Google UMP is a
+   * Swift-side concern; see `IosAdConsentBridge`) — no UI, just `requestConsentInfoUpdate`.
+   * [provider] receives the Developer Options test-device hash (or `null`) and a callback that
+   * must be called with `"REQUIRED"`/`"NOT_REQUIRED"`. Lets a caller (onboarding) decide whether to
+   * put a priming explanation in front of the real dialog before calling
+   * [installConsentFormPresenter] to show it.
    */
-  fun installAdConsentProvider(provider: (onResult: (String) -> Unit) -> Unit) {
-    IosAdConsentBridge.installConsentProvider(provider)
+  fun installConsentInfoUpdateProvider(provider: (testDeviceHashedId: String?, onResult: (String) -> Unit) -> Unit) {
+    IosAdConsentBridge.installConsentInfoUpdateProvider(provider)
+  }
+
+  /**
+   * Installs the resolver that actually shows the CMP dialog if required. [provider] receives the
+   * Developer Options test-device hash (or `null`) and a callback that must be called with one of
+   * `"NON_PERSONALIZED"`/`"DENIED"` (iOS never resolves `"PERSONALIZED"` — see `AdConsentManager`'s
+   * KDoc on why ATT was dropped).
+   */
+  fun installConsentFormPresenter(presenter: (testDeviceHashedId: String?, onResult: (String) -> Unit) -> Unit) {
+    IosAdConsentBridge.installConsentFormPresenter(presenter)
   }
 
   /** Installs the Settings → "Ad privacy settings" re-presentation of the CMP form. */
   fun installAdPrivacyOptionsPresenter(presenter: (onComplete: () -> Unit) -> Unit) {
     IosAdConsentBridge.installPrivacyOptionsPresenter(presenter)
+  }
+
+  /**
+   * Installs the synchronous check backing "Ad privacy settings"' own visibility — whether
+   * `ConsentInformation.shared.privacyOptionsRequirementStatus` currently reads `.required`, so the
+   * row can hide itself rather than presenting a control with nothing to show.
+   */
+  fun installIsPrivacyOptionsAvailableProvider(provider: () -> Boolean) {
+    IosAdConsentBridge.installPrivacyOptionsAvailableProvider(provider)
+  }
+
+  /**
+   * Installs the Developer Options "Reset ad consent" action — wipes UMP's on-device cache so the
+   * onboarding priming explainer can be re-tested without clearing the app's local data/account.
+   */
+  fun installResetConsentAction(action: () -> Unit) {
+    IosAdConsentBridge.installResetConsentAction(action)
   }
 
   /**

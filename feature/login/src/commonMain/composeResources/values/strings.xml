@@ -36,6 +36,11 @@
   <!-- Onboarding: welcome -->
   <string name="onboarding_welcome_aboard">Welcome aboard</string>
   <string name="onboarding_welcome_tagline">Let's get your hangar set up.</string>
+  <!-- Onboarding: ads consent priming, shown once before the platform's own consent dialog -->
+  <string name="onboarding_ads_consent_eyebrow">Keeping the lights on</string>
+  <string name="onboarding_ads_consent_headline">A few small ads 📣</string>
+  <string name="onboarding_ads_consent_body">Ads cover the servers, so SquawkIt stays free. Next, choose how they can use your data.</string>
+  <string name="onboarding_ads_consent_pro_note">Go ad-free anytime with SquawkIt Pro.</string>
   <!-- Guest -> permanent account upgrade -->
   <string name="upgrade_picker_title">Keep your records</string>
   <string name="upgrade_picker_body">Connect an account so your aircraft, logs, and records are backed up and available on your other devices.</string>

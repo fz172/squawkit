@@ -34,7 +34,6 @@ class SettingsViewModel(
     MutableStateFlow(
       SettingsUiState(
         isDeveloperOptionsSupported = appCapability.isDeveloperOptionsSupported,
-        isAdsSupported = appCapability.isAdsSupported,
       )
     )
   val user: StateFlow<SettingsUiState> = _user.asStateFlow()
@@ -56,6 +55,20 @@ class SettingsViewModel(
   init {
     loadUserProfile()
     observeDeveloperFlags()
+    refreshAdPrivacyOptionsAvailability()
+  }
+
+  /**
+   * Whether "Ad privacy settings" has anything to show right now (#384) — only meaningful once
+   * queried, since the underlying CMP call is lazy (see [AdConsentManager]'s KDoc), so this starts
+   * `false` at [loadUserProfile] and flips to `true` here if it turns out to be available.
+   */
+  private fun refreshAdPrivacyOptionsAvailability() {
+    if (!appCapability.isAdsSupported) return
+    viewModelScope.launch {
+      val available = adConsentManager.isPrivacyOptionsAvailable()
+      _user.value = _user.value.copy(isAdPrivacyOptionsAvailable = available)
+    }
   }
 
   private fun observeDeveloperFlags() {
@@ -80,7 +93,6 @@ class SettingsViewModel(
       userStatus = UserStatus.LOADING,
       isAnonymous = authManager.getCurrentUser()?.isAnonymous == true,
       isDeveloperOptionsSupported = appCapability.isDeveloperOptionsSupported,
-      isAdsSupported = appCapability.isAdsSupported,
     )
   }
 

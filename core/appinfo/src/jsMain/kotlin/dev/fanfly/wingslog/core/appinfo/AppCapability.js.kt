@@ -7,8 +7,8 @@ actual fun createAppCapability(isDeveloperBuild: Boolean) = AppCapability(
   isStressTestSupported = isDeveloperBuild,
   isCameraCaptureSupported = false,
   isAnonymousLoginSupported = false,
-  // Hard `false` for all of v1, not `isDeveloperBuild`: AdMob publishes no browser SDK, so the web
-  // host has no ad product until phase 2 puts it on Ad Manager (design §7.3, PRD D5). The `jsMain`
-  // AdView actual renders nothing regardless — this flag makes that a decision, not a side effect.
+  // AdMob publishes no browser SDK, so the web host has no ad product of its own until phase 2
+  // puts one on Ad Manager (design §7.3, PRD D5) — the `jsMain` AdView actual renders nothing
+  // regardless of this flag's value.
   isAdsSupported = false,
 )

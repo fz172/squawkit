@@ -119,7 +119,10 @@ fun AdSlot(
       // Neutral only. The amber/red status palette means "your aircraft needs attention" (G8).
       containerColor = MaterialTheme.colorScheme.surfaceVariant,
     ),
-    border = BorderStroke(Spacing.hairline, MaterialTheme.colorScheme.outlineVariant),
+    border = BorderStroke(
+      Spacing.hairline,
+      MaterialTheme.colorScheme.outlineVariant
+    ),
     shape = RoundedCornerShape(Spacing.cardCornerRadius),
     elevation = CardDefaults.cardElevation(defaultElevation = Spacing.none),
   ) {
@@ -147,7 +150,10 @@ fun AdSlot(
           .padding(horizontal = Spacing.extraSmall)
           // One focus group announced as "Advertisement" (N7).
           .clearAndSetSemantics { contentDescription = advertisement },
-        horizontalArrangement = Arrangement.spacedBy(Spacing.medium, Alignment.CenterHorizontally),
+        horizontalArrangement = Arrangement.spacedBy(
+          Spacing.medium,
+          Alignment.CenterHorizontally
+        ),
         verticalAlignment = Alignment.CenterVertically,
       ) {
         repeat(granted) { unit ->

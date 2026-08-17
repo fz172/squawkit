@@ -9,11 +9,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import dev.fanfly.wingslog.core.auth.EmailLinkDeepLinks
+import dev.fanfly.wingslog.feature.ads.datamanager.AdConsentManager
 import dev.fanfly.wingslog.feature.login.data.LoginViewModel
+import dev.fanfly.wingslog.feature.login.onboarding.AdsConsentExplainerScreen
 import dev.fanfly.wingslog.feature.login.onboarding.NameEntryScreen
 import dev.fanfly.wingslog.feature.login.onboarding.OnboardingActions
 import dev.fanfly.wingslog.feature.login.onboarding.OnboardingPreferences
 import dev.fanfly.wingslog.feature.login.onboarding.WelcomeScreen
+import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
 import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
@@ -21,10 +24,11 @@ import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
-private enum class AuthStep { Login, EmailSignIn, NameEntry, Welcome }
+private enum class AuthStep { Login, EmailSignIn, NameEntry, Welcome, AdsConsentExplainer }
 
 /**
- * The full pre-app flow shared by every platform: sign-in → name entry → welcome.
+ * The full pre-app flow shared by every platform: sign-in → name entry → welcome → (free tier,
+ * consent required) ads consent priming.
  *
  * Navigation-free (a simple step state machine) so it runs identically on Android, iOS, and web
  * without depending on a navigation library. [onComplete] fires once the user is signed in and has
@@ -32,7 +36,9 @@ private enum class AuthStep { Login, EmailSignIn, NameEntry, Welcome }
  * mobile, a placeholder on web today).
  *
  * Name persistence is delegated to [OnboardingActions]; the welcome flag goes
- * through [OnboardingPreferences] (local store).
+ * through [OnboardingPreferences] (local store). The ads consent step has no flag of its own —
+ * see `proceedPastOnboarding()` — it runs every time onboarding completes (new signup or returning
+ * user alike) and relies on the platform CMP's own cached state to no-op once already resolved.
  *
  * [loginContent] is the sign-in step's UI. It defaults to the shared [LoginScreen] used by Android
  * and iOS; the web host overrides it with its SEO landing page (see WebLoginLandingScreen) while
@@ -46,6 +52,8 @@ fun AuthFlow(
   firebaseAuth: FirebaseAuth = koinInject(),
   actions: OnboardingActions = koinInject(),
   onboardingPreferences: OnboardingPreferences = koinInject(),
+  subscriptionManager: SubscriptionManager = koinInject(),
+  adConsentManager: AdConsentManager = koinInject(),
   loginContent: @Composable (onLoginSuccess: () -> Unit, onChooseEmail: () -> Unit) -> Unit =
     { onLoginSuccess, onChooseEmail ->
       LoginScreen(
@@ -59,6 +67,22 @@ fun AuthFlow(
   var step by remember { mutableStateOf(AuthStep.Login) }
   val selfName by actions.observeSelfName()
     .collectAsState(null)
+
+  // Every path out of onboarding funnels through here, new signup and returning user alike — this
+  // is the one place ads consent gets resolved, instead of leaving it to whichever ad slot happens
+  // to render first. isConsentRequired() is a background check (no UI); only when it says a privacy
+  // choice is actually needed does the flow detour through the explainer + the real CMP dialog,
+  // rather than interrupt a pilot mid-scroll later. showsAds() already folds in both the tier check
+  // and isAdsSupported, so a Pro user's app never even calls the consent SDK.
+  suspend fun proceedPastOnboarding() {
+    val needsAdsConsent = subscriptionManager.shouldShowAds()
+      .first() && adConsentManager.isConsentRequired()
+    if (needsAdsConsent) {
+      step = AuthStep.AdsConsentExplainer
+    } else {
+      onComplete()
+    }
+  }
 
   // Guards against advancing past sign-in twice — a real risk once we also advance from
   // authStateChanged (below), which can race the manual onLoginSuccess call. Reset whenever we
@@ -81,7 +105,7 @@ fun AuthFlow(
         } else if (!onboardingPreferences.checkHasSeenWelcome()) {
           step = AuthStep.Welcome
         } else {
-          onComplete()
+          proceedPastOnboarding()
         }
       }
     }
@@ -148,6 +172,15 @@ fun AuthFlow(
       onDone = {
         scope.launch {
           onboardingPreferences.setHasSeenWelcome()
+          proceedPastOnboarding()
+        }
+      },
+    )
+
+    AuthStep.AdsConsentExplainer -> AdsConsentExplainerScreen(
+      onContinue = {
+        scope.launch {
+          adConsentManager.presentConsentForm()
           onComplete()
         }
       },

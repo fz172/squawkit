@@ -3,6 +3,7 @@ package dev.fanfly.wingslog.feature.settings.developeroptions
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.fanfly.wingslog.core.model.settings.Subscription
+import dev.fanfly.wingslog.feature.ads.datamanager.AdConsentManager
 import dev.fanfly.wingslog.feature.developeroptions.datamanager.DeveloperFlags
 import dev.fanfly.wingslog.feature.developeroptions.datamanager.DeveloperOptionsManager
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -12,6 +13,7 @@ import kotlinx.coroutines.launch
 
 class DeveloperOptionsViewModel(
   private val developerOptionsManager: DeveloperOptionsManager,
+  private val adConsentManager: AdConsentManager,
 ) : ViewModel() {
 
   private val _flags = MutableStateFlow(DeveloperFlags())
@@ -50,6 +52,17 @@ class DeveloperOptionsViewModel(
   /** Registers this device with Google UMP so the EEA debug-geography override takes effect. */
   fun setAdConsentTestDeviceHashedId(hashedId: String) {
     setFlags(_flags.value.copy(adConsentTestDeviceHashedId = hashedId.ifBlank { null }))
+  }
+
+  /**
+   * Wipes the on-device UMP cache so consent resolves fresh next time, as if this were a first-ever
+   * launch — the only way to re-test the onboarding priming explainer (`AuthFlow`) without clearing
+   * the app's local data/account entirely, since neither platform's SDK re-asks once already
+   * resolved. Takes effect on the *next* app launch: `AuthFlow`'s consent check only runs from its
+   * own step machine, which only mounts at a fresh cold start, not from within Developer Options.
+   */
+  fun resetAdConsent() {
+    viewModelScope.launch { adConsentManager.resetConsent() }
   }
 
   /**

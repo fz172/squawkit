@@ -39,5 +39,5 @@ interface SubscriptionManager {
    * effective tier is below `PRO`. Comparing the status enum rather than a boolean means any future
    * paid tier is ad-free automatically.
    */
-  fun showsAds(): Flow<Boolean>
+  fun shouldShowAds(): Flow<Boolean>
 }

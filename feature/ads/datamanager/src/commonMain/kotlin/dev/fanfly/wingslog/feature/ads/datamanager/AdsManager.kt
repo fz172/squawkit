@@ -21,7 +21,7 @@ interface AdsManager {
    * When `false`, callers render their items directly rather than wrapping them, so the ad-free
    * path allocates nothing.
    */
-  fun showsAds(): Flow<Boolean>
+  fun shouldShowsAds(): Flow<Boolean>
 
   /**
    * Claims up to [units] of this session's budget for the slot identified by [key], returning how many

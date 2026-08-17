@@ -39,6 +39,9 @@
   <string name="developer_options_force_ads_title">Force ads</string>
   <string name="developer_options_force_ads_subtitle">Show display ads on any account, ignoring the tier. Everything else behaves normally, including the limit of 5 ads per session.</string>
   <string name="developer_options_consent_test_device_title">UMP test device hash</string>
-  <string name="developer_options_consent_test_device_subtitle">Required on a physical device for the EEA debug-geography override below to show the consent form at all — emulators don’t need this. Run once with this blank, then check Logcat (tag "Ump") for a message giving this device’s hash, and paste it here.</string>
-  <string name="developer_options_consent_test_device_placeholder">Paste hash from Logcat</string>
+  <string name="developer_options_consent_test_device_subtitle">Required on a physical device (either platform) for the EEA debug-geography override to show the consent form at all — simulators/emulators don’t need this. Run once with this blank, then check the console for a message giving this device’s hash — Logcat tag "Ump" on Android, or search the Xcode console for "UMPDebugSettings.testDeviceIdentifiers" on iOS — and paste it here.</string>
+  <string name="developer_options_consent_test_device_placeholder">Paste hash from the console</string>
+  <string name="developer_options_reset_ad_consent_title">Reset ad consent</string>
+  <string name="developer_options_reset_ad_consent_subtitle">Wipes this device's cached UMP consent state, so it resolves fresh next launch — as if this were a first install. The only way to re-test the onboarding consent explainer without clearing all local app data.</string>
+  <string name="developer_options_reset_ad_consent_action">Reset</string>
 </resources>

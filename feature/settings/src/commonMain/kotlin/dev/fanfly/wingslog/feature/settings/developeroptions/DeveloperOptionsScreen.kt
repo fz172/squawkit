@@ -80,6 +80,7 @@ fun DeveloperOptionsScreen(
           onToggleForceAds = viewModel::setForceAds,
           adConsentTestDeviceHashedId = flags.adConsentTestDeviceHashedId,
           onAdConsentTestDeviceHashedIdChange = viewModel::setAdConsentTestDeviceHashedId,
+          onResetAdConsent = viewModel::resetAdConsent,
         )
         HorizontalDivider()
 

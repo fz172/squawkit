@@ -15,15 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.foundation.lazy.LazyColumn
-import dev.fanfly.wingslog.feature.ads.datamanager.AdsManager
-import dev.fanfly.wingslog.feature.ads.model.AdSurface
-import dev.fanfly.wingslog.feature.ads.model.ListRow
-import dev.fanfly.wingslog.feature.ads.model.withAdSlots
-import dev.fanfly.wingslog.feature.ads.viewing.AdSlot
-import org.koin.compose.koinInject
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -50,6 +42,8 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -68,6 +62,11 @@ import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalNavPillClearance
 import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.feature.ads.datamanager.AdsManager
+import dev.fanfly.wingslog.feature.ads.model.AdSurface
+import dev.fanfly.wingslog.feature.ads.model.ListRow
+import dev.fanfly.wingslog.feature.ads.model.withAdSlots
+import dev.fanfly.wingslog.feature.ads.viewing.AdSlot
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
 import dev.fanfly.wingslog.feature.logs.sharedassets.util.displayName
 import dev.fanfly.wingslog.feature.logs.viewing.log.data.MaintenanceLogListUiState
@@ -76,6 +75,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 import wingslog.core.sharedassets.generated.resources.done
 import wingslog.core.sharedassets.generated.resources.retry
 import wingslog.feature.logs.sharedassets.generated.resources.add_first_maintenance_log
@@ -133,7 +133,8 @@ fun MaintenanceLogListContent(
     (uiState as? MaintenanceLogListUiState.Success)?.logs.orEmpty()
   )
   val adsManager: AdsManager = koinInject()
-  val showAds by adsManager.showsAds().collectAsState(initial = false)
+  val showAds by adsManager.shouldShowsAds()
+    .collectAsState(initial = false)
   // The display list, not the item list. Everything index-based below must agree with what the
   // LazyColumn actually renders — see the scroll target immediately after.
   val rows by remember {
