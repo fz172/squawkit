@@ -190,8 +190,32 @@ class SharingManagerImpl(
       // before the ref tombstone reaches their device. Surface that as state rather than an error:
       // it is the earliest signal a member has that their access ended, and the screen watching this
       // roster has to react to it. Rules don't flap, so a denial is a real answer, not a hiccup.
+      //
+      // On our OWN aircraft, though, a denial means something else: there is no ACL yet — no invite
+      // has ever been created (aircraft_shares match block) — not a revocation. Stand in as the sole
+      // member from the locally-known owner role instead of surfacing a dead-end "no access"; the
+      // real member doc backfills itself (§7.2) once the first invite bootstraps the share.
       .catch { e ->
-        if (isPermissionDenied(e)) emit(AircraftShareState(accessDenied = true)) else throw e
+        if (!isPermissionDenied(e)) throw e
+        if (hostUid == myUid) {
+          val user = auth.currentUser
+          emit(
+            AircraftShareState(
+              members = listOf(
+                ShareMember(
+                  uid = hostUid,
+                  displayName = user?.displayName.orEmpty(),
+                  role = ShareRole.OWNER,
+                  photoUrl = user?.photoURL,
+                  isHost = true,
+                  isSelf = true,
+                ),
+              ),
+            ),
+          )
+        } else {
+          emit(AircraftShareState(accessDenied = true))
+        }
       }
   }
 
