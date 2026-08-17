@@ -2,6 +2,7 @@ package dev.fanfly.wingslog.feature.login.onboarding
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -85,60 +86,65 @@ fun AdsConsentExplainerScreen(
       modifier = Modifier
         .constrainedContentWidth(ContentWidth.Auth)
         .fillMaxSize()
-        .padding(start = 28.dp, end = 28.dp, top = 96.dp),
+        .padding(start = 28.dp, end = 28.dp, top = 70.dp),
     ) {
-      Box(
-        modifier = Modifier
-          .size(72.dp)
-          .background(Color.White.copy(alpha = 0.06f), CircleShape),
-        contentAlignment = Alignment.Center,
+      // Weighted + centered, like WelcomeScreen's whole layout, rather than pinned to the top the
+      // way NameEntryScreen's is (that screen has a text field anchoring it, this one doesn't).
+      Column(
+        modifier = Modifier.weight(1f),
+        verticalArrangement = Arrangement.Center,
       ) {
-        Icon(
-          imageVector = Icons.Default.Campaign,
-          contentDescription = null,
-          modifier = Modifier.size(32.dp),
-          tint = AviationBlue80,
+        Box(
+          modifier = Modifier
+            .size(72.dp)
+            .background(Color.White.copy(alpha = 0.06f), CircleShape),
+          contentAlignment = Alignment.Center,
+        ) {
+          Icon(
+            imageVector = Icons.Default.Campaign,
+            contentDescription = null,
+            modifier = Modifier.size(32.dp),
+            tint = AviationBlue80,
+          )
+        }
+
+        Spacer(Modifier.height(24.dp))
+
+        Text(
+          text = stringResource(Res.string.onboarding_ads_consent_eyebrow),
+          style = TextStyle(
+            fontFamily = FontFamily.SansSerif,
+            fontSize = 11.5.sp,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 1.5.sp,
+            color = AviationBlue80,
+          ),
+        )
+        Spacer(Modifier.height(8.dp))
+
+        Text(
+          text = stringResource(Res.string.onboarding_ads_consent_headline),
+          style = TextStyle(
+            fontFamily = headlineFamily,
+            fontSize = 30.sp,
+            fontWeight = FontWeight.Bold,
+            lineHeight = 34.sp,
+            letterSpacing = (-0.5).sp,
+            color = Color.White,
+          ),
+        )
+        Spacer(Modifier.height(10.dp))
+
+        Text(
+          text = stringResource(Res.string.onboarding_ads_consent_body),
+          style = TextStyle(
+            fontFamily = FontFamily.SansSerif,
+            fontSize = 14.sp,
+            lineHeight = 20.sp,
+            color = Color.White.copy(alpha = 0.62f),
+          ),
         )
       }
-
-      Spacer(Modifier.height(24.dp))
-
-      Text(
-        text = stringResource(Res.string.onboarding_ads_consent_eyebrow),
-        style = TextStyle(
-          fontFamily = FontFamily.SansSerif,
-          fontSize = 11.5.sp,
-          fontWeight = FontWeight.Bold,
-          letterSpacing = 1.5.sp,
-          color = AviationBlue80,
-        ),
-      )
-      Spacer(Modifier.height(8.dp))
-
-      Text(
-        text = stringResource(Res.string.onboarding_ads_consent_headline),
-        style = TextStyle(
-          fontFamily = headlineFamily,
-          fontSize = 30.sp,
-          fontWeight = FontWeight.Bold,
-          lineHeight = 34.sp,
-          letterSpacing = (-0.5).sp,
-          color = Color.White,
-        ),
-      )
-      Spacer(Modifier.height(10.dp))
-
-      Text(
-        text = stringResource(Res.string.onboarding_ads_consent_body),
-        style = TextStyle(
-          fontFamily = FontFamily.SansSerif,
-          fontSize = 14.sp,
-          lineHeight = 20.sp,
-          color = Color.White.copy(alpha = 0.62f),
-        ),
-      )
-
-      Spacer(Modifier.weight(1f))
 
       Button(
         onClick = onContinue,
