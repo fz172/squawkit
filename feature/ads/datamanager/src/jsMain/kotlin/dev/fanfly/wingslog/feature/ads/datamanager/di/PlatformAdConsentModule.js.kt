@@ -12,6 +12,8 @@ import org.koin.dsl.module
  */
 private object NoOpAdConsentManager : AdConsentManager {
   override suspend fun ensureConsent(): AdConsentState = AdConsentState.NON_PERSONALIZED
+  override suspend fun isConsentRequired(): Boolean = false
+  override suspend fun presentConsentForm(): AdConsentState = AdConsentState.NON_PERSONALIZED
   override suspend fun presentPrivacyOptions() = Unit
   override suspend fun isPrivacyOptionsAvailable(): Boolean = false
 }

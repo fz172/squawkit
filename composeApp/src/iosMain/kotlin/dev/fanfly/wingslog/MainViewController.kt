@@ -55,14 +55,25 @@ object MainEntry {
   }
 
   /**
-   * Installs the ad consent resolver owned by the Swift app (Google UMP is a Swift-side concern;
-   * see `IosAdConsentBridge`). [provider] receives the Developer Options test-device hash (or
-   * `null`) and a callback that must be called with one of
+   * Installs the background-only consent-info resolver owned by the Swift app (Google UMP is a
+   * Swift-side concern; see `IosAdConsentBridge`) — no UI, just `requestConsentInfoUpdate`.
+   * [provider] receives the Developer Options test-device hash (or `null`) and a callback that
+   * must be called with `"REQUIRED"`/`"NOT_REQUIRED"`. Lets a caller (onboarding) decide whether to
+   * put a priming explanation in front of the real dialog before calling
+   * [installConsentFormPresenter] to show it.
+   */
+  fun installConsentInfoUpdateProvider(provider: (testDeviceHashedId: String?, onResult: (String) -> Unit) -> Unit) {
+    IosAdConsentBridge.installConsentInfoUpdateProvider(provider)
+  }
+
+  /**
+   * Installs the resolver that actually shows the CMP dialog if required. [provider] receives the
+   * Developer Options test-device hash (or `null`) and a callback that must be called with one of
    * `"NON_PERSONALIZED"`/`"DENIED"` (iOS never resolves `"PERSONALIZED"` — see `AdConsentManager`'s
    * KDoc on why ATT was dropped).
    */
-  fun installAdConsentProvider(provider: (testDeviceHashedId: String?, onResult: (String) -> Unit) -> Unit) {
-    IosAdConsentBridge.installConsentProvider(provider)
+  fun installConsentFormPresenter(presenter: (testDeviceHashedId: String?, onResult: (String) -> Unit) -> Unit) {
+    IosAdConsentBridge.installConsentFormPresenter(presenter)
   }
 
   /** Installs the Settings → "Ad privacy settings" re-presentation of the CMP form. */

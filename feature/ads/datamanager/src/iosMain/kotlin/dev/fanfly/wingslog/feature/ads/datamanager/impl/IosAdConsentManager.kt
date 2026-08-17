@@ -15,15 +15,21 @@ internal class IosAdConsentManager(
   private val appCapability: AppCapability,
   private val developerOptionsManager: DeveloperOptionsManager,
 ) : AdConsentManager {
-  override suspend fun ensureConsent(): AdConsentState {
-    val testDeviceHashedId = if (appCapability.isDeveloperOptionsSupported) {
+  override suspend fun ensureConsent(): AdConsentState = presentConsentForm()
+
+  override suspend fun isConsentRequired(): Boolean =
+    IosAdConsentBridge.isConsentRequired(testDeviceHashedId())
+
+  override suspend fun presentConsentForm(): AdConsentState =
+    IosAdConsentBridge.presentConsentForm(testDeviceHashedId())
+
+  override suspend fun presentPrivacyOptions() = IosAdConsentBridge.presentPrivacyOptions()
+  override suspend fun isPrivacyOptionsAvailable(): Boolean = IosAdConsentBridge.isPrivacyOptionsAvailable()
+
+  private suspend fun testDeviceHashedId(): String? =
+    if (appCapability.isDeveloperOptionsSupported) {
       developerOptionsManager.observe().first().adConsentTestDeviceHashedId
     } else {
       null
     }
-    return IosAdConsentBridge.ensureConsent(testDeviceHashedId)
-  }
-
-  override suspend fun presentPrivacyOptions() = IosAdConsentBridge.presentPrivacyOptions()
-  override suspend fun isPrivacyOptionsAvailable(): Boolean = IosAdConsentBridge.isPrivacyOptionsAvailable()
 }
