@@ -55,12 +55,13 @@ object MainEntry {
   }
 
   /**
-   * Installs the ad consent resolver owned by the Swift app (App Tracking Transparency, and — once
-   * P8 adds the SPM package — Google UMP, are both Swift-side concerns; see `IosAdConsentBridge`).
-   * [provider] is invoked with a callback that must be called with one of
-   * `"PERSONALIZED"`/`"NON_PERSONALIZED"`/`"DENIED"`.
+   * Installs the ad consent resolver owned by the Swift app (Google UMP is a Swift-side concern;
+   * see `IosAdConsentBridge`). [provider] receives the Developer Options test-device hash (or
+   * `null`) and a callback that must be called with one of
+   * `"NON_PERSONALIZED"`/`"DENIED"` (iOS never resolves `"PERSONALIZED"` — see `AdConsentManager`'s
+   * KDoc on why ATT was dropped).
    */
-  fun installAdConsentProvider(provider: (onResult: (String) -> Unit) -> Unit) {
+  fun installAdConsentProvider(provider: (testDeviceHashedId: String?, onResult: (String) -> Unit) -> Unit) {
     IosAdConsentBridge.installConsentProvider(provider)
   }
 

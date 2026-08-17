@@ -20,19 +20,21 @@ import UserMessagingPlatform
 /// controller deliberately — the SDK itself resolves the top view controller of the key window, the
 /// same lookup `NativeGoogleSignInProvider` does by hand for its own sheet.
 func installAdConsentProvider() {
-    MainEntry.shared.installAdConsentProvider { onResult in
+    MainEntry.shared.installAdConsentProvider { testDeviceHashedId, onResult in
         let params = RequestParameters()
         #if targetEnvironment(simulator) || DEBUG
         // Debug features are already always-on for the Simulator per DebugSettings' own
         // documentation; the EEA override here is what makes the CMP exercisable in dev/dogfood on
-        // a *physical* device too, mirroring AndroidAdConsentManager's debug-geography override.
-        // A physical device additionally needs its identifier in testDeviceIdentifiers, or UMP
+        // a *physical* device too, mirroring AndroidAdConsentManager's debug-geography override. A
+        // physical device additionally needs its identifier in testDeviceIdentifiers, or UMP
         // silently ignores the geography override — same failure mode as Android without its
         // registered hash. UMP logs the identifier to the console the first time this runs on an
-        // unregistered device (grep the run for "UMPDebugSettings.testDeviceIdentifiers").
+        // unregistered device (grep the run for "UMPDebugSettings.testDeviceIdentifiers"); paste it
+        // into Developer Options' "UMP test device hash" field (Settings → Developer Options) — the
+        // same field/flow Android uses, and [testDeviceHashedId] here is that field's live value.
         let debugSettings = DebugSettings()
         debugSettings.geography = .EEA
-        debugSettings.testDeviceIdentifiers = knownTestDeviceIdentifiers
+        debugSettings.testDeviceIdentifiers = [testDeviceHashedId].compactMap { $0 }
         params.debugSettings = debugSettings
         #endif
 
@@ -81,9 +83,3 @@ func installAdConsentProvider() {
         KotlinBoolean(bool: ConsentInformation.shared.privacyOptionsRequirementStatus == .required)
     }
 }
-
-/// Physical dev/dogfood devices UMP has been told about (design §8 "Done when"). Add a new one by
-/// running once without it listed and grepping the console for the identifier UMP reports.
-private let knownTestDeviceIdentifiers = [
-    "41D04759-94D5-4CCD-9E1B-509EB6E90639",
-]

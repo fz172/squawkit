@@ -17,11 +17,16 @@ import kotlin.time.Duration.Companion.seconds
  * `iosApp/AdConsentPresenter.swift`.
  */
 object IosAdConsentBridge {
-  private var consentProvider: ((onResult: (String) -> Unit) -> Unit)? = null
+  private var consentProvider: ((testDeviceHashedId: String?, onResult: (String) -> Unit) -> Unit)? = null
   private var privacyOptionsPresenter: ((onComplete: () -> Unit) -> Unit)? = null
   private var privacyOptionsAvailableProvider: (() -> Boolean)? = null
 
-  fun installConsentProvider(provider: (onResult: (String) -> Unit) -> Unit) {
+  /**
+   * [provider] is called with the Developer Options "UMP test device hash" (null if unset, or the
+   * build has no Developer Options) so Swift can register a physical device for the EEA debug
+   * geography override — the same field [AndroidAdConsentManager] reads on Android.
+   */
+  fun installConsentProvider(provider: (testDeviceHashedId: String?, onResult: (String) -> Unit) -> Unit) {
     consentProvider = provider
   }
 
@@ -38,14 +43,14 @@ object IosAdConsentBridge {
     privacyOptionsAvailableProvider = provider
   }
 
-  internal suspend fun ensureConsent(): AdConsentState {
+  internal suspend fun ensureConsent(testDeviceHashedId: String?): AdConsentState {
     val provider = consentProvider
     if (provider == null) {
       log.w { "ensureConsent() requested but no provider installed (iOS host didn't wire it)" }
       return AdConsentState.NON_PERSONALIZED
     }
     val result = withTimeoutOrNull(RESOLUTION_TIMEOUT) {
-      suspendCancellableCoroutine { cont -> provider { raw -> cont.resume(raw) } }
+      suspendCancellableCoroutine { cont -> provider(testDeviceHashedId) { raw -> cont.resume(raw) } }
     }
     if (result == null) {
       log.w { "ensureConsent() timed out after $RESOLUTION_TIMEOUT" }
