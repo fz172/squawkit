@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.flowOf
 /**
  * Combines the entitlement gate with the session budget, and applies the developer force-override.
  *
- * See [SubscriptionManager.showsAds] for why the tier gate is default-CLOSED.
+ * See [SubscriptionManager.shouldShowAds] for why the tier gate is default-CLOSED.
  */
 internal class AdsManagerImpl(
   private val subscriptionManager: SubscriptionManager,
@@ -33,11 +33,11 @@ internal class AdsManagerImpl(
    * that must never exist. So the capability gate short-circuits before the override is even
    * consulted.
    */
-  override fun showsAds(): Flow<Boolean> {
+  override fun shouldShowsAds(): Flow<Boolean> {
     if (!adsPossible) return flowOf(false)
-    if (!devOverridesHonored) return subscriptionManager.showsAds()
+    if (!devOverridesHonored) return subscriptionManager.shouldShowAds()
     return combine(
-      subscriptionManager.showsAds(),
+      subscriptionManager.shouldShowAds(),
       forceAds
     ) { byTier, forced -> byTier || forced }
   }

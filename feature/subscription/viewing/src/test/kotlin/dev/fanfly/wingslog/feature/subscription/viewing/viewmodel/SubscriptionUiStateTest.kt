@@ -3,27 +3,27 @@ package dev.fanfly.wingslog.feature.subscription.viewing.viewmodel
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.core.auth.AuthManager
+import dev.fanfly.wingslog.core.model.settings.Subscription
 import dev.fanfly.wingslog.feature.subscription.datamanager.EntitlementReconciler
 import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
 import dev.fanfly.wingslog.feature.subscription.model.BillingManager
 import dev.fanfly.wingslog.feature.subscription.model.PurchasePlatform
 import dev.fanfly.wingslog.feature.subscription.model.UnsupportedBillingManager
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
 import dev.gitlive.firebase.auth.FirebaseUser
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.setMain
 import kotlinx.coroutines.test.runCurrent
-import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
-import dev.fanfly.wingslog.core.model.settings.Subscription
+import kotlinx.coroutines.test.setMain
 import kotlinx.datetime.TimeZone
 import org.junit.After
 import org.junit.Before
@@ -578,6 +578,6 @@ class SubscriptionUiStateTest {
 
     // These tests predate ads and assert nothing about them; false keeps the fake honest for a
     // subscriber, which is the tier they exercise.
-    override fun showsAds(): Flow<Boolean> = flowOf(false)
+    override fun shouldShowAds(): Flow<Boolean> = flowOf(false)
   }
 }

@@ -28,7 +28,7 @@ private class FakeSubscriptionGate(private val showsAds: Boolean) :
   override fun canEmailExports(): Flow<Boolean> = flowOf(false)
   override fun canHostShare(): Flow<Boolean> = flowOf(false)
   override fun aircraftLimit(): Flow<Int?> = flowOf(2)
-  override fun showsAds(): Flow<Boolean> = flowOf(showsAds)
+  override fun shouldShowAds(): Flow<Boolean> = flowOf(showsAds)
 }
 
 class AdsManagerImplTest {
@@ -64,7 +64,7 @@ class AdsManagerImplTest {
   fun `free tier on a supported build shows ads`() = runTest {
     val m = manager(capability(), tierShowsAds = true)
     assertThat(
-      m.showsAds()
+      m.shouldShowsAds()
         .first()
     ).isTrue()
   }
@@ -73,7 +73,7 @@ class AdsManagerImplTest {
   fun `a paid tier is ad-free`() = runTest {
     val m = manager(capability(), tierShowsAds = false)
     assertThat(
-      m.showsAds()
+      m.shouldShowsAds()
         .first()
     ).isFalse()
   }
@@ -82,7 +82,7 @@ class AdsManagerImplTest {
   fun `ads unsupported means no ads, even on the free tier`() = runTest {
     val m = manager(capability(ads = false), tierShowsAds = true)
     assertThat(
-      m.showsAds()
+      m.shouldShowsAds()
         .first()
     ).isFalse()
   }
@@ -97,7 +97,7 @@ class AdsManagerImplTest {
       forceAds = flowOf(true),
     )
     assertThat(
-      m.showsAds()
+      m.shouldShowsAds()
         .first()
     ).isTrue()
   }
@@ -110,7 +110,7 @@ class AdsManagerImplTest {
       forceAds = flowOf(true),
     )
     assertThat(
-      m.showsAds()
+      m.shouldShowsAds()
         .first()
     ).isFalse()
   }
@@ -122,13 +122,13 @@ class AdsManagerImplTest {
     val noAds =
       manager(capability(ads = false, devOptions = true), true, flowOf(true))
     assertThat(
-      noAds.showsAds()
+      noAds.shouldShowsAds()
         .first()
     ).isFalse()
   }
 
   @Test
-  fun `showsAds reacts to the force toggle without re-subscription`() =
+  fun `shouldShowAds reacts to the force toggle without re-subscription`() =
     runTest {
       val force = MutableStateFlow(false)
       val m = manager(
@@ -138,12 +138,12 @@ class AdsManagerImplTest {
       )
 
       assertThat(
-        m.showsAds()
+        m.shouldShowsAds()
           .first()
       ).isFalse()
       force.value = true
       assertThat(
-        m.showsAds()
+        m.shouldShowsAds()
           .first()
       ).isTrue()
     }

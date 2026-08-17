@@ -147,7 +147,7 @@ fun SquawkTab(
     val displayList = if (showClosed) closedSquawks else openSquawks
     // Each sub-view is its own list with its own counter — switching the toggle re-evaluates from
     // scratch, which falls out of wrapping the filtered list rather than the union.
-    val showAds by adsManager.showsAds()
+    val showAds by adsManager.shouldShowsAds()
       .collectAsState(initial = false)
     val rows = remember(displayList, showAds) {
       if (showAds) withAdSlots(displayList) else displayList.map {

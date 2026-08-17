@@ -75,7 +75,8 @@ fun AuthFlow(
   // rather than interrupt a pilot mid-scroll later. showsAds() already folds in both the tier check
   // and isAdsSupported, so a Pro user's app never even calls the consent SDK.
   suspend fun proceedPastOnboarding() {
-    val needsAdsConsent = subscriptionManager.showsAds().first() && adConsentManager.isConsentRequired()
+    val needsAdsConsent = subscriptionManager.shouldShowAds()
+      .first() && adConsentManager.isConsentRequired()
     if (needsAdsConsent) {
       step = AuthStep.AdsConsentExplainer
     } else {

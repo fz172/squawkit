@@ -80,7 +80,7 @@ fun ComplianceSection(
     // Due / History are independent lists with independent counters, exactly like squawks
     // Open / Closed — this is a toggle over flat lists, not the grouped list the PRD describes.
     val adsManager: AdsManager = koinInject()
-    val showAds by adsManager.showsAds()
+    val showAds by adsManager.shouldShowsAds()
       .collectAsState(initial = false)
     val rows = remember(displayList, showAds) {
       if (showAds) withAdSlots(displayList) else displayList.map {
