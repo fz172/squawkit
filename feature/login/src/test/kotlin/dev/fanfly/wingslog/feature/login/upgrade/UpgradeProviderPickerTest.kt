@@ -30,7 +30,6 @@ import org.junit.Test
 
 internal fun testAppCapability() = AppCapability(
   isDeveloperOptionsSupported = false,
-  isAircraftSharingSupported = true,
   isStressTestSupported = false,
   isCameraCaptureSupported = false,
   isAnonymousLoginSupported = true,

@@ -6,7 +6,6 @@ import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.aircraft.CertExpireLimit
 import dev.fanfly.wingslog.aircraft.CertificateType
 import dev.fanfly.wingslog.aircraft.Technician
-import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.model.sharing.SharedAircraftRef
 import dev.fanfly.wingslog.core.storage.CollectionKind
@@ -34,6 +33,7 @@ import dev.gitlive.firebase.firestore.toMilliseconds
 import dev.gitlive.firebase.functions.FirebaseFunctions
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -42,6 +42,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.update
 import kotlinx.serialization.Serializable
 import kotlin.time.Clock
 import dev.fanfly.wingslog.core.model.sharing.ShareRole as ProtoShareRole
@@ -52,7 +53,6 @@ import dev.fanfly.wingslog.core.model.sharing.ShareRole as ProtoShareRole
  * `observeMyRole` is answered locally from the refs store so it's instant and offline-correct.
  */
 class SharingManagerImpl(
-  private val appCapability: AppCapability,
   private val auth: FirebaseAuth,
   private val firestore: FirebaseFirestore,
   storeFactory: EntityStoreFactory,
@@ -70,13 +70,6 @@ class SharingManagerImpl(
    * The ACL for [acId] under [hostUid]. Keyed by host since #204: an aircraft id is unique only
    * within a tree, so a globally-keyed ACL could be claimed by anyone who knew the id.
    */
-  /**
-   * Sharing is gated off in this build (#134). The UI hides its entry points, but the ambient work
-   * has to stop too: the mirror publish runs at app start and the roster/linked-technician listeners
-   * are live Firestore subscriptions. Hiding a button does not stop a listener.
-   */
-  private val gatedOff: Boolean get() = !appCapability.isAircraftSharingSupported
-
   private fun shareDoc(hostUid: String, acId: String) =
     firestore.collection(SHARES)
       .document(hostUid)
@@ -110,13 +103,23 @@ class SharingManagerImpl(
     observeHostUid(acId).first()
       ?: error("Not a member of aircraft $acId; cannot resolve its share")
 
+  /**
+   * Bumped after a successful [createInvite] to force the roster listener in [observeShareState]
+   * to resubscribe. A denied `.snapshots()` listener (no ACL yet) is CLOSED by the underlying SDK —
+   * there is no retry once the rules start allowing the read, so without this the very first invite
+   * on a never-shared aircraft would bootstrap the ACL server-side while our still-dead listener
+   * never notices, leaving the roster (and the invite the CODE view is about to show) stuck.
+   */
+  private val rosterRetryTrigger = MutableStateFlow(0)
+
   override fun observeShareState(acId: String): Flow<AircraftShareState> =
-    if (gatedOff) flowOf(AircraftShareState()) else observeHostUid(acId).flatMapLatest { hostUid ->
-      if (hostUid == null) flowOf(AircraftShareState()) else shareStateIn(
-        hostUid,
-        acId
-      )
-    }
+    combine(observeHostUid(acId), rosterRetryTrigger) { hostUid, _ -> hostUid }
+      .flatMapLatest { hostUid ->
+        if (hostUid == null) flowOf(AircraftShareState()) else shareStateIn(
+          hostUid,
+          acId
+        )
+      }
 
   private fun shareStateIn(
     hostUid: String,
@@ -199,8 +202,32 @@ class SharingManagerImpl(
       // before the ref tombstone reaches their device. Surface that as state rather than an error:
       // it is the earliest signal a member has that their access ended, and the screen watching this
       // roster has to react to it. Rules don't flap, so a denial is a real answer, not a hiccup.
+      //
+      // On our OWN aircraft, though, a denial means something else: there is no ACL yet — no invite
+      // has ever been created (aircraft_shares match block) — not a revocation. Stand in as the sole
+      // member from the locally-known owner role instead of surfacing a dead-end "no access"; the
+      // real member doc backfills itself (§7.2) once the first invite bootstraps the share.
       .catch { e ->
-        if (isPermissionDenied(e)) emit(AircraftShareState(accessDenied = true)) else throw e
+        if (!isPermissionDenied(e)) throw e
+        if (hostUid == myUid) {
+          val user = auth.currentUser
+          emit(
+            AircraftShareState(
+              members = listOf(
+                ShareMember(
+                  uid = hostUid,
+                  displayName = user?.displayName.orEmpty(),
+                  role = ShareRole.OWNER,
+                  photoUrl = user?.photoURL,
+                  isHost = true,
+                  isSelf = true,
+                ),
+              ),
+            ),
+          )
+        } else {
+          emit(AircraftShareState(accessDenied = true))
+        }
       }
   }
 
@@ -271,6 +298,11 @@ class SharingManagerImpl(
     writeLock.withLock {
       db.schemaQueries.upsertConfig(uid, inviteCodeKey(res.codeId), res.code)
     }
+
+    // The function just bootstrapped the ACL server-side. If this was the first invite on a
+    // never-shared aircraft, our roster listener was denied before the ACL existed and the SDK
+    // closed it for good — resubscribe so the CODE view about to open can actually see this invite.
+    rosterRetryTrigger.update { it + 1 }
 
     InviteLink(
       code = res.code,
@@ -365,7 +397,6 @@ class SharingManagerImpl(
    */
   override suspend fun publishTechnicianMirror(alsoPublishTo: String?): Result<Unit> =
     runCatching {
-      if (gatedOff) return@runCatching
       val user = auth.currentUser ?: return@runCatching
       if (user.isAnonymous) return@runCatching
       val uid = user.uid
@@ -426,7 +457,6 @@ class SharingManagerImpl(
 
   @OptIn(ExperimentalCoroutinesApi::class)
   override fun observeLinkedTechnicians(): Flow<List<Technician>> {
-    if (gatedOff) return flowOf(emptyList())
     val uid = auth.currentUser?.uid ?: return flowOf(emptyList())
     val scope = EntityScope.userRoot(uid)
     return combine(
@@ -451,7 +481,6 @@ class SharingManagerImpl(
   }
 
   override fun observeLinkedTechnicians(acId: String): Flow<List<Technician>> {
-    if (gatedOff) return flowOf(emptyList())
     val uid = auth.currentUser?.uid ?: return flowOf(emptyList())
     return linkedTechniciansIn(acId, uid).map { it.dedupedByOwner() }
   }
@@ -504,7 +533,6 @@ class SharingManagerImpl(
       .map { it.id }
     return (shared + own).distinct()
   }
-
 
   /**
    * The code for [codeId], if this device minted it. The server stores only the hash, so this cache

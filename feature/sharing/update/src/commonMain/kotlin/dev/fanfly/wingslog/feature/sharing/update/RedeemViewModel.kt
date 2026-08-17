@@ -2,7 +2,6 @@ package dev.fanfly.wingslog.feature.sharing.update
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.feature.sharing.datamanager.AircraftShareDeepLinks
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.sharing.viewing.RedeemUiState
@@ -23,7 +22,6 @@ import kotlinx.coroutines.launch
 class RedeemViewModel(
   private val sharingManager: SharingManager,
   private val auth: FirebaseAuth,
-  private val appCapability: AppCapability,
 ) : ViewModel() {
 
   private val _uiState = MutableStateFlow<RedeemUiState>(RedeemUiState.Hidden)
@@ -37,13 +35,6 @@ class RedeemViewModel(
         when {
           invite == null -> _uiState.value = RedeemUiState.Hidden
 
-          // Sharing is gated off in this build (#134). Consume the link and say nothing: a hidden
-          // door that still opens is not a gate, and parking the invite would surface the sheet the
-          // moment the flag flipped — long after the user tapped anything.
-          !appCapability.isAircraftSharingSupported -> {
-            AircraftShareDeepLinks.consume()
-            _uiState.value = RedeemUiState.Hidden
-          }
           // Hold a resolved/in-flight outcome until the user dismisses it.
           _uiState.value.isHeld() -> Unit
           user == null -> _uiState.value = RedeemUiState.Hidden // still on the sign-in screen

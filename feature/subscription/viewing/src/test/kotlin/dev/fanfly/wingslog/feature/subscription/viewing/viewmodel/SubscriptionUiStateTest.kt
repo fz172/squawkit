@@ -535,7 +535,6 @@ class SubscriptionUiStateTest {
     authManager = authManager(isGuest),
     appCapability = AppCapability(
       isDeveloperOptionsSupported = false,
-      isAircraftSharingSupported = false,
       isStressTestSupported = false,
       isCameraCaptureSupported = false,
       isAnonymousLoginSupported = false,

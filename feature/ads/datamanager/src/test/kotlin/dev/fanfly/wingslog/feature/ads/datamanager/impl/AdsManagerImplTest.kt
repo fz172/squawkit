@@ -38,7 +38,6 @@ class AdsManagerImplTest {
     devOptions: Boolean = false,
   ) = AppCapability(
     isDeveloperOptionsSupported = devOptions,
-    isAircraftSharingSupported = false,
     isStressTestSupported = false,
     isCameraCaptureSupported = false,
     isAnonymousLoginSupported = false,
