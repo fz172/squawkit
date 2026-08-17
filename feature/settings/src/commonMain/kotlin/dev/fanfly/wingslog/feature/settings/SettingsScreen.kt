@@ -189,8 +189,9 @@ fun SettingsContent(
               onEnabledChange = settingsViewModel::setFirebaseLoggingEnabled,
             )
           }
-          // Only where this build actually ships ads — otherwise there is no CMP to re-present (#384).
-          if (user.isAdsSupported) {
+          // Only when there's actually a CMP form to re-present right now — not just wherever this
+          // build ships ads — so tapping the row never silently does nothing (#384).
+          if (user.isAdPrivacyOptionsAvailable) {
             add {
               SettingsRow(
                 icon = Icons.Default.PrivacyTip,

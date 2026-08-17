@@ -28,4 +28,15 @@ interface AdConsentManager {
 
   /** Re-presents the CMP's privacy-options form, for Settings' "Ad privacy settings" entry. */
   suspend fun presentPrivacyOptions()
+
+  /**
+   * Whether [presentPrivacyOptions] currently has a form to show. Both UMP SDKs expose this as an
+   * in-memory flag that reads `false`/unknown until [ensureConsent] has resolved at least once this
+   * process — i.e. until some ad slot has actually rendered — and even then only turns `true` for a
+   * region requiring a privacy choice (EEA/UK). Lets the "Ad privacy settings" Settings row hide
+   * itself instead of presenting a control that silently does nothing on tap when there is nothing
+   * to re-present, whether because no ad has been viewed yet this session or because this pilot was
+   * never shown a privacy choice at all.
+   */
+  suspend fun isPrivacyOptionsAvailable(): Boolean
 }

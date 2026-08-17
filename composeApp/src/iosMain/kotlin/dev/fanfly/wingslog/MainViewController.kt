@@ -70,6 +70,15 @@ object MainEntry {
   }
 
   /**
+   * Installs the synchronous check backing "Ad privacy settings"' own visibility — whether
+   * `ConsentInformation.shared.privacyOptionsRequirementStatus` currently reads `.required`, so the
+   * row can hide itself rather than presenting a control with nothing to show.
+   */
+  fun installIsPrivacyOptionsAvailableProvider(provider: () -> Boolean) {
+    IosAdConsentBridge.installPrivacyOptionsAvailableProvider(provider)
+  }
+
+  /**
    * Installs the ad view factory owned by the Swift app (`GoogleMobileAds` is linked there via
    * SPM, not in Kotlin/Native — see `IosAdViewBridge`'s KDoc). [factory] builds a configured
    * `GADBannerView` for the given ad unit id and size id (`"BANNER"`/`"LARGE_BANNER"`), wires its

@@ -19,6 +19,7 @@ import kotlin.time.Duration.Companion.seconds
 object IosAdConsentBridge {
   private var consentProvider: ((onResult: (String) -> Unit) -> Unit)? = null
   private var privacyOptionsPresenter: ((onComplete: () -> Unit) -> Unit)? = null
+  private var privacyOptionsAvailableProvider: (() -> Boolean)? = null
 
   fun installConsentProvider(provider: (onResult: (String) -> Unit) -> Unit) {
     consentProvider = provider
@@ -26,6 +27,15 @@ object IosAdConsentBridge {
 
   fun installPrivacyOptionsPresenter(presenter: (onComplete: () -> Unit) -> Unit) {
     privacyOptionsPresenter = presenter
+  }
+
+  /**
+   * [provider] reads `ConsentInformation.shared.privacyOptionsRequirementStatus` synchronously —
+   * a property read, not an SDK call — so unlike the two providers above this needs no
+   * callback/timeout plumbing.
+   */
+  fun installPrivacyOptionsAvailableProvider(provider: () -> Boolean) {
+    privacyOptionsAvailableProvider = provider
   }
 
   internal suspend fun ensureConsent(): AdConsentState {
@@ -47,6 +57,8 @@ object IosAdConsentBridge {
         AdConsentState.NON_PERSONALIZED
       }
   }
+
+  internal fun isPrivacyOptionsAvailable(): Boolean = privacyOptionsAvailableProvider?.invoke() ?: false
 
   internal suspend fun presentPrivacyOptions() {
     val presenter = privacyOptionsPresenter

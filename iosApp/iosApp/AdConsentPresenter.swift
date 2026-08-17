@@ -50,19 +50,19 @@ func installAdConsentProvider() {
 
     MainEntry.shared.installAdPrivacyOptionsPresenter { onComplete in
         // Google's SDK silently no-ops presentPrivacyOptionsForm when there is nothing to show
-        // (privacyOptionsRequirementStatus != .required) rather than surfacing an error — most
-        // commonly because the last-resolved consent state wasn't EEA/UK (the debug geography
-        // override above only takes effect on a fresh resolve; UMP caches its prior result
-        // on-device, so a stale non-EEA resolution from before the override was in place, or from
-        // a physical device not yet listed in testDeviceIdentifiers, persists across relaunches
-        // until `ConsentInformation.shared.reset()` or a reinstall). Logging both paths here so
-        // "the row does nothing" is diagnosable instead of silent.
+        // rather than surfacing an error, so the guard + log below is what makes "the row does
+        // nothing" diagnosable at all. Per UMPConsentInformation.h, privacyOptionsRequirementStatus
+        // is .unknown (rawValue 0) until requestConsentInfoUpdate has been called at least once
+        // *this process* — i.e. until some ad slot has actually rendered and called ensureConsent()
+        // — and only defaults to the previous session's cached value once that call has started.
+        // .notRequired (rawValue 2) means it resolved, just not to an EEA/UK region requiring one.
         guard ConsentInformation.shared.privacyOptionsRequirementStatus == .required else {
             print(
                 "Ad privacy settings: no form to show — " +
                 "privacyOptionsRequirementStatus=\(ConsentInformation.shared.privacyOptionsRequirementStatus.rawValue) " +
-                "(expected .required). Not EEA/UK for this resolve, or a stale cached consent " +
-                "state — see the comment above."
+                "(expected .required == 1). 0 (.unknown) means no ad slot has resolved consent yet " +
+                "this run — view an ad-eligible list first. 2 (.notRequired) means it resolved but " +
+                "not to a region requiring a privacy choice."
             )
             onComplete()
             return
@@ -73,6 +73,12 @@ func installAdConsentProvider() {
             }
             onComplete()
         }
+    }
+
+    // Backs the Settings row's own visibility (installIsPrivacyOptionsAvailableProvider) — a plain
+    // property read, not a CMP call, so this never contacts the CMP for a Pro user either.
+    MainEntry.shared.installIsPrivacyOptionsAvailableProvider {
+        KotlinBoolean(bool: ConsentInformation.shared.privacyOptionsRequirementStatus == .required)
     }
 }
 

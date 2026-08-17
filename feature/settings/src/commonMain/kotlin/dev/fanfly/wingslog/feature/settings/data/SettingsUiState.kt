@@ -8,8 +8,13 @@ data class SettingsUiState(
   // Guest (anonymous) accounts keep all data on-device only; logging out erases it permanently.
   val isAnonymous: Boolean = false,
   val isDeveloperOptionsSupported: Boolean = false,
-  /** Whether this build ships ads, and so has a CMP to re-present via "Ad privacy settings" (#384). */
-  val isAdsSupported: Boolean = false,
+  /**
+   * Whether "Ad privacy settings" has a CMP form to re-present right now (#384) — not just whether
+   * this build ships ads. False until some ad slot has resolved consent this session (the CMP call
+   * is lazy) and stays false outside a region requiring a privacy choice, so the row only appears
+   * when tapping it would actually do something.
+   */
+  val isAdPrivacyOptionsAvailable: Boolean = false,
   val deletion: AccountDeletion = AccountDeletion.Idle,
 )
 

@@ -7,4 +7,5 @@ import dev.fanfly.wingslog.feature.ads.model.AdConsentState
 internal class IosAdConsentManager : AdConsentManager {
   override suspend fun ensureConsent(): AdConsentState = IosAdConsentBridge.ensureConsent()
   override suspend fun presentPrivacyOptions() = IosAdConsentBridge.presentPrivacyOptions()
+  override suspend fun isPrivacyOptionsAvailable(): Boolean = IosAdConsentBridge.isPrivacyOptionsAvailable()
 }
