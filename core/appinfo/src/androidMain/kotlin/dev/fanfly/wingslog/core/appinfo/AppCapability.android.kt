@@ -7,6 +7,6 @@ actual fun createAppCapability(isDeveloperBuild: Boolean) = AppCapability(
   isStressTestSupported = isDeveloperBuild,
   isCameraCaptureSupported = true,
   isAnonymousLoginSupported = true,
-  // Staged rollout: dev + dogfood only until ads GA. Off = NO ads.
-  isAdsSupported = isDeveloperBuild,
+  // GA (#386, P9): was dev + dogfood only until ads GA. Off = NO ads.
+  isAdsSupported = true,
 )

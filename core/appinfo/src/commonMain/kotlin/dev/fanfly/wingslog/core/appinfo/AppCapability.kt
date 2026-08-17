@@ -22,13 +22,14 @@ data class AppCapability(
   val isCameraCaptureSupported: Boolean,
   val isAnonymousLoginSupported: Boolean,
   /**
-   * Free-tier display ads (`docs/ads/ads_design.html` §6). The staged-rollout gate: on in dev +
-   * dogfood, off in the shipping release until GA, and `false` on the web host for all of v1.
+   * Free-tier display ads (`docs/ads/ads_design.html` §6, GA'd #386/P9) on Android and iOS. Web has
+   * no ad product of its own regardless of this flag's value — no AdMob web SDK; phase 2 lands on
+   * Ad Manager (design §7.3, PRD D5) — so `jsMain`'s `AdView` actual renders nothing either way.
    *
-   * **Default-closed**, unlike [isAircraftSharingSupported]: while this is false there are no ads
-   * at all, never ads shown to everyone. A pilot must always have a way to buy their way out of
-   * ads (subscriptions are unconditional now — see `SubscriptionManager`), so "off" here can only
-   * ever mean *no ads*. `SubscriptionManager.showsAds()` enforces this; see the design doc §6.
+   * **Default-closed**: while this is false there are no ads at all, never ads shown to everyone.
+   * A pilot must always have a way to buy their way out of ads (subscriptions are unconditional
+   * now — see `SubscriptionManager`), so "off" here can only ever mean *no ads*.
+   * `SubscriptionManager.showsAds()` enforces this; see the design doc §6.
    */
   val isAdsSupported: Boolean,
 )
