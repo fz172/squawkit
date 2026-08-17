@@ -23,6 +23,7 @@ object IosAdConsentBridge {
   private var consentFormPresenter: ((testDeviceHashedId: String?, onResult: (String) -> Unit) -> Unit)? = null
   private var privacyOptionsPresenter: ((onComplete: () -> Unit) -> Unit)? = null
   private var privacyOptionsAvailableProvider: (() -> Boolean)? = null
+  private var resetConsentAction: (() -> Unit)? = null
 
   /**
    * [provider] runs `ConsentInformation.shared.requestConsentInfoUpdate` only — no UI — and calls
@@ -51,6 +52,11 @@ object IosAdConsentBridge {
    */
   fun installPrivacyOptionsAvailableProvider(provider: () -> Boolean) {
     privacyOptionsAvailableProvider = provider
+  }
+
+  /** [action] calls `ConsentInformation.shared.reset()` — developer-only, backs [resetConsent]. */
+  fun installResetConsentAction(action: () -> Unit) {
+    resetConsentAction = action
   }
 
   internal suspend fun isConsentRequired(testDeviceHashedId: String?): Boolean {
@@ -90,6 +96,15 @@ object IosAdConsentBridge {
   }
 
   internal fun isPrivacyOptionsAvailable(): Boolean = privacyOptionsAvailableProvider?.invoke() ?: false
+
+  internal fun resetConsent() {
+    val action = resetConsentAction
+    if (action == null) {
+      log.w { "resetConsent() requested but no action installed (iOS host didn't wire it)" }
+      return
+    }
+    action()
+  }
 
   internal suspend fun presentPrivacyOptions() {
     val presenter = privacyOptionsPresenter

@@ -64,4 +64,13 @@ interface AdConsentManager {
    * never shown a privacy choice at all.
    */
   suspend fun isPrivacyOptionsAvailable(): Boolean
+
+  /**
+   * Wipes this device's cached consent state (both platforms' UMP SDKs persist it locally across
+   * launches), so the next [isConsentRequired]/[ensureConsent] resolves completely fresh — as if
+   * this were a first-ever launch. Developer-only: exposed for Developer Options' "Reset ad consent"
+   * so onboarding's priming explainer can be re-tested without clearing the app's local data/account
+   * entirely. Has no production caller.
+   */
+  suspend fun resetConsent()
 }

@@ -79,6 +79,12 @@ func installAdConsentProvider() {
     MainEntry.shared.installIsPrivacyOptionsAvailableProvider {
         KotlinBoolean(bool: ConsentInformation.shared.privacyOptionsRequirementStatus == .required)
     }
+
+    // Developer Options' "Reset ad consent" — wipes UMP's on-device cache so the onboarding
+    // priming explainer can be re-tested without clearing the app's local data/account.
+    MainEntry.shared.installResetConsentAction {
+        ConsentInformation.shared.reset()
+    }
 }
 
 /// Shared by both providers above — always re-run before checking anything, per

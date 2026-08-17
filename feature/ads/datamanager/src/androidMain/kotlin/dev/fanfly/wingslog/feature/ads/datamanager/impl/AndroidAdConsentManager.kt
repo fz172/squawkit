@@ -133,6 +133,10 @@ internal class AndroidAdConsentManager(
     UserMessagingPlatform.getConsentInformation(application).privacyOptionsRequirementStatus ==
       ConsentInformation.PrivacyOptionsRequirementStatus.REQUIRED
 
+  override suspend fun resetConsent() {
+    UserMessagingPlatform.getConsentInformation(application).reset()
+  }
+
   private val log = Logger.withTag("AndroidAdConsentManager")
 }
 

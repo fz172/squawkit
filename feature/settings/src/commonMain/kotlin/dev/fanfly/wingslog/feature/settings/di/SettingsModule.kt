@@ -28,5 +28,5 @@ val settingsModule = module {
       get<AdConsentManager>(),
     )
   }
-  viewModel { DeveloperOptionsViewModel(get<DeveloperOptionsManager>()) }
+  viewModel { DeveloperOptionsViewModel(get<DeveloperOptionsManager>(), get<AdConsentManager>()) }
 }

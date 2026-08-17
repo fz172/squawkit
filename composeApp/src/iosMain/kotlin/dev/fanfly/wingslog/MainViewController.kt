@@ -91,6 +91,14 @@ object MainEntry {
   }
 
   /**
+   * Installs the Developer Options "Reset ad consent" action — wipes UMP's on-device cache so the
+   * onboarding priming explainer can be re-tested without clearing the app's local data/account.
+   */
+  fun installResetConsentAction(action: () -> Unit) {
+    IosAdConsentBridge.installResetConsentAction(action)
+  }
+
+  /**
    * Installs the ad view factory owned by the Swift app (`GoogleMobileAds` is linked there via
    * SPM, not in Kotlin/Native — see `IosAdViewBridge`'s KDoc). [factory] builds a configured
    * `GADBannerView` for the given ad unit id and size id (`"BANNER"`/`"LARGE_BANNER"`), wires its

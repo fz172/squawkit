@@ -25,6 +25,7 @@ internal class IosAdConsentManager(
 
   override suspend fun presentPrivacyOptions() = IosAdConsentBridge.presentPrivacyOptions()
   override suspend fun isPrivacyOptionsAvailable(): Boolean = IosAdConsentBridge.isPrivacyOptionsAvailable()
+  override suspend fun resetConsent() = IosAdConsentBridge.resetConsent()
 
   private suspend fun testDeviceHashedId(): String? =
     if (appCapability.isDeveloperOptionsSupported) {
