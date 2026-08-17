@@ -46,7 +46,6 @@ class SubscriptionManagerImplTest {
     ads: Boolean = false,
   ) = AppCapability(
     isDeveloperOptionsSupported = devBuild,
-    isAircraftSharingSupported = false,
     isStressTestSupported = false,
     isCameraCaptureSupported = false,
     isAnonymousLoginSupported = false,

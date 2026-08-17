@@ -6,7 +6,6 @@ import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.aircraft.CertExpireLimit
 import dev.fanfly.wingslog.aircraft.CertificateType
 import dev.fanfly.wingslog.aircraft.Technician
-import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.model.sharing.SharedAircraftRef
 import dev.fanfly.wingslog.core.storage.CollectionKind
@@ -52,7 +51,6 @@ import dev.fanfly.wingslog.core.model.sharing.ShareRole as ProtoShareRole
  * `observeMyRole` is answered locally from the refs store so it's instant and offline-correct.
  */
 class SharingManagerImpl(
-  private val appCapability: AppCapability,
   private val auth: FirebaseAuth,
   private val firestore: FirebaseFirestore,
   storeFactory: EntityStoreFactory,
@@ -70,13 +68,6 @@ class SharingManagerImpl(
    * The ACL for [acId] under [hostUid]. Keyed by host since #204: an aircraft id is unique only
    * within a tree, so a globally-keyed ACL could be claimed by anyone who knew the id.
    */
-  /**
-   * Sharing is gated off in this build (#134). The UI hides its entry points, but the ambient work
-   * has to stop too: the mirror publish runs at app start and the roster/linked-technician listeners
-   * are live Firestore subscriptions. Hiding a button does not stop a listener.
-   */
-  private val gatedOff: Boolean get() = !appCapability.isAircraftSharingSupported
-
   private fun shareDoc(hostUid: String, acId: String) =
     firestore.collection(SHARES)
       .document(hostUid)
@@ -111,7 +102,7 @@ class SharingManagerImpl(
       ?: error("Not a member of aircraft $acId; cannot resolve its share")
 
   override fun observeShareState(acId: String): Flow<AircraftShareState> =
-    if (gatedOff) flowOf(AircraftShareState()) else observeHostUid(acId).flatMapLatest { hostUid ->
+    observeHostUid(acId).flatMapLatest { hostUid ->
       if (hostUid == null) flowOf(AircraftShareState()) else shareStateIn(
         hostUid,
         acId
@@ -365,7 +356,6 @@ class SharingManagerImpl(
    */
   override suspend fun publishTechnicianMirror(alsoPublishTo: String?): Result<Unit> =
     runCatching {
-      if (gatedOff) return@runCatching
       val user = auth.currentUser ?: return@runCatching
       if (user.isAnonymous) return@runCatching
       val uid = user.uid
@@ -426,7 +416,6 @@ class SharingManagerImpl(
 
   @OptIn(ExperimentalCoroutinesApi::class)
   override fun observeLinkedTechnicians(): Flow<List<Technician>> {
-    if (gatedOff) return flowOf(emptyList())
     val uid = auth.currentUser?.uid ?: return flowOf(emptyList())
     val scope = EntityScope.userRoot(uid)
     return combine(
@@ -451,7 +440,6 @@ class SharingManagerImpl(
   }
 
   override fun observeLinkedTechnicians(acId: String): Flow<List<Technician>> {
-    if (gatedOff) return flowOf(emptyList())
     val uid = auth.currentUser?.uid ?: return flowOf(emptyList())
     return linkedTechniciansIn(acId, uid).map { it.dedupedByOwner() }
   }
@@ -504,7 +492,6 @@ class SharingManagerImpl(
       .map { it.id }
     return (shared + own).distinct()
   }
-
 
   /**
    * The code for [codeId], if this device minted it. The server stores only the hash, so this cache

@@ -111,7 +111,6 @@ class SettingsViewModelTest {
       analyticsPreferenceController,
       AppCapability(
         isDeveloperOptionsSupported = false,
-        isAircraftSharingSupported = true,
         isStressTestSupported = false,
         isCameraCaptureSupported = false,
         isAnonymousLoginSupported = false,
@@ -138,7 +137,6 @@ class SettingsViewModelTest {
       analyticsPreferenceController,
       AppCapability(
         isDeveloperOptionsSupported = false,
-        isAircraftSharingSupported = true,
         isStressTestSupported = false,
         isCameraCaptureSupported = false,
         isAnonymousLoginSupported = false,
@@ -165,7 +163,6 @@ class SettingsViewModelTest {
       analyticsPreferenceController,
       AppCapability(
         isDeveloperOptionsSupported = false,
-        isAircraftSharingSupported = true,
         isStressTestSupported = false,
         isCameraCaptureSupported = false,
         isAnonymousLoginSupported = false,
@@ -193,7 +190,6 @@ class SettingsViewModelTest {
       analyticsPreferenceController,
       AppCapability(
         isDeveloperOptionsSupported = false,
-        isAircraftSharingSupported = true,
         isStressTestSupported = false,
         isCameraCaptureSupported = false,
         isAnonymousLoginSupported = false,
@@ -221,7 +217,6 @@ class SettingsViewModelTest {
       analyticsPreferenceController,
       AppCapability(
         isDeveloperOptionsSupported = false,
-        isAircraftSharingSupported = true,
         isStressTestSupported = false,
         isCameraCaptureSupported = false,
         isAnonymousLoginSupported = false,
@@ -329,7 +324,6 @@ class SettingsViewModelTest {
     analyticsPreferenceController,
     AppCapability(
       isDeveloperOptionsSupported = false,
-      isAircraftSharingSupported = true,
       isStressTestSupported = false,
       isCameraCaptureSupported = false,
       isAnonymousLoginSupported = true,

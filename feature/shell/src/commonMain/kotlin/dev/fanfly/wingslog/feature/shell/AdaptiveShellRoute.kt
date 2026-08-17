@@ -20,7 +20,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import dev.fanfly.wingslog.core.analytics.LocalAnalytics
 import dev.fanfly.wingslog.core.analytics.trackScreenViews
-import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.nav.Screen.Companion.CROSS_SCREEN_SUCCESS_MESSAGE
 import dev.fanfly.wingslog.core.ui.adaptive.AdaptiveAppShell
@@ -37,7 +36,6 @@ import dev.fanfly.wingslog.feature.subscription.viewing.ProUpsellSheet
 import dev.fanfly.wingslog.feature.subscription.viewing.UpsellTrigger
 import dev.fanfly.wingslog.feature.sync.data.SyncNotice
 import org.jetbrains.compose.resources.stringResource
-import org.koin.compose.koinInject
 import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.core.sharedassets.generated.resources.dismiss
@@ -75,16 +73,11 @@ fun AdaptiveShellRoute(
     }
   }
 
-  // Manual invite-code entry (#209). Offered only when aircraft sharing is built into this app —
-  // otherwise the affordance is dropped, not shown-and-broken. Reused by both the switcher (populated
-  // fleet) and the empty-fleet state (where a technician with no aircraft of their own lands).
-  val appCapability = koinInject<AppCapability>()
-  val onEnterInviteCode: (() -> Unit)? =
-    if (appCapability.isAircraftSharingSupported) {
-      { navController.navigate(Screen.EnterInviteCode.route) }
-    } else {
-      null
-    }
+  // Manual invite-code entry (#209). Reused by both the switcher (populated fleet) and the
+  // empty-fleet state (where a technician with no aircraft of their own lands).
+  val onEnterInviteCode: () -> Unit = {
+    navController.navigate(Screen.EnterInviteCode.route)
+  }
   // Page-view feeder 2: the shell's sections (Dashboard/Tasks/Squawks/Logs/Settings) are
   // ViewModel state under one route, so the root observer can't see them — log on change here.
   val analytics = LocalAnalytics.current

@@ -6,7 +6,6 @@ import dev.fanfly.wingslog.aircraft.ComponentType
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.aircraft.Squawk
 import dev.fanfly.wingslog.aircraft.SquawkPriority
-import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.core.storage.AircraftScopeResolver
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
@@ -57,7 +56,6 @@ class AircraftOverviewViewModel(
   private val sharingManager: SharingManager,
   private val aircraftScopeResolver: AircraftScopeResolver,
   private val auth: FirebaseAuth,
-  private val appCapability: AppCapability,
   private val aircraftId: String,
 ) : ViewModel() {
 
@@ -226,7 +224,6 @@ class AircraftOverviewViewModel(
               .sortedByDescending { it.timestamp?.getEpochSecond() ?: 0L }
           } ?: emptyList()
 
-
           val squawksWithStatus = squawkList.map { it.toWithStatus() }
           val aogSquawks = squawkList.filter {
             it.priority == SquawkPriority.SQUAWK_PRIORITY_AOG &&
@@ -251,7 +248,6 @@ class AircraftOverviewViewModel(
             myRole = myRole,
             shared = isShared,
             isAnonymous = auth.currentUser?.isAnonymous ?: true,
-            sharingSupported = appCapability.isAircraftSharingSupported,
           )
         } else {
           AircraftOverviewUiState.Error
