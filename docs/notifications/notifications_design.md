@@ -876,9 +876,9 @@ than stacking beside it:
 
 | Time | Write | Push | What the recipient's tray holds |
 |:--|:--|:--|:--|
-| 14:00:00 | A task 1 | id `n1:{A}:task:{dave}` | `N4589T · Tasks` / `Dave Chen updated a task: Annual Inspection` |
+| 14:00:00 | A task 1 | id `n1:{A}:task:{dave}:1400` | `N4589T · Tasks` / `Dave Chen updated a task: Annual Inspection` |
 | 14:00:40 | A task 2 | same id — replaces | `Dave Chen made 2 changes to tasks` |
-| 14:01:10 | B task 1 | id `n1:{B}:task:{dave}` | + `N771TS · Tasks` / `Dave Chen updated a task: 100-Hour Inspection` |
+| 14:01:10 | B task 1 | id `n1:{B}:task:{dave}:1401` | + `N771TS · Tasks` / `Dave Chen updated a task: 100-Hour Inspection` |
 | 14:04:30 | A task 5 | same id — replaces | `Dave Chen made 5 changes to tasks` |
 
 Dave's eight edits across two aircraft leave two tray entries, each accurate — and accurate at every
@@ -886,9 +886,24 @@ intermediate moment, not only once he stops. Compare the buffered design, which 
 Sarah nothing for nine minutes; and a leading-edge variant, which sends instantly but then silently
 loses six of the eight edits because nothing wakes up to flush the tail.
 
-The id is `n1:{aircraftId}:{recordType}:{actorUid}` — the same key PRD §5.4 coalesces on, moved from
-a server buffer into the notification id. §5.2 already required deterministic ids so a re-scan
+The id is `n1:{aircraftId}:{recordType}:{actorUid}:{sessionStart}` — PRD §5.4's coalescing key, moved
+from a server buffer into the notification id. §5.2 already required deterministic ids so a re-scan
 replaces rather than stacks; this is that mechanism doing a second job.
+
+**`sessionStart` is load-bearing, and the whole id is wrong without it.** It is the counter's
+`firstWriteAt`, reset whenever `ACTIVITY_WINDOW` elapses (§7.4) — so a *working session* owns a tray
+entry, not a `(aircraft, recordType, actor)` triple forever. Without it, Dave editing one task an
+hour after his morning burst reuses the same id and **overwrites** "Dave Chen made 5 changes to
+tasks" with "Dave Chen updated a task: Oil Change," destroying news the recipient may never have
+read. With it:
+
+| Time | Write | Notification id | Sarah's tray |
+|:--|:--|:--|:--|
+| 14:00–14:04 | A tasks 1–5 | `n1:{A}:task:{dave}:1400` | `Dave Chen made 5 changes to tasks` |
+| 15:10 | A task 6 | `n1:{A}:task:{dave}:1510` | `Dave Chen made 5 changes to tasks`<br>`Dave Chen updated a task: Oil Change` |
+
+Two sessions, two entries, neither clobbering the other — and within each, replacement still collapses
+the burst. The rule the id encodes is *replace what is still being updated, never what is finished*.
 
 | Platform | Replacement primitive | Silent update |
 |:--|:--|:--|
@@ -915,7 +930,8 @@ notification_activity/{aircraftId}__{recordType}__{actorUid}
   hostUid, aircraftId, recordType, actorUid
   aircraftLabel        // resolved once — cosmetic, so staleness is harmless
   actorDisplayName     // from aircraft_shares/{host}/aircraft/{ac}/members/{actor}.displayName
-  firstWriteAt, lastWriteAt
+  firstWriteAt         // session start — part of the notification id (§7.3), NOT just telemetry
+  lastWriteAt
   changeCount
   lastSentAt
 ```
@@ -927,8 +943,11 @@ The trigger's whole job, per write:
 2. acl = get(aircraft_shares/{hostUid}/aircraft/{acId})
    if (!acl.exists || memberRoles.size <= 1) return          // unshared: the cheap early exit
 3. counter = upsert(key) in a transaction:
-     if (now - lastWriteAt > ACTIVITY_WINDOW) changeCount = 1 // a new working session
-     else                                     changeCount += 1
+     if (now - lastWriteAt > ACTIVITY_WINDOW) {               // a new working session
+       changeCount = 1
+       firstWriteAt = now        // ← rolls the notification id, so the previous
+     }                           //   session's tray entry survives untouched (§7.3)
+     else changeCount += 1
      lastWriteAt = now
 4. if (now - lastSentAt < MIN_REPOST_INTERVAL) return         // throttle, below
 5. audience = memberRoles minus actorUid                      // re-derived every send, §9.5
@@ -939,9 +958,11 @@ The trigger's whole job, per write:
 
 Three details that carry the weight the sweep used to:
 
-- **`ACTIVITY_WINDOW` (30 min) resets the count**, so a burst on Tuesday afternoon and one on
-  Wednesday morning are separate "5 changes," not "23 changes." Evaluated lazily on the next write,
-  so it needs no timer either.
+- **`ACTIVITY_WINDOW` (30 min) ends a working session**, resetting both `changeCount` *and*
+  `firstWriteAt` — the latter is what rolls the notification id so the finished session's tray entry
+  is left alone (§7.3). Tuesday afternoon and Wednesday morning are two entries reading "5 changes"
+  and "3 changes," never one reading "8 changes" and never one overwriting the other. Evaluated
+  lazily on the next write, so it needs no timer either.
 - **`MIN_REPOST_INTERVAL` (30s) is the storm guard.** A bulk import writing 200 records produces at
   most two sends per key per minute instead of 200. The cost is a count that lags by up to 30
   seconds; the next write corrects it, and the final write of any burst is the one that matters.
@@ -996,7 +1017,7 @@ routing and the tap router:
     "channel": "COLLABORATION",
     "aircraftId": "…", "recordType": "squawk", "recordId": "…",
     "titleKey": "…", "bodyArgs": "…",
-    "notificationId": "n1:{aircraftId}:{recordType}:{actorUid}",
+    "notificationId": "n1:{aircraftId}:{recordType}:{actorUid}:{sessionStart}",
     "tapTarget": "squawk:{aircraftId}:{squawkId}"
   },
   "android": { "collapse_key": "<same as notificationId>" },
@@ -1059,8 +1080,10 @@ notification, mirroring what the server's fan-out does. Empty result falls back 
 
 No server trigger sees this path, so web does its own counting — but §7.3's move from buffering to
 replacement shrinks that to almost nothing. An `ActivityCounter` in `engine/commonMain`, keyed by
-`(aircraftId, recordType, actorUid)`, in-memory and per-tab, holding `changeCount` / `lastWriteAt` /
-`lastSentAt` and applying the same `ACTIVITY_WINDOW` and `MIN_REPOST_INTERVAL` as §7.4. No timers,
+`(aircraftId, recordType, actorUid)`, in-memory and per-tab, holding `changeCount` / `firstWriteAt` /
+`lastWriteAt` / `lastSentAt` and applying the same `ACTIVITY_WINDOW` and `MIN_REPOST_INTERVAL` as
+§7.4 — including rolling `firstWriteAt` on session end, since the `tag` embeds it just as the native
+ids do. No timers,
 because there are none to mirror any more: an earlier draft had this class reproducing the server's
 5-minute quiet timer and 30-minute ceiling per tab, with its own lifecycle to get wrong.
 
@@ -1069,7 +1092,7 @@ platforms have to ask for:**
 
 ```js
 new Notification("N4589T · Tasks", {
-  tag: "n1:{aircraftId}:{recordType}:{actorUid}",   // same tag replaces, never stacks
+  tag: "n1:{aircraftId}:{recordType}:{actorUid}:{sessionStart}",  // same tag replaces, never stacks
   body: "Dave Chen made 5 changes to tasks",
   // renotify is deliberately omitted — a replacement is SILENT unless renotify: true
 })
@@ -1485,7 +1508,8 @@ independently relies on.
 **Backend** (emulator + vitest, per the existing harness): an unshared aircraft sends nothing and
 writes no counter; the actor is excluded from the audience; a second write bumps `changeCount` to 2
 and re-sends under the **same** notification id and `collapse_key`; a write after `ACTIVITY_WINDOW`
-resets the count to 1 rather than continuing yesterday's total; two writes inside
+resets the count to 1 **and rolls the notification id**, so the previous session's entry is not
+overwritten — assert on the id, since asserting only on the count passes for the broken version; two writes inside
 `MIN_REPOST_INTERVAL` produce one send; a priority escalation posts under `n1esc:…` and is exempt
 from both the throttle and the ceiling; a member revoked between two writes is absent from the
 second send's audience; the per-aircraft rate ceiling holds under a stress-test burst.
