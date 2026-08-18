@@ -85,48 +85,87 @@ Two more facts the PRD does not mention that materially shape this design:
 ```
 feature/notifications/
 ├── model/          NotificationClass, UrgencyRank, UrgencyLadder, NotificationPrefs,
-│                   PendingNotification, NotificationTapTarget
-├── datamanager/    NotificationPrefsManager, UrgencyScanner, UrgencyWatermarkStore,
-│                   NotificationPermission (expect), LocalNotifier (expect),
-│                   UrgencyScanScheduler (expect), PushTokenRegistrar (expect),
-│                   NotificationTapRouter, di/NotificationsModule.kt
+│                   PendingNotification, NotificationChannel, NotificationTapTarget,
+│                   PushTokenSink
+├── permission/     MAY we show one. NotificationPermission (expect), PermissionState.
+│                   A leaf: no dependency on any other notification module.
+├── viewing/        HOW one is shown. LocalNotifier (expect), channel registration,
+│                   PendingNotification -> platform notification, the FCM message
+│                   receiver, NotificationTapRouter
+├── datamanager/    NotificationPrefsManager (+ proto mapping), PushTokenRegistrar
+├── engine/         WHAT to show, and when. UrgencyScanner, UrgencyWatermarkStore,
+│                   UrgencyScanScheduler (expect), the web N1 detector, CoalescingBuffer
 ├── sharedassets/   PermissionBanner, NotificationClassRow, notification strings
 │                   (settings-screen furniture; the onboarding primer shares none of it — §10.1)
 └── settings/       NotificationSettingsScreen, NotificationSettingsViewModel,
                     di/NotificationSettingsModule.kt
 ```
 
-`settings/` rather than the canonical `viewing/` + `update/` pair, following the
-`feature/sync/settings` precedent exactly (one screen, one ViewModel, one Koin module,
-`compose.resources { publicResClass = true }`, reached from the shared nav graph). A settings surface
-with a single screen does not earn a two-module split, and `feature/sync/settings` already
-established that reading of the pattern. Copy its `build.gradle.kts` verbatim and change the
-`android.namespace`.
+**The split is the load-bearing decision here.** A single `datamanager` holding all of this would have
+to depend on five other features' datamanagers — the scanner genuinely needs tasks, logs, squawks,
+the fleet, and shares — and everything that only wanted to post a notification or ask whether it is
+allowed to would inherit that whole graph. Concretely: `feature/login` would pull
+`feature:tasks:datamanager` into its compile classpath to show one onboarding card.
 
-**Dependency direction.** `datamanager` depends on `core:storage`, `core:appinfo`, `core:lifecycle`,
-`feature:tasks:datamanager`, `feature:logs:datamanager`, `feature:squawk:datamanager`,
-`feature:fleet:datamanager`, `feature:sharing:datamanager`, and `feature:sync:data` (for
-`SyncCursorStore` and `CloudSyncSetting` — §4.3). That is a wide fan-in and it is the point: the
-scanner is deliberately a *consumer* of the existing managers so no computation is duplicated.
+So the feature separates three questions that have three different answers and three different
+audiences — **may we notify** (`permission`), **how is one shown** (`viewing`), **what is worth
+showing** (`engine`) — and the constraint is stated as a rule rather than left to discipline:
 
-Nothing depends on `feature:notifications` except the shell (routes), `feature:settings` (the row),
-`feature:login` (the primer — on `:datamanager` only, §10.1), and the hosts (Koin + platform init).
+> **`permission` and `viewing` may depend on `core:*` (and `viewing` on
+> `feature:notifications:model`). Nothing else.** Not a feature datamanager, not `feature:sync:data`,
+> not each other, not `engine`. If something in either needs to know about a task or a squawk, it
+> belongs in `engine`.
 
-**`feature:sync:data` must not depend on `feature:notifications`.** The web N1 detector (§8) needs to
-observe the sync stream, which would invert this. §8.2 resolves it with a listener interface owned by
-`core:storage`.
+`engine` depends on both and calls `NotificationPermission.observe()` and `LocalNotifier.post(...)`.
+The arrows never point back.
+
+| Module | Depends on | Notes |
+|:--|:--|:--|
+| `model` | `core:model` (protos) | Pure types + two interfaces. No Compose, no platform code. |
+| `permission` | `core:lifecycle` (Android's `CurrentActivityProvider`), `core:appinfo` | **The lightest module in the feature, and deliberately a leaf** — not even `:model`. Three consumers need to ask "may we notify?" without needing anything else the feature owns. |
+| `viewing` | `core:ui`, `core:ui:theme`, `core:nav`, `:model` | Platform actuals for display. Does **not** depend on `:permission`: posting and being allowed to post are separate questions, and the caller has already answered the second. |
+| `datamanager` | `core:storage`, `feature:sync:data`, `:model` | Preferences (§4.3 needs `SyncCursorStore`/`CloudSyncSetting`) and the token doc. No tasks/logs/squawks. |
+| `engine` | `core:storage`, `core:lifecycle`, `feature:{tasks,logs,squawk,fleet,sharing}:datamanager`, `feature:sync:data`, `:model`, `:permission`, `:viewing`, `:datamanager` | The wide fan-in, contained to one module. Deliberately a *consumer* of the existing managers so no computation is duplicated. |
+| `sharedassets` | `core:ui`, `:model`, `:permission` | `PermissionBanner` renders `PermissionState` |
+| `settings` | `core:ui*`, `:model`, `:permission`, `:datamanager`, `:sharedassets` | **Not `engine`, and not `viewing`.** The screen reads preferences and permission state; it neither scans nor posts. |
+
+And what the rest of the app takes on:
+
+| Consumer | Depends on | Why |
+|:--|:--|:--|
+| `feature:login` | `:permission` only | `NotificationPermission` for the primer (§10.1) |
+| `feature:shell` | `:settings`, `:engine`, `:viewing` | Routes, the Developer Options extra (§11), tap-route collection |
+| `feature:settings` | `:sharedassets`, `:permission` | The settings row's live subtitle. **Not `engine`** — §11. |
+| hosts | `:engine`, `:viewing`, `:permission` | Koin + platform init (channel registration, scheduler, FCM) |
+
+`settings/` rather than the canonical `viewing/` + `update/` pair *for the settings screen*, following
+the `feature/sync/settings` precedent exactly (one screen, one ViewModel, one Koin module,
+`compose.resources { publicResClass = true }`, reached from the shared nav graph). Note this feature
+uses `viewing/` for something else — the notification display surface — which is a deliberate
+departure from the canonical meaning and is called out in §15 D12.
+
+**`feature:sync:data` must not depend on any `feature:notifications` module.** The web N1 detector
+(§8) needs to observe the sync stream, which would invert this. §8.2 resolves it with a listener
+interface owned by `core:storage`.
 
 **Koin registration** (`core/di/CommonAppModules.kt`, alphabetical position after
 `maintenanceViewingModule`):
 
 ```kotlin
-notificationsModule,
-platformNotificationsModule,
-notificationSettingsModule,
+platformNotificationPermissionModule, // :permission — NotificationPermission actual
+notificationPrefsModule,              // :datamanager
+notificationDisplayModule,            // :viewing  — common bindings
+platformNotificationDisplayModule,    // :viewing  — LocalNotifier actual
+notificationEngineModule,             // :engine   — scanner, watermarks, web N1 detector
+platformNotificationEngineModule,     // :engine   — UrgencyScanScheduler actual
+notificationSettingsModule,           // :settings
 ```
 
-`platformNotificationsModule` is an `expect val` per host, following `platformAdConsentModule` —
-that is the established pattern for "a Koin module whose bindings only exist per platform."
+One module per Gradle module rather than one aggregate, so the Koin graph mirrors the compile graph
+and a missing binding names the module that owns it. The two `platform*` modules are `expect val`
+per host, following `platformAdConsentModule` — the established pattern for "a Koin module whose
+bindings only exist per platform." Bindings use `get<ClassType>()`, never bare `get()`; a repo hook
+rejects the latter.
 
 ---
 
@@ -311,11 +350,21 @@ mean "this device."
 
 ## 5. Platform surfaces
 
-Four `expect` interfaces, all in `feature/notifications/datamanager/commonMain`. Keeping them
-separate matters: N2 needs only two of them, and web N1 needs the same two rather than the push pair
-(PRD §7.6).
+Four `expect` interfaces, split across four modules by what each needs to know:
 
-### 5.1 `NotificationPermission`
+| Interface | Module | Because |
+|:--|:--|:--|
+| `NotificationPermission` | `permission` | Asks the OS one question about this app. Knows nothing about aircraft, and nothing about notifications either. |
+| `LocalNotifier` | `viewing` | Renders a `PendingNotification`. The caller decided what goes in it. |
+| `PushTokenRegistrar` | `datamanager` | Writes an account-scoped document |
+| `UrgencyScanScheduler` | `engine` | Schedules the scan, so it lives with the scan |
+
+Keeping them separate is what lets each consumer take only what it needs: N2 uses all but the
+registrar, web N1 uses `LocalNotifier` + `NotificationPermission` and neither of the push pair
+(PRD §7.6), the settings screen uses `NotificationPermission` alone, and so does the onboarding
+primer (§10.1).
+
+### 5.1 `NotificationPermission` — `permission`
 
 ```kotlin
 enum class PermissionState { UNDETERMINED, GRANTED, DENIED }
@@ -332,6 +381,15 @@ interface NotificationPermission {
 }
 ```
 
+This is the whole module. It has four consumers — the onboarding primer, the settings screen and its
+banner, and the scanner's precondition check — none of which want anything else the feature owns, so
+it depends on nothing the feature owns either: not `:model`, not `:viewing`. The only reason it is
+under `feature/notifications/` rather than in `core/` is that OS notification permission is this
+feature's concern; nothing else in the app asks for it.
+
+That leafness is what makes the §10.1 dependency defensible. A primer card that transitively compiled
+against `feature:tasks:datamanager` would be the tail wagging the dog.
+
 | Platform | `request()` | `openSystemSettings()` |
 |:--|:--|:--|
 | Android | `POST_NOTIFICATIONS` via the activity from `CurrentActivityProvider` (already in `core/lifecycle/androidMain`, already used by `AuthManagerImpl`); auto-`GRANTED` below API 33 | `ACTION_APPLICATION_DETAILS_SETTINGS` |
@@ -342,7 +400,11 @@ interface NotificationPermission {
 sub-33 auto-grant branch is dead code today. Write it anyway and comment why: the runtime prompt is
 the behaviour that matters and a future `minSdk` drop must not silently start denying.
 
-### 5.2 `LocalNotifier`
+### 5.2 `LocalNotifier` — `viewing`
+
+`PendingNotification` is the contract between the two halves of the feature: `engine` builds one,
+`viewing` renders it. It carries finished display strings and a tap target, never a task or a squawk
+— which is what keeps `viewing` free of every other feature.
 
 ```kotlin
 enum class NotificationChannel { COLLABORATION, URGENCY, GROUNDED }  // Q8: one per class
@@ -372,7 +434,7 @@ notification still arrives, it just does not pierce Focus.
 Notification ids are deterministic so a re-scan replaces rather than stacks:
 `"urgency:$aircraftId:$tier"` for N2 summaries, `"urgency:$collection:$recordId"` for singles.
 
-### 5.3 `NotificationTapTarget` and deep links
+### 5.3 `NotificationTapTarget` and deep links — `viewing`
 
 ```kotlin
 sealed interface NotificationTapTarget {
@@ -383,8 +445,10 @@ sealed interface NotificationTapTarget {
 }
 ```
 
-`NotificationTapRouter` in `datamanager` converts one to a `Screen` route
-(`Screen.EditSquawk.createRoute(...)` and friends already exist in `core/nav/Screen.kt`). It emits
+`NotificationTapRouter` in `viewing` converts one to a `Screen` route
+(`Screen.EditSquawk.createRoute(...)` and friends already exist in `core/nav/Screen.kt`; `core:nav`
+is core, so the rule in §3 permits it). Tapping is the return leg of display, so it belongs with the
+notifier that posted the thing being tapped. It emits
 onto a `MutableSharedFlow<String>` that `ShellNavGraph` collects — the same shape
 `EmailLinkDeepLinks.pendingLink` uses, so cold start (target buffered until the graph composes) and
 warm tap (delivered immediately) both work without a second mechanism.
@@ -400,10 +464,17 @@ data object AircraftTabDeepLink : Screen("aircraft/{$AIRCRAFT_ID}?tab={tab}&tier
 ("Tapping a summary opens that aircraft's task list filtered to the tier").
 
 **Tap-through must degrade, not crash.** A revoked share, a deleted record, or a device that has not
-synced yet all produce "no longer available" and land on the fleet (PRD §12). The router checks the
-record resolves before navigating.
+synced yet all produce "no longer available" and land on the fleet (PRD §12).
 
-### 5.4 `UrgencyScanScheduler` and `PushTokenRegistrar`
+**The router does not pre-check that the record resolves.** An earlier draft had it do so; the module
+rule in §3 forbids it — resolving a squawk id means `feature:squawk:datamanager`, which `viewing` may
+not depend on. That constraint improves the design rather than constraining it: the check was racy
+anyway (the record can vanish between the check and the navigation), and the destination screens must
+already handle a missing record, since a record can be deleted on another device while its edit screen
+is open. So the router navigates unconditionally and the destination owns the empty state — one
+behaviour instead of two paths to the same message.
+
+### 5.4 `UrgencyScanScheduler` — `engine`
 
 ```kotlin
 interface UrgencyScanScheduler {
@@ -419,7 +490,26 @@ interface UrgencyScanScheduler {
 | iOS | `BGTaskScheduler` app-refresh task registered in `didFinishLaunching`, re-submitted at the end of each run (iOS does not repeat a submission). Opportunistic — §6.6. |
 | Web | No-op. The foreground scan is the only scan; see §6.6. |
 
-`PushTokenRegistrar` is N1-only and lands in P4; §7.1.
+### 5.5 Push transport — `viewing` renders, `datamanager` registers
+
+The FCM plumbing splits along the same seam. An incoming data-only message (§7.6) is already a
+finished decision made by the server; turning its data map into a `PendingNotification` is rendering,
+so the receiver lives in `viewing` and needs nothing but `model`.
+
+Token *refresh*, though, arrives on the same platform callback and has to reach the account-scoped
+`PushTokenRegistrar` in `datamanager` — the wrong direction for the rule. A one-method sink in
+`model` closes it:
+
+```kotlin
+// feature/notifications/model — implemented by :datamanager, called by :viewing
+fun interface PushTokenSink {
+  suspend fun onTokenRefreshed(token: String)
+}
+```
+
+The Android `FirebaseMessagingService` therefore lives in `viewing/androidMain`, renders
+`onMessageReceived` itself, and forwards `onNewToken` to the injected sink. `viewing` never learns
+what a token is for. `PushTokenRegistrar` is N1-only and lands in P4; §7.1.
 
 ---
 
@@ -516,7 +606,8 @@ Plus `selectWatermarksInScopePrefix`, `upsertWatermark`, `deleteWatermarksNotIn`
 
 ### 6.3 The scan
 
-`UrgencyScanner` in `datamanager/commonMain` — the entire N2 feature, in shared code.
+`UrgencyScanner` in `engine/commonMain` — the entire N2 decision, in shared code. It is the one class
+that justifies `engine`'s fan-in, and everything it reads is read through an existing manager.
 
 ```
 suspend fun scan(trigger: ScanTrigger): ScanResult
@@ -878,7 +969,9 @@ fun interface ForeignWriteListener {
 ```
 
 `PullListener` invokes it (no-op binding by default) when it applies a remote write whose `writerUid`
-differs from the signed-in uid. `feature/notifications`' `jsMain` module binds the real one. This is
+differs from the signed-in uid. `engine`'s `jsMain` source set binds the real one — the detector is a
+decision about whether an event deserves a notification, so it sits with the scanner, not with the
+notifier it eventually calls. This is
 the `CloudSyncSetting` pattern: interface in `core:storage`, implementation supplied by a feature and
 bound via Koin.
 
@@ -895,7 +988,7 @@ notification, mirroring what the server's fan-out does. Empty result falls back 
 
 ### 8.4 Client-side coalescing
 
-The server buffer never sees this path. A `commonMain` `CoalescingBuffer` with the same 5-minute /
+The server buffer never sees this path. A `CoalescingBuffer` in `engine/commonMain` with the same 5-minute /
 30-minute constants, keyed by `(aircraftId, recordType, actorUid)`, in-memory and per-tab. It is
 small, it is shared code, and the same class is the natural home for any future client-side
 coalescing. V1 could ship without it and accept a burst on web, but the class is a few dozen lines
@@ -986,7 +1079,7 @@ silence one alert silences the whole app instead.
 | The step | `feature/login/src/commonMain/.../feature/login/AuthFlow.kt` — a new `AuthStep.NotificationPrimer` |
 | The screen | `feature/login/src/commonMain/.../feature/login/onboarding/NotificationPrimerScreen.kt`, beside `AdsConsentExplainerScreen.kt` |
 | Its strings | `feature/login/src/commonMain/composeResources/values/strings.xml`, as `onboarding_notifications_*`, matching the existing `onboarding_ads_consent_*` set. The Continue label is already shared — `core:sharedassets`' `continue_action`. |
-| Build dep | `feature/login/build.gradle.kts` gains `implementation(project(":feature:notifications:datamanager"))` |
+| Build dep | `feature/login/build.gradle.kts` gains `implementation(project(":feature:notifications:permission"))` |
 
 **In `feature/login`, not in `feature/notifications`.** `AuthFlow` is deliberately navigation-free —
 a `when (step)` that renders its screens directly — so a step owned by another module would have to
@@ -1003,13 +1096,19 @@ the same kind of comment explaining what it is for:
 implementation(project(":feature:ads:datamanager"))
 // The notification priming step: NotificationPermission (background UNDETERMINED check, then
 // request() — the real OS dialog — from the primer's Continue).
-implementation(project(":feature:notifications:datamanager"))
+implementation(project(":feature:notifications:permission"))
 ```
 
-**Not `feature:notifications:sharedassets`.** `PermissionBanner` and `NotificationClassRow` are
-settings-screen furniture; the primer is a full-bleed explainer card that shares no component with
-them, exactly as `AdsConsentExplainerScreen` shares nothing with the ads feature's own UI. One
-dependency, on `datamanager`, for one interface.
+**`:permission` and nothing else — this is the case the §3 split was for.** The primer needs exactly
+one interface, `NotificationPermission`. In the single-`datamanager` shape that interface sat beside
+the scanner, so an onboarding card would have dragged `feature:tasks:datamanager`,
+`feature:logs:datamanager`, `feature:squawk:datamanager`, `feature:fleet:datamanager` and
+`feature:sharing:datamanager` onto `feature/login`'s compile classpath. Now it takes the feature's
+leaf module, whose own dependencies are two `core:*` entries (§5.1).
+
+Not `:sharedassets` either — `PermissionBanner` and `NotificationClassRow` are settings-screen
+furniture, and the primer is a full-bleed explainer card that shares no component with them, exactly
+as `AdsConsentExplainerScreen` shares nothing with the ads feature's own UI.
 
 ### 10.2 The screen
 
@@ -1112,6 +1211,14 @@ following `DisplayAdsDeveloperSettings`:
 - **Show scan diagnostics** — last scan time, trigger, records examined, crossings found, crossings
   suppressed by preferences. This is what makes the background-versus-foreground metric (§6.6)
   debuggable rather than merely reportable.
+
+**Passed in as a composable slot, not imported.** Three of these four actions need `engine`, and
+`DeveloperOptionsScreen` lives in `feature:settings` — which §3 keeps off `engine` deliberately. The
+screen already takes extras as slots for exactly this reason: `ShellNavGraph` supplies
+`StressTestDeveloperOptionsExtra` the same way, gated on `isStressTestSupported`. So
+`NotificationDeveloperSettings` lives in `engine`, and the shell (which already depends on `engine`)
+passes it down. No new mechanism, and `feature:settings` keeps a compile classpath that has nothing
+to do with scanning aircraft.
 
 ---
 
@@ -1216,7 +1323,7 @@ Maps onto the PRD's phases. P1–P3 touch no backend at all.
 
 | Phase | Contents | Exit criteria |
 |:--|:--|:--|
-| **P1 Foundations** | Module set; proto + `CollectionKind` (all 5 registration points, §4.2); `NotificationPrefsManager` **including the hydration-resolution rule** (§4.3); `NotificationPermission` + `LocalNotifier` actuals ×3; channels; `Screen.Notifications` + nav; settings screen; Developer Options test sends | A dev build requests permission and posts a local notification on each channel; preferences persist and appear on a second device; **and a fresh install of an account with non-default preferences shows the spinner until they hydrate, never all-on — with the toggles disabled meanwhile** |
+| **P1 Foundations** | Seven modules (§3) wired into `settings.gradle.kts` + `CommonAppModules`; proto + `CollectionKind` (all 5 registration points, §4.2); `NotificationPrefsManager` **including the hydration-resolution rule** (§4.3); `NotificationPermission` + `LocalNotifier` actuals ×3; channels; `Screen.Notifications` + nav; settings screen; Developer Options test sends | A dev build requests permission and posts a local notification on each channel; preferences persist and appear on a second device; **and a fresh install of an account with non-default preferences shows the spinner until they hydrate, never all-on — with the toggles disabled meanwhile** |
 | **P2 N2 urgency** | `urgency_watermark` table; `UrgencyRank`; `UrgencyScanner`; `UrgencyScanScheduler` (Android + iOS); session-boundary scan; seeding; per-tier batching; tap routing; scan diagnostics | Crossings fire exactly once; de-escalations silent; a fresh install notifies nothing; **no backend change was required** |
 | **P3 Web N1** | `ForeignWriteListener` in `core:storage`; `PullListener` hook; `jsMain` detector; one-shot actor read; `CoalescingBuffer` | A web user with a shared aircraft open sees a collaborator's edit from another account; **no backend, no token registry** |
 | **P4 N1 backend + Android** | `device_config` table; `PushTokenRegistrar`; `aircraft.proto` + `notification_settings.proto` added to `generate:proto`; fan-out trigger; buffer; sweep; rate ceiling; rules + emulator tests | Two accounts sharing an aircraft see each other's changes; neither sees their own |
@@ -1246,6 +1353,7 @@ amended rather than quietly diverged from.
 | D9 | — (not addressed) | `aircraft.proto` and `settings/notification_settings.proto` must be added to the functions' `generate:proto` list | §7.2. Neither is generated today, and the fan-out cannot read a tail number or a preference without them. |
 | D10 | §7.5 — iOS N1 in V1 | iOS Time Sensitive interruption level needs an entitlement and App Store review; sequenced into P5 | §5.2. iOS N2 ships at default interruption level in P2. |
 | D11 | §9.2 — preferences are "a new synced entity … like every other setting" | The manager must resolve *hydrated* from *never set* before any read or write. `DeveloperOptionsManagerImpl` is not the template — it never hydrates. `TechnicianManagerImpl.awaitHydratedSelfId` is. | §4.3. Reading through an unhydrated store shows the wrong toggles; **writing** through it pushes a whole-message overwrite that reverts the user's settings on every other device. |
+| D12 | §9.2 — "`feature/notifications`: canonical module set (`model` / `datamanager` / `sharedassets` / `settings`)" | Seven modules: `model`, `permission`, `viewing`, `datamanager`, `engine`, `sharedassets`, `settings` — with `viewing` meaning the *notification display surface*, not the canonical read-only-UI layer | §3. One `datamanager` holding both the scanner and the display surface forces every consumer to inherit the scanner's five feature-datamanager dependencies; `feature/login` would compile against `feature:tasks:datamanager` to show one onboarding card. |
 
 ## 16. Open questions
 
