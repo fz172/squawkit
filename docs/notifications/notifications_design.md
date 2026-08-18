@@ -31,8 +31,8 @@ divides:
 
 | | **N2 — urgency escalation** | **N1 — collaboration activity** |
 |:--|:--|:--|
-| Where it runs | Entirely on the device | Firestore trigger + scheduled sweep + FCM/APNs (web: on-device) |
-| New backend surface | **None** | Token registry, fan-out trigger, coalescing buffer, sweep |
+| Where it runs | Entirely on the device | Firestore trigger + FCM/APNs (web: on-device) |
+| New backend surface | **None** | Token registry, fan-out trigger, activity counter |
 | Depends on sharing | No | Yes |
 | Correctness risk | Watermark semantics, seeding, enum-rank mapping | At-least-once delivery, audience freshness, storms |
 | Ships first | ✅ P2 | P4 |
@@ -94,7 +94,7 @@ feature/notifications/
 │                   receiver, NotificationTapRouter
 ├── datamanager/    NotificationPrefsManager, PushTokenRegistrar
 ├── engine/         WHAT to show, and when. UrgencyScanner, UrgencyWatermarkStore,
-│                   UrgencyScanScheduler (expect), the web N1 detector, CoalescingBuffer
+│                   UrgencyScanScheduler (expect), the web N1 detector, ActivityCounter
 ├── sharedassets/   PermissionBanner, NotificationClassRow, notification strings
 │                   (settings-screen furniture; the onboarding primer shares none of it — §10.1)
 ├── settings/       NotificationSettingsScreen, NotificationSettingsViewModel,
@@ -354,9 +354,9 @@ interface.
 
 #### The server has the same ambiguity, and does not need this machinery
 
-§7.4's sweep reads `users/{recipient}/notification_settings/main` directly from Firestore, which *is*
+§7.4's trigger reads `users/{recipient}/notification_settings/main` directly from Firestore, which *is*
 the source of truth — a missing doc there means "never set," full stop. An absent doc, a
-default-decoded message, and all-on are the same thing (§4.1), so the sweep needs no equivalent
+default-decoded message, and all-on are the same thing (§4.1), so the server needs no equivalent
 resolution step. The inverted-boolean convention is what makes the two sides agree without either
 knowing about the other.
 
@@ -844,7 +844,7 @@ plus a second trigger on `users/{uid}/aircraft/{acId}` for the Aircraft record i
 3. actorUid = after.writerUid
 4. decode before/after payloads -> record title, and for squawks the priority
 5. if (priority escalated) -> send immediately, bypass the buffer   // §7.5
-   else                    -> upsert the coalescing buffer          // §7.3
+   else                    -> bump the activity counter and send    // §7.3, §7.4
 ```
 
 Step 2 is the early exit that keeps this cheap: **most writes are on unshared aircraft**, and they
@@ -856,84 +856,127 @@ Two additions to `backend/firebase/functions/package.json`'s `generate:proto`, b
 - `aircraft/aircraft.proto` — the notification body leads with the tail number (PRD §5.3, "aircraft
   identity first"), and the server cannot read it out of anything else; the aircraft record is opaque
   proto bytes.
-- `settings/notification_settings.proto` — the sweep decodes each recipient's preferences to honor
+- `settings/notification_settings.proto` — the trigger decodes each recipient's preferences to honor
   their per-class toggles.
 
-### 7.3 The coalescing buffer, keyed by source rather than by recipient
+### 7.3 Coalescing by replacement, not by buffering
 
-PRD §5.4 keys the buffer per `(recipient, aircraft, recordType, actor)`. Keying it per
-`(aircraft, recordType, actor)` and fanning out at flush is strictly better on three counts, and
-this design takes that route:
+PRD §5.4 buffers writes behind a quiet timer and a max-wait ceiling, and flushes one summary. That
+shape has two problems, and the second is the one that killed it:
 
-- **Fewer writes.** A five-member share is one buffer write per edit instead of four.
-- **§9.5 falls out instead of needing enforcement.** The PRD requires the audience be re-derived from
-  the ACL at send time, never from a cached list — because a revoked member must stop receiving
-  immediately, and `SharedScopeJanitor` has already pruned their local data. With a per-recipient
-  buffer the audience is resolved at *buffer* time and must be re-checked at flush anyway; with a
-  shared buffer there is no cached audience to go stale.
-- **Preferences are honored at flush**, against the recipient's current settings rather than their
-  settings when the first edit landed.
+- **It needs a clock the server does not have.** Firestore triggers fire on writes, never on their
+  absence, so "5 minutes with no further write" requires either a polling sweep or Cloud Tasks.
+- **It cannot meet the PRD's own latency target.** PRD §4 promises "~a minute for an isolated edit,"
+  but a trailing-edge debounce cannot know an edit was isolated until the window has passed — so
+  *every* N1, including a lone squawk edit with nothing around it, would wait the full 5 minutes.
+
+**So nothing is buffered. Every write sends, and the tray does the coalescing** — each send reuses a
+deterministic notification id, so the second push through the eighth *replace* the first entry rather
+than stacking beside it:
+
+| Time | Write | Push | What the recipient's tray holds |
+|:--|:--|:--|:--|
+| 14:00:00 | A task 1 | id `n1:{A}:task:{dave}` | `N4589T · Tasks` / `Dave Chen updated a task: Annual Inspection` |
+| 14:00:40 | A task 2 | same id — replaces | `Dave Chen made 2 changes to tasks` |
+| 14:01:10 | B task 1 | id `n1:{B}:task:{dave}` | + `N771TS · Tasks` / `Dave Chen updated a task: 100-Hour Inspection` |
+| 14:04:30 | A task 5 | same id — replaces | `Dave Chen made 5 changes to tasks` |
+
+Dave's eight edits across two aircraft leave two tray entries, each accurate — and accurate at every
+intermediate moment, not only once he stops. Compare the buffered design, which would have shown
+Sarah nothing for nine minutes; and a leading-edge variant, which sends instantly but then silently
+loses six of the eight edits because nothing wakes up to flush the tail.
+
+The id is `n1:{aircraftId}:{recordType}:{actorUid}` — the same key PRD §5.4 coalesces on, moved from
+a server buffer into the notification id. §5.2 already required deterministic ids so a re-scan
+replaces rather than stacks; this is that mechanism doing a second job.
+
+| Platform | Replacement primitive | Silent update |
+|:--|:--|:--|
+| Android | Same notification id in `NotificationManager.notify` | `setOnlyAlertOnce(true)` |
+| iOS | Same `UNNotificationRequest` identifier | `interruptionLevel = .passive` on the update |
+| Web | Same `tag` on `new Notification(...)` | **Default** — silent unless `renotify: true`. §8.4 |
+
+So the recipient is buzzed once per aircraft and the entry quietly keeps up.
+
+**`collapse_key` carries the same property over the wire.** Setting FCM `collapse_key` (and
+`apns-collapse-id`) to the notification id means a device that is offline for the whole burst
+receives only the *last* message on reconnect, not eight. The dedup then costs nothing even in the
+worst case.
+
+### 7.4 The counter, and what replaces the sweep
+
+`scheduledNotificationSweep` is **deleted.** There is no timer, no Cloud Scheduler job, no Cloud
+Tasks queue, and no idle polling — work happens on writes, which is the only time there is work.
+
+What remains is a small counter doc so a body can say "5 changes" instead of "a change":
 
 ```
-notification_batches/{aircraftId}__{recordType}__{actorUid}
+notification_activity/{aircraftId}__{recordType}__{actorUid}
   hostUid, aircraftId, recordType, actorUid
-  aircraftLabel        // resolved once at buffer time — cosmetic, so staleness is harmless
+  aircraftLabel        // resolved once — cosmetic, so staleness is harmless
   actorDisplayName     // from aircraft_shares/{host}/aircraft/{ac}/members/{actor}.displayName
   firstWriteAt, lastWriteAt
   changeCount
-  sampleTitles[]       // capped at 5
-  flushAt              // = min(lastWriteAt + 5min, firstWriteAt + 30min), recomputed each upsert
+  lastSentAt
 ```
 
-The doc id concatenates with `__`; Firebase uids and the UUID aircraft ids are alphanumeric, and
-`recordType` is a fixed enum, so the separator is unambiguous. Rules:
-`match /notification_batches/{id} { allow read, write: if false; }` — functions only.
-
-`flushAt` as a stored field is what makes the sweep a single indexed query instead of a scan, and it
-encodes both of PRD §5.4's timers in one number: the quiet timer that collapses a burst, and the
-max-wait ceiling that keeps a technician working steadily for an hour from getting silence.
-`sampleTitles` is capped because a batch doc is not a change log.
-
-Neither `actorDisplayName` nor `aircraftLabel` is authorization-relevant, so resolving them once at
-buffer time and letting them go stale is fine — and it means the sweep does zero extra reads for the
-body. Missing display name falls back to "A collaborator" (PRD §5.3).
-
-### 7.4 The sweep
-
-`scheduledNotificationSweep`, an `onSchedule` function following `scheduledStorageSweep` exactly
-(`storageSweepTriggers.ts` — Cloud Scheduler, "Force run" in the console for on-demand, schedule as a
-code constant so arming it costs a redeploy).
+The trigger's whole job, per write:
 
 ```
-every 1 min:
-  batches = notification_batches where flushAt <= now, limit N
-  for each batch:
-    claim in a transaction (set claimedAt; skip if claimed within the last 2 min)
-    audience = memberRoles(hostUid, aircraftId) minus actorUid        // re-derived, §9.5
-    for each recipient:
-      prefs = decode(users/{recipient}/notification_settings/main)
-      skip if allDisabled or the recordType's class is off
-      tokens = users/{recipient}/push_devices where enabled == true
-      send
-    delete the batch
+1. hostUid = params.uid                        // from the PATH — unspoofable, §7.2
+2. acl = get(aircraft_shares/{hostUid}/aircraft/{acId})
+   if (!acl.exists || memberRoles.size <= 1) return          // unshared: the cheap early exit
+3. counter = upsert(key) in a transaction:
+     if (now - lastWriteAt > ACTIVITY_WINDOW) changeCount = 1 // a new working session
+     else                                     changeCount += 1
+     lastWriteAt = now
+4. if (now - lastSentAt < MIN_REPOST_INTERVAL) return         // throttle, below
+5. audience = memberRoles minus actorUid                      // re-derived every send, §9.5
+   for each recipient honoring this class in their prefs:
+     send to their enabled tokens, collapse_key = notification id
+6. lastSentAt = now
 ```
 
-**Claim-send-delete, not delete-then-send.** PRD §5.4 describes deleting the buffer inside the
-transaction that read it. That makes the send at-most-once: a crash between the commit and the FCM
-call loses the batch silently. Claiming with a reclaim timeout makes it at-least-once — a crash
-re-delivers up to one duplicate summary, which is the right side of that trade for a notification
-system. The 2-minute reclaim window comfortably exceeds a normal flush.
+Three details that carry the weight the sweep used to:
 
-**Per-aircraft rate ceiling** (PRD §9.4, §12). `feature/stresstest` is compiled into every build and
-will be pointed at a shared aircraft. Cap sends per `(aircraft, hour)`; past the cap, collapse to one
-"N4589T · a lot of activity" and drop the rest. Enforce it in the sweep, where the count is already
-in hand — enforcing after the send is not enforcement.
+- **`ACTIVITY_WINDOW` (30 min) resets the count**, so a burst on Tuesday afternoon and one on
+  Wednesday morning are separate "5 changes," not "23 changes." Evaluated lazily on the next write,
+  so it needs no timer either.
+- **`MIN_REPOST_INTERVAL` (30s) is the storm guard.** A bulk import writing 200 records produces at
+  most two sends per key per minute instead of 200. The cost is a count that lags by up to 30
+  seconds; the next write corrects it, and the final write of any burst is the one that matters.
+  This does **not** replace the per-aircraft rate ceiling below — it bounds one key, the ceiling
+  bounds the aircraft.
+- **Audience and preferences are re-derived on every send**, which is what PRD §9.5 asks for. With
+  no buffered fan-out there is no cached audience that could outlive a revocation, so §9.5 stops
+  being a rule to enforce and becomes a property of the shape.
+
+**Per-aircraft rate ceiling** (PRD §9.4, §12) still applies and still matters — `feature/stresstest`
+is compiled into every build and *will* be pointed at a shared aircraft. Cap sends per
+`(aircraft, hour)`; past the cap, collapse to one "N4589T · a lot of activity" and drop the rest.
+
+Rules: `match /notification_activity/{id} { allow read, write: if false; }` — functions only. The doc
+id concatenates with `__`; Firebase uids and UUID aircraft ids are alphanumeric and `recordType` is a
+fixed enum, so the separator is unambiguous.
+
+**Delivery is now at-least-once by construction.** The old sweep needed a claim-then-send-then-delete
+dance with a reclaim window, because delete-then-send loses a batch on a crash. Here a crashed
+invocation just means one write went unannounced, and the next write re-sends with a corrected count.
+Nothing to claim, nothing to reclaim.
 
 ### 7.5 The escalation bypass
 
-A write that raises a squawk's priority sends immediately with the specific §6.5 body, never folded
-into a summary. PRD §5.4 calls this a hard rule, not a tuning knob, and the reasoning holds: "wait up
-to 30 minutes to see whether they are still typing" is the wrong behaviour for AOG.
+A write that raises a squawk's priority sends the specific §6.5 body — and critically, **under its
+own notification id**, `n1esc:{aircraftId}:{squawkId}`, never `n1:{aircraft}:{recordType}:{actor}`.
+
+That distinction is the whole rule now. With §7.3's replacement scheme, folding an escalation into
+the activity id would let the *next* routine edit overwrite "Sarah raised Left brake dragging to
+AOG" with "Sarah made 4 changes to squawks" — silently replacing a grounding alert with a shrug. A
+separate id makes the AOG notification immune to collapse, and it is also exempt from
+`MIN_REPOST_INTERVAL` and from the per-aircraft ceiling.
+
+PRD §5.4 called the bypass a hard rule rather than a tuning knob, in the buffering design. It is
+still a hard rule; it just changes from "do not delay this" to "do not overwrite this."
 
 The trigger detects it by decoding `before.payload` and `after.payload` and comparing
 `squawk.priority` — the only ladder the server can evaluate. **Task due-status escalation is
@@ -953,10 +996,17 @@ routing and the tap router:
     "channel": "COLLABORATION",
     "aircraftId": "…", "recordType": "squawk", "recordId": "…",
     "titleKey": "…", "bodyArgs": "…",
+    "notificationId": "n1:{aircraftId}:{recordType}:{actorUid}",
     "tapTarget": "squawk:{aircraftId}:{squawkId}"
-  }
+  },
+  "android": { "collapse_key": "<same as notificationId>" },
+  "apns":    { "headers": { "apns-collapse-id": "<same as notificationId>" } }
 }
 ```
+
+`notificationId` is what `LocalNotifier` posts under, so the tray replacement in §7.3 happens on the
+client; the two collapse headers make the *transport* do the same thing for a device that was offline
+during the burst. All three carry the same value — the server computes it once.
 
 Localization is the reason for `titleKey`/`bodyArgs` rather than a rendered string: the server does
 not know the recipient's locale, and the client already has `strings.xml`. iOS needs
@@ -1005,13 +1055,43 @@ when the user has any shared aircraft, torn down on sign-out or when a share end
 across account switches — for a value needed only at the instant a notification fires. One read per
 notification, mirroring what the server's fan-out does. Empty result falls back to "A collaborator."
 
-### 8.4 Client-side coalescing
+### 8.4 Coalescing on web
 
-The server buffer never sees this path. A `CoalescingBuffer` in `engine/commonMain` with the same 5-minute /
-30-minute constants, keyed by `(aircraftId, recordType, actorUid)`, in-memory and per-tab. It is
-small, it is shared code, and the same class is the natural home for any future client-side
-coalescing. V1 could ship without it and accept a burst on web, but the class is a few dozen lines
-and the constants are already written down — build it.
+No server trigger sees this path, so web does its own counting — but §7.3's move from buffering to
+replacement shrinks that to almost nothing. An `ActivityCounter` in `engine/commonMain`, keyed by
+`(aircraftId, recordType, actorUid)`, in-memory and per-tab, holding `changeCount` / `lastWriteAt` /
+`lastSentAt` and applying the same `ACTIVITY_WINDOW` and `MIN_REPOST_INTERVAL` as §7.4. No timers,
+because there are none to mirror any more: an earlier draft had this class reproducing the server's
+5-minute quiet timer and 30-minute ceiling per tab, with its own lifecycle to get wrong.
+
+**Web's replacement primitive is the `tag` option, and its default is the behaviour the other two
+platforms have to ask for:**
+
+```js
+new Notification("N4589T · Tasks", {
+  tag: "n1:{aircraftId}:{recordType}:{actorUid}",   // same tag replaces, never stacks
+  body: "Dave Chen made 5 changes to tasks",
+  // renotify is deliberately omitted — a replacement is SILENT unless renotify: true
+})
+```
+
+Android needs `setOnlyAlertOnce(true)` and iOS a passive interruption level to avoid re-buzzing on
+each update; on web that is simply what happens.
+
+Two web-specific limits, both narrowing rather than breaking it:
+
+- **Chrome on Android rejects the `new Notification()` constructor outright** — it throws, and only
+  `ServiceWorkerRegistration.showNotification()` works there. §8.5 already scopes V1 web to an open
+  tab with no service worker, so mobile web is out of scope regardless; when P6 adds the service
+  worker, `showNotification()` takes the same `tag` and this section is unchanged.
+- **A page-created notification may auto-dismiss** (Chrome closes them after ~20s; macOS moves them
+  to Notification Center). So "the entry updates in place" is best-effort visually on web — if the
+  first is already gone, the replacement just appears as new. It still never *stacks*, which is the
+  property that matters.
+
+**`collapse_key` does not apply here.** Collapsing undelivered messages is an FCM feature and web V1
+has no push transport (§8.5), so web gets the dedup half of §7.3 and not the offline half. A tab that
+was closed during the burst sees nothing at all, which is the existing V1 limitation, not a new one.
 
 ### 8.5 What this does not cover
 
@@ -1324,10 +1404,10 @@ mirroring why `feature:stresstest:config` is separate from `feature:stresstest`.
 |:--|:--|
 | `users/{uid}/push_devices/{id}` | **None needed** — covered by the own-tree rule. Add a comment naming it. |
 | `users/{uid}/notification_settings/main` | **None needed** — same. |
-| `notification_batches/{id}` | New: `allow read, write: if false;` (functions only) |
+| `notification_activity/{id}` | New: `allow read, write: if false;` (functions only) |
 
 Add emulator tests to the existing vitest suite in `backend/firebase/functions` covering: another
-user cannot read my `push_devices`; no client can read or write `notification_batches`; a revoked
+user cannot read my `push_devices`; no client can read or write `notification_activity`; a revoked
 member's uid is absent from `memberRoles` and therefore from the audience.
 
 ### 12.2 Actor suppression
@@ -1386,8 +1466,8 @@ The one that must exist by name: `complied_ranksBelowDueSoon_despiteHigherOrdina
 `NotificationSettings()` reads every class as **on**. Small, because there is no mapping to
 round-trip (§4.1): the extensions derive from the proto rather than copying it, so the only thing
 that can be wrong is an inverted `!`. `absentDoc_resolvesToAllOn` is the case to name explicitly — it
-is the property the whole convention exists for, and the contract the server-side sweep independently
-relies on.
+is the property the whole convention exists for, and the contract the server-side trigger
+independently relies on.
 
 **`NotificationPrefsManagerTest`** — the resolution rule (§4.3), which is where copying
 `DeveloperOptionsManagerImpl` would have gone wrong:
@@ -1402,11 +1482,17 @@ relies on.
   `Result`. This is the test that would have caught consequence 2.
 - `update()` while `Resolved` copies onto the resolved value, leaving untouched fields intact
 
-**Backend** (emulator + vitest, per the existing harness): an unshared aircraft produces no batch;
-the actor is excluded from the audience; two writes inside the quiet window produce one batch with
-`changeCount = 2`; continuous writes flush at the 30-minute ceiling; a priority escalation bypasses
-the buffer; a revoked member is excluded at flush even though they were a member at buffer time; a
-claimed batch is not double-swept; the per-aircraft rate ceiling holds under a stress-test burst.
+**Backend** (emulator + vitest, per the existing harness): an unshared aircraft sends nothing and
+writes no counter; the actor is excluded from the audience; a second write bumps `changeCount` to 2
+and re-sends under the **same** notification id and `collapse_key`; a write after `ACTIVITY_WINDOW`
+resets the count to 1 rather than continuing yesterday's total; two writes inside
+`MIN_REPOST_INTERVAL` produce one send; a priority escalation posts under `n1esc:…` and is exempt
+from both the throttle and the ceiling; a member revoked between two writes is absent from the
+second send's audience; the per-aircraft rate ceiling holds under a stress-test burst.
+
+The one to write first, because it is the whole §7.3 argument in a test: **Dave's five edits on
+aircraft A interleaved with three on B produce exactly two distinct notification ids**, with final
+counts 5 and 3.
 
 **Not unit-tested, verify by hand:** `WorkManager` and `BGTaskScheduler` actually firing, OS
 permission dialogs, channel importance, tray rendering, and cold-start tap routing.
@@ -1421,13 +1507,13 @@ Maps onto the PRD's phases. P1–P3 touch no backend at all.
 |:--|:--|:--|
 | **P1 Foundations** | Eight modules (§3) wired into `settings.gradle.kts` + `CommonAppModules`; proto + `CollectionKind` (all 5 registration points, §4.2); `NotificationPrefsManager` **including the hydration-resolution rule** (§4.3); `NotificationPermission` + `LocalNotifier` actuals ×3; channels; `Screen.Notifications` + nav; settings screen; **`DeveloperOptionsExtra` in `core:ui` + migrating the stress-test extra off `dogfoodContent` (§11.2)**; the notification Developer Options section | A dev build requests permission and posts a local notification on each channel; preferences persist and appear on a second device; **and a fresh install of an account with non-default preferences shows the spinner until they hydrate, never all-on — with the toggles disabled meanwhile** |
 | **P2 N2 urgency** | `urgency_watermark` table; `UrgencyRank`; `UrgencyScanner`; `UrgencyScanScheduler` (Android + iOS); session-boundary scan; seeding; per-tier batching; tap routing; scan diagnostics | Crossings fire exactly once; de-escalations silent; a fresh install notifies nothing; **no backend change was required** |
-| **P3 Web N1** | `ForeignWriteListener` in `core:storage`; `PullListener` hook; `jsMain` detector; one-shot actor read; `CoalescingBuffer` | A web user with a shared aircraft open sees a collaborator's edit from another account; **no backend, no token registry** |
-| **P4 N1 backend + Android** | `device_config` table; `PushTokenRegistrar`; `aircraft.proto` + `notification_settings.proto` added to `generate:proto`; fan-out trigger; buffer; sweep; rate ceiling; rules + emulator tests | Two accounts sharing an aircraft see each other's changes; neither sees their own |
+| **P3 Web N1** | `ForeignWriteListener` in `core:storage`; `PullListener` hook; `jsMain` detector; one-shot actor read; `ActivityCounter` + `tag`-based replacement (§8.4) | A web user with a shared aircraft open sees a collaborator's edit from another account; **no backend, no token registry** |
+| **P4 N1 backend + Android** | `device_config` table; `PushTokenRegistrar`; `aircraft.proto` + `notification_settings.proto` added to `generate:proto`; fan-out trigger; `notification_activity` counter; collapse keys; rate ceiling; rules + emulator tests. **No Cloud Scheduler job and no Cloud Tasks queue** | Two accounts sharing an aircraft see each other's changes; neither sees their own |
 | **P5 N1 on iOS** | APNs certificates, entitlements, background modes, notification service extension, Time Sensitive entitlement | Parity with Android on N1; `timeSensitive` works for AOG |
 | **P6 Web push** | Service worker, VAPID, `push_devices` for web | `isPushSupported` flips true on `jsMain` |
 
-Dogfood across P2–P5. P2 tunes the scan cadence and per-tier batching; P4 tunes the coalescing
-window. The noise floor has to be felt rather than reasoned about.
+Dogfood across P2–P5. P2 tunes the scan cadence and per-tier batching; P4 tunes `ACTIVITY_WINDOW`
+and `MIN_REPOST_INTERVAL`. The noise floor has to be felt rather than reasoned about.
 
 ---
 
@@ -1441,8 +1527,8 @@ amended rather than quietly diverged from.
 | D1 | §9.1.6 — "foreground is already observable via `AppForegroundObserver`" | It is a session-boundary counter, not a foreground stream. Collect `sessionId` instead of adding an event. | §6.6. Its own doc comment asks future consumers to grow from it rather than add a second observer. |
 | D2 | §9.1.4 — implies `MaintenanceOverview` supplies hours | `TaskDueManagerImpl` derives current hours from `max()` over the aircraft's logs. The scanner must pass logs. | §6.3. Passing an empty log list reports the whole fleet overdue. |
 | D3 | §6.4 — silent seeding, silent on a new record | A new record written by **someone else** seeds at rank 0, so an already-urgent one reports on the same scan | §6.4. Otherwise a mechanic's AOG squawk is silently seeded on the owner's device and N2 never mentions it. |
-| D4 | §5.4 — buffer keyed per `(recipient, aircraft, recordType, actor)` | Keyed per `(aircraft, recordType, actor)`; fan out at flush | §7.3. Fewer writes, and §9.5's "re-derive the audience at send time" stops being a rule to enforce. |
-| D5 | §5.4 — sweep deletes the buffer in the transaction it read it from | Claim (with a 2-min reclaim window), send, then delete | §7.4. Delete-then-send is at-most-once; a crash loses the batch silently. |
+| D4 | §5.4 — buffer writes behind a 5-min quiet timer and a 30-min ceiling, then flush one summary | **Nothing is buffered.** Every write sends under a deterministic notification id, so later pushes *replace* the tray entry instead of stacking; a counter doc supplies the "5 changes" | §7.3. The buffer needed a clock the server does not have (triggers fire on writes, not on their absence) **and** could not meet the PRD's own "~a minute for an isolated edit" — a trailing-edge debounce cannot know an edit was isolated until the window has passed. |
+| D5 | §5.4 — a scheduled sweep flushes buffers past either timer | **No sweep, no Cloud Scheduler job, no Cloud Tasks queue.** Work happens on writes only | §7.4. Follows from D4: with nothing buffered there is no deadline to poll for. Also removes the claim/reclaim dance — a crashed invocation means one write went unannounced, and the next write re-sends with a corrected count. |
 | D6 | §4 / Q10 — N2 "requires nothing else"; the scan runs signed out | Requires *a Firebase user* — anonymous counts. With no user there is no local fleet, so the scan is a no-op. | §6.8. The real promise (no real account, no sync, no network) is intact; the wording is not. |
 | D7 | §9.2 — "notification preferences: new synced entity" | Every proto field is inverted (`*_disabled`) | §4.1. proto3 has no scalar presence, so all-false must mean all-on or a user who never opened settings is silenced. |
 | D8 | §11 — instrument via the analytics plan | The scan reports nothing when sync is off or the account is anonymous | §12.3. The PRD calls this a privacy call for the design doc and names this as the safe default. |
