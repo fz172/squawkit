@@ -4,8 +4,8 @@
 **Status:** 📋 Proposed — not implemented
 **Last updated:** 2026-08-17
 **Areas:** `feature/notifications` (new) · `core/storage` · `core/model` · `core/nav` · `core/appinfo` ·
-`feature/shell` · `feature/settings` · `feature/login` · `feature/sync/data` ·
-`backend/firebase/functions`
+`core/ui` · `feature/shell` · `feature/settings` · `feature/stresstest/config` · `feature/login` ·
+`feature/sync/data` · `backend/firebase/functions`
 **Related docs:** [notifications_PRD.md](notifications_PRD.md) ·
 [storage_r1_design.md](../storage/storage_r1_design.md) ·
 [squawk_design.md](../squawks/squawk_design.md) ·
@@ -84,21 +84,23 @@ Two more facts the PRD does not mention that materially shape this design:
 
 ```
 feature/notifications/
-├── model/          NotificationClass, UrgencyRank, UrgencyLadder, NotificationPrefs,
-│                   PendingNotification, NotificationChannel, NotificationTapTarget,
-│                   PushTokenSink
+├── model/          NotificationClass, UrgencyRank, UrgencyLadder, PendingNotification,
+│                   NotificationChannel, NotificationTapTarget, PushTokenSink,
+│                   NotificationSettingsExt (the §4.1 inversion, once)
 ├── permission/     MAY we show one. NotificationPermission (expect), PermissionState.
 │                   A leaf: no dependency on any other notification module.
 ├── viewing/        HOW one is shown. LocalNotifier (expect), channel registration,
 │                   PendingNotification -> platform notification, the FCM message
 │                   receiver, NotificationTapRouter
-├── datamanager/    NotificationPrefsManager (+ proto mapping), PushTokenRegistrar
+├── datamanager/    NotificationPrefsManager, PushTokenRegistrar
 ├── engine/         WHAT to show, and when. UrgencyScanner, UrgencyWatermarkStore,
 │                   UrgencyScanScheduler (expect), the web N1 detector, CoalescingBuffer
 ├── sharedassets/   PermissionBanner, NotificationClassRow, notification strings
 │                   (settings-screen furniture; the onboarding primer shares none of it — §10.1)
-└── settings/       NotificationSettingsScreen, NotificationSettingsViewModel,
-                    di/NotificationSettingsModule.kt
+├── settings/       NotificationSettingsScreen, NotificationSettingsViewModel,
+│                   di/NotificationSettingsModule.kt
+└── devoptions/     NotificationDeveloperOptionsExtra — one file, developer-only,
+                    contributed through Koin so nothing imports it (§11)
 ```
 
 **The split is the load-bearing decision here.** A single `datamanager` holding all of this would have
@@ -127,6 +129,7 @@ The arrows never point back.
 | `datamanager` | `core:storage`, `feature:sync:data`, `:model` | Preferences (§4.3 needs `SyncCursorStore`/`CloudSyncSetting`) and the token doc. No tasks/logs/squawks. |
 | `engine` | `core:storage`, `core:lifecycle`, `feature:{tasks,logs,squawk,fleet,sharing}:datamanager`, `feature:sync:data`, `:model`, `:permission`, `:viewing`, `:datamanager` | The wide fan-in, contained to one module. Deliberately a *consumer* of the existing managers so no computation is duplicated. |
 | `sharedassets` | `core:ui`, `:model`, `:permission` | `PermissionBanner` renders `PermissionState` |
+| `devoptions` | `core:ui`, `:engine`, `:viewing` | Developer-only. Its own module so `engine` stays Compose-free and `settings` stays `engine`-free — the same reason `feature:stresstest:config` is separate from `feature:stresstest`. §11 |
 | `settings` | `core:ui*`, `:model`, `:permission`, `:datamanager`, `:sharedassets` | **Not `engine`, and not `viewing`.** The screen reads preferences and permission state; it neither scans nor posts. |
 
 And what the rest of the app takes on:
@@ -134,9 +137,9 @@ And what the rest of the app takes on:
 | Consumer | Depends on | Why |
 |:--|:--|:--|
 | `feature:login` | `:permission` only | `NotificationPermission` for the primer (§10.1) |
-| `feature:shell` | `:settings`, `:engine`, `:viewing` | Routes, the Developer Options extra (§11), tap-route collection |
+| `feature:shell` | `:settings`, `:viewing` | The `Screen.Notifications` route, and collecting tap routes into the nav graph. **Not `engine` and not `devoptions`** — §11 |
 | `feature:settings` | `:sharedassets`, `:permission` | The settings row's live subtitle. **Not `engine`** — §11. |
-| hosts | `:engine`, `:viewing`, `:permission` | Koin + platform init (channel registration, scheduler, FCM) |
+| hosts | `:engine`, `:viewing`, `:permission`, `:devoptions` | Koin + platform init (channel registration, scheduler, FCM). `devoptions` appears here and nowhere else: it is registered, never imported. |
 
 `settings/` rather than the canonical `viewing/` + `update/` pair *for the settings screen*, following
 the `feature/sync/settings` precedent exactly (one screen, one ViewModel, one Koin module,
@@ -208,24 +211,39 @@ message NotificationSettings {
 
 The Kotlin-facing type inverts back so no call site reasons in negatives:
 
+**There is no Kotlin mirror of this message.** `NotificationSettings` *is* the type the app passes
+around — `PrefsState.Resolved` carries it, the manager writes it, the ViewModel reads it. Callers get
+readable positive names from extension properties, which are derived rather than copied:
+
 ```kotlin
-data class NotificationPrefs(
-  val allEnabled: Boolean = true,
-  val aog: Boolean = true,
-  val squawkPriority: Boolean = true,
-  val overdue: Boolean = true,
-  val dueSoon: Boolean = true,
-  val aircraftActivity: Boolean = true,
-  val squawkActivity: Boolean = true,
-  val taskActivity: Boolean = true,
-  val logActivity: Boolean = true,
-)
+// feature/notifications/model — NotificationSettingsExt.kt
+// The ONE place the inversion in §4.1 is spelled out. Everything else reads positives.
+val NotificationSettings.allEnabled: Boolean get() = !all_disabled
+val NotificationSettings.aogEnabled: Boolean get() = !aog_disabled
+val NotificationSettings.overdueEnabled: Boolean get() = !overdue_disabled
+// …one line per field
+
+fun NotificationSettings.withAog(enabled: Boolean) = copy(aog_disabled = !enabled)
+// …one per field; wire generates `copy` on the message (TechnicianManagerImpl already relies on it)
 ```
 
-Mapping in both directions lives beside `NotificationPrefsManagerImpl`, with a round-trip test —
-`DeveloperOptionsMappingTest` is the model, and its file comment says exactly why: adding a field to
-the data class alone compiles cleanly and then silently drops the value on write, "which looks
-exactly like a toggle that refuses to turn on."
+An earlier draft had a `data class NotificationPrefs` of nine positive booleans defaulting to `true`,
+on the `DeveloperFlags` precedent. That was a forked copy, and the cost outweighs the ergonomics:
+
+- **It restates the defaults.** §4.1's whole argument is that *absent doc = default-constructed
+  message = everything on* is one fact. A mirror with `= true` on every field states it a second
+  time, in a place that can silently disagree with the proto.
+- **It needs a round-trip test to stay honest.** `DeveloperOptionsMappingTest` exists precisely
+  because "adding a field to the data class alone compiles cleanly and then silently drops the value
+  on write, which looks exactly like a toggle that refuses to turn on." Extension properties cannot
+  drift that way: a new proto field either gets an extension or the call site does not compile.
+- **`SubscriptionManager` already has the opinion**, in its interface doc: "The types are the
+  `Subscription` proto and its enums — the same model the Cloud Functions and Firestore share —
+  **never a forked Kotlin copy**." Notification settings are read by Cloud Functions too (§7.4), so
+  that reasoning applies here verbatim.
+
+The ergonomics the mirror was bought for survive intact: `settings.aogEnabled` reads no worse than
+`prefs.aog`, and `update { it.withAog(false) }` reads better than reconstructing a whole record.
 
 ### 4.2 Registering the `CollectionKind`
 
@@ -287,7 +305,7 @@ Resolution is part of the contract rather than something each caller re-derives:
 sealed interface PrefsState {
   /** Signed in with sync on, and notification_settings has not hydrated yet. Do not read through. */
   data object Unresolved : PrefsState
-  data class Resolved(val prefs: NotificationPrefs) : PrefsState
+  data class Resolved(val settings: NotificationSettings) : PrefsState
 }
 
 interface NotificationPrefsManager {
@@ -297,11 +315,11 @@ interface NotificationPrefsManager {
    * a write from an unresolved state is a whole-message overwrite of settings this device has not
    * read yet.
    */
-  suspend fun update(mutate: (NotificationPrefs) -> NotificationPrefs): Result<Unit>
+  suspend fun update(mutate: (NotificationSettings) -> NotificationSettings): Result<Unit>
 }
 ```
 
-`update` takes a mutator rather than a whole `NotificationPrefs` for the same reason: a caller that
+`update` takes a mutator rather than a whole `NotificationSettings` for the same reason: a caller that
 hands over a value it built itself can reintroduce consequence 2 from outside the manager.
 
 #### Resolution rule
@@ -613,9 +631,10 @@ that justifies `engine`'s fan-in, and everything it reads is read through an exi
 suspend fun scan(trigger: ScanTrigger): ScanResult
 
 1. uid = auth.currentUser?.uid ?: return NoUser        // §6.7
-2. prefs = prefsManager.observe().first()
-   if (prefs is Unresolved) return PrefsUnresolved     // §4.3 — no notify, no seed, no watermark write
-   if (!prefs.allEnabled) return Disabled
+2. state = prefsManager.observe().first()
+   if (state is Unresolved) return PrefsUnresolved     // §4.3 — no notify, no seed, no watermark write
+   settings = state.settings
+   if (!settings.allEnabled) return Disabled
    if (permission.observe().value != GRANTED) return NoPermission
 3. fleet = fleetManager.observeFleetDashboard().first() // own + shared, PRD §6.2
 4. for each aircraft:
@@ -1015,7 +1034,7 @@ A `SettingsRow` in `feature/settings/SettingsScreen.kt` with the account-level r
 
 ```kotlin
 data class NotificationSettingsUiState(
-  val prefs: NotificationPrefs = NotificationPrefs(),
+  val settings: NotificationSettings = NotificationSettings(),
   val permission: PermissionState = PermissionState.UNDETERMINED,
   val canOpenSystemSettings: Boolean = false,
   val isSignedIn: Boolean = false,        // real account, not anonymous
@@ -1038,6 +1057,10 @@ the paywall. Here an *editable* control rendered against a guessed value writes 
 whole-message overwrite, reverting the user's real settings on every other device (§4.3, consequence
 2). Disabling the toggles while `isLoading` is what makes that unreachable; the spinner is just the
 visible part.
+
+Toggle rows read `state.settings.aogEnabled` and write
+`prefsManager.update { it.withAog(enabled) }` (§4.1) — the screen never sees an inverted field name,
+and never constructs a `NotificationSettings` of its own.
 
 Any in-progress edit lives in the ViewModel's `StateFlow`, never in composable `remember` — this
 screen can be torn down by the OS permission dialog.
@@ -1212,13 +1235,84 @@ following `DisplayAdsDeveloperSettings`:
   suppressed by preferences. This is what makes the background-versus-foreground metric (§6.6)
   debuggable rather than merely reportable.
 
-**Passed in as a composable slot, not imported.** Three of these four actions need `engine`, and
-`DeveloperOptionsScreen` lives in `feature:settings` — which §3 keeps off `engine` deliberately. The
-screen already takes extras as slots for exactly this reason: `ShellNavGraph` supplies
-`StressTestDeveloperOptionsExtra` the same way, gated on `isStressTestSupported`. So
-`NotificationDeveloperSettings` lives in `engine`, and the shell (which already depends on `engine`)
-passes it down. No new mechanism, and `feature:settings` keeps a compile classpath that has nothing
-to do with scanning aircraft.
+### 11.1 Getting the section onto the screen without a compile dependency
+
+Three of these four actions need `engine`, and `DeveloperOptionsScreen` lives in `feature:settings`,
+which §3 keeps off `engine` deliberately. The existing escape hatch is a composable slot the shell
+fills:
+
+```kotlin
+// feature/settings — DeveloperOptionsScreen.kt
+dogfoodContent: @Composable () -> Unit = {},
+
+// feature/shell — ShellNavGraph.kt
+dogfoodContent = { if (isStressTestSupported) StressTestDeveloperOptionsExtra(navController) },
+```
+
+**That slot is singular and already occupied.** A second extra cannot be added without either
+nesting both inside one lambda or changing the signature — so this feature forces a change to
+`DeveloperOptionsScreen` no matter which way it goes. Given that, the generalization is the cheaper
+of the two:
+
+```kotlin
+// core/ui — DeveloperOptionsExtra.kt
+/**
+ * A Developer Options section contributed by a feature. Resolved from Koin rather than passed down,
+ * so a feature can add one without the shell — or feature:settings — depending on it.
+ *
+ * [onNavigate] rather than a NavController on purpose: it keeps this interface, and therefore
+ * core:ui, free of a navigation dependency, and an extra that does not navigate ignores it.
+ */
+interface DeveloperOptionsExtra {
+  /** Ascending. Fixed numbers so section order does not depend on Koin registration order. */
+  val order: Int
+  /** False hides the section outright — this is where the capability gate now lives. */
+  fun isAvailable(): Boolean = true
+  @Composable fun Content(onNavigate: (route: String) -> Unit)
+}
+```
+
+`DeveloperOptionsScreen` replaces `dogfoodContent()` with the resolved list:
+
+```kotlin
+val koin = getKoin()
+val extras = remember { koin.getAll<DeveloperOptionsExtra>().sortedBy { it.order } }
+extras.filter { it.isAvailable() }.forEach { extra ->
+  extra.Content(onNavigate = navController::navigate)
+  HorizontalDivider()
+}
+```
+
+Contributors bind through their own Koin module — `bind DeveloperOptionsExtra::class`, so `getAll`
+finds them. Note that two definitions of the same type make a bare
+`get<DeveloperOptionsExtra>()` ambiguous; nothing should ever call it, and `getAll` is the only
+supported read.
+
+**In `core:ui`, not `feature:settings`.** Putting the interface in `feature:settings` would make
+every contributor depend on a UI feature module — worse than the problem being solved.
+
+What this buys, beyond the notification section:
+
+- **The shell drops both `:engine` and `feature:stresstest:config`.** Its only remaining notification
+  dependencies are `:settings` (the route) and `:viewing` (tap routes).
+- **`isStressTestSupported` stops being plumbed through `settingsDetailRoutes` for this purpose.** The
+  gate moves into the stress-test extra's own `isAvailable()`, where the capability actually belongs.
+  The parameter stays for `registerStressTestRoutes`.
+- **Adding a Developer Options section stops being a shell edit.** It becomes a Koin binding in the
+  feature that owns the section.
+
+### 11.2 Prerequisite: migrate the stress-test extra
+
+Not optional and not this feature's to skip — `dogfoodContent` cannot survive alongside the list.
+`StressTestDeveloperOptionsExtra` (`feature/stresstest/config/StressTestPlugin.kt`, already named a
+*plugin*) becomes a `DeveloperOptionsExtra` implementation contributed by `stressTestKoinModules()`,
+with `isAvailable() = capability.isStressTestSupported` and a high `order` so "Debug tools" stays
+last. Its `navController.navigate(STRESS_TEST_ROUTE)` becomes `onNavigate(STRESS_TEST_ROUTE)`. The
+`dogfoodContent` parameter and the shell's import are then deleted.
+
+The notification section is `NotificationDeveloperOptionsExtra` in `feature/notifications/devoptions`
+— its own module so that `engine` stays free of Compose and `settings` stays free of `engine`,
+mirroring why `feature:stresstest:config` is separate from `feature:stresstest`.
 
 ---
 
@@ -1288,10 +1382,12 @@ The one that must exist by name: `complied_ranksBelowDueSoon_despiteHigherOrdina
 - an unhydrated scope is not pruned
 - concurrent scans do not double-report
 
-**`NotificationPrefsMappingTest`** — round-trip every field, `DeveloperOptionsMappingTest`-style. The
-inverted-boolean convention is exactly the kind of thing that inverts back wrong once. Add
-`absentDoc_resolvesToAllOn` explicitly: it is the property the whole convention exists for, and it is
-also the contract the server-side sweep independently relies on (§4.3).
+**`NotificationSettingsExtTest`** — one assertion per extension, that a default-constructed
+`NotificationSettings()` reads every class as **on**. Small, because there is no mapping to
+round-trip (§4.1): the extensions derive from the proto rather than copying it, so the only thing
+that can be wrong is an inverted `!`. `absentDoc_resolvesToAllOn` is the case to name explicitly — it
+is the property the whole convention exists for, and the contract the server-side sweep independently
+relies on.
 
 **`NotificationPrefsManagerTest`** — the resolution rule (§4.3), which is where copying
 `DeveloperOptionsManagerImpl` would have gone wrong:
@@ -1323,7 +1419,7 @@ Maps onto the PRD's phases. P1–P3 touch no backend at all.
 
 | Phase | Contents | Exit criteria |
 |:--|:--|:--|
-| **P1 Foundations** | Seven modules (§3) wired into `settings.gradle.kts` + `CommonAppModules`; proto + `CollectionKind` (all 5 registration points, §4.2); `NotificationPrefsManager` **including the hydration-resolution rule** (§4.3); `NotificationPermission` + `LocalNotifier` actuals ×3; channels; `Screen.Notifications` + nav; settings screen; Developer Options test sends | A dev build requests permission and posts a local notification on each channel; preferences persist and appear on a second device; **and a fresh install of an account with non-default preferences shows the spinner until they hydrate, never all-on — with the toggles disabled meanwhile** |
+| **P1 Foundations** | Eight modules (§3) wired into `settings.gradle.kts` + `CommonAppModules`; proto + `CollectionKind` (all 5 registration points, §4.2); `NotificationPrefsManager` **including the hydration-resolution rule** (§4.3); `NotificationPermission` + `LocalNotifier` actuals ×3; channels; `Screen.Notifications` + nav; settings screen; **`DeveloperOptionsExtra` in `core:ui` + migrating the stress-test extra off `dogfoodContent` (§11.2)**; the notification Developer Options section | A dev build requests permission and posts a local notification on each channel; preferences persist and appear on a second device; **and a fresh install of an account with non-default preferences shows the spinner until they hydrate, never all-on — with the toggles disabled meanwhile** |
 | **P2 N2 urgency** | `urgency_watermark` table; `UrgencyRank`; `UrgencyScanner`; `UrgencyScanScheduler` (Android + iOS); session-boundary scan; seeding; per-tier batching; tap routing; scan diagnostics | Crossings fire exactly once; de-escalations silent; a fresh install notifies nothing; **no backend change was required** |
 | **P3 Web N1** | `ForeignWriteListener` in `core:storage`; `PullListener` hook; `jsMain` detector; one-shot actor read; `CoalescingBuffer` | A web user with a shared aircraft open sees a collaborator's edit from another account; **no backend, no token registry** |
 | **P4 N1 backend + Android** | `device_config` table; `PushTokenRegistrar`; `aircraft.proto` + `notification_settings.proto` added to `generate:proto`; fan-out trigger; buffer; sweep; rate ceiling; rules + emulator tests | Two accounts sharing an aircraft see each other's changes; neither sees their own |
@@ -1353,7 +1449,9 @@ amended rather than quietly diverged from.
 | D9 | — (not addressed) | `aircraft.proto` and `settings/notification_settings.proto` must be added to the functions' `generate:proto` list | §7.2. Neither is generated today, and the fan-out cannot read a tail number or a preference without them. |
 | D10 | §7.5 — iOS N1 in V1 | iOS Time Sensitive interruption level needs an entitlement and App Store review; sequenced into P5 | §5.2. iOS N2 ships at default interruption level in P2. |
 | D11 | §9.2 — preferences are "a new synced entity … like every other setting" | The manager must resolve *hydrated* from *never set* before any read or write. `DeveloperOptionsManagerImpl` is not the template — it never hydrates. `TechnicianManagerImpl.awaitHydratedSelfId` is. | §4.3. Reading through an unhydrated store shows the wrong toggles; **writing** through it pushes a whole-message overwrite that reverts the user's settings on every other device. |
-| D12 | §9.2 — "`feature/notifications`: canonical module set (`model` / `datamanager` / `sharedassets` / `settings`)" | Seven modules: `model`, `permission`, `viewing`, `datamanager`, `engine`, `sharedassets`, `settings` — with `viewing` meaning the *notification display surface*, not the canonical read-only-UI layer | §3. One `datamanager` holding both the scanner and the display surface forces every consumer to inherit the scanner's five feature-datamanager dependencies; `feature/login` would compile against `feature:tasks:datamanager` to show one onboarding card. |
+| D12 | §9.2 — "`feature/notifications`: canonical module set (`model` / `datamanager` / `sharedassets` / `settings`)" | Eight modules: `model`, `permission`, `viewing`, `datamanager`, `engine`, `sharedassets`, `settings`, `devoptions` — with `viewing` meaning the *notification display surface*, not the canonical read-only-UI layer | §3. One `datamanager` holding both the scanner and the display surface forces every consumer to inherit the scanner's five feature-datamanager dependencies; `feature/login` would compile against `feature:tasks:datamanager` to show one onboarding card. |
+| D13 | §9.6 — Developer Options test-send actions | Requires replacing `DeveloperOptionsScreen`'s single `dogfoodContent` slot with a Koin-resolved `List<DeveloperOptionsExtra>` in `core:ui`, and migrating the existing stress-test extra onto it | §11. The slot is singular and already taken, so a second section forces a signature change either way; generalizing also removes `:engine` and `feature:stresstest:config` from `feature:shell`. **Touches two modules this feature otherwise would not.** |
+| D14 | §9.2 — preferences as "a new synced entity" implies a domain type beside the proto | No Kotlin mirror. `NotificationSettings` is passed around directly, with extension properties supplying the positive names | §4.1. A mirror restates the all-on defaults in a second place and needs a round-trip test to stay honest; `SubscriptionManager` already rules that "never a forked Kotlin copy" for a proto the Cloud Functions also read. |
 
 ## 16. Open questions
 
