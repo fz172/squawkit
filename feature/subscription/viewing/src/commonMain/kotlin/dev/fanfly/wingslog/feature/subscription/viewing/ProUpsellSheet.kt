@@ -11,7 +11,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -20,7 +19,6 @@ import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.subscription.viewing.generated.resources.Res
-import wingslog.feature.subscription.viewing.generated.resources.subscription_cta_subscribe
 import wingslog.feature.subscription.viewing.generated.resources.subscription_title
 import wingslog.feature.subscription.viewing.generated.resources.upsell_body_add_aircraft
 import wingslog.feature.subscription.viewing.generated.resources.upsell_body_attachment
@@ -89,9 +87,7 @@ fun ProUpsellSheet(
       // Routes to the Subscription page rather than opening the paywall inline: the sheet is a
       // contextual promo shown over whatever the pilot was doing, and the page is where the full
       // comparison and the store's own paywall live.
-      TextButton(onClick = onSeePlans, modifier = Modifier.fillMaxWidth()) {
-        Text(stringResource(Res.string.subscription_cta_subscribe))
-      }
+      SubscribeButton(onClick = onSeePlans)
     }
   }
 }

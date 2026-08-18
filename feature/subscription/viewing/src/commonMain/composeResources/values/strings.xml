@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-  <string name="subscription_title">SquawkIt Pro</string>
+  <string name="subscription_title">Subscription</string>
 
   <!-- Non-subscriber comparison view -->
   <string name="subscription_compare_header">Your all-access pass</string>
