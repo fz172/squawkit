@@ -1,0 +1,1055 @@
+# Design Doc: Notifications
+
+**PRD:** [notifications_PRD.md](notifications_PRD.md)
+**Status:** 📋 Proposed — not implemented
+**Last updated:** 2026-08-17
+**Areas:** `feature/notifications` (new) · `core/storage` · `core/model` · `core/nav` · `core/appinfo` ·
+`feature/shell` · `feature/settings` · `feature/login` · `feature/sync/data` ·
+`backend/firebase/functions`
+**Related docs:** [notifications_PRD.md](notifications_PRD.md) ·
+[storage_r1_design.md](../storage/storage_r1_design.md) ·
+[squawk_design.md](../squawks/squawk_design.md) ·
+[aircraft_sharing_design.html](../sharing/aircraft_sharing_design.html) ·
+[subscription_design.html](../subscription/subscription_design.html) ·
+[DESIGN.md](../../DESIGN.md)
+
+---
+
+## Implementation status — 📋 NOT STARTED
+
+Nothing in this doc exists yet. There is no `feature/notifications` module, no FCM/APNs dependency,
+no `POST_NOTIFICATIONS` declaration in any manifest, and no notification-related `CollectionKind`,
+proto, table, or Cloud Function. Every file path below is a proposal.
+
+---
+
+## 1. Overview
+
+The PRD splits notifications into two classes with two entirely different mechanisms. This document
+keeps that split as the primary structural line, because it is also where the engineering risk
+divides:
+
+| | **N2 — urgency escalation** | **N1 — collaboration activity** |
+|:--|:--|:--|
+| Where it runs | Entirely on the device | Firestore trigger + scheduled sweep + FCM/APNs (web: on-device) |
+| New backend surface | **None** | Token registry, fan-out trigger, coalescing buffer, sweep |
+| Depends on sharing | No | Yes |
+| Correctness risk | Watermark semantics, seeding, enum-rank mapping | At-least-once delivery, audience freshness, storms |
+| Ships first | ✅ P2 | P4 |
+
+**N2 is the whole product for a solo pilot and requires no server**, so it is built first and its
+machinery — the module, the preferences entity, the permission actuals, the local notifier, the
+settings screen — is what N1 later reuses. N1 adds a transport, not a second feature.
+
+Two things this design deliberately does **not** introduce:
+
+- **No second airworthiness calculation.** The scanner calls `TaskDueManager.computeNextDue` — the
+  same object `TaskCardItem` and `TaskDetailSheet` render from. There is no TypeScript due engine and
+  no client-published digest, per PRD §9.3 / Q1.
+- **No event log.** The scanner compares *current computed urgency* against *the last rank this
+  device reported*, per record. Everything the PRD asks for (time-driven crossings, silent
+  de-escalations, a device that was dark for a week) falls out of that comparison rather than needing
+  its own rule.
+
+---
+
+## 2. What already exists, verified
+
+Every claim in PRD §9.1, checked against the tree at `25feae0b`. Two of them need a correction.
+
+| PRD claim | Verified | Notes |
+|:--|:--|:--|
+| Server can decode entity payloads | ✅ | `onRecordDeleted.ts` decodes via `src/generated/proto/`; `blobRefs.ts` gates on `schemaCanOwnBlobs` |
+| Audience is one document read | ✅ | `aircraft_shares/{hostUid}/aircraft/{acId}.memberRoles` — `firestore.rules:29-32` |
+| Actor is unforgeable | ✅ | `writerIsSelf()` in `firestore.rules:42-45`; stamped by `SyncWrite.writerUid` (`SyncWriter.kt:31`), carried down as `RemoteEntity.writerUid` and surfaced as `StorageEntity.writerUid` |
+| Due computation exists and is local | ✅ | `TaskDueManagerImpl` — pure function of `(card, logs, allCards)` + injected `Clock`/`TimeZone` |
+| Periodic background work is solved per platform | ✅ | `WorkManagerUploadScheduler` (androidMain), `UrlSessionUploadScheduler` (iosMain), both behind `UploadScheduler` in `core/storage` |
+| Foreground is observable | ⚠️ **Partly** | `AppForegroundObserver` exists but is a **session-boundary counter with a 30-minute threshold**, not a foreground event stream. See §6.6. |
+| `MaintenanceOverview` supplies accumulated hours | ⚠️ **Not how the scan needs it** | `TaskDueManagerImpl` derives current engine/airframe time from `max()` over the aircraft's **logs**, not from the overview. The scanner must feed it logs. See §6.3. |
+
+Two more facts the PRD does not mention that materially shape this design:
+
+- **`aircraft.proto` and `settings/*.proto` are not generated for Cloud Functions.** The
+  `generate:proto` script in `backend/firebase/functions/package.json` names five protos explicitly:
+  `request_export_delivery`, `shared_aircraft_ref`, `maintenance_log`, `squawk`, `maintenance_task`.
+  The fan-out needs the tail number (from `Aircraft`) and the recipient's preferences (from a new
+  settings proto), so both must be added to that list. §7.2.
+- **`CollectionKind.DeveloperOptions` is an entity but is not in `SyncEngine.TOP_LEVEL_KINDS`**, so
+  it pushes but never hydrates. Do not copy it as the precedent for a synced settings entity —
+  §4.2 lists the five places a new kind must be registered, one of which developer options skips.
+
+---
+
+## 3. Module layout
+
+```
+feature/notifications/
+├── model/          NotificationClass, UrgencyRank, UrgencyLadder, NotificationPrefs,
+│                   PendingNotification, NotificationTapTarget
+├── datamanager/    NotificationPrefsManager, UrgencyScanner, UrgencyWatermarkStore,
+│                   NotificationPermission (expect), LocalNotifier (expect),
+│                   UrgencyScanScheduler (expect), PushTokenRegistrar (expect),
+│                   NotificationTapRouter, di/NotificationsModule.kt
+├── sharedassets/   PermissionBanner, NotificationClassRow  (composables reused by
+│                   settings + the onboarding primer)
+└── settings/       NotificationSettingsScreen, NotificationSettingsViewModel,
+                    di/NotificationSettingsModule.kt
+```
+
+`settings/` rather than the canonical `viewing/` + `update/` pair, following the
+`feature/sync/settings` precedent exactly (one screen, one ViewModel, one Koin module,
+`compose.resources { publicResClass = true }`, reached from the shared nav graph). A settings surface
+with a single screen does not earn a two-module split, and `feature/sync/settings` already
+established that reading of the pattern. Copy its `build.gradle.kts` verbatim and change the
+`android.namespace`.
+
+**Dependency direction.** `datamanager` depends on `core:storage`, `core:appinfo`, `core:lifecycle`,
+`feature:tasks:datamanager`, `feature:logs:datamanager`, `feature:squawk:datamanager`,
+`feature:fleet:datamanager`, and `feature:sharing:datamanager`. That is a wide fan-in and it is the
+point: the scanner is deliberately a *consumer* of the existing managers so no computation is
+duplicated. Nothing depends on `feature:notifications` except the shell (routes), settings (the row),
+login (the primer), and the hosts (Koin + platform init).
+
+**`feature:sync:data` must not depend on `feature:notifications`.** The web N1 detector (§8) needs to
+observe the sync stream, which would invert this. §8.2 resolves it with a listener interface owned by
+`core:storage`.
+
+**Koin registration** (`core/di/CommonAppModules.kt`, alphabetical position after
+`maintenanceViewingModule`):
+
+```kotlin
+notificationsModule,
+platformNotificationsModule,
+notificationSettingsModule,
+```
+
+`platformNotificationsModule` is an `expect val` per host, following `platformAdConsentModule` —
+that is the established pattern for "a Koin module whose bindings only exist per platform."
+
+---
+
+## 4. Preferences
+
+### 4.1 `settings/notification_settings.proto`
+
+```proto
+syntax = "proto3";
+
+option java_package = "dev.fanfly.wingslog.core.model.settings";
+option java_multiple_files = true;
+
+// Account-level notification preferences. See docs/notifications/notifications_design.md §4.
+//
+// EVERY FIELD IS INVERTED — `*_disabled`, never `*_enabled`. proto3 has no field presence for
+// scalars, so an absent or default-constructed message decodes to all-false. The PRD (§8.3) wants
+// every class ON by default, so all-false must MEAN all-on. A user who has never opened the
+// settings screen has no doc at all; a `*_enabled` field would silence them.
+//
+// This is the same convention DeveloperSettings already reserves under
+// (`technician_disabled`, `attachment_upload_disabled`).
+message NotificationSettings {
+  // Master switch. Off silences every class, locally and server-side.
+  bool all_disabled = 1;
+
+  // --- Urgency (N2) — device-local detection, no account required ---
+  bool aog_disabled = 2;                 // any escalation to SQUAWK_PRIORITY_AOG
+  bool squawk_priority_disabled = 3;     // escalations below AOG, and reopened squawks
+  bool overdue_disabled = 4;             // -> DueStatus.OVERDUE
+  bool due_soon_disabled = 5;            // -> DueStatus.DUE_SOON
+
+  // --- Collaboration (N1) — server fan-out, needs a real account + cloud sync ---
+  bool aircraft_activity_disabled = 6;   // Aircraft record edited
+  bool squawk_activity_disabled = 7;     // squawk create/edit/dismiss/reopen/delete
+  bool task_activity_disabled = 8;       // task create/edit/force-comply/delete
+  bool log_activity_disabled = 9;        // log create/edit/delete
+}
+```
+
+The Kotlin-facing type inverts back so no call site reasons in negatives:
+
+```kotlin
+data class NotificationPrefs(
+  val allEnabled: Boolean = true,
+  val aog: Boolean = true,
+  val squawkPriority: Boolean = true,
+  val overdue: Boolean = true,
+  val dueSoon: Boolean = true,
+  val aircraftActivity: Boolean = true,
+  val squawkActivity: Boolean = true,
+  val taskActivity: Boolean = true,
+  val logActivity: Boolean = true,
+)
+```
+
+Mapping in both directions lives beside `NotificationPrefsManagerImpl`, with a round-trip test —
+`DeveloperOptionsMappingTest` is the model, and its file comment says exactly why: adding a field to
+the data class alone compiles cleanly and then silently drops the value on write, "which looks
+exactly like a toggle that refuses to turn on."
+
+### 4.2 Registering the `CollectionKind`
+
+Adding a kind is a zero-migration change (the `collection` column is `TEXT`), but it touches five
+places, and `CollectionKindCoverageTest` plus `AttachmentRefs`' exhaustive `when` will fail the build
+if any is missed — which is the intent:
+
+| # | File | Change |
+|:--|:--|:--|
+| 1 | `core/storage/.../CollectionKind.kt` | `data object NotificationSettings` (`wireName = "notification_settings"`, `schemaName = "settings.NotificationSettings"`) + add to `ALL` |
+| 2 | `core/storage/.../di/StorageModule.kt` | `register(CollectionKind.NotificationSettings, WireCodec(NotificationSettings.ADAPTER))` |
+| 3 | `core/storage/.../blob/AttachmentRefs.kt` | add to the `-> emptyList()` arm — it owns no blobs |
+| 4 | `core/storage/.../LocalAccountMigrator.kt` | **not** an identity singleton: preferences a guest set should follow them into the upgraded account, so it migrates like normal data rather than joining `UserInfo`/`DeveloperOptions` in the drop list |
+| 5 | `feature/sync/data/.../SyncEngine.kt` | add to `TOP_LEVEL_KINDS` — this is the step `DeveloperOptions` skips, and skipping it here would mean preferences push but never arrive on a second device |
+
+Stored at `users/{uid}/notification_settings/main`, single doc id `"main"`, exactly like
+`DeveloperOptionsManagerImpl.DOC_ID`. Covered by the existing `users/{userId}/{document=**}`
+own-tree rule; no rules change.
+
+### 4.3 `NotificationPrefsManager`
+
+```kotlin
+interface NotificationPrefsManager {
+  /** Emits defaults (all on) while signed out, so the settings screen is never empty. */
+  fun observe(): Flow<NotificationPrefs>
+  suspend fun update(prefs: NotificationPrefs): Result<Unit>
+}
+```
+
+Implementation is `DeveloperOptionsManagerImpl` line for line: `authStateChanged.flatMapLatest`, an
+`EntityStore<NotificationSettings>` from `EntityStoreFactory`, `.catch` that logs and re-emits
+defaults.
+
+**Preferences are account-level and synced; the per-device silence switch is not.** Q2 asks for a
+per-device enabled flag, and it belongs on the token doc (§7.1), not here — a synced field cannot
+mean "this device."
+
+---
+
+## 5. Platform surfaces
+
+Four `expect` interfaces, all in `feature/notifications/datamanager/commonMain`. Keeping them
+separate matters: N2 needs only two of them, and web N1 needs the same two rather than the push pair
+(PRD §7.6).
+
+### 5.1 `NotificationPermission`
+
+```kotlin
+enum class PermissionState { UNDETERMINED, GRANTED, DENIED }
+
+interface NotificationPermission {
+  /** Cheap, synchronous-ish read of the OS state. Re-read on foreground: the user can change it in system settings. */
+  fun observe(): StateFlow<PermissionState>
+  suspend fun refresh()
+  /** Shows the real OS dialog. No-ops (and reports the current state) when not UNDETERMINED. */
+  suspend fun request(): PermissionState
+  /** True where the platform exposes a deep link to its own app-settings page — false on web. */
+  val canOpenSystemSettings: Boolean
+  fun openSystemSettings()
+}
+```
+
+| Platform | `request()` | `openSystemSettings()` |
+|:--|:--|:--|
+| Android | `POST_NOTIFICATIONS` via the activity from `CurrentActivityProvider` (already in `core/lifecycle/androidMain`, already used by `AuthManagerImpl`); auto-`GRANTED` below API 33 | `ACTION_APPLICATION_DETAILS_SETTINGS` |
+| iOS | `UNUserNotificationCenter.requestAuthorizationWithOptions` (alert + sound + badge) | `UIApplication.openSettingsURLString` |
+| Web | `Notification.requestPermission()` | `canOpenSystemSettings = false` — no browser API exists. §9.3 |
+
+`minSdk` is 33 across the tree (`feature/sync/settings/build.gradle.kts:13` and siblings), so the
+sub-33 auto-grant branch is dead code today. Write it anyway and comment why: the runtime prompt is
+the behaviour that matters and a future `minSdk` drop must not silently start denying.
+
+### 5.2 `LocalNotifier`
+
+```kotlin
+enum class NotificationChannel { COLLABORATION, URGENCY, GROUNDED }  // Q8: one per class
+
+data class PendingNotification(
+  val id: String,                 // stable — re-posting the same id replaces, never stacks
+  val channel: NotificationChannel,
+  val title: String,
+  val body: String,
+  val highPriority: Boolean,      // AOG + Overdue
+  val tapTarget: NotificationTapTarget,
+)
+
+interface LocalNotifier {
+  suspend fun post(notification: PendingNotification)
+  suspend fun cancel(id: String)
+}
+```
+
+Android registers the three channels at Koin init (they must exist before the first post, and
+re-creating an existing channel is a no-op); `GROUNDED` gets `IMPORTANCE_HIGH`, the other two
+`IMPORTANCE_DEFAULT`. iOS maps `highPriority` to `UNNotificationInterruptionLevel.timeSensitive`,
+which needs the Time Sensitive Notifications entitlement — **an App Store review item, sequenced into
+P5 with the APNs work, not P2.** Until it lands, iOS N2 posts at the default interruption level; the
+notification still arrives, it just does not pierce Focus.
+
+Notification ids are deterministic so a re-scan replaces rather than stacks:
+`"urgency:$aircraftId:$tier"` for N2 summaries, `"urgency:$collection:$recordId"` for singles.
+
+### 5.3 `NotificationTapTarget` and deep links
+
+```kotlin
+sealed interface NotificationTapTarget {
+  data class Aircraft(val aircraftId: String, val tab: AircraftTab) : NotificationTapTarget
+  data class Squawk(val aircraftId: String, val squawkId: String) : NotificationTapTarget
+  data class Task(val aircraftId: String, val taskId: String) : NotificationTapTarget
+  data class Log(val aircraftId: String, val logId: String) : NotificationTapTarget
+}
+```
+
+`NotificationTapRouter` in `datamanager` converts one to a `Screen` route
+(`Screen.EditSquawk.createRoute(...)` and friends already exist in `core/nav/Screen.kt`). It emits
+onto a `MutableSharedFlow<String>` that `ShellNavGraph` collects — the same shape
+`EmailLinkDeepLinks.pendingLink` uses, so cold start (target buffered until the graph composes) and
+warm tap (delivered immediately) both work without a second mechanism.
+
+Two routes do not exist yet and are needed for the coalesced/summary bodies, which land on a *list*
+rather than a record:
+
+```kotlin
+data object AircraftTabDeepLink : Screen("aircraft/{$AIRCRAFT_ID}?tab={tab}&tier={tier}") { … }
+```
+
+`tier` is optional and pre-filters the task list to Overdue or Due Soon, satisfying PRD §6.6
+("Tapping a summary opens that aircraft's task list filtered to the tier").
+
+**Tap-through must degrade, not crash.** A revoked share, a deleted record, or a device that has not
+synced yet all produce "no longer available" and land on the fleet (PRD §12). The router checks the
+record resolves before navigating.
+
+### 5.4 `UrgencyScanScheduler` and `PushTokenRegistrar`
+
+```kotlin
+interface UrgencyScanScheduler {
+  /** Idempotent. Called at Koin init and after every permission/preference change. */
+  fun ensureScheduled()
+  fun cancel()
+}
+```
+
+| Platform | Implementation |
+|:--|:--|
+| Android | `PeriodicWorkRequest` (24h, flex 4h) via `WorkManager.enqueueUniquePeriodicWork(KEEP)`, no network constraint — the scan is local. `WorkManagerUploadScheduler` is the shape to copy. |
+| iOS | `BGTaskScheduler` app-refresh task registered in `didFinishLaunching`, re-submitted at the end of each run (iOS does not repeat a submission). Opportunistic — §6.6. |
+| Web | No-op. The foreground scan is the only scan; see §6.6. |
+
+`PushTokenRegistrar` is N1-only and lands in P4; §7.1.
+
+---
+
+## 6. N2 — the urgency scanner
+
+### 6.1 Urgency ranks
+
+The PRD's ⚠️ in §6.1 is real: `DueStatus` declares `NORMAL, DUE_SOON, OVERDUE, COMPLIED`, so
+`COMPLIED.ordinal == 3` — the highest. Comparing ordinals would make finishing an annual the most
+urgent event in the app.
+
+`feature/notifications/model/UrgencyRank.kt`:
+
+```kotlin
+/**
+ * Urgency rank within one ladder. NOT the enum ordinal — DueStatus.COMPLIED has the HIGHEST ordinal
+ * and the LOWEST urgency. Two records are only ever comparable within the same ladder, which is why
+ * the watermark key carries the CollectionKind (§6.2).
+ */
+@JvmInline
+value class UrgencyRank(val value: Int) : Comparable<UrgencyRank> {
+  override fun compareTo(other: UrgencyRank) = value.compareTo(other.value)
+  companion object { val RESOLVED = UrgencyRank(0) }
+}
+
+// Exhaustive `when`, no `else`: a new DueStatus value must fail the build here rather than
+// silently rank as 0 and go unreported forever.
+fun DueStatus.urgencyRank(): UrgencyRank = when (this) {
+  DueStatus.COMPLIED, DueStatus.NORMAL -> UrgencyRank(0)
+  DueStatus.DUE_SOON -> UrgencyRank(1)
+  DueStatus.OVERDUE  -> UrgencyRank(2)
+}
+
+fun SquawkWithStatus.urgencyRank(): UrgencyRank = when (status) {
+  SquawkStatus.ADDRESSED, SquawkStatus.DISMISSED -> UrgencyRank(0)
+  SquawkStatus.OPEN -> when (squawk.priority) {
+    SquawkPriority.SQUAWK_PRIORITY_AOG     -> UrgencyRank(4)
+    SquawkPriority.SQUAWK_PRIORITY_HIGH    -> UrgencyRank(3)
+    SquawkPriority.SQUAWK_PRIORITY_MEDIUM  -> UrgencyRank(2)
+    // An open squawk is never rank 0 — rank 0 means "resolved", and an unset priority is still
+    // an open defect. Squawks written before priority was mandatory decode as UNKNOWN.
+    SquawkPriority.SQUAWK_PRIORITY_LOW,
+    SquawkPriority.SQUAWK_PRIORITY_UNKNOWN -> UrgencyRank(1)
+  }
+}
+```
+
+**Reopen needs no special case, and that is the check that the mapping is right.** PRD §6.1 asks for
+a reopened squawk to be treated as an escalation from "resolved" at its stored priority. Dismissed is
+rank 0; reopening restores `OPEN` at the stored priority, so the rank goes 0 → 1..4 and the plain
+`rank > watermark` test fires. Any mapping that needed an if-statement here would be the wrong
+mapping.
+
+Note that `SquawkStatus` is derived, not stored (`Squawk.toWithStatus()` in
+`feature/squawk/model`) — the scanner calls it rather than reading a field.
+
+### 6.2 The watermark table
+
+New table in `core/storage/.../db/Schema.sq`, beside `sync_config`:
+
+```sql
+-- Per-device, per-record high-water mark of urgency ALREADY REPORTED to this user (§6).
+--
+-- ⚠️ This is deliberately NOT a CollectionKind. Entities sync; a synced watermark would let the
+-- phone's scan silence the tablet's — the phone reports the crossing, the tablet sees the mark
+-- already at the current rank and stays quiet forever. Per-device is the correct semantics, and it
+-- is also what keeps the whole of N2 off the network. `sync_config` is the precedent: local state
+-- the sync engine never touches.
+--
+-- Keyed like `entity` minus the payload, so a record is unambiguous even across two hosts that
+-- happen to use the same aircraft id.
+CREATE TABLE urgency_watermark (
+  uid         TEXT    NOT NULL,
+  collection  TEXT    AS CollectionKind NOT NULL,
+  scope_path  TEXT    NOT NULL,
+  id          TEXT    NOT NULL,
+  rank        INTEGER NOT NULL,
+  updated_at  INTEGER NOT NULL,
+  PRIMARY KEY (uid, collection, scope_path, id)
+);
+```
+
+Plus `selectWatermarksInScopePrefix`, `upsertWatermark`, `deleteWatermarksNotIn` (prune, §6.4), and
+`deleteWatermarksForUser`.
+
+**Lifecycle, and specifically what does *not* wipe it:**
+
+| Event | Watermarks |
+|:--|:--|
+| Sign-out | **Kept.** `deleteEntitiesForUser` wipes the rows and sign-in re-hydrates them; surviving watermarks mean the returning user is compared against real prior state instead of being silently re-seeded and losing a cycle. |
+| Integrity-check wipe | **Kept**, for the same reason `sync_config` is excluded from `wipeAllEntities` — it is user-facing state, not a cache. |
+| Account deletion | Deleted (`deleteWatermarksForUser`, alongside `deleteEntitiesForUser`). |
+| Guest → account upgrade | Re-keyed with the entities, in `LocalAccountMigrator`'s existing transaction. Not re-keying would silently re-seed the whole fleet at the exact moment the user has most reason to trust the app. |
+
+### 6.3 The scan
+
+`UrgencyScanner` in `datamanager/commonMain` — the entire N2 feature, in shared code.
+
+```
+suspend fun scan(trigger: ScanTrigger): ScanResult
+
+1. uid = auth.currentUser?.uid ?: return NoUser        // §6.7
+2. prefs = prefsManager.observe().first()
+   if (!prefs.allEnabled) return Disabled
+   if (permission.observe().value != GRANTED) return NoPermission
+3. fleet = fleetManager.observeFleetDashboard().first() // own + shared, PRD §6.2
+4. for each aircraft:
+     tasks   = taskDataManager.observeTasks(acId).first()
+     logs    = logManager.observeLogs(acId).first()
+     squawks = squawkManager.observeSquawks(acId).first()
+     scope   = scopeResolver.resolveNow(acId)
+
+     for each task:   rank = dueManager.computeNextDue(task, logs, tasks).status.urgencyRank()
+     for each squawk: rank = squawk.toWithStatus().urgencyRank()
+5. diff every rank against urgency_watermark; collect crossings where rank > watermark
+6. drop crossings whose tier is switched off in prefs
+7. group into at most one notification per (aircraft, tier)   // §6.5
+8. post them all
+9. commit every rank — up and down — in ONE transaction, and prune  // §6.6, §6.4
+```
+
+Four details that are load-bearing:
+
+**Logs, not the overview.** `TaskDueManagerImpl` derives current engine and airframe time from
+`max()` over the aircraft's `MaintenanceLog` rows (lines 61-70), branching on
+`ComponentType.COMPONENT_AIRFRAME`. It never reads `MaintenanceOverview`. Passing anything else, or
+passing an empty log list, silently computes every hour-based task against 0 hours and reports the
+entire fleet overdue. `allCards` must be the full task list too — `LinkedRule` resolves against it
+(line 175).
+
+**Scope comes from the resolver, never the uid.** `AircraftScopeResolver.resolveNow(aircraftId)` for
+the watermark's `scope_path`. On a shared aircraft the records live under the host's tree, and using
+the signed-in uid would key the owner's watermarks and the technician's into paths that do not match
+the data — the exact mistake `EntityScope.aircraftChildUnsafe`'s doc comment was written about.
+
+**`.first()` on each flow, on the storage dispatcher.** These are SQLDelight-backed flows;
+`.first()` reads the current value and detaches. The whole scan runs on the storage IO context and
+must never be awaited on the main thread or at startup — a scan that delays first paint has already
+cost more than it is worth (PRD §9.4).
+
+**One scan at a time.** `UrgencyScanner` holds a `Mutex`; a foreground scan arriving while the
+scheduled one runs waits rather than double-reporting. Reentrancy is real — a `WorkManager` job and
+an app launch can coincide.
+
+### 6.4 Seeding, and one refinement to PRD §6.4
+
+PRD §6.4 is unambiguous about a fresh install and a newly shared-in aircraft: seed silently, send
+nothing. It is silent about a **new record on an aircraft the device already knows**, and the two
+plausible readings differ in a way that matters.
+
+The rule this design adopts:
+
+| Situation | Behaviour |
+|:--|:--|
+| Aircraft not previously seen on this device (install, restore, newly shared in) | Seed **every** record at its current rank. Send nothing. |
+| New record on a known aircraft, `writerUid` == this user | Seed at current rank. Send nothing — you filed it, you know. |
+| New record on a known aircraft, `writerUid` is someone else or null | Seed at **rank 0**, so the same scan reports it if it is already urgent. |
+
+The third row is the refinement. Without it, a mechanic filing an AOG squawk on a shared aircraft is
+seeded silently on the owner's device and N2 never mentions it — the owner's only signal is the N1
+push, which they may have switched off (§4.3 makes N1 and N2 independently mutable) or which may not
+have been delivered. "A collaborator created something already urgent" is precisely the case this
+feature exists for. `StorageEntity.writerUid` supplies the test and is rules-enforced, so it is the
+same trust the server-side actor suppression rests on.
+
+It is also cheap in noise: a collaborator's new `NORMAL` task ranks 0 against a 0 watermark and says
+nothing, and a bulk import collapses into one per-tier summary (§6.5).
+
+**Pruning.** A deleted record leaves a watermark row forever. At the end of each scan, delete
+watermark rows under the scopes the scan actually visited whose ids it did not see. Scoping the
+prune to visited scopes is what keeps an un-hydrated aircraft from having its history erased and
+then silently re-seeded on the next scan.
+
+### 6.5 Batching a scan's findings
+
+Per PRD §6.6, at most one notification per `(aircraft, tier)`, where tier ∈ {Grounded, Overdue, Due
+Soon, Priority raised}:
+
+```
+1 crossing  → the specific body from PRD §6.5
+2+ crossings → the summary, e.g. "3 inspections are now overdue"
+```
+
+Bodies come from `strings.xml` in `feature/notifications/sharedassets` with plurals for the counts.
+Apostrophes are written literally (`’`), never `\'` — hook-enforced, and `\'` renders as a backslash
+in Compose resources.
+
+Exactly-once needs no separate mechanism: after the scan commits, the watermark equals the rank, so
+the next scan finds nothing. There is no idempotency table and no cross-device coordination.
+
+### 6.6 Scheduling, and the `AppForegroundObserver` correction
+
+PRD §9.1 point 6 says foreground is already observable via `AppForegroundObserver`. It is not, quite.
+That class is a **session-boundary counter**: it exposes a monotonically increasing `sessionId` that
+advances on cold start and after 30 minutes in the background, built for the ad session cap. It has
+no "app came to the foreground" event, and it is driven from a `LifecycleResumeEffect` at the shell
+root rather than from platform lifecycle.
+
+Two options, and the second is the recommendation:
+
+1. Add a foreground event stream to `AppForegroundObserver`. Widens a class whose doc comment
+   explicitly says it is scoped minimum-viable, for a second consumer with different semantics.
+2. **Collect `sessionId` in the scanner.** A new session id is exactly "the user came back after
+   being away a while" — which is the trigger the scan wants, already debounced by the 30-minute
+   threshold, already unit-testable with a fake clock, already driven on all three hosts. Its comment
+   invites exactly this: "If the analytics taxonomy later wants a session id, it should grow from
+   here rather than introduce a second observer."
+
+So: the scanner collects `sessionId`, and on each change runs a scan **if `now - lastScanAt >= 4h`**
+(`lastScanAt` in `sync_config`, via the `SyncPreferences.booleanConfig` pattern). The scheduled daily
+scan ignores the debounce.
+
+| Platform | Daily | Session-boundary | Effective cadence |
+|:--|:--|:--|:--|
+| Android | `PeriodicWorkRequest` 24h / flex 4h | ✅ | Daily, or better for an active user. OEM battery managers may kill periodic work; the session scan is the backstop. |
+| iOS | `BGTaskScheduler`, opportunistic | ✅ | Best-effort daily; in practice the session scan carries it. |
+| Web | none | ✅ | Session scan only, and only while a tab is open. |
+
+**08:00 local (Q4) is a target, not a guarantee, and only Android can honestly aim for it.**
+`PeriodicWorkRequest` has no time-of-day API — the usual construction is a one-time request with an
+`initialDelay` computed to the next 08:00 that re-enqueues itself. `BGTaskScheduler` accepts only an
+`earliestBeginDate` and iOS decides the rest. Do not build timezone plumbing for this: the device
+uses its own clock, and `TaskDueManagerImpl` already defaults to `TimeZone.currentSystemDefault()`.
+
+**Metric to instrument from day one** (PRD §11): what share of urgency notifications came from the
+background scan versus the session scan, per platform. That single number decides whether iOS keeps
+claiming a daily cadence or the copy changes to foreground-only (PRD §7.5's honesty note).
+
+### 6.7 Post, then commit
+
+If the process dies between posting and committing, one choice re-notifies and the other loses the
+notification. This design **posts first, then commits all watermarks in one transaction**: a duplicate
+"your annual is overdue" is a minor annoyance; a dropped one is the failure this feature exists to
+prevent. Recorded here because the opposite ordering looks tidier and someone will propose it.
+
+### 6.8 What "works signed out" actually means
+
+PRD §4 says N2 requires "OS notification permission — nothing else," and Q10 says the scan runs while
+signed out. Both are true only in the sense the app supports: **anonymous accounts**. Local data is
+addressed by `EntityScope.userRoot(uid)`, `FleetManager.observeFleetDashboard()` emits `emptyList()`
+with no user, and `AircraftScopeResolver.resolveNow` throws. With no Firebase user at all there is no
+fleet on the device, so the scan is correctly a no-op.
+
+What the PRD is actually promising — and what this design delivers — is that N2 needs **no real
+account, no cloud sync, and no network**: an anonymous pilot with `cloudSyncEnabled = false` and
+airplane mode still gets "your annual is overdue," because every input is on the device. That is the
+claim to make in the settings copy (§9.3) and in the privacy policy (§12.3). It is worth noting that
+`AppCapability.isAnonymousLoginSupported` is per-platform, so the truly-no-account population is
+platform-dependent.
+
+---
+
+## 7. N1 — server fan-out
+
+Everything in this section is P4+ and is *not* required for P2 or P3 to ship.
+
+### 7.1 Device token registry
+
+`users/{uid}/push_devices/{installationId}` — plain fields, not proto bytes, because the server must
+read them. Same rationale as the sharing ACL exception (`SharingManager`'s doc comment).
+
+```ts
+type PushDevice = {
+  token: string;          // FCM registration token
+  platform: "android" | "ios" | "web";
+  appVersion: string;
+  enabled: boolean;       // per-device silence switch (Q2) — the one preference that is NOT synced
+  updatedAt: Timestamp;
+};
+```
+
+Rules — a user reads and writes only their own, and no client ever reads another user's tokens. The
+existing `users/{userId}/{document=**}` own-tree rule already grants exactly this, and the
+default-deny catch-all covers everyone else. **No rules change is needed**; add a comment at the
+`match /users/{userId}` block naming `push_devices` so the next reader does not assume it was
+overlooked.
+
+Two collision checks, both clean: `SyncEngine.TOP_LEVEL_KINDS` is an explicit list, so
+`push_devices` is never mistaken for a synced kind; and `onRecordDeleted` matches
+`users/{uid}/aircraft/{acId}/{kind}/{docId}`, one level deeper.
+
+**`installationId` needs a stable per-install identifier that outlives token rotation.** Keying by
+the token itself orphans a doc on every rotation. `sync_config` is uid-keyed, so it would mint a new
+id per account on a shared device. Add a two-column device table beside it:
+
+```sql
+-- Device-scoped, uid-independent local config. Distinct from sync_config, which is per-account.
+CREATE TABLE device_config (
+  key   TEXT NOT NULL PRIMARY KEY,
+  value TEXT NOT NULL
+);
+```
+
+`PushTokenRegistrar` reads or mints a UUID there, then upserts the token doc on: sign-in, token
+refresh (the FCM callback), app version change, and the per-device toggle.
+
+**Deleted on sign-out and on account deletion.** A stale token on a shared device leaks another
+account's squawk titles into the tray. Sign-out already wipes local rows per user; deleting the
+token doc joins that path, and `deleteMyAccount` gains the cleanup.
+
+### 7.2 The fan-out trigger
+
+`backend/firebase/functions/src/notifications/onRecordWritten.ts`, an `onDocumentWritten` over
+`users/{uid}/aircraft/{acId}/{kind}/{docId}` — the same path `onRecordDeleted` already watches —
+plus a second trigger on `users/{uid}/aircraft/{acId}` for the Aircraft record itself.
+
+```
+1. hostUid = params.uid   // from the PATH. Unspoofable, same property firestore.rules leans on.
+2. acl = get(aircraft_shares/{hostUid}/aircraft/{acId})
+   if (!acl.exists || Object.keys(acl.memberRoles).length <= 1) return   // unshared: no audience
+3. actorUid = after.writerUid
+4. decode before/after payloads -> record title, and for squawks the priority
+5. if (priority escalated) -> send immediately, bypass the buffer   // §7.5
+   else                    -> upsert the coalescing buffer          // §7.3
+```
+
+Step 2 is the early exit that keeps this cheap: **most writes are on unshared aircraft**, and they
+cost one document read and nothing else. The `<= 1` test (not `!exists`) also covers a share whose
+last member left but whose ACL doc survives.
+
+Two additions to `backend/firebase/functions/package.json`'s `generate:proto`, both currently absent:
+
+- `aircraft/aircraft.proto` — the notification body leads with the tail number (PRD §5.3, "aircraft
+  identity first"), and the server cannot read it out of anything else; the aircraft record is opaque
+  proto bytes.
+- `settings/notification_settings.proto` — the sweep decodes each recipient's preferences to honor
+  their per-class toggles.
+
+### 7.3 The coalescing buffer, keyed by source rather than by recipient
+
+PRD §5.4 keys the buffer per `(recipient, aircraft, recordType, actor)`. Keying it per
+`(aircraft, recordType, actor)` and fanning out at flush is strictly better on three counts, and
+this design takes that route:
+
+- **Fewer writes.** A five-member share is one buffer write per edit instead of four.
+- **§9.5 falls out instead of needing enforcement.** The PRD requires the audience be re-derived from
+  the ACL at send time, never from a cached list — because a revoked member must stop receiving
+  immediately, and `SharedScopeJanitor` has already pruned their local data. With a per-recipient
+  buffer the audience is resolved at *buffer* time and must be re-checked at flush anyway; with a
+  shared buffer there is no cached audience to go stale.
+- **Preferences are honored at flush**, against the recipient's current settings rather than their
+  settings when the first edit landed.
+
+```
+notification_batches/{aircraftId}__{recordType}__{actorUid}
+  hostUid, aircraftId, recordType, actorUid
+  aircraftLabel        // resolved once at buffer time — cosmetic, so staleness is harmless
+  actorDisplayName     // from aircraft_shares/{host}/aircraft/{ac}/members/{actor}.displayName
+  firstWriteAt, lastWriteAt
+  changeCount
+  sampleTitles[]       // capped at 5
+  flushAt              // = min(lastWriteAt + 5min, firstWriteAt + 30min), recomputed each upsert
+```
+
+The doc id concatenates with `__`; Firebase uids and the UUID aircraft ids are alphanumeric, and
+`recordType` is a fixed enum, so the separator is unambiguous. Rules:
+`match /notification_batches/{id} { allow read, write: if false; }` — functions only.
+
+`flushAt` as a stored field is what makes the sweep a single indexed query instead of a scan, and it
+encodes both of PRD §5.4's timers in one number: the quiet timer that collapses a burst, and the
+max-wait ceiling that keeps a technician working steadily for an hour from getting silence.
+`sampleTitles` is capped because a batch doc is not a change log.
+
+Neither `actorDisplayName` nor `aircraftLabel` is authorization-relevant, so resolving them once at
+buffer time and letting them go stale is fine — and it means the sweep does zero extra reads for the
+body. Missing display name falls back to "A collaborator" (PRD §5.3).
+
+### 7.4 The sweep
+
+`scheduledNotificationSweep`, an `onSchedule` function following `scheduledStorageSweep` exactly
+(`storageSweepTriggers.ts` — Cloud Scheduler, "Force run" in the console for on-demand, schedule as a
+code constant so arming it costs a redeploy).
+
+```
+every 1 min:
+  batches = notification_batches where flushAt <= now, limit N
+  for each batch:
+    claim in a transaction (set claimedAt; skip if claimed within the last 2 min)
+    audience = memberRoles(hostUid, aircraftId) minus actorUid        // re-derived, §9.5
+    for each recipient:
+      prefs = decode(users/{recipient}/notification_settings/main)
+      skip if allDisabled or the recordType's class is off
+      tokens = users/{recipient}/push_devices where enabled == true
+      send
+    delete the batch
+```
+
+**Claim-send-delete, not delete-then-send.** PRD §5.4 describes deleting the buffer inside the
+transaction that read it. That makes the send at-most-once: a crash between the commit and the FCM
+call loses the batch silently. Claiming with a reclaim timeout makes it at-least-once — a crash
+re-delivers up to one duplicate summary, which is the right side of that trade for a notification
+system. The 2-minute reclaim window comfortably exceeds a normal flush.
+
+**Per-aircraft rate ceiling** (PRD §9.4, §12). `feature/stresstest` is compiled into every build and
+will be pointed at a shared aircraft. Cap sends per `(aircraft, hour)`; past the cap, collapse to one
+"N4589T · a lot of activity" and drop the rest. Enforce it in the sweep, where the count is already
+in hand — enforcing after the send is not enforcement.
+
+### 7.5 The escalation bypass
+
+A write that raises a squawk's priority sends immediately with the specific §6.5 body, never folded
+into a summary. PRD §5.4 calls this a hard rule, not a tuning knob, and the reasoning holds: "wait up
+to 30 minutes to see whether they are still typing" is the wrong behaviour for AOG.
+
+The trigger detects it by decoding `before.payload` and `after.payload` and comparing
+`squawk.priority` — the only ladder the server can evaluate. **Task due-status escalation is
+undetectable server-side** (no write happens when a date passes, and the rule engine lives on the
+device), which is exactly why N2 exists and is not a gap.
+
+### 7.6 Message payload
+
+Data-only FCM messages, with the client constructing the visible notification. Notification-type
+messages are displayed by the OS on Android when backgrounded, which would bypass the per-channel
+routing and the tap router:
+
+```json
+{
+  "data": {
+    "class": "collaboration",
+    "channel": "COLLABORATION",
+    "aircraftId": "…", "recordType": "squawk", "recordId": "…",
+    "titleKey": "…", "bodyArgs": "…",
+    "tapTarget": "squawk:{aircraftId}:{squawkId}"
+  }
+}
+```
+
+Localization is the reason for `titleKey`/`bodyArgs` rather than a rendered string: the server does
+not know the recipient's locale, and the client already has `strings.xml`. iOS needs
+`content-available` plus a notification service extension to render a data-only message while
+backgrounded; that is part of P5, and until it lands iOS may ship rendered strings with a TODO.
+
+---
+
+## 8. N1 on web — the sync-driven detector
+
+### 8.1 Why this works without any backend
+
+An open tab already runs the same entity sync engine every other platform runs, so it already
+receives a collaborator's write the instant Firestore delivers it. `RemoteEntity.writerUid`
+(`PullListener.kt`) carries rules-enforced authorship on the envelope. An incoming record whose
+`writerUid` is not the signed-in user, on an aircraft where `SharingManager.observeIsShared(acId)` is
+true, **is** an N1 event — the same test the server-side trigger applies, run locally.
+
+### 8.2 Where the hook goes
+
+`feature/sync/data` must not depend on `feature/notifications` (§3). So `core/storage` owns a
+one-method listener interface, and the sync engine calls it:
+
+```kotlin
+// core/storage
+fun interface ForeignWriteListener {
+  fun onForeignWrite(kind: CollectionKind, scope: EntityScope, id: String, writerUid: String)
+}
+```
+
+`PullListener` invokes it (no-op binding by default) when it applies a remote write whose `writerUid`
+differs from the signed-in uid. `feature/notifications`' `jsMain` module binds the real one. This is
+the `CloudSyncSetting` pattern: interface in `core:storage`, implementation supplied by a feature and
+bound via Koin.
+
+Deliberately a `jsMain`-only binding. Android and iOS get N1 from push, and running both paths would
+double-notify.
+
+### 8.3 Actor name
+
+A **one-shot** `SharingManager.observeShareState(acId).first()` at the moment a foreign write is
+detected, not a standing subscription. A per-aircraft listener would need its own lifecycle — opened
+when the user has any shared aircraft, torn down on sign-out or when a share ends, kept from leaking
+across account switches — for a value needed only at the instant a notification fires. One read per
+notification, mirroring what the server's fan-out does. Empty result falls back to "A collaborator."
+
+### 8.4 Client-side coalescing
+
+The server buffer never sees this path. A `commonMain` `CoalescingBuffer` with the same 5-minute /
+30-minute constants, keyed by `(aircraftId, recordType, actorUid)`, in-memory and per-tab. It is
+small, it is shared code, and the same class is the natural home for any future client-side
+coalescing. V1 could ship without it and accept a burst on web, but the class is a few dozen lines
+and the constants are already written down — build it.
+
+### 8.5 What this does not cover
+
+A closed or fully-suspended tab runs no JavaScript. Closed-tab delivery needs the real web-push stack
+(service worker, VAPID, a `push_devices` entry) and stays in V1.1 / P6, at which point
+`AppCapability.isPushSupported` flips true on `jsMain`.
+
+---
+
+## 9. Settings UI
+
+### 9.1 Entry point
+
+A `SettingsRow` in `feature/settings/SettingsScreen.kt` with the account-level rows, navigating to
+`Screen.Notifications` (new, `"notifications"` in `core/nav/Screen.kt`), registered in
+`ShellNavGraph` beside `Screen.SyncSettings`. Live subtitle: "Collaboration and urgency alerts" /
+"Off — turn on to hear about changes" / "Blocked in system settings".
+
+### 9.2 ViewModel
+
+```kotlin
+data class NotificationSettingsUiState(
+  val prefs: NotificationPrefs = NotificationPrefs(),
+  val permission: PermissionState = PermissionState.UNDETERMINED,
+  val canOpenSystemSettings: Boolean = false,
+  val isSignedIn: Boolean = false,        // real account, not anonymous
+  val isCloudSyncEnabled: Boolean = false,
+  val isLoading: Boolean = true,
+  val confirmDisableAog: Boolean = false, // Q5
+)
+```
+
+`combine` over `prefsManager.observe()`, `permission.observe()`, `auth.authStateChanged`, and
+`syncPreferences.state`. `isLoading` exists because of #451: a screen that flashes the wrong state
+before its first emission is worse than one that waits, and the same fix was already needed on the
+paywall. Any in-progress edit lives in the ViewModel's `StateFlow`, never in composable `remember` —
+this screen can be torn down by the OS permission dialog.
+
+### 9.3 States the screen must be honest about
+
+| State | Affects | UI |
+|:--|:--|:--|
+| Permission `UNDETERMINED` | Both groups | Toggles active; flipping the master on triggers the OS prompt inline |
+| Permission `DENIED` | Both groups | Persistent **neutral** banner + "Open settings". Toggles stay editable so choices survive fixing the permission. |
+| Signed out / anonymous | Collaboration only | Footer with a "Sign in" action. **The urgency group stays fully live and is not dimmed.** |
+| Cloud sync off | Collaboration only | Footer with "Turn on sync" → Backup & Sync. Urgency unaffected. |
+| Web | Denied banner | Drops the button (`canOpenSystemSettings == false`) and names where to look, phrased generically since the path differs by browser |
+
+Dimming the urgency group for a signed-out user would be a straightforward bug: it works fine for
+them, and they are the users for whom it matters most (§6.8).
+
+The banner is **informational, not an error** — no red, no destructive iconography. Notifications are
+a convenience on top of a logbook that works without them. Neutral surface color, plain sentence.
+Read `PRODUCT.md`, `DESIGN.md`, and `.impeccable/design.json` before building it; the aviation
+palette is required and dynamic color is disabled.
+
+Copy conventions: all strings from `strings.xml`, reuse before adding, apostrophes literal, and edit
+actions worded as "Update X" rather than "Edit X".
+
+### 9.4 Disabling AOG (Q5)
+
+Mutable, with a confirmation: "You won’t be told when an aircraft is grounded." A user who cannot
+silence one alert silences the whole app instead.
+
+---
+
+## 10. Onboarding primer
+
+A step in `AuthFlow`'s state machine (`feature/login/AuthFlow.kt`), inserted immediately before the
+ads-consent check:
+
+```kotlin
+private enum class AuthStep { Login, EmailSignIn, NameEntry, Welcome, NotificationPrimer, AdsConsentExplainer }
+
+suspend fun proceedPastOnboarding() {
+  if (notificationPermission.observe().value == PermissionState.UNDETERMINED) {
+    step = AuthStep.NotificationPrimer
+    return
+  }
+  proceedPastNotifications()
+}
+
+suspend fun proceedPastNotifications() {
+  val needsAdsConsent = subscriptionManager.shouldShowAds().first() && adConsentManager.isConsentRequired()
+  if (needsAdsConsent) step = AuthStep.AdsConsentExplainer else onComplete()
+}
+```
+
+**No preference flag of its own**, exactly like the ads-consent detour: it reads the OS permission
+state the way `AdConsentManager.isConsentRequired()` reads the CMP's cached state, and renders only
+when `UNDETERMINED`. That is what makes it safe to insert unconditionally — `proceedPastOnboarding()`
+runs for new and returning users alike, and the state check makes it a no-op for anyone already
+resolved.
+
+**Not a blocking gate.** Declining proceeds exactly as granting does; the denial is handled by §9.3's
+banner, not by re-litigating during onboarding.
+
+**Existing installs never see it** — an already-signed-in user who upgrades mid-session does not
+re-run `AuthFlow`. For that population the first ask stays contextual: the master toggle, or right
+after creating or accepting a share invite.
+
+---
+
+## 11. Developer Options
+
+Gated on `AppCapability.isDeveloperOptionsSupported`, in a `NotificationDeveloperSettings` section
+following `DisplayAdsDeveloperSettings`:
+
+- **Send test notification** — one action per channel, so channel routing and the high-priority path
+  can be verified without a second account and a real AOG squawk.
+- **Run urgency scan now** — a feature whose normal cadence is once a day is untestable without it.
+- **Reset urgency watermarks** — re-arms every crossing, which is the only way to exercise the
+  seeding rules repeatedly on one device.
+- **Show scan diagnostics** — last scan time, trigger, records examined, crossings found, crossings
+  suppressed by preferences. This is what makes the background-versus-foreground metric (§6.6)
+  debuggable rather than merely reportable.
+
+---
+
+## 12. Security, privacy, rules
+
+### 12.1 Rules changes
+
+| Path | Change |
+|:--|:--|
+| `users/{uid}/push_devices/{id}` | **None needed** — covered by the own-tree rule. Add a comment naming it. |
+| `users/{uid}/notification_settings/main` | **None needed** — same. |
+| `notification_batches/{id}` | New: `allow read, write: if false;` (functions only) |
+
+Add emulator tests to the existing vitest suite in `backend/firebase/functions` covering: another
+user cannot read my `push_devices`; no client can read or write `notification_batches`; a revoked
+member's uid is absent from `memberRoles` and therefore from the audience.
+
+### 12.2 Actor suppression
+
+From `writerUid` on the envelope, never from anything client-supplied. Server-side that is
+`after.writerUid`; client-side (web N1, and the §6.4 seeding refinement) it is
+`StorageEntity.writerUid` / `RemoteEntity.writerUid`, which the sync engine carries down from the
+same rules-enforced field.
+
+### 12.3 Privacy
+
+- **N1 bodies carry user content** — tail numbers, squawk titles, collaborator names — to Apple and
+  Google push infrastructure. This is a new trust boundary: Firestore content stays within Firebase
+  today. It belongs in the privacy policy, and it is why bodies stay short and carry no attachment or
+  certificate data.
+- **N2 crosses no trust boundary at all.** Local data in, local notification out. Worth stating
+  explicitly, because "the app told me my annual is overdue" otherwise reads like a server watching
+  the user's records — and for an anonymous, sync-off pilot nothing about their fleet has ever left
+  the device.
+- **N2 telemetry is the one place this touches the network for such a user** (PRD §11). The safe
+  default, and this design's recommendation: **the scan reports nothing when cloud sync is off or the
+  account is anonymous.** The metric loses exactly the population whose privacy expectation is
+  strongest, and keeps the claim in the paragraph above literally true.
+- **Log-level discipline.** Cross-account ids (recipient uids, actor uids) are redacted at info and
+  above; debug and verbose may keep them.
+
+---
+
+## 13. Testing
+
+`src/test/kotlin`, JUnit 4 + MockK + Truth + `kotlinx-coroutines-test`, per the house convention.
+
+**`UrgencyRank` (pure, exhaustive).** Every `DueStatus` and every `SquawkPriority` × `SquawkStatus`.
+The one that must exist by name: `complied_ranksBelowDueSoon_despiteHigherOrdinal`.
+
+**`UrgencyScannerTest`** — fake stores, fake `Clock`, in-memory watermarks:
+
+- a crossing notifies once and stays silent on the next scan
+- `OVERDUE → COMPLIED` is silent **and** lowers the watermark, so coming due again notifies again
+- a task that went overdue and was complied while the device was dark produces nothing
+- first sight of an aircraft seeds silently, however many records are already overdue
+- a new record written by *this* user seeds at its rank; a new record written by *another* user seeds
+  at 0 and reports if urgent (§6.4)
+- a dismissed squawk reopened at HIGH notifies
+- three tasks crossing at once produce one summary, not three
+- a preference toggled off suppresses its tier but still advances the watermark — so turning it back
+  on does not replay history
+- an unhydrated scope is not pruned
+- concurrent scans do not double-report
+
+**`NotificationPrefsMappingTest`** — round-trip every field, `DeveloperOptionsMappingTest`-style. The
+inverted-boolean convention is exactly the kind of thing that inverts back wrong once.
+
+**Backend** (emulator + vitest, per the existing harness): an unshared aircraft produces no batch;
+the actor is excluded from the audience; two writes inside the quiet window produce one batch with
+`changeCount = 2`; continuous writes flush at the 30-minute ceiling; a priority escalation bypasses
+the buffer; a revoked member is excluded at flush even though they were a member at buffer time; a
+claimed batch is not double-swept; the per-aircraft rate ceiling holds under a stress-test burst.
+
+**Not unit-tested, verify by hand:** `WorkManager` and `BGTaskScheduler` actually firing, OS
+permission dialogs, channel importance, tray rendering, and cold-start tap routing.
+
+---
+
+## 14. Implementation order
+
+Maps onto the PRD's phases. P1–P3 touch no backend at all.
+
+| Phase | Contents | Exit criteria |
+|:--|:--|:--|
+| **P1 Foundations** | Module set; proto + `CollectionKind` (all 5 registration points, §4.2); `NotificationPrefsManager`; `NotificationPermission` + `LocalNotifier` actuals ×3; channels; `Screen.Notifications` + nav; settings screen; Developer Options test sends | A dev build requests permission and posts a local notification on each channel; preferences persist and appear on a second device |
+| **P2 N2 urgency** | `urgency_watermark` table; `UrgencyRank`; `UrgencyScanner`; `UrgencyScanScheduler` (Android + iOS); session-boundary scan; seeding; per-tier batching; tap routing; scan diagnostics | Crossings fire exactly once; de-escalations silent; a fresh install notifies nothing; **no backend change was required** |
+| **P3 Web N1** | `ForeignWriteListener` in `core:storage`; `PullListener` hook; `jsMain` detector; one-shot actor read; `CoalescingBuffer` | A web user with a shared aircraft open sees a collaborator's edit from another account; **no backend, no token registry** |
+| **P4 N1 backend + Android** | `device_config` table; `PushTokenRegistrar`; `aircraft.proto` + `notification_settings.proto` added to `generate:proto`; fan-out trigger; buffer; sweep; rate ceiling; rules + emulator tests | Two accounts sharing an aircraft see each other's changes; neither sees their own |
+| **P5 N1 on iOS** | APNs certificates, entitlements, background modes, notification service extension, Time Sensitive entitlement | Parity with Android on N1; `timeSensitive` works for AOG |
+| **P6 Web push** | Service worker, VAPID, `push_devices` for web | `isPushSupported` flips true on `jsMain` |
+
+Dogfood across P2–P5. P2 tunes the scan cadence and per-tier batching; P4 tunes the coalescing
+window. The noise floor has to be felt rather than reasoned about.
+
+---
+
+## 15. Deltas from the PRD
+
+Everything here is a change to what the PRD specified, gathered in one place so the PRD can be
+amended rather than quietly diverged from.
+
+| # | PRD | This design | Why |
+|:--|:--|:--|:--|
+| D1 | §9.1.6 — "foreground is already observable via `AppForegroundObserver`" | It is a session-boundary counter, not a foreground stream. Collect `sessionId` instead of adding an event. | §6.6. Its own doc comment asks future consumers to grow from it rather than add a second observer. |
+| D2 | §9.1.4 — implies `MaintenanceOverview` supplies hours | `TaskDueManagerImpl` derives current hours from `max()` over the aircraft's logs. The scanner must pass logs. | §6.3. Passing an empty log list reports the whole fleet overdue. |
+| D3 | §6.4 — silent seeding, silent on a new record | A new record written by **someone else** seeds at rank 0, so an already-urgent one reports on the same scan | §6.4. Otherwise a mechanic's AOG squawk is silently seeded on the owner's device and N2 never mentions it. |
+| D4 | §5.4 — buffer keyed per `(recipient, aircraft, recordType, actor)` | Keyed per `(aircraft, recordType, actor)`; fan out at flush | §7.3. Fewer writes, and §9.5's "re-derive the audience at send time" stops being a rule to enforce. |
+| D5 | §5.4 — sweep deletes the buffer in the transaction it read it from | Claim (with a 2-min reclaim window), send, then delete | §7.4. Delete-then-send is at-most-once; a crash loses the batch silently. |
+| D6 | §4 / Q10 — N2 "requires nothing else"; the scan runs signed out | Requires *a Firebase user* — anonymous counts. With no user there is no local fleet, so the scan is a no-op. | §6.8. The real promise (no real account, no sync, no network) is intact; the wording is not. |
+| D7 | §9.2 — "notification preferences: new synced entity" | Every proto field is inverted (`*_disabled`) | §4.1. proto3 has no scalar presence, so all-false must mean all-on or a user who never opened settings is silenced. |
+| D8 | §11 — instrument via the analytics plan | The scan reports nothing when sync is off or the account is anonymous | §12.3. The PRD calls this a privacy call for the design doc and names this as the safe default. |
+| D9 | — (not addressed) | `aircraft.proto` and `settings/notification_settings.proto` must be added to the functions' `generate:proto` list | §7.2. Neither is generated today, and the fan-out cannot read a tail number or a preference without them. |
+| D10 | §7.5 — iOS N1 in V1 | iOS Time Sensitive interruption level needs an entitlement and App Store review; sequenced into P5 | §5.2. iOS N2 ships at default interruption level in P2. |
+
+## 16. Open questions
+
+| # | Question | Recommendation |
+|:--|:--|:--|
+| E1 | Should the scheduled Android scan chase 08:00 local with a self-re-enqueuing one-time request, or accept a plain 24h periodic? | Start with the plain periodic in P2. The session-boundary scan (§6.6) already covers active users, and the 08:00 target is worth real complexity only if the diagnostics show background scans landing at hours users complain about. |
+| E2 | Does the per-device `enabled` flag (Q2) need a UI in V1, or is uninstall/sign-out sufficient? | No UI in V1. It exists on the token doc so the server honors it, and Developer Options can flip it; a real UI needs a device list, which is an inbox-era feature. |
+| E3 | Should the web detector also drive N2, or does the session-boundary scan cover it? | Session scan only. Web N2 has no scheduler, and a sync-driven scan on every foreign write is a different (and much chattier) trigger than a daily one. |
+| E4 | Should P2 land the tap-router deep links, or can P2 ship notifications that only open the app? | Land them in P2. Tap-through rate is a stated success metric (PRD §11) and a notification that dumps the user on the fleet dashboard will not earn it. |
