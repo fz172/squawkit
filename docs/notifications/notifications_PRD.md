@@ -4,7 +4,8 @@
 **Last updated:** 2026-08-17
 **Areas:** `feature/notifications` (new) · `feature/login` · `feature/sharing` · `feature/tasks` ·
 `feature/squawk` · `feature/sync` · `core/appinfo` · `backend/firebase/functions`
-**Related docs:** [aircraft_sharing_PRD.html](../sharing/aircraft_sharing_PRD.html) ·
+**Related docs:** [notifications_design.md](notifications_design.md) ·
+[aircraft_sharing_PRD.html](../sharing/aircraft_sharing_PRD.html) ·
 [aircraft_sharing_design.html](../sharing/aircraft_sharing_design.html) ·
 [user_squawking_prd.md](../squawks/user_squawking_prd.md) ·
 [squawk_design.md](../squawks/squawk_design.md) ·
