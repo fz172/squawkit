@@ -1578,19 +1578,112 @@ permission dialogs, channel importance, tray rendering, and cold-start tap routi
 
 ## 14. Implementation order
 
-Maps onto the PRD's phases. P1–P3 touch no backend at all.
+Maps onto the PRD's phases, with a P0 added for prerequisites that touch existing code and can land
+before any notification module exists. **P0–P3 touch no backend at all.**
 
-| Phase | Contents | Exit criteria |
+| Phase | Theme | Exit criteria |
 |:--|:--|:--|
-| **P1 Foundations** | Eight modules (§3) wired into `settings.gradle.kts` + `CommonAppModules`; proto + `CollectionKind` (all 5 registration points, §4.2); `NotificationPrefsManager` **including the hydration-resolution rule** (§4.3); `NotificationPermission` + `LocalNotifier` actuals ×3; channels; `Screen.Notifications` + nav; settings screen; **`DeveloperOptionsExtra` in `core:ui` + migrating the stress-test extra off `dogfoodContent` (§11.2)**; the notification Developer Options section | A dev build requests permission and posts a local notification on each channel; preferences persist and appear on a second device; **and a fresh install of an account with non-default preferences shows the spinner until they hydrate, never all-on — with the toggles disabled meanwhile** |
-| **P2 N2 urgency** | `urgency_watermark` table; `UrgencyRank`; `UrgencyScanner`; `UrgencyScanScheduler` (Android + iOS); session-boundary scan; seeding; per-tier batching; tap routing; scan diagnostics | Crossings fire exactly once; de-escalations silent; a fresh install notifies nothing; **no backend change was required** |
-| **P3 Web N1** | `ForeignWriteListener` in `core:storage`; `PullListener` hook; `jsMain` detector; one-shot actor read; `ActivityCounter` + `tag`-based replacement (§8.4) | A web user with a shared aircraft open sees a collaborator's edit from another account; **no backend, no token registry** |
-| **P4 N1 backend + Android** | `device_config` table; `PushTokenRegistrar`; `aircraft.proto` + `notification_settings.proto` added to `generate:proto`; fan-out trigger; `notification_activity` counter + `notification_rate` ceiling; collapse keys; rules + emulator tests. **No Cloud Scheduler job and no Cloud Tasks queue** | Two accounts sharing an aircraft see each other's changes; neither sees their own |
-| **P5 N1 on iOS** | APNs certificates, entitlements, background modes, notification service extension, Time Sensitive entitlement | Parity with Android on N1; `timeSensitive` works for AOG |
-| **P6 Web push** | Service worker, VAPID, `push_devices` for web | `isPushSupported` flips true on `jsMain` |
+| **P0** | Developer Options plumbing (existing modules only) | A second Developer Options section can be added by a Koin binding alone |
+| **P1** | Foundations — modules, proto, preferences, permission, notifier, settings screen | A dev build requests permission and posts on each channel; preferences persist and reach a second device; a fresh install of an account with non-default preferences shows the spinner, never all-on |
+| **P2** | N2 urgency, Android + iOS | Crossings fire exactly once; de-escalations silent; a fresh install notifies nothing; **no backend change was required** |
+| **P3** | Web N1, open tab | A web user with a shared aircraft open sees a collaborator's edit from another account; **no backend, no token registry** |
+| **P4** | N1 backend + Android | Two accounts sharing an aircraft see each other's changes; neither sees their own; **no Cloud Scheduler job, no Cloud Tasks queue** |
+| **P5** | N1 on iOS | Parity with Android; `timeSensitive` works for AOG |
+| **P6** | Web push (V1.1) | `isPushSupported` flips true on `jsMain` |
 
 Dogfood across P2–P5. P2 tunes the scan cadence and per-tier batching; P4 tunes `ACTIVITY_WINDOW`
 and `MIN_REPOST_INTERVAL`. The noise floor has to be felt rather than reasoned about.
+
+### 14.1 Task breakdown
+
+Issue-sized. "Blocks" names the immediate prerequisite only.
+
+**P0 — Developer Options plumbing.** Independent of everything else; can start today.
+
+| # | Task | Touches | Blocks on |
+|:--|:--|:--|:--|
+| P0.1 | `DeveloperOptionsExtra` interface (`order`, `isAvailable()`, `Content(onNavigate)`); `DeveloperOptionsScreen` resolves `getAll()` sorted, drops `dogfoodContent` | `core/ui`, `feature/settings` | — |
+| P0.2 | Migrate `StressTestDeveloperOptionsExtra` onto the interface, contributed by `stressTestKoinModules()`; shell drops the import and the `isStressTestSupported` argument for this purpose | `feature/stresstest/config`, `feature/shell` | P0.1 |
+
+**P1 — Foundations.**
+
+| # | Task | Touches | Blocks on |
+|:--|:--|:--|:--|
+| P1.1 | Scaffold the eight modules (§3) with `build.gradle.kts` each, registered in `settings.gradle.kts` | `feature/notifications/*` | — |
+| P1.2 | `settings/notification_settings.proto` (inverted fields, §4.1) + `CollectionKind.NotificationSettings` at all five registration points (§4.2) | `core/model`, `core/storage`, `feature/sync/data` | P1.1 |
+| P1.3 | `NotificationSettingsExt` — the inversion in one file — plus `NotificationSettingsExtTest` | `:model` | P1.2 |
+| P1.4 | `NotificationPermission` + `PermissionState` and the three actuals (§5.1) | `:permission` | P1.1 |
+| P1.5 | `LocalNotifier`, `PendingNotification`, `NotificationChannel` + three actuals + channel registration (§5.2) | `:viewing` | P1.1 |
+| P1.6 | `NotificationPrefsManager` with the `PrefsState` resolution rule (§4.3) + `NotificationPrefsManagerTest` | `:datamanager` | P1.3 |
+| P1.7 | Six Koin modules + `CommonAppModules` wiring + host platform init | `core/di`, hosts | P1.4, P1.5, P1.6 |
+| P1.8 | `Screen.Notifications`, `ShellNavGraph` route, and the `SettingsRow` with its live subtitle (§9.1) | `core/nav`, `feature/shell`, `feature/settings` | P1.1 |
+| P1.9 | Settings screen + ViewModel: `isLoading` disables toggles, precondition footers, AOG confirm (§9.2–9.4) | `:settings`, `:sharedassets` | P1.6, P1.8 |
+| P1.10 | `strings.xml` for `:sharedassets` and `:settings` | `:sharedassets`, `:settings` | P1.9 |
+| P1.11 | `NotificationDeveloperOptionsExtra` — test send per channel | `:devoptions` | P0.1, P1.5 |
+| P1.12 | Onboarding primer: `NotificationPrimerScreen`, the `AuthFlow` step, `proceedPastNotifications()` split, strings (§10) | `feature/login` | P1.4 |
+
+**P2 — N2 urgency.**
+
+| # | Task | Touches | Blocks on |
+|:--|:--|:--|:--|
+| P2.1 | `urgency_watermark` table, queries, `UrgencyWatermarkStore` (§6.2) | `core/storage`, `:engine` | P1.1 |
+| P2.2 | `UrgencyRank` + both ladders, exhaustive `when`, `complied_ranksBelowDueSoon_despiteHigherOrdinal` (§6.1) | `:model` | P1.1 |
+| P2.3 | `UrgencyScanner` — fleet walk, `TaskDueManager` + squawk ranks, watermark diff (§6.3) | `:engine` | P2.1, P2.2 |
+| P2.4 | Seeding: silent for a first-seen aircraft; rank-0 for a foreign-authored new record; watermark prune (§6.4) | `:engine` | P2.3 |
+| P2.5 | Per-tier batching, notification bodies, post-then-commit ordering (§6.5–6.7) | `:engine` | P2.4 |
+| P2.6 | `UrgencyScanScheduler` — Android `PeriodicWorkRequest` (§5.4) | `:engine/androidMain` | P2.5 |
+| P2.7 | `UrgencyScanScheduler` — iOS `BGTaskScheduler`, re-submitting each run (§5.4) | `:engine/iosMain`, `iosApp` | P2.5 |
+| P2.8 | Session-boundary scan off `AppForegroundObserver.sessionId` + 4h debounce (§6.6) | `:engine` | P2.5 |
+| P2.9 | `NotificationTapRouter`, `Screen.AircraftTabDeepLink` (new route, tier pre-filter), shell collection (§5.3) | `:viewing`, `core/nav`, `feature/shell` | P1.8 |
+| P2.10 | `LocalAccountMigrator` re-keys watermarks on guest→account upgrade (§6.2) | `core/storage` | P2.1 |
+| P2.11 | Developer Options: run scan now, reset watermarks, scan diagnostics (§11) | `:devoptions` | P1.11, P2.5 |
+| P2.12 | Analytics: background-vs-foreground delivery split, suppressed when sync is off or anonymous (§11, §12.3) | `:engine`, `core/analytics` | P2.6, P2.7 |
+| P2.13 | Privacy policy — N2 crosses no trust boundary; say so (§12.3) | policy copy | P2.5 |
+
+**P3 — Web N1, open tab.**
+
+| # | Task | Touches | Blocks on |
+|:--|:--|:--|:--|
+| P3.1 | `ForeignWriteListener` in `core:storage`; `PullListener` invokes it on a foreign-authored apply (§8.2) | `core/storage`, `feature/sync/data` | P1.1 |
+| P3.2 | `jsMain` detector: shared-aircraft filter, one-shot share-roster read for the actor name (§8.1, §8.3) | `:engine/jsMain` | P3.1 |
+| P3.3 | `ActivityCounter` + `tag`-based replacement, `ACTIVITY_WINDOW` / `MIN_REPOST_INTERVAL` (§8.4) | `:engine`, `:viewing/jsMain` | P3.2 |
+
+**P4 — N1 backend + Android.**
+
+| # | Task | Touches | Blocks on |
+|:--|:--|:--|:--|
+| P4.1 | `device_config` table + a stable install id (§7.1) | `core/storage` | P1.1 |
+| P4.2 | `push_devices` schema, `PushTokenRegistrar`, sign-out cleanup, `PushTokenSink` wiring (§5.5, §7.1) | `:datamanager`, `:viewing` | P4.1 |
+| P4.3 | `deleteMyAccount` clears `push_devices` (§12.3) | `backend/firebase/functions` | P4.2 |
+| P4.4 | `aircraft.proto` + `notification_settings.proto` added to `generate:proto` (§7.2) | `backend/firebase/functions` | P1.2 |
+| P4.5 | Fan-out trigger: path-derived host, ACL early exit, actor suppression (§7.2) | `backend/firebase/functions` | P4.4 |
+| P4.6 | `notification_activity` counter — lock-free `increment`, session window, repost throttle (§7.4) | `backend/firebase/functions` | P4.5 |
+| P4.7 | `notification_rate` hourly ceiling, checked before any write (§7.4) | `backend/firebase/functions` | P4.6 |
+| P4.8 | Escalation bypass under `n1esc:` — exempt from throttle and ceiling (§7.5) | `backend/firebase/functions` | P4.6 |
+| P4.9 | Data-only FCM payload, `notificationId` + both collapse headers (§7.6) | `backend/firebase/functions` | P4.6 |
+| P4.10 | Android FCM receiver renders the payload and posts under the given id (§5.5, §7.3) | `:viewing/androidMain` | P4.9 |
+| P4.11 | Rules for `notification_activity` / `notification_rate` + emulator tests (§12.1, §13) | `backend/firebase` | P4.7, P4.8 |
+| P4.12 | Privacy policy — N1 sends user content to Apple/Google push infrastructure (§12.3) | policy copy | P4.10 |
+
+**P5 — N1 on iOS.**
+
+| # | Task | Touches | Blocks on |
+|:--|:--|:--|:--|
+| P5.1 | APNs certificates, entitlements, background modes | `iosApp`, Firebase console | P4.10 |
+| P5.2 | Notification service extension to render a data-only message while backgrounded (§7.6) | `iosApp` | P5.1 |
+| P5.3 | Time Sensitive entitlement for AOG — **App Store review item, start early** (§5.2) | `iosApp`, App Store | — |
+| P5.4 | iOS token registration + two-account parity check | `:datamanager/iosMain` | P5.2 |
+
+**P6 — Web push (V1.1).**
+
+| # | Task | Touches | Blocks on |
+|:--|:--|:--|:--|
+| P6.1 | Service worker + VAPID registration | `webApp` | P4.9 |
+| P6.2 | `push_devices` for web; `AppCapability.isPushSupported` flips true on `jsMain` | `:datamanager/jsMain`, `core/appinfo` | P6.1 |
+| P6.3 | Closed-tab N1 and N2 via `ServiceWorkerRegistration.showNotification()` (§8.4, §8.5) | `:viewing/jsMain` | P6.2 |
+
+**Externally blocked, start ahead of their phase:** P5.3 (App Store review) and P5.1 (APNs
+certificates) both have lead time that has nothing to do with code being ready.
 
 ---
 
