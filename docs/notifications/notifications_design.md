@@ -936,49 +936,97 @@ notification_activity/{aircraftId}__{recordType}__{actorUid}
   lastSentAt
 ```
 
+Plus one rate-limit doc per aircraft per hour, read on every write and written only on send:
+
+```
+notification_rate/{aircraftId}__{yyyymmddHH}
+  sendCount
+```
+
 The trigger's whole job, per write:
 
 ```
 1. hostUid = params.uid                        // from the PATH — unspoofable, §7.2
 2. acl = get(aircraft_shares/{hostUid}/aircraft/{acId})
    if (!acl.exists || memberRoles.size <= 1) return          // unshared: the cheap early exit
-3. counter = upsert(key) in a transaction:
-     if (now - lastWriteAt > ACTIVITY_WINDOW) {               // a new working session
-       changeCount = 1
-       firstWriteAt = now        // ← rolls the notification id, so the previous
-     }                           //   session's tray entry survives untouched (§7.3)
-     else changeCount += 1
-     lastWriteAt = now
-4. if (now - lastSentAt < MIN_REPOST_INTERVAL) return         // throttle, below
-5. audience = memberRoles minus actorUid                      // re-derived every send, §9.5
+3. rate = get(notification_rate/{acId}__{hour})              // a READ — cheap, no contention
+   if (rate.sendCount >= AIRCRAFT_HOURLY_CEILING) return     // storm: stop before touching anything
+4. prev = get(notification_activity/{key})                   // plain read, NOT a transaction
+   newSession = now - prev.lastWriteAt > ACTIVITY_WINDOW
+   set(key, merge = true):
+     changeCount  = newSession ? 1 : FieldValue.increment(1)
+     firstWriteAt = newSession ? now : prev.firstWriteAt      // rolls the notification id (§7.3)
+     lastWriteAt  = now
+5. if (now - prev.lastSentAt < MIN_REPOST_INTERVAL) return    // throttle
+6. audience = memberRoles minus actorUid                      // re-derived every send, §9.5
    for each recipient honoring this class in their prefs:
      send to their enabled tokens, collapse_key = notification id
-6. lastSentAt = now
+7. set(key, { lastSentAt: now }); increment(rate.sendCount)
 ```
 
-Three details that carry the weight the sweep used to:
+Four details that carry the weight the sweep used to:
 
 - **`ACTIVITY_WINDOW` (30 min) ends a working session**, resetting both `changeCount` *and*
   `firstWriteAt` — the latter is what rolls the notification id so the finished session's tray entry
   is left alone (§7.3). Tuesday afternoon and Wednesday morning are two entries reading "5 changes"
   and "3 changes," never one reading "8 changes" and never one overwriting the other. Evaluated
   lazily on the next write, so it needs no timer either.
-- **`MIN_REPOST_INTERVAL` (30s) is the storm guard.** A bulk import writing 200 records produces at
-  most two sends per key per minute instead of 200. The cost is a count that lags by up to 30
-  seconds; the next write corrects it, and the final write of any burst is the one that matters.
-  This does **not** replace the per-aircraft rate ceiling below — it bounds one key, the ceiling
-  bounds the aircraft.
+- **`MIN_REPOST_INTERVAL` (30s) is the per-key storm guard.** A bulk import writing 200 records
+  produces at most two sends per key per minute instead of 200. The cost is a count that lags by up
+  to 30 seconds; the next write corrects it, and the final write of any burst is the one that
+  matters.
+- **`AIRCRAFT_HOURLY_CEILING` bounds the aircraft**, not the key (PRD §9.4, §12) —
+  `feature/stresstest` is compiled into every build and *will* be pointed at a shared aircraft. Past
+  the cap, send one "N4589T · a lot of activity" and stop. It is checked at **step 3, before any
+  write**, so a tripped ceiling costs one read and nothing else.
 - **Audience and preferences are re-derived on every send**, which is what PRD §9.5 asks for. With
   no buffered fan-out there is no cached audience that could outlive a revocation, so §9.5 stops
   being a rule to enforce and becomes a property of the shape.
 
-**Per-aircraft rate ceiling** (PRD §9.4, §12) still applies and still matters — `feature/stresstest`
-is compiled into every build and *will* be pointed at a shared aircraft. Cap sends per
-`(aircraft, hour)`; past the cap, collapse to one "N4589T · a lot of activity" and drop the rest.
+#### No transaction — and that is a consequence of §7.3, not an oversight
 
-Rules: `match /notification_activity/{id} { allow read, write: if false; }` — functions only. The doc
-id concatenates with `__`; Firebase uids and UUID aircraft ids are alphanumeric and `recordType` is a
-fixed enum, so the separator is unambiguous.
+Step 4 is a plain read followed by a merge write. An earlier draft wrapped it in a transaction, which
+would have been the reflex: two concurrent writes to the same aircraft race on `changeCount`.
+
+They do, and every race is benign:
+
+| Race | Outcome |
+|:--|:--|
+| Two writes both read `changeCount = 5` | `FieldValue.increment(1)` is applied server-side against the *stored* value, not the read one, so the result is 7. The read is only used for the two boolean decisions below. |
+| Both decide `newSession` | Both stamp `firstWriteAt` within milliseconds of each other → effectively the same notification id → the second replaces the first in the tray |
+| Both decide the throttle has expired | Two sends under the same id and `collapse_key` → the tray shows one entry, and an offline device receives one message |
+
+**Duplicate sends collapse, so the counter does not need transactional exactness.** That is the
+replacement design paying for itself a second time: the mechanism that makes bursts readable also
+makes the write path lock-free. A transaction here would buy nothing and add a retry loop on the
+hottest document in the feature.
+
+#### The hot-document limit, stated plainly
+
+`notification_activity` is one document per `(aircraft, recordType, actor)`, and Firestore's sustained
+single-document write rate is roughly **1/sec**. A stress-test import of 200 task records on one
+aircraft by one actor is 200 writes to one key in a few seconds, well past that.
+
+What actually happens: latency climbs and some invocations get contention errors, which the trigger's
+own retry handles. Nothing is lost — a dropped increment costs one unit of a count that the next
+write corrects. `AIRCRAFT_HOURLY_CEILING` does **not** rescue this case, and the doc should not
+pretend otherwise: sends are throttled to ~2/min/key, so a 10-second burst never accumulates enough
+*sends* to trip an hourly *send* ceiling. The ceiling protects against sustained abuse over minutes
+and hours; it does not protect against one fast burst.
+
+Two escapes if dogfooding or the stress test shows this matters, neither built in V1:
+
+- **Cap the count.** Stop incrementing at 99 and render "99+ changes". Bounds writes per session to
+  99 regardless of burst size, and nobody reads the difference between 140 and 99+.
+- **Shard the counter** across N sub-documents summed at send time — the standard Firestore
+  distributed-counter pattern. More correct, more machinery.
+
+The cap is almost certainly the right one if it comes up: this is a notification body, not an
+accounting ledger.
+
+Rules: `match /notification_activity/{id}` and `match /notification_rate/{id}` are both
+`allow read, write: if false` — functions only. Doc ids concatenate with `__`; Firebase uids and UUID
+aircraft ids are alphanumeric and `recordType` is a fixed enum, so the separator is unambiguous.
 
 **Delivery is now at-least-once by construction.** The old sweep needed a claim-then-send-then-delete
 dance with a reclaim window, because delete-then-send loses a batch on a crash. Here a crashed
@@ -1083,7 +1131,8 @@ replacement shrinks that to almost nothing. An `ActivityCounter` in `engine/comm
 `(aircraftId, recordType, actorUid)`, in-memory and per-tab, holding `changeCount` / `firstWriteAt` /
 `lastWriteAt` / `lastSentAt` and applying the same `ACTIVITY_WINDOW` and `MIN_REPOST_INTERVAL` as
 §7.4 — including rolling `firstWriteAt` on session end, since the `tag` embeds it just as the native
-ids do. No timers,
+ids do. No `notification_rate` equivalent and no hot-document concern: the counter is a field in a
+tab's memory, and a tab only ever sees writes the sync engine delivered to it. No timers,
 because there are none to mirror any more: an earlier draft had this class reproducing the server's
 5-minute quiet timer and 30-minute ceiling per tab, with its own lifecycle to get wrong.
 
@@ -1428,9 +1477,11 @@ mirroring why `feature:stresstest:config` is separate from `feature:stresstest`.
 | `users/{uid}/push_devices/{id}` | **None needed** — covered by the own-tree rule. Add a comment naming it. |
 | `users/{uid}/notification_settings/main` | **None needed** — same. |
 | `notification_activity/{id}` | New: `allow read, write: if false;` (functions only) |
+| `notification_rate/{id}` | New: `allow read, write: if false;` (functions only) |
 
 Add emulator tests to the existing vitest suite in `backend/firebase/functions` covering: another
-user cannot read my `push_devices`; no client can read or write `notification_activity`; a revoked
+user cannot read my `push_devices`; no client can read or write `notification_activity` or
+`notification_rate`; a revoked
 member's uid is absent from `memberRoles` and therefore from the audience.
 
 ### 12.2 Actor suppression
@@ -1512,7 +1563,9 @@ resets the count to 1 **and rolls the notification id**, so the previous session
 overwritten — assert on the id, since asserting only on the count passes for the broken version; two writes inside
 `MIN_REPOST_INTERVAL` produce one send; a priority escalation posts under `n1esc:…` and is exempt
 from both the throttle and the ceiling; a member revoked between two writes is absent from the
-second send's audience; the per-aircraft rate ceiling holds under a stress-test burst.
+second send's audience; a tripped `AIRCRAFT_HOURLY_CEILING` short-circuits at step 3 and writes
+**no** counter doc at all; two concurrent writes leave `changeCount = 2`, not 1 — the lock-free
+`increment` path is the one a transaction-shaped test would silently pass.
 
 The one to write first, because it is the whole §7.3 argument in a test: **Dave's five edits on
 aircraft A interleaved with three on B produce exactly two distinct notification ids**, with final
@@ -1532,7 +1585,7 @@ Maps onto the PRD's phases. P1–P3 touch no backend at all.
 | **P1 Foundations** | Eight modules (§3) wired into `settings.gradle.kts` + `CommonAppModules`; proto + `CollectionKind` (all 5 registration points, §4.2); `NotificationPrefsManager` **including the hydration-resolution rule** (§4.3); `NotificationPermission` + `LocalNotifier` actuals ×3; channels; `Screen.Notifications` + nav; settings screen; **`DeveloperOptionsExtra` in `core:ui` + migrating the stress-test extra off `dogfoodContent` (§11.2)**; the notification Developer Options section | A dev build requests permission and posts a local notification on each channel; preferences persist and appear on a second device; **and a fresh install of an account with non-default preferences shows the spinner until they hydrate, never all-on — with the toggles disabled meanwhile** |
 | **P2 N2 urgency** | `urgency_watermark` table; `UrgencyRank`; `UrgencyScanner`; `UrgencyScanScheduler` (Android + iOS); session-boundary scan; seeding; per-tier batching; tap routing; scan diagnostics | Crossings fire exactly once; de-escalations silent; a fresh install notifies nothing; **no backend change was required** |
 | **P3 Web N1** | `ForeignWriteListener` in `core:storage`; `PullListener` hook; `jsMain` detector; one-shot actor read; `ActivityCounter` + `tag`-based replacement (§8.4) | A web user with a shared aircraft open sees a collaborator's edit from another account; **no backend, no token registry** |
-| **P4 N1 backend + Android** | `device_config` table; `PushTokenRegistrar`; `aircraft.proto` + `notification_settings.proto` added to `generate:proto`; fan-out trigger; `notification_activity` counter; collapse keys; rate ceiling; rules + emulator tests. **No Cloud Scheduler job and no Cloud Tasks queue** | Two accounts sharing an aircraft see each other's changes; neither sees their own |
+| **P4 N1 backend + Android** | `device_config` table; `PushTokenRegistrar`; `aircraft.proto` + `notification_settings.proto` added to `generate:proto`; fan-out trigger; `notification_activity` counter + `notification_rate` ceiling; collapse keys; rules + emulator tests. **No Cloud Scheduler job and no Cloud Tasks queue** | Two accounts sharing an aircraft see each other's changes; neither sees their own |
 | **P5 N1 on iOS** | APNs certificates, entitlements, background modes, notification service extension, Time Sensitive entitlement | Parity with Android on N1; `timeSensitive` works for AOG |
 | **P6 Web push** | Service worker, VAPID, `push_devices` for web | `isPushSupported` flips true on `jsMain` |
 
