@@ -105,9 +105,9 @@ established that reading of the pattern. Copy its `build.gradle.kts` verbatim an
 
 **Dependency direction.** `datamanager` depends on `core:storage`, `core:appinfo`, `core:lifecycle`,
 `feature:tasks:datamanager`, `feature:logs:datamanager`, `feature:squawk:datamanager`,
-`feature:fleet:datamanager`, and `feature:sharing:datamanager`. That is a wide fan-in and it is the
-point: the scanner is deliberately a *consumer* of the existing managers so no computation is
-duplicated. Nothing depends on `feature:notifications` except the shell (routes), settings (the row),
+`feature:fleet:datamanager`, `feature:sharing:datamanager`, and `feature:sync:data` (for
+`SyncCursorStore` and `CloudSyncSetting` — §4.3). That is a wide fan-in and it is the point: the
+scanner is deliberately a *consumer* of the existing managers so no computation is duplicated. Nothing depends on `feature:notifications` except the shell (routes), settings (the row),
 login (the primer), and the hosts (Koin + platform init).
 
 **`feature:sync:data` must not depend on `feature:notifications`.** The web N1 detector (§8) needs to
@@ -200,23 +200,106 @@ if any is missed — which is the intent:
 | 4 | `core/storage/.../LocalAccountMigrator.kt` | **not** an identity singleton: preferences a guest set should follow them into the upgraded account, so it migrates like normal data rather than joining `UserInfo`/`DeveloperOptions` in the drop list |
 | 5 | `feature/sync/data/.../SyncEngine.kt` | add to `TOP_LEVEL_KINDS` — this is the step `DeveloperOptions` skips, and skipping it here would mean preferences push but never arrive on a second device |
 
-Stored at `users/{uid}/notification_settings/main`, single doc id `"main"`, exactly like
-`DeveloperOptionsManagerImpl.DOC_ID`. Covered by the existing `users/{userId}/{document=**}`
-own-tree rule; no rules change.
+Stored at `users/{uid}/notification_settings/main` — the `"main"` doc id is the house convention for
+a per-user singleton, shared by `UserInfo` and `DeveloperOptions`. Covered by the existing
+`users/{userId}/{document=**}` own-tree rule; no rules change.
 
-### 4.3 `NotificationPrefsManager`
+### 4.3 `NotificationPrefsManager`, and why it is not `DeveloperOptionsManagerImpl`
+
+`DeveloperOptionsManagerImpl` is the closest-looking file in the tree — same `EntityStoreFactory`,
+same `authStateChanged.flatMapLatest`, same `"main"` doc id — and copying it would be a mistake.
+**`DeveloperOptions` is not in `TOP_LEVEL_KINDS` (§4.2 row 5), so it never hydrates**, and every
+simplification it is entitled to make depends on that.
+
+The right precedent is `TechnicianManagerImpl`'s handling of `UserInfo` — the other synced
+per-user singleton, at the same `"main"` id — and specifically `awaitHydratedSelfId`, whose comment
+states the problem exactly: "The cloud may know a self id we haven't hydrated yet — sync pulls
+`UserInfo` on sign-in. Rather than reading Firestore here (the sync engine is the only Firestore
+client), wait for hydration to land the row in the local store."
+
+#### Three consequences of hydrating, in increasing order of damage
+
+**1. `null` stops meaning "never set."** For `DeveloperOptions`, no local row can only mean the user
+has not changed anything, so resolving to defaults is immediately correct. For a hydrating kind it
+*also* means "this device signed in a moment ago and `notification_settings` has not arrived yet."
+A flow that answers "all on" during that window is answering a question it cannot yet answer.
+
+**2. A write during that window silently reverts every other device.** `EntityStore.put` writes the
+**whole message** with `dirty = 1`, and `SyncWriter`'s contract is explicit that implementations
+"issue an overwrite, never a merge." So a user who opens the screen before hydration lands, sees
+all-on, and flips AOG off has just pushed an all-defaults-except-AOG message — reverting the four
+classes they switched off on their phone last week. `PullListener`'s comparator then prefers the
+dirty local row over the incoming remote one, so the real settings lose. `UserInfo` never exposes
+this because it carries one meaningful field, so a whole-message overwrite has no sibling to clobber;
+`NotificationSettings` carries nine.
+
+**3. The scanner cannot un-send.** A screen showing the wrong state for two seconds is #451's flash
+one layer deeper. A notification posted against default preferences is permanent — a user who
+switched Due Soon off gets Due Soon alerts on a fresh install for as long as hydration takes, which
+is precisely the "it got noisy so I turned it all off" failure in PRD §12.
+
+#### The interface
+
+Resolution is part of the contract rather than something each caller re-derives:
 
 ```kotlin
+sealed interface PrefsState {
+  /** Signed in with sync on, and notification_settings has not hydrated yet. Do not read through. */
+  data object Unresolved : PrefsState
+  data class Resolved(val prefs: NotificationPrefs) : PrefsState
+}
+
 interface NotificationPrefsManager {
-  /** Emits defaults (all on) while signed out, so the settings screen is never empty. */
-  fun observe(): Flow<NotificationPrefs>
-  suspend fun update(prefs: NotificationPrefs): Result<Unit>
+  fun observe(): Flow<PrefsState>
+  /**
+   * Copies onto the currently resolved value. Fails (does not write) while [PrefsState.Unresolved] —
+   * a write from an unresolved state is a whole-message overwrite of settings this device has not
+   * read yet.
+   */
+  suspend fun update(mutate: (NotificationPrefs) -> NotificationPrefs): Result<Unit>
 }
 ```
 
-Implementation is `DeveloperOptionsManagerImpl` line for line: `authStateChanged.flatMapLatest`, an
-`EntityStore<NotificationSettings>` from `EntityStoreFactory`, `.catch` that logs and re-emits
-defaults.
+`update` takes a mutator rather than a whole `NotificationPrefs` for the same reason: a caller that
+hands over a value it built itself can reintroduce consequence 2 from outside the manager.
+
+#### Resolution rule
+
+In order; the first match wins:
+
+| Condition | State |
+|:--|:--|
+| No signed-in user | `Resolved(defaults)` — nothing to hydrate, and the settings screen is still usable (§6.8) |
+| `CloudSyncSetting.isCloudSyncEnabled()` is false | `Resolved(local row ?: defaults)` — nothing will *ever* hydrate, so waiting would hang forever. This is the same first-line guard `awaitHydratedSelfId` uses. |
+| A local row exists | `Resolved(it)` — whether it arrived by local edit or by hydration is irrelevant |
+| `SyncCursorStore.get(uid, NotificationSettings, userRoot)?.hydrated == true` | `Resolved(defaults)` — hydration finished and there genuinely is no doc, so the user has never set preferences |
+| Otherwise | `Unresolved`, until a row lands, the cursor flips, or `PREFS_HYDRATION_TIMEOUT` elapses → `Resolved(defaults)` |
+
+The cursor check is what `awaitHydratedSelfId` cannot do — it has no way to distinguish "no self id"
+from "not yet," so it leans on a bare timeout. Here the `sync_cursor` row makes the distinction
+exactly, and the timeout is only a backstop for hydration failing outright (`failed_attempts` backs
+off, so "never hydrates" is a state the app must survive, not an impossibility).
+
+This costs `feature:notifications:datamanager` a dependency on `feature:sync:data` for
+`SyncCursorStore`. That direction is fine — it is how `feature/sync/settings` already gets
+`SyncEngine`. The forbidden direction is the reverse, which §8.2 avoids with a `core:storage`
+interface.
+
+#### Consumers
+
+- **Settings screen** — `Unresolved` renders the spinner and disables the toggles, per §9.2's
+  `isLoading`. Disabling matters more than the spinner: it is what makes consequence 2 unreachable.
+- **`UrgencyScanner`** — `Unresolved` returns `ScanResult.PrefsUnresolved` and the scan does nothing
+  at all: no notifications, no seeding, **no watermark advance**. Skipping costs at most one cycle;
+  advancing watermarks against unresolved preferences would permanently swallow the crossings.
+
+#### The server has the same ambiguity, and does not need this machinery
+
+§7.4's sweep reads `users/{recipient}/notification_settings/main` directly from Firestore, which *is*
+the source of truth — a missing doc there means "never set," full stop. An absent doc, a
+default-decoded message, and all-on are the same thing (§4.1), so the sweep needs no equivalent
+resolution step. The inverted-boolean convention is what makes the two sides agree without either
+knowing about the other.
 
 **Preferences are account-level and synced; the per-device silence switch is not.** Q2 asks for a
 per-device enabled flag, and it belongs on the token doc (§7.1), not here — a synced field cannot
@@ -438,6 +521,7 @@ suspend fun scan(trigger: ScanTrigger): ScanResult
 
 1. uid = auth.currentUser?.uid ?: return NoUser        // §6.7
 2. prefs = prefsManager.observe().first()
+   if (prefs is Unresolved) return PrefsUnresolved     // §4.3 — no notify, no seed, no watermark write
    if (!prefs.allEnabled) return Disabled
    if (permission.observe().value != GRANTED) return NoPermission
 3. fleet = fleetManager.observeFleetDashboard().first() // own + shared, PRD §6.2
@@ -847,10 +931,21 @@ data class NotificationSettingsUiState(
 ```
 
 `combine` over `prefsManager.observe()`, `permission.observe()`, `auth.authStateChanged`, and
-`syncPreferences.state`. `isLoading` exists because of #451: a screen that flashes the wrong state
-before its first emission is worse than one that waits, and the same fix was already needed on the
-paywall. Any in-progress edit lives in the ViewModel's `StateFlow`, never in composable `remember` —
-this screen can be torn down by the OS permission dialog.
+`syncPreferences.state`. `isLoading` is true in **two** distinct situations, and both must disable
+the toggles rather than merely dim them:
+
+- the `stateIn` seed before `combine` has emitted — the #451 case verbatim, and the reason
+  `isLoading` defaults to `true`;
+- `PrefsState.Unresolved` (§4.3) — preferences exist but this device has not read them yet.
+
+The second is the one with teeth. #451 was a cosmetic flash: a returning Pro subscriber briefly saw
+the paywall. Here an *editable* control rendered against a guessed value writes that guess back as a
+whole-message overwrite, reverting the user's real settings on every other device (§4.3, consequence
+2). Disabling the toggles while `isLoading` is what makes that unreachable; the spinner is just the
+visible part.
+
+Any in-progress edit lives in the ViewModel's `StateFlow`, never in composable `remember` — this
+screen can be torn down by the OS permission dialog.
 
 ### 9.3 States the screen must be honest about
 
@@ -992,11 +1087,30 @@ The one that must exist by name: `complied_ranksBelowDueSoon_despiteHigherOrdina
 - three tasks crossing at once produce one summary, not three
 - a preference toggled off suppresses its tier but still advances the watermark — so turning it back
   on does not replay history
+- **`PrefsState.Unresolved` skips the scan entirely**: nothing notified, nothing seeded, and the
+  watermarks are byte-for-byte unchanged (§4.3). Assert the last one — an implementation that
+  advances watermarks and only suppresses the notification passes a weaker test and permanently
+  swallows the crossing.
 - an unhydrated scope is not pruned
 - concurrent scans do not double-report
 
 **`NotificationPrefsMappingTest`** — round-trip every field, `DeveloperOptionsMappingTest`-style. The
-inverted-boolean convention is exactly the kind of thing that inverts back wrong once.
+inverted-boolean convention is exactly the kind of thing that inverts back wrong once. Add
+`absentDoc_resolvesToAllOn` explicitly: it is the property the whole convention exists for, and it is
+also the contract the server-side sweep independently relies on (§4.3).
+
+**`NotificationPrefsManagerTest`** — the resolution rule (§4.3), which is where copying
+`DeveloperOptionsManagerImpl` would have gone wrong:
+
+- signed out → `Resolved(defaults)` immediately, never `Unresolved`
+- cloud sync off → `Resolved` immediately, even with no row and no cursor (otherwise it hangs forever)
+- signed in, sync on, no row, cursor not hydrated → `Unresolved`
+- …then the row lands → `Resolved(it)`
+- …or the cursor flips to `hydrated` with still no row → `Resolved(defaults)`
+- …or neither happens → `Resolved(defaults)` after `PREFS_HYDRATION_TIMEOUT`
+- `update()` while `Unresolved` fails and **writes nothing** — assert on the store, not just the
+  `Result`. This is the test that would have caught consequence 2.
+- `update()` while `Resolved` copies onto the resolved value, leaving untouched fields intact
 
 **Backend** (emulator + vitest, per the existing harness): an unshared aircraft produces no batch;
 the actor is excluded from the audience; two writes inside the quiet window produce one batch with
@@ -1015,7 +1129,7 @@ Maps onto the PRD's phases. P1–P3 touch no backend at all.
 
 | Phase | Contents | Exit criteria |
 |:--|:--|:--|
-| **P1 Foundations** | Module set; proto + `CollectionKind` (all 5 registration points, §4.2); `NotificationPrefsManager`; `NotificationPermission` + `LocalNotifier` actuals ×3; channels; `Screen.Notifications` + nav; settings screen; Developer Options test sends | A dev build requests permission and posts a local notification on each channel; preferences persist and appear on a second device |
+| **P1 Foundations** | Module set; proto + `CollectionKind` (all 5 registration points, §4.2); `NotificationPrefsManager` **including the hydration-resolution rule** (§4.3); `NotificationPermission` + `LocalNotifier` actuals ×3; channels; `Screen.Notifications` + nav; settings screen; Developer Options test sends | A dev build requests permission and posts a local notification on each channel; preferences persist and appear on a second device; **and a fresh install of an account with non-default preferences shows the spinner until they hydrate, never all-on — with the toggles disabled meanwhile** |
 | **P2 N2 urgency** | `urgency_watermark` table; `UrgencyRank`; `UrgencyScanner`; `UrgencyScanScheduler` (Android + iOS); session-boundary scan; seeding; per-tier batching; tap routing; scan diagnostics | Crossings fire exactly once; de-escalations silent; a fresh install notifies nothing; **no backend change was required** |
 | **P3 Web N1** | `ForeignWriteListener` in `core:storage`; `PullListener` hook; `jsMain` detector; one-shot actor read; `CoalescingBuffer` | A web user with a shared aircraft open sees a collaborator's edit from another account; **no backend, no token registry** |
 | **P4 N1 backend + Android** | `device_config` table; `PushTokenRegistrar`; `aircraft.proto` + `notification_settings.proto` added to `generate:proto`; fan-out trigger; buffer; sweep; rate ceiling; rules + emulator tests | Two accounts sharing an aircraft see each other's changes; neither sees their own |
@@ -1044,6 +1158,7 @@ amended rather than quietly diverged from.
 | D8 | §11 — instrument via the analytics plan | The scan reports nothing when sync is off or the account is anonymous | §12.3. The PRD calls this a privacy call for the design doc and names this as the safe default. |
 | D9 | — (not addressed) | `aircraft.proto` and `settings/notification_settings.proto` must be added to the functions' `generate:proto` list | §7.2. Neither is generated today, and the fan-out cannot read a tail number or a preference without them. |
 | D10 | §7.5 — iOS N1 in V1 | iOS Time Sensitive interruption level needs an entitlement and App Store review; sequenced into P5 | §5.2. iOS N2 ships at default interruption level in P2. |
+| D11 | §9.2 — preferences are "a new synced entity … like every other setting" | The manager must resolve *hydrated* from *never set* before any read or write. `DeveloperOptionsManagerImpl` is not the template — it never hydrates. `TechnicianManagerImpl.awaitHydratedSelfId` is. | §4.3. Reading through an unhydrated store shows the wrong toggles; **writing** through it pushes a whole-message overwrite that reverts the user's settings on every other device. |
 
 ## 16. Open questions
 
