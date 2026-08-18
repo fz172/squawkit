@@ -438,9 +438,9 @@ private fun ManageButton(caption: String, onClick: () -> Unit) {
       .height(Spacing.buttonHeight),
   ) {
     Text(
-      text = stringResource(Res.string.subscription_manage),
+      text = stringResource(Res.string.subscription_manage).uppercase(),
       style = MaterialTheme.typography.titleMedium,
-      fontWeight = FontWeight.SemiBold,
+      fontWeight = FontWeight.Bold,
     )
     Spacer(Modifier.width(Spacing.small))
     // Leaving the app: the Customer Center is the store's surface, not ours.

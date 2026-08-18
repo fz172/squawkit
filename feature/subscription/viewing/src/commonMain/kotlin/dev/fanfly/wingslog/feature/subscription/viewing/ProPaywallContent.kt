@@ -14,8 +14,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ReceiptLong
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -47,7 +45,6 @@ import wingslog.feature.subscription.viewing.generated.resources.subscription_co
 import wingslog.feature.subscription.viewing.generated.resources.subscription_compare_header
 import wingslog.feature.subscription.viewing.generated.resources.subscription_compare_subhead
 import wingslog.feature.subscription.viewing.generated.resources.subscription_cta_caption
-import wingslog.feature.subscription.viewing.generated.resources.subscription_cta_subscribe
 import wingslog.feature.subscription.viewing.generated.resources.subscription_feature_ads
 import wingslog.feature.subscription.viewing.generated.resources.subscription_feature_aircraft
 import wingslog.feature.subscription.viewing.generated.resources.subscription_feature_attachments
@@ -86,24 +83,13 @@ internal fun ProPaywallContent(
   BillingNote()
   ComparisonTable(isAdsSupported = state.isAdsSupported)
 
-  Button(
+  SubscribeButton(
     onClick = onSubscribe,
     // Disabled while activating so a pilot who has just paid can't start a second purchase in the
     // window before their entitlement syncs, and for a guest, who has no durable account to attach
     // a subscription to.
     enabled = state.isPurchaseSupported && !state.isActivating && !state.isGuest,
-    shape = RoundedCornerShape(Spacing.buttonCornerRadius),
-    colors = ButtonDefaults.buttonColors(),
-    modifier = Modifier
-      .fillMaxWidth()
-      .height(Spacing.buttonHeight),
-  ) {
-    Text(
-      text = stringResource(Res.string.subscription_cta_subscribe),
-      style = MaterialTheme.typography.titleMedium,
-      fontWeight = FontWeight.Bold,
-    )
-  }
+  )
 
   // Most actionable first: a guest can fix their case, and until they do nothing else about the
   // button matters. The default line sets expectations for the store sheet that is about to open.
