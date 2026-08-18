@@ -90,8 +90,8 @@ feature/notifications/
 │                   NotificationPermission (expect), LocalNotifier (expect),
 │                   UrgencyScanScheduler (expect), PushTokenRegistrar (expect),
 │                   NotificationTapRouter, di/NotificationsModule.kt
-├── sharedassets/   PermissionBanner, NotificationClassRow  (composables reused by
-│                   settings + the onboarding primer)
+├── sharedassets/   PermissionBanner, NotificationClassRow, notification strings
+│                   (settings-screen furniture; the onboarding primer shares none of it — §10.1)
 └── settings/       NotificationSettingsScreen, NotificationSettingsViewModel,
                     di/NotificationSettingsModule.kt
 ```
@@ -107,8 +107,10 @@ established that reading of the pattern. Copy its `build.gradle.kts` verbatim an
 `feature:tasks:datamanager`, `feature:logs:datamanager`, `feature:squawk:datamanager`,
 `feature:fleet:datamanager`, `feature:sharing:datamanager`, and `feature:sync:data` (for
 `SyncCursorStore` and `CloudSyncSetting` — §4.3). That is a wide fan-in and it is the point: the
-scanner is deliberately a *consumer* of the existing managers so no computation is duplicated. Nothing depends on `feature:notifications` except the shell (routes), settings (the row),
-login (the primer), and the hosts (Koin + platform init).
+scanner is deliberately a *consumer* of the existing managers so no computation is duplicated.
+
+Nothing depends on `feature:notifications` except the shell (routes), `feature:settings` (the row),
+`feature:login` (the primer — on `:datamanager` only, §10.1), and the hosts (Koin + platform init).
 
 **`feature:sync:data` must not depend on `feature:notifications`.** The web N1 detector (§8) needs to
 observe the sync stream, which would invert this. §8.2 resolves it with a listener interface owned by
@@ -977,13 +979,72 @@ silence one alert silences the whole app instead.
 
 ## 10. Onboarding primer
 
-A step in `AuthFlow`'s state machine (`feature/login/AuthFlow.kt`), inserted immediately before the
-ads-consent check:
+### 10.1 Where it lives
+
+| Piece | Location |
+|:--|:--|
+| The step | `feature/login/src/commonMain/.../feature/login/AuthFlow.kt` — a new `AuthStep.NotificationPrimer` |
+| The screen | `feature/login/src/commonMain/.../feature/login/onboarding/NotificationPrimerScreen.kt`, beside `AdsConsentExplainerScreen.kt` |
+| Its strings | `feature/login/src/commonMain/composeResources/values/strings.xml`, as `onboarding_notifications_*`, matching the existing `onboarding_ads_consent_*` set. The Continue label is already shared — `core:sharedassets`' `continue_action`. |
+| Build dep | `feature/login/build.gradle.kts` gains `implementation(project(":feature:notifications:datamanager"))` |
+
+**In `feature/login`, not in `feature/notifications`.** `AuthFlow` is deliberately navigation-free —
+a `when (step)` that renders its screens directly — so a step owned by another module would have to
+arrive as an injected composable slot, which is machinery bought for nothing. Onboarding screens
+belong to onboarding; `AdsConsentExplainerScreen` lives here rather than in `feature/ads` for the
+same reason.
+
+The dependency that follows is the one the ads step already declares, and the new line should carry
+the same kind of comment explaining what it is for:
+
+```kotlin
+// The ads-consent priming step: showsAds() (tier gate) + AdConsentManager (background
+// isConsentRequired() check, then presentConsentForm() from the explainer's Continue).
+implementation(project(":feature:ads:datamanager"))
+// The notification priming step: NotificationPermission (background UNDETERMINED check, then
+// request() — the real OS dialog — from the primer's Continue).
+implementation(project(":feature:notifications:datamanager"))
+```
+
+**Not `feature:notifications:sharedassets`.** `PermissionBanner` and `NotificationClassRow` are
+settings-screen furniture; the primer is a full-bleed explainer card that shares no component with
+them, exactly as `AdsConsentExplainerScreen` shares nothing with the ads feature's own UI. One
+dependency, on `datamanager`, for one interface.
+
+### 10.2 The screen
+
+Stateless, one parameter, mirroring `AdsConsentExplainerScreen`'s signature exactly:
+
+```kotlin
+@Composable
+fun NotificationPrimerScreen(onContinue: () -> Unit)
+```
+
+The screen has no opinion about what Continue does — it does not touch `NotificationPermission`, and
+it does not know whether a dialog follows. `AuthFlow` owns that, which is what keeps the screen
+previewable and keeps the permission call in one place. Copy is plain-language and concrete: hear
+about changes on shared aircraft, and when something goes overdue.
+
+### 10.3 The wiring
+
+`AuthFlow` takes the permission interface as a `koinInject()` default parameter, alongside
+`adConsentManager` and `subscriptionManager`:
+
+```kotlin
+@Composable
+fun AuthFlow(
+  onComplete: () -> Unit,
+  …
+  adConsentManager: AdConsentManager = koinInject(),
+  notificationPermission: NotificationPermission = koinInject(),
+) {
+```
 
 ```kotlin
 private enum class AuthStep { Login, EmailSignIn, NameEntry, Welcome, NotificationPrimer, AdsConsentExplainer }
 
 suspend fun proceedPastOnboarding() {
+  notificationPermission.refresh()
   if (notificationPermission.observe().value == PermissionState.UNDETERMINED) {
     step = AuthStep.NotificationPrimer
     return
@@ -996,6 +1057,32 @@ suspend fun proceedPastNotifications() {
   if (needsAdsConsent) step = AuthStep.AdsConsentExplainer else onComplete()
 }
 ```
+
+and in the `when (step)`, immediately before the `AdsConsentExplainer` arm:
+
+```kotlin
+AuthStep.NotificationPrimer -> NotificationPrimerScreen(
+  onContinue = {
+    scope.launch {
+      notificationPermission.request()   // the real OS dialog; its result is not branched on
+      proceedPastNotifications()
+    }
+  },
+)
+```
+
+Three details that matter:
+
+- **`refresh()` before the check** (§5.1). `observe()` is a `StateFlow` whose value can be stale —
+  the user may have changed the setting in the OS since the app last looked — and this is the one
+  read that decides whether a screen appears at all.
+- **The result of `request()` is deliberately not branched on.** §10.4's "not a blocking gate": a
+  denial proceeds exactly as a grant does, and is handled later by §9.3's settings banner.
+- **`proceedPastNotifications()` is a real split, not a rename.** `proceedPastOnboarding()` has two
+  call sites — `onLoginSuccess`'s already-onboarded branch and `WelcomeScreen.onDone` — and both must
+  keep entering at the top. The primer's Continue is the one path that must re-enter *below* the
+  notification check; routing it back through `proceedPastOnboarding()` would re-read a permission
+  state the OS may not have committed yet and show the primer again.
 
 **No preference flag of its own**, exactly like the ads-consent detour: it reads the OS permission
 state the way `AdConsentManager.isConsentRequired()` reads the CMP's cached state, and renders only
