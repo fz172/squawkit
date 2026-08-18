@@ -497,6 +497,7 @@ Feature PRDs and architecture design docs live in `docs/`, organized into per-to
 - `docs/account/` — `account_upgrade_PRD.html`, `account_upgrade_design.html`,
   `email_link_signin_design.html`
 - `docs/analytics/` — `analytics_design.html` (proposed, not implemented)
+- `docs/notifications/` — `notifications_PRD.md` (proposed, not implemented)
 - `docs/aircraft/` — `aircraft_overview_tabs.md`
 - `docs/search/` — `intelligentsearch.md`
 - `docs/web/` — `web_target_expansion_plan.md`, `web_attachments_design.md`,
@@ -508,9 +509,11 @@ Feature PRDs and architecture design docs live in `docs/`, organized into per-to
 Consult the relevant doc before making non-trivial changes to a feature area, and update its
 **Implementation Status** note when you change what has shipped.
 
-**Doc format policy:** all *new* docs are authored in **HTML** (self-contained, styled). Existing
-Markdown docs stay as-is until substantially rewritten; do not bulk-convert. Place a new doc in the
-matching subfolder (create one if no topic fits) and link related docs with relative paths.
+**Doc format policy:** all *new* docs are authored in **Markdown**. Existing HTML docs stay as-is
+until substantially rewritten; do not bulk-convert. Place a new doc in the matching subfolder
+(create one if no topic fits) and link related docs with relative paths. A Markdown doc opens in
+any editor, diffs cleanly in review, and needs no embedded stylesheet — which is why it, not
+self-contained HTML, is now the default.
 
 ## Developer Builds & Capabilities
 
