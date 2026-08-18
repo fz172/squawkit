@@ -1596,7 +1596,16 @@ and `MIN_REPOST_INTERVAL`. The noise floor has to be felt rather than reasoned a
 
 ### 14.1 Task breakdown
 
-Issue-sized. "Blocks" names the immediate prerequisite only.
+Tracked on **[GitHub Project #9 — Notifications](https://github.com/users/fz172/projects/9)**, one
+epic per phase with these tasks as sub-issues: [#454 P0](https://github.com/fz172/squawkit/issues/454)
+· [#455 P1](https://github.com/fz172/squawkit/issues/455)
+· [#456 P2](https://github.com/fz172/squawkit/issues/456)
+· [#457 P3](https://github.com/fz172/squawkit/issues/457)
+· [#458 P4](https://github.com/fz172/squawkit/issues/458)
+· [#459 P5](https://github.com/fz172/squawkit/issues/459)
+· [#460 P6](https://github.com/fz172/squawkit/issues/460).
+
+Issue-sized below. "Blocks on" names the immediate prerequisite only.
 
 **P0 — Developer Options plumbing.** Independent of everything else; can start today.
 
