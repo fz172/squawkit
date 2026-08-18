@@ -28,6 +28,16 @@ import kotlin.time.Instant
 
 /** Display state for the subscription page. Dates are pre-formatted; storage is formatted in the UI. */
 data class SubscriptionUiState(
+  /**
+   * No entitlement has been read yet — the page should show a neutral spinner, not a tier.
+   *
+   * Defaults `true` because the only place this default is ever seen is the `stateIn` seed the
+   * page's real StateFlow starts from, before its `combine` has emitted once. Every mapped state
+   * (see [toSubscriptionUiState]) sets this `false` explicitly, since a resolved tier — even the
+   * free one — is never "still loading". Without this, a returning Pro subscriber briefly sees
+   * [isPro] `false` and the free-tier paywall before their real entitlement arrives.
+   */
+  val isLoading: Boolean = true,
   val isPro: Boolean = false,
   val lifecycle: Subscription.Lifecycle = Subscription.Lifecycle.LIFECYCLE_NONE,
   val willRenew: Boolean = false,
@@ -324,6 +334,7 @@ internal fun toSubscriptionUiState(
   val providerUrl = if (isComped) null else manageableUrlOrNull(subscription.management_url)
   val derivedUrl = if (isComped) null else derivedManagementUrlFor(purchasePlatform)
   return SubscriptionUiState(
+    isLoading = false,
     isPro = status == Subscription.Status.STATUS_PRO,
     lifecycle = subscription.lifecycle,
     willRenew = subscription.will_renew,

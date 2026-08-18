@@ -28,6 +28,7 @@ import kotlinx.datetime.TimeZone
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
+import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class SubscriptionUiStateTest {
@@ -64,8 +65,39 @@ class SubscriptionUiStateTest {
 
   @Test
   fun `free status is not pro`() {
-    assertThat(toSubscriptionUiState(Subscription.Status.STATUS_FREE, Subscription(), TimeZone.UTC).isPro)
+    assertThat(
+      toSubscriptionUiState(
+        Subscription.Status.STATUS_FREE,
+        Subscription(),
+        TimeZone.UTC
+      ).isPro
+    )
       .isFalse()
+  }
+
+  @Test
+  fun `the unmapped default state starts loading`() {
+    // The only place a caller ever sees this default is the ViewModel's stateIn seed, before the
+    // real combine has emitted — the page must not render Free/Pro from this value.
+    assertThat(SubscriptionUiState().isLoading).isTrue()
+  }
+
+  @Test
+  fun `a mapped state is never loading, free or pro`() {
+    assertThat(
+      toSubscriptionUiState(
+        Subscription.Status.STATUS_FREE,
+        Subscription(),
+        TimeZone.UTC
+      ).isLoading
+    ).isFalse()
+    assertThat(
+      toSubscriptionUiState(
+        Subscription.Status.STATUS_PRO,
+        Subscription(),
+        TimeZone.UTC
+      ).isLoading
+    ).isFalse()
   }
 
   @Test
@@ -116,46 +148,58 @@ class SubscriptionUiStateTest {
   }
 
   @Test
-  fun `activation watchdog asks the server to re-check when the entitlement never lands`() = runTest {
-    // The charged-but-not-entitled case: the store took payment, no webhook arrived, and a daily
-    // scan can never find this account because it holds no Pro entitlement to look stale.
-    val reconciler = RecordingReconciler()
-    val vm = viewModel(status = Subscription.Status.STATUS_FREE, reconciler = reconciler)
+  fun `activation watchdog asks the server to re-check when the entitlement never lands`() =
+    runTest {
+      // The charged-but-not-entitled case: the store took payment, no webhook arrived, and a daily
+      // scan can never find this account because it holds no Pro entitlement to look stale.
+      val reconciler = RecordingReconciler()
+      val vm = viewModel(
+        status = Subscription.Status.STATUS_FREE,
+        reconciler = reconciler
+      )
 
-    vm.onPurchaseCompleted()
-    advanceTimeBy(GRACE + 1)
-    runCurrent()
+      vm.onPurchaseCompleted()
+      advanceTimeBy((GRACE + 1).milliseconds)
+      runCurrent()
 
-    assertThat(reconciler.calls).isEqualTo(1)
-  }
-
-  @Test
-  fun `activation watchdog stays quiet once the entitlement has landed`() = runTest {
-    // Asking the server to re-check an account that is already Pro burns a provider lookup for
-    // nothing, so the watchdog re-reads the tier rather than trusting the pending flag.
-    val reconciler = RecordingReconciler()
-    val vm = viewModel(status = Subscription.Status.STATUS_PRO, reconciler = reconciler)
-
-    vm.onPurchaseCompleted()
-    advanceTimeBy(GRACE + 1)
-    runCurrent()
-
-    assertThat(reconciler.calls).isEqualTo(0)
-  }
+      assertThat(reconciler.calls).isEqualTo(1)
+    }
 
   @Test
-  fun `a second purchase restarts the watchdog rather than stacking another`() = runTest {
-    val reconciler = RecordingReconciler()
-    val vm = viewModel(status = Subscription.Status.STATUS_FREE, reconciler = reconciler)
+  fun `activation watchdog stays quiet once the entitlement has landed`() =
+    runTest {
+      // Asking the server to re-check an account that is already Pro burns a provider lookup for
+      // nothing, so the watchdog re-reads the tier rather than trusting the pending flag.
+      val reconciler = RecordingReconciler()
+      val vm = viewModel(
+        status = Subscription.Status.STATUS_PRO,
+        reconciler = reconciler
+      )
 
-    vm.onPurchaseCompleted()
-    advanceTimeBy(GRACE / 2)
-    vm.onPurchaseCompleted()
-    advanceTimeBy(GRACE + 1)
-    runCurrent()
+      vm.onPurchaseCompleted()
+      advanceTimeBy((GRACE + 1).milliseconds)
+      runCurrent()
 
-    assertThat(reconciler.calls).isEqualTo(1)
-  }
+      assertThat(reconciler.calls).isEqualTo(0)
+    }
+
+  @Test
+  fun `a second purchase restarts the watchdog rather than stacking another`() =
+    runTest {
+      val reconciler = RecordingReconciler()
+      val vm = viewModel(
+        status = Subscription.Status.STATUS_FREE,
+        reconciler = reconciler
+      )
+
+      vm.onPurchaseCompleted()
+      advanceTimeBy((GRACE / 2).milliseconds)
+      vm.onPurchaseCompleted()
+      advanceTimeBy((GRACE + 1).milliseconds)
+      runCurrent()
+
+      assertThat(reconciler.calls).isEqualTo(1)
+    }
 
   @Test
   fun `purchase platform is read from the entitlement`() {
@@ -169,37 +213,92 @@ class SubscriptionUiStateTest {
 
   @Test
   fun `a subscription bought on this device's store can be managed here`() {
-    assertThat(canManageHere(PurchasePlatform.PLAY_STORE, PurchasePlatform.PLAY_STORE)).isTrue()
-    assertThat(canManageHere(PurchasePlatform.APP_STORE, PurchasePlatform.APP_STORE)).isTrue()
+    assertThat(
+      canManageHere(
+        PurchasePlatform.PLAY_STORE,
+        PurchasePlatform.PLAY_STORE
+      )
+    ).isTrue()
+    assertThat(
+      canManageHere(
+        PurchasePlatform.APP_STORE,
+        PurchasePlatform.APP_STORE
+      )
+    ).isTrue()
     // Both Apple storefronts are managed from the same place, so an iOS build handles either.
-    assertThat(canManageHere(PurchasePlatform.MAC_APP_STORE, PurchasePlatform.APP_STORE)).isTrue()
+    assertThat(
+      canManageHere(
+        PurchasePlatform.MAC_APP_STORE,
+        PurchasePlatform.APP_STORE
+      )
+    ).isTrue()
   }
 
   @Test
   fun `a subscription bought on another store cannot be managed here`() {
     // Pro is still unlocked on this device — entitlement is account-scoped — but Apple will not
     // cancel a Google Play plan, so the page must send the pilot back to the device that bought it.
-    assertThat(canManageHere(PurchasePlatform.APP_STORE, PurchasePlatform.PLAY_STORE)).isFalse()
-    assertThat(canManageHere(PurchasePlatform.PLAY_STORE, PurchasePlatform.APP_STORE)).isFalse()
-    assertThat(canManageHere(PurchasePlatform.AMAZON, PurchasePlatform.PLAY_STORE)).isFalse()
+    assertThat(
+      canManageHere(
+        PurchasePlatform.APP_STORE,
+        PurchasePlatform.PLAY_STORE
+      )
+    ).isFalse()
+    assertThat(
+      canManageHere(
+        PurchasePlatform.PLAY_STORE,
+        PurchasePlatform.APP_STORE
+      )
+    ).isFalse()
+    assertThat(
+      canManageHere(
+        PurchasePlatform.AMAZON,
+        PurchasePlatform.PLAY_STORE
+      )
+    ).isFalse()
     // Web subscriptions are cancelled in the biller's own portal, never in the app.
-    assertThat(canManageHere(PurchasePlatform.WEB, PurchasePlatform.PLAY_STORE)).isFalse()
+    assertThat(
+      canManageHere(
+        PurchasePlatform.WEB,
+        PurchasePlatform.PLAY_STORE
+      )
+    ).isFalse()
   }
 
   @Test
   fun `a build with no store manages nothing`() {
     // Web holds a real subscription and shows Pro, but has no Customer Center to open at all.
-    assertThat(canManageHere(PurchasePlatform.PLAY_STORE, store = null)).isFalse()
+    assertThat(
+      canManageHere(
+        PurchasePlatform.PLAY_STORE,
+        store = null
+      )
+    ).isFalse()
     assertThat(canManageHere(null, store = null)).isFalse()
-    assertThat(canManageHere(PurchasePlatform.TEST_STORE, store = null)).isFalse()
+    assertThat(
+      canManageHere(
+        PurchasePlatform.TEST_STORE,
+        store = null
+      )
+    ).isFalse()
   }
 
   @Test
   fun `test store purchases stay manageable on the build that made them`() {
     // The simulated store's origin matches no real storefront. Treating that as a mismatch would
     // block managing every dogfood purchase, which is the only kind that exists before GA.
-    assertThat(canManageHere(PurchasePlatform.TEST_STORE, PurchasePlatform.PLAY_STORE)).isTrue()
-    assertThat(canManageHere(PurchasePlatform.TEST_STORE, PurchasePlatform.APP_STORE)).isTrue()
+    assertThat(
+      canManageHere(
+        PurchasePlatform.TEST_STORE,
+        PurchasePlatform.PLAY_STORE
+      )
+    ).isTrue()
+    assertThat(
+      canManageHere(
+        PurchasePlatform.TEST_STORE,
+        PurchasePlatform.APP_STORE
+      )
+    ).isTrue()
   }
 
   @Test
@@ -417,46 +516,52 @@ class SubscriptionUiStateTest {
   }
 
   @Test
-  fun `a Pro account with no management link asks the server to reconcile`() = runTest {
-    // The gap this closes: `management_url` is REST-only, so a purchase whose webhook worked is
-    // never reconciled and never learns it — and the daily scan only looks at STALE entitlements, so
-    // a healthy subscription would wait until it lapsed to get a link. Web has no billing SDK at
-    // all, so without this it never gets one.
-    val reconciler = RecordingReconciler()
-    viewModel(
-      status = Subscription.Status.STATUS_PRO,
-      reconciler = reconciler,
-      subscription = Subscription(origin_platform = "play_store"),
-    )
-    runCurrent()
+  fun `a Pro account with no management link asks the server to reconcile`() =
+    runTest {
+      // The gap this closes: `management_url` is REST-only, so a purchase whose webhook worked is
+      // never reconciled and never learns it — and the daily scan only looks at STALE entitlements, so
+      // a healthy subscription would wait until it lapsed to get a link. Web has no billing SDK at
+      // all, so without this it never gets one.
+      val reconciler = RecordingReconciler()
+      viewModel(
+        status = Subscription.Status.STATUS_PRO,
+        reconciler = reconciler,
+        subscription = Subscription(origin_platform = "play_store"),
+      )
+      runCurrent()
 
-    assertThat(reconciler.calls).isEqualTo(1)
-  }
-
-  @Test
-  fun `a Pro account that already has a management link asks for nothing`() = runTest {
-    val reconciler = RecordingReconciler()
-    viewModel(status = Subscription.Status.STATUS_PRO, reconciler = reconciler)
-    runCurrent()
-
-    assertThat(reconciler.calls).isEqualTo(0)
-  }
+      assertThat(reconciler.calls).isEqualTo(1)
+    }
 
   @Test
-  fun `a build whose own store sold the subscription does not ask for a link`() = runTest {
-    // It opens the Customer Center instead, which is richer than any URL — asking would burn a
-    // provider lookup for a link the page will never render.
-    val reconciler = RecordingReconciler()
-    viewModel(
-      status = Subscription.Status.STATUS_PRO,
-      reconciler = reconciler,
-      billingManager = FakeBillingManager(PurchasePlatform.PLAY_STORE),
-      subscription = Subscription(origin_platform = "play_store"),
-    )
-    runCurrent()
+  fun `a Pro account that already has a management link asks for nothing`() =
+    runTest {
+      val reconciler = RecordingReconciler()
+      viewModel(
+        status = Subscription.Status.STATUS_PRO,
+        reconciler = reconciler
+      )
+      runCurrent()
 
-    assertThat(reconciler.calls).isEqualTo(0)
-  }
+      assertThat(reconciler.calls).isEqualTo(0)
+    }
+
+  @Test
+  fun `a build whose own store sold the subscription does not ask for a link`() =
+    runTest {
+      // It opens the Customer Center instead, which is richer than any URL — asking would burn a
+      // provider lookup for a link the page will never render.
+      val reconciler = RecordingReconciler()
+      viewModel(
+        status = Subscription.Status.STATUS_PRO,
+        reconciler = reconciler,
+        billingManager = FakeBillingManager(PurchasePlatform.PLAY_STORE),
+        subscription = Subscription(origin_platform = "play_store"),
+      )
+      runCurrent()
+
+      assertThat(reconciler.calls).isEqualTo(0)
+    }
 
   @Test
   fun `a free account is never asked about a management link`() = runTest {
@@ -485,7 +590,10 @@ class SubscriptionUiStateTest {
 
   @Test
   fun `a signed-in account is not treated as a guest`() = runTest {
-    val vm = viewModel(status = Subscription.Status.STATUS_FREE, reconciler = RecordingReconciler())
+    val vm = viewModel(
+      status = Subscription.Status.STATUS_FREE,
+      reconciler = RecordingReconciler()
+    )
     assertThat(stateOf(vm).isGuest).isFalse()
   }
 
@@ -558,11 +666,12 @@ class SubscriptionUiStateTest {
   }
 
   /** An AuthManager reporting a signed-in user who is, or is not, a guest. */
-  private fun authManager(isGuest: Boolean): AuthManager = mockk(relaxed = true) {
-    every { getCurrentUser() } returns mockk<FirebaseUser>(relaxed = true) {
-      every { this@mockk.isAnonymous } returns isGuest
+  private fun authManager(isGuest: Boolean): AuthManager =
+    mockk(relaxed = true) {
+      every { getCurrentUser() } returns mockk<FirebaseUser>(relaxed = true) {
+        every { this@mockk.isAnonymous } returns isGuest
+      }
     }
-  }
 
   private class FixedSubscriptionManager(
     private val status: Subscription.Status,

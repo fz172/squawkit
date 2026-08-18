@@ -15,6 +15,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -103,24 +104,30 @@ fun SubscriptionScreen(
         .fillMaxSize(),
       contentAlignment = Alignment.TopCenter,
     ) {
-      Column(
-        modifier = Modifier
-          .constrainedContentWidth(ContentWidth.Reading)
-          .fillMaxSize()
-          .padding(Spacing.screenPadding)
-          .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(Spacing.large),
-      ) {
-        if (uiState.isPro) {
-          ProMembershipContent(
-            state = uiState,
-            onManage = { sheet = BillingSheet.CustomerCenter },
-          )
-        } else {
-          ProPaywallContent(
-            state = uiState,
-            onSubscribe = { sheet = BillingSheet.Paywall },
-          )
+      if (uiState.isLoading) {
+        // No tier is known yet — a neutral spinner, never a guess. Showing the paywall here would
+        // read as a returning Pro subscriber's own subscription flashing as unpurchased.
+        CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+      } else {
+        Column(
+          modifier = Modifier
+            .constrainedContentWidth(ContentWidth.Reading)
+            .fillMaxSize()
+            .padding(Spacing.screenPadding)
+            .verticalScroll(rememberScrollState()),
+          verticalArrangement = Arrangement.spacedBy(Spacing.large),
+        ) {
+          if (uiState.isPro) {
+            ProMembershipContent(
+              state = uiState,
+              onManage = { sheet = BillingSheet.CustomerCenter },
+            )
+          } else {
+            ProPaywallContent(
+              state = uiState,
+              onSubscribe = { sheet = BillingSheet.Paywall },
+            )
+          }
         }
       }
     }
