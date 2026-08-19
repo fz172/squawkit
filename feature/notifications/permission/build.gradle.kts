@@ -42,6 +42,16 @@ kotlin {
     commonMain.dependencies {
       implementation(project(":core:lifecycle"))
       implementation(project(":core:appinfo"))
+      implementation(libs.kotlinx.coroutines.core)
+      implementation(libs.koin.core)
+    }
+    androidMain.dependencies {
+      // NotificationManagerCompat / ActivityCompat.shouldShowRequestPermissionRationale, and
+      // ActivityResultLauncher for the bridge MainActivity attaches into.
+      implementation(libs.androidx.core.ktx)
+      implementation(libs.androidx.activity.ktx)
+      implementation(libs.koin.android)
+      implementation(libs.kermit)
     }
   }
 }
