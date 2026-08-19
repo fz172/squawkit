@@ -46,6 +46,14 @@ kotlin {
       implementation(project(":feature:notifications:model"))
 
       implementation(libs.compose.runtime)
+      implementation(libs.kotlinx.coroutines.core)
+      implementation(libs.koin.core)
+    }
+    androidMain.dependencies {
+      // NotificationManagerCompat / NotificationChannel / NotificationCompat.Builder.
+      implementation(libs.androidx.core.ktx)
+      implementation(libs.koin.android)
+      implementation(libs.kermit)
     }
   }
 }

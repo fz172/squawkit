@@ -2,9 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
   <uses-permission android:name="android.permission.INTERNET" />
-  <!-- Runtime-prompted on API 33+ via AndroidNotificationPermission; declaring it here is required
-       before it can be requested at all. See docs/notifications/notifications_design.md §5.1. -->
-  <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+  <!-- POST_NOTIFICATIONS is declared by feature/notifications/viewing (the module that actually
+       calls NotificationManagerCompat.notify()) and merged in from there — not duplicated here. -->
 
   <!-- Lets the app resolve email apps for sharing exports (Android 11+ package visibility). -->
   <queries>

@@ -30,6 +30,7 @@ import dev.fanfly.wingslog.feature.logs.update.di.maintenanceUpdateModule
 import dev.fanfly.wingslog.feature.logs.viewing.di.maintenanceViewingModule
 import dev.fanfly.wingslog.feature.notifications.devoptions.di.notificationDevOptionsModule
 import dev.fanfly.wingslog.feature.notifications.permission.di.platformNotificationPermissionModule
+import dev.fanfly.wingslog.feature.notifications.viewing.di.platformNotificationDisplayModule
 import dev.fanfly.wingslog.feature.settings.di.settingsModule
 import dev.fanfly.wingslog.feature.sharing.datamanager.sharingModule
 import dev.fanfly.wingslog.feature.sharing.update.di.sharingUiModule
@@ -112,10 +113,11 @@ val commonAppModules: List<Module> = listOf(
   sharingUiModule,
   loginModule,
   // Notifications (P1, in progress — docs/notifications/notifications_design.md §14.1). Only the
-  // pieces that exist so far: NotificationPermission's platform actual, and the Developer Options
-  // section that exercises it. The remaining modules (:datamanager, :viewing, :engine,
-  // :settings) join this list as their own tasks land.
+  // pieces that exist so far: NotificationPermission's and LocalNotifier's platform actuals, and
+  // the Developer Options section that exercises the former. The remaining modules
+  // (:datamanager, :engine, :settings) join this list as their own tasks land.
   platformNotificationPermissionModule,
+  platformNotificationDisplayModule,
   notificationDevOptionsModule,
   settingsModule,
   syncSettingsModule,
