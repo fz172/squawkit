@@ -35,8 +35,8 @@ import dev.fanfly.wingslog.feature.shell.viewmodel.AdaptiveShellViewModel
 import dev.fanfly.wingslog.feature.subscription.viewing.ProUpsellSheet
 import dev.fanfly.wingslog.feature.subscription.viewing.UpsellTrigger
 import dev.fanfly.wingslog.feature.sync.data.SyncNotice
-import org.jetbrains.compose.resources.stringResource
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.core.sharedassets.generated.resources.dismiss
 import wingslog.core.sharedassets.generated.resources.sync_changes_discarded
@@ -51,7 +51,6 @@ import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 fun AdaptiveShellRoute(
   navController: NavController,
   shellEntry: NavBackStackEntry,
-  isStressTestSupported: Boolean,
 ) {
   val viewModel = koinViewModel<AdaptiveShellViewModel>()
   // Hoisted to the shell, not to Settings: an email upgrade link reopens the app on whatever
@@ -139,7 +138,6 @@ fun AdaptiveShellRoute(
         SettingsSection(
           rootNavController = navController,
           upgradeViewModel = upgradeViewModel,
-          isStressTestSupported = isStressTestSupported
         )
       } else {
         ShellSectionBody(
@@ -169,7 +167,13 @@ fun AdaptiveShellRoute(
   // section is showing. The flow ignores links that aren't for this guest's pending upgrade.
   AccountUpgradeFlow(
     viewModel = upgradeViewModel,
-    onMessage = { message -> scope.launch { snackbarHostState.showSnackbar(message) } },
+    onMessage = { message ->
+      scope.launch {
+        snackbarHostState.showSnackbar(
+          message
+        )
+      }
+    },
   )
 
   if (showAddAircraftUpsell) {
@@ -196,7 +200,6 @@ private const val SETTINGS_ROOT_ROUTE = "settings_root"
 @Composable
 private fun SettingsSection(
   rootNavController: NavController,
-  isStressTestSupported: Boolean,
   upgradeViewModel: AccountUpgradeViewModel,
 ) {
   if (LocalLayoutTier.current.hasFullSidebar) {
@@ -219,7 +222,7 @@ private fun SettingsSection(
           accountUpgradeViewModel = upgradeViewModel,
         )
       }
-      settingsDetailRoutes(settingsNav, isStressTestSupported)
+      settingsDetailRoutes(settingsNav)
     }
   } else {
     SettingsContent(

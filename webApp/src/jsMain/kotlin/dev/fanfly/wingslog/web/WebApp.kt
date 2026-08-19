@@ -127,16 +127,12 @@ fun WebApp() {
               AdaptiveShellRoute(
                 navController = navController,
                 shellEntry = entry,
-                isStressTestSupported = appCapability.isStressTestSupported,
               )
             }
             formDialogs(navController)
             sharingRoutes(navController)
             // Compact tiers (no sidebar) open settings detail pages as full-screen routes.
-            settingsDetailRoutes(
-              navController,
-              appCapability.isStressTestSupported
-            )
+            settingsDetailRoutes(navController)
           }
           // App-root overlay for inbound share deep links (parked invites), above the nav graph.
           RedeemHost()

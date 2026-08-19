@@ -9,15 +9,16 @@ import androidx.navigation.navArgument
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.ui.adaptive.compose.AdaptiveFormDialogFrame
 import dev.fanfly.wingslog.feature.aircraft.update.EditAircraftScreen
+import dev.fanfly.wingslog.feature.developeroptions.plugin.DeveloperOptionsNavContributor
 import dev.fanfly.wingslog.feature.export.update.ExportHistoryRoute
 import dev.fanfly.wingslog.feature.export.update.ExportSelectionRoute
 import dev.fanfly.wingslog.feature.logs.update.logs.MaintenanceLogFormScreen
+import dev.fanfly.wingslog.feature.developeroptions.plugin.DeveloperOptionsNavContributor
 import dev.fanfly.wingslog.feature.settings.developeroptions.DeveloperOptionsScreen
 import dev.fanfly.wingslog.feature.sharing.update.EnterInviteCodeRoute
 import dev.fanfly.wingslog.feature.sharing.update.ManageAccessRoute
 import dev.fanfly.wingslog.feature.squawk.update.ui.AddSquawkRoute
 import dev.fanfly.wingslog.feature.squawk.update.ui.EditSquawkRoute
-import dev.fanfly.wingslog.feature.stresstest.config.registerStressTestRoutes
 import dev.fanfly.wingslog.feature.subscription.viewing.SubscriptionScreen
 import dev.fanfly.wingslog.feature.sync.settings.SyncSettingsScreen
 import dev.fanfly.wingslog.feature.tasks.update.ui.AddTaskRoute
@@ -26,6 +27,7 @@ import dev.fanfly.wingslog.feature.technician.manage.compose.EditTechnicianScree
 import dev.fanfly.wingslog.feature.technician.manage.compose.TechnicianListScreen
 import dev.fanfly.wingslog.feature.technician.manage.viewmodel.TechnicianListViewModel
 import org.koin.compose.viewmodel.koinViewModel
+import org.koin.mp.KoinPlatform
 
 /**
  * The eight add/edit form dialogs shared by every host. Registered once on the root graph;
@@ -148,8 +150,9 @@ fun NavGraphBuilder.formDialogs(navController: NavController) {
  * nested settings NavHost (so detail pages render in the content pane beside the sidebar).
  * [navController] is whichever graph the caller is wiring.
  *
- * Stress-test routes and the DeveloperOptions debug entry are gated on [isStressTestSupported]
- * (`AppCapability.isStressTestSupported`) on every host.
+ * Developer-only destinations are not listed here. They are contributed through Koin as
+ * [DeveloperOptionsNavContributor]s and gate themselves, so this module needs no dependency on the
+ * features that own them and no capability flag to decide for them.
  */
 /**
  * Per-aircraft sharing destinations, registered once on the root graph so both hosts render them.
@@ -171,7 +174,6 @@ fun NavGraphBuilder.sharingRoutes(navController: NavController) {
 
 fun NavGraphBuilder.settingsDetailRoutes(
   navController: NavController,
-  isStressTestSupported: Boolean,
 ) {
   composable(Screen.SyncSettings.route) {
     SyncSettingsScreen(navController = navController)
@@ -192,9 +194,13 @@ fun NavGraphBuilder.settingsDetailRoutes(
   composable(Screen.DeveloperOptions.route) {
     DeveloperOptionsScreen(navController = navController)
   }
-  if (isStressTestSupported) {
-    registerStressTestRoutes(this, navController)
-  }
+  // Developer-only destinations, resolved rather than imported, so this module has no compile
+  // dependency on the features that own them. Non-composable builder scope, hence KoinPlatform
+  // rather than org.koin.compose.getKoin() — the same reach MainViewController.kt already uses.
+  KoinPlatform.getKoin()
+    .getAll<DeveloperOptionsNavContributor>()
+    .filter { it.isAvailable() }
+    .forEach { it.register(this@settingsDetailRoutes, navController) }
   composable(Screen.ManageTechnicians.route) {
     val viewModel = koinViewModel<TechnicianListViewModel>()
     TechnicianListScreen(
