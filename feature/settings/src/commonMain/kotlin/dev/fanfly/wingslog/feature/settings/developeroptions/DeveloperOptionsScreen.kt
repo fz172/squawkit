@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -69,7 +71,8 @@ fun DeveloperOptionsScreen(
         modifier = Modifier
           .constrainedContentWidth(ContentWidth.Reading)
           .fillMaxSize()
-          .padding(Spacing.screenPadding),
+          .padding(Spacing.screenPadding)
+          .verticalScroll(rememberScrollState()),
       ) {
         Text(
           text = stringResource(Res.string.developer_options_subtitle),
