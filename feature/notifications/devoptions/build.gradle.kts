@@ -19,6 +19,10 @@ android {
   }
 }
 
+compose.resources {
+  publicResClass = true
+}
+
 kotlin {
   jvmToolchain(21)
 
@@ -45,11 +49,15 @@ kotlin {
       implementation(project(":core:ui:theme"))
       implementation(project(":feature:developeroptions:plugin"))
       implementation(project(":feature:notifications:model"))
+      implementation(project(":feature:notifications:permission"))
       implementation(project(":feature:notifications:engine"))
       implementation(project(":feature:notifications:viewing"))
 
       implementation(libs.compose.runtime)
       implementation(libs.koin.core)
+      implementation(libs.koin.compose)
+      implementation(libs.jetbrains.lifecycle.runtime.compose)
+      implementation(libs.components.resources)
     }
   }
 }
