@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+option java_package = "dev.fanfly.wingslog.core.model.settings";
+option java_multiple_files = true;
+
+// Account-level notification preferences. See docs/notifications/notifications_design.md §4.1.
+//
+// EVERY FIELD IS INVERTED — `*_disabled`, never `*_enabled`. proto3 has no field presence for
+// scalars, so an absent or default-constructed message decodes to all-false. The PRD wants every
+// class ON by default, so all-false must MEAN all-on. A user who has never opened the settings
+// screen has no doc at all; a `*_enabled` field would silence them.
+//
+// This is the same convention DeveloperSettings already reserves under
+// (`technician_disabled`, `attachment_upload_disabled`).
+message NotificationSettings {
+  // Master switch. Off silences every class, locally and server-side.
+  bool all_disabled = 1;
+
+  // --- Urgency (N2) — device-local detection, no account required ---
+  bool aog_disabled = 2;                 // any escalation to SQUAWK_PRIORITY_AOG
+  bool squawk_priority_disabled = 3;     // escalations below AOG, and reopened squawks
+  bool overdue_disabled = 4;             // -> DueStatus.OVERDUE
+  bool due_soon_disabled = 5;            // -> DueStatus.DUE_SOON
+
+  // --- Collaboration (N1) — server fan-out, needs a real account + cloud sync ---
+  bool aircraft_activity_disabled = 6;   // Aircraft record edited
+  bool squawk_activity_disabled = 7;     // squawk create/edit/dismiss/reopen/delete
+  bool task_activity_disabled = 8;       // task create/edit/force-comply/delete
+  bool log_activity_disabled = 9;        // log create/edit/delete
+}

@@ -8,6 +8,7 @@ import dev.fanfly.wingslog.aircraft.MaintenanceTask
 import dev.fanfly.wingslog.aircraft.Squawk
 import dev.fanfly.wingslog.aircraft.Technician
 import dev.fanfly.wingslog.core.model.settings.DeveloperSettings
+import dev.fanfly.wingslog.core.model.settings.NotificationSettings
 import dev.fanfly.wingslog.core.model.settings.Subscription
 import dev.fanfly.wingslog.core.model.sharing.SharedAircraftRef
 import dev.fanfly.wingslog.core.model.userinfo.UserInfo
@@ -89,6 +90,10 @@ val storageModule: Module = module {
       register(
         CollectionKind.SharedAircraftRef,
         WireCodec(SharedAircraftRef.ADAPTER)
+      )
+      register(
+        CollectionKind.NotificationSettings,
+        WireCodec(NotificationSettings.ADAPTER)
       )
       verifyCoverage()
     }

@@ -16,6 +16,7 @@ class CollectionKindCoverageTest {
     CollectionKind.Subscription,
     CollectionKind.Squawk,
     CollectionKind.SharedAircraftRef,
+    CollectionKind.NotificationSettings,
   )
 
   @Test

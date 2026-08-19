@@ -36,6 +36,7 @@ object AttachmentRefs {
       CollectionKind.DeveloperOptions,
       CollectionKind.Subscription,
       CollectionKind.SharedAircraftRef,
+      CollectionKind.NotificationSettings,
         -> emptyList()
     }
 
