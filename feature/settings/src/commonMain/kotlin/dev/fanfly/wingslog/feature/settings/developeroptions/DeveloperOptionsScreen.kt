@@ -36,7 +36,6 @@ import wingslog.feature.settings.generated.resources.developer_options_subtitle
 fun DeveloperOptionsScreen(
   navController: NavController,
   viewModel: DeveloperOptionsViewModel = koinViewModel(),
-  dogfoodContent: @Composable () -> Unit = {},
 ) {
   val flags by viewModel.flags.collectAsStateWithLifecycle()
 
@@ -103,10 +102,6 @@ fun DeveloperOptionsScreen(
             extra.Content(onNavigate = { route -> navController.navigate(route) })
             HorizontalDivider()
           }
-
-        // Retired by P0.2, once the stress-test extra moves onto DeveloperOptionsExtra. Kept for
-        // now so this change lands without touching feature:shell.
-        dogfoodContent()
       }
     }
   }
