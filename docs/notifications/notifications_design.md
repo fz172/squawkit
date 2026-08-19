@@ -385,7 +385,7 @@ primer (§10.1).
 ### 5.1 `NotificationPermission` — `permission`
 
 ```kotlin
-enum class PermissionState { UNDETERMINED, GRANTED, DENIED }
+enum class PermissionState { UNDETERMINED, GRANTED, DENIED, UNSUPPORTED }
 
 interface NotificationPermission {
   /** Cheap, synchronous-ish read of the OS state. Re-read on foreground: the user can change it in system settings. */
@@ -399,6 +399,22 @@ interface NotificationPermission {
 }
 ```
 
+**`UNSUPPORTED` is a fourth state, not a variant of `DENIED`.** On web, the `Notification` API can be
+genuinely absent — an insecure origin, or a browser old enough not to implement it — and that is a
+capability question, not a permission one. Reporting `DENIED` for it would tell the settings screen
+to render "Blocked in system settings" with an "Open settings" fix that does not exist for a missing
+API. `refresh()` sets it once and it never changes for the life of the process; `request()` on an
+`UNSUPPORTED` device is a no-op that reports `UNSUPPORTED` back, the same way it already no-ops on
+anything but `UNDETERMINED`.
+
+**Deliberately not an `AppCapability` flag.** §7.5 draws two capability lines — push transport, and
+"local notification support" gating N2 and web's N1 — and the second one *reads* like it wants a
+build-time flag too. It should not get one. `AppCapability` answers "what can this build ever do";
+whether the Notifications API exists is a property of the running browser, discovered at runtime, and
+`NotificationPermission` already answers exactly that kind of question for the OS-level cases. A
+capability flag here would be a fourth gating mechanism in spirit, which AGENTS.md's three-mechanism
+rule (`AppCapability` / `SubscriptionManager` / `DeveloperFlags`) exists to prevent.
+
 This is the whole module. It has four consumers — the onboarding primer, the settings screen and its
 banner, and the scanner's precondition check — none of which want anything else the feature owns, so
 it depends on nothing the feature owns either: not `:model`, not `:viewing`. The only reason it is
@@ -408,11 +424,11 @@ feature's concern; nothing else in the app asks for it.
 That leafness is what makes the §10.1 dependency defensible. A primer card that transitively compiled
 against `feature:tasks:datamanager` would be the tail wagging the dog.
 
-| Platform | `request()` | `openSystemSettings()` |
-|:--|:--|:--|
-| Android | `POST_NOTIFICATIONS` via the activity from `CurrentActivityProvider` (already in `core/lifecycle/androidMain`, already used by `AuthManagerImpl`); auto-`GRANTED` below API 33 | `ACTION_APPLICATION_DETAILS_SETTINGS` |
-| iOS | `UNUserNotificationCenter.requestAuthorizationWithOptions` (alert + sound + badge) | `UIApplication.openSettingsURLString` |
-| Web | `Notification.requestPermission()` | `canOpenSystemSettings = false` — no browser API exists. §9.3 |
+| Platform | `request()` | `openSystemSettings()` | `UNSUPPORTED` when |
+|:--|:--|:--|:--|
+| Android | `POST_NOTIFICATIONS` via the activity from `CurrentActivityProvider` (already in `core/lifecycle/androidMain`, already used by `AuthManagerImpl`); auto-`GRANTED` below API 33 | `ACTION_APPLICATION_DETAILS_SETTINGS` | Never — `minSdk` 33 always has the permission surface |
+| iOS | `UNUserNotificationCenter.requestAuthorizationWithOptions` (alert + sound + badge) | `UIApplication.openSettingsURLString` | Never |
+| Web | `Notification.requestPermission()` | `canOpenSystemSettings = false` — no browser API exists. §9.3 | `"Notification" !in window`, or an insecure origin |
 
 `minSdk` is 33 across the tree (`feature/sync/settings/build.gradle.kts:13` and siblings), so the
 sub-33 auto-grant branch is dead code today. Write it anyway and comment why: the runtime prompt is
@@ -1223,9 +1239,10 @@ screen can be torn down by the OS permission dialog.
 |:--|:--|:--|
 | Permission `UNDETERMINED` | Both groups | Toggles active; flipping the master on triggers the OS prompt inline |
 | Permission `DENIED` | Both groups | Persistent **neutral** banner + "Open settings". Toggles stay editable so choices survive fixing the permission. |
+| Permission `UNSUPPORTED` | Both groups | Persistent **neutral** banner, **no** "Open settings" — there is nothing to open. Copy says the browser does not support notifications, not that they are blocked; conflating the two sends a pilot hunting through a settings page that will never fix it. Toggles stay editable, same reasoning as `DENIED`: a signed-in-elsewhere account still wants its preference recorded even where this device cannot act on it. |
 | Signed out / anonymous | Collaboration only | Footer with a "Sign in" action. **The urgency group stays fully live and is not dimmed.** |
 | Cloud sync off | Collaboration only | Footer with "Turn on sync" → Backup & Sync. Urgency unaffected. |
-| Web | Denied banner | Drops the button (`canOpenSystemSettings == false`) and names where to look, phrased generically since the path differs by browser |
+| Web | Denied banner | Drops the button (`canOpenSystemSettings == false`) and names where to look, phrased generically since the path differs by browser. `UNSUPPORTED` on web reuses this row's copy path but with the not-supported wording above, not the blocked one. |
 
 Dimming the urgency group for a signed-out user would be a straightforward bug: it works fine for
 them, and they are the users for whom it matters most (§6.8).
@@ -1325,6 +1342,15 @@ suspend fun proceedPastOnboarding() {
   }
   proceedPastNotifications()
 }
+```
+
+**The equality check is what keeps `UNSUPPORTED` out of the primer, and that has to stay an equality
+check.** A device that structurally cannot show notifications has nothing to prime — showing the
+card and then watching `request()` no-op back to `UNSUPPORTED` would be a dead end with a Continue
+button. Testing `!= GRANTED && != DENIED` instead would show the primer here by accident; the
+literal `== UNDETERMINED` is deliberate, not an oversight to "simplify" later.
+
+```kotlin
 
 suspend fun proceedPastNotifications() {
   val needsAdsConsent = subscriptionManager.shouldShowAds().first() && adConsentManager.isConsentRequired()
@@ -1618,7 +1644,7 @@ Issue-sized below. "Blocks on" names the immediate prerequisite only.
 | P1.1 | Scaffold the eight modules (§3) with `build.gradle.kts` each, registered in `settings.gradle.kts` | `feature/notifications/*` | — |
 | P1.2 | `settings/notification_settings.proto` (inverted fields, §4.1) + `CollectionKind.NotificationSettings` at all five registration points (§4.2) | `core/model`, `core/storage`, `feature/sync/data` | P1.1 |
 | P1.3 | `NotificationSettingsExt` — the inversion in one file — plus `NotificationSettingsExtTest` | `:model` | P1.2 |
-| P1.4 | `NotificationPermission` + `PermissionState` and the three actuals (§5.1) | `:permission` | P1.1 |
+| P1.4 | `NotificationPermission` + `PermissionState` (four values, incl. `UNSUPPORTED`) and the three actuals (§5.1) | `:permission` | P1.1 |
 | P1.5 | `LocalNotifier`, `PendingNotification`, `NotificationChannel` + three actuals + channel registration (§5.2) | `:viewing` | P1.1 |
 | P1.6 | `NotificationPrefsManager` with the `PrefsState` resolution rule (§4.3) + `NotificationPrefsManagerTest` | `:datamanager` | P1.3 |
 | P1.7 | Six Koin modules + `CommonAppModules` wiring + host platform init | `core/di`, hosts | P1.4, P1.5, P1.6 |
@@ -1714,6 +1740,7 @@ amended rather than quietly diverged from.
 | D12 | §9.2 — "`feature/notifications`: canonical module set (`model` / `datamanager` / `sharedassets` / `settings`)" | Eight modules: `model`, `permission`, `viewing`, `datamanager`, `engine`, `sharedassets`, `settings`, `devoptions` — with `viewing` meaning the *notification display surface*, not the canonical read-only-UI layer | §3. One `datamanager` holding both the scanner and the display surface forces every consumer to inherit the scanner's five feature-datamanager dependencies; `feature/login` would compile against `feature:tasks:datamanager` to show one onboarding card. |
 | D13 | §9.6 — Developer Options test-send actions | Two Koin-resolved interfaces in a new `feature/developeroptions/plugin` — `DeveloperOptionsExtra` for the row, `DeveloperOptionsNavContributor` for the page — replacing the single `dogfoodContent` slot. **Done ahead of this feature in #511/#512.** | §11.1. The slot was singular and already taken, so a second section forced a signature change either way. Also removed `feature:stresstest:config` and all `isStressTestSupported` threading from `feature:shell`. **Touched three modules this feature otherwise would not.** |
 | D14 | §9.2 — preferences as "a new synced entity" implies a domain type beside the proto | No Kotlin mirror. `NotificationSettings` is passed around directly, with extension properties supplying the positive names | §4.1. A mirror restates the all-on defaults in a second place and needs a round-trip test to stay honest; `SubscriptionManager` already rules that "never a forked Kotlin copy" for a proto the Cloud Functions also read. |
+| D15 | §5.1 — `PermissionState` is `UNDETERMINED / GRANTED / DENIED` | A fourth value, `UNSUPPORTED`, for a browser where the Notifications API is genuinely absent | §5.1, §9.3. `DENIED` would tell the settings screen to offer an "Open settings" fix that does not exist; conflating "blocked" with "cannot exist here" sends a pilot hunting through a settings page that will never fix it. Deliberately not a fourth `AppCapability` — it is a runtime property of the browser, not the build, and `NotificationPermission` already answers exactly that class of question. |
 
 ## 16. Open questions
 
