@@ -6,6 +6,7 @@ documentfile = "1.1.0"
 kotlinxCoroutines = "1.11.0"
 composeMultiplatform = "1.11.1"
 
+activityKtx = "1.12.4"
 composeBom = "2026.06.01"
 coreKtx = "1.19.0"
 credentials = "1.6.0"
@@ -35,6 +36,7 @@ wire = "6.4.5"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+androidx-activity-ktx = { group = "androidx.activity", name = "activity-ktx", version.ref = "activityKtx" }
 androidx-credentials = { module = "androidx.credentials:credentials", version.ref = "credentials" }
 androidx-documentfile = { module = "androidx.documentfile:documentfile", version.ref = "documentfile" }
 androidx-navigation-compose = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
