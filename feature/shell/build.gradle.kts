@@ -54,6 +54,9 @@ kotlin {
       implementation(project(":feature:fleet:viewing"))
       implementation(project(":feature:logs:update"))
       implementation(project(":feature:settings"))
+      // The DeveloperOptionsNavContributor interface only — NOT the features that implement it.
+      // This is what replaced the dependency on feature:stresstest:config.
+      implementation(project(":feature:developeroptions:plugin"))
       // AccountUpgradeFlow is hosted here so an upgrade email link is seen on any destination.
       implementation(project(":feature:login"))
       implementation(project(":feature:subscription:datamanager"))
@@ -62,7 +65,6 @@ kotlin {
       // App-start retry of an owed technician-mirror publish (design §7.2).
       implementation(project(":feature:sharing:datamanager"))
       implementation(project(":feature:squawk:update"))
-      implementation(project(":feature:stresstest:config"))
       implementation(project(":core:sharedassets"))
       implementation(project(":feature:sync:data"))
       implementation(project(":feature:sync:settings"))

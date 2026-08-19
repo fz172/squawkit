@@ -24,6 +24,7 @@ import androidx.navigation.compose.composable
 import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.developeroptions.plugin.DeveloperOptionsExtra
+import dev.fanfly.wingslog.feature.developeroptions.plugin.DeveloperOptionsNavContributor
 import dev.fanfly.wingslog.feature.stresstest.StressTestScreen
 import dev.fanfly.wingslog.feature.stresstest.di.stressTestModule
 import org.jetbrains.compose.resources.stringResource
@@ -48,14 +49,27 @@ fun stressTestKoinModules(): List<Module> =
  */
 private val stressTestPluginModule = module {
   single { StressTestDeveloperOptionsExtra(get<AppCapability>()) } bind DeveloperOptionsExtra::class
+  single { StressTestNavContributor(get<AppCapability>()) } bind DeveloperOptionsNavContributor::class
 }
 
-fun registerStressTestRoutes(
-  builder: NavGraphBuilder,
-  navController: NavController
-) {
-  builder.composable(STRESS_TEST_ROUTE) {
-    StressTestScreen(navController = navController)
+/**
+ * Registers the Fake Data Generator screen into the settings graph.
+ *
+ * Was `registerStressTestRoutes(builder, navController)`, called from `ShellNavGraph` — which is why
+ * `feature:shell` depended on this module at all. Contributing it through Koin instead means the
+ * shell registers a screen it has never heard of, and the `isStressTestSupported` argument it used
+ * to thread down here disappears with it.
+ */
+class StressTestNavContributor(
+  private val capability: AppCapability,
+) : DeveloperOptionsNavContributor {
+
+  override fun isAvailable(): Boolean = capability.isStressTestSupported
+
+  override fun register(builder: NavGraphBuilder, navController: NavController) {
+    builder.composable(STRESS_TEST_ROUTE) {
+      StressTestScreen(navController = navController)
+    }
   }
 }
 

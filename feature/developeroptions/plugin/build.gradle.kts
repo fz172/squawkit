@@ -43,6 +43,8 @@ kotlin {
   sourceSets {
     commonMain.dependencies {
       implementation(libs.compose.runtime)
+      // DeveloperOptionsNavContributor's signature only. No screens and no NavHost live here.
+      implementation(libs.androidx.navigation.compose)
     }
   }
 }
