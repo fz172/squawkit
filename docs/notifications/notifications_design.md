@@ -129,7 +129,7 @@ The arrows never point back.
 | `datamanager` | `core:storage`, `feature:sync:data`, `:model` | Preferences (§4.3 needs `SyncCursorStore`/`CloudSyncSetting`) and the token doc. No tasks/logs/squawks. |
 | `engine` | `core:storage`, `core:lifecycle`, `feature:{tasks,logs,squawk,fleet,sharing}:datamanager`, `feature:sync:data`, `:model`, `:permission`, `:viewing`, `:datamanager` | The wide fan-in, contained to one module. Deliberately a *consumer* of the existing managers so no computation is duplicated. |
 | `sharedassets` | `core:ui`, `:model`, `:permission` | `PermissionBanner` renders `PermissionState` |
-| `devoptions` | `core:ui`, `:engine`, `:viewing` | Developer-only. Its own module so `engine` stays Compose-free and `settings` stays `engine`-free — the same reason `feature:stresstest:config` is separate from `feature:stresstest`. §11 |
+| `devoptions` | `core:ui`, `feature:developeroptions:plugin`, `:engine`, `:viewing` | Developer-only. Its own module so `engine` stays Compose-free and `settings` stays `engine`-free — the same reason `feature:stresstest:config` is separate from `feature:stresstest`. §11 |
 | `settings` | `core:ui*`, `:model`, `:permission`, `:datamanager`, `:sharedassets` | **Not `engine`, and not `viewing`.** The screen reads preferences and permission state; it neither scans nor posts. |
 
 And what the rest of the app takes on:
@@ -137,7 +137,7 @@ And what the rest of the app takes on:
 | Consumer | Depends on | Why |
 |:--|:--|:--|
 | `feature:login` | `:permission` only | `NotificationPermission` for the primer (§10.1) |
-| `feature:shell` | `:settings`, `:viewing` | The `Screen.Notifications` route, and collecting tap routes into the nav graph. **Not `engine` and not `devoptions`** — §11 |
+| `feature:shell` | `:settings`, `:viewing` | The `Screen.Notifications` route, and collecting tap routes into the nav graph. **Not `engine` and not `devoptions`** — both reach the screen through `DeveloperOptionsExtra` / `DeveloperOptionsNavContributor` (§11.1, shipped in #511/#512) |
 | `feature:settings` | `:sharedassets`, `:permission` | The settings row's live subtitle. **Not `engine`** — §11. |
 | hosts | `:engine`, `:viewing`, `:permission`, `:devoptions` | Koin + platform init (channel registration, scheduler, FCM). `devoptions` appears here and nowhere else: it is registered, never imported. |
 
@@ -1389,82 +1389,78 @@ following `DisplayAdsDeveloperSettings`:
 
 ### 11.1 Getting the section onto the screen without a compile dependency
 
+> **Shipped.** PRs #511 and #512 built this ahead of the notification work, since it only touches
+> existing modules. What follows is the mechanism as it exists, not a proposal.
+
 Three of these four actions need `engine`, and `DeveloperOptionsScreen` lives in `feature:settings`,
-which §3 keeps off `engine` deliberately. The existing escape hatch is a composable slot the shell
-fills:
+which §3 keeps off `engine` deliberately. The escape hatch used to be a composable slot the shell
+filled — and it was **singular and already occupied** by the stress-test extra, so a second section
+forced a signature change either way. Two interfaces replaced it, both resolved from Koin, both
+living in **`feature/developeroptions/plugin`**:
 
 ```kotlin
-// feature/settings — DeveloperOptionsScreen.kt
-dogfoodContent: @Composable () -> Unit = {},
-
-// feature/shell — ShellNavGraph.kt
-dogfoodContent = { if (isStressTestSupported) StressTestDeveloperOptionsExtra(navController) },
-```
-
-**That slot is singular and already occupied.** A second extra cannot be added without either
-nesting both inside one lambda or changing the signature — so this feature forces a change to
-`DeveloperOptionsScreen` no matter which way it goes. Given that, the generalization is the cheaper
-of the two:
-
-```kotlin
-// core/ui — DeveloperOptionsExtra.kt
-/**
- * A Developer Options section contributed by a feature. Resolved from Koin rather than passed down,
- * so a feature can add one without the shell — or feature:settings — depending on it.
- *
- * [onNavigate] rather than a NavController on purpose: it keeps this interface, and therefore
- * core:ui, free of a navigation dependency, and an extra that does not navigate ignores it.
- */
+/** The row. */
 interface DeveloperOptionsExtra {
-  /** Ascending. Fixed numbers so section order does not depend on Koin registration order. */
-  val order: Int
-  /** False hides the section outright — this is where the capability gate now lives. */
-  fun isAvailable(): Boolean = true
+  val order: Int                                    // ascending; fixed numbers, not Koin order
+  fun isAvailable(): Boolean = true                 // where the capability gate lives
   @Composable fun Content(onNavigate: (route: String) -> Unit)
 }
-```
 
-`DeveloperOptionsScreen` replaces `dogfoodContent()` with the resolved list:
-
-```kotlin
-val koin = getKoin()
-val extras = remember { koin.getAll<DeveloperOptionsExtra>().sortedBy { it.order } }
-extras.filter { it.isAvailable() }.forEach { extra ->
-  extra.Content(onNavigate = navController::navigate)
-  HorizontalDivider()
+/** The page the row opens. */
+interface DeveloperOptionsNavContributor {
+  fun isAvailable(): Boolean = true
+  fun register(builder: NavGraphBuilder, navController: NavController)
 }
 ```
 
-Contributors bind through their own Koin module — `bind DeveloperOptionsExtra::class`, so `getAll`
-finds them. Note that two definitions of the same type make a bare
-`get<DeveloperOptionsExtra>()` ambiguous; nothing should ever call it, and `getAll` is the only
-supported read.
+`DeveloperOptionsScreen` renders `getAll<DeveloperOptionsExtra>()` sorted and filtered;
+`ShellNavGraph.settingsDetailRoutes` lets each `DeveloperOptionsNavContributor` register its own
+destinations. **Both halves are needed.** The first alone drops the shell's dependency on a
+developer feature's *section* while leaving it importing that feature's *screen* — which is what
+`registerStressTestRoutes` was.
 
-**In `core:ui`, not `feature:settings`.** Putting the interface in `feature:settings` would make
-every contributor depend on a UI feature module — worse than the problem being solved.
+Three decisions worth keeping:
 
-What this buys, beyond the notification section:
+- **`feature/developeroptions/plugin`, not `core:ui`.** An earlier draft put the interface in
+  `core:ui`. It carries a `@Composable` and a `NavGraphBuilder`, and `core:ui` is depended on by half
+  the app — a developer-options concept does not belong there. Its own module rather than
+  `:datamanager` because a datamanager must not carry Compose; the same split, for the same reason,
+  as `core:lifecycle` / `core:lifecycle:compose`.
+- **`onNavigate: (route: String) -> Unit` rather than a `NavController`** on `Content`, so the row
+  half needs no navigation dependency.
+- **`KoinPlatform.getKoin()` in `settingsDetailRoutes`.** It is a `NavGraphBuilder` extension, not a
+  `@Composable`, so `org.koin.compose.getKoin()` is unavailable. `MainViewController.kt` already
+  reaches Koin this way from non-composable code.
 
-- **The shell drops both `:engine` and `feature:stresstest:config`.** Its only remaining notification
-  dependencies are `:settings` (the route) and `:viewing` (tap routes).
-- **`isStressTestSupported` stops being plumbed through `settingsDetailRoutes` for this purpose.** The
-  gate moves into the stress-test extra's own `isAvailable()`, where the capability actually belongs.
-  The parameter stays for `registerStressTestRoutes`.
-- **Adding a Developer Options section stops being a shell edit.** It becomes a Koin binding in the
-  feature that owns the section.
+What it bought, measured after #512:
 
-### 11.2 Prerequisite: migrate the stress-test extra
+| | Before | After |
+|:--|:--|:--|
+| `feature:shell` → `feature:stresstest:config` | dependency | gone |
+| `feature:shell` → `feature:developeroptions:plugin` | — | added, **interface only** |
+| `isStressTestSupported` threading | `AppEntry` → `AdaptiveShellRoute` → `SettingsSection` → `settingsDetailRoutes`, plus `shellGraph` and `WebApp` | gone from all of them |
+| Product routes | static in `ShellNavGraph` | unchanged |
 
-Not optional and not this feature's to skip — `dogfoodContent` cannot survive alongside the list.
-`StressTestDeveloperOptionsExtra` (`feature/stresstest/config/StressTestPlugin.kt`, already named a
-*plugin*) becomes a `DeveloperOptionsExtra` implementation contributed by `stressTestKoinModules()`,
-with `isAvailable() = capability.isStressTestSupported` and a high `order` so "Debug tools" stays
-last. Its `navController.navigate(STRESS_TEST_ROUTE)` becomes `onNavigate(STRESS_TEST_ROUTE)`. The
-`dogfoodContent` parameter and the shell's import are then deleted.
+The shell is not dependency-free — it swapped a dependency on a *feature* for one on an *interface*
+that carries no screens and no `NavHost`. That is the win, and it is what lets `engine` and
+`devoptions` stay off `feature:shell` when P2.11 lands.
 
-The notification section is `NotificationDeveloperOptionsExtra` in `feature/notifications/devoptions`
-— its own module so that `engine` stays free of Compose and `settings` stays free of `engine`,
-mirroring why `feature:stresstest:config` is separate from `feature:stresstest`.
+**Scoped on purpose.** The contributor is named `DeveloperOptionsNavContributor`, not
+`NavGraphContributor`. The shell's fan-out to *product* feature modules is intentional — its build
+file calls that its "aggregator role for composables/nav that `core:di` plays for Koin modules" — and
+inverting all of it is a much larger question. This solves the narrow case: a developer-only,
+capability-gated feature has no business in the central graph. If it earns generalizing, it moves to
+a `core:nav:plugin` sibling.
+
+**Known limitation.** Contributed routes are not in `core:nav`'s `Screen`, so they stay outside that
+index — as `STRESS_TEST_ROUTE` already was. Not made worse; moving those constants is a separate
+change.
+
+### 11.2 What the notification section contributes
+
+`NotificationDeveloperOptionsExtra` (the row) and, for the scan-diagnostics page, a
+`DeveloperOptionsNavContributor` — both in `feature/notifications/devoptions`, its own module so that
+`engine` stays free of Compose and `settings` stays free of `engine`. `feature:shell` gains nothing.
 
 ---
 
@@ -1583,7 +1579,7 @@ before any notification module exists. **P0–P3 touch no backend at all.**
 
 | Phase | Theme | Exit criteria |
 |:--|:--|:--|
-| **P0** | Developer Options plumbing (existing modules only) | A second Developer Options section can be added by a Koin binding alone |
+| **P0** ✅ | Developer Options plumbing (existing modules only) | A second Developer Options section — row *and* page — can be added by a Koin binding alone |
 | **P1** | Foundations — modules, proto, preferences, permission, notifier, settings screen | A dev build requests permission and posts on each channel; preferences persist and reach a second device; a fresh install of an account with non-default preferences shows the spinner, never all-on |
 | **P2** | N2 urgency, Android + iOS | Crossings fire exactly once; de-escalations silent; a fresh install notifies nothing; **no backend change was required** |
 | **P3** | Web N1, open tab | A web user with a shared aircraft open sees a collaborator's edit from another account; **no backend, no token registry** |
@@ -1607,12 +1603,13 @@ epic per phase with these tasks as sub-issues: [#454 P0](https://github.com/fz17
 
 Issue-sized below. "Blocks on" names the immediate prerequisite only.
 
-**P0 — Developer Options plumbing.** Independent of everything else; can start today.
+**P0 — Developer Options plumbing.** ✅ **Complete** (#511, #512). Independent of the rest; built first because it only touches existing modules.
 
-| # | Task | Touches | Blocks on |
+| # | Task | Touches | Status |
 |:--|:--|:--|:--|
-| P0.1 | `DeveloperOptionsExtra` interface (`order`, `isAvailable()`, `Content(onNavigate)`); `DeveloperOptionsScreen` resolves `getAll()` sorted, drops `dogfoodContent` | `core/ui`, `feature/settings` | — |
-| P0.2 | Migrate `StressTestDeveloperOptionsExtra` onto the interface, contributed by `stressTestKoinModules()`; shell drops the import and the `isStressTestSupported` argument for this purpose | `feature/stresstest/config`, `feature/shell` | P0.1 |
+| P0.1 | `DeveloperOptionsExtra` (`order`, `isAvailable()`, `Content(onNavigate)`); `DeveloperOptionsScreen` resolves `getAll()` sorted | new `feature/developeroptions/plugin`, `feature/settings` | ✅ #511 |
+| P0.2 | `StressTestDeveloperOptionsExtra` onto the interface, contributed by `stressTestKoinModules()`; `dogfoodContent` deleted | `feature/stresstest/config`, `feature/settings` | ✅ #511 |
+| P0.3 | `DeveloperOptionsNavContributor` for the *pages* the rows open; shell drops `feature:stresstest:config` and `isStressTestSupported` entirely | `feature/developeroptions/plugin`, `feature/stresstest/config`, `feature/shell`, both hosts | ✅ #512 |
 
 **P1 — Foundations.**
 
@@ -1715,7 +1712,7 @@ amended rather than quietly diverged from.
 | D10 | §7.5 — iOS N1 in V1 | iOS Time Sensitive interruption level needs an entitlement and App Store review; sequenced into P5 | §5.2. iOS N2 ships at default interruption level in P2. |
 | D11 | §9.2 — preferences are "a new synced entity … like every other setting" | The manager must resolve *hydrated* from *never set* before any read or write. `DeveloperOptionsManagerImpl` is not the template — it never hydrates. `TechnicianManagerImpl.awaitHydratedSelfId` is. | §4.3. Reading through an unhydrated store shows the wrong toggles; **writing** through it pushes a whole-message overwrite that reverts the user's settings on every other device. |
 | D12 | §9.2 — "`feature/notifications`: canonical module set (`model` / `datamanager` / `sharedassets` / `settings`)" | Eight modules: `model`, `permission`, `viewing`, `datamanager`, `engine`, `sharedassets`, `settings`, `devoptions` — with `viewing` meaning the *notification display surface*, not the canonical read-only-UI layer | §3. One `datamanager` holding both the scanner and the display surface forces every consumer to inherit the scanner's five feature-datamanager dependencies; `feature/login` would compile against `feature:tasks:datamanager` to show one onboarding card. |
-| D13 | §9.6 — Developer Options test-send actions | Requires replacing `DeveloperOptionsScreen`'s single `dogfoodContent` slot with a Koin-resolved `List<DeveloperOptionsExtra>` in `core:ui`, and migrating the existing stress-test extra onto it | §11. The slot is singular and already taken, so a second section forces a signature change either way; generalizing also removes `:engine` and `feature:stresstest:config` from `feature:shell`. **Touches two modules this feature otherwise would not.** |
+| D13 | §9.6 — Developer Options test-send actions | Two Koin-resolved interfaces in a new `feature/developeroptions/plugin` — `DeveloperOptionsExtra` for the row, `DeveloperOptionsNavContributor` for the page — replacing the single `dogfoodContent` slot. **Done ahead of this feature in #511/#512.** | §11.1. The slot was singular and already taken, so a second section forced a signature change either way. Also removed `feature:stresstest:config` and all `isStressTestSupported` threading from `feature:shell`. **Touched three modules this feature otherwise would not.** |
 | D14 | §9.2 — preferences as "a new synced entity" implies a domain type beside the proto | No Kotlin mirror. `NotificationSettings` is passed around directly, with extension properties supplying the positive names | §4.1. A mirror restates the all-on defaults in a second place and needs a round-trip test to stay honest; `SubscriptionManager` already rules that "never a forked Kotlin copy" for a proto the Cloud Functions also read. |
 
 ## 16. Open questions
