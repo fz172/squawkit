@@ -91,6 +91,13 @@ class LocalAccountMigratorImpl(
      * silently overrides the account's copy when only the guest's is. [deleteReassignConflicts]
      * covers the both-on-device case for these too, but not the guest-only case (nothing to conflict
      * with), so identity/toggle collections must be listed explicitly.
+     *
+     * [CollectionKind.NotificationSettings] is ALSO at a fixed id under the user root, and is
+     * deliberately NOT here despite matching that shape: preferences a guest set should follow them
+     * into the upgraded account, so they migrate like normal data — through
+     * [deleteReassignConflicts] / [reassignEntities] below — rather than being dropped. Unlike
+     * [DeveloperOptions], a guest's notification choices are not an experimental flag to discard; the
+     * account is the same pilot before and after the upgrade. See notifications_design.md §4.2.
      */
     private val DROPPED_ON_MERGE: List<CollectionKind> = listOf(
       CollectionKind.UserInfo,
