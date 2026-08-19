@@ -13,6 +13,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -22,7 +23,9 @@ import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
 import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.feature.developeroptions.plugin.DeveloperOptionsExtra
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.getKoin
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.feature.settings.generated.resources.Res
 import wingslog.feature.settings.generated.resources.developer_options
@@ -33,9 +36,18 @@ import wingslog.feature.settings.generated.resources.developer_options_subtitle
 fun DeveloperOptionsScreen(
   navController: NavController,
   viewModel: DeveloperOptionsViewModel = koinViewModel(),
-  dogfoodContent: @Composable () -> Unit = {},
 ) {
   val flags by viewModel.flags.collectAsStateWithLifecycle()
+
+  // Sections contributed by other features, resolved rather than passed in, so neither this module
+  // nor feature:shell has to depend on whoever owns them. Sorted here rather than at registration
+  // so ordering does not depend on Koin module order. Remembered because getAll() walks the
+  // definition registry — that is startup-cheap but not per-recomposition cheap.
+  val koin = getKoin()
+  val extras = remember {
+    koin.getAll<DeveloperOptionsExtra>()
+      .sortedBy { it.order }
+  }
 
   Scaffold(
     topBar = {
@@ -84,7 +96,12 @@ fun DeveloperOptionsScreen(
         )
         HorizontalDivider()
 
-        dogfoodContent()
+        extras
+          .filter { it.isAvailable() }
+          .forEach { extra ->
+            extra.Content(onNavigate = { route -> navController.navigate(route) })
+            HorizontalDivider()
+          }
       }
     }
   }

@@ -64,6 +64,9 @@ kotlin {
       implementation(project(":feature:technician:sharedassets"))
       implementation(project(":feature:ads:datamanager"))
       implementation(project(":feature:developeroptions:datamanager"))
+      // DeveloperOptionsExtra: the contributed-section interface DeveloperOptionsScreen resolves
+      // from Koin, so contributors depend on it rather than on this module.
+      implementation(project(":feature:developeroptions:plugin"))
       implementation(project(":feature:technician:datamanager"))
       implementation(project(":core:datetime"))
       implementation(project(":core:model"))

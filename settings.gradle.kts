@@ -86,6 +86,7 @@ include(":feature:export:datamanager")
 include(":feature:export:sharedassets")
 include(":feature:export:update")
 include(":feature:developeroptions:datamanager")
+include(":feature:developeroptions:plugin")
 
 include(":feature:squawk:model")
 include(":feature:squawk:datamanager")

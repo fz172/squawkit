@@ -41,7 +41,9 @@ kotlin {
 
   sourceSets {
     commonMain.dependencies {
+      api(project(":core:appinfo"))
       api(project(":feature:stresstest"))
+      api(project(":feature:developeroptions:plugin"))
       implementation(project(":core:ui:theme"))
       implementation(libs.components.resources)
       implementation(libs.androidx.navigation.compose)

@@ -17,7 +17,6 @@ import dev.fanfly.wingslog.feature.sharing.update.EnterInviteCodeRoute
 import dev.fanfly.wingslog.feature.sharing.update.ManageAccessRoute
 import dev.fanfly.wingslog.feature.squawk.update.ui.AddSquawkRoute
 import dev.fanfly.wingslog.feature.squawk.update.ui.EditSquawkRoute
-import dev.fanfly.wingslog.feature.stresstest.config.StressTestDeveloperOptionsExtra
 import dev.fanfly.wingslog.feature.stresstest.config.registerStressTestRoutes
 import dev.fanfly.wingslog.feature.subscription.viewing.SubscriptionScreen
 import dev.fanfly.wingslog.feature.sync.settings.SyncSettingsScreen
@@ -191,14 +190,7 @@ fun NavGraphBuilder.settingsDetailRoutes(
     SubscriptionScreen(navController = navController)
   }
   composable(Screen.DeveloperOptions.route) {
-    DeveloperOptionsScreen(
-      navController = navController,
-      dogfoodContent = {
-        if (isStressTestSupported) StressTestDeveloperOptionsExtra(
-          navController
-        )
-      },
-    )
+    DeveloperOptionsScreen(navController = navController)
   }
   if (isStressTestSupported) {
     registerStressTestRoutes(this, navController)
