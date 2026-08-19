@@ -13,7 +13,6 @@ import dev.fanfly.wingslog.feature.developeroptions.plugin.DeveloperOptionsNavCo
 import dev.fanfly.wingslog.feature.export.update.ExportHistoryRoute
 import dev.fanfly.wingslog.feature.export.update.ExportSelectionRoute
 import dev.fanfly.wingslog.feature.logs.update.logs.MaintenanceLogFormScreen
-import dev.fanfly.wingslog.feature.developeroptions.plugin.DeveloperOptionsNavContributor
 import dev.fanfly.wingslog.feature.settings.developeroptions.DeveloperOptionsScreen
 import dev.fanfly.wingslog.feature.sharing.update.EnterInviteCodeRoute
 import dev.fanfly.wingslog.feature.sharing.update.ManageAccessRoute
