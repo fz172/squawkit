@@ -99,6 +99,15 @@ include(":feature:ads:datamanager")
 include(":feature:ads:sharedassets")
 include(":feature:ads:viewing")
 
+include(":feature:notifications:model")
+include(":feature:notifications:permission")
+include(":feature:notifications:viewing")
+include(":feature:notifications:datamanager")
+include(":feature:notifications:engine")
+include(":feature:notifications:sharedassets")
+include(":feature:notifications:settings")
+include(":feature:notifications:devoptions")
+
 include(":feature:shell")
 
 include(":feature:stresstest")
