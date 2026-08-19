@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="notifications_devoptions_header">Notifications</string>
+  <string name="notifications_devoptions_permission_title">OS permission</string>
+  <string name="notifications_devoptions_state_undetermined">Not yet asked</string>
+  <string name="notifications_devoptions_state_granted">Granted</string>
+  <string name="notifications_devoptions_state_denied">Denied — fix in system settings</string>
+  <string name="notifications_devoptions_state_unsupported">Unsupported on this browser</string>
+  <string name="notifications_devoptions_request_action">Request permission</string>
+  <string name="notifications_devoptions_open_settings_action">Open settings</string>
+</resources>
