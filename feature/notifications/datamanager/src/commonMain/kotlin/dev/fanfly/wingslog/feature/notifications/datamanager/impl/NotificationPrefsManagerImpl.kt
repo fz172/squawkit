@@ -59,7 +59,10 @@ class NotificationPrefsManagerImpl(
         // Re-run the resolution on every local write to the doc AND every sync hydration tick —
         // the latter is what notices "a scope just finished hydrating" for a doc that stayed
         // genuinely absent, which produces no entity write to react to on its own.
-        combine(store.observe(DOC_ID, scope), syncEngine.hydrationState) { entity, _ -> entity }
+        combine(
+          store.observe(DOC_ID, scope),
+          syncEngine.hydrationState
+        ) { entity, _ -> entity }
           // Explicit type argument: without it, inference locks R to PrefsState.Resolved from the
           // second (more specific) emit() call below rather than widening to the sealed supertype.
           .transformLatest<StorageEntity<NotificationSettings>?, PrefsState> { entity ->
@@ -86,7 +89,8 @@ class NotificationPrefsManagerImpl(
         ?: error("Cannot update notification settings when no user is signed in")
       val uid = user.uid
       val scope = EntityScope.userRoot(uid)
-      val entity = store.observe(DOC_ID, scope).first()
+      val entity = store.observe(DOC_ID, scope)
+        .first()
       val state = resolve(uid, scope, entity)
       val resolved = state as? PrefsState.Resolved
         ?: error("Cannot update notification settings while unresolved")
@@ -104,12 +108,17 @@ class NotificationPrefsManagerImpl(
     if (entity != null) return PrefsState.Resolved(entity.value)
     // Nothing will ever hydrate here — waiting would hang forever. Same first-line guard
     // awaitHydratedSelfId uses.
-    if (!cloudSyncSetting.isCloudSyncEnabled()) return PrefsState.Resolved(NotificationSettings())
-    val cursor = cursorStore.get(uid, CollectionKind.NotificationSettings, scope)
+    if (!cloudSyncSetting.isCloudSyncEnabled()) return PrefsState.Resolved(
+      NotificationSettings()
+    )
+    val cursor =
+      cursorStore.get(uid, CollectionKind.NotificationSettings, scope)
     // hydrated == true with still no row means hydration finished and there genuinely is no doc —
     // the user has never set preferences. Anything else means hydration has not reached this scope
     // yet, or has not started.
-    return if (cursor?.hydrated == true) PrefsState.Resolved(NotificationSettings())
+    return if (cursor?.hydrated == true) PrefsState.Resolved(
+      NotificationSettings()
+    )
     else PrefsState.Unresolved
   }
 

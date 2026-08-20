@@ -64,6 +64,7 @@ class IosNotificationPermission : NotificationPermission {
           UNAuthorizationStatusProvisional,
           UNAuthorizationStatusEphemeral,
             -> PermissionState.GRANTED
+
           UNAuthorizationStatusDenied -> PermissionState.DENIED
           else -> PermissionState.UNDETERMINED
         }

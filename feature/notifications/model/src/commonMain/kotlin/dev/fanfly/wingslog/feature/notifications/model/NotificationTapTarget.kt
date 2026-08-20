@@ -15,8 +15,15 @@ package dev.fanfly.wingslog.feature.notifications.model
  * dashboard uses is P2.9's problem when it defines the router, not this type's.
  */
 sealed interface NotificationTapTarget {
-  data class Aircraft(val aircraftId: String, val tab: String? = null) : NotificationTapTarget
-  data class Squawk(val aircraftId: String, val squawkId: String) : NotificationTapTarget
-  data class Task(val aircraftId: String, val taskId: String) : NotificationTapTarget
-  data class Log(val aircraftId: String, val logId: String) : NotificationTapTarget
+  data class Aircraft(val aircraftId: String, val tab: String? = null) :
+    NotificationTapTarget
+
+  data class Squawk(val aircraftId: String, val squawkId: String) :
+    NotificationTapTarget
+
+  data class Task(val aircraftId: String, val taskId: String) :
+    NotificationTapTarget
+
+  data class Log(val aircraftId: String, val logId: String) :
+    NotificationTapTarget
 }

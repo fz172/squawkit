@@ -40,7 +40,8 @@ class NotificationPrefsManagerImplTest {
   private val cloudSyncSetting = CloudSyncSetting { cloudSyncEnabled }
   private lateinit var cursorStore: SyncCursorStore
   private lateinit var syncEngine: SyncEngine
-  private val hydrationState = MutableStateFlow<HydrationState>(HydrationState.Idle)
+  private val hydrationState =
+    MutableStateFlow<HydrationState>(HydrationState.Idle)
   private lateinit var storeFactory: EntityStoreFactory
   private lateinit var store: EntityStore<NotificationSettings>
   private lateinit var manager: NotificationPrefsManagerImpl
@@ -80,20 +81,23 @@ class NotificationPrefsManagerImplTest {
     every { firebaseAuth.currentUser } returns null
     every { firebaseAuth.authStateChanged } returns flowOf(null)
 
-    val state = manager.observe().first()
+    val state = manager.observe()
+      .first()
 
     assertThat(state).isEqualTo(PrefsState.Resolved(NotificationSettings()))
   }
 
   @Test
-  fun cloudSyncOff_noRow_resolvesToDefaults_withoutReadingTheCursor() = runTest {
-    cloudSyncEnabled = false
+  fun cloudSyncOff_noRow_resolvesToDefaults_withoutReadingTheCursor() =
+    runTest {
+      cloudSyncEnabled = false
 
-    val state = manager.observe().first()
+      val state = manager.observe()
+        .first()
 
-    assertThat(state).isEqualTo(PrefsState.Resolved(NotificationSettings()))
-    coVerify(exactly = 0) { cursorStore.get(any(), any(), any()) }
-  }
+      assertThat(state).isEqualTo(PrefsState.Resolved(NotificationSettings()))
+      coVerify(exactly = 0) { cursorStore.get(any(), any(), any()) }
+    }
 
   @Test
   fun cloudSyncOff_rowExists_resolvesToTheRow() = runTest {
@@ -101,7 +105,8 @@ class NotificationPrefsManagerImplTest {
     val settings = NotificationSettings(aog_disabled = true)
     every { store.observe(any(), any()) } returns flowOf(testEntity(settings))
 
-    val state = manager.observe().first()
+    val state = manager.observe()
+      .first()
 
     assertThat(state).isEqualTo(PrefsState.Resolved(settings))
   }
@@ -111,18 +116,28 @@ class NotificationPrefsManagerImplTest {
     val settings = NotificationSettings(overdue_disabled = true)
     every { store.observe(any(), any()) } returns flowOf(testEntity(settings))
 
-    val state = manager.observe().first()
+    val state = manager.observe()
+      .first()
 
     assertThat(state).isEqualTo(PrefsState.Resolved(settings))
   }
 
   @Test
   fun cloudSyncOn_noRow_cursorNotHydrated_emitsUnresolved() = runTest {
-    coEvery { cursorStore.get(TEST_UID, CollectionKind.NotificationSettings, any()) } returns
+    coEvery {
+      cursorStore.get(
+        TEST_UID,
+        CollectionKind.NotificationSettings,
+        any()
+      )
+    } returns
       testCursor(hydrated = false)
 
     val collected = mutableListOf<PrefsState>()
-    val job = launch { manager.observe().toList(collected) }
+    val job = launch {
+      manager.observe()
+        .toList(collected)
+    }
     advanceTimeBy(1.seconds)
     job.cancel()
 
@@ -131,33 +146,56 @@ class NotificationPrefsManagerImplTest {
 
   @Test
   fun cloudSyncOn_noRow_cursorHydrated_resolvesToDefaults() = runTest {
-    coEvery { cursorStore.get(TEST_UID, CollectionKind.NotificationSettings, any()) } returns
+    coEvery {
+      cursorStore.get(
+        TEST_UID,
+        CollectionKind.NotificationSettings,
+        any()
+      )
+    } returns
       testCursor(hydrated = true)
 
-    val state = manager.observe().first()
+    val state = manager.observe()
+      .first()
 
     assertThat(state).isEqualTo(PrefsState.Resolved(NotificationSettings()))
   }
 
   @Test
   fun cloudSyncOn_stillUnresolvedAfterTimeout_resolvesToDefaults() = runTest {
-    coEvery { cursorStore.get(TEST_UID, CollectionKind.NotificationSettings, any()) } returns
+    coEvery {
+      cursorStore.get(
+        TEST_UID,
+        CollectionKind.NotificationSettings,
+        any()
+      )
+    } returns
       testCursor(hydrated = false)
 
     val collected = mutableListOf<PrefsState>()
-    val job = launch { manager.observe().toList(collected) }
+    val job = launch {
+      manager.observe()
+        .toList(collected)
+    }
     advanceTimeBy(6.seconds) // past the 5s PREFS_HYDRATION_TIMEOUT
     job.cancel()
 
     assertThat(collected).containsExactly(
       PrefsState.Unresolved,
       PrefsState.Resolved(NotificationSettings()),
-    ).inOrder()
+    )
+      .inOrder()
   }
 
   @Test
   fun update_whileUnresolved_fails_andWritesNothing() = runTest {
-    coEvery { cursorStore.get(TEST_UID, CollectionKind.NotificationSettings, any()) } returns
+    coEvery {
+      cursorStore.get(
+        TEST_UID,
+        CollectionKind.NotificationSettings,
+        any()
+      )
+    } returns
       testCursor(hydrated = false)
 
     val result = manager.update { it.copy(aog_disabled = true) }
@@ -184,7 +222,11 @@ class NotificationPrefsManagerImplTest {
   }
 
   private fun testEntity(settings: NotificationSettings): StorageEntity<NotificationSettings> =
-    StorageEntity(id = "main", value = settings, updatedAt = kotlin.time.Instant.DISTANT_PAST)
+    StorageEntity(
+      id = "main",
+      value = settings,
+      updatedAt = kotlin.time.Instant.DISTANT_PAST
+    )
 
   private fun testCursor(hydrated: Boolean): SyncCursor =
     SyncCursor(

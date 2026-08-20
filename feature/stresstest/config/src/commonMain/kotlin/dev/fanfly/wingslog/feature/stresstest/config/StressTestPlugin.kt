@@ -66,7 +66,10 @@ class StressTestNavContributor(
 
   override fun isAvailable(): Boolean = capability.isStressTestSupported
 
-  override fun register(builder: NavGraphBuilder, navController: NavController) {
+  override fun register(
+    builder: NavGraphBuilder,
+    navController: NavController
+  ) {
     builder.composable(STRESS_TEST_ROUTE) {
       StressTestScreen(navController = navController)
     }

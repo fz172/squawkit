@@ -28,7 +28,10 @@ class AndroidLocalNotifier(
   init {
     NotificationChannel.entries.forEach { channel ->
       manager.createNotificationChannel(
-        NotificationChannelCompat.Builder(channel.channelId(), channel.importance())
+        NotificationChannelCompat.Builder(
+          channel.channelId(),
+          channel.importance()
+        )
           .setName(channel.displayName())
           .setDescription(channel.description())
           .build()
@@ -37,16 +40,20 @@ class AndroidLocalNotifier(
   }
 
   override suspend fun post(notification: PendingNotification) {
-    val builder = NotificationCompat.Builder(context, notification.channel.channelId())
-      .setSmallIcon(R.drawable.ic_notification)
-      .setContentTitle(notification.title)
-      .setContentText(notification.body)
-      .setStyle(NotificationCompat.BigTextStyle().bigText(notification.body))
-      .setAutoCancel(true)
-      .setPriority(
-        if (notification.highPriority) NotificationCompat.PRIORITY_HIGH
-        else NotificationCompat.PRIORITY_DEFAULT
-      )
+    val builder =
+      NotificationCompat.Builder(context, notification.channel.channelId())
+        .setSmallIcon(R.drawable.ic_notification)
+        .setContentTitle(notification.title)
+        .setContentText(notification.body)
+        .setStyle(
+          NotificationCompat.BigTextStyle()
+            .bigText(notification.body)
+        )
+        .setAutoCancel(true)
+        .setPriority(
+          if (notification.highPriority) NotificationCompat.PRIORITY_HIGH
+          else NotificationCompat.PRIORITY_DEFAULT
+        )
     try {
       manager.notify(notification.id, NOTIFY_ID, builder.build())
     } catch (e: SecurityException) {
