@@ -7,6 +7,7 @@ import android.net.Uri
 import android.provider.Settings
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.edit
 import dev.fanfly.wingslog.core.lifecycle.CurrentActivityProvider
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -32,7 +33,8 @@ class AndroidNotificationPermission(
   private val activityProvider: CurrentActivityProvider,
 ) : NotificationPermission {
 
-  private val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+  private val prefs =
+    context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
   private val _state = MutableStateFlow(currentState())
   override fun observe(): StateFlow<PermissionState> = _state.asStateFlow()
 
@@ -42,8 +44,11 @@ class AndroidNotificationPermission(
 
   override suspend fun request(): PermissionState {
     if (_state.value != PermissionState.UNDETERMINED) return _state.value
-    prefs.edit().putBoolean(KEY_HAS_REQUESTED, true).apply()
-    val granted = AndroidNotificationPermissionBridge.request(Manifest.permission.POST_NOTIFICATIONS)
+    prefs.edit {
+      putBoolean(KEY_HAS_REQUESTED, true)
+    }
+    val granted =
+      AndroidNotificationPermissionBridge.request(Manifest.permission.POST_NOTIFICATIONS)
     val resolved = if (granted) PermissionState.GRANTED else currentState()
     _state.value = resolved
     return resolved
@@ -60,8 +65,14 @@ class AndroidNotificationPermission(
   }
 
   private fun currentState(): PermissionState {
-    if (NotificationManagerCompat.from(context).areNotificationsEnabled()) return PermissionState.GRANTED
-    if (!prefs.getBoolean(KEY_HAS_REQUESTED, false)) return PermissionState.UNDETERMINED
+    if (NotificationManagerCompat.from(context)
+        .areNotificationsEnabled()
+    ) return PermissionState.GRANTED
+    if (!prefs.getBoolean(
+        KEY_HAS_REQUESTED,
+        false
+      )
+    ) return PermissionState.UNDETERMINED
 
     // Requested before and still not granted. shouldShowRequestPermissionRationale distinguishes a
     // soft "not now" (still askable) from a hard "don't ask again" (system-settings-only) — but it

@@ -54,7 +54,8 @@ class NotificationDeveloperOptionsExtra(
 
   @Composable
   override fun Content(onNavigate: (route: String) -> Unit) {
-    val state by permission.observe().collectAsStateWithLifecycle()
+    val state by permission.observe()
+      .collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
 
     Spacer(Modifier.height(Spacing.extraLarge))
@@ -90,11 +91,13 @@ class NotificationDeveloperOptionsExtra(
         PermissionState.UNDETERMINED -> Button(onClick = { scope.launch { permission.request() } }) {
           Text(stringResource(Res.string.notifications_devoptions_request_action))
         }
+
         PermissionState.DENIED -> if (permission.canOpenSystemSettings) {
           OutlinedButton(onClick = { permission.openSystemSettings() }) {
             Text(stringResource(Res.string.notifications_devoptions_open_settings_action))
           }
         }
+
         PermissionState.GRANTED, PermissionState.UNSUPPORTED -> Unit
       }
     }

@@ -22,15 +22,21 @@ class WebLocalNotifier : LocalNotifier {
   private val live = mutableMapOf<String, dynamic>()
 
   override suspend fun post(notification: PendingNotification) {
-    val instance = createNotification(notification.title, notification.body, notification.id)
+    val instance =
+      createNotification(notification.title, notification.body, notification.id)
     live[notification.id] = instance
     instance.onclose = { live.remove(notification.id) }
   }
 
   override suspend fun cancel(id: String) {
-    live.remove(id)?.close()
+    live.remove(id)
+      ?.close()
   }
 
-  private fun createNotification(title: String, body: String, tag: String): dynamic =
+  private fun createNotification(
+    title: String,
+    body: String,
+    tag: String
+  ): dynamic =
     js("new Notification(title, { body: body, tag: tag })")
 }
