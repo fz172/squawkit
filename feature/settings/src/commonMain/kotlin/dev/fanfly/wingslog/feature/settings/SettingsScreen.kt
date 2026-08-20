@@ -187,19 +187,27 @@ fun SettingsContent(
               onClick = { detailNav.navigate(Screen.SyncSettings.route) },
             )
           }
-          add {
-            SettingsRow(
-              icon = Icons.Default.Notifications,
-              title = stringResource(SettingsRes.string.settings_notifications),
-              subtitle = stringResource(
-                when (user.notificationsRowState) {
-                  NotificationsRowState.BLOCKED -> SettingsRes.string.settings_notifications_subtitle_blocked
-                  NotificationsRowState.OFF -> SettingsRes.string.settings_notifications_subtitle_off
-                  NotificationsRowState.DEFAULT -> SettingsRes.string.settings_notifications_subtitle_default
-                }
-              ),
-              onClick = { detailNav.navigate(Screen.Notifications.route) },
-            )
+          // Staged rollout, not a capability statement: every platform can show notifications, so
+          // this is never permanent the way an isCameraCaptureSupported-style gate would be. The
+          // feature is mid-build across many PRs — the destination is still a "coming soon"
+          // placeholder (P1.9 finishes the real screen; N1/N2 land in P2-P5) — so it stays behind
+          // the same flag Developer Options and stress-test already use to keep an in-progress
+          // surface out of real users' hands, and comes out once the feature is actually finished.
+          if (user.isDeveloperOptionsSupported) {
+            add {
+              SettingsRow(
+                icon = Icons.Default.Notifications,
+                title = stringResource(SettingsRes.string.settings_notifications),
+                subtitle = stringResource(
+                  when (user.notificationsRowState) {
+                    NotificationsRowState.BLOCKED -> SettingsRes.string.settings_notifications_subtitle_blocked
+                    NotificationsRowState.OFF -> SettingsRes.string.settings_notifications_subtitle_off
+                    NotificationsRowState.DEFAULT -> SettingsRes.string.settings_notifications_subtitle_default
+                  }
+                ),
+                onClick = { detailNav.navigate(Screen.Notifications.route) },
+              )
+            }
           }
         }
         val supportRows = buildList<@Composable () -> Unit> {
