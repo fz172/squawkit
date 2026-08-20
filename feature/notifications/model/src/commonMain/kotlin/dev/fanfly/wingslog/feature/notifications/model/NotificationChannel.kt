@@ -10,7 +10,7 @@ enum class NotificationChannel {
   COLLABORATION,
 
   /** N2 — a squawk or inspection crossed into a more urgent tier, excluding AOG. */
-  URGENCY,
+  URGENCY_UPDATE,
 
   /** N2's top tier — an aircraft grounded by an AOG squawk. High priority; the one class that must pierce Focus once P5.3 lands the Time Sensitive entitlement. */
   GROUNDED,

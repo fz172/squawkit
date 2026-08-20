@@ -64,29 +64,29 @@ class AndroidLocalNotifier(
 
   private fun NotificationChannel.channelId(): String = when (this) {
     NotificationChannel.COLLABORATION -> "collaboration"
-    NotificationChannel.URGENCY -> "urgency"
+    NotificationChannel.URGENCY_UPDATE -> "urgency_update"
     NotificationChannel.GROUNDED -> "grounded"
   }
 
-  // TODO(notifications P1.10): move these through strings.xml once the module carries any — a
-  // channel name is user-visible (system Settings > App notifications > <this name>), so it should
-  // localize, but adding a whole classic-Android res/values pipeline for three strings ahead of any
-  // other user-facing copy in this module isn't worth it yet.
-  private fun NotificationChannel.displayName(): String = when (this) {
-    NotificationChannel.COLLABORATION -> "Collaboration"
-    NotificationChannel.URGENCY -> "Urgency"
-    NotificationChannel.GROUNDED -> "Aircraft grounded"
-  }
+  private fun NotificationChannel.displayName(): String = context.getString(
+    when (this) {
+      NotificationChannel.COLLABORATION -> R.string.notification_channel_collaboration_name
+      NotificationChannel.URGENCY_UPDATE -> R.string.notification_channel_urgency_update_name
+      NotificationChannel.GROUNDED -> R.string.notification_channel_grounded_name
+    }
+  )
 
-  private fun NotificationChannel.description(): String = when (this) {
-    NotificationChannel.COLLABORATION -> "Someone changes a shared aircraft"
-    NotificationChannel.URGENCY -> "A squawk or inspection becomes more urgent"
-    NotificationChannel.GROUNDED -> "An aircraft is grounded by an AOG squawk"
-  }
+  private fun NotificationChannel.description(): String = context.getString(
+    when (this) {
+      NotificationChannel.COLLABORATION -> R.string.notification_channel_collaboration_description
+      NotificationChannel.URGENCY_UPDATE -> R.string.notification_channel_urgency_update_description
+      NotificationChannel.GROUNDED -> R.string.notification_channel_grounded_description
+    }
+  )
 
   private fun NotificationChannel.importance(): Int = when (this) {
     NotificationChannel.GROUNDED -> NotificationManager.IMPORTANCE_HIGH
-    NotificationChannel.COLLABORATION, NotificationChannel.URGENCY -> NotificationManager.IMPORTANCE_DEFAULT
+    NotificationChannel.COLLABORATION, NotificationChannel.URGENCY_UPDATE -> NotificationManager.IMPORTANCE_DEFAULT
   }
 
   companion object {
