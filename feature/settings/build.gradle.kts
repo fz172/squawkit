@@ -64,6 +64,10 @@ kotlin {
       implementation(project(":feature:technician:sharedassets"))
       implementation(project(":feature:ads:datamanager"))
       implementation(project(":feature:developeroptions:datamanager"))
+      // The Notifications row's live subtitle (design §9.1).
+      implementation(project(":feature:notifications:model"))
+      implementation(project(":feature:notifications:permission"))
+      implementation(project(":feature:notifications:datamanager"))
       // DeveloperOptionsExtra: the contributed-section interface DeveloperOptionsScreen resolves
       // from Koin, so contributors depend on it rather than on this module.
       implementation(project(":feature:developeroptions:plugin"))

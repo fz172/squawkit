@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="notification_settings_title">Notifications</string>
+  <!-- Placeholder body for the screen scaffolded in P1.8, ahead of the real settings UI (P1.9). -->
+  <string name="notification_settings_coming_soon">Notification preferences are coming soon.</string>
+</resources>

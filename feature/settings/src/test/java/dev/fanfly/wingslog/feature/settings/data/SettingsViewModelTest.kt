@@ -12,8 +12,13 @@ import dev.fanfly.wingslog.core.ui.theme.AppearanceMode
 import dev.fanfly.wingslog.core.ui.theme.AppearanceStore
 import dev.fanfly.wingslog.feature.ads.datamanager.AdConsentManager
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
+import dev.fanfly.wingslog.core.model.settings.NotificationSettings
 import dev.fanfly.wingslog.feature.developeroptions.datamanager.DeveloperFlags
 import dev.fanfly.wingslog.feature.developeroptions.datamanager.DeveloperOptionsManager
+import dev.fanfly.wingslog.feature.notifications.datamanager.NotificationPrefsManager
+import dev.fanfly.wingslog.feature.notifications.datamanager.PrefsState
+import dev.fanfly.wingslog.feature.notifications.permission.NotificationPermission
+import dev.fanfly.wingslog.feature.notifications.permission.PermissionState
 import dev.gitlive.firebase.auth.FirebaseUser
 import io.mockk.coEvery
 import io.mockk.coJustRun
@@ -22,6 +27,7 @@ import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -47,6 +53,8 @@ class SettingsViewModelTest {
   private lateinit var appearanceController: AppearanceController
   private lateinit var analyticsPreferenceController: AnalyticsPreferenceController
   private lateinit var adConsentManager: AdConsentManager
+  private lateinit var notificationPermission: NotificationPermission
+  private lateinit var notificationPrefsManager: NotificationPrefsManager
   private lateinit var viewModel: SettingsViewModel
 
   /** In-memory [AppearanceStore] so the controller needs no platform backing in tests. */
@@ -77,6 +85,11 @@ class SettingsViewModelTest {
     dbChecker = mockk(relaxed = true)
     featureLabManager = mockk(relaxed = true)
     adConsentManager = mockk(relaxed = true)
+    notificationPermission = mockk(relaxed = true)
+    notificationPrefsManager = mockk(relaxed = true)
+    every { notificationPermission.observe() } returns MutableStateFlow(PermissionState.GRANTED)
+    every { notificationPrefsManager.observe() } returns
+      flowOf(PrefsState.Resolved(NotificationSettings()))
     appearanceController = AppearanceController(InMemoryAppearanceStore())
     analyticsPreferenceController = AnalyticsPreferenceController(
       InMemoryAnalyticsPreferenceStore(),
@@ -101,23 +114,7 @@ class SettingsViewModelTest {
 
   @Test
   fun logOut_wipesUserData_whenUserSignedIn() = runTest(testDispatcher) {
-    viewModel = SettingsViewModel(
-      authManager,
-      accountDeleter,
-      attachmentManager,
-      dbChecker,
-      featureLabManager,
-      appearanceController,
-      analyticsPreferenceController,
-      AppCapability(
-        isDeveloperOptionsSupported = false,
-        isStressTestSupported = false,
-        isCameraCaptureSupported = false,
-        isAnonymousLoginSupported = false,
-        isAdsSupported = false,
-      ),
-      adConsentManager,
-    )
+    viewModel = buildViewModel()
 
     viewModel.logOut()
     advanceUntilIdle()
@@ -127,23 +124,7 @@ class SettingsViewModelTest {
 
   @Test
   fun logOut_wipesAttachmentData_whenUserSignedIn() = runTest(testDispatcher) {
-    viewModel = SettingsViewModel(
-      authManager,
-      accountDeleter,
-      attachmentManager,
-      dbChecker,
-      featureLabManager,
-      appearanceController,
-      analyticsPreferenceController,
-      AppCapability(
-        isDeveloperOptionsSupported = false,
-        isStressTestSupported = false,
-        isCameraCaptureSupported = false,
-        isAnonymousLoginSupported = false,
-        isAdsSupported = false,
-      ),
-      adConsentManager,
-    )
+    viewModel = buildViewModel()
 
     viewModel.logOut()
     advanceUntilIdle()
@@ -153,23 +134,7 @@ class SettingsViewModelTest {
 
   @Test
   fun logOut_callsAuthManagerLogOut() = runTest(testDispatcher) {
-    viewModel = SettingsViewModel(
-      authManager,
-      accountDeleter,
-      attachmentManager,
-      dbChecker,
-      featureLabManager,
-      appearanceController,
-      analyticsPreferenceController,
-      AppCapability(
-        isDeveloperOptionsSupported = false,
-        isStressTestSupported = false,
-        isCameraCaptureSupported = false,
-        isAnonymousLoginSupported = false,
-        isAdsSupported = false,
-      ),
-      adConsentManager,
-    )
+    viewModel = buildViewModel()
 
     viewModel.logOut()
     advanceUntilIdle()
@@ -180,23 +145,7 @@ class SettingsViewModelTest {
   @Test
   fun logOut_skipsWipe_whenNoUserSignedIn() = runTest(testDispatcher) {
     every { authManager.getCurrentUser() } returns null
-    viewModel = SettingsViewModel(
-      authManager,
-      accountDeleter,
-      attachmentManager,
-      dbChecker,
-      featureLabManager,
-      appearanceController,
-      analyticsPreferenceController,
-      AppCapability(
-        isDeveloperOptionsSupported = false,
-        isStressTestSupported = false,
-        isCameraCaptureSupported = false,
-        isAnonymousLoginSupported = false,
-        isAdsSupported = false,
-      ),
-      adConsentManager,
-    )
+    viewModel = buildViewModel()
 
     viewModel.logOut()
     advanceUntilIdle()
@@ -207,23 +156,7 @@ class SettingsViewModelTest {
 
   @Test
   fun logOut_setsStateToLoggedOut() = runTest(testDispatcher) {
-    viewModel = SettingsViewModel(
-      authManager,
-      accountDeleter,
-      attachmentManager,
-      dbChecker,
-      featureLabManager,
-      appearanceController,
-      analyticsPreferenceController,
-      AppCapability(
-        isDeveloperOptionsSupported = false,
-        isStressTestSupported = false,
-        isCameraCaptureSupported = false,
-        isAnonymousLoginSupported = false,
-        isAdsSupported = false,
-      ),
-      adConsentManager,
-    )
+    viewModel = buildViewModel()
 
     viewModel.logOut()
     advanceUntilIdle()
@@ -314,6 +247,69 @@ class SettingsViewModelTest {
     coVerify(exactly = 0) { accountDeleter.deleteAccount() }
   }
 
+  @Test
+  fun notificationsRowState_grantedAndOn_isDefault() = runTest(testDispatcher) {
+    viewModel = buildViewModel()
+    advanceUntilIdle()
+
+    assertThat(viewModel.user.value.notificationsRowState).isEqualTo(NotificationsRowState.DEFAULT)
+  }
+
+  @Test
+  fun notificationsRowState_masterSwitchOff_isOff() = runTest(testDispatcher) {
+    every { notificationPrefsManager.observe() } returns
+      flowOf(PrefsState.Resolved(NotificationSettings(all_disabled = true)))
+
+    viewModel = buildViewModel()
+    advanceUntilIdle()
+
+    assertThat(viewModel.user.value.notificationsRowState).isEqualTo(NotificationsRowState.OFF)
+  }
+
+  @Test
+  fun notificationsRowState_permissionDenied_isBlocked() = runTest(testDispatcher) {
+    every { notificationPermission.observe() } returns MutableStateFlow(PermissionState.DENIED)
+
+    viewModel = buildViewModel()
+    advanceUntilIdle()
+
+    assertThat(viewModel.user.value.notificationsRowState).isEqualTo(NotificationsRowState.BLOCKED)
+  }
+
+  @Test
+  fun notificationsRowState_permissionUnsupported_isBlocked() = runTest(testDispatcher) {
+    every { notificationPermission.observe() } returns MutableStateFlow(PermissionState.UNSUPPORTED)
+
+    viewModel = buildViewModel()
+    advanceUntilIdle()
+
+    assertThat(viewModel.user.value.notificationsRowState).isEqualTo(NotificationsRowState.BLOCKED)
+  }
+
+  /** An OS-level block is true regardless of the in-app toggle, and is the more actionable fix. */
+  @Test
+  fun notificationsRowState_deniedAndMasterSwitchOff_blockedWins() = runTest(testDispatcher) {
+    every { notificationPermission.observe() } returns MutableStateFlow(PermissionState.DENIED)
+    every { notificationPrefsManager.observe() } returns
+      flowOf(PrefsState.Resolved(NotificationSettings(all_disabled = true)))
+
+    viewModel = buildViewModel()
+    advanceUntilIdle()
+
+    assertThat(viewModel.user.value.notificationsRowState).isEqualTo(NotificationsRowState.BLOCKED)
+  }
+
+  /** Unresolved preferences must never read as OFF — that would be a guess, not a fact. */
+  @Test
+  fun notificationsRowState_prefsUnresolved_readsAsDefault() = runTest(testDispatcher) {
+    every { notificationPrefsManager.observe() } returns flowOf(PrefsState.Unresolved)
+
+    viewModel = buildViewModel()
+    advanceUntilIdle()
+
+    assertThat(viewModel.user.value.notificationsRowState).isEqualTo(NotificationsRowState.DEFAULT)
+  }
+
   private fun buildViewModel() = SettingsViewModel(
     authManager,
     accountDeleter,
@@ -330,5 +326,7 @@ class SettingsViewModelTest {
       isAdsSupported = false,
     ),
     adConsentManager,
+    notificationPermission,
+    notificationPrefsManager,
   )
 }

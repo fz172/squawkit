@@ -68,6 +68,7 @@ kotlin {
       implementation(project(":core:sharedassets"))
       implementation(project(":feature:sync:data"))
       implementation(project(":feature:sync:settings"))
+      implementation(project(":feature:notifications:settings"))
       implementation(project(":feature:tasks:update"))
       implementation(project(":feature:technician:datamanager"))
       implementation(project(":feature:technician:manage"))

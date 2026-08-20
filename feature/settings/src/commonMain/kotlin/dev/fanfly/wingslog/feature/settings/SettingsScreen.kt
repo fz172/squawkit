@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.CloudSync
 import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.Engineering
 import androidx.compose.material.icons.filled.FileDownload
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.PrivacyTip
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.WorkspacePremium
@@ -45,6 +46,7 @@ import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.login.upgrade.AccountUpgradeViewModel
+import dev.fanfly.wingslog.feature.settings.data.NotificationsRowState
 import dev.fanfly.wingslog.feature.settings.data.SettingsViewModel
 import dev.fanfly.wingslog.feature.settings.data.UserStatus
 import org.jetbrains.compose.resources.stringResource
@@ -62,6 +64,10 @@ import wingslog.feature.settings.generated.resources.settings_delete_account_sub
 import wingslog.feature.settings.generated.resources.settings_developer_options_subtitle
 import wingslog.feature.settings.generated.resources.settings_export_subtitle
 import wingslog.feature.settings.generated.resources.settings_logout_subtitle
+import wingslog.feature.settings.generated.resources.settings_notifications
+import wingslog.feature.settings.generated.resources.settings_notifications_subtitle_blocked
+import wingslog.feature.settings.generated.resources.settings_notifications_subtitle_default
+import wingslog.feature.settings.generated.resources.settings_notifications_subtitle_off
 import wingslog.feature.settings.generated.resources.settings_subscription
 import wingslog.feature.settings.generated.resources.settings_subscription_subtitle
 import wingslog.feature.settings.generated.resources.settings_subtitle
@@ -179,6 +185,20 @@ fun SettingsContent(
               title = stringResource(SyncRes.string.feature_name_backup_and_sync),
               subtitle = stringResource(SettingsRes.string.settings_sync_subtitle),
               onClick = { detailNav.navigate(Screen.SyncSettings.route) },
+            )
+          }
+          add {
+            SettingsRow(
+              icon = Icons.Default.Notifications,
+              title = stringResource(SettingsRes.string.settings_notifications),
+              subtitle = stringResource(
+                when (user.notificationsRowState) {
+                  NotificationsRowState.BLOCKED -> SettingsRes.string.settings_notifications_subtitle_blocked
+                  NotificationsRowState.OFF -> SettingsRes.string.settings_notifications_subtitle_off
+                  NotificationsRowState.DEFAULT -> SettingsRes.string.settings_notifications_subtitle_default
+                }
+              ),
+              onClick = { detailNav.navigate(Screen.Notifications.route) },
             )
           }
         }
