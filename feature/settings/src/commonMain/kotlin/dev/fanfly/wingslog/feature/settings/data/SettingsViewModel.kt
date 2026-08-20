@@ -42,6 +42,7 @@ class SettingsViewModel(
     MutableStateFlow(
       SettingsUiState(
         isDeveloperOptionsSupported = appCapability.isDeveloperOptionsSupported,
+        isNotificationsSupported = appCapability.isNotificationsSupported,
       )
     )
   val user: StateFlow<SettingsUiState> = _user.asStateFlow()
@@ -127,6 +128,7 @@ class SettingsViewModel(
       userStatus = UserStatus.LOADING,
       isAnonymous = authManager.getCurrentUser()?.isAnonymous == true,
       isDeveloperOptionsSupported = appCapability.isDeveloperOptionsSupported,
+      isNotificationsSupported = appCapability.isNotificationsSupported,
     )
   }
 

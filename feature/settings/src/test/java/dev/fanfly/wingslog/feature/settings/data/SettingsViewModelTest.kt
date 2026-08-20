@@ -321,6 +321,7 @@ class SettingsViewModelTest {
     AppCapability(
       isDeveloperOptionsSupported = false,
       isStressTestSupported = false,
+      isNotificationsSupported = false,
       isCameraCaptureSupported = false,
       isAnonymousLoginSupported = true,
       isAdsSupported = false,

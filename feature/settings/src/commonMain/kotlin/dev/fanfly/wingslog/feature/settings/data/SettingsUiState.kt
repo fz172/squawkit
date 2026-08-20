@@ -29,6 +29,11 @@ data class SettingsUiState(
   val isAnonymous: Boolean = false,
   val isDeveloperOptionsSupported: Boolean = false,
   /**
+   * Staged-rollout gate for the Notifications row — see [dev.fanfly.wingslog.core.appinfo.AppCapability.isNotificationsSupported].
+   * Not a platform-capability read; comes out once the feature ships.
+   */
+  val isNotificationsSupported: Boolean = false,
+  /**
    * Whether "Ad privacy settings" has a CMP form to re-present right now (#384) — not just whether
    * this build ships ads. False until some ad slot has resolved consent this session (the CMP call
    * is lazy) and stays false outside a region requiring a privacy choice, so the row only appears
