@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+  <!--
+    Declared here rather than relied on from the app manifest: this module is the one that calls
+    NotificationManagerCompat.notify(), so it should carry its own requirement. The manifest merger
+    unions it into every host, and lint checks each module against what that module declares. See
+    feature/ads/viewing's AndroidManifest.xml for the same pattern.
+  -->
+  <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+</manifest>

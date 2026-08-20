@@ -51,6 +51,7 @@ kotlin {
       implementation(project(":feature:logs:update"))
       implementation(project(":feature:logs:viewing"))
       implementation(project(":feature:notifications:permission"))
+      implementation(project(":feature:notifications:viewing"))
       implementation(project(":feature:notifications:devoptions"))
       implementation(project(":feature:settings"))
       implementation(project(":feature:shell"))
