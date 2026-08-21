@@ -149,13 +149,14 @@ fun NotificationSettingsScreen(
             )
           }
 
+          val urgencyEnabled = !state.isLoading && state.settings.allEnabled
           GroupSection(title = stringResource(Res.string.notification_settings_group_urgency)) {
             ToggleCard {
               ToggleRow(
                 title = stringResource(Res.string.notification_settings_aog_title),
                 subtitle = stringResource(Res.string.notification_settings_aog_subtitle),
                 checked = state.settings.aogEnabled,
-                enabled = !state.isLoading,
+                enabled = urgencyEnabled,
                 onCheckedChange = viewModel::onAogToggled,
               )
               GroupDivider()
@@ -163,7 +164,7 @@ fun NotificationSettingsScreen(
                 title = stringResource(Res.string.notification_settings_squawk_priority_title),
                 subtitle = stringResource(Res.string.notification_settings_squawk_priority_subtitle),
                 checked = state.settings.squawkPriorityEnabled,
-                enabled = !state.isLoading,
+                enabled = urgencyEnabled,
                 onCheckedChange = viewModel::onSquawkPriorityToggled,
               )
               GroupDivider()
@@ -171,7 +172,7 @@ fun NotificationSettingsScreen(
                 title = stringResource(Res.string.notification_settings_overdue_title),
                 subtitle = stringResource(Res.string.notification_settings_overdue_subtitle),
                 checked = state.settings.overdueEnabled,
-                enabled = !state.isLoading,
+                enabled = urgencyEnabled,
                 onCheckedChange = viewModel::onOverdueToggled,
               )
               GroupDivider()
@@ -179,7 +180,7 @@ fun NotificationSettingsScreen(
                 title = stringResource(Res.string.notification_settings_due_soon_title),
                 subtitle = stringResource(Res.string.notification_settings_due_soon_subtitle),
                 checked = state.settings.dueSoonEnabled,
-                enabled = !state.isLoading,
+                enabled = urgencyEnabled,
                 onCheckedChange = viewModel::onDueSoonToggled,
               )
             }
@@ -191,7 +192,8 @@ fun NotificationSettingsScreen(
             )
           }
 
-          val collaborationEnabled = !state.isLoading && state.isSignedIn && state.isCloudSyncEnabled
+          val collaborationEnabled =
+            urgencyEnabled && state.isSignedIn && state.isCloudSyncEnabled
           GroupSection(title = stringResource(Res.string.notification_settings_group_collaboration)) {
             ToggleCard {
               ToggleRow(
