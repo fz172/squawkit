@@ -26,7 +26,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 /**
- * Design §9.2. Combines five independently-changing sources into one render input; the screen
+ * Design §9.2. Combines six independently-changing sources into one render input; the screen
  * itself never reads any of them directly.
  *
  * [NotificationSettingsUiState.isLoading] is true, and every toggle must be **disabled** (not just
@@ -51,14 +51,19 @@ class NotificationSettingsViewModel(
    */
   private val confirmDisableAog = MutableStateFlow(false)
 
+  /** One-shot: set on a failed [NotificationPrefsManager.update], cleared by [onSaveErrorShown]. */
+  private val saveError = MutableStateFlow(false)
+
   val uiState: StateFlow<NotificationSettingsUiState> =
     combine(
       prefsManager.observe(),
       permission.observe(),
       auth.authStateChanged,
       syncPreferences.state,
-      confirmDisableAog,
-    ) { prefs, permissionState, user, syncPrefs, confirming ->
+      // combine() tops out at 5 typed flows — folding these two together keeps the outer combine
+      // at arity 5 instead of falling through to the untyped Array<Any?> vararg overload.
+      combine(confirmDisableAog, saveError) { confirming, error -> confirming to error },
+    ) { prefs, permissionState, user, syncPrefs, (confirming, error) ->
       NotificationSettingsUiState(
         settings = (prefs as? PrefsState.Resolved)?.settings ?: NotificationSettings(),
         permission = permissionState,
@@ -67,6 +72,7 @@ class NotificationSettingsViewModel(
         isCloudSyncEnabled = syncPrefs.cloudSyncEnabled,
         isLoading = prefs is PrefsState.Unresolved,
         confirmDisableAog = confirming,
+        saveError = error,
       )
     }.stateIn(
       scope = viewModelScope,
@@ -74,8 +80,8 @@ class NotificationSettingsViewModel(
       initialValue = NotificationSettingsUiState(),
     )
 
-  fun onPermissionRequested() {
-    viewModelScope.launch { permission.request() }
+  fun onSaveErrorShown() {
+    saveError.value = false
   }
 
   fun onOpenSystemSettings() {
@@ -92,7 +98,7 @@ class NotificationSettingsViewModel(
     if (enabled) {
       viewModelScope.launch {
         if (uiState.value.permission == PermissionState.UNDETERMINED) permission.request()
-        prefsManager.update { it.withAllEnabled(true) }
+        write { it.withAllEnabled(true) }
       }
       return
     }
@@ -126,6 +132,10 @@ class NotificationSettingsViewModel(
   fun onLogActivityToggled(enabled: Boolean) = update { it.withLogActivity(enabled) }
 
   private fun update(mutate: (NotificationSettings) -> NotificationSettings) {
-    viewModelScope.launch { prefsManager.update(mutate) }
+    viewModelScope.launch { write(mutate) }
+  }
+
+  private suspend fun write(mutate: (NotificationSettings) -> NotificationSettings) {
+    if (prefsManager.update(mutate).isFailure) saveError.value = true
   }
 }

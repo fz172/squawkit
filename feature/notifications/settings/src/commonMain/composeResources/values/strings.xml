@@ -42,4 +42,6 @@
   <string name="notification_settings_aog_confirm_title">Turn off aircraft grounded alerts?</string>
   <string name="notification_settings_aog_confirm_body">You won’t be told when an aircraft is grounded.</string>
   <string name="notification_settings_aog_confirm_action">Turn off</string>
+
+  <string name="notification_settings_save_error">Couldn’t save that change. Try again.</string>
 </resources>

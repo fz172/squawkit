@@ -20,11 +20,15 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -75,6 +79,7 @@ import wingslog.feature.notifications.settings.generated.resources.notification_
 import wingslog.feature.notifications.settings.generated.resources.notification_settings_log_activity_title
 import wingslog.feature.notifications.settings.generated.resources.notification_settings_overdue_subtitle
 import wingslog.feature.notifications.settings.generated.resources.notification_settings_overdue_title
+import wingslog.feature.notifications.settings.generated.resources.notification_settings_save_error
 import wingslog.feature.notifications.settings.generated.resources.notification_settings_signin_cta
 import wingslog.feature.notifications.settings.generated.resources.notification_settings_signin_footer
 import wingslog.feature.notifications.settings.generated.resources.notification_settings_squawk_activity_subtitle
@@ -102,6 +107,14 @@ fun NotificationSettingsScreen(
 ) {
   val state by viewModel.uiState.collectAsStateWithLifecycle()
 
+  val snackbarHostState = remember { SnackbarHostState() }
+  val saveErrorMessage = stringResource(Res.string.notification_settings_save_error)
+  LaunchedEffect(state.saveError) {
+    if (!state.saveError) return@LaunchedEffect
+    snackbarHostState.showSnackbar(saveErrorMessage)
+    viewModel.onSaveErrorShown()
+  }
+
   Scaffold(
     topBar = {
       ConstrainedTopBar {
@@ -110,7 +123,8 @@ fun NotificationSettingsScreen(
           onBackClick = { navController.popBackStack() },
         )
       }
-    }
+    },
+    snackbarHost = { SnackbarHost(snackbarHostState) },
   ) { innerPadding ->
     Box(
       modifier = Modifier

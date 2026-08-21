@@ -260,4 +260,36 @@ class NotificationSettingsViewModelTest {
     coVerify { prefsManager.update(capture(mutate)) }
     assertThat(mutate.captured(NotificationSettings()).aircraft_activity_disabled).isTrue()
   }
+
+  // --- A failed write surfaces saveError instead of failing silently ---
+
+  @Test
+  fun onSquawkPriorityToggled_writeFails_setsSaveError() = runTest(testDispatcher) {
+    coEvery { prefsManager.update(any()) } returns Result.failure(RuntimeException("boom"))
+    val viewModel = viewModel()
+
+    viewModel.onSquawkPriorityToggled(false)
+
+    assertThat(viewModel.uiState.value.saveError).isTrue()
+  }
+
+  @Test
+  fun onSquawkPriorityToggled_writeSucceeds_saveErrorStaysFalse() = runTest(testDispatcher) {
+    val viewModel = viewModel()
+
+    viewModel.onSquawkPriorityToggled(false)
+
+    assertThat(viewModel.uiState.value.saveError).isFalse()
+  }
+
+  @Test
+  fun onSaveErrorShown_clearsTheSignal() = runTest(testDispatcher) {
+    coEvery { prefsManager.update(any()) } returns Result.failure(RuntimeException("boom"))
+    val viewModel = viewModel()
+    viewModel.onSquawkPriorityToggled(false)
+
+    viewModel.onSaveErrorShown()
+
+    assertThat(viewModel.uiState.value.saveError).isFalse()
+  }
 }
