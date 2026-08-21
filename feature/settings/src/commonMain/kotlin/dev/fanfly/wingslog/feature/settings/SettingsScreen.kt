@@ -189,11 +189,10 @@ fun SettingsContent(
           }
           // Staged rollout, not a capability statement: every platform can show notifications, so
           // this is never permanent the way an isCameraCaptureSupported-style gate would be. The
-          // feature is mid-build across many PRs — the destination is still a "coming soon"
-          // placeholder (P1.9 finishes the real screen; N1/N2 land in P2-P5) — so it stays behind
-          // its own AppCapability.isNotificationsSupported flag (defaults to isDeveloperBuild, same
-          // as isStressTestSupported) rather than piggybacking on Developer Options' flag, and comes
-          // out once the feature is actually finished.
+          // feature is mid-build across many PRs — N1/N2 themselves still land in P2-P5 — so it
+          // stays behind its own AppCapability.isNotificationsSupported flag (defaults to
+          // isDeveloperBuild, same as isStressTestSupported) rather than piggybacking on Developer
+          // Options' flag, and comes out once the feature is actually finished.
           if (user.isNotificationsSupported) {
             add {
               SettingsRow(

@@ -20,12 +20,10 @@ import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -39,6 +37,8 @@ import androidx.navigation.NavController
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedTopBar
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
 import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
+import dev.fanfly.wingslog.core.ui.common.compose.SwitchRowCard
+import dev.fanfly.wingslog.core.ui.common.compose.SwitchRowItem
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.statusColors
@@ -115,34 +115,31 @@ fun SyncSettingsScreen(
         ) {
           HeroCaption(state = state)
 
-          ToggleCard {
-            SyncToggleRow(
-              title = stringResource(Res.string.setting_item_sync),
-              subtitle = when {
-                !state.signedIn -> stringResource(Res.string.sync_subtitle_signin)
-                state.cloudSyncEnabled -> stringResource(Res.string.sync_subtitle_active)
-                else -> stringResource(Res.string.sync_subtitle_off)
-              },
-              checked = state.cloudSyncEnabled,
-              enabled = state.signedIn,
-              onCheckedChange = viewModel::onCloudSyncToggled,
-            )
-            HorizontalDivider(
-              color = MaterialTheme.colorScheme.outlineVariant.copy(
-                alpha = 0.4f
-              )
-            )
-            SyncToggleRow(
-              title = stringResource(Res.string.setting_item_sync_on_cellular),
-              subtitle = if (state.allowUploadOnCellular)
-                stringResource(Res.string.sync_subtitle_cellular_enabled)
-              else
-                stringResource(Res.string.sync_subtitle_cellular_disabled),
-              checked = state.allowUploadOnCellular,
-              enabled = state.signedIn && state.cloudSyncEnabled,
-              onCheckedChange = viewModel::onAllowUploadOnCellularToggled,
-            )
-          }
+          SwitchRowCard(
+            items = listOf(
+              SwitchRowItem(
+                title = stringResource(Res.string.setting_item_sync),
+                subtitle = when {
+                  !state.signedIn -> stringResource(Res.string.sync_subtitle_signin)
+                  state.cloudSyncEnabled -> stringResource(Res.string.sync_subtitle_active)
+                  else -> stringResource(Res.string.sync_subtitle_off)
+                },
+                checked = state.cloudSyncEnabled,
+                enabled = state.signedIn,
+                onCheckedChange = viewModel::onCloudSyncToggled,
+              ),
+              SwitchRowItem(
+                title = stringResource(Res.string.setting_item_sync_on_cellular),
+                subtitle = if (state.allowUploadOnCellular)
+                  stringResource(Res.string.sync_subtitle_cellular_enabled)
+                else
+                  stringResource(Res.string.sync_subtitle_cellular_disabled),
+                checked = state.allowUploadOnCellular,
+                enabled = state.signedIn && state.cloudSyncEnabled,
+                onCheckedChange = viewModel::onAllowUploadOnCellularToggled,
+              ),
+            ),
+          )
 
           StatusSection(state = state)
           Spacer(Modifier.height(Spacing.large))
@@ -176,65 +173,6 @@ private fun HeroCaption(state: SyncSettingsUiState) {
       text = body,
       style = MaterialTheme.typography.bodyMedium,
       color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
-  }
-}
-
-@Composable
-private fun ToggleCard(content: @Composable () -> Unit) {
-  Column(
-    modifier = Modifier
-      .fillMaxWidth()
-      .clip(RoundedCornerShape(Spacing.cardCornerRadius))
-      .background(MaterialTheme.colorScheme.surfaceContainerLow),
-  ) {
-    content()
-  }
-}
-
-@Composable
-private fun SyncToggleRow(
-  title: String,
-  subtitle: String,
-  checked: Boolean,
-  enabled: Boolean,
-  onCheckedChange: (Boolean) -> Unit,
-) {
-  val titleColor =
-    if (enabled) MaterialTheme.colorScheme.onSurface
-    else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.42f)
-  val subtitleColor =
-    if (enabled) MaterialTheme.colorScheme.onSurfaceVariant
-    else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.55f)
-  Row(
-    modifier = Modifier
-      .fillMaxWidth()
-      .padding(
-        horizontal = Spacing.large,
-        vertical = Spacing.large
-      ),
-    verticalAlignment = Alignment.CenterVertically,
-  ) {
-    Column(
-      modifier = Modifier.weight(1f),
-      verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
-    ) {
-      Text(
-        text = title,
-        style = MaterialTheme.typography.bodyLarge,
-        color = titleColor
-      )
-      Text(
-        text = subtitle,
-        style = MaterialTheme.typography.bodySmall,
-        color = subtitleColor
-      )
-    }
-    Spacer(Modifier.width(Spacing.large))
-    Switch(
-      checked = checked,
-      enabled = enabled,
-      onCheckedChange = onCheckedChange
     )
   }
 }
