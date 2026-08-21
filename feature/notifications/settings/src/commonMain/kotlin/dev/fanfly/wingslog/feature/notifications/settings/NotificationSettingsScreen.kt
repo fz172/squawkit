@@ -10,19 +10,16 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -38,6 +35,8 @@ import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedTopBar
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
 import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
+import dev.fanfly.wingslog.core.ui.common.compose.SwitchRowCard
+import dev.fanfly.wingslog.core.ui.common.compose.SwitchRowItem
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.statusColors
@@ -150,54 +149,55 @@ fun NotificationSettingsScreen(
         ) {
           PermissionBanner(state = state, onOpenSystemSettings = viewModel::onOpenSystemSettings)
 
-          ToggleCard {
-            ToggleRow(
-              title = stringResource(Res.string.notification_settings_all_title),
-              subtitle = if (state.settings.allEnabled)
-                stringResource(Res.string.notification_settings_all_subtitle_on)
-              else
-                stringResource(Res.string.notification_settings_all_subtitle_off),
-              checked = state.settings.allEnabled,
-              enabled = !state.isLoading,
-              onCheckedChange = viewModel::onAllNotificationsToggled,
-            )
-          }
+          SwitchRowCard(
+            items = listOf(
+              SwitchRowItem(
+                title = stringResource(Res.string.notification_settings_all_title),
+                subtitle = if (state.settings.allEnabled)
+                  stringResource(Res.string.notification_settings_all_subtitle_on)
+                else
+                  stringResource(Res.string.notification_settings_all_subtitle_off),
+                checked = state.settings.allEnabled,
+                enabled = !state.isLoading,
+                onCheckedChange = viewModel::onAllNotificationsToggled,
+              )
+            ),
+          )
 
           val urgencyEnabled = !state.isLoading && state.settings.allEnabled
           GroupSection(title = stringResource(Res.string.notification_settings_group_urgency)) {
-            ToggleCard {
-              ToggleRow(
-                title = stringResource(Res.string.notification_settings_aog_title),
-                subtitle = stringResource(Res.string.notification_settings_aog_subtitle),
-                checked = state.settings.aogEnabled,
-                enabled = urgencyEnabled,
-                onCheckedChange = viewModel::onAogToggled,
-              )
-              GroupDivider()
-              ToggleRow(
-                title = stringResource(Res.string.notification_settings_squawk_priority_title),
-                subtitle = stringResource(Res.string.notification_settings_squawk_priority_subtitle),
-                checked = state.settings.squawkPriorityEnabled,
-                enabled = urgencyEnabled,
-                onCheckedChange = viewModel::onSquawkPriorityToggled,
-              )
-              GroupDivider()
-              ToggleRow(
-                title = stringResource(Res.string.notification_settings_overdue_title),
-                subtitle = stringResource(Res.string.notification_settings_overdue_subtitle),
-                checked = state.settings.overdueEnabled,
-                enabled = urgencyEnabled,
-                onCheckedChange = viewModel::onOverdueToggled,
-              )
-              GroupDivider()
-              ToggleRow(
-                title = stringResource(Res.string.notification_settings_due_soon_title),
-                subtitle = stringResource(Res.string.notification_settings_due_soon_subtitle),
-                checked = state.settings.dueSoonEnabled,
-                enabled = urgencyEnabled,
-                onCheckedChange = viewModel::onDueSoonToggled,
-              )
-            }
+            SwitchRowCard(
+              items = listOf(
+                SwitchRowItem(
+                  title = stringResource(Res.string.notification_settings_aog_title),
+                  subtitle = stringResource(Res.string.notification_settings_aog_subtitle),
+                  checked = state.settings.aogEnabled,
+                  enabled = urgencyEnabled,
+                  onCheckedChange = viewModel::onAogToggled,
+                ),
+                SwitchRowItem(
+                  title = stringResource(Res.string.notification_settings_squawk_priority_title),
+                  subtitle = stringResource(Res.string.notification_settings_squawk_priority_subtitle),
+                  checked = state.settings.squawkPriorityEnabled,
+                  enabled = urgencyEnabled,
+                  onCheckedChange = viewModel::onSquawkPriorityToggled,
+                ),
+                SwitchRowItem(
+                  title = stringResource(Res.string.notification_settings_overdue_title),
+                  subtitle = stringResource(Res.string.notification_settings_overdue_subtitle),
+                  checked = state.settings.overdueEnabled,
+                  enabled = urgencyEnabled,
+                  onCheckedChange = viewModel::onOverdueToggled,
+                ),
+                SwitchRowItem(
+                  title = stringResource(Res.string.notification_settings_due_soon_title),
+                  subtitle = stringResource(Res.string.notification_settings_due_soon_subtitle),
+                  checked = state.settings.dueSoonEnabled,
+                  enabled = urgencyEnabled,
+                  onCheckedChange = viewModel::onDueSoonToggled,
+                ),
+              ),
+            )
             Text(
               text = stringResource(Res.string.notification_settings_group_urgency_footer),
               style = MaterialTheme.typography.bodySmall,
@@ -209,39 +209,38 @@ fun NotificationSettingsScreen(
           val collaborationEnabled =
             urgencyEnabled && state.isSignedIn && state.isCloudSyncEnabled
           GroupSection(title = stringResource(Res.string.notification_settings_group_collaboration)) {
-            ToggleCard {
-              ToggleRow(
-                title = stringResource(Res.string.notification_settings_aircraft_activity_title),
-                subtitle = stringResource(Res.string.notification_settings_aircraft_activity_subtitle),
-                checked = state.settings.aircraftActivityEnabled,
-                enabled = collaborationEnabled,
-                onCheckedChange = viewModel::onAircraftActivityToggled,
-              )
-              GroupDivider()
-              ToggleRow(
-                title = stringResource(Res.string.notification_settings_squawk_activity_title),
-                subtitle = stringResource(Res.string.notification_settings_squawk_activity_subtitle),
-                checked = state.settings.squawkActivityEnabled,
-                enabled = collaborationEnabled,
-                onCheckedChange = viewModel::onSquawkActivityToggled,
-              )
-              GroupDivider()
-              ToggleRow(
-                title = stringResource(Res.string.notification_settings_task_activity_title),
-                subtitle = stringResource(Res.string.notification_settings_task_activity_subtitle),
-                checked = state.settings.taskActivityEnabled,
-                enabled = collaborationEnabled,
-                onCheckedChange = viewModel::onTaskActivityToggled,
-              )
-              GroupDivider()
-              ToggleRow(
-                title = stringResource(Res.string.notification_settings_log_activity_title),
-                subtitle = stringResource(Res.string.notification_settings_log_activity_subtitle),
-                checked = state.settings.logActivityEnabled,
-                enabled = collaborationEnabled,
-                onCheckedChange = viewModel::onLogActivityToggled,
-              )
-            }
+            SwitchRowCard(
+              items = listOf(
+                SwitchRowItem(
+                  title = stringResource(Res.string.notification_settings_aircraft_activity_title),
+                  subtitle = stringResource(Res.string.notification_settings_aircraft_activity_subtitle),
+                  checked = state.settings.aircraftActivityEnabled,
+                  enabled = collaborationEnabled,
+                  onCheckedChange = viewModel::onAircraftActivityToggled,
+                ),
+                SwitchRowItem(
+                  title = stringResource(Res.string.notification_settings_squawk_activity_title),
+                  subtitle = stringResource(Res.string.notification_settings_squawk_activity_subtitle),
+                  checked = state.settings.squawkActivityEnabled,
+                  enabled = collaborationEnabled,
+                  onCheckedChange = viewModel::onSquawkActivityToggled,
+                ),
+                SwitchRowItem(
+                  title = stringResource(Res.string.notification_settings_task_activity_title),
+                  subtitle = stringResource(Res.string.notification_settings_task_activity_subtitle),
+                  checked = state.settings.taskActivityEnabled,
+                  enabled = collaborationEnabled,
+                  onCheckedChange = viewModel::onTaskActivityToggled,
+                ),
+                SwitchRowItem(
+                  title = stringResource(Res.string.notification_settings_log_activity_title),
+                  subtitle = stringResource(Res.string.notification_settings_log_activity_subtitle),
+                  checked = state.settings.logActivityEnabled,
+                  enabled = collaborationEnabled,
+                  onCheckedChange = viewModel::onLogActivityToggled,
+                ),
+              ),
+            )
             CollaborationFooter(state = state, navController = navController)
           }
 
@@ -318,55 +317,6 @@ private fun GroupSection(
       modifier = Modifier.padding(start = Spacing.small),
     )
     content()
-  }
-}
-
-@Composable
-private fun ToggleCard(content: @Composable () -> Unit) {
-  Column(
-    modifier = Modifier
-      .fillMaxWidth()
-      .clip(RoundedCornerShape(Spacing.cardCornerRadius))
-      .background(MaterialTheme.colorScheme.surfaceContainerLow),
-  ) {
-    content()
-  }
-}
-
-@Composable
-private fun GroupDivider() {
-  HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
-}
-
-@Composable
-private fun ToggleRow(
-  title: String,
-  subtitle: String,
-  checked: Boolean,
-  enabled: Boolean,
-  onCheckedChange: (Boolean) -> Unit,
-) {
-  val titleColor =
-    if (enabled) MaterialTheme.colorScheme.onSurface
-    else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.42f)
-  val subtitleColor =
-    if (enabled) MaterialTheme.colorScheme.onSurfaceVariant
-    else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.55f)
-  Row(
-    modifier = Modifier
-      .fillMaxWidth()
-      .padding(horizontal = Spacing.large, vertical = Spacing.large),
-    verticalAlignment = Alignment.CenterVertically,
-  ) {
-    Column(
-      modifier = Modifier.weight(1f),
-      verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
-    ) {
-      Text(text = title, style = MaterialTheme.typography.bodyLarge, color = titleColor)
-      Text(text = subtitle, style = MaterialTheme.typography.bodySmall, color = subtitleColor)
-    }
-    Spacer(Modifier.width(Spacing.large))
-    Switch(checked = checked, enabled = enabled, onCheckedChange = onCheckedChange)
   }
 }
 
