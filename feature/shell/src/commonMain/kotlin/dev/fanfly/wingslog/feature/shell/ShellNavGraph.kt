@@ -19,6 +19,7 @@ import dev.fanfly.wingslog.feature.sharing.update.ManageAccessRoute
 import dev.fanfly.wingslog.feature.squawk.update.ui.AddSquawkRoute
 import dev.fanfly.wingslog.feature.squawk.update.ui.EditSquawkRoute
 import dev.fanfly.wingslog.feature.subscription.viewing.SubscriptionScreen
+import dev.fanfly.wingslog.feature.notifications.settings.NotificationSettingsScreen
 import dev.fanfly.wingslog.feature.sync.settings.SyncSettingsScreen
 import dev.fanfly.wingslog.feature.tasks.update.ui.AddTaskRoute
 import dev.fanfly.wingslog.feature.tasks.update.ui.EditTaskRoute
@@ -176,6 +177,9 @@ fun NavGraphBuilder.settingsDetailRoutes(
 ) {
   composable(Screen.SyncSettings.route) {
     SyncSettingsScreen(navController = navController)
+  }
+  composable(Screen.Notifications.route) {
+    NotificationSettingsScreen(navController = navController)
   }
   composable(Screen.ExportLogs.route) {
     ExportSelectionRoute(

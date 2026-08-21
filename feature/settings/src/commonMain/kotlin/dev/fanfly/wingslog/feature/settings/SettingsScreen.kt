@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.CloudSync
 import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.Engineering
 import androidx.compose.material.icons.filled.FileDownload
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.PrivacyTip
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.WorkspacePremium
@@ -45,6 +46,7 @@ import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.login.upgrade.AccountUpgradeViewModel
+import dev.fanfly.wingslog.feature.settings.data.NotificationsRowState
 import dev.fanfly.wingslog.feature.settings.data.SettingsViewModel
 import dev.fanfly.wingslog.feature.settings.data.UserStatus
 import org.jetbrains.compose.resources.stringResource
@@ -62,6 +64,10 @@ import wingslog.feature.settings.generated.resources.settings_delete_account_sub
 import wingslog.feature.settings.generated.resources.settings_developer_options_subtitle
 import wingslog.feature.settings.generated.resources.settings_export_subtitle
 import wingslog.feature.settings.generated.resources.settings_logout_subtitle
+import wingslog.feature.settings.generated.resources.settings_notifications
+import wingslog.feature.settings.generated.resources.settings_notifications_subtitle_blocked
+import wingslog.feature.settings.generated.resources.settings_notifications_subtitle_default
+import wingslog.feature.settings.generated.resources.settings_notifications_subtitle_off
 import wingslog.feature.settings.generated.resources.settings_subscription
 import wingslog.feature.settings.generated.resources.settings_subscription_subtitle
 import wingslog.feature.settings.generated.resources.settings_subtitle
@@ -180,6 +186,29 @@ fun SettingsContent(
               subtitle = stringResource(SettingsRes.string.settings_sync_subtitle),
               onClick = { detailNav.navigate(Screen.SyncSettings.route) },
             )
+          }
+          // Staged rollout, not a capability statement: every platform can show notifications, so
+          // this is never permanent the way an isCameraCaptureSupported-style gate would be. The
+          // feature is mid-build across many PRs — the destination is still a "coming soon"
+          // placeholder (P1.9 finishes the real screen; N1/N2 land in P2-P5) — so it stays behind
+          // its own AppCapability.isNotificationsSupported flag (defaults to isDeveloperBuild, same
+          // as isStressTestSupported) rather than piggybacking on Developer Options' flag, and comes
+          // out once the feature is actually finished.
+          if (user.isNotificationsSupported) {
+            add {
+              SettingsRow(
+                icon = Icons.Default.Notifications,
+                title = stringResource(SettingsRes.string.settings_notifications),
+                subtitle = stringResource(
+                  when (user.notificationsRowState) {
+                    NotificationsRowState.BLOCKED -> SettingsRes.string.settings_notifications_subtitle_blocked
+                    NotificationsRowState.OFF -> SettingsRes.string.settings_notifications_subtitle_off
+                    NotificationsRowState.DEFAULT -> SettingsRes.string.settings_notifications_subtitle_default
+                  }
+                ),
+                onClick = { detailNav.navigate(Screen.Notifications.route) },
+              )
+            }
           }
         }
         val supportRows = buildList<@Composable () -> Unit> {

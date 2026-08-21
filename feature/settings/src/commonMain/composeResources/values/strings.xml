@@ -12,6 +12,10 @@
   <string name="settings_delete_account_failed">Your account could not be deleted. Nothing has been removed — please try again.</string>
   <string name="settings_technicians_subtitle">Manage technician info who performs maintenance work</string>
   <string name="settings_sync_subtitle">Keep your records synced across devices</string>
+  <string name="settings_notifications">Notifications</string>
+  <string name="settings_notifications_subtitle_default">Collaboration and urgency alerts</string>
+  <string name="settings_notifications_subtitle_off">Off — turn on to hear about changes</string>
+  <string name="settings_notifications_subtitle_blocked">Blocked in system settings</string>
   <string name="settings_export_subtitle">Export and share your logbook</string>
   <string name="settings_developer_options_subtitle">Advanced controls, synced across your devices</string>
   <string name="settings_subscription">Subscription</string>

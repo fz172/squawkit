@@ -12,10 +12,16 @@ import dev.fanfly.wingslog.core.ui.theme.AppearanceMode
 import dev.fanfly.wingslog.feature.ads.datamanager.AdConsentManager
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.developeroptions.datamanager.DeveloperOptionsManager
+import dev.fanfly.wingslog.feature.notifications.datamanager.NotificationPrefsManager
+import dev.fanfly.wingslog.feature.notifications.datamanager.PrefsState
+import dev.fanfly.wingslog.feature.notifications.model.allEnabled
+import dev.fanfly.wingslog.feature.notifications.permission.NotificationPermission
+import dev.fanfly.wingslog.feature.notifications.permission.PermissionState
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 class SettingsViewModel(
@@ -28,12 +34,15 @@ class SettingsViewModel(
   private val analyticsPreferenceController: AnalyticsPreferenceController,
   private val appCapability: AppCapability,
   private val adConsentManager: AdConsentManager,
+  private val notificationPermission: NotificationPermission,
+  private val notificationPrefsManager: NotificationPrefsManager,
 ) : ViewModel() {
 
   private val _user =
     MutableStateFlow(
       SettingsUiState(
         isDeveloperOptionsSupported = appCapability.isDeveloperOptionsSupported,
+        isNotificationsSupported = appCapability.isNotificationsSupported,
       )
     )
   val user: StateFlow<SettingsUiState> = _user.asStateFlow()
@@ -56,6 +65,32 @@ class SettingsViewModel(
     loadUserProfile()
     observeDeveloperFlags()
     refreshAdPrivacyOptionsAvailability()
+    observeNotificationsRowState()
+  }
+
+  /**
+   * `BLOCKED` beats `OFF`: an OS-level denial is true regardless of the in-app master switch, and
+   * is the more actionable thing to surface first. While preferences are
+   * [PrefsState.Unresolved] this reads as `DEFAULT` — everything defaults on (design §8.3), and a
+   * subtitle briefly guessing the common case is a cosmetic risk, not the write-time hazard
+   * [PrefsState.Unresolved]'s own doc warns about; nothing here ever writes through this state.
+   */
+  private fun observeNotificationsRowState() {
+    viewModelScope.launch {
+      combine(
+        notificationPermission.observe(),
+        notificationPrefsManager.observe(),
+      ) { permission, prefs ->
+        when {
+          permission == PermissionState.DENIED || permission == PermissionState.UNSUPPORTED ->
+            NotificationsRowState.BLOCKED
+          prefs is PrefsState.Resolved && !prefs.settings.allEnabled -> NotificationsRowState.OFF
+          else -> NotificationsRowState.DEFAULT
+        }
+      }.collect { rowState ->
+        _user.value = _user.value.copy(notificationsRowState = rowState)
+      }
+    }
   }
 
   /**
@@ -93,6 +128,7 @@ class SettingsViewModel(
       userStatus = UserStatus.LOADING,
       isAnonymous = authManager.getCurrentUser()?.isAnonymous == true,
       isDeveloperOptionsSupported = appCapability.isDeveloperOptionsSupported,
+      isNotificationsSupported = appCapability.isNotificationsSupported,
     )
   }
 
