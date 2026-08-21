@@ -51,10 +51,14 @@ kotlin {
       implementation(project(":core:ui:theme"))
       implementation(project(":core:ui:adaptive"))
       implementation(project(":core:auth"))
+      implementation(project(":core:model"))
+      implementation(project(":core:nav"))
+      implementation(project(":core:sharedassets"))
       implementation(project(":feature:notifications:model"))
       implementation(project(":feature:notifications:permission"))
       implementation(project(":feature:notifications:datamanager"))
       implementation(project(":feature:notifications:sharedassets"))
+      implementation(project(":feature:sync:data"))
       implementation(libs.gitlive.firebase.auth)
 
       // Compose
