@@ -62,10 +62,14 @@ class NotificationSettingsViewModel(
       syncPreferences.state,
       // combine() tops out at 5 typed flows — folding these two together keeps the outer combine
       // at arity 5 instead of falling through to the untyped Array<Any?> vararg overload.
-      combine(confirmDisableAog, saveError) { confirming, error -> confirming to error },
+      combine(
+        confirmDisableAog,
+        saveError
+      ) { confirming, error -> confirming to error },
     ) { prefs, permissionState, user, syncPrefs, (confirming, error) ->
       NotificationSettingsUiState(
-        settings = (prefs as? PrefsState.Resolved)?.settings ?: NotificationSettings(),
+        settings = (prefs as? PrefsState.Resolved)?.settings
+          ?: NotificationSettings(),
         permission = permissionState,
         canOpenSystemSettings = permission.canOpenSystemSettings,
         isSignedIn = user != null && !user.isAnonymous,
@@ -122,14 +126,23 @@ class NotificationSettingsViewModel(
     confirmDisableAog.value = false
   }
 
-  fun onSquawkPriorityToggled(enabled: Boolean) = update { it.withSquawkPriority(enabled) }
+  fun onSquawkPriorityToggled(enabled: Boolean) =
+    update { it.withSquawkPriority(enabled) }
+
   fun onOverdueToggled(enabled: Boolean) = update { it.withOverdue(enabled) }
   fun onDueSoonToggled(enabled: Boolean) = update { it.withDueSoon(enabled) }
 
-  fun onAircraftActivityToggled(enabled: Boolean) = update { it.withAircraftActivity(enabled) }
-  fun onSquawkActivityToggled(enabled: Boolean) = update { it.withSquawkActivity(enabled) }
-  fun onTaskActivityToggled(enabled: Boolean) = update { it.withTaskActivity(enabled) }
-  fun onLogActivityToggled(enabled: Boolean) = update { it.withLogActivity(enabled) }
+  fun onAircraftActivityToggled(enabled: Boolean) =
+    update { it.withAircraftActivity(enabled) }
+
+  fun onSquawkActivityToggled(enabled: Boolean) =
+    update { it.withSquawkActivity(enabled) }
+
+  fun onTaskActivityToggled(enabled: Boolean) =
+    update { it.withTaskActivity(enabled) }
+
+  fun onLogActivityToggled(enabled: Boolean) =
+    update { it.withLogActivity(enabled) }
 
   private fun update(mutate: (NotificationSettings) -> NotificationSettings) {
     viewModelScope.launch { write(mutate) }

@@ -4,12 +4,12 @@ import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.model.settings.NotificationSettings
 import dev.fanfly.wingslog.feature.notifications.datamanager.NotificationPrefsManager
 import dev.fanfly.wingslog.feature.notifications.datamanager.PrefsState
-import dev.fanfly.wingslog.feature.notifications.model.aogEnabled
 import dev.fanfly.wingslog.feature.notifications.model.allEnabled
+import dev.fanfly.wingslog.feature.notifications.model.aogEnabled
 import dev.fanfly.wingslog.feature.notifications.permission.NotificationPermission
 import dev.fanfly.wingslog.feature.notifications.permission.PermissionState
-import dev.fanfly.wingslog.feature.sync.data.SyncPrefs
 import dev.fanfly.wingslog.feature.sync.data.SyncPreferences
+import dev.fanfly.wingslog.feature.sync.data.SyncPrefs
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.auth.FirebaseUser
 import io.mockk.coEvery
@@ -50,11 +50,19 @@ class NotificationSettingsViewModelTest {
     auth = mockk(relaxed = true)
     syncPreferences = mockk(relaxed = true)
 
-    every { prefsManager.observe() } returns flowOf(PrefsState.Resolved(NotificationSettings()))
+    every { prefsManager.observe() } returns flowOf(
+      PrefsState.Resolved(
+        NotificationSettings()
+      )
+    )
     every { permission.observe() } returns MutableStateFlow(PermissionState.GRANTED)
     every { permission.canOpenSystemSettings } returns true
     every { auth.authStateChanged } returns flowOf(signedInUser())
-    every { syncPreferences.state } returns MutableStateFlow(SyncPrefs(cloudSyncEnabled = true))
+    every { syncPreferences.state } returns MutableStateFlow(
+      SyncPrefs(
+        cloudSyncEnabled = true
+      )
+    )
     coEvery { prefsManager.update(any()) } returns Result.success(Unit)
   }
 
@@ -73,7 +81,12 @@ class NotificationSettingsViewModelTest {
    * `backgroundScope` is that subscriber for the life of the test, cancelled automatically after.
    */
   private fun TestScope.viewModel(): NotificationSettingsViewModel {
-    val vm = NotificationSettingsViewModel(prefsManager, permission, auth, syncPreferences)
+    val vm = NotificationSettingsViewModel(
+      prefsManager,
+      permission,
+      auth,
+      syncPreferences
+    )
     backgroundScope.launch { vm.uiState.collect {} }
     return vm
   }
@@ -112,14 +125,15 @@ class NotificationSettingsViewModelTest {
   }
 
   @Test
-  fun uiState_unsupportedPermission_dropsOpenSettingsAffordance() = runTest(testDispatcher) {
-    every { permission.observe() } returns MutableStateFlow(PermissionState.UNSUPPORTED)
-    every { permission.canOpenSystemSettings } returns false
-    val viewModel = viewModel()
+  fun uiState_unsupportedPermission_dropsOpenSettingsAffordance() =
+    runTest(testDispatcher) {
+      every { permission.observe() } returns MutableStateFlow(PermissionState.UNSUPPORTED)
+      every { permission.canOpenSystemSettings } returns false
+      val viewModel = viewModel()
 
-    assertThat(viewModel.uiState.value.permission).isEqualTo(PermissionState.UNSUPPORTED)
-    assertThat(viewModel.uiState.value.canOpenSystemSettings).isFalse()
-  }
+      assertThat(viewModel.uiState.value.permission).isEqualTo(PermissionState.UNSUPPORTED)
+      assertThat(viewModel.uiState.value.canOpenSystemSettings).isFalse()
+    }
 
   @Test
   fun uiState_anonymousUser_isSignedInFalse() = runTest(testDispatcher) {
@@ -146,7 +160,11 @@ class NotificationSettingsViewModelTest {
 
   @Test
   fun uiState_cloudSyncOff_reflectedInState() = runTest(testDispatcher) {
-    every { syncPreferences.state } returns MutableStateFlow(SyncPrefs(cloudSyncEnabled = false))
+    every { syncPreferences.state } returns MutableStateFlow(
+      SyncPrefs(
+        cloudSyncEnabled = false
+      )
+    )
     val viewModel = viewModel()
 
     assertThat(viewModel.uiState.value.isCloudSyncEnabled).isFalse()
@@ -155,14 +173,15 @@ class NotificationSettingsViewModelTest {
   // --- AOG confirm gate (Q5) ---
 
   @Test
-  fun onAogToggled_off_gatesOnConfirmDialog_withoutWritingYet() = runTest(testDispatcher) {
-    val viewModel = viewModel()
+  fun onAogToggled_off_gatesOnConfirmDialog_withoutWritingYet() =
+    runTest(testDispatcher) {
+      val viewModel = viewModel()
 
-    viewModel.onAogToggled(false)
+      viewModel.onAogToggled(false)
 
-    assertThat(viewModel.uiState.value.confirmDisableAog).isTrue()
-    coVerify(exactly = 0) { prefsManager.update(any()) }
-  }
+      assertThat(viewModel.uiState.value.confirmDisableAog).isTrue()
+      coVerify(exactly = 0) { prefsManager.update(any()) }
+    }
 
   @Test
   fun onAogToggled_on_writesImmediately_noConfirm() = runTest(testDispatcher) {
@@ -177,114 +196,127 @@ class NotificationSettingsViewModelTest {
   }
 
   @Test
-  fun onConfirmDisableAog_writesTheDisableAndClearsTheGate() = runTest(testDispatcher) {
-    val viewModel = viewModel()
-    viewModel.onAogToggled(false)
+  fun onConfirmDisableAog_writesTheDisableAndClearsTheGate() =
+    runTest(testDispatcher) {
+      val viewModel = viewModel()
+      viewModel.onAogToggled(false)
 
-    viewModel.onConfirmDisableAog()
+      viewModel.onConfirmDisableAog()
 
-    assertThat(viewModel.uiState.value.confirmDisableAog).isFalse()
-    val mutate = slot<(NotificationSettings) -> NotificationSettings>()
-    coVerify { prefsManager.update(capture(mutate)) }
-    assertThat(mutate.captured(NotificationSettings()).aogEnabled).isFalse()
-  }
+      assertThat(viewModel.uiState.value.confirmDisableAog).isFalse()
+      val mutate = slot<(NotificationSettings) -> NotificationSettings>()
+      coVerify { prefsManager.update(capture(mutate)) }
+      assertThat(mutate.captured(NotificationSettings()).aogEnabled).isFalse()
+    }
 
   @Test
-  fun onDismissDisableAog_clearsTheGate_withoutWriting() = runTest(testDispatcher) {
-    val viewModel = viewModel()
-    viewModel.onAogToggled(false)
+  fun onDismissDisableAog_clearsTheGate_withoutWriting() =
+    runTest(testDispatcher) {
+      val viewModel = viewModel()
+      viewModel.onAogToggled(false)
 
-    viewModel.onDismissDisableAog()
+      viewModel.onDismissDisableAog()
 
-    assertThat(viewModel.uiState.value.confirmDisableAog).isFalse()
-    coVerify(exactly = 0) { prefsManager.update(any()) }
-  }
+      assertThat(viewModel.uiState.value.confirmDisableAog).isFalse()
+      coVerify(exactly = 0) { prefsManager.update(any()) }
+    }
 
   // --- Master switch (§9.3's "flipping the master on triggers the OS prompt inline") ---
 
   @Test
-  fun onAllNotificationsToggled_on_whileUndetermined_requestsPermission() = runTest(testDispatcher) {
-    every { permission.observe() } returns MutableStateFlow(PermissionState.UNDETERMINED)
-    coEvery { permission.request() } returns PermissionState.GRANTED
-    val viewModel = viewModel()
+  fun onAllNotificationsToggled_on_whileUndetermined_requestsPermission() =
+    runTest(testDispatcher) {
+      every { permission.observe() } returns MutableStateFlow(PermissionState.UNDETERMINED)
+      coEvery { permission.request() } returns PermissionState.GRANTED
+      val viewModel = viewModel()
 
-    viewModel.onAllNotificationsToggled(true)
+      viewModel.onAllNotificationsToggled(true)
 
-    coVerify { permission.request() }
-    val mutate = slot<(NotificationSettings) -> NotificationSettings>()
-    coVerify { prefsManager.update(capture(mutate)) }
-    assertThat(mutate.captured(NotificationSettings()).allEnabled).isTrue()
-  }
-
-  @Test
-  fun onAllNotificationsToggled_on_whileGranted_doesNotReRequest() = runTest(testDispatcher) {
-    val viewModel = viewModel()
-
-    viewModel.onAllNotificationsToggled(true)
-
-    coVerify(exactly = 0) { permission.request() }
-  }
+      coVerify { permission.request() }
+      val mutate = slot<(NotificationSettings) -> NotificationSettings>()
+      coVerify { prefsManager.update(capture(mutate)) }
+      assertThat(mutate.captured(NotificationSettings()).allEnabled).isTrue()
+    }
 
   @Test
-  fun onAllNotificationsToggled_off_writesWithoutRequestingPermission() = runTest(testDispatcher) {
-    val viewModel = viewModel()
+  fun onAllNotificationsToggled_on_whileGranted_doesNotReRequest() =
+    runTest(testDispatcher) {
+      val viewModel = viewModel()
 
-    viewModel.onAllNotificationsToggled(false)
+      viewModel.onAllNotificationsToggled(true)
 
-    coVerify(exactly = 0) { permission.request() }
-    val mutate = slot<(NotificationSettings) -> NotificationSettings>()
-    coVerify { prefsManager.update(capture(mutate)) }
-    assertThat(mutate.captured(NotificationSettings()).allEnabled).isFalse()
-  }
+      coVerify(exactly = 0) { permission.request() }
+    }
+
+  @Test
+  fun onAllNotificationsToggled_off_writesWithoutRequestingPermission() =
+    runTest(testDispatcher) {
+      val viewModel = viewModel()
+
+      viewModel.onAllNotificationsToggled(false)
+
+      coVerify(exactly = 0) { permission.request() }
+      val mutate = slot<(NotificationSettings) -> NotificationSettings>()
+      coVerify { prefsManager.update(capture(mutate)) }
+      assertThat(mutate.captured(NotificationSettings()).allEnabled).isFalse()
+    }
 
   // --- Every other toggle writes through its positive-name mutator, never a raw NotificationSettings ---
 
   @Test
-  fun onSquawkPriorityToggled_writesThroughTheMutator() = runTest(testDispatcher) {
-    val viewModel = viewModel()
+  fun onSquawkPriorityToggled_writesThroughTheMutator() =
+    runTest(testDispatcher) {
+      val viewModel = viewModel()
 
-    viewModel.onSquawkPriorityToggled(false)
+      viewModel.onSquawkPriorityToggled(false)
 
-    val mutate = slot<(NotificationSettings) -> NotificationSettings>()
-    coVerify { prefsManager.update(capture(mutate)) }
-    assertThat(mutate.captured(NotificationSettings()).squawk_priority_disabled).isTrue()
-  }
+      val mutate = slot<(NotificationSettings) -> NotificationSettings>()
+      coVerify { prefsManager.update(capture(mutate)) }
+      assertThat(mutate.captured(NotificationSettings()).squawk_priority_disabled).isTrue()
+    }
 
   @Test
-  fun onAircraftActivityToggled_writesThroughTheMutator() = runTest(testDispatcher) {
-    val viewModel = viewModel()
+  fun onAircraftActivityToggled_writesThroughTheMutator() =
+    runTest(testDispatcher) {
+      val viewModel = viewModel()
 
-    viewModel.onAircraftActivityToggled(false)
+      viewModel.onAircraftActivityToggled(false)
 
-    val mutate = slot<(NotificationSettings) -> NotificationSettings>()
-    coVerify { prefsManager.update(capture(mutate)) }
-    assertThat(mutate.captured(NotificationSettings()).aircraft_activity_disabled).isTrue()
-  }
+      val mutate = slot<(NotificationSettings) -> NotificationSettings>()
+      coVerify { prefsManager.update(capture(mutate)) }
+      assertThat(mutate.captured(NotificationSettings()).aircraft_activity_disabled).isTrue()
+    }
 
   // --- A failed write surfaces saveError instead of failing silently ---
 
   @Test
-  fun onSquawkPriorityToggled_writeFails_setsSaveError() = runTest(testDispatcher) {
-    coEvery { prefsManager.update(any()) } returns Result.failure(RuntimeException("boom"))
-    val viewModel = viewModel()
+  fun onSquawkPriorityToggled_writeFails_setsSaveError() =
+    runTest(testDispatcher) {
+      coEvery { prefsManager.update(any()) } returns Result.failure(
+        RuntimeException("boom")
+      )
+      val viewModel = viewModel()
 
-    viewModel.onSquawkPriorityToggled(false)
+      viewModel.onSquawkPriorityToggled(false)
 
-    assertThat(viewModel.uiState.value.saveError).isTrue()
-  }
+      assertThat(viewModel.uiState.value.saveError).isTrue()
+    }
 
   @Test
-  fun onSquawkPriorityToggled_writeSucceeds_saveErrorStaysFalse() = runTest(testDispatcher) {
-    val viewModel = viewModel()
+  fun onSquawkPriorityToggled_writeSucceeds_saveErrorStaysFalse() =
+    runTest(testDispatcher) {
+      val viewModel = viewModel()
 
-    viewModel.onSquawkPriorityToggled(false)
+      viewModel.onSquawkPriorityToggled(false)
 
-    assertThat(viewModel.uiState.value.saveError).isFalse()
-  }
+      assertThat(viewModel.uiState.value.saveError).isFalse()
+    }
 
   @Test
   fun onSaveErrorShown_clearsTheSignal() = runTest(testDispatcher) {
-    coEvery { prefsManager.update(any()) } returns Result.failure(RuntimeException("boom"))
+    coEvery { prefsManager.update(any()) } returns Result.failure(
+      RuntimeException("boom")
+    )
     val viewModel = viewModel()
     viewModel.onSquawkPriorityToggled(false)
 

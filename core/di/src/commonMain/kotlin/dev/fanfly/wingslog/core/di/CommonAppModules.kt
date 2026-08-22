@@ -28,11 +28,7 @@ import dev.fanfly.wingslog.feature.login.di.loginModule
 import dev.fanfly.wingslog.feature.logs.datamanager.impl.maintenanceDataManagerModule
 import dev.fanfly.wingslog.feature.logs.update.di.maintenanceUpdateModule
 import dev.fanfly.wingslog.feature.logs.viewing.di.maintenanceViewingModule
-import dev.fanfly.wingslog.feature.notifications.datamanager.di.notificationPrefsModule
-import dev.fanfly.wingslog.feature.notifications.devoptions.di.notificationDevOptionsModule
-import dev.fanfly.wingslog.feature.notifications.permission.di.platformNotificationPermissionModule
-import dev.fanfly.wingslog.feature.notifications.settings.di.notificationSettingsModule
-import dev.fanfly.wingslog.feature.notifications.viewing.di.platformNotificationDisplayModule
+import dev.fanfly.wingslog.feature.notifications.di.notificationsModule
 import dev.fanfly.wingslog.feature.settings.di.settingsModule
 import dev.fanfly.wingslog.feature.sharing.datamanager.sharingModule
 import dev.fanfly.wingslog.feature.sharing.update.di.sharingUiModule
@@ -114,15 +110,12 @@ val commonAppModules: List<Module> = listOf(
   sharingModule,
   sharingUiModule,
   loginModule,
-  // Notifications (P1, in progress — docs/notifications/notifications_design.md §14.1). Only the
-  // pieces that exist so far: NotificationPermission's and LocalNotifier's platform actuals,
-  // NotificationPrefsManager, the real settings screen (P1.9), and the Developer Options section
-  // that exercises permission. :engine joins this list once its own tasks land.
-  platformNotificationPermissionModule,
-  platformNotificationDisplayModule,
-  notificationPrefsModule,
-  notificationSettingsModule,
-  notificationDevOptionsModule,
+  // Notifications (P1 done; P2 in progress — docs/notifications/notifications_design.md §14.1).
+  // :engine's UrgencyScanner (P2.1-P2.3) has no scheduled caller yet — only the Developer Options
+  // "scan now" trigger — the platform schedulers (WorkManager/BGTaskScheduler, P2.6/P2.7) still
+  // don't exist. The feature's uber module (feature/notifications/di) bundles all six submodules'
+  // Koin modules into this one entry.
+  notificationsModule,
   settingsModule,
   syncSettingsModule,
   shellModule,

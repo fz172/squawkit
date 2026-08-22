@@ -56,14 +56,14 @@ import wingslog.core.sharedassets.generated.resources.cancel
 import wingslog.feature.notifications.settings.generated.resources.Res
 import wingslog.feature.notifications.settings.generated.resources.notification_settings_aircraft_activity_subtitle
 import wingslog.feature.notifications.settings.generated.resources.notification_settings_aircraft_activity_title
+import wingslog.feature.notifications.settings.generated.resources.notification_settings_all_subtitle_off
+import wingslog.feature.notifications.settings.generated.resources.notification_settings_all_subtitle_on
+import wingslog.feature.notifications.settings.generated.resources.notification_settings_all_title
 import wingslog.feature.notifications.settings.generated.resources.notification_settings_aog_confirm_action
 import wingslog.feature.notifications.settings.generated.resources.notification_settings_aog_confirm_body
 import wingslog.feature.notifications.settings.generated.resources.notification_settings_aog_confirm_title
 import wingslog.feature.notifications.settings.generated.resources.notification_settings_aog_subtitle
 import wingslog.feature.notifications.settings.generated.resources.notification_settings_aog_title
-import wingslog.feature.notifications.settings.generated.resources.notification_settings_all_subtitle_off
-import wingslog.feature.notifications.settings.generated.resources.notification_settings_all_subtitle_on
-import wingslog.feature.notifications.settings.generated.resources.notification_settings_all_title
 import wingslog.feature.notifications.settings.generated.resources.notification_settings_banner_denied_body
 import wingslog.feature.notifications.settings.generated.resources.notification_settings_banner_denied_open_settings
 import wingslog.feature.notifications.settings.generated.resources.notification_settings_banner_denied_title
@@ -107,7 +107,8 @@ fun NotificationSettingsScreen(
   val state by viewModel.uiState.collectAsStateWithLifecycle()
 
   val snackbarHostState = remember { SnackbarHostState() }
-  val saveErrorMessage = stringResource(Res.string.notification_settings_save_error)
+  val saveErrorMessage =
+    stringResource(Res.string.notification_settings_save_error)
   LaunchedEffect(state.saveError) {
     if (!state.saveError) return@LaunchedEffect
     snackbarHostState.showSnackbar(saveErrorMessage)
@@ -147,7 +148,10 @@ fun NotificationSettingsScreen(
           modifier = Modifier.padding(Spacing.screenPadding),
           verticalArrangement = Arrangement.spacedBy(Spacing.large),
         ) {
-          PermissionBanner(state = state, onOpenSystemSettings = viewModel::onOpenSystemSettings)
+          PermissionBanner(
+            state = state,
+            onOpenSystemSettings = viewModel::onOpenSystemSettings
+          )
 
           SwitchRowCard(
             items = listOf(
@@ -202,7 +206,10 @@ fun NotificationSettingsScreen(
               text = stringResource(Res.string.notification_settings_group_urgency_footer),
               style = MaterialTheme.typography.bodySmall,
               color = MaterialTheme.colorScheme.onSurfaceVariant,
-              modifier = Modifier.padding(top = Spacing.small, start = Spacing.small),
+              modifier = Modifier.padding(
+                top = Spacing.small,
+                start = Spacing.small
+              ),
             )
           }
 
@@ -289,8 +296,16 @@ private fun PermissionBanner(
       .padding(Spacing.large),
     verticalArrangement = Arrangement.spacedBy(Spacing.small),
   ) {
-    Text(text = title, style = MaterialTheme.typography.titleSmall, color = colors.onContainer)
-    Text(text = body, style = MaterialTheme.typography.bodyMedium, color = colors.onContainer)
+    Text(
+      text = title,
+      style = MaterialTheme.typography.titleSmall,
+      color = colors.onContainer
+    )
+    Text(
+      text = body,
+      style = MaterialTheme.typography.bodyMedium,
+      color = colors.onContainer
+    )
     // Nothing to open on web (PermissionState.UNSUPPORTED) or wherever the platform exposes no
     // deep link to its own settings page — the button would be a dead end either way.
     if (state.permission == PermissionState.DENIED && state.canOpenSystemSettings) {

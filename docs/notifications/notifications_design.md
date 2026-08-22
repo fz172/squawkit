@@ -520,7 +520,7 @@ interface UrgencyScanScheduler {
 
 | Platform | Implementation |
 |:--|:--|
-| Android | `PeriodicWorkRequest` (24h, flex 4h) via `WorkManager.enqueueUniquePeriodicWork(KEEP)`, no network constraint — the scan is local. `WorkManagerUploadScheduler` is the shape to copy. |
+| Android | `PeriodicWorkRequest` (2h, flex 15min — WorkManager's minimum) via `WorkManager.enqueueUniquePeriodicWork(KEEP)`, no network constraint — the scan is local. `WorkManagerUploadScheduler` is the shape to copy. |
 | iOS | `BGTaskScheduler` app-refresh task registered in `didFinishLaunching`, re-submitted at the end of each run (iOS does not repeat a submission). Opportunistic — §6.6. |
 | Web | No-op. The foreground scan is the only scan; see §6.6. |
 
@@ -755,25 +755,27 @@ Two options, and the second is the recommendation:
    invites exactly this: "If the analytics taxonomy later wants a session id, it should grow from
    here rather than introduce a second observer."
 
-So: the scanner collects `sessionId`, and on each change runs a scan **if `now - lastScanAt >= 4h`**
-(`lastScanAt` in `sync_config`, via the `SyncPreferences.booleanConfig` pattern). The scheduled daily
-scan ignores the debounce.
+So: the scanner collects `sessionId`, and on each change runs a scan **if `now - lastScanAt >= 2h`**
+(`lastScanAt` in `sync_config`, via the `SyncPreferences.booleanConfig` pattern). The scheduled
+background scan ignores the debounce.
 
-| Platform | Daily | Session-boundary | Effective cadence |
+**Superseded 2026-08-22: target cadence moved from once-daily (08:00 local) to at least every 2h.**
+Scan is the *only* detection mechanism (§6.3) — there is no push-driven path this backstops — so a
+tighter cadence is a direct latency win, not a safety net. The debounce moved from 4h to 2h to match.
+
+| Platform | Background schedule | Session-boundary | Effective cadence |
 |:--|:--|:--|:--|
-| Android | `PeriodicWorkRequest` 24h / flex 4h | ✅ | Daily, or better for an active user. OEM battery managers may kill periodic work; the session scan is the backstop. |
-| iOS | `BGTaskScheduler`, opportunistic | ✅ | Best-effort daily; in practice the session scan carries it. |
+| Android | `PeriodicWorkRequest` 2h / flex 15min | ✅ | Close to every 2h for an active user — the session scan and the periodic job both land inside that window. OEM battery managers may still kill periodic work; the session scan is the backstop. |
+| iOS | `BGTaskScheduler`, opportunistic | ✅ | **Not every 2h in practice, regardless of the interval requested.** `BGAppRefreshTask` is entirely iOS-scheduled — it weighs engagement, battery, Low Power Mode, and a system-wide per-app budget, and `earliestBeginDate` is a lower bound iOS is free to blow past by hours. For an app opened at least daily, real-world cadence is commonly a handful of times a day at best, and can go quiet for a full day or more for a less-engaged user. **The session-boundary scan is what actually delivers close to 2h cadence on iOS** — every app open past the 30-minute session threshold scans, debounced to at most once per 2h — not the background scheduler. |
 | Web | none | ✅ | Session scan only, and only while a tab is open. |
 
-**08:00 local (Q4) is a target, not a guarantee, and only Android can honestly aim for it.**
-`PeriodicWorkRequest` has no time-of-day API — the usual construction is a one-time request with an
-`initialDelay` computed to the next 08:00 that re-enqueues itself. `BGTaskScheduler` accepts only an
-`earliestBeginDate` and iOS decides the rest. Do not build timezone plumbing for this: the device
-uses its own clock, and `TaskDueManagerImpl` already defaults to `TimeZone.currentSystemDefault()`.
+Do not build timezone plumbing for the Android periodic job: the device uses its own clock, and
+`TaskDueManagerImpl` already defaults to `TimeZone.currentSystemDefault()`.
 
 **Metric to instrument from day one** (PRD §11): what share of urgency notifications came from the
-background scan versus the session scan, per platform. That single number decides whether iOS keeps
-claiming a daily cadence or the copy changes to foreground-only (PRD §7.5's honesty note).
+background scan versus the session scan, per platform. That single number decides whether iOS's copy
+can honestly claim "every 2 hours" or has to fall back to foreground-only framing (PRD §7.5's honesty
+note) — the metric was written for the daily cadence but answers exactly the same question at 2h.
 
 ### 6.7 Post, then commit
 
@@ -1665,7 +1667,7 @@ Issue-sized below. "Blocks on" names the immediate prerequisite only.
 | P2.5 | Per-tier batching, notification bodies, post-then-commit ordering (§6.5–6.7) | `:engine` | P2.4 |
 | P2.6 | `UrgencyScanScheduler` — Android `PeriodicWorkRequest` (§5.4) | `:engine/androidMain` | P2.5 |
 | P2.7 | `UrgencyScanScheduler` — iOS `BGTaskScheduler`, re-submitting each run (§5.4) | `:engine/iosMain`, `iosApp` | P2.5 |
-| P2.8 | Session-boundary scan off `AppForegroundObserver.sessionId` + 4h debounce (§6.6) | `:engine` | P2.5 |
+| P2.8 | Session-boundary scan off `AppForegroundObserver.sessionId` + 2h debounce (§6.6) | `:engine` | P2.5 |
 | P2.9 | `NotificationTapRouter`, `Screen.AircraftTabDeepLink` (new route, tier pre-filter), shell collection (§5.3) | `:viewing`, `core/nav`, `feature/shell` | P1.8 |
 | P2.10 | `LocalAccountMigrator` re-keys watermarks on guest→account upgrade (§6.2) | `core/storage` | P2.1 |
 | P2.11 | Developer Options: run scan now, reset watermarks, scan diagnostics (§11) | `:devoptions` | P1.11, P2.5 |
@@ -1746,7 +1748,7 @@ amended rather than quietly diverged from.
 
 | # | Question | Recommendation |
 |:--|:--|:--|
-| E1 | Should the scheduled Android scan chase 08:00 local with a self-re-enqueuing one-time request, or accept a plain 24h periodic? | Start with the plain periodic in P2. The session-boundary scan (§6.6) already covers active users, and the 08:00 target is worth real complexity only if the diagnostics show background scans landing at hours users complain about. |
+| E1 | ~~Should the scheduled Android scan chase 08:00 local...~~ | **Moot as of the 2026-08-22 cadence change (§6.6):** the target is no longer a single daily time-of-day, it's at least every 2h, so a plain `PeriodicWorkRequest(2h)` is both the simple option and the right one — there is no 08:00 to chase anymore. |
 | E2 | Does the per-device `enabled` flag (Q2) need a UI in V1, or is uninstall/sign-out sufficient? | No UI in V1. It exists on the token doc so the server honors it, and Developer Options can flip it; a real UI needs a device list, which is an inbox-era feature. |
 | E3 | Should the web detector also drive N2, or does the session-boundary scan cover it? | Session scan only. Web N2 has no scheduler, and a sync-driven scan on every foreign write is a different (and much chattier) trigger than a daily one. |
 | E4 | Should P2 land the tap-router deep links, or can P2 ship notifications that only open the app? | Land them in P2. Tap-through rate is a stated success metric (PRD §11) and a notification that dumps the user on the fleet dashboard will not earn it. |

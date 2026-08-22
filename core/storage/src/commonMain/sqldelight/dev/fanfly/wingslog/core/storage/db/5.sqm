@@ -1,0 +1,15 @@
+-- Migration from schema version 4 to 5.
+-- Adds urgency_watermark: per-device, per-record high-water mark of urgency already reported to
+-- this user (notifications design §6.2). Deliberately NOT a CollectionKind — see the table comment
+-- in Schema.sq.
+-- Note: type annotations (AS CollectionKind) are not valid in .sqm files — SQLite column types only.
+
+CREATE TABLE urgency_watermark (
+  uid         TEXT    NOT NULL,
+  collection  TEXT    NOT NULL,
+  scope_path  TEXT    NOT NULL,
+  id          TEXT    NOT NULL,
+  rank        INTEGER NOT NULL,
+  updated_at  INTEGER NOT NULL,
+  PRIMARY KEY (uid, collection, scope_path, id)
+);
