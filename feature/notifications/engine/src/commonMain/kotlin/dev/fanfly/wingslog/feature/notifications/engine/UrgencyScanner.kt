@@ -2,7 +2,6 @@ package dev.fanfly.wingslog.feature.notifications.engine
 
 import dev.fanfly.wingslog.aircraft.MaintenanceTask
 import dev.fanfly.wingslog.aircraft.Squawk
-import dev.fanfly.wingslog.aircraft.SquawkPriority
 import dev.fanfly.wingslog.core.model.settings.NotificationSettings
 import dev.fanfly.wingslog.core.storage.AircraftScopeResolver
 import dev.fanfly.wingslog.core.storage.CollectionKind
@@ -17,24 +16,24 @@ import dev.fanfly.wingslog.feature.notifications.model.NotificationChannel
 import dev.fanfly.wingslog.feature.notifications.model.NotificationTapTarget
 import dev.fanfly.wingslog.feature.notifications.model.PendingNotification
 import dev.fanfly.wingslog.feature.notifications.model.UrgencyRank
+import dev.fanfly.wingslog.feature.notifications.model.UrgencyTier
 import dev.fanfly.wingslog.feature.notifications.model.aogEnabled
 import dev.fanfly.wingslog.feature.notifications.model.allEnabled
 import dev.fanfly.wingslog.feature.notifications.model.dueSoonEnabled
 import dev.fanfly.wingslog.feature.notifications.model.overdueEnabled
+import dev.fanfly.wingslog.feature.notifications.model.reportableTier
 import dev.fanfly.wingslog.feature.notifications.model.squawkPriorityEnabled
 import dev.fanfly.wingslog.feature.notifications.model.urgencyRank
 import dev.fanfly.wingslog.feature.notifications.permission.NotificationPermission
 import dev.fanfly.wingslog.feature.notifications.permission.PermissionState
 import dev.fanfly.wingslog.feature.notifications.viewing.LocalNotifier
-import dev.fanfly.wingslog.feature.squawk.model.SquawkStatus
-import dev.fanfly.wingslog.feature.squawk.model.SquawkWithStatus
 import dev.fanfly.wingslog.feature.squawk.model.toWithStatus
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDueManager
-import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.getString
 import wingslog.feature.notifications.sharedassets.generated.resources.Res
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_body_due_soon_plural
@@ -49,6 +48,10 @@ import wingslog.feature.notifications.sharedassets.generated.resources.notificat
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_title_grounded
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_title_overdue
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_title_priority_raised
+import wingslog.feature.notifications.sharedassets.generated.resources.squawk_priority_label_high
+import wingslog.feature.notifications.sharedassets.generated.resources.squawk_priority_label_low
+import wingslog.feature.notifications.sharedassets.generated.resources.squawk_priority_label_medium
+import wingslog.feature.notifications.sharedassets.generated.resources.squawk_priority_label_resolved
 
 /**
  * The entire N2 decision, in shared code (design §6.3). The one class that justifies `engine`'s
@@ -134,8 +137,9 @@ class UrgencyScanner(
       val rank = status.urgencyRank()
       taskCommits += RecordRank(row.id, rank)
       val tier = status.reportableTier()
-      val isCrossing = isCrossing(uid, row.writerUid, rank, watermarkByKey[CollectionKind.MaintenanceTask to row.id], aircraftKnown)
-      if (tier != null && isCrossing) {
+      val previousRank =
+        crossingBaseline(uid, row.writerUid, rank, watermarkByKey[CollectionKind.MaintenanceTask to row.id], aircraftKnown)
+      if (tier != null && previousRank != null) {
         crossings += Crossing(
           tier = tier,
           title = row.value.title,
@@ -150,12 +154,14 @@ class UrgencyScanner(
       val rank = withStatus.urgencyRank()
       squawkCommits += RecordRank(row.id, rank)
       val tier = withStatus.reportableTier()
-      val isCrossing = isCrossing(uid, row.writerUid, rank, watermarkByKey[CollectionKind.Squawk to row.id], aircraftKnown)
-      if (tier != null && isCrossing) {
+      val previousRank =
+        crossingBaseline(uid, row.writerUid, rank, watermarkByKey[CollectionKind.Squawk to row.id], aircraftKnown)
+      if (tier != null && previousRank != null) {
         crossings += Crossing(
           tier = tier,
           title = row.value.title,
           tapTarget = NotificationTapTarget.Squawk(aircraftId, row.id),
+          previousRank = previousRank,
         )
       }
     }
@@ -186,49 +192,32 @@ class UrgencyScanner(
   }
 
   /**
-   * Whether this record is a reportable crossing this scan (design §6.3 step 5, folded together
-   * with §6.4's seeding rule — both are the same "what do we compare [rank] against" question):
+   * The rank this record's crossing is *against* this scan, or `null` if it isn't a reportable
+   * crossing at all (design §6.3 step 5, folded together with §6.4's seeding rule — both are the
+   * same "what do we compare [rank] against" question):
    *
    * - An existing watermark row → the normal diff, against its stored rank.
-   * - No row, and the whole aircraft has never been scanned on this device → always `false`: every
+   * - No row, and the whole aircraft has never been scanned on this device → always `null`: every
    *   record on a newly-seen aircraft seeds silently, no exceptions.
    * - No row, but the aircraft is known (a brand-new id) → `writerUid == uid` seeds silently at the
    *   current rank (you filed it, you know); anyone else or an unknown writer seeds at rank 0, so an
    *   already-urgent record reports on this same scan — the refinement PRD §6.4 needs so a
    *   collaborator's new AOG squawk isn't seeded silently on the owner's device.
    */
-  private fun isCrossing(
+  private fun crossingBaseline(
     uid: String,
     writerUid: String?,
     rank: UrgencyRank,
     existing: UrgencyWatermark?,
     aircraftKnown: Boolean,
-  ): Boolean {
+  ): UrgencyRank? {
     val baseline = when {
       existing != null -> UrgencyRank(existing.rank)
-      !aircraftKnown -> return false
-      writerUid == uid -> return false
+      !aircraftKnown -> return null
+      writerUid == uid -> return null
       else -> UrgencyRank.RESOLVED
     }
-    return rank > baseline
-  }
-
-  private fun DueStatus.reportableTier(): UrgencyTier? = when (this) {
-    DueStatus.OVERDUE -> UrgencyTier.OVERDUE
-    DueStatus.DUE_SOON -> UrgencyTier.DUE_SOON
-    DueStatus.NORMAL, DueStatus.COMPLIED -> null
-  }
-
-  private fun SquawkWithStatus.reportableTier(): UrgencyTier? {
-    if (status != SquawkStatus.OPEN) return null
-    return when (squawk.priority) {
-      SquawkPriority.SQUAWK_PRIORITY_AOG -> UrgencyTier.GROUNDED
-      SquawkPriority.SQUAWK_PRIORITY_HIGH -> UrgencyTier.PRIORITY_RAISED
-      // MEDIUM/LOW/UNKNOWN still rank above RESOLVED (UrgencyRank.kt) so the watermark advances
-      // correctly, but design §9.2's "becomes high priority or worse" scopes the notification to
-      // HIGH and up only.
-      else -> null
-    }
+    return if (rank > baseline) baseline else null
   }
 
   private fun NotificationSettings.tierEnabled(tier: UrgencyTier): Boolean = when (tier) {
@@ -245,11 +234,11 @@ class UrgencyScanner(
     group: List<Crossing>,
   ): PendingNotification {
     val single = group.singleOrNull()
-    val title = getString(tier.titleRes(), tailNumber)
+    val title = getString(tier.titleRes())
     val body = if (single != null) {
-      getString(tier.singleBodyRes(), single.title)
+      buildSingleBody(tier, tailNumber, single)
     } else {
-      getString(tier.pluralBodyRes(), group.size)
+      getString(tier.pluralBodyRes(), tailNumber, group.size)
     }
     return PendingNotification(
       id = "urgency:$aircraftId:${tier.name}",
@@ -259,6 +248,26 @@ class UrgencyScanner(
       highPriority = tier == UrgencyTier.GROUNDED || tier == UrgencyTier.OVERDUE,
       tapTarget = single?.tapTarget ?: NotificationTapTarget.Aircraft(aircraftId),
     )
+  }
+
+  // Three lines — tail + what changed, the record's own (possibly long) title on its own line, then
+  // a tap hint — rather than folding a user-authored title into one run-on sentence.
+  private suspend fun buildSingleBody(tier: UrgencyTier, tailNumber: String, crossing: Crossing): String =
+    if (tier == UrgencyTier.PRIORITY_RAISED) {
+      val fromLabel = getString((crossing.previousRank ?: UrgencyRank.RESOLVED).squawkPriorityLabelRes())
+      // PRIORITY_RAISED only ever reports at HIGH (reportableTier() in :model) — AOG has its own
+      // Grounded tier — so the "to" side of "from X to Y" is always HIGH, never computed per-crossing.
+      val toLabel = getString(UrgencyRank(3).squawkPriorityLabelRes())
+      getString(tier.singleBodyRes(), tailNumber, fromLabel, toLabel, crossing.title)
+    } else {
+      getString(tier.singleBodyRes(), tailNumber, crossing.title)
+    }
+
+  private fun UrgencyRank.squawkPriorityLabelRes(): StringResource = when (value) {
+    0 -> Res.string.squawk_priority_label_resolved
+    1 -> Res.string.squawk_priority_label_low
+    2 -> Res.string.squawk_priority_label_medium
+    else -> Res.string.squawk_priority_label_high
   }
 
   private fun UrgencyTier.titleRes() = when (this) {
@@ -288,5 +297,6 @@ class UrgencyScanner(
     val tier: UrgencyTier,
     val title: String,
     val tapTarget: NotificationTapTarget,
+    val previousRank: UrgencyRank? = null,
   )
 }

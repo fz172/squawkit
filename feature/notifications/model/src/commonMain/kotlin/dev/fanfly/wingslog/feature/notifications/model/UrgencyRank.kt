@@ -43,3 +43,53 @@ fun SquawkWithStatus.urgencyRank(): UrgencyRank = when (status) {
     SquawkPriority.SQUAWK_PRIORITY_UNKNOWN -> UrgencyRank(1)
   }
 }
+
+/**
+ * The four buckets a crossing batches into — at most one notification per (aircraft, tier) per scan
+ * (design §6.5). Matches the four toggles in `NotificationSettingsExt` one-to-one.
+ *
+ * Deliberately a separate type from [UrgencyRank], not merged into it, even though both describe
+ * "how urgent" — [UrgencyRank] is a raw per-ladder number that exists purely to be compared
+ * (`rank > watermark`) and covers every rank on both ladders, including ranks nobody is ever
+ * notified about (e.g. `MEDIUM` — see [SquawkWithStatus.reportableTier]). [UrgencyTier] is the
+ * opposite shape: not comparable, only defined for the ranks that map to a real settings toggle, and
+ * a many-to-one target (three squawk ranks and `RESOLVED` all funnel into `GROUNDED` or nothing).
+ * Their derivation lives together here regardless, next to the ranks a tier is derived from.
+ */
+enum class UrgencyTier {
+  /** A squawk reached `SQUAWK_PRIORITY_AOG`. */
+  GROUNDED,
+
+  /** An open squawk's priority increased, short of AOG. */
+  PRIORITY_RAISED,
+
+  /** A task crossed into `DueStatus.OVERDUE`. */
+  OVERDUE,
+
+  /** A task crossed into `DueStatus.DUE_SOON`. */
+  DUE_SOON,
+}
+
+// Exhaustive `when`, no `else`, matching urgencyRank()'s own exhaustiveness rule above.
+fun DueStatus.reportableTier(): UrgencyTier? = when (this) {
+  DueStatus.OVERDUE -> UrgencyTier.OVERDUE
+  DueStatus.DUE_SOON -> UrgencyTier.DUE_SOON
+  DueStatus.NORMAL, DueStatus.COMPLIED -> null
+}
+
+/**
+ * `null` covers both a resolved squawk and an open one below HIGH — MEDIUM/LOW/UNKNOWN still rank
+ * above [UrgencyRank.RESOLVED] (see [urgencyRank] above) so the watermark advances correctly and a
+ * later real escalation is still caught, but design §9.2's "becomes high priority or worse" scopes
+ * the *notification* to HIGH and up only.
+ */
+fun SquawkWithStatus.reportableTier(): UrgencyTier? {
+  if (status != SquawkStatus.OPEN) return null
+  return when (squawk.priority) {
+    SquawkPriority.SQUAWK_PRIORITY_AOG -> UrgencyTier.GROUNDED
+    SquawkPriority.SQUAWK_PRIORITY_HIGH -> UrgencyTier.PRIORITY_RAISED
+    SquawkPriority.SQUAWK_PRIORITY_MEDIUM,
+    SquawkPriority.SQUAWK_PRIORITY_LOW,
+    SquawkPriority.SQUAWK_PRIORITY_UNKNOWN -> null
+  }
+}

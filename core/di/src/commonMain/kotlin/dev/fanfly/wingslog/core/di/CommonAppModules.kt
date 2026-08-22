@@ -28,12 +28,6 @@ import dev.fanfly.wingslog.feature.login.di.loginModule
 import dev.fanfly.wingslog.feature.logs.datamanager.impl.maintenanceDataManagerModule
 import dev.fanfly.wingslog.feature.logs.update.di.maintenanceUpdateModule
 import dev.fanfly.wingslog.feature.logs.viewing.di.maintenanceViewingModule
-import dev.fanfly.wingslog.feature.notifications.datamanager.di.notificationPrefsModule
-import dev.fanfly.wingslog.feature.notifications.devoptions.di.notificationDevOptionsModule
-import dev.fanfly.wingslog.feature.notifications.engine.di.notificationEngineModule
-import dev.fanfly.wingslog.feature.notifications.permission.di.platformNotificationPermissionModule
-import dev.fanfly.wingslog.feature.notifications.settings.di.notificationSettingsModule
-import dev.fanfly.wingslog.feature.notifications.viewing.di.platformNotificationDisplayModule
 import dev.fanfly.wingslog.feature.settings.di.settingsModule
 import dev.fanfly.wingslog.feature.sharing.datamanager.sharingModule
 import dev.fanfly.wingslog.feature.sharing.update.di.sharingUiModule
@@ -118,13 +112,8 @@ val commonAppModules: List<Module> = listOf(
   // Notifications (P1 done; P2 in progress — docs/notifications/notifications_design.md §14.1).
   // :engine's UrgencyScanner (P2.1-P2.3) has no scheduled caller yet — only the Developer Options
   // "scan now" trigger — the platform schedulers (WorkManager/BGTaskScheduler, P2.6/P2.7) still
-  // don't exist.
-  platformNotificationPermissionModule,
-  platformNotificationDisplayModule,
-  notificationPrefsModule,
-  notificationSettingsModule,
-  notificationEngineModule,
-  notificationDevOptionsModule,
+  // don't exist. Bundled into one entry (NotificationModules.kt) rather than listed as six.
+  notificationsModule,
   settingsModule,
   syncSettingsModule,
   shellModule,
