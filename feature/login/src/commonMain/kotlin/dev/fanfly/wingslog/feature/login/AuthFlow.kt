@@ -13,9 +13,12 @@ import dev.fanfly.wingslog.feature.ads.datamanager.AdConsentManager
 import dev.fanfly.wingslog.feature.login.data.LoginViewModel
 import dev.fanfly.wingslog.feature.login.onboarding.AdsConsentExplainerScreen
 import dev.fanfly.wingslog.feature.login.onboarding.NameEntryScreen
+import dev.fanfly.wingslog.feature.login.onboarding.NotificationPrimerScreen
 import dev.fanfly.wingslog.feature.login.onboarding.OnboardingActions
 import dev.fanfly.wingslog.feature.login.onboarding.OnboardingPreferences
 import dev.fanfly.wingslog.feature.login.onboarding.WelcomeScreen
+import dev.fanfly.wingslog.feature.notifications.permission.NotificationPermission
+import dev.fanfly.wingslog.feature.notifications.permission.PermissionState
 import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
 import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.first
@@ -24,11 +27,11 @@ import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
-private enum class AuthStep { Login, EmailSignIn, NameEntry, Welcome, AdsConsentExplainer }
+private enum class AuthStep { Login, EmailSignIn, NameEntry, Welcome, NotificationPrimer, AdsConsentExplainer }
 
 /**
- * The full pre-app flow shared by every platform: sign-in → name entry → welcome → (free tier,
- * consent required) ads consent priming.
+ * The full pre-app flow shared by every platform: sign-in → name entry → welcome → (permission
+ * undetermined) notification priming → (free tier, consent required) ads consent priming.
  *
  * Navigation-free (a simple step state machine) so it runs identically on Android, iOS, and web
  * without depending on a navigation library. [onComplete] fires once the user is signed in and has
@@ -36,9 +39,10 @@ private enum class AuthStep { Login, EmailSignIn, NameEntry, Welcome, AdsConsent
  * mobile, a placeholder on web today).
  *
  * Name persistence is delegated to [OnboardingActions]; the welcome flag goes
- * through [OnboardingPreferences] (local store). The ads consent step has no flag of its own —
- * see `proceedPastOnboarding()` — it runs every time onboarding completes (new signup or returning
- * user alike) and relies on the platform CMP's own cached state to no-op once already resolved.
+ * through [OnboardingPreferences] (local store). Neither the notification primer nor the ads
+ * consent step has a flag of its own — both run every time onboarding completes (new signup or
+ * returning user alike) and rely on the platform's own cached state (OS permission state; the CMP's)
+ * to no-op once already resolved.
  *
  * [loginContent] is the sign-in step's UI. It defaults to the shared [LoginScreen] used by Android
  * and iOS; the web host overrides it with its SEO landing page (see WebLoginLandingScreen) while
@@ -54,6 +58,7 @@ fun AuthFlow(
   onboardingPreferences: OnboardingPreferences = koinInject(),
   subscriptionManager: SubscriptionManager = koinInject(),
   adConsentManager: AdConsentManager = koinInject(),
+  notificationPermission: NotificationPermission = koinInject(),
   loginContent: @Composable (onLoginSuccess: () -> Unit, onChooseEmail: () -> Unit) -> Unit =
     { onLoginSuccess, onChooseEmail ->
       LoginScreen(
@@ -68,13 +73,14 @@ fun AuthFlow(
   val selfName by actions.observeSelfName()
     .collectAsState(null)
 
-  // Every path out of onboarding funnels through here, new signup and returning user alike — this
-  // is the one place ads consent gets resolved, instead of leaving it to whichever ad slot happens
-  // to render first. isConsentRequired() is a background check (no UI); only when it says a privacy
-  // choice is actually needed does the flow detour through the explainer + the real CMP dialog,
-  // rather than interrupt a pilot mid-scroll later. showsAds() already folds in both the tier check
-  // and isAdsSupported, so a Pro user's app never even calls the consent SDK.
-  suspend fun proceedPastOnboarding() {
+  // The primer's Continue must re-enter here, below the notification check, rather than back through
+  // proceedPastOnboarding() — that would re-read a permission state the OS may not have committed yet
+  // and show the primer again. This is the one place ads consent gets resolved, instead of leaving it
+  // to whichever ad slot happens to render first. isConsentRequired() is a background check (no UI);
+  // only when it says a privacy choice is actually needed does the flow detour through the explainer
+  // + the real CMP dialog, rather than interrupt a pilot mid-scroll later. showsAds() already folds
+  // in both the tier check and isAdsSupported, so a Pro user's app never even calls the consent SDK.
+  suspend fun proceedPastNotifications() {
     val needsAdsConsent = subscriptionManager.shouldShowAds()
       .first() && adConsentManager.isConsentRequired()
     if (needsAdsConsent) {
@@ -82,6 +88,23 @@ fun AuthFlow(
     } else {
       onComplete()
     }
+  }
+
+  // Every path out of onboarding funnels through here, new signup and returning user alike — this
+  // is the one place the notification permission gets resolved, instead of leaving the first ask to
+  // whichever screen happens to touch NotificationPermission first. refresh() before the check:
+  // observe()'s StateFlow can be stale if the user changed the OS setting since the app last looked,
+  // and this is the one read that decides whether the primer appears at all. The equality check
+  // against UNDETERMINED (not e.g. "!= GRANTED && != DENIED") is deliberate — it is what keeps
+  // UNSUPPORTED out of the primer, since a device that cannot show notifications has nothing to
+  // prime.
+  suspend fun proceedPastOnboarding() {
+    notificationPermission.refresh()
+    if (notificationPermission.observe().value == PermissionState.UNDETERMINED) {
+      step = AuthStep.NotificationPrimer
+      return
+    }
+    proceedPastNotifications()
   }
 
   // Guards against advancing past sign-in twice — a real risk once we also advance from
@@ -173,6 +196,15 @@ fun AuthFlow(
         scope.launch {
           onboardingPreferences.setHasSeenWelcome()
           proceedPastOnboarding()
+        }
+      },
+    )
+
+    AuthStep.NotificationPrimer -> NotificationPrimerScreen(
+      onContinue = {
+        scope.launch {
+          notificationPermission.request() // the real OS dialog; its result is not branched on
+          proceedPastNotifications()
         }
       },
     )
