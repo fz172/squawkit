@@ -39,10 +39,9 @@ private enum class AuthStep { Login, EmailSignIn, NameEntry, Welcome, Notificati
  * mobile, a placeholder on web today).
  *
  * Name persistence is delegated to [OnboardingActions]; the welcome flag goes
- * through [OnboardingPreferences] (local store). Neither the notification primer nor the ads
- * consent step has a flag of its own — both run every time onboarding completes (new signup or
- * returning user alike) and rely on the platform's own cached state (OS permission state; the CMP's)
- * to no-op once already resolved.
+ * through [OnboardingPreferences] (local store), which also tracks whether the notification primer
+ * has been shown — unlike the ads consent step, the primer is a one-time notice rather than a pure
+ * permission-state gate, so it needs its own flag on top of `NotificationPermission`'s cached state.
  *
  * [loginContent] is the sign-in step's UI. It defaults to the shared [LoginScreen] used by Android
  * and iOS; the web host overrides it with its SEO landing page (see WebLoginLandingScreen) while
@@ -94,13 +93,20 @@ fun AuthFlow(
   // is the one place the notification permission gets resolved, instead of leaving the first ask to
   // whichever screen happens to touch NotificationPermission first. refresh() before the check:
   // observe()'s StateFlow can be stale if the user changed the OS setting since the app last looked,
-  // and this is the one read that decides whether the primer appears at all. The equality check
-  // against UNDETERMINED (not e.g. "!= GRANTED && != DENIED") is deliberate — it is what keeps
-  // UNSUPPORTED out of the primer, since a device that cannot show notifications has nothing to
-  // prime.
+  // and this is the one read that decides whether the primer appears at all.
+  //
+  // A one-time *notice*, not a permission-state gate: GRANTED and UNSUPPORTED skip it (nothing to
+  // ask, nothing to fix), but DENIED still shows it once — with the primer's "open settings" copy
+  // rather than a request() that would silently no-op — so an account that already said no (from a
+  // prior OS decision, or from testing before checkHasSeenNotificationPrimer existed) still gets
+  // told once what it is missing. hasSeenNotificationPrimer is what makes this idempotent across
+  // logins once shown, on top of the OS's own idempotency for UNDETERMINED.
   suspend fun proceedPastOnboarding() {
     notificationPermission.refresh()
-    if (notificationPermission.observe().value == PermissionState.UNDETERMINED) {
+    val permissionState = notificationPermission.observe().value
+    val primerApplies = permissionState == PermissionState.UNDETERMINED ||
+      permissionState == PermissionState.DENIED
+    if (primerApplies && !onboardingPreferences.checkHasSeenNotificationPrimer()) {
       step = AuthStep.NotificationPrimer
       return
     }
@@ -200,14 +206,23 @@ fun AuthFlow(
       },
     )
 
-    AuthStep.NotificationPrimer -> NotificationPrimerScreen(
-      onContinue = {
-        scope.launch {
-          notificationPermission.request() // the real OS dialog; its result is not branched on
-          proceedPastNotifications()
-        }
-      },
-    )
+    AuthStep.NotificationPrimer -> {
+      val permissionDenied = notificationPermission.observe().value == PermissionState.DENIED
+      NotificationPrimerScreen(
+        permissionDenied = permissionDenied,
+        onContinue = {
+          scope.launch {
+            onboardingPreferences.setHasSeenNotificationPrimer()
+            if (permissionDenied) {
+              notificationPermission.openSystemSettings()
+            } else {
+              notificationPermission.request() // the real OS dialog; its result is not branched on
+            }
+            proceedPastNotifications()
+          }
+        },
+      )
+    }
 
     AuthStep.AdsConsentExplainer -> AdsConsentExplainerScreen(
       onContinue = {

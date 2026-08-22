@@ -42,20 +42,34 @@ import dev.fanfly.wingslog.core.ui.theme.rememberBrandHeadlineFamily
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.login.generated.resources.Res
 import wingslog.feature.login.generated.resources.onboarding_notifications_body
+import wingslog.feature.login.generated.resources.onboarding_notifications_denied_action
+import wingslog.feature.login.generated.resources.onboarding_notifications_denied_body
+import wingslog.feature.login.generated.resources.onboarding_notifications_denied_eyebrow
+import wingslog.feature.login.generated.resources.onboarding_notifications_denied_headline
 import wingslog.feature.login.generated.resources.onboarding_notifications_eyebrow
 import wingslog.feature.login.generated.resources.onboarding_notifications_headline
 import wingslog.core.sharedassets.generated.resources.Res as UiRes
 import wingslog.core.sharedassets.generated.resources.continue_action
 
 /**
- * Priming explanation shown once, before the real OS permission dialog — not instead of it —
- * mirroring `AdsConsentExplainerScreen`'s pattern for the same reason: an unexplained system
- * prompt reads as an interruption, one with context in front of it reads as a choice. Stateless
- * and opinion-free about what Continue does; `AuthFlow` owns the actual `NotificationPermission`
- * call, which is what keeps this screen previewable (design §10.2).
+ * Priming explanation shown once per account, before the real OS permission dialog — not instead
+ * of it — mirroring `AdsConsentExplainerScreen`'s pattern for the same reason: an unexplained
+ * system prompt reads as an interruption, one with context in front of it reads as a choice.
+ *
+ * Shown for both `PermissionState.UNDETERMINED` and `PermissionState.DENIED` — this is a one-time
+ * *notice*, gated on `OnboardingPreferences.checkHasSeenNotificationPrimer()`, not solely on
+ * whether the OS still has something to ask. A device that already said no (from a prior OS
+ * decision, or from testing before this flag existed) still gets told once what it is missing,
+ * with [permissionDenied] switching the copy and the CTA to "Open settings" instead of a request
+ * that would silently no-op. `PermissionState.GRANTED` and `PermissionState.UNSUPPORTED` never
+ * reach this screen — `AuthFlow` filters those out before advancing to this step.
+ *
+ * Stateless and opinion-free about what Continue does; `AuthFlow` owns the actual
+ * `NotificationPermission` call, which is what keeps this screen previewable (design §10.2).
  */
 @Composable
 fun NotificationPrimerScreen(
+  permissionDenied: Boolean,
   onContinue: () -> Unit,
 ) {
   val headlineFamily = rememberBrandHeadlineFamily()
@@ -92,7 +106,10 @@ fun NotificationPrimerScreen(
         verticalArrangement = Arrangement.Center,
       ) {
         Text(
-          text = stringResource(Res.string.onboarding_notifications_eyebrow),
+          text = stringResource(
+            if (permissionDenied) Res.string.onboarding_notifications_denied_eyebrow
+            else Res.string.onboarding_notifications_eyebrow
+          ),
           textAlign = TextAlign.Center,
           style = TextStyle(
             fontFamily = FontFamily.SansSerif,
@@ -105,7 +122,10 @@ fun NotificationPrimerScreen(
         Spacer(Modifier.height(16.dp))
 
         Text(
-          text = stringResource(Res.string.onboarding_notifications_headline),
+          text = stringResource(
+            if (permissionDenied) Res.string.onboarding_notifications_denied_headline
+            else Res.string.onboarding_notifications_headline
+          ),
           textAlign = TextAlign.Center,
           style = TextStyle(
             fontFamily = headlineFamily,
@@ -119,7 +139,10 @@ fun NotificationPrimerScreen(
         Spacer(Modifier.height(14.dp))
 
         Text(
-          text = stringResource(Res.string.onboarding_notifications_body),
+          text = stringResource(
+            if (permissionDenied) Res.string.onboarding_notifications_denied_body
+            else Res.string.onboarding_notifications_body
+          ),
           textAlign = TextAlign.Center,
           modifier = Modifier.widthIn(max = 290.dp),
           style = TextStyle(
@@ -150,7 +173,10 @@ fun NotificationPrimerScreen(
         ) {
           Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
-              text = stringResource(UiRes.string.continue_action),
+              text = stringResource(
+                if (permissionDenied) Res.string.onboarding_notifications_denied_action
+                else UiRes.string.continue_action
+              ),
               style = TextStyle(
                 fontFamily = headlineFamily,
                 fontSize = 16.sp,
