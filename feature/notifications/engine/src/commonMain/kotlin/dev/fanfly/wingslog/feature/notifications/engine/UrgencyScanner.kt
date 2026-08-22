@@ -153,6 +153,8 @@ class UrgencyScanner(
       if (tier != null && previousRank != null) {
         crossings += Crossing(
           tier = tier,
+          collection = CollectionKind.MaintenanceTask,
+          recordId = row.id,
           title = row.value.title,
           tapTarget = NotificationTapTarget.Task(aircraftId, row.id),
         )
@@ -176,6 +178,8 @@ class UrgencyScanner(
       if (tier != null && previousRank != null) {
         crossings += Crossing(
           tier = tier,
+          collection = CollectionKind.Squawk,
+          recordId = row.id,
           title = row.value.title,
           tapTarget = NotificationTapTarget.Squawk(aircraftId, row.id),
           previousRank = previousRank,
@@ -280,13 +284,22 @@ class UrgencyScanner(
   ): PendingNotification {
     val single = group.singleOrNull()
     val title = getString(tier.titleRes())
-    val body = if (single != null) {
-      buildSingleBody(tier, tailNumber, single)
+    val body: String
+    // Deterministic ids so a re-scan replaces rather than stacks (design §6.5): a summary is keyed
+    // by (aircraft, tier) since it has no one record to point at, but a single crossing is keyed by
+    // (collection, recordId) specifically — NOT (aircraft, tier) — so a later scan's single crossing
+    // for a *different* record in the same tier gets its own tray slot instead of silently
+    // overwriting a still-unread notification about the first one.
+    val id: String
+    if (single != null) {
+      body = buildSingleBody(tier, tailNumber, single)
+      id = "urgency:${single.collection.wireName}:${single.recordId}"
     } else {
-      getString(tier.pluralBodyRes(), tailNumber, group.size)
+      body = getString(tier.pluralBodyRes(), tailNumber, group.size)
+      id = "urgency:$aircraftId:${tier.name}"
     }
     return PendingNotification(
-      id = "urgency:$aircraftId:${tier.name}",
+      id = id,
       channel = if (tier == UrgencyTier.GROUNDED) NotificationChannel.GROUNDED else NotificationChannel.URGENCY_UPDATE,
       title = title,
       body = body,
@@ -354,6 +367,8 @@ class UrgencyScanner(
 
   private data class Crossing(
     val tier: UrgencyTier,
+    val collection: CollectionKind,
+    val recordId: String,
     val title: String,
     val tapTarget: NotificationTapTarget,
     val previousRank: UrgencyRank? = null,
