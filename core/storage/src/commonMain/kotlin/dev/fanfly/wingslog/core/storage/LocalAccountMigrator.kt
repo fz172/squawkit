@@ -71,6 +71,25 @@ class LocalAccountMigratorImpl(
             remainderStart,
             oldPrefixLike
           )
+          // Urgency watermarks (notifications design §6.2) move in this same transaction — not
+          // re-keying them would silently re-seed the whole fleet at the exact moment the user has
+          // most reason to trust the app: every pending crossing swallowed, no notification, no
+          // error. Same conflict-then-move shape as entities above, but urgency_watermark's primary
+          // key carries uid explicitly, so both queries take fromUid/toUid too.
+          db.schemaQueries.deleteWatermarkReassignConflicts(
+            fromUid,
+            oldPrefixLike,
+            toUid,
+            newPrefix,
+            remainderStart
+          )
+          db.schemaQueries.reassignWatermarks(
+            toUid,
+            newPrefix,
+            remainderStart,
+            fromUid,
+            oldPrefixLike
+          )
           // Drop both users' cursors so the destination account re-hydrates its existing cloud set.
           db.schemaQueries.deleteSyncCursorsForUser(fromUid)
           db.schemaQueries.deleteSyncCursorsForUser(toUid)
