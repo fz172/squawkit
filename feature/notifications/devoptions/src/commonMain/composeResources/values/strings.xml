@@ -14,4 +14,12 @@
   <string name="notifications_devoptions_channel_grounded">Grounded / AOG (N2)</string>
   <string name="notifications_devoptions_send_action">Send</string>
   <string name="notifications_devoptions_test_body">Sent from Developer Options.</string>
+  <string name="notifications_devoptions_scan_now_title">Urgency scan</string>
+  <string name="notifications_devoptions_scan_never_run">Not run yet</string>
+  <string name="notifications_devoptions_scan_now_action">Scan now</string>
+  <string name="notifications_devoptions_scan_result_no_user">No signed-in user</string>
+  <string name="notifications_devoptions_scan_result_prefs_unresolved">Preferences not resolved yet</string>
+  <string name="notifications_devoptions_scan_result_disabled">Skipped — All notifications is off</string>
+  <string name="notifications_devoptions_scan_result_no_permission">Skipped — OS permission not granted</string>
+  <string name="notifications_devoptions_scan_result_completed">Done — %1$d notification(s) posted</string>
 </resources>

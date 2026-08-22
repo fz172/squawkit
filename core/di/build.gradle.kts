@@ -54,6 +54,7 @@ kotlin {
       implementation(project(":feature:notifications:viewing"))
       implementation(project(":feature:notifications:datamanager"))
       implementation(project(":feature:notifications:settings"))
+      implementation(project(":feature:notifications:engine"))
       implementation(project(":feature:notifications:devoptions"))
       implementation(project(":feature:settings"))
       implementation(project(":feature:shell"))

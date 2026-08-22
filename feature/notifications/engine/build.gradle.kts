@@ -50,7 +50,17 @@ kotlin {
       implementation(project(":feature:notifications:permission"))
       implementation(project(":feature:notifications:viewing"))
       implementation(project(":feature:notifications:datamanager"))
+      implementation(project(":feature:notifications:sharedassets"))
+      // UrgencyRank's ladder mappings live on DueStatus (:tasks:model) and SquawkWithStatus
+      // (:squawk:model) — datamanager modules expose their own :model transitively as
+      // `implementation`, not `api`, so these need to be declared directly here too.
+      implementation(project(":feature:tasks:model"))
+      implementation(project(":feature:squawk:model"))
       implementation(libs.gitlive.firebase.auth)
+      // getString(Res.string.…) — the notification bodies in :sharedassets are read from a
+      // background scan, never a @Composable, so this module needs the resources runtime but not
+      // the Compose UI plugin itself.
+      implementation(libs.components.resources)
 
       // Logging
       implementation(libs.kermit)

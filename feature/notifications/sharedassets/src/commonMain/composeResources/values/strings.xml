@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <!-- N2 urgency notification bodies (design §6.5). Single-crossing forms are used when a scan
+       finds exactly one crossing for an (aircraft, tier); the plural forms replace them once a scan
+       finds two or more, per PRD §6.6's "3 inspections are now overdue" example. -->
+
+  <string name="notification_title_grounded">⚠ AOG · %1$s</string>
+  <string name="notification_body_grounded_single">“%1$s” raised to AOG — aircraft grounded</string>
+  <string name="notification_body_grounded_plural">%1$d squawks raised this aircraft to AOG</string>
+
+  <!-- Fires only when a squawk reaches HIGH — AOG has its own Grounded tier above, and the
+       settings toggle this reads ("Squawk priority increases") is scoped to "becomes high priority
+       or worse" (see notification_settings_squawk_priority_subtitle in :settings). A LOW-to-MEDIUM
+       or MEDIUM-to-HIGH-adjacent bump below HIGH still moves the watermark so a later real crossing
+       is detected correctly, but is not itself reportable. -->
+  <string name="notification_title_priority_raised">Priority raised · %1$s</string>
+  <string name="notification_body_priority_raised_single">“%1$s” is now high priority</string>
+  <string name="notification_body_priority_raised_plural">%1$d squawks are now high priority</string>
+
+  <string name="notification_title_overdue">⚠ Overdue · %1$s</string>
+  <string name="notification_body_overdue_single">%1$s is now overdue</string>
+  <string name="notification_body_overdue_plural">%1$d inspections are now overdue</string>
+
+  <string name="notification_title_due_soon">Due soon · %1$s</string>
+  <string name="notification_body_due_soon_single">%1$s is due soon</string>
+  <string name="notification_body_due_soon_plural">%1$d inspections are due soon</string>
+</resources>

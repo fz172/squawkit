@@ -14,13 +14,19 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.developeroptions.plugin.DeveloperOptionsExtra
+import dev.fanfly.wingslog.feature.notifications.engine.ScanResult
+import dev.fanfly.wingslog.feature.notifications.engine.ScanTrigger
+import dev.fanfly.wingslog.feature.notifications.engine.UrgencyScanner
 import dev.fanfly.wingslog.feature.notifications.model.NotificationChannel
 import dev.fanfly.wingslog.feature.notifications.model.NotificationTapTarget
 import dev.fanfly.wingslog.feature.notifications.model.PendingNotification
@@ -38,6 +44,14 @@ import wingslog.feature.notifications.devoptions.generated.resources.notificatio
 import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_open_settings_action
 import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_permission_title
 import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_request_action
+import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_scan_never_run
+import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_scan_now_action
+import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_scan_now_title
+import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_scan_result_completed
+import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_scan_result_disabled
+import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_scan_result_no_permission
+import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_scan_result_no_user
+import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_scan_result_prefs_unresolved
 import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_send_action
 import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_state_denied
 import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_state_granted
@@ -49,17 +63,17 @@ import wingslog.feature.notifications.devoptions.generated.resources.notificatio
 /**
  * Developer Options section for the notifications feature.
  *
- * **Partial delivery of design §11 / task P1.11.** The design also specifies a run-scan-now action, a
- * watermark reset, and scan diagnostics — those still can't exist, since they need `UrgencyScanner`
- * (P2) to call. What ships here is everything buildable without it: a manual trigger for
- * [NotificationPermission.request] (P1.4's first UI caller), and one test-send button per
- * [NotificationChannel], now that `LocalNotifier` (P1.5) exists to post through. The rest of §11 lands
- * incrementally as its prerequisites do; this class is where later work adds to it, not a stand-in
- * that gets replaced.
+ * **Partial delivery of design §11.** Watermark reset and scan diagnostics still don't exist. What
+ * ships here: a manual trigger for [NotificationPermission.request] (P1.4), a test-send button per
+ * [NotificationChannel] (P1.5), and now a real "scan now" button that runs [UrgencyScanner.scan]
+ * with [ScanTrigger.MANUAL] — the only caller [UrgencyScanner] has until the platform schedulers
+ * (P2.6/P2.7) exist. The rest of §11 lands incrementally as its prerequisites do; this class is
+ * where later work adds to it, not a stand-in that gets replaced.
  */
 class NotificationDeveloperOptionsExtra(
   private val permission: NotificationPermission,
   private val notifier: LocalNotifier,
+  private val scanner: UrgencyScanner,
 ) : DeveloperOptionsExtra {
 
   override val order: Int = 500
@@ -132,7 +146,51 @@ class NotificationDeveloperOptionsExtra(
         },
       )
     }
+
+    Spacer(Modifier.height(Spacing.medium))
+    var lastResult by remember { mutableStateOf<ScanResult?>(null) }
+    var scanning by remember { mutableStateOf(false) }
+    Row(
+      modifier = Modifier
+        .fillMaxWidth()
+        .padding(vertical = Spacing.small),
+      horizontalArrangement = Arrangement.SpaceBetween,
+      verticalAlignment = Alignment.CenterVertically,
+    ) {
+      Column {
+        Text(
+          text = stringResource(Res.string.notifications_devoptions_scan_now_title),
+          style = MaterialTheme.typography.bodyLarge,
+        )
+        Text(
+          text = lastResult?.toLabel() ?: stringResource(Res.string.notifications_devoptions_scan_never_run),
+          style = MaterialTheme.typography.bodySmall,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+      }
+      OutlinedButton(
+        enabled = !scanning,
+        onClick = {
+          scanning = true
+          scope.launch {
+            lastResult = scanner.scan(ScanTrigger.MANUAL)
+            scanning = false
+          }
+        },
+      ) {
+        Text(stringResource(Res.string.notifications_devoptions_scan_now_action))
+      }
+    }
     // No trailing divider — the host draws one after every extra.
+  }
+
+  @Composable
+  private fun ScanResult.toLabel(): String = when (this) {
+    ScanResult.NoUser -> stringResource(Res.string.notifications_devoptions_scan_result_no_user)
+    ScanResult.PrefsUnresolved -> stringResource(Res.string.notifications_devoptions_scan_result_prefs_unresolved)
+    ScanResult.Disabled -> stringResource(Res.string.notifications_devoptions_scan_result_disabled)
+    ScanResult.NoPermission -> stringResource(Res.string.notifications_devoptions_scan_result_no_permission)
+    is ScanResult.Completed -> stringResource(Res.string.notifications_devoptions_scan_result_completed, notificationsPosted)
   }
 
   @Composable
