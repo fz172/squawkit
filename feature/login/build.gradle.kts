@@ -64,6 +64,9 @@ kotlin {
       implementation(project(":feature:ads:datamanager"))
       // AdConsentManager.presentConsentForm()'s return type — datamanager doesn't api-export it.
       implementation(project(":feature:ads:model"))
+      // The notification priming step: NotificationPermission (background UNDETERMINED check, then
+      // request() — the real OS dialog — from the primer's Continue).
+      implementation(project(":feature:notifications:permission"))
 
       // Compose resources (this module owns its login strings + Google icon)
       implementation(libs.components.resources)

@@ -41,6 +41,15 @@
   <string name="onboarding_ads_consent_headline">A few small ads 📣</string>
   <string name="onboarding_ads_consent_body">Ads cover the servers, so SquawkIt stays free. Next, choose how they can use your data.</string>
   <string name="onboarding_ads_consent_pro_note">Go ad-free anytime with SquawkIt Pro.</string>
+  <!-- Onboarding: notification priming, shown once before the platform's own permission dialog -->
+  <string name="onboarding_notifications_eyebrow">Stay in the loop</string>
+  <string name="onboarding_notifications_headline">Know when it matters</string>
+  <string name="onboarding_notifications_body">Hear about changes on aircraft shared with you, and when something goes overdue.</string>
+  <!-- Onboarding: notification priming, permission already denied -->
+  <string name="onboarding_notifications_denied_eyebrow">Notifications are off</string>
+  <string name="onboarding_notifications_denied_headline">Turn them back on</string>
+  <string name="onboarding_notifications_denied_body">You won’t hear about changes on shared aircraft or overdue alerts. Enable notifications in system settings to stay in the loop.</string>
+  <string name="onboarding_notifications_denied_action">Open settings</string>
   <!-- Guest -> permanent account upgrade -->
   <string name="upgrade_picker_title">Keep your records</string>
   <string name="upgrade_picker_body">Connect an account so your aircraft, logs, and records are backed up and available on your other devices.</string>

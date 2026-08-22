@@ -26,7 +26,29 @@ class OnboardingPreferences(
     }
   }
 
+  /**
+   * Whether this account has ever seen `NotificationPrimerScreen`, on any device. Unlike the
+   * original permission-only gate (`observe().value == UNDETERMINED`), this flag makes the primer a
+   * true one-time notice — it still shows once for an account whose permission is already `DENIED`
+   * (from a prior OS decision, or from testing before this flag existed), just with the
+   * "open settings" copy instead of the request prompt.
+   */
+  suspend fun checkHasSeenNotificationPrimer(): Boolean {
+    val uid = auth.currentUser?.uid ?: return false
+    return db.schemaQueries.selectConfig(uid, KEY_HAS_SEEN_NOTIFICATION_PRIMER)
+      .awaitAsOneOrNull()
+      ?.toBoolean() ?: false
+  }
+
+  suspend fun setHasSeenNotificationPrimer() {
+    val uid = auth.currentUser?.uid ?: return
+    writeLock.withLock {
+      db.schemaQueries.upsertConfig(uid, KEY_HAS_SEEN_NOTIFICATION_PRIMER, true.toString())
+    }
+  }
+
   companion object {
     private const val KEY_HAS_SEEN_WELCOME = "onboarding_has_seen_welcome"
+    private const val KEY_HAS_SEEN_NOTIFICATION_PRIMER = "onboarding_has_seen_notification_primer"
   }
 }
