@@ -378,3 +378,27 @@ SET scope_path = :newPrefix || substr(scope_path, :remainderStart),
     remote_path = NULL,
     upload_attempts = 0
 WHERE scope_path LIKE :oldPrefixLike;
+
+-- Watermark counterpart to deleteReassignConflicts/reassignEntities above (notifications design
+-- §6.2). Not re-keying would silently re-seed the whole fleet at the exact moment the user has most
+-- reason to trust the app — every pending crossing swallowed, no notification, no error. Filtered by
+-- uid, not just scope_path LIKE, since urgency_watermark's primary key carries uid explicitly
+-- (unlike entity, which has no uid column at all).
+
+deleteWatermarkReassignConflicts:
+DELETE FROM urgency_watermark
+WHERE uid = :fromUid
+  AND scope_path LIKE :oldPrefixLike
+  AND EXISTS (
+    SELECT 1 FROM urgency_watermark AS destination
+    WHERE destination.uid = :toUid
+      AND destination.collection = urgency_watermark.collection
+      AND destination.id = urgency_watermark.id
+      AND destination.scope_path = :newPrefix || substr(urgency_watermark.scope_path, :remainderStart)
+  );
+
+reassignWatermarks:
+UPDATE urgency_watermark
+SET uid = :toUid,
+    scope_path = :newPrefix || substr(scope_path, :remainderStart)
+WHERE uid = :fromUid AND scope_path LIKE :oldPrefixLike;

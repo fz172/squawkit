@@ -305,4 +305,88 @@ class LocalAccountMigratorTest {
       .awaitAsList()
     assertThat(stillThere).hasSize(1)
   }
+
+  // Urgency watermarks (notifications design §6.2) — not re-keying these would silently re-seed
+  // the whole fleet at the exact moment the user has most reason to trust the app.
+
+  private suspend fun insertWatermark(
+    uid: String,
+    scopePath: String,
+    id: String,
+    rank: Long,
+  ) {
+    db.schemaQueries.upsertWatermark(
+      uid = uid,
+      collection = CollectionKind.MaintenanceTask,
+      scope_path = scopePath,
+      id = id,
+      rank = rank,
+      updated_at = 1_000L,
+    )
+  }
+
+  @Test
+  fun reassign_movesWatermarkToNewUidAndScope() = runTest {
+    insertWatermark(FROM_UID, "/users/$FROM_UID/aircraft/ac-1/", "task-1", rank = 2L)
+
+    migrator.reassign(FROM_UID, TO_UID)
+
+    assertThat(
+      db.schemaQueries.selectWatermarksInScopePrefix(FROM_UID, "/users/$FROM_UID/%")
+        .awaitAsList()
+    ).isEmpty()
+
+    val moved = db.schemaQueries.selectWatermarksInScopePrefix(TO_UID, "/users/$TO_UID/%")
+      .awaitAsList()
+    assertThat(moved).hasSize(1)
+    assertThat(moved[0].uid).isEqualTo(TO_UID)
+    assertThat(moved[0].scope_path).isEqualTo("/users/$TO_UID/aircraft/ac-1/")
+    assertThat(moved[0].id).isEqualTo("task-1")
+    assertThat(moved[0].rank).isEqualTo(2L)
+  }
+
+  @Test
+  fun reassign_leavesOtherUsersWatermarksUntouched() = runTest {
+    insertWatermark(FROM_UID, "/users/$FROM_UID/aircraft/ac-1/", "task-1", rank = 1L)
+    insertWatermark("someone-else", "/users/someone-else/aircraft/ac-2/", "task-2", rank = 1L)
+
+    migrator.reassign(FROM_UID, TO_UID)
+
+    val other = db.schemaQueries.selectWatermarksInScopePrefix("someone-else", "/users/someone-else/%")
+      .awaitAsList()
+    assertThat(other).hasSize(1)
+    assertThat(other[0].id).isEqualTo("task-2")
+  }
+
+  @Test
+  fun reassign_dropsWatermarkConflictsWithDestination_keepingDestinationsRank() = runTest {
+    // Same shape as reassign_dropsRecordsTheDestinationAlreadyHolds: a same-(collection, id) row in
+    // both scopes is the same record. The destination's rank is the one this device already reported
+    // to the account; the guest's copy — from before the accounts were the same person — would
+    // otherwise trip the primary key or silently roll the watermark back.
+    insertWatermark(FROM_UID, "/users/$FROM_UID/aircraft/ac-1/", "task-1", rank = 0L)
+    insertWatermark(TO_UID, "/users/$TO_UID/aircraft/ac-1/", "task-1", rank = 2L)
+    insertWatermark(FROM_UID, "/users/$FROM_UID/aircraft/ac-1/", "task-2", rank = 1L)
+
+    migrator.reassign(FROM_UID, TO_UID)
+
+    val destination = db.schemaQueries.selectWatermarksInScopePrefix(TO_UID, "/users/$TO_UID/%")
+      .awaitAsList()
+    assertThat(destination.associate { it.id to it.rank }).containsExactly(
+      "task-1", 2L,
+      "task-2", 1L,
+    )
+  }
+
+  @Test
+  fun reassign_watermarkIsIdempotent() = runTest {
+    insertWatermark(FROM_UID, "/users/$FROM_UID/aircraft/ac-1/", "task-1", rank = 1L)
+
+    migrator.reassign(FROM_UID, TO_UID)
+    migrator.reassign(FROM_UID, TO_UID)
+
+    val moved = db.schemaQueries.selectWatermarksInScopePrefix(TO_UID, "/users/$TO_UID/%")
+      .awaitAsList()
+    assertThat(moved).hasSize(1)
+  }
 }
