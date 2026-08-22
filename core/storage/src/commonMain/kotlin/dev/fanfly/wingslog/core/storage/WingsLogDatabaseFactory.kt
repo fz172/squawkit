@@ -5,6 +5,7 @@ import dev.fanfly.wingslog.core.storage.blob.remoteStateAdapter
 import dev.fanfly.wingslog.core.storage.db.Blob_object
 import dev.fanfly.wingslog.core.storage.db.Entity
 import dev.fanfly.wingslog.core.storage.db.Sync_cursor
+import dev.fanfly.wingslog.core.storage.db.Urgency_watermark
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
 
 /**
@@ -18,4 +19,5 @@ fun createWingsLogDatabase(driver: SqlDriver): WingsLogDatabase =
     entityAdapter = Entity.Adapter(collectionAdapter = collectionKindAdapter),
     sync_cursorAdapter = Sync_cursor.Adapter(collectionAdapter = collectionKindAdapter),
     blob_objectAdapter = Blob_object.Adapter(remote_stateAdapter = remoteStateAdapter),
+    urgency_watermarkAdapter = Urgency_watermark.Adapter(collectionAdapter = collectionKindAdapter),
   )

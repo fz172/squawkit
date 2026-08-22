@@ -64,4 +64,5 @@ dependencies {
   testImplementation(libs.mockk)
   testImplementation(libs.truth)
   testImplementation(libs.kotlinx.coroutines.test)
+  testImplementation(libs.sqldelight.sqlite.driver)
 }
