@@ -56,9 +56,17 @@ class DatabaseIntegrityChecker(
   }
 
   /**
-   * Deletes entity rows and sync cursors for [uid] so the sync engine re-hydrates from Firestore
-   * on next sign-in. blob_object rows and files are handled separately by
-   * [AttachmentManager.wipeLocalData]. Call this from the sign-out path before clearing auth state.
+   * Deletes entity rows, sync cursors, and urgency watermarks for [uid] so the sync engine
+   * re-hydrates from Firestore on next sign-in. blob_object rows and files are handled separately
+   * by [AttachmentManager.wipeLocalData]. Call this from the sign-out path before clearing auth
+   * state.
+   *
+   * Watermarks are included as of notifications design §6.2 (2026-08-22): leaving another
+   * account's aircraft ids and urgency ranks recoverable from the raw SQLite file after sign-out is
+   * a privacy leak on a shared/borrowed device — the same reasoning §7.1 already applies to push
+   * tokens. The accepted cost is that a user who signs back into the *same* account is silently
+   * re-seeded on their next scan (§6.4) rather than compared against real prior state — a lost
+   * cycle, not a lost feature, and never a notification storm.
    */
   suspend fun wipeDataForUser(uid: String) {
     val scopePrefix = "/users/$uid/%"
@@ -66,8 +74,9 @@ class DatabaseIntegrityChecker(
       writeLock.withLock {
         db.schemaQueries.deleteEntitiesForUser(scopePrefix)
         db.schemaQueries.deleteSyncCursorsForUser(uid)
+        db.schemaQueries.deleteWatermarksForUser(uid)
       }
-      log.i { "wipeDataForUser: cleared entity and sync_cursor rows for uid=$uid" }
+      log.i { "wipeDataForUser: cleared entity, sync_cursor, and urgency_watermark rows for uid=$uid" }
     } catch (e: Exception) {
       log.e(e) { "wipeDataForUser failed for uid=$uid" }
     }

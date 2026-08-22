@@ -629,12 +629,12 @@ CREATE TABLE urgency_watermark (
 Plus `selectWatermarksInScopePrefix`, `upsertWatermark`, `deleteWatermarksNotIn` (prune, §6.4), and
 `deleteWatermarksForUser`.
 
-**Lifecycle, and specifically what does *not* wipe it:**
+**Lifecycle:**
 
 | Event | Watermarks |
 |:--|:--|
-| Sign-out | **Kept.** `deleteEntitiesForUser` wipes the rows and sign-in re-hydrates them; surviving watermarks mean the returning user is compared against real prior state instead of being silently re-seeded and losing a cycle. |
-| Integrity-check wipe | **Kept**, for the same reason `sync_config` is excluded from `wipeAllEntities` — it is user-facing state, not a cache. |
+| Sign-out | **Deleted, as of 2026-08-22.** `deleteWatermarksForUser` runs alongside `deleteEntitiesForUser` in `DatabaseIntegrityChecker.wipeDataForUser`. Superseded the original "kept" design: leaving another account's aircraft ids and urgency ranks recoverable from the raw SQLite file after sign-out is a privacy leak on a shared/borrowed device, same reasoning §7.1 already applies to push tokens ("a stale token on a shared device leaks another account's squawk titles into the tray"). The cost is accepted: a user who signs back into the *same* account gets silently re-seeded on the next scan (§6.4's seeding rule) rather than compared against real prior state — a lost cycle, not a lost feature, and never a notification storm. |
+| Integrity-check wipe | **Kept**, for the same reason `sync_config` is excluded from `wipeAllEntities` — it is user-facing state, not a cache, and this event never hands the device to a different account. |
 | Account deletion | Deleted (`deleteWatermarksForUser`, alongside `deleteEntitiesForUser`). |
 | Guest → account upgrade | Re-keyed with the entities, in `LocalAccountMigrator`'s existing transaction. Not re-keying would silently re-seed the whole fleet at the exact moment the user has most reason to trust the app. |
 
