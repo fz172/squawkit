@@ -40,8 +40,14 @@ class UrgencyRankTest {
 
   @Test
   fun squawk_addressed_ranksResolved_regardlessOfPriority() {
-    val squawk = buildSquawk(priority = SquawkPriority.SQUAWK_PRIORITY_AOG, addressedByLogId = "log-1")
-    assertThat(squawk.toWithStatus().urgencyRank()).isEqualTo(UrgencyRank.RESOLVED)
+    val squawk = buildSquawk(
+      priority = SquawkPriority.SQUAWK_PRIORITY_AOG,
+      addressedByLogId = "log-1"
+    )
+    assertThat(
+      squawk.toWithStatus()
+        .urgencyRank()
+    ).isEqualTo(UrgencyRank.RESOLVED)
   }
 
   @Test
@@ -50,7 +56,10 @@ class UrgencyRankTest {
       priority = SquawkPriority.SQUAWK_PRIORITY_HIGH,
       dismissReason = SquawkDismissReason.SQUAWK_DISMISS_REASON_OBSOLETE,
     )
-    assertThat(squawk.toWithStatus().urgencyRank()).isEqualTo(UrgencyRank.RESOLVED)
+    assertThat(
+      squawk.toWithStatus()
+        .urgencyRank()
+    ).isEqualTo(UrgencyRank.RESOLVED)
   }
 
   @Test
@@ -58,14 +67,23 @@ class UrgencyRankTest {
     // An open squawk is never rank 0 — rank 0 means resolved, and an unset priority is still an
     // open defect.
     val squawk = buildSquawk(priority = SquawkPriority.SQUAWK_PRIORITY_UNKNOWN)
-    assertThat(squawk.toWithStatus().urgencyRank()).isGreaterThan(UrgencyRank.RESOLVED)
+    assertThat(
+      squawk.toWithStatus()
+        .urgencyRank()
+    ).isGreaterThan(UrgencyRank.RESOLVED)
   }
 
   @Test
   fun squawk_openUnknownPriority_ranksSameAsLow() {
     val unknown = buildSquawk(priority = SquawkPriority.SQUAWK_PRIORITY_UNKNOWN)
     val low = buildSquawk(priority = SquawkPriority.SQUAWK_PRIORITY_LOW)
-    assertThat(unknown.toWithStatus().urgencyRank()).isEqualTo(low.toWithStatus().urgencyRank())
+    assertThat(
+      unknown.toWithStatus()
+        .urgencyRank()
+    ).isEqualTo(
+      low.toWithStatus()
+        .urgencyRank()
+    )
   }
 
   @Test
@@ -75,7 +93,10 @@ class UrgencyRankTest {
       SquawkPriority.SQUAWK_PRIORITY_MEDIUM,
       SquawkPriority.SQUAWK_PRIORITY_HIGH,
       SquawkPriority.SQUAWK_PRIORITY_AOG,
-    ).map { buildSquawk(priority = it).toWithStatus().urgencyRank() }
+    ).map {
+      buildSquawk(priority = it).toWithStatus()
+        .urgencyRank()
+    }
 
     for (i in 0 until ranks.lastIndex) {
       assertThat(ranks[i]).isLessThan(ranks[i + 1])
@@ -94,8 +115,17 @@ class UrgencyRankTest {
     )
     val reopened = buildSquawk(priority = SquawkPriority.SQUAWK_PRIORITY_MEDIUM)
 
-    assertThat(dismissed.toWithStatus().urgencyRank()).isEqualTo(UrgencyRank.RESOLVED)
-    assertThat(reopened.toWithStatus().urgencyRank()).isGreaterThan(dismissed.toWithStatus().urgencyRank())
+    assertThat(
+      dismissed.toWithStatus()
+        .urgencyRank()
+    ).isEqualTo(UrgencyRank.RESOLVED)
+    assertThat(
+      reopened.toWithStatus()
+        .urgencyRank()
+    ).isGreaterThan(
+      dismissed.toWithStatus()
+        .urgencyRank()
+    )
   }
 
   private fun buildSquawk(

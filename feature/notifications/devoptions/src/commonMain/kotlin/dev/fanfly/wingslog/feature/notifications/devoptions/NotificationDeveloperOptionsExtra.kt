@@ -142,7 +142,14 @@ class NotificationDeveloperOptionsExtra(
       TestSendRow(
         label = label,
         onSend = {
-          scope.launch { notifier.post(channel.toTestNotification(title = label, body = testBody)) }
+          scope.launch {
+            notifier.post(
+              channel.toTestNotification(
+                title = label,
+                body = testBody
+              )
+            )
+          }
         },
       )
     }
@@ -163,7 +170,8 @@ class NotificationDeveloperOptionsExtra(
           style = MaterialTheme.typography.bodyLarge,
         )
         Text(
-          text = lastResult?.toLabel() ?: stringResource(Res.string.notifications_devoptions_scan_never_run),
+          text = lastResult?.toLabel()
+            ?: stringResource(Res.string.notifications_devoptions_scan_never_run),
           style = MaterialTheme.typography.bodySmall,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -190,7 +198,10 @@ class NotificationDeveloperOptionsExtra(
     ScanResult.PrefsUnresolved -> stringResource(Res.string.notifications_devoptions_scan_result_prefs_unresolved)
     ScanResult.Disabled -> stringResource(Res.string.notifications_devoptions_scan_result_disabled)
     ScanResult.NoPermission -> stringResource(Res.string.notifications_devoptions_scan_result_no_permission)
-    is ScanResult.Completed -> stringResource(Res.string.notifications_devoptions_scan_result_completed, notificationsPosted)
+    is ScanResult.Completed -> stringResource(
+      Res.string.notifications_devoptions_scan_result_completed,
+      notificationsPosted
+    )
   }
 
   @Composable
@@ -226,7 +237,10 @@ class NotificationDeveloperOptionsExtra(
    * `tapTarget` points at a nonexistent aircraft since `NotificationTapRouter` (P2.9) doesn't exist
    * yet to resolve it either way — a dev-only test send has nowhere real to land a tap.
    */
-  private fun NotificationChannel.toTestNotification(title: String, body: String): PendingNotification =
+  private fun NotificationChannel.toTestNotification(
+    title: String,
+    body: String
+  ): PendingNotification =
     PendingNotification(
       id = "devoptions-test:$name",
       channel = this,

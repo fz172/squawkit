@@ -40,7 +40,10 @@ class UrgencyWatermarkStore(
         UrgencyWatermark(
           uid = it.uid,
           collection = it.collection,
-          scope = EntityScope(it.scope_path.trim('/').split('/')),
+          scope = EntityScope(
+            it.scope_path.trim('/')
+              .split('/')
+          ),
           id = it.id,
           rank = it.rank.toInt(),
         )

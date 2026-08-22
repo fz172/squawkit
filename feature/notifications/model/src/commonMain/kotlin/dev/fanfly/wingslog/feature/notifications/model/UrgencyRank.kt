@@ -15,6 +15,7 @@ import kotlin.jvm.JvmInline
 @JvmInline
 value class UrgencyRank(val value: Int) : Comparable<UrgencyRank> {
   override fun compareTo(other: UrgencyRank) = value.compareTo(other.value)
+
   companion object {
     val RESOLVED = UrgencyRank(0)
   }
