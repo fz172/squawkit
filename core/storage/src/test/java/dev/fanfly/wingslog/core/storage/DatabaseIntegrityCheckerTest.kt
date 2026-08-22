@@ -31,7 +31,7 @@ class DatabaseIntegrityCheckerTest {
   // ---- wipeDataForUser ----
 
   @Test
-  fun wipeDataForUser_deletesEntitiesAndCursorsForUid() = runTest {
+  fun wipeDataForUser_deletesEntitiesCursorsAndWatermarksForUid() = runTest {
     // Insert an entity row in the target user's scope.
     db.schemaQueries.upsert(
       collection = CollectionKind.Aircraft,
@@ -55,6 +55,17 @@ class DatabaseIntegrityCheckerTest {
       failed_attempts = 0L,
       last_attempt_at = null,
     )
+    // Insert an urgency_watermark row for the target user (notifications design §6.2: sign-out
+    // deletes these too, as of 2026-08-22 — leaving them recoverable from the raw SQLite file after
+    // sign-out is a privacy leak on a shared/borrowed device).
+    db.schemaQueries.upsertWatermark(
+      uid = TEST_UID,
+      collection = CollectionKind.MaintenanceTask,
+      scope_path = "/users/$TEST_UID/aircraft/ac-1/",
+      id = "task-1",
+      rank = 2L,
+      updated_at = 1_000_000L,
+    )
 
     checker.wipeDataForUser(TEST_UID)
 
@@ -72,6 +83,37 @@ class DatabaseIntegrityCheckerTest {
     )
       .awaitAsOneOrNull()
     assertThat(cursorsAfter).isNull()
+
+    val watermarksAfter = db.schemaQueries.selectWatermarksInScopePrefix(TEST_UID, "/users/$TEST_UID/%")
+      .awaitAsList()
+    assertThat(watermarksAfter).isEmpty()
+  }
+
+  @Test
+  fun wipeDataForUser_doesNotDeleteWatermarksForOtherUser() = runTest {
+    db.schemaQueries.upsertWatermark(
+      uid = TEST_UID,
+      collection = CollectionKind.MaintenanceTask,
+      scope_path = "/users/$TEST_UID/aircraft/ac-1/",
+      id = "task-target",
+      rank = 1L,
+      updated_at = 1_000_000L,
+    )
+    db.schemaQueries.upsertWatermark(
+      uid = OTHER_UID,
+      collection = CollectionKind.MaintenanceTask,
+      scope_path = "/users/$OTHER_UID/aircraft/ac-2/",
+      id = "task-other",
+      rank = 1L,
+      updated_at = 1_000_000L,
+    )
+
+    checker.wipeDataForUser(TEST_UID)
+
+    val otherWatermarks = db.schemaQueries.selectWatermarksInScopePrefix(OTHER_UID, "/users/$OTHER_UID/%")
+      .awaitAsList()
+    assertThat(otherWatermarks).hasSize(1)
+    assertThat(otherWatermarks[0].id).isEqualTo("task-other")
   }
 
   @Test

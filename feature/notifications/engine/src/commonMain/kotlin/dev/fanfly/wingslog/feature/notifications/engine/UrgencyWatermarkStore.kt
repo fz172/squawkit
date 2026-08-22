@@ -91,7 +91,14 @@ class UrgencyWatermarkStore(
     }
   }
 
-  /** Account deletion only — sign-out and the integrity-check wipe both leave these rows alone (design §6.2). */
+  /**
+   * Account deletion, and — as of 2026-08-22 — sign-out, called via
+   * `DatabaseIntegrityChecker.wipeDataForUser`, which is where the actual production caller lives
+   * (this class stays in `:engine`, which `core:storage` cannot depend on, so that path calls the
+   * same underlying query directly rather than through this store). The integrity-check wipe alone
+   * still leaves these rows in place, for the reason `sync_config` is excluded from
+   * `wipeAllEntities` — that event never hands the device to a different account (design §6.2).
+   */
   suspend fun deleteForUser(uid: String) {
     writeLock.withLock {
       db.schemaQueries.deleteWatermarksForUser(uid)
