@@ -6,11 +6,16 @@
 
        Titles carry no dynamic content — the record's own title is user-authored and can be long,
        so it (and the aircraft) live in the body instead, on their own line, rather than folded into
-       a run-on title or sentence. Single-crossing bodies are three lines: tail number + what
-       changed, the record's own title, then a tap hint. -->
+       a run-on title or sentence. Single-crossing bodies are three segments: tail number + what
+       changed, the record's own title, then a tap hint — separated by a blank line (\n\n) rather
+       than a bare line break, for visual breathing room between them. \n\n, not a single \n, is
+       deliberate: notification bodies are plain text on all three platforms (Android's
+       BigTextStyle, iOS's UNNotificationContent.body, the Web Notification API's body) — none of
+       them support HTML or rich text for paragraph spacing, so a literal blank line is the only
+       lever there is. -->
 
   <string name="notification_title_grounded">⚠ AOG</string>
-  <string name="notification_body_grounded_single">%1$s: raised to AOG — aircraft grounded\n%2$s\nTap to view details</string>
+  <string name="notification_body_grounded_single">%1$s: raised to AOG — aircraft grounded\n\n%2$s\n\nTap to view details</string>
   <string name="notification_body_grounded_plural">%1$s: %2$d squawks raised this aircraft to AOG</string>
 
   <!-- Fires only when a squawk reaches HIGH — AOG has its own Grounded tier above, and the
@@ -19,15 +24,15 @@
        or MEDIUM-to-HIGH-adjacent bump below HIGH still moves the watermark so a later real crossing
        is detected correctly, but is not itself reportable. -->
   <string name="notification_title_priority_raised">Priority raised</string>
-  <string name="notification_body_priority_raised_single">%1$s: priority raised from %2$s to %3$s\n%4$s\nTap to view details</string>
+  <string name="notification_body_priority_raised_single">%1$s: priority raised from %2$s to %3$s\n\n%4$s\n\nTap to view details</string>
   <string name="notification_body_priority_raised_plural">%1$s: %2$d squawks are now high priority</string>
 
   <string name="notification_title_overdue">⚠ Overdue</string>
-  <string name="notification_body_overdue_single">%1$s: task is now overdue\n%2$s\nTap to view details</string>
+  <string name="notification_body_overdue_single">%1$s: task is now overdue\n\n%2$s\n\nTap to view details</string>
   <string name="notification_body_overdue_plural">%1$s: %2$d inspections are now overdue</string>
 
   <string name="notification_title_due_soon">Due soon</string>
-  <string name="notification_body_due_soon_single">%1$s: task is due soon\n%2$s\nTap to view details</string>
+  <string name="notification_body_due_soon_single">%1$s: task is due soon\n\n%2$s\n\nTap to view details</string>
   <string name="notification_body_due_soon_plural">%1$s: %2$d inspections are due soon</string>
 
   <!-- The "from" side of notification_body_priority_raised_single's "from X to Y" — a squawk can
