@@ -61,6 +61,7 @@ class NotificationPrefsManagerImplTest {
 
     val user = mockk<FirebaseUser>()
     every { user.uid } returns TEST_UID
+    every { user.isAnonymous } returns false
     every { firebaseAuth.currentUser } returns user
     every { firebaseAuth.authStateChanged } returns flowOf(user)
 
@@ -91,6 +92,25 @@ class NotificationPrefsManagerImplTest {
   fun cloudSyncOff_noRow_resolvesToDefaults_withoutReadingTheCursor() =
     runTest {
       cloudSyncEnabled = false
+
+      val state = manager.observe()
+        .first()
+
+      assertThat(state).isEqualTo(PrefsState.Resolved(NotificationSettings()))
+      coVerify(exactly = 0) { cursorStore.get(any(), any(), any()) }
+    }
+
+  @Test
+  fun anonymousUser_noRow_resolvesToDefaults_withoutReadingTheCursor() =
+    runTest {
+      // A guest never syncs at all — SyncEngine gates on isAnonymous the same way, independent of
+      // the cloudSyncEnabled preference (which defaults to true) — so waiting on the cursor here
+      // would hang for the full PREFS_HYDRATION_TIMEOUT on every guest session.
+      val anonymousUser = mockk<FirebaseUser>()
+      every { anonymousUser.uid } returns TEST_UID
+      every { anonymousUser.isAnonymous } returns true
+      every { firebaseAuth.currentUser } returns anonymousUser
+      every { firebaseAuth.authStateChanged } returns flowOf(anonymousUser)
 
       val state = manager.observe()
         .first()
