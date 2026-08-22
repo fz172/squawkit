@@ -17,8 +17,8 @@ import dev.fanfly.wingslog.feature.notifications.model.NotificationTapTarget
 import dev.fanfly.wingslog.feature.notifications.model.PendingNotification
 import dev.fanfly.wingslog.feature.notifications.model.UrgencyRank
 import dev.fanfly.wingslog.feature.notifications.model.UrgencyTier
-import dev.fanfly.wingslog.feature.notifications.model.aogEnabled
 import dev.fanfly.wingslog.feature.notifications.model.allEnabled
+import dev.fanfly.wingslog.feature.notifications.model.aogEnabled
 import dev.fanfly.wingslog.feature.notifications.model.dueSoonEnabled
 import dev.fanfly.wingslog.feature.notifications.model.overdueEnabled
 import dev.fanfly.wingslog.feature.notifications.model.reportableTier
@@ -80,8 +80,10 @@ class UrgencyScanner(
   // Read straight from the entity layer, not TaskDataManager/SquawkManager — those decode away
   // StorageEntity.writerUid, which the seeding rule (design §6.4) needs and no domain manager
   // exposes for tasks or squawks (only MaintenanceLogManager.observeLogAuthors does, log-only).
-  private val taskStore: EntityStore<MaintenanceTask> = entityStoreFactory.create(CollectionKind.MaintenanceTask)
-  private val squawkStore: EntityStore<Squawk> = entityStoreFactory.create(CollectionKind.Squawk)
+  private val taskStore: EntityStore<MaintenanceTask> =
+    entityStoreFactory.create(CollectionKind.MaintenanceTask)
+  private val squawkStore: EntityStore<Squawk> =
+    entityStoreFactory.create(CollectionKind.Squawk)
 
   suspend fun scan(trigger: ScanTrigger): ScanResult = mutex.withLock {
     val uid = auth.currentUser?.uid ?: return@withLock ScanResult.NoUser
@@ -116,11 +118,13 @@ class UrgencyScanner(
     // the host's tree (design §6.3).
     val scope = scopeResolver.resolveNow(aircraftId)
 
-    val existingWatermarks = watermarkStore.selectInScopePrefix(uid, scope.toPath() + "%")
+    val existingWatermarks =
+      watermarkStore.selectInScopePrefix(uid, scope.toPath() + "%")
     // Seeding (design §6.4): no watermark row anywhere under this scope means this device has never
     // scanned this aircraft before — every record seeds silently regardless of who wrote it.
     val aircraftKnown = existingWatermarks.isNotEmpty()
-    val watermarkByKey = existingWatermarks.associateBy { it.collection to it.id }
+    val watermarkByKey =
+      existingWatermarks.associateBy { it.collection to it.id }
 
     val taskRows = taskStore.observeAll(scope)
       .first()
@@ -133,12 +137,19 @@ class UrgencyScanner(
     val crossings = mutableListOf<Crossing>()
     val taskCommits = mutableListOf<RecordRank>()
     for (row in taskRows) {
-      val status = taskDueManager.computeNextDue(row.value, logs, allTasks).status
+      val status =
+        taskDueManager.computeNextDue(row.value, logs, allTasks).status
       val rank = status.urgencyRank()
       taskCommits += RecordRank(row.id, rank)
       val tier = status.reportableTier()
       val previousRank =
-        crossingBaseline(uid, row.writerUid, rank, watermarkByKey[CollectionKind.MaintenanceTask to row.id], aircraftKnown)
+        crossingBaseline(
+          uid,
+          row.writerUid,
+          rank,
+          watermarkByKey[CollectionKind.MaintenanceTask to row.id],
+          aircraftKnown
+        )
       if (tier != null && previousRank != null) {
         crossings += Crossing(
           tier = tier,
@@ -155,7 +166,13 @@ class UrgencyScanner(
       squawkCommits += RecordRank(row.id, rank)
       val tier = withStatus.reportableTier()
       val previousRank =
-        crossingBaseline(uid, row.writerUid, rank, watermarkByKey[CollectionKind.Squawk to row.id], aircraftKnown)
+        crossingBaseline(
+          uid,
+          row.writerUid,
+          rank,
+          watermarkByKey[CollectionKind.Squawk to row.id],
+          aircraftKnown
+        )
       if (tier != null && previousRank != null) {
         crossings += Crossing(
           tier = tier,
@@ -172,21 +189,48 @@ class UrgencyScanner(
     // At most one notification per (aircraft, tier) — group into a summary once there is more than
     // one crossing (design §6.5).
     val notifications = reportable.groupBy { it.tier }
-      .map { (tier, group) -> buildNotification(aircraftId, tailNumber, tier, group) }
+      .map { (tier, group) ->
+        buildNotification(
+          aircraftId,
+          tailNumber,
+          tier,
+          group
+        )
+      }
 
     // Post, then commit (design §6.7): a duplicate notification if the process dies here is a minor
     // annoyance, a dropped one is the failure this feature exists to prevent.
     notifications.forEach { notifier.post(it) }
 
     for (commit in taskCommits) {
-      watermarkStore.upsert(uid, CollectionKind.MaintenanceTask, scope, commit.id, commit.rank.value)
+      watermarkStore.upsert(
+        uid,
+        CollectionKind.MaintenanceTask,
+        scope,
+        commit.id,
+        commit.rank.value
+      )
     }
-    watermarkStore.pruneNotIn(uid, CollectionKind.MaintenanceTask, scope, taskCommits.map { it.id })
+    watermarkStore.pruneNotIn(
+      uid,
+      CollectionKind.MaintenanceTask,
+      scope,
+      taskCommits.map { it.id })
 
     for (commit in squawkCommits) {
-      watermarkStore.upsert(uid, CollectionKind.Squawk, scope, commit.id, commit.rank.value)
+      watermarkStore.upsert(
+        uid,
+        CollectionKind.Squawk,
+        scope,
+        commit.id,
+        commit.rank.value
+      )
     }
-    watermarkStore.pruneNotIn(uid, CollectionKind.Squawk, scope, squawkCommits.map { it.id })
+    watermarkStore.pruneNotIn(
+      uid,
+      CollectionKind.Squawk,
+      scope,
+      squawkCommits.map { it.id })
 
     return notifications.size
   }
@@ -220,12 +264,13 @@ class UrgencyScanner(
     return if (rank > baseline) baseline else null
   }
 
-  private fun NotificationSettings.tierEnabled(tier: UrgencyTier): Boolean = when (tier) {
-    UrgencyTier.GROUNDED -> aogEnabled
-    UrgencyTier.PRIORITY_RAISED -> squawkPriorityEnabled
-    UrgencyTier.OVERDUE -> overdueEnabled
-    UrgencyTier.DUE_SOON -> dueSoonEnabled
-  }
+  private fun NotificationSettings.tierEnabled(tier: UrgencyTier): Boolean =
+    when (tier) {
+      UrgencyTier.GROUNDED -> aogEnabled
+      UrgencyTier.PRIORITY_RAISED -> squawkPriorityEnabled
+      UrgencyTier.OVERDUE -> overdueEnabled
+      UrgencyTier.DUE_SOON -> dueSoonEnabled
+    }
 
   private suspend fun buildNotification(
     aircraftId: String,
@@ -246,29 +291,43 @@ class UrgencyScanner(
       title = title,
       body = body,
       highPriority = tier == UrgencyTier.GROUNDED || tier == UrgencyTier.OVERDUE,
-      tapTarget = single?.tapTarget ?: NotificationTapTarget.Aircraft(aircraftId),
+      tapTarget = single?.tapTarget
+        ?: NotificationTapTarget.Aircraft(aircraftId),
     )
   }
 
   // Three lines — tail + what changed, the record's own (possibly long) title on its own line, then
   // a tap hint — rather than folding a user-authored title into one run-on sentence.
-  private suspend fun buildSingleBody(tier: UrgencyTier, tailNumber: String, crossing: Crossing): String =
+  private suspend fun buildSingleBody(
+    tier: UrgencyTier,
+    tailNumber: String,
+    crossing: Crossing
+  ): String =
     if (tier == UrgencyTier.PRIORITY_RAISED) {
-      val fromLabel = getString((crossing.previousRank ?: UrgencyRank.RESOLVED).squawkPriorityLabelRes())
+      val fromLabel = getString(
+        (crossing.previousRank ?: UrgencyRank.RESOLVED).squawkPriorityLabelRes()
+      )
       // PRIORITY_RAISED only ever reports at HIGH (reportableTier() in :model) — AOG has its own
       // Grounded tier — so the "to" side of "from X to Y" is always HIGH, never computed per-crossing.
       val toLabel = getString(UrgencyRank(3).squawkPriorityLabelRes())
-      getString(tier.singleBodyRes(), tailNumber, fromLabel, toLabel, crossing.title)
+      getString(
+        tier.singleBodyRes(),
+        tailNumber,
+        fromLabel,
+        toLabel,
+        crossing.title
+      )
     } else {
       getString(tier.singleBodyRes(), tailNumber, crossing.title)
     }
 
-  private fun UrgencyRank.squawkPriorityLabelRes(): StringResource = when (value) {
-    0 -> Res.string.squawk_priority_label_resolved
-    1 -> Res.string.squawk_priority_label_low
-    2 -> Res.string.squawk_priority_label_medium
-    else -> Res.string.squawk_priority_label_high
-  }
+  private fun UrgencyRank.squawkPriorityLabelRes(): StringResource =
+    when (value) {
+      0 -> Res.string.squawk_priority_label_resolved
+      1 -> Res.string.squawk_priority_label_low
+      2 -> Res.string.squawk_priority_label_medium
+      else -> Res.string.squawk_priority_label_high
+    }
 
   private fun UrgencyTier.titleRes() = when (this) {
     UrgencyTier.GROUNDED -> Res.string.notification_title_grounded
