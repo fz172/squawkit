@@ -32,6 +32,12 @@ kotlin {
   sourceSets {
     commonMain.dependencies {
       implementation(project(":core:model"))
+      // UrgencyRank's ladder mappings (design §6.1) need the domain enums directly — DueStatus and
+      // SquawkStatus/SquawkPriority — not a second copy of them. Both are lightweight model modules
+      // (enums and data classes, no manager/business logic), so this stays the same kind of
+      // dependency as :core:model, just two of them.
+      implementation(project(":feature:tasks:model"))
+      implementation(project(":feature:squawk:model"))
     }
   }
 }
