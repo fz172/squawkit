@@ -107,6 +107,7 @@ include(":feature:notifications:engine")
 include(":feature:notifications:sharedassets")
 include(":feature:notifications:settings")
 include(":feature:notifications:devoptions")
+include(":feature:notifications:di")
 
 include(":feature:shell")
 

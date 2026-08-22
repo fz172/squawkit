@@ -50,12 +50,9 @@ kotlin {
       implementation(project(":feature:logs:datamanager"))
       implementation(project(":feature:logs:update"))
       implementation(project(":feature:logs:viewing"))
-      implementation(project(":feature:notifications:permission"))
-      implementation(project(":feature:notifications:viewing"))
-      implementation(project(":feature:notifications:datamanager"))
-      implementation(project(":feature:notifications:settings"))
-      implementation(project(":feature:notifications:engine"))
-      implementation(project(":feature:notifications:devoptions"))
+      // The feature's uber Koin module (feature/notifications/di) — one dependency instead of the
+      // six notification submodules it bundles.
+      implementation(project(":feature:notifications:di"))
       implementation(project(":feature:settings"))
       implementation(project(":feature:shell"))
       implementation(project(":feature:sharing:datamanager"))
