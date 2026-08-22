@@ -8,4 +8,10 @@
   <string name="notifications_devoptions_state_unsupported">Unsupported on this browser</string>
   <string name="notifications_devoptions_request_action">Request permission</string>
   <string name="notifications_devoptions_open_settings_action">Open settings</string>
+  <string name="notifications_devoptions_test_sends_header">Test sends</string>
+  <string name="notifications_devoptions_channel_collaboration">Collaboration (N1)</string>
+  <string name="notifications_devoptions_channel_urgency_update">Urgency update (N2)</string>
+  <string name="notifications_devoptions_channel_grounded">Grounded / AOG (N2)</string>
+  <string name="notifications_devoptions_send_action">Send</string>
+  <string name="notifications_devoptions_test_body">Sent from Developer Options.</string>
 </resources>
