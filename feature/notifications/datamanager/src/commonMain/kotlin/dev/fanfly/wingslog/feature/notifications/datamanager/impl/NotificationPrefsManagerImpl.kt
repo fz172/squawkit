@@ -66,7 +66,7 @@ class NotificationPrefsManagerImpl(
           // Explicit type argument: without it, inference locks R to PrefsState.Resolved from the
           // second (more specific) emit() call below rather than widening to the sealed supertype.
           .transformLatest<StorageEntity<NotificationSettings>?, PrefsState> { entity ->
-            val state = resolve(uid, scope, entity)
+            val state = resolve(uid, scope, entity, user.isAnonymous)
             emit(state)
             if (state is PrefsState.Unresolved) {
               // Racing a fresh timeout per tick, not once overall: collectLatest/transformLatest
@@ -91,7 +91,7 @@ class NotificationPrefsManagerImpl(
       val scope = EntityScope.userRoot(uid)
       val entity = store.observe(DOC_ID, scope)
         .first()
-      val state = resolve(uid, scope, entity)
+      val state = resolve(uid, scope, entity, user.isAnonymous)
       val resolved = state as? PrefsState.Resolved
         ?: error("Cannot update notification settings while unresolved")
       store.put(DOC_ID, mutate(resolved.settings), scope)
@@ -104,11 +104,16 @@ class NotificationPrefsManagerImpl(
     uid: String,
     scope: EntityScope,
     entity: StorageEntity<NotificationSettings>?,
+    isAnonymous: Boolean,
   ): PrefsState {
     if (entity != null) return PrefsState.Resolved(entity.value)
     // Nothing will ever hydrate here — waiting would hang forever. Same first-line guard
-    // awaitHydratedSelfId uses.
-    if (!cloudSyncSetting.isCloudSyncEnabled()) return PrefsState.Resolved(
+    // awaitHydratedSelfId uses. An anonymous (guest) user never syncs at all — SyncEngine gates on
+    // isAnonymous the same way, independent of the cloudSyncEnabled preference (which defaults to
+    // true) — so its NotificationSettings cursor never hydrates either. Without this check every
+    // guest session burns the full PREFS_HYDRATION_TIMEOUT waiting for a hydration that will never
+    // come, instead of resolving to defaults immediately.
+    if (isAnonymous || !cloudSyncSetting.isCloudSyncEnabled()) return PrefsState.Resolved(
       NotificationSettings()
     )
     val cursor =
