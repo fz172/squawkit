@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Expanded content for urgency notifications, used with DecoratedCustomViewStyle: the system still
+  draws the header (app name, timestamp, expand affordance) and this supplies the title + body
+  beneath it. Both are needed here — a custom big content view replaces the whole text block, so a
+  layout carrying only the body silently drops the title.
+
+  It exists for one reason: the platform collapses consecutive newlines in EXTRA_BIG_TEXT, so under
+  BigTextStyle `a\n\nb` renders identically to `a\nb`, and no filler character survives either
+  (U+00A0, U+200B and U+2007 were all measured collapsing the same way). A TextView we own is not
+  subject to that normalisation, so the body keeps its blank lines verbatim.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/notification_urgency_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAppearance="@style/TextAppearance.Compat.Notification.Title"
+        android:textStyle="bold"
+        android:maxLines="1"
+        android:ellipsize="end" />
+
+    <TextView
+        android:id="@+id/notification_urgency_body_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:textAppearance="@style/TextAppearance.Compat.Notification"
+        android:maxLines="9"
+        android:ellipsize="end" />
+</LinearLayout>

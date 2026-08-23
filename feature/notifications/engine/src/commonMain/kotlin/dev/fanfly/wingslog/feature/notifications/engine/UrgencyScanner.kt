@@ -309,8 +309,9 @@ class UrgencyScanner(
     )
   }
 
-  // Three lines — tail + what changed, the record's own (possibly long) title on its own line, then
-  // a tap hint — rather than folding a user-authored title into one run-on sentence.
+  // Two paragraphs — tail + what changed, then the record's own (possibly long) title on its own
+  // line — rather than folding a user-authored title into one run-on sentence. No tap hint: every
+  // notification is tappable, so saying so on each one is noise.
   private suspend fun buildSingleBody(
     tier: UrgencyTier,
     tailNumber: String,
