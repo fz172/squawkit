@@ -40,14 +40,17 @@ object NotificationTapRouter {
    */
   fun deliver(uri: String): Boolean {
     val target = decode(uri) ?: return false
-    log.i { "deliver: uri=$uri target=$target (was pending=${_pending.value})" }
+    // Debug, not info: record ids. Paired with consume()'s line this is the whole delivery contract
+    // in logcat — enough to tell "the tap never arrived" from "something consumed it too early",
+    // which is exactly the distinction that is otherwise invisible from the outside.
+    log.d { "deliver: target=$target (was pending=${_pending.value})" }
     _pending.value = target
     return true
   }
 
   /** Called once a tap target has been acted on, so it isn't re-delivered on the next recomposition or relaunch. */
   fun consume() {
-    log.i { "consume: clearing pending=${_pending.value}" }
+    log.d { "consume: clearing pending=${_pending.value}" }
     _pending.value = null
   }
 

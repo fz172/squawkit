@@ -114,13 +114,10 @@ class AdaptiveShellViewModel(
    * selection is app-level ViewModel state, not a navigation argument (design §5.3, and this
    * class's own doc comment above).
    *
-   * The call site — not this method — owns subscribing to `NotificationTapRouter.pending` and
-   * calling `consume()`, and must do so lifecycle-aware (`collectAsStateWithLifecycle`, matching
-   * `EmailLinkDeepLinks.pendingLink` in `AccountUpgradeFlow`), not a raw `.collect()`: this router
-   * is a process-wide singleton, and MainActivity is singleTask, but the OS has been observed
-   * briefly running two Activity instances for one tap (a backgrounded task momentarily coexisting
-   * with a freshly-started one before the system reconciles them). A collector that never pauses in
-   * the background can win that race and consume the target before the visible instance sees it.
+   * Subscribing to `NotificationTapRouter.pending` and calling `consume()` belongs to that call
+   * site, not here: the router is a process-wide singleton whose targets are consume-once, so only
+   * a composable — which knows when the shell is actually on screen — can decide when a target has
+   * really been acted on.
    */
   fun onNotificationAircraftTap(target: NotificationTapTarget.Aircraft) {
     selectAircraft(target.aircraftId)

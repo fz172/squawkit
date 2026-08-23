@@ -19,7 +19,6 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.core.analytics.LocalAnalytics
 import dev.fanfly.wingslog.core.analytics.trackScreenViews
 import dev.fanfly.wingslog.core.nav.Screen
@@ -45,8 +44,6 @@ import org.koin.compose.viewmodel.koinViewModel
 import wingslog.core.sharedassets.generated.resources.dismiss
 import wingslog.core.sharedassets.generated.resources.sync_changes_discarded
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
-
-private val log = Logger.withTag("AdaptiveShellRoute")
 
 /**
  * The adaptive-shell destination body shared by every host: wires [AdaptiveShellViewModel]
@@ -113,13 +110,13 @@ fun AdaptiveShellRoute(
   // Work that was destroyed when a share ended (PRD D3 — the one data-loss window). Held open until
   // the user dismisses it: the purge typically runs while they are on another screen or the app is
   // backgrounded, and a message that times out unseen would leave them thinking the edit saved.
-  // Lifecycle-aware for the same reason as HandleNotificationTaps (AppNavHelpers.kt) — see its
-  // comment. selectAircraft/selectSection is the ViewModel's job; subscribing to the router and
-  // consuming is this composable's, since only it knows when it's actually visible.
+  // Aircraft is the one tap target with no nav destination — it moves shell state instead, so it is
+  // applied here rather than in HandleNotificationTaps (AppNavHelpers.kt). Handling it from inside
+  // this route needs no auth gate of its own: the shell destination only composes once the auth
+  // graph has handed off, so a tap that cold-started the app simply stays pending until then.
   val pendingTapTarget by NotificationTapRouter.pending.collectAsStateWithLifecycle()
   LaunchedEffect(pendingTapTarget) {
     val target = pendingTapTarget as? NotificationTapTarget.Aircraft ?: return@LaunchedEffect
-    log.i { "AdaptiveShellRoute: applying aircraft tap target=$target" }
     viewModel.onNotificationAircraftTap(target)
     NotificationTapRouter.consume()
   }

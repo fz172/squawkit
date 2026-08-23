@@ -6,7 +6,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
-import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.core.auth.EmailLinkDeepLinks
 import dev.fanfly.wingslog.feature.notifications.permission.AndroidNotificationPermissionBridge
 import dev.fanfly.wingslog.feature.notifications.viewing.NotificationTapRouter
@@ -23,7 +22,6 @@ class MainActivity : ComponentActivity() {
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
-    log.i { "onCreate: taskId=$taskId instance=${System.identityHashCode(this)} intentData=${intent?.data}" }
     enableEdgeToEdge()
     AndroidNotificationPermissionBridge.attach(notificationPermissionLauncher)
     // Deliver a launch-time email sign-in link (App Links). AuthFlow ignores non-sign-in URLs.
@@ -42,7 +40,6 @@ class MainActivity : ComponentActivity() {
   // singleTask (see manifest) routes a tapped sign-in link to the running instance here.
   override fun onNewIntent(intent: Intent) {
     super.onNewIntent(intent)
-    log.i { "onNewIntent: taskId=$taskId instance=${System.identityHashCode(this)} intentData=${intent.data}" }
     setIntent(intent)
     handleDeepLink(intent)
   }
@@ -51,19 +48,8 @@ class MainActivity : ComponentActivity() {
     val data = intent?.data?.toString() ?: return
     // A share invite is parked for the redeem flow; a tapped notification's target goes to
     // NotificationTapRouter (design §5.3); anything else (email sign-in) goes to AuthFlow.
-    if (AircraftShareDeepLinks.deliver(data)) {
-      log.i { "handleDeepLink: routed to AircraftShareDeepLinks" }
-      return
-    }
-    if (NotificationTapRouter.deliver(data)) {
-      log.i { "handleDeepLink: routed to NotificationTapRouter" }
-      return
-    }
-    log.i { "handleDeepLink: routed to EmailLinkDeepLinks" }
+    if (AircraftShareDeepLinks.deliver(data)) return
+    if (NotificationTapRouter.deliver(data)) return
     EmailLinkDeepLinks.deliver(data)
-  }
-
-  private companion object {
-    val log = Logger.withTag("MainActivity")
   }
 }

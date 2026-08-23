@@ -5,7 +5,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import co.touchlab.kermit.Logger
+import androidx.navigation.compose.currentBackStackEntryAsState
 import dev.fanfly.wingslog.core.analytics.AnalyticsManager
 import dev.fanfly.wingslog.core.analytics.trackScreenViews
 import dev.fanfly.wingslog.core.nav.Screen
@@ -58,18 +58,22 @@ fun TrackRootScreenViews(
  */
 @Composable
 fun HandleNotificationTaps(navController: NavController) {
-  // Lifecycle-aware, like `EmailLinkDeepLinks.pendingLink` in AccountUpgradeFlow — NOT a raw
-  // `.collect()` in LaunchedEffect. NotificationTapRouter is a process-wide singleton, and
-  // MainActivity is singleTask; when the OS briefly runs two Activity instances for one tap (seen
-  // live — a backgrounded instance's task momentarily coexisting with a freshly-started one before
-  // the system reconciles them), a plain `.collect()` never stops just because its host went to the
-  // background, so the stale instance can win the race and `consume()` the target before the
-  // visible one ever sees it: the tap silently does nothing. Pausing collection below STARTED
-  // closes that window.
   val pending by NotificationTapRouter.pending.collectAsStateWithLifecycle()
-  LaunchedEffect(pending) {
+  val currentRoute by navController.currentBackStackEntryAsState()
+
+  // Held until the auth graph hands off. A tap that cold-starts the app arrives while the NavHost is
+  // still on its start destination (both hosts start at Screen.Login and let AuthFlow resolve the
+  // already-signed-in user asynchronously); navigating now would push the target on top of the login
+  // destination, and AuthFlow's `popUpTo(login) { inclusive = true }` then wipes the whole back stack
+  // a beat later — the tapped record flashes up and the app settles on the shell's default section.
+  // Waiting also gives the right behaviour for a genuinely signed-out user: the target stays pending
+  // through sign-in and opens once they land in the shell.
+  val readyToNavigate =
+    currentRoute?.destination?.route.let { it != null && it != Screen.Login.route }
+
+  LaunchedEffect(pending, readyToNavigate) {
+    if (!readyToNavigate) return@LaunchedEffect
     val target = pending ?: return@LaunchedEffect
-    log.i { "HandleNotificationTaps: received target=$target" }
     val route = when (target) {
       is NotificationTapTarget.Squawk ->
         Screen.EditSquawk.createRoute(target.aircraftId, target.squawkId)
@@ -80,11 +84,8 @@ fun HandleNotificationTaps(navController: NavController) {
       is NotificationTapTarget.Aircraft -> null
     }
     if (route != null) {
-      log.i { "HandleNotificationTaps: navigating to $route" }
       navController.navigate(route)
       NotificationTapRouter.consume()
     }
   }
 }
-
-private val log = Logger.withTag("AppNavHelpers")
