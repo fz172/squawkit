@@ -35,6 +35,24 @@
   <string name="notification_body_due_soon_single">%1$s: task is due soon\n\n%2$s</string>
   <string name="notification_body_due_soon_plural">%1$s: %2$d inspections are due soon</string>
 
+  <!-- N1 collaboration activity (design §8.4). Web-only in V1: an open tab detects a
+       collaborator's write through the sync engine, so there is no push transport involved. The
+       title carries the tail number and section because both are short and bounded, unlike a
+       user-authored record title; the count and the actor live in the body. -->
+  <string name="notification_n1_title">%1$s · %2$s</string>
+  <string name="notification_n1_body_single">%1$s made a change to %2$s</string>
+  <string name="notification_n1_body_plural">%1$s made %2$d changes to %3$s</string>
+  <!-- Used when the share roster read comes back empty — a revoked or not-yet-synced member. -->
+  <string name="notification_n1_actor_fallback">A collaborator</string>
+
+  <!-- Section labels. Title case for notification_n1_title, lower case mid-sentence in the bodies. -->
+  <string name="notification_n1_section_squawks">Squawks</string>
+  <string name="notification_n1_section_tasks">Tasks</string>
+  <string name="notification_n1_section_logbook">Logbook</string>
+  <string name="notification_n1_section_squawks_lower">squawks</string>
+  <string name="notification_n1_section_tasks_lower">tasks</string>
+  <string name="notification_n1_section_logbook_lower">logbook entries</string>
+
   <!-- The "from" side of notification_body_priority_raised_single's "from X to Y" — a squawk can
        escalate from resolved (reopened) or from any open rank below High. -->
   <string name="squawk_priority_label_resolved">Resolved</string>

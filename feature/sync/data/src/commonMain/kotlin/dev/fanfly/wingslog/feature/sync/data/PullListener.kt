@@ -4,6 +4,7 @@ import app.cash.sqldelight.async.coroutines.awaitAsOneOrNull
 import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.DatabaseWriteLock
+import dev.fanfly.wingslog.core.storage.ForeignWriteListener
 import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.PostWriteHook
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
@@ -38,6 +39,13 @@ class PullListener(
   private val db: WingsLogDatabase,
   private val writeLock: DatabaseWriteLock = DatabaseWriteLock(),
   private val postWriteHook: PostWriteHook? = null,
+  /**
+   * The signed-in uid, read per write rather than captured, so a listener that outlives a user
+   * switch compares against the account that is actually signed in. `null` (signed out) disables
+   * foreign-write detection entirely — with nobody to compare against, every writer looks foreign.
+   */
+  private val selfUid: () -> String? = { null },
+  private val foreignWrites: ForeignWriteListener? = null,
 ) {
 
   private val log = Logger.withTag(TAG)
@@ -80,8 +88,26 @@ class PullListener(
     }
     if (written && !remote.deleted) {
       postWriteHook?.onEntityWritten(kind, scope, remote.payload)
+      notifyIfForeign(remote)
     }
     return remote.remoteTsMs
+  }
+
+  /**
+   * An applied write whose author is not us is an N1 event (design §8.1): `writerUid` is
+   * rules-enforced on the envelope, so this is the same authorship test the server-side trigger
+   * makes, run locally. Only reached for writes we actually applied — a skipped duplicate or a
+   * locally-dirty row is not news.
+   */
+  private fun notifyIfForeign(remote: RemoteEntity) {
+    val listener = foreignWrites ?: return
+    val writer = remote.writerUid ?: return
+    val self = selfUid() ?: return
+    if (writer == self) return
+    // Fire-and-forget by contract; a misbehaving listener must not fail the sync write that
+    // already committed above.
+    runCatching { listener.onForeignWrite(kind, scope, remote.id, writer) }
+      .onFailure { log.w(it) { "foreign-write listener threw for ${kind.wireName}/${remote.id}" } }
   }
 
   private suspend fun upsertFromRemote(remote: RemoteEntity) {

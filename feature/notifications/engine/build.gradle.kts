@@ -57,6 +57,9 @@ kotlin {
       // `implementation`, not `api`, so these need to be declared directly here too.
       implementation(project(":feature:tasks:model"))
       implementation(project(":feature:squawk:model"))
+      // AircraftShareState.members — the one-shot actor-name read for N1 (design §8.3). Same kind
+      // of direct :model dependency as the two above, for the same transitive-implementation reason.
+      implementation(project(":feature:sharing:model"))
       implementation(libs.gitlive.firebase.auth)
       // getString(Res.string.…) — the notification bodies in :sharedassets are read from a
       // background scan, never a @Composable, so this module needs the resources runtime but not
