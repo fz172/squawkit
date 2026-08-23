@@ -114,24 +114,49 @@ class UrgencyScanner(
 
     val fleet = fleetManager.observeFleetDashboard()
       .first()
-    var posted = 0
+    var tally = Tally()
     for (entry in fleet) {
-      posted += scanAircraft(uid, entry, settings)
+      tally += scanAircraft(uid, entry, settings)
     }
     // Recorded for every completed scan whatever the trigger, not just session ones: a scheduled
     // scan that just walked the fleet is exactly what the next session boundary should debounce
     // against. The early exits above deliberately do not record — they did no work, so there is
     // nothing to space out, and re-checking them on the next boundary costs a config read.
-    lastScanStore.record(uid, clock.now())
-    ScanResult.Completed(posted)
+    lastScanStore.record(
+      uid,
+      ScanRecord(
+        at = clock.now(),
+        trigger = trigger,
+        recordsExamined = tally.examined,
+        crossingsFound = tally.crossings,
+        crossingsSuppressed = tally.suppressed,
+        notificationsPosted = tally.posted,
+      ),
+    )
+    ScanResult.Completed(tally.posted)
   }
 
-  /** One aircraft's full cycle: rank every record, post crossings, then commit and prune. Returns the count posted. */
+  /** Per-aircraft counts, summed across the fleet for design §11's diagnostics. */
+  private data class Tally(
+    val examined: Int = 0,
+    val crossings: Int = 0,
+    val suppressed: Int = 0,
+    val posted: Int = 0,
+  ) {
+    operator fun plus(other: Tally) = Tally(
+      examined = examined + other.examined,
+      crossings = crossings + other.crossings,
+      suppressed = suppressed + other.suppressed,
+      posted = posted + other.posted,
+    )
+  }
+
+  /** One aircraft's full cycle: rank every record, post crossings, then commit and prune. */
   private suspend fun scanAircraft(
     uid: String,
     entry: FleetEntry,
     settings: NotificationSettings,
-  ): Int {
+  ): Tally {
     val aircraftId = entry.aircraft.id
     val tailNumber = entry.aircraft.tail_number
     // Scope comes from the resolver, never the signed-in uid — a shared aircraft's records live in
@@ -256,7 +281,12 @@ class UrgencyScanner(
       scope,
       squawkCommits.map { it.id })
 
-    return notifications.size
+    return Tally(
+      examined = taskRows.size + squawkRows.size,
+      crossings = crossings.size,
+      suppressed = crossings.size - reportable.size,
+      posted = notifications.size,
+    )
   }
 
   /**

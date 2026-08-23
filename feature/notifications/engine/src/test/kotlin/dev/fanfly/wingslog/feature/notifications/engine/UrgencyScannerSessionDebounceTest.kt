@@ -83,7 +83,7 @@ class UrgencyScannerSessionDebounceTest {
 
   @Test
   fun sessionScan_insideTheWindow_isDebounced() = runTest {
-    lastScanStore.record(UID, START)
+    lastScanStore.record(UID, scanAt(START))
     clock.advance(119.minutes)
 
     assertThat(scanner.scan(ScanTrigger.SESSION_BOUNDARY)).isEqualTo(ScanResult.Debounced)
@@ -91,7 +91,7 @@ class UrgencyScannerSessionDebounceTest {
 
   @Test
   fun sessionScan_atTheWindowBoundary_runs() = runTest {
-    lastScanStore.record(UID, START)
+    lastScanStore.record(UID, scanAt(START))
     clock.advance(2.hours)
 
     assertThat(scanner.scan(ScanTrigger.SESSION_BOUNDARY)).isEqualTo(ScanResult.Disabled)
@@ -100,7 +100,7 @@ class UrgencyScannerSessionDebounceTest {
   /** Design §6.6: "The scheduled background scan ignores the debounce." */
   @Test
   fun scheduledScan_insideTheWindow_isNotDebounced() = runTest {
-    lastScanStore.record(UID, START)
+    lastScanStore.record(UID, scanAt(START))
     clock.advance(1.minutes)
 
     assertThat(scanner.scan(ScanTrigger.SCHEDULED)).isEqualTo(ScanResult.Disabled)
@@ -109,7 +109,7 @@ class UrgencyScannerSessionDebounceTest {
   /** Someone tapping "scan now" means it, whatever the watermark says. */
   @Test
   fun manualScan_insideTheWindow_isNotDebounced() = runTest {
-    lastScanStore.record(UID, START)
+    lastScanStore.record(UID, scanAt(START))
     clock.advance(1.minutes)
 
     assertThat(scanner.scan(ScanTrigger.MANUAL)).isEqualTo(ScanResult.Disabled)
@@ -135,5 +135,37 @@ class UrgencyScannerSessionDebounceTest {
     )
 
     assertThat(other.scan(ScanTrigger.SESSION_BOUNDARY)).isEqualTo(ScanResult.NoUser)
+  }
+
+  /** Only `at` matters to the debounce; the counts are diagnostics. */
+  private fun scanAt(at: Instant) = ScanRecord(
+    at = at,
+    trigger = ScanTrigger.SCHEDULED,
+    recordsExamined = 0,
+    crossingsFound = 0,
+    crossingsSuppressed = 0,
+    notificationsPosted = 0,
+  )
+
+  /**
+   * A scan that exits early must not overwrite the diagnostics of the last scan that did work —
+   * otherwise Developer Options reports zeroes for a scan that never looked at anything.
+   */
+  @Test
+  fun anEarlyExit_doesNotOverwriteTheLastRecord() = runTest {
+    val real = ScanRecord(
+      at = START,
+      trigger = ScanTrigger.SCHEDULED,
+      recordsExamined = 12,
+      crossingsFound = 3,
+      crossingsSuppressed = 1,
+      notificationsPosted = 2,
+    )
+    lastScanStore.record(UID, real)
+    clock.advance(3.hours)
+
+    // Notifications are off in this fixture, so this exits at Disabled.
+    assertThat(scanner.scan(ScanTrigger.MANUAL)).isEqualTo(ScanResult.Disabled)
+    assertThat(lastScanStore.lastScan(UID)).isEqualTo(real)
   }
 }

@@ -2,9 +2,9 @@ package dev.fanfly.wingslog.feature.notifications.devoptions.di
 
 import dev.fanfly.wingslog.feature.developeroptions.plugin.DeveloperOptionsExtra
 import dev.fanfly.wingslog.feature.notifications.devoptions.NotificationDeveloperOptionsExtra
+import dev.fanfly.wingslog.feature.notifications.engine.UrgencyScanDiagnostics
 import dev.fanfly.wingslog.feature.notifications.engine.UrgencyScanner
 import dev.fanfly.wingslog.feature.notifications.permission.NotificationPermission
-import dev.fanfly.wingslog.feature.notifications.viewing.LocalNotifier
 import org.koin.core.module.Module
 import org.koin.dsl.bind
 import org.koin.dsl.module
@@ -21,8 +21,8 @@ val notificationDevOptionsModule: Module = module {
   single {
     NotificationDeveloperOptionsExtra(
       permission = get<NotificationPermission>(),
-      notifier = get<LocalNotifier>(),
       scanner = get<UrgencyScanner>(),
+      diagnostics = get<UrgencyScanDiagnostics>(),
     )
   } bind DeveloperOptionsExtra::class
 }
