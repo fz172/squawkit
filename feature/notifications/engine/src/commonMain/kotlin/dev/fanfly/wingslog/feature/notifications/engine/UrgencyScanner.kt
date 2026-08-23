@@ -59,8 +59,8 @@ import wingslog.feature.notifications.sharedassets.generated.resources.squawk_pr
  * due-status or priority logic of its own.
  *
  * One scan at a time: [mutex] makes a foreground scan arriving while a scheduled one runs wait
- * rather than double-report — reentrancy is real once a scheduler and an app launch can coincide
- * (that scheduler is P2.6/P2.7, not built yet, but the guard is cheap to have from the start).
+ * rather than double-report — reentrancy is real now that [UrgencyScanScheduler] can fire a
+ * background scan while the app is being opened.
  */
 class UrgencyScanner(
   private val auth: FirebaseAuth,

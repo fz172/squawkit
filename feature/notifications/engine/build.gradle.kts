@@ -65,6 +65,11 @@ kotlin {
       // Logging
       implementation(libs.kermit)
     }
+    androidMain.dependencies {
+      // UrgencyScanScheduler's PeriodicWorkRequest, and androidContext() to reach WorkManager.
+      implementation(libs.work.runtime.ktx)
+      implementation(libs.koin.android)
+    }
   }
 }
 

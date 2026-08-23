@@ -30,6 +30,15 @@
     <key>BGTaskSchedulerPermittedIdentifiers</key>
     <array>
         <string>dev.fanfly.wingslog.blob-scan</string>
+        <string>dev.fanfly.wingslog.urgency-scan</string>
+    </array>
+    <!-- BGTaskScheduler refuses to register a handler unless the matching background mode is
+         declared: "processing" for the blob scan's BGProcessingTask, "fetch" for the urgency
+         scan's BGAppRefreshTask. Both were missing, so the blob task has never actually run. -->
+    <key>UIBackgroundModes</key>
+    <array>
+        <string>fetch</string>
+        <string>processing</string>
     </array>
 </dict>
 </plist>
