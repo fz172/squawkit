@@ -44,6 +44,10 @@ class AppDelegate: NSObject, UIApplicationDelegate {
     // Register BGProcessingTask identifier "dev.fanfly.wingslog.blob-scan" with the OS.
     // Must be called before this method returns.
     MainEntry.shared.registerBgTasks()
+    // Routes a tapped notification into NotificationTapRouter, and lets urgency banners show while
+    // the app is foregrounded. Also must be set before this method returns, or iOS drops the
+    // response for a tap that cold-started the app — the case that matters most.
+    MainEntry.shared.registerNotificationTapHandler()
     return true
   }
 

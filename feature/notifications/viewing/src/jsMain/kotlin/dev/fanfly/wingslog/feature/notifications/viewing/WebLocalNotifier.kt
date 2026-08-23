@@ -26,6 +26,20 @@ class WebLocalNotifier : LocalNotifier {
       createNotification(notification.title, notification.body, notification.id)
     live[notification.id] = instance
     instance.onclose = { live.remove(notification.id) }
+    // Where a click should land (design §5.3). Unlike Android's PendingIntent and iOS's userInfo,
+    // nothing has to be serialised into the notification itself — this tab is the one that will
+    // handle the click, so the handler simply closes over the target.
+    val tapUri = NotificationTapRouter.encode(notification.tapTarget)
+    instance.onclick = {
+      // The tab is very likely in the background — that is when a notification is worth showing at
+      // all — so raise it before routing, or the app navigates somewhere the pilot cannot see.
+      focusWindow()
+      NotificationTapRouter.deliver(tapUri)
+      // A click does not dismiss on every browser (Chrome on desktop leaves it up); close it
+      // explicitly so it does not sit there having already been acted on.
+      instance.close()
+      live.remove(notification.id)
+    }
   }
 
   override suspend fun cancel(id: String) {
@@ -39,4 +53,8 @@ class WebLocalNotifier : LocalNotifier {
     tag: String
   ): dynamic =
     js("new Notification(title, { body: body, tag: tag })")
+
+  private fun focusWindow() {
+    js("window.focus()")
+  }
 }

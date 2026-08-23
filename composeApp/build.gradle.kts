@@ -69,6 +69,8 @@ kotlin {
       // App Check bridge.
       implementation(project(":feature:ads:datamanager"))
       implementation(project(":feature:ads:viewing"))
+      // IosNotificationTapDelegate — installed from MainViewController.kt before launch finishes.
+      implementation(project(":feature:notifications:viewing"))
 
       implementation(libs.compose.ui)
       implementation(libs.material3)
