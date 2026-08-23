@@ -31,20 +31,13 @@ import dev.fanfly.wingslog.feature.notifications.engine.ScanResult
 import dev.fanfly.wingslog.feature.notifications.engine.ScanTrigger
 import dev.fanfly.wingslog.feature.notifications.engine.UrgencyScanDiagnostics
 import dev.fanfly.wingslog.feature.notifications.engine.UrgencyScanner
-import dev.fanfly.wingslog.feature.notifications.model.NotificationChannel
-import dev.fanfly.wingslog.feature.notifications.model.NotificationTapTarget
-import dev.fanfly.wingslog.feature.notifications.model.PendingNotification
 import dev.fanfly.wingslog.feature.notifications.permission.NotificationPermission
 import dev.fanfly.wingslog.feature.notifications.permission.PermissionState
-import dev.fanfly.wingslog.feature.notifications.viewing.LocalNotifier
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.notifications.devoptions.generated.resources.Res
-import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_channel_collaboration
-import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_channel_grounded
-import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_channel_urgency_update
 import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_diagnostics_at
 import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_diagnostics_counts
 import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_diagnostics_never
@@ -68,27 +61,27 @@ import wingslog.feature.notifications.devoptions.generated.resources.notificatio
 import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_scan_result_no_permission
 import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_scan_result_no_user
 import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_scan_result_prefs_unresolved
-import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_send_action
 import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_state_denied
 import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_state_granted
 import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_state_undetermined
 import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_state_unsupported
-import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_test_body
-import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_test_sends_header
 
 /**
  * Developer Options section for the notifications feature.
  *
- * **Partial delivery of design §11.** Watermark reset and scan diagnostics still don't exist. What
- * ships here: a manual trigger for [NotificationPermission.request] (P1.4), a test-send button per
- * [NotificationChannel] (P1.5), and now a real "scan now" button that runs [UrgencyScanner.scan]
- * with [ScanTrigger.MANUAL] — the only caller [UrgencyScanner] has until the platform schedulers
- * (P2.6/P2.7) exist. The rest of §11 lands incrementally as its prerequisites do; this class is
- * where later work adds to it, not a stand-in that gets replaced.
+ * A manual trigger for [NotificationPermission.request] (P1.4), "scan now" via
+ * [UrgencyScanner.scan] with [ScanTrigger.MANUAL], a watermark reset, and the scan diagnostics
+ * design §11 wanted so §6.6's background-versus-foreground question is debuggable rather than
+ * merely reportable.
+ *
+ * **The per-channel test sends are gone.** They predated the scanner and existed to prove channel
+ * routing and the high-priority path without a second account and a real AOG squawk. "Scan now"
+ * plus the watermark reset now produce real notifications through the real code path, which is
+ * strictly better evidence than a synthetic post — and a synthetic post with a tap target pointing
+ * at a nonexistent aircraft was actively misleading once [ScanTrigger] and tap routing existed.
  */
 class NotificationDeveloperOptionsExtra(
   private val permission: NotificationPermission,
-  private val notifier: LocalNotifier,
   private val scanner: UrgencyScanner,
   private val diagnostics: UrgencyScanDiagnostics,
 ) : DeveloperOptionsExtra {
@@ -143,32 +136,6 @@ class NotificationDeveloperOptionsExtra(
 
         PermissionState.GRANTED, PermissionState.UNSUPPORTED -> Unit
       }
-    }
-
-    Spacer(Modifier.height(Spacing.medium))
-    Text(
-      text = stringResource(Res.string.notifications_devoptions_test_sends_header),
-      style = MaterialTheme.typography.labelSmall,
-      color = MaterialTheme.colorScheme.primary,
-      fontWeight = FontWeight.SemiBold,
-      modifier = Modifier.padding(bottom = Spacing.small),
-    )
-    val testBody = stringResource(Res.string.notifications_devoptions_test_body)
-    NotificationChannel.entries.forEach { channel ->
-      val label = stringResource(channel.toLabelRes())
-      TestSendRow(
-        label = label,
-        onSend = {
-          scope.launch {
-            notifier.post(
-              channel.toTestNotification(
-                title = label,
-                body = testBody
-              )
-            )
-          }
-        },
-      )
     }
 
     Spacer(Modifier.height(Spacing.medium))
@@ -241,51 +208,12 @@ class NotificationDeveloperOptionsExtra(
     )
   }
 
-  @Composable
-  private fun TestSendRow(label: String, onSend: () -> Unit) {
-    Row(
-      modifier = Modifier
-        .fillMaxWidth()
-        .padding(vertical = Spacing.small),
-      horizontalArrangement = Arrangement.SpaceBetween,
-      verticalAlignment = Alignment.CenterVertically,
-    ) {
-      Text(text = label, style = MaterialTheme.typography.bodyLarge)
-      OutlinedButton(onClick = onSend) {
-        Text(stringResource(Res.string.notifications_devoptions_send_action))
-      }
-    }
-  }
-
   private fun PermissionState.toLabelRes() = when (this) {
     PermissionState.UNDETERMINED -> Res.string.notifications_devoptions_state_undetermined
     PermissionState.GRANTED -> Res.string.notifications_devoptions_state_granted
     PermissionState.DENIED -> Res.string.notifications_devoptions_state_denied
     PermissionState.UNSUPPORTED -> Res.string.notifications_devoptions_state_unsupported
   }
-
-  private fun NotificationChannel.toLabelRes(): StringResource = when (this) {
-    NotificationChannel.COLLABORATION -> Res.string.notifications_devoptions_channel_collaboration
-    NotificationChannel.URGENCY_UPDATE -> Res.string.notifications_devoptions_channel_urgency_update
-    NotificationChannel.GROUNDED -> Res.string.notifications_devoptions_channel_grounded
-  }
-
-  /**
-   * `tapTarget` points at a nonexistent aircraft since `NotificationTapRouter` (P2.9) doesn't exist
-   * yet to resolve it either way — a dev-only test send has nowhere real to land a tap.
-   */
-  private fun NotificationChannel.toTestNotification(
-    title: String,
-    body: String
-  ): PendingNotification =
-    PendingNotification(
-      id = "devoptions-test:$name",
-      channel = this,
-      title = title,
-      body = body,
-      highPriority = this == NotificationChannel.GROUNDED,
-      tapTarget = NotificationTapTarget.Aircraft(aircraftId = "devoptions-test"),
-    )
 
   /**
    * Wipes this account's watermarks. Kept next to "scan now" because the two are used together:
