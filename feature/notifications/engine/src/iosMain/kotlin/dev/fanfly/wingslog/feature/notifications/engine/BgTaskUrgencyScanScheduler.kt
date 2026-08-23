@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.feature.notifications.engine
 
 import co.touchlab.kermit.Logger
+import dev.fanfly.wingslog.feature.notifications.model.ScanTrigger
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
