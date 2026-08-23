@@ -8,6 +8,7 @@ import dev.fanfly.wingslog.core.storage.TombstoneGc
 import dev.fanfly.wingslog.di.initKoin
 import dev.fanfly.wingslog.feature.ads.datamanager.impl.IosAdConsentBridge
 import dev.fanfly.wingslog.feature.ads.viewing.IosAdViewBridge
+import dev.fanfly.wingslog.feature.notifications.viewing.IosNotificationTapDelegate
 import dev.fanfly.wingslog.feature.sharing.datamanager.AircraftShareDeepLinks
 import dev.fanfly.wingslog.feature.sync.data.SyncEngine
 import dev.fanfly.wingslog.feature.sync.data.blob.IosAppCheckBridge
@@ -18,6 +19,7 @@ import kotlinx.coroutines.launch
 import org.koin.mp.KoinPlatform
 import platform.UIKit.UIView
 import platform.UIKit.UIViewController
+import platform.UserNotifications.UNUserNotificationCenter
 import kotlin.experimental.ExperimentalNativeApi
 
 object MainEntry {
@@ -187,6 +189,23 @@ object MainEntry {
         .runOnce()
     }
   }
+
+  /**
+   * Installs the `UNUserNotificationCenter` delegate that routes a tapped notification into the app
+   * (design §5.3), and lets urgency banners show while the app is foregrounded. Must be called
+   * before `application:didFinishLaunchingWithOptions:` returns — iOS drops the response for a tap
+   * that cold-started the process if no delegate is set by then, which is exactly the case that
+   * matters (a tap from the lock screen).
+   *
+   * The delegate is held here rather than by Swift because `UNUserNotificationCenter.delegate` is a
+   * weak reference; a locally-created instance would be collected and taps would silently stop.
+   */
+  fun registerNotificationTapHandler() {
+    UNUserNotificationCenter.currentNotificationCenter()
+      .setDelegate(notificationTapDelegate)
+  }
+
+  private val notificationTapDelegate = IosNotificationTapDelegate()
 
   /**
    * Registers the background blob-scan [BGProcessingTask] with the OS. Must be called before

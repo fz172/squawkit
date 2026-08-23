@@ -28,6 +28,13 @@ class IosLocalNotifier : LocalNotifier {
     val content = UNMutableNotificationContent().apply {
       setTitle(notification.title)
       setBody(notification.body)
+      // Where a tap should land, read back by IosNotificationTapDelegate — the counterpart of the
+      // intent data Android hangs on its tap PendingIntent (design §5.3).
+      setUserInfo(
+        mapOf(
+          TAP_URI_USER_INFO_KEY to NotificationTapRouter.encode(notification.tapTarget),
+        )
+      )
       // TODO(notifications P5.3): setInterruptionLevel(UNNotificationInterruptionLevelTimeSensitive)
       // once the Time Sensitive entitlement is in place, gated on notification.highPriority.
     }

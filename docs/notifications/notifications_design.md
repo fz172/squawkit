@@ -521,23 +521,43 @@ Because the shell destination composes only after the auth graph hands off, a ta
 the app needs no gate of its own — the target simply stays pending until there is somewhere to put
 it. That also covers a signed-out recipient: the target survives sign-in and lands afterwards.
 
+**Getting the tap from the OS to the router is the only per-platform part.** Everything above the
+router is shared, so each host only has to supply delivery:
+
+| Platform | Carried as | Delivered by |
+|:--|:--|:--|
+| Android | intent data on a tap `PendingIntent` (`getLaunchIntentForPackage`, so `:viewing` needs no reference to `app`) | `MainActivity.handleDeepLink`, one more link in the existing `AircraftShareDeepLinks` / `EmailLinkDeepLinks` chain |
+| iOS | `content.userInfo[wingslog_tap_uri]` | `IosNotificationTapDelegate`, a `UNUserNotificationCenterDelegate` installed from `MainEntry.registerNotificationTapHandler()` |
+| Web | nothing — the handler closes over the target | `Notification.onclick`, which also `window.focus()`es the tab first |
+
+The iOS delegate is written in Kotlin/Native rather than Swift, unlike the sign-in and ads bridges:
+those exist because Kotlin/Native cannot link those SDKs at all, whereas `UserNotifications` has
+interop already and `IosLocalNotifier` posts through it directly. It must be installed before
+`application(_:didFinishLaunchingWithOptions:)` returns, or iOS drops the response for a tap that
+cold-started the app — the case that matters most, since that is what tapping from the lock screen
+does. `MainEntry` holds the instance because `UNUserNotificationCenter.delegate` is a *weak*
+reference.
+
+That delegate also implements `willPresentNotification` so urgency banners appear while the app is
+foregrounded. iOS suppresses them by default; Android and web do not, and an alert that silently
+does not appear because the pilot has the app open is the worst case for suppression — they are
+looking at the very aircraft it concerns.
+
 PRD §6.6 ("Tapping a summary opens that aircraft's task list filtered to the tier") is satisfied
 apart from the tier pre-filter, which is not yet implemented — the summary lands on the right
 aircraft and the right section, unfiltered.
 
 **Tap-through must degrade, not crash.** A revoked share, a deleted record, or a device that has not
-synced yet all produce "no longer available" and land on the fleet (PRD §12). The router does not
-pre-check that a record resolves — it cannot, without `viewing` reaching into a feature datamanager
-(§3) — and it does not need to: a scroll target that matches nothing scrolls nowhere and highlights
-nothing, leaving the pilot on the right aircraft's list.
+synced yet all produce "no longer available" and land on the fleet (PRD §12).
 
 **The router does not pre-check that the record resolves.** An earlier draft had it do so; the module
 rule in §3 forbids it — resolving a squawk id means `feature:squawk:datamanager`, which `viewing` may
 not depend on. That constraint improves the design rather than constraining it: the check was racy
-anyway (the record can vanish between the check and the navigation), and the destination screens must
-already handle a missing record, since a record can be deleted on another device while its edit screen
-is open. So the router navigates unconditionally and the destination owns the empty state — one
-behaviour instead of two paths to the same message.
+anyway (the record can vanish between the check and the scroll), and it is no longer a question worth
+asking. Once a tap lands the pilot *in the list* rather than on a pushed record screen, an
+unresolvable id degrades on its own — a scroll target matching nothing scrolls nowhere and highlights
+nothing, leaving them on the right aircraft's list, looking at whatever is actually there. There is
+no empty state to design and no "no longer available" path to take.
 
 ### 5.4 `UrgencyScanScheduler` — `engine`
 
