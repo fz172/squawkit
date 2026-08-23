@@ -19,7 +19,11 @@ import kotlin.time.Instant
 @OptIn(ExperimentalCoroutinesApi::class)
 class SessionBoundaryScanTriggerTest {
 
-  private class FakeClock(private var current: Instant = Instant.fromEpochMilliseconds(0)) : Clock {
+  private class FakeClock(
+    private var current: Instant = Instant.fromEpochMilliseconds(
+      0
+    )
+  ) : Clock {
     override fun now(): Instant = current
     fun advance(by: Duration) {
       current += by
@@ -55,53 +59,57 @@ class SessionBoundaryScanTriggerTest {
   }
 
   @Test
-  fun briefBackgrounding_isTheSameSession_soNoScan() = runTest(UnconfinedTestDispatcher()) {
-    startedTrigger()
-    foreground.onEnterForeground()
-    requests = 0
+  fun briefBackgrounding_isTheSameSession_soNoScan() =
+    runTest(UnconfinedTestDispatcher()) {
+      startedTrigger()
+      foreground.onEnterForeground()
+      requests = 0
 
-    foreground.onEnterBackground()
-    clock.advance(5.minutes)
-    foreground.onEnterForeground()
+      foreground.onEnterBackground()
+      clock.advance(5.minutes)
+      foreground.onEnterForeground()
 
-    assertThat(requests).isEqualTo(0)
-  }
-
-  @Test
-  fun returningPastTheSessionThreshold_requestsAScan() = runTest(UnconfinedTestDispatcher()) {
-    startedTrigger()
-    foreground.onEnterForeground()
-    requests = 0
-
-    foreground.onEnterBackground()
-    clock.advance(31.minutes)
-    foreground.onEnterForeground()
-
-    assertThat(requests).isEqualTo(1)
-  }
+      assertThat(requests).isEqualTo(0)
+    }
 
   @Test
-  fun start_calledTwice_doesNotAttachASecondCollector() = runTest(UnconfinedTestDispatcher()) {
-    val trigger = startedTrigger()
-    trigger.start()
+  fun returningPastTheSessionThreshold_requestsAScan() =
+    runTest(UnconfinedTestDispatcher()) {
+      startedTrigger()
+      foreground.onEnterForeground()
+      requests = 0
 
-    foreground.onEnterForeground()
+      foreground.onEnterBackground()
+      clock.advance(31.minutes)
+      foreground.onEnterForeground()
 
-    assertThat(requests).isEqualTo(1)
-  }
+      assertThat(requests).isEqualTo(1)
+    }
 
   @Test
-  fun aFailedScanDoesNotStopLaterBoundaries() = runTest(UnconfinedTestDispatcher()) {
-    startedTrigger()
-    foreground.onEnterForeground()
+  fun start_calledTwice_doesNotAttachASecondCollector() =
+    runTest(UnconfinedTestDispatcher()) {
+      val trigger = startedTrigger()
+      trigger.start()
 
-    foreground.onEnterBackground()
-    clock.advance(31.minutes)
-    foreground.onEnterForeground()
+      foreground.onEnterForeground()
 
-    // Both boundaries got through even though every scan threw.
-    assertThat(requests).isEqualTo(2)
-  }
+      assertThat(requests).isEqualTo(1)
+    }
+
+  @Test
+  fun aFailedScanDoesNotStopLaterBoundaries() =
+    runTest(UnconfinedTestDispatcher()) {
+      startedTrigger()
+      foreground.onEnterForeground()
+
+      foreground.onEnterBackground()
+      clock.advance(31.minutes)
+      foreground.onEnterForeground()
+
+      // Both boundaries got through even though every scan threw.
+      assertThat(requests).isEqualTo(2)
+    }
 
   /**
    * The collector is launched at Koin init but subscribes asynchronously, so the cold-start
@@ -109,25 +117,27 @@ class SessionBoundaryScanTriggerTest {
    * a `drop(1)` on the StateFlow would discard exactly this case.
    */
   @Test
-  fun startingAfterTheColdStartBoundary_stillScans() = runTest(UnconfinedTestDispatcher()) {
-    foreground.onEnterForeground()
-    assertThat(requests).isEqualTo(0)
+  fun startingAfterTheColdStartBoundary_stillScans() =
+    runTest(UnconfinedTestDispatcher()) {
+      foreground.onEnterForeground()
+      assertThat(requests).isEqualTo(0)
 
-    startedTrigger()
+      startedTrigger()
 
-    assertThat(requests).isEqualTo(1)
-  }
+      assertThat(requests).isEqualTo(1)
+    }
 
   /** ...but it must not then re-scan that same session on any later emission. */
   @Test
-  fun anAlreadyHandledSession_isNotScannedTwice() = runTest(UnconfinedTestDispatcher()) {
-    foreground.onEnterForeground()
-    startedTrigger()
+  fun anAlreadyHandledSession_isNotScannedTwice() =
+    runTest(UnconfinedTestDispatcher()) {
+      foreground.onEnterForeground()
+      startedTrigger()
 
-    foreground.onEnterBackground()
-    clock.advance(5.minutes)
-    foreground.onEnterForeground()
+      foreground.onEnterBackground()
+      clock.advance(5.minutes)
+      foreground.onEnterForeground()
 
-    assertThat(requests).isEqualTo(1)
-  }
+      assertThat(requests).isEqualTo(1)
+    }
 }

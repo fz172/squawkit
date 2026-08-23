@@ -10,11 +10,13 @@ import dev.fanfly.wingslog.core.storage.EntityStoreFactory
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetEntry
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
+import dev.fanfly.wingslog.feature.notifications.analytics.UrgencyTelemetry
 import dev.fanfly.wingslog.feature.notifications.datamanager.NotificationPrefsManager
 import dev.fanfly.wingslog.feature.notifications.datamanager.PrefsState
 import dev.fanfly.wingslog.feature.notifications.model.NotificationChannel
 import dev.fanfly.wingslog.feature.notifications.model.NotificationTapTarget
 import dev.fanfly.wingslog.feature.notifications.model.PendingNotification
+import dev.fanfly.wingslog.feature.notifications.model.ScanTrigger
 import dev.fanfly.wingslog.feature.notifications.model.UrgencyRank
 import dev.fanfly.wingslog.feature.notifications.model.UrgencyTier
 import dev.fanfly.wingslog.feature.notifications.model.allEnabled
@@ -77,6 +79,7 @@ class UrgencyScanner(
   private val watermarkStore: UrgencyWatermarkStore,
   private val notifier: LocalNotifier,
   private val lastScanStore: LastScanStore,
+  private val telemetry: UrgencyTelemetry = UrgencyTelemetry.NoOp,
   private val clock: Clock = Clock.System,
   private val sessionDebounce: Duration = SESSION_SCAN_DEBOUNCE,
 ) {
@@ -122,6 +125,13 @@ class UrgencyScanner(
     // scan that just walked the fleet is exactly what the next session boundary should debounce
     // against. The early exits above deliberately do not record — they did no work, so there is
     // nothing to space out, and re-checking them on the next boundary costs a config read.
+    // Reported before the record is written so a crash between the two loses the diagnostic, not
+    // the metric — the metric is the one that cannot be reconstructed later.
+    telemetry.urgencyNotificationsPosted(
+      trigger = trigger,
+      count = tally.posted,
+      sharedFleet = fleet.any { it.shared },
+    )
     lastScanStore.record(
       uid,
       ScanRecord(

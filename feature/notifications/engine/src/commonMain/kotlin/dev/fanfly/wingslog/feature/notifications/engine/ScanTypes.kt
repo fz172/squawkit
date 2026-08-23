@@ -1,15 +1,6 @@
 package dev.fanfly.wingslog.feature.notifications.engine
 
-/**
- * Enum trigger for [UrgencyScanner.scan]. Only [SESSION_BOUNDARY] is debounced against
- * [LastScanStore] — an app opened six times an hour should not scan six times, while the periodic
- * background job is already on the cadence the debounce would enforce (design §6.6).
- */
-enum class ScanTrigger {
-  MANUAL,
-  SCHEDULED,
-  SESSION_BOUNDARY,
-}
+import dev.fanfly.wingslog.feature.notifications.model.ScanTrigger
 
 /** Every early-exit the scan can take, plus the terminal success case (design §6.3). */
 sealed interface ScanResult {

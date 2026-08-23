@@ -3,6 +3,7 @@ package dev.fanfly.wingslog.feature.notifications.engine
 import app.cash.sqldelight.async.coroutines.synchronous
 import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
 import com.google.common.truth.Truth.assertThat
+import dev.fanfly.wingslog.feature.notifications.model.ScanTrigger
 import dev.fanfly.wingslog.core.model.settings.NotificationSettings
 import dev.fanfly.wingslog.core.storage.createWingsLogDatabase
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
