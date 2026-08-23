@@ -8,6 +8,8 @@ import dev.fanfly.wingslog.core.ui.adaptive.ShellAircraft
 import dev.fanfly.wingslog.core.ui.adaptive.ShellSection
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.fleet.picker.data.SelectedAircraftStore
+import dev.fanfly.wingslog.feature.notifications.model.NotificationTapTarget
+import dev.fanfly.wingslog.feature.notifications.viewing.NotificationTapRouter
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
 import dev.fanfly.wingslog.feature.sync.data.SyncEngine
@@ -104,6 +106,28 @@ class AdaptiveShellViewModel(
           }
         }
     }
+    // Aircraft is the one NotificationTapTarget variant with no real nav-graph destination —
+    // AdaptiveShellViewModel handles it directly rather than through HandleNotificationTaps
+    // (feature/shell/AppNavHelpers.kt), since aircraft selection is app-level ViewModel state, not
+    // a navigation argument (design §5.3, and this class's own doc comment above). Referenced
+    // directly rather than constructor-injected, matching how RedeemViewModel reads
+    // AircraftShareDeepLinks.pendingInvite.
+    viewModelScope.launch {
+      NotificationTapRouter.pending.collect { target ->
+        if (target is NotificationTapTarget.Aircraft) {
+          selectAircraft(target.aircraftId)
+          target.tab?.toShellSection()
+            ?.let { selectSection(it) }
+          NotificationTapRouter.consume()
+        }
+      }
+    }
+  }
+
+  private fun String.toShellSection(): ShellSection? = when (this) {
+    "squawks" -> ShellSection.SQUAWKS
+    "tasks" -> ShellSection.TASKS
+    else -> null
   }
 
   /** Current user's name + photo for the sidebar account/settings entry. */

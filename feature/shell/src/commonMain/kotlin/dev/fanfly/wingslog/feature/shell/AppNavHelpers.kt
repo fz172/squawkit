@@ -6,6 +6,8 @@ import androidx.navigation.NavController
 import dev.fanfly.wingslog.core.analytics.AnalyticsManager
 import dev.fanfly.wingslog.core.analytics.trackScreenViews
 import dev.fanfly.wingslog.core.nav.Screen
+import dev.fanfly.wingslog.feature.notifications.model.NotificationTapTarget
+import dev.fanfly.wingslog.feature.notifications.viewing.NotificationTapRouter
 import dev.gitlive.firebase.auth.FirebaseAuth
 import org.koin.compose.koinInject
 
@@ -40,5 +42,34 @@ fun TrackRootScreenViews(
       analytics,
       suppress = setOf(Screen.AdaptiveShell.route),
     )
+  }
+}
+
+/**
+ * Navigates to a tapped notification's target, for the three [NotificationTapTarget] variants that
+ * have a real nav-graph destination already (`Screen.EditSquawk` and friends, registered by
+ * `formDialogs`). [NotificationTapTarget.Aircraft] is deliberately not handled here —
+ * `AdaptiveShellViewModel` collects the same [NotificationTapRouter.pending] itself, since aircraft
+ * selection is app-level ViewModel state, not a navigation argument (design §5.3; see that
+ * ViewModel's own doc comment).
+ */
+@Composable
+fun HandleNotificationTaps(navController: NavController) {
+  LaunchedEffect(Unit) {
+    NotificationTapRouter.pending.collect { target ->
+      val route = when (target) {
+        is NotificationTapTarget.Squawk ->
+          Screen.EditSquawk.createRoute(target.aircraftId, target.squawkId)
+        is NotificationTapTarget.Task ->
+          Screen.EditMaintenanceTask.createRoute(target.aircraftId, target.taskId)
+        is NotificationTapTarget.Log ->
+          Screen.EditMaintenanceLog.createRoute(target.aircraftId, target.logId)
+        is NotificationTapTarget.Aircraft, null -> null
+      }
+      if (route != null) {
+        navController.navigate(route)
+        NotificationTapRouter.consume()
+      }
+    }
   }
 }
