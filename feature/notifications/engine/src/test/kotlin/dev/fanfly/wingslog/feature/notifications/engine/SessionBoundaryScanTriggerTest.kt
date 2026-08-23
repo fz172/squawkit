@@ -102,4 +102,32 @@ class SessionBoundaryScanTriggerTest {
     // Both boundaries got through even though every scan threw.
     assertThat(requests).isEqualTo(2)
   }
+
+  /**
+   * The collector is launched at Koin init but subscribes asynchronously, so the cold-start
+   * boundary can land before it attaches. Starting *after* the foreground edge must still scan —
+   * a `drop(1)` on the StateFlow would discard exactly this case.
+   */
+  @Test
+  fun startingAfterTheColdStartBoundary_stillScans() = runTest(UnconfinedTestDispatcher()) {
+    foreground.onEnterForeground()
+    assertThat(requests).isEqualTo(0)
+
+    startedTrigger()
+
+    assertThat(requests).isEqualTo(1)
+  }
+
+  /** ...but it must not then re-scan that same session on any later emission. */
+  @Test
+  fun anAlreadyHandledSession_isNotScannedTwice() = runTest(UnconfinedTestDispatcher()) {
+    foreground.onEnterForeground()
+    startedTrigger()
+
+    foreground.onEnterBackground()
+    clock.advance(5.minutes)
+    foreground.onEnterForeground()
+
+    assertThat(requests).isEqualTo(1)
+  }
 }

@@ -6,7 +6,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 
 /**
@@ -44,22 +43,25 @@ class SessionBoundaryScanTrigger(
   fun start() {
     if (job?.isActive == true) return
     job = scope.launch {
-      // drop(1) skips the StateFlow's current value: at Koin init that is 0 ("never foregrounded"),
-      // and on the rare restart where a session is already open it is a boundary that has already
-      // been handled. Only transitions from here on are real boundaries.
-      foreground.sessionId
-        .drop(1)
-        .collect { sessionId ->
-          val result =
-            runCatching { scanner().scan(ScanTrigger.SESSION_BOUNDARY) }
-              .getOrElse { e ->
-                // A failed scan must not tear down the collector — that would silently disable the
-                // trigger for the rest of the process.
-                log.w(e) { "session-boundary scan failed (session $sessionId)" }
-                return@collect
-              }
-          log.d { "session-boundary scan (session $sessionId): $result" }
-        }
+      // Compare against the last id handled rather than drop(1)-ing the StateFlow's current value.
+      // This collector is launched at Koin init but subscribes asynchronously, so the cold-start
+      // boundary (0 -> 1) can already have happened by the time it attaches; drop(1) would discard
+      // exactly that emission and silently skip the most important scan of the process. Reading the
+      // current value and deciding cannot miss an edge — the same reason AppForegroundObserver
+      // exposes an id rather than a Flow<Unit> of events.
+      var handled = 0L
+      foreground.sessionId.collect { sessionId ->
+        if (sessionId == 0L || sessionId == handled) return@collect
+        handled = sessionId
+        val result =
+          runCatching { scanner().scan(ScanTrigger.SESSION_BOUNDARY) }.getOrElse { e ->
+            // A failed scan must not tear down the collector — that would silently disable the
+            // trigger for the rest of the process.
+            log.w(e) { "session-boundary scan failed (session $sessionId)" }
+            return@collect
+          }
+        log.d { "session-boundary scan (session $sessionId): $result" }
+      }
     }
   }
 
