@@ -30,7 +30,6 @@ import dev.fanfly.wingslog.core.ui.theme.resolveDarkTheme
 import dev.fanfly.wingslog.feature.login.AuthFlow
 import dev.fanfly.wingslog.feature.sharing.update.RedeemHost
 import dev.fanfly.wingslog.feature.shell.AdaptiveShellRoute
-import dev.fanfly.wingslog.feature.shell.HandleNotificationTaps
 import dev.fanfly.wingslog.feature.shell.NavigateToLoginOnSignOut
 import dev.fanfly.wingslog.feature.shell.TrackRootScreenViews
 import dev.fanfly.wingslog.feature.shell.formDialogs
@@ -88,7 +87,6 @@ fun AppEntry() {
 
       NavigateToLoginOnSignOut(navController)
       TrackRootScreenViews(navController, analytics)
-      HandleNotificationTaps(navController)
 
       CompositionLocalProvider(LocalAnalytics provides analytics) {
         NavHost(

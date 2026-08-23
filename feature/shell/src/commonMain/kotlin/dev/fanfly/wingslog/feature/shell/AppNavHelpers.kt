@@ -2,15 +2,10 @@ package dev.fanfly.wingslog.feature.shell
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import androidx.navigation.compose.currentBackStackEntryAsState
 import dev.fanfly.wingslog.core.analytics.AnalyticsManager
 import dev.fanfly.wingslog.core.analytics.trackScreenViews
 import dev.fanfly.wingslog.core.nav.Screen
-import dev.fanfly.wingslog.feature.notifications.model.NotificationTapTarget
-import dev.fanfly.wingslog.feature.notifications.viewing.NotificationTapRouter
 import dev.gitlive.firebase.auth.FirebaseAuth
 import org.koin.compose.koinInject
 
@@ -48,44 +43,8 @@ fun TrackRootScreenViews(
   }
 }
 
-/**
- * Navigates to a tapped notification's target, for the three [NotificationTapTarget] variants that
- * have a real nav-graph destination already (`Screen.EditSquawk` and friends, registered by
- * `formDialogs`). [NotificationTapTarget.Aircraft] is deliberately not handled here —
- * `AdaptiveShellViewModel` collects the same [NotificationTapRouter.pending] itself, since aircraft
- * selection is app-level ViewModel state, not a navigation argument (design §5.3; see that
- * ViewModel's own doc comment).
- */
-@Composable
-fun HandleNotificationTaps(navController: NavController) {
-  val pending by NotificationTapRouter.pending.collectAsStateWithLifecycle()
-  val currentRoute by navController.currentBackStackEntryAsState()
-
-  // Held until the auth graph hands off. A tap that cold-starts the app arrives while the NavHost is
-  // still on its start destination (both hosts start at Screen.Login and let AuthFlow resolve the
-  // already-signed-in user asynchronously); navigating now would push the target on top of the login
-  // destination, and AuthFlow's `popUpTo(login) { inclusive = true }` then wipes the whole back stack
-  // a beat later — the tapped record flashes up and the app settles on the shell's default section.
-  // Waiting also gives the right behaviour for a genuinely signed-out user: the target stays pending
-  // through sign-in and opens once they land in the shell.
-  val readyToNavigate =
-    currentRoute?.destination?.route.let { it != null && it != Screen.Login.route }
-
-  LaunchedEffect(pending, readyToNavigate) {
-    if (!readyToNavigate) return@LaunchedEffect
-    val target = pending ?: return@LaunchedEffect
-    val route = when (target) {
-      is NotificationTapTarget.Squawk ->
-        Screen.EditSquawk.createRoute(target.aircraftId, target.squawkId)
-      is NotificationTapTarget.Task ->
-        Screen.EditMaintenanceTask.createRoute(target.aircraftId, target.taskId)
-      is NotificationTapTarget.Log ->
-        Screen.EditMaintenanceLog.createRoute(target.aircraftId, target.logId)
-      is NotificationTapTarget.Aircraft -> null
-    }
-    if (route != null) {
-      navController.navigate(route)
-      NotificationTapRouter.consume()
-    }
-  }
-}
+// A notification tap has no helper here on purpose: no variant navigates any more. Every one of them
+// lands the pilot on a record inside a shell section, which is ViewModel state rather than a route,
+// so AdaptiveShellRoute applies the whole thing (design §5.3). That also removes the need for the
+// auth gate this used to carry — the shell composes only after the auth graph hands off, so a tap
+// that cold-starts the app stays pending until there is somewhere to put it.

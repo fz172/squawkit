@@ -108,20 +108,59 @@ class AdaptiveShellViewModel(
   }
 
   /**
-   * Aircraft is the one [NotificationTapTarget] variant with no real nav-graph destination —
-   * called from [AdaptiveShellRoute][dev.fanfly.wingslog.feature.shell.AdaptiveShellRoute] rather
-   * than handled through `HandleNotificationTaps` (`feature/shell/AppNavHelpers.kt`), since aircraft
-   * selection is app-level ViewModel state, not a navigation argument (design §5.3, and this
-   * class's own doc comment above).
+   * A record the shell should scroll to and highlight once its section renders, set by a tapped
+   * notification for a single record. Not a navigation argument for the same reason the aircraft
+   * selection isn't one (see this class's doc comment); the section body reads it as plain state and
+   * calls [consumeScrollTarget] once it has been handed to the list.
+   */
+  private val _pendingScrollTargetId = MutableStateFlow<String?>(null)
+  val pendingScrollTargetId: StateFlow<String?> = _pendingScrollTargetId.asStateFlow()
+
+  fun consumeScrollTarget() {
+    _pendingScrollTargetId.value = null
+  }
+
+  /**
+   * Applies a tapped notification's target to shell state. Called from
+   * [AdaptiveShellRoute][dev.fanfly.wingslog.feature.shell.AdaptiveShellRoute] rather than handled
+   * through `HandleNotificationTaps` (`feature/shell/AppNavHelpers.kt`), because none of it is a
+   * navigation argument — aircraft selection, section, and the scroll target are all app-level
+   * ViewModel state (design §5.3, and this class's own doc comment above).
+   *
+   * Every variant lands the pilot *in the list*, on the record, rather than in its edit form: a
+   * notification says something changed, so the useful destination is the record in the context of
+   * everything around it. Opening the editor would presume they want to change it, and would put an
+   * unsaved-changes guard between them and a glance.
    *
    * Subscribing to `NotificationTapRouter.pending` and calling `consume()` belongs to that call
    * site, not here: the router is a process-wide singleton whose targets are consume-once, so only
    * a composable — which knows when the shell is actually on screen — can decide when a target has
    * really been acted on.
    */
-  fun onNotificationAircraftTap(target: NotificationTapTarget.Aircraft) {
+  fun onNotificationTap(target: NotificationTapTarget) {
     selectAircraft(target.aircraftId)
-    target.tab?.toShellSection()?.let { selectSection(it) }
+    when (target) {
+      // A summary notification: the tier picks the list, and there is no one record to point at.
+      is NotificationTapTarget.Aircraft -> {
+        _pendingScrollTargetId.value = null
+        target.tab?.toShellSection()?.let { selectSection(it) }
+      }
+
+      is NotificationTapTarget.Squawk -> {
+        selectSection(ShellSection.SQUAWKS)
+        _pendingScrollTargetId.value = target.squawkId
+      }
+
+      is NotificationTapTarget.Task -> {
+        selectSection(ShellSection.TASKS)
+        _pendingScrollTargetId.value = target.taskId
+      }
+
+      is NotificationTapTarget.Log -> {
+        selectSection(ShellSection.LOGS)
+        _pendingScrollTargetId.value = target.logId
+      }
+    }
   }
 
   private fun String.toShellSection(): ShellSection? = when (this) {

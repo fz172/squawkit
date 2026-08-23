@@ -110,16 +110,17 @@ fun AdaptiveShellRoute(
   // Work that was destroyed when a share ended (PRD D3 — the one data-loss window). Held open until
   // the user dismisses it: the purge typically runs while they are on another screen or the app is
   // backgrounded, and a message that times out unseen would leave them thinking the edit saved.
-  // Aircraft is the one tap target with no nav destination — it moves shell state instead, so it is
-  // applied here rather than in HandleNotificationTaps (AppNavHelpers.kt). Handling it from inside
-  // this route needs no auth gate of its own: the shell destination only composes once the auth
-  // graph has handed off, so a tap that cold-started the app simply stays pending until then.
+  // Every notification tap moves shell state (aircraft, section, and for a single record the card to
+  // scroll to) rather than navigating, so all of it is applied here. Handling it from inside this
+  // route needs no auth gate of its own: the shell destination only composes once the auth graph has
+  // handed off, so a tap that cold-started the app simply stays pending until then.
   val pendingTapTarget by NotificationTapRouter.pending.collectAsStateWithLifecycle()
   LaunchedEffect(pendingTapTarget) {
-    val target = pendingTapTarget as? NotificationTapTarget.Aircraft ?: return@LaunchedEffect
-    viewModel.onNotificationAircraftTap(target)
+    val target = pendingTapTarget ?: return@LaunchedEffect
+    viewModel.onNotificationTap(target)
     NotificationTapRouter.consume()
   }
+  val scrollTargetId by viewModel.pendingScrollTargetId.collectAsStateWithLifecycle()
 
   val notice by viewModel.notice.collectAsState()
   val dismissLabel = stringResource(CoreRes.string.dismiss)
@@ -159,6 +160,8 @@ fun AdaptiveShellRoute(
           aircraftId = aircraftId,
           navController = navController,
           onNavigateToSection = viewModel::selectSection,
+          scrollToRecordId = scrollTargetId,
+          onScrollTargetConsumed = viewModel::consumeScrollTarget,
         )
       }
     },

@@ -12,6 +12,7 @@ import dev.fanfly.wingslog.core.auth.AuthProvider
 import dev.fanfly.wingslog.core.auth.SendLinkResult
 import dev.fanfly.wingslog.core.ui.adaptive.ShellSection
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
+import dev.fanfly.wingslog.feature.notifications.model.NotificationTapTarget
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
 import dev.fanfly.wingslog.feature.sync.data.SyncEngine
@@ -287,5 +288,91 @@ class AdaptiveShellViewModelTest {
     self.value = Technician(id = "self", name = "Avery Park")
 
     assertThat(vm.uiState.value.accountName).isEqualTo("Avery Park")
+  }
+
+  // Notification taps (design §5.3). Every variant selects the aircraft and lands in a section; the
+  // record variants additionally publish a scroll target instead of opening the record's edit form.
+
+  @Test
+  fun notificationTap_squawk_selectsAircraftSectionAndScrollTarget() = runTest(testDispatcher) {
+    fleet.value = listOf(aircraft("a1", "N1"), aircraft("a2", "N2"))
+    val vm = viewModel()
+
+    vm.onNotificationTap(NotificationTapTarget.Squawk(aircraftId = "a2", squawkId = "sq-1"))
+
+    assertThat(vm.uiState.value.selectedAircraftId).isEqualTo("a2")
+    assertThat(vm.uiState.value.section).isEqualTo(ShellSection.SQUAWKS)
+    assertThat(vm.pendingScrollTargetId.value).isEqualTo("sq-1")
+  }
+
+  @Test
+  fun notificationTap_task_selectsAircraftSectionAndScrollTarget() = runTest(testDispatcher) {
+    fleet.value = listOf(aircraft("a1", "N1"))
+    val vm = viewModel()
+
+    vm.onNotificationTap(NotificationTapTarget.Task(aircraftId = "a1", taskId = "task-1"))
+
+    assertThat(vm.uiState.value.section).isEqualTo(ShellSection.TASKS)
+    assertThat(vm.pendingScrollTargetId.value).isEqualTo("task-1")
+  }
+
+  @Test
+  fun notificationTap_log_selectsAircraftSectionAndScrollTarget() = runTest(testDispatcher) {
+    fleet.value = listOf(aircraft("a1", "N1"))
+    val vm = viewModel()
+
+    vm.onNotificationTap(NotificationTapTarget.Log(aircraftId = "a1", logId = "log-1"))
+
+    assertThat(vm.uiState.value.section).isEqualTo(ShellSection.LOGS)
+    assertThat(vm.pendingScrollTargetId.value).isEqualTo("log-1")
+  }
+
+  @Test
+  fun notificationTap_aircraftSummary_selectsTabWithoutAScrollTarget() = runTest(testDispatcher) {
+    fleet.value = listOf(aircraft("a1", "N1"))
+    val vm = viewModel()
+
+    vm.onNotificationTap(NotificationTapTarget.Aircraft(aircraftId = "a1", tab = "tasks"))
+
+    assertThat(vm.uiState.value.section).isEqualTo(ShellSection.TASKS)
+    // A summary covers several records, so there is no single card to scroll to.
+    assertThat(vm.pendingScrollTargetId.value).isNull()
+  }
+
+  @Test
+  fun notificationTap_aircraftSummary_clearsAScrollTargetLeftByAnEarlierTap() =
+    runTest(testDispatcher) {
+      fleet.value = listOf(aircraft("a1", "N1"))
+      val vm = viewModel()
+      vm.onNotificationTap(NotificationTapTarget.Task(aircraftId = "a1", taskId = "task-1"))
+
+      vm.onNotificationTap(NotificationTapTarget.Aircraft(aircraftId = "a1", tab = "tasks"))
+
+      // Otherwise the summary tap would re-highlight whichever record the previous tap pointed at.
+      assertThat(vm.pendingScrollTargetId.value).isNull()
+    }
+
+  @Test
+  fun notificationTap_aircraftSummaryWithoutTab_keepsCurrentSection() = runTest(testDispatcher) {
+    fleet.value = listOf(aircraft("a1", "N1"))
+    val vm = viewModel()
+    vm.selectSection(ShellSection.LOGS)
+
+    vm.onNotificationTap(NotificationTapTarget.Aircraft(aircraftId = "a1", tab = null))
+
+    assertThat(vm.uiState.value.section).isEqualTo(ShellSection.LOGS)
+  }
+
+  @Test
+  fun consumeScrollTarget_clearsIt() = runTest(testDispatcher) {
+    fleet.value = listOf(aircraft("a1", "N1"))
+    val vm = viewModel()
+    vm.onNotificationTap(NotificationTapTarget.Task(aircraftId = "a1", taskId = "task-1"))
+
+    vm.consumeScrollTarget()
+
+    // The section body consumes once it has handed the id to the list, so returning to that section
+    // later does not re-run the jump.
+    assertThat(vm.pendingScrollTargetId.value).isNull()
   }
 }
