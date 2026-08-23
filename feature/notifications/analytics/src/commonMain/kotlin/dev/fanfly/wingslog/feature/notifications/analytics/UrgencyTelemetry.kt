@@ -28,7 +28,11 @@ interface UrgencyTelemetry {
    *   outbound view, and the question here is whether N2 reaches people who receive nothing from
    *   collaborators.
    */
-  fun urgencyNotificationsPosted(trigger: ScanTrigger, count: Int, sharedFleet: Boolean)
+  fun urgencyNotificationsPosted(
+    trigger: ScanTrigger,
+    count: Int,
+    sharedFleet: Boolean
+  )
 
   /** Used by tests and by hosts that wire no analytics. */
   object NoOp : UrgencyTelemetry {
@@ -74,7 +78,12 @@ class AnalyticsUrgencyTelemetry(
       "trigger" to trigger.name.lowercase(),
       "shared_fleet" to sharedFleet.toString(),
     )
-    repeat(count) { analytics.logEvent(EVENT_URGENCY_NOTIFICATION_POSTED, params) }
+    repeat(count) {
+      analytics.logEvent(
+        EVENT_URGENCY_NOTIFICATION_POSTED,
+        params
+      )
+    }
   }
 
   /** §12.3: no report at all for an anonymous or sync-off account. */

@@ -1,8 +1,5 @@
 package dev.fanfly.wingslog.feature.notifications.engine
 
-import dev.fanfly.wingslog.feature.notifications.analytics.UrgencyTelemetry
-import dev.fanfly.wingslog.feature.notifications.model.ScanTrigger
-
 import dev.fanfly.wingslog.aircraft.MaintenanceTask
 import dev.fanfly.wingslog.aircraft.Squawk
 import dev.fanfly.wingslog.core.model.settings.NotificationSettings
@@ -13,11 +10,13 @@ import dev.fanfly.wingslog.core.storage.EntityStoreFactory
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetEntry
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
+import dev.fanfly.wingslog.feature.notifications.analytics.UrgencyTelemetry
 import dev.fanfly.wingslog.feature.notifications.datamanager.NotificationPrefsManager
 import dev.fanfly.wingslog.feature.notifications.datamanager.PrefsState
 import dev.fanfly.wingslog.feature.notifications.model.NotificationChannel
 import dev.fanfly.wingslog.feature.notifications.model.NotificationTapTarget
 import dev.fanfly.wingslog.feature.notifications.model.PendingNotification
+import dev.fanfly.wingslog.feature.notifications.model.ScanTrigger
 import dev.fanfly.wingslog.feature.notifications.model.UrgencyRank
 import dev.fanfly.wingslog.feature.notifications.model.UrgencyTier
 import dev.fanfly.wingslog.feature.notifications.model.allEnabled

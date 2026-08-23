@@ -19,7 +19,11 @@ class AnalyticsUrgencyTelemetryTest {
 
   private class RecordingAnalytics : AnalyticsManager {
     val events = mutableListOf<Pair<String, Map<String, String>>>()
-    override fun logScreenView(screenName: String, params: Map<String, String>) = Unit
+    override fun logScreenView(
+      screenName: String,
+      params: Map<String, String>
+    ) = Unit
+
     override fun logEvent(name: String, params: Map<String, String>) {
       events += name to params
     }
@@ -46,19 +50,31 @@ class AnalyticsUrgencyTelemetryTest {
 
   @Test
   fun anonymousAccount_reportsNothing() {
-    telemetry(anonymous = true).urgencyNotificationsPosted(ScanTrigger.SCHEDULED, 2, false)
+    telemetry(anonymous = true).urgencyNotificationsPosted(
+      ScanTrigger.SCHEDULED,
+      2,
+      false
+    )
     assertThat(analytics.events).isEmpty()
   }
 
   @Test
   fun cloudSyncOff_reportsNothing() {
-    telemetry(cloudSync = false).urgencyNotificationsPosted(ScanTrigger.SCHEDULED, 2, false)
+    telemetry(cloudSync = false).urgencyNotificationsPosted(
+      ScanTrigger.SCHEDULED,
+      2,
+      false
+    )
     assertThat(analytics.events).isEmpty()
   }
 
   @Test
   fun signedOut_reportsNothing() {
-    telemetry(signedIn = false).urgencyNotificationsPosted(ScanTrigger.SCHEDULED, 2, false)
+    telemetry(signedIn = false).urgencyNotificationsPosted(
+      ScanTrigger.SCHEDULED,
+      2,
+      false
+    )
     assertThat(analytics.events).isEmpty()
   }
 
@@ -74,17 +90,26 @@ class AnalyticsUrgencyTelemetryTest {
 
   @Test
   fun signedInWithCloudSync_reportsOneEventPerNotification() {
-    telemetry().urgencyNotificationsPosted(ScanTrigger.SESSION_BOUNDARY, 3, sharedFleet = true)
+    telemetry().urgencyNotificationsPosted(
+      ScanTrigger.SESSION_BOUNDARY,
+      3,
+      sharedFleet = true
+    )
 
     assertThat(analytics.events).hasSize(3)
-    assertThat(analytics.events.map { it.first }.distinct())
+    assertThat(analytics.events.map { it.first }
+                 .distinct())
       .containsExactly("urgency_notification_posted")
   }
 
   /** The trigger split is the number that decides whether iOS can claim a cadence at all (§6.6). */
   @Test
   fun reportsTheTriggerAndWhetherTheFleetIsShared() {
-    telemetry().urgencyNotificationsPosted(ScanTrigger.SCHEDULED, 1, sharedFleet = false)
+    telemetry().urgencyNotificationsPosted(
+      ScanTrigger.SCHEDULED,
+      1,
+      sharedFleet = false
+    )
 
     assertThat(analytics.events.single().second)
       .containsExactly("trigger", "scheduled", "shared_fleet", "false")
@@ -92,7 +117,11 @@ class AnalyticsUrgencyTelemetryTest {
 
   @Test
   fun sharedFleet_isReportedAsTrue() {
-    telemetry().urgencyNotificationsPosted(ScanTrigger.MANUAL, 1, sharedFleet = true)
+    telemetry().urgencyNotificationsPosted(
+      ScanTrigger.MANUAL,
+      1,
+      sharedFleet = true
+    )
 
     assertThat(analytics.events.single().second["shared_fleet"]).isEqualTo("true")
   }
