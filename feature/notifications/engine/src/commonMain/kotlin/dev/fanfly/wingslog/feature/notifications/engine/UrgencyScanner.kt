@@ -52,6 +52,9 @@ import wingslog.feature.notifications.sharedassets.generated.resources.squawk_pr
 import wingslog.feature.notifications.sharedassets.generated.resources.squawk_priority_label_low
 import wingslog.feature.notifications.sharedassets.generated.resources.squawk_priority_label_medium
 import wingslog.feature.notifications.sharedassets.generated.resources.squawk_priority_label_resolved
+import kotlin.time.Clock
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.hours
 
 /**
  * The entire N2 decision, in shared code (design §6.3). The one class that justifies `engine`'s
@@ -73,6 +76,9 @@ class UrgencyScanner(
   entityStoreFactory: EntityStoreFactory,
   private val watermarkStore: UrgencyWatermarkStore,
   private val notifier: LocalNotifier,
+  private val lastScanStore: LastScanStore,
+  private val clock: Clock = Clock.System,
+  private val sessionDebounce: Duration = SESSION_SCAN_DEBOUNCE,
 ) {
 
   private val mutex = Mutex()
@@ -87,6 +93,15 @@ class UrgencyScanner(
 
   suspend fun scan(trigger: ScanTrigger): ScanResult = mutex.withLock {
     val uid = auth.currentUser?.uid ?: return@withLock ScanResult.NoUser
+
+    // Only the session trigger debounces (design §6.6): an app opened repeatedly should not rescan
+    // every time, while the periodic job is already spaced at the cadence this would enforce and a
+    // manual scan is someone explicitly asking. Checked before prefs so a debounced boundary costs
+    // one config read rather than a full fleet walk.
+    if (trigger == ScanTrigger.SESSION_BOUNDARY) {
+      val last = lastScanStore.lastScanAt(uid)
+      if (last != null && clock.now() - last < sessionDebounce) return@withLock ScanResult.Debounced
+    }
 
     // .first() on each flow, on the caller's dispatcher: these are SQLDelight-backed flows, so this
     // reads the current value and detaches rather than staying subscribed for the scan's duration.
@@ -103,6 +118,11 @@ class UrgencyScanner(
     for (entry in fleet) {
       posted += scanAircraft(uid, entry, settings)
     }
+    // Recorded for every completed scan whatever the trigger, not just session ones: a scheduled
+    // scan that just walked the fleet is exactly what the next session boundary should debounce
+    // against. The early exits above deliberately do not record — they did no work, so there is
+    // nothing to space out, and re-checking them on the next boundary costs a config read.
+    lastScanStore.record(uid, clock.now())
     ScanResult.Completed(posted)
   }
 
@@ -305,7 +325,10 @@ class UrgencyScanner(
       body = body,
       highPriority = tier == UrgencyTier.GROUNDED || tier == UrgencyTier.OVERDUE,
       tapTarget = single?.tapTarget
-        ?: NotificationTapTarget.Aircraft(aircraftId, tab = tier.toAircraftTab()),
+        ?: NotificationTapTarget.Aircraft(
+          aircraftId,
+          tab = tier.toAircraftTab()
+        ),
     )
   }
 
@@ -384,4 +407,12 @@ class UrgencyScanner(
     val tapTarget: NotificationTapTarget,
     val previousRank: UrgencyRank? = null,
   )
+
+  companion object {
+    /**
+     * Design §6.6's target cadence, superseding the earlier 4h — the scan is N2's only detection
+     * mechanism, so spacing session scans further apart is pure added latency.
+     */
+    val SESSION_SCAN_DEBOUNCE: Duration = 2.hours
+  }
 }

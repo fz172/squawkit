@@ -18,6 +18,8 @@
   <string name="notifications_devoptions_scan_never_run">Not run yet</string>
   <string name="notifications_devoptions_scan_now_action">Scan now</string>
   <string name="notifications_devoptions_scan_result_no_user">No signed-in user</string>
+  <!-- Unreachable from the button below, which scans with MANUAL — kept so the result mapping stays total. -->
+  <string name="notifications_devoptions_scan_result_debounced">Skipped — scanned within the last 2 hours</string>
   <string name="notifications_devoptions_scan_result_prefs_unresolved">Preferences not resolved yet</string>
   <string name="notifications_devoptions_scan_result_disabled">Skipped — All notifications is off</string>
   <string name="notifications_devoptions_scan_result_no_permission">Skipped — OS permission not granted</string>
