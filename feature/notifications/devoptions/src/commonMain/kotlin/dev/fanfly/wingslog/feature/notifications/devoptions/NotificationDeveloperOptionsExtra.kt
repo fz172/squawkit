@@ -13,7 +13,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -24,8 +26,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.developeroptions.plugin.DeveloperOptionsExtra
+import dev.fanfly.wingslog.feature.notifications.engine.ScanRecord
 import dev.fanfly.wingslog.feature.notifications.engine.ScanResult
 import dev.fanfly.wingslog.feature.notifications.engine.ScanTrigger
+import dev.fanfly.wingslog.feature.notifications.engine.UrgencyScanDiagnostics
 import dev.fanfly.wingslog.feature.notifications.engine.UrgencyScanner
 import dev.fanfly.wingslog.feature.notifications.model.NotificationChannel
 import dev.fanfly.wingslog.feature.notifications.model.NotificationTapTarget
@@ -33,6 +37,7 @@ import dev.fanfly.wingslog.feature.notifications.model.PendingNotification
 import dev.fanfly.wingslog.feature.notifications.permission.NotificationPermission
 import dev.fanfly.wingslog.feature.notifications.permission.PermissionState
 import dev.fanfly.wingslog.feature.notifications.viewing.LocalNotifier
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
@@ -40,10 +45,20 @@ import wingslog.feature.notifications.devoptions.generated.resources.Res
 import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_channel_collaboration
 import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_channel_grounded
 import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_channel_urgency_update
+import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_diagnostics_at
+import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_diagnostics_counts
+import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_diagnostics_never
+import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_diagnostics_title
+import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_diagnostics_trigger
 import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_header
 import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_open_settings_action
 import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_permission_title
 import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_request_action
+import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_reset_watermarks_action
+import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_reset_watermarks_done
+import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_reset_watermarks_hint
+import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_reset_watermarks_no_user
+import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_reset_watermarks_title
 import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_scan_never_run
 import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_scan_now_action
 import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_scan_now_title
@@ -75,6 +90,7 @@ class NotificationDeveloperOptionsExtra(
   private val permission: NotificationPermission,
   private val notifier: LocalNotifier,
   private val scanner: UrgencyScanner,
+  private val diagnostics: UrgencyScanDiagnostics,
 ) : DeveloperOptionsExtra {
 
   override val order: Int = 500
@@ -157,6 +173,12 @@ class NotificationDeveloperOptionsExtra(
 
     Spacer(Modifier.height(Spacing.medium))
     var lastResult by remember { mutableStateOf<ScanResult?>(null) }
+    // An explicit counter, not `lastResult`, as the re-read key: a reset also clears the stored
+    // record, and keying on the scan result would not re-fire when reset leaves it at null — which
+    // left the row showing a scan that no longer existed.
+    var diagnosticsRefresh by remember { mutableIntStateOf(0) }
+    var lastScan by remember { mutableStateOf<ScanRecord?>(null) }
+    LaunchedEffect(diagnosticsRefresh) { lastScan = diagnostics.lastScan() }
     var scanning by remember { mutableStateOf(false) }
     Row(
       modifier = Modifier
@@ -183,6 +205,7 @@ class NotificationDeveloperOptionsExtra(
           scanning = true
           scope.launch {
             lastResult = scanner.scan(ScanTrigger.MANUAL)
+            diagnosticsRefresh++
             scanning = false
           }
         },
@@ -190,6 +213,18 @@ class NotificationDeveloperOptionsExtra(
         Text(stringResource(Res.string.notifications_devoptions_scan_now_action))
       }
     }
+    ResetWatermarksRow(
+      scope = scope,
+      onReset = {
+        val cleared = diagnostics.resetWatermarks()
+        lastResult = null
+        diagnosticsRefresh++
+        cleared
+      },
+    )
+
+    ScanDiagnosticsRow(lastScan = lastScan)
+
     // No trailing divider — the host draws one after every extra.
   }
 
@@ -251,4 +286,109 @@ class NotificationDeveloperOptionsExtra(
       highPriority = this == NotificationChannel.GROUNDED,
       tapTarget = NotificationTapTarget.Aircraft(aircraftId = "devoptions-test"),
     )
+
+  /**
+   * Wipes this account's watermarks. Kept next to "scan now" because the two are used together:
+   * reset, scan to re-seed, change a record, scan again.
+   */
+  @Composable
+  private fun ResetWatermarksRow(
+    scope: CoroutineScope,
+    onReset: suspend () -> Boolean,
+  ) {
+    var status by remember { mutableStateOf<StringResource?>(null) }
+    var resetting by remember { mutableStateOf(false) }
+
+    Spacer(Modifier.height(Spacing.medium))
+    Row(
+      modifier = Modifier
+        .fillMaxWidth()
+        .padding(vertical = Spacing.small),
+      horizontalArrangement = Arrangement.SpaceBetween,
+      verticalAlignment = Alignment.CenterVertically,
+    ) {
+      Column(modifier = Modifier.weight(1f)) {
+        Text(
+          text = stringResource(Res.string.notifications_devoptions_reset_watermarks_title),
+          style = MaterialTheme.typography.bodyLarge,
+        )
+        Text(
+          text = stringResource(
+            status ?: Res.string.notifications_devoptions_reset_watermarks_hint
+          ),
+          style = MaterialTheme.typography.bodySmall,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+      }
+      Spacer(Modifier.height(Spacing.small))
+      OutlinedButton(
+        enabled = !resetting,
+        onClick = {
+          resetting = true
+          scope.launch {
+            status =
+              if (onReset()) Res.string.notifications_devoptions_reset_watermarks_done
+              else Res.string.notifications_devoptions_reset_watermarks_no_user
+            resetting = false
+          }
+        },
+      ) {
+        Text(stringResource(Res.string.notifications_devoptions_reset_watermarks_action))
+      }
+    }
+  }
+
+  /**
+   * Design §11's diagnostics. Read from the persisted [ScanRecord] rather than from whatever this
+   * process happens to have run, so a background scan that happened while the app was closed —
+   * the case the §6.6 metric is about — is still visible here.
+   */
+  @Composable
+  private fun ScanDiagnosticsRow(lastScan: ScanRecord?) {
+    Spacer(Modifier.height(Spacing.medium))
+    Text(
+      text = stringResource(Res.string.notifications_devoptions_diagnostics_title),
+      style = MaterialTheme.typography.labelSmall,
+      color = MaterialTheme.colorScheme.primary,
+      fontWeight = FontWeight.SemiBold,
+      modifier = Modifier.padding(bottom = Spacing.small),
+    )
+    if (lastScan == null) {
+      Text(
+        text = stringResource(Res.string.notifications_devoptions_diagnostics_never),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+      )
+      return
+    }
+    Column {
+      Text(
+        text = stringResource(
+          Res.string.notifications_devoptions_diagnostics_at,
+          lastScan.at.toString(),
+        ),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+      )
+      Text(
+        text = stringResource(
+          Res.string.notifications_devoptions_diagnostics_trigger,
+          lastScan.trigger.name,
+        ),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+      )
+      Text(
+        text = stringResource(
+          Res.string.notifications_devoptions_diagnostics_counts,
+          lastScan.recordsExamined,
+          lastScan.crossingsFound,
+          lastScan.crossingsSuppressed,
+          lastScan.notificationsPosted,
+        ),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+      )
+    }
+  }
 }

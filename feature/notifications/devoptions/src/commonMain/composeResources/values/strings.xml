@@ -24,4 +24,17 @@
   <string name="notifications_devoptions_scan_result_disabled">Skipped — All notifications is off</string>
   <string name="notifications_devoptions_scan_result_no_permission">Skipped — OS permission not granted</string>
   <string name="notifications_devoptions_scan_result_completed">Done — %1$d notification(s) posted</string>
+
+  <string name="notifications_devoptions_reset_watermarks_title">Reset urgency watermarks</string>
+  <string name="notifications_devoptions_reset_watermarks_action">Reset</string>
+  <!-- Says two scans because the first re-seeds silently under the §6.4 seeding rule. -->
+  <string name="notifications_devoptions_reset_watermarks_hint">Re-arms every crossing. The next scan re-seeds silently — change a record, then scan again to see a notification.</string>
+  <string name="notifications_devoptions_reset_watermarks_done">Cleared. Next scan re-seeds.</string>
+  <string name="notifications_devoptions_reset_watermarks_no_user">No signed-in user</string>
+
+  <string name="notifications_devoptions_diagnostics_title">Scan diagnostics</string>
+  <string name="notifications_devoptions_diagnostics_never">No scan has completed on this device</string>
+  <string name="notifications_devoptions_diagnostics_trigger">Trigger: %1$s</string>
+  <string name="notifications_devoptions_diagnostics_at">Last scan: %1$s</string>
+  <string name="notifications_devoptions_diagnostics_counts">%1$d records examined · %2$d crossings · %3$d suppressed by preferences · %4$d posted</string>
 </resources>

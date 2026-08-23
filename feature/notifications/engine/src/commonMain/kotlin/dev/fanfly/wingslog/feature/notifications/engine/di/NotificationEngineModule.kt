@@ -9,6 +9,7 @@ import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.notifications.datamanager.NotificationPrefsManager
 import dev.fanfly.wingslog.feature.notifications.engine.LastScanStore
 import dev.fanfly.wingslog.feature.notifications.engine.SessionBoundaryScanTrigger
+import dev.fanfly.wingslog.feature.notifications.engine.UrgencyScanDiagnostics
 import dev.fanfly.wingslog.feature.notifications.engine.UrgencyScanner
 import dev.fanfly.wingslog.feature.notifications.engine.UrgencyWatermarkStore
 import dev.fanfly.wingslog.feature.notifications.permission.NotificationPermission
@@ -33,6 +34,13 @@ val notificationEngineModule: Module = module {
       entityStoreFactory = get<EntityStoreFactory>(),
       watermarkStore = get<UrgencyWatermarkStore>(),
       notifier = get<LocalNotifier>(),
+      lastScanStore = get<LastScanStore>(),
+    )
+  }
+  single {
+    UrgencyScanDiagnostics(
+      auth = get<FirebaseAuth>(),
+      watermarkStore = get<UrgencyWatermarkStore>(),
       lastScanStore = get<LastScanStore>(),
     )
   }
