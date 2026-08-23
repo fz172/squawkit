@@ -2,7 +2,10 @@ package dev.fanfly.wingslog.feature.shell
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.core.analytics.AnalyticsManager
 import dev.fanfly.wingslog.core.analytics.trackScreenViews
 import dev.fanfly.wingslog.core.nav.Screen
@@ -55,21 +58,33 @@ fun TrackRootScreenViews(
  */
 @Composable
 fun HandleNotificationTaps(navController: NavController) {
-  LaunchedEffect(Unit) {
-    NotificationTapRouter.pending.collect { target ->
-      val route = when (target) {
-        is NotificationTapTarget.Squawk ->
-          Screen.EditSquawk.createRoute(target.aircraftId, target.squawkId)
-        is NotificationTapTarget.Task ->
-          Screen.EditMaintenanceTask.createRoute(target.aircraftId, target.taskId)
-        is NotificationTapTarget.Log ->
-          Screen.EditMaintenanceLog.createRoute(target.aircraftId, target.logId)
-        is NotificationTapTarget.Aircraft, null -> null
-      }
-      if (route != null) {
-        navController.navigate(route)
-        NotificationTapRouter.consume()
-      }
+  // Lifecycle-aware, like `EmailLinkDeepLinks.pendingLink` in AccountUpgradeFlow — NOT a raw
+  // `.collect()` in LaunchedEffect. NotificationTapRouter is a process-wide singleton, and
+  // MainActivity is singleTask; when the OS briefly runs two Activity instances for one tap (seen
+  // live — a backgrounded instance's task momentarily coexisting with a freshly-started one before
+  // the system reconciles them), a plain `.collect()` never stops just because its host went to the
+  // background, so the stale instance can win the race and `consume()` the target before the
+  // visible one ever sees it: the tap silently does nothing. Pausing collection below STARTED
+  // closes that window.
+  val pending by NotificationTapRouter.pending.collectAsStateWithLifecycle()
+  LaunchedEffect(pending) {
+    val target = pending ?: return@LaunchedEffect
+    log.i { "HandleNotificationTaps: received target=$target" }
+    val route = when (target) {
+      is NotificationTapTarget.Squawk ->
+        Screen.EditSquawk.createRoute(target.aircraftId, target.squawkId)
+      is NotificationTapTarget.Task ->
+        Screen.EditMaintenanceTask.createRoute(target.aircraftId, target.taskId)
+      is NotificationTapTarget.Log ->
+        Screen.EditMaintenanceLog.createRoute(target.aircraftId, target.logId)
+      is NotificationTapTarget.Aircraft -> null
+    }
+    if (route != null) {
+      log.i { "HandleNotificationTaps: navigating to $route" }
+      navController.navigate(route)
+      NotificationTapRouter.consume()
     }
   }
 }
+
+private val log = Logger.withTag("AppNavHelpers")

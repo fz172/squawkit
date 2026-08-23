@@ -79,9 +79,11 @@ kotlin {
 
       implementation(libs.androidx.navigation.compose)
       implementation(libs.jetbrains.lifecycle.viewmodel.compose)
+      implementation(libs.jetbrains.lifecycle.runtime.compose)
       implementation(libs.koin.compose)
       implementation(libs.koin.compose.viewmodel)
       implementation(libs.gitlive.firebase.auth)
+      implementation(libs.kermit)
     }
   }
 }

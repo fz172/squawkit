@@ -9,7 +9,6 @@ import dev.fanfly.wingslog.core.ui.adaptive.ShellSection
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.fleet.picker.data.SelectedAircraftStore
 import dev.fanfly.wingslog.feature.notifications.model.NotificationTapTarget
-import dev.fanfly.wingslog.feature.notifications.viewing.NotificationTapRouter
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
 import dev.fanfly.wingslog.feature.sync.data.SyncEngine
@@ -106,22 +105,26 @@ class AdaptiveShellViewModel(
           }
         }
     }
-    // Aircraft is the one NotificationTapTarget variant with no real nav-graph destination —
-    // AdaptiveShellViewModel handles it directly rather than through HandleNotificationTaps
-    // (feature/shell/AppNavHelpers.kt), since aircraft selection is app-level ViewModel state, not
-    // a navigation argument (design §5.3, and this class's own doc comment above). Referenced
-    // directly rather than constructor-injected, matching how RedeemViewModel reads
-    // AircraftShareDeepLinks.pendingInvite.
-    viewModelScope.launch {
-      NotificationTapRouter.pending.collect { target ->
-        if (target is NotificationTapTarget.Aircraft) {
-          selectAircraft(target.aircraftId)
-          target.tab?.toShellSection()
-            ?.let { selectSection(it) }
-          NotificationTapRouter.consume()
-        }
-      }
-    }
+  }
+
+  /**
+   * Aircraft is the one [NotificationTapTarget] variant with no real nav-graph destination —
+   * called from [AdaptiveShellRoute][dev.fanfly.wingslog.feature.shell.AdaptiveShellRoute] rather
+   * than handled through `HandleNotificationTaps` (`feature/shell/AppNavHelpers.kt`), since aircraft
+   * selection is app-level ViewModel state, not a navigation argument (design §5.3, and this
+   * class's own doc comment above).
+   *
+   * The call site — not this method — owns subscribing to `NotificationTapRouter.pending` and
+   * calling `consume()`, and must do so lifecycle-aware (`collectAsStateWithLifecycle`, matching
+   * `EmailLinkDeepLinks.pendingLink` in `AccountUpgradeFlow`), not a raw `.collect()`: this router
+   * is a process-wide singleton, and MainActivity is singleTask, but the OS has been observed
+   * briefly running two Activity instances for one tap (a backgrounded task momentarily coexisting
+   * with a freshly-started one before the system reconciles them). A collector that never pauses in
+   * the background can win that race and consume the target before the visible instance sees it.
+   */
+  fun onNotificationAircraftTap(target: NotificationTapTarget.Aircraft) {
+    selectAircraft(target.aircraftId)
+    target.tab?.toShellSection()?.let { selectSection(it) }
   }
 
   private fun String.toShellSection(): ShellSection? = when (this) {

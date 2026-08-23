@@ -12,12 +12,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.core.analytics.LocalAnalytics
 import dev.fanfly.wingslog.core.analytics.trackScreenViews
 import dev.fanfly.wingslog.core.nav.Screen
@@ -30,6 +32,8 @@ import dev.fanfly.wingslog.feature.aircraft.dashboard.ShellSectionFab
 import dev.fanfly.wingslog.feature.fleet.viewing.FleetEmptyState
 import dev.fanfly.wingslog.feature.login.upgrade.AccountUpgradeFlow
 import dev.fanfly.wingslog.feature.login.upgrade.AccountUpgradeViewModel
+import dev.fanfly.wingslog.feature.notifications.model.NotificationTapTarget
+import dev.fanfly.wingslog.feature.notifications.viewing.NotificationTapRouter
 import dev.fanfly.wingslog.feature.settings.SettingsContent
 import dev.fanfly.wingslog.feature.shell.viewmodel.AdaptiveShellViewModel
 import dev.fanfly.wingslog.feature.subscription.viewing.ProUpsellSheet
@@ -41,6 +45,8 @@ import org.koin.compose.viewmodel.koinViewModel
 import wingslog.core.sharedassets.generated.resources.dismiss
 import wingslog.core.sharedassets.generated.resources.sync_changes_discarded
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
+
+private val log = Logger.withTag("AdaptiveShellRoute")
 
 /**
  * The adaptive-shell destination body shared by every host: wires [AdaptiveShellViewModel]
@@ -107,6 +113,17 @@ fun AdaptiveShellRoute(
   // Work that was destroyed when a share ended (PRD D3 — the one data-loss window). Held open until
   // the user dismisses it: the purge typically runs while they are on another screen or the app is
   // backgrounded, and a message that times out unseen would leave them thinking the edit saved.
+  // Lifecycle-aware for the same reason as HandleNotificationTaps (AppNavHelpers.kt) — see its
+  // comment. selectAircraft/selectSection is the ViewModel's job; subscribing to the router and
+  // consuming is this composable's, since only it knows when it's actually visible.
+  val pendingTapTarget by NotificationTapRouter.pending.collectAsStateWithLifecycle()
+  LaunchedEffect(pendingTapTarget) {
+    val target = pendingTapTarget as? NotificationTapTarget.Aircraft ?: return@LaunchedEffect
+    log.i { "AdaptiveShellRoute: applying aircraft tap target=$target" }
+    viewModel.onNotificationAircraftTap(target)
+    NotificationTapRouter.consume()
+  }
+
   val notice by viewModel.notice.collectAsState()
   val dismissLabel = stringResource(CoreRes.string.dismiss)
   val discardedMessage = stringResource(

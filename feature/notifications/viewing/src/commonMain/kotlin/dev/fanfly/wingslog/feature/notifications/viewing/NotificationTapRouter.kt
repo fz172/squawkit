@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.notifications.viewing
 
+import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.feature.notifications.model.NotificationTapTarget
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -39,14 +40,18 @@ object NotificationTapRouter {
    */
   fun deliver(uri: String): Boolean {
     val target = decode(uri) ?: return false
+    log.i { "deliver: uri=$uri target=$target (was pending=${_pending.value})" }
     _pending.value = target
     return true
   }
 
   /** Called once a tap target has been acted on, so it isn't re-delivered on the next recomposition or relaunch. */
   fun consume() {
+    log.i { "consume: clearing pending=${_pending.value}" }
     _pending.value = null
   }
+
+  private val log = Logger.withTag("NotificationTapRouter")
 
   fun encode(target: NotificationTapTarget): String = when (target) {
     is NotificationTapTarget.Squawk -> "$SCHEME://$HOST/squawk/${target.aircraftId}/${target.squawkId}"
