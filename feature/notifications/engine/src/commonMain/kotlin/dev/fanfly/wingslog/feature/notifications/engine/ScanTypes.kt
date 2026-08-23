@@ -1,6 +1,6 @@
 package dev.fanfly.wingslog.feature.notifications.engine
 
-/** Enum trigger for [UrgencyScanner.scan] — only [MANUAL] has a caller today (design §6.6's other two land with P2.6-P2.8). */
+/** Enum trigger for [UrgencyScanner.scan] — [SESSION_BOUNDARY] is still uncalled (design §6.6, P2.8). */
 enum class ScanTrigger {
   MANUAL,
   SCHEDULED,

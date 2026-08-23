@@ -8,6 +8,7 @@ import dev.fanfly.wingslog.core.storage.TombstoneGc
 import dev.fanfly.wingslog.di.initKoin
 import dev.fanfly.wingslog.feature.ads.datamanager.impl.IosAdConsentBridge
 import dev.fanfly.wingslog.feature.ads.viewing.IosAdViewBridge
+import dev.fanfly.wingslog.feature.notifications.engine.BgTaskUrgencyScanScheduler
 import dev.fanfly.wingslog.feature.notifications.viewing.IosNotificationTapDelegate
 import dev.fanfly.wingslog.feature.sharing.datamanager.AircraftShareDeepLinks
 import dev.fanfly.wingslog.feature.sync.data.SyncEngine
@@ -217,5 +218,21 @@ object MainEntry {
     KoinPlatform.getKoin()
       .get<UrlSessionUploadScheduler>()
       .registerBgTasks()
+  }
+
+  /**
+   * Registers the N2 urgency scan's [BGAppRefreshTask] and submits the first request (design §5.4).
+   * Registration must happen before `application:didFinishLaunchingWithOptions:` returns, and the
+   * identifier `dev.fanfly.wingslog.urgency-scan` must appear in `Info.plist`'s
+   * `BGTaskSchedulerPermittedIdentifiers`.
+   *
+   * Submitting here rather than from a Koin `createdAtStart` single (which is what Android does)
+   * keeps the order right: a submission for an unregistered identifier is rejected.
+   */
+  fun registerUrgencyScanTask() {
+    val scheduler = KoinPlatform.getKoin()
+      .get<BgTaskUrgencyScanScheduler>()
+    scheduler.registerBgTask()
+    scheduler.ensureScheduled()
   }
 }

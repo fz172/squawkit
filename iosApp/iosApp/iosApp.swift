@@ -48,6 +48,9 @@ class AppDelegate: NSObject, UIApplicationDelegate {
     // the app is foregrounded. Also must be set before this method returns, or iOS drops the
     // response for a tap that cold-started the app — the case that matters most.
     MainEntry.shared.registerNotificationTapHandler()
+    // Register BGAppRefreshTask identifier "dev.fanfly.wingslog.urgency-scan" and submit the first
+    // request. Also before this method returns — BGTaskScheduler rejects a late registration.
+    MainEntry.shared.registerUrgencyScanTask()
     return true
   }
 

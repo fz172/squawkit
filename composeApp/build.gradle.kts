@@ -71,6 +71,9 @@ kotlin {
       implementation(project(":feature:ads:viewing"))
       // IosNotificationTapDelegate — installed from MainViewController.kt before launch finishes.
       implementation(project(":feature:notifications:viewing"))
+      // BgTaskUrgencyScanScheduler — its BGTaskScheduler identifier is registered from
+      // MainViewController.kt before launch finishes, same as the blob scan's.
+      implementation(project(":feature:notifications:engine"))
 
       implementation(libs.compose.ui)
       implementation(libs.material3)

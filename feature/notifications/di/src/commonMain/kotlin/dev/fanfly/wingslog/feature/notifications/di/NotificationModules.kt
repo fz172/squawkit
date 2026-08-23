@@ -3,6 +3,7 @@ package dev.fanfly.wingslog.feature.notifications.di
 import dev.fanfly.wingslog.feature.notifications.datamanager.di.notificationPrefsModule
 import dev.fanfly.wingslog.feature.notifications.devoptions.di.notificationDevOptionsModule
 import dev.fanfly.wingslog.feature.notifications.engine.di.notificationEngineModule
+import dev.fanfly.wingslog.feature.notifications.engine.di.platformNotificationEngineModule
 import dev.fanfly.wingslog.feature.notifications.permission.di.platformNotificationPermissionModule
 import dev.fanfly.wingslog.feature.notifications.settings.di.notificationSettingsModule
 import dev.fanfly.wingslog.feature.notifications.viewing.di.platformNotificationDisplayModule
@@ -24,6 +25,7 @@ val notificationsModule: Module = module {
     notificationPrefsModule,
     notificationSettingsModule,
     notificationEngineModule,
+    platformNotificationEngineModule,
     notificationDevOptionsModule,
   )
 }
