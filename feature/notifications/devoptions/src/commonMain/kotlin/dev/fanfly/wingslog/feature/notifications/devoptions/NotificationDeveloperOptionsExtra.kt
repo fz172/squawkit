@@ -48,6 +48,7 @@ import wingslog.feature.notifications.devoptions.generated.resources.notificatio
 import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_scan_now_action
 import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_scan_now_title
 import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_scan_result_completed
+import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_scan_result_debounced
 import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_scan_result_disabled
 import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_scan_result_no_permission
 import wingslog.feature.notifications.devoptions.generated.resources.notifications_devoptions_scan_result_no_user
@@ -195,6 +196,7 @@ class NotificationDeveloperOptionsExtra(
   @Composable
   private fun ScanResult.toLabel(): String = when (this) {
     ScanResult.NoUser -> stringResource(Res.string.notifications_devoptions_scan_result_no_user)
+    ScanResult.Debounced -> stringResource(Res.string.notifications_devoptions_scan_result_debounced)
     ScanResult.PrefsUnresolved -> stringResource(Res.string.notifications_devoptions_scan_result_prefs_unresolved)
     ScanResult.Disabled -> stringResource(Res.string.notifications_devoptions_scan_result_disabled)
     ScanResult.NoPermission -> stringResource(Res.string.notifications_devoptions_scan_result_no_permission)
