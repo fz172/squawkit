@@ -5,6 +5,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.widget.RemoteViews
 import androidx.core.app.NotificationChannelCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -47,11 +48,11 @@ class AndroidLocalNotifier(
       NotificationCompat.Builder(context, notification.channel.channelId())
         .setSmallIcon(R.drawable.ic_notification)
         .setContentTitle(notification.title)
-        .setContentText(notification.body)
-        .setStyle(
-          NotificationCompat.BigTextStyle()
-            .bigText(notification.body)
-        )
+        // Collapsed is a single-line slot, so give it the first paragraph rather than the whole
+        // body flattened into a run-on sentence with the tap hint trailing off the end.
+        .setContentText(notification.body.substringBefore(PARAGRAPH_BREAK))
+        .setStyle(NotificationCompat.DecoratedCustomViewStyle())
+        .setCustomBigContentView(expandedContent(notification.title, notification.body))
         .setAutoCancel(true)
         .setPriority(
           if (notification.highPriority) NotificationCompat.PRIORITY_HIGH
@@ -72,6 +73,24 @@ class AndroidLocalNotifier(
   override suspend fun cancel(id: String) {
     manager.cancel(id, NOTIFY_ID)
   }
+
+  /**
+   * The expanded title + body, as a view we own rather than `BigTextStyle`.
+   *
+   * `BigTextStyle` cannot render the paragraph breaks the bodies are written with: the platform
+   * collapses consecutive newlines in `EXTRA_BIG_TEXT`, so `a\n\nb` and `a\nb` render identically.
+   * That was measured on-device against a framework-built notification carrying byte-identical
+   * text, and no filler survives it either — U+00A0, U+200B and U+2007 all collapse the same way.
+   * A `TextView` we own is not subject to that, so [body] goes in verbatim, blank lines and all.
+   *
+   * `DecoratedCustomViewStyle` keeps the system header, icon, timestamp and expand affordance, so
+   * this opts out of the text block only — not out of the notification template.
+   */
+  private fun expandedContent(title: String, body: String): RemoteViews =
+    RemoteViews(context.packageName, R.layout.notification_urgency_body).apply {
+      setTextViewText(R.id.notification_urgency_title, title)
+      setTextViewText(R.id.notification_urgency_body_text, body)
+    }
 
   /**
    * `getLaunchIntentForPackage` rather than a direct `MainActivity` reference — `:viewing` cannot
@@ -127,5 +146,12 @@ class AndroidLocalNotifier(
 
     /** Fixed — the `tag` (per-notification id string) is what makes a slot unique, not this. */
     private const val NOTIFY_ID = 0
+
+    /**
+     * How `engine` separates paragraphs in a body (design §6.5). Split on it for the collapsed
+     * one-liner, flatten it for the expanded view — see [expandedBody] for why it cannot survive
+     * as a blank line.
+     */
+    private const val PARAGRAPH_BREAK = "\n\n"
   }
 }
