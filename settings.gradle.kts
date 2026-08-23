@@ -100,6 +100,7 @@ include(":feature:ads:sharedassets")
 include(":feature:ads:viewing")
 
 include(":feature:notifications:model")
+include(":feature:notifications:analytics")
 include(":feature:notifications:permission")
 include(":feature:notifications:viewing")
 include(":feature:notifications:datamanager")

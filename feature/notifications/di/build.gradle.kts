@@ -38,6 +38,7 @@ kotlin {
   // contributes a Koin module; contains no business logic of its own.
   sourceSets {
     commonMain.dependencies {
+      implementation(project(":feature:notifications:analytics"))
       implementation(project(":feature:notifications:permission"))
       implementation(project(":feature:notifications:viewing"))
       implementation(project(":feature:notifications:datamanager"))

@@ -3,6 +3,7 @@ package dev.fanfly.wingslog.feature.notifications.engine
 import app.cash.sqldelight.async.coroutines.awaitAsOneOrNull
 import dev.fanfly.wingslog.core.storage.DatabaseWriteLock
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
+import dev.fanfly.wingslog.feature.notifications.model.ScanTrigger
 import kotlin.time.Instant
 
 /**

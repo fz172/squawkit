@@ -47,6 +47,7 @@ kotlin {
       implementation(project(":feature:sharing:datamanager"))
       implementation(project(":feature:sync:data"))
       implementation(project(":feature:notifications:model"))
+      implementation(project(":feature:notifications:analytics"))
       implementation(project(":feature:notifications:permission"))
       implementation(project(":feature:notifications:viewing"))
       implementation(project(":feature:notifications:datamanager"))

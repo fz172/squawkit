@@ -28,9 +28,9 @@ import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.developeroptions.plugin.DeveloperOptionsExtra
 import dev.fanfly.wingslog.feature.notifications.engine.ScanRecord
 import dev.fanfly.wingslog.feature.notifications.engine.ScanResult
-import dev.fanfly.wingslog.feature.notifications.engine.ScanTrigger
 import dev.fanfly.wingslog.feature.notifications.engine.UrgencyScanDiagnostics
 import dev.fanfly.wingslog.feature.notifications.engine.UrgencyScanner
+import dev.fanfly.wingslog.feature.notifications.model.ScanTrigger
 import dev.fanfly.wingslog.feature.notifications.permission.NotificationPermission
 import dev.fanfly.wingslog.feature.notifications.permission.PermissionState
 import kotlinx.coroutines.CoroutineScope

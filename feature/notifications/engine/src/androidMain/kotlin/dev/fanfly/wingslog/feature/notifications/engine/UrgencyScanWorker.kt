@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import co.touchlab.kermit.Logger
+import dev.fanfly.wingslog.feature.notifications.model.ScanTrigger
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 

@@ -5,6 +5,7 @@ import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.storage.createWingsLogDatabase
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
+import dev.fanfly.wingslog.feature.notifications.model.ScanTrigger
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test

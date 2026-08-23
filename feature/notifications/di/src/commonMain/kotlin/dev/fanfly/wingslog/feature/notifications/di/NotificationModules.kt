@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.notifications.di
 
+import dev.fanfly.wingslog.feature.notifications.analytics.di.notificationAnalyticsModule
 import dev.fanfly.wingslog.feature.notifications.datamanager.di.notificationPrefsModule
 import dev.fanfly.wingslog.feature.notifications.devoptions.di.notificationDevOptionsModule
 import dev.fanfly.wingslog.feature.notifications.engine.di.notificationEngineModule
@@ -24,6 +25,8 @@ val notificationsModule: Module = module {
     platformNotificationDisplayModule,
     notificationPrefsModule,
     notificationSettingsModule,
+    // Ahead of the engine module: the scanner consumes the telemetry, not the reverse.
+    notificationAnalyticsModule,
     notificationEngineModule,
     platformNotificationEngineModule,
     notificationDevOptionsModule,

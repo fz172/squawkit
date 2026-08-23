@@ -6,6 +6,7 @@ import dev.fanfly.wingslog.core.storage.EntityStoreFactory
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
+import dev.fanfly.wingslog.feature.notifications.analytics.UrgencyTelemetry
 import dev.fanfly.wingslog.feature.notifications.datamanager.NotificationPrefsManager
 import dev.fanfly.wingslog.feature.notifications.engine.LastScanStore
 import dev.fanfly.wingslog.feature.notifications.engine.SessionBoundaryScanTrigger
@@ -35,6 +36,7 @@ val notificationEngineModule: Module = module {
       watermarkStore = get<UrgencyWatermarkStore>(),
       notifier = get<LocalNotifier>(),
       lastScanStore = get<LastScanStore>(),
+      telemetry = get<UrgencyTelemetry>(),
     )
   }
   single {
