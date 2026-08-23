@@ -61,6 +61,7 @@ import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalNavPillClearance
 import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
+import dev.fanfly.wingslog.core.ui.common.compose.jumpTargetHighlight
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.ads.datamanager.AdsManager
 import dev.fanfly.wingslog.feature.ads.model.AdSurface
@@ -369,6 +370,9 @@ fun MaintenanceLogListContent(
                     is ListRow.Item -> MaintenanceLogCard(
                       log = row.value,
                       onClick = { onLogClick(row.value) },
+                      modifier = Modifier.jumpTargetHighlight(
+                        active = row.value.id == scrollToLogId,
+                      ),
                     )
                   }
                 }

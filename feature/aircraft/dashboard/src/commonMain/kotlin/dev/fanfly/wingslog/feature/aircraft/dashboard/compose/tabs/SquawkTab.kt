@@ -33,6 +33,7 @@ import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalNavPillClearance
 import dev.fanfly.wingslog.core.ui.common.compose.DualSegmentedFilter
 import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
+import dev.fanfly.wingslog.core.ui.common.compose.jumpTargetHighlight
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.ads.datamanager.AdsManager
 import dev.fanfly.wingslog.feature.ads.model.AdSurface
@@ -188,19 +189,21 @@ fun SquawkTab(
 
           is ListRow.Item -> {
             val item = row.value
+            val isJumpTarget = item.squawk.id == scrollToSquawkId
             SquawkCard(
               item = item,
               onClick = { onAction(AircraftOverviewAction.ShowSquawkDetail(item)) },
               modifier = Modifier.fillMaxWidth()
                 .then(
-                  if (item.squawk.id == scrollToSquawkId) {
+                  if (isJumpTarget) {
                     Modifier.onGloballyPositioned {
                       targetCardY = it.positionInRoot().y
                     }
                   } else {
                     Modifier
                   }
-                ),
+                )
+                .jumpTargetHighlight(active = isJumpTarget),
             )
           }
         }

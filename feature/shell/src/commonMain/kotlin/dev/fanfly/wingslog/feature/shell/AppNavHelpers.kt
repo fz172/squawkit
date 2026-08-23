@@ -42,3 +42,9 @@ fun TrackRootScreenViews(
     )
   }
 }
+
+// A notification tap has no helper here on purpose: no variant navigates any more. Every one of them
+// lands the pilot on a record inside a shell section, which is ViewModel state rather than a route,
+// so AdaptiveShellRoute applies the whole thing (design §5.3). That also removes the need for the
+// auth gate this used to carry — the shell composes only after the auth graph hands off, so a tap
+// that cold-starts the app stays pending until there is somewhere to put it.

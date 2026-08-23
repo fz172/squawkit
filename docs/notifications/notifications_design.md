@@ -479,26 +479,57 @@ sealed interface NotificationTapTarget {
 }
 ```
 
-`NotificationTapRouter` in `viewing` converts one to a `Screen` route
-(`Screen.EditSquawk.createRoute(...)` and friends already exist in `core/nav/Screen.kt`; `core:nav`
-is core, so the rule in §3 permits it). Tapping is the return leg of display, so it belongs with the
-notifier that posted the thing being tapped. It emits
-onto a `MutableSharedFlow<String>` that `ShellNavGraph` collects — the same shape
-`EmailLinkDeepLinks.pendingLink` uses, so cold start (target buffered until the graph composes) and
-warm tap (delivered immediately) both work without a second mechanism.
+`NotificationTapRouter` in `viewing` carries the target into the running app. Tapping is the return
+leg of display, so it belongs with the notifier that posted the thing being tapped. It holds a
+`StateFlow<NotificationTapTarget?>` that the shell collects — the same shape
+`EmailLinkDeepLinks.pendingLink` uses, so cold start (target retained until the shell composes) and
+warm tap (delivered immediately) both work without a second mechanism. It travels between process
+entry point and shell as a `wingslog://notification-tap/…` URI, so it can arrive through the same
+host deep-link chain as a share invite or a sign-in link.
 
-Two routes do not exist yet and are needed for the coalesced/summary bodies, which land on a *list*
-rather than a record:
+**No tap navigates. Every tap moves shell state**, as of 2026-08-23:
 
-```kotlin
-data object AircraftTabDeepLink : Screen("aircraft/{$AIRCRAFT_ID}?tab={tab}&tier={tier}") { … }
-```
+| Target | Aircraft | Section | Then |
+|:--|:--|:--|:--|
+| `Squawk` | selected | Squawks | scroll to the card, brief highlight |
+| `Task` | selected | Tasks | scroll to the card, brief highlight |
+| `Log` | selected | Logs | scroll to the row, brief highlight |
+| `Aircraft` (summary) | selected | from `tab` | — no single record to point at |
 
-`tier` is optional and pre-filters the task list to Overdue or Due Soon, satisfying PRD §6.6
-("Tapping a summary opens that aircraft's task list filtered to the tier").
+This replaces an earlier sketch in which the record variants pushed `Screen.EditSquawk` and friends,
+and the summary needed a new `AircraftTabDeepLink` route. Two reasons it changed, the second
+decisive:
+
+- **A notification reports that something changed; it is not a request to edit it.** Opening the
+  editor presumes an intent the pilot has not expressed, and puts an unsaved-changes guard between
+  them and what was meant to be a glance. Landing on the record in its list shows it *and* what sits
+  around it — the neighbouring overdue items that give it its meaning.
+- **Aircraft selection and section are not navigation arguments in this app** and deliberately never
+  will be (see `AdaptiveShellViewModel`, `docs/web/web_adaptive_layout_design.html` §6). A route
+  carrying them would have to fight the shell rather than drive it, and the summary case had no
+  destination at all without inventing one.
+
+So `AdaptiveShellViewModel.onNotificationTap` applies all four variants: `selectAircraft`, then
+`selectSection`, then for a record variant a `pendingScrollTargetId` the section body reads and
+clears. The scroll target reaches the list through the *same* `scrollTo…Id` parameter the in-app
+jumps already used (a log's Affected Tasks / Resolved Squawks), so both paths share one
+implementation — including `Modifier.jumpTargetHighlight` in `core:ui`, which the in-app jumps now
+get too. That wash is deliberately not a Material ripple: a ripple acknowledges a touch, and the
+pilot did not touch the card the app scrolled them to.
+
+Because the shell destination composes only after the auth graph hands off, a tap that cold-starts
+the app needs no gate of its own — the target simply stays pending until there is somewhere to put
+it. That also covers a signed-out recipient: the target survives sign-in and lands afterwards.
+
+PRD §6.6 ("Tapping a summary opens that aircraft's task list filtered to the tier") is satisfied
+apart from the tier pre-filter, which is not yet implemented — the summary lands on the right
+aircraft and the right section, unfiltered.
 
 **Tap-through must degrade, not crash.** A revoked share, a deleted record, or a device that has not
-synced yet all produce "no longer available" and land on the fleet (PRD §12).
+synced yet all produce "no longer available" and land on the fleet (PRD §12). The router does not
+pre-check that a record resolves — it cannot, without `viewing` reaching into a feature datamanager
+(§3) — and it does not need to: a scroll target that matches nothing scrolls nowhere and highlights
+nothing, leaving the pilot on the right aircraft's list.
 
 **The router does not pre-check that the record resolves.** An earlier draft had it do so; the module
 rule in §3 forbids it — resolving a squawk id means `feature:squawk:datamanager`, which `viewing` may

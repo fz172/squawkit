@@ -66,6 +66,15 @@ fun ShellSectionBody(
   aircraftId: String?,
   navController: NavController,
   onNavigateToSection: (ShellSection) -> Unit,
+  /**
+   * A record the host wants scrolled to and highlighted in [section]'s list — currently a tapped
+   * urgency notification (notifications design §5.3). Interpreted against [section], which the host
+   * sets to match the record's kind, so this needs no type of its own. [onScrollTargetConsumed] is
+   * called once it has been handed to the list, so the host can drop it and not re-trigger the jump
+   * every time the pilot returns to this section.
+   */
+  scrollToRecordId: String? = null,
+  onScrollTargetConsumed: () -> Unit = {},
 ) {
   if (aircraftId != null) {
     AircraftSectionContent(
@@ -73,6 +82,8 @@ fun ShellSectionBody(
       section = section,
       navController = navController,
       onNavigateToSection = onNavigateToSection,
+      scrollToRecordId = scrollToRecordId,
+      onScrollTargetConsumed = onScrollTargetConsumed,
     )
   } else {
     Box(
@@ -177,6 +188,9 @@ fun AircraftSectionContent(
   section: ShellSection,
   navController: NavController,
   onNavigateToSection: (ShellSection) -> Unit = {},
+  /** See [ShellSectionBody]'s parameter of the same name. */
+  scrollToRecordId: String? = null,
+  onScrollTargetConsumed: () -> Unit = {},
 ) {
   val viewModel: AircraftOverviewViewModel =
     koinViewModel(key = aircraftId, parameters = { parametersOf(aircraftId) })
@@ -221,6 +235,22 @@ fun AircraftSectionContent(
   }
   LaunchedEffect(section) {
     if (section != ShellSection.SQUAWKS) pendingSquawkScrollTarget = null
+  }
+
+  // A jump requested by the host (a tapped urgency notification) feeds the very same per-section
+  // state as an in-app jump, so both reach the list — and the highlight — by one path. The host has
+  // already switched [section] to match the record's kind, which is what says which list to aim at.
+  // Ordered after the clear-on-leave effects above so it wins when both run for the same section.
+  LaunchedEffect(scrollToRecordId, section) {
+    val id = scrollToRecordId ?: return@LaunchedEffect
+    when (section) {
+      ShellSection.TASKS -> pendingTaskScrollTarget = id
+      ShellSection.SQUAWKS -> pendingSquawkScrollTarget = id
+      ShellSection.LOGS -> pendingLogScrollTarget = id
+      // Nothing to scroll to in a section with no record list; drop it rather than stranding it.
+      ShellSection.DASHBOARD, ShellSection.SETTINGS -> Unit
+    }
+    onScrollTargetConsumed()
   }
 
   // Single navigation entry point: intercept the navigation actions and drive the host navController

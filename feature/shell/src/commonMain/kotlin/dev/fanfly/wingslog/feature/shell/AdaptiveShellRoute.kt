@@ -12,6 +12,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
@@ -30,6 +31,8 @@ import dev.fanfly.wingslog.feature.aircraft.dashboard.ShellSectionFab
 import dev.fanfly.wingslog.feature.fleet.viewing.FleetEmptyState
 import dev.fanfly.wingslog.feature.login.upgrade.AccountUpgradeFlow
 import dev.fanfly.wingslog.feature.login.upgrade.AccountUpgradeViewModel
+import dev.fanfly.wingslog.feature.notifications.model.NotificationTapTarget
+import dev.fanfly.wingslog.feature.notifications.viewing.NotificationTapRouter
 import dev.fanfly.wingslog.feature.settings.SettingsContent
 import dev.fanfly.wingslog.feature.shell.viewmodel.AdaptiveShellViewModel
 import dev.fanfly.wingslog.feature.subscription.viewing.ProUpsellSheet
@@ -107,6 +110,18 @@ fun AdaptiveShellRoute(
   // Work that was destroyed when a share ended (PRD D3 — the one data-loss window). Held open until
   // the user dismisses it: the purge typically runs while they are on another screen or the app is
   // backgrounded, and a message that times out unseen would leave them thinking the edit saved.
+  // Every notification tap moves shell state (aircraft, section, and for a single record the card to
+  // scroll to) rather than navigating, so all of it is applied here. Handling it from inside this
+  // route needs no auth gate of its own: the shell destination only composes once the auth graph has
+  // handed off, so a tap that cold-started the app simply stays pending until then.
+  val pendingTapTarget by NotificationTapRouter.pending.collectAsStateWithLifecycle()
+  LaunchedEffect(pendingTapTarget) {
+    val target = pendingTapTarget ?: return@LaunchedEffect
+    viewModel.onNotificationTap(target)
+    NotificationTapRouter.consume()
+  }
+  val scrollTargetId by viewModel.pendingScrollTargetId.collectAsStateWithLifecycle()
+
   val notice by viewModel.notice.collectAsState()
   val dismissLabel = stringResource(CoreRes.string.dismiss)
   val discardedMessage = stringResource(
@@ -145,6 +160,8 @@ fun AdaptiveShellRoute(
           aircraftId = aircraftId,
           navController = navController,
           onNavigateToSection = viewModel::selectSection,
+          scrollToRecordId = scrollTargetId,
+          onScrollTargetConsumed = viewModel::consumeScrollTarget,
         )
       }
     },

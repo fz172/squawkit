@@ -305,7 +305,7 @@ class UrgencyScanner(
       body = body,
       highPriority = tier == UrgencyTier.GROUNDED || tier == UrgencyTier.OVERDUE,
       tapTarget = single?.tapTarget
-        ?: NotificationTapTarget.Aircraft(aircraftId),
+        ?: NotificationTapTarget.Aircraft(aircraftId, tab = tier.toAircraftTab()),
     )
   }
 
@@ -341,6 +341,16 @@ class UrgencyScanner(
       2 -> Res.string.squawk_priority_label_medium
       else -> Res.string.squawk_priority_label_high
     }
+
+  // NotificationTapTarget.Aircraft.tab wire values (design §5.3 / P2.9) — a summary notification
+  // with no single record to point at still tells NotificationTapRouter which shell section to land
+  // on (PRD §6.6: "tapping a summary opens that aircraft's task list filtered to the tier"). Plain
+  // strings, not ShellSection directly: :engine cannot depend on core:ui:adaptive, and
+  // AdaptiveShellViewModel is what actually interprets these.
+  private fun UrgencyTier.toAircraftTab(): String = when (this) {
+    UrgencyTier.GROUNDED, UrgencyTier.PRIORITY_RAISED -> "squawks"
+    UrgencyTier.OVERDUE, UrgencyTier.DUE_SOON -> "tasks"
+  }
 
   private fun UrgencyTier.titleRes() = when (this) {
     UrgencyTier.GROUNDED -> Res.string.notification_title_grounded

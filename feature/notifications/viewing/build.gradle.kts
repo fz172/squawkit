@@ -48,12 +48,12 @@ kotlin {
       implementation(libs.compose.runtime)
       implementation(libs.kotlinx.coroutines.core)
       implementation(libs.koin.core)
+      implementation(libs.kermit)
     }
     androidMain.dependencies {
       // NotificationManagerCompat / NotificationChannel / NotificationCompat.Builder.
       implementation(libs.androidx.core.ktx)
       implementation(libs.koin.android)
-      implementation(libs.kermit)
     }
   }
 }

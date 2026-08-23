@@ -1,7 +1,10 @@
 package dev.fanfly.wingslog.feature.notifications.viewing
 
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import androidx.core.app.NotificationChannelCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -54,6 +57,7 @@ class AndroidLocalNotifier(
           if (notification.highPriority) NotificationCompat.PRIORITY_HIGH
           else NotificationCompat.PRIORITY_DEFAULT
         )
+        .setContentIntent(tapPendingIntent(notification))
     try {
       manager.notify(notification.id, NOTIFY_ID, builder.build())
     } catch (e: SecurityException) {
@@ -67,6 +71,28 @@ class AndroidLocalNotifier(
 
   override suspend fun cancel(id: String) {
     manager.cancel(id, NOTIFY_ID)
+  }
+
+  /**
+   * `getLaunchIntentForPackage` rather than a direct `MainActivity` reference — `:viewing` cannot
+   * depend on the `app` module (wrong direction; §3), and this is the standard way to target "this
+   * app's launcher activity" without one. `MainActivity.handleDeepLink` decodes the URI via
+   * [NotificationTapRouter], the same chain `AircraftShareDeepLinks`/`EmailLinkDeepLinks` already use
+   * (design §5.3). `null` (no launcher found) means [NotificationCompat.Builder.setContentIntent]
+   * gets a no-op — same tray entry, just not tappable, rather than a crash.
+   */
+  private fun tapPendingIntent(notification: PendingNotification): PendingIntent? {
+    val launchIntent = context.packageManager.getLaunchIntentForPackage(context.packageName)
+      ?: return null
+    launchIntent.action = Intent.ACTION_VIEW
+    launchIntent.data = Uri.parse(NotificationTapRouter.encode(notification.tapTarget))
+    launchIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+    return PendingIntent.getActivity(
+      context,
+      notification.id.hashCode(),
+      launchIntent,
+      PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+    )
   }
 
   private fun NotificationChannel.channelId(): String = when (this) {

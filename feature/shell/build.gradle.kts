@@ -69,12 +69,17 @@ kotlin {
       implementation(project(":feature:sync:data"))
       implementation(project(":feature:sync:settings"))
       implementation(project(":feature:notifications:settings"))
+      // NotificationTapRouter (design §5.3) — HandleNotificationTaps navigates for Squawk/Task/Log;
+      // AdaptiveShellViewModel handles Aircraft itself.
+      implementation(project(":feature:notifications:viewing"))
+      implementation(project(":feature:notifications:model"))
       implementation(project(":feature:tasks:update"))
       implementation(project(":feature:technician:datamanager"))
       implementation(project(":feature:technician:manage"))
 
       implementation(libs.androidx.navigation.compose)
       implementation(libs.jetbrains.lifecycle.viewmodel.compose)
+      implementation(libs.jetbrains.lifecycle.runtime.compose)
       implementation(libs.koin.compose)
       implementation(libs.koin.compose.viewmodel)
       implementation(libs.gitlive.firebase.auth)
