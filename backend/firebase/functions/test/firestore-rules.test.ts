@@ -130,3 +130,66 @@ describe("entitlement_reconcile/{uid} rules", () => {
     );
   });
 });
+
+// N1 push token registry (notifications_design.md §7.1). No rule of its own: the own-tree rule
+// already grants exactly "a user reads and writes only their own", and the default-deny catch-all
+// covers everyone else. These cases exist to prove that reading is right — a token leaking to
+// another account would let them be told what a stranger's mechanic is doing.
+describe("users/{uid}/push_devices rules", () => {
+  it("lets a user register and read their own device token", async () => {
+    const alice = testEnv.authenticatedContext("alice").firestore();
+    await assertSucceeds(
+      setDoc(doc(alice, "users/alice/push_devices/install-1"), {
+        token: "tok-a",
+        platform: "android",
+        appVersion: "1.0.0",
+        enabled: true,
+      }),
+    );
+    await assertSucceeds(getDoc(doc(alice, "users/alice/push_devices/install-1")));
+  });
+
+  it("denies reading another user's tokens", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "users/alice/push_devices/install-1"), { token: "tok-a" });
+    });
+    const bob = testEnv.authenticatedContext("bob").firestore();
+    await assertFails(getDoc(doc(bob, "users/alice/push_devices/install-1")));
+  });
+
+  it("denies planting a token in another user's registry", async () => {
+    // Not a theoretical hazard: a token written into someone else's tree would redirect that
+    // account's notifications — squawk titles and collaborator names — to the attacker's device.
+    const bob = testEnv.authenticatedContext("bob").firestore();
+    await assertFails(
+      setDoc(doc(bob, "users/alice/push_devices/install-evil"), { token: "tok-bob" }),
+    );
+  });
+});
+
+// The N1 counter and the hourly ceiling (§7.4). Both are function-only, and both matter: a client
+// that could write the counter could forge a session start and overwrite another member's tray
+// entry, and one that could write the rate document could raise its own cap.
+describe("notification_activity and notification_rate rules", () => {
+  it("denies a signed-in user reading or writing the activity counter", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "notification_activity/ac1__task__alice"), {
+        writeCount: 1,
+      });
+    });
+    const alice = testEnv.authenticatedContext("alice").firestore();
+    await assertFails(getDoc(doc(alice, "notification_activity/ac1__task__alice")));
+    await assertFails(
+      setDoc(doc(alice, "notification_activity/ac1__task__alice"), { writeCount: 0 }),
+    );
+  });
+
+  it("denies a signed-in user reading or resetting the hourly send ceiling", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "notification_rate/ac1__2026082402"), { sendCount: 60 });
+    });
+    const alice = testEnv.authenticatedContext("alice").firestore();
+    await assertFails(getDoc(doc(alice, "notification_rate/ac1__2026082402")));
+    await assertFails(setDoc(doc(alice, "notification_rate/ac1__2026082402"), { sendCount: 0 }));
+  });
+});

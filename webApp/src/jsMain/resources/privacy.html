@@ -122,7 +122,7 @@
     <header>
         <div class="eyebrow">SquawkIt</div>
         <h1>Privacy Notice</h1>
-        <p class="updated">Last updated: 16 August 2026</p>
+        <p class="updated">Last updated: 24 August 2026</p>
     </header>
 
     <p class="lede">
@@ -240,7 +240,37 @@
         AOG, that decision is made on your device from the records already stored there, and the
         notification is posted by your device. No server watches your records to produce these
         alerts, and nothing about the aircraft, task, or squawk is sent anywhere in order to show
-        one. They work with no account, no cloud sync, and no network connection.
+        one. They work with no account, no cloud sync, and no network connection. The one exception
+        is described next, and it applies only to aircraft you share with someone else.
+    </p>
+
+    <p>
+        <strong>Shared-aircraft notifications use push services.</strong> If you share an aircraft,
+        SquawkIt can tell you when another member changes something on it. Your device may be asleep
+        when that happens, so unlike the alerts above these are produced by our backend and delivered
+        through Apple Push Notification service and Firebase Cloud Messaging. Two consequences worth
+        stating plainly:
+    </p>
+    <ul>
+        <li>
+            We register a <strong>push token</strong> for each device you sign in on, so we know
+            where to send them. Tokens are deleted when you sign out of that device and when you
+            delete your account.
+        </li>
+        <li>
+            The message we hand to the push service carries the aircraft tail number, the other
+            member's display name, how many changes they made, and — when a squawk is raised to high
+            priority or AOG — that squawk's title. This is the only place SquawkIt passes your
+            content to a service outside Firebase, which is why these messages are kept short and
+            deliberately carry no attachments, certificate details, maintenance log contents, or
+            record descriptions.
+        </li>
+    </ul>
+    <p>
+        You control this in <em>Settings &rarr; Notifications</em>, by class (aircraft, squawks,
+        tasks, logbook, and the urgency classes) or with the master switch, and separately per
+        device. Switching a class off stops the message being sent at all, not merely hidden on
+        arrival. Aircraft you have not shared with anyone generate no push notifications of any kind.
     </p>
 
     <h2>4. Data exports</h2>

@@ -40,6 +40,15 @@ import {
  * already happens when a host deletes an aircraft (`onAircraftDeleted`): the data lives in the
  * host's tree, so it cannot outlive the host. Members are tombstoned rather than silently dropped,
  * which is what tells their devices to purge the local copy.
+ *
+ * ## Push tokens
+ *
+ * `users/{uid}/push_devices` goes with the rest of the tree in the `recursiveDelete` below — no
+ * separate step, because that call already takes every subcollection. It is named here because it
+ * is a **requirement**, not an incidental (notifications_design.md §12.3): a surviving token keeps
+ * a deleted account's device receiving notifications about aircraft it no longer has any claim on,
+ * and there would be no account left to switch them off from. `delete-account.test.ts` asserts it
+ * rather than trusting the reading.
  */
 export const deleteMyAccount = onCall<void, Promise<{ ok: true }>>(
   { region: FUNCTION_REGION, enforceAppCheck: true },

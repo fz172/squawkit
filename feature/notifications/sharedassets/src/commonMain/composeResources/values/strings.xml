@@ -52,6 +52,16 @@
   <string name="notification_n1_section_squawks_lower">squawks</string>
   <string name="notification_n1_section_tasks_lower">tasks</string>
   <string name="notification_n1_section_logbook_lower">logbook entries</string>
+  <!-- Aircraft-record activity (make/model/tail edits). Server-side N1 only — the web detector does
+       not cover the Aircraft record, so these are unused there. -->
+  <string name="notification_n1_section_aircraft">Aircraft</string>
+  <string name="notification_n1_section_aircraft_lower">the aircraft</string>
+
+  <!-- Sent once when an aircraft trips the hourly send ceiling (design §7.4), after which N1 goes
+       quiet for the rest of the hour. Deliberately reports a volume and names no record: the whole
+       point is that there are too many to summarize honestly. -->
+  <string name="notification_n1_title_high_volume">%1$s · A lot of activity</string>
+  <string name="notification_n1_body_high_volume">Too many changes to list. Open the aircraft to catch up.</string>
 
   <!-- The "from" side of notification_body_priority_raised_single's "from X to Y" — a squawk can
        escalate from resolved (reopened) or from any open rank below High. -->
