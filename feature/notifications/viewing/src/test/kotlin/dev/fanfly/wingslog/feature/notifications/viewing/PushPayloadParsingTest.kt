@@ -10,7 +10,7 @@ import org.junit.Test
  * `backend/firebase/functions/src/notifications/pushMessages.ts` actually sends — if those drift
  * apart, N1 arrives as a blank tray entry, and nothing else in either codebase would notice.
  */
-class N1PushMessageTest {
+class PushPayloadParsingTest {
 
   /** An activity summary, exactly as `activityPushData` builds it. */
   private fun activityData(
@@ -32,7 +32,7 @@ class N1PushMessageTest {
 
   @Test
   fun `parses an activity summary`() {
-    val parsed = N1PushMessage.parse(activityData())!!
+    val parsed = PushPayload.parse(activityData())!!
 
     assertThat(parsed.notificationId).isEqualTo("n1:ac-1:task:actor-1:3")
     assertThat(parsed.channel).isEqualTo(NotificationChannel.COLLABORATION)
@@ -45,7 +45,7 @@ class N1PushMessageTest {
 
   @Test
   fun `parses an escalation, which lands on the record rather than the list`() {
-    val parsed = N1PushMessage.parse(
+    val parsed = PushPayload.parse(
       mapOf(
         "class" to "urgency",
         "channel" to "GROUNDED",
@@ -72,14 +72,14 @@ class N1PushMessageTest {
   fun `maps the server's URGENCY onto the client's URGENCY_UPDATE`() {
     // The one name the two sides spell differently. Getting this wrong routes a priority-raise
     // through the collaboration channel, which has the wrong importance and the wrong OS toggle.
-    val parsed = N1PushMessage.parse(activityData(mapOf("channel" to "URGENCY")))!!
+    val parsed = PushPayload.parse(activityData(mapOf("channel" to "URGENCY")))!!
 
     assertThat(parsed.channel).isEqualTo(NotificationChannel.URGENCY_UPDATE)
   }
 
   @Test
   fun `falls back to COLLABORATION for an unknown channel rather than dropping the message`() {
-    val parsed = N1PushMessage.parse(activityData(mapOf("channel" to "SOMETHING_NEW")))!!
+    val parsed = PushPayload.parse(activityData(mapOf("channel" to "SOMETHING_NEW")))!!
 
     assertThat(parsed.channel).isEqualTo(NotificationChannel.COLLABORATION)
   }
@@ -87,36 +87,36 @@ class N1PushMessageTest {
   @Test
   fun `reads highPriority as the string it arrives as`() {
     // FCM data values are always strings. A Boolean-typed read would be false for every message.
-    assertThat(N1PushMessage.parse(activityData(mapOf("highPriority" to "true")))!!.highPriority)
+    assertThat(PushPayload.parse(activityData(mapOf("highPriority" to "true")))!!.highPriority)
       .isTrue()
   }
 
   @Test
   fun `drops a message with no notificationId`() {
     // Without it nothing can replace or cancel the entry — §7.3's whole mechanism is that id.
-    assertThat(N1PushMessage.parse(activityData() - "notificationId")).isNull()
-    assertThat(N1PushMessage.parse(activityData(mapOf("notificationId" to "")))).isNull()
+    assertThat(PushPayload.parse(activityData() - "notificationId")).isNull()
+    assertThat(PushPayload.parse(activityData(mapOf("notificationId" to "")))).isNull()
   }
 
   @Test
   fun `drops a message with no usable tap target`() {
-    assertThat(N1PushMessage.parse(activityData() - "tapTarget")).isNull()
-    assertThat(N1PushMessage.parse(activityData(mapOf("tapTarget" to "aircraft")))).isNull()
-    assertThat(N1PushMessage.parse(activityData(mapOf("tapTarget" to "wat:ac-1:x")))).isNull()
+    assertThat(PushPayload.parse(activityData() - "tapTarget")).isNull()
+    assertThat(PushPayload.parse(activityData(mapOf("tapTarget" to "aircraft")))).isNull()
+    assertThat(PushPayload.parse(activityData(mapOf("tapTarget" to "wat:ac-1:x")))).isNull()
   }
 
   @Test
   fun `degrades a record target with no id to that aircraft's list`() {
     // A tap that scrolls to nothing is survivable; losing the aircraft too is not.
-    val parsed = N1PushMessage.parse(activityData(mapOf("tapTarget" to "squawk:ac-1")))!!
+    val parsed = PushPayload.parse(activityData(mapOf("tapTarget" to "squawk:ac-1")))!!
 
     assertThat(parsed.tapTarget).isEqualTo(NotificationTapTarget.Aircraft("ac-1", tab = "squawks"))
   }
 
   @Test
   fun `defaults changeCount to one when absent or unparseable`() {
-    assertThat(N1PushMessage.parse(activityData() - "changeCount")!!.changeCount).isEqualTo(1)
-    assertThat(N1PushMessage.parse(activityData(mapOf("changeCount" to "lots")))!!.changeCount)
+    assertThat(PushPayload.parse(activityData() - "changeCount")!!.changeCount).isEqualTo(1)
+    assertThat(PushPayload.parse(activityData(mapOf("changeCount" to "lots")))!!.changeCount)
       .isEqualTo(1)
   }
 
@@ -124,12 +124,12 @@ class N1PushMessageTest {
   fun `keeps an empty actor name for the client to substitute`() {
     // The fallback ("A collaborator") is itself localized, so the server sends "" and the renderer
     // decides — this class must not invent a name of its own.
-    assertThat(N1PushMessage.parse(activityData(mapOf("actorName" to "")))!!.actorName).isEmpty()
+    assertThat(PushPayload.parse(activityData(mapOf("actorName" to "")))!!.actorName).isEmpty()
   }
 
   @Test
   fun `parses the high-volume ceiling notice`() {
-    val parsed = N1PushMessage.parse(
+    val parsed = PushPayload.parse(
       activityData(
         mapOf(
           "notificationId" to "n1max:ac-1:2026082404",

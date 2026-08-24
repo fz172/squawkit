@@ -16,7 +16,7 @@ import dev.fanfly.wingslog.feature.notifications.model.NotificationTapTarget
  * all. Which argument goes where is the client's knowledge, and it lives in `renderTitle`/
  * `renderBody` beside the string resources rather than here.
  */
-data class N1PushMessage(
+data class PushPayload(
   val notificationId: String,
   val channel: NotificationChannel,
   val highPriority: Boolean,
@@ -38,10 +38,10 @@ data class N1PushMessage(
      * tray entry. [notificationId] and [tapTarget] are the two fields with no sane default: without
      * the first nothing can replace in the tray, and without the second a tap goes nowhere.
      */
-        fun parse(data: Map<String, String>): N1PushMessage? {
+        fun parse(data: Map<String, String>): PushPayload? {
       val notificationId = data["notificationId"]?.takeIf { it.isNotBlank() } ?: return null
       val tapTarget = parseTapTarget(data["tapTarget"]) ?: return null
-      return N1PushMessage(
+      return PushPayload(
         notificationId = notificationId,
         channel = parseChannel(data["channel"]),
         // FCM data values are always strings — `highPriority` arrives as "true"/"false", never a

@@ -45,7 +45,7 @@ class WingsLogFirebaseMessagingService : FirebaseMessagingService(), KoinCompone
    * simpler correct answer.
    */
   override fun onMessageReceived(message: RemoteMessage) {
-    val parsed = N1PushMessage.parse(message.data)
+    val parsed = PushPayload.parse(message.data)
     if (parsed == null) {
       // Not an N1 message, or one from a newer server than this build understands. Dropping it is
       // better than posting a tray entry with no id, which could never be replaced or cancelled.

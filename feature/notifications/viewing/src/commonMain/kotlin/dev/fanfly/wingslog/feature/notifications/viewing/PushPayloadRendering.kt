@@ -25,7 +25,7 @@ import wingslog.feature.notifications.sharedassets.generated.resources.notificat
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_title_priority_raised
 
 /**
- * Turns a decoded [N1PushMessage] into a [PendingNotification] a [LocalNotifier] can post.
+ * Turns a decoded [PushPayload] into a [PendingNotification] a [LocalNotifier] can post.
  *
  * **This file is the client half of §7.6's contract, and the only place the argument order lives.**
  * The server names a string resource and supplies the variables by name; which variable fills which
@@ -36,7 +36,7 @@ import wingslog.feature.notifications.sharedassets.generated.resources.notificat
  * from a newer server than this build should still land in the tray under the right id, however
  * thin its text.
  */
-suspend fun N1PushMessage.toPendingNotification(): PendingNotification = PendingNotification(
+suspend fun PushPayload.toPendingNotification(): PendingNotification = PendingNotification(
   id = notificationId,
   channel = channel,
   title = renderTitle(),
@@ -45,7 +45,7 @@ suspend fun N1PushMessage.toPendingNotification(): PendingNotification = Pending
   tapTarget = tapTarget,
 )
 
-private suspend fun N1PushMessage.renderTitle(): String = when (titleKey) {
+private suspend fun PushPayload.renderTitle(): String = when (titleKey) {
   // "%1$s · %2$s" — tail number, then the TITLE-CASE section label, resolved from recordType.
   "notification_n1_title" -> getString(Res.string.notification_n1_title, tailNumber, sectionTitle())
   "notification_n1_title_high_volume" ->
@@ -58,7 +58,7 @@ private suspend fun N1PushMessage.renderTitle(): String = when (titleKey) {
   else -> ""
 }
 
-private suspend fun N1PushMessage.renderBody(): String = when (bodyKey) {
+private suspend fun PushPayload.renderBody(): String = when (bodyKey) {
   // "%1$s made a change to %2$s" — actor, then the LOWER-CASE section label.
   "notification_n1_body_single" ->
     getString(Res.string.notification_n1_body_single, actor(), sectionLower())
@@ -76,19 +76,19 @@ private suspend fun N1PushMessage.renderBody(): String = when (bodyKey) {
 }
 
 /** The server sends an empty name when the share roster had none — a revoked or unsynced member. */
-private suspend fun N1PushMessage.actor(): String =
+private suspend fun PushPayload.actor(): String =
   actorName.takeIf { it.isNotBlank() } ?: getString(Res.string.notification_n1_actor_fallback)
 
-private suspend fun N1PushMessage.sectionTitle(): String = getString(sectionRes(titleCase = true))
+private suspend fun PushPayload.sectionTitle(): String = getString(sectionRes(titleCase = true))
 
-private suspend fun N1PushMessage.sectionLower(): String = getString(sectionRes(titleCase = false))
+private suspend fun PushPayload.sectionLower(): String = getString(sectionRes(titleCase = false))
 
 /**
  * Section labels are resolved from `recordType` rather than sent, because they are localized text
  * the server has no way to produce (§7.6). An unknown type falls back to the aircraft labels, which
  * read correctly for anything about the aircraft as a whole.
  */
-private fun N1PushMessage.sectionRes(titleCase: Boolean): StringResource = when (recordType) {
+private fun PushPayload.sectionRes(titleCase: Boolean): StringResource = when (recordType) {
   "squawk" ->
     if (titleCase) Res.string.notification_n1_section_squawks
     else Res.string.notification_n1_section_squawks_lower
