@@ -55,8 +55,6 @@ export type PushData = {
   changeCount?: string;
   recordId?: string;
   recordTitle?: string;
-  fromRank?: string;
-  toRank?: string;
 };
 
 /**
@@ -109,20 +107,27 @@ export type EscalationMessageInput = {
   squawkId: string;
   tier: EscalationTier;
   title: string;
-  fromRank: number;
+  kind: "created" | "raised";
   tailNumber: string;
   actorName: string;
 };
 
 /**
- * The §7.5 bypass — the specific §6.5 urgency body, under `n1esc:{aircraftId}:{squawkId}` so no
- * later routine edit can replace a grounding alert with a shrug.
+ * The §7.5 bypass, under `n1esc:{aircraftId}:{squawkId}` so no later routine edit can replace a
+ * grounding alert with a shrug.
  *
- * `toRank` is a constant per tier rather than the decoded value, matching `UrgencyScanner`: a
- * PRIORITY_RAISED notification always reads "to High", because AOG has its own GROUNDED tier above.
+ * **The bodies are N1's own, not the N2 ones §7.5 originally reused.** Both can fire for the same
+ * squawk — this within seconds of the write, N2 at the recipient's next scan — and they are no
+ * longer deduplicated, because they are no longer saying the same thing. Only the server knows the
+ * actor, so only this notification can name them; word-for-word identical copy is exactly what would
+ * make the second arrival read as a duplicate rather than as news.
+ *
+ * `created` also keeps its own title below AOG: "Priority raised" would contradict a body saying the
+ * squawk was just created. At AOG the grounding is the headline however it got there.
  */
 export function escalationPushData(input: EscalationMessageInput): PushData {
   const grounded = input.tier === ESCALATION_TIER.GROUNDED;
+  const created = input.kind === "created";
   return {
     class: "urgency",
     channel: grounded ? "GROUNDED" : "URGENCY",
@@ -131,16 +136,18 @@ export function escalationPushData(input: EscalationMessageInput): PushData {
     aircraftId: input.aircraftId,
     recordType: "squawk",
     tapTarget: `squawk:${input.aircraftId}:${input.squawkId}`,
-    titleKey: grounded ? "notification_title_grounded" : "notification_title_priority_raised",
-    bodyKey: grounded
-      ? "notification_body_grounded_single"
-      : "notification_body_priority_raised_single",
+    titleKey: grounded
+      ? "notification_title_grounded"
+      : created
+        ? "notification_n1_title_squawk_created"
+        : "notification_title_priority_raised",
+    bodyKey: created
+      ? "notification_n1_body_squawk_created"
+      : "notification_n1_body_squawk_raised",
     tailNumber: input.tailNumber,
     actorName: input.actorName,
     recordId: input.squawkId,
     recordTitle: input.title,
-    fromRank: String(input.fromRank),
-    toRank: String(grounded ? 4 : 3),
   };
 }
 

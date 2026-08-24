@@ -4,7 +4,11 @@ import { adminDb, fft } from "./helpers.js";
 
 import { Aircraft } from "../src/generated/proto/aircraft/aircraft.js";
 import { NotificationSettings } from "../src/generated/proto/settings/notification_settings.js";
-import { Squawk, SquawkPriority } from "../src/generated/proto/aircraft/squawk.js";
+import {
+  Squawk,
+  SquawkDismissReason,
+  SquawkPriority,
+} from "../src/generated/proto/aircraft/squawk.js";
 import { bumpActivity } from "../src/notifications/activityCounter.js";
 import {
   AIRCRAFT_HOURLY_CEILING,
@@ -89,6 +93,22 @@ function squawkEnvelope(
 ) {
   return envelope(
     Squawk.encode(Squawk.fromPartial({ id, title, priority })).finish(),
+    "aircraft.Squawk",
+    writerUid,
+  );
+}
+
+/** A squawk that has been dismissed — rank 0, so reopening it is a raise rather than a creation. */
+function dismissedEnvelope(id: string, writerUid = HOST) {
+  return envelope(
+    Squawk.encode(
+      Squawk.fromPartial({
+        id,
+        title: "Left brake dragging",
+        priority: SquawkPriority.SQUAWK_PRIORITY_AOG,
+        dismissReason: SquawkDismissReason.SQUAWK_DISMISS_REASON_OBSOLETE,
+      }),
+    ).finish(),
     "aircraft.Squawk",
     writerUid,
   );
@@ -514,12 +534,10 @@ describe("§7.5 the escalation bypass", () => {
     expect(idsOf()).toEqual([`n1esc:${AC_A}:sq-1`, `n1esc:${AC_A}:sq-2`]);
     expect(sentMessages[0].data.channel).toBe("GROUNDED");
     expect(sentMessages[0].data.highPriority).toBe("true");
-    expect(sentMessages[0].data.bodyKey).toBe("notification_body_grounded_single");
+    expect(sentMessages[0].data.bodyKey).toBe("notification_n1_body_squawk_raised");
     expect(sentMessages[0].data.recordTitle).toBe("Left brake dragging");
     expect(sentMessages[1].data.channel).toBe("URGENCY");
-    expect(sentMessages[1].data.bodyKey).toBe("notification_body_priority_raised_single");
-    // AOG has its own GROUNDED tier, so "priority raised" always reads "to High" — rank 3.
-    expect(sentMessages[1].data.toRank).toBe("3");
+    expect(sentMessages[1].data.bodyKey).toBe("notification_n1_body_squawk_raised");
   });
 
   it("keys the id on the document id, not the payload's own id field", async () => {
@@ -569,6 +587,63 @@ describe("§7.5 the escalation bypass", () => {
 
     const rate = await adminDb.doc(rateDocPath(HOST, AC_A, Date.now())).get();
     expect(rate.data()?.sendCount).toBe(1);
+  });
+
+  it("names the actor, and never reuses an N2 body", async () => {
+    // Both fire for one squawk — this within seconds, N2 at the recipient's next scan — and they are
+    // deliberately not deduplicated. What keeps the second from reading as a duplicate is that only
+    // the server knows who did it, so only this body can say so. Sharing N2's wording would throw
+    // that away.
+    await shareAircraft(AC_A, { [HOST]: "owner", [MEMBER]: "technician" });
+
+    await wrappedRecord(
+      recordWrite(
+        AC_A,
+        "squawk",
+        "sq-1",
+        squawkEnvelope("sq-1", SquawkPriority.SQUAWK_PRIORITY_LOW),
+        squawkEnvelope("sq-1", SquawkPriority.SQUAWK_PRIORITY_AOG),
+      ),
+    );
+
+    expect(sentMessages[0].data.actorName).toBe("Dave Chen");
+    expect(sentMessages[0].data.bodyKey).toMatch(/^notification_n1_/);
+    // The N2 bodies carry no actor, so nothing may fall back to them.
+    expect(sentMessages[0].data.bodyKey).not.toBe("notification_body_grounded_single");
+    expect(sentMessages[0].data.bodyKey).not.toBe("notification_body_priority_raised_single");
+  });
+
+  it("tells a squawk created at AOG apart from one raised to it", async () => {
+    await shareAircraft(AC_A, { [HOST]: "owner", [MEMBER]: "technician" });
+
+    // No prior document at all: nobody raised anything.
+    await wrappedRecord(
+      recordWrite(AC_A, "squawk", "sq-new", null, squawkEnvelope("sq-new", SquawkPriority.SQUAWK_PRIORITY_AOG)),
+    );
+    expect(sentMessages[0].data.bodyKey).toBe("notification_n1_body_squawk_created");
+    // At AOG the grounding stays the headline however the squawk got there.
+    expect(sentMessages[0].data.titleKey).toBe("notification_title_grounded");
+
+    sentMessages.length = 0;
+    // Created straight at HIGH takes its own title — "Priority raised" would contradict the body.
+    await wrappedRecord(
+      recordWrite(AC_A, "squawk", "sq-high", null, squawkEnvelope("sq-high", SquawkPriority.SQUAWK_PRIORITY_HIGH)),
+    );
+    expect(sentMessages[0].data.bodyKey).toBe("notification_n1_body_squawk_created");
+    expect(sentMessages[0].data.titleKey).toBe("notification_n1_title_squawk_created");
+
+    sentMessages.length = 0;
+    // A reopen is a RAISE: the record was already there, only its status changed.
+    await wrappedRecord(
+      recordWrite(
+        AC_A,
+        "squawk",
+        "sq-reopened",
+        dismissedEnvelope("sq-reopened"),
+        squawkEnvelope("sq-reopened", SquawkPriority.SQUAWK_PRIORITY_AOG),
+      ),
+    );
+    expect(sentMessages[0].data.bodyKey).toBe("notification_n1_body_squawk_raised");
   });
 
   it("does not fold an escalation into the activity id or the activity count", async () => {

@@ -91,8 +91,15 @@ export type EscalationTier = (typeof ESCALATION_TIER)[keyof typeof ESCALATION_TI
 export type Escalation = {
   tier: EscalationTier;
   title: string;
-  /** The rank the squawk came from, for `notification_body_priority_raised_single`'s "from X". */
-  fromRank: number;
+  /**
+   * Whether the squawk arrived at this rank by being **created** there or by being **raised** to it.
+   *
+   * The two read completely differently — "Dave created a new squawk issue" versus "Dave raised the
+   * priority of 1 squawk issue" — and only the server can tell them apart, because only it sees the
+   * before/after pair. A reopened squawk (dismissal cleared) counts as raised: the record was
+   * already there.
+   */
+  kind: "created" | "raised";
 };
 
 /**
@@ -142,7 +149,11 @@ export function escalationOf(
         : null;
   if (tier == null) return null; // MEDIUM and below: below the reportable floor
 
-  return { tier, title: squawk.title, fromRank };
+  // No prior document, or a tombstoned one being written live again: nobody raised anything, the
+  // squawk arrived at this rank. Anything else — including a reopen — is a raise on a record that
+  // already existed.
+  const kind = before == null || before.deleted === true ? "created" : "raised";
+  return { tier, title: squawk.title, kind };
 }
 
 export { SquawkPriority };

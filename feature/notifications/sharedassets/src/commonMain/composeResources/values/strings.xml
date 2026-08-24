@@ -63,6 +63,21 @@
   <string name="notification_n1_title_high_volume">%1$s · A lot of activity</string>
   <string name="notification_n1_body_high_volume">Too many changes to list. Open the aircraft to catch up.</string>
 
+  <!-- N1 escalation bodies (design §7.5). Deliberately NOT the N2 bodies above, even though both
+       report the same crossing: the server knows WHO made the change and the device-local scanner
+       does not. Both can fire for one squawk — the push within seconds, N2 at the next scan — and
+       naming the actor is what makes the second one worth reading instead of a duplicate.
+
+       Same three-segment shape as the N2 single-crossing bodies: tail number + what changed, then
+       the squawk's own title on its own line after a blank one. %2$s is the collaborator; the
+       client substitutes notification_n1_actor_fallback when the server sends it empty. -->
+  <string name="notification_n1_body_squawk_created">%1$s: %2$s created a new squawk issue\n\n%3$s</string>
+  <string name="notification_n1_body_squawk_raised">%1$s: %2$s raised the priority of 1 squawk issue\n\n%3$s</string>
+  <!-- Paired with notification_n1_body_squawk_created below AOG: "Priority raised" would contradict
+       a body that says the squawk was just created. At AOG the grounding stays the headline
+       regardless of how the squawk got there, so that case keeps notification_title_grounded. -->
+  <string name="notification_n1_title_squawk_created">New squawk</string>
+
   <!-- The "from" side of notification_body_priority_raised_single's "from X to Y" — a squawk can
        escalate from resolved (reopened) or from any open rank below High. -->
   <string name="squawk_priority_label_resolved">Resolved</string>

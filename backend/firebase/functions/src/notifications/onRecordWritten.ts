@@ -279,7 +279,7 @@ async function fanOutEscalation(
       squawkId,
       tier: escalation.tier,
       title: escalation.title,
-      fromRank: escalation.fromRank,
+      kind: escalation.kind,
       tailNumber,
       actorName,
     }),

@@ -1121,8 +1121,31 @@ Nothing to claim, nothing to reclaim.
 
 ### 7.5 The escalation bypass
 
-A write that raises a squawk's priority sends the specific §6.5 body — and critically, **under its
-own notification id**, `n1esc:{aircraftId}:{squawkId}`, never `n1:{aircraft}:{recordType}:{actor}`.
+A write that raises a squawk's priority sends **its own body — not the §6.5 one** — and critically,
+**under its own notification id**, `n1esc:{aircraftId}:{squawkId}`, never
+`n1:{aircraft}:{recordType}:{actor}`.
+
+**The body names the actor, and that is what makes the duplicate survivable.** Both paths fire for
+one squawk: this push within seconds of the write, and N2 at the recipient's next scan, since the
+push never touches the local watermark. They post under different ids, so they stack. Deduplicating
+them by reusing N2's id was considered and rejected — the two notifications are not the same news.
+Only the server knows *who* raised the squawk, and a device-local scanner never can:
+
+| | body |
+|:--|:--|
+| N2, on the device | `N4589T: raised to AOG — aircraft grounded` |
+| N1, from the server | `N4589T: Dave Chen raised the priority of 1 squawk issue` |
+
+Word-for-word identical copy is what would have made the second arrival read as a duplicate rather
+than as the thing the recipient actually wants to know. So N1 carries
+`notification_n1_body_squawk_raised` / `..._created`, which no N2 body can collide with because no N2
+body has an actor to name.
+
+The server also distinguishes **created** from **raised**, which the scanner cannot: only the trigger
+sees the before/after pair. A squawk created straight at HIGH takes its own title
+(`notification_n1_title_squawk_created`) — "Priority raised" would contradict a body saying it was
+just created — while at AOG the grounding stays the headline however the squawk got there. A reopen
+counts as *raised*: the record was already there.
 
 That distinction is the whole rule now. With §7.3's replacement scheme, folding an escalation into
 the activity id would let the *next* routine edit overwrite "Sarah raised Left brake dragging to
