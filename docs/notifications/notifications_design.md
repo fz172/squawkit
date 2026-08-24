@@ -945,9 +945,9 @@ than stacking beside it:
 
 | Time | Write | Push | What the recipient's tray holds |
 |:--|:--|:--|:--|
-| 14:00:00 | A task 1 | id `n1:{A}:task:{dave}:1400` | `N4589T · Tasks` / `Dave Chen updated a task: Annual Inspection` |
+| 14:00:00 | A task 1 | id `n1:{A}:task:{dave}:1` | `N4589T · Tasks` / `Dave Chen updated a task: Annual Inspection` |
 | 14:00:40 | A task 2 | same id — replaces | `Dave Chen made 2 changes to tasks` |
-| 14:01:10 | B task 1 | id `n1:{B}:task:{dave}:1401` | + `N771TS · Tasks` / `Dave Chen updated a task: 100-Hour Inspection` |
+| 14:01:10 | B task 1 | id `n1:{B}:task:{dave}:1` | + `N771TS · Tasks` / `Dave Chen updated a task: 100-Hour Inspection` |
 | 14:04:30 | A task 5 | same id — replaces | `Dave Chen made 5 changes to tasks` |
 
 Dave's eight edits across two aircraft leave two tray entries, each accurate — and accurate at every
@@ -955,21 +955,21 @@ intermediate moment, not only once he stops. Compare the buffered design, which 
 Sarah nothing for nine minutes; and a leading-edge variant, which sends instantly but then silently
 loses six of the eight edits because nothing wakes up to flush the tail.
 
-The id is `n1:{aircraftId}:{recordType}:{actorUid}:{sessionStart}` — PRD §5.4's coalescing key, moved
+The id is `n1:{aircraftId}:{recordType}:{actorUid}:{sessionSeq}` — PRD §5.4's coalescing key, moved
 from a server buffer into the notification id. §5.2 already required deterministic ids so a re-scan
 replaces rather than stacks; this is that mechanism doing a second job.
 
-**`sessionStart` is load-bearing, and the whole id is wrong without it.** It is the counter's
-`firstWriteAt`, reset whenever `ACTIVITY_WINDOW` elapses (§7.4) — so a *working session* owns a tray
-entry, not a `(aircraft, recordType, actor)` triple forever. Without it, Dave editing one task an
+**The session component is load-bearing, and the whole id is wrong without it.** It is the counter's
+`sessionSeq`, incremented whenever `ACTIVITY_WINDOW` elapses (§7.4) — so a *working session* owns a
+tray entry, not a `(aircraft, recordType, actor)` triple forever. Without it, Dave editing one task an
 hour after his morning burst reuses the same id and **overwrites** "Dave Chen made 5 changes to
 tasks" with "Dave Chen updated a task: Oil Change," destroying news the recipient may never have
 read. With it:
 
 | Time | Write | Notification id | Sarah's tray |
 |:--|:--|:--|:--|
-| 14:00–14:04 | A tasks 1–5 | `n1:{A}:task:{dave}:1400` | `Dave Chen made 5 changes to tasks` |
-| 15:10 | A task 6 | `n1:{A}:task:{dave}:1510` | `Dave Chen made 5 changes to tasks`<br>`Dave Chen updated a task: Oil Change` |
+| 14:00–14:04 | A tasks 1–5 | `n1:{A}:task:{dave}:1` | `Dave Chen made 5 changes to tasks` |
+| 15:10 | A task 6 | `n1:{A}:task:{dave}:2` | `Dave Chen made 5 changes to tasks`<br>`Dave Chen updated a task: Oil Change` |
 
 Two sessions, two entries, neither clobbering the other — and within each, replacement still collapses
 the burst. The rule the id encodes is *replace what is still being updated, never what is finished*.
@@ -995,22 +995,34 @@ Tasks queue, and no idle polling — work happens on writes, which is the only t
 What remains is a small counter doc so a body can say "5 changes" instead of "a change":
 
 ```
-notification_activity/{aircraftId}__{recordType}__{actorUid}
+notification_activity/{hostUid}__{aircraftId}__{recordType}__{actorUid}
   hostUid, aircraftId, recordType, actorUid
   aircraftLabel        // resolved once — cosmetic, so staleness is harmless
   actorDisplayName     // from aircraft_shares/{host}/aircraft/{ac}/members/{actor}.displayName
-  firstWriteAt         // session start — part of the notification id (§7.3), NOT just telemetry
+  sessionSeq           // which working session — THIS is what the notification id is keyed on (§7.3)
+  firstWriteAt         // session start; telemetry and debugging only
   lastWriteAt
-  changeCount
+  writeCount           // lifetime, only ever incremented — see below
+  sessionBaseCount     // writeCount when the session began; the body reports the difference
   lastSentAt
 ```
 
 Plus one rate-limit doc per aircraft per hour, read on every write and written only on send:
 
 ```
-notification_rate/{aircraftId}__{yyyymmddHH}
+notification_rate/{hostUid}__{aircraftId}__{yyyymmddHH}
   sendCount
 ```
+
+**`hostUid` leads both keys, and that is #204 again rather than a detail.** An aircraft id is unique
+only *within one user's tree* — it is a 20-character client-generated string (`IdGenerator.kt`), and
+the own-tree rule lets any account create `users/{self}/aircraft/{anyId}`. Keyed on the aircraft id
+alone these documents form one global namespace, and every current and former member of a share
+knows its aircraft id: create a same-id aircraft in your own tree, share it with a second account,
+write for an hour, and the *victim's* aircraft trips `AIRCRAFT_HOURLY_CEILING` and goes quiet.
+`hostUid` comes from the trigger path and cannot be claimed, so under it a document a writer can
+influence only ever governs that writer's own tree — the same property `aircraft_shares` was
+re-keyed for.
 
 The trigger's whole job, per write:
 
@@ -1018,13 +1030,14 @@ The trigger's whole job, per write:
 1. hostUid = params.uid                        // from the PATH — unspoofable, §7.2
 2. acl = get(aircraft_shares/{hostUid}/aircraft/{acId})
    if (!acl.exists || memberRoles.size <= 1) return          // unshared: the cheap early exit
-3. rate = get(notification_rate/{acId}__{hour})              // a READ — cheap, no contention
+3. rate = get(notification_rate/{hostUid}__{acId}__{hour})    // a READ — cheap, no contention
    if (rate.sendCount >= AIRCRAFT_HOURLY_CEILING) return     // storm: stop before touching anything
 4. prev = get(notification_activity/{key})                   // plain read, NOT a transaction
    newSession = now - prev.lastWriteAt > ACTIVITY_WINDOW
    set(key, merge = true):
-     changeCount  = newSession ? 1 : FieldValue.increment(1)
-     firstWriteAt = newSession ? now : prev.firstWriteAt      // rolls the notification id (§7.3)
+     writeCount   = FieldValue.increment(1)                   // never assigned — see below
+     sessionSeq   = newSession ? prev.sessionSeq + 1 : prev.sessionSeq   // rolls the id (§7.3)
+     sessionBaseCount = newSession ? prev.writeCount : unchanged
      lastWriteAt  = now
 5. if (now - prev.lastSentAt < MIN_REPOST_INTERVAL) return    // throttle
 6. audience = memberRoles minus actorUid                      // re-derived every send, §9.5
@@ -1035,9 +1048,12 @@ The trigger's whole job, per write:
 
 Four details that carry the weight the sweep used to:
 
-- **`ACTIVITY_WINDOW` (30 min) ends a working session**, resetting both `changeCount` *and*
-  `firstWriteAt` — the latter is what rolls the notification id so the finished session's tray entry
-  is left alone (§7.3). Tuesday afternoon and Wednesday morning are two entries reading "5 changes"
+- **`ACTIVITY_WINDOW` (30 min) ends a working session**, moving both `sessionBaseCount` *and*
+  `sessionSeq` — the latter is what rolls the notification id so the finished session's tray entry
+  is left alone (§7.3). **A sequence, not the session's start time.** Two writers who both decide
+  "new session" read the same previous value and compute the same next one, so they converge on one
+  id; two clock reads milliseconds apart do not, and leave the recipient with two tray entries for
+  one session, one of which nothing ever updates again. Tuesday afternoon and Wednesday morning are two entries reading "5 changes"
   and "3 changes," never one reading "8 changes" and never one overwriting the other. Evaluated
   lazily on the next write, so it needs no timer either.
 - **`MIN_REPOST_INTERVAL` (30s) is the per-key storm guard.** A bulk import writing 200 records
@@ -1094,8 +1110,9 @@ The cap is almost certainly the right one if it comes up: this is a notification
 accounting ledger.
 
 Rules: `match /notification_activity/{id}` and `match /notification_rate/{id}` are both
-`allow read, write: if false` — functions only. Doc ids concatenate with `__`; Firebase uids and UUID
-aircraft ids are alphanumeric and `recordType` is a fixed enum, so the separator is unambiguous.
+`allow read, write: if false` — functions only. Doc ids concatenate with `__`; Firebase uids and
+aircraft ids are alphanumeric and `recordType` is a fixed enum, so the separator is unambiguous, and
+the leading uid also keeps the id clear of Firestore's reserved `__.*__` form.
 
 **Delivery is now at-least-once by construction.** The old sweep needed a claim-then-send-then-delete
 dance with a reclaim window, because delete-then-send loses a batch on a crash. Here a crashed
@@ -1104,8 +1121,31 @@ Nothing to claim, nothing to reclaim.
 
 ### 7.5 The escalation bypass
 
-A write that raises a squawk's priority sends the specific §6.5 body — and critically, **under its
-own notification id**, `n1esc:{aircraftId}:{squawkId}`, never `n1:{aircraft}:{recordType}:{actor}`.
+A write that raises a squawk's priority sends **its own body — not the §6.5 one** — and critically,
+**under its own notification id**, `n1esc:{aircraftId}:{squawkId}`, never
+`n1:{aircraft}:{recordType}:{actor}`.
+
+**The body names the actor, and that is what makes the duplicate survivable.** Both paths fire for
+one squawk: this push within seconds of the write, and N2 at the recipient's next scan, since the
+push never touches the local watermark. They post under different ids, so they stack. Deduplicating
+them by reusing N2's id was considered and rejected — the two notifications are not the same news.
+Only the server knows *who* raised the squawk, and a device-local scanner never can:
+
+| | body |
+|:--|:--|
+| N2, on the device | `N4589T: raised to AOG — aircraft grounded` |
+| N1, from the server | `N4589T: Dave Chen raised the priority of 1 squawk issue` |
+
+Word-for-word identical copy is what would have made the second arrival read as a duplicate rather
+than as the thing the recipient actually wants to know. So N1 carries
+`notification_n1_body_squawk_raised` / `..._created`, which no N2 body can collide with because no N2
+body has an actor to name.
+
+The server also distinguishes **created** from **raised**, which the scanner cannot: only the trigger
+sees the before/after pair. A squawk created straight at HIGH takes its own title
+(`notification_n1_title_squawk_created`) — "Priority raised" would contradict a body saying it was
+just created — while at AOG the grounding stays the headline however the squawk got there. A reopen
+counts as *raised*: the record was already there.
 
 That distinction is the whole rule now. With §7.3's replacement scheme, folding an escalation into
 the activity id would let the *next* routine edit overwrite "Sarah raised Left brake dragging to
@@ -1133,9 +1173,10 @@ routing and the tap router:
     "class": "collaboration",
     "channel": "COLLABORATION",
     "aircraftId": "…", "recordType": "squawk", "recordId": "…",
-    "titleKey": "…", "bodyArgs": "…",
-    "notificationId": "n1:{aircraftId}:{recordType}:{actorUid}:{sessionStart}",
-    "tapTarget": "squawk:{aircraftId}:{squawkId}"
+    "titleKey": "notification_n1_title", "bodyKey": "notification_n1_body_plural",
+    "tailNumber": "N4589T", "actorName": "Dave Chen", "changeCount": "5",
+    "notificationId": "n1:{aircraftId}:{recordType}:{actorUid}:{sessionSeq}",
+    "tapTarget": "aircraft:{aircraftId}:squawks"
   },
   "android": { "collapse_key": "<same as notificationId>" },
   "apns":    { "headers": { "apns-collapse-id": "<same as notificationId>" } }
@@ -1146,10 +1187,32 @@ routing and the tap router:
 client; the two collapse headers make the *transport* do the same thing for a device that was offline
 during the burst. All three carry the same value — the server computes it once.
 
-Localization is the reason for `titleKey`/`bodyArgs` rather than a rendered string: the server does
-not know the recipient's locale, and the client already has `strings.xml`. iOS needs
-`content-available` plus a notification service extension to render a data-only message while
-backgrounded; that is part of P5, and until it lands iOS may ship rendered strings with a TODO.
+Localization is the reason for string **keys** rather than rendered text: the server does not know
+the recipient's locale, and the client already has `strings.xml`.
+
+**Named values, not a positional `bodyArgs` array**, which an earlier draft of this section specified
+and which cannot work. Two reasons, either one sufficient:
+
+- `notification_n1_title` is `%1$s · %2$s`, and its second argument is a **localized section label**
+  ("Squawks" / "Tasks" / "Logbook"). The server cannot render that at all. It sends `recordType` and
+  the client resolves both the title-case and lower-case labels from it.
+- `notification_n1_body_single` (`%1$s made a change to %2$s`) and `..._body_plural`
+  (`%1$s made %2$d changes to %3$s`) do not share an argument order, so one array would mean the
+  server encoding per-string placeholder order it has no way to verify.
+
+So the message names the resources and supplies the *variable* values by name — `tailNumber`,
+`actorName`, `changeCount`, plus `recordTitle` on the escalation path — and the client assembles
+them. `bodyKey` is carried alongside `titleKey` for the same reason: single-versus-plural cannot be
+chosen client-side without it. An empty `actorName` means "fall back to
+`notification_n1_actor_fallback`", which is itself a localized string.
+
+The cost is that argument order lives in the client, on three platforms rather than in one server
+file. That is where `strings.xml` lives, so it is the right home, but it is a real coupling and the
+table in `pushMessages.ts` is the only place the contract is written down.
+
+iOS needs `content-available` plus a notification service extension to render a data-only message
+while backgrounded; that is part of P5, and until it lands iOS may ship rendered strings with a
+TODO.
 
 ---
 

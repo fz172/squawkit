@@ -60,6 +60,14 @@ async function seedAccount() {
   await adminDb
     .doc(`users/${USER}/shared_aircraft_ref/${JOINED_AC}`)
     .set(sharedAircraftRefWireDoc(JOINED_AC, OTHER_HOST, "technician"));
+
+  // An N1 push token (notifications_design.md §7.1).
+  await adminDb.doc(`users/${USER}/push_devices/install-1`).set({
+    token: "tok-leaver",
+    platform: "android",
+    appVersion: "1.0.0",
+    enabled: true,
+  });
 }
 
 describe("deleteMyAccount", () => {
@@ -77,6 +85,23 @@ describe("deleteMyAccount", () => {
     expect((await adminDb.doc(`users/${USER}/aircraft/${OWN_AC}`).get()).exists).toBe(false);
     expect((await adminDb.doc(`subscriptions/${USER}`).get()).exists).toBe(false);
     await expect(getAuth().getUser(USER)).rejects.toThrow();
+  });
+
+  /**
+   * A surviving push token keeps a deleted account's device receiving notifications about aircraft
+   * it no longer has any claim on — and with the account gone there is nothing left to switch them
+   * off from (notifications_design.md §12.3).
+   *
+   * `recursiveDelete` on `users/{uid}` already takes every subcollection, so this needs no separate
+   * step in the function. It needs a test precisely *because* it needs no step: nothing in
+   * `deleteMyAccount` mentions push, so nothing would notice if the delete stopped being recursive.
+   */
+  it("clears the account's push tokens", async () => {
+    await seedAccount();
+
+    await wrappedDelete(req(USER, undefined));
+
+    expect((await adminDb.collection(`users/${USER}/push_devices`).get()).empty).toBe(true);
   });
 
   /** The data lives in the host's tree, so it cannot outlive the host (#418). */
