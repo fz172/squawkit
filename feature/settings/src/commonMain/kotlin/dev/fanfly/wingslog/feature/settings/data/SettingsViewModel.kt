@@ -14,6 +14,7 @@ import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.developeroptions.datamanager.DeveloperOptionsManager
 import dev.fanfly.wingslog.feature.notifications.datamanager.NotificationPrefsManager
 import dev.fanfly.wingslog.feature.notifications.datamanager.PrefsState
+import dev.fanfly.wingslog.feature.notifications.datamanager.PushTokenRegistrar
 import dev.fanfly.wingslog.feature.notifications.model.allEnabled
 import dev.fanfly.wingslog.feature.notifications.permission.NotificationPermission
 import dev.fanfly.wingslog.feature.notifications.permission.PermissionState
@@ -36,6 +37,12 @@ class SettingsViewModel(
   private val adConsentManager: AdConsentManager,
   private val notificationPermission: NotificationPermission,
   private val notificationPrefsManager: NotificationPrefsManager,
+  /**
+   * Null on any platform with no push transport — iOS until P5, web by design (§8). Nullable rather
+   * than a no-op binding so "this platform does not register tokens" is visible here rather than
+   * hidden behind a stub that looks like it did something.
+   */
+  private val pushTokenRegistrar: PushTokenRegistrar? = null,
 ) : ViewModel() {
 
   private val _user =
@@ -183,6 +190,11 @@ class SettingsViewModel(
         return@launch
       }
       observeSelfJob?.cancel()
+      // Before logOut(), for the reason logOut() explains: deleting the token doc needs a live uid.
+      // Belt-and-braces here — deleteMyAccount already recursive-deletes users/{uid}, push_devices
+      // included — but this account may have been signed in on other devices, and the local one is
+      // the only doc this device is able to remove.
+      pushTokenRegistrar?.clearThisDevice()
       // Same ordering as logOut(): sign out first so the SyncEngine releases the write lock the
       // wipes below need, or they block forever on web.
       authManager.logOut()
@@ -205,6 +217,13 @@ class SettingsViewModel(
     val uid = authManager.getCurrentUser()?.uid
     viewModelScope.launch {
       observeSelfJob?.cancel()
+      // BEFORE logOut, and deliberately the opposite order from the wipes below. Deleting
+      // users/{uid}/push_devices/{installId} is a Firestore write that rules gate on
+      // `request.auth.uid == userId`, so once the session is gone it is permission-denied and the
+      // token survives — leaving this device receiving another account's squawk titles in its tray
+      // (design §7.1), which is exactly the leak urgency_watermark's sign-out wipe closed locally.
+      // It runs before the lock-release concern below because it touches Firestore, not SQLDelight.
+      pushTokenRegistrar?.clearThisDevice()
       // Sign out first so authStateChanged(null) fires immediately, which causes the SyncEngine
       // to cancel its userScope and release the DatabaseWriteLock. The wipe operations below
       // need that lock — calling them before signOut would block forever on web (JS single-thread,

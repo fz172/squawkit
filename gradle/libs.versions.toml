@@ -57,6 +57,9 @@ firebase-appcheck = { module = "com.google.firebase:firebase-appcheck" }
 firebase-appcheck-debug = { module = "com.google.firebase:firebase-appcheck-debug" }
 firebase-appcheck-playintegrity = { module = "com.google.firebase:firebase-appcheck-playintegrity" }
 firebase-functions = { module = "com.google.firebase:firebase-functions" }
+# Native Android SDK, not a GitLive wrapper: GitLive ships no messaging module, and the receiver is
+# androidMain-only anyway (design §5.5 — iOS uses UNUserNotificationCenter, web has no transport).
+firebase-messaging = { module = "com.google.firebase:firebase-messaging" }
 
 gitlive-firebase-analytics = { group = "dev.gitlive", name = "firebase-analytics", version.ref = "gitlive" }
 gitlive-firebase-firestore = { group = "dev.gitlive", name = "firebase-firestore", version.ref = "gitlive" }

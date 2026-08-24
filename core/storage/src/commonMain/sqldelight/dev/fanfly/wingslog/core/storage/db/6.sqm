@@ -1,0 +1,10 @@
+-- Migration from schema version 5 to 6.
+-- Adds device_config: device-scoped, uid-independent local config (notifications design §7.1).
+-- Holds the stable install id the push token doc is keyed on — a value that must outlive token
+-- rotation AND survive an account switch on a shared device, so it cannot live in sync_config,
+-- which is keyed by uid. See the table comment in Schema.sq.
+
+CREATE TABLE device_config (
+  key   TEXT NOT NULL PRIMARY KEY,
+  value TEXT NOT NULL
+);
