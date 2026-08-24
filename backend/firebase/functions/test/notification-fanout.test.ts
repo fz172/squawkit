@@ -349,6 +349,24 @@ describe("§7.4 the counter and its guards", () => {
     expect(sessionCount(await activityDoc(AC_A))).toBe(2);
   });
 
+  it("gives two concurrent session starts ONE notification id", async () => {
+    // Why the id is keyed on a sequence and not on `firstWriteAt`. Both writers read the same
+    // previous value and compute the same next one, so they converge. Two clock reads milliseconds
+    // apart would not, and the recipient would get two tray entries for one session — one of which
+    // nothing ever updates again.
+    const input = {
+      hostUid: HOST,
+      aircraftId: AC_A,
+      recordType: "task" as const,
+      actorUid: HOST,
+      nowMs: Date.now(),
+    };
+    const [a, b] = await Promise.all([bumpActivity(input), bumpActivity(input)]);
+
+    expect(a.sessionSeq).toBe(b.sessionSeq);
+    expect(a.sessionSeq).toBe(1);
+  });
+
   it("leaves changeCount at 2 for two concurrent writes, not 1", async () => {
     // The lock-free path a transaction-shaped test would silently pass. §7.4's pseudocode assigns
     // the literal 1 on a new session, so two writers racing on the FIRST write of a session both

@@ -945,9 +945,9 @@ than stacking beside it:
 
 | Time | Write | Push | What the recipient's tray holds |
 |:--|:--|:--|:--|
-| 14:00:00 | A task 1 | id `n1:{A}:task:{dave}:1400` | `N4589T · Tasks` / `Dave Chen updated a task: Annual Inspection` |
+| 14:00:00 | A task 1 | id `n1:{A}:task:{dave}:1` | `N4589T · Tasks` / `Dave Chen updated a task: Annual Inspection` |
 | 14:00:40 | A task 2 | same id — replaces | `Dave Chen made 2 changes to tasks` |
-| 14:01:10 | B task 1 | id `n1:{B}:task:{dave}:1401` | + `N771TS · Tasks` / `Dave Chen updated a task: 100-Hour Inspection` |
+| 14:01:10 | B task 1 | id `n1:{B}:task:{dave}:1` | + `N771TS · Tasks` / `Dave Chen updated a task: 100-Hour Inspection` |
 | 14:04:30 | A task 5 | same id — replaces | `Dave Chen made 5 changes to tasks` |
 
 Dave's eight edits across two aircraft leave two tray entries, each accurate — and accurate at every
@@ -955,21 +955,21 @@ intermediate moment, not only once he stops. Compare the buffered design, which 
 Sarah nothing for nine minutes; and a leading-edge variant, which sends instantly but then silently
 loses six of the eight edits because nothing wakes up to flush the tail.
 
-The id is `n1:{aircraftId}:{recordType}:{actorUid}:{sessionStart}` — PRD §5.4's coalescing key, moved
+The id is `n1:{aircraftId}:{recordType}:{actorUid}:{sessionSeq}` — PRD §5.4's coalescing key, moved
 from a server buffer into the notification id. §5.2 already required deterministic ids so a re-scan
 replaces rather than stacks; this is that mechanism doing a second job.
 
-**`sessionStart` is load-bearing, and the whole id is wrong without it.** It is the counter's
-`firstWriteAt`, reset whenever `ACTIVITY_WINDOW` elapses (§7.4) — so a *working session* owns a tray
-entry, not a `(aircraft, recordType, actor)` triple forever. Without it, Dave editing one task an
+**The session component is load-bearing, and the whole id is wrong without it.** It is the counter's
+`sessionSeq`, incremented whenever `ACTIVITY_WINDOW` elapses (§7.4) — so a *working session* owns a
+tray entry, not a `(aircraft, recordType, actor)` triple forever. Without it, Dave editing one task an
 hour after his morning burst reuses the same id and **overwrites** "Dave Chen made 5 changes to
 tasks" with "Dave Chen updated a task: Oil Change," destroying news the recipient may never have
 read. With it:
 
 | Time | Write | Notification id | Sarah's tray |
 |:--|:--|:--|:--|
-| 14:00–14:04 | A tasks 1–5 | `n1:{A}:task:{dave}:1400` | `Dave Chen made 5 changes to tasks` |
-| 15:10 | A task 6 | `n1:{A}:task:{dave}:1510` | `Dave Chen made 5 changes to tasks`<br>`Dave Chen updated a task: Oil Change` |
+| 14:00–14:04 | A tasks 1–5 | `n1:{A}:task:{dave}:1` | `Dave Chen made 5 changes to tasks` |
+| 15:10 | A task 6 | `n1:{A}:task:{dave}:2` | `Dave Chen made 5 changes to tasks`<br>`Dave Chen updated a task: Oil Change` |
 
 Two sessions, two entries, neither clobbering the other — and within each, replacement still collapses
 the burst. The rule the id encodes is *replace what is still being updated, never what is finished*.
@@ -999,9 +999,11 @@ notification_activity/{hostUid}__{aircraftId}__{recordType}__{actorUid}
   hostUid, aircraftId, recordType, actorUid
   aircraftLabel        // resolved once — cosmetic, so staleness is harmless
   actorDisplayName     // from aircraft_shares/{host}/aircraft/{ac}/members/{actor}.displayName
-  firstWriteAt         // session start — part of the notification id (§7.3), NOT just telemetry
+  sessionSeq           // which working session — THIS is what the notification id is keyed on (§7.3)
+  firstWriteAt         // session start; telemetry and debugging only
   lastWriteAt
-  changeCount
+  writeCount           // lifetime, only ever incremented — see below
+  sessionBaseCount     // writeCount when the session began; the body reports the difference
   lastSentAt
 ```
 
@@ -1033,8 +1035,9 @@ The trigger's whole job, per write:
 4. prev = get(notification_activity/{key})                   // plain read, NOT a transaction
    newSession = now - prev.lastWriteAt > ACTIVITY_WINDOW
    set(key, merge = true):
-     changeCount  = newSession ? 1 : FieldValue.increment(1)
-     firstWriteAt = newSession ? now : prev.firstWriteAt      // rolls the notification id (§7.3)
+     writeCount   = FieldValue.increment(1)                   // never assigned — see below
+     sessionSeq   = newSession ? prev.sessionSeq + 1 : prev.sessionSeq   // rolls the id (§7.3)
+     sessionBaseCount = newSession ? prev.writeCount : unchanged
      lastWriteAt  = now
 5. if (now - prev.lastSentAt < MIN_REPOST_INTERVAL) return    // throttle
 6. audience = memberRoles minus actorUid                      // re-derived every send, §9.5
@@ -1045,9 +1048,12 @@ The trigger's whole job, per write:
 
 Four details that carry the weight the sweep used to:
 
-- **`ACTIVITY_WINDOW` (30 min) ends a working session**, resetting both `changeCount` *and*
-  `firstWriteAt` — the latter is what rolls the notification id so the finished session's tray entry
-  is left alone (§7.3). Tuesday afternoon and Wednesday morning are two entries reading "5 changes"
+- **`ACTIVITY_WINDOW` (30 min) ends a working session**, moving both `sessionBaseCount` *and*
+  `sessionSeq` — the latter is what rolls the notification id so the finished session's tray entry
+  is left alone (§7.3). **A sequence, not the session's start time.** Two writers who both decide
+  "new session" read the same previous value and compute the same next one, so they converge on one
+  id; two clock reads milliseconds apart do not, and leave the recipient with two tray entries for
+  one session, one of which nothing ever updates again. Tuesday afternoon and Wednesday morning are two entries reading "5 changes"
   and "3 changes," never one reading "8 changes" and never one overwriting the other. Evaluated
   lazily on the next write, so it needs no timer either.
 - **`MIN_REPOST_INTERVAL` (30s) is the per-key storm guard.** A bulk import writing 200 records
@@ -1145,7 +1151,7 @@ routing and the tap router:
     "channel": "COLLABORATION",
     "aircraftId": "…", "recordType": "squawk", "recordId": "…",
     "titleKey": "…", "bodyArgs": "…",
-    "notificationId": "n1:{aircraftId}:{recordType}:{actorUid}:{sessionStart}",
+    "notificationId": "n1:{aircraftId}:{recordType}:{actorUid}:{sessionSeq}",
     "tapTarget": "squawk:{aircraftId}:{squawkId}"
   },
   "android": { "collapse_key": "<same as notificationId>" },

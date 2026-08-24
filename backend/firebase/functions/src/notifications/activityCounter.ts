@@ -59,8 +59,8 @@ import {
 export type ActivityBump = {
   /** Writes in the current working session — what the body reports. */
   changeCount: number;
-  /** The session's `firstWriteAt`, which is what the notification id is keyed on (§7.3). */
-  sessionStartMs: number;
+  /** Which working session this write belongs to — what the notification id is keyed on (§7.3). */
+  sessionSeq: number;
   /** True when this write was counted but must not interrupt anyone yet (§7.4 step 5). */
   throttled: boolean;
   /** Tail number cached on a previous pass, if there is one. Cosmetic, so staleness is harmless. */
@@ -94,7 +94,10 @@ export async function bumpActivity(input: BumpInput): Promise<ActivityBump> {
 
   const previousWriteCount = previous?.writeCount ?? 0;
   const sessionBaseCount = newSession ? previousWriteCount : (previous?.sessionBaseCount ?? 0);
-  const sessionStartMs = newSession ? nowMs : (toMillis(previous?.firstWriteAt) ?? nowMs);
+  // Assigned, never incremented: two writers who both see `newSession` read the same previous
+  // value and compute the same next one, so they converge on one notification id. A clock read
+  // would not — two stamps milliseconds apart are two different ids and two tray entries.
+  const sessionSeq = newSession ? (previous?.sessionSeq ?? 0) + 1 : (previous?.sessionSeq ?? 1);
   const changeCount = previousWriteCount + 1 - sessionBaseCount;
 
   await ref.set(
@@ -105,10 +108,11 @@ export async function bumpActivity(input: BumpInput): Promise<ActivityBump> {
       actorUid,
       // Only ever incremented. See the "lifetime total" note above for why this is not assigned.
       writeCount: FieldValue.increment(1),
-      firstWriteAt: Timestamp.fromMillis(sessionStartMs),
+      sessionSeq,
       lastWriteAt: Timestamp.fromMillis(nowMs),
       ...(newSession
         ? {
+            firstWriteAt: Timestamp.fromMillis(nowMs),
             sessionBaseCount,
             // A new session has its own tray entry to fill, so it must not be throttled against the
             // previous session's send. Clearing this is what lets the first write of a session post
@@ -125,7 +129,7 @@ export async function bumpActivity(input: BumpInput): Promise<ActivityBump> {
 
   return {
     changeCount,
-    sessionStartMs,
+    sessionSeq,
     throttled,
     cachedAircraftLabel: previous?.aircraftLabel || null,
   };

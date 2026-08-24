@@ -146,7 +146,18 @@ export type NotificationActivityDoc = {
   aircraftLabel: string;
   /** From `aircraft_shares/{host}/aircraft/{ac}/members/{actor}.displayName`. May be empty. */
   actorDisplayName: string;
-  /** Session start — **part of the notification id** (§7.3), not telemetry. */
+  /**
+   * Which working session this document is currently on, starting at 1 and incremented whenever
+   * [ACTIVITY_WINDOW_MS] elapses. **This is what the notification id is keyed on** (§7.3).
+   *
+   * Deliberately a sequence and not `firstWriteAt`, which is what §7.3 originally specified. Two
+   * writers who both decide "new session" each read the same previous value and so compute the same
+   * next one — they converge on one id. Two clock reads milliseconds apart do not, and produce two
+   * tray entries where one of them is never updated again. Assigned rather than incremented for the
+   * same reason: last-write-wins is correct when every writer computes the same answer.
+   */
+  sessionSeq: number;
+  /** Session start. Telemetry and debugging only now that [sessionSeq] keys the id. */
   firstWriteAt: Timestamp;
   lastWriteAt: Timestamp;
   /**
@@ -223,19 +234,32 @@ export const AIRCRAFT_HOURLY_CEILING = 60;
 // --- Notification ids (§7.3, §7.5) -------------------------------------------------------------
 
 /**
- * `n1:{aircraftId}:{recordType}:{actorUid}:{sessionStart}` — PRD §5.4's coalescing key, moved from
- * a server buffer into the notification id.
+ * `n1:{aircraftId}:{recordType}:{actorUid}:{sessionSeq}` — PRD §5.4's coalescing key, moved from a
+ * server buffer into the notification id.
  *
- * Byte-identical to the tag `WebForeignWriteDetector` posts under, on purpose: the same event seen
- * by an open web tab and by a phone must not become two different tray entries.
+ * **The trailing component is what makes a working *session* own a tray entry**, rather than an
+ * `(aircraft, recordType, actor)` triple owning one forever. Without it, Dave editing one task an
+ * hour after his morning burst reuses the id and overwrites "Dave Chen made 5 changes to tasks" with
+ * "Dave Chen made a change to tasks" — replacing accurate news, which the recipient may never have
+ * read, with a smaller number.
+ *
+ * It is a sequence rather than the session's start time (see [NotificationActivityDoc.sessionSeq]).
+ * The counter document is never deleted, so the sequence only ever moves forward and a finished
+ * session's id can never be minted again.
+ *
+ * Same *shape* as the tag `WebForeignWriteDetector` posts under, but not the same value — web counts
+ * sessions in a tab's memory, the server in a document, and there is no reason for two independent
+ * counters to agree. They never need to: a browser notification and a phone's tray are different
+ * surfaces that cannot collide. If web ever registers a push token (P6), the detector should stand
+ * down rather than both paths firing.
  */
 export function activityNotificationId(
   aircraftId: string,
   recordType: RecordType,
   actorUid: string,
-  sessionStartMs: number,
+  sessionSeq: number,
 ): string {
-  return `n1:${aircraftId}:${recordType}:${actorUid}:${sessionStartMs}`;
+  return `n1:${aircraftId}:${recordType}:${actorUid}:${sessionSeq}`;
 }
 
 /**

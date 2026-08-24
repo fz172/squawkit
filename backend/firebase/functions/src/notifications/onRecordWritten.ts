@@ -209,7 +209,7 @@ async function fanOutActivity({ input, recipients, tailNumber }: ActivityFanOut)
       actorName,
       tailNumber: label,
       changeCount: bump.changeCount,
-      sessionStartMs: bump.sessionStartMs,
+      sessionSeq: bump.sessionSeq,
     }),
   );
 

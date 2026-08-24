@@ -74,7 +74,7 @@ export type ActivityMessageInput = {
   actorName: string;
   tailNumber: string;
   changeCount: number;
-  sessionStartMs: number;
+  sessionSeq: number;
 };
 
 /** The §7.3 activity summary — "Dave Chen made 5 changes to tasks", replacing in place. */
@@ -83,7 +83,7 @@ export function activityPushData(input: ActivityMessageInput): PushData {
     input.aircraftId,
     input.recordType,
     input.actorUid,
-    input.sessionStartMs,
+    input.sessionSeq,
   );
   return {
     class: "collaboration",
