@@ -20,6 +20,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.getString
 import wingslog.feature.notifications.sharedassets.generated.resources.Res
@@ -33,6 +34,7 @@ import wingslog.feature.notifications.sharedassets.generated.resources.notificat
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_section_tasks
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_section_tasks_lower
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_title
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * N1 on web, with no backend at all (design §8).
@@ -66,8 +68,17 @@ class WebForeignWriteDetector(
     id: String,
     writerUid: String,
   ) {
-    val recordType = kind.toRecordType() ?: return
-    val aircraftId = scope.aircraftIdOrNull() ?: return
+    val recordType = kind.toRecordType()
+    if (recordType == null) {
+      log.d { "N1 skipped: ${kind.wireName} is not collaboration activity" }
+      return
+    }
+    val aircraftId = scope.aircraftIdOrNull()
+    if (aircraftId == null) {
+      log.d { "N1 skipped: ${scope.toPath()} is not an aircraft scope" }
+      return
+    }
+    log.d { "N1 foreign write: ${kind.wireName}/$id on $aircraftId by $writerUid" }
     this.scope.launch {
       runCatching { handle(recordType, aircraftId, writerUid) }
         .onFailure { log.w(it) { "N1 detection failed for ${kind.wireName}/$id" } }
@@ -79,14 +90,47 @@ class WebForeignWriteDetector(
     // roster read to build a notification nobody will see.
     val prefs = prefsManager.observe()
       .first()
-    if (prefs !is PrefsState.Resolved) return
-    if (!prefs.settings.allEnabled) return
-    if (!recordType.enabledIn(prefs)) return
-    if (permission.observe().value != PermissionState.GRANTED) return
+    if (prefs !is PrefsState.Resolved) {
+      log.d { "N1 skipped: preferences unresolved" }
+      return
+    }
+    if (!prefs.settings.allEnabled) {
+      log.d { "N1 skipped: all notifications off" }
+      return
+    }
+    if (!recordType.enabledIn(prefs)) {
+      log.d { "N1 skipped: ${recordType.wire} activity off in preferences" }
+      return
+    }
+    val permissionState = permission.observe().value
+    if (permissionState != PermissionState.GRANTED) {
+      log.d { "N1 skipped: OS permission is $permissionState" }
+      return
+    }
 
-    // "Part of a share at all" — true for the hosting owner too, not just a member, which is what
-    // makes an owner hear about their mechanic's edits.
-    if (!sharingManager.observeIsShared(aircraftId).first()) return
+    // ONE roster read, used for both the share test and the actor name below.
+    //
+    // Deliberately not `observeIsShared(acId).first()`: that flow combines the local ref with an
+    // online roster listener seeded `onStart { emit(false) }` so a combine cannot hang offline. For
+    // a member the ref half is true immediately, but for the **host** — who has no ref to their own
+    // aircraft — the first emission is the seed, so `.first()` returns false before Firestore ever
+    // answers. N1 would then fire for members and never for owners, which is backwards: an owner
+    // hearing about their mechanic's edits is the case the feature exists for.
+    val roster = withTimeoutOrNull(ROSTER_READ_TIMEOUT) {
+      sharingManager.observeShareState(aircraftId)
+        .first()
+    }
+    if (roster == null) {
+      // Offline, or the roster listener never answered. Staying silent is the safe direction: the
+      // alternative is notifying about an aircraft we cannot confirm is shared.
+      log.d { "N1 skipped: roster read timed out for $aircraftId" }
+      return
+    }
+    // More than one member means a share exists — true for the host and every member alike.
+    if (roster.members.size <= 1) {
+      log.d { "N1 skipped: $aircraftId has ${roster.members.size} member(s), accessDenied=${roster.accessDenied}" }
+      return
+    }
 
     val post = counter.record(
       ActivityKey(
@@ -94,19 +138,30 @@ class WebForeignWriteDetector(
         recordType = recordType.wire,
         actorUid = actorUid,
       )
-    ) ?: return
+    )
+    if (post == null) {
+      log.d { "N1 counted but throttled (within ${ActivityCounter.MIN_REPOST_INTERVAL})" }
+      return
+    }
 
-    notifier.post(buildNotification(recordType, aircraftId, actorUid, post))
+    val actor = roster.members.firstOrNull { it.uid == actorUid }
+      ?.displayName
+      ?.takeIf { it.isNotBlank() }
+      ?: getString(Res.string.notification_n1_actor_fallback)
+    log.i { "N1 posting: $aircraftId ${recordType.wire} x${post.changeCount} by $actor" }
+    notifier.post(buildNotification(recordType, aircraftId, actorUid, actor, post))
   }
 
   private suspend fun buildNotification(
     recordType: RecordType,
     aircraftId: String,
+    /** The stable id the tag is keyed on — a display name can change mid-session. */
     actorUid: String,
+    /** What the body says. */
+    actor: String,
     post: ActivityPost,
   ): PendingNotification {
     val tailNumber = tailNumberOf(aircraftId)
-    val actor = actorName(aircraftId, actorUid)
     val body =
       if (post.changeCount == 1) {
         getString(Res.string.notification_n1_body_single, actor, getString(recordType.lowerLabel))
@@ -135,22 +190,6 @@ class WebForeignWriteDetector(
       tapTarget = NotificationTapTarget.Aircraft(aircraftId, tab = recordType.tab),
     )
   }
-
-  /**
-   * One-shot roster read at the moment a notification fires (design §8.3), not a standing
-   * subscription: a per-aircraft listener would need its own lifecycle — opened when the user has
-   * any shared aircraft, torn down on sign-out or when a share ends, kept from leaking across
-   * account switches — for a value needed only at this instant.
-   */
-  private suspend fun actorName(aircraftId: String, actorUid: String): String =
-    runCatching {
-      sharingManager.observeShareState(aircraftId)
-        .first()
-        .members
-        .firstOrNull { it.uid == actorUid }
-        ?.displayName
-        ?.takeIf { it.isNotBlank() }
-    }.getOrNull() ?: getString(Res.string.notification_n1_actor_fallback)
 
   /** Falls back to the id, which is never shown in practice — the fleet always has the aircraft a write arrived for. */
   private suspend fun tailNumberOf(aircraftId: String): String =
@@ -215,5 +254,8 @@ class WebForeignWriteDetector(
 
   private companion object {
     val log = Logger.withTag("WebForeignWriteDetector")
+
+    /** The roster is an online-only listener; offline it never answers, so the read is bounded. */
+    val ROSTER_READ_TIMEOUT = 5.seconds
   }
 }

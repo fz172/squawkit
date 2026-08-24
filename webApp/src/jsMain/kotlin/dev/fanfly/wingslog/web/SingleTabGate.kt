@@ -1,7 +1,6 @@
 package dev.fanfly.wingslog.web
 
 import kotlinx.browser.window
-import kotlin.js.console
 
 private const val LOCK_NAME = "wingslog-opfs-db"
 
@@ -46,7 +45,11 @@ internal fun gateSingleTab(
     onPrimary()
     return
   }
-  tryAcquire(attempt = 1, onPrimary = onPrimary, onActiveElsewhere = onActiveElsewhere)
+  tryAcquire(
+    attempt = 1,
+    onPrimary = onPrimary,
+    onActiveElsewhere = onActiveElsewhere
+  )
 }
 
 private fun tryAcquire(
@@ -76,7 +79,8 @@ private fun tryAcquire(
 
   try {
     val options: dynamic = js("({ mode: 'exclusive', ifAvailable: true })")
-    val request = window.navigator.asDynamic().locks.request(LOCK_NAME, options, onLock)
+    val request =
+      window.navigator.asDynamic().locks.request(LOCK_NAME, options, onLock)
     // Only reachable when [onPrimary] itself threw — the lock was held and then released by the
     // rejection. Distinguishing that from contention is the point: a startup crash used to be
     // indistinguishable from a second tab, and looked exactly like one.
