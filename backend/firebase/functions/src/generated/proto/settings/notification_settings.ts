@@ -23,15 +23,38 @@ export const protobufPackage = "";
 export interface NotificationSettings {
   /** Master switch. Off silences every class, locally and server-side. */
   allDisabled: boolean;
-  /** --- Urgency (N2) — device-local detection, no account required --- */
+  /**
+   * --- Urgency — device-local detection, no account required ---
+   *
+   * The first two are NOT N2-only, and the distinction matters to anyone changing them. A squawk
+   * escalation is detectable from a single write, so the server fan-out reports one too (design
+   * §7.5), and it gates that push on these same two fields — not on squawk_activity_disabled. What
+   * arrives is an urgency notification (N2 channel, N2 priority), and someone who switched AOG off
+   * expects that switch to govern AOG alerts however they reach them.
+   *
+   * Two consequences worth knowing before touching this:
+   *   * The server READS these. They are not device-only state, so they cannot be repurposed or
+   *     re-scoped as though the scanner were their only consumer.
+   *   * A member of a shared aircraft can be notified with EVERY collaboration class below switched
+   *     off, because their grounding alert travels under aog_disabled. That is intended: muting
+   *     routine squawk activity is not asking to stop hearing the aircraft was grounded.
+   *
+   * The last two stay genuinely device-only: no write happens when a due date passes, so no trigger
+   * can fire and the server has nothing to report (§7.5).
+   */
   aogDisabled: boolean;
-  /** escalations below AOG, and reopened squawks */
+  /** escalations below AOG, and reopened squawks — likewise */
   squawkPriorityDisabled: boolean;
-  /** -> DueStatus.OVERDUE */
+  /** -> DueStatus.OVERDUE — device-only */
   overdueDisabled: boolean;
-  /** -> DueStatus.DUE_SOON */
+  /** -> DueStatus.DUE_SOON — device-only */
   dueSoonDisabled: boolean;
-  /** --- Collaboration (N1) — server fan-out, needs a real account + cloud sync --- */
+  /**
+   * --- Collaboration (N1) — server fan-out, needs a real account + cloud sync ---
+   *
+   * These four gate ACTIVITY only — "Dave Chen made 5 changes to tasks". A squawk escalation is
+   * gated above instead, so switching all four off still leaves grounding alerts arriving.
+   */
   aircraftActivityDisabled: boolean;
   /** squawk create/edit/dismiss/reopen/delete */
   squawkActivityDisabled: boolean;
