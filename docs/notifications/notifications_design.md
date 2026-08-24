@@ -1173,9 +1173,10 @@ routing and the tap router:
     "class": "collaboration",
     "channel": "COLLABORATION",
     "aircraftId": "…", "recordType": "squawk", "recordId": "…",
-    "titleKey": "…", "bodyArgs": "…",
+    "titleKey": "notification_n1_title", "bodyKey": "notification_n1_body_plural",
+    "tailNumber": "N4589T", "actorName": "Dave Chen", "changeCount": "5",
     "notificationId": "n1:{aircraftId}:{recordType}:{actorUid}:{sessionSeq}",
-    "tapTarget": "squawk:{aircraftId}:{squawkId}"
+    "tapTarget": "aircraft:{aircraftId}:squawks"
   },
   "android": { "collapse_key": "<same as notificationId>" },
   "apns":    { "headers": { "apns-collapse-id": "<same as notificationId>" } }
@@ -1186,10 +1187,32 @@ routing and the tap router:
 client; the two collapse headers make the *transport* do the same thing for a device that was offline
 during the burst. All three carry the same value — the server computes it once.
 
-Localization is the reason for `titleKey`/`bodyArgs` rather than a rendered string: the server does
-not know the recipient's locale, and the client already has `strings.xml`. iOS needs
-`content-available` plus a notification service extension to render a data-only message while
-backgrounded; that is part of P5, and until it lands iOS may ship rendered strings with a TODO.
+Localization is the reason for string **keys** rather than rendered text: the server does not know
+the recipient's locale, and the client already has `strings.xml`.
+
+**Named values, not a positional `bodyArgs` array**, which an earlier draft of this section specified
+and which cannot work. Two reasons, either one sufficient:
+
+- `notification_n1_title` is `%1$s · %2$s`, and its second argument is a **localized section label**
+  ("Squawks" / "Tasks" / "Logbook"). The server cannot render that at all. It sends `recordType` and
+  the client resolves both the title-case and lower-case labels from it.
+- `notification_n1_body_single` (`%1$s made a change to %2$s`) and `..._body_plural`
+  (`%1$s made %2$d changes to %3$s`) do not share an argument order, so one array would mean the
+  server encoding per-string placeholder order it has no way to verify.
+
+So the message names the resources and supplies the *variable* values by name — `tailNumber`,
+`actorName`, `changeCount`, plus `recordTitle` on the escalation path — and the client assembles
+them. `bodyKey` is carried alongside `titleKey` for the same reason: single-versus-plural cannot be
+chosen client-side without it. An empty `actorName` means "fall back to
+`notification_n1_actor_fallback`", which is itself a localized string.
+
+The cost is that argument order lives in the client, on three platforms rather than in one server
+file. That is where `strings.xml` lives, so it is the right home, but it is a real coupling and the
+table in `pushMessages.ts` is the only place the contract is written down.
+
+iOS needs `content-available` plus a notification service extension to render a data-only message
+while backgrounded; that is part of P5, and until it lands iOS may ship rendered strings with a
+TODO.
 
 ---
 
