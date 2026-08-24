@@ -45,7 +45,13 @@ class PullListener(
    * foreign-write detection entirely — with nobody to compare against, every writer looks foreign.
    */
   private val selfUid: () -> String? = { null },
-  private val foreignWrites: ForeignWriteListener? = null,
+  /**
+   * A provider, not the instance: the web listener's own dependency graph reaches back to
+   * [SyncEngine] (via `NotificationPrefsManager`), so resolving it while the engine is being
+   * constructed is a Koin cycle. Deferring to the first foreign write breaks it — and foreign
+   * writes only ever arrive long after startup.
+   */
+  private val foreignWrites: () -> ForeignWriteListener? = { null },
 ) {
 
   private val log = Logger.withTag(TAG)
@@ -100,7 +106,7 @@ class PullListener(
    * locally-dirty row is not news.
    */
   private fun notifyIfForeign(remote: RemoteEntity) {
-    val listener = foreignWrites ?: return
+    val listener = foreignWrites() ?: return
     val writer = remote.writerUid ?: return
     val self = selfUid() ?: return
     if (writer == self) return

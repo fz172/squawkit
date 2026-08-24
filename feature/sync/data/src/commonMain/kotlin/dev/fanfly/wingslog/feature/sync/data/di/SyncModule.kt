@@ -114,9 +114,6 @@ val syncModule: Module = module {
     val uploadScheduler = getOrNull<UploadScheduler>()
     val writeLock = get<DatabaseWriteLock>()
     val auth = get<FirebaseAuth>()
-    // Absent on Android and iOS, where N1 arrives by push (design §8.2) — getOrNull, so those hosts
-    // keep the no-op path rather than needing a stub binding.
-    val foreignWrites = getOrNull<ForeignWriteListener>()
     SyncEngine(
       auth = auth,
       cursors = get<SyncCursorStore>(),
@@ -130,7 +127,11 @@ val syncModule: Module = module {
           writeLock = writeLock,
           postWriteHook = postWriteHook,
           selfUid = { auth.currentUser?.uid },
-          foreignWrites = foreignWrites,
+          // Resolved lazily on the first foreign write, never here: the web implementation depends
+          // on NotificationPrefsManager, which depends on SyncEngine, so resolving it inside this
+          // factory is a cycle. Absent on Android and iOS, where N1 arrives by push (§8.2), which
+          // is what getOrNull covers.
+          foreignWrites = { getOrNull<ForeignWriteListener>() },
         )
       },
       pushWorker = get<PushWorker>(),
