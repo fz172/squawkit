@@ -40,13 +40,21 @@ const DEFAULTS = {
 const blobPath = (id: string) => `users/${HOST}/aircraft/${AC}/blobs/${id}`;
 const logPath = (id = LOG) => `users/${HOST}/aircraft/${AC}/maintenance_log/${id}`;
 
-function logPayload(...ids: string[]): Buffer {
+/**
+ * A payload in the shape the CLIENT actually writes: **base64 text**, not bytes.
+ *
+ * #427 changed the fixtures in storage-sweep and blob-cleanup for this reason and did not reach
+ * here, so this suite went on testing a shape production never produces — and stayed green against
+ * the exact decoder bug (#428) that deleted real photos. "Still spares a blob a co-member's LIVE
+ * record shows" is that catastrophe in one line, and it cannot see it while the fixture is a Buffer.
+ */
+function logPayload(...ids: string[]): string {
   const attachments = ids.map((id) =>
     Attachment.fromPartial({ id, name: `${id}.jpg`, type: AttachmentType.ATTACHMENT_TYPE_IMAGE }),
   );
   return Buffer.from(
     MaintenanceLog.encode(MaintenanceLog.fromPartial({ id: LOG, attachments })).finish(),
-  );
+  ).toString("base64");
 }
 
 async function putBlob(id: string) {
@@ -78,7 +86,7 @@ async function putMemberWrittenLog(
 }
 
 /** The `deleted: false → true` edge as the member's client pushes it into the host's tree. */
-function memberDeletion(payload: Buffer, docId = LOG) {
+function memberDeletion(payload: string, docId = LOG) {
   const base = { schema: "aircraft.MaintenanceLog", payload, writerUid: MEMBER };
   return {
     data: fft.makeChange(
