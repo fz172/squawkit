@@ -64,7 +64,7 @@ type SyncDocWire = {
    * is the only form that round-trips cleanly through GitLive's commonMain serialization"). It was
    * typed here as binary, which TypeScript could not catch across `record.data() as SyncDocWire`,
    * and the sweep's own fixtures seeded Buffers — so the tests exercised a shape production never
-   * produces. See #428.
+   * produces. See #428. The conversion now lives in `blobIdsInPayload`, which takes this shape.
    */
   payload?: string | Uint8Array | Buffer;
   schema?: string;
@@ -266,10 +266,10 @@ async function blobsReferencedByLiveRecords(
       const schema = data?.schema ?? "";
       if (!schemaCanOwnBlobs(schema) || data.payload == null) continue;
 
-      const bytes = toBytes(data.payload);
-      if (bytes == null) return null; // unreadable shape — skip the aircraft rather than guess
-      const ids = blobIdsInPayload(schema, bytes);
-      if (ids == null) return null; // unknowable — the caller must skip this aircraft entirely
+      // Unreadable shape and unreadable bytes are the same verdict, and blobIdsInPayload gives
+      // both: unknowable, so the caller must skip this aircraft entirely rather than guess.
+      const ids = blobIdsInPayload(schema, data.payload);
+      if (ids == null) return null;
       ids.forEach((id) => referenced.add(id));
     }
   }
@@ -280,19 +280,4 @@ async function blobsReferencedByLiveRecords(
 function record(into: string[], path: string, report: SweepReport): void {
   if (into.length < SAMPLE_LIMIT) into.push(path);
   else report.truncated = true;
-}
-
-/**
- * Decode a stored payload, or null when its shape is not one we understand.
- *
- * Null matters as much as the decoding: the caller treats it as "unknowable" and skips the whole
- * aircraft. It must never degrade to an empty payload, because an empty payload decodes to a record
- * with no attachments — which reads as "these bytes are referenced by nothing" and deletes them.
- * That is precisely what happened in #428: a base64 string fell through to `new Uint8Array(str)`,
- * which yields a zero-length array rather than throwing.
- */
-function toBytes(payload: string | Uint8Array | Buffer): Uint8Array | null {
-  if (payload instanceof Uint8Array) return payload; // Buffer is a Uint8Array
-  if (typeof payload === "string") return new Uint8Array(Buffer.from(payload, "base64"));
-  return null;
 }

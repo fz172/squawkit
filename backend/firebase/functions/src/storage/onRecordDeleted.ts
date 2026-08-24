@@ -5,9 +5,14 @@ import { FUNCTION_REGION } from "../config/env.js";
 import { adminDb, adminStorage } from "../config/firebaseAdmin.js";
 import { blobIdsInPayload, schemaCanOwnBlobs } from "./blobRefs.js";
 
-/** Envelope fields the sync engine writes. `payload` is proto bytes; `schema` names its type. */
+/** Envelope fields the sync engine writes. `schema` names the type `payload` decodes to. */
 type SyncDocWire = {
-  payload?: Uint8Array | Buffer;
+  /**
+   * **base64, not bytes.** `FirestoreSyncWriter` stores this as a base64 STRING; it was typed here
+   * as binary, and `record.data() as SyncDocWire` asserts rather than checks, so nothing caught it.
+   * `blobIdsInPayload` now takes the stored shape and does the conversion itself. See #428.
+   */
+  payload?: string | Uint8Array | Buffer;
   schema?: string;
   deleted?: boolean;
 };
@@ -43,7 +48,7 @@ export const onRecordDeleted = onDocumentWritten(
     const schema = doc.schema ?? "";
     if (!schemaCanOwnBlobs(schema) || doc.payload == null) return;
 
-    const owned = blobIdsInPayload(schema, toBytes(doc.payload));
+    const owned = blobIdsInPayload(schema, doc.payload);
     if (owned == null) {
       // Unreadable. Deleting nothing is the only safe answer: a payload we cannot decode is
       // indistinguishable from one that owns every blob in the aircraft.
@@ -117,7 +122,7 @@ async function blobsReferencedByLiveRecords(
       const schema = data?.schema ?? "";
       if (!schemaCanOwnBlobs(schema) || data.payload == null) continue;
 
-      const ids = blobIdsInPayload(schema, toBytes(data.payload));
+      const ids = blobIdsInPayload(schema, data.payload);
       if (ids == null) {
         logger.warn("Could not decode a live record", { uid, acId, docId: record.id, schema });
         return { referenced, trustworthy: false };
@@ -126,8 +131,4 @@ async function blobsReferencedByLiveRecords(
     }
   }
   return { referenced, trustworthy: true };
-}
-
-function toBytes(payload: Uint8Array | Buffer): Uint8Array {
-  return payload instanceof Uint8Array ? payload : new Uint8Array(payload);
 }
