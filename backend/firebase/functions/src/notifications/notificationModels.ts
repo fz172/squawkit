@@ -114,16 +114,27 @@ export const NOTIFICATION_ACTIVITY_COLLECTION = "notification_activity";
 export const NOTIFICATION_RATE_COLLECTION = "notification_rate";
 
 /**
- * One document per `(aircraft, recordType, actor)`. Ids concatenate with `__`: Firebase uids and
- * UUID aircraft ids are alphanumeric and `recordType` is a fixed enum, so the separator is
- * unambiguous.
+ * One document per `(host, aircraft, recordType, actor)`.
+ *
+ * **[hostUid] leads the key, and it is not decoration (#204).** An aircraft id is unique only
+ * *within one user's tree* — it is a 20-char client-generated string, and the own-tree rule lets any
+ * account create `users/{self}/aircraft/{anyId}`. Keyed on the aircraft id alone, these documents
+ * live in one global namespace that any account can reach into by choosing an id it has seen. Keyed
+ * under the host — which comes from the trigger *path* and so cannot be claimed — a document a
+ * writer can influence only ever governs that writer's own tree. Exactly the property
+ * `aircraftShareDocPath` was re-keyed for.
+ *
+ * Ids concatenate with `__`: Firebase uids and aircraft ids are alphanumeric (`IdGenerator.kt`) and
+ * `recordType` is a fixed enum, so the separator is unambiguous. The leading uid also keeps the id
+ * clear of Firestore's reserved `__.*__` form.
  */
 export function activityDocPath(
+  hostUid: string,
   aircraftId: string,
   recordType: RecordType,
   actorUid: string,
 ): string {
-  return `${NOTIFICATION_ACTIVITY_COLLECTION}/${aircraftId}__${recordType}__${actorUid}`;
+  return `${NOTIFICATION_ACTIVITY_COLLECTION}/${hostUid}__${aircraftId}__${recordType}__${actorUid}`;
 }
 
 export type NotificationActivityDoc = {
@@ -148,9 +159,16 @@ export type NotificationActivityDoc = {
   lastSentAt: Timestamp | null;
 };
 
-/** One document per aircraft per UTC hour. Read on every write, written only on a send. */
-export function rateDocPath(aircraftId: string, atMs: number): string {
-  return `${NOTIFICATION_RATE_COLLECTION}/${aircraftId}__${rateWindowKey(atMs)}`;
+/**
+ * One document per aircraft per UTC hour. Read on every write, written only on a send.
+ *
+ * Namespaced under [hostUid] for the reason [activityDocPath] gives, and this is the key where it
+ * bites hardest: the aircraft id is the *only* other component, so without the host, any account
+ * that knows an aircraft id — every current and former member of that share — could burn a victim
+ * aircraft's hourly budget from its own tree and silence that share's notifications for the hour.
+ */
+export function rateDocPath(hostUid: string, aircraftId: string, atMs: number): string {
+  return `${NOTIFICATION_RATE_COLLECTION}/${hostUid}__${aircraftId}__${rateWindowKey(atMs)}`;
 }
 
 /** `yyyymmddHH`, UTC. The hour is a bucket boundary, not a local-time claim about anyone's day. */

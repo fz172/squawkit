@@ -49,6 +49,7 @@ const wrappedAircraft = fft.wrap(onNotifiableAircraftWritten);
 const HOST = "n1-host";
 const MEMBER = "n1-member";
 const LURKER = "n1-lurker";
+const MALLORY = "n1-mallory";
 const AC_A = "n1-ac-a";
 const AC_B = "n1-ac-b";
 
@@ -176,11 +177,11 @@ async function taskEdit(acId: string, revision: number, actor = HOST) {
 }
 
 async function activityDoc(acId: string, recordType = "task", actor = HOST) {
-  const snap = await adminDb.doc(activityDocPath(acId, recordType as never, actor)).get();
+  const snap = await adminDb.doc(activityDocPath(HOST, acId, recordType as never, actor)).get();
   return snap.exists ? (snap.data() as Partial<NotificationActivityDoc>) : null;
 }
 
-function sessionCount(doc: Partial<NotificationActivityDoc> | null): number {
+function sessionCount(doc: Partial<NotificationActivityDoc> | null | undefined): number {
   return (doc?.writeCount ?? 0) - (doc?.sessionBaseCount ?? 0);
 }
 
@@ -193,13 +194,13 @@ function sessionCount(doc: Partial<NotificationActivityDoc> | null): number {
  */
 async function clearThrottle(acId: string, recordType = "task", actor = HOST) {
   await adminDb
-    .doc(activityDocPath(acId, recordType as never, actor))
+    .doc(activityDocPath(HOST, acId, recordType as never, actor))
     .set({ lastSentAt: null }, { merge: true });
 }
 
 /** Ages the session so the next write lands past `ACTIVITY_WINDOW`. */
 async function ageSession(acId: string, minutes: number, recordType = "task", actor = HOST) {
-  const ref = adminDb.doc(activityDocPath(acId, recordType as never, actor));
+  const ref = adminDb.doc(activityDocPath(HOST, acId, recordType as never, actor));
   const doc = (await ref.get()).data() as NotificationActivityDoc;
   const shift = (ts: FirebaseFirestore.Timestamp | null | undefined) =>
     ts == null ? null : new Date(ts.toMillis() - minutes * 60_000);
@@ -222,6 +223,8 @@ beforeEach(async () => {
     adminDb.recursiveDelete(adminDb.doc(`users/${MEMBER}`)),
     adminDb.recursiveDelete(adminDb.doc(`users/${LURKER}`)),
     adminDb.recursiveDelete(adminDb.collection("aircraft_shares").doc(HOST)),
+    adminDb.recursiveDelete(adminDb.collection("aircraft_shares").doc(MALLORY)),
+    adminDb.recursiveDelete(adminDb.doc(`users/${MALLORY}`)),
     adminDb.recursiveDelete(adminDb.collection("notification_activity")),
     adminDb.recursiveDelete(adminDb.collection("notification_rate")),
   ]);
@@ -365,7 +368,7 @@ describe("§7.4 the counter and its guards", () => {
   it("stops sending once the hourly ceiling trips, after one 'a lot of activity' notice", async () => {
     await shareAircraft(AC_A, { [HOST]: "owner", [MEMBER]: "technician" });
     await adminDb
-      .doc(rateDocPath(AC_A, Date.now()))
+      .doc(rateDocPath(HOST, AC_A, Date.now()))
       .set({ sendCount: AIRCRAFT_HOURLY_CEILING, expireAt: new Date() });
 
     await taskEdit(AC_A, 1);
@@ -380,11 +383,94 @@ describe("§7.4 the counter and its guards", () => {
   });
 });
 
+describe("doc ids are namespaced under the host (#204)", () => {
+  /**
+   * The aircraft id is a 20-character client-generated string that is unique only WITHIN a tree,
+   * and the own-tree rule lets anyone create `users/{self}/aircraft/{anyId}`. Keyed on the aircraft
+   * id alone, `notification_rate` would be one global namespace that any account could reach into
+   * by choosing an id it had seen — and every current and former member of a share knows its
+   * aircraft id.
+   */
+  it("does not let a stranger's identically-named aircraft burn this one's hourly budget", async () => {
+    await shareAircraft(AC_A, { [HOST]: "owner", [MEMBER]: "technician" });
+
+    // A DIFFERENT host, with an aircraft that has the SAME id. Nothing forbids this.
+    await adminDb.doc(aircraftShareDocPath(MALLORY, AC_A)).set({
+      hostUid: MALLORY,
+      aircraftId: AC_A,
+      memberRoles: { [MALLORY]: "owner", [LURKER]: "technician" },
+      createdAt: new Date(),
+    });
+    await registerDevice(LURKER, "lurker-install", "tok-lurker");
+
+    // Mallory exhausts the hourly ceiling in HER tree.
+    await adminDb
+      .doc(rateDocPath(MALLORY, AC_A, Date.now()))
+      .set({ sendCount: AIRCRAFT_HOURLY_CEILING, expireAt: new Date() });
+    await wrappedRecord({
+      data: fft.makeChange(
+        fft.firestore.makeDocumentSnapshot({}, `users/${MALLORY}/aircraft/${AC_A}/maintenance_task/t`),
+        fft.firestore.makeDocumentSnapshot(
+          taskEnvelope(1, MALLORY),
+          `users/${MALLORY}/aircraft/${AC_A}/maintenance_task/t`,
+        ),
+      ),
+      params: { uid: MALLORY, acId: AC_A, kind: "maintenance_task", docId: "t" },
+    } as never);
+    sentMessages.length = 0;
+
+    // The victim's aircraft must be entirely unaffected: a normal activity notification, not the
+    // "a lot of activity" notice a tripped ceiling produces.
+    await taskEdit(AC_A, 1);
+
+    expect(sentMessages).toHaveLength(1);
+    expect(sentMessages[0].tokens).toEqual(["tok-member"]);
+    expect(sentMessages[0].data.notificationId).toMatch(/^n1:/);
+  });
+
+  /**
+   * The counter key also carries `actorUid`, which rules pin to the writer's own uid — so colliding
+   * it needs the SAME person writing in both trees, not merely the same aircraft id. A mechanic who
+   * works for two owners is the ordinary way that happens.
+   */
+  it("keeps two hosts' counters apart when the same actor writes in both", async () => {
+    await shareAircraft(AC_A, { [HOST]: "owner", [MEMBER]: "technician" });
+    await adminDb.doc(aircraftShareDocPath(MALLORY, AC_A)).set({
+      hostUid: MALLORY,
+      aircraftId: AC_A,
+      memberRoles: { [MALLORY]: "owner", [MEMBER]: "technician" },
+      createdAt: new Date(),
+    });
+
+    await taskEdit(AC_A, 1, MEMBER);
+    await taskEdit(AC_A, 2, MEMBER);
+    await wrappedRecord({
+      data: fft.makeChange(
+        fft.firestore.makeDocumentSnapshot({}, `users/${MALLORY}/aircraft/${AC_A}/maintenance_task/t`),
+        fft.firestore.makeDocumentSnapshot(
+          taskEnvelope(1, MEMBER),
+          `users/${MALLORY}/aircraft/${AC_A}/maintenance_task/t`,
+        ),
+      ),
+      params: { uid: MALLORY, acId: AC_A, kind: "maintenance_task", docId: "t" },
+    } as never);
+
+    // Two separate working sessions, not one run-on count of 3 — and since `firstWriteAt` IS the
+    // notification id, a merged document would also let one tree roll the other's tray entry.
+    expect(sessionCount(await activityDoc(AC_A, "task", MEMBER))).toBe(2);
+    expect(
+      sessionCount(
+        (await adminDb.doc(activityDocPath(MALLORY, AC_A, "task", MEMBER)).get()).data(),
+      ),
+    ).toBe(1);
+  });
+});
+
 describe("§7.5 the escalation bypass", () => {
   it("posts under n1esc:, exempt from the throttle and from the ceiling", async () => {
     await shareAircraft(AC_A, { [HOST]: "owner", [MEMBER]: "technician" });
     await adminDb
-      .doc(rateDocPath(AC_A, Date.now()))
+      .doc(rateDocPath(HOST, AC_A, Date.now()))
       .set({ sendCount: AIRCRAFT_HOURLY_CEILING, ceilingNotified: true, expireAt: new Date() });
 
     await wrappedRecord(

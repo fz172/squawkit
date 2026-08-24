@@ -83,7 +83,7 @@ export type BumpInput = {
  */
 export async function bumpActivity(input: BumpInput): Promise<ActivityBump> {
   const { hostUid, aircraftId, recordType, actorUid, nowMs } = input;
-  const ref = adminDb.doc(activityDocPath(aircraftId, recordType, actorUid));
+  const ref = adminDb.doc(activityDocPath(hostUid, aircraftId, recordType, actorUid));
   const snap = await ref.get();
   const previous = snap.exists ? (snap.data() as Partial<NotificationActivityDoc>) : null;
 
@@ -141,7 +141,9 @@ export async function markActivitySent(
   input: BumpInput,
   labels: { aircraftLabel: string; actorDisplayName: string },
 ): Promise<void> {
-  await adminDb.doc(activityDocPath(input.aircraftId, input.recordType, input.actorUid)).set(
+  await adminDb
+    .doc(activityDocPath(input.hostUid, input.aircraftId, input.recordType, input.actorUid))
+    .set(
     {
       lastSentAt: Timestamp.fromMillis(input.nowMs),
       aircraftLabel: labels.aircraftLabel,
@@ -166,8 +168,12 @@ export type RateState = {
  * and written only on a send, which is what keeps it from becoming a hotter document than the one it
  * protects.
  */
-export async function readRateState(aircraftId: string, nowMs: number): Promise<RateState> {
-  const snap = await adminDb.doc(rateDocPath(aircraftId, nowMs)).get();
+export async function readRateState(
+  hostUid: string,
+  aircraftId: string,
+  nowMs: number,
+): Promise<RateState> {
+  const snap = await adminDb.doc(rateDocPath(hostUid, aircraftId, nowMs)).get();
   if (!snap.exists) return { sendCount: 0, ceilingNotified: false };
   const doc = snap.data() as Partial<NotificationRateDoc> & { ceilingNotified?: boolean };
   return {
@@ -182,11 +188,12 @@ export function ceilingTripped(rate: RateState): boolean {
 
 /** Increments the hour's send budget, and optionally marks the ceiling message as delivered. */
 export async function recordSend(
+  hostUid: string,
   aircraftId: string,
   nowMs: number,
   options: { ceilingNotified?: boolean } = {},
 ): Promise<void> {
-  await adminDb.doc(rateDocPath(aircraftId, nowMs)).set(
+  await adminDb.doc(rateDocPath(hostUid, aircraftId, nowMs)).set(
     {
       sendCount: FieldValue.increment(1),
       // These buckets are worthless the hour after they are written. Configure a Firestore TTL

@@ -182,7 +182,7 @@ type ActivityFanOut = {
 async function fanOutActivity({ input, recipients, tailNumber }: ActivityFanOut): Promise<void> {
   const { hostUid, aircraftId, recordType, actorUid, nowMs } = input;
 
-  const rate = await readRateState(aircraftId, nowMs);
+  const rate = await readRateState(hostUid, aircraftId, nowMs);
   if (ceilingTripped(rate)) {
     // Past the cap this costs one read and nothing else — no counter write, no audience walk.
     if (rate.ceilingNotified) return;
@@ -216,7 +216,7 @@ async function fanOutActivity({ input, recipients, tailNumber }: ActivityFanOut)
   // Stamped whether or not anything went out: the send pass ran, and throttling the next write
   // against it is what stops a burst re-walking the whole audience 200 times.
   await markActivitySent(input, { aircraftLabel: label, actorDisplayName: actorName });
-  if (sent > 0) await recordSend(aircraftId, nowMs);
+  if (sent > 0) await recordSend(hostUid, aircraftId, nowMs);
 
   logger.info("N1 activity fan-out", {
     aircraftId,
@@ -285,7 +285,7 @@ async function fanOutHighVolume(
       honorsActivity(settings, RECORD_TYPE.LOG),
     highVolumePushData(aircraftId, label, nowMs),
   );
-  await recordSend(aircraftId, nowMs, { ceilingNotified: true });
+  await recordSend(hostUid, aircraftId, nowMs, { ceilingNotified: true });
   logger.warn("N1 hourly ceiling tripped", { aircraftId, recipients: recipients.length, sent });
 }
 

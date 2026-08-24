@@ -995,7 +995,7 @@ Tasks queue, and no idle polling — work happens on writes, which is the only t
 What remains is a small counter doc so a body can say "5 changes" instead of "a change":
 
 ```
-notification_activity/{aircraftId}__{recordType}__{actorUid}
+notification_activity/{hostUid}__{aircraftId}__{recordType}__{actorUid}
   hostUid, aircraftId, recordType, actorUid
   aircraftLabel        // resolved once — cosmetic, so staleness is harmless
   actorDisplayName     // from aircraft_shares/{host}/aircraft/{ac}/members/{actor}.displayName
@@ -1008,9 +1008,19 @@ notification_activity/{aircraftId}__{recordType}__{actorUid}
 Plus one rate-limit doc per aircraft per hour, read on every write and written only on send:
 
 ```
-notification_rate/{aircraftId}__{yyyymmddHH}
+notification_rate/{hostUid}__{aircraftId}__{yyyymmddHH}
   sendCount
 ```
+
+**`hostUid` leads both keys, and that is #204 again rather than a detail.** An aircraft id is unique
+only *within one user's tree* — it is a 20-character client-generated string (`IdGenerator.kt`), and
+the own-tree rule lets any account create `users/{self}/aircraft/{anyId}`. Keyed on the aircraft id
+alone these documents form one global namespace, and every current and former member of a share
+knows its aircraft id: create a same-id aircraft in your own tree, share it with a second account,
+write for an hour, and the *victim's* aircraft trips `AIRCRAFT_HOURLY_CEILING` and goes quiet.
+`hostUid` comes from the trigger path and cannot be claimed, so under it a document a writer can
+influence only ever governs that writer's own tree — the same property `aircraft_shares` was
+re-keyed for.
 
 The trigger's whole job, per write:
 
@@ -1018,7 +1028,7 @@ The trigger's whole job, per write:
 1. hostUid = params.uid                        // from the PATH — unspoofable, §7.2
 2. acl = get(aircraft_shares/{hostUid}/aircraft/{acId})
    if (!acl.exists || memberRoles.size <= 1) return          // unshared: the cheap early exit
-3. rate = get(notification_rate/{acId}__{hour})              // a READ — cheap, no contention
+3. rate = get(notification_rate/{hostUid}__{acId}__{hour})    // a READ — cheap, no contention
    if (rate.sendCount >= AIRCRAFT_HOURLY_CEILING) return     // storm: stop before touching anything
 4. prev = get(notification_activity/{key})                   // plain read, NOT a transaction
    newSession = now - prev.lastWriteAt > ACTIVITY_WINDOW
@@ -1094,8 +1104,9 @@ The cap is almost certainly the right one if it comes up: this is a notification
 accounting ledger.
 
 Rules: `match /notification_activity/{id}` and `match /notification_rate/{id}` are both
-`allow read, write: if false` — functions only. Doc ids concatenate with `__`; Firebase uids and UUID
-aircraft ids are alphanumeric and `recordType` is a fixed enum, so the separator is unambiguous.
+`allow read, write: if false` — functions only. Doc ids concatenate with `__`; Firebase uids and
+aircraft ids are alphanumeric and `recordType` is a fixed enum, so the separator is unambiguous, and
+the leading uid also keeps the id clear of Firestore's reserved `__.*__` form.
 
 **Delivery is now at-least-once by construction.** The old sweep needed a claim-then-send-then-delete
 dance with a reclaim window, because delete-then-send loses a batch on a crash. Here a crashed
