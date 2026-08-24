@@ -72,7 +72,16 @@ export const onNotifiableRecordWritten = onDocumentWritten(
     const escalation =
       recordType === RECORD_TYPE.SQUAWK ? escalationOf(change.before, change.after) : null;
     if (escalation != null) {
-      await fanOutEscalation(hostUid, aircraftId, change.actorUid, recipients, escalation);
+      // The squawk id comes from the PATH, never from the payload's own `id` field — see
+      // `escalationOf`'s note on why the two are not interchangeable.
+      await fanOutEscalation(
+        hostUid,
+        aircraftId,
+        event.params.docId,
+        change.actorUid,
+        recipients,
+        escalation,
+      );
       return;
     }
 
@@ -234,6 +243,8 @@ async function fanOutActivity({ input, recipients, tailNumber }: ActivityFanOut)
 async function fanOutEscalation(
   hostUid: string,
   aircraftId: string,
+  /** The record's Firestore document id — its authoritative identity. */
+  squawkId: string,
   actorUid: string,
   recipients: string[],
   escalation: Escalation,
@@ -248,7 +259,7 @@ async function fanOutEscalation(
     (settings) => honorsEscalation(settings, escalation.tier),
     escalationPushData({
       aircraftId,
-      squawkId: escalation.squawkId,
+      squawkId,
       tier: escalation.tier,
       title: escalation.title,
       fromRank: escalation.fromRank,
@@ -259,7 +270,7 @@ async function fanOutEscalation(
 
   logger.info("N1 escalation fan-out", {
     aircraftId,
-    squawkId: escalation.squawkId,
+    squawkId,
     tier: escalation.tier,
     recipients: recipients.length,
     sent,

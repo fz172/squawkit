@@ -522,6 +522,36 @@ describe("§7.5 the escalation bypass", () => {
     expect(sentMessages[1].data.toRank).toBe("3");
   });
 
+  it("keys the id on the document id, not the payload's own id field", async () => {
+    // Nothing enforces that the two agree — rules cannot read a payload. proto3 defaults an unset
+    // `id` to "", which would put every grounding alert on this aircraft under `n1esc:{ac}:` and
+    // let each one replace the last. And a member could carry another squawk's id to overwrite
+    // that alert deliberately. The path is the record's identity; the payload copy is a claim.
+    await shareAircraft(AC_A, { [HOST]: "owner", [MEMBER]: "technician" });
+
+    const unset = (priority: SquawkPriority) =>
+      envelope(
+        Squawk.encode(Squawk.fromPartial({ title: "Left brake dragging", priority })).finish(),
+        "aircraft.Squawk",
+        HOST,
+      );
+
+    await wrappedRecord(
+      recordWrite(
+        AC_A,
+        "squawk",
+        "sq-real-id",
+        unset(SquawkPriority.SQUAWK_PRIORITY_LOW),
+        unset(SquawkPriority.SQUAWK_PRIORITY_AOG),
+      ),
+    );
+
+    expect(sentMessages).toHaveLength(1);
+    expect(sentMessages[0].data.notificationId).toBe(`n1esc:${AC_A}:sq-real-id`);
+    expect(sentMessages[0].data.recordId).toBe("sq-real-id");
+    expect(sentMessages[0].data.tapTarget).toBe(`squawk:${AC_A}:sq-real-id`);
+  });
+
   it("does not fold an escalation into the activity id or the activity count", async () => {
     // Folding it in would let the next routine edit overwrite "raised to AOG" with "made 4 changes
     // to squawks" — silently replacing a grounding alert with a shrug.

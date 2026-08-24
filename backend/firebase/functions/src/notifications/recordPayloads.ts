@@ -90,11 +90,26 @@ export type EscalationTier = (typeof ESCALATION_TIER)[keyof typeof ESCALATION_TI
 
 export type Escalation = {
   tier: EscalationTier;
-  squawkId: string;
   title: string;
   /** The rank the squawk came from, for `notification_body_priority_raised_single`'s "from X". */
   fromRank: number;
 };
+
+/**
+ * **Deliberately no `squawkId`.** The payload carries an `id` field, and it is the wrong one to use:
+ * the record's identity is its Firestore document id, which comes from the trigger path, while the
+ * copy inside the payload is opaque bytes that no rule can check (`writerIsSelf()` attests the
+ * envelope, not the contents). Nothing enforces that the two agree.
+ *
+ * Two ways that bites, and both defeat the one property §7.5 exists to guarantee. proto3 has no
+ * field presence for scalars, so an unset `id` decodes to `""` — no error — and every squawk on the
+ * aircraft would then post under `n1esc:{ac}:`, each grounding alert replacing the last. And since
+ * rules let any member write squawks into a shared aircraft but cannot see inside a payload, a
+ * member could carry *another* squawk's id and overwrite that alert in everyone's tray.
+ *
+ * The caller passes `event.params.docId` instead. Decoding is still right for the tail number and
+ * the title, which exist only in the payload; the record id has a canonical home in the path.
+ */
 
 /**
  * Was this write a reportable priority escalation? (§7.5)
@@ -127,7 +142,7 @@ export function escalationOf(
         : null;
   if (tier == null) return null; // MEDIUM and below: below the reportable floor
 
-  return { tier, squawkId: squawk.id, title: squawk.title, fromRank };
+  return { tier, title: squawk.title, fromRank };
 }
 
 export { SquawkPriority };
