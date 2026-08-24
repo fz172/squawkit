@@ -22,9 +22,21 @@ function attachment(id: string, type = AttachmentType.ATTACHMENT_TYPE_IMAGE): At
   return Attachment.fromPartial({ id, name: `${id}.jpg`, type });
 }
 
-function logPayload(...attachments: Attachment[]): Buffer {
-  return Buffer.from(MaintenanceLog.encode(MaintenanceLog.fromPartial({ id: LOG, attachments })).finish());
+/**
+ * A payload in the shape the CLIENT actually writes: **base64 text**, not bytes.
+ *
+ * These fixtures used to build Buffers, a shape production never produces, so every test here
+ * passed against a decoder that could not read a real document. That is #428, and it is the reason
+ * the sweep deleted real photos before it was caught there.
+ */
+function logPayload(...attachments: Attachment[]): string {
+  return Buffer.from(
+    MaintenanceLog.encode(MaintenanceLog.fromPartial({ id: LOG, attachments })).finish(),
+  ).toString("base64");
 }
+
+/** Base64 of bytes that are not a valid message of any schema we know. */
+const CORRUPT_PAYLOAD = Buffer.from([0xff, 0xff, 0xff, 0xff]).toString("base64");
 
 async function putBlob(id: string) {
   await adminStorage.bucket().file(blobPath(id)).save(Buffer.from([1, 2, 3]));
@@ -36,7 +48,7 @@ async function blobExists(id: string): Promise<boolean> {
 }
 
 /** The `deleted: false → true` edge, as the sync engine writes it. */
-function deletion(path: string, payload: Buffer, schema = "aircraft.MaintenanceLog", docId = LOG) {
+function deletion(path: string, payload: unknown, schema = "aircraft.MaintenanceLog", docId = LOG) {
   const before = fft.firestore.makeDocumentSnapshot({ deleted: false, schema, payload }, path);
   const after = fft.firestore.makeDocumentSnapshot({ deleted: true, schema, payload }, path);
   return {
@@ -97,9 +109,29 @@ describe("onRecordDeleted — a deleted record takes its photos with it (#158)",
     // An unreadable payload is indistinguishable from one that owns every blob in the aircraft.
     // Deleting nothing is the only safe answer.
     await putBlob("blob-a");
-    const corrupt = Buffer.from([0xff, 0xff, 0xff, 0xff]);
 
-    await wrappedRecord(deletion(logPath(), corrupt, "aircraft.NotARealSchema") as never);
+    await wrappedRecord(deletion(logPath(), CORRUPT_PAYLOAD, "aircraft.NotARealSchema") as never);
+
+    expect(await blobExists("blob-a")).toBe(true);
+  });
+
+  /**
+   * The #428 regression, on this trigger. A payload whose SHAPE cannot be read must be treated as
+   * unknowable, never as an empty record — an empty record owns no attachments, and "owns no
+   * attachments" is one branch away from "delete everything it pointed at".
+   */
+  it("collects NOTHING when the deleted payload is not a shape it can read", async () => {
+    await putBlob("blob-a");
+
+    await wrappedRecord(deletion(logPath(), 12345) as never); // neither base64 text nor bytes
+
+    expect(await blobExists("blob-a")).toBe(true);
+  });
+
+  it("collects NOTHING for an empty payload rather than reading it as 'owns nothing'", async () => {
+    await putBlob("blob-a");
+
+    await wrappedRecord(deletion(logPath(), "") as never);
 
     expect(await blobExists("blob-a")).toBe(true);
   });
@@ -112,7 +144,7 @@ describe("onRecordDeleted — a deleted record takes its photos with it (#158)",
     await adminDb.doc(logPath("log-corrupt")).set({
       deleted: false,
       schema: "aircraft.MaintenanceLog",
-      payload: Buffer.from([0xff, 0xff, 0xff, 0xff, 0xff]),
+      payload: CORRUPT_PAYLOAD,
     });
 
     await wrappedRecord(deletion(logPath(), payload) as never);
@@ -150,7 +182,7 @@ describe("onRecordDeleted — a deleted record takes its photos with it (#158)",
     await putBlob("squawk-blob");
     const payload = Buffer.from(
       Squawk.encode(Squawk.fromPartial({ id: "sq-1", attachments: [attachment("squawk-blob")] })).finish(),
-    );
+    ).toString("base64");
     const before = fft.firestore.makeDocumentSnapshot(
       { deleted: false, schema: "aircraft.Squawk", payload },
       `users/${UID}/aircraft/${AC}/squawk/sq-1`,
