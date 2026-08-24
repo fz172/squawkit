@@ -51,9 +51,17 @@ import {
  *
  * One document per `(aircraft, recordType, actor)` against Firestore's ~1 write/sec sustained
  * single-document rate. A stress-test import of 200 records by one actor is well past that: latency
- * climbs and some invocations get contention errors, which the trigger's own retry handles. Nothing
- * is lost — a dropped increment costs one unit of a count the next write corrects.
- * [AIRCRAFT_HOURLY_CEILING] does **not** rescue that case and is not claimed to (§7.4).
+ * climbs and some invocations fail on contention.
+ *
+ * **The triggers do not retry** — neither sets `retry: true`, and firebase-functions v2 event
+ * triggers default to off — so a contention failure drops the whole invocation, the notification
+ * included, not merely an increment. That is the intended shape rather than an omission: §7.4's
+ * "delivery is at-least-once by construction" rests on the *next write* re-sending with a corrected
+ * count, which is why nothing here needs a claim-and-reclaim dance. Turning retry on would trade a
+ * missed intermediate notification for one delivered minutes late, possibly under a rolled
+ * `sessionSeq` — worse, since the final write of any burst is the one that matters.
+ *
+ * [AIRCRAFT_HOURLY_CEILING] does **not** rescue the burst case and is not claimed to (§7.4).
  */
 
 export type ActivityBump = {

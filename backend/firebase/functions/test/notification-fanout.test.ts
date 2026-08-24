@@ -552,6 +552,25 @@ describe("§7.5 the escalation bypass", () => {
     expect(sentMessages[0].data.tapTarget).toBe(`squawk:${AC_A}:sq-real-id`);
   });
 
+  it("consumes the hourly budget even though the ceiling never blocks it", async () => {
+    // Exempt from being blocked, not from being counted. A storm of escalations should quiet
+    // routine activity — "made 3 changes to tasks" is noise while an aircraft is being grounded.
+    await shareAircraft(AC_A, { [HOST]: "owner", [MEMBER]: "technician" });
+
+    await wrappedRecord(
+      recordWrite(
+        AC_A,
+        "squawk",
+        "sq-1",
+        squawkEnvelope("sq-1", SquawkPriority.SQUAWK_PRIORITY_LOW),
+        squawkEnvelope("sq-1", SquawkPriority.SQUAWK_PRIORITY_AOG),
+      ),
+    );
+
+    const rate = await adminDb.doc(rateDocPath(HOST, AC_A, Date.now())).get();
+    expect(rate.data()?.sendCount).toBe(1);
+  });
+
   it("does not fold an escalation into the activity id or the activity count", async () => {
     // Folding it in would let the next routine edit overwrite "raised to AOG" with "made 4 changes
     // to squawks" — silently replacing a grounding alert with a shrug.
@@ -656,6 +675,30 @@ describe("§7.4 audience and preferences, re-derived on every send", () => {
     expect(sentMessages[0].tokens.sort()).toEqual(["tok-member", "tok-phone"]);
   });
 
+  it("still reaches everyone else when one recipient cannot be resolved", async () => {
+    // Without a per-recipient guard, one transient failure rejects the whole Promise.all and NOBODY
+    // is notified. Simulated by making one recipient's push_devices read throw.
+    await shareAircraft(AC_A, { [HOST]: "owner", [MEMBER]: "technician", [LURKER]: "technician" });
+    await registerDevice(LURKER, "lurker-install", "tok-lurker");
+
+    const realCollection = adminDb.collection.bind(adminDb);
+    const spy = vi
+      .spyOn(adminDb, "collection")
+      .mockImplementation((path: string) =>
+        path === `users/${LURKER}/push_devices`
+          ? ({ get: () => Promise.reject(new Error("transient")) } as never)
+          : realCollection(path),
+      );
+    try {
+      await taskEdit(AC_A, 1);
+    } finally {
+      spy.mockRestore();
+    }
+
+    expect(sentMessages).toHaveLength(1);
+    expect(sentMessages[0].tokens).toEqual(["tok-member"]);
+  });
+
   it("names the actor from the share roster, and the aircraft by tail number", async () => {
     await shareAircraft(AC_A, { [HOST]: "owner", [MEMBER]: "technician" });
 
@@ -669,15 +712,44 @@ describe("§7.4 audience and preferences, re-derived on every send", () => {
 });
 
 describe("what is not collaboration activity", () => {
-  it("ignores a write with no writerUid — including a function's own tombstone cascade", async () => {
-    // `onAircraftDeleted` tombstones every child record of a deleted aircraft. Without this guard
-    // that single act would fan out one notification per record.
+  it("ignores a write with no writerUid at all", async () => {
+    // A pre-attestation document, or a function write that creates a document outright.
     await shareAircraft(AC_A, { [HOST]: "owner", [MEMBER]: "technician" });
 
     const { writerUid: _stamped, ...unattested } = taskEnvelope(1);
     await wrappedRecord(
       recordWrite(AC_A, "maintenance_task", "task-1", taskEnvelope(1), {
         ...unattested,
+        deleted: true,
+      }),
+    );
+
+    expect(sentMessages).toHaveLength(0);
+  });
+
+  /**
+   * The cascade in its REAL shape, which the `writerUid` guard does not catch.
+   *
+   * `onAircraftDeleted.tombstoneChildren` uses `batch.update`, so each record keeps its original
+   * `writerUid` and the write is indistinguishable from that author deleting it by hand. What keeps
+   * it silent is that `tearDownShare` runs FIRST and removes the ACL.
+   *
+   * **This test does not pin that ordering, and should not be read as doing so.** It pins the shape
+   * — a cascade write carries a `writerUid`, so the guard above is not what saves us, and an absent
+   * ACL is. The ordering itself is a race between two independent triggers in production, which no
+   * unit test at this level can settle; the warning lives in `onAircraftDeleted` next to the two
+   * calls whose order decides it.
+   */
+  it("stays silent for the aircraft-delete cascade, which keeps its writerUid", async () => {
+    await shareAircraft(AC_A, { [HOST]: "owner", [MEMBER]: "technician" });
+    await adminDb.doc(`users/${HOST}/aircraft/${AC_A}/maintenance_task/task-1`).set(taskEnvelope(1));
+
+    // tearDownShare's effect: the ACL is gone before any child is tombstoned.
+    await adminDb.recursiveDelete(adminDb.collection("aircraft_shares").doc(HOST));
+
+    await wrappedRecord(
+      recordWrite(AC_A, "maintenance_task", "task-1", taskEnvelope(1), {
+        ...taskEnvelope(1), // writerUid preserved, exactly as batch.update leaves it
         deleted: true,
       }),
     );

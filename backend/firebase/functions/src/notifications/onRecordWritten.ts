@@ -147,9 +147,14 @@ type Change = {
  *
  * - **A hard delete.** `after` is gone, so this is the tombstone GC reclaiming a record months
  *   later, not somebody touching it.
- * - **A write with no `writerUid`.** Either a pre-attestation document or — the case that matters —
- *   a Cloud Function's own write. `onAircraftDeleted` tombstones every child record of a deleted
- *   aircraft; without this guard that single act would fan out one notification per record.
+ * - **A write with no `writerUid`.** A pre-attestation document, or a Cloud Function write that
+ *   creates a document outright. Note what this does **not** catch: `onAircraftDeleted`'s tombstone
+ *   cascade uses `batch.update`, which *preserves* the existing `writerUid`, so those writes look
+ *   exactly like the original author deleting each record. What actually keeps them silent is that
+ *   `onAircraftDeleted` tears the share down *before* it tombstones the children, so the ACL is gone
+ *   and `readShareAudience` returns null. That ordering is load-bearing for this feature and is
+ *   flagged as such in `onAircraftDeleted`; the test below pins the real cascade shape rather than a
+ *   hand-stripped one.
  * - **A write that changed nothing.** A client re-pushing an identical revision is not news.
  */
 function readChange(event: {
@@ -237,8 +242,20 @@ async function fanOutActivity({ input, recipients, tailNumber }: ActivityFanOut)
 }
 
 /**
- * The §7.5 bypass. Exempt from [MIN_REPOST_INTERVAL_MS] and from the hourly ceiling, and it never
+ * The §7.5 bypass. Exempt from `MIN_REPOST_INTERVAL` and from the hourly ceiling, and it never
  * touches the activity counter — a grounding alert is not one of "4 changes to squawks".
+ *
+ * **Exempt from being *blocked*, not from being *counted*.** It still calls `recordSend`, so a storm
+ * of escalations consumes the aircraft's hourly budget and quiets routine activity — which is the
+ * right order of sacrifice, since "made 3 changes to tasks" is noise while an aircraft is being
+ * grounded repeatedly. Without that, escalations were invisible to the accounting entirely.
+ *
+ * What remains unbounded, stated rather than papered over: nothing caps escalations *themselves*. A
+ * client toggling one squawk LOW→AOG→LOW in a loop fires a full fan-out per cycle. §7.5 forbids the
+ * two throttles that exist, deliberately — a grounding alert must not be suppressed — so bounding
+ * this needs a guard that cannot suppress a *different* squawk's alert (a per-`n1esc:` repost window
+ * is the obvious candidate, since a repeat under the same id only replaces itself in the tray).
+ * That is a design change, not a bug fix, and it is not made here.
  */
 async function fanOutEscalation(
   hostUid: string,
@@ -267,6 +284,9 @@ async function fanOutEscalation(
       actorName,
     }),
   );
+
+  // Counted, never blocking: readRateState is not consulted on this path.
+  if (sent > 0) await recordSend(hostUid, aircraftId, Date.now());
 
   logger.info("N1 escalation fan-out", {
     aircraftId,
@@ -314,9 +334,22 @@ async function fanOut(
 ): Promise<number> {
   const perRecipient = await Promise.all(
     recipients.map(async (uid): Promise<PushTarget[]> => {
-      const settings = await readNotificationSettings(uid);
-      if (!wants(settings)) return [];
-      return enabledTokensFor(uid);
+      // Per recipient, not per fan-out. Without this a single transient Firestore error reading one
+      // person's push_devices rejects the whole Promise.all, and every OTHER recipient — whose reads
+      // succeeded — hears nothing. The triggers do not retry (see activityCounter.ts), so that
+      // notification is simply gone. One unreachable recipient must cost only that recipient.
+      try {
+        const settings = await readNotificationSettings(uid);
+        if (!wants(settings)) return [];
+        return await enabledTokensFor(uid);
+      } catch (e) {
+        logger.warn("Could not resolve a recipient for a notification", {
+          uid,
+          notificationId: data.notificationId,
+          error: String(e),
+        });
+        return [];
+      }
     }),
   );
   return sendPush(perRecipient.flat(), data);
