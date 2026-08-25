@@ -5,7 +5,6 @@ import androidx.lifecycle.viewModelScope
 import dev.fanfly.wingslog.aircraft.ComponentType
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.aircraft.Squawk
-import dev.fanfly.wingslog.aircraft.SquawkPriority
 import dev.fanfly.wingslog.core.storage.AircraftScopeResolver
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
@@ -15,6 +14,7 @@ import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.sharing.model.ShareRole
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
+import dev.fanfly.wingslog.feature.squawk.model.openAog
 import dev.fanfly.wingslog.feature.squawk.model.toWithStatus
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDueManager
@@ -225,10 +225,7 @@ class AircraftOverviewViewModel(
           } ?: emptyList()
 
           val squawksWithStatus = squawkList.map { it.toWithStatus() }
-          val aogSquawks = squawkList.filter {
-            it.priority == SquawkPriority.SQUAWK_PRIORITY_AOG &&
-              it.addressed_by_log_id.isEmpty()
-          }
+          val aogSquawks = squawksWithStatus.openAog()
 
           AircraftOverviewUiState.Success(
             aircraft = aircraft,
