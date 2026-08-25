@@ -24,6 +24,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 
 class SettingsViewModel(
   private val authManager: AuthManager,
@@ -190,11 +191,11 @@ class SettingsViewModel(
         return@launch
       }
       observeSelfJob?.cancel()
-      // Before logOut(), for the reason logOut() explains: deleting the token doc needs a live uid.
-      // Belt-and-braces here — deleteMyAccount already recursive-deletes users/{uid}, push_devices
-      // included — but this account may have been signed in on other devices, and the local one is
-      // the only doc this device is able to remove.
-      pushTokenRegistrar?.clearThisDevice()
+      // No clearThisDevice() here, deliberately — unlike logOut(). deleteMyAccount recursive-deletes
+      // users/{uid}, and `deleteMyAccount.ts` calls out push_devices as going with it, so every
+      // device's doc is already gone rather than just this one's. Worse, the Auth user is deleted
+      // server-side, so by this line there is no live uid to authorize the write: the delete could
+      // only sit unacknowledged and strand `deletion` on Working behind a spinner.
       // Same ordering as logOut(): sign out first so the SyncEngine releases the write lock the
       // wipes below need, or they block forever on web.
       authManager.logOut()
@@ -223,7 +224,17 @@ class SettingsViewModel(
       // token survives — leaving this device receiving another account's squawk titles in its tray
       // (design §7.1), which is exactly the leak urgency_watermark's sign-out wipe closed locally.
       // It runs before the lock-release concern below because it touches Firestore, not SQLDelight.
-      pushTokenRegistrar?.clearThisDevice()
+      //
+      // BOUNDED, never awaited indefinitely. A Firestore write Task resolves only when the backend
+      // acknowledges the mutation, so offline it does not fail — it simply never settles, and
+      // nothing below this line runs. Unbounded, that makes "Log out" a dead button in airplane
+      // mode: no sign-out, no wipe, no LOGGED_OUT state, no error to show.
+      //
+      // Timing out leaves the token doc behind, so an offline sign-out can still deliver the
+      // previous account's titles here. That residue is not closable from this side — a queued
+      // delete fails once the session is gone — and the real fix is the recipient check on the
+      // receive side (design §7.1). Hanging the only exit from the account is the worse trade.
+      withTimeoutOrNull(PUSH_TOKEN_CLEAR_TIMEOUT_MS) { pushTokenRegistrar?.clearThisDevice() }
       // Sign out first so authStateChanged(null) fires immediately, which causes the SyncEngine
       // to cancel its userScope and release the DatabaseWriteLock. The wipe operations below
       // need that lock — calling them before signOut would block forever on web (JS single-thread,
@@ -236,5 +247,13 @@ class SettingsViewModel(
         dbChecker.wipeDataForUser(uid)
       }
     }
+  }
+
+  private companion object {
+    /**
+     * Long enough for a healthy round-trip, short enough that a pilot on a ramp with no signal does
+     * not read the button as broken. The cost of expiring is a stale token doc, not lost data.
+     */
+    const val PUSH_TOKEN_CLEAR_TIMEOUT_MS = 3_000L
   }
 }

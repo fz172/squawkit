@@ -5,6 +5,7 @@ import com.google.firebase.messaging.FirebaseMessaging
 import dev.fanfly.wingslog.feature.notifications.model.PushTokenSink
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -38,12 +39,22 @@ class PushTokenBootstrap(
 
   init {
     scope.launch {
-      val token = runCatching { readToken() }
-        .onFailure { log.w(it) { "Could not read the current push token" } }
-        .getOrNull()
+      val token = try {
+        readToken()
+      } catch (e: CancellationException) {
+        throw e
+      } catch (e: Throwable) {
+        log.w(e) { "Could not read the current push token" }
+        null
+      }
       if (token.isNullOrEmpty()) return@launch
-      runCatching { sink.onTokenRefreshed(token) }
-        .onFailure { log.w(it) { "Could not forward the current push token" } }
+      try {
+        sink.onTokenRefreshed(token)
+      } catch (e: CancellationException) {
+        throw e
+      } catch (e: Throwable) {
+        log.w(e) { "Could not forward the current push token" }
+      }
     }
   }
 

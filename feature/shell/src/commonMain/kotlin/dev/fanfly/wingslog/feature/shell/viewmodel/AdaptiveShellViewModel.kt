@@ -163,9 +163,18 @@ class AdaptiveShellViewModel(
     }
   }
 
+  /**
+   * The four tabs the server can name, which are exactly `aircraftTabForRecordType`'s four returns
+   * plus nothing else — `overview` arrives both for aircraft-level activity and for the §7.4
+   * high-volume notice. Keep this in step with that function: an unmapped tab is not an error, it
+   * just leaves the pilot on whatever section was already open with no clue what changed, which
+   * reads as a tap that did nothing.
+   */
   private fun String.toShellSection(): ShellSection? = when (this) {
     "squawks" -> ShellSection.SQUAWKS
     "tasks" -> ShellSection.TASKS
+    "logs" -> ShellSection.LOGS
+    "overview" -> ShellSection.DASHBOARD
     else -> null
   }
 

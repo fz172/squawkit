@@ -38,7 +38,7 @@ data class PushPayload(
      * tray entry. [notificationId] and [tapTarget] are the two fields with no sane default: without
      * the first nothing can replace in the tray, and without the second a tap goes nowhere.
      */
-        fun parse(data: Map<String, String>): PushPayload? {
+    fun parse(data: Map<String, String>): PushPayload? {
       val notificationId = data["notificationId"]?.takeIf { it.isNotBlank() } ?: return null
       val tapTarget = parseTapTarget(data["tapTarget"]) ?: return null
       return PushPayload(

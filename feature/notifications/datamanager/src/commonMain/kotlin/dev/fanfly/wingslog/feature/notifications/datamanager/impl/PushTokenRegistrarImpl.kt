@@ -8,6 +8,7 @@ import dev.gitlive.firebase.firestore.BaseTimestamp
 import dev.gitlive.firebase.firestore.DocumentReference
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 import dev.gitlive.firebase.firestore.Timestamp
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -81,8 +82,13 @@ class PushTokenRegistrarImpl(
           // A guest has no account to fan collaboration into — sharing itself requires signing in
           // — so registering a token here would be pointless state with no consumer server-side.
           if (user == null || user.isAnonymous || token == null) return@collect
-          runCatching { upsertToken(user.uid, token) }
-            .onFailure { log.w(it) { "Could not register push token" } }
+          try {
+            upsertToken(user.uid, token)
+          } catch (e: CancellationException) {
+            throw e
+          } catch (e: Throwable) {
+            log.w(e) { "Could not register push token" }
+          }
         }
     }
   }
@@ -93,16 +99,27 @@ class PushTokenRegistrarImpl(
 
   override suspend fun setEnabled(enabled: Boolean) {
     val uid = firebaseAuth.currentUser?.uid ?: return
-    runCatching {
+    try {
       deviceDoc(uid, installIdStore.getOrCreate())
         .set(PushDeviceEnabledWire(enabled = enabled), merge = true)
-    }.onFailure { log.w(it) { "Could not set this device's push enabled flag" } }
+    } catch (e: CancellationException) {
+      throw e
+    } catch (e: Throwable) {
+      log.w(e) { "Could not set this device's push enabled flag" }
+    }
   }
 
   override suspend fun clearThisDevice() {
     val uid = firebaseAuth.currentUser?.uid ?: return
-    runCatching { deviceDoc(uid, installIdStore.getOrCreate()).delete() }
-      .onFailure { log.w(it) { "Could not clear this device's push token on sign-out" } }
+    // CancellationException is rethrown, not logged: the caller bounds this with a timeout, and
+    // swallowing the timeout's cancellation would report a clean clear that never happened.
+    try {
+      deviceDoc(uid, installIdStore.getOrCreate()).delete()
+    } catch (e: CancellationException) {
+      throw e
+    } catch (e: Throwable) {
+      log.w(e) { "Could not clear this device's push token on sign-out" }
+    }
   }
 
   private suspend fun upsertToken(uid: String, token: String) {
