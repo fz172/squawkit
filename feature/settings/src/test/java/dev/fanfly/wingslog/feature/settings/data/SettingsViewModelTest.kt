@@ -39,6 +39,7 @@ import org.junit.Before
 import org.junit.Test
 
 private const val TEST_USER_ID = "test-user-123"
+private const val TEST_USER_EMAIL = "pilot@example.com"
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class SettingsViewModelTest {
@@ -97,10 +98,7 @@ class SettingsViewModelTest {
     )
     every { featureLabManager.observe() } returns flowOf(DeveloperFlags())
 
-    val mockUser = mockk<FirebaseUser>()
-    every { mockUser.uid } returns TEST_USER_ID
-    every { mockUser.isAnonymous } returns false
-    every { authManager.getCurrentUser() } returns mockUser
+    every { authManager.getCurrentUser() } returns userWithEmail(TEST_USER_EMAIL)
 
     coJustRun { dbChecker.wipeDataForUser(any()) }
     coJustRun { attachmentManager.wipeLocalData(any()) }
@@ -247,6 +245,85 @@ class SettingsViewModelTest {
     coVerify(exactly = 0) { accountDeleter.deleteAccount() }
   }
 
+  /** With an address the pilot would recognise, that address is what the dialog asks them to type. */
+  @Test
+  fun askingToDelete_challengesWithTheAccountEmail() = runTest(testDispatcher) {
+    viewModel = buildViewModel()
+
+    viewModel.askToDeleteAccount()
+
+    assertThat(viewModel.user.value.deletionChallenge)
+      .isEqualTo(DeletionChallenge.Email(TEST_USER_EMAIL))
+  }
+
+  /**
+   * Apple Hide My Email gives us an alias the pilot has never been shown. Asking them to type it
+   * would be an unanswerable question, so the fixed phrase takes over.
+   */
+  @Test
+  fun askingToDelete_fallsBackToThePhraseForAHiddenAppleAddress() = runTest(testDispatcher) {
+    every { authManager.getCurrentUser() } returns
+      userWithEmail("abc123xyz@privaterelay.appleid.com")
+    viewModel = buildViewModel()
+
+    viewModel.askToDeleteAccount()
+
+    assertThat(viewModel.user.value.deletionChallenge).isEqualTo(DeletionChallenge.Phrase)
+  }
+
+  /** Same fallback when the provider handed us no address at all. */
+  @Test
+  fun askingToDelete_fallsBackToThePhraseWithoutAnEmail() = runTest(testDispatcher) {
+    every { authManager.getCurrentUser() } returns userWithEmail(null)
+    viewModel = buildViewModel()
+
+    viewModel.askToDeleteAccount()
+
+    assertThat(viewModel.user.value.deletionChallenge).isEqualTo(DeletionChallenge.Phrase)
+  }
+
+  /** Reopening starts from a blank field, so yesterday's typing cannot arm today's confirm. */
+  @Test
+  fun askingToDelete_clearsAnyEarlierTyping() = runTest(testDispatcher) {
+    viewModel = buildViewModel()
+    viewModel.askToDeleteAccount()
+    viewModel.setDeleteAccountInput(TEST_USER_EMAIL)
+
+    viewModel.cancelDeleteAccount()
+    viewModel.askToDeleteAccount()
+
+    assertThat(viewModel.user.value.deletionInput).isEmpty()
+  }
+
+  /** Typed text belongs to the ViewModel, not to a composable that a rotation can throw away. */
+  @Test
+  fun typedConfirmation_isKeptInState() = runTest(testDispatcher) {
+    viewModel = buildViewModel()
+    viewModel.askToDeleteAccount()
+
+    viewModel.setDeleteAccountInput("pilot@")
+
+    assertThat(viewModel.user.value.deletionInput).isEqualTo("pilot@")
+  }
+
+  /** A delete already in flight cannot be re-aimed by editing the field behind the spinner. */
+  @Test
+  fun typedConfirmation_isFrozenWhileTheDeleteRuns() = runTest(testDispatcher) {
+    coEvery { accountDeleter.deleteAccount() } coAnswers {
+      viewModel.setDeleteAccountInput("changed my mind")
+      assertThat(viewModel.user.value.deletionInput).isNotEqualTo("changed my mind")
+      false
+    }
+    viewModel = buildViewModel()
+    viewModel.askToDeleteAccount()
+    viewModel.setDeleteAccountInput(TEST_USER_EMAIL)
+
+    viewModel.confirmDeleteAccount()
+    advanceUntilIdle()
+
+    assertThat(viewModel.user.value.deletion).isEqualTo(AccountDeletion.Failed)
+  }
+
   @Test
   fun notificationsRowState_grantedAndOn_isDefault() = runTest(testDispatcher) {
     viewModel = buildViewModel()
@@ -308,6 +385,12 @@ class SettingsViewModelTest {
     advanceUntilIdle()
 
     assertThat(viewModel.user.value.notificationsRowState).isEqualTo(NotificationsRowState.DEFAULT)
+  }
+
+  private fun userWithEmail(email: String?) = mockk<FirebaseUser> {
+    every { uid } returns TEST_USER_ID
+    every { isAnonymous } returns false
+    every { this@mockk.email } returns email
   }
 
   private fun buildViewModel() = SettingsViewModel(
