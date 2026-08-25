@@ -37,8 +37,13 @@ object ContentWidth {
 }
 
 /**
- * Expands content to the available width on small screens while centering it within [maxWidth]
- * when a parent supplies horizontal alignment on larger displays.
+ * Caps content to [maxWidth] on wide displays while letting it fill the available width below it.
+ *
+ * This does **not** centre the caller — a child sits at the box's start edge unless centring is
+ * supplied. On wide layouts wrap it in a container that carries the horizontal alignment, e.g.
+ * `Box(contentAlignment = Alignment.TopCenter) { … }` (see [ConstrainedTopBar] and
+ * [ConstrainedFloatingAction], which already show that pattern). Screens that forget the
+ * alignment pin an otherwise cap-sized column to the left edge at desktop width.
  */
 fun Modifier.constrainedContentWidth(
   maxWidth: Dp = ContentWidth.Reading,

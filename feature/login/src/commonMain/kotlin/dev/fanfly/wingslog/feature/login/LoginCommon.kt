@@ -139,7 +139,7 @@ internal fun LoginBackdrop(content: @Composable ColumnScope.() -> Unit) {
             Color.Transparent,
           ),
           center = Offset(size.width / 2f, size.height * 0.30f),
-          radius = size.width * 0.70f,
+          radius = minOf(size.width, ContentWidth.Auth.value) * 0.70f,
         ),
       )
     }

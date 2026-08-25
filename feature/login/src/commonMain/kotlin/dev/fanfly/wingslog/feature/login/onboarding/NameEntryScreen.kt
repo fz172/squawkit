@@ -121,7 +121,7 @@ fun NameEntryScreen(
             Color(0xFF2A6BC9).copy(alpha = 0.20f), Color.Transparent
           ),
           center = Offset(size.width / 2f, size.height * 0.618f),
-          radius = size.width * 0.70f,
+          radius = minOf(size.width, ContentWidth.Auth.value) * 0.70f,
         ),
       )
     }
