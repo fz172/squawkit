@@ -5,6 +5,7 @@ import android.content.pm.PackageManager
 import dev.fanfly.wingslog.core.storage.DatabaseWriteLock
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
 import dev.fanfly.wingslog.feature.notifications.datamanager.InstallIdStore
+import dev.fanfly.wingslog.feature.notifications.datamanager.PushTokenBootstrap
 import dev.fanfly.wingslog.feature.notifications.datamanager.PushTokenRegistrar
 import dev.fanfly.wingslog.feature.notifications.datamanager.impl.PushTokenRegistrarImpl
 import dev.fanfly.wingslog.feature.notifications.model.PushTokenSink
@@ -17,10 +18,11 @@ import org.koin.dsl.module
 actual val platformPushTokenModule: Module = module {
   single { InstallIdStore(db = get<WingsLogDatabase>(), writeLock = get<DatabaseWriteLock>()) }
 
-  // NOT createdAtStart: this touches Firebase, and eagerly constructing anything Firebase-backed
-  // is the iOS startup landmine documented on `iosFirebaseLazyInit`. It is constructed on first
-  // injection instead — which is `WingsLogFirebaseMessagingService`, i.e. the moment a token
-  // actually exists to register.
+  // Lazy, and pulled up by PushTokenBootstrap below rather than by its own createdAtStart: the
+  // eager-Firebase startup landmine on `iosFirebaseLazyInit` is about iOS, and this is the Android
+  // actual (the iOS one is an empty module), so eager construction is safe here — but keeping the
+  // registrar itself lazy means the one place that decides "now is the time to touch Firebase" is
+  // the bootstrap, not two singletons that both think they are first.
   single<PushTokenRegistrar> {
     PushTokenRegistrarImpl(
       firebaseAuth = get<FirebaseAuth>(),
@@ -36,6 +38,11 @@ actual val platformPushTokenModule: Module = module {
   // `get<PushTokenRegistrar>()` rather than a second constructor call: two registrars would mean
   // two authStateChanged collectors racing to write the same doc.
   single<PushTokenSink> { get<PushTokenRegistrar>() }
+
+  // createdAtStart, and that is the entire point: `onNewToken` only fires for a token that does not
+  // exist yet, so without something that reads the *current* token at startup a device that already
+  // had one never registers at all. See PushTokenBootstrap's KDoc for the failure this fixes.
+  single(createdAtStart = true) { PushTokenBootstrap(sink = get<PushTokenSink>()) }
 }
 
 /**

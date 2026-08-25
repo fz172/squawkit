@@ -1,6 +1,10 @@
 plugins {
   alias(libs.plugins.android.library)
   alias(libs.plugins.kotlin.multiplatform)
+  // PushTokenRegistrarImpl's two @Serializable wire classes. Without this the annotation compiles
+  // fine and no serializer is generated, so the push_devices write fails at *runtime* with
+  // "Serializer for class 'PushDeviceTokenWire' is not found" — caught only by an on-device test.
+  alias(libs.plugins.kotlin.serialization)
 }
 
 android {
@@ -56,6 +60,9 @@ kotlin {
     androidMain.dependencies {
       // androidContext(), for the app version the push token doc carries.
       implementation(libs.koin.android)
+      // FirebaseMessaging.getToken(), for PushTokenBootstrap. The registrar itself is
+      // platform-agnostic; only reading the device's existing token needs the messaging SDK.
+      implementation(libs.firebase.messaging)
     }
   }
 }
