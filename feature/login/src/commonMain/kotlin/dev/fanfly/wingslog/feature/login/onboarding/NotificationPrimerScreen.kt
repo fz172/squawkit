@@ -88,7 +88,7 @@ fun NotificationPrimerScreen(
             Color.Transparent,
           ),
           center = Offset(size.width / 2f, size.height * 0.618f),
-          radius = minOf(size.width, ContentWidth.Auth.value) * 0.70f,
+          radius = minOf(size.width, ContentWidth.Auth.toPx()) * 0.70f,
         ),
       )
     }
