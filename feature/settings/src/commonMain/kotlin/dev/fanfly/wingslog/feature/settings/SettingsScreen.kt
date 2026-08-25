@@ -322,9 +322,13 @@ fun SettingsContent(
     }
 
     // Guideline 5.1.1(v) wants deletion reachable, not easy to do by accident — so the row opens
-    // this rather than acting, and the confirm button is the destructive-coloured one.
+    // this rather than acting, and the confirm button stays inert until the pilot has typed their
+    // email address (or a fixed phrase, when the account has no address they would recognise).
     DeleteAccountDialog(
       state = user.deletion,
+      challenge = user.deletionChallenge,
+      typed = user.deletionInput,
+      onTypedChange = settingsViewModel::setDeleteAccountInput,
       onConfirm = settingsViewModel::confirmDeleteAccount,
       onDismiss = settingsViewModel::cancelDeleteAccount,
     )
