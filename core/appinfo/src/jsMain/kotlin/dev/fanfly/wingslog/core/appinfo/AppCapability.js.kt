@@ -3,7 +3,6 @@ package dev.fanfly.wingslog.core.appinfo
 actual fun createAppCapability(isDeveloperBuild: Boolean) = AppCapability(
   isDeveloperOptionsSupported = isDeveloperBuild,
   isStressTestSupported = isDeveloperBuild,
-  isNotificationsSupported = isDeveloperBuild,
   isCameraCaptureSupported = false,
   isAnonymousLoginSupported = false,
   // AdMob publishes no browser SDK, so the web host has no ad product of its own until phase 2

@@ -39,7 +39,6 @@ class AdsManagerImplTest {
   ) = AppCapability(
     isDeveloperOptionsSupported = devOptions,
     isStressTestSupported = false,
-    isNotificationsSupported = false,
     isCameraCaptureSupported = false,
     isAnonymousLoginSupported = false,
     isAdsSupported = ads,

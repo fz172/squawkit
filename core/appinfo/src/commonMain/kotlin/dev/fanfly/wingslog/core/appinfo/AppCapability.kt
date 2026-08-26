@@ -7,17 +7,6 @@ package dev.fanfly.wingslog.core.appinfo
 data class AppCapability(
   val isDeveloperOptionsSupported: Boolean,
   val isStressTestSupported: Boolean,
-  /**
-   * Staged rollout, not a platform-capability statement — every platform can show notifications
-   * (see `docs/notifications/notifications_design.md`). The feature ships incrementally across many
-   * PRs, and Settings' entry point still points at a "coming soon" placeholder until P1.9+ lands, so
-   * this keeps it out of real users' hands the same way [isStressTestSupported] does for the
-   * fake-data generator. Remove once the feature is actually finished — do not repurpose this as a
-   * real per-platform notification-support flag; `feature:notifications:permission`'s
-   * `PermissionState.UNSUPPORTED` already answers that question at runtime, per-device, which a
-   * build-time flag cannot.
-   */
-  val isNotificationsSupported: Boolean,
   val isCameraCaptureSupported: Boolean,
   val isAnonymousLoginSupported: Boolean,
   /**

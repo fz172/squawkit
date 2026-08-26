@@ -644,7 +644,6 @@ class SubscriptionUiStateTest {
     appCapability = AppCapability(
       isDeveloperOptionsSupported = false,
       isStressTestSupported = false,
-      isNotificationsSupported = false,
       isCameraCaptureSupported = false,
       isAnonymousLoginSupported = false,
       isAdsSupported = isAdsSupported,
