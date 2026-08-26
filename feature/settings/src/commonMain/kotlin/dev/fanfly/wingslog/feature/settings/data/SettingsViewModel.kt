@@ -14,7 +14,7 @@ import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.developeroptions.datamanager.DeveloperOptionsManager
 import dev.fanfly.wingslog.feature.notifications.datamanager.NotificationPrefsManager
 import dev.fanfly.wingslog.feature.notifications.datamanager.PrefsState
-import dev.fanfly.wingslog.feature.notifications.datamanager.PushTokenRegistrar
+import dev.fanfly.wingslog.feature.notifications.datamanager.SignOutCoordinator
 import dev.fanfly.wingslog.feature.notifications.model.allEnabled
 import dev.fanfly.wingslog.feature.notifications.permission.NotificationPermission
 import dev.fanfly.wingslog.feature.notifications.permission.PermissionState
@@ -24,7 +24,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeoutOrNull
 
 /**
  * Apple Hide My Email hands us an alias at this domain. We know the string; the pilot does not —
@@ -45,11 +44,11 @@ class SettingsViewModel(
   private val notificationPermission: NotificationPermission,
   private val notificationPrefsManager: NotificationPrefsManager,
   /**
-   * Null on any platform with no push transport — iOS until P5, web by design (§8). Nullable rather
-   * than a no-op binding so "this platform does not register tokens" is visible here rather than
-   * hidden behind a stub that looks like it did something.
+   * Sign-out, with this device's push registration released first. Shared with the
+   * corruption-recovery path in `AppEntry`, which had the same sequence to get right and did not
+   * (#550) — see [SignOutCoordinator].
    */
-  private val pushTokenRegistrar: PushTokenRegistrar? = null,
+  private val signOutCoordinator: SignOutCoordinator,
 ) : ViewModel() {
 
   private val _user =
@@ -237,7 +236,9 @@ class SettingsViewModel(
       // server-side, so by this line there is no live uid to authorize the write: the delete could
       // only sit unacknowledged and strand `deletion` on Working behind a spinner.
       // Same ordering as logOut(): sign out first so the SyncEngine releases the write lock the
-      // wipes below need, or they block forever on web.
+      // wipes below need, or they block forever on web. authManager directly rather than
+      // signOutCoordinator, for the reason above — there is nothing left to clear, and no session
+      // left to authorize the attempt.
       authManager.logOut()
       _user.value = SettingsUiState(userStatus = UserStatus.LOGGED_OUT)
       attachmentManager.wipeLocalData(uid)
@@ -258,28 +259,15 @@ class SettingsViewModel(
     val uid = authManager.getCurrentUser()?.uid
     viewModelScope.launch {
       observeSelfJob?.cancel()
-      // BEFORE logOut, and deliberately the opposite order from the wipes below. Deleting
-      // users/{uid}/push_devices/{installId} is a Firestore write that rules gate on
-      // `request.auth.uid == userId`, so once the session is gone it is permission-denied and the
-      // token survives — leaving this device receiving another account's squawk titles in its tray
-      // (design §7.1), which is exactly the leak urgency_watermark's sign-out wipe closed locally.
-      // It runs before the lock-release concern below because it touches Firestore, not SQLDelight.
+      // Clears this device's push registration and THEN signs out, in that order and bounded — the
+      // whole of why [SignOutCoordinator] exists is written there, along with what an expired clear
+      // leaves behind.
       //
-      // BOUNDED, never awaited indefinitely. A Firestore write Task resolves only when the backend
-      // acknowledges the mutation, so offline it does not fail — it simply never settles, and
-      // nothing below this line runs. Unbounded, that makes "Log out" a dead button in airplane
-      // mode: no sign-out, no wipe, no LOGGED_OUT state, no error to show.
-      //
-      // Timing out leaves the token doc behind, so an offline sign-out can still deliver the
-      // previous account's titles here. That residue is not closable from this side — a queued
-      // delete fails once the session is gone — and the real fix is the recipient check on the
-      // receive side (design §7.1). Hanging the only exit from the account is the worse trade.
-      withTimeoutOrNull(PUSH_TOKEN_CLEAR_TIMEOUT_MS) { pushTokenRegistrar?.clearThisDevice() }
-      // Sign out first so authStateChanged(null) fires immediately, which causes the SyncEngine
-      // to cancel its userScope and release the DatabaseWriteLock. The wipe operations below
-      // need that lock — calling them before signOut would block forever on web (JS single-thread,
-      // SyncEngine holds the lock across suspend points during active hydration/push).
-      authManager.logOut()
+      // It has to complete before the wipes below for a second, unrelated reason: signing out fires
+      // authStateChanged(null), which makes the SyncEngine cancel its userScope and release the
+      // DatabaseWriteLock. The wipes need that lock — running them first would block forever on web
+      // (JS single-thread, SyncEngine holds the lock across suspend points during hydration/push).
+      signOutCoordinator.signOut()
       _user.value =
         SettingsUiState(userStatus = UserStatus.LOGGED_OUT)
       if (uid != null) {
@@ -289,11 +277,4 @@ class SettingsViewModel(
     }
   }
 
-  private companion object {
-    /**
-     * Long enough for a healthy round-trip, short enough that a pilot on a ramp with no signal does
-     * not read the button as broken. The cost of expiring is a stale token doc, not lost data.
-     */
-    const val PUSH_TOKEN_CLEAR_TIMEOUT_MS = 3_000L
-  }
 }

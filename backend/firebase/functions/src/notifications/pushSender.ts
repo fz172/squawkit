@@ -63,9 +63,35 @@ export async function enabledTokensFor(uid: string): Promise<PushTarget[]> {
 export async function sendPush(targets: PushTarget[], data: PushData): Promise<number> {
   if (targets.length === 0) return 0;
 
+  // One multicast per recipient rather than one for the whole fan-out, because each copy is stamped
+  // with the uid it is addressed to (issue P4.13) and that is the one field that differs per device.
+  // This is not the extra network cost it looks like: `sendEachForMulticast` already issues one FCM
+  // request per token internally, so the same number of requests goes out either way.
+  const byRecipient = new Map<string, PushTarget[]>();
+  for (const target of targets) {
+    const group = byRecipient.get(target.uid);
+    if (group == null) byRecipient.set(target.uid, [target]);
+    else group.push(target);
+  }
+
+  const results = await Promise.all(
+    [...byRecipient].map(([uid, group]) => sendToRecipient(uid, group, data)),
+  );
+
+  // Pruned once for the whole fan-out, so a stale token on two accounts logs one line, not two.
+  await pruneDeadTokens(results.flatMap((result) => result.dead));
+  return results.reduce((total, result) => total + result.sent, 0);
+}
+
+/** One recipient's devices, addressed to them. Never throws — a failure here costs only this uid. */
+async function sendToRecipient(
+  recipientUid: string,
+  targets: PushTarget[],
+  data: PushData,
+): Promise<{ sent: number; dead: PushTarget[] }> {
   const message: MulticastMessage = {
     tokens: targets.map((t) => t.token),
-    data: toDataMap(data),
+    data: toDataMap(data, recipientUid),
     android: {
       // Data-only: the client renders it. A notification-type message would be drawn by the OS when
       // the app is backgrounded, bypassing the per-channel routing and the tap router (§7.6).
@@ -95,7 +121,7 @@ export async function sendPush(targets: PushTarget[], data: PushData): Promise<n
     response = await getMessaging().sendEachForMulticast(message);
   } catch (e) {
     logger.error("FCM multicast failed", { notificationId: data.notificationId, error: String(e) });
-    return 0;
+    return { sent: 0, dead: [] };
   }
 
   const dead: PushTarget[] = [];
@@ -115,8 +141,7 @@ export async function sendPush(targets: PushTarget[], data: PushData): Promise<n
     });
   });
 
-  await pruneDeadTokens(dead);
-  return response.successCount;
+  return { sent: response.successCount, dead };
 }
 
 /**

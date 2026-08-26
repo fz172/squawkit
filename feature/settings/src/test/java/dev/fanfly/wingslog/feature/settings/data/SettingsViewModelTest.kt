@@ -17,6 +17,7 @@ import dev.fanfly.wingslog.feature.developeroptions.datamanager.DeveloperFlags
 import dev.fanfly.wingslog.feature.developeroptions.datamanager.DeveloperOptionsManager
 import dev.fanfly.wingslog.feature.notifications.datamanager.NotificationPrefsManager
 import dev.fanfly.wingslog.feature.notifications.datamanager.PrefsState
+import dev.fanfly.wingslog.feature.notifications.datamanager.SignOutCoordinator
 import dev.fanfly.wingslog.feature.notifications.permission.NotificationPermission
 import dev.fanfly.wingslog.feature.notifications.permission.PermissionState
 import dev.gitlive.firebase.auth.FirebaseUser
@@ -56,6 +57,7 @@ class SettingsViewModelTest {
   private lateinit var adConsentManager: AdConsentManager
   private lateinit var notificationPermission: NotificationPermission
   private lateinit var notificationPrefsManager: NotificationPrefsManager
+  private lateinit var signOutCoordinator: SignOutCoordinator
   private lateinit var viewModel: SettingsViewModel
 
   /** In-memory [AppearanceStore] so the controller needs no platform backing in tests. */
@@ -88,6 +90,7 @@ class SettingsViewModelTest {
     adConsentManager = mockk(relaxed = true)
     notificationPermission = mockk(relaxed = true)
     notificationPrefsManager = mockk(relaxed = true)
+    signOutCoordinator = mockk(relaxed = true)
     every { notificationPermission.observe() } returns MutableStateFlow(PermissionState.GRANTED)
     every { notificationPrefsManager.observe() } returns
       flowOf(PrefsState.Resolved(NotificationSettings()))
@@ -103,6 +106,7 @@ class SettingsViewModelTest {
     coJustRun { dbChecker.wipeDataForUser(any()) }
     coJustRun { attachmentManager.wipeLocalData(any()) }
     coJustRun { authManager.logOut() }
+    coJustRun { signOutCoordinator.signOut() }
   }
 
   @After
@@ -130,14 +134,19 @@ class SettingsViewModelTest {
     coVerify { attachmentManager.wipeLocalData(TEST_USER_ID) }
   }
 
+  /**
+   * Through the coordinator, never `authManager.logOut()` directly — that shortcut is exactly what
+   * left the corruption-recovery path signing out without clearing this device's push token (#550).
+   */
   @Test
-  fun logOut_callsAuthManagerLogOut() = runTest(testDispatcher) {
+  fun logOut_signsOutThroughTheCoordinator() = runTest(testDispatcher) {
     viewModel = buildViewModel()
 
     viewModel.logOut()
     advanceUntilIdle()
 
-    coVerify { authManager.logOut() }
+    coVerify { signOutCoordinator.signOut() }
+    coVerify(exactly = 0) { authManager.logOut() }
   }
 
   @Test
@@ -227,7 +236,11 @@ class SettingsViewModelTest {
       viewModel.confirmDeleteAccount()
       advanceUntilIdle()
 
+      // Directly, not through the coordinator: deleteMyAccount already removed push_devices with the
+      // rest of users/{uid}, and the Auth user is gone server-side, so there is nothing left to
+      // clear and no session left to authorize the attempt.
       coVerify { authManager.logOut() }
+      coVerify(exactly = 0) { signOutCoordinator.signOut() }
       coVerify { attachmentManager.wipeLocalData(any()) }
       coVerify { dbChecker.wipeDataForUser(any()) }
       assertThat(viewModel.user.value.userStatus).isEqualTo(UserStatus.LOGGED_OUT)
@@ -412,5 +425,6 @@ class SettingsViewModelTest {
     adConsentManager,
     notificationPermission,
     notificationPrefsManager,
+    signOutCoordinator,
   )
 }

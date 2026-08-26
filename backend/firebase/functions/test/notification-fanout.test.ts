@@ -750,6 +750,36 @@ describe("§7.4 audience and preferences, re-derived on every send", () => {
     expect(sentMessages[0].tokens.sort()).toEqual(["tok-member", "tok-phone"]);
   });
 
+  it("addresses each copy to the recipient it is for", async () => {
+    // P4.13. An FCM token belongs to the app install, not the account, so a device can hold a live
+    // token registered under an account that signed out here. Naming the recipient is what lets the
+    // client drop a message meant for somebody else.
+    await shareAircraft(AC_A, { [HOST]: "owner", [MEMBER]: "technician", [LURKER]: "technician" });
+    await registerDevice(LURKER, "lurker-install", "tok-lurker");
+
+    await taskEdit(AC_A, 1);
+
+    // One multicast per recipient, each carrying its own address and the same notification id.
+    expect(sentMessages).toHaveLength(2);
+    const byToken = new Map(sentMessages.map((m) => [m.tokens[0], m.data.recipientUid]));
+    expect(byToken.get("tok-member")).toBe(MEMBER);
+    expect(byToken.get("tok-lurker")).toBe(LURKER);
+    expect(new Set(idsOf()).size).toBe(1);
+  });
+
+  it("gives one recipient's two devices a single copy, addressed once", async () => {
+    // Grouping is per recipient, not per device: two of the same person's phones stay in one
+    // multicast, because the address they need is the same.
+    await shareAircraft(AC_A, { [HOST]: "owner", [MEMBER]: "technician" });
+    await registerDevice(MEMBER, "install-3", "tok-phone");
+
+    await taskEdit(AC_A, 1);
+
+    expect(sentMessages).toHaveLength(1);
+    expect(sentMessages[0].tokens.sort()).toEqual(["tok-member", "tok-phone"]);
+    expect(sentMessages[0].data.recipientUid).toBe(MEMBER);
+  });
+
   it("still reaches everyone else when one recipient cannot be resolved", async () => {
     // Without a per-recipient guard, one transient failure rejects the whole Promise.all and NOBODY
     // is notified. Simulated by making one recipient's push_devices read throw.

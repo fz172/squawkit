@@ -42,6 +42,8 @@ kotlin {
       implementation(project(":core:storage"))
       // generateRandomId, for the InstallIdStore's stable per-device id (design §7.1).
       implementation(project(":core:model"))
+      // For SignOutCoordinator, which sequences the push-registration clear ahead of the sign-out.
+      implementation(project(":core:auth"))
       // PushTokenRegistrar writes users/{uid}/push_devices/{installationId} directly — plain
       // fields, not the entity sync path, because the server must read them (design §7.1). Same
       // documented exception SharingManager takes for the share ACL.

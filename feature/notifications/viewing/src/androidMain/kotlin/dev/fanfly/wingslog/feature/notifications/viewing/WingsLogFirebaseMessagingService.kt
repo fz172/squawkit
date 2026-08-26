@@ -4,6 +4,7 @@ import co.touchlab.kermit.Logger
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import dev.fanfly.wingslog.feature.notifications.model.PushTokenSink
+import dev.fanfly.wingslog.feature.notifications.model.SignedInUid
 import kotlinx.coroutines.runBlocking
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -17,7 +18,8 @@ import org.koin.core.component.inject
  *
  * Two jobs, and the split is the whole reason `:viewing` can host this at all (§3):
  * - **Render.** Turning a data map into a [dev.fanfly.wingslog.feature.notifications.model.PendingNotification]
- *   is display work, and this module already owns display.
+ *   is display work, and this module already owns display — but only after
+ *   [PushPayload.isAddressedTo] confirms the message is for whoever is signed in here.
  * - **Forward the token.** `onNewToken` fires here, but the registrar that writes it lives in
  *   `:datamanager`, which `:viewing` may not depend on. [PushTokenSink] in `:model` closes that —
  *   this class never learns what a token is *for*.
@@ -32,6 +34,12 @@ class WingsLogFirebaseMessagingService : FirebaseMessagingService(), KoinCompone
    * stops being true, failing loudly beats silently dropping every token.
    */
   private val tokenSink: PushTokenSink by inject()
+
+  /**
+   * Who this device is signed in as, for the [PushPayload.isAddressedTo] check below. Same seam
+   * argument as [tokenSink]: the answer lives in `core:auth`, which `:viewing` cannot see.
+   */
+  private val signedInUid: SignedInUid by inject()
 
   /**
    * Posted under the payload's own `notificationId`, which is what makes §7.3's tray replacement
@@ -50,6 +58,13 @@ class WingsLogFirebaseMessagingService : FirebaseMessagingService(), KoinCompone
       // Not an N1 message, or one from a newer server than this build understands. Dropping it is
       // better than posting a tray entry with no id, which could never be replaced or cancelled.
       log.d { "Ignoring a push with no usable N1 payload (keys=${message.data.keys})" }
+      return
+    }
+    if (!parsed.isAddressedTo(signedInUid.current())) {
+      // A stale push_devices document under an account that signed out here without the delete
+      // landing keeps a live token, so its notifications keep arriving (issue P4.13). Showing one
+      // would put another account's tail number and squawk title in this pilot's tray.
+      log.d { "Dropping a push addressed to another account (id=${parsed.notificationId})" }
       return
     }
     runBlocking {

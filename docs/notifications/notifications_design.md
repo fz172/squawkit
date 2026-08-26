@@ -978,7 +978,7 @@ the burst. The rule the id encodes is *replace what is still being updated, neve
 |:--|:--|:--|
 | Android | Same notification id in `NotificationManager.notify` | `setOnlyAlertOnce(true)` |
 | iOS | Same `UNNotificationRequest` identifier | `interruptionLevel = .passive` on the update |
-| Web | Same `tag` on `new Notification(...)` | **Default** — silent unless `renotify: true`. §8.4 |
+| Web | Same `tag` on `new Notification(...)` | Silent unless `renotify: true`, which `WebLocalNotifier` sets only when nothing is live under that tag. §8.4 |
 
 So the recipient is buzzed once per aircraft and the entry quietly keeps up.
 
@@ -1176,7 +1176,8 @@ routing and the tap router:
     "titleKey": "notification_n1_title", "bodyKey": "notification_n1_body_plural",
     "tailNumber": "N4589T", "actorName": "Dave Chen", "changeCount": "5",
     "notificationId": "n1:{aircraftId}:{recordType}:{actorUid}:{sessionSeq}",
-    "tapTarget": "aircraft:{aircraftId}:squawks"
+    "tapTarget": "aircraft:{aircraftId}:squawks",
+    "recipientUid": "{uid this copy is addressed to}"
   },
   "android": { "collapse_key": "<same as notificationId>" },
   "apns":    { "headers": { "apns-collapse-id": "<same as notificationId>" } }
@@ -1210,9 +1211,29 @@ The cost is that argument order lives in the client, on three platforms rather t
 file. That is where `strings.xml` lives, so it is the right home, but it is a real coupling and the
 table in `pushMessages.ts` is the only place the contract is written down.
 
+**`recipientUid` addresses the copy, and the client drops anything not meant for it** (P4.13). An
+FCM token belongs to the app *install*, not to an account, while `push_devices` is keyed by install
+id under `users/{uid}/`. A sign-out whose registry delete does not land — offline, or through a path
+that never calls it — leaves the previous account holding a document with a live token, and nothing
+prunes it, because `pruneDeadTokens` only fires on a token FCM reports as gone. Without the address,
+that account's notification text keeps arriving at a device somebody else is now using.
+
+On the send side, every sign-out goes through `SignOutCoordinator`, which clears this device's
+registration before `authManager.logOut()` and bounds the attempt. It is one shared call rather than
+a sequence each caller repeats, because it was already wrong in the second place that tried:
+corruption recovery signed out directly and cleared nothing (#550). The clear is best-effort by
+nature — offline it cannot land, and no sign-out at all happens on a shared device nobody signs out
+of — which is why the receive-side check exists rather than being redundant with it.
+
+Because one message addresses a whole fan-out, the field is stamped per recipient at send time
+rather than built into the payload: `sendPush` groups targets by uid and sends one multicast per
+recipient. An **absent** `recipientUid` means "a server older than this field" and must still render,
+so a client newer than the server does not go silent during a rollout.
+
 iOS needs `content-available` plus a notification service extension to render a data-only message
 while backgrounded; that is part of P5, and until it lands iOS may ship rendered strings with a
-TODO.
+TODO. The extension needs the same `recipientUid` drop — `PushPayload.isAddressedTo` is in
+`commonMain` for exactly that reason, though the drop itself is per-platform.
 
 ---
 
@@ -1275,7 +1296,9 @@ platforms have to ask for:**
 new Notification("N4589T · Tasks", {
   tag: "n1:{aircraftId}:{recordType}:{actorUid}:{sessionStart}",  // same tag replaces, never stacks
   body: "Dave Chen made 5 changes to tasks",
-  // renotify is deliberately omitted — a replacement is SILENT unless renotify: true
+  // renotify: false while the notification is still on screen, so an update replaces it quietly.
+  // true once it has been dismissed — otherwise the tag replaces something that is not there and
+  // the rest of the session is silent. WebLocalNotifier reads that from its own `live` map.
 })
 ```
 
