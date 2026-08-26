@@ -23,11 +23,39 @@
 		3DE64245300DD3DF000D1143 /* FirebaseAppCheck in Frameworks */ = {isa = PBXBuildFile; productRef = 3DE64244300DD3DF000D1143 /* FirebaseAppCheck */; };
 		F03C4F08C49BAC1B7760B3F8 /* GoogleMobileAds in Frameworks */ = {isa = PBXBuildFile; productRef = 3197832B061154A7275175D9 /* GoogleMobileAds */; };
 		F20FE4608ED8B667DA96EF43 /* GoogleUserMessagingPlatform in Frameworks */ = {isa = PBXBuildFile; productRef = CE3BAAA26B14222FAB28C158 /* GoogleUserMessagingPlatform */; };
+		C5DD281AB12BD2185156971C /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 3D25BC0D2F6FC23100EFFADF /* FirebaseCore */; };
+		75C2C624B27389AAE42E8971 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 3D25BC222F6FC42800EFFADF /* FirebaseAuth */; };
+		80B31B36EEA38B629949D958 /* NotificationServiceExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = DA16A722E7DBE44EB45F5348 /* NotificationServiceExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		C6AF0C55AFABBED7E89E8D9B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 3D25BBEB2F6FBB7500EFFADF /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 3508F08C4B8C87996D3ACE08;
+			remoteInfo = NotificationServiceExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		269555521576C2887F7666CC /* Embed App Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				80B31B36EEA38B629949D958 /* NotificationServiceExtension.appex in Embed App Extensions */,
+			);
+			name = "Embed App Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		3D25BBF32F6FBB7500EFFADF /* iosApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iosApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		3D9A96F43031583D00FAF8CC /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
+		DA16A722E7DBE44EB45F5348 /* NotificationServiceExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = NotificationServiceExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -38,6 +66,13 @@
 			);
 			target = 3D25BBF22F6FBB7500EFFADF /* iosApp */;
 		};
+		C74B7E395FAA173A769F559E /* Exceptions for "NotificationServiceExtension" folder in "NotificationServiceExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 3508F08C4B8C87996D3ACE08 /* NotificationServiceExtension */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -47,6 +82,14 @@
 				3D25BC252F6FC54E00EFFADF /* Exceptions for "iosApp" folder in "iosApp" target */,
 			);
 			path = iosApp;
+			sourceTree = "<group>";
+		};
+		C143811DC852391614E1F4FE /* NotificationServiceExtension */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				C74B7E395FAA173A769F559E /* Exceptions for "NotificationServiceExtension" folder in "NotificationServiceExtension" target */,
+			);
+			path = NotificationServiceExtension;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -75,6 +118,15 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		500E74AB21E8169BBBC2F464 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C5DD281AB12BD2185156971C /* FirebaseCore in Frameworks */,
+				75C2C624B27389AAE42E8971 /* FirebaseAuth in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -82,6 +134,7 @@
 			isa = PBXGroup;
 			children = (
 				3D25BBF52F6FBB7500EFFADF /* iosApp */,
+				C143811DC852391614E1F4FE /* NotificationServiceExtension */,
 				3D25BC212F6FC42800EFFADF /* Frameworks */,
 				3D25BBF42F6FBB7500EFFADF /* Products */,
 			);
@@ -91,6 +144,7 @@
 			isa = PBXGroup;
 			children = (
 				3D25BBF32F6FBB7500EFFADF /* iosApp.app */,
+				DA16A722E7DBE44EB45F5348 /* NotificationServiceExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -115,10 +169,12 @@
 				3D25BBF02F6FBB7500EFFADF /* Frameworks */,
 				3D25BBF12F6FBB7500EFFADF /* Resources */,
 				87DD4D69C37147118BFC8E00 /* Stamp Version from version.properties */,
+				269555521576C2887F7666CC /* Embed App Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				49F81BC0BC1DD50F73D0491C /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				3D25BBF52F6FBB7500EFFADF /* iosApp */,
@@ -145,6 +201,30 @@
 			productReference = 3D25BBF32F6FBB7500EFFADF /* iosApp.app */;
 			productType = "com.apple.product-type.application";
 		};
+		3508F08C4B8C87996D3ACE08 /* NotificationServiceExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = BD77AE521C1C7A31162771A9 /* Build configuration list for PBXNativeTarget "NotificationServiceExtension" */;
+			buildPhases = (
+				547A0180F39A63A22BDDFCE0 /* Sources */,
+				500E74AB21E8169BBBC2F464 /* Frameworks */,
+				5D9DC458D4B306ACA4800D9B /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				C143811DC852391614E1F4FE /* NotificationServiceExtension */,
+			);
+			name = NotificationServiceExtension;
+			packageProductDependencies = (
+				3D25BC0D2F6FC23100EFFADF /* FirebaseCore */,
+				3D25BC222F6FC42800EFFADF /* FirebaseAuth */,
+			);
+			productName = NotificationServiceExtension;
+			productReference = DA16A722E7DBE44EB45F5348 /* NotificationServiceExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -156,6 +236,9 @@
 				LastUpgradeCheck = 2620;
 				TargetAttributes = {
 					3D25BBF22F6FBB7500EFFADF = {
+						CreatedOnToolsVersion = 26.2;
+					};
+					3508F08C4B8C87996D3ACE08 = {
 						CreatedOnToolsVersion = 26.2;
 					};
 				};
@@ -181,12 +264,20 @@
 			projectRoot = "";
 			targets = (
 				3D25BBF22F6FBB7500EFFADF /* iosApp */,
+				3508F08C4B8C87996D3ACE08 /* NotificationServiceExtension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		3D25BBF12F6FBB7500EFFADF /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		5D9DC458D4B306ACA4800D9B /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -242,7 +333,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		547A0180F39A63A22BDDFCE0 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		49F81BC0BC1DD50F73D0491C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 3508F08C4B8C87996D3ACE08 /* NotificationServiceExtension */;
+			targetProxy = C6AF0C55AFABBED7E89E8D9B /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		3D25BBFC2F6FBB7600EFFADF /* Debug */ = {
@@ -448,6 +554,60 @@
 			};
 			name = Release;
 		};
+		3E434CD3D840F3758A4C27B5 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = NotificationServiceExtension/NotificationServiceExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 5NULUT3VRD;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = NotificationServiceExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "SquawkIt Notifications";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = dev.fanfly.wingslog.iosApp.NotificationServiceExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		58DA38ABA1394D60B820FE2D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = NotificationServiceExtension/NotificationServiceExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 5NULUT3VRD;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = NotificationServiceExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "SquawkIt Notifications";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = dev.fanfly.wingslog.iosApp.NotificationServiceExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -465,6 +625,15 @@
 			buildConfigurations = (
 				3D25BBFF2F6FBB7600EFFADF /* Debug */,
 				3D25BC002F6FBB7600EFFADF /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		BD77AE521C1C7A31162771A9 /* Build configuration list for PBXNativeTarget "NotificationServiceExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3E434CD3D840F3758A4C27B5 /* Debug */,
+				58DA38ABA1394D60B820FE2D /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

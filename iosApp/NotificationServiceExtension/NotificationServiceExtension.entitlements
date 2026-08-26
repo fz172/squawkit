@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!--
+	  Shared with iosApp.entitlements so this extension's own FirebaseAuth instance reads the same
+	  signed-in session Keychain the host app writes. Without a matching access group here, an app
+	  extension gets its own isolated Keychain, Auth.auth().currentUser is always nil in this process,
+	  and PushPayload.isAddressedTo(signedInUid:) would drop every addressed push.
+	-->
+	<key>keychain-access-groups</key>
+	<array>
+		<string>$(AppIdentifierPrefix)dev.fanfly.wingslog.shared</string>
+	</array>
+</dict>
+</plist>

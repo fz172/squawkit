@@ -31,7 +31,15 @@ import { aircraftShareDocPath, shareMemberDocPath } from "../src/sharing/sharing
  * happened.
  */
 const { sentMessages } = vi.hoisted(() => ({
-  sentMessages: [] as { tokens: string[]; data: Record<string, string>; android?: { collapseKey?: string }; apns?: { headers?: Record<string, string> } }[],
+  sentMessages: [] as {
+    tokens: string[];
+    data: Record<string, string>;
+    android?: { collapseKey?: string };
+    apns?: {
+      headers?: Record<string, string>;
+      payload?: { aps?: { alert?: { title?: string; body?: string }; mutableContent?: boolean } };
+    };
+  }[],
 }));
 
 vi.mock("firebase-admin/messaging", () => ({
@@ -292,6 +300,15 @@ describe("§7.3 coalescing by replacement", () => {
     // device that was offline for the whole burst receive only the last message.
     expect(second.android?.collapseKey).toBe(second.data.notificationId);
     expect(second.apns?.headers?.["apns-collapse-id"]).toBe(second.data.notificationId);
+    // "alert" push type + mutable-content are what make iOS invoke the notification service
+    // extension at all (§7.6, P5.2); background-only push type never triggers it.
+    expect(second.apns?.headers?.["apns-push-type"]).toBe("alert");
+    expect(second.apns?.headers?.["apns-priority"]).toBe("10");
+    expect(second.apns?.payload?.aps?.mutableContent).toBe(true);
+    // Generic and account-agnostic — no tail number, actor, or squawk title. The extension rewrites
+    // this with the real localized text; if it fails or times out, this generic fallback ships as
+    // delivered instead, and it must never leak this recipient's collaboration content.
+    expect(second.apns?.payload?.aps?.alert).toEqual({ title: "SquawkIt", body: "New update" });
     expect(first.data.changeCount).toBe("1");
     expect(second.data.changeCount).toBe("2");
     expect(second.data.bodyKey).toBe("notification_n1_body_plural");

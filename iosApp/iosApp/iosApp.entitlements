@@ -9,6 +9,16 @@
 		<string>Default</string>
 	</array>
 	<!--
+	  Shared with NotificationServiceExtension.entitlements so the extension's own FirebaseAuth
+	  instance can read this app's signed-in session — an app extension gets an isolated Keychain by
+	  default, and without a matching access group PushPayload.isAddressedTo(signedInUid:) over there
+	  always sees nobody signed in.
+	-->
+	<key>keychain-access-groups</key>
+	<array>
+		<string>$(AppIdentifierPrefix)dev.fanfly.wingslog.shared</string>
+	</array>
+	<!--
 	  Both domains are needed, and firebaseapp.com is the one that matters for email sign-in.
 	  Firebase generates that link against the project's default auth domain, so what lands in the
 	  inbox is https://wingslog-9ca4e.firebaseapp.com/__/auth/links?link=... — the custom authDomain

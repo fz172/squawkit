@@ -105,14 +105,26 @@ async function sendToRecipient(
     apns: {
       headers: {
         "apns-collapse-id": data.notificationId,
-        // A data-only APNs message is a background push; P5 adds the notification service
-        // extension that lets iOS render one while backgrounded (§7.6). Until then an iOS device
-        // has no registered token at all, so nothing here can reach one.
-        "apns-push-type": "background",
-        "apns-priority": "5",
+        // `alert` + `mutable-content` below need push type "alert", not "background" — Apple
+        // requires it whenever alert content is present, and rejects the mismatch outright.
+        "apns-push-type": "alert",
+        "apns-priority": "10",
         "apns-expiration": String(Math.floor(Date.now() / 1000) + PUSH_TTL_SECONDS),
       },
-      payload: { aps: { contentAvailable: true } },
+      payload: {
+        aps: {
+          // A generic, account-agnostic fallback (P5.2's notification service extension rewrites
+          // this with the real localized title/body). It must never leak a tail number, actor name,
+          // or squawk title: unlike Android's FirebaseMessagingService, which can simply not post a
+          // push addressed to another signed-out account (issue P4.13), iOS has already committed to
+          // showing *something* once `alert` is present, so the fallback has to stay content-free.
+          alert: { title: "SquawkIt", body: "New update" },
+          // Without this, iOS never invokes the notification service extension at all — a
+          // content-available-only push just wakes the app for background work, never shows
+          // anything (§7.6).
+          mutableContent: true,
+        },
+      },
     },
   };
 
