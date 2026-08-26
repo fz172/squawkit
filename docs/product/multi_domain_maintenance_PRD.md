@@ -1,11 +1,32 @@
 # PRD: Things & Templates — Multi-Domain Maintenance
 
-> **Implementation status.** **Proposed — nothing has shipped.** No template system, `Thing` model, or
-> non-aircraft preset exists in the codebase. The app today is aircraft-only, as described in
-> [`PRD.md`](PRD.md).
+> **Implementation status.** **Proposed — nothing has shipped.** No template system, `Thing` model,
+> `core:template` module, or non-aircraft preset exists in the codebase. The app today is aircraft-only, as
+> described in [`PRD.md`](PRD.md).
 
-**Owner:** Product · **Status:** Proposed · **Date:** 2026-08-12
-**Related:** [Product overview](PRD.md) · [Storage R1 design](../storage/storage_r1_design.md) · [Squawk design](../squawks/squawk_design.md) · [Subscription PRD](../subscription/subscription_PRD.html) · [Export PRD](../export/export_logs_PRD.md) · [Sharing PRD](../sharing/aircraft_sharing_PRD.html)
+**Owner:** Product · **Status:** Proposed · **Date:** 2026-08-12 · **Refreshed:** 2026-08-26
+**Related:** [Product overview](PRD.md) · [Storage R1 design](../storage/storage_r1_design.md) · [Squawk design](../squawks/squawk_design.md) · [Subscription PRD](../subscription/subscription_PRD.html) · [Export PRD](../export/export_logs_PRD.md) · [Sharing PRD](../sharing/aircraft_sharing_PRD.html) · [Notifications PRD](../notifications/notifications_PRD.md) · [Display ads PRD](../ads/display_ads_PRD.md) · [Aircraft overview tabs](../aircraft/aircraft_overview_tabs.md) *(historical — predates the shell sections)*
+
+> **What changed under this document since it was drafted.** Every code claim below was re-verified against
+> `main` on 2026-08-26. Five things moved, and each is reflected in place:
+>
+> 1. **Notifications shipped** (`feature/notifications`, 10 submodules). The urgency ladder is the first
+>    machinery outside the aircraft feature modules to encode an aviation assumption — `UrgencyTier.GROUNDED`
+>    and `NotificationChannel.GROUNDED` are keyed on `SquawkPriority.AOG`. It is now a row in §1 and §3.3,
+>    and a surface in §8.5.
+> 2. **The four tabs became four shell sections.** The `AircraftTab` enum and its tab host are gone; the
+>    adaptive shell owns `ShellSection.DASHBOARD / SQUAWKS / TASKS / LOGS` and `AircraftSectionContent` renders
+>    them. §8.3 is rewritten around that.
+> 3. **There is no fleet list screen.** `feature/fleet/viewing` holds only `FleetEmptyState`; the fleet is a
+>    **switcher** in the shell backed by `SelectedAircraftStore`. §8.2 is rewritten around that.
+> 4. **The tiers are Basic and Pro**, not Core and Heavy (renamed in `c00312d5`), and the free limit is
+>    **`FREE_AIRCRAFT_LIMIT = 2`**, raised from 1 in #375. §12 and §16's recommendation are restated against
+>    the real numbers — half of what §12 recommended has already happened.
+> 5. **The string corpus grew** from 820 entries in 25 files to **982 in 31**. §1 and §10 carry the recount.
+>
+> Unchanged and re-verified: the `Aircraft` / `MaintenanceLog` / `MaintenanceTask` / `Squawk` proto shapes and
+> field numbers, `ComponentType`'s three values, `TaskDueManagerImpl`'s 1-month and `+10f` due-soon constants
+> and its end-of-month snapping, and the five `InspectionRule` rule types.
 
 ---
 
@@ -18,7 +39,7 @@ service schedule. Adding a domain becomes authoring a config, not writing a feat
 > **The thesis in one paragraph.** The squawk / task / log triad is domain-independent — *something is wrong*,
 > *something is due*, *something was done*. That is the whole product, and it transfers unchanged. What does
 > **not** transfer is the aircraft's shape: a fixed `Airframe / Engine / Propeller` component tree, three
-> hardcoded hour counters, `tail_number` on the root message, aviation-tuned due thresholds, and ~150
+> hardcoded hour counters, `tail_number` on the root message, aviation-tuned due thresholds, and ~230
 > user-facing strings that say "aircraft," "tail number," "engine hours," or "AOG." All of it moves into a
 > **template config**. Everything else stays exactly as it is.
 
@@ -31,10 +52,12 @@ service schedule. Adding a domain becomes authoring a config, not writing a feat
 
 ## 1. Problem & Background
 
-SquawkIt today is a general-aviation logbook: a fleet of aircraft, each with a maintenance log, compliance tasks
-with due-status computation, and ad-hoc squawks. The architecture is local-first (SQLDelight `EntityStore` as the
-single source of truth, Firestore sync in the background), and the feature set — attachments, export, sharing,
-technicians, subscription — is mature.
+SquawkIt today is a general-aviation logbook: an account holds aircraft, one of them selected at a time in the
+adaptive shell's switcher, and each has a maintenance log, compliance tasks with due-status computation, and
+ad-hoc squawks. The architecture is local-first (SQLDelight `EntityStore` as the single source of truth,
+Firestore sync in the background), it runs on Android, iOS, and web from one Compose Multiplatform codebase, and
+the feature set — attachments, export, sharing, technicians, subscription, display ads, and now urgency
+notifications — is mature.
 
 The constraint is the market, not the software. General aviation in the US is on the order of 200k active
 aircraft; the population that will pay a subscription to track annuals is small and already served by incumbents.
@@ -57,11 +80,19 @@ wrong with it right now.** The app already does this well. It just insists the t
 | The metric a task tracks is inferred from component type | `TaskDueManagerImpl`: `component == AIRFRAME ? airframe_time : engine_hour` | With arbitrary components and arbitrary meters, a task must name its meter explicitly. |
 | Scheduling is interval-from-last-service only | `InspectionRule` oneof: time / engine-hour / on-condition / linked / immediate | Home upkeep is **seasonal**, not interval-based: gutters in April and October, sprinkler blowout before the first freeze. No existing rule can express it. |
 | Compliance means ADs and Service Bulletins; technicians have certificates | `ComplianceType` enum, `compliance_authority`, `reference_number`, `CertificateInputFields` | The *shape* is right in some domains (a recall on a car) and pure noise in others. A plumber has no A&P number. |
-| ~150 user-facing strings name the domain | 25 `strings.xml` files, 820 entries: 61 say "aircraft", 19 say "tail", 42 say "engine hour" or "tach", 67 say "squawk", 2 say "AOG" | Terminology is the whole felt experience. A homeowner reading "Add aircraft" churns on the first screen. |
+| Notification urgency is ranked on an aviation ladder | `feature/notifications`: `UrgencyRank`, `UrgencyTier.GROUNDED`, `NotificationChannel.GROUNDED`, `SquawkWithStatus.reportableTier()` | The ladder's *shape* is domain-independent — a defect got worse, a task crossed a threshold — but its top rung is named for an aircraft on the ground, and it is an OS-level channel id, so the name a homeowner sees in Android's notification settings is "Grounded". |
+| The shared app chrome names its subject "aircraft" | `core:ui:adaptive`: `ShellAircraft`, `PER_AIRCRAFT_SECTIONS`, the `add_aircraft` string, and the section labels **Dashboard · Squawks · Maint. · Logs** | This is the one surface a mixed-Stuff account can never navigate away from. "Squawks" as a permanent bottom-bar label is aviation vocabulary in the most persistent place in the app. |
+| ~230 user-facing strings name the domain | 31 `strings.xml` files, 982 entries: 87 say "aircraft", 18 say "tail", 42 say "engine hour" or "tach", 83 say "squawk", 8 say "AOG" | Terminology is the whole felt experience. A homeowner reading "Add aircraft" churns on the first screen. |
 
 Notably absent: the **storage engine, sync engine, attachments, export pipeline, sharing/ACL, technician records,
-subscription/entitlement, adaptive layout, and the entire squawk lifecycle**. None of them know what an aircraft
-is. That is what makes this pivot tractable.
+subscription/entitlement, display ads, the notification scan/schedule/permission/token/delivery machinery, and the
+entire squawk lifecycle**. None of them know what an aircraft is. That is what makes this pivot tractable.
+
+Two entries in the table above are worth separating from the rest, because they are *newer* than the aircraft
+feature modules and show which way the codebase drifts when nobody is watching for this. The notification
+ladders and the shell's `ShellAircraft` API both encode the aviation noun in shared, non-feature code that did
+not exist when the aircraft assumption was first made — which is the argument for landing the config seam
+(Phase 1) before the next such surface is built, rather than after.
 
 ---
 
@@ -102,7 +133,7 @@ is. That is what makes this pivot tractable.
 
 ### 3.1 The two concepts
 
-**A Thing** is what's being maintained — the row in the Stuff list, the owner of squawks, tasks, and logs. It is
+**A Thing** is what's being maintained — the row in the Stuff switcher, the owner of squawks, tasks, and logs. It is
 today's `Aircraft`, generalized: a name, a template reference, spec values, a component tree, and meter readings.
 
 **A Template** is the configuration that shapes a Thing. It is *not* copied into the Thing; the Thing holds a
@@ -131,7 +162,7 @@ context genuinely is:
 | Aircraft detail screen | "Add aircraft" · "2 open squawks" · "AOG" |
 | Home detail screen | "Add home" · "2 open issues" · "Emergency" |
 | Bike detail screen | "Add bike" · "2 open issues" · "Unrideable" |
-| Mixed Stuff list / template picker | "Add a new thing" · "What is it?" |
+| Mixed Stuff switcher / template picker | "Add a new thing" · "What is it?" |
 | Custom template, unnamed | "Add a thing" · "2 open issues" · "Down" |
 
 An aircraft owner reads the word "thing" in exactly one place: the create button on a mixed-Stuff account. On an
@@ -152,9 +183,11 @@ point and costs nothing at the places where precision is the product.
 | **Export** — PDF / CSV / XLSX / ZIP, email delivery, history | Headers and sheet names come from the lexicon and meter set; layout selected by config. Pipeline unchanged. |
 | **Sharing** — invite codes, ACL, `SharedAircraftRef`, foreign-scope sync fan-out | None functionally; the `TECHNICIAN` role label comes from the lexicon. |
 | **Technicians** — records, certificates, picker | None to the model; certificate fields are shown or hidden by config. |
-| **Storage (R1) + Sync** — `EntityStore`, `CollectionKind`, hydration, pull/push, tombstones | One new `CollectionKind` for custom templates. No engine changes. |
+| **Notifications** — urgency scan, watermarks, background scheduling, permission, push tokens, tap routing | None to the scanner, the watermark model, or delivery. `UrgencyTier.GROUNDED` and the `NotificationChannel.GROUNDED` display name take their copy from `Lexicon.down_status`; the channel **id** stays fixed (§8.5). The four settings toggles are structural and unchanged. |
+| **Display ads** — slots, consent, session cap | None. |
+| **Storage (R1) + Sync** — `EntityStore`, `CollectionKind`, hydration, pull/push, tombstones | One new `CollectionKind` for custom templates, bringing the current 11 to 12. No engine changes. |
 | **Subscription / entitlement** | Rename only; the limit *value* is a product decision — §12. |
-| **Adaptive layout, theme, navigation shell** | None. |
+| **Adaptive layout, theme, navigation shell** | Structure, window tiers, and routing unchanged. Section labels and the switcher's noun come from the lexicon; `ShellAircraft` → `ShellThing`, `PER_AIRCRAFT_SECTIONS` → `PER_THING_SECTIONS`. |
 
 ---
 
@@ -245,7 +278,7 @@ message Meter {
   double due_soon_threshold = 5; // 10 hrs · 500 mi · 25 ride hrs — replaces the +10f constant
   bool monotonic = 6;            // odometers and tach may not decrease
   bool per_component = 7;        // engine hours are per-engine; airframe time is per-Thing
-  bool primary = 8;              // shown on the Stuff list row
+  bool primary = 8;              // shown on the Stuff switcher row
 }
 ```
 
@@ -282,6 +315,11 @@ message Lexicon {
   string authority_label = 13;       // "FAA" · "NHTSA" · "Manufacturer"
 }
 ```
+
+`down_status` and `down_status_long` carry more weight than the rest of the block: besides the alert section on
+the Dashboard, they name the **notification channel** a user sees in their OS settings and the title of every
+grounded-tier notification (§8.5). That is the one place a lexicon string escapes the app's own surfaces, which
+is why it is a whole string rather than a substitution.
 
 ### 4.6 Scheduling & due calculation
 
@@ -385,7 +423,7 @@ message Capabilities {
   bool technician_certificates = 5;    // certificate fields on the technician record
   bool component_serial_prompt = 6;    // nag for serials at creation
   repeated SquawkPriority priorities = 7;  // which priority values are offered
-  repeated Tab tabs = 8;               // which of Overview/Defects/Tasks/Logs appear, and order
+  repeated Section sections = 8;       // which of Dashboard/Defects/Tasks/Logs appear, and order
   ExportLayout export_layout = 9;      // LOGBOOK | GENERIC
   bool weight_balance = 10;            // future, aviation-only
 }
@@ -407,6 +445,11 @@ message Capabilities {
 Concretely, on the log form: the home template hides the meter fields entirely, drops the serial autofill, and
 labels the person field "Contractor"; the airplane template shows three meter fields, the certificate-bearing
 technician picker, and the compliance chip. Same screen, same ViewModel, same proto — one config.
+
+> **No notification capability flag.** Every domain wants to be told that something got worse or came due, so
+> the urgency ladder is unconditional and the four notification toggles stay a user preference rather than a
+> template capability. This is the flag-justification rule from §14 working as intended: a flag no preset would
+> set differently is not config.
 
 ### 4.9 Starter task packs
 
@@ -533,9 +576,9 @@ message Component {
 | `MaintenanceLog` | Add `component_id` and `repeated MeterReading meters`. Keep `component_type`, `component_serial`, `engine_hour`, `airframe_time`, `prop_time`. | Dual-written for airplane-template Things; new-only for other templates, gated by the version floor in §9.2. |
 | `MaintenanceTask` | Add `component_id`; add `MeterRule` and `SeasonalRule` to the `InspectionRule` oneof; add `force_due_meter { key, value }`. Keep `component`, `engine_hour_rule`, `force_due_engine_hour`. | An `EngineHourRule` reads as a `MeterRule` on the engine-hours meter; writes emit both for airplanes. A `SeasonalRule` is invisible to old clients — see the risk in §9.2. |
 | `Squawk` | Add `component_id`. Keep `component_type`, `component_serial`. | Same dual-write rule. |
-| `MaintenanceOverview` | Add `repeated MeterReading current` and `map<string,uint32> log_count_by_slot`. Keep the five legacy counters. | Recomputed locally from logs; no migration risk. |
+| `MaintenanceOverview` | Add `repeated MeterReading current` and `map<string,uint32> log_count_by_slot`. Keep the four legacy log counters (`total_log_count`, `airframe_log_count`, `engine_log_count`, `propeller_log_count`) and the three `current_*_time` doubles. | Recomputed locally from logs; no migration risk. |
 | `ComponentType` | **Frozen, not extended.** Retained only for legacy fields; new code reads `slot_key`. | Adding enum values would be a trap — an enum can never cover user-defined slots. |
-| `ThingTemplate` *(new)* | The config from §4, as proto, for custom templates. | New `CollectionKind.ThingTemplate`; zero-migration per the R1 design (§4.2.1). |
+| `ThingTemplate` *(new)* | The config from §4, as proto, for custom templates. | New `CollectionKind.ThingTemplate` — the twelfth kind, after `NotificationSettings` took the count to eleven. Zero-migration per the R1 design (§4.2.1): the `collection` column is `TEXT` and `CollectionKind.ALL` is coverage-tested against `sealedSubclasses`, so a forgotten entry fails the build. |
 
 > **`CollectionKind.Aircraft.wireName` stays `"aircraft"`.** The wire name is the persisted `collection` column
 > value and the Firestore subcollection path. Renaming it would mean rewriting every stored row and every synced
@@ -569,6 +612,14 @@ are all meter-agnostic already and are not touched.
 > the generalized implementation, with the airplane preset supplying meters and scheduling flags. If a test needs
 > editing to pass, the generalization changed aviation behavior and the change is wrong. This is the cheapest
 > available proof that the pivot is non-destructive.
+>
+> The bar now extends one module further. `DueStatus` feeds `UrgencyRank` and `reportableTier()` in
+> `feature/notifications`, whose `when` blocks are deliberately exhaustive with no `else` so that a new
+> `DueStatus` value fails the build rather than silently ranking zero. Generalizing due status must therefore
+> leave the `DueStatus` enum alone — the four values are the contract between the two features — and the
+> notification ladder suites must pass unmodified alongside the due-status ones. A pivot that quietly stopped
+> notifying an owner about an overdue annual would be the worst possible failure mode, and it is a build error,
+> not a review catch, only as long as that enum is left intact.
 
 ### 7.1 Note for the engineering design doc: keep the decision engine pluggable
 
@@ -664,29 +715,53 @@ the fork is structural, then a plugin behind the interface that already exists:
 | 3 — Components | Pre-filled slots; skipped entirely when `capabilities.components` is off |
 | 4 — Starter pack | Per-item checkboxes; "Skip" is a first-class button |
 
-Steps 3 and 4 are skippable; a Thing with a name and a template is valid. This matters — the current aircraft
-form's serial validation is appropriate for an aircraft and hostile for a house.
+Steps 3 and 4 are skippable; a Thing with a name and a template is valid. This matters, and the current form is
+the proof: `EditAircraftUiState` refuses to save unless make, model, **and** serial are all non-blank, and
+`AirframeSection` / `EngineSection` mark each blank one in error. That is exactly right for an aircraft and
+hostile for a house, which has none of the three. Required-ness becomes `SpecField.required`, declared per
+template.
 
 **Homogeneous-account shortcut:** if every existing Thing shares one template, step 1 pre-selects it with a
 "change" affordance. An aviation user adding their second aircraft sees today's flow with one extra tap.
 
-### 8.2 The Stuff list
+### 8.2 The Stuff switcher
 
-Today's fleet list is homogeneous. It becomes a mixed-type list where each row carries a template icon and a
-status line in that Thing's own lexicon — "2 open squawks · AOG" sitting above "1 open issue · Gutters due in 9
-days". Grouping by template appears once the account holds more than one template type. The primary meter (if any)
-renders on the row; a home shows its next due chore instead.
+There is no fleet *list screen* to generalize — `feature/fleet/viewing` holds exactly one composable,
+`FleetEmptyState`. The fleet is reached through the adaptive shell's **switcher**: `ShellAircraft` rows in the
+sidebar on the wide tiers, the same switcher behind the top bar on compact ones, with `SelectedAircraftStore`
+persisting the choice per host. Sections then render for whatever is selected.
 
-The surface is titled **Stuff**, overridden by `Lexicon.collection_label` when every Thing shares one template —
-so an all-aircraft account still reads **Fleet** and an all-car account reads **Garage**. The create button follows
-the same rule: "Add a new thing" on a mixed account, "Add aircraft" on an aviation one.
+That makes the mixed-type problem smaller than it looked when this section was first drafted against a list. Each
+switcher row carries its template icon and, where the template declares a primary meter, that meter's current
+value; a home shows its next due chore instead. A status line in that Thing's own lexicon — "2 open squawks ·
+AOG" sitting above "1 open issue · Gutters due in 9 days" — is a row detail rather than a list redesign, and it
+only has to survive at sidebar width. Grouping by template appears once the account holds more than one template
+type.
+
+The switcher is titled **Stuff**, overridden by `Lexicon.collection_label` when every Thing shares one template —
+so an all-aircraft account still reads **Fleet** and an all-car account reads **Garage**. The create action
+follows the same rule: "Add a new thing" on a mixed account, "Add aircraft" (today's `add_aircraft` string in
+`core:sharedassets`) on an aviation one. `FleetEmptyState` is the one surface with no Thing to resolve a lexicon
+from, so it defaults to the generic noun — which is correct: a brand-new account genuinely does not yet know
+what it is for.
 
 ### 8.3 Thing overview
 
-The four-tab layout (Overview → Defects → Tasks → Logs) is preserved; labels come from the lexicon and tab
-presence from `capabilities.tabs`. The Overview tab's `ConfigurationCard` renders the component tree generically
-instead of hardcoded airframe/engine/prop sections, and `AogAlertSection` becomes a down-status alert section
-keyed on `Lexicon.down_status`.
+The four per-Thing surfaces are preserved. They are no longer tabs inside an aircraft screen: since this document
+was drafted they became **shell sections** — `ShellSection.DASHBOARD / SQUAWKS / TASKS / LOGS` in
+`core:ui:adaptive`, rendered by `AircraftSectionContent` and reached from a bottom bar, rail, or sidebar
+depending on window tier, with `SETTINGS` alongside them as the one global section.
+
+The generalization is unchanged in substance and cheaper in practice than the tab version would have been: labels
+come from the lexicon, section presence from `capabilities.sections`, and **one enum in one shared module** is
+the single place the set is declared, instead of a tab enum owned by the aircraft feature. The aviation labels living in
+`core:sharedassets` (`shell_tab_squawks`, `shell_title_tasks` = "Maintenance Tasks", `shell_title_logs` = "Work
+Logs") become lexicon-resolved at render.
+
+The Dashboard section's `AircraftDataCard` — the configuration accordion — renders the component tree generically
+instead of the hardcoded airframe/engine/prop sections in `EngineDetails` and `BladeChipsOverview`, and
+`AogAlertSection` becomes a down-status alert section keyed on `Lexicon.down_status`, above the unchanged
+`CriticalAlertSection`.
 
 ### 8.4 Log entry
 
@@ -695,12 +770,24 @@ now walks the component tree rather than three special cases. The three hour fie
 applicable meter, labeled and unit-suffixed from the meter definition, shown only for meters relevant to the
 selected component — and absent entirely when the template declares none.
 
-### 8.5 Export, settings, sharing, technicians
+### 8.5 Export, notifications, settings, sharing, technicians
 
 The paper-logbook tab layout becomes the **airplane** preset's layout, selected by `capabilities.export_layout`;
 other presets get a generic layout whose columns derive from the lexicon and meter set. Sheet names, file names,
 and the README are lexicon-driven. Pipeline, ZIP structure, delivery, and history are untouched. Technician
 certificate fields are shown or hidden by capability, so a homeowner never sees "A&P / IA".
+
+**Notifications** need one thing beyond copy substitution. `NotificationChannel.GROUNDED` is an OS-level channel
+(Android) and category (iOS) **identifier**, and renaming an identifier drops every user's per-channel settings —
+so the id stays `GROUNDED` forever while its *display name* resolves from `Lexicon.down_status`. Everything else
+is ordinary substitution: the four tier titles, the notification bodies, and the toggle labels in
+`NotificationSettingsScreen`. Two consequences are worth stating because they are easy to get wrong:
+
+- A user with an airplane and a house has **one** set of OS channels, not one per template. The channel is the
+  urgency class; the lexicon supplies the name. On a mixed account the channel name falls back to the generic
+  noun rather than picking a template's word arbitrarily — the same rule as the switcher title in §8.2.
+- The N1 collaboration channel is domain-neutral already ("someone changed something you share") and needs only
+  the Thing noun.
 
 ---
 
@@ -752,13 +839,18 @@ dual-write in Phase 5.
 
 ## 10. How Terminology Actually Works
 
-820 strings across 25 `strings.xml` files; roughly 150 name the domain, in three buckets:
+**982 strings across 31 `strings.xml` files**; roughly 230 name the domain, in three buckets:
 
 | Bucket | Count (approx.) | Treatment |
 |---|---|---|
-| **Domain-neutral** — "Save", "Delete", "Due soon", "Open", "Dismissed" | ~670 | Untouched. |
-| **Noun-substitutable** — "Add aircraft", "No aircraft yet", "Delete this squawk?" | ~110 | Become format strings: `"Add %1$s"` resolved against the lexicon at render. |
-| **Structurally aviation** — "Airworthiness directive", "Tail number", "Aircraft on ground", "Tach time" | ~40 | Move into the lexicon or the template's field/meter labels as whole strings, not substitutions. |
+| **Domain-neutral** — "Save", "Delete", "Due soon", "Open", "Dismissed" | ~755 | Untouched. |
+| **Noun-substitutable** — "Add aircraft", "No aircraft yet", "Delete this squawk?" | ~150 | Become format strings: `"Add %1$s"` resolved against the lexicon at render. |
+| **Structurally aviation** — "Airworthiness directive", "Tail number", "Aircraft on ground", "Tach time" | ~75 | Move into the lexicon or the template's field/meter labels as whole strings, not substitutions. |
+
+The corpus grew by ~160 entries between this document's first draft and its refresh (notifications, sharing, and
+subscription copy), and the domain-naming share held roughly steady at just under a quarter. That is the useful
+signal: the work does not shrink by waiting, and it does not run away either — it scales with the app at a
+predictable ratio, so the estimate above is stable enough to plan Phase 2 against.
 
 Mechanically: a `LocalThingLexicon` `CompositionLocal` is provided at the Thing scope (with a sensible default for
 account-level screens), plus a formatter handling sentence-case, title-case, plural, and indefinite article.
@@ -792,10 +884,15 @@ domain, and a second identifier migration on a codebase still carrying `wingslog
 forest/amber status), Space Grotesk titles, and JetBrains Mono for identifiers read as *precision instrument*, not
 *airplane* — exactly the right register for someone servicing a furnace or a race car. Dynamic color stays off.
 
-`PRODUCT.md` and `DESIGN.md` each need one revision: the "Users" section broadens beyond aircraft owners and
-mechanics, and the monospace set becomes "identifiers, serials, and meter readings" rather than "tail numbers,
-serials, tach times". The **Refined Minimalism** direction and all five design principles carry over unchanged —
-"Add a new thing" is plain-spoken, not unserious, and plain-spoken has always been the brief.
+`PRODUCT.md` needs one revision — the "Users" section broadens beyond aircraft owners and mechanics, and the
+monospace line becomes "identifiers, serials, and meter readings" rather than "tail numbers, serials, tach
+times". `DESIGN.md` needs a few more than one, all the same edit: **The Mono Rule**, the typography usage table
+(`dataLarge` "Engine hours, tach times", `dataMedium` "Tail numbers in cards", `displaySmall` "Hero display (tail
+numbers)"), and the `ComponentTypeBadge` spec each name aviation data where they mean *technical* data. None of
+them is a design change; the rule they encode — mono means measurement or identifier, never copy — is already
+domain-neutral and just happens to be written in examples. The **Refined Minimalism** direction and all five
+design principles carry over unchanged — "Add a new thing" is plain-spoken, not unserious, and plain-spoken has
+always been the brief.
 
 **Store positioning** is a genuine tension: one listing selling to a pilot and a homeowner. Recommendation is to
 lead with the universal promise ("Maintain anything with the rigor of an aircraft logbook") and use the screenshot
@@ -806,16 +903,25 @@ treatment before launch; out of scope here.
 
 ## 12. Subscription & Entitlement Impact
 
-Mechanically trivial: `aircraftLimit()` → `thingLimit()`, `FREE_AIRCRAFT_LIMIT` → `FREE_THING_LIMIT`, and four
-upsell strings drop "aircraft" for the neutral noun. Attachment, email-export, and sharing gates are unaffected.
+Mechanically trivial: `aircraftLimit()` → `thingLimit()`, `FREE_AIRCRAFT_LIMIT` → `FREE_THING_LIMIT`, and the
+`upsell_body_*` strings drop "aircraft" for the neutral noun. The other four gates —
+`canUploadAttachments()`, `canEmailExports()`, `canHostShare()`, `shouldShowAds()` — are unaffected; none of them
+is aircraft-shaped. Storage entitlement following the host on a shared Thing (AGENTS.md, *Sharing and scope
+resolution*) is likewise unchanged.
 
-> **Decision needed — does Core stay at one Thing?** A one-aircraft free tier is coherent: most GA owners own one
-> airplane, so free is a complete product and the paywall triggers on genuine fleet management. In a multi-domain
-> world the same limit reads differently — someone with a car and a house hits the wall on day one, before the app
-> has proven anything. **Recommendation: raise Core to 3 Things** and lean harder on attachments, email export,
-> and sharing as the Heavy differentiators. It trades immediate conversion pressure for a far better first week,
-> and the multi-Thing habit is what makes Heavy worth buying later. A revenue decision, not an engineering one —
-> make it with whatever conversion data exists rather than from this document.
+> **Decision needed — where does the free limit land?** Two corrections to this section's earlier framing, both
+> of which the app has since supplied. The tiers are **Basic** (free) and **Pro** (paid) — `Subscription.Status`
+> is `STATUS_FREE` / `STATUS_PRO`, and the Core / Heavy names this document used were renamed in `c00312d5`. And
+> the free limit is no longer one aircraft: **`FREE_AIRCRAFT_LIMIT = 2`** since #375.
+>
+> So half of what this section recommended has already happened, for aviation reasons rather than multi-domain
+> ones. The remaining question is narrower and better posed: **does 2 hold, or go to 3?** Two is still tight in a
+> multi-domain world — a car and a house fills it before the app has proven anything, and the third Thing is
+> exactly the one that establishes the multi-Thing habit. **Recommendation: raise Basic to 3 Things** and lean
+> harder on attachments, email export, and sharing as the Pro differentiators. It trades a little immediate
+> conversion pressure for a materially better first week. A revenue decision, not an engineering one — make it
+> with whatever conversion data the move from 1 to 2 produced, which is real evidence this document did not have
+> when it first asked the question.
 
 ---
 
@@ -829,7 +935,12 @@ upsell strings drop "aircraft" for the neutral noun. Attachment, email-export, a
 | **0 pt** | **Guardrail:** no regression in D30 retention or conversion for the pre-launch aviation cohort. The metric that can stop the rollout. |
 
 Instrumentation: `template_id` becomes a property on Thing-scoped analytics events (create, defect created, task
-complied, log created, export). No new event types needed.
+complied, log created, export). No new event *types* are needed — but note what exists today.
+`AnalyticsManager` (Firebase Analytics → GA4) implements `logScreenView` plus an untyped `logEvent` escape
+hatch, and the click/timing taxonomy in `docs/analytics/analytics_design.html` is still not modelled. Every
+metric in this table therefore depends on events that have to be defined and emitted first. That is a small,
+independent piece of work with no dependency on the pivot, and it should land **before** Phase 3 ships — a
+rollout whose guardrail metric cannot be measured is not a guarded rollout.
 
 ---
 
@@ -854,8 +965,8 @@ complied, log created, export). No new event types needed.
 |---|---|---|
 | **0 — Decisions** | Resolve the open decisions in §16. The free-tier limit and the squawk-word question are cheap now and expensive later. | No |
 | **1 — Config system + model** | `core:template` module: config model, `TemplateRegistry`, resolver, validation. `Thing` / `Component` / `Meter` / `ThingTemplate` protos. Deterministic backfill. Generalized `TaskDueManager` incl. `SeasonalRule`. Dual-write. Exactly one preset exists: **airplane**, reproducing today. | **No — by design.** The app must be indistinguishable. |
-| **2 — Lexicon plumbing** | String parameterization, `LocalThingLexicon`, formatter, byte-identical snapshot test. Capability flags wired into the UI, all still on. Aviation-only. | No |
-| **3 — The pivot ships** | Six remaining presets + starter packs, template picker and create flow, generic component tree UI, meter-driven log form, Stuff list, version floor, subscription rename, `PRODUCT.md`/`DESIGN.md` revisions. | **Yes** |
+| **2 — Lexicon plumbing** | String parameterization across all 31 `strings.xml` files, `LocalThingLexicon`, formatter, byte-identical snapshot test. Capability flags wired into the UI, all still on. Notification tier titles and the `GROUNDED` channel display name resolve through the lexicon (id unchanged). Analytics event taxonomy defined and emitted (§13). Aviation-only. | No |
+| **3 — The pivot ships** | Six remaining presets + starter packs, template picker and create flow, generic component tree UI, meter-driven log form, Stuff switcher, version floor, subscription rename, `PRODUCT.md`/`DESIGN.md` revisions. | **Yes** |
 | **4 — Depth** | Custom template editor, per-preset export layouts, template-aware search, additional presets (3D printer, equipment), store repositioning. | Yes |
 | **5 — Cleanup** | Retire dual-write and the version floor once the installed base clears the floor; deprecate legacy proto fields in place (never renumber). | No |
 
@@ -866,7 +977,7 @@ complied, log created, export). No new event types needed.
 | # | Decision | Recommendation |
 |---|---|---|
 | 1 | Is "squawk" universal or per-template? | **Per-template**, retained for aviation (§11). |
-| 2 | Core tier Thing limit | **Raise to 3**, pending conversion data (§12). |
+| 2 | Basic tier Thing limit — hold at the current 2, or raise? | **Raise to 3**, pending conversion data from the recent 1 → 2 move (§12). |
 | 3 | Custom template *editor* in v1? | **No — Phase 4.** The Custom *preset* ships in v1 (generic lexicon, user-addable components), and the `ThingTemplate` proto and `CollectionKind` ship in v1 so storage is settled. Only the field/slot/meter builder UI is deferred; it is a substantial surface that would gate the pivot on its own timeline. |
 | 4 | Can a Thing's template change after creation? | **Yes, but narrowly:** only while the Thing has no logs, and always additively — spec values and components whose keys don't exist in the new template are retained and rendered as legacy rows, never deleted. A full re-template with history is a data-loss trap and is out of scope. |
 | 5 | Does an overdue task block the "ready" status for every preset? | **Config it** (`overdue_blocks_ready_status`), default on. An overdue annual genuinely means not airworthy; an overdue gutter cleaning does not mean the house is unusable, and overstating it trains people to ignore the badge. |

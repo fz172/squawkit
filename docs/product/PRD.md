@@ -7,13 +7,15 @@ mechanics. It serves as a central hub to track aircraft details, manage maintena
 regulatory compliance/airworthiness, and perform essential flight planning calculations like
 Weight & Balance.
 
-> **Implementation status (2026-05).** The local-first storage architecture (R1) and the **Squawk** feature
-> are both shipped. **Attachments** (R2) infrastructure has largely landed but the UI is gated behind the
-> `attachmentUploadEnabled` feature-lab flag. The **Logbook Export** feature shipped and grew a server-side
-> **email-delivery** capability (a Firebase Functions backend under `backend/`). Weight & Balance remains future work.
+> **Implementation status (2026-08).** The local-first storage architecture (R1) and the **Squawk** feature
+> are both shipped. **Attachments** (R2) has shipped; file and photo upload is gated by the Pro subscription
+> (`SubscriptionManager.canUploadAttachments()`) while link attachments stay free. **FeatureLab and the
+> `attachmentUploadEnabled` lab flag were removed** — gating is now `AppCapability`, `SubscriptionManager`, or
+> `DeveloperFlags`. The **Logbook Export** feature shipped and grew a server-side **email-delivery** capability
+> (a Firebase Functions backend under `backend/`). Weight & Balance remains future work.
 
 > **Proposed pivot.** [`multi_domain_maintenance_PRD.md`](multi_domain_maintenance_PRD.md) proposes generalizing the
-> product from aircraft-only to **any maintainable "Thing"** (airplane, car, motorcycle, bike, boat, home, custom) via a
+> product from aircraft-only to **any maintainable “Thing”** (airplane, car, motorcycle, bike, boat, home, custom) via a
 > **template configuration system** that drives terminology, spec fields, component structure, usage meters, due
 > calculation, and which actions the UI offers. Nothing in it has shipped; this document still describes the aviation
 > product as built.
@@ -70,7 +72,7 @@ The application focuses on General Aviation (GA) aircraft management, specifical
     - Create new log entry.
     - Edit existing entry.
     - Delete entry (with confirmation dialog ✅).
-- **Attachments** (Implemented — R2; UI gated behind `attachmentUploadEnabled` feature-lab flag):
+- **Attachments** (Implemented — R2; file/photo upload gated by the Pro subscription, links free):
     - Store supporting documentation on logs, tasks, and squawks. Local-first blob store with background
       upload (WorkManager / URLSession) and lazy download on other devices.
     - **File Types**: PDF (8130, STC paperwork), Images (photos, physical logbook pages), generic files, links.
@@ -159,8 +161,9 @@ The application focuses on General Aviation (GA) aircraft management, specifical
    default and only data path (no rollout flag). See `docs/storage/storage_r1_design.md`.
 6. **Phase 6** ✅ Squawks — ad-hoc defect tracking (`feature/squawk`), Open → Addressed/Dismissed lifecycle,
    AOG alert on Aircraft Overview, log↔squawk linkage. See `docs/squawks/squawk_design.md`.
-7. **Phase 7** (Substantially implemented — behind feature flag) — Attachments R2: local blob store, background
-   upload, lazy download on logs/tasks/squawks. Gated behind `attachmentUploadEnabled`. See `docs/storage/storage_r2_design.md`.
+7. **Phase 7** ✅ Attachments R2: local blob store, background upload, lazy download on logs/tasks/squawks.
+   File/photo upload gated by `SubscriptionManager.canUploadAttachments()`; links are free.
+   See `docs/storage/storage_r2_design.md`.
 8. **Phase 8** ✅ Logbook Export (`feature/export`) — on-device PDF/CSV/XLSX ZIP export, per-aircraft or fleet,
    plus optional server-side email delivery (Firebase Functions backend). See `docs/export/export_logs_PRD.md` and
    `docs/export/export_email_automation_design.html`.
