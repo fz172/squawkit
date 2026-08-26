@@ -16,6 +16,11 @@ import dev.fanfly.wingslog.feature.notifications.model.PendingNotification
  * The constructed `Notification` is kept in [live] so [cancel] has something to `.close()` — unlike
  * Android/iOS, the web API has no "cancel by id" call; only the object returned by the constructor
  * can close itself.
+ *
+ * `icon` carries the same SquawkIt airplane the other two platforms show — Android's
+ * `ic_notification` mask, iOS's app icon. Without it a browser picks its own fallback (Chrome uses
+ * the page favicon, Firefox a generic bell), so passing it is what makes the web notification look
+ * like this app rather than like the browser.
  */
 class WebLocalNotifier : LocalNotifier {
 
@@ -51,10 +56,22 @@ class WebLocalNotifier : LocalNotifier {
     title: String,
     body: String,
     tag: String
-  ): dynamic =
-    js("new Notification(title, { body: body, tag: tag })")
+  ): dynamic {
+    val icon = NOTIFICATION_ICON
+    return js("new Notification(title, { body: body, tag: tag, icon: icon })")
+  }
 
   private fun focusWindow() {
     js("window.focus()")
+  }
+
+  private companion object {
+    /**
+     * The 192² app icon `webApp/src/jsMain/resources/index.html` already links as a favicon — the
+     * same airplane, at the size browsers want for a notification badge. Relative, so it
+     * resolves against the document base like every other asset the page loads; a root-absolute
+     * path would break the moment the app is served from a sub-path.
+     */
+    const val NOTIFICATION_ICON = "favicon-192.png"
   }
 }
