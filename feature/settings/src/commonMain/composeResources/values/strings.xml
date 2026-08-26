@@ -6,7 +6,7 @@
   <string name="settings_delete_account">Delete Account</string>
   <string name="settings_delete_account_subtitle">Permanently delete your account and all its records</string>
   <string name="settings_delete_account_title">Delete your account?</string>
-  <string name="settings_delete_account_body">This permanently deletes your account and every aircraft, log, task, squawk, and attachment in it. Anyone you have shared an aircraft with will lose access to it. This cannot be undone.</string>
+  <string name="settings_delete_account_body">This permanently deletes your account and all of your data. Anyone you have shared an aircraft with will lose access to it. This cannot be undone.</string>
   <string name="settings_delete_account_export_hint">Export your logbook first if you want to keep a copy.</string>
   <string name="settings_delete_account_challenge_email">To confirm, type your email address below:</string>
   <string name="settings_delete_account_challenge_phrase">To confirm, type this below:</string>
