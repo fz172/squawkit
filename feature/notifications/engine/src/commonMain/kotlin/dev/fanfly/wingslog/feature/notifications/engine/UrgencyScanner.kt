@@ -20,10 +20,8 @@ import dev.fanfly.wingslog.feature.notifications.model.ScanTrigger
 import dev.fanfly.wingslog.feature.notifications.model.UrgencyRank
 import dev.fanfly.wingslog.feature.notifications.model.UrgencyTier
 import dev.fanfly.wingslog.feature.notifications.model.allEnabled
-import dev.fanfly.wingslog.feature.notifications.model.dueSoonEnabled
-import dev.fanfly.wingslog.feature.notifications.model.overdueEnabled
+import dev.fanfly.wingslog.feature.notifications.model.priorityDueEnabled
 import dev.fanfly.wingslog.feature.notifications.model.reportableTier
-import dev.fanfly.wingslog.feature.notifications.model.squawkPriorityEnabled
 import dev.fanfly.wingslog.feature.notifications.model.urgencyRank
 import dev.fanfly.wingslog.feature.notifications.permission.NotificationPermission
 import dev.fanfly.wingslog.feature.notifications.permission.PermissionState
@@ -240,8 +238,9 @@ class UrgencyScanner(
       }
     }
 
-    // Drop crossings whose tier is switched off in prefs (design §6.3 step 6).
-    val reportable = crossings.filter { settings.tierEnabled(it.tier) }
+    // Drop crossings if priority/due updates are switched off in prefs (design §6.3 step 6). One
+    // flag now covers all three tiers (design decision, 2026-08-26).
+    val reportable = if (settings.priorityDueEnabled) crossings else emptyList()
 
     // At most one notification per (aircraft, tier) — group into a summary once there is more than
     // one crossing (design §6.5).
@@ -325,13 +324,6 @@ class UrgencyScanner(
     }
     return if (rank > baseline) baseline else null
   }
-
-  private fun NotificationSettings.tierEnabled(tier: UrgencyTier): Boolean =
-    when (tier) {
-      UrgencyTier.PRIORITY_RAISED -> squawkPriorityEnabled
-      UrgencyTier.OVERDUE -> overdueEnabled
-      UrgencyTier.DUE_SOON -> dueSoonEnabled
-    }
 
   private suspend fun buildNotification(
     aircraftId: String,

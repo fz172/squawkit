@@ -197,16 +197,18 @@ message NotificationSettings {
 
   reserved 2; // aog_disabled — AOG is not its own tier (decided 2026-08-26); reserved, not reused.
 
-  // --- Urgency (N2) — device-local detection, no account required ---
-  bool squawk_priority_disabled = 3;     // any priority escalation, including to AOG, and reopens
-  bool overdue_disabled = 4;             // -> DueStatus.OVERDUE
-  bool due_soon_disabled = 5;            // -> DueStatus.DUE_SOON
+  // Settings simplified to three toggles total (decided 2026-08-26): the eight per-class fields that
+  // used to live here collapsed into the two below. Reserved rather than reused, same reasoning as
+  // field 2.
+  reserved 3, 4, 5, 6, 7, 8, 9;
+
+  // --- Priority & due updates (N2) — device-local detection, no account required ---
+  // Any priority escalation (including to AOG, and reopens), plus DueStatus.OVERDUE / DUE_SOON.
+  bool priority_due_disabled = 10;
 
   // --- Collaboration (N1) — server fan-out, needs a real account + cloud sync ---
-  bool aircraft_activity_disabled = 6;   // Aircraft record edited
-  bool squawk_activity_disabled = 7;     // squawk create/edit/dismiss/reopen/delete
-  bool task_activity_disabled = 8;       // task create/edit/force-comply/delete
-  bool log_activity_disabled = 9;        // log create/edit/delete
+  // Aircraft/squawk/task/log record activity from other crew — one toggle for all four.
+  bool collaboration_disabled = 11;
 }
 ```
 
@@ -220,16 +222,15 @@ readable positive names from extension properties, which are derived rather than
 // feature/notifications/model — NotificationSettingsExt.kt
 // The ONE place the inversion in §4.1 is spelled out. Everything else reads positives.
 val NotificationSettings.allEnabled: Boolean get() = !all_disabled
-val NotificationSettings.squawkPriorityEnabled: Boolean get() = !squawk_priority_disabled
-val NotificationSettings.overdueEnabled: Boolean get() = !overdue_disabled
-// …one line per field
+val NotificationSettings.priorityDueEnabled: Boolean get() = !priority_due_disabled
+val NotificationSettings.collaborationEnabled: Boolean get() = !collaboration_disabled
 
-fun NotificationSettings.withSquawkPriority(enabled: Boolean) = copy(squawk_priority_disabled = !enabled)
+fun NotificationSettings.withPriorityDue(enabled: Boolean) = copy(priority_due_disabled = !enabled)
 // …one per field; wire generates `copy` on the message (TechnicianManagerImpl already relies on it)
 ```
 
-An earlier draft had a `data class NotificationPrefs` of nine positive booleans defaulting to `true`,
-on the `DeveloperFlags` precedent. That was a forked copy, and the cost outweighs the ergonomics:
+An earlier draft had a `data class NotificationPrefs` of positive booleans defaulting to `true`, on
+the `DeveloperFlags` precedent. That was a forked copy, and the cost outweighs the ergonomics:
 
 - **It restates the defaults.** §4.1's whole argument is that *absent doc = default-constructed
   message = everything on* is one fact. A mirror with `= true` on every field states it a second
@@ -291,7 +292,7 @@ all-on, and flips AOG off has just pushed an all-defaults-except-AOG message —
 classes they switched off on their phone last week. `PullListener`'s comparator then prefers the
 dirty local row over the incoming remote one, so the real settings lose. `UserInfo` never exposes
 this because it carries one meaningful field, so a whole-message overwrite has no sibling to clobber;
-`NotificationSettings` carries nine.
+`NotificationSettings` carries two.
 
 **3. The scanner cannot un-send.** A screen showing the wrong state for two seconds is #451's flash
 one layer deeper. A notification posted against default preferences is permanent — a user who
@@ -714,7 +715,8 @@ suspend fun scan(trigger: ScanTrigger): ScanResult
      for each task:   rank = dueManager.computeNextDue(task, logs, tasks).status.urgencyRank()
      for each squawk: rank = squawk.toWithStatus().urgencyRank()
 5. diff every rank against urgency_watermark; collect crossings where rank > watermark
-6. drop crossings whose tier is switched off in prefs
+6. drop all crossings if priority/due updates are switched off in prefs — one flag covers all three
+   tiers (decided 2026-08-26, §4.1)
 7. group into at most one notification per (aircraft, tier)   // §6.5
 8. post them all
 9. commit every rank — up and down — in ONE transaction, and prune  // §6.6, §6.4
@@ -926,7 +928,7 @@ Two additions to `backend/firebase/functions/package.json`'s `generate:proto`, b
   identity first"), and the server cannot read it out of anything else; the aircraft record is opaque
   proto bytes.
 - `settings/notification_settings.proto` — the trigger decodes each recipient's preferences to honor
-  their per-class toggles.
+  their collaboration/priority-due toggles.
 
 ### 7.3 Coalescing by replacement, not by buffering
 
@@ -1364,8 +1366,8 @@ whole-message overwrite, reverting the user's real settings on every other devic
 2). Disabling the toggles while `isLoading` is what makes that unreachable; the spinner is just the
 visible part.
 
-Toggle rows read positive names like `state.settings.squawkPriorityEnabled` and write through
-mutators like `prefsManager.update { it.withSquawkPriority(enabled) }` (§4.1) — the screen never sees
+Toggle rows read positive names like `state.settings.priorityDueEnabled` and write through
+mutators like `prefsManager.update { it.withPriorityDue(enabled) }` (§4.1) — the screen never sees
 an inverted field name, and never constructs a `NotificationSettings` of its own.
 
 Any in-progress edit lives in the ViewModel's `StateFlow`, never in composable `remember` — this
@@ -1397,8 +1399,14 @@ actions worded as "Update X" rather than "Edit X".
 
 The PRD's Q5 (a confirm-gated toggle so AOG alerts couldn't be silenced quietly) was implemented in
 P2, then reversed on 2026-08-26: AOG is not its own settings toggle. It reports through
-`squawk_priority_disabled` — "Squawk priority increases" — like any other escalation, with no confirm
+`priority_due_disabled` — "Priority & due updates" — like any other escalation, with no confirm
 dialog. There is no longer a way to silence *only* AOG while keeping other priority escalations on.
+
+Settings were simplified further on 2026-08-26 (after this decision, same day): the three separate
+urgency fields and four separate collaboration fields each collapsed into one toggle apiece, so the
+screen now shows exactly three switches — the master, Priority & due updates, and Collaboration
+(§4.1, §9.2). AOG's exemption from having its own toggle predates and survives that collapse: it was
+never going to get one back.
 
 ---
 

@@ -12,6 +12,7 @@ import dev.fanfly.wingslog.feature.notifications.model.NotificationChannel
 import dev.fanfly.wingslog.feature.notifications.model.NotificationTapTarget
 import dev.fanfly.wingslog.feature.notifications.model.PendingNotification
 import dev.fanfly.wingslog.feature.notifications.model.allEnabled
+import dev.fanfly.wingslog.feature.notifications.model.collaborationEnabled
 import dev.fanfly.wingslog.feature.notifications.permission.NotificationPermission
 import dev.fanfly.wingslog.feature.notifications.permission.PermissionState
 import dev.fanfly.wingslog.feature.notifications.viewing.LocalNotifier
@@ -103,8 +104,8 @@ class WebForeignWriteDetector(
       log.d { "N1 skipped: all notifications off" }
       return
     }
-    if (!recordType.enabledIn(prefs)) {
-      log.d { "N1 skipped: ${recordType.wire} activity off in preferences" }
+    if (!prefs.settings.collaborationEnabled) {
+      log.d { "N1 skipped: collaboration activity off in preferences" }
       return
     }
     val permissionState = permission.observe().value
@@ -264,13 +265,6 @@ class WebForeignWriteDetector(
       Res.string.notification_n1_section_logbook,
       Res.string.notification_n1_section_logbook_lower,
     ),
-    ;
-
-    fun enabledIn(prefs: PrefsState.Resolved): Boolean = when (this) {
-      SQUAWK -> !prefs.settings.squawk_activity_disabled
-      TASK -> !prefs.settings.task_activity_disabled
-      LOG -> !prefs.settings.log_activity_disabled
-    }
   }
 
   private fun CollectionKind.toRecordType(): RecordType? = when (this) {

@@ -17,22 +17,17 @@ class NotificationSettingsExtTest {
     val settings = NotificationSettings()
 
     assertThat(settings.allEnabled).isTrue()
-    assertThat(settings.squawkPriorityEnabled).isTrue()
-    assertThat(settings.overdueEnabled).isTrue()
-    assertThat(settings.dueSoonEnabled).isTrue()
-    assertThat(settings.aircraftActivityEnabled).isTrue()
-    assertThat(settings.squawkActivityEnabled).isTrue()
-    assertThat(settings.taskActivityEnabled).isTrue()
-    assertThat(settings.logActivityEnabled).isTrue()
+    assertThat(settings.priorityDueEnabled).isTrue()
+    assertThat(settings.collaborationEnabled).isTrue()
   }
 
   @Test
   fun disabledField_readsAsFalse() {
-    val settings = NotificationSettings(squawk_priority_disabled = true)
+    val settings = NotificationSettings(priority_due_disabled = true)
 
-    assertThat(settings.squawkPriorityEnabled).isFalse()
-    // Every sibling field is untouched — the inversion is per-field, not all-or-nothing.
-    assertThat(settings.overdueEnabled).isTrue()
+    assertThat(settings.priorityDueEnabled).isFalse()
+    // The sibling field is untouched — the inversion is per-field, not all-or-nothing.
+    assertThat(settings.collaborationEnabled).isTrue()
   }
 
   @Test
@@ -42,62 +37,22 @@ class NotificationSettingsExtTest {
     assertThat(settings.allEnabled).isFalse()
     // Per-class fields are untouched by the master switch — NotificationPrefsManager's consumers
     // read allEnabled as a short-circuit, not as something that rewrites every other field.
-    assertThat(settings.squawkPriorityEnabled).isTrue()
+    assertThat(settings.priorityDueEnabled).isTrue()
   }
 
   @Test
-  fun withSquawkPriority_flipsOnlyThatField() {
-    val settings = NotificationSettings().withSquawkPriority(enabled = false)
+  fun withPriorityDue_flipsOnlyThatField() {
+    val settings = NotificationSettings().withPriorityDue(enabled = false)
 
-    assertThat(settings.squawkPriorityEnabled).isFalse()
-    assertThat(settings.overdueEnabled).isTrue()
+    assertThat(settings.priorityDueEnabled).isFalse()
+    assertThat(settings.collaborationEnabled).isTrue()
   }
 
   @Test
-  fun withOverdue_flipsOnlyThatField() {
-    val settings = NotificationSettings().withOverdue(enabled = false)
+  fun withCollaboration_flipsOnlyThatField() {
+    val settings = NotificationSettings().withCollaboration(enabled = false)
 
-    assertThat(settings.overdueEnabled).isFalse()
-    assertThat(settings.dueSoonEnabled).isTrue()
-  }
-
-  @Test
-  fun withDueSoon_flipsOnlyThatField() {
-    val settings = NotificationSettings().withDueSoon(enabled = false)
-
-    assertThat(settings.dueSoonEnabled).isFalse()
-    assertThat(settings.overdueEnabled).isTrue()
-  }
-
-  @Test
-  fun withAircraftActivity_flipsOnlyThatField() {
-    val settings = NotificationSettings().withAircraftActivity(enabled = false)
-
-    assertThat(settings.aircraftActivityEnabled).isFalse()
-    assertThat(settings.squawkActivityEnabled).isTrue()
-  }
-
-  @Test
-  fun withSquawkActivity_flipsOnlyThatField() {
-    val settings = NotificationSettings().withSquawkActivity(enabled = false)
-
-    assertThat(settings.squawkActivityEnabled).isFalse()
-    assertThat(settings.taskActivityEnabled).isTrue()
-  }
-
-  @Test
-  fun withTaskActivity_flipsOnlyThatField() {
-    val settings = NotificationSettings().withTaskActivity(enabled = false)
-
-    assertThat(settings.taskActivityEnabled).isFalse()
-    assertThat(settings.logActivityEnabled).isTrue()
-  }
-
-  @Test
-  fun withLogActivity_flipsOnlyThatField() {
-    val settings = NotificationSettings().withLogActivity(enabled = false)
-
-    assertThat(settings.logActivityEnabled).isFalse()
-    assertThat(settings.aircraftActivityEnabled).isTrue()
+    assertThat(settings.collaborationEnabled).isFalse()
+    assertThat(settings.priorityDueEnabled).isTrue()
   }
 }

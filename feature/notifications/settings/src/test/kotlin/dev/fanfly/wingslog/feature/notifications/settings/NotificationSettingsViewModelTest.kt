@@ -212,50 +212,50 @@ class NotificationSettingsViewModelTest {
   // --- Every other toggle writes through its positive-name mutator, never a raw NotificationSettings ---
 
   @Test
-  fun onSquawkPriorityToggled_writesThroughTheMutator() =
+  fun onPriorityDueToggled_writesThroughTheMutator() =
     runTest(testDispatcher) {
       val viewModel = viewModel()
 
-      viewModel.onSquawkPriorityToggled(false)
+      viewModel.onPriorityDueToggled(false)
 
       val mutate = slot<(NotificationSettings) -> NotificationSettings>()
       coVerify { prefsManager.update(capture(mutate)) }
-      assertThat(mutate.captured(NotificationSettings()).squawk_priority_disabled).isTrue()
+      assertThat(mutate.captured(NotificationSettings()).priority_due_disabled).isTrue()
     }
 
   @Test
-  fun onAircraftActivityToggled_writesThroughTheMutator() =
+  fun onCollaborationToggled_writesThroughTheMutator() =
     runTest(testDispatcher) {
       val viewModel = viewModel()
 
-      viewModel.onAircraftActivityToggled(false)
+      viewModel.onCollaborationToggled(false)
 
       val mutate = slot<(NotificationSettings) -> NotificationSettings>()
       coVerify { prefsManager.update(capture(mutate)) }
-      assertThat(mutate.captured(NotificationSettings()).aircraft_activity_disabled).isTrue()
+      assertThat(mutate.captured(NotificationSettings()).collaboration_disabled).isTrue()
     }
 
   // --- A failed write surfaces saveError instead of failing silently ---
 
   @Test
-  fun onSquawkPriorityToggled_writeFails_setsSaveError() =
+  fun onPriorityDueToggled_writeFails_setsSaveError() =
     runTest(testDispatcher) {
       coEvery { prefsManager.update(any()) } returns Result.failure(
         RuntimeException("boom")
       )
       val viewModel = viewModel()
 
-      viewModel.onSquawkPriorityToggled(false)
+      viewModel.onPriorityDueToggled(false)
 
       assertThat(viewModel.uiState.value.saveError).isTrue()
     }
 
   @Test
-  fun onSquawkPriorityToggled_writeSucceeds_saveErrorStaysFalse() =
+  fun onPriorityDueToggled_writeSucceeds_saveErrorStaysFalse() =
     runTest(testDispatcher) {
       val viewModel = viewModel()
 
-      viewModel.onSquawkPriorityToggled(false)
+      viewModel.onPriorityDueToggled(false)
 
       assertThat(viewModel.uiState.value.saveError).isFalse()
     }
@@ -266,7 +266,7 @@ class NotificationSettingsViewModelTest {
       RuntimeException("boom")
     )
     val viewModel = viewModel()
-    viewModel.onSquawkPriorityToggled(false)
+    viewModel.onPriorityDueToggled(false)
 
     viewModel.onSaveErrorShown()
 

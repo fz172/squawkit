@@ -6,25 +6,12 @@
   <string name="notification_settings_all_subtitle_on">On</string>
   <string name="notification_settings_all_subtitle_off">Off — every notification below is silenced</string>
 
-  <string name="notification_settings_group_urgency">Urgency alerts</string>
-  <string name="notification_settings_group_urgency_footer">Works on this device even when you’re signed out or sync is off.</string>
-  <string name="notification_settings_group_collaboration">Collaboration</string>
+  <string name="notification_settings_priority_due_title">Priority &amp; due updates</string>
+  <string name="notification_settings_priority_due_subtitle">A squawk becomes high priority or worse, or a task becomes due soon or overdue</string>
+  <string name="notification_settings_priority_due_footer">Works on this device even when you’re signed out or sync is off.</string>
 
-  <string name="notification_settings_squawk_priority_title">Squawk priority increases</string>
-  <string name="notification_settings_squawk_priority_subtitle">A squawk becomes high priority or worse</string>
-  <string name="notification_settings_overdue_title">Task overdue</string>
-  <string name="notification_settings_overdue_subtitle">A maintenance task crosses into overdue</string>
-  <string name="notification_settings_due_soon_title">Task due soon</string>
-  <string name="notification_settings_due_soon_subtitle">A maintenance task is coming due</string>
-
-  <string name="notification_settings_aircraft_activity_title">Aircraft activity</string>
-  <string name="notification_settings_aircraft_activity_subtitle">Changes to an aircraft you have access to</string>
-  <string name="notification_settings_squawk_activity_title">Squawk activity</string>
-  <string name="notification_settings_squawk_activity_subtitle">Squawks added or updated by others</string>
-  <string name="notification_settings_task_activity_title">Task activity</string>
-  <string name="notification_settings_task_activity_subtitle">Maintenance tasks added or updated by others</string>
-  <string name="notification_settings_log_activity_title">Logbook activity</string>
-  <string name="notification_settings_log_activity_subtitle">Logbook entries added or updated by others</string>
+  <string name="notification_settings_collaboration_title">Collaboration</string>
+  <string name="notification_settings_collaboration_subtitle">Aircraft, squawk, task, or logbook activity from others</string>
 
   <string name="notification_settings_banner_denied_title">Notifications are blocked</string>
   <string name="notification_settings_banner_denied_body">Turn them on in system settings to hear about urgency alerts and collaboration on your aircraft.</string>

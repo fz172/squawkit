@@ -24,37 +24,16 @@ import dev.fanfly.wingslog.core.model.settings.NotificationSettings
 
 val NotificationSettings.allEnabled: Boolean get() = !all_disabled
 
-val NotificationSettings.squawkPriorityEnabled: Boolean get() = !squawk_priority_disabled
-val NotificationSettings.overdueEnabled: Boolean get() = !overdue_disabled
-val NotificationSettings.dueSoonEnabled: Boolean get() = !due_soon_disabled
-
-val NotificationSettings.aircraftActivityEnabled: Boolean get() = !aircraft_activity_disabled
-val NotificationSettings.squawkActivityEnabled: Boolean get() = !squawk_activity_disabled
-val NotificationSettings.taskActivityEnabled: Boolean get() = !task_activity_disabled
-val NotificationSettings.logActivityEnabled: Boolean get() = !log_activity_disabled
+val NotificationSettings.priorityDueEnabled: Boolean get() = !priority_due_disabled
+val NotificationSettings.collaborationEnabled: Boolean get() = !collaboration_disabled
 
 // --- Write: copy onto a positive value, never construct with a *_disabled field directly ---
 
 fun NotificationSettings.withAllEnabled(enabled: Boolean): NotificationSettings =
   copy(all_disabled = !enabled)
 
-fun NotificationSettings.withSquawkPriority(enabled: Boolean): NotificationSettings =
-  copy(squawk_priority_disabled = !enabled)
+fun NotificationSettings.withPriorityDue(enabled: Boolean): NotificationSettings =
+  copy(priority_due_disabled = !enabled)
 
-fun NotificationSettings.withOverdue(enabled: Boolean): NotificationSettings =
-  copy(overdue_disabled = !enabled)
-
-fun NotificationSettings.withDueSoon(enabled: Boolean): NotificationSettings =
-  copy(due_soon_disabled = !enabled)
-
-fun NotificationSettings.withAircraftActivity(enabled: Boolean): NotificationSettings =
-  copy(aircraft_activity_disabled = !enabled)
-
-fun NotificationSettings.withSquawkActivity(enabled: Boolean): NotificationSettings =
-  copy(squawk_activity_disabled = !enabled)
-
-fun NotificationSettings.withTaskActivity(enabled: Boolean): NotificationSettings =
-  copy(task_activity_disabled = !enabled)
-
-fun NotificationSettings.withLogActivity(enabled: Boolean): NotificationSettings =
-  copy(log_activity_disabled = !enabled)
+fun NotificationSettings.withCollaboration(enabled: Boolean): NotificationSettings =
+  copy(collaboration_disabled = !enabled)

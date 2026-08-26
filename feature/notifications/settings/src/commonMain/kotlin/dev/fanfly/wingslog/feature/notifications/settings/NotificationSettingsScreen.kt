@@ -39,21 +39,14 @@ import dev.fanfly.wingslog.core.ui.common.compose.SwitchRowItem
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.statusColors
-import dev.fanfly.wingslog.feature.notifications.model.aircraftActivityEnabled
 import dev.fanfly.wingslog.feature.notifications.model.allEnabled
-import dev.fanfly.wingslog.feature.notifications.model.dueSoonEnabled
-import dev.fanfly.wingslog.feature.notifications.model.logActivityEnabled
-import dev.fanfly.wingslog.feature.notifications.model.overdueEnabled
-import dev.fanfly.wingslog.feature.notifications.model.squawkActivityEnabled
-import dev.fanfly.wingslog.feature.notifications.model.squawkPriorityEnabled
-import dev.fanfly.wingslog.feature.notifications.model.taskActivityEnabled
+import dev.fanfly.wingslog.feature.notifications.model.collaborationEnabled
+import dev.fanfly.wingslog.feature.notifications.model.priorityDueEnabled
 import dev.fanfly.wingslog.feature.notifications.permission.PermissionState
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.core.sharedassets.generated.resources.cancel
 import wingslog.feature.notifications.settings.generated.resources.Res
-import wingslog.feature.notifications.settings.generated.resources.notification_settings_aircraft_activity_subtitle
-import wingslog.feature.notifications.settings.generated.resources.notification_settings_aircraft_activity_title
 import wingslog.feature.notifications.settings.generated.resources.notification_settings_all_subtitle_off
 import wingslog.feature.notifications.settings.generated.resources.notification_settings_all_subtitle_on
 import wingslog.feature.notifications.settings.generated.resources.notification_settings_all_title
@@ -62,32 +55,23 @@ import wingslog.feature.notifications.settings.generated.resources.notification_
 import wingslog.feature.notifications.settings.generated.resources.notification_settings_banner_denied_title
 import wingslog.feature.notifications.settings.generated.resources.notification_settings_banner_unsupported_body
 import wingslog.feature.notifications.settings.generated.resources.notification_settings_banner_unsupported_title
-import wingslog.feature.notifications.settings.generated.resources.notification_settings_due_soon_subtitle
-import wingslog.feature.notifications.settings.generated.resources.notification_settings_due_soon_title
-import wingslog.feature.notifications.settings.generated.resources.notification_settings_group_collaboration
-import wingslog.feature.notifications.settings.generated.resources.notification_settings_group_urgency
-import wingslog.feature.notifications.settings.generated.resources.notification_settings_group_urgency_footer
-import wingslog.feature.notifications.settings.generated.resources.notification_settings_log_activity_subtitle
-import wingslog.feature.notifications.settings.generated.resources.notification_settings_log_activity_title
-import wingslog.feature.notifications.settings.generated.resources.notification_settings_overdue_subtitle
-import wingslog.feature.notifications.settings.generated.resources.notification_settings_overdue_title
+import wingslog.feature.notifications.settings.generated.resources.notification_settings_collaboration_subtitle
+import wingslog.feature.notifications.settings.generated.resources.notification_settings_collaboration_title
+import wingslog.feature.notifications.settings.generated.resources.notification_settings_priority_due_footer
+import wingslog.feature.notifications.settings.generated.resources.notification_settings_priority_due_subtitle
+import wingslog.feature.notifications.settings.generated.resources.notification_settings_priority_due_title
 import wingslog.feature.notifications.settings.generated.resources.notification_settings_save_error
 import wingslog.feature.notifications.settings.generated.resources.notification_settings_signin_cta
 import wingslog.feature.notifications.settings.generated.resources.notification_settings_signin_footer
-import wingslog.feature.notifications.settings.generated.resources.notification_settings_squawk_activity_subtitle
-import wingslog.feature.notifications.settings.generated.resources.notification_settings_squawk_activity_title
-import wingslog.feature.notifications.settings.generated.resources.notification_settings_squawk_priority_subtitle
-import wingslog.feature.notifications.settings.generated.resources.notification_settings_squawk_priority_title
 import wingslog.feature.notifications.settings.generated.resources.notification_settings_sync_off_cta
 import wingslog.feature.notifications.settings.generated.resources.notification_settings_sync_off_footer
-import wingslog.feature.notifications.settings.generated.resources.notification_settings_task_activity_subtitle
-import wingslog.feature.notifications.settings.generated.resources.notification_settings_task_activity_title
 import wingslog.feature.notifications.settings.generated.resources.notification_settings_title
 
 /**
- * The real notifications settings screen (design §9.1–9.4), replacing P1.8's "coming soon"
- * stand-in. Two independent groups: urgency alerts work for anyone with OS permission — including a
- * signed-out guest, who must never see this group dimmed (§9.3, §6.8) — while collaboration needs a
+ * The real notifications settings screen (design §9.1–9.4), simplified to three toggles total
+ * (design decision, 2026-08-26): the master switch, plus one row each for the two independent
+ * groups below it. Priority & due updates work for anyone with OS permission — including a
+ * signed-out guest, who must never see that row dimmed (§9.3, §6.8) — while collaboration needs a
  * real account with cloud sync on.
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -161,34 +145,20 @@ fun NotificationSettingsScreen(
           )
 
           val urgencyEnabled = !state.isLoading && state.settings.allEnabled
-          GroupSection(title = stringResource(Res.string.notification_settings_group_urgency)) {
+          Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
             SwitchRowCard(
               items = listOf(
                 SwitchRowItem(
-                  title = stringResource(Res.string.notification_settings_squawk_priority_title),
-                  subtitle = stringResource(Res.string.notification_settings_squawk_priority_subtitle),
-                  checked = state.settings.squawkPriorityEnabled,
+                  title = stringResource(Res.string.notification_settings_priority_due_title),
+                  subtitle = stringResource(Res.string.notification_settings_priority_due_subtitle),
+                  checked = state.settings.priorityDueEnabled,
                   enabled = urgencyEnabled,
-                  onCheckedChange = viewModel::onSquawkPriorityToggled,
-                ),
-                SwitchRowItem(
-                  title = stringResource(Res.string.notification_settings_overdue_title),
-                  subtitle = stringResource(Res.string.notification_settings_overdue_subtitle),
-                  checked = state.settings.overdueEnabled,
-                  enabled = urgencyEnabled,
-                  onCheckedChange = viewModel::onOverdueToggled,
-                ),
-                SwitchRowItem(
-                  title = stringResource(Res.string.notification_settings_due_soon_title),
-                  subtitle = stringResource(Res.string.notification_settings_due_soon_subtitle),
-                  checked = state.settings.dueSoonEnabled,
-                  enabled = urgencyEnabled,
-                  onCheckedChange = viewModel::onDueSoonToggled,
+                  onCheckedChange = viewModel::onPriorityDueToggled,
                 ),
               ),
             )
             Text(
-              text = stringResource(Res.string.notification_settings_group_urgency_footer),
+              text = stringResource(Res.string.notification_settings_priority_due_footer),
               style = MaterialTheme.typography.bodySmall,
               color = MaterialTheme.colorScheme.onSurfaceVariant,
               modifier = Modifier.padding(
@@ -200,36 +170,15 @@ fun NotificationSettingsScreen(
 
           val collaborationEnabled =
             urgencyEnabled && state.isSignedIn && state.isCloudSyncEnabled
-          GroupSection(title = stringResource(Res.string.notification_settings_group_collaboration)) {
+          Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
             SwitchRowCard(
               items = listOf(
                 SwitchRowItem(
-                  title = stringResource(Res.string.notification_settings_aircraft_activity_title),
-                  subtitle = stringResource(Res.string.notification_settings_aircraft_activity_subtitle),
-                  checked = state.settings.aircraftActivityEnabled,
+                  title = stringResource(Res.string.notification_settings_collaboration_title),
+                  subtitle = stringResource(Res.string.notification_settings_collaboration_subtitle),
+                  checked = state.settings.collaborationEnabled,
                   enabled = collaborationEnabled,
-                  onCheckedChange = viewModel::onAircraftActivityToggled,
-                ),
-                SwitchRowItem(
-                  title = stringResource(Res.string.notification_settings_squawk_activity_title),
-                  subtitle = stringResource(Res.string.notification_settings_squawk_activity_subtitle),
-                  checked = state.settings.squawkActivityEnabled,
-                  enabled = collaborationEnabled,
-                  onCheckedChange = viewModel::onSquawkActivityToggled,
-                ),
-                SwitchRowItem(
-                  title = stringResource(Res.string.notification_settings_task_activity_title),
-                  subtitle = stringResource(Res.string.notification_settings_task_activity_subtitle),
-                  checked = state.settings.taskActivityEnabled,
-                  enabled = collaborationEnabled,
-                  onCheckedChange = viewModel::onTaskActivityToggled,
-                ),
-                SwitchRowItem(
-                  title = stringResource(Res.string.notification_settings_log_activity_title),
-                  subtitle = stringResource(Res.string.notification_settings_log_activity_subtitle),
-                  checked = state.settings.logActivityEnabled,
-                  enabled = collaborationEnabled,
-                  onCheckedChange = viewModel::onLogActivityToggled,
+                  onCheckedChange = viewModel::onCollaborationToggled,
                 ),
               ),
             )
@@ -294,22 +243,6 @@ private fun PermissionBanner(
         )
       }
     }
-  }
-}
-
-@Composable
-private fun GroupSection(
-  title: String,
-  content: @Composable () -> Unit,
-) {
-  Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
-    Text(
-      text = title,
-      style = MaterialTheme.typography.titleSmall,
-      color = MaterialTheme.colorScheme.onSurfaceVariant,
-      modifier = Modifier.padding(start = Spacing.small),
-    )
-    content()
   }
 }
 
