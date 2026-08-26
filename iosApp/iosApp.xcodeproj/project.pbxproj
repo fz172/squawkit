@@ -21,11 +21,12 @@
 		3D25BC352F701A7500EFFADF /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = 3D25BC342F701A7500EFFADF /* GoogleSignIn */; };
 		3D9A96F53031583D00FAF8CC /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3D9A96F43031583D00FAF8CC /* StoreKit.framework */; };
 		3DE64245300DD3DF000D1143 /* FirebaseAppCheck in Frameworks */ = {isa = PBXBuildFile; productRef = 3DE64244300DD3DF000D1143 /* FirebaseAppCheck */; };
-		F03C4F08C49BAC1B7760B3F8 /* GoogleMobileAds in Frameworks */ = {isa = PBXBuildFile; productRef = 3197832B061154A7275175D9 /* GoogleMobileAds */; };
-		F20FE4608ED8B667DA96EF43 /* GoogleUserMessagingPlatform in Frameworks */ = {isa = PBXBuildFile; productRef = CE3BAAA26B14222FAB28C158 /* GoogleUserMessagingPlatform */; };
-		C5DD281AB12BD2185156971C /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 3D25BC0D2F6FC23100EFFADF /* FirebaseCore */; };
+		4680EAA240EF7B0F7DAAE354 /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = 26A6642FEE8128EE0C2917EB /* FirebaseMessaging */; };
 		75C2C624B27389AAE42E8971 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 3D25BC222F6FC42800EFFADF /* FirebaseAuth */; };
 		80B31B36EEA38B629949D958 /* NotificationServiceExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = DA16A722E7DBE44EB45F5348 /* NotificationServiceExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		C5DD281AB12BD2185156971C /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 3D25BC0D2F6FC23100EFFADF /* FirebaseCore */; };
+		F03C4F08C49BAC1B7760B3F8 /* GoogleMobileAds in Frameworks */ = {isa = PBXBuildFile; productRef = 3197832B061154A7275175D9 /* GoogleMobileAds */; };
+		F20FE4608ED8B667DA96EF43 /* GoogleUserMessagingPlatform in Frameworks */ = {isa = PBXBuildFile; productRef = CE3BAAA26B14222FAB28C158 /* GoogleUserMessagingPlatform */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -115,6 +116,7 @@
 				3D25BC142F6FC23100EFFADF /* FirebaseFirestoreCombine-Community in Frameworks */,
 				F03C4F08C49BAC1B7760B3F8 /* GoogleMobileAds in Frameworks */,
 				F20FE4608ED8B667DA96EF43 /* GoogleUserMessagingPlatform in Frameworks */,
+				4680EAA240EF7B0F7DAAE354 /* FirebaseMessaging in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -160,6 +162,30 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		3508F08C4B8C87996D3ACE08 /* NotificationServiceExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = BD77AE521C1C7A31162771A9 /* Build configuration list for PBXNativeTarget "NotificationServiceExtension" */;
+			buildPhases = (
+				547A0180F39A63A22BDDFCE0 /* Sources */,
+				500E74AB21E8169BBBC2F464 /* Frameworks */,
+				5D9DC458D4B306ACA4800D9B /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				C143811DC852391614E1F4FE /* NotificationServiceExtension */,
+			);
+			name = NotificationServiceExtension;
+			packageProductDependencies = (
+				3D25BC0D2F6FC23100EFFADF /* FirebaseCore */,
+				3D25BC222F6FC42800EFFADF /* FirebaseAuth */,
+			);
+			productName = NotificationServiceExtension;
+			productReference = DA16A722E7DBE44EB45F5348 /* NotificationServiceExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		3D25BBF22F6FBB7500EFFADF /* iosApp */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 3D25BBFE2F6FBB7600EFFADF /* Build configuration list for PBXNativeTarget "iosApp" */;
@@ -196,34 +222,11 @@
 				3DE64244300DD3DF000D1143 /* FirebaseAppCheck */,
 				3197832B061154A7275175D9 /* GoogleMobileAds */,
 				CE3BAAA26B14222FAB28C158 /* GoogleUserMessagingPlatform */,
+				26A6642FEE8128EE0C2917EB /* FirebaseMessaging */,
 			);
 			productName = iosApp;
 			productReference = 3D25BBF32F6FBB7500EFFADF /* iosApp.app */;
 			productType = "com.apple.product-type.application";
-		};
-		3508F08C4B8C87996D3ACE08 /* NotificationServiceExtension */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = BD77AE521C1C7A31162771A9 /* Build configuration list for PBXNativeTarget "NotificationServiceExtension" */;
-			buildPhases = (
-				547A0180F39A63A22BDDFCE0 /* Sources */,
-				500E74AB21E8169BBBC2F464 /* Frameworks */,
-				5D9DC458D4B306ACA4800D9B /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			fileSystemSynchronizedGroups = (
-				C143811DC852391614E1F4FE /* NotificationServiceExtension */,
-			);
-			name = NotificationServiceExtension;
-			packageProductDependencies = (
-				3D25BC0D2F6FC23100EFFADF /* FirebaseCore */,
-				3D25BC222F6FC42800EFFADF /* FirebaseAuth */,
-			);
-			productName = NotificationServiceExtension;
-			productReference = DA16A722E7DBE44EB45F5348 /* NotificationServiceExtension.appex */;
-			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -235,10 +238,10 @@
 				LastSwiftUpdateCheck = 2620;
 				LastUpgradeCheck = 2620;
 				TargetAttributes = {
-					3D25BBF22F6FBB7500EFFADF = {
+					3508F08C4B8C87996D3ACE08 = {
 						CreatedOnToolsVersion = 26.2;
 					};
-					3508F08C4B8C87996D3ACE08 = {
+					3D25BBF22F6FBB7500EFFADF = {
 						CreatedOnToolsVersion = 26.2;
 					};
 				};
@@ -735,6 +738,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 3D25BC062F6FC23100EFFADF /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseFunctions;
+		};
+		26A6642FEE8128EE0C2917EB /* FirebaseMessaging */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 3D25BC062F6FC23100EFFADF /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseMessaging;
 		};
 		3D25BC342F701A7500EFFADF /* GoogleSignIn */ = {
 			isa = XCSwiftPackageProductDependency;
