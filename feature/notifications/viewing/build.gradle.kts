@@ -44,6 +44,9 @@ kotlin {
       implementation(project(":core:ui:theme"))
       implementation(project(":core:nav"))
       implementation(project(":feature:notifications:model"))
+      // The N1 bodies a push message names by key (design §7.6). Allowed by §3 — viewing may depend
+      // on :sharedassets — and shared with P5's iOS extension, which renders the same keys.
+      implementation(project(":feature:notifications:sharedassets"))
 
       implementation(libs.compose.runtime)
       implementation(libs.kotlinx.coroutines.core)
@@ -54,11 +57,16 @@ kotlin {
       // NotificationManagerCompat / NotificationChannel / NotificationCompat.Builder.
       implementation(libs.androidx.core.ktx)
       implementation(libs.koin.android)
+      // FirebaseMessagingService, for the N1 push receiver (design §5.5, §7.6). This module renders
+      // the message — turning a data map into a PendingNotification is display, not a decision —
+      // and forwards onNewToken to the PushTokenSink so it never has to know what a token is for.
+      implementation(libs.firebase.messaging)
     }
   }
 }
 
 dependencies {
+  implementation(platform(libs.firebase.bom))
   testImplementation(libs.junit)
   testImplementation(libs.mockk)
   testImplementation(libs.truth)

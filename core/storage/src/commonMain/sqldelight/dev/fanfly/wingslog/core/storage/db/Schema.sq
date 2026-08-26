@@ -48,6 +48,20 @@ CREATE TABLE sync_config (
   PRIMARY KEY (uid, key)
 );
 
+-- Device-scoped, uid-independent local config (notifications design §7.1). Distinct from
+-- sync_config, which is per-account: the push token doc needs an id that outlives token rotation
+-- AND survives an account switch on a shared device, so it cannot be keyed by uid the way
+-- sync_config is — that would mint a fresh id per account on the same physical device, orphaning
+-- the previous account's Firestore doc every time someone signs in as someone else.
+--
+-- No uid column, and deliberately excluded from every wipe query below (there is no
+-- wipeDeviceConfig): its whole reason to exist is to survive sign-out and account switching, which
+-- is the same property sync_config gets for the opposite reason (it must NOT survive a switch).
+CREATE TABLE device_config (
+  key   TEXT NOT NULL PRIMARY KEY,
+  value TEXT NOT NULL
+);
+
 -- Per-device, per-record high-water mark of urgency ALREADY REPORTED to this user
 -- (notifications design §6.2).
 --
@@ -192,6 +206,14 @@ INSERT OR REPLACE INTO sync_config(uid, key, value) VALUES (?, ?, ?);
 
 deleteConfig:
 DELETE FROM sync_config WHERE uid = ? AND key = ?;
+
+-- Device config queries. See device_config's table comment above for why this is not sync_config.
+
+selectDeviceConfig:
+SELECT value FROM device_config WHERE key = ?;
+
+upsertDeviceConfig:
+INSERT OR REPLACE INTO device_config(key, value) VALUES (?, ?);
 
 -- Urgency watermark queries.
 

@@ -2,6 +2,7 @@ package dev.fanfly.wingslog.feature.notifications.di
 
 import dev.fanfly.wingslog.feature.notifications.analytics.di.notificationAnalyticsModule
 import dev.fanfly.wingslog.feature.notifications.datamanager.di.notificationPrefsModule
+import dev.fanfly.wingslog.feature.notifications.datamanager.di.platformPushTokenModule
 import dev.fanfly.wingslog.feature.notifications.devoptions.di.notificationDevOptionsModule
 import dev.fanfly.wingslog.feature.notifications.engine.di.notificationEngineModule
 import dev.fanfly.wingslog.feature.notifications.engine.di.platformNotificationEngineModule
@@ -24,6 +25,8 @@ val notificationsModule: Module = module {
     platformNotificationPermissionModule,
     platformNotificationDisplayModule,
     notificationPrefsModule,
+    // Android only today — iOS is P5, web is P6 (design §8: web V1 has no push transport at all).
+    platformPushTokenModule,
     notificationSettingsModule,
     // Ahead of the engine module: the scanner consumes the telemetry, not the reverse.
     notificationAnalyticsModule,

@@ -9,4 +9,22 @@
   -->
   <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
+  <application>
+    <!--
+      N1 collaboration push (design §5.5). Declared in this module for the same reason the
+      permission above is: this is the module that hosts the service, so it should carry its own
+      declaration, and the manifest merger unions it into every host.
+
+      exported="false" — nothing outside the app may start it. FCM delivers through the Firebase
+      SDK's own broadcast, which does not need it exported.
+    -->
+    <service
+      android:name="dev.fanfly.wingslog.feature.notifications.viewing.WingsLogFirebaseMessagingService"
+      android:exported="false">
+      <intent-filter>
+        <action android:name="com.google.firebase.MESSAGING_EVENT" />
+      </intent-filter>
+    </service>
+  </application>
+
 </manifest>

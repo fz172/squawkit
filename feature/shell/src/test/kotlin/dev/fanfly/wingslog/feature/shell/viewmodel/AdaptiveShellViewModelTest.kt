@@ -339,6 +339,27 @@ class AdaptiveShellViewModelTest {
     assertThat(vm.pendingScrollTargetId.value).isNull()
   }
 
+  /**
+   * The server names four tabs (`aircraftTabForRecordType`), not two. `logs` reaches a pilot whenever
+   * a collaborator adds a logbook entry, and `overview` carries both aircraft-level activity and the
+   * §7.4 high-volume notice — an unmapped tab silently leaves the pilot wherever they already were.
+   */
+  @Test
+  fun notificationTap_aircraftSummary_selectsEveryTabTheServerCanSend() = runTest(testDispatcher) {
+    fleet.value = listOf(aircraft("a1", "N1"))
+
+    for ((tab, expected) in listOf(
+      "squawks" to ShellSection.SQUAWKS,
+      "tasks" to ShellSection.TASKS,
+      "logs" to ShellSection.LOGS,
+      "overview" to ShellSection.DASHBOARD,
+    )) {
+      val vm = viewModel()
+      vm.onNotificationTap(NotificationTapTarget.Aircraft(aircraftId = "a1", tab = tab))
+      assertThat(vm.uiState.value.section).isEqualTo(expected)
+    }
+  }
+
   @Test
   fun notificationTap_aircraftSummary_clearsAScrollTargetLeftByAnEarlierTap() =
     runTest(testDispatcher) {
