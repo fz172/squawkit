@@ -31,7 +31,15 @@ import { aircraftShareDocPath, shareMemberDocPath } from "../src/sharing/sharing
  * happened.
  */
 const { sentMessages } = vi.hoisted(() => ({
-  sentMessages: [] as { tokens: string[]; data: Record<string, string>; android?: { collapseKey?: string }; apns?: { headers?: Record<string, string> } }[],
+  sentMessages: [] as {
+    tokens: string[];
+    data: Record<string, string>;
+    android?: { collapseKey?: string };
+    apns?: {
+      headers?: Record<string, string>;
+      payload?: { aps?: { alert?: { title?: string; body?: string }; mutableContent?: boolean } };
+    };
+  }[],
 }));
 
 vi.mock("firebase-admin/messaging", () => ({
@@ -292,6 +300,15 @@ describe("§7.3 coalescing by replacement", () => {
     // device that was offline for the whole burst receive only the last message.
     expect(second.android?.collapseKey).toBe(second.data.notificationId);
     expect(second.apns?.headers?.["apns-collapse-id"]).toBe(second.data.notificationId);
+    // "alert" push type + mutable-content are what make iOS invoke the notification service
+    // extension at all (§7.6, P5.2); background-only push type never triggers it.
+    expect(second.apns?.headers?.["apns-push-type"]).toBe("alert");
+    expect(second.apns?.headers?.["apns-priority"]).toBe("10");
+    expect(second.apns?.payload?.aps?.mutableContent).toBe(true);
+    // Generic and account-agnostic — no tail number, actor, or squawk title. The extension rewrites
+    // this with the real localized text; if it fails or times out, this generic fallback ships as
+    // delivered instead, and it must never leak this recipient's collaboration content.
+    expect(second.apns?.payload?.aps?.alert).toEqual({ title: "SquawkIt", body: "New update" });
     expect(first.data.changeCount).toBe("1");
     expect(second.data.changeCount).toBe("2");
     expect(second.data.bodyKey).toBe("notification_n1_body_plural");
@@ -532,11 +549,14 @@ describe("§7.5 the escalation bypass", () => {
     );
 
     expect(idsOf()).toEqual([`n1esc:${AC_A}:sq-1`, `n1esc:${AC_A}:sq-2`]);
-    expect(sentMessages[0].data.channel).toBe("GROUNDED");
-    expect(sentMessages[0].data.highPriority).toBe("true");
+    // AOG is not its own tier — it reports exactly like any other priority raise (design decision,
+    // 2026-08-26): same channel, same (non-high) priority as the HIGH escalation right after it.
+    expect(sentMessages[0].data.channel).toBe("URGENCY");
+    expect(sentMessages[0].data.highPriority).toBe("false");
     expect(sentMessages[0].data.bodyKey).toBe("notification_n1_body_squawk_raised");
     expect(sentMessages[0].data.recordTitle).toBe("Left brake dragging");
     expect(sentMessages[1].data.channel).toBe("URGENCY");
+    expect(sentMessages[1].data.highPriority).toBe("false");
     expect(sentMessages[1].data.bodyKey).toBe("notification_n1_body_squawk_raised");
   });
 
@@ -609,20 +629,19 @@ describe("§7.5 the escalation bypass", () => {
     expect(sentMessages[0].data.actorName).toBe("Dave Chen");
     expect(sentMessages[0].data.bodyKey).toMatch(/^notification_n1_/);
     // The N2 bodies carry no actor, so nothing may fall back to them.
-    expect(sentMessages[0].data.bodyKey).not.toBe("notification_body_grounded_single");
     expect(sentMessages[0].data.bodyKey).not.toBe("notification_body_priority_raised_single");
   });
 
-  it("tells a squawk created at AOG apart from one raised to it", async () => {
+  it("tells a squawk created at AOG apart from one raised to it — same as any other priority", async () => {
     await shareAircraft(AC_A, { [HOST]: "owner", [MEMBER]: "technician" });
 
-    // No prior document at all: nobody raised anything.
+    // No prior document at all: nobody raised anything. AOG gets the same "created" title HIGH
+    // does — it is not its own headline (design decision, 2026-08-26).
     await wrappedRecord(
       recordWrite(AC_A, "squawk", "sq-new", null, squawkEnvelope("sq-new", SquawkPriority.SQUAWK_PRIORITY_AOG)),
     );
     expect(sentMessages[0].data.bodyKey).toBe("notification_n1_body_squawk_created");
-    // At AOG the grounding stays the headline however the squawk got there.
-    expect(sentMessages[0].data.titleKey).toBe("notification_title_grounded");
+    expect(sentMessages[0].data.titleKey).toBe("notification_n1_title_squawk_created");
 
     sentMessages.length = 0;
     // Created straight at HIGH takes its own title — "Priority raised" would contradict the body.

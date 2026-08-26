@@ -34,7 +34,7 @@ class AndroidLocalNotifier(
       manager.createNotificationChannel(
         NotificationChannelCompat.Builder(
           channel.channelId(),
-          channel.importance()
+          NotificationManager.IMPORTANCE_DEFAULT
         )
           .setName(channel.displayName())
           .setDescription(channel.description())
@@ -117,14 +117,12 @@ class AndroidLocalNotifier(
   private fun NotificationChannel.channelId(): String = when (this) {
     NotificationChannel.COLLABORATION -> "collaboration"
     NotificationChannel.URGENCY_UPDATE -> "urgency_update"
-    NotificationChannel.GROUNDED -> "grounded"
   }
 
   private fun NotificationChannel.displayName(): String = context.getString(
     when (this) {
       NotificationChannel.COLLABORATION -> R.string.notification_channel_collaboration_name
       NotificationChannel.URGENCY_UPDATE -> R.string.notification_channel_urgency_update_name
-      NotificationChannel.GROUNDED -> R.string.notification_channel_grounded_name
     }
   )
 
@@ -132,14 +130,8 @@ class AndroidLocalNotifier(
     when (this) {
       NotificationChannel.COLLABORATION -> R.string.notification_channel_collaboration_description
       NotificationChannel.URGENCY_UPDATE -> R.string.notification_channel_urgency_update_description
-      NotificationChannel.GROUNDED -> R.string.notification_channel_grounded_description
     }
   )
-
-  private fun NotificationChannel.importance(): Int = when (this) {
-    NotificationChannel.GROUNDED -> NotificationManager.IMPORTANCE_HIGH
-    NotificationChannel.COLLABORATION, NotificationChannel.URGENCY_UPDATE -> NotificationManager.IMPORTANCE_DEFAULT
-  }
 
   companion object {
     private val log = Logger.withTag("AndroidLocalNotifier")

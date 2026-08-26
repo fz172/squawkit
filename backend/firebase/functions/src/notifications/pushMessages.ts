@@ -5,7 +5,6 @@ import {
   highVolumeNotificationId,
   type RecordType,
 } from "./notificationModels.js";
-import { ESCALATION_TIER, type EscalationTier } from "./recordPayloads.js";
 
 /**
  * The N1 wire contract: what the server puts in a data-only FCM message, and what the client is
@@ -53,8 +52,8 @@ import { ESCALATION_TIER, type EscalationTier } from "./recordPayloads.js";
 export type PushData = {
   /** `collaboration` (an activity summary) or `urgency` (a §7.5 escalation). */
   class: "collaboration" | "urgency";
-  /** `NotificationChannel` name — COLLABORATION, URGENCY, or GROUNDED. */
-  channel: "COLLABORATION" | "URGENCY" | "GROUNDED";
+  /** `NotificationChannel` name — COLLABORATION or URGENCY. */
+  channel: "COLLABORATION" | "URGENCY";
   notificationId: string;
   highPriority: "true" | "false";
   aircraftId: string;
@@ -117,7 +116,6 @@ export function activityPushData(input: ActivityMessageInput): PushData {
 export type EscalationMessageInput = {
   aircraftId: string;
   squawkId: string;
-  tier: EscalationTier;
   title: string;
   kind: "created" | "raised";
   tailNumber: string;
@@ -125,8 +123,8 @@ export type EscalationMessageInput = {
 };
 
 /**
- * The §7.5 bypass, under `n1esc:{aircraftId}:{squawkId}` so no later routine edit can replace a
- * grounding alert with a shrug.
+ * The §7.5 bypass, under `n1esc:{aircraftId}:{squawkId}` so no later routine edit can replace an
+ * escalation alert with a shrug.
  *
  * **The bodies are N1's own, not the N2 ones §7.5 originally reused.** Both can fire for the same
  * squawk — this within seconds of the write, N2 at the recipient's next scan — and they are no
@@ -134,25 +132,21 @@ export type EscalationMessageInput = {
  * actor, so only this notification can name them; word-for-word identical copy is exactly what would
  * make the second arrival read as a duplicate rather than as news.
  *
- * `created` also keeps its own title below AOG: "Priority raised" would contradict a body saying the
- * squawk was just created. At AOG the grounding is the headline however it got there.
+ * `created` keeps its own title: "Priority raised" would contradict a body saying the squawk was
+ * just created — including at AOG, which is no longer a separate headline (design decision,
+ * 2026-08-26: AOG reports exactly like any other priority raise, not as its own tier).
  */
 export function escalationPushData(input: EscalationMessageInput): PushData {
-  const grounded = input.tier === ESCALATION_TIER.GROUNDED;
   const created = input.kind === "created";
   return {
     class: "urgency",
-    channel: grounded ? "GROUNDED" : "URGENCY",
+    channel: "URGENCY",
     notificationId: escalationNotificationId(input.aircraftId, input.squawkId),
-    highPriority: grounded ? "true" : "false",
+    highPriority: "false",
     aircraftId: input.aircraftId,
     recordType: "squawk",
     tapTarget: `squawk:${input.aircraftId}:${input.squawkId}`,
-    titleKey: grounded
-      ? "notification_title_grounded"
-      : created
-        ? "notification_n1_title_squawk_created"
-        : "notification_title_priority_raised",
+    titleKey: created ? "notification_n1_title_squawk_created" : "notification_title_priority_raised",
     bodyKey: created
       ? "notification_n1_body_squawk_created"
       : "notification_n1_body_squawk_raised",

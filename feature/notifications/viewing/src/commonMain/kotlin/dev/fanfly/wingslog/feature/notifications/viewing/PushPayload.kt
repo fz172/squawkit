@@ -126,7 +126,6 @@ data class PushPayload(
      * wrong channel is a routing annoyance, a dropped one is lost news.
      */
     internal fun parseChannel(raw: String?): NotificationChannel = when (raw) {
-      "GROUNDED" -> NotificationChannel.GROUNDED
       "URGENCY" -> NotificationChannel.URGENCY_UPDATE
       else -> NotificationChannel.COLLABORATION
     }

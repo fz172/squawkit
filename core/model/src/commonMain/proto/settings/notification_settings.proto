@@ -16,25 +16,28 @@ message NotificationSettings {
   // Master switch. Off silences every class, locally and server-side.
   bool all_disabled = 1;
 
+  reserved 2; // aog_disabled — AOG is no longer its own tier (design decision, 2026-08-26); reserved
+              // rather than reused so an old synced doc's stray `true` byte on this field number can
+              // never be misread as a future field's value.
+
   // --- Urgency — device-local detection, no account required ---
   //
-  // The first two are NOT N2-only, and the distinction matters to anyone changing them. A squawk
-  // escalation is detectable from a single write, so the server fan-out reports one too (design
-  // §7.5), and it gates that push on these same two fields — not on squawk_activity_disabled. What
-  // arrives is an urgency notification (N2 channel, N2 priority), and someone who switched AOG off
-  // expects that switch to govern AOG alerts however they reach them.
+  // squawk_priority_disabled is NOT N2-only, and the distinction matters to anyone changing it. A
+  // squawk escalation — including to AOG, treated the same as any other priority raise — is
+  // detectable from a single write, so the server fan-out reports one too (design §7.5), and it
+  // gates that push on this same field — not on squawk_activity_disabled. What arrives is an urgency
+  // notification (N2 channel, N2 priority).
   //
   // Two consequences worth knowing before touching this:
-  //   * The server READS these. They are not device-only state, so they cannot be repurposed or
-  //     re-scoped as though the scanner were their only consumer.
+  //   * The server READS this. It is not device-only state, so it cannot be repurposed or re-scoped
+  //     as though the scanner were its only consumer.
   //   * A member of a shared aircraft can be notified with EVERY collaboration class below switched
-  //     off, because their grounding alert travels under aog_disabled. That is intended: muting
-  //     routine squawk activity is not asking to stop hearing the aircraft was grounded.
+  //     off, because a priority escalation travels under squawk_priority_disabled. That is intended:
+  //     muting routine squawk activity is not asking to stop hearing that a squawk got worse.
   //
   // The last two stay genuinely device-only: no write happens when a due date passes, so no trigger
   // can fire and the server has nothing to report (§7.5).
-  bool aog_disabled = 2;                 // any escalation to SQUAWK_PRIORITY_AOG — N2 scan AND N1 push
-  bool squawk_priority_disabled = 3;     // escalations below AOG, and reopened squawks — likewise
+  bool squawk_priority_disabled = 3;     // any priority escalation, including to AOG, and reopens
   bool overdue_disabled = 4;             // -> DueStatus.OVERDUE — device-only
   bool due_soon_disabled = 5;            // -> DueStatus.DUE_SOON — device-only
 

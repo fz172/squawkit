@@ -10,8 +10,6 @@
   <string name="notification_settings_group_urgency_footer">Works on this device even when you’re signed out or sync is off.</string>
   <string name="notification_settings_group_collaboration">Collaboration</string>
 
-  <string name="notification_settings_aog_title">Aircraft grounded</string>
-  <string name="notification_settings_aog_subtitle">An open squawk grounds an aircraft (AOG)</string>
   <string name="notification_settings_squawk_priority_title">Squawk priority increases</string>
   <string name="notification_settings_squawk_priority_subtitle">A squawk becomes high priority or worse</string>
   <string name="notification_settings_overdue_title">Task overdue</string>
@@ -38,10 +36,6 @@
   <string name="notification_settings_signin_cta">Sign in</string>
   <string name="notification_settings_sync_off_footer">Turn on Backup &amp; Sync to get notified about changes other people make.</string>
   <string name="notification_settings_sync_off_cta">Turn on sync</string>
-
-  <string name="notification_settings_aog_confirm_title">Turn off aircraft grounded alerts?</string>
-  <string name="notification_settings_aog_confirm_body">You won’t be told when an aircraft is grounded.</string>
-  <string name="notification_settings_aog_confirm_action">Turn off</string>
 
   <string name="notification_settings_save_error">Couldn’t save that change. Try again.</string>
 </resources>

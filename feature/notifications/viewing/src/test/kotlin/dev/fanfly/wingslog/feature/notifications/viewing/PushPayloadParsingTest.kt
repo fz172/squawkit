@@ -51,12 +51,12 @@ class PushPayloadParsingTest {
     val parsed = PushPayload.parse(
       mapOf(
         "class" to "urgency",
-        "channel" to "GROUNDED",
+        "channel" to "URGENCY",
         "notificationId" to "n1esc:ac-1:sq-9",
-        "highPriority" to "true",
+        "highPriority" to "false",
         "recordType" to "squawk",
         "tapTarget" to "squawk:ac-1:sq-9",
-        "titleKey" to "notification_title_grounded",
+        "titleKey" to "notification_title_priority_raised",
         "bodyKey" to "notification_n1_body_squawk_raised",
         "tailNumber" to "N4589T",
         "actorName" to "Dave Chen",
@@ -65,8 +65,10 @@ class PushPayloadParsingTest {
       ),
     )!!
 
-    assertThat(parsed.channel).isEqualTo(NotificationChannel.GROUNDED)
-    assertThat(parsed.highPriority).isTrue()
+    // AOG is not its own channel (design decision, 2026-08-26) — an escalation, at AOG or not,
+    // reports through URGENCY_UPDATE like any other priority raise.
+    assertThat(parsed.channel).isEqualTo(NotificationChannel.URGENCY_UPDATE)
+    assertThat(parsed.highPriority).isFalse()
     assertThat(parsed.recordTitle).isEqualTo("Left brake dragging")
     assertThat(parsed.tapTarget).isEqualTo(NotificationTapTarget.Squawk("ac-1", "sq-9"))
   }

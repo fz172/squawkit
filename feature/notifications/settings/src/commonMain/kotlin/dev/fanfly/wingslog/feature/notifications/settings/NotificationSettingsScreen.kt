@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -42,7 +41,6 @@ import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.statusColors
 import dev.fanfly.wingslog.feature.notifications.model.aircraftActivityEnabled
 import dev.fanfly.wingslog.feature.notifications.model.allEnabled
-import dev.fanfly.wingslog.feature.notifications.model.aogEnabled
 import dev.fanfly.wingslog.feature.notifications.model.dueSoonEnabled
 import dev.fanfly.wingslog.feature.notifications.model.logActivityEnabled
 import dev.fanfly.wingslog.feature.notifications.model.overdueEnabled
@@ -59,11 +57,6 @@ import wingslog.feature.notifications.settings.generated.resources.notification_
 import wingslog.feature.notifications.settings.generated.resources.notification_settings_all_subtitle_off
 import wingslog.feature.notifications.settings.generated.resources.notification_settings_all_subtitle_on
 import wingslog.feature.notifications.settings.generated.resources.notification_settings_all_title
-import wingslog.feature.notifications.settings.generated.resources.notification_settings_aog_confirm_action
-import wingslog.feature.notifications.settings.generated.resources.notification_settings_aog_confirm_body
-import wingslog.feature.notifications.settings.generated.resources.notification_settings_aog_confirm_title
-import wingslog.feature.notifications.settings.generated.resources.notification_settings_aog_subtitle
-import wingslog.feature.notifications.settings.generated.resources.notification_settings_aog_title
 import wingslog.feature.notifications.settings.generated.resources.notification_settings_banner_denied_body
 import wingslog.feature.notifications.settings.generated.resources.notification_settings_banner_denied_open_settings
 import wingslog.feature.notifications.settings.generated.resources.notification_settings_banner_denied_title
@@ -90,7 +83,6 @@ import wingslog.feature.notifications.settings.generated.resources.notification_
 import wingslog.feature.notifications.settings.generated.resources.notification_settings_task_activity_subtitle
 import wingslog.feature.notifications.settings.generated.resources.notification_settings_task_activity_title
 import wingslog.feature.notifications.settings.generated.resources.notification_settings_title
-import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 
 /**
  * The real notifications settings screen (design §9.1–9.4), replacing P1.8's "coming soon"
@@ -173,13 +165,6 @@ fun NotificationSettingsScreen(
             SwitchRowCard(
               items = listOf(
                 SwitchRowItem(
-                  title = stringResource(Res.string.notification_settings_aog_title),
-                  subtitle = stringResource(Res.string.notification_settings_aog_subtitle),
-                  checked = state.settings.aogEnabled,
-                  enabled = urgencyEnabled,
-                  onCheckedChange = viewModel::onAogToggled,
-                ),
-                SwitchRowItem(
                   title = stringResource(Res.string.notification_settings_squawk_priority_title),
                   subtitle = stringResource(Res.string.notification_settings_squawk_priority_subtitle),
                   checked = state.settings.squawkPriorityEnabled,
@@ -254,13 +239,6 @@ fun NotificationSettingsScreen(
           Spacer(Modifier.height(Spacing.large))
         }
       }
-    }
-
-    if (state.confirmDisableAog) {
-      AogConfirmDialog(
-        onConfirm = viewModel::onConfirmDisableAog,
-        onDismiss = viewModel::onDismissDisableAog,
-      )
     }
   }
 }
@@ -383,28 +361,4 @@ private fun FooterRow(
     )
     TextButton(onClick = onClick) { Text(cta) }
   }
-}
-
-/** Q5 — the one urgency toggle a pilot cannot silence quietly. */
-@Composable
-private fun AogConfirmDialog(
-  onConfirm: () -> Unit,
-  onDismiss: () -> Unit,
-) {
-  AlertDialog(
-    onDismissRequest = onDismiss,
-    title = { Text(stringResource(Res.string.notification_settings_aog_confirm_title)) },
-    text = { Text(stringResource(Res.string.notification_settings_aog_confirm_body)) },
-    confirmButton = {
-      TextButton(onClick = onConfirm) {
-        Text(
-          text = stringResource(Res.string.notification_settings_aog_confirm_action),
-          color = MaterialTheme.colorScheme.error,
-        )
-      }
-    },
-    dismissButton = {
-      TextButton(onClick = onDismiss) { Text(stringResource(CoreRes.string.cancel)) }
-    },
-  )
 }

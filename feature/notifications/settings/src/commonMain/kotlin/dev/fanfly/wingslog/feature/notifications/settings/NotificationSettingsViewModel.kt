@@ -7,7 +7,6 @@ import dev.fanfly.wingslog.feature.notifications.datamanager.NotificationPrefsMa
 import dev.fanfly.wingslog.feature.notifications.datamanager.PrefsState
 import dev.fanfly.wingslog.feature.notifications.model.withAircraftActivity
 import dev.fanfly.wingslog.feature.notifications.model.withAllEnabled
-import dev.fanfly.wingslog.feature.notifications.model.withAog
 import dev.fanfly.wingslog.feature.notifications.model.withDueSoon
 import dev.fanfly.wingslog.feature.notifications.model.withLogActivity
 import dev.fanfly.wingslog.feature.notifications.model.withOverdue
@@ -26,7 +25,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 /**
- * Design §9.2. Combines six independently-changing sources into one render input; the screen
+ * Design §9.2. Combines five independently-changing sources into one render input; the screen
  * itself never reads any of them directly.
  *
  * [NotificationSettingsUiState.isLoading] is true, and every toggle must be **disabled** (not just
@@ -44,13 +43,6 @@ class NotificationSettingsViewModel(
   syncPreferences: SyncPreferences,
 ) : ViewModel() {
 
-  /**
-   * Q5's confirm gate, held here rather than composable `remember`: the OS permission dialog can
-   * tear this screen down mid-decision, and a `remember`ed flag would silently reset to "not
-   * confirming" underneath it.
-   */
-  private val confirmDisableAog = MutableStateFlow(false)
-
   /** One-shot: set on a failed [NotificationPrefsManager.update], cleared by [onSaveErrorShown]. */
   private val saveError = MutableStateFlow(false)
 
@@ -60,13 +52,8 @@ class NotificationSettingsViewModel(
       permission.observe(),
       auth.authStateChanged,
       syncPreferences.state,
-      // combine() tops out at 5 typed flows — folding these two together keeps the outer combine
-      // at arity 5 instead of falling through to the untyped Array<Any?> vararg overload.
-      combine(
-        confirmDisableAog,
-        saveError
-      ) { confirming, error -> confirming to error },
-    ) { prefs, permissionState, user, syncPrefs, (confirming, error) ->
+      saveError,
+    ) { prefs, permissionState, user, syncPrefs, error ->
       NotificationSettingsUiState(
         settings = (prefs as? PrefsState.Resolved)?.settings
           ?: NotificationSettings(),
@@ -75,7 +62,6 @@ class NotificationSettingsViewModel(
         isSignedIn = user != null && !user.isAnonymous,
         isCloudSyncEnabled = syncPrefs.cloudSyncEnabled,
         isLoading = prefs is PrefsState.Unresolved,
-        confirmDisableAog = confirming,
         saveError = error,
       )
     }.stateIn(
@@ -107,23 +93,6 @@ class NotificationSettingsViewModel(
       return
     }
     update { it.withAllEnabled(false) }
-  }
-
-  fun onAogToggled(enabled: Boolean) {
-    if (!enabled) {
-      confirmDisableAog.value = true
-      return
-    }
-    update { it.withAog(true) }
-  }
-
-  fun onConfirmDisableAog() {
-    confirmDisableAog.value = false
-    update { it.withAog(false) }
-  }
-
-  fun onDismissDisableAog() {
-    confirmDisableAog.value = false
   }
 
   fun onSquawkPriorityToggled(enabled: Boolean) =

@@ -24,7 +24,6 @@ import dev.fanfly.wingslog.core.model.settings.NotificationSettings
 
 val NotificationSettings.allEnabled: Boolean get() = !all_disabled
 
-val NotificationSettings.aogEnabled: Boolean get() = !aog_disabled
 val NotificationSettings.squawkPriorityEnabled: Boolean get() = !squawk_priority_disabled
 val NotificationSettings.overdueEnabled: Boolean get() = !overdue_disabled
 val NotificationSettings.dueSoonEnabled: Boolean get() = !due_soon_disabled
@@ -38,9 +37,6 @@ val NotificationSettings.logActivityEnabled: Boolean get() = !log_activity_disab
 
 fun NotificationSettings.withAllEnabled(enabled: Boolean): NotificationSettings =
   copy(all_disabled = !enabled)
-
-fun NotificationSettings.withAog(enabled: Boolean): NotificationSettings =
-  copy(aog_disabled = !enabled)
 
 fun NotificationSettings.withSquawkPriority(enabled: Boolean): NotificationSettings =
   copy(squawk_priority_disabled = !enabled)

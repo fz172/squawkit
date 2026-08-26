@@ -17,7 +17,6 @@ class NotificationSettingsExtTest {
     val settings = NotificationSettings()
 
     assertThat(settings.allEnabled).isTrue()
-    assertThat(settings.aogEnabled).isTrue()
     assertThat(settings.squawkPriorityEnabled).isTrue()
     assertThat(settings.overdueEnabled).isTrue()
     assertThat(settings.dueSoonEnabled).isTrue()
@@ -29,28 +28,11 @@ class NotificationSettingsExtTest {
 
   @Test
   fun disabledField_readsAsFalse() {
-    val settings = NotificationSettings(aog_disabled = true)
+    val settings = NotificationSettings(squawk_priority_disabled = true)
 
-    assertThat(settings.aogEnabled).isFalse()
+    assertThat(settings.squawkPriorityEnabled).isFalse()
     // Every sibling field is untouched — the inversion is per-field, not all-or-nothing.
     assertThat(settings.overdueEnabled).isTrue()
-  }
-
-  @Test
-  fun withAog_flipsOnlyTheOneField() {
-    val settings = NotificationSettings().withAog(enabled = false)
-
-    assertThat(settings.aog_disabled).isTrue()
-    assertThat(settings.overdue_disabled).isFalse()
-  }
-
-  @Test
-  fun withAog_reEnabling_clearsTheDisabledFlag() {
-    val disabled = NotificationSettings(aog_disabled = true)
-
-    val reEnabled = disabled.withAog(enabled = true)
-
-    assertThat(reEnabled.aogEnabled).isTrue()
   }
 
   @Test
@@ -60,7 +42,7 @@ class NotificationSettingsExtTest {
     assertThat(settings.allEnabled).isFalse()
     // Per-class fields are untouched by the master switch — NotificationPrefsManager's consumers
     // read allEnabled as a short-circuit, not as something that rewrites every other field.
-    assertThat(settings.aogEnabled).isTrue()
+    assertThat(settings.squawkPriorityEnabled).isTrue()
   }
 
   @Test
@@ -68,7 +50,7 @@ class NotificationSettingsExtTest {
     val settings = NotificationSettings().withSquawkPriority(enabled = false)
 
     assertThat(settings.squawkPriorityEnabled).isFalse()
-    assertThat(settings.aogEnabled).isTrue()
+    assertThat(settings.overdueEnabled).isTrue()
   }
 
   @Test

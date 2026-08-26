@@ -10,7 +10,4 @@
 
   <string name="notification_channel_urgency_update_name">Due reminder</string>
   <string name="notification_channel_urgency_update_description">A task’s urgency or due status has changed</string>
-
-  <string name="notification_channel_grounded_name">Aircraft grounded</string>
-  <string name="notification_channel_grounded_description">An aircraft is grounded by an AOG squawk</string>
 </resources>

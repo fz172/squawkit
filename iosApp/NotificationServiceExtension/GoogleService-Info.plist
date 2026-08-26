@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>811416892017-j692rbgf9tjnsavosrj62ahu70dkfn44.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.811416892017-j692rbgf9tjnsavosrj62ahu70dkfn44</string>
+	<key>ANDROID_CLIENT_ID</key>
+	<string>811416892017-1487tsp2p8tdl4of0r06v3o71hjsq89h.apps.googleusercontent.com</string>
+	<key>API_KEY</key>
+	<string>AIzaSyDOBCl64OZn3b1s4N2IaZyHTlC7-L6PtIM</string>
+	<key>GCM_SENDER_ID</key>
+	<string>811416892017</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>dev.fanfly.wingslog.iosApp</string>
+	<key>PROJECT_ID</key>
+	<string>wingslog-9ca4e</string>
+	<key>STORAGE_BUCKET</key>
+	<string>wingslog-9ca4e.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:811416892017:ios:e04bbe689405347df961d0</string>
+</dict>
+</plist>

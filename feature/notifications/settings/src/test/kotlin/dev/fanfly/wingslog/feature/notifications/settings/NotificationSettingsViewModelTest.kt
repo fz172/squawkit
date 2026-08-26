@@ -5,7 +5,6 @@ import dev.fanfly.wingslog.core.model.settings.NotificationSettings
 import dev.fanfly.wingslog.feature.notifications.datamanager.NotificationPrefsManager
 import dev.fanfly.wingslog.feature.notifications.datamanager.PrefsState
 import dev.fanfly.wingslog.feature.notifications.model.allEnabled
-import dev.fanfly.wingslog.feature.notifications.model.aogEnabled
 import dev.fanfly.wingslog.feature.notifications.permission.NotificationPermission
 import dev.fanfly.wingslog.feature.notifications.permission.PermissionState
 import dev.fanfly.wingslog.feature.sync.data.SyncPreferences
@@ -169,57 +168,6 @@ class NotificationSettingsViewModelTest {
 
     assertThat(viewModel.uiState.value.isCloudSyncEnabled).isFalse()
   }
-
-  // --- AOG confirm gate (Q5) ---
-
-  @Test
-  fun onAogToggled_off_gatesOnConfirmDialog_withoutWritingYet() =
-    runTest(testDispatcher) {
-      val viewModel = viewModel()
-
-      viewModel.onAogToggled(false)
-
-      assertThat(viewModel.uiState.value.confirmDisableAog).isTrue()
-      coVerify(exactly = 0) { prefsManager.update(any()) }
-    }
-
-  @Test
-  fun onAogToggled_on_writesImmediately_noConfirm() = runTest(testDispatcher) {
-    val viewModel = viewModel()
-
-    viewModel.onAogToggled(true)
-
-    assertThat(viewModel.uiState.value.confirmDisableAog).isFalse()
-    val mutate = slot<(NotificationSettings) -> NotificationSettings>()
-    coVerify { prefsManager.update(capture(mutate)) }
-    assertThat(mutate.captured(NotificationSettings()).aogEnabled).isTrue()
-  }
-
-  @Test
-  fun onConfirmDisableAog_writesTheDisableAndClearsTheGate() =
-    runTest(testDispatcher) {
-      val viewModel = viewModel()
-      viewModel.onAogToggled(false)
-
-      viewModel.onConfirmDisableAog()
-
-      assertThat(viewModel.uiState.value.confirmDisableAog).isFalse()
-      val mutate = slot<(NotificationSettings) -> NotificationSettings>()
-      coVerify { prefsManager.update(capture(mutate)) }
-      assertThat(mutate.captured(NotificationSettings()).aogEnabled).isFalse()
-    }
-
-  @Test
-  fun onDismissDisableAog_clearsTheGate_withoutWriting() =
-    runTest(testDispatcher) {
-      val viewModel = viewModel()
-      viewModel.onAogToggled(false)
-
-      viewModel.onDismissDisableAog()
-
-      assertThat(viewModel.uiState.value.confirmDisableAog).isFalse()
-      coVerify(exactly = 0) { prefsManager.update(any()) }
-    }
 
   // --- Master switch (§9.3's "flipping the master on triggers the OS prompt inline") ---
 
