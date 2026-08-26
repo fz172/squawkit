@@ -573,6 +573,19 @@ Three checks, all enforced **client-side in the picker**, before a `PendingAttac
 
 The dedupe check requires sha256, so the picker reads the candidate bytes and computes the hash *before* deciding whether to accept. That work is not wasted: if accepted, those same bytes (and that same hash) are handed straight to `LocalBlobStore.put` — see §6.3.
 
+**Where check 1 lives as shipped.** Dedupe is enforced by `AttachmentFormController.addLocalFiles`,
+against the form's own pending list (`Local` + `Saved`, `PendingDelete` excluded) — the rule above,
+at the layer every form shares. It runs just *after* `addPickedFile` rather than before it, because
+sha256 is only known once the bytes have been read and, for photos, re-encoded: a compressed photo
+does not hash like the file the user picked. A rejected copy is tombstoned immediately
+(`AttachmentManager.delete`), so the write it cost is reclaimed along with its scheduled upload.
+Rejections surface as `AddFileError.Duplicate`, which each form maps to `duplicate_file_skipped`.
+
+Check 2 (per-parent 15 MB) is implied by the file-count cap: `PARENT_CAP_BYTES` is defined as
+`MAX_FILE_SIZE_BYTES × MAX_FILE_ATTACHMENTS`, so three files that each pass the 5 MB per-file check
+cannot exceed it. Check 3 (per-user 1 GB) is **not yet wired into the add path** — `QuotaChecker.check`
+exists and is tested, but no form calls it; only `observeState` is consumed, by Settings → Storage.
+
 ### `QuotaChecker` (commonMain, `feature/attachment/datamanager`)
 
 ```kotlin
