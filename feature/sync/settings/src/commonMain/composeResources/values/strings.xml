@@ -15,8 +15,6 @@
   <string name="sync_status_anonymous_body">Sync requires signing in.</string>
   <string name="sync_status_off_title">Cloud sync is off</string>
   <string name="sync_status_off_body">Local edits will not reach the cloud. Re-enable above to resume backups.\n\nShared aircraft stop updating. You keep a readable copy, but changes will not flow in either direction, and you cannot invite anyone or manage access.</string>
-  <string name="sync_status_synced_title">All caught up</string>
-  <string name="sync_status_synced_body">Recent changes have been pushed and any remote updates are applied.</string>
   <string name="sync_subtitle_signin">Sign in to enable cloud sync.</string>
   <string name="sync_subtitle_active">Backed up to your account across devices.</string>
   <string name="sync_subtitle_off">Your data stays on this device only.</string>

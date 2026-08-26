@@ -31,7 +31,8 @@ data class SwitchRowItem(
 /**
  * Card-backed group of on/off [Switch] rows — the settings-screen toggle-list pattern shared by
  * Sync and Notifications (dimmed title/subtitle when a row is disabled, a divider between rows,
- * never between the card edge and its first/last row).
+ * never between the card edge and its first/last row). Plain surface, deliberately: [MasterSwitchRow]
+ * is the tinted, senior control a screen's subordinate toggles sit under; this is those toggles.
  */
 @Composable
 fun SwitchRowCard(
@@ -47,7 +48,11 @@ fun SwitchRowCard(
     items.forEachIndexed { index, item ->
       SwitchRow(item)
       if (index < items.lastIndex) {
-        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+        HorizontalDivider(
+          color = MaterialTheme.colorScheme.outlineVariant.copy(
+            alpha = 0.4f
+          )
+        )
       }
     }
   }
@@ -71,10 +76,22 @@ private fun SwitchRow(item: SwitchRowItem) {
       modifier = Modifier.weight(1f),
       verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
     ) {
-      Text(text = item.title, style = MaterialTheme.typography.bodyLarge, color = titleColor)
-      Text(text = item.subtitle, style = MaterialTheme.typography.bodySmall, color = subtitleColor)
+      Text(
+        text = item.title,
+        style = MaterialTheme.typography.bodyLarge,
+        color = titleColor
+      )
+      Text(
+        text = item.subtitle,
+        style = MaterialTheme.typography.bodySmall,
+        color = subtitleColor
+      )
     }
     Spacer(Modifier.width(Spacing.large))
-    Switch(checked = item.checked, enabled = item.enabled, onCheckedChange = item.onCheckedChange)
+    Switch(
+      checked = item.checked,
+      enabled = item.enabled,
+      onCheckedChange = item.onCheckedChange
+    )
   }
 }

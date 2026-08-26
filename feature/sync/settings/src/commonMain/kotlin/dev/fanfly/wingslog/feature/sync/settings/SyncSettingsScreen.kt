@@ -37,6 +37,7 @@ import androidx.navigation.NavController
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedTopBar
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
 import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
+import dev.fanfly.wingslog.core.ui.common.compose.MasterSwitchRow
 import dev.fanfly.wingslog.core.ui.common.compose.SwitchRowCard
 import dev.fanfly.wingslog.core.ui.common.compose.SwitchRowItem
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
@@ -65,8 +66,6 @@ import wingslog.feature.sync.settings.generated.resources.sync_status_off_body
 import wingslog.feature.sync.settings.generated.resources.sync_status_off_title
 import wingslog.feature.sync.settings.generated.resources.sync_status_push_error_body
 import wingslog.feature.sync.settings.generated.resources.sync_status_restoring
-import wingslog.feature.sync.settings.generated.resources.sync_status_synced_body
-import wingslog.feature.sync.settings.generated.resources.sync_status_synced_title
 import wingslog.feature.sync.settings.generated.resources.sync_subtitle_active
 import wingslog.feature.sync.settings.generated.resources.sync_subtitle_cellular_disabled
 import wingslog.feature.sync.settings.generated.resources.sync_subtitle_cellular_enabled
@@ -115,19 +114,20 @@ fun SyncSettingsScreen(
         ) {
           HeroCaption(state = state)
 
+          MasterSwitchRow(
+            title = stringResource(Res.string.setting_item_sync),
+            subtitle = when {
+              !state.signedIn -> stringResource(Res.string.sync_subtitle_signin)
+              state.cloudSyncEnabled -> stringResource(Res.string.sync_subtitle_active)
+              else -> stringResource(Res.string.sync_subtitle_off)
+            },
+            checked = state.cloudSyncEnabled,
+            enabled = state.signedIn,
+            onCheckedChange = viewModel::onCloudSyncToggled,
+          )
+
           SwitchRowCard(
             items = listOf(
-              SwitchRowItem(
-                title = stringResource(Res.string.setting_item_sync),
-                subtitle = when {
-                  !state.signedIn -> stringResource(Res.string.sync_subtitle_signin)
-                  state.cloudSyncEnabled -> stringResource(Res.string.sync_subtitle_active)
-                  else -> stringResource(Res.string.sync_subtitle_off)
-                },
-                checked = state.cloudSyncEnabled,
-                enabled = state.signedIn,
-                onCheckedChange = viewModel::onCloudSyncToggled,
-              ),
               SwitchRowItem(
                 title = stringResource(Res.string.setting_item_sync_on_cellular),
                 subtitle = if (state.allowUploadOnCellular)
@@ -177,11 +177,14 @@ private fun HeroCaption(state: SyncSettingsUiState) {
   }
 }
 
+/**
+ * "Notes & warnings" (house settings-screen shape): renders nothing when sync is fully caught up —
+ * a working setup shows controls, not a reassurance box competing with them for attention. Every
+ * other case here is exactly that, something worth a note.
+ */
 @Composable
 private fun StatusSection(state: SyncSettingsUiState) {
   val colors = MaterialTheme.statusColors
-  // Three mutually exclusive cases — only one ever renders. The point of having all three drawn
-  // out explicitly is so future-me can spot when a state is missing UX coverage.
   when {
     state.failure != null -> StatusRow(
       icon = Icons.Default.Warning,
@@ -242,13 +245,8 @@ private fun StatusSection(state: SyncSettingsUiState) {
       container = colors.neutral.container,
     )
 
-    else -> StatusRow(
-      icon = Icons.Default.Info,
-      title = stringResource(Res.string.sync_status_synced_title),
-      body = stringResource(Res.string.sync_status_synced_body),
-      tint = colors.positive.accent,
-      container = colors.positive.container,
-    )
+    // Fully caught up: no note. This is the common case, and it needs no box.
+    else -> Unit
   }
 }
 
