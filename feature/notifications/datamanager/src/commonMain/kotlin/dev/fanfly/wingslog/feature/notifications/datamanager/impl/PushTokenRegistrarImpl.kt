@@ -17,19 +17,18 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 
-/** The two fields sign-in / token refresh / app-version-change write. Never touches `enabled`. */
+/** The fields sign-in / token refresh write. Never touches `enabled`. */
 @Serializable
 private data class PushDeviceTokenWire(
   val token: String,
   val platform: String,
-  val appVersion: String,
   // BaseTimestamp, not Timestamp: that is the type the ServerTimestamp sentinel is, and the
   // sentinel is what asks Firestore to stamp the doc rather than trusting a device clock. Same
   // shape as SyncDocWire.lastUpdateTimestamp.
   val updatedAt: BaseTimestamp = Timestamp.ServerTimestamp,
 )
 
-/** What [PushTokenRegistrar.setEnabled] writes. Never touches `token`/`platform`/`appVersion`. */
+/** What [PushTokenRegistrar.setEnabled] writes. Never touches `token`/`platform`. */
 @Serializable
 private data class PushDeviceEnabledWire(
   val enabled: Boolean,
@@ -46,10 +45,10 @@ private data class PushDeviceEnabledWire(
  * refresh" collapse into one reactive pipeline rather than two call sites that have to agree.
  * Whichever arrives second re-fires the write, which is idempotent (`merge = true`).
  *
- * **Two separate partial writes, never one.** [onTokenRefreshed] writes `{token, platform,
- * appVersion}`; [setEnabled] writes `{enabled}`. Neither ever touches the other's fields, so an
- * app-version-driven re-registration can never silently flip the per-device toggle back on, and
- * toggling the switch can never stomp a token that arrived a moment later. Both are `merge = true`,
+ * **Two separate partial writes, never one.** [onTokenRefreshed] writes `{token, platform}`;
+ * [setEnabled] writes `{enabled}`. Neither ever touches the other's fields, so a token refresh can
+ * never silently flip the per-device toggle back on, and toggling the switch can never stomp a
+ * token that arrived a moment later. Both are `merge = true`,
  * so the first write for a brand-new device also never has to invent a value for the field it
  * doesn't own — an absent `enabled` reads as "on" server-side, which is correct for a fresh device.
  *
@@ -68,8 +67,6 @@ class PushTokenRegistrarImpl(
   private val installIdStore: InstallIdStore,
   /** `"android"` / `"ios"` / `"web"` — supplied by the platform's own Koin module. */
   private val platform: String,
-  /** Computed once at Koin-build time; app version does not change during a process's lifetime. */
-  private val appVersion: String,
   private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
 ) : PushTokenRegistrar {
 
@@ -77,7 +74,10 @@ class PushTokenRegistrarImpl(
 
   init {
     scope.launch {
-      combine(firebaseAuth.authStateChanged, cachedToken) { user, token -> user to token }
+      combine(
+        firebaseAuth.authStateChanged,
+        cachedToken
+      ) { user, token -> user to token }
         .collect { (user, token) ->
           // A guest has no account to fan collaboration into — sharing itself requires signing in
           // — so registering a token here would be pointless state with no consumer server-side.
@@ -124,13 +124,16 @@ class PushTokenRegistrarImpl(
 
   private suspend fun upsertToken(uid: String, token: String) {
     deviceDoc(uid, installIdStore.getOrCreate()).set(
-      PushDeviceTokenWire(token = token, platform = platform, appVersion = appVersion),
+      PushDeviceTokenWire(token = token, platform = platform),
       merge = true,
     )
   }
 
   private fun deviceDoc(uid: String, installId: String): DocumentReference =
-    firestore.collection("users").document(uid).collection("push_devices").document(installId)
+    firestore.collection("users")
+      .document(uid)
+      .collection("push_devices")
+      .document(installId)
 
   private companion object {
     val log = Logger.withTag("PushTokenRegistrarImpl")

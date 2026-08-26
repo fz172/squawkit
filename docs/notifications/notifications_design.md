@@ -866,7 +866,6 @@ read them. Same rationale as the sharing ACL exception (`SharingManager`'s doc c
 type PushDevice = {
   token: string;          // FCM registration token
   platform: "android" | "ios" | "web";
-  appVersion: string;
   enabled: boolean;       // per-device silence switch (Q2) — the one preference that is NOT synced
   updatedAt: Timestamp;
 };

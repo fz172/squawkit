@@ -65,7 +65,6 @@ async function seedAccount() {
   await adminDb.doc(`users/${USER}/push_devices/install-1`).set({
     token: "tok-leaver",
     platform: "android",
-    appVersion: "1.0.0",
     enabled: true,
   });
 }

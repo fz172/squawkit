@@ -27,7 +27,6 @@ export type PushDeviceDoc = {
   /** FCM registration token. Rotates; the document id (the install id) does not. */
   token: string;
   platform: PushPlatform;
-  appVersion: string;
   /** Per-device silence switch — the one preference that is deliberately NOT synced (§4, Q2). */
   enabled: boolean;
   updatedAt: Timestamp;
