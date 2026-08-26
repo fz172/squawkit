@@ -81,6 +81,7 @@ fun AdsConsentExplainerScreen(
     modifier = Modifier
       .fillMaxSize()
       .background(CardBackground),
+    contentAlignment = Alignment.TopCenter,
   ) {
     Canvas(modifier = Modifier.fillMaxSize()) {
       drawCircle(
@@ -91,7 +92,7 @@ fun AdsConsentExplainerScreen(
             0.70f to Color.Transparent,
           ),
           center = Offset(size.width / 2f, size.height * 0.52f),
-          radius = size.width * 2.1f,
+          radius = minOf(size.width, ContentWidth.Auth.toPx()) * 2.1f,
         ),
       )
     }

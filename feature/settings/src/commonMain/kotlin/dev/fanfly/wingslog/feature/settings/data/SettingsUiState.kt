@@ -41,7 +41,33 @@ data class SettingsUiState(
    */
   val isAdPrivacyOptionsAvailable: Boolean = false,
   val deletion: AccountDeletion = AccountDeletion.Idle,
+  /**
+   * What the pilot has to type out to get past the confirmation (#418). Resolved when the
+   * confirmation opens, so it cannot change under half-typed input.
+   */
+  val deletionChallenge: DeletionChallenge = DeletionChallenge.Phrase,
+  /** The confirmation text typed so far. In the ViewModel so recomposition cannot drop it. */
+  val deletionInput: String = "",
 )
+
+/**
+ * The thing a pilot has to type before "Delete my account" does anything (#418).
+ *
+ * A single tap on a destructive button is too cheap for an irreversible, un-undoable delete that
+ * also cuts off everyone they have shared an aircraft with — so the confirmation asks for something
+ * only someone who means it will produce.
+ */
+sealed interface DeletionChallenge {
+  /** The account has an address the pilot would recognise, so that address is what they type. */
+  data class Email(val address: String) : DeletionChallenge
+
+  /**
+   * No address worth asking for — a provider gave us none, or it is an Apple Hide My Email alias
+   * the pilot has never seen. They type a fixed phrase instead; the dialog owns its wording, since
+   * it is a localized string.
+   */
+  data object Phrase : DeletionChallenge
+}
 
 /**
  * Where the "Delete Account" flow has got to (#418).

@@ -26,6 +26,12 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 
+/**
+ * Apple Hide My Email hands us an alias at this domain. We know the string; the pilot does not —
+ * they have never been shown it — so it is no use as something to ask them to type.
+ */
+private const val APPLE_PRIVATE_RELAY_DOMAIN = "@privaterelay.appleid.com"
+
 class SettingsViewModel(
   private val authManager: AuthManager,
   private val accountDeleter: AccountDeleter,
@@ -157,15 +163,46 @@ class SettingsViewModel(
     )
   }
 
-  /** Opens the confirmation. Nothing is destroyed until [confirmDeleteAccount]. */
+  /**
+   * Opens the confirmation, and fixes what the pilot will have to type to get past it. Nothing is
+   * destroyed until [confirmDeleteAccount].
+   *
+   * The challenge is resolved once, here, rather than read live in the dialog: a sign-out or token
+   * refresh mid-confirmation must not swap the target out from under half-typed input.
+   */
   fun askToDeleteAccount() {
     if (_user.value.deletion == AccountDeletion.Working) return
-    _user.value = _user.value.copy(deletion = AccountDeletion.Confirming)
+    _user.value = _user.value.copy(
+      deletion = AccountDeletion.Confirming,
+      deletionChallenge = challengeFor(authManager.getCurrentUser()?.email),
+      deletionInput = "",
+    )
+  }
+
+  /**
+   * Their own address when we have one they would recognise, the fixed phrase otherwise — a blank
+   * address, or an alias from [APPLE_PRIVATE_RELAY_DOMAIN] that they could not type from memory.
+   */
+  private fun challengeFor(email: String?): DeletionChallenge {
+    val address = email?.trim().orEmpty()
+    val usable = address.isNotEmpty() &&
+      !address.endsWith(APPLE_PRIVATE_RELAY_DOMAIN, ignoreCase = true)
+    return if (usable) DeletionChallenge.Email(address) else DeletionChallenge.Phrase
+  }
+
+  /**
+   * The confirmation text typed so far. Held here rather than in a composable `remember` for the
+   * same reason as [AccountDeletion] itself — a recomposition or rotation must not quietly reset
+   * how far the pilot has got.
+   */
+  fun setDeleteAccountInput(text: String) {
+    if (_user.value.deletion == AccountDeletion.Working) return
+    _user.value = _user.value.copy(deletionInput = text)
   }
 
   fun cancelDeleteAccount() {
     if (_user.value.deletion == AccountDeletion.Working) return
-    _user.value = _user.value.copy(deletion = AccountDeletion.Idle)
+    _user.value = _user.value.copy(deletion = AccountDeletion.Idle, deletionInput = "")
   }
 
   /**
@@ -179,6 +216,9 @@ class SettingsViewModel(
    * The Auth user is deleted server-side, so no re-authentication is needed here and the session is
    * already invalid by the time this returns; signing out is what makes the app notice and route
    * back to login.
+   *
+   * Only call this once the typed [SettingsUiState.deletionChallenge] has been met —
+   * `DeleteAccountDialog` enables its confirm button on nothing less, and it is the only caller.
    */
   fun confirmDeleteAccount() {
     if (_user.value.deletion == AccountDeletion.Working) return

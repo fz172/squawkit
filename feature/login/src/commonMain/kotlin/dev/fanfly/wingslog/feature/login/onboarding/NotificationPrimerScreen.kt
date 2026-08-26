@@ -78,6 +78,7 @@ fun NotificationPrimerScreen(
     modifier = Modifier
       .fillMaxSize()
       .background(AviationBlue10),
+    contentAlignment = Alignment.TopCenter,
   ) {
     Canvas(modifier = Modifier.fillMaxSize()) {
       drawCircle(
@@ -87,7 +88,7 @@ fun NotificationPrimerScreen(
             Color.Transparent,
           ),
           center = Offset(size.width / 2f, size.height * 0.618f),
-          radius = size.width * 0.70f,
+          radius = minOf(size.width, ContentWidth.Auth.toPx()) * 0.70f,
         ),
       )
     }
