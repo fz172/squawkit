@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog
 
 import androidx.compose.ui.window.ComposeUIViewController
+import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.core.auth.EmailLinkDeepLinks
 import dev.fanfly.wingslog.core.auth.IosAppleSignInBridge
 import dev.fanfly.wingslog.core.auth.IosGoogleSignInBridge
@@ -9,11 +10,13 @@ import dev.fanfly.wingslog.di.initKoin
 import dev.fanfly.wingslog.feature.ads.datamanager.impl.IosAdConsentBridge
 import dev.fanfly.wingslog.feature.ads.viewing.IosAdViewBridge
 import dev.fanfly.wingslog.feature.notifications.engine.BgTaskUrgencyScanScheduler
+import dev.fanfly.wingslog.feature.notifications.model.PushTokenSink
 import dev.fanfly.wingslog.feature.notifications.viewing.IosNotificationTapDelegate
 import dev.fanfly.wingslog.feature.sharing.datamanager.AircraftShareDeepLinks
 import dev.fanfly.wingslog.feature.sync.data.SyncEngine
 import dev.fanfly.wingslog.feature.sync.data.blob.IosAppCheckBridge
 import dev.fanfly.wingslog.feature.sync.data.blob.UrlSessionUploadScheduler
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -235,4 +238,26 @@ object MainEntry {
     scheduler.registerBgTask()
     scheduler.ensureScheduled()
   }
+
+  /**
+   * Forwards an FCM registration token from Swift (design §7.1, issue #506) —
+   * `FirebaseMessaging` is a third-party framework Kotlin/Native can't link, so `iosApp.swift`'s
+   * `AppDelegate` owns the SDK (both the proactive read at launch and the `MessagingDelegate`
+   * rotation callback) and calls this for either case. [PushTokenSink] already exists in `:model`
+   * for exactly this hand-off; no new bridge object needed since there is nothing to hand back to
+   * Swift, unlike [installAppCheckTokenProvider]'s request/response shape.
+   */
+  fun onPushTokenReceived(token: String) {
+    CoroutineScope(Dispatchers.Default).launch {
+      try {
+        KoinPlatform.getKoin().get<PushTokenSink>().onTokenRefreshed(token)
+      } catch (e: CancellationException) {
+        throw e
+      } catch (e: Throwable) {
+        log.w(e) { "Could not forward a push token from Swift" }
+      }
+    }
+  }
+
+  private val log = Logger.withTag("MainEntry")
 }

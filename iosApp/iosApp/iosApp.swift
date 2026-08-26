@@ -2,6 +2,7 @@ import SwiftUI
 import GoogleSignIn
 import FirebaseCore
 import FirebaseAppCheck
+import FirebaseMessaging
 import ComposeApp
 
 
@@ -14,7 +15,7 @@ final class AppAttestProviderFactory: NSObject, AppCheckProviderFactory {
   }
 }
 
-class AppDelegate: NSObject, UIApplicationDelegate {
+class AppDelegate: NSObject, UIApplicationDelegate, MessagingDelegate {
   private let googleSignInProvider = NativeGoogleSignInProvider()
   private let appleSignInProvider = NativeAppleSignInProvider()
 
@@ -51,7 +52,50 @@ class AppDelegate: NSObject, UIApplicationDelegate {
     // Register BGAppRefreshTask identifier "dev.fanfly.wingslog.urgency-scan" and submit the first
     // request. Also before this method returns — BGTaskScheduler rejects a late registration.
     MainEntry.shared.registerUrgencyScanTask()
+
+    // N1 push registration (design §7.1, issue #506). FirebaseMessaging is linked only here, not in
+    // Kotlin/Native — same reasoning as FirebaseAppCheck/GoogleSignIn: a third-party framework Kotlin
+    // can't link, so Swift owns the SDK and forwards the result through MainEntry.onPushTokenReceived.
+    Messaging.messaging().delegate = self
+    // Safe regardless of notification-permission state — a device token exists independently of
+    // whether the user has granted alert permission (that's IosNotificationPermission's concern, not
+    // this call's). Registering unconditionally means a later permission grant needs nothing extra.
+    application.registerForRemoteNotifications()
+    // Proactively read the *current* token, mirroring Android's PushTokenBootstrap: the
+    // didReceiveRegistrationToken delegate callback only fires on first mint or rotation, so a device
+    // that already has a token before this code shipped would otherwise never register at all.
+    Messaging.messaging().token { token, _ in
+      guard let token else { return }
+      MainEntry.shared.onPushTokenReceived(token: token)
+    }
     return true
+  }
+
+  // FCM's APNs bridge: hands the raw APNs device token to Messaging so it can mint/attach the FCM
+  // registration token our backend's Admin SDK actually sends to (sendEachForMulticast needs FCM
+  // tokens, not raw APNs ones).
+  func application(
+    _ application: UIApplication,
+    didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data
+  ) {
+    Messaging.messaging().apnsToken = deviceToken
+  }
+
+  func application(
+    _ application: UIApplication,
+    didFailToRegisterForRemoteNotificationsWithError error: Error
+  ) {
+    // No user-facing failure path needed — same fire-and-forget shape as PushTokenBootstrap
+    // swallowing a read failure on Android. The next successful registration (app relaunch, network
+    // recovery) closes the gap on its own.
+  }
+
+  // MessagingDelegate: fires once a token is first minted and again on every rotation — FCM's
+  // equivalent of Android's onNewToken. token is the FCM registration token, already resolved
+  // against apnsToken above.
+  func messaging(_ messaging: Messaging, didReceiveRegistrationToken token: String?) {
+    guard let token else { return }
+    MainEntry.shared.onPushTokenReceived(token: token)
   }
 
   // Called when iOS relaunches the app to deliver background URLSession completion events.
