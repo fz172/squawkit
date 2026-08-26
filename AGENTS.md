@@ -483,7 +483,9 @@ over Density, Progressive Disclosure). Dynamic color is disabled; the aviation p
 
 Feature PRDs and architecture design docs live in `docs/`, organized into per-topic subfolders:
 
-- `docs/product/` — `PRD.md`, `platform_feature_parity.html`, store assets and screenshots
+- `docs/product/` — `PRD.md`, `multi_domain_maintenance_PRD.md` (proposed pivot from aircraft-only to any
+  maintainable “Thing” via a template configuration system), `platform_feature_parity.html`, store assets
+  and screenshots
 - `docs/storage/` — `storage_mode_PRD.md`, `storage_r1_design.md`, `storage_r2_design.md`,
   `deletion_gc_design.html`
 - `docs/attachments/` — `attachments_PRD.md`, `attachments_design.md`
