@@ -1,0 +1,5 @@
+// Regenerated before every build by the "Stamp Version.xcconfig from version.properties" scheme
+// pre-action, from version.properties. Committed so a fresh checkout has a valid value before the
+// first build ever runs. See iosAppDebug.xcscheme / iosAppRelease.xcscheme.
+MARKETING_VERSION = 1.0.260825
+CURRENT_PROJECT_VERSION = 1398

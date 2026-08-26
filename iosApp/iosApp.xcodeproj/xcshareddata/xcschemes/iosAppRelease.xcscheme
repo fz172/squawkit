@@ -5,6 +5,24 @@
    <BuildAction
       parallelizeBuildables = "YES"
       buildImplicitDependencies = "YES">
+      <PreActions>
+         <ExecutionAction
+            ActionType = "Xcode.IDEStandardExecutionActionsCore.ExecutionActionType.ShellScriptAction">
+            <ActionContent
+               title = "Stamp Version.xcconfig from version.properties"
+               scriptText = "cd &quot;$SRCROOT/..&quot;&#10;VERSION_FILE=&quot;version.properties&quot;&#10;MAJOR=$(awk -F= '/^major=/{print $2}' &quot;$VERSION_FILE&quot;)&#10;MINOR=$(awk -F= '/^minor=/{print $2}' &quot;$VERSION_FILE&quot;)&#10;BUILD_DATE=$(awk -F= '/^buildDate=/{print $2}' &quot;$VERSION_FILE&quot;)&#10;VERSION_CODE=$(awk -F= '/^versionCode=/{print $2}' &quot;$VERSION_FILE&quot;)&#10;if [ -z &quot;$MAJOR&quot; ] || [ -z &quot;$MINOR&quot; ] || [ -z &quot;$BUILD_DATE&quot; ] || [ -z &quot;$VERSION_CODE&quot; ]; then&#10;  echo &quot;warning: could not parse version.properties, leaving Version.xcconfig untouched&quot;&#10;  exit 0&#10;fi&#10;printf 'MARKETING_VERSION = %s.%s.%s\nCURRENT_PROJECT_VERSION = %s\n' &quot;$MAJOR&quot; &quot;$MINOR&quot; &quot;$BUILD_DATE&quot; &quot;$VERSION_CODE&quot; &gt; iosApp/Version.xcconfig&#10;">
+               <EnvironmentBuildable>
+                  <BuildableReference
+                     BuildableIdentifier = "primary"
+                     BlueprintIdentifier = "3D25BBF22F6FBB7500EFFADF"
+                     BuildableName = "iosApp.app"
+                     BlueprintName = "iosApp"
+                     ReferencedContainer = "container:iosApp.xcodeproj">
+                  </BuildableReference>
+               </EnvironmentBuildable>
+            </ActionContent>
+         </ExecutionAction>
+      </PreActions>
       <BuildActionEntries>
          <BuildActionEntry
             buildForTesting = "YES"

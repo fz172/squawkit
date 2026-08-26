@@ -27,28 +27,6 @@ android {
 
 val versionPropsFile = rootProject.file("version.properties")
 
-val generateIosVersionKt by tasks.registering {
-  val outputDir = layout.buildDirectory.dir(
-    "generated/iosMain/kotlin/dev/fanfly/wingslog/core/appinfo"
-  )
-  outputs.dir(outputDir)
-  inputs.file(versionPropsFile)
-  doFirst {
-    val props = Properties().apply {
-      if (versionPropsFile.exists()) versionPropsFile.inputStream()
-        .use { load(it) }
-    }
-    val versionName = "${props["major"]}.${props["minor"]}" +
-      ".${props["buildDate"]}.${props["patch"]}"
-    outputDir.get().asFile.also { it.mkdirs() }
-      .resolve("GeneratedVersionInfo.kt")
-      .writeText(
-        "package dev.fanfly.wingslog.core.appinfo\n\n" +
-          "internal const val GENERATED_VERSION_NAME = \"$versionName\"\n"
-      )
-  }
-}
-
 val generateJsVersionKt by tasks.registering {
   val outputDir = layout.buildDirectory.dir(
     "generated/jsMain/kotlin/dev/fanfly/wingslog/core/appinfo"
@@ -86,7 +64,6 @@ kotlin {
       sourceSets.findByName("iosMain") ?: sourceSets.create("iosMain")
     iosMain.apply {
       dependsOn(commonMain.get())
-      kotlin.srcDir(layout.buildDirectory.dir("generated/iosMain/kotlin"))
     }
     sourceSets.findByName("iosX64Main")
       ?.dependsOn(iosMain)
@@ -112,7 +89,6 @@ kotlin {
 }
 
 tasks.configureEach {
-  if (name.startsWith("compileKotlinIos")) dependsOn(generateIosVersionKt)
   if (name == "compileKotlinJs") dependsOn(generateJsVersionKt)
 }
 
