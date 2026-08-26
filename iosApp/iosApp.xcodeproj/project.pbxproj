@@ -57,6 +57,7 @@
 		3D25BBF32F6FBB7500EFFADF /* iosApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iosApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		3D9A96F43031583D00FAF8CC /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
 		DA16A722E7DBE44EB45F5348 /* NotificationServiceExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = NotificationServiceExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		2F1BD13E5FCF47D78F34EECF /* Version.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Version.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -137,6 +138,7 @@
 			children = (
 				3D25BBF52F6FBB7500EFFADF /* iosApp */,
 				C143811DC852391614E1F4FE /* NotificationServiceExtension */,
+				2F1BD13E5FCF47D78F34EECF /* Version.xcconfig */,
 				3D25BC212F6FC42800EFFADF /* Frameworks */,
 				3D25BBF42F6FBB7500EFFADF /* Products */,
 			);
@@ -194,7 +196,6 @@
 				3D25BBEF2F6FBB7500EFFADF /* Sources */,
 				3D25BBF02F6FBB7500EFFADF /* Frameworks */,
 				3D25BBF12F6FBB7500EFFADF /* Resources */,
-				87DD4D69C37147118BFC8E00 /* Stamp Version from version.properties */,
 				269555521576C2887F7666CC /* Embed App Extensions */,
 			);
 			buildRules = (
@@ -307,24 +308,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "cd \"$SRCROOT/..\"\n./gradlew :composeApp:embedAndSignAppleFrameworkForXcode\n";
-		};
-		87DD4D69C37147118BFC8E00 /* Stamp Version from version.properties */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-			);
-			name = "Stamp Version from version.properties";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "cd \"$SRCROOT/..\"\nVERSION_FILE=\"version.properties\"\nMAJOR=$(awk -F= '/^major=/{print $2}' \"$VERSION_FILE\")\nMINOR=$(awk -F= '/^minor=/{print $2}' \"$VERSION_FILE\")\nBUILD_DATE=$(awk -F= '/^buildDate=/{print $2}' \"$VERSION_FILE\")\nVERSION_CODE=$(awk -F= '/^versionCode=/{print $2}' \"$VERSION_FILE\")\nif [ -z \"$MAJOR\" ] || [ -z \"$MINOR\" ] || [ -z \"$BUILD_DATE\" ] || [ -z \"$VERSION_CODE\" ]; then\n  echo \"warning: could not parse version.properties, leaving Info.plist version untouched\"\n  exit 0\nfi\nMKT_VERSION=\"$MAJOR.$MINOR.$BUILD_DATE\"\nINFO_PLIST=\"$TARGET_BUILD_DIR/$INFOPLIST_PATH\"\nif [ -f \"$INFO_PLIST\" ]; then\n  /usr/libexec/PlistBuddy -c \"Set :CFBundleShortVersionString $MKT_VERSION\" \"$INFO_PLIST\"\n  /usr/libexec/PlistBuddy -c \"Set :CFBundleVersion $VERSION_CODE\" \"$INFO_PLIST\"\n  echo \"Stamped Info.plist: CFBundleShortVersionString=$MKT_VERSION CFBundleVersion=$VERSION_CODE\"\nfi\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -475,12 +458,12 @@
 		};
 		3D25BBFF2F6FBB7600EFFADF /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 2F1BD13E5FCF47D78F34EECF /* Version.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = iosApp/iosApp.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 5NULUT3VRD;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
@@ -498,7 +481,6 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -517,12 +499,12 @@
 		};
 		3D25BC002F6FBB7600EFFADF /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 2F1BD13E5FCF47D78F34EECF /* Version.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = iosApp/iosApp.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 5NULUT3VRD;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
@@ -540,7 +522,6 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -559,10 +540,10 @@
 		};
 		3E434CD3D840F3758A4C27B5 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 2F1BD13E5FCF47D78F34EECF /* Version.xcconfig */;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = NotificationServiceExtension/NotificationServiceExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 5NULUT3VRD;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -573,7 +554,6 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = dev.fanfly.wingslog.iosApp.NotificationServiceExtension;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -586,10 +566,10 @@
 		};
 		58DA38ABA1394D60B820FE2D /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 2F1BD13E5FCF47D78F34EECF /* Version.xcconfig */;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = NotificationServiceExtension/NotificationServiceExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 5NULUT3VRD;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -600,7 +580,6 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = dev.fanfly.wingslog.iosApp.NotificationServiceExtension;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
