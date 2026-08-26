@@ -24,55 +24,40 @@ export interface NotificationSettings {
   /** Master switch. Off silences every class, locally and server-side. */
   allDisabled: boolean;
   /**
-   * --- Urgency — device-local detection, no account required ---
+   * --- Priority & due updates — device-local detection, no account required ---
    *
-   * squawk_priority_disabled is NOT N2-only, and the distinction matters to anyone changing it. A
-   * squawk escalation — including to AOG, treated the same as any other priority raise — is
-   * detectable from a single write, so the server fan-out reports one too (design §7.5), and it
-   * gates that push on this same field — not on squawk_activity_disabled. What arrives is an urgency
-   * notification (N2 channel, N2 priority).
+   * Covers what used to be three fields: a squawk priority escalation (including to AOG, treated the
+   * same as any other raise) and a task crossing into overdue or due-soon.
+   *
+   * priority_due_disabled is NOT N2-only, and the distinction matters to anyone touching it. A squawk
+   * escalation is detectable from a single write, so the server fan-out reports one too (design §7.5),
+   * and it gates that push on this same field. What arrives is an urgency notification (N2 channel, N2
+   * priority).
    *
    * Two consequences worth knowing before touching this:
-   *   * The server READS this. It is not device-only state, so it cannot be repurposed or re-scoped
-   *     as though the scanner were its only consumer.
-   *   * A member of a shared aircraft can be notified with EVERY collaboration class below switched
-   *     off, because a priority escalation travels under squawk_priority_disabled. That is intended:
-   *     muting routine squawk activity is not asking to stop hearing that a squawk got worse.
+   *   * The server READS this, for the escalation push. It is not device-only state, so it cannot be
+   *     repurposed or re-scoped as though the scanner were its only consumer.
+   *   * A member of a shared aircraft can be notified with collaboration_disabled on, because a
+   *     priority escalation travels under this field instead. That is intended: muting collaboration
+   *     activity is not asking to stop hearing that a squawk got worse.
    *
-   * The last two stay genuinely device-only: no write happens when a due date passes, so no trigger
-   * can fire and the server has nothing to report (§7.5).
+   * The due-soon/overdue half stays genuinely device-only: no write happens when a due date passes, so
+   * no trigger can fire and the server has nothing to report (§7.5).
    */
-  squawkPriorityDisabled: boolean;
-  /** -> DueStatus.OVERDUE — device-only */
-  overdueDisabled: boolean;
-  /** -> DueStatus.DUE_SOON — device-only */
-  dueSoonDisabled: boolean;
+  priorityDueDisabled: boolean;
   /**
    * --- Collaboration (N1) — server fan-out, needs a real account + cloud sync ---
    *
-   * These four gate ACTIVITY only — "Dave Chen made 5 changes to tasks". A squawk escalation is
-   * gated above instead, so switching all four off still leaves grounding alerts arriving.
+   * Covers what used to be four fields — aircraft/squawk/task/log record activity from other crew —
+   * collapsed since the settings screen no longer distinguishes them. Gates ACTIVITY only —
+   * "Dave Chen made 5 changes to tasks". A squawk escalation is gated above instead, so switching this
+   * off still leaves grounding alerts arriving.
    */
-  aircraftActivityDisabled: boolean;
-  /** squawk create/edit/dismiss/reopen/delete */
-  squawkActivityDisabled: boolean;
-  /** task create/edit/force-comply/delete */
-  taskActivityDisabled: boolean;
-  /** log create/edit/delete */
-  logActivityDisabled: boolean;
+  collaborationDisabled: boolean;
 }
 
 function createBaseNotificationSettings(): NotificationSettings {
-  return {
-    allDisabled: false,
-    squawkPriorityDisabled: false,
-    overdueDisabled: false,
-    dueSoonDisabled: false,
-    aircraftActivityDisabled: false,
-    squawkActivityDisabled: false,
-    taskActivityDisabled: false,
-    logActivityDisabled: false,
-  };
+  return { allDisabled: false, priorityDueDisabled: false, collaborationDisabled: false };
 }
 
 export const NotificationSettings: MessageFns<NotificationSettings> = {
@@ -80,26 +65,11 @@ export const NotificationSettings: MessageFns<NotificationSettings> = {
     if (message.allDisabled !== false) {
       writer.uint32(8).bool(message.allDisabled);
     }
-    if (message.squawkPriorityDisabled !== false) {
-      writer.uint32(24).bool(message.squawkPriorityDisabled);
+    if (message.priorityDueDisabled !== false) {
+      writer.uint32(80).bool(message.priorityDueDisabled);
     }
-    if (message.overdueDisabled !== false) {
-      writer.uint32(32).bool(message.overdueDisabled);
-    }
-    if (message.dueSoonDisabled !== false) {
-      writer.uint32(40).bool(message.dueSoonDisabled);
-    }
-    if (message.aircraftActivityDisabled !== false) {
-      writer.uint32(48).bool(message.aircraftActivityDisabled);
-    }
-    if (message.squawkActivityDisabled !== false) {
-      writer.uint32(56).bool(message.squawkActivityDisabled);
-    }
-    if (message.taskActivityDisabled !== false) {
-      writer.uint32(64).bool(message.taskActivityDisabled);
-    }
-    if (message.logActivityDisabled !== false) {
-      writer.uint32(72).bool(message.logActivityDisabled);
+    if (message.collaborationDisabled !== false) {
+      writer.uint32(88).bool(message.collaborationDisabled);
     }
     return writer;
   },
@@ -119,60 +89,20 @@ export const NotificationSettings: MessageFns<NotificationSettings> = {
           message.allDisabled = reader.bool();
           continue;
         }
-        case 3: {
-          if (tag !== 24) {
+        case 10: {
+          if (tag !== 80) {
             break;
           }
 
-          message.squawkPriorityDisabled = reader.bool();
+          message.priorityDueDisabled = reader.bool();
           continue;
         }
-        case 4: {
-          if (tag !== 32) {
+        case 11: {
+          if (tag !== 88) {
             break;
           }
 
-          message.overdueDisabled = reader.bool();
-          continue;
-        }
-        case 5: {
-          if (tag !== 40) {
-            break;
-          }
-
-          message.dueSoonDisabled = reader.bool();
-          continue;
-        }
-        case 6: {
-          if (tag !== 48) {
-            break;
-          }
-
-          message.aircraftActivityDisabled = reader.bool();
-          continue;
-        }
-        case 7: {
-          if (tag !== 56) {
-            break;
-          }
-
-          message.squawkActivityDisabled = reader.bool();
-          continue;
-        }
-        case 8: {
-          if (tag !== 64) {
-            break;
-          }
-
-          message.taskActivityDisabled = reader.bool();
-          continue;
-        }
-        case 9: {
-          if (tag !== 72) {
-            break;
-          }
-
-          message.logActivityDisabled = reader.bool();
+          message.collaborationDisabled = reader.bool();
           continue;
         }
       }
@@ -191,40 +121,15 @@ export const NotificationSettings: MessageFns<NotificationSettings> = {
         : isSet(object.all_disabled)
         ? globalThis.Boolean(object.all_disabled)
         : false,
-      squawkPriorityDisabled: isSet(object.squawkPriorityDisabled)
-        ? globalThis.Boolean(object.squawkPriorityDisabled)
-        : isSet(object.squawk_priority_disabled)
-        ? globalThis.Boolean(object.squawk_priority_disabled)
+      priorityDueDisabled: isSet(object.priorityDueDisabled)
+        ? globalThis.Boolean(object.priorityDueDisabled)
+        : isSet(object.priority_due_disabled)
+        ? globalThis.Boolean(object.priority_due_disabled)
         : false,
-      overdueDisabled: isSet(object.overdueDisabled)
-        ? globalThis.Boolean(object.overdueDisabled)
-        : isSet(object.overdue_disabled)
-        ? globalThis.Boolean(object.overdue_disabled)
-        : false,
-      dueSoonDisabled: isSet(object.dueSoonDisabled)
-        ? globalThis.Boolean(object.dueSoonDisabled)
-        : isSet(object.due_soon_disabled)
-        ? globalThis.Boolean(object.due_soon_disabled)
-        : false,
-      aircraftActivityDisabled: isSet(object.aircraftActivityDisabled)
-        ? globalThis.Boolean(object.aircraftActivityDisabled)
-        : isSet(object.aircraft_activity_disabled)
-        ? globalThis.Boolean(object.aircraft_activity_disabled)
-        : false,
-      squawkActivityDisabled: isSet(object.squawkActivityDisabled)
-        ? globalThis.Boolean(object.squawkActivityDisabled)
-        : isSet(object.squawk_activity_disabled)
-        ? globalThis.Boolean(object.squawk_activity_disabled)
-        : false,
-      taskActivityDisabled: isSet(object.taskActivityDisabled)
-        ? globalThis.Boolean(object.taskActivityDisabled)
-        : isSet(object.task_activity_disabled)
-        ? globalThis.Boolean(object.task_activity_disabled)
-        : false,
-      logActivityDisabled: isSet(object.logActivityDisabled)
-        ? globalThis.Boolean(object.logActivityDisabled)
-        : isSet(object.log_activity_disabled)
-        ? globalThis.Boolean(object.log_activity_disabled)
+      collaborationDisabled: isSet(object.collaborationDisabled)
+        ? globalThis.Boolean(object.collaborationDisabled)
+        : isSet(object.collaboration_disabled)
+        ? globalThis.Boolean(object.collaboration_disabled)
         : false,
     };
   },
@@ -234,26 +139,11 @@ export const NotificationSettings: MessageFns<NotificationSettings> = {
     if (message.allDisabled !== false) {
       obj.allDisabled = message.allDisabled;
     }
-    if (message.squawkPriorityDisabled !== false) {
-      obj.squawkPriorityDisabled = message.squawkPriorityDisabled;
+    if (message.priorityDueDisabled !== false) {
+      obj.priorityDueDisabled = message.priorityDueDisabled;
     }
-    if (message.overdueDisabled !== false) {
-      obj.overdueDisabled = message.overdueDisabled;
-    }
-    if (message.dueSoonDisabled !== false) {
-      obj.dueSoonDisabled = message.dueSoonDisabled;
-    }
-    if (message.aircraftActivityDisabled !== false) {
-      obj.aircraftActivityDisabled = message.aircraftActivityDisabled;
-    }
-    if (message.squawkActivityDisabled !== false) {
-      obj.squawkActivityDisabled = message.squawkActivityDisabled;
-    }
-    if (message.taskActivityDisabled !== false) {
-      obj.taskActivityDisabled = message.taskActivityDisabled;
-    }
-    if (message.logActivityDisabled !== false) {
-      obj.logActivityDisabled = message.logActivityDisabled;
+    if (message.collaborationDisabled !== false) {
+      obj.collaborationDisabled = message.collaborationDisabled;
     }
     return obj;
   },
@@ -264,13 +154,8 @@ export const NotificationSettings: MessageFns<NotificationSettings> = {
   fromPartial<I extends Exact<DeepPartial<NotificationSettings>, I>>(object: I): NotificationSettings {
     const message = createBaseNotificationSettings();
     message.allDisabled = object.allDisabled ?? false;
-    message.squawkPriorityDisabled = object.squawkPriorityDisabled ?? false;
-    message.overdueDisabled = object.overdueDisabled ?? false;
-    message.dueSoonDisabled = object.dueSoonDisabled ?? false;
-    message.aircraftActivityDisabled = object.aircraftActivityDisabled ?? false;
-    message.squawkActivityDisabled = object.squawkActivityDisabled ?? false;
-    message.taskActivityDisabled = object.taskActivityDisabled ?? false;
-    message.logActivityDisabled = object.logActivityDisabled ?? false;
+    message.priorityDueDisabled = object.priorityDueDisabled ?? false;
+    message.collaborationDisabled = object.collaborationDisabled ?? false;
     return message;
   },
 };

@@ -16,8 +16,8 @@
 
   <!-- Fires when a squawk reaches HIGH or AOG — both report the same way (design decision,
        2026-08-26: AOG is not its own tier), and the "from X to Y" single body renders whichever
-       level was actually reached. The settings toggle this reads ("Squawk priority increases") is
-       scoped to "becomes high priority or worse" (see notification_settings_squawk_priority_subtitle
+       level was actually reached. The settings toggle this reads ("Priority & due updates") is
+       scoped to "becomes high priority or worse" (see notification_settings_priority_due_subtitle
        in :settings). A LOW-to-MEDIUM or MEDIUM-to-HIGH-adjacent bump below HIGH still moves the
        watermark so a later real crossing is detected correctly, but is not itself reportable. -->
   <string name="notification_title_priority_raised">Priority raised</string>

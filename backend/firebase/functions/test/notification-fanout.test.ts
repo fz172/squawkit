@@ -731,9 +731,9 @@ describe("§7.4 audience and preferences, re-derived on every send", () => {
     expect(sentMessages).toHaveLength(1);
   });
 
-  it("honors the recipient's per-class toggle", async () => {
+  it("honors the recipient's collaboration toggle", async () => {
     await shareAircraft(AC_A, { [HOST]: "owner", [MEMBER]: "technician" });
-    await setPreferences(MEMBER, { taskActivityDisabled: true });
+    await setPreferences(MEMBER, { collaborationDisabled: true });
 
     await taskEdit(AC_A, 1);
 
@@ -955,9 +955,9 @@ describe("the Aircraft record's own trigger", () => {
     expect(sentMessages).toHaveLength(0);
   });
 
-  it("honors the aircraft-activity toggle independently of the others", async () => {
+  it("honors the collaboration toggle on the aircraft document's own trigger too", async () => {
     await shareAircraft(AC_A, { [HOST]: "owner", [MEMBER]: "technician" });
-    await setPreferences(MEMBER, { aircraftActivityDisabled: true });
+    await setPreferences(MEMBER, { collaborationDisabled: true });
 
     await wrappedAircraft(
       aircraftWrite(AC_A, aircraftEnvelope(AC_A, "N4589T"), aircraftEnvelope(AC_A, "N123AB")),

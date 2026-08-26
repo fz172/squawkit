@@ -94,7 +94,7 @@ export const onNotifiableRecordWritten = onDocumentWritten(
 
 /**
  * The Aircraft record itself — a tail number or a make/model correction is collaboration activity
- * too, and `aircraft_activity_disabled` is the toggle that governs it.
+ * too, and `collaboration_disabled` is the toggle that governs it.
  *
  * A tombstone write is skipped: deleting an aircraft tears down the share (`onAircraftDeleted`), so
  * "someone made a change to the aircraft" would be both wrong and the last thing the recipient ever
@@ -215,7 +215,7 @@ async function fanOutActivity({ input, recipients, tailNumber }: ActivityFanOut)
 
   const sent = await fanOut(
     recipients,
-    (settings) => honorsActivity(settings, recordType),
+    honorsActivity,
     activityPushData({
       aircraftId,
       recordType,
@@ -307,12 +307,7 @@ async function fanOutHighVolume(
   const label = tailNumber ?? (await readTailNumber(hostUid, aircraftId));
   const sent = await fanOut(
     recipients,
-    // It reports a volume rather than a class of change, so anyone who wants *any* activity gets it.
-    (settings) =>
-      honorsActivity(settings, RECORD_TYPE.AIRCRAFT) ||
-      honorsActivity(settings, RECORD_TYPE.SQUAWK) ||
-      honorsActivity(settings, RECORD_TYPE.TASK) ||
-      honorsActivity(settings, RECORD_TYPE.LOG),
+    honorsActivity,
     highVolumePushData(aircraftId, label, nowMs),
   );
   await recordSend(hostUid, aircraftId, nowMs, { ceilingNotified: true });

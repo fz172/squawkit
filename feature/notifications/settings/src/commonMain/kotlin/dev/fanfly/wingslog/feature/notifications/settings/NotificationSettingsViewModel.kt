@@ -5,14 +5,9 @@ import androidx.lifecycle.viewModelScope
 import dev.fanfly.wingslog.core.model.settings.NotificationSettings
 import dev.fanfly.wingslog.feature.notifications.datamanager.NotificationPrefsManager
 import dev.fanfly.wingslog.feature.notifications.datamanager.PrefsState
-import dev.fanfly.wingslog.feature.notifications.model.withAircraftActivity
 import dev.fanfly.wingslog.feature.notifications.model.withAllEnabled
-import dev.fanfly.wingslog.feature.notifications.model.withDueSoon
-import dev.fanfly.wingslog.feature.notifications.model.withLogActivity
-import dev.fanfly.wingslog.feature.notifications.model.withOverdue
-import dev.fanfly.wingslog.feature.notifications.model.withSquawkActivity
-import dev.fanfly.wingslog.feature.notifications.model.withSquawkPriority
-import dev.fanfly.wingslog.feature.notifications.model.withTaskActivity
+import dev.fanfly.wingslog.feature.notifications.model.withCollaboration
+import dev.fanfly.wingslog.feature.notifications.model.withPriorityDue
 import dev.fanfly.wingslog.feature.notifications.permission.NotificationPermission
 import dev.fanfly.wingslog.feature.notifications.permission.PermissionState
 import dev.fanfly.wingslog.feature.sync.data.SyncPreferences
@@ -95,23 +90,11 @@ class NotificationSettingsViewModel(
     update { it.withAllEnabled(false) }
   }
 
-  fun onSquawkPriorityToggled(enabled: Boolean) =
-    update { it.withSquawkPriority(enabled) }
+  fun onPriorityDueToggled(enabled: Boolean) =
+    update { it.withPriorityDue(enabled) }
 
-  fun onOverdueToggled(enabled: Boolean) = update { it.withOverdue(enabled) }
-  fun onDueSoonToggled(enabled: Boolean) = update { it.withDueSoon(enabled) }
-
-  fun onAircraftActivityToggled(enabled: Boolean) =
-    update { it.withAircraftActivity(enabled) }
-
-  fun onSquawkActivityToggled(enabled: Boolean) =
-    update { it.withSquawkActivity(enabled) }
-
-  fun onTaskActivityToggled(enabled: Boolean) =
-    update { it.withTaskActivity(enabled) }
-
-  fun onLogActivityToggled(enabled: Boolean) =
-    update { it.withLogActivity(enabled) }
+  fun onCollaborationToggled(enabled: Boolean) =
+    update { it.withCollaboration(enabled) }
 
   private fun update(mutate: (NotificationSettings) -> NotificationSettings) {
     viewModelScope.launch { write(mutate) }

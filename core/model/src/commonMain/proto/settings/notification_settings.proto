@@ -20,33 +20,39 @@ message NotificationSettings {
               // rather than reused so an old synced doc's stray `true` byte on this field number can
               // never be misread as a future field's value.
 
-  // --- Urgency — device-local detection, no account required ---
+  // Settings collapsed from eight fields to two — priority_due_disabled and collaboration_disabled
+  // below — down to three toggles total including all_disabled (design decision, 2026-08-26).
+  // Reserved rather than reused, same reasoning as field 2: squawk_priority_disabled, overdue_disabled,
+  // due_soon_disabled, aircraft_activity_disabled, squawk_activity_disabled, task_activity_disabled,
+  // log_activity_disabled.
+  reserved 3, 4, 5, 6, 7, 8, 9;
+
+  // --- Priority & due updates — device-local detection, no account required ---
   //
-  // squawk_priority_disabled is NOT N2-only, and the distinction matters to anyone changing it. A
-  // squawk escalation — including to AOG, treated the same as any other priority raise — is
-  // detectable from a single write, so the server fan-out reports one too (design §7.5), and it
-  // gates that push on this same field — not on squawk_activity_disabled. What arrives is an urgency
-  // notification (N2 channel, N2 priority).
+  // Covers what used to be three fields: a squawk priority escalation (including to AOG, treated the
+  // same as any other raise) and a task crossing into overdue or due-soon.
+  //
+  // priority_due_disabled is NOT N2-only, and the distinction matters to anyone touching it. A squawk
+  // escalation is detectable from a single write, so the server fan-out reports one too (design §7.5),
+  // and it gates that push on this same field. What arrives is an urgency notification (N2 channel, N2
+  // priority).
   //
   // Two consequences worth knowing before touching this:
-  //   * The server READS this. It is not device-only state, so it cannot be repurposed or re-scoped
-  //     as though the scanner were its only consumer.
-  //   * A member of a shared aircraft can be notified with EVERY collaboration class below switched
-  //     off, because a priority escalation travels under squawk_priority_disabled. That is intended:
-  //     muting routine squawk activity is not asking to stop hearing that a squawk got worse.
+  //   * The server READS this, for the escalation push. It is not device-only state, so it cannot be
+  //     repurposed or re-scoped as though the scanner were its only consumer.
+  //   * A member of a shared aircraft can be notified with collaboration_disabled on, because a
+  //     priority escalation travels under this field instead. That is intended: muting collaboration
+  //     activity is not asking to stop hearing that a squawk got worse.
   //
-  // The last two stay genuinely device-only: no write happens when a due date passes, so no trigger
-  // can fire and the server has nothing to report (§7.5).
-  bool squawk_priority_disabled = 3;     // any priority escalation, including to AOG, and reopens
-  bool overdue_disabled = 4;             // -> DueStatus.OVERDUE — device-only
-  bool due_soon_disabled = 5;            // -> DueStatus.DUE_SOON — device-only
+  // The due-soon/overdue half stays genuinely device-only: no write happens when a due date passes, so
+  // no trigger can fire and the server has nothing to report (§7.5).
+  bool priority_due_disabled = 10;
 
   // --- Collaboration (N1) — server fan-out, needs a real account + cloud sync ---
   //
-  // These four gate ACTIVITY only — "Dave Chen made 5 changes to tasks". A squawk escalation is
-  // gated above instead, so switching all four off still leaves grounding alerts arriving.
-  bool aircraft_activity_disabled = 6;   // Aircraft record edited
-  bool squawk_activity_disabled = 7;     // squawk create/edit/dismiss/reopen/delete
-  bool task_activity_disabled = 8;       // task create/edit/force-comply/delete
-  bool log_activity_disabled = 9;        // log create/edit/delete
+  // Covers what used to be four fields — aircraft/squawk/task/log record activity from other crew —
+  // collapsed since the settings screen no longer distinguishes them. Gates ACTIVITY only —
+  // "Dave Chen made 5 changes to tasks". A squawk escalation is gated above instead, so switching this
+  // off still leaves grounding alerts arriving.
+  bool collaboration_disabled = 11;
 }

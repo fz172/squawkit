@@ -9,11 +9,7 @@ import {
 } from "../sharing/sharingModels.js";
 import { NotificationSettings } from "../generated/proto/settings/notification_settings.js";
 import { payloadBytes, type SyncDocWire } from "../shared/syncDocWire.js";
-import {
-  notificationSettingsDocPath,
-  RECORD_TYPE,
-  type RecordType,
-} from "./notificationModels.js";
+import { notificationSettingsDocPath } from "./notificationModels.js";
 
 /**
  * Who should hear about a write, and whether they have asked to.
@@ -95,30 +91,25 @@ export async function readNotificationSettings(uid: string): Promise<Notificatio
   }
 }
 
-/** Does this recipient want collaboration activity of this record type? */
-export function honorsActivity(settings: NotificationSettings, recordType: RecordType): boolean {
+/**
+ * Does this recipient want collaboration activity — "Dave Chen made 5 changes to tasks"? One toggle
+ * now covers aircraft/squawk/task/log records alike (design decision, 2026-08-26); `recordType` no
+ * longer distinguishes anything here, but callers still pass it for the push payload's own content.
+ */
+export function honorsActivity(settings: NotificationSettings): boolean {
   if (settings.allDisabled) return false;
-  switch (recordType) {
-    case RECORD_TYPE.AIRCRAFT:
-      return !settings.aircraftActivityDisabled;
-    case RECORD_TYPE.SQUAWK:
-      return !settings.squawkActivityDisabled;
-    case RECORD_TYPE.TASK:
-      return !settings.taskActivityDisabled;
-    case RECORD_TYPE.LOG:
-      return !settings.logActivityDisabled;
-  }
+  return !settings.collaborationDisabled;
 }
 
 /**
  * Does this recipient want a §7.5 escalation?
  *
- * Gated on the **urgency** toggle, not the squawk-activity one, because what the recipient sees is
- * an urgency notification: N2's title, N2's body, N2's channel — including at AOG, which is not its
- * own tier and has no toggle of its own (design decision, 2026-08-26). Someone who muted routine
- * squawk *activity* has not asked to stop hearing that a squawk's priority got worse.
+ * Gated on the **priority/due** toggle, not the collaboration one, because what the recipient sees
+ * is an urgency notification: N2's title, N2's body, N2's channel — including at AOG, which is not
+ * its own tier and has no toggle of its own (design decision, 2026-08-26). Someone who muted
+ * collaboration activity has not asked to stop hearing that a squawk's priority got worse.
  */
 export function honorsEscalation(settings: NotificationSettings): boolean {
   if (settings.allDisabled) return false;
-  return !settings.squawkPriorityDisabled;
+  return !settings.priorityDueDisabled;
 }

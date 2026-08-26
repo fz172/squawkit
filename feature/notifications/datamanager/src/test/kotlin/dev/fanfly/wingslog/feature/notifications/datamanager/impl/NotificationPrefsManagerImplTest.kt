@@ -122,7 +122,7 @@ class NotificationPrefsManagerImplTest {
   @Test
   fun cloudSyncOff_rowExists_resolvesToTheRow() = runTest {
     cloudSyncEnabled = false
-    val settings = NotificationSettings(squawk_priority_disabled = true)
+    val settings = NotificationSettings(priority_due_disabled = true)
     every { store.observe(any(), any()) } returns flowOf(testEntity(settings))
 
     val state = manager.observe()
@@ -133,7 +133,7 @@ class NotificationPrefsManagerImplTest {
 
   @Test
   fun rowExists_resolvesToTheRow_regardlessOfCursor() = runTest {
-    val settings = NotificationSettings(overdue_disabled = true)
+    val settings = NotificationSettings(collaboration_disabled = true)
     every { store.observe(any(), any()) } returns flowOf(testEntity(settings))
 
     val state = manager.observe()
@@ -218,7 +218,7 @@ class NotificationPrefsManagerImplTest {
     } returns
       testCursor(hydrated = false)
 
-    val result = manager.update { it.copy(squawk_priority_disabled = true) }
+    val result = manager.update { it.copy(priority_due_disabled = true) }
 
     assertThat(result.isFailure).isTrue()
     coVerify(exactly = 0) { store.put(any(), any(), any()) }
@@ -226,16 +226,16 @@ class NotificationPrefsManagerImplTest {
 
   @Test
   fun update_whileResolved_copiesOntoTheResolvedValue() = runTest {
-    val existing = NotificationSettings(overdue_disabled = true)
+    val existing = NotificationSettings(collaboration_disabled = true)
     every { store.observe(any(), any()) } returns flowOf(testEntity(existing))
 
-    val result = manager.update { it.copy(squawk_priority_disabled = true) }
+    val result = manager.update { it.copy(priority_due_disabled = true) }
 
     assertThat(result.isSuccess).isTrue()
     coVerify {
       store.put(
         "main",
-        NotificationSettings(overdue_disabled = true, squawk_priority_disabled = true),
+        NotificationSettings(collaboration_disabled = true, priority_due_disabled = true),
         any(),
       )
     }
