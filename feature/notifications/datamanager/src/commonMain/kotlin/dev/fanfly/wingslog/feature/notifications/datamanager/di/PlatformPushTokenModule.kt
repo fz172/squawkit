@@ -6,9 +6,8 @@ import org.koin.core.module.Module
  * The platform's [dev.fanfly.wingslog.feature.notifications.datamanager.PushTokenRegistrar]
  * binding, in the same `expect`/`actual` shape as `platformNotificationDisplayModule`.
  *
- * Platform-split rather than common because the two values the registrar stamps onto the token doc
- * — `platform` and `appVersion` — are only knowable per host, and Android's version needs a
- * `Context` that `commonMain` has no way to reach.
+ * Platform-split rather than common because `platform` — the one value the registrar stamps onto
+ * the token doc beyond the token itself — is only knowable per host.
  *
  * **Only Android binds one today.** iOS is P5 (its token arrives through APNs, which needs the
  * certificates and entitlements of #503 first) and web is P6 (no push transport in V1 — an open tab

@@ -146,7 +146,6 @@ async function registerDevice(uid: string, installationId: string, token: string
   await adminDb.doc(`users/${uid}/${"push_devices"}/${installationId}`).set({
     token,
     platform: "android",
-    appVersion: "1.0.0",
     enabled,
     updatedAt: new Date(),
   });

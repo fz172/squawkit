@@ -10,7 +10,6 @@ import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 import org.koin.core.module.Module
 import org.koin.dsl.module
-import platform.Foundation.NSBundle
 
 /**
  * Mirrors the Android actual (issue #506) — see its comments for the shape and reasoning.
@@ -28,7 +27,12 @@ import platform.Foundation.NSBundle
  * signed-in uid straight from `FirebaseAuth` on its own side.
  */
 actual val platformPushTokenModule: Module = module {
-  single { InstallIdStore(db = get<WingsLogDatabase>(), writeLock = get<DatabaseWriteLock>()) }
+  single {
+    InstallIdStore(
+      db = get<WingsLogDatabase>(),
+      writeLock = get<DatabaseWriteLock>()
+    )
+  }
 
   single<PushTokenRegistrar> {
     PushTokenRegistrarImpl(
@@ -36,7 +40,6 @@ actual val platformPushTokenModule: Module = module {
       firestore = get<FirebaseFirestore>(),
       installIdStore = get<InstallIdStore>(),
       platform = "ios",
-      appVersion = iosAppVersion(),
     )
   }
 
@@ -44,10 +47,3 @@ actual val platformPushTokenModule: Module = module {
   // (a second registrar would mean two authStateChanged collectors racing to write the same doc).
   single<PushTokenSink> { get<PushTokenRegistrar>() }
 }
-
-/**
- * Read once at Koin-build time, same reasoning as the Android actual's `appVersionName()`: fixed at
- * install, so re-reading per write would be wasted work for a long-lived singleton.
- */
-private fun iosAppVersion(): String =
-  (NSBundle.mainBundle.infoDictionary?.get("CFBundleShortVersionString") as? String) ?: "Unknown"

@@ -142,7 +142,6 @@ describe("users/{uid}/push_devices rules", () => {
       setDoc(doc(alice, "users/alice/push_devices/install-1"), {
         token: "tok-a",
         platform: "android",
-        appVersion: "1.0.0",
         enabled: true,
       }),
     );

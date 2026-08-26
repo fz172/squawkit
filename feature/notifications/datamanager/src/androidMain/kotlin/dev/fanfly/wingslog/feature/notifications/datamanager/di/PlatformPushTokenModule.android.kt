@@ -1,7 +1,5 @@
 package dev.fanfly.wingslog.feature.notifications.datamanager.di
 
-import android.content.Context
-import android.content.pm.PackageManager
 import dev.fanfly.wingslog.core.storage.DatabaseWriteLock
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
 import dev.fanfly.wingslog.feature.notifications.datamanager.InstallIdStore
@@ -12,12 +10,16 @@ import dev.fanfly.wingslog.feature.notifications.model.PushTokenSink
 import dev.fanfly.wingslog.feature.notifications.model.SignedInUid
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.firestore.FirebaseFirestore
-import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
 actual val platformPushTokenModule: Module = module {
-  single { InstallIdStore(db = get<WingsLogDatabase>(), writeLock = get<DatabaseWriteLock>()) }
+  single {
+    InstallIdStore(
+      db = get<WingsLogDatabase>(),
+      writeLock = get<DatabaseWriteLock>()
+    )
+  }
 
   // Lazy, and pulled up by PushTokenBootstrap below rather than by its own createdAtStart: the
   // eager-Firebase startup landmine on `iosFirebaseLazyInit` is about iOS, and this is the Android
@@ -30,7 +32,6 @@ actual val platformPushTokenModule: Module = module {
       firestore = get<FirebaseFirestore>(),
       installIdStore = get<InstallIdStore>(),
       platform = "android",
-      appVersion = androidContext().appVersionName(),
     )
   }
 
@@ -52,15 +53,4 @@ actual val platformPushTokenModule: Module = module {
   // exist yet, so without something that reads the *current* token at startup a device that already
   // had one never registers at all. See PushTokenBootstrap's KDoc for the failure this fixes.
   single(createdAtStart = true) { PushTokenBootstrap(sink = get<PushTokenSink>()) }
-}
-
-/**
- * Read once at Koin-build time. `versionName` cannot change during a process's lifetime, and the
- * registrar is a long-lived singleton — re-reading it per write would be a package-manager call per
- * token refresh for a value that is fixed at install.
- */
-private fun Context.appVersionName(): String = try {
-  packageManager.getPackageInfo(packageName, 0).versionName ?: "Unknown"
-} catch (_: PackageManager.NameNotFoundException) {
-  "Unknown"
 }
