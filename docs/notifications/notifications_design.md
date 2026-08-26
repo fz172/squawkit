@@ -1218,6 +1218,13 @@ that never calls it — leaves the previous account holding a document with a li
 prunes it, because `pruneDeadTokens` only fires on a token FCM reports as gone. Without the address,
 that account's notification text keeps arriving at a device somebody else is now using.
 
+On the send side, every sign-out goes through `SignOutCoordinator`, which clears this device's
+registration before `authManager.logOut()` and bounds the attempt. It is one shared call rather than
+a sequence each caller repeats, because it was already wrong in the second place that tried:
+corruption recovery signed out directly and cleared nothing (#550). The clear is best-effort by
+nature — offline it cannot land, and no sign-out at all happens on a shared device nobody signs out
+of — which is why the receive-side check exists rather than being redundant with it.
+
 Because one message addresses a whole fan-out, the field is stamped per recipient at send time
 rather than built into the payload: `sendPush` groups targets by uid and sends one multicast per
 recipient. An **absent** `recipientUid` means "a server older than this field" and must still render,

@@ -10,7 +10,7 @@ import dev.fanfly.wingslog.feature.ads.datamanager.AdConsentManager
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.developeroptions.datamanager.DeveloperOptionsManager
 import dev.fanfly.wingslog.feature.notifications.datamanager.NotificationPrefsManager
-import dev.fanfly.wingslog.feature.notifications.datamanager.PushTokenRegistrar
+import dev.fanfly.wingslog.feature.notifications.datamanager.SignOutCoordinator
 import dev.fanfly.wingslog.feature.notifications.permission.NotificationPermission
 import dev.fanfly.wingslog.feature.settings.data.SettingsViewModel
 import dev.fanfly.wingslog.feature.settings.developeroptions.DeveloperOptionsViewModel
@@ -31,10 +31,7 @@ val settingsModule = module {
       get<AdConsentManager>(),
       get<NotificationPermission>(),
       get<NotificationPrefsManager>(),
-      // getOrNull, not get: only Android binds a registrar today (iOS is P5, web is P6 and never
-      // will). A hard get() here would turn "this platform has no push transport" into a startup
-      // crash on the Settings screen.
-      getOrNull<PushTokenRegistrar>(),
+      get<SignOutCoordinator>(),
     )
   }
   viewModel { DeveloperOptionsViewModel(get<DeveloperOptionsManager>(), get<AdConsentManager>()) }

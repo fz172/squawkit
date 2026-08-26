@@ -71,6 +71,8 @@ kotlin {
       implementation(project(":feature:ads:viewing"))
       // IosNotificationTapDelegate — installed from MainViewController.kt before launch finishes.
       implementation(project(":feature:notifications:viewing"))
+      // For SignOutCoordinator, which the corruption-recovery dialog signs out through (#550).
+      implementation(project(":feature:notifications:datamanager"))
       // BgTaskUrgencyScanScheduler — its BGTaskScheduler identifier is registered from
       // MainViewController.kt before launch finishes, same as the blob scan's.
       implementation(project(":feature:notifications:engine"))

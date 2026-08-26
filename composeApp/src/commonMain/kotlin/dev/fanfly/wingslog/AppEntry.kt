@@ -20,7 +20,6 @@ import dev.fanfly.wingslog.core.analytics.LocalAnalytics
 import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.core.lifecycle.AppForegroundObserver
 import dev.fanfly.wingslog.core.lifecycle.compose.AppForegroundEffect
-import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.storage.DatabaseHealth
 import dev.fanfly.wingslog.core.storage.DatabaseIntegrityChecker
@@ -28,6 +27,7 @@ import dev.fanfly.wingslog.core.ui.theme.AppearanceController
 import dev.fanfly.wingslog.core.ui.theme.WingslogTheme
 import dev.fanfly.wingslog.core.ui.theme.resolveDarkTheme
 import dev.fanfly.wingslog.feature.login.AuthFlow
+import dev.fanfly.wingslog.feature.notifications.datamanager.SignOutCoordinator
 import dev.fanfly.wingslog.feature.sharing.update.RedeemHost
 import dev.fanfly.wingslog.feature.shell.AdaptiveShellRoute
 import dev.fanfly.wingslog.feature.shell.NavigateToLoginOnSignOut
@@ -50,7 +50,7 @@ private const val GRAPH_SHELL = "graph_shell"
 fun AppEntry() {
   val health: DatabaseHealth = koinInject()
   val checker: DatabaseIntegrityChecker = koinInject()
-  val authManager: AuthManager = koinInject()
+  val signOutCoordinator: SignOutCoordinator = koinInject()
   val appCapability: AppCapability = koinInject()
   val analytics: AnalyticsManager = koinInject()
   val appearanceController: AppearanceController = koinInject()
@@ -70,7 +70,11 @@ fun AppEntry() {
           // wipeAllData() is now suspend (async-generated queries); log out only after it completes.
           scope.launch {
             checker.wipeAllData()
-            authManager.logOut()
+            // Through the coordinator, not authManager directly: this path used to sign out without
+            // ever clearing this device's push registration (#550). wipeAllData() deliberately
+            // spares device_config, so the install id survives recovery and the next account reuses
+            // the same push_devices doc id while the previous one keeps a live token.
+            signOutCoordinator.signOut()
           }
         },
       )
