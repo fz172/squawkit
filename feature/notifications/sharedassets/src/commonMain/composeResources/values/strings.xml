@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <!-- N2 urgency notification bodies (design §6.5). Single-crossing forms are used when a scan
+       finds exactly one crossing for an (aircraft, tier); the plural forms replace them once a scan
+       finds two or more, per PRD §6.6's "3 inspections are now overdue" example.
+
+       Titles carry no dynamic content — the record's own title is user-authored and can be long,
+       so it (and the aircraft) live in the body instead, on their own line, rather than folded into
+       a run-on title or sentence. Single-crossing bodies are three segments: tail number + what
+       changed, the record's own title, then a tap hint — separated by a blank line (\n\n) rather
+       than a bare line break, for visual breathing room between them. \n\n, not a single \n, is
+       deliberate: notification bodies are plain text on all three platforms (Android's
+       BigTextStyle, iOS's UNNotificationContent.body, the Web Notification API's body) — none of
+       them support HTML or rich text for paragraph spacing, so a literal blank line is the only
+       lever there is. -->
+
+  <string name="notification_title_grounded">⚠ AOG</string>
+  <string name="notification_body_grounded_single">%1$s: raised to AOG — aircraft grounded\n\n%2$s</string>
+  <string name="notification_body_grounded_plural">%1$s: %2$d squawks raised this aircraft to AOG</string>
+
+  <!-- Fires only when a squawk reaches HIGH — AOG has its own Grounded tier above, and the
+       settings toggle this reads ("Squawk priority increases") is scoped to "becomes high priority
+       or worse" (see notification_settings_squawk_priority_subtitle in :settings). A LOW-to-MEDIUM
+       or MEDIUM-to-HIGH-adjacent bump below HIGH still moves the watermark so a later real crossing
+       is detected correctly, but is not itself reportable. -->
+  <string name="notification_title_priority_raised">Priority raised</string>
+  <string name="notification_body_priority_raised_single">%1$s: priority raised from %2$s to %3$s\n\n%4$s</string>
+  <string name="notification_body_priority_raised_plural">%1$s: %2$d squawks are now high priority</string>
+
+  <string name="notification_title_overdue">⚠ Overdue</string>
+  <string name="notification_body_overdue_single">%1$s: task is now overdue\n\n%2$s</string>
+  <string name="notification_body_overdue_plural">%1$s: %2$d inspections are now overdue</string>
+
+  <string name="notification_title_due_soon">Due soon</string>
+  <string name="notification_body_due_soon_single">%1$s: task is due soon\n\n%2$s</string>
+  <string name="notification_body_due_soon_plural">%1$s: %2$d inspections are due soon</string>
+
+  <!-- N1 collaboration activity (design §8.4). Web-only in V1: an open tab detects a
+       collaborator's write through the sync engine, so there is no push transport involved. The
+       title carries the tail number and section because both are short and bounded, unlike a
+       user-authored record title; the count and the actor live in the body. -->
+  <string name="notification_n1_title">%1$s · %2$s</string>
+  <string name="notification_n1_body_single">%1$s made a change to %2$s</string>
+  <string name="notification_n1_body_plural">%1$s made %2$d changes to %3$s</string>
+  <!-- Used when the share roster read comes back empty — a revoked or not-yet-synced member. -->
+  <string name="notification_n1_actor_fallback">A collaborator</string>
+
+  <!-- Section labels. Title case for notification_n1_title, lower case mid-sentence in the bodies. -->
+  <string name="notification_n1_section_squawks">Squawks</string>
+  <string name="notification_n1_section_tasks">Tasks</string>
+  <string name="notification_n1_section_logbook">Logbook</string>
+  <string name="notification_n1_section_squawks_lower">squawks</string>
+  <string name="notification_n1_section_tasks_lower">tasks</string>
+  <string name="notification_n1_section_logbook_lower">logbook entries</string>
+  <!-- Aircraft-record activity (make/model/tail edits). Server-side N1 only — the web detector does
+       not cover the Aircraft record, so these are unused there. -->
+  <string name="notification_n1_section_aircraft">Aircraft</string>
+  <string name="notification_n1_section_aircraft_lower">the aircraft</string>
+
+  <!-- Sent once when an aircraft trips the hourly send ceiling (design §7.4), after which N1 goes
+       quiet for the rest of the hour. Deliberately reports a volume and names no record: the whole
+       point is that there are too many to summarize honestly. -->
+  <string name="notification_n1_title_high_volume">%1$s · A lot of activity</string>
+  <string name="notification_n1_body_high_volume">Too many changes to list. Open the aircraft to catch up.</string>
+
+  <!-- N1 escalation bodies (design §7.5). Deliberately NOT the N2 bodies above, even though both
+       report the same crossing: the server knows WHO made the change and the device-local scanner
+       does not. Both can fire for one squawk — the push within seconds, N2 at the next scan — and
+       naming the actor is what makes the second one worth reading instead of a duplicate.
+
+       Same three-segment shape as the N2 single-crossing bodies: tail number + what changed, then
+       the squawk's own title on its own line after a blank one. %2$s is the collaborator; the
+       client substitutes notification_n1_actor_fallback when the server sends it empty. -->
+  <string name="notification_n1_body_squawk_created">%1$s: %2$s created a new squawk issue\n\n%3$s</string>
+  <string name="notification_n1_body_squawk_raised">%1$s: %2$s raised the priority of 1 squawk issue\n\n%3$s</string>
+  <!-- Paired with notification_n1_body_squawk_created below AOG: "Priority raised" would contradict
+       a body that says the squawk was just created. At AOG the grounding stays the headline
+       regardless of how the squawk got there, so that case keeps notification_title_grounded. -->
+  <string name="notification_n1_title_squawk_created">New squawk</string>
+
+  <!-- The "from" side of notification_body_priority_raised_single's "from X to Y" — a squawk can
+       escalate from resolved (reopened) or from any open rank below High. -->
+  <string name="squawk_priority_label_resolved">Resolved</string>
+  <string name="squawk_priority_label_low">Low</string>
+  <string name="squawk_priority_label_medium">Medium</string>
+  <string name="squawk_priority_label_high">High</string>
+</resources>

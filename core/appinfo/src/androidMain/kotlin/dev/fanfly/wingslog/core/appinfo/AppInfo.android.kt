@@ -11,7 +11,7 @@ actual fun getAppVersion(): String {
     val packageInfo =
       context.packageManager.getPackageInfo(context.packageName, 0)
     packageInfo.versionName ?: "Unknown"
-  } catch (e: PackageManager.NameNotFoundException) {
+  } catch (_: PackageManager.NameNotFoundException) {
     "Unknown"
   }
 }

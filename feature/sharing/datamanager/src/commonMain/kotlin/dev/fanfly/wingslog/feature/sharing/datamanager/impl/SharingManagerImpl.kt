@@ -6,36 +6,34 @@ import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.aircraft.CertExpireLimit
 import dev.fanfly.wingslog.aircraft.CertificateType
 import dev.fanfly.wingslog.aircraft.Technician
-import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.model.sharing.SharedAircraftRef
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.DatabaseWriteLock
 import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.EntityStoreFactory
-import dev.fanfly.wingslog.core.storage.blob.sha256Hex
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.sharing.model.AircraftShareState
 import dev.fanfly.wingslog.feature.sharing.model.InviteLink
 import dev.fanfly.wingslog.feature.sharing.model.InvitePreview
-import dev.fanfly.wingslog.feature.sharing.model.SHARE_URL_BASE
 import dev.fanfly.wingslog.feature.sharing.model.PendingInvite
 import dev.fanfly.wingslog.feature.sharing.model.RedeemOutcome
+import dev.fanfly.wingslog.feature.sharing.model.SHARE_URL_BASE
 import dev.fanfly.wingslog.feature.sharing.model.ShareMember
 import dev.fanfly.wingslog.feature.sharing.model.ShareRole
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
-import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 import dev.gitlive.firebase.firestore.FirebaseFirestoreException
 import dev.gitlive.firebase.firestore.FirestoreExceptionCode
-import dev.gitlive.firebase.firestore.code
 import dev.gitlive.firebase.firestore.Timestamp
+import dev.gitlive.firebase.firestore.code
 import dev.gitlive.firebase.firestore.toMilliseconds
-import dev.gitlive.firebase.functions.functions
+import dev.gitlive.firebase.functions.FirebaseFunctions
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -44,10 +42,8 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.update
 import kotlinx.serialization.Serializable
-import kotlin.io.encoding.Base64
-import kotlin.io.encoding.ExperimentalEncodingApi
-import kotlin.random.Random
 import kotlin.time.Clock
 import dev.fanfly.wingslog.core.model.sharing.ShareRole as ProtoShareRole
 
@@ -57,16 +53,14 @@ import dev.fanfly.wingslog.core.model.sharing.ShareRole as ProtoShareRole
  * `observeMyRole` is answered locally from the refs store so it's instant and offline-correct.
  */
 class SharingManagerImpl(
-  private val appCapability: AppCapability,
   private val auth: FirebaseAuth,
   private val firestore: FirebaseFirestore,
   storeFactory: EntityStoreFactory,
   private val db: WingsLogDatabase,
   private val writeLock: DatabaseWriteLock,
   private val technicianManager: TechnicianManager,
+  private val functions: FirebaseFunctions,
 ) : SharingManager {
-
-  private val functions = Firebase.functions(FUNCTIONS_REGION)
   private val refStore =
     storeFactory.create<SharedAircraftRef>(CollectionKind.SharedAircraftRef)
   private val aircraftStore =
@@ -76,17 +70,11 @@ class SharingManagerImpl(
    * The ACL for [acId] under [hostUid]. Keyed by host since #204: an aircraft id is unique only
    * within a tree, so a globally-keyed ACL could be claimed by anyone who knew the id.
    */
-  /**
-   * Sharing is gated off in this build (#134). The UI hides its entry points, but the ambient work
-   * has to stop too: the mirror publish runs at app start and the roster/linked-technician listeners
-   * are live Firestore subscriptions. Hiding a button does not stop a listener.
-   */
-  private val gatedOff: Boolean get() = !appCapability.isAircraftSharingSupported
-
-  private fun shareDoc(hostUid: String, acId: String) = firestore.collection(SHARES)
-    .document(hostUid)
-    .collection(SHARE_AIRCRAFT)
-    .document(acId)
+  private fun shareDoc(hostUid: String, acId: String) =
+    firestore.collection(SHARES)
+      .document(hostUid)
+      .collection(SHARE_AIRCRAFT)
+      .document(acId)
 
   /**
    * Whose tree this aircraft lives in — ours if we own it, otherwise the host named on our ref.
@@ -115,12 +103,28 @@ class SharingManagerImpl(
     observeHostUid(acId).first()
       ?: error("Not a member of aircraft $acId; cannot resolve its share")
 
-  override fun observeShareState(acId: String): Flow<AircraftShareState> =
-    if (gatedOff) flowOf(AircraftShareState()) else observeHostUid(acId).flatMapLatest { hostUid ->
-      if (hostUid == null) flowOf(AircraftShareState()) else shareStateIn(hostUid, acId)
-    }
+  /**
+   * Bumped after a successful [createInvite] to force the roster listener in [observeShareState]
+   * to resubscribe. A denied `.snapshots()` listener (no ACL yet) is CLOSED by the underlying SDK —
+   * there is no retry once the rules start allowing the read, so without this the very first invite
+   * on a never-shared aircraft would bootstrap the ACL server-side while our still-dead listener
+   * never notices, leaving the roster (and the invite the CODE view is about to show) stuck.
+   */
+  private val rosterRetryTrigger = MutableStateFlow(0)
 
-  private fun shareStateIn(hostUid: String, acId: String): Flow<AircraftShareState> {
+  override fun observeShareState(acId: String): Flow<AircraftShareState> =
+    combine(observeHostUid(acId), rosterRetryTrigger) { hostUid, _ -> hostUid }
+      .flatMapLatest { hostUid ->
+        if (hostUid == null) flowOf(AircraftShareState()) else shareStateIn(
+          hostUid,
+          acId
+        )
+      }
+
+  private fun shareStateIn(
+    hostUid: String,
+    acId: String
+  ): Flow<AircraftShareState> {
     val myUid = auth.currentUser?.uid
     val root = shareDoc(hostUid, acId).snapshots.map {
       it.takeIf { s -> s.exists }
@@ -136,7 +140,8 @@ class SharingManagerImpl(
           // No `revoked` / `useCount` to filter on any more: cancelling and redeeming both DELETE the
           // code, so a doc that still exists is a live invite (#164). Expired ones are filtered by
           // time — the TTL sweep may not have reaped them yet.
-          val now = Clock.System.now().toEpochMilliseconds()
+          val now = Clock.System.now()
+            .toEpochMilliseconds()
           inviteSnaps.documents
             .map { it.id to it.data<InviteWire>() }
             .map { (codeId, i) ->
@@ -185,14 +190,44 @@ class SharingManagerImpl(
       // Recover each invite's share URL from the device-local cache (the secret isn't in Firestore),
       // so a returning owner can re-show the QR/link. map's transform is suspend, so the DB read fits.
       .map { state ->
-        state.copy(invites = state.invites.map { it.copy(code = localInviteCode(it.codeId)) })
+        state.copy(invites = state.invites.map {
+          it.copy(
+            code = localInviteCode(
+              it.codeId
+            )
+          )
+        })
       }
       // A revoked member's roster listener is denied the instant they leave `memberRoles` — well
       // before the ref tombstone reaches their device. Surface that as state rather than an error:
       // it is the earliest signal a member has that their access ended, and the screen watching this
       // roster has to react to it. Rules don't flap, so a denial is a real answer, not a hiccup.
+      //
+      // On our OWN aircraft, though, a denial means something else: there is no ACL yet — no invite
+      // has ever been created (aircraft_shares match block) — not a revocation. Stand in as the sole
+      // member from the locally-known owner role instead of surfacing a dead-end "no access"; the
+      // real member doc backfills itself (§7.2) once the first invite bootstraps the share.
       .catch { e ->
-        if (isPermissionDenied(e)) emit(AircraftShareState(accessDenied = true)) else throw e
+        if (!isPermissionDenied(e)) throw e
+        if (hostUid == myUid) {
+          val user = auth.currentUser
+          emit(
+            AircraftShareState(
+              members = listOf(
+                ShareMember(
+                  uid = hostUid,
+                  displayName = user?.displayName.orEmpty(),
+                  role = ShareRole.OWNER,
+                  photoUrl = user?.photoURL,
+                  isHost = true,
+                  isSelf = true,
+                ),
+              ),
+            ),
+          )
+        } else {
+          emit(AircraftShareState(accessDenied = true))
+        }
       }
   }
 
@@ -264,6 +299,11 @@ class SharingManagerImpl(
       db.schemaQueries.upsertConfig(uid, inviteCodeKey(res.codeId), res.code)
     }
 
+    // The function just bootstrapped the ACL server-side. If this was the first invite on a
+    // never-shared aircraft, our roster listener was denied before the ACL existed and the SDK
+    // closed it for good — resubscribe so the CODE view about to open can actually see this invite.
+    rosterRetryTrigger.update { it + 1 }
+
     InviteLink(
       code = res.code,
       formattedCode = res.formattedCode,
@@ -280,32 +320,39 @@ class SharingManagerImpl(
     functions.httpsCallable("cancelAircraftShareInvite")
       .invoke(CancelInviteRequest(aircraftId = acId, codeId = codeId))
     val uid = requireUid()
-    writeLock.withLock { db.schemaQueries.deleteConfig(uid, inviteCodeKey(codeId)) }
+    writeLock.withLock {
+      db.schemaQueries.deleteConfig(
+        uid,
+        inviteCodeKey(codeId)
+      )
+    }
     Unit
   }
 
-  override suspend fun redeemInvite(code: String): Result<RedeemOutcome> = runCatching {
-    val res = functions.httpsCallable("redeemAircraftShareInvite")
-      .invoke(RedeemRequest(code = code))
-      .data<RedeemResponse>()
-    RedeemOutcome(
-      aircraftId = res.aircraftId,
-      hostUid = res.hostUid,
-      role = res.role.toModel(),
-      alreadyMember = res.alreadyMember,
-    )
-  }
+  override suspend fun redeemInvite(code: String): Result<RedeemOutcome> =
+    runCatching {
+      val res = functions.httpsCallable("redeemAircraftShareInvite")
+        .invoke(RedeemRequest(code = code))
+        .data<RedeemResponse>()
+      RedeemOutcome(
+        aircraftId = res.aircraftId,
+        hostUid = res.hostUid,
+        role = res.role.toModel(),
+        alreadyMember = res.alreadyMember,
+      )
+    }
 
-  override suspend fun previewInvite(code: String): Result<InvitePreview> = runCatching {
-    val res = functions.httpsCallable("previewAircraftShareInvite")
-      .invoke(PreviewRequest(code = code))
-      .data<PreviewResponse>()
-    InvitePreview(
-      aircraftLabel = res.aircraftLabel,
-      hostName = res.hostName,
-      role = res.role.toModel(),
-    )
-  }
+  override suspend fun previewInvite(code: String): Result<InvitePreview> =
+    runCatching {
+      val res = functions.httpsCallable("previewAircraftShareInvite")
+        .invoke(PreviewRequest(code = code))
+        .data<PreviewResponse>()
+      InvitePreview(
+        aircraftLabel = res.aircraftLabel,
+        hostName = res.hostName,
+        role = res.role.toModel(),
+      )
+    }
 
   override suspend fun revokeMember(acId: String, uid: String): Result<Unit> =
     runCatching {
@@ -328,7 +375,7 @@ class SharingManagerImpl(
       .invoke(
         UpdateRoleRequest(
           hostUid = hostUidFor(acId),
-            aircraftId = acId,
+          aircraftId = acId,
           memberUid = uid,
           role = role.wire()
         )
@@ -348,69 +395,68 @@ class SharingManagerImpl(
    * still carrying a name from before this existed. Best-effort by design: freshness is eventual,
    * and log snapshots capture whatever is current at signing time.
    */
-  override suspend fun publishTechnicianMirror(alsoPublishTo: String?): Result<Unit> = runCatching {
-    if (gatedOff) return@runCatching
-    val user = auth.currentUser ?: return@runCatching
-    if (user.isAnonymous) return@runCatching
-    val uid = user.uid
+  override suspend fun publishTechnicianMirror(alsoPublishTo: String?): Result<Unit> =
+    runCatching {
+      val user = auth.currentUser ?: return@runCatching
+      if (user.isAnonymous) return@runCatching
+      val uid = user.uid
 
-    val self = technicianManager.observeSelf()
-      .first()
-    // The in-app profile name wins over the Firebase Auth account name. The redeem function seeds
-    // displayName from the auth token because it has nothing else to go on, but the account name
-    // (e.g. from Google) is not what the user edits or expects to see — the self-technician record
-    // is. Same precedence the shell uses for the account row.
-    val update = MemberSelfUpdateWire(
-      displayName = self?.name?.takeIf { it.isNotBlank() }
-        ?: user.displayName?.takeIf { it.isNotBlank() }
-        ?: user.email.orEmpty(),
-      photoUrl = user.photoURL,
-      technicianMirror = self?.toMirrorWire(),
-    )
+      val self = technicianManager.observeSelf()
+        .first()
+      // The in-app profile name wins over the Firebase Auth account name. The redeem function seeds
+      // displayName from the auth token because it has nothing else to go on, but the account name
+      // (e.g. from Google) is not what the user edits or expects to see — the self-technician record
+      // is. Same precedence the shell uses for the account row.
+      val update = MemberSelfUpdateWire(
+        displayName = self?.name?.takeIf { it.isNotBlank() }
+          ?: user.displayName?.takeIf { it.isNotBlank() }
+          ?: user.email.orEmpty(),
+        photoUrl = user.photoURL,
+        technicianMirror = self?.toMirrorWire(),
+      )
 
-    // A just-redeemed aircraft isn't in the local stores yet — its ref is still syncing down — so it
-    // is named explicitly. The ACL check below is what keeps that safe: naming an aircraft we are
-    // not actually a member of publishes nothing.
-    val targets = (memberships(uid) + listOfNotNull(alsoPublishTo)).distinct()
+      // A just-redeemed aircraft isn't in the local stores yet — its ref is still syncing down — so it
+      // is named explicitly. The ACL check below is what keeps that safe: naming an aircraft we are
+      // not actually a member of publishes nothing.
+      val targets = (memberships(uid) + listOfNotNull(alsoPublishTo)).distinct()
 
-    targets.forEach { acId ->
-      // Each target sits in its host's namespace (#204): our own aircraft under us, a shared one
-      // under whoever hosts it. A target we can place in neither is not ours to publish into.
-      val hostUid = observeHostUid(acId).first() ?: return@forEach
+      targets.forEach { acId ->
+        // Each target sits in its host's namespace (#204): our own aircraft under us, a shared one
+        // under whoever hosts it. A target we can place in neither is not ours to publish into.
+        val hostUid = observeHostUid(acId).first() ?: return@forEach
 
-      // The ACL decides whether we're a member at all, and with what role. An own aircraft that was
-      // never shared has no ACL doc — skip it rather than bootstrapping a share nobody asked for.
-      val myRole = shareDoc(hostUid, acId).get()
-        .takeIf { it.exists }
-        ?.data<RootWire>()
-        ?.memberRoles
-        ?.get(uid)
-        ?: return@forEach
+        // The ACL decides whether we're a member at all, and with what role. An own aircraft that was
+        // never shared has no ACL doc — skip it rather than bootstrapping a share nobody asked for.
+        val myRole = shareDoc(hostUid, acId).get()
+          .takeIf { it.exists }
+          ?.data<RootWire>()
+          ?.memberRoles
+          ?.get(uid)
+          ?: return@forEach
 
-      val memberDoc = shareDoc(hostUid, acId).collection(MEMBERS)
-        .document(uid)
-      if (memberDoc.get().exists) {
-        memberDoc.set(update, merge = true)
-      } else {
-        // No doc yet: the hosting owner, who never redeems. Create it with the role the ACL already
-        // grants — rules pin it to exactly that, so this can't mint membership or escalate.
-        memberDoc.set(
-          MemberCreateWire(
-            role = myRole,
-            displayName = update.displayName,
-            photoUrl = update.photoUrl,
-            technicianMirror = update.technicianMirror,
-            addedAt = Timestamp.now(),
-            invitedBy = uid,
-          ),
-        )
+        val memberDoc = shareDoc(hostUid, acId).collection(MEMBERS)
+          .document(uid)
+        if (memberDoc.get().exists) {
+          memberDoc.set(update, merge = true)
+        } else {
+          // No doc yet: the hosting owner, who never redeems. Create it with the role the ACL already
+          // grants — rules pin it to exactly that, so this can't mint membership or escalate.
+          memberDoc.set(
+            MemberCreateWire(
+              role = myRole,
+              displayName = update.displayName,
+              photoUrl = update.photoUrl,
+              technicianMirror = update.technicianMirror,
+              addedAt = Timestamp.now(),
+              invitedBy = uid,
+            ),
+          )
+        }
       }
-    }
-  }.onFailure { logger.w(it) { "Mirror publish failed; retries on next app start" } }
+    }.onFailure { logger.w(it) { "Mirror publish failed; retries on next app start" } }
 
   @OptIn(ExperimentalCoroutinesApi::class)
   override fun observeLinkedTechnicians(): Flow<List<Technician>> {
-    if (gatedOff) return flowOf(emptyList())
     val uid = auth.currentUser?.uid ?: return flowOf(emptyList())
     val scope = EntityScope.userRoot(uid)
     return combine(
@@ -420,7 +466,12 @@ class SharingManagerImpl(
       .distinctUntilChanged()
       .flatMapLatest { acIds ->
         if (acIds.isEmpty()) return@flatMapLatest flowOf(emptyList())
-        combine(acIds.map { acId -> linkedTechniciansIn(acId, uid) }) { perShare ->
+        combine(acIds.map { acId ->
+          linkedTechniciansIn(
+            acId,
+            uid
+          )
+        }) { perShare ->
           perShare.toList()
             .flatten()
         }
@@ -430,7 +481,6 @@ class SharingManagerImpl(
   }
 
   override fun observeLinkedTechnicians(acId: String): Flow<List<Technician>> {
-    if (gatedOff) return flowOf(emptyList())
     val uid = auth.currentUser?.uid ?: return flowOf(emptyList())
     return linkedTechniciansIn(acId, uid).map { it.dedupedByOwner() }
   }
@@ -442,9 +492,16 @@ class SharingManagerImpl(
    * An aircraft that was never shared just yields an empty roster; a denied read degrades to empty
    * rather than taking the caller's whole list down.
    */
-  private fun linkedTechniciansIn(acId: String, selfUid: String): Flow<List<Technician>> =
+  private fun linkedTechniciansIn(
+    acId: String,
+    selfUid: String
+  ): Flow<List<Technician>> =
     observeHostUid(acId).flatMapLatest { hostUid ->
-      if (hostUid == null) flowOf(emptyList()) else membersOf(hostUid, acId, selfUid)
+      if (hostUid == null) flowOf(emptyList()) else membersOf(
+        hostUid,
+        acId,
+        selfUid
+      )
     }
 
   private fun membersOf(
@@ -477,7 +534,6 @@ class SharingManagerImpl(
     return (shared + own).distinct()
   }
 
-
   /**
    * The code for [codeId], if this device minted it. The server stores only the hash, so this cache
    * is the ONLY way to re-show a code — lose it (reinstall, another device) and the invite must be
@@ -497,7 +553,6 @@ class SharingManagerImpl(
 
   companion object {
     private val logger = Logger.withTag("SharingManager")
-    private const val FUNCTIONS_REGION = "us-central1"
     private const val SHARES = "aircraft_shares"
     private const val SHARE_AIRCRAFT = "aircraft"
     private const val MEMBERS = "members"
@@ -642,6 +697,7 @@ private data class CreateInviteRequest(
   val role: String,
   val aircraftLabel: String,
 )
+
 @Serializable
 private data class CreateInviteResponse(
   val code: String = "",
@@ -651,10 +707,14 @@ private data class CreateInviteResponse(
 )
 
 @Serializable
-private data class CancelInviteRequest(val aircraftId: String, val codeId: String)
+private data class CancelInviteRequest(
+  val aircraftId: String,
+  val codeId: String
+)
 
 @Serializable
 private data class PreviewRequest(val code: String)
+
 @Serializable
 private data class PreviewResponse(
   val aircraftLabel: String = "",
@@ -664,6 +724,7 @@ private data class PreviewResponse(
 
 @Serializable
 private data class RedeemRequest(val code: String)
+
 @Serializable
 private data class RedeemResponse(
   val aircraftId: String = "",
@@ -678,6 +739,7 @@ private data class RevokeRequest(
   val aircraftId: String,
   val memberUid: String,
 )
+
 @Serializable
 private data class UpdateRoleRequest(
   val hostUid: String,

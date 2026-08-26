@@ -7,7 +7,6 @@ import dev.fanfly.wingslog.feature.sharing.model.InvitePreview
 import dev.fanfly.wingslog.feature.sharing.model.RedeemOutcome
 import dev.fanfly.wingslog.feature.sharing.model.ShareRole
 import dev.fanfly.wingslog.feature.sharing.viewing.RedeemUiState
-import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.auth.FirebaseUser
 import io.mockk.coEvery
@@ -36,9 +35,6 @@ class RedeemViewModelTest {
   private lateinit var sharing: SharingManager
   private lateinit var auth: FirebaseAuth
   private val authState = MutableStateFlow<FirebaseUser?>(null)
-
-  // Sharing is gated on the build (#134). On for these tests unless a test says otherwise.
-  private var capability = appCapability(sharing = true)
 
   @Before
   fun setUp() {
@@ -69,7 +65,7 @@ class RedeemViewModelTest {
     every { isAnonymous } returns anonymous
   }
 
-  private fun viewModel() = RedeemViewModel(sharingManager = sharing, auth = auth, appCapability = capability)
+  private fun viewModel() = RedeemViewModel(sharingManager = sharing, auth = auth)
 
   @Test
   fun noPendingInvite_isHidden() = runTest {
@@ -258,30 +254,4 @@ class RedeemViewModelTest {
     assertThat(state).isInstanceOf(RedeemUiState.Confirm::class.java)
     assertThat((state as RedeemUiState.Confirm).preview).isNull()
   }
-
-  @Test
-  fun sharingGatedOff_theInviteLinkIsIgnoredEntirely() = runTest {
-    // Off must mean off, not merely hidden. A parked invite would surface the sheet the moment the
-    // gate flipped — long after the user tapped anything — so the link is consumed and dropped.
-    capability = appCapability(sharing = false)
-    val signedIn = user(anonymous = false)
-    authState.value = signedIn
-    every { auth.currentUser } returns signedIn
-    AircraftShareDeepLinks.deliver(SHARE_URL)
-
-    val vm = viewModel()
-
-    assertThat(vm.uiState.value).isEqualTo(RedeemUiState.Hidden)
-    assertThat(AircraftShareDeepLinks.pendingInvite.value).isNull()
-  }
 }
-
-private fun appCapability(sharing: Boolean) = AppCapability(
-  isDeveloperOptionsSupported = false,
-  isAircraftSharingSupported = sharing,
-  isStressTestSupported = false,
-  isCameraCaptureSupported = false,
-  isAnonymousLoginSupported = true,
-  isAppleSignInSupported = false,
-  isSubscriptionSupported = false,
-)

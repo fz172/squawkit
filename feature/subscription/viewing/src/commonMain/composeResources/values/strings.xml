@@ -1,24 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-  <string name="subscription_title">SquawkIt Heavy</string>
+  <string name="subscription_title">Subscription</string>
 
   <!-- Non-subscriber comparison view -->
   <string name="subscription_compare_header">Your all-access pass</string>
-  <string name="subscription_compare_subhead">Core is a complete single-aircraft logbook, backed up and synced. Heavy adds scale, attachments and collaboration.</string>
+  <string name="subscription_compare_subhead">The Basic bundle is free and provides the complete feature set as logbook, backed up and synced. The Pro bundle adds scale, attachments, collaboration and more.</string>
   <!-- Sets expectations before the store paywall opens: SquawkIt never shows a price itself. -->
   <string name="subscription_billing_note">Monthly and annual billing, price and payment method are chosen in the store.</string>
   <string name="subscription_cta_caption">Price shown at checkout. Cancel anytime.</string>
   <string name="subscription_includes_header">What’s included</string>
-  <string name="subscription_col_free">Core</string>
-  <string name="subscription_col_pro">Heavy</string>
+  <string name="subscription_col_free">Basic</string>
+  <string name="subscription_col_pro">Pro</string>
   <string name="subscription_feature_aircraft">Aircraft</string>
   <string name="subscription_feature_records">Logs, tasks &amp; squawks</string>
   <string name="subscription_feature_export">Export to this device</string>
   <string name="subscription_feature_backup">Cloud backup &amp; sync</string>
+  <string name="subscription_feature_ads">Ad-free experience</string>
   <string name="subscription_feature_attachments">Photo &amp; file attachments</string>
   <string name="subscription_feature_email">Email a copy of exports</string>
-  <string name="subscription_feature_sharing">Share aircraft &amp; invite others</string>
-  <string name="subscription_aircraft_free">1</string>
+  <string name="subscription_feature_sharing">Share aircraft &amp; collaborate with others</string>
+  <string name="subscription_aircraft_free">2</string>
   <!-- Announced in place of subscription_cell_unlimited, which is the glyph shown in its cell. -->
   <string name="subscription_aircraft_unlimited">Unlimited</string>
   <!-- Comparison table: the tier does not include this feature. An em dash, not a crossed box. -->
@@ -31,7 +32,7 @@
   <!-- Shown on web, which can use a subscription but never buy one. -->
   <string name="subscription_purchase_on_mobile">Subscribe in the SquawkIt app on iOS or Android. Your subscription works everywhere, including here.</string>
   <!-- The store took payment; the entitlement is still syncing back from the server. -->
-  <string name="subscription_activating">Payment received. Activating SquawkIt Heavy…</string>
+  <string name="subscription_activating">Payment received. Activating SquawkIt Pro…</string>
 
   <!-- Subscriber status view -->
   <string name="subscription_member_since">Member since</string>
@@ -60,7 +61,7 @@
   <!-- Replaces "Renews" once the subscription is set to end rather than renew. -->
   <string name="subscription_ends">Ends</string>
   <string name="subscription_purchased_on">Purchased on</string>
-  <string name="subscription_unlocked_header">Unlocked with Heavy</string>
+  <string name="subscription_unlocked_header">Unlocked with Pro</string>
   <string name="subscription_perk_aircraft_title">Unlimited aircraft</string>
   <string name="subscription_perk_aircraft_body">Whole fleet in one logbook</string>
   <string name="subscription_perk_attachments_title">Attachments</string>
@@ -68,12 +69,12 @@
   <string name="subscription_perk_sharing_title">Sharing</string>
   <string name="subscription_perk_sharing_body">Invite owners and technicians</string>
 
-  <!-- The subscription is real and Heavy is unlocked here, but this device's store did not sell it. -->
+  <!-- The subscription is real and Pro is unlocked here, but this device's store did not sell it. -->
   <string name="subscription_managed_elsewhere_title">Managed on another platform</string>
   <string name="subscription_managed_elsewhere_body">This subscription was purchased on a different platform. Open SquawkIt on the device and store account it was purchased with to change or cancel it.</string>
   <!-- Web has no store at all, so there is no "different platform" to name — only "not here". -->
   <string name="subscription_managed_elsewhere_body_web">Subscriptions can’t be changed here. Open SquawkIt on the device and store account it was purchased with to change or cancel it.</string>
-  <string name="subscription_managed_elsewhere_caption">Your Heavy features stay active everywhere you sign in.</string>
+  <string name="subscription_managed_elsewhere_caption">Your Pro features stay active everywhere you sign in.</string>
 
   <string name="subscription_status_active">Active</string>
   <string name="subscription_status_trialing">Free trial</string>
@@ -83,9 +84,9 @@
   <!-- Shared -->
   <string name="subscription_storage_used">Storage used</string>
 
-  <!-- Heavy upsell sheet -->
-  <string name="upsell_body_add_aircraft">Add unlimited aircraft with SquawkIt Heavy.</string>
-  <string name="upsell_body_attachment">Attach photos and files to your maintenance records with SquawkIt Heavy.</string>
-  <string name="upsell_body_email">Email a copy of your exports with SquawkIt Heavy.</string>
-  <string name="upsell_body_share">Share aircraft and invite others with SquawkIt Heavy.</string>
+  <!-- Pro upsell sheet -->
+  <string name="upsell_body_add_aircraft">Add unlimited aircraft with SquawkIt Pro.</string>
+  <string name="upsell_body_attachment">Attach photos and files to your maintenance records with SquawkIt Pro.</string>
+  <string name="upsell_body_email">Email a copy of your exports with SquawkIt Pro.</string>
+  <string name="upsell_body_share">Share aircraft and invite others with SquawkIt Pro.</string>
 </resources>

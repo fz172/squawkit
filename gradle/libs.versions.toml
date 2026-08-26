@@ -6,6 +6,7 @@ documentfile = "1.1.0"
 kotlinxCoroutines = "1.11.0"
 composeMultiplatform = "1.11.1"
 
+activityKtx = "1.12.4"
 composeBom = "2026.06.01"
 coreKtx = "1.19.0"
 credentials = "1.6.0"
@@ -25,7 +26,9 @@ material3 = "1.9.0"
 materialIconsExtended = "1.7.3"
 mockk = "1.14.11"
 navigationCompose = "2.9.2"
+playServicesAds = "24.6.0"
 playServicesAuth = "21.6.0"
+userMessagingPlatform = "4.0.0"
 purchasesKmp = "3.3.1"
 sqldelight = "2.3.2"
 truth = "1.4.5"
@@ -33,6 +36,7 @@ wire = "6.4.5"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+androidx-activity-ktx = { group = "androidx.activity", name = "activity-ktx", version.ref = "activityKtx" }
 androidx-credentials = { module = "androidx.credentials:credentials", version.ref = "credentials" }
 androidx-documentfile = { module = "androidx.documentfile:documentfile", version.ref = "documentfile" }
 androidx-navigation-compose = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
@@ -53,6 +57,9 @@ firebase-appcheck = { module = "com.google.firebase:firebase-appcheck" }
 firebase-appcheck-debug = { module = "com.google.firebase:firebase-appcheck-debug" }
 firebase-appcheck-playintegrity = { module = "com.google.firebase:firebase-appcheck-playintegrity" }
 firebase-functions = { module = "com.google.firebase:firebase-functions" }
+# Native Android SDK, not a GitLive wrapper: GitLive ships no messaging module, and the receiver is
+# androidMain-only anyway (design §5.5 — iOS uses UNUserNotificationCenter, web has no transport).
+firebase-messaging = { module = "com.google.firebase:firebase-messaging" }
 
 gitlive-firebase-analytics = { group = "dev.gitlive", name = "firebase-analytics", version.ref = "gitlive" }
 gitlive-firebase-firestore = { group = "dev.gitlive", name = "firebase-firestore", version.ref = "gitlive" }
@@ -85,6 +92,8 @@ material3 = { module = "org.jetbrains.compose.material3:material3", version.ref 
 material3-adaptive-navigation-suite = { module = "org.jetbrains.compose.material3:material3-adaptive-navigation-suite", version.ref = "material3" }
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 play-services-auth = { module = "com.google.android.gms:play-services-auth", version.ref = "playServicesAuth" }
+play-services-ads = { module = "com.google.android.gms:play-services-ads", version.ref = "playServicesAds" }
+user-messaging-platform = { module = "com.google.android.ump:user-messaging-platform", version.ref = "userMessagingPlatform" }
 # RevenueCat KMP — Android + iOS only (no JS variant is published), so these may only be
 # referenced from `feature/subscription/billing`, which does not declare a web target.
 purchases-kmp-core = { module = "com.revenuecat.purchases:purchases-kmp-core", version.ref = "purchasesKmp" }

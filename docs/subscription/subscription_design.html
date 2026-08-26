@@ -68,12 +68,12 @@
 <main>
   <div class="hero">
     <div>
-      <span class="pill amber">Status: Proposed</span>
+      <span class="pill green">Status: Shipped — GA</span>
       <span class="pill">Design Doc</span>
       <span class="pill">Entitlement · Sync · Cloud Functions</span>
     </div>
     <h1>Subscription — SquawkIt Pro</h1>
-    <p class="lede">Engineering design for the subscription feature. Companion to the <a href="subscription_PRD.html">PRD</a>: how the account-level entitlement is stored, synced, and gated on; the Feature&nbsp;Lab → Developer&nbsp;Options refactor; the server pipeline abstracted over an undecided billing provider; storage-usage accounting; and a phased build roadmap.</p>
+    <p class="lede">Engineering design for the subscription feature. Companion to the <a href="subscription_PRD.html">PRD</a>: how the account-level entitlement is stored, synced, and gated on; the Feature&nbsp;Lab → Developer&nbsp;Options refactor; the RevenueCat-backed server pipeline; storage-usage accounting; and the build roadmap that shipped it.</p>
   </div>
 
   <div class="page-shell">
@@ -81,7 +81,7 @@
 
       <div class="callout note">
         <strong>Implementation Status</strong>
-        Proposed. Not yet built. The billing integration (native vs. aggregator) is an explicit blackbox — everything here is written to be agnostic to it, and the purchase/paywall UI is out of scope until that call is made (PRD §14). This note will track what actually ships.
+        Shipped — GA on both Android and iOS. P1 through P7 (billing pipeline, purchase/paywall UI, Manage-subscription UI, entitlement reconciliation) are built, merged, and verified end to end against real store purchases on both platforms. The staged-rollout gate described in §1/§4 below (<code>AppCapability.isSubscriptionSupported</code>) has since been <b>removed entirely</b> — subscription gating is now unconditional rather than build-time-flagged. Remaining work is limited to per-tier storage quota enforcement (deferred) and Play/App Store public listing, tracked separately from this design.
       </div>
 
       <h2 id="overview">1. Overview &amp; Principles</h2>
@@ -90,7 +90,7 @@
         <li><b>Entitlement is server-authoritative and account-scoped.</b> A trusted Cloud Function is the only writer; the client reads a synced, read-only copy. This is what makes "pay once, premium everywhere" structural rather than client logic (PRD §6).</li>
         <li><b>The client gates on a tier enum, resolved locally.</b> A single <code>SubscriptionManager</code> exposes an effective <code>Subscription.Status</code> (the proto enum — no forked types, §4) that features compare against a per-feature minimum tier. It works offline off the last synced entitlement.</li>
         <li><b>Gate as promo, don't hide.</b> Gated affordances stay visible and open a reusable <code>ProUpsellSheet</code> (PRD §9).</li>
-        <li><b>Rolled out through <code>AppCapability</code>, default-open.</b> A new <code>isSubscriptionSupported</code> build gate (like <code>isAircraftSharingSupported</code>) stages the launch: on in dev/dogfood, off in the shipping release until GA. <b>While it is off there is no paywall at all</b> — every premium feature is treated as available (no gating), and the Subscription entry/page is hidden. Off means "unlocked for everyone," not "restricted."</li>
+        <li><b>Gating is unconditional, post-GA.</b> Launch was staged through an <code>AppCapability.isSubscriptionSupported</code> build gate (like <code>isAircraftSharingSupported</code>): on in dev/dogfood, off in the shipping release, default-open while off so no paywall existed before there were real products behind it. That flag has since been removed — every gate site (§4) now always enforces the subscribed tier, and the Subscription entry/page is always visible.</li>
       </ul>
       <p>The design leans on existing infrastructure where it can: the local-first <code>EntityStore</code> caches the entitlement for offline reads, and the storage-usage number is summed by extending the scheduled storage sweep. The one deliberate deviation is the entitlement's <b>remote</b> path: because it must be un-forgeable it cannot ride the client-writable user tree (§3), so a small dedicated listener mirrors a top-level, function-only doc into that local cache.</p>
 
@@ -104,7 +104,6 @@
   viewing/        SubscriptionScreen (status + comparison), ProUpsellSheet (reusable)
   update/         SubscriptionViewModel, Upsell trigger plumbing
 
-core/appinfo/     + AppCapability.isSubscriptionSupported (staged-rollout gate)
 core/model/       + Subscription proto (settings package), regenerated
 core/storage/     + CollectionKind.Subscription
 core/nav/         + Screen.Subscription
@@ -179,19 +178,17 @@ interface SubscriptionManager {
   // Quantity limit — enforced against current usage, not a yes/no:
   fun aircraftLimit(): Flow&lt;Int?&gt;                   // null = unlimited; FREE = 1
 }</code></pre>
-      <p><b>Rollout gate first.</b> Before any entitlement logic runs, the manager checks <code>AppCapability.isSubscriptionSupported</code>. While the capability is off, <b>gating is disabled</b>: every capability accessor emits <code>true</code> and <code>aircraftLimit()</code> emits <code>null</code> (unlimited). No entitlement doc even needs to exist. <code>status()</code> is irrelevant in this state because its only consumer, the Subscription page, is hidden (§8). When on, <b>effective status</b> = lifecycle resolved to a tier (TRIALING/ACTIVE/CANCELED-before-end/GRACE → the granted tier; NONE/EXPIRED → FREE), then the <b>developer override</b> OR-ed on top. A private <code>gate(minimum)</code> helper centralizes the capability → minimum-tier mapping:</p>
+      <p><b>Unconditional gating.</b> Every capability accessor compares the effective tier directly — <b>effective status</b> = lifecycle resolved to a tier (TRIALING/ACTIVE/CANCELED-before-end/GRACE → the granted tier; NONE/EXPIRED → FREE), then the <b>developer override</b> OR-ed on top. A private <code>gate(minimum)</code> helper centralizes the minimum-tier comparison (the <code>isSubscriptionSupported</code> rollout short-circuit this section originally described was removed once GA'd — see the Implementation Status note above):</p>
       <pre><code>private fun gate(minimum: Subscription.Status): Flow&lt;Boolean&gt; =
-  if (!appCapability.isSubscriptionSupported) flowOf(true)          // no paywall yet → open
-  else status().map { it &gt;= minimum }                              // proto enums order by declaration
+  status().map { it &gt;= minimum }                                    // proto enums order by declaration
 
 override fun canUploadAttachments() = gate(STATUS_PRO)
 override fun canEmailExports()      = gate(STATUS_PRO)
 override fun canHostShare()         = gate(STATUS_PRO)
 override fun aircraftLimit(): Flow&lt;Int?&gt; =
-  if (!appCapability.isSubscriptionSupported) flowOf(null)          // unlimited while off
-  else status().map { if (it &gt;= STATUS_PRO) null else FREE_AIRCRAFT_LIMIT } // = 1
+  status().map { if (it &gt;= STATUS_PRO) null else FREE_AIRCRAFT_LIMIT } // = 1
 
-// status(), capability on:
+// status():
 val effective = when {
   appCapability.isDeveloperOptionsSupported &amp;&amp; devOptions.forceStatus != null -> devOptions.forceStatus
   else -> subscription.effectiveStatusAt(nowMillis)   // lifecycle + current_period_end vs now
@@ -200,7 +197,7 @@ val effective = when {
 
       <div class="callout warn">
         <strong>Add-aircraft is a limit, not a capability</strong>
-        Free allows <b>one</b> aircraft, not zero — so it is a quantity (<code>aircraftLimit()</code>: <code>null</code>=unlimited, <code>FREE</code>=1), not a boolean feature. The add-aircraft path compares <code>aircraftLimit()</code> against the owned count from <code>FleetManager.observeFleetDashboard()</code>, filtered to <b>owned</b> aircraft — shared-in aircraft (<code>SharedAircraftRef</code>) never count (PRD R4). Future storage quota is the same shape, which is exactly why it belongs with limits rather than a fake yes/no. Bypassed while <code>isSubscriptionSupported</code> is off (unlimited for everyone).
+        Free allows <b>one</b> aircraft, not zero — so it is a quantity (<code>aircraftLimit()</code>: <code>null</code>=unlimited, <code>FREE</code>=1), not a boolean feature. The add-aircraft path compares <code>aircraftLimit()</code> against the owned count from <code>FleetManager.observeFleetDashboard()</code>, filtered to <b>owned</b> aircraft — shared-in aircraft (<code>SharedAircraftRef</code>) never count (PRD R4). Future storage quota is the same shape, which is exactly why it belongs with limits rather than a fake yes/no.
       </div>
 
       <h2 id="devoptions">5. Feature Lab → Developer Options Refactor</h2>
@@ -251,7 +248,7 @@ function applyEntitlement(update: NormalizedEntitlement): Promise&lt;void&gt;</c
       <h2 id="wiring">8. DI &amp; Navigation Wiring</h2>
       <ul>
         <li><b>Koin:</b> add <code>subscriptionModule</code> (manager + viewmodels) to the single list in <code>core/di/CommonAppModules.kt</code>, next to <code>featureLabModule</code> (which becomes <code>developerOptionsModule</code>).</li>
-        <li><b>Nav:</b> add <code>Screen.Subscription</code> in <code>core/nav</code>; register the route in <code>feature/shell/ShellNavGraph</code>; add the <b>Subscription</b> Settings row <b>gated by <code>isSubscriptionSupported</code></b> (near Backup&nbsp;&amp;&nbsp;Sync / Export) — hidden while the capability is off, exactly as the Feature Lab row is gated by <code>isFeatureLabSupported</code>. Rename the <code>FeatureLab</code> route/entry to <code>DeveloperOptions</code> (still gated by the dev-build capability).</li>
+        <li><b>Nav:</b> add <code>Screen.Subscription</code> in <code>core/nav</code>; register the route in <code>feature/shell/ShellNavGraph</code>; add the <b>Subscription</b> Settings row (near Backup&nbsp;&amp;&nbsp;Sync / Export) — always visible, post-GA. Rename the <code>FeatureLab</code> route/entry to <code>DeveloperOptions</code> (still gated by the dev-build capability).</li>
         <li><b>ProUpsellSheet</b> hosting: shown from the shell (add-aircraft) and inline from each form; a thin <code>UpsellController</code> in <code>subscription/update</code> holds the trigger state.</li>
       </ul>
 
@@ -271,7 +268,12 @@ function applyEntitlement(update: NormalizedEntitlement): Promise&lt;void&gt;</c
       <div class="phase"><div class="tag">P4</div><div class="body"><b>Subscription page + ProUpsellSheet</b>Status/comparison screen (viewing/update), Settings entry <b>gated by <code>isSubscriptionSupported</code> (hidden while off)</b>, <code>Screen.Subscription</code>, DI. Reusable upsell sheet. Purchase CTA = placeholder.</div></div>
       <div class="phase"><div class="tag">P5</div><div class="body"><b>Gating migration</b>Repoint attachments, email export, add-aircraft limit, sharing host to the manager + promo sheet — each <b>defaulting open while the capability is off</b>. Reword coming-soon strings (R16). Removes the last Feature-Lab flag usage.</div></div>
       <div class="phase"><div class="tag">P6</div><div class="body"><b>Storage usage + entitlement writer</b>Extend the sweep to sum usage; display on the page. Land <code>applyEntitlement</code> + promo callable + stub ingest (exercised by dev override / manual grants).</div></div>
-      <div class="phase"><div class="tag">P7</div><div class="body"><b>Billing integration + GA (blocked on decision)</b>Real provider ingest (native vs. aggregator), purchase/paywall UI, platform Manage deep links. <b>GA = flip <code>isSubscriptionSupported</code> on in the release build</b> once the store products and pipeline are live. <span class="muted">Later:</span> per-tier storage quotas enforced against tracked usage.</div></div>
+      <div class="phase"><div class="tag">P7</div><div class="body"><b>Billing integration + GA — shipped</b>Real provider ingest (RevenueCat), purchase/paywall UI, platform Manage-subscription UI (including a Kotlin/Native sizing fix for iOS Customer Center), entitlement drift reconciliation. GA'd on both Android and iOS: the store products and pipeline are live, and <code>AppCapability.isSubscriptionSupported</code> was removed entirely rather than left flipped on, since the staged-rollout gate had no further purpose once every platform shipped. <span class="muted">Later:</span> per-tier storage quotas enforced against tracked usage.</div></div>
+
+      <div class="callout note">
+        <strong>Status as of GA</strong>
+        P1–P7 shipped on both Android and iOS, verified against real store purchases end to end (offering resolution → purchase → webhook → synced entitlement → Manage-subscription UI). Only per-tier storage quota enforcement remains, deliberately deferred — <code>storage_quota_bytes</code> is reserved but unenforced (0 = unlimited) in v1.
+      </div>
 
       <h2 id="open">11. Open Questions</h2>
       <ul>

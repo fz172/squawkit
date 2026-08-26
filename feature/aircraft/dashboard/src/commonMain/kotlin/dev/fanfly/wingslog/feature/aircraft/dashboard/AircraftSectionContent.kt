@@ -19,6 +19,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.core.nav.Screen
@@ -65,6 +66,15 @@ fun ShellSectionBody(
   aircraftId: String?,
   navController: NavController,
   onNavigateToSection: (ShellSection) -> Unit,
+  /**
+   * A record the host wants scrolled to and highlighted in [section]'s list — currently a tapped
+   * urgency notification (notifications design §5.3). Interpreted against [section], which the host
+   * sets to match the record's kind, so this needs no type of its own. [onScrollTargetConsumed] is
+   * called once it has been handed to the list, so the host can drop it and not re-trigger the jump
+   * every time the pilot returns to this section.
+   */
+  scrollToRecordId: String? = null,
+  onScrollTargetConsumed: () -> Unit = {},
 ) {
   if (aircraftId != null) {
     AircraftSectionContent(
@@ -72,6 +82,8 @@ fun ShellSectionBody(
       section = section,
       navController = navController,
       onNavigateToSection = onNavigateToSection,
+      scrollToRecordId = scrollToRecordId,
+      onScrollTargetConsumed = onScrollTargetConsumed,
     )
   } else {
     Box(
@@ -176,10 +188,20 @@ fun AircraftSectionContent(
   section: ShellSection,
   navController: NavController,
   onNavigateToSection: (ShellSection) -> Unit = {},
+  /** See [ShellSectionBody]'s parameter of the same name. */
+  scrollToRecordId: String? = null,
+  onScrollTargetConsumed: () -> Unit = {},
 ) {
   val viewModel: AircraftOverviewViewModel =
     koinViewModel(key = aircraftId, parameters = { parametersOf(aircraftId) })
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+  // Due status depends on the wall clock, not just on stored data, so recompute it whenever the
+  // dashboard comes back into view — otherwise an app resumed the next day still shows yesterday's
+  // status. Common to all three hosts: UIKit foreground on iOS, document.visibilitychange on web.
+  LifecycleResumeEffect(aircraftId) {
+    viewModel.onResumed()
+    onPauseOrDispose { }
+  }
   val attachmentOpener: AttachmentOpener = koinInject()
   val coroutineScope = rememberCoroutineScope()
   var taskSheetOpenError by remember(aircraftId) { mutableStateOf<String?>(null) }
@@ -187,20 +209,48 @@ fun AircraftSectionContent(
   // after [onNavigateToSection] switches sections. It is cleared only while the Logs tab is OFF
   // screen (see below): toggling it back to null while LogsTab is mounted remounts that tab and drops
   // its list ViewModel and scroll position, which would bounce the list back to the top.
-  var pendingLogScrollTarget by remember(aircraftId) { mutableStateOf<String?>(null) }
+  var pendingLogScrollTarget by remember(aircraftId) {
+    mutableStateOf<String?>(
+      null
+    )
+  }
   LaunchedEffect(section) {
     if (section != ShellSection.LOGS) pendingLogScrollTarget = null
   }
   // Same pattern for jumping from a log's linked tasks/squawks to the item in its list: set on tap,
   // consumed by the Tasks/Squawks section (which switches to the right sub-view and scrolls to it),
   // cleared once that section is left.
-  var pendingTaskScrollTarget by remember(aircraftId) { mutableStateOf<String?>(null) }
+  var pendingTaskScrollTarget by remember(aircraftId) {
+    mutableStateOf<String?>(
+      null
+    )
+  }
   LaunchedEffect(section) {
     if (section != ShellSection.TASKS) pendingTaskScrollTarget = null
   }
-  var pendingSquawkScrollTarget by remember(aircraftId) { mutableStateOf<String?>(null) }
+  var pendingSquawkScrollTarget by remember(aircraftId) {
+    mutableStateOf<String?>(
+      null
+    )
+  }
   LaunchedEffect(section) {
     if (section != ShellSection.SQUAWKS) pendingSquawkScrollTarget = null
+  }
+
+  // A jump requested by the host (a tapped urgency notification) feeds the very same per-section
+  // state as an in-app jump, so both reach the list — and the highlight — by one path. The host has
+  // already switched [section] to match the record's kind, which is what says which list to aim at.
+  // Ordered after the clear-on-leave effects above so it wins when both run for the same section.
+  LaunchedEffect(scrollToRecordId, section) {
+    val id = scrollToRecordId ?: return@LaunchedEffect
+    when (section) {
+      ShellSection.TASKS -> pendingTaskScrollTarget = id
+      ShellSection.SQUAWKS -> pendingSquawkScrollTarget = id
+      ShellSection.LOGS -> pendingLogScrollTarget = id
+      // Nothing to scroll to in a section with no record list; drop it rather than stranding it.
+      ShellSection.DASHBOARD, ShellSection.SETTINGS -> Unit
+    }
+    onScrollTargetConsumed()
   }
 
   // Single navigation entry point: intercept the navigation actions and drive the host navController

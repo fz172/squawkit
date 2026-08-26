@@ -18,6 +18,7 @@ sealed class Screen(val route: String) {
   data object Login : Screen("login")
   data object AdaptiveShell : Screen("app")
   data object SyncSettings : Screen("sync_settings")
+  data object Notifications : Screen("notifications")
   data object ExportLogs : Screen("export_logs")
   data object ExportHistory : Screen("export_history")
   data object AddAircraft : Screen("add_aircraft")

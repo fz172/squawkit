@@ -45,6 +45,12 @@ class BlobUploadDriver(
         blobs.markFailedTransient(id)
       }
 
+      RemoteState.RemoteMissing -> {
+        // Nothing to upload: the bytes were never fetched and the remote object is gone (#426).
+        log.w { "upload skipped: ${id.value} is REMOTE_MISSING — the bytes are lost" }
+        return true
+      }
+
       RemoteState.RemoteOnly -> {
         log.w { "upload skipped: ${id.value} is REMOTE_ONLY — should not be scheduled for upload" }
         return true

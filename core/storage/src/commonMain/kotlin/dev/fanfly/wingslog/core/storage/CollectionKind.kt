@@ -67,6 +67,16 @@ sealed interface CollectionKind {
   }
 
   /**
+   * Account-level notification preferences (docs/notifications/notifications_design.md §4). In
+   * `TOP_LEVEL_KINDS` — unlike [DeveloperOptions] — so it hydrates onto a second device; see
+   * `NotificationPrefsManager`'s hydration-resolution rule for why that distinction matters here.
+   */
+  data object NotificationSettings : CollectionKind {
+    override val wireName = "notification_settings"
+    override val schemaName = "settings.NotificationSettings"
+  }
+
+  /**
    * Member-side index of aircraft shared *into* this account. Lives at
    * `users/{uid}/shared_aircraft_ref/{aircraftId}` and drives the sync engine's foreign-scope
    * fan-out. See docs/sharing §2.2.
@@ -93,6 +103,7 @@ sealed interface CollectionKind {
       Subscription,
       Squawk,
       SharedAircraftRef,
+      NotificationSettings,
     )
 
     private val byWire: Map<String, CollectionKind> =

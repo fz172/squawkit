@@ -631,6 +631,11 @@ class SyncEngine(
       CollectionKind.Technician,
       CollectionKind.UserInfo,
       CollectionKind.SharedAircraftRef,
+      // Unlike CollectionKind.DeveloperOptions, notification preferences must hydrate onto a second
+      // device — that is the whole point of syncing them. See NotificationPrefsManager's
+      // hydration-resolution rule (notifications_design.md §4.3) for what a store that reads through
+      // an unhydrated row here would get wrong.
+      CollectionKind.NotificationSettings,
     )
 
     /** Collections nested under `users/{uid}/aircraft/{ac}/<wire>/...`. Hydrated per aircraft. */

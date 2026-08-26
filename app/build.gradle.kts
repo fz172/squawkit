@@ -143,7 +143,15 @@ dependencies {
   implementation(project(":composeApp"))
   implementation(project(":feature:sync:data"))
   implementation(project(":feature:login"))
+  // EmailLinkDeepLinks: MainActivity hands the launch intent's URL to the shared auth channel.
+  implementation(project(":core:auth"))
   implementation(project(":feature:sharing:datamanager"))
+  // AndroidNotificationPermissionBridge: MainActivity registers the runtime-permission launcher
+  // this actual needs, since registerForActivityResult must happen before STARTED.
+  implementation(project(":feature:notifications:permission"))
+  // NotificationTapRouter: MainActivity hands the launch intent's URL to the shared tap channel,
+  // same as EmailLinkDeepLinks above (design §5.3).
+  implementation(project(":feature:notifications:viewing"))
   debugImplementation(libs.androidx.compose.ui.tooling)
   debugImplementation(libs.androidx.compose.ui.test.manifest)
 }

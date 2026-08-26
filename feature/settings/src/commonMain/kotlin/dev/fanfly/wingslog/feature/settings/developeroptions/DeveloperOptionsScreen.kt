@@ -2,45 +2,35 @@ package dev.fanfly.wingslog.feature.settings.developeroptions
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Star
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import dev.fanfly.wingslog.core.model.settings.Subscription
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedTopBar
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
 import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.feature.developeroptions.plugin.DeveloperOptionsExtra
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.getKoin
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.feature.settings.generated.resources.Res
 import wingslog.feature.settings.generated.resources.developer_options
-import wingslog.feature.settings.generated.resources.developer_options_force_free
-import wingslog.feature.settings.generated.resources.developer_options_force_off
-import wingslog.feature.settings.generated.resources.developer_options_force_pro
-import wingslog.feature.settings.generated.resources.developer_options_force_subscription_subtitle
-import wingslog.feature.settings.generated.resources.developer_options_force_subscription_title
 import wingslog.feature.settings.generated.resources.developer_options_subtitle
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -48,9 +38,18 @@ import wingslog.feature.settings.generated.resources.developer_options_subtitle
 fun DeveloperOptionsScreen(
   navController: NavController,
   viewModel: DeveloperOptionsViewModel = koinViewModel(),
-  dogfoodContent: @Composable () -> Unit = {},
 ) {
   val flags by viewModel.flags.collectAsStateWithLifecycle()
+
+  // Sections contributed by other features, resolved rather than passed in, so neither this module
+  // nor feature:shell has to depend on whoever owns them. Sorted here rather than at registration
+  // so ordering does not depend on Koin module order. Remembered because getAll() walks the
+  // definition registry — that is startup-cheap but not per-recomposition cheap.
+  val koin = getKoin()
+  val extras = remember {
+    koin.getAll<DeveloperOptionsExtra>()
+      .sortedBy { it.order }
+  }
 
   Scaffold(
     topBar = {
@@ -72,7 +71,8 @@ fun DeveloperOptionsScreen(
         modifier = Modifier
           .constrainedContentWidth(ContentWidth.Reading)
           .fillMaxSize()
-          .padding(Spacing.screenPadding),
+          .padding(Spacing.screenPadding)
+          .verticalScroll(rememberScrollState()),
       ) {
         Text(
           text = stringResource(Res.string.developer_options_subtitle),
@@ -84,68 +84,27 @@ fun DeveloperOptionsScreen(
 
         HorizontalDivider()
 
-        ForceSubscriptionRow(
-          current = flags.forceSubscriptionStatus,
-          onSelect = viewModel::setForceSubscriptionStatus,
+        SubscriptionDeveloperSettings(
+          forceStatus = flags.forceSubscriptionStatus,
+          onSelectForceStatus = viewModel::setForceSubscriptionStatus,
         )
         HorizontalDivider()
 
-        dogfoodContent()
-      }
-    }
-  }
-}
+        DisplayAdsDeveloperSettings(
+          forceAds = flags.forceAds,
+          onToggleForceAds = viewModel::setForceAds,
+          adConsentTestDeviceHashedId = flags.adConsentTestDeviceHashedId,
+          onAdConsentTestDeviceHashedIdChange = viewModel::setAdConsentTestDeviceHashedId,
+          onResetAdConsent = viewModel::resetAdConsent,
+        )
+        HorizontalDivider()
 
-/**
- * Developer-only override of the effective subscription tier. Off = use the real entitlement; Free
- * or Pro force that tier locally (honored only in developer builds).
- */
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun ForceSubscriptionRow(
-  current: Subscription.Status?,
-  onSelect: (Subscription.Status?) -> Unit,
-) {
-  val options: List<Pair<String, Subscription.Status?>> = listOf(
-    stringResource(Res.string.developer_options_force_off) to null,
-    stringResource(Res.string.developer_options_force_free) to Subscription.Status.STATUS_FREE,
-    stringResource(Res.string.developer_options_force_pro) to Subscription.Status.STATUS_PRO,
-  )
-  Column(
-    modifier = Modifier
-      .fillMaxWidth()
-      .padding(vertical = Spacing.medium),
-  ) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-      Icon(
-        imageVector = Icons.Default.Star,
-        contentDescription = null,
-        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.padding(end = Spacing.medium),
-      )
-      Column(modifier = Modifier.weight(1f)) {
-        Text(
-          text = stringResource(Res.string.developer_options_force_subscription_title),
-          style = MaterialTheme.typography.bodyLarge,
-          fontWeight = FontWeight.Medium,
-        )
-        Text(
-          text = stringResource(Res.string.developer_options_force_subscription_subtitle),
-          style = MaterialTheme.typography.bodySmall,
-          color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-      }
-    }
-    Spacer(Modifier.height(Spacing.medium))
-    SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-      options.forEachIndexed { index, (label, status) ->
-        SegmentedButton(
-          selected = current == status,
-          onClick = { onSelect(status) },
-          shape = SegmentedButtonDefaults.itemShape(index, options.size),
-        ) {
-          Text(label)
-        }
+        extras
+          .filter { it.isAvailable() }
+          .forEach { extra ->
+            extra.Content(onNavigate = { route -> navController.navigate(route) })
+            HorizontalDivider()
+          }
       }
     }
   }

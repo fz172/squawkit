@@ -59,7 +59,14 @@ export type SweepReport = {
 const SAMPLE_LIMIT = 200;
 
 type SyncDocWire = {
-  payload?: Uint8Array | Buffer;
+  /**
+   * **base64, not bytes.** The client writes this as a base64 STRING (see SyncDocWire.kt: "base64
+   * is the only form that round-trips cleanly through GitLive's commonMain serialization"). It was
+   * typed here as binary, which TypeScript could not catch across `record.data() as SyncDocWire`,
+   * and the sweep's own fixtures seeded Buffers — so the tests exercised a shape production never
+   * produces. See #428. The conversion now lives in `blobIdsInPayload`, which takes this shape.
+   */
+  payload?: string | Uint8Array | Buffer;
   schema?: string;
   deleted?: boolean;
   lastUpdateTimestamp?: Timestamp;
@@ -259,8 +266,10 @@ async function blobsReferencedByLiveRecords(
       const schema = data?.schema ?? "";
       if (!schemaCanOwnBlobs(schema) || data.payload == null) continue;
 
-      const ids = blobIdsInPayload(schema, toBytes(data.payload));
-      if (ids == null) return null; // unknowable — the caller must skip this aircraft entirely
+      // Unreadable shape and unreadable bytes are the same verdict, and blobIdsInPayload gives
+      // both: unknowable, so the caller must skip this aircraft entirely rather than guess.
+      const ids = blobIdsInPayload(schema, data.payload);
+      if (ids == null) return null;
       ids.forEach((id) => referenced.add(id));
     }
   }
@@ -271,8 +280,4 @@ async function blobsReferencedByLiveRecords(
 function record(into: string[], path: string, report: SweepReport): void {
   if (into.length < SAMPLE_LIMIT) into.push(path);
   else report.truncated = true;
-}
-
-function toBytes(payload: Uint8Array | Buffer): Uint8Array {
-  return payload instanceof Uint8Array ? payload : new Uint8Array(payload);
 }

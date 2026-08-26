@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <!-- Notification channel names/descriptions — user-visible under system Settings > App
+       notifications > <name>. Classic Android resources, not Compose Resources: NotificationChannel
+       needs a plain CharSequence read synchronously from AndroidLocalNotifier's init block, which
+       runs outside any @Composable context. -->
+
+  <string name="notification_channel_collaboration_name">Collaboration</string>
+  <string name="notification_channel_collaboration_description">Someone changes a shared aircraft</string>
+
+  <string name="notification_channel_urgency_update_name">Due reminder</string>
+  <string name="notification_channel_urgency_update_description">A task’s urgency or due status has changed</string>
+
+  <string name="notification_channel_grounded_name">Aircraft grounded</string>
+  <string name="notification_channel_grounded_description">An aircraft is grounded by an AOG squawk</string>
+</resources>

@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+option java_package = "dev.fanfly.wingslog.core.model.settings";
+option java_multiple_files = true;
+
+// Account-level notification preferences. See docs/notifications/notifications_design.md §4.1.
+//
+// EVERY FIELD IS INVERTED — `*_disabled`, never `*_enabled`. proto3 has no field presence for
+// scalars, so an absent or default-constructed message decodes to all-false. The PRD wants every
+// class ON by default, so all-false must MEAN all-on. A user who has never opened the settings
+// screen has no doc at all; a `*_enabled` field would silence them.
+//
+// This is the same convention DeveloperSettings already reserves under
+// (`technician_disabled`, `attachment_upload_disabled`).
+message NotificationSettings {
+  // Master switch. Off silences every class, locally and server-side.
+  bool all_disabled = 1;
+
+  // --- Urgency — device-local detection, no account required ---
+  //
+  // The first two are NOT N2-only, and the distinction matters to anyone changing them. A squawk
+  // escalation is detectable from a single write, so the server fan-out reports one too (design
+  // §7.5), and it gates that push on these same two fields — not on squawk_activity_disabled. What
+  // arrives is an urgency notification (N2 channel, N2 priority), and someone who switched AOG off
+  // expects that switch to govern AOG alerts however they reach them.
+  //
+  // Two consequences worth knowing before touching this:
+  //   * The server READS these. They are not device-only state, so they cannot be repurposed or
+  //     re-scoped as though the scanner were their only consumer.
+  //   * A member of a shared aircraft can be notified with EVERY collaboration class below switched
+  //     off, because their grounding alert travels under aog_disabled. That is intended: muting
+  //     routine squawk activity is not asking to stop hearing the aircraft was grounded.
+  //
+  // The last two stay genuinely device-only: no write happens when a due date passes, so no trigger
+  // can fire and the server has nothing to report (§7.5).
+  bool aog_disabled = 2;                 // any escalation to SQUAWK_PRIORITY_AOG — N2 scan AND N1 push
+  bool squawk_priority_disabled = 3;     // escalations below AOG, and reopened squawks — likewise
+  bool overdue_disabled = 4;             // -> DueStatus.OVERDUE — device-only
+  bool due_soon_disabled = 5;            // -> DueStatus.DUE_SOON — device-only
+
+  // --- Collaboration (N1) — server fan-out, needs a real account + cloud sync ---
+  //
+  // These four gate ACTIVITY only — "Dave Chen made 5 changes to tasks". A squawk escalation is
+  // gated above instead, so switching all four off still leaves grounding alerts arriving.
+  bool aircraft_activity_disabled = 6;   // Aircraft record edited
+  bool squawk_activity_disabled = 7;     // squawk create/edit/dismiss/reopen/delete
+  bool task_activity_disabled = 8;       // task create/edit/force-comply/delete
+  bool log_activity_disabled = 9;        // log create/edit/delete
+}

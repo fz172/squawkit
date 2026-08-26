@@ -1,9 +1,14 @@
 import { onCall } from "firebase-functions/v2/https";
 
 import { FUNCTION_REGION } from "./config/env.js";
+import { deleteMyAccount } from "./account/deleteMyAccount.js";
 import { requestExportDelivery } from "./export/requestExportDelivery.js";
 import { cancelAircraftShareInvite } from "./sharing/cancelAircraftShareInvite.js";
 import { createAircraftShareInvite } from "./sharing/createAircraftShareInvite.js";
+import {
+  onNotifiableAircraftWritten,
+  onNotifiableRecordWritten,
+} from "./notifications/onRecordWritten.js";
 import { onAircraftDeleted } from "./sharing/onAircraftDeleted.js";
 import { previewAircraftShareInvite } from "./sharing/previewAircraftShareInvite.js";
 import { getBlobUploadSession } from "./storage/getBlobUploadSession.js";
@@ -45,12 +50,14 @@ export const health_probe = onCall<unknown, HealthProbeResponse>(
 );
 
 export { requestExportDelivery };
+export { deleteMyAccount };
 export { redeemAircraftShareInvite };
 export { revokeAircraftShare };
 export { updateAircraftShareRole };
 export { onAircraftDeleted };
 export { createAircraftShareInvite, previewAircraftShareInvite, cancelAircraftShareInvite };
 export { onRecordDeleted };
+export { onNotifiableRecordWritten, onNotifiableAircraftWritten };
 export { scheduledStorageSweep };
 export { streamBlob };
 export { getBlobUploadSession };

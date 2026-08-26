@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <!--
+    The "Sponsored" label required on every ad card by G6 — an ad must never be mistakable for a
+    squawk, task or log. Shown once per slot, not once per unit (PRD §7.1).
+  -->
+  <string name="ads_sponsored_label">Sponsored</string>
+  <!-- Announced for the ad card as a whole (N7). -->
+  <string name="ads_a11y_advertisement">Advertisement</string>
+</resources>

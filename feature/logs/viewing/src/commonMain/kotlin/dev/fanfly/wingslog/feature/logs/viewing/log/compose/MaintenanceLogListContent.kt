@@ -42,6 +42,8 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -59,7 +61,13 @@ import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalNavPillClearance
 import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
+import dev.fanfly.wingslog.core.ui.common.compose.jumpTargetHighlight
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.feature.ads.datamanager.AdsManager
+import dev.fanfly.wingslog.feature.ads.model.AdSurface
+import dev.fanfly.wingslog.feature.ads.model.ListRow
+import dev.fanfly.wingslog.feature.ads.model.withAdSlots
+import dev.fanfly.wingslog.feature.ads.viewing.AdSlot
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
 import dev.fanfly.wingslog.feature.logs.sharedassets.util.displayName
 import dev.fanfly.wingslog.feature.logs.viewing.log.data.MaintenanceLogListUiState
@@ -68,6 +76,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 import wingslog.core.sharedassets.generated.resources.done
 import wingslog.core.sharedassets.generated.resources.retry
 import wingslog.feature.logs.sharedassets.generated.resources.add_first_maintenance_log
@@ -80,6 +89,7 @@ import wingslog.feature.logs.viewing.generated.resources.log_count_n_entries
 import wingslog.feature.logs.viewing.generated.resources.log_count_one_entry
 import wingslog.feature.logs.viewing.generated.resources.no_logs_match_filter
 import wingslog.feature.logs.viewing.generated.resources.search_logs
+import kotlin.time.Duration.Companion.milliseconds
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.logs.sharedassets.generated.resources.Res as SharedRes
 import wingslog.feature.logs.viewing.generated.resources.Res as MaintenanceRes
@@ -123,16 +133,31 @@ fun MaintenanceLogListContent(
   val currentLogs by rememberUpdatedState(
     (uiState as? MaintenanceLogListUiState.Success)?.logs.orEmpty()
   )
+  val adsManager: AdsManager = koinInject()
+  val showAds by adsManager.shouldShowsAds()
+    .collectAsState(initial = false)
+  // The display list, not the item list. Everything index-based below must agree with what the
+  // LazyColumn actually renders — see the scroll target immediately after.
+  val rows by remember {
+    derivedStateOf {
+      if (showAds) withAdSlots(currentLogs) else currentLogs.map { ListRow.Item(it) }
+    }
+  }
   LaunchedEffect(scrollToLogId) {
     if (scrollToLogId == null) return@LaunchedEffect
     coroutineScope {
       val pinning = launch {
-        snapshotFlow { currentLogs }.collect { logs ->
-          val index = logs.indexOfFirst { it.id == scrollToLogId }
+        // Resolve against the DISPLAY list. Using the item index would drift by the number of ads
+        // above the target once slots are interleaved, landing the pilot on the wrong log — and the
+        // error grows further down the list.
+        snapshotFlow { rows }.collect { displayRows ->
+          val index = displayRows.indexOfFirst {
+            it is ListRow.Item && it.value.id == scrollToLogId
+          }
           if (index >= 0) logListState.scrollToItem(index)
         }
       }
-      withTimeoutOrNull(8000) {
+      withTimeoutOrNull(8000.milliseconds) {
         logListState.interactionSource.interactions.first { it is DragInteraction.Start }
       }
       pinning.cancel()
@@ -298,7 +323,7 @@ fun MaintenanceLogListContent(
             } else if (LocalLayoutTier.current.hasSideNav) {
               // MEDIUM and wider: a real data table instead of cards.
               MaintenanceLogTable(
-                logs = uiState.logs,
+                rows = rows,
                 onLogClick = onLogClick,
                 listState = logListState,
                 modifier = Modifier
@@ -325,12 +350,31 @@ fun MaintenanceLogListContent(
                 verticalArrangement = Arrangement.spacedBy(Spacing.medium)
               ) {
                 items(
-                  uiState.logs,
-                  key = { it.id }) { log ->
-                  MaintenanceLogCard(
-                    log = log,
-                    onClick = { onLogClick(log) },
-                  )
+                  rows,
+                  // Stable keys matter here in a way they do not on the card surfaces: this is the
+                  // one lazy list, so an identity that changed as logs loaded in would tear the slot
+                  // down and re-request, burning cap on an ad nobody saw.
+                  key = { row ->
+                    when (row) {
+                      is ListRow.Ad -> "ad-${row.slotIndex}"
+                      is ListRow.Item -> row.value.id
+                    }
+                  },
+                ) { row ->
+                  when (row) {
+                    is ListRow.Ad -> AdSlot(
+                      surface = AdSurface.LOGS,
+                      slotIndex = row.slotIndex,
+                    )
+
+                    is ListRow.Item -> MaintenanceLogCard(
+                      log = row.value,
+                      onClick = { onLogClick(row.value) },
+                      modifier = Modifier.jumpTargetHighlight(
+                        active = row.value.id == scrollToLogId,
+                      ),
+                    )
+                  }
                 }
               }
             }

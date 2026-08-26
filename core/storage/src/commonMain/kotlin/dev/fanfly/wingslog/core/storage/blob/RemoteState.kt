@@ -3,13 +3,14 @@ package dev.fanfly.wingslog.core.storage.blob
 import app.cash.sqldelight.ColumnAdapter
 
 /**
- * The four states a blob can be in relative to Firebase Storage. See docs/storage/storage_r2_design.md §5.
+ * The states a blob can be in relative to Firebase Storage. See docs/storage/storage_r2_design.md §5.
  *
  * Transitions:
  * - `LOCAL_ONLY → UPLOADING → SYNCED` — the upload happy path.
  * - `UPLOADING → LOCAL_ONLY` — transient failure; retried with backoff.
  * - `REMOTE_ONLY → SYNCED` — fresh device sees a proto referencing an attachment, lazy-downloads
  *   on first open.
+ * - `REMOTE_ONLY → REMOTE_MISSING` — the download found no object there (#426). Terminal.
  *
  * The on-disk column is `TEXT` (the [wireName]); a SQLDelight [ColumnAdapter] handles the mapping.
  */
@@ -40,9 +41,23 @@ sealed interface RemoteState {
     override val wireName = "REMOTE_ONLY"
   }
 
+  /**
+   * The remote object is gone and no local file was ever fetched — the bytes are lost (#426).
+   *
+   * **Terminal, and that is the point.** Without it a 404 was indistinguishable from a network
+   * blip: the row stayed [RemoteOnly], WorkManager retried an object that will never exist for as
+   * long as the app was installed, and every export waited the full `ensureLocal` timeout on it.
+   *
+   * Deliberately NOT [LocalOnly]: that state promises a readable file on disk, and here there is
+   * none. Callers must be able to tell "you have it" from "it is gone".
+   */
+  data object RemoteMissing : RemoteState {
+    override val wireName = "REMOTE_MISSING"
+  }
+
   companion object {
     val ALL: List<RemoteState> =
-      listOf(LocalOnly, Uploading, Synced, RemoteOnly)
+      listOf(LocalOnly, Uploading, Synced, RemoteOnly, RemoteMissing)
 
     private val byWire: Map<String, RemoteState> =
       ALL.associateBy { it.wireName }

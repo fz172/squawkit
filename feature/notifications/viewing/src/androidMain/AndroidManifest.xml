@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+  <!--
+    Declared here rather than relied on from the app manifest: this module is the one that calls
+    NotificationManagerCompat.notify(), so it should carry its own requirement. The manifest merger
+    unions it into every host, and lint checks each module against what that module declares. See
+    feature/ads/viewing's AndroidManifest.xml for the same pattern.
+  -->
+  <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+  <application>
+    <!--
+      N1 collaboration push (design §5.5). Declared in this module for the same reason the
+      permission above is: this is the module that hosts the service, so it should carry its own
+      declaration, and the manifest merger unions it into every host.
+
+      exported="false" — nothing outside the app may start it. FCM delivers through the Firebase
+      SDK's own broadcast, which does not need it exported.
+    -->
+    <service
+      android:name="dev.fanfly.wingslog.feature.notifications.viewing.WingsLogFirebaseMessagingService"
+      android:exported="false">
+      <intent-filter>
+        <action android:name="com.google.firebase.MESSAGING_EVENT" />
+      </intent-filter>
+    </service>
+  </application>
+
+</manifest>

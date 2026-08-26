@@ -8,10 +8,14 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -25,6 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -40,6 +45,7 @@ import dev.fanfly.wingslog.feature.subscription.viewing.viewmodel.SubscriptionVi
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.feature.subscription.viewing.generated.resources.Res
+import wingslog.feature.subscription.viewing.generated.resources.subscription_cta_subscribe
 import wingslog.feature.subscription.viewing.generated.resources.subscription_title
 
 /**
@@ -98,24 +104,30 @@ fun SubscriptionScreen(
         .fillMaxSize(),
       contentAlignment = Alignment.TopCenter,
     ) {
-      Column(
-        modifier = Modifier
-          .constrainedContentWidth(ContentWidth.Pane)
-          .fillMaxSize()
-          .padding(Spacing.screenPadding)
-          .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(Spacing.large),
-      ) {
-        if (uiState.isPro) {
-          ProMembershipContent(
-            state = uiState,
-            onManage = { sheet = BillingSheet.CustomerCenter },
-          )
-        } else {
-          ProPaywallContent(
-            state = uiState,
-            onSubscribe = { sheet = BillingSheet.Paywall },
-          )
+      if (uiState.isLoading) {
+        // No tier is known yet — a neutral spinner, never a guess. Showing the paywall here would
+        // read as a returning Pro subscriber's own subscription flashing as unpurchased.
+        CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+      } else {
+        Column(
+          modifier = Modifier
+            .constrainedContentWidth(ContentWidth.Reading)
+            .fillMaxSize()
+            .padding(Spacing.screenPadding)
+            .verticalScroll(rememberScrollState()),
+          verticalArrangement = Arrangement.spacedBy(Spacing.large),
+        ) {
+          if (uiState.isPro) {
+            ProMembershipContent(
+              state = uiState,
+              onManage = { sheet = BillingSheet.CustomerCenter },
+            )
+          } else {
+            ProPaywallContent(
+              state = uiState,
+              onSubscribe = { sheet = BillingSheet.Paywall },
+            )
+          }
         }
       }
     }
@@ -144,6 +156,36 @@ internal fun SubscriptionPanel(
       .border(Spacing.hairline, borderColor, shape),
     content = content,
   )
+}
+
+/**
+ * The subscribe CTA — filled, full width, 56dp, UPPERCASE Bold per DESIGN.md's "Uppercase
+ * Commitment Rule" ("a button is a decision, not an option").
+ *
+ * Shared by [ProPaywallContent] and [ProUpsellSheet] so the same action can never render as two
+ * different component types depending on which screen shows it.
+ */
+@Composable
+internal fun SubscribeButton(
+  onClick: () -> Unit,
+  modifier: Modifier = Modifier,
+  enabled: Boolean = true,
+) {
+  Button(
+    onClick = onClick,
+    enabled = enabled,
+    shape = RoundedCornerShape(Spacing.buttonCornerRadius),
+    colors = ButtonDefaults.buttonColors(),
+    modifier = modifier
+      .fillMaxWidth()
+      .height(Spacing.buttonHeight),
+  ) {
+    Text(
+      text = stringResource(Res.string.subscription_cta_subscribe).uppercase(),
+      style = MaterialTheme.typography.titleMedium,
+      fontWeight = FontWeight.Bold,
+    )
+  }
 }
 
 /**

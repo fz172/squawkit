@@ -80,7 +80,12 @@ standalone `webApp` seed into a real, code-sharing web client.
   `AuthManagerImpl.signInAnonymously()` is now an explicit unsupported no-op. Consequently
   **account upgrade on web is dropped** (there are no anonymous users to upgrade);
   `upgradeAnonymousAccount()` stays a no-op stub. The login screen also now shows a
-  "Continue with Apple" button on all platforms (UI only; provider not yet wired).
+  "Continue with Apple" button on all platforms (UI only; provider not yet wired at the time).
+  **Update (2026-08-10):** the provider is wired — web signs in through the Firebase JS
+  `OAuthProvider` popup, and the button was gated on `AppCapability.isAppleSignInSupported`
+  rather than shown unconditionally (#396). **Update (2026-08-12):** that flag is gone — #408
+  gave Android its own Apple flow, so every platform sets it and the button is unconditional
+  again, this time with all three providers actually wired behind it.
 - **M7 — ✅ verified.** The interim
   sql.js→IndexedDB worker is replaced by the official `@sqlite.org/sqlite-wasm` build on OPFS via
   its SAH-Pool VFS (`webApp/src/jsMain/resources/sqlite-wasm-opfs.worker.js`). It speaks the same

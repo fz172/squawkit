@@ -35,6 +35,8 @@ import dev.fanfly.wingslog.feature.shell.sharingRoutes
 import kotlinx.browser.document
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.rememberResourceEnvironment
+import dev.fanfly.wingslog.core.lifecycle.AppForegroundObserver
+import dev.fanfly.wingslog.core.lifecycle.compose.AppForegroundEffect
 import org.koin.compose.koinInject
 import org.w3c.dom.HTMLElement
 import wingslog.core.sharedassets.generated.resources.app_name
@@ -53,6 +55,11 @@ fun WebApp() {
   val appearanceMode by appearanceController.mode.collectAsState()
   val isDark = appearanceMode.resolveDarkTheme()
   LaunchedEffect(isDark) { updateBrowserGutterColor(isDark) }
+
+  // App-session boundaries, at the root rather than in a nav destination (see AppForegroundEffect).
+  // On this host it rides `document.visibilitychange`. Web carries no ads in v1, so nothing consumes
+  // it here yet — it is installed for parity so the two hosts cannot drift.
+  AppForegroundEffect(koinInject<AppForegroundObserver>())
   // Read packed string resources via whole-file fetches instead of HTTP Range requests, which
   // Firebase Hosting's gzip breaks. Must wrap the resource warm-up below. See WholeFileResourceReader.
   ProvideWholeFileResourceReader {
@@ -120,16 +127,12 @@ fun WebApp() {
               AdaptiveShellRoute(
                 navController = navController,
                 shellEntry = entry,
-                isStressTestSupported = appCapability.isStressTestSupported,
               )
             }
             formDialogs(navController)
             sharingRoutes(navController)
             // Compact tiers (no sidebar) open settings detail pages as full-screen routes.
-            settingsDetailRoutes(
-              navController,
-              appCapability.isStressTestSupported
-            )
+            settingsDetailRoutes(navController)
           }
           // App-root overlay for inbound share deep links (parked invites), above the nav graph.
           RedeemHost()

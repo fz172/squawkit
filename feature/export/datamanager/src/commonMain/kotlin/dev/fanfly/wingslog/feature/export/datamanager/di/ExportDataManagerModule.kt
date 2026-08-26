@@ -1,8 +1,8 @@
 package dev.fanfly.wingslog.feature.export.datamanager.di
 
-import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.core.storage.blob.BlobFilesystem
 import dev.fanfly.wingslog.core.storage.blob.LocalBlobStore
+import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.export.datamanager.ExportManager
 import dev.fanfly.wingslog.feature.export.datamanager.impl.AttachmentExportResolver
 import dev.fanfly.wingslog.feature.export.datamanager.impl.ExportDeliveryBackend
@@ -20,6 +20,7 @@ import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDueManager
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.firestore.FirebaseFirestore
+import dev.gitlive.firebase.functions.FirebaseFunctions
 import dev.gitlive.firebase.storage.FirebaseStorage
 import io.ktor.client.HttpClient
 import org.koin.dsl.module
@@ -52,7 +53,7 @@ val exportDataManagerModule = module {
       get<HttpClient>(),
     )
   }
-  single { ExportDeliveryBackend() }
+  single { ExportDeliveryBackend(get<FirebaseFunctions>()) }
   single<ExportManager> {
     ExportManagerImpl(
       get<LogbookExportAggregator>(),

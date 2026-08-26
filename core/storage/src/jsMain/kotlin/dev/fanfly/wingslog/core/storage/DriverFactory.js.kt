@@ -23,7 +23,11 @@ actual class DriverFactory(private val worker: Worker) {
   actual fun createDriver(): SqlDriver {
     val driver = WebWorkerDriver(worker)
     CoroutineScope(Dispatchers.Default).launch { ensureSchema(driver) }
-    return driver
+    // The worker driver does not convert INTEGER-backed booleans, so every `AS kotlin.Boolean`
+    // column would read back as the number 1 and fail every `== true` check. See
+    // BooleanNormalizingSqlDriver for the mechanism and what it broke. Schema setup above runs
+    // against the raw driver deliberately — it binds no booleans and reads only PRAGMA user_version.
+    return BooleanNormalizingSqlDriver(driver)
   }
 
   /**

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="notification_settings_title">Notifications</string>
+
+  <string name="notification_settings_all_title">All notifications</string>
+  <string name="notification_settings_all_subtitle_on">On</string>
+  <string name="notification_settings_all_subtitle_off">Off — every notification below is silenced</string>
+
+  <string name="notification_settings_group_urgency">Urgency alerts</string>
+  <string name="notification_settings_group_urgency_footer">Works on this device even when you’re signed out or sync is off.</string>
+  <string name="notification_settings_group_collaboration">Collaboration</string>
+
+  <string name="notification_settings_aog_title">Aircraft grounded</string>
+  <string name="notification_settings_aog_subtitle">An open squawk grounds an aircraft (AOG)</string>
+  <string name="notification_settings_squawk_priority_title">Squawk priority increases</string>
+  <string name="notification_settings_squawk_priority_subtitle">A squawk becomes high priority or worse</string>
+  <string name="notification_settings_overdue_title">Task overdue</string>
+  <string name="notification_settings_overdue_subtitle">A maintenance task crosses into overdue</string>
+  <string name="notification_settings_due_soon_title">Task due soon</string>
+  <string name="notification_settings_due_soon_subtitle">A maintenance task is coming due</string>
+
+  <string name="notification_settings_aircraft_activity_title">Aircraft activity</string>
+  <string name="notification_settings_aircraft_activity_subtitle">Changes to an aircraft you have access to</string>
+  <string name="notification_settings_squawk_activity_title">Squawk activity</string>
+  <string name="notification_settings_squawk_activity_subtitle">Squawks added or updated by others</string>
+  <string name="notification_settings_task_activity_title">Task activity</string>
+  <string name="notification_settings_task_activity_subtitle">Maintenance tasks added or updated by others</string>
+  <string name="notification_settings_log_activity_title">Logbook activity</string>
+  <string name="notification_settings_log_activity_subtitle">Logbook entries added or updated by others</string>
+
+  <string name="notification_settings_banner_denied_title">Notifications are blocked</string>
+  <string name="notification_settings_banner_denied_body">Turn them on in system settings to hear about urgency alerts and collaboration on your aircraft.</string>
+  <string name="notification_settings_banner_denied_open_settings">Open settings</string>
+  <string name="notification_settings_banner_unsupported_title">Not supported in this browser</string>
+  <string name="notification_settings_banner_unsupported_body">This browser doesn’t support notifications. Your choices below are still saved for devices that do.</string>
+
+  <string name="notification_settings_signin_footer">Sign in to get notified about changes other people make.</string>
+  <string name="notification_settings_signin_cta">Sign in</string>
+  <string name="notification_settings_sync_off_footer">Turn on Backup &amp; Sync to get notified about changes other people make.</string>
+  <string name="notification_settings_sync_off_cta">Turn on sync</string>
+
+  <string name="notification_settings_aog_confirm_title">Turn off aircraft grounded alerts?</string>
+  <string name="notification_settings_aog_confirm_body">You won’t be told when an aircraft is grounded.</string>
+  <string name="notification_settings_aog_confirm_action">Turn off</string>
+
+  <string name="notification_settings_save_error">Couldn’t save that change. Try again.</string>
+</resources>

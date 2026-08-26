@@ -18,6 +18,8 @@ import androidx.navigation.navigation
 import dev.fanfly.wingslog.core.analytics.AnalyticsManager
 import dev.fanfly.wingslog.core.analytics.LocalAnalytics
 import dev.fanfly.wingslog.core.appinfo.AppCapability
+import dev.fanfly.wingslog.core.lifecycle.AppForegroundObserver
+import dev.fanfly.wingslog.core.lifecycle.compose.AppForegroundEffect
 import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.storage.DatabaseHealth
@@ -56,6 +58,11 @@ fun AppEntry() {
   val darkTheme = appearanceMode.resolveDarkTheme()
   val scope = rememberCoroutineScope()
 
+  // App-session boundaries (cold start, and foregrounding after 30+ min away). At the root, not in a
+  // nav destination: a destination is disposed on navigation, which would report a background every
+  // time a pilot opened a form. Currently consumed by the ad session cap.
+  AppForegroundEffect(koinInject<AppForegroundObserver>())
+
   if (health.isCorrupted) {
     WingslogTheme(darkTheme = darkTheme) {
       IntegrityRecoveryDialog(
@@ -87,12 +94,12 @@ fun AppEntry() {
           startDestination = GRAPH_AUTH
         ) {
           authGraph(navController)
-          shellGraph(navController, appCapability.isStressTestSupported)
+          shellGraph(navController)
           formDialogs(navController)
           sharingRoutes(navController)
           // Compact tiers (no sidebar) open settings detail pages as full-screen routes; the sidebar
           // tier hosts its own nested copy of these inside the Settings section (see SettingsSection).
-          settingsDetailRoutes(navController, appCapability.isStressTestSupported)
+          settingsDetailRoutes(navController)
         }
         // App-root overlay for inbound share deep links (parked invites), above the nav graph.
         RedeemHost()
@@ -123,7 +130,6 @@ private fun NavGraphBuilder.authGraph(
 
 private fun NavGraphBuilder.shellGraph(
   navController: NavController,
-  isStressTestSupported: Boolean,
 ) {
   navigation(
     startDestination = Screen.AdaptiveShell.route,
@@ -133,7 +139,6 @@ private fun NavGraphBuilder.shellGraph(
       AdaptiveShellRoute(
         navController = navController,
         shellEntry = entry,
-        isStressTestSupported = isStressTestSupported,
       )
     }
   }

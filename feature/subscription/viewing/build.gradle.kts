@@ -41,6 +41,7 @@ kotlin {
   sourceSets {
     commonMain.dependencies {
       implementation(project(":core:model"))
+      implementation(project(":core:appinfo"))
       implementation(project(":core:sharedassets"))
       implementation(project(":core:auth"))
       implementation(project(":core:ui"))

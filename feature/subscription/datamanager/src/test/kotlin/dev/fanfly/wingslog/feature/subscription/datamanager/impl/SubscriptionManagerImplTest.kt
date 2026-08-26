@@ -41,14 +41,16 @@ class SubscriptionManagerImplTest {
     every { store.observe(any(), any()) } returns flowOf(null)
   }
 
-  private fun capability(subscription: Boolean, devBuild: Boolean = false) = AppCapability(
+  private fun capability(
+    devBuild: Boolean = false,
+    ads: Boolean = false,
+  ) = AppCapability(
     isDeveloperOptionsSupported = devBuild,
-    isAircraftSharingSupported = false,
     isStressTestSupported = false,
+    isNotificationsSupported = false,
     isCameraCaptureSupported = false,
     isAnonymousLoginSupported = false,
-    isAppleSignInSupported = false,
-    isSubscriptionSupported = subscription,
+    isAdsSupported = ads,
   )
 
   private fun manager(
@@ -86,50 +88,40 @@ class SubscriptionManagerImplTest {
   )
 
   @Test
-  fun `capability off - every gate is open regardless of entitlement`() = runTest {
-    // FREE entitlement (default stub), but the capability is off, so there is no paywall.
-    val m = manager(capability(subscription = false))
-    assertThat(m.canUploadAttachments().first()).isTrue()
-    assertThat(m.canEmailExports().first()).isTrue()
-    assertThat(m.canHostShare().first()).isTrue()
-    assertThat(m.aircraftLimit().first()).isNull()
-  }
-
-  @Test
-  fun `capability on with PRO active - gates open and aircraft unlimited`() = runTest {
+  fun `PRO active - gates open and aircraft unlimited`() = runTest {
     entitle(proActive)
-    val m = manager(capability(subscription = true))
+    val m = manager(capability())
     assertThat(m.status().first()).isEqualTo(Subscription.Status.STATUS_PRO)
     assertThat(m.canUploadAttachments().first()).isTrue()
     assertThat(m.aircraftLimit().first()).isNull()
   }
 
   @Test
-  fun `capability on with an expired comp - gates closed and one aircraft`() = runTest {
+  fun `an expired comp - gates closed and the free aircraft limit`() = runTest {
     // A promo grant is ACTIVE with willRenew=false and an end date; once that date passes nothing
     // will renew it, so it must lapse to Free rather than entitle forever.
     entitle(proCompExpired)
-    val m = manager(capability(subscription = true))
+    val m = manager(capability())
     assertThat(m.status().first()).isEqualTo(Subscription.Status.STATUS_FREE)
     assertThat(m.canUploadAttachments().first()).isFalse()
     assertThat(m.aircraftLimit().first()).isEqualTo(SubscriptionManagerImpl.FREE_AIRCRAFT_LIMIT)
   }
 
   @Test
-  fun `capability on with FREE - gates closed and one aircraft`() = runTest {
-    val m = manager(capability(subscription = true)) // default FREE stub
+  fun `FREE - gates closed and two aircraft`() = runTest {
+    val m = manager(capability()) // default FREE stub
     assertThat(m.status().first()).isEqualTo(Subscription.Status.STATUS_FREE)
     assertThat(m.canUploadAttachments().first()).isFalse()
     assertThat(m.canEmailExports().first()).isFalse()
     assertThat(m.canHostShare().first()).isFalse()
-    assertThat(m.aircraftLimit().first()).isEqualTo(1)
+    assertThat(m.aircraftLimit().first()).isEqualTo(2)
   }
 
   @Test
   fun `dev override forces PRO in a developer build`() = runTest {
     // FREE entitlement, but a developer build forces PRO.
     val m = manager(
-      capability(subscription = true, devBuild = true),
+      capability(devBuild = true),
       forceStatus = flowOf(Subscription.Status.STATUS_PRO),
     )
     assertThat(m.status().first()).isEqualTo(Subscription.Status.STATUS_PRO)
@@ -139,7 +131,7 @@ class SubscriptionManagerImplTest {
   @Test
   fun `dev override is ignored in a release build`() = runTest {
     val m = manager(
-      capability(subscription = true, devBuild = false),
+      capability(devBuild = false),
       forceStatus = flowOf(Subscription.Status.STATUS_PRO),
     )
     assertThat(m.status().first()).isEqualTo(Subscription.Status.STATUS_FREE)

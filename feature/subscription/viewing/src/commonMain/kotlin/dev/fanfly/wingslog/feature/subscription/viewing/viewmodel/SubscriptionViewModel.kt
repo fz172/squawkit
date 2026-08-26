@@ -2,6 +2,7 @@ package dev.fanfly.wingslog.feature.subscription.viewing.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.model.settings.Subscription
@@ -27,6 +28,16 @@ import kotlin.time.Instant
 
 /** Display state for the subscription page. Dates are pre-formatted; storage is formatted in the UI. */
 data class SubscriptionUiState(
+  /**
+   * No entitlement has been read yet — the page should show a neutral spinner, not a tier.
+   *
+   * Defaults `true` because the only place this default is ever seen is the `stateIn` seed the
+   * page's real StateFlow starts from, before its `combine` has emitted once. Every mapped state
+   * (see [toSubscriptionUiState]) sets this `false` explicitly, since a resolved tier — even the
+   * free one — is never "still loading". Without this, a returning Pro subscriber briefly sees
+   * [isPro] `false` and the free-tier paywall before their real entitlement arrives.
+   */
+  val isLoading: Boolean = true,
   val isPro: Boolean = false,
   val lifecycle: Subscription.Lifecycle = Subscription.Lifecycle.LIFECYCLE_NONE,
   val willRenew: Boolean = false,
@@ -103,6 +114,15 @@ data class SubscriptionUiState(
    * — the charged-and-stranded case, created deliberately rather than by a dropped webhook.
    */
   val isGuest: Boolean = false,
+  /**
+   * Whether this build ships ads at all — the comparison table's "Ad-free experience" row must
+   * describe the build the pilot is actually holding, not a hypothetical one (#384). Sourced from
+   * [dev.fanfly.wingslog.core.appinfo.AppCapability.isAdsSupported] rather than
+   * [dev.fanfly.wingslog.feature.ads.datamanager.AdsManager.showsAds], which additionally reflects
+   * *this account's* tier and the developer force-override — neither belongs in a row that is
+   * arguing what Free lacks and Pro has.
+   */
+  val isAdsSupported: Boolean = false,
 )
 
 /**
@@ -181,6 +201,7 @@ class SubscriptionViewModel(
   private val subscriptionManager: SubscriptionManager,
   private val billingManager: BillingManager,
   private val authManager: AuthManager,
+  private val appCapability: AppCapability,
   private val entitlementReconciler: EntitlementReconciler = NoOpEntitlementReconciler,
   /** How long to wait for the webhook before asking the server to re-check. Overridden in tests. */
   private val activationGraceMillis: Long = ACTIVATION_GRACE_MILLIS,
@@ -247,6 +268,7 @@ class SubscriptionViewModel(
         // out re-runs this. Linking a guest account to a real one does NOT fire authStateChanged
         // (see SettingsViewModel), so an in-session upgrade is reflected when the page is revisited.
         isGuest = authManager.getCurrentUser()?.isAnonymous == true,
+        isAdsSupported = appCapability.isAdsSupported,
       )
     }.stateIn(
       viewModelScope,
@@ -302,6 +324,7 @@ internal fun toSubscriptionUiState(
   store: PurchasePlatform? = null,
   isActivating: Boolean = false,
   isGuest: Boolean = false,
+  isAdsSupported: Boolean = false,
 ): SubscriptionUiState {
   val purchasePlatform = purchasePlatformOf(subscription.origin_platform)
   val isComped = isCompedEntitlement(subscription)
@@ -311,6 +334,7 @@ internal fun toSubscriptionUiState(
   val providerUrl = if (isComped) null else manageableUrlOrNull(subscription.management_url)
   val derivedUrl = if (isComped) null else derivedManagementUrlFor(purchasePlatform)
   return SubscriptionUiState(
+    isLoading = false,
     isPro = status == Subscription.Status.STATUS_PRO,
     lifecycle = subscription.lifecycle,
     willRenew = subscription.will_renew,
@@ -327,6 +351,7 @@ internal fun toSubscriptionUiState(
     isManagementUrlDerived = providerUrl == null && derivedUrl != null,
     isComped = isComped,
     isGuest = isGuest,
+    isAdsSupported = isAdsSupported,
   )
 }
 

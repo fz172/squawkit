@@ -2,12 +2,10 @@ package dev.fanfly.wingslog.core.appinfo
 
 actual fun createAppCapability(isDeveloperBuild: Boolean) = AppCapability(
   isDeveloperOptionsSupported = isDeveloperBuild,
-  // Staged rollout (#134): dev + dogfood only. GA is flipping this to `true`.
-  isAircraftSharingSupported = isDeveloperBuild,
   isStressTestSupported = isDeveloperBuild,
+  isNotificationsSupported = true,
   isCameraCaptureSupported = true,
   isAnonymousLoginSupported = true,
-  isAppleSignInSupported = false,
-  // Staged rollout: dev + dogfood only until GA. Off = no paywall (everything unlocked).
-  isSubscriptionSupported = isDeveloperBuild,
+  // GA (#386, P9): was dev + dogfood only until ads GA. Off = NO ads.
+  isAdsSupported = true,
 )

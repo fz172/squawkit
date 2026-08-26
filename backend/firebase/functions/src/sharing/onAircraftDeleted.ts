@@ -31,6 +31,12 @@ export const onAircraftDeleted = onDocumentWritten(
 
     const { uid, acId } = event.params;
 
+    // ORDER IS LOAD-BEARING, and for a second reason since N1 landed. `tombstoneChildren` uses
+    // `batch.update`, which preserves each record's existing `writerUid` — so to the notification
+    // fan-out those writes are indistinguishable from the original author deleting every record by
+    // hand. Tearing the share down FIRST removes the ACL, so `readShareAudience` returns null and
+    // the cascade stays silent. Reverse these two lines and deleting one aircraft sends every member
+    // one notification per record. See onRecordWritten's `readChange`.
     await tearDownShare(uid, acId);
     await tombstoneChildren(uid, acId);
     await deleteAircraftBlobs(uid, acId);

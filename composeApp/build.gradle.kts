@@ -55,6 +55,7 @@ kotlin {
       implementation(project(":core:di"))
       implementation(project(":core:appinfo"))
       implementation(project(":core:nav"))
+      implementation(project(":core:lifecycle:compose"))
       implementation(project(":core:ui"))
       implementation(project(":core:ui:theme"))
       implementation(project(":core:storage"))
@@ -64,6 +65,15 @@ kotlin {
       implementation(project(":feature:shell"))
       implementation(project(":feature:sync:data"))
       implementation(project(":feature:stresstest:config"))
+      // IosAdConsentBridge / IosAdViewBridge — wired from MainViewController.kt, same shape as the
+      // App Check bridge.
+      implementation(project(":feature:ads:datamanager"))
+      implementation(project(":feature:ads:viewing"))
+      // IosNotificationTapDelegate — installed from MainViewController.kt before launch finishes.
+      implementation(project(":feature:notifications:viewing"))
+      // BgTaskUrgencyScanScheduler — its BGTaskScheduler identifier is registered from
+      // MainViewController.kt before launch finishes, same as the blob scan's.
+      implementation(project(":feature:notifications:engine"))
 
       implementation(libs.compose.ui)
       implementation(libs.material3)

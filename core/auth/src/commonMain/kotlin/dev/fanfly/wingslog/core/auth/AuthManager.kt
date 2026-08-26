@@ -7,7 +7,19 @@ interface AuthManager {
   fun getCurrentUser(): FirebaseUser?
   suspend fun trySilentLogin(): FirebaseUser?
   suspend fun signInWithGoogle(): FirebaseUser?
+
+  /**
+   * Sign in with Apple. Offered on every platform: iOS presents the native `ASAuthorization` sheet
+   * (App Store policy requires it wherever Google is offered), web uses the Firebase JS popup, and
+   * Android runs Firebase's generic OAuth flow in a Custom Tab (#408) — there is no native Apple
+   * SDK there, so it is a browser flow rather than a system sheet.
+   *
+   * Returns null when the user cancels or the flow fails — the caller shows a generic error, the
+   * same contract as [signInWithGoogle].
+   */
+  suspend fun signInWithApple(): FirebaseUser?
   suspend fun signInAnonymously(): FirebaseUser?
+
   /**
    * Writes [name] to the Firebase Auth profile, so the ID token carries it.
    *
@@ -36,16 +48,45 @@ interface AuthManager {
   suspend fun completeSignInLink(email: String, link: String): FirebaseUser?
 
   /**
-   * Links the platform's primary provider (Google on Android, Apple on iOS) to the current
-   * anonymous user, preserving the UID so local-first data stays valid. Returns
-   * [AccountUpgradeResult.CredentialInUse] when the chosen account already exists (caller then
-   * offers the merge path).
+   * Links [provider] to the current anonymous user, preserving the UID so local-first data stays
+   * valid. Returns [AccountUpgradeResult.CredentialInUse] when the chosen account already exists
+   * (caller then offers the merge path).
+   *
+   * [AuthProvider.Email] is not accepted here — it cannot complete in one call, because the link
+   * leaves the app. Use [sendSignInLink] then [completeUpgradeWithEmailLink]. Passing it returns
+   * [AccountUpgradeResult.Failed] rather than throwing, so a mis-wired caller degrades to an error
+   * message instead of a crash.
+   *
+   * A provider the platform does not offer (Apple on Android) also returns
+   * [AccountUpgradeResult.Failed]; [upgradeProvidersFor] is what keeps the UI from asking.
    */
-  suspend fun upgradeAnonymousAccount(): AccountUpgradeResult
+  suspend fun upgradeAnonymousAccount(provider: AuthProvider): AccountUpgradeResult
+
+  /**
+   * Email-link upgrade, leg 2: links the credential carried by [link] to the current anonymous
+   * user, preserving the UID.
+   *
+   * Deliberately *not* [completeSignInLink]: that signs in, which would abandon the guest UID and
+   * every local row keyed to it. Returns [AccountUpgradeResult.CredentialInUse] when the address
+   * already has an account, so the caller can take the same merge path the other providers use.
+   */
+  suspend fun completeUpgradeWithEmailLink(
+    email: String,
+    link: String,
+  ): AccountUpgradeResult
 
   /**
    * Merge path: signs in to the existing account that owns [credential] (a different UID). The
    * caller is responsible for re-keying local data to the new UID afterward.
    */
   suspend fun signInToExistingAccount(credential: AuthCredential): AccountUpgradeResult
+
+  /**
+   * Merge path for providers that answered [AccountUpgradeResult.ReauthRequiredToMerge]: runs a
+   * fresh authorization for [provider] and signs in to the existing account with it.
+   *
+   * Call only after the user has been told their account already exists — this presents a second
+   * provider sheet. Like [signInToExistingAccount], the caller re-keys local data afterward.
+   */
+  suspend fun mergeIntoExistingAccount(provider: AuthProvider): AccountUpgradeResult
 }

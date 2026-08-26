@@ -5,6 +5,7 @@ import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.aircraft.MaintenanceTask
 import dev.fanfly.wingslog.aircraft.Squawk
 import dev.fanfly.wingslog.core.storage.CollectionKind
+import dev.fanfly.wingslog.core.storage.blob.AttachmentRefs.of
 
 /**
  * The attachments an entity payload references.
@@ -20,22 +21,24 @@ import dev.fanfly.wingslog.core.storage.CollectionKind
  */
 object AttachmentRefs {
 
-  fun of(kind: CollectionKind, payload: ByteArray): List<Attachment> = when (kind) {
-    CollectionKind.MaintenanceLog -> MaintenanceLog.ADAPTER.decode(payload).attachments
-    CollectionKind.MaintenanceTask -> MaintenanceTask.ADAPTER.decode(payload).attachments
-    CollectionKind.Squawk -> Squawk.ADAPTER.decode(payload).attachments
-    // No `attachments` field on these kinds today. Deliberately exhaustive (no `else`) so adding one
-    // to a proto forces a decision here instead of silently skipping both reconciliation and GC —
-    // the way CollectionKind.Squawk was skipped before this was one list.
-    CollectionKind.Aircraft,
-    CollectionKind.MaintenanceOverview,
-    CollectionKind.Technician,
-    CollectionKind.UserInfo,
-    CollectionKind.DeveloperOptions,
-    CollectionKind.Subscription,
-    CollectionKind.SharedAircraftRef,
-      -> emptyList()
-  }
+  fun of(kind: CollectionKind, payload: ByteArray): List<Attachment> =
+    when (kind) {
+      CollectionKind.MaintenanceLog -> MaintenanceLog.ADAPTER.decode(payload).attachments
+      CollectionKind.MaintenanceTask -> MaintenanceTask.ADAPTER.decode(payload).attachments
+      CollectionKind.Squawk -> Squawk.ADAPTER.decode(payload).attachments
+      // No `attachments` field on these kinds today. Deliberately exhaustive (no `else`) so adding one
+      // to a proto forces a decision here instead of silently skipping both reconciliation and GC —
+      // the way CollectionKind.Squawk was skipped before this was one list.
+      CollectionKind.Aircraft,
+      CollectionKind.MaintenanceOverview,
+      CollectionKind.Technician,
+      CollectionKind.UserInfo,
+      CollectionKind.DeveloperOptions,
+      CollectionKind.Subscription,
+      CollectionKind.SharedAircraftRef,
+      CollectionKind.NotificationSettings,
+        -> emptyList()
+    }
 
   /**
    * The blob ids [of] names. Deliberately does *not* require a sha256: an attachment whose bytes

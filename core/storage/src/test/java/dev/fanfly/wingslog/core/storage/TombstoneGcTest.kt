@@ -13,15 +13,16 @@ import dev.fanfly.wingslog.core.storage.blob.LocalBlobStore
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.test.runTest
+import org.junit.Before
+import org.junit.Test
 import kotlin.time.Duration.Companion.days
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
-import org.junit.Before
-import org.junit.Test
 
 private const val UID = "u1"
 private const val AIRCRAFT_ID = "ac-1"
-private const val SHA = "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890"
+private const val SHA =
+  "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890"
 
 private val NOW = Instant.fromEpochMilliseconds(100.days.inWholeMilliseconds)
 private val LONG_AGO = NOW - 31.days
@@ -85,7 +86,12 @@ class TombstoneGcTest {
 
   @Test
   fun reclaimsBlobsOfPurgedRecord() = runTest {
-    putLog(id = "old", at = LONG_AGO, deleted = true, attachmentIds = listOf("blob-a", "blob-b"))
+    putLog(
+      id = "old",
+      at = LONG_AGO,
+      deleted = true,
+      attachmentIds = listOf("blob-a", "blob-b")
+    )
 
     gc.runOnce(NOW)
 
@@ -94,7 +100,12 @@ class TombstoneGcTest {
 
   @Test
   fun leavesBlobsOfTombstonesNotYetPurgeable() = runTest {
-    putLog(id = "recent", at = RECENTLY, deleted = true, attachmentIds = listOf("blob-a"))
+    putLog(
+      id = "recent",
+      at = RECENTLY,
+      deleted = true,
+      attachmentIds = listOf("blob-a")
+    )
 
     gc.runOnce(NOW)
 
@@ -103,9 +114,19 @@ class TombstoneGcTest {
 
   @Test
   fun keepsABlobALiveRecordStillReferences() = runTest {
-    putLog(id = "old", at = LONG_AGO, deleted = true, attachmentIds = listOf("shared", "only-mine"))
+    putLog(
+      id = "old",
+      at = LONG_AGO,
+      deleted = true,
+      attachmentIds = listOf("shared", "only-mine")
+    )
     // A duplicate/copy can put the same attachment id on a live record. Its bytes must survive.
-    putLog(id = "copy", at = RECENTLY, deleted = false, attachmentIds = listOf("shared"))
+    putLog(
+      id = "copy",
+      at = RECENTLY,
+      deleted = false,
+      attachmentIds = listOf("shared")
+    )
 
     gc.runOnce(NOW)
 
@@ -114,7 +135,12 @@ class TombstoneGcTest {
 
   @Test
   fun keepsABlobALiveRecordInAnotherAircraftStillReferences() = runTest {
-    putLog(id = "old", at = LONG_AGO, deleted = true, attachmentIds = listOf("copied"))
+    putLog(
+      id = "old",
+      at = LONG_AGO,
+      deleted = true,
+      attachmentIds = listOf("copied")
+    )
     // Same attachment id, different aircraft — a copy across the fleet. The live one wins.
     putEntity(
       kind = CollectionKind.MaintenanceLog,
@@ -138,7 +164,12 @@ class TombstoneGcTest {
   @Test
   fun reclaimsBlobsOfCascadeProducedChildTombstones() = runTest {
     putAircraft(at = LONG_AGO, deleted = true)
-    putLog(id = "child", at = LONG_AGO, deleted = true, attachmentIds = listOf("blob-a"))
+    putLog(
+      id = "child",
+      at = LONG_AGO,
+      deleted = true,
+      attachmentIds = listOf("blob-a")
+    )
 
     gc.runOnce(NOW)
 
@@ -149,14 +180,15 @@ class TombstoneGcTest {
 
   /** Blobs are aircraft-scoped: a deleted aircraft takes its whole blob prefix with it (§5.2). */
   @Test
-  fun purgedAircraftReclaimsEveryBlobInItsScope_evenOnesNoPayloadNames() = runTest {
-    putAircraft(at = LONG_AGO, deleted = true)
-    blobs.rows[BlobId("orphan")] = AIRCRAFT_SCOPE
+  fun purgedAircraftReclaimsEveryBlobInItsScope_evenOnesNoPayloadNames() =
+    runTest {
+      putAircraft(at = LONG_AGO, deleted = true)
+      blobs.rows[BlobId("orphan")] = AIRCRAFT_SCOPE
 
-    gc.runOnce(NOW)
+      gc.runOnce(NOW)
 
-    assertThat(blobs.purged).containsExactly(BlobId("orphan"))
-  }
+      assertThat(blobs.purged).containsExactly(BlobId("orphan"))
+    }
 
   @Test
   fun purgedAircraftLeavesAnotherAircraftsBlobsAlone() = runTest {
@@ -180,7 +212,12 @@ class TombstoneGcTest {
       at = LONG_AGO,
       deleted = true,
     )
-    putLog(id = "old", at = LONG_AGO, deleted = true, attachmentIds = listOf("blob-a"))
+    putLog(
+      id = "old",
+      at = LONG_AGO,
+      deleted = true,
+      attachmentIds = listOf("blob-a")
+    )
 
     gc.runOnce(NOW)
 
@@ -192,7 +229,12 @@ class TombstoneGcTest {
   @Test
   fun withoutABlobStore_stillPurgesTombstones() = runTest {
     TombstoneGc(db = db, blobs = null).let { gcWithoutBlobs ->
-      putLog(id = "old", at = LONG_AGO, deleted = true, attachmentIds = listOf("blob-a"))
+      putLog(
+        id = "old",
+        at = LONG_AGO,
+        deleted = true,
+        attachmentIds = listOf("blob-a")
+      )
 
       gcWithoutBlobs.runOnce(NOW)
 
@@ -204,11 +246,19 @@ class TombstoneGcTest {
 
   /** Row-level existence — [selectOneForSync] returns tombstoned rows too, which is the point here. */
   private suspend fun logExists(id: String): Boolean =
-    db.schemaQueries.selectOneForSync(CollectionKind.MaintenanceLog, AIRCRAFT_SCOPE, id)
+    db.schemaQueries.selectOneForSync(
+      CollectionKind.MaintenanceLog,
+      AIRCRAFT_SCOPE,
+      id
+    )
       .awaitAsOneOrNull() != null
 
   private suspend fun aircraftExists(): Boolean =
-    db.schemaQueries.selectOneForSync(CollectionKind.Aircraft, USER_ROOT, AIRCRAFT_ID)
+    db.schemaQueries.selectOneForSync(
+      CollectionKind.Aircraft,
+      USER_ROOT,
+      AIRCRAFT_ID
+    )
       .awaitAsOneOrNull() != null
 
   private suspend fun putLog(
@@ -222,7 +272,15 @@ class TombstoneGcTest {
       id = id,
       attachments = attachmentIds.map { Attachment(id = it, sha256 = SHA) },
     ).encode()
-    putEntity(CollectionKind.MaintenanceLog, AIRCRAFT_SCOPE, id, payload, at, deleted, dirty)
+    putEntity(
+      CollectionKind.MaintenanceLog,
+      AIRCRAFT_SCOPE,
+      id,
+      payload,
+      at,
+      deleted,
+      dirty
+    )
   }
 
   private suspend fun putAircraft(at: Instant, deleted: Boolean) {
@@ -298,12 +356,18 @@ private class RecordingBlobStore : LocalBlobStore {
   ): Unit = notUsed()
 
   override fun observe(id: BlobId): Flow<BlobRef?> = notUsed()
-  override suspend fun get(id: BlobId): BlobRef? = notUsed()
-  override suspend fun localUri(id: BlobId): String? = notUsed()
+  override suspend fun get(id: BlobId): BlobRef = notUsed()
+  override suspend fun localUri(id: BlobId): String = notUsed()
   override suspend fun markUploading(id: BlobId): Unit = notUsed()
-  override suspend fun markUploaded(id: BlobId, remotePath: String): Unit = notUsed()
+  override suspend fun markUploaded(id: BlobId, remotePath: String): Unit =
+    notUsed()
+
   override suspend fun markFailedTransient(id: BlobId): Unit = notUsed()
-  override suspend fun markFailedPermanent(id: BlobId, cause: Throwable): Unit = notUsed()
+  override suspend fun markFailedPermanent(id: BlobId, cause: Throwable): Unit =
+    notUsed()
+
+  override suspend fun markRemoteMissing(id: BlobId, cause: Throwable): Unit = notUsed()
+
   override suspend fun installDownloaded(
     id: BlobId,
     bytes: ByteArray,
@@ -311,7 +375,9 @@ private class RecordingBlobStore : LocalBlobStore {
   ): Result<Unit> = notUsed()
 
   override suspend fun delete(id: BlobId): Unit = notUsed()
-  override fun observeForScope(scopePath: String): Flow<List<BlobRef>> = notUsed()
+  override fun observeForScope(scopePath: String): Flow<List<BlobRef>> =
+    notUsed()
+
   override suspend fun resetUploadAttempts(id: BlobId): Unit = notUsed()
   override suspend fun wipeForUser(uid: String): Unit = notUsed()
 

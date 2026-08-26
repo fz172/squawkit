@@ -33,6 +33,7 @@ class SqlDelightEntityStoreTest {
   private lateinit var store: SqlDelightEntityStore<Aircraft>
   private lateinit var testClock: TestClock
 
+  @OptIn(ExperimentalCoroutinesApi::class)
   private val ioContext = UnconfinedTestDispatcher()
   private val codec = WireCodec(Aircraft.ADAPTER)
   private val scopeA = EntityScope.userRoot(TEST_USER_ID)
@@ -61,13 +62,15 @@ class SqlDelightEntityStoreTest {
 
   @Test
   fun put_stamps_the_writing_account_as_author() = runTest(ioContext) {
-    val aircraft = buildTestAircraft(id = TEST_AIRCRAFT_ID, tailNumber = "N12345")
+    val aircraft =
+      buildTestAircraft(id = TEST_AIRCRAFT_ID, tailNumber = "N12345")
 
     store.put(TEST_AIRCRAFT_ID, aircraft, scopeA)
 
     // Who wrote this revision is what §7.5 attests: it is read back to tell a technician signing
     // their own work apart from someone else attributing work to them.
-    val row = store.observe(TEST_AIRCRAFT_ID, scopeA).first()
+    val row = store.observe(TEST_AIRCRAFT_ID, scopeA)
+      .first()
     assertThat(row?.writerUid).isEqualTo(CURRENT_UID)
   }
 
@@ -81,12 +84,16 @@ class SqlDelightEntityStoreTest {
       clock = testClock,
       currentUid = { null },
     )
-    val aircraft = buildTestAircraft(id = TEST_AIRCRAFT_ID, tailNumber = "N12345")
+    val aircraft =
+      buildTestAircraft(id = TEST_AIRCRAFT_ID, tailNumber = "N12345")
 
     anonymous.put(TEST_AIRCRAFT_ID, aircraft, scopeA)
 
     // Null means "unknown", which the UI reports as neither signed nor assigned.
-    assertThat(anonymous.observe(TEST_AIRCRAFT_ID, scopeA).first()?.writerUid).isNull()
+    assertThat(
+      anonymous.observe(TEST_AIRCRAFT_ID, scopeA)
+        .first()?.writerUid
+    ).isNull()
   }
 
   // ---- put + observeAll ----

@@ -5,33 +5,39 @@ import dev.fanfly.wingslog.core.analytics.di.analyticsPreferenceStoreModule
 import dev.fanfly.wingslog.core.analytics.di.platformAnalyticsModule
 import dev.fanfly.wingslog.core.auth.di.authModule
 import dev.fanfly.wingslog.core.auth.di.commonAuthModule
+import dev.fanfly.wingslog.core.firebase.functions.functionsModule
+import dev.fanfly.wingslog.core.lifecycle.di.lifecycleModule
+import dev.fanfly.wingslog.core.lifecycle.di.platformLifecycleModule
 import dev.fanfly.wingslog.core.storage.di.platformStorageModule
 import dev.fanfly.wingslog.core.storage.di.storageModule
 import dev.fanfly.wingslog.core.ui.theme.di.appearanceModule
 import dev.fanfly.wingslog.core.ui.theme.di.appearanceStoreModule
+import dev.fanfly.wingslog.feature.ads.datamanager.di.adsModule
+import dev.fanfly.wingslog.feature.ads.datamanager.di.platformAdConsentModule
 import dev.fanfly.wingslog.feature.aircraft.dashboard.di.aircraftDashboardModule
 import dev.fanfly.wingslog.feature.aircraft.update.di.aircraftUpdateModule
 import dev.fanfly.wingslog.feature.attachment.datamanager.attachmentModule
 import dev.fanfly.wingslog.feature.attachment.datamanager.platformAttachmentModule
+import dev.fanfly.wingslog.feature.developeroptions.datamanager.di.developerOptionsModule
 import dev.fanfly.wingslog.feature.export.datamanager.di.exportDataManagerModule
 import dev.fanfly.wingslog.feature.export.datamanager.di.exportPlatformModule
 import dev.fanfly.wingslog.feature.export.update.viewmodel.exportUiModule
-import dev.fanfly.wingslog.feature.developeroptions.datamanager.di.developerOptionsModule
-import dev.fanfly.wingslog.feature.subscription.datamanager.di.platformBillingModule
-import dev.fanfly.wingslog.feature.subscription.datamanager.di.subscriptionModule
-import dev.fanfly.wingslog.feature.subscription.viewing.di.subscriptionUiModule
 import dev.fanfly.wingslog.feature.fleet.datamanager.di.fleetDataManagerModule
 import dev.fanfly.wingslog.feature.fleet.picker.data.di.selectedAircraftStoreModule
 import dev.fanfly.wingslog.feature.login.di.loginModule
 import dev.fanfly.wingslog.feature.logs.datamanager.impl.maintenanceDataManagerModule
 import dev.fanfly.wingslog.feature.logs.update.di.maintenanceUpdateModule
 import dev.fanfly.wingslog.feature.logs.viewing.di.maintenanceViewingModule
+import dev.fanfly.wingslog.feature.notifications.di.notificationsModule
 import dev.fanfly.wingslog.feature.settings.di.settingsModule
 import dev.fanfly.wingslog.feature.sharing.datamanager.sharingModule
 import dev.fanfly.wingslog.feature.sharing.update.di.sharingUiModule
 import dev.fanfly.wingslog.feature.shell.di.shellModule
 import dev.fanfly.wingslog.feature.squawk.datamanager.squawkModule
 import dev.fanfly.wingslog.feature.squawk.update.viewmodel.squawkUiModule
+import dev.fanfly.wingslog.feature.subscription.datamanager.di.platformBillingModule
+import dev.fanfly.wingslog.feature.subscription.datamanager.di.subscriptionModule
+import dev.fanfly.wingslog.feature.subscription.viewing.di.subscriptionUiModule
 import dev.fanfly.wingslog.feature.sync.data.blob.di.blobSchedulerModule
 import dev.fanfly.wingslog.feature.sync.data.di.syncModule
 import dev.fanfly.wingslog.feature.sync.logging.di.syncLoggingModule
@@ -57,6 +63,12 @@ val commonAppModules: List<Module> = listOf(
   platformAnalyticsModule,
   analyticsPreferenceStoreModule,
   analyticsPreferenceModule,
+  // Ahead of authModule: on Android this supplies the CurrentActivityProvider that AuthManagerImpl
+  // takes. Koin resolves lazily so the order is not required, but the list is read by people and
+  // the dependency direction should be visible. Empty on iOS and web.
+  platformLifecycleModule,
+  // The one Cloud Functions client. Ahead of every callable client that injects it.
+  functionsModule,
   commonAuthModule,
   authModule,
   storageModule,
@@ -77,6 +89,12 @@ val commonAppModules: List<Module> = listOf(
   // RevenueCat on Android/iOS; the no-purchase binding on web (see PlatformBillingModule).
   platformBillingModule,
   subscriptionUiModule,
+  // Ahead of adsModule: the ad session counter depends on the foreground observer, not the reverse.
+  lifecycleModule,
+  adsModule,
+  // Google UMP on Android/iOS's Swift bridge; the no-op binding on web. Same shape as
+  // platformBillingModule next to subscriptionModule.
+  platformAdConsentModule,
   technicianDataManagerModule,
   technicianManageModule,
   maintenanceDataManagerModule,
@@ -92,6 +110,12 @@ val commonAppModules: List<Module> = listOf(
   sharingModule,
   sharingUiModule,
   loginModule,
+  // Notifications (P1 done; P2 in progress — docs/notifications/notifications_design.md §14.1).
+  // :engine's UrgencyScanner (P2.1-P2.3) has no scheduled caller yet — only the Developer Options
+  // "scan now" trigger — the platform schedulers (WorkManager/BGTaskScheduler, P2.6/P2.7) still
+  // don't exist. The feature's uber module (feature/notifications/di) bundles all six submodules'
+  // Koin modules into this one entry.
+  notificationsModule,
   settingsModule,
   syncSettingsModule,
   shellModule,

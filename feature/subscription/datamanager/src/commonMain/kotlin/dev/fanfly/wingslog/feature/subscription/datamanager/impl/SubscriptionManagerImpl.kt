@@ -21,7 +21,7 @@ import kotlin.time.Clock
 
 /**
  * Reads the entitlement from the local [EntityStore] on an auth-scoped `flatMapLatest`, resolves the
- * effective tier, and applies the default-open rollout gate and the developer force-status override.
+ * effective tier, and applies the developer force-status override.
  *
  * @param forceStatus a developer override stream; emits a forced tier or `null` for "no override".
  *   Defaults to none; Developer Options wires the real source in P3. Honored only in developer
@@ -53,10 +53,16 @@ class SubscriptionManagerImpl(
       }
     }
 
+  /**
+   * Read once: [AppCapability] is fixed at build time, so there is no value change to observe and no
+   * reason to re-evaluate it on every emission below.
+   */
+  private val devOverridesHonored = appCapability.isDeveloperOptionsSupported
+
   override fun status(): Flow<Subscription.Status> =
     combine(entitlement(), forceStatus) { subscription, forced ->
       // The forced tier wins, but only in a developer build — never in the shipping release.
-      if (appCapability.isDeveloperOptionsSupported && forced != null) {
+      if (devOverridesHonored && forced != null) {
         forced
       } else {
         subscription.effectiveStatusAt(clock.now().toEpochMilliseconds())
@@ -70,27 +76,30 @@ class SubscriptionManagerImpl(
   override fun canHostShare(): Flow<Boolean> = gate(Subscription.Status.STATUS_PRO)
 
   override fun aircraftLimit(): Flow<Int?> =
-    // Default-open: no paywall while the capability is off → unlimited.
-    if (!appCapability.isSubscriptionSupported) {
-      flowOf(null)
+    status().map { if (it >= Subscription.Status.STATUS_PRO) null else FREE_AIRCRAFT_LIMIT }
+
+  override fun shouldShowAds(): Flow<Boolean> =
+    // No ads unless we can also sell their removal.
+    if (!appCapability.isAdsSupported) {
+      flowOf(false)
     } else {
-      status().map { if (it >= Subscription.Status.STATUS_PRO) null else FREE_AIRCRAFT_LIMIT }
+      status().map { it < Subscription.Status.STATUS_PRO }
     }
 
   private fun gate(minimum: Subscription.Status): Flow<Boolean> =
-    // Default-open: while the subscription capability is off, every gate reads available.
-    if (!appCapability.isSubscriptionSupported) {
-      flowOf(true)
-    } else {
-      // Proto enums order by declaration (STATUS_FREE < STATUS_PRO), so this is a tier comparison.
-      status().map { it >= minimum }
-    }
+    // Proto enums order by declaration (STATUS_FREE < STATUS_PRO), so this is a tier comparison.
+    status().map { it >= minimum }
 
   companion object {
     private val logger = Logger.withTag("SubscriptionManagerImpl")
     private const val DOC_ID = "main"
 
-    /** Aircraft a free account may own; a Pro account is unlimited. */
-    const val FREE_AIRCRAFT_LIMIT = 1
+    /**
+     * Aircraft a free account may own; a Pro account is unlimited. Raised from 1 to 2 alongside
+     * display ads (`docs/ads/display_ads_PRD.md` D9) — ad revenue on the free tier pays for the
+     * second aircraft, and 2 covers the owner-plus-partnership case. Enforced client-side only;
+     * no Cloud Function or Firestore rule checks aircraft count.
+     */
+    const val FREE_AIRCRAFT_LIMIT = 2
   }
 }

@@ -9,8 +9,10 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
@@ -19,7 +21,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import dev.fanfly.wingslog.core.analytics.LocalAnalytics
 import dev.fanfly.wingslog.core.analytics.trackScreenViews
-import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.nav.Screen.Companion.CROSS_SCREEN_SUCCESS_MESSAGE
 import dev.fanfly.wingslog.core.ui.adaptive.AdaptiveAppShell
@@ -28,13 +29,17 @@ import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
 import dev.fanfly.wingslog.feature.aircraft.dashboard.ShellSectionBody
 import dev.fanfly.wingslog.feature.aircraft.dashboard.ShellSectionFab
 import dev.fanfly.wingslog.feature.fleet.viewing.FleetEmptyState
+import dev.fanfly.wingslog.feature.login.upgrade.AccountUpgradeFlow
+import dev.fanfly.wingslog.feature.login.upgrade.AccountUpgradeViewModel
+import dev.fanfly.wingslog.feature.notifications.model.NotificationTapTarget
+import dev.fanfly.wingslog.feature.notifications.viewing.NotificationTapRouter
 import dev.fanfly.wingslog.feature.settings.SettingsContent
 import dev.fanfly.wingslog.feature.shell.viewmodel.AdaptiveShellViewModel
 import dev.fanfly.wingslog.feature.subscription.viewing.ProUpsellSheet
 import dev.fanfly.wingslog.feature.subscription.viewing.UpsellTrigger
 import dev.fanfly.wingslog.feature.sync.data.SyncNotice
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
-import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.core.sharedassets.generated.resources.dismiss
 import wingslog.core.sharedassets.generated.resources.sync_changes_discarded
@@ -49,9 +54,12 @@ import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 fun AdaptiveShellRoute(
   navController: NavController,
   shellEntry: NavBackStackEntry,
-  isStressTestSupported: Boolean,
 ) {
   val viewModel = koinViewModel<AdaptiveShellViewModel>()
+  // Hoisted to the shell, not to Settings: an email upgrade link reopens the app on whatever
+  // destination it starts at, so the flow has to be mounted for the link to be seen at all.
+  val upgradeViewModel = koinViewModel<AccountUpgradeViewModel>()
+  val scope = rememberCoroutineScope()
   val state by viewModel.uiState.collectAsState()
   val atAircraftLimit by viewModel.atAircraftLimit.collectAsState()
 
@@ -67,16 +75,11 @@ fun AdaptiveShellRoute(
     }
   }
 
-  // Manual invite-code entry (#209). Offered only when aircraft sharing is built into this app —
-  // otherwise the affordance is dropped, not shown-and-broken. Reused by both the switcher (populated
-  // fleet) and the empty-fleet state (where a technician with no aircraft of their own lands).
-  val appCapability = koinInject<AppCapability>()
-  val onEnterInviteCode: (() -> Unit)? =
-    if (appCapability.isAircraftSharingSupported) {
-      { navController.navigate(Screen.EnterInviteCode.route) }
-    } else {
-      null
-    }
+  // Manual invite-code entry (#209). Reused by both the switcher (populated fleet) and the
+  // empty-fleet state (where a technician with no aircraft of their own lands).
+  val onEnterInviteCode: () -> Unit = {
+    navController.navigate(Screen.EnterInviteCode.route)
+  }
   // Page-view feeder 2: the shell's sections (Dashboard/Tasks/Squawks/Logs/Settings) are
   // ViewModel state under one route, so the root observer can't see them — log on change here.
   val analytics = LocalAnalytics.current
@@ -107,6 +110,18 @@ fun AdaptiveShellRoute(
   // Work that was destroyed when a share ended (PRD D3 — the one data-loss window). Held open until
   // the user dismisses it: the purge typically runs while they are on another screen or the app is
   // backgrounded, and a message that times out unseen would leave them thinking the edit saved.
+  // Every notification tap moves shell state (aircraft, section, and for a single record the card to
+  // scroll to) rather than navigating, so all of it is applied here. Handling it from inside this
+  // route needs no auth gate of its own: the shell destination only composes once the auth graph has
+  // handed off, so a tap that cold-started the app simply stays pending until then.
+  val pendingTapTarget by NotificationTapRouter.pending.collectAsStateWithLifecycle()
+  LaunchedEffect(pendingTapTarget) {
+    val target = pendingTapTarget ?: return@LaunchedEffect
+    viewModel.onNotificationTap(target)
+    NotificationTapRouter.consume()
+  }
+  val scrollTargetId by viewModel.pendingScrollTargetId.collectAsStateWithLifecycle()
+
   val notice by viewModel.notice.collectAsState()
   val dismissLabel = stringResource(CoreRes.string.dismiss)
   val discardedMessage = stringResource(
@@ -137,7 +152,7 @@ fun AdaptiveShellRoute(
       if (section == ShellSection.SETTINGS) {
         SettingsSection(
           rootNavController = navController,
-          isStressTestSupported = isStressTestSupported
+          upgradeViewModel = upgradeViewModel,
         )
       } else {
         ShellSectionBody(
@@ -145,6 +160,8 @@ fun AdaptiveShellRoute(
           aircraftId = aircraftId,
           navController = navController,
           onNavigateToSection = viewModel::selectSection,
+          scrollToRecordId = scrollTargetId,
+          onScrollTargetConsumed = viewModel::consumeScrollTarget,
         )
       }
     },
@@ -160,6 +177,19 @@ fun AdaptiveShellRoute(
         aircraftId = aircraftId,
         navController = navController,
       )
+    },
+  )
+
+  // Always mounted while signed in, so an upgrade link that reopens the app is seen no matter which
+  // section is showing. The flow ignores links that aren't for this guest's pending upgrade.
+  AccountUpgradeFlow(
+    viewModel = upgradeViewModel,
+    onMessage = { message ->
+      scope.launch {
+        snackbarHostState.showSnackbar(
+          message
+        )
+      }
     },
   )
 
@@ -187,7 +217,7 @@ private const val SETTINGS_ROOT_ROUTE = "settings_root"
 @Composable
 private fun SettingsSection(
   rootNavController: NavController,
-  isStressTestSupported: Boolean,
+  upgradeViewModel: AccountUpgradeViewModel,
 ) {
   if (LocalLayoutTier.current.hasFullSidebar) {
     val settingsNav: NavHostController = rememberNavController()
@@ -206,11 +236,15 @@ private fun SettingsSection(
         SettingsContent(
           navController = rootNavController,
           sectionNavController = settingsNav,
+          accountUpgradeViewModel = upgradeViewModel,
         )
       }
-      settingsDetailRoutes(settingsNav, isStressTestSupported)
+      settingsDetailRoutes(settingsNav)
     }
   } else {
-    SettingsContent(navController = rootNavController)
+    SettingsContent(
+      navController = rootNavController,
+      accountUpgradeViewModel = upgradeViewModel,
+    )
   }
 }

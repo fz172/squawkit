@@ -28,9 +28,6 @@ object AircraftShareDeepLinks {
   /** Held (parked) until a consumer redeems it — survives the sign-in / guest-upgrade round trip. */
   val pendingInvite: StateFlow<ShareInvite?> = _pendingInvite.asStateFlow()
 
-  /** True for a URL this channel owns, so a host can route it here instead of the email-link channel. */
-  fun isShareLink(url: String): Boolean = parse(url) != null
-
   /** Parks [url]'s invite if it's a share link; ignores anything else. Returns whether it was taken. */
   fun deliver(url: String): Boolean {
     val invite = parse(url) ?: return false

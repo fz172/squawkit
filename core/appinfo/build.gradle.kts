@@ -101,6 +101,8 @@ kotlin {
 
     commonMain.dependencies {
       implementation(libs.compose.ui)
+      // configureLogging() sets Kermit's min severity from the build flavor (#276).
+      api(libs.kermit)
     }
 
     androidMain.dependencies {

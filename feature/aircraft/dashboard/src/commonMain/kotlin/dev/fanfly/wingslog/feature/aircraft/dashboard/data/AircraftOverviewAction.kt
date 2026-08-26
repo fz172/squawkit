@@ -27,6 +27,7 @@ sealed interface AircraftOverviewAction {
     AircraftOverviewAction
 
   data object DismissSquawkDetail : AircraftOverviewAction
+
   data class EditSquawkClick(val aircraftId: String, val squawkId: String) :
     AircraftOverviewAction
 }

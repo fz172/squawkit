@@ -95,8 +95,8 @@ See [DESIGN.md](DESIGN.md) and [PRODUCT.md](PRODUCT.md) for the full brand and p
 ## Build & run
 
 ```bash
-./gradlew assembleDebug                              # Android debug APK
-./gradlew assembleDogfoodDebug                       # Dogfood APK (includes fake data generator)
+./gradlew assembleDebug                              # Android debug APK (developer tooling on)
+./gradlew assembleRelease                            # Android release APK (developer tooling off)
 ./gradlew lint                                       # Lint
 ./gradlew testDebugUnitTest                          # All Android unit tests
 ./gradlew :feature:fleet:viewing:testDebugUnitTest   # Single-module tests
@@ -104,7 +104,8 @@ See [DESIGN.md](DESIGN.md) and [PRODUCT.md](PRODUCT.md) for the full brand and p
 ./gradlew :webApp:jsBrowserDevelopmentWebpack        # Web development bundle
 ```
 
-For iOS, open `iosApp/` in Xcode and run the **iosAppDogfood** scheme.
+For iOS, open `iosApp/` in Xcode and run the **iosAppDebug** scheme (**iosAppRelease** for a
+tooling-off build).
 
 CI runs lint → `assembleDebug` → `testDebugUnitTest` on every push and requires a
 `GOOGLE_SERVICES_JSON` secret. iOS is not built on CI.

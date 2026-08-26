@@ -234,7 +234,25 @@
                     <td class="platform"><span class="check">&#10003;</span></td>
                     <td class="platform"><span class="check">&#10003;</span></td>
                     <td class="note">Native provider bridge on iOS; browser popup integration on
-                        web.
+                        web. The iOS bridge hands the ID and access tokens back to Kotlin, which
+                        builds the Firebase credential — the same shape as the Apple bridge, so the
+                        guest upgrade can link rather than sign in (#415).
+                    </td>
+                </tr>
+                <tr>
+                    <td class="feature">Sign in with Apple</td>
+                    <td class="platform"><span class="check">&#10003;</span></td>
+                    <td class="platform"><span class="check">&#10003;</span></td>
+                    <td class="platform"><span class="check">&#10003;</span></td>
+                    <td class="note">iOS presents the native <code>ASAuthorization</code> sheet from
+                        Swift and builds the credential in Kotlin; web uses the Firebase JS
+                        <code>OAuthProvider</code> popup. Android has no native Apple SDK, so #408
+                        runs Firebase's generic OAuth flow in a Custom Tab — a browser flow, not a
+                        system sheet, and the only auth path here that needs a foreground
+                        <code>Activity</code> (see <code>CurrentActivityProvider</code>). Apple
+                        returns the user's name only on the first authorization, so iOS captures it
+                        then — everywhere else the onboarding name step is what populates
+                        <code>token.name</code>.
                     </td>
                 </tr>
                 <tr>
@@ -255,10 +273,13 @@
                     <td class="feature">Guest to permanent account upgrade</td>
                     <td class="platform"><span class="check">&#10003;</span> <span class="limited">Flagged</span>
                     </td>
-                    <td class="platform"><span class="none">&mdash;</span></td>
+                    <td class="platform"><span class="check">&#10003;</span></td>
                     <td class="platform"><span class="design">N/A</span></td>
-                    <td class="note">iOS Sign in with Apple link flow is not implemented; web has no
-                        guest session to upgrade.
+                    <td class="note">The picker offers Google, Apple (where the platform offers it),
+                        and a passwordless email link. iOS links via either provider, verified
+                        manually on device — its native Google presenter returns the token pair
+                        rather than signing in, which is what makes linking possible there (#415).
+                        Web has no guest session to upgrade.
                     </td>
                 </tr>
                 <tr>
@@ -477,9 +498,6 @@
             </li>
             <li><strong>Web export:</strong> add JS targets and browser download/delivery UX for
                 export generation and history.
-            </li>
-            <li><strong>iOS guest upgrade:</strong> wire the permanent-account linking provider for
-                anonymous mobile users.
             </li>
             <li><strong>Web integrity recovery UI:</strong> expose the local database recovery path
                 currently present in the mobile app shell.

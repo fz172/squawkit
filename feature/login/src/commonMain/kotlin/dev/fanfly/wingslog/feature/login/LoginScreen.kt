@@ -1,8 +1,6 @@
 package dev.fanfly.wingslog.feature.login
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -25,7 +23,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
@@ -52,6 +49,16 @@ import wingslog.feature.login.generated.resources.sign_in_with_apple
 import wingslog.feature.login.generated.resources.sign_in_with_email
 import wingslog.feature.login.generated.resources.sign_in_with_google
 
+/**
+ * Which sign-in request is awaiting a result, so only the pressed button spins while the rest are
+ * disabled. Null means idle.
+ *
+ * Not the list of login methods on offer — only those that suspend *here*. The email option
+ * navigates away to `EmailSignInScreen`, which owns the progress state for both legs of the link
+ * flow, so it never reaches an in-flight state on this screen.
+ */
+private enum class PendingSignIn { Google, Apple, Anonymous }
+
 @Composable
 fun LoginScreen(
   loginViewModel: LoginViewModel = koinViewModel(),
@@ -61,7 +68,7 @@ fun LoginScreen(
   val appCapability: AppCapability = koinInject()
   val scope = rememberCoroutineScope()
   var error by remember { mutableStateOf<String?>(null) }
-  var isSigningIn by remember { mutableStateOf(false) }
+  var signingIn by remember { mutableStateOf<PendingSignIn?>(null) }
   val signInErrorMessage = stringResource(Res.string.sign_in_error)
   val signInAnonymousErrorMessage =
     stringResource(Res.string.sign_in_anonymous_error)
@@ -100,8 +107,8 @@ fun LoginScreen(
     Button(
       modifier = Modifier
         .fillMaxWidth()
-        .height(54.dp),
-      enabled = !isSigningIn,
+        .height(LoginButtonHeight),
+      enabled = signingIn == null,
       shape = RoundedCornerShape(Spacing.buttonCornerRadius),
       colors = ButtonDefaults.buttonColors(
         containerColor = LoginOnBackground,
@@ -111,7 +118,7 @@ fun LoginScreen(
       ),
       onClick = {
         scope.launch {
-          isSigningIn = true
+          signingIn = PendingSignIn.Google
           try {
             val credential = loginViewModel.login()
             if (credential != null) {
@@ -120,71 +127,73 @@ fun LoginScreen(
               error = signInErrorMessage
             }
           } finally {
-            isSigningIn = false
+            signingIn = null
           }
         }
       },
     ) {
-      if (isSigningIn) {
+      if (signingIn == PendingSignIn.Google) {
         CircularProgressIndicator(
           modifier = Modifier.size(Spacing.xLarge),
           strokeWidth = 2.dp,
           color = LoginBackground,
         )
       } else {
-        Row(
-          verticalAlignment = Alignment.CenterVertically,
-          horizontalArrangement = Arrangement.spacedBy(Spacing.small),
-        ) {
+        LoginButtonContent(label = stringResource(Res.string.sign_in_with_google)) {
           Icon(
             painter = painterResource(Res.drawable.ic_google_rd_na),
             contentDescription = stringResource(Res.string.google_logo),
             modifier = Modifier.size(Spacing.xLarge),
             tint = Color.Unspecified,
           )
-          Text(
-            text = stringResource(Res.string.sign_in_with_google),
-            style = LoginButtonLabelStyle,
-          )
         }
       }
     }
 
-    // Continue with Apple — hidden on Android (see AppCapability.isAppleSignInSupported). Backend
-    // (signInWithApple) is not wired yet; tapping is a no-op until the Apple provider is
-    // implemented per platform.
-    if (appCapability.isAppleSignInSupported) {
-      Spacer(Modifier.height(Spacing.medium))
+    // Continue with Apple — offered on every platform since #408 gave Android its Custom Tab flow.
+    Spacer(Modifier.height(Spacing.medium))
 
-      Button(
-        modifier = Modifier
-          .fillMaxWidth()
-          .height(54.dp),
-        enabled = !isSigningIn,
-        shape = RoundedCornerShape(Spacing.buttonCornerRadius),
-        colors = ButtonDefaults.buttonColors(
-          containerColor = AppleButtonBackground,
-          contentColor = AppleButtonContent,
-          disabledContainerColor = AppleButtonBackground.copy(alpha = 0.4f),
-          disabledContentColor = AppleButtonContent.copy(alpha = 0.4f),
-        ),
-        onClick = {
-          // TODO(apple-signin): wire AuthManager.signInWithApple() per platform.
-        },
-      ) {
-        Row(
-          verticalAlignment = Alignment.CenterVertically,
-          horizontalArrangement = Arrangement.spacedBy(Spacing.small),
-        ) {
+    Button(
+      modifier = Modifier
+        .fillMaxWidth()
+        .height(LoginButtonHeight),
+      enabled = signingIn == null,
+      shape = RoundedCornerShape(Spacing.buttonCornerRadius),
+      colors = ButtonDefaults.buttonColors(
+        containerColor = AppleButtonBackground,
+        contentColor = AppleButtonContent,
+        disabledContainerColor = AppleButtonBackground.copy(alpha = 0.4f),
+        disabledContentColor = AppleButtonContent.copy(alpha = 0.4f),
+      ),
+      onClick = {
+        scope.launch {
+          signingIn = PendingSignIn.Apple
+          try {
+            val credential = loginViewModel.loginWithApple()
+            if (credential != null) {
+              onLoginSuccess()
+            } else {
+              error = signInErrorMessage
+            }
+          } finally {
+            signingIn = null
+          }
+        }
+      },
+    ) {
+      if (signingIn == PendingSignIn.Apple) {
+        CircularProgressIndicator(
+          modifier = Modifier.size(Spacing.xLarge),
+          strokeWidth = 2.dp,
+          color = AppleButtonContent,
+        )
+      } else {
+        LoginButtonContent(label = stringResource(Res.string.sign_in_with_apple)) {
           Icon(
             painter = painterResource(Res.drawable.ic_apple),
             contentDescription = stringResource(Res.string.apple_logo),
             modifier = Modifier.size(Spacing.xLarge),
             tint = AppleButtonContent,
-          )
-          Text(
-            text = stringResource(Res.string.sign_in_with_apple),
-            style = LoginButtonLabelStyle,
           )
         }
       }
@@ -197,8 +206,8 @@ fun LoginScreen(
     OutlinedButton(
       modifier = Modifier
         .fillMaxWidth()
-        .height(54.dp),
-      enabled = !isSigningIn,
+        .height(LoginButtonHeight),
+      enabled = signingIn == null,
       shape = RoundedCornerShape(Spacing.buttonCornerRadius),
       colors = ButtonDefaults.outlinedButtonColors(
         contentColor = LoginOnBackground,
@@ -209,18 +218,11 @@ fun LoginScreen(
       ),
       onClick = onChooseEmail,
     ) {
-      Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(Spacing.small),
-      ) {
+      LoginButtonContent(label = stringResource(Res.string.sign_in_with_email)) {
         Icon(
           imageVector = Icons.Filled.Email,
           contentDescription = null,
           modifier = Modifier.size(Spacing.xLarge),
-        )
-        Text(
-          text = stringResource(Res.string.sign_in_with_email),
-          style = LoginButtonLabelStyle,
         )
       }
     }
@@ -231,8 +233,8 @@ fun LoginScreen(
       OutlinedButton(
         modifier = Modifier
           .fillMaxWidth()
-          .height(54.dp),
-        enabled = !isSigningIn,
+          .height(LoginButtonHeight),
+        enabled = signingIn == null,
         shape = RoundedCornerShape(Spacing.buttonCornerRadius),
         colors = ButtonDefaults.outlinedButtonColors(
           contentColor = LoginOnBackgroundMuted,
@@ -243,7 +245,7 @@ fun LoginScreen(
         ),
         onClick = {
           scope.launch {
-            isSigningIn = true
+            signingIn = PendingSignIn.Anonymous
             try {
               val credential = loginViewModel.loginAnonymously()
               if (credential != null) {
@@ -252,23 +254,19 @@ fun LoginScreen(
                 error = signInAnonymousErrorMessage
               }
             } finally {
-              isSigningIn = false
+              signingIn = null
             }
           }
         },
       ) {
-        Row(
-          verticalAlignment = Alignment.CenterVertically,
-          horizontalArrangement = Arrangement.spacedBy(Spacing.small),
+        LoginButtonContent(
+          label = stringResource(Res.string.continue_without_account),
+          labelStyle = LoginSecondaryLabelStyle,
         ) {
           Icon(
             imageVector = Icons.Filled.Person,
             contentDescription = null,
             modifier = Modifier.size(Spacing.xLarge),
-          )
-          Text(
-            text = stringResource(Res.string.continue_without_account),
-            style = LoginSecondaryLabelStyle,
           )
         }
       }

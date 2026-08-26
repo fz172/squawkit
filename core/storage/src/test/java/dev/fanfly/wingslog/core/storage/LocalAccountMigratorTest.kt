@@ -206,35 +206,42 @@ class LocalAccountMigratorTest {
   }
 
   @Test
-  fun reassign_dropsGuestDeveloperOptions_notInheritedIntoTheAccount() = runTest {
-    // DeveloperOptions is a per-user singleton at the fixed id "main", like UserInfo. A guest's
-    // experimental toggles must not ride the merge into a real account: the guest's row is dropped,
-    // not moved (moving it would override the account's own device flags — and collide when the
-    // account already has a local copy).
-    db.schemaQueries.upsert(
-      collection = CollectionKind.DeveloperOptions,
-      scope_path = "/users/$FROM_UID/",
-      id = "main",
-      payload = byteArrayOf(1),
-      payload_schema = CollectionKind.DeveloperOptions.schemaName,
-      updated_at = 1_000L,
-      remote_updated_at = null,
-      dirty = false,
-      deleted = false,
-      writer_uid = null,
-    )
+  fun reassign_dropsGuestDeveloperOptions_notInheritedIntoTheAccount() =
+    runTest {
+      // DeveloperOptions is a per-user singleton at the fixed id "main", like UserInfo. A guest's
+      // experimental toggles must not ride the merge into a real account: the guest's row is dropped,
+      // not moved (moving it would override the account's own device flags — and collide when the
+      // account already has a local copy).
+      db.schemaQueries.upsert(
+        collection = CollectionKind.DeveloperOptions,
+        scope_path = "/users/$FROM_UID/",
+        id = "main",
+        payload = byteArrayOf(1),
+        payload_schema = CollectionKind.DeveloperOptions.schemaName,
+        updated_at = 1_000L,
+        remote_updated_at = null,
+        dirty = false,
+        deleted = false,
+        writer_uid = null,
+      )
 
-    migrator.reassign(FROM_UID, TO_UID)
+      migrator.reassign(FROM_UID, TO_UID)
 
-    assertThat(
-      db.schemaQueries.selectAll(CollectionKind.DeveloperOptions, "/users/$FROM_UID/")
-        .awaitAsList()
-    ).isEmpty()
-    assertThat(
-      db.schemaQueries.selectAll(CollectionKind.DeveloperOptions, "/users/$TO_UID/")
-        .awaitAsList()
-    ).isEmpty()
-  }
+      assertThat(
+        db.schemaQueries.selectAll(
+          CollectionKind.DeveloperOptions,
+          "/users/$FROM_UID/"
+        )
+          .awaitAsList()
+      ).isEmpty()
+      assertThat(
+        db.schemaQueries.selectAll(
+          CollectionKind.DeveloperOptions,
+          "/users/$TO_UID/"
+        )
+          .awaitAsList()
+      ).isEmpty()
+    }
 
   @Test
   fun reassign_dropsGuestUserInfo_evenWhenTheAccountHasNoneLocally() = runTest {
@@ -277,7 +284,10 @@ class LocalAccountMigratorTest {
       .awaitAsOneOrNull()
     assertThat(kept!!.remote_updated_at).isEqualTo(9_000L)
     assertThat(
-      db.schemaQueries.selectAll(CollectionKind.Aircraft, "/users/$FROM_UID/fleet")
+      db.schemaQueries.selectAll(
+        CollectionKind.Aircraft,
+        "/users/$FROM_UID/fleet"
+      )
         .awaitAsList()
     ).isEmpty()
   }
@@ -294,5 +304,89 @@ class LocalAccountMigratorTest {
     )
       .awaitAsList()
     assertThat(stillThere).hasSize(1)
+  }
+
+  // Urgency watermarks (notifications design §6.2) — not re-keying these would silently re-seed
+  // the whole fleet at the exact moment the user has most reason to trust the app.
+
+  private suspend fun insertWatermark(
+    uid: String,
+    scopePath: String,
+    id: String,
+    rank: Long,
+  ) {
+    db.schemaQueries.upsertWatermark(
+      uid = uid,
+      collection = CollectionKind.MaintenanceTask,
+      scope_path = scopePath,
+      id = id,
+      rank = rank,
+      updated_at = 1_000L,
+    )
+  }
+
+  @Test
+  fun reassign_movesWatermarkToNewUidAndScope() = runTest {
+    insertWatermark(FROM_UID, "/users/$FROM_UID/aircraft/ac-1/", "task-1", rank = 2L)
+
+    migrator.reassign(FROM_UID, TO_UID)
+
+    assertThat(
+      db.schemaQueries.selectWatermarksInScopePrefix(FROM_UID, "/users/$FROM_UID/%")
+        .awaitAsList()
+    ).isEmpty()
+
+    val moved = db.schemaQueries.selectWatermarksInScopePrefix(TO_UID, "/users/$TO_UID/%")
+      .awaitAsList()
+    assertThat(moved).hasSize(1)
+    assertThat(moved[0].uid).isEqualTo(TO_UID)
+    assertThat(moved[0].scope_path).isEqualTo("/users/$TO_UID/aircraft/ac-1/")
+    assertThat(moved[0].id).isEqualTo("task-1")
+    assertThat(moved[0].rank).isEqualTo(2L)
+  }
+
+  @Test
+  fun reassign_leavesOtherUsersWatermarksUntouched() = runTest {
+    insertWatermark(FROM_UID, "/users/$FROM_UID/aircraft/ac-1/", "task-1", rank = 1L)
+    insertWatermark("someone-else", "/users/someone-else/aircraft/ac-2/", "task-2", rank = 1L)
+
+    migrator.reassign(FROM_UID, TO_UID)
+
+    val other = db.schemaQueries.selectWatermarksInScopePrefix("someone-else", "/users/someone-else/%")
+      .awaitAsList()
+    assertThat(other).hasSize(1)
+    assertThat(other[0].id).isEqualTo("task-2")
+  }
+
+  @Test
+  fun reassign_dropsWatermarkConflictsWithDestination_keepingDestinationsRank() = runTest {
+    // Same shape as reassign_dropsRecordsTheDestinationAlreadyHolds: a same-(collection, id) row in
+    // both scopes is the same record. The destination's rank is the one this device already reported
+    // to the account; the guest's copy — from before the accounts were the same person — would
+    // otherwise trip the primary key or silently roll the watermark back.
+    insertWatermark(FROM_UID, "/users/$FROM_UID/aircraft/ac-1/", "task-1", rank = 0L)
+    insertWatermark(TO_UID, "/users/$TO_UID/aircraft/ac-1/", "task-1", rank = 2L)
+    insertWatermark(FROM_UID, "/users/$FROM_UID/aircraft/ac-1/", "task-2", rank = 1L)
+
+    migrator.reassign(FROM_UID, TO_UID)
+
+    val destination = db.schemaQueries.selectWatermarksInScopePrefix(TO_UID, "/users/$TO_UID/%")
+      .awaitAsList()
+    assertThat(destination.associate { it.id to it.rank }).containsExactly(
+      "task-1", 2L,
+      "task-2", 1L,
+    )
+  }
+
+  @Test
+  fun reassign_watermarkIsIdempotent() = runTest {
+    insertWatermark(FROM_UID, "/users/$FROM_UID/aircraft/ac-1/", "task-1", rank = 1L)
+
+    migrator.reassign(FROM_UID, TO_UID)
+    migrator.reassign(FROM_UID, TO_UID)
+
+    val moved = db.schemaQueries.selectWatermarksInScopePrefix(TO_UID, "/users/$TO_UID/%")
+      .awaitAsList()
+    assertThat(moved).hasSize(1)
   }
 }

@@ -2,6 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
   <uses-permission android:name="android.permission.INTERNET" />
+  <!-- POST_NOTIFICATIONS is declared by feature/notifications/viewing (the module that actually
+       calls NotificationManagerCompat.notify()) and merged in from there — not duplicated here. -->
 
   <!-- Lets the app resolve email apps for sharing exports (Android 11+ package visibility). -->
   <queries>
@@ -68,6 +70,18 @@
         android:name="android.support.FILE_PROVIDER_PATHS"
         android:resource="@xml/file_provider_paths" />
     </provider>
-  </application>
+  
+        <!--
+          The real AdMob app id. Not a secret - it ships in every APK and is readable by anyone who
+          unzips one. The SDK refuses to initialise without this entry.
+
+          Ad UNIT ids are a different matter: developer builds request Google's test units instead of
+          the real ones (see AdView.android.kt), because impressions and clicks from development
+          count as invalid traffic and can get an AdMob account suspended.
+        -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-1367143209408464~7704227598" />
+    </application>
 
 </manifest>

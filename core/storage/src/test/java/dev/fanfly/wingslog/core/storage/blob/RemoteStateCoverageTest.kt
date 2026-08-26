@@ -10,6 +10,7 @@ class RemoteStateCoverageTest {
     RemoteState.Uploading,
     RemoteState.Synced,
     RemoteState.RemoteOnly,
+    RemoteState.RemoteMissing,
   )
 
   @Test

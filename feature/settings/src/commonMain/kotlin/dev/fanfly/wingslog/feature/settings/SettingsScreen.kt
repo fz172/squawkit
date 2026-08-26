@@ -4,7 +4,6 @@ package dev.fanfly.wingslog.feature.settings
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -14,7 +13,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -22,12 +20,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.CloudSync
+import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.Engineering
 import androidx.compose.material.icons.filled.FileDownload
-import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.PrivacyTip
 import androidx.compose.material.icons.filled.Tune
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material.icons.filled.WorkspacePremium
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -46,24 +45,29 @@ import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.feature.login.upgrade.AccountUpgradeViewModel
+import dev.fanfly.wingslog.feature.settings.data.NotificationsRowState
 import dev.fanfly.wingslog.feature.settings.data.SettingsViewModel
 import dev.fanfly.wingslog.feature.settings.data.UserStatus
-import dev.fanfly.wingslog.feature.settings.upgrade.AccountUpgradeViewModel
-import dev.fanfly.wingslog.feature.settings.upgrade.UpgradeUiState
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.core.sharedassets.generated.resources.settings
 import wingslog.feature.export.sharedassets.generated.resources.feature_name_export_logs
-import wingslog.feature.settings.generated.resources.account_upgrade_error
-import wingslog.feature.settings.generated.resources.account_upgrade_login_cta
-import wingslog.feature.settings.generated.resources.account_upgrade_login_subtitle
-import wingslog.feature.settings.generated.resources.account_upgrade_success
-import wingslog.feature.settings.generated.resources.account_upgrade_working
+import wingslog.feature.settings.generated.resources.account_upgrade_link_cta
+import wingslog.feature.settings.generated.resources.account_upgrade_link_subtitle
 import wingslog.feature.settings.generated.resources.app_version
 import wingslog.feature.settings.generated.resources.developer_options
+import wingslog.feature.settings.generated.resources.settings_ad_privacy
+import wingslog.feature.settings.generated.resources.settings_ad_privacy_subtitle
+import wingslog.feature.settings.generated.resources.settings_delete_account
+import wingslog.feature.settings.generated.resources.settings_delete_account_subtitle
 import wingslog.feature.settings.generated.resources.settings_developer_options_subtitle
 import wingslog.feature.settings.generated.resources.settings_export_subtitle
 import wingslog.feature.settings.generated.resources.settings_logout_subtitle
+import wingslog.feature.settings.generated.resources.settings_notifications
+import wingslog.feature.settings.generated.resources.settings_notifications_subtitle_blocked
+import wingslog.feature.settings.generated.resources.settings_notifications_subtitle_default
+import wingslog.feature.settings.generated.resources.settings_notifications_subtitle_off
 import wingslog.feature.settings.generated.resources.settings_subscription
 import wingslog.feature.settings.generated.resources.settings_subscription_subtitle
 import wingslog.feature.settings.generated.resources.settings_subtitle
@@ -100,7 +104,6 @@ fun SettingsContent(
   val user by settingsViewModel.user.collectAsStateWithLifecycle()
   val appearanceMode by settingsViewModel.appearanceMode.collectAsStateWithLifecycle()
   val firebaseLoggingEnabled by settingsViewModel.firebaseLoggingEnabled.collectAsStateWithLifecycle()
-  val upgradeState by accountUpgradeViewModel.state.collectAsStateWithLifecycle()
   val snackbarHostState = remember { SnackbarHostState() }
 
   // With a sidebar, detail pages embed via the nested controller; otherwise they open full-screen
@@ -108,10 +111,14 @@ fun SettingsContent(
   val hasSidebar = LocalLayoutTier.current.hasFullSidebar
   val detailNav = if (hasSidebar) sectionNavController else navController
 
-  val upgradeSuccessMessage =
-    stringResource(SettingsRes.string.account_upgrade_success)
-  val upgradeErrorMessage =
-    stringResource(SettingsRes.string.account_upgrade_error)
+  // The account row is chosen from isAnonymous, and linking never fires authStateChanged, so this
+  // ViewModel would otherwise keep serving a stale snapshot. Re-read on entry for an upgrade that
+  // finished while Settings was off-screen, and on each completion for one that finishes while it
+  // is open — the flow is hosted by the shell, so both happen.
+  LaunchedEffect(Unit) { settingsViewModel.refreshAccountState() }
+  LaunchedEffect(accountUpgradeViewModel) {
+    accountUpgradeViewModel.completions.collect { settingsViewModel.refreshAccountState() }
+  }
 
   LaunchedEffect(user) {
     if (user.userStatus == UserStatus.LOGGED_OUT) {
@@ -119,25 +126,6 @@ fun SettingsContent(
         popUpTo(Screen.AdaptiveShell.route) { inclusive = true }
         launchSingleTop = true
       }
-    }
-  }
-
-  // Terminal upgrade states surface as a snackbar, then reset to Idle.
-  LaunchedEffect(upgradeState) {
-    when (upgradeState) {
-      is UpgradeUiState.Success -> {
-        // Linking didn't fire authStateChanged; pull the new photo / non-anonymous state in now.
-        settingsViewModel.refreshAccountState()
-        snackbarHostState.showSnackbar(upgradeSuccessMessage)
-        accountUpgradeViewModel.dismiss()
-      }
-
-      is UpgradeUiState.Error -> {
-        snackbarHostState.showSnackbar(upgradeErrorMessage)
-        accountUpgradeViewModel.dismiss()
-      }
-
-      else -> Unit
     }
   }
 
@@ -176,30 +164,21 @@ fun SettingsContent(
           SettingsHeader()
         }
 
-        val accountAndSubscriptionRows = buildList<@Composable () -> Unit> {
-          // Shown only where the subscription capability is on (dev + dogfood today); hidden in the
-          // shipping release until GA, so no user sees a paywall entry before it exists.
-          if (user.isSubscriptionSupported) {
-            add {
-              SettingsRow(
-                icon = Icons.Default.Star,
-                title = stringResource(SettingsRes.string.settings_subscription),
-                subtitle = stringResource(SettingsRes.string.settings_subscription_subtitle),
-                onClick = { detailNav.navigate(Screen.Subscription.route) },
-              )
-            }
-            add {
-              SettingsRow(
-                icon = Icons.Default.Engineering,
-                title = stringResource(TechnicianRes.string.manage_technicians),
-                subtitle = stringResource(SettingsRes.string.settings_technicians_subtitle),
-                onClick = { detailNav.navigate(Screen.ManageTechnicians.route) },
-              )
-            }
+        val generalRows = buildList<@Composable () -> Unit> {
+          add {
+            AppearanceSettingRow(
+              mode = appearanceMode,
+              onModeChange = settingsViewModel::setAppearance,
+            )
           }
-        }
-
-        val dataAndLogsRows = buildList<@Composable () -> Unit> {
+          add {
+            SettingsRow(
+              icon = Icons.Default.WorkspacePremium,
+              title = stringResource(SettingsRes.string.settings_subscription),
+              subtitle = stringResource(SettingsRes.string.settings_subscription_subtitle),
+              onClick = { detailNav.navigate(Screen.Subscription.route) },
+            )
+          }
           add {
             SettingsRow(
               icon = Icons.Default.CloudSync,
@@ -208,31 +187,47 @@ fun SettingsContent(
               onClick = { detailNav.navigate(Screen.SyncSettings.route) },
             )
           }
-          add {
-            SettingsRow(
-              icon = Icons.Default.FileDownload,
-              title = stringResource(ExportRes.string.feature_name_export_logs),
-              subtitle = stringResource(SettingsRes.string.settings_export_subtitle),
-              onClick = { detailNav.navigate(Screen.ExportLogs.route) },
-            )
+          // Staged rollout, not a capability statement: every platform can show notifications, so
+          // this is never permanent the way an isCameraCaptureSupported-style gate would be. The
+          // feature is mid-build across many PRs — N1/N2 themselves still land in P2-P5 — so it
+          // stays behind its own AppCapability.isNotificationsSupported flag (defaults to
+          // isDeveloperBuild, same as isStressTestSupported) rather than piggybacking on Developer
+          // Options' flag, and comes out once the feature is actually finished.
+          if (user.isNotificationsSupported) {
+            add {
+              SettingsRow(
+                icon = Icons.Default.Notifications,
+                title = stringResource(SettingsRes.string.settings_notifications),
+                subtitle = stringResource(
+                  when (user.notificationsRowState) {
+                    NotificationsRowState.BLOCKED -> SettingsRes.string.settings_notifications_subtitle_blocked
+                    NotificationsRowState.OFF -> SettingsRes.string.settings_notifications_subtitle_off
+                    NotificationsRowState.DEFAULT -> SettingsRes.string.settings_notifications_subtitle_default
+                  }
+                ),
+                onClick = { detailNav.navigate(Screen.Notifications.route) },
+              )
+            }
           }
         }
-
-        val preferenceRows = buildList<@Composable () -> Unit> {
-
-          add {
-            AppearanceSettingRow(
-              mode = appearanceMode,
-              onModeChange = settingsViewModel::setAppearance,
-            )
-          }
-        }
-        val advancedRows = buildList<@Composable () -> Unit> {
+        val supportRows = buildList<@Composable () -> Unit> {
           add {
             FirebaseLoggingSettingRow(
               enabled = firebaseLoggingEnabled,
               onEnabledChange = settingsViewModel::setFirebaseLoggingEnabled,
             )
+          }
+          // Only when there's actually a CMP form to re-present right now — not just wherever this
+          // build ships ads — so tapping the row never silently does nothing (#384).
+          if (user.isAdPrivacyOptionsAvailable) {
+            add {
+              SettingsRow(
+                icon = Icons.Default.PrivacyTip,
+                title = stringResource(SettingsRes.string.settings_ad_privacy),
+                subtitle = stringResource(SettingsRes.string.settings_ad_privacy_subtitle),
+                onClick = settingsViewModel::presentAdPrivacyOptions,
+              )
+            }
           }
           // Developer Options is a developer surface: only on debug and dogfood-style builds, never in release.
           if (user.isDeveloperOptionsSupported) {
@@ -246,33 +241,71 @@ fun SettingsContent(
             }
           }
         }
-        SettingsRowGroup(rows = accountAndSubscriptionRows)
-        SettingsRowGroup(rows = dataAndLogsRows)
-        SettingsRowGroup(preferenceRows)
-        SettingsRowGroup(advancedRows)
-
-        // Guest shows "Log in" (runs the upgrade); real accounts show "Log out".
-        if (user.isAnonymous) {
-          SettingsCard {
+        val dataManagementRows = buildList<@Composable () -> Unit> {
+          add {
             SettingsRow(
-              icon = Icons.AutoMirrored.Filled.Login,
-              title = stringResource(SettingsRes.string.account_upgrade_login_cta),
-              subtitle =
-                stringResource(SettingsRes.string.account_upgrade_login_subtitle),
-              onClick = { accountUpgradeViewModel.startUpgrade() },
+              icon = Icons.Default.Engineering,
+              title = stringResource(TechnicianRes.string.manage_technicians),
+              subtitle = stringResource(SettingsRes.string.settings_technicians_subtitle),
+              onClick = { detailNav.navigate(Screen.ManageTechnicians.route) },
             )
           }
-        } else {
-          SettingsCard {
+          add {
             SettingsRow(
-              icon = Icons.AutoMirrored.Filled.Logout,
-              title = stringResource(SettingsRes.string.sign_out),
-              subtitle = stringResource(SettingsRes.string.settings_logout_subtitle),
-              onClick = { settingsViewModel.logOut() },
-              settingsLevel = SettingsLevel.DANGER,
+              icon = Icons.Default.FileDownload,
+              title = stringResource(ExportRes.string.feature_name_export_logs),
+              subtitle = stringResource(SettingsRes.string.settings_export_subtitle),
+              onClick = { detailNav.navigate(Screen.ExportLogs.route) },
             )
           }
         }
+        val accountRows = buildList<@Composable () -> Unit> {
+          // Guest shows "Link to an account" (runs the upgrade); real accounts show "Log out".
+          //
+          // The branch is load-bearing, not cosmetic: a guest has no cloud copy, so logOut()'s wipe
+          // would destroy every aircraft, log, task, squawk, and attachment unrecoverably — and
+          // "Sign out of your account on this device" says the opposite of what that does. Guests
+          // are offered the way *in* instead, which is also the only thing that makes their data
+          // recoverable. Keep it that way: a guest sign-out needs an explicit erase warning ahead of
+          // it, never this row (#413).
+          if (user.isAnonymous) {
+            add {
+              SettingsRow(
+                icon = Icons.AutoMirrored.Filled.Login,
+                title = stringResource(SettingsRes.string.account_upgrade_link_cta),
+                subtitle =
+                  stringResource(SettingsRes.string.account_upgrade_link_subtitle),
+                onClick = { accountUpgradeViewModel.choose() },
+              )
+            }
+          } else {
+            add {
+              SettingsRow(
+                icon = Icons.AutoMirrored.Filled.Logout,
+                title = stringResource(SettingsRes.string.sign_out),
+                subtitle = stringResource(SettingsRes.string.settings_logout_subtitle),
+                onClick = { settingsViewModel.logOut() },
+              )
+            }
+            // Below Log out, and only for a permanent account. Required by App Store Review
+            // Guideline 5.1.1(v) — which applies to any app offering account creation, not just
+            // Apple sign-in (#418). A guest has no account to delete: their exit is the upgrade row
+            // above, and logOut()'s wipe is already off-limits to them (#413).
+            add {
+              SettingsRow(
+                icon = Icons.Default.DeleteForever,
+                title = stringResource(SettingsRes.string.settings_delete_account),
+                subtitle = stringResource(SettingsRes.string.settings_delete_account_subtitle),
+                settingsLevel = SettingsLevel.DANGER,
+                onClick = { settingsViewModel.askToDeleteAccount() },
+              )
+            }
+          }
+        }
+        SettingsRowGroup(generalRows)
+        SettingsRowGroup(dataManagementRows)
+        SettingsRowGroup(supportRows)
+        SettingsRowGroup(accountRows)
 
         Spacer(modifier = Modifier.height(Spacing.columnGap))
 
@@ -288,30 +321,25 @@ fun SettingsContent(
       }
     }
 
+    // Guideline 5.1.1(v) wants deletion reachable, not easy to do by accident — so the row opens
+    // this rather than acting, and the confirm button stays inert until the pilot has typed their
+    // email address (or a fixed phrase, when the account has no address they would recognise).
+    DeleteAccountDialog(
+      state = user.deletion,
+      challenge = user.deletionChallenge,
+      typed = user.deletionInput,
+      onTypedChange = settingsViewModel::setDeleteAccountInput,
+      onConfirm = settingsViewModel::confirmDeleteAccount,
+      onDismiss = settingsViewModel::cancelDeleteAccount,
+    )
+
     SnackbarHost(
       snackbarHostState,
       modifier = Modifier.align(Alignment.BottomCenter)
     )
   }
 
-  when (upgradeState) {
-    is UpgradeUiState.Working -> AlertDialog(
-      // Non-dismissable: provider sign-in / sync re-keying is in flight.
-      onDismissRequest = {},
-      confirmButton = {},
-      text = {
-        Row(
-          verticalAlignment = Alignment.CenterVertically,
-          horizontalArrangement = Arrangement.spacedBy(Spacing.large),
-        ) {
-          CircularProgressIndicator(modifier = Modifier.size(Spacing.xLarge))
-          Text(stringResource(SettingsRes.string.account_upgrade_working))
-        }
-      },
-    )
 
-    else -> Unit
-  }
 }
 
 /**

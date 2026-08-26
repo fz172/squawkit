@@ -30,9 +30,13 @@ kotlin {
 
       implementation(project(":core:analytics"))
       implementation(project(":core:auth"))
+      // functionsModule — the shared Cloud Functions client.
+      implementation(project(":core:firebase"))
       implementation(project(":core:storage"))
       implementation(project(":core:ui:theme"))
       implementation(project(":feature:aircraft:dashboard"))
+      implementation(project(":core:lifecycle"))
+      implementation(project(":feature:ads:datamanager"))
       implementation(project(":feature:aircraft:update"))
       implementation(project(":feature:attachment:datamanager"))
       implementation(project(":feature:export:datamanager"))
@@ -46,6 +50,9 @@ kotlin {
       implementation(project(":feature:logs:datamanager"))
       implementation(project(":feature:logs:update"))
       implementation(project(":feature:logs:viewing"))
+      // The feature's uber Koin module (feature/notifications/di) — one dependency instead of the
+      // six notification submodules it bundles.
+      implementation(project(":feature:notifications:di"))
       implementation(project(":feature:settings"))
       implementation(project(":feature:shell"))
       implementation(project(":feature:sharing:datamanager"))

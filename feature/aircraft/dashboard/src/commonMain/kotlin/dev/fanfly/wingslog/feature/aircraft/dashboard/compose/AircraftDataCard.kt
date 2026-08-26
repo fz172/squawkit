@@ -40,8 +40,8 @@ import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.component_airframe
 import wingslog.core.sharedassets.generated.resources.component_engine
 import wingslog.core.sharedassets.generated.resources.edit
-import wingslog.core.sharedassets.generated.resources.manage_access
 import wingslog.core.sharedassets.generated.resources.make_model_template
+import wingslog.core.sharedassets.generated.resources.manage_access
 import wingslog.feature.logs.sharedassets.generated.resources.engine_with_index
 import wingslog.feature.logs.viewing.generated.resources.aircraft_data
 import wingslog.feature.logs.viewing.generated.resources.collapse_details

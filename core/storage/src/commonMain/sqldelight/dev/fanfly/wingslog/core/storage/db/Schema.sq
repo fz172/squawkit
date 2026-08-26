@@ -48,6 +48,41 @@ CREATE TABLE sync_config (
   PRIMARY KEY (uid, key)
 );
 
+-- Device-scoped, uid-independent local config (notifications design §7.1). Distinct from
+-- sync_config, which is per-account: the push token doc needs an id that outlives token rotation
+-- AND survives an account switch on a shared device, so it cannot be keyed by uid the way
+-- sync_config is — that would mint a fresh id per account on the same physical device, orphaning
+-- the previous account's Firestore doc every time someone signs in as someone else.
+--
+-- No uid column, and deliberately excluded from every wipe query below (there is no
+-- wipeDeviceConfig): its whole reason to exist is to survive sign-out and account switching, which
+-- is the same property sync_config gets for the opposite reason (it must NOT survive a switch).
+CREATE TABLE device_config (
+  key   TEXT NOT NULL PRIMARY KEY,
+  value TEXT NOT NULL
+);
+
+-- Per-device, per-record high-water mark of urgency ALREADY REPORTED to this user
+-- (notifications design §6.2).
+--
+-- ⚠️ This is deliberately NOT a CollectionKind. Entities sync; a synced watermark would let the
+-- phone's scan silence the tablet's — the phone reports the crossing, the tablet sees the mark
+-- already at the current rank and stays quiet forever. Per-device is the correct semantics, and it
+-- is also what keeps the whole of N2 off the network. sync_config is the precedent: local state the
+-- sync engine never touches.
+--
+-- Keyed like `entity` minus the payload, so a record is unambiguous even across two hosts that
+-- happen to use the same aircraft id.
+CREATE TABLE urgency_watermark (
+  uid         TEXT    NOT NULL,
+  collection  TEXT    AS CollectionKind NOT NULL,
+  scope_path  TEXT    NOT NULL,
+  id          TEXT    NOT NULL,
+  rank        INTEGER NOT NULL,
+  updated_at  INTEGER NOT NULL,
+  PRIMARY KEY (uid, collection, scope_path, id)
+);
+
 -- Entity queries.
 
 selectAll:
@@ -171,6 +206,38 @@ INSERT OR REPLACE INTO sync_config(uid, key, value) VALUES (?, ?, ?);
 
 deleteConfig:
 DELETE FROM sync_config WHERE uid = ? AND key = ?;
+
+-- Device config queries. See device_config's table comment above for why this is not sync_config.
+
+selectDeviceConfig:
+SELECT value FROM device_config WHERE key = ?;
+
+upsertDeviceConfig:
+INSERT OR REPLACE INTO device_config(key, value) VALUES (?, ?);
+
+-- Urgency watermark queries.
+
+-- All of this user's watermark rows under a scope prefix (e.g. their whole user root), so a scan
+-- can build its lookup once rather than querying per aircraft per collection.
+selectWatermarksInScopePrefix:
+SELECT * FROM urgency_watermark WHERE uid = :uid AND scope_path LIKE :scopePrefix;
+
+upsertWatermark:
+INSERT OR REPLACE INTO urgency_watermark(uid, collection, scope_path, id, rank, updated_at)
+VALUES (?, ?, ?, ?, ?, ?);
+
+-- Prune (design §6.4): at the end of a scan, drop watermark rows under the one (collection,
+-- scope_path) the scan just visited whose ids it did not see — a deleted record would otherwise
+-- leave a watermark row forever. Scoped to only the visited (collection, scope_path), never run
+-- broader: an un-hydrated aircraft's watermarks must survive untouched.
+deleteWatermarksNotIn:
+DELETE FROM urgency_watermark
+WHERE uid = :uid AND collection = :collection AND scope_path = :scopePath AND id NOT IN :ids;
+
+-- Account deletion only (notifications design §6.2's lifecycle table) — sign-out and the
+-- integrity-check wipe both deliberately leave these rows alone, unlike entity/sync_cursor.
+deleteWatermarksForUser:
+DELETE FROM urgency_watermark WHERE uid = :uid;
 
 -- Attachment binary index. See docs/storage_r2_design.md §4.
 -- This table is device-local — never synced to Firestore. Each row mirrors an Attachment
@@ -333,3 +400,27 @@ SET scope_path = :newPrefix || substr(scope_path, :remainderStart),
     remote_path = NULL,
     upload_attempts = 0
 WHERE scope_path LIKE :oldPrefixLike;
+
+-- Watermark counterpart to deleteReassignConflicts/reassignEntities above (notifications design
+-- §6.2). Not re-keying would silently re-seed the whole fleet at the exact moment the user has most
+-- reason to trust the app — every pending crossing swallowed, no notification, no error. Filtered by
+-- uid, not just scope_path LIKE, since urgency_watermark's primary key carries uid explicitly
+-- (unlike entity, which has no uid column at all).
+
+deleteWatermarkReassignConflicts:
+DELETE FROM urgency_watermark
+WHERE uid = :fromUid
+  AND scope_path LIKE :oldPrefixLike
+  AND EXISTS (
+    SELECT 1 FROM urgency_watermark AS destination
+    WHERE destination.uid = :toUid
+      AND destination.collection = urgency_watermark.collection
+      AND destination.id = urgency_watermark.id
+      AND destination.scope_path = :newPrefix || substr(urgency_watermark.scope_path, :remainderStart)
+  );
+
+reassignWatermarks:
+UPDATE urgency_watermark
+SET uid = :toUid,
+    scope_path = :newPrefix || substr(scope_path, :remainderStart)
+WHERE uid = :fromUid AND scope_path LIKE :oldPrefixLike;

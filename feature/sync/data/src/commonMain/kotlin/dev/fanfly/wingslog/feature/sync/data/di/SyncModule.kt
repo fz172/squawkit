@@ -4,6 +4,7 @@ import dev.fanfly.wingslog.core.storage.CloudSyncSetting
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.CurrentUidProvider
 import dev.fanfly.wingslog.core.storage.DatabaseWriteLock
+import dev.fanfly.wingslog.core.storage.ForeignWriteListener
 import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.EntityStoreFactory
 import dev.fanfly.wingslog.core.storage.PostWriteHook
@@ -112,8 +113,9 @@ val syncModule: Module = module {
     val postWriteHook = getOrNull<PostWriteHook>()
     val uploadScheduler = getOrNull<UploadScheduler>()
     val writeLock = get<DatabaseWriteLock>()
+    val auth = get<FirebaseAuth>()
     SyncEngine(
-      auth = get<FirebaseAuth>(),
+      auth = auth,
       cursors = get<SyncCursorStore>(),
       pullSubscription = get<PullSubscription>(),
       hydrationRunner = get<HydrationRunner>(),
@@ -124,6 +126,12 @@ val syncModule: Module = module {
           db = db,
           writeLock = writeLock,
           postWriteHook = postWriteHook,
+          selfUid = { auth.currentUser?.uid },
+          // Resolved lazily on the first foreign write, never here: the web implementation depends
+          // on NotificationPrefsManager, which depends on SyncEngine, so resolving it inside this
+          // factory is a cycle. Absent on Android and iOS, where N1 arrives by push (§8.2), which
+          // is what getOrNull covers.
+          foreignWrites = { getOrNull<ForeignWriteListener>() },
         )
       },
       pushWorker = get<PushWorker>(),

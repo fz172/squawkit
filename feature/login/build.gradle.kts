@@ -56,6 +56,17 @@ kotlin {
       implementation(project(":core:storage"))
       // The onboarding name step persists through the shared local-first technician manager.
       implementation(project(":feature:technician:datamanager"))
+      // SyncEngine: the account upgrade hydrates and resyncs after re-keying local data.
+      implementation(project(":feature:sync:data"))
+      // The ads-consent priming step: showsAds() (tier gate) + AdConsentManager (background
+      // isConsentRequired() check, then presentConsentForm() from the explainer's Continue).
+      implementation(project(":feature:subscription:datamanager"))
+      implementation(project(":feature:ads:datamanager"))
+      // AdConsentManager.presentConsentForm()'s return type — datamanager doesn't api-export it.
+      implementation(project(":feature:ads:model"))
+      // The notification priming step: NotificationPermission (background UNDETERMINED check, then
+      // request() — the real OS dialog — from the primer's Continue).
+      implementation(project(":feature:notifications:permission"))
 
       // Compose resources (this module owns its login strings + Google icon)
       implementation(libs.components.resources)
@@ -73,4 +84,9 @@ dependencies {
   // GitLive firebase-auth-android pins its versions via the Firebase BOM, which
   // core:auth declares as `implementation` (not exposed transitively) — so declare it here too.
   implementation(platform(libs.firebase.bom))
+
+  testImplementation(libs.junit)
+  testImplementation(libs.truth)
+  testImplementation(libs.mockk)
+  testImplementation(libs.kotlinx.coroutines.test)
 }
