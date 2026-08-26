@@ -21,7 +21,6 @@ import wingslog.feature.notifications.sharedassets.generated.resources.notificat
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_title
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_title_high_volume
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_title_squawk_created
-import wingslog.feature.notifications.sharedassets.generated.resources.notification_title_grounded
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_title_priority_raised
 
 /**
@@ -50,8 +49,7 @@ private suspend fun PushPayload.renderTitle(): String = when (titleKey) {
   "notification_n1_title" -> getString(Res.string.notification_n1_title, tailNumber, sectionTitle())
   "notification_n1_title_high_volume" ->
     getString(Res.string.notification_n1_title_high_volume, tailNumber)
-  // The escalation titles carry no dynamic content: the tail number lives in their bodies.
-  "notification_title_grounded" -> getString(Res.string.notification_title_grounded)
+  // The escalation title carries no dynamic content: the tail number lives in the body.
   "notification_title_priority_raised" -> getString(Res.string.notification_title_priority_raised)
   "notification_n1_title_squawk_created" ->
     getString(Res.string.notification_n1_title_squawk_created)

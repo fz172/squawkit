@@ -549,11 +549,14 @@ describe("§7.5 the escalation bypass", () => {
     );
 
     expect(idsOf()).toEqual([`n1esc:${AC_A}:sq-1`, `n1esc:${AC_A}:sq-2`]);
-    expect(sentMessages[0].data.channel).toBe("GROUNDED");
-    expect(sentMessages[0].data.highPriority).toBe("true");
+    // AOG is not its own tier — it reports exactly like any other priority raise (design decision,
+    // 2026-08-26): same channel, same (non-high) priority as the HIGH escalation right after it.
+    expect(sentMessages[0].data.channel).toBe("URGENCY");
+    expect(sentMessages[0].data.highPriority).toBe("false");
     expect(sentMessages[0].data.bodyKey).toBe("notification_n1_body_squawk_raised");
     expect(sentMessages[0].data.recordTitle).toBe("Left brake dragging");
     expect(sentMessages[1].data.channel).toBe("URGENCY");
+    expect(sentMessages[1].data.highPriority).toBe("false");
     expect(sentMessages[1].data.bodyKey).toBe("notification_n1_body_squawk_raised");
   });
 
@@ -626,20 +629,19 @@ describe("§7.5 the escalation bypass", () => {
     expect(sentMessages[0].data.actorName).toBe("Dave Chen");
     expect(sentMessages[0].data.bodyKey).toMatch(/^notification_n1_/);
     // The N2 bodies carry no actor, so nothing may fall back to them.
-    expect(sentMessages[0].data.bodyKey).not.toBe("notification_body_grounded_single");
     expect(sentMessages[0].data.bodyKey).not.toBe("notification_body_priority_raised_single");
   });
 
-  it("tells a squawk created at AOG apart from one raised to it", async () => {
+  it("tells a squawk created at AOG apart from one raised to it — same as any other priority", async () => {
     await shareAircraft(AC_A, { [HOST]: "owner", [MEMBER]: "technician" });
 
-    // No prior document at all: nobody raised anything.
+    // No prior document at all: nobody raised anything. AOG gets the same "created" title HIGH
+    // does — it is not its own headline (design decision, 2026-08-26).
     await wrappedRecord(
       recordWrite(AC_A, "squawk", "sq-new", null, squawkEnvelope("sq-new", SquawkPriority.SQUAWK_PRIORITY_AOG)),
     );
     expect(sentMessages[0].data.bodyKey).toBe("notification_n1_body_squawk_created");
-    // At AOG the grounding stays the headline however the squawk got there.
-    expect(sentMessages[0].data.titleKey).toBe("notification_title_grounded");
+    expect(sentMessages[0].data.titleKey).toBe("notification_n1_title_squawk_created");
 
     sentMessages.length = 0;
     // Created straight at HIGH takes its own title — "Priority raised" would contradict the body.

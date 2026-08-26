@@ -26,24 +26,22 @@ export interface NotificationSettings {
   /**
    * --- Urgency — device-local detection, no account required ---
    *
-   * The first two are NOT N2-only, and the distinction matters to anyone changing them. A squawk
-   * escalation is detectable from a single write, so the server fan-out reports one too (design
-   * §7.5), and it gates that push on these same two fields — not on squawk_activity_disabled. What
-   * arrives is an urgency notification (N2 channel, N2 priority), and someone who switched AOG off
-   * expects that switch to govern AOG alerts however they reach them.
+   * squawk_priority_disabled is NOT N2-only, and the distinction matters to anyone changing it. A
+   * squawk escalation — including to AOG, treated the same as any other priority raise — is
+   * detectable from a single write, so the server fan-out reports one too (design §7.5), and it
+   * gates that push on this same field — not on squawk_activity_disabled. What arrives is an urgency
+   * notification (N2 channel, N2 priority).
    *
    * Two consequences worth knowing before touching this:
-   *   * The server READS these. They are not device-only state, so they cannot be repurposed or
-   *     re-scoped as though the scanner were their only consumer.
+   *   * The server READS this. It is not device-only state, so it cannot be repurposed or re-scoped
+   *     as though the scanner were its only consumer.
    *   * A member of a shared aircraft can be notified with EVERY collaboration class below switched
-   *     off, because their grounding alert travels under aog_disabled. That is intended: muting
-   *     routine squawk activity is not asking to stop hearing the aircraft was grounded.
+   *     off, because a priority escalation travels under squawk_priority_disabled. That is intended:
+   *     muting routine squawk activity is not asking to stop hearing that a squawk got worse.
    *
    * The last two stay genuinely device-only: no write happens when a due date passes, so no trigger
    * can fire and the server has nothing to report (§7.5).
    */
-  aogDisabled: boolean;
-  /** escalations below AOG, and reopened squawks — likewise */
   squawkPriorityDisabled: boolean;
   /** -> DueStatus.OVERDUE — device-only */
   overdueDisabled: boolean;
@@ -67,7 +65,6 @@ export interface NotificationSettings {
 function createBaseNotificationSettings(): NotificationSettings {
   return {
     allDisabled: false,
-    aogDisabled: false,
     squawkPriorityDisabled: false,
     overdueDisabled: false,
     dueSoonDisabled: false,
@@ -82,9 +79,6 @@ export const NotificationSettings: MessageFns<NotificationSettings> = {
   encode(message: NotificationSettings, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
     if (message.allDisabled !== false) {
       writer.uint32(8).bool(message.allDisabled);
-    }
-    if (message.aogDisabled !== false) {
-      writer.uint32(16).bool(message.aogDisabled);
     }
     if (message.squawkPriorityDisabled !== false) {
       writer.uint32(24).bool(message.squawkPriorityDisabled);
@@ -123,14 +117,6 @@ export const NotificationSettings: MessageFns<NotificationSettings> = {
           }
 
           message.allDisabled = reader.bool();
-          continue;
-        }
-        case 2: {
-          if (tag !== 16) {
-            break;
-          }
-
-          message.aogDisabled = reader.bool();
           continue;
         }
         case 3: {
@@ -205,11 +191,6 @@ export const NotificationSettings: MessageFns<NotificationSettings> = {
         : isSet(object.all_disabled)
         ? globalThis.Boolean(object.all_disabled)
         : false,
-      aogDisabled: isSet(object.aogDisabled)
-        ? globalThis.Boolean(object.aogDisabled)
-        : isSet(object.aog_disabled)
-        ? globalThis.Boolean(object.aog_disabled)
-        : false,
       squawkPriorityDisabled: isSet(object.squawkPriorityDisabled)
         ? globalThis.Boolean(object.squawkPriorityDisabled)
         : isSet(object.squawk_priority_disabled)
@@ -253,9 +234,6 @@ export const NotificationSettings: MessageFns<NotificationSettings> = {
     if (message.allDisabled !== false) {
       obj.allDisabled = message.allDisabled;
     }
-    if (message.aogDisabled !== false) {
-      obj.aogDisabled = message.aogDisabled;
-    }
     if (message.squawkPriorityDisabled !== false) {
       obj.squawkPriorityDisabled = message.squawkPriorityDisabled;
     }
@@ -286,7 +264,6 @@ export const NotificationSettings: MessageFns<NotificationSettings> = {
   fromPartial<I extends Exact<DeepPartial<NotificationSettings>, I>>(object: I): NotificationSettings {
     const message = createBaseNotificationSettings();
     message.allDisabled = object.allDisabled ?? false;
-    message.aogDisabled = object.aogDisabled ?? false;
     message.squawkPriorityDisabled = object.squawkPriorityDisabled ?? false;
     message.overdueDisabled = object.overdueDisabled ?? false;
     message.dueSoonDisabled = object.dueSoonDisabled ?? false;

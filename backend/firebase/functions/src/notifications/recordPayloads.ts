@@ -80,16 +80,7 @@ export function urgencyRankOf(doc: SyncDocWire | undefined): number {
   }
 }
 
-/** The two escalation tiers the server can detect, matching `UrgencyTier` on the client. */
-export const ESCALATION_TIER = {
-  GROUNDED: "GROUNDED",
-  PRIORITY_RAISED: "PRIORITY_RAISED",
-} as const;
-
-export type EscalationTier = (typeof ESCALATION_TIER)[keyof typeof ESCALATION_TIER];
-
 export type Escalation = {
-  tier: EscalationTier;
   title: string;
   /**
    * Whether the squawk arrived at this rank by being **created** there or by being **raised** to it.
@@ -121,10 +112,11 @@ export type Escalation = {
 /**
  * Was this write a reportable priority escalation? (§7.5)
  *
- * Mirrors `SquawkWithStatus.reportableTier()`: **only HIGH and AOG report.** A LOW→MEDIUM bump is a
- * real escalation and still moves N2's watermark, but design §9.2 scopes the *notification* to
- * "becomes high priority or worse" — reporting the quietest possible change would interrupt
- * someone for nothing.
+ * Mirrors `SquawkWithStatus.reportableTier()`: **only HIGH and AOG report, and both report the
+ * same way** — AOG is not its own tier, just the top of the same priority-raised ladder (design
+ * decision, 2026-08-26). A LOW→MEDIUM bump is a real escalation and still moves N2's watermark, but
+ * design §9.2 scopes the *notification* to "becomes high priority or worse" — reporting the
+ * quietest possible change would interrupt someone for nothing.
  *
  * An absent `before` (a squawk created straight at HIGH or AOG) reports too, and reads correctly:
  * N2 does the same thing, treating an unseen record's previous rank as `RESOLVED`.
@@ -140,20 +132,13 @@ export function escalationOf(
   const fromRank = urgencyRankOf(before);
   const toRank = urgencyRankOf(after);
   if (toRank <= fromRank) return null; // unchanged, or de-escalated — silent by design (PRD §6)
-
-  const tier =
-    toRank === 4
-      ? ESCALATION_TIER.GROUNDED
-      : toRank === 3
-        ? ESCALATION_TIER.PRIORITY_RAISED
-        : null;
-  if (tier == null) return null; // MEDIUM and below: below the reportable floor
+  if (toRank < 3) return null; // MEDIUM and below: below the reportable floor
 
   // No prior document, or a tombstoned one being written live again: nobody raised anything, the
   // squawk arrived at this rank. Anything else — including a reopen — is a raise on a record that
   // already existed.
   const kind = before == null || before.deleted === true ? "created" : "raised";
-  return { tier, title: squawk.title, kind };
+  return { title: squawk.title, kind };
 }
 
 export { SquawkPriority };

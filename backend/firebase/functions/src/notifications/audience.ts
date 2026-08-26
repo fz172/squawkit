@@ -14,7 +14,6 @@ import {
   RECORD_TYPE,
   type RecordType,
 } from "./notificationModels.js";
-import { ESCALATION_TIER, type EscalationTier } from "./recordPayloads.js";
 
 /**
  * Who should hear about a write, and whether they have asked to.
@@ -114,17 +113,12 @@ export function honorsActivity(settings: NotificationSettings, recordType: Recor
 /**
  * Does this recipient want a §7.5 escalation?
  *
- * Gated on the **urgency** toggles, not the squawk-activity one, because what the recipient sees is
- * an urgency notification: N2's title, N2's body, N2's channel. Someone who switched "AOG" off in
- * settings expects that switch to govern AOG alerts however they arrive, and someone who muted
- * routine squawk *activity* has not asked to stop hearing that their aircraft was grounded.
+ * Gated on the **urgency** toggle, not the squawk-activity one, because what the recipient sees is
+ * an urgency notification: N2's title, N2's body, N2's channel — including at AOG, which is not its
+ * own tier and has no toggle of its own (design decision, 2026-08-26). Someone who muted routine
+ * squawk *activity* has not asked to stop hearing that a squawk's priority got worse.
  */
-export function honorsEscalation(
-  settings: NotificationSettings,
-  tier: EscalationTier,
-): boolean {
+export function honorsEscalation(settings: NotificationSettings): boolean {
   if (settings.allDisabled) return false;
-  return tier === ESCALATION_TIER.GROUNDED
-    ? !settings.aogDisabled
-    : !settings.squawkPriorityDisabled;
+  return !settings.squawkPriorityDisabled;
 }

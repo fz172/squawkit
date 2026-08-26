@@ -273,11 +273,10 @@ async function fanOutEscalation(
 
   const sent = await fanOut(
     recipients,
-    (settings) => honorsEscalation(settings, escalation.tier),
+    (settings) => honorsEscalation(settings),
     escalationPushData({
       aircraftId,
       squawkId,
-      tier: escalation.tier,
       title: escalation.title,
       kind: escalation.kind,
       tailNumber,
@@ -291,7 +290,7 @@ async function fanOutEscalation(
   logger.info("N1 escalation fan-out", {
     aircraftId,
     squawkId,
-    tier: escalation.tier,
+    kind: escalation.kind,
     recipients: recipients.length,
     sent,
   });

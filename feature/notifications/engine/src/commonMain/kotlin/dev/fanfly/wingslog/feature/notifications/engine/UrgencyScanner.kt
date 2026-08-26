@@ -20,7 +20,6 @@ import dev.fanfly.wingslog.feature.notifications.model.ScanTrigger
 import dev.fanfly.wingslog.feature.notifications.model.UrgencyRank
 import dev.fanfly.wingslog.feature.notifications.model.UrgencyTier
 import dev.fanfly.wingslog.feature.notifications.model.allEnabled
-import dev.fanfly.wingslog.feature.notifications.model.aogEnabled
 import dev.fanfly.wingslog.feature.notifications.model.dueSoonEnabled
 import dev.fanfly.wingslog.feature.notifications.model.overdueEnabled
 import dev.fanfly.wingslog.feature.notifications.model.reportableTier
@@ -40,16 +39,14 @@ import org.jetbrains.compose.resources.getString
 import wingslog.feature.notifications.sharedassets.generated.resources.Res
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_body_due_soon_plural
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_body_due_soon_single
-import wingslog.feature.notifications.sharedassets.generated.resources.notification_body_grounded_plural
-import wingslog.feature.notifications.sharedassets.generated.resources.notification_body_grounded_single
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_body_overdue_plural
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_body_overdue_single
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_body_priority_raised_plural
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_body_priority_raised_single
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_title_due_soon
-import wingslog.feature.notifications.sharedassets.generated.resources.notification_title_grounded
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_title_overdue
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_title_priority_raised
+import wingslog.feature.notifications.sharedassets.generated.resources.squawk_priority_label_aog
 import wingslog.feature.notifications.sharedassets.generated.resources.squawk_priority_label_high
 import wingslog.feature.notifications.sharedassets.generated.resources.squawk_priority_label_low
 import wingslog.feature.notifications.sharedassets.generated.resources.squawk_priority_label_medium
@@ -238,6 +235,7 @@ class UrgencyScanner(
           title = row.value.title,
           tapTarget = NotificationTapTarget.Squawk(aircraftId, row.id),
           previousRank = previousRank,
+          newRank = rank,
         )
       }
     }
@@ -330,7 +328,6 @@ class UrgencyScanner(
 
   private fun NotificationSettings.tierEnabled(tier: UrgencyTier): Boolean =
     when (tier) {
-      UrgencyTier.GROUNDED -> aogEnabled
       UrgencyTier.PRIORITY_RAISED -> squawkPriorityEnabled
       UrgencyTier.OVERDUE -> overdueEnabled
       UrgencyTier.DUE_SOON -> dueSoonEnabled
@@ -360,10 +357,10 @@ class UrgencyScanner(
     }
     return PendingNotification(
       id = id,
-      channel = if (tier == UrgencyTier.GROUNDED) NotificationChannel.GROUNDED else NotificationChannel.URGENCY_UPDATE,
+      channel = NotificationChannel.URGENCY_UPDATE,
       title = title,
       body = body,
-      highPriority = tier == UrgencyTier.GROUNDED || tier == UrgencyTier.OVERDUE,
+      highPriority = tier == UrgencyTier.OVERDUE,
       tapTarget = single?.tapTarget
         ?: NotificationTapTarget.Aircraft(
           aircraftId,
@@ -384,9 +381,13 @@ class UrgencyScanner(
       val fromLabel = getString(
         (crossing.previousRank ?: UrgencyRank.RESOLVED).squawkPriorityLabelRes()
       )
-      // PRIORITY_RAISED only ever reports at HIGH (reportableTier() in :model) — AOG has its own
-      // Grounded tier — so the "to" side of "from X to Y" is always HIGH, never computed per-crossing.
-      val toLabel = getString(UrgencyRank(3).squawkPriorityLabelRes())
+      // Computed per-crossing, not assumed: PRIORITY_RAISED reports at HIGH or AOG now that AOG
+      // folds into it (design decision, 2026-08-26), so "to" can no longer be hardcoded to HIGH.
+      // Only squawk crossings ever carry this tier, so newRank is always set here.
+      val toLabel = getString(
+        checkNotNull(crossing.newRank) { "PRIORITY_RAISED crossing with no newRank" }
+          .squawkPriorityLabelRes()
+      )
       getString(
         tier.singleBodyRes(),
         tailNumber,
@@ -403,7 +404,8 @@ class UrgencyScanner(
       0 -> Res.string.squawk_priority_label_resolved
       1 -> Res.string.squawk_priority_label_low
       2 -> Res.string.squawk_priority_label_medium
-      else -> Res.string.squawk_priority_label_high
+      3 -> Res.string.squawk_priority_label_high
+      else -> Res.string.squawk_priority_label_aog
     }
 
   // NotificationTapTarget.Aircraft.tab wire values (design §5.3 / P2.9) — a summary notification
@@ -412,26 +414,23 @@ class UrgencyScanner(
   // strings, not ShellSection directly: :engine cannot depend on core:ui:adaptive, and
   // AdaptiveShellViewModel is what actually interprets these.
   private fun UrgencyTier.toAircraftTab(): String = when (this) {
-    UrgencyTier.GROUNDED, UrgencyTier.PRIORITY_RAISED -> "squawks"
+    UrgencyTier.PRIORITY_RAISED -> "squawks"
     UrgencyTier.OVERDUE, UrgencyTier.DUE_SOON -> "tasks"
   }
 
   private fun UrgencyTier.titleRes() = when (this) {
-    UrgencyTier.GROUNDED -> Res.string.notification_title_grounded
     UrgencyTier.PRIORITY_RAISED -> Res.string.notification_title_priority_raised
     UrgencyTier.OVERDUE -> Res.string.notification_title_overdue
     UrgencyTier.DUE_SOON -> Res.string.notification_title_due_soon
   }
 
   private fun UrgencyTier.singleBodyRes() = when (this) {
-    UrgencyTier.GROUNDED -> Res.string.notification_body_grounded_single
     UrgencyTier.PRIORITY_RAISED -> Res.string.notification_body_priority_raised_single
     UrgencyTier.OVERDUE -> Res.string.notification_body_overdue_single
     UrgencyTier.DUE_SOON -> Res.string.notification_body_due_soon_single
   }
 
   private fun UrgencyTier.pluralBodyRes() = when (this) {
-    UrgencyTier.GROUNDED -> Res.string.notification_body_grounded_plural
     UrgencyTier.PRIORITY_RAISED -> Res.string.notification_body_priority_raised_plural
     UrgencyTier.OVERDUE -> Res.string.notification_body_overdue_plural
     UrgencyTier.DUE_SOON -> Res.string.notification_body_due_soon_plural
@@ -446,6 +445,12 @@ class UrgencyScanner(
     val title: String,
     val tapTarget: NotificationTapTarget,
     val previousRank: UrgencyRank? = null,
+    /**
+     * The rank this crossing landed at — only set for squawks. `PRIORITY_RAISED` no longer reports
+     * exclusively at HIGH now that AOG folds into it (design decision, 2026-08-26), so
+     * [buildSingleBody] needs the actual landing rank per crossing rather than assuming HIGH.
+     */
+    val newRank: UrgencyRank? = null,
   )
 
   companion object {

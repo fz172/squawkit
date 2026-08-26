@@ -195,9 +195,10 @@ message NotificationSettings {
   // Master switch. Off silences every class, locally and server-side.
   bool all_disabled = 1;
 
+  reserved 2; // aog_disabled — AOG is not its own tier (decided 2026-08-26); reserved, not reused.
+
   // --- Urgency (N2) — device-local detection, no account required ---
-  bool aog_disabled = 2;                 // any escalation to SQUAWK_PRIORITY_AOG
-  bool squawk_priority_disabled = 3;     // escalations below AOG, and reopened squawks
+  bool squawk_priority_disabled = 3;     // any priority escalation, including to AOG, and reopens
   bool overdue_disabled = 4;             // -> DueStatus.OVERDUE
   bool due_soon_disabled = 5;            // -> DueStatus.DUE_SOON
 
@@ -219,11 +220,11 @@ readable positive names from extension properties, which are derived rather than
 // feature/notifications/model — NotificationSettingsExt.kt
 // The ONE place the inversion in §4.1 is spelled out. Everything else reads positives.
 val NotificationSettings.allEnabled: Boolean get() = !all_disabled
-val NotificationSettings.aogEnabled: Boolean get() = !aog_disabled
+val NotificationSettings.squawkPriorityEnabled: Boolean get() = !squawk_priority_disabled
 val NotificationSettings.overdueEnabled: Boolean get() = !overdue_disabled
 // …one line per field
 
-fun NotificationSettings.withAog(enabled: Boolean) = copy(aog_disabled = !enabled)
+fun NotificationSettings.withSquawkPriority(enabled: Boolean) = copy(squawk_priority_disabled = !enabled)
 // …one per field; wire generates `copy` on the message (TechnicianManagerImpl already relies on it)
 ```
 
@@ -441,14 +442,14 @@ the behaviour that matters and a future `minSdk` drop must not silently start de
 — which is what keeps `viewing` free of every other feature.
 
 ```kotlin
-enum class NotificationChannel { COLLABORATION, URGENCY, GROUNDED }  // Q8: one per class
+enum class NotificationChannel { COLLABORATION, URGENCY }  // Q8: one per class
 
 data class PendingNotification(
   val id: String,                 // stable — re-posting the same id replaces, never stacks
   val channel: NotificationChannel,
   val title: String,
   val body: String,
-  val highPriority: Boolean,      // AOG + Overdue
+  val highPriority: Boolean,      // Overdue only
   val tapTarget: NotificationTapTarget,
 )
 
@@ -458,12 +459,12 @@ interface LocalNotifier {
 }
 ```
 
-Android registers the three channels at Koin init (they must exist before the first post, and
-re-creating an existing channel is a no-op); `GROUNDED` gets `IMPORTANCE_HIGH`, the other two
-`IMPORTANCE_DEFAULT`. iOS maps `highPriority` to `UNNotificationInterruptionLevel.timeSensitive`,
-which needs the Time Sensitive Notifications entitlement — **an App Store review item, sequenced into
-P5 with the APNs work, not P2.** Until it lands, iOS N2 posts at the default interruption level; the
-notification still arrives, it just does not pierce Focus.
+Android registers the two channels at Koin init (they must exist before the first post, and
+re-creating an existing channel is a no-op), both at `IMPORTANCE_DEFAULT`. iOS never maps
+`highPriority` to `UNNotificationInterruptionLevel.timeSensitive` — the Time Sensitive Notifications
+entitlement (an App Store review item) was decided against (2026-08-26): AOG is not its own tier, so
+there is no class left that would have used it. A high-priority notification still arrives on iOS; it
+just never pierces Focus.
 
 Notification ids are deterministic so a re-scan replaces rather than stacks:
 `"urgency:$aircraftId:$tier"` for N2 summaries, `"urgency:$collection:$recordId"` for singles.
@@ -773,8 +774,8 @@ then silently re-seeded on the next scan.
 
 ### 6.5 Batching a scan's findings
 
-Per PRD §6.6, at most one notification per `(aircraft, tier)`, where tier ∈ {Grounded, Overdue, Due
-Soon, Priority raised}:
+Per PRD §6.6, at most one notification per `(aircraft, tier)`, where tier ∈ {Overdue, Due Soon,
+Priority raised — which includes AOG}:
 
 ```
 1 crossing  → the specific body from PRD §6.5
@@ -1133,7 +1134,7 @@ Only the server knows *who* raised the squawk, and a device-local scanner never 
 
 | | body |
 |:--|:--|
-| N2, on the device | `N4589T: raised to AOG — aircraft grounded` |
+| N2, on the device | `N4589T: priority raised from High to AOG` |
 | N1, from the server | `N4589T: Dave Chen raised the priority of 1 squawk issue` |
 
 Word-for-word identical copy is what would have made the second arrival read as a duplicate rather
@@ -1142,15 +1143,15 @@ than as the thing the recipient actually wants to know. So N1 carries
 body has an actor to name.
 
 The server also distinguishes **created** from **raised**, which the scanner cannot: only the trigger
-sees the before/after pair. A squawk created straight at HIGH takes its own title
+sees the before/after pair. A squawk created straight at HIGH or AOG takes its own title
 (`notification_n1_title_squawk_created`) — "Priority raised" would contradict a body saying it was
-just created — while at AOG the grounding stays the headline however the squawk got there. A reopen
-counts as *raised*: the record was already there.
+just created. AOG is not its own headline (decided 2026-08-26): it uses the same created/raised
+titles HIGH does. A reopen counts as *raised*: the record was already there.
 
 That distinction is the whole rule now. With §7.3's replacement scheme, folding an escalation into
 the activity id would let the *next* routine edit overwrite "Sarah raised Left brake dragging to
-AOG" with "Sarah made 4 changes to squawks" — silently replacing a grounding alert with a shrug. A
-separate id makes the AOG notification immune to collapse, and it is also exempt from
+AOG" with "Sarah made 4 changes to squawks" — silently replacing an escalation alert with a shrug. A
+separate id makes the escalation notification immune to collapse, and it is also exempt from
 `MIN_REPOST_INTERVAL` and from the per-aircraft ceiling.
 
 PRD §5.4 called the bypass a hard rule rather than a tuning knob, in the buffering design. It is
@@ -1347,7 +1348,6 @@ data class NotificationSettingsUiState(
   val isSignedIn: Boolean = false,        // real account, not anonymous
   val isCloudSyncEnabled: Boolean = false,
   val isLoading: Boolean = true,
-  val confirmDisableAog: Boolean = false, // Q5
 )
 ```
 
@@ -1365,9 +1365,9 @@ whole-message overwrite, reverting the user's real settings on every other devic
 2). Disabling the toggles while `isLoading` is what makes that unreachable; the spinner is just the
 visible part.
 
-Toggle rows read `state.settings.aogEnabled` and write
-`prefsManager.update { it.withAog(enabled) }` (§4.1) — the screen never sees an inverted field name,
-and never constructs a `NotificationSettings` of its own.
+Toggle rows read positive names like `state.settings.squawkPriorityEnabled` and write through
+mutators like `prefsManager.update { it.withSquawkPriority(enabled) }` (§4.1) — the screen never sees
+an inverted field name, and never constructs a `NotificationSettings` of its own.
 
 Any in-progress edit lives in the ViewModel's `StateFlow`, never in composable `remember` — this
 screen can be torn down by the OS permission dialog.
@@ -1394,10 +1394,12 @@ palette is required and dynamic color is disabled.
 Copy conventions: all strings from `strings.xml`, reuse before adding, apostrophes literal, and edit
 actions worded as "Update X" rather than "Edit X".
 
-### 9.4 Disabling AOG (Q5)
+### 9.4 Disabling AOG (Q5) — reversed
 
-Mutable, with a confirmation: "You won’t be told when an aircraft is grounded." A user who cannot
-silence one alert silences the whole app instead.
+The PRD's Q5 (a confirm-gated toggle so AOG alerts couldn't be silenced quietly) was implemented in
+P2, then reversed on 2026-08-26: AOG is not its own settings toggle. It reports through
+`squawk_priority_disabled` — "Squawk priority increases" — like any other escalation, with no confirm
+dialog. There is no longer a way to silence *only* AOG while keeping other priority escalations on.
 
 ---
 
@@ -1842,7 +1844,7 @@ Issue-sized below. "Blocks on" names the immediate prerequisite only.
 |:--|:--|:--|:--|
 | P5.1 | APNs certificates, entitlements, background modes | `iosApp`, Firebase console | P4.10 |
 | P5.2 | Notification service extension to render a data-only message while backgrounded (§7.6) | `iosApp` | P5.1 |
-| P5.3 | Time Sensitive entitlement for AOG — **App Store review item, start early** (§5.2) | `iosApp`, App Store | — |
+| ~~P5.3~~ | ~~Time Sensitive entitlement for AOG~~ — **cancelled 2026-08-26**, AOG is not its own tier and needs no interruption-level treatment (§5.2, §9.4) | — | — |
 | P5.4 | iOS token registration + two-account parity check | `:datamanager/iosMain` | P5.2 |
 
 **P6 — Web push (V1.1).**
@@ -1853,8 +1855,8 @@ Issue-sized below. "Blocks on" names the immediate prerequisite only.
 | P6.2 | `push_devices` for web; `AppCapability.isPushSupported` flips true on `jsMain` | `:datamanager/jsMain`, `core/appinfo` | P6.1 |
 | P6.3 | Closed-tab N1 and N2 via `ServiceWorkerRegistration.showNotification()` (§8.4, §8.5) | `:viewing/jsMain` | P6.2 |
 
-**Externally blocked, start ahead of their phase:** P5.3 (App Store review) and P5.1 (APNs
-certificates) both have lead time that has nothing to do with code being ready.
+**Externally blocked, start ahead of its phase:** P5.1 (APNs certificates) has lead time that has
+nothing to do with code being ready.
 
 ---
 
@@ -1874,7 +1876,7 @@ amended rather than quietly diverged from.
 | D7 | §9.2 — "notification preferences: new synced entity" | Every proto field is inverted (`*_disabled`) | §4.1. proto3 has no scalar presence, so all-false must mean all-on or a user who never opened settings is silenced. |
 | D8 | §11 — instrument via the analytics plan | The scan reports nothing when sync is off or the account is anonymous | §12.3. The PRD calls this a privacy call for the design doc and names this as the safe default. |
 | D9 | — (not addressed) | `aircraft.proto` and `settings/notification_settings.proto` must be added to the functions' `generate:proto` list | §7.2. Neither is generated today, and the fan-out cannot read a tail number or a preference without them. |
-| D10 | §7.5 — iOS N1 in V1 | iOS Time Sensitive interruption level needs an entitlement and App Store review; sequenced into P5 | §5.2. iOS N2 ships at default interruption level in P2. |
+| D10 | §7.5 — iOS N1 in V1 | ~~iOS Time Sensitive interruption level needs an entitlement and App Store review; sequenced into P5~~ — **reversed 2026-08-26**: AOG is not its own tier, so no class needs Time Sensitive at all; iOS never maps `highPriority` to `.timeSensitive` | §5.2, §9.4. iOS N2 ships at default interruption level always, not just in P2. |
 | D11 | §9.2 — preferences are "a new synced entity … like every other setting" | The manager must resolve *hydrated* from *never set* before any read or write. `DeveloperOptionsManagerImpl` is not the template — it never hydrates. `TechnicianManagerImpl.awaitHydratedSelfId` is. | §4.3. Reading through an unhydrated store shows the wrong toggles; **writing** through it pushes a whole-message overwrite that reverts the user's settings on every other device. |
 | D12 | §9.2 — "`feature/notifications`: canonical module set (`model` / `datamanager` / `sharedassets` / `settings`)" | Eight modules: `model`, `permission`, `viewing`, `datamanager`, `engine`, `sharedassets`, `settings`, `devoptions` — with `viewing` meaning the *notification display surface*, not the canonical read-only-UI layer | §3. One `datamanager` holding both the scanner and the display surface forces every consumer to inherit the scanner's five feature-datamanager dependencies; `feature/login` would compile against `feature:tasks:datamanager` to show one onboarding card. |
 | D13 | §9.6 — Developer Options test-send actions | Two Koin-resolved interfaces in a new `feature/developeroptions/plugin` — `DeveloperOptionsExtra` for the row, `DeveloperOptionsNavContributor` for the page — replacing the single `dogfoodContent` slot. **Done ahead of this feature in #511/#512.** | §11.1. The slot was singular and already taken, so a second section forced a signature change either way. Also removed `feature:stresstest:config` and all `isStressTestSupported` threading from `feature:shell`. **Touched three modules this feature otherwise would not.** |

@@ -17,7 +17,7 @@ data class PendingNotification(
   val channel: NotificationChannel,
   val title: String,
   val body: String,
-  /** AOG and Overdue. Maps to `IMPORTANCE_HIGH` on Android; iOS's Time Sensitive treatment waits on P5.3. */
+  /** Overdue only. Maps to `IMPORTANCE_HIGH` on Android; iOS has no equivalent treatment. */
   val highPriority: Boolean,
   val tapTarget: NotificationTapTarget,
 )

@@ -14,9 +14,7 @@ extension PushPayload {
       return "\(tailNumber) · \(sectionTitle())"
     case "notification_n1_title_high_volume":
       return "\(tailNumber) · A lot of activity"
-    // The escalation titles carry no dynamic content: the tail number lives in their bodies.
-    case "notification_title_grounded":
-      return "⚠ AOG"
+    // The escalation title carries no dynamic content: the tail number lives in the body.
     case "notification_title_priority_raised":
       return "Priority raised"
     case "notification_n1_title_squawk_created":
