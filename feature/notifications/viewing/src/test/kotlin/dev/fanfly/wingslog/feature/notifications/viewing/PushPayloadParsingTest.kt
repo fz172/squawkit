@@ -13,6 +13,9 @@ import org.junit.Test
 class PushPayloadParsingTest {
 
   /** An activity summary, exactly as `activityPushData` builds it. */
+  private fun activityData(vararg extra: Pair<String, String>): Map<String, String> =
+    activityData(extra.toMap())
+
   private fun activityData(
     extra: Map<String, String> = emptyMap(),
   ): Map<String, String> = mapOf(
@@ -125,6 +128,49 @@ class PushPayloadParsingTest {
     // The fallback ("A collaborator") is itself localized, so the server sends "" and the renderer
     // decides — this class must not invent a name of its own.
     assertThat(PushPayload.parse(activityData(mapOf("actorName" to "")))!!.actorName).isEmpty()
+  }
+
+  @Test
+  fun `drops a message addressed to an account that is not signed in here`() {
+    // The P4.13 case: a stale push_devices doc under a signed-out account keeps a live token, so its
+    // notifications keep arriving at a device someone else is now using.
+    val parsed = PushPayload.parse(activityData("recipientUid" to "user-a"))!!
+
+    assertThat(parsed.isAddressedTo("user-b")).isFalse()
+  }
+
+  @Test
+  fun `renders a message addressed to the account signed in here`() {
+    val parsed = PushPayload.parse(activityData("recipientUid" to "user-a"))!!
+
+    assertThat(parsed.isAddressedTo("user-a")).isTrue()
+  }
+
+  @Test
+  fun `drops an addressed message when nobody is signed in`() {
+    val parsed = PushPayload.parse(activityData("recipientUid" to "user-a"))!!
+
+    assertThat(parsed.isAddressedTo(null)).isFalse()
+  }
+
+  @Test
+  fun `still renders a message from a server that sends no recipient`() {
+    // Rollout: a client newer than the server must not go silent. Absent means the server never
+    // addressed the message, not that it addressed it to nobody.
+    val parsed = PushPayload.parse(activityData())!!
+
+    assertThat(parsed.recipientUid).isNull()
+    assertThat(parsed.isAddressedTo("user-a")).isTrue()
+    assertThat(parsed.isAddressedTo(null)).isTrue()
+  }
+
+  /** An empty value addresses nobody, so it reads as absent rather than as a reason to drop. */
+  @Test
+  fun `treats a blank recipient as absent`() {
+    val parsed = PushPayload.parse(activityData("recipientUid" to ""))!!
+
+    assertThat(parsed.recipientUid).isNull()
+    assertThat(parsed.isAddressedTo("user-a")).isTrue()
   }
 
   @Test

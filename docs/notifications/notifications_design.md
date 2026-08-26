@@ -1176,7 +1176,8 @@ routing and the tap router:
     "titleKey": "notification_n1_title", "bodyKey": "notification_n1_body_plural",
     "tailNumber": "N4589T", "actorName": "Dave Chen", "changeCount": "5",
     "notificationId": "n1:{aircraftId}:{recordType}:{actorUid}:{sessionSeq}",
-    "tapTarget": "aircraft:{aircraftId}:squawks"
+    "tapTarget": "aircraft:{aircraftId}:squawks",
+    "recipientUid": "{uid this copy is addressed to}"
   },
   "android": { "collapse_key": "<same as notificationId>" },
   "apns":    { "headers": { "apns-collapse-id": "<same as notificationId>" } }
@@ -1210,9 +1211,22 @@ The cost is that argument order lives in the client, on three platforms rather t
 file. That is where `strings.xml` lives, so it is the right home, but it is a real coupling and the
 table in `pushMessages.ts` is the only place the contract is written down.
 
+**`recipientUid` addresses the copy, and the client drops anything not meant for it** (P4.13). An
+FCM token belongs to the app *install*, not to an account, while `push_devices` is keyed by install
+id under `users/{uid}/`. A sign-out whose registry delete does not land — offline, or through a path
+that never calls it — leaves the previous account holding a document with a live token, and nothing
+prunes it, because `pruneDeadTokens` only fires on a token FCM reports as gone. Without the address,
+that account's notification text keeps arriving at a device somebody else is now using.
+
+Because one message addresses a whole fan-out, the field is stamped per recipient at send time
+rather than built into the payload: `sendPush` groups targets by uid and sends one multicast per
+recipient. An **absent** `recipientUid` means "a server older than this field" and must still render,
+so a client newer than the server does not go silent during a rollout.
+
 iOS needs `content-available` plus a notification service extension to render a data-only message
 while backgrounded; that is part of P5, and until it lands iOS may ship rendered strings with a
-TODO.
+TODO. The extension needs the same `recipientUid` drop — `PushPayload.isAddressedTo` is in
+`commonMain` for exactly that reason, though the drop itself is per-platform.
 
 ---
 

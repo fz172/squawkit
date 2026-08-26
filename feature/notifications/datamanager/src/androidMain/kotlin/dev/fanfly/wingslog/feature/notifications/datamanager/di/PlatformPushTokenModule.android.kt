@@ -9,6 +9,7 @@ import dev.fanfly.wingslog.feature.notifications.datamanager.PushTokenBootstrap
 import dev.fanfly.wingslog.feature.notifications.datamanager.PushTokenRegistrar
 import dev.fanfly.wingslog.feature.notifications.datamanager.impl.PushTokenRegistrarImpl
 import dev.fanfly.wingslog.feature.notifications.model.PushTokenSink
+import dev.fanfly.wingslog.feature.notifications.model.SignedInUid
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 import org.koin.android.ext.koin.androidContext
@@ -38,6 +39,14 @@ actual val platformPushTokenModule: Module = module {
   // `get<PushTokenRegistrar>()` rather than a second constructor call: two registrars would mean
   // two authStateChanged collectors racing to write the same doc.
   single<PushTokenSink> { get<PushTokenRegistrar>() }
+
+  // Bound beside PushTokenSink because it exists for the same reason: the FCM service in `:viewing`
+  // needs an answer only `core:auth` has, and `:viewing` cannot depend on it. Android-only for now —
+  // iOS binds its own when P5 gives it a receiver to guard.
+  single<SignedInUid> {
+    val auth = get<FirebaseAuth>()
+    SignedInUid { auth.currentUser?.uid }
+  }
 
   // createdAtStart, and that is the entire point: `onNewToken` only fires for a token that does not
   // exist yet, so without something that reads the *current* token at startup a device that already

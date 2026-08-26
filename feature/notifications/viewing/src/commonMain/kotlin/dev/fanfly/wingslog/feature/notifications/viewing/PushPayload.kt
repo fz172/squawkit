@@ -30,7 +30,39 @@ data class PushPayload(
   val changeCount: Int,
   val recordTitle: String,
   val tapTarget: NotificationTapTarget,
+  /**
+   * Which account the server addressed this copy to, or `null` from a server older than issue
+   * P4.13. See [isAddressedTo] for why the two are not the same thing.
+   */
+  val recipientUid: String?,
 ) {
+
+  /**
+   * Whether this message should be shown on a device signed in as [signedInUid] (`null` when nobody
+   * is signed in here).
+   *
+   * **Why the check is needed at all:** an FCM token belongs to the app *install*, not to an
+   * account, while `push_devices` is keyed by install id under `users/{uid}/`. Sign out without the
+   * registry delete landing — offline, or through a path that never calls it — and the next account
+   * to sign in registers the same token under its own uid while the previous one keeps a document
+   * holding a perfectly live address. Nothing prunes it: `pruneDeadTokens` only fires on a token FCM
+   * reports as gone, and this one is not gone. So the previous account's collaboration text keeps
+   * arriving at a device it no longer controls.
+   *
+   * The three cases, and each one is a deliberate answer rather than a fallthrough:
+   * - **No [recipientUid]** — a server that predates the field. Render. A client newer than the
+   *   server must not go silent during a rollout, and "absent" means the server never addressed the
+   *   message, not that it addressed it to nobody.
+   * - **Addressed, nobody signed in** — drop. There is no one here to show it to, and the account it
+   *   names is not using this device.
+   * - **Addressed to someone else** — drop. This is the case the field exists for.
+   */
+  fun isAddressedTo(signedInUid: String?): Boolean = when {
+    recipientUid == null -> true
+    signedInUid == null -> false
+    else -> recipientUid == signedInUid
+  }
+
   companion object {
     /**
      * Returns `null` for anything that is not a well-formed N1 message, so an unrecognised push —
@@ -55,6 +87,9 @@ data class PushPayload(
         changeCount = data["changeCount"]?.toIntOrNull() ?: 1,
         recordTitle = data["recordTitle"].orEmpty(),
         tapTarget = tapTarget,
+        // Blank is treated as absent: an empty string addresses nobody, and dropping every message
+        // over a server that sent `recipientUid=""` would be a silent outage.
+        recipientUid = data["recipientUid"]?.takeIf { it.isNotBlank() },
       )
     }
 

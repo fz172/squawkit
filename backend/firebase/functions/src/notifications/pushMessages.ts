@@ -31,6 +31,18 @@ import { ESCALATION_TIER, type EscalationTier } from "./recordPayloads.js";
  * | `recordType` | `squawk` \| `task` \| `log` \| `aircraft`; the client maps it to the section labels |
  * | `recordTitle` | escalation only — the squawk's own title |
  * | `fromRank` / `toRank` | escalation only — `UrgencyRank` values, mapped to `squawk_priority_label_*` |
+ * | `recipientUid` | who this copy is for; the client drops it if that is not who is signed in |
+ *
+ * ## Why `recipientUid` is stamped at send time and is not a field of [PushData]
+ *
+ * One [PushData] addresses a whole fan-out — every recipient of one aircraft's activity gets the
+ * same text. The *address* is the one thing that differs per device, so [toDataMap] takes it as a
+ * second argument and `sendPush` supplies it per recipient group. Putting it in [PushData] would
+ * mean rebuilding the message once per recipient for a field none of the builders can know.
+ *
+ * A client older than this field simply ignores it; a client newer than a server that does not send
+ * it must keep rendering, so an absent value means "not addressed" rather than "addressed to
+ * nobody" (issue P4.13).
  *
  * §7.6 sketched this as `titleKey`/`bodyArgs`, a positional array. Named values are used instead
  * because a positional array cannot work here: `notification_n1_title` interpolates a **localized
@@ -178,9 +190,17 @@ export function highVolumePushData(
   };
 }
 
-/** FCM `data` values must be strings, so absent optional fields are dropped rather than sent empty. */
-export function toDataMap(data: PushData): Record<string, string> {
-  return Object.fromEntries(
-    Object.entries(data).filter(([, value]) => value !== undefined),
-  ) as Record<string, string>;
+/**
+ * FCM `data` values must be strings, so absent optional fields are dropped rather than sent empty.
+ *
+ * [recipientUid] is added here rather than carried on [PushData] — see the note on the type. It is
+ * the last thing written, so a builder can never shadow it.
+ */
+export function toDataMap(data: PushData, recipientUid: string): Record<string, string> {
+  return {
+    ...(Object.fromEntries(
+      Object.entries(data).filter(([, value]) => value !== undefined),
+    ) as Record<string, string>),
+    recipientUid,
+  };
 }
