@@ -7,6 +7,7 @@ import dev.fanfly.wingslog.core.storage.ForeignWriteListener
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.notifications.datamanager.NotificationPrefsManager
 import dev.fanfly.wingslog.feature.notifications.datamanager.PrefsState
+import dev.fanfly.wingslog.feature.notifications.engine.WebForeignWriteDetector.Companion.ROSTER_READ_TIMEOUT
 import dev.fanfly.wingslog.feature.notifications.model.NotificationChannel
 import dev.fanfly.wingslog.feature.notifications.model.NotificationTapTarget
 import dev.fanfly.wingslog.feature.notifications.model.PendingNotification
@@ -85,7 +86,11 @@ class WebForeignWriteDetector(
     }
   }
 
-  private suspend fun handle(recordType: RecordType, aircraftId: String, actorUid: String) {
+  private suspend fun handle(
+    recordType: RecordType,
+    aircraftId: String,
+    actorUid: String
+  ) {
     // Preferences and OS permission first: both are local reads, and there is no point paying for a
     // roster read to build a notification nobody will see.
     val prefs = prefsManager.observe()
@@ -149,7 +154,14 @@ class WebForeignWriteDetector(
       ?.takeIf { it.isNotBlank() }
       ?: getString(Res.string.notification_n1_actor_fallback)
     log.i { "N1 posting: $aircraftId ${recordType.wire} x${post.changeCount} by $actor" }
-    notifier.post(buildNotification(recordType, aircraftId, actorUid, actor, post))
+    // Built and posted in two statements rather than one nested call, so these two log lines sit on
+    // either side of the suspending build. A build that never returns used to look identical to a
+    // notification that was posted and not drawn — the log said "posting", and nothing followed.
+    val notification =
+      buildNotification(recordType, aircraftId, actorUid, actor, post)
+    log.d { "N1 built ${notification.id}, handing to the notifier" }
+    notifier.post(notification)
+    log.d { "N1 posted ${notification.id}" }
   }
 
   private suspend fun buildNotification(
@@ -162,9 +174,16 @@ class WebForeignWriteDetector(
     post: ActivityPost,
   ): PendingNotification {
     val tailNumber = tailNumberOf(aircraftId)
+    // Between this and "N1 built" there is nothing but string resource loads, so the pair of lines
+    // says which half of the build is slow or stuck without another round of guessing.
+    log.d { "N1 tail number resolved for $aircraftId, rendering strings" }
     val body =
       if (post.changeCount == 1) {
-        getString(Res.string.notification_n1_body_single, actor, getString(recordType.lowerLabel))
+        getString(
+          Res.string.notification_n1_body_single,
+          actor,
+          getString(recordType.lowerLabel)
+        )
       } else {
         getString(
           Res.string.notification_n1_body_plural,
@@ -187,18 +206,37 @@ class WebForeignWriteDetector(
       // Collaboration activity is never high priority — that is what N2's urgency tiers are for,
       // and §7.3 is explicit that an activity summary must never replace a grounding alert.
       highPriority = false,
-      tapTarget = NotificationTapTarget.Aircraft(aircraftId, tab = recordType.tab),
+      tapTarget = NotificationTapTarget.Aircraft(
+        aircraftId,
+        tab = recordType.tab
+      ),
     )
   }
 
-  /** Falls back to the id, which is never shown in practice — the fleet always has the aircraft a write arrived for. */
+  /**
+   * Falls back to the id, which is never shown in practice — the fleet always has the aircraft a
+   * write arrived for.
+   *
+   * **Bounded, for the same reason the roster read above is.** `observeFleetDashboard()` is
+   * `authStateChanged.flatMapLatest { combine(ownAircraft, sharedAircraft) }`, and a `combine`
+   * emits nothing until every source has emitted once — so a single source that never answers makes
+   * `.first()` suspend rather than fail. `runCatching` does not help with that: there is no
+   * exception, just a coroutine that never returns, and since this is evaluated as the argument to
+   * `notifier.post(...)` the notification is silently never posted. A title reading as the aircraft
+   * id is a bad title; no notification at all is a lost one.
+   */
   private suspend fun tailNumberOf(aircraftId: String): String =
     runCatching {
-      fleetManager.observeFleetDashboard()
-        .first()
-        .firstOrNull { it.aircraft.id == aircraftId }
-        ?.aircraft
-        ?.tail_number
+      withTimeoutOrNull(FLEET_READ_TIMEOUT) {
+        fleetManager.observeFleetDashboard()
+          .first()
+          .firstOrNull { it.aircraft.id == aircraftId }
+          ?.aircraft
+          ?.tail_number
+      } ?: run {
+        log.w { "N1 tail number read timed out for $aircraftId; falling back to the id" }
+        null
+      }
     }.getOrNull() ?: aircraftId
 
   /** The three record types §8 treats as collaboration activity. Anything else is not N1. */
@@ -257,5 +295,8 @@ class WebForeignWriteDetector(
 
     /** The roster is an online-only listener; offline it never answers, so the read is bounded. */
     val ROSTER_READ_TIMEOUT = 5.seconds
+
+    /** Same hazard as [ROSTER_READ_TIMEOUT], on a flow that only decorates the title. */
+    val FLEET_READ_TIMEOUT = 5.seconds
   }
 }

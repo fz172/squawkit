@@ -978,7 +978,7 @@ the burst. The rule the id encodes is *replace what is still being updated, neve
 |:--|:--|:--|
 | Android | Same notification id in `NotificationManager.notify` | `setOnlyAlertOnce(true)` |
 | iOS | Same `UNNotificationRequest` identifier | `interruptionLevel = .passive` on the update |
-| Web | Same `tag` on `new Notification(...)` | **Default** — silent unless `renotify: true`. §8.4 |
+| Web | Same `tag` on `new Notification(...)` | Silent unless `renotify: true`, which `WebLocalNotifier` sets only when nothing is live under that tag. §8.4 |
 
 So the recipient is buzzed once per aircraft and the entry quietly keeps up.
 
@@ -1296,7 +1296,9 @@ platforms have to ask for:**
 new Notification("N4589T · Tasks", {
   tag: "n1:{aircraftId}:{recordType}:{actorUid}:{sessionStart}",  // same tag replaces, never stacks
   body: "Dave Chen made 5 changes to tasks",
-  // renotify is deliberately omitted — a replacement is SILENT unless renotify: true
+  // renotify: false while the notification is still on screen, so an update replaces it quietly.
+  // true once it has been dismissed — otherwise the tag replaces something that is not there and
+  // the rest of the session is silent. WebLocalNotifier reads that from its own `live` map.
 })
 ```
 
