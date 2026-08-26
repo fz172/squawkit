@@ -369,6 +369,31 @@ class SquawkFormViewModelTest {
       assertThat(viewModel.state.value.error).isNull()
     }
 
+  @Test
+  fun addLocalFiles_whenPickExceedsTheFileCap_setsErrorOnState() =
+    runTest(testDispatcher) {
+      coEvery {
+        attachmentManager.addPickedFile(any(), any(), any())
+      } returns mockk(relaxed = true)
+      val viewModel = buildViewModelForNew()
+
+      // No platform picker can cap multi-select, so five files can arrive for three slots. The
+      // two that do not fit must be reported, not dropped in silence.
+      viewModel.addLocalFiles(
+        List(5) { index ->
+          PickedFile(
+            "uri-$index",
+            "photo-$index.jpg",
+            "image/jpeg",
+            100L
+          )
+        }
+      )
+      advanceUntilIdle()
+
+      assertThat(viewModel.state.value.error).isNotNull()
+    }
+
   // ---- onFilePickError ----
 
   @Test

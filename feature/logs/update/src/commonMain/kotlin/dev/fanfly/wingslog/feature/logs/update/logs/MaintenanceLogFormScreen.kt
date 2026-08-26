@@ -155,6 +155,17 @@ fun MaintenanceLogFormScreen(
     resolveTaskPrefill?.let { viewModel.consumeResolveTaskPrefill(it) }
   }
 
+  // Attachment skips (over the file cap, already attached, too large) surface here rather than in
+  // uiState.error, which renders on the Work tab's description field — a tab away from the
+  // attachment list that produced them.
+  val attachmentErrorMessage = uiState.attachmentError?.asString()
+  LaunchedEffect(attachmentErrorMessage) {
+    attachmentErrorMessage?.let {
+      snackbarHostState.showSnackbar(it)
+      viewModel.clearAttachmentError()
+    }
+  }
+
   LaunchedEffect(viewModel) {
     viewModel.events.collect { event ->
       when (event) {

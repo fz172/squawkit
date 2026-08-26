@@ -2,6 +2,8 @@ package dev.fanfly.wingslog.feature.tasks.update.viewmodel
 
 import androidx.lifecycle.SavedStateHandle
 import com.google.common.truth.Truth.assertThat
+import dev.fanfly.wingslog.aircraft.Attachment
+import dev.fanfly.wingslog.aircraft.AttachmentType
 import dev.fanfly.wingslog.aircraft.ForceCompliedStatus
 import dev.fanfly.wingslog.aircraft.MaintenanceTask
 import dev.fanfly.wingslog.core.datetime.toWireInstant
@@ -122,6 +124,29 @@ class TaskViewModelTest {
     assertThat(viewModel.formState.value.title).isEqualTo("Annual inspection")
     assertThat(viewModel.formState.value.refNumber).isEqualTo("AD-2024-01")
   }
+
+  @Test
+  fun addLocalFiles_whenTheSameFileIsPickedTwice_addsItOnceAndReportsIt() =
+    runTest(testDispatcher) {
+      // Same bytes, so the same sha256 both times: the second pick must not burn a file slot.
+      coEvery { attachmentManager.addPickedFile(any(), any(), any()) } returns Attachment(
+        id = "att-1",
+        name = "log.pdf",
+        type = AttachmentType.ATTACHMENT_TYPE_FILE,
+        sha256 = "sha-1",
+      )
+      val viewModel = buildViewModelForNew()
+
+      val picked = listOf(PickedFile("uri", "log.pdf", "application/pdf", 100L))
+      viewModel.addLocalFiles(picked)
+      viewModel.addLocalFiles(picked)
+      advanceUntilIdle()
+
+      assertThat(viewModel.pendingAttachments.value).hasSize(1)
+      assertThat((viewModel.uiState.value as TaskUiState.Success).error).isNotNull()
+      // The rejected copy is already on disk with an upload scheduled — it must be reclaimed.
+      coVerify(exactly = 1) { attachmentManager.delete(any()) }
+    }
 
   // ---- attachment gate (P8.7 §9.7) ----
 

@@ -43,6 +43,12 @@ data class MaintenanceLogFormUiState(
   /** Attachments pending in this editing session. Excludes PendingDelete items from the visible list. */
   val pendingAttachments: List<PendingAttachment> = emptyList(),
   val showAttachmentPicker: Boolean = false,
+  /**
+   * Why the last pick dropped one or more files (over the cap, already attached, too large).
+   * Kept apart from [error]: that one renders as the work-description field's supporting text on
+   * the Work tab, where an attachment message would be both invisible and misleading.
+   */
+  val attachmentError: UiText? = null,
   /** Whether the current user is anonymous (attachments disabled for anonymous users). */
   val isAnonymous: Boolean = false,
   /** Whether file/photo attachment uploads are enabled via Developer Options; links are always on. */

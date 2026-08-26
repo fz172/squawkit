@@ -45,6 +45,19 @@ class AttachmentFormController(
     /** File exceeds [MAX_FILE_SIZE_BYTES]; the file is skipped and iteration continues. */
     data object FileTooLarge : AddFileError
 
+    /**
+     * The file is byte-identical (same sha256) to one already attached to this parent, so it was
+     * skipped rather than burning a second file slot on the same content.
+     */
+    data object Duplicate : AddFileError
+
+    /**
+     * [skipped] files were dropped because the parent already holds [maxFiles]. Reported once per
+     * pick, after the files that did fit have been added — the pickers cannot cap multi-select on
+     * any platform, so this is the only place the user learns their extras did not make it.
+     */
+    data class LimitExceeded(val maxFiles: Int, val skipped: Int) : AddFileError
+
     /** Copying the file into local blob storage failed. */
     data class Failed(val message: String?) : AddFileError
   }
@@ -79,16 +92,27 @@ class AttachmentFormController(
 
   /**
    * Copies picked files into local blob storage and appends them as [PendingAttachment.Local].
-   * Stops once the file cap is reached; oversized files are skipped with
-   * [AddFileError.FileTooLarge]. Returns true if at least one file was added.
+   * Returns true if at least one file was added.
+   *
+   * Every file that does not make it reports through [onError] — no picked file is dropped
+   * silently. Oversized files raise [AddFileError.FileTooLarge]; bytes already attached to this
+   * parent raise [AddFileError.Duplicate]; anything past [MAX_FILE_ATTACHMENTS] raises a single
+   * [AddFileError.LimitExceeded] once the rest of the batch has been processed.
    */
   suspend fun addLocalFiles(
     files: List<PickedFile>,
     onError: (AddFileError) -> Unit,
   ): Boolean {
     var anyAdded = false
+    var skippedOverLimit = 0
     for (file in files) {
-      if (_pendingAttachments.value.fileCount() >= MAX_FILE_ATTACHMENTS) break
+      // No platform picker can cap multi-select, so a batch routinely arrives with more files
+      // than there are slots. Keep counting the overflow instead of breaking, so the caller can
+      // tell the user exactly how many files were left behind.
+      if (_pendingAttachments.value.fileCount() >= MAX_FILE_ATTACHMENTS) {
+        skippedOverLimit++
+        continue
+      }
       // Photos are size-checked *after* compression, inside addPickedFile, so a large image can
       // be rescued by shrinking under the cap. Non-photos are rejected up front so we never read
       // a huge file fully into memory just to fail it.
@@ -102,6 +126,15 @@ class AttachmentFormController(
           file,
           file.name
         )
+        // sha256 is only known once the bytes are read (and, for photos, compressed), so the
+        // duplicate check has to happen here rather than on the PickedFile. Re-picking a file
+        // that is already attached would otherwise burn a slot on a second copy of the same
+        // bytes; tombstone the copy addPickedFile just wrote so it doesn't orphan.
+        if (isDuplicateOnParent(attachment.sha256)) {
+          attachmentManager.delete(attachment)
+          onError(AddFileError.Duplicate)
+          continue
+        }
         _pendingAttachments.update { it + PendingAttachment.Local(attachment) }
         anyAdded = true
       } catch (e: CancellationException) {
@@ -112,7 +145,34 @@ class AttachmentFormController(
         onError(AddFileError.Failed(e.message))
       }
     }
+    if (skippedOverLimit > 0) {
+      onError(
+        AddFileError.LimitExceeded(
+          maxFiles = MAX_FILE_ATTACHMENTS,
+          skipped = skippedOverLimit
+        )
+      )
+    }
     return anyAdded
+  }
+
+  /**
+   * True when [sha256] matches a file already held on this parent. Mirrors
+   * `QuotaChecker.DuplicateOnParent`: `Local` + `Saved` count, `PendingDelete` does not — those
+   * bytes are on their way out, so re-adding them is a legitimate undo.
+   *
+   * A blank hash never matches: links carry none, and saved attachments written before the field
+   * existed carry none either — treating those as identical would block every new file.
+   */
+  private fun isDuplicateOnParent(sha256: String): Boolean {
+    if (sha256.isBlank()) return false
+    return _pendingAttachments.value.any { pending ->
+      when (pending) {
+        is PendingAttachment.Local -> pending.attachment.sha256 == sha256
+        is PendingAttachment.Saved -> pending.attachment.sha256 == sha256
+        else -> false
+      }
+    }
   }
 
   fun addLink(

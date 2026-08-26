@@ -40,7 +40,9 @@ import kotlinx.datetime.toLocalDateTime
 import wingslog.core.sharedassets.generated.resources.delete_failed
 import wingslog.core.sharedassets.generated.resources.save_failed
 import wingslog.feature.attachment.sharedassets.generated.resources.add_file_failed
+import wingslog.feature.attachment.sharedassets.generated.resources.duplicate_file_skipped
 import wingslog.feature.attachment.sharedassets.generated.resources.file_too_large
+import wingslog.feature.attachment.sharedassets.generated.resources.files_over_limit_skipped
 import wingslog.feature.logs.update.generated.resources.log_not_found
 import wingslog.feature.logs.update.generated.resources.work_description_required
 import kotlin.time.Clock
@@ -464,22 +466,15 @@ class MaintenanceLogFormViewModel(
   fun addLocalFiles(files: List<PickedFile>) {
     viewModelScope.launch {
       val anyAdded = attachmentForm.addLocalFiles(files) { error ->
-        _uiState.update {
-          it.copy(
-            error = when (error) {
-              is AttachmentFormController.AddFileError.FileTooLarge ->
-                UiText.StringRes(AttachmentRes.string.file_too_large)
-
-              is AttachmentFormController.AddFileError.Failed ->
-                error.message?.let { msg -> UiText.DynamicString(msg) }
-                  ?: UiText.StringRes(AttachmentRes.string.add_file_failed)
-            }
-          )
-        }
+        val message = error.toUiText()
+        _uiState.update { it.copy(attachmentError = message) }
       }
       if (anyAdded) _events.send(MaintenanceLogFormEvent.FileAdded)
     }
   }
+
+  fun clearAttachmentError() =
+    _uiState.update { it.copy(attachmentError = null) }
 
   fun addLink(
     url: String,
@@ -614,4 +609,24 @@ class MaintenanceLogFormViewModel(
         }
     }
   }
+}
+
+/**
+ * Maps every skip reason from [AttachmentFormController] to a message. Nothing the user picked is
+ * dropped without a word — the pickers cannot cap multi-select or filter out files that are
+ * already attached, so the form is where they find out.
+ */
+private fun AttachmentFormController.AddFileError.toUiText(): UiText = when (this) {
+  AttachmentFormController.AddFileError.FileTooLarge ->
+    UiText.StringRes(AttachmentRes.string.file_too_large)
+
+  AttachmentFormController.AddFileError.Duplicate ->
+    UiText.StringRes(AttachmentRes.string.duplicate_file_skipped)
+
+  is AttachmentFormController.AddFileError.LimitExceeded ->
+    UiText.StringRes(AttachmentRes.string.files_over_limit_skipped)
+
+  is AttachmentFormController.AddFileError.Failed ->
+    message?.let { UiText.DynamicString(it) }
+      ?: UiText.StringRes(AttachmentRes.string.add_file_failed)
 }

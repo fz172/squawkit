@@ -129,17 +129,121 @@ class AttachmentFormControllerTest {
   }
 
   @Test
-  fun addLocalFiles_stopsAtFileCap() = runTest {
+  fun addLocalFiles_stopsAtFileCap_andReportsWhatWasSkipped() = runTest {
     var next = 0
     coEvery {
       attachmentManager.addPickedFile(AIRCRAFT_ID, any(), any())
     } answers { fileAttachment("new-${next++}") }
+    val errors = mutableListOf<AttachmentFormController.AddFileError>()
 
-    controller.addLocalFiles(List(5) { pickedFile() }) { }
+    controller.addLocalFiles(List(5) { pickedFile() }) { errors.add(it) }
 
     assertThat(controller.pendingAttachments.value)
       .hasSize(QuotaChecker.MAX_FILE_ATTACHMENTS)
     assertThat(controller.filesAtLimit).isTrue()
+    // No platform picker can cap multi-select, so the two extras must not vanish silently.
+    assertThat(errors).containsExactly(
+      AttachmentFormController.AddFileError.LimitExceeded(
+        maxFiles = QuotaChecker.MAX_FILE_ATTACHMENTS,
+        skipped = 2,
+      )
+    )
+  }
+
+  @Test
+  fun addLocalFiles_whenSeededNearCap_countsOnlyTheOverflow() = runTest {
+    controller.seedIfEmpty(listOf(fileAttachment("a1"), fileAttachment("a2")))
+    coEvery {
+      attachmentManager.addPickedFile(AIRCRAFT_ID, any(), any())
+    } returns fileAttachment("new")
+    val errors = mutableListOf<AttachmentFormController.AddFileError>()
+
+    controller.addLocalFiles(List(3) { pickedFile() }) { errors.add(it) }
+
+    assertThat(errors).containsExactly(
+      AttachmentFormController.AddFileError.LimitExceeded(
+        maxFiles = QuotaChecker.MAX_FILE_ATTACHMENTS,
+        skipped = 2,
+      )
+    )
+  }
+
+  @Test
+  fun addLocalFiles_whenEverythingFits_reportsNothing() = runTest {
+    var next = 0
+    coEvery {
+      attachmentManager.addPickedFile(AIRCRAFT_ID, any(), any())
+    } answers { fileAttachment("new-${next++}", sha256 = "sha-${next}") }
+    val errors = mutableListOf<AttachmentFormController.AddFileError>()
+
+    controller.addLocalFiles(List(3) { pickedFile() }) { errors.add(it) }
+
+    assertThat(errors).isEmpty()
+  }
+
+  // ---- addLocalFiles — duplicates ----
+
+  @Test
+  fun addLocalFiles_fileAlreadyOnParent_isRejectedAndItsBlobTombstoned() = runTest {
+    // Re-picking a file that is already attached must not burn a second slot on the same bytes.
+    controller.seedIfEmpty(listOf(fileAttachment("saved", sha256 = SHA)))
+    val copy = fileAttachment("copy", sha256 = SHA)
+    coEvery { attachmentManager.addPickedFile(AIRCRAFT_ID, any(), any()) } returns copy
+    val errors = mutableListOf<AttachmentFormController.AddFileError>()
+
+    val anyAdded = controller.addLocalFiles(listOf(pickedFile())) { errors.add(it) }
+
+    assertThat(anyAdded).isFalse()
+    assertThat(errors).containsExactly(AttachmentFormController.AddFileError.Duplicate)
+    assertThat(controller.pendingAttachments.value).hasSize(1)
+    // addPickedFile already wrote the copy to disk and scheduled its upload — reclaim both.
+    coVerify(exactly = 1) { attachmentManager.delete(copy) }
+  }
+
+  @Test
+  fun addLocalFiles_sameFileTwiceInOneBatch_addsItOnce() = runTest {
+    var next = 0
+    coEvery {
+      attachmentManager.addPickedFile(AIRCRAFT_ID, any(), any())
+    } answers { fileAttachment("new-${next++}", sha256 = SHA) }
+    val errors = mutableListOf<AttachmentFormController.AddFileError>()
+
+    controller.addLocalFiles(List(2) { pickedFile() }) { errors.add(it) }
+
+    assertThat(controller.pendingAttachments.value).hasSize(1)
+    assertThat(errors).containsExactly(AttachmentFormController.AddFileError.Duplicate)
+  }
+
+  @Test
+  fun addLocalFiles_blankSha256_isNeverADuplicate() = runTest {
+    // Links carry no hash, and attachments saved before the field existed carry none either —
+    // matching on blank would block every new file.
+    controller.seedIfEmpty(listOf(fileAttachment("legacy"), linkAttachment("l1")))
+    coEvery {
+      attachmentManager.addPickedFile(AIRCRAFT_ID, any(), any())
+    } returns fileAttachment("new")
+    val errors = mutableListOf<AttachmentFormController.AddFileError>()
+
+    val anyAdded = controller.addLocalFiles(listOf(pickedFile())) { errors.add(it) }
+
+    assertThat(anyAdded).isTrue()
+    assertThat(errors).isEmpty()
+  }
+
+  @Test
+  fun addLocalFiles_reAddingARemovedFile_isAllowed() = runTest {
+    // The saved copy is pending-delete: re-picking those bytes is an undo, not a duplicate.
+    controller.seedIfEmpty(listOf(fileAttachment("saved", sha256 = SHA)))
+    controller.remove("saved")
+    coEvery {
+      attachmentManager.addPickedFile(AIRCRAFT_ID, any(), any())
+    } returns fileAttachment("copy", sha256 = SHA)
+    val errors = mutableListOf<AttachmentFormController.AddFileError>()
+
+    val anyAdded = controller.addLocalFiles(listOf(pickedFile())) { errors.add(it) }
+
+    assertThat(anyAdded).isTrue()
+    assertThat(errors).isEmpty()
   }
 
   @Test
@@ -362,10 +466,11 @@ class AttachmentFormControllerTest {
 
   // ---- helpers ----
 
-  private fun fileAttachment(id: String) = Attachment(
+  private fun fileAttachment(id: String, sha256: String = "") = Attachment(
     id = id,
     name = "$id.pdf",
     type = AttachmentType.ATTACHMENT_TYPE_FILE,
+    sha256 = sha256,
   )
 
   private fun linkAttachment(id: String) = Attachment(
@@ -387,5 +492,6 @@ class AttachmentFormControllerTest {
 
   private companion object {
     const val AIRCRAFT_ID = "aircraft-1"
+    const val SHA = "abc123"
   }
 }

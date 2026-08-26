@@ -8,6 +8,8 @@
   <string name="link_name">Name (optional)</string>
   <string name="max_files_reached">Maximum 3 files reached</string>
   <string name="file_too_large">File exceeds 5 MB limit</string>
+  <string name="duplicate_file_skipped">Already attached — duplicate files were skipped</string>
+  <string name="files_over_limit_skipped">Only 3 files can be attached — the extra files were not added</string>
   <string name="attachment_limits_hint">Up to 3 files · Max 5 MB each</string>
   <string name="sign_in_to_add_attachments">Sign in to add attachments</string>
   <string name="invalid_url">Enter a valid URL</string>

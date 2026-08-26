@@ -32,6 +32,9 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import wingslog.feature.attachment.sharedassets.generated.resources.add_file_failed
+import wingslog.feature.attachment.sharedassets.generated.resources.duplicate_file_skipped
+import wingslog.feature.attachment.sharedassets.generated.resources.file_too_large
+import wingslog.feature.attachment.sharedassets.generated.resources.files_over_limit_skipped
 import kotlin.time.Clock
 import wingslog.feature.attachment.sharedassets.generated.resources.Res as AttachRes
 
@@ -206,15 +209,8 @@ class SquawkFormViewModel(
   fun addLocalFiles(files: List<PickedFile>) {
     viewModelScope.launch {
       attachmentForm.addLocalFiles(files) { error ->
-        // Oversized files are skipped silently on this form; only surface hard failures.
-        if (error is AttachmentFormController.AddFileError.Failed) {
-          _state.update {
-            it.copy(
-              error = error.message?.let { msg -> UiText.DynamicString(msg) }
-                ?: UiText.StringRes(AttachRes.string.add_file_failed)
-            )
-          }
-        }
+        val message = error.toUiText()
+        _state.update { it.copy(error = message) }
       }
     }
   }
@@ -325,4 +321,24 @@ class SquawkFormViewModel(
     viewModelScope.launch { _events.send(SquawkFormEvent.NavigateBack) }
   }
 
+}
+
+/**
+ * Maps every skip reason from [AttachmentFormController] to a message. Nothing the user picked is
+ * dropped without a word — the pickers cannot cap multi-select or filter out files that are
+ * already attached, so the form is where they find out.
+ */
+private fun AttachmentFormController.AddFileError.toUiText(): UiText = when (this) {
+  AttachmentFormController.AddFileError.FileTooLarge ->
+    UiText.StringRes(AttachRes.string.file_too_large)
+
+  AttachmentFormController.AddFileError.Duplicate ->
+    UiText.StringRes(AttachRes.string.duplicate_file_skipped)
+
+  is AttachmentFormController.AddFileError.LimitExceeded ->
+    UiText.StringRes(AttachRes.string.files_over_limit_skipped)
+
+  is AttachmentFormController.AddFileError.Failed ->
+    message?.let { UiText.DynamicString(it) }
+      ?: UiText.StringRes(AttachRes.string.add_file_failed)
 }
