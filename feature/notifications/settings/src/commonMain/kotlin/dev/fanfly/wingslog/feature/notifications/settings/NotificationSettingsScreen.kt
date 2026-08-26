@@ -34,6 +34,7 @@ import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedTopBar
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
 import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
+import dev.fanfly.wingslog.core.ui.common.compose.MasterSwitchRow
 import dev.fanfly.wingslog.core.ui.common.compose.SwitchRowCard
 import dev.fanfly.wingslog.core.ui.common.compose.SwitchRowItem
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
@@ -43,9 +44,9 @@ import dev.fanfly.wingslog.feature.notifications.model.allEnabled
 import dev.fanfly.wingslog.feature.notifications.model.collaborationEnabled
 import dev.fanfly.wingslog.feature.notifications.model.priorityDueEnabled
 import dev.fanfly.wingslog.feature.notifications.permission.PermissionState
+import dev.fanfly.wingslog.feature.notifications.settings.compose.NotificationHeroIllustration
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
-import wingslog.core.sharedassets.generated.resources.cancel
 import wingslog.feature.notifications.settings.generated.resources.Res
 import wingslog.feature.notifications.settings.generated.resources.notification_settings_all_subtitle_off
 import wingslog.feature.notifications.settings.generated.resources.notification_settings_all_subtitle_on
@@ -57,7 +58,10 @@ import wingslog.feature.notifications.settings.generated.resources.notification_
 import wingslog.feature.notifications.settings.generated.resources.notification_settings_banner_unsupported_title
 import wingslog.feature.notifications.settings.generated.resources.notification_settings_collaboration_subtitle
 import wingslog.feature.notifications.settings.generated.resources.notification_settings_collaboration_title
-import wingslog.feature.notifications.settings.generated.resources.notification_settings_priority_due_footer
+import wingslog.feature.notifications.settings.generated.resources.notification_settings_hero_body_off
+import wingslog.feature.notifications.settings.generated.resources.notification_settings_hero_body_on
+import wingslog.feature.notifications.settings.generated.resources.notification_settings_hero_title_off
+import wingslog.feature.notifications.settings.generated.resources.notification_settings_hero_title_on
 import wingslog.feature.notifications.settings.generated.resources.notification_settings_priority_due_subtitle
 import wingslog.feature.notifications.settings.generated.resources.notification_settings_priority_due_title
 import wingslog.feature.notifications.settings.generated.resources.notification_settings_save_error
@@ -66,11 +70,17 @@ import wingslog.feature.notifications.settings.generated.resources.notification_
 import wingslog.feature.notifications.settings.generated.resources.notification_settings_sync_off_cta
 import wingslog.feature.notifications.settings.generated.resources.notification_settings_sync_off_footer
 import wingslog.feature.notifications.settings.generated.resources.notification_settings_title
+import wingslog.feature.notifications.settings.generated.resources.notification_settings_types_label
 
 /**
  * The real notifications settings screen (design §9.1–9.4), simplified to three toggles total
- * (design decision, 2026-08-26): the master switch, plus one row each for the two independent
- * groups below it. Priority & due updates work for anyone with OS permission — including a
+ * (design decision, 2026-08-26). Follows the house settings-screen shape — hero, description,
+ * master switch, individual switches, notes & warnings — that Backup & Sync's settings screen
+ * established first: [NotificationHeroIllustration] + [HeroCaption] introduce the surface,
+ * [MasterSwitchRow] is visually senior to the plain [SwitchRowCard] rows below it under a
+ * "Notification types" label, and [PermissionBanner] / [CollaborationFooter] — the "notes &
+ * warnings" — sit last rather than up front, so a working setup reads as controls first, caveats
+ * only if one applies. Priority & due updates work for anyone with OS permission — including a
  * signed-out guest, who must never see that row dimmed (§9.3, §6.8) — while collaboration needs a
  * real account with cloud sync on.
  */
@@ -120,32 +130,37 @@ fun NotificationSettingsScreen(
           LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
         }
 
+        Spacer(Modifier.height(Spacing.medium))
+        NotificationHeroIllustration(active = state.settings.allEnabled)
+
         Column(
           modifier = Modifier.padding(Spacing.screenPadding),
           verticalArrangement = Arrangement.spacedBy(Spacing.large),
         ) {
-          PermissionBanner(
-            state = state,
-            onOpenSystemSettings = viewModel::onOpenSystemSettings
-          )
+          HeroCaption(allEnabled = state.settings.allEnabled)
 
-          SwitchRowCard(
-            items = listOf(
-              SwitchRowItem(
-                title = stringResource(Res.string.notification_settings_all_title),
-                subtitle = if (state.settings.allEnabled)
-                  stringResource(Res.string.notification_settings_all_subtitle_on)
-                else
-                  stringResource(Res.string.notification_settings_all_subtitle_off),
-                checked = state.settings.allEnabled,
-                enabled = !state.isLoading,
-                onCheckedChange = viewModel::onAllNotificationsToggled,
-              )
-            ),
+          MasterSwitchRow(
+            title = stringResource(Res.string.notification_settings_all_title),
+            subtitle = if (state.settings.allEnabled)
+              stringResource(Res.string.notification_settings_all_subtitle_on)
+            else
+              stringResource(Res.string.notification_settings_all_subtitle_off),
+            checked = state.settings.allEnabled,
+            enabled = !state.isLoading,
+            onCheckedChange = viewModel::onAllNotificationsToggled,
           )
 
           val urgencyEnabled = !state.isLoading && state.settings.allEnabled
+          val collaborationEnabled =
+            urgencyEnabled && state.isSignedIn && state.isCloudSyncEnabled
           Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
+            Text(
+              text = stringResource(Res.string.notification_settings_types_label),
+              style = MaterialTheme.typography.titleSmall,
+              color = MaterialTheme.colorScheme.onSurfaceVariant,
+              modifier = Modifier.padding(start = Spacing.small),
+            )
+
             SwitchRowCard(
               items = listOf(
                 SwitchRowItem(
@@ -157,20 +172,7 @@ fun NotificationSettingsScreen(
                 ),
               ),
             )
-            Text(
-              text = stringResource(Res.string.notification_settings_priority_due_footer),
-              style = MaterialTheme.typography.bodySmall,
-              color = MaterialTheme.colorScheme.onSurfaceVariant,
-              modifier = Modifier.padding(
-                top = Spacing.small,
-                start = Spacing.small
-              ),
-            )
-          }
 
-          val collaborationEnabled =
-            urgencyEnabled && state.isSignedIn && state.isCloudSyncEnabled
-          Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
             SwitchRowCard(
               items = listOf(
                 SwitchRowItem(
@@ -182,13 +184,43 @@ fun NotificationSettingsScreen(
                 ),
               ),
             )
-            CollaborationFooter(state = state, navController = navController)
           }
+
+          // Notes & warnings last (house settings-screen shape) — a working setup shows only
+          // controls; a caveat appears here only when one actually applies.
+          PermissionBanner(
+            state = state,
+            onOpenSystemSettings = viewModel::onOpenSystemSettings
+          )
+          CollaborationFooter(state = state, navController = navController)
 
           Spacer(Modifier.height(Spacing.large))
         }
       }
     }
+  }
+}
+
+/** The "description" step of the house settings shape, paired with [NotificationHeroIllustration]. */
+@Composable
+private fun HeroCaption(allEnabled: Boolean) {
+  val (title, body) = if (allEnabled)
+    stringResource(Res.string.notification_settings_hero_title_on) to
+      stringResource(Res.string.notification_settings_hero_body_on)
+  else
+    stringResource(Res.string.notification_settings_hero_title_off) to
+      stringResource(Res.string.notification_settings_hero_body_off)
+
+  Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
+    Text(
+      text = title,
+      style = MaterialTheme.typography.headlineSmall
+    )
+    Text(
+      text = body,
+      style = MaterialTheme.typography.bodyMedium,
+      color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
   }
 }
 

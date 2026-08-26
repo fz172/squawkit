@@ -2,13 +2,19 @@
 <resources>
   <string name="notification_settings_title">Notifications</string>
 
+  <string name="notification_settings_hero_title_on">Stay in the loop</string>
+  <string name="notification_settings_hero_body_on">Hear about priority changes, due dates, and updates from your crew — the moment they happen.</string>
+  <string name="notification_settings_hero_title_off">Notifications are off</string>
+  <string name="notification_settings_hero_body_off">Turn on All notifications to hear about priority changes, due dates, and updates from your crew.</string>
+
   <string name="notification_settings_all_title">All notifications</string>
   <string name="notification_settings_all_subtitle_on">On</string>
   <string name="notification_settings_all_subtitle_off">Off — every notification below is silenced</string>
 
+  <string name="notification_settings_types_label">Notification types</string>
+
   <string name="notification_settings_priority_due_title">Priority &amp; due updates</string>
   <string name="notification_settings_priority_due_subtitle">A squawk becomes high priority or worse, or a task becomes due soon or overdue</string>
-  <string name="notification_settings_priority_due_footer">Works on this device even when you’re signed out or sync is off.</string>
 
   <string name="notification_settings_collaboration_title">Collaboration</string>
   <string name="notification_settings_collaboration_subtitle">Aircraft, squawk, task, or logbook activity from others</string>
