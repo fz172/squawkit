@@ -145,6 +145,15 @@ fun MaintenanceLogListContent(
   }
   LaunchedEffect(scrollToLogId) {
     if (scrollToLogId == null) return@LaunchedEffect
+    // A jump target must always be reachable: a search query or component filter left over from
+    // earlier browsing would otherwise silently exclude it from `rows`, leaving nothing to scroll to
+    // or highlight — the same "stale narrowing state hides the jump target" gap the Squawks/Tasks
+    // tabs have on their Open/Closed and Active/Complied splits, just via a filter here instead of a
+    // segmented toggle.
+    val filter = (uiState as? MaintenanceLogListUiState.Success)?.filter
+    if (filter != null && (filter.query.isNotBlank() || filter.components.isNotEmpty())) {
+      onClearFilter()
+    }
     coroutineScope {
       val pinning = launch {
         // Resolve against the DISPLAY list. Using the item index would drift by the number of ads
@@ -154,7 +163,7 @@ fun MaintenanceLogListContent(
           val index = displayRows.indexOfFirst {
             it is ListRow.Item && it.value.id == scrollToLogId
           }
-          if (index >= 0) logListState.scrollToItem(index)
+          if (index >= 0) logListState.animateScrollToItem(index)
         }
       }
       withTimeoutOrNull(8000.milliseconds) {
@@ -326,6 +335,7 @@ fun MaintenanceLogListContent(
                 rows = rows,
                 onLogClick = onLogClick,
                 listState = logListState,
+                scrollToLogId = scrollToLogId,
                 modifier = Modifier
                   // fill = false so the bordered table wraps its content height when there are
                   // few entries instead of stretching to fill the whole viewport; it still caps
