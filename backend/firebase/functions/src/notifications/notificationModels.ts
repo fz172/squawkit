@@ -107,180 +107,39 @@ export function aircraftTabForRecordType(recordType: RecordType): string {
   }
 }
 
-// --- The activity counter and the rate ceiling (§7.4) ------------------------------------------
-
-export const NOTIFICATION_ACTIVITY_COLLECTION = "notification_activity";
-export const NOTIFICATION_RATE_COLLECTION = "notification_rate";
-
-/**
- * One document per `(host, aircraft, recordType, actor)`.
- *
- * **[hostUid] leads the key, and it is not decoration (#204).** An aircraft id is unique only
- * *within one user's tree* — it is a 20-char client-generated string, and the own-tree rule lets any
- * account create `users/{self}/aircraft/{anyId}`. Keyed on the aircraft id alone, these documents
- * live in one global namespace that any account can reach into by choosing an id it has seen. Keyed
- * under the host — which comes from the trigger *path* and so cannot be claimed — a document a
- * writer can influence only ever governs that writer's own tree. Exactly the property
- * `aircraftShareDocPath` was re-keyed for.
- *
- * Ids concatenate with `__`: Firebase uids and aircraft ids are alphanumeric (`IdGenerator.kt`) and
- * `recordType` is a fixed enum, so the separator is unambiguous. The leading uid also keeps the id
- * clear of Firestore's reserved `__.*__` form.
- */
-export function activityDocPath(
-  hostUid: string,
-  aircraftId: string,
-  recordType: RecordType,
-  actorUid: string,
-): string {
-  return `${NOTIFICATION_ACTIVITY_COLLECTION}/${hostUid}__${aircraftId}__${recordType}__${actorUid}`;
-}
-
-export type NotificationActivityDoc = {
-  hostUid: string;
-  aircraftId: string;
-  recordType: RecordType;
-  actorUid: string;
-  /** Tail number, resolved once. Cosmetic, so staleness is harmless. */
-  aircraftLabel: string;
-  /** From `aircraft_shares/{host}/aircraft/{ac}/members/{actor}.displayName`. May be empty. */
-  actorDisplayName: string;
-  /**
-   * Which working session this document is currently on, starting at 1 and incremented whenever
-   * [ACTIVITY_WINDOW_MS] elapses. **This is what the notification id is keyed on** (§7.3).
-   *
-   * Deliberately a sequence and not `firstWriteAt`, which is what §7.3 originally specified. Two
-   * writers who both decide "new session" each read the same previous value and so compute the same
-   * next one — they converge on one id. Two clock reads milliseconds apart do not, and produce two
-   * tray entries where one of them is never updated again. Assigned rather than incremented for the
-   * same reason: last-write-wins is correct when every writer computes the same answer.
-   */
-  sessionSeq: number;
-  /** Session start. Telemetry and debugging only now that [sessionSeq] keys the id. */
-  firstWriteAt: Timestamp;
-  lastWriteAt: Timestamp;
-  /**
-   * Lifetime writes on this key. **Only ever incremented, never assigned** — see the "lifetime
-   * total" note in `activityCounter.ts` for the concurrent cold start that assigning loses.
-   */
-  writeCount: number;
-  /** [writeCount] as it stood when the current session began. The body reports the difference. */
-  sessionBaseCount: number;
-  lastSentAt: Timestamp | null;
-};
-
-/**
- * One document per aircraft per UTC hour. Read on every write, written only on a send.
- *
- * Namespaced under [hostUid] for the reason [activityDocPath] gives, and this is the key where it
- * bites hardest: the aircraft id is the *only* other component, so without the host, any account
- * that knows an aircraft id — every current and former member of that share — could burn a victim
- * aircraft's hourly budget from its own tree and silence that share's notifications for the hour.
- */
-export function rateDocPath(hostUid: string, aircraftId: string, atMs: number): string {
-  return `${NOTIFICATION_RATE_COLLECTION}/${hostUid}__${aircraftId}__${rateWindowKey(atMs)}`;
-}
-
-/** `yyyymmddHH`, UTC. The hour is a bucket boundary, not a local-time claim about anyone's day. */
-export function rateWindowKey(atMs: number): string {
-  const at = new Date(atMs);
-  const pad = (n: number, width = 2) => String(n).padStart(width, "0");
-  return (
-    pad(at.getUTCFullYear(), 4) +
-    pad(at.getUTCMonth() + 1) +
-    pad(at.getUTCDate()) +
-    pad(at.getUTCHours())
-  );
-}
-
-export type NotificationRateDoc = {
-  sendCount: number;
-  /** For a Firestore TTL policy — these buckets are worthless the hour after they are written. */
-  expireAt: Timestamp;
-};
-
-/**
- * A gap this long ends the working session, resetting `changeCount` **and** `firstWriteAt` — the
- * latter is what rolls the notification id so a finished session's tray entry is left alone rather
- * than overwritten by the next session's first edit (§7.3).
- *
- * Kept in step with `ActivityCounter.ACTIVITY_WINDOW` on the client, which is web's in-memory
- * stand-in for this document.
- */
-export const ACTIVITY_WINDOW_MS = 30 * 60 * 1000;
-
-/**
- * The per-key storm guard: a bulk import writing 200 records sends at most twice a minute per key
- * instead of 200 times. The cost is a count that lags by up to 30 seconds; the next write corrects
- * it, and the last write of a burst is the one that matters.
- */
-export const MIN_REPOST_INTERVAL_MS = 30 * 1000;
-
-/**
- * Sends per aircraft per hour, across every key and every recipient, before the fan-out stops.
- *
- * Bounds the **aircraft**, not the key (PRD §9.4): `feature/stresstest` is compiled into every
- * build and will be pointed at a shared aircraft. Sixty is roughly four record types × two active
- * collaborators × the ~2/min/key the throttle already permits, i.e. comfortably above what real
- * collaboration produces and far below what a runaway loop does.
- *
- * It bounds sustained abuse over minutes and hours. It does **not** bound one fast burst — sends
- * are already throttled to ~2/min/key, so a ten-second burst never accumulates enough *sends* to
- * trip an hourly *send* ceiling. §7.4 says so plainly and this constant does not pretend otherwise.
- */
-export const AIRCRAFT_HOURLY_CEILING = 60;
-
 // --- Notification ids (§7.3, §7.5) -------------------------------------------------------------
 
 /**
- * `n1:{aircraftId}:{recordType}:{actorUid}:{sessionSeq}` — PRD §5.4's coalescing key, moved from a
- * server buffer into the notification id.
+ * `n1:{aircraftId}:{recordType}:{recordId}:{atMs}` — one id per write (design decision,
+ * 2026-08-27: coalescing removed). Every write fans out its own concrete notification naming the
+ * record and what happened to it, and nothing here ever collapses one tray entry onto another; the
+ * timestamp only keeps two rapid writes to the same record from racing onto an identical id.
  *
- * **The trailing component is what makes a working *session* own a tray entry**, rather than an
- * `(aircraft, recordType, actor)` triple owning one forever. Without it, Dave editing one task an
- * hour after his morning burst reuses the id and overwrites "Dave Chen made 5 changes to tasks" with
- * "Dave Chen made a change to tasks" — replacing accurate news, which the recipient may never have
- * read, with a smaller number.
- *
- * It is a sequence rather than the session's start time (see [NotificationActivityDoc.sessionSeq]).
- * The counter document is never deleted, so the sequence only ever moves forward and a finished
- * session's id can never be minted again.
- *
- * Same *shape* as the tag `WebForeignWriteDetector` posts under, but not the same value — web counts
- * sessions in a tab's memory, the server in a document, and there is no reason for two independent
- * counters to agree. They never need to: a browser notification and a phone's tray are different
- * surfaces that cannot collide. If web ever registers a push token (P6), the detector should stand
- * down rather than both paths firing.
+ * The earlier design (§7.3, now historical) kept one counter shared by every recipient, per
+ * `(aircraft, recordType, actor)`, and replaced the tray entry in place, summarizing as "made N
+ * changes." That lost the specific record a pilot had already looked at the moment a second,
+ * unrelated write replaced it with a bigger, vaguer number — worse than helpful once someone had
+ * genuinely acted on an earlier notification, and worse again after a session boundary made the
+ * count restart from a record nobody remembered opening. Concrete, one-per-write, never collapsed,
+ * is what replaced it.
  */
 export function activityNotificationId(
   aircraftId: string,
   recordType: RecordType,
-  actorUid: string,
-  sessionSeq: number,
+  recordId: string,
+  atMs: number,
 ): string {
-  return `n1:${aircraftId}:${recordType}:${actorUid}:${sessionSeq}`;
+  return `n1:${aircraftId}:${recordType}:${recordId}:${atMs}`;
 }
 
 /**
  * `n1esc:{aircraftId}:{squawkId}` — an escalation's own id, never the activity id (§7.5).
  *
  * That distinction is the whole rule: folding an escalation into the activity id would let the next
- * routine edit overwrite "Sarah raised Left brake dragging to AOG" with "Sarah made 4 changes to
- * squawks", silently replacing a grounding alert with a shrug. It carries no actor and no session,
- * so nothing can collapse onto it either.
+ * routine edit's push overwrite "Sarah raised Left brake dragging to AOG" with a mundane update
+ * notice, silently replacing a grounding alert. It carries no actor, so nothing can collapse onto it
+ * either.
  */
 export function escalationNotificationId(aircraftId: string, squawkId: string): string {
   return `n1esc:${aircraftId}:${squawkId}`;
-}
-
-/**
- * `n1max:{aircraftId}:{yyyymmddHH}` — the one "a lot of activity" message sent when
- * [AIRCRAFT_HOURLY_CEILING] trips, keyed to the hour it trips in.
- *
- * Keyed by hour rather than being a single id per aircraft so that a second storm tomorrow is its
- * own tray entry instead of silently replacing a notice the pilot may never have read — the same
- * rule `sessionStart` encodes for the activity id.
- */
-export function highVolumeNotificationId(aircraftId: string, atMs: number): string {
-  return `n1max:${aircraftId}:${rateWindowKey(atMs)}`;
 }

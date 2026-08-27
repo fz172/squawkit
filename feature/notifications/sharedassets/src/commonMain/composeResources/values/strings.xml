@@ -34,33 +34,45 @@
   <string name="notification_body_due_soon_single">%1$s: task is due soon\n\n%2$s</string>
   <string name="notification_body_due_soon_plural">%1$s: %2$d inspections are due soon</string>
 
-  <!-- N1 collaboration activity (design §8.4). Web-only in V1: an open tab detects a
-       collaborator's write through the sync engine, so there is no push transport involved. The
-       title carries the tail number and section because both are short and bounded, unlike a
-       user-authored record title; the count and the actor live in the body. -->
+  <!-- N1 collaboration activity, server push (design §7.2, rewritten 2026-08-27: every write gets
+       its own concrete notification — no coalescing, no "made N changes" summary, no ceiling. The
+       title still carries the tail number and section, both short and bounded unlike a
+       user-authored record title (%1$s · %2$s); the body names the actor and what happened to the
+       specific record, with the record's own title on its own line — the same three/four-segment
+       shape as the N2 and escalation bodies below. -->
   <string name="notification_n1_title">%1$s · %2$s</string>
+  <string name="notification_n1_body_record_created">%1$s: %2$s created a new %3$s\n\n%4$s</string>
+  <string name="notification_n1_body_record_updated">%1$s: %2$s updated a %3$s\n\n%4$s</string>
+  <string name="notification_n1_body_record_deleted">%1$s: %2$s deleted a %3$s\n\n%4$s</string>
+  <!-- The Aircraft record's own trigger (make/model/tail edits) has no per-record title to name —
+       it is always "updated," never created or deleted through that path — so it gets its own
+       two-segment body instead of the noun-and-title shape above. -->
+  <string name="notification_n1_body_aircraft_updated">%1$s: %2$s updated the aircraft</string>
+  <!-- N1 on web (design §8.4): an open tab detects a collaborator's write locally and cannot see
+       the record's own title, so it posts this single generic body instead of the concrete
+       record_created/updated/deleted ones above — still one notification per write, immediately,
+       with no count. -->
   <string name="notification_n1_body_single">%1$s made a change to %2$s</string>
-  <string name="notification_n1_body_plural">%1$s made %2$d changes to %3$s</string>
   <!-- Used when the share roster read comes back empty — a revoked or not-yet-synced member. -->
   <string name="notification_n1_actor_fallback">A collaborator</string>
 
-  <!-- Section labels. Title case for notification_n1_title, lower case mid-sentence in the bodies. -->
+  <!-- Section labels, title case for notification_n1_title. -->
   <string name="notification_n1_section_squawks">Squawks</string>
   <string name="notification_n1_section_tasks">Tasks</string>
   <string name="notification_n1_section_logbook">Logbook</string>
+  <!-- Lower-case, mid-sentence section labels for notification_n1_body_single (web only — see
+       above; the server-push bodies name the record's own noun instead, below). -->
   <string name="notification_n1_section_squawks_lower">squawks</string>
   <string name="notification_n1_section_tasks_lower">tasks</string>
   <string name="notification_n1_section_logbook_lower">logbook entries</string>
   <!-- Aircraft-record activity (make/model/tail edits). Server-side N1 only — the web detector does
-       not cover the Aircraft record, so these are unused there. -->
+       not cover the Aircraft record. -->
   <string name="notification_n1_section_aircraft">Aircraft</string>
-  <string name="notification_n1_section_aircraft_lower">the aircraft</string>
 
-  <!-- Sent once when an aircraft trips the hourly send ceiling (design §7.4), after which N1 goes
-       quiet for the rest of the hour. Deliberately reports a volume and names no record: the whole
-       point is that there are too many to summarize honestly. -->
-  <string name="notification_n1_title_high_volume">%1$s · A lot of activity</string>
-  <string name="notification_n1_body_high_volume">Too many changes to list. Open the aircraft to catch up.</string>
+  <!-- Singular record nouns for notification_n1_body_record_*, e.g. "created a new squawk". -->
+  <string name="notification_n1_noun_squawk">squawk</string>
+  <string name="notification_n1_noun_task">task</string>
+  <string name="notification_n1_noun_log">logbook entry</string>
 
   <!-- N1 escalation bodies (design §7.5). Deliberately NOT the N2 bodies above, even though both
        report the same crossing: the server knows WHO made the change and the device-local scanner

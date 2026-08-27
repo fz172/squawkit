@@ -5,21 +5,20 @@ import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.getString
 import wingslog.feature.notifications.sharedassets.generated.resources.Res
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_actor_fallback
-import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_body_high_volume
-import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_body_plural
-import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_body_single
+import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_body_aircraft_updated
+import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_body_record_created
+import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_body_record_deleted
+import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_body_record_updated
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_body_squawk_created
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_body_squawk_raised
+import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_noun_log
+import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_noun_squawk
+import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_noun_task
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_section_aircraft
-import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_section_aircraft_lower
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_section_logbook
-import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_section_logbook_lower
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_section_squawks
-import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_section_squawks_lower
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_section_tasks
-import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_section_tasks_lower
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_title
-import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_title_high_volume
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_title_squawk_created
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_title_priority_raised
 
@@ -35,68 +34,114 @@ import wingslog.feature.notifications.sharedassets.generated.resources.notificat
  * from a newer server than this build should still land in the tray under the right id, however
  * thin its text.
  */
-suspend fun PushPayload.toPendingNotification(): PendingNotification = PendingNotification(
-  id = notificationId,
-  channel = channel,
-  title = renderTitle(),
-  body = renderBody(),
-  highPriority = highPriority,
-  tapTarget = tapTarget,
-)
+suspend fun PushPayload.toPendingNotification(): PendingNotification =
+  PendingNotification(
+    id = notificationId,
+    channel = channel,
+    title = renderTitle(),
+    body = renderBody(),
+    highPriority = highPriority,
+    tapTarget = tapTarget,
+  )
 
 private suspend fun PushPayload.renderTitle(): String = when (titleKey) {
   // "%1$s · %2$s" — tail number, then the TITLE-CASE section label, resolved from recordType.
-  "notification_n1_title" -> getString(Res.string.notification_n1_title, tailNumber, sectionTitle())
-  "notification_n1_title_high_volume" ->
-    getString(Res.string.notification_n1_title_high_volume, tailNumber)
+  "notification_n1_title" -> getString(
+    Res.string.notification_n1_title,
+    tailNumber,
+    sectionTitle()
+  )
   // The escalation title carries no dynamic content: the tail number lives in the body.
   "notification_title_priority_raised" -> getString(Res.string.notification_title_priority_raised)
   "notification_n1_title_squawk_created" ->
     getString(Res.string.notification_n1_title_squawk_created)
+
   else -> ""
 }
 
 private suspend fun PushPayload.renderBody(): String = when (bodyKey) {
-  // "%1$s made a change to %2$s" — actor, then the LOWER-CASE section label.
-  "notification_n1_body_single" ->
-    getString(Res.string.notification_n1_body_single, actor(), sectionLower())
-  // "%1$s made %2$d changes to %3$s" — note the count sits between the two, not after them.
-  "notification_n1_body_plural" ->
-    getString(Res.string.notification_n1_body_plural, actor(), changeCount, sectionLower())
-  "notification_n1_body_high_volume" -> getString(Res.string.notification_n1_body_high_volume)
+  // "%1$s: %2$s VERB a %3$s\n\n%4$s" — tail, actor, the record's own noun, then its own title on
+  // its own line. One concrete notification per write (design decision, 2026-08-27) — there is no
+  // count and nothing here is ever a summary.
+  "notification_n1_body_record_created" ->
+    getString(
+      Res.string.notification_n1_body_record_created,
+      tailNumber,
+      actor(),
+      noun(),
+      recordTitle
+    )
+
+  "notification_n1_body_record_updated" ->
+    getString(
+      Res.string.notification_n1_body_record_updated,
+      tailNumber,
+      actor(),
+      noun(),
+      recordTitle
+    )
+
+  "notification_n1_body_record_deleted" ->
+    getString(
+      Res.string.notification_n1_body_record_deleted,
+      tailNumber,
+      actor(),
+      noun(),
+      recordTitle
+    )
+  // The Aircraft record has no per-record title to name, so its body is two segments, not four.
+  "notification_n1_body_aircraft_updated" ->
+    getString(
+      Res.string.notification_n1_body_aircraft_updated,
+      tailNumber,
+      actor()
+    )
   // The escalation bodies lead with the tail number instead: "%1$s: %2$s created a new squawk
   // issue\n\n%3$s" — tail, actor, then the squawk's own title on its own line.
   "notification_n1_body_squawk_created" ->
-    getString(Res.string.notification_n1_body_squawk_created, tailNumber, actor(), recordTitle)
+    getString(
+      Res.string.notification_n1_body_squawk_created,
+      tailNumber,
+      actor(),
+      recordTitle
+    )
+
   "notification_n1_body_squawk_raised" ->
-    getString(Res.string.notification_n1_body_squawk_raised, tailNumber, actor(), recordTitle)
+    getString(
+      Res.string.notification_n1_body_squawk_raised,
+      tailNumber,
+      actor(),
+      recordTitle
+    )
+
   else -> ""
 }
 
 /** The server sends an empty name when the share roster had none — a revoked or unsynced member. */
 private suspend fun PushPayload.actor(): String =
-  actorName.takeIf { it.isNotBlank() } ?: getString(Res.string.notification_n1_actor_fallback)
+  actorName.takeIf { it.isNotBlank() }
+    ?: getString(Res.string.notification_n1_actor_fallback)
 
-private suspend fun PushPayload.sectionTitle(): String = getString(sectionRes(titleCase = true))
+private suspend fun PushPayload.sectionTitle(): String = getString(sectionRes())
 
-private suspend fun PushPayload.sectionLower(): String = getString(sectionRes(titleCase = false))
+/** The record's own singular noun for the body — "a squawk", "a task", "a logbook entry". */
+private suspend fun PushPayload.noun(): String = getString(nounRes())
 
 /**
  * Section labels are resolved from `recordType` rather than sent, because they are localized text
- * the server has no way to produce (§7.6). An unknown type falls back to the aircraft labels, which
- * read correctly for anything about the aircraft as a whole.
+ * the server has no way to produce (§7.6). An unknown type falls back to the aircraft label, which
+ * reads correctly for anything about the aircraft as a whole.
  */
-private fun PushPayload.sectionRes(titleCase: Boolean): StringResource = when (recordType) {
-  "squawk" ->
-    if (titleCase) Res.string.notification_n1_section_squawks
-    else Res.string.notification_n1_section_squawks_lower
-  "task" ->
-    if (titleCase) Res.string.notification_n1_section_tasks
-    else Res.string.notification_n1_section_tasks_lower
-  "log" ->
-    if (titleCase) Res.string.notification_n1_section_logbook
-    else Res.string.notification_n1_section_logbook_lower
-  else ->
-    if (titleCase) Res.string.notification_n1_section_aircraft
-    else Res.string.notification_n1_section_aircraft_lower
+private fun PushPayload.sectionRes(): StringResource = when (recordType) {
+  "squawk" -> Res.string.notification_n1_section_squawks
+  "task" -> Res.string.notification_n1_section_tasks
+  "log" -> Res.string.notification_n1_section_logbook
+  else -> Res.string.notification_n1_section_aircraft
+}
+
+/** Only reached from a record body (created/updated/deleted) — the aircraft body needs no noun. */
+private fun PushPayload.nounRes(): StringResource = when (recordType) {
+  "squawk" -> Res.string.notification_n1_noun_squawk
+  "task" -> Res.string.notification_n1_noun_task
+  else -> Res.string.notification_n1_noun_log
 }

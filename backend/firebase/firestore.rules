@@ -120,23 +120,6 @@ service cloud.firestore {
       allow read, write: if false; // functions only
     }
 
-    // --- N1 collaboration notifications (notifications_design.md §7.4) -------------------------
-
-    // The activity counter, one document per (aircraft, recordType, actor), holding the change
-    // count and — load-bearing — the session start that the notification id is keyed on. Server
-    // bookkeeping only: a client that could write it could forge a session start and overwrite
-    // another member's tray entry, or reset a count to make a burst look like a single edit.
-    match /notification_activity/{id} {
-      allow read, write: if false; // functions only
-    }
-
-    // The per-aircraft hourly send ceiling. A client that could write this could raise its own cap,
-    // which is exactly what the ceiling exists to prevent — feature/stresstest is compiled into
-    // every build and will be pointed at a shared aircraft.
-    match /notification_rate/{id} {
-      allow read, write: if false; // functions only
-    }
-
     // --- Pairing-code invites (#164) -----------------------------------------------------------
 
     // The code IS the secret: the document holds the aircraft id, the host uid, and the role, keyed

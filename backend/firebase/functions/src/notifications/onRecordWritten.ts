@@ -5,14 +5,6 @@ import { FUNCTION_REGION } from "../config/env.js";
 import { adminDb } from "../config/firebaseAdmin.js";
 import { payloadBytes, type SyncDocWire } from "../shared/syncDocWire.js";
 import {
-  bumpActivity,
-  ceilingTripped,
-  markActivitySent,
-  readRateState,
-  recordSend,
-  type BumpInput,
-} from "./activityCounter.js";
-import {
   honorsActivity,
   honorsEscalation,
   readActorDisplayName,
@@ -23,11 +15,10 @@ import { RECORD_TYPE, recordTypeForKind, type RecordType } from "./notificationM
 import {
   activityPushData,
   escalationPushData,
-  highVolumePushData,
   type PushData,
 } from "./pushMessages.js";
 import { enabledTokensFor, sendPush, type PushTarget } from "./pushSender.js";
-import { escalationOf, tailNumberOf, type Escalation } from "./recordPayloads.js";
+import { escalationOf, recordTitleOf, tailNumberOf, type Escalation } from "./recordPayloads.js";
 
 /**
  * N1 collaboration fan-out (docs/notifications/notifications_design.md §7.2).
@@ -46,6 +37,10 @@ import { escalationOf, tailNumberOf, type Escalation } from "./recordPayloads.js
  * And one property does the cost work: reading the ACL is the **first** thing that happens after the
  * cheap local checks, and most writes are on unshared aircraft, so the common case is one document
  * read and nothing else.
+ *
+ * **Every write sends its own concrete notification** (design decision, 2026-08-27) — there is no
+ * counter, no session, no throttle, no hourly ceiling. See [notificationModels.activityNotificationId]
+ * for what the earlier, coalescing design got wrong.
  */
 
 export const onNotifiableRecordWritten = onDocumentWritten(
@@ -67,8 +62,9 @@ export const onNotifiableRecordWritten = onDocumentWritten(
 
     const nowMs = Date.now();
 
-    // A squawk write that raises priority bypasses the counter entirely (§7.2 step 5): it is the one
-    // change important enough that a count of it would be the wrong thing to say.
+    // A squawk write that raises priority bypasses activity entirely (§7.2 step 5): it is the one
+    // change important enough that it gets its own body and its own notification, exempt from
+    // nothing.
     const escalation =
       recordType === RECORD_TYPE.SQUAWK ? escalationOf(change.before, change.after) : null;
     if (escalation != null) {
@@ -86,7 +82,14 @@ export const onNotifiableRecordWritten = onDocumentWritten(
     }
 
     await fanOutActivity({
-      input: { hostUid, aircraftId, recordType, actorUid: change.actorUid, nowMs },
+      hostUid,
+      aircraftId,
+      recordType,
+      recordId: event.params.docId,
+      recordTitle: recordTitleOf(recordType, change.after) ?? "",
+      kind: activityKindOf(change),
+      actorUid: change.actorUid,
+      nowMs,
       recipients,
     });
   },
@@ -98,7 +101,8 @@ export const onNotifiableRecordWritten = onDocumentWritten(
  *
  * A tombstone write is skipped: deleting an aircraft tears down the share (`onAircraftDeleted`), so
  * "someone made a change to the aircraft" would be both wrong and the last thing the recipient ever
- * heard about it.
+ * heard about it. That also means this trigger's writes are always "updated" — never created (the
+ * aircraft already exists once it can be shared) or deleted (filtered here).
  */
 export const onNotifiableAircraftWritten = onDocumentWritten(
   { document: "users/{uid}/aircraft/{acId}", region: FUNCTION_REGION },
@@ -117,13 +121,14 @@ export const onNotifiableAircraftWritten = onDocumentWritten(
     if (recipients.length === 0) return;
 
     await fanOutActivity({
-      input: {
-        hostUid,
-        aircraftId,
-        recordType: RECORD_TYPE.AIRCRAFT,
-        actorUid: change.actorUid,
-        nowMs: Date.now(),
-      },
+      hostUid,
+      aircraftId,
+      recordType: RECORD_TYPE.AIRCRAFT,
+      recordId: aircraftId,
+      recordTitle: "",
+      kind: "updated",
+      actorUid: change.actorUid,
+      nowMs: Date.now(),
       recipients,
       // The write in hand IS the aircraft, so its tail number needs no second read.
       tailNumber: tailNumberOf(change.after) ?? undefined,
@@ -184,33 +189,34 @@ function base64Of(payload: SyncDocWire["payload"]): string {
   return bytes == null ? "" : Buffer.from(bytes).toString("base64");
 }
 
+/** Created (no prior doc), deleted (soft-tombstoned), or a plain update — what the body says happened. */
+function activityKindOf(change: Change): "created" | "updated" | "deleted" {
+  if (change.after.deleted === true) return "deleted";
+  if (change.before == null || change.before.deleted === true) return "created";
+  return "updated";
+}
+
 // --- Fan-out -----------------------------------------------------------------------------------
 
 type ActivityFanOut = {
-  input: BumpInput;
+  hostUid: string;
+  aircraftId: string;
+  recordType: RecordType;
+  recordId: string;
+  recordTitle: string;
+  kind: "created" | "updated" | "deleted";
+  actorUid: string;
+  nowMs: number;
   recipients: string[];
   tailNumber?: string;
 };
 
-/** §7.4 steps 3–7, in order, and the order is the point: the ceiling is checked before any write. */
-async function fanOutActivity({ input, recipients, tailNumber }: ActivityFanOut): Promise<void> {
-  const { hostUid, aircraftId, recordType, actorUid, nowMs } = input;
+/** One concrete notification per write, naming the record and what happened to it. */
+async function fanOutActivity(input: ActivityFanOut): Promise<void> {
+  const { hostUid, aircraftId, recordType, recordId, recordTitle, kind, actorUid, nowMs, recipients } =
+    input;
 
-  const rate = await readRateState(hostUid, aircraftId, nowMs);
-  if (ceilingTripped(rate)) {
-    // Past the cap this costs one read and nothing else — no counter write, no audience walk.
-    if (rate.ceilingNotified) return;
-    await fanOutHighVolume(hostUid, aircraftId, recipients, nowMs, tailNumber);
-    return;
-  }
-
-  const bump = await bumpActivity(input);
-  if (bump.throttled) {
-    logger.debug("N1 counted but throttled", { aircraftId, recordType, actorUid });
-    return;
-  }
-
-  const label = tailNumber ?? bump.cachedAircraftLabel ?? (await readTailNumber(hostUid, aircraftId));
+  const label = input.tailNumber ?? (await readTailNumber(hostUid, aircraftId));
   const actorName = await readActorDisplayName(hostUid, aircraftId, actorUid);
 
   const sent = await fanOut(
@@ -219,43 +225,29 @@ async function fanOutActivity({ input, recipients, tailNumber }: ActivityFanOut)
     activityPushData({
       aircraftId,
       recordType,
+      recordId,
+      recordTitle,
+      kind,
       actorUid,
       actorName,
       tailNumber: label,
-      changeCount: bump.changeCount,
-      sessionSeq: bump.sessionSeq,
+      atMs: nowMs,
     }),
   );
-
-  // Stamped whether or not anything went out: the send pass ran, and throttling the next write
-  // against it is what stops a burst re-walking the whole audience 200 times.
-  await markActivitySent(input, { aircraftLabel: label, actorDisplayName: actorName });
-  if (sent > 0) await recordSend(hostUid, aircraftId, nowMs);
 
   logger.info("N1 activity fan-out", {
     aircraftId,
     recordType,
-    changeCount: bump.changeCount,
+    recordId,
+    kind,
     recipients: recipients.length,
     sent,
   });
 }
 
 /**
- * The §7.5 bypass. Exempt from `MIN_REPOST_INTERVAL` and from the hourly ceiling, and it never
- * touches the activity counter — a grounding alert is not one of "4 changes to squawks".
- *
- * **Exempt from being *blocked*, not from being *counted*.** It still calls `recordSend`, so a storm
- * of escalations consumes the aircraft's hourly budget and quiets routine activity — which is the
- * right order of sacrifice, since "made 3 changes to tasks" is noise while an aircraft is being
- * grounded repeatedly. Without that, escalations were invisible to the accounting entirely.
- *
- * What remains unbounded, stated rather than papered over: nothing caps escalations *themselves*. A
- * client toggling one squawk LOW→AOG→LOW in a loop fires a full fan-out per cycle. §7.5 forbids the
- * two throttles that exist, deliberately — a grounding alert must not be suppressed — so bounding
- * this needs a guard that cannot suppress a *different* squawk's alert (a per-`n1esc:` repost window
- * is the obvious candidate, since a repeat under the same id only replaces itself in the tray).
- * That is a design change, not a bug fix, and it is not made here.
+ * The §7.5 bypass, exempt from nothing else here either: it never touched the activity counter this
+ * design removed, and it still doesn't touch anything that replaced it.
  */
 async function fanOutEscalation(
   hostUid: string,
@@ -284,9 +276,6 @@ async function fanOutEscalation(
     }),
   );
 
-  // Counted, never blocking: readRateState is not consulted on this path.
-  if (sent > 0) await recordSend(hostUid, aircraftId, Date.now());
-
   logger.info("N1 escalation fan-out", {
     aircraftId,
     squawkId,
@@ -294,24 +283,6 @@ async function fanOutEscalation(
     recipients: recipients.length,
     sent,
   });
-}
-
-/** One "N4589T · a lot of activity" per aircraft per hour, then silence for the rest of it. */
-async function fanOutHighVolume(
-  hostUid: string,
-  aircraftId: string,
-  recipients: string[],
-  nowMs: number,
-  tailNumber?: string,
-): Promise<void> {
-  const label = tailNumber ?? (await readTailNumber(hostUid, aircraftId));
-  const sent = await fanOut(
-    recipients,
-    honorsActivity,
-    highVolumePushData(aircraftId, label, nowMs),
-  );
-  await recordSend(hostUid, aircraftId, nowMs, { ceilingNotified: true });
-  logger.warn("N1 hourly ceiling tripped", { aircraftId, recipients: recipients.length, sent });
 }
 
 /**
@@ -330,8 +301,8 @@ async function fanOut(
     recipients.map(async (uid): Promise<PushTarget[]> => {
       // Per recipient, not per fan-out. Without this a single transient Firestore error reading one
       // person's push_devices rejects the whole Promise.all, and every OTHER recipient — whose reads
-      // succeeded — hears nothing. The triggers do not retry (see activityCounter.ts), so that
-      // notification is simply gone. One unreachable recipient must cost only that recipient.
+      // succeeded — hears nothing. The triggers do not retry, so that notification is simply gone.
+      // One unreachable recipient must cost only that recipient.
       try {
         const settings = await readNotificationSettings(uid);
         if (!wants(settings)) return [];

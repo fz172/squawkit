@@ -2,7 +2,7 @@ import {
   aircraftTabForRecordType,
   activityNotificationId,
   escalationNotificationId,
-  highVolumeNotificationId,
+  RECORD_TYPE,
   type RecordType,
 } from "./notificationModels.js";
 
@@ -26,9 +26,9 @@ import {
  * | `titleKey` / `bodyKey` | `strings.xml` resource names in `feature/notifications/sharedassets` |
  * | `tailNumber` | `%1$s` of every title and body here |
  * | `actorName` | the collaborator's display name; **empty** means fall back to `notification_n1_actor_fallback` |
- * | `changeCount` | writes in the session, decimal — the plural body's `%2$d` |
  * | `recordType` | `squawk` \| `task` \| `log` \| `aircraft`; the client maps it to the section labels |
- * | `recordTitle` | escalation only — the squawk's own title |
+ * | `recordId` | the record's Firestore document id — escalation always, activity whenever it names one |
+ * | `recordTitle` | the record's own title/description — escalation always, activity whenever it names one |
  * | `fromRank` / `toRank` | escalation only — `UrgencyRank` values, mapped to `squawk_priority_label_*` |
  * | `recipientUid` | who this copy is for; the client drops it if that is not who is signed in |
  *
@@ -42,12 +42,6 @@ import {
  * A client older than this field simply ignores it; a client newer than a server that does not send
  * it must keep rendering, so an absent value means "not addressed" rather than "addressed to
  * nobody" (issue P4.13).
- *
- * §7.6 sketched this as `titleKey`/`bodyArgs`, a positional array. Named values are used instead
- * because a positional array cannot work here: `notification_n1_title` interpolates a **localized
- * section label** ("Squawks") that the server cannot render, and `..._body_single` and
- * `..._body_plural` do not share an argument order. Sending the raw values and letting the client
- * assemble them is the only form that survives both facts.
  */
 export type PushData = {
   /** `collaboration` (an activity summary) or `urgency` (a §7.5 escalation). */
@@ -63,37 +57,57 @@ export type PushData = {
   bodyKey: string;
   tailNumber: string;
   actorName: string;
-  changeCount?: string;
   recordId?: string;
   recordTitle?: string;
 };
 
 /**
- * How long FCM should keep trying. An escalation matters a day later; an activity summary a day
- * later is mild noise that replaces in the tray anyway. One value keeps the contract simple, and
- * `collapse_key` already ensures a device offline for a whole burst wakes to one message, not
- * eight.
+ * How long FCM should keep trying. An escalation matters a day later; a stale activity push a day
+ * later is mild noise the recipient can ignore. One value keeps the contract simple.
  */
 export const PUSH_TTL_SECONDS = 24 * 60 * 60;
 
 export type ActivityMessageInput = {
   aircraftId: string;
   recordType: RecordType;
+  /** The record's Firestore document id — the aircraft's own id for the `aircraft` record type. */
+  recordId: string;
+  /** The record's own title/description, or `""` for `aircraft` (its identity is [tailNumber]). */
+  recordTitle: string;
+  kind: "created" | "updated" | "deleted";
   actorUid: string;
   actorName: string;
   tailNumber: string;
-  changeCount: number;
-  sessionSeq: number;
+  atMs: number;
 };
 
-/** The §7.3 activity summary — "Dave Chen made 5 changes to tasks", replacing in place. */
+/**
+ * The §7.2 activity notification — one per write, always naming the specific record and what
+ * happened to it (design decision, 2026-08-27; see [activityNotificationId] for what this replaced
+ * and why).
+ *
+ * The aircraft record itself has no per-record title to name, so it gets its own body regardless of
+ * [ActivityMessageInput.kind] — a tail-number edit is always "updated," never created or deleted
+ * through this trigger (`onNotifiableAircraftWritten` already filters the tombstone case).
+ *
+ * A deleted record has nothing left to tap into, so its push falls back to the aircraft-and-tab
+ * target instead of a record the pilot can no longer open.
+ */
 export function activityPushData(input: ActivityMessageInput): PushData {
   const notificationId = activityNotificationId(
     input.aircraftId,
     input.recordType,
-    input.actorUid,
-    input.sessionSeq,
+    input.recordId,
+    input.atMs,
   );
+  const isAircraft = input.recordType === RECORD_TYPE.AIRCRAFT;
+  const tapTarget =
+    isAircraft || input.kind === "deleted"
+      ? `aircraft:${input.aircraftId}:${aircraftTabForRecordType(input.recordType)}`
+      : `${input.recordType}:${input.aircraftId}:${input.recordId}`;
+  const bodyKey = isAircraft
+    ? "notification_n1_body_aircraft_updated"
+    : `notification_n1_body_record_${input.kind}`;
   return {
     class: "collaboration",
     channel: "COLLABORATION",
@@ -103,13 +117,13 @@ export function activityPushData(input: ActivityMessageInput): PushData {
     highPriority: "false",
     aircraftId: input.aircraftId,
     recordType: input.recordType,
-    tapTarget: `aircraft:${input.aircraftId}:${aircraftTabForRecordType(input.recordType)}`,
+    tapTarget,
     titleKey: "notification_n1_title",
-    bodyKey:
-      input.changeCount === 1 ? "notification_n1_body_single" : "notification_n1_body_plural",
+    bodyKey,
     tailNumber: input.tailNumber,
     actorName: input.actorName,
-    changeCount: String(input.changeCount),
+    recordId: input.recordId,
+    recordTitle: input.recordTitle,
   };
 }
 
@@ -124,7 +138,7 @@ export type EscalationMessageInput = {
 
 /**
  * The §7.5 bypass, under `n1esc:{aircraftId}:{squawkId}` so no later routine edit can replace an
- * escalation alert with a shrug.
+ * escalation alert.
  *
  * **The bodies are N1's own, not the N2 ones §7.5 originally reused.** Both can fire for the same
  * squawk — this within seconds of the write, N2 at the recipient's next scan — and they are no
@@ -154,33 +168,6 @@ export function escalationPushData(input: EscalationMessageInput): PushData {
     actorName: input.actorName,
     recordId: input.squawkId,
     recordTitle: input.title,
-  };
-}
-
-/**
- * The single "N4589T · a lot of activity" message sent when the per-aircraft hourly ceiling trips
- * (§7.4), after which the fan-out goes quiet for the rest of the hour.
- *
- * It reports a *volume*, not a change, so it carries no actor, no count and no record — and it taps
- * through to the aircraft overview, because there is no one record that explains it.
- */
-export function highVolumePushData(
-  aircraftId: string,
-  tailNumber: string,
-  atMs: number,
-): PushData {
-  return {
-    class: "collaboration",
-    channel: "COLLABORATION",
-    notificationId: highVolumeNotificationId(aircraftId, atMs),
-    highPriority: "false",
-    aircraftId,
-    recordType: "aircraft",
-    tapTarget: `aircraft:${aircraftId}:overview`,
-    titleKey: "notification_n1_title_high_volume",
-    bodyKey: "notification_n1_body_high_volume",
-    tailNumber,
-    actorName: "",
   };
 }
 

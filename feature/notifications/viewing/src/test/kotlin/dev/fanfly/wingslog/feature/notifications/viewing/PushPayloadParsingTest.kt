@@ -12,7 +12,7 @@ import org.junit.Test
  */
 class PushPayloadParsingTest {
 
-  /** An activity summary, exactly as `activityPushData` builds it. */
+  /** One concrete write, exactly as `activityPushData` builds it (design decision, 2026-08-27). */
   private fun activityData(vararg extra: Pair<String, String>): Map<String, String> =
     activityData(extra.toMap())
 
@@ -21,29 +21,30 @@ class PushPayloadParsingTest {
   ): Map<String, String> = mapOf(
     "class" to "collaboration",
     "channel" to "COLLABORATION",
-    "notificationId" to "n1:ac-1:task:actor-1:3",
+    "notificationId" to "n1:ac-1:task:task-1:1000",
     "highPriority" to "false",
     "aircraftId" to "ac-1",
     "recordType" to "task",
-    "tapTarget" to "aircraft:ac-1:tasks",
+    "tapTarget" to "task:ac-1:task-1",
     "titleKey" to "notification_n1_title",
-    "bodyKey" to "notification_n1_body_plural",
+    "bodyKey" to "notification_n1_body_record_updated",
     "tailNumber" to "N4589T",
     "actorName" to "Dave Chen",
-    "changeCount" to "5",
+    "recordId" to "task-1",
+    "recordTitle" to "Replace left brake pads",
   ) + extra
 
   @Test
-  fun `parses an activity summary`() {
+  fun `parses an activity write`() {
     val parsed = PushPayload.parse(activityData())!!
 
-    assertThat(parsed.notificationId).isEqualTo("n1:ac-1:task:actor-1:3")
+    assertThat(parsed.notificationId).isEqualTo("n1:ac-1:task:task-1:1000")
     assertThat(parsed.channel).isEqualTo(NotificationChannel.COLLABORATION)
     assertThat(parsed.highPriority).isFalse()
     assertThat(parsed.tailNumber).isEqualTo("N4589T")
     assertThat(parsed.actorName).isEqualTo("Dave Chen")
-    assertThat(parsed.changeCount).isEqualTo(5)
-    assertThat(parsed.tapTarget).isEqualTo(NotificationTapTarget.Aircraft("ac-1", tab = "tasks"))
+    assertThat(parsed.recordTitle).isEqualTo("Replace left brake pads")
+    assertThat(parsed.tapTarget).isEqualTo(NotificationTapTarget.Task("ac-1", "task-1"))
   }
 
   @Test
@@ -98,7 +99,7 @@ class PushPayloadParsingTest {
 
   @Test
   fun `drops a message with no notificationId`() {
-    // Without it nothing can replace or cancel the entry — §7.3's whole mechanism is that id.
+    // Without it nothing can replace or cancel the entry in the tray.
     assertThat(PushPayload.parse(activityData() - "notificationId")).isNull()
     assertThat(PushPayload.parse(activityData(mapOf("notificationId" to "")))).isNull()
   }
@@ -119,10 +120,17 @@ class PushPayloadParsingTest {
   }
 
   @Test
-  fun `defaults changeCount to one when absent or unparseable`() {
-    assertThat(PushPayload.parse(activityData() - "changeCount")!!.changeCount).isEqualTo(1)
-    assertThat(PushPayload.parse(activityData(mapOf("changeCount" to "lots")))!!.changeCount)
-      .isEqualTo(1)
+  fun `taps a deleted record's notification to the aircraft and tab, not the gone record`() {
+    val parsed = PushPayload.parse(
+      activityData(
+        mapOf(
+          "bodyKey" to "notification_n1_body_record_deleted",
+          "tapTarget" to "aircraft:ac-1:tasks",
+        ),
+      ),
+    )!!
+
+    assertThat(parsed.tapTarget).isEqualTo(NotificationTapTarget.Aircraft("ac-1", tab = "tasks"))
   }
 
   @Test
@@ -173,24 +181,5 @@ class PushPayloadParsingTest {
 
     assertThat(parsed.recipientUid).isNull()
     assertThat(parsed.isAddressedTo("user-a")).isTrue()
-  }
-
-  @Test
-  fun `parses the high-volume ceiling notice`() {
-    val parsed = PushPayload.parse(
-      activityData(
-        mapOf(
-          "notificationId" to "n1max:ac-1:2026082404",
-          "tapTarget" to "aircraft:ac-1:overview",
-          "titleKey" to "notification_n1_title_high_volume",
-          "bodyKey" to "notification_n1_body_high_volume",
-          "recordType" to "aircraft",
-          "actorName" to "",
-        ),
-      ),
-    )!!
-
-    assertThat(parsed.notificationId).startsWith("n1max:")
-    assertThat(parsed.tapTarget).isEqualTo(NotificationTapTarget.Aircraft("ac-1", tab = "overview"))
   }
 }
