@@ -325,6 +325,19 @@ message Thing {
 engine + propeller tree, deterministically derived from the existing `Engine`/`Propeller` messages (§4.2). No
 other component shape, no other spec-field set, and no template other than `"airplane"` exists until Phase 3.
 
+> **`option java_package = "dev.fanfly.wingslog.aircraft"` does not change, and never needs a migration when it
+> eventually does.** `aircraft.proto` has no `package` statement — only this Kotlin/Java-only codegen option,
+> shared by every proto in the directory (`Engine`, `Propeller`, `MaintenanceLog`, `Squawk`, `Technician`,
+> `Attachment`, `ComponentType`, not just `Thing`). It governs source-code organization and nothing else: proto3's
+> binary wire format encodes field numbers and types, never the source package, so this string leaves no trace in
+> a Firestore document, a Storage object, or a local `entity`/`blob_object` row. `CollectionKind.schemaName`
+> (`"thing.Thing"`, §2.2) looks derived from a proto package but isn't — there is no `package` statement to derive
+> it from, and it's already an independent hand-picked string. Renaming `java_package` — if it ever happens — is a
+> compiler-verified source refactor with zero runtime or stored-data effect, the same risk class as
+> `AircraftScopeResolver` (§3.3), not the class of anything else in this document. It belongs with that later
+> identifier cleanup, not with this migration, and needs no backend script, no grace window, and no retry logic
+> to go with it.
+
 ### 3.2 Every path, before and after
 
 | What | Before | After |
@@ -645,7 +658,7 @@ parallel or in any order. **Ref** points at the section that specifies the task 
 
 | # | Task | Depends on | Ref |
 |---|---|---|---|
-| A1 | Rename `aircraft.proto`'s `Aircraft` message → `Thing`; rename the file → `thing.proto`; add fields 7–11 (`template_id`, `template_version`, `name`, `spec`, `components`) and declare `SpecValue`/`Component`. Keep `java_package = "dev.fanfly.wingslog.aircraft"` unchanged. | — | §3.1, §3.3 |
+| A1 | Rename `aircraft.proto`'s `Aircraft` message → `Thing`; rename the file → `thing.proto`; add fields 7–11 (`template_id`, `template_version`, `name`, `spec`, `components`) and declare `SpecValue`/`Component`. Keep `java_package = "dev.fanfly.wingslog.aircraft"` unchanged — it's Kotlin/Java-only, carries no wire or stored-data identity, and renaming it later (if ever) needs no migration of its own (§3.1). | — | §3.1, §3.3 |
 | A2 | Regenerate Kotlin (Wire) proto bindings from A1; fix every resulting compiler error at `Aircraft`-referencing call sites (mechanical rename to `Thing`). | A1 | §8 #1 |
 | A3 | Rename `CollectionKind.Aircraft` (Kotlin symbol) → `CollectionKind.Thing`; set `wireName = "thing"`, `schemaName = "thing.Thing"`; fix every call site (compiler-verified). | — | §2.2, §3.2, §8 #1 |
 | A4 | Update `EntityScope.aircraftChildUnsafe`'s internal literal `"aircraft"` → `"thing"`. Do not rename the function. | — | §2.3, §3.3 |
