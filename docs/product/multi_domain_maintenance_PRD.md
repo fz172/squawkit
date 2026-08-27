@@ -180,7 +180,7 @@ point and costs nothing at the places where precision is the product.
 | **Squawk lifecycle** — Open → Addressed / Dismissed, reopen, log↔squawk linkage, dismiss reasons | None. Priority and dismiss-reason labels come from the lexicon; enum values and every state transition are untouched. |
 | **Task compliance** — force-due, force-complied, linked rules, one-time tasks, due-status computation | `EngineHourRule` generalizes to `MeterRule`; a `SeasonalRule` is added; thresholds and end-of-month snapping move into config. The algorithm's structure is unchanged. |
 | **Maintenance logs** — CRUD, technician, work description, inspection linkage | Three hour fields become a meter-reading list. Component reference becomes an ID. |
-| **Attachments** (R2) — local blob store, background upload, lazy download | None. |
+| **Attachments** (R2) — local blob store, background upload, lazy download | None to the broker, upload/download, or local store logic. The Cloud Storage path each blob lives at is derived from the same `aircraft` scope segment as the Firestore path, so it moves in the same migration (§6, §9) — a data copy, not a feature change. |
 | **Export** — PDF / CSV / XLSX / ZIP, email delivery, history | Headers and sheet names come from the lexicon and meter set; layout selected by config. Pipeline unchanged. |
 | **Sharing** — invite codes, ACL, `SharedAircraftRef`, foreign-scope sync fan-out | None functionally; the `TECHNICIAN` role label comes from the lexicon. |
 | **Technicians** — records, certificates, picker | None to the model; certificate fields are shown or hidden by config. |
@@ -581,18 +581,23 @@ pack be written once there is a user asking for it. Same logic for tractors, HVA
 
 **This is a clean cutover, not a permanent fork.** An earlier draft of this section kept the aircraft-shaped
 fields forever — dual-written on every write, never removed — to avoid ever breaking a client that hadn't
-updated. Review feedback rejected that trade: the Things feature has never shipped to a single client, so there
-is no installed base running Things-aware code yet, and every account's data is uniformly aircraft-shaped today.
-That means the compatibility problem is only ever "some of *this account's own* devices haven't updated yet"
-(§9), not "some client somewhere is still running last year's model forever." Fields 2–6 below exist for the
-length of that rollout window and are deleted — not just deprecated — once it closes (§9.2, §15 Phase 5).
+updated. Review feedback rejected that trade on two grounds. First, the Things feature has never shipped to a
+single client, so every account's data is uniformly aircraft-shaped today — there is no installed base running
+Things-aware code to be compatible with. Second, and more decisively: **SquawkIt is currently distributed
+manually to a small dogfood group (under 50 accounts)**, not through app stores, so "every device is on the new
+build" is a fact the developer can directly confirm rather than something that has to be inferred from a
+self-reported version floor. Given that, Phase 1 (§15) is scoped as a **non-UI migration milestone**: swap the
+aircraft protos for Thing/template protos and the Firestore/Storage paths that go with them, support the airplane
+preset fully (the template language itself can still be partial), and ship **no new functionality — no template
+picker, no non-airplane preset — until every dogfood account is confirmed migrated.** Fields 2–6 below exist only
+for the span of that milestone and are deleted — not just deprecated — once it closes (§9, §15 Phase 5).
 
 ```proto
 // aircraft.proto → thing.proto (message renamed; wireName moves to "thing" — see below)
 message Thing {
   string id = 1;
 
-  // --- transitional storage slots, dual-written only until the version floor clears (§9.2) ---
+  // --- transitional storage slots, dual-written only until Phase 1 migration is 100% complete (§9) ---
   // The storage location for the conventional spec keys make/model/serial, and for the
   // airplane preset's engine tree, until the one-time migration moves them into spec/components
   // and this block is deleted in a follow-up proto revision.
@@ -626,23 +631,46 @@ message Component {
 
 | Message | Change | Compatibility |
 |---|---|---|
-| `Aircraft` → `Thing` | Add `template_id`, `template_version`, `name`, `spec`, `components`. Fields 2–6 are transitional. | Pre-floor clients read 2–6 and ignore the rest; post-floor clients dual-write 2–6 for airplane Things until the migration runs, then 2–6 are deleted (§9.2). |
-| `MaintenanceLog` | Add `component_id` and `repeated MeterReading meters`. Keep `component_type`, `component_serial`, `engine_hour`, `airframe_time`, `prop_time` for the same transitional window. | Dual-written for airplane-template Things only during the floor window; legacy fields deleted once every device on the account clears it. |
-| `MaintenanceTask` | Add `component_id`; add `MeterRule` and `SeasonalRule` to the `InspectionRule` oneof; add `force_due_meter { key, value }`. Keep `component`, `engine_hour_rule`, `force_due_engine_hour` transitionally. | An `EngineHourRule` reads as a `MeterRule` on the engine-hours meter; writes emit both until the floor clears. A `SeasonalRule` is invisible to a pre-floor client — see the risk in §9.2. |
+| `Aircraft` → `Thing` | Add `template_id`, `template_version`, `name`, `spec`, `components`. Fields 2–6 are transitional. | A device still on the pre-Phase-1 build can't reach `/thing` at all (its account hasn't cut over yet — §9); a Phase 1 device dual-writes 2–6 for airplane Things throughout Phase 1, and the fields are removed from the schema once every dogfood account has cut over, ahead of Phase 2. |
+| `MaintenanceLog` | Add `component_id` and `repeated MeterReading meters`. Keep `component_type`, `component_serial`, `engine_hour`, `airframe_time`, `prop_time` for the same transitional window. | Dual-written for airplane-template Things for the duration of Phase 1; legacy fields removed from the schema alongside `Aircraft`'s. |
+| `MaintenanceTask` | Add `component_id`; add `MeterRule` and `SeasonalRule` to the `InspectionRule` oneof; add `force_due_meter { key, value }`. Keep `component`, `engine_hour_rule`, `force_due_engine_hour` transitionally. | An `EngineHourRule` reads as a `MeterRule` on the engine-hours meter; writes emit both throughout Phase 1. `SeasonalRule` can't appear before Phase 3, which starts only after every dogfood account has cut over — see §9. |
 | `Squawk` | Add `component_id`. Keep `component_type`, `component_serial` transitionally. | Same bounded dual-write rule. |
-| `MaintenanceOverview` | Add `repeated MeterReading current` and `map<string,uint32> log_count_by_slot`. Legacy log counters and `current_*_time` doubles retired once the floor clears. | Recomputed locally from logs; no migration risk. |
+| `MaintenanceOverview` | Add `repeated MeterReading current` and `map<string,uint32> log_count_by_slot`. Legacy log counters and `current_*_time` doubles retired with the rest of Phase 1's transitional fields. | Recomputed locally from logs; no migration risk. |
 | `ComponentType` | **Frozen, not extended.** Retained only for the transitional fields above; new code reads `slot_key`. | Adding enum values would be a trap — an enum can never cover user-defined slots. |
 | `ThingTemplate` *(new)* | The config from §4, as proto, for custom templates. | New `CollectionKind.ThingTemplate` — the twelfth kind, after `NotificationSettings` took the count to eleven. Zero-migration per the R1 design (§4.2.1): the `collection` column is `TEXT` and `CollectionKind.ALL` is coverage-tested against `sealedSubclasses`, so a forgotten entry fails the build. |
 
-> **`CollectionKind.Aircraft.wireName` moves to `"thing"`, and the Firestore path moves with it.** The wire name
-> is both the persisted `collection` column value and the Firestore subcollection path, and an earlier draft kept
-> both as `"aircraft"` permanently to avoid a rewrite. That reasoning doesn't survive the point above: because
-> nothing has ever synced Things-shaped data, the one-time migration (§9.1) can rename the local column value and
-> copy each account's `/aircraft` subcollection to `/thing` in the same pass that builds the component tree —
-> one bounded job per account, gated by the same version floor, not a standing liability. The old `/aircraft`
-> path is deleted once the copy is confirmed; `schemaName` becomes `"thing.Thing"`, consistent with the new
-> wireName rather than a permanently documented mismatch. `CollectionKind.kt` gets a comment noting the rename
-> happened once, in this migration, so the next reader doesn't go looking for a reason it's still `"aircraft"`.
+> **`CollectionKind.Aircraft.wireName` moves to `"thing"`, and every path built from it moves too — not just
+> Firestore.** The wire name is the persisted `collection` column value and the Firestore subcollection path, and
+> an earlier draft kept both as `"aircraft"` permanently to avoid a rewrite. That reasoning doesn't survive the
+> point above: because nothing has ever synced Things-shaped data, a backend script can copy each account's
+> `/aircraft` Firestore subcollection to `/thing` (§9.1 step 1) before the Phase 1 build — which ships
+> `wireName = "thing"` as a compile-time constant — ever reaches that account's devices. No client-side rename is
+> needed; the new build simply starts reading and writing at a path the backend has already prepared.
+>
+> **Attachment blobs live under the same "aircraft" segment and need the same treatment.** Per `EntityScope`
+> (`core:storage`) and `storage.rules`, an attachment's Cloud Storage object sits at
+> `users/{uid}/aircraft/{acId}/blobs/{blobId}` — the identical scope string that names the Firestore
+> subcollection, since both are derived from `AircraftScopeResolver`/`EntityScope.aircraftChildUnsafe`. A
+> migration that renamed the Firestore path and left every attachment's blob sitting under `.../aircraft/...`
+> would recreate the exact mismatch this decision exists to avoid, just one layer down. The backend script
+> therefore does two copies per account, not one: `/aircraft` → `/thing` in Firestore, and each
+> `users/{uid}/aircraft/{acId}/blobs/**` object to `users/{uid}/thing/{thingId}/blobs/**` in Cloud Storage.
+> `storage.rules` needs no rule change — its ownership check is `request.auth.uid == userId` on the path's first
+> segment, blind to what comes after — so this is a data-copy operation, not a security-rules deploy. The local
+> `scope_path` each device's own blob store recorded is corrected afterward, per device, by the local backfill in
+> §9.1 step 2 — a string rewrite against already-synced data, not a second network migration.
+>
+> **Run manually, once per account, before the build ships to it — not gated by an automated version floor.**
+> With distribution manual to under 50 dogfood accounts, the developer already controls exactly when each
+> account's backend cuts over and when its devices receive the new build; building and maintaining a
+> version-floor flag to infer that automatically is machinery this scale doesn't need. The old `/aircraft`
+> Firestore path and `.../aircraft/...` blob objects are deleted only after both copies are confirmed for that
+> account; `schemaName` becomes `"thing.Thing"`, consistent with the new wireName rather than a permanently
+> documented mismatch. `CollectionKind.kt` gets a comment noting the rename happened once, in this migration, so
+> the next reader doesn't go looking for a reason it's still `"aircraft"`. **This is a decision for the current
+> stage, not a permanent one:** once distribution moves to app stores at real scale, "the developer sequences it
+> by hand" stops being true, and an automated floor (or a background per-account migration worker) becomes
+> necessary again — revisit before then, not after.
 
 ---
 
@@ -854,21 +882,47 @@ is ordinary substitution: the four tier titles, the notification bodies, and the
 
 ---
 
-## 9. Migration & Version Compatibility
+## 9. Migration
 
-The highest-risk section, but a narrower risk than an indefinite-compatibility design would suggest. The Things
-feature has never shipped, so the only version-skew problem that exists is **intra-account**: a phone that
-updated Tuesday and a tablet that updates Friday, both signed into the same account, syncing through the same
-documents during that gap. There is no population of long-lived old clients to support forever — once every
-device on an account has updated, the account's compatibility burden is over, permanently, and the migration in
-§6 deletes the transitional fields rather than carrying them.
+**The migration is a hard, all-or-nothing gate on Phase 1 — not a soft version-floor feature built into the
+app.** An earlier draft of this section designed for indefinite compatibility: an account-level version-floor
+flag the client reads, a self-clearing gate on the create flow, and a matrix of what a pre-floor device sees when
+it encounters non-airplane data. Review feedback cut all of that, for a reason specific to where the product is
+right now rather than a general principle: **SquawkIt is distributed manually to under 50 dogfood accounts**, and
+Phase 1 (§15) ships **zero new functionality** — no template picker, no non-airplane preset, nothing a pre-floor
+device could even encounter that a post-floor device wrote. There is no automated gate to build because there is
+nothing on the other side of it yet. The developer runs each account's backend cutover, then distributes the
+Phase 1 build to that account's devices (§9.1) — and only once every dogfood account has been through both do
+Phase 2 (lexicon plumbing, still aviation-only) and Phase 3 (the pivot itself) proceed. This is a decision for
+the current distribution model, flagged in §6, and it should be revisited — toward something automated — before
+the app moves to store distribution at real scale.
 
-### 9.1 Migration
+### 9.1 Migration steps
 
-Two steps, run at different scopes because they carry different risk.
+Two steps. They run in a fixed order — backend first, then client — which is precisely what makes a manual,
+unautomated cutover safe: the developer controls both ends and can sequence them, rather than a client racing a
+migration on the other side that it has no way to observe.
 
-**1 — Local backfill (per-device, immediate, non-dirtying).** On first launch of the new version, a local
-migration runs over every stored `Aircraft` and populates the new shape in memory and in the local store:
+**1 — Backend cutover (per-account, one-time, run manually by the developer, before the build goes out).** This
+step moves data the client doesn't own, so it has to happen first: distributing the Phase 1 build to a device
+before its account's backend has cut over would point that device at a `/thing` path with nothing in it yet,
+which looks exactly like data loss. Per account, the developer's script:
+
+1. Copies the account's Firestore subcollection from `/aircraft` to `/thing`.
+2. Copies every attachment blob the account owns from `users/{uid}/aircraft/{acId}/blobs/**` to
+   `users/{uid}/thing/{thingId}/blobs/**` in Cloud Storage (§6) — binary data, so this step verifies size or
+   checksum per object before touching the source.
+3. Deletes the old Firestore subcollection and the old Storage objects, only after both copies above are
+   confirmed for that account.
+
+Run each account's cutover as a short maintenance window — a write landing on the old path mid-copy would be
+lost — which is simple at under 50 accounts and stops being available at store-distribution scale, the other
+half of why this section says "for now" (§6).
+
+**2 — Local backfill (per-device, automatic, non-dirtying, after the build reaches that device).** Once an
+account has cut over and its devices receive the Phase 1 build — which already ships `wireName = "thing"` as a
+compile-time constant, so it reads and writes at `/thing` from first launch — a local migration runs over every
+stored `Aircraft` and populates the new shape in memory and in the local store:
 
 - `template_id = "airplane"`, `template_version` = shipped revision.
 - `name` = `tail_number` if non-empty, else `"$make $model"`.
@@ -880,41 +934,29 @@ migration runs over every stored `Aircraft` and populates the new shape in memor
   serial leaves it empty and the row falls back to legacy display. It is never dropped.
 - Log meters backfilled: `airframe_time` → `airframe_hours`, `engine_hour` → `engine_hours`, `prop_time` →
   `prop_hours`.
+- Every locally-stored `BlobRef`'s `scope_path` is rewritten from `.../aircraft/{id}/...` to `.../thing/{id}/...`
+  to match — a local string rewrite, not a network call, so it costs nothing extra alongside the rest.
 
 This step is **idempotent and non-dirtying**: it does not mark rows dirty and does not push, so it is safe to run
-on every device the moment it updates, independent of what the rest of the account is running.
-
-**2 — Path cutover (per-account, one-time, gated on the version floor).** Once every device on the account
-reports at or above the version floor, a single job renames the account's stored `collection` value from
-`"aircraft"` to `"thing"` and copies its Firestore subcollection from `/aircraft` to `/thing`, then deletes the
-old path once the copy is confirmed. This step is deliberately **not** per-device or lazy — it runs exactly once
-per account, only after the floor guarantees no device will write to the old path again. This is what makes the
-"pause the world" cutover in §6 safe: nothing is straddling both paths at once.
+independently on every device of an already-cut-over account, in whatever order those devices happen to update.
 
 > **Deterministic IDs are load-bearing.** If component IDs were random per device, the same aircraft would migrate
 > to different IDs on a phone and a tablet, and last-writer-wins would silently reassign every log's component.
 > Deriving IDs from `(thing_id, slot_key, index)` makes migration a pure function of data that already synced.
 > Covered by an explicit test that migrates the same payload twice and asserts identical output.
 
-### 9.2 Mixed-version behavior — bounded to the version-floor window
+### 9.2 Why there is no mixed-version matrix here
 
-Every row below describes behavior that only has to hold **between** step 1 and step 2 above — for this account,
-once, during this rollout. It is not a standing contract with clients from years in the future, because after the
-cutover the old shape no longer exists to be compatible with.
-
-| Scenario | Behavior |
-|---|---|
-| Pre-floor device reads an airplane-template Thing written by a post-floor device | Correct. Legacy fields are dual-written; new fields ignored by Wire. |
-| Pre-floor device reads a **home** written by a post-floor device | Degraded but safe: an aircraft with no tail number and no engines. Must not crash, must not delete. This is exactly why non-airplane presets are floor-gated in the first place. |
-| Pre-floor device **edits** a home | The real risk. A pre-floor device writing an aircraft-shaped payload could drop `components` and `spec`. Wire's unknown-field retention normally preserves them; this must be **verified with a test**, not assumed. |
-| Pre-floor device evaluates a task carrying a `SeasonalRule` | Sees a rule oneof it doesn't know, computes no candidate date, and shows the task as never-due. Wrong but non-destructive, and this window closes the moment the account clears the floor. |
-| Post-floor device reads a pre-migration Thing synced from a pre-floor device | Local backfill (step 1) runs on read; the in-memory model is fully populated. |
-
-**Version floor.** Non-airplane templates are gated on a minimum client version recorded on the account. Until
-every signed-in device reports at or above the floor, the create flow offers only the airplane preset and explains
-why. A soft, self-clearing gate — anonymous and single-device accounts never see it. Clearing the floor triggers
-step 2 above; the transitional fields in §6 and this whole section stop applying at that point, not eventually in
-a later phase.
+An earlier draft carried a table of what a pre-floor device sees when it reads or edits data a post-floor device
+wrote in a non-airplane shape. That table is gone because the scenario it described can't occur: Phase 1 code has
+no template picker and offers no way to create anything but an airplane, so **no non-airplane-shaped Thing can
+exist anywhere in the fleet of dogfood devices until Phase 1 has already finished on all of them.** The only
+version-skew that is real during Phase 1 is one device on an already-cut-over account running step 2's local
+backfill slightly before or after another device on that same account — which is exactly what step 2's
+idempotent, non-dirtying design (above) already covers, since both devices converge on the same shape
+independent of order. Once step 1's backend cutover has closed out every dogfood account, the transitional
+fields in §6 are removed from the schema in one code change (§15 Phase 5), and this section stops applying for
+good, not "until further notice."
 
 ---
 
@@ -1035,7 +1077,7 @@ rollout whose guardrail metric cannot be measured is not a guarded rollout.
 | Risk | Severity | Mitigation |
 |---|---|---|
 | **Dilution.** An app for everything is an app for nothing; the aviation product's credibility comes from being specific. | High | Config-driven UI means an aviation user's app is *visually and verbally identical* to today — not "mostly the same." Enforced by the byte-identical lexicon snapshot test and the unmodified due-status suite. The aviation guardrail metric can halt the rollout. |
-| **Mixed-version sync corruption.** A pre-floor device editing a new-template Thing drops fields it doesn't understand. | High | Bounded, not indefinite: version floor gates other presets until every device on the account updates, transitional dual-write covers only that window, and an explicit round-trip test proves Wire preserves unknown fields through a pre-floor edit. Verify before Phase 3, not after. |
+| **Mixed-version sync corruption.** A device running an older build edits a Thing shaped by newer code and drops fields it doesn't understand. | High | Structurally prevented, not just mitigated: Phase 1 ships no way to create a non-airplane Thing, and the backend cutover for an account runs *before* that account's devices ever receive the build that could write one (§9). An explicit round-trip test still proves Wire preserves unknown fields across old/new edits, as a backstop. Verify before Phase 3, not after. |
 | **Config over-generalization.** A capability flag per UI element ends in an unreadable config nobody can reason about and a UI that is a matrix of special cases. | Medium | The capability list is **closed and small** (10 flags), and every flag must be justified by at least two presets differing on it. A flag needed by exactly one preset is a code branch, not config. Reviewed at the end of Phase 1. When a fork is structural rather than parametric, the escape hatch is a **pluggable decision engine** behind the existing interface, not another flag — see §7.1, which the engineering design doc should carry forward. |
 | **Scope.** Generic components, meters, and capabilities touch aircraft, logs, tasks, squawks, export, overview, and dashboard — nearly every feature module. | Medium | Phase 1 lands the model and config with **zero UI change** and one preset reproducing today. If the phase is correct the app is byte-identical; if not, that is visible immediately and cheaply. |
 | **Starter-pack accuracy.** Wrong intervals are worse than none, and carry liability weight in aviation. | Medium | Recommendations-not-authority framing with a manual disclaimer; airplane pack limited to regulatory-universal intervals; no ADs or SBs, ever, in a pack. |
@@ -1050,11 +1092,11 @@ rollout whose guardrail metric cannot be measured is not a guarded rollout.
 | Phase | Scope | User-visible? |
 |---|---|---|
 | **0 — Decisions** | Resolve the open decisions in §16. The free-tier limit and the squawk-word question are cheap now and expensive later. | No |
-| **1 — Config system + model** | `core:template` module: config model, `TemplateRegistry`, resolver, validation. `Thing` / `Component` / `Meter` / `ThingTemplate` protos. Deterministic backfill. Generalized `TaskDueManager` incl. `SeasonalRule`. Dual-write. Exactly one preset exists: **airplane**, reproducing today. | **No — by design.** The app must be indistinguishable. |
-| **2 — Lexicon plumbing** | String parameterization across all 31 `strings.xml` files, `LocalThingLexicon`, formatter, byte-identical snapshot test. Capability flags wired into the UI, all still on. Notification tier titles and the `GROUNDED` channel display name resolve through the lexicon (id unchanged). Analytics event taxonomy defined and emitted (§13). Aviation-only. | No |
-| **3 — The pivot ships** | Six remaining presets + starter packs, template picker and create flow, generic component tree UI, meter-driven log form, Stuff switcher, version floor, subscription rename, `PRODUCT.md`/`DESIGN.md` revisions. | **Yes** |
+| **1 — Migration** *(hard gate)* | Non-UI only. `Thing` / `Component` / `Meter` / `ThingTemplate` protos replace the aircraft protos; `core:template` module and `TemplateRegistry` exist but the template language may still be partial — it only has to fully support **airplane**. The developer runs the manual backend cutover (§9.1 step 1) covering Firestore and attachment Storage paths per account, *then* distributes the build to that account's devices, where local backfill (§9.1 step 2) runs automatically. **No template picker, no non-airplane preset, no other new functionality ships until every account has cut over.** | **No — by design.** The app must be indistinguishable, and there is nothing else to see yet. |
+| **2 — Lexicon plumbing** | String parameterization across all 31 `strings.xml` files, `LocalThingLexicon`, formatter, byte-identical snapshot test. Capability flags wired into the UI, all still on. Notification tier titles and the `GROUNDED` channel display name resolve through the lexicon (id unchanged). Analytics event taxonomy defined and emitted (§13). Aviation-only. Starts only after Phase 1 has closed out on every account. | No |
+| **3 — The pivot ships** | Six remaining presets + starter packs, template picker and create flow, generic component tree UI, meter-driven log form, Stuff switcher, subscription rename, `PRODUCT.md`/`DESIGN.md` revisions. No version-floor work here — Phase 1 already guaranteed every device is on the new shape before this phase can start. | **Yes** |
 | **4 — Depth** | Custom template editor, per-preset export layouts, template-aware search, additional presets (3D printer, equipment), store repositioning. | Yes |
-| **5 — Cleanup** | Once every device on an account clears the version floor: run the one-time path cutover (§9.1), delete the transitional proto fields (§6) rather than deprecating them in place, and retire the floor gate itself. | No |
+| **5 — Cleanup** | The transitional proto fields (§6) were already removed from the schema once every dogfood account cleared Phase 1 — a single code change made ahead of Phase 2, not something carried this far. Nothing is left to clean up by the time Phase 3 ships; this row exists as a checkpoint that it stayed that way. | No |
 
 ---
 
