@@ -94,12 +94,7 @@ export type ActivityMessageInput = {
  * target instead of a record the pilot can no longer open.
  */
 export function activityPushData(input: ActivityMessageInput): PushData {
-  const notificationId = activityNotificationId(
-    input.aircraftId,
-    input.recordType,
-    input.recordId,
-    input.atMs,
-  );
+  const notificationId = activityNotificationId(input.recordType, input.recordId, input.atMs);
   const isAircraft = input.recordType === RECORD_TYPE.AIRCRAFT;
   const tapTarget =
     isAircraft || input.kind === "deleted"

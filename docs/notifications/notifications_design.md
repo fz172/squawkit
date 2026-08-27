@@ -953,16 +953,33 @@ naming the record and what happened to it, and nothing ever replaces anything el
 
 | Time | Write | Push | What the recipient's tray holds |
 |:--|:--|:--|:--|
-| 14:00:00 | A task 1 (new) | id `n1:{A}:task:{task1}:{t0}` | `N4589T · Tasks` / `Dave Chen created a new task: Annual Inspection` |
-| 14:00:40 | A task 2 (new) | id `n1:{A}:task:{task2}:{t1}` | + `N4589T · Tasks` / `Dave Chen created a new task: Oil Change` |
-| 14:01:10 | B task 1 (new) | id `n1:{B}:task:{task3}:{t2}` | + `N771TS · Tasks` / `Dave Chen created a new task: 100-Hour Inspection` |
-| 14:04:30 | A task 1 (edited again) | id `n1:{A}:task:{task1}:{t3}` | + `N4589T · Tasks` / `Dave Chen updated a task: Annual Inspection` |
+| 14:00:00 | A task 1 (new) | id `n1:task:{task1}:{t0}` | `N4589T · Tasks` / `Dave Chen created a new task: Annual Inspection` |
+| 14:00:40 | A task 2 (new) | id `n1:task:{task2}:{t1}` | + `N4589T · Tasks` / `Dave Chen created a new task: Oil Change` |
+| 14:01:10 | B task 1 (new) | id `n1:task:{task3}:{t2}` | + `N771TS · Tasks` / `Dave Chen created a new task: 100-Hour Inspection` |
+| 14:04:30 | A task 1 (edited again) | id `n1:task:{task1}:{t3}` | + `N4589T · Tasks` / `Dave Chen updated a task: Annual Inspection` |
 
 Four writes, four tray entries, each naming its own record. Tapping the first at 14:00:00 and coming
 back later changes nothing about what the other three say — there is no shared count for a later write
-to invalidate. The id is `n1:{aircraftId}:{recordType}:{recordId}:{atMs}` (`activityNotificationId`):
-the record's own id plus a timestamp, so two writes to the *same* record still get two distinct ids
-rather than one replacing the other.
+to invalidate. The id is `n1:{recordType}:{recordId}:{atMs}` (`activityNotificationId`): the record's
+own id plus a timestamp, so two writes to the *same* record still get two distinct ids rather than one
+replacing the other.
+
+**No `aircraftId` in the id, and that omission carries real weight — this section originally
+specified `n1:{aircraftId}:{recordType}:{recordId}:{atMs}`, and that version shipped and broke
+production.** `sendPush` sets `apns-collapse-id` to this id (§7.6), and FCM enforces a hard **64-byte**
+limit on that header — rejecting the entire multicast, every platform at once, not just iOS, with
+`messaging/invalid-argument` when it is exceeded. `aircraftId` and `recordId` are both 20-character
+client-generated ids (`IdGenerator.kt`); the original format ran 65 bytes for `recordType: "squawk"`
+and 67 for `"aircraft"` (whose `recordId` duplicates the 20-char `aircraftId`), and the failure was
+silent — the record write still succeeded, `sendToRecipient` caught and logged the per-token error,
+and nothing surfaced it. It shipped 2026-08-27 and made every squawk and aircraft activity
+notification fail outright for a few hours; `task` (63 bytes) and `log` (62) happened to survive by
+one and two bytes, which is luck, not a property of the design, and is why a reopened squawk went
+unreported while other record types looked fine. `aircraftId` is already carried in the payload's own
+`aircraftId` field for anything that needs it, so dropping it from the id cost nothing and brought the
+worst case (`aircraft`) down to 46 bytes. `activityNotificationId`'s doc comment and
+`notification-fanout.test.ts` (`keeps the notification id under FCM's 64-byte apns-collapse-id limit,
+worst case`) carry the byte-budget as a standing regression guard, not just this paragraph.
 
 | Platform | What posts | Why no replacement primitive is needed any more |
 |:--|:--|:--|
@@ -1075,7 +1092,7 @@ routing and the tap router:
     "aircraftId": "…", "recordType": "task", "recordId": "task-1",
     "titleKey": "notification_n1_title", "bodyKey": "notification_n1_body_record_updated",
     "tailNumber": "N4589T", "actorName": "Dave Chen", "recordTitle": "Annual Inspection",
-    "notificationId": "n1:{aircraftId}:{recordType}:{recordId}:{atMs}",
+    "notificationId": "n1:{recordType}:{recordId}:{atMs}",
     "tapTarget": "task:{aircraftId}:task-1",
     "recipientUid": "{uid this copy is addressed to}"
   },
@@ -1208,7 +1225,7 @@ entry — the same shape §7.3 describes, just without a record title to put in 
 
 ```js
 new Notification("N4589T · Tasks", {
-  tag: "n1:{aircraftId}:{recordType}:{recordId}:{atMs}",  // one write, one tag, never reused
+  tag: "n1:{recordType}:{recordId}:{atMs}",  // one write, one tag, never reused — no aircraftId, §7.3
   body: "Dave Chen made a change to tasks",
 })
 ```

@@ -110,26 +110,32 @@ export function aircraftTabForRecordType(recordType: RecordType): string {
 // --- Notification ids (§7.3, §7.5) -------------------------------------------------------------
 
 /**
- * `n1:{aircraftId}:{recordType}:{recordId}:{atMs}` — one id per write (design decision,
- * 2026-08-27: coalescing removed). Every write fans out its own concrete notification naming the
- * record and what happened to it, and nothing here ever collapses one tray entry onto another; the
- * timestamp only keeps two rapid writes to the same record from racing onto an identical id.
+ * `n1:{recordType}:{recordId}:{atMs}` — one id per write (design decision, 2026-08-27: coalescing
+ * removed). Every write fans out its own concrete notification naming the record and what happened
+ * to it, and nothing here ever collapses one tray entry onto another; the timestamp only keeps two
+ * rapid writes to the same record from racing onto an identical id.
  *
- * The earlier design (§7.3, now historical) kept one counter shared by every recipient, per
- * `(aircraft, recordType, actor)`, and replaced the tray entry in place, summarizing as "made N
- * changes." That lost the specific record a pilot had already looked at the moment a second,
- * unrelated write replaced it with a bigger, vaguer number — worse than helpful once someone had
- * genuinely acted on an earlier notification, and worse again after a session boundary made the
- * count restart from a record nobody remembered opening. Concrete, one-per-write, never collapsed,
- * is what replaced it.
+ * **No `aircraftId`, on purpose — and not merely for brevity.** FCM enforces a **hard 64-byte limit
+ * on the `apns-collapse-id` header** (`sendPush` sets it to this id, §7.6), and both `aircraftId` and
+ * `recordId` are 20-character client-generated ids (`IdGenerator.kt`). The original format —
+ * `n1:{aircraftId}:{recordType}:{recordId}:{atMs}` — ran 65 bytes for `recordType: "squawk"` and 67
+ * for `"aircraft"` (whose `recordId` duplicates `aircraftId`), both over the limit. FCM rejects the
+ * **entire multicast** with `messaging/invalid-argument` when that happens, which fails silently:
+ * `sendToRecipient` catches and logs the per-token error but never surfaces it to the write's
+ * caller, so the record itself saves fine and nothing points at the push. It shipped, deployed to
+ * production, and made every squawk (and aircraft) activity notification fail outright — caught only
+ * because a reopened squawk went unreported and someone noticed. `task` (63 bytes) and `log` (62)
+ * happened to survive by one and two bytes; that is luck, not a property of the design. Dropping
+ * `aircraftId` — already carried in the push payload's own `aircraftId` field for anything that needs
+ * it — brings the worst case (`aircraft`, whose `recordId` is the 20-char aircraft id) down to 46
+ * bytes, with headroom to spare rather than margin measured in single bytes.
  */
 export function activityNotificationId(
-  aircraftId: string,
   recordType: RecordType,
   recordId: string,
   atMs: number,
 ): string {
-  return `n1:${aircraftId}:${recordType}:${recordId}:${atMs}`;
+  return `n1:${recordType}:${recordId}:${atMs}`;
 }
 
 /**

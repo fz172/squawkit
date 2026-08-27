@@ -180,11 +180,10 @@ class WebForeignWriteDetector(
     )
     return PendingNotification(
       // One id per write, never replaced by the next one — matching the backend's own scheme
-      // (`n1:{aircraftId}:{recordType}:{recordId}:{atMs}`) now that neither side coalesces.
-      id = "n1:$aircraftId:${recordType.wire}:$recordId:${
-        clock.now()
-          .toEpochMilliseconds()
-      }",
+      // (`n1:{recordType}:{recordId}:{atMs}`, no aircraftId — see activityNotificationId's doc
+      // comment for why the server dropped it: APNs enforces a 64-byte collapse-id limit) now that
+      // neither side coalesces.
+      id = "n1:${recordType.wire}:$recordId:${clock.now().toEpochMilliseconds()}",
       channel = NotificationChannel.COLLABORATION,
       title = getString(
         Res.string.notification_n1_title,

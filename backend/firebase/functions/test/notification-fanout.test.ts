@@ -9,6 +9,7 @@ import {
   SquawkDismissReason,
   SquawkPriority,
 } from "../src/generated/proto/aircraft/squawk.js";
+import { activityNotificationId, RECORD_TYPE } from "../src/notifications/notificationModels.js";
 import {
   onNotifiableAircraftWritten,
   onNotifiableRecordWritten,
@@ -261,6 +262,25 @@ describe("§7.2 one concrete notification per write (coalescing removed, 2026-08
     await taskEdit(AC_A, 1);
 
     expect(sentMessages[0].data.tapTarget).toBe(`task:${AC_A}:task-1`);
+  });
+
+  it("keeps the notification id under FCM's 64-byte apns-collapse-id limit, worst case", () => {
+    // Regression for the 2026-08-27 outage: `sendPush` sets `apns-collapse-id` to this id, and FCM
+    // hard-rejects the WHOLE multicast — every platform, not just iOS — when it exceeds 64 bytes.
+    // That shipped once already: an id that embedded `aircraftId` ran 65 bytes for `recordType:
+    // "squawk"` and 67 for `"aircraft"` (whose recordId duplicates a 20-char aircraftId), both over
+    // the limit, and the failure is silent — `sendToRecipient` catches and logs it, the record write
+    // itself still succeeds, and nothing points at the push. Real ids are 20-char client-generated
+    // strings (`IdGenerator.kt`); "aircraft" is the longest `recordType` and the worst case, since its
+    // `recordId` IS the aircraftId. `atMs` at 13 digits (current epoch millis) is the longest it gets
+    // for centuries.
+    const worstCase = activityNotificationId(
+      RECORD_TYPE.AIRCRAFT,
+      "a".repeat(20),
+      Date.now(),
+    );
+
+    expect(Buffer.byteLength(worstCase, "utf8")).toBeLessThanOrEqual(64);
   });
 
   it("gives every write its own notification id, even two writes to the same record", async () => {
