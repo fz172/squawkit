@@ -4,7 +4,6 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
-import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.aircraft.Engine
 import dev.fanfly.wingslog.aircraft.Propeller
 import dev.fanfly.wingslog.aircraft.PropellerBlade
@@ -12,6 +11,7 @@ import dev.fanfly.wingslog.aircraft.PropellerHub
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
+import dev.fanfly.wingslog.thing.Thing
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -35,7 +35,7 @@ class EditAircraftViewModel(
     val aircraftId: String? = savedStateHandle[Screen.AIRCRAFT_ID]
     if (aircraftId.isNullOrEmpty()) {
       logger.i { "Initializing the view model with empty aircraft" }
-      loadAircraft(Aircraft())
+      loadAircraft(Thing())
     } else {
       logger.i { "Loading aircraft $aircraftId" }
       loadAircraftById(aircraftId)
@@ -101,7 +101,7 @@ class EditAircraftViewModel(
     }
   }
 
-  fun loadAircraft(aircraft: Aircraft) {
+  fun loadAircraft(aircraft: Thing) {
     _uiState.update {
       it.copy(
         aircraft = aircraft,

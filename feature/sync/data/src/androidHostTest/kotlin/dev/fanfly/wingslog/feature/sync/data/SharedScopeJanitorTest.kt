@@ -42,7 +42,7 @@ class SharedScopeJanitorTest {
 
   /** A shared aircraft in the host's tree (doc + nested log + cursor) plus the member's own aircraft. */
   private suspend fun seedFixture() {
-    seedEntity(CollectionKind.Aircraft, EntityScope.userRoot(HOST), SHARED_AC)
+    seedEntity(CollectionKind.Thing, EntityScope.userRoot(HOST), SHARED_AC)
     seedEntity(
       CollectionKind.MaintenanceLog,
       EntityScope.aircraftChildUnsafe(HOST, SHARED_AC),
@@ -54,7 +54,7 @@ class SharedScopeJanitorTest {
         .toPath(),
       false, null, 0, null,
     )
-    seedEntity(CollectionKind.Aircraft, EntityScope.userRoot(MEMBER), OWN_AC)
+    seedEntity(CollectionKind.Thing, EntityScope.userRoot(MEMBER), OWN_AC)
   }
 
   @Test
@@ -90,7 +90,7 @@ class SharedScopeJanitorTest {
     // delete — that would destroy the host's blob, which is the one thing this must never do.
     val blobs = mockk<LocalBlobStore>(relaxed = true)
     val cached = listOf(BlobId("blob-a"), BlobId("blob-b"))
-    coEvery { blobs.idsInScopePrefix("/users/$HOST/aircraft/$SHARED_AC/%") } returns cached
+    coEvery { blobs.idsInScopePrefix("/users/$HOST/thing/$SHARED_AC/%") } returns cached
     val janitorWithBlobs =
       SharedScopeJanitor(db, DatabaseWriteLock(), blobs = blobs)
     seedFixture()
@@ -159,7 +159,7 @@ class SharedScopeJanitorTest {
   }
 
   private fun aircraftAt(scope: EntityScope) =
-    db.schemaQueries.selectAll(CollectionKind.Aircraft, scope.toPath())
+    db.schemaQueries.selectAll(CollectionKind.Thing, scope.toPath())
       .executeAsList()
 
   private fun logsAt(scope: EntityScope) =
@@ -218,7 +218,7 @@ class SharedScopeJanitorTest {
     // like a shared aircraft with no live ref — but they were never pulled as a share (no cursor),
     // they are the very data the merge exists to carry over, and purging them destroys it.
     seedEntity(
-      CollectionKind.Aircraft,
+      CollectionKind.Thing,
       EntityScope.userRoot(GUEST),
       GUEST_AC,
       dirty = true
@@ -252,7 +252,7 @@ class SharedScopeJanitorTest {
     // nested subtree — counting only the subtree would under-report the loss.
     seedFixture()
     seedEntity(
-      CollectionKind.Aircraft,
+      CollectionKind.Thing,
       EntityScope.userRoot(HOST),
       SHARED_AC,
       dirty = true

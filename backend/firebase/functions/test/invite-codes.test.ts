@@ -17,7 +17,7 @@ const TECH = "tech-uid";
 const AC = "ac-code-1";
 
 async function seedAircraft() {
-  await adminDb.doc(`users/${HOST}/aircraft/${AC}`).set({ deleted: false, writerUid: HOST });
+  await adminDb.doc(`users/${HOST}/thing/${AC}`).set({ deleted: false, writerUid: HOST });
 }
 
 async function mintCode(role = "technician"): Promise<string> {

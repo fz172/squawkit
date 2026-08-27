@@ -1,7 +1,6 @@
 package dev.fanfly.wingslog.feature.export.datamanager.impl
 
 import com.google.common.truth.Truth.assertThat
-import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.aircraft.Attachment
 import dev.fanfly.wingslog.aircraft.AttachmentType
 import dev.fanfly.wingslog.aircraft.ComponentType
@@ -14,6 +13,7 @@ import dev.fanfly.wingslog.aircraft.SquawkDismissReason
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDateRange
 import dev.fanfly.wingslog.feature.export.datamanager.ExportFormat
 import dev.fanfly.wingslog.feature.export.datamanager.ExportRequest
+import dev.fanfly.wingslog.thing.Thing
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import org.junit.Test
@@ -122,7 +122,7 @@ class LogbookExportArchiveBuilderTest {
 
   @Test
   fun buildEntries_singleEngineAndPropellerUseUnnumberedTimeLabels() {
-    val aircraft = Aircraft(
+    val aircraft = Thing(
       id = "aircraft-1",
       make = "Cessna",
       model = "172",
@@ -322,7 +322,7 @@ class LogbookExportArchiveBuilderTest {
 
   @Test
   fun buildEntries_multiAircraftUsesOneFolderPerAircraftAndRootReadme() {
-    val secondAircraft = Aircraft(
+    val secondAircraft = Thing(
       id = "aircraft-2",
       make = "Beechcraft",
       model = "Bonanza",
@@ -390,7 +390,7 @@ class LogbookExportArchiveBuilderTest {
   private fun aircraftBundle(
     logs: List<MaintenanceLog>,
     squawks: List<Squawk> = emptyList(),
-    aircraft: Aircraft = Aircraft(
+    aircraft: Thing = Thing(
       id = "aircraft-1",
       make = "Cessna",
       model = "172",

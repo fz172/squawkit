@@ -206,15 +206,15 @@ class PushWorkerTest {
   @Test
   fun run_drainsTheSharedAircraftDocAtTheHostRoot() = runTest(ioContext) {
     // A co-owner's edit to the aircraft *doc* is a row at /users/{host}/ — outside the
-    // /users/{host}/aircraft/{acId}/ subtree. Miss it and the edit stays dirty forever.
+    // /users/{host}/thing/{acId}/ subtree. Miss it and the edit stays dirty forever.
     val storeFactory = liveShareStoreFactory()
     db.schemaQueries.upsert(
-      collection = CollectionKind.Aircraft,
+      collection = CollectionKind.Thing,
       scope_path = EntityScope.userRoot(HOST_UID)
         .toPath(),
       id = SHARED_AC,
       payload = byteArrayOf(0x07),
-      payload_schema = CollectionKind.Aircraft.schemaName,
+      payload_schema = CollectionKind.Thing.schemaName,
       updated_at = 1000L,
       remote_updated_at = null,
       dirty = true,
@@ -247,12 +247,12 @@ class PushWorkerTest {
       // understand that shape too, or a denial here would be misread as an expired session.
       val storeFactory = liveShareStoreFactory()
       db.schemaQueries.upsert(
-        collection = CollectionKind.Aircraft,
+        collection = CollectionKind.Thing,
         scope_path = EntityScope.userRoot(HOST_UID)
           .toPath(),
         id = SHARED_AC,
         payload = byteArrayOf(0x07),
-        payload_schema = CollectionKind.Aircraft.schemaName,
+        payload_schema = CollectionKind.Thing.schemaName,
         updated_at = 1000L,
         remote_updated_at = null,
         dirty = true,

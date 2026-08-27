@@ -175,7 +175,7 @@ describe("createAircraftShareInvite stamps attachmentsEnabled at bootstrap", () 
 
   beforeEach(async () => {
     await adminDb.doc(subscriptionDocPath(HOST)).delete();
-    await adminDb.doc(`users/${HOST}/aircraft/${AC1}`).set({ deleted: false, schema: "aircraft.Aircraft" });
+    await adminDb.doc(`users/${HOST}/thing/${AC1}`).set({ deleted: false, schema: "thing.Thing" });
   });
 
   const createReq = () =>

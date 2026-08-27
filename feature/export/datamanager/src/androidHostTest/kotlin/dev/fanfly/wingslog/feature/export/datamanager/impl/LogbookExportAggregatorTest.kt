@@ -1,7 +1,6 @@
 package dev.fanfly.wingslog.feature.export.datamanager.impl
 
 import com.google.common.truth.Truth.assertThat
-import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.aircraft.ComponentType
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.aircraft.MaintenanceTask
@@ -14,6 +13,7 @@ import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDueManager
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
+import dev.fanfly.wingslog.thing.Thing
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.flow.flowOf
@@ -51,7 +51,7 @@ class LogbookExportAggregatorTest {
   private fun aggregator(): LogbookExportAggregator {
     val fleetManager = mockk<FleetManager> {
       every { loadAircraft(aircraftId) } returns flowOf(
-        Aircraft(
+        Thing(
           id = aircraftId,
           make = "Cessna",
           model = "172",

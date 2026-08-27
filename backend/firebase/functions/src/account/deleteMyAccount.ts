@@ -145,7 +145,7 @@ async function leaveJoinedShares(uid: string): Promise<void> {
 
 /**
  * Attachment bytes for the whole account. Blobs are aircraft-scoped under
- * `users/{uid}/aircraft/{acId}/blobs/`, so the single user prefix covers all of them.
+ * `users/{uid}/thing/{acId}/blobs/`, so the single user prefix covers all of them.
  *
  * Logged and swallowed on failure, like `onAircraftDeleted`'s sweep: orphaned bytes are picked up
  * by `scheduledStorageSweep`, whereas a throw here would abandon the deletion with the account

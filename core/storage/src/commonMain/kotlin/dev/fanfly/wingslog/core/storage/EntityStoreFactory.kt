@@ -10,7 +10,7 @@ import kotlin.time.ExperimentalTime
  * Creates [EntityStore] instances on demand. Avoids per-domain Koin singletons; each manager
  * receives the factory and asks for the store it needs.
  *
- * Example: `factory.create<Aircraft>(CollectionKind.Aircraft)`.
+ * Example: `factory.create<Thing>(CollectionKind.Thing)`.
  */
 @OptIn(ExperimentalTime::class)
 class EntityStoreFactory(

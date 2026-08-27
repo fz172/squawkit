@@ -13,7 +13,7 @@ const AC = "ac-sweep";
 const DEFAULTS = { dryRun: false, tombstoneRetentionDays: 30, orphanGraceDays: 7, onlyUid: UID };
 
 const daysAgo = (n: number) => Timestamp.fromMillis(Date.now() - n * 24 * 60 * 60 * 1000);
-const blobPath = (id: string) => `users/${UID}/aircraft/${AC}/blobs/${id}`;
+const blobPath = (id: string) => `users/${UID}/thing/${AC}/blobs/${id}`;
 
 /**
  * A payload in the shape the CLIENT actually writes: **base64 text**, not bytes.
@@ -33,7 +33,7 @@ function logPayload(...ids: string[]): string {
 }
 
 async function putLog(id: string, opts: { deleted: boolean; ageDays?: number; blobs?: string[] }) {
-  await adminDb.doc(`users/${UID}/aircraft/${AC}/maintenance_log/${id}`).set({
+  await adminDb.doc(`users/${UID}/thing/${AC}/maintenance_log/${id}`).set({
     deleted: opts.deleted,
     schema: "aircraft.MaintenanceLog",
     payload: logPayload(...(opts.blobs ?? [])),
@@ -51,14 +51,14 @@ async function blobExists(id: string): Promise<boolean> {
 }
 
 async function logExists(id: string): Promise<boolean> {
-  return (await adminDb.doc(`users/${UID}/aircraft/${AC}/maintenance_log/${id}`).get()).exists;
+  return (await adminDb.doc(`users/${UID}/thing/${AC}/maintenance_log/${id}`).get()).exists;
 }
 
 beforeEach(async () => {
   await adminDb.recursiveDelete(adminDb.doc(`users/${UID}`));
   await adminStorage.bucket().deleteFiles({ prefix: `users/${UID}/` });
   await adminDb.doc(`subscriptions/${UID}`).delete();
-  await adminDb.doc(`users/${UID}/aircraft/${AC}`).set({ deleted: false, schema: "aircraft.Aircraft" });
+  await adminDb.doc(`users/${UID}/thing/${AC}`).set({ deleted: false, schema: "thing.Thing" });
 });
 
 describe("tombstone purge", () => {
@@ -132,7 +132,7 @@ describe("orphan blob collection", () => {
     // We cannot know what it still holds, and a blob wrongly judged unreferenced is a photo deleted
     // for good. Skipping costs bytes; guessing costs the user their picture.
     await putBlob("maybe-orphan");
-    await adminDb.doc(`users/${UID}/aircraft/${AC}/maintenance_log/corrupt`).set({
+    await adminDb.doc(`users/${UID}/thing/${AC}/maintenance_log/corrupt`).set({
       deleted: false,
       schema: "aircraft.MaintenanceLog",
       payload: Buffer.from([0xff, 0xff, 0xff, 0xff]).toString("base64"),
@@ -151,7 +151,7 @@ describe("orphan blob collection", () => {
    */
   it("SKIPS the aircraft when a payload is not a shape it can read", async () => {
     await putBlob("keep-me");
-    await adminDb.doc(`users/${UID}/aircraft/${AC}/maintenance_log/weird`).set({
+    await adminDb.doc(`users/${UID}/thing/${AC}/maintenance_log/weird`).set({
       deleted: false,
       schema: "aircraft.MaintenanceLog",
       payload: 12345, // neither base64 text nor bytes
@@ -257,9 +257,9 @@ describe("the report says WHAT, not just how much", () => {
 
     const report = await runStorageSweep({ ...DEFAULTS, dryRun: true, orphanGraceDays: 0 });
 
-    expect(report.orphanBlobPaths).toEqual([`users/${UID}/aircraft/${AC}/blobs/orphan-1`]);
+    expect(report.orphanBlobPaths).toEqual([`users/${UID}/thing/${AC}/blobs/orphan-1`]);
     expect(report.purgedTombstonePaths).toEqual([
-      `users/${UID}/aircraft/${AC}/maintenance_log/old`,
+      `users/${UID}/thing/${AC}/maintenance_log/old`,
     ]);
     expect(report.truncated).toBe(false);
   });

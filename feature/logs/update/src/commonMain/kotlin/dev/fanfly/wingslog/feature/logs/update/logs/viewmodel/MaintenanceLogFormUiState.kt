@@ -1,6 +1,5 @@
 package dev.fanfly.wingslog.feature.logs.update.logs.viewmodel
 
-import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.aircraft.ComponentType
 import dev.fanfly.wingslog.aircraft.MaintenanceTask
 import dev.fanfly.wingslog.aircraft.Squawk
@@ -10,6 +9,7 @@ import dev.fanfly.wingslog.feature.attachment.datamanager.QuotaChecker
 import dev.fanfly.wingslog.feature.attachment.model.PendingAttachment
 import dev.fanfly.wingslog.feature.attachment.model.fileCount
 import dev.fanfly.wingslog.feature.attachment.model.visible
+import dev.fanfly.wingslog.thing.Thing
 import kotlinx.datetime.LocalDate
 
 data class MaintenanceLogFormUiState(
@@ -20,7 +20,7 @@ data class MaintenanceLogFormUiState(
   val engineTime: String = "",
   val airframeTime: String = "",
   val propTime: String = "",
-  val aircraft: Aircraft? = null,
+  val aircraft: Thing? = null,
   val selectedComponentType: ComponentType = ComponentType.COMPONENT_AIRFRAME,
   val selectedSubComponent: String? = null,
   val error: UiText? = null,

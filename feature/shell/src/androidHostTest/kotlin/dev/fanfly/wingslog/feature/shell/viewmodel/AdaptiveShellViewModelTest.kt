@@ -1,7 +1,7 @@
 package dev.fanfly.wingslog.feature.shell.viewmodel
 
 import com.google.common.truth.Truth.assertThat
-import dev.fanfly.wingslog.aircraft.Aircraft
+import dev.fanfly.wingslog.thing.Thing
 import dev.fanfly.wingslog.aircraft.Technician
 import dev.fanfly.wingslog.core.auth.AccountUpgradeResult
 import dev.fanfly.wingslog.core.auth.AuthManager
@@ -43,10 +43,10 @@ class AdaptiveShellViewModelTest {
   private val self = MutableStateFlow<Technician?>(null)
   private val fleetManager = object : FleetManager {
     override fun observeFleetDashboard(): Flow<List<FleetEntry>> = fleet
-    override suspend fun updateAircraft(aircraft: Aircraft) =
+    override suspend fun updateAircraft(aircraft: Thing) =
       Result.success(true)
 
-    override fun loadAircraft(id: String): Flow<Aircraft?> =
+    override fun loadAircraft(id: String): Flow<Thing?> =
       MutableStateFlow(null)
 
     override suspend fun deleteAircraft(id: String) = Result.success(true)
@@ -127,7 +127,7 @@ class AdaptiveShellViewModelTest {
     shared: Boolean = false,
   ) =
     FleetEntry(
-      aircraft = Aircraft(
+      aircraft = Thing(
         id = id,
         make = make,
         model = model,

@@ -16,9 +16,9 @@ sealed interface CollectionKind {
   /** Fully qualified proto name — stored alongside payloads as a forensic tag. */
   val schemaName: String
 
-  data object Aircraft : CollectionKind {
-    override val wireName = "aircraft"
-    override val schemaName = "aircraft.Aircraft"
+  data object Thing : CollectionKind {
+    override val wireName = "thing"
+    override val schemaName = "thing.Thing"
   }
 
   data object MaintenanceTask : CollectionKind {
@@ -93,7 +93,7 @@ sealed interface CollectionKind {
      * forgotten entry fails the build rather than corrupting data at runtime.
      */
     val ALL: List<CollectionKind> = listOf(
-      Aircraft,
+      Thing,
       MaintenanceTask,
       MaintenanceLog,
       MaintenanceOverview,

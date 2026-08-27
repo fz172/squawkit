@@ -1,7 +1,16 @@
+import type { DocumentSnapshot } from "firebase-admin/firestore";
 import { logger } from "firebase-functions/v2";
+import type { Change, FirestoreEvent } from "firebase-functions/v2/firestore";
 import { onDocumentWritten } from "firebase-functions/v2/firestore";
 
 import { FUNCTION_REGION } from "../config/env.js";
+import {
+  ENTITY_SEGMENT_LEGACY,
+  ENTITY_SEGMENT_THING,
+  entityBlobPath,
+  entityDocPath,
+  type EntitySegment,
+} from "../config/entitySegment.js";
 import { adminDb, adminStorage } from "../config/firebaseAdmin.js";
 import { blobIdsInPayload, schemaCanOwnBlobs } from "./blobRefs.js";
 
@@ -32,10 +41,13 @@ type SyncDocWire = {
  * every record deleted before the field existed, and would introduce a second source of truth that
  * can drift from the payload it describes — and a drifted list either leaks bytes or deletes a photo
  * a live record still shows. See docs/storage/deletion_gc_design.html §4.
+ *
+ * [segment] is the entity path segment the event fired for — every path this handler builds must
+ * stay in that same tree (see config/entitySegment.ts).
  */
-export const onRecordDeleted = onDocumentWritten(
-  { document: "users/{uid}/aircraft/{acId}/{kind}/{docId}", region: FUNCTION_REGION },
-  async (event) => {
+const handleRecordDeleted =
+  (segment: EntitySegment) =>
+  async (event: FirestoreEvent<Change<DocumentSnapshot> | undefined, Record<string, string>>) => {
     const after = event.data?.after;
     if (after == null || !after.exists) return; // hard-deleted; nothing left to read
 
@@ -59,7 +71,7 @@ export const onRecordDeleted = onDocumentWritten(
     }
     if (owned.length === 0) return;
 
-    const live = await blobsReferencedByLiveRecords(uid, acId, docId);
+    const live = await blobsReferencedByLiveRecords(uid, acId, docId, segment);
     if (!live.trustworthy) {
       // A live record would not decode, so we cannot know what it still holds. Collect nothing this
       // run and let the sweep (#159) revisit. A leaked byte is cheap; a deleted photo is not.
@@ -75,7 +87,7 @@ export const onRecordDeleted = onDocumentWritten(
 
     await Promise.all(
       collectable.map(async (blobId) => {
-        const path = `users/${uid}/aircraft/${acId}/blobs/${blobId}`;
+        const path = entityBlobPath(uid, acId, blobId, segment);
         try {
           // ignoreNotFound makes this idempotent: the trigger may re-run, and the aircraft-delete
           // prefix sweep may have got there first.
@@ -89,7 +101,28 @@ export const onRecordDeleted = onDocumentWritten(
     logger.info("Collected blobs for a deleted record", {
       uid, acId, docId, schema, count: collectable.length,
     });
+  };
+
+/**
+ * MIGRATION (thing_migration_design.md §2.7 / task B9): registered twice, once per entity segment —
+ * a v2 Firestore trigger path is a deploy-time literal with no "either segment" wildcard, and a
+ * deploy is global. `onRecordDeleted` keeps its export name so the already-deployed function is not
+ * torn down and recreated; Phase F3 deletes it.
+ */
+export const onRecordDeleted = onDocumentWritten(
+  {
+    document: `users/{uid}/${ENTITY_SEGMENT_LEGACY}/{acId}/{kind}/{docId}`,
+    region: FUNCTION_REGION,
   },
+  handleRecordDeleted(ENTITY_SEGMENT_LEGACY),
+);
+
+export const onThingRecordDeleted = onDocumentWritten(
+  {
+    document: `users/{uid}/${ENTITY_SEGMENT_THING}/{acId}/{kind}/{docId}`,
+    region: FUNCTION_REGION,
+  },
+  handleRecordDeleted(ENTITY_SEGMENT_THING),
 );
 
 type LiveRefs = {
@@ -108,9 +141,10 @@ async function blobsReferencedByLiveRecords(
   uid: string,
   acId: string,
   excludeDocId: string,
+  segment: EntitySegment,
 ): Promise<LiveRefs> {
   const referenced = new Set<string>();
-  const collections = await adminDb.doc(`users/${uid}/aircraft/${acId}`).listCollections();
+  const collections = await adminDb.doc(entityDocPath(uid, acId, segment)).listCollections();
 
   for (const collection of collections) {
     const snap = await collection.get();

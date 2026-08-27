@@ -1,7 +1,7 @@
 package dev.fanfly.wingslog.feature.export.datamanager.impl
 
 import com.google.common.truth.Truth.assertThat
-import dev.fanfly.wingslog.aircraft.Aircraft
+import dev.fanfly.wingslog.thing.Thing
 import dev.fanfly.wingslog.aircraft.Attachment
 import dev.fanfly.wingslog.aircraft.AttachmentType
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
@@ -58,7 +58,7 @@ class AttachmentExportResolverTest {
   )
 
   private fun bundle(vararg attachments: Attachment) = AircraftBundle(
-    aircraft = Aircraft(id = "ac1"),
+    aircraft = Thing(id = "ac1"),
     logs = listOf(
       MaintenanceLog(
         id = "log1",

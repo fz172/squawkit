@@ -1,7 +1,7 @@
 package dev.fanfly.wingslog.feature.fleet.datamanager.impl
 
 import com.google.common.truth.Truth.assertThat
-import dev.fanfly.wingslog.aircraft.Aircraft
+import dev.fanfly.wingslog.thing.Thing
 import dev.fanfly.wingslog.core.model.sharing.ShareRole
 import dev.fanfly.wingslog.core.model.sharing.SharedAircraftRef
 import dev.fanfly.wingslog.core.storage.CollectionKind
@@ -29,7 +29,7 @@ class FleetManagerImplTest {
 
   private lateinit var firebaseAuth: FirebaseAuth
   private lateinit var storeFactory: EntityStoreFactory
-  private lateinit var store: EntityStore<Aircraft>
+  private lateinit var store: EntityStore<Thing>
   private lateinit var refStore: EntityStore<SharedAircraftRef>
   private lateinit var manager: FleetManagerImpl
 
@@ -41,7 +41,7 @@ class FleetManagerImplTest {
     storeFactory = mockk(relaxed = true)
 
     @Suppress("UNCHECKED_CAST")
-    every { storeFactory.create<Aircraft>(CollectionKind.Aircraft) } returns store
+    every { storeFactory.create<Thing>(CollectionKind.Thing) } returns store
     @Suppress("UNCHECKED_CAST")
     every {
       storeFactory.create<SharedAircraftRef>(CollectionKind.SharedAircraftRef)
@@ -140,7 +140,7 @@ class FleetManagerImplTest {
     every { refStore.observeAll(EntityScope.userRoot(TEST_USER_ID)) } returns flowOf(
       listOf(StorageEntity("shared-1", ref, Instant.DISTANT_PAST))
     )
-    // Aircraft doc not synced yet → null.
+    // Thing doc not synced yet → null.
     every {
       store.observe(
         "shared-1",
@@ -292,7 +292,7 @@ class FleetManagerImplTest {
     id: String = TEST_AIRCRAFT_ID,
     make: String = "Cessna",
     model: String = "172",
-  ): Aircraft = Aircraft(id = id, make = make, model = model)
+  ): Thing = Thing(id = id, make = make, model = model)
 
   // --- Writes must land in the tree the aircraft actually lives in (#143) ---
 
@@ -313,7 +313,7 @@ class FleetManagerImplTest {
         Instant.DISTANT_PAST,
       )
     )
-    val edited = Aircraft(
+    val edited = Thing(
       id = "shared-1",
       make = "Cessna",
       model = "172",
@@ -335,7 +335,7 @@ class FleetManagerImplTest {
 
   @Test
   fun updateAircraft_own_writesToOwnTree() = runTest {
-    val mine = Aircraft(id = "own-1", make = "Cessna", model = "172")
+    val mine = Thing(id = "own-1", make = "Cessna", model = "172")
 
     manager.updateAircraft(mine)
 

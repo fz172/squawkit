@@ -215,6 +215,30 @@ At under 50 accounts migrated in what is realistically one operator sitting, thi
 not zero, and skipping it means a not-yet-migrated account silently stops getting notifications, deletion
 cascades, or blob cleanup for the duration.
 
+### 2.7a The same constraint, in a second shape: globally-deployed **callables**
+
+Found while implementing Phase B, and not anticipated by the original §2.5 inventory. Triggers are not the only
+backend code with a "can't flip until every account has migrated" property — **callables have it too, for the
+same reason**: one deployed version answers every account's invocation, so the path it hardcodes is either right
+for all of them or wrong for some. Three call sites:
+
+```
+createAircraftShareInvite.ts   adminDb.doc(`users/${uid}/aircraft/${aircraftId}`)   (existence check)
+blobBroker.ts:16               blobObjectPath() → `users/${hostUid}/aircraft/${acId}/blobs/${blobId}`
+                               — used by the getBlobUploadSession and streamBlob callables
+```
+
+Unlike triggers, these **cannot be dual-deployed** — a second copy under a different export name is a different
+callable, and the client calls one name. So they are a hard flip, and the flip must land at exactly one moment:
+**after D3 (every account migrated) and with, or before, the Phase 1 client build reaching devices (E2)**. Call
+that **Checkpoint 2**, distinct from Phase C's Checkpoint 1 (additive dual deploy, safe any time). Flipping them
+early breaks blob upload/download and share invites for every not-yet-migrated account; flipping them late
+breaks the same things for every already-migrated one.
+
+`storageSweep.ts` looks like it belongs to this group but does not: it is a **scheduled** function that reconciles
+orphaned objects, so a wrong path makes it find nothing (a no-op) rather than corrupt anything, and the next run
+after the flip self-corrects. It is safe to flip immediately, with the rest of Phase B.
+
 ### 2.8 Local database schema — what actually needs rewriting on-device
 
 From `core/storage/.../db/Schema.sq`, four tables carry a `scope_path` (or, for blobs, both `scope_path` and
@@ -301,7 +325,8 @@ mid-migration about.
 Exactly the PRD's §6 shape — reproduced here so this doc is self-contained:
 
 ```proto
-// aircraft.proto → thing.proto (message renamed; new fields added, nothing removed or renumbered)
+// aircraft/aircraft.proto → thing/thing.proto (message renamed; new fields added, nothing removed
+// or renumbered). Spec and Component are siblings in thing/spec.proto and thing/component.proto.
 message Thing {
   string id = 1;
 
@@ -316,27 +341,35 @@ message Thing {
   string template_id = 7;          // "airplane" for every Thing in Phase 1 — no other value exists yet
   int32 template_version = 8;
   string name = 9;
-  repeated SpecValue spec = 10;    // mirrors of make/model/serial/tail_number — see §4.2
+  repeated Spec spec = 10;         // mirrors of make/model/serial/tail_number — see §4.2
   repeated Component components = 11;
 }
 ```
 
-`SpecValue` and `Component` are declared but Phase 1 populates them with exactly one shape — the airframe +
+`Spec` and `Component` are declared but Phase 1 populates them with exactly one shape — the airframe +
 engine + propeller tree, deterministically derived from the existing `Engine`/`Propeller` messages (§4.2). No
 other component shape, no other spec-field set, and no template other than `"airplane"` exists until Phase 3.
 
-> **`option java_package = "dev.fanfly.wingslog.aircraft"` does not change, and never needs a migration when it
-> eventually does.** `aircraft.proto` has no `package` statement — only this Kotlin/Java-only codegen option,
-> shared by every proto in the directory (`Engine`, `Propeller`, `MaintenanceLog`, `Squawk`, `Technician`,
-> `Attachment`, `ComponentType`, not just `Thing`). It governs source-code organization and nothing else: proto3's
-> binary wire format encodes field numbers and types, never the source package, so this string leaves no trace in
-> a Firestore document, a Storage object, or a local `entity`/`blob_object` row. `CollectionKind.schemaName`
-> (`"thing.Thing"`, §2.2) looks derived from a proto package but isn't — there is no `package` statement to derive
-> it from, and it's already an independent hand-picked string. Renaming `java_package` — if it ever happens — is a
-> compiler-verified source refactor with zero runtime or stored-data effect, the same risk class as
-> `AircraftScopeResolver` (§3.3), not the class of anything else in this document. It belongs with that later
-> identifier cleanup, not with this migration, and needs no backend script, no grace window, and no retry logic
-> to go with it.
+> **The new protos live in a new directory and a new `java_package`; the legacy ones keep theirs.** *Revised
+> during implementation — an earlier revision of this doc kept `Thing` in `aircraft/` under
+> `java_package = "dev.fanfly.wingslog.aircraft"`.* `thing.proto`, `spec.proto`, and `component.proto` now sit in
+> `core/model/src/commonMain/proto/thing/` under `option java_package = "dev.fanfly.wingslog.thing"`, so the
+> domain's new types don't inherit the legacy directory's naming. Everything the old blockquote argued about
+> `java_package` still holds and is the reason this was safe to do *inside* this migration rather than as a
+> separate one: the proto files have no `package` statement, so `java_package` is a Kotlin/Java-only codegen
+> option governing source organization and nothing else. proto3's binary wire format encodes field numbers and
+> types, never the source package, so the change leaves no trace in a Firestore document, a Storage object, or a
+> local `entity`/`blob_object` row, and needs no backend script, grace window, or retry logic. It is a
+> compiler-verified source refactor whose entire blast radius is the `import` line at each call site.
+>
+> `CollectionKind.schemaName` (`"thing.Thing"`, §2.2) looks derived from a proto package but isn't — there is no
+> `package` statement to derive it from; it's an independent hand-picked string that this migration sets
+> deliberately.
+>
+> The legacy `aircraft/` directory keeps `java_package = "dev.fanfly.wingslog.aircraft"` for `Engine`,
+> `Propeller`, `MaintenanceLog`, `Squawk`, `Technician`, `Attachment`, and `ComponentType`, which are out of
+> scope here. `thing.proto` therefore imports `Engine` across package boundaries — verified working in the
+> generated Wire and ts-proto output.
 
 ### 3.2 Every path, before and after
 
@@ -374,91 +407,62 @@ in already-rendered UI.**
 
 ---
 
-## 4. Local migration
+## 4. Local (on-device) migration — deliberately none
 
-### 4.1 `LocalThingPathMigrator` — modeled directly on `LocalAccountMigrator`
+**Decision (2026-08-27): there is no `LocalThingPathMigrator`.** An earlier revision of this doc specified one —
+a `LocalAccountMigrator`-shaped class that would rewrite every `/aircraft/` path literal in the local SQLDelight
+database in place. It is not being built, and the tasks that described it (A6, A7, A8) are withdrawn.
 
-A new class, same package as `LocalAccountMigrator`, same shape: `DatabaseWriteLock`-guarded, one transaction,
-idempotent by construction (no "have I run" flag needed — once no row matches `/aircraft/`, every query below is
-a no-op, exactly like `LocalAccountMigrator.reassign`'s own idempotency argument).
+### 4.1 Why not
 
-Unlike the account-merge case (which moves a *variable-length* uid prefix via `substr`), this migration replaces
-a *fixed* literal at a *fixed* position, which is simpler — a straight `REPLACE()`:
+Phase 1 ships only to dogfood devices, and the migration itself is a **single global batch run by the developer**
+(§5.1), not a rollout staggered across accounts over weeks. That combination makes the on-device path-rewrite
+unnecessary:
 
-```sql
--- New queries, same file as the existing reassign* queries in Schema.sq.
+- By the time any device runs the Phase 1 build, the backend has already moved *every* account's data to
+  `/thing/...` (D3 gates E2). The device's job is only to read the new paths, which the Phase 1 code does by
+  construction.
+- The only thing a local migrator would buy is preserving the *local* copy of already-synced data plus its sync
+  cursors and watermarks. **Wiping local app data is an accepted cost** — the operator deletes and reinstalls the
+  app on each dogfood device, and a clean install re-hydrates from `/thing/...` on first launch with nothing to
+  migrate. This was explicitly accepted rather than assumed.
+- A migrator is not free: it is a transaction that mutates every table on a database it does not own the schema
+  version of, running on a device whose data may already be partly `/thing/`-shaped if the user reinstalled
+  mid-window. The failure modes it introduces are worse than the bandwidth it saves for a handful of devices.
 
-fixThingCollection:
-UPDATE entity SET collection = 'thing', payload_schema = 'thing.Thing'
-WHERE collection = 'aircraft';
+This is a Phase-1-only judgement. It rests on "dogfood devices, operator-controlled, wipe is acceptable," and
+does **not** generalise to any later migration that touches real users' devices.
 
-fixThingScopePaths:
-UPDATE entity SET scope_path = REPLACE(scope_path, '/aircraft/', '/thing/')
-WHERE scope_path LIKE '%/aircraft/%';
+### 4.2 What the wipe does *not* cover — and where that work moved instead
 
-fixBlobScopePaths:
-UPDATE blob_object
-SET scope_path  = REPLACE(scope_path, '/aircraft/', '/thing/'),
-    remote_path = REPLACE(remote_path, '/aircraft/', '/thing/')
-WHERE scope_path LIKE '%/aircraft/%' OR remote_path LIKE '%/aircraft/%';
+Two pieces of §4's original scope are genuinely useful and survive the deletion of the local migrator. Both move
+**server-side, into the cutover script (B1)**, where they run once per account against authoritative data rather
+than N times against N devices' partial copies:
 
-fixSyncCursorScopePaths:
-UPDATE sync_cursor SET scope_path = REPLACE(scope_path, '/aircraft/', '/thing/')
-WHERE scope_path LIKE '%/aircraft/%';
+1. **Rewriting embedded `Attachment.storage_path`.** §2.6 is unchanged: the storage path is denormalized *inside*
+   every `MaintenanceLog`/`MaintenanceTask`/`Squawk` payload, so moving the blob objects does not fix the
+   pointers. The script decodes each such payload with the generated TypeScript proto bindings, replaces the
+   `/aircraft/` segment with `/thing/` on each `Attachment.storage_path`, and re-encodes. A local wipe cannot do
+   this — the stale pointer is in the *server's* copy of the payload, and a clean install would just re-hydrate
+   it.
 
-fixWatermarkScopePaths:
-UPDATE urgency_watermark SET scope_path = REPLACE(scope_path, '/aircraft/', '/thing/')
-WHERE scope_path LIKE '%/aircraft/%';
-```
+2. **Backfilling `template_id` / `name` / `spec` / `components`.** Same computation the PRD's §9.1 specifies —
+   `template_id = "airplane"`, `name` from `tail_number` or `"$make $model"`, `spec` mirroring legacy fields 2–5,
+   and a `components` tree (one `airframe` carrying make/model/serial, one `engine` child per `Engine`, one
+   `propeller` grandchild per engine with `hub`/`blade` children), with every `Component.id` **derived
+   deterministically** from `(thing_id, slot_key, index)`. Doing it server-side is strictly better than doing it
+   on-device: it runs exactly once per Thing against the authoritative document, so the determinism requirement
+   is satisfied trivially rather than by making N independent devices agree.
 
-`REPLACE()` is safe here specifically because IDs are opaque generated strings (`generateRandomId()`) that cannot
-themselves contain a `/` — there is exactly one occurrence of the literal per path, at a fixed position, so a
-blind string replace can't mismatch a different segment.
+The consequence for the client is that the Phase 1 build must tolerate reading a `Thing` whose fields 7–11 are
+*already populated* by the server — which it does, since those fields are additive and Phase 1 ships no UI that
+reads them.
 
-Rewriting `sync_cursor` and `urgency_watermark` **in place** (rather than dropping them, which would be simpler
-but wrong) is deliberate: dropping cursors forces a full re-hydration of every migrated aircraft's history on
-next launch (wasted bandwidth and a slow first-launch-after-update), and dropping watermarks re-arms every
-already-acknowledged overdue item as if newly crossed — the exact failure mode the existing `Schema.sq` comment
-on `reassignWatermarks` warns about for the unrelated account-merge case. Rewriting preserves both.
+### 4.3 The one thing to verify instead of a migrator test
 
-### 4.2 The part that isn't SQL: rewriting embedded `Attachment.storage_path` and backfilling `spec`/`components`
-
-This step must go through the generated proto API, not raw bytes (§2.6). For every `entity` row where
-`collection` is `MaintenanceLog`, `MaintenanceTask`, or `Squawk`:
-
-1. Decode `payload` as the corresponding message.
-2. For each `Attachment` in its `attachments` list with a non-empty `storage_path`, replace the `/aircraft/`
-   segment with `/thing/` (string-level is fine *here*, since we're operating on an already-decoded Kotlin
-   `String` field, not raw proto bytes).
-3. Re-encode, write back via the existing `upsert` query — **not marked dirty, no push** (§4.3).
-
-For every `entity` row where `collection` is (soon-to-be) `Thing`:
-
-1. Decode as `Thing` (the renamed message reading the still-populated legacy fields 2–6).
-2. Compute, deterministically, exactly the fields the PRD's §9.1 already specifies: `template_id = "airplane"`,
-   `name` from `tail_number` or `"$make $model"`, `spec` mirroring 2–5, and a `components` tree — one `airframe`
-   component carrying the Thing's own make/model/serial, one `engine` child per `Engine`, one `propeller`
-   grandchild per engine with `hub`/`blade` children — with every `Component.id` **derived deterministically**
-   from `(thing_id, slot_key, index)`, per the PRD's own load-bearing requirement (§9.1: covered by a test that
-   migrates the same payload twice and asserts identical output).
-3. Re-encode, write back the same non-dirtying way.
-
-Both passes run inside the same `LocalThingPathMigrator` transaction as §4.1's SQL, so a crash mid-migration
-can't leave the database in a state where paths moved but payloads didn't, or vice versa.
-
-### 4.3 Invocation
-
-Called once, early in app startup — before `SyncEngine.start()` — analogous to where `LocalAccountMigrator` is
-invoked from the account-upgrade flow, except this one is unconditional rather than user-triggered: every device
-that launches the Phase 1 build runs it, regardless of whether this is a fresh install or an upgrade. On a fresh
-install there is nothing to migrate and every query above is a no-op immediately.
-
-Non-dirtying is essential here, exactly as the PRD states (§9.1): this pass must **not** set `dirty = 1` or
-`remote_updated_at = NULL` on the rows it rewrites, because by the time a device runs this migration, the backend
-has *already* moved this account's data to `/thing/...` (§5.1) — pushing these rows again would be redundant at
-best and a spurious write racing the backend's own copy at worst.
-
----
+Replacing A8 (`LocalThingPathMigratorTest`): the client-side guarantee that still needs proving is that a
+**pre-migration** client's edit of a Thing-shaped document does not drop the new fields 7–11 — Wire's
+unknown-field retention. That is A11, and it becomes the load-bearing client test for this phase.
 
 ## 5. Backend migration
 
@@ -489,11 +493,14 @@ every aircraft exactly once, members included):
 1. **Enumerate.** List every `/users/{uid}/aircraft/*` document.
 2. **Copy Firestore.** For each aircraft doc: copy it to `/users/{uid}/thing/{id}`, then copy its
    `maintenance_log`, `maintenance_task`, `maintenance_overview`, and `squawk` subcollections beneath the new
-   path. Copy the raw `SyncDocWire` envelope (base64 `payload` and all) unchanged — **do not** attempt the
-   `spec`/`components` backfill or the embedded `storage_path` rewrite server-side; that's §4.2's job, run
-   identically on every device from the same deterministic inputs, which is exactly what makes it safe to compute
-   twice (once here implicitly by *not* computing it, and once for real on-device) rather than needing the two
-   computations to agree.
+   path. The `SyncDocWire` envelope's `collection`/`payload_schema` fields are rewritten to `thing`/`thing.Thing`
+   for the Thing doc itself; every other kind's envelope carries over unchanged.
+2a. **Transform payloads.** Since there is no on-device migrator (§4), the two payload rewrites happen here, on
+   the decoded proto (never on raw bytes — §2.6): rewrite each `Attachment.storage_path`'s `/aircraft/` segment
+   to `/thing/` on `MaintenanceLog`/`MaintenanceTask`/`Squawk` payloads, and backfill
+   `template_id`/`name`/`spec`/`components` on the Thing payload with deterministically derived `Component.id`s
+   (§4.2). Because this runs exactly once per document against the authoritative copy, determinism is satisfied
+   by construction rather than by making N devices agree.
 3. **Copy Storage.** For each aircraft: copy every object under `users/{uid}/aircraft/{acId}/blobs/**` to
    `users/{uid}/thing/{acId}/blobs/**`, verifying size (or checksum, since `Attachment.sha256` is already on
    hand from the proto — cheap to verify against) before touching the source.
@@ -577,11 +584,12 @@ the same copy-verify-then-delete shape costs nothing.
 
 ## 6. Testing & verification
 
-- **`LocalThingPathMigratorTest`**, modeled on the existing account-merge migrator's test: seed rows with
-  `/aircraft/`-shaped `scope_path`/`collection` values (including at least one `MaintenanceLog` with an
-  attachment, to exercise §4.2's payload rewrite), run the migrator, assert every table's rows now read
-  `/thing/`, assert a second run is a no-op (row-for-row identical), and assert the decoded `Attachment
-  .storage_path` no longer contains `/aircraft/`.
+- **Payload-transform test on the cutover script** (replacing the withdrawn `LocalThingPathMigratorTest`, §4):
+  seed emulator documents with `/aircraft/`-shaped envelopes — including at least one `MaintenanceLog` with an
+  attachment — run the script, assert the decoded `Attachment.storage_path` no longer contains `/aircraft/`,
+  assert the Thing payload's backfilled `template_id`/`name`/`spec`/`components` match the PRD's §9.1 spec, and
+  assert running the transform twice on the same input yields byte-identical output (the determinism
+  requirement).
 - **The PRD's own regression bar still applies unchanged**: the existing `TaskDueManager` suite must pass
   unmodified against Thing-shaped data (PRD §7), and a byte-identical snapshot test proves the airplane lexicon
   is untouched (PRD §10) — neither is new to this doc, both gate this phase too.
@@ -631,9 +639,12 @@ then, not from day 1's first attempt.
    compiler-verified end to end, and leaving the Kotlin symbol `Aircraft` pointing at a message literally named
    `Thing` would be a standing readability trap for exactly the reason `schemaName` changes to `"thing.Thing"` in
    the first place. Reflected in §3.2's path table.
-2. **`LocalThingPathMigrator` is invoked once, early in app startup, before `SyncEngine.start()`** —
-   `LocalAccountMigrator`-style (§4.3). The exact call site (Koin module, `composeApp` init, or a dedicated
-   startup orchestrator) is left to whoever implements this; it isn't a design decision, just a wiring detail.
+2. **There is no on-device migrator; dogfood devices wipe and reinstall instead (§4).** *Supersedes an earlier
+   decision that `LocalThingPathMigrator` would run before `SyncEngine.start()`.* Local data loss on dogfood
+   devices is an explicitly accepted cost, and a clean install re-hydrates from `/thing/...`. The two pieces of
+   that migrator's job that were genuinely load-bearing — the embedded `Attachment.storage_path` rewrite and the
+   `template_id`/`spec`/`components` backfill — move server-side into the cutover script (§4.2, §5.1 step 2a),
+   where each runs exactly once per document against authoritative data. Tasks A6/A7/A8 are withdrawn.
 3. **The grace window in §7 is 7 days.** Applied consistently to both the entity tree's old paths (§7) and the
    ACL tree's old paths (§5.4 step 4) — a device hasn't necessarily updated within a day of the backend batch
    completing, and 7 days is comfortable room for that without meaningfully delaying final cleanup.
@@ -658,23 +669,23 @@ parallel or in any order. **Ref** points at the section that specifies the task 
 
 | # | Task | Depends on | Ref |
 |---|---|---|---|
-| A1 | Rename `aircraft.proto`'s `Aircraft` message → `Thing`; rename the file → `thing.proto`; add fields 7–11 (`template_id`, `template_version`, `name`, `spec`, `components`) and declare `SpecValue`/`Component`. Keep `java_package = "dev.fanfly.wingslog.aircraft"` unchanged — it's Kotlin/Java-only, carries no wire or stored-data identity, and renaming it later (if ever) needs no migration of its own (§3.1). | — | §3.1, §3.3 |
+| A1 | Rename `aircraft/aircraft.proto`'s `Aircraft` message → `Thing` and move it to a new `thing/` directory as `thing/thing.proto`; add fields 7–11 (`template_id`, `template_version`, `name`, `spec`, `components`); declare `Spec` and `Component` as siblings in `thing/spec.proto` and `thing/component.proto`. All three take `java_package = "dev.fanfly.wingslog.thing"` so the new types don't inherit the legacy directory's naming — safe inside this migration because `java_package` carries no wire or stored-data identity (§3.1). The legacy `aircraft/` protos keep theirs; `thing.proto` imports `Engine` across the package boundary. | — | §3.1, §3.3 |
 | A2 | Regenerate Kotlin (Wire) proto bindings from A1; fix every resulting compiler error at `Aircraft`-referencing call sites (mechanical rename to `Thing`). | A1 | §8 #1 |
 | A3 | Rename `CollectionKind.Aircraft` (Kotlin symbol) → `CollectionKind.Thing`; set `wireName = "thing"`, `schemaName = "thing.Thing"`; fix every call site (compiler-verified). | — | §2.2, §3.2, §8 #1 |
 | A4 | Update `EntityScope.aircraftChildUnsafe`'s internal literal `"aircraft"` → `"thing"`. Do not rename the function. | — | §2.3, §3.3 |
-| A5 | Fix the ten hardcoded-literal call sites: `SyncEngine.kt:594`; `PushWorker.kt:214,236,256`; `AttachmentBroker.kt:48,59`; `SharedScopeJanitor.kt:83,88,147,158`; `WebForeignWriteDetector.kt:283`; `storageSweep.ts:207,261`; `deleteMyAccount.ts:100,120,147`. | — | §2.5 |
-| A6 | Write `LocalThingPathMigrator` (new class, `core/storage`, sibling of `LocalAccountMigrator`): the five SQL queries (`fixThingCollection`, `fixThingScopePaths`, `fixBlobScopePaths`, `fixSyncCursorScopePaths`, `fixWatermarkScopePaths`) plus the proto-level pass that rewrites embedded `Attachment.storage_path` on `MaintenanceLog`/`MaintenanceTask`/`Squawk` rows and backfills `spec`/`components`/`template_id`/`name` (deterministic component IDs) on Thing rows — all inside one `DatabaseWriteLock`-guarded transaction. | A1, A2 | §4.1, §4.2 |
-| A7 | Wire `LocalThingPathMigrator`'s invocation into app startup, before `SyncEngine.start()`. | A6 | §4.3, §8 #2 |
-| A8 | Write `LocalThingPathMigratorTest`: seed `/aircraft/`-shaped rows (incl. a `MaintenanceLog` with an attachment), run, assert rewritten, assert a second run is a no-op, assert `Attachment.storage_path` fixed. | A6 | §6 |
+| A5 | Fix every hardcoded `"aircraft"` path literal on the client. §2.5's inventory of ten proved **incomplete** — an eleventh lives in `TombstoneGc.kt` (`idsInScopePrefix("${row.scope_path}aircraft/${row.id}/%")`), plus KDoc examples in `FirestoreRefs.kt`/`LocalBlobStore.kt`/`EntityStoreFactory.kt` and path literals in eight test fixtures. Treat §2.5 as a starting point, not a checklist: finish with a repo-wide `grep` for `aircraft/` over `*.kt` returning nothing. The `storageSweep.ts`/`deleteMyAccount.ts` entries §2.5 listed here are backend files and belong to Phase B; §2.5's `deleteMyAccount.ts:100,120,147` citations were wrong (those lines are `shared_aircraft_ref`/ACL helpers — only a comment needed changing). | — | §2.5 |
+| ~~A6~~ | **Withdrawn** — no `LocalThingPathMigrator` is built. Its two load-bearing jobs move server-side to B1. | — | §4, §8 #2 |
+| ~~A7~~ | **Withdrawn** — nothing to invoke at startup. | — | §4, §8 #2 |
+| ~~A8~~ | **Withdrawn** — replaced by the script-side payload-transform test folded into B11. | — | §4.3, §6 |
 | A9 | Confirm `CollectionKindCoverageTest` still passes unmodified (no code change expected — it asserts against the symbol, not the string). | A3 | §2.2 |
-| A10 | Confirm the existing `TaskDueManager` regression suite and the byte-identical lexicon snapshot test still pass unmodified against Thing-shaped data. | A6 | §6, PRD §7/§10 |
+| A10 | Confirm the existing `TaskDueManager` regression suite and the byte-identical lexicon snapshot test still pass unmodified against Thing-shaped data. | A2 | §6, PRD §7/§10 |
 | A11 | Write the round-trip test proving Wire's unknown-field retention across a pre-migration client's edit of Thing-shaped data. | A1, A2 | §6, PRD §9.2 |
 
 ### Phase B — Backend script + rules/functions code (parallelizable; independent of Phase A)
 
 | # | Task | Depends on | Ref |
 |---|---|---|---|
-| B1 | Write the backend cutover script (`backend/firebase/functions`, one-off Node/Admin SDK): enumerate every uid via `adminDb.collection("users").listDocuments()`; per uid, `try`/`catch` around enumerate → copy Firestore → copy Storage (checksum-verified) → verify counts; collect a success/failure report. Explicitly do **not** attempt the `spec`/`components`/`storage_path` rewrite server-side — that's A6, run identically on-device. | — | §5.1 |
+| B1 | Write the backend cutover script (`backend/firebase/functions`, one-off Node/Admin SDK): enumerate every uid via `adminDb.collection("users").listDocuments()`; per uid, `try`/`catch` around enumerate → copy Firestore → copy Storage (checksum-verified) → verify counts; collect a success/failure report. **Also performs both payload transforms** (A6's withdrawn job): rewrite embedded `Attachment.storage_path` on `MaintenanceLog`/`MaintenanceTask`/`Squawk` payloads, and backfill `template_id`/`name`/`spec`/`components` with deterministic `Component.id`s on Thing payloads. | — | §5.1, §4.2 |
 | B2 | Add a `--dry-run` mode to the script (read-only count/checksum comparison, no writes). | B1 | §5.3 |
 | B3 | Add a targeted-retry mode (`--only <uids>`) so a failed subset can be re-run without repeating the whole batch. | B1 | §5.1 |
 | B4 | Write a separate deletion pass (a mode of the same script, or a sibling script): delete old Firestore subcollections + old Storage objects, scoped to accounts whose copy was verified more than 7 days ago. | B1 | §7 |
@@ -682,15 +693,17 @@ parallel or in any order. **Ref** points at the section that specifies the task 
 | B6 | Update `sharingModels.ts`'s `AIRCRAFT_SHARES_COLLECTION`/`SHARE_AIRCRAFT_SUBCOLLECTION` values — **write now, hold on a branch; do not deploy until Phase G.** | — | §2.9, §3.2, §5.4 |
 | B7 | Add a new `match /thing/{acId} { ... }` block to `firestore.rules`, alongside the existing `match /aircraft/{acId} { ... }` block, mirroring `isShareMember`/`isShareOwner`/`writerIsSelf`/`isSharedAircraftKind`. | — | §2.4a, §3.2 |
 | B8 | Add a new `match /thing_shares/{hostUid}/thing/{acId} { ... }` block to `firestore.rules`, alongside the existing ACL block — added now, inert until Phase G. Do **not** repoint `shareRole()` yet. | — | §2.9, §3.2 |
+| B9a | Write the **Checkpoint 2** flip for the globally-deployed callables that cannot be dual-deployed: `blobBroker.ts`'s `blobObjectPath()` and `createAircraftShareInvite.ts`'s existence check. Write now, **hold — do not deploy until C2.** | — | §2.7a |
 | B9 | Write new versions of the four Cloud Functions (`onNotifiableRecordWritten`, `onNotifiableAircraftWritten`, `onAircraftDeleted`, `onRecordDeleted`) registered on `users/{uid}/thing/{acId}...`, to deploy *alongside* (not replacing) the existing ones. | — | §2.7, §5.2 |
 | B10 | Update `firestore-rules.test.ts` and `sharing-rules.test.ts` with a parallel set of assertions against the `/thing/`- and `thing_shares`-shaped paths, keeping every existing `aircraft`-shaped assertion passing. | B7, B8 | §6 |
-| B11 | Test the cutover script end-to-end against the Firestore/Storage emulator with a seeded fixture. | B1, B2 | §6 |
+| B11 | Test the cutover script end-to-end against the Firestore/Storage emulator with a seeded fixture — including the payload-transform assertions that replace the withdrawn A8: `storage_path` rewritten, backfill matches PRD §9.1, and the transform is byte-identical when run twice. | B1, B2 | §6, §4.3 |
 
 ### Phase C — Deploy dual backend infrastructure (gates Phase D)
 
 | # | Task | Depends on | Ref |
 |---|---|---|---|
-| C1 | Deploy, together, in one release: the new `/thing/{acId}` and `/thing_shares/...` `firestore.rules` blocks (B7, B8) and the four new dual Cloud Functions (B9) — alongside everything existing, unchanged. | B7, B8, B9, B10 | §5.2 |
+| C1 | **Checkpoint 1 (additive, safe any time).** Deploy, together, in one release: the new `/thing/{acId}` and `/thing_shares/...` `firestore.rules` blocks (B7, B8) and the four new dual Cloud Functions (B9) — alongside everything existing, unchanged. Nothing here removes or repoints a path, so no account can be broken by it. | B7, B8, B9, B10 | §5.2 |
+| C2 | **Checkpoint 2 (a hard flip — timing is load-bearing).** Deploy B9a: repoint `blobObjectPath()` and `createAircraftShareInvite`'s existence check at `/thing/`. Must land **after D3** (every account migrated) and **at or before E2** (devices get the Phase 1 build). Too early breaks blobs and invites for un-migrated accounts; too late breaks them for migrated ones. | B9a, D3 | §2.7a |
 
 ### Phase D — Run the entity/blob migration batch (must reach zero failures before Phase E/G)
 
@@ -704,8 +717,8 @@ parallel or in any order. **Ref** points at the section that specifies the task 
 
 | # | Task | Depends on | Ref |
 |---|---|---|---|
-| E1 | Cut the Phase 1 client release bundling A1–A11. Confirm no template-picker UI and no non-airplane preset exist in it — the app must be behaviorally invisible. Building/tagging this release does not require D3 to be done yet. | A2, A3, A4, A5, A6, A7, A8, A9, A10, A11 | §1, PRD §15 Phase 1 |
-| E2 | Distribute the build to all dogfood devices. **Must not happen before D3** — a device on this build reads `/thing/...`, which must already hold this account's data. | E1, D3 | §5.1, PRD §9 |
+| E1 | Cut the Phase 1 client release bundling A1–A5 and A9–A11. Confirm no template-picker UI and no non-airplane preset exist in it — the app must be behaviorally invisible. Building/tagging this release does not require D3 to be done yet. | A2, A3, A4, A5, A9, A10, A11 | §1, PRD §15 Phase 1 |
+| E2 | Distribute the build to all dogfood devices, **deleting and reinstalling the app on each** rather than upgrading in place — there is no local migrator, so the existing `/aircraft/`-shaped local database must be discarded (§4). **Must not happen before D3** — a device on this build reads `/thing/...`, which must already hold this account's data. | E1, D3, C2 | §2.7a, §4, §5.1, PRD §9 |
 
 ### Phase F — Grace window + entity-tree cleanup (independent of Phase G's own timing)
 

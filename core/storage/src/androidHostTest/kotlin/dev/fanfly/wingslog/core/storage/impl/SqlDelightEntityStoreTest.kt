@@ -4,13 +4,13 @@ import app.cash.sqldelight.async.coroutines.awaitAsList
 import app.cash.sqldelight.async.coroutines.synchronous
 import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
 import com.google.common.truth.Truth.assertThat
-import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.StorageEntity
 import dev.fanfly.wingslog.core.storage.WireCodec
 import dev.fanfly.wingslog.core.storage.createWingsLogDatabase
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
+import dev.fanfly.wingslog.thing.Thing
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -30,12 +30,12 @@ private const val CURRENT_UID = "uid-writer"
 class SqlDelightEntityStoreTest {
 
   private lateinit var db: WingsLogDatabase
-  private lateinit var store: SqlDelightEntityStore<Aircraft>
+  private lateinit var store: SqlDelightEntityStore<Thing>
   private lateinit var testClock: TestClock
 
   @OptIn(ExperimentalCoroutinesApi::class)
   private val ioContext = UnconfinedTestDispatcher()
-  private val codec = WireCodec(Aircraft.ADAPTER)
+  private val codec = WireCodec(Thing.ADAPTER)
   private val scopeA = EntityScope.userRoot(TEST_USER_ID)
   private val scopeB = EntityScope.userRoot(OTHER_USER_ID)
 
@@ -49,7 +49,7 @@ class SqlDelightEntityStoreTest {
 
     testClock = TestClock(Instant.fromEpochMilliseconds(1_000_000L))
     store = SqlDelightEntityStore(
-      kind = CollectionKind.Aircraft,
+      kind = CollectionKind.Thing,
       codec = codec,
       db = db,
       ioContext = ioContext,
@@ -77,7 +77,7 @@ class SqlDelightEntityStoreTest {
   @Test
   fun signedOut_writes_carry_no_author() = runTest(ioContext) {
     val anonymous = SqlDelightEntityStore(
-      kind = CollectionKind.Aircraft,
+      kind = CollectionKind.Thing,
       codec = codec,
       db = db,
       ioContext = ioContext,
@@ -105,7 +105,7 @@ class SqlDelightEntityStoreTest {
 
     store.put(TEST_AIRCRAFT_ID, aircraft, scopeA)
 
-    val emissions: List<StorageEntity<Aircraft>> = store.observeAll(scopeA)
+    val emissions: List<StorageEntity<Thing>> = store.observeAll(scopeA)
       .first()
     assertThat(emissions).hasSize(1)
     assertThat(emissions[0].id).isEqualTo(TEST_AIRCRAFT_ID)
@@ -138,7 +138,7 @@ class SqlDelightEntityStoreTest {
     )
     store.delete(TEST_AIRCRAFT_ID, scopeA)
 
-    val emissions: List<StorageEntity<Aircraft>> = store.observeAll(scopeA)
+    val emissions: List<StorageEntity<Thing>> = store.observeAll(scopeA)
       .first()
 
     assertThat(emissions).isEmpty()
@@ -154,7 +154,7 @@ class SqlDelightEntityStoreTest {
       scopeA
     )
 
-    val emissionsInB: List<StorageEntity<Aircraft>> = store.observeAll(scopeB)
+    val emissionsInB: List<StorageEntity<Thing>> = store.observeAll(scopeB)
       .first()
 
     assertThat(emissionsInB).isEmpty()
@@ -220,7 +220,7 @@ class SqlDelightEntityStoreTest {
       scopeA
     )
 
-    val emissions: List<StorageEntity<Aircraft>> = store.observeAll(scopeA)
+    val emissions: List<StorageEntity<Thing>> = store.observeAll(scopeA)
       .first()
 
     assertThat(emissions).hasSize(2)
@@ -258,7 +258,7 @@ class SqlDelightEntityStoreTest {
     tailNumber: String = "N00000",
     make: String = "Cessna",
     model: String = "172",
-  ): Aircraft = Aircraft(
+  ): Thing = Thing(
     id = id,
     tail_number = tailNumber,
     make = make,

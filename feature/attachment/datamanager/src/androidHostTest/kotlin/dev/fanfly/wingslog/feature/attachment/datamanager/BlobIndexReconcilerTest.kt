@@ -155,7 +155,7 @@ class BlobIndexReconcilerTest {
     val dispatcher = StandardTestDispatcher(testScheduler)
     val reconciler = BlobIndexReconciler(blobs, TestScope(dispatcher))
 
-    reconciler.onEntityWritten(CollectionKind.Aircraft, scope, ByteArray(0))
+    reconciler.onEntityWritten(CollectionKind.Thing, scope, ByteArray(0))
     advanceUntilIdle()
 
     coVerify(exactly = 0) {

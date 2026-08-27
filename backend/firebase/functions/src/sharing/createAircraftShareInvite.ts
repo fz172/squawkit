@@ -46,7 +46,10 @@ export const createAircraftShareInvite = onCall<CreateRequest, Promise<CreateRes
     // Only the aircraft's owner may invite to it. The aircraft must exist in the CALLER's tree —
     // and since the ACL is namespaced under the caller, an aircraft planted in their own tree only
     // ever mints invites to their own aircraft. Nothing to hijack.
-    const aircraft = await adminDb.doc(`users/${uid}/aircraft/${aircraftId}`).get();
+    //
+    // MIGRATION (Checkpoint 2, thing_migration_design.md §2.7a / task B9a): a callable, so this path
+    // is a hard flip — do not deploy before D3 or this check fails for every un-migrated account.
+    const aircraft = await adminDb.doc(`users/${uid}/thing/${aircraftId}`).get();
     if (!aircraft.exists || aircraft.data()?.deleted === true) {
       throw new HttpsError("not-found", "Aircraft not found.");
     }

@@ -1,10 +1,19 @@
 import { FieldValue } from "firebase-admin/firestore";
+import type { Change, FirestoreEvent } from "firebase-functions/v2/firestore";
+import type { DocumentSnapshot } from "firebase-admin/firestore";
 import { onDocumentWritten } from "firebase-functions/v2/firestore";
 
 import { FUNCTION_REGION } from "../config/env.js";
 import { logger } from "firebase-functions/v2";
 
 import { adminDb, adminStorage } from "../config/firebaseAdmin.js";
+import {
+  ENTITY_SEGMENT_LEGACY,
+  ENTITY_SEGMENT_THING,
+  entityBlobPrefix,
+  entityDocPath,
+  type EntitySegment,
+} from "../config/entitySegment.js";
 import { sharedAircraftRefTombstone } from "./sharedAircraftRefWire.js";
 import { aircraftShareDocPath, type AircraftShareDoc } from "./sharingModels.js";
 
@@ -19,10 +28,13 @@ const BATCH_LIMIT = 400;
  *   2. cascades the delete to the aircraft's child records so they don't orphan (#155/#157 first slice).
  *
  * The cascade runs for every aircraft, shared or not, closing the single-user orphaning gap too.
+ *
+ * [segment] is the entity path segment the event fired for — every path this handler builds must
+ * stay in that same tree (see config/entitySegment.ts).
  */
-export const onAircraftDeleted = onDocumentWritten(
-  { document: "users/{uid}/aircraft/{acId}", region: FUNCTION_REGION },
-  async (event) => {
+const handleDelete =
+  (segment: EntitySegment) =>
+  async (event: FirestoreEvent<Change<DocumentSnapshot> | undefined, Record<string, string>>) => {
     const after = event.data?.after;
     if (after == null || !after.exists) return; // hard-deleted doc — nothing to cascade from
     const wasDeleted = event.data?.before?.exists === true && event.data.before.data()?.deleted === true;
@@ -38,9 +50,25 @@ export const onAircraftDeleted = onDocumentWritten(
     // the cascade stays silent. Reverse these two lines and deleting one aircraft sends every member
     // one notification per record. See onRecordWritten's `readChange`.
     await tearDownShare(uid, acId);
-    await tombstoneChildren(uid, acId);
-    await deleteAircraftBlobs(uid, acId);
-  },
+    await tombstoneChildren(uid, acId, segment);
+    await deleteAircraftBlobs(uid, acId, segment);
+  };
+
+/**
+ * MIGRATION (thing_migration_design.md §2.7 / task B9): registered twice, once per entity segment,
+ * because a v2 Firestore trigger path is a deploy-time literal with no "either segment" wildcard.
+ * Both registrations run the same handler; each is told which segment it fired for so the cascade
+ * stays inside the tree the write happened in. `onAircraftDeleted` keeps its export name so the
+ * already-deployed function is not torn down and recreated; Phase F3 deletes it.
+ */
+export const onAircraftDeleted = onDocumentWritten(
+  { document: `users/{uid}/${ENTITY_SEGMENT_LEGACY}/{acId}`, region: FUNCTION_REGION },
+  handleDelete(ENTITY_SEGMENT_LEGACY),
+);
+
+export const onThingDeleted = onDocumentWritten(
+  { document: `users/{uid}/${ENTITY_SEGMENT_THING}/{acId}`, region: FUNCTION_REGION },
+  handleDelete(ENTITY_SEGMENT_THING),
 );
 
 /**
@@ -79,14 +107,18 @@ async function tearDownShare(deletedBy: string, acId: string): Promise<void> {
  * Delete every blob belonging to this aircraft (#158).
  *
  * No payload decoding needed here, unlike a single-record delete: blobs are **aircraft-scoped**
- * (`users/{uid}/aircraft/{acId}/blobs/{blobId}`), so the whole prefix dies with the aircraft and the
+ * (`users/{uid}/{segment}/{acId}/blobs/{blobId}`), so the whole prefix dies with the aircraft and the
  * question "which record owned this?" never has to be asked.
  *
  * The per-record trigger will also fire for each child this cascade tombstones, and will find the
  * bytes already gone. That is fine — deleting an absent object is a no-op.
  */
-async function deleteAircraftBlobs(uid: string, acId: string): Promise<void> {
-  const prefix = `users/${uid}/aircraft/${acId}/blobs/`;
+async function deleteAircraftBlobs(
+  uid: string,
+  acId: string,
+  segment: EntitySegment,
+): Promise<void> {
+  const prefix = entityBlobPrefix(uid, acId, segment);
   try {
     await adminStorage.bucket().deleteFiles({ prefix });
   } catch (e) {
@@ -100,8 +132,12 @@ async function deleteAircraftBlobs(uid: string, acId: string): Promise<void> {
  * list, so this stays correct as per-aircraft kinds change (e.g. attachments) with no code to keep
  * in sync with the client's CollectionKind.
  */
-async function tombstoneChildren(uid: string, acId: string): Promise<void> {
-  const collections = await adminDb.doc(`users/${uid}/aircraft/${acId}`).listCollections();
+async function tombstoneChildren(
+  uid: string,
+  acId: string,
+  segment: EntitySegment,
+): Promise<void> {
+  const collections = await adminDb.doc(entityDocPath(uid, acId, segment)).listCollections();
   for (const collection of collections) {
     const docs = await collection.get();
     let batch = adminDb.batch();

@@ -1,11 +1,11 @@
 package dev.fanfly.wingslog.feature.aircraft.update.viewmodel
 
-import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.aircraft.PropellerHub
+import dev.fanfly.wingslog.thing.Thing
 
 data class EditAircraftUiState(
-  val aircraft: Aircraft = Aircraft(),
-  val initialAircraft: Aircraft? = null,
+  val aircraft: Thing = Thing(),
+  val initialAircraft: Thing? = null,
   val isLoading: Boolean = true,
   val isSaved: Boolean = false,
   val isDeleted: Boolean = false,

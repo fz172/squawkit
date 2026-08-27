@@ -119,7 +119,7 @@ class AttachmentBrokerRoutingTest {
     sha256 = "sha",
     contentType = "image/jpeg",
     remoteState = remoteState,
-    remotePath = "users/$ownerUid/aircraft/ac1/blobs/$BLOB_ID",
+    remotePath = "users/$ownerUid/thing/ac1/blobs/$BLOB_ID",
     uploadAttempts = 0L,
     deleted = false,
     updatedAt = Instant.fromEpochSeconds(0),

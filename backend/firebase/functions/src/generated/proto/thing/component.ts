@@ -2,54 +2,64 @@
 // versions:
 //   protoc-gen-ts_proto  v2.11.8
 //   protoc               v3.19.1
-// source: aircraft/aircraft.proto
+// source: thing/component.proto
 
 /* eslint-disable */
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
-import { Engine } from "./engine";
+import { Spec } from "./spec";
 
 export const protobufPackage = "";
 
-export interface Aircraft {
+export interface Component {
+  /** stable UUID — the join key for logs/tasks/squawks */
   id: string;
+  /** "airframe" | "engine" | "propeller" | "hub" | "blade" */
+  slotKey: string;
+  label: string;
   make: string;
   model: string;
   serial: string;
-  tailNumber: string;
-  engine: Engine[];
+  children: Component[];
+  spec: Spec[];
 }
 
-function createBaseAircraft(): Aircraft {
-  return { id: "", make: "", model: "", serial: "", tailNumber: "", engine: [] };
+function createBaseComponent(): Component {
+  return { id: "", slotKey: "", label: "", make: "", model: "", serial: "", children: [], spec: [] };
 }
 
-export const Aircraft: MessageFns<Aircraft> = {
-  encode(message: Aircraft, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+export const Component: MessageFns<Component> = {
+  encode(message: Component, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
     if (message.id !== "") {
       writer.uint32(10).string(message.id);
     }
+    if (message.slotKey !== "") {
+      writer.uint32(18).string(message.slotKey);
+    }
+    if (message.label !== "") {
+      writer.uint32(26).string(message.label);
+    }
     if (message.make !== "") {
-      writer.uint32(18).string(message.make);
+      writer.uint32(34).string(message.make);
     }
     if (message.model !== "") {
-      writer.uint32(26).string(message.model);
+      writer.uint32(42).string(message.model);
     }
     if (message.serial !== "") {
-      writer.uint32(34).string(message.serial);
+      writer.uint32(50).string(message.serial);
     }
-    if (message.tailNumber !== "") {
-      writer.uint32(42).string(message.tailNumber);
+    for (const v of message.children) {
+      Component.encode(v!, writer.uint32(58).fork()).join();
     }
-    for (const v of message.engine) {
-      Engine.encode(v!, writer.uint32(50).fork()).join();
+    for (const v of message.spec) {
+      Spec.encode(v!, writer.uint32(66).fork()).join();
     }
     return writer;
   },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): Aircraft {
+  decode(input: BinaryReader | Uint8Array, length?: number): Component {
     const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseAircraft();
+    const message = createBaseComponent();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -66,7 +76,7 @@ export const Aircraft: MessageFns<Aircraft> = {
             break;
           }
 
-          message.make = reader.string();
+          message.slotKey = reader.string();
           continue;
         }
         case 3: {
@@ -74,7 +84,7 @@ export const Aircraft: MessageFns<Aircraft> = {
             break;
           }
 
-          message.model = reader.string();
+          message.label = reader.string();
           continue;
         }
         case 4: {
@@ -82,7 +92,7 @@ export const Aircraft: MessageFns<Aircraft> = {
             break;
           }
 
-          message.serial = reader.string();
+          message.make = reader.string();
           continue;
         }
         case 5: {
@@ -90,7 +100,7 @@ export const Aircraft: MessageFns<Aircraft> = {
             break;
           }
 
-          message.tailNumber = reader.string();
+          message.model = reader.string();
           continue;
         }
         case 6: {
@@ -98,7 +108,23 @@ export const Aircraft: MessageFns<Aircraft> = {
             break;
           }
 
-          message.engine.push(Engine.decode(reader, reader.uint32()));
+          message.serial = reader.string();
+          continue;
+        }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+
+          message.children.push(Component.decode(reader, reader.uint32()));
+          continue;
+        }
+        case 8: {
+          if (tag !== 66) {
+            break;
+          }
+
+          message.spec.push(Spec.decode(reader, reader.uint32()));
           continue;
         }
       }
@@ -110,25 +136,35 @@ export const Aircraft: MessageFns<Aircraft> = {
     return message;
   },
 
-  fromJSON(object: any): Aircraft {
+  fromJSON(object: any): Component {
     return {
       id: isSet(object.id) ? globalThis.String(object.id) : "",
+      slotKey: isSet(object.slotKey)
+        ? globalThis.String(object.slotKey)
+        : isSet(object.slot_key)
+        ? globalThis.String(object.slot_key)
+        : "",
+      label: isSet(object.label) ? globalThis.String(object.label) : "",
       make: isSet(object.make) ? globalThis.String(object.make) : "",
       model: isSet(object.model) ? globalThis.String(object.model) : "",
       serial: isSet(object.serial) ? globalThis.String(object.serial) : "",
-      tailNumber: isSet(object.tailNumber)
-        ? globalThis.String(object.tailNumber)
-        : isSet(object.tail_number)
-        ? globalThis.String(object.tail_number)
-        : "",
-      engine: globalThis.Array.isArray(object?.engine) ? object.engine.map((e: any) => Engine.fromJSON(e)) : [],
+      children: globalThis.Array.isArray(object?.children)
+        ? object.children.map((e: any) => Component.fromJSON(e))
+        : [],
+      spec: globalThis.Array.isArray(object?.spec) ? object.spec.map((e: any) => Spec.fromJSON(e)) : [],
     };
   },
 
-  toJSON(message: Aircraft): unknown {
+  toJSON(message: Component): unknown {
     const obj: any = {};
     if (message.id !== "") {
       obj.id = message.id;
+    }
+    if (message.slotKey !== "") {
+      obj.slotKey = message.slotKey;
+    }
+    if (message.label !== "") {
+      obj.label = message.label;
     }
     if (message.make !== "") {
       obj.make = message.make;
@@ -139,26 +175,28 @@ export const Aircraft: MessageFns<Aircraft> = {
     if (message.serial !== "") {
       obj.serial = message.serial;
     }
-    if (message.tailNumber !== "") {
-      obj.tailNumber = message.tailNumber;
+    if (message.children?.length) {
+      obj.children = message.children.map((e) => Component.toJSON(e));
     }
-    if (message.engine?.length) {
-      obj.engine = message.engine.map((e) => Engine.toJSON(e));
+    if (message.spec?.length) {
+      obj.spec = message.spec.map((e) => Spec.toJSON(e));
     }
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<Aircraft>, I>>(base?: I): Aircraft {
-    return Aircraft.fromPartial(base ?? ({} as any));
+  create<I extends Exact<DeepPartial<Component>, I>>(base?: I): Component {
+    return Component.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<Aircraft>, I>>(object: I): Aircraft {
-    const message = createBaseAircraft();
+  fromPartial<I extends Exact<DeepPartial<Component>, I>>(object: I): Component {
+    const message = createBaseComponent();
     message.id = object.id ?? "";
+    message.slotKey = object.slotKey ?? "";
+    message.label = object.label ?? "";
     message.make = object.make ?? "";
     message.model = object.model ?? "";
     message.serial = object.serial ?? "";
-    message.tailNumber = object.tailNumber ?? "";
-    message.engine = object.engine?.map((e) => Engine.fromPartial(e)) || [];
+    message.children = object.children?.map((e) => Component.fromPartial(e)) || [];
+    message.spec = object.spec?.map((e) => Spec.fromPartial(e)) || [];
     return message;
   },
 };

@@ -109,7 +109,7 @@ interface LocalBlobStore {
   /** Reset `upload_attempts` to 0 so the uploader will retry on its next pass. */
   suspend fun resetUploadAttempts(id: BlobId)
 
-  /** Ids of every live (non-tombstoned) blob under a scope path prefix, e.g. `/users/u1/aircraft/a1/`. */
+  /** Ids of every live (non-tombstoned) blob under a scope path prefix, e.g. `/users/u1/thing/a1/`. */
   suspend fun idsInScopePrefix(scopePrefix: String): List<BlobId>
 
   /**

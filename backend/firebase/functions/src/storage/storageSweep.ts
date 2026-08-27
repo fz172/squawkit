@@ -190,7 +190,7 @@ async function collectOrphanBlobs(
   options: SweepOptions,
   report: SweepReport,
 ): Promise<void> {
-  const aircraftRefs = await adminDb.collection(`users/${uid}/aircraft`).listDocuments();
+  const aircraftRefs = await adminDb.collection(`users/${uid}/thing`).listDocuments();
   const graceCutoffMs = Date.now() - options.orphanGraceDays * 24 * 60 * 60 * 1000;
 
   for (const aircraftRef of aircraftRefs) {
@@ -204,7 +204,7 @@ async function collectOrphanBlobs(
 
     const [files] = await adminStorage
       .bucket()
-      .getFiles({ prefix: `users/${uid}/aircraft/${acId}/blobs/` });
+      .getFiles({ prefix: `users/${uid}/thing/${acId}/blobs/` });
 
     for (const file of files) {
       const blobId = file.name.split("/").pop() ?? "";
@@ -258,7 +258,7 @@ async function blobsReferencedByLiveRecords(
 ): Promise<Set<string> | null> {
   const referenced = new Set<string>();
 
-  for (const collection of await adminDb.doc(`users/${uid}/aircraft/${acId}`).listCollections()) {
+  for (const collection of await adminDb.doc(`users/${uid}/thing/${acId}`).listCollections()) {
     for (const record of (await collection.get()).docs) {
       const data = record.data() as SyncDocWire;
       if (data?.deleted === true) continue; // a tombstone holds no claim on the bytes

@@ -3,7 +3,6 @@ package dev.fanfly.wingslog.feature.sync.data
 import app.cash.sqldelight.async.coroutines.synchronous
 import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
 import com.google.common.truth.Truth.assertThat
-import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.core.model.sharing.SharedAircraftRef
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.DatabaseWriteLock
@@ -16,6 +15,7 @@ import dev.fanfly.wingslog.core.storage.blob.RemoteState
 import dev.fanfly.wingslog.core.storage.blob.UploadScheduler
 import dev.fanfly.wingslog.core.storage.createWingsLogDatabase
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
+import dev.fanfly.wingslog.thing.Thing
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.auth.FirebaseUser
 import dev.gitlive.firebase.firestore.FirebaseFirestoreException
@@ -58,7 +58,7 @@ class SyncEngineTest {
   private lateinit var engine: SyncEngine
 
   private val sharedDocKey =
-    CollectionKind.Aircraft to EntityScope.userRoot(HOST)
+    CollectionKind.Thing to EntityScope.userRoot(HOST)
       .toPath()
   private val sharedNestedKey =
     CollectionKind.MaintenanceLog to EntityScope.aircraftChildUnsafe(
@@ -75,7 +75,7 @@ class SyncEngineTest {
     db = createWingsLogDatabase(driver)
     writeLock = DatabaseWriteLock()
     val codecs = EntityCodecRegistry().apply {
-      register(CollectionKind.Aircraft, WireCodec(Aircraft.ADAPTER))
+      register(CollectionKind.Thing, WireCodec(Thing.ADAPTER))
       register(
         CollectionKind.SharedAircraftRef,
         WireCodec(SharedAircraftRef.ADAPTER)
@@ -129,7 +129,7 @@ class SyncEngineTest {
     runTest(ioContext) {
       seedRef()
       // Local copy of the shared aircraft (doc + nested log) that must be purged once revoked.
-      seedEntity(CollectionKind.Aircraft, EntityScope.userRoot(HOST), SHARED_AC)
+      seedEntity(CollectionKind.Thing, EntityScope.userRoot(HOST), SHARED_AC)
       seedEntity(
         CollectionKind.MaintenanceLog,
         EntityScope.aircraftChildUnsafe(HOST, SHARED_AC),
@@ -153,7 +153,7 @@ class SyncEngineTest {
       // Janitor purged the now-orphaned shared data (doc + nested).
       assertThat(
         rowsAt(
-          CollectionKind.Aircraft,
+          CollectionKind.Thing,
           EntityScope.userRoot(HOST)
         )
       ).isEmpty()

@@ -61,12 +61,12 @@ class TombstoneGc(
 
     for (row in doomed) {
       roots += userRootOf(row.scope_path)
-      if (row.collection == CollectionKind.Aircraft) {
+      if (row.collection == CollectionKind.Thing) {
         // Blobs are aircraft-scoped, so a deleted aircraft takes its whole blob prefix with it
         // (§5.2). This is also what reclaims blobs no surviving payload names — the orphans of a
         // cascade whose child tombstones this device never saw. Built from the aircraft's own
         // scope and id, never an id from elsewhere (the #204 lesson).
-        condemned += blobs.idsInScopePrefix("${row.scope_path}aircraft/${row.id}/%")
+        condemned += blobs.idsInScopePrefix("${row.scope_path}thing/${row.id}/%")
       }
       try {
         condemned += AttachmentRefs.blobIdsIn(row.collection, row.payload)
@@ -87,7 +87,7 @@ class TombstoneGc(
     Logger.i { "TombstoneGc reclaimed ${condemned.size} local blob(s)" }
   }
 
-  /** `/users/u1/aircraft/a1/` → `/users/u1/`; anything else is left as-is and vetoes only itself. */
+  /** `/users/u1/thing/a1/` → `/users/u1/`; anything else is left as-is and vetoes only itself. */
   private fun userRootOf(scopePath: String): String {
     val segments = scopePath.trim('/')
       .split('/')

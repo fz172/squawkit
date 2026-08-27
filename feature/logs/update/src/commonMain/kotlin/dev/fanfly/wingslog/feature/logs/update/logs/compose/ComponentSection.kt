@@ -17,11 +17,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.aircraft.ComponentType
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.feature.logs.sharedassets.util.displayName
+import dev.fanfly.wingslog.thing.Thing
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.component_engine
 import wingslog.feature.logs.sharedassets.generated.resources.blade
@@ -40,7 +40,7 @@ import wingslog.feature.logs.sharedassets.generated.resources.Res as LogRes
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ComponentSection(
-  aircraft: Aircraft?,
+  aircraft: Thing?,
   selectedComponentType: ComponentType,
   selectedSubComponent: String?,
   onComponentTypeChange: (ComponentType) -> Unit,

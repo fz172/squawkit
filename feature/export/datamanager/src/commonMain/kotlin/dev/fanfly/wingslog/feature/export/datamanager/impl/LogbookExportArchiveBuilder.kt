@@ -1,6 +1,5 @@
 package dev.fanfly.wingslog.feature.export.datamanager.impl
 
-import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.aircraft.Attachment
 import dev.fanfly.wingslog.aircraft.AttachmentType
 import dev.fanfly.wingslog.aircraft.CertExpireLimit
@@ -19,6 +18,7 @@ import dev.fanfly.wingslog.core.datetime.toLocalDate
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDateRange
 import dev.fanfly.wingslog.feature.export.datamanager.ExportFormat
 import dev.fanfly.wingslog.feature.export.datamanager.ExportRequest
+import dev.fanfly.wingslog.thing.Thing
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
@@ -735,22 +735,22 @@ class LogbookExportArchiveBuilder(
     technician?.takeIf { it.name.isNotBlank() }
       ?: bundle.techniciansById[technician_id]
 
-  private fun engineCsvName(aircraft: Aircraft, index: Int): String =
+  private fun engineCsvName(aircraft: Thing, index: Int): String =
     if (aircraft.engine.size <= 1) "02_Engine.csv" else "02_Engine_${index + 1}.csv"
 
-  private fun propellerCsvName(aircraft: Aircraft, index: Int): String =
+  private fun propellerCsvName(aircraft: Thing, index: Int): String =
     if (aircraft.engine.count { it.propeller != null } <= 1) "03_Propeller.csv" else "03_Propeller_${index + 1}.csv"
 
-  private fun engineSheetName(aircraft: Aircraft, index: Int): String =
+  private fun engineSheetName(aircraft: Thing, index: Int): String =
     if (aircraft.engine.size <= 1) "02 Engine" else "02 Engine ${index + 1}"
 
-  private fun propellerSheetName(aircraft: Aircraft, index: Int): String =
+  private fun propellerSheetName(aircraft: Thing, index: Int): String =
     if (aircraft.engine.count { it.propeller != null } <= 1) "03 Prop" else "03 Prop ${index + 1}"
 
-  private fun engineCardTitle(aircraft: Aircraft, index: Int): String =
+  private fun engineCardTitle(aircraft: Thing, index: Int): String =
     if (aircraft.engine.size <= 1) "Engine" else "Engine ${index + 1}"
 
-  private fun propellerCardTitle(aircraft: Aircraft, index: Int): String =
+  private fun propellerCardTitle(aircraft: Thing, index: Int): String =
     if (aircraft.engine.count { it.propeller != null } <= 1) "Propeller" else "Propeller ${index + 1}"
 
   private fun MaintenanceLog.inspectionTitles(bundle: AircraftBundle): String =
@@ -822,10 +822,10 @@ class LogbookExportArchiveBuilder(
       is ExportDateRange.Custom -> "$start -> $endInclusive"
     }
 
-  private fun Aircraft.folderName(): String =
+  private fun Thing.folderName(): String =
     "${safeTailNumber()}_${make}_${model}".sanitizePathSegment()
 
-  private fun Aircraft.safeTailNumber(): String =
+  private fun Thing.safeTailNumber(): String =
     tail_number.ifBlank { id.ifBlank { "Aircraft" } }
       .sanitizePathSegment()
 

@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { adminDb, fft } from "./helpers.js";
 
-import { Aircraft } from "../src/generated/proto/aircraft/aircraft.js";
+import { Thing } from "../src/generated/proto/thing/thing.js";
 import { NotificationSettings } from "../src/generated/proto/settings/notification_settings.js";
 import {
   Squawk,
@@ -81,8 +81,8 @@ function envelope(
 
 function aircraftEnvelope(acId: string, tail: string, writerUid = HOST) {
   return envelope(
-    Aircraft.encode(Aircraft.fromPartial({ id: acId, tailNumber: tail })).finish(),
-    "aircraft.Aircraft",
+    Thing.encode(Thing.fromPartial({ id: acId, tailNumber: tail })).finish(),
+    "thing.Thing",
     writerUid,
   );
 }

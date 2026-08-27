@@ -1,7 +1,15 @@
+import type { DocumentSnapshot } from "firebase-admin/firestore";
 import { logger } from "firebase-functions/v2";
+import type { Change as FirestoreChange, FirestoreEvent } from "firebase-functions/v2/firestore";
 import { onDocumentWritten } from "firebase-functions/v2/firestore";
 
 import { FUNCTION_REGION } from "../config/env.js";
+import {
+  ENTITY_SEGMENT_LEGACY,
+  ENTITY_SEGMENT_THING,
+  entityDocPath,
+  type EntitySegment,
+} from "../config/entitySegment.js";
 import { adminDb } from "../config/firebaseAdmin.js";
 import { payloadBytes, type SyncDocWire } from "../shared/syncDocWire.js";
 import {
@@ -43,9 +51,23 @@ import { escalationOf, recordTitleOf, tailNumberOf, type Escalation } from "./re
  * for what the earlier, coalescing design got wrong.
  */
 
-export const onNotifiableRecordWritten = onDocumentWritten(
-  { document: "users/{uid}/aircraft/{acId}/{kind}/{docId}", region: FUNCTION_REGION },
-  async (event) => {
+type WriteEvent = FirestoreEvent<
+  FirestoreChange<DocumentSnapshot> | undefined,
+  Record<string, string>
+>;
+
+/**
+ * MIGRATION (thing_migration_design.md §2.7 / task B9): both triggers below are registered twice,
+ * once per entity segment — a v2 Firestore trigger path is a deploy-time literal with no "either
+ * segment" wildcard, and a deploy is global. The original export names stay bound to the legacy
+ * segment so the already-deployed functions are not torn down and recreated; Phase F3 deletes them.
+ *
+ * [segment] is threaded into the handler because the tail-number read below builds an entity path,
+ * which must stay in the tree the write happened in.
+ */
+const handleRecordWritten =
+  (segment: EntitySegment) =>
+  async (event: WriteEvent) => {
     const hostUid = event.params.uid;
     const aircraftId = event.params.acId;
     const recordType = recordTypeForKind(event.params.kind);
@@ -77,6 +99,7 @@ export const onNotifiableRecordWritten = onDocumentWritten(
         change.actorUid,
         recipients,
         escalation,
+        segment,
       );
       return;
     }
@@ -91,8 +114,24 @@ export const onNotifiableRecordWritten = onDocumentWritten(
       actorUid: change.actorUid,
       nowMs,
       recipients,
+      segment,
     });
+  };
+
+export const onNotifiableRecordWritten = onDocumentWritten(
+  {
+    document: `users/{uid}/${ENTITY_SEGMENT_LEGACY}/{acId}/{kind}/{docId}`,
+    region: FUNCTION_REGION,
   },
+  handleRecordWritten(ENTITY_SEGMENT_LEGACY),
+);
+
+export const onNotifiableThingRecordWritten = onDocumentWritten(
+  {
+    document: `users/{uid}/${ENTITY_SEGMENT_THING}/{acId}/{kind}/{docId}`,
+    region: FUNCTION_REGION,
+  },
+  handleRecordWritten(ENTITY_SEGMENT_THING),
 );
 
 /**
@@ -104,9 +143,9 @@ export const onNotifiableRecordWritten = onDocumentWritten(
  * heard about it. That also means this trigger's writes are always "updated" — never created (the
  * aircraft already exists once it can be shared) or deleted (filtered here).
  */
-export const onNotifiableAircraftWritten = onDocumentWritten(
-  { document: "users/{uid}/aircraft/{acId}", region: FUNCTION_REGION },
-  async (event) => {
+const handleAircraftWritten =
+  (segment: EntitySegment) =>
+  async (event: WriteEvent) => {
     const hostUid = event.params.uid;
     const aircraftId = event.params.acId;
 
@@ -130,10 +169,20 @@ export const onNotifiableAircraftWritten = onDocumentWritten(
       actorUid: change.actorUid,
       nowMs: Date.now(),
       recipients,
+      segment,
       // The write in hand IS the aircraft, so its tail number needs no second read.
       tailNumber: tailNumberOf(change.after) ?? undefined,
     });
-  },
+  };
+
+export const onNotifiableAircraftWritten = onDocumentWritten(
+  { document: `users/{uid}/${ENTITY_SEGMENT_LEGACY}/{acId}`, region: FUNCTION_REGION },
+  handleAircraftWritten(ENTITY_SEGMENT_LEGACY),
+);
+
+export const onNotifiableThingWritten = onDocumentWritten(
+  { document: `users/{uid}/${ENTITY_SEGMENT_THING}/{acId}`, region: FUNCTION_REGION },
+  handleAircraftWritten(ENTITY_SEGMENT_THING),
 );
 
 // --- The write itself --------------------------------------------------------------------------
@@ -209,6 +258,8 @@ type ActivityFanOut = {
   nowMs: number;
   recipients: string[];
   tailNumber?: string;
+  /** The entity segment the triggering write landed on — see config/entitySegment.ts. */
+  segment: EntitySegment;
 };
 
 /** One concrete notification per write, naming the record and what happened to it. */
@@ -216,7 +267,7 @@ async function fanOutActivity(input: ActivityFanOut): Promise<void> {
   const { hostUid, aircraftId, recordType, recordId, recordTitle, kind, actorUid, nowMs, recipients } =
     input;
 
-  const label = input.tailNumber ?? (await readTailNumber(hostUid, aircraftId));
+  const label = input.tailNumber ?? (await readTailNumber(hostUid, aircraftId, input.segment));
   const actorName = await readActorDisplayName(hostUid, aircraftId, actorUid);
 
   const sent = await fanOut(
@@ -257,9 +308,10 @@ async function fanOutEscalation(
   actorUid: string,
   recipients: string[],
   escalation: Escalation,
+  segment: EntitySegment,
 ): Promise<void> {
   const [tailNumber, actorName] = await Promise.all([
-    readTailNumber(hostUid, aircraftId),
+    readTailNumber(hostUid, aircraftId, segment),
     readActorDisplayName(hostUid, aircraftId, actorUid),
   ]);
 
@@ -326,9 +378,13 @@ async function fanOut(
  * Empty is passed through rather than substituted with the id: the title is "%1$s · Squawks", and a
  * raw UUID there is worse than a title that simply reads "Squawks".
  */
-async function readTailNumber(hostUid: string, aircraftId: string): Promise<string> {
+async function readTailNumber(
+  hostUid: string,
+  aircraftId: string,
+  segment: EntitySegment,
+): Promise<string> {
   try {
-    const snap = await adminDb.doc(`users/${hostUid}/aircraft/${aircraftId}`).get();
+    const snap = await adminDb.doc(entityDocPath(hostUid, aircraftId, segment)).get();
     if (!snap.exists) return "";
     return tailNumberOf(snap.data() as SyncDocWire) ?? "";
   } catch (e) {
