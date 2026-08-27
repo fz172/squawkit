@@ -29,6 +29,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -37,6 +38,7 @@ import dev.fanfly.wingslog.aircraft.ComponentType
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.datetime.toLocalDate
+import dev.fanfly.wingslog.core.ui.common.compose.jumpTargetHighlight
 import dev.fanfly.wingslog.core.ui.common.formatToOneDecimalPlace
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
@@ -63,6 +65,8 @@ fun MaintenanceLogTable(
   rows: List<ListRow<MaintenanceLog>>,
   onLogClick: (MaintenanceLog) -> Unit,
   listState: LazyListState = rememberLazyListState(),
+  /** See [MaintenanceLogListContent]'s parameter of the same name. */
+  scrollToLogId: String? = null,
   modifier: Modifier = Modifier,
 ) {
   Surface(
@@ -107,6 +111,7 @@ fun MaintenanceLogTable(
             is ListRow.Item -> LogRow(
               log = row.value,
               onClick = { onLogClick(row.value) },
+              isJumpTarget = row.value.id == scrollToLogId,
             )
           }
           HorizontalDivider(
@@ -158,6 +163,7 @@ private fun RowScope.HeaderCell(
 private fun LogRow(
   log: MaintenanceLog,
   onClick: () -> Unit,
+  isJumpTarget: Boolean = false,
 ) {
   val dateStr = log.timestamp?.toLocalDate()
     ?.toDisplayFormat()
@@ -167,6 +173,9 @@ private fun LogRow(
   Row(
     modifier = Modifier
       .fillMaxWidth()
+      // Flat, undivided by rounded corners like the rest of this table — RectangleShape rather than
+      // jumpTargetHighlight's card-shaped default.
+      .jumpTargetHighlight(active = isJumpTarget, shape = RectangleShape)
       .clickable(onClick = onClick)
       .padding(horizontal = Spacing.large, vertical = Spacing.medium),
     verticalAlignment = Alignment.CenterVertically,

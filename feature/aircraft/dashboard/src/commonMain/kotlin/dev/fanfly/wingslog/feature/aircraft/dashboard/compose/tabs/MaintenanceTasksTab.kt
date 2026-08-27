@@ -46,12 +46,23 @@ fun MaintenanceTasksTab(
   // See SquawkTab for the root-coordinate offset scheme.
   var contentTopY by remember { mutableStateOf(0f) }
   var targetCardY by remember(scrollToTaskId) { mutableStateOf<Float?>(null) }
-  LaunchedEffect(scrollToTaskId) {
-    val id = scrollToTaskId ?: return@LaunchedEffect
-    val inHistory = state.completedTasks.any { it.card.id == id }
-    val inActive = state.activeTasks.any { it.card.id == id }
-    if (!inHistory && !inActive) return@LaunchedEffect
+  // null = not found in either list yet, true = in history, false = active — three states so a
+  // not-yet-synced tap and a status flip both re-trigger below (see SquawkTab for why: a tapped
+  // notification can arrive and be acted on before the local sync pull carrying the very status
+  // change it announced has landed).
+  val taskInHistory: Boolean? = scrollToTaskId?.let { id ->
+    when {
+      state.completedTasks.any { it.card.id == id } -> true
+      state.activeTasks.any { it.card.id == id } -> false
+      else -> null
+    }
+  }
+  LaunchedEffect(scrollToTaskId, taskInHistory) {
+    val inHistory = taskInHistory ?: return@LaunchedEffect
     showComplied = inHistory
+    // Reset on the re-run too — the target card just moved between sub-views, so its old on-screen
+    // position no longer means anything.
+    targetCardY = null
     val cardY = snapshotFlow { targetCardY }.filterNotNull()
       .first()
     scrollState.animateScrollTo(

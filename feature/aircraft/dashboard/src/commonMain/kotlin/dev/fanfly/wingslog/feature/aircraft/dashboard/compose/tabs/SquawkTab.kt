@@ -98,11 +98,18 @@ fun SquawkTab(
   val scrollState = rememberScrollState()
   var contentTopY by remember { mutableStateOf(0f) }
   var targetCardY by remember(scrollToSquawkId) { mutableStateOf<Float?>(null) }
-  LaunchedEffect(scrollToSquawkId) {
-    val id = scrollToSquawkId ?: return@LaunchedEffect
-    val target =
-      state.squawks.find { it.squawk.id == id } ?: return@LaunchedEffect
+  // Keyed on the target's status too, not just its id: a tapped notification can arrive and be acted
+  // on before the local sync pull carrying the very status change it announced has landed, so this
+  // can first see the squawk as still OPEN. Re-running once the real status shows up (rather than
+  // only once, on id alone) is what corrects showClosed and the scroll target instead of leaving both
+  // stuck on Open.
+  val scrollTarget = scrollToSquawkId?.let { id -> state.squawks.find { it.squawk.id == id } }
+  LaunchedEffect(scrollToSquawkId, scrollTarget?.status) {
+    val target = scrollTarget ?: return@LaunchedEffect
     showClosed = target.status != SquawkStatus.OPEN
+    // Reset (not just on a fresh id, but on the status flip re-run too) — the target card just moved
+    // between sub-views, so its old on-screen position no longer means anything.
+    targetCardY = null
     // Wait until the target card lays out in the (possibly just-switched) sub-view, then scroll once.
     val cardY = snapshotFlow { targetCardY }.filterNotNull()
       .first()

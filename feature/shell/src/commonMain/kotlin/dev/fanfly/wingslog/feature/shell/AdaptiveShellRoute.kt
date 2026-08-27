@@ -114,6 +114,10 @@ fun AdaptiveShellRoute(
   // scroll to) rather than navigating, so all of it is applied here. Handling it from inside this
   // route needs no auth gate of its own: the shell destination only composes once the auth graph has
   // handed off, so a tap that cold-started the app simply stays pending until then.
+  //
+  // Consuming still only happens while this destination is composed and STARTED, which is exactly
+  // why PopToShellOnNotificationTap exists at the app root (#559) — it pops whatever is covering the
+  // shell so this collector actually gets to run promptly instead of only once the pilot backs out.
   val pendingTapTarget by NotificationTapRouter.pending.collectAsStateWithLifecycle()
   LaunchedEffect(pendingTapTarget) {
     val target = pendingTapTarget ?: return@LaunchedEffect
