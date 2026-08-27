@@ -160,17 +160,18 @@ context genuinely is:
 | Surface | What the user reads |
 |---|---|
 | Aircraft detail screen | "Add aircraft" · "2 open squawks" · "AOG" |
-| Home detail screen | "Add home" · "2 open issues" · "Emergency" |
+| Home detail screen | "Add home" · "2 need attention" · "Emergency" |
 | Bike detail screen | "Add bike" · "2 open issues" · "Unrideable" |
 | Mixed Stuff switcher / template picker | "Add a new thing" · "What is it?" |
-| Custom template, unnamed | "Add a thing" · "2 open issues" · "Down" |
+| Custom template, unnamed | "Add a thing" · "2 need attention" · "Down" |
 
 An aircraft owner reads the word "thing" in exactly one place: the create button on a mixed-Stuff account. On an
 all-aircraft account even that is overridden to "Add aircraft" (§8.2). The playful word buys warmth at the entry
 point and costs nothing at the places where precision is the product.
 
 > **Settled.** Proto message `Aircraft` → `Thing`; Kotlin identifiers follow. `CollectionKind.Aircraft.wireName`
-> stays `"aircraft"` — see §6. Subscription's `aircraftLimit` → `thingLimit`. The home surface is **Stuff**.
+> moves to `"thing"` — a one-time migration, not a permanent mismatch; see §6 and §9. Subscription's
+> `aircraftLimit` → `thingLimit`. The home surface is **Stuff**.
 
 ### 3.3 What transfers unchanged
 
@@ -200,7 +201,7 @@ the app does differently for a home versus an airplane is expressed here, and no
 
 | # | Block | Controls |
 |---|---|---|
-| 1 | **Identity** | Template id, version, display name, icon, sort order in the picker. |
+| 1 | **Identity** | Template id, version, display name, icon, sort order in the picker, and the form's declared section labels (`groups`, §4.2). |
 | 2 | **Lexicon** (§4.5) | Every domain noun and status word: what a Thing is called, what a defect is called, what "down" is called. |
 | 3 | **Spec fields** (§4.2) | Which identity/detail fields the Thing has, their labels, input types, validation, and grouping on the form. |
 | 4 | **Component slots** (§4.3) | The default component tree, cardinality, and which meters accrue against which slot. |
@@ -220,14 +221,17 @@ most presets declare — and that map onto existing proto fields for storage —
 ```proto
 message SpecField {
   string key = 1;              // "make", "tail_number", "vin", "address", "year_built"
-  string label = 2;            // "Make", "Tail number", "VIN", "Address"
+  string label = 2;            // "Make", "Tail number", "VIN", "Address" — the field's caption
   InputType input = 3;         // TEXT | NUMBER | DATE | YEAR | ENUM | MULTILINE
   bool required = 4;
-  bool monospace = 5;          // render in JetBrains Mono — identifiers and serials
+  bool is_identifier = 5;      // VIN, tail number, serial, hull ID: renders in JetBrains Mono
+                                // (the Mono Rule, DESIGN.md) and is matched exactly, never fuzzy
   string hint = 6;             // "N12345"
   repeated string enum_values = 7;
-  string group = 8;            // section header on the edit form ("Identity", "Property")
-  bool title_candidate = 9;    // may be offered as the Thing's display name
+  string group = 8;            // one of the template's declared `groups` (Identity block, §4.1) —
+                                // a section header on the edit form, validated like spec_key (§4.7)
+  bool title_candidate = 9;    // may be offered as the Thing's display name when the user hasn't
+                                // set one — distinct from `label`, which is just the field's caption
 }
 ```
 
@@ -244,18 +248,24 @@ and instantiated per Thing:
 message ComponentSlot {
   string key = 1;                  // "airframe" | "engine" | "hvac" | "water_heater"
   string label = 2;                // "Engine", "Furnace / HVAC", "Water heater"
-  Cardinality cardinality = 3;     // EXACTLY_ONE | ZERO_OR_ONE | ZERO_OR_MORE
+  Cardinality cardinality = 3;     // EXACTLY_ONE | ZERO_OR_ONE | ZERO_OR_MORE — also governs
+                                    // whether the user can add one: ZERO_OR_MORE always allows it,
+                                    // ZERO_OR_ONE allows it only while absent, EXACTLY_ONE never does
   bool serial_required = 4;
   repeated string spec_keys = 5;   // which of make/model/serial/etc. this slot shows
   repeated string meter_keys = 6;  // meters that accrue against this slot
   repeated ComponentSlot children = 7;
-  bool user_addable = 8;           // may the user create extra components in this slot
 }
 ```
 
+> **No separate `user_addable` flag.** An earlier draft had one; it was redundant with `cardinality` in every
+> case that matters, and a field that can only ever restate its neighbor is a bug waiting for the two to drift.
+
 Note that make / model / serial are genuinely universal at the *component* level even where they are meaningless
-at the Thing level — a furnace has all three, a house does not. The home preset is the case that proves the tree
-needs to carry them and the root does not.
+at the Thing level — a boat's outboard has all three, the Thing itself may not (a bike's Thing-level spec is
+frame number, not make/model/serial). And the tree itself is optional: **Home declares zero component slots**
+(§5.1) — capability, not compromise, and the strongest proof that the tree isn't a hidden second "universal core"
+after §4.2 already killed the first one.
 
 > **Why component IDs, not serials.** Today a log, task, or squawk points at a component with `ComponentType` +
 > `component_serial`. That breaks the moment two components share a blank serial (universal on bikes, common on
@@ -282,6 +292,12 @@ message Meter {
 }
 ```
 
+> **Why `key` and `unit` stay strings, not enums.** A custom template can declare a meter no built-in preset has
+> — "cycles" for a 3D printer, "flights" for a sailplane — and an enum can't grow to fit a user-authored template
+> without a code release, which is exactly the `ComponentType` trap called out in §6 ("frozen, not extended").
+> Built-in presets are Kotlin declarations (§4.7) and get an enum's typo-safety for free at compile time; only
+> user-authored values are genuinely free text, and that is the case an enum can't cover.
+
 A log carries `repeated MeterReading { meter_key, component_id, value }`. `MaintenanceOverview`'s three
 `current_*_time` fields become `repeated MeterReading current`, computed the same way (max over logs).
 
@@ -301,11 +317,11 @@ message Noun { string singular = 1; string plural = 2; string article = 3; }  //
 
 message Lexicon {
   Noun thing = 1;        // aircraft · car · bike · boat · home · thing
-  Noun defect = 2;       // squawk · issue · fault
+  Noun defect = 2;       // squawk · issue · fault · attention
   Noun task = 3;         // inspection · service · chore
   Noun log = 4;          // logbook entry · service record · work record
   Noun component = 5;    // component · part · system
-  Noun technician = 6;   // mechanic · shop · contractor
+  Noun technician = 6;   // mechanic · shop · person
   string ready_status = 7;       // "Airworthy" · "Ready" · "Good"
   string down_status = 8;        // "AOG" · "Dead in the water" · "Emergency"
   string down_status_long = 9;   // "Aircraft on ground" · "Out of service"
@@ -320,6 +336,15 @@ message Lexicon {
 the Dashboard, they name the **notification channel** a user sees in their OS settings and the title of every
 grounded-tier notification (§8.5). That is the one place a lexicon string escapes the app's own surfaces, which
 is why it is a whole string rather than a substitution.
+
+> **"Squawk" isn't always a defect.** In aviation the line between a one-off compliance task (an AD or SB) and a
+> squawk (something's wrong right now) is sharp. Outside aviation it often isn't — a homeowner using this app to
+> track "clean the gutters" and "the fence gate is broken" wants one inbox, not a judgment call about which
+> lifecycle a random TODO belongs to. Rather than build a second concept, ambiguous domains get the existing
+> squawk lifecycle under a word that doesn't presuppose failure: `defect` resolves to **"attention"** for Home and
+> Custom, where "something needs attention" covers both a broken gate and a chore nobody scheduled. Aviation and
+> the other vehicle presets keep a defect-shaped word (issue, squawk) because for them the one-off-task-vs-defect
+> boundary genuinely is clean.
 
 ### 4.6 Scheduling & due calculation
 
@@ -395,8 +420,8 @@ field, and it is what makes templates safe to evolve.
 #### Validation
 
 A config is invalid if it enables `METER` rules while declaring no meters, references a `meter_key` or `spec_key`
-that does not exist, declares a duplicate key, has a starter task referencing an undeclared meter, or ships an
-empty lexicon noun. Built-in presets are validated by a unit test that loads all of them; custom templates are
+that does not exist, declares a `SpecField.group` not present in Identity's `groups` list, declares a duplicate
+key, has a starter task referencing an undeclared meter, or ships an empty lexicon noun. Built-in presets are validated by a unit test that loads all of them; custom templates are
 validated at save time with inline errors.
 
 > **Where the config lives.** **Built-in presets are Kotlin declarations** in a new `core:template` module —
@@ -431,20 +456,35 @@ message Capabilities {
 
 | Capability | Airplane | Car | Moto | Bike | Boat | Home | Custom |
 |---|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
-| Components | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | off |
+| Components | ✓ | ✓ | ✓ | ✓ | ✓ | off | off |
 | Meters | ✓ | ✓ | ✓ | ✓ | ✓ | — | ✓ |
 | Compliance (recalls / ADs) | ✓ | ✓ | ✓ | — | — | — | off |
 | Technician picker | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Technician certificates | ✓ | — | — | — | — | — | off |
-| Serial prompt at creation | ✓ | ✓ | ✓ | — | ✓ | — | off |
+| Serial prompt at creation | ✓ | — | — | — | — | off | off |
 | Seasonal rules | — | — | ✓ | — | ✓ | ✓ | ✓ |
 | Export layout | logbook | generic | generic | generic | generic | generic | generic |
 | Due-soon window | 30 d | 30 d | 30 d | 14 d | 30 d | 14 d | 30 d |
 | End-of-month snap | ✓ | — | — | — | — | — | — |
 
+> **Why Car and Motorcycle stay separate presets.** They look alike at this table's altitude — engine, brakes,
+> suspension — but the component and spec vocabulary genuinely differs (final drive vs. transmission, no
+> doors/interior, different registration and insurance classes), and motorcyclists reliably bristle at being
+> folded into "automobile." Merging them would save one row in a seven-item picker at the cost of the
+> terminology precision this pivot is built on. If the picker ever needs to shrink, Bike (pedal) is the more
+> defensible merge candidate with Custom, not Car with Moto.
+>
+> **A preset worth adding later:** drone / RC aircraft. Flight hours and battery cycles instead of tach time,
+> frame/motor/battery/gimbal component slots, and an audience already primed by this app's aviation register —
+> a strong next candidate once the v1 picker has proven itself (§5.2).
+
 Concretely, on the log form: the home template hides the meter fields entirely, drops the serial autofill, and
-labels the person field "Contractor"; the airplane template shows three meter fields, the certificate-bearing
-technician picker, and the compliance chip. Same screen, same ViewModel, same proto — one config.
+labels the person field "Person" rather than assuming a paid contractor — a homeowner splitting chores with a
+spouse or doing the work themselves is at least as common as hiring one out. No vehicle preset (car, motorcycle,
+boat) prompts for component serials at creation either — most owners don't know their engine or chassis serial
+off-hand, and accepting one later costs nothing. The airplane template shows three meter fields, the
+certificate-bearing technician picker, and the compliance chip. Same screen, same ViewModel, same proto — one
+config.
 
 > **No notification capability flag.** Every domain wants to be told that something got worse or came due, so
 > the urgency ladder is unconditional and the four notification toggles stay a user preference rather than a
@@ -478,8 +518,8 @@ and starter packs are the cheapest possible content moat, because they are data.
 | **Motorcycle** | Make · Model · Year · VIN *(mono)* · Plate | Frame ×1 · Engine ×1 · Final drive ×0-1 · Brakes ×0-1 · Suspension ×0-1 · Tires ×0-N | Odometer *(primary)* · Engine hours | Issue / Off the road |
 | **Bike** | Make · Model · Frame number *(mono)* · Size · Year | Frame ×1 · Drivetrain ×0-1 · Fork ×0-1 · Rear shock ×0-1 · Brakes ×0-1 · Wheels ×0-N | Distance *(primary)* · Ride hours | Issue / Unrideable |
 | **Boat** | Make · Model · Year · Hull ID (HIN) *(mono)* · Registration · Length | Hull ×1 · Engine ×N · Outdrive/Saildrive ×0-N · Generator ×0-N · Rigging ×0-1 | Engine hours *(primary, per engine)* · Generator hours · Nautical miles | Issue / Dead in the water |
-| **Home** *(no meters)* | Address · Year built · Square footage · Purchase date *(no make/model/serial)* | HVAC ×0-N · Water heater ×0-N · Roof ×0-1 · Gutters ×0-1 · Appliance ×0-N · Water treatment ×0-1 · Septic ×0-1 · Irrigation ×0-1 · Chimney ×0-N · Deck ×0-1 | **None** | Issue / Emergency |
-| **Custom** | Name only, user-extendable | Off by default, user-addable | One generic "Usage", renameable | Issue / Down |
+| **Home** *(no meters, no components)* | None beyond the Thing's own name *(e.g. "Home", "655 Lincoln")* | **None** | **None** | Attention / Emergency |
+| **Custom** | Name only; components and the one meter are added per-Thing, not template-edited until Phase 4 (§16 #3) | Off by default, user-addable | One generic "Usage", renameable | Attention / Down |
 
 ### 5.1 The home preset, in detail
 
@@ -487,17 +527,25 @@ Home is the preset that stresses every joint in the design, so it is specified r
 
 | | |
 |---|---|
-| Lexicon | thing: home / homes · defect: issue · task: **chore** · log: work record · component: system · technician: **contractor** |
+| Lexicon | thing: home / homes · defect: **attention** · task: **chore** · log: work record · component: system · technician: **person** |
 | Status words | ready: "Good" · down: "Emergency" |
-| Spec fields | Address *(title candidate)* · Year built · Square footage · Purchase date |
+| Spec fields | **None** — the Thing's own `name` (e.g. "Home", "655 Lincoln") is enough |
+| Components | **None** |
 | Meters | none — date-only scheduling |
 | Rules enabled | TIME · **SEASONAL** · ON_CONDITION · LINKED · IMMEDIATE *(no METER)* |
 | Due-soon window | 14 days · no end-of-month snapping |
-| Capabilities off | compliance · technician certificates · serial prompt · weight & balance |
+| Capabilities off | components · compliance · technician certificates · serial prompt · weight & balance |
 
-**Components** are systems and appliances, each carrying make / model / serial — a furnace has all three even
-though the house has none. Serials are never prompted for, only accepted, because a homeowner adding their house
-should not be blocked on climbing behind the water heater.
+**No components, no extra spec fields.** An earlier draft gave Home a system tree (HVAC, water heater, roof,
+gutters...) mirroring the vehicle presets, plus Address, Year built, Square footage, and Purchase date as spec
+fields. Review feedback cut both: most homeowners can't name half of what's in their own mechanical room, a
+component picker in front of "clean the gutters" is a step that buys nothing, and purchase date/square footage
+are private details this app has no use for. The Thing's own `name` already carries what "Address" was for — the
+user types "Home," "The lake house," or "655 Lincoln" and that is the whole identity. This makes Home structurally
+identical to Custom with `capabilities.components` off; what still distinguishes it is the lexicon, the starter
+pack below, and the seasonal-scheduling defaults — which is the point. Home was never a different *shape*, just
+different words and a smarter default schedule. Every chore in the starter pack below is a Thing-level task, with
+no `component_id`, the same as any Custom-template task.
 
 **Starter pack** (the highest-value pack in the catalog):
 
@@ -514,41 +562,47 @@ should not be blocked on climbing behind the water heater.
 | Refrigerator water filter | Time, 6 months |
 | Septic pump-out | Time, 36 months |
 
-**What home proves about the design:** spec fields cannot assume make/model/serial; meters must be genuinely
-optional rather than zeroed; scheduling needs a calendar-anchored rule; and the aviation end-of-month convention
-has to be config, not code. Every one of those is a correction the preset forced, and each makes the abstraction
-more honest rather than more elaborate.
+**What home proves about the design:** spec fields and the component tree are not universal — a Thing can have
+zero of either; meters must be genuinely optional rather than zeroed; scheduling needs a calendar-anchored rule;
+and the aviation end-of-month convention has to be config, not code. Every one of those is a correction the
+preset forced, and each makes the abstraction more honest rather than more elaborate.
 
 ### 5.2 Presets deliberately not in v1
 
 **3D printer** and **shop / garage equipment** were in the original framing and are covered in v1 by **Custom**.
 They are pure data — a config plus a starter pack, no code — so they ship the moment the content is worth
 shipping. Holding them back keeps the v1 picker to seven legible choices rather than nine, and lets the printer
-pack be written once there is a user asking for it. Same logic for tractors, HVAC-only rentals, sailplanes, and
-firearms.
+pack be written once there is a user asking for it. Same logic for tractors, HVAC-only rentals, sailplanes,
+**drone / RC aircraft** (§4.8), and firearms.
 
 ---
 
 ## 6. Data Model Changes
 
-All changes are **additive at the proto level**. No field is removed or renumbered in v1; legacy fields are
-dual-written and deprecated in place.
+**This is a clean cutover, not a permanent fork.** An earlier draft of this section kept the aircraft-shaped
+fields forever — dual-written on every write, never removed — to avoid ever breaking a client that hadn't
+updated. Review feedback rejected that trade: the Things feature has never shipped to a single client, so there
+is no installed base running Things-aware code yet, and every account's data is uniformly aircraft-shaped today.
+That means the compatibility problem is only ever "some of *this account's own* devices haven't updated yet"
+(§9), not "some client somewhere is still running last year's model forever." Fields 2–6 below exist for the
+length of that rollout window and are deleted — not just deprecated — once it closes (§9.2, §15 Phase 5).
 
 ```proto
-// aircraft.proto → thing.proto (message renamed; wireName stays "aircraft")
+// aircraft.proto → thing.proto (message renamed; wireName moves to "thing" — see below)
 message Thing {
   string id = 1;
 
-  // --- legacy storage slots, dual-written for template "airplane" ---
-  // Now just the storage location for the conventional spec keys make/model/serial,
-  // and for the airplane preset's engine tree. Not a privileged core.
+  // --- transitional storage slots, dual-written only until the version floor clears (§9.2) ---
+  // The storage location for the conventional spec keys make/model/serial, and for the
+  // airplane preset's engine tree, until the one-time migration moves them into spec/components
+  // and this block is deleted in a follow-up proto revision.
   string make = 2;
   string model = 3;
   string serial = 4;
   string tail_number = 5;
-  repeated Engine engine = 6;      // deprecated: mirrored from components
+  repeated Engine engine = 6;      // transitional: mirrored from components
 
-  // --- new ---
+  // --- new, permanent ---
   string template_id = 7;          // "airplane" | "car" | "home" | ... | custom UUID
   int32 template_version = 8;      // preset revision at creation (informational — see §4.7)
   string name = 9;                 // user-chosen display name ("N12345", "The house")
@@ -572,20 +626,23 @@ message Component {
 
 | Message | Change | Compatibility |
 |---|---|---|
-| `Aircraft` → `Thing` | Add `template_id`, `template_version`, `name`, `spec`, `components`. Keep 2–6. | Old clients read 2–6 and ignore the rest. New clients writing an airplane-template Thing keep 2–6 in sync. |
-| `MaintenanceLog` | Add `component_id` and `repeated MeterReading meters`. Keep `component_type`, `component_serial`, `engine_hour`, `airframe_time`, `prop_time`. | Dual-written for airplane-template Things; new-only for other templates, gated by the version floor in §9.2. |
-| `MaintenanceTask` | Add `component_id`; add `MeterRule` and `SeasonalRule` to the `InspectionRule` oneof; add `force_due_meter { key, value }`. Keep `component`, `engine_hour_rule`, `force_due_engine_hour`. | An `EngineHourRule` reads as a `MeterRule` on the engine-hours meter; writes emit both for airplanes. A `SeasonalRule` is invisible to old clients — see the risk in §9.2. |
-| `Squawk` | Add `component_id`. Keep `component_type`, `component_serial`. | Same dual-write rule. |
-| `MaintenanceOverview` | Add `repeated MeterReading current` and `map<string,uint32> log_count_by_slot`. Keep the four legacy log counters (`total_log_count`, `airframe_log_count`, `engine_log_count`, `propeller_log_count`) and the three `current_*_time` doubles. | Recomputed locally from logs; no migration risk. |
-| `ComponentType` | **Frozen, not extended.** Retained only for legacy fields; new code reads `slot_key`. | Adding enum values would be a trap — an enum can never cover user-defined slots. |
+| `Aircraft` → `Thing` | Add `template_id`, `template_version`, `name`, `spec`, `components`. Fields 2–6 are transitional. | Pre-floor clients read 2–6 and ignore the rest; post-floor clients dual-write 2–6 for airplane Things until the migration runs, then 2–6 are deleted (§9.2). |
+| `MaintenanceLog` | Add `component_id` and `repeated MeterReading meters`. Keep `component_type`, `component_serial`, `engine_hour`, `airframe_time`, `prop_time` for the same transitional window. | Dual-written for airplane-template Things only during the floor window; legacy fields deleted once every device on the account clears it. |
+| `MaintenanceTask` | Add `component_id`; add `MeterRule` and `SeasonalRule` to the `InspectionRule` oneof; add `force_due_meter { key, value }`. Keep `component`, `engine_hour_rule`, `force_due_engine_hour` transitionally. | An `EngineHourRule` reads as a `MeterRule` on the engine-hours meter; writes emit both until the floor clears. A `SeasonalRule` is invisible to a pre-floor client — see the risk in §9.2. |
+| `Squawk` | Add `component_id`. Keep `component_type`, `component_serial` transitionally. | Same bounded dual-write rule. |
+| `MaintenanceOverview` | Add `repeated MeterReading current` and `map<string,uint32> log_count_by_slot`. Legacy log counters and `current_*_time` doubles retired once the floor clears. | Recomputed locally from logs; no migration risk. |
+| `ComponentType` | **Frozen, not extended.** Retained only for the transitional fields above; new code reads `slot_key`. | Adding enum values would be a trap — an enum can never cover user-defined slots. |
 | `ThingTemplate` *(new)* | The config from §4, as proto, for custom templates. | New `CollectionKind.ThingTemplate` — the twelfth kind, after `NotificationSettings` took the count to eleven. Zero-migration per the R1 design (§4.2.1): the `collection` column is `TEXT` and `CollectionKind.ALL` is coverage-tested against `sealedSubclasses`, so a forgotten entry fails the build. |
 
-> **`CollectionKind.Aircraft.wireName` stays `"aircraft"`.** The wire name is the persisted `collection` column
-> value and the Firestore subcollection path. Renaming it would mean rewriting every stored row and every synced
-> document on every device, for zero user benefit. The `schemaName` forensic tag becomes `"aircraft.Thing"`, which
-> is safe because routing goes through `fromWire`, not `schemaName`. Expect a permanent, documented mismatch
-> between the wire name "aircraft" and the concept "Thing" — the cheap side of the trade, and worth a comment in
-> `CollectionKind.kt` so the next reader doesn't try to "fix" it.
+> **`CollectionKind.Aircraft.wireName` moves to `"thing"`, and the Firestore path moves with it.** The wire name
+> is both the persisted `collection` column value and the Firestore subcollection path, and an earlier draft kept
+> both as `"aircraft"` permanently to avoid a rewrite. That reasoning doesn't survive the point above: because
+> nothing has ever synced Things-shaped data, the one-time migration (§9.1) can rename the local column value and
+> copy each account's `/aircraft` subcollection to `/thing` in the same pass that builds the component tree —
+> one bounded job per account, gated by the same version floor, not a standing liability. The old `/aircraft`
+> path is deleted once the copy is confirmed; `schemaName` becomes `"thing.Thing"`, consistent with the new
+> wireName rather than a permanently documented mismatch. `CollectionKind.kt` gets a comment noting the rename
+> happened once, in this migration, so the next reader doesn't go looking for a reason it's still `"aircraft"`.
 
 ---
 
@@ -715,6 +772,12 @@ the fork is structural, then a plugin behind the interface that already exists:
 | 3 — Components | Pre-filled slots; skipped entirely when `capabilities.components` is off |
 | 4 — Starter pack | Per-item checkboxes; "Skip" is a first-class button |
 
+**What "Custom" gets at step 1.** Choosing Custom does not open a field/slot/meter editor — that's the template
+*editor*, deferred to Phase 4 (§16 #3). What v1 gives a Custom Thing is per-Thing flexibility on top of a fixed,
+minimal template: no pre-filled component slots (the user adds their own, ad hoc, at step 3), and the one generic
+"Usage" meter can be renamed. It looks like customization because the starting point is nearly empty, not because
+the template itself is editable yet.
+
 Steps 3 and 4 are skippable; a Thing with a name and a template is valid. This matters, and the current form is
 the proof: `EditAircraftUiState` refuses to save unless make, model, **and** serial are all non-blank, and
 `AirframeSection` / `EngineSection` mark each blank one in error. That is exactly right for an aircraft and
@@ -793,12 +856,19 @@ is ordinary substitution: the four tier titles, the notification bodies, and the
 
 ## 9. Migration & Version Compatibility
 
-The highest-risk section. Two devices on one account can run different app versions against the same synced
-documents, so a migration that is correct locally can still corrupt data through the sync engine.
+The highest-risk section, but a narrower risk than an indefinite-compatibility design would suggest. The Things
+feature has never shipped, so the only version-skew problem that exists is **intra-account**: a phone that
+updated Tuesday and a tablet that updates Friday, both signed into the same account, syncing through the same
+documents during that gap. There is no population of long-lived old clients to support forever — once every
+device on an account has updated, the account's compatibility burden is over, permanently, and the migration in
+§6 deletes the transitional fields rather than carrying them.
 
-### 9.1 Backfill
+### 9.1 Migration
 
-On first launch of the new version, a local migration runs over every stored `Aircraft`:
+Two steps, run at different scopes because they carry different risk.
+
+**1 — Local backfill (per-device, immediate, non-dirtying).** On first launch of the new version, a local
+migration runs over every stored `Aircraft` and populates the new shape in memory and in the local store:
 
 - `template_id = "airplane"`, `template_version` = shipped revision.
 - `name` = `tail_number` if non-empty, else `"$make $model"`.
@@ -811,29 +881,40 @@ On first launch of the new version, a local migration runs over every stored `Ai
 - Log meters backfilled: `airframe_time` → `airframe_hours`, `engine_hour` → `engine_hours`, `prop_time` →
   `prop_hours`.
 
-The backfill is **idempotent and non-dirtying**: it does not mark rows dirty and does not push. Migrated fields are
-written on the next legitimate edit. This avoids a full-account re-push on upgrade day and keeps the mixed-version
-window quiet.
+This step is **idempotent and non-dirtying**: it does not mark rows dirty and does not push, so it is safe to run
+on every device the moment it updates, independent of what the rest of the account is running.
+
+**2 — Path cutover (per-account, one-time, gated on the version floor).** Once every device on the account
+reports at or above the version floor, a single job renames the account's stored `collection` value from
+`"aircraft"` to `"thing"` and copies its Firestore subcollection from `/aircraft` to `/thing`, then deletes the
+old path once the copy is confirmed. This step is deliberately **not** per-device or lazy — it runs exactly once
+per account, only after the floor guarantees no device will write to the old path again. This is what makes the
+"pause the world" cutover in §6 safe: nothing is straddling both paths at once.
 
 > **Deterministic IDs are load-bearing.** If component IDs were random per device, the same aircraft would migrate
 > to different IDs on a phone and a tablet, and last-writer-wins would silently reassign every log's component.
 > Deriving IDs from `(thing_id, slot_key, index)` makes migration a pure function of data that already synced.
 > Covered by an explicit test that migrates the same payload twice and asserts identical output.
 
-### 9.2 Mixed-version behavior
+### 9.2 Mixed-version behavior — bounded to the version-floor window
+
+Every row below describes behavior that only has to hold **between** step 1 and step 2 above — for this account,
+once, during this rollout. It is not a standing contract with clients from years in the future, because after the
+cutover the old shape no longer exists to be compatible with.
 
 | Scenario | Behavior |
 |---|---|
-| Old client reads an airplane-template Thing written by a new client | Correct. Legacy fields are dual-written; new fields ignored by Wire. |
-| Old client reads a **home** written by a new client | Degraded but safe: an aircraft with no tail number and no engines. Must not crash, must not delete. Gated by the version floor below. |
-| Old client **edits** a home | The real risk. An old client writing an aircraft-shaped payload could drop `components` and `spec`. Wire's unknown-field retention normally preserves them; this must be **verified with a test**, not assumed. |
-| Old client evaluates a task carrying a `SeasonalRule` | Sees a rule oneof it doesn't know, computes no candidate date, and shows the task as never-due. Wrong but non-destructive, and covered by the floor. |
-| New client reads a pre-migration Thing synced from an old client | Backfill runs on read; the in-memory model is fully populated. |
+| Pre-floor device reads an airplane-template Thing written by a post-floor device | Correct. Legacy fields are dual-written; new fields ignored by Wire. |
+| Pre-floor device reads a **home** written by a post-floor device | Degraded but safe: an aircraft with no tail number and no engines. Must not crash, must not delete. This is exactly why non-airplane presets are floor-gated in the first place. |
+| Pre-floor device **edits** a home | The real risk. A pre-floor device writing an aircraft-shaped payload could drop `components` and `spec`. Wire's unknown-field retention normally preserves them; this must be **verified with a test**, not assumed. |
+| Pre-floor device evaluates a task carrying a `SeasonalRule` | Sees a rule oneof it doesn't know, computes no candidate date, and shows the task as never-due. Wrong but non-destructive, and this window closes the moment the account clears the floor. |
+| Post-floor device reads a pre-migration Thing synced from a pre-floor device | Local backfill (step 1) runs on read; the in-memory model is fully populated. |
 
 **Version floor.** Non-airplane templates are gated on a minimum client version recorded on the account. Until
 every signed-in device reports at or above the floor, the create flow offers only the airplane preset and explains
-why. A soft, self-clearing gate — anonymous and single-device accounts never see it — retired along with the
-dual-write in Phase 5.
+why. A soft, self-clearing gate — anonymous and single-device accounts never see it. Clearing the floor triggers
+step 2 above; the transitional fields in §6 and this whole section stop applying at that point, not eventually in
+a later phase.
 
 ---
 
@@ -879,6 +960,11 @@ domain, and a second identifier migration on a codebase still carrying `wingslog
 > squawks" learns a word they didn't ask to learn; the brand still says SquawkIt on the icon, which is where a
 > brand belongs. The counter-argument — one universal verb is stronger branding — is real, and if it wins, the
 > change is one lexicon field set identically across presets.
+>
+> The per-template word isn't just aviation-vs-everyone-else, though: Home and Custom resolve `defect` to
+> **"attention"** rather than to a defect-shaped word like "issue," because those domains don't have aviation's
+> clean line between a scheduled one-off task and something-is-wrong-right-now (§4.5). Car, motorcycle, boat, and
+> bike keep an "issue"-style word because for them that line is as clean as it is for aviation.
 
 **Visual identity is unchanged.** The aviation palette (Aviation Blue, Instrument Amber ≤10%, semantic
 forest/amber status), Space Grotesk titles, and JetBrains Mono for identifiers read as *precision instrument*, not
@@ -949,7 +1035,7 @@ rollout whose guardrail metric cannot be measured is not a guarded rollout.
 | Risk | Severity | Mitigation |
 |---|---|---|
 | **Dilution.** An app for everything is an app for nothing; the aviation product's credibility comes from being specific. | High | Config-driven UI means an aviation user's app is *visually and verbally identical* to today — not "mostly the same." Enforced by the byte-identical lexicon snapshot test and the unmodified due-status suite. The aviation guardrail metric can halt the rollout. |
-| **Mixed-version sync corruption.** An old client editing a new-template Thing drops fields it doesn't understand. | High | Dual-write for the airplane template; version floor gating other presets; an explicit round-trip test proving Wire preserves unknown fields through an old-client edit. Verify before Phase 3, not after. |
+| **Mixed-version sync corruption.** A pre-floor device editing a new-template Thing drops fields it doesn't understand. | High | Bounded, not indefinite: version floor gates other presets until every device on the account updates, transitional dual-write covers only that window, and an explicit round-trip test proves Wire preserves unknown fields through a pre-floor edit. Verify before Phase 3, not after. |
 | **Config over-generalization.** A capability flag per UI element ends in an unreadable config nobody can reason about and a UI that is a matrix of special cases. | Medium | The capability list is **closed and small** (10 flags), and every flag must be justified by at least two presets differing on it. A flag needed by exactly one preset is a code branch, not config. Reviewed at the end of Phase 1. When a fork is structural rather than parametric, the escape hatch is a **pluggable decision engine** behind the existing interface, not another flag — see §7.1, which the engineering design doc should carry forward. |
 | **Scope.** Generic components, meters, and capabilities touch aircraft, logs, tasks, squawks, export, overview, and dashboard — nearly every feature module. | Medium | Phase 1 lands the model and config with **zero UI change** and one preset reproducing today. If the phase is correct the app is byte-identical; if not, that is visible immediately and cheaply. |
 | **Starter-pack accuracy.** Wrong intervals are worse than none, and carry liability weight in aviation. | Medium | Recommendations-not-authority framing with a manual disclaimer; airplane pack limited to regulatory-universal intervals; no ADs or SBs, ever, in a pack. |
@@ -968,7 +1054,7 @@ rollout whose guardrail metric cannot be measured is not a guarded rollout.
 | **2 — Lexicon plumbing** | String parameterization across all 31 `strings.xml` files, `LocalThingLexicon`, formatter, byte-identical snapshot test. Capability flags wired into the UI, all still on. Notification tier titles and the `GROUNDED` channel display name resolve through the lexicon (id unchanged). Analytics event taxonomy defined and emitted (§13). Aviation-only. | No |
 | **3 — The pivot ships** | Six remaining presets + starter packs, template picker and create flow, generic component tree UI, meter-driven log form, Stuff switcher, version floor, subscription rename, `PRODUCT.md`/`DESIGN.md` revisions. | **Yes** |
 | **4 — Depth** | Custom template editor, per-preset export layouts, template-aware search, additional presets (3D printer, equipment), store repositioning. | Yes |
-| **5 — Cleanup** | Retire dual-write and the version floor once the installed base clears the floor; deprecate legacy proto fields in place (never renumber). | No |
+| **5 — Cleanup** | Once every device on an account clears the version floor: run the one-time path cutover (§9.1), delete the transitional proto fields (§6) rather than deprecating them in place, and retire the floor gate itself. | No |
 
 ---
 
@@ -976,10 +1062,10 @@ rollout whose guardrail metric cannot be measured is not a guarded rollout.
 
 | # | Decision | Recommendation |
 |---|---|---|
-| 1 | Is "squawk" universal or per-template? | **Per-template**, retained for aviation (§11). |
+| 1 | Is "squawk" universal or per-template? | **Per-template**, retained for aviation (§11), with the domain-specific word used wherever one fits (issue, defect, fault) — and **"attention"** for Home and Custom, where the one-off-task-vs-defect boundary isn't clean enough to warrant a defect-shaped word (§4.5). |
 | 2 | Basic tier Thing limit — hold at the current 2, or raise? | **Raise to 3**, pending conversion data from the recent 1 → 2 move (§12). |
-| 3 | Custom template *editor* in v1? | **No — Phase 4.** The Custom *preset* ships in v1 (generic lexicon, user-addable components), and the `ThingTemplate` proto and `CollectionKind` ship in v1 so storage is settled. Only the field/slot/meter builder UI is deferred; it is a substantial surface that would gate the pivot on its own timeline. |
-| 4 | Can a Thing's template change after creation? | **Yes, but narrowly:** only while the Thing has no logs, and always additively — spec values and components whose keys don't exist in the new template are retained and rendered as legacy rows, never deleted. A full re-template with history is a data-loss trap and is out of scope. |
+| 3 | Custom template *editor* in v1? | **No — Phase 4.** The Custom *preset* ships in v1 (generic lexicon, user-addable components), and the `ThingTemplate` proto and `CollectionKind` ship in v1 so storage is settled. Only the field/slot/meter builder UI is deferred — a user can already add ad-hoc components and rename the one meter *on their own Thing* in v1; what's deferred is editing the *template* itself so those changes carry forward to future Things. |
+| 4 | Can a Thing's template change after creation? | **No.** A Thing's template is fixed at creation. Picking the wrong preset means deleting and re-adding the Thing — rare, since the picker is the very first screen — rather than carrying a narrow in-place-editing path (a "no logs yet" gate, legacy-row rendering for orphaned keys) for a need nobody has demonstrated yet. Revisit if custom-template users hit it in practice. |
 | 5 | Does an overdue task block the "ready" status for every preset? | **Config it** (`overdue_blocks_ready_status`), default on. An overdue annual genuinely means not airworthy; an overdue gutter cleaning does not mean the house is unusable, and overstating it trains people to ignore the badge. |
 | 6 | Ship 3D printer and shop-equipment presets in v1? | **No** — Custom covers them; they are data-only additions whenever the content is ready (§5.2). |
 
@@ -993,12 +1079,12 @@ The same feature, expressed under three configs, showing that the stored rows ar
 |---|---|---|---|
 | Task title | Oil change | Oil & filter | Clean gutters |
 | Called a… | Inspection | Service | Chore |
-| Component | Engine 1 (slot `engine`) | Engine (slot `engine`) | Gutters (slot `gutters`) |
+| Component | Engine 1 (slot `engine`) | Engine (slot `engine`) | **None** — Thing-level task, no `component_id` |
 | Rules | `MeterRule(engine_hours, 50)` + `TimeRule(4 mo)` | `MeterRule(odometer, 5000)` + `TimeRule(6 mo)` | `SeasonalRule([4, 10])` |
 | Due-soon at | 10 hrs / 30 days | 500 mi / 30 days | 14 days |
 | Month interval snaps | end of month | anniversary | n/a |
-| Person who did it | Mechanic (with A&P) | Shop | Contractor |
-| Defect if it fails | Squawk · AOG | Issue · Off the road | Issue · Emergency |
+| Person who did it | Mechanic (with A&P) | Shop | Person |
+| Defect if it fails | Squawk · AOG | Issue · Off the road | Attention · Emergency |
 
 All three are stored as **one `MaintenanceTask` row** — same table, same sync path, same due algorithm.
 
