@@ -27,7 +27,6 @@ import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.getString
 import wingslog.feature.notifications.sharedassets.generated.resources.Res
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_actor_fallback
-import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_body_plural
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_body_single
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_section_logbook
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_section_logbook_lower
@@ -36,6 +35,7 @@ import wingslog.feature.notifications.sharedassets.generated.resources.notificat
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_section_tasks
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_section_tasks_lower
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_title
+import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 
 /**
@@ -50,6 +50,14 @@ import kotlin.time.Duration.Companion.seconds
  * double-notify. That is also why this lives in `engine` rather than `viewing`: deciding whether an
  * event deserves a notification is the scanner's kind of job, not the notifier's.
  *
+ * **Every foreign write posts its own notification, immediately** (design decision, 2026-08-27) —
+ * no session, no count, no throttle, mirroring the backend push path's [notification id scheme]
+ * (`n1:{aircraftId}:{recordType}:{recordId}:{atMs}`; see the server's `activityNotificationId`).
+ * [ForeignWriteListener] carries no before/after payload though, so unlike the server this cannot
+ * name the record's own title or tell created/updated/deleted apart — it posts the same "made a
+ * change to {section}" body every time and lets the tap target (keyed on [id], the record's own
+ * document id) take the pilot straight to the record to see what changed.
+ *
  * Ordering note: the share check and the actor read are suspending, so writes are handled on
  * [scope] rather than inline — the sync engine must not wait on a notification decision. Each write
  * is an independent launch, so a slow roster read cannot delay the next one.
@@ -60,7 +68,7 @@ class WebForeignWriteDetector(
   private val prefsManager: NotificationPrefsManager,
   private val permission: NotificationPermission,
   private val notifier: LocalNotifier,
-  private val counter: ActivityCounter = ActivityCounter(),
+  private val clock: Clock = Clock.System,
   private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
 ) : ForeignWriteListener {
 
@@ -82,7 +90,7 @@ class WebForeignWriteDetector(
     }
     log.d { "N1 foreign write: ${kind.wireName}/$id on $aircraftId by $writerUid" }
     this.scope.launch {
-      runCatching { handle(recordType, aircraftId, writerUid) }
+      runCatching { handle(recordType, aircraftId, id, writerUid) }
         .onFailure { log.w(it) { "N1 detection failed for ${kind.wireName}/$id" } }
     }
   }
@@ -90,7 +98,8 @@ class WebForeignWriteDetector(
   private suspend fun handle(
     recordType: RecordType,
     aircraftId: String,
-    actorUid: String
+    recordId: String,
+    actorUid: String,
   ) {
     // Preferences and OS permission first: both are local reads, and there is no point paying for a
     // roster read to build a notification nobody will see.
@@ -138,28 +147,16 @@ class WebForeignWriteDetector(
       return
     }
 
-    val post = counter.record(
-      ActivityKey(
-        aircraftId = aircraftId,
-        recordType = recordType.wire,
-        actorUid = actorUid,
-      )
-    )
-    if (post == null) {
-      log.d { "N1 counted but throttled (within ${ActivityCounter.MIN_REPOST_INTERVAL})" }
-      return
-    }
-
     val actor = roster.members.firstOrNull { it.uid == actorUid }
       ?.displayName
       ?.takeIf { it.isNotBlank() }
       ?: getString(Res.string.notification_n1_actor_fallback)
-    log.i { "N1 posting: $aircraftId ${recordType.wire} x${post.changeCount} by $actor" }
+    log.i { "N1 posting: $aircraftId ${recordType.wire}/$recordId by $actor" }
     // Built and posted in two statements rather than one nested call, so these two log lines sit on
     // either side of the suspending build. A build that never returns used to look identical to a
     // notification that was posted and not drawn — the log said "posting", and nothing followed.
     val notification =
-      buildNotification(recordType, aircraftId, actorUid, actor, post)
+      buildNotification(recordType, aircraftId, recordId, actor)
     log.d { "N1 built ${notification.id}, handing to the notifier" }
     notifier.post(notification)
     log.d { "N1 posted ${notification.id}" }
@@ -168,35 +165,26 @@ class WebForeignWriteDetector(
   private suspend fun buildNotification(
     recordType: RecordType,
     aircraftId: String,
-    /** The stable id the tag is keyed on — a display name can change mid-session. */
-    actorUid: String,
+    recordId: String,
     /** What the body says. */
     actor: String,
-    post: ActivityPost,
   ): PendingNotification {
     val tailNumber = tailNumberOf(aircraftId)
     // Between this and "N1 built" there is nothing but string resource loads, so the pair of lines
     // says which half of the build is slow or stuck without another round of guessing.
     log.d { "N1 tail number resolved for $aircraftId, rendering strings" }
-    val body =
-      if (post.changeCount == 1) {
-        getString(
-          Res.string.notification_n1_body_single,
-          actor,
-          getString(recordType.lowerLabel)
-        )
-      } else {
-        getString(
-          Res.string.notification_n1_body_plural,
-          actor,
-          post.changeCount,
-          getString(recordType.lowerLabel),
-        )
-      }
+    val body = getString(
+      Res.string.notification_n1_body_single,
+      actor,
+      getString(recordType.lowerLabel),
+    )
     return PendingNotification(
-      // The tag §8.4 specifies. sessionStart is what rolls it when a working session ends, so a
-      // finished session's tray entry is left alone instead of being overwritten by the next one.
-      id = "n1:$aircraftId:${recordType.wire}:$actorUid:${post.sessionStart.toEpochMilliseconds()}",
+      // One id per write, never replaced by the next one — matching the backend's own scheme
+      // (`n1:{aircraftId}:{recordType}:{recordId}:{atMs}`) now that neither side coalesces.
+      id = "n1:$aircraftId:${recordType.wire}:$recordId:${
+        clock.now()
+          .toEpochMilliseconds()
+      }",
       channel = NotificationChannel.COLLABORATION,
       title = getString(
         Res.string.notification_n1_title,
@@ -207,10 +195,7 @@ class WebForeignWriteDetector(
       // Collaboration activity is never high priority — that is what N2's urgency tiers are for,
       // and §7.3 is explicit that an activity summary must never replace a grounding alert.
       highPriority = false,
-      tapTarget = NotificationTapTarget.Aircraft(
-        aircraftId,
-        tab = recordType.tab
-      ),
+      tapTarget = recordType.tapTarget(aircraftId, recordId),
     )
   }
 
@@ -243,27 +228,42 @@ class WebForeignWriteDetector(
   /** The three record types §8 treats as collaboration activity. Anything else is not N1. */
   private enum class RecordType(
     val wire: String,
-    val tab: String,
     val titleLabel: StringResource,
     val lowerLabel: StringResource,
+    val tapTarget: (aircraftId: String, recordId: String) -> NotificationTapTarget,
   ) {
     SQUAWK(
       "squawk",
-      "squawks",
       Res.string.notification_n1_section_squawks,
       Res.string.notification_n1_section_squawks_lower,
+      { aircraftId, recordId ->
+        NotificationTapTarget.Squawk(
+          aircraftId,
+          recordId
+        )
+      },
     ),
     TASK(
       "task",
-      "tasks",
       Res.string.notification_n1_section_tasks,
       Res.string.notification_n1_section_tasks_lower,
+      { aircraftId, recordId ->
+        NotificationTapTarget.Task(
+          aircraftId,
+          recordId
+        )
+      },
     ),
     LOG(
       "log",
-      "logs",
       Res.string.notification_n1_section_logbook,
       Res.string.notification_n1_section_logbook_lower,
+      { aircraftId, recordId ->
+        NotificationTapTarget.Log(
+          aircraftId,
+          recordId
+        )
+      },
     ),
   }
 

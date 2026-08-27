@@ -27,7 +27,6 @@ data class PushPayload(
   val actorName: String,
   /** `squawk` / `task` / `log` / `aircraft`, which selects the section labels. */
   val recordType: String,
-  val changeCount: Int,
   val recordTitle: String,
   val tapTarget: NotificationTapTarget,
   /**
@@ -84,7 +83,6 @@ data class PushPayload(
         tailNumber = data["tailNumber"].orEmpty(),
         actorName = data["actorName"].orEmpty(),
         recordType = data["recordType"].orEmpty(),
-        changeCount = data["changeCount"]?.toIntOrNull() ?: 1,
         recordTitle = data["recordTitle"].orEmpty(),
         tapTarget = tapTarget,
         // Blank is treated as absent: an empty string addresses nobody, and dropping every message

@@ -165,30 +165,3 @@ describe("users/{uid}/push_devices rules", () => {
     );
   });
 });
-
-// The N1 counter and the hourly ceiling (§7.4). Both are function-only, and both matter: a client
-// that could write the counter could forge a session start and overwrite another member's tray
-// entry, and one that could write the rate document could raise its own cap.
-describe("notification_activity and notification_rate rules", () => {
-  it("denies a signed-in user reading or writing the activity counter", async () => {
-    await testEnv.withSecurityRulesDisabled(async (ctx) => {
-      await setDoc(doc(ctx.firestore(), "notification_activity/ac1__task__alice"), {
-        writeCount: 1,
-      });
-    });
-    const alice = testEnv.authenticatedContext("alice").firestore();
-    await assertFails(getDoc(doc(alice, "notification_activity/ac1__task__alice")));
-    await assertFails(
-      setDoc(doc(alice, "notification_activity/ac1__task__alice"), { writeCount: 0 }),
-    );
-  });
-
-  it("denies a signed-in user reading or resetting the hourly send ceiling", async () => {
-    await testEnv.withSecurityRulesDisabled(async (ctx) => {
-      await setDoc(doc(ctx.firestore(), "notification_rate/ac1__2026082402"), { sendCount: 60 });
-    });
-    const alice = testEnv.authenticatedContext("alice").firestore();
-    await assertFails(getDoc(doc(alice, "notification_rate/ac1__2026082402")));
-    await assertFails(setDoc(doc(alice, "notification_rate/ac1__2026082402"), { sendCount: 0 }));
-  });
-});

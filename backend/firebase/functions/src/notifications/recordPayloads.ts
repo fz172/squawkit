@@ -1,23 +1,21 @@
 import { logger } from "firebase-functions/v2";
 
 import { Aircraft } from "../generated/proto/aircraft/aircraft.js";
+import { MaintenanceLog } from "../generated/proto/aircraft/maintenance_log.js";
+import { MaintenanceTask } from "../generated/proto/aircraft/maintenance_task.js";
 import { Squawk, SquawkDismissReason, SquawkPriority } from "../generated/proto/aircraft/squawk.js";
 import { payloadBytes, type SyncDocWire } from "../shared/syncDocWire.js";
+import { RECORD_TYPE, type RecordType } from "./notificationModels.js";
 
 /**
- * The two things the fan-out needs out of an otherwise opaque entity payload: an aircraft's tail
- * number, and a squawk's urgency (§7.2 step 4).
+ * The things the fan-out needs out of an otherwise opaque entity payload: an aircraft's tail
+ * number, a squawk's urgency (§7.2 step 4), and — since coalescing was removed (design decision,
+ * 2026-08-27) — every record type's own title, because the activity path now names the specific
+ * record in every push instead of summarizing "N changes."
  *
  * Security rules cannot read a payload — they see bytes, which is why the sharing ACL exists as
  * plain fields. Cloud Functions can, and `blobRefs.ts` already does it for attachment ids. This is
  * the same trick for the notification body.
- *
- * **Record titles are deliberately not decoded for the activity path.** The shipped bodies are
- * "%1$s made %2$d changes to %3$s" (`notification_n1_body_plural`) — an actor, a count and a
- * section, never a record title. §7.3's illustrative "Dave Chen updated a task: Annual Inspection"
- * predates those strings; matching what `strings.xml` actually renders is what keeps a tray entry
- * posted from push identical to one `WebForeignWriteDetector` posts for the same event. The
- * escalation body is the one place a title appears, and it is decoded below.
  */
 
 export const SCHEMA = {
@@ -45,6 +43,37 @@ function decodeSquawk(doc: SyncDocWire | undefined): Squawk | null {
     return Squawk.decode(bytes);
   } catch (e) {
     logger.warn("Could not decode a squawk payload for a notification", { error: String(e) });
+    return null;
+  }
+}
+
+/**
+ * The record's own title/description, resolved per [RecordType] — the specific thing a concrete
+ * activity notification names. `null` for `aircraft` (there is no per-record title; the aircraft's
+ * own identity is its tail number, via [tailNumberOf]) and whenever the payload will not decode.
+ */
+export function recordTitleOf(recordType: RecordType, doc: SyncDocWire | undefined): string | null {
+  const bytes = payloadBytes(doc?.payload);
+  if (bytes == null) return null;
+  try {
+    switch (recordType) {
+      case RECORD_TYPE.SQUAWK: {
+        const title = Squawk.decode(bytes).title;
+        return title.length > 0 ? title : null;
+      }
+      case RECORD_TYPE.TASK: {
+        const title = MaintenanceTask.decode(bytes).title;
+        return title.length > 0 ? title : null;
+      }
+      case RECORD_TYPE.LOG: {
+        const description = MaintenanceLog.decode(bytes).workDescription;
+        return description.length > 0 ? description : null;
+      }
+      case RECORD_TYPE.AIRCRAFT:
+        return null;
+    }
+  } catch (e) {
+    logger.warn("Could not decode a record payload for a notification", { recordType, error: String(e) });
     return null;
   }
 }
