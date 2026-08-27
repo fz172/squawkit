@@ -28,6 +28,7 @@ import dev.fanfly.wingslog.feature.login.AuthFlow
 import dev.fanfly.wingslog.feature.sharing.update.RedeemHost
 import dev.fanfly.wingslog.feature.shell.AdaptiveShellRoute
 import dev.fanfly.wingslog.feature.shell.NavigateToLoginOnSignOut
+import dev.fanfly.wingslog.feature.shell.PopToShellOnNotificationTap
 import dev.fanfly.wingslog.feature.shell.TrackRootScreenViews
 import dev.fanfly.wingslog.feature.shell.formDialogs
 import dev.fanfly.wingslog.feature.shell.settingsDetailRoutes
@@ -91,6 +92,7 @@ fun WebApp() {
         var browserNavigationBound by remember { mutableStateOf(false) }
 
         NavigateToLoginOnSignOut(navController)
+        PopToShellOnNotificationTap(navController)
 
         LaunchedEffect(browserNavigationBound) {
           if (browserNavigationBound) {
