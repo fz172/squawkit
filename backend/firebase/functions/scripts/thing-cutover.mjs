@@ -25,12 +25,22 @@
  * Credentials & project (Application Default Credentials; nothing is hardcoded):
  *   gcloud auth application-default login
  *   export GOOGLE_CLOUD_PROJECT=wingslog-9ca4e         # or GOOGLE_APPLICATION_CREDENTIALS=<sa.json>
- *   # To target the local emulator instead of prod:
- *   export FIRESTORE_EMULATOR_HOST=localhost:8080
- *   export FIREBASE_STORAGE_EMULATOR_HOST=localhost:9199
  *
- * The resolved project id is printed and confirmed before any write, so a mis-pointed credential is
- * caught rather than silently migrating the wrong environment.
+ * The resolved project id is printed, and flagged [EMULATOR] when one is in use, so a mis-pointed
+ * credential is caught rather than silently migrating the wrong environment. A live run also asks
+ * for confirmation unless `--yes` is passed; a dry run never does, because it cannot write.
+ *
+ * To rehearse against the emulator instead of prod:
+ *
+ *   npm run build
+ *   NODE=$(command -v node)   # see below — this matters
+ *   firebase emulators:exec --only firestore,storage --project demo-squawkit \
+ *     "$NODE scripts/thing-cutover.mjs --dry-run"
+ *
+ * `$(command -v node)` is not decoration. The `firebase` CLI is a pkg-bundled binary carrying its
+ * own Node, and a bare `node` inside `emulators:exec` resolves to that one, which cannot load an ESM
+ * entry point (`ERR_REQUIRE_ESM`). Resolve the real binary in your own shell and pass the absolute
+ * path. `package.json`'s `test` script does the same thing for the same reason.
  *
  * ORDERING — this is not a script to run whenever. Per §2.7c and §5.2:
  *   1. C1 must already be deployed (the `/thing/` rules block), or the copies are unreadable.
