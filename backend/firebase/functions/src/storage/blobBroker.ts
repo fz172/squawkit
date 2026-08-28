@@ -1,10 +1,11 @@
+import { ENTITY_SEGMENT_LEGACY } from "../config/entitySegment.js";
 import { adminDb } from "../config/firebaseAdmin.js";
 import { aircraftShareDocPath, type AircraftShareDoc } from "../sharing/sharingModels.js";
 
 /**
  * Shared authorization core for the attachment broker (design §9.2).
  *
- * Blobs live strictly under the host at `users/{hostUid}/thing/{acId}/blobs/{blobId}`, and
+ * Blobs live strictly under the host at `users/{hostUid}/{segment}/{acId}/blobs/{blobId}`, and
  * `storage.rules` deny every cross-account access. The broker is the ONLY door across trees, and it
  * opens that door by consulting the `aircraft_shares` ACL — the one thing Storage rules cannot do
  * (they cannot `get()` Firestore). Reads (`streamBlob`) and writes (`getBlobUploadSession`) both
@@ -14,14 +15,19 @@ import { aircraftShareDocPath, type AircraftShareDoc } from "../sharing/sharingM
 /**
  * Canonical object path for a blob in the HOST's tree. The blob namespace is per-aircraft.
  *
- * MIGRATION (Checkpoint 2, thing_migration_design.md §2.7a / task B9a): this is a **hard flip**, not
- * a dual deploy. `getBlobUploadSession` and `streamBlob` are callables — one deployed copy answers
- * every account, and the client calls one export name, so there is no way to serve `/aircraft/` to
- * un-migrated accounts and `/thing/` to migrated ones at the same time. Deploying this before D3
- * (every account migrated) breaks blob upload/download for whoever is left behind.
+ * MIGRATION (Checkpoint 2, thing_migration_design.md §2.7a / task B9a): still on the LEGACY segment,
+ * deliberately. This is a **hard flip**, not a dual deploy — `getBlobUploadSession` and `streamBlob`
+ * are callables, so one deployed copy answers every account and the client calls one export name.
+ * There is no way to serve `/aircraft/` to un-migrated accounts and `/thing/` to migrated ones at
+ * the same time.
+ *
+ * The flip itself lives on the `feat/thing-migration-checkpoint-2` branch and must not reach main:
+ * merging main auto-deploys functions (`.github/workflows/deploy-functions.yml` runs on push), so
+ * on this branch "merged" means "deployed". Flipping this before D3 (every account migrated) breaks
+ * blob upload and download for every account still on the old path — which, until D3, is all of them.
  */
 export function blobObjectPath(hostUid: string, acId: string, blobId: string): string {
-  return `users/${hostUid}/thing/${acId}/blobs/${blobId}`;
+  return `users/${hostUid}/${ENTITY_SEGMENT_LEGACY}/${acId}/blobs/${blobId}`;
 }
 
 /** The ACL root for a shared aircraft, or `null` if no share exists at that host+aircraft. */

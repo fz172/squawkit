@@ -264,3 +264,62 @@ describe("the report says WHAT, not just how much", () => {
     expect(report.truncated).toBe(false);
   });
 });
+
+// MIGRATION (thing_migration_design.md §2.7a): the sweep walks BOTH entity segments for the duration
+// of the window. The rest of this file exercises `/thing/`; this block proves the legacy segment is
+// swept by the same run, which is what keeps orphan GC alive for accounts that have not migrated yet
+// — i.e. every account, until D3. Pointing the sweep at one segment would silently stop collecting
+// for everyone on the other, and a scheduled reconciler that quietly does nothing is the kind of
+// regression nobody notices until the storage bill arrives.
+describe("migration: the sweep covers both entity segments", () => {
+  const LEGACY_AC = "ac-legacy";
+  const legacyBlobPath = (id: string) => `users/${UID}/aircraft/${LEGACY_AC}/blobs/${id}`;
+
+  beforeEach(async () => {
+    await adminDb
+      .doc(`users/${UID}/aircraft/${LEGACY_AC}`)
+      .set({ deleted: false, schema: "aircraft.Aircraft" });
+  });
+
+  it("collects an orphan under the LEGACY /aircraft/ segment", async () => {
+    await adminStorage.bucket().file(legacyBlobPath("orphan-legacy")).save(Buffer.from([1, 2, 3]));
+
+    // graceDays 0 for the same reason as the /thing/ orphan test above: the blob is freshly
+    // written here, and the grace window would otherwise (correctly) refuse to judge it.
+    const report = await runStorageSweep({ ...DEFAULTS, orphanGraceDays: 0 });
+
+    expect(report.orphanBlobsCollected).toBe(1);
+    expect(report.orphanBlobPaths).toEqual([legacyBlobPath("orphan-legacy")]);
+    expect((await adminStorage.bucket().file(legacyBlobPath("orphan-legacy")).exists())[0])
+      .toBe(false);
+  });
+
+  it("collects orphans on BOTH segments in a single run", async () => {
+    await putBlob("orphan-thing");
+    await adminStorage.bucket().file(legacyBlobPath("orphan-legacy")).save(Buffer.from([1, 2, 3]));
+
+    const report = await runStorageSweep({ ...DEFAULTS, orphanGraceDays: 0 });
+
+    expect(report.orphanBlobsCollected).toBe(2);
+    expect(report.orphanBlobPaths.sort()).toEqual(
+      [blobPath("orphan-thing"), legacyBlobPath("orphan-legacy")].sort(),
+    );
+  });
+
+  it("still respects a live record's claim on the LEGACY segment", async () => {
+    // The refusal that matters most: a referenced blob must survive on the old path exactly as it
+    // does on the new one. Getting this wrong deletes a user's photo.
+    await adminDb.doc(`users/${UID}/aircraft/${LEGACY_AC}/maintenance_log/live`).set({
+      deleted: false,
+      schema: "aircraft.MaintenanceLog",
+      payload: logPayload("kept-legacy"),
+      lastUpdateTimestamp: daysAgo(0),
+    });
+    await adminStorage.bucket().file(legacyBlobPath("kept-legacy")).save(Buffer.from([1, 2, 3]));
+
+    const report = await runStorageSweep(DEFAULTS);
+
+    expect(report.orphanBlobsCollected).toBe(0);
+    expect((await adminStorage.bucket().file(legacyBlobPath("kept-legacy")).exists())[0]).toBe(true);
+  });
+});

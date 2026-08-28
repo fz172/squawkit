@@ -236,8 +236,35 @@ early breaks blob upload/download and share invites for every not-yet-migrated a
 breaks the same things for every already-migrated one.
 
 `storageSweep.ts` looks like it belongs to this group but does not: it is a **scheduled** function that reconciles
-orphaned objects, so a wrong path makes it find nothing (a no-op) rather than corrupt anything, and the next run
-after the flip self-corrects. It is safe to flip immediately, with the rest of Phase B.
+orphaned objects, so a wrong path makes it find nothing rather than corrupt anything. But "finds nothing" is not
+free — a reconciler that quietly stops collecting is a regression nobody notices until the storage bill arrives,
+and pointing it at one segment would stop orphan GC for every account still on the other. So it is neither
+flipped nor held: it **sweeps both segments**, which is cheap (one empty `listDocuments()` per absent segment)
+and keeps GC alive throughout the window. Phase F3 drops the legacy segment and it collapses back to one pass.
+
+### 2.7b Merging to `main` *is* deploying — the constraint that decides what may land when
+
+Discovered while preparing the Phase A/B PR, and load-bearing for every "write now, hold" instruction in this
+doc. `.github/workflows/deploy-functions.yml` and `deploy-firestore-rules.yml` both run on `push: branches:
+[main]` with path filters that any backend change matches, and their deploy job is gated only by
+`if: github.event_name != 'pull_request'`. **A merge to `main` deploys Cloud Functions and Firestore rules to
+production `wingslog-9ca4e` with no further action.**
+
+So "written on a branch that has been merged" and "deployed" are the same state, and a task marked *hold, do not
+deploy until Phase X* cannot sit on `main` waiting for Phase X. Anything held must live on an unmerged branch.
+Concretely:
+
+- **B9a (Checkpoint 2)** lives on `feat/thing-migration-checkpoint-2`, not on the Phase A/B branch. Merging it
+  early breaks blob upload/download and share invites for every account that has not migrated — which, before D3,
+  is all of them.
+- **B6 (the `sharingModels.ts` ACL constant flip)** is subject to the same rule and must be held the same way
+  until Phase G3.
+
+Everything else in Phase B is **purely additive** — new rules blocks alongside the old, new trigger
+registrations alongside the old, and a sweep that walks both segments — so it is safe for `main` to deploy on
+merge. That is not a happy accident: it is why the phase was designed additively, and the reason C1 can be a
+merge rather than a coordinated release. The client is unaffected either way; `deploy-web.yml` and the Android
+build are `workflow_dispatch` only, so no client ships without an explicit E1/E2 decision.
 
 ### 2.8 Local database schema — what actually needs rewriting on-device
 
@@ -690,10 +717,10 @@ parallel or in any order. **Ref** points at the section that specifies the task 
 | B3 | Add a targeted-retry mode (`--only <uids>`) so a failed subset can be re-run without repeating the whole batch. | B1 | §5.1 |
 | B4 | Write a separate deletion pass (a mode of the same script, or a sibling script): delete old Firestore subcollections + old Storage objects, scoped to accounts whose copy was verified more than 7 days ago. | B1 | §7 |
 | B5 | Write the batch-runner failure-isolation/retry test against a seeded multi-account emulator fixture with one uid engineered to fail: assert the rest still process, the failure is reported, and a targeted re-run succeeds without disturbing already-migrated uids. | B1, B3 | §6 |
-| B6 | Update `sharingModels.ts`'s `AIRCRAFT_SHARES_COLLECTION`/`SHARE_AIRCRAFT_SUBCOLLECTION` values — **write now, hold on a branch; do not deploy until Phase G.** | — | §2.9, §3.2, §5.4 |
+| B6 | Update `sharingModels.ts`'s `AIRCRAFT_SHARES_COLLECTION`/`SHARE_AIRCRAFT_SUBCOLLECTION` values — **write now, hold on an unmerged branch; do not merge until G3.** Merging to `main` deploys (§2.7b). | — | §2.9, §3.2, §5.4, §2.7b |
 | B7 | Add a new `match /thing/{acId} { ... }` block to `firestore.rules`, alongside the existing `match /aircraft/{acId} { ... }` block, mirroring `isShareMember`/`isShareOwner`/`writerIsSelf`/`isSharedAircraftKind`. | — | §2.4a, §3.2 |
 | B8 | Add a new `match /thing_shares/{hostUid}/thing/{acId} { ... }` block to `firestore.rules`, alongside the existing ACL block — added now, inert until Phase G. Do **not** repoint `shareRole()` yet. | — | §2.9, §3.2 |
-| B9a | Write the **Checkpoint 2** flip for the globally-deployed callables that cannot be dual-deployed: `blobBroker.ts`'s `blobObjectPath()` and `createAircraftShareInvite.ts`'s existence check. Write now, **hold — do not deploy until C2.** | — | §2.7a |
+| B9a | Write the **Checkpoint 2** flip for the globally-deployed callables that cannot be dual-deployed: `blobBroker.ts`'s `blobObjectPath()` and `createAircraftShareInvite.ts`'s existence check. Write now, **hold on the unmerged `feat/thing-migration-checkpoint-2` branch** — merging to `main` deploys (§2.7b), so this must not land there until C2. | — | §2.7a, §2.7b |
 | B9 | Write new versions of the four Cloud Functions (`onNotifiableRecordWritten`, `onNotifiableAircraftWritten`, `onAircraftDeleted`, `onRecordDeleted`) registered on `users/{uid}/thing/{acId}...`, to deploy *alongside* (not replacing) the existing ones. | — | §2.7, §5.2 |
 | B10 | Update `firestore-rules.test.ts` and `sharing-rules.test.ts` with a parallel set of assertions against the `/thing/`- and `thing_shares`-shaped paths, keeping every existing `aircraft`-shaped assertion passing. | B7, B8 | §6 |
 | B11 | Test the cutover script end-to-end against the Firestore/Storage emulator with a seeded fixture — including the payload-transform assertions that replace the withdrawn A8: `storage_path` rewritten, backfill matches PRD §9.1, and the transform is byte-identical when run twice. | B1, B2 | §6, §4.3 |
@@ -702,7 +729,7 @@ parallel or in any order. **Ref** points at the section that specifies the task 
 
 | # | Task | Depends on | Ref |
 |---|---|---|---|
-| C1 | **Checkpoint 1 (additive, safe any time).** Deploy, together, in one release: the new `/thing/{acId}` and `/thing_shares/...` `firestore.rules` blocks (B7, B8) and the four new dual Cloud Functions (B9) — alongside everything existing, unchanged. Nothing here removes or repoints a path, so no account can be broken by it. | B7, B8, B9, B10 | §5.2 |
+| C1 | **Checkpoint 1 (additive, safe any time).** Happens automatically when the Phase A/B branch merges — see §2.7b. Deploy, together, in one release: the new `/thing/{acId}` and `/thing_shares/...` `firestore.rules` blocks (B7, B8) and the four new dual Cloud Functions (B9) — alongside everything existing, unchanged. Nothing here removes or repoints a path, so no account can be broken by it. | B7, B8, B9, B10 | §5.2 |
 | C2 | **Checkpoint 2 (a hard flip — timing is load-bearing).** Deploy B9a: repoint `blobObjectPath()` and `createAircraftShareInvite`'s existence check at `/thing/`. Must land **after D3** (every account migrated) and **at or before E2** (devices get the Phase 1 build). Too early breaks blobs and invites for un-migrated accounts; too late breaks them for migrated ones. | B9a, D3 | §2.7a |
 
 ### Phase D — Run the entity/blob migration batch (must reach zero failures before Phase E/G)

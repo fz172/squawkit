@@ -1,6 +1,12 @@
 import { Timestamp } from "firebase-admin/firestore";
 import { logger } from "firebase-functions/v2";
 
+import {
+  ENTITY_SEGMENTS,
+  entityBlobPrefix,
+  entityDocPath,
+  type EntitySegment,
+} from "../config/entitySegment.js";
 import { adminDb, adminStorage } from "../config/firebaseAdmin.js";
 import { blobIdsInPayload, schemaCanOwnBlobs } from "./blobRefs.js";
 
@@ -184,27 +190,47 @@ async function purgeIfExpired(
  * - **A blob younger than the grace window is left alone.** Records and blobs travel in separate
  *   queues, so a freshly uploaded photo can arrive before the log that references it. Without the
  *   window we would delete the picture the user just took.
+ *
+ * MIGRATION (thing_migration_design.md §2.7a): sweeps BOTH entity segments for the duration of the
+ * window. Unlike the triggers and callables, this needed no coordination to get right — it is a
+ * scheduled reconciler, so pointing it at one segment would simply make it find nothing there and
+ * quietly stop collecting for every account still on the other. Walking both keeps GC alive
+ * throughout, and an account that has no documents under a segment costs one empty listDocuments().
+ * Phase F3 drops the legacy segment from ENTITY_SEGMENTS and this collapses back to one pass.
  */
 async function collectOrphanBlobs(
   uid: string,
   options: SweepOptions,
   report: SweepReport,
 ): Promise<void> {
-  const aircraftRefs = await adminDb.collection(`users/${uid}/thing`).listDocuments();
   const graceCutoffMs = Date.now() - options.orphanGraceDays * 24 * 60 * 60 * 1000;
+
+  for (const segment of ENTITY_SEGMENTS) {
+    await collectOrphanBlobsIn(uid, segment, graceCutoffMs, options, report);
+  }
+}
+
+async function collectOrphanBlobsIn(
+  uid: string,
+  segment: EntitySegment,
+  graceCutoffMs: number,
+  options: SweepOptions,
+  report: SweepReport,
+): Promise<void> {
+  const aircraftRefs = await adminDb.collection(`users/${uid}/${segment}`).listDocuments();
 
   for (const aircraftRef of aircraftRefs) {
     const acId = aircraftRef.id;
-    const referenced = await blobsReferencedByLiveRecords(uid, acId);
+    const referenced = await blobsReferencedByLiveRecords(uid, acId, segment);
     if (referenced == null) {
       report.aircraftSkipped++;
-      logger.warn("Skipping an aircraft: a live record would not decode", { uid, acId });
+      logger.warn("Skipping an aircraft: a live record would not decode", { uid, acId, segment });
       continue;
     }
 
     const [files] = await adminStorage
       .bucket()
-      .getFiles({ prefix: `users/${uid}/thing/${acId}/blobs/` });
+      .getFiles({ prefix: entityBlobPrefix(uid, acId, segment) });
 
     for (const file of files) {
       const blobId = file.name.split("/").pop() ?? "";
@@ -255,10 +281,11 @@ async function sumStorageUsage(
 async function blobsReferencedByLiveRecords(
   uid: string,
   acId: string,
+  segment: EntitySegment,
 ): Promise<Set<string> | null> {
   const referenced = new Set<string>();
 
-  for (const collection of await adminDb.doc(`users/${uid}/thing/${acId}`).listCollections()) {
+  for (const collection of await adminDb.doc(entityDocPath(uid, acId, segment)).listCollections()) {
     for (const record of (await collection.get()).docs) {
       const data = record.data() as SyncDocWire;
       if (data?.deleted === true) continue; // a tombstone holds no claim on the bytes

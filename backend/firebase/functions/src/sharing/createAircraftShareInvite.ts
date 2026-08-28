@@ -1,6 +1,7 @@
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 
+import { ENTITY_SEGMENT_LEGACY } from "../config/entitySegment.js";
 import { FUNCTION_REGION } from "../config/env.js";
 import { adminDb } from "../config/firebaseAdmin.js";
 import { requireAuthenticatedApp } from "../shared/auth.js";
@@ -47,9 +48,13 @@ export const createAircraftShareInvite = onCall<CreateRequest, Promise<CreateRes
     // and since the ACL is namespaced under the caller, an aircraft planted in their own tree only
     // ever mints invites to their own aircraft. Nothing to hijack.
     //
-    // MIGRATION (Checkpoint 2, thing_migration_design.md §2.7a / task B9a): a callable, so this path
-    // is a hard flip — do not deploy before D3 or this check fails for every un-migrated account.
-    const aircraft = await adminDb.doc(`users/${uid}/thing/${aircraftId}`).get();
+    // MIGRATION (Checkpoint 2, thing_migration_design.md §2.7a / task B9a): still on the LEGACY
+    // segment, deliberately. A callable is deployed globally and called by one export name, so this
+    // path is a hard flip rather than a dual deploy. The flip lives on the
+    // `feat/thing-migration-checkpoint-2` branch and must not reach main before D3 — merging main
+    // auto-deploys functions, and flipping early makes this check fail for every un-migrated
+    // account, which until D3 is all of them.
+    const aircraft = await adminDb.doc(`users/${uid}/${ENTITY_SEGMENT_LEGACY}/${aircraftId}`).get();
     if (!aircraft.exists || aircraft.data()?.deleted === true) {
       throw new HttpsError("not-found", "Aircraft not found.");
     }
