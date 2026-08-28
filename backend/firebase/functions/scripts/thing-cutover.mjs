@@ -21,6 +21,7 @@
  *   npm run cutover -- --only uid1,uid2 --yes          # retry just these
  *   npm run cutover -- --dry-run --skip-checksum       # size-only blob verification (faster)
  *   npm run cutover -- --yes --out report.json         # also write the full report to a file
+ *   npm run cutover -- --dry-run --bucket my-bucket    # override the bucket explicitly
  *
  * Credentials & project (Application Default Credentials; nothing is hardcoded):
  *   gcloud auth application-default login
@@ -56,7 +57,9 @@ import { createInterface } from "node:readline/promises";
 import { runThingCutover } from "../lib/migration/thingCutover.js";
 
 function parseArgs(argv) {
-  const args = { dryRun: false, yes: false, skipChecksum: false, onlyUids: [], out: null };
+  const args = {
+    dryRun: false, yes: false, skipChecksum: false, onlyUids: [], out: null, bucket: null,
+  };
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     if (arg === "--dry-run") args.dryRun = true;
@@ -64,12 +67,42 @@ function parseArgs(argv) {
     else if (arg === "--skip-checksum") args.skipChecksum = true;
     else if (arg === "--only") args.onlyUids = (argv[++i] ?? "").split(",").filter(Boolean);
     else if (arg === "--out") args.out = argv[++i] ?? null;
+    else if (arg === "--bucket") args.bucket = argv[++i] ?? null;
     else {
       console.error(`Unknown argument: ${arg}`);
       process.exit(2);
     }
   }
   return args;
+}
+
+/**
+ * The bucket to migrate.
+ *
+ * A local script has NO default: `adminStorage.bucket()` reads the Admin app's `storageBucket`
+ * option, which the Cloud Functions runtime and `firebase emulators:exec` populate from
+ * FIREBASE_CONFIG, but a process authenticated with plain ADC does not. Left unresolved it fails
+ * once per account with an error that reads like a data problem — which is exactly how it first
+ * showed up on a production dry run.
+ *
+ * Deriving `<project>.firebasestorage.app` is a convenience, not a guarantee: projects created
+ * before the naming change use `<project>.appspot.com`. Whatever is chosen is printed below and
+ * probed by preflight before any account is touched, so a wrong guess fails immediately and loudly
+ * rather than midway through a batch.
+ */
+function resolvedBucket(explicit) {
+  if (explicit != null && explicit.length > 0) return explicit;
+  if (process.env.FIREBASE_STORAGE_BUCKET != null) return process.env.FIREBASE_STORAGE_BUCKET;
+  try {
+    const config = JSON.parse(process.env.FIREBASE_CONFIG ?? "{}");
+    if (typeof config.storageBucket === "string" && config.storageBucket.length > 0) {
+      return config.storageBucket;
+    }
+  } catch {
+    // FIREBASE_CONFIG absent or malformed — fall through to the derivation below.
+  }
+  const project = process.env.GOOGLE_CLOUD_PROJECT ?? process.env.GCLOUD_PROJECT;
+  return project != null ? `${project}.firebasestorage.app` : null;
 }
 
 function resolvedProject() {
@@ -90,11 +123,13 @@ async function main() {
   const args = parseArgs(process.argv.slice(2));
 
   const emulator = process.env.FIRESTORE_EMULATOR_HOST != null;
+  const bucket = resolvedBucket(args.bucket);
   console.log("");
   console.log("  Aircraft → Thing cutover");
   console.log(`  project:   ${resolvedProject()}${emulator ? "  [EMULATOR]" : ""}`);
   console.log(`  mode:      ${args.dryRun ? "DRY RUN (writes nothing)" : "LIVE (copies data)"}`);
   console.log(`  scope:     ${args.onlyUids.length > 0 ? args.onlyUids.join(", ") : "every account"}`);
+  console.log(`  bucket:    ${bucket ?? "(unresolved — pass --bucket)"}`);
   console.log(`  blob check: ${args.skipChecksum ? "size only" : "size + sha256"}`);
   console.log("");
 
@@ -112,6 +147,7 @@ async function main() {
     dryRun: args.dryRun,
     onlyUids: args.onlyUids,
     skipChecksum: args.skipChecksum,
+    bucketName: bucket ?? undefined,
   });
 
   const t = report.totals;
