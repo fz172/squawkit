@@ -23,8 +23,19 @@ import { aircraftShareDocPath, type AircraftShareDoc } from "../sharing/sharingM
  *
  * The flip itself lives on the `feat/thing-migration-checkpoint-2` branch and must not reach main:
  * merging main auto-deploys functions (`.github/workflows/deploy-functions.yml` runs on push), so
- * on this branch "merged" means "deployed". Flipping this before D3 (every account migrated) breaks
- * blob upload and download for every account still on the old path — which, until D3, is all of them.
+ * on this branch "merged" means "deployed".
+ *
+ * WHAT THIS IS ACTUALLY COUPLED TO: the CLIENT BUILD (E2), not the data migration (D3). The segment
+ * a blob lands in is chosen client-side — `LocalFirstAttachmentManagerImpl` derives `storage_path`
+ * from `scope.toPath()`, which this migration moved to `thing` — and `BlobDownloadDriver` sends
+ * own-tree reads STRAIGHT to `ref.remotePath`, routing only foreign-tree reads through this broker.
+ * So the broker is the one place where the two trees have to agree, and it must name whatever
+ * segment the shipped client writes.
+ *
+ * Diverge in either direction and shared attachments break: with a `thing`-scoped client and a
+ * legacy broker, the owner uploads direct to `.../thing/.../blobs/{id}` while a member's
+ * `streamBlob` resolves `.../aircraft/...`, 404s, and `markRemoteMissing` marks the blob
+ * permanently gone. The mirror case fails the same way. Flip with E2, not before.
  */
 export function blobObjectPath(hostUid: string, acId: string, blobId: string): string {
   return `users/${hostUid}/${ENTITY_SEGMENT_LEGACY}/${acId}/blobs/${blobId}`;
