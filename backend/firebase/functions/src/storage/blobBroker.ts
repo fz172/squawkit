@@ -1,4 +1,4 @@
-import { ENTITY_SEGMENT_LEGACY } from "../config/entitySegment.js";
+import { ENTITY_SEGMENT_THING } from "../config/entitySegment.js";
 import { adminDb } from "../config/firebaseAdmin.js";
 import { aircraftShareDocPath, type AircraftShareDoc } from "../sharing/sharingModels.js";
 
@@ -15,15 +15,14 @@ import { aircraftShareDocPath, type AircraftShareDoc } from "../sharing/sharingM
 /**
  * Canonical object path for a blob in the HOST's tree. The blob namespace is per-aircraft.
  *
- * MIGRATION (Checkpoint 2, thing_migration_design.md §2.7a / task B9a): still on the LEGACY segment,
- * deliberately. This is a **hard flip**, not a dual deploy — `getBlobUploadSession` and `streamBlob`
- * are callables, so one deployed copy answers every account and the client calls one export name.
- * There is no way to serve `/aircraft/` to un-migrated accounts and `/thing/` to migrated ones at
- * the same time.
+ * MIGRATION (Checkpoint 2, thing_migration_design.md §2.7a / task B9a): **THIS IS THE FLIP.** A
+ * hard cutover, not a dual deploy — `getBlobUploadSession` and `streamBlob` are callables, so one
+ * deployed copy answers every account and the client calls one export name. There is no way to serve
+ * `/aircraft/` to un-migrated accounts and `/thing/` to migrated ones at the same time.
  *
- * The flip itself lives on the `feat/thing-migration-checkpoint-2` branch and must not reach main:
- * merging main auto-deploys functions (`.github/workflows/deploy-functions.yml` runs on push), so
- * on this branch "merged" means "deployed".
+ * DO NOT MERGE THIS BRANCH BEFORE D3. Merging to main auto-deploys functions
+ * (`.github/workflows/deploy-functions.yml` runs on push to main — see §2.7b), so merging is the
+ * deploy. The window is: after D3 (the copy is complete), at or before E2 (devices get the build).
  *
  * WHAT THIS IS ACTUALLY COUPLED TO: the CLIENT BUILD (E2), not the data migration (D3). The segment
  * a blob lands in is chosen client-side — `LocalFirstAttachmentManagerImpl` derives `storage_path`
@@ -35,10 +34,10 @@ import { aircraftShareDocPath, type AircraftShareDoc } from "../sharing/sharingM
  * Diverge in either direction and shared attachments break: with a `thing`-scoped client and a
  * legacy broker, the owner uploads direct to `.../thing/.../blobs/{id}` while a member's
  * `streamBlob` resolves `.../aircraft/...`, 404s, and `markRemoteMissing` marks the blob
- * permanently gone. The mirror case fails the same way. Flip with E2, not before.
+ * permanently gone. The mirror case fails the same way.
  */
 export function blobObjectPath(hostUid: string, acId: string, blobId: string): string {
-  return `users/${hostUid}/${ENTITY_SEGMENT_LEGACY}/${acId}/blobs/${blobId}`;
+  return `users/${hostUid}/${ENTITY_SEGMENT_THING}/${acId}/blobs/${blobId}`;
 }
 
 /** The ACL root for a shared aircraft, or `null` if no share exists at that host+aircraft. */
