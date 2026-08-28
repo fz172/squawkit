@@ -33,12 +33,12 @@ function req(uid: string, data: unknown, provider = "google.com") {
 }
 
 async function seedShare(memberRoles: Record<string, string> = { [HOST]: "owner" }) {
-  await adminDb.doc(`aircraft_shares/${HOST}/aircraft/${AC}`).set({ hostUid: HOST, aircraftId: AC, memberRoles });
+  await adminDb.doc(`thing_shares/${HOST}/thing/${AC}`).set({ hostUid: HOST, aircraftId: AC, memberRoles });
 }
 
 async function seedInvite(overrides: Record<string, unknown> = {}) {
   const secret = "secret-xyz";
-  await adminDb.doc(`aircraft_shares/${HOST}/aircraft/${AC}/invites/${sha256(secret)}`).set({
+  await adminDb.doc(`thing_shares/${HOST}/thing/${AC}/invites/${sha256(secret)}`).set({
     role: "technician",
     createdBy: HOST,
     createdAt: Timestamp.now(),
@@ -52,7 +52,7 @@ async function seedInvite(overrides: Record<string, unknown> = {}) {
 }
 
 async function wipe() {
-  await adminDb.recursiveDelete(adminDb.doc(`aircraft_shares/${HOST}/aircraft/${AC}`));
+  await adminDb.recursiveDelete(adminDb.doc(`thing_shares/${HOST}/thing/${AC}`));
   for (const u of [HOST, OWNER2, TECH]) {
     await adminDb.recursiveDelete(adminDb.doc(`users/${u}`));
     await adminStorage.bucket().deleteFiles({ prefix: `users/${u}/` });
@@ -69,14 +69,14 @@ afterAll(() => fft.cleanup());
 describe("revokeAircraftShare", () => {
   it("an owner removes a member: ACL cleared, member doc deleted, ref tombstoned", async () => {
     await seedShare({ [HOST]: "owner", [TECH]: "technician" });
-    await adminDb.doc(`aircraft_shares/${HOST}/aircraft/${AC}/members/${TECH}`).set({ role: "technician" });
+    await adminDb.doc(`thing_shares/${HOST}/thing/${AC}/members/${TECH}`).set({ role: "technician" });
     await adminDb.doc(`users/${TECH}/shared_aircraft_ref/${AC}`).set({ deleted: false });
 
     await wrappedRevoke(req(HOST, { hostUid: HOST, aircraftId: AC, memberUid: TECH }));
 
-    const share = (await adminDb.doc(`aircraft_shares/${HOST}/aircraft/${AC}`).get()).data();
+    const share = (await adminDb.doc(`thing_shares/${HOST}/thing/${AC}`).get()).data();
     expect(share?.memberRoles[TECH]).toBeUndefined();
-    expect((await adminDb.doc(`aircraft_shares/${HOST}/aircraft/${AC}/members/${TECH}`).get()).exists).toBe(false);
+    expect((await adminDb.doc(`thing_shares/${HOST}/thing/${AC}/members/${TECH}`).get()).exists).toBe(false);
     expect((await adminDb.doc(`users/${TECH}/shared_aircraft_ref/${AC}`).get()).data()?.deleted).toBe(true);
   });
 
@@ -85,7 +85,7 @@ describe("revokeAircraftShare", () => {
     // host and for every remaining member; only the revoked member's local cache is dropped, which
     // the client does with a local purge that never tombstones (SharedScopeJanitor).
     await seedShare({ [HOST]: "owner", [TECH]: "technician" });
-    await adminDb.doc(`aircraft_shares/${HOST}/aircraft/${AC}/members/${TECH}`).set({ role: "technician" });
+    await adminDb.doc(`thing_shares/${HOST}/thing/${AC}/members/${TECH}`).set({ role: "technician" });
     await adminDb.doc(`users/${TECH}/shared_aircraft_ref/${AC}`).set({ deleted: false });
     const blob = `users/${HOST}/aircraft/${AC}/blobs/keep-me`;
     await adminStorage.bucket().file(blob).save(Buffer.from([1, 2, 3]));
@@ -110,11 +110,11 @@ describe("revokeAircraftShare", () => {
 describe("updateAircraftShareRole", () => {
   it("an owner promotes a technician to owner and rewrites the ref", async () => {
     await seedShare({ [HOST]: "owner", [TECH]: "technician" });
-    await adminDb.doc(`aircraft_shares/${HOST}/aircraft/${AC}/members/${TECH}`).set({ role: "technician" });
+    await adminDb.doc(`thing_shares/${HOST}/thing/${AC}/members/${TECH}`).set({ role: "technician" });
 
     await wrappedUpdateRole(req(HOST, { hostUid: HOST, aircraftId: AC, memberUid: TECH, role: "owner" }));
 
-    const share = (await adminDb.doc(`aircraft_shares/${HOST}/aircraft/${AC}`).get()).data();
+    const share = (await adminDb.doc(`thing_shares/${HOST}/thing/${AC}`).get()).data();
     expect(share?.memberRoles[TECH]).toBe("owner");
     const ref = await adminDb.doc(`users/${TECH}/shared_aircraft_ref/${AC}`).get();
     expect(ref.exists).toBe(true);
@@ -150,7 +150,7 @@ describe("onAircraftDeleted", () => {
 
     await wrappedDeleted(change(false, true) as never);
 
-    expect((await adminDb.doc(`aircraft_shares/${HOST}/aircraft/${AC}`).get()).exists).toBe(false);
+    expect((await adminDb.doc(`thing_shares/${HOST}/thing/${AC}`).get()).exists).toBe(false);
     expect((await adminDb.doc(`users/${TECH}/shared_aircraft_ref/${AC}`).get()).data()?.deleted).toBe(true);
   });
 
@@ -180,7 +180,7 @@ describe("onAircraftDeleted", () => {
     } as never);
 
     // The host's share is untouched: ACL, member docs, and the member's ref all survive.
-    expect((await adminDb.doc(`aircraft_shares/${HOST}/aircraft/${AC}`).get()).exists).toBe(true);
+    expect((await adminDb.doc(`thing_shares/${HOST}/thing/${AC}`).get()).exists).toBe(true);
     expect((await adminDb.doc(`users/${TECH}/shared_aircraft_ref/${AC}`).get()).data()?.deleted)
       .toBe(false);
   });
@@ -200,7 +200,7 @@ describe("onAircraftDeleted", () => {
     } as never);
 
     expect((await adminDb.doc(`${techPath}/maintenance_log/log-1`).get()).data()?.deleted).toBe(true);
-    expect((await adminDb.doc(`aircraft_shares/${HOST}/aircraft/${AC}`).get()).exists).toBe(true);
+    expect((await adminDb.doc(`thing_shares/${HOST}/thing/${AC}`).get()).exists).toBe(true);
   });
 
   it("ignores a non-delete write (deleted stays false)", async () => {

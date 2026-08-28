@@ -23,12 +23,12 @@ async function seedShare(
   extra: Record<string, unknown> = {},
 ) {
   await adminDb
-    .doc(`aircraft_shares/${HOST}/aircraft/${AC}`)
+    .doc(`thing_shares/${HOST}/thing/${AC}`)
     .set({ hostUid: HOST, aircraftId: AC, memberRoles, ...extra });
 }
 
 async function wipe() {
-  await adminDb.recursiveDelete(adminDb.doc(`aircraft_shares/${HOST}/aircraft/${AC}`));
+  await adminDb.recursiveDelete(adminDb.doc(`thing_shares/${HOST}/thing/${AC}`));
   await adminStorage.bucket().deleteFiles({ prefix: `users/${HOST}/` });
 }
 

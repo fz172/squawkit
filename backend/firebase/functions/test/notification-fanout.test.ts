@@ -205,8 +205,8 @@ beforeEach(async () => {
     adminDb.recursiveDelete(adminDb.doc(`users/${HOST}`)),
     adminDb.recursiveDelete(adminDb.doc(`users/${MEMBER}`)),
     adminDb.recursiveDelete(adminDb.doc(`users/${LURKER}`)),
-    adminDb.recursiveDelete(adminDb.collection("aircraft_shares").doc(HOST)),
-    adminDb.recursiveDelete(adminDb.collection("aircraft_shares").doc(MALLORY)),
+    adminDb.recursiveDelete(adminDb.collection("thing_shares").doc(HOST)),
+    adminDb.recursiveDelete(adminDb.collection("thing_shares").doc(MALLORY)),
     adminDb.recursiveDelete(adminDb.doc(`users/${MALLORY}`)),
   ]);
   await adminDb.doc(`users/${HOST}/aircraft/${AC_A}`).set(aircraftEnvelope(AC_A, "N4589T"));
@@ -662,7 +662,7 @@ describe("what is not collaboration activity", () => {
     await adminDb.doc(`users/${HOST}/aircraft/${AC_A}/maintenance_task/task-1`).set(taskEnvelope(1));
 
     // tearDownShare's effect: the ACL is gone before any child is tombstoned.
-    await adminDb.recursiveDelete(adminDb.collection("aircraft_shares").doc(HOST));
+    await adminDb.recursiveDelete(adminDb.collection("thing_shares").doc(HOST));
 
     await wrappedRecord(
       recordWrite(AC_A, "maintenance_task", "task-1", taskEnvelope(1), {

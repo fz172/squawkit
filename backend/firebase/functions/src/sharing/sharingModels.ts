@@ -18,9 +18,28 @@ export const SHARE_ROLE = {
 
 export type ShareRole = (typeof SHARE_ROLE)[keyof typeof SHARE_ROLE];
 
-/** Collection and subcollection names under `aircraft_shares/{hostUid}/aircraft/{aircraftId}`. */
-export const AIRCRAFT_SHARES_COLLECTION = "aircraft_shares";
-export const SHARE_AIRCRAFT_SUBCOLLECTION = "aircraft";
+/**
+ * Collection and subcollection names under `thing_shares/{hostUid}/thing/{aircraftId}`.
+ *
+ * MIGRATION (Phase G3, task B6 — thing_migration_design.md §5.4): **THIS IS THE FLIP.** The
+ * constant NAMES keep saying "aircraft" deliberately; only their values move. Renaming the symbols
+ * would balloon this diff across every call site for no behavioural gain, and §3.3 draws the line
+ * exactly here: rename what is stored identity, leave alone what is only a name in code.
+ *
+ * DO NOT MERGE THIS BRANCH before G2 reports a clean copy. Merging to main auto-deploys
+ * (§2.7b), and these values decide where `aircraftShareDocPath` and every function built on it
+ * read and write. Flipped before `thing_shares` holds a faithful replica, every share lookup
+ * resolves to a document that does not exist — which reads to a member as having been removed from
+ * the aircraft.
+ *
+ * It must also deploy TOGETHER with two other changes, in one release (G3):
+ *   1. `firestore.rules`' `shareRole()` repointed at `thing_shares/.../thing/...`;
+ *   2. a client release updating `SharingManagerImpl`'s `SHARES` / `SHARE_AIRCRAFT` constants.
+ * Ship any one of the three alone and the client, the rules, and the functions disagree about
+ * where the ACL lives.
+ */
+export const AIRCRAFT_SHARES_COLLECTION = "thing_shares";
+export const SHARE_AIRCRAFT_SUBCOLLECTION = "thing";
 export const SHARE_MEMBERS_SUBCOLLECTION = "members";
 export const SHARE_INVITES_SUBCOLLECTION = "invites";
 
