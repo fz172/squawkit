@@ -66,11 +66,14 @@ export const onAircraftDeleted = onDocumentWritten(
   handleDelete(ENTITY_SEGMENT_LEGACY),
 );
 
-// MIGRATION (thing_migration_design.md §2.7c / task B9): the `/thing/` registration is NOT deployed
-// with this branch. A cutover copy CREATES each document, so `before` never exists — which means
-// every record the Phase D script copies would look like a brand-new write to these handlers. See
-// §2.7c for what that costs. The registrations live on `feat/thing-migration-checkpoint-2` and go
-// out with C2, after the copy is done and before any client writes `/thing/` at E2.
+// MIGRATION (thing_migration_design.md §2.7c / task B9): deployed with C2, NOT with the Phase A/B
+// branch. A cutover copy CREATES each document, so `before` never exists and every record the Phase
+// D script copies would read as a fresh authored write here. By C2 the copy is done, and nothing
+// writes `/thing/` until E2 anyway — so these are inert before this point and correct after it.
+export const onThingDeleted = onDocumentWritten(
+  { document: `users/{uid}/${ENTITY_SEGMENT_THING}/{acId}`, region: FUNCTION_REGION },
+  handleDelete(ENTITY_SEGMENT_THING),
+);
 
 /**
  * Tombstone every member's ref, then recursively delete the aircraft_shares tree. No-op if unshared.
