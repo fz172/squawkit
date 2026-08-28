@@ -8,13 +8,11 @@ import { createAircraftShareInvite } from "./sharing/createAircraftShareInvite.j
 import {
   onNotifiableAircraftWritten,
   onNotifiableRecordWritten,
-  onNotifiableThingRecordWritten,
-  onNotifiableThingWritten,
 } from "./notifications/onRecordWritten.js";
-import { onAircraftDeleted, onThingDeleted } from "./sharing/onAircraftDeleted.js";
+import { onAircraftDeleted } from "./sharing/onAircraftDeleted.js";
 import { previewAircraftShareInvite } from "./sharing/previewAircraftShareInvite.js";
 import { getBlobUploadSession } from "./storage/getBlobUploadSession.js";
-import { onRecordDeleted, onThingRecordDeleted } from "./storage/onRecordDeleted.js";
+import { onRecordDeleted } from "./storage/onRecordDeleted.js";
 import { streamBlob } from "./storage/streamBlob.js";
 import { scheduledStorageSweep } from "./storage/storageSweepTriggers.js";
 import { redeemAircraftShareInvite } from "./sharing/redeemAircraftShareInvite.js";
@@ -56,18 +54,14 @@ export { deleteMyAccount };
 export { redeemAircraftShareInvite };
 export { revokeAircraftShare };
 export { updateAircraftShareRole };
-// MIGRATION (thing_migration_design.md §2.7 / task B9): the four `Thing`-path triggers below are
-// deployed ALONGSIDE their `aircraft`-path twins, not instead of them, for the span between the
-// first account's cutover and the last. Phase F3 removes the `aircraft` half.
-export { onAircraftDeleted, onThingDeleted };
+// MIGRATION (thing_migration_design.md §2.7, §2.7c / task B9): the four `Thing`-path triggers are
+// written but NOT exported here — they ship with C2, after the Phase D copy is done. A cutover copy
+// creates each document, so every copied record would look like a new write to them. Phase F3
+// removes the `aircraft` half once no account is left on it.
+export { onAircraftDeleted };
 export { createAircraftShareInvite, previewAircraftShareInvite, cancelAircraftShareInvite };
-export { onRecordDeleted, onThingRecordDeleted };
-export {
-  onNotifiableRecordWritten,
-  onNotifiableAircraftWritten,
-  onNotifiableThingRecordWritten,
-  onNotifiableThingWritten,
-};
+export { onRecordDeleted };
+export { onNotifiableRecordWritten, onNotifiableAircraftWritten };
 export { scheduledStorageSweep };
 export { streamBlob };
 export { getBlobUploadSession };

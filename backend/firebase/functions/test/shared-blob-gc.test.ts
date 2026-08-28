@@ -5,7 +5,7 @@ import { adminDb, adminStorage, fft } from "./helpers.js";
 
 import { Attachment, AttachmentType } from "../src/generated/proto/aircraft/attachment.js";
 import { MaintenanceLog } from "../src/generated/proto/aircraft/maintenance_log.js";
-import { onThingRecordDeleted } from "../src/storage/onRecordDeleted.js";
+import { onRecordDeleted } from "../src/storage/onRecordDeleted.js";
 import { runStorageSweep } from "../src/storage/storageSweep.js";
 
 /**
@@ -22,12 +22,7 @@ import { runStorageSweep } from "../src/storage/storageSweep.js";
  *                                 sweep is the backstop.
  */
 
-// The `/thing/`-path registration: this file's fixtures live on the new segment because
-// `runStorageSweep` was flipped there outright (thing_migration_design.md §2.7a — a scheduled
-// function is self-correcting, so it needs no dual deploy). `blob-cleanup.test.ts` covers the
-// legacy `onRecordDeleted` registration on `/aircraft/`, so both halves of the dual deploy are
-// exercised across the suite.
-const wrappedRecord = fft.wrap(onThingRecordDeleted);
+const wrappedRecord = fft.wrap(onRecordDeleted);
 
 const HOST = "host-shared-gc";
 const MEMBER = "member-shared-gc";
@@ -42,8 +37,8 @@ const DEFAULTS = {
 };
 
 /** Canonical blob location — the HOST's tree, whoever uploaded it. */
-const blobPath = (id: string) => `users/${HOST}/thing/${AC}/blobs/${id}`;
-const logPath = (id = LOG) => `users/${HOST}/thing/${AC}/maintenance_log/${id}`;
+const blobPath = (id: string) => `users/${HOST}/aircraft/${AC}/blobs/${id}`;
+const logPath = (id = LOG) => `users/${HOST}/aircraft/${AC}/maintenance_log/${id}`;
 
 /**
  * A payload in the shape the CLIENT actually writes: **base64 text**, not bytes.
@@ -107,7 +102,7 @@ beforeEach(async () => {
   await adminDb.recursiveDelete(adminDb.doc(`users/${HOST}`));
   await adminStorage.bucket().deleteFiles({ prefix: `users/${HOST}/` });
   await adminDb
-    .doc(`users/${HOST}/thing/${AC}`)
+    .doc(`users/${HOST}/aircraft/${AC}`)
     .set({ deleted: false, schema: "thing.Thing" });
 });
 

@@ -1,0 +1,72 @@
+-- Migration from schema version 7 to 8.
+-- (SQLDelight applies N.sqm when migrating FROM version N; Schema.version is 8 with this file.)
+--
+-- Aircraft → Thing (docs/product/thing_migration_design.md §4). Rewrites the entity-tree path
+-- segment `aircraft` → `thing` everywhere it is PERSISTED locally, plus the two identity strings
+-- that name the renamed proto.
+--
+-- Why this exists when §4 says there is no local migrator. The design's mitigation for local data
+-- is "the operator deletes and reinstalls the app," and on Android and iOS that is true. It is NOT
+-- true on web: `DriverFactory.js.kt` persists SQLite to OPFS and runs a version-aware
+-- `Schema.migrate`, so a returning web user keeps their database and cannot reinstall their way out
+-- of it. Without this file their first read after the Phase 1 deploy throws — `CollectionKind
+-- .fromWire` calls `error(...)` on an unregistered name, and every existing row says 'aircraft'.
+--
+-- This is deliberately ONLY the path rewrite. The expensive half of the withdrawn
+-- LocalThingPathMigrator — decoding payloads to rewrite embedded `Attachment.storage_path` and to
+-- backfill `template_id`/`spec`/`components` with deterministic component ids — stays server-side in
+-- the cutover script (§5.1 step 2a), where it runs once per document against authoritative data
+-- rather than N times against N devices' partial copies. Nothing here touches a payload blob.
+--
+-- REPLACE() is safe here specifically because ids are opaque generated strings that cannot contain
+-- a '/', so the literal '/aircraft/' occurs exactly once per path, at a fixed position. A blind
+-- string replace cannot mismatch a different segment.
+--
+-- Rows are rewritten IN PLACE rather than dropped. Dropping sync_cursor would force a full
+-- re-hydration of every aircraft's history on next launch, and dropping urgency_watermark would
+-- re-arm every already-acknowledged overdue item as if newly crossed — the exact failure the
+-- reassignWatermarks comment in Schema.sq warns about for the unrelated account-merge case.
+--
+-- Idempotent by construction: once no row matches, every statement below is a no-op.
+
+-- The Thing document's own collection, and the schema string that names its proto type.
+UPDATE entity
+SET collection = 'thing'
+WHERE collection = 'aircraft';
+
+UPDATE entity
+SET payload_schema = 'thing.Thing'
+WHERE payload_schema = 'aircraft.Aircraft';
+
+-- The scope segment every per-aircraft child (logs, tasks, squawks, overview) syncs under. This is
+-- a SEPARATE constant from the one above — CollectionKind.wireName names the collection the Thing
+-- doc lives in, EntityScope names the segment its children hang off — and both must move or half
+-- the tree relocates and half does not.
+UPDATE entity
+SET scope_path = REPLACE(scope_path, '/aircraft/', '/thing/')
+WHERE scope_path LIKE '%/aircraft/%';
+
+UPDATE sync_cursor
+SET collection = 'thing'
+WHERE collection = 'aircraft';
+
+UPDATE sync_cursor
+SET scope_path = REPLACE(scope_path, '/aircraft/', '/thing/')
+WHERE scope_path LIKE '%/aircraft/%';
+
+UPDATE urgency_watermark
+SET collection = 'thing'
+WHERE collection = 'aircraft';
+
+UPDATE urgency_watermark
+SET scope_path = REPLACE(scope_path, '/aircraft/', '/thing/')
+WHERE scope_path LIKE '%/aircraft/%';
+
+-- blob_object carries the segment TWICE: scope_path (local identity, leading slash) and remote_path
+-- (the Cloud Storage object path, no leading slash). Both contain '/aircraft/' between the uid and
+-- the aircraft id, so the same replace covers each. Miss remote_path and every cached blob points at
+-- an object the backend has already moved.
+UPDATE blob_object
+SET scope_path  = REPLACE(scope_path,  '/aircraft/', '/thing/'),
+    remote_path = REPLACE(remote_path, '/aircraft/', '/thing/')
+WHERE scope_path LIKE '%/aircraft/%' OR remote_path LIKE '%/aircraft/%';

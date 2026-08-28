@@ -117,13 +117,11 @@ export const onRecordDeleted = onDocumentWritten(
   handleRecordDeleted(ENTITY_SEGMENT_LEGACY),
 );
 
-export const onThingRecordDeleted = onDocumentWritten(
-  {
-    document: `users/{uid}/${ENTITY_SEGMENT_THING}/{acId}/{kind}/{docId}`,
-    region: FUNCTION_REGION,
-  },
-  handleRecordDeleted(ENTITY_SEGMENT_THING),
-);
+// MIGRATION (thing_migration_design.md §2.7c / task B9): the `/thing/` registration is NOT deployed
+// with this branch. A cutover copy CREATES each document, so `before` never exists — which means
+// every record the Phase D script copies would look like a brand-new write to these handlers. See
+// §2.7c for what that costs. The registrations live on `feat/thing-migration-checkpoint-2` and go
+// out with C2, after the copy is done and before any client writes `/thing/` at E2.
 
 type LiveRefs = {
   referenced: Set<string>;

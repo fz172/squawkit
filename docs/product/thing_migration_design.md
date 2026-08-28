@@ -266,6 +266,45 @@ merge. That is not a happy accident: it is why the phase was designed additively
 merge rather than a coordinated release. The client is unaffected either way; `deploy-web.yml` and the Android
 build are `workflow_dispatch` only, so no client ships without an explicit E1/E2 decision.
 
+### 2.7c The cutover copy looks like a write — so the `/thing/` triggers must not be live during it
+
+Found by code review of the Phase A/B PR, and it changes Phase C's shape.
+
+A Firestore `onDocumentWritten` trigger cannot tell "a user edited this" from "a script copied this here." Both
+are a write. And a **copy creates the document**, so `event.data.before` never exists — which defeats the two
+filters these handlers rely on to stay quiet:
+
+- `onRecordDeleted`'s "act only on the `deleted: false → true` edge" computes `wasDeleted` from `before`. With no
+  `before`, **every already-tombstoned record the script copies hits that edge** and runs blob GC.
+- `onRecordWritten`'s `readChange` skips its `isMeaningfulChange` comparison entirely when `before` is absent, and
+  a copy preserves `writerUid` verbatim. So every copied record reads as a genuine authored write.
+
+Two concrete consequences if the `/thing/` registrations are live while §5.1's copy runs:
+
+1. **Blob GC against a half-populated tree.** `blobsReferencedByLiveRecords` enumerates only what has been copied
+   so far. Copy a tombstoned log that owns blob `b1` before copying the live log that also references it — the
+   handler's own comment notes duplicate attachment ids across records are real — and it deletes
+   `users/{uid}/thing/{ac}/blobs/b1`, which step 3 has already copied. Unlike `storageSweep`, this path has no
+   grace window to save it.
+2. **A notification storm.** The ACL still resolves through `aircraft_shares` (Phase G has not moved it), so the
+   audience is live. A shared aircraft with N records and M members sends **N × (M−1)** pushes during the batch.
+   This is the same hazard `onAircraftDeleted`'s ordering comment already guards against — *"reverse these two
+   lines and deleting one aircraft sends every member one notification per record"* — arriving by a different
+   route.
+
+**The fix is sequencing, not a suppression flag.** Nothing reads or writes `/thing/` until the Phase 1 client
+reaches devices at E2, so the `/thing/` registrations are inert before then — they are only *needed* from E2
+onward. Deploying them after the copy therefore costs nothing and removes the hazard entirely, with no marker
+field for the handlers to check and get wrong.
+
+So **Phase C splits in two**: C1 deploys the rules blocks only (additive, safe at any time, and it must precede
+the copy so the copied documents are readable). The four `/thing/` trigger registrations move to **C2**, alongside
+the callable flip, in the window after D3 and at or before E2. They are written on the same held branch.
+
+A note on §2.7's original argument, which still stands but for a narrower window than first written: dual
+registration is needed across the **E2 boundary**, because devices do not all update at the same instant — not
+across the whole migration, because the global batch means no account is half-moved.
+
 ### 2.8 Local database schema — what actually needs rewriting on-device
 
 From `core/storage/.../db/Schema.sq`, four tables carry a `scope_path` (or, for blobs, both `scope_path` and
@@ -436,7 +475,8 @@ in already-rendered UI.**
 
 ## 4. Local (on-device) migration — deliberately none
 
-**Decision (2026-08-27): there is no `LocalThingPathMigrator`.** An earlier revision of this doc specified one —
+**Decision (2026-08-27, amended 2026-08-28): there is no `LocalThingPathMigrator`, but there *is* a
+`7.sqm` path-rewrite migration (§4.1a) — the wipe-and-reinstall answer does not reach the web build.** An earlier revision of this doc specified one —
 a `LocalAccountMigrator`-shaped class that would rewrite every `/aircraft/` path literal in the local SQLDelight
 database in place. It is not being built, and the tasks that described it (A6, A7, A8) are withdrawn.
 
@@ -453,12 +493,50 @@ unnecessary:
   cursors and watermarks. **Wiping local app data is an accepted cost** — the operator deletes and reinstalls the
   app on each dogfood device, and a clean install re-hydrates from `/thing/...` on first launch with nothing to
   migrate. This was explicitly accepted rather than assumed.
+
+  **Except on web, where "reinstall" is not a thing the operator can do.** `DriverFactory.js.kt` persists SQLite
+  to OPFS and runs a version-aware `Schema.migrate`, so a returning web user keeps their database across any
+  deploy. Left alone, their first read after Phase 1 ships *throws*: `CollectionKind.fromWire` calls `error(...)`
+  on an unregistered name, and every stored row says `'aircraft'`. That gap is closed by `7.sqm` — see §4.1a. The
+  wipe-and-reinstall answer covers Android and iOS; it never covered web, and the earlier revision of this section
+  asserted otherwise without checking.
 - A migrator is not free: it is a transaction that mutates every table on a database it does not own the schema
   version of, running on a device whose data may already be partly `/thing/`-shaped if the user reinstalled
   mid-window. The failure modes it introduces are worse than the bandwidth it saves for a handful of devices.
 
 This is a Phase-1-only judgement. It rests on "dogfood devices, operator-controlled, wipe is acceptable," and
 does **not** generalise to any later migration that touches real users' devices.
+
+### 4.1a `7.sqm` — the path rewrite, and only the path rewrite
+
+A SQLDelight migration (schema version 7 → 8) rewrites the segment everywhere it is *persisted locally*:
+
+| Table | Columns |
+|---|---|
+| `entity` | `collection` (`'aircraft'` → `'thing'`), `payload_schema` (`'aircraft.Aircraft'` → `'thing.Thing'`), `scope_path` |
+| `sync_cursor` | `collection`, `scope_path` |
+| `urgency_watermark` | `collection`, `scope_path` |
+| `blob_object` | `scope_path` **and** `remote_path` |
+
+`REPLACE()` is safe because ids are opaque generated strings that cannot contain a `/`, so `'/aircraft/'` occurs
+exactly once per path at a fixed position. Cursors and watermarks are rewritten **in place** rather than dropped:
+dropping cursors forces a full re-hydration of every aircraft's history on next launch, and dropping watermarks
+re-arms every already-acknowledged overdue item as if newly crossed — the exact failure the `reassignWatermarks`
+comment in `Schema.sq` warns about for the unrelated account-merge case. Idempotent by construction: once no row
+matches, every statement is a no-op.
+
+**This is not a reinstatement of the withdrawn `LocalThingPathMigrator` (A6).** The expensive half of that class —
+decoding payloads to rewrite embedded `Attachment.storage_path`, and backfilling `template_id`/`spec`/`components`
+with deterministically derived component ids — stays server-side in the cutover script (§4.2, §5.1 step 2a), where
+it runs once per document against authoritative data rather than N times against N devices' partial copies.
+Nothing in `7.sqm` touches a payload blob. What is left is eight `UPDATE` statements that SQLDelight runs
+automatically, which is a different risk class from a hand-invoked transaction that decodes and re-encodes protos.
+
+It also makes the wipe *optional* rather than load-bearing on Android and iOS — an upgraded install now lands on
+the right paths instead of stranding its `blob_object` rows (which carry no `CollectionKind`, so they would have
+survived the throw and then been unreachable to `TombstoneGc`, `SharedScopeJanitor`, and `PushWorker`'s
+shared-scope match). Reinstalling is still the simplest thing to do on a phone; it is no longer the only thing
+that works.
 
 ### 4.2 What the wipe does *not* cover — and where that work moved instead
 
@@ -702,6 +780,8 @@ parallel or in any order. **Ref** points at the section that specifies the task 
 | A4 | Update `EntityScope.aircraftChildUnsafe`'s internal literal `"aircraft"` → `"thing"`. Do not rename the function. | — | §2.3, §3.3 |
 | A5 | Fix every hardcoded `"aircraft"` path literal on the client. §2.5's inventory of ten proved **incomplete** — an eleventh lives in `TombstoneGc.kt` (`idsInScopePrefix("${row.scope_path}aircraft/${row.id}/%")`), plus KDoc examples in `FirestoreRefs.kt`/`LocalBlobStore.kt`/`EntityStoreFactory.kt` and path literals in eight test fixtures. Treat §2.5 as a starting point, not a checklist: finish with a repo-wide `grep` for `aircraft/` over `*.kt` returning nothing. The `storageSweep.ts`/`deleteMyAccount.ts` entries §2.5 listed here are backend files and belong to Phase B; §2.5's `deleteMyAccount.ts:100,120,147` citations were wrong (those lines are `shared_aircraft_ref`/ACL helpers — only a comment needed changing). | — | §2.5 |
 | ~~A6~~ | **Withdrawn** — no `LocalThingPathMigrator` is built. Its two load-bearing jobs move server-side to B1. | — | §4, §8 #2 |
+| A6b | Add `7.sqm` (schema 7 → 8): rewrite `collection`, `payload_schema`, `scope_path`, and `blob_object.remote_path` from the `aircraft` segment to `thing`. Path strings only — no payload decode, no backfill. Required because web persists to OPFS and cannot be reinstalled (§4.1a). | A3, A4 | §4.1a |
+| A8b | Write `ThingPathMigration7Test`: seed pre-migration rows via raw SQL (the typed API cannot write the legacy string), migrate, assert every table moved, assert unrelated kinds did not, assert dirty rows stay dirty, assert a second run is a no-op, assert an empty DB migrates cleanly. | A6b | §4.1a, §6 |
 | ~~A7~~ | **Withdrawn** — nothing to invoke at startup. | — | §4, §8 #2 |
 | ~~A8~~ | **Withdrawn** — replaced by the script-side payload-transform test folded into B11. | — | §4.3, §6 |
 | A9 | Confirm `CollectionKindCoverageTest` still passes unmodified (no code change expected — it asserts against the symbol, not the string). | A3 | §2.2 |
@@ -721,7 +801,7 @@ parallel or in any order. **Ref** points at the section that specifies the task 
 | B7 | Add a new `match /thing/{acId} { ... }` block to `firestore.rules`, alongside the existing `match /aircraft/{acId} { ... }` block, mirroring `isShareMember`/`isShareOwner`/`writerIsSelf`/`isSharedAircraftKind`. | — | §2.4a, §3.2 |
 | B8 | Add a new `match /thing_shares/{hostUid}/thing/{acId} { ... }` block to `firestore.rules`, alongside the existing ACL block — added now, inert until Phase G. Do **not** repoint `shareRole()` yet. | — | §2.9, §3.2 |
 | B9a | Write the **Checkpoint 2** flip for the globally-deployed callables that cannot be dual-deployed: `blobBroker.ts`'s `blobObjectPath()` and `createAircraftShareInvite.ts`'s existence check. Write now, **hold on the unmerged `feat/thing-migration-checkpoint-2` branch** — merging to `main` deploys (§2.7b), so this must not land there until C2. | — | §2.7a, §2.7b |
-| B9 | Write new versions of the four Cloud Functions (`onNotifiableRecordWritten`, `onNotifiableAircraftWritten`, `onAircraftDeleted`, `onRecordDeleted`) registered on `users/{uid}/thing/{acId}...`, to deploy *alongside* (not replacing) the existing ones. | — | §2.7, §5.2 |
+| B9 | Write new versions of the four Cloud Functions (`onNotifiableRecordWritten`, `onNotifiableAircraftWritten`, `onAircraftDeleted`, `onRecordDeleted`) registered on `users/{uid}/thing/{acId}...`, to deploy *alongside* (not replacing) the existing ones. **Hold on the same unmerged branch as B9a** — these must not be live while the Phase D copy runs (§2.7c). | — | §2.7, §2.7c, §5.2 |
 | B10 | Update `firestore-rules.test.ts` and `sharing-rules.test.ts` with a parallel set of assertions against the `/thing/`- and `thing_shares`-shaped paths, keeping every existing `aircraft`-shaped assertion passing. | B7, B8 | §6 |
 | B11 | Test the cutover script end-to-end against the Firestore/Storage emulator with a seeded fixture — including the payload-transform assertions that replace the withdrawn A8: `storage_path` rewritten, backfill matches PRD §9.1, and the transform is byte-identical when run twice. | B1, B2 | §6, §4.3 |
 
@@ -729,8 +809,8 @@ parallel or in any order. **Ref** points at the section that specifies the task 
 
 | # | Task | Depends on | Ref |
 |---|---|---|---|
-| C1 | **Checkpoint 1 (additive, safe any time).** Happens automatically when the Phase A/B branch merges — see §2.7b. Deploy, together, in one release: the new `/thing/{acId}` and `/thing_shares/...` `firestore.rules` blocks (B7, B8) and the four new dual Cloud Functions (B9) — alongside everything existing, unchanged. Nothing here removes or repoints a path, so no account can be broken by it. | B7, B8, B9, B10 | §5.2 |
-| C2 | **Checkpoint 2 (a hard flip — timing is load-bearing).** Deploy B9a: repoint `blobObjectPath()` and `createAircraftShareInvite`'s existence check at `/thing/`. Must land **after D3** (every account migrated) and **at or before E2** (devices get the Phase 1 build). Too early breaks blobs and invites for un-migrated accounts; too late breaks them for migrated ones. | B9a, D3 | §2.7a |
+| C1 | **Checkpoint 1 (rules only — additive, safe any time).** Happens automatically when the Phase A/B branch merges (§2.7b). Deploys the new `/thing/{acId}` and `/thing_shares/...` `firestore.rules` blocks (B7, B8) alongside everything existing, unchanged. Must precede D2 so the copied documents are readable. Nothing here removes or repoints a path, so no account can be broken by it. **The `/thing/` Cloud Function triggers are deliberately NOT part of this** — see C2. | B7, B8, B10 | §5.2, §2.7c |
+| C2 | **Checkpoint 2 (timing is load-bearing).** Merge the held branch, deploying two things together: **(a)** the four `/thing/` trigger registrations (B9) — held back so the Phase D copy could not trip them (§2.7c); **(b)** the callable flip (B9a) — `blobObjectPath()` and `createAircraftShareInvite`'s existence check. Must land **after D3** (copy complete) and **at or before E2** (devices get the Phase 1 build). The callable flip is coupled to the *client build*, not to D3: the client chooses the segment it writes, and the broker has to name the same one or shared attachments 404 and get marked permanently missing. | B9, B9a, D3 | §2.7a, §2.7c |
 
 ### Phase D — Run the entity/blob migration batch (must reach zero failures before Phase E/G)
 
@@ -744,7 +824,7 @@ parallel or in any order. **Ref** points at the section that specifies the task 
 
 | # | Task | Depends on | Ref |
 |---|---|---|---|
-| E1 | Cut the Phase 1 client release bundling A1–A5 and A9–A11. Confirm no template-picker UI and no non-airplane preset exist in it — the app must be behaviorally invisible. Building/tagging this release does not require D3 to be done yet. | A2, A3, A4, A5, A9, A10, A11 | §1, PRD §15 Phase 1 |
+| E1 | Cut the Phase 1 client release bundling A1–A5, A6b, A8b, and A9–A11. Confirm no template-picker UI and no non-airplane preset exist in it — the app must be behaviorally invisible. Building/tagging this release does not require D3 to be done yet. | A2, A3, A4, A5, A6b, A8b, A9, A10, A11 | §1, PRD §15 Phase 1 |
 | E2 | Distribute the build to all dogfood devices, **deleting and reinstalling the app on each** rather than upgrading in place — there is no local migrator, so the existing `/aircraft/`-shaped local database must be discarded (§4). **Must not happen before D3** — a device on this build reads `/thing/...`, which must already hold this account's data. | E1, D3, C2 | §2.7a, §4, §5.1, PRD §9 |
 
 ### Phase F — Grace window + entity-tree cleanup (independent of Phase G's own timing)

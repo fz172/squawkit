@@ -126,13 +126,11 @@ export const onNotifiableRecordWritten = onDocumentWritten(
   handleRecordWritten(ENTITY_SEGMENT_LEGACY),
 );
 
-export const onNotifiableThingRecordWritten = onDocumentWritten(
-  {
-    document: `users/{uid}/${ENTITY_SEGMENT_THING}/{acId}/{kind}/{docId}`,
-    region: FUNCTION_REGION,
-  },
-  handleRecordWritten(ENTITY_SEGMENT_THING),
-);
+// MIGRATION (thing_migration_design.md §2.7c / task B9): the `/thing/` registration is NOT deployed
+// with this branch. A cutover copy CREATES each document, so `before` never exists — which means
+// every record the Phase D script copies would look like a brand-new write to these handlers. See
+// §2.7c for what that costs. The registrations live on `feat/thing-migration-checkpoint-2` and go
+// out with C2, after the copy is done and before any client writes `/thing/` at E2.
 
 /**
  * The Aircraft record itself — a tail number or a make/model correction is collaboration activity
@@ -180,10 +178,7 @@ export const onNotifiableAircraftWritten = onDocumentWritten(
   handleAircraftWritten(ENTITY_SEGMENT_LEGACY),
 );
 
-export const onNotifiableThingWritten = onDocumentWritten(
-  { document: `users/{uid}/${ENTITY_SEGMENT_THING}/{acId}`, region: FUNCTION_REGION },
-  handleAircraftWritten(ENTITY_SEGMENT_THING),
-);
+// See the note above: the `/thing/` registration ships with C2, not with this branch.
 
 // --- The write itself --------------------------------------------------------------------------
 
