@@ -12,6 +12,7 @@ kotlin {
     minSdk = 33
 
     withHostTest {
+      isReturnDefaultValues = true
     }
   }
 

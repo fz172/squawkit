@@ -98,8 +98,8 @@ See [DESIGN.md](DESIGN.md) and [PRODUCT.md](PRODUCT.md) for the full brand and p
 ./gradlew assembleDebug                              # Android debug APK (developer tooling on)
 ./gradlew assembleRelease                            # Android release APK (developer tooling off)
 ./gradlew lint                                       # Lint
-./gradlew testDebugUnitTest                          # All Android unit tests
-./gradlew :feature:fleet:viewing:testDebugUnitTest   # Single-module tests
+./gradlew testDebugUnitTest testAndroidHostTest      # All Android unit tests
+./gradlew :feature:fleet:datamanager:testAndroidHostTest # Single-module tests
 ./gradlew :composeApp:iosSimulatorArm64Test          # iOS simulator tests (local only)
 ./gradlew :webApp:jsBrowserDevelopmentWebpack        # Web development bundle
 ```
@@ -107,7 +107,7 @@ See [DESIGN.md](DESIGN.md) and [PRODUCT.md](PRODUCT.md) for the full brand and p
 For iOS, open `iosApp/` in Xcode and run the **iosAppDebug** scheme (**iosAppRelease** for a
 tooling-off build).
 
-CI runs lint → `assembleDebug` → `testDebugUnitTest` on every push and requires a
+CI runs lint → `assembleDebug` → `testDebugUnitTest` + `testAndroidHostTest` on every push and requires a
 `GOOGLE_SERVICES_JSON` secret. iOS is not built on CI.
 
 ## Documentation
