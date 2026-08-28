@@ -6,7 +6,7 @@ import org.junit.Test
 class CollectionKindCoverageTest {
 
   private val allKnownKinds: List<CollectionKind> = listOf(
-    CollectionKind.Aircraft,
+    CollectionKind.Thing,
     CollectionKind.MaintenanceTask,
     CollectionKind.MaintenanceLog,
     CollectionKind.MaintenanceOverview,

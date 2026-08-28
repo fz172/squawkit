@@ -1,19 +1,44 @@
+import { ENTITY_SEGMENT_LEGACY } from "../config/entitySegment.js";
 import { adminDb } from "../config/firebaseAdmin.js";
 import { aircraftShareDocPath, type AircraftShareDoc } from "../sharing/sharingModels.js";
 
 /**
  * Shared authorization core for the attachment broker (design §9.2).
  *
- * Blobs live strictly under the host at `users/{hostUid}/aircraft/{acId}/blobs/{blobId}`, and
+ * Blobs live strictly under the host at `users/{hostUid}/{segment}/{acId}/blobs/{blobId}`, and
  * `storage.rules` deny every cross-account access. The broker is the ONLY door across trees, and it
  * opens that door by consulting the `aircraft_shares` ACL — the one thing Storage rules cannot do
  * (they cannot `get()` Firestore). Reads (`streamBlob`) and writes (`getBlobUploadSession`) both
  * authorize through the two functions here, so membership is decided in exactly one place.
  */
 
-/** Canonical object path for a blob in the HOST's tree. The blob namespace is per-aircraft. */
+/**
+ * Canonical object path for a blob in the HOST's tree. The blob namespace is per-aircraft.
+ *
+ * MIGRATION (Checkpoint 2, thing_migration_design.md §2.7a / task B9a): still on the LEGACY segment,
+ * deliberately. This is a **hard flip**, not a dual deploy — `getBlobUploadSession` and `streamBlob`
+ * are callables, so one deployed copy answers every account and the client calls one export name.
+ * There is no way to serve `/aircraft/` to un-migrated accounts and `/thing/` to migrated ones at
+ * the same time.
+ *
+ * The flip itself lives on the `feat/thing-migration-checkpoint-2` branch and must not reach main:
+ * merging main auto-deploys functions (`.github/workflows/deploy-functions.yml` runs on push), so
+ * on this branch "merged" means "deployed".
+ *
+ * WHAT THIS IS ACTUALLY COUPLED TO: the CLIENT BUILD (E2), not the data migration (D3). The segment
+ * a blob lands in is chosen client-side — `LocalFirstAttachmentManagerImpl` derives `storage_path`
+ * from `scope.toPath()`, which this migration moved to `thing` — and `BlobDownloadDriver` sends
+ * own-tree reads STRAIGHT to `ref.remotePath`, routing only foreign-tree reads through this broker.
+ * So the broker is the one place where the two trees have to agree, and it must name whatever
+ * segment the shipped client writes.
+ *
+ * Diverge in either direction and shared attachments break: with a `thing`-scoped client and a
+ * legacy broker, the owner uploads direct to `.../thing/.../blobs/{id}` while a member's
+ * `streamBlob` resolves `.../aircraft/...`, 404s, and `markRemoteMissing` marks the blob
+ * permanently gone. The mirror case fails the same way. Flip with E2, not before.
+ */
 export function blobObjectPath(hostUid: string, acId: string, blobId: string): string {
-  return `users/${hostUid}/aircraft/${acId}/blobs/${blobId}`;
+  return `users/${hostUid}/${ENTITY_SEGMENT_LEGACY}/${acId}/blobs/${blobId}`;
 }
 
 /** The ACL root for a shared aircraft, or `null` if no share exists at that host+aircraft. */

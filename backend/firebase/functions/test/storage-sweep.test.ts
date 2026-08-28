@@ -13,7 +13,7 @@ const AC = "ac-sweep";
 const DEFAULTS = { dryRun: false, tombstoneRetentionDays: 30, orphanGraceDays: 7, onlyUid: UID };
 
 const daysAgo = (n: number) => Timestamp.fromMillis(Date.now() - n * 24 * 60 * 60 * 1000);
-const blobPath = (id: string) => `users/${UID}/aircraft/${AC}/blobs/${id}`;
+const blobPath = (id: string) => `users/${UID}/thing/${AC}/blobs/${id}`;
 
 /**
  * A payload in the shape the CLIENT actually writes: **base64 text**, not bytes.
@@ -33,7 +33,7 @@ function logPayload(...ids: string[]): string {
 }
 
 async function putLog(id: string, opts: { deleted: boolean; ageDays?: number; blobs?: string[] }) {
-  await adminDb.doc(`users/${UID}/aircraft/${AC}/maintenance_log/${id}`).set({
+  await adminDb.doc(`users/${UID}/thing/${AC}/maintenance_log/${id}`).set({
     deleted: opts.deleted,
     schema: "aircraft.MaintenanceLog",
     payload: logPayload(...(opts.blobs ?? [])),
@@ -51,14 +51,14 @@ async function blobExists(id: string): Promise<boolean> {
 }
 
 async function logExists(id: string): Promise<boolean> {
-  return (await adminDb.doc(`users/${UID}/aircraft/${AC}/maintenance_log/${id}`).get()).exists;
+  return (await adminDb.doc(`users/${UID}/thing/${AC}/maintenance_log/${id}`).get()).exists;
 }
 
 beforeEach(async () => {
   await adminDb.recursiveDelete(adminDb.doc(`users/${UID}`));
   await adminStorage.bucket().deleteFiles({ prefix: `users/${UID}/` });
   await adminDb.doc(`subscriptions/${UID}`).delete();
-  await adminDb.doc(`users/${UID}/aircraft/${AC}`).set({ deleted: false, schema: "aircraft.Aircraft" });
+  await adminDb.doc(`users/${UID}/thing/${AC}`).set({ deleted: false, schema: "thing.Thing" });
 });
 
 describe("tombstone purge", () => {
@@ -132,7 +132,7 @@ describe("orphan blob collection", () => {
     // We cannot know what it still holds, and a blob wrongly judged unreferenced is a photo deleted
     // for good. Skipping costs bytes; guessing costs the user their picture.
     await putBlob("maybe-orphan");
-    await adminDb.doc(`users/${UID}/aircraft/${AC}/maintenance_log/corrupt`).set({
+    await adminDb.doc(`users/${UID}/thing/${AC}/maintenance_log/corrupt`).set({
       deleted: false,
       schema: "aircraft.MaintenanceLog",
       payload: Buffer.from([0xff, 0xff, 0xff, 0xff]).toString("base64"),
@@ -151,7 +151,7 @@ describe("orphan blob collection", () => {
    */
   it("SKIPS the aircraft when a payload is not a shape it can read", async () => {
     await putBlob("keep-me");
-    await adminDb.doc(`users/${UID}/aircraft/${AC}/maintenance_log/weird`).set({
+    await adminDb.doc(`users/${UID}/thing/${AC}/maintenance_log/weird`).set({
       deleted: false,
       schema: "aircraft.MaintenanceLog",
       payload: 12345, // neither base64 text nor bytes
@@ -257,10 +257,69 @@ describe("the report says WHAT, not just how much", () => {
 
     const report = await runStorageSweep({ ...DEFAULTS, dryRun: true, orphanGraceDays: 0 });
 
-    expect(report.orphanBlobPaths).toEqual([`users/${UID}/aircraft/${AC}/blobs/orphan-1`]);
+    expect(report.orphanBlobPaths).toEqual([`users/${UID}/thing/${AC}/blobs/orphan-1`]);
     expect(report.purgedTombstonePaths).toEqual([
-      `users/${UID}/aircraft/${AC}/maintenance_log/old`,
+      `users/${UID}/thing/${AC}/maintenance_log/old`,
     ]);
     expect(report.truncated).toBe(false);
+  });
+});
+
+// MIGRATION (thing_migration_design.md §2.7a): the sweep walks BOTH entity segments for the duration
+// of the window. The rest of this file exercises `/thing/`; this block proves the legacy segment is
+// swept by the same run, which is what keeps orphan GC alive for accounts that have not migrated yet
+// — i.e. every account, until D3. Pointing the sweep at one segment would silently stop collecting
+// for everyone on the other, and a scheduled reconciler that quietly does nothing is the kind of
+// regression nobody notices until the storage bill arrives.
+describe("migration: the sweep covers both entity segments", () => {
+  const LEGACY_AC = "ac-legacy";
+  const legacyBlobPath = (id: string) => `users/${UID}/aircraft/${LEGACY_AC}/blobs/${id}`;
+
+  beforeEach(async () => {
+    await adminDb
+      .doc(`users/${UID}/aircraft/${LEGACY_AC}`)
+      .set({ deleted: false, schema: "aircraft.Aircraft" });
+  });
+
+  it("collects an orphan under the LEGACY /aircraft/ segment", async () => {
+    await adminStorage.bucket().file(legacyBlobPath("orphan-legacy")).save(Buffer.from([1, 2, 3]));
+
+    // graceDays 0 for the same reason as the /thing/ orphan test above: the blob is freshly
+    // written here, and the grace window would otherwise (correctly) refuse to judge it.
+    const report = await runStorageSweep({ ...DEFAULTS, orphanGraceDays: 0 });
+
+    expect(report.orphanBlobsCollected).toBe(1);
+    expect(report.orphanBlobPaths).toEqual([legacyBlobPath("orphan-legacy")]);
+    expect((await adminStorage.bucket().file(legacyBlobPath("orphan-legacy")).exists())[0])
+      .toBe(false);
+  });
+
+  it("collects orphans on BOTH segments in a single run", async () => {
+    await putBlob("orphan-thing");
+    await adminStorage.bucket().file(legacyBlobPath("orphan-legacy")).save(Buffer.from([1, 2, 3]));
+
+    const report = await runStorageSweep({ ...DEFAULTS, orphanGraceDays: 0 });
+
+    expect(report.orphanBlobsCollected).toBe(2);
+    expect(report.orphanBlobPaths.sort()).toEqual(
+      [blobPath("orphan-thing"), legacyBlobPath("orphan-legacy")].sort(),
+    );
+  });
+
+  it("still respects a live record's claim on the LEGACY segment", async () => {
+    // The refusal that matters most: a referenced blob must survive on the old path exactly as it
+    // does on the new one. Getting this wrong deletes a user's photo.
+    await adminDb.doc(`users/${UID}/aircraft/${LEGACY_AC}/maintenance_log/live`).set({
+      deleted: false,
+      schema: "aircraft.MaintenanceLog",
+      payload: logPayload("kept-legacy"),
+      lastUpdateTimestamp: daysAgo(0),
+    });
+    await adminStorage.bucket().file(legacyBlobPath("kept-legacy")).save(Buffer.from([1, 2, 3]));
+
+    const report = await runStorageSweep(DEFAULTS);
+
+    expect(report.orphanBlobsCollected).toBe(0);
+    expect((await adminStorage.bucket().file(legacyBlobPath("kept-legacy")).exists())[0]).toBe(true);
   });
 });

@@ -132,6 +132,6 @@ class BlobDownloadDriverTest {
   private companion object {
     private const val BLOB_ID = "blob-1"
     private const val OWNER_UID = "owner-1"
-    private const val REMOTE_PATH = "users/owner-1/aircraft/ac1/blobs/blob-1"
+    private const val REMOTE_PATH = "users/owner-1/thing/ac1/blobs/blob-1"
   }
 }

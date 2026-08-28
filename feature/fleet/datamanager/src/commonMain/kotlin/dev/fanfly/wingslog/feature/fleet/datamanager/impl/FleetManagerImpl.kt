@@ -1,7 +1,6 @@
 package dev.fanfly.wingslog.feature.fleet.datamanager.impl
 
 import co.touchlab.kermit.Logger
-import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.core.model.id.generateRandomId
 import dev.fanfly.wingslog.core.model.sharing.ShareRole
 import dev.fanfly.wingslog.core.model.sharing.SharedAircraftRef
@@ -11,6 +10,7 @@ import dev.fanfly.wingslog.core.storage.EntityStore
 import dev.fanfly.wingslog.core.storage.EntityStoreFactory
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetEntry
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
+import dev.fanfly.wingslog.thing.Thing
 import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -34,8 +34,8 @@ class FleetManagerImpl(
 ) : FleetManager {
 
   private val logger = Logger.withTag("FleetManagerImpl")
-  private val store: EntityStore<Aircraft> =
-    storeFactory.create(CollectionKind.Aircraft)
+  private val store: EntityStore<Thing> =
+    storeFactory.create(CollectionKind.Thing)
   private val refStore: EntityStore<SharedAircraftRef> =
     storeFactory.create(CollectionKind.SharedAircraftRef)
 
@@ -46,7 +46,10 @@ class FleetManagerImpl(
         logger.d { "User logged out, stopping fleet dashboard observation" }
         flowOf(emptyList())
       } else {
-        combine(ownAircraft(user.uid), sharedAircraft(user.uid)) { own, shared ->
+        combine(
+          ownAircraft(user.uid),
+          sharedAircraft(user.uid)
+        ) { own, shared ->
           own + shared
         }.catch { e ->
           logger.w(e) { "Fleet observe failed" }
@@ -59,7 +62,13 @@ class FleetManagerImpl(
   private fun ownAircraft(uid: String): Flow<List<FleetEntry>> =
     store.observeAll(EntityScope.userRoot(uid))
       .map { rows ->
-        rows.map { FleetEntry(it.value, shared = false, role = ShareRole.SHARE_ROLE_OWNER) }
+        rows.map {
+          FleetEntry(
+            it.value,
+            shared = false,
+            role = ShareRole.SHARE_ROLE_OWNER
+          )
+        }
       }
 
   /**
@@ -69,24 +78,34 @@ class FleetManagerImpl(
    */
   @OptIn(ExperimentalCoroutinesApi::class)
   private fun sharedAircraft(uid: String): Flow<List<FleetEntry>> =
-    refStore.observeAll(EntityScope.userRoot(uid)).flatMapLatest { refRows ->
-      val refs = refRows.map { it.value }
-      if (refs.isEmpty()) {
-        flowOf(emptyList())
-      } else {
-        combine(
-          refs.map { ref ->
-            store.observe(ref.aircraft_id, EntityScope.userRoot(ref.host_uid))
-              .map { entity ->
-                entity?.value?.let { FleetEntry(it, shared = true, role = ref.role) }
-              }
+    refStore.observeAll(EntityScope.userRoot(uid))
+      .flatMapLatest { refRows ->
+        val refs = refRows.map { it.value }
+        if (refs.isEmpty()) {
+          flowOf(emptyList())
+        } else {
+          combine(
+            refs.map { ref ->
+              store.observe(ref.aircraft_id, EntityScope.userRoot(ref.host_uid))
+                .map { entity ->
+                  entity?.value?.let {
+                    FleetEntry(
+                      it,
+                      shared = true,
+                      role = ref.role
+                    )
+                  }
+                }
+            }
+          ) { entries ->
+            entries.filterNotNull()
+              .toList()
           }
-        ) { entries -> entries.filterNotNull().toList() }
+        }
       }
-    }
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  override fun loadAircraft(id: String): Flow<Aircraft?> =
+  override fun loadAircraft(id: String): Flow<Thing?> =
     firebaseAuth.authStateChanged.flatMapLatest { user ->
       if (user == null) {
         logger.d { "User logged out, stopping aircraft observation for $id" }
@@ -96,14 +115,16 @@ class FleetManagerImpl(
         // shared → users/{hostUid}/aircraft. A ref for this id (keyed by aircraft id) names the host;
         // its absence means it's the user's own. (The AircraftScopeResolver handles the nested
         // aircraftChildUnsafe scope; the doc itself needs userRoot, hence the lookup here.)
-        refStore.observe(id, EntityScope.userRoot(user.uid)).flatMapLatest { ref ->
-          val rootUid = ref?.value?.host_uid ?: user.uid
-          store.observe(id, EntityScope.userRoot(rootUid))
-            .map { it?.value }
-        }.catch { e ->
-          logger.w(e) { "Error observing aircraft $id" }
-          emit(null)
-        }
+        refStore.observe(id, EntityScope.userRoot(user.uid))
+          .flatMapLatest { ref ->
+            val rootUid = ref?.value?.host_uid ?: user.uid
+            store.observe(id, EntityScope.userRoot(rootUid))
+              .map { it?.value }
+          }
+          .catch { e ->
+            logger.w(e) { "Error observing aircraft $id" }
+            emit(null)
+          }
       }
     }
 
@@ -123,17 +144,18 @@ class FleetManagerImpl(
     return EntityScope.userRoot(hostUid ?: uid)
   }
 
-  override suspend fun updateAircraft(aircraft: Aircraft): Result<Boolean> =
+  override suspend fun updateAircraft(aircraft: Thing): Result<Boolean> =
     runCatching {
       val uid = firebaseAuth.currentUser?.uid
         ?: error("Cannot update aircraft when no user is signed in")
       // A brand-new aircraft has no id yet, so there is no ref to consult — it is ours by definition.
       val isNew = aircraft.id.isEmpty()
-      val withId = if (isNew) aircraft.copy(id = generateRandomId()) else aircraft
+      val withId =
+        if (isNew) aircraft.copy(id = generateRandomId()) else aircraft
       val scope =
         if (isNew) EntityScope.userRoot(uid) else rootScopeOf(withId.id, uid)
       store.put(withId.id, withId, scope)
-      logger.d { "Aircraft ${withId.id} written to local store at ${scope.toPath()}" }
+      logger.d { "Thing ${withId.id} written to local store at ${scope.toPath()}" }
       true
     }.onFailure { logger.w(it) { "Error updating aircraft" } }
 
@@ -152,7 +174,7 @@ class FleetManagerImpl(
         "Only the hosting owner may delete aircraft $id"
       }
       store.delete(id, ownRoot)
-      logger.d { "Aircraft $id tombstoned in local store" }
+      logger.d { "Thing $id tombstoned in local store" }
       true
     }.onFailure { logger.w(it) { "Error deleting aircraft $id" } }
 }

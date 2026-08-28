@@ -2,7 +2,6 @@ package dev.fanfly.wingslog.feature.export.update.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.aircraft.Attachment
 import dev.fanfly.wingslog.aircraft.AttachmentType.ATTACHMENT_TYPE_LINK
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDateRange
@@ -13,11 +12,12 @@ import dev.fanfly.wingslog.feature.export.datamanager.ExportFormat
 import dev.fanfly.wingslog.feature.export.datamanager.ExportManager
 import dev.fanfly.wingslog.feature.export.datamanager.ExportProgress
 import dev.fanfly.wingslog.feature.export.datamanager.ExportRequest
-import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
+import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
+import dev.fanfly.wingslog.thing.Thing
 import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -84,7 +84,8 @@ class ExportViewModel(
         .flatMapLatest { entries ->
           // Export operates on the user's own logbook only; shared aircraft are read-through
           // pointers into another account's tree and aren't exported here.
-          val aircraft = entries.filter { !it.shared }.map { it.aircraft }
+          val aircraft = entries.filter { !it.shared }
+            .map { it.aircraft }
           if (aircraft.isEmpty()) {
             flowOf(emptyList())
           } else {
@@ -150,7 +151,10 @@ class ExportViewModel(
           // accounts are local-only regardless of the gate.
           val eligibleForEmail = signedIn && authEmail.isNotBlank()
           val info = if (emailDeliveryEnabled && eligibleForEmail) {
-            ExportDeliveryInfo(authEmail, ExportDeliveryEmailSource.AUTH_FALLBACK)
+            ExportDeliveryInfo(
+              authEmail,
+              ExportDeliveryEmailSource.AUTH_FALLBACK
+            )
           } else {
             null
           }
@@ -370,7 +374,7 @@ class ExportViewModel(
     )
   }
 
-  private fun Aircraft.toSelectionRow(
+  private fun Thing.toSelectionRow(
     logCount: Int,
     attachmentSizeBytes: Long,
   ) = AircraftSelectionRow(

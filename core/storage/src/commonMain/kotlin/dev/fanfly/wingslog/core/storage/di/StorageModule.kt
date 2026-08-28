@@ -1,7 +1,6 @@
 package dev.fanfly.wingslog.core.storage.di
 
 import app.cash.sqldelight.db.SqlDriver
-import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.aircraft.MaintenanceOverview
 import dev.fanfly.wingslog.aircraft.MaintenanceTask
@@ -28,6 +27,7 @@ import dev.fanfly.wingslog.core.storage.blob.LocalBlobStore
 import dev.fanfly.wingslog.core.storage.createWingsLogDatabase
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
 import dev.fanfly.wingslog.core.storage.storageIoContext
+import dev.fanfly.wingslog.thing.Thing
 import org.koin.core.module.Module
 import org.koin.dsl.module
 import kotlin.time.ExperimentalTime
@@ -52,8 +52,8 @@ val storageModule: Module = module {
   single<EntityCodecRegistry> {
     EntityCodecRegistry().apply {
       register(
-        CollectionKind.Aircraft,
-        WireCodec(Aircraft.ADAPTER)
+        CollectionKind.Thing,
+        WireCodec(Thing.ADAPTER)
       )
       register(
         CollectionKind.MaintenanceTask,

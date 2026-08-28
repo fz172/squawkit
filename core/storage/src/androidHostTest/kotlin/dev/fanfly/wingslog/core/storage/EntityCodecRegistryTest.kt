@@ -10,10 +10,10 @@ class EntityCodecRegistryTest {
   @Test
   fun register_then_codecFor_returns_registered_codec() {
     val codec = bytesCodec()
-    registry.register(CollectionKind.Aircraft, codec)
+    registry.register(CollectionKind.Thing, codec)
 
     val retrieved: EntityCodec<ByteArray> =
-      registry.codecFor(CollectionKind.Aircraft)
+      registry.codecFor(CollectionKind.Thing)
 
     assertThat(retrieved).isSameInstanceAs(codec)
   }
@@ -34,18 +34,18 @@ class EntityCodecRegistryTest {
   fun registeredKinds_reflects_all_inserted_kinds() {
     assertThat(registry.registeredKinds).isEmpty()
 
-    registry.register(CollectionKind.Aircraft, bytesCodec())
+    registry.register(CollectionKind.Thing, bytesCodec())
     registry.register(CollectionKind.MaintenanceLog, bytesCodec())
 
     assertThat(registry.registeredKinds).containsExactly(
-      CollectionKind.Aircraft,
+      CollectionKind.Thing,
       CollectionKind.MaintenanceLog,
     )
   }
 
   @Test
   fun registeredKinds_does_not_include_unregistered_kind() {
-    registry.register(CollectionKind.Aircraft, bytesCodec())
+    registry.register(CollectionKind.Thing, bytesCodec())
 
     assertThat(registry.registeredKinds).doesNotContain(CollectionKind.Technician)
   }

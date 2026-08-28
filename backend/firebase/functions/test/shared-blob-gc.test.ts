@@ -103,7 +103,7 @@ beforeEach(async () => {
   await adminStorage.bucket().deleteFiles({ prefix: `users/${HOST}/` });
   await adminDb
     .doc(`users/${HOST}/aircraft/${AC}`)
-    .set({ deleted: false, schema: "aircraft.Aircraft" });
+    .set({ deleted: false, schema: "thing.Thing" });
 });
 
 describe("a MEMBER's delete reclaims the host's canonical bytes", () => {

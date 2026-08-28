@@ -166,7 +166,7 @@ class LocalFirstAttachmentManagerImplTest {
     )
 
     assertThat(result.storage_path)
-      .startsWith("users/$hostUid/aircraft/$TEST_AIRCRAFT_ID/blobs/")
+      .startsWith("users/$hostUid/thing/$TEST_AIRCRAFT_ID/blobs/")
     coVerify {
       blobs.put(
         any(),
@@ -200,13 +200,13 @@ class LocalFirstAttachmentManagerImplTest {
 
     assertThat(result.sha256).isEqualTo(TEST_SHA256)
     assertThat(result.storage_path)
-      .startsWith("users/$TEST_USER_ID/aircraft/$TEST_AIRCRAFT_ID/blobs/")
-    // storage_path must be: users/{uid}/aircraft/{aircraftId}/blobs/{id}
+      .startsWith("users/$TEST_USER_ID/thing/$TEST_AIRCRAFT_ID/blobs/")
+    // storage_path must be: users/{uid}/thing/{aircraftId}/blobs/{id}
     val parts = result.storage_path.split("/")
     assertThat(parts).hasSize(6)
     assertThat(parts[0]).isEqualTo("users")
     assertThat(parts[1]).isEqualTo(TEST_USER_ID)
-    assertThat(parts[2]).isEqualTo("aircraft")
+    assertThat(parts[2]).isEqualTo("thing")
     assertThat(parts[3]).isEqualTo(TEST_AIRCRAFT_ID)
     assertThat(parts[4]).isEqualTo("blobs")
     assertThat(parts[5]).isNotEmpty()

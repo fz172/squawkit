@@ -2,7 +2,6 @@ package dev.fanfly.wingslog.feature.sharing.datamanager.impl
 
 import app.cash.sqldelight.async.coroutines.awaitAsOneOrNull
 import co.touchlab.kermit.Logger
-import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.aircraft.CertExpireLimit
 import dev.fanfly.wingslog.aircraft.CertificateType
 import dev.fanfly.wingslog.aircraft.Technician
@@ -23,6 +22,7 @@ import dev.fanfly.wingslog.feature.sharing.model.SHARE_URL_BASE
 import dev.fanfly.wingslog.feature.sharing.model.ShareMember
 import dev.fanfly.wingslog.feature.sharing.model.ShareRole
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
+import dev.fanfly.wingslog.thing.Thing
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 import dev.gitlive.firebase.firestore.FirebaseFirestoreException
@@ -64,7 +64,7 @@ class SharingManagerImpl(
   private val refStore =
     storeFactory.create<SharedAircraftRef>(CollectionKind.SharedAircraftRef)
   private val aircraftStore =
-    storeFactory.create<Aircraft>(CollectionKind.Aircraft)
+    storeFactory.create<Thing>(CollectionKind.Thing)
 
   /**
    * The ACL for [acId] under [hostUid]. Keyed by host since #204: an aircraft id is unique only

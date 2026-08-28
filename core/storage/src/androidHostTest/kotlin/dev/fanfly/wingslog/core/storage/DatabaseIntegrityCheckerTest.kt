@@ -34,7 +34,7 @@ class DatabaseIntegrityCheckerTest {
   fun wipeDataForUser_deletesEntitiesCursorsAndWatermarksForUid() = runTest {
     // Insert an entity row in the target user's scope.
     db.schemaQueries.upsert(
-      collection = CollectionKind.Aircraft,
+      collection = CollectionKind.Thing,
       scope_path = "/users/$TEST_UID/fleet",
       id = "aircraft-1",
       payload = byteArrayOf(1, 2, 3),
@@ -48,7 +48,7 @@ class DatabaseIntegrityCheckerTest {
     // Insert a sync_cursor row for the target user.
     db.schemaQueries.upsertCursor(
       uid = TEST_UID,
-      collection = CollectionKind.Aircraft,
+      collection = CollectionKind.Thing,
       scope_path = "/users/$TEST_UID/fleet",
       hydrated = true,
       last_seen_remote = null,
@@ -61,7 +61,7 @@ class DatabaseIntegrityCheckerTest {
     db.schemaQueries.upsertWatermark(
       uid = TEST_UID,
       collection = CollectionKind.MaintenanceTask,
-      scope_path = "/users/$TEST_UID/aircraft/ac-1/",
+      scope_path = "/users/$TEST_UID/thing/ac-1/",
       id = "task-1",
       rank = 2L,
       updated_at = 1_000_000L,
@@ -70,7 +70,7 @@ class DatabaseIntegrityCheckerTest {
     checker.wipeDataForUser(TEST_UID)
 
     val entitiesAfter = db.schemaQueries.selectAll(
-      collection = CollectionKind.Aircraft,
+      collection = CollectionKind.Thing,
       scope = "/users/$TEST_UID/fleet",
     )
       .awaitAsList()
@@ -78,7 +78,7 @@ class DatabaseIntegrityCheckerTest {
 
     val cursorsAfter = db.schemaQueries.selectCursor(
       uid = TEST_UID,
-      collection = CollectionKind.Aircraft,
+      collection = CollectionKind.Thing,
       scope_path = "/users/$TEST_UID/fleet",
     )
       .awaitAsOneOrNull()
@@ -97,7 +97,7 @@ class DatabaseIntegrityCheckerTest {
     db.schemaQueries.upsertWatermark(
       uid = TEST_UID,
       collection = CollectionKind.MaintenanceTask,
-      scope_path = "/users/$TEST_UID/aircraft/ac-1/",
+      scope_path = "/users/$TEST_UID/thing/ac-1/",
       id = "task-target",
       rank = 1L,
       updated_at = 1_000_000L,
@@ -105,7 +105,7 @@ class DatabaseIntegrityCheckerTest {
     db.schemaQueries.upsertWatermark(
       uid = OTHER_UID,
       collection = CollectionKind.MaintenanceTask,
-      scope_path = "/users/$OTHER_UID/aircraft/ac-2/",
+      scope_path = "/users/$OTHER_UID/thing/ac-2/",
       id = "task-other",
       rank = 1L,
       updated_at = 1_000_000L,
@@ -126,7 +126,7 @@ class DatabaseIntegrityCheckerTest {
   fun wipeDataForUser_doesNotDeleteEntitiesForOtherUser() = runTest {
     // Insert entity for target user and a different user.
     db.schemaQueries.upsert(
-      collection = CollectionKind.Aircraft,
+      collection = CollectionKind.Thing,
       scope_path = "/users/$TEST_UID/fleet",
       id = "aircraft-target",
       payload = byteArrayOf(1),
@@ -138,7 +138,7 @@ class DatabaseIntegrityCheckerTest {
       writer_uid = null,
     )
     db.schemaQueries.upsert(
-      collection = CollectionKind.Aircraft,
+      collection = CollectionKind.Thing,
       scope_path = "/users/$OTHER_UID/fleet",
       id = "aircraft-other",
       payload = byteArrayOf(2),
@@ -153,7 +153,7 @@ class DatabaseIntegrityCheckerTest {
     checker.wipeDataForUser(TEST_UID)
 
     val otherUserEntities = db.schemaQueries.selectAll(
-      collection = CollectionKind.Aircraft,
+      collection = CollectionKind.Thing,
       scope = "/users/$OTHER_UID/fleet",
     )
       .awaitAsList()
@@ -165,7 +165,7 @@ class DatabaseIntegrityCheckerTest {
   fun wipeDataForUser_doesNotDeleteCursorsForOtherUser() = runTest {
     db.schemaQueries.upsertCursor(
       uid = TEST_UID,
-      collection = CollectionKind.Aircraft,
+      collection = CollectionKind.Thing,
       scope_path = "/users/$TEST_UID/fleet",
       hydrated = true,
       last_seen_remote = null,
@@ -174,7 +174,7 @@ class DatabaseIntegrityCheckerTest {
     )
     db.schemaQueries.upsertCursor(
       uid = OTHER_UID,
-      collection = CollectionKind.Aircraft,
+      collection = CollectionKind.Thing,
       scope_path = "/users/$OTHER_UID/fleet",
       hydrated = true,
       last_seen_remote = null,
@@ -186,7 +186,7 @@ class DatabaseIntegrityCheckerTest {
 
     val otherCursor = db.schemaQueries.selectCursor(
       uid = OTHER_UID,
-      collection = CollectionKind.Aircraft,
+      collection = CollectionKind.Thing,
       scope_path = "/users/$OTHER_UID/fleet",
     )
       .awaitAsOneOrNull()
@@ -206,7 +206,7 @@ class DatabaseIntegrityCheckerTest {
     // (e.g. someone else's path that happens to mention our uid in a sub-path)
     // SQLite LIKE is used with prefix "/users/<uid>/%" so only exact prefix matches should go.
     db.schemaQueries.upsert(
-      collection = CollectionKind.Aircraft,
+      collection = CollectionKind.Thing,
       scope_path = "/users/$OTHER_UID/references/$TEST_UID/extra",
       id = "aircraft-unrelated",
       payload = byteArrayOf(9),
@@ -221,7 +221,7 @@ class DatabaseIntegrityCheckerTest {
     checker.wipeDataForUser(TEST_UID)
 
     val remaining = db.schemaQueries.selectAll(
-      collection = CollectionKind.Aircraft,
+      collection = CollectionKind.Thing,
       scope = "/users/$OTHER_UID/references/$TEST_UID/extra",
     )
       .awaitAsList()

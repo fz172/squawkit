@@ -54,6 +54,10 @@ export { deleteMyAccount };
 export { redeemAircraftShareInvite };
 export { revokeAircraftShare };
 export { updateAircraftShareRole };
+// MIGRATION (thing_migration_design.md §2.7, §2.7c / task B9): the four `Thing`-path triggers are
+// written but NOT exported here — they ship with C2, after the Phase D copy is done. A cutover copy
+// creates each document, so every copied record would look like a new write to them. Phase F3
+// removes the `aircraft` half once no account is left on it.
 export { onAircraftDeleted };
 export { createAircraftShareInvite, previewAircraftShareInvite, cancelAircraftShareInvite };
 export { onRecordDeleted };

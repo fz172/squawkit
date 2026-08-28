@@ -3,15 +3,15 @@ package dev.fanfly.wingslog.feature.sync.data
 import app.cash.sqldelight.async.coroutines.awaitAsList
 import app.cash.sqldelight.async.coroutines.awaitAsOne
 import app.cash.sqldelight.async.coroutines.awaitAsOneOrNull
-import dev.fanfly.wingslog.aircraft.Aircraft
-import dev.fanfly.wingslog.core.storage.EntityStore
-import kotlinx.coroutines.flow.first
 import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.DatabaseWriteLock
 import dev.fanfly.wingslog.core.storage.EntityScope
+import dev.fanfly.wingslog.core.storage.EntityStore
 import dev.fanfly.wingslog.core.storage.blob.LocalBlobStore
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
+import dev.fanfly.wingslog.thing.Thing
+import kotlinx.coroutines.flow.first
 
 /**
  * Purges a member's local copy of a shared aircraft once its share ends (revoke / leave / aircraft
@@ -31,7 +31,7 @@ class SharedScopeJanitor(
   private val db: WingsLogDatabase,
   private val writeLock: DatabaseWriteLock,
   /** Names the aircraft for the discarded-changes notice, before it is purged and unnameable. */
-  private val aircraftStore: EntityStore<Aircraft>? = null,
+  private val aircraftStore: EntityStore<Thing>? = null,
   /**
    * Drops the member's cached attachment bytes for an ended share. Null in tests that only exercise
    * the entity purge.
@@ -57,7 +57,7 @@ class SharedScopeJanitor(
     val ownRoot = EntityScope.userRoot(memberUid)
       .toPath()
     val localShared = db.schemaQueries
-      .selectScopeAndIdForCollection(CollectionKind.Aircraft)
+      .selectScopeAndIdForCollection(CollectionKind.Thing)
       .awaitAsList()
       .mapNotNull { row ->
         if (row.scope_path == ownRoot) return@mapNotNull null // the member's own aircraft
@@ -66,7 +66,13 @@ class SharedScopeJanitor(
       .toSet()
 
     val toPurge = (localShared - liveShares)
-      .filter { (hostUid, aircraftId) -> wasPulledAsShare(memberUid, hostUid, aircraftId) }
+      .filter { (hostUid, aircraftId) ->
+        wasPulledAsShare(
+          memberUid,
+          hostUid,
+          aircraftId
+        )
+      }
     if (toPurge.isEmpty()) return
 
     // What we are about to destroy has to be counted and named *before* it is gone, not after.
@@ -80,15 +86,16 @@ class SharedScopeJanitor(
     // Read the cached blob ids before the rows go: this is a read, and it must happen outside the
     // write lock below because purgeLocal takes that same (non-reentrant) lock itself.
     val cachedBlobs = toPurge.associateWith { (hostUid, aircraftId) ->
-      blobs?.idsInScopePrefix("/users/$hostUid/aircraft/$aircraftId/%").orEmpty()
+      blobs?.idsInScopePrefix("/users/$hostUid/thing/$aircraftId/%")
+        .orEmpty()
     }
 
     writeLock.withLock {
       for ((hostUid, aircraftId) in toPurge) {
-        val nestedPrefix = "/users/$hostUid/aircraft/$aircraftId/%"
+        val nestedPrefix = "/users/$hostUid/thing/$aircraftId/%"
         db.schemaQueries.deleteEntitiesInScopePrefix(nestedPrefix) // logs/tasks/squawks/overview
         db.schemaQueries.deleteEntity(
-          CollectionKind.Aircraft,
+          CollectionKind.Thing,
           EntityScope.userRoot(hostUid)
             .toPath(),
           aircraftId, // the aircraft doc itself
@@ -144,23 +151,24 @@ class SharedScopeJanitor(
     db.schemaQueries
       .countCursorsInScopePrefix(
         uid = memberUid,
-        scopePrefix = "/users/$hostUid/aircraft/$aircraftId/%",
+        scopePrefix = "/users/$hostUid/thing/$aircraftId/%",
       )
       .awaitAsOne() > 0
 
   /**
    * Unsynced rows in this aircraft's scopes. Both halves count: its nested records
-   * (`/users/{host}/aircraft/{acId}/%`) and the aircraft doc itself, which is a row *at* the host's
+   * (`/users/{host}/thing/{acId}/%`) and the aircraft doc itself, which is a row *at* the host's
    * root — a co-owner's edit to the aircraft lives there, and missing it would under-report the loss.
    */
   private suspend fun dirtyCountFor(hostUid: String, aircraftId: String): Int {
     val nested = db.schemaQueries
-      .countDirtyInScope("/users/$hostUid/aircraft/$aircraftId/%")
+      .countDirtyInScope("/users/$hostUid/thing/$aircraftId/%")
       .awaitAsOne()
     val doc = db.schemaQueries
       .selectOne(
-        CollectionKind.Aircraft,
-        EntityScope.userRoot(hostUid).toPath(),
+        CollectionKind.Thing,
+        EntityScope.userRoot(hostUid)
+          .toPath(),
         aircraftId,
       )
       .awaitAsOneOrNull()
@@ -171,14 +179,18 @@ class SharedScopeJanitor(
   private suspend fun isDirty(hostUid: String, aircraftId: String): Boolean =
     db.schemaQueries
       .selectDirtyInScope(
-        scopePrefix = EntityScope.userRoot(hostUid).toPath(),
+        scopePrefix = EntityScope.userRoot(hostUid)
+          .toPath(),
         limit = DIRTY_PROBE_LIMIT,
       )
       .awaitAsList()
-      .any { it.collection == CollectionKind.Aircraft && it.id == aircraftId }
+      .any { it.collection == CollectionKind.Thing && it.id == aircraftId }
 
   /** Tail number if we can still read it; a generic label otherwise (the notice must still be sent). */
-  private suspend fun aircraftLabel(hostUid: String, aircraftId: String): String {
+  private suspend fun aircraftLabel(
+    hostUid: String,
+    aircraftId: String
+  ): String {
     val tail = aircraftStore
       ?.observe(aircraftId, EntityScope.userRoot(hostUid))
       ?.first()

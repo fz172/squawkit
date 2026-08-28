@@ -1,6 +1,5 @@
 package dev.fanfly.wingslog.feature.stresstest
 
-import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.aircraft.CertExpireLimit
 import dev.fanfly.wingslog.aircraft.CertificateType
 import dev.fanfly.wingslog.aircraft.ComplianceType
@@ -22,12 +21,13 @@ import dev.fanfly.wingslog.aircraft.Technician
 import dev.fanfly.wingslog.aircraft.TimeRule
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.model.id.generateRandomId
+import dev.fanfly.wingslog.thing.Thing
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Instant
 
 data class StressTestData(
-  val aircraft: Aircraft,
+  val aircraft: Thing,
   val technicians: List<Technician>,
   val tasks: List<MaintenanceTask>,
   val squawks: List<Squawk>,
@@ -637,7 +637,7 @@ object FakeDataGenerator {
     spec: AircraftSpec,
     aircraftId: String,
     config: StressTestConfig
-  ): Aircraft {
+  ): Thing {
     val serialLetters = ('A'..'Z').toList()
     val serial = "S${serialLetters.random()}${(10000..99999).random()}"
     val tailNumber = "N${(1000..9999).random()}${('A'..'Z').random()}"
@@ -669,7 +669,7 @@ object FakeDataGenerator {
       )
     }
 
-    return Aircraft(
+    return Thing(
       id = aircraftId,
       make = spec.make,
       model = spec.model,
@@ -793,7 +793,7 @@ object FakeDataGenerator {
 
   private fun buildSquawks(
     count: Int,
-    aircraft: Aircraft,
+    aircraft: Thing,
     startInstant: Instant,
     now: Instant,
   ): List<Squawk> {
@@ -827,7 +827,7 @@ object FakeDataGenerator {
 
   private fun buildLogs(
     count: Int,
-    aircraft: Aircraft,
+    aircraft: Thing,
     technicians: List<Technician>,
     tasks: List<MaintenanceTask>,
     squawks: List<Squawk>,

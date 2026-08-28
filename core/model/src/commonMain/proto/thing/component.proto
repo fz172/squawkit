@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+import "thing/spec.proto";
+
+option java_package = "dev.fanfly.wingslog.thing";
+option java_multiple_files = true;
+
+message Component {
+  string id = 1;                   // stable UUID — the join key for logs/tasks/squawks
+  string slot_key = 2;             // "airframe" | "engine" | "propeller" | "hub" | "blade"
+  string label = 3;
+  string make = 4;
+  string model = 5;
+  string serial = 6;
+  repeated Component children = 7;
+  repeated Spec spec = 8;
+}

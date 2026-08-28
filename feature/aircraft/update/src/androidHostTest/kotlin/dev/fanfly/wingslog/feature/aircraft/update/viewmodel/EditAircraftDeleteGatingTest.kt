@@ -1,7 +1,7 @@
 package dev.fanfly.wingslog.feature.aircraft.update.viewmodel
 
 import com.google.common.truth.Truth.assertThat
-import dev.fanfly.wingslog.aircraft.Aircraft
+import dev.fanfly.wingslog.thing.Thing
 import org.junit.Test
 
 /**
@@ -12,7 +12,7 @@ import org.junit.Test
 class EditAircraftDeleteGatingTest {
 
   private fun state(hostedByMe: Boolean, id: String = "ac-1") =
-    EditAircraftUiState(aircraft = Aircraft(id = id), hostedByMe = hostedByMe)
+    EditAircraftUiState(aircraft = Thing(id = id), hostedByMe = hostedByMe)
 
   @Test
   fun host_canDelete() {
@@ -30,7 +30,7 @@ class EditAircraftDeleteGatingTest {
   fun beforeOwnershipResolves_deleteIsHidden() {
     // hostedByMe defaults to false: offering Delete on the first frame and retracting it would be
     // worse than showing it a beat late.
-    assertThat(EditAircraftUiState(aircraft = Aircraft(id = "ac-1")).canDelete).isFalse()
+    assertThat(EditAircraftUiState(aircraft = Thing(id = "ac-1")).canDelete).isFalse()
   }
 
   @Test

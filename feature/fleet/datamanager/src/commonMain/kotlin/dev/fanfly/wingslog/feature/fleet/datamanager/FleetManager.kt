@@ -1,7 +1,7 @@
 package dev.fanfly.wingslog.feature.fleet.datamanager
 
-import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.core.model.sharing.ShareRole
+import dev.fanfly.wingslog.thing.Thing
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.Flow
  *   aircraft, otherwise the role from the member's `SharedAircraftRef` (drives UI gating, #133).
  */
 data class FleetEntry(
-  val aircraft: Aircraft,
+  val aircraft: Thing,
   val shared: Boolean,
   val role: ShareRole,
 )
@@ -25,9 +25,9 @@ interface FleetManager {
    */
   fun observeFleetDashboard(): Flow<List<FleetEntry>>
 
-  suspend fun updateAircraft(aircraft: Aircraft): Result<Boolean>
+  suspend fun updateAircraft(aircraft: Thing): Result<Boolean>
 
-  fun loadAircraft(id: String): Flow<Aircraft?>
+  fun loadAircraft(id: String): Flow<Thing?>
 
   suspend fun deleteAircraft(id: String): Result<Boolean>
 }

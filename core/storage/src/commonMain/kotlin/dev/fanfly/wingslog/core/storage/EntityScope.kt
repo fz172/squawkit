@@ -4,8 +4,8 @@ package dev.fanfly.wingslog.core.storage
  * Identifies a collection's location in the user's data tree.
  *
  * Examples
- * - `EntityScope.userRoot("u123")` → `/users/u123/` — top-level collections like aircraft.
- * - `EntityScope.aircraftChildUnsafe("u123", "ac1")` → `/users/u123/aircraft/ac1/` — nested
+ * - `EntityScope.userRoot("u123")` → `/users/u123/` — top-level collections like the Thing itself.
+ * - `EntityScope.aircraftChildUnsafe("u123", "ac1")` → `/users/u123/thing/ac1/` — nested
  *   collections like maintenance logs.
  *
  * The path string is what gets persisted in `entity.scope_path`. Two scopes with different
@@ -36,6 +36,6 @@ data class EntityScope(val segments: List<String>) {
      * `userRoot` and derives shared scopes from each `SharedAircraftRef.host_uid`).
      */
     fun aircraftChildUnsafe(uid: String, aircraftId: String): EntityScope =
-      EntityScope(listOf("users", uid, "aircraft", aircraftId))
+      EntityScope(listOf("users", uid, "thing", aircraftId))
   }
 }

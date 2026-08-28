@@ -93,6 +93,26 @@ service cloud.firestore {
             || (isSharedAircraftKind(kind) && isShareMember(userId, acId) && writerIsSelf());
         }
       }
+
+      // MIGRATION (docs/product/thing_migration_design.md §2.4a, task B7): the entity tree is moving
+      // from /aircraft/{acId} to /thing/{acId}. This file deploys as ONE atomic unit — there is no
+      // way to serve different rules to migrated and un-migrated accounts — so the new block is
+      // added ALONGSIDE the one above rather than replacing it, and both stay live for the whole
+      // migration window. Phase F3 deletes the /aircraft/ block once no account is left on it.
+      //
+      // An exact mirror of the block above; every comment there applies here verbatim. The share
+      // helpers are shared, so the two blocks cannot drift in their authorization logic.
+      match /thing/{acId} {
+        allow get: if request.auth.uid == userId || isShareMember(userId, acId);
+        allow write: if request.auth.uid == userId
+          || (isShareOwner(userId, acId) && writerIsSelf() && request.resource.data.deleted != true);
+
+        match /{kind}/{docId} {
+          allow read: if request.auth.uid == userId || isShareMember(userId, acId);
+          allow write: if request.auth.uid == userId
+            || (isSharedAircraftKind(kind) && isShareMember(userId, acId) && writerIsSelf());
+        }
+      }
     }
 
     // --- Subscription entitlement / SquawkIt Pro -----------------------------------------------
@@ -192,6 +212,36 @@ service cloud.firestore {
         // Owner-visible record of a pending invite: role and expiry, NOT the code. Reading this
         // list yields nothing redeemable (#164). Creation and cancellation are function-only now —
         // both have to touch the invite_codes collection, which clients cannot see.
+        allow read: if isShareOwner(hostUid, acId);
+        allow write: if false; // functions only
+      }
+    }
+
+    // MIGRATION (docs/product/thing_migration_design.md §2.9, task B8): the ACL tree is moving from
+    // aircraft_shares/{hostUid}/aircraft/{acId} to thing_shares/{hostUid}/thing/{acId}. Added now,
+    // alongside the block above, and INERT until Phase G — `shareRole()` above still reads
+    // aircraft_shares, and no document exists under thing_shares until G1 copies the tree. Adding it
+    // early is deliberate: rules deploy atomically, so the block must already be live before G1's
+    // copy lands, or the copied ACL would be unreadable in the gap.
+    //
+    // Phase G3 repoints `shareRole()` here; Phase G6 deletes the aircraft_shares block above. Do NOT
+    // repoint `shareRole()` as part of adding this.
+    //
+    // An exact mirror of the aircraft_shares block; every comment there applies here verbatim.
+    match /thing_shares/{hostUid}/thing/{acId} {
+      allow get: if isShareMember(hostUid, acId);
+      allow create, update, delete: if false; // functions only
+
+      match /members/{memberUid} {
+        allow read: if isShareMember(hostUid, acId);
+        allow update: if request.auth.uid == memberUid
+          && request.resource.data.role == resource.data.role;
+        allow create: if request.auth.uid == memberUid
+          && request.resource.data.role == shareRole(hostUid, acId);
+        allow delete: if false;
+      }
+
+      match /invites/{tokenHash} {
         allow read: if isShareOwner(hostUid, acId);
         allow write: if false; // functions only
       }

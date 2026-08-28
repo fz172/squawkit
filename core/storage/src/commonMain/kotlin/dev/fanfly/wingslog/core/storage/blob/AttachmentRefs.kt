@@ -29,7 +29,7 @@ object AttachmentRefs {
       // No `attachments` field on these kinds today. Deliberately exhaustive (no `else`) so adding one
       // to a proto forces a decision here instead of silently skipping both reconciliation and GC —
       // the way CollectionKind.Squawk was skipped before this was one list.
-      CollectionKind.Aircraft,
+      CollectionKind.Thing,
       CollectionKind.MaintenanceOverview,
       CollectionKind.Technician,
       CollectionKind.UserInfo,

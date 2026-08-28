@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+import "aircraft/engine.proto";
+import "thing/spec.proto";
+import "thing/component.proto";
+
+option java_package = "dev.fanfly.wingslog.thing";
+option java_multiple_files = true;
+
+message Thing {
+  string id = 1;
+
+  // --- transitional, dual-written until every dogfood account has migrated
+  // (docs/product/thing_migration_design.md §6, §9) ---
+  string make = 2;
+  string model = 3;
+  string serial = 4;
+  string tail_number = 5;
+  repeated Engine engine = 6;
+
+  // --- new, permanent ---
+  string template_id = 7;          // "airplane" for every Thing in Phase 1 — no other value exists yet
+  int32 template_version = 8;
+  string name = 9;
+  repeated Spec spec = 10;         // mirrors of make/model/serial/tail_number
+  repeated Component components = 11;
+}

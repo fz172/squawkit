@@ -34,8 +34,8 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
-import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.thing.Thing
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.component_airframe
 import wingslog.core.sharedassets.generated.resources.component_engine
@@ -54,7 +54,7 @@ import wingslog.feature.logs.viewing.generated.resources.Res as MaintenanceRes
 
 @Composable
 fun AircraftDataCard(
-  aircraft: Aircraft,
+  aircraft: Thing,
   initiallyExpanded: Boolean = true,
   onEditClick: (() -> Unit)? = null,
   onManageAccessClick: (() -> Unit)? = null,

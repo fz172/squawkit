@@ -3,7 +3,6 @@ package dev.fanfly.wingslog.feature.sync.data
 import app.cash.sqldelight.async.coroutines.awaitAsList
 import app.cash.sqldelight.async.coroutines.awaitAsOneOrNull
 import co.touchlab.kermit.Logger
-import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.core.model.sharing.SharedAircraftRef
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.DatabaseWriteLock
@@ -15,6 +14,7 @@ import dev.fanfly.wingslog.core.storage.blob.UploadScheduler
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
 import dev.fanfly.wingslog.feature.sync.data.SyncEngine.Companion.PUSH_FAILURE_KEY
 import dev.fanfly.wingslog.feature.sync.logging.SyncTelemetry
+import dev.fanfly.wingslog.thing.Thing
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.auth.FirebaseUser
 import kotlinx.coroutines.CancellationException
@@ -43,7 +43,7 @@ import kotlin.time.Duration.Companion.milliseconds
  * Top-level orchestrator that wires Firestore sync to the local store for the signed-in user.
  *
  * Lifecycle is anchored to [FirebaseAuth.authStateChanged]:
- * - On sign-in (non-anonymous user): hydrate top-level scopes (Aircraft, Technician, UserInfo)
+ * - On sign-in (non-anonymous user): hydrate top-level scopes (Thing, Technician, UserInfo)
  *   under the user's root, attach pull listeners with the cursor watermark, launch [PushWorker],
  *   and observe the local aircraft list to spin up per-aircraft pull listeners for nested
  *   collections (MaintenanceLog/Task/Overview).
@@ -114,8 +114,8 @@ class SyncEngine(
       success = hydrationRunner.runFor(uid, kind, userRoot) && success
     }
 
-    val aircraftStore: EntityStore<Aircraft> =
-      storeFactory.create(CollectionKind.Aircraft)
+    val aircraftStore: EntityStore<Thing> =
+      storeFactory.create(CollectionKind.Thing)
     val aircraftIds = aircraftStore.observeAll(userRoot)
       .first()
       .map { it.id }
@@ -283,8 +283,8 @@ class SyncEngine(
       }
     }
 
-    val aircraftStore: EntityStore<Aircraft> =
-      storeFactory.create(CollectionKind.Aircraft)
+    val aircraftStore: EntityStore<Thing> =
+      storeFactory.create(CollectionKind.Thing)
     scope.launch {
       aircraftStore.observeAll(userRoot)
         .map { rows ->
@@ -344,7 +344,7 @@ class SyncEngine(
             subScope.launchSharedWatch(uid, aircraftId) {
               watchDocAndListen(
                 uid,
-                CollectionKind.Aircraft,
+                CollectionKind.Thing,
                 EntityScope.userRoot(hostUid),
                 aircraftId
               )
@@ -591,7 +591,7 @@ class SyncEngine(
         buildSet {
           add("/users/$uid/%")
           for (ref in refs) {
-            add("/users/${ref.value.host_uid}/aircraft/${ref.value.aircraft_id}/%")
+            add("/users/${ref.value.host_uid}/thing/${ref.value.aircraft_id}/%")
           }
         }
       }
@@ -627,7 +627,7 @@ class SyncEngine(
 
     /** Collections that live at `users/{uid}/<wire>/...`. Hydrated on sign-in. */
     private val TOP_LEVEL_KINDS: List<CollectionKind> = listOf(
-      CollectionKind.Aircraft,
+      CollectionKind.Thing,
       CollectionKind.Technician,
       CollectionKind.UserInfo,
       CollectionKind.SharedAircraftRef,
@@ -638,7 +638,7 @@ class SyncEngine(
       CollectionKind.NotificationSettings,
     )
 
-    /** Collections nested under `users/{uid}/aircraft/{ac}/<wire>/...`. Hydrated per aircraft. */
+    /** Collections nested under `users/{uid}/thing/{ac}/<wire>/...`. Hydrated per aircraft. */
     private val PER_AIRCRAFT_KINDS: List<CollectionKind> = listOf(
       CollectionKind.MaintenanceLog,
       CollectionKind.MaintenanceTask,

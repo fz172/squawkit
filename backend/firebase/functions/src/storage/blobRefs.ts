@@ -6,7 +6,7 @@ import { Squawk } from "../generated/proto/aircraft/squawk.js";
 /**
  * Which blobs does a record own? (#158)
  *
- * A blob lives at `users/{uid}/aircraft/{acId}/blobs/{blobId}` — the path names the **aircraft** and
+ * A blob lives at `users/{uid}/{segment}/{acId}/blobs/{blobId}` — the path names the **aircraft** and
  * says nothing about which **record** owns the bytes. That mapping exists in exactly one place: the
  * record's protobuf payload.
  *

@@ -276,7 +276,7 @@ class SyncCursorStoreTest {
 
     val cursorOther = store.get(
       TEST_UID,
-      CollectionKind.Aircraft,
+      CollectionKind.Thing,
       TEST_SCOPE
     )
     assertThat(cursorOther).isNull()

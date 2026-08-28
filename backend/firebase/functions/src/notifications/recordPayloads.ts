@@ -1,6 +1,6 @@
 import { logger } from "firebase-functions/v2";
 
-import { Aircraft } from "../generated/proto/aircraft/aircraft.js";
+import { Thing } from "../generated/proto/thing/thing.js";
 import { MaintenanceLog } from "../generated/proto/aircraft/maintenance_log.js";
 import { MaintenanceTask } from "../generated/proto/aircraft/maintenance_task.js";
 import { Squawk, SquawkDismissReason, SquawkPriority } from "../generated/proto/aircraft/squawk.js";
@@ -19,16 +19,16 @@ import { RECORD_TYPE, type RecordType } from "./notificationModels.js";
  */
 
 export const SCHEMA = {
-  AIRCRAFT: "aircraft.Aircraft",
+  AIRCRAFT: "thing.Thing",
   SQUAWK: "aircraft.Squawk",
 } as const;
 
-/** Tail number carried by an Aircraft envelope, or `null` if it will not decode. */
+/** Tail number carried by a Thing envelope, or `null` if it will not decode. */
 export function tailNumberOf(doc: SyncDocWire | undefined): string | null {
   const bytes = payloadBytes(doc?.payload);
   if (bytes == null) return null;
   try {
-    const tail = Aircraft.decode(bytes).tailNumber;
+    const tail = Thing.decode(bytes).tailNumber;
     return tail.length > 0 ? tail : null;
   } catch (e) {
     logger.warn("Could not decode an aircraft payload for a notification", { error: String(e) });

@@ -36,7 +36,7 @@ class LocalAccountMigratorTest {
     remoteUpdatedAt: Long?
   ) {
     db.schemaQueries.upsert(
-      collection = CollectionKind.Aircraft,
+      collection = CollectionKind.Thing,
       scope_path = "/users/$uid/fleet",
       id = id,
       payload = byteArrayOf(1),
@@ -57,14 +57,14 @@ class LocalAccountMigratorTest {
       migrator.reassign(FROM_UID, TO_UID)
 
       val oldScope = db.schemaQueries.selectAll(
-        collection = CollectionKind.Aircraft,
+        collection = CollectionKind.Thing,
         scope = "/users/$FROM_UID/fleet",
       )
         .awaitAsList()
       assertThat(oldScope).isEmpty()
 
       val moved = db.schemaQueries.selectOneForSync(
-        collection = CollectionKind.Aircraft,
+        collection = CollectionKind.Thing,
         scope = "/users/$TO_UID/fleet",
         id = "ac-1",
       )
@@ -87,7 +87,7 @@ class LocalAccountMigratorTest {
     migrator.reassign(FROM_UID, TO_UID)
 
     val other = db.schemaQueries.selectAll(
-      collection = CollectionKind.Aircraft,
+      collection = CollectionKind.Thing,
       scope = "/users/someone-else/fleet",
     )
       .awaitAsList()
@@ -128,7 +128,7 @@ class LocalAccountMigratorTest {
     listOf(FROM_UID, TO_UID).forEach { uid ->
       db.schemaQueries.upsertCursor(
         uid = uid,
-        collection = CollectionKind.Aircraft,
+        collection = CollectionKind.Thing,
         scope_path = "/users/$uid/fleet",
         hydrated = true,
         last_seen_remote = null,
@@ -142,7 +142,7 @@ class LocalAccountMigratorTest {
     listOf(FROM_UID, TO_UID).forEach { uid ->
       val cursor = db.schemaQueries.selectCursor(
         uid = uid,
-        collection = CollectionKind.Aircraft,
+        collection = CollectionKind.Thing,
         scope_path = "/users/$uid/fleet",
       )
         .awaitAsOneOrNull()
@@ -158,7 +158,7 @@ class LocalAccountMigratorTest {
     migrator.reassign(FROM_UID, TO_UID)
 
     val moved = db.schemaQueries.selectAll(
-      collection = CollectionKind.Aircraft,
+      collection = CollectionKind.Thing,
       scope = "/users/$TO_UID/fleet",
     )
       .awaitAsList()
@@ -270,14 +270,14 @@ class LocalAccountMigratorTest {
     migrator.reassign(FROM_UID, TO_UID)
 
     val destination = db.schemaQueries.selectAll(
-      collection = CollectionKind.Aircraft,
+      collection = CollectionKind.Thing,
       scope = "/users/$TO_UID/fleet",
     )
       .awaitAsList()
     // The conflicting row survives once — as the destination's copy — and the rest still moves.
     assertThat(destination.map { it.id }).containsExactly("ac-1", "ac-2")
     val kept = db.schemaQueries.selectOneForSync(
-      collection = CollectionKind.Aircraft,
+      collection = CollectionKind.Thing,
       scope = "/users/$TO_UID/fleet",
       id = "ac-1",
     )
@@ -285,7 +285,7 @@ class LocalAccountMigratorTest {
     assertThat(kept!!.remote_updated_at).isEqualTo(9_000L)
     assertThat(
       db.schemaQueries.selectAll(
-        CollectionKind.Aircraft,
+        CollectionKind.Thing,
         "/users/$FROM_UID/fleet"
       )
         .awaitAsList()
@@ -299,7 +299,7 @@ class LocalAccountMigratorTest {
     migrator.reassign(FROM_UID, FROM_UID)
 
     val stillThere = db.schemaQueries.selectAll(
-      collection = CollectionKind.Aircraft,
+      collection = CollectionKind.Thing,
       scope = "/users/$FROM_UID/fleet",
     )
       .awaitAsList()
@@ -329,7 +329,7 @@ class LocalAccountMigratorTest {
   fun reassign_movesWatermarkToNewUidAndScope() = runTest {
     insertWatermark(
       FROM_UID,
-      "/users/$FROM_UID/aircraft/ac-1/",
+      "/users/$FROM_UID/thing/ac-1/",
       "task-1",
       rank = 2L
     )
@@ -349,7 +349,7 @@ class LocalAccountMigratorTest {
         .awaitAsList()
     assertThat(moved).hasSize(1)
     assertThat(moved[0].uid).isEqualTo(TO_UID)
-    assertThat(moved[0].scope_path).isEqualTo("/users/$TO_UID/aircraft/ac-1/")
+    assertThat(moved[0].scope_path).isEqualTo("/users/$TO_UID/thing/ac-1/")
     assertThat(moved[0].id).isEqualTo("task-1")
     assertThat(moved[0].rank).isEqualTo(2L)
   }
@@ -358,13 +358,13 @@ class LocalAccountMigratorTest {
   fun reassign_leavesOtherUsersWatermarksUntouched() = runTest {
     insertWatermark(
       FROM_UID,
-      "/users/$FROM_UID/aircraft/ac-1/",
+      "/users/$FROM_UID/thing/ac-1/",
       "task-1",
       rank = 1L
     )
     insertWatermark(
       "someone-else",
-      "/users/someone-else/aircraft/ac-2/",
+      "/users/someone-else/thing/ac-2/",
       "task-2",
       rank = 1L
     )
@@ -389,19 +389,19 @@ class LocalAccountMigratorTest {
       // otherwise trip the primary key or silently roll the watermark back.
       insertWatermark(
         FROM_UID,
-        "/users/$FROM_UID/aircraft/ac-1/",
+        "/users/$FROM_UID/thing/ac-1/",
         "task-1",
         rank = 0L
       )
       insertWatermark(
         TO_UID,
-        "/users/$TO_UID/aircraft/ac-1/",
+        "/users/$TO_UID/thing/ac-1/",
         "task-1",
         rank = 2L
       )
       insertWatermark(
         FROM_UID,
-        "/users/$FROM_UID/aircraft/ac-1/",
+        "/users/$FROM_UID/thing/ac-1/",
         "task-2",
         rank = 1L
       )
@@ -423,7 +423,7 @@ class LocalAccountMigratorTest {
   fun reassign_watermarkIsIdempotent() = runTest {
     insertWatermark(
       FROM_UID,
-      "/users/$FROM_UID/aircraft/ac-1/",
+      "/users/$FROM_UID/thing/ac-1/",
       "task-1",
       rank = 1L
     )

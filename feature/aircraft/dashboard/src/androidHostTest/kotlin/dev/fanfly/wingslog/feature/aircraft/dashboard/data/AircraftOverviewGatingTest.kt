@@ -1,8 +1,8 @@
 package dev.fanfly.wingslog.feature.aircraft.dashboard.data
 
 import com.google.common.truth.Truth.assertThat
-import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.feature.sharing.model.ShareRole
+import dev.fanfly.wingslog.thing.Thing
 import org.junit.Test
 
 /**
@@ -13,7 +13,7 @@ class AircraftOverviewGatingTest {
 
   private fun state(role: ShareRole?) =
     AircraftOverviewUiState.Success(
-      aircraft = Aircraft(id = "ac-1"),
+      aircraft = Thing(id = "ac-1"),
       myRole = role
     )
 
@@ -42,7 +42,7 @@ class AircraftOverviewGatingTest {
     // identity that survives a reinstall. Showing a guest the entry point offers a door that leads
     // only to a sign-in prompt.
     val state = AircraftOverviewUiState.Success(
-      aircraft = Aircraft(id = "ac-1"),
+      aircraft = Thing(id = "ac-1"),
       myRole = ShareRole.OWNER,
       isAnonymous = true,
     )
@@ -55,14 +55,14 @@ class AircraftOverviewGatingTest {
     // A technician gets it too: it is read-only for them, and it is their only route out of a share.
     assertThat(
       AircraftOverviewUiState.Success(
-        aircraft = Aircraft(id = "ac-1"),
+        aircraft = Thing(id = "ac-1"),
         myRole = ShareRole.TECHNICIAN,
         isAnonymous = false,
       ).canOpenManageAccess,
     ).isTrue()
     assertThat(
       AircraftOverviewUiState.Success(
-        aircraft = Aircraft(id = "ac-1"),
+        aircraft = Thing(id = "ac-1"),
         myRole = ShareRole.OWNER,
         isAnonymous = false,
       ).canOpenManageAccess,

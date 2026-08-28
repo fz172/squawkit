@@ -4,13 +4,13 @@ import app.cash.sqldelight.async.coroutines.awaitAsOneOrNull
 import app.cash.sqldelight.async.coroutines.synchronous
 import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
 import com.google.common.truth.Truth.assertThat
-import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.aircraft.Attachment
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.core.storage.blob.BlobId
 import dev.fanfly.wingslog.core.storage.blob.BlobRef
 import dev.fanfly.wingslog.core.storage.blob.LocalBlobStore
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
+import dev.fanfly.wingslog.thing.Thing
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
@@ -255,7 +255,7 @@ class TombstoneGcTest {
 
   private suspend fun aircraftExists(): Boolean =
     db.schemaQueries.selectOneForSync(
-      CollectionKind.Aircraft,
+      CollectionKind.Thing,
       USER_ROOT,
       AIRCRAFT_ID
     )
@@ -285,10 +285,10 @@ class TombstoneGcTest {
 
   private suspend fun putAircraft(at: Instant, deleted: Boolean) {
     putEntity(
-      kind = CollectionKind.Aircraft,
+      kind = CollectionKind.Thing,
       scope = USER_ROOT,
       id = AIRCRAFT_ID,
-      payload = Aircraft(id = AIRCRAFT_ID).encode(),
+      payload = Thing(id = AIRCRAFT_ID).encode(),
       at = at,
       deleted = deleted,
     )

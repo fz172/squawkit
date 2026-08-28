@@ -4,9 +4,9 @@ import dev.fanfly.wingslog.core.storage.CloudSyncSetting
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.CurrentUidProvider
 import dev.fanfly.wingslog.core.storage.DatabaseWriteLock
-import dev.fanfly.wingslog.core.storage.ForeignWriteListener
 import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.EntityStoreFactory
+import dev.fanfly.wingslog.core.storage.ForeignWriteListener
 import dev.fanfly.wingslog.core.storage.PostWriteHook
 import dev.fanfly.wingslog.core.storage.blob.LocalBlobStore
 import dev.fanfly.wingslog.core.storage.blob.UploadScheduler
@@ -17,8 +17,8 @@ import dev.fanfly.wingslog.feature.sync.data.PullSubscription
 import dev.fanfly.wingslog.feature.sync.data.PushWorker
 import dev.fanfly.wingslog.feature.sync.data.RemoteFetcher
 import dev.fanfly.wingslog.feature.sync.data.SharedScopeJanitor
-import dev.fanfly.wingslog.feature.sync.data.SyncCursorStore
 import dev.fanfly.wingslog.feature.sync.data.SubscriptionSyncListener
+import dev.fanfly.wingslog.feature.sync.data.SyncCursorStore
 import dev.fanfly.wingslog.feature.sync.data.SyncEngine
 import dev.fanfly.wingslog.feature.sync.data.SyncPreferences
 import dev.fanfly.wingslog.feature.sync.data.SyncWriter
@@ -143,7 +143,7 @@ val syncModule: Module = module {
       sharedScopeJanitor = SharedScopeJanitor(
         db = db,
         writeLock = writeLock,
-        aircraftStore = get<EntityStoreFactory>().create(CollectionKind.Aircraft),
+        aircraftStore = get<EntityStoreFactory>().create(CollectionKind.Thing),
         blobs = getOrNull<LocalBlobStore>(),
       ),
       telemetry = get<SyncTelemetry>(),

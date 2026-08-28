@@ -1,12 +1,12 @@
 package dev.fanfly.wingslog.feature.aircraft.dashboard.data
 
-import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.aircraft.Squawk
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
 import dev.fanfly.wingslog.feature.sharing.model.ShareRole
 import dev.fanfly.wingslog.feature.squawk.model.SquawkWithStatus
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
+import dev.fanfly.wingslog.thing.Thing
 
 data class LogStats(
   val total: Long,
@@ -23,7 +23,7 @@ sealed interface AircraftOverviewUiState {
   data object Error : AircraftOverviewUiState
 
   data class Success(
-    val aircraft: Aircraft,
+    val aircraft: Thing,
     val logStats: LogStats? = null,
     val activeTasks: List<MaintenanceTaskWithStatus> = emptyList(),
     val completedTasks: List<MaintenanceTaskWithStatus> = emptyList(),

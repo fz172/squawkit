@@ -69,7 +69,7 @@ class PushWorker(
    * Suitable to launch from [SyncEngine].
    *
    * **Scoped to a prefix set:** the user's own `users/{uid}/` subtree, plus every shared aircraft's
-   * nested-data subtree `users/{hostUid}/aircraft/{acId}/` from the live refs (docs/sharing §5.3).
+   * nested-data subtree `users/{hostUid}/thing/{acId}/` from the live refs (docs/sharing §5.3).
    * Own-tree scoping keeps account A's undrained writes from being pushed under account B's auth
    * (`PERMISSION_DENIED`) after a device hand-off; the shared prefixes let a member's edits to a
    * shared plane drain to the host's tree. The set is recomputed from the refs store, so a redeemed
@@ -211,7 +211,7 @@ class PushWorker(
   }
 }
 
-/** Reverse of [EntityScope.toPath]: `"/users/u1/aircraft/ac1/"` → `["users", "u1", "aircraft", "ac1"]`. */
+/** Reverse of [EntityScope.toPath]: `"/users/u1/thing/ac1/"` → `["users", "u1", "thing", "ac1"]`. */
 private fun parseScopePath(path: String): List<String> =
   path.trim('/')
     .split('/')
@@ -224,7 +224,7 @@ private fun scopePrefixFor(uid: String): String = "/users/$uid/%"
 
 /**
  * Exact `LIKE` scope (no wildcard) for a host's root, where the shared aircraft *doc* rows sit —
- * `users/{hostUid}/` holds the doc; `users/{hostUid}/aircraft/{acId}/` holds its nested data.
+ * `users/{hostUid}/` holds the doc; `users/{hostUid}/thing/{acId}/` holds its nested data.
  */
 private fun hostRootScope(hostUid: String): String = "/users/$hostUid/"
 
@@ -233,14 +233,14 @@ private fun sharedAircraftScopePrefix(
   hostUid: String,
   aircraftId: String
 ): String =
-  "/users/$hostUid/aircraft/$aircraftId/%"
+  "/users/$hostUid/thing/$aircraftId/%"
 
 /**
  * `(hostUid, aircraftId)` when [row] belongs to a shared aircraft in *someone else's* tree, else
  * null. Anything under our own `/users/{uid}/...` is never a share, however deep it sits.
  *
  * Two shapes qualify, because a shared aircraft straddles two scopes: its nested data lives at
- * `/users/{host}/aircraft/{acId}/`, while the aircraft doc itself is a row *at* `/users/{host}/`,
+ * `/users/{host}/thing/{acId}/`, while the aircraft doc itself is a row *at* `/users/{host}/`,
  * where the aircraft id is the row id rather than part of the path.
  */
 private fun sharedAircraftIn(
@@ -253,8 +253,8 @@ private fun sharedAircraftIn(
   if (hostUid == uid) return null
 
   return when {
-    parts.size >= 4 && parts[2] == "aircraft" -> hostUid to parts[3]
-    parts.size == 2 && row.collection == CollectionKind.Aircraft -> hostUid to row.id
+    parts.size >= 4 && parts[2] == "thing" -> hostUid to parts[3]
+    parts.size == 2 && row.collection == CollectionKind.Thing -> hostUid to row.id
     else -> null
   }
 }

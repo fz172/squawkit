@@ -276,11 +276,11 @@ class WebForeignWriteDetector(
   }
 
   /**
-   * Per-aircraft scopes are `/users/{hostUid}/aircraft/{acId}/`, so the id is the fourth segment.
+   * Per-aircraft scopes are `/users/{hostUid}/thing/{acId}/`, so the id is the fourth segment.
    * A top-level scope has no aircraft and is not N1.
    */
   private fun EntityScope.aircraftIdOrNull(): String? =
-    segments.takeIf { it.size >= 4 && it[2] == "aircraft" }
+    segments.takeIf { it.size >= 4 && it[2] == "thing" }
       ?.get(3)
 
   private companion object {

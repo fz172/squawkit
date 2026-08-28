@@ -59,6 +59,30 @@ describe("baseline firestore.rules", () => {
     const alice = testEnv.authenticatedContext("alice").firestore();
     await assertFails(getDoc(doc(alice, "aircraft_shares/ac1")));
   });
+
+  // MIGRATION (thing_migration_design.md §2.4a, task B10): the same three baseline properties on the
+  // new `/thing/` segment. The own-tree grant is `match /{document=**}` on users/{uid}, so it covers
+  // any segment — these assert that outright rather than leaving it inferred, since the whole
+  // migration rests on the new path being no less locked down than the old one.
+  it("lets a signed-in user read and write their own /thing/ subtree", async () => {
+    const alice = testEnv.authenticatedContext("alice").firestore();
+    await assertSucceeds(setDoc(doc(alice, "users/alice/thing/ac1"), { tail: "N123" }));
+    await assertSucceeds(getDoc(doc(alice, "users/alice/thing/ac1")));
+  });
+
+  it("denies reading or writing another user's /thing/ subtree", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "users/alice/thing/ac1"), { tail: "N123" });
+    });
+    const bob = testEnv.authenticatedContext("bob").firestore();
+    await assertFails(getDoc(doc(bob, "users/alice/thing/ac1")));
+    await assertFails(setDoc(doc(bob, "users/alice/thing/ac1"), { tail: "hijacked" }));
+  });
+
+  it("denies unauthenticated access to /thing/", async () => {
+    const anon = testEnv.unauthenticatedContext().firestore();
+    await assertFails(getDoc(doc(anon, "users/alice/thing/ac1")));
+  });
 });
 
 // Subscription entitlement (SquawkIt Pro): server-authoritative at top-level subscriptions/{uid}.

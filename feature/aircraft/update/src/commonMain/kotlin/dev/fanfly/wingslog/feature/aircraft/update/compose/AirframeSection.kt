@@ -14,10 +14,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardCapitalization
-import dev.fanfly.wingslog.aircraft.Aircraft
 import dev.fanfly.wingslog.core.ui.common.compose.FormTextField
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.aircraft.update.viewmodel.EditAircraftViewModel
+import dev.fanfly.wingslog.thing.Thing
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.aircraft.update.generated.resources.Res
 import wingslog.feature.aircraft.update.generated.resources.make
@@ -27,7 +27,7 @@ import wingslog.feature.aircraft.update.generated.resources.tail_number
 
 @Composable
 fun AirframeSection(
-  aircraft: Aircraft,
+  aircraft: Thing,
   viewModel: EditAircraftViewModel,
   showValidationErrors: Boolean,
 ) {

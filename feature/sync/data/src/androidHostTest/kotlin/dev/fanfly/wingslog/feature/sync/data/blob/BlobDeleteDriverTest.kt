@@ -185,6 +185,6 @@ class BlobDeleteDriverTest {
 
   private companion object {
     const val BLOB_ID = "blob-123"
-    const val REMOTE_PATH = "users/u1/aircraft/ac1/blobs/blob-123"
+    const val REMOTE_PATH = "users/u1/thing/ac1/blobs/blob-123"
   }
 }

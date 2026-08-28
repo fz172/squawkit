@@ -547,3 +547,164 @@ describe("invites", () => {
     await assertFails(deleteDoc(doc(as(HOST), inviteDoc)));
   });
 });
+
+// --- MIGRATION: the /thing/ and thing_shares blocks (tasks B7, B8, B10) ---------------------------
+//
+// docs/product/thing_migration_design.md §2.4a and §2.9. `firestore.rules` deploys as ONE atomic
+// unit, so the new blocks are added ALONGSIDE the `/aircraft/` and `aircraft_shares` ones rather
+// than replacing them, and every assertion above must keep passing for the whole migration window.
+// These are the parallel assertions for the new shapes.
+//
+// The intermediate state this pins down is easy to get wrong: the ENTITY tree moves in Phase D, but
+// the ACL tree does not move until Phase G. So a `/thing/` document is authorized by an ACL that is
+// still at `aircraft_shares` — `shareRole()` has not been repointed. That is asserted directly
+// below, because a rules edit that repointed it early would break every already-migrated account.
+describe("migration: /thing/{acId} entity tree, authorized by the still-at-aircraft_shares ACL", () => {
+  const thingDoc = `users/${HOST}/thing/${AC}`;
+  const thingLogDoc = `${thingDoc}/maintenance_log/${LOG}`;
+
+  beforeEach(async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      const db = ctx.firestore();
+      await setDoc(doc(db, thingDoc), { registration: "N123", writerUid: HOST });
+      await setDoc(doc(db, thingLogDoc), { note: "oil change", writerUid: HOST });
+    });
+  });
+
+  it("member may GET the shared thing doc", async () => {
+    await assertSucceeds(getDoc(doc(as(TECH), thingDoc)));
+  });
+
+  it("non-member may NOT get the shared thing doc", async () => {
+    await assertFails(getDoc(doc(as(STRANGER), thingDoc)));
+  });
+
+  it("member may NOT LIST the host's thing collection (keeps other things private)", async () => {
+    await assertFails(getDocs(collection(as(TECH), `users/${HOST}/thing`)));
+  });
+
+  it("co-owner may edit the thing doc (attested, non-delete)", async () => {
+    await assertSucceeds(
+      setDoc(doc(as(OWNER2), thingDoc), { registration: "N999", deleted: false, writerUid: OWNER2 }),
+    );
+  });
+
+  it("technician may NOT write the thing doc", async () => {
+    await assertFails(setDoc(doc(as(TECH), thingDoc), { registration: "N999", writerUid: TECH }));
+  });
+
+  it("co-owner may NOT forge writerUid on the thing doc", async () => {
+    await assertFails(setDoc(doc(as(OWNER2), thingDoc), { registration: "N999", writerUid: HOST }));
+  });
+
+  it("hosting owner may delete (tombstone) the thing", async () => {
+    await assertSucceeds(
+      setDoc(doc(as(HOST), thingDoc), { registration: "N123", deleted: true, writerUid: HOST }),
+    );
+  });
+
+  it("co-owner may NOT delete (tombstone) the thing — hosting owner only", async () => {
+    await assertFails(
+      setDoc(doc(as(OWNER2), thingDoc), { registration: "N123", deleted: true, writerUid: OWNER2 }),
+    );
+  });
+
+  it("member may read, list, and write nested maintenance data under /thing/", async () => {
+    await assertSucceeds(getDoc(doc(as(TECH), thingLogDoc)));
+    await assertSucceeds(getDocs(collection(as(TECH), `${thingDoc}/maintenance_log`)));
+    await assertSucceeds(setDoc(doc(as(TECH), thingLogDoc), { note: "fixed", writerUid: TECH }));
+  });
+
+  it("member may NOT forge writerUid, and non-members are shut out entirely", async () => {
+    await assertFails(setDoc(doc(as(TECH), thingLogDoc), { note: "fixed", writerUid: OWNER2 }));
+    await assertFails(getDoc(doc(as(STRANGER), thingLogDoc)));
+    await assertFails(setDoc(doc(as(STRANGER), thingLogDoc), { note: "x", writerUid: STRANGER }));
+  });
+
+  it("member may NOT write an unknown kind into the host's /thing/ subtree", async () => {
+    await assertFails(setDoc(doc(as(TECH), `${thingDoc}/evil/x`), { data: 1, writerUid: TECH }));
+  });
+});
+
+// The thing_shares block is added early and deliberately INERT: `shareRole()` still reads
+// aircraft_shares, and nothing writes thing_shares until Phase G1 copies the tree. It has to be live
+// BEFORE that copy lands, though — rules deploy atomically, so a block added at copy time would
+// leave the copied ACL unreadable in the gap. These assertions prove the block exists and grants the
+// right things, using the aircraft_shares ACL that `shareRole()` still consults.
+describe("migration: thing_shares ACL block — present, correct, and not yet load-bearing", () => {
+  const thingShareDoc = `thing_shares/${HOST}/thing/${AC}`;
+
+  beforeEach(async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), thingShareDoc), {
+        hostUid: HOST,
+        aircraftId: AC,
+        memberRoles: { [HOST]: "owner", [OWNER2]: "owner", [TECH]: "technician" },
+      });
+    });
+  });
+
+  it("member may get a thing_shares doc", async () => {
+    await assertSucceeds(getDoc(doc(as(TECH), thingShareDoc)));
+  });
+
+  it("non-member may NOT get a thing_shares doc", async () => {
+    await assertFails(getDoc(doc(as(STRANGER), thingShareDoc)));
+  });
+
+  it("no client may create, update, or delete a thing_shares doc — functions only", async () => {
+    await assertFails(
+      setDoc(doc(as(HOST), `thing_shares/${HOST}/thing/ac-new`), {
+        hostUid: HOST,
+        aircraftId: "ac-new",
+        memberRoles: { [HOST]: "owner" },
+      }),
+    );
+    await assertFails(deleteDoc(doc(as(HOST), thingShareDoc)));
+  });
+
+  it("membership still comes from aircraft_shares — shareRole() has NOT been repointed", async () => {
+    // The load-bearing assertion for the migration's ordering. TECH is a member in aircraft_shares
+    // and NOT in this thing_shares doc's own memberRoles, yet the read below succeeds — proving the
+    // authorization still resolves through the old tree. When Phase G3 repoints shareRole(), this
+    // assertion is the one that must be revisited.
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), thingShareDoc), {
+        hostUid: HOST,
+        aircraftId: AC,
+        memberRoles: { [HOST]: "owner" }, // TECH deliberately absent
+      });
+    });
+    await assertSucceeds(getDoc(doc(as(TECH), thingShareDoc)));
+  });
+
+  it("a member may create their own member doc under thing_shares", async () => {
+    await assertSucceeds(
+      setDoc(doc(as(TECH), `${thingShareDoc}/members/${TECH}`), {
+        role: "technician",
+        displayName: "Tech",
+        invitedBy: HOST,
+      }),
+    );
+  });
+
+  it("a member may NOT mint a role they do not already hold", async () => {
+    await assertFails(
+      setDoc(doc(as(TECH), `${thingShareDoc}/members/${TECH}`), {
+        role: "owner",
+        displayName: "Tech",
+        invitedBy: HOST,
+      }),
+    );
+  });
+
+  it("only an owner reads thing_shares invites, and no client writes them", async () => {
+    const thingInviteDoc = `${thingShareDoc}/invites/token-1`;
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), thingInviteDoc), { role: "technician", createdBy: HOST });
+    });
+    await assertSucceeds(getDoc(doc(as(HOST), thingInviteDoc)));
+    await assertFails(getDoc(doc(as(TECH), thingInviteDoc)));
+    await assertFails(setDoc(doc(as(HOST), thingInviteDoc), { role: "owner", createdBy: HOST }));
+  });
+});
