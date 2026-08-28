@@ -5,3 +5,10 @@ node_modules/
 
 # Firebase emulator logs (emulators:exec runs from this dir during `npm test`)
 *-debug.log
+
+# Migration run reports (thing-cutover / thing-cleanup --out). These name real account uids and
+# are operational output, not source. Keep them local.
+*.json
+!package.json
+!package-lock.json
+!tsconfig.json
