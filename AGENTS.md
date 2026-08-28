@@ -35,8 +35,8 @@ file/photo upload gated by the Pro subscription (links are always free). See
 ./gradlew assembleRelease                        # Release APK (developer tooling off)
 ./gradlew assembleRelease -PdeveloperBuild=true  # "Dogfood-style" release APK (tooling on)
 ./gradlew lint                                   # Lint checks
-./gradlew testDebugUnitTest                      # All Android unit tests
-./gradlew :feature:fleet:datamanager:testDebugUnitTest   # One module's tests
+./gradlew testDebugUnitTest testAndroidHostTest  # All Android unit tests (app + migrated KMP modules)
+./gradlew :feature:fleet:datamanager:testAndroidHostTest   # One module's tests
 ./gradlew :composeApp:iosSimulatorArm64Test      # iOS simulator unit tests (local only)
 ./gradlew :webApp:jsBrowserDevelopmentWebpack    # Web development bundle
 ./gradlew :webApp:jsBrowserDistribution          # Web production bundle (what deploy-web ships)
@@ -68,7 +68,7 @@ npm run serve     # firebase emulators:start --only functions
 
 | Workflow | Trigger | What it does |
 |---|---|---|
-| `build.yml` | **manual only** (`workflow_dispatch`) | lint → `assembleDebug` → `testDebugUnitTest` |
+| `build.yml` | **manual only** (`workflow_dispatch`) | lint → `assembleDebug` → `testDebugUnitTest` + `testAndroidHostTest` |
 | `deploy-functions.yml` | PR + push to `main` under `functions/**` | emulator test suite as the gate; deploys functions on merge |
 | `deploy-firestore-rules.yml` | PR + push to `main` on `firestore.rules` | emulator rules suite; deploys rules on merge |
 | `deploy-storage-rules.yml` | PR + push to `main` on `storage.rules` | emulator rules suite; deploys rules on merge |
@@ -76,7 +76,8 @@ npm run serve     # firebase emulators:start --only functions
 | `promote-web.yml` | manual | promotes the alpha channel to live |
 
 **The Kotlin build does not run automatically on PRs or pushes.** Run `./gradlew lint
-testDebugUnitTest` locally before pushing anything non-trivial. iOS is never built on CI.
+testDebugUnitTest testAndroidHostTest` locally before pushing anything non-trivial. iOS is never
+built on CI.
 
 Firestore and Storage security rules are source-controlled in `backend/firebase/` — the Firebase
 console is read-only and these workflows are the only publisher.
@@ -581,9 +582,10 @@ constants (camera capture, anonymous login), and `isAdsSupported`.
 
 ## Testing
 
-- Unit tests live in each module's **`src/test/kotlin`** (or `src/test/java`) and run under
-  `./gradlew testDebugUnitTest`. `commonTest` / `jsTest` are used only where a test genuinely must be
-  multiplatform.
+- Unit tests live in each module's **`src/test/kotlin`** and run under `./gradlew testDebugUnitTest`
+  — except modules migrated to the `com.android.kotlin.multiplatform.library` plugin, where they live
+  in **`src/androidHostTest/kotlin`** and run under `./gradlew testAndroidHostTest`. `commonTest` /
+  `jsTest` are used only where a test genuinely must be multiplatform.
 - Stack: **JUnit 4 + MockK + Google Truth + kotlinx-coroutines-test**.
 - The densest suites are the best patterns to copy: `feature/sync/data`, `core/storage`,
   `feature/attachment/datamanager`, `feature/export/datamanager`, `feature/ads/datamanager`.

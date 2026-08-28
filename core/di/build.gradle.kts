@@ -1,23 +1,18 @@
 plugins {
-  alias(libs.plugins.android.library)
+  alias(libs.plugins.android.kmp.library)
   alias(libs.plugins.kotlin.multiplatform)
-}
-
-android {
-  namespace = "dev.fanfly.wingslog.core.di"
-  compileSdk = 37
-  defaultConfig { minSdk = 33 }
-  compileOptions {
-    sourceCompatibility = JavaVersion.VERSION_21
-    targetCompatibility = JavaVersion.VERSION_21
-  }
 }
 
 kotlin {
   jvmToolchain(21)
-  androidTarget()
 
-  js(IR) {
+  android {
+    namespace = "dev.fanfly.wingslog.core.di"
+    compileSdk = 37
+    minSdk = 33
+  }
+
+  js {
     browser()
   }
 
@@ -66,9 +61,9 @@ kotlin {
       implementation(project(":feature:technician:datamanager"))
       implementation(project(":feature:technician:manage"))
     }
+    sourceSets.getByName("androidMain")
+      .dependencies {
+        implementation(project.dependencies.platform(libs.firebase.bom))
+    }
   }
-}
-
-dependencies {
-  implementation(platform(libs.firebase.bom))
 }

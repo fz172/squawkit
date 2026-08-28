@@ -1,28 +1,21 @@
 plugins {
-  alias(libs.plugins.android.library)
+  alias(libs.plugins.android.kmp.library)
   alias(libs.plugins.kotlin.multiplatform)
-}
-
-android {
-  namespace = "dev.fanfly.wingslog.feature.subscription.model"
-  compileSdk = 37
-
-  defaultConfig {
-    minSdk = 33
-  }
-
-  compileOptions {
-    sourceCompatibility = JavaVersion.VERSION_21
-    targetCompatibility = JavaVersion.VERSION_21
-  }
 }
 
 kotlin {
   jvmToolchain(21)
 
-  androidTarget()
+  android {
+    namespace = "dev.fanfly.wingslog.feature.subscription.model"
+    compileSdk = 37
+    minSdk = 33
 
-  js(IR) {
+    withHostTest {
+    }
+  }
+
+  js {
     browser()
   }
 
@@ -40,6 +33,6 @@ kotlin {
 }
 
 dependencies {
-  testImplementation(libs.junit)
-  testImplementation(libs.truth)
+  "androidHostTestImplementation"(libs.junit)
+  "androidHostTestImplementation"(libs.truth)
 }

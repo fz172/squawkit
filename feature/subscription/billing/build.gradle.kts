@@ -1,44 +1,23 @@
 plugins {
-  alias(libs.plugins.android.library)
+  alias(libs.plugins.android.kmp.library)
   alias(libs.plugins.compose.multiplatform)
   alias(libs.plugins.kotlin.multiplatform)
   alias(libs.plugins.kotlin.compose)
 }
 
-android {
-  namespace = "dev.fanfly.wingslog.feature.subscription.billing"
-  compileSdk = 37
-
-  defaultConfig {
-    minSdk = 33
-  }
-
-  buildFeatures {
-    compose = true
-  }
-
-  compileOptions {
-    sourceCompatibility = JavaVersion.VERSION_21
-    targetCompatibility = JavaVersion.VERSION_21
-  }
-}
-
-/**
- * Android + iOS only — deliberately **no `js(IR)` target**, unlike every other module in the tree.
- *
- * The RevenueCat KMP SDK publishes Android and iOS variants only (verified against its Gradle module
- * metadata), and purchasing is an Android/iOS capability by product decision. Isolating the SDK in a
- * module without a web target is what keeps `webApp` building: the shared `BillingManager` contract
- * lives in `feature/subscription/model`, which every target compiles, and web binds
- * `UnsupportedBillingManager` instead of anything in here.
- *
- * Adding a web target to this module will not work — it will fail to resolve the dependency.
- */
 kotlin {
   jvmToolchain(21)
 
-  androidTarget {
-    compilerOptions {
+  android {
+    namespace = "dev.fanfly.wingslog.feature.subscription.billing"
+    compileSdk = 37
+    minSdk = 33
+
+    androidResources {
+      enable = true
+    }
+
+    withHostTest {
     }
   }
 
@@ -73,8 +52,8 @@ kotlin {
 }
 
 dependencies {
-  testImplementation(libs.junit)
-  testImplementation(libs.truth)
-  testImplementation(libs.mockk)
-  testImplementation(libs.kotlinx.coroutines.test)
+  "androidHostTestImplementation"(libs.junit)
+  "androidHostTestImplementation"(libs.truth)
+  "androidHostTestImplementation"(libs.mockk)
+  "androidHostTestImplementation"(libs.kotlinx.coroutines.test)
 }

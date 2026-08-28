@@ -1,0 +1,190 @@
+package dev.fanfly.wingslog.feature.subscription.datamanager.impl
+
+import com.google.common.truth.Truth.assertThat
+import dev.fanfly.wingslog.core.appinfo.AppCapability
+import dev.fanfly.wingslog.core.model.settings.Subscription
+import dev.fanfly.wingslog.core.storage.CollectionKind
+import dev.fanfly.wingslog.core.storage.EntityStore
+import dev.fanfly.wingslog.core.storage.EntityStoreFactory
+import dev.fanfly.wingslog.core.storage.StorageEntity
+import dev.gitlive.firebase.auth.FirebaseAuth
+import dev.gitlive.firebase.auth.FirebaseUser
+import io.mockk.every
+import io.mockk.mockk
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.runTest
+import org.junit.Before
+import org.junit.Test
+import kotlin.time.Instant
+
+private const val TEST_USER_ID = "user-1"
+
+class SubscriptionManagerImplTest {
+
+  private lateinit var firebaseAuth: FirebaseAuth
+  private lateinit var storeFactory: EntityStoreFactory
+  private lateinit var store: EntityStore<Subscription>
+
+  @Before
+  fun setUp() {
+    firebaseAuth = mockk(relaxed = true)
+    store = mockk(relaxed = true)
+    storeFactory = mockk(relaxed = true)
+    every { storeFactory.create<Subscription>(CollectionKind.Subscription) } returns store
+
+    val user = mockk<FirebaseUser>()
+    every { user.uid } returns TEST_USER_ID
+    every { firebaseAuth.authStateChanged } returns flowOf(user)
+    // Default: no entitlement doc → the manager reads FREE.
+    every { store.observe(any(), any()) } returns flowOf(null)
+  }
+
+  private fun capability(
+    devBuild: Boolean = false,
+    ads: Boolean = false,
+  ) = AppCapability(
+    isDeveloperOptionsSupported = devBuild,
+    isStressTestSupported = false,
+    isCameraCaptureSupported = false,
+    isAnonymousLoginSupported = false,
+    isAdsSupported = ads,
+  )
+
+  private fun manager(
+    capability: AppCapability,
+    forceStatus: Flow<Subscription.Status?> = flowOf(null),
+  ) = SubscriptionManagerImpl(
+    firebaseAuth = firebaseAuth,
+    storeFactory = storeFactory,
+    appCapability = capability,
+    forceStatus = forceStatus,
+  )
+
+  private fun entitle(subscription: Subscription) {
+    every { store.observe(any(), any()) } returns
+      flowOf(
+        StorageEntity(
+          "main",
+          subscription,
+          Instant.fromEpochMilliseconds(0)
+        )
+      )
+  }
+
+  /**
+   * An actively renewing subscriber, as `applyEntitlement` actually writes one. `will_renew` keeps
+   * this independent of the wall clock: a renewing subscription is entitled regardless of where its
+   * period end falls (see `Subscription.effectiveStatusAt`).
+   */
+  private val proActive = Subscription(
+    status = Subscription.Status.STATUS_PRO,
+    lifecycle = Subscription.Lifecycle.LIFECYCLE_ACTIVE,
+    will_renew = true,
+  )
+
+  /** A server-granted comp whose end date has passed: ACTIVE, but nothing will renew it. */
+  private val proCompExpired = Subscription(
+    status = Subscription.Status.STATUS_PRO,
+    lifecycle = Subscription.Lifecycle.LIFECYCLE_ACTIVE,
+    will_renew = false,
+    current_period_end_millis = 1L,
+  )
+
+  @Test
+  fun `PRO active - gates open and aircraft unlimited`() = runTest {
+    entitle(proActive)
+    val m = manager(capability())
+    assertThat(
+      m.status()
+        .first()
+    ).isEqualTo(Subscription.Status.STATUS_PRO)
+    assertThat(
+      m.canUploadAttachments()
+        .first()
+    ).isTrue()
+    assertThat(
+      m.aircraftLimit()
+        .first()
+    ).isNull()
+  }
+
+  @Test
+  fun `an expired comp - gates closed and the free aircraft limit`() = runTest {
+    // A promo grant is ACTIVE with willRenew=false and an end date; once that date passes nothing
+    // will renew it, so it must lapse to Free rather than entitle forever.
+    entitle(proCompExpired)
+    val m = manager(capability())
+    assertThat(
+      m.status()
+        .first()
+    ).isEqualTo(Subscription.Status.STATUS_FREE)
+    assertThat(
+      m.canUploadAttachments()
+        .first()
+    ).isFalse()
+    assertThat(
+      m.aircraftLimit()
+        .first()
+    ).isEqualTo(SubscriptionManagerImpl.FREE_AIRCRAFT_LIMIT)
+  }
+
+  @Test
+  fun `FREE - gates closed and two aircraft`() = runTest {
+    val m = manager(capability()) // default FREE stub
+    assertThat(
+      m.status()
+        .first()
+    ).isEqualTo(Subscription.Status.STATUS_FREE)
+    assertThat(
+      m.canUploadAttachments()
+        .first()
+    ).isFalse()
+    assertThat(
+      m.canEmailExports()
+        .first()
+    ).isFalse()
+    assertThat(
+      m.canHostShare()
+        .first()
+    ).isFalse()
+    assertThat(
+      m.aircraftLimit()
+        .first()
+    ).isEqualTo(2)
+  }
+
+  @Test
+  fun `dev override forces PRO in a developer build`() = runTest {
+    // FREE entitlement, but a developer build forces PRO.
+    val m = manager(
+      capability(devBuild = true),
+      forceStatus = flowOf(Subscription.Status.STATUS_PRO),
+    )
+    assertThat(
+      m.status()
+        .first()
+    ).isEqualTo(Subscription.Status.STATUS_PRO)
+    assertThat(
+      m.canUploadAttachments()
+        .first()
+    ).isTrue()
+  }
+
+  @Test
+  fun `dev override is ignored in a release build`() = runTest {
+    val m = manager(
+      capability(devBuild = false),
+      forceStatus = flowOf(Subscription.Status.STATUS_PRO),
+    )
+    assertThat(
+      m.status()
+        .first()
+    ).isEqualTo(Subscription.Status.STATUS_FREE)
+    assertThat(
+      m.canUploadAttachments()
+        .first()
+    ).isFalse()
+  }
+}

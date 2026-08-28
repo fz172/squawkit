@@ -37,13 +37,13 @@ Functions and security rules — not a Gradle module). Full tree in
 ```bash
 ./gradlew assembleDebug                              # Debug APK (developer tooling on)
 ./gradlew lint
-./gradlew testDebugUnitTest                          # All Android unit tests
-./gradlew :feature:fleet:datamanager:testDebugUnitTest   # Single module
+./gradlew testDebugUnitTest testAndroidHostTest      # All Android unit tests
+./gradlew :feature:fleet:datamanager:testAndroidHostTest # Single module
 ./gradlew :webApp:jsBrowserDevelopmentWebpack        # Web dev bundle
 ```
 
 Two things worth knowing before you run anything else: **CI's Kotlin build is manual-dispatch only**,
-so run `lint` and `testDebugUnitTest` locally before pushing; and **`assembleRelease` mutates
+so run `lint`, `testDebugUnitTest`, and `testAndroidHostTest` locally before pushing; and **`assembleRelease` mutates
 `version.properties`**. Full command list, iOS/web builds, backend commands, and the workflow table:
 [§ Build & Test Commands](AGENTS.md#build--test-commands) and [§ CI / CD](AGENTS.md#ci--cd-githubworkflows).
 
