@@ -1,46 +1,33 @@
 plugins {
-  alias(libs.plugins.android.library)
+  alias(libs.plugins.android.kmp.library)
   alias(libs.plugins.kotlin.multiplatform)
   alias(libs.plugins.kotlin.compose)
   alias(libs.plugins.compose.multiplatform)
 }
 
-android {
-  namespace = "dev.fanfly.wingslog.core.ui.adaptive"
-  compileSdk = 37
-
-  defaultConfig {
-    minSdk = 33
-    testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-  }
-
-  buildFeatures {
-    compose = true
-  }
-
-  compileOptions {
-    sourceCompatibility = JavaVersion.VERSION_21
-    targetCompatibility = JavaVersion.VERSION_21
-  }
-}
-
-compose.resources {
-  publicResClass = true
-}
-
 kotlin {
   jvmToolchain(21)
 
-  androidTarget {
-    compilerOptions {
+  android {
+    namespace = "dev.fanfly.wingslog.core.ui.adaptive"
+    compileSdk = 37
+    minSdk = 33
+
+    androidResources {
+      enable = true
+    }
+
+    withHostTest {
+    }
+    withDeviceTest {
+      instrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
   }
-
 
   iosArm64()
   iosSimulatorArm64()
 
-  js(IR) {
+  js {
     browser()
   }
 
@@ -56,11 +43,14 @@ kotlin {
       api(libs.components.resources)
       api(libs.material.icons.extended)
     }
+    sourceSets.getByName("androidHostTest")
+      .dependencies {
+        implementation(libs.junit)
+        implementation(libs.truth)
+      }
   }
 }
 
-
-dependencies {
-  testImplementation(libs.junit)
-  testImplementation(libs.truth)
+compose.resources {
+  publicResClass = true
 }

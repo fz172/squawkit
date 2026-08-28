@@ -2,14 +2,15 @@
 plugins {
   alias(libs.plugins.android.application) apply false
   alias(libs.plugins.android.library) apply false
+  alias(libs.plugins.android.kmp.library) apply false
   alias(libs.plugins.kotlin.android) apply false
   alias(libs.plugins.kotlin.compose) apply false
   alias(libs.plugins.kotlin.multiplatform) apply false
   alias(libs.plugins.compose.multiplatform) apply false
   alias(libs.plugins.kover) apply false
   // Firebase
-  id("com.google.gms.google-services") version "4.4.4" apply false
-  id("com.google.protobuf") version "0.9.5" apply false
+  id("com.google.gms.google-services") version "4.5.0" apply false
+  id("com.google.protobuf") version "0.10.0" apply false
 }
 
 // Align the core Compose Multiplatform runtime artifacts with the Compose plugin version.

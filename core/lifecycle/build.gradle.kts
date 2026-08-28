@@ -1,36 +1,28 @@
 plugins {
-  alias(libs.plugins.android.library)
+  alias(libs.plugins.android.kmp.library)
   alias(libs.plugins.kotlin.multiplatform)
   alias(libs.plugins.kover)
-}
-
-android {
-  namespace = "dev.fanfly.wingslog.core.lifecycle"
-  compileSdk = 37
-
-  defaultConfig {
-    minSdk = 33
-    testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-  }
-
-  compileOptions {
-    sourceCompatibility = JavaVersion.VERSION_21
-    targetCompatibility = JavaVersion.VERSION_21
-  }
 }
 
 kotlin {
   jvmToolchain(21)
 
-  androidTarget {
-    compilerOptions {
+  android {
+    namespace = "dev.fanfly.wingslog.core.lifecycle"
+    compileSdk = 37
+    minSdk = 33
+
+    withHostTest {
+    }
+    withDeviceTest {
+      instrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
   }
 
   iosArm64()
   iosSimulatorArm64()
 
-  js(IR) {
+  js {
     browser()
   }
 
@@ -47,11 +39,11 @@ kotlin {
       // themselves come from the platform SDK, so there is nothing else to add here.
       implementation(libs.koin.android)
     }
+    sourceSets.getByName("androidHostTest")
+      .dependencies {
+        implementation(libs.junit)
+        implementation(libs.truth)
+        implementation(libs.kotlinx.coroutines.test)
+      }
   }
-}
-
-dependencies {
-  testImplementation(libs.junit)
-  testImplementation(libs.truth)
-  testImplementation(libs.kotlinx.coroutines.test)
 }

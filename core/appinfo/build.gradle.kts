@@ -1,61 +1,25 @@
 import java.util.Properties
 
 plugins {
-  alias(libs.plugins.android.library)
+  alias(libs.plugins.android.kmp.library)
   alias(libs.plugins.kotlin.multiplatform)
   alias(libs.plugins.kotlin.compose)
   alias(libs.plugins.compose.multiplatform)
 }
 
-android {
-  namespace = "dev.fanfly.wingslog.core.appinfo"
-  compileSdk = 37
-
-  defaultConfig {
-    minSdk = 33
-  }
-
-  buildFeatures {
-    compose = true
-  }
-
-  compileOptions {
-    sourceCompatibility = JavaVersion.VERSION_21
-    targetCompatibility = JavaVersion.VERSION_21
-  }
-}
-
-val versionPropsFile = rootProject.file("version.properties")
-
-val generateJsVersionKt by tasks.registering {
-  val outputDir = layout.buildDirectory.dir(
-    "generated/jsMain/kotlin/dev/fanfly/wingslog/core/appinfo"
-  )
-  outputs.dir(outputDir)
-  inputs.file(versionPropsFile)
-  doFirst {
-    val props = Properties().apply {
-      if (versionPropsFile.exists()) versionPropsFile.inputStream()
-        .use { load(it) }
-    }
-    val versionName = "${props["major"]}.${props["minor"]}" +
-      ".${props["buildDate"]}.${props["patch"]}"
-    outputDir.get().asFile.also { it.mkdirs() }
-      .resolve("GeneratedVersionInfo.kt")
-      .writeText(
-        "package dev.fanfly.wingslog.core.appinfo\n\n" +
-          "internal const val GENERATED_VERSION_NAME = \"$versionName\"\n"
-      )
-  }
-}
-
 kotlin {
   jvmToolchain(21)
 
-  androidTarget()
-  js(IR) {
+  android {
+    namespace = "dev.fanfly.wingslog.core.appinfo"
+    compileSdk = 37
+    minSdk = 33
+  }
+
+  js {
     browser()
   }
+
   iosArm64()
   iosSimulatorArm64()
 
@@ -84,14 +48,35 @@ kotlin {
 
     androidMain.dependencies {
       implementation(libs.compose.ui)
+      implementation(project.dependencies.platform(libs.androidx.compose.bom))
     }
+  }
+}
+
+val versionPropsFile = rootProject.file("version.properties")
+
+val generateJsVersionKt by tasks.registering {
+  val outputDir = layout.buildDirectory.dir(
+    "generated/jsMain/kotlin/dev/fanfly/wingslog/core/appinfo"
+  )
+  outputs.dir(outputDir)
+  inputs.file(versionPropsFile)
+  doFirst {
+    val props = Properties().apply {
+      if (versionPropsFile.exists()) versionPropsFile.inputStream()
+        .use { load(it) }
+    }
+    val versionName = "${props["major"]}.${props["minor"]}" +
+      ".${props["buildDate"]}.${props["patch"]}"
+    outputDir.get().asFile.also { it.mkdirs() }
+      .resolve("GeneratedVersionInfo.kt")
+      .writeText(
+        "package dev.fanfly.wingslog.core.appinfo\n\n" +
+          "internal const val GENERATED_VERSION_NAME = \"$versionName\"\n"
+      )
   }
 }
 
 tasks.configureEach {
   if (name == "compileKotlinJs") dependsOn(generateJsVersionKt)
-}
-
-dependencies {
-  implementation(platform(libs.androidx.compose.bom))
 }

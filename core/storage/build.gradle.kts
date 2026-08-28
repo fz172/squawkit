@@ -1,36 +1,28 @@
 plugins {
-  alias(libs.plugins.android.library)
+  alias(libs.plugins.android.kmp.library)
   alias(libs.plugins.kotlin.multiplatform)
   alias(libs.plugins.sqldelight)
-}
-
-android {
-  namespace = "dev.fanfly.wingslog.core.storage"
-  compileSdk = 37
-
-  defaultConfig {
-    minSdk = 33
-    testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-  }
-
-  compileOptions {
-    sourceCompatibility = JavaVersion.VERSION_21
-    targetCompatibility = JavaVersion.VERSION_21
-  }
 }
 
 kotlin {
   jvmToolchain(21)
 
-  androidTarget {
-    compilerOptions {
+  android {
+    namespace = "dev.fanfly.wingslog.core.storage"
+    compileSdk = 37
+    minSdk = 33
+
+    withHostTest {
+    }
+    withDeviceTest {
+      instrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
   }
 
   iosArm64()
   iosSimulatorArm64()
 
-  js(IR) {
+  js {
     browser()
   }
 
@@ -53,20 +45,21 @@ kotlin {
     iosMain.dependencies {
       api(libs.sqldelight.native.driver)
     }
-    jsMain.dependencies {
+    sourceSets.getByName("jsMain")
+      .dependencies {
       api(libs.sqldelight.web.worker.driver)
       // sql.js worker prebuilt by Cash App + the sql.js WASM engine it loads.
       implementation(npm("@cashapp/sqldelight-sqljs-worker", "2.3.2"))
       implementation(npm("sql.js", "1.8.0"))
     }
+    sourceSets.getByName("androidHostTest")
+      .dependencies {
+        implementation(libs.junit)
+        implementation(libs.truth)
+        implementation(libs.kotlinx.coroutines.test)
+        implementation(libs.sqldelight.sqlite.driver)
+      }
   }
-}
-
-dependencies {
-  testImplementation(libs.junit)
-  testImplementation(libs.truth)
-  testImplementation(libs.kotlinx.coroutines.test)
-  testImplementation(libs.sqldelight.sqlite.driver)
 }
 
 sqldelight {

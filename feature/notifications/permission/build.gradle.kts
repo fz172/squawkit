@@ -1,32 +1,21 @@
 plugins {
-  alias(libs.plugins.android.library)
+  alias(libs.plugins.android.kmp.library)
   alias(libs.plugins.kotlin.multiplatform)
-}
-
-android {
-  namespace = "dev.fanfly.wingslog.feature.notifications.permission"
-  compileSdk = 37
-
-  defaultConfig {
-    minSdk = 33
-    testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-  }
-
-  compileOptions {
-    sourceCompatibility = JavaVersion.VERSION_21
-    targetCompatibility = JavaVersion.VERSION_21
-  }
 }
 
 kotlin {
   jvmToolchain(21)
 
-  androidTarget {
-    compilerOptions {
+  android {
+    namespace = "dev.fanfly.wingslog.feature.notifications.permission"
+    compileSdk = 37
+    minSdk = 33
+
+    withHostTest {
     }
   }
 
-  js(IR) {
+  js {
     browser()
   }
 
@@ -45,20 +34,16 @@ kotlin {
       implementation(libs.kotlinx.coroutines.core)
       implementation(libs.koin.core)
     }
-    androidMain.dependencies {
-      // NotificationManagerCompat / ActivityCompat.shouldShowRequestPermissionRationale, and
-      // ActivityResultLauncher for the bridge MainActivity attaches into.
-      implementation(libs.androidx.core.ktx)
-      implementation(libs.androidx.activity.ktx)
-      implementation(libs.koin.android)
-      implementation(libs.kermit)
-    }
   }
 }
 
 dependencies {
-  testImplementation(libs.junit)
-  testImplementation(libs.mockk)
-  testImplementation(libs.truth)
-  testImplementation(libs.kotlinx.coroutines.test)
+  "androidMainImplementation"(libs.androidx.core.ktx)
+  "androidMainImplementation"(libs.androidx.activity.ktx)
+  "androidMainImplementation"(libs.koin.android)
+  "androidMainImplementation"(libs.kermit)
+  "androidHostTestImplementation"(libs.junit)
+  "androidHostTestImplementation"(libs.mockk)
+  "androidHostTestImplementation"(libs.truth)
+  "androidHostTestImplementation"(libs.kotlinx.coroutines.test)
 }

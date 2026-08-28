@@ -1,37 +1,27 @@
 plugins {
-  alias(libs.plugins.android.library)
+  alias(libs.plugins.android.kmp.library)
   alias(libs.plugins.compose.multiplatform)
   alias(libs.plugins.kotlin.multiplatform)
   alias(libs.plugins.kotlin.compose)
 }
 
-android {
-  namespace = "dev.fanfly.wingslog.feature.subscription.viewing"
-  compileSdk = 37
-
-  defaultConfig {
-    minSdk = 33
-  }
-
-  buildFeatures {
-    compose = true
-  }
-
-  compileOptions {
-    sourceCompatibility = JavaVersion.VERSION_21
-    targetCompatibility = JavaVersion.VERSION_21
-  }
-}
-
 kotlin {
   jvmToolchain(21)
 
-  androidTarget {
-    compilerOptions {
+  android {
+    namespace = "dev.fanfly.wingslog.feature.subscription.viewing"
+    compileSdk = 37
+    minSdk = 33
+
+    androidResources {
+      enable = true
+    }
+
+    withHostTest {
     }
   }
 
-  js(IR) {
+  js {
     browser()
   }
 
@@ -70,9 +60,9 @@ kotlin {
 
 dependencies {
   // gitlive firebase-auth (via core:auth) resolves its Android artifact versions from the BOM.
-  implementation(platform(libs.firebase.bom))
-  testImplementation(libs.junit)
-  testImplementation(libs.truth)
-  testImplementation(libs.mockk)
-  testImplementation(libs.kotlinx.coroutines.test)
+  "androidMainImplementation"(platform(libs.firebase.bom))
+  "androidHostTestImplementation"(libs.junit)
+  "androidHostTestImplementation"(libs.truth)
+  "androidHostTestImplementation"(libs.mockk)
+  "androidHostTestImplementation"(libs.kotlinx.coroutines.test)
 }

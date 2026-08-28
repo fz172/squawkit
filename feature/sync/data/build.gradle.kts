@@ -1,41 +1,25 @@
 plugins {
-  alias(libs.plugins.android.library)
+  alias(libs.plugins.android.kmp.library)
   alias(libs.plugins.kotlin.multiplatform)
   alias(libs.plugins.kotlin.serialization)
-}
-
-android {
-  namespace = "dev.fanfly.wingslog.feature.sync.data"
-  compileSdk = 37
-
-  defaultConfig {
-    minSdk = 33
-    testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-  }
-
-  compileOptions {
-    sourceCompatibility = JavaVersion.VERSION_21
-    targetCompatibility = JavaVersion.VERSION_21
-  }
-
-  testOptions {
-    unitTests.isReturnDefaultValues = true
-  }
 }
 
 kotlin {
   jvmToolchain(21)
 
-  androidTarget {
-    compilerOptions {
+  android {
+    namespace = "dev.fanfly.wingslog.feature.sync.data"
+    compileSdk = 37
+    minSdk = 33
+
+    withHostTest {
     }
   }
-
 
   iosArm64()
   iosSimulatorArm64()
 
-  js(IR) {
+  js {
     browser()
   }
 
@@ -54,12 +38,6 @@ kotlin {
       implementation(libs.ktor.client.core)
       implementation(libs.kermit)
     }
-    androidMain.dependencies {
-      implementation(libs.koin.android)
-      implementation(libs.ktor.client.okhttp)
-      implementation(libs.work.runtime.ktx)
-      implementation(libs.firebase.appcheck)
-    }
     iosMain.dependencies {
       implementation(libs.ktor.client.darwin)
     }
@@ -70,12 +48,16 @@ kotlin {
 }
 
 dependencies {
-  implementation(platform(libs.firebase.bom))
-  testImplementation(libs.junit)
-  testImplementation(libs.mockk)
-  testImplementation(libs.truth)
-  testImplementation(libs.kotlinx.coroutines.test)
-  testImplementation(libs.sqldelight.sqlite.driver)
+  "androidMainImplementation"(libs.koin.android)
+  "androidMainImplementation"(libs.ktor.client.okhttp)
+  "androidMainImplementation"(libs.work.runtime.ktx)
+  "androidMainImplementation"(libs.firebase.appcheck)
+  "androidMainImplementation"(platform(libs.firebase.bom))
+  "androidHostTestImplementation"(libs.junit)
+  "androidHostTestImplementation"(libs.mockk)
+  "androidHostTestImplementation"(libs.truth)
+  "androidHostTestImplementation"(libs.kotlinx.coroutines.test)
+  "androidHostTestImplementation"(libs.sqldelight.sqlite.driver)
   // Reflects over the Wire proto's declared fields to prove the wire doc maps all of them.
-  testImplementation(kotlin("reflect"))
+  "androidHostTestImplementation"(kotlin("reflect"))
 }
