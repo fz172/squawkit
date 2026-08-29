@@ -516,19 +516,57 @@ suite (PRD §7) is the thing that proves the old shape still works after the new
 
 Phase 2 needs the machinery, with exactly one preset, and **no user-visible change**.
 
+### 12.1 `Lexicon` and `Capabilities`: defined together, consumed differently
+
+Both are shown in the PRD long after §4 and it is reasonable to ask whether either is Phase 2 work. They split
+along a line that matters:
+
+| | `Lexicon` | `Capabilities` |
+|---|---|---|
+| **Proto defined** | Phase 2 | Phase 2 |
+| **Read by Phase 2 code** | **Yes — it is most of Phase 2** | Yes, but every airplane value is `true` |
+| **Changes behaviour in Phase 2** | No (airplane words == today's strings) | No (nothing is off) |
+| **Starts mattering** | Phase 3, when a second lexicon exists | Phase 3, when a preset turns something off |
+
+**`Lexicon` is the point of Phase 2.** Tasks #655–#658 convert ~230 strings to resolve through it, and #652–#654
+build the `CompositionLocal` and formatter that do the resolving. The byte-identical snapshot test (#658) is what
+proves the aviation lexicon renders exactly today's copy. Phase 2 without the lexicon is not Phase 2.
+
+**`Capabilities` is wired in Phase 2 but inert.** Every airplane capability is on (§4.8's table), so #659 changes
+no pixel and #660 exists to prove it. The reason to do it now rather than in Phase 3, when the values first
+vary, is §10's rule: a capability being off must **remove** UI, not disable it. Wiring that while the answer is
+always "on" exercises every call site with zero behavioural risk. Retrofitting removal onto show/hide later means
+auditing every site twice, and the greyed-out version tends to ship in the meantime.
+
+### 12.2 The full split
+
 | Build now | Defer |
 |---|---|
 | `ThingTemplate`, `Lexicon`, `Capabilities` protos (#647, #650) | The six non-airplane presets (Phase 3) |
-| `core:template` + `TemplateRegistry`, baked-in resolution (#648) | The fetch RPC and its cache table (§4, §7.1) |
-| The airplane template as a baked-in asset (#649) | The picker and create flow (Phase 3) |
-| Lexicon plumbing, capability wiring (#652–#660) | The degraded state (§6.2) — nothing can trigger it yet |
-| `Thing.template` field 12, reserved now (#647) | Inflating DNA at creation — there is no create flow until Phase 3 |
-| Web's shared `versionCode` (#672) | Inflate-on-write (§5.3) — nothing writes DNA until the picker exists |
+| `core:template` + `TemplateRegistry`, baked-in resolution (#648) | The fetch RPC and its throttle (§4) |
+| The airplane template as a baked-in asset (#649) | The publishing script (§4.1) — nothing to publish yet |
+| Lexicon plumbing and its formatter (#652–#654) | The canonical cache table (§7.1) |
+| The string conversion and snapshot test (#655–#658) | The picker and create flow (Phase 3) |
+| Capability wiring, all flags on (#659–#660) | The degraded state (§6.2) — nothing can trigger it |
+| `Thing.template` field 12 (#647) | Inflating DNA at creation — no create flow until Phase 3 |
+| Web's shared `versionCode` (#672) | Inflate-on-write (§5.3) — nothing writes DNA yet |
 
-The RPC, the cache, and the degraded state are designed here and built when a second template exists to justify
-them. Building the distribution path for a pool that cannot change is speculative work that will be rewritten
-before it is first exercised.
+The RPC, the cache, the publishing script, and the degraded state are designed here and built when a second
+template exists to justify them. Building a distribution path for a pool that cannot change is speculative work
+that gets rewritten before it is first exercised.
 
-What Phase 2 **must not** defer is the shape of the protos. Field numbers are free now and a migration later
-(#638) — so `ThingTemplate`, `Lexicon`, and `Capabilities` get their full field sets in Phase 2 even where no
-Phase 2 code reads them.
+### 12.3 What must not be deferred, and the real deadline
+
+**The shape of the protos.** `ThingTemplate`, `Lexicon`, and `Capabilities` get their *full* field sets in Phase
+2, including fields no Phase 2 code reads — `weight_balance`, `starter_tasks`, `authority_label`. Field numbers
+are free before anything is stored and a migration afterwards (#638).
+
+The deadline is sharper than "end of Phase 2," and worth stating because it is easy to miss: these protos stay
+freely editable until **the first canonical template is published** (§4.1) or **the first Thing is created with
+DNA** (§5). Both happen in Phase 3. Until then, nothing durable has been written in this shape, so renumbering a
+field or renaming an enum value costs a rebuild and nothing else.
+
+That is a genuinely useful window — the enums `Capabilities` needs (`Section`, `ExportLayout`, and the
+`SquawkPriority` subset) are exactly the sort of thing whose right values only become obvious once a second
+preset is being written. Phase 2 should define them with the airplane case in hand and expect to revise them
+early in Phase 3, **before** the first publish closes the door.
