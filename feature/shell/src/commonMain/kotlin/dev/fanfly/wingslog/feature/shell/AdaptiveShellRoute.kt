@@ -26,8 +26,8 @@ import dev.fanfly.wingslog.core.nav.Screen.Companion.CROSS_SCREEN_SUCCESS_MESSAG
 import dev.fanfly.wingslog.core.ui.adaptive.AdaptiveAppShell
 import dev.fanfly.wingslog.core.ui.adaptive.ShellSection
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
-import dev.fanfly.wingslog.feature.aircraft.dashboard.ShellSectionBody
-import dev.fanfly.wingslog.feature.aircraft.dashboard.ShellSectionFab
+import dev.fanfly.wingslog.feature.thing.dashboard.ShellSectionBody
+import dev.fanfly.wingslog.feature.thing.dashboard.ShellSectionFab
 import dev.fanfly.wingslog.feature.fleet.viewing.FleetEmptyState
 import dev.fanfly.wingslog.feature.login.upgrade.AccountUpgradeFlow
 import dev.fanfly.wingslog.feature.login.upgrade.AccountUpgradeViewModel

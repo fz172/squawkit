@@ -271,7 +271,7 @@ logic.
 - **`feature/settings/`** — flat module; also hosts the Developer Options screens.
 - **`feature/userprofile/`** — legacy remnant, being unified with Technician
   (`docs/technician/userprofile_as_technician.md`).
-- **`feature/aircraft/dashboard/`** — single submodule with its own ViewModel and DI module; its
+- **`feature/thing/dashboard/`** — single submodule with its own ViewModel and DI module; its
   sibling `aircraft/update` is canonical.
 - **`feature/fleet/`** — no `model` or `update`; `viewing/` holds only `FleetEmptyState`, and
   `picker/data` is a data-only leaf. When a feature has no `update` sibling, `viewing/` may host the
@@ -563,7 +563,7 @@ constants (camera capture, anonymous login), and `isAdsSupported`.
 
 - **Thing, not aircraft**: the domain is **Things**, not aircraft (Milestone 1, `docs/product/thing_migration_design.md`). New types, properties, wire names, and schema names use Thing vocabulary. Use aviation vocabulary **only** when the subject is genuinely and permanently an airplane — `Engine`, `Propeller`, `PropellerHub`, `EngineHourRule` qualify; anything that will one day hold a boat, a house, or a 3D printer does not.
 
-  What survives with aviation names is **grandfathered, not exemplary**: `CollectionKind`'s five `aircraft.*` `schemaName`s, `SharedAircraftRef`, `ExportRecordAircraft`, the `feature/aircraft/*` module, the `"aircraft"` deep-link segment, and `strings.xml`. Issue #638 records why they stay — renaming stored identity is a data migration, not a refactor. Do not copy them.
+  What survives with aviation names is **grandfathered, not exemplary**: `CollectionKind`'s five `aircraft.*` `schemaName`s, `SharedAircraftRef`, `ExportRecordAircraft`, the `"aircraft"` deep-link segment, and `strings.xml`. Issue #638 records why they stay — renaming stored identity is a data migration, not a refactor. Do not copy them.
 
   The cost is asymmetric and that is the whole point. A wrong name in Kotlin is a compiler-verified rename; a wrong `wireName` or `schemaName` is a global batch, a grace window, and a coordinated client release across three platforms. Milestone 1 did that once, deliberately. Get the name right when it is free.
 - **Instants**: always `kotlin.time.Instant`, never `kotlinx.datetime.Instant`.

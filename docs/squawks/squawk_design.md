@@ -241,9 +241,9 @@ Labels are passed pre-formatted so `DualSegmentedFilter` stays free of string re
 
 ---
 
-## 6. `SquawkTab` Composable (`feature/aircraft/dashboard`)
+## 6. `SquawkTab` Composable (`feature/thing/dashboard`)
 
-The Squawks tab lives in `feature/aircraft/dashboard` alongside the other tab composables, since it is driven by the same `AircraftOverviewViewModel` and shares the same aircraft scope.
+The Squawks tab lives in `feature/thing/dashboard` alongside the other tab composables, since it is driven by the same `AircraftOverviewViewModel` and shares the same aircraft scope.
 
 **`compose/tabs/SquawkTab.kt`** — stateless; receives `squawks: List<SquawkWithStatus>` and callbacks. Layout mirrors `MaintenanceTasksTab`:
 
@@ -315,7 +315,7 @@ val squawkPickerVisible: Boolean = false
 - Non-empty: list of selected squawk titles with remove affordance.
 - Tapping opens `SquawkPickerSheet`.
 
-### 7.2 `feature/aircraft/dashboard`
+### 7.2 `feature/thing/dashboard`
 
 **`AircraftOverviewUiState.Success`:** Add:
 ```kotlin
@@ -395,7 +395,7 @@ Per PRD §5.2, cascade behavior when a resolving log is deleted is out of scope 
 ## 11. Implementation Order
 
 1. `core/ui` — `DualSegmentedFilter` composable
-2. `feature/aircraft/dashboard` — refactor `ComplianceSection` to use `DualSegmentedFilter`
+2. `feature/thing/dashboard` — refactor `ComplianceSection` to use `DualSegmentedFilter`
 3. `squawk.proto` + Wire codegen + `maintenance_log.proto` field 14
 4. `CollectionKind.Squawk` + `CollectionKindCoverageTest` update
 5. `feature/squawk/model/` + `feature/squawk/datamanager/` + Koin wiring
@@ -404,6 +404,6 @@ Per PRD §5.2, cascade behavior when a resolving log is deleted is out of scope 
 8. `feature/squawk/update/` — Add/Edit screens + ViewModels
 9. `AircraftTab` enum + `AircraftDashboardTabRow` (4 tabs) + `SquawkTab` (with `DualSegmentedFilter`, empty states, sorted lists) + context-sensitive FAB in `AircraftOverviewContent`
 10. Navigation routes (`Screen.AddSquawk`, `Screen.EditSquawk`)
-11. `feature/aircraft/dashboard` — ViewModel squawk observation + `AogAlertSection` on Overview tab
+11. `feature/thing/dashboard` — ViewModel squawk observation + `AogAlertSection` on Overview tab
 12. `feature/logs/update` — squawk section in log form + addressing on save
 13. `feature/fleet` — AOG badge on fleet card

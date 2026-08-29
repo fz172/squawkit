@@ -145,7 +145,7 @@ the controller rethrows `CancellationException`, fixing the logs copy's latent s
   (b) add a small `core:storage` test-fixtures source set and share it. Prefer (a) unless a
   third copy appears; note it here either way so the next duplicator finds this entry.
 - **`NavigateToEditLog(aircraftId, logId)`** — identical nav event in
-  `feature/aircraft/dashboard/.../AircraftOverviewEvent.kt` and
+  `feature/thing/dashboard/.../AircraftOverviewEvent.kt` and
   `feature/logs/viewing/.../MaintenanceLogListViewModel.kt`. Leave as-is for now (nav events
   are per-screen contracts; sharing them couples the two ViewModels), but fold into the
   Phase 3 nav work if a shared nav-event type emerges there.
@@ -300,14 +300,14 @@ entirely; platform filesystem impls and the blob *tests* stayed in `attachment:d
 `EditAircraftUiState`, `EngineSection`, `AirframeSection`) is aircraft CRUD UI living in the
 maintenance-logs feature. Aircraft data ownership is `fleet:datamanager` (`FleetManager`).
 
-- Create `feature/aircraft/update` (the `feature/aircraft` umbrella already exists with
+- Create `feature/thing/update` (the `feature/aircraft` umbrella already exists with
   `dashboard/`) and move the five files + their strings (currently in logs resources) there.
 - Update route registration (one call site per host today; after Phase 3, one call site in the
   shared graph) and `core:di` imports.
 - This is a mechanical move; do it **after** Phase 3 so only the shared graph needs rewiring.
 
-**Outcome (2026-07-06):** `feature:aircraft:update` created with the five files (packages →
-`dev.fanfly.wingslog.feature.aircraft.update`), its own `strings.xml` (nine keys from
+**Outcome (2026-07-06):** `feature:thing:update` created with the five files (packages →
+`dev.fanfly.wingslog.feature.thing.update`), its own `strings.xml` (nine keys from
 `logs:update` plus `blade_serial_numbers` / `delete_aircraft` from `logs:sharedassets` — the
 other four shared keys stayed put and the new module reads them from `logs:sharedassets`), and
 a new `aircraftUpdateModule` Koin module registered in `commonAppModules`. `feature:shell` is
@@ -384,7 +384,7 @@ the corrections below independently — they are wrong today regardless:
 
 **Outcome (2026-07-06):** AGENTS.md's module tree rewritten to the post-cleanup state (adds
 `core:nav`/`core:sharedassets`/`core:analytics`/`core:di`/`core:ui:*` nesting,
-`feature:login`/`feature:shell`/`feature:aircraft:update`; drops the deleted modules; reflects
+`feature:login`/`feature:shell`/`feature:thing:update`; drops the deleted modules; reflects
 the `core.storage.blob` move and the hosts' thin-delta role). DI aggregation now correctly
 points at `core/di/CommonAppModules.kt` in AGENTS.md, CLAUDE.md, *and* the
 `feature-module-scaffolder` agent definition (which would otherwise wire new modules into one
@@ -410,7 +410,7 @@ linked from AGENTS.md's Design Docs map as the cleanup record.
 | 10 | Move `AdaptiveShellViewModel` out of `fleet:viewing`                  | 3     | med  | ☑ 2026-07-06 |
 | 11 | Technician manager: local-only reads, no sync dep                     | 4.1   | med  | ☑ 2026-07-06 |
 | 12 | `LocalBlobStore` → `core:storage`; fix sync api-export                | 4.2   | med  | ☑ 2026-07-06 |
-| 13 | `feature/logs/update/aircraft/` → `feature/aircraft/update`           | 4.3   | low  | ☑ 2026-07-06 |
+| 13 | `feature/logs/update/aircraft/` → `feature/thing/update`           | 4.3   | low  | ☑ 2026-07-06 |
 | 14 | `sharedassets` rule decision (recommend Option B)                     | 4.4   | low  | ☑ 2026-07-06 |
 | 15 | AGENTS.md / CLAUDE.md refresh                                         | 5     | none | ☑ 2026-07-06 |
 

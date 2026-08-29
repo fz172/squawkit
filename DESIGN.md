@@ -366,7 +366,7 @@ The data model has four entity types per aircraft. Each maps to a tab. The Overv
 
 | Tab | Source | Layout |
 |-----|---|---|
-| Overview (`feature/aircraft/dashboard`) | Aggregated | Vertical flow: hero → config → alerts → stats |
+| Overview (`feature/thing/dashboard`) | Aggregated | Vertical flow: hero → config → alerts → stats |
 | Squawks (`feature/squawk/viewing`) | `SquawkWithStatus` | Vertical card list + segmented filter (Open/Closed) |
 | Tasks (`feature/tasks/viewing`) | `MaintenanceTaskWithStatus` | Vertical card list + segmented filter (Active/Complied) |
 | Logs (`feature/logs/viewing`) | `MaintenanceLog` | Vertical card list + segmented filter (All/Inspection types) |
@@ -421,7 +421,7 @@ The fleet list **is** the page. No hero metrics. Primary data is the list of air
 
 Key detail: health status (`DueStatus?`) renders as a StatusChip (CRITICAL → error, CAUTION → caution, else hidden) or the card border color. The card border is always `outlineVariant` at 1dp.
 
-### 9B. Aircraft Detail — Overview Tab (`feature/aircraft/dashboard/compose/tabs/OverviewTab.kt`)
+### 9B. Aircraft Detail — Overview Tab (`feature/thing/dashboard/compose/tabs/OverviewTab.kt`)
 
 ```
 ┌──────────────────────────────────────────────┐
@@ -472,7 +472,7 @@ Key detail: health status (`DueStatus?`) renders as a StatusChip (CRITICAL → e
 - Health status determines card expansion: if no overdue, expand config; if overdue, collapse it (focus on alerts)
 - `Spacing.screenPadding` = 16dp on all content
 
-### 9C. Aircraft Tabs (`feature/aircraft/dashboard/compose/tabs/AircraftDashboardTabRow.kt`)
+### 9C. Aircraft Tabs (`feature/thing/dashboard/compose/tabs/AircraftDashboardTabRow.kt`)
 
 Four tabs with icon+label, using `IconLabelTabSpec`:
 

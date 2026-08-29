@@ -14,8 +14,8 @@ import dev.fanfly.wingslog.core.ui.theme.di.appearanceModule
 import dev.fanfly.wingslog.core.ui.theme.di.appearanceStoreModule
 import dev.fanfly.wingslog.feature.ads.datamanager.di.adsModule
 import dev.fanfly.wingslog.feature.ads.datamanager.di.platformAdConsentModule
-import dev.fanfly.wingslog.feature.aircraft.dashboard.di.aircraftDashboardModule
-import dev.fanfly.wingslog.feature.aircraft.update.di.aircraftUpdateModule
+import dev.fanfly.wingslog.feature.thing.dashboard.di.aircraftDashboardModule
+import dev.fanfly.wingslog.feature.thing.update.di.aircraftUpdateModule
 import dev.fanfly.wingslog.feature.attachment.datamanager.attachmentModule
 import dev.fanfly.wingslog.feature.attachment.datamanager.platformAttachmentModule
 import dev.fanfly.wingslog.feature.developeroptions.datamanager.di.developerOptionsModule
