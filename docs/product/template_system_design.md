@@ -1,6 +1,7 @@
 # Design: The Template System — Definition, Distribution, and Resolution
 
-> **Implementation status.** **Proposed — nothing has shipped.** This designs the machinery Phase 2 needs
+> **Implementation status.** **Design settled 2026-08-29; nothing has shipped.** Every open question in §11 has
+> been decided. This designs the machinery Phase 2 needs
 > (`core:template`, the template definition protos, the registry, and the distribution path) plus the
 > compatibility rules Phases 3–4 depend on. It does **not** design the six non-airplane presets; that is Phase 3
 > product work.
@@ -410,23 +411,24 @@ show/hide means auditing every call site twice.
 
 ---
 
-## 11. Decisions, and the one question still open
+## 11. Decisions
 
-Settled with the developer, 2026-08-29:
+Settled with the developer, 2026-08-29. Nothing in this design is open.
 
 1. **DNA is not editable.** Write-once at creation. If editing ever ships it is **per-Thing** (§5.2).
 2. **Canonical templates are published by an admin script from source-controlled `.textproto` files** (§4.1).
    The same file compiles to the baked-in asset, so served and bundled copies cannot drift.
 3. **The fetch callable requires App Check but no user auth**, throttled ~10/day per client (§4).
+4. **`MeterRule` and `SeasonalRule` are additive. No migration.** (§11.1)
 
-### 11.1 The one still open: does `MeterRule` change stored data?
+### 11.1 `MeterRule` / `SeasonalRule`: additive
 
-*This question was asked badly the first time. Restating it concretely.*
+*The question was asked badly the first time; restated here with the proto in front of it, because the
+conclusion only makes sense alongside what it rejected.*
 
-PRD §3.3 says: **"`EngineHourRule` generalizes to `MeterRule`; a `SeasonalRule` is added."** That is one
-sentence in a table of things that "transfer unchanged," and it hides a decision with two very different price
-tags — because `EngineHourRule` is not a UI concept. It is a stored proto, inside a `oneof`, in every
-`MaintenanceTask` document users already have:
+PRD §3.3 says **"`EngineHourRule` generalizes to `MeterRule`; a `SeasonalRule` is added"** — one sentence, in a
+table of things that "transfer unchanged." But `EngineHourRule` is not a UI concept. It is a stored proto inside
+a `oneof`, in every `MaintenanceTask` document users already have:
 
 ```proto
 // thing/maintenance_task.proto, as it exists in production today
@@ -441,41 +443,40 @@ oneof rule {
 }
 ```
 
-**Option A — additive. Free.**
+**Decision: extend the `oneof`. Leave field 2 alone.**
 
 ```proto
 oneof rule {
-  EngineHourRule engine_hour_rule = 2;   // kept, no longer written
+  TimeRule time_rule = 1;
+  EngineHourRule engine_hour_rule = 2;   // kept; no longer written after Phase 3
+  OnConditionRule on_condition_rule = 3;
+  LinkedRule linked_rule = 4;
+  ImmediateRule immediate_rule = 5;
   MeterRule meter_rule = 6;              // new
   SeasonalRule seasonal_rule = 7;        // new
 }
 ```
 
-Existing tasks keep field 2 and keep working. New tasks write field 6. The client reads both, and field 2 drains
-as tasks are edited. No migration, ever. The cost is a permanently deprecated field and a reader that
-understands two shapes.
+Existing tasks keep field 2 and keep working. New tasks write field 6. The reader understands both, and field 2
+drains naturally as tasks are edited — no sweep, no deadline, and it may never reach zero, which is fine. The
+standing cost is one deprecated field and a reader that handles two shapes.
 
-**Option B — reuse field 2. A full migration.**
+**What this avoids.** Reusing field 2 for `MeterRule` would put a `float` (`interval_hours = 1`) and a `string`
+(`meter_key = 1`) at the same field number. Existing tasks would not read as empty — they would decode to
+garbage or throw. That is Milestone 1 over again: a global batch, a grace window, dual-deployed triggers, a
+coordinated release across three platforms. For a rename.
 
-```proto
-MeterRule meter_rule = 2;   // same field number, different message
-```
+**And it was never a rename.** `float interval_hours` cannot express "every 3000 miles" — there is no unit in
+it. `MeterRule` needs a meter key and an interval, so it is a genuinely different message that happens to
+supersede a narrower one. Once that is clear, the in-place option is not "the tidier of two renames"; it is
+destroying one message to make room for an unrelated one.
 
-`EngineHourRule` holds `float interval_hours = 1`. A `MeterRule` presumably holds something like
-`string meter_key = 1; float interval = 2`. **Same field number, incompatible wire types** — field 1 is a
-`float` in every stored document and a `string` in the new schema. Existing tasks do not "read as empty," they
-decode to garbage or throw.
+`ForceCompliedStatus.complied_engine_hours` (a `float`, field 2) carries the same question and takes the same
+answer: add a meter-shaped companion field, leave the float where it is.
 
-That is the Milestone 1 exercise again: a global batch, a grace window, dual-deployed triggers, a coordinated
-release. For a rename.
-
-**Recommendation: Option A**, and the reasoning generalises past this field. `float interval_hours` also cannot
-express "every 3000 miles" without a unit, so `MeterRule` is a genuinely different message rather than
-`EngineHourRule` with a better name — which means Option B was never a rename to begin with. `ForceCompliedStatus
-.complied_engine_hours` (a `float`, field 2) carries the same question and the same answer.
-
-**Settle before Phase 3 starts, not during.** It changes what `MaintenanceTask` looks like, and Phase 3's
-meter-driven log form is built against whichever shape wins.
+**Consequence for Phase 3.** The meter-driven log form reads whichever field is present, and writes only the new
+one. Anything that computes due-status must handle both — that is `TaskDueManager`, whose existing regression
+suite (PRD §7) is the thing that proves the old shape still works after the new one lands.
 
 ---
 
