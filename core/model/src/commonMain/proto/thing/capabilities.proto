@@ -17,7 +17,7 @@ option java_multiple_files = true;
 enum Section {
   SECTION_UNKNOWN = 0;
   SECTION_DASHBOARD = 1;
-  SECTION_DEFECTS = 2;  // "Squawks" for airplanes — the shell tab, named by Lexicon.defect
+  SECTION_SQUAWKS = 2;  // named by Lexicon.squawk at render — "Issues", "Attention", ...
   SECTION_TASKS = 3;
   SECTION_LOGS = 4;
 }
@@ -49,7 +49,7 @@ message Capabilities {
 
   ExportLayout export_layout = 9;
 
-  // Declared now, unread until it exists. Field numbers are free before anything is stored and a
-  // migration afterwards (#638) — see template_system_design.md §12.3 for when that door closes.
-  bool weight_balance = 10;         // future, aviation-only
+  // 10 deliberately unused. PRD §4.8 sketches a `weight_balance` flag, left out until something
+  // needs it: a speculative bool is the field most likely to want a different shape by the time
+  // it is real, and an unused number costs nothing to claim later.
 }

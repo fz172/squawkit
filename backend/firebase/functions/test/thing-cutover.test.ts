@@ -171,13 +171,12 @@ describe("cutover — payload transforms (replacing the withdrawn A8)", () => {
     expect(log.attachments[0].storagePath).not.toContain("/aircraft/");
   });
 
-  it("backfills template_id, name, spec and the component tree per PRD §9.1", async () => {
+  it("backfills name, spec and the component tree per PRD §9.1", async () => {
     await seedAccount();
 
     await runThingCutover(RUN);
 
     const thing = await readThing(newThing());
-    expect(thing.templateId).toBe("airplane");
     expect(thing.name).toBe("N12345");
     expect(thing.spec.map((s) => s.key)).toEqual(["make", "model", "serial", "tail_number"]);
 
@@ -271,7 +270,7 @@ describe("cutover — idempotency and re-runs", () => {
     expect(second.totals.blobsCopied).toBe(0);
   });
 
-  it("skips the backfill on a payload that already carries a template_id", async () => {
+  it("skips the backfill on a payload that already carries components", async () => {
     // The defensive branch in backfillThing, exercised directly: a document already at /thing/ (a
     // partially cleaned-up source, or a future re-run reading migrated data) must not be rebuilt.
     await seedAccount();

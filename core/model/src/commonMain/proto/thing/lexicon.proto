@@ -20,8 +20,11 @@ message Noun {
 }
 
 message Lexicon {
+  // Field names here are the CODE vocabulary; their values are the user-facing words. A Lexicon
+  // holding "attention" still lives in `squawk`, because that is what the concept is called
+  // everywhere else in the codebase — CollectionKind.Squawk, SquawkPriority, the squawk proto.
   Noun thing = 1;       // aircraft · car · bike · boat · home · thing
-  Noun defect = 2;      // squawk · issue · fault · attention
+  Noun squawk = 2;      // squawk · issue · fault · attention
   Noun task = 3;        // inspection · service · chore
   Noun log = 4;         // logbook entry · service record · work record
   Noun component = 5;   // component · part · system

@@ -20,12 +20,16 @@ export interface Noun {
 }
 
 export interface Lexicon {
-  /** aircraft · car · bike · boat · home · thing */
+  /**
+   * Field names here are the CODE vocabulary; their values are the user-facing words. A Lexicon
+   * holding "attention" still lives in `squawk`, because that is what the concept is called
+   * everywhere else in the codebase — CollectionKind.Squawk, SquawkPriority, the squawk proto.
+   */
   thing:
     | Noun
     | undefined;
   /** squawk · issue · fault · attention */
-  defect:
+  squawk:
     | Noun
     | undefined;
   /** inspection · service · chore */
@@ -162,7 +166,7 @@ export const Noun: MessageFns<Noun> = {
 function createBaseLexicon(): Lexicon {
   return {
     thing: undefined,
-    defect: undefined,
+    squawk: undefined,
     task: undefined,
     log: undefined,
     component: undefined,
@@ -182,8 +186,8 @@ export const Lexicon: MessageFns<Lexicon> = {
     if (message.thing !== undefined) {
       Noun.encode(message.thing, writer.uint32(10).fork()).join();
     }
-    if (message.defect !== undefined) {
-      Noun.encode(message.defect, writer.uint32(18).fork()).join();
+    if (message.squawk !== undefined) {
+      Noun.encode(message.squawk, writer.uint32(18).fork()).join();
     }
     if (message.task !== undefined) {
       Noun.encode(message.task, writer.uint32(26).fork()).join();
@@ -241,7 +245,7 @@ export const Lexicon: MessageFns<Lexicon> = {
             break;
           }
 
-          message.defect = Noun.decode(reader, reader.uint32());
+          message.squawk = Noun.decode(reader, reader.uint32());
           continue;
         }
         case 3: {
@@ -344,7 +348,7 @@ export const Lexicon: MessageFns<Lexicon> = {
   fromJSON(object: any): Lexicon {
     return {
       thing: isSet(object.thing) ? Noun.fromJSON(object.thing) : undefined,
-      defect: isSet(object.defect) ? Noun.fromJSON(object.defect) : undefined,
+      squawk: isSet(object.squawk) ? Noun.fromJSON(object.squawk) : undefined,
       task: isSet(object.task) ? Noun.fromJSON(object.task) : undefined,
       log: isSet(object.log) ? Noun.fromJSON(object.log) : undefined,
       component: isSet(object.component) ? Noun.fromJSON(object.component) : undefined,
@@ -392,8 +396,8 @@ export const Lexicon: MessageFns<Lexicon> = {
     if (message.thing !== undefined) {
       obj.thing = Noun.toJSON(message.thing);
     }
-    if (message.defect !== undefined) {
-      obj.defect = Noun.toJSON(message.defect);
+    if (message.squawk !== undefined) {
+      obj.squawk = Noun.toJSON(message.squawk);
     }
     if (message.task !== undefined) {
       obj.task = Noun.toJSON(message.task);
@@ -437,8 +441,8 @@ export const Lexicon: MessageFns<Lexicon> = {
   fromPartial<I extends Exact<DeepPartial<Lexicon>, I>>(object: I): Lexicon {
     const message = createBaseLexicon();
     message.thing = (object.thing !== undefined && object.thing !== null) ? Noun.fromPartial(object.thing) : undefined;
-    message.defect = (object.defect !== undefined && object.defect !== null)
-      ? Noun.fromPartial(object.defect)
+    message.squawk = (object.squawk !== undefined && object.squawk !== null)
+      ? Noun.fromPartial(object.squawk)
       : undefined;
     message.task = (object.task !== undefined && object.task !== null) ? Noun.fromPartial(object.task) : undefined;
     message.log = (object.log !== undefined && object.log !== null) ? Noun.fromPartial(object.log) : undefined;

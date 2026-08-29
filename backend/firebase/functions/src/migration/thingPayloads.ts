@@ -39,10 +39,6 @@ export const THING_SCHEMA = "thing.Thing";
 /** The schema string it carried before. */
 export const LEGACY_THING_SCHEMA = "aircraft.Aircraft";
 
-/** Phase 1 ships exactly one template, and no UI that could produce another (PRD §15). */
-export const AIRPLANE_TEMPLATE_ID = "airplane";
-export const AIRPLANE_TEMPLATE_VERSION = 1;
-
 export type TransformResult<T> = {
   value: T;
   /** How many fields this transform actually changed — 0 means the document was already migrated. */
@@ -263,7 +259,10 @@ export function backfillThing(doc: SyncDocWire): TransformResult<SyncDocWire> {
     return { value: doc, changed: 0 };
   }
 
-  const alreadyBackfilled = thing.templateId.length > 0;
+  // Idempotency signal. A Thing without DNA is legacy, and legacy is always airplane, so nothing needs to be
+  // stored to say which template applies. `components` is a truer signal anyway: it is what this
+  // function actually produces, so it cannot report "done" for work that did not happen.
+  const alreadyBackfilled = thing.components.length > 0;
   const schemaNeedsUpdate = doc.schema !== THING_SCHEMA;
 
   if (alreadyBackfilled) {
@@ -273,8 +272,6 @@ export function backfillThing(doc: SyncDocWire): TransformResult<SyncDocWire> {
       : { value: doc, changed: 0 };
   }
 
-  thing.templateId = AIRPLANE_TEMPLATE_ID;
-  thing.templateVersion = AIRPLANE_TEMPLATE_VERSION;
   thing.name = nameOf(thing);
   thing.spec = specOf([
     ["make", thing.make],

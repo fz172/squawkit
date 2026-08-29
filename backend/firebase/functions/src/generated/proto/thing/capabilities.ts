@@ -17,8 +17,8 @@ export const protobufPackage = "";
 export enum Section {
   SECTION_UNKNOWN = 0,
   SECTION_DASHBOARD = 1,
-  /** SECTION_DEFECTS - "Squawks" for airplanes — the shell tab, named by Lexicon.defect */
-  SECTION_DEFECTS = 2,
+  /** SECTION_SQUAWKS - named by Lexicon.squawk at render — "Issues", "Attention", ... */
+  SECTION_SQUAWKS = 2,
   SECTION_TASKS = 3,
   SECTION_LOGS = 4,
   UNRECOGNIZED = -1,
@@ -33,8 +33,8 @@ export function sectionFromJSON(object: any): Section {
     case "SECTION_DASHBOARD":
       return Section.SECTION_DASHBOARD;
     case 2:
-    case "SECTION_DEFECTS":
-      return Section.SECTION_DEFECTS;
+    case "SECTION_SQUAWKS":
+      return Section.SECTION_SQUAWKS;
     case 3:
     case "SECTION_TASKS":
       return Section.SECTION_TASKS;
@@ -54,8 +54,8 @@ export function sectionToJSON(object: Section): string {
       return "SECTION_UNKNOWN";
     case Section.SECTION_DASHBOARD:
       return "SECTION_DASHBOARD";
-    case Section.SECTION_DEFECTS:
-      return "SECTION_DEFECTS";
+    case Section.SECTION_SQUAWKS:
+      return "SECTION_SQUAWKS";
     case Section.SECTION_TASKS:
       return "SECTION_TASKS";
     case Section.SECTION_LOGS:
@@ -132,11 +132,6 @@ export interface Capabilities {
    */
   sections: Section[];
   exportLayout: ExportLayout;
-  /**
-   * Declared now, unread until it exists. Field numbers are free before anything is stored and a
-   * migration afterwards (#638) — see template_system_design.md §12.3 for when that door closes.
-   */
-  weightBalance: boolean;
 }
 
 function createBaseCapabilities(): Capabilities {
@@ -150,7 +145,6 @@ function createBaseCapabilities(): Capabilities {
     priorities: [],
     sections: [],
     exportLayout: 0,
-    weightBalance: false,
   };
 }
 
@@ -186,9 +180,6 @@ export const Capabilities: MessageFns<Capabilities> = {
     writer.join();
     if (message.exportLayout !== 0) {
       writer.uint32(72).int32(message.exportLayout);
-    }
-    if (message.weightBalance !== false) {
-      writer.uint32(80).bool(message.weightBalance);
     }
     return writer;
   },
@@ -292,14 +283,6 @@ export const Capabilities: MessageFns<Capabilities> = {
           message.exportLayout = reader.int32() as any;
           continue;
         }
-        case 10: {
-          if (tag !== 80) {
-            break;
-          }
-
-          message.weightBalance = reader.bool();
-          continue;
-        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -334,11 +317,6 @@ export const Capabilities: MessageFns<Capabilities> = {
         : isSet(object.export_layout)
         ? exportLayoutFromJSON(object.export_layout)
         : 0,
-      weightBalance: isSet(object.weightBalance)
-        ? globalThis.Boolean(object.weightBalance)
-        : isSet(object.weight_balance)
-        ? globalThis.Boolean(object.weight_balance)
-        : false,
     };
   },
 
@@ -371,9 +349,6 @@ export const Capabilities: MessageFns<Capabilities> = {
     if (message.exportLayout !== 0) {
       obj.exportLayout = exportLayoutToJSON(message.exportLayout);
     }
-    if (message.weightBalance !== false) {
-      obj.weightBalance = message.weightBalance;
-    }
     return obj;
   },
 
@@ -391,7 +366,6 @@ export const Capabilities: MessageFns<Capabilities> = {
     message.priorities = object.priorities?.map((e) => e) || [];
     message.sections = object.sections?.map((e) => e) || [];
     message.exportLayout = object.exportLayout ?? 0;
-    message.weightBalance = object.weightBalance ?? false;
     return message;
   },
 };

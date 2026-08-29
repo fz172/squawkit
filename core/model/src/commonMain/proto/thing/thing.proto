@@ -20,8 +20,14 @@ message Thing {
   repeated Engine engine = 6;
 
   // --- new, permanent ---
-  string template_id = 7;          // "airplane" for every Thing in Phase 1 — no other value exists yet
-  int32 template_version = 8;
+  // 7 and 8 held template_id / template_version. Removed once `template` (12) landed: a Thing
+  // without DNA can only be one created before templates existed, and every one of those is an
+  // airplane — a closed set, because any client able to create something else necessarily has
+  // DNA support. So the fallback needs no stored hint. Reserved so the numbers are never reused;
+  // the bytes still present in migrated documents decode as unknown fields and are retained.
+  reserved 7, 8;
+  reserved "template_id", "template_version";
+
   string name = 9;
   repeated Spec spec = 10;         // mirrors of make/model/serial/tail_number
   repeated Component components = 11;
