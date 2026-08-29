@@ -117,8 +117,8 @@ const attachmentsEnabledOf = async (hostUid: string, acId: string) =>
   (await adminDb.doc(aircraftShareDocPath(hostUid, acId)).get()).data()?.attachmentsEnabled;
 
 beforeEach(async () => {
-  await adminDb.recursiveDelete(adminDb.collection(`aircraft_shares/${HOST}/aircraft`));
-  await adminDb.recursiveDelete(adminDb.collection(`aircraft_shares/${OTHER}/aircraft`));
+  await adminDb.recursiveDelete(adminDb.collection(`thing_shares/${HOST}/thing`));
+  await adminDb.recursiveDelete(adminDb.collection(`thing_shares/${OTHER}/thing`));
 });
 
 describe("projectAttachmentEntitlement trigger", () => {

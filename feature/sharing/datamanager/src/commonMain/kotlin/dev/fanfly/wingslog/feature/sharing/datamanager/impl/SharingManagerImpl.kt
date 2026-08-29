@@ -553,8 +553,18 @@ class SharingManagerImpl(
 
   companion object {
     private val logger = Logger.withTag("SharingManager")
-    private const val SHARES = "aircraft_shares"
-    private const val SHARE_AIRCRAFT = "aircraft"
+    // MIGRATION (Phase G3, docs/product/thing_migration_design.md §5.4): the ACL tree moved from
+    // aircraft_shares/{hostUid}/aircraft/{acId} to thing_shares/{hostUid}/thing/{acId}.
+    //
+    // The constant NAMES keep saying "aircraft" deliberately — only their values move. §3.3 draws
+    // the line there: rename what is stored identity, leave alone what is only a name in code.
+    //
+    // This ships in the SAME release as two backend changes, and is meaningless without them:
+    // sharingModels.ts's matching constants, and firestore.rules' shareRole() repoint. A client on
+    // this build talking to a backend without them reads an ACL nobody writes; the reverse reads
+    // one nobody authorizes against. Either way a member looks like they lost access.
+    private const val SHARES = "thing_shares"
+    private const val SHARE_AIRCRAFT = "thing"
     private const val MEMBERS = "members"
     private const val INVITES = "invites"
 

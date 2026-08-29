@@ -18,7 +18,7 @@ const JOINED_AC = "joined-ac";
 
 async function wipe() {
   await adminDb.recursiveDelete(adminDb.collection("users"));
-  await adminDb.recursiveDelete(adminDb.collection("aircraft_shares"));
+  await adminDb.recursiveDelete(adminDb.collection("thing_shares"));
   await adminDb.recursiveDelete(adminDb.collection("subscriptions"));
   try {
     await getAuth().deleteUser(USER);
@@ -39,7 +39,7 @@ async function seedAccount() {
   await adminDb.doc(`subscriptions/${USER}`).set({ tier: "heavy" });
 
   // A share USER hosts, with someone else in it.
-  await adminDb.doc(`aircraft_shares/${USER}/aircraft/${OWN_AC}`).set({
+  await adminDb.doc(`thing_shares/${USER}/thing/${OWN_AC}`).set({
     hostUid: USER,
     aircraftId: OWN_AC,
     memberRoles: { [USER]: "owner", [MEMBER]: "technician" },
@@ -49,13 +49,13 @@ async function seedAccount() {
     .set(sharedAircraftRefWireDoc(OWN_AC, USER, "technician"));
 
   // A share USER merely belongs to, hosted by someone else.
-  await adminDb.doc(`aircraft_shares/${OTHER_HOST}/aircraft/${JOINED_AC}`).set({
+  await adminDb.doc(`thing_shares/${OTHER_HOST}/thing/${JOINED_AC}`).set({
     hostUid: OTHER_HOST,
     aircraftId: JOINED_AC,
     memberRoles: { [OTHER_HOST]: "owner", [USER]: "technician" },
   });
   await adminDb
-    .doc(`aircraft_shares/${OTHER_HOST}/aircraft/${JOINED_AC}/members/${USER}`)
+    .doc(`thing_shares/${OTHER_HOST}/thing/${JOINED_AC}/members/${USER}`)
     .set({ role: "technician", displayName: "Leaver" });
   await adminDb
     .doc(`users/${USER}/shared_aircraft_ref/${JOINED_AC}`)
@@ -109,7 +109,7 @@ describe("deleteMyAccount", () => {
 
     await wrappedDelete(req(USER, undefined));
 
-    expect((await adminDb.doc(`aircraft_shares/${USER}/aircraft/${OWN_AC}`).get()).exists)
+    expect((await adminDb.doc(`thing_shares/${USER}/thing/${OWN_AC}`).get()).exists)
       .toBe(false);
     // A tombstone, not a deletion: it is what tells the ex-member's devices to purge their copy.
     const memberRef = await adminDb.doc(`users/${MEMBER}/shared_aircraft_ref/${OWN_AC}`).get();
@@ -127,13 +127,13 @@ describe("deleteMyAccount", () => {
 
     await wrappedDelete(req(USER, undefined));
 
-    const share = await adminDb.doc(`aircraft_shares/${OTHER_HOST}/aircraft/${JOINED_AC}`).get();
+    const share = await adminDb.doc(`thing_shares/${OTHER_HOST}/thing/${JOINED_AC}`).get();
     expect(share.exists).toBe(true); // someone else's share survives
     expect(share.data()?.memberRoles).not.toHaveProperty(USER);
     expect(share.data()?.memberRoles).toHaveProperty(OTHER_HOST);
     expect(
       (await adminDb
-        .doc(`aircraft_shares/${OTHER_HOST}/aircraft/${JOINED_AC}/members/${USER}`)
+        .doc(`thing_shares/${OTHER_HOST}/thing/${JOINED_AC}/members/${USER}`)
         .get()).exists,
     ).toBe(false);
   });

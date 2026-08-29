@@ -28,7 +28,7 @@ async function mintCode(role = "technician"): Promise<string> {
 }
 
 beforeEach(async () => {
-  await adminDb.recursiveDelete(adminDb.doc(`aircraft_shares/${HOST}`));
+  await adminDb.recursiveDelete(adminDb.doc(`thing_shares/${HOST}`));
   await adminDb.recursiveDelete(adminDb.collection("invite_codes"));
   await adminDb.recursiveDelete(adminDb.collection("invite_attempts"));
   await adminDb.recursiveDelete(adminDb.doc(`users/${TECH}`));
@@ -45,12 +45,12 @@ describe("createAircraftShareInvite", () => {
     expect(res.formattedCode).toBe(`${res.code.slice(0, 4)}-${res.code.slice(4)}`);
 
     // The ACL is bootstrapped under the HOST, with the host as owner.
-    const share = (await adminDb.doc(`aircraft_shares/${HOST}/aircraft/${AC}`).get()).data();
+    const share = (await adminDb.doc(`thing_shares/${HOST}/thing/${AC}`).get()).data();
     expect(share?.memberRoles).toEqual({ [HOST]: "owner" });
 
     // The owner-visible record carries role + expiry, and NOT the code.
     const pending = (
-      await adminDb.doc(`aircraft_shares/${HOST}/aircraft/${AC}/invites/${res.codeId}`).get()
+      await adminDb.doc(`thing_shares/${HOST}/thing/${AC}/invites/${res.codeId}`).get()
     ).data();
     expect(pending?.role).toBe("technician");
     expect(JSON.stringify(pending)).not.toContain(res.code);
@@ -71,7 +71,7 @@ describe("redeemAircraftShareInvite", () => {
     const res = (await wrappedRedeem(req(TECH, { code }))) as Record<string, unknown>;
 
     expect(res).toMatchObject({ aircraftId: AC, hostUid: HOST, role: "technician", alreadyMember: false });
-    const share = (await adminDb.doc(`aircraft_shares/${HOST}/aircraft/${AC}`).get()).data();
+    const share = (await adminDb.doc(`thing_shares/${HOST}/thing/${AC}`).get()).data();
     expect(share?.memberRoles[TECH]).toBe("technician");
     const ref = await adminDb.doc(`users/${TECH}/shared_aircraft_ref/${AC}`).get();
     expect(ref.exists).toBe(true);
@@ -149,7 +149,7 @@ describe("previewAircraftShareInvite (#201)", () => {
 
     await wrappedPreview(req(TECH, { code }));
 
-    const share = (await adminDb.doc(`aircraft_shares/${HOST}/aircraft/${AC}`).get()).data();
+    const share = (await adminDb.doc(`thing_shares/${HOST}/thing/${AC}`).get()).data();
     expect(share?.memberRoles[TECH]).toBeUndefined();
     expect((await adminDb.doc(`invite_codes/${code}`).get()).exists).toBe(true); // not burned
   });
@@ -206,7 +206,7 @@ describe("cancelAircraftShareInvite", () => {
 
     expect((await adminDb.doc(`invite_codes/${code}`).get()).exists).toBe(false);
     expect(
-      (await adminDb.doc(`aircraft_shares/${HOST}/aircraft/${AC}/invites/${codeId}`).get()).exists,
+      (await adminDb.doc(`thing_shares/${HOST}/thing/${AC}/invites/${codeId}`).get()).exists,
     ).toBe(false);
     await expect(wrappedRedeem(req(TECH, { code }))).rejects.toThrow();
   });
