@@ -28,8 +28,12 @@ const STRANGER = "stranger-uid";
 const AC = "ac-shared";
 const LOG = "log-1";
 
-const aircraftDoc = `users/${HOST}/aircraft/${AC}`;
+// MIGRATION (task F3/F4): the entity tree is `/thing/` now — Phase F2 deleted the `/aircraft/`
+// documents and F3 removed the rules block that governed them. `legacyAircraftDoc` survives only so
+// F4 can assert that path is genuinely dead rather than merely unused.
+const aircraftDoc = `users/${HOST}/thing/${AC}`;
 const logDoc = `${aircraftDoc}/maintenance_log/${LOG}`;
+const legacyAircraftDoc = `users/${HOST}/aircraft/${AC}`;
 // MIGRATION (Phase G3): the ACL tree has moved. `shareRole()` now resolves against thing_shares,
 // so this is where every fixture below has to seed — the aircraft_shares match block is still in
 // the rules file until G6, but nothing authorizes against it any more.
@@ -564,70 +568,47 @@ describe("invites", () => {
 // the ACL tree does not move until Phase G. So a `/thing/` document is authorized by an ACL that is
 // now at `thing_shares` as of G3. Both entity blocks resolve membership through the same helper, so
 // these assertions cover the /thing/ tree specifically rather than the ACL behind it.
-describe("migration: /thing/{acId} entity tree", () => {
-  const thingDoc = `users/${HOST}/thing/${AC}`;
-  const thingLogDoc = `${thingDoc}/maintenance_log/${LOG}`;
-
+describe("migration: the retired /aircraft/ entity path is dead (task F4)", () => {
+  // F3 removed `match /aircraft/{acId}`, so what used to be a member's read is now denied by the
+  // default-deny catch-all. Asserting that explicitly is the point of F4: without it, "the block is
+  // gone" and "the block is still there but nothing uses it" look identical from the test suite,
+  // and only one of those is true.
+  //
+  // The host is deliberately NOT tested here. `match /users/{userId}/{document=**}` still grants an
+  // owner their whole subtree at any path, so the host would pass and prove nothing about the
+  // removed block. Sharing is the capability that block uniquely granted.
   beforeEach(async () => {
     await testEnv.withSecurityRulesDisabled(async (ctx) => {
-      const db = ctx.firestore();
-      await setDoc(doc(db, thingDoc), { registration: "N123", writerUid: HOST });
-      await setDoc(doc(db, thingLogDoc), { note: "oil change", writerUid: HOST });
+      await setDoc(doc(ctx.firestore(), legacyAircraftDoc), { registration: "N123" });
+      await setDoc(doc(ctx.firestore(), `${legacyAircraftDoc}/maintenance_log/${LOG}`), {
+        note: "old",
+        writerUid: HOST,
+      });
     });
   });
 
-  it("member may GET the shared thing doc", async () => {
-    await assertSucceeds(getDoc(doc(as(TECH), thingDoc)));
+  it("denies a member the retired aircraft doc", async () => {
+    await assertFails(getDoc(doc(as(TECH), legacyAircraftDoc)));
   });
 
-  it("non-member may NOT get the shared thing doc", async () => {
-    await assertFails(getDoc(doc(as(STRANGER), thingDoc)));
-  });
-
-  it("member may NOT LIST the host's thing collection (keeps other things private)", async () => {
-    await assertFails(getDocs(collection(as(TECH), `users/${HOST}/thing`)));
-  });
-
-  it("co-owner may edit the thing doc (attested, non-delete)", async () => {
-    await assertSucceeds(
-      setDoc(doc(as(OWNER2), thingDoc), { registration: "N999", deleted: false, writerUid: OWNER2 }),
-    );
-  });
-
-  it("technician may NOT write the thing doc", async () => {
-    await assertFails(setDoc(doc(as(TECH), thingDoc), { registration: "N999", writerUid: TECH }));
-  });
-
-  it("co-owner may NOT forge writerUid on the thing doc", async () => {
-    await assertFails(setDoc(doc(as(OWNER2), thingDoc), { registration: "N999", writerUid: HOST }));
-  });
-
-  it("hosting owner may delete (tombstone) the thing", async () => {
-    await assertSucceeds(
-      setDoc(doc(as(HOST), thingDoc), { registration: "N123", deleted: true, writerUid: HOST }),
-    );
-  });
-
-  it("co-owner may NOT delete (tombstone) the thing — hosting owner only", async () => {
+  it("denies a member its nested records, read and write alike", async () => {
+    await assertFails(getDoc(doc(as(TECH), `${legacyAircraftDoc}/maintenance_log/${LOG}`)));
     await assertFails(
-      setDoc(doc(as(OWNER2), thingDoc), { registration: "N123", deleted: true, writerUid: OWNER2 }),
+      setDoc(doc(as(TECH), `${legacyAircraftDoc}/maintenance_log/${LOG}`), {
+        note: "x",
+        writerUid: TECH,
+      }),
     );
   });
 
-  it("member may read, list, and write nested maintenance data under /thing/", async () => {
-    await assertSucceeds(getDoc(doc(as(TECH), thingLogDoc)));
-    await assertSucceeds(getDocs(collection(as(TECH), `${thingDoc}/maintenance_log`)));
-    await assertSucceeds(setDoc(doc(as(TECH), thingLogDoc), { note: "fixed", writerUid: TECH }));
-  });
-
-  it("member may NOT forge writerUid, and non-members are shut out entirely", async () => {
-    await assertFails(setDoc(doc(as(TECH), thingLogDoc), { note: "fixed", writerUid: OWNER2 }));
-    await assertFails(getDoc(doc(as(STRANGER), thingLogDoc)));
-    await assertFails(setDoc(doc(as(STRANGER), thingLogDoc), { note: "x", writerUid: STRANGER }));
-  });
-
-  it("member may NOT write an unknown kind into the host's /thing/ subtree", async () => {
-    await assertFails(setDoc(doc(as(TECH), `${thingDoc}/evil/x`), { data: 1, writerUid: TECH }));
+  it("denies a co-owner the write the removed block used to allow", async () => {
+    await assertFails(
+      setDoc(doc(as(OWNER2), legacyAircraftDoc), {
+        registration: "N999",
+        deleted: false,
+        writerUid: OWNER2,
+      }),
+    );
   });
 });
 

@@ -15,7 +15,8 @@
     "test": "firebase emulators:exec --only auth,firestore,storage --project demo-squawkit \"$(command -v node) node_modules/vitest/vitest.mjs run\"",
     "cutover": "npm run build && node scripts/thing-cutover.mjs",
     "cleanup": "npm run build && node scripts/thing-cleanup.mjs",
-    "share-cutover": "npm run build && node scripts/thing-share-cutover.mjs"
+    "share-cutover": "npm run build && node scripts/thing-share-cutover.mjs",
+    "share-cleanup": "npm run build && node scripts/thing-share-cleanup.mjs"
   },
   "dependencies": {
     "@bufbuild/protobuf": "^2.11.0",

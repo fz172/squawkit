@@ -1,10 +1,18 @@
 # PRD: Things & Templates — Multi-Domain Maintenance
 
-> **Implementation status.** **Proposed — nothing has shipped.** No template system, `Thing` model,
-> `core:template` module, or non-aircraft preset exists in the codebase. The app today is aircraft-only, as
-> described in [`PRD.md`](PRD.md).
+> **Implementation status.** **Phase 1 has shipped (2026-08-28/29). Phases 2–5 are unstarted.**
+>
+> What exists now: the `Thing` proto (`core/model/.../proto/thing/`), its Firestore and Cloud Storage paths,
+> the `thing_shares` ACL tree, and a completed data migration across every account —
+> see [`thing_migration_design.md`](thing_migration_design.md). Every `Thing` carries a backfilled
+> `template_id = "airplane"`, `spec`, and `components` tree.
+>
+> What still does **not** exist: the template system itself. No `core:template` module, no `TemplateRegistry`,
+> no lexicon, no template picker, and **no preset other than airplane**. Phase 1 was deliberately invisible —
+> it reproduces today's aircraft-only app byte for byte (§15), and the fields it added are populated but unread.
+> Everything in §5, §7, §8, §10–§14 below remains a design, not a description.
 
-**Owner:** Product · **Status:** Proposed · **Date:** 2026-08-12 · **Refreshed:** 2026-08-26
+**Owner:** Product · **Status:** Phase 1 shipped; Phases 2–5 proposed · **Date:** 2026-08-12 · **Refreshed:** 2026-08-29
 **Related:** [Product overview](PRD.md) · [Storage R1 design](../storage/storage_r1_design.md) · [Squawk design](../squawks/squawk_design.md) · [Subscription PRD](../subscription/subscription_PRD.html) · [Export PRD](../export/export_logs_PRD.md) · [Sharing PRD](../sharing/aircraft_sharing_PRD.html) · [Notifications PRD](../notifications/notifications_PRD.md) · [Display ads PRD](../ads/display_ads_PRD.md) · [Aircraft overview tabs](../aircraft/aircraft_overview_tabs.md) *(historical — predates the shell sections)*
 
 > **What changed under this document since it was drafted.** Every code claim below was re-verified against

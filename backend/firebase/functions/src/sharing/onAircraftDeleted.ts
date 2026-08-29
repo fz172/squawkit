@@ -54,18 +54,8 @@ const handleDelete =
     await deleteAircraftBlobs(uid, acId, segment);
   };
 
-/**
- * MIGRATION (thing_migration_design.md §2.7 / task B9): registered twice, once per entity segment,
- * because a v2 Firestore trigger path is a deploy-time literal with no "either segment" wildcard.
- * Both registrations run the same handler; each is told which segment it fired for so the cascade
- * stays inside the tree the write happened in. `onAircraftDeleted` keeps its export name so the
- * already-deployed function is not torn down and recreated; Phase F3 deletes it.
- */
-export const onAircraftDeleted = onDocumentWritten(
-  { document: `users/{uid}/${ENTITY_SEGMENT_LEGACY}/{acId}`, region: FUNCTION_REGION },
-  handleDelete(ENTITY_SEGMENT_LEGACY),
-);
-
+// MIGRATION (task F3): the `aircraft`-path registration is gone. Phase F2 deleted the documents
+// it watched, so it could only ever fire on a tree that no longer exists.
 // MIGRATION (thing_migration_design.md §2.7c / task B9): deployed with C2, NOT with the Phase A/B
 // branch. A cutover copy CREATES each document, so `before` never exists and every record the Phase
 // D script copies would read as a fresh authored write here. By C2 the copy is done, and nothing

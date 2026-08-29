@@ -6,15 +6,13 @@ import { requestExportDelivery } from "./export/requestExportDelivery.js";
 import { cancelAircraftShareInvite } from "./sharing/cancelAircraftShareInvite.js";
 import { createAircraftShareInvite } from "./sharing/createAircraftShareInvite.js";
 import {
-  onNotifiableAircraftWritten,
-  onNotifiableRecordWritten,
   onNotifiableThingRecordWritten,
   onNotifiableThingWritten,
 } from "./notifications/onRecordWritten.js";
-import { onAircraftDeleted, onThingDeleted } from "./sharing/onAircraftDeleted.js";
+import { onThingDeleted } from "./sharing/onAircraftDeleted.js";
 import { previewAircraftShareInvite } from "./sharing/previewAircraftShareInvite.js";
 import { getBlobUploadSession } from "./storage/getBlobUploadSession.js";
-import { onRecordDeleted, onThingRecordDeleted } from "./storage/onRecordDeleted.js";
+import { onThingRecordDeleted } from "./storage/onRecordDeleted.js";
 import { streamBlob } from "./storage/streamBlob.js";
 import { scheduledStorageSweep } from "./storage/storageSweepTriggers.js";
 import { redeemAircraftShareInvite } from "./sharing/redeemAircraftShareInvite.js";
@@ -56,19 +54,13 @@ export { deleteMyAccount };
 export { redeemAircraftShareInvite };
 export { revokeAircraftShare };
 export { updateAircraftShareRole };
-// MIGRATION (thing_migration_design.md §2.7, §2.7c / task B9): the four `Thing`-path triggers ship
-// HERE, with C2 — held off the Phase A/B branch so the Phase D copy could not trip them. They are
-// deployed ALONGSIDE their `aircraft`-path twins, which stay live across the E2 boundary because
-// devices do not all update at the same instant. Phase F3 removes the `aircraft` half.
-export { onAircraftDeleted, onThingDeleted };
+// MIGRATION (task F3): the `aircraft`-path twins are gone. Phase F2 deleted the documents they
+// watched, so they could only ever have fired on a tree that no longer exists. Removing an export
+// deletes the deployed function — intended here, and the reason F3 waits until F2 has run.
+export { onThingDeleted };
 export { createAircraftShareInvite, previewAircraftShareInvite, cancelAircraftShareInvite };
-export { onRecordDeleted, onThingRecordDeleted };
-export {
-  onNotifiableRecordWritten,
-  onNotifiableAircraftWritten,
-  onNotifiableThingRecordWritten,
-  onNotifiableThingWritten,
-};
+export { onThingRecordDeleted };
+export { onNotifiableThingRecordWritten, onNotifiableThingWritten };
 export { scheduledStorageSweep };
 export { streamBlob };
 export { getBlobUploadSession };

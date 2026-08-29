@@ -118,14 +118,6 @@ const handleRecordWritten =
     });
   };
 
-export const onNotifiableRecordWritten = onDocumentWritten(
-  {
-    document: `users/{uid}/${ENTITY_SEGMENT_LEGACY}/{acId}/{kind}/{docId}`,
-    region: FUNCTION_REGION,
-  },
-  handleRecordWritten(ENTITY_SEGMENT_LEGACY),
-);
-
 // MIGRATION (thing_migration_design.md §2.7c / task B9): deployed with C2, NOT with the Phase A/B
 // branch. A cutover copy CREATES each document, so `before` never exists and every record the Phase
 // D script copies would read as a fresh authored write here. By C2 the copy is done, and nothing
@@ -179,10 +171,7 @@ const handleAircraftWritten =
     });
   };
 
-export const onNotifiableAircraftWritten = onDocumentWritten(
-  { document: `users/{uid}/${ENTITY_SEGMENT_LEGACY}/{acId}`, region: FUNCTION_REGION },
-  handleAircraftWritten(ENTITY_SEGMENT_LEGACY),
-);
+// MIGRATION (task F3): both `aircraft`-path registrations are gone — see onAircraftDeleted.
 
 export const onNotifiableThingWritten = onDocumentWritten(
   { document: `users/{uid}/${ENTITY_SEGMENT_THING}/{acId}`, region: FUNCTION_REGION },

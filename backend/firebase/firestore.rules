@@ -79,38 +79,15 @@ service cloud.firestore {
         allow read, write: if request.auth.uid == userId;
       }
 
-      // Shared aircraft document. Members may GET it (they know the id from their ref) but not
-      // LIST the host's aircraft collection — that keeps the host's OTHER aircraft private and
-      // forces the doc-level sync path (docs/sharing §5.2). Only owners may edit the aircraft.
-      match /aircraft/{acId} {
+      // Shared thing document. Members may GET it (they know the id from their ref) but not LIST
+      // the host's thing collection — that keeps the host's OTHER things private and forces the
+      // doc-level sync path (docs/sharing §5.2). Only owners may edit it.
+      //
+      // The /aircraft/{acId} block that stood alongside this one was removed at F3, after Phase F2
+      // deleted the documents it governed.
+      match /thing/{acId} {
         // userId is the tree being accessed — that is the host, by definition. Unspoofable: it is
         // the path the caller asked for, not a claim they made.
-        allow get: if request.auth.uid == userId || isShareMember(userId, acId);
-        // Co-owners may edit the aircraft, but only the hosting owner may delete it — deleting an
-        // aircraft tears down the whole share (§3.3), so it must not be a peer-owner capability.
-        // The tombstone is a write with deleted=true; restricting that to the own-tree branch
-        // leaves deletion to the host. PRD §4: "Delete the aircraft — hosting owner only."
-        allow write: if request.auth.uid == userId
-          || (isShareOwner(userId, acId) && writerIsSelf() && request.resource.data.deleted != true);
-
-        // Nested maintenance data: any member may read; any member may write the known kinds,
-        // attested. (The host's own writes are already granted by the own-tree rule above.)
-        match /{kind}/{docId} {
-          allow read: if request.auth.uid == userId || isShareMember(userId, acId);
-          allow write: if request.auth.uid == userId
-            || (isSharedAircraftKind(kind) && isShareMember(userId, acId) && writerIsSelf());
-        }
-      }
-
-      // MIGRATION (docs/product/thing_migration_design.md §2.4a, task B7): the entity tree is moving
-      // from /aircraft/{acId} to /thing/{acId}. This file deploys as ONE atomic unit — there is no
-      // way to serve different rules to migrated and un-migrated accounts — so the new block is
-      // added ALONGSIDE the one above rather than replacing it, and both stay live for the whole
-      // migration window. Phase F3 deletes the /aircraft/ block once no account is left on it.
-      //
-      // An exact mirror of the block above; every comment there applies here verbatim. The share
-      // helpers are shared, so the two blocks cannot drift in their authorization logic.
-      match /thing/{acId} {
         allow get: if request.auth.uid == userId || isShareMember(userId, acId);
         allow write: if request.auth.uid == userId
           || (isShareOwner(userId, acId) && writerIsSelf() && request.resource.data.deleted != true);
@@ -169,73 +146,14 @@ service cloud.firestore {
 
     // --- Share ACL tree (plain-field, rules-readable) ------------------------------------------
 
-    // Keyed by HOST, then aircraft (#204). The {hostUid} segment is pinned to the caller's own uid
-    // on create, and request.auth.uid comes from a signed token — so a caller can only ever mint a
-    // share over their OWN tree. A share they create governs their own aircraft and nothing else.
+    // Keyed by HOST, then thing (#204). The {hostUid} segment is pinned to the caller's own uid on
+    // create, and request.auth.uid comes from a signed token — so a caller can only ever mint a
+    // share over their OWN tree. A share they create governs their own thing and nothing else.
     //
-    // The old key was aircraft_shares/{acId}: a single global slot for an id that is unique only
-    // within a tree. Spoofing hostUid was never needed — an attacker created that one slot honestly
-    // declaring themselves host, and the lookup (keyed on acId alone) then consulted THEIR doc to
-    // authorize access to the VICTIM's aircraft. Reachable in practice: deleting a shared aircraft
-    // removes its ACL while leaving the records behind, so an ex-member could re-claim the id and
-    // read (and write) the deleted aircraft. See #204.
-    match /aircraft_shares/{hostUid}/aircraft/{acId} {
-      // Membership is the only key. Nothing else — no "I have an aircraft with this id", which is a
-      // claim anyone who knew the id could manufacture (#202), and which no longer buys even the
-      // bootstrap read now that createAircraftShareInvite bootstraps the ACL server-side (#164).
-      //
-      // On a not-yet-shared aircraft there is no ACL, so this denies. Correct: there is nothing to
-      // read. Manage Access already treats the denial as "no members yet"
-      // (AircraftShareState.accessDenied) and still offers Invite, because the owner's role comes
-      // from the local refs rather than from this doc.
-      allow get: if isShareMember(hostUid, acId);
-
-      // Function-only since #164: createAircraftShareInvite bootstraps the ACL as admin, so no client
-      // ever needs to. That retires the last forgeable check — the old rule leaned on "I have an
-      // aircraft with this id in my tree", which anyone could manufacture. #204 made that harmless by
-      // namespacing the key; this removes it outright.
-      allow create, update, delete: if false; // functions only
-
-      match /members/{memberUid} {
-        // Members only — these carry display names, photos, and technician mirrors (certificate
-        // numbers and expiry dates). No own-aircraft escape hatch (#202).
-        allow read: if isShareMember(hostUid, acId);
-        // A member maintains their own display + technician mirror; role stays immutable from
-        // clients (function-managed). Delete is function-only.
-        allow update: if request.auth.uid == memberUid
-          && request.resource.data.role == resource.data.role;
-        // A member may create their OWN member doc, but only with the role the ACL already grants
-        // them — so this cannot mint membership or escalate a role, it only backfills the display
-        // record. The hosting owner needs this: they never redeem, so no function ever writes their
-        // member doc, and without it they would be absent from the roster (design §7.2).
-        allow create: if request.auth.uid == memberUid
-          && request.resource.data.role == shareRole(hostUid, acId);
-        allow delete: if false;
-      }
-
-      match /invites/{tokenHash} {
-        // Owner reads the invite list (Manage Access). Denied before the ACL exists, which is fine:
-        // there are no invites yet, and the client degrades to an empty list. Pending invites are
-        // live credentials — no own-aircraft escape hatch (#202).
-        // Owner-visible record of a pending invite: role and expiry, NOT the code. Reading this
-        // list yields nothing redeemable (#164). Creation and cancellation are function-only now —
-        // both have to touch the invite_codes collection, which clients cannot see.
-        allow read: if isShareOwner(hostUid, acId);
-        allow write: if false; // functions only
-      }
-    }
-
-    // MIGRATION (docs/product/thing_migration_design.md §2.9, task B8): the ACL tree is moving from
-    // aircraft_shares/{hostUid}/aircraft/{acId} to thing_shares/{hostUid}/thing/{acId}. Added now,
-    // alongside the block above, and INERT until Phase G — `shareRole()` above still reads
-    // aircraft_shares, and no document exists under thing_shares until G1 copies the tree. Adding it
-    // early is deliberate: rules deploy atomically, so the block must already be live before G1's
-    // copy lands, or the copied ACL would be unreadable in the gap.
-    //
-    // Phase G3 repoints `shareRole()` here; Phase G6 deletes the aircraft_shares block above. Do NOT
-    // repoint `shareRole()` as part of adding this.
-    //
-    // An exact mirror of the aircraft_shares block; every comment there applies here verbatim.
+    // The original key was aircraft_shares/{acId}: a single global slot for an id unique only within
+    // a tree. Spoofing hostUid was never needed — an attacker created that one slot honestly naming
+    // themselves host, and the lookup (keyed on acId alone) then consulted THEIR doc to authorize
+    // access to the VICTIM's aircraft. See #204. The aircraft_shares tree was retired at G6.
     match /thing_shares/{hostUid}/thing/{acId} {
       allow get: if isShareMember(hostUid, acId);
       allow create, update, delete: if false; // functions only
