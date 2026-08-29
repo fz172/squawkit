@@ -1,6 +1,8 @@
 package dev.fanfly.wingslog.core.template
 
 import com.google.common.truth.Truth.assertThat
+import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
+import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
 import dev.fanfly.wingslog.thing.Lexicon
 import dev.fanfly.wingslog.thing.Noun
 import dev.fanfly.wingslog.thing.Section
@@ -27,7 +29,7 @@ class TemplateRegistryTest {
       lexicon = Lexicon(thing = Noun(singular = "glider", plural = "gliders", article = "a")),
     )
 
-    val resolved = registry.forThing(Thing(id = "t1", template = custom))
+    val resolved = registry.forThingWithFallback(Thing(id = "t1", template = custom))
 
     assertThat(resolved).isEqualTo(custom)
     assertThat(resolved.lexicon?.thing?.singular).isEqualTo("glider")
@@ -39,7 +41,7 @@ class TemplateRegistryTest {
     // which is why no stored hint is needed and Thing.template_id could be removed.
     val legacy = Thing(id = "t1", make = "Cessna", model = "172")
 
-    assertThat(registry.forThing(legacy)).isEqualTo(AirplaneTemplate.TEMPLATE)
+    assertThat(registry.forThingWithFallback(legacy)).isEqualTo(AirplaneTemplate.TEMPLATE)
   }
 
   @Test
@@ -47,7 +49,7 @@ class TemplateRegistryTest {
     // Deliberately not the CollectionKind.fromWire behaviour. An unknown collection means a
     // corrupt database and should throw; a missing template is ordinary and has a right answer,
     // so throwing here would turn a legacy Thing into a crash.
-    assertThat(registry.forThing(Thing())).isNotNull()
+    assertThat(registry.forThingWithFallback(Thing())).isNotNull()
   }
 
   @Test
@@ -61,7 +63,7 @@ class TemplateRegistryTest {
       ),
     )
 
-    val resolved = registry.forThing(Thing(id = "t1", template = customised))
+    val resolved = registry.forThingWithFallback(Thing(id = "t1", template = customised))
 
     assertThat(resolved.lexicon?.squawk?.singular).isEqualTo("gripe")
     assertThat(resolved).isNotEqualTo(AirplaneTemplate.TEMPLATE)

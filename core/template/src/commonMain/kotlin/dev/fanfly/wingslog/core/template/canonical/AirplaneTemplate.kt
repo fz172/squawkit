@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.core.template
+package dev.fanfly.wingslog.core.template.canonical
 
 import dev.fanfly.wingslog.thing.Capabilities
 import dev.fanfly.wingslog.thing.ComponentSlot

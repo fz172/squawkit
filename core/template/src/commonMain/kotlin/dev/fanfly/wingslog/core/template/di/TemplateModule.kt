@@ -1,6 +1,6 @@
 package dev.fanfly.wingslog.core.template.di
 
-import dev.fanfly.wingslog.core.template.BakedInTemplateRegistry
+import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
 import dev.fanfly.wingslog.core.template.TemplateRegistry
 import org.koin.dsl.module
 

@@ -398,19 +398,26 @@ sync ordering.
 
 ## 8. Resolution and its failure modes
 
-`TemplateRegistry.resolve(id, version): ThingTemplate?` — nullable, deliberately.
+`TemplateRegistry.forThingWithFallback(thing): ThingTemplate` — non-nullable, deliberately, and
+named for what it adds over reading `thing.template` directly. Almost every Thing has DNA and this
+is a field read; the method exists for the ones that do not, so a caller reaching for the field
+instead is one that renders a legacy Thing blank.
+
+The canonical pool is reached separately — `canonical()` for the picker, `canonicalById(id)` for a
+lookup — and *that* one is nullable, because a build may legitimately not carry a template.
 
 Phase 1's `CollectionKind.fromWire` chose `error()` on an unknown name, and that was right there: an unknown
 collection means a corrupt local database, and failing loudly is better than guessing. **The equivalent choice
-here would be wrong**, because an unresolvable template is an ordinary, expected state — a Thing from a newer
-build, or a template not yet fetched — and it must degrade (§6.2) rather than crash.
+here would be wrong**, because a Thing without DNA is an ordinary, expected state — every Thing created before
+templates existed — and failing would turn a legacy record into a crash.
 
-Resolution order: local cache → baked-in assets → unresolved. The RPC is never consulted synchronously during
-resolution; it populates the cache in the background.
+Resolving a Thing is therefore total: read `thing.template`, or fall back to the baked-in airplane preset. No
+cache, no network, no ordering. The fetch RPC populates the *canonical* pool in the background and is never
+consulted while rendering.
 
-`template_id` empty is treated as `("airplane", 1)`. Phase 1 backfilled every production Thing (#603), so this
-path should be unreachable — but "should be unreachable" is not "is unreachable," and the alternative is an
-unresolvable Thing for a document written by something the migration missed.
+The fallback is unconditional rather than keyed on a stored hint, which is why `template_id` and
+`template_version` were removed (§5.3): a Thing without DNA can only be an airplane, because anything able to
+create something else necessarily inflates DNA.
 
 ---
 
