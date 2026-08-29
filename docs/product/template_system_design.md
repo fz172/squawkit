@@ -107,14 +107,60 @@ message FetchTemplatesResponse {
 }
 ```
 
-Two properties worth being explicit about:
+**Authentication: App Check only, no user identity.** The callable sets `enforceAppCheck: true` — the same
+guard `requestExportDelivery`, `deleteMyAccount`, and `createAircraftShareInvite` already use — but does **not**
+require a signed-in user. Canonical templates are not per-user data and not secret; what matters is that the
+caller is the SquawkIt app rather than an open endpoint.
+
+**Throttled at roughly 10 calls per day per client.** One consequence of dropping user auth is worth stating:
+without `request.auth.uid` there is no natural key to rate-limit on. App Check attests the *app*, not an
+install. So the client supplies its stable install id — the one `device_config` already holds for push
+registration — and the limit is keyed on that. That key is **advisory**: a hostile client can rotate it. App
+Check is the real barrier to non-app callers, and a global daily cap is the backstop against an app-attested
+client looping. The precedent is `rateLimit.ts`, which guards invite-code dereferencing for the same reason.
+
+Two further properties:
 
 - **The server filters by `app_version`.** A client never receives a template it cannot run, so the client-side
   check in §6 is a second line of defence rather than the only one. Filtering server-side also means the
   *response* stays small on old clients instead of shipping payloads they will discard.
 - **The fetch is never on the critical path.** The baked-in pool is complete and self-sufficient; the RPC only
-  ever *adds*. A failed fetch, an offline device, or an unauthenticated call degrades to "the presets this build
-  shipped with," which is exactly the app's behaviour today. Nothing blocks on it.
+  ever *adds*. A failed fetch, an offline device, or a throttled call degrades to "the presets this build shipped
+  with," which is exactly the app's behaviour today. Nothing blocks on it. `poll_after_seconds` lets the server
+  pace clients without them guessing.
+
+### 4.1 Publishing: source-controlled text protos
+
+Canonical templates are **authored as text-format protos, checked into the repo**, and published by an admin
+script. Not authored in a console, not hand-encoded.
+
+```
+templates/
+  airplane.v1.textproto
+  car.v1.textproto
+```
+
+Source control is the point: a template is a product artifact that gets reviewed, diffed, and blamed like code.
+Immutability makes that doubly true — a published template can never be corrected, only superseded (§5), so the
+review that matters happens before publication, which means it has to happen against a file in a PR.
+
+**The same file produces both consumers.** `protoc --encode=ThingTemplate` compiles a `.textproto` to binary, so
+the **baked-in asset** (§4) and the **published canonical** are built from one source and cannot drift. That is
+not a convenience — a baked-in `airplane` that disagrees with the served `airplane` of the same version would be
+a silent, per-device inconsistency with no natural detector.
+
+The script follows `grant-entitlement.mjs`: reads the file, validates, prints the resolved project, and confirms
+before writing. Validation is the interesting part, because publication is irreversible:
+
+- `(id, version)` must not already exist — **refuse, never overwrite.** This is the guard that makes
+  immutability real rather than a convention.
+- `min_app_version` must be set and not in the future relative to the current `versionCode`.
+- Every enum value must be one this repo's protos define, so a typo in a capability name fails at publish
+  rather than on a user's device.
+
+Where the published bytes live — a Firestore collection keyed `(id, version)`, or Cloud Storage objects served
+by the callable — is an implementation choice with no user-visible consequence. Firestore is the smaller step:
+the callable already has `adminDb`, and the documents are a few KB.
 
 ---
 
@@ -169,11 +215,13 @@ and cannot change later without a migration (#638).
 
 ### 5.2 What it costs, stated honestly
 
-**Per-Thing customisation is per-Thing.** A user with three airplanes has three sets of DNA. Editing one does
-not touch the others, and there is no "my airplane template" to adjust once. That is the direct consequence of
-DNA, and it may be the right product answer — three aircraft genuinely differ — but it is a real UX position
-rather than a free one. If "edit my airplane template everywhere" is later wanted, it is a fan-out write across
-Things, not a single edit.
+**Per-Thing customisation is per-Thing — and for now there is none.** *Decided: DNA is write-once at creation
+and not editable.* That removes the cost this section was written to flag, for as long as it holds: with no edit
+path, three airplanes having three identical sets of DNA is invisible.
+
+It becomes real if editing ever ships, and the model fixes the answer in advance: editing is **per-Thing**.
+There is no "my airplane template" to adjust once, and making one appear later would be a fan-out write across
+every Thing sharing a provenance, not a single edit. Worth knowing before the feature is promised.
 
 **Every Thing edit re-uploads its DNA.** The payload is one blob; changing a tail number re-pushes the template
 with it. A full template — lexicon, capabilities, spec fields, component slots, meters, starter tasks — is on
@@ -362,25 +410,72 @@ show/hide means auditing every call site twice.
 
 ---
 
-## 11. Open questions
+## 11. Decisions, and the one question still open
 
-1. ~~**Does `versionCode` mean anything on web?**~~ **Settled: the number becomes genuinely shared.** Web
-   currently renders `1.0.260826.1` from `core/appinfo/build.gradle.kts`, which composes
-   `major.minor.buildDate.patch` and never reads `versionCode` at all. It moves to the Android/iOS form —
-   `1.0.260826(1399)` — so one monotonic `versionCode` gates all three platforms and `min_app_version` means the
-   same thing everywhere. Tracked as a Phase 2 task; note `assembleRelease` is what *increments* the number, so
-   a web-only deploy ships whatever the last release build stamped.
-2. **Should DNA be editable per Thing, and is that the product intent (§5.2)?** Three airplanes means three sets
-   of DNA and no single "my airplane template" to adjust. That follows necessarily from the model; flagging it
-   because it is a UX position, not a technical detail.
-3. **Who publishes a canonical template, and through what?** No admin surface exists. A script following
-   `grant-entitlement.mjs` is the cheap answer, and immutability makes a mistake unfixable by editing —
-   a bad publish is superseded, never corrected.
-4. **Do `MeterRule` / `SeasonalRule` (PRD §3.3) change `MaintenanceTask`?** That is stored data. If the change
-   is additive it is free; if it renumbers or repurposes a field it is a #638-class migration. **Settle before
-   Phase 3, not during.**
-5. **Is the fetch authenticated?** Templates are not secret, but an unauthenticated callable is an open endpoint.
-   App Check, as the existing callables use, is probably sufficient.
+Settled with the developer, 2026-08-29:
+
+1. **DNA is not editable.** Write-once at creation. If editing ever ships it is **per-Thing** (§5.2).
+2. **Canonical templates are published by an admin script from source-controlled `.textproto` files** (§4.1).
+   The same file compiles to the baked-in asset, so served and bundled copies cannot drift.
+3. **The fetch callable requires App Check but no user auth**, throttled ~10/day per client (§4).
+
+### 11.1 The one still open: does `MeterRule` change stored data?
+
+*This question was asked badly the first time. Restating it concretely.*
+
+PRD §3.3 says: **"`EngineHourRule` generalizes to `MeterRule`; a `SeasonalRule` is added."** That is one
+sentence in a table of things that "transfer unchanged," and it hides a decision with two very different price
+tags — because `EngineHourRule` is not a UI concept. It is a stored proto, inside a `oneof`, in every
+`MaintenanceTask` document users already have:
+
+```proto
+// thing/maintenance_task.proto, as it exists in production today
+message EngineHourRule { float interval_hours = 1; }
+
+oneof rule {
+  TimeRule time_rule = 1;
+  EngineHourRule engine_hour_rule = 2;   // <- this
+  OnConditionRule on_condition_rule = 3;
+  LinkedRule linked_rule = 4;
+  ImmediateRule immediate_rule = 5;
+}
+```
+
+**Option A — additive. Free.**
+
+```proto
+oneof rule {
+  EngineHourRule engine_hour_rule = 2;   // kept, no longer written
+  MeterRule meter_rule = 6;              // new
+  SeasonalRule seasonal_rule = 7;        // new
+}
+```
+
+Existing tasks keep field 2 and keep working. New tasks write field 6. The client reads both, and field 2 drains
+as tasks are edited. No migration, ever. The cost is a permanently deprecated field and a reader that
+understands two shapes.
+
+**Option B — reuse field 2. A full migration.**
+
+```proto
+MeterRule meter_rule = 2;   // same field number, different message
+```
+
+`EngineHourRule` holds `float interval_hours = 1`. A `MeterRule` presumably holds something like
+`string meter_key = 1; float interval = 2`. **Same field number, incompatible wire types** — field 1 is a
+`float` in every stored document and a `string` in the new schema. Existing tasks do not "read as empty," they
+decode to garbage or throw.
+
+That is the Milestone 1 exercise again: a global batch, a grace window, dual-deployed triggers, a coordinated
+release. For a rename.
+
+**Recommendation: Option A**, and the reasoning generalises past this field. `float interval_hours` also cannot
+express "every 3000 miles" without a unit, so `MeterRule` is a genuinely different message rather than
+`EngineHourRule` with a better name — which means Option B was never a rename to begin with. `ForceCompliedStatus
+.complied_engine_hours` (a `float`, field 2) carries the same question and the same answer.
+
+**Settle before Phase 3 starts, not during.** It changes what `MaintenanceTask` looks like, and Phase 3's
+meter-driven log form is built against whichever shape wins.
 
 ---
 
