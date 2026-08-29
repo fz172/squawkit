@@ -30,7 +30,12 @@ const LOG = "log-1";
 
 const aircraftDoc = `users/${HOST}/aircraft/${AC}`;
 const logDoc = `${aircraftDoc}/maintenance_log/${LOG}`;
-const shareDoc = `aircraft_shares/${HOST}/aircraft/${AC}`;
+// MIGRATION (Phase G3): the ACL tree has moved. `shareRole()` now resolves against thing_shares,
+// so this is where every fixture below has to seed — the aircraft_shares match block is still in
+// the rules file until G6, but nothing authorizes against it any more.
+const shareDoc = `thing_shares/${HOST}/thing/${AC}`;
+/** The retired tree. Still matched by the rules, but no longer consulted for membership. */
+const legacyShareDoc = `thing_shares/${HOST}/thing/${AC}`;
 
 let testEnv: RulesTestEnvironment;
 
@@ -166,7 +171,7 @@ describe("aircraft_shares ACL root", () => {
       await setDoc(doc(ctx.firestore(), `users/${HOST}/aircraft/ac-new`), { registration: "N2" });
     });
     await assertFails(
-      setDoc(doc(as(HOST), `aircraft_shares/${HOST}/aircraft/ac-new`), {
+      setDoc(doc(as(HOST), `thing_shares/${HOST}/thing/ac-new`), {
         hostUid: HOST,
         aircraftId: "ac-new",
         memberRoles: { [HOST]: "owner" },
@@ -176,7 +181,7 @@ describe("aircraft_shares ACL root", () => {
 
   it("cannot create a share for an aircraft you don't own (spoof)", async () => {
     await assertFails(
-      setDoc(doc(as(STRANGER), `aircraft_shares/${STRANGER}/aircraft/ac-new`), {
+      setDoc(doc(as(STRANGER), `thing_shares/${STRANGER}/thing/ac-new`), {
         hostUid: STRANGER,
         aircraftId: "ac-new",
         memberRoles: { [STRANGER]: "owner" },
@@ -189,7 +194,7 @@ describe("aircraft_shares ACL root", () => {
       await setDoc(doc(ctx.firestore(), `users/${STRANGER}/aircraft/ac-new`), { registration: "N2" });
     });
     await assertFails(
-      setDoc(doc(as(STRANGER), `aircraft_shares/${STRANGER}/aircraft/ac-new`), {
+      setDoc(doc(as(STRANGER), `thing_shares/${STRANGER}/thing/ac-new`), {
         hostUid: HOST,
         aircraftId: "ac-new",
         memberRoles: { [STRANGER]: "owner" },
@@ -301,7 +306,7 @@ describe("aircraft_shares — namespaced by host (#204)", () => {
     // The direct question: can a malicious client just spoof the host segment? No — the rules pin it
     // to request.auth.uid, which comes from a signed token.
     await assertFails(
-      setDoc(doc(as(STRANGER), `aircraft_shares/${HOST}/aircraft/${AC}`), {
+      setDoc(doc(as(STRANGER), `thing_shares/${HOST}/thing/${AC}`), {
         hostUid: STRANGER,
         aircraftId: AC,
         memberRoles: { [STRANGER]: "owner" },
@@ -311,7 +316,7 @@ describe("aircraft_shares — namespaced by host (#204)", () => {
 
   it("may NOT create it while also claiming to be the host", async () => {
     await assertFails(
-      setDoc(doc(as(STRANGER), `aircraft_shares/${HOST}/aircraft/${AC}`), {
+      setDoc(doc(as(STRANGER), `thing_shares/${HOST}/thing/${AC}`), {
         hostUid: HOST,
         aircraftId: AC,
         memberRoles: { [STRANGER]: "owner" },
@@ -323,7 +328,7 @@ describe("aircraft_shares — namespaced by host (#204)", () => {
     // Since #164 client ACL creation is closed outright, so the fabrication buys not even a share
     // over their own plane. Belt and braces on top of #204's namespacing.
     await assertFails(
-      setDoc(doc(as(STRANGER), `aircraft_shares/${STRANGER}/aircraft/${AC}`), {
+      setDoc(doc(as(STRANGER), `thing_shares/${STRANGER}/thing/${AC}`), {
         hostUid: STRANGER,
         aircraftId: AC,
         memberRoles: { [STRANGER]: "owner" },
@@ -350,7 +355,7 @@ describe("aircraft_shares — namespaced by host (#204)", () => {
       await setDoc(doc(ctx.firestore(), `users/${TECH}/aircraft/${AC}`), { registration: "FAKE" });
     });
     await assertFails(
-      setDoc(doc(as(TECH), `aircraft_shares/${HOST}/aircraft/${AC}`), {
+      setDoc(doc(as(TECH), `thing_shares/${HOST}/thing/${AC}`), {
         hostUid: TECH,
         aircraftId: AC,
         memberRoles: { [TECH]: "owner" },
@@ -365,7 +370,7 @@ describe("aircraft_shares — namespaced by host (#204)", () => {
 
 describe("aircraft_shares ACL root — first share (no ACL doc yet)", () => {
   const FRESH = "ac-fresh";
-  const freshShare = `aircraft_shares/${HOST}/aircraft/${FRESH}`;
+  const freshShare = `thing_shares/${HOST}/thing/${FRESH}`;
 
   beforeEach(async () => {
     await testEnv.withSecurityRulesDisabled(async (ctx) => {
@@ -557,9 +562,9 @@ describe("invites", () => {
 //
 // The intermediate state this pins down is easy to get wrong: the ENTITY tree moves in Phase D, but
 // the ACL tree does not move until Phase G. So a `/thing/` document is authorized by an ACL that is
-// still at `aircraft_shares` — `shareRole()` has not been repointed. That is asserted directly
-// below, because a rules edit that repointed it early would break every already-migrated account.
-describe("migration: /thing/{acId} entity tree, authorized by the still-at-aircraft_shares ACL", () => {
+// now at `thing_shares` as of G3. Both entity blocks resolve membership through the same helper, so
+// these assertions cover the /thing/ tree specifically rather than the ACL behind it.
+describe("migration: /thing/{acId} entity tree", () => {
   const thingDoc = `users/${HOST}/thing/${AC}`;
   const thingLogDoc = `${thingDoc}/maintenance_log/${LOG}`;
 
@@ -626,85 +631,45 @@ describe("migration: /thing/{acId} entity tree, authorized by the still-at-aircr
   });
 });
 
-// The thing_shares block is added early and deliberately INERT: `shareRole()` still reads
-// aircraft_shares, and nothing writes thing_shares until Phase G1 copies the tree. It has to be live
-// BEFORE that copy lands, though — rules deploy atomically, so a block added at copy time would
-// leave the copied ACL unreadable in the gap. These assertions prove the block exists and grants the
-// right things, using the aircraft_shares ACL that `shareRole()` still consults.
-describe("migration: thing_shares ACL block — present, correct, and not yet load-bearing", () => {
-  const thingShareDoc = `thing_shares/${HOST}/thing/${AC}`;
+describe("migration: thing_shares is now the live ACL (Phase G3)", () => {
+  // The inverse of what this file asserted before G3. Everything above already proves thing_shares
+  // authorizes — every fixture seeds it. What is left to prove is that the RETIRED tree does not,
+  // because a rules file that still honoured aircraft_shares would leave the #204 namespacing hole
+  // open on a tree nobody maintains any more.
+  //
+  // A distinct aircraft id, rather than clearing and re-seeding the shared fixture: this aircraft
+  // exists ONLY in the legacy tree, so the assertion cannot accidentally be satisfied (or defeated)
+  // by the membership the outer beforeEach grants on AC.
+  const LEGACY_ONLY = "ac-legacy-only";
+  const legacyOnlyAircraft = `users/${HOST}/${"aircraft"}/${LEGACY_ONLY}`;
+  const legacyOnlyShare = `aircraft_shares/${HOST}/aircraft/${LEGACY_ONLY}`;
 
   beforeEach(async () => {
     await testEnv.withSecurityRulesDisabled(async (ctx) => {
-      await setDoc(doc(ctx.firestore(), thingShareDoc), {
+      const db = ctx.firestore();
+      await setDoc(doc(db, legacyOnlyAircraft), { registration: "N999", writerUid: HOST });
+      // A full, valid-looking ACL — at the old address only.
+      await setDoc(doc(db, legacyOnlyShare), {
         hostUid: HOST,
-        aircraftId: AC,
-        memberRoles: { [HOST]: "owner", [OWNER2]: "owner", [TECH]: "technician" },
+        aircraftId: LEGACY_ONLY,
+        memberRoles: { [HOST]: "owner", [TECH]: "technician" },
       });
     });
   });
 
-  it("member may get a thing_shares doc", async () => {
-    await assertSucceeds(getDoc(doc(as(TECH), thingShareDoc)));
+  it("grants no entity access from a doc that exists only in the retired tree", async () => {
+    await assertFails(getDoc(doc(as(TECH), legacyOnlyAircraft)));
+    await assertFails(getDoc(doc(as(TECH), `users/${HOST}/thing/${LEGACY_ONLY}`)));
   });
 
-  it("non-member may NOT get a thing_shares doc", async () => {
-    await assertFails(getDoc(doc(as(STRANGER), thingShareDoc)));
+  it("grants no ACL access from it either", async () => {
+    await assertFails(getDoc(doc(as(TECH), legacyOnlyShare)));
   });
 
-  it("no client may create, update, or delete a thing_shares doc — functions only", async () => {
-    await assertFails(
-      setDoc(doc(as(HOST), `thing_shares/${HOST}/thing/ac-new`), {
-        hostUid: HOST,
-        aircraftId: "ac-new",
-        memberRoles: { [HOST]: "owner" },
-      }),
-    );
-    await assertFails(deleteDoc(doc(as(HOST), thingShareDoc)));
-  });
-
-  it("membership still comes from aircraft_shares — shareRole() has NOT been repointed", async () => {
-    // The load-bearing assertion for the migration's ordering. TECH is a member in aircraft_shares
-    // and NOT in this thing_shares doc's own memberRoles, yet the read below succeeds — proving the
-    // authorization still resolves through the old tree. When Phase G3 repoints shareRole(), this
-    // assertion is the one that must be revisited.
-    await testEnv.withSecurityRulesDisabled(async (ctx) => {
-      await setDoc(doc(ctx.firestore(), thingShareDoc), {
-        hostUid: HOST,
-        aircraftId: AC,
-        memberRoles: { [HOST]: "owner" }, // TECH deliberately absent
-      });
-    });
-    await assertSucceeds(getDoc(doc(as(TECH), thingShareDoc)));
-  });
-
-  it("a member may create their own member doc under thing_shares", async () => {
-    await assertSucceeds(
-      setDoc(doc(as(TECH), `${thingShareDoc}/members/${TECH}`), {
-        role: "technician",
-        displayName: "Tech",
-        invitedBy: HOST,
-      }),
-    );
-  });
-
-  it("a member may NOT mint a role they do not already hold", async () => {
-    await assertFails(
-      setDoc(doc(as(TECH), `${thingShareDoc}/members/${TECH}`), {
-        role: "owner",
-        displayName: "Tech",
-        invitedBy: HOST,
-      }),
-    );
-  });
-
-  it("only an owner reads thing_shares invites, and no client writes them", async () => {
-    const thingInviteDoc = `${thingShareDoc}/invites/token-1`;
-    await testEnv.withSecurityRulesDisabled(async (ctx) => {
-      await setDoc(doc(ctx.firestore(), thingInviteDoc), { role: "technician", createdBy: HOST });
-    });
-    await assertSucceeds(getDoc(doc(as(HOST), thingInviteDoc)));
-    await assertFails(getDoc(doc(as(TECH), thingInviteDoc)));
-    await assertFails(setDoc(doc(as(HOST), thingInviteDoc), { role: "owner", createdBy: HOST }));
+  it("still matches the retired tree for someone thing_shares does vouch for", async () => {
+    // The aircraft_shares match block stays in place through the grace window and now resolves
+    // membership through thing_shares like everything else — so a CURRENT member can still read
+    // what is left there. That is what makes G6 a cleanup rather than a second cutover.
+    await assertSucceeds(getDoc(doc(as(TECH), legacyShareDoc)));
   });
 });

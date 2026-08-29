@@ -26,8 +26,16 @@ service cloud.firestore {
     // hostUid — no lie required — and the lookup, keyed by acId alone, would then consult THEIR doc
     // to authorize access to SOMEONE ELSE'S aircraft. Namespacing by host means a doc a caller can
     // create only ever governs the caller's own tree.
+    // MIGRATION (Phase G3, thing_migration_design.md §5.4): REPOINTED at thing_shares. This single
+    // line decides where every share authorization in this file resolves, so it moves exactly once,
+    // in the same release as sharingModels.ts's constants (B6) and the client's SharingManagerImpl
+    // constants. Deployed before G1's copy is verified, every share lookup resolves to a document
+    // that does not exist — which a member experiences as being removed from the aircraft.
+    //
+    // The aircraft_shares match block below stays live until G6, so the old tree remains readable
+    // through the grace window even though nothing authorizes against it any more.
     function shareRole(hostUid, acId) {
-      return get(/databases/$(database)/documents/aircraft_shares/$(hostUid)/aircraft/$(acId))
+      return get(/databases/$(database)/documents/thing_shares/$(hostUid)/thing/$(acId))
         .data.memberRoles[request.auth.uid];
     }
     function isShareOwner(hostUid, acId) {
