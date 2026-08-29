@@ -3,8 +3,8 @@ package dev.fanfly.wingslog.core.storage
 import com.google.common.truth.Truth.assertThat
 import com.squareup.wire.ProtoAdapter
 import com.squareup.wire.ProtoWriter
-import dev.fanfly.wingslog.thing.Engine
 import dev.fanfly.wingslog.thing.Component
+import dev.fanfly.wingslog.thing.Engine
 import dev.fanfly.wingslog.thing.Spec
 import dev.fanfly.wingslog.thing.Thing
 import okio.Buffer
@@ -40,7 +40,13 @@ class ThingUnknownFieldRetentionTest {
     // `value_`, not `value`: Wire escapes the proto field name in Kotlin codegen. The wire format
     // and the TypeScript bindings are unaffected — only the Kotlin identifier changes.
     spec = listOf(Spec(key = "make", value_ = "Cessna")),
-    components = listOf(Component(id = "ac-1:airframe:0", slot_key = "airframe", label = "Airframe")),
+    components = listOf(
+      Component(
+        id = "ac-1:airframe:0",
+        slot_key = "airframe",
+        label = "Airframe"
+      )
+    ),
   )
 
   /** Bytes as a *newer* client would write them: a real Thing plus a field this build cannot name. */
@@ -82,7 +88,8 @@ class ThingUnknownFieldRetentionTest {
     // server backfilled must read back identically after a round-trip through a client's edit.
     // (template_id/template_version are gone — a Thing without DNA is legacy, and legacy is
     // always airplane, so nothing needs storing to say so.)
-    val edited = Thing.ADAPTER.decode(Thing.ADAPTER.encode(thing)).copy(tail_number = "N54321")
+    val edited = Thing.ADAPTER.decode(Thing.ADAPTER.encode(thing))
+      .copy(tail_number = "N54321")
     val reread = Thing.ADAPTER.decode(Thing.ADAPTER.encode(edited))
 
     assertThat(reread.name).isEqualTo("N12345")
