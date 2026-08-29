@@ -117,7 +117,15 @@ class ThingUnknownFieldRetentionTest {
   }
 
   private companion object {
-    /** One past the highest field this build knows (`components = 11`). */
-    const val FUTURE_TAG = 12
+    /**
+     * One past the highest field this build knows (`template = 12`).
+     *
+     * This must be bumped whenever `Thing` gains a field, and the bump is not cosmetic: if this
+     * names a tag the schema actually defines, the test stops exercising unknown-field retention
+     * and starts exercising a type mismatch — encoding a `string` where the schema expects a
+     * message. It would still pass or fail for reasons that have nothing to do with what it
+     * claims to prove.
+     */
+    const val FUTURE_TAG = 13
   }
 }

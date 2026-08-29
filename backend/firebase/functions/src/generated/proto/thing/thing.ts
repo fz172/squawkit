@@ -9,6 +9,7 @@ import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
 import { Component } from "./component";
 import { Engine } from "./engine";
 import { Spec } from "./spec";
+import { ThingTemplate } from "./template";
 
 export const protobufPackage = "";
 
@@ -30,6 +31,18 @@ export interface Thing {
   /** mirrors of make/model/serial/tail_number */
   spec: Spec[];
   components: Component[];
+  /**
+   * The template this Thing was created from, inflated at creation and never a reference
+   * (template_system_design.md §5). A Thing carries everything needed to render itself: no
+   * lookup, no second document that can arrive late, and a share member gets it with the read
+   * they already make.
+   *
+   * ABSENT on every Thing created before the template system existed. Those resolve through
+   * `template_id` to the baked-in canonical, which is exactly right for them — a pre-template
+   * Thing has no customisation to miss — and they are inflated on their next write (§5.3). That
+   * is why fields 7 and 8 stay rather than being replaced by this one.
+   */
+  template: ThingTemplate | undefined;
 }
 
 function createBaseThing(): Thing {
@@ -45,6 +58,7 @@ function createBaseThing(): Thing {
     name: "",
     spec: [],
     components: [],
+    template: undefined,
   };
 }
 
@@ -82,6 +96,9 @@ export const Thing: MessageFns<Thing> = {
     }
     for (const v of message.components) {
       Component.encode(v!, writer.uint32(90).fork()).join();
+    }
+    if (message.template !== undefined) {
+      ThingTemplate.encode(message.template, writer.uint32(98).fork()).join();
     }
     return writer;
   },
@@ -181,6 +198,14 @@ export const Thing: MessageFns<Thing> = {
           message.components.push(Component.decode(reader, reader.uint32()));
           continue;
         }
+        case 12: {
+          if (tag !== 98) {
+            break;
+          }
+
+          message.template = ThingTemplate.decode(reader, reader.uint32());
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -219,6 +244,7 @@ export const Thing: MessageFns<Thing> = {
       components: globalThis.Array.isArray(object?.components)
         ? object.components.map((e: any) => Component.fromJSON(e))
         : [],
+      template: isSet(object.template) ? ThingTemplate.fromJSON(object.template) : undefined,
     };
   },
 
@@ -257,6 +283,9 @@ export const Thing: MessageFns<Thing> = {
     if (message.components?.length) {
       obj.components = message.components.map((e) => Component.toJSON(e));
     }
+    if (message.template !== undefined) {
+      obj.template = ThingTemplate.toJSON(message.template);
+    }
     return obj;
   },
 
@@ -276,6 +305,9 @@ export const Thing: MessageFns<Thing> = {
     message.name = object.name ?? "";
     message.spec = object.spec?.map((e) => Spec.fromPartial(e)) || [];
     message.components = object.components?.map((e) => Component.fromPartial(e)) || [];
+    message.template = (object.template !== undefined && object.template !== null)
+      ? ThingTemplate.fromPartial(object.template)
+      : undefined;
     return message;
   },
 };

@@ -3,6 +3,7 @@ syntax = "proto3";
 import "thing/engine.proto";
 import "thing/spec.proto";
 import "thing/component.proto";
+import "thing/template.proto";
 
 option java_package = "dev.fanfly.wingslog.thing";
 option java_multiple_files = true;
@@ -24,4 +25,15 @@ message Thing {
   string name = 9;
   repeated Spec spec = 10;         // mirrors of make/model/serial/tail_number
   repeated Component components = 11;
+
+  // The template this Thing was created from, inflated at creation and never a reference
+  // (template_system_design.md §5). A Thing carries everything needed to render itself: no
+  // lookup, no second document that can arrive late, and a share member gets it with the read
+  // they already make.
+  //
+  // ABSENT on every Thing created before the template system existed. Those resolve through
+  // `template_id` to the baked-in canonical, which is exactly right for them — a pre-template
+  // Thing has no customisation to miss — and they are inflated on their next write (§5.3). That
+  // is why fields 7 and 8 stay rather than being replaced by this one.
+  ThingTemplate template = 12;
 }

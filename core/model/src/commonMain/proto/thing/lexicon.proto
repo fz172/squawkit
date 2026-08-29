@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+option java_package = "dev.fanfly.wingslog.thing";
+option java_multiple_files = true;
+
+// Every domain noun and status word a template supplies, so the same screens read correctly for
+// an airplane, a boat, or a house. See docs/product/multi_domain_maintenance_PRD.md §4.5 and
+// docs/product/template_system_design.md §5.
+//
+// One lexicon per template, resolved into a CompositionLocal at the Thing scope. Account-level
+// screens (settings, the switcher, notification channel names) resolve the GENERIC lexicon
+// instead — on a mixed account there is no single template whose word would be right.
+
+message Noun {
+  string singular = 1;
+  string plural = 2;
+  // "a" / "an". Stored rather than derived: English article selection is not a function of the
+  // first letter — "an hour", "a unicycle" — and a wrong article is visible in every empty state.
+  string article = 3;
+}
+
+message Lexicon {
+  Noun thing = 1;       // aircraft · car · bike · boat · home · thing
+  Noun defect = 2;      // squawk · issue · fault · attention
+  Noun task = 3;        // inspection · service · chore
+  Noun log = 4;         // logbook entry · service record · work record
+  Noun component = 5;   // component · part · system
+  Noun technician = 6;  // mechanic · shop · person
+
+  string ready_status = 7;  // "Airworthy" · "Ready" · "Good"
+
+  // These two carry more weight than the rest of the block. Besides the Dashboard's alert
+  // section they name the OS notification channel a user sees in their system settings, and the
+  // title of every grounded-tier notification (PRD §8.5). That is the one place a lexicon string
+  // escapes the app's own surfaces — which is why both are whole strings rather than
+  // substitutions, and why the channel ID stays "GROUNDED" forever while only its display name
+  // resolves from here. Renaming a channel ID drops every user's per-channel settings.
+  string down_status = 8;       // "AOG" · "Dead in the water" · "Emergency"
+  string down_status_long = 9;  // "Aircraft on ground" · "Out of service"
+
+  string collection_label = 10;      // "Fleet" · "Garage" · "Stuff"
+  string compliance_mandatory = 11;  // "Airworthiness directive" · "Safety recall"
+  string compliance_advisory = 12;   // "Service bulletin" · "TSB"
+  string authority_label = 13;       // "FAA" · "NHTSA" · "Manufacturer"
+}
