@@ -124,6 +124,26 @@ This follows the established pattern rather than inventing one: invite-code dere
 uid through `rateLimit.ts`, with state under `invite_attempts/{uid}` — a collection `firestore.rules` already
 locks to functions-only.
 
+**No global cap, deliberately.** An earlier revision of this section added one, on the grounds that a per-uid
+limit cannot stop a systemic event — a bad client release polling on a timer across every install. That argument
+was wrong, and the error is worth recording because it is the kind that justifies unnecessary machinery:
+
+> **The per-uid throttle already bounds the systemic case.** A runaway client does not get unlimited calls; it
+> gets ten per user per day, the same as a well-behaved one. The worst case is `10 × users` — at 100,000 users,
+> one million calls a day against an expected hundred thousand. Ten times expected load, not four orders of
+> magnitude, and one million Firestore operations is small money.
+
+A global cap would have cost a sharded counter (Firestore sustains ~1 write/sec/document, and a single
+`quota/{date}` doc would contend exactly at the morning peak) or a scheduled aggregation, plus a
+degrade-not-error path, plus a configured budget to keep it from tripping on the first busy day. That is real
+machinery to bound something the per-uid limit already bounds.
+
+The exposure it would have covered, stated plainly so the decision can be revisited on evidence: **anonymous
+sign-in makes uids cheap**, so an attacker willing to mint accounts multiplies their allowance. App Check is
+what makes that expensive, and it is already required. If abuse ever shows up in the numbers, a global cap is
+the answer — but adding it now would be defending against a threat App Check already handles, at the cost of
+a hot-document contention problem that does not otherwise exist.
+
 **Anonymous sign-in counts.** Guests have a uid like anyone else, so they are throttled normally rather than
 excluded. And a client with no session at all is not blocked from creating Things — it simply never calls this,
 and uses the baked-in pool, which is complete by construction (below). Sign-in gates *new* templates, never the
@@ -139,46 +159,7 @@ Two further properties:
   with," which is exactly the app's behaviour today. Nothing blocks on it. `poll_after_seconds` lets the server
   pace clients without them guessing.
 
-### 4.1 The global cap
-
-The per-uid limit stops one account looping. It does **not** stop a systemic event — a bad client release
-polling on a timer, across every install at once — and that is the failure this cap exists for.
-
-**Budget: 100,000 calls/day**, sized as 100,000 users × 1 call/day.
-
-**That sizing has no headroom, and should be a configured value rather than a constant.** At exactly expected
-load, the first genuinely busy day trips it: a user who opens the app on a phone and a tablet spends two calls,
-so does one who force-quits and reopens. The cap's job is catching a runaway three orders of magnitude out
-(a one-second poll loop across 100k installs is ~8.6 *billion* calls/day), not trimming a 20% overshoot — so it
-wants deliberate slack, and it wants raising without a deploy when the user base grows.
-
-**Counting it needs a sharded counter, not one document.** Firestore sustains roughly **one write per second per
-document**. 100,000/day averages ~1.2/sec, which already sits at the limit before accounting for the morning
-peak every consumer app has. A single `quota/{date}` document would go into contention exactly when load is
-highest — the moment the cap most needs to be accurate.
-
-Two workable shapes:
-
-- **Sharded counter** — `template_fetch_quota/{date}/shards/{0..9}`, each call incrementing a random shard,
-  the total read as a sum. The standard Firestore answer; ten shards give ten times the write ceiling.
-- **Derive it from the per-uid documents** — the throttle in §4 already writes one document per uid per day, so
-  a scheduled function can count them and publish a running total with **no extra write on the request path**.
-  The count lags by the schedule interval, which is fine for a backstop and not fine for a hard limit.
-
-The second is cheaper and reuses state that has to exist anyway. The first is exact. For a cap whose purpose is
-catching runaway rather than metering, the lag is acceptable — but this is a real choice and the doc should not
-pretend otherwise.
-
-**Tripping the cap must not surface as an error.** The client already treats a failed fetch as "use the baked-in
-pool" (§4), and that path is correct and complete. So a capped response is an ordinary **success with zero
-templates and a long `poll_after_seconds`** — invisible to the user, and it sheds load instead of provoking a
-retry storm from clients treating failure as transient.
-
-Better still, `poll_after_seconds` should widen *as the budget depletes* rather than only at the wall. A cap
-that trips at 09:00 and starves everyone until midnight is a worse outcome than one that slows everybody down
-from 70% consumption onward.
-
-### 4.2 Publishing: source-controlled text protos
+### 4.1 Publishing: source-controlled text protos
 
 Canonical templates are **authored as text-format protos, checked into the repo**, and published by an admin
 script. Not authored in a console, not hand-encoded.
@@ -464,12 +445,12 @@ show/hide means auditing every call site twice.
 Settled with the developer, 2026-08-29. Nothing in this design is open.
 
 1. **DNA is not editable.** Write-once at creation. If editing ever ships it is **per-Thing** (§5.2).
-2. **Canonical templates are published by an admin script from source-controlled `.textproto` files** (§4.2).
+2. **Canonical templates are published by an admin script from source-controlled `.textproto` files** (§4.1).
    The same file compiles to the baked-in asset, so served and bundled copies cannot drift.
-3. **The fetch callable requires App Check *and* a signed-in user**, throttled ~10/day keyed on `uid` (§4),
-   under a **global daily cap** sized at 100,000 calls (§4.1). The uid is for throttling, not authorization —
-   an install id would be rotatable and the limit advisory. The global cap needs a sharded counter and
-   deliberate headroom; see §4.1 for why the expected-load figure is the wrong number to cap at.
+3. **The fetch callable requires App Check *and* a signed-in user**, throttled ~10/day keyed on `uid` (§4).
+   The uid is for throttling, not authorization — an install id would be rotatable and the limit advisory.
+   **No global cap**: the per-uid limit already bounds the worst case at `10 × users`, and §4 records what
+   would justify revisiting that.
 4. **`MeterRule` and `SeasonalRule` are additive. No migration.** (§11.1)
 
 ### 11.1 `MeterRule` / `SeasonalRule`: additive
