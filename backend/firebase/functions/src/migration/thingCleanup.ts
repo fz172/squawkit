@@ -253,7 +253,11 @@ async function deleteAircraft(
   for (const collection of await sourceDoc.listCollections()) {
     outcome.documentsDeleted += (await collection.count().get()).data().count;
   }
-  outcome.documentsDeleted++; // the aircraft document itself
+  // Only if there IS one. `listDocuments()` returns references for documents that do not exist but
+  // still have subcollections — an aircraft whose own doc was already deleted, with orphaned child
+  // records underneath. Counting those inflated the report against the cutover's own figures, which
+  // is exactly the kind of unexplained discrepancy that makes an operator distrust a delete.
+  if ((await sourceDoc.get()).exists) outcome.documentsDeleted++;
 
   const sourcePrefix = `users/${uid}/${ENTITY_SEGMENT_LEGACY}/${acId}/blobs/`;
   const [sourceBlobs] = await bucket.getFiles({ prefix: sourcePrefix });
