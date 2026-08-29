@@ -25,8 +25,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import dev.fanfly.wingslog.aircraft.Attachment
-import dev.fanfly.wingslog.aircraft.AttachmentType
+import dev.fanfly.wingslog.thing.Attachment
+import dev.fanfly.wingslog.thing.AttachmentType
 import dev.fanfly.wingslog.core.ui.common.compose.formatFileSize
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography

@@ -2,8 +2,8 @@ package dev.fanfly.wingslog.feature.export.update.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dev.fanfly.wingslog.aircraft.Attachment
-import dev.fanfly.wingslog.aircraft.AttachmentType.ATTACHMENT_TYPE_LINK
+import dev.fanfly.wingslog.thing.Attachment
+import dev.fanfly.wingslog.thing.AttachmentType.ATTACHMENT_TYPE_LINK
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDateRange
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDeliveryEmailSource
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDeliveryInfo

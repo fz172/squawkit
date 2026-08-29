@@ -2,7 +2,7 @@
 // versions:
 //   protoc-gen-ts_proto  v2.11.8
 //   protoc               v3.19.1
-// source: aircraft/propeller.proto
+// source: thing/propeller.proto
 
 /* eslint-disable */
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";

@@ -1,7 +1,7 @@
 package dev.fanfly.wingslog.feature.squawk.datamanager
 
-import dev.fanfly.wingslog.aircraft.Squawk
-import dev.fanfly.wingslog.aircraft.SquawkDismissReason
+import dev.fanfly.wingslog.thing.Squawk
+import dev.fanfly.wingslog.thing.SquawkDismissReason
 import kotlinx.coroutines.flow.Flow
 
 interface SquawkManager {

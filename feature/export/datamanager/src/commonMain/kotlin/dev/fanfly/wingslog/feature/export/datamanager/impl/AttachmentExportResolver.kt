@@ -1,8 +1,8 @@
 package dev.fanfly.wingslog.feature.export.datamanager.impl
 
 import co.touchlab.kermit.Logger
-import dev.fanfly.wingslog.aircraft.Attachment
-import dev.fanfly.wingslog.aircraft.AttachmentType
+import dev.fanfly.wingslog.thing.Attachment
+import dev.fanfly.wingslog.thing.AttachmentType
 import dev.fanfly.wingslog.core.storage.blob.BlobId
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.core.storage.blob.BlobFilesystem

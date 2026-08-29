@@ -1,7 +1,7 @@
 package dev.fanfly.wingslog.feature.attachment.model
 
-import dev.fanfly.wingslog.aircraft.Attachment
-import dev.fanfly.wingslog.aircraft.AttachmentType
+import dev.fanfly.wingslog.thing.Attachment
+import dev.fanfly.wingslog.thing.AttachmentType
 
 /**
  * Form-side attachment state. R2 dropped the R1 [Uploading] / [Failed] variants — uploads no

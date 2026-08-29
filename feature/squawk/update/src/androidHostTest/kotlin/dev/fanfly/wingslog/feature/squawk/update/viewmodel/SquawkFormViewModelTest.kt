@@ -2,8 +2,8 @@ package dev.fanfly.wingslog.feature.squawk.update.viewmodel
 
 import androidx.lifecycle.SavedStateHandle
 import com.google.common.truth.Truth.assertThat
-import dev.fanfly.wingslog.aircraft.Squawk
-import dev.fanfly.wingslog.aircraft.SquawkDismissReason
+import dev.fanfly.wingslog.thing.Squawk
+import dev.fanfly.wingslog.thing.SquawkDismissReason
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager

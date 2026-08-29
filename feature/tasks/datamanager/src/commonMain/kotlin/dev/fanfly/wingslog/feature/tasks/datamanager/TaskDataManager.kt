@@ -1,6 +1,6 @@
 package dev.fanfly.wingslog.feature.tasks.datamanager
 
-import dev.fanfly.wingslog.aircraft.MaintenanceTask
+import dev.fanfly.wingslog.thing.MaintenanceTask
 import kotlinx.coroutines.flow.Flow
 
 interface TaskDataManager {

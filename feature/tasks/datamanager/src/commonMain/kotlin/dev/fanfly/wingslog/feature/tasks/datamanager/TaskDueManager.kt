@@ -1,7 +1,7 @@
 package dev.fanfly.wingslog.feature.tasks.datamanager
 
-import dev.fanfly.wingslog.aircraft.MaintenanceLog
-import dev.fanfly.wingslog.aircraft.MaintenanceTask
+import dev.fanfly.wingslog.thing.MaintenanceLog
+import dev.fanfly.wingslog.thing.MaintenanceTask
 import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
 
 interface TaskDueManager {

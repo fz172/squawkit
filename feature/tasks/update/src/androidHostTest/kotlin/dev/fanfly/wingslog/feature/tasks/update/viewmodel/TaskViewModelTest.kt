@@ -2,10 +2,10 @@ package dev.fanfly.wingslog.feature.tasks.update.viewmodel
 
 import androidx.lifecycle.SavedStateHandle
 import com.google.common.truth.Truth.assertThat
-import dev.fanfly.wingslog.aircraft.Attachment
-import dev.fanfly.wingslog.aircraft.AttachmentType
-import dev.fanfly.wingslog.aircraft.ForceCompliedStatus
-import dev.fanfly.wingslog.aircraft.MaintenanceTask
+import dev.fanfly.wingslog.thing.Attachment
+import dev.fanfly.wingslog.thing.AttachmentType
+import dev.fanfly.wingslog.thing.ForceCompliedStatus
+import dev.fanfly.wingslog.thing.MaintenanceTask
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager

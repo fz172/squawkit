@@ -1,7 +1,7 @@
 package dev.fanfly.wingslog.feature.logs.datamanager
 
-import dev.fanfly.wingslog.aircraft.MaintenanceLog
-import dev.fanfly.wingslog.aircraft.MaintenanceOverview
+import dev.fanfly.wingslog.thing.MaintenanceLog
+import dev.fanfly.wingslog.thing.MaintenanceOverview
 import kotlinx.coroutines.flow.Flow
 
 interface MaintenanceLogManager {

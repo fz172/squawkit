@@ -1,9 +1,9 @@
 package dev.fanfly.wingslog.feature.export.datamanager.impl
 
-import dev.fanfly.wingslog.aircraft.MaintenanceLog
-import dev.fanfly.wingslog.aircraft.Squawk
-import dev.fanfly.wingslog.aircraft.SquawkDismissReason
-import dev.fanfly.wingslog.aircraft.Technician
+import dev.fanfly.wingslog.thing.MaintenanceLog
+import dev.fanfly.wingslog.thing.Squawk
+import dev.fanfly.wingslog.thing.SquawkDismissReason
+import dev.fanfly.wingslog.thing.Technician
 import dev.fanfly.wingslog.core.datetime.toLocalDate
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDateRange
 import dev.fanfly.wingslog.feature.export.datamanager.ExportRequest

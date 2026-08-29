@@ -1,8 +1,8 @@
 package dev.fanfly.wingslog.feature.squawk.datamanager.impl
 
 import com.google.common.truth.Truth.assertThat
-import dev.fanfly.wingslog.aircraft.Squawk
-import dev.fanfly.wingslog.aircraft.SquawkDismissReason
+import dev.fanfly.wingslog.thing.Squawk
+import dev.fanfly.wingslog.thing.SquawkDismissReason
 import dev.fanfly.wingslog.core.storage.ThingScopeResolver
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.EntityScope

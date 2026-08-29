@@ -1,6 +1,6 @@
 package dev.fanfly.wingslog.feature.sharing.datamanager
 
-import dev.fanfly.wingslog.aircraft.Technician
+import dev.fanfly.wingslog.thing.Technician
 import dev.fanfly.wingslog.feature.sharing.model.AircraftShareState
 import dev.fanfly.wingslog.feature.sharing.model.InviteLink
 import dev.fanfly.wingslog.feature.sharing.model.InvitePreview

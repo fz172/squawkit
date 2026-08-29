@@ -1,6 +1,6 @@
 package dev.fanfly.wingslog.feature.logs.datamanager.authorship
 
-import dev.fanfly.wingslog.aircraft.MaintenanceLog
+import dev.fanfly.wingslog.thing.MaintenanceLog
 
 /**
  * Whether the technician named on a log actually wrote it (design §7.5).

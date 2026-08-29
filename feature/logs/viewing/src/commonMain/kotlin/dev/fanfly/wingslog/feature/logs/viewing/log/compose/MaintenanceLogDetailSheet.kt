@@ -29,11 +29,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
-import dev.fanfly.wingslog.aircraft.Attachment
-import dev.fanfly.wingslog.aircraft.ComponentType
-import dev.fanfly.wingslog.aircraft.MaintenanceLog
-import dev.fanfly.wingslog.aircraft.MaintenanceTask
-import dev.fanfly.wingslog.aircraft.Squawk
+import dev.fanfly.wingslog.thing.Attachment
+import dev.fanfly.wingslog.thing.ComponentType
+import dev.fanfly.wingslog.thing.MaintenanceLog
+import dev.fanfly.wingslog.thing.MaintenanceTask
+import dev.fanfly.wingslog.thing.Squawk
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.datetime.toLocalDate
 import dev.fanfly.wingslog.core.ui.common.compose.DetailSheet

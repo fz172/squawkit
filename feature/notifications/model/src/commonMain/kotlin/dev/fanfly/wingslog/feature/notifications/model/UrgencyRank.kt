@@ -1,6 +1,6 @@
 package dev.fanfly.wingslog.feature.notifications.model
 
-import dev.fanfly.wingslog.aircraft.SquawkPriority
+import dev.fanfly.wingslog.thing.SquawkPriority
 import dev.fanfly.wingslog.feature.squawk.model.SquawkStatus
 import dev.fanfly.wingslog.feature.squawk.model.SquawkWithStatus
 import dev.fanfly.wingslog.feature.tasks.model.DueStatus

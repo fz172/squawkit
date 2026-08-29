@@ -1,7 +1,7 @@
-import { Attachment } from "../generated/proto/aircraft/attachment.js";
-import { MaintenanceLog } from "../generated/proto/aircraft/maintenance_log.js";
-import { MaintenanceTask } from "../generated/proto/aircraft/maintenance_task.js";
-import { Squawk } from "../generated/proto/aircraft/squawk.js";
+import { Attachment } from "../generated/proto/thing/attachment.js";
+import { MaintenanceLog } from "../generated/proto/thing/maintenance_log.js";
+import { MaintenanceTask } from "../generated/proto/thing/maintenance_task.js";
+import { Squawk } from "../generated/proto/thing/squawk.js";
 import { Component } from "../generated/proto/thing/component.js";
 import { Spec } from "../generated/proto/thing/spec.js";
 import { Thing } from "../generated/proto/thing/thing.js";

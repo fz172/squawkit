@@ -25,8 +25,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
-import dev.fanfly.wingslog.aircraft.Engine
-import dev.fanfly.wingslog.aircraft.PropellerHub
+import dev.fanfly.wingslog.thing.Engine
+import dev.fanfly.wingslog.thing.PropellerHub
 import dev.fanfly.wingslog.core.ui.common.compose.DashedButton
 import dev.fanfly.wingslog.core.ui.common.compose.FormTextField
 import dev.fanfly.wingslog.core.ui.theme.Spacing

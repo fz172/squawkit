@@ -1,10 +1,10 @@
 syntax = "proto3";
 
 import "google/protobuf/timestamp.proto";
-import "aircraft/attachment.proto";
-import "aircraft/component_type.proto";
+import "thing/attachment.proto";
+import "thing/component_type.proto";
 
-option java_package = "dev.fanfly.wingslog.aircraft";
+option java_package = "dev.fanfly.wingslog.thing";
 option java_multiple_files = true;
 
 enum ComplianceType {

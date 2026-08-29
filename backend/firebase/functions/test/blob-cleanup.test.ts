@@ -2,9 +2,9 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import { adminDb, adminStorage, fft } from "./helpers.js";
 
-import { Attachment, AttachmentType } from "../src/generated/proto/aircraft/attachment.js";
-import { MaintenanceLog } from "../src/generated/proto/aircraft/maintenance_log.js";
-import { Squawk } from "../src/generated/proto/aircraft/squawk.js";
+import { Attachment, AttachmentType } from "../src/generated/proto/thing/attachment.js";
+import { MaintenanceLog } from "../src/generated/proto/thing/maintenance_log.js";
+import { Squawk } from "../src/generated/proto/thing/squawk.js";
 import { onThingDeleted } from "../src/sharing/onAircraftDeleted.js";
 import { onThingRecordDeleted } from "../src/storage/onRecordDeleted.js";
 

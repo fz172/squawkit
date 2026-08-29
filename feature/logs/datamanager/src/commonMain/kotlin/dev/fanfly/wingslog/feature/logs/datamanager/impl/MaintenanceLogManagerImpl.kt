@@ -1,9 +1,9 @@
 package dev.fanfly.wingslog.feature.logs.datamanager.impl
 
 import co.touchlab.kermit.Logger
-import dev.fanfly.wingslog.aircraft.ComponentType
-import dev.fanfly.wingslog.aircraft.MaintenanceLog
-import dev.fanfly.wingslog.aircraft.MaintenanceOverview
+import dev.fanfly.wingslog.thing.ComponentType
+import dev.fanfly.wingslog.thing.MaintenanceLog
+import dev.fanfly.wingslog.thing.MaintenanceOverview
 import dev.fanfly.wingslog.core.model.id.generateRandomId
 import dev.fanfly.wingslog.core.storage.ThingScopeResolver
 import dev.fanfly.wingslog.core.storage.CollectionKind

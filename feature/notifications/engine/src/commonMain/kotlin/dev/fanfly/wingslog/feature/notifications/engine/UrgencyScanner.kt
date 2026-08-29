@@ -1,7 +1,7 @@
 package dev.fanfly.wingslog.feature.notifications.engine
 
-import dev.fanfly.wingslog.aircraft.MaintenanceTask
-import dev.fanfly.wingslog.aircraft.Squawk
+import dev.fanfly.wingslog.thing.MaintenanceTask
+import dev.fanfly.wingslog.thing.Squawk
 import dev.fanfly.wingslog.core.model.settings.NotificationSettings
 import dev.fanfly.wingslog.core.storage.ThingScopeResolver
 import dev.fanfly.wingslog.core.storage.CollectionKind

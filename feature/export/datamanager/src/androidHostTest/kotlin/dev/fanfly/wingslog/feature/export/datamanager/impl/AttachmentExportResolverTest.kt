@@ -2,9 +2,9 @@ package dev.fanfly.wingslog.feature.export.datamanager.impl
 
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.thing.Thing
-import dev.fanfly.wingslog.aircraft.Attachment
-import dev.fanfly.wingslog.aircraft.AttachmentType
-import dev.fanfly.wingslog.aircraft.MaintenanceLog
+import dev.fanfly.wingslog.thing.Attachment
+import dev.fanfly.wingslog.thing.AttachmentType
+import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.blob.BlobFilesystem
 import dev.fanfly.wingslog.core.storage.blob.BlobId

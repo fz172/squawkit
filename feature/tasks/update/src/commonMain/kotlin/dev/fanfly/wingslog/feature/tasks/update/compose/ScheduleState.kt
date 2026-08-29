@@ -1,12 +1,12 @@
 package dev.fanfly.wingslog.feature.tasks.update.compose
 
 import com.squareup.wire.Instant
-import dev.fanfly.wingslog.aircraft.EngineHourRule
-import dev.fanfly.wingslog.aircraft.ImmediateRule
-import dev.fanfly.wingslog.aircraft.InspectionRule
-import dev.fanfly.wingslog.aircraft.LinkedRule
-import dev.fanfly.wingslog.aircraft.MaintenanceTask
-import dev.fanfly.wingslog.aircraft.TimeRule
+import dev.fanfly.wingslog.thing.EngineHourRule
+import dev.fanfly.wingslog.thing.ImmediateRule
+import dev.fanfly.wingslog.thing.InspectionRule
+import dev.fanfly.wingslog.thing.LinkedRule
+import dev.fanfly.wingslog.thing.MaintenanceTask
+import dev.fanfly.wingslog.thing.TimeRule
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import kotlin.time.Clock
 

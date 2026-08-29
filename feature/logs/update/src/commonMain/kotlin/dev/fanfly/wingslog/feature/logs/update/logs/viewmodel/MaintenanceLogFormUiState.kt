@@ -1,9 +1,9 @@
 package dev.fanfly.wingslog.feature.logs.update.logs.viewmodel
 
-import dev.fanfly.wingslog.aircraft.ComponentType
-import dev.fanfly.wingslog.aircraft.MaintenanceTask
-import dev.fanfly.wingslog.aircraft.Squawk
-import dev.fanfly.wingslog.aircraft.Technician
+import dev.fanfly.wingslog.thing.ComponentType
+import dev.fanfly.wingslog.thing.MaintenanceTask
+import dev.fanfly.wingslog.thing.Squawk
+import dev.fanfly.wingslog.thing.Technician
 import dev.fanfly.wingslog.core.ui.common.UiText
 import dev.fanfly.wingslog.feature.attachment.datamanager.QuotaChecker
 import dev.fanfly.wingslog.feature.attachment.model.PendingAttachment

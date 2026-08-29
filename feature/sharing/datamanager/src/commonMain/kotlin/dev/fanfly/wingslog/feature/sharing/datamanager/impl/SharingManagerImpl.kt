@@ -2,9 +2,9 @@ package dev.fanfly.wingslog.feature.sharing.datamanager.impl
 
 import app.cash.sqldelight.async.coroutines.awaitAsOneOrNull
 import co.touchlab.kermit.Logger
-import dev.fanfly.wingslog.aircraft.CertExpireLimit
-import dev.fanfly.wingslog.aircraft.CertificateType
-import dev.fanfly.wingslog.aircraft.Technician
+import dev.fanfly.wingslog.thing.CertExpireLimit
+import dev.fanfly.wingslog.thing.CertificateType
+import dev.fanfly.wingslog.thing.Technician
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.model.sharing.SharedAircraftRef
 import dev.fanfly.wingslog.core.storage.CollectionKind

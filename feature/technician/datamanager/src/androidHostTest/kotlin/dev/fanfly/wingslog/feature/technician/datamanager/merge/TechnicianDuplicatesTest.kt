@@ -1,8 +1,8 @@
 package dev.fanfly.wingslog.feature.technician.datamanager.merge
 
 import com.google.common.truth.Truth.assertThat
-import dev.fanfly.wingslog.aircraft.CertificateType
-import dev.fanfly.wingslog.aircraft.Technician
+import dev.fanfly.wingslog.thing.CertificateType
+import dev.fanfly.wingslog.thing.Technician
 import org.junit.Test
 
 private const val MEMBER_UID = "uid-member"

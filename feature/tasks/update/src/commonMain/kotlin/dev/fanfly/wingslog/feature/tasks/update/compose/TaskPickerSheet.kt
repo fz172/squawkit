@@ -11,8 +11,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import dev.fanfly.wingslog.aircraft.ComplianceType
-import dev.fanfly.wingslog.aircraft.MaintenanceTask
+import dev.fanfly.wingslog.thing.ComplianceType
+import dev.fanfly.wingslog.thing.MaintenanceTask
 import dev.fanfly.wingslog.core.ui.common.compose.PickerDoneButton
 import dev.fanfly.wingslog.core.ui.common.compose.PickerSectionHeader
 import dev.fanfly.wingslog.core.ui.common.compose.PickerSelectableRow

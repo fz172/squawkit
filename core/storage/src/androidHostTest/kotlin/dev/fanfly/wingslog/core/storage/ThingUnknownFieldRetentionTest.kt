@@ -3,7 +3,7 @@ package dev.fanfly.wingslog.core.storage
 import com.google.common.truth.Truth.assertThat
 import com.squareup.wire.ProtoAdapter
 import com.squareup.wire.ProtoWriter
-import dev.fanfly.wingslog.aircraft.Engine
+import dev.fanfly.wingslog.thing.Engine
 import dev.fanfly.wingslog.thing.Component
 import dev.fanfly.wingslog.thing.Spec
 import dev.fanfly.wingslog.thing.Thing

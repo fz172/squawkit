@@ -1,7 +1,7 @@
-import { Attachment, AttachmentType } from "../generated/proto/aircraft/attachment.js";
-import { MaintenanceLog } from "../generated/proto/aircraft/maintenance_log.js";
-import { MaintenanceTask } from "../generated/proto/aircraft/maintenance_task.js";
-import { Squawk } from "../generated/proto/aircraft/squawk.js";
+import { Attachment, AttachmentType } from "../generated/proto/thing/attachment.js";
+import { MaintenanceLog } from "../generated/proto/thing/maintenance_log.js";
+import { MaintenanceTask } from "../generated/proto/thing/maintenance_task.js";
+import { Squawk } from "../generated/proto/thing/squawk.js";
 
 /**
  * Which blobs does a record own? (#158)

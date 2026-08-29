@@ -1,6 +1,6 @@
 package dev.fanfly.wingslog.feature.thing.update.viewmodel
 
-import dev.fanfly.wingslog.aircraft.PropellerHub
+import dev.fanfly.wingslog.thing.PropellerHub
 import dev.fanfly.wingslog.thing.Thing
 
 data class EditThingUiState(

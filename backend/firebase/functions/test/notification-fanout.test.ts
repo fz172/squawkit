@@ -8,7 +8,7 @@ import {
   Squawk,
   SquawkDismissReason,
   SquawkPriority,
-} from "../src/generated/proto/aircraft/squawk.js";
+} from "../src/generated/proto/thing/squawk.js";
 import { activityNotificationId, RECORD_TYPE } from "../src/notifications/notificationModels.js";
 import {
   onNotifiableThingRecordWritten,

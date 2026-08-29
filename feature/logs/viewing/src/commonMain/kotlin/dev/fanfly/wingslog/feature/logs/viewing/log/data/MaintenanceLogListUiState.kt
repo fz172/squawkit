@@ -1,9 +1,9 @@
 package dev.fanfly.wingslog.feature.logs.viewing.log.data
 
-import dev.fanfly.wingslog.aircraft.ComponentType
-import dev.fanfly.wingslog.aircraft.MaintenanceLog
-import dev.fanfly.wingslog.aircraft.MaintenanceTask
-import dev.fanfly.wingslog.aircraft.Squawk
+import dev.fanfly.wingslog.thing.ComponentType
+import dev.fanfly.wingslog.thing.MaintenanceLog
+import dev.fanfly.wingslog.thing.MaintenanceTask
+import dev.fanfly.wingslog.thing.Squawk
 import dev.fanfly.wingslog.feature.logs.datamanager.authorship.LogAuthorship
 
 data class LogFilter(

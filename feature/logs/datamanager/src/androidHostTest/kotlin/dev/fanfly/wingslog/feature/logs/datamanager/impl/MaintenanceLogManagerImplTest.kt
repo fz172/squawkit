@@ -1,7 +1,7 @@
 package dev.fanfly.wingslog.feature.logs.datamanager.impl
 
 import com.google.common.truth.Truth.assertThat
-import dev.fanfly.wingslog.aircraft.MaintenanceLog
+import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.core.storage.ThingScopeResolver
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.EntityScope

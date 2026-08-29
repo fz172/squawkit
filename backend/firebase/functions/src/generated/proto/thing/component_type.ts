@@ -2,7 +2,7 @@
 // versions:
 //   protoc-gen-ts_proto  v2.11.8
 //   protoc               v3.19.1
-// source: aircraft/component_type.proto
+// source: thing/component_type.proto
 
 /* eslint-disable */
 

@@ -1,6 +1,6 @@
 package dev.fanfly.wingslog.feature.technician.datamanager.merge
 
-import dev.fanfly.wingslog.aircraft.Technician
+import dev.fanfly.wingslog.thing.Technician
 
 /**
  * Duplicate detection for the technician roster (design §7.4).

@@ -1,7 +1,7 @@
 package dev.fanfly.wingslog.feature.logs.sharedassets.util
 
 import androidx.compose.runtime.Composable
-import dev.fanfly.wingslog.aircraft.ComponentType
+import dev.fanfly.wingslog.thing.ComponentType
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.Res
 import wingslog.core.sharedassets.generated.resources.component_airframe

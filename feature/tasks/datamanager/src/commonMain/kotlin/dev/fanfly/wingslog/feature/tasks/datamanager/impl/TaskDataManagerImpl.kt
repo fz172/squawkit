@@ -1,7 +1,7 @@
 package dev.fanfly.wingslog.feature.tasks.datamanager.impl
 
 import co.touchlab.kermit.Logger
-import dev.fanfly.wingslog.aircraft.MaintenanceTask
+import dev.fanfly.wingslog.thing.MaintenanceTask
 import dev.fanfly.wingslog.core.model.id.generateRandomId
 import dev.fanfly.wingslog.core.storage.ThingScopeResolver
 import dev.fanfly.wingslog.core.storage.CollectionKind

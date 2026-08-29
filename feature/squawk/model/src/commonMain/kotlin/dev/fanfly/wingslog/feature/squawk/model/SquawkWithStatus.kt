@@ -1,8 +1,8 @@
 package dev.fanfly.wingslog.feature.squawk.model
 
-import dev.fanfly.wingslog.aircraft.Squawk
-import dev.fanfly.wingslog.aircraft.SquawkDismissReason
-import dev.fanfly.wingslog.aircraft.SquawkPriority
+import dev.fanfly.wingslog.thing.Squawk
+import dev.fanfly.wingslog.thing.SquawkDismissReason
+import dev.fanfly.wingslog.thing.SquawkPriority
 
 data class SquawkWithStatus(
   val squawk: Squawk,

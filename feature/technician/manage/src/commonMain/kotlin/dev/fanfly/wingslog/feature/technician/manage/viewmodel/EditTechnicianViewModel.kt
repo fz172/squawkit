@@ -3,9 +3,9 @@ package dev.fanfly.wingslog.feature.technician.manage.viewmodel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dev.fanfly.wingslog.aircraft.CertExpireLimit
-import dev.fanfly.wingslog.aircraft.CertificateType
-import dev.fanfly.wingslog.aircraft.Technician
+import dev.fanfly.wingslog.thing.CertExpireLimit
+import dev.fanfly.wingslog.thing.CertificateType
+import dev.fanfly.wingslog.thing.Technician
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager

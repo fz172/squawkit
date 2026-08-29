@@ -1,7 +1,7 @@
 package dev.fanfly.wingslog.feature.thing.dashboard.data
 
-import dev.fanfly.wingslog.aircraft.MaintenanceLog
-import dev.fanfly.wingslog.aircraft.Squawk
+import dev.fanfly.wingslog.thing.MaintenanceLog
+import dev.fanfly.wingslog.thing.Squawk
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
 import dev.fanfly.wingslog.feature.sharing.model.ShareRole
 import dev.fanfly.wingslog.feature.squawk.model.SquawkWithStatus

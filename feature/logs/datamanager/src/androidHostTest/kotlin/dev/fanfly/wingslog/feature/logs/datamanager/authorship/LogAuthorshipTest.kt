@@ -1,8 +1,8 @@
 package dev.fanfly.wingslog.feature.logs.datamanager.authorship
 
 import com.google.common.truth.Truth.assertThat
-import dev.fanfly.wingslog.aircraft.MaintenanceLog
-import dev.fanfly.wingslog.aircraft.Technician
+import dev.fanfly.wingslog.thing.MaintenanceLog
+import dev.fanfly.wingslog.thing.Technician
 import org.junit.Test
 
 private const val TECH_UID = "uid-technician"

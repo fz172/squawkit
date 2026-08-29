@@ -1,8 +1,8 @@
 package dev.fanfly.wingslog.feature.squawk.datamanager.impl
 
 import co.touchlab.kermit.Logger
-import dev.fanfly.wingslog.aircraft.Squawk
-import dev.fanfly.wingslog.aircraft.SquawkDismissReason
+import dev.fanfly.wingslog.thing.Squawk
+import dev.fanfly.wingslog.thing.SquawkDismissReason
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.model.id.generateRandomId
 import dev.fanfly.wingslog.core.storage.ThingScopeResolver

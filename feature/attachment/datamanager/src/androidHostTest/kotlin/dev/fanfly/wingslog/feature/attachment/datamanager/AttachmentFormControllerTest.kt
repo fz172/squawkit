@@ -1,8 +1,8 @@
 package dev.fanfly.wingslog.feature.attachment.datamanager
 
 import com.google.common.truth.Truth.assertThat
-import dev.fanfly.wingslog.aircraft.Attachment
-import dev.fanfly.wingslog.aircraft.AttachmentType
+import dev.fanfly.wingslog.thing.Attachment
+import dev.fanfly.wingslog.thing.AttachmentType
 import dev.fanfly.wingslog.feature.attachment.model.PendingAttachment
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
 import io.mockk.coEvery

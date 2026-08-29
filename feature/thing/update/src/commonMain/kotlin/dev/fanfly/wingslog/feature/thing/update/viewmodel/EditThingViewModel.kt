@@ -4,10 +4,10 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
-import dev.fanfly.wingslog.aircraft.Engine
-import dev.fanfly.wingslog.aircraft.Propeller
-import dev.fanfly.wingslog.aircraft.PropellerBlade
-import dev.fanfly.wingslog.aircraft.PropellerHub
+import dev.fanfly.wingslog.thing.Engine
+import dev.fanfly.wingslog.thing.Propeller
+import dev.fanfly.wingslog.thing.PropellerBlade
+import dev.fanfly.wingslog.thing.PropellerHub
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager

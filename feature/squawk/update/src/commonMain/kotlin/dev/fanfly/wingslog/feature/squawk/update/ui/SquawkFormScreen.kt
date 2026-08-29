@@ -34,7 +34,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import dev.fanfly.wingslog.aircraft.SquawkDismissReason
+import dev.fanfly.wingslog.thing.SquawkDismissReason
 import dev.fanfly.wingslog.core.analytics.LocalAnalytics
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedTopBar
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
@@ -62,7 +62,7 @@ fun SquawkFormScreen(
   state: SquawkFormState,
   onTitleChange: (String) -> Unit,
   onDescriptionChange: (String) -> Unit,
-  onPriorityChange: (dev.fanfly.wingslog.aircraft.SquawkPriority) -> Unit,
+  onPriorityChange: (dev.fanfly.wingslog.thing.SquawkPriority) -> Unit,
   onSave: () -> Unit,
   onBack: () -> Unit,
   onAddLog: () -> Unit,

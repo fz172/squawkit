@@ -2,7 +2,7 @@
 // versions:
 //   protoc-gen-ts_proto  v2.11.8
 //   protoc               v3.19.1
-// source: aircraft/maintenance_task.proto
+// source: thing/maintenance_task.proto
 
 /* eslint-disable */
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";

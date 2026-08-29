@@ -1,8 +1,8 @@
 package dev.fanfly.wingslog.feature.logs.viewing.log.data
 
 import com.google.common.truth.Truth.assertThat
-import dev.fanfly.wingslog.aircraft.MaintenanceLog
-import dev.fanfly.wingslog.aircraft.Technician
+import dev.fanfly.wingslog.thing.MaintenanceLog
+import dev.fanfly.wingslog.thing.Technician
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.logs.datamanager.authorship.LogAuthorship
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
