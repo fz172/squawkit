@@ -76,11 +76,17 @@ message ThingTemplate {
 
 `(id, version)` is the identity. Everything else is payload.
 
-**This proto is not stored per-user and gets no `CollectionKind`.** That is a deliberate departure from every
-other message in the app. `CollectionKind` exists to route *user-scoped, synced* entities through `EntityStore`
-and the sync engine, and every path it builds is `/users/{uid}/...`. Templates are **global** — the same
-`airplane` v1 for everyone — so putting them through a per-user store would replicate one identical document
-into every account and make each user's copy independently corruptible. §7 covers where they actually live.
+**One message, two lifecycles.** The same `ThingTemplate` is used for the global canonical pool and for the
+per-user copy a Thing actually resolves against (§5). Only the second is a synced entity with a `CollectionKind`;
+the first is a local cache. §7 covers both, and the distinction decides more than storage layout — it decides
+what is immutable, what syncs, and what a share member can read.
+
+Owned copies add two fields recording their provenance:
+
+```proto
+  string source_id = 13;       // the canonical id this was copied from
+  int32 source_version = 14;   // and its version — see §5.3
+```
 
 ---
 
@@ -120,39 +126,65 @@ Two properties worth being explicit about:
 
 ---
 
-## 5. Immutability
+## 5. Two pools: canonical and owned
 
-**A published template is never modified. A change is a new `version`.** This is the invariant the rest of the
-design leans on, and it is worth being precise about what it buys: a user who created a Thing last year does not
-get their field labels, meters, or capabilities rearranged underneath them by a server-side edit.
+The system has **two kinds of template**, and almost every question below resolves differently for each.
 
-Every Thing pins `(template_id, template_version)` — both fields already exist and are already populated.
+| | **Canonical** | **Owned** |
+|---|---|---|
+| Scope | global, one copy for everyone | one user's tree |
+| Mutability | **immutable** — a change is a new `version` | the user's to edit |
+| Source | baked-in assets + fetch RPC (§4) | copied from canonical on first use, or authored from scratch |
+| Purpose | **the picker, and nothing else** | rendering the user's Things |
+| Synced? | no — a local cache (§7.1) | **yes** — an ordinary synced entity (§7.2) |
 
-### 5.1 The consequence that needs deciding: old versions must remain reachable
+The rule that connects them: **the moment a template is used to create a Thing, the user gets their own copy.**
+The same applies to customising a canonical template and to authoring one from scratch — both produce an owned
+template, and owned templates are what Things actually resolve against.
 
-Immutability plus pinning creates an obligation nobody has to think about until it breaks. If a Thing pins
-`(airplane, 1)`, and the app bakes in only `(airplane, 3)`, and the RPC serves only the latest — then **v1 is
-unreachable and that Thing cannot render.** The failure surfaces on someone's oldest, most valuable record.
+### 5.1 What this buys, and what it retires
 
-Three ways out, and this doc recommends the third:
+An earlier revision of this doc spent a section on a problem this design does not have. If Things pinned
+*canonical* `(id, version)` pairs, then immutability plus pinning would oblige the canonical pool to keep every
+version reachable forever — otherwise a Thing pinned to `(airplane, 1)` could not render on a build that ships
+only v3. That section recommended a reference-counted cache to solve it.
 
-| Option | Cost |
-|---|---|
-| **RPC serves any requested `(id, version)`** | Backend retains every version forever. Cheap to store, but a network dependency to open a Thing — violates local-first (R1). |
-| **App bakes in every version ever published** | Bundle grows without bound; a template published after this build still cannot be reached. Does not actually solve it. |
-| **Cache every template the device has ever resolved, and never evict one still referenced** | Local-first preserved. Bounded by templates actually used, not templates published. |
+**Copy-on-use dissolves it.** The template a Thing needs travels with the user's own data, in the user's own
+tree, synced by the machinery that already syncs everything else. The canonical pool never has to answer "what
+did v1 look like," because nothing asks it. Canonical retention becomes a product convenience — how far back the
+picker offers — rather than a correctness requirement.
 
-**Recommendation: the local cache is authoritative and eviction is reference-counted.** A template is removable
-only when no Thing on the device pins it. This keeps the local-first guarantee — a Thing opens offline, forever,
-without asking the network what it used to look like — and it means the backend's retention policy is a
-convenience rather than a correctness dependency.
+It also makes the immutability guarantee stronger than versioning alone could. A user is insulated from canonical
+changes not because the app is careful to pin a version, but because **their template is not the canonical one**.
+There is no path by which a server-side edit reaches an existing Thing, including no path through a bug.
 
-> **The rejected alternative, and why it is tempting.** Snapshot the resolved template *onto each Thing*.
-> Immutability then needs no mechanism at all, and Phase 1 already set the precedent by putting `spec` and
-> `components` on the Thing rather than referencing the template. It was rejected because a template carries the
-> lexicon, capabilities, meters, and starter tasks — copying all of it into every Thing inflates documents that
-> already sync on every edit, and a corrected typo in a display string could never reach anything. Pinning by
-> reference keeps the door open to publishing `(airplane, 4)` and letting users move deliberately.
+### 5.2 The question that decides everything else: does one owned template serve many Things?
+
+A user with three airplanes creates them from the same canonical template. Do they end up with **one** owned
+template or **three**?
+
+This is a product question, not an implementation detail, and it decides the storage layout in §7:
+
+- **One shared copy** — customising "my airplane template" changes all three airplanes. Matches the intuition
+  that it is *a template*, a thing you keep and adjust.
+- **A copy per Thing** — the three drift independently; editing one leaves the others alone. Matches the
+  intuition that the template is *baked into* the Thing at creation, which is the phrasing the requirement uses.
+
+**This doc assumes one shared copy per `(id, version)` per user**, because "mutate it and it becomes theirs"
+reads as owning a template rather than owning N snapshots, and because the alternative multiplies storage by the
+number of Things for no user-visible gain. **It needs confirming** — reversing it later is a data migration
+(§11 #1).
+
+### 5.3 Versioning within owned templates
+
+Canonical `version` is a publication counter, immutable by definition. An owned template's version is seeded
+from the canonical one it was copied from, and then means something different: it is *provenance*, not identity.
+
+That has a consequence worth stating plainly: after a user customises, `(airplane, 3)` in **their** tree and
+`(airplane, 3)` in the canonical pool are no longer the same object. That is correct and intended — the owned
+copy is authoritative for their Things — but it means `(id, version)` is not globally meaningful, and any code
+that compares them across the boundary is wrong. Owned templates therefore carry `source_id` and
+`source_version` recording what they were copied from, distinct from their own identity.
 
 ---
 
@@ -161,8 +193,8 @@ convenience rather than a correctness dependency.
 `min_app_version` is a `versionCode` floor, checked against `version.properties`'s single monotonic
 `versionCode` (currently `1400`), which is shared across platforms.
 
-**A client refuses any template whose `min_app_version` exceeds its own.** Refused templates are absent from the
-picker entirely, not shown-and-disabled — the same principle §4.8 applies to capabilities.
+**A client refuses any canonical template whose `min_app_version` exceeds its own** — absent from the picker
+entirely, not shown-and-disabled, the same principle §4.8 applies to capabilities.
 
 ### 6.1 What this actually protects against
 
@@ -180,52 +212,105 @@ Proto3 surfaces unknown enum values distinctly, so "this template names a capabi
 mechanically detectable, independent of whether the author set the floor correctly. `min_app_version` is the
 declared contract; unknown-enum detection is the check that does not depend on anyone getting it right.
 
-### 6.2 The gap in "don't show it": an unsupported template on an *existing* Thing
+### 6.2 The unresolvable-template state, which is now routine rather than exotic
 
-PRD §5 and the requirement as stated cover the **picker** — don't offer what you can't run. They do not cover the
-case that actually reaches users:
+"Don't show it" is the right answer for the **picker**. It is not available for a Thing that already exists, and
+copy-on-use makes that case *common* rather than a version-skew curiosity:
 
-> A Thing is created on device A running a newer build, with `(boat, 2)` requiring `versionCode ≥ 1500`. It syncs
-> to device B running `1400`. **Device B cannot hide the user's Thing** — it is their data, it appears in their
-> switcher, and it counts against their limit.
+> **The ordinary case.** A Thing and its owned template are two documents. They sync independently. A device that
+> has pulled the Thing but not yet its template has an unresolvable Thing — for seconds, or for as long as the
+> pull takes on a cold start.
 
-Hiding it is wrong: silent data disappearance is the failure mode this codebase has repeatedly refused
-elsewhere. Rendering it with a fallback template is worse: it would show a boat's data under airplane labels.
+> **The version-skew case.** A Thing is created on a device running a newer build, with a template requiring
+> `versionCode ≥ 1500`. It syncs to a device on `1400`.
+
+Neither may hide the Thing. It is the user's data, it appears in their switcher, it counts against their limit,
+and silent disappearance is the failure mode this codebase refuses elsewhere. Rendering it under a *fallback*
+template is worse — that shows a boat's data with airplane labels.
 
 **A Thing whose template cannot be resolved renders in a defined degraded state**: its name, its raw spec values
-as unlabelled key/value pairs, and a prompt to update the app. It is never hidden, never silently relabelled, and
-never editable — editing under a template you cannot interpret is how a client writes data that violates the
-template's own rules.
+as unlabelled key/value pairs, and — for the version-skew case only — a prompt to update. Never hidden, never
+relabelled, and **never editable**, because editing under a template you cannot interpret is how a client writes
+data violating rules it cannot see.
+
+Because the sync race is transient and the version skew is not, the two need different copy: "loading" versus
+"this needs a newer app." The distinguishing signal is whether the template is *absent* or *present but too new*.
 
 This is the same shape as `BlobDownloadDriver`'s "a 404 is an answer, not an outage": an unresolvable template is
-a *known* state to be represented, not an error to be swallowed.
+a known state to represent, not an error to swallow.
 
 ### 6.3 The update prompt is platform-specific
 
-"Prompt the user to update" is not one behaviour:
-
 - **Android / iOS** — a real action: deep-link to the store listing.
-- **Web** — there is no install step. The deployed bundle updates on reload, so the prompt is "reload to get the
-  latest version," and a stale web client is a cache-lifetime question rather than an install one.
+- **Web** — there is no install step. The deployed bundle updates on reload, so the prompt is "reload," and a
+  stale web client is a cache-lifetime question rather than an install one.
 
-Worth noting that `versionCode` is bumped by `assembleRelease`, which is an *Android* task — so the web build's
-relationship to that number needs settling before the floor can be trusted cross-platform (§11).
+Web reads the same `versionCode` once §11 #1's task lands. Until then the web build renders a version string
+that omits it entirely, so a floor check on web has nothing to compare against — which is why that task gates
+any use of `min_app_version`, not just its display.
 
 ---
 
-## 7. Where the pool lives on-device
+## 7. Storage
 
-Not in `EntityStore`. Templates are global, not user-scoped, and every path `EntityScope` builds begins
-`/users/{uid}/`.
+The two pools are stored by completely different machinery, which is the clearest evidence they are actually
+two things.
 
-A dedicated SQLDelight table, keyed `(id, version)`, holding the encoded `ThingTemplate` bytes, outside the
-`entity` table and outside the sync engine's push/pull loop. It needs none of what that machinery provides —
-no dirty tracking, no watermarks, no tombstones, no per-user scoping — and inheriting them would mean a global
-document pushed once per account.
+### 7.1 Canonical: a local cache, no `CollectionKind`
 
-This also keeps the template pool out of `CollectionKind`, which matters for a reason beyond tidiness:
-adding a `CollectionKind` means choosing a `wireName` and a `schemaName`, and those are **stored identity** that
-cannot be changed later without a migration (#638). Templates need no such commitment.
+Global, identical for everyone, and not the user's data. A dedicated SQLDelight table keyed `(id, version)`
+holding encoded bytes — outside the `entity` table and outside the sync engine.
+
+It needs nothing that machinery provides: no dirty tracking, no watermarks, no tombstones, no per-user scoping.
+Routing it through `EntityStore` would replicate one identical document into every account and make each user's
+copy independently corruptible.
+
+It also gets **no `CollectionKind`**, and that is worth being deliberate about: adding one means choosing a
+`wireName` and a `schemaName`, which are **stored identity** that cannot change later without a migration
+(#638). The canonical pool needs no such commitment.
+
+### 7.2 Owned: a synced entity, and therefore a `CollectionKind`
+
+Owned templates are ordinary user data — created by the user, mutated by the user, needed on every device.
+So they sync like everything else, and they **do** take a `CollectionKind`, bringing the current 11 to 12
+exactly as PRD §3.3 anticipated.
+
+> An earlier revision of this doc argued templates should get no `CollectionKind` at all. That was correct for
+> the canonical pool and wrong for owned templates — it followed from assuming Things resolve against canonical
+> templates, which copy-on-use replaced.
+
+Its `wireName` and `schemaName` are a permanent commitment. Per the convention now in `CollectionKind`'s KDoc,
+they take **Thing vocabulary** — `thing_template` / `thing.ThingTemplate`.
+
+### 7.3 Where the owned template sits — and why sharing decides it
+
+This is the placement question, and the sharing model constrains it more than storage cost does.
+
+`firestore.rules` grants a share member access to exactly
+`/users/{host}/thing/{acId}/{kind}/{docId}` where `isSharedAircraftKind(kind)` — currently
+`maintenance_log`, `maintenance_task`, `maintenance_overview`, `squawk`. **User-root collections are invisible to
+members**; that is why the technician mirror is *copied into* `ShareMemberDoc.technicianMirror` rather than
+granted from the host's `technician` records.
+
+So:
+
+| Placement | Sharing | Cost |
+|---|---|---|
+| **User-root** `/users/{uid}/thing_template/{id}` | ✗ members cannot read it — **every shared Thing renders degraded** unless a new grant is added | one copy per user; supports §5.2's shared-copy model directly |
+| **Per-Thing** `/users/{uid}/thing/{acId}/thing_template/{id}` | ✓ works by adding one entry to `isSharedAircraftKind` | one copy per Thing; contradicts §5.2 |
+| **Embedded in the Thing document** | ✓ automatic — members already `get` the Thing doc | inflates a document that re-syncs on every edit; contradicts §5.2 |
+
+**Recommendation: user-root, plus an explicit share grant.** It is the only option consistent with §5.2's shared
+copy, and the grant is bounded work — a `match` block for `thing_template` keyed by the *host*, readable by
+anyone who is a member of any of that host's shares.
+
+The privacy cost is real and should be stated rather than glossed: a member of one shared aircraft could read
+the host's whole template collection, which leaks *which kinds of thing the host owns* — not their data, but a
+signal. If that is unacceptable, the technician-mirror precedent applies: copy the resolved template into the
+share, and accept the duplication.
+
+**This is the decision most worth reviewing**, because it is simultaneously a sharing-rules change, a privacy
+tradeoff, and the thing §5.2 depends on.
 
 ---
 
@@ -280,9 +365,12 @@ show/hide means auditing every call site twice.
 
 ## 11. Open questions
 
-1. **Does `versionCode` mean anything on web?** It is bumped by `assembleRelease`, an Android task. If web
-   deploys independently — it did on 2026-08-29 — then a single floor cannot gate all three platforms honestly.
-   Either the number becomes genuinely shared, or `min_app_version` needs a per-platform form.
+1. ~~**Does `versionCode` mean anything on web?**~~ **Settled: the number becomes genuinely shared.** Web
+   currently renders `1.0.260826.1` from `core/appinfo/build.gradle.kts`, which composes
+   `major.minor.buildDate.patch` and never reads `versionCode` at all. It moves to the Android/iOS form —
+   `1.0.260826(1399)` — so one monotonic `versionCode` gates all three platforms and `min_app_version` means the
+   same thing everywhere. Tracked as a Phase 2 task; note `assembleRelease` is what *increments* the number, so
+   a web-only deploy ships whatever the last release build stamped.
 2. **Who publishes a template, and through what?** No admin surface exists. A script following
    `grant-entitlement.mjs` is the cheap answer, and immutability makes a mistake unfixable by editing —
    a bad publish is superseded, never corrected.
