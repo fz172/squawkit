@@ -1,7 +1,7 @@
 package dev.fanfly.wingslog.feature.technician.datamanager.impl
 
 import com.google.common.truth.Truth.assertThat
-import dev.fanfly.wingslog.aircraft.Technician
+import dev.fanfly.wingslog.thing.Technician
 import dev.fanfly.wingslog.core.model.userinfo.UserInfo
 import dev.fanfly.wingslog.core.storage.CloudSyncSetting
 import dev.fanfly.wingslog.core.storage.CollectionKind

@@ -26,9 +26,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import dev.fanfly.wingslog.aircraft.CertExpireLimit
-import dev.fanfly.wingslog.aircraft.CertificateType
-import dev.fanfly.wingslog.aircraft.Technician
+import dev.fanfly.wingslog.thing.CertExpireLimit
+import dev.fanfly.wingslog.thing.CertificateType
+import dev.fanfly.wingslog.thing.Technician
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.ui.common.compose.FormSectionLabel
 import dev.fanfly.wingslog.core.ui.common.compose.FormTextField

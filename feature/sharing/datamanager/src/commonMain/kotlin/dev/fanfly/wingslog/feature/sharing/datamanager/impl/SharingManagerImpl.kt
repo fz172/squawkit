@@ -2,9 +2,9 @@ package dev.fanfly.wingslog.feature.sharing.datamanager.impl
 
 import app.cash.sqldelight.async.coroutines.awaitAsOneOrNull
 import co.touchlab.kermit.Logger
-import dev.fanfly.wingslog.aircraft.CertExpireLimit
-import dev.fanfly.wingslog.aircraft.CertificateType
-import dev.fanfly.wingslog.aircraft.Technician
+import dev.fanfly.wingslog.thing.CertExpireLimit
+import dev.fanfly.wingslog.thing.CertificateType
+import dev.fanfly.wingslog.thing.Technician
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.model.sharing.SharedAircraftRef
 import dev.fanfly.wingslog.core.storage.CollectionKind
@@ -48,7 +48,7 @@ import kotlin.time.Clock
 import dev.fanfly.wingslog.core.model.sharing.ShareRole as ProtoShareRole
 
 /**
- * Online-only Firestore/Functions client for aircraft sharing (docs/sharing §6.2). Reads of the
+ * Online-only Firestore/Functions client for thing sharing (docs/sharing §6.2). Reads of the
  * share ACL and invite writes go straight to Firestore; every cross-tree operation is a callable.
  * `observeMyRole` is answered locally from the refs store so it's instant and offline-correct.
  */
@@ -63,11 +63,11 @@ class SharingManagerImpl(
 ) : SharingManager {
   private val refStore =
     storeFactory.create<SharedAircraftRef>(CollectionKind.SharedAircraftRef)
-  private val aircraftStore =
+  private val thingStore =
     storeFactory.create<Thing>(CollectionKind.Thing)
 
   /**
-   * The ACL for [acId] under [hostUid]. Keyed by host since #204: an aircraft id is unique only
+   * The ACL for [acId] under [hostUid]. Keyed by host since #204: an thing id is unique only
    * within a tree, so a globally-keyed ACL could be claimed by anyone who knew the id.
    */
   private fun shareDoc(hostUid: String, acId: String) =
@@ -77,7 +77,7 @@ class SharingManagerImpl(
       .document(acId)
 
   /**
-   * Whose tree this aircraft lives in — ours if we own it, otherwise the host named on our ref.
+   * Whose tree this thing lives in — ours if we own it, otherwise the host named on our ref.
    * Answered from the local stores, so it is available offline and needs no round trip.
    *
    * Null when neither is present: we are not the owner and hold no ref, so we have no business
@@ -87,7 +87,7 @@ class SharingManagerImpl(
     val uid = auth.currentUser?.uid ?: return flowOf(null)
     val scope = EntityScope.userRoot(uid)
     return combine(
-      aircraftStore.observe(acId, scope),
+      thingStore.observe(acId, scope),
       refStore.observe(acId, scope),
     ) { own, ref ->
       when {
@@ -107,7 +107,7 @@ class SharingManagerImpl(
    * Bumped after a successful [createInvite] to force the roster listener in [observeShareState]
    * to resubscribe. A denied `.snapshots()` listener (no ACL yet) is CLOSED by the underlying SDK —
    * there is no retry once the rules start allowing the read, so without this the very first invite
-   * on a never-shared aircraft would bootstrap the ACL server-side while our still-dead listener
+   * on a never-shared thing would bootstrap the ACL server-side while our still-dead listener
    * never notices, leaving the roster (and the invite the CODE view is about to show) stuck.
    */
   private val rosterRetryTrigger = MutableStateFlow(0)
@@ -203,7 +203,7 @@ class SharingManagerImpl(
       // it is the earliest signal a member has that their access ended, and the screen watching this
       // roster has to react to it. Rules don't flap, so a denial is a real answer, not a hiccup.
       //
-      // On our OWN aircraft, though, a denial means something else: there is no ACL yet — no invite
+      // On our OWN thing, though, a denial means something else: there is no ACL yet — no invite
       // has ever been created (aircraft_shares match block) — not a revocation. Stand in as the sole
       // member from the locally-known owner role instead of surfacing a dead-end "no access"; the
       // real member doc backfills itself (§7.2) once the first invite bootstraps the share.
@@ -254,9 +254,9 @@ class SharingManagerImpl(
   override fun observeMyRole(acId: String): Flow<ShareRole?> {
     val uid = auth.currentUser?.uid ?: return flowOf(null)
     val scope = EntityScope.userRoot(uid)
-    // Own aircraft ⇒ owner; otherwise the ref's advisory role; otherwise not a member.
+    // Own thing ⇒ owner; otherwise the ref's advisory role; otherwise not a member.
     return combine(
-      aircraftStore.observe(acId, scope),
+      thingStore.observe(acId, scope),
       refStore.observe(acId, scope),
     ) { own, ref ->
       when {
@@ -269,7 +269,7 @@ class SharingManagerImpl(
 
   override fun observeIsForeignHosted(acId: String): Flow<Boolean> {
     val uid = auth.currentUser?.uid ?: return flowOf(false)
-    // A ref exists iff the aircraft was shared *into* this fleet — exactly the foreign-hosted case,
+    // A ref exists iff the thing was shared *into* this fleet — exactly the foreign-hosted case,
     // and the co-owner-on-a-foreign-tree case too, since a co-owner also holds a ref.
     return refStore.observe(acId, EntityScope.userRoot(uid))
       .map { it != null }
@@ -279,14 +279,14 @@ class SharingManagerImpl(
   override suspend fun createInvite(
     acId: String,
     role: ShareRole,
-    aircraftLabel: String,
+    thingLabel: String,
   ): Result<InviteLink> = runCatching {
     val res = functions.httpsCallable("createAircraftShareInvite")
       .invoke(
         CreateInviteRequest(
-          aircraftId = acId,
+          thingId = acId,
           role = role.wire(),
-          aircraftLabel = aircraftLabel,
+          thingLabel = thingLabel,
         ),
       )
       .data<CreateInviteResponse>()
@@ -300,7 +300,7 @@ class SharingManagerImpl(
     }
 
     // The function just bootstrapped the ACL server-side. If this was the first invite on a
-    // never-shared aircraft, our roster listener was denied before the ACL existed and the SDK
+    // never-shared thing, our roster listener was denied before the ACL existed and the SDK
     // closed it for good — resubscribe so the CODE view about to open can actually see this invite.
     rosterRetryTrigger.update { it + 1 }
 
@@ -308,7 +308,7 @@ class SharingManagerImpl(
       code = res.code,
       formattedCode = res.formattedCode,
       codeId = res.codeId,
-      url = "$SHARE_URL_BASE#${res.code}", // names no aircraft, no host — only the code
+      url = "$SHARE_URL_BASE#${res.code}", // names no thing, no host — only the code
       expiresAtEpochMs = res.expiresAtMs,
     )
   }
@@ -318,7 +318,7 @@ class SharingManagerImpl(
     codeId: String
   ): Result<Unit> = runCatching {
     functions.httpsCallable("cancelAircraftShareInvite")
-      .invoke(CancelInviteRequest(aircraftId = acId, codeId = codeId))
+      .invoke(CancelInviteRequest(thingId = acId, codeId = codeId))
     val uid = requireUid()
     writeLock.withLock {
       db.schemaQueries.deleteConfig(
@@ -335,7 +335,7 @@ class SharingManagerImpl(
         .invoke(RedeemRequest(code = code))
         .data<RedeemResponse>()
       RedeemOutcome(
-        aircraftId = res.aircraftId,
+        thingId = res.thingId,
         hostUid = res.hostUid,
         role = res.role.toModel(),
         alreadyMember = res.alreadyMember,
@@ -348,7 +348,7 @@ class SharingManagerImpl(
         .invoke(PreviewRequest(code = code))
         .data<PreviewResponse>()
       InvitePreview(
-        aircraftLabel = res.aircraftLabel,
+        thingLabel = res.thingLabel,
         hostName = res.hostName,
         role = res.role.toModel(),
       )
@@ -360,7 +360,7 @@ class SharingManagerImpl(
         .invoke(
           RevokeRequest(
             hostUid = hostUidFor(acId),
-            aircraftId = acId,
+            thingId = acId,
             memberUid = uid,
           ),
         )
@@ -375,7 +375,7 @@ class SharingManagerImpl(
       .invoke(
         UpdateRoleRequest(
           hostUid = hostUidFor(acId),
-          aircraftId = acId,
+          thingId = acId,
           memberUid = uid,
           role = role.wire()
         )
@@ -415,17 +415,17 @@ class SharingManagerImpl(
         technicianMirror = self?.toMirrorWire(),
       )
 
-      // A just-redeemed aircraft isn't in the local stores yet — its ref is still syncing down — so it
-      // is named explicitly. The ACL check below is what keeps that safe: naming an aircraft we are
+      // A just-redeemed thing isn't in the local stores yet — its ref is still syncing down — so it
+      // is named explicitly. The ACL check below is what keeps that safe: naming an thing we are
       // not actually a member of publishes nothing.
       val targets = (memberships(uid) + listOfNotNull(alsoPublishTo)).distinct()
 
       targets.forEach { acId ->
-        // Each target sits in its host's namespace (#204): our own aircraft under us, a shared one
+        // Each target sits in its host's namespace (#204): our own thing under us, a shared one
         // under whoever hosts it. A target we can place in neither is not ours to publish into.
         val hostUid = observeHostUid(acId).first() ?: return@forEach
 
-        // The ACL decides whether we're a member at all, and with what role. An own aircraft that was
+        // The ACL decides whether we're a member at all, and with what role. An own thing that was
         // never shared has no ACL doc — skip it rather than bootstrapping a share nobody asked for.
         val myRole = shareDoc(hostUid, acId).get()
           .takeIf { it.exists }
@@ -461,7 +461,7 @@ class SharingManagerImpl(
     val scope = EntityScope.userRoot(uid)
     return combine(
       refStore.observeAll(scope),
-      aircraftStore.observeAll(scope),
+      thingStore.observeAll(scope),
     ) { refs, own -> (refs.map { it.id } + own.map { it.id }).distinct() }
       .distinctUntilChanged()
       .flatMapLatest { acIds ->
@@ -489,7 +489,7 @@ class SharingManagerImpl(
    * The members of one share who have published a mirror, excluding [selfUid] — the caller's own
    * record is listed separately and comes from their local store, not from a mirror.
    *
-   * An aircraft that was never shared just yields an empty roster; a denied read degrades to empty
+   * An thing that was never shared just yields an empty roster; a denied read degrades to empty
    * rather than taking the caller's whole list down.
    */
   private fun linkedTechniciansIn(
@@ -519,8 +519,8 @@ class SharingManagerImpl(
       .catch { emit(emptyList()) }
 
   /**
-   * Every share the user is a member of: aircraft shared *with* them (the local refs store, per
-   * §7.2) plus their own aircraft, which are the shares they host. Own aircraft that were never
+   * Every share the user is a member of: thing shared *with* them (the local refs store, per
+   * §7.2) plus their own thing, which are the shares they host. Own thing that were never
    * shared simply have no member doc, and are skipped by the existence check at the call site.
    */
   private suspend fun memberships(uid: String): List<String> {
@@ -528,7 +528,7 @@ class SharingManagerImpl(
     val shared = refStore.observeAll(scope)
       .first()
       .map { it.id }
-    val own = aircraftStore.observeAll(scope)
+    val own = thingStore.observeAll(scope)
       .first()
       .map { it.id }
     return (shared + own).distinct()
@@ -554,7 +554,7 @@ class SharingManagerImpl(
   companion object {
     private val logger = Logger.withTag("SharingManager")
     // MIGRATION (Phase G3, docs/product/thing_migration_design.md §5.4): the ACL tree moved from
-    // aircraft_shares/{hostUid}/aircraft/{acId} to thing_shares/{hostUid}/thing/{acId}.
+    // aircraft_shares/{hostUid}/thing/{acId} to thing_shares/{hostUid}/thing/{acId}.
     //
     // The constant NAMES keep saying "aircraft" deliberately — only their values move. §3.3 draws
     // the line there: rename what is stored identity, leave alone what is only a name in code.
@@ -703,9 +703,9 @@ private data class InviteWire(
 
 @Serializable
 private data class CreateInviteRequest(
-  val aircraftId: String,
+  val thingId: String,
   val role: String,
-  val aircraftLabel: String,
+  val thingLabel: String,
 )
 
 @Serializable
@@ -718,7 +718,7 @@ private data class CreateInviteResponse(
 
 @Serializable
 private data class CancelInviteRequest(
-  val aircraftId: String,
+  val thingId: String,
   val codeId: String
 )
 
@@ -727,7 +727,7 @@ private data class PreviewRequest(val code: String)
 
 @Serializable
 private data class PreviewResponse(
-  val aircraftLabel: String = "",
+  val thingLabel: String = "",
   val hostName: String = "",
   val role: String = "technician",
 )
@@ -737,7 +737,7 @@ private data class RedeemRequest(val code: String)
 
 @Serializable
 private data class RedeemResponse(
-  val aircraftId: String = "",
+  val thingId: String = "",
   val hostUid: String = "",
   val role: String = "technician",
   val alreadyMember: Boolean = false,
@@ -746,14 +746,14 @@ private data class RedeemResponse(
 @Serializable
 private data class RevokeRequest(
   val hostUid: String,
-  val aircraftId: String,
+  val thingId: String,
   val memberUid: String,
 )
 
 @Serializable
 private data class UpdateRoleRequest(
   val hostUid: String,
-  val aircraftId: String,
+  val thingId: String,
   val memberUid: String,
   val role: String,
 )

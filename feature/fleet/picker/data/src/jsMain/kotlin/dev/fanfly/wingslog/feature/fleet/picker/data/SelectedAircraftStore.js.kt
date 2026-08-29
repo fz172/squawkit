@@ -2,13 +2,13 @@ package dev.fanfly.wingslog.feature.fleet.picker.data
 
 import kotlinx.browser.localStorage
 
-/** Device-local selected-aircraft memory backed by the browser's `localStorage`. */
-class JsSelectedAircraftStore : SelectedAircraftStore {
+/** Device-local selected-thing memory backed by the browser's `localStorage`. */
+class JsSelectedThingStore : SelectedThingStore {
   override fun load(): String? = localStorage.getItem(KEY)
 
-  override fun save(aircraftId: String?) {
-    if (aircraftId == null) localStorage.removeItem(KEY)
-    else localStorage.setItem(KEY, aircraftId)
+  override fun save(thingId: String?) {
+    if (thingId == null) localStorage.removeItem(KEY)
+    else localStorage.setItem(KEY, thingId)
   }
 
   private companion object {

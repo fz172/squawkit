@@ -242,7 +242,7 @@ private fun ExportHistoryCard(
 ) {
   var showDeleteConfirm by remember { mutableStateOf(false) }
   var menuExpanded by remember { mutableStateOf(false) }
-  val aircraftTitle = aircraftSummary(record)
+  val aircraftTitle = thingSummary(record)
   val scope = scopeLine(record)
   val onDevice = record.file_path.isNotBlank()
   val canRetry =
@@ -486,7 +486,7 @@ private fun deleteConfirmBody(record: ExportRecord): String = when {
 }
 
 /** Aircraft tail summary ("N532SL" / "N532SL +2"), falling back to the file name for legacy records. */
-private fun aircraftSummary(record: ExportRecord): String {
+private fun thingSummary(record: ExportRecord): String {
   val tails = record.aircraft.map { it.tail_number.ifBlank { "—" } }
   return when (tails.size) {
     0 -> record.file_name

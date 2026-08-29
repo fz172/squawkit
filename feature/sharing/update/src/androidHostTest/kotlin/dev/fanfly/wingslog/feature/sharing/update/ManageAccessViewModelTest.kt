@@ -46,7 +46,7 @@ class ManageAccessViewModelTest {
   // Host-a-share gate; on (default-open) unless a test flips it.
   private val canHostShare = MutableStateFlow(true)
 
-  // Supplies the aircraft label carried on new invites for the invitee's preview (#201).
+  // Supplies the thing label carried on new invites for the invitee's preview (#201).
   private val fleet: FleetManager = mockk(relaxed = true)
 
   @Before
@@ -149,7 +149,7 @@ class ManageAccessViewModelTest {
 
   @Test
   fun rosterUnavailable_stillResolvesRole_andCanManage() = runTest {
-    // A never-shared aircraft: the owner isn't in memberRoles yet, so the roster read is denied.
+    // A never-shared thing: the owner isn't in memberRoles yet, so the roster read is denied.
     // Role is resolved locally and must still land (so "Create invite code" stays available); the
     // roster failure is swallowed rather than surfaced or left spinning.
     every { sharing.observeShareState(AC_ID) } returns flow {
@@ -199,7 +199,7 @@ class ManageAccessViewModelTest {
   @Test
   fun accessDeniedWithoutEverAppearingInRoster_doesNotCloseTheScreen() =
     runTest {
-      // The same PERMISSION_DENIED on the wire, but from an owner whose aircraft has no share doc yet.
+      // The same PERMISSION_DENIED on the wire, but from an owner whose thing has no share doc yet.
       // Nothing has been revoked — there is nothing to revoke — so the screen must stay put and let
       // them invite.
       role.value = ShareRole.OWNER

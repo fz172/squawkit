@@ -41,7 +41,7 @@ import wingslog.feature.settings.generated.resources.Res as SettingsRes
  * The confirmation in front of account deletion (#418).
  *
  * Names what actually goes — including the part a pilot cannot see from here, that **people they
- * have shared an aircraft with lose access to it**. Deletion tears the share down, so the cost
+ * have shared an thing with lose access to it**. Deletion tears the share down, so the cost
  * lands on someone who is not in the room; saying so is the difference between a confirmation and a
  * formality.
  *

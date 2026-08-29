@@ -1,7 +1,7 @@
 package dev.fanfly.wingslog.feature.technician.manage.viewmodel
 
 import com.google.common.truth.Truth.assertThat
-import dev.fanfly.wingslog.aircraft.Technician
+import dev.fanfly.wingslog.thing.Technician
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import io.mockk.every

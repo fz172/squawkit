@@ -2,7 +2,7 @@ package dev.fanfly.wingslog.feature.shell.di
 
 import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
-import dev.fanfly.wingslog.feature.fleet.picker.data.SelectedAircraftStore
+import dev.fanfly.wingslog.feature.fleet.picker.data.SelectedThingStore
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.shell.viewmodel.AdaptiveShellViewModel
 import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
@@ -20,7 +20,7 @@ val shellModule = module {
       sharingManager = get<SharingManager>(),
       subscriptionManager = get<SubscriptionManager>(),
       syncEngine = get<SyncEngine>(),
-      selectedAircraftStore = get<SelectedAircraftStore>(),
+      selectedThingStore = get<SelectedThingStore>(),
     )
   }
 }

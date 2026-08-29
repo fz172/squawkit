@@ -4,7 +4,7 @@ import dev.fanfly.wingslog.core.storage.blob.BlobRef
 
 /**
  * Client half of the attachment broker (design §9.2). Blobs on a **foreign-hosted** (shared)
- * aircraft live under the host's tree at `users/{hostUid}/thing/{acId}/blobs/{blobId}`, which
+ * thing live under the host's tree at `users/{hostUid}/thing/{acId}/blobs/{blobId}`, which
  * `storage.rules` deny cross-account. The broker is the only door across trees:
  *
  * - **Upload** mints a resumable-upload session into the host's tree via the `getBlobUploadSession`
@@ -26,7 +26,7 @@ interface AttachmentBroker {
    */
   suspend fun upload(
     hostUid: String,
-    aircraftId: String,
+    thingId: String,
     blobId: String,
     contentType: String?,
     bytes: ByteArray,
@@ -39,17 +39,17 @@ interface AttachmentBroker {
    */
   suspend fun download(
     hostUid: String,
-    aircraftId: String,
+    thingId: String,
     blobId: String,
   ): ByteArray
 }
 
 /**
  * Where a blob's bytes live, parsed from its scope path `["users", ownerUid, "thing", acId]`.
- * [ownerUid] is the tree the object sits in — the signed-in user for an owned aircraft, the host for
- * a shared one. Returns `null` when the scope is not an aircraft-child path (nothing to broker).
+ * [ownerUid] is the tree the object sits in — the signed-in user for an owned thing, the host for
+ * a shared one. Returns `null` when the scope is not an thing-child path (nothing to broker).
  */
-data class BlobLocation(val ownerUid: String, val aircraftId: String) {
+data class BlobLocation(val ownerUid: String, val thingId: String) {
   /** A blob is foreign — and must go through the broker — when its owning tree isn't the caller's. */
   fun isForeign(currentUid: String?): Boolean = currentUid != null && ownerUid != currentUid
 
@@ -58,9 +58,9 @@ data class BlobLocation(val ownerUid: String, val aircraftId: String) {
       val segs = ref.scope.segments
       if (segs.size < 4 || segs[0] != "users" || segs[2] != "thing") return null
       val ownerUid = segs[1]
-      val aircraftId = segs[3]
-      if (ownerUid.isBlank() || aircraftId.isBlank()) return null
-      return BlobLocation(ownerUid, aircraftId)
+      val thingId = segs[3]
+      if (ownerUid.isBlank() || thingId.isBlank()) return null
+      return BlobLocation(ownerUid, thingId)
     }
   }
 }

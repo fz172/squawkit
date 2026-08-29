@@ -1,6 +1,6 @@
 package dev.fanfly.wingslog.feature.attachment.model
 
-import dev.fanfly.wingslog.aircraft.Attachment
+import dev.fanfly.wingslog.thing.Attachment
 
 data class AttachmentWithState(
   val attachment: Attachment,

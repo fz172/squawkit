@@ -7,7 +7,7 @@ import dev.fanfly.wingslog.feature.sharing.viewing.RedeemConfirmationSheet
 import org.koin.compose.viewmodel.koinViewModel
 
 /**
- * App-root overlay for inbound aircraft-share deep links: shows the redeem confirmation dialog
+ * App-root overlay for inbound thing-share deep links: shows the redeem confirmation dialog
  * whenever an invite is parked. Placed once at each host's root, above the nav graph, so a link
  * that arrives mid-session (or resumes after sign-in) surfaces on top of whatever screen is shown.
  */

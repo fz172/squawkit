@@ -14,8 +14,8 @@ import dev.fanfly.wingslog.core.ui.theme.di.appearanceModule
 import dev.fanfly.wingslog.core.ui.theme.di.appearanceStoreModule
 import dev.fanfly.wingslog.feature.ads.datamanager.di.adsModule
 import dev.fanfly.wingslog.feature.ads.datamanager.di.platformAdConsentModule
-import dev.fanfly.wingslog.feature.aircraft.dashboard.di.aircraftDashboardModule
-import dev.fanfly.wingslog.feature.aircraft.update.di.aircraftUpdateModule
+import dev.fanfly.wingslog.feature.thing.dashboard.di.aircraftDashboardModule
+import dev.fanfly.wingslog.feature.thing.update.di.aircraftUpdateModule
 import dev.fanfly.wingslog.feature.attachment.datamanager.attachmentModule
 import dev.fanfly.wingslog.feature.attachment.datamanager.platformAttachmentModule
 import dev.fanfly.wingslog.feature.developeroptions.datamanager.di.developerOptionsModule
@@ -23,7 +23,7 @@ import dev.fanfly.wingslog.feature.export.datamanager.di.exportDataManagerModule
 import dev.fanfly.wingslog.feature.export.datamanager.di.exportPlatformModule
 import dev.fanfly.wingslog.feature.export.update.viewmodel.exportUiModule
 import dev.fanfly.wingslog.feature.fleet.datamanager.di.fleetDataManagerModule
-import dev.fanfly.wingslog.feature.fleet.picker.data.di.selectedAircraftStoreModule
+import dev.fanfly.wingslog.feature.fleet.picker.data.di.selectedThingStoreModule
 import dev.fanfly.wingslog.feature.login.di.loginModule
 import dev.fanfly.wingslog.feature.logs.datamanager.impl.maintenanceDataManagerModule
 import dev.fanfly.wingslog.feature.logs.update.di.maintenanceUpdateModule
@@ -75,7 +75,7 @@ val commonAppModules: List<Module> = listOf(
   platformStorageModule,
   appearanceModule,
   appearanceStoreModule,
-  selectedAircraftStoreModule,
+  selectedThingStoreModule,
   syncModule,
   syncLoggingModule,
   blobSchedulerModule,

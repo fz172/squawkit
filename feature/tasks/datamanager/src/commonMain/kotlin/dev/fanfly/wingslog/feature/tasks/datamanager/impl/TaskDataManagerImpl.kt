@@ -1,9 +1,9 @@
 package dev.fanfly.wingslog.feature.tasks.datamanager.impl
 
 import co.touchlab.kermit.Logger
-import dev.fanfly.wingslog.aircraft.MaintenanceTask
+import dev.fanfly.wingslog.thing.MaintenanceTask
 import dev.fanfly.wingslog.core.model.id.generateRandomId
-import dev.fanfly.wingslog.core.storage.AircraftScopeResolver
+import dev.fanfly.wingslog.core.storage.ThingScopeResolver
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.EntityStore
 import dev.fanfly.wingslog.core.storage.EntityStoreFactory
@@ -16,7 +16,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 
 class TaskDataManagerImpl(
-  private val scopeResolver: AircraftScopeResolver,
+  private val scopeResolver: ThingScopeResolver,
   storeFactory: EntityStoreFactory,
 ) : TaskDataManager {
 
@@ -24,27 +24,27 @@ class TaskDataManagerImpl(
     storeFactory.create(CollectionKind.MaintenanceTask)
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  override fun observeTasks(aircraftId: String): Flow<List<MaintenanceTask>> =
-    scopeResolver.resolve(aircraftId).flatMapLatest { scope ->
+  override fun observeTasks(thingId: String): Flow<List<MaintenanceTask>> =
+    scopeResolver.resolve(thingId).flatMapLatest { scope ->
       if (scope == null) {
-        logger.d { "No signed-in user; stopping tasks observation for aircraft $aircraftId" }
+        logger.d { "No signed-in user; stopping tasks observation for aircraft $thingId" }
         flowOf(emptyList())
       } else {
         store.observeAll(scope)
           .map { rows -> rows.map { it.value } }
           .catch { e ->
-            logger.w(e) { "Error observing tasks for aircraft $aircraftId" }
+            logger.w(e) { "Error observing tasks for aircraft $thingId" }
             emit(emptyList())
           }
       }
     }
 
   override suspend fun addTask(
-    aircraftId: String,
+    thingId: String,
     card: MaintenanceTask
   ): Result<Boolean> =
     runCatching {
-      val scope = scopeResolver.resolveNow(aircraftId)
+      val scope = scopeResolver.resolveNow(thingId)
       val withId =
         if (card.id.isEmpty()) card.copy(id = generateRandomId()) else card
       store.put(withId.id, withId, scope)
@@ -52,21 +52,21 @@ class TaskDataManagerImpl(
     }.onFailure { logger.w(it) { "Error adding task" } }
 
   override suspend fun updateTask(
-    aircraftId: String,
+    thingId: String,
     card: MaintenanceTask
   ): Result<Boolean> =
     runCatching {
-      val scope = scopeResolver.resolveNow(aircraftId)
+      val scope = scopeResolver.resolveNow(thingId)
       store.put(card.id, card, scope)
       true
     }.onFailure { logger.w(it) { "Error updating task ${card.id}" } }
 
   override suspend fun deleteTask(
-    aircraftId: String,
+    thingId: String,
     cardId: String
   ): Result<Boolean> =
     runCatching {
-      val scope = scopeResolver.resolveNow(aircraftId)
+      val scope = scopeResolver.resolveNow(thingId)
       store.delete(cardId, scope)
       true
     }.onFailure { logger.w(it) { "Error deleting task $cardId" } }

@@ -32,7 +32,7 @@ fun formatInviteCode(code: String): String =
   if (code.length == CODE_LENGTH) "${code.take(4)}-${code.drop(4)}" else code
 
 /**
- * Where a share link points. The fragment is the code and nothing else — the URL names no aircraft
+ * Where a share link points. The fragment is the code and nothing else — the URL names no thing
  * and no host, which is the whole reason the mechanism changed (#202/#204).
  */
 const val SHARE_URL_BASE: String = "https://squawkit.fanfly.dev/share"

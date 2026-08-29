@@ -6,8 +6,8 @@
 
 /* eslint-disable */
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
-import { Engine } from "../aircraft/engine";
 import { Component } from "./component";
+import { Engine } from "./engine";
 import { Spec } from "./spec";
 
 export const protobufPackage = "";

@@ -1,7 +1,7 @@
 package dev.fanfly.wingslog.feature.sharing.model
 
 /**
- * Client-side view models for aircraft sharing. Scaffolded stubs — fields are refined as the
+ * Client-side view models for thing sharing. Scaffolded stubs — fields are refined as the
  * membership plumbing (P2) and UI (P4/P5) land. The role here is the UI/permission role; it mirrors
  * the ACL and the synced `SharedAircraftRef.role`. See docs/sharing §6.
  */
@@ -10,7 +10,7 @@ enum class ShareRole {
   TECHNICIAN,
 }
 
-/** A member of a shared aircraft, as surfaced in Manage Access. */
+/** A member of a shared thing, as surfaced in Manage Access. */
 data class ShareMember(
   val uid: String,
   val displayName: String,
@@ -42,7 +42,7 @@ data class AircraftShareState(
   val invites: List<PendingInvite> = emptyList(),
   /**
    * The rules refused us the roster. Two very different situations produce this, and only the caller
-   * can tell them apart: an owner whose aircraft has no share doc yet (normal — nothing to read),
+   * can tell them apart: an owner whose thing has no share doc yet (normal — nothing to read),
    * versus a member who was just revoked (their read is denied the moment they leave `memberRoles`).
    * If you have already seen yourself in this roster, this is a revocation.
    */
@@ -61,7 +61,7 @@ data class InviteLink(
   val formattedCode: String,
   /** SHA-256 of the code: what the owner sees in the pending list, and cancels by. */
   val codeId: String,
-  /** `https://…/share#EFA1GGTH` — names no aircraft and no host, only the opaque code. */
+  /** `https://…/share#EFA1GGTH` — names no thing and no host, only the opaque code. */
   val url: String,
   val expiresAtEpochMs: Long,
 )
@@ -69,14 +69,14 @@ data class InviteLink(
 /** What an invitee is shown before accepting (#201), resolved from the code alone. */
 data class InvitePreview(
   /** e.g. "N2037O · Cessna 172". Empty if the inviting client did not supply one. */
-  val aircraftLabel: String,
+  val thingLabel: String,
   val hostName: String,
   val role: ShareRole,
 )
 
 /** Result of redeeming an invite. */
 data class RedeemOutcome(
-  val aircraftId: String,
+  val thingId: String,
   val hostUid: String,
   val role: ShareRole,
   val alreadyMember: Boolean = false,

@@ -33,7 +33,7 @@ import wingslog.feature.fleet.sharedassets.generated.resources.Res as FleetRes
 fun FleetEmptyState(
   onAddAircraft: () -> Unit,
   modifier: Modifier = Modifier,
-  // #209: join-by-code, offered next to create-aircraft. Null when sharing is gated off for the
+  // #209: join-by-code, offered next to create-thing. Null when sharing is gated off for the
   // build, which drops the affordance entirely rather than showing a door that does not open.
   onEnterInviteCode: (() -> Unit)? = null,
 ) {

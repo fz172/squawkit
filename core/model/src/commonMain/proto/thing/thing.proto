@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-import "aircraft/engine.proto";
+import "thing/engine.proto";
 import "thing/spec.proto";
 import "thing/component.proto";
 

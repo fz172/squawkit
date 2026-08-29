@@ -1,9 +1,9 @@
 package dev.fanfly.wingslog.feature.notifications.engine
 
-import dev.fanfly.wingslog.aircraft.MaintenanceTask
-import dev.fanfly.wingslog.aircraft.Squawk
+import dev.fanfly.wingslog.thing.MaintenanceTask
+import dev.fanfly.wingslog.thing.Squawk
 import dev.fanfly.wingslog.core.model.settings.NotificationSettings
-import dev.fanfly.wingslog.core.storage.AircraftScopeResolver
+import dev.fanfly.wingslog.core.storage.ThingScopeResolver
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.EntityStore
 import dev.fanfly.wingslog.core.storage.EntityStoreFactory
@@ -67,7 +67,7 @@ class UrgencyScanner(
   private val prefsManager: NotificationPrefsManager,
   private val permission: NotificationPermission,
   private val fleetManager: FleetManager,
-  private val scopeResolver: AircraftScopeResolver,
+  private val scopeResolver: ThingScopeResolver,
   private val taskDueManager: TaskDueManager,
   private val logManager: MaintenanceLogManager,
   entityStoreFactory: EntityStoreFactory,
@@ -114,7 +114,7 @@ class UrgencyScanner(
       .first()
     var tally = Tally()
     for (entry in fleet) {
-      tally += scanAircraft(uid, entry, settings)
+      tally += scanThing(uid, entry, settings)
     }
     // Recorded for every completed scan whatever the trigger, not just session ones: a scheduled
     // scan that just walked the fleet is exactly what the next session boundary should debounce
@@ -141,7 +141,7 @@ class UrgencyScanner(
     ScanResult.Completed(tally.posted)
   }
 
-  /** Per-aircraft counts, summed across the fleet for design §11's diagnostics. */
+  /** Per-thing counts, summed across the fleet for design §11's diagnostics. */
   private data class Tally(
     val examined: Int = 0,
     val crossings: Int = 0,
@@ -156,29 +156,29 @@ class UrgencyScanner(
     )
   }
 
-  /** One aircraft's full cycle: rank every record, post crossings, then commit and prune. */
-  private suspend fun scanAircraft(
+  /** One thing's full cycle: rank every record, post crossings, then commit and prune. */
+  private suspend fun scanThing(
     uid: String,
     entry: FleetEntry,
     settings: NotificationSettings,
   ): Tally {
-    val aircraftId = entry.aircraft.id
-    val tailNumber = entry.aircraft.tail_number
-    // Scope comes from the resolver, never the signed-in uid — a shared aircraft's records live in
+    val thingId = entry.thing.id
+    val tailNumber = entry.thing.tail_number
+    // Scope comes from the resolver, never the signed-in uid — a shared thing's records live in
     // the host's tree (design §6.3).
-    val scope = scopeResolver.resolveNow(aircraftId)
+    val scope = scopeResolver.resolveNow(thingId)
 
     val existingWatermarks =
       watermarkStore.selectInScopePrefix(uid, scope.toPath() + "%")
     // Seeding (design §6.4): no watermark row anywhere under this scope means this device has never
-    // scanned this aircraft before — every record seeds silently regardless of who wrote it.
+    // scanned this thing before — every record seeds silently regardless of who wrote it.
     val aircraftKnown = existingWatermarks.isNotEmpty()
     val watermarkByKey =
       existingWatermarks.associateBy { it.collection to it.id }
 
     val taskRows = taskStore.observeAll(scope)
       .first()
-    val logs = logManager.observeLogs(aircraftId)
+    val logs = logManager.observeLogs(thingId)
       .first()
     val squawkRows = squawkStore.observeAll(scope)
       .first()
@@ -206,7 +206,7 @@ class UrgencyScanner(
           collection = CollectionKind.MaintenanceTask,
           recordId = row.id,
           title = row.value.title,
-          tapTarget = NotificationTapTarget.Task(aircraftId, row.id),
+          tapTarget = NotificationTapTarget.Task(thingId, row.id),
         )
       }
     }
@@ -231,7 +231,7 @@ class UrgencyScanner(
           collection = CollectionKind.Squawk,
           recordId = row.id,
           title = row.value.title,
-          tapTarget = NotificationTapTarget.Squawk(aircraftId, row.id),
+          tapTarget = NotificationTapTarget.Squawk(thingId, row.id),
           previousRank = previousRank,
           newRank = rank,
         )
@@ -242,12 +242,12 @@ class UrgencyScanner(
     // flag now covers all three tiers (design decision, 2026-08-26).
     val reportable = if (settings.priorityDueEnabled) crossings else emptyList()
 
-    // At most one notification per (aircraft, tier) — group into a summary once there is more than
+    // At most one notification per (thing, tier) — group into a summary once there is more than
     // one crossing (design §6.5).
     val notifications = reportable.groupBy { it.tier }
       .map { (tier, group) ->
         buildNotification(
-          aircraftId,
+          thingId,
           tailNumber,
           tier,
           group
@@ -302,9 +302,9 @@ class UrgencyScanner(
    * same "what do we compare [rank] against" question):
    *
    * - An existing watermark row → the normal diff, against its stored rank.
-   * - No row, and the whole aircraft has never been scanned on this device → always `null`: every
-   *   record on a newly-seen aircraft seeds silently, no exceptions.
-   * - No row, but the aircraft is known (a brand-new id) → `writerUid == uid` seeds silently at the
+   * - No row, and the whole thing has never been scanned on this device → always `null`: every
+   *   record on a newly-seen thing seeds silently, no exceptions.
+   * - No row, but the thing is known (a brand-new id) → `writerUid == uid` seeds silently at the
    *   current rank (you filed it, you know); anyone else or an unknown writer seeds at rank 0, so an
    *   already-urgent record reports on this same scan — the refinement PRD §6.4 needs so a
    *   collaborator's new AOG squawk isn't seeded silently on the owner's device.
@@ -326,7 +326,7 @@ class UrgencyScanner(
   }
 
   private suspend fun buildNotification(
-    aircraftId: String,
+    thingId: String,
     tailNumber: String,
     tier: UrgencyTier,
     group: List<Crossing>,
@@ -335,8 +335,8 @@ class UrgencyScanner(
     val title = getString(tier.titleRes())
     val body: String
     // Deterministic ids so a re-scan replaces rather than stacks (design §6.5): a summary is keyed
-    // by (aircraft, tier) since it has no one record to point at, but a single crossing is keyed by
-    // (collection, recordId) specifically — NOT (aircraft, tier) — so a later scan's single crossing
+    // by (thing, tier) since it has no one record to point at, but a single crossing is keyed by
+    // (collection, recordId) specifically — NOT (thing, tier) — so a later scan's single crossing
     // for a *different* record in the same tier gets its own tray slot instead of silently
     // overwriting a still-unread notification about the first one.
     val id: String
@@ -345,7 +345,7 @@ class UrgencyScanner(
       id = "urgency:${single.collection.wireName}:${single.recordId}"
     } else {
       body = getString(tier.pluralBodyRes(), tailNumber, group.size)
-      id = "urgency:$aircraftId:${tier.name}"
+      id = "urgency:$thingId:${tier.name}"
     }
     return PendingNotification(
       id = id,
@@ -355,7 +355,7 @@ class UrgencyScanner(
       highPriority = tier == UrgencyTier.OVERDUE,
       tapTarget = single?.tapTarget
         ?: NotificationTapTarget.Aircraft(
-          aircraftId,
+          thingId,
           tab = tier.toAircraftTab()
         ),
     )

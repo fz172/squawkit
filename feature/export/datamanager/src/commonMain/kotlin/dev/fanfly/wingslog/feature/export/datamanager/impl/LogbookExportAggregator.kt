@@ -1,9 +1,9 @@
 package dev.fanfly.wingslog.feature.export.datamanager.impl
 
-import dev.fanfly.wingslog.aircraft.MaintenanceLog
-import dev.fanfly.wingslog.aircraft.Squawk
-import dev.fanfly.wingslog.aircraft.SquawkDismissReason
-import dev.fanfly.wingslog.aircraft.Technician
+import dev.fanfly.wingslog.thing.MaintenanceLog
+import dev.fanfly.wingslog.thing.Squawk
+import dev.fanfly.wingslog.thing.SquawkDismissReason
+import dev.fanfly.wingslog.thing.Technician
 import dev.fanfly.wingslog.core.datetime.toLocalDate
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDateRange
 import dev.fanfly.wingslog.feature.export.datamanager.ExportRequest
@@ -25,7 +25,7 @@ import kotlin.time.Clock
 import com.squareup.wire.Instant as WireInstant
 
 /**
- * Builds a consistent, in-memory export snapshot for one aircraft.
+ * Builds a consistent, in-memory export snapshot for one thing.
  */
 class LogbookExportAggregator(
   private val fleetManager: FleetManager,
@@ -38,33 +38,33 @@ class LogbookExportAggregator(
   private val timeZone: TimeZone = TimeZone.currentSystemDefault(),
 ) {
   /**
-   * Collects aircraft, logs, tasks, squawks, and technician data for [aircraftId].
+   * Collects thing, logs, tasks, squawks, and technician data for [thingId].
    *
    * The returned bundle is date-filtered for timestamped records and sorted oldest first for
    * paper-logbook order.
    */
   suspend fun collect(
     request: ExportRequest,
-    aircraftId: String
-  ): AircraftBundle = coroutineScope {
+    thingId: String
+  ): ThingBundle = coroutineScope {
     val aircraftDeferred = async {
-      fleetManager.loadAircraft(aircraftId)
+      fleetManager.loadThing(thingId)
         .first()
     }
     val logsDeferred = async {
-      logsManager.observeLogs(aircraftId)
+      logsManager.observeLogs(thingId)
         .first()
     }
     val tasksDeferred = async {
-      tasksManager.observeTasks(aircraftId)
+      tasksManager.observeTasks(thingId)
         .first()
     }
     val squawksDeferred = async {
-      squawkManager.observeSquawks(aircraftId)
+      squawkManager.observeSquawks(thingId)
         .first()
     }
 
-    val aircraft = requireNotNull(aircraftDeferred.await())
+    val thing = requireNotNull(aircraftDeferred.await())
     val allLogs = logsDeferred.await()
     val allTasks = tasksDeferred.await()
     val allSquawks = squawksDeferred.await()
@@ -104,8 +104,8 @@ class LogbookExportAggregator(
       .filterValues { it != null }
       .mapValues { (_, log) -> log!! }
 
-    AircraftBundle(
-      aircraft = aircraft,
+    ThingBundle(
+      thing = thing,
       logs = logsInRange,
       tasks = tasksInRange,
       dueByTaskId = dueByTaskId,

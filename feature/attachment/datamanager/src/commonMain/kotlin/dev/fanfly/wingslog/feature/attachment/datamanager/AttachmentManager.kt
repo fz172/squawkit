@@ -1,6 +1,6 @@
 package dev.fanfly.wingslog.feature.attachment.datamanager
 
-import dev.fanfly.wingslog.aircraft.Attachment
+import dev.fanfly.wingslog.thing.Attachment
 import dev.fanfly.wingslog.core.storage.blob.LocalBlobStore
 import dev.fanfly.wingslog.feature.attachment.model.AttachmentStatus
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
@@ -40,7 +40,7 @@ interface AttachmentManager {
    * @throws FileTooLargeException if the file (post-compression, for photos) exceeds the cap.
    */
   suspend fun addPickedFile(
-    aircraftId: String,
+    thingId: String,
     picked: PickedFile,
     displayName: String
   ): Attachment
@@ -67,7 +67,7 @@ interface AttachmentManager {
 
   /**
    * Observe [BlobSyncState] for all blobs in the given scope path. Returns a map from
-   * attachment id to [BlobSyncState]. Used by the aircraft overview to drive status badges.
+   * attachment id to [BlobSyncState]. Used by the thing overview to drive status badges.
    */
   fun observeBlobStates(scopePath: String): Flow<Map<String, BlobSyncState>>
 

@@ -1,9 +1,9 @@
 package dev.fanfly.wingslog.feature.notifications.model
 
 import com.google.common.truth.Truth.assertThat
-import dev.fanfly.wingslog.aircraft.Squawk
-import dev.fanfly.wingslog.aircraft.SquawkDismissReason
-import dev.fanfly.wingslog.aircraft.SquawkPriority
+import dev.fanfly.wingslog.thing.Squawk
+import dev.fanfly.wingslog.thing.SquawkDismissReason
+import dev.fanfly.wingslog.thing.SquawkPriority
 import dev.fanfly.wingslog.feature.squawk.model.toWithStatus
 import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import org.junit.Test

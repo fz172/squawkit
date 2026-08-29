@@ -21,7 +21,7 @@ sealed interface StressTestState {
     val total: Int,
   ) : StressTestState
 
-  data class Done(val aircraftId: String, val summary: StressTestSummary) :
+  data class Done(val thingId: String, val summary: StressTestSummary) :
     StressTestState
 
   data class Error(val message: String?) : StressTestState
@@ -101,7 +101,7 @@ class StressTestViewModel(
       runCatching {
         val config = _config.value
         val data = FakeDataGenerator.generate(config)
-        val aircraftId = data.aircraft.id
+        val thingId = data.thing.id
 
         val totalSteps = 1 +
           data.technicians.size +
@@ -123,9 +123,9 @@ class StressTestViewModel(
 
         progress(
           StressTestProgressStep.CreatingAircraft,
-          data.aircraft.tail_number
+          data.thing.tail_number
         )
-        fleetManager.updateAircraft(data.aircraft)
+        fleetManager.updateThing(data.thing)
           .getOrThrow()
 
         data.technicians.forEach { tech ->
@@ -136,43 +136,43 @@ class StressTestViewModel(
 
         data.tasks.forEach { task ->
           progress(StressTestProgressStep.CreatingTask, task.title)
-          taskDataManager.addTask(aircraftId, task)
+          taskDataManager.addTask(thingId, task)
             .getOrThrow()
         }
 
         data.squawks.forEach { squawk ->
           progress(StressTestProgressStep.CreatingSquawk, squawk.title)
-          squawkManager.addSquawk(aircraftId, squawk)
+          squawkManager.addSquawk(thingId, squawk)
             .getOrThrow()
         }
 
         data.logs.forEach { log ->
           progress(StressTestProgressStep.CreatingLog)
-          logManager.addLog(aircraftId, log)
+          logManager.addLog(thingId, log)
             .getOrThrow()
         }
 
         data.addressedSquawks.forEach { (squawkId, logId) ->
           progress(StressTestProgressStep.MarkingSquawkAddressed)
-          squawkManager.markAddressed(aircraftId, listOf(squawkId), logId)
+          squawkManager.markAddressed(thingId, listOf(squawkId), logId)
             .getOrThrow()
         }
 
         data.dismissedSquawks.forEach { (squawkId, reason) ->
           progress(StressTestProgressStep.DismissingSquawk)
-          squawkManager.dismissSquawk(aircraftId, squawkId, reason)
+          squawkManager.dismissSquawk(thingId, squawkId, reason)
             .getOrThrow()
         }
 
         val openCount =
           data.squawks.size - data.addressedSquawks.size - data.dismissedSquawks.size
         val summary = StressTestSummary(
-          aircraftMake = data.aircraft.make,
-          aircraftModel = data.aircraft.model,
-          tailNumber = data.aircraft.tail_number,
-          serialNumber = data.aircraft.serial,
-          engineCount = data.aircraft.engine.size,
-          engineModel = data.aircraft.engine.firstOrNull()?.model.orEmpty(),
+          aircraftMake = data.thing.make,
+          aircraftModel = data.thing.model,
+          tailNumber = data.thing.tail_number,
+          serialNumber = data.thing.serial,
+          engineCount = data.thing.engine.size,
+          engineModel = data.thing.engine.firstOrNull()?.model.orEmpty(),
           technicianCount = data.technicians.size,
           taskCount = data.tasks.size,
           logCount = data.logs.size,
@@ -182,7 +182,7 @@ class StressTestViewModel(
           dismissedSquawkCount = data.dismissedSquawks.size,
         )
 
-        _state.value = StressTestState.Done(aircraftId, summary)
+        _state.value = StressTestState.Done(thingId, summary)
       }.onFailure { e ->
         _state.value = StressTestState.Error(e.message)
       }

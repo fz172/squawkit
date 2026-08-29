@@ -1,7 +1,7 @@
 package dev.fanfly.wingslog.feature.export.datamanager.impl
 
 /**
- * Renders the export README text template with the values for one exported aircraft.
+ * Renders the export README text template with the values for one exported thing.
  */
 class ReadmeTemplateRenderer(
   private val template: String,

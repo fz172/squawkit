@@ -7,7 +7,7 @@ import co.touchlab.kermit.Severity
  * Gates Kermit output by build flavor (#276).
  *
  * Debug and verbose logs deliberately carry identifiers that must never reach a release-visible
- * log — aircraft ids, other accounts' uids, remote blob paths, signed download URLs with bearer
+ * log — thing ids, other accounts' uids, remote blob paths, signed download URLs with bearer
  * tokens. The redaction added in #246 keeps those at `d`/`v` precisely *because* debug is supposed
  * to be absent from release, so that rule has to actually hold: a release build drops everything
  * below [Severity.Info].

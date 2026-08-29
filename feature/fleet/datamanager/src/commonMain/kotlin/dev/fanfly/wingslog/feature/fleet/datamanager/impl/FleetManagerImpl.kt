@@ -48,7 +48,7 @@ class FleetManagerImpl(
       } else {
         combine(
           ownAircraft(user.uid),
-          sharedAircraft(user.uid)
+          sharedThing(user.uid)
         ) { own, shared ->
           own + shared
         }.catch { e ->
@@ -58,7 +58,7 @@ class FleetManagerImpl(
       }
     }
 
-  /** The user's own aircraft under their root — always owner. */
+  /** The user's own thing under their root — always owner. */
   private fun ownAircraft(uid: String): Flow<List<FleetEntry>> =
     store.observeAll(EntityScope.userRoot(uid))
       .map { rows ->
@@ -72,12 +72,12 @@ class FleetManagerImpl(
       }
 
   /**
-   * Aircraft shared into the user's fleet: each `SharedAircraftRef` points at an aircraft doc under
+   * Aircraft shared into the user's fleet: each `SharedAircraftRef` points at an thing doc under
    * its host's root. The refs are pointers, not copies — read the live doc in place (§6.3). A ref
-   * whose aircraft doc hasn't synced yet is skipped rather than shown as a blank card.
+   * whose thing doc hasn't synced yet is skipped rather than shown as a blank card.
    */
   @OptIn(ExperimentalCoroutinesApi::class)
-  private fun sharedAircraft(uid: String): Flow<List<FleetEntry>> =
+  private fun sharedThing(uid: String): Flow<List<FleetEntry>> =
     refStore.observeAll(EntityScope.userRoot(uid))
       .flatMapLatest { refRows ->
         val refs = refRows.map { it.value }
@@ -105,14 +105,14 @@ class FleetManagerImpl(
       }
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  override fun loadAircraft(id: String): Flow<Thing?> =
+  override fun loadThing(id: String): Flow<Thing?> =
     firebaseAuth.authStateChanged.flatMapLatest { user ->
       if (user == null) {
         logger.d { "User logged out, stopping aircraft observation for $id" }
         flowOf(null)
       } else {
-        // The aircraft doc lives at the *parent* of its nested data: own → users/{myUid}/aircraft,
-        // shared → users/{hostUid}/aircraft. A ref for this id (keyed by aircraft id) names the host;
+        // The thing doc lives at the *parent* of its nested data: own → users/{myUid}/thing,
+        // shared → users/{hostUid}/thing. A ref for this id (keyed by thing id) names the host;
         // its absence means it's the user's own. (The AircraftScopeResolver handles the nested
         // aircraftChildUnsafe scope; the doc itself needs userRoot, hence the lookup here.)
         refStore.observe(id, EntityScope.userRoot(user.uid))
@@ -129,12 +129,12 @@ class FleetManagerImpl(
     }
 
   /**
-   * The root the aircraft doc actually lives under: the host's for a shared aircraft, ours
-   * otherwise. A ref keyed by this aircraft id is what names the host — the same lookup
-   * [loadAircraft] does, and writes have to agree with reads about where the row is.
+   * The root the thing doc actually lives under: the host's for a shared thing, ours
+   * otherwise. A ref keyed by this thing id is what names the host — the same lookup
+   * [loadThing] does, and writes have to agree with reads about where the row is.
    *
    * Writing to our own root unconditionally (as this used to) doesn't fail — it silently forks a
-   * *second* copy of the aircraft into our tree, which then reads back as an aircraft we own.
+   * *second* copy of the thing into our tree, which then reads back as an thing we own.
    */
   private suspend fun rootScopeOf(id: String, uid: String): EntityScope {
     val hostUid = refStore.observe(id, EntityScope.userRoot(uid))
@@ -144,14 +144,14 @@ class FleetManagerImpl(
     return EntityScope.userRoot(hostUid ?: uid)
   }
 
-  override suspend fun updateAircraft(aircraft: Thing): Result<Boolean> =
+  override suspend fun updateThing(thing: Thing): Result<Boolean> =
     runCatching {
       val uid = firebaseAuth.currentUser?.uid
         ?: error("Cannot update aircraft when no user is signed in")
-      // A brand-new aircraft has no id yet, so there is no ref to consult — it is ours by definition.
-      val isNew = aircraft.id.isEmpty()
+      // A brand-new thing has no id yet, so there is no ref to consult — it is ours by definition.
+      val isNew = thing.id.isEmpty()
       val withId =
-        if (isNew) aircraft.copy(id = generateRandomId()) else aircraft
+        if (isNew) thing.copy(id = generateRandomId()) else thing
       val scope =
         if (isNew) EntityScope.userRoot(uid) else rootScopeOf(withId.id, uid)
       store.put(withId.id, withId, scope)
@@ -161,11 +161,11 @@ class FleetManagerImpl(
 
   /**
    * Deleting tears the whole share down for every member (§3.3), so it belongs to the hosting owner
-   * alone — a co-owner holds the same role but not the aircraft. The rules reject their tombstone
+   * alone — a co-owner holds the same role but not the thing. The rules reject their tombstone
    * anyway; refusing here means we never queue a write that can only come back denied, which (since
    * #144) a member's client would read as *their own* revocation and purge the share over.
    */
-  override suspend fun deleteAircraft(id: String): Result<Boolean> =
+  override suspend fun deleteThing(id: String): Result<Boolean> =
     runCatching {
       val uid = firebaseAuth.currentUser?.uid
         ?: error("Cannot delete aircraft when no user is signed in")

@@ -3,7 +3,7 @@ package dev.fanfly.wingslog.feature.export.datamanager.impl
 import kotlin.math.max
 
 /**
- * Pure-Kotlin PDF renderer for the per-aircraft export document.
+ * Pure-Kotlin PDF renderer for the per-thing export document.
  *
  * The output intentionally uses a small subset of PDF 1.4 primitives so it remains portable
  * across Android/JVM and iOS/native without introducing a platform PDF dependency.

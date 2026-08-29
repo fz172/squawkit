@@ -214,7 +214,7 @@ fun ExportSelectionScreen(
             else -> onNavigateBack
           },
           actions = {
-            if (state is ExportUiState.Configuring && state.aircraft.isNotEmpty()) {
+            if (state is ExportUiState.Configuring && state.thing.isNotEmpty()) {
               IconButton(onClick = onNavigateToHistory) {
                 Icon(
                   imageVector = Icons.Default.History,
@@ -297,7 +297,7 @@ private fun ConfiguringContent(
   onNavigateToHistory: () -> Unit,
   onExport: () -> Unit,
 ) {
-  if (!state.isLoadingAircraft && state.aircraft.isEmpty()) {
+  if (!state.isLoadingAircraft && state.thing.isEmpty()) {
     EmptyAircraftContent(modifier, onNavigateToHistory)
     return
   }
@@ -320,7 +320,7 @@ private fun ConfiguringContent(
         .padding(horizontal = Spacing.screenPadding),
       bottomPadding = ExportBottomBarReservedHeight,
     )
-    if (state.aircraft.isNotEmpty()) {
+    if (state.thing.isNotEmpty()) {
       Box(
         modifier = Modifier.align(Alignment.BottomCenter),
       ) {
@@ -352,10 +352,10 @@ private fun ExportSetupList(
     }
 
     item {
-      val allSelected = state.selectedAircraftIds.size == state.aircraft.size
+      val allSelected = state.selectedThingIds.size == state.thing.size
       Section(
         title = stringResource(Res.string.export_aircraft_section),
-        action = if (state.aircraft.size > 1) {
+        action = if (state.thing.size > 1) {
           {
             TextButton(onClick = if (allSelected) onClearAll else onSelectAll) {
               Text(
@@ -370,12 +370,12 @@ private fun ExportSetupList(
         },
       ) {
         GroupedRowGroup(
-          rows = state.aircraft.map { aircraft ->
+          rows = state.thing.map { thing ->
             {
               AircraftOptionRow(
-                aircraft = aircraft,
-                selected = aircraft.aircraftId in state.selectedAircraftIds,
-                onClick = { onToggleAircraft(aircraft.aircraftId) },
+                thing = thing,
+                selected = thing.thingId in state.selectedThingIds,
+                onClick = { onToggleAircraft(thing.thingId) },
               )
             }
           }
@@ -472,13 +472,13 @@ private fun FormatSection(
 
 @Composable
 private fun AircraftOptionRow(
-  aircraft: AircraftSelectionRow,
+  thing: AircraftSelectionRow,
   selected: Boolean,
   onClick: () -> Unit,
 ) {
   GroupedCheckboxRow(
-    title = aircraft.tailNumber.ifBlank { stringResource(Res.string.export_untitled_aircraft) },
-    subtitle = aircraft.makeModel.ifBlank {
+    title = thing.tailNumber.ifBlank { stringResource(Res.string.export_untitled_aircraft) },
+    subtitle = thing.makeModel.ifBlank {
       stringResource(Res.string.export_aircraft_details_incomplete)
     },
     titleStyle = WingslogTypography.dataLarge,
@@ -753,7 +753,7 @@ private fun ExportBottomBar(
         Text(
           text = stringResource(
             Res.string.export_footer_aircraft_count,
-            state.selectedAircraftIds.size
+            state.selectedThingIds.size
           ),
           style = MaterialTheme.typography.bodySmall,
           color = MaterialTheme.colorScheme.onSurface,
@@ -781,7 +781,7 @@ private fun ExportBottomBar(
 
       Button(
         onClick = onExport,
-        enabled = state.selectedAircraftIds.isNotEmpty() && state.formats.isNotEmpty(),
+        enabled = state.selectedThingIds.isNotEmpty() && state.formats.isNotEmpty(),
         modifier = Modifier
           .fillMaxWidth()
           .height(Spacing.buttonHeight),
@@ -1019,7 +1019,7 @@ private fun SuccessResult(
         fileName = fileName,
         sizeText = state.sizeBytes.formatFileSize(),
         formats = state.formats,
-        aircraftSummary = aircraftSummary(state.selectedTailNumbers),
+        thingSummary = thingSummary(state.selectedTailNumbers),
         rangeText = rangeSummary(
           state.dateRange,
           state.customStart,
@@ -1157,7 +1157,7 @@ private fun ReceiptCard(
   fileName: String,
   sizeText: String,
   formats: Set<ExportFormat>,
-  aircraftSummary: String,
+  thingSummary: String,
   rangeText: String,
   deliveryFailure: DeliveryFailure? = null,
 ) {
@@ -1219,7 +1219,7 @@ private fun ReceiptCard(
     ReceiptRow(
       Icons.Default.Flight,
       stringResource(Res.string.export_receipt_aircraft),
-      aircraftSummary,
+      thingSummary,
       mono = true
     )
     ReceiptRow(
@@ -1458,7 +1458,7 @@ private fun ResultSecondaryButton(
   }
 }
 
-// ─── Empty aircraft ─────────────────────────────────────────────────────────
+// ─── Empty thing ─────────────────────────────────────────────────────────
 
 @Composable
 private fun EmptyAircraftContent(
@@ -1535,7 +1535,7 @@ private fun joinFormats(formats: Set<ExportFormat>): String {
 }
 
 @Composable
-private fun aircraftSummary(tailNumbers: List<String>): String =
+private fun thingSummary(tailNumbers: List<String>): String =
   when (tailNumbers.size) {
     0 -> "—"
     1 -> tailNumbers[0]

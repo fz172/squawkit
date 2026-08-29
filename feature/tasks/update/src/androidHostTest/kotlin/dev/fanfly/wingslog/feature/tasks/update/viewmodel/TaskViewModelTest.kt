@@ -2,10 +2,10 @@ package dev.fanfly.wingslog.feature.tasks.update.viewmodel
 
 import androidx.lifecycle.SavedStateHandle
 import com.google.common.truth.Truth.assertThat
-import dev.fanfly.wingslog.aircraft.Attachment
-import dev.fanfly.wingslog.aircraft.AttachmentType
-import dev.fanfly.wingslog.aircraft.ForceCompliedStatus
-import dev.fanfly.wingslog.aircraft.MaintenanceTask
+import dev.fanfly.wingslog.thing.Attachment
+import dev.fanfly.wingslog.thing.AttachmentType
+import dev.fanfly.wingslog.thing.ForceCompliedStatus
+import dev.fanfly.wingslog.thing.MaintenanceTask
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
@@ -76,7 +76,7 @@ class TaskViewModelTest {
 
     // Prevent the load flows from suspending forever.
     every { subscriptionManager.canUploadAttachments() } returns flowOf(false)
-    // Own aircraft by default; foreign-hosted tests override this.
+    // Own thing by default; foreign-hosted tests override this.
     every { sharingManager.observeIsForeignHosted(any()) } returns flowOf(false)
     every { inspectionDataManager.observeTasks(TEST_AIRCRAFT_ID) } returns flowOf(
       emptyList()
@@ -174,7 +174,7 @@ class TaskViewModelTest {
   fun attachAvailable_onForeignHostedAircraft_evenWithoutOwnEntitlement() =
     runTest(testDispatcher) {
       // The host pays and the broker enforces the host's entitlement, so a member with no subscription
-      // of their own can still attach on a paid owner's aircraft.
+      // of their own can still attach on a paid owner's thing.
       every { subscriptionManager.canUploadAttachments() } returns flowOf(false)
       every { sharingManager.observeIsForeignHosted(any()) } returns flowOf(true)
 

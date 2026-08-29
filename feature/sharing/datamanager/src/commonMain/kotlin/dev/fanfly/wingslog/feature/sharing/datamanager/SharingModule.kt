@@ -1,10 +1,10 @@
 package dev.fanfly.wingslog.feature.sharing.datamanager
 
-import dev.fanfly.wingslog.core.storage.AircraftScopeResolver
+import dev.fanfly.wingslog.core.storage.ThingScopeResolver
 import dev.fanfly.wingslog.core.storage.DatabaseWriteLock
 import dev.fanfly.wingslog.core.storage.EntityStoreFactory
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
-import dev.fanfly.wingslog.feature.sharing.datamanager.impl.AircraftScopeResolverImpl
+import dev.fanfly.wingslog.feature.sharing.datamanager.impl.ThingScopeResolverImpl
 import dev.fanfly.wingslog.feature.sharing.datamanager.impl.SharingManagerImpl
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import dev.gitlive.firebase.auth.FirebaseAuth
@@ -24,10 +24,10 @@ val sharingModule = module {
       functions = get<FirebaseFunctions>(),
     )
   }
-  // Own-vs-shared scope resolution for the per-aircraft managers (logs/tasks/squawk). Lives here
+  // Own-vs-shared scope resolution for the per-thing managers (logs/tasks/squawk). Lives here
   // because it needs auth + the refs store; consumers depend only on the core:storage interface.
-  single<AircraftScopeResolver> {
-    AircraftScopeResolverImpl(
+  single<ThingScopeResolver> {
+    ThingScopeResolverImpl(
       auth = get<FirebaseAuth>(),
       storeFactory = get<EntityStoreFactory>(),
     )

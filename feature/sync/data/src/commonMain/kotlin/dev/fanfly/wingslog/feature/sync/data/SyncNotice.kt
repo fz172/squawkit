@@ -7,7 +7,7 @@ package dev.fanfly.wingslog.feature.sync.data
 sealed interface SyncNotice {
 
   /**
-   * Edits made to a shared aircraft while offline could not be saved, because access was revoked
+   * Edits made to a shared thing while offline could not be saved, because access was revoked
    * before they synced. The rows are gone.
    *
    * This is the one data-loss window in the sharing design (PRD D3), and it is genuinely
@@ -16,8 +16,8 @@ sealed interface SyncNotice {
    * the purge reports what it dropped.
    */
   data class ChangesDiscarded(
-    /** Tail number if we still know it, else a generic label — the aircraft is being purged. */
-    val aircraftLabel: String,
+    /** Tail number if we still know it, else a generic label — the thing is being purged. */
+    val thingLabel: String,
     val discardedCount: Int,
   ) : SyncNotice
 }

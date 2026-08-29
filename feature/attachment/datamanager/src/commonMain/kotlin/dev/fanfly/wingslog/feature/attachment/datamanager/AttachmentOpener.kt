@@ -1,6 +1,6 @@
 package dev.fanfly.wingslog.feature.attachment.datamanager
 
-import dev.fanfly.wingslog.aircraft.Attachment
+import dev.fanfly.wingslog.thing.Attachment
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 

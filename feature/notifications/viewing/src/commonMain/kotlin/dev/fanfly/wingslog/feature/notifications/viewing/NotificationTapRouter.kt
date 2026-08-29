@@ -21,7 +21,7 @@ private const val HOST = "notification-tap"
  * - `Aircraft` does not, and per `AdaptiveShellViewModel`'s own doc comment, deliberately never
  *   will: "the selected aircraft is app-level state chosen from the switcher rather than a
  *   navigation argument carried per destination." `AdaptiveShellViewModel` collects [pending]
- *   itself and calls `selectAircraft`/`selectSection` directly — no nav route, no shim destination.
+ *   itself and calls `selectThing`/`selectSection` directly — no nav route, no shim destination.
  *
  * [encode]/[decode] are symmetric and live together in the one file that owns the wire format, a
  * plain `"$SCHEME://$HOST/…"` string — deliberately not `android.net.Uri`, which doesn't exist
@@ -57,11 +57,11 @@ object NotificationTapRouter {
   private val log = Logger.withTag("NotificationTapRouter")
 
   fun encode(target: NotificationTapTarget): String = when (target) {
-    is NotificationTapTarget.Squawk -> "$SCHEME://$HOST/squawk/${target.aircraftId}/${target.squawkId}"
-    is NotificationTapTarget.Task -> "$SCHEME://$HOST/task/${target.aircraftId}/${target.taskId}"
-    is NotificationTapTarget.Log -> "$SCHEME://$HOST/log/${target.aircraftId}/${target.logId}"
+    is NotificationTapTarget.Squawk -> "$SCHEME://$HOST/squawk/${target.thingId}/${target.squawkId}"
+    is NotificationTapTarget.Task -> "$SCHEME://$HOST/task/${target.thingId}/${target.taskId}"
+    is NotificationTapTarget.Log -> "$SCHEME://$HOST/log/${target.thingId}/${target.logId}"
     is NotificationTapTarget.Aircraft ->
-      "$SCHEME://$HOST/aircraft/${target.aircraftId}" + (target.tab?.let { "?tab=$it" } ?: "")
+      "$SCHEME://$HOST/aircraft/${target.thingId}" + (target.tab?.let { "?tab=$it" } ?: "")
   }
 
   private fun decode(uri: String): NotificationTapTarget? {
@@ -78,12 +78,12 @@ object NotificationTapRouter {
         val parts = param.split("=", limit = 2)
         if (parts.size == 2 && parts[0] == "tab") parts[1] else null
       }
-    val aircraftId = segments.getOrNull(1) ?: return null
+    val thingId = segments.getOrNull(1) ?: return null
     return when (segments.getOrNull(0)) {
-      "squawk" -> segments.getOrNull(2)?.let { NotificationTapTarget.Squawk(aircraftId, it) }
-      "task" -> segments.getOrNull(2)?.let { NotificationTapTarget.Task(aircraftId, it) }
-      "log" -> segments.getOrNull(2)?.let { NotificationTapTarget.Log(aircraftId, it) }
-      "aircraft" -> NotificationTapTarget.Aircraft(aircraftId, tab)
+      "squawk" -> segments.getOrNull(2)?.let { NotificationTapTarget.Squawk(thingId, it) }
+      "task" -> segments.getOrNull(2)?.let { NotificationTapTarget.Task(thingId, it) }
+      "log" -> segments.getOrNull(2)?.let { NotificationTapTarget.Log(thingId, it) }
+      "aircraft" -> NotificationTapTarget.Aircraft(thingId, tab)
       else -> null
     }
   }

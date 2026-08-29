@@ -1,14 +1,14 @@
 package dev.fanfly.wingslog.feature.logs.datamanager
 
-import dev.fanfly.wingslog.aircraft.MaintenanceLog
-import dev.fanfly.wingslog.aircraft.MaintenanceOverview
+import dev.fanfly.wingslog.thing.MaintenanceLog
+import dev.fanfly.wingslog.thing.MaintenanceOverview
 import kotlinx.coroutines.flow.Flow
 
 interface MaintenanceLogManager {
   /**
-   * Observes the list of maintenance logs for a specific aircraft.
+   * Observes the list of maintenance logs for a specific thing.
    */
-  fun observeLogs(aircraftId: String): Flow<List<MaintenanceLog>>
+  fun observeLogs(thingId: String): Flow<List<MaintenanceLog>>
 
   /**
    * Log id → uid of the account that wrote the latest revision (design §7.5).
@@ -17,28 +17,28 @@ interface MaintenanceLogManager {
    * payload — that is precisely what makes it unforgeable. Null for a log whose author we have never
    * seen (written before the field existed).
    */
-  fun observeLogAuthors(aircraftId: String): Flow<Map<String, String?>>
+  fun observeLogAuthors(thingId: String): Flow<Map<String, String?>>
 
   /**
-   * Observes the maintenance overview (summary stats) for a specific aircraft.
+   * Observes the maintenance overview (summary stats) for a specific thing.
    */
-  fun observeMaintenanceOverview(aircraftId: String): Flow<MaintenanceOverview?>
+  fun observeMaintenanceOverview(thingId: String): Flow<MaintenanceOverview?>
 
   /**
-   * Adds a new maintenance log for an aircraft.
+   * Adds a new maintenance log for an thing.
    */
-  suspend fun addLog(aircraftId: String, log: MaintenanceLog): Result<Boolean>
+  suspend fun addLog(thingId: String, log: MaintenanceLog): Result<Boolean>
 
   /**
    * Updates an existing maintenance log.
    */
   suspend fun updateLog(
-    aircraftId: String,
+    thingId: String,
     log: MaintenanceLog
   ): Result<Boolean>
 
   /**
    * Deletes a maintenance log.
    */
-  suspend fun deleteLog(aircraftId: String, logId: String): Result<Boolean>
+  suspend fun deleteLog(thingId: String, logId: String): Result<Boolean>
 }

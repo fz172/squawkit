@@ -10,10 +10,31 @@ import app.cash.sqldelight.ColumnAdapter
  * docs/storage/storage_r1_design.md §4.2.1 for the rationale.
  */
 sealed interface CollectionKind {
-  /** Stable wire name — persisted as the `collection` column value. Never change once shipped. */
+  /**
+   * Stable wire name — persisted as the `collection` column value. Never change once shipped.
+   *
+   * **New kinds use Thing vocabulary, never aircraft vocabulary**, unless the thing being named is
+   * genuinely and permanently an airplane (`Engine`, `Propeller`, and `EngineHourRule` qualify; a
+   * generic per-Thing record does not). The domain is Things now, and an `aircraft`-shaped name on
+   * something that will hold a boat or a 3D printer is a lie the compiler cannot catch.
+   *
+   * This is not a style preference. [wireName] and [schemaName] are **stored data** — the former is
+   * a Firestore collection segment, the latter is written into every document's envelope. Renaming
+   * either after it ships is a full data migration: a global batch, a grace window, a coordinated
+   * client release. Milestone 1 did exactly that for one kind, and issue #638 records the decision
+   * not to do it again for the five `aircraft.*` schemaNames still below. Those are grandfathered,
+   * not exemplary — do not copy them.
+   *
+   * Getting the name right costs nothing here and everything later.
+   */
   val wireName: String
 
-  /** Fully qualified proto name — stored alongside payloads as a forensic tag. */
+  /**
+   * Fully qualified proto name — stored alongside payloads as a forensic tag.
+   *
+   * Same rule and the same reason as [wireName]: new entries name Things. The `aircraft.*` values
+   * below predate the pivot and stay only because moving them is not worth a migration (#638).
+   */
   val schemaName: String
 
   data object Thing : CollectionKind {
@@ -77,8 +98,8 @@ sealed interface CollectionKind {
   }
 
   /**
-   * Member-side index of aircraft shared *into* this account. Lives at
-   * `users/{uid}/shared_aircraft_ref/{aircraftId}` and drives the sync engine's foreign-scope
+   * Member-side index of thing shared *into* this account. Lives at
+   * `users/{uid}/shared_aircraft_ref/{thingId}` and drives the sync engine's foreign-scope
    * fan-out. See docs/sharing §2.2.
    */
   data object SharedAircraftRef : CollectionKind {

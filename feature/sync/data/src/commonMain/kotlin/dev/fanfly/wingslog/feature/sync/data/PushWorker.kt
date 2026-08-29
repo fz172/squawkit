@@ -43,7 +43,7 @@ class PushWorker(
   private val ioContext: CoroutineContext,
   private val writeLock: DatabaseWriteLock = DatabaseWriteLock(),
   // Optional so tests (and any own-tree-only caller) can omit it: without it only the user's own
-  // tree drains, preserving pre-sharing behavior. With it, shared aircraft scopes drain too.
+  // tree drains, preserving pre-sharing behavior. With it, shared thing scopes drain too.
   private val storeFactory: EntityStoreFactory? = null,
   private val telemetry: SyncTelemetry = SyncTelemetry.NoOp,
 ) {
@@ -58,7 +58,7 @@ class PushWorker(
   var failureSink: (SyncFailure?) -> Unit = {}
 
   /**
-   * Invoked with `(hostUid, aircraftId)` when a push into a shared aircraft's subtree is denied by
+   * Invoked with `(hostUid, thingId)` when a push into a shared thing's subtree is denied by
    * the rules — i.e. we were revoked. [SyncEngine] wires this to the same local reconcile the read
    * path uses. Defaults to no-op, which leaves the rows dirty (the pre-sharing behavior).
    */
@@ -68,7 +68,7 @@ class PushWorker(
    * Suspends forever, draining `dirty=1` rows as they appear. Cancel the surrounding scope to stop.
    * Suitable to launch from [SyncEngine].
    *
-   * **Scoped to a prefix set:** the user's own `users/{uid}/` subtree, plus every shared aircraft's
+   * **Scoped to a prefix set:** the user's own `users/{uid}/` subtree, plus every shared thing's
    * nested-data subtree `users/{hostUid}/thing/{acId}/` from the live refs (docs/sharing §5.3).
    * Own-tree scoping keeps account A's undrained writes from being pushed under account B's auth
    * (`PERMISSION_DENIED`) after a device hand-off; the shared prefixes let a member's edits to a
@@ -87,7 +87,7 @@ class PushWorker(
       }
   }
 
-  /** Own tree ∪ each live shared aircraft's nested-data subtree. Own-tree only when no store factory. */
+  /** Own tree ∪ each live shared thing's nested-data subtree. Own-tree only when no store factory. */
   private fun scopePrefixes(uid: String): Flow<Set<String>> {
     val own = scopePrefixFor(uid)
     val refStore =
@@ -99,15 +99,15 @@ class PushWorker(
           add(own)
           for (ref in refs) {
             add(
-              sharedAircraftScopePrefix(
+              sharedThingScopePrefix(
                 ref.value.host_uid,
                 ref.value.aircraft_id
               )
             )
-            // The aircraft *doc* sits at the host's root, not inside the per-aircraft subtree, so
-            // the prefix above misses it and a co-owner's edit to the aircraft itself would stay
+            // The thing *doc* sits at the host's root, not inside the per-thing subtree, so
+            // the prefix above misses it and a co-owner's edit to the thing itself would stay
             // dirty forever. This exact-match scope (no trailing %) is the doc's own row. The only
-            // rows we ever hold at a host's root are the shared aircraft docs — we never hydrate a
+            // rows we ever hold at a host's root are the shared thing docs — we never hydrate a
             // host's technicians or user info — so it grants no reach beyond them.
             add(hostRootScope(ref.value.host_uid))
           }
@@ -176,16 +176,16 @@ class PushWorker(
       if (e is CancellationException) throw e
 
       if (isPermissionDenied(e)) {
-        val shared = sharedAircraftIn(row, uid)
+        val shared = sharedThingIn(row, uid)
         telemetry.permissionDeniedWrite(sharedScope = shared != null)
         if (shared != null) {
           // We were revoked while this edit sat in the queue, and the push beat the ref tombstone to
           // us. This is the write-side twin of the §5.4 read race: reconcile locally rather than
           // accuse the user of an expired session, and let the janitor purge the scope — which drops
           // these rows, so we don't retry a write we will never be allowed to make.
-          val (hostUid, aircraftId) = shared
+          val (hostUid, thingId) = shared
           log.i { "PERMISSION_DENIED pushing to a shared aircraft; treating as revoked (§5.4)" }
-          sharedScopeRevokedSink(hostUid, aircraftId)
+          sharedScopeRevokedSink(hostUid, thingId)
           return@getOrElse false
         }
       }
@@ -223,27 +223,27 @@ private typealias DirtyRow = SelectDirtyInScope
 private fun scopePrefixFor(uid: String): String = "/users/$uid/%"
 
 /**
- * Exact `LIKE` scope (no wildcard) for a host's root, where the shared aircraft *doc* rows sit —
+ * Exact `LIKE` scope (no wildcard) for a host's root, where the shared thing *doc* rows sit —
  * `users/{hostUid}/` holds the doc; `users/{hostUid}/thing/{acId}/` holds its nested data.
  */
 private fun hostRootScope(hostUid: String): String = "/users/$hostUid/"
 
-/** `LIKE` prefix matching a shared aircraft's nested-data subtree in the host's tree. */
-private fun sharedAircraftScopePrefix(
+/** `LIKE` prefix matching a shared thing's nested-data subtree in the host's tree. */
+private fun sharedThingScopePrefix(
   hostUid: String,
-  aircraftId: String
+  thingId: String
 ): String =
-  "/users/$hostUid/thing/$aircraftId/%"
+  "/users/$hostUid/thing/$thingId/%"
 
 /**
- * `(hostUid, aircraftId)` when [row] belongs to a shared aircraft in *someone else's* tree, else
+ * `(hostUid, thingId)` when [row] belongs to a shared thing in *someone else's* tree, else
  * null. Anything under our own `/users/{uid}/...` is never a share, however deep it sits.
  *
- * Two shapes qualify, because a shared aircraft straddles two scopes: its nested data lives at
- * `/users/{host}/thing/{acId}/`, while the aircraft doc itself is a row *at* `/users/{host}/`,
- * where the aircraft id is the row id rather than part of the path.
+ * Two shapes qualify, because a shared thing straddles two scopes: its nested data lives at
+ * `/users/{host}/thing/{acId}/`, while the thing doc itself is a row *at* `/users/{host}/`,
+ * where the thing id is the row id rather than part of the path.
  */
-private fun sharedAircraftIn(
+private fun sharedThingIn(
   row: DirtyRow,
   uid: String
 ): Pair<String, String>? {

@@ -1,6 +1,6 @@
 package dev.fanfly.wingslog.feature.technician.datamanager
 
-import dev.fanfly.wingslog.aircraft.Technician
+import dev.fanfly.wingslog.thing.Technician
 import dev.fanfly.wingslog.feature.technician.datamanager.merge.DuplicateGroup
 import kotlinx.coroutines.flow.Flow
 

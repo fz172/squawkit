@@ -1,7 +1,7 @@
 package dev.fanfly.wingslog.feature.squawk.sharedassets
 
 import androidx.compose.runtime.Composable
-import dev.fanfly.wingslog.aircraft.SquawkDismissReason
+import dev.fanfly.wingslog.thing.SquawkDismissReason
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.squawk.sharedassets.generated.resources.Res
 import wingslog.feature.squawk.sharedassets.generated.resources.dismiss_reason_duplicate

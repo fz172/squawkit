@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+import "thing/attachment.proto";
+import "thing/technician.proto";
+import "thing/component_type.proto";
+
+option java_package = "dev.fanfly.wingslog.thing";
+option java_multiple_files = true;
+
+message MaintenanceLog {
+  string id = 1;
+  google.protobuf.Timestamp timestamp = 2;
+  string technician_id = 3;
+  string work_description = 4;
+
+  ComponentType component_type = 5;
+
+  string component_serial = 6; // References Engine/Prop/Blade Serial
+
+  double engine_hour = 8;
+
+  // Field 9 repurposed from repeated string attachment_urls.
+  // Safe because no data was ever written to field 9 before this change.
+  repeated Attachment attachments = 9;
+
+  // Separate time tracking for each component category
+  double airframe_time = 10;
+  double prop_time = 11;
+
+  // Inspection cards associated with this log entry
+  repeated string inspection_ids = 12;
+
+  // Technician who performed the work
+  Technician technician = 13;
+
+  // Squawks addressed by this log entry
+  repeated string squawk_ids = 14;
+}

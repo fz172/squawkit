@@ -46,7 +46,7 @@ class HttpsAttachmentBroker(
 
   override suspend fun upload(
     hostUid: String,
-    aircraftId: String,
+    thingId: String,
     blobId: String,
     contentType: String?,
     bytes: ByteArray,
@@ -57,7 +57,7 @@ class HttpsAttachmentBroker(
       .invoke(
         UploadSessionRequest(
           hostUid = hostUid,
-          aircraftId = aircraftId,
+          thingId = thingId,
           blobId = blobId,
           contentType = contentType,
         )
@@ -82,7 +82,7 @@ class HttpsAttachmentBroker(
 
   override suspend fun download(
     hostUid: String,
-    aircraftId: String,
+    thingId: String,
     blobId: String,
   ): ByteArray {
     // §9.2.1: the proxy verifies App Check + ID token + the ACL on THIS request, then streams bytes.
@@ -99,7 +99,7 @@ class HttpsAttachmentBroker(
       header(HttpHeaders.Authorization, "Bearer $idToken")
       header(APP_CHECK_HEADER, appCheckToken)
       parameter("hostUid", hostUid)
-      parameter("acId", aircraftId)
+      parameter("acId", thingId)
       parameter("blobId", blobId)
     }
     check(response.status.isSuccess()) {
@@ -119,7 +119,7 @@ class HttpsAttachmentBroker(
 @Serializable
 private data class UploadSessionRequest(
   val hostUid: String,
-  val aircraftId: String,
+  val thingId: String,
   val blobId: String,
   val contentType: String? = null,
 )

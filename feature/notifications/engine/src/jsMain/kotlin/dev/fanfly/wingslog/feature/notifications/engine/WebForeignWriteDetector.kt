@@ -43,7 +43,7 @@ import kotlin.time.Duration.Companion.seconds
  *
  * An open tab already runs the sync engine, so it already receives a collaborator's write the
  * instant Firestore delivers it, and `RemoteEntity.writerUid` carries rules-enforced authorship on
- * the envelope. A write we applied, authored by someone else, on an aircraft that is part of a
+ * the envelope. A write we applied, authored by someone else, on an thing that is part of a
  * share, **is** an N1 event — the same test the server-side trigger makes, run locally.
  *
  * **Bound in `jsMain` only.** Android and iOS receive N1 by push; running both paths would
@@ -52,7 +52,7 @@ import kotlin.time.Duration.Companion.seconds
  *
  * **Every foreign write posts its own notification, immediately** (design decision, 2026-08-27) —
  * no session, no count, no throttle, mirroring the backend push path's [notification id scheme]
- * (`n1:{aircraftId}:{recordType}:{recordId}:{atMs}`; see the server's `activityNotificationId`).
+ * (`n1:{thingId}:{recordType}:{recordId}:{atMs}`; see the server's `activityNotificationId`).
  * [ForeignWriteListener] carries no before/after payload though, so unlike the server this cannot
  * name the record's own title or tell created/updated/deleted apart — it posts the same "made a
  * change to {section}" body every time and lets the tap target (keyed on [id], the record's own
@@ -83,21 +83,21 @@ class WebForeignWriteDetector(
       log.d { "N1 skipped: ${kind.wireName} is not collaboration activity" }
       return
     }
-    val aircraftId = scope.aircraftIdOrNull()
-    if (aircraftId == null) {
+    val thingId = scope.thingIdOrNull()
+    if (thingId == null) {
       log.d { "N1 skipped: ${scope.toPath()} is not an aircraft scope" }
       return
     }
-    log.d { "N1 foreign write: ${kind.wireName}/$id on $aircraftId by $writerUid" }
+    log.d { "N1 foreign write: ${kind.wireName}/$id on $thingId by $writerUid" }
     this.scope.launch {
-      runCatching { handle(recordType, aircraftId, id, writerUid) }
+      runCatching { handle(recordType, thingId, id, writerUid) }
         .onFailure { log.w(it) { "N1 detection failed for ${kind.wireName}/$id" } }
     }
   }
 
   private suspend fun handle(
     recordType: RecordType,
-    aircraftId: String,
+    thingId: String,
     recordId: String,
     actorUid: String,
   ) {
@@ -128,22 +128,22 @@ class WebForeignWriteDetector(
     // Deliberately not `observeIsShared(acId).first()`: that flow combines the local ref with an
     // online roster listener seeded `onStart { emit(false) }` so a combine cannot hang offline. For
     // a member the ref half is true immediately, but for the **host** — who has no ref to their own
-    // aircraft — the first emission is the seed, so `.first()` returns false before Firestore ever
+    // thing — the first emission is the seed, so `.first()` returns false before Firestore ever
     // answers. N1 would then fire for members and never for owners, which is backwards: an owner
     // hearing about their mechanic's edits is the case the feature exists for.
     val roster = withTimeoutOrNull(ROSTER_READ_TIMEOUT) {
-      sharingManager.observeShareState(aircraftId)
+      sharingManager.observeShareState(thingId)
         .first()
     }
     if (roster == null) {
       // Offline, or the roster listener never answered. Staying silent is the safe direction: the
-      // alternative is notifying about an aircraft we cannot confirm is shared.
-      log.d { "N1 skipped: roster read timed out for $aircraftId" }
+      // alternative is notifying about an thing we cannot confirm is shared.
+      log.d { "N1 skipped: roster read timed out for $thingId" }
       return
     }
     // More than one member means a share exists — true for the host and every member alike.
     if (roster.members.size <= 1) {
-      log.d { "N1 skipped: $aircraftId has ${roster.members.size} member(s), accessDenied=${roster.accessDenied}" }
+      log.d { "N1 skipped: $thingId has ${roster.members.size} member(s), accessDenied=${roster.accessDenied}" }
       return
     }
 
@@ -151,12 +151,12 @@ class WebForeignWriteDetector(
       ?.displayName
       ?.takeIf { it.isNotBlank() }
       ?: getString(Res.string.notification_n1_actor_fallback)
-    log.i { "N1 posting: $aircraftId ${recordType.wire}/$recordId by $actor" }
+    log.i { "N1 posting: $thingId ${recordType.wire}/$recordId by $actor" }
     // Built and posted in two statements rather than one nested call, so these two log lines sit on
     // either side of the suspending build. A build that never returns used to look identical to a
     // notification that was posted and not drawn — the log said "posting", and nothing followed.
     val notification =
-      buildNotification(recordType, aircraftId, recordId, actor)
+      buildNotification(recordType, thingId, recordId, actor)
     log.d { "N1 built ${notification.id}, handing to the notifier" }
     notifier.post(notification)
     log.d { "N1 posted ${notification.id}" }
@@ -164,15 +164,15 @@ class WebForeignWriteDetector(
 
   private suspend fun buildNotification(
     recordType: RecordType,
-    aircraftId: String,
+    thingId: String,
     recordId: String,
     /** What the body says. */
     actor: String,
   ): PendingNotification {
-    val tailNumber = tailNumberOf(aircraftId)
+    val tailNumber = tailNumberOf(thingId)
     // Between this and "N1 built" there is nothing but string resource loads, so the pair of lines
     // says which half of the build is slow or stuck without another round of guessing.
-    log.d { "N1 tail number resolved for $aircraftId, rendering strings" }
+    log.d { "N1 tail number resolved for $thingId, rendering strings" }
     val body = getString(
       Res.string.notification_n1_body_single,
       actor,
@@ -194,50 +194,50 @@ class WebForeignWriteDetector(
       // Collaboration activity is never high priority — that is what N2's urgency tiers are for,
       // and §7.3 is explicit that an activity summary must never replace a grounding alert.
       highPriority = false,
-      tapTarget = recordType.tapTarget(aircraftId, recordId),
+      tapTarget = recordType.tapTarget(thingId, recordId),
     )
   }
 
   /**
-   * Falls back to the id, which is never shown in practice — the fleet always has the aircraft a
+   * Falls back to the id, which is never shown in practice — the fleet always has the thing a
    * write arrived for.
    *
    * **Bounded, for the same reason the roster read above is.** `observeFleetDashboard()` is
-   * `authStateChanged.flatMapLatest { combine(ownAircraft, sharedAircraft) }`, and a `combine`
+   * `authStateChanged.flatMapLatest { combine(ownAircraft, sharedThing) }`, and a `combine`
    * emits nothing until every source has emitted once — so a single source that never answers makes
    * `.first()` suspend rather than fail. `runCatching` does not help with that: there is no
    * exception, just a coroutine that never returns, and since this is evaluated as the argument to
-   * `notifier.post(...)` the notification is silently never posted. A title reading as the aircraft
+   * `notifier.post(...)` the notification is silently never posted. A title reading as the thing
    * id is a bad title; no notification at all is a lost one.
    */
-  private suspend fun tailNumberOf(aircraftId: String): String =
+  private suspend fun tailNumberOf(thingId: String): String =
     runCatching {
       withTimeoutOrNull(FLEET_READ_TIMEOUT) {
         fleetManager.observeFleetDashboard()
           .first()
-          .firstOrNull { it.aircraft.id == aircraftId }
-          ?.aircraft
+          .firstOrNull { it.thing.id == thingId }
+          ?.thing
           ?.tail_number
       } ?: run {
-        log.w { "N1 tail number read timed out for $aircraftId; falling back to the id" }
+        log.w { "N1 tail number read timed out for $thingId; falling back to the id" }
         null
       }
-    }.getOrNull() ?: aircraftId
+    }.getOrNull() ?: thingId
 
   /** The three record types §8 treats as collaboration activity. Anything else is not N1. */
   private enum class RecordType(
     val wire: String,
     val titleLabel: StringResource,
     val lowerLabel: StringResource,
-    val tapTarget: (aircraftId: String, recordId: String) -> NotificationTapTarget,
+    val tapTarget: (thingId: String, recordId: String) -> NotificationTapTarget,
   ) {
     SQUAWK(
       "squawk",
       Res.string.notification_n1_section_squawks,
       Res.string.notification_n1_section_squawks_lower,
-      { aircraftId, recordId ->
+      { thingId, recordId ->
         NotificationTapTarget.Squawk(
-          aircraftId,
+          thingId,
           recordId
         )
       },
@@ -246,9 +246,9 @@ class WebForeignWriteDetector(
       "task",
       Res.string.notification_n1_section_tasks,
       Res.string.notification_n1_section_tasks_lower,
-      { aircraftId, recordId ->
+      { thingId, recordId ->
         NotificationTapTarget.Task(
-          aircraftId,
+          thingId,
           recordId
         )
       },
@@ -257,9 +257,9 @@ class WebForeignWriteDetector(
       "log",
       Res.string.notification_n1_section_logbook,
       Res.string.notification_n1_section_logbook_lower,
-      { aircraftId, recordId ->
+      { thingId, recordId ->
         NotificationTapTarget.Log(
-          aircraftId,
+          thingId,
           recordId
         )
       },
@@ -276,10 +276,10 @@ class WebForeignWriteDetector(
   }
 
   /**
-   * Per-aircraft scopes are `/users/{hostUid}/thing/{acId}/`, so the id is the fourth segment.
-   * A top-level scope has no aircraft and is not N1.
+   * Per-thing scopes are `/users/{hostUid}/thing/{acId}/`, so the id is the fourth segment.
+   * A top-level scope has no thing and is not N1.
    */
-  private fun EntityScope.aircraftIdOrNull(): String? =
+  private fun EntityScope.thingIdOrNull(): String? =
     segments.takeIf { it.size >= 4 && it[2] == "thing" }
       ?.get(3)
 

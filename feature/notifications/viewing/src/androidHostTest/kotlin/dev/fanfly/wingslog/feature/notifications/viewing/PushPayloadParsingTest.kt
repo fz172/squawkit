@@ -124,8 +124,8 @@ class PushPayloadParsingTest {
   }
 
   @Test
-  fun `degrades a record target with no id to that aircraft's list`() {
-    // A tap that scrolls to nothing is survivable; losing the aircraft too is not.
+  fun `degrades a record target with no id to that thing's list`() {
+    // A tap that scrolls to nothing is survivable; losing the thing too is not.
     val parsed =
       PushPayload.parse(activityData(mapOf("tapTarget" to "squawk:ac-1")))!!
 
@@ -138,7 +138,7 @@ class PushPayloadParsingTest {
   }
 
   @Test
-  fun `taps a deleted record's notification to the aircraft and tab, not the gone record`() {
+  fun `taps a deleted record's notification to the thing and tab, not the gone record`() {
     val parsed = PushPayload.parse(
       activityData(
         mapOf(

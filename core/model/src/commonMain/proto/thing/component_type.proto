@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+import "thing/attachment.proto";
+import "thing/technician.proto";
+
+option java_package = "dev.fanfly.wingslog.thing";
+option java_multiple_files = true;
+
+enum ComponentType {
+  COMPONENT_UNKNOWN = 0;
+  COMPONENT_AIRFRAME = 1;
+  COMPONENT_ENGINE = 2;
+  COMPONENT_PROPELLER = 3;
+  reserved 4;
+  reserved "COMPONENT_AVIONICS";
+}

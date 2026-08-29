@@ -15,7 +15,7 @@ class UrgencyWatermarkStoreTest {
   companion object {
     private const val TEST_UID = "user-watermark-001"
     private const val TEST_AIRCRAFT_ID = "aircraft-watermark-001"
-    private val TEST_SCOPE = EntityScope.aircraftChildUnsafe(
+    private val TEST_SCOPE = EntityScope.thingChildUnsafe(
       TEST_UID,
       TEST_AIRCRAFT_ID
     )
@@ -153,7 +153,7 @@ class UrgencyWatermarkStoreTest {
 
   @Test
   fun pruneNotIn_doesNotTouchOtherScopes() = runTest {
-    val otherScope = EntityScope.aircraftChildUnsafe(
+    val otherScope = EntityScope.thingChildUnsafe(
       TEST_UID,
       "other-aircraft"
     )
@@ -173,7 +173,7 @@ class UrgencyWatermarkStoreTest {
     )
 
     // Pruning TEST_SCOPE with an empty seen set must not touch otherScope's watermark, even though
-    // it shares the same id — an un-hydrated aircraft's watermarks must survive untouched.
+    // it shares the same id — an un-hydrated thing's watermarks must survive untouched.
     store.pruneNotIn(
       TEST_UID,
       TEST_KIND,
@@ -245,7 +245,7 @@ class UrgencyWatermarkStoreTest {
   @Test
   fun deleteForUser_doesNotTouchOtherUsers() = runTest {
     val otherUid = "user-watermark-002"
-    val otherScope = EntityScope.aircraftChildUnsafe(
+    val otherScope = EntityScope.thingChildUnsafe(
       otherUid,
       TEST_AIRCRAFT_ID
     )

@@ -26,12 +26,11 @@ import dev.fanfly.wingslog.core.nav.Screen.Companion.CROSS_SCREEN_SUCCESS_MESSAG
 import dev.fanfly.wingslog.core.ui.adaptive.AdaptiveAppShell
 import dev.fanfly.wingslog.core.ui.adaptive.ShellSection
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
-import dev.fanfly.wingslog.feature.aircraft.dashboard.ShellSectionBody
-import dev.fanfly.wingslog.feature.aircraft.dashboard.ShellSectionFab
+import dev.fanfly.wingslog.feature.thing.dashboard.ShellSectionBody
+import dev.fanfly.wingslog.feature.thing.dashboard.ShellSectionFab
 import dev.fanfly.wingslog.feature.fleet.viewing.FleetEmptyState
 import dev.fanfly.wingslog.feature.login.upgrade.AccountUpgradeFlow
 import dev.fanfly.wingslog.feature.login.upgrade.AccountUpgradeViewModel
-import dev.fanfly.wingslog.feature.notifications.model.NotificationTapTarget
 import dev.fanfly.wingslog.feature.notifications.viewing.NotificationTapRouter
 import dev.fanfly.wingslog.feature.settings.SettingsContent
 import dev.fanfly.wingslog.feature.shell.viewmodel.AdaptiveShellViewModel
@@ -61,29 +60,29 @@ fun AdaptiveShellRoute(
   val upgradeViewModel = koinViewModel<AccountUpgradeViewModel>()
   val scope = rememberCoroutineScope()
   val state by viewModel.uiState.collectAsState()
-  val atAircraftLimit by viewModel.atAircraftLimit.collectAsState()
+  val atThingLimit by viewModel.atThingLimit.collectAsState()
 
-  // At the owned-aircraft limit, the Add-aircraft entry surfaces the promo instead of navigating
+  // At the owned-thing limit, the Add-thing entry surfaces the promo instead of navigating
   // (gate as promo, not a hidden action). Never reached from the empty-fleet state — 0 owned is
   // never at limit. Default-open while the subscription capability is off.
-  var showAddAircraftUpsell by remember { mutableStateOf(false) }
+  var showAddThingUpsell by remember { mutableStateOf(false) }
   val onAddAircraft = {
-    if (atAircraftLimit) {
-      showAddAircraftUpsell = true
+    if (atThingLimit) {
+      showAddThingUpsell = true
     } else {
       navController.navigate(Screen.AddAircraft.route)
     }
   }
 
   // Manual invite-code entry (#209). Reused by both the switcher (populated fleet) and the
-  // empty-fleet state (where a technician with no aircraft of their own lands).
+  // empty-fleet state (where a technician with no thing of their own lands).
   val onEnterInviteCode: () -> Unit = {
     navController.navigate(Screen.EnterInviteCode.route)
   }
   // Page-view feeder 2: the shell's sections (Dashboard/Tasks/Squawks/Logs/Settings) are
   // ViewModel state under one route, so the root observer can't see them — log on change here.
   val analytics = LocalAnalytics.current
-  LaunchedEffect(state.section, state.selectedAircraftId) {
+  LaunchedEffect(state.section, state.selectedThingId) {
     analytics.logScreenView("shell/${state.section.name.lowercase()}")
   }
 
@@ -110,7 +109,7 @@ fun AdaptiveShellRoute(
   // Work that was destroyed when a share ended (PRD D3 — the one data-loss window). Held open until
   // the user dismisses it: the purge typically runs while they are on another screen or the app is
   // backgrounded, and a message that times out unseen would leave them thinking the edit saved.
-  // Every notification tap moves shell state (aircraft, section, and for a single record the card to
+  // Every notification tap moves shell state (thing, section, and for a single record the card to
   // scroll to) rather than navigating, so all of it is applied here. Handling it from inside this
   // route needs no auth gate of its own: the shell destination only composes once the auth graph has
   // handed off, so a tap that cold-started the app simply stays pending until then.
@@ -130,7 +129,7 @@ fun AdaptiveShellRoute(
   val dismissLabel = stringResource(CoreRes.string.dismiss)
   val discardedMessage = stringResource(
     CoreRes.string.sync_changes_discarded,
-    (notice as? SyncNotice.ChangesDiscarded)?.aircraftLabel.orEmpty(),
+    (notice as? SyncNotice.ChangesDiscarded)?.thingLabel.orEmpty(),
   )
   LaunchedEffect(notice) {
     val discarded =
@@ -148,11 +147,11 @@ fun AdaptiveShellRoute(
     state = state,
     snackbarHostState = snackbarHostState,
     onSelectSection = viewModel::selectSection,
-    onSelectAircraft = viewModel::selectAircraft,
+    onSelectAircraft = viewModel::selectThing,
     onOpenSettings = viewModel::openSettings,
     onAddAircraft = onAddAircraft,
     onEnterInviteCode = onEnterInviteCode,
-    sectionContent = { section, aircraftId ->
+    sectionContent = { section, thingId ->
       if (section == ShellSection.SETTINGS) {
         SettingsSection(
           rootNavController = navController,
@@ -161,7 +160,7 @@ fun AdaptiveShellRoute(
       } else {
         ShellSectionBody(
           section = section,
-          aircraftId = aircraftId,
+          thingId = thingId,
           navController = navController,
           onNavigateToSection = viewModel::selectSection,
           scrollToRecordId = scrollTargetId,
@@ -175,10 +174,10 @@ fun AdaptiveShellRoute(
         onEnterInviteCode = onEnterInviteCode,
       )
     },
-    sectionFab = { section, aircraftId ->
+    sectionFab = { section, thingId ->
       ShellSectionFab(
         section = section,
-        aircraftId = aircraftId,
+        thingId = thingId,
         navController = navController,
       )
     },
@@ -197,14 +196,14 @@ fun AdaptiveShellRoute(
     },
   )
 
-  if (showAddAircraftUpsell) {
+  if (showAddThingUpsell) {
     ProUpsellSheet(
       trigger = UpsellTrigger.ADD_AIRCRAFT,
       onSeePlans = {
-        showAddAircraftUpsell = false
+        showAddThingUpsell = false
         navController.navigate(Screen.Subscription.route)
       },
-      onDismiss = { showAddAircraftUpsell = false },
+      onDismiss = { showAddThingUpsell = false },
     )
   }
 }

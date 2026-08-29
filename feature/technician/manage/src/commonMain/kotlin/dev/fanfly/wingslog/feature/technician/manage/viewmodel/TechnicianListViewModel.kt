@@ -2,7 +2,7 @@ package dev.fanfly.wingslog.feature.technician.manage.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dev.fanfly.wingslog.aircraft.Technician
+import dev.fanfly.wingslog.thing.Technician
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import dev.fanfly.wingslog.feature.technician.datamanager.merge.DuplicateGroup
@@ -20,7 +20,7 @@ data class TechnicianListUiState(
   /** The user's own list: their self-record first, then mechanics they typed in by hand. */
   val technicians: List<Technician> = emptyList(),
   /**
-   * Members of the user's shared aircraft who have published a technician mirror. Read-only — each
+   * Members of the user's shared thing who have published a technician mirror. Read-only — each
    * is maintained by the person it belongs to, not by this user (design §7.3).
    */
   val linkedTechnicians: List<Technician> = emptyList(),

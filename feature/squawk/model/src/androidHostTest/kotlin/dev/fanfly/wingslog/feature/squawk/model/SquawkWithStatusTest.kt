@@ -1,8 +1,8 @@
 package dev.fanfly.wingslog.feature.squawk.model
 
 import com.google.common.truth.Truth.assertThat
-import dev.fanfly.wingslog.aircraft.Squawk
-import dev.fanfly.wingslog.aircraft.SquawkDismissReason
+import dev.fanfly.wingslog.thing.Squawk
+import dev.fanfly.wingslog.thing.SquawkDismissReason
 import org.junit.Test
 
 class SquawkWithStatusTest {

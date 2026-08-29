@@ -1,7 +1,7 @@
 package dev.fanfly.wingslog.feature.login.upgrade
 
 import com.google.common.truth.Truth.assertThat
-import dev.fanfly.wingslog.aircraft.Technician
+import dev.fanfly.wingslog.thing.Technician
 import dev.fanfly.wingslog.core.auth.AccountUpgradeResult
 import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.core.auth.AuthProvider

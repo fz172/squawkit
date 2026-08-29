@@ -36,7 +36,7 @@ actual class ExportFileStore {
 
   // App-private metadata index. The leading dot keeps it out of the ".zip" archive listing and
   // tucked away from the Files app; the archives are the source of truth for existence, this is
-  // the source of truth for scope (formats / date range / aircraft).
+  // the source of truth for scope (formats / date range / thing).
   private fun indexPath(ownerUid: String): String =
     "$exportDirectory/.export_record_index_${ownerUid.toFileSegment()}.pb"
 

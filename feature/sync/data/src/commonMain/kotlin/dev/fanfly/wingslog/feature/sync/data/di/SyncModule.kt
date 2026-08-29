@@ -143,7 +143,7 @@ val syncModule: Module = module {
       sharedScopeJanitor = SharedScopeJanitor(
         db = db,
         writeLock = writeLock,
-        aircraftStore = get<EntityStoreFactory>().create(CollectionKind.Thing),
+        thingStore = get<EntityStoreFactory>().create(CollectionKind.Thing),
         blobs = getOrNull<LocalBlobStore>(),
       ),
       telemetry = get<SyncTelemetry>(),

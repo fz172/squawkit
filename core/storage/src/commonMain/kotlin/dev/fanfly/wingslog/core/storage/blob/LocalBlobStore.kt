@@ -118,7 +118,7 @@ interface LocalBlobStore {
    * This is reclamation, not deletion. It is called by
    * `dev.fanfly.wingslog.core.storage.TombstoneGc` on blobs whose record was deleted and whose
    * tombstone has now aged out, long after the server's own cascade removed the canonical bytes.
-   * Deleting those bytes is the server's job and never the client's — on a shared aircraft they sit
+   * Deleting those bytes is the server's job and never the client's — on a shared thing they sit
    * in the *host's* Storage, and a member reaching into it is exactly what the deletion design
    * forbids ([docs/storage/deletion_gc_design.html] §5.5). Use [delete] for a user removing an
    * attachment: that one is meant to take the remote object with it.

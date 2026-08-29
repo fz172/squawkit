@@ -1,9 +1,9 @@
 package dev.fanfly.wingslog.feature.logs.update.logs.viewmodel
 
-import dev.fanfly.wingslog.aircraft.ComponentType
-import dev.fanfly.wingslog.aircraft.MaintenanceTask
-import dev.fanfly.wingslog.aircraft.Squawk
-import dev.fanfly.wingslog.aircraft.Technician
+import dev.fanfly.wingslog.thing.ComponentType
+import dev.fanfly.wingslog.thing.MaintenanceTask
+import dev.fanfly.wingslog.thing.Squawk
+import dev.fanfly.wingslog.thing.Technician
 import dev.fanfly.wingslog.core.ui.common.UiText
 import dev.fanfly.wingslog.feature.attachment.datamanager.QuotaChecker
 import dev.fanfly.wingslog.feature.attachment.model.PendingAttachment
@@ -20,20 +20,20 @@ data class MaintenanceLogFormUiState(
   val engineTime: String = "",
   val airframeTime: String = "",
   val propTime: String = "",
-  val aircraft: Thing? = null,
+  val thing: Thing? = null,
   val selectedComponentType: ComponentType = ComponentType.COMPONENT_AIRFRAME,
   val selectedSubComponent: String? = null,
   val error: UiText? = null,
-  /** Open squawks for this aircraft, plus any already addressed by this log — used by SquawkPickerSheet and to resolve titles for selected squawk chips */
+  /** Open squawks for this thing, plus any already addressed by this log — used by SquawkPickerSheet and to resolve titles for selected squawk chips */
   val availableSquawks: List<Squawk> = emptyList(),
   val selectedSquawkIds: List<String> = emptyList(),
   val showSquawkPicker: Boolean = false,
-  /** All inspection cards for this aircraft — used by TaskPickerSheet */
+  /** All inspection cards for this thing — used by TaskPickerSheet */
   val availableInspectionCards: List<MaintenanceTask> = emptyList(),
   val showInspectionPicker: Boolean = false,
   val selectedTechnician: Technician? = null,
   val availableTechnicians: List<Technician> = emptyList(),
-  /** Members of this aircraft's share who published a mirror — selectable, badged "Linked" (§7.3). */
+  /** Members of this thing's share who published a mirror — selectable, badged "Linked" (§7.3). */
   val linkedTechnicians: List<Technician> = emptyList(),
   /** The caller's own technician record, listed first in the picker. */
   val selfTechnicianId: String? = null,

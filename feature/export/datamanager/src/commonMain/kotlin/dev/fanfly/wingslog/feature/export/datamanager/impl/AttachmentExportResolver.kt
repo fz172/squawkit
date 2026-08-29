@@ -1,8 +1,8 @@
 package dev.fanfly.wingslog.feature.export.datamanager.impl
 
 import co.touchlab.kermit.Logger
-import dev.fanfly.wingslog.aircraft.Attachment
-import dev.fanfly.wingslog.aircraft.AttachmentType
+import dev.fanfly.wingslog.thing.Attachment
+import dev.fanfly.wingslog.thing.AttachmentType
 import dev.fanfly.wingslog.core.storage.blob.BlobId
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.core.storage.blob.BlobFilesystem
@@ -37,7 +37,7 @@ class AttachmentExportResolver(
    *
    * **Concurrency.** These coroutines spend nearly all their time *waiting* on
    * `AttachmentManager.ensureLocal`, whose own timeout is per attachment. Resolved one at a time,
-   * an aircraft with 11 unfetchable attachments cost 11 × that timeout — five and a half silent
+   * an thing with 11 unfetchable attachments cost 11 × that timeout — five and a half silent
    * minutes, which is exactly how #426 was first reported. Run together, the worst case is one
    * timeout regardless of count. The real network work is not done here anyway; it is scheduled
    * through WorkManager, which does its own throttling.
@@ -46,7 +46,7 @@ class AttachmentExportResolver(
    * (batches × timeout), so the phase gets an absolute cap. Whatever has not resolved when it
    * expires is noted and abandoned rather than extending the wait.
    */
-  suspend fun resolve(bundle: AircraftBundle): AttachmentExportManifest =
+  suspend fun resolve(bundle: ThingBundle): AttachmentExportManifest =
     coroutineScope {
       val notes = mutableListOf<String>()
       // Deduped, and in bundle order: the ZIP's entry order should not depend on which download
@@ -82,10 +82,10 @@ class AttachmentExportResolver(
       // instead of from here. Counts at warn; the per-attachment reasons at debug, since the ids
       // are noise once the count tells you whether to care.
       if (notes.isEmpty()) {
-        log.i { "Attachments resolved for ${bundle.aircraft.id}: ${payloads.size}/${targets.size}" }
+        log.i { "Attachments resolved for ${bundle.thing.id}: ${payloads.size}/${targets.size}" }
       } else {
         log.w {
-          "Attachments INCOMPLETE for ${bundle.aircraft.id}: " +
+          "Attachments INCOMPLETE for ${bundle.thing.id}: " +
             "${payloads.size}/${targets.size} embedded, ${notes.size} unavailable"
         }
         notes.forEach { note -> log.d { note } }
@@ -127,7 +127,7 @@ class AttachmentExportResolver(
     data class Missing(val note: String) : Resolved
   }
 
-  private fun AircraftBundle.exportedAttachments(): List<Attachment> =
+  private fun ThingBundle.exportedAttachments(): List<Attachment> =
     logs.flatMap { it.attachments } +
       tasks.flatMap { it.attachments } +
       squawks.flatMap { it.attachments }

@@ -284,7 +284,7 @@ fun MaintenanceLogFormScreen(
                   onDateClick = { showDatePicker = true },
                   workDescription = uiState.workDescription,
                   onWorkDescriptionChange = viewModel::onWorkDescriptionChange,
-                  aircraft = uiState.aircraft,
+                  thing = uiState.thing,
                   selectedComponentType = uiState.selectedComponentType,
                   onComponentTypeChange = viewModel::onComponentTypeChange,
                   selectedSubComponent = uiState.selectedSubComponent,

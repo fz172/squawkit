@@ -244,7 +244,7 @@ Order matters — keep Android/iOS green at every step:
 - Resolve the `Dispatchers.IO` blocker (expect/actual IO dispatcher).
 - Verify/establish navigation on JS (androidx navigation-compose, else custom).
 - Add `js(IR)` to the read-path feature modules: `feature:fleet:*`,
-  `feature:aircraft:dashboard`, and the `model`/`datamanager`/`viewing`/`sharedassets`
+  `feature:thing:dashboard`, and the `model`/`datamanager`/`viewing`/`sharedassets`
   of `logs`, `tasks`, `squawk`. Port `AppEntry`'s graph (or a web-tailored subset).
 - Mutation controls render only when their host supplies edit destinations; web omits
   them until M6 wires those destinations, without a temporary `readOnly` mode flag.
@@ -294,7 +294,7 @@ Track which shared modules have gained a `js(IR)` target (✅ = has JS target):
 | `core:storage`                                                                      | ✅         | M3                                    |
 | `core:firebase`, `feature:attachment:{model,datamanager}`                           | ✅         | M4                                    |
 | `feature:sync:data`, `feature:technician:datamanager`                               | ✅         | M4                                    |
-| `feature:fleet:*`, `feature:aircraft:dashboard`                                     | ✅         | M5                                    |
+| `feature:fleet:*`, `feature:thing:dashboard`                                     | ✅         | M5                                    |
 | `feature:{logs,tasks,squawk}:{model,datamanager,viewing,sharedassets}`              | ✅         | M5                                    |
 | `feature:attachment:{sharedassets,viewing}`, `feature:featurelab:datamanager`       | ✅         | M5 dependency                         |
 | `feature:{logs,tasks,squawk}:update`, `feature:technician:{manage,sharedassets}`    | ✅         | M6                                    |

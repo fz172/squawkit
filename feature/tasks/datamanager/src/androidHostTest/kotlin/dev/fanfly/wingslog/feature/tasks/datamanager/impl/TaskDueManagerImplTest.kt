@@ -1,16 +1,16 @@
 package dev.fanfly.wingslog.feature.tasks.datamanager.impl
 
 import com.google.common.truth.Truth.assertThat
-import dev.fanfly.wingslog.aircraft.ComponentType
-import dev.fanfly.wingslog.aircraft.EngineHourRule
-import dev.fanfly.wingslog.aircraft.ForceCompliedStatus
-import dev.fanfly.wingslog.aircraft.ImmediateRule
-import dev.fanfly.wingslog.aircraft.InspectionRule
-import dev.fanfly.wingslog.aircraft.LinkedRule
-import dev.fanfly.wingslog.aircraft.MaintenanceLog
-import dev.fanfly.wingslog.aircraft.MaintenanceTask
-import dev.fanfly.wingslog.aircraft.OnConditionRule
-import dev.fanfly.wingslog.aircraft.TimeRule
+import dev.fanfly.wingslog.thing.ComponentType
+import dev.fanfly.wingslog.thing.EngineHourRule
+import dev.fanfly.wingslog.thing.ForceCompliedStatus
+import dev.fanfly.wingslog.thing.ImmediateRule
+import dev.fanfly.wingslog.thing.InspectionRule
+import dev.fanfly.wingslog.thing.LinkedRule
+import dev.fanfly.wingslog.thing.MaintenanceLog
+import dev.fanfly.wingslog.thing.MaintenanceTask
+import dev.fanfly.wingslog.thing.OnConditionRule
+import dev.fanfly.wingslog.thing.TimeRule
 import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import io.mockk.every
 import io.mockk.mockk

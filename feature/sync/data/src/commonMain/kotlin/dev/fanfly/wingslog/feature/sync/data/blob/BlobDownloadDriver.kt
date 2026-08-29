@@ -14,7 +14,7 @@ import io.ktor.client.statement.readRawBytes
  * One-shot download of a single `blob_object` row from `REMOTE_ONLY` → `SYNCED`.
  *
  * **Own-tree** blobs fetch a Firebase Storage download URL and pull the bytes directly.
- * **Foreign-hosted** (shared-aircraft) blobs go through the [AttachmentBroker] `streamBlob` proxy,
+ * **Foreign-hosted** (shared-thing) blobs go through the [AttachmentBroker] `streamBlob` proxy,
  * because `storage.rules` deny cross-account reads and the proxy is the only authorized door
  * (design §9.2). Either way the bytes flow into [LocalBlobStore.installDownloaded], which verifies
  * the sha256 and writes to disk.
@@ -56,7 +56,7 @@ class BlobDownloadDriver(
 
     val bytes = try {
       if (foreign) {
-        broker.download(location.ownerUid, location.aircraftId, id.value)
+        broker.download(location.ownerUid, location.thingId, id.value)
       } else {
         val url = storage.reference(remotePath)
           .getDownloadUrl()

@@ -92,7 +92,7 @@ class BlobUploadDriver(
         // host tree, so the row records the same canonical location on success.
         broker.upload(
           hostUid = location.ownerUid,
-          aircraftId = location.aircraftId,
+          thingId = location.thingId,
           blobId = id.value,
           contentType = ref.contentType,
           bytes = bytes,

@@ -16,7 +16,7 @@ import java.io.IOException
 actual class ExportFileStore(private val context: Context) {
   // App-private index of export metadata. Survives alongside the user-visible archives in
   // Downloads/SquawkIt; the archives are the source of truth for existence, this is the source of
-  // truth for the scope (formats / date range / aircraft) that can't be read back off the file.
+  // truth for the scope (formats / date range / thing) that can't be read back off the file.
   private fun indexFile(ownerUid: String): File =
     File(context.filesDir, "export_record_index_${ownerUid.toFileSegment()}.pb")
 

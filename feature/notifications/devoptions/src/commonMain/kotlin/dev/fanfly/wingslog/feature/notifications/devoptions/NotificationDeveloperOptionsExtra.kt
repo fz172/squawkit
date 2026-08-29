@@ -78,7 +78,7 @@ import wingslog.feature.notifications.devoptions.generated.resources.notificatio
  * routing and the high-priority path without a second account and a real AOG squawk. "Scan now"
  * plus the watermark reset now produce real notifications through the real code path, which is
  * strictly better evidence than a synthetic post — and a synthetic post with a tap target pointing
- * at a nonexistent aircraft was actively misleading once [ScanTrigger] and tap routing existed.
+ * at a nonexistent thing was actively misleading once [ScanTrigger] and tap routing existed.
  */
 class NotificationDeveloperOptionsExtra(
   private val permission: NotificationPermission,

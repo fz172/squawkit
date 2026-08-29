@@ -4,12 +4,12 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.squareup.wire.Instant
-import dev.fanfly.wingslog.aircraft.ComplianceType
-import dev.fanfly.wingslog.aircraft.ComponentType
-import dev.fanfly.wingslog.aircraft.ForceCompliedStatus
-import dev.fanfly.wingslog.aircraft.InspectionRule
-import dev.fanfly.wingslog.aircraft.MaintenanceLog
-import dev.fanfly.wingslog.aircraft.MaintenanceTask
+import dev.fanfly.wingslog.thing.ComplianceType
+import dev.fanfly.wingslog.thing.ComponentType
+import dev.fanfly.wingslog.thing.ForceCompliedStatus
+import dev.fanfly.wingslog.thing.InspectionRule
+import dev.fanfly.wingslog.thing.MaintenanceLog
+import dev.fanfly.wingslog.thing.MaintenanceTask
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.model.id.generateRandomId
 import dev.fanfly.wingslog.core.nav.Screen
@@ -45,7 +45,7 @@ import wingslog.feature.attachment.sharedassets.generated.resources.Res as Attac
 sealed interface TaskUiState {
   data object Loading : TaskUiState
   data class Success(
-    val aircraftId: String,
+    val thingId: String,
     val allInspections: List<MaintenanceTask> = emptyList(),
     val availableLogs: List<MaintenanceLog> = emptyList(),
     val currentEngineHours: Float,
@@ -59,7 +59,7 @@ sealed interface TaskUiState {
 
 sealed interface TaskFormEvent {
   data object PickError : TaskFormEvent
-  data class NavigateToCreateLog(val aircraftId: String, val cardId: String) : TaskFormEvent
+  data class NavigateToCreateLog(val thingId: String, val cardId: String) : TaskFormEvent
 }
 
 /**
@@ -156,7 +156,7 @@ class TaskViewModel(
   savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
-  private val aircraftId: String =
+  private val thingId: String =
     checkNotNull(savedStateHandle[Screen.AIRCRAFT_ID])
   val cardId: String? = savedStateHandle[Screen.CARD_ID]
 
@@ -176,7 +176,7 @@ class TaskViewModel(
   // Attachment state is kept separate so it survives inspection list reloads.
   private var saveJob: Job? = null
   private val attachmentForm =
-    AttachmentFormController(attachmentManager, aircraftId)
+    AttachmentFormController(attachmentManager, thingId)
   val pendingAttachments: StateFlow<List<PendingAttachment>> =
     attachmentForm.pendingAttachments
   val showAttachmentPicker: StateFlow<Boolean> = attachmentForm.showPicker
@@ -197,13 +197,13 @@ class TaskViewModel(
   init {
     loadData()
     viewModelScope.launch {
-      // The attachment gate is aircraft-scoped (§9.7): on a foreign host's aircraft the host pays and
+      // The attachment gate is thing-scoped (§9.7): on a foreign host's thing the host pays and
       // the broker enforces the host's entitlement, so the member is never gated by their own
-      // subscription; on an own aircraft the member's own entitlement governs. (Both default-open
+      // subscription; on an own thing the member's own entitlement governs. (Both default-open
       // until the subscription capability ships.)
       combine(
         subscriptionManager.canUploadAttachments(),
-        sharingManager.observeIsForeignHosted(aircraftId),
+        sharingManager.observeIsForeignHosted(thingId),
       ) { canUpload, foreignHosted -> foreignHosted || canUpload }
         .collect { _attachmentUploadEnabled.value = it }
     }
@@ -212,9 +212,9 @@ class TaskViewModel(
   private fun loadData() {
     viewModelScope.launch {
       combine(
-        inspectionDataManager.observeTasks(aircraftId),
-        maintenanceLogManager.observeLogs(aircraftId),
-        maintenanceLogManager.observeMaintenanceOverview(aircraftId)
+        inspectionDataManager.observeTasks(thingId),
+        maintenanceLogManager.observeLogs(thingId),
+        maintenanceLogManager.observeMaintenanceOverview(thingId)
       ) { cards, logs, overview ->
         Triple(cards, logs, overview)
       }.collect { (cards, logs, overview) ->
@@ -237,7 +237,7 @@ class TaskViewModel(
         }
         _uiState.update { prev ->
           TaskUiState.Success(
-            aircraftId = aircraftId,
+            thingId = thingId,
             allInspections = cards,
             availableLogs = logs,
             currentEngineHours = engineHours,
@@ -309,7 +309,7 @@ class TaskViewModel(
     createWorkLogRequested = true
     _formState.update { it.copy(showResolveMenu = false) }
     viewModelScope.launch {
-      _events.send(TaskFormEvent.NavigateToCreateLog(aircraftId, id))
+      _events.send(TaskFormEvent.NavigateToCreateLog(thingId, id))
     }
   }
 
@@ -337,7 +337,7 @@ class TaskViewModel(
           complied_engine_hours = currentEngineHours,
         )
       )
-      inspectionDataManager.updateTask(aircraftId, skipped)
+      inspectionDataManager.updateTask(thingId, skipped)
         .onSuccess { onSuccess() }
     }
   }
@@ -376,7 +376,7 @@ class TaskViewModel(
     if (taskId in log.inspection_ids) return
     viewModelScope.launch {
       maintenanceLogManager.updateLog(
-        aircraftId,
+        thingId,
         log.copy(inspection_ids = log.inspection_ids + taskId)
       )
       _showLogPicker.value = false
@@ -386,7 +386,7 @@ class TaskViewModel(
   fun removeLogFromHistory(taskId: String, log: MaintenanceLog) {
     viewModelScope.launch {
       maintenanceLogManager.updateLog(
-        aircraftId,
+        thingId,
         log.copy(inspection_ids = log.inspection_ids - taskId)
       )
     }
@@ -459,7 +459,7 @@ class TaskViewModel(
           attachments = attachments,
         )
         inspectionDataManager.addTask(
-          aircraftId,
+          thingId,
           card
         )
           .onSuccess { onSuccess() }
@@ -536,7 +536,7 @@ class TaskViewModel(
           attachments = attachments,
         )
         inspectionDataManager.updateTask(
-          aircraftId,
+          thingId,
           updatedCard
         )
           .onSuccess { onSuccess() }
@@ -553,7 +553,7 @@ class TaskViewModel(
     viewModelScope.launch {
       attachmentForm.deleteSavedFiles()
       inspectionDataManager.deleteTask(
-        aircraftId,
+        thingId,
         cardId
       )
         .onSuccess { onSuccess() }

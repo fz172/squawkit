@@ -8,7 +8,7 @@ import androidx.navigation.compose.dialog
 import androidx.navigation.navArgument
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.ui.adaptive.compose.AdaptiveFormDialogFrame
-import dev.fanfly.wingslog.feature.aircraft.update.EditAircraftScreen
+import dev.fanfly.wingslog.feature.thing.update.EditAircraftScreen
 import dev.fanfly.wingslog.feature.developeroptions.plugin.DeveloperOptionsNavContributor
 import dev.fanfly.wingslog.feature.export.update.ExportHistoryRoute
 import dev.fanfly.wingslog.feature.export.update.ExportSelectionRoute
@@ -155,8 +155,8 @@ fun NavGraphBuilder.formDialogs(navController: NavController) {
  * features that own them and no capability flag to decide for them.
  */
 /**
- * Per-aircraft sharing destinations, registered once on the root graph so both hosts render them.
- * Reached from an aircraft's context (the entry point + role-gated visibility land with #133).
+ * Per-thing sharing destinations, registered once on the root graph so both hosts render them.
+ * Reached from an thing's context (the entry point + role-gated visibility land with #133).
  */
 fun NavGraphBuilder.sharingRoutes(navController: NavController) {
   dialog(

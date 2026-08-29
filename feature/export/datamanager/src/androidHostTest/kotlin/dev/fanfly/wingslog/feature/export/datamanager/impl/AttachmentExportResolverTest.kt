@@ -2,9 +2,9 @@ package dev.fanfly.wingslog.feature.export.datamanager.impl
 
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.thing.Thing
-import dev.fanfly.wingslog.aircraft.Attachment
-import dev.fanfly.wingslog.aircraft.AttachmentType
-import dev.fanfly.wingslog.aircraft.MaintenanceLog
+import dev.fanfly.wingslog.thing.Attachment
+import dev.fanfly.wingslog.thing.AttachmentType
+import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.blob.BlobFilesystem
 import dev.fanfly.wingslog.core.storage.blob.BlobId
@@ -57,8 +57,8 @@ class AttachmentExportResolverTest {
     type = AttachmentType.ATTACHMENT_TYPE_FILE,
   )
 
-  private fun bundle(vararg attachments: Attachment) = AircraftBundle(
-    aircraft = Thing(id = "ac1"),
+  private fun bundle(vararg attachments: Attachment) = ThingBundle(
+    thing = Thing(id = "ac1"),
     logs = listOf(
       MaintenanceLog(
         id = "log1",
@@ -76,7 +76,7 @@ class AttachmentExportResolverTest {
 
   private fun blobRef(id: String) = BlobRef(
     id = BlobId(id),
-    scope = EntityScope.aircraftChildUnsafe("uid", "ac1"),
+    scope = EntityScope.thingChildUnsafe("uid", "ac1"),
     relativePath = "blobs/$id.bin",
     sizeBytes = 3L,
     sha256 = "sha",

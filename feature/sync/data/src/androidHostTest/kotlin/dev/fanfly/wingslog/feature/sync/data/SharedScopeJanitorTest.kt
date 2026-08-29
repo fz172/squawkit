@@ -40,17 +40,17 @@ class SharedScopeJanitorTest {
     janitor = SharedScopeJanitor(db, DatabaseWriteLock())
   }
 
-  /** A shared aircraft in the host's tree (doc + nested log + cursor) plus the member's own aircraft. */
+  /** A shared thing in the host's tree (doc + nested log + cursor) plus the member's own thing. */
   private suspend fun seedFixture() {
     seedEntity(CollectionKind.Thing, EntityScope.userRoot(HOST), SHARED_AC)
     seedEntity(
       CollectionKind.MaintenanceLog,
-      EntityScope.aircraftChildUnsafe(HOST, SHARED_AC),
+      EntityScope.thingChildUnsafe(HOST, SHARED_AC),
       "log-1"
     )
     db.schemaQueries.upsertCursor(
       MEMBER, CollectionKind.MaintenanceLog,
-      EntityScope.aircraftChildUnsafe(HOST, SHARED_AC)
+      EntityScope.thingChildUnsafe(HOST, SHARED_AC)
         .toPath(),
       false, null, 0, null,
     )
@@ -65,7 +65,7 @@ class SharedScopeJanitorTest {
     assertThat(aircraftAt(EntityScope.userRoot(HOST))).isEmpty()
     assertThat(
       logsAt(
-        EntityScope.aircraftChildUnsafe(
+        EntityScope.thingChildUnsafe(
           HOST,
           SHARED_AC
         )
@@ -73,13 +73,13 @@ class SharedScopeJanitorTest {
     ).isEmpty()
     assertThat(
       cursor(
-        EntityScope.aircraftChildUnsafe(
+        EntityScope.thingChildUnsafe(
           HOST,
           SHARED_AC
         )
       )
     ).isNull()
-    // Own aircraft untouched.
+    // Own thing untouched.
     assertThat(aircraftAt(EntityScope.userRoot(MEMBER))).hasSize(1)
   }
 
@@ -122,7 +122,7 @@ class SharedScopeJanitorTest {
     assertThat(aircraftAt(EntityScope.userRoot(HOST))).hasSize(1)
     assertThat(
       logsAt(
-        EntityScope.aircraftChildUnsafe(
+        EntityScope.thingChildUnsafe(
           HOST,
           SHARED_AC
         )
@@ -130,7 +130,7 @@ class SharedScopeJanitorTest {
     ).hasSize(1)
     assertThat(
       cursor(
-        EntityScope.aircraftChildUnsafe(
+        EntityScope.thingChildUnsafe(
           HOST,
           SHARED_AC
         )
@@ -184,7 +184,7 @@ class SharedScopeJanitorTest {
     seedFixture()
     seedEntity(
       CollectionKind.MaintenanceLog,
-      EntityScope.aircraftChildUnsafe(HOST, SHARED_AC),
+      EntityScope.thingChildUnsafe(HOST, SHARED_AC),
       "log-unsynced",
       dirty = true,
     )
@@ -215,7 +215,7 @@ class SharedScopeJanitorTest {
   fun leaves_alone_foreign_scoped_data_this_member_never_synced() = runTest {
     // Issue #223: mid account-merge, the guest's own records still sit under the guest's root while
     // the sync engine has already started for the account they are merging into. They look exactly
-    // like a shared aircraft with no live ref — but they were never pulled as a share (no cursor),
+    // like a shared thing with no live ref — but they were never pulled as a share (no cursor),
     // they are the very data the merge exists to carry over, and purging them destroys it.
     seedEntity(
       CollectionKind.Thing,
@@ -225,7 +225,7 @@ class SharedScopeJanitorTest {
     )
     seedEntity(
       CollectionKind.MaintenanceLog,
-      EntityScope.aircraftChildUnsafe(GUEST, GUEST_AC),
+      EntityScope.thingChildUnsafe(GUEST, GUEST_AC),
       "log-guest",
       dirty = true,
     )
@@ -237,7 +237,7 @@ class SharedScopeJanitorTest {
     assertThat(aircraftAt(EntityScope.userRoot(GUEST))).hasSize(1)
     assertThat(
       logsAt(
-        EntityScope.aircraftChildUnsafe(
+        EntityScope.thingChildUnsafe(
           GUEST,
           GUEST_AC
         )
@@ -248,7 +248,7 @@ class SharedScopeJanitorTest {
 
   @Test
   fun purge_countsADirtyAircraftDocToo() = runTest {
-    // A co-owner's unsynced edit to the aircraft itself is a row at the host's *root*, not in the
+    // A co-owner's unsynced edit to the thing itself is a row at the host's *root*, not in the
     // nested subtree — counting only the subtree would under-report the loss.
     seedFixture()
     seedEntity(

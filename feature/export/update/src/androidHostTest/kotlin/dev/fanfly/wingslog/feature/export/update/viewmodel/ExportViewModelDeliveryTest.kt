@@ -43,7 +43,7 @@ class ExportViewModelDeliveryTest {
   @Before
   fun setUp() {
     Dispatchers.setMain(dispatcher)
-    // Empty fleet keeps the aircraft observation path trivial; delivery resolution is the subject.
+    // Empty fleet keeps the thing observation path trivial; delivery resolution is the subject.
     fleetManager = mockk {
       every { observeFleetDashboard() } returns flowOf(emptyList())
     }

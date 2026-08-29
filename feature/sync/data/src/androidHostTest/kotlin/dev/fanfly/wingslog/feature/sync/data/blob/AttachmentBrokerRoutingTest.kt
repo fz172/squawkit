@@ -24,7 +24,7 @@ import kotlin.time.Instant
 
 /**
  * The own-vs-foreign routing P8.4 (#245) adds to the blob drivers: a blob whose owning tree is the
- * signed-in user goes straight to Firebase Storage; a foreign-hosted (shared-aircraft) blob crosses
+ * signed-in user goes straight to Firebase Storage; a foreign-hosted (shared-thing) blob crosses
  * through the [AttachmentBroker]. These assert the foreign branch reaches the broker and never
  * touches direct Storage (which `storage.rules` would deny cross-account anyway).
  */
@@ -113,7 +113,7 @@ class AttachmentBrokerRoutingTest {
     remoteState: RemoteState = RemoteState.RemoteOnly,
   ) = BlobRef(
     id = BlobId(BLOB_ID),
-    scope = EntityScope.aircraftChildUnsafe(ownerUid, "ac1"),
+    scope = EntityScope.thingChildUnsafe(ownerUid, "ac1"),
     relativePath = "blobs/$BLOB_ID.bin",
     sizeBytes = 3L,
     sha256 = "sha",
@@ -132,7 +132,7 @@ class AttachmentBrokerRoutingTest {
 
 private data class Call(
   val hostUid: String,
-  val aircraftId: String,
+  val thingId: String,
   val blobId: String
 )
 
@@ -143,20 +143,20 @@ private class FakeAttachmentBroker : AttachmentBroker {
 
   override suspend fun upload(
     hostUid: String,
-    aircraftId: String,
+    thingId: String,
     blobId: String,
     contentType: String?,
     bytes: ByteArray,
   ) {
-    uploads += Call(hostUid, aircraftId, blobId)
+    uploads += Call(hostUid, thingId, blobId)
   }
 
   override suspend fun download(
     hostUid: String,
-    aircraftId: String,
+    thingId: String,
     blobId: String
   ): ByteArray {
-    downloads += Call(hostUid, aircraftId, blobId)
+    downloads += Call(hostUid, thingId, blobId)
     return downloadResult
   }
 }

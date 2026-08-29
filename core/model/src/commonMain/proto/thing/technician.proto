@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+option java_package = "dev.fanfly.wingslog.thing";
+option java_multiple_files = true;
+
+message Technician {
+  string id = 1;
+  string name = 2;
+  string cert_type = 3; // legacy string field — prefer certificate_type (field 7)
+  string cert_number = 4;
+  google.protobuf.Timestamp cert_expiration = 5;
+  CertExpireLimit cert_expire_limit = 6;
+  CertificateType certificate_type = 7;
+
+  // Owning uid of the first-party profile this was snapshotted from — the member's own
+  // self-record, or another share member's published mirror. Empty for a manual entry typed by
+  // hand. Drives the provenance label and the self-signed check (design §7.3/§7.5).
+  string source_uid = 8;
+
+  // 9 was superseded_by_uid: a soft alias from a manual row to the share member that superseded it.
+  // Reconciling a duplicate now deletes the manual row outright, so nothing needs aliasing.
+  reserved 9;
+}
+
+enum CertificateType {
+  CERTIFICATE_TYPE_NONE = 0;
+  CERTIFICATE_TYPE_REPAIRMAN = 1;
+  CERTIFICATE_TYPE_AMT = 2;
+}
+
+enum CertExpireLimit {
+  CERT_EXPIRE_LIMIT_UNKNOWN = 0;
+  CERT_EXPIRE_LIMIT_EXPIRES = 1;
+  CERT_EXPIRE_LIMIT_NEVER_EXPIRES = 2;
+}

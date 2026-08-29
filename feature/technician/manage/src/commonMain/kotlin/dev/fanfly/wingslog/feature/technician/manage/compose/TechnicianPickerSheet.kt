@@ -12,8 +12,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import dev.fanfly.wingslog.aircraft.CertificateType
-import dev.fanfly.wingslog.aircraft.Technician
+import dev.fanfly.wingslog.thing.CertificateType
+import dev.fanfly.wingslog.thing.Technician
 import dev.fanfly.wingslog.core.ui.common.compose.PickerActionButton
 import dev.fanfly.wingslog.core.ui.common.compose.PickerDoneButton
 import dev.fanfly.wingslog.core.ui.common.compose.PickerSectionHeader
@@ -45,7 +45,7 @@ fun TechnicianPickerSheet(
   onDismiss: () -> Unit,
   modifier: Modifier = Modifier,
   /**
-   * Members of this aircraft's share who have published a mirror. Selecting one snapshots their
+   * Members of this thing's share who have published a mirror. Selecting one snapshots their
    * mirror fields into the log exactly as a local record would — only the source differs (§7.3).
    */
   linkedTechnicians: List<Technician> = emptyList(),

@@ -3,8 +3,8 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import { adminDb, adminStorage } from "./helpers.js";
 
-import { Attachment, AttachmentType } from "../src/generated/proto/aircraft/attachment.js";
-import { MaintenanceLog } from "../src/generated/proto/aircraft/maintenance_log.js";
+import { Attachment, AttachmentType } from "../src/generated/proto/thing/attachment.js";
+import { MaintenanceLog } from "../src/generated/proto/thing/maintenance_log.js";
 import { runStorageSweep } from "../src/storage/storageSweep.js";
 
 const UID = "user-sweep";

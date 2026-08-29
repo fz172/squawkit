@@ -1,7 +1,7 @@
 package dev.fanfly.wingslog.feature.attachment.datamanager
 
-import dev.fanfly.wingslog.aircraft.Attachment
-import dev.fanfly.wingslog.aircraft.AttachmentType
+import dev.fanfly.wingslog.thing.Attachment
+import dev.fanfly.wingslog.thing.AttachmentType
 import dev.fanfly.wingslog.feature.attachment.datamanager.QuotaChecker.Companion.MAX_FILE_ATTACHMENTS
 import dev.fanfly.wingslog.feature.attachment.datamanager.QuotaChecker.Companion.MAX_FILE_SIZE_BYTES
 import dev.fanfly.wingslog.feature.attachment.model.PendingAttachment
@@ -32,7 +32,7 @@ import kotlinx.coroutines.launch
  */
 class AttachmentFormController(
   private val attachmentManager: AttachmentManager,
-  private val aircraftId: String,
+  private val thingId: String,
   private val cleanupScope: CoroutineScope =
     CoroutineScope(SupervisorJob() + Dispatchers.Default),
 ) {
@@ -122,7 +122,7 @@ class AttachmentFormController(
       }
       try {
         val attachment = attachmentManager.addPickedFile(
-          aircraftId,
+          thingId,
           file,
           file.name
         )

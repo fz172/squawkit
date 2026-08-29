@@ -19,7 +19,7 @@ import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
  * On success the cursor's `last_seen_remote` advances to the max `remoteTsMs` seen, the cursor is
  * marked `hydrated = true`, and `failed_attempts` resets to 0. On failure we increment
  * `failed_attempts` so [SyncEngine] can compute a per-(kind, scope) backoff before retrying — a
- * flaky read for one aircraft's logs doesn't block hydration of another aircraft.
+ * flaky read for one thing's logs doesn't block hydration of another thing.
  */
 class HydrationRunner(
   private val db: WingsLogDatabase,

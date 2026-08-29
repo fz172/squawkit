@@ -682,7 +682,7 @@ class SubscriptionUiStateTest {
     override fun canUploadAttachments(): Flow<Boolean> = flowOf(false)
     override fun canEmailExports(): Flow<Boolean> = flowOf(false)
     override fun canHostShare(): Flow<Boolean> = flowOf(false)
-    override fun aircraftLimit(): Flow<Int?> = flowOf(2)
+    override fun thingLimit(): Flow<Int?> = flowOf(2)
 
     // These tests predate ads and assert nothing about them; false keeps the fake honest for a
     // subscriber, which is the tier they exercise.

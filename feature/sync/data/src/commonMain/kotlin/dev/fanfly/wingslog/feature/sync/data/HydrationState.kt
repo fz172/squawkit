@@ -2,7 +2,7 @@ package dev.fanfly.wingslog.feature.sync.data
 
 /**
  * Surfaced via [SyncEngine.hydrationState] so the UI can show "Restoring 3 of 6 collections…" on
- * first launch. `total` grows as nested scopes (per-aircraft sub-collections) come into view, so
+ * first launch. `total` grows as nested scopes (per-thing sub-collections) come into view, so
  * the count can climb during the run — that's intentional.
  */
 sealed interface HydrationState {

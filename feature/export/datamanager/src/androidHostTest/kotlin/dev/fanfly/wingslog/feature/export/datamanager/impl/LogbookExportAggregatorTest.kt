@@ -1,10 +1,10 @@
 package dev.fanfly.wingslog.feature.export.datamanager.impl
 
 import com.google.common.truth.Truth.assertThat
-import dev.fanfly.wingslog.aircraft.ComponentType
-import dev.fanfly.wingslog.aircraft.MaintenanceLog
-import dev.fanfly.wingslog.aircraft.MaintenanceTask
-import dev.fanfly.wingslog.aircraft.Squawk
+import dev.fanfly.wingslog.thing.ComponentType
+import dev.fanfly.wingslog.thing.MaintenanceLog
+import dev.fanfly.wingslog.thing.MaintenanceTask
+import dev.fanfly.wingslog.thing.Squawk
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDateRange
 import dev.fanfly.wingslog.feature.export.datamanager.ExportRequest
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
@@ -25,7 +25,7 @@ import com.squareup.wire.Instant as WireInstant
 
 class LogbookExportAggregatorTest {
 
-  private val aircraftId = "ac-1"
+  private val thingId = "ac-1"
   private val jan2020 =
     WireInstant.ofEpochSecond(1_577_836_800L) // 2020-01-01T00:00:00Z
   private val jan2025 =
@@ -50,9 +50,9 @@ class LogbookExportAggregatorTest {
 
   private fun aggregator(): LogbookExportAggregator {
     val fleetManager = mockk<FleetManager> {
-      every { loadAircraft(aircraftId) } returns flowOf(
+      every { loadThing(thingId) } returns flowOf(
         Thing(
-          id = aircraftId,
+          id = thingId,
           make = "Cessna",
           model = "172",
           serial = "1",
@@ -61,10 +61,10 @@ class LogbookExportAggregatorTest {
       )
     }
     val logsManager = mockk<MaintenanceLogManager> {
-      every { observeLogs(aircraftId) } returns flowOf(listOf(log2020, log2025))
+      every { observeLogs(thingId) } returns flowOf(listOf(log2020, log2025))
     }
     val tasksManager = mockk<TaskDataManager> {
-      every { observeTasks(aircraftId) } returns flowOf(
+      every { observeTasks(thingId) } returns flowOf(
         listOf(
           taskOld,
           taskNew
@@ -72,7 +72,7 @@ class LogbookExportAggregatorTest {
       )
     }
     val squawkManager = mockk<SquawkManager> {
-      every { observeSquawks(aircraftId) } returns flowOf(emptyList<Squawk>())
+      every { observeSquawks(thingId) } returns flowOf(emptyList<Squawk>())
     }
     return LogbookExportAggregator(
       fleetManager = fleetManager,
@@ -89,14 +89,14 @@ class LogbookExportAggregatorTest {
   fun collect_customRange_keepsOnlyLogsAndTasksWithinRange() = runTest {
     val bundle = aggregator().collect(
       request = ExportRequest(
-        aircraftIds = listOf(aircraftId),
+        thingIds = listOf(thingId),
         dateRange = ExportDateRange.Custom(
           LocalDate(2020, 1, 1),
           LocalDate(2020, 12, 31)
         ),
         includeOpenSquawks = true,
       ),
-      aircraftId = aircraftId,
+      thingId = thingId,
     )
 
     assertThat(bundle.logs.map { it.id }).containsExactly("log-2020")
@@ -108,11 +108,11 @@ class LogbookExportAggregatorTest {
   fun collect_allTime_keepsEveryLogAndTask() = runTest {
     val bundle = aggregator().collect(
       request = ExportRequest(
-        aircraftIds = listOf(aircraftId),
+        thingIds = listOf(thingId),
         dateRange = ExportDateRange.AllTime,
         includeOpenSquawks = true,
       ),
-      aircraftId = aircraftId,
+      thingId = thingId,
     )
 
     assertThat(bundle.logs.map { it.id }).containsExactly(

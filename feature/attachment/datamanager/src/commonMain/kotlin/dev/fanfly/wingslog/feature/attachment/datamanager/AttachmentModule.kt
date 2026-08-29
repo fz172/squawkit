@@ -1,6 +1,6 @@
 package dev.fanfly.wingslog.feature.attachment.datamanager
 
-import dev.fanfly.wingslog.core.storage.AircraftScopeResolver
+import dev.fanfly.wingslog.core.storage.ThingScopeResolver
 import dev.fanfly.wingslog.core.storage.DatabaseWriteLock
 import dev.fanfly.wingslog.core.storage.PostWriteHook
 import dev.fanfly.wingslog.core.storage.blob.BlobFilesystem
@@ -34,7 +34,7 @@ val attachmentModule = module {
       auth = get<AuthManager>(),
       fileByteReader = get<FileByteReader>(),
       imageCompressor = get<ImageCompressor>(),
-      aircraftScopeResolver = get<AircraftScopeResolver>(),
+      thingScopeResolver = get<ThingScopeResolver>(),
       uploadScheduler = getOrNull(),
     )
   }

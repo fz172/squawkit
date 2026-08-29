@@ -63,6 +63,7 @@ so run `lint`, `testDebugUnitTest`, and `testAndroidHostTest` locally before pus
 
 These are enforced or load-bearing; the reasoning for each is in AGENTS.md.
 
+- **Thing, not aircraft.** New types, properties, wire names, and schema names use Thing vocabulary; aviation words only for things that are permanently airplanes (`Engine`, `Propeller`). Surviving `aircraft` names are grandfathered — see #638 and [§ Coding Conventions](AGENTS.md#coding-conventions).
 - `kotlin.time.Instant`, never `kotlinx.datetime.Instant`.
 - `get<ClassType>()` in Koin modules, never bare `get()` — a repo hook rejects it.
 - No `\'` in Kotlin strings or `strings.xml` — use `’`. Also hook-enforced.

@@ -1,11 +1,11 @@
 package dev.fanfly.wingslog.feature.logs.datamanager.impl
 
 import co.touchlab.kermit.Logger
-import dev.fanfly.wingslog.aircraft.ComponentType
-import dev.fanfly.wingslog.aircraft.MaintenanceLog
-import dev.fanfly.wingslog.aircraft.MaintenanceOverview
+import dev.fanfly.wingslog.thing.ComponentType
+import dev.fanfly.wingslog.thing.MaintenanceLog
+import dev.fanfly.wingslog.thing.MaintenanceOverview
 import dev.fanfly.wingslog.core.model.id.generateRandomId
-import dev.fanfly.wingslog.core.storage.AircraftScopeResolver
+import dev.fanfly.wingslog.core.storage.ThingScopeResolver
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.EntityStore
@@ -20,7 +20,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 
 class MaintenanceLogManagerImpl(
-  private val scopeResolver: AircraftScopeResolver,
+  private val scopeResolver: ThingScopeResolver,
   storeFactory: EntityStoreFactory,
 ) : MaintenanceLogManager {
 
@@ -30,22 +30,22 @@ class MaintenanceLogManagerImpl(
     storeFactory.create(CollectionKind.MaintenanceOverview)
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  override fun observeLogAuthors(aircraftId: String): Flow<Map<String, String?>> =
-    scopeResolver.resolve(aircraftId).flatMapLatest { scope ->
+  override fun observeLogAuthors(thingId: String): Flow<Map<String, String?>> =
+    scopeResolver.resolve(thingId).flatMapLatest { scope ->
       if (scope == null) flowOf(emptyMap())
       else logStore.observeAll(scope)
         .map { rows -> rows.associate { it.id to it.writerUid } }
         .catch { e ->
-          logger.w(e) { "Error observing log authorship for aircraft $aircraftId" }
+          logger.w(e) { "Error observing log authorship for aircraft $thingId" }
           emit(emptyMap())
         }
     }
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  override fun observeLogs(aircraftId: String): Flow<List<MaintenanceLog>> =
-    scopeResolver.resolve(aircraftId).flatMapLatest { scope ->
+  override fun observeLogs(thingId: String): Flow<List<MaintenanceLog>> =
+    scopeResolver.resolve(thingId).flatMapLatest { scope ->
       if (scope == null) {
-        logger.d { "No signed-in user; stopping logs observation for aircraft $aircraftId" }
+        logger.d { "No signed-in user; stopping logs observation for aircraft $thingId" }
         flowOf(emptyList())
       } else {
         logStore.observeAll(scope)
@@ -54,70 +54,70 @@ class MaintenanceLogManagerImpl(
               .sortedByDescending { it.timestamp?.getEpochSecond() ?: 0L }
           }
           .catch { e ->
-            logger.w(e) { "Error observing logs for aircraft $aircraftId" }
+            logger.w(e) { "Error observing logs for aircraft $thingId" }
             emit(emptyList())
           }
       }
     }
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  override fun observeMaintenanceOverview(aircraftId: String): Flow<MaintenanceOverview?> =
-    scopeResolver.resolve(aircraftId).flatMapLatest { scope ->
+  override fun observeMaintenanceOverview(thingId: String): Flow<MaintenanceOverview?> =
+    scopeResolver.resolve(thingId).flatMapLatest { scope ->
       if (scope == null) {
         flowOf(null)
       } else {
         overviewStore.observe(OVERVIEW_ID, scope)
           .map { it?.value }
           .catch { e ->
-            logger.w(e) { "Error observing overview for aircraft $aircraftId" }
+            logger.w(e) { "Error observing overview for aircraft $thingId" }
             emit(null)
           }
       }
     }
 
   override suspend fun addLog(
-    aircraftId: String,
+    thingId: String,
     log: MaintenanceLog
   ): Result<Boolean> =
     runCatching {
-      val scope = scopeResolver.resolveNow(aircraftId)
+      val scope = scopeResolver.resolveNow(thingId)
       val withId =
         if (log.id.isEmpty()) log.copy(id = generateRandomId()) else log
       logStore.put(withId.id, withId, scope)
-      refreshOverview(aircraftId, scope)
+      refreshOverview(thingId, scope)
       true
     }.onFailure { logger.w(it) { "Error adding log" } }
 
   override suspend fun updateLog(
-    aircraftId: String,
+    thingId: String,
     log: MaintenanceLog
   ): Result<Boolean> =
     runCatching {
-      val scope = scopeResolver.resolveNow(aircraftId)
+      val scope = scopeResolver.resolveNow(thingId)
       logStore.put(log.id, log, scope)
-      refreshOverview(aircraftId, scope)
+      refreshOverview(thingId, scope)
       true
     }.onFailure { logger.w(it) { "Error updating log ${log.id}" } }
 
   override suspend fun deleteLog(
-    aircraftId: String,
+    thingId: String,
     logId: String
   ): Result<Boolean> =
     runCatching {
-      val scope = scopeResolver.resolveNow(aircraftId)
+      val scope = scopeResolver.resolveNow(thingId)
       logStore.delete(logId, scope)
-      refreshOverview(aircraftId, scope)
+      refreshOverview(thingId, scope)
       true
     }.onFailure { logger.w(it) { "Error deleting log $logId" } }
 
   // Overview is recomputed from the logs after every mutation. With local SQLite this is cheap,
   // and keeping the doc on disk lets observers read it without holding a logs-flow subscription.
-  private suspend fun refreshOverview(aircraftId: String, scope: EntityScope) {
+  private suspend fun refreshOverview(thingId: String, scope: EntityScope) {
     val logs = logStore.observeAll(scope)
       .first()
       .map { it.value }
     val overview = MaintenanceOverview(
-      aircraft_id = aircraftId,
+      aircraft_id = thingId,
       total_log_count = logs.size,
       airframe_log_count = logs.count { it.component_type == ComponentType.COMPONENT_AIRFRAME },
       engine_log_count = logs.count { it.component_type == ComponentType.COMPONENT_ENGINE },
@@ -138,8 +138,8 @@ class MaintenanceLogManagerImpl(
   companion object {
     private val logger = Logger.withTag("MaintenanceLogManagerImpl")
 
-    // Single fixed id for the overview doc; the scope already includes the aircraft id so this
-    // constant doesn't need to vary per aircraft.
+    // Single fixed id for the overview doc; the scope already includes the thing id so this
+    // constant doesn't need to vary per thing.
     private const val OVERVIEW_ID = "main"
   }
 }

@@ -55,7 +55,7 @@ class RedeemViewModelTest {
     // too. A default keeps them harmless; a test's own specific stub (eq(CODE)) still wins.
     coEvery { sharing.redeemInvite(any()) } returns Result.success(
       RedeemOutcome(
-        aircraftId = AC_ID,
+        thingId = AC_ID,
         hostUid = "host-uid",
         role = ShareRole.TECHNICIAN
       ),
@@ -106,7 +106,7 @@ class RedeemViewModelTest {
     AircraftShareDeepLinks.deliver(SHARE_URL)
     coEvery { sharing.redeemInvite(CODE) } returns Result.success(
       RedeemOutcome(
-        aircraftId = AC_ID,
+        thingId = AC_ID,
         hostUid = "host-uid",
         role = ShareRole.TECHNICIAN
       ),
@@ -126,7 +126,7 @@ class RedeemViewModelTest {
     AircraftShareDeepLinks.deliver(SHARE_URL)
     coEvery { sharing.redeemInvite(CODE) } returns Result.success(
       RedeemOutcome(
-        aircraftId = AC_ID,
+        thingId = AC_ID,
         hostUid = "host-uid",
         role = ShareRole.TECHNICIAN
       ),
@@ -135,7 +135,7 @@ class RedeemViewModelTest {
     viewModel().accept()
 
     // Named explicitly, not left to local membership: the ref for the share we just joined is still
-    // syncing down, so a publish without it would skip this aircraft and leave the auth-token name.
+    // syncing down, so a publish without it would skip this thing and leave the auth-token name.
     coVerify { sharing.publishTechnicianMirror(alsoPublishTo = AC_ID) }
   }
 
@@ -161,7 +161,7 @@ class RedeemViewModelTest {
     AircraftShareDeepLinks.deliver(SHARE_URL)
     coEvery { sharing.redeemInvite(CODE) } returns Result.success(
       RedeemOutcome(
-        aircraftId = AC_ID,
+        thingId = AC_ID,
         hostUid = "host",
         role = ShareRole.TECHNICIAN,
         alreadyMember = true
@@ -198,7 +198,7 @@ class RedeemViewModelTest {
     every { auth.currentUser } returns signedIn
     coEvery { sharing.redeemInvite(CODE) } returns Result.success(
       RedeemOutcome(
-        aircraftId = AC_ID,
+        thingId = AC_ID,
         hostUid = "host-uid",
         role = ShareRole.TECHNICIAN
       ),
@@ -220,7 +220,7 @@ class RedeemViewModelTest {
     authState.value = user(anonymous = true)
     coEvery { sharing.redeemInvite(CODE) } returns Result.success(
       RedeemOutcome(
-        aircraftId = AC_ID,
+        thingId = AC_ID,
         hostUid = "host-uid",
         role = ShareRole.TECHNICIAN
       ),
@@ -251,7 +251,7 @@ class RedeemViewModelTest {
 
   @Test
   fun confirm_showsWhatYouAreJoining() = runTest {
-    // Until #164 this was impossible: the invitee held an aircraft id the rules must refuse to
+    // Until #164 this was impossible: the invitee held an thing id the rules must refuse to
     // resolve for a non-member, so the sheet could only say "an aircraft" and accepting meant
     // accepting blind.
     val signedIn = user(anonymous = false)
@@ -259,7 +259,7 @@ class RedeemViewModelTest {
     every { auth.currentUser } returns signedIn
     coEvery { sharing.previewInvite(CODE) } returns Result.success(
       InvitePreview(
-        aircraftLabel = "N2037O · Cessna 172",
+        thingLabel = "N2037O · Cessna 172",
         hostName = "Fan Zhang",
         role = ShareRole.TECHNICIAN,
       ),
@@ -269,7 +269,7 @@ class RedeemViewModelTest {
     val state = viewModel().uiState.value
 
     assertThat(state).isInstanceOf(RedeemUiState.Confirm::class.java)
-    assertThat((state as RedeemUiState.Confirm).preview?.aircraftLabel)
+    assertThat((state as RedeemUiState.Confirm).preview?.thingLabel)
       .isEqualTo("N2037O · Cessna 172")
     assertThat(state.preview?.hostName).isEqualTo("Fan Zhang")
   }

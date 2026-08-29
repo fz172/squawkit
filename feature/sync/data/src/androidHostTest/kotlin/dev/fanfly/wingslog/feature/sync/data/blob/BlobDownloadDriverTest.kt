@@ -59,7 +59,7 @@ class BlobDownloadDriverTest {
 
   private fun blobRef() = BlobRef(
     id = BlobId(BLOB_ID),
-    scope = EntityScope.aircraftChildUnsafe(OWNER_UID, "ac1"),
+    scope = EntityScope.thingChildUnsafe(OWNER_UID, "ac1"),
     relativePath = "blobs/$BLOB_ID.bin",
     sizeBytes = 10L,
     sha256 = "sha",

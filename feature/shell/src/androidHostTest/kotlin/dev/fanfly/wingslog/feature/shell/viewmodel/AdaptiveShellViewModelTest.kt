@@ -1,8 +1,7 @@
 package dev.fanfly.wingslog.feature.shell.viewmodel
 
 import com.google.common.truth.Truth.assertThat
-import dev.fanfly.wingslog.thing.Thing
-import dev.fanfly.wingslog.aircraft.Technician
+import dev.fanfly.wingslog.thing.Technician
 import dev.fanfly.wingslog.core.auth.AccountUpgradeResult
 import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.core.auth.AuthProvider
@@ -11,13 +10,14 @@ import dev.fanfly.wingslog.core.model.sharing.ShareRole
 import dev.fanfly.wingslog.core.ui.adaptive.ShellSection
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetEntry
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
-import dev.fanfly.wingslog.feature.fleet.picker.data.SelectedAircraftStore
+import dev.fanfly.wingslog.feature.fleet.picker.data.SelectedThingStore
 import dev.fanfly.wingslog.feature.notifications.model.NotificationTapTarget
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
 import dev.fanfly.wingslog.feature.sync.data.SyncEngine
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import dev.fanfly.wingslog.feature.technician.datamanager.merge.DuplicateGroup
+import dev.fanfly.wingslog.thing.Thing
 import dev.gitlive.firebase.auth.AuthCredential
 import dev.gitlive.firebase.auth.FirebaseUser
 import io.mockk.every
@@ -43,13 +43,13 @@ class AdaptiveShellViewModelTest {
   private val self = MutableStateFlow<Technician?>(null)
   private val fleetManager = object : FleetManager {
     override fun observeFleetDashboard(): Flow<List<FleetEntry>> = fleet
-    override suspend fun updateAircraft(aircraft: Thing) =
+    override suspend fun updateThing(thing: Thing) =
       Result.success(true)
 
-    override fun loadAircraft(id: String): Flow<Thing?> =
+    override fun loadThing(id: String): Flow<Thing?> =
       MutableStateFlow(null)
 
-    override suspend fun deleteAircraft(id: String) = Result.success(true)
+    override suspend fun deleteThing(id: String) = Result.success(true)
   }
   private val technicianManager = object : TechnicianManager {
     override fun observeTechnicians(): Flow<List<Technician>> =
@@ -119,7 +119,7 @@ class AdaptiveShellViewModelTest {
   @After
   fun tearDown() = Dispatchers.resetMain()
 
-  private fun aircraft(
+  private fun thing(
     id: String,
     tail: String,
     make: String = "Cessna",
@@ -127,7 +127,7 @@ class AdaptiveShellViewModelTest {
     shared: Boolean = false,
   ) =
     FleetEntry(
-      aircraft = Thing(
+      thing = Thing(
         id = id,
         make = make,
         model = model,
@@ -144,19 +144,19 @@ class AdaptiveShellViewModelTest {
   // The engine only feeds the discarded-changes notice here; irrelevant to these assertions.
   private val syncEngine: SyncEngine = mockk(relaxed = true)
 
-  // Drives the owned-aircraft gate; null = unlimited (default-open, capability off).
-  private val aircraftLimit = MutableStateFlow<Int?>(null)
+  // Drives the owned-thing gate; null = unlimited (default-open, capability off).
+  private val thingLimit = MutableStateFlow<Int?>(null)
   private val subscriptionManager: SubscriptionManager = mockk {
-    every { aircraftLimit() } returns aircraftLimit
+    every { thingLimit() } returns thingLimit
   }
 
   // In-memory device-local selection store; starts empty so tests behave like a fresh install
   // unless they seed [selectedAircraftStore.saved].
-  private val selectedAircraftStore = object : SelectedAircraftStore {
+  private val selectedThingStore = object : SelectedThingStore {
     var saved: String? = null
     override fun load(): String? = saved
-    override fun save(aircraftId: String?) {
-      saved = aircraftId
+    override fun save(thingId: String?) {
+      saved = thingId
     }
   }
 
@@ -167,36 +167,36 @@ class AdaptiveShellViewModelTest {
     sharingManager = sharingManager,
     subscriptionManager = subscriptionManager,
     syncEngine = syncEngine,
-    selectedAircraftStore = selectedAircraftStore,
+    selectedThingStore = selectedThingStore,
   )
 
   @Test
   fun mapsFleetAndSelectsFirstByDefault() = runTest(testDispatcher) {
-    fleet.value = listOf(aircraft("a1", "N1"), aircraft("a2", "N2"))
+    fleet.value = listOf(thing("a1", "N1"), thing("a2", "N2"))
     val vm = viewModel()
 
     val s = vm.uiState.value
-    assertThat(s.aircraft.map { it.tail }).containsExactly("N1", "N2")
+    assertThat(s.thing.map { it.tail }).containsExactly("N1", "N2")
       .inOrder()
-    assertThat(s.aircraft.first().name).isEqualTo("Cessna 172")
-    assertThat(s.selectedAircraftId).isEqualTo("a1")
+    assertThat(s.thing.first().name).isEqualTo("Cessna 172")
+    assertThat(s.selectedThingId).isEqualTo("a1")
     assertThat(s.section).isEqualTo(ShellSection.DASHBOARD)
   }
 
   @Test
   fun keepsSelectionAcrossReemissionWhenStillPresent() =
     runTest(testDispatcher) {
-      fleet.value = listOf(aircraft("a1", "N1"), aircraft("a2", "N2"))
+      fleet.value = listOf(thing("a1", "N1"), thing("a2", "N2"))
       val vm = viewModel()
-      vm.selectAircraft("a2")
+      vm.selectThing("a2")
 
-      // Re-emit with the same aircraft; the explicit selection must survive.
-      fleet.value = listOf(aircraft("a1", "N1"), aircraft("a2", "N2"))
-      assertThat(vm.uiState.value.selectedAircraftId).isEqualTo("a2")
+      // Re-emit with the same thing; the explicit selection must survive.
+      fleet.value = listOf(thing("a1", "N1"), thing("a2", "N2"))
+      assertThat(vm.uiState.value.selectedThingId).isEqualTo("a2")
 
       // Remove the selected one; selection falls back to the first remaining.
-      fleet.value = listOf(aircraft("a1", "N1"))
-      assertThat(vm.uiState.value.selectedAircraftId).isEqualTo("a1")
+      fleet.value = listOf(thing("a1", "N1"))
+      assertThat(vm.uiState.value.selectedThingId).isEqualTo("a1")
     }
 
   @Test
@@ -205,45 +205,45 @@ class AdaptiveShellViewModelTest {
       fleet.value = emptyList()
       val vm = viewModel()
 
-      assertThat(vm.uiState.value.selectedAircraftId).isNull()
+      assertThat(vm.uiState.value.selectedThingId).isNull()
 
-      fleet.value = listOf(aircraft("a1", "N1"))
+      fleet.value = listOf(thing("a1", "N1"))
 
       val s = vm.uiState.value
-      assertThat(s.selectedAircraftId).isEqualTo("a1")
+      assertThat(s.selectedThingId).isEqualTo("a1")
       assertThat(s.section).isEqualTo(ShellSection.DASHBOARD)
     }
 
   @Test
   fun restoresRememberedAircraftFromStore() = runTest(testDispatcher) {
     // Simulate a previous session that left "a2" selected on this device.
-    selectedAircraftStore.saved = "a2"
-    fleet.value = listOf(aircraft("a1", "N1"), aircraft("a2", "N2"))
+    selectedThingStore.saved = "a2"
+    fleet.value = listOf(thing("a1", "N1"), thing("a2", "N2"))
     val vm = viewModel()
 
-    assertThat(vm.uiState.value.selectedAircraftId).isEqualTo("a2")
+    assertThat(vm.uiState.value.selectedThingId).isEqualTo("a2")
   }
 
   @Test
   fun fallsBackToFirstWhenRememberedAircraftIsGone() = runTest(testDispatcher) {
-    // The remembered aircraft was deleted since last session.
-    selectedAircraftStore.saved = "deleted"
-    fleet.value = listOf(aircraft("a1", "N1"), aircraft("a2", "N2"))
+    // The remembered thing was deleted since last session.
+    selectedThingStore.saved = "deleted"
+    fleet.value = listOf(thing("a1", "N1"), thing("a2", "N2"))
     val vm = viewModel()
 
-    assertThat(vm.uiState.value.selectedAircraftId).isEqualTo("a1")
+    assertThat(vm.uiState.value.selectedThingId).isEqualTo("a1")
     // The effective selection is written back so the stale id doesn't linger.
-    assertThat(selectedAircraftStore.saved).isEqualTo("a1")
+    assertThat(selectedThingStore.saved).isEqualTo("a1")
   }
 
   @Test
-  fun selectAircraftPersistsChoice() = runTest(testDispatcher) {
-    fleet.value = listOf(aircraft("a1", "N1"), aircraft("a2", "N2"))
+  fun selectThingPersistsChoice() = runTest(testDispatcher) {
+    fleet.value = listOf(thing("a1", "N1"), thing("a2", "N2"))
     val vm = viewModel()
 
-    vm.selectAircraft("a2")
+    vm.selectThing("a2")
 
-    assertThat(selectedAircraftStore.saved).isEqualTo("a2")
+    assertThat(selectedThingStore.saved).isEqualTo("a2")
   }
 
   @Test
@@ -264,34 +264,34 @@ class AdaptiveShellViewModelTest {
 
   @Test
   fun notAtLimitWhenAircraftLimitIsUnlimited() = runTest(testDispatcher) {
-    aircraftLimit.value = null
-    fleet.value = listOf(aircraft("a1", "N1"), aircraft("a2", "N2"))
+    thingLimit.value = null
+    fleet.value = listOf(thing("a1", "N1"), thing("a2", "N2"))
     val vm = viewModel()
 
-    assertThat(vm.atAircraftLimit.value).isFalse()
+    assertThat(vm.atThingLimit.value).isFalse()
   }
 
   @Test
   fun atLimitWhenOwnedCountReachesLimit() = runTest(testDispatcher) {
-    aircraftLimit.value = 1
-    fleet.value = listOf(aircraft("a1", "N1"))
+    thingLimit.value = 1
+    fleet.value = listOf(thing("a1", "N1"))
     val vm = viewModel()
 
-    assertThat(vm.atAircraftLimit.value).isTrue()
+    assertThat(vm.atThingLimit.value).isTrue()
   }
 
   @Test
-  fun sharedAircraftDoNotCountAgainstTheLimit() = runTest(testDispatcher) {
-    aircraftLimit.value = 2
+  fun sharedThingDoNotCountAgainstTheLimit() = runTest(testDispatcher) {
+    thingLimit.value = 2
     // One owned + one shared against a limit of 2: only the owned one counts, so still under limit.
     // If the shared pointer counted, 2 >= 2 would trip the gate.
     fleet.value = listOf(
-      aircraft("a1", "N1", shared = false),
-      aircraft("a2", "N2", shared = true)
+      thing("a1", "N1", shared = false),
+      thing("a2", "N2", shared = true)
     )
     val vm = viewModel()
 
-    assertThat(vm.atAircraftLimit.value).isFalse()
+    assertThat(vm.atThingLimit.value).isFalse()
   }
 
   @Test
@@ -303,23 +303,23 @@ class AdaptiveShellViewModelTest {
     assertThat(vm.uiState.value.accountName).isEqualTo("Avery Park")
   }
 
-  // Notification taps (design §5.3). Every variant selects the aircraft and lands in a section; the
+  // Notification taps (design §5.3). Every variant selects the thing and lands in a section; the
   // record variants additionally publish a scroll target instead of opening the record's edit form.
 
   @Test
   fun notificationTap_squawk_selectsAircraftSectionAndScrollTarget() =
     runTest(testDispatcher) {
-      fleet.value = listOf(aircraft("a1", "N1"), aircraft("a2", "N2"))
+      fleet.value = listOf(thing("a1", "N1"), thing("a2", "N2"))
       val vm = viewModel()
 
       vm.onNotificationTap(
         NotificationTapTarget.Squawk(
-          aircraftId = "a2",
+          thingId = "a2",
           squawkId = "sq-1"
         )
       )
 
-      assertThat(vm.uiState.value.selectedAircraftId).isEqualTo("a2")
+      assertThat(vm.uiState.value.selectedThingId).isEqualTo("a2")
       assertThat(vm.uiState.value.section).isEqualTo(ShellSection.SQUAWKS)
       assertThat(vm.pendingScrollTargetId.value).isEqualTo("sq-1")
     }
@@ -327,12 +327,12 @@ class AdaptiveShellViewModelTest {
   @Test
   fun notificationTap_task_selectsAircraftSectionAndScrollTarget() =
     runTest(testDispatcher) {
-      fleet.value = listOf(aircraft("a1", "N1"))
+      fleet.value = listOf(thing("a1", "N1"))
       val vm = viewModel()
 
       vm.onNotificationTap(
         NotificationTapTarget.Task(
-          aircraftId = "a1",
+          thingId = "a1",
           taskId = "task-1"
         )
       )
@@ -344,12 +344,12 @@ class AdaptiveShellViewModelTest {
   @Test
   fun notificationTap_log_selectsAircraftSectionAndScrollTarget() =
     runTest(testDispatcher) {
-      fleet.value = listOf(aircraft("a1", "N1"))
+      fleet.value = listOf(thing("a1", "N1"))
       val vm = viewModel()
 
       vm.onNotificationTap(
         NotificationTapTarget.Log(
-          aircraftId = "a1",
+          thingId = "a1",
           logId = "log-1"
         )
       )
@@ -359,14 +359,14 @@ class AdaptiveShellViewModelTest {
     }
 
   @Test
-  fun notificationTap_aircraftSummary_selectsTabWithoutAScrollTarget() =
+  fun notificationTap_thingSummary_selectsTabWithoutAScrollTarget() =
     runTest(testDispatcher) {
-      fleet.value = listOf(aircraft("a1", "N1"))
+      fleet.value = listOf(thing("a1", "N1"))
       val vm = viewModel()
 
       vm.onNotificationTap(
         NotificationTapTarget.Aircraft(
-          aircraftId = "a1",
+          thingId = "a1",
           tab = "tasks"
         )
       )
@@ -378,13 +378,13 @@ class AdaptiveShellViewModelTest {
 
   /**
    * The server names four tabs (`aircraftTabForRecordType`), not two. `logs` reaches a pilot whenever
-   * a collaborator adds a logbook entry, and `overview` carries both aircraft-level activity and the
+   * a collaborator adds a logbook entry, and `overview` carries both thing-level activity and the
    * §7.4 high-volume notice — an unmapped tab silently leaves the pilot wherever they already were.
    */
   @Test
-  fun notificationTap_aircraftSummary_selectsEveryTabTheServerCanSend() =
+  fun notificationTap_thingSummary_selectsEveryTabTheServerCanSend() =
     runTest(testDispatcher) {
-      fleet.value = listOf(aircraft("a1", "N1"))
+      fleet.value = listOf(thing("a1", "N1"))
 
       for ((tab, expected) in listOf(
         "squawks" to ShellSection.SQUAWKS,
@@ -395,7 +395,7 @@ class AdaptiveShellViewModelTest {
         val vm = viewModel()
         vm.onNotificationTap(
           NotificationTapTarget.Aircraft(
-            aircraftId = "a1",
+            thingId = "a1",
             tab = tab
           )
         )
@@ -404,20 +404,20 @@ class AdaptiveShellViewModelTest {
     }
 
   @Test
-  fun notificationTap_aircraftSummary_clearsAScrollTargetLeftByAnEarlierTap() =
+  fun notificationTap_thingSummary_clearsAScrollTargetLeftByAnEarlierTap() =
     runTest(testDispatcher) {
-      fleet.value = listOf(aircraft("a1", "N1"))
+      fleet.value = listOf(thing("a1", "N1"))
       val vm = viewModel()
       vm.onNotificationTap(
         NotificationTapTarget.Task(
-          aircraftId = "a1",
+          thingId = "a1",
           taskId = "task-1"
         )
       )
 
       vm.onNotificationTap(
         NotificationTapTarget.Aircraft(
-          aircraftId = "a1",
+          thingId = "a1",
           tab = "tasks"
         )
       )
@@ -427,15 +427,15 @@ class AdaptiveShellViewModelTest {
     }
 
   @Test
-  fun notificationTap_aircraftSummaryWithoutTab_keepsCurrentSection() =
+  fun notificationTap_thingSummaryWithoutTab_keepsCurrentSection() =
     runTest(testDispatcher) {
-      fleet.value = listOf(aircraft("a1", "N1"))
+      fleet.value = listOf(thing("a1", "N1"))
       val vm = viewModel()
       vm.selectSection(ShellSection.LOGS)
 
       vm.onNotificationTap(
         NotificationTapTarget.Aircraft(
-          aircraftId = "a1",
+          thingId = "a1",
           tab = null
         )
       )
@@ -445,11 +445,11 @@ class AdaptiveShellViewModelTest {
 
   @Test
   fun consumeScrollTarget_clearsIt() = runTest(testDispatcher) {
-    fleet.value = listOf(aircraft("a1", "N1"))
+    fleet.value = listOf(thing("a1", "N1"))
     val vm = viewModel()
     vm.onNotificationTap(
       NotificationTapTarget.Task(
-        aircraftId = "a1",
+        thingId = "a1",
         taskId = "task-1"
       )
     )

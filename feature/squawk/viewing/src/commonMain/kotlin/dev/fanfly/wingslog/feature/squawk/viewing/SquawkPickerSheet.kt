@@ -8,7 +8,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.text.font.FontWeight
-import dev.fanfly.wingslog.aircraft.Squawk
+import dev.fanfly.wingslog.thing.Squawk
 import dev.fanfly.wingslog.core.ui.common.compose.PickerSelectableRow
 import dev.fanfly.wingslog.core.ui.common.compose.PickerSelectionMode
 import dev.fanfly.wingslog.core.ui.common.compose.PickerSheet
