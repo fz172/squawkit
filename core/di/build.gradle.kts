@@ -28,6 +28,7 @@ kotlin {
       // functionsModule — the shared Cloud Functions client.
       implementation(project(":core:firebase"))
       implementation(project(":core:storage"))
+      implementation(project(":core:template"))
       implementation(project(":core:ui:theme"))
       implementation(project(":feature:thing:dashboard"))
       implementation(project(":core:lifecycle"))

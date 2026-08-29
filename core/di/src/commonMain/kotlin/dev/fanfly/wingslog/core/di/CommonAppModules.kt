@@ -10,6 +10,7 @@ import dev.fanfly.wingslog.core.lifecycle.di.lifecycleModule
 import dev.fanfly.wingslog.core.lifecycle.di.platformLifecycleModule
 import dev.fanfly.wingslog.core.storage.di.platformStorageModule
 import dev.fanfly.wingslog.core.storage.di.storageModule
+import dev.fanfly.wingslog.core.template.di.templateModule
 import dev.fanfly.wingslog.core.ui.theme.di.appearanceModule
 import dev.fanfly.wingslog.core.ui.theme.di.appearanceStoreModule
 import dev.fanfly.wingslog.feature.ads.datamanager.di.adsModule
@@ -72,6 +73,7 @@ val commonAppModules: List<Module> = listOf(
   commonAuthModule,
   authModule,
   storageModule,
+  templateModule,
   platformStorageModule,
   appearanceModule,
   appearanceStoreModule,
