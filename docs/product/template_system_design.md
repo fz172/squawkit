@@ -274,15 +274,20 @@ because it is a plausible-sounding argument:
 
 So the rule is simply:
 
-**Absent `template` resolves to the baked-in canonical template named by `template_id`.** Phase 1 backfilled
-`template_id = "airplane"` onto every production Thing (#603), which is exactly the handle that makes this work
-with no migration — the provenance fields are load-bearing after all, just not at render time for inflated
-Things.
+**Absent `template` resolves to the baked-in airplane template, unconditionally.** No stored hint is needed,
+and `template_id` / `template_version` (fields 7 and 8) are **removed** rather than kept as one.
 
-`template_id` therefore **stays** rather than being replaced by `template`. It costs two fields already
-populated, and it is the only thing standing between a legacy Thing and an unresolvable one. Removing it would
-force an unconditional "assume airplane" default — correct today, and precisely the kind of implicit assumption
-that becomes wrong the moment a second preset exists.
+*A previous revision argued the opposite* — that `template_id` had to stay because an unconditional
+"assume airplane" default would "become wrong the moment a second preset exists." **That was false**, and the
+error is worth keeping because it sounds careful:
+
+> **The set of Things without DNA is closed.** It is exactly those created before templates existed. A second
+> preset can only be chosen through a picker, and a client with a picker inflates DNA — so nothing that lacks
+> DNA can be anything but an airplane, now or ever. Even an un-updated client writing a Thing after this ships
+> produces an airplane, because an old build has no way to make anything else.
+
+A default that is correct over a closed set is not an assumption waiting to break; it is a fact about that set.
+The fields were carrying no information the absence of `template` did not already carry.
 
 **Inflate on next write.** When a Thing without DNA is next saved, the resolved template is written into it. No
 migration run, no separate pass, and the population of reference-resolved Things shrinks to zero through
@@ -557,9 +562,16 @@ that gets rewritten before it is first exercised.
 
 ### 12.3 What must not be deferred, and the real deadline
 
-**The shape of the protos.** `ThingTemplate`, `Lexicon`, and `Capabilities` get their *full* field sets in Phase
-2, including fields no Phase 2 code reads — `weight_balance`, `starter_tasks`, `authority_label`. Field numbers
+**The shape of the protos**, for anything whose shape is actually known. `ThingTemplate`, `Lexicon`, and
+`Capabilities` declare the fields Phases 2–3 will need even where no Phase 2 code reads them — `starter_tasks`
+(PRD §4.9 specifies them and §13's metric depends on them), `authority_label`, the full `Lexicon`. Field numbers
 are free before anything is stored and a migration afterwards (#638).
+
+**That is not a licence to declare everything imaginable.** PRD §4.8 sketches a `weight_balance` flag marked
+"future, aviation-only"; it is deliberately absent. A speculative field is the one most likely to want a
+different shape by the time it is real — a `bool` that should have been a message — and claiming an unused
+number later costs nothing. The rule is *declare what you know the shape of and will need*, not *reserve
+everything*.
 
 The deadline is sharper than "end of Phase 2," and worth stating because it is easy to miss: these protos stay
 freely editable until **the first canonical template is published** (§4.1) or **the first Thing is created with

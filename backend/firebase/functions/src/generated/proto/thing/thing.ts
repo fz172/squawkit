@@ -9,6 +9,7 @@ import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
 import { Component } from "./component";
 import { Engine } from "./engine";
 import { Spec } from "./spec";
+import { ThingTemplate } from "./template";
 
 export const protobufPackage = "";
 
@@ -23,13 +24,22 @@ export interface Thing {
   serial: string;
   tailNumber: string;
   engine: Engine[];
-  /** --- new, permanent --- */
-  templateId: string;
-  templateVersion: number;
   name: string;
   /** mirrors of make/model/serial/tail_number */
   spec: Spec[];
   components: Component[];
+  /**
+   * The template this Thing was created from, inflated at creation and never a reference
+   * (template_system_design.md §5). A Thing carries everything needed to render itself: no
+   * lookup, no second document that can arrive late, and a share member gets it with the read
+   * they already make.
+   *
+   * ABSENT on every Thing created before the template system existed. Those resolve through
+   * `template_id` to the baked-in canonical, which is exactly right for them — a pre-template
+   * Thing has no customisation to miss — and they are inflated on their next write (§5.3). That
+   * is why fields 7 and 8 stay rather than being replaced by this one.
+   */
+  template: ThingTemplate | undefined;
 }
 
 function createBaseThing(): Thing {
@@ -40,11 +50,10 @@ function createBaseThing(): Thing {
     serial: "",
     tailNumber: "",
     engine: [],
-    templateId: "",
-    templateVersion: 0,
     name: "",
     spec: [],
     components: [],
+    template: undefined,
   };
 }
 
@@ -68,12 +77,6 @@ export const Thing: MessageFns<Thing> = {
     for (const v of message.engine) {
       Engine.encode(v!, writer.uint32(50).fork()).join();
     }
-    if (message.templateId !== "") {
-      writer.uint32(58).string(message.templateId);
-    }
-    if (message.templateVersion !== 0) {
-      writer.uint32(64).int32(message.templateVersion);
-    }
     if (message.name !== "") {
       writer.uint32(74).string(message.name);
     }
@@ -82,6 +85,9 @@ export const Thing: MessageFns<Thing> = {
     }
     for (const v of message.components) {
       Component.encode(v!, writer.uint32(90).fork()).join();
+    }
+    if (message.template !== undefined) {
+      ThingTemplate.encode(message.template, writer.uint32(98).fork()).join();
     }
     return writer;
   },
@@ -141,22 +147,6 @@ export const Thing: MessageFns<Thing> = {
           message.engine.push(Engine.decode(reader, reader.uint32()));
           continue;
         }
-        case 7: {
-          if (tag !== 58) {
-            break;
-          }
-
-          message.templateId = reader.string();
-          continue;
-        }
-        case 8: {
-          if (tag !== 64) {
-            break;
-          }
-
-          message.templateVersion = reader.int32();
-          continue;
-        }
         case 9: {
           if (tag !== 74) {
             break;
@@ -181,6 +171,14 @@ export const Thing: MessageFns<Thing> = {
           message.components.push(Component.decode(reader, reader.uint32()));
           continue;
         }
+        case 12: {
+          if (tag !== 98) {
+            break;
+          }
+
+          message.template = ThingTemplate.decode(reader, reader.uint32());
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -202,23 +200,12 @@ export const Thing: MessageFns<Thing> = {
         ? globalThis.String(object.tail_number)
         : "",
       engine: globalThis.Array.isArray(object?.engine) ? object.engine.map((e: any) => Engine.fromJSON(e)) : [],
-      templateId: isSet(object.templateId)
-        ? globalThis.String(object.templateId)
-        : isSet(object.template_id)
-        ? globalThis.String(object.template_id)
-        : "",
-      templateVersion: isSet(object.templateVersion)
-        ? globalThis.Number(object.templateVersion)
-        : isSet(object.template_version)
-        ? globalThis.Number(object.template_version)
-        : 0,
       name: isSet(object.name) ? globalThis.String(object.name) : "",
-      spec: globalThis.Array.isArray(object?.spec)
-        ? object.spec.map((e: any) => Spec.fromJSON(e))
-        : [],
+      spec: globalThis.Array.isArray(object?.spec) ? object.spec.map((e: any) => Spec.fromJSON(e)) : [],
       components: globalThis.Array.isArray(object?.components)
         ? object.components.map((e: any) => Component.fromJSON(e))
         : [],
+      template: isSet(object.template) ? ThingTemplate.fromJSON(object.template) : undefined,
     };
   },
 
@@ -242,12 +229,6 @@ export const Thing: MessageFns<Thing> = {
     if (message.engine?.length) {
       obj.engine = message.engine.map((e) => Engine.toJSON(e));
     }
-    if (message.templateId !== "") {
-      obj.templateId = message.templateId;
-    }
-    if (message.templateVersion !== 0) {
-      obj.templateVersion = Math.round(message.templateVersion);
-    }
     if (message.name !== "") {
       obj.name = message.name;
     }
@@ -256,6 +237,9 @@ export const Thing: MessageFns<Thing> = {
     }
     if (message.components?.length) {
       obj.components = message.components.map((e) => Component.toJSON(e));
+    }
+    if (message.template !== undefined) {
+      obj.template = ThingTemplate.toJSON(message.template);
     }
     return obj;
   },
@@ -271,11 +255,12 @@ export const Thing: MessageFns<Thing> = {
     message.serial = object.serial ?? "";
     message.tailNumber = object.tailNumber ?? "";
     message.engine = object.engine?.map((e) => Engine.fromPartial(e)) || [];
-    message.templateId = object.templateId ?? "";
-    message.templateVersion = object.templateVersion ?? 0;
     message.name = object.name ?? "";
     message.spec = object.spec?.map((e) => Spec.fromPartial(e)) || [];
     message.components = object.components?.map((e) => Component.fromPartial(e)) || [];
+    message.template = (object.template !== undefined && object.template !== null)
+      ? ThingTemplate.fromPartial(object.template)
+      : undefined;
     return message;
   },
 };

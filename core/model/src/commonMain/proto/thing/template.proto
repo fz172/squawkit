@@ -1,0 +1,100 @@
+syntax = "proto3";
+
+import "thing/capabilities.proto";
+import "thing/lexicon.proto";
+
+option java_package = "dev.fanfly.wingslog.thing";
+option java_multiple_files = true;
+
+// The template definition language. See docs/product/template_system_design.md.
+//
+// ONE MESSAGE, TWO LIFECYCLES (design §3, §5):
+//
+//   CANONICAL — global, immutable, identified by (id, version). Baked into the app as a binary
+//   asset and served by the fetch RPC. Used for the picker and nothing else. A published
+//   canonical template is NEVER edited; a change is a new `version`.
+//
+//   DNA — the copy inflated into a Thing at creation, carried on `Thing.template`. This is what
+//   renders a Thing, and it is why a Thing is self-contained: no lookup, no second document to
+//   arrive late, and a share member gets it with the read they already make.
+//
+// The distinction matters at every call site. Nothing resolves a canonical template at render
+// time, which is why the canonical pool never has to keep old versions reachable.
+
+// A field the user fills in on a Thing — make, model, serial, tail number, VIN, address.
+// Deliberately template-declared rather than hardcoded: a house has no make, model, or serial
+// (PRD §4.2), so make/model/serial survive only as conventional keys most presets happen to
+// declare, not as a privileged core.
+message SpecField {
+  string key = 1;                 // matches Spec.key on the Thing
+  string label = 2;
+  bool required = 3;
+  // Renders in a monospace face — VIN, tail number, serial, hull ID. A readability hint, not a
+  // validation rule.
+  bool is_identifier = 4;
+  string placeholder = 5;
+}
+
+// A slot in the component tree the template expects — airframe, engine, propeller, hub, blade.
+// The Thing's actual Components reference these by `slot_key`.
+message ComponentSlot {
+  string slot_key = 1;
+  string label = 2;
+  bool repeatable = 3;                    // an airplane has N engines
+  repeated ComponentSlot children = 4;    // engine -> propeller -> hub/blade
+  bool serial_expected = 5;
+}
+
+// A meter a Thing accumulates and rules can be written against — hours, miles, cycles, seasons.
+// Generalises the aviation-only engine-hour concept: `float interval_hours` cannot express
+// "every 3000 miles" because there is no unit in it (design §11.1).
+message MeterDef {
+  string key = 1;                 // "airframe_hours" · "odometer" · "cycles"
+  string label = 2;
+  string unit_label = 3;          // "hrs" · "mi" · "cycles"
+  bool decimal = 4;               // hours take decimals; cycles do not
+  // Which component slot this meter belongs to, empty for Thing-level meters. An engine's hours
+  // are the engine's, not the airframe's, and a per-engine meter has to say so.
+  string component_slot_key = 5;
+}
+
+// A task offered at creation so a new Thing is not an empty shell. PRD §4.9; the §13 metric that
+// judges them is "≥ 60% of new Things accept at least one starter task."
+message StarterTask {
+  string title = 1;
+  string description = 2;
+  bool default_selected = 3;
+  // The rule this task carries, expressed the same way MaintenanceTask does. Left as a free-form
+  // key/interval pair here rather than embedding the rule oneof, so adding a rule kind to
+  // MaintenanceTask does not force a template schema change.
+  string meter_key = 4;
+  float interval = 5;
+  int32 interval_months = 6;
+}
+
+message ThingTemplate {
+  string id = 1;       // "airplane" · "car" · "home" — stable across versions
+  // Bumped on every publication. Immutable in the sense that (id, version) always names the same
+  // bytes; a correction is a new version, never an edit (design §5).
+  int32 version = 2;
+
+  // versionCode floor from version.properties. A client refuses a canonical template above its
+  // own build, so the picker never offers something it cannot render (design §6).
+  //
+  // This guards SEMANTICS, not parsing: proto3 round-trips unknown fields happily, so a client
+  // decodes a future template perfectly and then renders it incoherently. Because the value is
+  // author-set and a wrong one is silent, clients also refuse templates naming enum values they
+  // do not recognise — a check that does not depend on anyone getting this number right.
+  int32 min_app_version = 3;
+
+  Lexicon lexicon = 4;
+  Capabilities capabilities = 5;
+  repeated SpecField spec_fields = 6;
+  repeated ComponentSlot component_slots = 7;
+  repeated MeterDef meters = 8;
+  repeated StarterTask starter_tasks = 9;
+
+  string display_name = 10;  // picker copy — "Airplane", "Car"
+  string icon = 11;          // icon key the client maps to a vector
+  int32 sort_order = 12;     // position in the picker
+}

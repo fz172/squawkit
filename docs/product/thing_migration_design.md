@@ -4,16 +4,16 @@
 > `/users/{uid}/thing/...`, the ACL at `thing_shares/{hostUid}/thing/{acId}`, and all three platforms run a
 > client that reads them. What remains is deletion of the retired trees, held behind their grace windows.
 >
-> | Phase | State |
-> |---|---|
-> | A — client rename, `7.sqm` | Shipped |
-> | B — scripts, rules, functions | Shipped |
-> | C1 / C2 — dual infra, then the callable + trigger flip | Deployed |
-> | D — entity + blob batch | **25 accounts, 0 failures** |
-> | E — Phase 1 client on Android, iOS, web | Distributed |
-> | F — entity-tree cleanup | **F2 opens 2026-09-04**; F3/F4 written, held |
-> | G — ACL cutover | G1–G3 done; **G5 window to ~2026-09-05**; G6 written, held |
-> | H — this banner | Done |
+> | Phase                                                  | State                                                      |
+> |--------------------------------------------------------|------------------------------------------------------------|
+> | A — client rename, `7.sqm`                             | Shipped                                                    |
+> | B — scripts, rules, functions                          | Shipped                                                    |
+> | C1 / C2 — dual infra, then the callable + trigger flip | Deployed                                                   |
+> | D — entity + blob batch                                | **25 accounts, 0 failures**                                |
+> | E — Phase 1 client on Android, iOS, web                | Distributed                                                |
+> | F — entity-tree cleanup                                | **F2 opens 2026-09-04**; F3/F4 written, held               |
+> | G — ACL cutover                                        | G1–G3 done; **G5 window to ~2026-09-05**; G6 written, held |
+> | H — this banner                                        | Done                                                       |
 >
 > Verified in production: entity reads and writes, the payload backfill, blob resolution after the broker flip,
 > `7.sqm` against a real OPFS database, the `/thing/` notification triggers, and ACL authorization through

@@ -1,0 +1,55 @@
+syntax = "proto3";
+
+import "thing/squawk.proto";
+
+option java_package = "dev.fanfly.wingslog.thing";
+option java_multiple_files = true;
+
+// Which sections, actions, and fields exist at all for a kind of Thing.
+// See docs/product/multi_domain_maintenance_PRD.md §4.8 and template_system_design.md §10.
+//
+// Everything here is a hard on/off that REMOVES UI rather than disabling it — a homeowner should
+// never see a greyed-out "Engine hours" field. That distinction is load-bearing at the call site:
+// a capability guards whether a composable emits anything, not whether it passes enabled = false.
+
+// The per-Thing sections of the adaptive shell, in the order a template wants them. Mirrors
+// ShellSection's first four values; SETTINGS is account-level and never template-controlled.
+enum Section {
+  SECTION_UNKNOWN = 0;
+  SECTION_DASHBOARD = 1;
+  SECTION_SQUAWKS = 2;  // named by Lexicon.squawk at render — "Issues", "Attention", ...
+  SECTION_TASKS = 3;
+  SECTION_LOGS = 4;
+}
+
+enum ExportLayout {
+  EXPORT_LAYOUT_UNKNOWN = 0;
+  // The paper-logbook tab layout the app ships today. Airplane only.
+  EXPORT_LAYOUT_LOGBOOK = 1;
+  // Columns derived from the lexicon and the template's meter set.
+  EXPORT_LAYOUT_GENERIC = 2;
+}
+
+message Capabilities {
+  bool components = 1;              // component tree UI, picker, config card
+  bool meters = 2;                  // meter fields on logs; METER-based rules
+  bool compliance = 3;              // type chip, reference number, authority
+  bool technicians = 4;             // technician picker on the log form
+  bool technician_certificates = 5; // certificate fields on the technician record
+  bool component_serial_prompt = 6; // nag for serials at creation
+
+  // Which priority values the template offers. The SquawkPriority enum keeps every value
+  // regardless — it is stored data on existing squawks (#638) — so this narrows what is OFFERED,
+  // never what can be read back.
+  repeated SquawkPriority priorities = 7;
+
+  // Which sections appear, and in what order. An ordered list rather than a bool per section, so
+  // the shell reads one list instead of every screen checking a flag (design §10).
+  repeated Section sections = 8;
+
+  ExportLayout export_layout = 9;
+
+  // 10 deliberately unused. PRD §4.8 sketches a `weight_balance` flag, left out until something
+  // needs it: a speculative bool is the field most likely to want a different shape by the time
+  // it is real, and an unused number costs nothing to claim later.
+}
