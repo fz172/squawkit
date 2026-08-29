@@ -479,9 +479,9 @@ other component shape, no other spec-field set, and no template other than `"air
 
 | Stays as-is | Why |
 |---|---|
-| `AircraftScopeResolver` (interface + impl), its `resolve(aircraftId: String)` signature | Names a stable concept — "where does this Thing's data live" — that doesn't change meaning. Renaming it touches ~10 call sites for zero behavior change. Defer to Phase 3's broader identifier pass (PRD §3.3: `ShellAircraft` → `ShellThing` happens there too). |
-| `EntityScope.aircraftChildUnsafe` function name (only its body's literal changes) | Same reasoning — the function's contract ("this Thing's nested-data scope") is unchanged. |
-| `feature/aircraft/*` module names and packages | Renaming a Gradle module is its own, larger-blast-radius change (settings.gradle.kts, every internal import) that buys nothing for Phase 1's goal. |
+| `AircraftScopeResolver` (interface + impl), its `resolve(aircraftId: String)` signature | Names a stable concept — "where does this Thing's data live" — that doesn't change meaning. Renaming it touches ~10 call sites for zero behavior change. Deferred to the standalone identifier rename (#637) — **not** to a "Phase 3 identifier pass", which an earlier revision of this table cited and the PRD does not describe. PRD §3.3 names exactly two symbols (`ShellAircraft` → `ShellThing`, `PER_AIRCRAFT_SECTIONS` → `PER_THING_SECTIONS`) in a table of what transfers *unchanged*; it scopes no systematic rename. |
+| `EntityScope.aircraftChildUnsafe` function name (only its body's literal changes) | Same reasoning — the function's contract ("this Thing's nested-data scope") is unchanged. Also deferred to #637. |
+| `feature/aircraft/*` module names and packages | Renaming a Gradle module is its own, larger-blast-radius change (settings.gradle.kts, every internal import) that buys nothing for Phase 1's goal. Tracked in #637. |
 | `add_aircraft` and other `strings.xml` entries, `ShellAircraft`, the adaptive shell's section labels | UI-facing; explicitly Phase 2/3 work per the PRD. Phase 1 must be invisible, which these already are. |
 | `NotificationTapRouter`'s / `PushPayload`'s `"aircraft"` deep-link segment | A URL scheme segment for tap routing, not stored data — unrelated namespace to everything in §2.5–2.8. |
 | `aircraftShareDocPath`/`shareMemberDocPath`/`AircraftShareDoc` (function and type *names*), `SharingManagerImpl`'s `SHARES`/`SHARE_AIRCRAFT` constant *names* | Only their *values* change (§2.9, §3.2) — same "rename identity, not every name that mentions it" principle as the rest of this table. |
