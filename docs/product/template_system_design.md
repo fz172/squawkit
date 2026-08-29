@@ -87,10 +87,21 @@ storage of its own. That distinction decides what is immutable, what syncs, and 
 
 Two sources, in priority order, resolving to one pool.
 
-**Baked in.** The app ships the presets current at build time, as **binary proto assets** rather than as Kotlin
-that constructs the messages. That is not a packaging preference — it means baked-in and fetched templates travel
-the same decode-and-validate path. Constructing them in Kotlin creates a second path that is not exercised by
-the fetch tests and will drift.
+**Baked in.** The app ships the presets current at build time. The intended form is **binary proto assets**
+rather than Kotlin that constructs the messages, because baked-in and fetched templates then travel the same
+decode-and-validate path; constructing them in Kotlin creates a second path the fetch tests never exercise.
+
+> **Phase 2 builds the airplane preset in Kotlin instead** (`canonical/AirplaneTemplate.kt`). Compiling a text
+> proto to bytes needs `protoc --encode` at build time, and `protoc` is not available to Gradle in this repo —
+> only `grpc_tools_node_protoc`, inside the backend's `node_modules`. Authoring a `.textproto` that nothing
+> parses would be worse than none: it would drift silently while looking authoritative.
+>
+> **The drift risk this creates is narrower than it first appears, and does not touch airplane.** The fetch RPC
+> "only ever adds" (below), so a preset that ships baked-in is never *also* served to a client that already has
+> it — and airplane, shipping in every build from Phase 2 onward, is never published at all. Drift becomes
+> possible for a Phase 3 preset like `car`, which is baked into the build that introduces it *and* fetched by
+> clients still on the previous one. That is the point at which one source of truth stops being a nicety, and it
+> is also when the publishing script needs `protoc` regardless.
 
 **Fetched.** A callable RPC returns templates the app did not ship with, so **introducing a template does not
 require an app update** — the requirement that motivates the whole design. It follows the existing
