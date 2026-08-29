@@ -76,17 +76,9 @@ message ThingTemplate {
 
 `(id, version)` is the identity. Everything else is payload.
 
-**One message, two lifecycles.** The same `ThingTemplate` is used for the global canonical pool and for the
-per-user copy a Thing actually resolves against (§5). Only the second is a synced entity with a `CollectionKind`;
-the first is a local cache. §7 covers both, and the distinction decides more than storage layout — it decides
-what is immutable, what syncs, and what a share member can read.
-
-Owned copies add two fields recording their provenance:
-
-```proto
-  string source_id = 13;       // the canonical id this was copied from
-  int32 source_version = 14;   // and its version — see §5.3
-```
+**One message, two lifecycles.** The same `ThingTemplate` serves the global canonical pool and the copy inflated
+into each Thing as its DNA (§5). The canonical pool is a local cache; the DNA is a field on `Thing` and needs no
+storage of its own. That distinction decides what is immutable, what syncs, and what a share member can read.
 
 ---
 
@@ -126,65 +118,85 @@ Two properties worth being explicit about:
 
 ---
 
-## 5. Two pools: canonical and owned
+## 5. Canonical templates, and the Thing's DNA
 
-The system has **two kinds of template**, and almost every question below resolves differently for each.
+Two kinds of template, and the distinction decides everything below.
 
-| | **Canonical** | **Owned** |
+| | **Canonical** | **Inflated (the Thing's DNA)** |
 |---|---|---|
-| Scope | global, one copy for everyone | one user's tree |
-| Mutability | **immutable** — a change is a new `version` | the user's to edit |
-| Source | baked-in assets + fetch RPC (§4) | copied from canonical on first use, or authored from scratch |
-| Purpose | **the picker, and nothing else** | rendering the user's Things |
-| Synced? | no — a local cache (§7.1) | **yes** — an ordinary synced entity (§7.2) |
+| Scope | global, one copy for everyone | one Thing |
+| Mutability | **immutable** — a change is a new `version` | the user's to edit, per Thing |
+| Source | baked-in assets + fetch RPC (§4) | copied from canonical at creation, or authored from scratch |
+| Purpose | **the picker, and nothing else** | rendering that Thing |
+| Storage | a local cache (§7.1) | **a field on the `Thing` message itself** (§7.2) |
 
-The rule that connects them: **the moment a template is used to create a Thing, the user gets their own copy.**
-The same applies to customising a canonical template and to authoring one from scratch — both produce an owned
-template, and owned templates are what Things actually resolve against.
+**At creation, the chosen canonical template is inflated into the Thing and becomes its DNA.** From that moment
+the Thing carries everything needed to render itself. Customising, or authoring from scratch, produces the same
+thing: DNA belonging to that Thing.
 
-### 5.1 What this buys, and what it retires
+```proto
+message Thing {
+  // ... fields 1-11 as shipped in Phase 1 ...
+  ThingTemplate template = 12;   // the DNA — inflated at creation, never a reference
+}
+```
 
-An earlier revision of this doc spent a section on a problem this design does not have. If Things pinned
-*canonical* `(id, version)` pairs, then immutability plus pinning would oblige the canonical pool to keep every
-version reachable forever — otherwise a Thing pinned to `(airplane, 1)` could not render on a build that ships
-only v3. That section recommended a reference-counted cache to solve it.
+`template_id` (7) and `template_version` (8) survive as **provenance** — which canonical template this DNA came
+from — not as a lookup key. Nothing resolves through them at render time.
 
-**Copy-on-use dissolves it.** The template a Thing needs travels with the user's own data, in the user's own
-tree, synced by the machinery that already syncs everything else. The canonical pool never has to answer "what
-did v1 look like," because nothing asks it. Canonical retention becomes a product convenience — how far back the
-picker offers — rather than a correctness requirement.
+### 5.1 What self-containment buys
 
-It also makes the immutability guarantee stronger than versioning alone could. A user is insulated from canonical
-changes not because the app is careful to pin a version, but because **their template is not the canonical one**.
-There is no path by which a server-side edit reaches an existing Thing, including no path through a bug.
+Three problems that earlier revisions of this doc spent sections solving simply do not arise.
 
-### 5.2 The question that decides everything else: does one owned template serve many Things?
+**Canonical retention.** If Things referenced canonical `(id, version)`, the canonical pool would be obliged to
+keep every version reachable forever, or a Thing on `(airplane, 1)` could not render on a build shipping only
+v3. Nothing references canonical templates at render time, so nothing asks. Canonical retention becomes a
+product question about what the picker offers.
 
-A user with three airplanes creates them from the same canonical template. Do they end up with **one** owned
-template or **three**?
+**The sync race.** A previous revision put the user's template in a separate synced document, which meant a
+device could hold a Thing whose template had not arrived yet — an unresolvable Thing for as long as the pull
+took. **One document cannot arrive before itself.** The race is gone, not mitigated.
 
-This is a product question, not an implementation detail, and it decides the storage layout in §7:
+**Sharing.** `firestore.rules` grants a member access to the Thing document itself
+(`allow get: if ... isShareMember(userId, acId)`). The DNA is *in* that document, so a technician gets it with
+the read they already make — **no new `isSharedAircraftKind` entry, no new match block, no grant over a
+user-root collection, and no privacy question about which kinds of thing the host owns.** The earlier revision
+needed all four.
 
-- **One shared copy** — customising "my airplane template" changes all three airplanes. Matches the intuition
-  that it is *a template*, a thing you keep and adjust.
-- **A copy per Thing** — the three drift independently; editing one leaves the others alone. Matches the
-  intuition that the template is *baked into* the Thing at creation, which is the phrasing the requirement uses.
+It also means **no twelfth `CollectionKind`**, despite PRD §3.3 anticipating one. Nothing new syncs; the `Thing`
+payload simply got bigger. That avoids committing to a `wireName` and `schemaName`, which are stored identity
+and cannot change later without a migration (#638).
 
-**This doc assumes one shared copy per `(id, version)` per user**, because "mutate it and it becomes theirs"
-reads as owning a template rather than owning N snapshots, and because the alternative multiplies storage by the
-number of Things for no user-visible gain. **It needs confirming** — reversing it later is a data migration
-(§11 #1).
+### 5.2 What it costs, stated honestly
 
-### 5.3 Versioning within owned templates
+**Per-Thing customisation is per-Thing.** A user with three airplanes has three sets of DNA. Editing one does
+not touch the others, and there is no "my airplane template" to adjust once. That is the direct consequence of
+DNA, and it may be the right product answer — three aircraft genuinely differ — but it is a real UX position
+rather than a free one. If "edit my airplane template everywhere" is later wanted, it is a fan-out write across
+Things, not a single edit.
 
-Canonical `version` is a publication counter, immutable by definition. An owned template's version is seeded
-from the canonical one it was copied from, and then means something different: it is *provenance*, not identity.
+**Every Thing edit re-uploads its DNA.** The payload is one blob; changing a tail number re-pushes the template
+with it. A full template — lexicon, capabilities, spec fields, component slots, meters, starter tasks — is on
+the order of a few KB, well inside Firestore's 1 MiB document limit, and Thing edits are rare compared with log
+and squawk writes. Acceptable, but worth measuring rather than assuming once real templates exist.
 
-That has a consequence worth stating plainly: after a user customises, `(airplane, 3)` in **their** tree and
-`(airplane, 3)` in the canonical pool are no longer the same object. That is correct and intended — the owned
-copy is authoritative for their Things — but it means `(id, version)` is not globally meaningful, and any code
-that compares them across the boundary is wrong. Owned templates therefore carry `source_id` and
-`source_version` recording what they were copied from, distinct from their own identity.
+### 5.3 The consequence that needs a decision: existing Things have no DNA
+
+**Every Thing in production today has `template_id = "airplane"` and no `template` field.** Phase 1 backfilled
+the former (#603); the latter did not exist. So this is a **stored-data change**, and adding a field is only the
+easy half.
+
+| Approach | Trade |
+|---|---|
+| **Server-side backfill**, a `thing-cutover`-shaped script that inflates the airplane template into all existing Things | Faithful to the design — every Thing is genuinely self-contained afterwards. Costs a migration run, and Milestone 1 is the template for how (#586). |
+| **Lazy inflation on the client** — on read, if `template` is absent, inflate from the baked-in canonical named by `template_id`, non-dirtying | No migration. But the guarantee is aspirational until the Thing is next written, and it **breaks for shared Things**: a member reading a host's un-inflated Thing must fall back to their *own* baked-in pool, which is precisely the coupling the DNA model exists to remove. |
+
+**Recommendation: server-side backfill.** The lazy path reintroduces, for an unbounded window, the dependency
+this design removed — and it fails exactly where the design is most valuable, on shared Things. The population
+is small and known (21 Things across 25 accounts), and Milestone 1 already proved the machinery.
+
+Whether this lands in Phase 2 or with the picker in Phase 3 is a sequencing question (§11). It cannot land
+*before* the airplane template exists as an asset (#649).
 
 ---
 
@@ -214,27 +226,27 @@ declared contract; unknown-enum detection is the check that does not depend on a
 
 ### 6.2 The unresolvable-template state, which is now routine rather than exotic
 
-"Don't show it" is the right answer for the **picker**. It is not available for a Thing that already exists, and
-copy-on-use makes that case *common* rather than a version-skew curiosity:
+"Don't show it" is the right answer for the **picker**. It is not available for a Thing that already exists.
 
-> **The ordinary case.** A Thing and its owned template are two documents. They sync independently. A device that
-> has pulled the Thing but not yet its template has an unresolvable Thing — for seconds, or for as long as the
-> pull takes on a cold start.
+The DNA model removes the case an earlier revision worried about — a Thing arriving before its template — because
+one document cannot arrive before itself. **One case survives, and it is the one that matters:**
 
-> **The version-skew case.** A Thing is created on a device running a newer build, with a template requiring
-> `versionCode ≥ 1500`. It syncs to a device on `1400`.
+> A Thing is created on a device running a newer build, with DNA declaring `min_app_version` above the reader's
+> `versionCode`, or naming a capability enum the reader has no code for. It syncs to an older device. The DNA is
+> right there in the document, fully readable — and still not renderable.
 
-Neither may hide the Thing. It is the user's data, it appears in their switcher, it counts against their limit,
+The Thing may not be hidden. It is the user's data, it appears in their switcher, it counts against their limit,
 and silent disappearance is the failure mode this codebase refuses elsewhere. Rendering it under a *fallback*
 template is worse — that shows a boat's data with airplane labels.
 
-**A Thing whose template cannot be resolved renders in a defined degraded state**: its name, its raw spec values
-as unlabelled key/value pairs, and — for the version-skew case only — a prompt to update. Never hidden, never
-relabelled, and **never editable**, because editing under a template you cannot interpret is how a client writes
-data violating rules it cannot see.
+**A Thing whose DNA cannot be interpreted renders in a defined degraded state**: its name, its raw spec values
+as unlabelled key/value pairs, and a prompt to update. Never hidden, never relabelled under a fallback, and
+**never editable** — editing under a template you cannot interpret is how a client writes data violating rules it
+cannot see.
 
-Because the sync race is transient and the version skew is not, the two need different copy: "loading" versus
-"this needs a newer app." The distinguishing signal is whether the template is *absent* or *present but too new*.
+Note this state is now *permanent until the app updates*, not transient. That makes the copy simpler than the
+earlier design needed — there is no "loading" case to distinguish — but it also means the prompt is the whole
+remedy, which is why §6.3 matters.
 
 This is the same shape as `BlobDownloadDriver`'s "a 404 is an answer, not an outage": an unresolvable template is
 a known state to represent, not an error to swallow.
@@ -269,48 +281,19 @@ It also gets **no `CollectionKind`**, and that is worth being deliberate about: 
 `wireName` and a `schemaName`, which are **stored identity** that cannot change later without a migration
 (#638). The canonical pool needs no such commitment.
 
-### 7.2 Owned: a synced entity, and therefore a `CollectionKind`
+### 7.2 DNA: a field on `Thing`, and therefore no storage of its own
 
-Owned templates are ordinary user data — created by the user, mutated by the user, needed on every device.
-So they sync like everything else, and they **do** take a `CollectionKind`, bringing the current 11 to 12
-exactly as PRD §3.3 anticipated.
+The inflated template is a field on the `Thing` message (§5). It is stored, synced, shared, exported, and
+tombstoned by exactly the machinery that already handles Things — because it *is* a Thing.
 
-> An earlier revision of this doc argued templates should get no `CollectionKind` at all. That was correct for
-> the canonical pool and wrong for owned templates — it followed from assuming Things resolve against canonical
-> templates, which copy-on-use replaced.
+Nothing further to design. No new table, no new `CollectionKind`, no new rules block, no eviction policy, no
+sync ordering.
 
-Its `wireName` and `schemaName` are a permanent commitment. Per the convention now in `CollectionKind`'s KDoc,
-they take **Thing vocabulary** — `thing_template` / `thing.ThingTemplate`.
-
-### 7.3 Where the owned template sits — and why sharing decides it
-
-This is the placement question, and the sharing model constrains it more than storage cost does.
-
-`firestore.rules` grants a share member access to exactly
-`/users/{host}/thing/{acId}/{kind}/{docId}` where `isSharedAircraftKind(kind)` — currently
-`maintenance_log`, `maintenance_task`, `maintenance_overview`, `squawk`. **User-root collections are invisible to
-members**; that is why the technician mirror is *copied into* `ShareMemberDoc.technicianMirror` rather than
-granted from the host's `technician` records.
-
-So:
-
-| Placement | Sharing | Cost |
-|---|---|---|
-| **User-root** `/users/{uid}/thing_template/{id}` | ✗ members cannot read it — **every shared Thing renders degraded** unless a new grant is added | one copy per user; supports §5.2's shared-copy model directly |
-| **Per-Thing** `/users/{uid}/thing/{acId}/thing_template/{id}` | ✓ works by adding one entry to `isSharedAircraftKind` | one copy per Thing; contradicts §5.2 |
-| **Embedded in the Thing document** | ✓ automatic — members already `get` the Thing doc | inflates a document that re-syncs on every edit; contradicts §5.2 |
-
-**Recommendation: user-root, plus an explicit share grant.** It is the only option consistent with §5.2's shared
-copy, and the grant is bounded work — a `match` block for `thing_template` keyed by the *host*, readable by
-anyone who is a member of any of that host's shares.
-
-The privacy cost is real and should be stated rather than glossed: a member of one shared aircraft could read
-the host's whole template collection, which leaks *which kinds of thing the host owns* — not their data, but a
-signal. If that is unacceptable, the technician-mirror precedent applies: copy the resolved template into the
-share, and accept the duplication.
-
-**This is the decision most worth reviewing**, because it is simultaneously a sharing-rules change, a privacy
-tradeoff, and the thing §5.2 depends on.
+> Two earlier revisions of this doc worked hard here — one proposing a reference-counted cache of canonical
+> versions, the next a twelfth `CollectionKind` plus a share grant plus a privacy trade-off. Both were solving
+> problems created by keeping the template *outside* the Thing. Recording that because the next person to
+> propose "surely the template should be its own entity, to avoid duplication" should see what that costs before
+> re-deriving it.
 
 ---
 
@@ -371,13 +354,20 @@ show/hide means auditing every call site twice.
    `1.0.260826(1399)` — so one monotonic `versionCode` gates all three platforms and `min_app_version` means the
    same thing everywhere. Tracked as a Phase 2 task; note `assembleRelease` is what *increments* the number, so
    a web-only deploy ships whatever the last release build stamped.
-2. **Who publishes a template, and through what?** No admin surface exists. A script following
+2. **When does the backfill run (§5.3)?** Existing Things have no DNA. Phase 2 could inflate them as soon as
+   the airplane template exists (#649), or it could wait for Phase 3's picker. Earlier is safer — it closes the
+   window in which a shared Thing has no DNA for its member to read — but it means a production migration run
+   inside a milestone whose whole premise is that nothing user-visible changes.
+3. **Should DNA be editable per Thing, and is that the product intent (§5.2)?** Three airplanes means three sets
+   of DNA and no single "my airplane template" to adjust. That follows necessarily from the model; flagging it
+   because it is a UX position, not a technical detail.
+4. **Who publishes a canonical template, and through what?** No admin surface exists. A script following
    `grant-entitlement.mjs` is the cheap answer, and immutability makes a mistake unfixable by editing —
    a bad publish is superseded, never corrected.
-3. **Do `MeterRule` / `SeasonalRule` (PRD §3.3) change `MaintenanceTask`?** That is stored data. If the change
+5. **Do `MeterRule` / `SeasonalRule` (PRD §3.3) change `MaintenanceTask`?** That is stored data. If the change
    is additive it is free; if it renumbers or repurposes a field it is a #638-class migration. **Settle before
    Phase 3, not during.**
-4. **Is the fetch authenticated?** Templates are not secret, but an unauthenticated callable is an open endpoint.
+6. **Is the fetch authenticated?** Templates are not secret, but an unauthenticated callable is an open endpoint.
    App Check, as the existing callables use, is probably sufficient.
 
 ---
@@ -389,9 +379,11 @@ Phase 2 needs the machinery, with exactly one preset, and **no user-visible chan
 | Build now | Defer |
 |---|---|
 | `ThingTemplate`, `Lexicon`, `Capabilities` protos (#647, #650) | The six non-airplane presets (Phase 3) |
-| `core:template` + `TemplateRegistry`, baked-in resolution (#648) | The fetch RPC and its cache table (§4, §7) |
+| `core:template` + `TemplateRegistry`, baked-in resolution (#648) | The fetch RPC and its cache table (§4, §7.1) |
 | The airplane template as a baked-in asset (#649) | The picker and create flow (Phase 3) |
 | Lexicon plumbing, capability wiring (#652–#660) | The degraded state (§6.2) — nothing can trigger it yet |
+| `Thing.template` field 12, reserved now (#647) | Inflating DNA at creation — there is no create flow until Phase 3 |
+| Web's shared `versionCode` (#672) | The backfill (§5.3), if it waits for the picker |
 
 The RPC, the cache, and the degraded state are designed here and built when a second template exists to justify
 them. Building the distribution path for a pool that cannot change is speculative work that will be rewritten
