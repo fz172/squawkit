@@ -108,17 +108,26 @@ message FetchTemplatesResponse {
 }
 ```
 
-**Authentication: App Check only, no user identity.** The callable sets `enforceAppCheck: true` — the same
-guard `requestExportDelivery`, `deleteMyAccount`, and `createAircraftShareInvite` already use — but does **not**
-require a signed-in user. Canonical templates are not per-user data and not secret; what matters is that the
-caller is the SquawkIt app rather than an open endpoint.
+**Authentication: App Check *and* a signed-in user.** `enforceAppCheck: true` plus `requireAuthenticatedApp` —
+the same pair `requestExportDelivery` and `createAircraftShareInvite` already use.
 
-**Throttled at roughly 10 calls per day per client.** One consequence of dropping user auth is worth stating:
-without `request.auth.uid` there is no natural key to rate-limit on. App Check attests the *app*, not an
-install. So the client supplies its stable install id — the one `device_config` already holds for push
-registration — and the limit is keyed on that. That key is **advisory**: a hostile client can rotate it. App
-Check is the real barrier to non-app callers, and a global daily cap is the backstop against an app-attested
-client looping. The precedent is `rateLimit.ts`, which guards invite-code dereferencing for the same reason.
+The user identity is **not** there for authorization. Canonical templates are neither per-user nor secret, and
+every caller sees the same pool. It is there to make throttling real.
+
+**Throttled at roughly 10 calls per day, keyed on `uid`.** An earlier revision of this section required App
+Check alone and keyed the limit on the install id `device_config` holds for push registration. That was weak in
+a way worth recording: **an install id is client-supplied and rotatable**, so the limit it enforces is advisory
+— a client that wants more calls simply presents a new one. `request.auth.uid` is issued by Firebase Auth and
+cannot be rotated at will, which is the difference between a throttle and a suggestion.
+
+This follows the established pattern rather than inventing one: invite-code dereferencing is rate-limited per
+uid through `rateLimit.ts`, with state under `invite_attempts/{uid}` — a collection `firestore.rules` already
+locks to functions-only.
+
+**Anonymous sign-in counts.** Guests have a uid like anyone else, so they are throttled normally rather than
+excluded. And a client with no session at all is not blocked from creating Things — it simply never calls this,
+and uses the baked-in pool, which is complete by construction (below). Sign-in gates *new* templates, never the
+ability to use the app.
 
 Two further properties:
 
@@ -418,7 +427,8 @@ Settled with the developer, 2026-08-29. Nothing in this design is open.
 1. **DNA is not editable.** Write-once at creation. If editing ever ships it is **per-Thing** (§5.2).
 2. **Canonical templates are published by an admin script from source-controlled `.textproto` files** (§4.1).
    The same file compiles to the baked-in asset, so served and bundled copies cannot drift.
-3. **The fetch callable requires App Check but no user auth**, throttled ~10/day per client (§4).
+3. **The fetch callable requires App Check *and* a signed-in user**, throttled ~10/day keyed on `uid` (§4).
+   The uid is for throttling, not authorization — an install id would be rotatable and the limit advisory.
 4. **`MeterRule` and `SeasonalRule` are additive. No migration.** (§11.1)
 
 ### 11.1 `MeterRule` / `SeasonalRule`: additive
