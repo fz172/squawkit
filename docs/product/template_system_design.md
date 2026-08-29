@@ -180,23 +180,39 @@ with it. A full template — lexicon, capabilities, spec fields, component slots
 the order of a few KB, well inside Firestore's 1 MiB document limit, and Thing edits are rare compared with log
 and squawk writes. Acceptable, but worth measuring rather than assuming once real templates exist.
 
-### 5.3 The consequence that needs a decision: existing Things have no DNA
+### 5.3 Existing Things: no backfill
 
-**Every Thing in production today has `template_id = "airplane"` and no `template` field.** Phase 1 backfilled
-the former (#603); the latter did not exist. So this is a **stored-data change**, and adding a field is only the
-easy half.
+**No migration.** Every Thing in production predates the template system entirely, so there is no template data
+to move — the field is simply absent, and absent is a state the resolver can answer without help.
 
-| Approach | Trade |
-|---|---|
-| **Server-side backfill**, a `thing-cutover`-shaped script that inflates the airplane template into all existing Things | Faithful to the design — every Thing is genuinely self-contained afterwards. Costs a migration run, and Milestone 1 is the template for how (#586). |
-| **Lazy inflation on the client** — on read, if `template` is absent, inflate from the baked-in canonical named by `template_id`, non-dirtying | No migration. But the guarantee is aspirational until the Thing is next written, and it **breaks for shared Things**: a member reading a host's un-inflated Thing must fall back to their *own* baked-in pool, which is precisely the coupling the DNA model exists to remove. |
+An earlier revision of this section recommended a server-side backfill, on the grounds that lazy resolution
+would make a member fall back to their own baked-in pool when reading a host's un-inflated Thing, reintroducing
+the canonical-pool dependency this model removes. **That reasoning was wrong**, and it is worth recording why,
+because it is a plausible-sounding argument:
 
-**Recommendation: server-side backfill.** The lazy path reintroduces, for an unbounded window, the dependency
-this design removed — and it fails exactly where the design is most valuable, on shared Things. The population
-is small and known (21 Things across 25 accounts), and Milestone 1 already proved the machinery.
+> An un-inflated Thing has **no customisation to miss**. It was created before templates existed. Falling back
+> to the canonical airplane template is not an approximation of its DNA — it *is* its DNA, arrived at by a
+> different route. There is nothing for the host and member to disagree about.
 
-Whether this lands in Phase 2 or with the picker in Phase 3 is a sequencing question (§11). It cannot land
-*before* the airplane template exists as an asset (#649).
+So the rule is simply:
+
+**Absent `template` resolves to the baked-in canonical template named by `template_id`.** Phase 1 backfilled
+`template_id = "airplane"` onto every production Thing (#603), which is exactly the handle that makes this work
+with no migration — the provenance fields are load-bearing after all, just not at render time for inflated
+Things.
+
+`template_id` therefore **stays** rather than being replaced by `template`. It costs two fields already
+populated, and it is the only thing standing between a legacy Thing and an unresolvable one. Removing it would
+force an unconditional "assume airplane" default — correct today, and precisely the kind of implicit assumption
+that becomes wrong the moment a second preset exists.
+
+**Inflate on next write.** When a Thing without DNA is next saved, the resolved template is written into it. No
+migration run, no separate pass, and the population of reference-resolved Things shrinks to zero through
+ordinary use. Until then the fallback covers them, indefinitely and correctly.
+
+The one residual: if a canonical airplane v2 is ever published with different labels, two clients on different
+builds could render the *same legacy Thing* slightly differently until it is next written. Small, self-healing,
+and only reachable in the window before that Thing's first save after this ships.
 
 ---
 
@@ -354,20 +370,16 @@ show/hide means auditing every call site twice.
    `1.0.260826(1399)` — so one monotonic `versionCode` gates all three platforms and `min_app_version` means the
    same thing everywhere. Tracked as a Phase 2 task; note `assembleRelease` is what *increments* the number, so
    a web-only deploy ships whatever the last release build stamped.
-2. **When does the backfill run (§5.3)?** Existing Things have no DNA. Phase 2 could inflate them as soon as
-   the airplane template exists (#649), or it could wait for Phase 3's picker. Earlier is safer — it closes the
-   window in which a shared Thing has no DNA for its member to read — but it means a production migration run
-   inside a milestone whose whole premise is that nothing user-visible changes.
-3. **Should DNA be editable per Thing, and is that the product intent (§5.2)?** Three airplanes means three sets
+2. **Should DNA be editable per Thing, and is that the product intent (§5.2)?** Three airplanes means three sets
    of DNA and no single "my airplane template" to adjust. That follows necessarily from the model; flagging it
    because it is a UX position, not a technical detail.
-4. **Who publishes a canonical template, and through what?** No admin surface exists. A script following
+3. **Who publishes a canonical template, and through what?** No admin surface exists. A script following
    `grant-entitlement.mjs` is the cheap answer, and immutability makes a mistake unfixable by editing —
    a bad publish is superseded, never corrected.
-5. **Do `MeterRule` / `SeasonalRule` (PRD §3.3) change `MaintenanceTask`?** That is stored data. If the change
+4. **Do `MeterRule` / `SeasonalRule` (PRD §3.3) change `MaintenanceTask`?** That is stored data. If the change
    is additive it is free; if it renumbers or repurposes a field it is a #638-class migration. **Settle before
    Phase 3, not during.**
-6. **Is the fetch authenticated?** Templates are not secret, but an unauthenticated callable is an open endpoint.
+5. **Is the fetch authenticated?** Templates are not secret, but an unauthenticated callable is an open endpoint.
    App Check, as the existing callables use, is probably sufficient.
 
 ---
@@ -383,7 +395,7 @@ Phase 2 needs the machinery, with exactly one preset, and **no user-visible chan
 | The airplane template as a baked-in asset (#649) | The picker and create flow (Phase 3) |
 | Lexicon plumbing, capability wiring (#652–#660) | The degraded state (§6.2) — nothing can trigger it yet |
 | `Thing.template` field 12, reserved now (#647) | Inflating DNA at creation — there is no create flow until Phase 3 |
-| Web's shared `versionCode` (#672) | The backfill (§5.3), if it waits for the picker |
+| Web's shared `versionCode` (#672) | Inflate-on-write (§5.3) — nothing writes DNA until the picker exists |
 
 The RPC, the cache, and the degraded state are designed here and built when a second template exists to justify
 them. Building the distribution path for a pool that cannot change is speculative work that will be rewritten
