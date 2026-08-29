@@ -48,7 +48,7 @@ fun main() {
   // sign-in and advances. See EmailLinkCompletionScreen. This must run before the single-tab gate,
   // which would otherwise strand this tab on ActiveElsewhereScreen.
   val href = window.location.href
-  // Park an aircraft-share invite (/share#{acId}.{secret}) so the redeem flow (P4) picks it up once
+  // Park an thing-share invite (/share#{acId}.{secret}) so the redeem flow (P4) picks it up once
   // the app starts; a no-op for any other URL.
   AircraftShareDeepLinks.deliver(href)
   if (Firebase.auth.isSignInWithEmailLink(href)) {

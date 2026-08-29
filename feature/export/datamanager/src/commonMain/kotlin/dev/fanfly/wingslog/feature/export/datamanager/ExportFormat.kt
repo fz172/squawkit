@@ -4,7 +4,7 @@ package dev.fanfly.wingslog.feature.export.datamanager
  * Report document types that can be bundled inside an export ZIP.
  *
  * Every export ships as a ZIP; the selected formats decide which report documents are written
- * for each aircraft. Attachments and the README are always included regardless of selection.
+ * for each thing. Attachments and the README are always included regardless of selection.
  *
  * Declaration order is the canonical display order.
  */

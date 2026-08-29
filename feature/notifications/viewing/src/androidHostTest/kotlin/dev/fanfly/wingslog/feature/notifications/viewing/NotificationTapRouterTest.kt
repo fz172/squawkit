@@ -18,7 +18,7 @@ class NotificationTapRouterTest {
   @Test
   fun encodeThenDeliver_squawk_roundTrips() {
     val target =
-      NotificationTapTarget.Squawk(aircraftId = "ac-1", squawkId = "sq-1")
+      NotificationTapTarget.Squawk(thingId = "ac-1", squawkId = "sq-1")
 
     val delivered =
       NotificationTapRouter.deliver(NotificationTapRouter.encode(target))
@@ -30,7 +30,7 @@ class NotificationTapRouterTest {
   @Test
   fun encodeThenDeliver_task_roundTrips() {
     val target =
-      NotificationTapTarget.Task(aircraftId = "ac-1", taskId = "task-1")
+      NotificationTapTarget.Task(thingId = "ac-1", taskId = "task-1")
 
     NotificationTapRouter.deliver(NotificationTapRouter.encode(target))
 
@@ -39,7 +39,7 @@ class NotificationTapRouterTest {
 
   @Test
   fun encodeThenDeliver_log_roundTrips() {
-    val target = NotificationTapTarget.Log(aircraftId = "ac-1", logId = "log-1")
+    val target = NotificationTapTarget.Log(thingId = "ac-1", logId = "log-1")
 
     NotificationTapRouter.deliver(NotificationTapRouter.encode(target))
 
@@ -49,7 +49,7 @@ class NotificationTapRouterTest {
   @Test
   fun encodeThenDeliver_aircraftWithTab_roundTrips() {
     val target =
-      NotificationTapTarget.Aircraft(aircraftId = "ac-1", tab = "tasks")
+      NotificationTapTarget.Aircraft(thingId = "ac-1", tab = "tasks")
 
     NotificationTapRouter.deliver(NotificationTapRouter.encode(target))
 
@@ -58,7 +58,7 @@ class NotificationTapRouterTest {
 
   @Test
   fun encodeThenDeliver_aircraftWithoutTab_roundTrips() {
-    val target = NotificationTapTarget.Aircraft(aircraftId = "ac-1", tab = null)
+    val target = NotificationTapTarget.Aircraft(thingId = "ac-1", tab = null)
 
     NotificationTapRouter.deliver(NotificationTapRouter.encode(target))
 

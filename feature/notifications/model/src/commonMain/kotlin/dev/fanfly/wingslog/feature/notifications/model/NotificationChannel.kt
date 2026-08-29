@@ -6,7 +6,7 @@ package dev.fanfly.wingslog.feature.notifications.model
  * lumping everything under one importance level.
  */
 enum class NotificationChannel {
-  /** N1 — someone else changed a shared aircraft. */
+  /** N1 — someone else changed a shared thing. */
   COLLABORATION,
 
   /**

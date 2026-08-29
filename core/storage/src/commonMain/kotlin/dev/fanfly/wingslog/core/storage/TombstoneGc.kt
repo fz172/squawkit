@@ -56,15 +56,15 @@ class TombstoneGc(
     val condemned = mutableSetOf<BlobId>()
     // The trees to re-check for live references before anything is dropped. Whole accounts, not the
     // dead records' own scopes: a copy can put the same attachment id on a record in a *different*
-    // aircraft, and that record's blob must survive its twin's purge just the same.
+    // thing, and that record's blob must survive its twin's purge just the same.
     val roots = mutableSetOf<String>()
 
     for (row in doomed) {
       roots += userRootOf(row.scope_path)
       if (row.collection == CollectionKind.Thing) {
-        // Blobs are aircraft-scoped, so a deleted aircraft takes its whole blob prefix with it
+        // Blobs are thing-scoped, so a deleted thing takes its whole blob prefix with it
         // (§5.2). This is also what reclaims blobs no surviving payload names — the orphans of a
-        // cascade whose child tombstones this device never saw. Built from the aircraft's own
+        // cascade whose child tombstones this device never saw. Built from the thing's own
         // scope and id, never an id from elsewhere (the #204 lesson).
         condemned += blobs.idsInScopePrefix("${row.scope_path}thing/${row.id}/%")
       }

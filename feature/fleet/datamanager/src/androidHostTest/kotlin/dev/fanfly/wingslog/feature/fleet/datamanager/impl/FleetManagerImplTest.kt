@@ -46,7 +46,7 @@ class FleetManagerImplTest {
     every {
       storeFactory.create<SharedAircraftRef>(CollectionKind.SharedAircraftRef)
     } returns refStore
-    // Default: no shared aircraft. Individual tests override.
+    // Default: no shared thing. Individual tests override.
     every { refStore.observeAll(any()) } returns flowOf(emptyList())
     every { refStore.observe(any(), any()) } returns flowOf(null)
 
@@ -72,10 +72,10 @@ class FleetManagerImplTest {
   @Test
   fun observeFleetDashboard_loggedIn_delegatesToStoreWithUserRootAndUnwrapsValues() =
     runTest {
-      val aircraft = buildTestAircraft(id = TEST_AIRCRAFT_ID)
+      val thing = buildTestThing(id = TEST_AIRCRAFT_ID)
       val entity = StorageEntity(
         id = TEST_AIRCRAFT_ID,
-        value = aircraft,
+        value = thing,
         updatedAt = Instant.DISTANT_PAST
       )
       every { store.observeAll(EntityScope.userRoot(TEST_USER_ID)) } returns flowOf(
@@ -86,7 +86,7 @@ class FleetManagerImplTest {
         .first()
 
       assertThat(result).hasSize(1)
-      assertThat(result.first().aircraft.id).isEqualTo(TEST_AIRCRAFT_ID)
+      assertThat(result.first().thing.id).isEqualTo(TEST_AIRCRAFT_ID)
       assertThat(result.first().shared).isFalse()
       assertThat(result.first().role).isEqualTo(ShareRole.SHARE_ROLE_OWNER)
       io.mockk.verify { store.observeAll(EntityScope.userRoot(TEST_USER_ID)) }
@@ -95,13 +95,13 @@ class FleetManagerImplTest {
   @Test
   fun observeFleetDashboard_withSharedRef_includesHostAircraftTaggedShared() =
     runTest {
-      val own = buildTestAircraft(id = "own-1")
+      val own = buildTestThing(id = "own-1")
       val shared =
-        buildTestAircraft(id = "shared-1", make = "Piper", model = "PA-28")
+        buildTestThing(id = "shared-1", make = "Piper", model = "PA-28")
       every { store.observeAll(EntityScope.userRoot(TEST_USER_ID)) } returns flowOf(
         listOf(StorageEntity("own-1", own, Instant.DISTANT_PAST))
       )
-      // A ref pointing at the host's aircraft, plus the live doc under the host's root.
+      // A ref pointing at the host's thing, plus the live doc under the host's root.
       val ref = SharedAircraftRef(
         aircraft_id = "shared-1",
         host_uid = HOST_UID,
@@ -125,9 +125,9 @@ class FleetManagerImplTest {
       assertThat(result).hasSize(2)
       val ownEntry = result.first { !it.shared }
       val sharedEntry = result.first { it.shared }
-      assertThat(ownEntry.aircraft.id).isEqualTo("own-1")
+      assertThat(ownEntry.thing.id).isEqualTo("own-1")
       assertThat(ownEntry.role).isEqualTo(ShareRole.SHARE_ROLE_OWNER)
-      assertThat(sharedEntry.aircraft.id).isEqualTo("shared-1")
+      assertThat(sharedEntry.thing.id).isEqualTo("shared-1")
       assertThat(sharedEntry.role).isEqualTo(ShareRole.SHARE_ROLE_TECHNICIAN)
     }
 
@@ -155,22 +155,22 @@ class FleetManagerImplTest {
   }
 
   @Test
-  fun loadAircraft_withoutLoggedInUser_emitsNull() = runTest {
+  fun loadThing_withoutLoggedInUser_emitsNull() = runTest {
     every { firebaseAuth.currentUser } returns null
     every { firebaseAuth.authStateChanged } returns flowOf(null)
 
-    val result = manager.loadAircraft(TEST_AIRCRAFT_ID)
+    val result = manager.loadThing(TEST_AIRCRAFT_ID)
       .first()
 
     assertThat(result).isNull()
   }
 
   @Test
-  fun loadAircraft_loggedIn_delegatesToStoreAndUnwrapsValue() = runTest {
-    val aircraft = buildTestAircraft(id = TEST_AIRCRAFT_ID)
+  fun loadThing_loggedIn_delegatesToStoreAndUnwrapsValue() = runTest {
+    val thing = buildTestThing(id = TEST_AIRCRAFT_ID)
     val entity = StorageEntity(
       id = TEST_AIRCRAFT_ID,
-      value = aircraft,
+      value = thing,
       updatedAt = Instant.DISTANT_PAST
     )
     every {
@@ -180,16 +180,16 @@ class FleetManagerImplTest {
       )
     } returns flowOf(entity)
 
-    val result = manager.loadAircraft(TEST_AIRCRAFT_ID)
+    val result = manager.loadThing(TEST_AIRCRAFT_ID)
       .first()
 
-    assertThat(result).isEqualTo(aircraft)
+    assertThat(result).isEqualTo(thing)
   }
 
   @Test
-  fun loadAircraft_sharedAircraft_readsFromHostRoot() = runTest {
+  fun loadThing_sharedAircraft_readsFromHostRoot() = runTest {
     val shared =
-      buildTestAircraft(id = "shared-1", make = "Piper", model = "PA-28")
+      buildTestThing(id = "shared-1", make = "Piper", model = "PA-28")
     // A ref for this id names the host; the doc lives under the host's root.
     every {
       refStore.observe(
@@ -212,7 +212,7 @@ class FleetManagerImplTest {
       StorageEntity("shared-1", shared, Instant.DISTANT_PAST)
     )
 
-    val result = manager.loadAircraft("shared-1")
+    val result = manager.loadThing("shared-1")
       .first()
 
     assertThat(result).isEqualTo(shared)
@@ -225,10 +225,10 @@ class FleetManagerImplTest {
   }
 
   @Test
-  fun updateAircraft_withEmptyId_generatesIdAndCallsStorePut() = runTest {
-    val aircraft = buildTestAircraft(id = "")
+  fun updateThing_withEmptyId_generatesIdAndCallsStorePut() = runTest {
+    val thing = buildTestThing(id = "")
 
-    val result = manager.updateAircraft(aircraft)
+    val result = manager.updateThing(thing)
 
     assertThat(result.isSuccess).isTrue()
     coVerify {
@@ -241,34 +241,34 @@ class FleetManagerImplTest {
   }
 
   @Test
-  fun updateAircraft_withExistingId_preservesIdAndCallsStorePut() = runTest {
-    val aircraft = buildTestAircraft(id = TEST_AIRCRAFT_ID)
+  fun updateThing_withExistingId_preservesIdAndCallsStorePut() = runTest {
+    val thing = buildTestThing(id = TEST_AIRCRAFT_ID)
 
-    val result = manager.updateAircraft(aircraft)
+    val result = manager.updateThing(thing)
 
     assertThat(result.isSuccess).isTrue()
     coVerify {
       store.put(
         TEST_AIRCRAFT_ID,
-        aircraft,
+        thing,
         EntityScope.userRoot(TEST_USER_ID)
       )
     }
   }
 
   @Test
-  fun updateAircraft_withoutLoggedInUser_returnsFailure() = runTest {
+  fun updateThing_withoutLoggedInUser_returnsFailure() = runTest {
     every { firebaseAuth.currentUser } returns null
 
     val result =
-      manager.updateAircraft(buildTestAircraft(id = TEST_AIRCRAFT_ID))
+      manager.updateThing(buildTestThing(id = TEST_AIRCRAFT_ID))
 
     assertThat(result.isFailure).isTrue()
   }
 
   @Test
-  fun deleteAircraft_loggedIn_callsStoreDeleteAndReturnsSuccess() = runTest {
-    val result = manager.deleteAircraft(TEST_AIRCRAFT_ID)
+  fun deleteThing_loggedIn_callsStoreDeleteAndReturnsSuccess() = runTest {
+    val result = manager.deleteThing(TEST_AIRCRAFT_ID)
 
     assertThat(result.isSuccess).isTrue()
     coVerify {
@@ -280,26 +280,26 @@ class FleetManagerImplTest {
   }
 
   @Test
-  fun deleteAircraft_withoutLoggedInUser_returnsFailure() = runTest {
+  fun deleteThing_withoutLoggedInUser_returnsFailure() = runTest {
     every { firebaseAuth.currentUser } returns null
 
-    val result = manager.deleteAircraft(TEST_AIRCRAFT_ID)
+    val result = manager.deleteThing(TEST_AIRCRAFT_ID)
 
     assertThat(result.isFailure).isTrue()
   }
 
-  private fun buildTestAircraft(
+  private fun buildTestThing(
     id: String = TEST_AIRCRAFT_ID,
     make: String = "Cessna",
     model: String = "172",
   ): Thing = Thing(id = id, make = make, model = model)
 
-  // --- Writes must land in the tree the aircraft actually lives in (#143) ---
+  // --- Writes must land in the tree the thing actually lives in (#143) ---
 
   @Test
-  fun updateAircraft_shared_writesToTheHostsTree() = runTest {
-    // A co-owner editing a shared aircraft must write the *host's* row. Writing our own root would
-    // not fail — it would silently fork a second copy of the aircraft into our tree, so the edit
+  fun updateThing_shared_writesToTheHostsTree() = runTest {
+    // A co-owner editing a shared thing must write the *host's* row. Writing our own root would
+    // not fail — it would silently fork a second copy of the thing into our tree, so the edit
     // vanishes (the read still resolves to the host's doc) and the fork reads back as ours.
     every {
       refStore.observe(
@@ -320,7 +320,7 @@ class FleetManagerImplTest {
       tail_number = "N999XX"
     )
 
-    val result = manager.updateAircraft(edited)
+    val result = manager.updateThing(edited)
 
     assertThat(result.isSuccess).isTrue()
     coVerify { store.put("shared-1", edited, EntityScope.userRoot(HOST_UID)) }
@@ -334,16 +334,16 @@ class FleetManagerImplTest {
   }
 
   @Test
-  fun updateAircraft_own_writesToOwnTree() = runTest {
+  fun updateThing_own_writesToOwnTree() = runTest {
     val mine = Thing(id = "own-1", make = "Cessna", model = "172")
 
-    manager.updateAircraft(mine)
+    manager.updateThing(mine)
 
     coVerify { store.put("own-1", mine, EntityScope.userRoot(TEST_USER_ID)) }
   }
 
   @Test
-  fun deleteAircraft_shared_isRefused() = runTest {
+  fun deleteThing_shared_isRefused() = runTest {
     // Deleting tears the share down for everyone, so it is the hosting owner's alone. Queuing a
     // tombstone we know the rules will deny is worse than refusing: since #144 the client reads a
     // denied write into a host's tree as its own revocation, and would purge the share over it.
@@ -360,7 +360,7 @@ class FleetManagerImplTest {
       )
     )
 
-    val result = manager.deleteAircraft("shared-1")
+    val result = manager.deleteThing("shared-1")
 
     assertThat(result.isFailure).isTrue()
     coVerify(exactly = 0) { store.delete(any(), any()) }

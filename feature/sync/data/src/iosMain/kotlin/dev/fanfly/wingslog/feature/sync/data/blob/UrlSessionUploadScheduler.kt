@@ -140,7 +140,7 @@ class UrlSessionUploadScheduler(
       .executeAsOneOrNull() ?: return
     if (row.deleted) return
 
-    // Foreign-hosted (shared aircraft) blobs live in the HOST's tree, which storage.rules deny a
+    // Foreign-hosted (shared thing) blobs live in the HOST's tree, which storage.rules deny a
     // direct write to. Route them through the shared upload driver → broker (getBlobUploadSession
     // mints a session, App Check attached by the native SDK; the PUT runs in-process). Own-tree
     // blobs fall through to the background-URLSession path below, unchanged.

@@ -23,7 +23,7 @@ import com.squareup.wire.Instant as WireInstant
 
 class LogbookExportArchiveBuilderTest {
 
-  private val aircraftFolder = "N12345_Cessna_172"
+  private val thingFolder = "N12345_Cessna_172"
 
   @Test
   fun buildEntries_embedsAttachmentPayloadsAndLinksCsvRows() {
@@ -45,13 +45,13 @@ class LogbookExportArchiveBuilderTest {
       appVersion = "SquawkIt 1.0.260519.10 (364)",
     ).buildEntries(
       request = ExportRequest(
-        aircraftIds = listOf(bundle.aircraft.id),
+        thingIds = listOf(bundle.thing.id),
         dateRange = ExportDateRange.AllTime,
         includeOpenSquawks = true,
       ),
       bundles = listOf(bundle),
       attachmentManifests = mapOf(
-        bundle.aircraft.id to AttachmentExportManifest(
+        bundle.thing.id to AttachmentExportManifest(
           byAttachmentId = mapOf(
             availableAttachment.id to AttachmentExportPayload(
               attachmentId = availableAttachment.id,
@@ -67,39 +67,39 @@ class LogbookExportArchiveBuilderTest {
     )
       .associateBy { entry -> entry.path }
 
-    assertThat(entries["$aircraftFolder/attachments/abcd_inspection_photo.jpg"]?.bytes?.decodeToString())
+    assertThat(entries["$thingFolder/attachments/abcd_inspection_photo.jpg"]?.bytes?.decodeToString())
       .isEqualTo("photo-bytes")
-    assertThat(entries["$aircraftFolder/N12345_Cessna_172.pdf"]?.bytes?.decodeToString())
+    assertThat(entries["$thingFolder/N12345_Cessna_172.pdf"]?.bytes?.decodeToString())
       .startsWith("%PDF-1.4")
-    assertThat(entries["$aircraftFolder/csv/01_Airframe.csv"]?.bytes?.decodeToString())
+    assertThat(entries["$thingFolder/csv/01_Airframe.csv"]?.bytes?.decodeToString())
       .contains(
         "inspection photo.jpg -> attachments/abcd_inspection_photo.jpg\n" +
           "missing.pdf -> [attachment unavailable]"
       )
     assertThat(entries["README.txt"]?.bytes?.decodeToString())
       .contains("Attachment efgh5678 has no local blob record.")
-    assertThat(entries["$aircraftFolder/csv/00_Aircraft_Info.csv"]?.bytes?.decodeToString())
+    assertThat(entries["$thingFolder/csv/00_Aircraft_Info.csv"]?.bytes?.decodeToString())
       .contains("Export App Version,SquawkIt 1.0.260519.10 (364)")
     assertThat(entries["README.txt"]?.bytes?.decodeToString())
       .contains("App:       SquawkIt 1.0.260519.10 (364)")
-    assertThat(entries["$aircraftFolder/csv/01_Airframe.csv"]?.bytes?.decodeToString())
+    assertThat(entries["$thingFolder/csv/01_Airframe.csv"]?.bytes?.decodeToString())
       .doesNotContain("Log ID")
-    assertThat(entries["$aircraftFolder/csv/10_Tasks.csv"]?.bytes?.decodeToString())
+    assertThat(entries["$thingFolder/csv/10_Tasks.csv"]?.bytes?.decodeToString())
       .doesNotContain("Task ID")
-    assertThat(entries["$aircraftFolder/csv/10_Tasks.csv"]?.bytes?.decodeToString())
+    assertThat(entries["$thingFolder/csv/10_Tasks.csv"]?.bytes?.decodeToString())
       .doesNotContain("Status")
-    assertThat(entries["$aircraftFolder/csv/10_Tasks.csv"]?.bytes?.decodeToString())
+    assertThat(entries["$thingFolder/csv/10_Tasks.csv"]?.bytes?.decodeToString())
       .contains("One-Time")
-    assertThat(entries["$aircraftFolder/csv/10_Tasks.csv"]?.bytes?.decodeToString())
+    assertThat(entries["$thingFolder/csv/10_Tasks.csv"]?.bytes?.decodeToString())
       .contains("Task Details")
-    assertThat(entries["$aircraftFolder/csv/11_Squawks.csv"]?.bytes?.decodeToString())
+    assertThat(entries["$thingFolder/csv/11_Squawks.csv"]?.bytes?.decodeToString())
       .doesNotContain("Squawk ID")
-    assertThat(entries["$aircraftFolder/csv/20_Technicians.csv"]?.bytes?.decodeToString())
+    assertThat(entries["$thingFolder/csv/20_Technicians.csv"]?.bytes?.decodeToString())
       .doesNotContain("Technician ID")
-    assertThat(entries["$aircraftFolder/csv/20_Technicians.csv"]?.bytes?.decodeToString())
+    assertThat(entries["$thingFolder/csv/20_Technicians.csv"]?.bytes?.decodeToString())
       .doesNotContain("Sign-Offs in Export")
     val workbookEntries = readZipEntries(
-      requireNotNull(entries["$aircraftFolder/SquawkIt_Logs_N12345_20260519.xlsx"]?.bytes)
+      requireNotNull(entries["$thingFolder/SquawkIt_Logs_N12345_20260519.xlsx"]?.bytes)
     )
     assertThat(workbookEntries.keys).containsAtLeast(
       "[Content_Types].xml",
@@ -122,7 +122,7 @@ class LogbookExportArchiveBuilderTest {
 
   @Test
   fun buildEntries_singleEngineAndPropellerUseUnnumberedTimeLabels() {
-    val aircraft = Thing(
+    val thing = Thing(
       id = "aircraft-1",
       make = "Cessna",
       model = "172",
@@ -144,7 +144,7 @@ class LogbookExportArchiveBuilderTest {
       ),
     )
     val bundle = aircraftBundle(
-      aircraft = aircraft,
+      thing = thing,
       logs = listOf(
         MaintenanceLog(
           id = "log-1",
@@ -158,7 +158,7 @@ class LogbookExportArchiveBuilderTest {
       appVersion = "SquawkIt 1.0.260520.1 (365)",
     ).buildEntries(
       request = ExportRequest(
-        aircraftIds = listOf(bundle.aircraft.id),
+        thingIds = listOf(bundle.thing.id),
         dateRange = ExportDateRange.AllTime,
         includeOpenSquawks = true,
       ),
@@ -170,24 +170,24 @@ class LogbookExportArchiveBuilderTest {
       .associateBy { entry -> entry.path }
 
     val aircraftInfoCsv =
-      requireNotNull(entries["$aircraftFolder/csv/00_Aircraft_Info.csv"]?.bytes?.decodeToString())
+      requireNotNull(entries["$thingFolder/csv/00_Aircraft_Info.csv"]?.bytes?.decodeToString())
     val airframeCsv =
-      requireNotNull(entries["$aircraftFolder/csv/01_Airframe.csv"]?.bytes?.decodeToString())
+      requireNotNull(entries["$thingFolder/csv/01_Airframe.csv"]?.bytes?.decodeToString())
     val engineCsv =
-      requireNotNull(entries["$aircraftFolder/csv/02_Engine.csv"]?.bytes?.decodeToString())
+      requireNotNull(entries["$thingFolder/csv/02_Engine.csv"]?.bytes?.decodeToString())
     val propellerCsv =
-      requireNotNull(entries["$aircraftFolder/csv/03_Propeller.csv"]?.bytes?.decodeToString())
+      requireNotNull(entries["$thingFolder/csv/03_Propeller.csv"]?.bytes?.decodeToString())
     val workbookEntries = readZipEntries(
-      requireNotNull(entries["$aircraftFolder/SquawkIt_Logs_N12345_20260520.xlsx"]?.bytes)
+      requireNotNull(entries["$thingFolder/SquawkIt_Logs_N12345_20260520.xlsx"]?.bytes)
     )
-    assertThat(entries["$aircraftFolder/N12345_Cessna_172.pdf"]?.bytes?.decodeToString()).startsWith(
+    assertThat(entries["$thingFolder/N12345_Cessna_172.pdf"]?.bytes?.decodeToString()).startsWith(
       "%PDF-1.4"
     )
 
-    assertThat(entries.keys).contains("$aircraftFolder/csv/02_Engine.csv")
-    assertThat(entries.keys).contains("$aircraftFolder/csv/03_Propeller.csv")
-    assertThat(entries.keys).doesNotContain("$aircraftFolder/csv/02_Engine_1.csv")
-    assertThat(entries.keys).doesNotContain("$aircraftFolder/csv/03_Propeller_1.csv")
+    assertThat(entries.keys).contains("$thingFolder/csv/02_Engine.csv")
+    assertThat(entries.keys).contains("$thingFolder/csv/03_Propeller.csv")
+    assertThat(entries.keys).doesNotContain("$thingFolder/csv/02_Engine_1.csv")
+    assertThat(entries.keys).doesNotContain("$thingFolder/csv/03_Propeller_1.csv")
     assertThat(aircraftInfoCsv).contains("Current Engine Time")
     assertThat(aircraftInfoCsv).contains("Current Propeller Time")
     assertThat(aircraftInfoCsv).doesNotContain("Current Engine 1 Time")
@@ -241,7 +241,7 @@ class LogbookExportArchiveBuilderTest {
       appVersion = "SquawkIt 1.0.260520.2 (366)",
     ).buildEntries(
       request = ExportRequest(
-        aircraftIds = listOf(bundle.aircraft.id),
+        thingIds = listOf(bundle.thing.id),
         dateRange = ExportDateRange.AllTime,
         includeOpenSquawks = true,
       ),
@@ -253,9 +253,9 @@ class LogbookExportArchiveBuilderTest {
       .associateBy { entry -> entry.path }
 
     val squawkCsv =
-      requireNotNull(entries["$aircraftFolder/csv/11_Squawks.csv"]?.bytes?.decodeToString())
+      requireNotNull(entries["$thingFolder/csv/11_Squawks.csv"]?.bytes?.decodeToString())
     val workbookEntries = readZipEntries(
-      requireNotNull(entries["$aircraftFolder/SquawkIt_Logs_N12345_20260520.xlsx"]?.bytes)
+      requireNotNull(entries["$thingFolder/SquawkIt_Logs_N12345_20260520.xlsx"]?.bytes)
     )
     val workbookText = workbookEntries.values.joinToString(separator = "\n")
 
@@ -288,14 +288,14 @@ class LogbookExportArchiveBuilderTest {
 
     val entries = LogbookExportArchiveBuilder().buildEntries(
       request = ExportRequest(
-        aircraftIds = listOf(bundle.aircraft.id),
+        thingIds = listOf(bundle.thing.id),
         dateRange = ExportDateRange.AllTime,
         includeOpenSquawks = true,
         formats = setOf(ExportFormat.CSV),
       ),
       bundles = listOf(bundle),
       attachmentManifests = mapOf(
-        bundle.aircraft.id to AttachmentExportManifest(
+        bundle.thing.id to AttachmentExportManifest(
           byAttachmentId = mapOf(
             photo.id to AttachmentExportPayload(
               attachmentId = photo.id,
@@ -312,17 +312,17 @@ class LogbookExportArchiveBuilderTest {
       .associateBy { it.path }
 
     // CSV selected → CSV present; PDF and XLSX omitted.
-    assertThat(entries.keys).contains("$aircraftFolder/csv/00_Aircraft_Info.csv")
-    assertThat(entries.keys).doesNotContain("$aircraftFolder/N12345_Cessna_172.pdf")
-    assertThat(entries.keys).doesNotContain("$aircraftFolder/SquawkIt_Logs_N12345_20260520.xlsx")
+    assertThat(entries.keys).contains("$thingFolder/csv/00_Aircraft_Info.csv")
+    assertThat(entries.keys).doesNotContain("$thingFolder/N12345_Cessna_172.pdf")
+    assertThat(entries.keys).doesNotContain("$thingFolder/SquawkIt_Logs_N12345_20260520.xlsx")
     // Attachments and README ride along regardless of the format selection.
-    assertThat(entries.keys).contains("$aircraftFolder/attachments/abcd_inspection_photo.jpg")
+    assertThat(entries.keys).contains("$thingFolder/attachments/abcd_inspection_photo.jpg")
     assertThat(entries.keys).contains("README.txt")
   }
 
   @Test
   fun buildEntries_multiAircraftUsesOneFolderPerAircraftAndRootReadme() {
-    val secondAircraft = Thing(
+    val secondThing = Thing(
       id = "aircraft-2",
       make = "Beechcraft",
       model = "Bonanza",
@@ -346,12 +346,12 @@ class LogbookExportArchiveBuilderTest {
           work_description = "Brake service",
         )
       ),
-      aircraft = secondAircraft,
+      thing = secondThing,
     )
 
     val entries = LogbookExportArchiveBuilder().buildEntries(
       request = ExportRequest(
-        aircraftIds = listOf(firstBundle.aircraft.id, secondBundle.aircraft.id),
+        thingIds = listOf(firstBundle.thing.id, secondBundle.thing.id),
         dateRange = ExportDateRange.AllTime,
         includeOpenSquawks = true,
       ),
@@ -390,16 +390,16 @@ class LogbookExportArchiveBuilderTest {
   private fun aircraftBundle(
     logs: List<MaintenanceLog>,
     squawks: List<Squawk> = emptyList(),
-    aircraft: Thing = Thing(
+    thing: Thing = Thing(
       id = "aircraft-1",
       make = "Cessna",
       model = "172",
       serial = "172001",
       tail_number = "N12345",
     ),
-  ) = AircraftBundle(
+  ) = ThingBundle(
     logs = logs,
-    aircraft = aircraft,
+    thing = thing,
     tasks = emptyList(),
     dueByTaskId = emptyMap(),
     lastCompliedByTaskId = emptyMap(),

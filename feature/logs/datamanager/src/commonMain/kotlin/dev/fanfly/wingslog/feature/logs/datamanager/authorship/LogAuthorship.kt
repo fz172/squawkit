@@ -5,7 +5,7 @@ import dev.fanfly.wingslog.aircraft.MaintenanceLog
 /**
  * Whether the technician named on a log actually wrote it (design §7.5).
  *
- * On a shared aircraft the payload is opaque bytes and any member may write any bytes, so a member
+ * On a shared thing the payload is opaque bytes and any member may write any bytes, so a member
  * can create a log and name a *different* member as its technician. The snapshot alone can't tell
  * "B signed their own work" from "A attributed the work to B".
  *

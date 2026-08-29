@@ -41,7 +41,7 @@ private const val HOST = "host-eng-001"
 private const val SHARED_AC = "ac-shared-eng"
 
 /**
- * Engine-level behaviours of the shared-aircraft sync path (docs/sharing §10). The per-scope
+ * Engine-level behaviours of the shared-thing sync path (docs/sharing §10). The per-scope
  * collaborators (push-prefix widening, doc-level LWW, janitor purge, PERMISSION_DENIED
  * classification) are covered by their own tests; this drives the whole [SyncEngine] with a fake
  * pull subscription to assert the fan-out it orchestrates: refs → spin-up, ref removal → teardown,
@@ -61,7 +61,7 @@ class SyncEngineTest {
     CollectionKind.Thing to EntityScope.userRoot(HOST)
       .toPath()
   private val sharedNestedKey =
-    CollectionKind.MaintenanceLog to EntityScope.aircraftChildUnsafe(
+    CollectionKind.MaintenanceLog to EntityScope.thingChildUnsafe(
       HOST,
       SHARED_AC
     )
@@ -99,8 +99,8 @@ class SyncEngineTest {
     val job = engine.start()
     testScheduler.advanceUntilIdle()
 
-    // The shared aircraft doc is watched doc-level at the host's user-root; its nested maintenance
-    // kinds are listened at the foreign aircraft-child scope.
+    // The shared thing doc is watched doc-level at the host's user-root; its nested maintenance
+    // kinds are listened at the foreign thing-child scope.
     assertThat(pull.active.value).contains(sharedDocKey)
     assertThat(pull.active.value).contains(sharedNestedKey)
 
@@ -128,11 +128,11 @@ class SyncEngineTest {
   fun permissionDeniedOnSharedDoc_revokesLocallyAndDoesNotBanner() =
     runTest(ioContext) {
       seedRef()
-      // Local copy of the shared aircraft (doc + nested log) that must be purged once revoked.
+      // Local copy of the shared thing (doc + nested log) that must be purged once revoked.
       seedEntity(CollectionKind.Thing, EntityScope.userRoot(HOST), SHARED_AC)
       seedEntity(
         CollectionKind.MaintenanceLog,
-        EntityScope.aircraftChildUnsafe(HOST, SHARED_AC),
+        EntityScope.thingChildUnsafe(HOST, SHARED_AC),
         "log-1"
       )
       // Hydration (mocked out here) is what writes this in production; it is the janitor's evidence
@@ -160,7 +160,7 @@ class SyncEngineTest {
       assertThat(
         rowsAt(
           CollectionKind.MaintenanceLog,
-          EntityScope.aircraftChildUnsafe(HOST, SHARED_AC)
+          EntityScope.thingChildUnsafe(HOST, SHARED_AC)
         )
       )
         .isEmpty()
@@ -173,20 +173,20 @@ class SyncEngineTest {
   @Test
   fun schedulePendingBlobs_widensToSharedAircraftScope() = runTest(ioContext) {
     seedRef()
-    // A member's own pending upload, and one on the shared aircraft (host's tree). The old
+    // A member's own pending upload, and one on the shared thing (host's tree). The old
     // own-tree-only scan (`/users/{member}/%`) would have found the first and stranded the second.
     seedPendingUpload(
-      EntityScope.aircraftChildUnsafe(MEMBER, "ac-own"),
+      EntityScope.thingChildUnsafe(MEMBER, "ac-own"),
       "blob-own"
     )
     seedPendingUpload(
-      EntityScope.aircraftChildUnsafe(HOST, SHARED_AC),
+      EntityScope.thingChildUnsafe(HOST, SHARED_AC),
       "blob-shared"
     )
     // A pending blob in an unrelated user's tree that is NOT a share of ours must stay untouched —
     // scanning it would push it under our auth (PERMISSION_DENIED). Guards against over-widening.
     seedPendingUpload(
-      EntityScope.aircraftChildUnsafe("stranger-uid", "ac-x"),
+      EntityScope.thingChildUnsafe("stranger-uid", "ac-x"),
       "blob-foreign"
     )
     val scheduler = FakeUploadScheduler()
@@ -278,7 +278,7 @@ class SyncEngineTest {
     db.schemaQueries.upsertCursor(
       uid = MEMBER,
       collection = CollectionKind.MaintenanceLog,
-      scope_path = EntityScope.aircraftChildUnsafe(HOST, SHARED_AC)
+      scope_path = EntityScope.thingChildUnsafe(HOST, SHARED_AC)
         .toPath(),
       hydrated = true,
       last_seen_remote = null,

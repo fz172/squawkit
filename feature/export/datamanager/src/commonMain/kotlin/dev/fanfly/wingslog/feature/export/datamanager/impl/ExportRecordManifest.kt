@@ -12,7 +12,7 @@ import dev.fanfly.wingslog.export.ExportRecordIndex
  *
  * Reconciliation treats the on-disk archives as the source of truth for *existence* and volatile
  * facts (path, size, timestamp), and the stored manifest as the source of truth for the rich scope
- * (formats, date range, aircraft) that cannot be recovered from the file system alone.
+ * (formats, date range, thing) that cannot be recovered from the file system alone.
  */
 internal object ExportRecordManifest {
 

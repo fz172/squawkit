@@ -21,69 +21,69 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class EditAircraftViewModel(
+class EditThingViewModel(
   private val fleetManager: FleetManager,
   private val sharingManager: SharingManager,
   savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
-  private val _uiState: MutableStateFlow<EditAircraftUiState> =
-    MutableStateFlow(EditAircraftUiState())
+  private val _uiState: MutableStateFlow<EditThingUiState> =
+    MutableStateFlow(EditThingUiState())
   val uiState = _uiState.asStateFlow()
 
   init {
-    val aircraftId: String? = savedStateHandle[Screen.AIRCRAFT_ID]
-    if (aircraftId.isNullOrEmpty()) {
+    val thingId: String? = savedStateHandle[Screen.AIRCRAFT_ID]
+    if (thingId.isNullOrEmpty()) {
       logger.i { "Initializing the view model with empty aircraft" }
-      loadAircraft(Thing())
+      loadThing(Thing())
     } else {
-      logger.i { "Loading aircraft $aircraftId" }
-      loadAircraftById(aircraftId)
-      observeHostedByMe(aircraftId)
-      observeOtherMembers(aircraftId)
+      logger.i { "Loading aircraft $thingId" }
+      loadThingById(thingId)
+      observeHostedByMe(thingId)
+      observeOtherMembers(thingId)
     }
   }
 
   /**
-   * Whether this aircraft lives in *our* tree. `FleetEntry.shared` is exactly that question asked
+   * Whether this thing lives in *our* tree. `FleetEntry.shared` is exactly that question asked
    * the other way round, and it is answered from the local refs, so it holds offline too.
    *
    * This is deliberately not read off [ShareRole]: a co-owner is `OWNER` as well, and the thing that
-   * separates them from the host is whose tree the aircraft is in — not what role they hold.
+   * separates them from the host is whose tree the thing is in — not what role they hold.
    */
-  /** Everyone on the share except us — the people a delete would take the aircraft away from. */
-  private fun observeOtherMembers(aircraftId: String) {
+  /** Everyone on the share except us — the people a delete would take the thing away from. */
+  private fun observeOtherMembers(thingId: String) {
     viewModelScope.launch {
-      sharingManager.observeShareState(aircraftId)
+      sharingManager.observeShareState(thingId)
         .map { share -> share.members.count { !it.isSelf } }
         .distinctUntilChanged()
-        .catch { emit(0) } // roster unreadable (unshared aircraft) — nobody else to warn about
+        .catch { emit(0) } // roster unreadable (unshared thing) — nobody else to warn about
         .collect { count -> _uiState.update { it.copy(otherMemberCount = count) } }
     }
   }
 
-  private fun observeHostedByMe(aircraftId: String) {
+  private fun observeHostedByMe(thingId: String) {
     viewModelScope.launch {
       fleetManager.observeFleetDashboard()
-        .map { fleet -> fleet.firstOrNull { it.aircraft.id == aircraftId }?.shared == false }
+        .map { fleet -> fleet.firstOrNull { it.thing.id == thingId }?.shared == false }
         .distinctUntilChanged()
         .collect { hosted -> _uiState.update { it.copy(hostedByMe = hosted) } }
     }
   }
 
-  fun loadAircraftById(id: String) {
+  fun loadThingById(id: String) {
     _uiState.update { it.copy(isLoading = true) }
     viewModelScope.launch {
-      // We need a way to get one aircraft. FleetManager.loadAircraft returns a Flow.
+      // We need a way to get one thing. FleetManager.loadAircraft returns a Flow.
       // We can take the first emission.
       try {
-        fleetManager.loadAircraft(id)
-          .collect { aircraft ->
-            if (aircraft != null) {
+        fleetManager.loadThing(id)
+          .collect { thing ->
+            if (thing != null) {
               _uiState.update {
                 it.copy(
-                  aircraft = aircraft,
-                  initialAircraft = it.initialAircraft ?: aircraft,
+                  thing = thing,
+                  initialAircraft = it.initialAircraft ?: thing,
                   isLoading = false,
                 )
               }
@@ -101,11 +101,11 @@ class EditAircraftViewModel(
     }
   }
 
-  fun loadAircraft(aircraft: Thing) {
+  fun loadThing(thing: Thing) {
     _uiState.update {
       it.copy(
-        aircraft = aircraft,
-        initialAircraft = it.initialAircraft ?: aircraft,
+        thing = thing,
+        initialAircraft = it.initialAircraft ?: thing,
         isLoading = false,
       )
     }
@@ -119,7 +119,7 @@ class EditAircraftViewModel(
       }
 
       _uiState.update { it.copy(isLoading = true) }
-      val result = fleetManager.updateAircraft(uiState.value.aircraft)
+      val result = fleetManager.updateThing(uiState.value.thing)
       if (result.isSuccess) {
         _uiState.update { it.copy(isSaved = true) }
       }
@@ -127,10 +127,10 @@ class EditAircraftViewModel(
     }
   }
 
-  fun deleteAircraft() {
+  fun deleteThing() {
     viewModelScope.launch {
       _uiState.update { it.copy(isLoading = true) }
-      val result = fleetManager.deleteAircraft(uiState.value.aircraft.id)
+      val result = fleetManager.deleteThing(uiState.value.thing.id)
       if (result.isSuccess) {
         _uiState.update { it.copy(isDeleted = true) }
       }
@@ -141,7 +141,7 @@ class EditAircraftViewModel(
   fun onMakeChanged(newValue: String) {
     _uiState.update {
       it.copy(
-        aircraft = it.aircraft.copy(
+        thing = it.thing.copy(
           make = newValue.replaceFirstChar { char -> char.uppercase() }
         ))
     }
@@ -150,78 +150,78 @@ class EditAircraftViewModel(
   fun onModelChanged(newValue: String) {
     _uiState.update {
       it.copy(
-        aircraft = it.aircraft.copy(
+        thing = it.thing.copy(
           model = newValue.replaceFirstChar { char -> char.uppercase() }
         ))
     }
   }
 
   fun onSerialChanged(newValue: String) {
-    _uiState.update { it.copy(aircraft = it.aircraft.copy(serial = newValue.uppercase())) }
+    _uiState.update { it.copy(thing = it.thing.copy(serial = newValue.uppercase())) }
   }
 
   fun onTailNumberChanged(newValue: String) {
-    _uiState.update { it.copy(aircraft = it.aircraft.copy(tail_number = newValue.uppercase())) }
+    _uiState.update { it.copy(thing = it.thing.copy(tail_number = newValue.uppercase())) }
   }
 
   fun onEngineMakeChanged(engineIndex: Int, newValue: String) {
     _uiState.update {
-      val newEngines = it.aircraft.engine.toMutableList()
+      val newEngines = it.thing.engine.toMutableList()
       newEngines[engineIndex] = newEngines[engineIndex].copy(
         make = newValue.replaceFirstChar { char -> char.uppercase() }
       )
-      it.copy(aircraft = it.aircraft.copy(engine = newEngines))
+      it.copy(thing = it.thing.copy(engine = newEngines))
     }
   }
 
   fun onEngineModelChanged(engineIndex: Int, newValue: String) {
     _uiState.update {
-      val newEngines = it.aircraft.engine.toMutableList()
+      val newEngines = it.thing.engine.toMutableList()
       newEngines[engineIndex] = newEngines[engineIndex].copy(
         model = newValue.replaceFirstChar { char -> char.uppercase() }
       )
-      it.copy(aircraft = it.aircraft.copy(engine = newEngines))
+      it.copy(thing = it.thing.copy(engine = newEngines))
     }
   }
 
   fun onEngineSerialChanged(engineIndex: Int, newValue: String) {
     _uiState.update {
-      val newEngines = it.aircraft.engine.toMutableList()
+      val newEngines = it.thing.engine.toMutableList()
       newEngines[engineIndex] =
         newEngines[engineIndex].copy(serial = newValue.uppercase())
-      it.copy(aircraft = it.aircraft.copy(engine = newEngines))
+      it.copy(thing = it.thing.copy(engine = newEngines))
     }
   }
 
   fun onPropellerHubMakeChanged(engineIndex: Int, newValue: String) {
     _uiState.update {
-      val newEngines = it.aircraft.engine.toMutableList()
+      val newEngines = it.thing.engine.toMutableList()
       val engine = newEngines[engineIndex]
       val newHub = (engine.propeller?.hub
         ?: PropellerHub()).copy(make = newValue.replaceFirstChar { char -> char.uppercase() })
       val newPropeller =
         (engine.propeller ?: Propeller()).copy(hub = newHub)
       newEngines[engineIndex] = engine.copy(propeller = newPropeller)
-      it.copy(aircraft = it.aircraft.copy(engine = newEngines))
+      it.copy(thing = it.thing.copy(engine = newEngines))
     }
   }
 
   fun onPropellerHubModelChanged(engineIndex: Int, newValue: String) {
     _uiState.update {
-      val newEngines = it.aircraft.engine.toMutableList()
+      val newEngines = it.thing.engine.toMutableList()
       val engine = newEngines[engineIndex]
       val newHub = (engine.propeller?.hub
         ?: PropellerHub()).copy(model = newValue.replaceFirstChar { char -> char.uppercase() })
       val newPropeller =
         (engine.propeller ?: Propeller()).copy(hub = newHub)
       newEngines[engineIndex] = engine.copy(propeller = newPropeller)
-      it.copy(aircraft = it.aircraft.copy(engine = newEngines))
+      it.copy(thing = it.thing.copy(engine = newEngines))
     }
   }
 
   fun onPropellerHubSerialChanged(engineIndex: Int, newValue: String) {
     _uiState.update {
-      val newEngines = it.aircraft.engine.toMutableList()
+      val newEngines = it.thing.engine.toMutableList()
       val engine = newEngines[engineIndex]
       val newHub = (engine.propeller?.hub ?: PropellerHub()).copy(
         serial = newValue.uppercase()
@@ -229,7 +229,7 @@ class EditAircraftViewModel(
       val newPropeller =
         (engine.propeller ?: Propeller()).copy(hub = newHub)
       newEngines[engineIndex] = engine.copy(propeller = newPropeller)
-      it.copy(aircraft = it.aircraft.copy(engine = newEngines))
+      it.copy(thing = it.thing.copy(engine = newEngines))
     }
   }
 
@@ -239,7 +239,7 @@ class EditAircraftViewModel(
     newValue: String
   ) {
     _uiState.update {
-      val newEngines = it.aircraft.engine.toMutableList()
+      val newEngines = it.thing.engine.toMutableList()
       val engine = newEngines[engineIndex]
       val propeller = engine.propeller ?: Propeller()
       val newBlades = propeller.blades.toMutableList()
@@ -249,26 +249,26 @@ class EditAircraftViewModel(
       }
       val newPropeller = propeller.copy(blades = newBlades)
       newEngines[engineIndex] = engine.copy(propeller = newPropeller)
-      it.copy(aircraft = it.aircraft.copy(engine = newEngines))
+      it.copy(thing = it.thing.copy(engine = newEngines))
     }
   }
 
   fun onAddBlade(engineIndex: Int) {
     _uiState.update {
-      val newEngines = it.aircraft.engine.toMutableList()
+      val newEngines = it.thing.engine.toMutableList()
       val engine = newEngines[engineIndex]
       val propeller = engine.propeller ?: Propeller()
       val newBlades = propeller.blades.toMutableList()
       newBlades.add(PropellerBlade())
       val newPropeller = propeller.copy(blades = newBlades)
       newEngines[engineIndex] = engine.copy(propeller = newPropeller)
-      it.copy(aircraft = it.aircraft.copy(engine = newEngines))
+      it.copy(thing = it.thing.copy(engine = newEngines))
     }
   }
 
   fun onAddEngine() {
     _uiState.update {
-      val newEngines = it.aircraft.engine.toMutableList()
+      val newEngines = it.thing.engine.toMutableList()
       newEngines.add(
         Engine(
           propeller = Propeller(
@@ -276,23 +276,23 @@ class EditAircraftViewModel(
           )
         )
       )
-      it.copy(aircraft = it.aircraft.copy(engine = newEngines))
+      it.copy(thing = it.thing.copy(engine = newEngines))
     }
   }
 
   fun onRemoveEngine(engineIndex: Int) {
     _uiState.update {
-      val newEngines = it.aircraft.engine.toMutableList()
+      val newEngines = it.thing.engine.toMutableList()
       if (engineIndex in newEngines.indices) {
         newEngines.removeAt(engineIndex)
       }
-      it.copy(aircraft = it.aircraft.copy(engine = newEngines))
+      it.copy(thing = it.thing.copy(engine = newEngines))
     }
   }
 
   fun onRemoveBlade(engineIndex: Int, bladeIndex: Int) {
     _uiState.update {
-      val newEngines = it.aircraft.engine.toMutableList()
+      val newEngines = it.thing.engine.toMutableList()
       val engine = newEngines[engineIndex]
       val propeller = engine.propeller ?: Propeller()
       val newBlades = propeller.blades.toMutableList()
@@ -301,7 +301,7 @@ class EditAircraftViewModel(
       }
       val newPropeller = propeller.copy(blades = newBlades)
       newEngines[engineIndex] = engine.copy(propeller = newPropeller)
-      it.copy(aircraft = it.aircraft.copy(engine = newEngines))
+      it.copy(thing = it.thing.copy(engine = newEngines))
     }
   }
 

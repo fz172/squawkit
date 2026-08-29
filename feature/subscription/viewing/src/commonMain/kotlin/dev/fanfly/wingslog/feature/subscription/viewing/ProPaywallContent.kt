@@ -62,7 +62,7 @@ import wingslog.feature.subscription.viewing.generated.resources.subscription_st
  * The pre-purchase page: what Pro adds, and one way to get it.
  *
  * The argument is scale, not features — Free is already a complete logbook, so the comparison leads
- * with the aircraft count and only then lists what Pro unlocks. Nothing here quotes a price; the
+ * with the thing count and only then lists what Pro unlocks. Nothing here quotes a price; the
  * store's paywall does that, and saying so up front is what keeps the CTA honest.
  */
 @Composable
@@ -254,7 +254,7 @@ private sealed interface Cell {
 
   data class Label(val text: String) : Cell
 
-  /** The aircraft count on Pro: an ∞ glyph, announced as the word. */
+  /** The thing count on Pro: an ∞ glyph, announced as the word. */
   data object Unlimited : Cell
 }
 

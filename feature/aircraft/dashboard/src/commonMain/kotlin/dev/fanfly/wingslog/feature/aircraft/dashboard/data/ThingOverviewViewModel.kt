@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import dev.fanfly.wingslog.aircraft.ComponentType
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
 import dev.fanfly.wingslog.aircraft.Squawk
-import dev.fanfly.wingslog.core.storage.AircraftScopeResolver
+import dev.fanfly.wingslog.core.storage.ThingScopeResolver
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
@@ -45,7 +45,7 @@ private data class ShareContext(
   val shared: Boolean,
 )
 
-class AircraftOverviewViewModel(
+class ThingOverviewViewModel(
   private val fleetManager: FleetManager,
   private val logManager: MaintenanceLogManager,
   private val taskDataManager: TaskDataManager,
@@ -54,14 +54,14 @@ class AircraftOverviewViewModel(
   private val attachmentManager: AttachmentManager,
   private val squawkManager: SquawkManager,
   private val sharingManager: SharingManager,
-  private val aircraftScopeResolver: AircraftScopeResolver,
+  private val thingScopeResolver: ThingScopeResolver,
   private val auth: FirebaseAuth,
-  private val aircraftId: String,
+  private val thingId: String,
 ) : ViewModel() {
 
   private val _uiState =
-    MutableStateFlow<AircraftOverviewUiState>(AircraftOverviewUiState.Loading)
-  val uiState: StateFlow<AircraftOverviewUiState> = _uiState.asStateFlow()
+    MutableStateFlow<ThingOverviewUiState>(ThingOverviewUiState.Loading)
+  val uiState: StateFlow<ThingOverviewUiState> = _uiState.asStateFlow()
 
   private val _events = Channel<AircraftOverviewEvent>()
   private var cachedLogs: List<MaintenanceLog> = emptyList()
@@ -82,25 +82,25 @@ class AircraftOverviewViewModel(
   }
 
   init {
-    loadAircraftAndStats()
+    loadThingAndStats()
   }
 
-  // Blob sync state must be observed at the scope that actually holds this aircraft's data: the
+  // Blob sync state must be observed at the scope that actually holds this thing's data: the
   // caller's own tree for an owned plane, or the host's tree for a shared one. Deriving the path
-  // from the uid alone (the old `/users/$uid/aircraft/...`) missed a member's shared aircraft
+  // from the uid alone (the old `/users/$uid/thing/...`) missed a member's shared thing
   // entirely, so sync state never resolved. Drive it off [AircraftScopeResolver] instead, which
-  // re-emits when the aircraft flips own ↔ shared. See docs/sharing §6.3 and P8.3 (#244).
+  // re-emits when the thing flips own ↔ shared. See docs/sharing §6.3 and P8.3 (#244).
   @OptIn(ExperimentalCoroutinesApi::class)
   private fun blobStatesFlow(): Flow<Map<String, BlobSyncState>> =
-    aircraftScopeResolver.resolve(aircraftId)
+    thingScopeResolver.resolve(thingId)
       .flatMapLatest { scope ->
         if (scope == null) flowOf(emptyMap())
         else attachmentManager.observeBlobStates(scope.toPath())
       }
 
-  private fun loadAircraftAndStats() {
+  private fun loadThingAndStats() {
     viewModelScope.launch {
-      _uiState.update { AircraftOverviewUiState.Loading }
+      _uiState.update { ThingOverviewUiState.Loading }
       // Every collection shares one SQLDelight `entity` table, and SQLDelight notifies query
       // listeners per *table*, so any write anywhere — adding a squawk, a sync writeback — re-runs
       // and re-emits every observer here with identical content. Unfiltered, that re-ran
@@ -108,23 +108,23 @@ class AircraftOverviewViewModel(
       // drops the duplicates; the store still re-queries and re-decodes, which is a separate
       // (larger) fix at the EntityStore level.
       combine(
-        fleetManager.loadAircraft(aircraftId)
+        fleetManager.loadThing(thingId)
           .distinctUntilChanged(),
-        logManager.observeLogs(aircraftId)
+        logManager.observeLogs(thingId)
           .distinctUntilChanged(),
         // The resume tick rides along with the tasks flow rather than occupying a combine slot of
         // its own: `combine` tops out at five typed sources, and re-emitting the task list is
         // exactly what re-runs computeNextDue below. distinctUntilChanged sits *upstream* of the
         // tick, so a resume still gets through.
         combine(
-          taskDataManager.observeTasks(aircraftId)
+          taskDataManager.observeTasks(thingId)
             .distinctUntilChanged(),
           resumeTick,
         ) { tasks, _ -> tasks },
-        logManager.observeMaintenanceOverview(aircraftId)
+        logManager.observeMaintenanceOverview(thingId)
           .distinctUntilChanged(),
         combine(
-          squawkManager.observeSquawks(aircraftId)
+          squawkManager.observeSquawks(thingId)
             .distinctUntilChanged(),
           combine(
             blobStatesFlow(),
@@ -140,19 +140,19 @@ class AircraftOverviewViewModel(
               }
             }
           }.distinctUntilChanged(),
-          // The caller's role on this aircraft, resolved locally (own ⇒ OWNER, shared ⇒ ref role).
+          // The caller's role on this thing, resolved locally (own ⇒ OWNER, shared ⇒ ref role).
           // Gates owner-only affordances in the UI; server rules remain the real enforcement (§6.3).
-          sharingManager.observeMyRole(aircraftId)
+          sharingManager.observeMyRole(thingId)
             .distinctUntilChanged(),
-          sharingManager.observeIsShared(aircraftId)
+          sharingManager.observeIsShared(thingId)
             .distinctUntilChanged(),
         ) { squawks, syncs, myRole, shared ->
           ShareContext(squawks, syncs, myRole, shared)
         }
-      ) { aircraft, logs, taskCards, overview, shareContext ->
+      ) { thing, logs, taskCards, overview, shareContext ->
         val (squawkList, syncStates, myRole, isShared) = shareContext
         cachedLogs = logs
-        if (aircraft != null) {
+        if (thing != null) {
           val stats = if (overview != null) {
             LogStats(
               total = overview.total_log_count.toLong(),
@@ -215,7 +215,7 @@ class AircraftOverviewViewModel(
           val complied =
             cardsWithStatus.filter { it.dueStatus.status == DueStatus.COMPLIED }
 
-          val current = _uiState.value as? AircraftOverviewUiState.Success
+          val current = _uiState.value as? ThingOverviewUiState.Success
           val refreshedSelected = current?.selectedTask?.let { sel ->
             cardsWithStatus.find { it.card.id == sel.card.id }
           }
@@ -227,8 +227,8 @@ class AircraftOverviewViewModel(
           val squawksWithStatus = squawkList.map { it.toWithStatus() }
           val aogSquawks = squawksWithStatus.openAog()
 
-          AircraftOverviewUiState.Success(
-            aircraft = aircraft,
+          ThingOverviewUiState.Success(
+            thing = thing,
             logStats = stats,
             activeTasks = active,
             completedTasks = complied,
@@ -247,7 +247,7 @@ class AircraftOverviewViewModel(
             isAnonymous = auth.currentUser?.isAnonymous ?: true,
           )
         } else {
-          AircraftOverviewUiState.Error
+          ThingOverviewUiState.Error
         }
       }.collect { state ->
         _uiState.update { state }
@@ -265,21 +265,21 @@ class AircraftOverviewViewModel(
         viewModelScope.launch {
           _events.send(
             AircraftOverviewEvent.NavigateToEditAircraft(
-              action.aircraftId
+              action.thingId
             )
           )
         }
       }
 
       AircraftOverviewAction.DeleteConfirm -> {
-        deleteAircraft()
+        deleteThing()
       }
 
       is AircraftOverviewAction.ManageAccessClick -> {
         viewModelScope.launch {
           _events.send(
             AircraftOverviewEvent.NavigateToManageAccess(
-              action.aircraftId
+              action.thingId
             )
           )
         }
@@ -289,7 +289,7 @@ class AircraftOverviewViewModel(
         viewModelScope.launch {
           _events.send(
             AircraftOverviewEvent.NavigateToAddLog(
-              action.aircraftId
+              action.thingId
             )
           )
         }
@@ -299,7 +299,7 @@ class AircraftOverviewViewModel(
         viewModelScope.launch {
           _events.send(
             AircraftOverviewEvent.NavigateToEditLog(
-              action.aircraftId,
+              action.thingId,
               action.logId
             )
           )
@@ -310,7 +310,7 @@ class AircraftOverviewViewModel(
         viewModelScope.launch {
           _events.send(
             AircraftOverviewEvent.NavigateToAddTask(
-              action.aircraftId
+              action.thingId
             )
           )
         }
@@ -329,7 +329,7 @@ class AircraftOverviewViewModel(
         viewModelScope.launch {
           _events.send(
             AircraftOverviewEvent.NavigateToEditTask(
-              action.aircraftId,
+              action.thingId,
               action.cardId
             )
           )
@@ -348,7 +348,7 @@ class AircraftOverviewViewModel(
         viewModelScope.launch {
           _events.send(
             AircraftOverviewEvent.NavigateToAddSquawk(
-              action.aircraftId
+              action.thingId
             )
           )
         }
@@ -358,7 +358,7 @@ class AircraftOverviewViewModel(
         val log =
           cachedLogs.firstOrNull { it.id == action.squawk.squawk.addressed_by_log_id }
         _uiState.update { state ->
-          if (state is AircraftOverviewUiState.Success)
+          if (state is ThingOverviewUiState.Success)
             state.copy(
               selectedSquawk = action.squawk,
               logForSelectedSquawk = log
@@ -369,7 +369,7 @@ class AircraftOverviewViewModel(
 
       AircraftOverviewAction.DismissSquawkDetail -> {
         _uiState.update { state ->
-          if (state is AircraftOverviewUiState.Success)
+          if (state is ThingOverviewUiState.Success)
             state.copy(
               selectedSquawk = null,
               logForSelectedSquawk = null
@@ -382,7 +382,7 @@ class AircraftOverviewViewModel(
         viewModelScope.launch {
           _events.send(
             AircraftOverviewEvent.NavigateToEditSquawk(
-              action.aircraftId,
+              action.thingId,
               action.squawkId
             )
           )
@@ -397,7 +397,7 @@ class AircraftOverviewViewModel(
       cachedLogs.filter { cardWithStatus.card.id in it.inspection_ids }
         .sortedByDescending { it.timestamp?.getEpochSecond() ?: 0L }
     _uiState.update { state ->
-      if (state is AircraftOverviewUiState.Success) {
+      if (state is ThingOverviewUiState.Success) {
         state.copy(
           selectedTask = cardWithStatus,
           logsForSelectedTask = relevantLogs,
@@ -408,7 +408,7 @@ class AircraftOverviewViewModel(
 
   fun hideTaskDetail() {
     _uiState.update { state ->
-      if (state is AircraftOverviewUiState.Success) {
+      if (state is ThingOverviewUiState.Success) {
         state.copy(
           selectedTask = null,
           logsForSelectedTask = emptyList()
@@ -419,27 +419,27 @@ class AircraftOverviewViewModel(
 
   fun cancelDeleteTask() {
     _uiState.update { state ->
-      if (state is AircraftOverviewUiState.Success) {
+      if (state is ThingOverviewUiState.Success) {
         state.copy(deletingTaskId = null)
       } else state
     }
   }
 
   fun confirmDeleteTask() {
-    val state = _uiState.value as? AircraftOverviewUiState.Success ?: return
+    val state = _uiState.value as? ThingOverviewUiState.Success ?: return
     val cardId = state.deletingTaskId ?: return
     deleteTask(cardId)
   }
 
   fun deleteTask(cardId: String) {
-    val state = _uiState.value as? AircraftOverviewUiState.Success ?: return
+    val state = _uiState.value as? ThingOverviewUiState.Success ?: return
     viewModelScope.launch {
       taskDataManager.deleteTask(
-        state.aircraft.id,
+        state.thing.id,
         cardId
       )
       _uiState.update { s ->
-        if (s is AircraftOverviewUiState.Success) {
+        if (s is ThingOverviewUiState.Success) {
           s.copy(
             deletingTaskId = null,
             selectedTask = null
@@ -449,9 +449,9 @@ class AircraftOverviewViewModel(
     }
   }
 
-  fun deleteAircraft() {
+  fun deleteThing() {
     viewModelScope.launch {
-      fleetManager.deleteAircraft(aircraftId)
+      fleetManager.deleteThing(thingId)
         .onSuccess {
           _events.send(AircraftOverviewEvent.NavigateBack)
         }

@@ -23,7 +23,7 @@ interface UrgencyTelemetry {
   /**
    * [count] urgency notifications were posted by one scan.
    *
-   * @param sharedFleet at least one aircraft in the fleet was shared *into* this account. Note it
+   * @param sharedFleet at least one thing in the fleet was shared *into* this account. Note it
    *   does not detect an owner who only shares *out* — that needs the sharing datamanager's
    *   outbound view, and the question here is whether N2 reaches people who receive nothing from
    *   collaborators.

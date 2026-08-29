@@ -30,7 +30,7 @@ import dev.fanfly.wingslog.aircraft.PropellerHub
 import dev.fanfly.wingslog.core.ui.common.compose.DashedButton
 import dev.fanfly.wingslog.core.ui.common.compose.FormTextField
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import dev.fanfly.wingslog.feature.aircraft.update.viewmodel.EditAircraftViewModel
+import dev.fanfly.wingslog.feature.aircraft.update.viewmodel.EditThingViewModel
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.aircraft.update.generated.resources.Res
 import wingslog.feature.aircraft.update.generated.resources.add_blade
@@ -49,7 +49,7 @@ import wingslog.feature.logs.sharedassets.generated.resources.Res as SharedRes
 fun EngineSection(
   engineIndex: Int,
   engine: Engine,
-  viewModel: EditAircraftViewModel,
+  viewModel: EditThingViewModel,
   showValidationErrors: Boolean,
 ) {
   Card(

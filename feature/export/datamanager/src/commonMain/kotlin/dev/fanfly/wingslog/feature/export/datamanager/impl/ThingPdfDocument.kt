@@ -1,7 +1,7 @@
 package dev.fanfly.wingslog.feature.export.datamanager.impl
 
 /**
- * Render-ready document model for a single aircraft export PDF.
+ * Render-ready document model for a single thing export PDF.
  */
 data class AircraftPdfDocument(
   val title: String,

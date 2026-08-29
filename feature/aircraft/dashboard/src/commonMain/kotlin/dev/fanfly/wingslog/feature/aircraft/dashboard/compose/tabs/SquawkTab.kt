@@ -41,7 +41,7 @@ import dev.fanfly.wingslog.feature.ads.model.ListRow
 import dev.fanfly.wingslog.feature.ads.model.withAdSlots
 import dev.fanfly.wingslog.feature.ads.viewing.AdSlot
 import dev.fanfly.wingslog.feature.aircraft.dashboard.data.AircraftOverviewAction
-import dev.fanfly.wingslog.feature.aircraft.dashboard.data.AircraftOverviewUiState
+import dev.fanfly.wingslog.feature.aircraft.dashboard.data.ThingOverviewUiState
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
 import dev.fanfly.wingslog.feature.attachment.datamanager.OpenState
 import dev.fanfly.wingslog.feature.squawk.model.SquawkStatus
@@ -68,7 +68,7 @@ private val squawkOrder = compareByDescending<SquawkWithStatus> {
 
 @Composable
 fun SquawkTab(
-  state: AircraftOverviewUiState.Success,
+  state: ThingOverviewUiState.Success,
   onAction: (AircraftOverviewAction) -> Unit,
   onMutationAction: ((AircraftOverviewAction) -> Unit)? = onAction,
   onLogClick: ((logId: String) -> Unit)? = null,
@@ -246,7 +246,7 @@ fun SquawkTab(
           onAction(AircraftOverviewAction.DismissSquawkDetail)
           mutate(
             AircraftOverviewAction.EditSquawkClick(
-              state.aircraft.id,
+              state.thing.id,
               selected.squawk.id
             )
           )

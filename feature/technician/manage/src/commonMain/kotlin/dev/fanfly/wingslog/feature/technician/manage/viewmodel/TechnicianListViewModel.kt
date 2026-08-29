@@ -20,7 +20,7 @@ data class TechnicianListUiState(
   /** The user's own list: their self-record first, then mechanics they typed in by hand. */
   val technicians: List<Technician> = emptyList(),
   /**
-   * Members of the user's shared aircraft who have published a technician mirror. Read-only — each
+   * Members of the user's shared thing who have published a technician mirror. Read-only — each
    * is maintained by the person it belongs to, not by this user (design §7.3).
    */
   val linkedTechnicians: List<Technician> = emptyList(),

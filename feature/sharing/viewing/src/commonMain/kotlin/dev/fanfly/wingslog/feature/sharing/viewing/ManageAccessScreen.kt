@@ -107,7 +107,7 @@ private fun AccessToast.text(): String = when (this) {
 /** Plain UI state for [ManageAccessScreen]; produced by the host-side ManageAccessViewModel. */
 data class ManageAccessUiState(
   val isLoading: Boolean = true,
-  /** The signed-in user's role on this aircraft; `OWNER` may manage access, others are read-only. */
+  /** The signed-in user's role on this thing; `OWNER` may manage access, others are read-only. */
   val myRole: ShareRole? = null,
   val members: List<ShareMember> = emptyList(),
   val error: String? = null,
@@ -134,7 +134,7 @@ data class ManageAccessUiState(
   /** Which of the four steps (people → role → code → member) the panel is showing. */
   val view: AccessPanelView = AccessPanelView.MAIN,
   /** e.g. "N7245K · Cessna 172S", carried on new invites for the invitee's preview (#201). */
-  val aircraftLabel: String = "",
+  val thingLabel: String = "",
   val invites: List<PendingInvite> = emptyList(),
   val selectedInviteRole: ShareRole = ShareRole.TECHNICIAN,
   val creatingInvite: Boolean = false,
@@ -152,7 +152,7 @@ data class ManageAccessUiState(
   /** Owners manage access; everyone else sees a read-only roster. Never while sync is off. */
   val canManage: Boolean get() = myRole == ShareRole.OWNER && syncEnabled
 
-  /** A non-host member may leave; the host tears the share down by deleting the aircraft instead. */
+  /** A non-host member may leave; the host tears the share down by deleting the thing instead. */
   val canLeave: Boolean get() = syncEnabled && members.any { it.isSelf && !it.isHost }
 
   val activeInvite: PendingInvite? get() = invites.firstOrNull { it.codeId == activeInviteCodeId }
@@ -248,7 +248,7 @@ private fun AccessPanel(
   // undoable, and neither used to ask.
   var revoking by remember { mutableStateOf<ShareMember?>(null) }
   var leaving by remember { mutableStateOf(false) }
-  // A role change is a real permission grant/revoke (co-owner can edit aircraft details and manage
+  // A role change is a real permission grant/revoke (co-owner can edit thing details and manage
   // access), and it takes effect immediately — so it gets the same "ask first" treatment. The member
   // is captured with the tap (not re-looked-up from state.activeMember at render time), same as
   // [revoking] above, so the dialog can't dangle if the roster changes underneath it.
@@ -421,8 +421,8 @@ private fun PanelHeader(state: ManageAccessUiState, onLeading: () -> Unit) {
 @Composable
 private fun panelTitles(state: ManageAccessUiState): Pair<String, String> =
   when (state.view) {
-    AccessPanelView.MAIN -> stringResource(Res.string.manage_access_title) to state.aircraftLabel
-    AccessPanelView.INVITE -> stringResource(Res.string.invite_title) to state.aircraftLabel
+    AccessPanelView.MAIN -> stringResource(Res.string.manage_access_title) to state.thingLabel
+    AccessPanelView.INVITE -> stringResource(Res.string.invite_title) to state.thingLabel
     AccessPanelView.CODE -> {
       val invite = state.activeInvite
       val subtitle = if (invite != null) {
@@ -563,7 +563,7 @@ private fun PrimaryActionButton(
 
 /**
  * The hosting owner is *the* owner; anyone else holding the owner role is a co-owner. Same wire
- * role — the distinction is who the aircraft belongs to, and calling both "Owner" hid that.
+ * role — the distinction is who the thing belongs to, and calling both "Owner" hid that.
  */
 @Composable
 internal fun roleLabel(role: ShareRole, isHost: Boolean): String = when (role) {

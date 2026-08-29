@@ -22,7 +22,7 @@ import org.koin.core.parameter.parametersOf
 
 @Composable
 fun LogsTab(
-  aircraftId: String,
+  thingId: String,
   syncStates: Map<String, BlobSyncState> = emptyMap(),
   onNavigateToAddLog: (() -> Unit)?,
   onNavigateToEditLog: ((logId: String) -> Unit)?,
@@ -31,10 +31,10 @@ fun LogsTab(
   scrollToLogId: String? = null,
   modifier: Modifier = Modifier,
 ) {
-  // Key by aircraftId: in the adaptive shell the switcher swaps aircraft within the same
-  // composition site, so an unkeyed ViewModel would be reused and keep the previous aircraft's logs.
+  // Key by aircraftId: in the adaptive shell the switcher swaps thing within the same
+  // composition site, so an unkeyed ViewModel would be reused and keep the previous thing's logs.
   val viewModel: MaintenanceLogListViewModel =
-    koinViewModel(key = aircraftId, parameters = { parametersOf(aircraftId) })
+    koinViewModel(key = thingId, parameters = { parametersOf(thingId) })
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
   val attachmentOpener: AttachmentOpener = koinInject()
   val coroutineScope = rememberCoroutineScope()

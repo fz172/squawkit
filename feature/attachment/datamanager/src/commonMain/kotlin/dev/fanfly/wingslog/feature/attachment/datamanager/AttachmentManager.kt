@@ -40,7 +40,7 @@ interface AttachmentManager {
    * @throws FileTooLargeException if the file (post-compression, for photos) exceeds the cap.
    */
   suspend fun addPickedFile(
-    aircraftId: String,
+    thingId: String,
     picked: PickedFile,
     displayName: String
   ): Attachment
@@ -67,7 +67,7 @@ interface AttachmentManager {
 
   /**
    * Observe [BlobSyncState] for all blobs in the given scope path. Returns a map from
-   * attachment id to [BlobSyncState]. Used by the aircraft overview to drive status badges.
+   * attachment id to [BlobSyncState]. Used by the thing overview to drive status badges.
    */
   fun observeBlobStates(scopePath: String): Flow<Map<String, BlobSyncState>>
 

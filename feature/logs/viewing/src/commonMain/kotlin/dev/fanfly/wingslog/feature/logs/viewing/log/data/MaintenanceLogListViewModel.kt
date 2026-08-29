@@ -44,7 +44,7 @@ class MaintenanceLogListViewModel(
   private val technicianManager: TechnicianManager,
   private val squawkManager: SquawkManager,
   private val auth: FirebaseAuth,
-  val aircraftId: String,
+  val thingId: String,
 ) : ViewModel() {
 
   private val _uiState =
@@ -69,10 +69,10 @@ class MaintenanceLogListViewModel(
   private val _namesByUid = MutableStateFlow<Map<String, String>>(emptyMap())
 
   /**
-   * Attestation is a statement about *other people*. On an unshared aircraft nobody else can write a
+   * Attestation is a statement about *other people*. On an unshared thing nobody else can write a
    * log, so there is no one to attest against and nothing a reader could act on: the owner typed
    * every name here and is answerable for all of it. Saying "not verified" on their own logbook
-   * would be noise dressed up as rigour, so authorship stays silent until the aircraft is shared.
+   * would be noise dressed up as rigour, so authorship stays silent until the thing is shared.
    */
   private val _isShared = MutableStateFlow(false)
 
@@ -135,7 +135,7 @@ class MaintenanceLogListViewModel(
 
   private fun observeLogs() {
     viewModelScope.launch {
-      logManager.observeLogs(aircraftId)
+      logManager.observeLogs(thingId)
         .onStart { _logsLoadState.value = LogsLoadState.Loading }
         .catch { _logsLoadState.value = LogsLoadState.Error }
         .collect { logs -> _logsLoadState.value = LogsLoadState.Loaded(logs) }
@@ -144,23 +144,23 @@ class MaintenanceLogListViewModel(
 
   /**
    * Authorship, and the names to render it with. The roster of members who published a mirror gives
-   * us a name for anyone who might have written a log on this aircraft; the caller's own record
+   * us a name for anyone who might have written a log on this thing; the caller's own record
    * covers the common case of their own writes.
    */
   private fun observeAuthorship() {
     viewModelScope.launch {
-      sharingManager.observeIsShared(aircraftId)
+      sharingManager.observeIsShared(thingId)
         .catch { _isShared.value = false }
         .collect { _isShared.value = it }
     }
     viewModelScope.launch {
-      logManager.observeLogAuthors(aircraftId)
+      logManager.observeLogAuthors(thingId)
         .catch { _logAuthors.value = emptyMap() }
         .collect { _logAuthors.value = it }
     }
     viewModelScope.launch {
       combine(
-        sharingManager.observeLinkedTechnicians(aircraftId),
+        sharingManager.observeLinkedTechnicians(thingId),
         technicianManager.observeSelf(),
       ) { linked, self ->
         buildMap {
@@ -177,7 +177,7 @@ class MaintenanceLogListViewModel(
 
   private fun observeTasks() {
     viewModelScope.launch {
-      inspectionDataManager.observeTasks(aircraftId)
+      inspectionDataManager.observeTasks(thingId)
         .catch { _availableCards.value = emptyList() }
         .collect { _availableCards.value = it }
     }
@@ -185,7 +185,7 @@ class MaintenanceLogListViewModel(
 
   private fun observeSquawks() {
     viewModelScope.launch {
-      squawkManager.observeSquawks(aircraftId)
+      squawkManager.observeSquawks(thingId)
         .catch { _availableSquawks.value = emptyList() }
         .collect { _availableSquawks.value = it }
     }
@@ -222,13 +222,13 @@ class MaintenanceLogListViewModel(
 
   fun onAddLog() {
     viewModelScope.launch {
-      _events.send(MaintenanceLogListEvent.NavigateToCreateLog(aircraftId))
+      _events.send(MaintenanceLogListEvent.NavigateToCreateLog(thingId))
     }
   }
 
   fun onEditLog(logId: String) {
     viewModelScope.launch {
-      _events.send(MaintenanceLogListEvent.NavigateToEditLog(aircraftId, logId))
+      _events.send(MaintenanceLogListEvent.NavigateToEditLog(thingId, logId))
     }
   }
 
@@ -240,9 +240,9 @@ class MaintenanceLogListViewModel(
 }
 
 sealed interface MaintenanceLogListEvent {
-  data class NavigateToCreateLog(val aircraftId: String) :
+  data class NavigateToCreateLog(val thingId: String) :
     MaintenanceLogListEvent
 
-  data class NavigateToEditLog(val aircraftId: String, val logId: String) :
+  data class NavigateToEditLog(val thingId: String, val logId: String) :
     MaintenanceLogListEvent
 }

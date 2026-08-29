@@ -30,8 +30,8 @@ import dev.fanfly.wingslog.feature.aircraft.dashboard.compose.tabs.MaintenanceTa
 import dev.fanfly.wingslog.feature.aircraft.dashboard.compose.tabs.OverviewTab
 import dev.fanfly.wingslog.feature.aircraft.dashboard.compose.tabs.SquawkTab
 import dev.fanfly.wingslog.feature.aircraft.dashboard.data.AircraftOverviewAction
-import dev.fanfly.wingslog.feature.aircraft.dashboard.data.AircraftOverviewUiState
-import dev.fanfly.wingslog.feature.aircraft.dashboard.data.AircraftOverviewViewModel
+import dev.fanfly.wingslog.feature.aircraft.dashboard.data.ThingOverviewUiState
+import dev.fanfly.wingslog.feature.aircraft.dashboard.data.ThingOverviewViewModel
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
 import dev.fanfly.wingslog.feature.attachment.datamanager.OpenState
 import dev.fanfly.wingslog.feature.tasks.viewing.DeleteTaskConfirmDialog
@@ -53,17 +53,17 @@ import wingslog.feature.squawk.sharedassets.generated.resources.Res as SquawkRes
 import wingslog.feature.tasks.sharedassets.generated.resources.Res as TasksRes
 
 /**
- * Host entry point for the adaptive shell's **per-aircraft** section bodies: maps a [dev.fanfly.wingslog.core.ui.adaptive.ShellSection]
- * (+ optional ambient [aircraftId]) to the right content. Both hosts (`AppEntry`, `WebApp`) call this
+ * Host entry point for the adaptive shell's **per-thing** section bodies: maps a [dev.fanfly.wingslog.core.ui.adaptive.ShellSection]
+ * (+ optional ambient [thingId]) to the right content. Both hosts (`AppEntry`, `WebApp`) call this
  * from the shell's `sectionContent` slot for everything except [dev.fanfly.wingslog.core.ui.adaptive.ShellSection.SETTINGS], which is
  * global and rendered by the host directly (it depends on `feature:settings`).
  *
- * - per-aircraft sections → [AircraftSectionContent], or an empty state when no aircraft exists.
+ * - per-thing sections → [AircraftSectionContent], or an empty state when no thing exists.
  */
 @Composable
 fun ShellSectionBody(
   section: ShellSection,
-  aircraftId: String?,
+  thingId: String?,
   navController: NavController,
   onNavigateToSection: (ShellSection) -> Unit,
   /**
@@ -76,9 +76,9 @@ fun ShellSectionBody(
   scrollToRecordId: String? = null,
   onScrollTargetConsumed: () -> Unit = {},
 ) {
-  if (aircraftId != null) {
+  if (thingId != null) {
     AircraftSectionContent(
-      aircraftId = aircraftId,
+      thingId = thingId,
       section = section,
       navController = navController,
       onNavigateToSection = onNavigateToSection,
@@ -102,8 +102,8 @@ fun ShellSectionBody(
  * The per-section floating action button for the adaptive shell's `sectionFab` slot: Add Squawk /
  * Task / Log for the matching section, navigating into the same add screens that
  * [AircraftSectionContent]'s `onAction` uses. Dashboard has no primary add action and Settings is
- * global, so neither shows a FAB. Returns nothing until an aircraft is selected — the add routes are
- * all aircraft-scoped.
+ * global, so neither shows a FAB. Returns nothing until an thing is selected — the add routes are
+ * all thing-scoped.
  *
  * Lives here (not in `core:ui`) because the shell cannot depend on the feature add-screen routes; it
  * is rendered inside the shell's own Scaffold FAB slot so snackbars offset around it.
@@ -111,10 +111,10 @@ fun ShellSectionBody(
 @Composable
 fun ShellSectionFab(
   section: ShellSection,
-  aircraftId: String?,
+  thingId: String?,
   navController: NavController,
 ) {
-  if (aircraftId == null) return
+  if (thingId == null) return
   when (section) {
     ShellSection.SQUAWKS ->
       SectionAddFab(
@@ -122,7 +122,7 @@ fun ShellSectionFab(
         onClick = {
           navController.navigate(
             Screen.AddSquawk.createRoute(
-              aircraftId
+              thingId
             )
           )
         },
@@ -134,7 +134,7 @@ fun ShellSectionFab(
         onClick = {
           navController.navigate(
             Screen.AddMaintenanceTask.createRoute(
-              aircraftId
+              thingId
             )
           )
         },
@@ -146,7 +146,7 @@ fun ShellSectionFab(
         onClick = {
           navController.navigate(
             Screen.AddMaintenanceLog.createRoute(
-              aircraftId
+              thingId
             )
           )
         },
@@ -169,14 +169,14 @@ private fun SectionAddFab(label: String, onClick: () -> Unit) {
 }
 
 /**
- * Renders the content of a single adaptive-shell [dev.fanfly.wingslog.core.ui.adaptive.ShellSection] for a given aircraft (M3).
+ * Renders the content of a single adaptive-shell [dev.fanfly.wingslog.core.ui.adaptive.ShellSection] for a given thing (M3).
  *
  * Reuses the existing per-tab composables ([OverviewTab], [MaintenanceTasksTab], [LogsTab],
- * [SquawkTab]) but drives them from an [AircraftOverviewViewModel] scoped to the ambient
- * [aircraftId] (via Koin parameters, keyed per aircraft) rather than a navigation argument. A single
+ * [SquawkTab]) but drives them from an [ThingOverviewViewModel] scoped to the ambient
+ * [thingId] (via Koin parameters, keyed per thing) rather than a navigation argument. A single
  * `onAction` wrapper intercepts every navigation action and drives [navController] directly, while
  * state actions fall through to the ViewModel — so add/edit for tasks, logs, squawks, and the
- * aircraft all use one deterministic path (no cross-ViewModel event relay). Cross-section jumps
+ * thing all use one deterministic path (no cross-ViewModel event relay). Cross-section jumps
  * (overview → squawks, log → task) are surfaced via [onNavigateToSection] so the shell can switch
  * sections.
  *
@@ -184,7 +184,7 @@ private fun SectionAddFab(label: String, onClick: () -> Unit) {
  */
 @Composable
 fun AircraftSectionContent(
-  aircraftId: String,
+  thingId: String,
   section: ShellSection,
   navController: NavController,
   onNavigateToSection: (ShellSection) -> Unit = {},
@@ -192,24 +192,24 @@ fun AircraftSectionContent(
   scrollToRecordId: String? = null,
   onScrollTargetConsumed: () -> Unit = {},
 ) {
-  val viewModel: AircraftOverviewViewModel =
-    koinViewModel(key = aircraftId, parameters = { parametersOf(aircraftId) })
+  val viewModel: ThingOverviewViewModel =
+    koinViewModel(key = thingId, parameters = { parametersOf(thingId) })
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
   // Due status depends on the wall clock, not just on stored data, so recompute it whenever the
   // dashboard comes back into view — otherwise an app resumed the next day still shows yesterday's
   // status. Common to all three hosts: UIKit foreground on iOS, document.visibilitychange on web.
-  LifecycleResumeEffect(aircraftId) {
+  LifecycleResumeEffect(thingId) {
     viewModel.onResumed()
     onPauseOrDispose { }
   }
   val attachmentOpener: AttachmentOpener = koinInject()
   val coroutineScope = rememberCoroutineScope()
-  var taskSheetOpenError by remember(aircraftId) { mutableStateOf<String?>(null) }
+  var taskSheetOpenError by remember(thingId) { mutableStateOf<String?>(null) }
   // Set when the user taps a squawk's addressing log; consumed by the Logs section to scroll to it
   // after [onNavigateToSection] switches sections. It is cleared only while the Logs tab is OFF
   // screen (see below): toggling it back to null while LogsTab is mounted remounts that tab and drops
   // its list ViewModel and scroll position, which would bounce the list back to the top.
-  var pendingLogScrollTarget by remember(aircraftId) {
+  var pendingLogScrollTarget by remember(thingId) {
     mutableStateOf<String?>(
       null
     )
@@ -220,7 +220,7 @@ fun AircraftSectionContent(
   // Same pattern for jumping from a log's linked tasks/squawks to the item in its list: set on tap,
   // consumed by the Tasks/Squawks section (which switches to the right sub-view and scrolls to it),
   // cleared once that section is left.
-  var pendingTaskScrollTarget by remember(aircraftId) {
+  var pendingTaskScrollTarget by remember(thingId) {
     mutableStateOf<String?>(
       null
     )
@@ -228,7 +228,7 @@ fun AircraftSectionContent(
   LaunchedEffect(section) {
     if (section != ShellSection.TASKS) pendingTaskScrollTarget = null
   }
-  var pendingSquawkScrollTarget by remember(aircraftId) {
+  var pendingSquawkScrollTarget by remember(thingId) {
     mutableStateOf<String?>(
       null
     )
@@ -255,24 +255,24 @@ fun AircraftSectionContent(
 
   // Single navigation entry point: intercept the navigation actions and drive the host navController
   // directly; delegate every other (state) action to the ViewModel. This keeps add/edit for tasks,
-  // logs, squawks, and the aircraft on one deterministic path and removes the cross-ViewModel event
+  // logs, squawks, and the thing on one deterministic path and removes the cross-ViewModel event
   // relay that previously dropped log navigation. Edit actions dismiss their detail overlay first so
   // it doesn't float above the pushed screen.
   val onAction: (AircraftOverviewAction) -> Unit =
-    remember(viewModel, navController, aircraftId) {
+    remember(viewModel, navController, thingId) {
       { action ->
         when (action) {
           is AircraftOverviewAction.AddLogClick ->
             navController.navigate(
               Screen.AddMaintenanceLog.createRoute(
-                aircraftId
+                thingId
               )
             )
 
           is AircraftOverviewAction.EditLogClick ->
             navController.navigate(
               Screen.EditMaintenanceLog.createRoute(
-                aircraftId,
+                thingId,
                 action.logId
               )
             )
@@ -280,7 +280,7 @@ fun AircraftSectionContent(
           is AircraftOverviewAction.AddTaskClick ->
             navController.navigate(
               Screen.AddMaintenanceTask.createRoute(
-                aircraftId
+                thingId
               )
             )
 
@@ -288,30 +288,30 @@ fun AircraftSectionContent(
             viewModel.onAction(AircraftOverviewAction.DismissTaskDetail)
             navController.navigate(
               Screen.EditMaintenanceTask.createRoute(
-                aircraftId,
+                thingId,
                 action.cardId
               )
             )
           }
 
           is AircraftOverviewAction.AddSquawkClick ->
-            navController.navigate(Screen.AddSquawk.createRoute(aircraftId))
+            navController.navigate(Screen.AddSquawk.createRoute(thingId))
 
           is AircraftOverviewAction.EditSquawkClick -> {
             viewModel.onAction(AircraftOverviewAction.DismissSquawkDetail)
             navController.navigate(
               Screen.EditSquawk.createRoute(
-                aircraftId,
+                thingId,
                 action.squawkId
               )
             )
           }
 
           is AircraftOverviewAction.EditClick ->
-            navController.navigate(Screen.EditAircraft.createRoute(aircraftId))
+            navController.navigate(Screen.EditAircraft.createRoute(thingId))
 
           is AircraftOverviewAction.ManageAccessClick ->
-            navController.navigate(Screen.ManageAccess.createRoute(aircraftId))
+            navController.navigate(Screen.ManageAccess.createRoute(thingId))
 
           AircraftOverviewAction.BackClick -> Unit
 
@@ -321,7 +321,7 @@ fun AircraftSectionContent(
     }
 
   when (val state = uiState) {
-    AircraftOverviewUiState.Loading ->
+    ThingOverviewUiState.Loading ->
       Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
@@ -329,7 +329,7 @@ fun AircraftSectionContent(
         CircularProgressIndicator()
       }
 
-    AircraftOverviewUiState.Error ->
+    ThingOverviewUiState.Error ->
       Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
@@ -337,7 +337,7 @@ fun AircraftSectionContent(
         Text(stringResource(DashboardRes.string.aircraft_load_error))
       }
 
-    is AircraftOverviewUiState.Success -> {
+    is ThingOverviewUiState.Success -> {
       when (section) {
         ShellSection.DASHBOARD -> OverviewTab(
           state = state,
@@ -370,18 +370,18 @@ fun AircraftSectionContent(
         )
 
         ShellSection.LOGS -> LogsTab(
-          aircraftId = aircraftId,
+          thingId = thingId,
           syncStates = state.syncStates,
           // Route through the same onAction wrapper as every other section, which navigates directly.
           onNavigateToAddLog = {
             onAction(
               AircraftOverviewAction.AddLogClick(
-                aircraftId
+                thingId
               )
             )
           },
           onNavigateToEditLog = { logId ->
-            onAction(AircraftOverviewAction.EditLogClick(aircraftId, logId))
+            onAction(AircraftOverviewAction.EditLogClick(thingId, logId))
           },
           onTaskClick = { taskId ->
             pendingTaskScrollTarget = taskId
@@ -411,7 +411,7 @@ fun AircraftSectionContent(
           onEditClick = {
             onAction(
               AircraftOverviewAction.EditTaskClick(
-                aircraftId,
+                thingId,
                 selectedTask.card.id
               )
             )

@@ -75,7 +75,7 @@ class SubscriptionManagerImpl(
 
   override fun canHostShare(): Flow<Boolean> = gate(Subscription.Status.STATUS_PRO)
 
-  override fun aircraftLimit(): Flow<Int?> =
+  override fun thingLimit(): Flow<Int?> =
     status().map { if (it >= Subscription.Status.STATUS_PRO) null else FREE_AIRCRAFT_LIMIT }
 
   override fun shouldShowAds(): Flow<Boolean> =
@@ -97,8 +97,8 @@ class SubscriptionManagerImpl(
     /**
      * Aircraft a free account may own; a Pro account is unlimited. Raised from 1 to 2 alongside
      * display ads (`docs/ads/display_ads_PRD.md` D9) — ad revenue on the free tier pays for the
-     * second aircraft, and 2 covers the owner-plus-partnership case. Enforced client-side only;
-     * no Cloud Function or Firestore rule checks aircraft count.
+     * second thing, and 2 covers the owner-plus-partnership case. Enforced client-side only;
+     * no Cloud Function or Firestore rule checks thing count.
      */
     const val FREE_AIRCRAFT_LIMIT = 2
   }

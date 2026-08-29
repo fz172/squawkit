@@ -32,7 +32,7 @@ import wingslog.feature.sharing.sharedassets.generated.resources.redeem_success_
 import wingslog.feature.sharing.sharedassets.generated.resources.redeem_success_title
 
 /**
- * State of the aircraft-invite redemption surface. A non-member can't read the aircraft before
+ * State of the thing-invite redemption surface. A non-member can't read the thing before
  * joining (rules deny it, and the share URL carries only id + secret), so the confirm step is
  * intentionally detail-light; the offered role is surfaced on success from the function's response.
  */
@@ -40,7 +40,7 @@ sealed interface RedeemUiState {
   data object Hidden : RedeemUiState
   /**
    * What you are about to join (#201). Resolved from the code by the server — the invitee holds no
-   * aircraft id, and the rules would (rightly) refuse to resolve one for a non-member.
+   * thing id, and the rules would (rightly) refuse to resolve one for a non-member.
    *
    * [preview] is null while it is still loading, or if the lookup failed: the sheet then says less
    * rather than blocking Accept on a call that is only there to inform.
@@ -68,19 +68,19 @@ fun RedeemConfirmationSheet(
       title = { Text(stringResource(Res.string.redeem_confirm_title)) },
       text = {
         // Say what they are joining and who is inviting them (#201). Until #164 this was impossible:
-        // the invitee held an aircraft id the rules must refuse to resolve for a non-member, so the
+        // the invitee held an thing id the rules must refuse to resolve for a non-member, so the
         // sheet could only say "an aircraft" — and accepting meant accepting blind.
         val preview = state.preview
         Text(
           when {
             preview == null -> stringResource(Res.string.redeem_confirm_body)
-            preview.hostName.isBlank() || preview.aircraftLabel.isBlank() ->
+            preview.hostName.isBlank() || preview.thingLabel.isBlank() ->
               stringResource(Res.string.redeem_confirm_body_role, roleLabel(preview.role))
 
             else -> stringResource(
               Res.string.redeem_confirm_body_full,
               preview.hostName,
-              preview.aircraftLabel,
+              preview.thingLabel,
               roleLabel(preview.role),
             )
           },

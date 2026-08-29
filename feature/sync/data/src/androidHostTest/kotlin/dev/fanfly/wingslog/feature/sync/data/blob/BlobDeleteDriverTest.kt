@@ -58,7 +58,7 @@ class BlobDeleteDriverTest {
     ownerUid: String = "u1",
   ) = BlobRef(
     id = BlobId(id),
-    scope = EntityScope.aircraftChildUnsafe(ownerUid, "ac1"),
+    scope = EntityScope.thingChildUnsafe(ownerUid, "ac1"),
     relativePath = "blobs/$id.bin",
     sizeBytes = 10L,
     sha256 = "sha",

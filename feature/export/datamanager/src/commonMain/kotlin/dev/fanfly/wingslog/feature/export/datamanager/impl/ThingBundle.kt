@@ -8,10 +8,10 @@ import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
 import dev.fanfly.wingslog.thing.Thing
 
 /**
- * Aggregated records needed to write one aircraft folder in an export archive.
+ * Aggregated records needed to write one thing folder in an export archive.
  */
-data class AircraftBundle(
-  val aircraft: Thing,
+data class ThingBundle(
+  val thing: Thing,
   val logs: List<MaintenanceLog>,
   val tasks: List<MaintenanceTask>,
   val dueByTaskId: Map<String, DueMetadata>,

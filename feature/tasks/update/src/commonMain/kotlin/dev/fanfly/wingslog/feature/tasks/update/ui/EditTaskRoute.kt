@@ -54,7 +54,7 @@ fun EditTaskRoute(
           navController.popBackStack()
           navController.navigate(
             Screen.AddMaintenanceLog.createRoute(
-              aircraftId = event.aircraftId,
+              thingId = event.thingId,
               cardId = event.cardId,
             )
           )

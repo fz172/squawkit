@@ -163,7 +163,7 @@ fun MaintenanceLogDetailSheet(
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Medium,
           )
-          // On a shared aircraft, being named as the technician does not mean you wrote the entry.
+          // On a shared thing, being named as the technician does not mean you wrote the entry.
           // Say which it is — unforgeably, from the envelope's writer_uid (§7.5).
           AuthorshipLine(authorship)
         }

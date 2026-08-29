@@ -48,7 +48,7 @@ class SquawkFormViewModelTest {
   private lateinit var auth: FirebaseAuth
   private lateinit var subscriptionManager: SubscriptionManager
 
-  // Only gates the attach affordance on shared aircraft; irrelevant to these assertions.
+  // Only gates the attach affordance on shared thing; irrelevant to these assertions.
   private lateinit var sharingManager: SharingManager
 
   @Before
@@ -68,7 +68,7 @@ class SquawkFormViewModelTest {
 
     // Prevent the init-block flows from suspending forever.
     every { subscriptionManager.canUploadAttachments() } returns flowOf(false)
-    // Own aircraft by default; foreign-hosted tests override this.
+    // Own thing by default; foreign-hosted tests override this.
     every { sharingManager.observeIsForeignHosted(any()) } returns flowOf(false)
     every { squawkManager.observeSquawks(TEST_AIRCRAFT_ID) } returns flowOf(
       emptyList()
@@ -240,7 +240,7 @@ class SquawkFormViewModelTest {
       val event = viewModel.events.first()
       assertThat(event).isInstanceOf(SquawkFormEvent.NavigateToCreateLog::class.java)
       val navigateEvent = event as SquawkFormEvent.NavigateToCreateLog
-      assertThat(navigateEvent.aircraftId).isEqualTo(TEST_AIRCRAFT_ID)
+      assertThat(navigateEvent.thingId).isEqualTo(TEST_AIRCRAFT_ID)
       assertThat(navigateEvent.squawkId).isEqualTo(TEST_SQUAWK_ID)
     }
 
@@ -570,13 +570,13 @@ class SquawkFormViewModelTest {
       ),
     )
 
-  // --- Attachments on a shared aircraft (design §9, #146) ---
+  // --- Attachments on a shared thing (design §9, #146) ---
 
   @Test
   fun attachAvailable_onAnAircraftHostedByAnotherAccount() =
     runTest(testDispatcher) {
       // A member's upload now travels through the broker into the host's tree (P8.4 §9.2), so the
-      // attach button is offered on a shared aircraft — no longer hard-disabled by hosting.
+      // attach button is offered on a shared thing — no longer hard-disabled by hosting.
       every { subscriptionManager.canUploadAttachments() } returns flowOf(true)
 
       val viewModel = buildViewModelForNew()
@@ -599,7 +599,7 @@ class SquawkFormViewModelTest {
   @Test
   fun attachStaysOff_onOwnAircraft_whenTheEntitlementIsOff() =
     runTest(testDispatcher) {
-      // On an OWN aircraft the member's own entitlement has the final say (P8.7 §9.7).
+      // On an OWN thing the member's own entitlement has the final say (P8.7 §9.7).
       every { subscriptionManager.canUploadAttachments() } returns flowOf(false)
       every { sharingManager.observeIsForeignHosted(any()) } returns flowOf(
         false
@@ -615,7 +615,7 @@ class SquawkFormViewModelTest {
   fun attachAvailable_onForeignHostedAircraft_evenWithoutOwnEntitlement() =
     runTest(testDispatcher) {
       // The host pays and the broker enforces the host's entitlement, so a member with no subscription
-      // of their own can still attach on a paid owner's aircraft (P8.7 §9.7).
+      // of their own can still attach on a paid owner's thing (P8.7 §9.7).
       every { subscriptionManager.canUploadAttachments() } returns flowOf(false)
       every { sharingManager.observeIsForeignHosted(any()) } returns flowOf(true)
 

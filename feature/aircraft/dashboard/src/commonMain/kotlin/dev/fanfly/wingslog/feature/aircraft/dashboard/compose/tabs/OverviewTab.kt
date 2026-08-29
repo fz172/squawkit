@@ -48,11 +48,11 @@ import dev.fanfly.wingslog.core.ui.common.formatToOneDecimalPlace
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.core.ui.theme.statusColors
-import dev.fanfly.wingslog.feature.aircraft.dashboard.compose.AircraftDataCard
+import dev.fanfly.wingslog.feature.aircraft.dashboard.compose.ThingDataCard
 import dev.fanfly.wingslog.feature.aircraft.dashboard.compose.LogOnboardingCard
 import dev.fanfly.wingslog.feature.aircraft.dashboard.compose.LogStatsSection
 import dev.fanfly.wingslog.feature.aircraft.dashboard.data.AircraftOverviewAction
-import dev.fanfly.wingslog.feature.aircraft.dashboard.data.AircraftOverviewUiState
+import dev.fanfly.wingslog.feature.aircraft.dashboard.data.ThingOverviewUiState
 import dev.fanfly.wingslog.feature.logs.sharedassets.util.displayName
 import dev.fanfly.wingslog.feature.squawk.model.SquawkStatus
 import dev.fanfly.wingslog.feature.squawk.viewing.AogAlertSection
@@ -83,7 +83,7 @@ import wingslog.feature.tasks.sharedassets.generated.resources.Res as TasksRes
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun OverviewTab(
-  state: AircraftOverviewUiState.Success,
+  state: ThingOverviewUiState.Success,
   onAction: (AircraftOverviewAction) -> Unit,
   onViewSquawksTab: () -> Unit = {},
   onViewLogsTab: () -> Unit = {},
@@ -121,15 +121,15 @@ fun OverviewTab(
     )
 
     Column(modifier = Modifier.padding(horizontal = Spacing.screenPadding)) {
-      AircraftDataCard(
-        state.aircraft,
+      ThingDataCard(
+        state.thing,
         initiallyExpanded = overdueTasks.isEmpty(),
-        // Edit + Manage Access are owner-only; technicians get a read-only aircraft card (§6.3).
+        // Edit + Manage Access are owner-only; technicians get a read-only thing card (§6.3).
         onEditClick = manageAction(state, onMutationAction) {
-          AircraftOverviewAction.EditClick(state.aircraft.id)
+          AircraftOverviewAction.EditClick(state.thing.id)
         },
         onManageAccessClick = memberAction(state, onMutationAction) {
-          AircraftOverviewAction.ManageAccessClick(state.aircraft.id)
+          AircraftOverviewAction.ManageAccessClick(state.thing.id)
         },
       )
     }
@@ -156,7 +156,7 @@ fun OverviewTab(
           onAddLogClick = {
             onMutationAction(
               AircraftOverviewAction.AddLogClick(
-                state.aircraft.id
+                state.thing.id
               )
             )
           },
@@ -176,7 +176,7 @@ fun OverviewTab(
 
 @Composable
 private fun LargeOverviewTab(
-  state: AircraftOverviewUiState.Success,
+  state: ThingOverviewUiState.Success,
   onAction: (AircraftOverviewAction) -> Unit,
   onViewSquawksTab: () -> Unit,
   onViewLogsTab: () -> Unit,
@@ -195,14 +195,14 @@ private fun LargeOverviewTab(
   ) {
     OverviewHero(state)
 
-    AircraftDataCard(
-      state.aircraft,
+    ThingDataCard(
+      state.thing,
       initiallyExpanded = overdueTasks.isEmpty(),
       onEditClick = manageAction(state, onMutationAction) {
-        AircraftOverviewAction.EditClick(state.aircraft.id)
+        AircraftOverviewAction.EditClick(state.thing.id)
       },
       onManageAccessClick = memberAction(state, onMutationAction) {
-        AircraftOverviewAction.ManageAccessClick(state.aircraft.id)
+        AircraftOverviewAction.ManageAccessClick(state.thing.id)
       },
     )
 
@@ -226,7 +226,7 @@ private fun LargeOverviewTab(
           onAddLogClick = {
             onMutationAction(
               AircraftOverviewAction.AddLogClick(
-                state.aircraft.id
+                state.thing.id
               )
             )
           },
@@ -250,7 +250,7 @@ private fun LargeOverviewTab(
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun OverviewHero(
-  state: AircraftOverviewUiState.Success,
+  state: ThingOverviewUiState.Success,
   modifier: Modifier = Modifier,
 ) {
   Column(modifier = modifier) {
@@ -258,14 +258,14 @@ private fun OverviewHero(
       Text(
         text = stringResource(
           CoreRes.string.make_model_template,
-          state.aircraft.make.trim(),
-          state.aircraft.model.trim()
+          state.thing.make.trim(),
+          state.thing.model.trim()
         ),
         style = WingslogTypography.heroDisplay,
         color = MaterialTheme.colorScheme.onSurface
       )
       Text(
-        text = state.aircraft.tail_number,
+        text = state.thing.tail_number,
         style = WingslogTypography.heroDisplay,
         color = MaterialTheme.colorScheme.primary
       )
@@ -277,12 +277,12 @@ private fun OverviewHero(
 }
 
 /**
- * Marks an aircraft that is part of a share (§6.3) — shown to *every* partner in it, the hosting
+ * Marks an thing that is part of a share (§6.3) — shown to *every* partner in it, the hosting
  * owner and co-owners included, not just the accounts it was shared into. Everyone in the share
  * needs to know that what they write here is visible to the others.
  *
- * It sits under the hero title rather than in the aircraft picker: the picker showed it once, in
- * passing, while the dashboard is where you actually act on the aircraft.
+ * It sits under the hero title rather than in the thing picker: the picker showed it once, in
+ * passing, while the dashboard is where you actually act on the thing.
  */
 @Composable
 private fun SharedMarker() {
@@ -307,7 +307,7 @@ private fun SharedMarker() {
 
 @Composable
 private fun DashboardLowerGrid(
-  state: AircraftOverviewUiState.Success,
+  state: ThingOverviewUiState.Success,
   onTaskClick: (MaintenanceTaskWithStatus) -> Unit,
   onLogsClick: () -> Unit,
   onViewSquawksClick: () -> Unit,
@@ -611,12 +611,12 @@ private fun EmptyRailState(
 }
 
 /**
- * Wires an owner-only aircraft action: returns a click handler only when the caller may manage the
- * aircraft (owner, not a technician) and mutations are enabled; otherwise null so the affordance is
+ * Wires an owner-only thing action: returns a click handler only when the caller may manage the
+ * thing (owner, not a technician) and mutations are enabled; otherwise null so the affordance is
  * hidden. Server rules remain the enforcement (docs/sharing §6.3).
  */
 private fun manageAction(
-  state: AircraftOverviewUiState.Success,
+  state: ThingOverviewUiState.Success,
   onMutationAction: ((AircraftOverviewAction) -> Unit)?,
   action: () -> AircraftOverviewAction,
 ): (() -> Unit)? =
@@ -636,7 +636,7 @@ private fun manageAction(
  * sign-in prompt.
  */
 private fun memberAction(
-  state: AircraftOverviewUiState.Success,
+  state: ThingOverviewUiState.Success,
   onMutationAction: ((AircraftOverviewAction) -> Unit)?,
   action: () -> AircraftOverviewAction,
 ): (() -> Unit)? =

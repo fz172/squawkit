@@ -53,8 +53,8 @@ import wingslog.feature.logs.viewing.generated.resources.Res as MaintenanceRes
 
 
 @Composable
-fun AircraftDataCard(
-  aircraft: Thing,
+fun ThingDataCard(
+  thing: Thing,
   initiallyExpanded: Boolean = true,
   onEditClick: (() -> Unit)? = null,
   onManageAccessClick: (() -> Unit)? = null,
@@ -129,14 +129,14 @@ fun AircraftDataCard(
             category = stringResource(CoreRes.string.component_airframe).uppercase(),
             name = stringResource(
               CoreRes.string.make_model_template,
-              aircraft.make,
-              aircraft.model,
+              thing.make,
+              thing.model,
             ),
-            serial = aircraft.serial
+            serial = thing.serial
           )
 
-          aircraft.engine.forEachIndexed { index, engine ->
-            val label = if (aircraft.engine.size > 1) {
+          thing.engine.forEachIndexed { index, engine ->
+            val label = if (thing.engine.size > 1) {
               stringResource(
                 SharedRes.string.engine_with_index,
                 index + 1

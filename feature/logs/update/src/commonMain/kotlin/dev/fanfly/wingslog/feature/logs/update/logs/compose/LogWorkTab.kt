@@ -34,7 +34,7 @@ fun LogWorkTab(
   onDateClick: () -> Unit,
   workDescription: String,
   onWorkDescriptionChange: (String) -> Unit,
-  aircraft: Thing?,
+  thing: Thing?,
   selectedComponentType: ComponentType,
   onComponentTypeChange: (ComponentType) -> Unit,
   selectedSubComponent: String?,
@@ -70,7 +70,7 @@ fun LogWorkTab(
       description = stringResource(Res.string.component_section_description),
     ) {
       ComponentSection(
-        aircraft = aircraft,
+        thing = thing,
         selectedComponentType = selectedComponentType,
         selectedSubComponent = selectedSubComponent,
         onComponentTypeChange = onComponentTypeChange,

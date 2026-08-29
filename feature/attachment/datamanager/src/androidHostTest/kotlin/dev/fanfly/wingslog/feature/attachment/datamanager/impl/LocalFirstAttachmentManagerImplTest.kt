@@ -4,7 +4,7 @@ import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.aircraft.Attachment
 import dev.fanfly.wingslog.aircraft.AttachmentType
 import dev.fanfly.wingslog.core.auth.AuthManager
-import dev.fanfly.wingslog.core.storage.AircraftScopeResolver
+import dev.fanfly.wingslog.core.storage.ThingScopeResolver
 import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.blob.BlobId
 import dev.fanfly.wingslog.core.storage.blob.UploadScheduler
@@ -47,7 +47,7 @@ class LocalFirstAttachmentManagerImplTest {
   private lateinit var auth: AuthManager
   private lateinit var fileByteReader: FileByteReader
   private lateinit var imageCompressor: ImageCompressor
-  private lateinit var aircraftScopeResolver: AircraftScopeResolver
+  private lateinit var thingScopeResolver: ThingScopeResolver
   private lateinit var uploadScheduler: UploadScheduler
   private lateinit var clock: Clock
   private lateinit var manager: LocalFirstAttachmentManagerImpl
@@ -71,11 +71,11 @@ class LocalFirstAttachmentManagerImplTest {
     every { mockUser.uid } returns TEST_USER_ID
     every { auth.getCurrentUser() } returns mockUser
 
-    // Default: own aircraft — the resolver hands back the caller's own tree. A shared-aircraft case
+    // Default: own thing — the resolver hands back the caller's own tree. A shared-thing case
     // would return aircraftChildUnsafe(hostUid, ...); the manager just uses whatever scope it is given.
-    aircraftScopeResolver = mockk(relaxed = true)
-    coEvery { aircraftScopeResolver.resolveNow(any()) } answers {
-      EntityScope.aircraftChildUnsafe(TEST_USER_ID, firstArg())
+    thingScopeResolver = mockk(relaxed = true)
+    coEvery { thingScopeResolver.resolveNow(any()) } answers {
+      EntityScope.thingChildUnsafe(TEST_USER_ID, firstArg())
     }
 
     manager = LocalFirstAttachmentManagerImpl(
@@ -83,7 +83,7 @@ class LocalFirstAttachmentManagerImplTest {
       auth,
       fileByteReader,
       imageCompressor,
-      aircraftScopeResolver,
+      thingScopeResolver,
       uploadScheduler,
       clock = clock
     )
@@ -141,8 +141,8 @@ class LocalFirstAttachmentManagerImplTest {
     // host and the host's download 404'd. The blob must land in the host's tree (design §9), which is
     // also what makes the upload driver route it through the broker (P8.4).
     val hostUid = "host-eng-42"
-    coEvery { aircraftScopeResolver.resolveNow(TEST_AIRCRAFT_ID) } returns
-      EntityScope.aircraftChildUnsafe(hostUid, TEST_AIRCRAFT_ID)
+    coEvery { thingScopeResolver.resolveNow(TEST_AIRCRAFT_ID) } returns
+      EntityScope.thingChildUnsafe(hostUid, TEST_AIRCRAFT_ID)
     val picked = buildPickedFile(
       uri = "content://example/photo.jpg",
       mimeType = "image/jpeg"
@@ -172,7 +172,7 @@ class LocalFirstAttachmentManagerImplTest {
         any(),
         fakeBytes,
         contentType = any(),
-        scope = EntityScope.aircraftChildUnsafe(hostUid, TEST_AIRCRAFT_ID),
+        scope = EntityScope.thingChildUnsafe(hostUid, TEST_AIRCRAFT_ID),
       )
     }
   }

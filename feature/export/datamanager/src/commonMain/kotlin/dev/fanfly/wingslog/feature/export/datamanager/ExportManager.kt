@@ -4,7 +4,7 @@ import dev.fanfly.wingslog.export.ExportRecord
 import kotlinx.coroutines.flow.Flow
 
 /**
- * Generates logbook export archives for the selected aircraft and options.
+ * Generates logbook export archives for the selected thing and options.
  */
 interface ExportManager {
   /**

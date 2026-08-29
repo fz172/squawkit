@@ -296,7 +296,7 @@ class SqlDelightLocalBlobStore(
     }
     if (present.isEmpty()) return
 
-    // One lock for the batch: a purged aircraft can carry hundreds of blobs, and this runs on start.
+    // One lock for the batch: a purged thing can carry hundreds of blobs, and this runs on start.
     writeLock.withLock {
       for (id in present) db.schemaQueries.hardDeleteBlob(id.value)
     }

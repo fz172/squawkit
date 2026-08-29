@@ -7,13 +7,13 @@ import org.junit.Test
 
 /**
  * Owner-only affordance gating (Edit Aircraft / Delete / Manage Access). A technician on a shared
- * aircraft gets a read-only screen; owners (and own aircraft, resolved to OWNER) may manage.
+ * thing gets a read-only screen; owners (and own thing, resolved to OWNER) may manage.
  */
-class AircraftOverviewGatingTest {
+class ThingOverviewGatingTest {
 
   private fun state(role: ShareRole?) =
-    AircraftOverviewUiState.Success(
-      aircraft = Thing(id = "ac-1"),
+    ThingOverviewUiState.Success(
+      thing = Thing(id = "ac-1"),
       myRole = role
     )
 
@@ -29,7 +29,7 @@ class AircraftOverviewGatingTest {
 
   @Test
   fun unresolvedRole_defaultsToManageable() {
-    // null only appears briefly before the role resolves; own aircraft resolve to OWNER, so
+    // null only appears briefly before the role resolves; own thing resolve to OWNER, so
     // defaulting to manageable avoids hiding an owner's controls on first frame.
     assertThat(state(null).canManageAircraft).isTrue()
   }
@@ -41,8 +41,8 @@ class AircraftOverviewGatingTest {
     // Redeeming and inviting both require a permanent account, and a share must attach to an
     // identity that survives a reinstall. Showing a guest the entry point offers a door that leads
     // only to a sign-in prompt.
-    val state = AircraftOverviewUiState.Success(
-      aircraft = Thing(id = "ac-1"),
+    val state = ThingOverviewUiState.Success(
+      thing = Thing(id = "ac-1"),
       myRole = ShareRole.OWNER,
       isAnonymous = true,
     )
@@ -54,15 +54,15 @@ class AircraftOverviewGatingTest {
   fun signedIn_canOpenManageAccess_whateverTheirRole() {
     // A technician gets it too: it is read-only for them, and it is their only route out of a share.
     assertThat(
-      AircraftOverviewUiState.Success(
-        aircraft = Thing(id = "ac-1"),
+      ThingOverviewUiState.Success(
+        thing = Thing(id = "ac-1"),
         myRole = ShareRole.TECHNICIAN,
         isAnonymous = false,
       ).canOpenManageAccess,
     ).isTrue()
     assertThat(
-      AircraftOverviewUiState.Success(
-        aircraft = Thing(id = "ac-1"),
+      ThingOverviewUiState.Success(
+        thing = Thing(id = "ac-1"),
         myRole = ShareRole.OWNER,
         isAnonymous = false,
       ).canOpenManageAccess,

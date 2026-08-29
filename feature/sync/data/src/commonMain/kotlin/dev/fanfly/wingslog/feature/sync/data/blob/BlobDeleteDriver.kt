@@ -16,7 +16,7 @@ import dev.gitlive.firebase.storage.FirebaseStorage
  * Safe to call multiple times — if the remote object is already gone, Firebase Storage returns a
  * 404 which we treat as success (the object is gone either way).
  *
- * **Foreign-hosted** (shared-aircraft) blobs are not deleted from Storage here: a member has no
+ * **Foreign-hosted** (shared-thing) blobs are not deleted from Storage here: a member has no
  * write rights to the host's tree and the broker exposes no delete door, so a direct delete would
  * only earn a permanent `PERMISSION_DENIED`. The remote object is the host's to reclaim — via the
  * host-side deletion cascade / orphan sweep (design §9.6, P8.6). We just drop the local row so the

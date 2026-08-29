@@ -27,7 +27,7 @@ private const val TEST_SHA256 =
 class BlobIndexReconcilerTest {
 
   private val scope =
-    EntityScope.aircraftChildUnsafe(TEST_USER_ID, TEST_AIRCRAFT_ID)
+    EntityScope.thingChildUnsafe(TEST_USER_ID, TEST_AIRCRAFT_ID)
 
   private fun buildAttachment(
     id: String = "att-1",

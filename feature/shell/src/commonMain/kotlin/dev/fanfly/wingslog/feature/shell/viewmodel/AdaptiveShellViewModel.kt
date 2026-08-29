@@ -4,10 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.core.ui.adaptive.AdaptiveShellUiState
-import dev.fanfly.wingslog.core.ui.adaptive.ShellAircraft
 import dev.fanfly.wingslog.core.ui.adaptive.ShellSection
+import dev.fanfly.wingslog.core.ui.adaptive.ShellThing
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
-import dev.fanfly.wingslog.feature.fleet.picker.data.SelectedAircraftStore
+import dev.fanfly.wingslog.feature.fleet.picker.data.SelectedThingStore
 import dev.fanfly.wingslog.feature.notifications.model.NotificationTapTarget
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
@@ -24,9 +24,9 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /**
- * Holds the ambient aircraft selection for the adaptive shell ([AdaptiveAppShell]).
+ * Holds the ambient thing selection for the adaptive shell ([AdaptiveAppShell]).
  *
- * Per the redesign, the selected aircraft is app-level state chosen from the switcher rather than a
+ * Per the redesign, the selected thing is app-level state chosen from the switcher rather than a
  * navigation argument carried per destination — see `docs/web/web_adaptive_layout_design.html` §6.
  */
 class AdaptiveShellViewModel(
@@ -36,29 +36,29 @@ class AdaptiveShellViewModel(
   private val sharingManager: SharingManager,
   private val subscriptionManager: SubscriptionManager,
   private val syncEngine: SyncEngine,
-  private val selectedAircraftStore: SelectedAircraftStore,
+  private val selectedThingStore: SelectedThingStore,
 ) : ViewModel() {
 
   /**
-   * Whether the account is at its owned-aircraft limit (Pro gate). Shared aircraft are pointers into
+   * Whether the account is at its owned-thing limit (Pro gate). Shared thing are pointers into
    * another account's tree and never count against the limit. `false` while the capability is off
-   * (default-open) since [SubscriptionManager.aircraftLimit] is unlimited then. The Add-aircraft
+   * (default-open) since [SubscriptionManager.thingLimit] is unlimited then. The Add-thing
    * entry consults this to open the upsell instead of navigating; see subscription_design.html §4/§6.
    */
-  val atAircraftLimit: StateFlow<Boolean> =
+  val atThingLimit: StateFlow<Boolean> =
     combine(
       fleetManager.observeFleetDashboard(),
-      subscriptionManager.aircraftLimit(),
+      subscriptionManager.thingLimit(),
     ) { fleet, limit ->
       limit != null && fleet.count { !it.shared } >= limit
     }.stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
   /**
-   * The aircraft remembered from the last session, used as the initial selection so the app reopens
-   * on the same aircraft. Kept in sync with [SelectedAircraftStore] as the selection changes; falls
-   * back to the first aircraft when the remembered one no longer exists.
+   * The thing remembered from the last session, used as the initial selection so the app reopens
+   * on the same thing. Kept in sync with [SelectedThingStore] as the selection changes; falls
+   * back to the first thing when the remembered one no longer exists.
    */
-  private var rememberedAircraftId: String? = selectedAircraftStore.load()
+  private var rememberedAircraftId: String? = selectedThingStore.load()
 
   /**
    * Work the sync engine had to throw away (PRD D3). Surfaced from the shell because it outlives
@@ -82,8 +82,8 @@ class AdaptiveShellViewModel(
         .collect { fleet ->
           _uiState.update { state ->
             val mapped = fleet.map { entry ->
-              val ac = entry.aircraft
-              ShellAircraft(
+              val ac = entry.thing
+              ShellThing(
                 id = ac.id,
                 tail = ac.tail_number,
                 name = listOf(ac.make, ac.model).filter { it.isNotBlank() }
@@ -91,17 +91,17 @@ class AdaptiveShellViewModel(
               )
             }
             // Prefer the live selection, then the one remembered from last session; fall back to the
-            // first aircraft when neither still exists. Persist whatever we land on so the memory
+            // first thing when neither still exists. Persist whatever we land on so the memory
             // tracks the effective selection (including the fallback after the remembered one is gone).
-            val selected = state.selectedAircraftId
+            val selected = state.selectedThingId
               ?.takeIf { id -> mapped.any { it.id == id } }
               ?: rememberedAircraftId?.takeIf { id -> mapped.any { it.id == id } }
               ?: mapped.firstOrNull()?.id
             if (selected != rememberedAircraftId) {
               rememberedAircraftId = selected
-              selectedAircraftStore.save(selected)
+              selectedThingStore.save(selected)
             }
-            state.copy(aircraft = mapped, selectedAircraftId = selected)
+            state.copy(thing = mapped, selectedThingId = selected)
           }
         }
     }
@@ -109,12 +109,13 @@ class AdaptiveShellViewModel(
 
   /**
    * A record the shell should scroll to and highlight once its section renders, set by a tapped
-   * notification for a single record. Not a navigation argument for the same reason the aircraft
+   * notification for a single record. Not a navigation argument for the same reason the thing
    * selection isn't one (see this class's doc comment); the section body reads it as plain state and
    * calls [consumeScrollTarget] once it has been handed to the list.
    */
   private val _pendingScrollTargetId = MutableStateFlow<String?>(null)
-  val pendingScrollTargetId: StateFlow<String?> = _pendingScrollTargetId.asStateFlow()
+  val pendingScrollTargetId: StateFlow<String?> =
+    _pendingScrollTargetId.asStateFlow()
 
   fun consumeScrollTarget() {
     _pendingScrollTargetId.value = null
@@ -124,7 +125,7 @@ class AdaptiveShellViewModel(
    * Applies a tapped notification's target to shell state. Called from
    * [AdaptiveShellRoute][dev.fanfly.wingslog.feature.shell.AdaptiveShellRoute] rather than handled
    * through `HandleNotificationTaps` (`feature/shell/AppNavHelpers.kt`), because none of it is a
-   * navigation argument — aircraft selection, section, and the scroll target are all app-level
+   * navigation argument — thing selection, section, and the scroll target are all app-level
    * ViewModel state (design §5.3, and this class's own doc comment above).
    *
    * Every variant lands the pilot *in the list*, on the record, rather than in its edit form: a
@@ -138,12 +139,13 @@ class AdaptiveShellViewModel(
    * really been acted on.
    */
   fun onNotificationTap(target: NotificationTapTarget) {
-    selectAircraft(target.aircraftId)
+    selectThing(target.thingId)
     when (target) {
       // A summary notification: the tier picks the list, and there is no one record to point at.
       is NotificationTapTarget.Aircraft -> {
         _pendingScrollTargetId.value = null
-        target.tab?.toShellSection()?.let { selectSection(it) }
+        target.tab?.toShellSection()
+          ?.let { selectSection(it) }
       }
 
       is NotificationTapTarget.Squawk -> {
@@ -165,7 +167,7 @@ class AdaptiveShellViewModel(
 
   /**
    * The four tabs the server can name, which are exactly `aircraftTabForRecordType`'s four returns
-   * plus nothing else — `overview` arrives both for aircraft-level activity and for the §7.4
+   * plus nothing else — `overview` arrives both for thing-level activity and for the §7.4
    * high-volume notice. Keep this in step with that function: an unmapped tab is not an error, it
    * just leaves the pilot on whatever section was already open with no clue what changed, which
    * reads as a tap that did nothing.
@@ -196,11 +198,11 @@ class AdaptiveShellViewModel(
     }
   }
 
-  /** Switcher selection (above phone): swaps the ambient aircraft in place and remembers it. */
-  fun selectAircraft(id: String) {
-    _uiState.update { it.copy(selectedAircraftId = id) }
+  /** Switcher selection (above phone): swaps the ambient thing in place and remembers it. */
+  fun selectThing(id: String) {
+    _uiState.update { it.copy(selectedThingId = id) }
     rememberedAircraftId = id
-    selectedAircraftStore.save(id)
+    selectedThingStore.save(id)
   }
 
   /** Switches the active top-level section. */

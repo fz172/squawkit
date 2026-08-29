@@ -6,7 +6,7 @@ import dev.fanfly.wingslog.aircraft.Technician
  * Duplicate detection for the technician roster (design §7.4).
  *
  * Once the mechanics a user hand-typed before sharing join as members, each shows up twice: the
- * stale manual row (user-global, in their own collection) and the live mirror (per-aircraft, from
+ * stale manual row (user-global, in their own collection) and the live mirror (per-thing, from
  * the share). This groups those so the user can reconcile them.
  *
  * Everything here is pure — the matching rules are fiddly enough to be worth testing on their own,

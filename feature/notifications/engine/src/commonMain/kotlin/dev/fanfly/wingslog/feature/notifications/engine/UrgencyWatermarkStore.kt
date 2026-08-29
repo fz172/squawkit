@@ -29,7 +29,7 @@ class UrgencyWatermarkStore(
   private val writeLock: DatabaseWriteLock = DatabaseWriteLock(),
 ) {
 
-  /** Every watermark this user has under [scopePrefix], for the scanner to build its lookup once rather than querying per aircraft. */
+  /** Every watermark this user has under [scopePrefix], for the scanner to build its lookup once rather than querying per thing. */
   suspend fun selectInScopePrefix(
     uid: String,
     scopePrefix: String,
@@ -73,7 +73,7 @@ class UrgencyWatermarkStore(
   /**
    * Drops watermark rows under [scope] for [collection] whose id is not in [seenIds] — a deleted
    * record would otherwise leave a watermark row forever (design §6.4). Call once per (collection,
-   * scope) the scan actually visited; never broader, or an un-hydrated aircraft's history is erased.
+   * scope) the scan actually visited; never broader, or an un-hydrated thing's history is erased.
    */
   suspend fun pruneNotIn(
     uid: String,

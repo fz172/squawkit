@@ -45,7 +45,7 @@ fun TechnicianPickerSheet(
   onDismiss: () -> Unit,
   modifier: Modifier = Modifier,
   /**
-   * Members of this aircraft's share who have published a mirror. Selecting one snapshots their
+   * Members of this thing's share who have published a mirror. Selecting one snapshots their
    * mirror fields into the log exactly as a local record would — only the source differs (§7.3).
    */
   linkedTechnicians: List<Technician> = emptyList(),

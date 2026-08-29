@@ -6,15 +6,15 @@ import kotlinx.coroutines.flow.Flow
 interface TaskDataManager {
 
   /**
-   * Observe all task cards for an aircraft in real-time.
+   * Observe all task cards for an thing in real-time.
    */
-  fun observeTasks(aircraftId: String): Flow<List<MaintenanceTask>>
+  fun observeTasks(thingId: String): Flow<List<MaintenanceTask>>
 
   /**
-   * Add a new task card to an aircraft.
+   * Add a new task card to an thing.
    */
   suspend fun addTask(
-    aircraftId: String,
+    thingId: String,
     card: MaintenanceTask,
   ): Result<Boolean>
 
@@ -22,7 +22,7 @@ interface TaskDataManager {
    * Update an existing task card.
    */
   suspend fun updateTask(
-    aircraftId: String,
+    thingId: String,
     card: MaintenanceTask,
   ): Result<Boolean>
 
@@ -31,7 +31,7 @@ interface TaskDataManager {
    * which are silently ignored during display.
    */
   suspend fun deleteTask(
-    aircraftId: String,
+    thingId: String,
     cardId: String,
   ): Result<Boolean>
 }

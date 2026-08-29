@@ -35,35 +35,35 @@ sealed class Screen(val route: String) {
   }
 
   data object EditAircraft : Screen("edit_aircraft/{$AIRCRAFT_ID}") {
-    fun createRoute(aircraftId: String) = "edit_aircraft/$aircraftId"
+    fun createRoute(thingId: String) = "edit_aircraft/$thingId"
   }
 
   data object ManageAccess : Screen("manage_access/{$AIRCRAFT_ID}") {
-    fun createRoute(aircraftId: String) = "manage_access/$aircraftId"
+    fun createRoute(thingId: String) = "manage_access/$thingId"
   }
 
   data object AddMaintenanceTask :
     Screen("maintenance_task_create/{$AIRCRAFT_ID}") {
-    fun createRoute(aircraftId: String) = "maintenance_task_create/$aircraftId"
+    fun createRoute(thingId: String) = "maintenance_task_create/$thingId"
   }
 
   data object EditMaintenanceTask :
     Screen("maintenance_task_edit/{$AIRCRAFT_ID}/{$CARD_ID}") {
     fun createRoute(
-      aircraftId: String,
+      thingId: String,
       cardId: String,
     ) =
-      "maintenance_task_edit/$aircraftId/$cardId"
+      "maintenance_task_edit/$thingId/$cardId"
   }
 
   data object AddMaintenanceLog :
     Screen("maintenance_log_create/{$AIRCRAFT_ID}?$SQUAWK_ID={$SQUAWK_ID}&$CARD_ID={$CARD_ID}") {
     fun createRoute(
-      aircraftId: String,
+      thingId: String,
       squawkId: String? = null,
       cardId: String? = null,
     ): String {
-      val base = "maintenance_log_create/$aircraftId"
+      val base = "maintenance_log_create/$thingId"
       val params = buildList {
         if (squawkId != null) add("$SQUAWK_ID=$squawkId")
         if (cardId != null) add("$CARD_ID=$cardId")
@@ -75,17 +75,17 @@ sealed class Screen(val route: String) {
   data object EditMaintenanceLog :
     Screen("maintenance_log_edit/{$AIRCRAFT_ID}/{$LOG_ID}") {
     fun createRoute(
-      aircraftId: String,
+      thingId: String,
       logId: String,
-    ) = "maintenance_log_edit/$aircraftId/$logId"
+    ) = "maintenance_log_edit/$thingId/$logId"
   }
 
   data object AddSquawk : Screen("squawk_create/{$AIRCRAFT_ID}") {
-    fun createRoute(aircraftId: String) = "squawk_create/$aircraftId"
+    fun createRoute(thingId: String) = "squawk_create/$thingId"
   }
 
   data object EditSquawk : Screen("squawk_edit/{$AIRCRAFT_ID}/{$SQUAWK_ID}") {
-    fun createRoute(aircraftId: String, squawkId: String) =
-      "squawk_edit/$aircraftId/$squawkId"
+    fun createRoute(thingId: String, squawkId: String) =
+      "squawk_edit/$thingId/$squawkId"
   }
 }

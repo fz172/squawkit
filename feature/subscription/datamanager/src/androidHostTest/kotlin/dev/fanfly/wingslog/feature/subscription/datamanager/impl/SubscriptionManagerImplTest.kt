@@ -93,7 +93,7 @@ class SubscriptionManagerImplTest {
   )
 
   @Test
-  fun `PRO active - gates open and aircraft unlimited`() = runTest {
+  fun `PRO active - gates open and thing unlimited`() = runTest {
     entitle(proActive)
     val m = manager(capability())
     assertThat(
@@ -105,13 +105,13 @@ class SubscriptionManagerImplTest {
         .first()
     ).isTrue()
     assertThat(
-      m.aircraftLimit()
+      m.thingLimit()
         .first()
     ).isNull()
   }
 
   @Test
-  fun `an expired comp - gates closed and the free aircraft limit`() = runTest {
+  fun `an expired comp - gates closed and the free thing limit`() = runTest {
     // A promo grant is ACTIVE with willRenew=false and an end date; once that date passes nothing
     // will renew it, so it must lapse to Free rather than entitle forever.
     entitle(proCompExpired)
@@ -125,13 +125,13 @@ class SubscriptionManagerImplTest {
         .first()
     ).isFalse()
     assertThat(
-      m.aircraftLimit()
+      m.thingLimit()
         .first()
     ).isEqualTo(SubscriptionManagerImpl.FREE_AIRCRAFT_LIMIT)
   }
 
   @Test
-  fun `FREE - gates closed and two aircraft`() = runTest {
+  fun `FREE - gates closed and two thing`() = runTest {
     val m = manager(capability()) // default FREE stub
     assertThat(
       m.status()
@@ -150,7 +150,7 @@ class SubscriptionManagerImplTest {
         .first()
     ).isFalse()
     assertThat(
-      m.aircraftLimit()
+      m.thingLimit()
         .first()
     ).isEqualTo(2)
   }

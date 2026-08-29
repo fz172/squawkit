@@ -49,7 +49,7 @@ data class SettingsUiState(
  * The thing a pilot has to type before "Delete my account" does anything (#418).
  *
  * A single tap on a destructive button is too cheap for an irreversible, un-undoable delete that
- * also cuts off everyone they have shared an aircraft with — so the confirmation asks for something
+ * also cuts off everyone they have shared an thing with — so the confirmation asks for something
  * only someone who means it will produce.
  */
 sealed interface DeletionChallenge {

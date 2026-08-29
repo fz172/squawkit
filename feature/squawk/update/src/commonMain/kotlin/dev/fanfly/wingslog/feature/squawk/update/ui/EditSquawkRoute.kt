@@ -51,7 +51,7 @@ fun EditSquawkRoute(
           navController.popBackStack()
           navController.navigate(
             Screen.AddMaintenanceLog.createRoute(
-              event.aircraftId,
+              event.thingId,
               event.squawkId
             )
           )

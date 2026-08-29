@@ -112,11 +112,17 @@ class AccountUpgradeViewModel(
           }
 
           is SendLinkResult.InvalidEmail ->
-            current.copy(sending = false, error = EmailEntryError.InvalidAddress)
+            current.copy(
+              sending = false,
+              error = EmailEntryError.InvalidAddress
+            )
 
           is SendLinkResult.Failed -> {
             logger.w { "Could not send the upgrade link: ${result.message}" }
-            current.copy(sending = false, error = EmailEntryError.SendFailed(result.message))
+            current.copy(
+              sending = false,
+              error = EmailEntryError.SendFailed(result.message)
+            )
           }
         }
     }
@@ -246,7 +252,12 @@ class AccountUpgradeViewModel(
             if (guestUid == null) {
               UpgradeUiState.Error("No signed-in user to merge")
             } else {
-              askToMerge(result.provider, guestUid, guestName, credential = null)
+              askToMerge(
+                result.provider,
+                guestUid,
+                guestName,
+                credential = null
+              )
             }
 
           is AccountUpgradeResult.Cancelled -> UpgradeUiState.Idle
@@ -354,7 +365,7 @@ class AccountUpgradeViewModel(
           if (guestName != null) technicianManager.saveSelfName(guestName)
           pushSelfNameToAuthProfile()
           // Sign-in fired authStateChanged, but re-keying happened after; hydrate and nudge sync
-          // so local reads include the permanent account's aircraft before the UI leaves Working.
+          // so local reads include the permanent account's thing before the UI leaves Working.
           refreshLocalAccountData()
           _completions.tryEmit(Unit)
           UpgradeUiState.Success

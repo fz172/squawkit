@@ -7,7 +7,7 @@ import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
 interface TaskDueManager {
 
   /**
-   * Compute the next-due status for a given inspection card, given the aircraft's maintenance logs.
+   * Compute the next-due status for a given inspection card, given the thing's maintenance logs.
    *
    * Logic:
    * - If the card has a force_due_date or force_due_engine_hour set, return those directly.

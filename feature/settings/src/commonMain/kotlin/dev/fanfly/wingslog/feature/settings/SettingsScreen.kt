@@ -255,7 +255,7 @@ fun SettingsContent(
           // Guest shows "Link to an account" (runs the upgrade); real accounts show "Log out".
           //
           // The branch is load-bearing, not cosmetic: a guest has no cloud copy, so logOut()'s wipe
-          // would destroy every aircraft, log, task, squawk, and attachment unrecoverably — and
+          // would destroy every thing, log, task, squawk, and attachment unrecoverably — and
           // "Sign out of your account on this device" says the opposite of what that does. Guests
           // are offered the way *in* instead, which is also the only thing that makes their data
           // recoverable. Keep it that way: a guest sign-out needs an explicit erase warning ahead of

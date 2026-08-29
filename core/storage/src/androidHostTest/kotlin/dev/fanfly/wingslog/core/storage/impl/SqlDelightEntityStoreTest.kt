@@ -62,10 +62,10 @@ class SqlDelightEntityStoreTest {
 
   @Test
   fun put_stamps_the_writing_account_as_author() = runTest(ioContext) {
-    val aircraft =
-      buildTestAircraft(id = TEST_AIRCRAFT_ID, tailNumber = "N12345")
+    val thing =
+      buildTestThing(id = TEST_AIRCRAFT_ID, tailNumber = "N12345")
 
-    store.put(TEST_AIRCRAFT_ID, aircraft, scopeA)
+    store.put(TEST_AIRCRAFT_ID, thing, scopeA)
 
     // Who wrote this revision is what §7.5 attests: it is read back to tell a technician signing
     // their own work apart from someone else attributing work to them.
@@ -84,10 +84,10 @@ class SqlDelightEntityStoreTest {
       clock = testClock,
       currentUid = { null },
     )
-    val aircraft =
-      buildTestAircraft(id = TEST_AIRCRAFT_ID, tailNumber = "N12345")
+    val thing =
+      buildTestThing(id = TEST_AIRCRAFT_ID, tailNumber = "N12345")
 
-    anonymous.put(TEST_AIRCRAFT_ID, aircraft, scopeA)
+    anonymous.put(TEST_AIRCRAFT_ID, thing, scopeA)
 
     // Null means "unknown", which the UI reports as neither signed nor assigned.
     assertThat(
@@ -100,10 +100,10 @@ class SqlDelightEntityStoreTest {
 
   @Test
   fun put_then_observeAll_emits_row() = runTest(ioContext) {
-    val aircraft =
-      buildTestAircraft(id = TEST_AIRCRAFT_ID, tailNumber = "N12345")
+    val thing =
+      buildTestThing(id = TEST_AIRCRAFT_ID, tailNumber = "N12345")
 
-    store.put(TEST_AIRCRAFT_ID, aircraft, scopeA)
+    store.put(TEST_AIRCRAFT_ID, thing, scopeA)
 
     val emissions: List<StorageEntity<Thing>> = store.observeAll(scopeA)
       .first()
@@ -118,7 +118,7 @@ class SqlDelightEntityStoreTest {
   fun delete_makes_observe_emit_null() = runTest(ioContext) {
     store.put(
       TEST_AIRCRAFT_ID,
-      buildTestAircraft(id = TEST_AIRCRAFT_ID),
+      buildTestThing(id = TEST_AIRCRAFT_ID),
       scopeA
     )
     store.delete(TEST_AIRCRAFT_ID, scopeA)
@@ -133,7 +133,7 @@ class SqlDelightEntityStoreTest {
   fun delete_makes_observeAll_omit_deleted_row() = runTest(ioContext) {
     store.put(
       TEST_AIRCRAFT_ID,
-      buildTestAircraft(id = TEST_AIRCRAFT_ID),
+      buildTestThing(id = TEST_AIRCRAFT_ID),
       scopeA
     )
     store.delete(TEST_AIRCRAFT_ID, scopeA)
@@ -150,7 +150,7 @@ class SqlDelightEntityStoreTest {
   fun scopes_are_isolated_put_in_A_not_visible_in_B() = runTest(ioContext) {
     store.put(
       TEST_AIRCRAFT_ID,
-      buildTestAircraft(id = TEST_AIRCRAFT_ID),
+      buildTestThing(id = TEST_AIRCRAFT_ID),
       scopeA
     )
 
@@ -166,7 +166,7 @@ class SqlDelightEntityStoreTest {
   fun put_marks_row_as_dirty() = runTest(ioContext) {
     store.put(
       TEST_AIRCRAFT_ID,
-      buildTestAircraft(id = TEST_AIRCRAFT_ID),
+      buildTestThing(id = TEST_AIRCRAFT_ID),
       scopeA
     )
 
@@ -184,7 +184,7 @@ class SqlDelightEntityStoreTest {
   fun delete_marks_row_dirty_and_deleted() = runTest(ioContext) {
     store.put(
       TEST_AIRCRAFT_ID,
-      buildTestAircraft(id = TEST_AIRCRAFT_ID),
+      buildTestThing(id = TEST_AIRCRAFT_ID),
       scopeA
     )
     // Advance clock so the delete gets a later timestamp than the put.
@@ -209,14 +209,14 @@ class SqlDelightEntityStoreTest {
     // Put older first at t=1_000_000.
     store.put(
       idOlder,
-      buildTestAircraft(id = idOlder, tailNumber = "N00001"),
+      buildTestThing(id = idOlder, tailNumber = "N00001"),
       scopeA
     )
     // Advance clock so the second put gets a strictly later timestamp.
     testClock.advanceBy(5_000L)
     store.put(
       idNewer,
-      buildTestAircraft(id = idNewer, tailNumber = "N99999"),
+      buildTestThing(id = idNewer, tailNumber = "N99999"),
       scopeA
     )
 
@@ -233,10 +233,10 @@ class SqlDelightEntityStoreTest {
 
   @Test
   fun put_then_observe_emits_the_entity() = runTest(ioContext) {
-    val aircraft =
-      buildTestAircraft(id = TEST_AIRCRAFT_ID, tailNumber = "N54321")
+    val thing =
+      buildTestThing(id = TEST_AIRCRAFT_ID, tailNumber = "N54321")
 
-    store.put(TEST_AIRCRAFT_ID, aircraft, scopeA)
+    store.put(TEST_AIRCRAFT_ID, thing, scopeA)
 
     val entity = store.observe(TEST_AIRCRAFT_ID, scopeA)
       .first()
@@ -253,7 +253,7 @@ class SqlDelightEntityStoreTest {
 
   // ---- helpers ----
 
-  private fun buildTestAircraft(
+  private fun buildTestThing(
     id: String = TEST_AIRCRAFT_ID,
     tailNumber: String = "N00000",
     make: String = "Cessna",

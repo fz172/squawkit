@@ -23,11 +23,11 @@ private const val HOST_UID = "host-scope-001"
 private const val OWN_AC = "ac-own"
 private const val SHARED_AC = "ac-shared"
 
-class AircraftScopeResolverImplTest {
+class ThingScopeResolverImplTest {
 
   private lateinit var auth: FirebaseAuth
   private lateinit var refStore: EntityStore<SharedAircraftRef>
-  private lateinit var resolver: AircraftScopeResolverImpl
+  private lateinit var resolver: ThingScopeResolverImpl
 
   @Before
   fun setUp() {
@@ -45,24 +45,24 @@ class AircraftScopeResolverImplTest {
     every { auth.currentUser } returns user
     every { auth.authStateChanged } returns flowOf(user)
 
-    // Default: no ref for any aircraft → own.
+    // Default: no ref for any thing → own.
     every { refStore.observe(any(), any()) } returns flowOf(null)
 
-    resolver = AircraftScopeResolverImpl(auth, storeFactory)
+    resolver = ThingScopeResolverImpl(auth, storeFactory)
   }
 
   @Test
   fun resolveNow_ownAircraft_usesMyUidScope() = runTest {
     assertThat(resolver.resolveNow(OWN_AC))
-      .isEqualTo(EntityScope.aircraftChildUnsafe(MY_UID, OWN_AC))
+      .isEqualTo(EntityScope.thingChildUnsafe(MY_UID, OWN_AC))
   }
 
   @Test
-  fun resolveNow_sharedAircraft_usesHostScope() = runTest {
+  fun resolveNow_sharedThing_usesHostScope() = runTest {
     seedSharedRef()
 
     assertThat(resolver.resolveNow(SHARED_AC))
-      .isEqualTo(EntityScope.aircraftChildUnsafe(HOST_UID, SHARED_AC))
+      .isEqualTo(EntityScope.thingChildUnsafe(HOST_UID, SHARED_AC))
   }
 
   @Test
@@ -78,18 +78,18 @@ class AircraftScopeResolverImplTest {
       resolver.resolve(OWN_AC)
         .first()
     )
-      .isEqualTo(EntityScope.aircraftChildUnsafe(MY_UID, OWN_AC))
+      .isEqualTo(EntityScope.thingChildUnsafe(MY_UID, OWN_AC))
   }
 
   @Test
-  fun resolve_sharedAircraft_emitsHostScope() = runTest {
+  fun resolve_sharedThing_emitsHostScope() = runTest {
     seedSharedRef()
 
     assertThat(
       resolver.resolve(SHARED_AC)
         .first()
     )
-      .isEqualTo(EntityScope.aircraftChildUnsafe(HOST_UID, SHARED_AC))
+      .isEqualTo(EntityScope.thingChildUnsafe(HOST_UID, SHARED_AC))
   }
 
   @Test

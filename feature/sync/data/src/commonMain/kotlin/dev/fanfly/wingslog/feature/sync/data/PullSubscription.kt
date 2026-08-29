@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.Flow
  * [PullListener] apply path (LWW, tombstones, cursor advance). Two shapes:
  *  - [observeCollection] — a filtered collection query, the common case;
  *  - [observeSingleDoc] — one document, for scopes a member may `get` but not `list` (the shared
- *    aircraft doc, docs/sharing §5.2).
+ *    thing doc, docs/sharing §5.2).
  *
  * The returned flows are cold; collecting opens the listener, cancelling collection detaches it.
  * Implemented by [FirestorePullSubscription]; mirrors the SyncWriter/RemoteFetcher interface pattern.

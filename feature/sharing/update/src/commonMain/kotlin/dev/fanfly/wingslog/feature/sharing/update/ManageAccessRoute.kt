@@ -28,7 +28,7 @@ fun ManageAccessRoute(navController: NavController) {
   val clipboard = LocalClipboardManager.current
   val chooserTitle = stringResource(Res.string.invite_title)
 
-  // Leaving removes this aircraft from the user's fleet — pop back once it succeeds. Being revoked
+  // Leaving removes this thing from the user's fleet — pop back once it succeeds. Being revoked
   // while the screen is open is the same ending, arrived at from the other side: we are no longer a
   // member, so the roster on screen is stale and must not stay up.
   //

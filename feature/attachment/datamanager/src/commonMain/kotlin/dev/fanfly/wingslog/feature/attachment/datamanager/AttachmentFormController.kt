@@ -32,7 +32,7 @@ import kotlinx.coroutines.launch
  */
 class AttachmentFormController(
   private val attachmentManager: AttachmentManager,
-  private val aircraftId: String,
+  private val thingId: String,
   private val cleanupScope: CoroutineScope =
     CoroutineScope(SupervisorJob() + Dispatchers.Default),
 ) {
@@ -122,7 +122,7 @@ class AttachmentFormController(
       }
       try {
         val attachment = attachmentManager.addPickedFile(
-          aircraftId,
+          thingId,
           file,
           file.name
         )

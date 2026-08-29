@@ -20,7 +20,7 @@ import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
 
 /**
- * On-device export manager that writes selected aircraft snapshots to a ZIP archive.
+ * On-device export manager that writes selected thing snapshots to a ZIP archive.
  */
 class ExportManagerImpl(
   private val aggregator: LogbookExportAggregator,
@@ -38,7 +38,7 @@ class ExportManagerImpl(
   private val log = Logger.withTag("ExportManagerImpl")
 
   override fun exportLogs(request: ExportRequest): Flow<ExportProgress> = flow {
-    if (request.aircraftIds.isEmpty()) {
+    if (request.thingIds.isEmpty()) {
       emit(ExportProgress.Error(""))
       return@flow
     }
@@ -49,17 +49,17 @@ class ExportManagerImpl(
         percent = 8
       )
     )
-    val bundles = request.aircraftIds.mapIndexed { index, aircraftId ->
+    val bundles = request.thingIds.mapIndexed { index, thingId ->
       emit(
         ExportProgress.Running(
           step = ExportProgressStep.COLLECTING_DATA,
-          percent = 8 + ((index + 1) * 24 / request.aircraftIds.size),
+          percent = 8 + ((index + 1) * 24 / request.thingIds.size),
         )
       )
-      aggregator.collect(request, aircraftId)
+      aggregator.collect(request, thingId)
     }
     val attachmentManifests = bundles.associate { bundle ->
-      bundle.aircraft.id to attachmentExportResolver.resolve(bundle)
+      bundle.thing.id to attachmentExportResolver.resolve(bundle)
     }
     // The one line that says whether this export is whole. Nothing else did: the ZIP carries the
     // notes, but a pilot reporting "it looks fine" and a log showing nothing were indistinguishable.
@@ -286,7 +286,7 @@ class ExportManagerImpl(
 
   private fun buildRecord(
     request: ExportRequest,
-    bundles: List<AircraftBundle>,
+    bundles: List<ThingBundle>,
     saved: ExportedFile,
     createdAtEpochMillis: Long,
   ): ExportRecord = ExportRecord(
@@ -301,8 +301,8 @@ class ExportManagerImpl(
     date_range = request.dateRange.toRecordDateRange(),
     aircraft = bundles.map { bundle ->
       ExportRecordAircraft(
-        tail_number = bundle.aircraft.tail_number,
-        make_model = listOf(bundle.aircraft.make, bundle.aircraft.model)
+        tail_number = bundle.thing.tail_number,
+        make_model = listOf(bundle.thing.make, bundle.thing.model)
           .filter { it.isNotBlank() }
           .joinToString(" "),
       )

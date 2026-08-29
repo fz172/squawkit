@@ -2,7 +2,7 @@ package dev.fanfly.wingslog.feature.logs.datamanager.impl
 
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.aircraft.MaintenanceLog
-import dev.fanfly.wingslog.core.storage.AircraftScopeResolver
+import dev.fanfly.wingslog.core.storage.ThingScopeResolver
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.EntityStore
@@ -68,7 +68,7 @@ class MaintenanceLogManagerImplTest {
   fun observeLogs_loggedIn_delegatesToStoreWithAircraftScope() = runTest {
     every {
       logStore.observeAll(
-        EntityScope.aircraftChildUnsafe(
+        EntityScope.thingChildUnsafe(
           TEST_USER_ID,
           TEST_AIRCRAFT_ID
         )
@@ -83,7 +83,7 @@ class MaintenanceLogManagerImplTest {
     assertThat(result.first()).isEmpty()
     io.mockk.verify {
       logStore.observeAll(
-        EntityScope.aircraftChildUnsafe(
+        EntityScope.thingChildUnsafe(
           TEST_USER_ID,
           TEST_AIRCRAFT_ID
         )
@@ -93,19 +93,19 @@ class MaintenanceLogManagerImplTest {
 }
 
 /**
- * Own-aircraft resolver driven by the same mocked auth the tests already set up: signed in →
- * `aircraftChildUnsafe(uid, id)`, signed out → null / throw. Keeps these unit tests focused on the manager
- * (the own-vs-shared logic is covered by AircraftScopeResolverImplTest).
+ * Own-thing resolver driven by the same mocked auth the tests already set up: signed in →
+ * `thingChildUnsafe(uid, id)`, signed out → null / throw. Keeps these unit tests focused on the manager
+ * (the own-vs-shared logic is covered by ThingScopeResolverImplTest).
  */
 private class FakeScopeResolver(private val auth: FirebaseAuth) :
-  AircraftScopeResolver {
-  override fun resolve(aircraftId: String): Flow<EntityScope?> =
+  ThingScopeResolver {
+  override fun resolve(thingId: String): Flow<EntityScope?> =
     auth.authStateChanged.map { user ->
-      user?.uid?.let { EntityScope.aircraftChildUnsafe(it, aircraftId) }
+      user?.uid?.let { EntityScope.thingChildUnsafe(it, thingId) }
     }
 
-  override suspend fun resolveNow(aircraftId: String): EntityScope {
+  override suspend fun resolveNow(thingId: String): EntityScope {
     val uid = auth.currentUser?.uid ?: error("Not signed in")
-    return EntityScope.aircraftChildUnsafe(uid, aircraftId)
+    return EntityScope.thingChildUnsafe(uid, thingId)
   }
 }

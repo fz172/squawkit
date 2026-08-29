@@ -1,7 +1,7 @@
 package dev.fanfly.wingslog.feature.notifications.engine.di
 
 import dev.fanfly.wingslog.core.lifecycle.AppForegroundObserver
-import dev.fanfly.wingslog.core.storage.AircraftScopeResolver
+import dev.fanfly.wingslog.core.storage.ThingScopeResolver
 import dev.fanfly.wingslog.core.storage.EntityStoreFactory
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
@@ -29,7 +29,7 @@ val notificationEngineModule: Module = module {
       prefsManager = get<NotificationPrefsManager>(),
       permission = get<NotificationPermission>(),
       fleetManager = get<FleetManager>(),
-      scopeResolver = get<AircraftScopeResolver>(),
+      scopeResolver = get<ThingScopeResolver>(),
       taskDueManager = get<TaskDueManager>(),
       logManager = get<MaintenanceLogManager>(),
       entityStoreFactory = get<EntityStoreFactory>(),

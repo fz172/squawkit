@@ -46,7 +46,7 @@ fun SquawkWithStatus.urgencyRank(): UrgencyRank = when (status) {
 }
 
 /**
- * The three buckets a crossing batches into — at most one notification per (aircraft, tier) per scan
+ * The three buckets a crossing batches into — at most one notification per (thing, tier) per scan
  * (design §6.5). Matches the three toggles in `NotificationSettingsExt` one-to-one.
  *
  * Deliberately a separate type from [UrgencyRank], not merged into it, even though both describe

@@ -24,14 +24,14 @@ import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalNavPillClearance
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.aircraft.dashboard.compose.ComplianceSection
 import dev.fanfly.wingslog.feature.aircraft.dashboard.data.AircraftOverviewAction
-import dev.fanfly.wingslog.feature.aircraft.dashboard.data.AircraftOverviewUiState
+import dev.fanfly.wingslog.feature.aircraft.dashboard.data.ThingOverviewUiState
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlin.math.roundToInt
 
 @Composable
 fun MaintenanceTasksTab(
-  state: AircraftOverviewUiState.Success,
+  state: ThingOverviewUiState.Success,
   onAction: (AircraftOverviewAction) -> Unit,
   /** Jumped-to task (from a log's Affected Tasks): switch to its sub-view and scroll to it. */
   scrollToTaskId: String? = null,

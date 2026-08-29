@@ -45,7 +45,7 @@ import kotlin.time.Duration.Companion.milliseconds
  * Lifecycle is anchored to [FirebaseAuth.authStateChanged]:
  * - On sign-in (non-anonymous user): hydrate top-level scopes (Thing, Technician, UserInfo)
  *   under the user's root, attach pull listeners with the cursor watermark, launch [PushWorker],
- *   and observe the local aircraft list to spin up per-aircraft pull listeners for nested
+ *   and observe the local thing list to spin up per-thing pull listeners for nested
  *   collections (MaintenanceLog/Task/Overview).
  * - On sign-out: cancel everything by tearing down the per-user scope. The next sign-in starts a
  *   fresh scope; data already on disk is left alone (a different user starts with their own
@@ -114,14 +114,14 @@ class SyncEngine(
       success = hydrationRunner.runFor(uid, kind, userRoot) && success
     }
 
-    val aircraftStore: EntityStore<Thing> =
+    val thingStore: EntityStore<Thing> =
       storeFactory.create(CollectionKind.Thing)
-    val aircraftIds = aircraftStore.observeAll(userRoot)
+    val thingIds = thingStore.observeAll(userRoot)
       .first()
       .map { it.id }
-    for (aircraftId in aircraftIds) {
-      val aircraftScope = EntityScope.aircraftChildUnsafe(uid, aircraftId)
-      for (kind in PER_AIRCRAFT_KINDS) {
+    for (thingId in thingIds) {
+      val aircraftScope = EntityScope.thingChildUnsafe(uid, thingId)
+      for (kind in PER_THING_KINDS) {
         success = hydrationRunner.runFor(uid, kind, aircraftScope) && success
       }
     }
@@ -258,8 +258,8 @@ class SyncEngine(
     }
     // A denied push into a host's tree means the same thing a denied read does — we were revoked —
     // so it reconciles the same way (§5.4).
-    pushWorker.sharedScopeRevokedSink = { _, aircraftId ->
-      if (revokeSharedLocally(uid, aircraftId)) {
+    pushWorker.sharedScopeRevokedSink = { _, thingId ->
+      if (revokeSharedLocally(uid, thingId)) {
         telemetry.sharedScopeReconciled(SyncTelemetry.TRIGGER_DENIED_WRITE)
       }
     }
@@ -283,26 +283,26 @@ class SyncEngine(
       }
     }
 
-    val aircraftStore: EntityStore<Thing> =
+    val thingStore: EntityStore<Thing> =
       storeFactory.create(CollectionKind.Thing)
     scope.launch {
-      aircraftStore.observeAll(userRoot)
+      thingStore.observeAll(userRoot)
         .map { rows ->
           rows.map { it.id }
             .toSet()
         }
         .distinctUntilChanged()
-        .collectLatest { aircraftIds ->
+        .collectLatest { thingIds ->
           aircraftSubScopeSupervisor.cancel()
           val subSupervisor = SupervisorJob(scope.coroutineContext[Job])
           aircraftSubScopeSupervisor = subSupervisor
           val subScope = CoroutineScope(subSupervisor + ioContext)
-          for (aircraftId in aircraftIds) {
-            val acScope = EntityScope.aircraftChildUnsafe(
+          for (thingId in thingIds) {
+            val acScope = EntityScope.thingChildUnsafe(
               uid,
-              aircraftId
+              thingId
             )
-            for (kind in PER_AIRCRAFT_KINDS) {
+            for (kind in PER_THING_KINDS) {
               subScope.launch {
                 hydrateAndListen(
                   uid,
@@ -315,9 +315,9 @@ class SyncEngine(
         }
     }
 
-    // Shared aircraft: the refs store (hydrated as a TOP_LEVEL_KIND) names foreign scopes that live
-    // under each host's tree. Mirror the own-aircraft fan-out, but hydrate/listen the per-aircraft
-    // kinds at aircraftChildUnsafe(hostUid, acId). The shared aircraft doc itself needs a doc-level pull
+    // Shared thing: the refs store (hydrated as a TOP_LEVEL_KIND) names foreign scopes that live
+    // under each host's tree. Mirror the own-thing fan-out, but hydrate/listen the per-thing
+    // kinds at aircraftChildUnsafe(hostUid, acId). The shared thing doc itself needs a doc-level pull
     // (§5.2, #123); this branch covers the nested maintenance data. See docs/sharing §5.1.
     val refStore: EntityStore<SharedAircraftRef> =
       storeFactory.create(CollectionKind.SharedAircraftRef)
@@ -337,24 +337,24 @@ class SyncEngine(
           val subSupervisor = SupervisorJob(scope.coroutineContext[Job])
           sharedSubScopeSupervisor = subSupervisor
           val subScope = CoroutineScope(subSupervisor + ioContext)
-          for ((hostUid, aircraftId) in sharedScopes) {
-            // The aircraft doc itself: doc-level (a list over the host's aircraft collection is denied).
+          for ((hostUid, thingId) in sharedScopes) {
+            // The thing doc itself: doc-level (a list over the host's thing collection is denied).
             // Each watcher is wrapped so a PERMISSION_DENIED — the rules denying us because we were
             // revoked while the ref tombstone was still in flight — reconciles as a local revoke (§5.4).
-            subScope.launchSharedWatch(uid, aircraftId) {
+            subScope.launchSharedWatch(uid, thingId) {
               watchDocAndListen(
                 uid,
                 CollectionKind.Thing,
                 EntityScope.userRoot(hostUid),
-                aircraftId
+                thingId
               )
             }
-            val acScope = EntityScope.aircraftChildUnsafe(
+            val acScope = EntityScope.thingChildUnsafe(
               hostUid,
-              aircraftId
+              thingId
             )
-            for (kind in PER_AIRCRAFT_KINDS) {
-              subScope.launchSharedWatch(uid, aircraftId) {
+            for (kind in PER_THING_KINDS) {
+              subScope.launchSharedWatch(uid, thingId) {
                 hydrateAndListen(
                   uid,
                   kind,
@@ -377,7 +377,7 @@ class SyncEngine(
    */
   private fun CoroutineScope.launchSharedWatch(
     memberUid: String,
-    aircraftId: String,
+    thingId: String,
     block: suspend () -> Unit,
   ): Job = launch {
     try {
@@ -390,7 +390,7 @@ class SyncEngine(
         // Every watcher on the scope is denied at once, so they all land here — but one revocation
         // happened, not five. Only the watcher that actually removes the ref reports it, or the
         // metric would count listeners instead of revocations.
-        if (revokeSharedLocally(memberUid, aircraftId)) {
+        if (revokeSharedLocally(memberUid, thingId)) {
           telemetry.sharedScopeReconciled(SyncTelemetry.TRIGGER_DENIED_READ)
         }
       } else {
@@ -400,7 +400,7 @@ class SyncEngine(
   }
 
   /**
-   * Hard-deletes the member's stale local ref for [aircraftId]. This drops the aircraft from the
+   * Hard-deletes the member's stale local ref for [thingId]. This drops the thing from the
    * live-refs set the refs branch observes, which re-spins the cycle: [SharedScopeJanitor] purges
    * the now-orphaned local data and this scope's watchers are torn down — the same teardown a
    * normally-delivered ref tombstone would trigger. It is a **local** delete on purpose: no dirty
@@ -409,7 +409,7 @@ class SyncEngine(
    */
   private suspend fun revokeSharedLocally(
     memberUid: String,
-    aircraftId: String
+    thingId: String
   ): Boolean {
     val database = db ?: return false
     val lock = writeLock ?: return false
@@ -419,23 +419,23 @@ class SyncEngine(
     // gets `true` — that one is the revocation; the rest are echoes of it.
     return lock.withLock {
       val present = database.schemaQueries
-        .selectOne(CollectionKind.SharedAircraftRef, scopePath, aircraftId)
+        .selectOne(CollectionKind.SharedAircraftRef, scopePath, thingId)
         .awaitAsOneOrNull() != null
       if (present) {
         database.schemaQueries.deleteEntity(
           CollectionKind.SharedAircraftRef,
           scopePath,
-          aircraftId,
+          thingId,
         )
       }
       present
     }
   }
 
-  /** Per-cycle supervisor for the aircraft-child listeners; recreated each time the id-set changes. */
+  /** Per-cycle supervisor for the thing-child listeners; recreated each time the id-set changes. */
   private var aircraftSubScopeSupervisor: Job = Job().apply { complete() }
 
-  /** Per-cycle supervisor for the shared-aircraft (foreign-scope) listeners; recreated on ref changes. */
+  /** Per-cycle supervisor for the shared-thing (foreign-scope) listeners; recreated on ref changes. */
   private var sharedSubScopeSupervisor: Job = Job().apply { complete() }
 
   /**
@@ -537,7 +537,7 @@ class SyncEngine(
   }
 
   /**
-   * Doc-level pull for a scope a member may `get` but not `list` — the shared aircraft doc (§5.2).
+   * Doc-level pull for a scope a member may `get` but not `list` — the shared thing doc (§5.2).
    * The snapshot listener delivers the current doc immediately, so there's no separate hydration
    * step; each emission feeds the same [PullListener] path (LWW/tombstones) as the collection listen.
    */
@@ -569,7 +569,7 @@ class SyncEngine(
 
   /**
    * Scans the local blob index for work the scheduler should pick up and enqueues it. Scoped to the
-   * user's own tree **plus every shared aircraft's nested-data subtree** (docs/sharing §5.3, #124 —
+   * user's own tree **plus every shared thing's nested-data subtree** (docs/sharing §5.3, #124 —
    * the same prefix widening [PushWorker] applies to the dirty-push queue), so a member's edits to a
    * shared plane's attachments are uploaded/prefetched rather than stranded. Re-runs whenever the
    * live-refs set changes, so a share redeemed mid-session catches up its pending blobs; suspends
@@ -638,8 +638,8 @@ class SyncEngine(
       CollectionKind.NotificationSettings,
     )
 
-    /** Collections nested under `users/{uid}/thing/{ac}/<wire>/...`. Hydrated per aircraft. */
-    private val PER_AIRCRAFT_KINDS: List<CollectionKind> = listOf(
+    /** Collections nested under `users/{uid}/thing/{ac}/<wire>/...`. Hydrated per thing. */
+    private val PER_THING_KINDS: List<CollectionKind> = listOf(
       CollectionKind.MaintenanceLog,
       CollectionKind.MaintenanceTask,
       CollectionKind.MaintenanceOverview,

@@ -40,7 +40,7 @@ import wingslog.feature.logs.sharedassets.generated.resources.Res as LogRes
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ComponentSection(
-  aircraft: Thing?,
+  thing: Thing?,
   selectedComponentType: ComponentType,
   selectedSubComponent: String?,
   onComponentTypeChange: (ComponentType) -> Unit,
@@ -74,23 +74,23 @@ fun ComponentSection(
 
     when (selectedComponentType) {
       ComponentType.COMPONENT_AIRFRAME -> {
-        // Display aircraft serial (read-only)
+        // Display thing serial (read-only)
         ReadOnlyComponentField(
           label = stringResource(Res.string.airframe_serial),
-          value = aircraft?.serial ?: "",
+          value = thing?.serial ?: "",
           modifier = Modifier.fillMaxWidth(),
         )
       }
 
       ComponentType.COMPONENT_ENGINE -> {
-        if (aircraft == null) {
+        if (thing == null) {
           Text(
             text = stringResource(Res.string.loading_aircraft),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
           )
         } else {
-          val engines = aircraft.engine
+          val engines = thing.engine
           val options = engines.map { engine ->
             val makeModel = listOf(engine.make, engine.model)
               .filter { it.isNotBlank() }
@@ -133,7 +133,7 @@ fun ComponentSection(
       }
 
       ComponentType.COMPONENT_PROPELLER -> {
-        if (aircraft == null) {
+        if (thing == null) {
           Text(
             text = stringResource(Res.string.loading_aircraft),
             style = MaterialTheme.typography.bodySmall,
@@ -142,7 +142,7 @@ fun ComponentSection(
         } else {
           // Collect all propeller components from all engines
           val options = mutableListOf<Pair<String, String>>()
-          aircraft.engine.forEach { engine ->
+          thing.engine.forEach { engine ->
             val prop = engine.propeller
             val hub = prop?.hub
             if (hub?.serial?.isNotEmpty() == true) {
@@ -200,7 +200,7 @@ fun ComponentSection(
 
 /**
  * Read-only labelled value box used when a component has no choice to make (the airframe, or an
- * aircraft with a single engine). Styled like a disabled outlined field so it reads as informational
+ * thing with a single engine). Styled like a disabled outlined field so it reads as informational
  * rather than interactive.
  */
 @Composable

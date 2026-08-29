@@ -27,7 +27,7 @@ import kotlin.time.Duration.Companion.days
 import kotlin.time.Instant
 
 data class StressTestData(
-  val aircraft: Thing,
+  val thing: Thing,
   val technicians: List<Technician>,
   val tasks: List<MaintenanceTask>,
   val squawks: List<Squawk>,
@@ -605,15 +605,15 @@ object FakeDataGenerator {
     val startInstant = now - spanDays
 
     val spec = AIRCRAFT_SPECS.random()
-    val aircraftId = generateRandomId()
-    val aircraft = buildAircraft(spec, aircraftId, config)
+    val thingId = generateRandomId()
+    val thing = buildAircraft(spec, thingId, config)
     val technicians = buildTechnicians(config.technicianCount)
     val tasks = buildTasks(config.taskCount, now)
     val squawks =
-      buildSquawks(config.squawkCount, aircraft, startInstant, now)
+      buildSquawks(config.squawkCount, thing, startInstant, now)
     val (logs, addressedSquawks) = buildLogs(
       config.logCount,
-      aircraft,
+      thing,
       technicians,
       tasks,
       squawks,
@@ -623,7 +623,7 @@ object FakeDataGenerator {
     val dismissedSquawks = buildDismissedSquawks(squawks, addressedSquawks)
 
     return StressTestData(
-      aircraft = aircraft,
+      thing = thing,
       technicians = technicians,
       tasks = tasks,
       squawks = squawks,
@@ -635,7 +635,7 @@ object FakeDataGenerator {
 
   private fun buildAircraft(
     spec: AircraftSpec,
-    aircraftId: String,
+    thingId: String,
     config: StressTestConfig
   ): Thing {
     val serialLetters = ('A'..'Z').toList()
@@ -670,7 +670,7 @@ object FakeDataGenerator {
     }
 
     return Thing(
-      id = aircraftId,
+      id = thingId,
       make = spec.make,
       model = spec.model,
       serial = serial,
@@ -793,7 +793,7 @@ object FakeDataGenerator {
 
   private fun buildSquawks(
     count: Int,
-    aircraft: Thing,
+    thing: Thing,
     startInstant: Instant,
     now: Instant,
   ): List<Squawk> {
@@ -805,13 +805,13 @@ object FakeDataGenerator {
         if (pool.size == 1) 0.5 else i.toDouble() / (pool.size - 1)
       val squawkInstant = startInstant + (span * fraction)
       val serial = when (template.component) {
-        ComponentType.COMPONENT_ENGINE -> aircraft.engine.firstOrNull()?.serial
-          ?: aircraft.serial
+        ComponentType.COMPONENT_ENGINE -> thing.engine.firstOrNull()?.serial
+          ?: thing.serial
 
-        ComponentType.COMPONENT_PROPELLER -> aircraft.engine.firstOrNull()?.propeller?.hub?.serial
-          ?: aircraft.serial
+        ComponentType.COMPONENT_PROPELLER -> thing.engine.firstOrNull()?.propeller?.hub?.serial
+          ?: thing.serial
 
-        else -> aircraft.serial
+        else -> thing.serial
       }
       Squawk(
         id = generateRandomId(),
@@ -827,7 +827,7 @@ object FakeDataGenerator {
 
   private fun buildLogs(
     count: Int,
-    aircraft: Thing,
+    thing: Thing,
     technicians: List<Technician>,
     tasks: List<MaintenanceTask>,
     squawks: List<Squawk>,
@@ -884,13 +884,13 @@ object FakeDataGenerator {
         }
 
       val componentSerial = when (template.component) {
-        ComponentType.COMPONENT_ENGINE -> aircraft.engine.firstOrNull()?.serial
-          ?: aircraft.serial
+        ComponentType.COMPONENT_ENGINE -> thing.engine.firstOrNull()?.serial
+          ?: thing.serial
 
-        ComponentType.COMPONENT_PROPELLER -> aircraft.engine.firstOrNull()?.propeller?.hub?.serial
-          ?: aircraft.serial
+        ComponentType.COMPONENT_PROPELLER -> thing.engine.firstOrNull()?.propeller?.hub?.serial
+          ?: thing.serial
 
-        else -> aircraft.serial
+        else -> thing.serial
       }
 
       MaintenanceLog(

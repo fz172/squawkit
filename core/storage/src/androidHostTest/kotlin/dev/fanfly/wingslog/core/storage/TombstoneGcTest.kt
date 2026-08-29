@@ -30,7 +30,7 @@ private val RECENTLY = NOW - 3.days
 
 private val USER_ROOT = EntityScope.userRoot(UID)
   .toPath()
-private val AIRCRAFT_SCOPE = EntityScope.aircraftChildUnsafe(UID, AIRCRAFT_ID)
+private val AIRCRAFT_SCOPE = EntityScope.thingChildUnsafe(UID, AIRCRAFT_ID)
   .toPath()
 
 @OptIn(ExperimentalTime::class)
@@ -141,10 +141,10 @@ class TombstoneGcTest {
       deleted = true,
       attachmentIds = listOf("copied")
     )
-    // Same attachment id, different aircraft — a copy across the fleet. The live one wins.
+    // Same attachment id, different thing — a copy across the fleet. The live one wins.
     putEntity(
       kind = CollectionKind.MaintenanceLog,
-      scope = EntityScope.aircraftChildUnsafe(UID, "ac-2")
+      scope = EntityScope.thingChildUnsafe(UID, "ac-2")
         .toPath(),
       id = "copy",
       payload = MaintenanceLog(
@@ -178,7 +178,7 @@ class TombstoneGcTest {
     assertThat(blobs.purged).contains(BlobId("blob-a"))
   }
 
-  /** Blobs are aircraft-scoped: a deleted aircraft takes its whole blob prefix with it (§5.2). */
+  /** Blobs are thing-scoped: a deleted thing takes its whole blob prefix with it (§5.2). */
   @Test
   fun purgedAircraftReclaimsEveryBlobInItsScope_evenOnesNoPayloadNames() =
     runTest {
@@ -194,7 +194,7 @@ class TombstoneGcTest {
   fun purgedAircraftLeavesAnotherAircraftsBlobsAlone() = runTest {
     putAircraft(at = LONG_AGO, deleted = true)
     blobs.rows[BlobId("mine")] = AIRCRAFT_SCOPE
-    blobs.rows[BlobId("theirs")] = EntityScope.aircraftChildUnsafe(UID, "ac-2")
+    blobs.rows[BlobId("theirs")] = EntityScope.thingChildUnsafe(UID, "ac-2")
       .toPath()
 
     gc.runOnce(NOW)

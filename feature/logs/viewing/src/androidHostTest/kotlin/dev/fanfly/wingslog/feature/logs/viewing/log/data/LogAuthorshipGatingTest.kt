@@ -27,7 +27,7 @@ private const val OWNER_UID = "uid-owner"
 private const val LOG_ID = "log-1"
 
 /**
- * Attestation is a statement about other people. On an unshared aircraft nobody else can write a
+ * Attestation is a statement about other people. On an unshared thing nobody else can write a
  * log, so there is nothing to attest and nothing a reader could do about it — the owner typed every
  * name and answers for all of it. The sheet must say nothing at all there.
  */
@@ -71,7 +71,7 @@ class LogAuthorshipGatingTest {
     technicianManager = technicians,
     squawkManager = squawks,
     auth = auth,
-    aircraftId = AC_ID,
+    thingId = AC_ID,
   )
 
   private fun selectedAuthorship(): LogAuthorship {
@@ -81,14 +81,14 @@ class LogAuthorshipGatingTest {
   }
 
   @Test
-  fun unsharedAircraft_saysNothing() {
+  fun unsharedThing_saysNothing() {
     every { sharing.observeIsShared(AC_ID) } returns flowOf(false)
 
     assertThat(selectedAuthorship()).isEqualTo(LogAuthorship.Unknown)
   }
 
   @Test
-  fun sharedAircraft_reportsTheHandTypedNameAsUnverifiable() {
+  fun sharedThing_reportsTheHandTypedNameAsUnverifiable() {
     every { sharing.observeIsShared(AC_ID) } returns flowOf(true)
 
     assertThat(selectedAuthorship())

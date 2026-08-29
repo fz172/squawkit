@@ -170,7 +170,7 @@ object MainEntry {
    * docs/account/email_link_signin_design.html.
    */
   fun handleIncomingUrl(url: String): Boolean {
-    // An aircraft-share invite is parked for the redeem flow; otherwise fall through to email sign-in.
+    // An thing-share invite is parked for the redeem flow; otherwise fall through to email sign-in.
     if (AircraftShareDeepLinks.deliver(url)) return true
     val authManager = KoinPlatform.getKoin()
       .get<dev.fanfly.wingslog.core.auth.AuthManager>()

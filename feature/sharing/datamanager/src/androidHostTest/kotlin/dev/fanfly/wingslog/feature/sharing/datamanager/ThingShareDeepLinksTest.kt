@@ -19,8 +19,8 @@ class AircraftShareDeepLinksTest {
 
   @Test
   fun a_link_names_no_aircraft_and_no_host() {
-    // The entire point of #164. An aircraft id in an invite is a capability: whoever holds one can
-    // fabricate a same-id aircraft and read the victim's ACL and technician certificate numbers
+    // The entire point of #164. An thing id in an invite is a capability: whoever holds one can
+    // fabricate a same-id thing and read the victim's ACL and technician certificate numbers
     // (#202), or re-claim an abandoned share (#204). The code names nothing real.
     val invite =
       AircraftShareDeepLinks.parse("https://squawkit.fanfly.dev/share#$CODE")

@@ -18,12 +18,12 @@ data class LogStats(
   val currentPropTime: Double? = null,
 )
 
-sealed interface AircraftOverviewUiState {
-  data object Loading : AircraftOverviewUiState
-  data object Error : AircraftOverviewUiState
+sealed interface ThingOverviewUiState {
+  data object Loading : ThingOverviewUiState
+  data object Error : ThingOverviewUiState
 
   data class Success(
-    val aircraft: Thing,
+    val thing: Thing,
     val logStats: LogStats? = null,
     val activeTasks: List<MaintenanceTaskWithStatus> = emptyList(),
     val completedTasks: List<MaintenanceTaskWithStatus> = emptyList(),
@@ -36,16 +36,16 @@ sealed interface AircraftOverviewUiState {
     val aogSquawks: List<Squawk> = emptyList(),
     val selectedSquawk: SquawkWithStatus? = null,
     val logForSelectedSquawk: MaintenanceLog? = null,
-    /** Caller's role on this aircraft; drives owner-only gating. `null` while it resolves. */
+    /** Caller's role on this thing; drives owner-only gating. `null` while it resolves. */
     val myRole: ShareRole? = null,
     /**
-     * True when this aircraft lives in another account's fleet and was shared into ours. Not the
-     * same as [myRole]: a co-owner of someone else's aircraft is `OWNER` *and* shared.
+     * True when this thing lives in another account's fleet and was shared into ours. Not the
+     * same as [myRole]: a co-owner of someone else's thing is `OWNER` *and* shared.
      */
     val shared: Boolean = false,
     /** Guest account. Sharing needs a permanent one, so its entry points are hidden entirely. */
     val isAnonymous: Boolean = false,
-  ) : AircraftOverviewUiState {
+  ) : ThingOverviewUiState {
     /**
      * Owner-only affordances: Edit Aircraft, Delete, Manage Access. Technicians get a read-only
      * screen (they can still add maintenance). Server rules are the real enforcement (§6.3).

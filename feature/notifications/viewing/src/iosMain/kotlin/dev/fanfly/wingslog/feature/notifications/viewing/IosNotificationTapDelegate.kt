@@ -53,7 +53,7 @@ class IosNotificationTapDelegate : NSObject(), UNUserNotificationCenterDelegateP
    * Show the banner even while the app is foregrounded. iOS suppresses foreground notifications
    * unless a delegate says otherwise; Android and web both show them, and an urgency alert that
    * silently does not appear because the pilot happened to have the app open is the one case where
-   * suppression is most wrong — they are looking at the aircraft the alert is about.
+   * suppression is most wrong — they are looking at the thing the alert is about.
    */
   override fun userNotificationCenter(
     center: UNUserNotificationCenter,

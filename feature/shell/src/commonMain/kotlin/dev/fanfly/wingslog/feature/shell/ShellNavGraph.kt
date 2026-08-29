@@ -155,8 +155,8 @@ fun NavGraphBuilder.formDialogs(navController: NavController) {
  * features that own them and no capability flag to decide for them.
  */
 /**
- * Per-aircraft sharing destinations, registered once on the root graph so both hosts render them.
- * Reached from an aircraft's context (the entry point + role-gated visibility land with #133).
+ * Per-thing sharing destinations, registered once on the root graph so both hosts render them.
+ * Reached from an thing's context (the entry point + role-gated visibility land with #133).
  */
 fun NavGraphBuilder.sharingRoutes(navController: NavController) {
   dialog(

@@ -5,23 +5,23 @@ sealed interface AircraftOverviewEvent {
   data object NavigateBack : AircraftOverviewEvent
 
   data class ShowError(val message: String?) : AircraftOverviewEvent
-  data class NavigateToEditAircraft(val aircraftId: String) :
+  data class NavigateToEditAircraft(val thingId: String) :
     AircraftOverviewEvent
 
-  data class NavigateToManageAccess(val aircraftId: String) :
+  data class NavigateToManageAccess(val thingId: String) :
     AircraftOverviewEvent
 
-  data class NavigateToAddLog(val aircraftId: String) : AircraftOverviewEvent
-  data class NavigateToEditLog(val aircraftId: String, val logId: String) :
+  data class NavigateToAddLog(val thingId: String) : AircraftOverviewEvent
+  data class NavigateToEditLog(val thingId: String, val logId: String) :
     AircraftOverviewEvent
 
-  data class NavigateToAddTask(val aircraftId: String) : AircraftOverviewEvent
-  data class NavigateToEditTask(val aircraftId: String, val cardId: String) :
+  data class NavigateToAddTask(val thingId: String) : AircraftOverviewEvent
+  data class NavigateToEditTask(val thingId: String, val cardId: String) :
     AircraftOverviewEvent
 
-  data class NavigateToAddSquawk(val aircraftId: String) : AircraftOverviewEvent
+  data class NavigateToAddSquawk(val thingId: String) : AircraftOverviewEvent
   data class NavigateToEditSquawk(
-    val aircraftId: String,
+    val thingId: String,
     val squawkId: String
   ) : AircraftOverviewEvent
 }

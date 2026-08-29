@@ -36,11 +36,11 @@ class LogbookExportArchiveBuilder(
 ) {
 
   /**
-   * Creates all ZIP entry payloads for [bundles] using a root README and one directory per aircraft.
+   * Creates all ZIP entry payloads for [bundles] using a root README and one directory per thing.
    */
   fun buildEntries(
     request: ExportRequest,
-    bundles: List<AircraftBundle>,
+    bundles: List<ThingBundle>,
     attachmentManifests: Map<String, AttachmentExportManifest> = emptyMap(),
     generatedAt: LocalDateTime,
     timeZone: TimeZone,
@@ -50,7 +50,7 @@ class LogbookExportArchiveBuilder(
       aircraftExport(
         request = request,
         bundle = bundle,
-        attachments = attachmentManifests[bundle.aircraft.id]
+        attachments = attachmentManifests[bundle.thing.id]
           ?: AttachmentExportManifest(
             byAttachmentId = emptyMap(),
             notes = emptyList(),
@@ -72,18 +72,18 @@ class LogbookExportArchiveBuilder(
       )
     )
     aircraftExports.forEach { export ->
-      val aircraftFolder = export.bundle.aircraft.folderName()
+      val thingFolder = export.bundle.thing.folderName()
       if (ExportFormat.CSV in formats) {
         export.tables.forEach { table ->
           entries += csvEntry(
-            "$aircraftFolder/csv/${table.csvPath}",
+            "$thingFolder/csv/${table.csvPath}",
             table.rows
           )
         }
       }
       if (ExportFormat.XLSX in formats) {
         entries += ZipEntryPayload(
-          path = "$aircraftFolder/${
+          path = "$thingFolder/${
             workbookFileName(
               export.bundle,
               generatedAt.date
@@ -99,7 +99,7 @@ class LogbookExportArchiveBuilder(
       }
       if (ExportFormat.PDF in formats) {
         entries += ZipEntryPayload(
-          path = "$aircraftFolder/${export.bundle.aircraft.folderName()}.pdf",
+          path = "$thingFolder/${export.bundle.thing.folderName()}.pdf",
           bytes = aircraftPdfWriter.write(
             buildPdfDocument(
               export = export,
@@ -112,7 +112,7 @@ class LogbookExportArchiveBuilder(
       }
       export.attachments.byAttachmentId.values.forEach { payload ->
         entries += ZipEntryPayload(
-          path = "$aircraftFolder/${payload.relativePath}",
+          path = "$thingFolder/${payload.relativePath}",
           bytes = payload.bytes,
         )
       }
@@ -123,7 +123,7 @@ class LogbookExportArchiveBuilder(
 
   private fun aircraftExport(
     request: ExportRequest,
-    bundle: AircraftBundle,
+    bundle: ThingBundle,
     attachments: AttachmentExportManifest,
     generatedAt: LocalDateTime,
     timeZone: TimeZone,
@@ -147,18 +147,18 @@ class LogbookExportArchiveBuilder(
             rows = airframeRows(bundle, attachments, timeZone),
           )
         )
-        bundle.aircraft.engine.forEachIndexed { index, engine ->
+        bundle.thing.engine.forEachIndexed { index, engine ->
           add(
             LogbookExportTable(
-              csvPath = engineCsvName(bundle.aircraft, index),
-              sheetName = engineSheetName(bundle.aircraft, index),
+              csvPath = engineCsvName(bundle.thing, index),
+              sheetName = engineSheetName(bundle.thing, index),
               rows = engineRows(bundle, attachments, engine, index, timeZone),
             )
           )
           add(
             LogbookExportTable(
-              csvPath = propellerCsvName(bundle.aircraft, index),
-              sheetName = propellerSheetName(bundle.aircraft, index),
+              csvPath = propellerCsvName(bundle.thing, index),
+              sheetName = propellerSheetName(bundle.thing, index),
               rows = propellerRows(
                 bundle,
                 attachments,
@@ -169,7 +169,7 @@ class LogbookExportArchiveBuilder(
             )
           )
         }
-        if (bundle.aircraft.engine.isEmpty()) {
+        if (bundle.thing.engine.isEmpty()) {
           add(
             LogbookExportTable(
               csvPath = "02_Engine_Unknown.csv",
@@ -211,50 +211,50 @@ class LogbookExportArchiveBuilder(
   }
 
   /**
-   * Returns the PRD filename for a single-aircraft or fleet export.
+   * Returns the PRD filename for a single-thing or fleet export.
    */
-  fun fileName(bundles: List<AircraftBundle>, date: LocalDate): String {
+  fun fileName(bundles: List<ThingBundle>, date: LocalDate): String {
     val stamp = date.compact()
     val subject =
-      if (bundles.size == 1) bundles.first().aircraft.safeTailNumber() else "Fleet"
+      if (bundles.size == 1) bundles.first().thing.safeTailNumber() else "Fleet"
     return "SquawkIt_Logs_${subject}_$stamp.zip"
   }
 
   private fun workbookFileName(
-    bundle: AircraftBundle,
+    bundle: ThingBundle,
     date: LocalDate
   ): String =
     fileName(listOf(bundle), date).removeSuffix(".zip") + ".xlsx"
 
   private fun aircraftInfoRows(
-    bundle: AircraftBundle,
+    bundle: ThingBundle,
     request: ExportRequest,
     generatedAt: LocalDateTime,
     timeZone: TimeZone,
   ): List<List<String>> {
-    val aircraft = bundle.aircraft
+    val thing = bundle.thing
     val openSquawks = bundle.squawks.count { it.statusLabel() == "Open" }
     val latestLog = bundle.logs.maxByOrNull {
       it.timestamp?.getEpochSecond() ?: Long.MIN_VALUE
     }
     val engineTimeLabel =
-      if (aircraft.engine.size <= 1) "Current Engine Time" else "Current Engine 1 Time"
+      if (thing.engine.size <= 1) "Current Engine Time" else "Current Engine 1 Time"
     val propellerTimeLabel =
-      if (aircraft.engine.count { it.propeller != null } <= 1) {
+      if (thing.engine.count { it.propeller != null } <= 1) {
         "Current Propeller Time"
       } else {
         "Current Propeller 1 Time"
       }
     return listOf(
       listOf("Field", "Value"),
-      listOf("Tail Number", aircraft.tail_number),
-      listOf("Make", aircraft.make),
-      listOf("Model", aircraft.model),
-      listOf("Serial Number", aircraft.serial),
-      listOf("Engines", aircraft.engine.size.toString()),
+      listOf("Tail Number", thing.tail_number),
+      listOf("Make", thing.make),
+      listOf("Model", thing.model),
+      listOf("Serial Number", thing.serial),
+      listOf("Engines", thing.engine.size.toString()),
       listOf(
         "Propellers",
-        aircraft.engine.count { it.propeller != null }
+        thing.engine.count { it.propeller != null }
           .toString()
       ),
       listOf("Current Airframe Time", latestLog?.airframe_time.formatHours()),
@@ -270,13 +270,13 @@ class LogbookExportArchiveBuilder(
   }
 
   private fun airframeRows(
-    bundle: AircraftBundle,
+    bundle: ThingBundle,
     attachments: AttachmentExportManifest,
     timeZone: TimeZone,
   ): List<List<String>> =
     buildList {
       val engineTimeHeader =
-        if (bundle.aircraft.engine.size <= 1) "Engine Time" else "Engine 1 Time"
+        if (bundle.thing.engine.size <= 1) "Engine Time" else "Engine 1 Time"
       add(
         listOf(
           "Date",
@@ -309,7 +309,7 @@ class LogbookExportArchiveBuilder(
     }
 
   private fun engineRows(
-    bundle: AircraftBundle,
+    bundle: ThingBundle,
     attachments: AttachmentExportManifest,
     engine: Engine?,
     index: Int,
@@ -357,7 +357,7 @@ class LogbookExportArchiveBuilder(
     }
 
   private fun propellerRows(
-    bundle: AircraftBundle,
+    bundle: ThingBundle,
     attachments: AttachmentExportManifest,
     propeller: Propeller?,
     index: Int,
@@ -416,7 +416,7 @@ class LogbookExportArchiveBuilder(
     }
 
   private fun complianceRows(
-    bundle: AircraftBundle,
+    bundle: ThingBundle,
     timeZone: TimeZone
   ): List<List<String>> =
     buildList {
@@ -463,7 +463,7 @@ class LogbookExportArchiveBuilder(
     }
 
   private fun squawkRows(
-    bundle: AircraftBundle,
+    bundle: ThingBundle,
     timeZone: TimeZone
   ): List<List<String>> =
     buildList {
@@ -496,7 +496,7 @@ class LogbookExportArchiveBuilder(
     }
 
   private fun technicianRows(
-    bundle: AircraftBundle,
+    bundle: ThingBundle,
     timeZone: TimeZone
   ): List<List<String>> =
     buildList {
@@ -519,24 +519,24 @@ class LogbookExportArchiveBuilder(
     }
 
   private fun readme(
-    bundles: List<AircraftBundle>,
+    bundles: List<ThingBundle>,
     request: ExportRequest,
     attachmentManifests: Map<String, AttachmentExportManifest>,
     generatedAt: LocalDateTime,
     timeZone: TimeZone,
   ): String {
     val attachmentNotes = bundles.mapNotNull { bundle ->
-      val notes = attachmentManifests[bundle.aircraft.id]?.notes.orEmpty()
+      val notes = attachmentManifests[bundle.thing.id]?.notes.orEmpty()
         .takeIf { it.isNotEmpty() }
         ?.joinToString(separator = "\n") { "- $it" }
-      notes?.let { "${bundle.aircraft.folderName()}\n$it" }
+      notes?.let { "${bundle.thing.folderName()}\n$it" }
     }
       .takeIf { it.isNotEmpty() }
       ?.joinToString(separator = "\n\n")
       ?.let { "\nAttachment notes\n$it" }
       .orEmpty()
     val scope = if (bundles.size == 1) {
-      bundles.first().aircraft.run { "$make $model $tail_number" }
+      bundles.first().thing.run { "$make $model $tail_number" }
     } else {
       "${bundles.size} aircraft"
     }
@@ -557,12 +557,12 @@ class LogbookExportArchiveBuilder(
     generatedAt: LocalDateTime,
     timeZone: TimeZone,
   ): AircraftPdfDocument {
-    val aircraft = export.bundle.aircraft
+    val thing = export.bundle.thing
     return AircraftPdfDocument(
-      title = listOf(aircraft.make, aircraft.model, aircraft.tail_number)
+      title = listOf(thing.make, thing.model, thing.tail_number)
         .filter { it.isNotBlank() }
         .joinToString(separator = " ")
-        .ifBlank { aircraft.id.ifBlank { "Aircraft Export" } },
+        .ifBlank { thing.id.ifBlank { "Aircraft Export" } },
       subtitle = "SquawkIt logbook export PDF",
       summarySections = buildList {
         add(
@@ -594,20 +594,20 @@ class LogbookExportArchiveBuilder(
                 rows = listOf(
                   PdfSummaryRow(
                     "Tail Number",
-                    aircraft.tail_number.ifBlank { aircraft.id }),
-                  PdfSummaryRow("Make", aircraft.make),
-                  PdfSummaryRow("Model", aircraft.model),
-                  PdfSummaryRow("Serial Number", aircraft.serial),
+                    thing.tail_number.ifBlank { thing.id }),
+                  PdfSummaryRow("Make", thing.make),
+                  PdfSummaryRow("Model", thing.model),
+                  PdfSummaryRow("Serial Number", thing.serial),
                 )
               )
             ),
           )
         )
-        val componentCards = aircraft.engine.flatMapIndexed { index, engine ->
+        val componentCards = thing.engine.flatMapIndexed { index, engine ->
           buildList {
             add(
               PdfSummaryCard(
-                title = engineCardTitle(aircraft, index),
+                title = engineCardTitle(thing, index),
                 rows = listOf(
                   PdfSummaryRow("Make", engine.make),
                   PdfSummaryRow("Model", engine.model),
@@ -618,7 +618,7 @@ class LogbookExportArchiveBuilder(
             engine.propeller?.let { propeller ->
               add(
                 PdfSummaryCard(
-                  title = propellerCardTitle(aircraft, index),
+                  title = propellerCardTitle(thing, index),
                   rows = buildList {
                     add(
                       PdfSummaryRow(
@@ -699,7 +699,7 @@ class LogbookExportArchiveBuilder(
   }
 
   private fun logRow(
-    bundle: AircraftBundle,
+    bundle: ThingBundle,
     attachments: AttachmentExportManifest,
     log: MaintenanceLog,
     primaryHours: Double,
@@ -731,34 +731,34 @@ class LogbookExportArchiveBuilder(
   private fun textEntry(path: String, text: String): ZipEntryPayload =
     ZipEntryPayload(path = path, bytes = text.encodeToByteArray())
 
-  private fun MaintenanceLog.resolveTechnician(bundle: AircraftBundle): Technician? =
+  private fun MaintenanceLog.resolveTechnician(bundle: ThingBundle): Technician? =
     technician?.takeIf { it.name.isNotBlank() }
       ?: bundle.techniciansById[technician_id]
 
-  private fun engineCsvName(aircraft: Thing, index: Int): String =
-    if (aircraft.engine.size <= 1) "02_Engine.csv" else "02_Engine_${index + 1}.csv"
+  private fun engineCsvName(thing: Thing, index: Int): String =
+    if (thing.engine.size <= 1) "02_Engine.csv" else "02_Engine_${index + 1}.csv"
 
-  private fun propellerCsvName(aircraft: Thing, index: Int): String =
-    if (aircraft.engine.count { it.propeller != null } <= 1) "03_Propeller.csv" else "03_Propeller_${index + 1}.csv"
+  private fun propellerCsvName(thing: Thing, index: Int): String =
+    if (thing.engine.count { it.propeller != null } <= 1) "03_Propeller.csv" else "03_Propeller_${index + 1}.csv"
 
-  private fun engineSheetName(aircraft: Thing, index: Int): String =
-    if (aircraft.engine.size <= 1) "02 Engine" else "02 Engine ${index + 1}"
+  private fun engineSheetName(thing: Thing, index: Int): String =
+    if (thing.engine.size <= 1) "02 Engine" else "02 Engine ${index + 1}"
 
-  private fun propellerSheetName(aircraft: Thing, index: Int): String =
-    if (aircraft.engine.count { it.propeller != null } <= 1) "03 Prop" else "03 Prop ${index + 1}"
+  private fun propellerSheetName(thing: Thing, index: Int): String =
+    if (thing.engine.count { it.propeller != null } <= 1) "03 Prop" else "03 Prop ${index + 1}"
 
-  private fun engineCardTitle(aircraft: Thing, index: Int): String =
-    if (aircraft.engine.size <= 1) "Engine" else "Engine ${index + 1}"
+  private fun engineCardTitle(thing: Thing, index: Int): String =
+    if (thing.engine.size <= 1) "Engine" else "Engine ${index + 1}"
 
-  private fun propellerCardTitle(aircraft: Thing, index: Int): String =
-    if (aircraft.engine.count { it.propeller != null } <= 1) "Propeller" else "Propeller ${index + 1}"
+  private fun propellerCardTitle(thing: Thing, index: Int): String =
+    if (thing.engine.count { it.propeller != null } <= 1) "Propeller" else "Propeller ${index + 1}"
 
-  private fun MaintenanceLog.inspectionTitles(bundle: AircraftBundle): String =
+  private fun MaintenanceLog.inspectionTitles(bundle: ThingBundle): String =
     inspection_ids.joinToString("\n") { id ->
       bundle.tasksById[id]?.title ?: "[deleted]"
     }
 
-  private fun MaintenanceLog.referenceNumbers(bundle: AircraftBundle): String =
+  private fun MaintenanceLog.referenceNumbers(bundle: ThingBundle): String =
     inspection_ids.mapNotNull { id ->
       bundle.tasksById[id]?.reference_number?.takeIf(
         String::isNotBlank
@@ -766,7 +766,7 @@ class LogbookExportArchiveBuilder(
     }
       .joinToString("\n")
 
-  private fun MaintenanceLog.squawkTitles(bundle: AircraftBundle): String =
+  private fun MaintenanceLog.squawkTitles(bundle: ThingBundle): String =
     squawk_ids.joinToString("\n") { id ->
       bundle.squawksById[id]?.title ?: "[deleted]"
     }
@@ -783,7 +783,7 @@ class LogbookExportArchiveBuilder(
       }
     }
 
-  private fun List<InspectionRule>.scheduleLabel(bundle: AircraftBundle): String =
+  private fun List<InspectionRule>.scheduleLabel(bundle: ThingBundle): String =
     joinToString("\n") { rule ->
       when {
         rule.time_rule != null -> rule.time_rule!!.run {
@@ -870,7 +870,7 @@ class LogbookExportArchiveBuilder(
     }
 
   private fun Squawk.actionDate(
-    bundle: AircraftBundle,
+    bundle: ThingBundle,
     timeZone: TimeZone
   ): String =
     when {
@@ -941,7 +941,7 @@ class LogbookExportArchiveBuilder(
   }
 
   private data class AircraftExport(
-    val bundle: AircraftBundle,
+    val bundle: ThingBundle,
     val attachments: AttachmentExportManifest,
     val sheetPrefix: String,
     val tables: List<LogbookExportTable>,

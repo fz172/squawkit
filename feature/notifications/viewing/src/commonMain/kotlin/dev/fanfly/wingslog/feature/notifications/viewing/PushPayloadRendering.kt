@@ -129,8 +129,8 @@ private suspend fun PushPayload.noun(): String = getString(nounRes())
 
 /**
  * Section labels are resolved from `recordType` rather than sent, because they are localized text
- * the server has no way to produce (§7.6). An unknown type falls back to the aircraft label, which
- * reads correctly for anything about the aircraft as a whole.
+ * the server has no way to produce (§7.6). An unknown type falls back to the thing label, which
+ * reads correctly for anything about the thing as a whole.
  */
 private fun PushPayload.sectionRes(): StringResource = when (recordType) {
   "squawk" -> Res.string.notification_n1_section_squawks
@@ -139,7 +139,7 @@ private fun PushPayload.sectionRes(): StringResource = when (recordType) {
   else -> Res.string.notification_n1_section_aircraft
 }
 
-/** Only reached from a record body (created/updated/deleted) — the aircraft body needs no noun. */
+/** Only reached from a record body (created/updated/deleted) — the thing body needs no noun. */
 private fun PushPayload.nounRes(): StringResource = when (recordType) {
   "squawk" -> Res.string.notification_n1_noun_squawk
   "task" -> Res.string.notification_n1_noun_task

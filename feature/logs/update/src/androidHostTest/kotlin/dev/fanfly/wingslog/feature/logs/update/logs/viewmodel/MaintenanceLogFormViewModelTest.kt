@@ -79,9 +79,9 @@ class MaintenanceLogFormViewModelTest {
 
     // Prevent the init-block flows from suspending forever.
     every { subscriptionManager.canUploadAttachments() } returns flowOf(false)
-    // Own aircraft by default; foreign-hosted tests override this.
+    // Own thing by default; foreign-hosted tests override this.
     every { sharingManager.observeIsForeignHosted(any()) } returns flowOf(false)
-    every { fleetManager.loadAircraft(TEST_AIRCRAFT_ID) } returns flowOf(null)
+    every { fleetManager.loadThing(TEST_AIRCRAFT_ID) } returns flowOf(null)
     every { inspectionDataManager.observeTasks(TEST_AIRCRAFT_ID) } returns flowOf(
       emptyList()
     )
@@ -102,7 +102,7 @@ class MaintenanceLogFormViewModelTest {
   fun attachAvailable_onForeignHostedAircraft_evenWithoutOwnEntitlement() =
     runTest(testDispatcher) {
       // The host pays and the broker enforces the host's entitlement, so a member with no
-      // subscription of their own can still attach on a paid owner's aircraft (P8.7 §9.7).
+      // subscription of their own can still attach on a paid owner's thing (P8.7 §9.7).
       every { subscriptionManager.canUploadAttachments() } returns flowOf(false)
       every { sharingManager.observeIsForeignHosted(any()) } returns flowOf(true)
 

@@ -27,7 +27,7 @@ private class FakeSubscriptionGate(private val showsAds: Boolean) :
   override fun canUploadAttachments(): Flow<Boolean> = flowOf(false)
   override fun canEmailExports(): Flow<Boolean> = flowOf(false)
   override fun canHostShare(): Flow<Boolean> = flowOf(false)
-  override fun aircraftLimit(): Flow<Int?> = flowOf(2)
+  override fun thingLimit(): Flow<Int?> = flowOf(2)
   override fun shouldShowAds(): Flow<Boolean> = flowOf(showsAds)
 }
 

@@ -8,8 +8,8 @@ import kotlinx.coroutines.flow.asStateFlow
 /**
  * A pairing code carried in a `/share#{code}` deep link (#164).
  *
- * Note what is NOT here: the aircraft id and the host uid. Older links carried both, and an aircraft
- * id turned out to be a capability — anyone holding one could fabricate a same-id aircraft in their
+ * Note what is NOT here: the thing id and the host uid. Older links carried both, and an thing
+ * id turned out to be a capability — anyone holding one could fabricate a same-id thing in their
  * own tree and read the victim's ACL, roster, and technician certificate numbers (#202), or re-claim
  * an abandoned share outright (#204). The code names nothing real. Only the server can dereference
  * it, and it dies on first use.
@@ -18,7 +18,7 @@ import kotlinx.coroutines.flow.asStateFlow
  * [autoAccept] is true when the user's own action already *was* the consent — typing a code in the
  * manual-entry screen (#209). Such an invite skips the "you've been invited, accept?" confirmation
  * and redeems straight away. A link stays false: tapping a link is not the same as choosing to join
- * a named aircraft, so it still shows what's being joined (#201) and asks.
+ * a named thing, so it still shows what's being joined (#201) and asks.
  */
 data class ShareInvite(val code: String, val autoAccept: Boolean = false)
 
@@ -57,7 +57,7 @@ object AircraftShareDeepLinks {
    *
    * The code is normalized the way a typed one is, so a link and a hand-typed code go down exactly
    * one path. Normalization is strict: a character outside the alphabet is a rejection, not a
-   * deletion — which is what makes legacy `{aircraftId}.{secret}` links fail cleanly instead of
+   * deletion — which is what makes legacy `{thingId}.{secret}` links fail cleanly instead of
    * filtering down into a well-formed but meaningless code.
    */
   fun parse(url: String): ShareInvite? {

@@ -11,11 +11,11 @@ import kotlinx.datetime.LocalDate
  */
 sealed interface ExportUiState {
   /**
-   * Editable export setup with live aircraft selection and size estimates.
+   * Editable export setup with live thing selection and size estimates.
    */
   data class Configuring(
-    val aircraft: List<AircraftSelectionRow> = emptyList(),
-    val selectedAircraftIds: Set<String> = emptySet(),
+    val thing: List<AircraftSelectionRow> = emptyList(),
+    val selectedThingIds: Set<String> = emptySet(),
     val formats: Set<ExportFormat> = ExportFormat.ALL,
     val dateRange: DateRangeOption = DateRangeOption.AllTime,
     val customStart: LocalDate,

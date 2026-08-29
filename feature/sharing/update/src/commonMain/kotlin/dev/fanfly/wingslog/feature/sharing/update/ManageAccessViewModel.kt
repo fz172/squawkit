@@ -20,7 +20,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /**
- * Drives the Manage Access panel for one aircraft: the (online-only) Firestore roster + pending
+ * Drives the Manage Access panel for one thing: the (online-only) Firestore roster + pending
  * invites, the caller's locally-resolved role, and every owner mutation — invite, cancel, change
  * role, revoke, leave — via [SharingManager]. Also owns which of the panel's four steps (people →
  * role → code → member, squawkit#269) is currently showing.
@@ -33,7 +33,7 @@ class ManageAccessViewModel(
   savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
-  val aircraftId: String = savedStateHandle.get<String>(Screen.AIRCRAFT_ID)
+  val thingId: String = savedStateHandle.get<String>(Screen.AIRCRAFT_ID)
     .orEmpty()
 
   private val _uiState =
@@ -44,7 +44,7 @@ class ManageAccessViewModel(
 
   init {
     observeShare()
-    observeAircraftLabel()
+    observeThingLabel()
     // The host-a-share gate. Default-open while the subscription capability is off; when locked, the
     // route surfaces the "Create invite code" action as a promo. Leaving/managing an existing share
     // is unaffected.
@@ -56,26 +56,26 @@ class ManageAccessViewModel(
     // photos come from the member docs — so a member whose doc is absent renders as a bare uid. This
     // is idempotent and cheap, and it means opening the screen repairs the row rather than staring
     // at the damage. (§7.2)
-    viewModelScope.launch { sharingManager.publishTechnicianMirror(alsoPublishTo = aircraftId) }
+    viewModelScope.launch { sharingManager.publishTechnicianMirror(alsoPublishTo = thingId) }
   }
 
   private fun observeShare() {
-    // Role is resolved locally (own aircraft ⇒ owner, shared ⇒ ref) — always available, and what
+    // Role is resolved locally (own thing ⇒ owner, shared ⇒ ref) — always available, and what
     // gates the "Create invite code" action. Kept separate from the roster so it never depends on it.
     viewModelScope.launch {
-      sharingManager.observeMyRole(aircraftId)
+      sharingManager.observeMyRole(thingId)
         .collect { role ->
           _uiState.update { it.copy(isLoading = false, myRole = role) }
         }
     }
-    // The roster is online-only and, for an aircraft that hasn't been shared yet, not readable at
+    // The roster is online-only and, for an thing that hasn't been shared yet, not readable at
     // all (the owner isn't in memberRoles until the first invite bootstraps the share doc). Treat a
     // failure as "no members yet" rather than an error, so it can't block the owner from inviting.
     viewModelScope.launch {
-      sharingManager.observeShareState(aircraftId)
+      sharingManager.observeShareState(thingId)
         .catch { e ->
           // Roster unavailable (e.g. no share yet) — leave it empty, don't block inviting.
-          logger.d { "share roster unavailable for $aircraftId: ${e.message}" }
+          logger.d { "share roster unavailable for $thingId: ${e.message}" }
         }
         .collect { share ->
           if (share.members.any { it.isSelf }) seenSelfInRoster = true
@@ -84,10 +84,10 @@ class ManageAccessViewModel(
           // removed us and the rules cut the listener off. Leaving the screen open would show a
           // stale roster that still lists us as a member of a share we no longer belong to, so it
           // closes — the same exit as leaving voluntarily. A denial *before* we ever appeared is
-          // just an owner whose aircraft has no share doc yet, and means nothing.
+          // just an owner whose thing has no share doc yet, and means nothing.
           if (share.accessDenied) {
             if (seenSelfInRoster) {
-              logger.i { "access to $aircraftId was revoked; closing Manage Access" }
+              logger.i { "access to $thingId was revoked; closing Manage Access" }
               _uiState.update { it.copy(accessRevoked = true) }
             }
             return@collect
@@ -113,25 +113,25 @@ class ManageAccessViewModel(
 
   /**
    * What the invitee is shown before accepting (#201). It has to be carried on the invite: the
-   * server cannot read it out of the aircraft record, which is opaque proto bytes.
+   * server cannot read it out of the thing record, which is opaque proto bytes.
    */
-  private fun observeAircraftLabel() {
+  private fun observeThingLabel() {
     viewModelScope.launch {
-      fleetManager.loadAircraft(aircraftId)
+      fleetManager.loadThing(thingId)
         .catch { }
-        .collect { aircraft ->
-          val label = aircraft?.let {
+        .collect { thing ->
+          val label = thing?.let {
             listOf(it.tail_number, listOf(it.make, it.model).filter(String::isNotBlank).joinToString(" "))
               .filter(String::isNotBlank)
               .joinToString(" · ")
           }.orEmpty()
-          _uiState.update { it.copy(aircraftLabel = label) }
+          _uiState.update { it.copy(thingLabel = label) }
         }
     }
   }
 
   /**
-   * Whether this user has ever appeared on this aircraft's roster. It is what makes a later denial
+   * Whether this user has ever appeared on this thing's roster. It is what makes a later denial
    * legible: revocation and "no share exists yet" are the same PERMISSION_DENIED on the wire, and
    * only having-been-a-member tells them apart.
    */
@@ -167,7 +167,7 @@ class ManageAccessViewModel(
     if (_uiState.value.creatingInvite) return
     _uiState.update { it.copy(creatingInvite = true, error = null) }
     viewModelScope.launch {
-      sharingManager.createInvite(aircraftId, _uiState.value.selectedInviteRole, _uiState.value.aircraftLabel)
+      sharingManager.createInvite(thingId, _uiState.value.selectedInviteRole, _uiState.value.thingLabel)
         .onSuccess { link ->
           _uiState.update {
             it.copy(creatingInvite = false, view = AccessPanelView.CODE, activeInviteCodeId = link.codeId)
@@ -181,7 +181,7 @@ class ManageAccessViewModel(
     if (_uiState.value.cancellingInvite) return
     _uiState.update { it.copy(cancellingInvite = true, error = null) }
     viewModelScope.launch {
-      sharingManager.cancelInvite(aircraftId, codeId)
+      sharingManager.cancelInvite(thingId, codeId)
         .onSuccess {
           _uiState.update {
             it.copy(
@@ -208,7 +208,7 @@ class ManageAccessViewModel(
 
   fun changeRole(uid: String, role: ShareRole) {
     viewModelScope.launch {
-      sharingManager.updateRole(aircraftId, uid, role)
+      sharingManager.updateRole(thingId, uid, role)
         .onSuccess { _uiState.update { it.copy(toast = AccessToast.ROLE_UPDATED) } }
         .onFailure { e -> _uiState.update { it.copy(error = e.message) } }
     }
@@ -216,7 +216,7 @@ class ManageAccessViewModel(
 
   fun revoke(uid: String) {
     viewModelScope.launch {
-      sharingManager.revokeMember(aircraftId, uid)
+      sharingManager.revokeMember(thingId, uid)
         .onSuccess {
           _uiState.update {
             it.copy(view = AccessPanelView.MAIN, activeMemberUid = null, toast = AccessToast.ACCESS_REMOVED)
@@ -228,7 +228,7 @@ class ManageAccessViewModel(
 
   fun leave() {
     viewModelScope.launch {
-      sharingManager.leave(aircraftId)
+      sharingManager.leave(thingId)
         .onSuccess { _uiState.update { it.copy(leaveSuccess = true) } }
         .onFailure { e -> _uiState.update { it.copy(error = e.message) } }
     }

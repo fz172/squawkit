@@ -35,7 +35,7 @@ enum class StatusTier {
 
 @Immutable
 data class StatusColors(
-  /** Grounds the aircraft: AOG and similarly immediate operational stops only. */
+  /** Grounds the thing: AOG and similarly immediate operational stops only. */
   val blocking: StatusTone,
   /** Overdue work and high-priority attention. */
   val critical: StatusTone,

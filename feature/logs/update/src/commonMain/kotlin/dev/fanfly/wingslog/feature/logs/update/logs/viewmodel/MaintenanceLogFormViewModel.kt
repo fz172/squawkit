@@ -64,7 +64,7 @@ class MaintenanceLogFormViewModel(
   savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
-  val aircraftId: String = checkNotNull(savedStateHandle[Screen.AIRCRAFT_ID])
+  val thingId: String = checkNotNull(savedStateHandle[Screen.AIRCRAFT_ID])
   private val logId: String? = savedStateHandle[Screen.LOG_ID]
   val isEditMode: Boolean get() = logId != null
 
@@ -87,7 +87,7 @@ class MaintenanceLogFormViewModel(
 
   private var saveJob: Job? = null
   private val attachmentForm =
-    AttachmentFormController(attachmentManager, aircraftId)
+    AttachmentFormController(attachmentManager, thingId)
   private val _uiState = MutableStateFlow(
     MaintenanceLogFormUiState(
       maintenanceDate = Clock.System.now()
@@ -100,7 +100,7 @@ class MaintenanceLogFormViewModel(
   val events = _events.receiveAsFlow()
 
   init {
-    loadAircraft()
+    loadThing()
     observeSquawks()
     observeTasks()
     observeTechnicians()
@@ -115,13 +115,13 @@ class MaintenanceLogFormViewModel(
   }
 
   private fun observeAttachmentAccess() {
-    // The attachment gate is aircraft-scoped (§9.7): on a foreign host's aircraft the host pays and
+    // The attachment gate is thing-scoped (§9.7): on a foreign host's thing the host pays and
     // the broker enforces the host's entitlement, so the member is never gated by their own
-    // subscription; on an own aircraft the member's own entitlement governs. (Both default-open until
+    // subscription; on an own thing the member's own entitlement governs. (Both default-open until
     // the subscription capability ships.)
     combine(
       subscriptionManager.canUploadAttachments(),
-      sharingManager.observeIsForeignHosted(aircraftId),
+      sharingManager.observeIsForeignHosted(thingId),
     ) { canUpload, foreignHosted -> foreignHosted || canUpload }
       .onEach { enabled ->
         _uiState.update { it.copy(attachmentUploadEnabled = enabled) }
@@ -133,9 +133,9 @@ class MaintenanceLogFormViewModel(
     combine(
       technicianManager.observeTechnicians(),
       technicianManager.observeSelfId(),
-      // Members of THIS aircraft's share who published a mirror. Scoped to the aircraft because a
-      // log is signed for one aircraft — only its members are selectable (§7.3).
-      sharingManager.observeLinkedTechnicians(aircraftId),
+      // Members of THIS thing's share who published a mirror. Scoped to the thing because a
+      // log is signed for one thing — only its members are selectable (§7.3).
+      sharingManager.observeLinkedTechnicians(thingId),
     ) { technicians, selfId, linked ->
       // Stamp the self-record with its owning uid so picking it snapshots provenance into the log
       // (§7.3). Manual entries carry no source_uid — they were typed by hand, not linked to an
@@ -193,7 +193,7 @@ class MaintenanceLogFormViewModel(
   }
 
   private fun observeSquawks() {
-    squawkManager.observeSquawks(aircraftId)
+    squawkManager.observeSquawks(thingId)
       .onEach { squawks ->
         val filtered = squawks.filter { s ->
           s.addressed_by_log_id.isEmpty() || s.addressed_by_log_id == logId
@@ -244,7 +244,7 @@ class MaintenanceLogFormViewModel(
   }
 
   private fun observeTasks() {
-    inspectionDataManager.observeTasks(aircraftId)
+    inspectionDataManager.observeTasks(thingId)
       .onEach { cards ->
         _uiState.update { state ->
           var next = state.copy(availableInspectionCards = cards)
@@ -286,11 +286,11 @@ class MaintenanceLogFormViewModel(
     maybeCaptureInitialSnapshot()
   }
 
-  private fun loadAircraft() {
+  private fun loadThing() {
     viewModelScope.launch {
-      fleetManager.loadAircraft(aircraftId)
-        .collect { aircraft ->
-          _uiState.update { it.copy(aircraft = aircraft) }
+      fleetManager.loadThing(thingId)
+        .collect { thing ->
+          _uiState.update { it.copy(thing = thing) }
         }
     }
   }
@@ -298,7 +298,7 @@ class MaintenanceLogFormViewModel(
   private fun loadLog() {
     viewModelScope.launch {
       _uiState.update { it.copy(isLoading = true) }
-      val log = logManager.observeLogs(aircraftId)
+      val log = logManager.observeLogs(thingId)
         .firstOrNull()
         ?.firstOrNull { it.id == logId }
       if (log != null) {
@@ -415,18 +415,18 @@ class MaintenanceLogFormViewModel(
 
   fun onComponentTypeChange(value: ComponentType) {
     _uiState.update { state ->
-      val aircraft = state.aircraft
+      val thing = state.thing
       val autoSerial = when (value) {
         ComponentType.COMPONENT_AIRFRAME ->
-          aircraft?.serial?.takeIf { it.isNotEmpty() }
+          thing?.serial?.takeIf { it.isNotEmpty() }
 
         ComponentType.COMPONENT_ENGINE -> {
-          val engines = aircraft?.engine ?: emptyList()
+          val engines = thing?.engine ?: emptyList()
           engines.singleOrNull()?.serial?.takeIf { it.isNotEmpty() }
         }
 
         ComponentType.COMPONENT_PROPELLER -> {
-          val propSerials = aircraft?.engine?.flatMap { engine ->
+          val propSerials = thing?.engine?.flatMap { engine ->
             buildList {
               engine.propeller?.hub?.serial?.takeIf { it.isNotEmpty() }
                 ?.let { add(it) }
@@ -518,7 +518,7 @@ class MaintenanceLogFormViewModel(
 
       // Save log
       val componentSerial = when (state.selectedComponentType) {
-        ComponentType.COMPONENT_AIRFRAME -> state.aircraft?.serial ?: ""
+        ComponentType.COMPONENT_AIRFRAME -> state.thing?.serial ?: ""
         else -> state.selectedSubComponent ?: ""
       }
       val now = Clock.System.now()
@@ -544,17 +544,17 @@ class MaintenanceLogFormViewModel(
       )
 
       val result = if (isEditMode) logManager.updateLog(
-        aircraftId,
+        thingId,
         log
       ) else logManager.addLog(
-        aircraftId,
+        thingId,
         log
       )
       result
         .onSuccess {
           if (state.selectedSquawkIds.isNotEmpty()) {
             squawkManager.markAddressed(
-              aircraftId,
+              thingId,
               state.selectedSquawkIds,
               resolvedLogId
             )
@@ -566,7 +566,7 @@ class MaintenanceLogFormViewModel(
                   card.force_complied_status != null
                 ) {
                   inspectionDataManager.updateTask(
-                    aircraftId,
+                    thingId,
                     card.copy(
                       force_due_date = null,
                       force_due_engine_hour = 0f,
@@ -597,7 +597,7 @@ class MaintenanceLogFormViewModel(
       // Tombstone file attachments before removing the Firestore document
       attachmentForm.deleteSavedFiles()
       logManager.deleteLog(
-        aircraftId,
+        thingId,
         id
       )
         .onSuccess { _events.send(MaintenanceLogFormEvent.DeleteSuccess) }

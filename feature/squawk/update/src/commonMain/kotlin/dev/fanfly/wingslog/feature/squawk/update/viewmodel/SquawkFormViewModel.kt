@@ -39,7 +39,7 @@ import kotlin.time.Clock
 import wingslog.feature.attachment.sharedassets.generated.resources.Res as AttachRes
 
 data class SquawkFormState(
-  val aircraftId: String = "",
+  val thingId: String = "",
   val squawkId: String? = null,
   val title: String = "",
   val description: String = "",
@@ -70,7 +70,7 @@ data class SquawkFormState(
 sealed interface SquawkFormEvent {
   data object NavigateBack : SquawkFormEvent
   data class SaveSuccess(val message: String) : SquawkFormEvent
-  data class NavigateToCreateLog(val aircraftId: String, val squawkId: String) : SquawkFormEvent
+  data class NavigateToCreateLog(val thingId: String, val squawkId: String) : SquawkFormEvent
   data object PickError : SquawkFormEvent
 }
 
@@ -84,13 +84,13 @@ class SquawkFormViewModel(
   savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
-  private val aircraftId: String =
+  private val thingId: String =
     checkNotNull(savedStateHandle[Screen.AIRCRAFT_ID])
   private val squawkId: String? = savedStateHandle[Screen.SQUAWK_ID]
 
   private val _state = MutableStateFlow(
     SquawkFormState(
-      aircraftId = aircraftId,
+      thingId = thingId,
       squawkId = squawkId
     )
   )
@@ -100,7 +100,7 @@ class SquawkFormViewModel(
   val events = _events.receiveAsFlow()
 
   private val attachmentForm =
-    AttachmentFormController(attachmentManager, aircraftId)
+    AttachmentFormController(attachmentManager, thingId)
   val pendingAttachments: StateFlow<List<PendingAttachment>> =
     attachmentForm.pendingAttachments
   val showAttachmentPicker: StateFlow<Boolean> = attachmentForm.showPicker
@@ -118,13 +118,13 @@ class SquawkFormViewModel(
       loadLogs()
     }
     viewModelScope.launch {
-      // The attachment gate is aircraft-scoped (§9.7): on a foreign host's aircraft the host pays and
+      // The attachment gate is thing-scoped (§9.7): on a foreign host's thing the host pays and
       // the broker enforces the host's entitlement, so the member is never gated by their own
-      // subscription; on an own aircraft the member's own entitlement governs. (Both default-open
+      // subscription; on an own thing the member's own entitlement governs. (Both default-open
       // until the subscription capability ships.)
       combine(
         subscriptionManager.canUploadAttachments(),
-        sharingManager.observeIsForeignHosted(aircraftId),
+        sharingManager.observeIsForeignHosted(thingId),
       ) { canUpload, foreignHosted -> foreignHosted || canUpload }
         .collect { _attachmentUploadEnabled.value = it }
     }
@@ -132,7 +132,7 @@ class SquawkFormViewModel(
 
   private fun loadExisting(id: String) {
     viewModelScope.launch {
-      squawkManager.observeSquawks(aircraftId)
+      squawkManager.observeSquawks(thingId)
         .collect { squawks ->
           val squawk = squawks.find { it.id == id } ?: return@collect
           _state.update {
@@ -166,7 +166,7 @@ class SquawkFormViewModel(
 
   private fun loadLogs() {
     viewModelScope.launch {
-      logManager.observeLogs(aircraftId)
+      logManager.observeLogs(thingId)
         .collect { logs ->
           _state.update { it.copy(availableLogs = logs) }
         }
@@ -261,9 +261,9 @@ class SquawkFormViewModel(
         else null,
       )
       val result = if (current.squawkId == null)
-        squawkManager.addSquawk(aircraftId, squawk)
+        squawkManager.addSquawk(thingId, squawk)
       else
-        squawkManager.updateSquawk(aircraftId, squawk)
+        squawkManager.updateSquawk(thingId, squawk)
 
       _state.update { it.copy(isSaving = false) }
       result.onSuccess {
@@ -279,7 +279,7 @@ class SquawkFormViewModel(
   fun reopen(onSuccessMessage: String) {
     val squawkId = _state.value.squawkId ?: return
     viewModelScope.launch {
-      squawkManager.reopenSquawk(aircraftId, squawkId)
+      squawkManager.reopenSquawk(thingId, squawkId)
         .onSuccess { _events.send(SquawkFormEvent.SaveSuccess(onSuccessMessage)) }
     }
   }
@@ -299,7 +299,7 @@ class SquawkFormViewModel(
     val squawkId = _state.value.squawkId ?: return
     _state.update { it.copy(showDismissDialog = false, isDismissing = true) }
     viewModelScope.launch {
-      squawkManager.dismissSquawk(aircraftId, squawkId, reason)
+      squawkManager.dismissSquawk(thingId, squawkId, reason)
         .onSuccess { _events.send(SquawkFormEvent.SaveSuccess(onSuccessMessage)) }
       _state.update { it.copy(isDismissing = false) }
     }
@@ -313,7 +313,7 @@ class SquawkFormViewModel(
     if (!current.showResolveMenu) return
     _state.update { it.copy(showResolveMenu = false) }
     viewModelScope.launch {
-      _events.send(SquawkFormEvent.NavigateToCreateLog(aircraftId, squawkId))
+      _events.send(SquawkFormEvent.NavigateToCreateLog(thingId, squawkId))
     }
   }
 

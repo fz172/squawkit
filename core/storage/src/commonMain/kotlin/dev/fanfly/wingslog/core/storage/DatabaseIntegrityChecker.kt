@@ -62,7 +62,7 @@ class DatabaseIntegrityChecker(
    * state.
    *
    * Watermarks are included as of notifications design §6.2 (2026-08-22): leaving another
-   * account's aircraft ids and urgency ranks recoverable from the raw SQLite file after sign-out is
+   * account's thing ids and urgency ranks recoverable from the raw SQLite file after sign-out is
    * a privacy leak on a shared/borrowed device — the same reasoning §7.1 already applies to push
    * tokens. The accepted cost is that a user who signs back into the *same* account is silently
    * re-seeded on their next scan (§6.4) rather than compared against real prior state — a lost

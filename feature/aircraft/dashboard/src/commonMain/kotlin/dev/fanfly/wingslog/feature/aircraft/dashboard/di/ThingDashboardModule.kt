@@ -2,8 +2,8 @@ package dev.fanfly.wingslog.feature.aircraft.dashboard.di
 
 import androidx.lifecycle.SavedStateHandle
 import dev.fanfly.wingslog.core.nav.Screen
-import dev.fanfly.wingslog.core.storage.AircraftScopeResolver
-import dev.fanfly.wingslog.feature.aircraft.dashboard.data.AircraftOverviewViewModel
+import dev.fanfly.wingslog.core.storage.ThingScopeResolver
+import dev.fanfly.wingslog.feature.aircraft.dashboard.data.ThingOverviewViewModel
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
@@ -20,9 +20,9 @@ val aircraftDashboardModule = module {
   // aircraftId comes from an explicit parameter (adaptive shell, ambient selection) when present,
   // otherwise from the navigation SavedStateHandle (legacy maintenance_overview/{aircraftId} route).
   viewModel { params ->
-    val aircraftId = params.getOrNull<String>()
+    val thingId = params.getOrNull<String>()
       ?: checkNotNull(get<SavedStateHandle>().get<String>(Screen.AIRCRAFT_ID))
-    AircraftOverviewViewModel(
+    ThingOverviewViewModel(
       get<FleetManager>(),
       get<MaintenanceLogManager>(),
       get<TaskDataManager>(),
@@ -31,9 +31,9 @@ val aircraftDashboardModule = module {
       get<AttachmentManager>(),
       get<SquawkManager>(),
       get<SharingManager>(),
-      get<AircraftScopeResolver>(),
+      get<ThingScopeResolver>(),
       get<FirebaseAuth>(),
-      aircraftId,
+      thingId,
     )
   }
 }

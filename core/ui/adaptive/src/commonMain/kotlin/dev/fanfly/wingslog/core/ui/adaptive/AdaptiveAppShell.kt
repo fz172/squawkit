@@ -97,15 +97,15 @@ import wingslog.core.sharedassets.generated.resources.shell_title_logs
 import wingslog.core.sharedassets.generated.resources.shell_title_tasks
 import wingslog.core.sharedassets.generated.resources.Res as UiRes
 
-/** Lightweight aircraft projection used by the shell's switcher. */
-data class ShellAircraft(
+/** Lightweight thing projection used by the shell's switcher. */
+data class ShellThing(
   val id: String,
   val tail: String,
   val name: String,
 )
 
 /**
- * Top-level sections of the adaptive shell. The first four are per-aircraft; [SETTINGS] is global.
+ * Top-level sections of the adaptive shell. The first four are per-thing; [SETTINGS] is global.
  */
 enum class ShellSection(
   /** Short label for the space-constrained bottom bar tier. */
@@ -132,7 +132,7 @@ enum class ShellSection(
   SETTINGS(UiRes.string.settings, Icons.Filled.Settings),
 }
 
-private val PER_AIRCRAFT_SECTIONS =
+private val PER_THING_SECTIONS =
   listOf(
     ShellSection.DASHBOARD,
     ShellSection.SQUAWKS,
@@ -142,28 +142,28 @@ private val PER_AIRCRAFT_SECTIONS =
 
 /** Plain UI state for [AdaptiveAppShell]; produced by a host-side ViewModel. */
 data class AdaptiveShellUiState(
-  val aircraft: List<ShellAircraft> = emptyList(),
-  val selectedAircraftId: String? = null,
+  val thing: List<ShellThing> = emptyList(),
+  val selectedThingId: String? = null,
   val section: ShellSection = ShellSection.DASHBOARD,
   /** Current user's display name + photo, for the sidebar account/settings entry. */
   val accountName: String? = null,
   val accountPhotoUrl: String? = null,
 ) {
-  val selectedAircraft: ShellAircraft?
-    get() = aircraft.firstOrNull { it.id == selectedAircraftId }
+  val selectedThing: ShellThing?
+    get() = thing.firstOrNull { it.id == selectedThingId }
 }
 
 /**
  * The adaptive web/tablet shell.
  *
  * Navigation container by tier:
- * - **EXPANDED / LARGE** — a custom [WingsSidebar] (brand + aircraft switcher + sections + account
+ * - **EXPANDED / LARGE** — a custom [WingsSidebar] (brand + thing switcher + sections + account
  *   footer), matching the design mock (D2: custom sidebar).
  * - **MEDIUM** — `NavigationSuiteScaffold` icon rail, with the switcher in the top bar.
- * - **COMPACT** — the same section shell as rail tiers once an aircraft exists.
+ * - **COMPACT** — the same section shell as rail tiers once an thing exists.
  *
- * Section bodies are supplied by the host via [sectionContent] (M3: real per-aircraft content), and
- * the no-aircraft prompt by [emptyFleetContent] — both are host slots because real content lives in
+ * Section bodies are supplied by the host via [sectionContent] (M3: real per-thing content), and
+ * the no-thing prompt by [emptyFleetContent] — both are host slots because real content lives in
  * feature modules that `core:ui` cannot depend on. Tier is derived from the measured
  * [BoxWithConstraints] width (not `LocalWindowInfo`, which is unreliable on Kotlin/JS).
  */
@@ -174,15 +174,15 @@ fun AdaptiveAppShell(
   onSelectAircraft: (String) -> Unit,
   onOpenSettings: () -> Unit,
   onAddAircraft: () -> Unit,
-  // #209: opens the manual invite-code entry surface. Null when aircraft sharing is gated off for
+  // #209: opens the manual invite-code entry surface. Null when thing sharing is gated off for
   // the build, which removes the switcher affordance entirely.
   onEnterInviteCode: (() -> Unit)? = null,
-  sectionContent: @Composable (section: ShellSection, aircraftId: String?) -> Unit,
+  sectionContent: @Composable (section: ShellSection, thingId: String?) -> Unit,
   emptyFleetContent: @Composable () -> Unit,
   // Per-section floating action button (Add log / task / squawk). A host slot because the add
   // actions navigate into feature screens that `core:ui` cannot depend on. Rendered in the shell's
   // own Scaffold slot so snackbars offset around it automatically.
-  sectionFab: @Composable (section: ShellSection, aircraftId: String?) -> Unit = { _, _ -> },
+  sectionFab: @Composable (section: ShellSection, thingId: String?) -> Unit = { _, _ -> },
   // Shared across every tier so a caller can drive snackbars (e.g. a cross-screen success message)
   // from a single instance regardless of which shell layout is currently active.
   snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
@@ -190,11 +190,11 @@ fun AdaptiveAppShell(
   BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
     val tier = layoutTierFor(maxWidth)
     val content: @Composable () -> Unit =
-      { sectionContent(state.section, state.selectedAircraftId) }
+      { sectionContent(state.section, state.selectedThingId) }
     val fab: @Composable () -> Unit =
-      { sectionFab(state.section, state.selectedAircraftId) }
+      { sectionFab(state.section, state.selectedThingId) }
     CompositionLocalProvider(LocalLayoutTier provides tier) {
-      if (state.aircraft.isEmpty()) {
+      if (state.thing.isEmpty()) {
         EmptyFleetShell(
           tier = tier,
           state = state,
@@ -227,16 +227,16 @@ fun AdaptiveAppShell(
 /* ---------------------------------------------------------------------------------------------- */
 
 /**
- * Shell shown while the fleet is empty. There are no aircraft to drive the per-aircraft sections, so
+ * Shell shown while the fleet is empty. There are no thing to drive the per-thing sections, so
  * they carry no content of their own. Per design:
- * - **full sidebar** — keep the sidebar but hide the switcher and mute the per-aircraft sections.
- *   They stay tappable, though: tapping any of them returns to the add-aircraft prompt, so a user
+ * - **full sidebar** — keep the sidebar but hide the switcher and mute the per-thing sections.
+ *   They stay tappable, though: tapping any of them returns to the add-thing prompt, so a user
  *   who has opened Settings has an obvious way back (they read as "greyed out" but still respond).
  * - **narrower tiers** — drop the nav container entirely and surface Settings via the top-right
  *   account avatar button.
  *
  * The settings entry toggles: tapping it opens Settings, tapping it again returns to the
- * add-aircraft prompt (there is no other section to navigate back through).
+ * add-thing prompt (there is no other section to navigate back through).
  */
 @Composable
 private fun EmptyFleetShell(
@@ -297,7 +297,7 @@ private fun EmptyFleetShell(
 /**
  * Body wrapper for [EmptyFleetShell]. Shows a top bar only when it carries something: the account
  * avatar action (narrower tiers) or the "Account" title while Settings is open. Otherwise, the
- * add-aircraft prompt renders full-bleed, as before.
+ * add-thing prompt renders full-bleed, as before.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -312,14 +312,14 @@ private fun EmptyFleetScaffold(
   val inSettings = state.section == ShellSection.SETTINGS
   Scaffold(
     // An empty fleet is not a reason to have no snackbar host. It is the *most* likely moment to
-    // need one: losing access to a shared aircraft that was your only aircraft lands you here, and
+    // need one: losing access to a shared thing that was your only thing lands you here, and
     // that is exactly when the "changes discarded" notice has to be seen (PRD D3).
     snackbarHost = { SnackbarHost(snackbarHostState) },
     topBar = {
       if (showAccountAction || (inSettings && showSettingsTopBar)) {
         TopAppBar(
           title = {
-            // No aircraft means no real section to name; only Settings gets a title here.
+            // No thing means no real section to name; only Settings gets a title here.
             Text(
               if (inSettings) stringResource(state.section.label) else "",
               maxLines = 1,
@@ -466,9 +466,9 @@ private fun WingsSidebar(
   onAddAircraft: () -> Unit,
   onEnterInviteCode: (() -> Unit)? = null,
   onOpenAccount: () -> Unit,
-  // When true (empty fleet) the switcher is hidden and the per-aircraft sections are muted — but
-  // still tappable, so tapping any of them leaves Settings and returns to the add-aircraft prompt.
-  // With no aircraft there's no per-aircraft content, so none of them appears selected.
+  // When true (empty fleet) the switcher is hidden and the per-thing sections are muted — but
+  // still tappable, so tapping any of them leaves Settings and returns to the add-thing prompt.
+  // With no thing there's no per-thing content, so none of them appears selected.
   sectionsMuted: Boolean = false,
   showSwitcher: Boolean = true,
 ) {
@@ -510,7 +510,7 @@ private fun WingsSidebar(
         )
       }
 
-      PER_AIRCRAFT_SECTIONS.forEach { section ->
+      PER_THING_SECTIONS.forEach { section ->
         SidebarItem(
           section,
           selected = !sectionsMuted && state.section == section,
@@ -546,7 +546,7 @@ private fun SidebarItem(
   selected: Boolean,
   onClick: () -> Unit,
   // Muted (empty-fleet) items keep the greyed-out look but stay tappable, so they can route back to
-  // the add-aircraft prompt from Settings.
+  // the add-thing prompt from Settings.
   muted: Boolean = false,
 ) {
   val label =
@@ -587,10 +587,10 @@ private fun SidebarSwitcher(
       ) {
         Column(modifier = Modifier.weight(1f)) {
           Text(
-            state.selectedAircraft?.tail ?: "Select aircraft",
+            state.selectedThing?.tail ?: "Select aircraft",
             style = MaterialTheme.typography.titleSmall,
           )
-          state.selectedAircraft?.name?.takeIf { it.isNotBlank() }
+          state.selectedThing?.name?.takeIf { it.isNotBlank() }
             ?.let {
               Text(
                 it,
@@ -654,7 +654,7 @@ private fun ScaffoldShell(
   ShellContent(
     state = state,
     // The switcher lives in the top bar on COMPACT — there is no sidebar to host it, so it is the
-    // only in-place way to switch aircraft.
+    // only in-place way to switch thing.
     showTopBarSwitcher = true,
     onSelectAircraft = onSelectAircraft,
     onAddAircraft = onAddAircraft,
@@ -676,7 +676,7 @@ private fun ScaffoldShell(
           fab()
         }
         FloatingPillNavigationBar(
-          items = PER_AIRCRAFT_SECTIONS.map { s ->
+          items = PER_THING_SECTIONS.map { s ->
             FloatingNavItem(
               label = stringResource(s.label),
               icon = s.icon,
@@ -867,7 +867,7 @@ private fun TopBarSwitcher(
   var open by remember { mutableStateOf(false) }
   Box {
     TextButton(onClick = { open = true }) {
-      Text(state.selectedAircraft?.tail ?: "Select aircraft")
+      Text(state.selectedThing?.tail ?: "Select aircraft")
       Icon(Icons.Filled.ArrowDropDown, contentDescription = null)
     }
     AircraftDropdown(
@@ -891,7 +891,7 @@ private fun AircraftDropdown(
   onEnterInviteCode: (() -> Unit)?,
 ) {
   DropdownMenu(expanded = expanded, onDismissRequest = onDismiss) {
-    state.aircraft.forEach { ac ->
+    state.thing.forEach { ac ->
       DropdownMenuItem(
         text = {
           Column {
@@ -906,7 +906,7 @@ private fun AircraftDropdown(
           onDismiss()
         },
         trailingIcon = {
-          if (ac.id == state.selectedAircraftId) {
+          if (ac.id == state.selectedThingId) {
             Icon(Icons.Filled.Check, contentDescription = null)
           }
         },

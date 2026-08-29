@@ -10,7 +10,7 @@ data class PendingNotification(
    * Stable and deterministic. Re-posting under the same id replaces the tray entry rather than
    * stacking a second one — that is the whole mechanism §6.5's per-tier batching and §7.3's tray
    * coalescing rely on. Callers derive this from what the notification is *about*
-   * (`"urgency:$aircraftId:$tier"`, `"n1:$aircraftId:$recordType:$actorUid:$sessionStart"`), never
+   * (`"urgency:$thingId:$tier"`, `"n1:$thingId:$recordType:$actorUid:$sessionStart"`), never
    * from a random or incrementing value.
    */
   val id: String,

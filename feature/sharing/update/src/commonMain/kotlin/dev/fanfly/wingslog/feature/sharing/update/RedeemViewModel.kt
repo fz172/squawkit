@@ -12,12 +12,12 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 /**
- * Drives the aircraft-invite redemption surface (docs/sharing §3.2). Observes the parked deep link
+ * Drives the thing-invite redemption surface (docs/sharing §3.2). Observes the parked deep link
  * ([AircraftShareDeepLinks]) alongside auth state so a signed-out/guest redeemer resumes
  * automatically once they sign in with a real account, then calls the redeem function on Accept.
  *
  * The freshly-written `shared_aircraft_ref` arrives through the always-on refs pull listener, so no
- * explicit resync is issued here — the aircraft shows up in the fleet on the next pull.
+ * explicit resync is issued here — the thing shows up in the fleet on the next pull.
  */
 class RedeemViewModel(
   private val sharingManager: SharingManager,
@@ -86,10 +86,10 @@ class RedeemViewModel(
           // or Technician alike, since the picker lists membership-with-mirror, not role. Failure
           // is queued in the outbox, so it must not gate the success state.
           //
-          // Name the aircraft explicitly: its SharedAircraftRef is still syncing down, so a publish
+          // Name the thing explicitly: its SharedAircraftRef is still syncing down, so a publish
           // that only consulted local membership would skip the very share we just joined, leaving
           // the redeem function's auth-token name on the member doc for both accounts to see.
-          sharingManager.publishTechnicianMirror(alsoPublishTo = outcome.aircraftId)
+          sharingManager.publishTechnicianMirror(alsoPublishTo = outcome.thingId)
           _uiState.value =
             if (outcome.alreadyMember) RedeemUiState.AlreadyMember
             else RedeemUiState.Success(outcome.role)

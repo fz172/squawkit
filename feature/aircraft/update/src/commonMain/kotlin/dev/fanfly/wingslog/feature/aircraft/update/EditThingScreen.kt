@@ -44,7 +44,7 @@ import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.aircraft.update.compose.AirframeSection
 import dev.fanfly.wingslog.feature.aircraft.update.compose.EngineSection
-import dev.fanfly.wingslog.feature.aircraft.update.viewmodel.EditAircraftViewModel
+import dev.fanfly.wingslog.feature.aircraft.update.viewmodel.EditThingViewModel
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.core.sharedassets.generated.resources.add_aircraft
@@ -66,7 +66,7 @@ import wingslog.feature.logs.sharedassets.generated.resources.Res as SharedRes
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
 fun EditAircraftScreen(
-  viewModel: EditAircraftViewModel = koinViewModel(),
+  viewModel: EditThingViewModel = koinViewModel(),
   navController: NavController,
 ) {
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -117,7 +117,7 @@ fun EditAircraftScreen(
       text = {
         Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
           Text(stringResource(SharedRes.string.this_action_cannot_be_undone))
-          // Deleting a shared aircraft takes it away from everyone on the share (PRD D5). Saying
+          // Deleting a shared thing takes it away from everyone on the share (PRD D5). Saying
           // only "cannot be undone" hides that you are deleting other people's access too.
           val others = uiState.otherMemberCount
           if (others > 0) {
@@ -138,7 +138,7 @@ fun EditAircraftScreen(
       confirmButton = {
         TextButton(
           onClick = {
-            viewModel.deleteAircraft()
+            viewModel.deleteThing()
             showDeleteDialog = false
           },
           colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
@@ -158,7 +158,7 @@ fun EditAircraftScreen(
     topBar = {
       ConstrainedTopBar(ContentWidth.Form) {
         WingsLogTopAppBar(
-          title = if (uiState.aircraft.id == "") stringResource(CoreRes.string.add_aircraft)
+          title = if (uiState.thing.id == "") stringResource(CoreRes.string.add_aircraft)
           else stringResource(AircraftRes.string.update_aircraft),
           onBackClick = { tryNavigateBack() },
           scrollBehavior = scrollBehavior,
@@ -188,7 +188,7 @@ fun EditAircraftScreen(
           text = stringResource(CoreRes.string.component_airframe).uppercase()
         )
         AirframeSection(
-          uiState.aircraft,
+          uiState.thing,
           viewModel,
           uiState.showValidationErrors
         )
@@ -197,7 +197,7 @@ fun EditAircraftScreen(
         Text(
           text = stringResource(CoreRes.string.component_engine).uppercase()
         )
-        uiState.aircraft.engine.forEachIndexed { index, engine ->
+        uiState.thing.engine.forEachIndexed { index, engine ->
           EngineSection(
             engineIndex = index,
             engine = engine,
@@ -226,7 +226,7 @@ fun EditAircraftScreen(
         onDangerClick = if (uiState.canDelete) {
           { showDeleteDialog = true }
         } else null,
-        primaryLabel = if (uiState.aircraft.id == "")
+        primaryLabel = if (uiState.thing.id == "")
           stringResource(CoreRes.string.add_aircraft)
         else
           stringResource(AircraftRes.string.update_aircraft)

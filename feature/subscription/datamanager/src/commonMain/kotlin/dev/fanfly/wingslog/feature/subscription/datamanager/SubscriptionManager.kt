@@ -25,11 +25,11 @@ interface SubscriptionManager {
   /** Emailing a copy of an export (export-to-device stays free). */
   fun canEmailExports(): Flow<Boolean>
 
-  /** Hosting a shared aircraft / sending invites (accepting an invite is never gated). */
+  /** Hosting a shared thing / sending invites (accepting an invite is never gated). */
   fun canHostShare(): Flow<Boolean>
 
-  /** Max aircraft the account may own; `null` = unlimited. Enforced against the owned count. */
-  fun aircraftLimit(): Flow<Int?>
+  /** Max thing the account may own; `null` = unlimited. Enforced against the owned count. */
+  fun thingLimit(): Flow<Int?>
 
   /**
    * Whether the free tier's display ads should be shown.

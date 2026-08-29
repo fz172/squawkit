@@ -31,12 +31,12 @@ import org.junit.Test
 private const val TEST_USER_ID = "user-push-001"
 private const val TEST_AIRCRAFT_ID = "aircraft-push-001"
 private val TEST_SCOPE =
-  EntityScope.aircraftChildUnsafe(TEST_USER_ID, TEST_AIRCRAFT_ID)
+  EntityScope.thingChildUnsafe(TEST_USER_ID, TEST_AIRCRAFT_ID)
 private val TEST_KIND = CollectionKind.MaintenanceLog
 
 private const val HOST_UID = "host-push-001"
 private const val SHARED_AC = "aircraft-shared-001"
-private val SHARED_SCOPE = EntityScope.aircraftChildUnsafe(HOST_UID, SHARED_AC)
+private val SHARED_SCOPE = EntityScope.thingChildUnsafe(HOST_UID, SHARED_AC)
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class PushWorkerTest {
@@ -94,14 +94,14 @@ class PushWorkerTest {
       ioContext = ioContext,
       writeLock = DatabaseWriteLock(),
     )
-    // A live share pointing at another account's aircraft.
+    // A live share pointing at another account's thing.
     storeFactory.create<SharedAircraftRef>(CollectionKind.SharedAircraftRef)
       .put(
         SHARED_AC,
         SharedAircraftRef(aircraft_id = SHARED_AC, host_uid = HOST_UID),
         EntityScope.userRoot(TEST_USER_ID),
       )
-    // A dirty row under the shared aircraft's scope (the host's tree).
+    // A dirty row under the shared thing's scope (the host's tree).
     insertDirtyRow("shared-log-1", scope = SHARED_SCOPE)
 
     val captured = slot<SyncWrite>()
@@ -201,11 +201,11 @@ class PushWorkerTest {
       assertThat(remaining[0].id).isEqualTo("log-fail")
     }
 
-  // --- The aircraft doc itself lives at the host's root, not in the per-aircraft subtree ---
+  // --- The thing doc itself lives at the host's root, not in the per-thing subtree ---
 
   @Test
   fun run_drainsTheSharedAircraftDocAtTheHostRoot() = runTest(ioContext) {
-    // A co-owner's edit to the aircraft *doc* is a row at /users/{host}/ — outside the
+    // A co-owner's edit to the thing *doc* is a row at /users/{host}/ — outside the
     // /users/{host}/thing/{acId}/ subtree. Miss it and the edit stays dirty forever.
     val storeFactory = liveShareStoreFactory()
     db.schemaQueries.upsert(
@@ -243,7 +243,7 @@ class PushWorkerTest {
   @Test
   fun run_permissionDeniedOnTheSharedAircraftDoc_reconcilesAsRevoked() =
     runTest(ioContext) {
-      // The doc row names its aircraft by row id, not in its scope path — the revocation check has to
+      // The doc row names its thing by row id, not in its scope path — the revocation check has to
       // understand that shape too, or a denial here would be misread as an expired session.
       val storeFactory = liveShareStoreFactory()
       db.schemaQueries.upsert(
@@ -290,7 +290,7 @@ class PushWorkerTest {
   @Test
   fun run_permissionDeniedOnSharedScope_reconcilesAsRevokedAndShowsNoBanner() =
     runTest(ioContext) {
-      // The member edited a shared aircraft offline, was revoked meanwhile, and the push lands
+      // The member edited a shared thing offline, was revoked meanwhile, and the push lands
       // before the ref tombstone does. That is a revocation, not an expired session.
       val storeFactory = liveShareStoreFactory()
       insertDirtyRow("shared-log-1", scope = SHARED_SCOPE)

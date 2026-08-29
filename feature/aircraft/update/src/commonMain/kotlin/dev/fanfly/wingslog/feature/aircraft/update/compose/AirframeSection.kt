@@ -16,7 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import dev.fanfly.wingslog.core.ui.common.compose.FormTextField
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import dev.fanfly.wingslog.feature.aircraft.update.viewmodel.EditAircraftViewModel
+import dev.fanfly.wingslog.feature.aircraft.update.viewmodel.EditThingViewModel
 import dev.fanfly.wingslog.thing.Thing
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.aircraft.update.generated.resources.Res
@@ -27,8 +27,8 @@ import wingslog.feature.aircraft.update.generated.resources.tail_number
 
 @Composable
 fun AirframeSection(
-  aircraft: Thing,
-  viewModel: EditAircraftViewModel,
+  thing: Thing,
+  viewModel: EditThingViewModel,
   showValidationErrors: Boolean,
 ) {
   Card(
@@ -45,19 +45,19 @@ fun AirframeSection(
 
       // --- Make Number ---
       FormTextField(
-        value = aircraft.make, // Read from ViewModel
+        value = thing.make, // Read from ViewModel
         onValueChange = { viewModel.onMakeChanged(it) }, // Update ViewModel
         label = stringResource(Res.string.make),
-        editable = aircraft.id == "",
-        isError = showValidationErrors && aircraft.make.isBlank()
+        editable = thing.id == "",
+        isError = showValidationErrors && thing.make.isBlank()
       )
       // --- Model Number ---
       FormTextField(
-        value = aircraft.model, // Read from ViewModel
+        value = thing.model, // Read from ViewModel
         onValueChange = { viewModel.onModelChanged(it) }, // Update ViewModel
         label = stringResource(Res.string.model),
-        editable = aircraft.id == "",
-        isError = showValidationErrors && aircraft.model.isBlank()
+        editable = thing.id == "",
+        isError = showValidationErrors && thing.model.isBlank()
       )
       Row(
         modifier = Modifier.fillMaxWidth(),
@@ -65,17 +65,17 @@ fun AirframeSection(
       ) {
         // --- Serial Number ---
         FormTextField(
-          value = aircraft.serial, // Read from ViewModel
+          value = thing.serial, // Read from ViewModel
           onValueChange = { viewModel.onSerialChanged(it) }, // Update ViewModel
           label = stringResource(Res.string.serial),
           modifier = Modifier.weight(1f), // Takes up 50%
-          editable = aircraft.id == "",
-          isError = showValidationErrors && aircraft.serial.isBlank(),
+          editable = thing.id == "",
+          isError = showValidationErrors && thing.serial.isBlank(),
           keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters)
         )
         // --- Tail Number ---
         FormTextField(
-          value = aircraft.tail_number, // Read from ViewModel
+          value = thing.tail_number, // Read from ViewModel
           onValueChange = { viewModel.onTailNumberChanged(it) }, // Update ViewModel
           label = stringResource(Res.string.tail_number),
           modifier = Modifier.weight(1f), // Takes up 50%

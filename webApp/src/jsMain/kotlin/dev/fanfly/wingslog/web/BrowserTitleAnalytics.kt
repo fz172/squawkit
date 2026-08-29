@@ -8,7 +8,7 @@ private const val BRAND = "SquawkIt"
 /**
  * Maps an analytics screen-name key to a human-readable browser-tab title. The keys are the same
  * values passed to [AnalyticsManager.logScreenView] across the web: NavController route *templates*
- * (e.g. `edit_aircraft/{aircraftId}`), shell-section keys (`shell/squawks`), and form-tab keys
+ * (e.g. `edit_aircraft/{thingId}`), shell-section keys (`shell/squawks`), and form-tab keys
  * (`task_form/...`). Keep this in sync with the route strings in [dev.fanfly.wingslog.core.nav.Screen]
  * and the `logScreenView` call sites in WebApp.kt and the feature forms. Unmapped keys fall back to a
  * best-effort prettified label so a new screen still gets a unique, readable title.

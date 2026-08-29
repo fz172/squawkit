@@ -25,7 +25,7 @@ data class PushPayload(
   val tailNumber: String,
   /** Empty means "the server had no display name" — render `notification_n1_actor_fallback`. */
   val actorName: String,
-  /** `squawk` / `task` / `log` / `aircraft`, which selects the section labels. */
+  /** `squawk` / `task` / `log` / `thing`, which selects the section labels. */
   val recordType: String,
   val recordTitle: String,
   val tapTarget: NotificationTapTarget,
@@ -92,8 +92,8 @@ data class PushPayload(
     }
 
     /**
-     * The server's tap target is **colon-delimited** (`squawk:{aircraftId}:{squawkId}`,
-     * `aircraft:{aircraftId}:{tab}`) — deliberately not the slash-and-query URI
+     * The server's tap target is **colon-delimited** (`squawk:{thingId}:{squawkId}`,
+     * `thing:{thingId}:{tab}`) — deliberately not the slash-and-query URI
      * [NotificationTapRouter] encodes, which is this app's internal deep-link format and not
      * something the server should have to know. `NotificationTapRouter.decode` will not read this;
      * that asymmetry is the reason this function exists.
@@ -101,19 +101,19 @@ data class PushPayload(
     internal fun parseTapTarget(raw: String?): NotificationTapTarget? {
       val parts = raw?.split(":") ?: return null
       if (parts.size < 2) return null
-      val aircraftId = parts[1].takeIf { it.isNotBlank() } ?: return null
+      val thingId = parts[1].takeIf { it.isNotBlank() } ?: return null
       val recordId = parts.getOrNull(2)?.takeIf { it.isNotBlank() }
       return when (parts[0]) {
-        "aircraft" -> NotificationTapTarget.Aircraft(aircraftId, tab = recordId)
+        "aircraft" -> NotificationTapTarget.Aircraft(thingId, tab = recordId)
         // The record variants are useless without an id — a tap would scroll to nothing. Falling
-        // back to the aircraft still lands the pilot on the right aircraft, which is the part every
+        // back to the thing still lands the pilot on the right thing, which is the part every
         // variant shares.
-        "squawk" -> recordId?.let { NotificationTapTarget.Squawk(aircraftId, it) }
-          ?: NotificationTapTarget.Aircraft(aircraftId, tab = "squawks")
-        "task" -> recordId?.let { NotificationTapTarget.Task(aircraftId, it) }
-          ?: NotificationTapTarget.Aircraft(aircraftId, tab = "tasks")
-        "log" -> recordId?.let { NotificationTapTarget.Log(aircraftId, it) }
-          ?: NotificationTapTarget.Aircraft(aircraftId, tab = "logs")
+        "squawk" -> recordId?.let { NotificationTapTarget.Squawk(thingId, it) }
+          ?: NotificationTapTarget.Aircraft(thingId, tab = "squawks")
+        "task" -> recordId?.let { NotificationTapTarget.Task(thingId, it) }
+          ?: NotificationTapTarget.Aircraft(thingId, tab = "tasks")
+        "log" -> recordId?.let { NotificationTapTarget.Log(thingId, it) }
+          ?: NotificationTapTarget.Aircraft(thingId, tab = "logs")
         else -> null
       }
     }
