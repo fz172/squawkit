@@ -1,11 +1,29 @@
 # Design: Aircraft → Thing Proto & Data Migration (Phase 1)
 
-> **Implementation status.** **Proposed — nothing has shipped.** This designs exactly one phase of
-> [`multi_domain_maintenance_PRD.md`](multi_domain_maintenance_PRD.md) — **Phase 1** (§15): the non-UI proto,
-> Firestore, and Cloud Storage migration that must close out on every account before any template-system UI
-> ships. No other phase is in scope here.
+> **Implementation status.** **Shipped, 2026-08-28/29 — pending final cleanup.** Every account's data lives at
+> `/users/{uid}/thing/...`, the ACL at `thing_shares/{hostUid}/thing/{acId}`, and all three platforms run a
+> client that reads them. What remains is deletion of the retired trees, held behind their grace windows.
+>
+> | Phase | State |
+> |---|---|
+> | A — client rename, `7.sqm` | Shipped |
+> | B — scripts, rules, functions | Shipped |
+> | C1 / C2 — dual infra, then the callable + trigger flip | Deployed |
+> | D — entity + blob batch | **25 accounts, 0 failures** |
+> | E — Phase 1 client on Android, iOS, web | Distributed |
+> | F — entity-tree cleanup | **F2 opens 2026-09-04**; F3/F4 written, held |
+> | G — ACL cutover | G1–G3 done; **G5 window to ~2026-09-05**; G6 written, held |
+> | H — this banner | Done |
+>
+> Verified in production: entity reads and writes, the payload backfill, blob resolution after the broker flip,
+> `7.sqm` against a real OPFS database, the `/thing/` notification triggers, and ACL authorization through
+> `thing_shares`.
+>
+> **Two branches are deliberately unmerged**, because merging deploys (§2.7b): `feat/thing-migration-f3-g6`
+> carries F3/F4 and G6, and must not land until F2 and G6 have both run. Its merge is the last deploy of this
+> migration.
 
-**Owner:** Engineering · **Status:** Proposed · **Date:** 2026-08-27
+**Owner:** Engineering · **Status:** Shipped (cleanup pending) · **Date:** 2026-08-27 · **Updated:** 2026-08-29
 **Related:** [Multi-domain maintenance PRD](multi_domain_maintenance_PRD.md) (§4, §6, §9, §15 — the product-level
 description this doc operationalizes) · [Storage R1 design](../storage/storage_r1_design.md) ·
 [Sharing design](../sharing/aircraft_sharing_design.html)

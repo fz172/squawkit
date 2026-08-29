@@ -5,18 +5,18 @@ import { adminDb, adminStorage, fft } from "./helpers.js";
 import { Attachment, AttachmentType } from "../src/generated/proto/aircraft/attachment.js";
 import { MaintenanceLog } from "../src/generated/proto/aircraft/maintenance_log.js";
 import { Squawk } from "../src/generated/proto/aircraft/squawk.js";
-import { onAircraftDeleted } from "../src/sharing/onAircraftDeleted.js";
-import { onRecordDeleted } from "../src/storage/onRecordDeleted.js";
+import { onThingDeleted } from "../src/sharing/onAircraftDeleted.js";
+import { onThingRecordDeleted } from "../src/storage/onRecordDeleted.js";
 
-const wrappedRecord = fft.wrap(onRecordDeleted);
-const wrappedAircraft = fft.wrap(onAircraftDeleted);
+const wrappedRecord = fft.wrap(onThingRecordDeleted);
+const wrappedAircraft = fft.wrap(onThingDeleted);
 
 const UID = "user-gc";
 const AC = "ac-gc";
 const LOG = "log-1";
 
-const blobPath = (id: string) => `users/${UID}/aircraft/${AC}/blobs/${id}`;
-const logPath = (id = LOG) => `users/${UID}/aircraft/${AC}/maintenance_log/${id}`;
+const blobPath = (id: string) => `users/${UID}/thing/${AC}/blobs/${id}`;
+const logPath = (id = LOG) => `users/${UID}/thing/${AC}/maintenance_log/${id}`;
 
 function attachment(id: string, type = AttachmentType.ATTACHMENT_TYPE_IMAGE): Attachment {
   return Attachment.fromPartial({ id, name: `${id}.jpg`, type });
@@ -185,11 +185,11 @@ describe("onRecordDeleted — a deleted record takes its photos with it (#158)",
     ).toString("base64");
     const before = fft.firestore.makeDocumentSnapshot(
       { deleted: false, schema: "aircraft.Squawk", payload },
-      `users/${UID}/aircraft/${AC}/squawk/sq-1`,
+      `users/${UID}/thing/${AC}/squawk/sq-1`,
     );
     const after = fft.firestore.makeDocumentSnapshot(
       { deleted: true, schema: "aircraft.Squawk", payload },
-      `users/${UID}/aircraft/${AC}/squawk/sq-1`,
+      `users/${UID}/thing/${AC}/squawk/sq-1`,
     );
 
     await wrappedRecord({
@@ -207,7 +207,7 @@ describe("onAircraftDeleted — the aircraft takes all its blobs with it", () =>
     // never has to be asked.
     await putBlob("blob-a");
     await putBlob("blob-b");
-    const path = `users/${UID}/aircraft/${AC}`;
+    const path = `users/${UID}/thing/${AC}`;
     const before = fft.firestore.makeDocumentSnapshot({ deleted: false }, path);
     const after = fft.firestore.makeDocumentSnapshot({ deleted: true }, path);
 

@@ -11,8 +11,8 @@ import {
 } from "../src/generated/proto/aircraft/squawk.js";
 import { activityNotificationId, RECORD_TYPE } from "../src/notifications/notificationModels.js";
 import {
-  onNotifiableAircraftWritten,
-  onNotifiableRecordWritten,
+  onNotifiableThingRecordWritten,
+  onNotifiableThingWritten,
 } from "../src/notifications/onRecordWritten.js";
 import { aircraftShareDocPath, shareMemberDocPath } from "../src/sharing/sharingModels.js";
 
@@ -49,8 +49,8 @@ vi.mock("firebase-admin/messaging", () => ({
   }),
 }));
 
-const wrappedRecord = fft.wrap(onNotifiableRecordWritten);
-const wrappedAircraft = fft.wrap(onNotifiableAircraftWritten);
+const wrappedRecord = fft.wrap(onNotifiableThingRecordWritten);
+const wrappedAircraft = fft.wrap(onNotifiableThingWritten);
 
 const HOST = "n1-host";
 const MEMBER = "n1-member";
@@ -60,7 +60,7 @@ const AC_A = "n1-ac-a";
 const AC_B = "n1-ac-b";
 
 const recordPath = (acId: string, kind: string, docId: string) =>
-  `users/${HOST}/aircraft/${acId}/${kind}/${docId}`;
+  `users/${HOST}/thing/${acId}/${kind}/${docId}`;
 
 // --- Seeding -----------------------------------------------------------------------------------
 
@@ -174,7 +174,7 @@ function recordWrite(
 }
 
 function aircraftWrite(acId: string, before: object | null, after: object) {
-  const path = `users/${HOST}/aircraft/${acId}`;
+  const path = `users/${HOST}/thing/${acId}`;
   return {
     data: fft.makeChange(
       fft.firestore.makeDocumentSnapshot(before ?? {}, path),
@@ -209,8 +209,8 @@ beforeEach(async () => {
     adminDb.recursiveDelete(adminDb.collection("thing_shares").doc(MALLORY)),
     adminDb.recursiveDelete(adminDb.doc(`users/${MALLORY}`)),
   ]);
-  await adminDb.doc(`users/${HOST}/aircraft/${AC_A}`).set(aircraftEnvelope(AC_A, "N4589T"));
-  await adminDb.doc(`users/${HOST}/aircraft/${AC_B}`).set(aircraftEnvelope(AC_B, "N771TS"));
+  await adminDb.doc(`users/${HOST}/thing/${AC_A}`).set(aircraftEnvelope(AC_A, "N4589T"));
+  await adminDb.doc(`users/${HOST}/thing/${AC_B}`).set(aircraftEnvelope(AC_B, "N771TS"));
   await registerDevice(MEMBER, "install-1", "tok-member");
 });
 
@@ -659,7 +659,7 @@ describe("what is not collaboration activity", () => {
    */
   it("stays silent for the aircraft-delete cascade, which keeps its writerUid", async () => {
     await shareAircraft(AC_A, { [HOST]: "owner", [MEMBER]: "technician" });
-    await adminDb.doc(`users/${HOST}/aircraft/${AC_A}/maintenance_task/task-1`).set(taskEnvelope(1));
+    await adminDb.doc(`users/${HOST}/thing/${AC_A}/maintenance_task/task-1`).set(taskEnvelope(1));
 
     // tearDownShare's effect: the ACL is gone before any child is tombstoned.
     await adminDb.recursiveDelete(adminDb.collection("thing_shares").doc(HOST));

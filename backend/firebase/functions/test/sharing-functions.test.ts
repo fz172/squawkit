@@ -5,7 +5,7 @@ import functionsTest from "firebase-functions-test";
 import { afterAll, afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { adminDb, adminStorage } from "../src/config/firebaseAdmin.js";
-import { onAircraftDeleted } from "../src/sharing/onAircraftDeleted.js";
+import { onThingDeleted } from "../src/sharing/onAircraftDeleted.js";
 import { redeemAircraftShareInvite } from "../src/sharing/redeemAircraftShareInvite.js";
 import { revokeAircraftShare as revoke } from "../src/sharing/revokeAircraftShare.js";
 import { updateAircraftShareRole } from "../src/sharing/updateAircraftShareRole.js";
@@ -14,7 +14,7 @@ const fft = functionsTest();
 const wrappedRedeem = fft.wrap(redeemAircraftShareInvite);
 const wrappedRevoke = fft.wrap(revoke);
 const wrappedUpdateRole = fft.wrap(updateAircraftShareRole);
-const wrappedDeleted = fft.wrap(onAircraftDeleted);
+const wrappedDeleted = fft.wrap(onThingDeleted);
 
 const APP_ID = "1:811416892017:android:27fbaf1c76bb16a3f961d0";
 const HOST = "host-uid";
@@ -87,7 +87,7 @@ describe("revokeAircraftShare", () => {
     await seedShare({ [HOST]: "owner", [TECH]: "technician" });
     await adminDb.doc(`thing_shares/${HOST}/thing/${AC}/members/${TECH}`).set({ role: "technician" });
     await adminDb.doc(`users/${TECH}/shared_aircraft_ref/${AC}`).set({ deleted: false });
-    const blob = `users/${HOST}/aircraft/${AC}/blobs/keep-me`;
+    const blob = `users/${HOST}/thing/${AC}/blobs/keep-me`;
     await adminStorage.bucket().file(blob).save(Buffer.from([1, 2, 3]));
 
     await wrappedRevoke(req(HOST, { hostUid: HOST, aircraftId: AC, memberUid: TECH }));
@@ -135,8 +135,8 @@ describe("updateAircraftShareRole", () => {
   });
 });
 
-describe("onAircraftDeleted", () => {
-  const aircraftPath = `users/${HOST}/aircraft/${AC}`;
+describe("onThingDeleted", () => {
+  const aircraftPath = `users/${HOST}/thing/${AC}`;
 
   function change(beforeDeleted: boolean, afterDeleted: boolean) {
     const before = fft.firestore.makeDocumentSnapshot({ deleted: beforeDeleted }, aircraftPath);
@@ -171,7 +171,7 @@ describe("onAircraftDeleted", () => {
     await seedShare({ [HOST]: "owner", [TECH]: "technician" });
     await adminDb.doc(`users/${TECH}/shared_aircraft_ref/${AC}`).set({ deleted: false });
 
-    const techPath = `users/${TECH}/aircraft/${AC}`;
+    const techPath = `users/${TECH}/thing/${AC}`;
     const before = fft.firestore.makeDocumentSnapshot({ deleted: false }, techPath);
     const after = fft.firestore.makeDocumentSnapshot({ deleted: true }, techPath);
     await wrappedDeleted({
@@ -189,7 +189,7 @@ describe("onAircraftDeleted", () => {
     // The teardown is host-only, but the cascade is not — the deleter's own child records must
     // still be tombstoned, or they orphan.
     await seedShare({ [HOST]: "owner", [TECH]: "technician" });
-    const techPath = `users/${TECH}/aircraft/${AC}`;
+    const techPath = `users/${TECH}/thing/${AC}`;
     await adminDb.doc(`${techPath}/maintenance_log/log-1`).set({ deleted: false });
 
     const before = fft.firestore.makeDocumentSnapshot({ deleted: false }, techPath);
