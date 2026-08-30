@@ -1,5 +1,8 @@
 package dev.fanfly.wingslog.feature.squawk.viewing
 
+import dev.fanfly.wingslog.core.template.LexiconFormatter
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.squawkNoun
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -15,7 +18,6 @@ import dev.fanfly.wingslog.core.ui.common.compose.PickerSheet
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.squawk.sharedassets.generated.resources.Res
-import wingslog.feature.squawk.sharedassets.generated.resources.squawks
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -29,7 +31,7 @@ fun SquawkPickerSheet(
     onDismiss = onDismiss,
     headerSlot = {
       Text(
-        text = stringResource(Res.string.squawks),
+        text = LexiconFormatter.titleCasePlural(LocalThingLexicon.current.squawkNoun),
         style = MaterialTheme.typography.titleLarge,
         fontWeight = FontWeight.Bold,
       )

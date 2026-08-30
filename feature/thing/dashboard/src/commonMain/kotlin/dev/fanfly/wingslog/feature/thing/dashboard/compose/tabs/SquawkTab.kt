@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.thing.dashboard.compose.tabs
 
+import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.squawkNoun
 import androidx.compose.foundation.layout.Arrangement
@@ -61,7 +62,6 @@ import wingslog.feature.squawk.sharedassets.generated.resources.no_closed_squawk
 import wingslog.feature.squawk.sharedassets.generated.resources.no_open_squawks
 import wingslog.feature.squawk.sharedassets.generated.resources.no_open_squawks_description
 import wingslog.feature.squawk.sharedassets.generated.resources.open_with_count
-import wingslog.feature.squawk.sharedassets.generated.resources.squawks
 import kotlin.math.roundToInt
 
 private val squawkOrder = compareByDescending<SquawkWithStatus> {
@@ -135,7 +135,7 @@ fun SquawkTab(
 
     if (showHeader) {
       Text(
-        text = stringResource(Res.string.squawks),
+        text = LexiconFormatter.titleCasePlural(LocalThingLexicon.current.squawkNoun),
         style = MaterialTheme.typography.titleMedium,
         fontWeight = FontWeight.Bold,
       )

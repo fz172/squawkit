@@ -13,7 +13,6 @@
   <string name="compliance_type_ad_short">AD</string>
   <string name="compliance_type_sb_short">SB</string>
 
-  <string name="maintenance_tasks">Maintenance Tasks</string>
   <string name="maintenance_due_title">Maintenance Due</string>
   <string name="add_task">Add task</string>
   <string name="no_tasks_yet">No %1$s</string>

@@ -457,7 +457,6 @@ feature/sharing/sharedassets	invite_link_unavailable	This code was created on an
 feature/sharing/sharedassets	invite_qr_desc	Invite QR code
 feature/sharing/sharedassets	invite_role_label	Role
 feature/sharing/sharedassets	invite_role_owner	Co-owner
-feature/sharing/sharedassets	invite_role_technician	Technician
 feature/sharing/sharedassets	invite_scan_hint	Or have them scan this.
 feature/sharing/sharedassets	invite_share	Share link
 feature/sharing/sharedassets	invite_title	Invite to aircraft
@@ -485,12 +484,10 @@ feature/sharing/sharedassets	manage_access_people_section	People with access
 feature/sharing/sharedassets	manage_access_perm_manage_access	Manage access
 feature/sharing/sharedassets	manage_access_perm_squawks_tasks	Squawks and tasks
 feature/sharing/sharedassets	manage_access_perm_thing_details	Aircraft details
-feature/sharing/sharedassets	manage_access_perm_work_logs	Work logs
 feature/sharing/sharedassets	manage_access_revoke	Remove access
 feature/sharing/sharedassets	manage_access_role_co_owner	Co-owner
 feature/sharing/sharedassets	manage_access_role_co_owner_desc	Everything a technician can do, plus edit aircraft details and manage who has access.
 feature/sharing/sharedassets	manage_access_role_owner	Owner
-feature/sharing/sharedassets	manage_access_role_technician	Technician
 feature/sharing/sharedassets	manage_access_role_technician_desc	Add and edit squawks, maintenance tasks, and work logs. Cannot change aircraft details.
 feature/sharing/sharedassets	manage_access_solo_body	Invite a mechanic or a co-owner and they can log squawks, tasks, and work against this aircraft.
 feature/sharing/sharedassets	manage_access_solo_title	No one else has access
@@ -511,7 +508,6 @@ feature/sharing/sharedassets	redeem_failed_title	Invite unavailable
 feature/sharing/sharedassets	redeem_needs_signin_body	Sign in with your account to accept this invitation.
 feature/sharing/sharedassets	redeem_needs_signin_title	Sign in required
 feature/sharing/sharedassets	redeem_role_owner	a co-owner
-feature/sharing/sharedassets	redeem_role_technician	a technician
 feature/sharing/sharedassets	redeem_success_body	You now have access as %1$s. The aircraft will appear in your fleet shortly.
 feature/sharing/sharedassets	redeem_success_title	You're in
 feature/sharing/sharedassets	revoke_confirm_action	Remove access
@@ -530,7 +526,6 @@ feature/squawk/sharedassets	dismiss_reason_not_reproducible	Not reproducible
 feature/squawk/sharedassets	dismiss_reason_obsolete	Obsolete
 feature/squawk/sharedassets	dismissed_label	Dismissed — %1$s
 feature/squawk/sharedassets	down_alert_subtitle	AOG squawks must be resolved before flight
-feature/squawk/sharedassets	down_alert_title	Aircraft on Ground
 feature/squawk/sharedassets	edit_squawk	Update squawk
 feature/squawk/sharedassets	no_closed_squawks	No closed squawks yet.
 feature/squawk/sharedassets	no_open_squawks	No open squawks
@@ -538,7 +533,6 @@ feature/squawk/sharedassets	no_open_squawks_description	Tap + to report a defect
 feature/squawk/sharedassets	no_squawk_work_recorded	No squawks addressed by this log
 feature/squawk/sharedassets	no_work_recorded	No work recorded yet.
 feature/squawk/sharedassets	open_with_count	OPEN (%1$d)
-feature/squawk/sharedassets	priority_down	AOG
 feature/squawk/sharedassets	priority_high	High
 feature/squawk/sharedassets	priority_low	Low
 feature/squawk/sharedassets	priority_medium	Medium
@@ -555,7 +549,6 @@ feature/squawk/sharedassets	squawk_status_dismissed	Dismissed
 feature/squawk/sharedassets	squawk_title_label	Issue Summary
 feature/squawk/sharedassets	squawk_title_required	Issue summary is required
 feature/squawk/sharedassets	squawk_updated	Squawk updated
-feature/squawk/sharedassets	squawks	Squawks
 feature/squawk/sharedassets	view_squawks	View Squawks
 feature/squawk/sharedassets	work_history	Work History
 feature/squawk/update	dismiss_issue	Dismiss Issue
@@ -696,7 +689,6 @@ feature/tasks/sharedassets	due_with_count	DUE (%1$d)
 feature/tasks/sharedassets	edit_task	Update task
 feature/tasks/sharedassets	history_with_count	HISTORY (%1$d)
 feature/tasks/sharedassets	maintenance_due_title	Maintenance Due
-feature/tasks/sharedassets	maintenance_tasks	Maintenance Tasks
 feature/tasks/sharedassets	no_complied_yet	Log work against a task to see its history here.
 feature/tasks/sharedassets	no_task_work_recorded	No task addressed by this log.
 feature/tasks/sharedassets	no_tasks_yet	No maintenance tasks

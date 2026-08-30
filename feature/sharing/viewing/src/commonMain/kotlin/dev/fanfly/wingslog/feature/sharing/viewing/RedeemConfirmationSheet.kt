@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.sharing.viewing
 
+import dev.fanfly.wingslog.core.template.technicianNoun
 import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.thingNoun
@@ -30,7 +31,6 @@ import wingslog.feature.sharing.sharedassets.generated.resources.redeem_failed_t
 import wingslog.feature.sharing.sharedassets.generated.resources.redeem_needs_signin_body
 import wingslog.feature.sharing.sharedassets.generated.resources.redeem_needs_signin_title
 import wingslog.feature.sharing.sharedassets.generated.resources.redeem_role_owner
-import wingslog.feature.sharing.sharedassets.generated.resources.redeem_role_technician
 import wingslog.feature.sharing.sharedassets.generated.resources.redeem_success_body
 import wingslog.feature.sharing.sharedassets.generated.resources.redeem_success_title
 
@@ -165,5 +165,5 @@ private fun InfoDialog(title: String, body: String, onDismiss: () -> Unit) {
 @Composable
 private fun roleLabel(role: ShareRole): String = when (role) {
   ShareRole.OWNER -> stringResource(Res.string.redeem_role_owner)
-  ShareRole.TECHNICIAN -> stringResource(Res.string.redeem_role_technician)
+  ShareRole.TECHNICIAN -> LexiconFormatter.withArticle(LocalThingLexicon.current.technicianNoun)
 }
