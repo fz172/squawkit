@@ -3,6 +3,9 @@ package dev.fanfly.wingslog.feature.shell.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.fanfly.wingslog.core.auth.AuthManager
+import dev.fanfly.wingslog.core.template.CurrentThingLexicon
+import dev.fanfly.wingslog.core.template.GenericLexicon
+import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.core.ui.adaptive.AdaptiveShellUiState
 import dev.fanfly.wingslog.core.ui.adaptive.ShellSection
 import dev.fanfly.wingslog.core.ui.adaptive.ShellThing
@@ -37,6 +40,8 @@ class AdaptiveShellViewModel(
   private val subscriptionManager: SubscriptionManager,
   private val syncEngine: SyncEngine,
   private val selectedThingStore: SelectedThingStore,
+  private val templateRegistry: TemplateRegistry,
+  private val currentThingLexicon: CurrentThingLexicon,
 ) : ViewModel() {
 
   /**
@@ -88,6 +93,10 @@ class AdaptiveShellViewModel(
                 tail = ac.tail_number,
                 name = listOf(ac.make, ac.model).filter { it.isNotBlank() }
                   .joinToString(" "),
+                // forThingWithFallback, not ac.template: a Thing created before templates existed
+                // carries none, and reading the field directly would render it in no words at all.
+                lexicon = templateRegistry.forThingWithFallback(ac).lexicon
+                  ?: GenericLexicon.LEXICON,
               )
             }
             // Prefer the live selection, then the one remembered from last session; fall back to the
@@ -103,6 +112,9 @@ class AdaptiveShellViewModel(
             }
             state.copy(thing = mapped, selectedThingId = selected)
           }
+          // After the update, not inside it: `update` may re-run its lambda under contention, so a
+          // side effect there can fire more than once per change.
+          publishLexicon()
         }
     }
   }
@@ -172,6 +184,16 @@ class AdaptiveShellViewModel(
    * just leaves the pilot on whatever section was already open with no clue what changed, which
    * reads as a tap that did nothing.
    */
+  /**
+   * Publishes the selected thing's words app-scoped.
+   *
+   * The per-thing form dialogs are registered on the root nav graph and compose outside this shell,
+   * so they cannot read a CompositionLocal the shell installs — see [CurrentThingLexicon].
+   */
+  private fun publishLexicon() {
+    currentThingLexicon.set(_uiState.value.selectedThing?.lexicon ?: GenericLexicon.LEXICON)
+  }
+
   private fun String.toShellSection(): ShellSection? = when (this) {
     "squawks" -> ShellSection.SQUAWKS
     "tasks" -> ShellSection.TASKS
@@ -201,6 +223,7 @@ class AdaptiveShellViewModel(
   /** Switcher selection (above phone): swaps the ambient thing in place and remembers it. */
   fun selectThing(id: String) {
     _uiState.update { it.copy(selectedThingId = id) }
+    publishLexicon()
     rememberedAircraftId = id
     selectedThingStore.save(id)
   }

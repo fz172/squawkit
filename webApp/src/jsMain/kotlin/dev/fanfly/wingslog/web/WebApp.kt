@@ -20,7 +20,11 @@ import androidx.navigation.compose.rememberNavController
 import dev.fanfly.wingslog.core.analytics.AnalyticsManager
 import dev.fanfly.wingslog.core.analytics.LocalAnalytics
 import dev.fanfly.wingslog.core.appinfo.AppCapability
+import dev.fanfly.wingslog.core.lifecycle.AppForegroundObserver
+import dev.fanfly.wingslog.core.lifecycle.compose.AppForegroundEffect
 import dev.fanfly.wingslog.core.nav.Screen
+import dev.fanfly.wingslog.core.template.CurrentThingLexicon
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.ui.theme.AppearanceController
 import dev.fanfly.wingslog.core.ui.theme.WingslogTheme
 import dev.fanfly.wingslog.core.ui.theme.resolveDarkTheme
@@ -36,8 +40,6 @@ import dev.fanfly.wingslog.feature.shell.sharingRoutes
 import kotlinx.browser.document
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.rememberResourceEnvironment
-import dev.fanfly.wingslog.core.lifecycle.AppForegroundObserver
-import dev.fanfly.wingslog.core.lifecycle.compose.AppForegroundEffect
 import org.koin.compose.koinInject
 import org.w3c.dom.HTMLElement
 import wingslog.core.sharedassets.generated.resources.app_name
@@ -53,6 +55,7 @@ import wingslog.core.sharedassets.generated.resources.Res as UiRes
 @Composable
 fun WebApp() {
   val appearanceController: AppearanceController = koinInject()
+  val currentThingLexicon: CurrentThingLexicon = koinInject()
   val appearanceMode by appearanceController.mode.collectAsState()
   val isDark = appearanceMode.resolveDarkTheme()
   LaunchedEffect(isDark) { updateBrowserGutterColor(isDark) }
@@ -102,7 +105,13 @@ fun WebApp() {
 
         TrackRootScreenViews(navController, analytics)
 
-        CompositionLocalProvider(LocalAnalytics provides analytics) {
+        // Above the NavHost so the per-thing form dialogs see it too: they are root
+        // destinations composed in DialogHost, a sibling of the shell (CurrentThingLexicon).
+        val thingLexicon by currentThingLexicon.lexicon.collectAsState()
+        CompositionLocalProvider(
+          LocalAnalytics provides analytics,
+          LocalThingLexicon provides thingLexicon,
+        ) {
           NavHost(
             navController = navController,
             startDestination = Screen.Login.route,

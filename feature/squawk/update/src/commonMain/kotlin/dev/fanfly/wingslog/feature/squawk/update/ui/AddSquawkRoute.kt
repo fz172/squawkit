@@ -1,5 +1,8 @@
 package dev.fanfly.wingslog.feature.squawk.update.ui
 
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.squawkNoun
+import dev.fanfly.wingslog.core.template.LexiconFormatter
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -29,7 +32,11 @@ fun AddSquawkRoute(
   val pendingAttachments by viewModel.pendingAttachments.collectAsStateWithLifecycle()
   val showAttachmentPicker by viewModel.showAttachmentPicker.collectAsStateWithLifecycle()
   val attachmentUploadEnabled by viewModel.attachmentUploadEnabled.collectAsStateWithLifecycle()
-  val successMessage = stringResource(Res.string.squawk_added)
+  val successMessage =
+    stringResource(
+      Res.string.squawk_added,
+      LexiconFormatter.sentenceCase(LocalThingLexicon.current.squawkNoun),
+    )
   val fileReadErrorMessage = stringResource(AttachRes.string.file_read_error)
   val snackbarHostState = remember { SnackbarHostState() }
 

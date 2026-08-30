@@ -26,9 +26,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
-import dev.fanfly.wingslog.thing.Squawk
+import dev.fanfly.wingslog.core.template.LexiconFormatter
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.squawkNoun
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.statusColors
+import dev.fanfly.wingslog.thing.Squawk
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.squawk.sharedassets.generated.resources.Res
 import wingslog.feature.squawk.sharedassets.generated.resources.aog_alert_subtitle
@@ -110,7 +113,10 @@ fun AogAlertSection(
           .padding(horizontal = Spacing.medium),
       ) {
         Text(
-          text = stringResource(Res.string.view_squawks),
+          text = stringResource(
+            Res.string.view_squawks,
+            LexiconFormatter.titleCasePlural(LocalThingLexicon.current.squawkNoun),
+          ),
           color = blocking.accent,
         )
       }

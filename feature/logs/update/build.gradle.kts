@@ -30,6 +30,7 @@ kotlin {
 
   sourceSets {
     commonMain.dependencies {
+      implementation(project(":core:template"))
       implementation(project(":core:nav"))
       implementation(project(":core:analytics"))
       implementation(project(":core:ui"))

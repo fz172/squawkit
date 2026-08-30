@@ -1,5 +1,9 @@
 package dev.fanfly.wingslog
 
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import dev.fanfly.wingslog.core.template.CurrentThingLexicon
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -55,6 +59,7 @@ fun AppEntry() {
   val appCapability: AppCapability = koinInject()
   val analytics: AnalyticsManager = koinInject()
   val appearanceController: AppearanceController = koinInject()
+  val currentThingLexicon: CurrentThingLexicon = koinInject()
   val appearanceMode by appearanceController.mode.collectAsState()
   val darkTheme = appearanceMode.resolveDarkTheme()
   val scope = rememberCoroutineScope()
@@ -94,7 +99,13 @@ fun AppEntry() {
       PopToShellOnNotificationTap(navController)
       TrackRootScreenViews(navController, analytics)
 
-      CompositionLocalProvider(LocalAnalytics provides analytics) {
+      // Above the NavHost so the per-thing form dialogs see it too: they are root
+      // destinations composed in DialogHost, a sibling of the shell (CurrentThingLexicon).
+      val thingLexicon by currentThingLexicon.lexicon.collectAsState()
+      CompositionLocalProvider(
+        LocalAnalytics provides analytics,
+        LocalThingLexicon provides thingLexicon,
+      ) {
         NavHost(
           navController,
           startDestination = GRAPH_AUTH

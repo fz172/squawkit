@@ -1,5 +1,9 @@
 package dev.fanfly.wingslog.feature.shell.viewmodel
 
+import dev.fanfly.wingslog.core.template.CurrentThingLexicon
+import dev.fanfly.wingslog.core.template.GenericLexicon
+import dev.fanfly.wingslog.core.template.squawkNoun
+import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.thing.Technician
 import dev.fanfly.wingslog.core.auth.AccountUpgradeResult
@@ -119,6 +123,30 @@ class AdaptiveShellViewModelTest {
   @After
   fun tearDown() = Dispatchers.resetMain()
 
+  @Test
+  fun publishesTheSelectedThingsLexiconAppScoped() = runTest(testDispatcher) {
+    // Guards a bug class the byte-identical snapshot test cannot see (#658, #656). The per-thing
+    // form dialogs are root nav destinations composed in DialogHost, a sibling of the shell, so
+    // they cannot read a CompositionLocal the shell installs. If this stops being published they
+    // fall back to the generic lexicon and render "New issue" where the app says "New squawk" —
+    // a visible regression with a green test suite.
+    assertThat(currentThingLexicon.lexicon.value)
+      .isEqualTo(GenericLexicon.LEXICON)
+
+    fleet.value = listOf(thing("a1", "N1"))
+    viewModel()
+
+    assertThat(currentThingLexicon.lexicon.value.squawkNoun.singular).isEqualTo("squawk")
+  }
+
+  @Test
+  fun fallsBackToTheGenericLexiconWhenTheFleetIsEmpty() = runTest(testDispatcher) {
+    fleet.value = emptyList()
+    viewModel()
+
+    assertThat(currentThingLexicon.lexicon.value).isEqualTo(GenericLexicon.LEXICON)
+  }
+
   private fun thing(
     id: String,
     tail: String,
@@ -160,6 +188,12 @@ class AdaptiveShellViewModelTest {
     }
   }
 
+  // The real registry, not a mock: it is pure data with no I/O, and a mock here would let a
+  // ShellThing be built with a lexicon no template would ever produce.
+  private val templateRegistry = BakedInTemplateRegistry()
+
+  private val currentThingLexicon = CurrentThingLexicon()
+
   private fun viewModel() = AdaptiveShellViewModel(
     fleetManager = fleetManager,
     technicianManager = technicianManager,
@@ -168,6 +202,8 @@ class AdaptiveShellViewModelTest {
     subscriptionManager = subscriptionManager,
     syncEngine = syncEngine,
     selectedThingStore = selectedThingStore,
+    templateRegistry = templateRegistry,
+    currentThingLexicon = currentThingLexicon,
   )
 
   @Test

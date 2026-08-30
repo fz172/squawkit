@@ -1,5 +1,7 @@
 package dev.fanfly.wingslog.feature.squawk.viewing
 
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.squawkNoun
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -61,7 +63,12 @@ fun SquawkDetailSheet(
     actionSlot = {
       if (onEditClick != null) {
         TextButton(onClick = onEditClick) {
-          Text(stringResource(Res.string.edit_squawk))
+          Text(
+            stringResource(
+              Res.string.edit_squawk,
+              LocalThingLexicon.current.squawkNoun.singular,
+            ),
+          )
         }
       }
     },

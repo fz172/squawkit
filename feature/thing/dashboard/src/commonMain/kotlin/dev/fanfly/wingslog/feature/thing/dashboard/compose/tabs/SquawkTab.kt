@@ -1,5 +1,7 @@
 package dev.fanfly.wingslog.feature.thing.dashboard.compose.tabs
 
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.squawkNoun
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -168,13 +170,19 @@ fun SquawkTab(
     if (displayList.isEmpty()) {
       if (!showClosed) {
         EmptyState(
-          title = stringResource(Res.string.no_open_squawks),
+          title = stringResource(
+            Res.string.no_open_squawks,
+            LocalThingLexicon.current.squawkNoun.plural,
+          ),
           description = stringResource(Res.string.no_open_squawks_description),
           icon = Icons.Default.CheckCircle,
         )
       } else {
         Text(
-          text = stringResource(Res.string.no_closed_squawks),
+          text = stringResource(
+            Res.string.no_closed_squawks,
+            LocalThingLexicon.current.squawkNoun.plural,
+          ),
           style = MaterialTheme.typography.bodyMedium,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
           modifier = Modifier.padding(vertical = Spacing.large),

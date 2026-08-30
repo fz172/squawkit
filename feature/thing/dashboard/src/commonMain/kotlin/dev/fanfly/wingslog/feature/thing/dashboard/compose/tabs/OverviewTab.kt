@@ -1,5 +1,7 @@
 package dev.fanfly.wingslog.feature.thing.dashboard.compose.tabs
 
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.squawkNoun
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -376,7 +378,10 @@ private fun DashboardLowerGrid(
         if (openSquawks.isEmpty()) {
           EmptyRailState(
             icon = Icons.Default.CheckCircle,
-            title = stringResource(SquawkRes.string.no_open_squawks),
+            title = stringResource(
+              SquawkRes.string.no_open_squawks,
+              LocalThingLexicon.current.squawkNoun.plural,
+            ),
             body = stringResource(Res.string.overview_no_squawks_body),
           )
         } else {
