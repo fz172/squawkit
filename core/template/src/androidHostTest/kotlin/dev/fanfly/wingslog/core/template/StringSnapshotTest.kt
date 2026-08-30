@@ -357,12 +357,6 @@ class StringSnapshotTest {
     "feature/notifications/sharedassets:notification_n1_body_thing_updated" to { l: Lexicon ->
       mapOf(3 to l.thingNoun.singular)
     },
-    // An Android `res/values` string rather than a Compose resource — the OS channel description,
-    // read with R.string in AndroidLocalNotifier (#662). The snapshot scans every strings.xml, so
-    // it is covered here like any other.
-    frame("feature/notifications/viewing", "notification_channel_collaboration_description") {
-      it.thingNoun.singular
-    },
   )
 
   /** A single-argument frame at position 1, in any module. */
