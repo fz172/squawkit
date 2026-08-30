@@ -8,6 +8,8 @@ import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.EntityStore
 import dev.fanfly.wingslog.core.storage.EntityStoreFactory
+import dev.fanfly.wingslog.core.template.TemplateRegistry
+import dev.fanfly.wingslog.core.template.ThingInflater
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetEntry
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.thing.Thing
@@ -30,6 +32,7 @@ import kotlinx.coroutines.flow.map
  */
 class FleetManagerImpl(
   private val firebaseAuth: FirebaseAuth,
+  private val templateRegistry: TemplateRegistry,
   storeFactory: EntityStoreFactory,
 ) : FleetManager {
 
@@ -152,10 +155,22 @@ class FleetManagerImpl(
       val isNew = thing.id.isEmpty()
       val withId =
         if (isNew) thing.copy(id = generateRandomId()) else thing
+      // Inflate before writing, not at creation only (#717). `spec` and `components` were meant to
+      // be dual-written from Phase 1 and only the server half shipped, so every Thing written since
+      // the cutover has its values in fields 2-6 alone. Doing it at this choke point means the
+      // population without them shrinks through ordinary use rather than needing a second migration
+      // for anything edited after this ships. Inflation is idempotent, so an already-inflated Thing
+      // round-trips unchanged. Note it runs *after* the id is assigned: component ids derive from
+      // the Thing id, so inflating a Thing whose id is still empty would bake "" into every one.
+      val inflated =
+        ThingInflater.inflate(
+          withId,
+          templateRegistry.forThingWithFallback(withId)
+        )
       val scope =
-        if (isNew) EntityScope.userRoot(uid) else rootScopeOf(withId.id, uid)
-      store.put(withId.id, withId, scope)
-      logger.d { "Thing ${withId.id} written to local store at ${scope.toPath()}" }
+        if (isNew) EntityScope.userRoot(uid) else rootScopeOf(inflated.id, uid)
+      store.put(inflated.id, inflated, scope)
+      logger.d { "Thing ${inflated.id} written to local store at ${scope.toPath()}" }
       true
     }.onFailure { logger.w(it) { "Error updating aircraft" } }
 
