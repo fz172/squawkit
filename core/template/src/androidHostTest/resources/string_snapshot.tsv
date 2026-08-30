@@ -1,0 +1,975 @@
+# Every user-facing string, captured BEFORE Phase 2C converted any of them (#658).
+# Real newlines and tabs are stored as U+0001 and U+0002, because the format is line-based and 12
+# strings are multi-line — and because strings.xml also holds literal backslash-n as Android escape
+# text, which a backslash scheme cannot distinguish from an escaped newline.
+# Everything else, including XML entities and trailing whitespace, is exactly as authored.
+# Regenerating this file to make the test pass defeats its entire purpose.
+module	resource	value
+app	app_name	SquawkIt
+composeApp	clearing_local_data	Clearing local data…
+composeApp	database_error	Database Error
+composeApp	database_problem_message	A problem was detected with the local database. Tap below to wipe your device's copy and re-sync from the cloud. Your cloud data is safe and will be restored.
+composeApp	wipe_and_resync	Wipe and Re-sync
+composeApp	wiping	Wiping…
+core/sharedassets	accept	Accept
+core/sharedassets	add	Add
+core/sharedassets	add_aircraft	Add Aircraft
+core/sharedassets	aircraft_shared_badge	Shared
+core/sharedassets	all	All
+core/sharedassets	app_name	SquawkIt
+core/sharedassets	back	Back
+core/sharedassets	cancel	Cancel
+core/sharedassets	component_airframe	Airframe
+core/sharedassets	component_engine	Engine
+core/sharedassets	component_propeller	Propeller
+core/sharedassets	component_type	Component Type
+core/sharedassets	configuration	Configuration
+core/sharedassets	continue_action	Continue
+core/sharedassets	dash	—
+core/sharedassets	delete	Delete
+core/sharedassets	delete_failed	Delete failed
+core/sharedassets	details	Details
+core/sharedassets	discard	Discard
+core/sharedassets	dismiss	Dismiss
+core/sharedassets	done	Done
+core/sharedassets	edit	Update
+core/sharedassets	edit_profile	Update Profile
+core/sharedassets	empty_add_aircraft	Add an aircraft to get started
+core/sharedassets	enter_invite_code	Enter invite code
+core/sharedassets	error_occurred	An error occurred
+core/sharedassets	file_size_bytes	%1$s B
+core/sharedassets	file_size_kb	%1$s KB
+core/sharedassets	file_size_mb	%1$s MB
+core/sharedassets	file_size_zero_kb	0 KB
+core/sharedassets	make_model_template	%1$s %2$s
+core/sharedassets	manage_access	Manage Access
+core/sharedassets	none	None
+core/sharedassets	not_now	Not now
+core/sharedassets	ok	OK
+core/sharedassets	or	OR
+core/sharedassets	remove	Remove
+core/sharedassets	required	Required
+core/sharedassets	retry	Try Again
+core/sharedassets	save	Save
+core/sharedassets	save_changes	Save Changes
+core/sharedassets	save_failed	Save failed
+core/sharedassets	select_date	Select Date
+core/sharedassets	settings	Settings
+core/sharedassets	shell_nav_tasks_narrow	Maint. Tasks
+core/sharedassets	shell_tab_dashboard	Dashboard
+core/sharedassets	shell_tab_logs	Logs
+core/sharedassets	shell_tab_squawks	Squawks
+core/sharedassets	shell_tab_tasks	Maint.
+core/sharedassets	shell_title_logs	Work Logs
+core/sharedassets	shell_title_tasks	Maintenance Tasks
+core/sharedassets	sync_changes_discarded	Unsaved changes to %1$s were discarded — your access was removed
+core/sharedassets	unit_hours	hrs
+core/sharedassets	unknown	Unknown
+core/sharedassets	unsaved_changes	Unsaved Changes
+core/sharedassets	unsaved_changes_message	You have unsaved changes. Are you sure you want to leave?
+feature/ads/sharedassets	ads_a11y_advertisement	Advertisement
+feature/ads/sharedassets	ads_sponsored_label	Sponsored
+feature/attachment/sharedassets	add_file_failed	Failed to add file
+feature/attachment/sharedassets	add_link	Add link
+feature/attachment/sharedassets	attachment_limits_hint	Up to 3 files · Max 5 MB each
+feature/attachment/sharedassets	attachment_type_file	File
+feature/attachment/sharedassets	attachment_type_image	Image
+feature/attachment/sharedassets	attachment_type_link	Link
+feature/attachment/sharedassets	attachment_type_pdf	PDF
+feature/attachment/sharedassets	attachment_type_text	Text
+feature/attachment/sharedassets	attachments	Attachments
+feature/attachment/sharedassets	choose_file	Choose file
+feature/attachment/sharedassets	delete_saved_attachment_message	The file will be permanently deleted when you save.
+feature/attachment/sharedassets	delete_saved_attachment_title	Remove file?
+feature/attachment/sharedassets	duplicate_file_skipped	Already attached — duplicate files were skipped
+feature/attachment/sharedassets	file_added	File added
+feature/attachment/sharedassets	file_read_error	Could not read selected file
+feature/attachment/sharedassets	file_too_large	File exceeds 5 MB limit
+feature/attachment/sharedassets	file_upload_coming_soon	Subscribe to SquawkIt Pro to attach photos &amp; files
+feature/attachment/sharedassets	files_over_limit_skipped	Only 3 files can be attached — the extra files were not added
+feature/attachment/sharedassets	invalid_url	Enter a valid URL
+feature/attachment/sharedassets	link_added	Link added
+feature/attachment/sharedassets	link_name	Name (optional)
+feature/attachment/sharedassets	link_url	URL
+feature/attachment/sharedassets	max_files_reached	Maximum 3 files reached
+feature/attachment/sharedassets	no_attachments	No attachments yet
+feature/attachment/sharedassets	open_failed	Could not open attachment. Try again.
+feature/attachment/sharedassets	opening_attachment	Opening…
+feature/attachment/sharedassets	remove_attachment	Remove attachment
+feature/attachment/sharedassets	retry_upload	Retry upload
+feature/attachment/sharedassets	sign_in_to_add_attachments	Sign in to add attachments
+feature/attachment/sharedassets	subtitle_separator	 · 
+feature/attachment/sharedassets	take_photo	Take photo
+feature/attachment/sharedassets	upload_failed	Upload failed
+feature/attachment/sharedassets	upload_network_error	Upload failed. Check your connection.
+feature/attachment/sharedassets	upload_permission_error	Upload failed: permission denied
+feature/export/sharedassets	export_aircraft_details_incomplete	Aircraft details incomplete
+feature/export/sharedassets	export_aircraft_section	Aircraft
+feature/export/sharedassets	export_aircraft_summary_more	%1$s + %2$d more
+feature/export/sharedassets	export_all_time	All time
+feature/export/sharedassets	export_back_to_setup	Back to setup
+feature/export/sharedassets	export_clear_all	Clear all
+feature/export/sharedassets	export_custom	Custom
+feature/export/sharedassets	export_custom_end_date	End date
+feature/export/sharedassets	export_custom_range_title	Custom range
+feature/export/sharedassets	export_custom_start_date	Start date
+feature/export/sharedassets	export_date_range_section	Date range
+feature/export/sharedassets	export_delivery_note	Your export will be sent to %1$s.
+feature/export/sharedassets	export_delivery_title	Export delivery email
+feature/export/sharedassets	export_download	Download
+feature/export/sharedassets	export_download_failed	Couldn’t download the export
+feature/export/sharedassets	export_download_success	Saved to your device
+feature/export/sharedassets	export_email_sent_action	Emailed
+feature/export/sharedassets	export_error_details	If this keeps happening, contact support@fanfly.dev so we can look into it.
+feature/export/sharedassets	export_error_subtitle	Something went wrong while building the ZIP. Try again in a moment.
+feature/export/sharedassets	export_error_title	Export failed
+feature/export/sharedassets	export_estimated_size	~%1$s
+feature/export/sharedassets	export_footer_aircraft_count	%1$d aircraft
+feature/export/sharedassets	export_format_csv_sub	Plain text
+feature/export/sharedassets	export_format_pdf_sub	Print-ready
+feature/export/sharedassets	export_format_pick_one	Pick at least one format
+feature/export/sharedassets	export_format_xlsx_sub	Spreadsheet
+feature/export/sharedassets	export_formats_helper	%1$s bundled in a ZIP with your attached files.
+feature/export/sharedassets	export_formats_section	Report formats
+feature/export/sharedassets	export_history_action	Export history
+feature/export/sharedassets	export_history_delete_confirm_body	%1$s will be permanently removed from this device.
+feature/export/sharedassets	export_history_delete_confirm_body_cloud_only	%1$s will be permanently removed from cloud.
+feature/export/sharedassets	export_history_delete_confirm_body_device_and_cloud	%1$s will be permanently removed from this device and cloud.
+feature/export/sharedassets	export_history_delete_confirm_title	Delete export?
+feature/export/sharedassets	export_history_delivery_failed	Failed to send email
+feature/export/sharedassets	export_history_delivery_in_progress	Email is already being sent
+feature/export/sharedassets	export_history_delivery_manual	Manual share only
+feature/export/sharedassets	export_history_delivery_queued	Email requested
+feature/export/sharedassets	export_history_delivery_retry	Retry email delivery
+feature/export/sharedassets	export_history_delivery_sending	Sending email
+feature/export/sharedassets	export_history_delivery_sent	Email sent
+feature/export/sharedassets	export_history_delivery_throttled	Already sent recently — try again later
+feature/export/sharedassets	export_history_empty_body	Generate a printable PDF or spreadsheet of your maintenance logs to share with your mechanic, IA, or insurance.
+feature/export/sharedassets	export_history_empty_title	No exports yet
+feature/export/sharedassets	export_history_item_meta	%1$s · %2$s
+feature/export/sharedassets	export_history_menu_delete	Delete export
+feature/export/sharedassets	export_history_menu_download	Download
+feature/export/sharedassets	export_history_menu_resend	Resend email
+feature/export/sharedassets	export_history_menu_save	Save to device
+feature/export/sharedassets	export_history_more_actions	More actions
+feature/export/sharedassets	export_history_new	New export
+feature/export/sharedassets	export_history_remote_expired	Cloud copy expired %1$s
+feature/export/sharedassets	export_history_remote_expires_on	Cloud copy expires %1$s
+feature/export/sharedassets	export_history_status_cloud	In the cloud
+feature/export/sharedassets	export_history_status_device	On device
+feature/export/sharedassets	export_history_title	Export history
+feature/export/sharedassets	export_last_12_months	Last 12 months
+feature/export/sharedassets	export_last_n_months	Last %1$d months
+feature/export/sharedassets	export_location_downloads_squawkit	Saved to Downloads · SquawkIt
+feature/export/sharedassets	export_location_files_squawkit	Saved to Files · SquawkIt
+feature/export/sharedassets	export_no_aircraft_title	No aircraft to export
+feature/export/sharedassets	export_primary_action	Start
+feature/export/sharedassets	export_progress_building_archive	Generating reports...
+feature/export/sharedassets	export_progress_building_archive_detail	Writing the PDF, CSV, XLSX, and README contents for the ZIP.
+feature/export/sharedassets	export_progress_collecting_data	Collecting aircraft data...
+feature/export/sharedassets	export_progress_collecting_data_detail	Loading logs, tasks, squawks, and attachments for the selected aircraft.
+feature/export/sharedassets	export_progress_compressing_archive	Compressing files...
+feature/export/sharedassets	export_progress_compressing_archive_detail	Packing documents and attachments into the final ZIP archive.
+feature/export/sharedassets	export_progress_saving_file	Saving export...
+feature/export/sharedassets	export_progress_saving_file_detail	Writing the ZIP to your device and updating local export history.
+feature/export/sharedassets	export_progress_uploading_archive	Syncing to the cloud...
+feature/export/sharedassets	export_progress_uploading_archive_detail	Uploading your archive so it's ready to download or email later.
+feature/export/sharedassets	export_receipt_aircraft	Aircraft
+feature/export/sharedassets	export_receipt_attachments	Attachments
+feature/export/sharedassets	export_receipt_attachments_included	Included
+feature/export/sharedassets	export_receipt_file_subtitle	%1$s · ZIP containing %2$s + attachments
+feature/export/sharedassets	export_receipt_range	Range
+feature/export/sharedassets	export_resend_email	Email this export again
+feature/export/sharedassets	export_running_cancel_notice	Leaving this screen now will cancel the export.
+feature/export/sharedassets	export_running_progress_percent	%1$d% complete
+feature/export/sharedassets	export_running_stage_counter	%1$d / %2$d
+feature/export/sharedassets	export_running_steps_title	Current progress
+feature/export/sharedassets	export_running_title	Preparing export
+feature/export/sharedassets	export_select_all	Select all
+feature/export/sharedassets	export_send_to_email_action	Email it to me
+feature/export/sharedassets	export_stub_preview_file_name	SquawkIt_Logs_preview.zip
+feature/export/sharedassets	export_stub_preview_location	Saved to this device
+feature/export/sharedassets	export_success_delivery_auth	Destination: signed-in account email %1$s
+feature/export/sharedassets	export_success_delivery_failed	Delivery failed. Use Download for now, then try emailing it again.
+feature/export/sharedassets	export_success_delivery_failed_title	Delivery failed
+feature/export/sharedassets	export_success_title	Export ready
+feature/export/sharedassets	export_untitled_aircraft	Untitled aircraft
+feature/export/sharedassets	export_view_exports	View exports
+feature/export/sharedassets	feature_name_export_logs	Export Logs
+feature/fleet/sharedassets	add_first_aircraft	Add Your First Aircraft
+feature/fleet/sharedassets	have_invite_code	Have an invite code?
+feature/fleet/sharedassets	no_fleet_description	Keep your aircraft details, maintenance logs, and compliance records in one place.
+feature/fleet/sharedassets	no_fleet_title	Ready for Takeoff?
+feature/login	account_upgrade_error	Couldn't complete sync. Please try again.
+feature/login	account_upgrade_success	Syncing complete
+feature/login	account_upgrade_working	Syncing your records…
+feature/login	apple_logo	Apple Logo
+feature/login	continue_without_account	Continue Anonymously
+feature/login	email_entry_hint	you@example.com
+feature/login	email_entry_title	Log in with email
+feature/login	email_finish_body	Confirm the email this link was sent to.
+feature/login	email_finish_title	Finish signing in
+feature/login	email_invalid	Enter a valid email address.
+feature/login	email_link_error	That link didn't work. Request a new one.
+feature/login	email_link_sent_body	We sent a sign-in link to %1$s. Open it on this device to finish logging in.
+feature/login	email_link_sent_title	Check your inbox
+feature/login	email_resend	Resend link
+feature/login	email_resend_in	Resend in %1$s
+feature/login	email_send_link	Send sign-in link
+feature/login	email_use_different	Use a different email
+feature/login	google_logo	Google Logo
+feature/login	legal_disclaimer	SquawkIt is a personal convenience tool and is not a certified maintenance record system. It does not replace the official aircraft logbooks required by your aviation authority.
+feature/login	login_prompt	Log in or continue anonymously to manage your aircraft maintenance records.
+feature/login	mission_statement	Track the important stuff for your airplane
+feature/login	onboarding_ads_consent_body	Ads cover the servers, so SquawkIt stays free. Next, choose how they can use your data.
+feature/login	onboarding_ads_consent_eyebrow	Keeping the lights on
+feature/login	onboarding_ads_consent_headline	A few small ads 📣
+feature/login	onboarding_ads_consent_pro_note	Go ad-free anytime with SquawkIt Pro.
+feature/login	onboarding_name_body	Just so we know who's logging any maintenance work. You can change it anytime in Settings.
+feature/login	onboarding_name_eyebrow	QUICK HELLO
+feature/login	onboarding_name_headline	What should we\ncall you?
+feature/login	onboarding_name_hint	e.g. Amelia Earhart
+feature/login	onboarding_name_label	YOUR NAME
+feature/login	onboarding_notifications_body	Hear about changes on aircraft shared with you, and when something goes overdue.
+feature/login	onboarding_notifications_denied_action	Open settings
+feature/login	onboarding_notifications_denied_body	You won’t hear about changes on shared aircraft or overdue alerts. Enable notifications in system settings to stay in the loop.
+feature/login	onboarding_notifications_denied_eyebrow	Notifications are off
+feature/login	onboarding_notifications_denied_headline	Turn them back on
+feature/login	onboarding_notifications_eyebrow	Stay in the loop
+feature/login	onboarding_notifications_headline	Know when it matters
+feature/login	onboarding_welcome_aboard	Welcome aboard
+feature/login	onboarding_welcome_tagline	Let's get your hangar set up.
+feature/login	privacy_notice	Privacy Notice
+feature/login	sign_in_anonymous_error	Could not continue anonymously. Please try again.
+feature/login	sign_in_error	Sign-in failed. Check your connection and try again.
+feature/login	sign_in_with_apple	Log in with Apple
+feature/login	sign_in_with_email	Log in with email
+feature/login	sign_in_with_google	Log in with Google
+feature/login	upgrade_confirm_link_body	Your records on this device will be connected to %1$s and backed up. If that isn't your address, cancel and start again.
+feature/login	upgrade_confirm_link_confirm	Connect
+feature/login	upgrade_confirm_link_title	Connect this account?
+feature/login	upgrade_email_body	We'll email you a link. Open it on this device to finish connecting your account.
+feature/login	upgrade_email_invalid	Enter a valid email address
+feature/login	upgrade_email_label	Email address
+feature/login	upgrade_email_send	Send link
+feature/login	upgrade_email_send_failed	Couldn't send the link. Please try again.
+feature/login	upgrade_email_title	Continue with email
+feature/login	upgrade_link_sent_body	We sent a link to %1$s. Open it on this device and we'll ask you to confirm before connecting your records.
+feature/login	upgrade_link_sent_title	Check your email
+feature/login	upgrade_merge_body	Continuing moves the aircraft, logs, and records on this device into that account, alongside what it already has. Nothing is deleted.
+feature/login	upgrade_merge_confirm	Merge my records
+feature/login	upgrade_merge_reauth	You'll be asked to confirm with %1$s once more — that second prompt is what signs you in to the existing account.
+feature/login	upgrade_merge_title	That %1$s already has an account
+feature/login	upgrade_picker_body	Connect an account so your aircraft, logs, and records are backed up and available on your other devices.
+feature/login	upgrade_picker_title	Keep your records
+feature/login	upgrade_provider_apple	Apple ID
+feature/login	upgrade_provider_email	email address
+feature/login	upgrade_provider_google	Google account
+feature/logs/sharedassets	add_first_maintenance_log	Log First Entry
+feature/logs/sharedassets	add_log	Add Work Log
+feature/logs/sharedassets	airframe_time_label	Airframe Time
+feature/logs/sharedassets	blade	Blade
+feature/logs/sharedassets	blade_with_index	Blade %1$d
+feature/logs/sharedassets	edit_log	Update Work Log
+feature/logs/sharedassets	engine_time_label	Engine Time
+feature/logs/sharedassets	engine_with_index	Engine %1$d
+feature/logs/sharedassets	log_assigned_by	Logged by %1$s
+feature/logs/sharedassets	log_assigned_by_unknown	Logged by another member
+feature/logs/sharedassets	log_unverified_technician	Not verified — name entered manually
+feature/logs/sharedassets	maintenance_date	Work Date
+feature/logs/sharedassets	maintenance_history	Maintenance History
+feature/logs/sharedassets	no_maintenance_logs_description	Log your first entry — oil change, annual, 100-hour, or any other airframe, engine, or prop work.
+feature/logs/sharedassets	no_maintenance_logs_title	Logbook Is Empty
+feature/logs/sharedassets	prop_time_label	Prop Time
+feature/logs/sharedassets	propeller_hub	Propeller Hub
+feature/logs/sharedassets	resolve_squawk_work_description	Resolve squawk "%1$s"
+feature/logs/sharedassets	resolve_task_work_description	Performed maintenance task "%1$s"
+feature/logs/sharedassets	this_action_cannot_be_undone	This action cannot be undone.
+feature/logs/update	airframe_serial	Airframe Serial
+feature/logs/update	airframe_time_hours	Airframe Time (hours)
+feature/logs/update	component_section_description	Which part of the aircraft was serviced
+feature/logs/update	date_section_description	When this work was performed
+feature/logs/update	delete_log	Delete Log?
+feature/logs/update	engine_time_hours	Engine Time (hours)
+feature/logs/update	hours_section_description	Fill the fields that apply to this work event
+feature/logs/update	loading_aircraft	Loading aircraft…
+feature/logs/update	log_deleted	Log deleted
+feature/logs/update	log_not_found	Log not found
+feature/logs/update	log_saved	Log saved
+feature/logs/update	log_tab_hours	Hours
+feature/logs/update	log_tab_records	Records
+feature/logs/update	log_tab_work	Work
+feature/logs/update	log_updated	Log updated
+feature/logs/update	make_model_serial	%1$s (%2$s)
+feature/logs/update	no_engines_found	No engines found for this aircraft.
+feature/logs/update	no_propeller_components_found	No propeller components found for this aircraft.
+feature/logs/update	performed_by_description	The technician who performed this work
+feature/logs/update	prop_time_hours	Prop Time (hours)
+feature/logs/update	propeller_component	Propeller Component
+feature/logs/update	squawks_section_header	Squawks Addressed
+feature/logs/update	tap_to_change_date	Tap to change date
+feature/logs/update	tasks_section_header	Maintenance Tasks Completed
+feature/logs/update	type_make_model_serial	%1$s - %2$s (%3$s)
+feature/logs/update	work_description_required	Work Description *
+feature/logs/viewing	affected_maintenance_tasks	Affected Maintenance Tasks
+feature/logs/viewing	aircraft_data	Aircraft Data
+feature/logs/viewing	airframe_time_abbr	AFTT
+feature/logs/viewing	blade_abbreviation_with_index	B%1$d: %2$s
+feature/logs/viewing	clear_filter	Clear Filter
+feature/logs/viewing	collapse_details	Collapse details
+feature/logs/viewing	edit_aircraft	Update aircraft
+feature/logs/viewing	engine_time_abbr	Eng
+feature/logs/viewing	expand_details	Expand details
+feature/logs/viewing	failed_to_load_logs	Could not load maintenance logs
+feature/logs/viewing	filter_by_type	Filter by Type
+feature/logs/viewing	hours_abbr_value	%1$s hrs
+feature/logs/viewing	log_count_n_entries	%1$d Entries
+feature/logs/viewing	log_count_one_entry	1 Entry
+feature/logs/viewing	log_details	Log details
+feature/logs/viewing	log_onboarding_description	Log your current airframe, engine, and prop times to start tracking maintenance intervals accurately. This will serve as your logbook's baseline.
+feature/logs/viewing	log_squawk_count_one	1 squawk
+feature/logs/viewing	log_squawk_count_plural	%1$d squawks
+feature/logs/viewing	log_task_count_one	1 task
+feature/logs/viewing	log_task_count_plural	%1$d tasks
+feature/logs/viewing	maintenance_logs	Maintenance Logs
+feature/logs/viewing	maintenance_summary	Maintenance Summary
+feature/logs/viewing	model_and_sn	Model: %1$s %2$s\nS/N: %3$s\n
+feature/logs/viewing	no_logs_match_filter	No logs match your filter.
+feature/logs/viewing	no_tasks_linked	No tasks linked to this entry
+feature/logs/viewing	prop_time_abbr	Prop
+feature/logs/viewing	resolved_squawks	Resolved Squawks
+feature/logs/viewing	s_n_empty	No S/N
+feature/logs/viewing	s_n_placeholder	S/N: %1$s
+feature/logs/viewing	search_logs	Search logs…
+feature/logs/viewing	showing_x_of_y	Showing %1$d of %2$d
+feature/logs/viewing	total_logs	Total Logs
+feature/logs/viewing	unknown_squawk	Unknown squawk (%1$s)
+feature/notifications/devoptions	notifications_devoptions_diagnostics_at	Last scan: %1$s
+feature/notifications/devoptions	notifications_devoptions_diagnostics_counts	%1$d records examined · %2$d crossings · %3$d suppressed by preferences · %4$d posted
+feature/notifications/devoptions	notifications_devoptions_diagnostics_never	No scan has completed on this device
+feature/notifications/devoptions	notifications_devoptions_diagnostics_title	Scan diagnostics
+feature/notifications/devoptions	notifications_devoptions_diagnostics_trigger	Trigger: %1$s
+feature/notifications/devoptions	notifications_devoptions_header	Notifications
+feature/notifications/devoptions	notifications_devoptions_open_settings_action	Open settings
+feature/notifications/devoptions	notifications_devoptions_permission_title	OS permission
+feature/notifications/devoptions	notifications_devoptions_request_action	Request permission
+feature/notifications/devoptions	notifications_devoptions_reset_watermarks_action	Reset
+feature/notifications/devoptions	notifications_devoptions_reset_watermarks_done	Cleared. Next scan re-seeds.
+feature/notifications/devoptions	notifications_devoptions_reset_watermarks_hint	Re-arms every crossing. The next scan re-seeds silently — change a record, then scan again to see a notification.
+feature/notifications/devoptions	notifications_devoptions_reset_watermarks_no_user	No signed-in user
+feature/notifications/devoptions	notifications_devoptions_reset_watermarks_title	Reset urgency watermarks
+feature/notifications/devoptions	notifications_devoptions_scan_never_run	Not run yet
+feature/notifications/devoptions	notifications_devoptions_scan_now_action	Scan now
+feature/notifications/devoptions	notifications_devoptions_scan_now_title	Urgency scan
+feature/notifications/devoptions	notifications_devoptions_scan_result_completed	Done — %1$d notification(s) posted
+feature/notifications/devoptions	notifications_devoptions_scan_result_debounced	Skipped — scanned within the last 2 hours
+feature/notifications/devoptions	notifications_devoptions_scan_result_disabled	Skipped — All notifications is off
+feature/notifications/devoptions	notifications_devoptions_scan_result_no_permission	Skipped — OS permission not granted
+feature/notifications/devoptions	notifications_devoptions_scan_result_no_user	No signed-in user
+feature/notifications/devoptions	notifications_devoptions_scan_result_prefs_unresolved	Preferences not resolved yet
+feature/notifications/devoptions	notifications_devoptions_state_denied	Denied — fix in system settings
+feature/notifications/devoptions	notifications_devoptions_state_granted	Granted
+feature/notifications/devoptions	notifications_devoptions_state_undetermined	Not yet asked
+feature/notifications/devoptions	notifications_devoptions_state_unsupported	Unsupported on this browser
+feature/notifications/settings	notification_settings_all_subtitle_off	Off — every notification below is silenced
+feature/notifications/settings	notification_settings_all_subtitle_on	On
+feature/notifications/settings	notification_settings_all_title	All notifications
+feature/notifications/settings	notification_settings_banner_denied_body	Turn them on in system settings to hear about urgency alerts and collaboration on your aircraft.
+feature/notifications/settings	notification_settings_banner_denied_open_settings	Open settings
+feature/notifications/settings	notification_settings_banner_denied_title	Notifications are blocked
+feature/notifications/settings	notification_settings_banner_unsupported_body	This browser doesn’t support notifications. Your choices below are still saved for devices that do.
+feature/notifications/settings	notification_settings_banner_unsupported_title	Not supported in this browser
+feature/notifications/settings	notification_settings_collaboration_subtitle	Aircraft, squawk, task, or logbook activity from others
+feature/notifications/settings	notification_settings_collaboration_title	Collaboration
+feature/notifications/settings	notification_settings_hero_body_off	Turn on All notifications to hear about priority changes, due dates, and updates from your crew.
+feature/notifications/settings	notification_settings_hero_body_on	Hear about priority changes, due dates, and updates from your crew — the moment they happen.
+feature/notifications/settings	notification_settings_hero_title_off	Notifications are off
+feature/notifications/settings	notification_settings_hero_title_on	Stay in the loop
+feature/notifications/settings	notification_settings_priority_due_subtitle	A squawk becomes high priority or worse, or a task becomes due soon or overdue
+feature/notifications/settings	notification_settings_priority_due_title	Priority &amp; due updates
+feature/notifications/settings	notification_settings_save_error	Couldn’t save that change. Try again.
+feature/notifications/settings	notification_settings_signin_cta	Sign in
+feature/notifications/settings	notification_settings_signin_footer	Sign in to get notified about changes other people make.
+feature/notifications/settings	notification_settings_sync_off_cta	Turn on sync
+feature/notifications/settings	notification_settings_sync_off_footer	Turn on Backup &amp; Sync to get notified about changes other people make.
+feature/notifications/settings	notification_settings_title	Notifications
+feature/notifications/settings	notification_settings_types_label	Notification types
+feature/notifications/sharedassets	notification_body_due_soon_plural	%1$s: %2$d inspections are due soon
+feature/notifications/sharedassets	notification_body_due_soon_single	%1$s: task is due soon\n\n%2$s
+feature/notifications/sharedassets	notification_body_overdue_plural	%1$s: %2$d inspections are now overdue
+feature/notifications/sharedassets	notification_body_overdue_single	%1$s: task is now overdue\n\n%2$s
+feature/notifications/sharedassets	notification_body_priority_raised_plural	%1$s: %2$d squawks increased in priority
+feature/notifications/sharedassets	notification_body_priority_raised_single	%1$s: priority raised from %2$s to %3$s\n\n%4$s
+feature/notifications/sharedassets	notification_n1_actor_fallback	A collaborator
+feature/notifications/sharedassets	notification_n1_body_aircraft_updated	%1$s: %2$s updated the aircraft
+feature/notifications/sharedassets	notification_n1_body_record_created	%1$s: %2$s created a new %3$s\n\n%4$s
+feature/notifications/sharedassets	notification_n1_body_record_deleted	%1$s: %2$s deleted a %3$s\n\n%4$s
+feature/notifications/sharedassets	notification_n1_body_record_updated	%1$s: %2$s updated a %3$s\n\n%4$s
+feature/notifications/sharedassets	notification_n1_body_single	%1$s made a change to %2$s
+feature/notifications/sharedassets	notification_n1_body_squawk_created	%1$s: %2$s created a new squawk issue\n\n%3$s
+feature/notifications/sharedassets	notification_n1_body_squawk_raised	%1$s: %2$s raised the priority of 1 squawk issue\n\n%3$s
+feature/notifications/sharedassets	notification_n1_noun_log	logbook entry
+feature/notifications/sharedassets	notification_n1_noun_squawk	squawk
+feature/notifications/sharedassets	notification_n1_noun_task	task
+feature/notifications/sharedassets	notification_n1_section_aircraft	Aircraft
+feature/notifications/sharedassets	notification_n1_section_logbook	Logbook
+feature/notifications/sharedassets	notification_n1_section_logbook_lower	logbook entries
+feature/notifications/sharedassets	notification_n1_section_squawks	Squawks
+feature/notifications/sharedassets	notification_n1_section_squawks_lower	squawks
+feature/notifications/sharedassets	notification_n1_section_tasks	Tasks
+feature/notifications/sharedassets	notification_n1_section_tasks_lower	tasks
+feature/notifications/sharedassets	notification_n1_title	%1$s · %2$s
+feature/notifications/sharedassets	notification_n1_title_squawk_created	New squawk
+feature/notifications/sharedassets	notification_title_due_soon	Due soon
+feature/notifications/sharedassets	notification_title_overdue	⚠ Overdue
+feature/notifications/sharedassets	notification_title_priority_raised	Priority raised
+feature/notifications/sharedassets	squawk_priority_label_aog	AOG
+feature/notifications/sharedassets	squawk_priority_label_high	High
+feature/notifications/sharedassets	squawk_priority_label_low	Low
+feature/notifications/sharedassets	squawk_priority_label_medium	Medium
+feature/notifications/sharedassets	squawk_priority_label_resolved	Resolved
+feature/notifications/viewing	notification_channel_collaboration_description	Someone changes a shared aircraft
+feature/notifications/viewing	notification_channel_collaboration_name	Collaboration
+feature/notifications/viewing	notification_channel_urgency_update_description	A task’s urgency or due status has changed
+feature/notifications/viewing	notification_channel_urgency_update_name	Due reminder
+feature/settings	account_upgrade_link_cta	Link to an account
+feature/settings	account_upgrade_link_subtitle	Your records are on this device only. Link an account to sync and back them up.
+feature/settings	app_version	App Version: %1$s
+feature/settings	appearance_dark	Dark
+feature/settings	appearance_light	Light
+feature/settings	appearance_subtitle	Choose how SquawkIt looks on this device
+feature/settings	appearance_system	System
+feature/settings	appearance_title	Appearance
+feature/settings	developer_options	Developer Options
+feature/settings	developer_options_consent_test_device_placeholder	Paste hash from the console
+feature/settings	developer_options_consent_test_device_subtitle	Required on a physical device (either platform) for the EEA debug-geography override to show the consent form at all — simulators/emulators don’t need this. Run once with this blank, then check the console for a message giving this device’s hash — Logcat tag "Ump" on Android, or search the Xcode console for "UMPDebugSettings.testDeviceIdentifiers" on iOS — and paste it here.
+feature/settings	developer_options_consent_test_device_title	UMP test device hash
+feature/settings	developer_options_force_ads_subtitle	Show display ads on any account, ignoring the tier. Everything else behaves normally, including the limit of 5 ads per session.
+feature/settings	developer_options_force_ads_title	Force ads
+feature/settings	developer_options_force_free	Basic
+feature/settings	developer_options_force_off	Off
+feature/settings	developer_options_force_pro	Pro
+feature/settings	developer_options_force_subscription_subtitle	Make this account behave as the chosen tier, ignoring the real entitlement.
+feature/settings	developer_options_force_subscription_title	Force subscription status
+feature/settings	developer_options_reset_ad_consent_action	Reset
+feature/settings	developer_options_reset_ad_consent_subtitle	Wipes this device's cached UMP consent state, so it resolves fresh next launch — as if this were a first install. The only way to re-test the onboarding consent explainer without clearing all local app data.
+feature/settings	developer_options_reset_ad_consent_title	Reset ad consent
+feature/settings	developer_options_subtitle	Advanced controls. Changes sync across your devices.
+feature/settings	firebase_logging_subtitle	Share anonymous diagnostics and usage data to help us improve SquawkIt
+feature/settings	firebase_logging_title	Help Us Improve
+feature/settings	remove_local_data	Remove this account from this device
+feature/settings	settings_ad_privacy	Ad privacy settings
+feature/settings	settings_ad_privacy_subtitle	Review or change your ad consent choice
+feature/settings	settings_delete_account	Delete Account
+feature/settings	settings_delete_account_body	This permanently deletes your account and all of your data. Anyone you have shared an aircraft with will lose access to it. This cannot be undone.
+feature/settings	settings_delete_account_challenge_email	To confirm, type your email address below:
+feature/settings	settings_delete_account_challenge_hint	Type to confirm
+feature/settings	settings_delete_account_challenge_mismatch	That does not match yet.
+feature/settings	settings_delete_account_challenge_phrase	To confirm, type this below:
+feature/settings	settings_delete_account_challenge_word	delete account
+feature/settings	settings_delete_account_confirm	Delete my account
+feature/settings	settings_delete_account_export_hint	Export your logbook first if you want to keep a copy.
+feature/settings	settings_delete_account_failed	Your account could not be deleted. Nothing has been removed — please try again.
+feature/settings	settings_delete_account_subtitle	Permanently delete your account and all its records
+feature/settings	settings_delete_account_title	Delete your account?
+feature/settings	settings_developer_options_subtitle	Advanced controls, synced across your devices
+feature/settings	settings_export_subtitle	Export and share your logbook
+feature/settings	settings_logout_subtitle	Sign out of your account on this device
+feature/settings	settings_notifications	Notifications
+feature/settings	settings_notifications_subtitle_blocked	Blocked in system settings
+feature/settings	settings_notifications_subtitle_default	Collaboration and urgency alerts
+feature/settings	settings_notifications_subtitle_off	Off — turn on to hear about changes
+feature/settings	settings_subscription	Subscription
+feature/settings	settings_subscription_subtitle	Your plan, benefits, and storage
+feature/settings	settings_subtitle	Account, appearance &amp; preferences
+feature/settings	settings_sync_subtitle	Keep your records synced across devices
+feature/settings	settings_technicians_subtitle	Manage technician info who performs maintenance work
+feature/settings	sign_out	Log out
+feature/sharing/sharedassets	enter_code_field_label	Invite code
+feature/sharing/sharedassets	enter_code_instructions	Enter the invite code the aircraft owner gave you. It looks like EFA2-GGTH.
+feature/sharing/sharedassets	enter_code_title	Join a shared aircraft
+feature/sharing/sharedassets	invite_cancel	Cancel this code
+feature/sharing/sharedassets	invite_code_hint	Read it out, or have them type it into Join aircraft.
+feature/sharing/sharedassets	invite_copy	Copy link
+feature/sharing/sharedassets	invite_link_unavailable	This code was created on another device. Codes are never stored, so it cannot be shown again — cancel it and create a new one.
+feature/sharing/sharedassets	invite_qr_desc	Invite QR code
+feature/sharing/sharedassets	invite_role_label	Role
+feature/sharing/sharedassets	invite_role_owner	Co-owner
+feature/sharing/sharedassets	invite_role_technician	Technician
+feature/sharing/sharedassets	invite_scan_hint	Or have them scan this.
+feature/sharing/sharedassets	invite_share	Share link
+feature/sharing/sharedassets	invite_title	Invite to aircraft
+feature/sharing/sharedassets	leave_confirm_action	Leave
+feature/sharing/sharedassets	leave_confirm_body	It is removed from your fleet and its records are deleted from your devices. Any changes you made offline that have not synced yet are lost.The owner can invite you again.
+feature/sharing/sharedassets	leave_confirm_title	Leave this aircraft?
+feature/sharing/sharedassets	manage_access_badge_you	You
+feature/sharing/sharedassets	manage_access_code_subtitle	%1$s · single use
+feature/sharing/sharedassets	manage_access_code_title	Invite code
+feature/sharing/sharedassets	manage_access_create_invite	Create invite code
+feature/sharing/sharedassets	manage_access_done	Done
+feature/sharing/sharedassets	manage_access_empty_desc	Invite a co-owner or technician to share this aircraft.
+feature/sharing/sharedassets	manage_access_empty_title	No shared access
+feature/sharing/sharedassets	manage_access_expires_in	Expires in %1$s
+feature/sharing/sharedassets	manage_access_expiry_note	One person, one use. The code stops working once it’s redeemed, or after 24 hours.
+feature/sharing/sharedassets	manage_access_help_footer	Only the owner can delete the aircraft or hand over ownership. Anyone can leave on their own.
+feature/sharing/sharedassets	manage_access_help_title	What each role can do
+feature/sharing/sharedassets	manage_access_invite_meta	%1$s · expires in %2$s
+feature/sharing/sharedassets	manage_access_invites_hint	Anyone holding a code can join. Codes are not tied to a person.
+feature/sharing/sharedassets	manage_access_invites_section	Open invite codes
+feature/sharing/sharedassets	manage_access_leave	Leave shared aircraft
+feature/sharing/sharedassets	manage_access_member_count_plural	%1$d people
+feature/sharing/sharedassets	manage_access_member_count_singular	1 person
+feature/sharing/sharedassets	manage_access_people_section	People with access
+feature/sharing/sharedassets	manage_access_perm_aircraft_details	Aircraft details
+feature/sharing/sharedassets	manage_access_perm_manage_access	Manage access
+feature/sharing/sharedassets	manage_access_perm_squawks_tasks	Squawks and tasks
+feature/sharing/sharedassets	manage_access_perm_work_logs	Work logs
+feature/sharing/sharedassets	manage_access_revoke	Remove access
+feature/sharing/sharedassets	manage_access_role_co_owner	Co-owner
+feature/sharing/sharedassets	manage_access_role_co_owner_desc	Everything a technician can do, plus edit aircraft details and manage who has access.
+feature/sharing/sharedassets	manage_access_role_owner	Owner
+feature/sharing/sharedassets	manage_access_role_technician	Technician
+feature/sharing/sharedassets	manage_access_role_technician_desc	Add and edit squawks, maintenance tasks, and work logs. Cannot change aircraft details.
+feature/sharing/sharedassets	manage_access_solo_body	Invite a mechanic or a co-owner and they can log squawks, tasks, and work against this aircraft.
+feature/sharing/sharedassets	manage_access_solo_title	No one else has access
+feature/sharing/sharedassets	manage_access_title	Manage Access
+feature/sharing/sharedassets	manage_access_toast_access_removed	Access removed
+feature/sharing/sharedassets	manage_access_toast_code_cancelled	Invite code cancelled
+feature/sharing/sharedassets	manage_access_toast_link_copied	Invite link copied
+feature/sharing/sharedassets	manage_access_toast_role_updated	Role updated
+feature/sharing/sharedassets	manage_access_unnamed_member	Unnamed member
+feature/sharing/sharedassets	redeem_already_member_body	You already have access to this aircraft.
+feature/sharing/sharedassets	redeem_already_member_title	Already a member
+feature/sharing/sharedassets	redeem_confirm_body	You have been invited to share an aircraft. Accept to add it to your fleet.
+feature/sharing/sharedassets	redeem_confirm_body_full	%1$s is inviting you to %2$s as %3$s.\n\nAccept to add it to your fleet.
+feature/sharing/sharedassets	redeem_confirm_body_role	You have been invited to share an aircraft as %1$s. Accept to add it to your fleet.
+feature/sharing/sharedassets	redeem_confirm_title	Aircraft invitation
+feature/sharing/sharedassets	redeem_failed_body	This invite is no longer valid. Ask the owner for a new one.
+feature/sharing/sharedassets	redeem_failed_title	Invite unavailable
+feature/sharing/sharedassets	redeem_needs_signin_body	Sign in with your account to accept this invitation.
+feature/sharing/sharedassets	redeem_needs_signin_title	Sign in required
+feature/sharing/sharedassets	redeem_role_owner	a co-owner
+feature/sharing/sharedassets	redeem_role_technician	a technician
+feature/sharing/sharedassets	redeem_success_body	You now have access as %1$s. The aircraft will appear in your fleet shortly.
+feature/sharing/sharedassets	redeem_success_title	You're in
+feature/sharing/sharedassets	revoke_confirm_action	Remove access
+feature/sharing/sharedassets	revoke_confirm_body	They lose access to this aircraft immediately, and their copy of its records is removed from their devices.If they made changes while offline that have not synced yet, those changes are lost.
+feature/sharing/sharedassets	revoke_confirm_title	Remove %1$s?
+feature/sharing/sharedassets	role_confirm_action	Change role
+feature/sharing/sharedassets	role_confirm_body	This changes what they can do on this aircraft right away.
+feature/sharing/sharedassets	role_confirm_title	Change %1$s’s role to %2$s?
+feature/sharing/sharedassets	sharing_sync_off_body	Sharing needs Cloud Sync. Turn it on in Settings to invite people or manage access. Aircraft already shared with you stay readable, but will not update.
+feature/sharing/sharedassets	sharing_sync_off_title	Cloud Sync is off
+feature/squawk/sharedassets	add_squawk	New squawk
+feature/squawk/sharedassets	addressed_by	Addressed by log
+feature/squawk/sharedassets	aog_alert_subtitle	AOG squawks must be resolved before flight
+feature/squawk/sharedassets	aog_alert_title	Aircraft on Ground
+feature/squawk/sharedassets	closed_with_count	CLOSED (%1$d)
+feature/squawk/sharedassets	dismiss_reason_duplicate	Duplicate
+feature/squawk/sharedassets	dismiss_reason_intended_behavior	Intended behavior
+feature/squawk/sharedassets	dismiss_reason_not_reproducible	Not reproducible
+feature/squawk/sharedassets	dismiss_reason_obsolete	Obsolete
+feature/squawk/sharedassets	dismissed_label	Dismissed — %1$s
+feature/squawk/sharedassets	edit_squawk	Update squawk
+feature/squawk/sharedassets	no_closed_squawks	No closed squawks yet.
+feature/squawk/sharedassets	no_open_squawks	No open squawks
+feature/squawk/sharedassets	no_open_squawks_description	Tap + to report a defect or anomaly
+feature/squawk/sharedassets	no_squawk_work_recorded	No squawks addressed by this log
+feature/squawk/sharedassets	no_work_recorded	No work recorded yet.
+feature/squawk/sharedassets	open_with_count	OPEN (%1$d)
+feature/squawk/sharedassets	priority_aog	AOG
+feature/squawk/sharedassets	priority_high	High
+feature/squawk/sharedassets	priority_low	Low
+feature/squawk/sharedassets	priority_medium	Medium
+feature/squawk/sharedassets	reported	Reported
+feature/squawk/sharedassets	squawk_added	Squawk reported
+feature/squawk/sharedassets	squawk_description_label	Description
+feature/squawk/sharedassets	squawk_dismissed	Squawk dismissed
+feature/squawk/sharedassets	squawk_not_yet_addressed	Not yet addressed by any log
+feature/squawk/sharedassets	squawk_priority_label	Priority
+feature/squawk/sharedassets	squawk_reopened	Squawk reopened
+feature/squawk/sharedassets	squawk_reported_on	Reported on
+feature/squawk/sharedassets	squawk_status_addressed	Addressed
+feature/squawk/sharedassets	squawk_status_dismissed	Dismissed
+feature/squawk/sharedassets	squawk_title_label	Issue Summary
+feature/squawk/sharedassets	squawk_title_required	Issue summary is required
+feature/squawk/sharedassets	squawk_updated	Squawk updated
+feature/squawk/sharedassets	squawk_view_log	View Log
+feature/squawk/sharedassets	squawks	Squawks
+feature/squawk/sharedassets	view_squawks	View Squawks
+feature/squawk/sharedassets	work_history	Work History
+feature/squawk/update	dismiss_issue	Dismiss Issue
+feature/squawk/update	dismiss_no_work_planned	Dismiss, no work planned
+feature/squawk/update	dismiss_squawk_title	Dismiss Without Addressing?
+feature/squawk/update	dismiss_squawk_warning	This squawk will be closed without recording corrective action. Please select a reason for dismissing this squawk.
+feature/squawk/update	fixed_option_label	Fixed
+feature/squawk/update	reopen_issue	Reopen Issue
+feature/squawk/update	resolve_issue	Resolve
+feature/stresstest	stress_test_complete	Generation complete
+feature/stresstest	stress_test_config_aircraft	Aircraft
+feature/stresstest	stress_test_config_blades_per_engine	Blades per engine
+feature/stresstest	stress_test_config_engines	Engines
+feature/stresstest	stress_test_config_log_entries	Log entries
+feature/stresstest	stress_test_config_records	Maintenance records
+feature/stresstest	stress_test_config_squawks	Squawk count
+feature/stresstest	stress_test_config_tasks	Task count
+feature/stresstest	stress_test_config_technicians	Technician count
+feature/stresstest	stress_test_decrement	−
+feature/stresstest	stress_test_description	Generates realistic aviation records for UI stress testing. Data is written to your account.
+feature/stresstest	stress_test_error_message	Error: %1$s
+feature/stresstest	stress_test_generate	Generate Fake Data
+feature/stresstest	stress_test_increment	+
+feature/stresstest	stress_test_progress_count	%1$d / %2$d
+feature/stresstest	stress_test_progress_creating_aircraft	Creating aircraft %1$s…
+feature/stresstest	stress_test_progress_creating_log	Creating log entry…
+feature/stresstest	stress_test_progress_creating_squawk	Creating squawk: %1$s…
+feature/stresstest	stress_test_progress_creating_task	Creating task: %1$s…
+feature/stresstest	stress_test_progress_creating_technician	Creating technician %1$s…
+feature/stresstest	stress_test_progress_dismissing_squawk	Dismissing squawk…
+feature/stresstest	stress_test_progress_marking_squawk_addressed	Marking squawk addressed…
+feature/stresstest	stress_test_regenerate	Generate Another
+feature/stresstest	stress_test_summary_addressed_squawks	  • %1$d addressed
+feature/stresstest	stress_test_summary_aircraft	Aircraft: %1$s %2$s (%3$s)
+feature/stresstest	stress_test_summary_dismissed_squawks	  • %1$d dismissed
+feature/stresstest	stress_test_summary_engines	Engines: %1$d × %2$s
+feature/stresstest	stress_test_summary_log_entries	%1$d log entries created (span: 4 years)
+feature/stresstest	stress_test_summary_log_entry_one	%1$d log entry created (span: 4 years)
+feature/stresstest	stress_test_summary_open_squawks	  • %1$d open
+feature/stresstest	stress_test_summary_squawks	%1$d squawk(s) created:
+feature/stresstest	stress_test_summary_tail	Tail: %1$s · S/N: %2$s
+feature/stresstest	stress_test_summary_tasks	%1$d task(s) created
+feature/stresstest	stress_test_summary_technicians	%1$d technician(s) created
+feature/stresstest	stress_test_summary_unknown_engine	-
+feature/stresstest	stress_test_title	Fake Data Generator
+feature/stresstest	stress_test_unknown_error	Unknown error
+feature/stresstest	stress_test_working	Working…
+feature/stresstest/config	debug_tools_header	DEBUG TOOLS
+feature/stresstest/config	fake_data_generator_description	Populate fake aircraft, logs, squawks, and tasks for UI testing
+feature/subscription/viewing	subscription_activating	Payment received. Activating SquawkIt Pro…
+feature/subscription/viewing	subscription_aircraft_free	2
+feature/subscription/viewing	subscription_aircraft_unlimited	Unlimited
+feature/subscription/viewing	subscription_billing_note	Monthly and annual billing, price and payment method are chosen in the store.
+feature/subscription/viewing	subscription_cell_excluded	—
+feature/subscription/viewing	subscription_cell_unlimited	∞
+feature/subscription/viewing	subscription_col_free	Basic
+feature/subscription/viewing	subscription_col_pro	Pro
+feature/subscription/viewing	subscription_compare_header	Your all-access pass
+feature/subscription/viewing	subscription_compare_subhead	The Basic bundle is free and provides the complete feature set as logbook, backed up and synced. The Pro bundle adds scale, attachments, collaboration and more.
+feature/subscription/viewing	subscription_cta_caption	Price shown at checkout. Cancel anytime.
+feature/subscription/viewing	subscription_cta_subscribe	Subscribe
+feature/subscription/viewing	subscription_ends	Ends
+feature/subscription/viewing	subscription_feature_ads	Ad-free experience
+feature/subscription/viewing	subscription_feature_aircraft	Aircraft
+feature/subscription/viewing	subscription_feature_attachments	Photo &amp; file attachments
+feature/subscription/viewing	subscription_feature_backup	Cloud backup &amp; sync
+feature/subscription/viewing	subscription_feature_email	Email a copy of exports
+feature/subscription/viewing	subscription_feature_export	Export to this device
+feature/subscription/viewing	subscription_feature_records	Logs, tasks &amp; squawks
+feature/subscription/viewing	subscription_feature_sharing	Share aircraft &amp; collaborate with others
+feature/subscription/viewing	subscription_includes_header	What’s included
+feature/subscription/viewing	subscription_manage	Manage subscription
+feature/subscription/viewing	subscription_manage_caption	Plan changes and cancellation are handled by the store.
+feature/subscription/viewing	subscription_manage_link_caption	Opens the store page where this subscription is billed.
+feature/subscription/viewing	subscription_manage_store_caption	Opens your subscriptions in the store that billed this plan.
+feature/subscription/viewing	subscription_managed_elsewhere_body	This subscription was purchased on a different platform. Open SquawkIt on the device and store account it was purchased with to change or cancel it.
+feature/subscription/viewing	subscription_managed_elsewhere_body_web	Subscriptions can’t be changed here. Open SquawkIt on the device and store account it was purchased with to change or cancel it.
+feature/subscription/viewing	subscription_managed_elsewhere_caption	Your Pro features stay active everywhere you sign in.
+feature/subscription/viewing	subscription_managed_elsewhere_title	Managed on another platform
+feature/subscription/viewing	subscription_member_since	Member since
+feature/subscription/viewing	subscription_perk_aircraft_body	Whole fleet in one logbook
+feature/subscription/viewing	subscription_perk_aircraft_title	Unlimited aircraft
+feature/subscription/viewing	subscription_perk_attachments_body	Photos and files on any log
+feature/subscription/viewing	subscription_perk_attachments_title	Attachments
+feature/subscription/viewing	subscription_perk_sharing_body	Invite owners and technicians
+feature/subscription/viewing	subscription_perk_sharing_title	Sharing
+feature/subscription/viewing	subscription_platform_amazon	Amazon Appstore
+feature/subscription/viewing	subscription_platform_app_store	App Store
+feature/subscription/viewing	subscription_platform_mac_app_store	Mac App Store
+feature/subscription/viewing	subscription_platform_play_store	Google Play
+feature/subscription/viewing	subscription_platform_test_store	Test Store (developer build)
+feature/subscription/viewing	subscription_platform_web	Web
+feature/subscription/viewing	subscription_purchase_on_mobile	Subscribe in the SquawkIt app on iOS or Android. Your subscription works everywhere, including here.
+feature/subscription/viewing	subscription_purchased_on	Purchased on
+feature/subscription/viewing	subscription_renews	Renews
+feature/subscription/viewing	subscription_sign_in_to_subscribe	Sign in to subscribe, so your subscription is tied to your account and works on every device.
+feature/subscription/viewing	subscription_status_active	Active
+feature/subscription/viewing	subscription_status_canceled	Canceled
+feature/subscription/viewing	subscription_status_grace	Payment problem
+feature/subscription/viewing	subscription_status_trialing	Free trial
+feature/subscription/viewing	subscription_storage_used	Storage used
+feature/subscription/viewing	subscription_title	Subscription
+feature/subscription/viewing	subscription_unlocked_header	Unlocked with Pro
+feature/subscription/viewing	upsell_body_add_aircraft	Add unlimited aircraft with SquawkIt Pro.
+feature/subscription/viewing	upsell_body_attachment	Attach photos and files to your maintenance records with SquawkIt Pro.
+feature/subscription/viewing	upsell_body_email	Email a copy of your exports with SquawkIt Pro.
+feature/subscription/viewing	upsell_body_share	Share aircraft and invite others with SquawkIt Pro.
+feature/sync/settings	setting_item_sync	Cloud Sync
+feature/sync/settings	setting_item_sync_on_cellular	Upload on Cellular
+feature/sync/settings	sync_hero_body_active	Changes you make here sync to the cloud and any other device signed in to the same account.
+feature/sync/settings	sync_hero_body_paused	Your work stays on this device. Reinstalling the app or moving to a new phone will not bring this data with you.
+feature/sync/settings	sync_hero_body_signin	You're using the app anonymously. All data stays on this device. Sign in with a permanent account on the previous screen to back things up.
+feature/sync/settings	sync_hero_title_active	Backed up across your devices
+feature/sync/settings	sync_hero_title_paused	Sync is paused
+feature/sync/settings	sync_hero_title_signin	Sign in to enable sync
+feature/sync/settings	sync_status_anonymous_body	Sync requires signing in.
+feature/sync/settings	sync_status_anonymous_title	Anonymous account
+feature/sync/settings	sync_status_auth_expired_body	Authentication expired. Sign in again to resume sync.
+feature/sync/settings	sync_status_error_title	Sync error
+feature/sync/settings	sync_status_hydration_error_body	Could not restore %1$s after %2$d retries.
+feature/sync/settings	sync_status_off_body	Local edits will not reach the cloud. Re-enable above to resume backups.\n\nShared aircraft stop updating. You keep a readable copy, but changes will not flow in either direction, and you cannot invite anyone or manage access.
+feature/sync/settings	sync_status_off_title	Cloud sync is off
+feature/sync/settings	sync_status_push_error_body	Could not upload the latest local changes. Sync will retry when possible.
+feature/sync/settings	sync_status_restoring	Restoring %1$d of %2$d collections
+feature/sync/settings	sync_subtitle_active	Backed up to your account across devices.
+feature/sync/settings	sync_subtitle_cellular_disabled	Attachments upload over Wi-Fi only.
+feature/sync/settings	sync_subtitle_cellular_enabled	Attachments upload over Wi-Fi and cellular.
+feature/sync/settings	sync_subtitle_off	Your data stays on this device only.
+feature/sync/settings	sync_subtitle_signin	Sign in to enable cloud sync.
+feature/sync/sharedassets	feature_name_backup_and_sync	Backup &amp; Sync
+feature/tasks/sharedassets	add_task	Add task
+feature/tasks/sharedassets	affects_n_tasks	Affects %1$d maintenance task(s)
+feature/tasks/sharedassets	compliance_authority	Compliance authority
+feature/tasks/sharedassets	compliance_type_ad_short	AD
+feature/tasks/sharedassets	compliance_type_sb_short	SB
+feature/tasks/sharedassets	delete_task	Delete Task
+feature/tasks/sharedassets	delete_task_confirmation	Delete "%1$s"? This cannot be undone. Maintenance logs that reference this task will not be deleted.
+feature/tasks/sharedassets	due_soon	Due Soon
+feature/tasks/sharedassets	due_with_count	DUE (%1$d)
+feature/tasks/sharedassets	edit_task	Update task
+feature/tasks/sharedassets	engine_format	Engine: %1$s
+feature/tasks/sharedassets	history_with_count	HISTORY (%1$d)
+feature/tasks/sharedassets	maintenance_due_title	Maintenance Due
+feature/tasks/sharedassets	maintenance_tasks	Maintenance Tasks
+feature/tasks/sharedassets	no_complied_yet	Log work against a task to see its history here.
+feature/tasks/sharedassets	no_task_work_recorded	No task addressed by this log.
+feature/tasks/sharedassets	no_tasks_yet	No maintenance tasks
+feature/tasks/sharedassets	no_tasks_yet_description	Tap + to add inspections, part replacements, and other checks.
+feature/tasks/sharedassets	overdue	Overdue
+feature/tasks/sharedassets	skip_task_confirm_action	Skip
+feature/tasks/sharedassets	skip_task_confirm_body	Marks complete without logging and snoozes one cycle to the next due target. This can’t be undone.
+feature/tasks/sharedassets	skip_task_confirm_title	Skip This Cycle?
+feature/tasks/sharedassets	unknown_date	Unknown date
+feature/tasks/sharedassets	unknown_task	Unknown task (%1$s)
+feature/tasks/update	adj_preview_hint	What will happen
+feature/tasks/update	adj_preview_label_neutral	Current
+feature/tasks/update	adj_preview_neutral_primary	No adjustments
+feature/tasks/update	adj_preview_neutral_secondary_linked	Linked to another task — schedule is automatic
+feature/tasks/update	adj_preview_neutral_secondary_unset	No schedule set yet
+feature/tasks/update	adj_preview_primary_date	Next due %1$s · %2$s
+feature/tasks/update	adj_preview_primary_hours	Next due at %1$s tach hrs · %2$s
+feature/tasks/update	adj_preview_rel_due_today	due today
+feature/tasks/update	adj_preview_rel_hours_at	at current hours
+feature/tasks/update	adj_preview_rel_in_day	in 1 day
+feature/tasks/update	adj_preview_rel_in_days	in %1$d days
+feature/tasks/update	adj_preview_rel_in_hours	in %1$s tach hrs
+feature/tasks/update	adj_preview_rel_over_hours	over by %1$s tach hrs
+feature/tasks/update	adj_preview_rel_overdue_day	overdue by 1 day
+feature/tasks/update	adj_preview_rel_overdue_days	overdue by %1$d days
+feature/tasks/update	adj_preview_reschedule_date_primary	Next due %1$s
+feature/tasks/update	adj_preview_reschedule_hours_primary	Next due at %1$s tach hrs
+feature/tasks/update	adj_preview_reschedule_was_date	Was set by schedule
+feature/tasks/update	adj_preview_was_date	Was %1$s
+feature/tasks/update	adj_preview_was_hours	Was %1$s tach hrs
+feature/tasks/update	adj_reschedule_disabled_linked	Disabled — this task is linked to another
+feature/tasks/update	adj_reschedule_disabled_unset	Set a schedule first to enable rescheduling
+feature/tasks/update	adj_reschedule_section_label	Reschedule next due
+feature/tasks/update	adj_reschedule_subtitle	Manually set the next-due target. The schedule resumes from there.
+feature/tasks/update	adj_reschedule_title	Set when this is next due
+feature/tasks/update	adj_reschedule_was_date	Original date set by schedule
+feature/tasks/update	adj_reschedule_was_hours	Original hours set by schedule
+feature/tasks/update	adjustments	Adjustments
+feature/tasks/update	basics	Basics
+feature/tasks/update	compliance	Compliance
+feature/tasks/update	compliance_ad_sub	Regulatory requirement
+feature/tasks/update	compliance_authority_hint	e.g. Rotax / Lycoming
+feature/tasks/update	compliance_notes	Compliance Notes
+feature/tasks/update	compliance_notes_hint	e.g. One-time inspection of fuel lines...
+feature/tasks/update	compliance_routine_sub	Scheduled maintenance intervals
+feature/tasks/update	compliance_sb_sub	Manufacturer recommended
+feature/tasks/update	compliance_type	Compliance Type
+feature/tasks/update	compliance_type_ad	Airworthiness Directives (AD)
+feature/tasks/update	compliance_type_ad_full	AD (Airworthiness Directive)
+feature/tasks/update	compliance_type_description	Regulatory nature of this task. Mandatory items will trigger critical system alerts.
+feature/tasks/update	compliance_type_routine	Routine Tasks
+feature/tasks/update	compliance_type_routine_short	Routine
+feature/tasks/update	compliance_type_sb	Service Bulletins (SB)
+feature/tasks/update	compliance_type_sb_full	SB (Service Bulletin)
+feature/tasks/update	component_type_description	Select the primary system or component this task pertains to for accurate log grouping.
+feature/tasks/update	create_work_log	Create Work Log
+feature/tasks/update	create_work_log_subtitle	Opens a new log, pre-linked to this task
+feature/tasks/update	delete_task_section_label	Delete Task
+feature/tasks/update	delete_this_task_subtitle	Permanently removes this task and its maintenance schedule.
+feature/tasks/update	delete_this_task_title	Delete this task
+feature/tasks/update	force_due_engine_hours	Force Due Engine (hours)
+feature/tasks/update	force_overrides_safety	Force Override
+feature/tasks/update	interval_hours	Interval (hours)
+feature/tasks/update	interval_hours_placeholder	e.g. 100
+feature/tasks/update	interval_months	Interval (months)
+feature/tasks/update	interval_months_placeholder	e.g. 12
+feature/tasks/update	intervals	Intervals
+feature/tasks/update	link_to_task	Link to maintenance task
+feature/tasks/update	mark_complied	Mark as Completed
+feature/tasks/update	no_log_history	No maintenance logs recorded for this task.
+feature/tasks/update	no_tasks_configured	No tasks configured. Add them from the aircraft overview to track recurring maintenance.
+feature/tasks/update	one_time_compliance	One-Time Task
+feature/tasks/update	one_time_compliance_desc	Moves to history after first log
+feature/tasks/update	override_next_due_date	Override next due date
+feature/tasks/update	override_next_due_engine	Override next due engine hour
+feature/tasks/update	reference_and_component	%1$s • %2$s
+feature/tasks/update	reference_number	Reference Number
+feature/tasks/update	reference_number_hint	e.g. SB-001
+feature/tasks/update	remove_link	Remove link
+feature/tasks/update	resolve_task	Resolve
+feature/tasks/update	schedule	Schedule
+feature/tasks/update	schedule_pick_linked_task	Pick a task to link
+feature/tasks/update	schedule_prefix_every	Every
+feature/tasks/update	schedule_prefix_in	In
+feature/tasks/update	schedule_preview_asap_primary	Due now — ASAP
+feature/tasks/update	schedule_preview_asap_secondary	Will appear immediately on the dashboard
+feature/tasks/update	schedule_preview_due_every	Due every %1$d %2$s
+feature/tasks/update	schedule_preview_due_every_hours	Due every %1$s tach hrs
+feature/tasks/update	schedule_preview_due_in	Due in %1$d %2$s
+feature/tasks/update	schedule_preview_due_in_hours	Due in %1$s tach hrs
+feature/tasks/update	schedule_preview_empty_primary	No schedule yet
+feature/tasks/update	schedule_preview_empty_secondary	Pick how this task is tracked below
+feature/tasks/update	schedule_preview_hint	How this task will appear
+feature/tasks/update	schedule_preview_label	Preview
+feature/tasks/update	schedule_preview_linked_one_time_secondary	Will move to history after first log
+feature/tasks/update	schedule_preview_linked_primary	Due whenever "%1$s" is due
+feature/tasks/update	schedule_preview_linked_repeating_secondary	Repeats with the linked task
+feature/tasks/update	schedule_preview_linked_unset_primary	Linked task not chosen
+feature/tasks/update	schedule_preview_linked_unset_secondary	Pick a task to link to below
+feature/tasks/update	schedule_preview_one_time_secondary	One-time · moves to history after first log
+feature/tasks/update	schedule_preview_recurring_secondary	Recurring schedule
+feature/tasks/update	schedule_preview_set_calendar_primary	Set how often (%1$s)
+feature/tasks/update	schedule_preview_set_hours_primary	Set how many tach hours
+feature/tasks/update	schedule_preview_set_secondary	Enter an interval below
+feature/tasks/update	schedule_recurrence_asap	ASAP
+feature/tasks/update	schedule_recurrence_asap_sub	Due now
+feature/tasks/update	schedule_recurrence_linked_one_time_sub	Then moves to history
+feature/tasks/update	schedule_recurrence_linked_repeating_sub	With linked task
+feature/tasks/update	schedule_recurrence_one_time	One-time
+feature/tasks/update	schedule_recurrence_one_time_sub	In one interval
+feature/tasks/update	schedule_recurrence_repeating	Repeating
+feature/tasks/update	schedule_recurrence_repeating_sub	Every interval
+feature/tasks/update	schedule_step_interval_how_often	Step 3 · How often?
+feature/tasks/update	schedule_step_interval_in_how_long	Step 3 · In how long?
+feature/tasks/update	schedule_step_recurrence_label	Step 2 · When is it due?
+feature/tasks/update	schedule_step_recurrence_linked_label	Step 2 · Recurrence
+feature/tasks/update	schedule_step_track_label	Step 1 · How is this tracked?
+feature/tasks/update	schedule_track_calendar_time	Calendar Time
+feature/tasks/update	schedule_track_tach_hours	Tach Hours
+feature/tasks/update	schedule_unit_days	days
+feature/tasks/update	schedule_unit_months	months
+feature/tasks/update	schedule_unit_tach_hours	tach hrs
+feature/tasks/update	schedule_unit_years	years
+feature/tasks/update	schedule_with_another_work	Advanced · Link to another task
+feature/tasks/update	schedule_with_another_work_description	This task becomes due whenever the linked task is next due. Choosing a linked task replaces interval-based scheduling above.
+feature/tasks/update	select_task_work	Select Maintenance Work
+feature/tasks/update	skip_this_cycle_option	Skip This Cycle
+feature/tasks/update	skip_this_cycle_option_subtitle	Marks complete without logging
+feature/tasks/update	task_added	Task added
+feature/tasks/update	task_deleted	Task deleted
+feature/tasks/update	task_description_label	Task Description
+feature/tasks/update	task_description_placeholder	e.g. 100-Hour Inspection
+feature/tasks/update	task_due_warning	Note: This task will be due on whichever comes first.
+feature/tasks/update	task_identity_description	Define the core name and component category for this maintenance requirement.
+feature/tasks/update	task_interval_description	Set a recurring interval based on time, engine hours, or both.
+feature/tasks/update	task_skipped	Cycle skipped — next due rescheduled
+feature/tasks/update	task_title	Maintenance Task Title
+feature/tasks/update	task_title_helper	Provide a concise, technical name for this maintenance action as it appears in the service manual.
+feature/tasks/update	task_updated	Task updated
+feature/tasks/viewing	authority_reference_number	%1$s · %2$s
+feature/tasks/viewing	badge_due	DUE
+feature/tasks/viewing	badge_overdue	OVERDUE
+feature/tasks/viewing	completed	Completed
+feature/tasks/viewing	compliance_details	Compliance Details
+feature/tasks/viewing	critical_airworthiness	URGENT ATTENTION REQUIRED
+feature/tasks/viewing	days_overdue_count	%1$d Days Overdue
+feature/tasks/viewing	days_remaining	%1$d Days Remaining
+feature/tasks/viewing	due_date	Due %1$s
+feature/tasks/viewing	due_engine	Due @ %1$s engine hrs
+feature/tasks/viewing	due_soon_date	Due Soon: %1$s
+feature/tasks/viewing	due_soon_date_engine	Due Soon: %1$s / %2$s hrs
+feature/tasks/viewing	due_soon_engine	Due Soon: @ %1$s hrs
+feature/tasks/viewing	due_today	Due Today
+feature/tasks/viewing	engine_hours_upper	%1$s HRS
+feature/tasks/viewing	label_deadline	DEADLINE
+feature/tasks/viewing	label_due_engine	DUE @
+feature/tasks/viewing	label_due_engine_value	DUE @ %1$s
+feature/tasks/viewing	label_expired	EXPIRED %1$s
+feature/tasks/viewing	maintenance_due_subtitle	Maintenance tasks pending
+feature/tasks/viewing	next_due_date	NEXT DUE DATE
+feature/tasks/viewing	next_due_engine_hrs	NEXT DUE ENGINE HRS
+feature/tasks/viewing	no_maintenance_logs_for_task	No logs yet. Add a maintenance entry and tag this task to see history here.
+feature/tasks/viewing	on_condition	On Condition
+feature/tasks/viewing	overdue_was	Overdue (was %1$s)
+feature/tasks/viewing	status_label	STATUS
+feature/technician/sharedassets	add_technician	Add Technician
+feature/technician/sharedassets	certificate_number	Certificate Number
+feature/technician/sharedassets	certificate_type	Certificate Type
+feature/technician/sharedassets	certificate_type_amt	A&amp;P Mechanic
+feature/technician/sharedassets	certificate_type_repairman	Repairman
+feature/technician/sharedassets	delete_technician	Delete Technician
+feature/technician/sharedassets	delete_technician_confirmation	Are you sure you want to delete this technician? This will prevent them from being added to future logs, but it will not remove them from past logs.
+feature/technician/sharedassets	duplicates_apply	Merge selected
+feature/technician/sharedassets	duplicates_merge_manual	Merge into %1$s
+feature/technician/sharedassets	duplicates_merge_member	Use the shared profile for %1$s
+feature/technician/sharedassets	duplicates_needs_confirmation	Names only — confirm this is the same person
+feature/technician/sharedassets	duplicates_no_selection	Nothing selected
+feature/technician/sharedassets	duplicates_prompt_action	Review
+feature/technician/sharedassets	duplicates_prompt_dismiss	Not duplicates
+feature/technician/sharedassets	duplicates_prompt_title	Some technicians look like the same person
+feature/technician/sharedassets	duplicates_replaces	Deletes: %1$s
+feature/technician/sharedassets	duplicates_review_body	Merging deletes the duplicate entries. It changes only who you can pick from here — logs you have already signed keep the technician they recorded.
+feature/technician/sharedassets	duplicates_review_title	Review duplicates
+feature/technician/sharedassets	duplicates_warn_mirror	%1$s and %2$s have the same certificate number. Two members are two different people, so this is likely a typo — check with them.
+feature/technician/sharedassets	edit_technician	Update Technician
+feature/technician/sharedassets	empty_technicians_desc	You haven't added any technicians yet. Add one to keep track of who performs your maintenance.
+feature/technician/sharedassets	empty_technicians_title	No Technicians
+feature/technician/sharedassets	expiration_date	Expiration Date
+feature/technician/sharedassets	linked_badge	Linked
+feature/technician/sharedassets	linked_technician_info_body	This profile comes from an aircraft you share. It’s kept up to date by the person it belongs to, so you can’t edit or delete it here — but you can select them when logging maintenance.
+feature/technician/sharedassets	linked_technician_info_dismiss	Got it
+feature/technician/sharedassets	linked_technician_info_title	Maintained by %1$s
+feature/technician/sharedassets	linked_technicians_header	Linked from shared aircraft
+feature/technician/sharedassets	manage_technicians	Technician Profiles
+feature/technician/sharedassets	my_profile	My Profile
+feature/technician/sharedassets	my_technicians_header	My technicians
+feature/technician/sharedassets	name	Name
+feature/technician/sharedassets	name_required	Name (Required)
+feature/technician/sharedassets	never	Never
+feature/technician/sharedassets	no_certificate	No certificate provided
+feature/technician/sharedassets	no_technicians	No technicians added yet.
+feature/technician/sharedassets	performed_by	Performed By
+feature/technician/sharedassets	select_technician	Select Technician
+feature/technician/sharedassets	technician	Technician
+feature/technician/sharedassets	you_badge	You
+feature/thing/dashboard	aircraft_load_error	Couldn't load this aircraft
+feature/thing/dashboard	overview_all_logs	All logs
+feature/thing/dashboard	overview_next_due	Next due
+feature/thing/dashboard	overview_no_logs_body	Add the first maintenance entry to start the aircraft record.
+feature/thing/dashboard	overview_no_logs_title	No logs yet
+feature/thing/dashboard	overview_no_squawks_body	No active discrepancies for this aircraft.
+feature/thing/dashboard	overview_no_tasks_body	Scheduled maintenance is up to date.
+feature/thing/dashboard	overview_no_tasks_title	No upcoming tasks
+feature/thing/dashboard	overview_open_squawks	Open squawks
+feature/thing/dashboard	overview_recent_activity	Recent activity
+feature/thing/dashboard	tab_logs	Logs
+feature/thing/dashboard	tab_overview	Overview
+feature/thing/dashboard	tab_tasks	Tasks
+feature/thing/update	add_blade	Add blade
+feature/thing/update	add_engine	Add Engine
+feature/thing/update	blade_serial_numbers	Blade Serial numbers
+feature/thing/update	delete_aircraft	Delete Aircraft?
+feature/thing/update	delete_aircraft_member_plural	people will
+feature/thing/update	delete_aircraft_member_singular	person will
+feature/thing/update	delete_aircraft_shared_warning	%1$d other %2$s lose access to this aircraft and its records.
+feature/thing/update	make	Make
+feature/thing/update	model	Model
+feature/thing/update	remove_blade	Remove Blade
+feature/thing/update	remove_engine	Remove Engine
+feature/thing/update	serial	Serial Number
+feature/thing/update	tail_number	Tail Number
+feature/thing/update	update_aircraft	Update Aircraft
+feature/userprofile/sharedassets	anonymous_user	Anonymous User
