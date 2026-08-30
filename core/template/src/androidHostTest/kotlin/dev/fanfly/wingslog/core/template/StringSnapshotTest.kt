@@ -247,6 +247,24 @@ class StringSnapshotTest {
     "feature/logs/sharedassets:resolve_task_work_description" to { l: Lexicon ->
       mapOf(2 to l.taskNoun.singular)
     },
+
+    // The remaining per-thing surfaces (#656). Absent on purpose: "Tail Number" is a *spec field*
+    // label, not a lexicon noun (PRD §4.2, so #657); the collaboration channel description belongs
+    // to #661 with the rest of the notification surface; and the stress-test copy is a developer
+    // surface, excluded wholesale by the classification.
+    frame("feature/thing/dashboard", "aircraft_load_error") { it.thingNoun.singular },
+    frame("feature/thing/dashboard", "overview_no_logs_body") { it.thingNoun.singular },
+    // Only the thing noun. "discrepancies" stays literal: the squawk plural is "squawks", so
+    // substituting would reword the sentence rather than translate it.
+    frame("feature/thing/dashboard", "overview_no_squawks_body") { it.thingNoun.singular },
+    frame("feature/thing/dashboard", "overview_open_squawks") { it.squawkNoun.plural },
+    frame("feature/thing/update", "delete_aircraft") { LexiconFormatter.titleCase(it.thingNoun) },
+    frame("feature/thing/update", "update_aircraft") { LexiconFormatter.titleCase(it.thingNoun) },
+    frame("feature/squawk/update", "dismiss_squawk_warning") { it.squawkNoun.singular },
+    // Positions 1 and 2 are the count and the member noun, both caller-supplied.
+    "feature/thing/update:delete_aircraft_shared_warning" to { l: Lexicon ->
+      mapOf(3 to l.thingNoun.singular)
+    },
   )
 
   /** A single-argument frame at position 1, in any module. */

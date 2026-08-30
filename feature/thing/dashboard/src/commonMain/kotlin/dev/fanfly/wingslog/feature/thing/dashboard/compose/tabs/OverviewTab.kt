@@ -1,7 +1,5 @@
 package dev.fanfly.wingslog.feature.thing.dashboard.compose.tabs
 
-import dev.fanfly.wingslog.core.template.LocalThingLexicon
-import dev.fanfly.wingslog.core.template.squawkNoun
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -39,10 +37,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import dev.fanfly.wingslog.thing.ComponentType
-import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.datetime.toLocalDate
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.squawkNoun
+import dev.fanfly.wingslog.core.template.thingNoun
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LayoutTier
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalNavPillClearance
@@ -50,11 +49,6 @@ import dev.fanfly.wingslog.core.ui.common.formatToOneDecimalPlace
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.core.ui.theme.statusColors
-import dev.fanfly.wingslog.feature.thing.dashboard.compose.ThingDataCard
-import dev.fanfly.wingslog.feature.thing.dashboard.compose.LogOnboardingCard
-import dev.fanfly.wingslog.feature.thing.dashboard.compose.LogStatsSection
-import dev.fanfly.wingslog.feature.thing.dashboard.data.AircraftOverviewAction
-import dev.fanfly.wingslog.feature.thing.dashboard.data.ThingOverviewUiState
 import dev.fanfly.wingslog.feature.logs.sharedassets.util.displayName
 import dev.fanfly.wingslog.feature.squawk.model.SquawkStatus
 import dev.fanfly.wingslog.feature.squawk.viewing.AogAlertSection
@@ -62,10 +56,19 @@ import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
 import dev.fanfly.wingslog.feature.tasks.viewing.CriticalAlertsSection
 import dev.fanfly.wingslog.feature.tasks.viewing.TaskCardItem
+import dev.fanfly.wingslog.feature.thing.dashboard.compose.LogOnboardingCard
+import dev.fanfly.wingslog.feature.thing.dashboard.compose.LogStatsSection
+import dev.fanfly.wingslog.feature.thing.dashboard.compose.ThingDataCard
+import dev.fanfly.wingslog.feature.thing.dashboard.data.AircraftOverviewAction
+import dev.fanfly.wingslog.feature.thing.dashboard.data.ThingOverviewUiState
+import dev.fanfly.wingslog.thing.ComponentType
+import dev.fanfly.wingslog.thing.MaintenanceLog
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.aircraft_shared_badge
 import wingslog.core.sharedassets.generated.resources.all
 import wingslog.core.sharedassets.generated.resources.make_model_template
+import wingslog.feature.squawk.sharedassets.generated.resources.no_open_squawks
+import wingslog.feature.tasks.sharedassets.generated.resources.unknown_date
 import wingslog.feature.thing.dashboard.generated.resources.Res
 import wingslog.feature.thing.dashboard.generated.resources.overview_all_logs
 import wingslog.feature.thing.dashboard.generated.resources.overview_next_due
@@ -76,8 +79,6 @@ import wingslog.feature.thing.dashboard.generated.resources.overview_no_tasks_bo
 import wingslog.feature.thing.dashboard.generated.resources.overview_no_tasks_title
 import wingslog.feature.thing.dashboard.generated.resources.overview_open_squawks
 import wingslog.feature.thing.dashboard.generated.resources.overview_recent_activity
-import wingslog.feature.squawk.sharedassets.generated.resources.no_open_squawks
-import wingslog.feature.tasks.sharedassets.generated.resources.unknown_date
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.squawk.sharedassets.generated.resources.Res as SquawkRes
 import wingslog.feature.tasks.sharedassets.generated.resources.Res as TasksRes
@@ -333,7 +334,10 @@ private fun DashboardLowerGrid(
         EmptyRailState(
           icon = Icons.Default.Description,
           title = stringResource(Res.string.overview_no_logs_title),
-          body = stringResource(Res.string.overview_no_logs_body),
+          body = stringResource(
+            Res.string.overview_no_logs_body,
+            LocalThingLexicon.current.thingNoun.singular,
+          ),
         )
       } else {
         state.recentLogs.forEachIndexed { index, log ->
@@ -371,7 +375,10 @@ private fun DashboardLowerGrid(
       }
 
       RailCard(
-        title = stringResource(Res.string.overview_open_squawks),
+        title = stringResource(
+          Res.string.overview_open_squawks,
+          LocalThingLexicon.current.squawkNoun.plural,
+        ),
         actionLabel = stringResource(CoreRes.string.all),
         onActionClick = onViewSquawksClick
       ) {
@@ -382,7 +389,10 @@ private fun DashboardLowerGrid(
               SquawkRes.string.no_open_squawks,
               LocalThingLexicon.current.squawkNoun.plural,
             ),
-            body = stringResource(Res.string.overview_no_squawks_body),
+            body = stringResource(
+              Res.string.overview_no_squawks_body,
+              LocalThingLexicon.current.thingNoun.singular,
+            ),
           )
         } else {
           val previewSquawks = openSquawks.take(3)

@@ -34,6 +34,9 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.core.nav.Screen
+import dev.fanfly.wingslog.core.template.LexiconFormatter
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.thingNoun
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedTopBar
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
 import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
@@ -52,16 +55,16 @@ import wingslog.core.sharedassets.generated.resources.cancel
 import wingslog.core.sharedassets.generated.resources.component_airframe
 import wingslog.core.sharedassets.generated.resources.component_engine
 import wingslog.core.sharedassets.generated.resources.delete
+import wingslog.feature.logs.sharedassets.generated.resources.this_action_cannot_be_undone
 import wingslog.feature.thing.update.generated.resources.add_engine
 import wingslog.feature.thing.update.generated.resources.delete_aircraft
 import wingslog.feature.thing.update.generated.resources.delete_aircraft_member_plural
 import wingslog.feature.thing.update.generated.resources.delete_aircraft_member_singular
 import wingslog.feature.thing.update.generated.resources.delete_aircraft_shared_warning
 import wingslog.feature.thing.update.generated.resources.update_aircraft
-import wingslog.feature.logs.sharedassets.generated.resources.this_action_cannot_be_undone
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
-import wingslog.feature.thing.update.generated.resources.Res as AircraftRes
 import wingslog.feature.logs.sharedassets.generated.resources.Res as SharedRes
+import wingslog.feature.thing.update.generated.resources.Res as AircraftRes
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
@@ -113,7 +116,14 @@ fun EditAircraftScreen(
   if (showDeleteDialog) {
     AlertDialog(
       onDismissRequest = { showDeleteDialog = false },
-      title = { Text(stringResource(AircraftRes.string.delete_aircraft)) },
+      title = {
+        Text(
+          stringResource(
+            AircraftRes.string.delete_aircraft,
+            LexiconFormatter.titleCase(LocalThingLexicon.current.thingNoun),
+          )
+        )
+      },
       text = {
         Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
           Text(stringResource(SharedRes.string.this_action_cannot_be_undone))
@@ -129,6 +139,7 @@ fun EditAircraftScreen(
                   if (others == 1) AircraftRes.string.delete_aircraft_member_singular
                   else AircraftRes.string.delete_aircraft_member_plural
                 ),
+                LocalThingLexicon.current.thingNoun.singular,
               ),
               color = MaterialTheme.colorScheme.error,
             )
@@ -159,7 +170,10 @@ fun EditAircraftScreen(
       ConstrainedTopBar(ContentWidth.Form) {
         WingsLogTopAppBar(
           title = if (uiState.thing.id == "") stringResource(CoreRes.string.add_aircraft)
-          else stringResource(AircraftRes.string.update_aircraft),
+          else stringResource(
+            AircraftRes.string.update_aircraft,
+            LexiconFormatter.titleCase(LocalThingLexicon.current.thingNoun),
+          ),
           onBackClick = { tryNavigateBack() },
           scrollBehavior = scrollBehavior,
         )
@@ -229,7 +243,10 @@ fun EditAircraftScreen(
         primaryLabel = if (uiState.thing.id == "")
           stringResource(CoreRes.string.add_aircraft)
         else
-          stringResource(AircraftRes.string.update_aircraft)
+          stringResource(
+            AircraftRes.string.update_aircraft,
+            LexiconFormatter.titleCase(LocalThingLexicon.current.thingNoun),
+          )
       )
     }
   }
