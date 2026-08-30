@@ -371,14 +371,14 @@ feature/notifications/sharedassets	notification_n1_body_single	%1$s made a chang
 feature/notifications/sharedassets	notification_n1_body_squawk_created	%1$s: %2$s created a new squawk issue\n\n%3$s
 feature/notifications/sharedassets	notification_n1_body_squawk_raised	%1$s: %2$s raised the priority of 1 squawk issue\n\n%3$s
 feature/notifications/sharedassets	notification_n1_body_thing_updated	%1$s: %2$s updated the aircraft
-feature/notifications/sharedassets	notification_n1_noun_log	logbook entry
-feature/notifications/sharedassets	notification_n1_noun_task	task
-feature/notifications/sharedassets	notification_n1_section_logbook	Logbook
-feature/notifications/sharedassets	notification_n1_section_logbook_lower	logbook entries
+feature/notifications/sharedassets	notification_n1_noun_log	work log
+feature/notifications/sharedassets	notification_n1_noun_task	maintenance task
+feature/notifications/sharedassets	notification_n1_section_logbook	Work Logs
+feature/notifications/sharedassets	notification_n1_section_logbook_lower	work logs
 feature/notifications/sharedassets	notification_n1_section_squawks	Squawks
 feature/notifications/sharedassets	notification_n1_section_squawks_lower	squawks
-feature/notifications/sharedassets	notification_n1_section_tasks	Tasks
-feature/notifications/sharedassets	notification_n1_section_tasks_lower	tasks
+feature/notifications/sharedassets	notification_n1_section_tasks	Maintenance Tasks
+feature/notifications/sharedassets	notification_n1_section_tasks_lower	maintenance tasks
 feature/notifications/sharedassets	notification_n1_title	%1$s · %2$s
 feature/notifications/sharedassets	notification_n1_title_squawk_created	New squawk
 feature/notifications/sharedassets	notification_title_due_soon	Due soon
