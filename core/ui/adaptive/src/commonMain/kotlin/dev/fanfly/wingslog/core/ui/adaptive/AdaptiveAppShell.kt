@@ -66,6 +66,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import dev.fanfly.wingslog.core.template.GenericLexicon
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedFloatingAction
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedTopBar
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
@@ -79,6 +81,7 @@ import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.adaptive.compose.layoutTierFor
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.widget.avataricon.compose.AvatarIcon
+import dev.fanfly.wingslog.thing.Lexicon
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -102,6 +105,15 @@ data class ShellThing(
   val id: String,
   val tail: String,
   val name: String,
+  /**
+   * The words this thing is described in, from its template's DNA.
+   *
+   * Resolved once here rather than at each call site: every screen below the shell needs it, and
+   * resolving per-screen would mean each one holding a [TemplateRegistry] to answer a question the
+   * shell has already answered. Defaults to the generic lexicon so a caller constructing a
+   * [ShellThing] in a test gets a valid one without reaching for a template.
+   */
+  val lexicon: Lexicon = GenericLexicon.LEXICON,
 )
 
 /**
@@ -189,10 +201,22 @@ fun AdaptiveAppShell(
 ) {
   BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
     val tier = layoutTierFor(maxWidth)
-    val content: @Composable () -> Unit =
-      { sectionContent(state.section, state.selectedThingId) }
-    val fab: @Composable () -> Unit =
-      { sectionFab(state.section, state.selectedThingId) }
+    // Per-thing sections render in the selected thing's words; SETTINGS is global and keeps the
+    // generic lexicon, because on a mixed account no single template's word would be right
+    // (template_system_design.md §9). The FAB is wrapped too — it says "New squawk".
+    val sectionLexicon =
+      if (state.section == ShellSection.SETTINGS) GenericLexicon.LEXICON
+      else state.selectedThing?.lexicon ?: GenericLexicon.LEXICON
+    val content: @Composable () -> Unit = {
+      CompositionLocalProvider(LocalThingLexicon provides sectionLexicon) {
+        sectionContent(state.section, state.selectedThingId)
+      }
+    }
+    val fab: @Composable () -> Unit = {
+      CompositionLocalProvider(LocalThingLexicon provides sectionLexicon) {
+        sectionFab(state.section, state.selectedThingId)
+      }
+    }
     CompositionLocalProvider(LocalLayoutTier provides tier) {
       if (state.thing.isEmpty()) {
         EmptyFleetShell(

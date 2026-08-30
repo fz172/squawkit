@@ -22,6 +22,7 @@ kotlin {
       // core:ui api-exports compose.ui, material3, and material-icons-extended. The whole
       // feature nav graph comes in via feature:shell (composables) + core:di (Koin modules);
       // this host only declares what its own sources touch.
+      implementation(project(":core:template"))
       implementation(project(":core:analytics"))
       implementation(project(":core:di"))
       implementation(project(":core:appinfo"))

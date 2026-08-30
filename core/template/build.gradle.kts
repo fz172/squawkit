@@ -29,6 +29,7 @@ kotlin {
     commonMain.dependencies {
       api(project(":core:model"))
       api(libs.koin.core)
+      api(libs.kotlinx.coroutines.core)
       // Runtime only — this module provides a CompositionLocal, not UI. Nothing here draws.
       implementation(compose.runtime)
     }

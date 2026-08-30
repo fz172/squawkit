@@ -36,6 +36,8 @@ kotlin {
       implementation(project(":core:ui:theme"))
       implementation(project(":core:ui:widget:avataricon"))
       implementation(project(":core:sharedassets"))
+      // For LocalThingLexicon: the shell is where a Thing's lexicon enters the composition.
+      api(project(":core:template"))
       api(libs.compose.ui)
       api(libs.compose.ui.backhandler)
       api(libs.material3)

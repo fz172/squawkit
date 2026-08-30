@@ -3,6 +3,7 @@ package dev.fanfly.wingslog.core.template
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
 import dev.fanfly.wingslog.thing.Lexicon
+import dev.fanfly.wingslog.thing.Noun
 import org.junit.Test
 import java.io.File
 
@@ -80,9 +81,30 @@ class StringSnapshotTest {
    * deliberately absent and stay as literal placeholders on both sides of the comparison, because
    * the snapshot recorded them that way too.
    *
-   * Empty until #656 begins converting. Each conversion adds its entry in the same commit.
+   * Each conversion adds its entry in the same commit that changes the string.
    */
-  private val LEXICON_ARGS: Map<String, (Lexicon) -> Map<Int, String>> = mapOf()
+  private val LEXICON_ARGS: Map<String, (Lexicon) -> Map<Int, String>> = mapOf(
+    // feature/squawk/sharedassets (#656). Three of the module's domain strings are absent
+    // deliberately: "Squawks", "AOG" and "Aircraft on Ground" are lexicon values in their
+    // entirety rather than sentence frames, so they belong to #657's move-into-the-lexicon.
+    squawkFrame("add_squawk") { it.singular },
+    squawkFrame("edit_squawk") { it.singular },
+    squawkFrame("no_open_squawks") { it.plural },
+    squawkFrame("no_closed_squawks") { it.plural },
+    squawkFrame("no_squawk_work_recorded") { it.plural },
+    squawkFrame("view_squawks") { LexiconFormatter.titleCasePlural(it) },
+    squawkFrame("squawk_added") { LexiconFormatter.sentenceCase(it) },
+    squawkFrame("squawk_updated") { LexiconFormatter.sentenceCase(it) },
+    squawkFrame("squawk_dismissed") { LexiconFormatter.sentenceCase(it) },
+    squawkFrame("squawk_reopened") { LexiconFormatter.sentenceCase(it) },
+  )
+
+  /** A single-argument frame in `feature/squawk/sharedassets` filled from the squawk noun. */
+  private fun squawkFrame(
+    resource: String,
+    word: (Noun) -> String,
+  ): Pair<String, (Lexicon) -> Map<Int, String>> =
+    "feature/squawk/sharedassets:$resource" to { lexicon -> mapOf(1 to word(lexicon.squawkNoun)) }
 
   private data class Entry(
     val module: String,

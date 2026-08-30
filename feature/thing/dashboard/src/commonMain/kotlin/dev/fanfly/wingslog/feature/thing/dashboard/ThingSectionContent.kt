@@ -23,8 +23,14 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.core.nav.Screen
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.squawkNoun
 import dev.fanfly.wingslog.core.ui.adaptive.ShellSection
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
+import dev.fanfly.wingslog.feature.attachment.datamanager.OpenState
+import dev.fanfly.wingslog.feature.tasks.viewing.DeleteTaskConfirmDialog
+import dev.fanfly.wingslog.feature.tasks.viewing.TaskDetailSheet
 import dev.fanfly.wingslog.feature.thing.dashboard.compose.tabs.LogsTab
 import dev.fanfly.wingslog.feature.thing.dashboard.compose.tabs.MaintenanceTasksTab
 import dev.fanfly.wingslog.feature.thing.dashboard.compose.tabs.OverviewTab
@@ -32,25 +38,21 @@ import dev.fanfly.wingslog.feature.thing.dashboard.compose.tabs.SquawkTab
 import dev.fanfly.wingslog.feature.thing.dashboard.data.AircraftOverviewAction
 import dev.fanfly.wingslog.feature.thing.dashboard.data.ThingOverviewUiState
 import dev.fanfly.wingslog.feature.thing.dashboard.data.ThingOverviewViewModel
-import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
-import dev.fanfly.wingslog.feature.attachment.datamanager.OpenState
-import dev.fanfly.wingslog.feature.tasks.viewing.DeleteTaskConfirmDialog
-import dev.fanfly.wingslog.feature.tasks.viewing.TaskDetailSheet
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import wingslog.core.sharedassets.generated.resources.empty_add_aircraft
-import wingslog.feature.thing.dashboard.generated.resources.aircraft_load_error
 import wingslog.feature.logs.sharedassets.generated.resources.add_log
 import wingslog.feature.squawk.sharedassets.generated.resources.add_squawk
 import wingslog.feature.tasks.sharedassets.generated.resources.add_task
+import wingslog.feature.thing.dashboard.generated.resources.aircraft_load_error
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
-import wingslog.feature.thing.dashboard.generated.resources.Res as DashboardRes
 import wingslog.feature.logs.sharedassets.generated.resources.Res as LogsRes
 import wingslog.feature.squawk.sharedassets.generated.resources.Res as SquawkRes
 import wingslog.feature.tasks.sharedassets.generated.resources.Res as TasksRes
+import wingslog.feature.thing.dashboard.generated.resources.Res as DashboardRes
 
 /**
  * Host entry point for the adaptive shell's **per-thing** section bodies: maps a [dev.fanfly.wingslog.core.ui.adaptive.ShellSection]
@@ -118,7 +120,10 @@ fun ShellSectionFab(
   when (section) {
     ShellSection.SQUAWKS ->
       SectionAddFab(
-        label = stringResource(SquawkRes.string.add_squawk),
+        label = stringResource(
+          SquawkRes.string.add_squawk,
+          LocalThingLexicon.current.squawkNoun.singular,
+        ),
         onClick = {
           navController.navigate(
             Screen.AddSquawk.createRoute(

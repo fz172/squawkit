@@ -1,5 +1,7 @@
 package dev.fanfly.wingslog.feature.squawk.update.ui
 
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.squawkNoun
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -84,8 +86,9 @@ fun SquawkFormScreen(
   val isDismissed =
     state.dismissReason != SquawkDismissReason.SQUAWK_DISMISS_REASON_UNKNOWN
   val showResolveButton = isEdit && !state.isAddressedReadOnly && !isDismissed
-  val screenTitle = if (isEdit) stringResource(Res.string.edit_squawk)
-  else stringResource(Res.string.add_squawk)
+  val squawk = LocalThingLexicon.current.squawkNoun
+  val screenTitle = if (isEdit) stringResource(Res.string.edit_squawk, squawk.singular)
+  else stringResource(Res.string.add_squawk, squawk.singular)
 
   val hasChanges = if (isEdit) {
     state.title != state.initialTitle ||
