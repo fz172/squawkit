@@ -12,6 +12,10 @@ kotlin {
     namespace = "dev.fanfly.wingslog.core.analytics"
     compileSdk = 37
     minSdk = 33
+
+    withHostTest {
+      isReturnDefaultValues = true
+    }
   }
 
   iosArm64()
@@ -42,4 +46,9 @@ kotlin {
       implementation(libs.gitlive.firebase.analytics)
     }
   }
+}
+
+dependencies {
+  "androidHostTestImplementation"(libs.junit)
+  "androidHostTestImplementation"(libs.truth)
 }

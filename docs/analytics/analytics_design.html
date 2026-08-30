@@ -138,6 +138,57 @@
 }</pre>
   <p>An <code>analyticsModule</code> Koin module exposes <code>single&lt;AnalyticsManager&gt;</code>.</p>
 
+  <div class="callout note">
+    <strong>What actually shipped.</strong> The interface above is the original proposal.
+    <code>AnalyticsManager</code> as built has <code>logScreenView</code>,
+    <code>setAnalyticsCollectionEnabled</code>, and a single untyped
+    <code>logEvent(name, Map&lt;String, String&gt;)</code> rather than separate
+    <code>logClick</code> / <code>logTiming</code> / <code>setUserProperty</code> methods. §3.1a
+    below is the taxonomy that rides on <code>logEvent</code>; the click-conformance Lint rule in
+    §5.1 and the latency hooks in §6 remain unbuilt.
+  </div>
+
+  <h3 id="taxonomy">3.1a The event taxonomy (typed)</h3>
+  <p>Events are modelled as types in <code>core/analytics</code>
+  (<code>AnalyticsEvent.kt</code>, <code>AnalyticsEvents.kt</code>), not assembled as strings at the
+  call site. <code>AnalyticsEvent.Name</code> and <code>AnalyticsEvent.Param</code> hold every wire
+  name; each event is a data class whose constructor names exactly the parameters it carries, so a
+  call site cannot omit one, misspell a key, or invent a parameter the event does not have.</p>
+
+  <div class="callout warn">
+    <strong>Names are append-only.</strong> A GA4 event or parameter name cannot be changed once data
+    has landed against it — renaming orphans the history rather than migrating it, the analytics
+    equivalent of a wire-identity change (#638). Add entries freely; never edit or delete one.
+    <code>AnalyticsTaxonomyTest</code> pins the shipped names so a rename fails the build.
+  </div>
+
+  <table>
+    <thead><tr><th>Event</th><th>Parameters</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td><code>ad_slot_filled</code></td><td><code>surface</code>, <code>slot_index</code>, <code>unit_position</code></td><td>shipped</td></tr>
+      <tr><td><code>ad_impression</code></td><td><code>surface</code>, <code>slot_index</code>, <code>unit_position</code></td><td>shipped</td></tr>
+      <tr><td><code>ad_fill_failed</code></td><td><code>surface</code>, <code>reason</code></td><td>shipped</td></tr>
+      <tr><td><code>ad_click</code></td><td><code>surface</code>, <code>slot_index</code>, <code>unit_position</code></td><td>shipped</td></tr>
+      <tr><td><code>sync_permission_denied_write</code></td><td><code>scope</code></td><td>shipped</td></tr>
+      <tr><td><code>sync_share_reconciled</code></td><td><code>trigger</code></td><td>shipped</td></tr>
+      <tr><td><code>urgency_notification_posted</code></td><td><code>trigger</code>, <code>shared_fleet</code></td><td>shipped</td></tr>
+      <tr><td><code>thing_created</code></td><td><code>template_id</code>, <code>source</code></td><td>defined, not yet emitted</td></tr>
+      <tr><td><code>starter_tasks_offered</code></td><td><code>template_id</code>, <code>task_count</code></td><td>defined, not yet emitted</td></tr>
+      <tr><td><code>starter_tasks_accepted</code></td><td><code>template_id</code>, <code>task_count</code></td><td>defined, not yet emitted</td></tr>
+      <tr><td><code>task_completed</code></td><td><code>template_id</code></td><td>defined, not yet emitted</td></tr>
+      <tr><td><code>defect_created</code></td><td><code>template_id</code></td><td>defined, not yet emitted</td></tr>
+      <tr><td><code>log_created</code></td><td><code>template_id</code></td><td>defined, not yet emitted</td></tr>
+      <tr><td><code>export_completed</code></td><td><code>template_id</code>, <code>format</code>, <code>thing_count</code></td><td>defined, not yet emitted</td></tr>
+    </tbody>
+  </table>
+
+  <p><code>shared_fleet</code> keeps its aviation name because it is already emitting — the same
+  grandfathering that applies to wire names. The seven Thing-scoped events implement
+  <code>ThingScopedEvent</code>, which requires <code>template_id</code> as a property rather than a
+  parameter each event remembers to add, so a new Thing-scoped event cannot be defined without one.
+  That property is what PRD §13 splits every success metric by: the ≥40% non-airplane target and the
+  aviation-cohort retention guardrail are both a filter on it.</p>
+
   <h3>3.2 Platform actuals</h3>
   <table>
     <thead><tr><th>Target</th><th>Backing SDK</th><th>Notes</th></tr></thead>
@@ -305,6 +356,7 @@
       <li><a href="#context">Context &amp; Goals</a></li>
       <li><a href="#backend">Backend choice</a></li>
       <li><a href="#architecture">Architecture — core/analytics</a></li>
+      <li><a href="#taxonomy">The event taxonomy</a></li>
       <li><a href="#pageviews">Page-view tracking</a></li>
       <li><a href="#clicks">Button-click tracking</a></li>
       <li><a href="#latency">Latency tracking</a></li>
