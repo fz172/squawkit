@@ -1,7 +1,7 @@
 package dev.fanfly.wingslog.feature.shell.di
 
 import dev.fanfly.wingslog.core.auth.AuthManager
-import dev.fanfly.wingslog.core.template.CurrentThingLexicon
+import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.fleet.picker.data.SelectedThingStore
@@ -24,7 +24,7 @@ val shellModule = module {
       syncEngine = get<SyncEngine>(),
       selectedThingStore = get<SelectedThingStore>(),
       templateRegistry = get<TemplateRegistry>(),
-      currentThingLexicon = get<CurrentThingLexicon>(),
+      currentThingTemplate = get<CurrentThingTemplate>(),
     )
   }
 }

@@ -1,10 +1,5 @@
 package dev.fanfly.wingslog.core.ui.adaptive
 
-import dev.fanfly.wingslog.core.template.logNoun
-import dev.fanfly.wingslog.core.template.squawkNoun
-import dev.fanfly.wingslog.core.template.taskNoun
-import dev.fanfly.wingslog.core.template.LexiconFormatter
-import dev.fanfly.wingslog.core.template.thingNoun
 import androidx.compose.animation.core.animate
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -72,7 +67,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.template.GenericLexicon
+import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.logNoun
+import dev.fanfly.wingslog.core.template.squawkNoun
+import dev.fanfly.wingslog.core.template.taskNoun
+import dev.fanfly.wingslog.core.template.thingNoun
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedFloatingAction
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedTopBar
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
@@ -86,8 +86,9 @@ import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.adaptive.compose.layoutTierFor
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.widget.avataricon.compose.AvatarIcon
-import dev.fanfly.wingslog.thing.Lexicon
-import org.jetbrains.compose.resources.StringResource
+import dev.fanfly.wingslog.core.template.LocalThingCapabilities
+import dev.fanfly.wingslog.thing.Section
+import dev.fanfly.wingslog.thing.ThingTemplate
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.add_thing
@@ -108,14 +109,14 @@ data class ShellThing(
   val tail: String,
   val name: String,
   /**
-   * The words this thing is described in, from its template's DNA.
+   * This thing's template DNA — the words it is described in, and the features it has.
    *
    * Resolved once here rather than at each call site: every screen below the shell needs it, and
    * resolving per-screen would mean each one holding a [TemplateRegistry] to answer a question the
-   * shell has already answered. Defaults to the generic lexicon so a caller constructing a
-   * [ShellThing] in a test gets a valid one without reaching for a template.
+   * shell has already answered. Null for a caller constructing a [ShellThing] in a test, which then
+   * gets the generic lexicon and every capability enabled.
    */
-  val lexicon: Lexicon = GenericLexicon.LEXICON,
+  val template: ThingTemplate? = null,
 )
 
 /**
@@ -166,13 +167,39 @@ fun ShellSection.narrowSidebarLabel(): String = when (this) {
   else -> title()
 }
 
-private val PER_THING_SECTIONS =
+private val DEFAULT_PER_THING_SECTIONS =
   listOf(
     ShellSection.DASHBOARD,
     ShellSection.SQUAWKS,
     ShellSection.TASKS,
     ShellSection.LOGS,
   )
+
+/**
+ * The per-thing sections this thing's template declares, in the order it wants them (PRD §4.8).
+ *
+ * An ordered list rather than a bool per section, so the shell reads one list instead of every
+ * screen checking a flag — and so a template can *reorder*, which a set of bools cannot express.
+ *
+ * Falls back to all four when the template names none. That is the fail-open rule
+ * [LocalThingCapabilities] documents: a missing declaration should show a section, not silently
+ * remove navigation. SETTINGS is absent from both — it is account-level and never template-owned.
+ */
+@Composable
+private fun perThingSections(): List<ShellSection> {
+  val declared = LocalThingCapabilities.current.sections.mapNotNull { it.toShellSection() }
+  return declared.ifEmpty { DEFAULT_PER_THING_SECTIONS }
+}
+
+private fun Section.toShellSection(): ShellSection? = when (this) {
+  Section.SECTION_DASHBOARD -> ShellSection.DASHBOARD
+  Section.SECTION_SQUAWKS -> ShellSection.SQUAWKS
+  Section.SECTION_TASKS -> ShellSection.TASKS
+  Section.SECTION_LOGS -> ShellSection.LOGS
+  // A template built by a newer client naming a section this build has no screen for. Dropping it
+  // is the only safe reading: the alternative is a tab that navigates nowhere.
+  Section.SECTION_UNKNOWN -> null
+}
 
 /** Plain UI state for [AdaptiveAppShell]; produced by a host-side ViewModel. */
 data class AdaptiveShellUiState(
@@ -240,7 +267,7 @@ fun AdaptiveAppShell(
     // The FAB is wrapped too, since it says "New squawk".
     val sectionLexicon =
       if (state.section == ShellSection.SETTINGS) GenericLexicon.LEXICON
-      else state.selectedThing?.lexicon ?: LocalThingLexicon.current
+      else state.selectedThing?.template?.lexicon ?: LocalThingLexicon.current
     val content: @Composable () -> Unit = {
       CompositionLocalProvider(LocalThingLexicon provides sectionLexicon) {
         sectionContent(state.section, state.selectedThingId)
@@ -568,7 +595,7 @@ private fun WingsSidebar(
         )
       }
 
-      PER_THING_SECTIONS.forEach { section ->
+      perThingSections().forEach { section ->
         SidebarItem(
           section,
           selected = !sectionsMuted && state.section == section,
@@ -734,7 +761,7 @@ private fun ScaffoldShell(
           fab()
         }
         FloatingPillNavigationBar(
-          items = PER_THING_SECTIONS.map { s ->
+          items = perThingSections().map { s ->
             FloatingNavItem(
               label = s.label(),
               icon = s.icon,
@@ -975,10 +1002,14 @@ private fun AircraftDropdown(
     }
     if (onAddAircraft != null) {
       DropdownMenuItem(
-        text = { Text(stringResource(
-          UiRes.string.add_thing,
-          LexiconFormatter.titleCase(LocalThingLexicon.current.thingNoun),
-        )) },
+        text = {
+          Text(
+            stringResource(
+              UiRes.string.add_thing,
+              LexiconFormatter.titleCase(LocalThingLexicon.current.thingNoun),
+            )
+          )
+        },
         leadingIcon = { Icon(Icons.Filled.Add, contentDescription = null) },
         onClick = {
           onAddAircraft()

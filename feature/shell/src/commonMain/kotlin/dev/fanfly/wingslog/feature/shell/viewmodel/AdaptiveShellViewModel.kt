@@ -3,8 +3,7 @@ package dev.fanfly.wingslog.feature.shell.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.fanfly.wingslog.core.auth.AuthManager
-import dev.fanfly.wingslog.core.template.CurrentThingLexicon
-import dev.fanfly.wingslog.core.template.GenericLexicon
+import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.core.ui.adaptive.AdaptiveShellUiState
 import dev.fanfly.wingslog.core.ui.adaptive.ShellSection
@@ -41,7 +40,7 @@ class AdaptiveShellViewModel(
   private val syncEngine: SyncEngine,
   private val selectedThingStore: SelectedThingStore,
   private val templateRegistry: TemplateRegistry,
-  private val currentThingLexicon: CurrentThingLexicon,
+  private val currentThingTemplate: CurrentThingTemplate,
 ) : ViewModel() {
 
   /**
@@ -95,8 +94,7 @@ class AdaptiveShellViewModel(
                   .joinToString(" "),
                 // forThingWithFallback, not ac.template: a Thing created before templates existed
                 // carries none, and reading the field directly would render it in no words at all.
-                lexicon = templateRegistry.forThingWithFallback(ac).lexicon
-                  ?: GenericLexicon.LEXICON,
+                template = templateRegistry.forThingWithFallback(ac),
               )
             }
             // Prefer the live selection, then the one remembered from last session; fall back to the
@@ -188,11 +186,13 @@ class AdaptiveShellViewModel(
    * Publishes the selected thing's words app-scoped.
    *
    * The per-thing form dialogs are registered on the root nav graph and compose outside this shell,
-   * so they cannot read a CompositionLocal the shell installs — see [CurrentThingLexicon].
+   * so they cannot read a CompositionLocal the shell installs — see [CurrentThingTemplate].
    */
   private fun publishLexicon() {
-    val selected = _uiState.value.selectedThing
-    if (selected == null) currentThingLexicon.clear() else currentThingLexicon.set(selected.lexicon)
+    val selected = _uiState.value.selectedThing?.template
+    if (selected == null) currentThingTemplate.clear() else currentThingTemplate.set(
+      selected
+    )
   }
 
   private fun String.toShellSection(): ShellSection? = when (this) {

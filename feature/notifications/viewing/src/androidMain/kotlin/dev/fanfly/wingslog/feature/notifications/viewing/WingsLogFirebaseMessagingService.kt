@@ -1,15 +1,15 @@
 package dev.fanfly.wingslog.feature.notifications.viewing
 
-import dev.fanfly.wingslog.core.template.CurrentThingLexicon
-import org.koin.mp.KoinPlatform
 import co.touchlab.kermit.Logger
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
+import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import dev.fanfly.wingslog.feature.notifications.model.PushTokenSink
 import dev.fanfly.wingslog.feature.notifications.model.SignedInUid
 import kotlinx.coroutines.runBlocking
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import org.koin.mp.KoinPlatform
 
 /**
  * Receives N1 collaboration push (design §5.5, §7.6) and renders it here on the device.
@@ -26,7 +26,8 @@ import org.koin.core.component.inject
  *   `:datamanager`, which `:viewing` may not depend on. [PushTokenSink] in `:model` closes that —
  *   this class never learns what a token is *for*.
  */
-class WingsLogFirebaseMessagingService : FirebaseMessagingService(), KoinComponent {
+class WingsLogFirebaseMessagingService : FirebaseMessagingService(),
+  KoinComponent {
 
   private val notifier: LocalNotifier by inject()
 
@@ -73,7 +74,8 @@ class WingsLogFirebaseMessagingService : FirebaseMessagingService(), KoinCompone
       runCatching {
         // Service-located rather than injected: this is a framework-instantiated Service, so it
         // has no constructor to inject through. Same reason ShellNavGraph reaches for KoinPlatform.
-        val lexicon = KoinPlatform.getKoin().get<CurrentThingLexicon>().lexicon.value
+        val lexicon = KoinPlatform.getKoin()
+          .get<CurrentThingTemplate>().lexicon.value
         notifier.post(parsed.toPendingNotification(lexicon))
       }
         .onFailure { log.w(it) { "Could not post an N1 push (id=${parsed.notificationId})" } }
