@@ -25,13 +25,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
-import dev.fanfly.wingslog.thing.Engine
-import dev.fanfly.wingslog.thing.PropellerHub
+import dev.fanfly.wingslog.core.template.LocalThingCapabilities
 import dev.fanfly.wingslog.core.ui.common.compose.DashedButton
 import dev.fanfly.wingslog.core.ui.common.compose.FormTextField
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.thing.update.viewmodel.EditThingViewModel
+import dev.fanfly.wingslog.thing.Engine
+import dev.fanfly.wingslog.thing.PropellerHub
 import org.jetbrains.compose.resources.stringResource
+import wingslog.feature.logs.sharedassets.generated.resources.blade_with_index
+import wingslog.feature.logs.sharedassets.generated.resources.engine_with_index
+import wingslog.feature.logs.sharedassets.generated.resources.propeller_hub
 import wingslog.feature.thing.update.generated.resources.Res
 import wingslog.feature.thing.update.generated.resources.add_blade
 import wingslog.feature.thing.update.generated.resources.blade_serial_numbers
@@ -40,9 +44,6 @@ import wingslog.feature.thing.update.generated.resources.model
 import wingslog.feature.thing.update.generated.resources.remove_blade
 import wingslog.feature.thing.update.generated.resources.remove_engine
 import wingslog.feature.thing.update.generated.resources.serial
-import wingslog.feature.logs.sharedassets.generated.resources.blade_with_index
-import wingslog.feature.logs.sharedassets.generated.resources.engine_with_index
-import wingslog.feature.logs.sharedassets.generated.resources.propeller_hub
 import wingslog.feature.logs.sharedassets.generated.resources.Res as SharedRes
 
 @Composable
@@ -114,17 +115,19 @@ fun EngineSection(
             it
           )
         }
-        FormTextField(
-          label = stringResource(Res.string.serial),
-          value = engine.serial,
-          modifier = Modifier.weight(1f),
-          isError = showValidationErrors && engine.serial.isBlank(),
-          keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters)
-        ) {
-          viewModel.onEngineSerialChanged(
-            engineIndex,
-            it
-          )
+        if (LocalThingCapabilities.current.component_serial_prompt) {
+          FormTextField(
+            label = stringResource(Res.string.serial),
+            value = engine.serial,
+            modifier = Modifier.weight(1f),
+            isError = showValidationErrors && engine.serial.isBlank(),
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters)
+          ) {
+            viewModel.onEngineSerialChanged(
+              engineIndex,
+              it
+            )
+          }
         }
       }
 
@@ -161,73 +164,81 @@ fun EngineSection(
             it
           )
         }
-        FormTextField(
-          label = stringResource(
-            Res.string.serial,
-            ""
-          ),
-          value = hub.serial,
-          modifier = Modifier.weight(1f),
-          textStyle = MaterialTheme.typography.bodyMedium,
-          dense = true,
-          isError = showValidationErrors && hub.serial.isBlank()
-        ) {
-          viewModel.onPropellerHubSerialChanged(
-            engineIndex,
-            it
-          )
+        if (LocalThingCapabilities.current.component_serial_prompt) {
+          FormTextField(
+            label = stringResource(
+              Res.string.serial,
+              ""
+            ),
+            value = hub.serial,
+            modifier = Modifier.weight(1f),
+            textStyle = MaterialTheme.typography.bodyMedium,
+            dense = true,
+            isError = showValidationErrors && hub.serial.isBlank()
+          ) {
+            viewModel.onPropellerHubSerialChanged(
+              engineIndex,
+              it
+            )
+          }
         }
       }
 
 
       // Blade Serial Numbers - Dynamic List
-      Text(
-        stringResource(Res.string.blade_serial_numbers),
-        style = MaterialTheme.typography.labelSmall,
-        modifier = Modifier.padding(top = Spacing.extraSmall),
-      )
-      val blades = engine.propeller?.blades ?: emptyList()
-      // Chunked(2) allows us to create rows of 2 for that 50/50 look
-      blades.withIndex()
-        .chunked(2)
-        .forEach { pair ->
-          Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
-            pair.forEach { (bladeIndex, blade) ->
-              FormTextField(
-                label = stringResource(
-                  SharedRes.string.blade_with_index,
-                  bladeIndex + 1
-                ),
-                value = blade.serial,
-                modifier = Modifier.weight(1f),
-                textStyle = MaterialTheme.typography.bodyMedium,
-                dense = true,
-                trailingIcon = {
-                  IconButton(onClick = {
-                    viewModel.onRemoveBlade(
-                      engineIndex,
-                      bladeIndex
-                    )
-                  }) {
-                    Icon(
-                      Icons.Default.Close,
-                      contentDescription = stringResource(Res.string.remove_blade)
-                    )
-                  }
-                },
-                isError = showValidationErrors && blade.serial.isBlank(),
-                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters)
-              ) {
-                viewModel.onPropellerBladeSerialChanged(
-                  engineIndex,
-                  bladeIndex,
-                  it
-                )
+      //
+      // The whole block, heading included, rather than the fields inside it: a "Blade Serial
+      // numbers" heading over nothing is worse than no heading. The add-blade control goes with it,
+      // since a blade whose only field is a serial has nothing left to enter.
+      if (LocalThingCapabilities.current.component_serial_prompt) {
+        Text(
+          stringResource(Res.string.blade_serial_numbers),
+          style = MaterialTheme.typography.labelSmall,
+          modifier = Modifier.padding(top = Spacing.extraSmall),
+        )
+        val blades = engine.propeller?.blades ?: emptyList()
+        // Chunked(2) allows us to create rows of 2 for that 50/50 look
+        blades.withIndex()
+          .chunked(2)
+          .forEach { pair ->
+            Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
+              pair.forEach { (bladeIndex, blade) ->
+                FormTextField(
+                  label = stringResource(
+                    SharedRes.string.blade_with_index,
+                    bladeIndex + 1
+                  ),
+                  value = blade.serial,
+                  modifier = Modifier.weight(1f),
+                  textStyle = MaterialTheme.typography.bodyMedium,
+                  dense = true,
+                  trailingIcon = {
+                    IconButton(onClick = {
+                      viewModel.onRemoveBlade(
+                        engineIndex,
+                        bladeIndex
+                      )
+                    }) {
+                      Icon(
+                        Icons.Default.Close,
+                        contentDescription = stringResource(Res.string.remove_blade)
+                      )
+                    }
+                  },
+                  isError = showValidationErrors && blade.serial.isBlank(),
+                  keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters)
+                ) {
+                  viewModel.onPropellerBladeSerialChanged(
+                    engineIndex,
+                    bladeIndex,
+                    it
+                  )
+                }
               }
+              if (pair.size == 1) Spacer(Modifier.weight(1f))
             }
-            if (pair.size == 1) Spacer(Modifier.weight(1f))
           }
-        }
+      }
       Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
         DashedButton(
           label = stringResource(Res.string.add_blade),

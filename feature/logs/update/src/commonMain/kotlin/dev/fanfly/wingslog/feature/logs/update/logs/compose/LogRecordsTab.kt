@@ -1,10 +1,5 @@
 package dev.fanfly.wingslog.feature.logs.update.logs.compose
 
-import dev.fanfly.wingslog.core.template.LexiconFormatter
-import dev.fanfly.wingslog.core.template.LocalThingLexicon
-import dev.fanfly.wingslog.core.template.squawkNoun
-import dev.fanfly.wingslog.core.template.taskNoun
-import dev.fanfly.wingslog.core.template.technicianNoun
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -20,11 +15,17 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import dev.fanfly.wingslog.core.template.LexiconFormatter
+import dev.fanfly.wingslog.core.template.LocalThingCapabilities
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.squawkNoun
+import dev.fanfly.wingslog.core.template.taskNoun
+import dev.fanfly.wingslog.core.template.technicianNoun
+import dev.fanfly.wingslog.core.ui.common.compose.FormValueField
+import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.thing.MaintenanceTask
 import dev.fanfly.wingslog.thing.Squawk
 import dev.fanfly.wingslog.thing.Technician
-import dev.fanfly.wingslog.core.ui.common.compose.FormValueField
-import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.add
 import wingslog.feature.logs.update.generated.resources.Res
@@ -55,29 +56,35 @@ fun LogRecordsTab(
     modifier = modifier.fillMaxWidth(),
     verticalArrangement = Arrangement.spacedBy(Spacing.massive),
   ) {
-    LogSection(
-      header = stringResource(TechnicianRes.string.performed_by),
-      description = stringResource(
-        Res.string.performed_by_description,
-        LocalThingLexicon.current.technicianNoun.singular,
-      ),
-    ) {
-      val displayText = selectedTechnician?.name
-        ?: stringResource(TechnicianRes.string.select_technician)
-      FormValueField(
-        value = displayText,
-        label = stringResource(TechnicianRes.string.performed_by),
-        showLabel = false,
-        onClick = onTechnicianClick,
-        accessibilityDescription = stringResource(TechnicianRes.string.performed_by),
-        leadingIcon = {
-          Icon(
-            Icons.Default.Person,
-            contentDescription = null
-          )
-        },
-        modifier = Modifier.fillMaxWidth(),
-      )
+    // Removed, not disabled, for a template with no one to name. A log kept for a house is signed
+    // by whoever owns the house; asking "performed by" and offering an empty picker is worse than
+    // not asking. The picker sheet itself becomes unreachable, which is why the section is what is
+    // gated rather than the sheet.
+    if (LocalThingCapabilities.current.technicians) {
+      LogSection(
+        header = stringResource(TechnicianRes.string.performed_by),
+        description = stringResource(
+          Res.string.performed_by_description,
+          LocalThingLexicon.current.technicianNoun.singular,
+        ),
+      ) {
+        val displayText = selectedTechnician?.name
+          ?: stringResource(TechnicianRes.string.select_technician)
+        FormValueField(
+          value = displayText,
+          label = stringResource(TechnicianRes.string.performed_by),
+          showLabel = false,
+          onClick = onTechnicianClick,
+          accessibilityDescription = stringResource(TechnicianRes.string.performed_by),
+          leadingIcon = {
+            Icon(
+              Icons.Default.Person,
+              contentDescription = null
+            )
+          },
+          modifier = Modifier.fillMaxWidth(),
+        )
+      }
     }
 
     LogSection(

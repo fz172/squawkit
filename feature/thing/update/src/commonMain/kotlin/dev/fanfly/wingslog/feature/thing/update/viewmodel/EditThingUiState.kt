@@ -21,6 +21,14 @@ data class EditThingUiState(
    * all of them (PRD D5), so the confirmation says so rather than a generic "cannot be undone".
    */
   val otherMemberCount: Int = 0,
+  /**
+   * Whether this thing's template asks for serial numbers (PRD §4.8, `component_serial_prompt`).
+   *
+   * **Gates the validation, not only the fields.** Hiding a required input without relaxing its
+   * rule is worse than leaving it: the form would refuse to save and give no reason, because the
+   * field the user is being blocked on is not on screen. Defaults true, which is what shipped.
+   */
+  val requireSerials: Boolean = true,
 ) {
   /** Deleting is the hosting owner's call alone; rules enforce it, this keeps the UI honest. */
   val canDelete: Boolean get() = hostedByMe && thing.id.isNotEmpty()
@@ -30,13 +38,21 @@ data class EditThingUiState(
 
   val isValid: Boolean
     get() {
-      if (thing.make.isBlank() || thing.model.isBlank() || thing.serial.isBlank()) return false
+      if (thing.make.isBlank() || thing.model.isBlank()) return false
+      if (requireSerials && thing.serial.isBlank()) return false
       thing.engine.forEach { engine ->
-        if (engine.make.isBlank() || engine.model.isBlank() || engine.serial.isBlank()) return false
+        if (engine.make.isBlank() || engine.model.isBlank()) return false
+        if (requireSerials && engine.serial.isBlank()) return false
         val hub = engine.propeller?.hub ?: PropellerHub()
         if (hub.make.isBlank() || hub.model.isBlank()) return false
-        engine.propeller?.blades?.forEach { blade ->
-          if (blade.serial.isBlank()) return false
+        // The hub's own serial is shown with an error indicator but has never been enforced here.
+        // Left as it was rather than fixed in passing: making it required would start rejecting
+        // saves that succeed today, which is a product change and not this commit's business.
+        // See the #659 discussion.
+        if (requireSerials) {
+          engine.propeller?.blades?.forEach { blade ->
+            if (blade.serial.isBlank()) return false
+          }
         }
       }
       return true

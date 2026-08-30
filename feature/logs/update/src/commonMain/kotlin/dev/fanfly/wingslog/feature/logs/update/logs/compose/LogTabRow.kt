@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.logs.update.logs.compose
 
+import dev.fanfly.wingslog.thing.Capabilities
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Link
@@ -42,3 +43,37 @@ fun LogTabRow(
     modifier = modifier,
   )
 }
+
+/**
+ * The log form's tabs, as identities rather than positions.
+ *
+ * Same reason as `TaskFormTab`: dispatching on the page number makes a tab impossible to remove,
+ * because dropping one renumbers every tab after it and the next form renders under the wrong
+ * heading with no error anywhere.
+ */
+enum class LogFormTab {
+  WORK,
+
+  /** Meter readings — airframe, engine and prop time on an airplane. */
+  HOURS,
+  RECORDS,
+}
+
+internal val LogFormTab.spec: LogTabSpec
+  get() = when (this) {
+    LogFormTab.WORK -> LOG_WORK_TAB
+    LogFormTab.HOURS -> LOG_HOURS_TAB
+    LogFormTab.RECORDS -> LOG_RECORDS_TAB
+  }
+
+/**
+ * Which tabs this template's logs have (PRD §4.8, `meters`).
+ *
+ * **Removal, not disabling.** A template with no meters gets no hours tab at all: a house has no
+ * running total to record against, and an empty "Hours" tab is a question the user cannot answer.
+ *
+ * A pure function so it can be tested with `meters = false`. The airplane template sets it true, so
+ * against the shipped set this is indistinguishable from no gate.
+ */
+internal fun logFormTabsFor(capabilities: Capabilities): List<LogFormTab> =
+  LogFormTab.entries.filter { it != LogFormTab.HOURS || capabilities.meters }
