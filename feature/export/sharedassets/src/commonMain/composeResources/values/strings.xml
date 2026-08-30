@@ -14,7 +14,7 @@
   <string name="export_clear_all">Clear all</string>
   <string name="export_untitled_thing">Untitled <xliff:g example="aircraft">%1$s</xliff:g></string>
   <string name="export_thing_details_incomplete"><xliff:g example="Aircraft">%1$s</xliff:g> details incomplete</string>
-  <string name="export_no_thing_title">No <xliff:g example="aircraft">%1$s</xliff:g> to export</string>
+  <string name="export_no_thing_title">Nothing to export</string>
 
   <!-- Setup: date range -->
   <string name="export_date_range_section">Date range</string>
@@ -27,7 +27,7 @@
   <string name="export_custom_end_date">End date</string>
 
   <!-- Setup: footer -->
-  <string name="export_footer_thing_count"><xliff:g example="3">%1$d</xliff:g> <xliff:g example="aircraft">%2$s</xliff:g></string>
+  <string name="export_footer_thing_count"><xliff:g example="3">%1$d</xliff:g> selected</string>
   <string name="export_estimated_size">~<xliff:g example="2.4 MB">%1$s</xliff:g></string>
   <string name="export_primary_action">Start</string>
 

@@ -762,7 +762,7 @@ private fun ExportBottomBar(
         Text(
           text = stringResource(
             Res.string.export_footer_thing_count,
-            state.selectedThingIds.size
+            state.selectedThingIds.size,
           ),
           style = MaterialTheme.typography.bodySmall,
           color = MaterialTheme.colorScheme.onSurface,
@@ -1483,10 +1483,7 @@ private fun EmptyAircraftContent(
     heroIcon = Icons.Default.FileDownload,
     heroColor = MaterialTheme.colorScheme.primary,
     heroContainer = MaterialTheme.colorScheme.primary.copy(alpha = 0.13f),
-    title = stringResource(
-      Res.string.export_no_thing_title,
-      LocalThingLexicon.current.thingNoun.plural,
-    ),
+    title = stringResource(Res.string.export_no_thing_title),
     subtitle = stringResource(
       CoreRes.string.empty_add_thing,
       LexiconFormatter.withArticle(LocalThingLexicon.current.thingNoun),

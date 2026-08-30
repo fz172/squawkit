@@ -110,7 +110,7 @@ feature/export/sharedassets	export_error_details	If this keeps happening, contac
 feature/export/sharedassets	export_error_subtitle	Something went wrong while building the ZIP. Try again in a moment.
 feature/export/sharedassets	export_error_title	Export failed
 feature/export/sharedassets	export_estimated_size	~%1$s
-feature/export/sharedassets	export_footer_thing_count	%1$d aircraft
+feature/export/sharedassets	export_footer_thing_count	%1$d selected
 feature/export/sharedassets	export_format_csv_sub	Plain text
 feature/export/sharedassets	export_format_pdf_sub	Print-ready
 feature/export/sharedassets	export_format_pick_one	Pick at least one format
@@ -141,7 +141,7 @@ feature/export/sharedassets	export_last_12_months	Last 12 months
 feature/export/sharedassets	export_last_n_months	Last %1$d months
 feature/export/sharedassets	export_location_downloads_squawkit	Saved to Downloads · SquawkIt
 feature/export/sharedassets	export_location_files_squawkit	Saved to Files · SquawkIt
-feature/export/sharedassets	export_no_thing_title	No aircraft to export
+feature/export/sharedassets	export_no_thing_title	Nothing to export
 feature/export/sharedassets	export_primary_action	Start
 feature/export/sharedassets	export_progress_building_archive	Generating reports...
 feature/export/sharedassets	export_progress_collecting_data	Collecting aircraft data...

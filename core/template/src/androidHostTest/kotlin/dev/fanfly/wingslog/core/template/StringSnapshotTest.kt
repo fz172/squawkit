@@ -346,13 +346,8 @@ class StringSnapshotTest {
     frame("feature/export/sharedassets", "export_thing_details_incomplete") {
       LexiconFormatter.sentenceCase(it.thingNoun)
     },
-    frame("feature/export/sharedassets", "export_no_thing_title") { it.thingNoun.plural },
     frame("feature/export/sharedassets", "export_progress_collecting_data") {
       it.thingNoun.singular
-    },
-    // Position 1 is the count.
-    "feature/export/sharedassets:export_footer_thing_count" to { l: Lexicon ->
-      mapOf(2 to l.thingNoun.plural)
     },
     // Positions 1 and 2 are the tail number and the actor, both from the push payload.
     "feature/notifications/sharedassets:notification_n1_body_thing_updated" to { l: Lexicon ->
