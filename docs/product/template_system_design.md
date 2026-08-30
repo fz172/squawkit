@@ -489,7 +489,8 @@ show/hide means auditing every call site twice.
 
 **The lexicon blocks shipping outside English-speaking markets.** Not "makes harder" — the substitution model
 cannot express the grammar most languages need, and the ceiling is the design rather than an unfinished
-implementation. The app ships one locale today (31 `strings.xml` files, all `values`, no variants), so nothing is
+implementation. *Decided (#677): ship English only. This section is the record of what a locale would cost, not
+a plan to build one.* The app ships one locale today (31 `strings.xml` files, all `values`, no variants), so nothing is
 currently broken. This is what to read before committing to a non-English market.
 
 ### What Phase 2 actually trades away
@@ -565,15 +566,47 @@ every template in the canonical pool.
 lexicon earns its keep only while overrides stay exceptional, so "how many overrides is too many" is worth an
 explicit number before the first non-English template rather than after.
 
+### The four languages actually on the table
+
+*Decided: **ship English only**. Chinese, Japanese, Korean and Spanish are possible future targets, so this
+records what each would cost rather than leaving the next reader to re-derive it (#677).*
+
+They land in three different places, and **none is the plural/article problem the `Noun` shape was built
+around**:
+
+| Language | Two-form `Noun` | `article` | The real problem |
+|---|---|---|---|
+| Chinese | Fine — no inflection | None; `withArticle` emits a stray word | **Measure words.** 一**架**飞机 vs 一**辆**车 vs 一**台**机器. The classifier is a property of the noun, so every counted phrase needs one, and `%1$d %2$s` has nowhere to put it. |
+| Japanese | Fine — no inflection | None | Same classifier problem (機 / 台 / 本 …); no spaces, so `titleCase` / `sentenceCase` are no-ops. |
+| Korean | Fine | None | **Particles agree with the preceding noun's final phoneme** — 은/는, 이/가, 을/를. Substituting into a fixed frame picks the wrong particle about half the time. |
+| Spanish | Two forms is right | Exists, but **inflects by gender** | Gender agreement — *el avión* / *la casa* — and determiners and adjectives elsewhere in the sentence agree too. The German case above. |
+
+A richer `Noun` would need three new dimensions — gender, classifier, particle form — and would still not fix
+the deep one, because in all four **the frame changes when the noun changes**. That is the argument for
+`string_overrides` above, strengthened rather than weakened: a full per-string replacement models no grammar at
+all, so it covers all four with one mechanism.
+
+**One correction to how urgency reads here.** §12.3's "field numbers are free before anything is stored" is
+about *changing or removing* fields. Adding `string_overrides = 15` later is **additive and backward
+compatible** — an older client treats it as an unknown field, and this repo already retains those
+(`ThingUnknownFieldRetentionTest`). There is no proto deadline. The cost of deferring is a slope, not a cliff:
+every string added meanwhile is another frame written English-first.
+
+**The habit that costs nothing now:** when a new string takes a lexicon placeholder, put the substitution at a
+phrase boundary. `"Add %1$s"` survives translation into all four; `"Delete this %1$s?"` does not, because *this*
+has to agree with the noun.
+
 ### The remaining options, for completeness
 
-1. **Stay English-only.** Free, and currently true.
+1. **Stay English-only.** Free, and **the decision** (#677).
 2. **A real ICU MessageFormat pipeline** plus gender and plural-category fields on `Noun`. Solves plurals and
    agreement properly and is the largest change; the override map above gets most of the benefit for a fraction
    of it, and the two compose if ICU is ever wanted.
 
-**Decide before the first non-English locale, not after** — every option gets more expensive once 2C has
-converted the strings.
+**The decision was made before the first non-English locale, which is what this section asked for.** Nothing
+here is built: no `string_overrides`, no ICU pipeline, no gender / classifier / particle fields on `Noun`.
+Revisit when a locale is actually committed to — the mechanism is designed, and building it against a decision
+nobody has made is the speculative work §12.3 warns about.
 
 ---
 

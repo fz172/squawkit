@@ -194,7 +194,7 @@ point and costs nothing at the places where precision is the product.
 | **Technicians** — records, certificates, picker | None to the model; certificate fields are shown or hidden by config. |
 | **Notifications** — urgency scan, watermarks, background scheduling, permission, push tokens, tap routing | None to the scanner, the watermark model, or delivery. `UrgencyTier.GROUNDED` takes its copy from `Lexicon.down_status`. OS channel names and descriptions stay neutral fixed text, and the channel **ids** are pinned by test (§8.5, #663). The four settings toggles are structural and unchanged. |
 | **Display ads** — slots, consent, session cap | None. |
-| **Storage (R1) + Sync** — `EntityStore`, `CollectionKind`, hydration, pull/push, tombstones | One new `CollectionKind` for custom templates, bringing the current 11 to 12. No engine changes. |
+| **Storage (R1) + Sync** — `EntityStore`, `CollectionKind`, hydration, pull/push, tombstones | **No new `CollectionKind`.** `template_system_design.md` §5.1 supersedes an earlier plan for a twelfth: a Thing's template is inflated into the `Thing` document itself, so nothing new syncs and no new `wireName` / `schemaName` is committed to (#638). The `Thing` payload simply got bigger. No engine changes. |
 | **Subscription / entitlement** | Rename only; the limit *value* is a product decision — §12. |
 | **Adaptive layout, theme, navigation shell** | Structure, window tiers, and routing unchanged. Section labels and the switcher's noun come from the lexicon; `ShellAircraft` → `ShellThing`, `PER_AIRCRAFT_SECTIONS` → `PER_THING_SECTIONS`. |
 
