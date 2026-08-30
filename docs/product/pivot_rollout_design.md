@@ -86,19 +86,68 @@ written at least once, and nothing guarantees that ever happens.
 
 Three ways out, and the choice is not obvious:
 
-| Option | Cost | Risk |
-|---|---|---|
-| **A. Backfill pass** (#718) | A migration, run once per account | #638 discipline; the Phase 1 precedent is a backend script |
-| **B. Derive on read** — synthesise `spec` from 2–6 when empty | No migration; a mapping function | The mapping lives forever; 2–6 can never be removed |
-| **C. Never remove 2–6** | Nothing | The schema keeps a dead shape and every new reader must know which to trust |
+| Option                                                        | Cost                              | Risk                                                                        |
+|---------------------------------------------------------------|-----------------------------------|-----------------------------------------------------------------------------|
+| **A. Backfill pass** (#718)                                   | A migration, run once per account | #638 discipline; the Phase 1 precedent is a backend script                  |
+| **B. Derive on read** — synthesise `spec` from 2–6 when empty | No migration; a mapping function  | The mapping lives forever; 2–6 can never be removed                         |
+| **C. Never remove 2–6**                                       | Nothing                           | The schema keeps a dead shape and every new reader must know which to trust |
 
 **Recommendation: A, and schedule it early.** B and C both keep fields 2–6 alive permanently, which means every
 future reader faces "which of these two places holds the truth" — the ambiguity the removal exists to end. A is
 a one-time cost that is *smallest if taken soonest*, because the set it repairs is still growing.
 
-**The scheduling consequence is the actionable part of this whole section:** 3C should land early in Phase 3,
-ahead of work that is more visible. Feature priority would put the picker first. The backfill cost curve says
-otherwise.
+### 3.1 This is a hard gate, not a priority
+
+**Inflate-on-write and the backfill ship before any user-visible Phase 3 change.** Not "early" — *first*, in the
+same sense Phase 1's migration row was a hard gate. No preset, no picker, no template-driven rendering lands
+until a Thing's data is in one place.
+
+Three reasons, in increasing order of how much they cost to ignore:
+
+**The repair set grows daily.** Every Thing created before inflate-on-write ships is one the backfill has to
+find. Shipping the picker first means shipping the thing that *creates more Things* before the thing that stops
+them being created broken.
+
+**Every user-visible feature built first has to be re-verified afterwards.** A screen written while three
+populations exist — migrated, un-inflated, inflated — is a screen whose correctness depends on which population
+it was tested against. Building the picker, the component tree and the meter-driven log form on top of a data
+shape that is about to change means testing each of them twice, and the second pass is the one nobody schedules.
+
+**A user-visible pivot is the worst possible moment to be running a data migration.** Phase 1 was deliberately
+invisible for this reason. Phase 3 is deliberately visible, and it is the phase with the most new surface — so
+the migration should be finished and quiet before the surface arrives, not competing with it for attention when
+something goes wrong. A bug report during the pivot should never require asking "is this the new UI, or is this
+Thing's data half-migrated?"
+
+So the phase order is **3A → 3C → everything else**, and 3C's own steps are strictly ordered (§7).
+
+### 3.2 Testing it, without touching a real account
+
+The stress test in Developer Options is the right instrument, and it is already most of the way there.
+
+`StressTestViewModel` creates its Thing through `fleetManager.updateThing(data.thing)` — **the same choke point
+inflate-on-write sits at.** So once §3 lands, the generator produces correctly inflated Things with no change to
+it, which is a useful property in itself: it means the stress test exercises the real write path rather than a
+parallel one.
+
+More usefully, it can produce the populations the backfill has to handle:
+
+| Population needed | How the generator makes it |
+|---|---|
+| Un-inflated — created since the cutover, `spec`/`components` empty | **What it produces today.** `FakeDataGenerator` writes fields 2–6 only |
+| Inflated | What it produces after §3, unchanged |
+| Migrated-by-cutover — both populated | The generator writing both, as `thingPayloads.ts` does |
+
+**That means a toggle is worth adding rather than removing the old behaviour.** After inflate-on-write ships,
+the generator stops being able to produce broken Things — and broken Things are exactly what the backfill needs
+to be tested against. A developer-only switch that writes the pre-inflation shape keeps the fixture available.
+
+This is all behind `isDeveloperOptionsSupported`, so none of it reaches a release build, and it generates data
+in the developer's own account rather than requiring a production one to be sacrificed.
+
+> `FakeDataGenerator` is also one of the 12 files reading fields 2–6 (§7), so it moves in step 3 like the rest.
+> Worth doing deliberately: it is the one whose *output* the backfill test depends on, so changing it and the
+> backfill in the same change removes the fixture the test needs.
 
 ---
 
@@ -183,13 +232,13 @@ names, and it exists for the same reason: the failure is silent and the data is 
 
 The boundary, stated once so it is not re-litigated per screen:
 
-| Template-driven | Stays hardcoded |
-|---|---|
-| Spec field labels and order (#703) | The *shape* of the Thing form — a list of fields |
-| Component tree — slots, labels, nesting | The tree widget itself |
-| Meter labels, units, which exist | The log form's structure |
-| Which sections exist, via capabilities | Navigation, settings, sharing, export, technicians |
-| Starter task packs (§7 below) | Everything account-scoped |
+| Template-driven                         | Stays hardcoded                                    |
+|-----------------------------------------|----------------------------------------------------|
+| Spec field labels and order (#703)      | The *shape* of the Thing form — a list of fields   |
+| Component tree — slots, labels, nesting | The tree widget itself                             |
+| Meter labels, units, which exist        | The log form's structure                           |
+| Which sections exist, via capabilities  | Navigation, settings, sharing, export, technicians |
+| Starter task packs (§7 below)           | Everything account-scoped                          |
 
 The right-hand column is not an oversight. Phase 2 established the rule the hard way, twice: account-scoped
 surfaces take neutral copy rather than lexicon substitution (#687), and a string may only be filled from a
@@ -262,36 +311,39 @@ languages; `"Delete this %1$s?"` does not.
 
 ## 10. Decisions
 
-| # | Decision | Where |
-|---|---|---|
-| 1 | Inflate `template`, `spec` and `components` on every write, not only create | §3 |
-| 2 | Backfill the Things created between the cutover and inflate-on-write, rather than deriving on read or keeping 2–6 forever | §3 |
-| 3 | Schedule 3C early — the backfill set grows daily | §3 |
-| 4 | The create flow validates `min_app_version` and template structure *before* inflating | §4.2 |
-| 5 | Build `home` first; it is the preset that proves the system | §5 |
-| 6 | Make `protoc` available to Gradle first; the asset pipeline and publishing script both need it | §5.1 |
-| 7 | Every declared key must resolve, checked over the whole pool | §5.2 |
-| 8 | Account-scoped UI stays hardcoded, on the same rule that governs account-scoped copy | §6 |
-| 9 | The snapshot test narrows to the airplane lexicon rather than being deleted | §8 |
-| 10 | English only; nothing built | §9 |
+| #  | Decision                                                                                                                  | Where |
+|----|---------------------------------------------------------------------------------------------------------------------------|-------|
+| 1  | Inflate `template`, `spec` and `components` on every write, not only create                                               | §3    |
+| 2  | Backfill the Things created between the cutover and inflate-on-write, rather than deriving on read or keeping 2–6 forever | §3    |
+| 3 | **3C is a hard gate**: inflate-on-write and the backfill ship before any user-visible Phase 3 change | §3.1 |
+| 3a | Test with the Developer Options stress test — it already writes through the same choke point; keep a toggle producing the pre-inflation shape as a backfill fixture | §3.2 |
+| 4  | The create flow validates `min_app_version` and template structure *before* inflating                                     | §4.2  |
+| 5  | Build `home` first; it is the preset that proves the system                                                               | §5    |
+| 6  | Make `protoc` available to Gradle first; the asset pipeline and publishing script both need it                            | §5.1  |
+| 7  | Every declared key must resolve, checked over the whole pool                                                              | §5.2  |
+| 8  | Account-scoped UI stays hardcoded, on the same rule that governs account-scoped copy                                      | §6    |
+| 9  | The snapshot test narrows to the airplane lexicon rather than being deleted                                               | §8    |
+| 10 | English only; nothing built                                                                                               | §9    |
 
 ---
 
 ## 11. What Phase 3 builds
 
-| Build | Defer |
-|---|---|
-| `protoc` in the build; presets as assets (#675) | The custom template editor (Phase 4) |
-| Six presets, `home` first | Per-preset export layouts (Phase 4) |
-| Inflate-on-write (#717) and the backfill (#718) | Template-aware search (Phase 4) |
-| Template picker and create flow | Template sharing / marketplace (PRD §2 rules it out) |
-| Fetch RPC + throttle, publishing script, canonical cache | `string_overrides` and any localisation (§9) |
-| Degraded state (§6.2) — now reachable | |
-| Template-driven spec / component / meter rendering (#703) | |
-| Starter packs and their analytics (#707) | |
-| Derived technician roles (#684) | |
-| Transitional field removal (#668), **after** 1–3 above | |
-| Subscription rename, `PRODUCT.md` / `DESIGN.md` revisions | |
+**Order matters.** 3A gates the phase; 3C gates everything user-visible (§3.1). The rest can be sequenced on product priority once those are done.
+
+| Build                                                     | Defer                                                |
+|-----------------------------------------------------------|------------------------------------------------------|
+| **First — the gate: inflate-on-write (#717), then the backfill (#718)** | Template-aware search (Phase 4) |
+| `protoc` in the build; presets as assets (#675)           | The custom template editor (Phase 4)                 |
+| Six presets, `home` first                                 | Per-preset export layouts (Phase 4)                  |
+| Template picker and create flow                           | Template sharing / marketplace (PRD §2 rules it out) |
+| Fetch RPC + throttle, publishing script, canonical cache  | `string_overrides` and any localisation (§9)         |
+| Degraded state (§6.2) — now reachable                     |                                                      |
+| Template-driven spec / component / meter rendering (#703) |                                                      |
+| Starter packs and their analytics (#707)                  |                                                      |
+| Derived technician roles (#684)                           |                                                      |
+| Transitional field removal (#668), **after** 1–3 above    |                                                      |
+| Subscription rename, `PRODUCT.md` / `DESIGN.md` revisions |                                                      |
 
 ---
 
