@@ -594,7 +594,7 @@ feature/subscription/viewing	subscription_cell_unlimited	∞
 feature/subscription/viewing	subscription_col_free	Basic
 feature/subscription/viewing	subscription_col_pro	Pro
 feature/subscription/viewing	subscription_compare_header	Your all-access pass
-feature/subscription/viewing	subscription_compare_subhead	The Basic bundle is free and provides the complete feature set as logbook, backed up and synced. The Pro bundle adds scale, attachments, collaboration and more.
+feature/subscription/viewing	subscription_compare_subhead	The Basic bundle is free and provides the essential functional feature set, backed up and synced. The Pro bundle adds scale, attachments, collaboration and more.
 feature/subscription/viewing	subscription_cta_caption	Price shown at checkout. Cancel anytime.
 feature/subscription/viewing	subscription_cta_subscribe	Subscribe
 feature/subscription/viewing	subscription_ends	Ends
