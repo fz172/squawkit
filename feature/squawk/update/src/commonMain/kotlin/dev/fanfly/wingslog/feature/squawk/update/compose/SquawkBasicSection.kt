@@ -50,9 +50,6 @@ fun SquawkBasicSection(
         .toLocalDateTime(TimeZone.currentSystemDefault()).date.toDisplayFormat()
     }
   }
-  // Narrows what is OFFERED, never what can be read back: SquawkPriority keeps every value because
-  // existing squawks are stored with it (#638). A template that drops AOG stops offering it; a
-  // squawk already marked AOG still renders as AOG.
   val offered = LocalThingCapabilities.current.priorities
   val priorities = listOf(
     SquawkPriority.SQUAWK_PRIORITY_LOW to stringResource(Res.string.priority_low),
@@ -61,7 +58,7 @@ fun SquawkBasicSection(
     SquawkPriority.SQUAWK_PRIORITY_AOG to LexiconFormatter.titleCase(
       LocalThingLexicon.current.down_status
     ),
-  ).filter { (priority, _) -> offered.isEmpty() || priority in offered }
+  ).filter { (priority, _) -> priority.isOfferedBy(offered) }
 
   Column(
     modifier = modifier.fillMaxWidth(),
@@ -107,3 +104,20 @@ fun SquawkBasicSection(
     }
   }
 }
+
+/**
+ * Whether the template offers this priority on the squawk form.
+ *
+ * **Narrows what is offered, never what can be read back.** `SquawkPriority` keeps every value
+ * because existing squawks are stored with it (#638): a template that drops AOG stops offering it,
+ * while a squawk already marked AOG still renders as AOG.
+ *
+ * Separated from the composition so it can be tested with a *narrower* set than the airplane one.
+ * With all four declared, a filter that ignored its argument would produce the same four chips —
+ * indistinguishable from a working gate on screen and in any test using the shipped template.
+ *
+ * An empty list fails open, for the same reason the shell's sections do: a template that declares no
+ * priorities is broken, and a form with no priority to choose cannot be completed.
+ */
+internal fun SquawkPriority.isOfferedBy(offered: List<SquawkPriority>): Boolean =
+  offered.isEmpty() || this in offered
