@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.core.template
 
 import androidx.compose.runtime.staticCompositionLocalOf
+import dev.fanfly.wingslog.thing.ComplianceTerm
 import dev.fanfly.wingslog.thing.Lexicon
 import dev.fanfly.wingslog.thing.Noun
 
@@ -44,8 +45,16 @@ object GenericLexicon {
     down_status = "Down",
     down_status_long = "Out of service",
     collection_label = "Stuff",
-    compliance_mandatory = "Safety recall",
-    compliance_advisory = "Service bulletin",
+    // No abbreviation: a house has mandatory work with no two-letter name for it. This is the
+    // case that keeps the UI honest — it must drop the parenthetical, not render "Safety recalls ()".
+    compliance_mandatory = ComplianceTerm(
+      singular = "Safety recall",
+      plural = "Safety recalls",
+    ),
+    compliance_advisory = ComplianceTerm(
+      singular = "Service bulletin",
+      plural = "Service bulletins",
+    ),
     authority_label = "Manufacturer",
   )
 }

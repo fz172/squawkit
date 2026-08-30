@@ -64,6 +64,7 @@ core/sharedassets	shell_tab_tasks	Maint.
 core/sharedassets	shell_title_logs	Work Logs
 core/sharedassets	shell_title_tasks	Maintenance Tasks
 core/sharedassets	sync_changes_discarded	Unsaved changes to %1$s were discarded — your access was removed
+core/sharedassets	term_with_abbreviation	%1$s (%2$s)
 core/sharedassets	thing_shared_badge	Shared
 core/sharedassets	unit_hours	hrs
 core/sharedassets	unknown	Unknown
@@ -736,13 +737,9 @@ feature/tasks/update	compliance_notes_hint	e.g. One-time inspection of fuel line
 feature/tasks/update	compliance_routine_sub	Scheduled maintenance intervals
 feature/tasks/update	compliance_sb_sub	Manufacturer recommended
 feature/tasks/update	compliance_type	Compliance Type
-feature/tasks/update	compliance_type_ad	Airworthiness Directives (AD)
-feature/tasks/update	compliance_type_ad_full	AD (Airworthiness Directive)
 feature/tasks/update	compliance_type_description	Regulatory nature of this task. Mandatory items will trigger critical system alerts.
 feature/tasks/update	compliance_type_routine	Routine Tasks
 feature/tasks/update	compliance_type_routine_short	Routine
-feature/tasks/update	compliance_type_sb	Service Bulletins (SB)
-feature/tasks/update	compliance_type_sb_full	SB (Service Bulletin)
 feature/tasks/update	component_type_description	Select the primary system or component this task pertains to for accurate log grouping.
 feature/tasks/update	create_work_log	Create Work Log
 feature/tasks/update	create_work_log_subtitle	Opens a new log, pre-linked to this task

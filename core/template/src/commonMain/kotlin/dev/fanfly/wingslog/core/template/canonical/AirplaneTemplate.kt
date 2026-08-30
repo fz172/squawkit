@@ -1,6 +1,8 @@
 package dev.fanfly.wingslog.core.template.canonical
 
+import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate.AIRPLANE_LEXICON
 import dev.fanfly.wingslog.thing.Capabilities
+import dev.fanfly.wingslog.thing.ComplianceTerm
 import dev.fanfly.wingslog.thing.ComponentSlot
 import dev.fanfly.wingslog.thing.ExportLayout
 import dev.fanfly.wingslog.thing.Lexicon
@@ -50,10 +52,22 @@ object AirplaneTemplate {
     // stored field rather than something derived from the first letter.
     thing = Noun(singular = "aircraft", plural = "aircraft", article = "an"),
     squawk = Noun(singular = "squawk", plural = "squawks", article = "a"),
-    task = Noun(singular = "maintenance task", plural = "maintenance tasks", article = "a"),
+    task = Noun(
+      singular = "maintenance task",
+      plural = "maintenance tasks",
+      article = "a"
+    ),
     log = Noun(singular = "work log", plural = "work logs", article = "a"),
-    component = Noun(singular = "component", plural = "components", article = "a"),
-    technician = Noun(singular = "technician", plural = "technicians", article = "a"),
+    component = Noun(
+      singular = "component",
+      plural = "components",
+      article = "a"
+    ),
+    technician = Noun(
+      singular = "technician",
+      plural = "technicians",
+      article = "a"
+    ),
     ready_status = "Airworthy",
     // These two name the OS notification channel a user sees in system settings (PRD §8.5), which
     // is why they are whole strings rather than substitutions — and why the channel *id* stays
@@ -61,8 +75,16 @@ object AirplaneTemplate {
     down_status = "AOG",
     down_status_long = "Aircraft on Ground",
     collection_label = "Fleet",
-    compliance_mandatory = "Airworthiness Directive",
-    compliance_advisory = "Service Bulletin",
+    compliance_mandatory = ComplianceTerm(
+      singular = "Airworthiness Directive",
+      plural = "Airworthiness Directives",
+      abbreviation = "AD",
+    ),
+    compliance_advisory = ComplianceTerm(
+      singular = "Service Bulletin",
+      plural = "Service Bulletins",
+      abbreviation = "SB",
+    ),
     authority_label = "FAA",
   )
 
@@ -123,7 +145,11 @@ object AirplaneTemplate {
               slot_key = "propeller",
               label = "Propeller",
               children = listOf(
-                ComponentSlot(slot_key = "hub", label = "Hub", serial_expected = true),
+                ComponentSlot(
+                  slot_key = "hub",
+                  label = "Hub",
+                  serial_expected = true
+                ),
                 ComponentSlot(
                   slot_key = "blade",
                   label = "Blade",
@@ -145,7 +171,12 @@ object AirplaneTemplate {
    * (`template_system_design.md` §11.1).
    */
   val AIRPLANE_METERS: List<MeterDef> = listOf(
-    MeterDef(key = "airframe_hours", label = "Airframe Time", unit_label = "hrs", decimal = true),
+    MeterDef(
+      key = "airframe_hours",
+      label = "Airframe Time",
+      unit_label = "hrs",
+      decimal = true
+    ),
     MeterDef(
       key = "engine_hours",
       label = "Engine Time",
