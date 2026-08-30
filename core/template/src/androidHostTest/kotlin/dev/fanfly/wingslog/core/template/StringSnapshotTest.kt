@@ -493,7 +493,11 @@ class StringSnapshotTest {
             ) ||
               Regex("""getString\(\s*[A-Za-z]*Res\.string\.$resource\s*\)""").containsMatchIn(
                 text
-              )
+              ) ||
+              // Android's R.string too, not only Compose's Res.string. The OS notification channel
+              // description is a res/values string read with getString(R.string.…), and a guard
+              // that only knew about Compose resources waved it straight through (#662).
+              Regex("""getString\(\s*R\.string\.$resource\s*\)""").containsMatchIn(text)
           }
           .map { "${file.name}: $it" }
       }
@@ -517,7 +521,7 @@ class StringSnapshotTest {
       .filter { it.extension == "kt" && "/build/" !in it.path && "androidHostTest" !in it.path }
       .flatMap { file ->
         val text = file.readText()
-        Regex("""[A-Za-z]*Res\.string\.([a-z0-9_]+)""").findAll(text)
+        Regex("""(?:[A-Za-z]*Res|R)\.string\.([a-z0-9_]+)""").findAll(text)
           .filter { it.groupValues[1] in LEXICON_ARGS.keys.map { k -> k.substringAfter(":") } }
           .filterNot { match ->
             val before = text.substring(0, match.range.first).trimEnd()

@@ -121,6 +121,17 @@ class AndroidLocalNotifier(
     }
   )
 
+  /**
+   * The channel description, as it appears in the OS settings app.
+   *
+   * **Deliberately neutral and never lexicon-driven.** An OS channel is a surface the user
+   * configures once — importance, sound, whether it is blocked — and then expects to stay put. A
+   * description that flipped between "aircraft", "home" and "car" as the account changed would be
+   * unsettling for no benefit, and on a mixed account it could not be right for everything anyway.
+   *
+   * PRD §8.5 says this channel "is domain-neutral already"; the shipped string was not, so it is
+   * now. Its wording is the PRD's own.
+   */
   private fun NotificationChannel.description(): String = context.getString(
     when (this) {
       NotificationChannel.COLLABORATION -> R.string.notification_channel_collaboration_description

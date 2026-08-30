@@ -192,7 +192,7 @@ point and costs nothing at the places where precision is the product.
 | **Export** — PDF / CSV / XLSX / ZIP, email delivery, history | Headers and sheet names come from the lexicon and meter set; layout selected by config. Pipeline unchanged. |
 | **Sharing** — invite codes, ACL, `SharedAircraftRef`, foreign-scope sync fan-out | None functionally; the `TECHNICIAN` role label comes from the lexicon. |
 | **Technicians** — records, certificates, picker | None to the model; certificate fields are shown or hidden by config. |
-| **Notifications** — urgency scan, watermarks, background scheduling, permission, push tokens, tap routing | None to the scanner, the watermark model, or delivery. `UrgencyTier.GROUNDED` and the `NotificationChannel.GROUNDED` display name take their copy from `Lexicon.down_status`; the channel **id** stays fixed (§8.5). The four settings toggles are structural and unchanged. |
+| **Notifications** — urgency scan, watermarks, background scheduling, permission, push tokens, tap routing | None to the scanner, the watermark model, or delivery. `UrgencyTier.GROUNDED` takes its copy from `Lexicon.down_status`. OS channel names and descriptions stay neutral fixed text, and the channel **ids** are pinned by test (§8.5, #663). The four settings toggles are structural and unchanged. |
 | **Display ads** — slots, consent, session cap | None. |
 | **Storage (R1) + Sync** — `EntityStore`, `CollectionKind`, hydration, pull/push, tombstones | One new `CollectionKind` for custom templates, bringing the current 11 to 12. No engine changes. |
 | **Subscription / entitlement** | Rename only; the limit *value* is a product decision — §12. |
@@ -879,17 +879,27 @@ certificate fields are shown or hidden by capability so a homeowner never sees "
 alone stops working the moment an account holds two templates, for reasons that are structural rather than
 verbal. See §8.6.
 
-**Notifications** need one thing beyond copy substitution. `NotificationChannel.GROUNDED` is an OS-level channel
-(Android) and category (iOS) **identifier**, and renaming an identifier drops every user's per-channel settings —
-so the id stays `GROUNDED` forever while its *display name* resolves from `Lexicon.down_status`. Everything else
-is ordinary substitution: the four tier titles, the notification bodies, and the toggle labels in
-`NotificationSettingsScreen`. Two consequences are worth stating because they are easy to get wrong:
+**Notifications** need one thing beyond copy substitution, and it is the opposite of what an earlier draft of
+this section said.
 
-- A user with an airplane and a house has **one** set of OS channels, not one per template. The channel is the
-  urgency class; the lexicon supplies the name. On a mixed account the channel name falls back to the generic
-  noun rather than picking a template's word arbitrarily — the same rule as the switcher title in §8.2.
-- The N1 collaboration channel is domain-neutral already ("someone changed something you share") and needs only
-  the Thing noun.
+**OS channel names and descriptions are neutral fixed text, never lexicon-driven.** A channel is a surface the
+user configures once — importance, sound, whether it is blocked at all — and then expects to stay put. A
+description that flipped between "aircraft", "home" and "car" as the account changed would be unsettling for no
+benefit, and on a mixed account no template's word could be right for all of it. There is **one** set of OS
+channels per install, not one per template, so there is nothing for a per-thing lexicon to attach to.
+
+The **id** matters for a separate and harder reason: renaming one drops every user's per-channel settings, with
+no error and no migration path, so the ids are pinned as literals by a regression test (#663).
+
+Two corrections of fact, recorded because this section asserted both:
+
+- `NotificationChannel.GROUNDED` **does not exist.** AOG stopped being its own tier on 2026-08-26 and reports
+  through `URGENCY_UPDATE` like any other escalation. The channels are `COLLABORATION` and `URGENCY_UPDATE`.
+- The N1 collaboration channel was described here as "domain-neutral already". It was not — it read "Someone
+  changes a shared aircraft". It is now, in this section's own words: "Someone changes something you share".
+
+Everything else on the notification surface is ordinary substitution: the tier titles, the notification bodies,
+and the toggle labels in `NotificationSettingsScreen`.
 
 ### 8.6 Technicians: certifications carry the domain, roles are derived
 
@@ -1176,7 +1186,7 @@ rollout whose guardrail metric cannot be measured is not a guarded rollout.
 |---|---|---|
 | **0 — Decisions** | Resolve the open decisions in §16. The free-tier limit and the squawk-word question are cheap now and expensive later. | No |
 | **1 — Migration** *(hard gate)* | Non-UI only. `Thing` / `Component` / `Meter` / `ThingTemplate` protos replace the aircraft protos; `core:template` module and `TemplateRegistry` exist but the template language may still be partial — it only has to fully support **airplane**. The developer runs the manual backend cutover (§9.1 step 1) covering Firestore and attachment Storage paths per account, *then* distributes the build to that account's devices, where local backfill (§9.1 step 2) runs automatically. **No template picker, no non-airplane preset, no other new functionality ships until every account has cut over.** | **No — by design.** The app must be indistinguishable, and there is nothing else to see yet. |
-| **2 — Lexicon plumbing** | String parameterization across all 31 `strings.xml` files, `LocalThingLexicon`, formatter, byte-identical snapshot test. Capability flags wired into the UI, all still on. Notification tier titles and the `GROUNDED` channel display name resolve through the lexicon (id unchanged). Analytics event taxonomy defined and emitted (§13). Aviation-only. Starts only after Phase 1 has closed out on every account. | No |
+| **2 — Lexicon plumbing** | String parameterization across all 31 `strings.xml` files, `LocalThingLexicon`, formatter, byte-identical snapshot test. Capability flags wired into the UI, all still on. Notification tier titles resolve through the lexicon; OS channel names stay neutral and their ids are pinned (§8.5). Analytics event taxonomy defined and emitted (§13). Aviation-only. Starts only after Phase 1 has closed out on every account. | No |
 | **3 — The pivot ships** | Six remaining presets + starter packs, template picker and create flow, generic component tree UI, meter-driven log form, Stuff switcher, technician certifications and derived role tags (§8.6), subscription rename, `PRODUCT.md`/`DESIGN.md` revisions. No version-floor work here — Phase 1 already guaranteed every device is on the new shape before this phase can start. | **Yes** |
 | **4 — Depth** | Custom template editor, template-declared spec fields on technician certifications (§8.6), per-preset export layouts, template-aware search, additional presets (3D printer, equipment), store repositioning. | Yes |
 | **5 — Cleanup** | The transitional proto fields (§6) were already removed from the schema once every dogfood account cleared Phase 1 — a single code change made ahead of Phase 2, not something carried this far. Nothing is left to clean up by the time Phase 3 ships; this row exists as a checkpoint that it stayed that way. | No |
