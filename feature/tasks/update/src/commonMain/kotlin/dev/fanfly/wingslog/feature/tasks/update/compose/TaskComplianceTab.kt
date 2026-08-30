@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.tasks.update.compose
 
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -15,10 +16,8 @@ import wingslog.feature.tasks.update.generated.resources.compliance_ad_sub
 import wingslog.feature.tasks.update.generated.resources.compliance_routine_sub
 import wingslog.feature.tasks.update.generated.resources.compliance_sb_sub
 import wingslog.feature.tasks.update.generated.resources.compliance_type
-import wingslog.feature.tasks.update.generated.resources.compliance_type_ad_full
 import wingslog.feature.tasks.update.generated.resources.compliance_type_description
 import wingslog.feature.tasks.update.generated.resources.compliance_type_routine_short
-import wingslog.feature.tasks.update.generated.resources.compliance_type_sb_full
 
 /**
  * Compliance tab for Add/Edit Maintenance Task screens.
@@ -50,10 +49,10 @@ fun TaskComplianceTab(
               stringResource(Res.string.compliance_type_routine_short)
 
             ComplianceType.COMPLIANCE_TYPE_SERVICE_BULLETIN ->
-              stringResource(Res.string.compliance_type_sb_full)
+              LocalThingLexicon.current.compliance_advisory!!.abbreviationFirstLabel()
 
             ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE ->
-              stringResource(Res.string.compliance_type_ad_full)
+              LocalThingLexicon.current.compliance_mandatory!!.abbreviationFirstLabel()
           }
           val subtitle = when (entry) {
             ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION ->

@@ -120,6 +120,20 @@ class LexiconFormatterTest {
     // The paywall's feature-row label renders straight from here, with no string resource between,
     // so this assertion is that label's only coverage.
     assertThat(LexiconFormatter.titleCase(l.thing!!)).isEqualTo("Aircraft")
+
+    // The four compliance labels used to be four string resources, each pinned by the snapshot.
+    // They are now assembled from ComplianceTerm, so this is their only coverage — the wording
+    // that reaches the task picker and the compliance tab is asserted here or nowhere.
+    val ad = l.compliance_mandatory!!
+    val sb = l.compliance_advisory!!
+    assertThat("${LexiconFormatter.titleCase(ad.plural)} (${ad.abbreviation})")
+      .isEqualTo("Airworthiness Directives (AD)")
+    assertThat("${ad.abbreviation} (${LexiconFormatter.titleCase(ad.singular)})")
+      .isEqualTo("AD (Airworthiness Directive)")
+    assertThat("${LexiconFormatter.titleCase(sb.plural)} (${sb.abbreviation})")
+      .isEqualTo("Service Bulletins (SB)")
+    assertThat("${sb.abbreviation} (${LexiconFormatter.titleCase(sb.singular)})")
+      .isEqualTo("SB (Service Bulletin)")
   }
 }
 

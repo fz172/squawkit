@@ -25,6 +25,21 @@ message Noun {
   string article = 3;
 }
 
+/**
+ * A compliance category, in the three forms the UI actually asks for.
+ *
+ * A plain string could not do the job: the task picker lists the plural ("Airworthiness
+ * Directives (AD)") and the detail tab leads with the abbreviation ("AD (Airworthiness
+ * Directive)"). Both forms are conventional in aviation and neither is derivable from the other.
+ */
+message ComplianceTerm {
+  string singular = 1;      // "Airworthiness Directive"
+  string plural = 2;        // "Airworthiness Directives"
+  // May be empty. A home or car template has a mandatory-compliance concept with no abbreviation,
+  // and the UI drops the parenthetical rather than rendering an empty one.
+  string abbreviation = 3;  // "AD"
+}
+
 message Lexicon {
   // Field names here are the CODE vocabulary; their values are the user-facing words. A Lexicon
   // holding "attention" still lives in `squawk`, because that is what the concept is called
@@ -48,7 +63,14 @@ message Lexicon {
   string down_status_long = 9;  // "Aircraft on ground" · "Out of service"
 
   string collection_label = 10;      // "Fleet" · "Garage" · "Stuff"
-  string compliance_mandatory = 11;  // "Airworthiness directive" · "Safety recall"
-  string compliance_advisory = 12;   // "Service bulletin" · "TSB"
+  // Field 11 and 12 were plain strings carrying only a singular. They could not render
+  // "Airworthiness Directives (AD)" — which needs a plural and an abbreviation — so they are
+  // replaced by ComplianceTerm below. Nothing has ever written a Lexicon: templates are baked into
+  // the app and no Thing carries DNA yet, so this costs no migration and reserves rather than
+  // reuses the numbers, the same call made for Thing.template_id.
+  reserved 11, 12;
   string authority_label = 13;       // "FAA" · "NHTSA" · "Manufacturer"
+
+  ComplianceTerm compliance_mandatory = 14;  // AD · safety recall · code violation
+  ComplianceTerm compliance_advisory = 15;   // service bulletin · TSB · manufacturer notice
 }

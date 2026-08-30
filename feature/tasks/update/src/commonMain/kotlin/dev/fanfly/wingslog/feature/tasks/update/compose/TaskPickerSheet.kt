@@ -25,9 +25,7 @@ import dev.fanfly.wingslog.thing.MaintenanceTask
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.done
 import wingslog.feature.tasks.update.generated.resources.Res
-import wingslog.feature.tasks.update.generated.resources.compliance_type_ad
 import wingslog.feature.tasks.update.generated.resources.compliance_type_routine
-import wingslog.feature.tasks.update.generated.resources.compliance_type_sb
 import wingslog.feature.tasks.update.generated.resources.no_tasks_configured
 import wingslog.feature.tasks.update.generated.resources.reference_and_component
 import wingslog.feature.tasks.update.generated.resources.select_task_work
@@ -73,10 +71,10 @@ fun TaskPickerSheet(
         val grouped = availableCards.groupBy { it.type }
 
         listOf(
-          ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE to stringResource(
-            Res.string.compliance_type_ad
-          ),
-          ComplianceType.COMPLIANCE_TYPE_SERVICE_BULLETIN to stringResource(Res.string.compliance_type_sb),
+          ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE to
+            LocalThingLexicon.current.compliance_mandatory!!.pluralLabel(),
+          ComplianceType.COMPLIANCE_TYPE_SERVICE_BULLETIN to
+            LocalThingLexicon.current.compliance_advisory!!.pluralLabel(),
           ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION to stringResource(
             Res.string.compliance_type_routine
           ),
