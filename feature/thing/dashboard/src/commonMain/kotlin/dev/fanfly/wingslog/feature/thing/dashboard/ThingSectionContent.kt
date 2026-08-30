@@ -1,7 +1,5 @@
 package dev.fanfly.wingslog.feature.thing.dashboard
 
-import dev.fanfly.wingslog.core.template.LexiconFormatter
-import dev.fanfly.wingslog.core.template.logNoun
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -25,8 +23,11 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.core.nav.Screen
+import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.logNoun
 import dev.fanfly.wingslog.core.template.squawkNoun
+import dev.fanfly.wingslog.core.template.thingNoun
 import dev.fanfly.wingslog.core.ui.adaptive.ShellSection
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
@@ -344,7 +345,12 @@ fun AircraftSectionContent(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
       ) {
-        Text(stringResource(DashboardRes.string.aircraft_load_error))
+        Text(
+          stringResource(
+            DashboardRes.string.aircraft_load_error,
+            LocalThingLexicon.current.thingNoun.singular,
+          )
+        )
       }
 
     is ThingOverviewUiState.Success -> {

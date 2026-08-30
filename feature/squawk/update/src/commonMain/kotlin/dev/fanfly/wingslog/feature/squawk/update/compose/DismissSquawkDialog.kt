@@ -21,9 +21,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
-import dev.fanfly.wingslog.thing.SquawkDismissReason
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.squawkNoun
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.squawk.sharedassets.toLabel
+import dev.fanfly.wingslog.thing.SquawkDismissReason
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.cancel
 import wingslog.feature.squawk.update.generated.resources.Res
@@ -52,7 +54,10 @@ fun DismissSquawkDialog(
     text = {
       Column {
         Text(
-          text = stringResource(Res.string.dismiss_squawk_warning),
+          text = stringResource(
+            Res.string.dismiss_squawk_warning,
+            LocalThingLexicon.current.squawkNoun.singular,
+          ),
           style = MaterialTheme.typography.bodyMedium,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
         )

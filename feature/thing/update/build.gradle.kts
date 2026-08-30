@@ -30,6 +30,7 @@ kotlin {
 
   sourceSets {
     commonMain.dependencies {
+      implementation(project(":core:template"))
       implementation(project(":core:model"))
       implementation(project(":feature:sharing:datamanager"))
       implementation(project(":feature:sharing:model"))

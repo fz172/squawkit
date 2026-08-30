@@ -6,5 +6,5 @@
   <string name="dismiss_no_work_planned">Dismiss, no work planned</string>
   <string name="fixed_option_label">Fixed</string>
   <string name="dismiss_squawk_title">Dismiss Without Addressing?</string>
-  <string name="dismiss_squawk_warning">This squawk will be closed without recording corrective action. Please select a reason for dismissing this squawk.</string>
+  <string name="dismiss_squawk_warning">This %1$s will be closed without recording corrective action. Please select a reason for dismissing this squawk.</string>
 </resources>
