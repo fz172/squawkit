@@ -376,7 +376,6 @@ feature/notifications/sharedassets	notification_n1_title_squawk_created	New squa
 feature/notifications/sharedassets	notification_title_due_soon	Due soon
 feature/notifications/sharedassets	notification_title_overdue	⚠ Overdue
 feature/notifications/sharedassets	notification_title_priority_raised	Priority raised
-feature/notifications/sharedassets	squawk_priority_label_down	AOG
 feature/notifications/sharedassets	squawk_priority_label_high	High
 feature/notifications/sharedassets	squawk_priority_label_low	Low
 feature/notifications/sharedassets	squawk_priority_label_medium	Medium
