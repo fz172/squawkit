@@ -24,6 +24,7 @@ kotlin {
 
   sourceSets {
     commonMain.dependencies {
+      implementation(project(":core:template"))
       implementation(project(":core:storage"))
       implementation(project(":core:lifecycle"))
       implementation(project(":feature:tasks:datamanager"))

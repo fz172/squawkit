@@ -1,26 +1,26 @@
-<resources>
-  <string name="add_log">Add %1$s</string>
-  <string name="edit_log">Update %1$s</string>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+  <string name="add_log">Add <xliff:g example="work logs">%1$s</xliff:g></string>
+  <string name="edit_log">Update <xliff:g example="work logs">%1$s</xliff:g></string>
   <string name="maintenance_history">Maintenance History</string>
   <string name="maintenance_date">Work Date</string>
   <string name="engine_time_label">Engine Time</string>
   <string name="airframe_time_label">Airframe Time</string>
   <string name="prop_time_label">Prop Time</string>
   <string name="add_first_maintenance_log">Log First Entry</string>
-  <string name="no_maintenance_logs_title">Logbook Is Empty</string>
+  <string name="no_maintenance_logs_title">Work log is empty</string>
   <string name="no_maintenance_logs_description">Log your first entry — oil change, annual, 100-hour, or any other airframe, engine, or prop work.</string>
   <string name="propeller_hub">Propeller Hub</string>
   <string name="blade">Blade</string>
   <string name="this_action_cannot_be_undone">This action cannot be undone.</string>
-  <string name="engine_with_index">Engine %1$d</string>
-  <string name="blade_with_index">Blade %1$d</string>
-  <string name="resolve_squawk_work_description">Resolve %2$s "%1$s"</string>
-  <string name="resolve_task_work_description">Performed %2$s "%1$s"</string>
+  <string name="engine_with_index">Engine <xliff:g example="3">%1$d</xliff:g></string>
+  <string name="blade_with_index">Blade <xliff:g example="3">%1$d</xliff:g></string>
+  <string name="resolve_squawk_work_description">Resolve <xliff:g example="squawks">%2$s</xliff:g> "<xliff:g example="Left brake dragging">%1$s</xliff:g>"</string>
+  <string name="resolve_task_work_description">Performed <xliff:g example="maintenance tasks">%2$s</xliff:g> "<xliff:g example="Left brake dragging">%1$s</xliff:g>"</string>
 
   <!-- Authorship (design §7.5). Shown only when the writer is NOT the technician named on the log;
        a technician signing their own work is the unremarkable case and says nothing. These render
        directly under the technician's name, so they never repeat it. -->
   <string name="log_unverified_technician">Not verified — name entered manually</string>
-  <string name="log_assigned_by">Logged by %1$s</string>
+  <string name="log_assigned_by">Logged by <xliff:g example="Alex">%1$s</xliff:g></string>
   <string name="log_assigned_by_unknown">Logged by another member</string>
 </resources>

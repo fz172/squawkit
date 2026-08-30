@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
   <string name="unknown_date">Unknown date</string>
 
-  <string name="due_with_count">DUE (%1$d)</string>
-  <string name="history_with_count">HISTORY (%1$d)</string>
+  <string name="due_with_count">DUE (<xliff:g example="3">%1$d</xliff:g>)</string>
+  <string name="history_with_count">HISTORY (<xliff:g example="3">%1$d</xliff:g>)</string>
 
   <string name="edit_task">Update task</string>
 
@@ -15,14 +15,14 @@
 
   <string name="maintenance_due_title">Maintenance Due</string>
   <string name="add_task">Add task</string>
-  <string name="no_tasks_yet">No %1$s</string>
+  <string name="no_tasks_yet">No <xliff:g example="maintenance tasks">%1$s</xliff:g></string>
   <string name="no_tasks_yet_description">Tap + to add inspections, part replacements, and other checks.</string>
   <string name="no_complied_yet">Log work against a task to see its history here.</string>
   <string name="no_task_work_recorded">No task addressed by this log.</string>
-  <string name="unknown_task">Unknown task (%1$s)</string>
-  <string name="affects_n_tasks">Affects %1$d maintenance task(s)</string>
+  <string name="unknown_task">Unknown task (<xliff:g example="tk_4b1c">%1$s</xliff:g>)</string>
+  <string name="affects_n_tasks">Affects <xliff:g example="3">%1$d</xliff:g> maintenance task(s)</string>
   <string name="delete_task">Delete Task</string>
-  <string name="delete_task_confirmation">Delete "%1$s"? This cannot be undone. Maintenance logs that reference this task will not be deleted.</string>
+  <string name="delete_task_confirmation">Delete "<xliff:g example="Left brake dragging">%1$s</xliff:g>"? This cannot be undone. Maintenance logs that reference this task will not be deleted.</string>
 
   <string name="skip_task_confirm_title">Skip This Cycle?</string>
   <string name="skip_task_confirm_body">Marks complete without logging and snoozes one cycle to the next due target. This can’t be undone.</string>

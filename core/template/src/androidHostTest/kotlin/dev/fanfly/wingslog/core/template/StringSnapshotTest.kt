@@ -357,6 +357,31 @@ class StringSnapshotTest {
     "feature/notifications/sharedassets:notification_n1_body_thing_updated" to { l: Lexicon ->
       mapOf(3 to l.thingNoun.singular)
     },
+    // The urgency summaries. Positions 1 and 2 are the tail number and the count; the noun differs
+    // by tier, which is why the scanner builds them per tier rather than from one resource handle.
+    "feature/notifications/sharedassets:notification_body_due_soon_plural" to { l: Lexicon ->
+      mapOf(3 to l.taskNoun.plural)
+    },
+    "feature/notifications/sharedassets:notification_body_overdue_plural" to { l: Lexicon ->
+      mapOf(3 to l.taskNoun.plural)
+    },
+    "feature/notifications/sharedassets:notification_body_priority_raised_plural" to { l: Lexicon ->
+      mapOf(3 to l.squawkNoun.plural)
+    },
+    // "New squawk", not "New Squawk" — mid-sentence, so the bare singular.
+    frame(
+      "feature/notifications/sharedassets",
+      "notification_n1_title_squawk_created"
+    ) {
+      it.squawkNoun.singular
+    },
+    // Positions 1-3 are tail number, actor, and the record's own title.
+    "feature/notifications/sharedassets:notification_n1_body_squawk_created" to { l: Lexicon ->
+      mapOf(4 to l.squawkNoun.singular)
+    },
+    "feature/notifications/sharedassets:notification_n1_body_squawk_raised" to { l: Lexicon ->
+      mapOf(4 to l.squawkNoun.singular)
+    },
   )
 
   /** A single-argument frame at position 1, in any module. */
@@ -497,7 +522,9 @@ class StringSnapshotTest {
               // Android's R.string too, not only Compose's Res.string. The OS notification channel
               // description is a res/values string read with getString(R.string.…), and a guard
               // that only knew about Compose resources waved it straight through (#662).
-              Regex("""getString\(\s*R\.string\.$resource\s*\)""").containsMatchIn(text)
+              Regex("""getString\(\s*R\.string\.$resource\s*\)""").containsMatchIn(
+                text
+              )
           }
           .map { "${file.name}: $it" }
       }
@@ -522,9 +549,16 @@ class StringSnapshotTest {
       .flatMap { file ->
         val text = file.readText()
         Regex("""(?:[A-Za-z]*Res|R)\.string\.([a-z0-9_]+)""").findAll(text)
-          .filter { it.groupValues[1] in LEXICON_ARGS.keys.map { k -> k.substringAfter(":") } }
+          .filter {
+            it.groupValues[1] in LEXICON_ARGS.keys.map { k ->
+              k.substringAfter(
+                ":"
+              )
+            }
+          }
           .filterNot { match ->
-            val before = text.substring(0, match.range.first).trimEnd()
+            val before = text.substring(0, match.range.first)
+              .trimEnd()
             before.endsWith("stringResource(") || before.endsWith("getString(")
           }
           .map { "${file.name}: ${it.groupValues[1]}" }
@@ -591,11 +625,30 @@ class StringSnapshotTest {
           .substringBefore("/src/")
         stringRe.findAll(file.readText())
           .map { m ->
-            Entry(module, m.groupValues[1], m.groupValues[2])
+            Entry(
+              module,
+              m.groupValues[1],
+              m.groupValues[2].stripInlineMarkup()
+            )
           }
       }
       .associate { "${it.module}:${it.resource}" to it.value }
   }
+
+  /**
+   * Drops inline markup, so the value compared is the one the app actually renders.
+   *
+   * `<xliff:g name="tail_number" example="N123AA">%1${'$'}s</xliff:g>` says what a placeholder is
+   * for where a developer reads the string, instead of making them trace the call site. Compose
+   * Multiplatform strips those tags when it compiles `strings.xml` into its `.cvr` format —
+   * verified by decoding the output, which is byte-identical with and without them — so the app
+   * sees plain `%1${'$'}s` either way.
+   *
+   * This test reads the XML directly rather than through the resource accessors, so without this it
+   * would compare markup against a snapshot holding rendered text and fail on a string that had not
+   * changed at all. Raw `<` only ever appears as a tag: a literal one is written `&lt;`.
+   */
+  private fun String.stripInlineMarkup(): String = replace(Regex("<[^>]+>"), "")
 
   /**
    * Restores real newlines and tabs from the sentinels the snapshot stores them as.

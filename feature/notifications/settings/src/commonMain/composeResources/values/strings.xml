@@ -14,13 +14,13 @@
   <string name="notification_settings_types_label">Notification types</string>
 
   <string name="notification_settings_priority_due_title">Priority &amp; due updates</string>
-  <string name="notification_settings_priority_due_subtitle">A squawk becomes high priority or worse, or a task becomes due soon or overdue</string>
+  <string name="notification_settings_priority_due_subtitle">An issue becomes higher priority, or a task becomes due soon or overdue</string>
 
   <string name="notification_settings_collaboration_title">Collaboration</string>
-  <string name="notification_settings_collaboration_subtitle">Aircraft, squawk, task, or logbook activity from others</string>
+  <string name="notification_settings_collaboration_subtitle">Activity from other people on something you share</string>
 
   <string name="notification_settings_banner_denied_title">Notifications are blocked</string>
-  <string name="notification_settings_banner_denied_body">Turn them on in system settings to hear about urgency alerts and collaboration on your aircraft.</string>
+  <string name="notification_settings_banner_denied_body">Turn them on in system settings to hear about urgency alerts and collaboration.</string>
   <string name="notification_settings_banner_denied_open_settings">Open settings</string>
   <string name="notification_settings_banner_unsupported_title">Not supported in this browser</string>
   <string name="notification_settings_banner_unsupported_body">This browser doesn’t support notifications. Your choices below are still saved for devices that do.</string>

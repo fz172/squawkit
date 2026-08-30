@@ -250,7 +250,7 @@ feature/logs/sharedassets	log_unverified_technician	Not verified — name entere
 feature/logs/sharedassets	maintenance_date	Work Date
 feature/logs/sharedassets	maintenance_history	Maintenance History
 feature/logs/sharedassets	no_maintenance_logs_description	Log your first entry — oil change, annual, 100-hour, or any other airframe, engine, or prop work.
-feature/logs/sharedassets	no_maintenance_logs_title	Logbook Is Empty
+feature/logs/sharedassets	no_maintenance_logs_title	Work log is empty
 feature/logs/sharedassets	prop_time_label	Prop Time
 feature/logs/sharedassets	propeller_hub	Propeller Hub
 feature/logs/sharedassets	resolve_squawk_work_description	Resolve squawk "%1$s"
@@ -337,18 +337,18 @@ feature/notifications/devoptions	notifications_devoptions_state_unsupported	Unsu
 feature/notifications/settings	notification_settings_all_subtitle_off	Off — every notification below is silenced
 feature/notifications/settings	notification_settings_all_subtitle_on	On
 feature/notifications/settings	notification_settings_all_title	All notifications
-feature/notifications/settings	notification_settings_banner_denied_body	Turn them on in system settings to hear about urgency alerts and collaboration on your aircraft.
+feature/notifications/settings	notification_settings_banner_denied_body	Turn them on in system settings to hear about urgency alerts and collaboration.
 feature/notifications/settings	notification_settings_banner_denied_open_settings	Open settings
 feature/notifications/settings	notification_settings_banner_denied_title	Notifications are blocked
 feature/notifications/settings	notification_settings_banner_unsupported_body	This browser doesn’t support notifications. Your choices below are still saved for devices that do.
 feature/notifications/settings	notification_settings_banner_unsupported_title	Not supported in this browser
-feature/notifications/settings	notification_settings_collaboration_subtitle	Aircraft, squawk, task, or logbook activity from others
+feature/notifications/settings	notification_settings_collaboration_subtitle	Activity from other people on something you share
 feature/notifications/settings	notification_settings_collaboration_title	Collaboration
 feature/notifications/settings	notification_settings_hero_body_off	Turn on All notifications to hear about priority changes, due dates, and updates from your crew.
 feature/notifications/settings	notification_settings_hero_body_on	Hear about priority changes, due dates, and updates from your crew — the moment they happen.
 feature/notifications/settings	notification_settings_hero_title_off	Notifications are off
 feature/notifications/settings	notification_settings_hero_title_on	Stay in the loop
-feature/notifications/settings	notification_settings_priority_due_subtitle	A squawk becomes high priority or worse, or a task becomes due soon or overdue
+feature/notifications/settings	notification_settings_priority_due_subtitle	An issue becomes higher priority, or a task becomes due soon or overdue
 feature/notifications/settings	notification_settings_priority_due_title	Priority &amp; due updates
 feature/notifications/settings	notification_settings_save_error	Couldn’t save that change. Try again.
 feature/notifications/settings	notification_settings_signin_cta	Sign in
@@ -357,9 +357,9 @@ feature/notifications/settings	notification_settings_sync_off_cta	Turn on sync
 feature/notifications/settings	notification_settings_sync_off_footer	Turn on Backup &amp; Sync to get notified about changes other people make.
 feature/notifications/settings	notification_settings_title	Notifications
 feature/notifications/settings	notification_settings_types_label	Notification types
-feature/notifications/sharedassets	notification_body_due_soon_plural	%1$s: %2$d inspections are due soon
+feature/notifications/sharedassets	notification_body_due_soon_plural	%1$s: %2$d maintenance tasks are due soon
 feature/notifications/sharedassets	notification_body_due_soon_single	%1$s: task is due soon\n\n%2$s
-feature/notifications/sharedassets	notification_body_overdue_plural	%1$s: %2$d inspections are now overdue
+feature/notifications/sharedassets	notification_body_overdue_plural	%1$s: %2$d maintenance tasks are now overdue
 feature/notifications/sharedassets	notification_body_overdue_single	%1$s: task is now overdue\n\n%2$s
 feature/notifications/sharedassets	notification_body_priority_raised_plural	%1$s: %2$d squawks increased in priority
 feature/notifications/sharedassets	notification_body_priority_raised_single	%1$s: priority raised from %2$s to %3$s\n\n%4$s
@@ -368,17 +368,9 @@ feature/notifications/sharedassets	notification_n1_body_record_created	%1$s: %2$
 feature/notifications/sharedassets	notification_n1_body_record_deleted	%1$s: %2$s deleted a %3$s\n\n%4$s
 feature/notifications/sharedassets	notification_n1_body_record_updated	%1$s: %2$s updated a %3$s\n\n%4$s
 feature/notifications/sharedassets	notification_n1_body_single	%1$s made a change to %2$s
-feature/notifications/sharedassets	notification_n1_body_squawk_created	%1$s: %2$s created a new squawk issue\n\n%3$s
-feature/notifications/sharedassets	notification_n1_body_squawk_raised	%1$s: %2$s raised the priority of 1 squawk issue\n\n%3$s
+feature/notifications/sharedassets	notification_n1_body_squawk_created	%1$s: %2$s created a new squawk\n\n%3$s
+feature/notifications/sharedassets	notification_n1_body_squawk_raised	%1$s: %2$s raised the priority of 1 squawk\n\n%3$s
 feature/notifications/sharedassets	notification_n1_body_thing_updated	%1$s: %2$s updated the aircraft
-feature/notifications/sharedassets	notification_n1_noun_log	work log
-feature/notifications/sharedassets	notification_n1_noun_task	maintenance task
-feature/notifications/sharedassets	notification_n1_section_logbook	Work Logs
-feature/notifications/sharedassets	notification_n1_section_logbook_lower	work logs
-feature/notifications/sharedassets	notification_n1_section_squawks	Squawks
-feature/notifications/sharedassets	notification_n1_section_squawks_lower	squawks
-feature/notifications/sharedassets	notification_n1_section_tasks	Maintenance Tasks
-feature/notifications/sharedassets	notification_n1_section_tasks_lower	maintenance tasks
 feature/notifications/sharedassets	notification_n1_title	%1$s · %2$s
 feature/notifications/sharedassets	notification_n1_title_squawk_created	New squawk
 feature/notifications/sharedassets	notification_title_due_soon	Due soon
@@ -628,7 +620,7 @@ feature/subscription/viewing	subscription_perk_attachments_body	Photos and files
 feature/subscription/viewing	subscription_perk_attachments_title	Attachments
 feature/subscription/viewing	subscription_perk_sharing_body	Invite owners and technicians
 feature/subscription/viewing	subscription_perk_sharing_title	Sharing
-feature/subscription/viewing	subscription_perk_thing_body	Whole fleet in one logbook
+feature/subscription/viewing	subscription_perk_thing_body	All your things logged in one book
 feature/subscription/viewing	subscription_perk_thing_title	Unlimited aircraft
 feature/subscription/viewing	subscription_platform_amazon	Amazon Appstore
 feature/subscription/viewing	subscription_platform_app_store	App Store

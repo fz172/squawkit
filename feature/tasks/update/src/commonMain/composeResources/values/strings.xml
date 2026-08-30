@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
   <string name="compliance_type_routine">Routine Tasks</string>
-  <string name="task_title">%1$s Title</string>
+  <string name="task_title"><xliff:g example="maintenance tasks">%1$s</xliff:g> Title</string>
   <string name="task_description_placeholder">e.g. 100-Hour Inspection</string>
   <string name="task_title_helper">Provide a concise, technical name for this maintenance action as it appears in the service manual.</string>
-  <string name="component_type_description">Select the primary system or %1$s this task pertains to for accurate log grouping.</string>
+  <string name="component_type_description">Select the primary system or <xliff:g example="component">%1$s</xliff:g> this task pertains to for accurate log grouping.</string>
   <string name="compliance_type_description">Regulatory nature of this task. Mandatory items will trigger critical system alerts.</string>
   <string name="compliance_routine_sub">Scheduled maintenance intervals</string>
   <string name="compliance_sb_sub">Manufacturer recommended</string>
@@ -47,25 +47,25 @@
   <string name="schedule_preview_empty_secondary">Pick how this task is tracked below</string>
   <string name="schedule_preview_linked_unset_primary">Linked task not chosen</string>
   <string name="schedule_preview_linked_unset_secondary">Pick a task to link to below</string>
-  <string name="schedule_preview_linked_primary">Due whenever "%1$s" is due</string>
+  <string name="schedule_preview_linked_primary">Due whenever "<xliff:g example="Annual inspection">%1$s</xliff:g>" is due</string>
   <string name="schedule_preview_linked_one_time_secondary">Will move to history after first log</string>
   <string name="schedule_preview_linked_repeating_secondary">Repeats with the linked task</string>
   <string name="schedule_preview_asap_primary">Due now — ASAP</string>
   <string name="schedule_preview_asap_secondary">Will appear immediately on the dashboard</string>
-  <string name="schedule_preview_set_calendar_primary">Set how often (%1$s)</string>
+  <string name="schedule_preview_set_calendar_primary">Set how often (<xliff:g example="Work Logs">%1$s</xliff:g>)</string>
   <string name="schedule_preview_set_hours_primary">Set how many tach hours</string>
   <string name="schedule_preview_set_secondary">Enter an interval below</string>
-  <string name="schedule_preview_due_every">Due every %1$d %2$s</string>
-  <string name="schedule_preview_due_in">Due in %1$d %2$s</string>
-  <string name="schedule_preview_due_every_hours">Due every %1$s tach hrs</string>
-  <string name="schedule_preview_due_in_hours">Due in %1$s tach hrs</string>
+  <string name="schedule_preview_due_every">Due every <xliff:g example="3">%1$d</xliff:g> <xliff:g example="months">%2$s</xliff:g></string>
+  <string name="schedule_preview_due_in">Due in <xliff:g example="3">%1$d</xliff:g> <xliff:g example="months">%2$s</xliff:g></string>
+  <string name="schedule_preview_due_every_hours">Due every <xliff:g example="100">%1$s</xliff:g> tach hrs</string>
+  <string name="schedule_preview_due_in_hours">Due in <xliff:g example="12.5">%1$s</xliff:g> tach hrs</string>
   <string name="schedule_preview_recurring_secondary">Recurring schedule</string>
   <string name="schedule_preview_one_time_secondary">One-time · moves to history after first log</string>
 
   <string name="schedule_pick_linked_task">Pick a task to link</string>
 
   <string name="select_task_work">Select Maintenance Work</string>
-  <string name="reference_and_component">%1$s • %2$s</string>
+  <string name="reference_and_component"><xliff:g example="AD-2024-11-07">%1$s</xliff:g> • <xliff:g example="Work Logs">%2$s</xliff:g></string>
 
   <string name="compliance_type">Compliance Type</string>
   <string name="compliance_type_routine_short">Routine</string>
@@ -87,23 +87,23 @@
   <string name="adj_preview_neutral_primary">No adjustments</string>
   <string name="adj_preview_neutral_secondary_linked">Linked to another task — schedule is automatic</string>
   <string name="adj_preview_neutral_secondary_unset">No schedule set yet</string>
-  <string name="adj_preview_reschedule_date_primary">Next due %1$s</string>
-  <string name="adj_preview_reschedule_hours_primary">Next due at %1$s tach hrs</string>
+  <string name="adj_preview_reschedule_date_primary">Next due <xliff:g example="12 Mar 2026">%1$s</xliff:g></string>
+  <string name="adj_preview_reschedule_hours_primary">Next due at <xliff:g example="12.5">%1$s</xliff:g> tach hrs</string>
   <string name="adj_preview_reschedule_was_date">Was set by schedule</string>
   <!-- Adjustments tab — preview banner with next-due + relative phrasing -->
-  <string name="adj_preview_primary_date">Next due %1$s · %2$s</string>
-  <string name="adj_preview_primary_hours">Next due at %1$s tach hrs · %2$s</string>
-  <string name="adj_preview_was_date">Was %1$s</string>
-  <string name="adj_preview_was_hours">Was %1$s tach hrs</string>
+  <string name="adj_preview_primary_date">Next due <xliff:g example="12 Mar 2026">%1$s</xliff:g> · <xliff:g example="3">%2$s</xliff:g></string>
+  <string name="adj_preview_primary_hours">Next due at <xliff:g example="1250.0">%1$s</xliff:g> tach hrs · <xliff:g example="12.5">%2$s</xliff:g></string>
+  <string name="adj_preview_was_date">Was <xliff:g example="12 Mar 2026">%1$s</xliff:g></string>
+  <string name="adj_preview_was_hours">Was <xliff:g example="1200.0">%1$s</xliff:g> tach hrs</string>
   <!-- Relative phrases (days) -->
   <string name="adj_preview_rel_due_today">due today</string>
   <string name="adj_preview_rel_in_day">in 1 day</string>
-  <string name="adj_preview_rel_in_days">in %1$d days</string>
+  <string name="adj_preview_rel_in_days">in <xliff:g example="3">%1$d</xliff:g> days</string>
   <string name="adj_preview_rel_overdue_day">overdue by 1 day</string>
-  <string name="adj_preview_rel_overdue_days">overdue by %1$d days</string>
+  <string name="adj_preview_rel_overdue_days">overdue by <xliff:g example="3">%1$d</xliff:g> days</string>
   <!-- Relative phrases (tach hours) -->
-  <string name="adj_preview_rel_in_hours">in %1$s tach hrs</string>
-  <string name="adj_preview_rel_over_hours">over by %1$s tach hrs</string>
+  <string name="adj_preview_rel_in_hours">in <xliff:g example="12.5">%1$s</xliff:g> tach hrs</string>
+  <string name="adj_preview_rel_over_hours">over by <xliff:g example="12.5">%1$s</xliff:g> tach hrs</string>
   <string name="adj_preview_rel_hours_at">at current hours</string>
   <!-- Preview banner eyebrow labels and hints -->
   <string name="schedule_preview_label">Preview</string>
@@ -127,7 +127,7 @@
 
   <!-- Resolve menu (bottom bar) -->
   <string name="resolve_task">Resolve</string>
-  <string name="create_work_log">Create %1$s</string>
+  <string name="create_work_log">Create <xliff:g example="work logs">%1$s</xliff:g></string>
   <string name="create_work_log_subtitle">Opens a new log, pre-linked to this task</string>
   <string name="skip_this_cycle_option">Skip This Cycle</string>
   <string name="skip_this_cycle_option_subtitle">Marks complete without logging</string>
@@ -137,5 +137,5 @@
   <string name="task_updated">Task updated</string>
   <string name="task_deleted">Task deleted</string>
   <string name="task_added">Task added</string>
-  <string name="no_tasks_configured">No tasks configured. Add them from the %1$s overview to track recurring maintenance.</string>
+  <string name="no_tasks_configured">No tasks configured. Add them from the <xliff:g example="aircraft">%1$s</xliff:g> overview to track recurring maintenance.</string>
 </resources>

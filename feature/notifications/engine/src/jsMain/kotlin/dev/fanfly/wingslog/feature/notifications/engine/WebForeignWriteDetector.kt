@@ -4,6 +4,11 @@ import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.ForeignWriteListener
+import dev.fanfly.wingslog.core.template.CurrentThingTemplate
+import dev.fanfly.wingslog.core.template.LexiconFormatter
+import dev.fanfly.wingslog.core.template.logNoun
+import dev.fanfly.wingslog.core.template.squawkNoun
+import dev.fanfly.wingslog.core.template.taskNoun
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.notifications.datamanager.NotificationPrefsManager
 import dev.fanfly.wingslog.feature.notifications.datamanager.PrefsState
@@ -17,23 +22,17 @@ import dev.fanfly.wingslog.feature.notifications.permission.NotificationPermissi
 import dev.fanfly.wingslog.feature.notifications.permission.PermissionState
 import dev.fanfly.wingslog.feature.notifications.viewing.LocalNotifier
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
+import dev.fanfly.wingslog.thing.Lexicon
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
-import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.getString
 import wingslog.feature.notifications.sharedassets.generated.resources.Res
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_actor_fallback
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_body_single
-import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_section_logbook
-import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_section_logbook_lower
-import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_section_squawks
-import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_section_squawks_lower
-import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_section_tasks
-import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_section_tasks_lower
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_title
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
@@ -68,6 +67,7 @@ class WebForeignWriteDetector(
   private val prefsManager: NotificationPrefsManager,
   private val permission: NotificationPermission,
   private val notifier: LocalNotifier,
+  private val currentThingTemplate: CurrentThingTemplate,
   private val clock: Clock = Clock.System,
   private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
 ) : ForeignWriteListener {
@@ -173,22 +173,26 @@ class WebForeignWriteDetector(
     // Between this and "N1 built" there is nothing but string resource loads, so the pair of lines
     // says which half of the build is slow or stuck without another round of guessing.
     log.d { "N1 tail number resolved for $thingId, rendering strings" }
+    val lexicon = currentThingTemplate.lexicon.value
     val body = getString(
       Res.string.notification_n1_body_single,
       actor,
-      getString(recordType.lowerLabel),
+      recordType.lowerLabel(lexicon),
     )
     return PendingNotification(
       // One id per write, never replaced by the next one — matching the backend's own scheme
       // (`n1:{recordType}:{recordId}:{atMs}`, no aircraftId — see activityNotificationId's doc
       // comment for why the server dropped it: APNs enforces a 64-byte collapse-id limit) now that
       // neither side coalesces.
-      id = "n1:${recordType.wire}:$recordId:${clock.now().toEpochMilliseconds()}",
+      id = "n1:${recordType.wire}:$recordId:${
+        clock.now()
+          .toEpochMilliseconds()
+      }",
       channel = NotificationChannel.COLLABORATION,
       title = getString(
         Res.string.notification_n1_title,
         tailNumber,
-        getString(recordType.titleLabel),
+        recordType.titleLabel(lexicon),
       ),
       body = body,
       // Collaboration activity is never high priority — that is what N2's urgency tiers are for,
@@ -225,16 +229,34 @@ class WebForeignWriteDetector(
     }.getOrNull() ?: thingId
 
   /** The three record types §8 treats as collaboration activity. Anything else is not N1. */
+  /**
+   * The section labels, resolved from the lexicon rather than stored on the enum.
+   *
+   * The enum used to carry a `StringResource` per label. That is the shape which let
+   * `UpsellTrigger` render a raw "%1${'$'}s" to users (#692) — a resource held as a value hides
+   * whether it is read correctly — and it is also what kept `notification_n1_section_squawks` alive
+   * after #689 tried to delete it. Resolving here means the labels follow the template like every
+   * other noun, and the resources are gone.
+   */
+  private fun RecordType.titleLabel(lexicon: Lexicon): String = when (this) {
+    RecordType.SQUAWK -> LexiconFormatter.titleCasePlural(lexicon.squawkNoun)
+    RecordType.TASK -> LexiconFormatter.titleCasePlural(lexicon.taskNoun)
+    RecordType.LOG -> LexiconFormatter.titleCasePlural(lexicon.logNoun)
+  }
+
+  /** The lower-case plural the body reads: "… changed two work logs". */
+  private fun RecordType.lowerLabel(lexicon: Lexicon): String = when (this) {
+    RecordType.SQUAWK -> lexicon.squawkNoun.plural
+    RecordType.TASK -> lexicon.taskNoun.plural
+    RecordType.LOG -> lexicon.logNoun.plural
+  }
+
   private enum class RecordType(
     val wire: String,
-    val titleLabel: StringResource,
-    val lowerLabel: StringResource,
     val tapTarget: (thingId: String, recordId: String) -> NotificationTapTarget,
   ) {
     SQUAWK(
       "squawk",
-      Res.string.notification_n1_section_squawks,
-      Res.string.notification_n1_section_squawks_lower,
       { thingId, recordId ->
         NotificationTapTarget.Squawk(
           thingId,
@@ -244,8 +266,6 @@ class WebForeignWriteDetector(
     ),
     TASK(
       "task",
-      Res.string.notification_n1_section_tasks,
-      Res.string.notification_n1_section_tasks_lower,
       { thingId, recordId ->
         NotificationTapTarget.Task(
           thingId,
@@ -255,8 +275,6 @@ class WebForeignWriteDetector(
     ),
     LOG(
       "log",
-      Res.string.notification_n1_section_logbook,
-      Res.string.notification_n1_section_logbook_lower,
       { thingId, recordId ->
         NotificationTapTarget.Log(
           thingId,

@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
   <!-- Empty / error states -->
-  <string name="thing_load_error">Couldn't load this %1$s</string>
+  <string name="thing_load_error">Couldn't load this <xliff:g example="aircraft">%1$s</xliff:g></string>
   <!-- Overview tab cards -->
   <string name="overview_recent_activity">Recent activity</string>
   <string name="overview_all_logs">All logs</string>
   <string name="overview_no_logs_title">No logs yet</string>
-  <string name="overview_no_logs_body">Add the first maintenance entry to start the %1$s record.</string>
+  <string name="overview_no_logs_body">Add the first maintenance entry to start the <xliff:g example="aircraft">%1$s</xliff:g> record.</string>
   <string name="overview_next_due">Next due</string>
   <string name="overview_no_tasks_title">No upcoming tasks</string>
   <string name="overview_no_tasks_body">Scheduled maintenance is up to date.</string>
-  <string name="overview_open_squawks">Open %1$s</string>
-  <string name="overview_no_squawks_body">No active discrepancies for this %1$s.</string>
+  <string name="overview_open_squawks">Open <xliff:g example="squawks">%1$s</xliff:g></string>
+  <string name="overview_no_squawks_body">No active discrepancies for this <xliff:g example="aircraft">%1$s</xliff:g>.</string>
 </resources>

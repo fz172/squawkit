@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
   <!-- N2 urgency notification bodies (design §6.5). Single-crossing forms are used when a scan
        finds exactly one crossing for an (aircraft, tier); the plural forms replace them once a scan
        finds two or more, per PRD §6.6's "3 inspections are now overdue" example.
@@ -21,18 +21,18 @@
        in :settings). A LOW-to-MEDIUM or MEDIUM-to-HIGH-adjacent bump below HIGH still moves the
        watermark so a later real crossing is detected correctly, but is not itself reportable. -->
   <string name="notification_title_priority_raised">Priority raised</string>
-  <string name="notification_body_priority_raised_single">%1$s: priority raised from %2$s to %3$s\n\n%4$s</string>
+  <string name="notification_body_priority_raised_single"><xliff:g example="N123AA">%1$s</xliff:g>: priority raised from <xliff:g example="Medium">%2$s</xliff:g> to <xliff:g example="AOG">%3$s</xliff:g>\n\n<xliff:g example="Left brake dragging">%4$s</xliff:g></string>
   <!-- Deliberately not "…are now high priority": a summary can batch a HIGH crossing with an AOG
        one, and calling an AOG squawk merely "high priority" would understate it. -->
-  <string name="notification_body_priority_raised_plural">%1$s: %2$d squawks increased in priority</string>
+  <string name="notification_body_priority_raised_plural"><xliff:g example="N123AA">%1$s</xliff:g>: <xliff:g example="3">%2$d</xliff:g> <xliff:g example="squawks">%3$s</xliff:g> increased in priority</string>
 
   <string name="notification_title_overdue">⚠ Overdue</string>
-  <string name="notification_body_overdue_single">%1$s: task is now overdue\n\n%2$s</string>
-  <string name="notification_body_overdue_plural">%1$s: %2$d inspections are now overdue</string>
+  <string name="notification_body_overdue_single"><xliff:g example="N123AA">%1$s</xliff:g>: task is now overdue\n\n<xliff:g example="Annual inspection">%2$s</xliff:g></string>
+  <string name="notification_body_overdue_plural"><xliff:g example="N123AA">%1$s</xliff:g>: <xliff:g example="3">%2$d</xliff:g> <xliff:g example="maintenance tasks">%3$s</xliff:g> are now overdue</string>
 
   <string name="notification_title_due_soon">Due soon</string>
-  <string name="notification_body_due_soon_single">%1$s: task is due soon\n\n%2$s</string>
-  <string name="notification_body_due_soon_plural">%1$s: %2$d inspections are due soon</string>
+  <string name="notification_body_due_soon_single"><xliff:g example="N123AA">%1$s</xliff:g>: task is due soon\n\n<xliff:g example="Annual inspection">%2$s</xliff:g></string>
+  <string name="notification_body_due_soon_plural"><xliff:g example="N123AA">%1$s</xliff:g>: <xliff:g example="3">%2$d</xliff:g> <xliff:g example="maintenance tasks">%3$s</xliff:g> are due soon</string>
 
   <!-- N1 collaboration activity, server push (design §7.2, rewritten 2026-08-27: every write gets
        its own concrete notification — no coalescing, no "made N changes" summary, no ceiling. The
@@ -40,37 +40,29 @@
        user-authored record title (%1$s · %2$s); the body names the actor and what happened to the
        specific record, with the record's own title on its own line — the same three/four-segment
        shape as the N2 and escalation bodies below. -->
-  <string name="notification_n1_title">%1$s · %2$s</string>
-  <string name="notification_n1_body_record_created">%1$s: %2$s created a new %3$s\n\n%4$s</string>
-  <string name="notification_n1_body_record_updated">%1$s: %2$s updated a %3$s\n\n%4$s</string>
-  <string name="notification_n1_body_record_deleted">%1$s: %2$s deleted a %3$s\n\n%4$s</string>
+  <string name="notification_n1_title"><xliff:g example="N123AA">%1$s</xliff:g> · <xliff:g example="Left brake dragging">%2$s</xliff:g></string>
+  <string name="notification_n1_body_record_created"><xliff:g example="N123AA">%1$s</xliff:g>: <xliff:g example="Alex">%2$s</xliff:g> created a new <xliff:g example="work log">%3$s</xliff:g>\n\n<xliff:g example="Left brake dragging">%4$s</xliff:g></string>
+  <string name="notification_n1_body_record_updated"><xliff:g example="N123AA">%1$s</xliff:g>: <xliff:g example="Alex">%2$s</xliff:g> updated a <xliff:g example="work log">%3$s</xliff:g>\n\n<xliff:g example="Left brake dragging">%4$s</xliff:g></string>
+  <string name="notification_n1_body_record_deleted"><xliff:g example="N123AA">%1$s</xliff:g>: <xliff:g example="Alex">%2$s</xliff:g> deleted a <xliff:g example="work log">%3$s</xliff:g>\n\n<xliff:g example="Left brake dragging">%4$s</xliff:g></string>
   <!-- The Aircraft record's own trigger (make/model/tail edits) has no per-record title to name —
        it is always "updated," never created or deleted through that path — so it gets its own
        two-segment body instead of the noun-and-title shape above. -->
-  <string name="notification_n1_body_thing_updated">%1$s: %2$s updated the %3$s</string>
+  <string name="notification_n1_body_thing_updated"><xliff:g example="N123AA">%1$s</xliff:g>: <xliff:g example="Alex">%2$s</xliff:g> updated the <xliff:g example="aircraft">%3$s</xliff:g></string>
   <!-- N1 on web (design §8.4): an open tab detects a collaborator's write locally and cannot see
        the record's own title, so it posts this single generic body instead of the concrete
        record_created/updated/deleted ones above — still one notification per write, immediately,
        with no count. -->
-  <string name="notification_n1_body_single">%1$s made a change to %2$s</string>
+  <string name="notification_n1_body_single"><xliff:g example="Alex">%1$s</xliff:g> made a change to <xliff:g example="work logs">%2$s</xliff:g></string>
   <!-- Used when the share roster read comes back empty — a revoked or not-yet-synced member. -->
   <string name="notification_n1_actor_fallback">A collaborator</string>
 
   <!-- Section labels, title case for notification_n1_title. -->
-  <string name="notification_n1_section_squawks">Squawks</string>
-  <string name="notification_n1_section_tasks">Maintenance Tasks</string>
-  <string name="notification_n1_section_logbook">Work Logs</string>
   <!-- Lower-case, mid-sentence section labels for notification_n1_body_single (web only — see
        above; the server-push bodies name the record's own noun instead, below). -->
-  <string name="notification_n1_section_squawks_lower">squawks</string>
-  <string name="notification_n1_section_tasks_lower">maintenance tasks</string>
-  <string name="notification_n1_section_logbook_lower">work logs</string>
   <!-- Aircraft-record activity (make/model/tail edits). Server-side N1 only — the web detector does
        not cover the Aircraft record. -->
 
   <!-- Singular record nouns for notification_n1_body_record_*, e.g. "created a new squawk". -->
-  <string name="notification_n1_noun_task">maintenance task</string>
-  <string name="notification_n1_noun_log">work log</string>
 
   <!-- N1 escalation bodies (design §7.5). Deliberately NOT the N2 bodies above, even though both
        report the same crossing: the server knows WHO made the change and the device-local scanner
@@ -80,12 +72,12 @@
        Same three-segment shape as the N2 single-crossing bodies: tail number + what changed, then
        the squawk's own title on its own line after a blank one. %2$s is the collaborator; the
        client substitutes notification_n1_actor_fallback when the server sends it empty. -->
-  <string name="notification_n1_body_squawk_created">%1$s: %2$s created a new squawk issue\n\n%3$s</string>
-  <string name="notification_n1_body_squawk_raised">%1$s: %2$s raised the priority of 1 squawk issue\n\n%3$s</string>
+  <string name="notification_n1_body_squawk_created"><xliff:g example="N123AA">%1$s</xliff:g>: <xliff:g example="Alex">%2$s</xliff:g> created a new <xliff:g example="squawks">%4$s</xliff:g>\n\n<xliff:g example="Left brake dragging">%3$s</xliff:g></string>
+  <string name="notification_n1_body_squawk_raised"><xliff:g example="N123AA">%1$s</xliff:g>: <xliff:g example="Alex">%2$s</xliff:g> raised the priority of 1 <xliff:g example="squawks">%4$s</xliff:g>\n\n<xliff:g example="Left brake dragging">%3$s</xliff:g></string>
   <!-- Paired with notification_n1_body_squawk_created: "Priority raised" would contradict a body
        that says the squawk was just created — including at AOG, which uses this same title now that
        it is not its own headline (design decision, 2026-08-26). -->
-  <string name="notification_n1_title_squawk_created">New squawk</string>
+  <string name="notification_n1_title_squawk_created">New <xliff:g example="squawks">%1$s</xliff:g></string>
 
   <!-- The two sides of notification_body_priority_raised_single's "from X to Y" — a squawk can
        escalate from resolved (reopened) or from any open rank below High, and can land at High or

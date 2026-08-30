@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
   <string name="feature_name_export_logs">Export Logs</string>
 
   <!-- Setup: report formats -->
@@ -20,20 +20,20 @@
   <string name="export_date_range_section">Date range</string>
   <string name="export_all_time">All time</string>
   <string name="export_last_12_months">Last 12 months</string>
-  <string name="export_last_n_months">Last %1$d months</string>
+  <string name="export_last_n_months">Last <xliff:g example="3">%1$d</xliff:g> months</string>
   <string name="export_custom">Custom</string>
   <string name="export_custom_range_title">Custom range</string>
   <string name="export_custom_start_date">Start date</string>
   <string name="export_custom_end_date">End date</string>
 
   <!-- Setup: footer -->
-  <string name="export_footer_thing_count">%1$d aircraft</string>
-  <string name="export_estimated_size">~%1$s</string>
+  <string name="export_footer_thing_count"><xliff:g example="3">%1$d</xliff:g> aircraft</string>
+  <string name="export_estimated_size">~<xliff:g example="2.4 MB">%1$s</xliff:g></string>
   <string name="export_primary_action">Start</string>
 
   <!-- Running -->
   <string name="export_running_title">Preparing export</string>
-  <string name="export_running_stage_counter">%1$d / %2$d</string>
+  <string name="export_running_stage_counter"><xliff:g example="3">%1$d</xliff:g> / <xliff:g example="3">%2$d</xliff:g></string>
   <string name="export_progress_collecting_data">Collecting aircraft data...</string>
   <string name="export_progress_building_archive">Generating reports...</string>
   <string name="export_progress_compressing_archive">Compressing files...</string>
@@ -48,12 +48,12 @@
   <string name="export_location_files_squawkit">Saved to Files · SquawkIt</string>
   <string name="export_success_delivery_failed_title">Delivery failed</string>
   <string name="export_success_delivery_failed">Delivery failed. Use Download for now, then try emailing it again.</string>
-  <string name="export_success_delivery_auth">Destination: signed-in account email %1$s</string>
-  <string name="export_receipt_file_subtitle">%1$s · ZIP containing %2$s + attachments</string>
+  <string name="export_success_delivery_auth">Destination: signed-in account email <xliff:g example="you@example.com">%1$s</xliff:g></string>
+  <string name="export_receipt_file_subtitle"><xliff:g example="2.4 MB">%1$s</xliff:g> · ZIP containing <xliff:g example="PDF, CSV">%2$s</xliff:g> + attachments</string>
   <string name="export_receipt_range">Range</string>
   <string name="export_receipt_attachments">Attachments</string>
   <string name="export_receipt_attachments_included">Included</string>
-  <string name="export_thing_summary_more">%1$s + %2$d more</string>
+  <string name="export_thing_summary_more"><xliff:g example="N123AA">%1$s</xliff:g> + <xliff:g example="3">%2$d</xliff:g> more</string>
 
   <!-- Result: actions -->
   <string name="export_download">Download</string>
@@ -75,7 +75,7 @@
   <string name="export_history_empty_title">No exports yet</string>
   <string name="export_history_empty_body">Generate a printable PDF or spreadsheet of your maintenance logs to share with your mechanic, IA, or insurance.</string>
   <string name="export_history_new">New export</string>
-  <string name="export_history_item_meta">%1$s · %2$s</string>
+  <string name="export_history_item_meta"><xliff:g example="12 Mar 2026">%1$s</xliff:g> · <xliff:g example="3">%2$s</xliff:g></string>
   <string name="export_history_delivery_sent">Email sent</string>
   <string name="export_history_delivery_failed">Failed to send email</string>
   <string name="export_history_delivery_throttled">Already sent recently — try again later</string>
@@ -88,7 +88,7 @@
   <string name="export_history_status_cloud">In the cloud</string>
   <string name="export_history_status_device">On device</string>
   <string name="export_history_delete_confirm_title">Delete export?</string>
-  <string name="export_history_delete_confirm_body">%1$s will be permanently removed from this device.</string>
-  <string name="export_history_delete_confirm_body_device_and_cloud">%1$s will be permanently removed from this device and cloud.</string>
-  <string name="export_history_delete_confirm_body_cloud_only">%1$s will be permanently removed from cloud.</string>
+  <string name="export_history_delete_confirm_body"><xliff:g example="export.zip">%1$s</xliff:g> will be permanently removed from this device.</string>
+  <string name="export_history_delete_confirm_body_device_and_cloud"><xliff:g example="export.zip">%1$s</xliff:g> will be permanently removed from this device and cloud.</string>
+  <string name="export_history_delete_confirm_body_cloud_only"><xliff:g example="export.zip">%1$s</xliff:g> will be permanently removed from cloud.</string>
 </resources>

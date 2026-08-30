@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
   <string name="settings_subtitle">Account, appearance &amp; preferences</string>
   <string name="sign_out">Log out</string>
   <string name="settings_logout_subtitle">Sign out of your account on this device</string>
@@ -29,7 +29,7 @@
   <string name="settings_ad_privacy_subtitle">Review or change your ad consent choice</string>
   <string name="account_upgrade_link_cta">Link to an account</string>
   <string name="account_upgrade_link_subtitle">Your records are on this device only. Link an account to sync and back them up.</string>
-  <string name="app_version">App Version: %1$s</string>
+  <string name="app_version">App Version: <xliff:g example="1.0.260826">%1$s</xliff:g></string>
   <string name="appearance_title">Appearance</string>
   <string name="appearance_subtitle">Choose how SquawkIt looks on this device</string>
   <string name="appearance_light">Light</string>
