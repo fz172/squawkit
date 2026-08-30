@@ -222,10 +222,16 @@ class StringSnapshotTest {
     // two meter labels, so they are template *fields* rather than lexicon nouns (#657); and
     // no_maintenance_logs_title ("Logbook Is Empty") is blocked on #683, because the log noun is
     // "work log" and the app says "Logbook" only here and in the export copy.
-    frame("feature/logs/update", "component_section_description") { it.thingNoun.singular },
+    frame(
+      "feature/logs/update",
+      "component_section_description"
+    ) { it.thingNoun.singular },
     frame("feature/logs/update", "loading_thing") { it.thingNoun.singular },
     frame("feature/logs/update", "no_engines_found") { it.thingNoun.singular },
-    frame("feature/logs/update", "performed_by_description") { it.technicianNoun.singular },
+    frame(
+      "feature/logs/update",
+      "performed_by_description"
+    ) { it.technicianNoun.singular },
     frame("feature/logs/update", "squawks_section_header") {
       LexiconFormatter.titleCasePlural(it.squawkNoun)
     },
@@ -235,14 +241,28 @@ class StringSnapshotTest {
     frame("feature/logs/viewing", "affected_maintenance_tasks") {
       LexiconFormatter.titleCasePlural(it.taskNoun)
     },
-    frame("feature/logs/viewing", "thing_data") { LexiconFormatter.titleCase(it.thingNoun) },
+    frame(
+      "feature/logs/viewing",
+      "thing_data"
+    ) { LexiconFormatter.titleCase(it.thingNoun) },
     frame("feature/logs/viewing", "edit_thing") { it.thingNoun.singular },
-    frame("feature/logs/viewing", "log_squawk_count_one") { it.squawkNoun.singular },
+    frame(
+      "feature/logs/viewing",
+      "log_squawk_count_one"
+    ) { it.squawkNoun.singular },
     frame("feature/logs/viewing", "resolved_squawks") {
       LexiconFormatter.titleCasePlural(it.squawkNoun)
     },
-    frame("feature/logs/sharedassets", "add_log") { LexiconFormatter.titleCase(it.logNoun) },
-    frame("feature/logs/sharedassets", "edit_log") { LexiconFormatter.titleCase(it.logNoun) },
+    frame("feature/logs/sharedassets", "add_log") {
+      LexiconFormatter.titleCase(
+        it.logNoun
+      )
+    },
+    frame("feature/logs/sharedassets", "edit_log") {
+      LexiconFormatter.titleCase(
+        it.logNoun
+      )
+    },
     // Position 1 is caller-supplied in each of these — a count, or the record's own title.
     "feature/logs/viewing:log_squawk_count_plural" to { l: Lexicon ->
       mapOf(2 to l.squawkNoun.plural)
@@ -259,15 +279,38 @@ class StringSnapshotTest {
     // label, not a lexicon noun (PRD §4.2, so #657); the collaboration channel description belongs
     // to #661 with the rest of the notification surface; and the stress-test copy is a developer
     // surface, excluded wholesale by the classification.
-    frame("feature/thing/dashboard", "thing_load_error") { it.thingNoun.singular },
-    frame("feature/thing/dashboard", "overview_no_logs_body") { it.thingNoun.singular },
+    frame(
+      "feature/thing/dashboard",
+      "thing_load_error"
+    ) { it.thingNoun.singular },
+    frame(
+      "feature/thing/dashboard",
+      "overview_no_logs_body"
+    ) { it.thingNoun.singular },
     // Only the thing noun. "discrepancies" stays literal: the squawk plural is "squawks", so
     // substituting would reword the sentence rather than translate it.
-    frame("feature/thing/dashboard", "overview_no_squawks_body") { it.thingNoun.singular },
-    frame("feature/thing/dashboard", "overview_open_squawks") { it.squawkNoun.plural },
-    frame("feature/thing/update", "delete_thing") { LexiconFormatter.titleCase(it.thingNoun) },
-    frame("feature/thing/update", "update_thing") { LexiconFormatter.titleCase(it.thingNoun) },
-    frame("feature/squawk/update", "dismiss_squawk_warning") { it.squawkNoun.singular },
+    frame(
+      "feature/thing/dashboard",
+      "overview_no_squawks_body"
+    ) { it.thingNoun.singular },
+    frame(
+      "feature/thing/dashboard",
+      "overview_open_squawks"
+    ) { it.squawkNoun.plural },
+    frame("feature/thing/update", "delete_thing") {
+      LexiconFormatter.titleCase(
+        it.thingNoun
+      )
+    },
+    frame("feature/thing/update", "update_thing") {
+      LexiconFormatter.titleCase(
+        it.thingNoun
+      )
+    },
+    frame(
+      "feature/squawk/update",
+      "dismiss_squawk_warning"
+    ) { it.squawkNoun.singular },
     // Positions 1 and 2 are the count and the member noun, both caller-supplied.
     "feature/thing/update:delete_thing_shared_warning" to { l: Lexicon ->
       mapOf(3 to l.thingNoun.singular)
@@ -279,16 +322,37 @@ class StringSnapshotTest {
     // right word, a second preset means the generic one. That is why they are conversions and not
     // hand-written neutral copy like the technician page (#684), whose list aggregates things that
     // already exist and may not share a template.
-    frame("core/sharedassets", "add_thing") { LexiconFormatter.titleCase(it.thingNoun) },
-    frame("core/sharedassets", "empty_add_thing") { LexiconFormatter.withArticle(it.thingNoun) },
+    frame(
+      "core/sharedassets",
+      "add_thing"
+    ) { LexiconFormatter.titleCase(it.thingNoun) },
+    frame(
+      "core/sharedassets",
+      "empty_add_thing"
+    ) { LexiconFormatter.withArticle(it.thingNoun) },
     frame("feature/fleet/sharedassets", "add_first_thing") {
       LexiconFormatter.titleCase(it.thingNoun)
     },
-    frame("feature/fleet/sharedassets", "no_fleet_description") { it.thingNoun.singular },
-    frame("feature/subscription/viewing", "subscription_perk_thing_title") { it.thingNoun.plural },
-    frame("feature/subscription/viewing", "subscription_feature_sharing") { it.thingNoun.plural },
-    frame("feature/subscription/viewing", "upsell_body_add_thing") { it.thingNoun.plural },
-    frame("feature/subscription/viewing", "upsell_body_share") { it.thingNoun.plural },
+    frame(
+      "feature/fleet/sharedassets",
+      "no_fleet_description"
+    ) { it.thingNoun.singular },
+    frame(
+      "feature/subscription/viewing",
+      "subscription_perk_thing_title"
+    ) { it.thingNoun.plural },
+    frame(
+      "feature/subscription/viewing",
+      "subscription_feature_sharing"
+    ) { it.thingNoun.plural },
+    frame(
+      "feature/subscription/viewing",
+      "upsell_body_add_thing"
+    ) { it.thingNoun.plural },
+    frame(
+      "feature/subscription/viewing",
+      "upsell_body_share"
+    ) { it.thingNoun.plural },
     // Positions 1 and 2 are the tail number and the actor, both from the push payload.
     "feature/notifications/sharedassets:notification_n1_body_thing_updated" to { l: Lexicon ->
       mapOf(3 to l.thingNoun.singular)
@@ -450,8 +514,12 @@ class StringSnapshotTest {
   fun theSnapshotItselfIsIntact() {
     // A truncated or empty snapshot would make the test above pass vacuously — the failure mode
     // where a broken guard looks exactly like a satisfied one.
+    //
+    // A floor, not a census: the test above already reports additions and removals by name, so
+    // this only has to catch a file that got cut off or clobbered. Lower it deliberately when
+    // strings are legitimately deleted (66 dead ones went in #685), never to get to green.
     val snapshot = loadSnapshot()
-    assertThat(snapshot.size).isAtLeast(900)
+    assertThat(snapshot.size).isAtLeast(850)
     assertThat(snapshot).containsKey("app:app_name")
     assertThat(snapshot.getValue("app:app_name")).isEqualTo("SquawkIt")
   }

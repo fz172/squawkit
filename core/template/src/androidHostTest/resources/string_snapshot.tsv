@@ -18,7 +18,6 @@ composeApp	wiping	Wiping…
 core/sharedassets	accept	Accept
 core/sharedassets	add	Add
 core/sharedassets	add_thing	Add Aircraft
-core/sharedassets	thing_shared_badge	Shared
 core/sharedassets	all	All
 core/sharedassets	app_name	SquawkIt
 core/sharedassets	back	Back
@@ -65,6 +64,7 @@ core/sharedassets	shell_tab_tasks	Maint.
 core/sharedassets	shell_title_logs	Work Logs
 core/sharedassets	shell_title_tasks	Maintenance Tasks
 core/sharedassets	sync_changes_discarded	Unsaved changes to %1$s were discarded — your access was removed
+core/sharedassets	thing_shared_badge	Shared
 core/sharedassets	unit_hours	hrs
 core/sharedassets	unknown	Unknown
 core/sharedassets	unsaved_changes	Unsaved Changes
@@ -96,9 +96,6 @@ feature/attachment/sharedassets	remove_attachment	Remove attachment
 feature/attachment/sharedassets	sign_in_to_add_attachments	Sign in to add attachments
 feature/attachment/sharedassets	subtitle_separator	 · 
 feature/attachment/sharedassets	take_photo	Take photo
-feature/export/sharedassets	export_thing_details_incomplete	Aircraft details incomplete
-feature/export/sharedassets	export_thing_section	Aircraft
-feature/export/sharedassets	export_thing_summary_more	%1$s + %2$d more
 feature/export/sharedassets	export_all_time	All time
 feature/export/sharedassets	export_back_to_setup	Back to setup
 feature/export/sharedassets	export_clear_all	Clear all
@@ -153,7 +150,6 @@ feature/export/sharedassets	export_progress_collecting_data	Collecting aircraft 
 feature/export/sharedassets	export_progress_compressing_archive	Compressing files...
 feature/export/sharedassets	export_progress_saving_file	Saving export...
 feature/export/sharedassets	export_progress_uploading_archive	Syncing to the cloud...
-feature/export/sharedassets	export_receipt_thing	Aircraft
 feature/export/sharedassets	export_receipt_attachments	Attachments
 feature/export/sharedassets	export_receipt_attachments_included	Included
 feature/export/sharedassets	export_receipt_file_subtitle	%1$s · ZIP containing %2$s + attachments
@@ -168,6 +164,8 @@ feature/export/sharedassets	export_success_delivery_auth	Destination: signed-in 
 feature/export/sharedassets	export_success_delivery_failed	Delivery failed. Use Download for now, then try emailing it again.
 feature/export/sharedassets	export_success_delivery_failed_title	Delivery failed
 feature/export/sharedassets	export_success_title	Export ready
+feature/export/sharedassets	export_thing_details_incomplete	Aircraft details incomplete
+feature/export/sharedassets	export_thing_summary_more	%1$s + %2$d more
 feature/export/sharedassets	export_untitled_thing	Untitled aircraft
 feature/export/sharedassets	export_view_exports	View exports
 feature/export/sharedassets	feature_name_export_logs	Export Logs
@@ -287,7 +285,6 @@ feature/logs/update	tasks_section_header	Maintenance Tasks Completed
 feature/logs/update	type_make_model_serial	%1$s - %2$s (%3$s)
 feature/logs/update	work_description_required	Work Description *
 feature/logs/viewing	affected_maintenance_tasks	Affected Maintenance Tasks
-feature/logs/viewing	thing_data	Aircraft Data
 feature/logs/viewing	clear_filter	Clear Filter
 feature/logs/viewing	collapse_details	Collapse details
 feature/logs/viewing	edit_thing	Update aircraft
@@ -309,6 +306,7 @@ feature/logs/viewing	resolved_squawks	Resolved Squawks
 feature/logs/viewing	s_n_empty	No S/N
 feature/logs/viewing	s_n_placeholder	S/N: %1$s
 feature/logs/viewing	search_logs	Search logs…
+feature/logs/viewing	thing_data	Aircraft Data
 feature/logs/viewing	total_logs	Total Logs
 feature/logs/viewing	unknown_squawk	Unknown squawk (%1$s)
 feature/notifications/devoptions	notifications_devoptions_diagnostics_at	Last scan: %1$s
@@ -368,17 +366,15 @@ feature/notifications/sharedassets	notification_body_overdue_single	%1$s: task i
 feature/notifications/sharedassets	notification_body_priority_raised_plural	%1$s: %2$d squawks increased in priority
 feature/notifications/sharedassets	notification_body_priority_raised_single	%1$s: priority raised from %2$s to %3$s\n\n%4$s
 feature/notifications/sharedassets	notification_n1_actor_fallback	A collaborator
-feature/notifications/sharedassets	notification_n1_body_thing_updated	%1$s: %2$s updated the aircraft
 feature/notifications/sharedassets	notification_n1_body_record_created	%1$s: %2$s created a new %3$s\n\n%4$s
 feature/notifications/sharedassets	notification_n1_body_record_deleted	%1$s: %2$s deleted a %3$s\n\n%4$s
 feature/notifications/sharedassets	notification_n1_body_record_updated	%1$s: %2$s updated a %3$s\n\n%4$s
 feature/notifications/sharedassets	notification_n1_body_single	%1$s made a change to %2$s
 feature/notifications/sharedassets	notification_n1_body_squawk_created	%1$s: %2$s created a new squawk issue\n\n%3$s
 feature/notifications/sharedassets	notification_n1_body_squawk_raised	%1$s: %2$s raised the priority of 1 squawk issue\n\n%3$s
+feature/notifications/sharedassets	notification_n1_body_thing_updated	%1$s: %2$s updated the aircraft
 feature/notifications/sharedassets	notification_n1_noun_log	logbook entry
-feature/notifications/sharedassets	notification_n1_noun_squawk	squawk
 feature/notifications/sharedassets	notification_n1_noun_task	task
-feature/notifications/sharedassets	notification_n1_section_thing	Aircraft
 feature/notifications/sharedassets	notification_n1_section_logbook	Logbook
 feature/notifications/sharedassets	notification_n1_section_logbook_lower	logbook entries
 feature/notifications/sharedassets	notification_n1_section_squawks	Squawks
@@ -486,9 +482,9 @@ feature/sharing/sharedassets	manage_access_leave	Leave shared aircraft
 feature/sharing/sharedassets	manage_access_member_count_plural	%1$d people
 feature/sharing/sharedassets	manage_access_member_count_singular	1 person
 feature/sharing/sharedassets	manage_access_people_section	People with access
-feature/sharing/sharedassets	manage_access_perm_thing_details	Aircraft details
 feature/sharing/sharedassets	manage_access_perm_manage_access	Manage access
 feature/sharing/sharedassets	manage_access_perm_squawks_tasks	Squawks and tasks
+feature/sharing/sharedassets	manage_access_perm_thing_details	Aircraft details
 feature/sharing/sharedassets	manage_access_perm_work_logs	Work logs
 feature/sharing/sharedassets	manage_access_revoke	Remove access
 feature/sharing/sharedassets	manage_access_role_co_owner	Co-owner
@@ -527,14 +523,14 @@ feature/sharing/sharedassets	role_confirm_title	Change %1$s’s role to %2$s?
 feature/sharing/sharedassets	sharing_sync_off_body	Sharing needs Cloud Sync. Turn it on in Settings to invite people or manage access. Aircraft already shared with you stay readable, but will not update.
 feature/sharing/sharedassets	sharing_sync_off_title	Cloud Sync is off
 feature/squawk/sharedassets	add_squawk	New squawk
-feature/squawk/sharedassets	down_alert_subtitle	AOG squawks must be resolved before flight
-feature/squawk/sharedassets	down_alert_title	Aircraft on Ground
 feature/squawk/sharedassets	closed_with_count	CLOSED (%1$d)
 feature/squawk/sharedassets	dismiss_reason_duplicate	Duplicate
 feature/squawk/sharedassets	dismiss_reason_intended_behavior	Intended behavior
 feature/squawk/sharedassets	dismiss_reason_not_reproducible	Not reproducible
 feature/squawk/sharedassets	dismiss_reason_obsolete	Obsolete
 feature/squawk/sharedassets	dismissed_label	Dismissed — %1$s
+feature/squawk/sharedassets	down_alert_subtitle	AOG squawks must be resolved before flight
+feature/squawk/sharedassets	down_alert_title	Aircraft on Ground
 feature/squawk/sharedassets	edit_squawk	Update squawk
 feature/squawk/sharedassets	no_closed_squawks	No closed squawks yet.
 feature/squawk/sharedassets	no_open_squawks	No open squawks
@@ -570,7 +566,6 @@ feature/squawk/update	fixed_option_label	Fixed
 feature/squawk/update	reopen_issue	Reopen Issue
 feature/squawk/update	resolve_issue	Resolve
 feature/stresstest	stress_test_complete	Generation complete
-feature/stresstest	stress_test_config_thing	Aircraft
 feature/stresstest	stress_test_config_blades_per_engine	Blades per engine
 feature/stresstest	stress_test_config_engines	Engines
 feature/stresstest	stress_test_config_log_entries	Log entries
@@ -578,22 +573,22 @@ feature/stresstest	stress_test_config_records	Maintenance records
 feature/stresstest	stress_test_config_squawks	Squawk count
 feature/stresstest	stress_test_config_tasks	Task count
 feature/stresstest	stress_test_config_technicians	Technician count
+feature/stresstest	stress_test_config_thing	Thing
 feature/stresstest	stress_test_decrement	−
 feature/stresstest	stress_test_description	Generates realistic aviation records for UI stress testing. Data is written to your account.
 feature/stresstest	stress_test_error_message	Error: %1$s
 feature/stresstest	stress_test_generate	Generate Fake Data
 feature/stresstest	stress_test_increment	+
 feature/stresstest	stress_test_progress_count	%1$d / %2$d
-feature/stresstest	stress_test_progress_creating_thing	Creating aircraft %1$s…
 feature/stresstest	stress_test_progress_creating_log	Creating log entry…
 feature/stresstest	stress_test_progress_creating_squawk	Creating squawk: %1$s…
 feature/stresstest	stress_test_progress_creating_task	Creating task: %1$s…
 feature/stresstest	stress_test_progress_creating_technician	Creating technician %1$s…
+feature/stresstest	stress_test_progress_creating_thing	Creating thing %1$s…
 feature/stresstest	stress_test_progress_dismissing_squawk	Dismissing squawk…
 feature/stresstest	stress_test_progress_marking_squawk_addressed	Marking squawk addressed…
 feature/stresstest	stress_test_regenerate	Generate Another
 feature/stresstest	stress_test_summary_addressed_squawks	  • %1$d addressed
-feature/stresstest	stress_test_summary_thing	Aircraft: %1$s %2$s (%3$s)
 feature/stresstest	stress_test_summary_dismissed_squawks	  • %1$d dismissed
 feature/stresstest	stress_test_summary_engines	Engines: %1$d × %2$s
 feature/stresstest	stress_test_summary_log_entries	%1$d log entries created (span: 4 years)
@@ -603,15 +598,14 @@ feature/stresstest	stress_test_summary_squawks	%1$d squawk(s) created:
 feature/stresstest	stress_test_summary_tail	Tail: %1$s · S/N: %2$s
 feature/stresstest	stress_test_summary_tasks	%1$d task(s) created
 feature/stresstest	stress_test_summary_technicians	%1$d technician(s) created
+feature/stresstest	stress_test_summary_thing	Thing: %1$s %2$s (%3$s)
 feature/stresstest	stress_test_summary_unknown_engine	-
 feature/stresstest	stress_test_title	Fake Data Generator
 feature/stresstest	stress_test_unknown_error	Unknown error
 feature/stresstest	stress_test_working	Working…
 feature/stresstest/config	debug_tools_header	DEBUG TOOLS
-feature/stresstest/config	fake_data_generator_description	Populate fake aircraft, logs, squawks, and tasks for UI testing
+feature/stresstest/config	fake_data_generator_description	Populate fake things, logs, squawks, and tasks for UI testing
 feature/subscription/viewing	subscription_activating	Payment received. Activating SquawkIt Pro…
-feature/subscription/viewing	subscription_thing_free	2
-feature/subscription/viewing	subscription_thing_unlimited	Unlimited
 feature/subscription/viewing	subscription_billing_note	Monthly and annual billing, price and payment method are chosen in the store.
 feature/subscription/viewing	subscription_cell_excluded	—
 feature/subscription/viewing	subscription_cell_unlimited	∞
@@ -639,12 +633,12 @@ feature/subscription/viewing	subscription_managed_elsewhere_body_web	Subscriptio
 feature/subscription/viewing	subscription_managed_elsewhere_caption	Your Pro features stay active everywhere you sign in.
 feature/subscription/viewing	subscription_managed_elsewhere_title	Managed on another platform
 feature/subscription/viewing	subscription_member_since	Member since
-feature/subscription/viewing	subscription_perk_thing_body	Whole fleet in one logbook
-feature/subscription/viewing	subscription_perk_thing_title	Unlimited aircraft
 feature/subscription/viewing	subscription_perk_attachments_body	Photos and files on any log
 feature/subscription/viewing	subscription_perk_attachments_title	Attachments
 feature/subscription/viewing	subscription_perk_sharing_body	Invite owners and technicians
 feature/subscription/viewing	subscription_perk_sharing_title	Sharing
+feature/subscription/viewing	subscription_perk_thing_body	Whole fleet in one logbook
+feature/subscription/viewing	subscription_perk_thing_title	Unlimited aircraft
 feature/subscription/viewing	subscription_platform_amazon	Amazon Appstore
 feature/subscription/viewing	subscription_platform_app_store	App Store
 feature/subscription/viewing	subscription_platform_mac_app_store	Mac App Store
@@ -660,6 +654,8 @@ feature/subscription/viewing	subscription_status_canceled	Canceled
 feature/subscription/viewing	subscription_status_grace	Payment problem
 feature/subscription/viewing	subscription_status_trialing	Free trial
 feature/subscription/viewing	subscription_storage_used	Storage used
+feature/subscription/viewing	subscription_thing_free	2
+feature/subscription/viewing	subscription_thing_unlimited	Unlimited
 feature/subscription/viewing	subscription_title	Subscription
 feature/subscription/viewing	subscription_unlocked_header	Unlocked with Pro
 feature/subscription/viewing	upsell_body_add_thing	Add unlimited aircraft with SquawkIt Pro.
@@ -887,7 +883,6 @@ feature/technician/sharedassets	performed_by	Performed By
 feature/technician/sharedassets	select_technician	Select Technician
 feature/technician/sharedassets	technician	Technician
 feature/technician/sharedassets	you_badge	You
-feature/thing/dashboard	thing_load_error	Couldn't load this aircraft
 feature/thing/dashboard	overview_all_logs	All logs
 feature/thing/dashboard	overview_next_due	Next due
 feature/thing/dashboard	overview_no_logs_body	Add the first maintenance entry to start the aircraft record.
@@ -897,6 +892,7 @@ feature/thing/dashboard	overview_no_tasks_body	Scheduled maintenance is up to da
 feature/thing/dashboard	overview_no_tasks_title	No upcoming tasks
 feature/thing/dashboard	overview_open_squawks	Open squawks
 feature/thing/dashboard	overview_recent_activity	Recent activity
+feature/thing/dashboard	thing_load_error	Couldn't load this aircraft
 feature/thing/update	add_blade	Add blade
 feature/thing/update	add_engine	Add Engine
 feature/thing/update	blade_serial_numbers	Blade Serial numbers

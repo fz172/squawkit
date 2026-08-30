@@ -10,7 +10,6 @@
   <string name="export_format_pick_one">Pick at least one format</string>
 
   <!-- Setup: aircraft -->
-  <string name="export_thing_section">Aircraft</string>
   <string name="export_select_all">Select all</string>
   <string name="export_clear_all">Clear all</string>
   <string name="export_untitled_thing">Untitled aircraft</string>
@@ -51,7 +50,6 @@
   <string name="export_success_delivery_failed">Delivery failed. Use Download for now, then try emailing it again.</string>
   <string name="export_success_delivery_auth">Destination: signed-in account email %1$s</string>
   <string name="export_receipt_file_subtitle">%1$s · ZIP containing %2$s + attachments</string>
-  <string name="export_receipt_thing">Aircraft</string>
   <string name="export_receipt_range">Range</string>
   <string name="export_receipt_attachments">Attachments</string>
   <string name="export_receipt_attachments_included">Included</string>

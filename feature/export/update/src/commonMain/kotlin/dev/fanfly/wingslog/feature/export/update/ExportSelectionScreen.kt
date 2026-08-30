@@ -6,9 +6,6 @@
 
 package dev.fanfly.wingslog.feature.export.update
 
-import dev.fanfly.wingslog.core.template.LexiconFormatter
-import dev.fanfly.wingslog.core.template.LocalThingLexicon
-import dev.fanfly.wingslog.core.template.thingNoun
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -91,6 +88,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
+import dev.fanfly.wingslog.core.template.LexiconFormatter
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.thingNoun
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedTopBar
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
 import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
@@ -122,9 +122,6 @@ import wingslog.core.sharedassets.generated.resources.done
 import wingslog.core.sharedassets.generated.resources.empty_add_thing
 import wingslog.core.sharedassets.generated.resources.retry
 import wingslog.feature.export.sharedassets.generated.resources.Res
-import wingslog.feature.export.sharedassets.generated.resources.export_thing_details_incomplete
-import wingslog.feature.export.sharedassets.generated.resources.export_thing_section
-import wingslog.feature.export.sharedassets.generated.resources.export_thing_summary_more
 import wingslog.feature.export.sharedassets.generated.resources.export_all_time
 import wingslog.feature.export.sharedassets.generated.resources.export_back_to_setup
 import wingslog.feature.export.sharedassets.generated.resources.export_clear_all
@@ -156,7 +153,6 @@ import wingslog.feature.export.sharedassets.generated.resources.export_progress_
 import wingslog.feature.export.sharedassets.generated.resources.export_progress_compressing_archive
 import wingslog.feature.export.sharedassets.generated.resources.export_progress_saving_file
 import wingslog.feature.export.sharedassets.generated.resources.export_progress_uploading_archive
-import wingslog.feature.export.sharedassets.generated.resources.export_receipt_thing
 import wingslog.feature.export.sharedassets.generated.resources.export_receipt_attachments
 import wingslog.feature.export.sharedassets.generated.resources.export_receipt_attachments_included
 import wingslog.feature.export.sharedassets.generated.resources.export_receipt_file_subtitle
@@ -171,6 +167,8 @@ import wingslog.feature.export.sharedassets.generated.resources.export_success_d
 import wingslog.feature.export.sharedassets.generated.resources.export_success_delivery_failed
 import wingslog.feature.export.sharedassets.generated.resources.export_success_delivery_failed_title
 import wingslog.feature.export.sharedassets.generated.resources.export_success_title
+import wingslog.feature.export.sharedassets.generated.resources.export_thing_details_incomplete
+import wingslog.feature.export.sharedassets.generated.resources.export_thing_summary_more
 import wingslog.feature.export.sharedassets.generated.resources.export_untitled_thing
 import wingslog.feature.export.sharedassets.generated.resources.export_view_exports
 import wingslog.feature.export.sharedassets.generated.resources.feature_name_export_logs
@@ -357,7 +355,7 @@ private fun ExportSetupList(
     item {
       val allSelected = state.selectedThingIds.size == state.thing.size
       Section(
-        title = stringResource(Res.string.export_thing_section),
+        title = LexiconFormatter.titleCase(LocalThingLexicon.current.thingNoun),
         action = if (state.thing.size > 1) {
           {
             TextButton(onClick = if (allSelected) onClearAll else onSelectAll) {
@@ -1221,7 +1219,7 @@ private fun ReceiptCard(
     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
     ReceiptRow(
       Icons.Default.Flight,
-      stringResource(Res.string.export_receipt_thing),
+      LexiconFormatter.titleCase(LocalThingLexicon.current.thingNoun),
       thingSummary,
       mono = true
     )
