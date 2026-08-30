@@ -1,8 +1,5 @@
 package dev.fanfly.wingslog.feature.subscription.viewing
 
-import dev.fanfly.wingslog.core.template.LexiconFormatter
-import dev.fanfly.wingslog.core.template.LocalThingLexicon
-import dev.fanfly.wingslog.core.template.thingNoun
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -53,6 +50,7 @@ import wingslog.feature.subscription.viewing.generated.resources.subscription_fe
 import wingslog.feature.subscription.viewing.generated.resources.subscription_feature_export
 import wingslog.feature.subscription.viewing.generated.resources.subscription_feature_records
 import wingslog.feature.subscription.viewing.generated.resources.subscription_feature_sharing
+import wingslog.feature.subscription.viewing.generated.resources.subscription_feature_thing
 import wingslog.feature.subscription.viewing.generated.resources.subscription_includes_header
 import wingslog.feature.subscription.viewing.generated.resources.subscription_purchase_on_mobile
 import wingslog.feature.subscription.viewing.generated.resources.subscription_sign_in_to_subscribe
@@ -161,7 +159,7 @@ private fun ComparisonTable(isAdsSupported: Boolean) {
   SubscriptionPanel {
     CompareHeader()
     CompareRow(
-      label = LexiconFormatter.titleCase(LocalThingLexicon.current.thingNoun),
+      label = stringResource(Res.string.subscription_feature_thing),
       free = Cell.Label(stringResource(Res.string.subscription_thing_free)),
       pro = Cell.Unlimited,
     )
@@ -200,10 +198,7 @@ private fun ComparisonTable(isAdsSupported: Boolean) {
       Cell.Yes
     )
     CompareRow(
-      label = stringResource(
-        Res.string.subscription_feature_sharing,
-        LocalThingLexicon.current.thingNoun.plural,
-      ),
+      label = stringResource(Res.string.subscription_feature_sharing),
       free = Cell.No,
       pro = Cell.Yes,
       divider = false,

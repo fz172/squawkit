@@ -1,7 +1,5 @@
 package dev.fanfly.wingslog.feature.subscription.viewing
 
-import dev.fanfly.wingslog.core.template.thingNoun
-import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -51,15 +49,9 @@ enum class UpsellTrigger {
  */
 @Composable
 private fun UpsellTrigger.body(): String = when (this) {
-  UpsellTrigger.ADD_AIRCRAFT -> stringResource(
-    Res.string.upsell_body_add_thing,
-    LocalThingLexicon.current.thingNoun.plural,
-  )
+  UpsellTrigger.ADD_AIRCRAFT -> stringResource(Res.string.upsell_body_add_thing)
 
-  UpsellTrigger.SHARE_HOST -> stringResource(
-    Res.string.upsell_body_share,
-    LocalThingLexicon.current.thingNoun.plural,
-  )
+  UpsellTrigger.SHARE_HOST -> stringResource(Res.string.upsell_body_share)
 
   UpsellTrigger.ATTACHMENT_UPLOAD -> stringResource(Res.string.upsell_body_attachment)
   UpsellTrigger.EMAIL_EXPORT -> stringResource(Res.string.upsell_body_email)

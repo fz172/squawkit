@@ -12,9 +12,9 @@
   <!-- Setup: aircraft -->
   <string name="export_select_all">Select all</string>
   <string name="export_clear_all">Clear all</string>
-  <string name="export_untitled_thing">Untitled aircraft</string>
-  <string name="export_thing_details_incomplete">Aircraft details incomplete</string>
-  <string name="export_no_thing_title">No aircraft to export</string>
+  <string name="export_untitled_thing">Untitled <xliff:g example="aircraft">%1$s</xliff:g></string>
+  <string name="export_thing_details_incomplete"><xliff:g example="Aircraft">%1$s</xliff:g> details incomplete</string>
+  <string name="export_no_thing_title">No <xliff:g example="aircraft">%1$s</xliff:g> to export</string>
 
   <!-- Setup: date range -->
   <string name="export_date_range_section">Date range</string>
@@ -27,14 +27,14 @@
   <string name="export_custom_end_date">End date</string>
 
   <!-- Setup: footer -->
-  <string name="export_footer_thing_count"><xliff:g example="3">%1$d</xliff:g> aircraft</string>
+  <string name="export_footer_thing_count"><xliff:g example="3">%1$d</xliff:g> <xliff:g example="aircraft">%2$s</xliff:g></string>
   <string name="export_estimated_size">~<xliff:g example="2.4 MB">%1$s</xliff:g></string>
   <string name="export_primary_action">Start</string>
 
   <!-- Running -->
   <string name="export_running_title">Preparing export</string>
   <string name="export_running_stage_counter"><xliff:g example="3">%1$d</xliff:g> / <xliff:g example="3">%2$d</xliff:g></string>
-  <string name="export_progress_collecting_data">Collecting aircraft data...</string>
+  <string name="export_progress_collecting_data">Collecting <xliff:g example="aircraft">%1$s</xliff:g> data...</string>
   <string name="export_progress_building_archive">Generating reports...</string>
   <string name="export_progress_compressing_archive">Compressing files...</string>
   <string name="export_progress_saving_file">Saving export...</string>
@@ -73,7 +73,7 @@
   <string name="export_history_action">Export history</string>
   <string name="export_history_title">Export history</string>
   <string name="export_history_empty_title">No exports yet</string>
-  <string name="export_history_empty_body">Generate a printable PDF or spreadsheet of your maintenance logs to share with your mechanic, IA, or insurance.</string>
+  <string name="export_history_empty_body">Generate a printable PDF or spreadsheet of your maintenance logs to share with whoever needs them.</string>
   <string name="export_history_new">New export</string>
   <string name="export_history_item_meta"><xliff:g example="12 Mar 2026">%1$s</xliff:g> · <xliff:g example="3">%2$s</xliff:g></string>
   <string name="export_history_delivery_sent">Email sent</string>

@@ -478,9 +478,17 @@ private fun AircraftOptionRow(
   onClick: () -> Unit,
 ) {
   GroupedCheckboxRow(
-    title = thing.tailNumber.ifBlank { stringResource(Res.string.export_untitled_thing) },
+    title = thing.tailNumber.ifBlank {
+      stringResource(
+        Res.string.export_untitled_thing,
+        LocalThingLexicon.current.thingNoun.singular,
+      )
+    },
     subtitle = thing.makeModel.ifBlank {
-      stringResource(Res.string.export_thing_details_incomplete)
+      stringResource(
+        Res.string.export_thing_details_incomplete,
+        LexiconFormatter.sentenceCase(LocalThingLexicon.current.thingNoun),
+      )
     },
     titleStyle = WingslogTypography.dataLarge,
     checked = selected,
@@ -950,7 +958,11 @@ private fun exportRunningPhases(): List<ExportProgressStep> = listOf(
 
 @Composable
 private fun ExportProgressStep.label(): String = when (this) {
-  ExportProgressStep.COLLECTING_DATA -> stringResource(Res.string.export_progress_collecting_data)
+  ExportProgressStep.COLLECTING_DATA -> stringResource(
+    Res.string.export_progress_collecting_data,
+    LocalThingLexicon.current.thingNoun.singular,
+  )
+
   ExportProgressStep.BUILDING_ARCHIVE -> stringResource(Res.string.export_progress_building_archive)
   ExportProgressStep.COMPRESSING_ARCHIVE -> stringResource(Res.string.export_progress_compressing_archive)
   ExportProgressStep.SAVING_FILE -> stringResource(Res.string.export_progress_saving_file)
@@ -1471,7 +1483,10 @@ private fun EmptyAircraftContent(
     heroIcon = Icons.Default.FileDownload,
     heroColor = MaterialTheme.colorScheme.primary,
     heroContainer = MaterialTheme.colorScheme.primary.copy(alpha = 0.13f),
-    title = stringResource(Res.string.export_no_thing_title),
+    title = stringResource(
+      Res.string.export_no_thing_title,
+      LocalThingLexicon.current.thingNoun.plural,
+    ),
     subtitle = stringResource(
       CoreRes.string.empty_add_thing,
       LexiconFormatter.withArticle(LocalThingLexicon.current.thingNoun),
