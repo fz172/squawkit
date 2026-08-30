@@ -1,8 +1,8 @@
 package dev.fanfly.wingslog.feature.shell.viewmodel
 
 import dev.fanfly.wingslog.core.template.CurrentThingLexicon
-import dev.fanfly.wingslog.core.template.GenericLexicon
 import dev.fanfly.wingslog.core.template.squawkNoun
+import dev.fanfly.wingslog.core.template.thingNoun
 import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.thing.Technician
@@ -130,9 +130,6 @@ class AdaptiveShellViewModelTest {
     // they cannot read a CompositionLocal the shell installs. If this stops being published they
     // fall back to the generic lexicon and render "New issue" where the app says "New squawk" —
     // a visible regression with a green test suite.
-    assertThat(currentThingLexicon.lexicon.value)
-      .isEqualTo(GenericLexicon.LEXICON)
-
     fleet.value = listOf(thing("a1", "N1"))
     viewModel()
 
@@ -140,11 +137,15 @@ class AdaptiveShellViewModelTest {
   }
 
   @Test
-  fun fallsBackToTheGenericLexiconWhenTheFleetIsEmpty() = runTest(testDispatcher) {
+  fun anEmptyFleetStillSpeaksTheSolePresetsWords() = runTest(testDispatcher) {
+    // A technician with no thing of their own lands on the redeem / invite-code flow as their
+    // first screen, with nothing selected. While airplane is the only preset it is the only right
+    // answer there — the generic lexicon would say "Join a shared thing" to a user the app has
+    // always said "Join a shared aircraft" to.
     fleet.value = emptyList()
     viewModel()
 
-    assertThat(currentThingLexicon.lexicon.value).isEqualTo(GenericLexicon.LEXICON)
+    assertThat(currentThingLexicon.lexicon.value.thingNoun.singular).isEqualTo("aircraft")
   }
 
   private fun thing(
@@ -192,7 +193,7 @@ class AdaptiveShellViewModelTest {
   // ShellThing be built with a lexicon no template would ever produce.
   private val templateRegistry = BakedInTemplateRegistry()
 
-  private val currentThingLexicon = CurrentThingLexicon()
+  private val currentThingLexicon = CurrentThingLexicon(templateRegistry)
 
   private fun viewModel() = AdaptiveShellViewModel(
     fleetManager = fleetManager,

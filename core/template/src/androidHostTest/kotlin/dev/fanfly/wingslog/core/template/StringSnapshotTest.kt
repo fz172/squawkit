@@ -97,7 +97,82 @@ class StringSnapshotTest {
     squawkFrame("squawk_updated") { LexiconFormatter.sentenceCase(it) },
     squawkFrame("squawk_dismissed") { LexiconFormatter.sentenceCase(it) },
     squawkFrame("squawk_reopened") { LexiconFormatter.sentenceCase(it) },
+
+    // feature/sharing/sharedassets (#656). Four of this module's domain strings are absent for the
+    // same reason as the squawk module's: "Technician" (twice), "a technician" and "Work logs" are
+    // whole lexicon values rather than frames, so they are #657's.
+    sharing("enter_code_instructions") { mapOf(1 to it.thingNoun.singular) },
+    sharing("enter_code_title") { mapOf(1 to it.thingNoun.singular) },
+    sharing("invite_code_hint") { mapOf(1 to it.thingNoun.singular) },
+    sharing("invite_title") { mapOf(1 to it.thingNoun.singular) },
+    sharing("leave_confirm_title") { mapOf(1 to it.thingNoun.singular) },
+    sharing("manage_access_leave") { mapOf(1 to it.thingNoun.singular) },
+    sharing("manage_access_help_footer") { mapOf(1 to it.thingNoun.singular) },
+    sharing("redeem_already_member_body") { mapOf(1 to it.thingNoun.singular) },
+    sharing("revoke_confirm_body") { mapOf(1 to it.thingNoun.singular) },
+    sharing("role_confirm_body") { mapOf(1 to it.thingNoun.singular) },
+    sharing("leave_confirm_body") { mapOf(1 to LexiconFormatter.lowerFirst(it.collection_label)) },
+    sharing("manage_access_perm_aircraft_details") {
+      mapOf(1 to LexiconFormatter.sentenceCase(it.thingNoun))
+    },
+    sharing("redeem_confirm_title") { mapOf(1 to LexiconFormatter.sentenceCase(it.thingNoun)) },
+    sharing("sharing_sync_off_body") {
+      mapOf(1 to LexiconFormatter.sentenceCasePlural(it.thingNoun))
+    },
+    sharing("manage_access_perm_squawks_tasks") {
+      // Only the squawk noun. "tasks" stays literal because the airplane task noun is
+      // "maintenance tasks", and substituting it would reword the string to "Squawks and
+      // maintenance tasks" — a product change wearing a refactor's clothes.
+      mapOf(1 to LexiconFormatter.sentenceCasePlural(it.squawkNoun))
+    },
+    sharing("manage_access_empty_desc") {
+      mapOf(1 to it.technicianNoun.singular, 2 to it.thingNoun.singular)
+    },
+    sharing("manage_access_role_co_owner_desc") {
+      mapOf(1 to it.technicianNoun.singular, 2 to it.thingNoun.singular)
+    },
+    sharing("manage_access_solo_body") {
+      // "mechanic" is left literal for the same reason: the technician noun is "technician".
+      mapOf(1 to it.squawkNoun.plural, 2 to it.thingNoun.singular)
+    },
+    sharing("manage_access_role_technician_desc") {
+      mapOf(
+        1 to it.squawkNoun.plural,
+        2 to it.taskNoun.plural,
+        3 to it.logNoun.plural,
+        4 to it.thingNoun.singular,
+      )
+    },
+    sharing("redeem_confirm_body") {
+      mapOf(
+        1 to LexiconFormatter.withArticle(it.thingNoun),
+        2 to LexiconFormatter.lowerFirst(it.collection_label),
+      )
+    },
+    // Position 1 is the inviter's name, supplied by the caller, so the lexicon starts at 4.
+    sharing("redeem_confirm_body_full") {
+      mapOf(4 to LexiconFormatter.lowerFirst(it.collection_label))
+    },
+    sharing("redeem_confirm_body_role") {
+      mapOf(
+        2 to LexiconFormatter.withArticle(it.thingNoun),
+        3 to LexiconFormatter.lowerFirst(it.collection_label),
+      )
+    },
+    sharing("redeem_success_body") {
+      mapOf(
+        2 to it.thingNoun.singular,
+        3 to LexiconFormatter.lowerFirst(it.collection_label),
+      )
+    },
   )
+
+  /** A frame in `feature/sharing/sharedassets`. */
+  private fun sharing(
+    resource: String,
+    args: (Lexicon) -> Map<Int, String>,
+  ): Pair<String, (Lexicon) -> Map<Int, String>> =
+    "feature/sharing/sharedassets:$resource" to args
 
   /** A single-argument frame in `feature/squawk/sharedassets` filled from the squawk noun. */
   private fun squawkFrame(
@@ -192,6 +267,29 @@ class StringSnapshotTest {
 
     // Two-digit positions must not be truncated by a prefix match on %1$s.
     assertThat("%1\$s %11\$s".fill(mapOf(11 to "x", 1 to "y"))).isEqualTo("y x")
+  }
+
+  @Test
+  fun noConvertedStringIsReadWithoutItsArguments() {
+    // The failure this exists for: adding "%1${'$'}s" to a string does not break compilation, so a
+    // call site left as stringResource(Res.string.x) still builds and renders the placeholder
+    // literally — "Leave this %1${'$'}s?" on screen. Nothing else catches it. The snapshot test
+    // checks the resource's recipe, not how it is read, and there is no compiler error to trip on.
+    val offenders = repoRoot().walkTopDown()
+      .filter { it.extension == "kt" && "/build/" !in it.path }
+      .flatMap { file ->
+        val text = file.readText()
+        LEXICON_ARGS.keys.map { it.substringAfter(":") }
+          .filter { resource ->
+            // A bare read: the resource name followed directly by ")" with no argument between.
+            Regex("""stringResource\(\s*[A-Za-z]*Res\.string\.$resource\s*\)""").containsMatchIn(text) ||
+              Regex("""getString\(\s*[A-Za-z]*Res\.string\.$resource\s*\)""").containsMatchIn(text)
+          }
+          .map { "${file.name}: $it" }
+      }
+      .toList()
+
+    assertThat(offenders).isEmpty()
   }
 
   @Test

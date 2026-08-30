@@ -1,5 +1,7 @@
 package dev.fanfly.wingslog.feature.sharing.viewing
 
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.thingNoun
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -113,13 +115,19 @@ fun EnterInviteCodeScreen(
         }
         Spacer(Modifier.height(Spacing.large))
         Text(
-          text = stringResource(Res.string.enter_code_title),
+          text = stringResource(
+            Res.string.enter_code_title,
+            LocalThingLexicon.current.thingNoun.singular,
+          ),
           style = MaterialTheme.typography.headlineSmall,
           textAlign = TextAlign.Center,
         )
         Spacer(Modifier.height(Spacing.small))
         Text(
-          text = stringResource(Res.string.enter_code_instructions),
+          text = stringResource(
+            Res.string.enter_code_instructions,
+            LocalThingLexicon.current.thingNoun.singular,
+          ),
           style = MaterialTheme.typography.bodyMedium,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
           textAlign = TextAlign.Center,

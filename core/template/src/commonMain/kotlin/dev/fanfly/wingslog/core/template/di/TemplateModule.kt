@@ -13,5 +13,5 @@ val templateModule = module {
   single<TemplateRegistry> { BakedInTemplateRegistry() }
   // App-scoped on purpose: the root providers and the shell ViewModel must see one
   // instance, or the form dialogs read a lexicon nobody is updating.
-  single<CurrentThingLexicon> { CurrentThingLexicon() }
+  single<CurrentThingLexicon> { CurrentThingLexicon(get<TemplateRegistry>()) }
 }

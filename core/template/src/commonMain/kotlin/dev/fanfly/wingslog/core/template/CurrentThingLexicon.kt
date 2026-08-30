@@ -21,12 +21,32 @@ import kotlinx.coroutines.flow.asStateFlow
  * Written by the shell's ViewModel, which is the authority on what is selected, and read above both
  * NavHosts (`AppEntry` on Android/iOS, `WebApp` on web) so content and dialogs see the same words.
  */
-class CurrentThingLexicon {
+class CurrentThingLexicon(registry: TemplateRegistry) {
 
-  private val _lexicon = MutableStateFlow(GenericLexicon.LEXICON)
+  /**
+   * What to say when nothing is selected — an empty fleet, or before the first load.
+   *
+   * **While exactly one preset exists it is the only correct answer**, so it is used rather than
+   * [GenericLexicon]. This is not a Phase 2 shortcut: the surfaces that render with no selection
+   * include the redeem and invite-code flows, which a technician with no thing of their own reaches
+   * as their *first* screen. Falling back to generic there would show "Join a shared thing" to a
+   * user the app has always said "Join a shared aircraft" to — a visible regression in the phase
+   * whose entire promise is that nothing changes.
+   *
+   * It retires itself. The moment a second canonical preset ships there is no single right word,
+   * and this returns the generic lexicon without anyone editing it (design §9).
+   */
+  private val default: Lexicon =
+    registry.canonical().singleOrNull()?.lexicon ?: GenericLexicon.LEXICON
 
-  /** Generic until a thing is selected — which is also the right answer for an empty fleet. */
+  private val _lexicon = MutableStateFlow(default)
+
   val lexicon: StateFlow<Lexicon> = _lexicon.asStateFlow()
+
+  /** Restores the no-selection default — an empty fleet is not the same as "keep the last word". */
+  fun clear() {
+    _lexicon.value = default
+  }
 
   fun set(value: Lexicon) {
     _lexicon.value = value

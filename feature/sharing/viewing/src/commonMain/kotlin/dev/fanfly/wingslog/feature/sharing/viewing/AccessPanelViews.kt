@@ -1,5 +1,12 @@
 package dev.fanfly.wingslog.feature.sharing.viewing
 
+import dev.fanfly.wingslog.core.template.LexiconFormatter
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.logNoun
+import dev.fanfly.wingslog.core.template.squawkNoun
+import dev.fanfly.wingslog.core.template.taskNoun
+import dev.fanfly.wingslog.core.template.technicianNoun
+import dev.fanfly.wingslog.core.template.thingNoun
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -159,7 +166,10 @@ internal fun MainView(
       OutlinedButton(onClick = onLeave, modifier = Modifier.fillMaxWidth()) {
         Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = null)
         Spacer(Modifier.width(Spacing.small))
-        Text(stringResource(Res.string.manage_access_leave))
+        Text(stringResource(
+          Res.string.manage_access_leave,
+          LocalThingLexicon.current.thingNoun.singular,
+        ))
       }
     }
   }
@@ -239,7 +249,10 @@ internal fun CodeView(state: ManageAccessUiState) {
           letterSpacing = 4.sp,
         )
         Text(
-          stringResource(Res.string.invite_code_hint),
+          stringResource(
+            Res.string.invite_code_hint,
+            LocalThingLexicon.current.thingNoun.singular,
+          ),
           style = MaterialTheme.typography.bodySmall,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
           textAlign = TextAlign.Center,
@@ -369,13 +382,23 @@ private fun RoleOptionCard(role: ShareRole, selected: Boolean, onClick: () -> Un
   val (name, desc, icon) = when (role) {
     ShareRole.TECHNICIAN -> Triple(
       stringResource(Res.string.invite_role_technician),
-      stringResource(Res.string.manage_access_role_technician_desc),
+      stringResource(
+        Res.string.manage_access_role_technician_desc,
+        LocalThingLexicon.current.squawkNoun.plural,
+        LocalThingLexicon.current.taskNoun.plural,
+        LocalThingLexicon.current.logNoun.plural,
+        LocalThingLexicon.current.thingNoun.singular,
+      ),
       Icons.Filled.Construction,
     )
 
     ShareRole.OWNER -> Triple(
       stringResource(Res.string.invite_role_owner),
-      stringResource(Res.string.manage_access_role_co_owner_desc),
+      stringResource(
+        Res.string.manage_access_role_co_owner_desc,
+        LocalThingLexicon.current.technicianNoun.singular,
+        LocalThingLexicon.current.thingNoun.singular,
+      ),
       Icons.Filled.Flight,
     )
   }
@@ -499,7 +522,11 @@ private fun SoloEmptyCallout() {
         color = MaterialTheme.colorScheme.onPrimaryContainer,
       )
       Text(
-        stringResource(Res.string.manage_access_solo_body),
+        stringResource(
+          Res.string.manage_access_solo_body,
+          LocalThingLexicon.current.squawkNoun.plural,
+          LocalThingLexicon.current.thingNoun.singular,
+        ),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onPrimaryContainer,
       )
@@ -537,9 +564,15 @@ private fun PermissionsCard(expanded: Boolean, onToggle: () -> Unit) {
     if (expanded) {
       Column(modifier = Modifier.padding(start = Spacing.medium, end = Spacing.medium, bottom = Spacing.medium)) {
         val rows = listOf(
-          Triple(stringResource(Res.string.manage_access_perm_squawks_tasks), true, true),
+          Triple(stringResource(
+            Res.string.manage_access_perm_squawks_tasks,
+            LexiconFormatter.sentenceCasePlural(LocalThingLexicon.current.squawkNoun),
+          ), true, true),
           Triple(stringResource(Res.string.manage_access_perm_work_logs), true, true),
-          Triple(stringResource(Res.string.manage_access_perm_aircraft_details), false, true),
+          Triple(stringResource(
+            Res.string.manage_access_perm_aircraft_details,
+            LexiconFormatter.sentenceCase(LocalThingLexicon.current.thingNoun),
+          ), false, true),
           Triple(stringResource(Res.string.manage_access_perm_manage_access), false, true),
         )
         Row(Modifier.fillMaxWidth()) {
@@ -571,7 +604,10 @@ private fun PermissionsCard(expanded: Boolean, onToggle: () -> Unit) {
           }
         }
         Text(
-          stringResource(Res.string.manage_access_help_footer),
+          stringResource(
+            Res.string.manage_access_help_footer,
+            LocalThingLexicon.current.thingNoun.singular,
+          ),
           style = MaterialTheme.typography.bodySmall,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
           modifier = Modifier.padding(top = Spacing.small),

@@ -31,6 +31,7 @@ kotlin {
       implementation(libs.compose.foundation)
       implementation(libs.material3)
       implementation(libs.qrose)
+      implementation(project(":core:template"))
       implementation(project(":core:sharedassets"))
       implementation(project(":core:ui"))
       implementation(project(":core:ui:adaptive"))

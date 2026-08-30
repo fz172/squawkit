@@ -82,6 +82,17 @@ object LexiconFormatter {
   fun withArticle(noun: Noun): String =
     if (noun.article.isEmpty()) noun.singular else "${noun.article} ${noun.singular}"
 
+  /**
+   * `Fleet` → `fleet`. The inverse of [sentenceCase], for a lexicon value landing mid-sentence.
+   *
+   * Needed because the non-noun lexicon fields are authored in the case they take as a *label* —
+   * `collection_label` is "Fleet" — while strings like "add it to your fleet" need them lowered.
+   * Only the first character: "AOG" must not become "aog", and a value whose later characters are
+   * deliberately capitalised is the author's choice, not this function's to undo.
+   */
+  fun lowerFirst(text: String): String =
+    if (text.isEmpty()) text else text[0].lowercaseChar() + text.substring(1)
+
   /** `an aircraft` → `An aircraft`. */
   fun sentenceCase(text: String): String =
     if (text.isEmpty()) text else text[0].uppercaseChar() + text.substring(1)
