@@ -166,9 +166,9 @@
     <thead><tr><th>Event</th><th>Parameters</th><th>Status</th></tr></thead>
     <tbody>
       <tr><td><code>ad_slot_filled</code></td><td><code>surface</code>, <code>slot_index</code>, <code>unit_position</code></td><td>shipped</td></tr>
-      <tr><td><code>ad_impression</code></td><td><code>surface</code>, <code>slot_index</code>, <code>unit_position</code></td><td>shipped</td></tr>
+      <tr><td><code>ad_unit_impression</code></td><td><code>surface</code>, <code>slot_index</code>, <code>unit_position</code></td><td>shipped (renamed, see below)</td></tr>
       <tr><td><code>ad_fill_failed</code></td><td><code>surface</code>, <code>reason</code></td><td>shipped</td></tr>
-      <tr><td><code>ad_click</code></td><td><code>surface</code>, <code>slot_index</code>, <code>unit_position</code></td><td>shipped</td></tr>
+      <tr><td><code>ad_unit_click</code></td><td><code>surface</code>, <code>slot_index</code>, <code>unit_position</code></td><td>shipped</td></tr>
       <tr><td><code>sync_permission_denied_write</code></td><td><code>scope</code></td><td>shipped</td></tr>
       <tr><td><code>sync_share_reconciled</code></td><td><code>trigger</code></td><td>shipped</td></tr>
       <tr><td><code>urgency_notification_posted</code></td><td><code>trigger</code>, <code>shared_fleet</code></td><td>shipped</td></tr>
@@ -181,6 +181,18 @@
       <tr><td><code>export_completed</code></td><td><code>template_id</code>, <code>format</code>, <code>thing_count</code></td><td>defined, not yet emitted</td></tr>
     </tbody>
   </table>
+
+  <div class="callout warn">
+    <strong><code>ad_impression</code> and <code>ad_click</code> are reserved Firebase names.</strong>
+    Both shipped under those names and were being silently renamed to Firebase's internal
+    <code>_ai</code> / <code>_ac</code> and <em>merged with AdMob's auto-collected events</em> — the
+    event arrived, the metric looked healthy, and the per-slot count the ads PRD §12 reads as revenue
+    was conflated with a counter we do not control. Caught on a device during #667 verification
+    (<code>Renaming ad_impression to _ai</code> in the SDK log). They are now
+    <code>ad_unit_impression</code> and <code>ad_unit_click</code>.
+    The append-only rule did not protect them: the old names never had a series of their own to
+    orphan. <code>AnalyticsTaxonomyTest</code> now checks reserved <em>names</em>, not only prefixes.
+  </div>
 
   <p><code>shared_fleet</code> keeps its aviation name because it is already emitting — the same
   grandfathering that applies to wire names. The seven Thing-scoped events implement

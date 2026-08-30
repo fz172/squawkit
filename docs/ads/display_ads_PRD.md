@@ -339,7 +339,7 @@ Additional rules:
 - **The band is one slot.** "Sponsored" is labeled **once** per slot, not once per unit, and the
   "Subscribe to remove ads" link appears once, at the band's trailing edge.
 - **Two units, two impressions.** A two-up slot counts as two against the session cap and emits two
-  `ad_impression` events (§12), distinguished by a `unit_position` param.
+  `ad_unit_impression` events (§12), distinguished by a `unit_position` param.
 
 ---
 
@@ -560,8 +560,8 @@ Events, via the existing `AnalyticsManager.logEvent`:
 | Event | Params |
 |---|---|
 | `ad_slot_filled` | `surface` (squawks/tasks/logs), `slot_index`, `unit_position` (`single`/`left`/`right`) |
-| `ad_impression` | `surface`, `slot_index`, `unit_position`, `session_count` (1–5, this unit's ordinal in the session) |
-| `ad_click` | `surface`, `slot_index`, `unit_position` |
+| `ad_unit_impression` | `surface`, `slot_index`, `unit_position`, `session_count` (1–5, this unit's ordinal in the session) |
+| `ad_unit_click` | `surface`, `slot_index`, `unit_position` |
 | `ad_fill_failed` | `surface`, `reason` |
 | `ad_upsell_tapped` | `surface` — the "Subscribe to remove ads" link |
 | `ad_session_cap_reached` | `surface` — emitted once per session when the 5th unit displays; tells us how often the cap actually binds |

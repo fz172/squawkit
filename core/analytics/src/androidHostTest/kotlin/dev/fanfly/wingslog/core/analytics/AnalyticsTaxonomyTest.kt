@@ -19,6 +19,28 @@ class AnalyticsTaxonomyTest {
   // Reserved by Firebase — an event using one of these prefixes is dropped.
   private val reservedPrefixes = listOf("firebase_", "google_", "ga_")
 
+  /**
+   * Reserved *names*, which the prefix check cannot see. Firebase auto-collects these, and a custom
+   * event using one is silently renamed to its internal short form and merged with the automatic
+   * event — it arrives, the metric looks healthy, and it is measuring something else.
+   *
+   * This is not hypothetical: `ad_impression` and `ad_click` shipped, and a device run for #667
+   * caught `Renaming ad_impression to _ai` in the SDK log, conflating our per-slot count with
+   * AdMob's. They are now `ad_unit_impression` / `ad_unit_click`.
+   *
+   * Not exhaustive — Firebase's list is long and grows. These are the ones an app like this one is
+   * realistically tempted by; add more as they come up.
+   */
+  private val reservedNames = listOf(
+    "ad_activeview", "ad_click", "ad_exposure", "ad_impression", "ad_query", "ad_reward",
+    "adunit_exposure", "app_background", "app_clear_data", "app_exception", "app_remove",
+    "app_store_refund", "app_store_subscription_cancel", "app_store_subscription_convert",
+    "app_store_subscription_renew", "app_update", "app_upgrade", "error", "first_open",
+    "first_visit", "in_app_purchase", "notification_dismiss", "notification_foreground",
+    "notification_open", "notification_receive", "os_update", "screen_view", "session_start",
+    "user_engagement",
+  )
+
   @Test
   fun everyEventNameIsGa4Legal() {
     val offenders = AnalyticsEvent.Name.entries
@@ -48,6 +70,18 @@ class AnalyticsTaxonomyTest {
   }
 
   @Test
+  fun noEventNameCollidesWithAFirebaseReservedName() {
+    // The failure this exists for: a reserved name is not rejected, it is *renamed and merged*.
+    // Nothing in the build, the SDK's return value, or GA4's UI says so — only the verbose device
+    // log does, and only if someone is watching it.
+    val offenders = AnalyticsEvent.Name.entries
+      .filter { it.wire in reservedNames }
+      .map { "${it.name} -> \"${it.wire}\"" }
+
+    assertThat(offenders).isEmpty()
+  }
+
+  @Test
   fun noTwoEntriesShareAWireName() {
     // Two enum entries mapping to one wire name silently merge two different things into one GA4
     // series — worse than a missing event, because the number looks plausible.
@@ -68,9 +102,12 @@ class AnalyticsTaxonomyTest {
   @Test
   fun shippedEventNamesNeverChange() {
     assertThat(AnalyticsEvent.Name.AD_SLOT_FILLED.wire).isEqualTo("ad_slot_filled")
-    assertThat(AnalyticsEvent.Name.AD_IMPRESSION.wire).isEqualTo("ad_impression")
+    // Renamed out of a reserved-name collision found on-device in #667 — see reservedNames.
+    // The append-only rule does not protect these two: the old names never had a series of their
+    // own to orphan, because Firebase was merging them into its own.
+    assertThat(AnalyticsEvent.Name.AD_UNIT_IMPRESSION.wire).isEqualTo("ad_unit_impression")
     assertThat(AnalyticsEvent.Name.AD_FILL_FAILED.wire).isEqualTo("ad_fill_failed")
-    assertThat(AnalyticsEvent.Name.AD_CLICK.wire).isEqualTo("ad_click")
+    assertThat(AnalyticsEvent.Name.AD_UNIT_CLICK.wire).isEqualTo("ad_unit_click")
     assertThat(AnalyticsEvent.Name.SYNC_PERMISSION_DENIED_WRITE.wire)
       .isEqualTo("sync_permission_denied_write")
     assertThat(AnalyticsEvent.Name.SYNC_SHARE_RECONCILED.wire).isEqualTo("sync_share_reconciled")

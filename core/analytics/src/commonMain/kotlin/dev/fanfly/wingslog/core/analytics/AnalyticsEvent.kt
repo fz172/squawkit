@@ -34,9 +34,14 @@ sealed interface AnalyticsEvent {
   enum class Name(val wire: String) {
     // --- Ads (shipped) ---
     AD_SLOT_FILLED("ad_slot_filled"),
-    AD_IMPRESSION("ad_impression"),
+    // NOT "ad_impression"/"ad_click": both are reserved Firebase names, auto-collected from the
+    // AdMob integration. Firebase silently renames a custom event using one to its internal `_ai`
+    // / `_ac`, merging ours into AdMob's — the event arrives, the metric looks healthy, and the
+    // number the ads PRD §12 reads as revenue is conflated with a counter we do not control.
+    // Caught on a device in #667; see reservedNames in AnalyticsTaxonomyTest.
+    AD_UNIT_IMPRESSION("ad_unit_impression"),
     AD_FILL_FAILED("ad_fill_failed"),
-    AD_CLICK("ad_click"),
+    AD_UNIT_CLICK("ad_unit_click"),
 
     // --- Sync (shipped) ---
     SYNC_PERMISSION_DENIED_WRITE("sync_permission_denied_write"),

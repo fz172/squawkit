@@ -37,7 +37,7 @@ data class AdImpression(
   val slotIndex: Int,
   val unitPosition: String,
 ) : AnalyticsEvent {
-  override val name = Name.AD_IMPRESSION
+  override val name = Name.AD_UNIT_IMPRESSION
   override val params = mapOf(
     Param.SURFACE to surface,
     Param.SLOT_INDEX to slotIndex.toString(),
@@ -60,7 +60,7 @@ data class AdClick(
   val slotIndex: Int,
   val unitPosition: String,
 ) : AnalyticsEvent {
-  override val name = Name.AD_CLICK
+  override val name = Name.AD_UNIT_CLICK
   override val params = mapOf(
     Param.SURFACE to surface,
     Param.SLOT_INDEX to slotIndex.toString(),
