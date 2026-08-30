@@ -88,3 +88,21 @@ dependencies {
   "androidHostTestImplementation"(libs.mockk)
   "androidHostTestImplementation"(libs.kotlinx.coroutines.test)
 }
+
+/**
+ * Tells Gradle that `ScreenViewNotDoubleCountedTest` depends on every `.kt` file in the repo.
+ *
+ * It scans the filesystem for screens that log their own view, which Gradle cannot see. Without
+ * this the task is UP-TO-DATE whenever `feature/shell`'s own sources are unchanged — which is
+ * exactly the commit that adds a self-logging screen in `feature/squawk`. The guard would be
+ * skipped on the change it exists to catch, and a skipped task reports success.
+ */
+tasks.withType<Test>().configureEach {
+  inputs.files(
+    rootProject.fileTree(rootProject.projectDir) {
+      include("**/src/**/*.kt")
+      exclude("**/build/**")
+    },
+  ).withPropertyName("repoKotlinSourcesForScreenViewGuard")
+    .withPathSensitivity(PathSensitivity.RELATIVE)
+}
