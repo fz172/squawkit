@@ -201,12 +201,24 @@ fun AdaptiveAppShell(
 ) {
   BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
     val tier = layoutTierFor(maxWidth)
-    // Per-thing sections render in the selected thing's words; SETTINGS is global and keeps the
-    // generic lexicon, because on a mixed account no single template's word would be right
-    // (template_system_design.md §9). The FAB is wrapped too — it says "New squawk".
+    // Per-thing sections render in the selected thing's words. SETTINGS does not: it is a global
+    // surface and should read the same whatever the picker has selected, so it stays on the generic
+    // lexicon (template_system_design.md §9).
+    //
+    // **This constrains which settings strings may be converted.** A settings string is only a
+    // candidate if its *generic* rendering is acceptable, because that is the only rendering it
+    // will ever get. "Whole fleet in one logbook" must therefore stay fixed text — converted, it
+    // would read "Whole stuff in one logbook" for everyone. Where the generic and template words
+    // coincide the conversion is free: the technician noun is "technician" in both, which is why
+    // the settings row for it converts without changing.
+    //
+    // Detail screens reached *from* settings are root destinations, not section bodies, so they
+    // keep the thing lexicon and can be domain-specific — see TechnicianListScreen.
+    //
+    // The FAB is wrapped too, since it says "New squawk".
     val sectionLexicon =
       if (state.section == ShellSection.SETTINGS) GenericLexicon.LEXICON
-      else state.selectedThing?.lexicon ?: GenericLexicon.LEXICON
+      else state.selectedThing?.lexicon ?: LocalThingLexicon.current
     val content: @Composable () -> Unit = {
       CompositionLocalProvider(LocalThingLexicon provides sectionLexicon) {
         sectionContent(state.section, state.selectedThingId)

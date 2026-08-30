@@ -60,6 +60,13 @@ import java.io.File
  *
  * Recorded because a test that looks total and is not is worse than one whose limits are known:
  *
+ * - **It renders every recipe with the airplane lexicon, wherever the string actually appears.**
+ *   The SETTINGS section is provided the *generic* lexicon, so a settings string is checked here
+ *   against words it will never be given. Today that is harmless because the two lexicons agree on
+ *   every noun a settings string uses — the technician noun is "technician" in both — but the
+ *   agreement is a fact about the current lexicons, not something this test enforces. The rule that
+ *   keeps it safe lives in `AdaptiveAppShell`: a settings string is only a conversion candidate if
+ *   its generic rendering is acceptable.
  * - **It checks the recipe, not the call site.** [LEXICON_ARGS] says `add_aircraft` is filled with
  *   `sentenceCase(thing)`; a call site passing `titleCase(thing)` instead still passes here. The
  *   two are written in the same commit, which is the mitigation, not a proof.
@@ -165,7 +172,9 @@ class StringSnapshotTest {
         3 to LexiconFormatter.lowerFirst(it.collection_label),
       )
     },
+
   )
+
 
   /** A frame in `feature/sharing/sharedassets`. */
   private fun sharing(

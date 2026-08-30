@@ -1,6 +1,9 @@
 package dev.fanfly.wingslog.feature.settings
 
 
+import dev.fanfly.wingslog.core.template.LexiconFormatter
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.technicianNoun
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -237,6 +240,10 @@ fun SettingsContent(
           add {
             SettingsRow(
               icon = Icons.Default.Engineering,
+              // Fixed text, not a lexicon substitution. Settings should read the same whatever
+              // the picker holds, and no lexicon noun is right here anyway: the generic word is
+              // "person", so this row would say "Person Profiles". The domain-specific framing
+              // lives inside the screen this opens (manage_technicians_description).
               title = stringResource(TechnicianRes.string.manage_technicians),
               subtitle = stringResource(SettingsRes.string.settings_technicians_subtitle),
               onClick = { detailNav.navigate(Screen.ManageTechnicians.route) },

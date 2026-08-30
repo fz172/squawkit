@@ -49,6 +49,7 @@ import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.technician.manage.viewmodel.TechnicianListViewModel
 import org.jetbrains.compose.resources.stringResource
+import wingslog.feature.technician.sharedassets.generated.resources.manage_technicians_description
 import wingslog.feature.technician.sharedassets.generated.resources.add_technician
 import wingslog.feature.technician.sharedassets.generated.resources.empty_technicians_desc
 import wingslog.feature.technician.sharedassets.generated.resources.empty_technicians_title
@@ -175,6 +176,23 @@ fun TechnicianListScreen(
           ),
           verticalArrangement = Arrangement.spacedBy(Spacing.medium),
         ) {
+          // Fixed text, no lexicon. This page aggregates technicians across the whole account —
+          // they are account-scoped, not per-thing — so the selected thing's words are the wrong
+          // words here even when only one template exists.
+          //
+          // The chrome stays neutral permanently. What arrives in Phase 3 is per-person
+          // certifications (PRD §8.6): a technician holds one or more, their type is a key declared
+          // by a template, and the domain is *derived* from it — an A&P means aviation, an
+          // electrician's licence means home. Rows carry tags read off that. Nothing asks the user
+          // which domain someone belongs to. That is where the domain speaks on this screen.
+          item(key = "description") {
+            Text(
+              text = stringResource(TechnicianRes.string.manage_technicians_description),
+              style = MaterialTheme.typography.bodyMedium,
+              color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+          }
+
           if (state.showDuplicatePrompt) {
             item(key = "duplicate-prompt") {
               DuplicatePrompt(
