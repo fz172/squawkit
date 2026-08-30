@@ -24,7 +24,7 @@ val generateExportVersionKt by tasks.registering {
         .use { load(it) }
     }
     val versionName =
-      "${props["major"]}.${props["minor"]}.${props["buildDate"]}.${props["patch"]}"
+      "${props["major"]}.${props["minor"]}.${props["buildDate"]}"
     val versionCode = props["versionCode"]?.toString()
       .orEmpty()
     val displayVersion = if (versionCode.isBlank()) {

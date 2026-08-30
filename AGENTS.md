@@ -47,7 +47,7 @@ a tooling-off build). See [Developer Builds & Capabilities](#developer-builds--c
 
 Notes that bite:
 
-- **`assembleRelease` mutates `version.properties`** — it bumps `patch` and `versionCode` and stamps
+- **`assembleRelease` mutates `version.properties`** — it bumps `versionCode` and stamps
   `buildDate` (see `app/build.gradle.kts`). Don't run it casually; don't commit an accidental bump.
 - Android builds need `app/google-services.json` (CI writes it from the `GOOGLE_SERVICES_JSON`
   secret).
