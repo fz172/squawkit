@@ -1,5 +1,7 @@
 package dev.fanfly.wingslog.feature.subscription.viewing
 
+import dev.fanfly.wingslog.core.template.thingNoun
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -16,7 +18,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.subscription.viewing.generated.resources.Res
 import wingslog.feature.subscription.viewing.generated.resources.subscription_title
@@ -30,11 +31,38 @@ import wingslog.feature.subscription.viewing.generated.resources.upsell_body_sha
  * [name] is the analytics tag for "which gate drove the upsell" (wired when subscription analytics
  * lands). See docs/subscription/subscription_design.html §9.
  */
-enum class UpsellTrigger(val bodyRes: StringResource) {
-  ADD_AIRCRAFT(Res.string.upsell_body_add_thing),
-  ATTACHMENT_UPLOAD(Res.string.upsell_body_attachment),
-  EMAIL_EXPORT(Res.string.upsell_body_email),
-  SHARE_HOST(Res.string.upsell_body_share),
+enum class UpsellTrigger {
+  ADD_AIRCRAFT,
+  ATTACHMENT_UPLOAD,
+  EMAIL_EXPORT,
+  SHARE_HOST,
+}
+
+/**
+ * The trigger's body copy.
+ *
+ * **A `when` rather than a `StringResource` field on the enum.** Two of these four take the thing
+ * noun and two do not, and a resource handle stored in a constructor hides that difference: the
+ * single `stringResource(trigger.bodyRes)` that used to render all four passed no arguments, so
+ * "Share %1$s and invite others with SquawkIt Pro." reached users with the placeholder intact.
+ *
+ * Naming each resource at the point it is read is what makes the argument list visible, and it is
+ * what `StringSnapshotTest.everyConvertedStringIsReadInline` now requires.
+ */
+@Composable
+private fun UpsellTrigger.body(): String = when (this) {
+  UpsellTrigger.ADD_AIRCRAFT -> stringResource(
+    Res.string.upsell_body_add_thing,
+    LocalThingLexicon.current.thingNoun.plural,
+  )
+
+  UpsellTrigger.SHARE_HOST -> stringResource(
+    Res.string.upsell_body_share,
+    LocalThingLexicon.current.thingNoun.plural,
+  )
+
+  UpsellTrigger.ATTACHMENT_UPLOAD -> stringResource(Res.string.upsell_body_attachment)
+  UpsellTrigger.EMAIL_EXPORT -> stringResource(Res.string.upsell_body_email)
 }
 
 /**
@@ -80,7 +108,7 @@ fun ProUpsellSheet(
         fontWeight = FontWeight.Bold,
       )
       Text(
-        text = stringResource(trigger.bodyRes),
+        text = trigger.body(),
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
       )

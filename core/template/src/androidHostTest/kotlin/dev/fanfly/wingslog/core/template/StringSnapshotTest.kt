@@ -503,6 +503,34 @@ class StringSnapshotTest {
   }
 
   @Test
+  fun everyConvertedStringIsReadInline() {
+    // The hole the bare-call check could not see, found in production rather than by a test:
+    // ProUpsellSheet stored four StringResources in an enum and rendered them through one
+    // `stringResource(trigger.bodyRes)`. Two of the four take the thing noun. Neither the compiler
+    // nor the bare-call check nor the round-trip could tell — the reference is a *value*, so there
+    // is no argument list at the reference to inspect — and "Share %1${'$'}s and invite others with
+    // SquawkIt Pro." shipped with the placeholder showing.
+    //
+    // So a converted resource may only be named where it is read. Storing one in an enum, a map, a
+    // val, or a parameter hides whether its arguments are ever supplied.
+    val offenders = repoRoot().walkTopDown()
+      .filter { it.extension == "kt" && "/build/" !in it.path && "androidHostTest" !in it.path }
+      .flatMap { file ->
+        val text = file.readText()
+        Regex("""[A-Za-z]*Res\.string\.([a-z0-9_]+)""").findAll(text)
+          .filter { it.groupValues[1] in LEXICON_ARGS.keys.map { k -> k.substringAfter(":") } }
+          .filterNot { match ->
+            val before = text.substring(0, match.range.first).trimEnd()
+            before.endsWith("stringResource(") || before.endsWith("getString(")
+          }
+          .map { "${file.name}: ${it.groupValues[1]}" }
+      }
+      .toList()
+
+    assertThat(offenders).isEmpty()
+  }
+
+  @Test
   fun everyRecipeNamesAStringThatExists() {
     // A recipe whose resource was renamed or deleted stops doing anything, and its string silently
     // leaves coverage — the same failure as never declaring it.
