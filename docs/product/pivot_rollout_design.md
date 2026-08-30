@@ -1,6 +1,11 @@
 # Design Doc: Phase 3 — The Pivot Ships
 
-**Status:** Proposed
+> **Implementation status.** **Designed 2026-08-30; nothing has shipped.** Phases 1 and 2 are done — see
+> [`thing_migration_design.md`](thing_migration_design.md) and
+> [`template_system_design.md`](template_system_design.md). Phase 3 is the first phase a user can see, and its
+> hard gate (§3.1) has not started.
+
+**Owner:** Engineering · **Status:** Proposed · **Date:** 2026-08-30
 **Supersedes nothing.** Builds on `template_system_design.md` (Phase 2) and `thing_migration_design.md` (Phase 1).
 **Milestone:** Milestone 3 — The Pivot Ships (Phase 3)
 
