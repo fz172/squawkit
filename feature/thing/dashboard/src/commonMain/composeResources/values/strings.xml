@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
   <!-- Empty / error states -->
-  <string name="aircraft_load_error">Couldn't load this %1$s</string>
+  <string name="thing_load_error">Couldn't load this %1$s</string>
   <!-- Overview tab cards -->
   <string name="overview_recent_activity">Recent activity</string>
   <string name="overview_all_logs">All logs</string>

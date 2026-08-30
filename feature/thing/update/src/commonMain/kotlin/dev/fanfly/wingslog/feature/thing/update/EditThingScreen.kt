@@ -50,18 +50,18 @@ import dev.fanfly.wingslog.feature.thing.update.compose.EngineSection
 import dev.fanfly.wingslog.feature.thing.update.viewmodel.EditThingViewModel
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
-import wingslog.core.sharedassets.generated.resources.add_aircraft
+import wingslog.core.sharedassets.generated.resources.add_thing
 import wingslog.core.sharedassets.generated.resources.cancel
 import wingslog.core.sharedassets.generated.resources.component_airframe
 import wingslog.core.sharedassets.generated.resources.component_engine
 import wingslog.core.sharedassets.generated.resources.delete
 import wingslog.feature.logs.sharedassets.generated.resources.this_action_cannot_be_undone
 import wingslog.feature.thing.update.generated.resources.add_engine
-import wingslog.feature.thing.update.generated.resources.delete_aircraft
-import wingslog.feature.thing.update.generated.resources.delete_aircraft_member_plural
-import wingslog.feature.thing.update.generated.resources.delete_aircraft_member_singular
-import wingslog.feature.thing.update.generated.resources.delete_aircraft_shared_warning
-import wingslog.feature.thing.update.generated.resources.update_aircraft
+import wingslog.feature.thing.update.generated.resources.delete_thing
+import wingslog.feature.thing.update.generated.resources.delete_thing_member_plural
+import wingslog.feature.thing.update.generated.resources.delete_thing_member_singular
+import wingslog.feature.thing.update.generated.resources.delete_thing_shared_warning
+import wingslog.feature.thing.update.generated.resources.update_thing
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.logs.sharedassets.generated.resources.Res as SharedRes
 import wingslog.feature.thing.update.generated.resources.Res as AircraftRes
@@ -119,7 +119,7 @@ fun EditAircraftScreen(
       title = {
         Text(
           stringResource(
-            AircraftRes.string.delete_aircraft,
+            AircraftRes.string.delete_thing,
             LexiconFormatter.titleCase(LocalThingLexicon.current.thingNoun),
           )
         )
@@ -133,11 +133,11 @@ fun EditAircraftScreen(
           if (others > 0) {
             Text(
               text = stringResource(
-                AircraftRes.string.delete_aircraft_shared_warning,
+                AircraftRes.string.delete_thing_shared_warning,
                 others,
                 stringResource(
-                  if (others == 1) AircraftRes.string.delete_aircraft_member_singular
-                  else AircraftRes.string.delete_aircraft_member_plural
+                  if (others == 1) AircraftRes.string.delete_thing_member_singular
+                  else AircraftRes.string.delete_thing_member_plural
                 ),
                 LocalThingLexicon.current.thingNoun.singular,
               ),
@@ -169,9 +169,12 @@ fun EditAircraftScreen(
     topBar = {
       ConstrainedTopBar(ContentWidth.Form) {
         WingsLogTopAppBar(
-          title = if (uiState.thing.id == "") stringResource(CoreRes.string.add_aircraft)
+          title = if (uiState.thing.id == "") stringResource(
+            CoreRes.string.add_thing,
+            LexiconFormatter.titleCase(LocalThingLexicon.current.thingNoun),
+          )
           else stringResource(
-            AircraftRes.string.update_aircraft,
+            AircraftRes.string.update_thing,
             LexiconFormatter.titleCase(LocalThingLexicon.current.thingNoun),
           ),
           onBackClick = { tryNavigateBack() },
@@ -241,10 +244,13 @@ fun EditAircraftScreen(
           { showDeleteDialog = true }
         } else null,
         primaryLabel = if (uiState.thing.id == "")
-          stringResource(CoreRes.string.add_aircraft)
+          stringResource(
+            CoreRes.string.add_thing,
+            LexiconFormatter.titleCase(LocalThingLexicon.current.thingNoun),
+          )
         else
           stringResource(
-            AircraftRes.string.update_aircraft,
+            AircraftRes.string.update_thing,
             LexiconFormatter.titleCase(LocalThingLexicon.current.thingNoun),
           )
       )

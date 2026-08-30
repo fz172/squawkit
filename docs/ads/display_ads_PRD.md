@@ -455,7 +455,7 @@ deferred. Five places carry the number and all five moved together:
 | 1 | `SubscriptionManagerImpl.FREE_AIRCRAFT_LIMIT` (`feature/subscription/datamanager`) | `2` — the **only** enforcement point |
 | 2 | `SubscriptionManagerImplTest` — asserts the free limit | `2` |
 | 3 | `SubscriptionUiStateTest` — fake `aircraftLimit()` | `2` |
-| 4 | `subscription_aircraft_free` in `feature/subscription/viewing` `strings.xml` | `"2"` — the user-facing cell |
+| 4 | `subscription_thing_free` in `feature/subscription/viewing` `strings.xml` | `"2"` — the user-facing cell |
 | 5 | [`subscription_PRD.html`](../subscription/subscription_PRD.html) — R3, the §3 table, pricing rows, personas, paywall trigger #1 | `2` |
 
 Three properties of the change worth recording here, since this PRD is what motivated it:
@@ -473,7 +473,7 @@ Three properties of the change worth recording here, since this PRD is what moti
   left contradicting the new limit.
 - **User-facing prose deliberately omits the count.** The comparison subhead reads "Basic is a
   complete logbook, backed up and synced" — the number lives only in the Aircraft table cell
-  (`subscription_aircraft_free`). This is why the list above is five places and not more: keep the
+  (`subscription_thing_free`). This is why the list above is five places and not more: keep the
   count out of sentences and the next limit change stays a one-cell edit instead of a copy sweep.
   Row 4 is the only user-visible occurrence, by design.
 

@@ -20,7 +20,7 @@ import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.subscription.viewing.generated.resources.Res
 import wingslog.feature.subscription.viewing.generated.resources.subscription_title
-import wingslog.feature.subscription.viewing.generated.resources.upsell_body_add_aircraft
+import wingslog.feature.subscription.viewing.generated.resources.upsell_body_add_thing
 import wingslog.feature.subscription.viewing.generated.resources.upsell_body_attachment
 import wingslog.feature.subscription.viewing.generated.resources.upsell_body_email
 import wingslog.feature.subscription.viewing.generated.resources.upsell_body_share
@@ -31,7 +31,7 @@ import wingslog.feature.subscription.viewing.generated.resources.upsell_body_sha
  * lands). See docs/subscription/subscription_design.html §9.
  */
 enum class UpsellTrigger(val bodyRes: StringResource) {
-  ADD_AIRCRAFT(Res.string.upsell_body_add_aircraft),
+  ADD_AIRCRAFT(Res.string.upsell_body_add_thing),
   ATTACHMENT_UPLOAD(Res.string.upsell_body_attachment),
   EMAIL_EXPORT(Res.string.upsell_body_email),
   SHARE_HOST(Res.string.upsell_body_share),

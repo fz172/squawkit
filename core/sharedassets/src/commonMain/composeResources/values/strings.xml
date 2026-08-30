@@ -6,9 +6,9 @@
   <string name="back">Back</string>
   <string name="add">Add</string>
   <string name="edit">Update</string>
-  <string name="add_aircraft">Add Aircraft</string>
+  <string name="add_thing">Add %1$s</string>
   <string name="enter_invite_code">Enter invite code</string>
-  <string name="empty_add_aircraft">Add an aircraft to get started</string>
+  <string name="empty_add_thing">Add %1$s to get started</string>
   <string name="remove">Remove</string>
   <string name="delete">Delete</string>
   <string name="done">Done</string>
@@ -49,7 +49,7 @@
   <string name="shell_title_tasks">Maintenance Tasks</string>
   <string name="shell_title_logs">Work Logs</string>
   <!-- Aircraft sharing -->
-  <string name="aircraft_shared_badge">Shared</string>
+  <string name="thing_shared_badge">Shared</string>
   <!-- Component names -->
   <string name="component_type">Component Type</string>
   <string name="component_airframe">Airframe</string>

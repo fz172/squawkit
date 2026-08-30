@@ -11,9 +11,9 @@
   <string name="priority_low">Low</string>
   <string name="priority_medium">Medium</string>
   <string name="priority_high">High</string>
-  <string name="priority_aog">AOG</string>
-  <string name="aog_alert_title">Aircraft on Ground</string>
-  <string name="aog_alert_subtitle">AOG squawks must be resolved before flight</string>
+  <string name="priority_down">AOG</string>
+  <string name="down_alert_title">Aircraft on Ground</string>
+  <string name="down_alert_subtitle">AOG squawks must be resolved before flight</string>
   <string name="view_squawks">View %1$s</string>
   <string name="squawk_title_label">Issue Summary</string>
   <string name="squawk_description_label">Description</string>

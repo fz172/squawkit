@@ -45,7 +45,7 @@ correctness gain right now:
   **exactly one preset, airplane**, reproducing today's app byte-for-byte (PRD §15).
 - UI-facing and API-facing renames that still read correctly under their old names: `ShellAircraft`,
   `AircraftScopeResolver`, `EntityScope.aircraftChildUnsafe`, the `feature/aircraft/*` module names, the
-  `add_aircraft` string, the notification deep-link's `aircraft` path segment
+  `add_thing` string, the notification deep-link's `aircraft` path segment
   (`NotificationTapRouter.kt:86`, `PushPayload.kt:107`), and the sharing helper *function/type names*
   (`aircraftShareDocPath`, `AircraftShareDoc`, `SharingManagerImpl`'s `SHARES`/`SHARE_AIRCRAFT` constant names).
   None of these are *stored* data — they're names in code and in already-rendered UI — so leaving them as-is
@@ -482,7 +482,7 @@ other component shape, no other spec-field set, and no template other than `"air
 | `AircraftScopeResolver` (interface + impl), its `resolve(aircraftId: String)` signature | Names a stable concept — "where does this Thing's data live" — that doesn't change meaning. Renaming it touches ~10 call sites for zero behavior change. Deferred to the standalone identifier rename (#637) — **not** to a "Phase 3 identifier pass", which an earlier revision of this table cited and the PRD does not describe. PRD §3.3 names exactly two symbols (`ShellAircraft` → `ShellThing`, `PER_AIRCRAFT_SECTIONS` → `PER_THING_SECTIONS`) in a table of what transfers *unchanged*; it scopes no systematic rename. |
 | `EntityScope.aircraftChildUnsafe` function name (only its body's literal changes) | Same reasoning — the function's contract ("this Thing's nested-data scope") is unchanged. Also deferred to #637. |
 | `feature/aircraft/*` module names and packages | Renaming a Gradle module is its own, larger-blast-radius change (settings.gradle.kts, every internal import) that buys nothing for Phase 1's goal. Tracked in #637, and **since done** — the modules are `feature/thing/*` now. |
-| `add_aircraft` and other `strings.xml` entries, `ShellAircraft`, the adaptive shell's section labels | UI-facing; explicitly Phase 2/3 work per the PRD. Phase 1 must be invisible, which these already are. |
+| `add_thing` and other `strings.xml` entries, `ShellAircraft`, the adaptive shell's section labels | UI-facing; explicitly Phase 2/3 work per the PRD. Phase 1 must be invisible, which these already are. |
 | `NotificationTapRouter`'s / `PushPayload`'s `"aircraft"` deep-link segment | A URL scheme segment for tap routing, not stored data — unrelated namespace to everything in §2.5–2.8. |
 | `aircraftShareDocPath`/`shareMemberDocPath`/`AircraftShareDoc` (function and type *names*), `SharingManagerImpl`'s `SHARES`/`SHARE_AIRCRAFT` constant *names* | Only their *values* change (§2.9, §3.2) — same "rename identity, not every name that mentions it" principle as the rest of this table. |
 

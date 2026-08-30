@@ -117,6 +117,9 @@ class LexiconFormatterTest {
     assertThat(LexiconFormatter.titleCase(l.down_status_long)).isEqualTo("Aircraft on Ground")
     assertThat(LexiconFormatter.titleCasePlural(l.squawk!!)).isEqualTo("Squawks")
     assertThat(LexiconFormatter.sentenceCase(l.thing!!)).isEqualTo("Aircraft")
+    // The paywall's feature-row label renders straight from here, with no string resource between,
+    // so this assertion is that label's only coverage.
+    assertThat(LexiconFormatter.titleCase(l.thing!!)).isEqualTo("Aircraft")
   }
 }
 

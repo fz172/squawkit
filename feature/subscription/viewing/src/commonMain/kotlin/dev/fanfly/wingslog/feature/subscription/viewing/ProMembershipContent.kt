@@ -1,5 +1,7 @@
 package dev.fanfly.wingslog.feature.subscription.viewing
 
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.thingNoun
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -67,8 +69,8 @@ import wingslog.feature.subscription.viewing.generated.resources.subscription_ma
 import wingslog.feature.subscription.viewing.generated.resources.subscription_managed_elsewhere_caption
 import wingslog.feature.subscription.viewing.generated.resources.subscription_managed_elsewhere_title
 import wingslog.feature.subscription.viewing.generated.resources.subscription_member_since
-import wingslog.feature.subscription.viewing.generated.resources.subscription_perk_aircraft_body
-import wingslog.feature.subscription.viewing.generated.resources.subscription_perk_aircraft_title
+import wingslog.feature.subscription.viewing.generated.resources.subscription_perk_thing_body
+import wingslog.feature.subscription.viewing.generated.resources.subscription_perk_thing_title
 import wingslog.feature.subscription.viewing.generated.resources.subscription_perk_attachments_body
 import wingslog.feature.subscription.viewing.generated.resources.subscription_perk_attachments_title
 import wingslog.feature.subscription.viewing.generated.resources.subscription_perk_sharing_body
@@ -335,8 +337,11 @@ private fun PerkGrid() {
     Row(horizontalArrangement = Arrangement.spacedBy(Spacing.medium)) {
       PerkCard(
         icon = Icons.Default.AirplanemodeActive,
-        title = stringResource(Res.string.subscription_perk_aircraft_title),
-        body = stringResource(Res.string.subscription_perk_aircraft_body),
+        title = stringResource(
+          Res.string.subscription_perk_thing_title,
+          LocalThingLexicon.current.thingNoun.plural,
+        ),
+        body = stringResource(Res.string.subscription_perk_thing_body),
         modifier = Modifier.weight(1f),
       )
       PerkCard(

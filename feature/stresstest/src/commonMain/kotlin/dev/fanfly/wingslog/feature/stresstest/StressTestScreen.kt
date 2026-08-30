@@ -49,7 +49,6 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.feature.stresstest.generated.resources.Res
 import wingslog.feature.stresstest.generated.resources.stress_test_complete
-import wingslog.feature.stresstest.generated.resources.stress_test_config_aircraft
 import wingslog.feature.stresstest.generated.resources.stress_test_config_blades_per_engine
 import wingslog.feature.stresstest.generated.resources.stress_test_config_engines
 import wingslog.feature.stresstest.generated.resources.stress_test_config_log_entries
@@ -57,22 +56,22 @@ import wingslog.feature.stresstest.generated.resources.stress_test_config_record
 import wingslog.feature.stresstest.generated.resources.stress_test_config_squawks
 import wingslog.feature.stresstest.generated.resources.stress_test_config_tasks
 import wingslog.feature.stresstest.generated.resources.stress_test_config_technicians
+import wingslog.feature.stresstest.generated.resources.stress_test_config_thing
 import wingslog.feature.stresstest.generated.resources.stress_test_decrement
 import wingslog.feature.stresstest.generated.resources.stress_test_description
 import wingslog.feature.stresstest.generated.resources.stress_test_error_message
 import wingslog.feature.stresstest.generated.resources.stress_test_generate
 import wingslog.feature.stresstest.generated.resources.stress_test_increment
 import wingslog.feature.stresstest.generated.resources.stress_test_progress_count
-import wingslog.feature.stresstest.generated.resources.stress_test_progress_creating_aircraft
 import wingslog.feature.stresstest.generated.resources.stress_test_progress_creating_log
 import wingslog.feature.stresstest.generated.resources.stress_test_progress_creating_squawk
 import wingslog.feature.stresstest.generated.resources.stress_test_progress_creating_task
 import wingslog.feature.stresstest.generated.resources.stress_test_progress_creating_technician
+import wingslog.feature.stresstest.generated.resources.stress_test_progress_creating_thing
 import wingslog.feature.stresstest.generated.resources.stress_test_progress_dismissing_squawk
 import wingslog.feature.stresstest.generated.resources.stress_test_progress_marking_squawk_addressed
 import wingslog.feature.stresstest.generated.resources.stress_test_regenerate
 import wingslog.feature.stresstest.generated.resources.stress_test_summary_addressed_squawks
-import wingslog.feature.stresstest.generated.resources.stress_test_summary_aircraft
 import wingslog.feature.stresstest.generated.resources.stress_test_summary_dismissed_squawks
 import wingslog.feature.stresstest.generated.resources.stress_test_summary_engines
 import wingslog.feature.stresstest.generated.resources.stress_test_summary_log_entries
@@ -82,6 +81,7 @@ import wingslog.feature.stresstest.generated.resources.stress_test_summary_squaw
 import wingslog.feature.stresstest.generated.resources.stress_test_summary_tail
 import wingslog.feature.stresstest.generated.resources.stress_test_summary_tasks
 import wingslog.feature.stresstest.generated.resources.stress_test_summary_technicians
+import wingslog.feature.stresstest.generated.resources.stress_test_summary_thing
 import wingslog.feature.stresstest.generated.resources.stress_test_summary_unknown_engine
 import wingslog.feature.stresstest.generated.resources.stress_test_title
 import wingslog.feature.stresstest.generated.resources.stress_test_unknown_error
@@ -149,7 +149,7 @@ fun StressTestScreen(
 
         AnimatedVisibility(visible = isIdle || isError) {
           Column(verticalArrangement = Arrangement.spacedBy(Spacing.large)) {
-            ConfigSection(title = stringResource(Res.string.stress_test_config_aircraft)) {
+            ConfigSection(title = stringResource(Res.string.stress_test_config_thing)) {
               StepperRow(
                 label = stringResource(Res.string.stress_test_config_engines),
                 value = config.engineCount,
@@ -447,7 +447,7 @@ private fun StepperRow(
 @Composable
 private fun StressTestState.Running.displayText(): String = when (step) {
   StressTestProgressStep.CreatingAircraft -> stringResource(
-    Res.string.stress_test_progress_creating_aircraft,
+    Res.string.stress_test_progress_creating_thing,
     subject.orEmpty(),
   )
 
@@ -479,7 +479,7 @@ private fun StressTestState.Running.displayText(): String = when (step) {
 @Composable
 private fun StressTestSummary.displayText(): String = listOf(
   stringResource(
-    Res.string.stress_test_summary_aircraft,
+    Res.string.stress_test_summary_thing,
     aircraftMake,
     aircraftModel,
     tailNumber,

@@ -33,6 +33,7 @@ kotlin {
   // a task or a squawk, it belongs in :engine instead.
   sourceSets {
     commonMain.dependencies {
+      implementation(project(":core:template"))
       implementation(project(":core:ui"))
       implementation(project(":core:ui:theme"))
       implementation(project(":core:nav"))

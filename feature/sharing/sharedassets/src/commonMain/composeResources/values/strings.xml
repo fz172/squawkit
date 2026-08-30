@@ -25,7 +25,7 @@
   <string name="manage_access_help_title">What each role can do</string>
   <string name="manage_access_perm_squawks_tasks">%1$s and tasks</string>
   <string name="manage_access_perm_work_logs">Work logs</string>
-  <string name="manage_access_perm_aircraft_details">%1$s details</string>
+  <string name="manage_access_perm_thing_details">%1$s details</string>
   <string name="manage_access_perm_manage_access">Manage access</string>
   <string name="manage_access_help_footer">Only the owner can delete the %1$s or hand over ownership. Anyone can leave on their own.</string>
   <string name="manage_access_role_technician_desc">Add and edit %1$s, %2$s, and %3$s. Cannot change %4$s details.</string>

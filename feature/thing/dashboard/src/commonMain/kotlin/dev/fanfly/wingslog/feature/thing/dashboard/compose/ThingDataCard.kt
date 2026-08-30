@@ -1,8 +1,5 @@
 package dev.fanfly.wingslog.feature.thing.dashboard.compose
 
-import dev.fanfly.wingslog.core.template.LexiconFormatter
-import dev.fanfly.wingslog.core.template.LocalThingLexicon
-import dev.fanfly.wingslog.core.template.thingNoun
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
@@ -37,6 +34,9 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import dev.fanfly.wingslog.core.template.LexiconFormatter
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.thingNoun
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.thing.Thing
 import org.jetbrains.compose.resources.stringResource
@@ -46,10 +46,10 @@ import wingslog.core.sharedassets.generated.resources.edit
 import wingslog.core.sharedassets.generated.resources.make_model_template
 import wingslog.core.sharedassets.generated.resources.manage_access
 import wingslog.feature.logs.sharedassets.generated.resources.engine_with_index
-import wingslog.feature.logs.viewing.generated.resources.aircraft_data
 import wingslog.feature.logs.viewing.generated.resources.collapse_details
 import wingslog.feature.logs.viewing.generated.resources.expand_details
 import wingslog.feature.logs.viewing.generated.resources.s_n_placeholder
+import wingslog.feature.logs.viewing.generated.resources.thing_data
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.logs.sharedassets.generated.resources.Res as SharedRes
 import wingslog.feature.logs.viewing.generated.resources.Res as MaintenanceRes
@@ -95,7 +95,7 @@ fun ThingDataCard(
 
         Text(
           text = stringResource(
-            MaintenanceRes.string.aircraft_data,
+            MaintenanceRes.string.thing_data,
             LexiconFormatter.titleCase(LocalThingLexicon.current.thingNoun),
           ),
           modifier = Modifier

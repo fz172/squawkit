@@ -1,5 +1,8 @@
 package dev.fanfly.wingslog.feature.subscription.viewing
 
+import dev.fanfly.wingslog.core.template.LexiconFormatter
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.thingNoun
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -35,8 +38,6 @@ import dev.fanfly.wingslog.feature.subscription.viewing.viewmodel.SubscriptionUi
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.subscription.viewing.generated.resources.Res
 import wingslog.feature.subscription.viewing.generated.resources.subscription_activating
-import wingslog.feature.subscription.viewing.generated.resources.subscription_aircraft_free
-import wingslog.feature.subscription.viewing.generated.resources.subscription_aircraft_unlimited
 import wingslog.feature.subscription.viewing.generated.resources.subscription_billing_note
 import wingslog.feature.subscription.viewing.generated.resources.subscription_cell_excluded
 import wingslog.feature.subscription.viewing.generated.resources.subscription_cell_unlimited
@@ -46,7 +47,6 @@ import wingslog.feature.subscription.viewing.generated.resources.subscription_co
 import wingslog.feature.subscription.viewing.generated.resources.subscription_compare_subhead
 import wingslog.feature.subscription.viewing.generated.resources.subscription_cta_caption
 import wingslog.feature.subscription.viewing.generated.resources.subscription_feature_ads
-import wingslog.feature.subscription.viewing.generated.resources.subscription_feature_aircraft
 import wingslog.feature.subscription.viewing.generated.resources.subscription_feature_attachments
 import wingslog.feature.subscription.viewing.generated.resources.subscription_feature_backup
 import wingslog.feature.subscription.viewing.generated.resources.subscription_feature_email
@@ -57,6 +57,8 @@ import wingslog.feature.subscription.viewing.generated.resources.subscription_in
 import wingslog.feature.subscription.viewing.generated.resources.subscription_purchase_on_mobile
 import wingslog.feature.subscription.viewing.generated.resources.subscription_sign_in_to_subscribe
 import wingslog.feature.subscription.viewing.generated.resources.subscription_storage_used
+import wingslog.feature.subscription.viewing.generated.resources.subscription_thing_free
+import wingslog.feature.subscription.viewing.generated.resources.subscription_thing_unlimited
 
 /**
  * The pre-purchase page: what Pro adds, and one way to get it.
@@ -159,8 +161,8 @@ private fun ComparisonTable(isAdsSupported: Boolean) {
   SubscriptionPanel {
     CompareHeader()
     CompareRow(
-      label = stringResource(Res.string.subscription_feature_aircraft),
-      free = Cell.Label(stringResource(Res.string.subscription_aircraft_free)),
+      label = LexiconFormatter.titleCase(LocalThingLexicon.current.thingNoun),
+      free = Cell.Label(stringResource(Res.string.subscription_thing_free)),
       pro = Cell.Unlimited,
     )
     CompareRow(
@@ -198,7 +200,10 @@ private fun ComparisonTable(isAdsSupported: Boolean) {
       Cell.Yes
     )
     CompareRow(
-      label = stringResource(Res.string.subscription_feature_sharing),
+      label = stringResource(
+        Res.string.subscription_feature_sharing,
+        LocalThingLexicon.current.thingNoun.plural,
+      ),
       free = Cell.No,
       pro = Cell.Yes,
       divider = false,
@@ -338,7 +343,7 @@ private fun CellContent(
       )
 
       Cell.Unlimited -> {
-        val spoken = stringResource(Res.string.subscription_aircraft_unlimited)
+        val spoken = stringResource(Res.string.subscription_thing_unlimited)
         Text(
           text = stringResource(Res.string.subscription_cell_unlimited),
           style = WingslogTypography.dataMedium,

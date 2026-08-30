@@ -458,7 +458,7 @@ NEUTRAL	feature/squawk/update	fixed_option_label		no domain vocabulary	Fixed
 NEUTRAL	feature/squawk/update	reopen_issue		no domain vocabulary	Reopen Issue
 NEUTRAL	feature/squawk/update	resolve_issue		no domain vocabulary	Resolve
 NEUTRAL	feature/stresstest	stress_test_complete		brand or developer surface	Generation complete
-NEUTRAL	feature/stresstest	stress_test_config_aircraft		brand or developer surface	Aircraft
+NEUTRAL	feature/stresstest	stress_test_config_thing		brand or developer surface	Aircraft
 NEUTRAL	feature/stresstest	stress_test_config_blades_per_engine		brand or developer surface	Blades per engine
 NEUTRAL	feature/stresstest	stress_test_config_engines		brand or developer surface	Engines
 NEUTRAL	feature/stresstest	stress_test_config_log_entries		brand or developer surface	Log entries
@@ -472,7 +472,7 @@ NEUTRAL	feature/stresstest	stress_test_error_message		brand or developer surface
 NEUTRAL	feature/stresstest	stress_test_generate		brand or developer surface	Generate Fake Data
 NEUTRAL	feature/stresstest	stress_test_increment		brand or developer surface	+
 NEUTRAL	feature/stresstest	stress_test_progress_count		brand or developer surface	%1$d / %2$d
-NEUTRAL	feature/stresstest	stress_test_progress_creating_aircraft		brand or developer surface	Creating aircraft %1$s…
+NEUTRAL	feature/stresstest	stress_test_progress_creating_thing		brand or developer surface	Creating aircraft %1$s…
 NEUTRAL	feature/stresstest	stress_test_progress_creating_log		brand or developer surface	Creating log entry…
 NEUTRAL	feature/stresstest	stress_test_progress_creating_squawk		brand or developer surface	Creating squawk: %1$s…
 NEUTRAL	feature/stresstest	stress_test_progress_creating_task		brand or developer surface	Creating task: %1$s…
@@ -481,7 +481,7 @@ NEUTRAL	feature/stresstest	stress_test_progress_dismissing_squawk		brand or deve
 NEUTRAL	feature/stresstest	stress_test_progress_marking_squawk_addressed		brand or developer surface	Marking squawk addressed…
 NEUTRAL	feature/stresstest	stress_test_regenerate		brand or developer surface	Generate Another
 NEUTRAL	feature/stresstest	stress_test_summary_addressed_squawks		brand or developer surface	• %1$d addressed
-NEUTRAL	feature/stresstest	stress_test_summary_aircraft		brand or developer surface	Aircraft: %1$s %2$s (%3$s)
+NEUTRAL	feature/stresstest	stress_test_summary_thing		brand or developer surface	Aircraft: %1$s %2$s (%3$s)
 NEUTRAL	feature/stresstest	stress_test_summary_dismissed_squawks		brand or developer surface	• %1$d dismissed
 NEUTRAL	feature/stresstest	stress_test_summary_engines		brand or developer surface	Engines: %1$d × %2$s
 NEUTRAL	feature/stresstest	stress_test_summary_log_entries		brand or developer surface	%1$d log entries created (span: 4 years)
@@ -755,7 +755,7 @@ STRUCTURAL	feature/logs/update	prop_time_hours		no lexicon slot for: prop time	P
 STRUCTURAL	feature/logs/update	propeller_component	component	no lexicon slot for: propeller	Propeller Component
 STRUCTURAL	feature/logs/viewing	log_onboarding_description	component;log	no lexicon slot for: prop time	Log your current airframe, engine, and prop times to start tracking maintenance intervals accurately. This will serve as your logbook's baseline.
 STRUCTURAL	feature/logs/viewing	prop_time_abbr		no lexicon slot for: prop time	Prop
-STRUCTURAL	feature/squawk/sharedassets	aog_alert_subtitle	down_status;squawk	no lexicon slot for: flight	AOG squawks must be resolved before flight
+STRUCTURAL	feature/squawk/sharedassets	down_alert_subtitle	down_status;squawk	no lexicon slot for: flight	AOG squawks must be resolved before flight
 STRUCTURAL	feature/subscription/viewing	subscription_billing_note		no lexicon slot for: annual	Monthly and annual billing, price and payment method are chosen in the store.
 STRUCTURAL	feature/tasks/update	adj_preview_primary_hours		no lexicon slot for: tach	Next due at %1$s tach hrs · %2$s
 STRUCTURAL	feature/tasks/update	adj_preview_rel_in_hours		no lexicon slot for: tach	in %1$s tach hrs
@@ -778,26 +778,26 @@ STRUCTURAL	feature/technician/sharedassets	certificate_type_amt	technician	no le
 STRUCTURAL	feature/technician/sharedassets	certificate_type_repairman		no lexicon slot for: certificate	Repairman
 STRUCTURAL	feature/technician/sharedassets	duplicates_warn_mirror		no lexicon slot for: certificate	%1$s and %2$s have the same certificate number. Two members are two different people, so this is likely a typo — check with them.
 STRUCTURAL	feature/technician/sharedassets	no_certificate		no lexicon slot for: certificate	No certificate provided
-SUBSTITUTABLE	core/sharedassets	add_aircraft	thing	slots: thing	Add Aircraft
-SUBSTITUTABLE	core/sharedassets	aircraft_shared_badge	thing	slots: thing	Shared
+SUBSTITUTABLE	core/sharedassets	add_thing	thing	slots: thing	Add Aircraft
+SUBSTITUTABLE	core/sharedassets	thing_shared_badge	thing	slots: thing	Shared
 SUBSTITUTABLE	core/sharedassets	component_airframe	component	slots: component	Airframe
 SUBSTITUTABLE	core/sharedassets	component_engine	component	slots: component	Engine
 SUBSTITUTABLE	core/sharedassets	component_type	component	slots: component	Component Type
-SUBSTITUTABLE	core/sharedassets	empty_add_aircraft	thing	slots: thing	Add an aircraft to get started
+SUBSTITUTABLE	core/sharedassets	empty_add_thing	thing	slots: thing	Add an aircraft to get started
 SUBSTITUTABLE	core/sharedassets	shell_tab_squawks	squawk	slots: squawk	Squawks
 SUBSTITUTABLE	core/sharedassets	shell_title_logs	log	slots: log	Work Logs
 SUBSTITUTABLE	core/sharedassets	shell_title_tasks	task	slots: task	Maintenance Tasks
-SUBSTITUTABLE	feature/export/sharedassets	export_aircraft_details_incomplete	thing	slots: thing	Aircraft details incomplete
-SUBSTITUTABLE	feature/export/sharedassets	export_aircraft_section	thing	slots: thing	Aircraft
-SUBSTITUTABLE	feature/export/sharedassets	export_aircraft_summary_more	thing	slots: thing	%1$s + %2$d more
-SUBSTITUTABLE	feature/export/sharedassets	export_footer_aircraft_count	thing	slots: thing	%1$d aircraft
+SUBSTITUTABLE	feature/export/sharedassets	export_thing_details_incomplete	thing	slots: thing	Aircraft details incomplete
+SUBSTITUTABLE	feature/export/sharedassets	export_thing_section	thing	slots: thing	Aircraft
+SUBSTITUTABLE	feature/export/sharedassets	export_thing_summary_more	thing	slots: thing	%1$s + %2$d more
+SUBSTITUTABLE	feature/export/sharedassets	export_footer_thing_count	thing	slots: thing	%1$d aircraft
 SUBSTITUTABLE	feature/export/sharedassets	export_history_empty_body	technician	slots: technician	Generate a printable PDF or spreadsheet of your maintenance logs to share with your mechanic, IA, or insurance.
-SUBSTITUTABLE	feature/export/sharedassets	export_no_aircraft_title	thing	slots: thing	No aircraft to export
+SUBSTITUTABLE	feature/export/sharedassets	export_no_thing_title	thing	slots: thing	No aircraft to export
 SUBSTITUTABLE	feature/export/sharedassets	export_progress_collecting_data	thing	slots: thing	Collecting aircraft data...
 SUBSTITUTABLE	feature/export/sharedassets	export_progress_collecting_data_detail	squawk;thing	slots: squawk, thing	Loading logs, tasks, squawks, and attachments for the selected aircraft.
-SUBSTITUTABLE	feature/export/sharedassets	export_receipt_aircraft	thing	slots: thing	Aircraft
-SUBSTITUTABLE	feature/export/sharedassets	export_untitled_aircraft	thing	slots: thing	Untitled aircraft
-SUBSTITUTABLE	feature/fleet/sharedassets	add_first_aircraft	thing	slots: thing	Add Your First Aircraft
+SUBSTITUTABLE	feature/export/sharedassets	export_receipt_thing	thing	slots: thing	Aircraft
+SUBSTITUTABLE	feature/export/sharedassets	export_untitled_thing	thing	slots: thing	Untitled aircraft
+SUBSTITUTABLE	feature/fleet/sharedassets	add_first_thing	thing	slots: thing	Add Your First Aircraft
 SUBSTITUTABLE	feature/fleet/sharedassets	no_fleet_description	collection_label;thing	slots: collection_label, thing	Keep your aircraft details, maintenance logs, and compliance records in one place.
 SUBSTITUTABLE	feature/login	legal_disclaimer	log;thing	slots: log, thing	SquawkIt is a personal convenience tool and is not a certified maintenance record system. It does not replace the official aircraft logbooks required by your aviation authority.
 SUBSTITUTABLE	feature/login	login_prompt	thing	slots: thing	Log in or continue anonymously to manage your aircraft maintenance records.
@@ -816,15 +816,15 @@ SUBSTITUTABLE	feature/logs/sharedassets	resolve_task_work_description	task	slots
 SUBSTITUTABLE	feature/logs/update	airframe_serial	component	slots: component	Airframe Serial
 SUBSTITUTABLE	feature/logs/update	airframe_time_hours	component	slots: component	Airframe Time (hours)
 SUBSTITUTABLE	feature/logs/update	component_section_description	component;thing	slots: component, thing	Which part of the aircraft was serviced
-SUBSTITUTABLE	feature/logs/update	loading_aircraft	thing	slots: thing	Loading aircraft…
+SUBSTITUTABLE	feature/logs/update	loading_thing	thing	slots: thing	Loading aircraft…
 SUBSTITUTABLE	feature/logs/update	no_engines_found	thing	slots: thing	No engines found for this aircraft.
 SUBSTITUTABLE	feature/logs/update	performed_by_description	technician	slots: technician	The technician who performed this work
 SUBSTITUTABLE	feature/logs/update	squawks_section_header	squawk	slots: squawk	Squawks Addressed
 SUBSTITUTABLE	feature/logs/update	tasks_section_header	task	slots: task	Maintenance Tasks Completed
 SUBSTITUTABLE	feature/logs/viewing	affected_maintenance_tasks	task	slots: task	Affected Maintenance Tasks
-SUBSTITUTABLE	feature/logs/viewing	aircraft_data	thing	slots: thing	Aircraft Data
+SUBSTITUTABLE	feature/logs/viewing	thing_data	thing	slots: thing	Aircraft Data
 SUBSTITUTABLE	feature/logs/viewing	airframe_time_abbr	component	slots: component	AFTT
-SUBSTITUTABLE	feature/logs/viewing	edit_aircraft	thing	slots: thing	Update aircraft
+SUBSTITUTABLE	feature/logs/viewing	edit_thing	thing	slots: thing	Update aircraft
 SUBSTITUTABLE	feature/logs/viewing	log_squawk_count_one	squawk	slots: squawk	1 squawk
 SUBSTITUTABLE	feature/logs/viewing	log_squawk_count_plural	squawk	slots: squawk	%1$d squawks
 SUBSTITUTABLE	feature/logs/viewing	resolved_squawks	squawk	slots: squawk	Resolved Squawks
@@ -835,18 +835,18 @@ SUBSTITUTABLE	feature/notifications/settings	notification_settings_priority_due_
 SUBSTITUTABLE	feature/notifications/sharedassets	notification_body_due_soon_plural	task	slots: task	%1$s: %2$d inspections are due soon
 SUBSTITUTABLE	feature/notifications/sharedassets	notification_body_overdue_plural	task	slots: task	%1$s: %2$d inspections are now overdue
 SUBSTITUTABLE	feature/notifications/sharedassets	notification_body_priority_raised_plural	squawk	slots: squawk	%1$s: %2$d squawks increased in priority
-SUBSTITUTABLE	feature/notifications/sharedassets	notification_n1_body_aircraft_updated	thing	slots: thing	%1$s: %2$s updated the aircraft
+SUBSTITUTABLE	feature/notifications/sharedassets	notification_n1_body_thing_updated	thing	slots: thing	%1$s: %2$s updated the aircraft
 SUBSTITUTABLE	feature/notifications/sharedassets	notification_n1_body_squawk_created	squawk	slots: squawk	%1$s: %2$s created a new squawk issue\n\n%3$s
 SUBSTITUTABLE	feature/notifications/sharedassets	notification_n1_body_squawk_raised	squawk	slots: squawk	%1$s: %2$s raised the priority of 1 squawk issue\n\n%3$s
 SUBSTITUTABLE	feature/notifications/sharedassets	notification_n1_noun_log	log	slots: log	logbook entry
 SUBSTITUTABLE	feature/notifications/sharedassets	notification_n1_noun_squawk	squawk	slots: squawk	squawk
-SUBSTITUTABLE	feature/notifications/sharedassets	notification_n1_section_aircraft	thing	slots: thing	Aircraft
+SUBSTITUTABLE	feature/notifications/sharedassets	notification_n1_section_thing	thing	slots: thing	Aircraft
 SUBSTITUTABLE	feature/notifications/sharedassets	notification_n1_section_logbook	log	slots: log	Logbook
 SUBSTITUTABLE	feature/notifications/sharedassets	notification_n1_section_logbook_lower	log	slots: log	logbook entries
 SUBSTITUTABLE	feature/notifications/sharedassets	notification_n1_section_squawks	squawk	slots: squawk	Squawks
 SUBSTITUTABLE	feature/notifications/sharedassets	notification_n1_section_squawks_lower	squawk	slots: squawk	squawks
 SUBSTITUTABLE	feature/notifications/sharedassets	notification_n1_title_squawk_created	squawk	slots: squawk	New squawk
-SUBSTITUTABLE	feature/notifications/sharedassets	squawk_priority_label_aog	down_status;squawk	slots: down_status, squawk	AOG
+SUBSTITUTABLE	feature/notifications/sharedassets	squawk_priority_label_down	down_status;squawk	slots: down_status, squawk	AOG
 SUBSTITUTABLE	feature/notifications/sharedassets	squawk_priority_label_high	squawk	slots: squawk	High
 SUBSTITUTABLE	feature/notifications/sharedassets	squawk_priority_label_low	squawk	slots: squawk	Low
 SUBSTITUTABLE	feature/notifications/sharedassets	squawk_priority_label_medium	squawk	slots: squawk	Medium
@@ -866,7 +866,7 @@ SUBSTITUTABLE	feature/sharing/sharedassets	leave_confirm_title	thing	slots: thin
 SUBSTITUTABLE	feature/sharing/sharedassets	manage_access_empty_desc	technician;thing	slots: technician, thing	Invite a co-owner or technician to share this aircraft.
 SUBSTITUTABLE	feature/sharing/sharedassets	manage_access_help_footer	thing	slots: thing	Only the owner can delete the aircraft or hand over ownership. Anyone can leave on their own.
 SUBSTITUTABLE	feature/sharing/sharedassets	manage_access_leave	thing	slots: thing	Leave shared aircraft
-SUBSTITUTABLE	feature/sharing/sharedassets	manage_access_perm_aircraft_details	thing	slots: thing	Aircraft details
+SUBSTITUTABLE	feature/sharing/sharedassets	manage_access_perm_thing_details	thing	slots: thing	Aircraft details
 SUBSTITUTABLE	feature/sharing/sharedassets	manage_access_perm_squawks_tasks	squawk	slots: squawk	Squawks and tasks
 SUBSTITUTABLE	feature/sharing/sharedassets	manage_access_perm_work_logs	log	slots: log	Work logs
 SUBSTITUTABLE	feature/sharing/sharedassets	manage_access_role_co_owner_desc	technician;thing	slots: technician, thing	Everything a technician can do, plus edit aircraft details and manage who has access.
@@ -884,13 +884,13 @@ SUBSTITUTABLE	feature/sharing/sharedassets	revoke_confirm_body	thing	slots: thin
 SUBSTITUTABLE	feature/sharing/sharedassets	role_confirm_body	thing	slots: thing	This changes what they can do on this aircraft right away.
 SUBSTITUTABLE	feature/sharing/sharedassets	sharing_sync_off_body	thing	slots: thing	Sharing needs Cloud Sync. Turn it on in Settings to invite people or manage access. Aircraft already shared with you stay readable, but will not update.
 SUBSTITUTABLE	feature/squawk/sharedassets	add_squawk	squawk	slots: squawk	New squawk
-SUBSTITUTABLE	feature/squawk/sharedassets	aog_alert_title	down_status;thing	slots: down_status, thing	Aircraft on Ground
+SUBSTITUTABLE	feature/squawk/sharedassets	down_alert_title	down_status;thing	slots: down_status, thing	Aircraft on Ground
 SUBSTITUTABLE	feature/squawk/sharedassets	edit_squawk	squawk	slots: squawk	Update squawk
 SUBSTITUTABLE	feature/squawk/sharedassets	no_closed_squawks	squawk	slots: squawk	No closed squawks yet.
 SUBSTITUTABLE	feature/squawk/sharedassets	no_open_squawks	squawk	slots: squawk	No open squawks
 SUBSTITUTABLE	feature/squawk/sharedassets	no_open_squawks_description	squawk	slots: squawk	Tap + to report a defect or anomaly
 SUBSTITUTABLE	feature/squawk/sharedassets	no_squawk_work_recorded	squawk	slots: squawk	No squawks addressed by this log
-SUBSTITUTABLE	feature/squawk/sharedassets	priority_aog	down_status	slots: down_status	AOG
+SUBSTITUTABLE	feature/squawk/sharedassets	priority_down	down_status	slots: down_status	AOG
 SUBSTITUTABLE	feature/squawk/sharedassets	squawk_added	squawk	slots: squawk	Squawk reported
 SUBSTITUTABLE	feature/squawk/sharedassets	squawk_description_label	squawk	slots: squawk	Description
 SUBSTITUTABLE	feature/squawk/sharedassets	squawk_dismissed	squawk	slots: squawk	Squawk dismissed
@@ -909,16 +909,16 @@ SUBSTITUTABLE	feature/squawk/sharedassets	view_squawks	squawk	slots: squawk	View
 SUBSTITUTABLE	feature/squawk/update	dismiss_squawk_title	squawk	slots: squawk	Dismiss Without Addressing?
 SUBSTITUTABLE	feature/squawk/update	dismiss_squawk_warning	squawk	slots: squawk	This squawk will be closed without recording corrective action. Please select a reason for dismissing this squawk.
 SUBSTITUTABLE	feature/stresstest/config	fake_data_generator_description	squawk;thing	slots: squawk, thing	Populate fake aircraft, logs, squawks, and tasks for UI testing
-SUBSTITUTABLE	feature/subscription/viewing	subscription_aircraft_free	thing	slots: thing	2
-SUBSTITUTABLE	feature/subscription/viewing	subscription_aircraft_unlimited	thing	slots: thing	Unlimited
+SUBSTITUTABLE	feature/subscription/viewing	subscription_thing_free	thing	slots: thing	2
+SUBSTITUTABLE	feature/subscription/viewing	subscription_thing_unlimited	thing	slots: thing	Unlimited
 SUBSTITUTABLE	feature/subscription/viewing	subscription_compare_subhead	log	slots: log	The Basic bundle is free and provides the complete feature set as logbook, backed up and synced. The Pro bundle adds scale, attachments, collaboration and more.
-SUBSTITUTABLE	feature/subscription/viewing	subscription_feature_aircraft	thing	slots: thing	Aircraft
+SUBSTITUTABLE	feature/subscription/viewing	subscription_feature_thing	thing	slots: thing	Aircraft
 SUBSTITUTABLE	feature/subscription/viewing	subscription_feature_records	squawk	slots: squawk	Logs, tasks &amp; squawks
 SUBSTITUTABLE	feature/subscription/viewing	subscription_feature_sharing	thing	slots: thing	Share aircraft &amp; collaborate with others
-SUBSTITUTABLE	feature/subscription/viewing	subscription_perk_aircraft_body	collection_label;log;thing	slots: collection_label, log, thing	Whole fleet in one logbook
-SUBSTITUTABLE	feature/subscription/viewing	subscription_perk_aircraft_title	thing	slots: thing	Unlimited aircraft
+SUBSTITUTABLE	feature/subscription/viewing	subscription_perk_thing_body	collection_label;log;thing	slots: collection_label, log, thing	Whole fleet in one logbook
+SUBSTITUTABLE	feature/subscription/viewing	subscription_perk_thing_title	thing	slots: thing	Unlimited aircraft
 SUBSTITUTABLE	feature/subscription/viewing	subscription_perk_sharing_body	technician	slots: technician	Invite owners and technicians
-SUBSTITUTABLE	feature/subscription/viewing	upsell_body_add_aircraft	thing	slots: thing	Add unlimited aircraft with SquawkIt Pro.
+SUBSTITUTABLE	feature/subscription/viewing	upsell_body_add_thing	thing	slots: thing	Add unlimited aircraft with SquawkIt Pro.
 SUBSTITUTABLE	feature/subscription/viewing	upsell_body_share	thing	slots: thing	Share aircraft and invite others with SquawkIt Pro.
 SUBSTITUTABLE	feature/sync/settings	sync_status_off_body	thing	slots: thing	Local edits will not reach the cloud. Re-enable above to resume backups.\n\nShared aircraft stop updating. You keep a readable copy, but changes will not flow in either direction, and you cannot invite anyone or manage access.
 SUBSTITUTABLE	feature/tasks/sharedassets	affects_n_tasks	task	slots: task	Affects %1$d maintenance task(s)
@@ -957,13 +957,13 @@ SUBSTITUTABLE	feature/technician/sharedassets	my_technicians_header	technician	s
 SUBSTITUTABLE	feature/technician/sharedassets	no_technicians	technician	slots: technician	No technicians added yet.
 SUBSTITUTABLE	feature/technician/sharedassets	select_technician	technician	slots: technician	Select Technician
 SUBSTITUTABLE	feature/technician/sharedassets	technician	technician	slots: technician	Technician
-SUBSTITUTABLE	feature/thing/dashboard	aircraft_load_error	thing	slots: thing	Couldn't load this aircraft
+SUBSTITUTABLE	feature/thing/dashboard	thing_load_error	thing	slots: thing	Couldn't load this aircraft
 SUBSTITUTABLE	feature/thing/dashboard	overview_no_logs_body	thing	slots: thing	Add the first maintenance entry to start the aircraft record.
 SUBSTITUTABLE	feature/thing/dashboard	overview_no_squawks_body	squawk;thing	slots: squawk, thing	No active discrepancies for this aircraft.
 SUBSTITUTABLE	feature/thing/dashboard	overview_open_squawks	squawk	slots: squawk	Open squawks
-SUBSTITUTABLE	feature/thing/update	delete_aircraft	thing	slots: thing	Delete Aircraft?
-SUBSTITUTABLE	feature/thing/update	delete_aircraft_member_plural	thing	slots: thing	people will
-SUBSTITUTABLE	feature/thing/update	delete_aircraft_member_singular	thing	slots: thing	person will
-SUBSTITUTABLE	feature/thing/update	delete_aircraft_shared_warning	thing	slots: thing	%1$d other %2$s lose access to this aircraft and its records.
+SUBSTITUTABLE	feature/thing/update	delete_thing	thing	slots: thing	Delete Aircraft?
+SUBSTITUTABLE	feature/thing/update	delete_thing_member_plural	thing	slots: thing	people will
+SUBSTITUTABLE	feature/thing/update	delete_thing_member_singular	thing	slots: thing	person will
+SUBSTITUTABLE	feature/thing/update	delete_thing_shared_warning	thing	slots: thing	%1$d other %2$s lose access to this aircraft and its records.
 SUBSTITUTABLE	feature/thing/update	tail_number	thing	slots: thing	Tail Number
-SUBSTITUTABLE	feature/thing/update	update_aircraft	thing	slots: thing	Update Aircraft
+SUBSTITUTABLE	feature/thing/update	update_thing	thing	slots: thing	Update Aircraft

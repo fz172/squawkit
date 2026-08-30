@@ -27,6 +27,7 @@ kotlin {
 
   sourceSets {
     commonMain.dependencies {
+      implementation(project(":core:template"))
       implementation(project(":core:sharedassets"))
       implementation(project(":core:ui"))
       implementation(project(":feature:fleet:sharedassets"))

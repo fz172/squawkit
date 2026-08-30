@@ -1,5 +1,7 @@
 package dev.fanfly.wingslog.core.ui.adaptive
 
+import dev.fanfly.wingslog.core.template.LexiconFormatter
+import dev.fanfly.wingslog.core.template.thingNoun
 import androidx.compose.animation.core.animate
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -85,7 +87,7 @@ import dev.fanfly.wingslog.thing.Lexicon
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
-import wingslog.core.sharedassets.generated.resources.add_aircraft
+import wingslog.core.sharedassets.generated.resources.add_thing
 import wingslog.core.sharedassets.generated.resources.app_name
 import wingslog.core.sharedassets.generated.resources.back
 import wingslog.core.sharedassets.generated.resources.enter_invite_code
@@ -953,7 +955,10 @@ private fun AircraftDropdown(
     }
     if (onAddAircraft != null) {
       DropdownMenuItem(
-        text = { Text(stringResource(UiRes.string.add_aircraft)) },
+        text = { Text(stringResource(
+          UiRes.string.add_thing,
+          LexiconFormatter.titleCase(LocalThingLexicon.current.thingNoun),
+        )) },
         leadingIcon = { Icon(Icons.Filled.Add, contentDescription = null) },
         onClick = {
           onAddAircraft()

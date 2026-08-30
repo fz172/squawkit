@@ -18,7 +18,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import dev.fanfly.wingslog.thing.SquawkPriority
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.datetime.toLocalDate
 import dev.fanfly.wingslog.core.ui.common.compose.StatusChip
@@ -27,9 +26,10 @@ import dev.fanfly.wingslog.core.ui.theme.StatusTier
 import dev.fanfly.wingslog.core.ui.theme.statusColors
 import dev.fanfly.wingslog.feature.squawk.model.SquawkStatus
 import dev.fanfly.wingslog.feature.squawk.model.SquawkWithStatus
+import dev.fanfly.wingslog.thing.SquawkPriority
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.squawk.sharedassets.generated.resources.Res
-import wingslog.feature.squawk.sharedassets.generated.resources.priority_aog
+import wingslog.feature.squawk.sharedassets.generated.resources.priority_down
 import wingslog.feature.squawk.sharedassets.generated.resources.priority_high
 import wingslog.feature.squawk.sharedassets.generated.resources.priority_low
 import wingslog.feature.squawk.sharedassets.generated.resources.priority_medium
@@ -132,7 +132,7 @@ internal fun PriorityBadge(item: SquawkWithStatus) {
   val priority = item.squawk.priority
   val tier = priority.statusTier()
   val label = when (priority) {
-    SquawkPriority.SQUAWK_PRIORITY_AOG -> stringResource(Res.string.priority_aog)
+    SquawkPriority.SQUAWK_PRIORITY_AOG -> stringResource(Res.string.priority_down)
     SquawkPriority.SQUAWK_PRIORITY_HIGH -> stringResource(Res.string.priority_high)
     SquawkPriority.SQUAWK_PRIORITY_MEDIUM -> stringResource(Res.string.priority_medium)
     else -> stringResource(Res.string.priority_low)

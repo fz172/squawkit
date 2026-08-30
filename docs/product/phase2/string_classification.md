@@ -50,7 +50,7 @@ Three systematic errors were found and fixed while building it, each of which si
 1. **`"tach"` matched inside `"attach"`.** Every attachment string landed in the aviation bucket. Fixed with
    word boundaries — and it is why the first run reported 61 structural strings instead of 34.
 2. **`\b` treats `_` as a word character**, so `\baircraft\b` never matched the resource *name*
-   `aircraft_shared_badge`, and `\bsquawk\b` missed the value `"Squawks"`. Fixed by flattening underscores and
+   `thing_shared_badge`, and `\bsquawk\b` missed the value `"Squawks"`. Fixed by flattening underscores and
    allowing a plural `s`.
 3. **`app_name = "SquawkIt"` classified as substitutable.** The product name contains a lexicon word and must
    never be substituted — a boat owner's app is still called SquawkIt. Brand mentions are now stripped before

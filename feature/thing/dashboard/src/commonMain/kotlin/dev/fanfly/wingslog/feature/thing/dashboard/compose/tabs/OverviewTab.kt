@@ -64,7 +64,7 @@ import dev.fanfly.wingslog.feature.thing.dashboard.data.ThingOverviewUiState
 import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.MaintenanceLog
 import org.jetbrains.compose.resources.stringResource
-import wingslog.core.sharedassets.generated.resources.aircraft_shared_badge
+import wingslog.core.sharedassets.generated.resources.thing_shared_badge
 import wingslog.core.sharedassets.generated.resources.all
 import wingslog.core.sharedassets.generated.resources.make_model_template
 import wingslog.feature.squawk.sharedassets.generated.resources.no_open_squawks
@@ -301,7 +301,7 @@ private fun SharedMarker() {
       modifier = Modifier.size(Spacing.large),
     )
     Text(
-      text = stringResource(CoreRes.string.aircraft_shared_badge),
+      text = stringResource(CoreRes.string.thing_shared_badge),
       style = MaterialTheme.typography.labelLarge,
       color = MaterialTheme.colorScheme.onSurfaceVariant,
     )

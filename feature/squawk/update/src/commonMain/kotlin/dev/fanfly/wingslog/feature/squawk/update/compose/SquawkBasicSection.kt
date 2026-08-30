@@ -10,18 +10,18 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import dev.fanfly.wingslog.thing.SquawkPriority
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.ui.common.compose.FormKeyboard
 import dev.fanfly.wingslog.core.ui.common.compose.FormSectionLabel
 import dev.fanfly.wingslog.core.ui.common.compose.FormTextField
 import dev.fanfly.wingslog.core.ui.common.compose.FormValueField
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.thing.SquawkPriority
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.squawk.sharedassets.generated.resources.Res
-import wingslog.feature.squawk.sharedassets.generated.resources.priority_aog
+import wingslog.feature.squawk.sharedassets.generated.resources.priority_down
 import wingslog.feature.squawk.sharedassets.generated.resources.priority_high
 import wingslog.feature.squawk.sharedassets.generated.resources.priority_low
 import wingslog.feature.squawk.sharedassets.generated.resources.priority_medium
@@ -52,7 +52,7 @@ fun SquawkBasicSection(
     SquawkPriority.SQUAWK_PRIORITY_LOW to stringResource(Res.string.priority_low),
     SquawkPriority.SQUAWK_PRIORITY_MEDIUM to stringResource(Res.string.priority_medium),
     SquawkPriority.SQUAWK_PRIORITY_HIGH to stringResource(Res.string.priority_high),
-    SquawkPriority.SQUAWK_PRIORITY_AOG to stringResource(Res.string.priority_aog),
+    SquawkPriority.SQUAWK_PRIORITY_AOG to stringResource(Res.string.priority_down),
   )
 
   Column(

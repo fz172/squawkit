@@ -1117,7 +1117,7 @@ and which cannot work. Two reasons, either one sufficient:
   ("Squawks" / "Tasks" / "Logbook"). The server cannot render that at all. It sends `recordType` and
   the client resolves it.
 - `notification_n1_body_record_created/updated/deleted` (`%1$s: %2$s VERB a %3$s\n\n%4$s`) and
-  `notification_n1_body_aircraft_updated` (`%1$s: %2$s updated the aircraft`) do not share an
+  `notification_n1_body_thing_updated` (`%1$s: %2$s updated the aircraft`) do not share an
   argument count, so one array would mean the server encoding per-string placeholder order it has no
   way to verify.
 
