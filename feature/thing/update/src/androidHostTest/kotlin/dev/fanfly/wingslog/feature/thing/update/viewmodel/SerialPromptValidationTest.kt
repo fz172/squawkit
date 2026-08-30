@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.thing.update.viewmodel
 
+import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.thing.Engine
 import dev.fanfly.wingslog.thing.Propeller
@@ -38,6 +39,18 @@ class SerialPromptValidationTest {
       ),
     ),
   )
+
+  @Test
+  fun theFailOpenDefaultStillAsksForSerials() {
+    // #660: a wrong default must not silently stop asking aviation users for serial numbers —
+    // which would let a Thing be created without the identifiers its logbook depends on.
+    val state = EditThingUiState(
+      thing = thing(serials = false),
+      requireSerials = CurrentThingTemplate.ALL_ENABLED.component_serial_prompt,
+    )
+
+    assertThat(state.isValid).isFalse()
+  }
 
   @Test
   fun blankSerialsBlockSavingWhenTheTemplateAsksForThem() {

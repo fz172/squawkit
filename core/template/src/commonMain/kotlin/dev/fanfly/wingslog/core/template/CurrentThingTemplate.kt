@@ -90,7 +90,14 @@ class CurrentThingTemplate(registry: TemplateRegistry) {
     this?.capabilities ?: ALL_ENABLED
 
   companion object {
-    internal val ALL_ENABLED = Capabilities(
+    /**
+     * The fail-open default, public so each gate's own tests can assert it removes nothing.
+     *
+     * That assertion is what #660 asks for: a capability read with the wrong default silently
+     * removes a section for aviation users, and a missing tab is far less noticeable in review
+     * than a wrong word.
+     */
+    val ALL_ENABLED = Capabilities(
       components = true,
       meters = true,
       compliance = true,

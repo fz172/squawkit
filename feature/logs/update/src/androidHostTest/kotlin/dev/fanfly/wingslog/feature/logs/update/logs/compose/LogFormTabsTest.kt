@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.logs.update.logs.compose
 
+import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.thing.Capabilities
 import org.junit.Test
@@ -11,6 +12,16 @@ import org.junit.Test
  * indistinguishable from no gate at all. Only `meters = false` separates them.
  */
 class LogFormTabsTest {
+
+  @Test
+  fun theFailOpenDefaultRemovesNothing() {
+    // #660: a wrong default must not silently drop the hours tab for aviation users.
+    assertThat(logFormTabsFor(CurrentThingTemplate.ALL_ENABLED)).containsExactly(
+      LogFormTab.WORK,
+      LogFormTab.HOURS,
+      LogFormTab.RECORDS,
+    ).inOrder()
+  }
 
   @Test
   fun aTemplateWithoutMetersHasNoHoursTab() {
