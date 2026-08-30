@@ -1,8 +1,5 @@
 package dev.fanfly.wingslog.feature.technician.manage.compose
 
-import dev.fanfly.wingslog.core.template.LexiconFormatter
-import dev.fanfly.wingslog.core.template.LocalThingLexicon
-import dev.fanfly.wingslog.core.template.technicianNoun
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -73,24 +70,15 @@ fun EditTechnicianScreen(
   if (showDeleteDialog) {
     AlertDialog(
       onDismissRequest = { showDeleteDialog = false },
-      title = { Text(stringResource(
-        TechnicianRes.string.delete_technician,
-        LexiconFormatter.titleCase(LocalThingLexicon.current.technicianNoun),
-      )) },
-      text = { Text(stringResource(
-        TechnicianRes.string.delete_technician_confirmation,
-        LocalThingLexicon.current.technicianNoun.singular,
-      )) },
+      title = { Text(stringResource(TechnicianRes.string.delete_technician)) },
+      text = { Text(stringResource(TechnicianRes.string.delete_technician_confirmation)) },
       confirmButton = {
         TextButton(onClick = {
           showDeleteDialog = false
           viewModel.delete()
         }) {
           Text(
-            stringResource(
-              TechnicianRes.string.delete_technician,
-              LexiconFormatter.titleCase(LocalThingLexicon.current.technicianNoun),
-            ),
+            stringResource(TechnicianRes.string.delete_technician),
             color = MaterialTheme.colorScheme.error
           )
         }
@@ -111,15 +99,9 @@ fun EditTechnicianScreen(
           title = {
             Text(
               when {
-                uiState.id.isEmpty() -> stringResource(
-                  TechnicianRes.string.add_technician,
-                  LexiconFormatter.titleCase(LocalThingLexicon.current.technicianNoun),
-                )
+                uiState.id.isEmpty() -> stringResource(TechnicianRes.string.add_technician)
                 uiState.isSelf -> stringResource(TechnicianRes.string.my_profile)
-                else -> stringResource(
-                  TechnicianRes.string.edit_technician,
-                  LexiconFormatter.titleCase(LocalThingLexicon.current.technicianNoun),
-                )
+                else -> stringResource(TechnicianRes.string.edit_technician)
               }
             )
           },
@@ -189,10 +171,7 @@ fun EditTechnicianScreen(
         onDangerClick = if (uiState.id.isNotEmpty() && !uiState.isSelf) ({
           showDeleteDialog = true
         }) else null,
-        dangerLabel = stringResource(
-          TechnicianRes.string.delete_technician,
-          LexiconFormatter.titleCase(LocalThingLexicon.current.technicianNoun),
-        ),
+        dangerLabel = stringResource(TechnicianRes.string.delete_technician),
         primaryEnabled = !uiState.isSaving,
         isPrimaryFunctionInProgress = uiState.isSaving,
       )

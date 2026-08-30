@@ -938,7 +938,7 @@ feature/technician/sharedassets	linked_technician_info_dismiss	Got it
 feature/technician/sharedassets	linked_technician_info_title	Maintained by %1$s
 feature/technician/sharedassets	linked_technicians_header	Linked from shared aircraft
 feature/technician/sharedassets	manage_technicians	Who Does the Work
-feature/technician/sharedassets	manage_technicians_description	The people who work on your aircraft. Add them here so you can pick them when signing a work log.
+feature/technician/sharedassets	manage_technicians_description	Everyone who works on what you track. Add them here so you can pick them when recording work.
 feature/technician/sharedassets	my_profile	My Profile
 feature/technician/sharedassets	my_technicians_header	My technicians
 feature/technician/sharedassets	name	Name

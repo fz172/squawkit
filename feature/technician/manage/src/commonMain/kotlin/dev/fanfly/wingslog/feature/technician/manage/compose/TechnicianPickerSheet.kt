@@ -1,9 +1,5 @@
 package dev.fanfly.wingslog.feature.technician.manage.compose
 
-import dev.fanfly.wingslog.core.template.LexiconFormatter
-import dev.fanfly.wingslog.core.template.LocalThingLexicon
-import dev.fanfly.wingslog.core.template.technicianNoun
-import dev.fanfly.wingslog.core.template.thingNoun
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -61,10 +57,7 @@ fun TechnicianPickerSheet(
     modifier = modifier,
     headerSlot = {
       Text(
-        text = stringResource(
-          TechnicianRes.string.select_technician,
-          LexiconFormatter.titleCase(LocalThingLexicon.current.technicianNoun),
-        ),
+        text = stringResource(TechnicianRes.string.select_technician),
         style = MaterialTheme.typography.titleLarge
       )
     }
@@ -92,10 +85,7 @@ fun TechnicianPickerSheet(
       }
 
       if (linkedTechnicians.isNotEmpty()) {
-        PickerSectionHeader(stringResource(
-          TechnicianRes.string.linked_technicians_header,
-          LocalThingLexicon.current.thingNoun.singular,
-        ))
+        PickerSectionHeader(stringResource(TechnicianRes.string.linked_technicians_header))
         val linkedBadge = stringResource(TechnicianRes.string.linked_badge)
         linkedTechnicians.forEach { technician ->
           TechnicianRow(technician, selectedId, onSelect, badge = linkedBadge)
@@ -104,10 +94,7 @@ fun TechnicianPickerSheet(
 
       if (manual.isNotEmpty()) {
         if (grouped) {
-          PickerSectionHeader(stringResource(
-            TechnicianRes.string.my_technicians_header,
-            LocalThingLexicon.current.technicianNoun.plural,
-          ))
+          PickerSectionHeader(stringResource(TechnicianRes.string.my_technicians_header))
         }
         manual.forEach { technician ->
           TechnicianRow(technician, selectedId, onSelect)
@@ -115,10 +102,7 @@ fun TechnicianPickerSheet(
       }
 
       PickerActionButton(
-        text = stringResource(
-          TechnicianRes.string.add_technician,
-          LexiconFormatter.titleCase(LocalThingLexicon.current.technicianNoun),
-        ),
+        text = stringResource(TechnicianRes.string.add_technician),
         icon = Icons.Default.Add,
         onClick = onAddClick,
       )

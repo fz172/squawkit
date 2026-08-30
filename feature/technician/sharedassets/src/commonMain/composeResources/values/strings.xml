@@ -1,10 +1,10 @@
 <resources>
   <string name="technician">Technician</string>
-  <string name="add_technician">Add %1$s</string>
-  <string name="edit_technician">Update %1$s</string>
-  <string name="manage_technicians_description">The people who work on your %1$s. Add them here so you can pick them when signing %2$s.</string>
+  <string name="add_technician">Add Technician</string>
+  <string name="edit_technician">Update Technician</string>
+  <string name="manage_technicians_description">Everyone who works on what you track. Add them here so you can pick them when recording work.</string>
   <string name="manage_technicians">Who Does the Work</string>
-  <string name="select_technician">Select %1$s</string>
+  <string name="select_technician">Select Technician</string>
   <string name="performed_by">Performed By</string>
 
   <string name="name">Name</string>
@@ -21,17 +21,17 @@
   <string name="my_profile">My Profile</string>
 
   <string name="linked_badge">Linked</string>
-  <string name="linked_technicians_header">Linked from shared %1$s</string>
-  <string name="my_technicians_header">My %1$s</string>
+  <string name="linked_technicians_header">Linked from shared aircraft</string>
+  <string name="my_technicians_header">My technicians</string>
   <string name="linked_technician_info_title">Maintained by %1$s</string>
-  <string name="linked_technician_info_body">This profile comes from %1$s you share. It’s kept up to date by the person it belongs to, so you can’t edit or delete it here — but you can select them when logging maintenance.</string>
+  <string name="linked_technician_info_body">This profile comes from an aircraft you share. It’s kept up to date by the person it belongs to, so you can’t edit or delete it here — but you can select them when logging maintenance.</string>
   <string name="linked_technician_info_dismiss">Got it</string>
 
-  <string name="duplicates_prompt_title">Some %1$s look like the same person</string>
+  <string name="duplicates_prompt_title">Some technicians look like the same person</string>
   <string name="duplicates_prompt_action">Review</string>
   <string name="duplicates_prompt_dismiss">Not duplicates</string>
   <string name="duplicates_review_title">Review duplicates</string>
-  <string name="duplicates_review_body">Merging deletes the duplicate entries. It changes only who you can pick from here — logs you have already signed keep the %1$s they recorded.</string>
+  <string name="duplicates_review_body">Merging deletes the duplicate entries. It changes only who you can pick from here — logs you have already signed keep the technician they recorded.</string>
   <string name="duplicates_merge_manual">Merge into %1$s</string>
   <string name="duplicates_merge_member">Use the shared profile for %1$s</string>
   <string name="duplicates_warn_mirror">%1$s and %2$s have the same certificate number. Two members are two different people, so this is likely a typo — check with them.</string>
@@ -41,9 +41,9 @@
   <string name="duplicates_no_selection">Nothing selected</string>
 
   <string name="no_certificate">No certificate provided</string>
-  <string name="no_technicians">No %1$s added yet.</string>
-  <string name="empty_technicians_title">No %1$s</string>
-  <string name="empty_technicians_desc">You haven't added any %1$s yet. Add one to keep track of who performs your maintenance.</string>
-  <string name="delete_technician">Delete %1$s</string>
-  <string name="delete_technician_confirmation">Are you sure you want to delete this %1$s? This will prevent them from being added to future logs, but it will not remove them from past logs.</string>
+  <string name="no_technicians">No technicians added yet.</string>
+  <string name="empty_technicians_title">No Technicians</string>
+  <string name="empty_technicians_desc">You haven't added any technicians yet. Add one to keep track of who performs your maintenance.</string>
+  <string name="delete_technician">Delete Technician</string>
+  <string name="delete_technician_confirmation">Are you sure you want to delete this technician? This will prevent them from being added to future logs, but it will not remove them from past logs.</string>
 </resources>

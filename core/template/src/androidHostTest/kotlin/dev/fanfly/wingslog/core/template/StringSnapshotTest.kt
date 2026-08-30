@@ -173,34 +173,8 @@ class StringSnapshotTest {
       )
     },
 
-    // feature/technician/sharedassets (#656). "Technician" alone is #657's, as ever.
-    technician("add_technician") { LexiconFormatter.titleCase(it.technicianNoun) },
-    technician("delete_technician") { LexiconFormatter.titleCase(it.technicianNoun) },
-    technician("edit_technician") { LexiconFormatter.titleCase(it.technicianNoun) },
-    technician("select_technician") { LexiconFormatter.titleCase(it.technicianNoun) },
-    technician("empty_technicians_title") { LexiconFormatter.titleCasePlural(it.technicianNoun) },
-    technician("delete_technician_confirmation") { it.technicianNoun.singular },
-    technician("duplicates_review_body") { it.technicianNoun.singular },
-    technician("duplicates_prompt_title") { it.technicianNoun.plural },
-    technician("empty_technicians_desc") { it.technicianNoun.plural },
-    technician("my_technicians_header") { it.technicianNoun.plural },
-    technician("no_technicians") { it.technicianNoun.plural },
-    technician("linked_technicians_header") { it.thingNoun.singular },
-    technician("linked_technician_info_body") { LexiconFormatter.withArticle(it.thingNoun) },
-    "feature/technician/sharedassets:manage_technicians_description" to { lexicon: Lexicon ->
-      mapOf(
-        1 to lexicon.thingNoun.plural,
-        2 to LexiconFormatter.withArticle(lexicon.logNoun),
-      )
-    },
   )
 
-  /** A single-argument frame in `feature/technician/sharedassets`. */
-  private fun technician(
-    resource: String,
-    word: (Lexicon) -> String,
-  ): Pair<String, (Lexicon) -> Map<Int, String>> =
-    "feature/technician/sharedassets:$resource" to { lexicon -> mapOf(1 to word(lexicon)) }
 
   /** A frame in `feature/sharing/sharedassets`. */
   private fun sharing(

@@ -1,15 +1,15 @@
 package dev.fanfly.wingslog.feature.technician.manage.compose
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -40,11 +40,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontWeight
-import dev.fanfly.wingslog.core.template.LexiconFormatter
-import dev.fanfly.wingslog.core.template.LocalThingLexicon
-import dev.fanfly.wingslog.core.template.logNoun
-import dev.fanfly.wingslog.core.template.technicianNoun
-import dev.fanfly.wingslog.core.template.thingNoun
+import dev.fanfly.wingslog.thing.Technician
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedFloatingAction
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedTopBar
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
@@ -52,21 +48,20 @@ import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.technician.manage.viewmodel.TechnicianListViewModel
-import dev.fanfly.wingslog.thing.Technician
 import org.jetbrains.compose.resources.stringResource
+import wingslog.feature.technician.sharedassets.generated.resources.manage_technicians_description
 import wingslog.feature.technician.sharedassets.generated.resources.add_technician
+import wingslog.feature.technician.sharedassets.generated.resources.empty_technicians_desc
+import wingslog.feature.technician.sharedassets.generated.resources.empty_technicians_title
 import wingslog.feature.technician.sharedassets.generated.resources.duplicates_prompt_action
 import wingslog.feature.technician.sharedassets.generated.resources.duplicates_prompt_dismiss
 import wingslog.feature.technician.sharedassets.generated.resources.duplicates_prompt_title
 import wingslog.feature.technician.sharedassets.generated.resources.duplicates_review_title
-import wingslog.feature.technician.sharedassets.generated.resources.empty_technicians_desc
-import wingslog.feature.technician.sharedassets.generated.resources.empty_technicians_title
 import wingslog.feature.technician.sharedassets.generated.resources.linked_technician_info_body
 import wingslog.feature.technician.sharedassets.generated.resources.linked_technician_info_dismiss
 import wingslog.feature.technician.sharedassets.generated.resources.linked_technician_info_title
 import wingslog.feature.technician.sharedassets.generated.resources.linked_technicians_header
 import wingslog.feature.technician.sharedassets.generated.resources.manage_technicians
-import wingslog.feature.technician.sharedassets.generated.resources.manage_technicians_description
 import wingslog.feature.technician.sharedassets.generated.resources.my_technicians_header
 import wingslog.feature.technician.sharedassets.generated.resources.Res as TechnicianRes
 
@@ -88,10 +83,7 @@ fun TechnicianListScreen(
       title = {
         Text(stringResource(TechnicianRes.string.linked_technician_info_title, linked.name))
       },
-      text = { Text(stringResource(
-        TechnicianRes.string.linked_technician_info_body,
-        LexiconFormatter.withArticle(LocalThingLexicon.current.thingNoun),
-      )) },
+      text = { Text(stringResource(TechnicianRes.string.linked_technician_info_body)) },
       confirmButton = {
         TextButton(onClick = { infoFor = null }) {
           Text(stringResource(TechnicianRes.string.linked_technician_info_dismiss))
@@ -113,9 +105,6 @@ fun TechnicianListScreen(
     topBar = {
       ConstrainedTopBar {
         TopAppBar(
-          // The same fixed string as the settings row that opens this page: a row reading "Who
-          // Does the Work" that opens a page titled "Technician Profiles" is a seam the user can
-          // see, and this page is still settings. The domain speaks in the description below.
           title = { Text(stringResource(TechnicianRes.string.manage_technicians)) },
           navigationIcon = {
             IconButton(onClick = onNavigateBack) {
@@ -145,10 +134,7 @@ fun TechnicianListScreen(
         FloatingActionButton(onClick = { onNavigateToEdit(null) }) {
           Icon(
             Icons.Default.Add,
-            contentDescription = stringResource(
-              TechnicianRes.string.add_technician,
-              LexiconFormatter.titleCase(LocalThingLexicon.current.technicianNoun),
-            )
+            contentDescription = stringResource(TechnicianRes.string.add_technician)
           )
         }
       }
@@ -156,14 +142,8 @@ fun TechnicianListScreen(
   ) { paddingValues ->
     if (state.technicians.isEmpty() && state.linkedTechnicians.isEmpty()) {
       EmptyState(
-        title = stringResource(
-          TechnicianRes.string.empty_technicians_title,
-          LexiconFormatter.titleCasePlural(LocalThingLexicon.current.technicianNoun),
-        ),
-        description = stringResource(
-          TechnicianRes.string.empty_technicians_desc,
-          LocalThingLexicon.current.technicianNoun.plural,
-        ),
+        title = stringResource(TechnicianRes.string.empty_technicians_title),
+        description = stringResource(TechnicianRes.string.empty_technicians_desc),
         icon = Icons.Default.Engineering,
         modifier = Modifier
           .fillMaxSize()
@@ -196,16 +176,12 @@ fun TechnicianListScreen(
           ),
           verticalArrangement = Arrangement.spacedBy(Spacing.medium),
         ) {
-          // What this page is for, in the words of the thing being maintained. The settings row
-          // that opens it is deliberately generic — settings should read the same whatever the
-          // picker has selected — so this is where the domain gets to speak.
+          // Fixed text, no lexicon. This page aggregates technicians across the whole account —
+          // they are account-scoped, not per-thing — so the selected thing's words are the wrong
+          // words here even when only one template exists. See manage_technicians_description.
           item(key = "description") {
             Text(
-              text = stringResource(
-                TechnicianRes.string.manage_technicians_description,
-                LocalThingLexicon.current.thingNoun.plural,
-                LexiconFormatter.withArticle(LocalThingLexicon.current.logNoun),
-              ),
+              text = stringResource(TechnicianRes.string.manage_technicians_description),
               style = MaterialTheme.typography.bodyMedium,
               color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -223,10 +199,7 @@ fun TechnicianListScreen(
           // Only headline the personal list when there's a linked section to distinguish it from.
           if (state.linkedTechnicians.isNotEmpty() && state.technicians.isNotEmpty()) {
             item(key = "own-header") {
-              SectionHeader(stringResource(
-                TechnicianRes.string.my_technicians_header,
-                LocalThingLexicon.current.technicianNoun.plural,
-              ))
+              SectionHeader(stringResource(TechnicianRes.string.my_technicians_header))
             }
           }
           items(state.technicians, key = { it.id }) { technician ->
@@ -239,10 +212,7 @@ fun TechnicianListScreen(
 
           if (state.linkedTechnicians.isNotEmpty()) {
             item(key = "linked-header") {
-              SectionHeader(stringResource(
-                TechnicianRes.string.linked_technicians_header,
-                LocalThingLexicon.current.thingNoun.singular,
-              ))
+              SectionHeader(stringResource(TechnicianRes.string.linked_technicians_header))
             }
             // Keyed by source_uid: a linked profile is identified by the account that owns it, and
             // that's what keeps it distinct from any manual entry of the same person.
@@ -292,10 +262,7 @@ private fun DuplicatePrompt(
       verticalArrangement = Arrangement.spacedBy(Spacing.small),
     ) {
       Text(
-        text = stringResource(
-          TechnicianRes.string.duplicates_prompt_title,
-          LocalThingLexicon.current.technicianNoun.plural,
-        ),
+        text = stringResource(TechnicianRes.string.duplicates_prompt_title),
         style = MaterialTheme.typography.bodyMedium,
       )
       Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
