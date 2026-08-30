@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.squawk.update.compose
 
+import dev.fanfly.wingslog.core.template.LocalThingCapabilities
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -49,6 +50,10 @@ fun SquawkBasicSection(
         .toLocalDateTime(TimeZone.currentSystemDefault()).date.toDisplayFormat()
     }
   }
+  // Narrows what is OFFERED, never what can be read back: SquawkPriority keeps every value because
+  // existing squawks are stored with it (#638). A template that drops AOG stops offering it; a
+  // squawk already marked AOG still renders as AOG.
+  val offered = LocalThingCapabilities.current.priorities
   val priorities = listOf(
     SquawkPriority.SQUAWK_PRIORITY_LOW to stringResource(Res.string.priority_low),
     SquawkPriority.SQUAWK_PRIORITY_MEDIUM to stringResource(Res.string.priority_medium),
@@ -56,7 +61,7 @@ fun SquawkBasicSection(
     SquawkPriority.SQUAWK_PRIORITY_AOG to LexiconFormatter.titleCase(
       LocalThingLexicon.current.down_status
     ),
-  )
+  ).filter { (priority, _) -> offered.isEmpty() || priority in offered }
 
   Column(
     modifier = modifier.fillMaxWidth(),

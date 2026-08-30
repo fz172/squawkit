@@ -1,9 +1,5 @@
 package dev.fanfly.wingslog
 
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import dev.fanfly.wingslog.core.template.CurrentThingLexicon
-import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -27,6 +23,9 @@ import dev.fanfly.wingslog.core.lifecycle.compose.AppForegroundEffect
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.storage.DatabaseHealth
 import dev.fanfly.wingslog.core.storage.DatabaseIntegrityChecker
+import dev.fanfly.wingslog.core.template.CurrentThingTemplate
+import dev.fanfly.wingslog.core.template.LocalThingCapabilities
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.ui.theme.AppearanceController
 import dev.fanfly.wingslog.core.ui.theme.WingslogTheme
 import dev.fanfly.wingslog.core.ui.theme.resolveDarkTheme
@@ -59,7 +58,7 @@ fun AppEntry() {
   val appCapability: AppCapability = koinInject()
   val analytics: AnalyticsManager = koinInject()
   val appearanceController: AppearanceController = koinInject()
-  val currentThingLexicon: CurrentThingLexicon = koinInject()
+  val currentThingTemplate: CurrentThingTemplate = koinInject()
   val appearanceMode by appearanceController.mode.collectAsState()
   val darkTheme = appearanceMode.resolveDarkTheme()
   val scope = rememberCoroutineScope()
@@ -100,11 +99,13 @@ fun AppEntry() {
       TrackRootScreenViews(navController, analytics)
 
       // Above the NavHost so the per-thing form dialogs see it too: they are root
-      // destinations composed in DialogHost, a sibling of the shell (CurrentThingLexicon).
-      val thingLexicon by currentThingLexicon.lexicon.collectAsState()
+      // destinations composed in DialogHost, a sibling of the shell (CurrentThingTemplate).
+      val thingLexicon by currentThingTemplate.lexicon.collectAsState()
+      val thingCapabilities by currentThingTemplate.capabilities.collectAsState()
       CompositionLocalProvider(
         LocalAnalytics provides analytics,
         LocalThingLexicon provides thingLexicon,
+        LocalThingCapabilities provides thingCapabilities,
       ) {
         NavHost(
           navController,

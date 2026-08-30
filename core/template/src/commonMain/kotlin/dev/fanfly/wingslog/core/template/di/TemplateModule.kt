@@ -1,8 +1,8 @@
 package dev.fanfly.wingslog.core.template.di
 
-import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
-import dev.fanfly.wingslog.core.template.CurrentThingLexicon
+import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import dev.fanfly.wingslog.core.template.TemplateRegistry
+import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
 import org.koin.dsl.module
 
 /**
@@ -13,5 +13,5 @@ val templateModule = module {
   single<TemplateRegistry> { BakedInTemplateRegistry() }
   // App-scoped on purpose: the root providers and the shell ViewModel must see one
   // instance, or the form dialogs read a lexicon nobody is updating.
-  single<CurrentThingLexicon> { CurrentThingLexicon(get<TemplateRegistry>()) }
+  single<CurrentThingTemplate> { CurrentThingTemplate(get<TemplateRegistry>()) }
 }

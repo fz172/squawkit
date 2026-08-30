@@ -1,16 +1,15 @@
 package dev.fanfly.wingslog.feature.shell.viewmodel
 
-import dev.fanfly.wingslog.core.template.CurrentThingLexicon
-import dev.fanfly.wingslog.core.template.squawkNoun
-import dev.fanfly.wingslog.core.template.thingNoun
-import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
 import com.google.common.truth.Truth.assertThat
-import dev.fanfly.wingslog.thing.Technician
 import dev.fanfly.wingslog.core.auth.AccountUpgradeResult
 import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.core.auth.AuthProvider
 import dev.fanfly.wingslog.core.auth.SendLinkResult
 import dev.fanfly.wingslog.core.model.sharing.ShareRole
+import dev.fanfly.wingslog.core.template.CurrentThingTemplate
+import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
+import dev.fanfly.wingslog.core.template.squawkNoun
+import dev.fanfly.wingslog.core.template.thingNoun
 import dev.fanfly.wingslog.core.ui.adaptive.ShellSection
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetEntry
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
@@ -21,6 +20,7 @@ import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
 import dev.fanfly.wingslog.feature.sync.data.SyncEngine
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import dev.fanfly.wingslog.feature.technician.datamanager.merge.DuplicateGroup
+import dev.fanfly.wingslog.thing.Technician
 import dev.fanfly.wingslog.thing.Thing
 import dev.gitlive.firebase.auth.AuthCredential
 import dev.gitlive.firebase.auth.FirebaseUser
@@ -133,7 +133,9 @@ class AdaptiveShellViewModelTest {
     fleet.value = listOf(thing("a1", "N1"))
     viewModel()
 
-    assertThat(currentThingLexicon.lexicon.value.squawkNoun.singular).isEqualTo("squawk")
+    assertThat(currentThingTemplate.lexicon.value.squawkNoun.singular).isEqualTo(
+      "squawk"
+    )
   }
 
   @Test
@@ -145,7 +147,9 @@ class AdaptiveShellViewModelTest {
     fleet.value = emptyList()
     viewModel()
 
-    assertThat(currentThingLexicon.lexicon.value.thingNoun.singular).isEqualTo("aircraft")
+    assertThat(currentThingTemplate.lexicon.value.thingNoun.singular).isEqualTo(
+      "aircraft"
+    )
   }
 
   private fun thing(
@@ -193,7 +197,7 @@ class AdaptiveShellViewModelTest {
   // ShellThing be built with a lexicon no template would ever produce.
   private val templateRegistry = BakedInTemplateRegistry()
 
-  private val currentThingLexicon = CurrentThingLexicon(templateRegistry)
+  private val currentThingTemplate = CurrentThingTemplate(templateRegistry)
 
   private fun viewModel() = AdaptiveShellViewModel(
     fleetManager = fleetManager,
@@ -204,7 +208,7 @@ class AdaptiveShellViewModelTest {
     syncEngine = syncEngine,
     selectedThingStore = selectedThingStore,
     templateRegistry = templateRegistry,
-    currentThingLexicon = currentThingLexicon,
+    currentThingTemplate = currentThingTemplate,
   )
 
   @Test

@@ -23,7 +23,8 @@ import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.core.lifecycle.AppForegroundObserver
 import dev.fanfly.wingslog.core.lifecycle.compose.AppForegroundEffect
 import dev.fanfly.wingslog.core.nav.Screen
-import dev.fanfly.wingslog.core.template.CurrentThingLexicon
+import dev.fanfly.wingslog.core.template.CurrentThingTemplate
+import dev.fanfly.wingslog.core.template.LocalThingCapabilities
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.ui.theme.AppearanceController
 import dev.fanfly.wingslog.core.ui.theme.WingslogTheme
@@ -55,7 +56,7 @@ import wingslog.core.sharedassets.generated.resources.Res as UiRes
 @Composable
 fun WebApp() {
   val appearanceController: AppearanceController = koinInject()
-  val currentThingLexicon: CurrentThingLexicon = koinInject()
+  val currentThingTemplate: CurrentThingTemplate = koinInject()
   val appearanceMode by appearanceController.mode.collectAsState()
   val isDark = appearanceMode.resolveDarkTheme()
   LaunchedEffect(isDark) { updateBrowserGutterColor(isDark) }
@@ -106,11 +107,13 @@ fun WebApp() {
         TrackRootScreenViews(navController, analytics)
 
         // Above the NavHost so the per-thing form dialogs see it too: they are root
-        // destinations composed in DialogHost, a sibling of the shell (CurrentThingLexicon).
-        val thingLexicon by currentThingLexicon.lexicon.collectAsState()
+        // destinations composed in DialogHost, a sibling of the shell (CurrentThingTemplate).
+        val thingLexicon by currentThingTemplate.lexicon.collectAsState()
+        val thingCapabilities by currentThingTemplate.capabilities.collectAsState()
         CompositionLocalProvider(
           LocalAnalytics provides analytics,
           LocalThingLexicon provides thingLexicon,
+          LocalThingCapabilities provides thingCapabilities,
         ) {
           NavHost(
             navController = navController,

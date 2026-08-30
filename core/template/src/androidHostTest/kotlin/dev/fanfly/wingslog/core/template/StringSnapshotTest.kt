@@ -317,7 +317,7 @@ class StringSnapshotTest {
     },
 
     // Strings that name a thing *in the abstract*, with none selected — "Add a ___", the empty
-    // fleet, the subscription perks. These read from the app-scoped default in CurrentThingLexicon,
+    // fleet, the subscription perks. These read from the app-scoped default in CurrentThingTemplate,
     // which is exactly the case it exists for and which retires itself: one preset means the only
     // right word, a second preset means the generic one. That is why they are conversions and not
     // hand-written neutral copy like the technician page (#684), whose list aggregates things that

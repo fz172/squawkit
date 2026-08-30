@@ -19,6 +19,20 @@ import dev.fanfly.wingslog.thing.Noun
 val LocalThingLexicon = staticCompositionLocalOf { GenericLexicon.LEXICON }
 
 /**
+ * Which features exist at all for the thing being rendered (PRD §4.8).
+ *
+ * **A capability removes UI; it never disables it.** The guard belongs where a composable decides
+ * whether to emit anything, not where it would pass `enabled = false` — a homeowner should never
+ * see a greyed-out "Engine hours" field. Retrofitting removal onto a show/hide implementation means
+ * auditing every call site twice, and the greyed-out version is the one that tends to ship.
+ *
+ * Defaults to everything enabled so a missing provider shows a control rather than hiding one. That
+ * failure is visible and gets reported; the opposite is silent.
+ */
+val LocalThingCapabilities =
+  staticCompositionLocalOf { CurrentThingTemplate.ALL_ENABLED }
+
+/**
  * The domain-neutral lexicon, and the default when nothing more specific is in scope.
  *
  * **A real authored lexicon, not the airplane one with values blanked.** That distinction matters
