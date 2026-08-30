@@ -41,10 +41,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import dev.fanfly.wingslog.thing.MaintenanceLog
-import dev.fanfly.wingslog.thing.MaintenanceTask
 import dev.fanfly.wingslog.core.analytics.LocalAnalytics
 import dev.fanfly.wingslog.core.datetime.toWireInstant
+import dev.fanfly.wingslog.core.template.LocalThingCapabilities
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedTopBar
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
 import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
@@ -53,21 +52,22 @@ import dev.fanfly.wingslog.core.ui.common.compose.UnsavedChangesDialog
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.logs.sharedassets.compose.LogPickerSheet
 import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
-import dev.fanfly.wingslog.feature.tasks.update.compose.ADJUSTMENT_TAB
-import dev.fanfly.wingslog.feature.tasks.update.compose.BASIC_TAB
-import dev.fanfly.wingslog.feature.tasks.update.compose.COMPLIANCE_TAB
 import dev.fanfly.wingslog.feature.tasks.update.compose.ResolveTaskOptionsMenu
-import dev.fanfly.wingslog.feature.tasks.update.compose.SCHEDULE_TAB
 import dev.fanfly.wingslog.feature.tasks.update.compose.ScheduleState
 import dev.fanfly.wingslog.feature.tasks.update.compose.TASK_FORM_TAB_KEYS
 import dev.fanfly.wingslog.feature.tasks.update.compose.TaskAdjustmentsTab
 import dev.fanfly.wingslog.feature.tasks.update.compose.TaskComplianceTab
+import dev.fanfly.wingslog.feature.tasks.update.compose.TaskFormTab
 import dev.fanfly.wingslog.feature.tasks.update.compose.TaskIdentityTab
 import dev.fanfly.wingslog.feature.tasks.update.compose.TaskScheduleTab
 import dev.fanfly.wingslog.feature.tasks.update.compose.TaskTabRow
+import dev.fanfly.wingslog.feature.tasks.update.compose.spec
+import dev.fanfly.wingslog.feature.tasks.update.compose.taskFormTabsFor
 import dev.fanfly.wingslog.feature.tasks.update.viewmodel.TaskFormState
 import dev.fanfly.wingslog.feature.tasks.viewing.DeleteTaskConfirmDialog
 import dev.fanfly.wingslog.feature.tasks.viewing.SkipTaskConfirmDialog
+import dev.fanfly.wingslog.thing.MaintenanceLog
+import dev.fanfly.wingslog.thing.MaintenanceTask
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
@@ -171,7 +171,9 @@ fun EditTaskScreen(
     )
   }
 
-  val pagerState = rememberPagerState(pageCount = { 4 })
+  val tabs =
+    taskFormTabsFor(LocalThingCapabilities.current, includeAdjustments = true)
+  val pagerState = rememberPagerState(pageCount = { tabs.size })
   val coroutineScope = rememberCoroutineScope()
   val analytics = LocalAnalytics.current
   // Log tab switches (tap or swipe) as page views; drop(1) skips the initial page on open.
@@ -216,12 +218,7 @@ fun EditTaskScreen(
           contentAlignment = Alignment.TopCenter
         ) {
           TaskTabRow(
-            tabs = listOf(
-              BASIC_TAB,
-              COMPLIANCE_TAB,
-              SCHEDULE_TAB,
-              ADJUSTMENT_TAB
-            ),
+            tabs = tabs.map { it.spec },
             selectedIndex = pagerState.currentPage,
             onSelect = {
               coroutineScope.launch {
@@ -257,8 +254,8 @@ fun EditTaskScreen(
               .verticalScroll(rememberScrollState())
               .padding(Spacing.screenPadding)
           ) {
-            when (page) {
-              0 -> TaskIdentityTab(
+            when (tabs[page]) {
+              TaskFormTab.IDENTITY -> TaskIdentityTab(
                 title = state.title,
                 onTitleChange = onTitleChange,
                 component = state.component,
@@ -271,7 +268,7 @@ fun EditTaskScreen(
                 attachmentSection = attachmentSection
               )
 
-              1 -> TaskComplianceTab(
+              TaskFormTab.COMPLIANCE -> TaskComplianceTab(
                 complianceType = state.type,
                 onComplianceTypeChange = null,
                 refNumber = state.refNumber,
@@ -282,13 +279,13 @@ fun EditTaskScreen(
                 onComplianceNotesChange = onComplianceNotesChange,
               )
 
-              2 -> TaskScheduleTab(
+              TaskFormTab.SCHEDULE -> TaskScheduleTab(
                 state = state.schedule,
                 onChange = onScheduleChange,
                 availableInspections = availableInspections.filter { it.id != card.id },
               )
 
-              3 -> TaskAdjustmentsTab(
+              TaskFormTab.ADJUSTMENTS -> TaskAdjustmentsTab(
                 schedule = state.schedule,
                 forceOverrideEngine = state.forceOverrideEngine,
                 onForceOverrideEngineChange = onForceOverrideEngineChange,
