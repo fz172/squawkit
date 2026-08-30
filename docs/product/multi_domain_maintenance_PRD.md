@@ -645,6 +645,7 @@ message Component {
 | `Squawk` | Add `component_id`. Keep `component_type`, `component_serial` transitionally. | Same bounded dual-write rule. |
 | `MaintenanceOverview` | Add `repeated MeterReading current` and `map<string,uint32> log_count_by_slot`. Legacy log counters and `current_*_time` doubles retired with the rest of Phase 1's transitional fields. | Recomputed locally from logs; no migration risk. |
 | `ComponentType` | **Frozen, not extended.** Retained only for the transitional fields above; new code reads `slot_key`. | Adding enum values would be a trap — an enum can never cover user-defined slots. |
+| `Technician` | Add `repeated TechnicianRole roles`, each naming a `template_id` and carrying that template's technician spec. The existing certificate fields (3–7) become the airplane role's spec. | The record is account-scoped and so cannot read a per-Thing capability (§8.6). No stored backfill: every technician predating roles was created when airplane was the only preset, so the value is derivable — the same closed-set argument as `Thing.template_id`. |
 | `ThingTemplate` *(new)* | The config from §4, as proto, for custom templates. | New `CollectionKind.ThingTemplate` — the twelfth kind, after `NotificationSettings` took the count to eleven. Zero-migration per the R1 design (§4.2.1): the `collection` column is `TEXT` and `CollectionKind.ALL` is coverage-tested against `sealedSubclasses`, so a forgotten entry fails the build. |
 
 > **`CollectionKind.Aircraft.wireName` moves to `"thing"`, and every path built from it moves too — not just
@@ -874,7 +875,9 @@ selected component — and absent entirely when the template declares none.
 The paper-logbook tab layout becomes the **airplane** preset's layout, selected by `capabilities.export_layout`;
 other presets get a generic layout whose columns derive from the lexicon and meter set. Sheet names, file names,
 and the README are lexicon-driven. Pipeline, ZIP structure, delivery, and history are untouched. Technician
-certificate fields are shown or hidden by capability, so a homeowner never sees "A&P / IA".
+certificate fields are shown or hidden by capability so a homeowner never sees "A&P / IA" — but that gate
+alone stops working the moment an account holds two templates, for reasons that are structural rather than
+verbal. See §8.6.
 
 **Notifications** need one thing beyond copy substitution. `NotificationChannel.GROUNDED` is an OS-level channel
 (Android) and category (iOS) **identifier**, and renaming an identifier drops every user's per-channel settings —
@@ -887,6 +890,52 @@ is ordinary substitution: the four tier titles, the notification bodies, and the
   noun rather than picking a template's word arbitrarily — the same rule as the switcher title in §8.2.
 - The N1 collaboration channel is domain-neutral already ("someone changed something you share") and needs only
   the Thing noun.
+
+### 8.6 Technicians carry roles, not a certificate shape
+
+**The technician record is aviation-shaped in the proto, not only in its words.** `Technician` carries
+`cert_type`, `cert_number`, `cert_expiration`, `cert_expire_limit`, and a `CertificateType` enum whose values are
+`REPAIRMAN` and `AMT` — FAA certificates, in the schema. §4.8 gates those fields behind
+`capabilities.technician_certificates`, which is sufficient while every Thing is an airplane and insufficient
+immediately afterwards.
+
+**What breaks is scope, not vocabulary.** A capability is read from a Thing's template. The technician list is
+**account-scoped** — it aggregates every technician the user has, including ones linked from shared Things — so
+there is no Thing in context to read a capability from. On an account holding an airplane and a house, "show
+certificate fields?" has no single answer, and neither the union nor the intersection is right: the A&P who signs
+the annual has a certificate, the neighbour who clears the gutters does not, and they are both rows in one list.
+
+**So the shape belongs on the person, not on the screen.** A technician carries one or more **roles**. A role
+names a template and carries the spec that template defines for someone who works on it:
+
+- Adding a person asks what kind of work they do — aircraft technician, home help, car mechanic — offering the
+  templates present on the account.
+- **One person can hold several roles.** The A&P who also services the user's car is one contact with two roles,
+  not two records. This matters more than it first appears: the app already ships duplicate detection and a merge
+  sheet, so duplicate technician records are a known, already-paid-for pain — and a single-role model would
+  manufacture exactly the duplicates that feature exists to clean up.
+- Certificate and licence fields are asked per role, from that role's template, so aviation questions only ever
+  appear beneath an aviation role.
+- The list **tags** each person with their role or roles, because on a mixed account a name alone no longer says
+  what someone does.
+
+A technician created before roles existed has none. That backfill is **derivable rather than stored**: every such
+record was created when airplane was the only preset, so the set is closed — the same argument that let
+`Thing.template_id` be dropped instead of kept as a hint (§6). A technician on a single-template account never
+needs to be asked the question at all; the only template present is the answer.
+
+The screen's own chrome stays **neutral**. It spans every template, so its title and description are fixed text
+rather than lexicon substitutions — a surface that belongs to no single Thing cannot borrow one Thing's words
+(§10). The domain appears in the role tags and the per-role fields, which is the right place for it: each of
+those genuinely belongs to exactly one template.
+
+**Phase 3, with the second preset — not later.** Phase 3 is the first moment a mixed account can exist, and
+therefore the first moment the current model is *wrong* rather than merely narrow. Deferring it would ship a
+release whose technician screen has no correct behaviour available to it.
+
+What Phase 4 takes is the general case: arbitrary template-declared spec fields on a role, beyond certificates,
+using the same machinery as `SpecField` on a Thing (§4.2). That belongs with the custom template editor (§16
+decision 3). Phase 3 needs only the fields the shipped presets declare.
 
 ---
 
@@ -1102,8 +1151,8 @@ rollout whose guardrail metric cannot be measured is not a guarded rollout.
 | **0 — Decisions** | Resolve the open decisions in §16. The free-tier limit and the squawk-word question are cheap now and expensive later. | No |
 | **1 — Migration** *(hard gate)* | Non-UI only. `Thing` / `Component` / `Meter` / `ThingTemplate` protos replace the aircraft protos; `core:template` module and `TemplateRegistry` exist but the template language may still be partial — it only has to fully support **airplane**. The developer runs the manual backend cutover (§9.1 step 1) covering Firestore and attachment Storage paths per account, *then* distributes the build to that account's devices, where local backfill (§9.1 step 2) runs automatically. **No template picker, no non-airplane preset, no other new functionality ships until every account has cut over.** | **No — by design.** The app must be indistinguishable, and there is nothing else to see yet. |
 | **2 — Lexicon plumbing** | String parameterization across all 31 `strings.xml` files, `LocalThingLexicon`, formatter, byte-identical snapshot test. Capability flags wired into the UI, all still on. Notification tier titles and the `GROUNDED` channel display name resolve through the lexicon (id unchanged). Analytics event taxonomy defined and emitted (§13). Aviation-only. Starts only after Phase 1 has closed out on every account. | No |
-| **3 — The pivot ships** | Six remaining presets + starter packs, template picker and create flow, generic component tree UI, meter-driven log form, Stuff switcher, subscription rename, `PRODUCT.md`/`DESIGN.md` revisions. No version-floor work here — Phase 1 already guaranteed every device is on the new shape before this phase can start. | **Yes** |
-| **4 — Depth** | Custom template editor, per-preset export layouts, template-aware search, additional presets (3D printer, equipment), store repositioning. | Yes |
+| **3 — The pivot ships** | Six remaining presets + starter packs, template picker and create flow, generic component tree UI, meter-driven log form, Stuff switcher, technician roles and role tags (§8.6), subscription rename, `PRODUCT.md`/`DESIGN.md` revisions. No version-floor work here — Phase 1 already guaranteed every device is on the new shape before this phase can start. | **Yes** |
+| **4 — Depth** | Custom template editor, template-declared spec fields on technician roles (§8.6), per-preset export layouts, template-aware search, additional presets (3D printer, equipment), store repositioning. | Yes |
 | **5 — Cleanup** | The transitional proto fields (§6) were already removed from the schema once every dogfood account cleared Phase 1 — a single code change made ahead of Phase 2, not something carried this far. Nothing is left to clean up by the time Phase 3 ships; this row exists as a checkpoint that it stayed that way. | No |
 
 ---
