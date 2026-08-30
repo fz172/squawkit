@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
   <!-- Manage Access screen -->
   <string name="manage_access_title">Manage Access</string>
   <string name="manage_access_empty_title">No shared access</string>
-  <string name="manage_access_empty_desc">Invite a co-owner or %1$s to share this %2$s.</string>
+  <string name="manage_access_empty_desc">Invite a co-owner or <xliff:g example="technician">%1$s</xliff:g> to share this <xliff:g example="aircraft">%2$s</xliff:g>.</string>
   <!-- "Owner" is only ever the hosting owner. Anyone you invite, promote, or who redeems an invite
        is by definition not the host — you are — so every other owner-role label reads "co-owner". -->
   <string name="manage_access_role_owner">Owner</string>
@@ -11,29 +11,29 @@
   <string name="manage_access_badge_you">You</string>
   <string name="manage_access_unnamed_member">Unnamed member</string>
   <string name="manage_access_revoke">Remove access</string>
-  <string name="manage_access_leave">Leave shared %1$s</string>
+  <string name="manage_access_leave">Leave shared <xliff:g example="aircraft">%1$s</xliff:g></string>
   <!-- Access panel — main view -->
   <string name="manage_access_people_section">People with access</string>
   <string name="manage_access_member_count_singular">1 person</string>
-  <string name="manage_access_member_count_plural">%1$d people</string>
+  <string name="manage_access_member_count_plural"><xliff:g example="3">%1$d</xliff:g> people</string>
   <string name="manage_access_solo_title">No one else has access</string>
-  <string name="manage_access_solo_body">Invite a mechanic or a co-owner and they can log %1$s, tasks, and work against this %2$s.</string>
+  <string name="manage_access_solo_body">Invite a mechanic or a co-owner and they can log <xliff:g example="squawks">%1$s</xliff:g>, tasks, and work against this <xliff:g example="aircraft">%2$s</xliff:g>.</string>
   <string name="manage_access_invites_section">Open invite codes</string>
   <string name="manage_access_invites_hint">Anyone holding a code can join. Codes are not tied to a person.</string>
-  <string name="manage_access_invite_meta">%1$s · expires in %2$s</string>
+  <string name="manage_access_invite_meta"><xliff:g example="technician">%1$s</xliff:g> · expires in <xliff:g example="Work Logs">%2$s</xliff:g></string>
   <string name="manage_access_help_title">What each role can do</string>
-  <string name="manage_access_perm_squawks_tasks">%1$s and tasks</string>
-  <string name="manage_access_perm_thing_details">%1$s details</string>
+  <string name="manage_access_perm_squawks_tasks"><xliff:g example="squawks">%1$s</xliff:g> and tasks</string>
+  <string name="manage_access_perm_thing_details"><xliff:g example="aircraft">%1$s</xliff:g> details</string>
   <string name="manage_access_perm_manage_access">Manage access</string>
-  <string name="manage_access_help_footer">Only the owner can delete the %1$s or hand over ownership. Anyone can leave on their own.</string>
-  <string name="manage_access_role_technician_desc">Add and edit %1$s, %2$s, and %3$s. Cannot change %4$s details.</string>
-  <string name="manage_access_role_co_owner_desc">Everything a %1$s can do, plus edit %2$s details and manage who has access.</string>
+  <string name="manage_access_help_footer">Only the owner can delete the <xliff:g example="aircraft">%1$s</xliff:g> or hand over ownership. Anyone can leave on their own.</string>
+  <string name="manage_access_role_technician_desc">Add and edit <xliff:g example="squawks">%1$s</xliff:g>, <xliff:g example="maintenance tasks">%2$s</xliff:g>, and <xliff:g example="work logs">%3$s</xliff:g>. Cannot change <xliff:g example="aircraft">%4$s</xliff:g> details.</string>
+  <string name="manage_access_role_co_owner_desc">Everything a <xliff:g example="technician">%1$s</xliff:g> can do, plus edit <xliff:g example="aircraft">%2$s</xliff:g> details and manage who has access.</string>
   <string name="manage_access_create_invite">Create invite code</string>
   <!-- Access panel — code view -->
   <string name="manage_access_code_title">Invite code</string>
-  <string name="manage_access_code_subtitle">%1$s · single use</string>
+  <string name="manage_access_code_subtitle"><xliff:g example="technician">%1$s</xliff:g> · single use</string>
   <string name="manage_access_expiry_note">One person, one use. The code stops working once it’s redeemed, or after 24 hours.</string>
-  <string name="manage_access_expires_in">Expires in %1$s</string>
+  <string name="manage_access_expires_in">Expires in <xliff:g example="Work Logs">%1$s</xliff:g></string>
   <!-- Access panel — member view -->
   <string name="manage_access_done">Done</string>
   <!-- Access panel — transient confirmations -->
@@ -44,28 +44,28 @@
   <!-- Revoke confirmation (PRD D2/D3). Revoking is server-enforced and immediate, and it destroys
        any edits the member made offline and had not yet synced — the one data-loss window in the
        design. The owner is told that before they do it, not after. -->
-  <string name="revoke_confirm_title">Remove %1$s?</string>
-  <string name="revoke_confirm_body">They lose access to this %1$s immediately, and their copy of its records is removed from their devices.
+  <string name="revoke_confirm_title">Remove <xliff:g example="Alex">%1$s</xliff:g>?</string>
+  <string name="revoke_confirm_body">They lose access to this <xliff:g example="aircraft">%1$s</xliff:g> immediately, and their copy of its records is removed from their devices.
 
 If they made changes while offline that have not synced yet, those changes are lost.</string>
   <string name="revoke_confirm_action">Remove access</string>
   <!-- Leave confirmation. Same data-loss caveat, from the member's own side. -->
-  <string name="leave_confirm_title">Leave this %1$s?</string>
-  <string name="leave_confirm_body">It is removed from your %1$s and its records are deleted from your devices. Any changes you made offline that have not synced yet are lost.
+  <string name="leave_confirm_title">Leave this <xliff:g example="aircraft">%1$s</xliff:g>?</string>
+  <string name="leave_confirm_body">It is removed from your <xliff:g example="fleet">%1$s</xliff:g> and its records are deleted from your devices. Any changes you made offline that have not synced yet are lost.
 
 The owner can invite you again.</string>
   <string name="leave_confirm_action">Leave</string>
   <!-- Role change confirmation. A co-owner can edit aircraft details and manage access — same tier
        as the demoting/promoting owner — so this is a real permission grant/revoke, not a label
        swap, and takes effect immediately. -->
-  <string name="role_confirm_title">Change %1$s’s role to %2$s?</string>
-  <string name="role_confirm_body">This changes what they can do on this %1$s right away.</string>
+  <string name="role_confirm_title">Change <xliff:g example="Alex">%1$s</xliff:g>’s role to <xliff:g example="technician">%2$s</xliff:g>?</string>
+  <string name="role_confirm_body">This changes what they can do on this <xliff:g example="aircraft">%1$s</xliff:g> right away.</string>
   <string name="role_confirm_action">Change role</string>
   <!-- Invite view (nested in the access panel) -->
-  <string name="invite_title">Invite to %1$s</string>
+  <string name="invite_title">Invite to <xliff:g example="aircraft">%1$s</xliff:g></string>
   <string name="invite_role_label">Role</string>
   <string name="invite_role_owner">Co-owner</string>
-  <string name="invite_code_hint">Read it out, or have them type it into Join %1$s.</string>
+  <string name="invite_code_hint">Read it out, or have them type it into Join <xliff:g example="aircraft">%1$s</xliff:g>.</string>
   <string name="invite_scan_hint">Or have them scan this.</string>
   <string name="invite_share">Share link</string>
   <string name="invite_copy">Copy link</string>
@@ -73,28 +73,28 @@ The owner can invite you again.</string>
   <string name="invite_qr_desc">Invite QR code</string>
   <string name="invite_link_unavailable">This code was created on another device. Codes are never stored, so it cannot be shown again — cancel it and create a new one.</string>
   <!-- Redeem confirmation -->
-  <string name="redeem_confirm_title">%1$s invitation</string>
-  <string name="redeem_confirm_body">You have been invited to share %1$s. Accept to add it to your %2$s.</string>
+  <string name="redeem_confirm_title"><xliff:g example="aircraft">%1$s</xliff:g> invitation</string>
+  <string name="redeem_confirm_body">You have been invited to share <xliff:g example="aircraft">%1$s</xliff:g>. Accept to add it to your <xliff:g example="fleet">%2$s</xliff:g>.</string>
   <!-- #201: name the aircraft and the inviter. Accepting blind is exactly the moment a user should
        be able to check they are not being talked into a stranger's fleet. -->
-  <string name="redeem_confirm_body_full">%1$s is inviting you to %2$s as %3$s.\n\nAccept to add it to your %4$s.</string>
-  <string name="redeem_confirm_body_role">You have been invited to share %2$s as %1$s. Accept to add it to your %3$s.</string>
+  <string name="redeem_confirm_body_full"><xliff:g example="Alex">%1$s</xliff:g> is inviting you to <xliff:g example="aircraft">%2$s</xliff:g> as <xliff:g example="technician">%3$s</xliff:g>.\n\nAccept to add it to your <xliff:g example="fleet">%4$s</xliff:g>.</string>
+  <string name="redeem_confirm_body_role">You have been invited to share <xliff:g example="aircraft">%2$s</xliff:g> as <xliff:g example="technician">%1$s</xliff:g>. Accept to add it to your <xliff:g example="fleet">%3$s</xliff:g>.</string>
   <string name="redeem_needs_signin_title">Sign in required</string>
   <string name="redeem_needs_signin_body">Sign in with your account to accept this invitation.</string>
   <string name="redeem_success_title">You're in</string>
-  <string name="redeem_success_body">You now have access as %1$s. The %2$s will appear in your %3$s shortly.</string>
+  <string name="redeem_success_body">You now have access as <xliff:g example="technician">%1$s</xliff:g>. The <xliff:g example="aircraft">%2$s</xliff:g> will appear in your <xliff:g example="fleet">%3$s</xliff:g> shortly.</string>
   <string name="redeem_already_member_title">Already a member</string>
-  <string name="redeem_already_member_body">You already have access to this %1$s.</string>
+  <string name="redeem_already_member_body">You already have access to this <xliff:g example="aircraft">%1$s</xliff:g>.</string>
   <string name="redeem_failed_title">Invite unavailable</string>
   <string name="redeem_failed_body">This invite is no longer valid. Ask the owner for a new one.</string>
   <string name="redeem_role_owner">a co-owner</string>
   <!-- #209: manual invite-code entry — the case the pairing code was invented for (owner reads it
        out, mechanic types it in) with no link to travel. -->
-  <string name="enter_code_title">Join a shared %1$s</string>
-  <string name="enter_code_instructions">Enter the invite code the %1$s owner gave you. It looks like EFA2-GGTH.</string>
+  <string name="enter_code_title">Join a shared <xliff:g example="aircraft">%1$s</xliff:g></string>
+  <string name="enter_code_instructions">Enter the invite code the <xliff:g example="aircraft">%1$s</xliff:g> owner gave you. It looks like EFA2-GGTH.</string>
   <string name="enter_code_field_label">Invite code</string>
   <!-- PRD E2: sharing is a cloud feature. With Cloud Sync off there is nothing to share into and
        nothing to receive from, so management is disabled and says why rather than failing on tap. -->
   <string name="sharing_sync_off_title">Cloud Sync is off</string>
-  <string name="sharing_sync_off_body">Sharing needs Cloud Sync. Turn it on in Settings to invite people or manage access. %1$s already shared with you stay readable, but will not update.</string>
+  <string name="sharing_sync_off_body">Sharing needs Cloud Sync. Turn it on in Settings to invite people or manage access. <xliff:g example="aircraft">%1$s</xliff:g> already shared with you stay readable, but will not update.</string>
 </resources>

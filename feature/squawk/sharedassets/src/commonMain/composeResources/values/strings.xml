@@ -1,36 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
-  <string name="add_squawk">New %1$s</string>
-  <string name="edit_squawk">Update %1$s</string>
-  <string name="open_with_count">OPEN (%1$d)</string>
-  <string name="closed_with_count">CLOSED (%1$d)</string>
-  <string name="no_open_squawks">No open %1$s</string>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+  <string name="add_squawk">New <xliff:g example="squawk">%1$s</xliff:g></string>
+  <string name="edit_squawk">Update <xliff:g example="squawk">%1$s</xliff:g></string>
+  <string name="open_with_count">OPEN (<xliff:g example="3">%1$d</xliff:g>)</string>
+  <string name="closed_with_count">CLOSED (<xliff:g example="3">%1$d</xliff:g>)</string>
+  <string name="no_open_squawks">No open <xliff:g example="squawks">%1$s</xliff:g></string>
   <string name="no_open_squawks_description">Tap + to report a defect or anomaly</string>
-  <string name="no_closed_squawks">No closed %1$s yet.</string>
+  <string name="no_closed_squawks">No closed <xliff:g example="squawks">%1$s</xliff:g> yet.</string>
   <string name="priority_low">Low</string>
   <string name="priority_medium">Medium</string>
   <string name="priority_high">High</string>
   <string name="down_alert_subtitle">AOG squawks must be resolved before flight</string>
-  <string name="view_squawks">View %1$s</string>
+  <string name="view_squawks">View <xliff:g example="squawks">%1$s</xliff:g></string>
   <string name="squawk_title_label">Issue Summary</string>
   <string name="squawk_description_label">Description</string>
   <string name="squawk_priority_label">Priority</string>
   <string name="squawk_title_required">Issue summary is required</string>
-  <string name="squawk_added">%1$s reported</string>
-  <string name="squawk_updated">%1$s updated</string>
-  <string name="no_squawk_work_recorded">No %1$s addressed by this log</string>
+  <string name="squawk_added"><xliff:g example="squawks">%1$s</xliff:g> reported</string>
+  <string name="squawk_updated"><xliff:g example="squawk">%1$s</xliff:g> updated</string>
+  <string name="no_squawk_work_recorded">No <xliff:g example="squawks">%1$s</xliff:g> addressed by this log</string>
   <string name="reported">Reported</string>
   <string name="work_history">Work History</string>
   <string name="no_work_recorded">No work recorded yet.</string>
   <string name="squawk_reported_on">Reported on</string>
   <string name="squawk_not_yet_addressed">Not yet addressed by any log</string>
-  <string name="squawk_dismissed">%1$s dismissed</string>
-  <string name="squawk_reopened">%1$s reopened</string>
+  <string name="squawk_dismissed"><xliff:g example="squawk">%1$s</xliff:g> dismissed</string>
+  <string name="squawk_reopened"><xliff:g example="squawk">%1$s</xliff:g> reopened</string>
   <string name="dismiss_reason_obsolete">Obsolete</string>
   <string name="dismiss_reason_not_reproducible">Not reproducible</string>
   <string name="dismiss_reason_intended_behavior">Intended behavior</string>
   <string name="dismiss_reason_duplicate">Duplicate</string>
   <string name="squawk_status_addressed">Addressed</string>
   <string name="squawk_status_dismissed">Dismissed</string>
-  <string name="dismissed_label">Dismissed — %1$s</string>
+  <string name="dismissed_label">Dismissed — <xliff:g example="Work Logs">%1$s</xliff:g></string>
 </resources>

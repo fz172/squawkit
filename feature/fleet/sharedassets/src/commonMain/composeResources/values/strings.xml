@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
   <string name="no_fleet_title">Ready for Takeoff?</string>
-  <string name="no_fleet_description">Keep your %1$s details, maintenance logs, and compliance records in one place.</string>
-  <string name="add_first_thing">Add Your First %1$s</string>
+  <string name="no_fleet_description">Keep your <xliff:g example="aircraft">%1$s</xliff:g> details, maintenance logs, and compliance records in one place.</string>
+  <string name="add_first_thing">Add Your First <xliff:g example="aircraft">%1$s</xliff:g></string>
   <!-- #209: a technician with no aircraft of their own lands here — give them the join-by-code path
        next to the create-aircraft one. -->
   <string name="have_invite_code">Have an invite code?</string>

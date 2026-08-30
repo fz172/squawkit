@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
   <string name="mission_statement">Track the important stuff for your airplane</string>
   <string name="login_prompt">Log in or continue anonymously to manage your aircraft maintenance records.</string>
   <string name="google_logo">Google Logo</string>
@@ -17,9 +17,9 @@
   <string name="email_send_link">Send sign-in link</string>
   <string name="email_invalid">Enter a valid email address.</string>
   <string name="email_link_sent_title">Check your inbox</string>
-  <string name="email_link_sent_body">We sent a sign-in link to %1$s. Open it on this device to finish logging in.</string>
+  <string name="email_link_sent_body">We sent a sign-in link to <xliff:g example="you@example.com">%1$s</xliff:g>. Open it on this device to finish logging in.</string>
   <string name="email_resend">Resend link</string>
-  <string name="email_resend_in">Resend in %1$s</string>
+  <string name="email_resend_in">Resend in <xliff:g example="3">%1$s</xliff:g></string>
   <string name="email_use_different">Use a different email</string>
   <string name="email_finish_title">Finish signing in</string>
   <string name="email_finish_body">Confirm the email this link was sent to.</string>
@@ -60,13 +60,13 @@
   <string name="upgrade_email_send">Send link</string>
   <string name="upgrade_email_send_failed">Couldn't send the link. Please try again.</string>
   <string name="upgrade_link_sent_title">Check your email</string>
-  <string name="upgrade_link_sent_body">We sent a link to %1$s. Open it on this device and we'll ask you to confirm before connecting your records.</string>
+  <string name="upgrade_link_sent_body">We sent a link to <xliff:g example="you@example.com">%1$s</xliff:g>. Open it on this device and we'll ask you to confirm before connecting your records.</string>
   <string name="upgrade_confirm_link_title">Connect this account?</string>
-  <string name="upgrade_confirm_link_body">Your records on this device will be connected to %1$s and backed up. If that isn't your address, cancel and start again.</string>
+  <string name="upgrade_confirm_link_body">Your records on this device will be connected to <xliff:g example="you@example.com">%1$s</xliff:g> and backed up. If that isn't your address, cancel and start again.</string>
   <string name="upgrade_confirm_link_confirm">Connect</string>
-  <string name="upgrade_merge_title">That %1$s already has an account</string>
+  <string name="upgrade_merge_title">That <xliff:g example="Google">%1$s</xliff:g> already has an account</string>
   <string name="upgrade_merge_body">Continuing moves the aircraft, logs, and records on this device into that account, alongside what it already has. Nothing is deleted.</string>
-  <string name="upgrade_merge_reauth">You'll be asked to confirm with %1$s once more — that second prompt is what signs you in to the existing account.</string>
+  <string name="upgrade_merge_reauth">You'll be asked to confirm with <xliff:g example="Google">%1$s</xliff:g> once more — that second prompt is what signs you in to the existing account.</string>
   <string name="upgrade_merge_confirm">Merge my records</string>
   <string name="upgrade_provider_apple">Apple ID</string>
   <string name="upgrade_provider_google">Google account</string>

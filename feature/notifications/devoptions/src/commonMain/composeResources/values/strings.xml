@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
   <string name="notifications_devoptions_header">Notifications</string>
   <string name="notifications_devoptions_permission_title">OS permission</string>
   <string name="notifications_devoptions_state_undetermined">Not yet asked</string>
@@ -17,7 +17,7 @@
   <string name="notifications_devoptions_scan_result_prefs_unresolved">Preferences not resolved yet</string>
   <string name="notifications_devoptions_scan_result_disabled">Skipped — All notifications is off</string>
   <string name="notifications_devoptions_scan_result_no_permission">Skipped — OS permission not granted</string>
-  <string name="notifications_devoptions_scan_result_completed">Done — %1$d notification(s) posted</string>
+  <string name="notifications_devoptions_scan_result_completed">Done — <xliff:g example="3">%1$d</xliff:g> notification(s) posted</string>
 
   <string name="notifications_devoptions_reset_watermarks_title">Reset urgency watermarks</string>
   <string name="notifications_devoptions_reset_watermarks_action">Reset</string>
@@ -28,7 +28,7 @@
 
   <string name="notifications_devoptions_diagnostics_title">Scan diagnostics</string>
   <string name="notifications_devoptions_diagnostics_never">No scan has completed on this device</string>
-  <string name="notifications_devoptions_diagnostics_trigger">Trigger: %1$s</string>
-  <string name="notifications_devoptions_diagnostics_at">Last scan: %1$s</string>
-  <string name="notifications_devoptions_diagnostics_counts">%1$d records examined · %2$d crossings · %3$d suppressed by preferences · %4$d posted</string>
+  <string name="notifications_devoptions_diagnostics_trigger">Trigger: <xliff:g example="SESSION_BOUNDARY">%1$s</xliff:g></string>
+  <string name="notifications_devoptions_diagnostics_at">Last scan: <xliff:g example="12 Mar 2026 14:03">%1$s</xliff:g></string>
+  <string name="notifications_devoptions_diagnostics_counts"><xliff:g example="3">%1$d</xliff:g> records examined · <xliff:g example="3">%2$d</xliff:g> crossings · <xliff:g example="3">%3$d</xliff:g> suppressed by preferences · <xliff:g example="3">%4$d</xliff:g> posted</string>
 </resources>

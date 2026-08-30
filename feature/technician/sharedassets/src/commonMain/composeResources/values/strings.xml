@@ -1,4 +1,4 @@
-<resources>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
   <string name="technician">Technician</string>
   <string name="add_technician">Add Technician</string>
   <string name="edit_technician">Update Technician</string>
@@ -23,7 +23,7 @@
   <string name="linked_badge">Linked</string>
   <string name="linked_technicians_header">Linked from shared aircraft</string>
   <string name="my_technicians_header">My technicians</string>
-  <string name="linked_technician_info_title">Maintained by %1$s</string>
+  <string name="linked_technician_info_title">Maintained by <xliff:g example="Google">%1$s</xliff:g></string>
   <string name="linked_technician_info_body">This profile comes from an aircraft you share. It’s kept up to date by the person it belongs to, so you can’t edit or delete it here — but you can select them when logging maintenance.</string>
   <string name="linked_technician_info_dismiss">Got it</string>
 
@@ -32,10 +32,10 @@
   <string name="duplicates_prompt_dismiss">Not duplicates</string>
   <string name="duplicates_review_title">Review duplicates</string>
   <string name="duplicates_review_body">Merging deletes the duplicate entries. It changes only who you can pick from here — logs you have already signed keep the technician they recorded.</string>
-  <string name="duplicates_merge_manual">Merge into %1$s</string>
-  <string name="duplicates_merge_member">Use the shared profile for %1$s</string>
-  <string name="duplicates_warn_mirror">%1$s and %2$s have the same certificate number. Two members are two different people, so this is likely a typo — check with them.</string>
-  <string name="duplicates_replaces">Deletes: %1$s</string>
+  <string name="duplicates_merge_manual">Merge into <xliff:g example="Google">%1$s</xliff:g></string>
+  <string name="duplicates_merge_member">Use the shared profile for <xliff:g example="Google">%1$s</xliff:g></string>
+  <string name="duplicates_warn_mirror"><xliff:g example="Google">%1$s</xliff:g> and <xliff:g example="Google">%2$s</xliff:g> have the same certificate number. Two members are two different people, so this is likely a typo — check with them.</string>
+  <string name="duplicates_replaces">Deletes: <xliff:g example="Google">%1$s</xliff:g></string>
   <string name="duplicates_needs_confirmation">Names only — confirm this is the same person</string>
   <string name="duplicates_apply">Merge selected</string>
   <string name="duplicates_no_selection">Nothing selected</string>

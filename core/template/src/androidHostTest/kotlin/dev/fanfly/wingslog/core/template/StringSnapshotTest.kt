@@ -625,11 +625,30 @@ class StringSnapshotTest {
           .substringBefore("/src/")
         stringRe.findAll(file.readText())
           .map { m ->
-            Entry(module, m.groupValues[1], m.groupValues[2])
+            Entry(
+              module,
+              m.groupValues[1],
+              m.groupValues[2].stripInlineMarkup()
+            )
           }
       }
       .associate { "${it.module}:${it.resource}" to it.value }
   }
+
+  /**
+   * Drops inline markup, so the value compared is the one the app actually renders.
+   *
+   * `<xliff:g name="tail_number" example="N123AA">%1${'$'}s</xliff:g>` says what a placeholder is
+   * for where a developer reads the string, instead of making them trace the call site. Compose
+   * Multiplatform strips those tags when it compiles `strings.xml` into its `.cvr` format —
+   * verified by decoding the output, which is byte-identical with and without them — so the app
+   * sees plain `%1${'$'}s` either way.
+   *
+   * This test reads the XML directly rather than through the resource accessors, so without this it
+   * would compare markup against a snapshot holding rendered text and fail on a string that had not
+   * changed at all. Raw `<` only ever appears as a tag: a literal one is written `&lt;`.
+   */
+  private fun String.stripInlineMarkup(): String = replace(Regex("<[^>]+>"), "")
 
   /**
    * Restores real newlines and tabs from the sentinels the snapshot stores them as.

@@ -1,28 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
-  <string name="thing_data">%1$s Data</string>
-  <string name="s_n_placeholder">S/N: %1$s</string>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+  <string name="thing_data"><xliff:g example="aircraft">%1$s</xliff:g> Data</string>
+  <string name="s_n_placeholder">S/N: <xliff:g example="SN-1234">%1$s</xliff:g></string>
   <string name="s_n_empty">No S/N</string>
-  <string name="edit_thing">Update %1$s</string>
+  <string name="edit_thing">Update <xliff:g example="aircraft">%1$s</xliff:g></string>
   <string name="search_logs">Search logs…</string>
   <string name="no_logs_match_filter">No logs match your filter.</string>
   <string name="clear_filter">Clear Filter</string>
   <string name="filter_by_type">Filter by Type</string>
   <string name="log_count_one_entry">1 Entry</string>
-  <string name="log_count_n_entries">%1$d Entries</string>
+  <string name="log_count_n_entries"><xliff:g example="3">%1$d</xliff:g> Entries</string>
   <string name="log_task_count_one">1 task</string>
-  <string name="log_task_count_plural">%1$d tasks</string>
-  <string name="log_squawk_count_one">1 %1$s</string>
-  <string name="log_squawk_count_plural">%1$d %2$s</string>
-  <string name="hours_abbr_value">%1$s hrs</string>
+  <string name="log_task_count_plural"><xliff:g example="3">%1$d</xliff:g> tasks</string>
+  <string name="log_squawk_count_one">1 <xliff:g example="squawks">%1$s</xliff:g></string>
+  <string name="log_squawk_count_plural"><xliff:g example="3">%1$d</xliff:g> <xliff:g example="squawks">%2$s</xliff:g></string>
+  <string name="hours_abbr_value"><xliff:g example="12.5">%1$s</xliff:g> hrs</string>
   <string name="failed_to_load_logs">Could not load maintenance logs</string>
   <string name="maintenance_summary">Maintenance Summary</string>
   <string name="total_logs">Total Logs</string>
   <string name="log_onboarding_description">Log your current airframe, engine, and prop times to start tracking maintenance intervals accurately. This will serve as your logbook's baseline.</string>
   <string name="collapse_details">Collapse details</string>
   <string name="expand_details">Expand details</string>
-  <string name="affected_maintenance_tasks">Affected %1$s</string>
+  <string name="affected_maintenance_tasks">Affected <xliff:g example="maintenance tasks">%1$s</xliff:g></string>
   <string name="no_tasks_linked">No tasks linked to this entry</string>
-  <string name="resolved_squawks">Resolved %1$s</string>
-  <string name="unknown_squawk">Unknown %2$s (%1$s)</string>
+  <string name="resolved_squawks">Resolved <xliff:g example="squawks">%1$s</xliff:g></string>
+  <string name="unknown_squawk">Unknown <xliff:g example="squawks">%2$s</xliff:g> (<xliff:g example="sq_8f2a">%1$s</xliff:g>)</string>
 </resources>

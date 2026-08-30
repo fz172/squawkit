@@ -1,4 +1,4 @@
-<resources>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
   <string name="stress_test_title">Fake Data Generator</string>
   <string name="stress_test_description">Generates realistic aviation records for UI stress testing. Data is written to your account.</string>
   <string name="stress_test_config_thing">Thing</string>
@@ -13,28 +13,28 @@
   <string name="stress_test_working">Working…</string>
   <string name="stress_test_complete">Generation complete</string>
   <string name="stress_test_regenerate">Generate Another</string>
-  <string name="stress_test_error_message">Error: %1$s</string>
+  <string name="stress_test_error_message">Error: <xliff:g example="Engine">%1$s</xliff:g></string>
   <string name="stress_test_unknown_error">Unknown error</string>
-  <string name="stress_test_progress_count">%1$d / %2$d</string>
+  <string name="stress_test_progress_count"><xliff:g example="3">%1$d</xliff:g> / <xliff:g example="3">%2$d</xliff:g></string>
   <string name="stress_test_decrement">−</string>
   <string name="stress_test_increment">+</string>
-  <string name="stress_test_progress_creating_thing">Creating thing %1$s…</string>
-  <string name="stress_test_progress_creating_technician">Creating technician %1$s…</string>
-  <string name="stress_test_progress_creating_task">Creating task: %1$s…</string>
-  <string name="stress_test_progress_creating_squawk">Creating squawk: %1$s…</string>
+  <string name="stress_test_progress_creating_thing">Creating thing <xliff:g example="N123AA">%1$s</xliff:g>…</string>
+  <string name="stress_test_progress_creating_technician">Creating technician <xliff:g example="N123AA">%1$s</xliff:g>…</string>
+  <string name="stress_test_progress_creating_task">Creating task: <xliff:g example="N123AA">%1$s</xliff:g>…</string>
+  <string name="stress_test_progress_creating_squawk">Creating squawk: <xliff:g example="N123AA">%1$s</xliff:g>…</string>
   <string name="stress_test_progress_creating_log">Creating log entry…</string>
   <string name="stress_test_progress_marking_squawk_addressed">Marking squawk addressed…</string>
   <string name="stress_test_progress_dismissing_squawk">Dismissing squawk…</string>
-  <string name="stress_test_summary_thing">Thing: %1$s %2$s (%3$s)</string>
-  <string name="stress_test_summary_tail">Tail: %1$s · S/N: %2$s</string>
-  <string name="stress_test_summary_engines">Engines: %1$d × %2$s</string>
+  <string name="stress_test_summary_thing">Thing: <xliff:g example="aircraft">%1$s</xliff:g> <xliff:g example="aircraft">%2$s</xliff:g> (<xliff:g example="N123AA">%3$s</xliff:g>)</string>
+  <string name="stress_test_summary_tail">Tail: <xliff:g example="N123AA">%1$s</xliff:g> · S/N: <xliff:g example="SN-1234">%2$s</xliff:g></string>
+  <string name="stress_test_summary_engines">Engines: <xliff:g example="3">%1$d</xliff:g> × <xliff:g example="Engine">%2$s</xliff:g></string>
   <string name="stress_test_summary_unknown_engine">-</string>
-  <string name="stress_test_summary_technicians">%1$d technician(s) created</string>
-  <string name="stress_test_summary_tasks">%1$d task(s) created</string>
-  <string name="stress_test_summary_log_entry_one">%1$d log entry created (span: 4 years)</string>
-  <string name="stress_test_summary_log_entries">%1$d log entries created (span: 4 years)</string>
-  <string name="stress_test_summary_squawks">%1$d squawk(s) created:</string>
-  <string name="stress_test_summary_open_squawks">  • %1$d open</string>
-  <string name="stress_test_summary_addressed_squawks">  • %1$d addressed</string>
-  <string name="stress_test_summary_dismissed_squawks">  • %1$d dismissed</string>
+  <string name="stress_test_summary_technicians"><xliff:g example="3">%1$d</xliff:g> technician(s) created</string>
+  <string name="stress_test_summary_tasks"><xliff:g example="3">%1$d</xliff:g> task(s) created</string>
+  <string name="stress_test_summary_log_entry_one"><xliff:g example="3">%1$d</xliff:g> log entry created (span: 4 years)</string>
+  <string name="stress_test_summary_log_entries"><xliff:g example="3">%1$d</xliff:g> log entries created (span: 4 years)</string>
+  <string name="stress_test_summary_squawks"><xliff:g example="3">%1$d</xliff:g> squawk(s) created:</string>
+  <string name="stress_test_summary_open_squawks">  • <xliff:g example="3">%1$d</xliff:g> open</string>
+  <string name="stress_test_summary_addressed_squawks">  • <xliff:g example="3">%1$d</xliff:g> addressed</string>
+  <string name="stress_test_summary_dismissed_squawks">  • <xliff:g example="3">%1$d</xliff:g> dismissed</string>
 </resources>
