@@ -1,5 +1,8 @@
 package dev.fanfly.wingslog.feature.sharing.viewing
 
+import dev.fanfly.wingslog.core.template.LexiconFormatter
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.thingNoun
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
@@ -65,7 +68,10 @@ fun RedeemConfirmationSheet(
 
     is RedeemUiState.Confirm -> AlertDialog(
       onDismissRequest = onDismiss,
-      title = { Text(stringResource(Res.string.redeem_confirm_title)) },
+      title = { Text(stringResource(
+        Res.string.redeem_confirm_title,
+        LexiconFormatter.sentenceCase(LocalThingLexicon.current.thingNoun),
+      )) },
       text = {
         // Say what they are joining and who is inviting them (#201). Until #164 this was impossible:
         // the invitee held an thing id the rules must refuse to resolve for a non-member, so the
@@ -73,15 +79,25 @@ fun RedeemConfirmationSheet(
         val preview = state.preview
         Text(
           when {
-            preview == null -> stringResource(Res.string.redeem_confirm_body)
+            preview == null -> stringResource(
+              Res.string.redeem_confirm_body,
+              LexiconFormatter.withArticle(LocalThingLexicon.current.thingNoun),
+              LexiconFormatter.lowerFirst(LocalThingLexicon.current.collection_label),
+            )
             preview.hostName.isBlank() || preview.thingLabel.isBlank() ->
-              stringResource(Res.string.redeem_confirm_body_role, roleLabel(preview.role))
+              stringResource(
+                Res.string.redeem_confirm_body_role,
+                roleLabel(preview.role),
+                LexiconFormatter.withArticle(LocalThingLexicon.current.thingNoun),
+                LexiconFormatter.lowerFirst(LocalThingLexicon.current.collection_label),
+              )
 
             else -> stringResource(
               Res.string.redeem_confirm_body_full,
               preview.hostName,
               preview.thingLabel,
               roleLabel(preview.role),
+              LexiconFormatter.lowerFirst(LocalThingLexicon.current.collection_label),
             )
           },
         )
@@ -99,19 +115,30 @@ fun RedeemConfirmationSheet(
     RedeemUiState.Redeeming -> AlertDialog(
       onDismissRequest = {},
       confirmButton = {},
-      title = { Text(stringResource(Res.string.redeem_confirm_title)) },
+      title = { Text(stringResource(
+        Res.string.redeem_confirm_title,
+        LexiconFormatter.sentenceCase(LocalThingLexicon.current.thingNoun),
+      )) },
       text = { CircularProgressIndicator(Modifier.padding(Spacing.small)) },
     )
 
     is RedeemUiState.Success -> InfoDialog(
       title = stringResource(Res.string.redeem_success_title),
-      body = stringResource(Res.string.redeem_success_body, roleLabel(state.role)),
+      body = stringResource(
+        Res.string.redeem_success_body,
+        roleLabel(state.role),
+        LocalThingLexicon.current.thingNoun.singular,
+        LexiconFormatter.lowerFirst(LocalThingLexicon.current.collection_label),
+      ),
       onDismiss = onDismiss,
     )
 
     RedeemUiState.AlreadyMember -> InfoDialog(
       title = stringResource(Res.string.redeem_already_member_title),
-      body = stringResource(Res.string.redeem_already_member_body),
+      body = stringResource(
+        Res.string.redeem_already_member_body,
+        LocalThingLexicon.current.thingNoun.singular,
+      ),
       onDismiss = onDismiss,
     )
 

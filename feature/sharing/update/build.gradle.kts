@@ -33,6 +33,7 @@ kotlin {
       implementation(libs.compose.runtime)
       implementation(libs.compose.foundation)
       implementation(libs.material3)
+      implementation(project(":core:template"))
       implementation(project(":core:appinfo"))
       implementation(project(":core:nav"))
       implementation(project(":core:storage"))

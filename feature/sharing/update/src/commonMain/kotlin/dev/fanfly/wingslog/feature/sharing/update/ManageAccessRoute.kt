@@ -1,5 +1,7 @@
 package dev.fanfly.wingslog.feature.sharing.update
 
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.thingNoun
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -26,7 +28,10 @@ fun ManageAccessRoute(navController: NavController) {
   val state by viewModel.uiState.collectAsState()
   val linkSharer = rememberLinkSharer()
   val clipboard = LocalClipboardManager.current
-  val chooserTitle = stringResource(Res.string.invite_title)
+  val chooserTitle = stringResource(
+    Res.string.invite_title,
+    LocalThingLexicon.current.thingNoun.singular,
+  )
 
   // Leaving removes this thing from the user's fleet — pop back once it succeeds. Being revoked
   // while the screen is open is the same ending, arrived at from the other side: we are no longer a

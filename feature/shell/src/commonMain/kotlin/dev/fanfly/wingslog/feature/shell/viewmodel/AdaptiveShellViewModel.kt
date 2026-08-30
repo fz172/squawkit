@@ -191,7 +191,8 @@ class AdaptiveShellViewModel(
    * so they cannot read a CompositionLocal the shell installs — see [CurrentThingLexicon].
    */
   private fun publishLexicon() {
-    currentThingLexicon.set(_uiState.value.selectedThing?.lexicon ?: GenericLexicon.LEXICON)
+    val selected = _uiState.value.selectedThing
+    if (selected == null) currentThingLexicon.clear() else currentThingLexicon.set(selected.lexicon)
   }
 
   private fun String.toShellSection(): ShellSection? = when (this) {

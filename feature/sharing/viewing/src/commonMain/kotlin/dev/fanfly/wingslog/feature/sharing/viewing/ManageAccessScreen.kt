@@ -1,5 +1,9 @@
 package dev.fanfly.wingslog.feature.sharing.viewing
 
+import dev.fanfly.wingslog.core.template.LexiconFormatter
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.technicianNoun
+import dev.fanfly.wingslog.core.template.thingNoun
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -189,14 +193,21 @@ fun ManageAccessScreen(
 
     !state.syncEnabled -> EmptyState(
       title = stringResource(Res.string.sharing_sync_off_title),
-      description = stringResource(Res.string.sharing_sync_off_body),
+      description = stringResource(
+        Res.string.sharing_sync_off_body,
+        LexiconFormatter.sentenceCasePlural(LocalThingLexicon.current.thingNoun),
+      ),
       icon = Icons.Filled.CloudOff,
       modifier = modifier.fillMaxSize(),
     )
 
     state.members.isEmpty() -> EmptyState(
       title = stringResource(Res.string.manage_access_empty_title),
-      description = stringResource(Res.string.manage_access_empty_desc),
+      description = stringResource(
+        Res.string.manage_access_empty_desc,
+        LocalThingLexicon.current.technicianNoun.singular,
+        LocalThingLexicon.current.thingNoun.singular,
+      ),
       icon = Icons.Filled.Group,
       modifier = modifier.fillMaxSize(),
     )
@@ -273,7 +284,10 @@ private fun AccessPanel(
         Res.string.revoke_confirm_title,
         member.displayName.ifBlank { stringResource(Res.string.manage_access_unnamed_member) },
       ),
-      body = stringResource(Res.string.revoke_confirm_body),
+      body = stringResource(
+        Res.string.revoke_confirm_body,
+        LocalThingLexicon.current.thingNoun.singular,
+      ),
       confirmLabel = stringResource(Res.string.revoke_confirm_action),
       onConfirm = {
         onRevoke(member.uid)
@@ -285,8 +299,14 @@ private fun AccessPanel(
 
   if (leaving) {
     ConfirmDialog(
-      title = stringResource(Res.string.leave_confirm_title),
-      body = stringResource(Res.string.leave_confirm_body),
+      title = stringResource(
+        Res.string.leave_confirm_title,
+        LocalThingLexicon.current.thingNoun.singular,
+      ),
+      body = stringResource(
+        Res.string.leave_confirm_body,
+        LexiconFormatter.lowerFirst(LocalThingLexicon.current.collection_label),
+      ),
       confirmLabel = stringResource(Res.string.leave_confirm_action),
       onConfirm = {
         onLeave()
@@ -303,7 +323,10 @@ private fun AccessPanel(
         member.displayName.ifBlank { stringResource(Res.string.manage_access_unnamed_member) },
         roleLabel(role, isHost = false),
       ),
-      body = stringResource(Res.string.role_confirm_body),
+      body = stringResource(
+        Res.string.role_confirm_body,
+        LocalThingLexicon.current.thingNoun.singular,
+      ),
       confirmLabel = stringResource(Res.string.role_confirm_action),
       onConfirm = {
         onChangeRole(member.uid, role)
@@ -422,7 +445,10 @@ private fun PanelHeader(state: ManageAccessUiState, onLeading: () -> Unit) {
 private fun panelTitles(state: ManageAccessUiState): Pair<String, String> =
   when (state.view) {
     AccessPanelView.MAIN -> stringResource(Res.string.manage_access_title) to state.thingLabel
-    AccessPanelView.INVITE -> stringResource(Res.string.invite_title) to state.thingLabel
+    AccessPanelView.INVITE -> stringResource(
+      Res.string.invite_title,
+      LocalThingLexicon.current.thingNoun.singular,
+    ) to state.thingLabel
     AccessPanelView.CODE -> {
       val invite = state.activeInvite
       val subtitle = if (invite != null) {
