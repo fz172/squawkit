@@ -350,8 +350,8 @@ fun installAppCheckTokenProvider(provider: (onToken: (String?) -&gt; Unit) -&gt;
       <table>
         <tr><th>Event</th><th>Params</th><th>Emitted from</th></tr>
         <tr><td><code>ad_slot_filled</code></td><td><code>surface</code>, <code>slot_index</code>, <code>unit_position</code></td><td><code>AdSlot</code> on <code>onFilled</code></td></tr>
-        <tr><td><code>ad_impression</code></td><td>+ <code>session_count</code> (1–5)</td><td><code>AdSlot</code>, once per unit, on first display</td></tr>
-        <tr><td><code>ad_click</code></td><td><code>surface</code>, <code>slot_index</code>, <code>unit_position</code></td><td><code>AdSlot</code> on <code>onClicked</code></td></tr>
+        <tr><td><code>ad_unit_impression</code></td><td>+ <code>session_count</code> (1–5)</td><td><code>AdSlot</code>, once per unit, on first display</td></tr>
+        <tr><td><code>ad_unit_click</code></td><td><code>surface</code>, <code>slot_index</code>, <code>unit_position</code></td><td><code>AdSlot</code> on <code>onClicked</code></td></tr>
         <tr><td><code>ad_fill_failed</code></td><td><code>surface</code>, <code>reason</code></td><td><code>AdSlot</code> on <code>onFailed</code></td></tr>
         <tr><td><code>ad_upsell_tapped</code></td><td><code>surface</code></td><td>the "Subscribe to remove ads" link</td></tr>
         <tr><td><code>ad_session_cap_reached</code></td><td><code>surface</code></td><td><code>AdSessionCounter</code>, once per session at the 5th unit</td></tr>

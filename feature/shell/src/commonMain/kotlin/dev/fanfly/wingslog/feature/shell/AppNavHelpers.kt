@@ -33,6 +33,30 @@ fun NavigateToLoginOnSignOut(navController: NavController) {
  * [analytics] is a parameter (not [dev.fanfly.wingslog.core.analytics.LocalAnalytics]) because
  * hosts may wrap the platform manager (e.g. web's browser-title wrapper) before providing it.
  */
+/**
+ * Routes whose screens log their own view, so feeder 1 must not log the raw route as well.
+ *
+ * **The failure this prevents**, caught in DebugView during #667: opening the squawk form produced
+ * *two* `screen_view` events — `squawk_edit/{aircraftId}/{squawkId}` from the back-stack observer
+ * and `squawk_form` from the screen itself. One screen open, counted twice, split across two names,
+ * so neither series is the real number.
+ *
+ * The screen's own name wins because it carries detail the route cannot: the task and log forms
+ * report the *tab* the user is on (`task_form/parts`), which is a different screen to a reader and
+ * the same route to the navigator.
+ *
+ * Add a route here when its screen calls [AnalyticsManager.logScreenView] itself — and only then.
+ * A route missing from this set is double-counted; a route wrongly in it is not counted at all.
+ */
+private val SELF_LOGGING_ROUTES = setOf(
+  Screen.AddSquawk.route,
+  Screen.EditSquawk.route,
+  Screen.AddMaintenanceTask.route,
+  Screen.EditMaintenanceTask.route,
+  Screen.AddMaintenanceLog.route,
+  Screen.EditMaintenanceLog.route,
+)
+
 @Composable
 fun TrackRootScreenViews(
   navController: NavController,
@@ -41,7 +65,7 @@ fun TrackRootScreenViews(
   LaunchedEffect(navController) {
     navController.trackScreenViews(
       analytics,
-      suppress = setOf(Screen.AdaptiveShell.route),
+      suppress = SELF_LOGGING_ROUTES + Screen.AdaptiveShell.route,
     )
   }
 }

@@ -1,5 +1,7 @@
 package dev.fanfly.wingslog.feature.squawk.update.viewmodel
 
+import dev.fanfly.wingslog.core.template.CurrentThingTemplate
+import dev.fanfly.wingslog.core.analytics.NoOpAnalyticsManager
 import androidx.lifecycle.SavedStateHandle
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.thing.Squawk
@@ -544,6 +546,8 @@ class SquawkFormViewModelTest {
   private fun buildViewModelForEdit(): SquawkFormViewModel =
     SquawkFormViewModel(
       squawkManager = squawkManager,
+      currentThingTemplate = mockk<CurrentThingTemplate>(relaxed = true),
+      analytics = NoOpAnalyticsManager,
       attachmentManager = attachmentManager,
       logManager = logManager,
       auth = auth,
@@ -560,6 +564,8 @@ class SquawkFormViewModelTest {
   private fun buildViewModelForNew(): SquawkFormViewModel =
     SquawkFormViewModel(
       squawkManager = squawkManager,
+      currentThingTemplate = mockk<CurrentThingTemplate>(relaxed = true),
+      analytics = NoOpAnalyticsManager,
       attachmentManager = attachmentManager,
       logManager = logManager,
       auth = auth,

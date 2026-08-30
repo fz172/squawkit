@@ -3,25 +3,29 @@ package dev.fanfly.wingslog.feature.squawk.update.viewmodel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dev.fanfly.wingslog.thing.ComponentType
-import dev.fanfly.wingslog.thing.MaintenanceLog
-import dev.fanfly.wingslog.thing.Squawk
-import dev.fanfly.wingslog.thing.SquawkDismissReason
-import dev.fanfly.wingslog.thing.SquawkPriority
+import dev.fanfly.wingslog.core.analytics.AnalyticsManager
+import dev.fanfly.wingslog.core.analytics.DefectCreated
+import dev.fanfly.wingslog.core.analytics.log
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.datetime.toLocalDate
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.model.id.generateRandomId
 import dev.fanfly.wingslog.core.nav.Screen
+import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import dev.fanfly.wingslog.core.ui.common.UiText
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentFormController
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.model.PendingAttachment
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
-import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
-import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
+import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
+import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
+import dev.fanfly.wingslog.thing.ComponentType
+import dev.fanfly.wingslog.thing.MaintenanceLog
+import dev.fanfly.wingslog.thing.Squawk
+import dev.fanfly.wingslog.thing.SquawkDismissReason
+import dev.fanfly.wingslog.thing.SquawkPriority
 import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -70,12 +74,16 @@ data class SquawkFormState(
 sealed interface SquawkFormEvent {
   data object NavigateBack : SquawkFormEvent
   data class SaveSuccess(val message: String) : SquawkFormEvent
-  data class NavigateToCreateLog(val thingId: String, val squawkId: String) : SquawkFormEvent
+  data class NavigateToCreateLog(val thingId: String, val squawkId: String) :
+    SquawkFormEvent
+
   data object PickError : SquawkFormEvent
 }
 
 class SquawkFormViewModel(
   private val squawkManager: SquawkManager,
+  private val currentThingTemplate: CurrentThingTemplate,
+  private val analytics: AnalyticsManager,
   private val attachmentManager: AttachmentManager,
   private val logManager: MaintenanceLogManager,
   private val auth: FirebaseAuth,
@@ -251,7 +259,8 @@ class SquawkFormViewModel(
         created_at = if (current.createdAtEpochSeconds > 0L)
           kotlin.time.Instant.fromEpochSeconds(current.createdAtEpochSeconds)
             .toWireInstant()
-        else Clock.System.now().toWireInstant(),
+        else Clock.System.now()
+          .toWireInstant(),
         attachments = attachments,
         addressed_by_log_id = current.addressedByLogId,
         dismiss_reason = current.dismissReason,
@@ -260,13 +269,17 @@ class SquawkFormViewModel(
             .toWireInstant()
         else null,
       )
-      val result = if (current.squawkId == null)
+      val isNewSquawk = current.squawkId == null
+      val result = if (isNewSquawk)
         squawkManager.addSquawk(thingId, squawk)
       else
         squawkManager.updateSquawk(thingId, squawk)
 
       _state.update { it.copy(isSaving = false) }
       result.onSuccess {
+        if (isNewSquawk) {
+          analytics.log(DefectCreated(templateId = currentThingTemplate.templateId))
+        }
         _events.send(
           SquawkFormEvent.SaveSuccess(
             onSuccessMessage
@@ -328,17 +341,18 @@ class SquawkFormViewModel(
  * dropped without a word — the pickers cannot cap multi-select or filter out files that are
  * already attached, so the form is where they find out.
  */
-private fun AttachmentFormController.AddFileError.toUiText(): UiText = when (this) {
-  AttachmentFormController.AddFileError.FileTooLarge ->
-    UiText.StringRes(AttachRes.string.file_too_large)
+private fun AttachmentFormController.AddFileError.toUiText(): UiText =
+  when (this) {
+    AttachmentFormController.AddFileError.FileTooLarge ->
+      UiText.StringRes(AttachRes.string.file_too_large)
 
-  AttachmentFormController.AddFileError.Duplicate ->
-    UiText.StringRes(AttachRes.string.duplicate_file_skipped)
+    AttachmentFormController.AddFileError.Duplicate ->
+      UiText.StringRes(AttachRes.string.duplicate_file_skipped)
 
-  is AttachmentFormController.AddFileError.LimitExceeded ->
-    UiText.StringRes(AttachRes.string.files_over_limit_skipped)
+    is AttachmentFormController.AddFileError.LimitExceeded ->
+      UiText.StringRes(AttachRes.string.files_over_limit_skipped)
 
-  is AttachmentFormController.AddFileError.Failed ->
-    message?.let { UiText.DynamicString(it) }
-      ?: UiText.StringRes(AttachRes.string.add_file_failed)
-}
+    is AttachmentFormController.AddFileError.Failed ->
+      message?.let { UiText.DynamicString(it) }
+        ?: UiText.StringRes(AttachRes.string.add_file_failed)
+  }

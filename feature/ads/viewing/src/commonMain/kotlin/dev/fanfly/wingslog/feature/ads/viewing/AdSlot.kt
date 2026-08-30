@@ -21,7 +21,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import dev.fanfly.wingslog.core.analytics.AdClick
+import dev.fanfly.wingslog.core.analytics.AdFillFailed
+import dev.fanfly.wingslog.core.analytics.AdImpression
+import dev.fanfly.wingslog.core.analytics.AdSlotFilled
 import dev.fanfly.wingslog.core.analytics.LocalAnalytics
+import dev.fanfly.wingslog.core.analytics.log
 import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LayoutTier
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
@@ -169,24 +174,22 @@ fun AdSlot(
             onFilled = {
               filled++
               val position = unitPosition(format, unit)
-              analytics.logEvent(
-                "ad_slot_filled",
-                mapOf(
-                  "surface" to surface.analyticsName,
-                  "slot_index" to slotIndex.toString(),
-                  "unit_position" to position,
-                ),
+              analytics.log(
+                AdSlotFilled(
+                  surface = surface.analyticsName,
+                  slotIndex = slotIndex,
+                  unitPosition = position,
+                )
               )
               // Once per slot per session. A slot re-rendered because the pilot scrolled back is the
               // same impression; counting it again would inflate the number §12 reads as revenue.
               if (adsManager.markImpressionLogged(key)) {
-                analytics.logEvent(
-                  "ad_impression",
-                  mapOf(
-                    "surface" to surface.analyticsName,
-                    "slot_index" to slotIndex.toString(),
-                    "unit_position" to position,
-                  ),
+                analytics.log(
+                  AdImpression(
+                    surface = surface.analyticsName,
+                    slotIndex = slotIndex,
+                    unitPosition = position,
+                  )
                 )
               }
             },
@@ -195,19 +198,20 @@ fun AdSlot(
               // Give the unit back: the PRD counts filled units only, so a run of no-fills must not
               // quietly eat the session allowance.
               adsManager.release(key, 1)
-              analytics.logEvent(
-                "ad_fill_failed",
-                mapOf("surface" to surface.analyticsName, "reason" to reason),
+              analytics.log(
+                AdFillFailed(
+                  surface = surface.analyticsName,
+                  reason = reason
+                )
               )
             },
             onClicked = {
-              analytics.logEvent(
-                "ad_click",
-                mapOf(
-                  "surface" to surface.analyticsName,
-                  "slot_index" to slotIndex.toString(),
-                  "unit_position" to unitPosition(format, unit),
-                ),
+              analytics.log(
+                AdClick(
+                  surface = surface.analyticsName,
+                  slotIndex = slotIndex,
+                  unitPosition = unitPosition(format, unit),
+                )
               )
             },
           )

@@ -1,6 +1,8 @@
 package dev.fanfly.wingslog.feature.notifications.analytics
 
 import dev.fanfly.wingslog.core.analytics.AnalyticsManager
+import dev.fanfly.wingslog.core.analytics.UrgencyNotificationPosted
+import dev.fanfly.wingslog.core.analytics.log
 import dev.fanfly.wingslog.core.storage.CloudSyncSetting
 import dev.fanfly.wingslog.feature.notifications.model.ScanTrigger
 import dev.gitlive.firebase.auth.FirebaseAuth
@@ -74,16 +76,11 @@ class AnalyticsUrgencyTelemetry(
     sharedFleet: Boolean,
   ) {
     if (count <= 0 || !reportingAllowed()) return
-    val params = mapOf(
-      "trigger" to trigger.name.lowercase(),
-      "shared_fleet" to sharedFleet.toString(),
+    val event = UrgencyNotificationPosted(
+      trigger = trigger.name.lowercase(),
+      sharedFleet = sharedFleet,
     )
-    repeat(count) {
-      analytics.logEvent(
-        EVENT_URGENCY_NOTIFICATION_POSTED,
-        params
-      )
-    }
+    repeat(count) { analytics.log(event) }
   }
 
   /** §12.3: no report at all for an anonymous or sync-off account. */
@@ -91,9 +88,5 @@ class AnalyticsUrgencyTelemetry(
     val user = auth.currentUser ?: return false
     if (user.isAnonymous) return false
     return cloudSync.isCloudSyncEnabled()
-  }
-
-  private companion object {
-    const val EVENT_URGENCY_NOTIFICATION_POSTED = "urgency_notification_posted"
   }
 }

@@ -1,6 +1,9 @@
 package dev.fanfly.wingslog.feature.sync.logging
 
 import dev.fanfly.wingslog.core.analytics.AnalyticsManager
+import dev.fanfly.wingslog.core.analytics.SyncPermissionDeniedWrite
+import dev.fanfly.wingslog.core.analytics.SyncShareReconciled
+import dev.fanfly.wingslog.core.analytics.log
 import dev.fanfly.wingslog.feature.sync.logging.SyncTelemetry.Companion.TRIGGER_DENIED_READ
 import dev.fanfly.wingslog.feature.sync.logging.SyncTelemetry.Companion.TRIGGER_DENIED_WRITE
 
@@ -51,18 +54,10 @@ class AnalyticsSyncTelemetry(
 ) : SyncTelemetry {
 
   override fun permissionDeniedWrite(sharedScope: Boolean) {
-    analytics.logEvent(
-      EVENT_PERMISSION_DENIED_WRITE,
-      mapOf("scope" to if (sharedScope) "shared" else "own"),
-    )
+    analytics.log(SyncPermissionDeniedWrite(shared = sharedScope))
   }
 
   override fun sharedScopeReconciled(trigger: String) {
-    analytics.logEvent(EVENT_SHARE_RECONCILED, mapOf("trigger" to trigger))
-  }
-
-  private companion object {
-    const val EVENT_PERMISSION_DENIED_WRITE = "sync_permission_denied_write"
-    const val EVENT_SHARE_RECONCILED = "sync_share_reconciled"
+    analytics.log(SyncShareReconciled(trigger = trigger))
   }
 }
