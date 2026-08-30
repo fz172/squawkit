@@ -1,14 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
   <string name="aircraft_data">Aircraft Data</string>
-  <string name="blade_abbreviation_with_index">B%1$d: %2$s</string>
-  <string name="model_and_sn">Model: %1$s %2$s\nS/N: %3$s\n</string>
   <string name="s_n_placeholder">S/N: %1$s</string>
   <string name="s_n_empty">No S/N</string>
   <string name="edit_aircraft">Update aircraft</string>
-  <string name="maintenance_logs">Maintenance Logs</string>
   <string name="search_logs">Search logs…</string>
-  <string name="showing_x_of_y">Showing %1$d of %2$d</string>
   <string name="no_logs_match_filter">No logs match your filter.</string>
   <string name="clear_filter">Clear Filter</string>
   <string name="filter_by_type">Filter by Type</string>
@@ -22,10 +18,6 @@
   <string name="failed_to_load_logs">Could not load maintenance logs</string>
   <string name="maintenance_summary">Maintenance Summary</string>
   <string name="total_logs">Total Logs</string>
-  <string name="log_details">Log details</string>
-  <string name="engine_time_abbr">Eng</string>
-  <string name="airframe_time_abbr">AFTT</string>
-  <string name="prop_time_abbr">Prop</string>
   <string name="log_onboarding_description">Log your current airframe, engine, and prop times to start tracking maintenance intervals accurately. This will serve as your logbook's baseline.</string>
   <string name="collapse_details">Collapse details</string>
   <string name="expand_details">Expand details</string>

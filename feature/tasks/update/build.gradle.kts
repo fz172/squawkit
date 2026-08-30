@@ -36,6 +36,7 @@ kotlin {
       implementation(project(":feature:tasks:datamanager"))
       implementation(project(":feature:tasks:sharedassets"))
       implementation(project(":feature:tasks:viewing"))
+      implementation(project(":core:template"))
       implementation(project(":core:nav"))
       implementation(project(":core:sharedassets"))
       implementation(project(":core:analytics"))

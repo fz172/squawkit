@@ -41,7 +41,6 @@
   <string name="duplicates_no_selection">Nothing selected</string>
 
   <string name="no_certificate">No certificate provided</string>
-  <string name="no_technicians">No technicians added yet.</string>
   <string name="empty_technicians_title">No Technicians</string>
   <string name="empty_technicians_desc">You haven't added any technicians yet. Add one to keep track of who performs your maintenance.</string>
   <string name="delete_technician">Delete Technician</string>

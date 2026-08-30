@@ -13,25 +13,16 @@
   <string name="attachment_limits_hint">Up to 3 files · Max 5 MB each</string>
   <string name="sign_in_to_add_attachments">Sign in to add attachments</string>
   <string name="invalid_url">Enter a valid URL</string>
-  <string name="opening_attachment">Opening…</string>
   <string name="open_failed">Could not open attachment. Try again.</string>
   <string name="remove_attachment">Remove attachment</string>
   <string name="no_attachments">No attachments yet</string>
   <string name="file_upload_coming_soon">Subscribe to SquawkIt Pro to attach photos &amp; files</string>
-  <string name="file_added">File added</string>
-  <string name="link_added">Link added</string>
   <string name="file_read_error">Could not read selected file</string>
   <string name="add_file_failed">Failed to add file</string>
-  <string name="upload_failed">Upload failed</string>
-  <string name="retry_upload">Retry upload</string>
-  <string name="upload_network_error">Upload failed. Check your connection.</string>
-  <string name="upload_permission_error">Upload failed: permission denied</string>
   <string name="delete_saved_attachment_title">Remove file?</string>
   <string name="delete_saved_attachment_message">The file will be permanently deleted when you save.</string>
   <string name="attachment_type_pdf">PDF</string>
   <string name="attachment_type_image">Image</string>
-  <string name="attachment_type_link">Link</string>
-  <string name="attachment_type_file">File</string>
   <string name="attachment_type_text">Text</string>
   <string name="subtitle_separator"> · </string>
   <!-- Design §9: v1 shares record data only, not blobs. A member sees the attachment exists but

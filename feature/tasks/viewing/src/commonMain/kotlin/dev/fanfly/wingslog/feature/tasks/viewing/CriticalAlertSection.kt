@@ -23,6 +23,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
+import dev.fanfly.wingslog.core.template.LexiconFormatter
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.taskNoun
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.statusColors
 import dev.fanfly.wingslog.feature.tasks.model.DueStatus
@@ -79,7 +82,10 @@ fun CriticalAlertsSection(
           color = titleColor,
         )
         Text(
-          text = stringResource(ViewingRes.string.maintenance_due_subtitle),
+          text = stringResource(
+            ViewingRes.string.maintenance_due_subtitle,
+            LexiconFormatter.sentenceCasePlural(LocalThingLexicon.current.taskNoun),
+          ),
           style = MaterialTheme.typography.bodySmall,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
         )

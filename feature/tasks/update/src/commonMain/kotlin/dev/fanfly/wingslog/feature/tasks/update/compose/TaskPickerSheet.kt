@@ -11,8 +11,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import dev.fanfly.wingslog.thing.ComplianceType
-import dev.fanfly.wingslog.thing.MaintenanceTask
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.thingNoun
 import dev.fanfly.wingslog.core.ui.common.compose.PickerDoneButton
 import dev.fanfly.wingslog.core.ui.common.compose.PickerSectionHeader
 import dev.fanfly.wingslog.core.ui.common.compose.PickerSelectableRow
@@ -20,6 +20,8 @@ import dev.fanfly.wingslog.core.ui.common.compose.PickerSelectionMode
 import dev.fanfly.wingslog.core.ui.common.compose.PickerSheet
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.logs.sharedassets.util.displayName
+import dev.fanfly.wingslog.thing.ComplianceType
+import dev.fanfly.wingslog.thing.MaintenanceTask
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.done
 import wingslog.feature.tasks.update.generated.resources.Res
@@ -59,7 +61,10 @@ fun TaskPickerSheet(
     ) {
       if (availableCards.isEmpty()) {
         Text(
-          text = stringResource(Res.string.no_tasks_configured),
+          text = stringResource(
+            Res.string.no_tasks_configured,
+            LocalThingLexicon.current.thingNoun.singular,
+          ),
           style = MaterialTheme.typography.bodyMedium,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
           modifier = Modifier.padding(vertical = Spacing.large),

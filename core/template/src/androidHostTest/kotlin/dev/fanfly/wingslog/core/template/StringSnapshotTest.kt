@@ -122,7 +122,13 @@ class StringSnapshotTest {
     sharing("manage_access_perm_aircraft_details") {
       mapOf(1 to LexiconFormatter.sentenceCase(it.thingNoun))
     },
-    sharing("redeem_confirm_title") { mapOf(1 to LexiconFormatter.sentenceCase(it.thingNoun)) },
+    sharing("redeem_confirm_title") {
+      mapOf(
+        1 to LexiconFormatter.sentenceCase(
+          it.thingNoun
+        )
+      )
+    },
     sharing("sharing_sync_off_body") {
       mapOf(1 to LexiconFormatter.sentenceCasePlural(it.thingNoun))
     },
@@ -173,8 +179,45 @@ class StringSnapshotTest {
       )
     },
 
+    // The task surfaces (#656). All per-thing: a task belongs to one thing, so the selected
+    // thing's words are the right words here. Absent on purpose — the four compliance_type_*
+    // strings and "Maintenance Tasks" are whole lexicon values (#657), and compliance_notes_hint
+    // and no_tasks_yet_description are per-template *example copy*: "e.g. One-time inspection of
+    // fuel lines" has no noun to substitute, it has to be rewritten per template (design §10a).
+    // Three that were converted here first — link_to_task, task_identity_description,
+    // affects_n_tasks — turned out to have no call site at all, and have been deleted along with
+    // the other 63 dead strings. A recipe on a string nothing renders passes forever while testing
+    // nothing, and neither guard can see it: the round-trip has no placeholder to fill, and the
+    // bare-call check has no call to find.
+    frame(
+      "feature/tasks/update",
+      "component_type_description"
+    ) { it.componentNoun.singular },
+    frame(
+      "feature/tasks/update",
+      "create_work_log"
+    ) { LexiconFormatter.titleCase(it.logNoun) },
+    frame(
+      "feature/tasks/update",
+      "no_tasks_configured"
+    ) { it.thingNoun.singular },
+    frame(
+      "feature/tasks/update",
+      "task_title"
+    ) { LexiconFormatter.titleCase(it.taskNoun) },
+    frame("feature/tasks/sharedassets", "no_tasks_yet") { it.taskNoun.plural },
+    frame("feature/tasks/viewing", "maintenance_due_subtitle") {
+      LexiconFormatter.sentenceCasePlural(it.taskNoun)
+    },
   )
 
+  /** A single-argument frame at position 1, in any module. */
+  private fun frame(
+    module: String,
+    resource: String,
+    word: (Lexicon) -> String,
+  ): Pair<String, (Lexicon) -> Map<Int, String>> =
+    "$module:$resource" to { lexicon -> mapOf(1 to word(lexicon)) }
 
   /** A frame in `feature/sharing/sharedassets`. */
   private fun sharing(
@@ -188,7 +231,13 @@ class StringSnapshotTest {
     resource: String,
     word: (Noun) -> String,
   ): Pair<String, (Lexicon) -> Map<Int, String>> =
-    "feature/squawk/sharedassets:$resource" to { lexicon -> mapOf(1 to word(lexicon.squawkNoun)) }
+    "feature/squawk/sharedassets:$resource" to { lexicon ->
+      mapOf(
+        1 to word(
+          lexicon.squawkNoun
+        )
+      )
+    }
 
   private data class Entry(
     val module: String,
@@ -291,8 +340,12 @@ class StringSnapshotTest {
         LEXICON_ARGS.keys.map { it.substringAfter(":") }
           .filter { resource ->
             // A bare read: the resource name followed directly by ")" with no argument between.
-            Regex("""stringResource\(\s*[A-Za-z]*Res\.string\.$resource\s*\)""").containsMatchIn(text) ||
-              Regex("""getString\(\s*[A-Za-z]*Res\.string\.$resource\s*\)""").containsMatchIn(text)
+            Regex("""stringResource\(\s*[A-Za-z]*Res\.string\.$resource\s*\)""").containsMatchIn(
+              text
+            ) ||
+              Regex("""getString\(\s*[A-Za-z]*Res\.string\.$resource\s*\)""").containsMatchIn(
+                text
+              )
           }
           .map { "${file.name}: $it" }
       }

@@ -1,8 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-  <string name="tab_overview">Overview</string>
-  <string name="tab_tasks">Tasks</string>
-  <string name="tab_logs">Logs</string>
   <!-- Empty / error states -->
   <string name="aircraft_load_error">Couldn't load this aircraft</string>
   <!-- Overview tab cards -->

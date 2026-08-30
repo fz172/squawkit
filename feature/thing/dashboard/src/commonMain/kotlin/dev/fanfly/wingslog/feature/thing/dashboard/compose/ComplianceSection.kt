@@ -16,6 +16,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.text.font.FontWeight
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.taskNoun
 import dev.fanfly.wingslog.core.ui.adaptive.compose.AdaptiveCardList
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.common.compose.DualSegmentedFilter
@@ -94,7 +96,10 @@ fun ComplianceSection(
     if (displayList.isEmpty()) {
       if (!showComplied) {
         EmptyState(
-          title = stringResource(SharedRes.string.no_tasks_yet),
+          title = stringResource(
+            SharedRes.string.no_tasks_yet,
+            LocalThingLexicon.current.taskNoun.plural,
+          ),
           description = stringResource(SharedRes.string.no_tasks_yet_description),
           icon = Icons.Default.CheckCircle,
         )
