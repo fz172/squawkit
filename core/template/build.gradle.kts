@@ -1,6 +1,8 @@
 plugins {
   alias(libs.plugins.android.kmp.library)
   alias(libs.plugins.kotlin.multiplatform)
+  alias(libs.plugins.kotlin.compose)
+  alias(libs.plugins.compose.multiplatform)
 }
 
 kotlin {
@@ -27,6 +29,8 @@ kotlin {
     commonMain.dependencies {
       api(project(":core:model"))
       api(libs.koin.core)
+      // Runtime only — this module provides a CompositionLocal, not UI. Nothing here draws.
+      implementation(compose.runtime)
     }
   }
 }

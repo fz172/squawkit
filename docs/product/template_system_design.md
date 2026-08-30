@@ -463,6 +463,98 @@ show/hide means auditing every call site twice.
 
 ---
 
+## 10a. The localisation ceiling
+
+**The lexicon blocks shipping outside English-speaking markets.** Not "makes harder" — the substitution model
+cannot express the grammar most languages need, and the ceiling is the design rather than an unfinished
+implementation. The app ships one locale today (31 `strings.xml` files, all `values`, no variants), so nothing is
+currently broken. This is what to read before committing to a non-English market.
+
+### What Phase 2 actually trades away
+
+Today every one of the 982 strings is independently translatable, and plurals go through the platform's own
+plural resources, which already understand that Russian has three forms and Arabic has a dual. **That is a
+solved problem.**
+
+Phase 2 converts ~230 of them into format strings filled from a `Lexicon` (PRD §10). For English that is a clear
+win — one word changes and every screen follows. For an inflected language it removes the thing that made
+translation work: a translator can no longer write the sentence, because the sentence is assembled at runtime
+from a noun and a frame that were written separately, in English, by someone who assumed neither would inflect.
+
+So the trade is **template flexibility for translatability**, on a quarter of the corpus. It is invisible today
+because there is one locale, and it is the reason this section exists rather than a comment in `LexiconFormatter`.
+
+### Where it breaks, concretely
+
+- **`Noun` has two number forms.** Russian and Polish select among three by number, Arabic has a dual, Chinese
+  and Japanese do not inflect. CLDR defines six categories; two fields carry two.
+- **`article` assumes one exists, precedes, separates, and does not inflect.** Russian, Chinese, and Japanese
+  have no indefinite article — `withArticle` emits a stray word. Swedish and Norwegian suffix them. German and
+  Spanish inflect by gender, German additionally by case.
+- **Title case is an English convention.** German capitalises all nouns; French uses sentence case; Chinese,
+  Japanese, Arabic, Hebrew, and Thai have no case, so `titleCase` and `sentenceCase` are silent no-ops.
+- **And the deepest one is not in the formatter at all.** Substituting a noun into a fixed frame assumes the rest
+  of the sentence does not change when the noun does. German *"Diesen Squawk löschen?"* needs the determiner to
+  agree with the noun's gender, so `"Delete %1$s?"` cannot be filled from a bare noun however it is formatted.
+
+### And it compounds with templates
+
+Per-locale strings alone would not close it either. If a sentence's grammar depends on the substituted noun, and
+the noun depends on the template, the translatable unit becomes **locale × template** rather than locale. Seven
+presets and five locales is thirty-five variants of every affected string — which is the point at which "just
+translate it" stops being a plan.
+
+### The way out: per-string overrides, not a better `Noun`
+
+The framing that makes this tractable is that **substitution is a default, not a rule**. A template supplies a
+lexicon *and* may replace any individual string outright — and which strings need replacing is a property of the
+string's context, discovered per string, rather than something a formatter can be taught.
+
+```proto
+message ThingTemplate {
+  // ... lexicon, capabilities, ... ...
+  // Resource name -> complete replacement. Absent means "substitute from the lexicon", which is
+  // the common case; present means this string's grammar does not survive substitution.
+  map<string, string> string_overrides = 15;
+}
+```
+
+This is better than making `Noun` richer, for three reasons:
+
+- **The cost lands only where substitution fails.** "Add %1$s" works in most languages. *"Diesen Squawk
+  löschen?"* does not. Only the second needs an override, so a locale costs a handful of full strings rather
+  than a parallel corpus.
+- **The decision is made where the context is.** Whether a frame survives substitution depends on what the
+  sentence does with the noun — whether it takes a determiner, whether it is a subject or an object. That is
+  visible at the string, and invisible to a formatter looking at a bare noun.
+- **It generalises the buckets PRD §10 already draws.** Domain-neutral, noun-substitutable, structurally
+  aviation was always a per-string judgement. This makes the third bucket a *template-supplied value* rather
+  than a code branch, and lets a string move between buckets per template and per locale — which is what
+  actually varies.
+
+**The hazard to design against: the keys are resource names, so they are a data-to-code coupling.** A template
+holding `"delete_aircraft_title"` breaks silently if that resource is renamed — the override stops matching, the
+string falls back to substitution, and nothing fails. This repo has already been bitten by exactly this shape:
+the #637 rename turned `Res.string.add_aircraft` into `add_thing` and only the compiler caught it. An override
+map gets no compiler. So it needs a test asserting every override key resolves to a real resource, run against
+every template in the canonical pool.
+
+**And it needs a ceiling.** A template that overrides everything is per-template strings with extra steps. The
+lexicon earns its keep only while overrides stay exceptional, so "how many overrides is too many" is worth an
+explicit number before the first non-English template rather than after.
+
+### The remaining options, for completeness
+
+1. **Stay English-only.** Free, and currently true.
+2. **A real ICU MessageFormat pipeline** plus gender and plural-category fields on `Noun`. Solves plurals and
+   agreement properly and is the largest change; the override map above gets most of the benefit for a fraction
+   of it, and the two compose if ICU is ever wanted.
+
+**Decide before the first non-English locale, not after** — every option gets more expensive once 2C has
+converted the strings.
+
+---
+
 ## 11. Decisions
 
 Settled with the developer, 2026-08-29. Nothing in this design is open.
