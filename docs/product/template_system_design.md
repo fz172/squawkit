@@ -504,16 +504,54 @@ the noun depends on the template, the translatable unit becomes **locale × temp
 presets and five locales is thirty-five variants of every affected string — which is the point at which "just
 translate it" stops being a plan.
 
-### The honest options, when it matters
+### The way out: per-string overrides, not a better `Noun`
+
+The framing that makes this tractable is that **substitution is a default, not a rule**. A template supplies a
+lexicon *and* may replace any individual string outright — and which strings need replacing is a property of the
+string's context, discovered per string, rather than something a formatter can be taught.
+
+```proto
+message ThingTemplate {
+  // ... lexicon, capabilities, ... ...
+  // Resource name -> complete replacement. Absent means "substitute from the lexicon", which is
+  // the common case; present means this string's grammar does not survive substitution.
+  map<string, string> string_overrides = 15;
+}
+```
+
+This is better than making `Noun` richer, for three reasons:
+
+- **The cost lands only where substitution fails.** "Add %1$s" works in most languages. *"Diesen Squawk
+  löschen?"* does not. Only the second needs an override, so a locale costs a handful of full strings rather
+  than a parallel corpus.
+- **The decision is made where the context is.** Whether a frame survives substitution depends on what the
+  sentence does with the noun — whether it takes a determiner, whether it is a subject or an object. That is
+  visible at the string, and invisible to a formatter looking at a bare noun.
+- **It generalises the buckets PRD §10 already draws.** Domain-neutral, noun-substitutable, structurally
+  aviation was always a per-string judgement. This makes the third bucket a *template-supplied value* rather
+  than a code branch, and lets a string move between buckets per template and per locale — which is what
+  actually varies.
+
+**The hazard to design against: the keys are resource names, so they are a data-to-code coupling.** A template
+holding `"delete_aircraft_title"` breaks silently if that resource is renamed — the override stops matching, the
+string falls back to substitution, and nothing fails. This repo has already been bitten by exactly this shape:
+the #637 rename turned `Res.string.add_aircraft` into `add_thing` and only the compiler caught it. An override
+map gets no compiler. So it needs a test asserting every override key resolves to a real resource, run against
+every template in the canonical pool.
+
+**And it needs a ceiling.** A template that overrides everything is per-template strings with extra steps. The
+lexicon earns its keep only while overrides stay exceptional, so "how many overrides is too many" is worth an
+explicit number before the first non-English template rather than after.
+
+### The remaining options, for completeness
 
 1. **Stay English-only.** Free, and currently true.
-2. **Per-locale full strings for anything a lexicon touches**, keeping substitution for English only. Gives up
-   the lexicon's benefit exactly where the app is not English, which may be the right trade.
-3. **A real ICU MessageFormat pipeline** plus gender and plural-category fields on `Noun`, and per-template
-   sentence frames rather than per-template nouns. A different design, not a bigger `Noun`.
+2. **A real ICU MessageFormat pipeline** plus gender and plural-category fields on `Noun`. Solves plurals and
+   agreement properly and is the largest change; the override map above gets most of the benefit for a fraction
+   of it, and the two compose if ICU is ever wanted.
 
-None is cheap, and all three get more expensive after Phase 2C converts the strings. **Decide before the first
-non-English locale, not after.**
+**Decide before the first non-English locale, not after** — every option gets more expensive once 2C has
+converted the strings.
 
 ---
 
