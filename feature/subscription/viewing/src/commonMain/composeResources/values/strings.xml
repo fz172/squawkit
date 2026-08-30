@@ -11,17 +11,16 @@
   <string name="subscription_includes_header">What’s included</string>
   <string name="subscription_col_free">Basic</string>
   <string name="subscription_col_pro">Pro</string>
-  <string name="subscription_feature_aircraft">Aircraft</string>
   <string name="subscription_feature_records">Logs, tasks &amp; squawks</string>
   <string name="subscription_feature_export">Export to this device</string>
   <string name="subscription_feature_backup">Cloud backup &amp; sync</string>
   <string name="subscription_feature_ads">Ad-free experience</string>
   <string name="subscription_feature_attachments">Photo &amp; file attachments</string>
   <string name="subscription_feature_email">Email a copy of exports</string>
-  <string name="subscription_feature_sharing">Share aircraft &amp; collaborate with others</string>
-  <string name="subscription_aircraft_free">2</string>
+  <string name="subscription_feature_sharing">Share %1$s &amp; collaborate with others</string>
+  <string name="subscription_thing_free">2</string>
   <!-- Announced in place of subscription_cell_unlimited, which is the glyph shown in its cell. -->
-  <string name="subscription_aircraft_unlimited">Unlimited</string>
+  <string name="subscription_thing_unlimited">Unlimited</string>
   <!-- Comparison table: the tier does not include this feature. An em dash, not a crossed box. -->
   <string name="subscription_cell_excluded">—</string>
   <!-- Comparison table: no aircraft limit. Reads as the infinity glyph, speaks as "Unlimited". -->
@@ -62,8 +61,8 @@
   <string name="subscription_ends">Ends</string>
   <string name="subscription_purchased_on">Purchased on</string>
   <string name="subscription_unlocked_header">Unlocked with Pro</string>
-  <string name="subscription_perk_aircraft_title">Unlimited aircraft</string>
-  <string name="subscription_perk_aircraft_body">Whole fleet in one logbook</string>
+  <string name="subscription_perk_thing_title">Unlimited %1$s</string>
+  <string name="subscription_perk_thing_body">Whole fleet in one logbook</string>
   <string name="subscription_perk_attachments_title">Attachments</string>
   <string name="subscription_perk_attachments_body">Photos and files on any log</string>
   <string name="subscription_perk_sharing_title">Sharing</string>
@@ -85,8 +84,8 @@
   <string name="subscription_storage_used">Storage used</string>
 
   <!-- Pro upsell sheet -->
-  <string name="upsell_body_add_aircraft">Add unlimited aircraft with SquawkIt Pro.</string>
+  <string name="upsell_body_add_thing">Add unlimited %1$s with SquawkIt Pro.</string>
   <string name="upsell_body_attachment">Attach photos and files to your maintenance records with SquawkIt Pro.</string>
   <string name="upsell_body_email">Email a copy of your exports with SquawkIt Pro.</string>
-  <string name="upsell_body_share">Share aircraft and invite others with SquawkIt Pro.</string>
+  <string name="upsell_body_share">Share %1$s and invite others with SquawkIt Pro.</string>
 </resources>

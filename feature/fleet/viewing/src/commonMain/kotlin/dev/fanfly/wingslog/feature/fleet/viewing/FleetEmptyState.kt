@@ -1,5 +1,8 @@
 package dev.fanfly.wingslog.feature.fleet.viewing
 
+import dev.fanfly.wingslog.core.template.LexiconFormatter
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.thingNoun
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -22,7 +25,7 @@ import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.ic_launcher_foreground
-import wingslog.feature.fleet.sharedassets.generated.resources.add_first_aircraft
+import wingslog.feature.fleet.sharedassets.generated.resources.add_first_thing
 import wingslog.feature.fleet.sharedassets.generated.resources.have_invite_code
 import wingslog.feature.fleet.sharedassets.generated.resources.no_fleet_description
 import wingslog.feature.fleet.sharedassets.generated.resources.no_fleet_title
@@ -63,7 +66,10 @@ fun FleetEmptyState(
   ) {
     EmptyState(
       title = stringResource(FleetRes.string.no_fleet_title),
-      description = stringResource(FleetRes.string.no_fleet_description),
+      description = stringResource(
+        FleetRes.string.no_fleet_description,
+        LocalThingLexicon.current.thingNoun.singular,
+      ),
       iconContent = {
         Icon(
           painter = painterResource(UiRes.drawable.ic_launcher_foreground),
@@ -75,7 +81,10 @@ fun FleetEmptyState(
           tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.72f),
         )
       },
-      actionText = stringResource(FleetRes.string.add_first_aircraft),
+      actionText = stringResource(
+        FleetRes.string.add_first_thing,
+        LexiconFormatter.titleCase(LocalThingLexicon.current.thingNoun),
+      ),
       onActionClick = onAddAircraft,
       secondaryActionText = onEnterInviteCode?.let { stringResource(FleetRes.string.have_invite_code) },
       onSecondaryActionClick = onEnterInviteCode,

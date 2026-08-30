@@ -1,12 +1,10 @@
 package dev.fanfly.wingslog.feature.notifications.engine
 
-import dev.fanfly.wingslog.thing.MaintenanceTask
-import dev.fanfly.wingslog.thing.Squawk
 import dev.fanfly.wingslog.core.model.settings.NotificationSettings
-import dev.fanfly.wingslog.core.storage.ThingScopeResolver
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.EntityStore
 import dev.fanfly.wingslog.core.storage.EntityStoreFactory
+import dev.fanfly.wingslog.core.storage.ThingScopeResolver
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetEntry
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
@@ -28,6 +26,8 @@ import dev.fanfly.wingslog.feature.notifications.permission.PermissionState
 import dev.fanfly.wingslog.feature.notifications.viewing.LocalNotifier
 import dev.fanfly.wingslog.feature.squawk.model.toWithStatus
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDueManager
+import dev.fanfly.wingslog.thing.MaintenanceTask
+import dev.fanfly.wingslog.thing.Squawk
 import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Mutex
@@ -44,7 +44,7 @@ import wingslog.feature.notifications.sharedassets.generated.resources.notificat
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_title_due_soon
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_title_overdue
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_title_priority_raised
-import wingslog.feature.notifications.sharedassets.generated.resources.squawk_priority_label_aog
+import wingslog.feature.notifications.sharedassets.generated.resources.squawk_priority_label_down
 import wingslog.feature.notifications.sharedassets.generated.resources.squawk_priority_label_high
 import wingslog.feature.notifications.sharedassets.generated.resources.squawk_priority_label_low
 import wingslog.feature.notifications.sharedassets.generated.resources.squawk_priority_label_medium
@@ -397,7 +397,7 @@ class UrgencyScanner(
       1 -> Res.string.squawk_priority_label_low
       2 -> Res.string.squawk_priority_label_medium
       3 -> Res.string.squawk_priority_label_high
-      else -> Res.string.squawk_priority_label_aog
+      else -> Res.string.squawk_priority_label_down
     }
 
   // NotificationTapTarget.Aircraft.tab wire values (design §5.3 / P2.9) — a summary notification

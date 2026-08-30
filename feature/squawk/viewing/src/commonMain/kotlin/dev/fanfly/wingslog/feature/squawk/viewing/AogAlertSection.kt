@@ -34,9 +34,9 @@ import dev.fanfly.wingslog.core.ui.theme.statusColors
 import dev.fanfly.wingslog.thing.Squawk
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.squawk.sharedassets.generated.resources.Res
-import wingslog.feature.squawk.sharedassets.generated.resources.aog_alert_subtitle
-import wingslog.feature.squawk.sharedassets.generated.resources.aog_alert_title
-import wingslog.feature.squawk.sharedassets.generated.resources.priority_aog
+import wingslog.feature.squawk.sharedassets.generated.resources.down_alert_subtitle
+import wingslog.feature.squawk.sharedassets.generated.resources.down_alert_title
+import wingslog.feature.squawk.sharedassets.generated.resources.priority_down
 import wingslog.feature.squawk.sharedassets.generated.resources.view_squawks
 
 @Composable
@@ -73,13 +73,13 @@ fun AogAlertSection(
           modifier = Modifier.size(Spacing.huge),
         )
         Text(
-          text = stringResource(Res.string.aog_alert_title),
+          text = stringResource(Res.string.down_alert_title),
           style = MaterialTheme.typography.headlineSmall,
           fontWeight = FontWeight.Bold,
           color = blocking.accent,
         )
         Text(
-          text = stringResource(Res.string.aog_alert_subtitle),
+          text = stringResource(Res.string.down_alert_subtitle),
           style = MaterialTheme.typography.bodySmall,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -92,7 +92,7 @@ fun AogAlertSection(
         verticalArrangement = Arrangement.spacedBy(Spacing.medium),
       ) {
         Text(
-          text = stringResource(Res.string.priority_aog),
+          text = stringResource(Res.string.priority_down),
           style = MaterialTheme.typography.labelSmall,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
           letterSpacing = 1.sp,

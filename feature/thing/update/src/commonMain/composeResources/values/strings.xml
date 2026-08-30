@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-  <string name="update_aircraft">Update %1$s</string>
+  <string name="update_thing">Update %1$s</string>
   <string name="make">Make</string>
   <string name="model">Model</string>
   <string name="serial">Serial Number</string>
@@ -10,11 +10,11 @@
   <string name="remove_engine">Remove Engine</string>
   <string name="remove_blade">Remove Blade</string>
   <string name="blade_serial_numbers">Blade Serial numbers</string>
-  <string name="delete_aircraft">Delete %1$s?</string>
+  <string name="delete_thing">Delete %1$s?</string>
   <!-- PRD D5: deleting a shared aircraft tears the share down for everyone on it. Say how many
        people that is — "cannot be undone" does not convey that you are deleting someone else's
        access to records they may depend on. -->
-  <string name="delete_aircraft_shared_warning">%1$d other %2$s lose access to this %3$s and its records.</string>
-  <string name="delete_aircraft_member_singular">person will</string>
-  <string name="delete_aircraft_member_plural">people will</string>
+  <string name="delete_thing_shared_warning">%1$d other %2$s lose access to this %3$s and its records.</string>
+  <string name="delete_thing_member_singular">person will</string>
+  <string name="delete_thing_member_plural">people will</string>
 </resources>

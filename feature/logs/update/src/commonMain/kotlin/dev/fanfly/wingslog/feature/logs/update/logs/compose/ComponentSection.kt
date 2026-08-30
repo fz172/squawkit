@@ -1,7 +1,5 @@
 package dev.fanfly.wingslog.feature.logs.update.logs.compose
 
-import dev.fanfly.wingslog.core.template.LocalThingLexicon
-import dev.fanfly.wingslog.core.template.thingNoun
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -19,10 +17,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import dev.fanfly.wingslog.thing.ComponentType
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.thingNoun
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.feature.logs.sharedassets.util.displayName
+import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.Thing
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.component_engine
@@ -30,7 +30,7 @@ import wingslog.feature.logs.sharedassets.generated.resources.blade
 import wingslog.feature.logs.sharedassets.generated.resources.propeller_hub
 import wingslog.feature.logs.update.generated.resources.Res
 import wingslog.feature.logs.update.generated.resources.airframe_serial
-import wingslog.feature.logs.update.generated.resources.loading_aircraft
+import wingslog.feature.logs.update.generated.resources.loading_thing
 import wingslog.feature.logs.update.generated.resources.make_model_serial
 import wingslog.feature.logs.update.generated.resources.no_engines_found
 import wingslog.feature.logs.update.generated.resources.no_propeller_components_found
@@ -88,7 +88,7 @@ fun ComponentSection(
         if (thing == null) {
           Text(
             text = stringResource(
-              Res.string.loading_aircraft,
+              Res.string.loading_thing,
               LocalThingLexicon.current.thingNoun.singular,
             ),
             style = MaterialTheme.typography.bodySmall,
@@ -144,7 +144,7 @@ fun ComponentSection(
         if (thing == null) {
           Text(
             text = stringResource(
-              Res.string.loading_aircraft,
+              Res.string.loading_thing,
               LocalThingLexicon.current.thingNoun.singular,
             ),
             style = MaterialTheme.typography.bodySmall,

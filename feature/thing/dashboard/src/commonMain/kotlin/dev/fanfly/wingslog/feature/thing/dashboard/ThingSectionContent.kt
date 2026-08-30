@@ -46,11 +46,11 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
-import wingslog.core.sharedassets.generated.resources.empty_add_aircraft
+import wingslog.core.sharedassets.generated.resources.empty_add_thing
 import wingslog.feature.logs.sharedassets.generated.resources.add_log
 import wingslog.feature.squawk.sharedassets.generated.resources.add_squawk
 import wingslog.feature.tasks.sharedassets.generated.resources.add_task
-import wingslog.feature.thing.dashboard.generated.resources.aircraft_load_error
+import wingslog.feature.thing.dashboard.generated.resources.thing_load_error
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.logs.sharedassets.generated.resources.Res as LogsRes
 import wingslog.feature.squawk.sharedassets.generated.resources.Res as SquawkRes
@@ -96,7 +96,10 @@ fun ShellSectionBody(
       contentAlignment = Alignment.Center
     ) {
       Text(
-        stringResource(CoreRes.string.empty_add_aircraft),
+        stringResource(
+          CoreRes.string.empty_add_thing,
+          LexiconFormatter.withArticle(LocalThingLexicon.current.thingNoun),
+        ),
         style = MaterialTheme.typography.bodyMedium
       )
     }
@@ -347,7 +350,7 @@ fun AircraftSectionContent(
       ) {
         Text(
           stringResource(
-            DashboardRes.string.aircraft_load_error,
+            DashboardRes.string.thing_load_error,
             LocalThingLexicon.current.thingNoun.singular,
           )
         )

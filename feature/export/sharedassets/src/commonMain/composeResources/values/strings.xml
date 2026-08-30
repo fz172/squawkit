@@ -10,12 +10,12 @@
   <string name="export_format_pick_one">Pick at least one format</string>
 
   <!-- Setup: aircraft -->
-  <string name="export_aircraft_section">Aircraft</string>
+  <string name="export_thing_section">Aircraft</string>
   <string name="export_select_all">Select all</string>
   <string name="export_clear_all">Clear all</string>
-  <string name="export_untitled_aircraft">Untitled aircraft</string>
-  <string name="export_aircraft_details_incomplete">Aircraft details incomplete</string>
-  <string name="export_no_aircraft_title">No aircraft to export</string>
+  <string name="export_untitled_thing">Untitled aircraft</string>
+  <string name="export_thing_details_incomplete">Aircraft details incomplete</string>
+  <string name="export_no_thing_title">No aircraft to export</string>
 
   <!-- Setup: date range -->
   <string name="export_date_range_section">Date range</string>
@@ -28,7 +28,7 @@
   <string name="export_custom_end_date">End date</string>
 
   <!-- Setup: footer -->
-  <string name="export_footer_aircraft_count">%1$d aircraft</string>
+  <string name="export_footer_thing_count">%1$d aircraft</string>
   <string name="export_estimated_size">~%1$s</string>
   <string name="export_primary_action">Start</string>
 
@@ -51,11 +51,11 @@
   <string name="export_success_delivery_failed">Delivery failed. Use Download for now, then try emailing it again.</string>
   <string name="export_success_delivery_auth">Destination: signed-in account email %1$s</string>
   <string name="export_receipt_file_subtitle">%1$s · ZIP containing %2$s + attachments</string>
-  <string name="export_receipt_aircraft">Aircraft</string>
+  <string name="export_receipt_thing">Aircraft</string>
   <string name="export_receipt_range">Range</string>
   <string name="export_receipt_attachments">Attachments</string>
   <string name="export_receipt_attachments_included">Included</string>
-  <string name="export_aircraft_summary_more">%1$s + %2$d more</string>
+  <string name="export_thing_summary_more">%1$s + %2$d more</string>
 
   <!-- Result: actions -->
   <string name="export_download">Download</string>

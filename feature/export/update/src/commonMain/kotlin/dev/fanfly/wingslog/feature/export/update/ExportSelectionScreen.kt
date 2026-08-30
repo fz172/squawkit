@@ -6,6 +6,9 @@
 
 package dev.fanfly.wingslog.feature.export.update
 
+import dev.fanfly.wingslog.core.template.LexiconFormatter
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.thingNoun
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -116,12 +119,12 @@ import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.cancel
 import wingslog.core.sharedassets.generated.resources.done
-import wingslog.core.sharedassets.generated.resources.empty_add_aircraft
+import wingslog.core.sharedassets.generated.resources.empty_add_thing
 import wingslog.core.sharedassets.generated.resources.retry
 import wingslog.feature.export.sharedassets.generated.resources.Res
-import wingslog.feature.export.sharedassets.generated.resources.export_aircraft_details_incomplete
-import wingslog.feature.export.sharedassets.generated.resources.export_aircraft_section
-import wingslog.feature.export.sharedassets.generated.resources.export_aircraft_summary_more
+import wingslog.feature.export.sharedassets.generated.resources.export_thing_details_incomplete
+import wingslog.feature.export.sharedassets.generated.resources.export_thing_section
+import wingslog.feature.export.sharedassets.generated.resources.export_thing_summary_more
 import wingslog.feature.export.sharedassets.generated.resources.export_all_time
 import wingslog.feature.export.sharedassets.generated.resources.export_back_to_setup
 import wingslog.feature.export.sharedassets.generated.resources.export_clear_all
@@ -136,7 +139,7 @@ import wingslog.feature.export.sharedassets.generated.resources.export_error_det
 import wingslog.feature.export.sharedassets.generated.resources.export_error_subtitle
 import wingslog.feature.export.sharedassets.generated.resources.export_error_title
 import wingslog.feature.export.sharedassets.generated.resources.export_estimated_size
-import wingslog.feature.export.sharedassets.generated.resources.export_footer_aircraft_count
+import wingslog.feature.export.sharedassets.generated.resources.export_footer_thing_count
 import wingslog.feature.export.sharedassets.generated.resources.export_format_csv_sub
 import wingslog.feature.export.sharedassets.generated.resources.export_format_pdf_sub
 import wingslog.feature.export.sharedassets.generated.resources.export_format_pick_one
@@ -146,14 +149,14 @@ import wingslog.feature.export.sharedassets.generated.resources.export_history_a
 import wingslog.feature.export.sharedassets.generated.resources.export_last_12_months
 import wingslog.feature.export.sharedassets.generated.resources.export_location_downloads_squawkit
 import wingslog.feature.export.sharedassets.generated.resources.export_location_files_squawkit
-import wingslog.feature.export.sharedassets.generated.resources.export_no_aircraft_title
+import wingslog.feature.export.sharedassets.generated.resources.export_no_thing_title
 import wingslog.feature.export.sharedassets.generated.resources.export_primary_action
 import wingslog.feature.export.sharedassets.generated.resources.export_progress_building_archive
 import wingslog.feature.export.sharedassets.generated.resources.export_progress_collecting_data
 import wingslog.feature.export.sharedassets.generated.resources.export_progress_compressing_archive
 import wingslog.feature.export.sharedassets.generated.resources.export_progress_saving_file
 import wingslog.feature.export.sharedassets.generated.resources.export_progress_uploading_archive
-import wingslog.feature.export.sharedassets.generated.resources.export_receipt_aircraft
+import wingslog.feature.export.sharedassets.generated.resources.export_receipt_thing
 import wingslog.feature.export.sharedassets.generated.resources.export_receipt_attachments
 import wingslog.feature.export.sharedassets.generated.resources.export_receipt_attachments_included
 import wingslog.feature.export.sharedassets.generated.resources.export_receipt_file_subtitle
@@ -168,7 +171,7 @@ import wingslog.feature.export.sharedassets.generated.resources.export_success_d
 import wingslog.feature.export.sharedassets.generated.resources.export_success_delivery_failed
 import wingslog.feature.export.sharedassets.generated.resources.export_success_delivery_failed_title
 import wingslog.feature.export.sharedassets.generated.resources.export_success_title
-import wingslog.feature.export.sharedassets.generated.resources.export_untitled_aircraft
+import wingslog.feature.export.sharedassets.generated.resources.export_untitled_thing
 import wingslog.feature.export.sharedassets.generated.resources.export_view_exports
 import wingslog.feature.export.sharedassets.generated.resources.feature_name_export_logs
 import kotlin.time.Instant
@@ -354,7 +357,7 @@ private fun ExportSetupList(
     item {
       val allSelected = state.selectedThingIds.size == state.thing.size
       Section(
-        title = stringResource(Res.string.export_aircraft_section),
+        title = stringResource(Res.string.export_thing_section),
         action = if (state.thing.size > 1) {
           {
             TextButton(onClick = if (allSelected) onClearAll else onSelectAll) {
@@ -477,9 +480,9 @@ private fun AircraftOptionRow(
   onClick: () -> Unit,
 ) {
   GroupedCheckboxRow(
-    title = thing.tailNumber.ifBlank { stringResource(Res.string.export_untitled_aircraft) },
+    title = thing.tailNumber.ifBlank { stringResource(Res.string.export_untitled_thing) },
     subtitle = thing.makeModel.ifBlank {
-      stringResource(Res.string.export_aircraft_details_incomplete)
+      stringResource(Res.string.export_thing_details_incomplete)
     },
     titleStyle = WingslogTypography.dataLarge,
     checked = selected,
@@ -752,7 +755,7 @@ private fun ExportBottomBar(
         )
         Text(
           text = stringResource(
-            Res.string.export_footer_aircraft_count,
+            Res.string.export_footer_thing_count,
             state.selectedThingIds.size
           ),
           style = MaterialTheme.typography.bodySmall,
@@ -1218,7 +1221,7 @@ private fun ReceiptCard(
     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
     ReceiptRow(
       Icons.Default.Flight,
-      stringResource(Res.string.export_receipt_aircraft),
+      stringResource(Res.string.export_receipt_thing),
       thingSummary,
       mono = true
     )
@@ -1470,8 +1473,11 @@ private fun EmptyAircraftContent(
     heroIcon = Icons.Default.FileDownload,
     heroColor = MaterialTheme.colorScheme.primary,
     heroContainer = MaterialTheme.colorScheme.primary.copy(alpha = 0.13f),
-    title = stringResource(Res.string.export_no_aircraft_title),
-    subtitle = stringResource(CoreRes.string.empty_add_aircraft),
+    title = stringResource(Res.string.export_no_thing_title),
+    subtitle = stringResource(
+      CoreRes.string.empty_add_thing,
+      LexiconFormatter.withArticle(LocalThingLexicon.current.thingNoun),
+    ),
     body = {},
     actions = {
       ResultSecondaryButton(
@@ -1541,7 +1547,7 @@ private fun thingSummary(tailNumbers: List<String>): String =
     1 -> tailNumbers[0]
     2 -> tailNumbers.joinToString(", ")
     else -> stringResource(
-      Res.string.export_aircraft_summary_more,
+      Res.string.export_thing_summary_more,
       tailNumbers[0],
       tailNumbers.size - 1
     )

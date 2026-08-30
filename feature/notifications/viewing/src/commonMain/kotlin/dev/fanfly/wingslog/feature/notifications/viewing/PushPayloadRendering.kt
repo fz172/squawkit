@@ -1,23 +1,25 @@
 package dev.fanfly.wingslog.feature.notifications.viewing
 
+import dev.fanfly.wingslog.core.template.thingNoun
+import dev.fanfly.wingslog.thing.Lexicon
 import dev.fanfly.wingslog.feature.notifications.model.PendingNotification
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.getString
 import wingslog.feature.notifications.sharedassets.generated.resources.Res
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_actor_fallback
-import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_body_aircraft_updated
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_body_record_created
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_body_record_deleted
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_body_record_updated
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_body_squawk_created
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_body_squawk_raised
+import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_body_thing_updated
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_noun_log
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_noun_squawk
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_noun_task
-import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_section_aircraft
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_section_logbook
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_section_squawks
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_section_tasks
+import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_section_thing
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_title
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_title_squawk_created
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_title_priority_raised
@@ -34,12 +36,12 @@ import wingslog.feature.notifications.sharedassets.generated.resources.notificat
  * from a newer server than this build should still land in the tray under the right id, however
  * thin its text.
  */
-suspend fun PushPayload.toPendingNotification(): PendingNotification =
+suspend fun PushPayload.toPendingNotification(lexicon: Lexicon): PendingNotification =
   PendingNotification(
     id = notificationId,
     channel = channel,
     title = renderTitle(),
-    body = renderBody(),
+    body = renderBody(lexicon),
     highPriority = highPriority,
     tapTarget = tapTarget,
   )
@@ -59,7 +61,7 @@ private suspend fun PushPayload.renderTitle(): String = when (titleKey) {
   else -> ""
 }
 
-private suspend fun PushPayload.renderBody(): String = when (bodyKey) {
+private suspend fun PushPayload.renderBody(lexicon: Lexicon): String = when (bodyKey) {
   // "%1$s: %2$s VERB a %3$s\n\n%4$s" — tail, actor, the record's own noun, then its own title on
   // its own line. One concrete notification per write (design decision, 2026-08-27) — there is no
   // count and nothing here is ever a summary.
@@ -89,12 +91,18 @@ private suspend fun PushPayload.renderBody(): String = when (bodyKey) {
       noun(),
       recordTitle
     )
-  // The Aircraft record has no per-record title to name, so its body is two segments, not four.
+  // The Thing record has no per-record title to name, so its body is two segments, not four.
+  //
+  // The key keeps "aircraft" while the resource it renders is now ..._thing_updated. That is not
+  // an oversight: bodyKey is a **wire value** the backend sends (pushMessages.ts), so renaming it
+  // here would stop matching every push already in flight and every one sent by a function that
+  // has not been redeployed. Wire identity is grandfathered — see #638.
   "notification_n1_body_aircraft_updated" ->
     getString(
-      Res.string.notification_n1_body_aircraft_updated,
+      Res.string.notification_n1_body_thing_updated,
       tailNumber,
-      actor()
+      actor(),
+      lexicon.thingNoun.singular,
     )
   // The escalation bodies lead with the tail number instead: "%1$s: %2$s created a new squawk
   // issue\n\n%3$s" — tail, actor, then the squawk's own title on its own line.
@@ -136,7 +144,7 @@ private fun PushPayload.sectionRes(): StringResource = when (recordType) {
   "squawk" -> Res.string.notification_n1_section_squawks
   "task" -> Res.string.notification_n1_section_tasks
   "log" -> Res.string.notification_n1_section_logbook
-  else -> Res.string.notification_n1_section_aircraft
+  else -> Res.string.notification_n1_section_thing
 }
 
 /** Only reached from a record body (created/updated/deleted) — the thing body needs no noun. */

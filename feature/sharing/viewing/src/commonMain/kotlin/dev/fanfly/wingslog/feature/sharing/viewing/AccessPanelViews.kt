@@ -1,12 +1,5 @@
 package dev.fanfly.wingslog.feature.sharing.viewing
 
-import dev.fanfly.wingslog.core.template.LexiconFormatter
-import dev.fanfly.wingslog.core.template.LocalThingLexicon
-import dev.fanfly.wingslog.core.template.logNoun
-import dev.fanfly.wingslog.core.template.squawkNoun
-import dev.fanfly.wingslog.core.template.taskNoun
-import dev.fanfly.wingslog.core.template.technicianNoun
-import dev.fanfly.wingslog.core.template.thingNoun
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -20,7 +13,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -28,6 +20,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Construction
@@ -42,7 +35,6 @@ import androidx.compose.material.icons.filled.QrCode2
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Security
-import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -58,6 +50,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.fanfly.wingslog.core.template.LexiconFormatter
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.logNoun
+import dev.fanfly.wingslog.core.template.squawkNoun
+import dev.fanfly.wingslog.core.template.taskNoun
+import dev.fanfly.wingslog.core.template.technicianNoun
+import dev.fanfly.wingslog.core.template.thingNoun
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.statusColors
 import dev.fanfly.wingslog.core.ui.widget.avataricon.compose.AvatarIcon
@@ -67,7 +66,6 @@ import dev.fanfly.wingslog.feature.sharing.model.ShareMember
 import dev.fanfly.wingslog.feature.sharing.model.ShareRole
 import dev.fanfly.wingslog.feature.sharing.model.formatInviteCode
 import io.github.alexzhirkevich.qrose.rememberQrCodePainter
-import kotlin.time.Clock
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.sharing.sharedassets.generated.resources.Res
 import wingslog.feature.sharing.sharedassets.generated.resources.invite_code_hint
@@ -89,9 +87,9 @@ import wingslog.feature.sharing.sharedassets.generated.resources.manage_access_l
 import wingslog.feature.sharing.sharedassets.generated.resources.manage_access_member_count_plural
 import wingslog.feature.sharing.sharedassets.generated.resources.manage_access_member_count_singular
 import wingslog.feature.sharing.sharedassets.generated.resources.manage_access_people_section
-import wingslog.feature.sharing.sharedassets.generated.resources.manage_access_perm_aircraft_details
 import wingslog.feature.sharing.sharedassets.generated.resources.manage_access_perm_manage_access
 import wingslog.feature.sharing.sharedassets.generated.resources.manage_access_perm_squawks_tasks
+import wingslog.feature.sharing.sharedassets.generated.resources.manage_access_perm_thing_details
 import wingslog.feature.sharing.sharedassets.generated.resources.manage_access_perm_work_logs
 import wingslog.feature.sharing.sharedassets.generated.resources.manage_access_revoke
 import wingslog.feature.sharing.sharedassets.generated.resources.manage_access_role_co_owner_desc
@@ -99,6 +97,7 @@ import wingslog.feature.sharing.sharedassets.generated.resources.manage_access_r
 import wingslog.feature.sharing.sharedassets.generated.resources.manage_access_solo_body
 import wingslog.feature.sharing.sharedassets.generated.resources.manage_access_solo_title
 import wingslog.feature.sharing.sharedassets.generated.resources.manage_access_unnamed_member
+import kotlin.time.Clock
 
 @Composable
 internal fun MainView(
@@ -570,7 +569,7 @@ private fun PermissionsCard(expanded: Boolean, onToggle: () -> Unit) {
           ), true, true),
           Triple(stringResource(Res.string.manage_access_perm_work_logs), true, true),
           Triple(stringResource(
-            Res.string.manage_access_perm_aircraft_details,
+            Res.string.manage_access_perm_thing_details,
             LexiconFormatter.sentenceCase(LocalThingLexicon.current.thingNoun),
           ), false, true),
           Triple(stringResource(Res.string.manage_access_perm_manage_access), false, true),

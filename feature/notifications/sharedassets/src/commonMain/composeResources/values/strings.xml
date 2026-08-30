@@ -47,7 +47,7 @@
   <!-- The Aircraft record's own trigger (make/model/tail edits) has no per-record title to name —
        it is always "updated," never created or deleted through that path — so it gets its own
        two-segment body instead of the noun-and-title shape above. -->
-  <string name="notification_n1_body_aircraft_updated">%1$s: %2$s updated the aircraft</string>
+  <string name="notification_n1_body_thing_updated">%1$s: %2$s updated the %3$s</string>
   <!-- N1 on web (design §8.4): an open tab detects a collaborator's write locally and cannot see
        the record's own title, so it posts this single generic body instead of the concrete
        record_created/updated/deleted ones above — still one notification per write, immediately,
@@ -67,7 +67,7 @@
   <string name="notification_n1_section_logbook_lower">logbook entries</string>
   <!-- Aircraft-record activity (make/model/tail edits). Server-side N1 only — the web detector does
        not cover the Aircraft record. -->
-  <string name="notification_n1_section_aircraft">Aircraft</string>
+  <string name="notification_n1_section_thing">Aircraft</string>
 
   <!-- Singular record nouns for notification_n1_body_record_*, e.g. "created a new squawk". -->
   <string name="notification_n1_noun_squawk">squawk</string>
@@ -96,5 +96,5 @@
   <string name="squawk_priority_label_low">Low</string>
   <string name="squawk_priority_label_medium">Medium</string>
   <string name="squawk_priority_label_high">High</string>
-  <string name="squawk_priority_label_aog">AOG</string>
+  <string name="squawk_priority_label_down">AOG</string>
 </resources>

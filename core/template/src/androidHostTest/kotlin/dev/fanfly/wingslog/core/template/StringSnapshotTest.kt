@@ -29,6 +29,13 @@ import java.io.File
  * .tsv` was generated while every string was still fixed text, so it is independent evidence of
  * what the app said rather than a restatement of what it says.
  *
+ * ## A label that *is* a lexicon value needs no string resource at all
+ *
+ * If the whole value would become `"%1${'$'}s"`, the resource carries no information — the lexicon
+ * does. Those call sites read the formatter directly and the resource is deleted, rather than every
+ * such label getting its own pass-through entry (or all of them sharing one, which is the same
+ * indirection with fewer files). `LexiconFormatterTest` pins the rendered words instead.
+ *
  * ## Converting a string requires declaring its recipe
  *
  * [LEXICON_ARGS] maps a resource to the lexicon-derived arguments that fill it. A string whose
@@ -67,7 +74,7 @@ import java.io.File
  *   agreement is a fact about the current lexicons, not something this test enforces. The rule that
  *   keeps it safe lives in `AdaptiveAppShell`: a settings string is only a conversion candidate if
  *   its generic rendering is acceptable.
- * - **It checks the recipe, not the call site.** [LEXICON_ARGS] says `add_aircraft` is filled with
+ * - **It checks the recipe, not the call site.** [LEXICON_ARGS] says `add_thing` is filled with
  *   `sentenceCase(thing)`; a call site passing `titleCase(thing)` instead still passes here. The
  *   two are written in the same commit, which is the mitigation, not a proof.
  * - **Two lexicon fields render nowhere today** — `ready_status` and `collection_label`. The app
@@ -119,7 +126,7 @@ class StringSnapshotTest {
     sharing("revoke_confirm_body") { mapOf(1 to it.thingNoun.singular) },
     sharing("role_confirm_body") { mapOf(1 to it.thingNoun.singular) },
     sharing("leave_confirm_body") { mapOf(1 to LexiconFormatter.lowerFirst(it.collection_label)) },
-    sharing("manage_access_perm_aircraft_details") {
+    sharing("manage_access_perm_thing_details") {
       mapOf(1 to LexiconFormatter.sentenceCase(it.thingNoun))
     },
     sharing("redeem_confirm_title") {
@@ -216,7 +223,7 @@ class StringSnapshotTest {
     // no_maintenance_logs_title ("Logbook Is Empty") is blocked on #683, because the log noun is
     // "work log" and the app says "Logbook" only here and in the export copy.
     frame("feature/logs/update", "component_section_description") { it.thingNoun.singular },
-    frame("feature/logs/update", "loading_aircraft") { it.thingNoun.singular },
+    frame("feature/logs/update", "loading_thing") { it.thingNoun.singular },
     frame("feature/logs/update", "no_engines_found") { it.thingNoun.singular },
     frame("feature/logs/update", "performed_by_description") { it.technicianNoun.singular },
     frame("feature/logs/update", "squawks_section_header") {
@@ -228,8 +235,8 @@ class StringSnapshotTest {
     frame("feature/logs/viewing", "affected_maintenance_tasks") {
       LexiconFormatter.titleCasePlural(it.taskNoun)
     },
-    frame("feature/logs/viewing", "aircraft_data") { LexiconFormatter.titleCase(it.thingNoun) },
-    frame("feature/logs/viewing", "edit_aircraft") { it.thingNoun.singular },
+    frame("feature/logs/viewing", "thing_data") { LexiconFormatter.titleCase(it.thingNoun) },
+    frame("feature/logs/viewing", "edit_thing") { it.thingNoun.singular },
     frame("feature/logs/viewing", "log_squawk_count_one") { it.squawkNoun.singular },
     frame("feature/logs/viewing", "resolved_squawks") {
       LexiconFormatter.titleCasePlural(it.squawkNoun)
@@ -252,17 +259,38 @@ class StringSnapshotTest {
     // label, not a lexicon noun (PRD §4.2, so #657); the collaboration channel description belongs
     // to #661 with the rest of the notification surface; and the stress-test copy is a developer
     // surface, excluded wholesale by the classification.
-    frame("feature/thing/dashboard", "aircraft_load_error") { it.thingNoun.singular },
+    frame("feature/thing/dashboard", "thing_load_error") { it.thingNoun.singular },
     frame("feature/thing/dashboard", "overview_no_logs_body") { it.thingNoun.singular },
     // Only the thing noun. "discrepancies" stays literal: the squawk plural is "squawks", so
     // substituting would reword the sentence rather than translate it.
     frame("feature/thing/dashboard", "overview_no_squawks_body") { it.thingNoun.singular },
     frame("feature/thing/dashboard", "overview_open_squawks") { it.squawkNoun.plural },
-    frame("feature/thing/update", "delete_aircraft") { LexiconFormatter.titleCase(it.thingNoun) },
-    frame("feature/thing/update", "update_aircraft") { LexiconFormatter.titleCase(it.thingNoun) },
+    frame("feature/thing/update", "delete_thing") { LexiconFormatter.titleCase(it.thingNoun) },
+    frame("feature/thing/update", "update_thing") { LexiconFormatter.titleCase(it.thingNoun) },
     frame("feature/squawk/update", "dismiss_squawk_warning") { it.squawkNoun.singular },
     // Positions 1 and 2 are the count and the member noun, both caller-supplied.
-    "feature/thing/update:delete_aircraft_shared_warning" to { l: Lexicon ->
+    "feature/thing/update:delete_thing_shared_warning" to { l: Lexicon ->
+      mapOf(3 to l.thingNoun.singular)
+    },
+
+    // Strings that name a thing *in the abstract*, with none selected — "Add a ___", the empty
+    // fleet, the subscription perks. These read from the app-scoped default in CurrentThingLexicon,
+    // which is exactly the case it exists for and which retires itself: one preset means the only
+    // right word, a second preset means the generic one. That is why they are conversions and not
+    // hand-written neutral copy like the technician page (#684), whose list aggregates things that
+    // already exist and may not share a template.
+    frame("core/sharedassets", "add_thing") { LexiconFormatter.titleCase(it.thingNoun) },
+    frame("core/sharedassets", "empty_add_thing") { LexiconFormatter.withArticle(it.thingNoun) },
+    frame("feature/fleet/sharedassets", "add_first_thing") {
+      LexiconFormatter.titleCase(it.thingNoun)
+    },
+    frame("feature/fleet/sharedassets", "no_fleet_description") { it.thingNoun.singular },
+    frame("feature/subscription/viewing", "subscription_perk_thing_title") { it.thingNoun.plural },
+    frame("feature/subscription/viewing", "subscription_feature_sharing") { it.thingNoun.plural },
+    frame("feature/subscription/viewing", "upsell_body_add_thing") { it.thingNoun.plural },
+    frame("feature/subscription/viewing", "upsell_body_share") { it.thingNoun.plural },
+    // Positions 1 and 2 are the tail number and the actor, both from the push payload.
+    "feature/notifications/sharedassets:notification_n1_body_thing_updated" to { l: Lexicon ->
       mapOf(3 to l.thingNoun.singular)
     },
   )

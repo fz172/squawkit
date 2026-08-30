@@ -89,7 +89,7 @@ wrong with it right now.** The app already does this well. It just insists the t
 | Scheduling is interval-from-last-service only | `InspectionRule` oneof: time / engine-hour / on-condition / linked / immediate | Home upkeep is **seasonal**, not interval-based: gutters in April and October, sprinkler blowout before the first freeze. No existing rule can express it. |
 | Compliance means ADs and Service Bulletins; technicians have certificates | `ComplianceType` enum, `compliance_authority`, `reference_number`, `CertificateInputFields` | The *shape* is right in some domains (a recall on a car) and pure noise in others. A plumber has no A&P number. |
 | Notification urgency is ranked on an aviation ladder | `feature/notifications`: `UrgencyRank`, `UrgencyTier.GROUNDED`, `NotificationChannel.GROUNDED`, `SquawkWithStatus.reportableTier()` | The ladder's *shape* is domain-independent — a defect got worse, a task crossed a threshold — but its top rung is named for an aircraft on the ground, and it is an OS-level channel id, so the name a homeowner sees in Android's notification settings is "Grounded". |
-| The shared app chrome names its subject "aircraft" | `core:ui:adaptive`: `ShellAircraft`, `PER_AIRCRAFT_SECTIONS`, the `add_aircraft` string, and the section labels **Dashboard · Squawks · Maint. · Logs** | This is the one surface a mixed-Stuff account can never navigate away from. "Squawks" as a permanent bottom-bar label is aviation vocabulary in the most persistent place in the app. |
+| The shared app chrome names its subject "aircraft" | `core:ui:adaptive`: `ShellAircraft`, `PER_AIRCRAFT_SECTIONS`, the `add_thing` string, and the section labels **Dashboard · Squawks · Maint. · Logs** | This is the one surface a mixed-Stuff account can never navigate away from. "Squawks" as a permanent bottom-bar label is aviation vocabulary in the most persistent place in the app. |
 | ~230 user-facing strings name the domain | 31 `strings.xml` files, 982 entries: 87 say "aircraft", 18 say "tail", 42 say "engine hour" or "tach", 83 say "squawk", 8 say "AOG" | Terminology is the whole felt experience. A homeowner reading "Add aircraft" churns on the first screen. |
 
 Notably absent: the **storage engine, sync engine, attachments, export pipeline, sharing/ACL, technician records,
@@ -840,7 +840,7 @@ type.
 
 The switcher is titled **Stuff**, overridden by `Lexicon.collection_label` when every Thing shares one template —
 so an all-aircraft account still reads **Fleet** and an all-car account reads **Garage**. The create action
-follows the same rule: "Add a new thing" on a mixed account, "Add aircraft" (today's `add_aircraft` string in
+follows the same rule: "Add a new thing" on a mixed account, "Add aircraft" (today's `add_thing` string in
 `core:sharedassets`) on an aviation one. `FleetEmptyState` is the one surface with no Thing to resolve a lexicon
 from, so it defaults to the generic noun — which is correct: a brand-new account genuinely does not yet know
 what it is for.

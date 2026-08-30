@@ -38,6 +38,7 @@ kotlin {
       implementation(project(":feature:logs:datamanager"))
       implementation(project(":feature:squawk:datamanager"))
       implementation(project(":feature:tasks:datamanager"))
+      implementation(project(":core:template"))
       implementation(project(":core:sharedassets"))
       implementation(project(":core:ui"))
       implementation(project(":core:ui:adaptive"))

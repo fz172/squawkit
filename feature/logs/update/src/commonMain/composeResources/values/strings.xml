@@ -3,7 +3,7 @@
   <string name="work_description_required">Work Description *</string>
   <string name="engine_time_hours">Engine Time (hours)</string>
   <string name="airframe_serial">Airframe Serial</string>
-  <string name="loading_aircraft">Loading %1$s…</string>
+  <string name="loading_thing">Loading %1$s…</string>
   <string name="no_engines_found">No engines found for this %1$s.</string>
   <string name="no_propeller_components_found">No propeller components found for this aircraft.</string>
   <string name="propeller_component">Propeller Component</string>

@@ -308,7 +308,7 @@ maintenance-logs feature. Aircraft data ownership is `fleet:datamanager` (`Fleet
 
 **Outcome (2026-07-06):** `feature:thing:update` created with the five files (packages →
 `dev.fanfly.wingslog.feature.thing.update`), its own `strings.xml` (nine keys from
-`logs:update` plus `blade_serial_numbers` / `delete_aircraft` from `logs:sharedassets` — the
+`logs:update` plus `blade_serial_numbers` / `delete_thing` from `logs:sharedassets` — the
 other four shared keys stayed put and the new module reads them from `logs:sharedassets`), and
 a new `aircraftUpdateModule` Koin module registered in `commonAppModules`. `feature:shell` is
 the only route consumer and now imports from the new module.

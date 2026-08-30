@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-  <string name="aircraft_data">%1$s Data</string>
+  <string name="thing_data">%1$s Data</string>
   <string name="s_n_placeholder">S/N: %1$s</string>
   <string name="s_n_empty">No S/N</string>
-  <string name="edit_aircraft">Update %1$s</string>
+  <string name="edit_thing">Update %1$s</string>
   <string name="search_logs">Search logs…</string>
   <string name="no_logs_match_filter">No logs match your filter.</string>
   <string name="clear_filter">Clear Filter</string>
