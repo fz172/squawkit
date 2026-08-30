@@ -39,3 +39,21 @@ dependencies {
   "androidHostTestImplementation"(libs.junit)
   "androidHostTestImplementation"(libs.truth)
 }
+
+/**
+ * Tells Gradle that `StringSnapshotTest` depends on every `strings.xml` in the repo.
+ *
+ * The test reads them from the filesystem rather than through generated resource accessors (see
+ * its KDoc for why). Gradle cannot see that, so without this the task is UP-TO-DATE whenever
+ * `core/template`'s own sources are unchanged — which is precisely the commit that edits a string
+ * in `feature/login`. The guard would be skipped on exactly the change it exists to catch, and a
+ * skipped task reports success. Verified by mutating a string and watching the test not run.
+ */
+tasks.withType<Test>().configureEach {
+  inputs.files(
+    rootProject.fileTree(rootProject.projectDir) {
+      include("**/src/**/values/strings.xml")
+      exclude("**/build/**")
+    },
+  ).withPropertyName("repoStringResources").withPathSensitivity(PathSensitivity.RELATIVE)
+}
