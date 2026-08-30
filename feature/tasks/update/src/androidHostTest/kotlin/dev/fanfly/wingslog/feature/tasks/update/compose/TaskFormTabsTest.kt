@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.tasks.update.compose
 
+import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.thing.Capabilities
 import org.junit.Test
@@ -14,6 +15,18 @@ class TaskFormTabsTest {
 
   private val airplane = Capabilities(compliance = true)
   private val house = Capabilities(compliance = false)
+
+  @Test
+  fun theFailOpenDefaultRemovesNothing() {
+    // #660: a wrong default must not silently drop the compliance tab for aviation users.
+    assertThat(taskFormTabsFor(CurrentThingTemplate.ALL_ENABLED, includeAdjustments = true))
+      .containsExactly(
+        TaskFormTab.IDENTITY,
+        TaskFormTab.COMPLIANCE,
+        TaskFormTab.SCHEDULE,
+        TaskFormTab.ADJUSTMENTS,
+      ).inOrder()
+  }
 
   @Test
   fun aTemplateWithoutComplianceHasNoComplianceTab() {

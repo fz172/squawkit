@@ -38,6 +38,38 @@ class CurrentThingTemplateTest {
   }
 
   @Test
+  fun theAirplaneSetAndTheFailOpenDefaultAgreeOnEveryFlag() {
+    // **Why Phase 2 is invisible whichever path a gate takes** (#660).
+    //
+    // Every gate reads capabilities from one of two places: the selected thing's template, or the
+    // fail-open default when none applies. If those two disagreed on any boolean, the same screen
+    // would render differently depending on whether the fleet had loaded — a race nobody would
+    // reproduce reliably and everybody would blame on something else.
+    //
+    // The list flags are deliberately not compared: ALL_ENABLED declares no sections and no
+    // priorities, because a default has no template to take an order from, and each gate's own
+    // "fail-open removes nothing" test covers what that empty list means where it is read.
+    val airplane = AirplaneTemplate.AIRPLANE_CAPABILITIES
+    val default = CurrentThingTemplate.ALL_ENABLED
+
+    assertThat(default.components).isEqualTo(airplane.components)
+    assertThat(default.meters).isEqualTo(airplane.meters)
+    assertThat(default.compliance).isEqualTo(airplane.compliance)
+    assertThat(default.technicians).isEqualTo(airplane.technicians)
+    assertThat(default.technician_certificates).isEqualTo(airplane.technician_certificates)
+    assertThat(default.component_serial_prompt).isEqualTo(airplane.component_serial_prompt)
+  }
+
+  @Test
+  fun capabilitiesAreUsableImmediatelyAfterConstruction() {
+    // The other failure #660 names: a capability read *before the registry resolves*. There is no
+    // such window — the registry is baked into the build, so the holder resolves in its constructor
+    // and the first read already has the airplane set rather than an empty one.
+    assertThat(holder().capabilities.value.sections).isNotEmpty()
+    assertThat(holder().template.value).isNotNull()
+  }
+
+  @Test
   fun clearRestoresTheSolePresetRatherThanEmptying() {
     // An empty fleet is not "no template" while one preset exists — the same rule the lexicon
     // follows, and the reason a technician with no thing of their own still reads "aircraft".

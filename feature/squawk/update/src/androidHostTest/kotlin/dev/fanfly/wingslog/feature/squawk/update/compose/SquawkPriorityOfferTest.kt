@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.squawk.update.compose
 
+import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.thing.SquawkPriority
 import org.junit.Test
@@ -12,6 +13,14 @@ import org.junit.Test
  * narrower set, which is the only way to tell a working gate from an absent one.
  */
 class SquawkPriorityOfferTest {
+
+  @Test
+  fun theFailOpenDefaultOffersEverything() {
+    // #660: a wrong default must not silently drop AOG from the form for aviation users.
+    SquawkPriority.entries.forEach {
+      assertThat(it.isOfferedBy(CurrentThingTemplate.ALL_ENABLED.priorities)).isTrue()
+    }
+  }
 
   @Test
   fun aTemplateThatDoesNotOfferAogDoesNotShowIt() {
