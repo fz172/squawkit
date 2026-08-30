@@ -1,5 +1,10 @@
 package dev.fanfly.wingslog.feature.logs.update.logs
 
+import dev.fanfly.wingslog.core.template.squawkNoun
+import dev.fanfly.wingslog.core.template.taskNoun
+import dev.fanfly.wingslog.core.template.LexiconFormatter
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.logNoun
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -140,7 +145,11 @@ fun MaintenanceLogFormScreen(
   // squawk's title is known, then hand the plain string to the ViewModel to prepend to
   // workDescription.
   val resolveSquawkPrefill = uiState.pendingResolveSquawkTitle?.let { title ->
-    stringResource(SharedRes.string.resolve_squawk_work_description, title)
+    stringResource(
+      SharedRes.string.resolve_squawk_work_description,
+      title,
+      LocalThingLexicon.current.squawkNoun.singular,
+    )
   }
   LaunchedEffect(resolveSquawkPrefill) {
     resolveSquawkPrefill?.let { viewModel.consumeResolveSquawkPrefill(it) }
@@ -149,7 +158,11 @@ fun MaintenanceLogFormScreen(
   // Opened via the task edit screen's "Create Work Log" resolve option: mirrors the squawk
   // prefill flow above.
   val resolveTaskPrefill = uiState.pendingResolveTaskTitle?.let { title ->
-    stringResource(SharedRes.string.resolve_task_work_description, title)
+    stringResource(
+      SharedRes.string.resolve_task_work_description,
+      title,
+      LocalThingLexicon.current.taskNoun.singular,
+    )
   }
   LaunchedEffect(resolveTaskPrefill) {
     resolveTaskPrefill?.let { viewModel.consumeResolveTaskPrefill(it) }
@@ -206,9 +219,15 @@ fun MaintenanceLogFormScreen(
             title = {
               Text(
                 text = if (viewModel.isEditMode)
-                  stringResource(SharedRes.string.edit_log).uppercase()
+                  stringResource(
+                    SharedRes.string.edit_log,
+                    LexiconFormatter.titleCase(LocalThingLexicon.current.logNoun),
+                  ).uppercase()
                 else
-                  stringResource(SharedRes.string.add_log).uppercase(),
+                  stringResource(
+                    SharedRes.string.add_log,
+                    LexiconFormatter.titleCase(LocalThingLexicon.current.logNoun),
+                  ).uppercase(),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
               )

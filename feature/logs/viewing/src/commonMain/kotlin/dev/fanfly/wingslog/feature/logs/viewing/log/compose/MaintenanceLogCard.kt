@@ -1,5 +1,7 @@
 package dev.fanfly.wingslog.feature.logs.viewing.log.compose
 
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.squawkNoun
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -145,10 +147,14 @@ fun MaintenanceLogCard(
         if (squawkCount > 0) {
           if (taskCount > 0) Spacer(Modifier.width(Spacing.medium))
           val squawkLabel =
-            if (squawkCount == 1) stringResource(MaintenanceRes.string.log_squawk_count_one)
+            if (squawkCount == 1) stringResource(
+              MaintenanceRes.string.log_squawk_count_one,
+              LocalThingLexicon.current.squawkNoun.singular,
+            )
             else stringResource(
               MaintenanceRes.string.log_squawk_count_plural,
-              squawkCount
+              squawkCount,
+              LocalThingLexicon.current.squawkNoun.plural,
             )
           Text(
             text = squawkLabel,

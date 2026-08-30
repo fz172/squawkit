@@ -1,5 +1,10 @@
 package dev.fanfly.wingslog.feature.logs.viewing.log.compose
 
+import dev.fanfly.wingslog.core.template.LexiconFormatter
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.logNoun
+import dev.fanfly.wingslog.core.template.squawkNoun
+import dev.fanfly.wingslog.core.template.taskNoun
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -89,7 +94,10 @@ fun MaintenanceLogDetailSheet(
     actionSlot = {
       if (onEditClick != null) {
         TextButton(onClick = onEditClick) {
-          Text(stringResource(MaintenanceRes.string.edit_log))
+          Text(stringResource(
+            MaintenanceRes.string.edit_log,
+            LexiconFormatter.titleCase(LocalThingLexicon.current.logNoun),
+          ))
         }
       }
     },
@@ -231,7 +239,10 @@ private fun AffectedTasksSection(
   onTaskClick: ((String) -> Unit)?,
 ) {
   Text(
-    text = stringResource(ViewingRes.string.affected_maintenance_tasks),
+    text = stringResource(
+      ViewingRes.string.affected_maintenance_tasks,
+      LexiconFormatter.titleCasePlural(LocalThingLexicon.current.taskNoun),
+    ),
     style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
     color = MaterialTheme.colorScheme.onSurface,
   )
@@ -278,7 +289,10 @@ private fun ResolvedSquawksSection(
   onSquawkClick: ((String) -> Unit)?,
 ) {
   Text(
-    text = stringResource(ViewingRes.string.resolved_squawks),
+    text = stringResource(
+      ViewingRes.string.resolved_squawks,
+      LexiconFormatter.titleCasePlural(LocalThingLexicon.current.squawkNoun),
+    ),
     style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
     color = MaterialTheme.colorScheme.onSurface,
   )
@@ -287,7 +301,11 @@ private fun ResolvedSquawksSection(
     log.squawk_ids.forEach { squawkId ->
       val squawk = availableSquawks.find { it.id == squawkId }
       val title = squawk?.title?.takeIf { it.isNotBlank() }
-        ?: stringResource(ViewingRes.string.unknown_squawk, squawkId)
+        ?: stringResource(
+          ViewingRes.string.unknown_squawk,
+          squawkId,
+          LocalThingLexicon.current.squawkNoun.singular,
+        )
       LinkedEntityRow(
         title = title,
         icon = Icons.Default.Warning,
