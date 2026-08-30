@@ -1,19 +1,15 @@
 package dev.fanfly.wingslog.feature.technician.manage.compose
 
-import dev.fanfly.wingslog.core.template.LexiconFormatter
-import dev.fanfly.wingslog.core.template.LocalThingLexicon
-import dev.fanfly.wingslog.core.template.technicianNoun
-import dev.fanfly.wingslog.core.template.thingNoun
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -44,7 +40,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontWeight
-import dev.fanfly.wingslog.thing.Technician
+import dev.fanfly.wingslog.core.template.LexiconFormatter
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.logNoun
+import dev.fanfly.wingslog.core.template.technicianNoun
+import dev.fanfly.wingslog.core.template.thingNoun
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedFloatingAction
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedTopBar
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
@@ -52,19 +52,21 @@ import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.technician.manage.viewmodel.TechnicianListViewModel
+import dev.fanfly.wingslog.thing.Technician
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.technician.sharedassets.generated.resources.add_technician
-import wingslog.feature.technician.sharedassets.generated.resources.empty_technicians_desc
-import wingslog.feature.technician.sharedassets.generated.resources.empty_technicians_title
 import wingslog.feature.technician.sharedassets.generated.resources.duplicates_prompt_action
 import wingslog.feature.technician.sharedassets.generated.resources.duplicates_prompt_dismiss
 import wingslog.feature.technician.sharedassets.generated.resources.duplicates_prompt_title
 import wingslog.feature.technician.sharedassets.generated.resources.duplicates_review_title
+import wingslog.feature.technician.sharedassets.generated.resources.empty_technicians_desc
+import wingslog.feature.technician.sharedassets.generated.resources.empty_technicians_title
 import wingslog.feature.technician.sharedassets.generated.resources.linked_technician_info_body
 import wingslog.feature.technician.sharedassets.generated.resources.linked_technician_info_dismiss
 import wingslog.feature.technician.sharedassets.generated.resources.linked_technician_info_title
 import wingslog.feature.technician.sharedassets.generated.resources.linked_technicians_header
 import wingslog.feature.technician.sharedassets.generated.resources.manage_technicians
+import wingslog.feature.technician.sharedassets.generated.resources.manage_technicians_description
 import wingslog.feature.technician.sharedassets.generated.resources.my_technicians_header
 import wingslog.feature.technician.sharedassets.generated.resources.Res as TechnicianRes
 
@@ -111,10 +113,10 @@ fun TechnicianListScreen(
     topBar = {
       ConstrainedTopBar {
         TopAppBar(
-          title = { Text(stringResource(
-            TechnicianRes.string.manage_technicians,
-            LexiconFormatter.titleCase(LocalThingLexicon.current.technicianNoun),
-          )) },
+          // The same fixed string as the settings row that opens this page: a row reading "Who
+          // Does the Work" that opens a page titled "Technician Profiles" is a seam the user can
+          // see, and this page is still settings. The domain speaks in the description below.
+          title = { Text(stringResource(TechnicianRes.string.manage_technicians)) },
           navigationIcon = {
             IconButton(onClick = onNavigateBack) {
               Icon(
@@ -194,6 +196,21 @@ fun TechnicianListScreen(
           ),
           verticalArrangement = Arrangement.spacedBy(Spacing.medium),
         ) {
+          // What this page is for, in the words of the thing being maintained. The settings row
+          // that opens it is deliberately generic — settings should read the same whatever the
+          // picker has selected — so this is where the domain gets to speak.
+          item(key = "description") {
+            Text(
+              text = stringResource(
+                TechnicianRes.string.manage_technicians_description,
+                LocalThingLexicon.current.thingNoun.plural,
+                LexiconFormatter.withArticle(LocalThingLexicon.current.logNoun),
+              ),
+              style = MaterialTheme.typography.bodyMedium,
+              color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+          }
+
           if (state.showDuplicatePrompt) {
             item(key = "duplicate-prompt") {
               DuplicatePrompt(

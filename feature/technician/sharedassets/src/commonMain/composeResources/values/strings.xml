@@ -2,7 +2,8 @@
   <string name="technician">Technician</string>
   <string name="add_technician">Add %1$s</string>
   <string name="edit_technician">Update %1$s</string>
-  <string name="manage_technicians">%1$s Profiles</string>
+  <string name="manage_technicians_description">The people who work on your %1$s. Add them here so you can pick them when signing %2$s.</string>
+  <string name="manage_technicians">Who Does the Work</string>
   <string name="select_technician">Select %1$s</string>
   <string name="performed_by">Performed By</string>
 

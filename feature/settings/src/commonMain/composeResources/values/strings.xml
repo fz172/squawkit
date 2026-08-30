@@ -15,7 +15,7 @@
   <string name="settings_delete_account_challenge_mismatch">That does not match yet.</string>
   <string name="settings_delete_account_confirm">Delete my account</string>
   <string name="settings_delete_account_failed">Your account could not be deleted. Nothing has been removed — please try again.</string>
-  <string name="settings_technicians_subtitle">Manage technician info who performs maintenance work</string>
+  <string name="settings_technicians_subtitle">People you can name when recording work</string>
   <string name="settings_sync_subtitle">Keep your records synced across devices</string>
   <string name="settings_notifications">Notifications</string>
   <string name="settings_notifications_subtitle_default">Collaboration and urgency alerts</string>

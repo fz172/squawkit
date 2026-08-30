@@ -3,6 +3,10 @@
 # strings are multi-line — and because strings.xml also holds literal backslash-n as Android escape
 # text, which a backslash scheme cannot distinguish from an escaped newline.
 # Everything else, including XML entities and trailing whitespace, is exactly as authored.
+# Two kinds of entry live here. The original 968 are historical evidence: what the app said before
+# any conversion. Entries added later are forward pins — what an aviation user should see from now
+# on. The test treats them identically; only the provenance differs, and only the first kind can
+# testify that a conversion changed nothing.
 # Regenerating this file to make the test pass defeats its entire purpose.
 module	resource	value
 app	app_name	SquawkIt
@@ -483,7 +487,7 @@ feature/settings	settings_subscription	Subscription
 feature/settings	settings_subscription_subtitle	Your plan, benefits, and storage
 feature/settings	settings_subtitle	Account, appearance &amp; preferences
 feature/settings	settings_sync_subtitle	Keep your records synced across devices
-feature/settings	settings_technicians_subtitle	Manage technician info who performs maintenance work
+feature/settings	settings_technicians_subtitle	People you can name when recording work
 feature/settings	sign_out	Log out
 feature/sharing/sharedassets	enter_code_field_label	Invite code
 feature/sharing/sharedassets	enter_code_instructions	Enter the invite code the aircraft owner gave you. It looks like EFA2-GGTH.
@@ -933,7 +937,8 @@ feature/technician/sharedassets	linked_technician_info_body	This profile comes f
 feature/technician/sharedassets	linked_technician_info_dismiss	Got it
 feature/technician/sharedassets	linked_technician_info_title	Maintained by %1$s
 feature/technician/sharedassets	linked_technicians_header	Linked from shared aircraft
-feature/technician/sharedassets	manage_technicians	Technician Profiles
+feature/technician/sharedassets	manage_technicians	Who Does the Work
+feature/technician/sharedassets	manage_technicians_description	The people who work on your aircraft. Add them here so you can pick them when signing a work log.
 feature/technician/sharedassets	my_profile	My Profile
 feature/technician/sharedassets	my_technicians_header	My technicians
 feature/technician/sharedassets	name	Name

@@ -60,6 +60,13 @@ import java.io.File
  *
  * Recorded because a test that looks total and is not is worse than one whose limits are known:
  *
+ * - **It renders every recipe with the airplane lexicon, wherever the string actually appears.**
+ *   The SETTINGS section is provided the *generic* lexicon, so a settings string is checked here
+ *   against words it will never be given. Today that is harmless because the two lexicons agree on
+ *   every noun a settings string uses — the technician noun is "technician" in both — but the
+ *   agreement is a fact about the current lexicons, not something this test enforces. The rule that
+ *   keeps it safe lives in `AdaptiveAppShell`: a settings string is only a conversion candidate if
+ *   its generic rendering is acceptable.
  * - **It checks the recipe, not the call site.** [LEXICON_ARGS] says `add_aircraft` is filled with
  *   `sentenceCase(thing)`; a call site passing `titleCase(thing)` instead still passes here. The
  *   two are written in the same commit, which is the mitigation, not a proof.
@@ -171,7 +178,6 @@ class StringSnapshotTest {
     technician("delete_technician") { LexiconFormatter.titleCase(it.technicianNoun) },
     technician("edit_technician") { LexiconFormatter.titleCase(it.technicianNoun) },
     technician("select_technician") { LexiconFormatter.titleCase(it.technicianNoun) },
-    technician("manage_technicians") { LexiconFormatter.titleCase(it.technicianNoun) },
     technician("empty_technicians_title") { LexiconFormatter.titleCasePlural(it.technicianNoun) },
     technician("delete_technician_confirmation") { it.technicianNoun.singular },
     technician("duplicates_review_body") { it.technicianNoun.singular },
@@ -181,6 +187,12 @@ class StringSnapshotTest {
     technician("no_technicians") { it.technicianNoun.plural },
     technician("linked_technicians_header") { it.thingNoun.singular },
     technician("linked_technician_info_body") { LexiconFormatter.withArticle(it.thingNoun) },
+    "feature/technician/sharedassets:manage_technicians_description" to { lexicon: Lexicon ->
+      mapOf(
+        1 to lexicon.thingNoun.plural,
+        2 to LexiconFormatter.withArticle(lexicon.logNoun),
+      )
+    },
   )
 
   /** A single-argument frame in `feature/technician/sharedassets`. */

@@ -33,7 +33,10 @@ object GenericLexicon {
     task = Noun(singular = "task", plural = "tasks", article = "a"),
     log = Noun(singular = "log", plural = "logs", article = "a"),
     component = Noun(singular = "part", plural = "parts", article = "a"),
-    technician = Noun(singular = "technician", plural = "technicians", article = "a"),
+    // "person", not "technician". The generic lexicon has to hold for a *home*, where the entry
+    // is "buy milk" and whoever did it is nobody's technician. A generic word that only reads
+    // right for machinery is the airplane lexicon wearing a disguise.
+    technician = Noun(singular = "person", plural = "people", article = "a"),
     ready_status = "Ready",
     // The OS notification channel name on a mixed account resolves here rather than picking a
     // template's word arbitrarily (PRD §8.5). The channel *id* stays "GROUNDED" regardless —

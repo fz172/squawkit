@@ -240,10 +240,11 @@ fun SettingsContent(
           add {
             SettingsRow(
               icon = Icons.Default.Engineering,
-              title = stringResource(
-                TechnicianRes.string.manage_technicians,
-                LexiconFormatter.titleCase(LocalThingLexicon.current.technicianNoun),
-              ),
+              // Fixed text, not a lexicon substitution. Settings should read the same whatever
+              // the picker holds, and no lexicon noun is right here anyway: the generic word is
+              // "person", so this row would say "Person Profiles". The domain-specific framing
+              // lives inside the screen this opens (manage_technicians_description).
+              title = stringResource(TechnicianRes.string.manage_technicians),
               subtitle = stringResource(SettingsRes.string.settings_technicians_subtitle),
               onClick = { detailNav.navigate(Screen.ManageTechnicians.route) },
             )
