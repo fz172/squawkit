@@ -114,11 +114,6 @@ class AndroidLocalNotifier(
     )
   }
 
-  private fun NotificationChannel.channelId(): String = when (this) {
-    NotificationChannel.COLLABORATION -> "collaboration"
-    NotificationChannel.URGENCY_UPDATE -> "urgency_update"
-  }
-
   private fun NotificationChannel.displayName(): String = context.getString(
     when (this) {
       NotificationChannel.COLLABORATION -> R.string.notification_channel_collaboration_name
@@ -146,4 +141,21 @@ class AndroidLocalNotifier(
      */
     private const val PARAGRAPH_BREAK = "\n\n"
   }
+}
+
+
+/**
+ * The OS-level channel id. **Never change these literals** (#663).
+ *
+ * Android keys a user's per-channel settings — importance, sound, whether it is blocked at all —
+ * by this string. Renaming one does not migrate those settings: it creates a *new* channel at the
+ * default importance and orphans the old one, so a user who had turned collaboration pushes down
+ * to silent silently starts getting them at full volume again.
+ *
+ * There is no error and no migration path, and it is invisible in review because the display name
+ * beside it still looks right. Internal rather than private so the test can pin it.
+ */
+internal fun NotificationChannel.channelId(): String = when (this) {
+  NotificationChannel.COLLABORATION -> "collaboration"
+  NotificationChannel.URGENCY_UPDATE -> "urgency_update"
 }
