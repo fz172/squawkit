@@ -1,5 +1,7 @@
 package dev.fanfly.wingslog.feature.logs.update.logs.compose
 
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.thingNoun
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -67,7 +69,10 @@ fun LogWorkTab(
 
     LogSection(
       header = stringResource(CoreRes.string.component_type),
-      description = stringResource(Res.string.component_section_description),
+      description = stringResource(
+        Res.string.component_section_description,
+        LocalThingLexicon.current.thingNoun.singular,
+      ),
     ) {
       ComponentSection(
         thing = thing,

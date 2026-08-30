@@ -3,8 +3,8 @@
   <string name="work_description_required">Work Description *</string>
   <string name="engine_time_hours">Engine Time (hours)</string>
   <string name="airframe_serial">Airframe Serial</string>
-  <string name="loading_aircraft">Loading aircraft…</string>
-  <string name="no_engines_found">No engines found for this aircraft.</string>
+  <string name="loading_aircraft">Loading %1$s…</string>
+  <string name="no_engines_found">No engines found for this %1$s.</string>
   <string name="no_propeller_components_found">No propeller components found for this aircraft.</string>
   <string name="propeller_component">Propeller Component</string>
   <string name="make_model_serial">%1$s (%2$s)</string>
@@ -21,9 +21,9 @@
   <string name="log_tab_hours">Hours</string>
   <string name="log_tab_records">Records</string>
   <string name="date_section_description">When this work was performed</string>
-  <string name="component_section_description">Which part of the aircraft was serviced</string>
+  <string name="component_section_description">Which part of the %1$s was serviced</string>
   <string name="hours_section_description">Fill the fields that apply to this work event</string>
-  <string name="performed_by_description">The technician who performed this work</string>
-  <string name="squawks_section_header">Squawks Addressed</string>
-  <string name="tasks_section_header">Maintenance Tasks Completed</string>
+  <string name="performed_by_description">The %1$s who performed this work</string>
+  <string name="squawks_section_header">%1$s Addressed</string>
+  <string name="tasks_section_header">%1$s Completed</string>
 </resources>

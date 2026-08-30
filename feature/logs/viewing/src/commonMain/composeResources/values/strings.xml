@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-  <string name="aircraft_data">Aircraft Data</string>
+  <string name="aircraft_data">%1$s Data</string>
   <string name="s_n_placeholder">S/N: %1$s</string>
   <string name="s_n_empty">No S/N</string>
-  <string name="edit_aircraft">Update aircraft</string>
+  <string name="edit_aircraft">Update %1$s</string>
   <string name="search_logs">Search logs…</string>
   <string name="no_logs_match_filter">No logs match your filter.</string>
   <string name="clear_filter">Clear Filter</string>
@@ -12,8 +12,8 @@
   <string name="log_count_n_entries">%1$d Entries</string>
   <string name="log_task_count_one">1 task</string>
   <string name="log_task_count_plural">%1$d tasks</string>
-  <string name="log_squawk_count_one">1 squawk</string>
-  <string name="log_squawk_count_plural">%1$d squawks</string>
+  <string name="log_squawk_count_one">1 %1$s</string>
+  <string name="log_squawk_count_plural">%1$d %2$s</string>
   <string name="hours_abbr_value">%1$s hrs</string>
   <string name="failed_to_load_logs">Could not load maintenance logs</string>
   <string name="maintenance_summary">Maintenance Summary</string>
@@ -21,8 +21,8 @@
   <string name="log_onboarding_description">Log your current airframe, engine, and prop times to start tracking maintenance intervals accurately. This will serve as your logbook's baseline.</string>
   <string name="collapse_details">Collapse details</string>
   <string name="expand_details">Expand details</string>
-  <string name="affected_maintenance_tasks">Affected Maintenance Tasks</string>
+  <string name="affected_maintenance_tasks">Affected %1$s</string>
   <string name="no_tasks_linked">No tasks linked to this entry</string>
-  <string name="resolved_squawks">Resolved Squawks</string>
-  <string name="unknown_squawk">Unknown squawk (%1$s)</string>
+  <string name="resolved_squawks">Resolved %1$s</string>
+  <string name="unknown_squawk">Unknown %2$s (%1$s)</string>
 </resources>

@@ -33,6 +33,7 @@ kotlin {
       implementation(project(":feature:ads:model"))
       implementation(project(":feature:ads:datamanager"))
       implementation(project(":feature:ads:viewing"))
+      implementation(project(":core:template"))
       implementation(project(":core:ui"))
       implementation(project(":core:sharedassets"))
       implementation(project(":core:ui:adaptive"))

@@ -1,5 +1,8 @@
 package dev.fanfly.wingslog.feature.thing.dashboard.compose
 
+import dev.fanfly.wingslog.core.template.LexiconFormatter
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.thingNoun
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
@@ -91,7 +94,10 @@ fun ThingDataCard(
         )
 
         Text(
-          text = stringResource(MaintenanceRes.string.aircraft_data),
+          text = stringResource(
+            MaintenanceRes.string.aircraft_data,
+            LexiconFormatter.titleCase(LocalThingLexicon.current.thingNoun),
+          ),
           modifier = Modifier
             .padding(start = Spacing.medium)
             .weight(1f),

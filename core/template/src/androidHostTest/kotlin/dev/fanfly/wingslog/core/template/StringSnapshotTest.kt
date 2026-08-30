@@ -209,6 +209,44 @@ class StringSnapshotTest {
     frame("feature/tasks/viewing", "maintenance_due_subtitle") {
       LexiconFormatter.sentenceCasePlural(it.taskNoun)
     },
+
+    // The log surfaces (#656). Per-thing: a log belongs to one thing. Absent on purpose —
+    // airframe_serial, airframe_time_hours and airframe_time_label are a component-slot label and
+    // two meter labels, so they are template *fields* rather than lexicon nouns (#657); and
+    // no_maintenance_logs_title ("Logbook Is Empty") is blocked on #683, because the log noun is
+    // "work log" and the app says "Logbook" only here and in the export copy.
+    frame("feature/logs/update", "component_section_description") { it.thingNoun.singular },
+    frame("feature/logs/update", "loading_aircraft") { it.thingNoun.singular },
+    frame("feature/logs/update", "no_engines_found") { it.thingNoun.singular },
+    frame("feature/logs/update", "performed_by_description") { it.technicianNoun.singular },
+    frame("feature/logs/update", "squawks_section_header") {
+      LexiconFormatter.titleCasePlural(it.squawkNoun)
+    },
+    frame("feature/logs/update", "tasks_section_header") {
+      LexiconFormatter.titleCasePlural(it.taskNoun)
+    },
+    frame("feature/logs/viewing", "affected_maintenance_tasks") {
+      LexiconFormatter.titleCasePlural(it.taskNoun)
+    },
+    frame("feature/logs/viewing", "aircraft_data") { LexiconFormatter.titleCase(it.thingNoun) },
+    frame("feature/logs/viewing", "edit_aircraft") { it.thingNoun.singular },
+    frame("feature/logs/viewing", "log_squawk_count_one") { it.squawkNoun.singular },
+    frame("feature/logs/viewing", "resolved_squawks") {
+      LexiconFormatter.titleCasePlural(it.squawkNoun)
+    },
+    frame("feature/logs/sharedassets", "add_log") { LexiconFormatter.titleCase(it.logNoun) },
+    frame("feature/logs/sharedassets", "edit_log") { LexiconFormatter.titleCase(it.logNoun) },
+    // Position 1 is caller-supplied in each of these — a count, or the record's own title.
+    "feature/logs/viewing:log_squawk_count_plural" to { l: Lexicon ->
+      mapOf(2 to l.squawkNoun.plural)
+    },
+    "feature/logs/viewing:unknown_squawk" to { l: Lexicon -> mapOf(2 to l.squawkNoun.singular) },
+    "feature/logs/sharedassets:resolve_squawk_work_description" to { l: Lexicon ->
+      mapOf(2 to l.squawkNoun.singular)
+    },
+    "feature/logs/sharedassets:resolve_task_work_description" to { l: Lexicon ->
+      mapOf(2 to l.taskNoun.singular)
+    },
   )
 
   /** A single-argument frame at position 1, in any module. */

@@ -1,5 +1,7 @@
 package dev.fanfly.wingslog.feature.thing.dashboard
 
+import dev.fanfly.wingslog.core.template.LexiconFormatter
+import dev.fanfly.wingslog.core.template.logNoun
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -147,7 +149,10 @@ fun ShellSectionFab(
 
     ShellSection.LOGS ->
       SectionAddFab(
-        label = stringResource(LogsRes.string.add_log),
+        label = stringResource(
+          LogsRes.string.add_log,
+          LexiconFormatter.titleCase(LocalThingLexicon.current.logNoun),
+        ),
         onClick = {
           navController.navigate(
             Screen.AddMaintenanceLog.createRoute(

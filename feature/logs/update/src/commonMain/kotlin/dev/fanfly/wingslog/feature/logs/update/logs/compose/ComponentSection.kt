@@ -1,5 +1,7 @@
 package dev.fanfly.wingslog.feature.logs.update.logs.compose
 
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.thingNoun
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -85,7 +87,10 @@ fun ComponentSection(
       ComponentType.COMPONENT_ENGINE -> {
         if (thing == null) {
           Text(
-            text = stringResource(Res.string.loading_aircraft),
+            text = stringResource(
+              Res.string.loading_aircraft,
+              LocalThingLexicon.current.thingNoun.singular,
+            ),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
           )
@@ -108,7 +113,10 @@ fun ComponentSection(
           }
           when (options.size) {
             0 -> Text(
-              text = stringResource(Res.string.no_engines_found),
+              text = stringResource(
+                Res.string.no_engines_found,
+                LocalThingLexicon.current.thingNoun.singular,
+              ),
               style = MaterialTheme.typography.bodySmall,
               color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -135,7 +143,10 @@ fun ComponentSection(
       ComponentType.COMPONENT_PROPELLER -> {
         if (thing == null) {
           Text(
-            text = stringResource(Res.string.loading_aircraft),
+            text = stringResource(
+              Res.string.loading_aircraft,
+              LocalThingLexicon.current.thingNoun.singular,
+            ),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
           )

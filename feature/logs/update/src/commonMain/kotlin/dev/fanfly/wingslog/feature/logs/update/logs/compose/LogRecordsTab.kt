@@ -1,5 +1,10 @@
 package dev.fanfly.wingslog.feature.logs.update.logs.compose
 
+import dev.fanfly.wingslog.core.template.LexiconFormatter
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.squawkNoun
+import dev.fanfly.wingslog.core.template.taskNoun
+import dev.fanfly.wingslog.core.template.technicianNoun
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -52,7 +57,10 @@ fun LogRecordsTab(
   ) {
     LogSection(
       header = stringResource(TechnicianRes.string.performed_by),
-      description = stringResource(Res.string.performed_by_description),
+      description = stringResource(
+        Res.string.performed_by_description,
+        LocalThingLexicon.current.technicianNoun.singular,
+      ),
     ) {
       val displayText = selectedTechnician?.name
         ?: stringResource(TechnicianRes.string.select_technician)
@@ -73,7 +81,10 @@ fun LogRecordsTab(
     }
 
     LogSection(
-      header = stringResource(Res.string.squawks_section_header),
+      header = stringResource(
+        Res.string.squawks_section_header,
+        LexiconFormatter.titleCasePlural(LocalThingLexicon.current.squawkNoun),
+      ),
       action = { LogSectionAddButton(onClick = onAddSquawkClick) },
     ) {
       SquawkWorkSection(
@@ -85,7 +96,10 @@ fun LogRecordsTab(
     }
 
     LogSection(
-      header = stringResource(Res.string.tasks_section_header),
+      header = stringResource(
+        Res.string.tasks_section_header,
+        LexiconFormatter.titleCasePlural(LocalThingLexicon.current.taskNoun),
+      ),
       action = { LogSectionAddButton(onClick = onAddTaskClick) },
     ) {
       TaskWorkSection(
