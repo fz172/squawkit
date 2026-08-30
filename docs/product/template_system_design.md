@@ -1,12 +1,32 @@
 # Design: The Template System — Definition, Distribution, and Resolution
 
-> **Implementation status.** **Design settled 2026-08-29; nothing has shipped.** Every open question in §11 has
-> been decided. This designs the machinery Phase 2 needs
-> (`core:template`, the template definition protos, the registry, and the distribution path) plus the
+> **Implementation status.** **Phase 2 shipped 2026-08-29/30. The Phase 3 half of this design is unbuilt.**
+>
+> | Designed here | State |
+> |---|---|
+> | `ThingTemplate` / `Lexicon` / `Capabilities` protos (§3) | Shipped |
+> | `core:template`, `TemplateRegistry`, `CurrentThingTemplate` (§3) | Shipped |
+> | Lexicon plumbing, formatter, byte-identical snapshot (§9) | Shipped |
+> | Capabilities wired, every airplane flag `true` (§10) | Shipped — inert by design (§12.1) |
+> | `Thing.template` field 12 — **read** path (§5) | Shipped: `forThingWithFallback(thing) = thing.template ?: fallback` |
+> | Web's shared `versionCode` (§6) | Shipped |
+> | The airplane preset **as a binary asset** (§4) | **Not shipped** — it is Kotlin (`canonical/AirplaneTemplate.kt`), because `protoc` is not available to Gradle here |
+> | `Thing.template` — **write** path, and inflate-on-write (§5.3) | **Not shipped.** Nothing in the app writes it |
+> | Fetch RPC and throttle (§4), publishing script (§4.1), canonical cache (§7.1) | Not shipped — deferred to Phase 3 (§12.2) |
+> | The unresolvable-template degraded state (§6.2) | Not shipped — nothing could trigger it until a template can fail to resolve |
+>
+> **One correction to §5.3, found while planning Phase 3.** Its "no backfill" conclusion is right for
+> `Thing.template` and does **not** extend to `spec` (10) and `components` (11). `template` is *derivable* — the
+> fallback reconstructs it exactly, because a Thing without DNA can only be an airplane. `spec` and `components`
+> are the Thing's **own values**, and no template can supply them. They are populated only on Things the backend
+> cutover migrated; the client has never written either. See
+> [`pivot_rollout_design.md`](pivot_rollout_design.md) §2.1 and §3.
+>
+> Every open question in §11 was decided before Phase 2. This designs the machinery Phase 2 needed plus the
 > compatibility rules Phases 3–4 depend on. It does **not** design the six non-airplane presets; that is Phase 3
 > product work.
 
-**Owner:** Engineering · **Status:** Proposed · **Date:** 2026-08-29
+**Owner:** Engineering · **Status:** Phase 2 portion shipped; Phase 3 portion unbuilt · **Date:** 2026-08-29 · **Refreshed:** 2026-08-30
 **Related:** [Multi-domain maintenance PRD](multi_domain_maintenance_PRD.md) (§4 the config blocks, §4.5 lexicon,
 §4.8 capabilities, §15 rollout) · [Aircraft → Thing migration](thing_migration_design.md) (the phase this builds
 on, and the source of the wire-identity discipline below)
