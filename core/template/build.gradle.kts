@@ -42,7 +42,8 @@ dependencies {
 }
 
 /**
- * Tells Gradle that `StringSnapshotTest` depends on every `strings.xml` in the repo.
+ * Tells Gradle that `StringSnapshotTest` depends on every `strings.xml` **and every `.kt` file** in
+ * the repo.
  *
  * The test reads them from the filesystem rather than through generated resource accessors (see
  * its KDoc for why). Gradle cannot see that, so without this the task is UP-TO-DATE whenever
@@ -57,4 +58,15 @@ tasks.withType<Test>().configureEach {
       exclude("**/build/**")
     },
   ).withPropertyName("repoStringResources").withPathSensitivity(PathSensitivity.RELATIVE)
+
+  // The call-site guards read Kotlin, not just resources. Without this they are UP-TO-DATE whenever
+  // core/template is unchanged — which is every commit that only touches a call site, exactly the
+  // commits they exist to police. Found by mutating ProUpsellSheet and watching the suite pass in
+  // two seconds without running.
+  inputs.files(
+    rootProject.fileTree(rootProject.projectDir) {
+      include("**/src/**/*.kt")
+      exclude("**/build/**")
+    },
+  ).withPropertyName("repoKotlinSources").withPathSensitivity(PathSensitivity.RELATIVE)
 }
