@@ -3,23 +3,28 @@ package dev.fanfly.wingslog.feature.logs.update.logs.viewmodel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dev.fanfly.wingslog.thing.ComponentType
-import dev.fanfly.wingslog.thing.MaintenanceLog
-import dev.fanfly.wingslog.thing.Technician
+import dev.fanfly.wingslog.core.analytics.AnalyticsManager
+import dev.fanfly.wingslog.core.analytics.LogCreated
+import dev.fanfly.wingslog.core.analytics.TaskCompleted
+import dev.fanfly.wingslog.core.analytics.log
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.model.id.generateRandomId
 import dev.fanfly.wingslog.core.nav.Screen
+import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import dev.fanfly.wingslog.core.ui.common.UiText
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentFormController
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
-import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
+import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
+import dev.fanfly.wingslog.thing.ComponentType
+import dev.fanfly.wingslog.thing.MaintenanceLog
+import dev.fanfly.wingslog.thing.Technician
 import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -61,6 +66,8 @@ class MaintenanceLogFormViewModel(
   private val sharingManager: SharingManager,
   private val auth: FirebaseAuth,
   private val subscriptionManager: SubscriptionManager,
+  private val currentThingTemplate: CurrentThingTemplate,
+  private val analytics: AnalyticsManager,
   savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
@@ -144,7 +151,7 @@ class MaintenanceLogFormViewModel(
         ?.let { it.copy(source_uid = auth.currentUser?.uid.orEmpty()) }
       val others = technicians
         .filter { it.id != selfId }
-          .sortedBy { it.name.lowercase() }
+        .sortedBy { it.name.lowercase() }
       Triple(self, listOfNotNull(self) + others, linked)
     }
       .onEach { (selfTech, available, linked) ->
@@ -576,6 +583,14 @@ class MaintenanceLogFormViewModel(
                 }
               }
           }
+          if (!isEditMode) {
+            analytics.log(LogCreated(templateId = currentThingTemplate.templateId))
+          }
+          // A task is "complied" by logging work against it, so the tasks this log closes out are
+          // exactly the ones selected here — one event each, since §13 counts completions.
+          repeat(state.selectedInspectionIds.size) {
+            analytics.log(TaskCompleted(templateId = currentThingTemplate.templateId))
+          }
           _events.send(MaintenanceLogFormEvent.SaveSuccess)
         }
         .onFailure { e ->
@@ -616,17 +631,18 @@ class MaintenanceLogFormViewModel(
  * dropped without a word — the pickers cannot cap multi-select or filter out files that are
  * already attached, so the form is where they find out.
  */
-private fun AttachmentFormController.AddFileError.toUiText(): UiText = when (this) {
-  AttachmentFormController.AddFileError.FileTooLarge ->
-    UiText.StringRes(AttachmentRes.string.file_too_large)
+private fun AttachmentFormController.AddFileError.toUiText(): UiText =
+  when (this) {
+    AttachmentFormController.AddFileError.FileTooLarge ->
+      UiText.StringRes(AttachmentRes.string.file_too_large)
 
-  AttachmentFormController.AddFileError.Duplicate ->
-    UiText.StringRes(AttachmentRes.string.duplicate_file_skipped)
+    AttachmentFormController.AddFileError.Duplicate ->
+      UiText.StringRes(AttachmentRes.string.duplicate_file_skipped)
 
-  is AttachmentFormController.AddFileError.LimitExceeded ->
-    UiText.StringRes(AttachmentRes.string.files_over_limit_skipped)
+    is AttachmentFormController.AddFileError.LimitExceeded ->
+      UiText.StringRes(AttachmentRes.string.files_over_limit_skipped)
 
-  is AttachmentFormController.AddFileError.Failed ->
-    message?.let { UiText.DynamicString(it) }
-      ?: UiText.StringRes(AttachmentRes.string.add_file_failed)
-}
+    is AttachmentFormController.AddFileError.Failed ->
+      message?.let { UiText.DynamicString(it) }
+        ?: UiText.StringRes(AttachmentRes.string.add_file_failed)
+  }

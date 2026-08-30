@@ -4,6 +4,9 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
+import dev.fanfly.wingslog.core.analytics.AnalyticsManager
+import dev.fanfly.wingslog.core.analytics.ThingCreated
+import dev.fanfly.wingslog.core.analytics.log
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
@@ -25,7 +28,8 @@ import kotlinx.coroutines.launch
 class EditThingViewModel(
   private val fleetManager: FleetManager,
   private val sharingManager: SharingManager,
-  currentThingTemplate: CurrentThingTemplate,
+  private val currentThingTemplate: CurrentThingTemplate,
+  private val analytics: AnalyticsManager,
   savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
@@ -38,6 +42,15 @@ class EditThingViewModel(
       ),
     )
   val uiState = _uiState.asStateFlow()
+
+  /**
+   * A create rather than an edit. Read once from the route argument, because the same form serves
+   * both and [saveAircraft] cannot tell them apart afterwards — by then the thing has an id either
+   * way, and counting an edit as a create would inflate the §13 Things-per-account metric.
+   */
+  private val isNewThing: Boolean =
+    savedStateHandle.get<String>(Screen.AIRCRAFT_ID)
+      .isNullOrEmpty()
 
   init {
     val thingId: String? = savedStateHandle[Screen.AIRCRAFT_ID]
@@ -129,6 +142,16 @@ class EditThingViewModel(
       _uiState.update { it.copy(isLoading = true) }
       val result = fleetManager.updateThing(uiState.value.thing)
       if (result.isSuccess) {
+        // Only on the write actually landing: a create that failed is not a Thing, and §13 counts
+        // Things that exist.
+        if (isNewThing) {
+          analytics.log(
+            ThingCreated(
+              templateId = currentThingTemplate.templateId,
+              source = SOURCE_FORM
+            )
+          )
+        }
         _uiState.update { it.copy(isSaved = true) }
       }
       _uiState.update { it.copy(isLoading = false) }
@@ -315,5 +338,12 @@ class EditThingViewModel(
 
   companion object {
     private val logger = Logger.withTag("EditAircraftViewModel")
+
+    /**
+     * How the Thing was created. Only the manual form exists today; the template picker and any
+     * future import path get their own value, so a low non-airplane share in §13 can be read as
+     * "not offered" rather than "offered and declined".
+     */
+    private const val SOURCE_FORM = "form"
   }
 }

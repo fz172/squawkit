@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.feature.thing.update.di
 
 import androidx.lifecycle.SavedStateHandle
+import dev.fanfly.wingslog.core.analytics.AnalyticsManager
 import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
@@ -11,10 +12,11 @@ import org.koin.dsl.module
 val aircraftUpdateModule = module {
   viewModel {
     EditThingViewModel(
-      get<FleetManager>(),
-      get<SharingManager>(),
-      get<CurrentThingTemplate>(),
-      get<SavedStateHandle>()
+      fleetManager = get<FleetManager>(),
+      sharingManager = get<SharingManager>(),
+      currentThingTemplate = get<CurrentThingTemplate>(),
+      analytics = get<AnalyticsManager>(),
+      savedStateHandle = get<SavedStateHandle>(),
     )
   }
 }

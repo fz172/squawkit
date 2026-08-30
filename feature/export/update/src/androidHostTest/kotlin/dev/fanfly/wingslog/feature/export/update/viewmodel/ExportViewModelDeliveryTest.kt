@@ -1,5 +1,7 @@
 package dev.fanfly.wingslog.feature.export.update.viewmodel
 
+import dev.fanfly.wingslog.core.template.CurrentThingTemplate
+import dev.fanfly.wingslog.core.analytics.NoOpAnalyticsManager
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDeliveryEmailSource
 import dev.fanfly.wingslog.feature.export.datamanager.ExportManager
@@ -72,6 +74,8 @@ class ExportViewModelDeliveryTest {
       squawkManager = squawkManager,
       subscriptionManager = subscriptionManager,
       auth = auth,
+      currentThingTemplate = mockk<CurrentThingTemplate>(relaxed = true),
+      analytics = NoOpAnalyticsManager,
     )
   }
 

@@ -30,6 +30,7 @@ kotlin {
 
   sourceSets {
     commonMain.dependencies {
+      implementation(project(":core:analytics"))
       implementation(project(":core:template"))
       implementation(project(":core:model"))
       implementation(project(":feature:sharing:datamanager"))
@@ -68,7 +69,9 @@ kotlin {
 dependencies {
   "androidMainImplementation"(platform(libs.androidx.compose.bom))
   "androidHostTestImplementation"(libs.junit)
+  "androidHostTestImplementation"(libs.mockk)
   "androidHostTestImplementation"(libs.truth)
+  "androidHostTestImplementation"(libs.kotlinx.coroutines.test)
 }
 
 compose.resources {

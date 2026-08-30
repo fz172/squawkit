@@ -1,5 +1,7 @@
 package dev.fanfly.wingslog.feature.logs.update.logs.viewmodel
 
+import dev.fanfly.wingslog.core.template.CurrentThingTemplate
+import dev.fanfly.wingslog.core.analytics.NoOpAnalyticsManager
 import androidx.lifecycle.SavedStateHandle
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.thing.MaintenanceLog
@@ -260,6 +262,8 @@ class MaintenanceLogFormViewModelTest {
         sharingManager = sharingManager,
         auth = auth,
         subscriptionManager = subscriptionManager,
+        currentThingTemplate = mockk<CurrentThingTemplate>(relaxed = true),
+        analytics = NoOpAnalyticsManager,
         savedStateHandle = SavedStateHandle(
           mapOf(
             Screen.AIRCRAFT_ID to TEST_AIRCRAFT_ID,
@@ -315,6 +319,8 @@ class MaintenanceLogFormViewModelTest {
         sharingManager = sharingManager,
         auth = auth,
         subscriptionManager = subscriptionManager,
+        currentThingTemplate = mockk<CurrentThingTemplate>(relaxed = true),
+        analytics = NoOpAnalyticsManager,
         savedStateHandle = SavedStateHandle(
           mapOf(
             Screen.AIRCRAFT_ID to TEST_AIRCRAFT_ID,
@@ -590,6 +596,8 @@ class MaintenanceLogFormViewModelTest {
       sharingManager = sharingManager,
       auth = auth,
       subscriptionManager = subscriptionManager,
+      currentThingTemplate = mockk<CurrentThingTemplate>(relaxed = true),
+      analytics = NoOpAnalyticsManager,
       savedStateHandle = SavedStateHandle(
         mapOf(
           Screen.AIRCRAFT_ID to TEST_AIRCRAFT_ID,
@@ -612,6 +620,8 @@ class MaintenanceLogFormViewModelTest {
       sharingManager = sharingManager,
       auth = auth,
       subscriptionManager = subscriptionManager,
+      currentThingTemplate = mockk<CurrentThingTemplate>(relaxed = true),
+      analytics = NoOpAnalyticsManager,
       savedStateHandle = SavedStateHandle(
         buildMap {
           put(Screen.AIRCRAFT_ID, TEST_AIRCRAFT_ID)

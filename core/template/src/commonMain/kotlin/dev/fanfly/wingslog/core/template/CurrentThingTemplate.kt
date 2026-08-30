@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.core.template
 
 import dev.fanfly.wingslog.core.template.CurrentThingTemplate.Companion.ALL_ENABLED
+import dev.fanfly.wingslog.core.template.CurrentThingTemplate.Companion.UNKNOWN_TEMPLATE_ID
 import dev.fanfly.wingslog.thing.Capabilities
 import dev.fanfly.wingslog.thing.Lexicon
 import dev.fanfly.wingslog.thing.ThingTemplate
@@ -64,6 +65,17 @@ class CurrentThingTemplate(registry: TemplateRegistry) {
    */
   val capabilities: StateFlow<Capabilities> = _capabilities.asStateFlow()
 
+  /**
+   * The active template's stable id — the value every Thing-scoped analytics event carries as
+   * `template_id` (#666). In Phase 2 this is always `"airplane"`, which is the point: it establishes
+   * the pre-pivot baseline that the PRD §13 retention guardrail compares the aviation cohort
+   * against. Adding the property in Phase 3 would leave that cohort with no history to measure.
+   *
+   * [UNKNOWN_TEMPLATE_ID] rather than an empty string when no single template applies, so the gap is
+   * legible in a GA4 report instead of vanishing into a blank dimension.
+   */
+  val templateId: String get() = _template.value?.id ?: UNKNOWN_TEMPLATE_ID
+
   fun set(value: ThingTemplate) = publish(value)
 
   /** Restores the no-selection default — an empty fleet is not the same as "keep the last thing". */
@@ -90,6 +102,9 @@ class CurrentThingTemplate(registry: TemplateRegistry) {
     this?.capabilities ?: ALL_ENABLED
 
   companion object {
+    /** `template_id` when no single template applies — never an empty dimension in GA4. */
+    const val UNKNOWN_TEMPLATE_ID = "unknown"
+
     /**
      * The fail-open default, public so each gate's own tests can assert it removes nothing.
      *

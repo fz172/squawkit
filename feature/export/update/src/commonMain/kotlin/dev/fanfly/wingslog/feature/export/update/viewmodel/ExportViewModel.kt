@@ -2,8 +2,10 @@ package dev.fanfly.wingslog.feature.export.update.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dev.fanfly.wingslog.thing.Attachment
-import dev.fanfly.wingslog.thing.AttachmentType.ATTACHMENT_TYPE_LINK
+import dev.fanfly.wingslog.core.analytics.AnalyticsManager
+import dev.fanfly.wingslog.core.analytics.ExportCompleted
+import dev.fanfly.wingslog.core.analytics.log
+import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDateRange
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDeliveryEmailSource
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDeliveryInfo
@@ -17,6 +19,8 @@ import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
+import dev.fanfly.wingslog.thing.Attachment
+import dev.fanfly.wingslog.thing.AttachmentType.ATTACHMENT_TYPE_LINK
 import dev.fanfly.wingslog.thing.Thing
 import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -49,6 +53,8 @@ class ExportViewModel(
   private val squawkManager: SquawkManager,
   private val subscriptionManager: SubscriptionManager,
   private val auth: FirebaseAuth,
+  private val currentThingTemplate: CurrentThingTemplate,
+  private val analytics: AnalyticsManager,
   clock: Clock = Clock.System,
   timeZone: TimeZone = TimeZone.currentSystemDefault(),
 ) : ViewModel() {
@@ -241,8 +247,20 @@ class ExportViewModel(
     lastConfiguring = configuring
     exportJob?.cancel()
     exportJob = viewModelScope.launch {
-      exportManager.exportLogs(configuring.toRequest())
+      val request = configuring.toRequest()
+      exportManager.exportLogs(request)
         .collect { progress ->
+          // On the terminal success only: a cancelled or failed export produced no archive, and
+          // §13 counts exports that finished.
+          if (progress is ExportProgress.Success) {
+            analytics.log(
+              ExportCompleted(
+                templateId = currentThingTemplate.templateId,
+                format = request.formats.joinToString("+") { it.name.lowercase() },
+                thingCount = request.thingIds.size,
+              )
+            )
+          }
           _state.value = progress.toUiState()
         }
     }

@@ -576,6 +576,14 @@ constants (camera capture, anonymous login), and `isAdsSupported`.
 - **No backslash escapes in Kotlin strings or `strings.xml`**: use a typographic apostrophe `’`,
   never `\'` (`"it's"` is already legal Kotlin, and `’` is better typography anyway). Enforced by
   `.claude/hooks/no-escape-chars.sh`; Kotlin char literals are exempt.
+- **Analytics events are typed**: emit `analytics.log(ThingCreated(…))` from the taxonomy in
+  `core/analytics` (`AnalyticsEvent.kt` / `AnalyticsEvents.kt`), never
+  `analytics.logEvent("name", mapOf(…))`. A `PostToolUse` hook
+  (`.claude/hooks/no-untyped-analytics-event.sh`) rejects callers outside `core/analytics` itself.
+  **GA4 event and parameter names are append-only** — a name cannot be changed once data has landed
+  against it, because renaming orphans the history rather than migrating it, exactly as with a wire
+  identity (#638). `AnalyticsTaxonomyTest` pins the shipped names. Thing-scoped events implement
+  `ThingScopedEvent`, which requires `template_id` — the dimension PRD §13 splits every metric by.
 - **Feature managers read/write `EntityStore` only** — the sync engine is the Firestore client, with
   the two documented online-only exceptions above.
 - **Per-aircraft scopes** come from `AircraftScopeResolver`, never from the signed-in uid.
