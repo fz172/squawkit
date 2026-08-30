@@ -37,10 +37,8 @@ core/sharedassets	discard	Discard
 core/sharedassets	dismiss	Dismiss
 core/sharedassets	done	Done
 core/sharedassets	edit	Update
-core/sharedassets	edit_profile	Update Profile
 core/sharedassets	empty_add_aircraft	Add an aircraft to get started
 core/sharedassets	enter_invite_code	Enter invite code
-core/sharedassets	error_occurred	An error occurred
 core/sharedassets	file_size_bytes	%1$s B
 core/sharedassets	file_size_kb	%1$s KB
 core/sharedassets	file_size_mb	%1$s MB
@@ -76,9 +74,7 @@ feature/ads/sharedassets	ads_sponsored_label	Sponsored
 feature/attachment/sharedassets	add_file_failed	Failed to add file
 feature/attachment/sharedassets	add_link	Add link
 feature/attachment/sharedassets	attachment_limits_hint	Up to 3 files · Max 5 MB each
-feature/attachment/sharedassets	attachment_type_file	File
 feature/attachment/sharedassets	attachment_type_image	Image
-feature/attachment/sharedassets	attachment_type_link	Link
 feature/attachment/sharedassets	attachment_type_pdf	PDF
 feature/attachment/sharedassets	attachment_type_text	Text
 feature/attachment/sharedassets	attachments	Attachments
@@ -86,27 +82,20 @@ feature/attachment/sharedassets	choose_file	Choose file
 feature/attachment/sharedassets	delete_saved_attachment_message	The file will be permanently deleted when you save.
 feature/attachment/sharedassets	delete_saved_attachment_title	Remove file?
 feature/attachment/sharedassets	duplicate_file_skipped	Already attached — duplicate files were skipped
-feature/attachment/sharedassets	file_added	File added
 feature/attachment/sharedassets	file_read_error	Could not read selected file
 feature/attachment/sharedassets	file_too_large	File exceeds 5 MB limit
 feature/attachment/sharedassets	file_upload_coming_soon	Subscribe to SquawkIt Pro to attach photos &amp; files
 feature/attachment/sharedassets	files_over_limit_skipped	Only 3 files can be attached — the extra files were not added
 feature/attachment/sharedassets	invalid_url	Enter a valid URL
-feature/attachment/sharedassets	link_added	Link added
 feature/attachment/sharedassets	link_name	Name (optional)
 feature/attachment/sharedassets	link_url	URL
 feature/attachment/sharedassets	max_files_reached	Maximum 3 files reached
 feature/attachment/sharedassets	no_attachments	No attachments yet
 feature/attachment/sharedassets	open_failed	Could not open attachment. Try again.
-feature/attachment/sharedassets	opening_attachment	Opening…
 feature/attachment/sharedassets	remove_attachment	Remove attachment
-feature/attachment/sharedassets	retry_upload	Retry upload
 feature/attachment/sharedassets	sign_in_to_add_attachments	Sign in to add attachments
 feature/attachment/sharedassets	subtitle_separator	 · 
 feature/attachment/sharedassets	take_photo	Take photo
-feature/attachment/sharedassets	upload_failed	Upload failed
-feature/attachment/sharedassets	upload_network_error	Upload failed. Check your connection.
-feature/attachment/sharedassets	upload_permission_error	Upload failed: permission denied
 feature/export/sharedassets	export_aircraft_details_incomplete	Aircraft details incomplete
 feature/export/sharedassets	export_aircraft_section	Aircraft
 feature/export/sharedassets	export_aircraft_summary_more	%1$s + %2$d more
@@ -118,8 +107,6 @@ feature/export/sharedassets	export_custom_end_date	End date
 feature/export/sharedassets	export_custom_range_title	Custom range
 feature/export/sharedassets	export_custom_start_date	Start date
 feature/export/sharedassets	export_date_range_section	Date range
-feature/export/sharedassets	export_delivery_note	Your export will be sent to %1$s.
-feature/export/sharedassets	export_delivery_title	Export delivery email
 feature/export/sharedassets	export_download	Download
 feature/export/sharedassets	export_download_failed	Couldn’t download the export
 feature/export/sharedassets	export_download_success	Saved to your device
@@ -133,7 +120,6 @@ feature/export/sharedassets	export_format_csv_sub	Plain text
 feature/export/sharedassets	export_format_pdf_sub	Print-ready
 feature/export/sharedassets	export_format_pick_one	Pick at least one format
 feature/export/sharedassets	export_format_xlsx_sub	Spreadsheet
-feature/export/sharedassets	export_formats_helper	%1$s bundled in a ZIP with your attached files.
 feature/export/sharedassets	export_formats_section	Report formats
 feature/export/sharedassets	export_history_action	Export history
 feature/export/sharedassets	export_history_delete_confirm_body	%1$s will be permanently removed from this device.
@@ -142,10 +128,6 @@ feature/export/sharedassets	export_history_delete_confirm_body_device_and_cloud	
 feature/export/sharedassets	export_history_delete_confirm_title	Delete export?
 feature/export/sharedassets	export_history_delivery_failed	Failed to send email
 feature/export/sharedassets	export_history_delivery_in_progress	Email is already being sent
-feature/export/sharedassets	export_history_delivery_manual	Manual share only
-feature/export/sharedassets	export_history_delivery_queued	Email requested
-feature/export/sharedassets	export_history_delivery_retry	Retry email delivery
-feature/export/sharedassets	export_history_delivery_sending	Sending email
 feature/export/sharedassets	export_history_delivery_sent	Email sent
 feature/export/sharedassets	export_history_delivery_throttled	Already sent recently — try again later
 feature/export/sharedassets	export_history_empty_body	Generate a printable PDF or spreadsheet of your maintenance logs to share with your mechanic, IA, or insurance.
@@ -157,8 +139,6 @@ feature/export/sharedassets	export_history_menu_resend	Resend email
 feature/export/sharedassets	export_history_menu_save	Save to device
 feature/export/sharedassets	export_history_more_actions	More actions
 feature/export/sharedassets	export_history_new	New export
-feature/export/sharedassets	export_history_remote_expired	Cloud copy expired %1$s
-feature/export/sharedassets	export_history_remote_expires_on	Cloud copy expires %1$s
 feature/export/sharedassets	export_history_status_cloud	In the cloud
 feature/export/sharedassets	export_history_status_device	On device
 feature/export/sharedassets	export_history_title	Export history
@@ -169,25 +149,16 @@ feature/export/sharedassets	export_location_files_squawkit	Saved to Files · Squ
 feature/export/sharedassets	export_no_aircraft_title	No aircraft to export
 feature/export/sharedassets	export_primary_action	Start
 feature/export/sharedassets	export_progress_building_archive	Generating reports...
-feature/export/sharedassets	export_progress_building_archive_detail	Writing the PDF, CSV, XLSX, and README contents for the ZIP.
 feature/export/sharedassets	export_progress_collecting_data	Collecting aircraft data...
-feature/export/sharedassets	export_progress_collecting_data_detail	Loading logs, tasks, squawks, and attachments for the selected aircraft.
 feature/export/sharedassets	export_progress_compressing_archive	Compressing files...
-feature/export/sharedassets	export_progress_compressing_archive_detail	Packing documents and attachments into the final ZIP archive.
 feature/export/sharedassets	export_progress_saving_file	Saving export...
-feature/export/sharedassets	export_progress_saving_file_detail	Writing the ZIP to your device and updating local export history.
 feature/export/sharedassets	export_progress_uploading_archive	Syncing to the cloud...
-feature/export/sharedassets	export_progress_uploading_archive_detail	Uploading your archive so it's ready to download or email later.
 feature/export/sharedassets	export_receipt_aircraft	Aircraft
 feature/export/sharedassets	export_receipt_attachments	Attachments
 feature/export/sharedassets	export_receipt_attachments_included	Included
 feature/export/sharedassets	export_receipt_file_subtitle	%1$s · ZIP containing %2$s + attachments
 feature/export/sharedassets	export_receipt_range	Range
-feature/export/sharedassets	export_resend_email	Email this export again
-feature/export/sharedassets	export_running_cancel_notice	Leaving this screen now will cancel the export.
-feature/export/sharedassets	export_running_progress_percent	%1$d% complete
 feature/export/sharedassets	export_running_stage_counter	%1$d / %2$d
-feature/export/sharedassets	export_running_steps_title	Current progress
 feature/export/sharedassets	export_running_title	Preparing export
 feature/export/sharedassets	export_select_all	Select all
 feature/export/sharedassets	export_send_to_email_action	Email it to me
@@ -317,35 +288,27 @@ feature/logs/update	type_make_model_serial	%1$s - %2$s (%3$s)
 feature/logs/update	work_description_required	Work Description *
 feature/logs/viewing	affected_maintenance_tasks	Affected Maintenance Tasks
 feature/logs/viewing	aircraft_data	Aircraft Data
-feature/logs/viewing	airframe_time_abbr	AFTT
-feature/logs/viewing	blade_abbreviation_with_index	B%1$d: %2$s
 feature/logs/viewing	clear_filter	Clear Filter
 feature/logs/viewing	collapse_details	Collapse details
 feature/logs/viewing	edit_aircraft	Update aircraft
-feature/logs/viewing	engine_time_abbr	Eng
 feature/logs/viewing	expand_details	Expand details
 feature/logs/viewing	failed_to_load_logs	Could not load maintenance logs
 feature/logs/viewing	filter_by_type	Filter by Type
 feature/logs/viewing	hours_abbr_value	%1$s hrs
 feature/logs/viewing	log_count_n_entries	%1$d Entries
 feature/logs/viewing	log_count_one_entry	1 Entry
-feature/logs/viewing	log_details	Log details
 feature/logs/viewing	log_onboarding_description	Log your current airframe, engine, and prop times to start tracking maintenance intervals accurately. This will serve as your logbook's baseline.
 feature/logs/viewing	log_squawk_count_one	1 squawk
 feature/logs/viewing	log_squawk_count_plural	%1$d squawks
 feature/logs/viewing	log_task_count_one	1 task
 feature/logs/viewing	log_task_count_plural	%1$d tasks
-feature/logs/viewing	maintenance_logs	Maintenance Logs
 feature/logs/viewing	maintenance_summary	Maintenance Summary
-feature/logs/viewing	model_and_sn	Model: %1$s %2$s\nS/N: %3$s\n
 feature/logs/viewing	no_logs_match_filter	No logs match your filter.
 feature/logs/viewing	no_tasks_linked	No tasks linked to this entry
-feature/logs/viewing	prop_time_abbr	Prop
 feature/logs/viewing	resolved_squawks	Resolved Squawks
 feature/logs/viewing	s_n_empty	No S/N
 feature/logs/viewing	s_n_placeholder	S/N: %1$s
 feature/logs/viewing	search_logs	Search logs…
-feature/logs/viewing	showing_x_of_y	Showing %1$d of %2$d
 feature/logs/viewing	total_logs	Total Logs
 feature/logs/viewing	unknown_squawk	Unknown squawk (%1$s)
 feature/notifications/devoptions	notifications_devoptions_diagnostics_at	Last scan: %1$s
@@ -461,7 +424,6 @@ feature/settings	developer_options_reset_ad_consent_title	Reset ad consent
 feature/settings	developer_options_subtitle	Advanced controls. Changes sync across your devices.
 feature/settings	firebase_logging_subtitle	Share anonymous diagnostics and usage data to help us improve SquawkIt
 feature/settings	firebase_logging_title	Help Us Improve
-feature/settings	remove_local_data	Remove this account from this device
 feature/settings	settings_ad_privacy	Ad privacy settings
 feature/settings	settings_ad_privacy_subtitle	Review or change your ad consent choice
 feature/settings	settings_delete_account	Delete Account
@@ -565,7 +527,6 @@ feature/sharing/sharedassets	role_confirm_title	Change %1$s’s role to %2$s?
 feature/sharing/sharedassets	sharing_sync_off_body	Sharing needs Cloud Sync. Turn it on in Settings to invite people or manage access. Aircraft already shared with you stay readable, but will not update.
 feature/sharing/sharedassets	sharing_sync_off_title	Cloud Sync is off
 feature/squawk/sharedassets	add_squawk	New squawk
-feature/squawk/sharedassets	addressed_by	Addressed by log
 feature/squawk/sharedassets	aog_alert_subtitle	AOG squawks must be resolved before flight
 feature/squawk/sharedassets	aog_alert_title	Aircraft on Ground
 feature/squawk/sharedassets	closed_with_count	CLOSED (%1$d)
@@ -598,7 +559,6 @@ feature/squawk/sharedassets	squawk_status_dismissed	Dismissed
 feature/squawk/sharedassets	squawk_title_label	Issue Summary
 feature/squawk/sharedassets	squawk_title_required	Issue summary is required
 feature/squawk/sharedassets	squawk_updated	Squawk updated
-feature/squawk/sharedassets	squawk_view_log	View Log
 feature/squawk/sharedassets	squawks	Squawks
 feature/squawk/sharedassets	view_squawks	View Squawks
 feature/squawk/sharedassets	work_history	Work History
@@ -737,10 +697,8 @@ feature/tasks/sharedassets	compliance_type_ad_short	AD
 feature/tasks/sharedassets	compliance_type_sb_short	SB
 feature/tasks/sharedassets	delete_task	Delete Task
 feature/tasks/sharedassets	delete_task_confirmation	Delete "%1$s"? This cannot be undone. Maintenance logs that reference this task will not be deleted.
-feature/tasks/sharedassets	due_soon	Due Soon
 feature/tasks/sharedassets	due_with_count	DUE (%1$d)
 feature/tasks/sharedassets	edit_task	Update task
-feature/tasks/sharedassets	engine_format	Engine: %1$s
 feature/tasks/sharedassets	history_with_count	HISTORY (%1$d)
 feature/tasks/sharedassets	maintenance_due_title	Maintenance Due
 feature/tasks/sharedassets	maintenance_tasks	Maintenance Tasks
@@ -804,25 +762,15 @@ feature/tasks/update	create_work_log_subtitle	Opens a new log, pre-linked to thi
 feature/tasks/update	delete_task_section_label	Delete Task
 feature/tasks/update	delete_this_task_subtitle	Permanently removes this task and its maintenance schedule.
 feature/tasks/update	delete_this_task_title	Delete this task
-feature/tasks/update	force_due_engine_hours	Force Due Engine (hours)
-feature/tasks/update	force_overrides_safety	Force Override
 feature/tasks/update	interval_hours	Interval (hours)
-feature/tasks/update	interval_hours_placeholder	e.g. 100
 feature/tasks/update	interval_months	Interval (months)
-feature/tasks/update	interval_months_placeholder	e.g. 12
 feature/tasks/update	intervals	Intervals
 feature/tasks/update	link_to_task	Link to maintenance task
-feature/tasks/update	mark_complied	Mark as Completed
 feature/tasks/update	no_log_history	No maintenance logs recorded for this task.
 feature/tasks/update	no_tasks_configured	No tasks configured. Add them from the aircraft overview to track recurring maintenance.
-feature/tasks/update	one_time_compliance	One-Time Task
-feature/tasks/update	one_time_compliance_desc	Moves to history after first log
-feature/tasks/update	override_next_due_date	Override next due date
-feature/tasks/update	override_next_due_engine	Override next due engine hour
 feature/tasks/update	reference_and_component	%1$s • %2$s
 feature/tasks/update	reference_number	Reference Number
 feature/tasks/update	reference_number_hint	e.g. SB-001
-feature/tasks/update	remove_link	Remove link
 feature/tasks/update	resolve_task	Resolve
 feature/tasks/update	schedule	Schedule
 feature/tasks/update	schedule_pick_linked_task	Pick a task to link
@@ -874,11 +822,8 @@ feature/tasks/update	skip_this_cycle_option	Skip This Cycle
 feature/tasks/update	skip_this_cycle_option_subtitle	Marks complete without logging
 feature/tasks/update	task_added	Task added
 feature/tasks/update	task_deleted	Task deleted
-feature/tasks/update	task_description_label	Task Description
 feature/tasks/update	task_description_placeholder	e.g. 100-Hour Inspection
-feature/tasks/update	task_due_warning	Note: This task will be due on whichever comes first.
 feature/tasks/update	task_identity_description	Define the core name and component category for this maintenance requirement.
-feature/tasks/update	task_interval_description	Set a recurring interval based on time, engine hours, or both.
 feature/tasks/update	task_skipped	Cycle skipped — next due rescheduled
 feature/tasks/update	task_title	Maintenance Task Title
 feature/tasks/update	task_title_helper	Provide a concise, technical name for this maintenance action as it appears in the service manual.
@@ -892,10 +837,6 @@ feature/tasks/viewing	critical_airworthiness	URGENT ATTENTION REQUIRED
 feature/tasks/viewing	days_overdue_count	%1$d Days Overdue
 feature/tasks/viewing	days_remaining	%1$d Days Remaining
 feature/tasks/viewing	due_date	Due %1$s
-feature/tasks/viewing	due_engine	Due @ %1$s engine hrs
-feature/tasks/viewing	due_soon_date	Due Soon: %1$s
-feature/tasks/viewing	due_soon_date_engine	Due Soon: %1$s / %2$s hrs
-feature/tasks/viewing	due_soon_engine	Due Soon: @ %1$s hrs
 feature/tasks/viewing	due_today	Due Today
 feature/tasks/viewing	engine_hours_upper	%1$s HRS
 feature/tasks/viewing	label_deadline	DEADLINE
@@ -907,8 +848,6 @@ feature/tasks/viewing	next_due_date	NEXT DUE DATE
 feature/tasks/viewing	next_due_engine_hrs	NEXT DUE ENGINE HRS
 feature/tasks/viewing	no_maintenance_logs_for_task	No logs yet. Add a maintenance entry and tag this task to see history here.
 feature/tasks/viewing	on_condition	On Condition
-feature/tasks/viewing	overdue_was	Overdue (was %1$s)
-feature/tasks/viewing	status_label	STATUS
 feature/technician/sharedassets	add_technician	Add Technician
 feature/technician/sharedassets	certificate_number	Certificate Number
 feature/technician/sharedassets	certificate_type	Certificate Type
@@ -945,7 +884,6 @@ feature/technician/sharedassets	name	Name
 feature/technician/sharedassets	name_required	Name (Required)
 feature/technician/sharedassets	never	Never
 feature/technician/sharedassets	no_certificate	No certificate provided
-feature/technician/sharedassets	no_technicians	No technicians added yet.
 feature/technician/sharedassets	performed_by	Performed By
 feature/technician/sharedassets	select_technician	Select Technician
 feature/technician/sharedassets	technician	Technician
@@ -960,9 +898,6 @@ feature/thing/dashboard	overview_no_tasks_body	Scheduled maintenance is up to da
 feature/thing/dashboard	overview_no_tasks_title	No upcoming tasks
 feature/thing/dashboard	overview_open_squawks	Open squawks
 feature/thing/dashboard	overview_recent_activity	Recent activity
-feature/thing/dashboard	tab_logs	Logs
-feature/thing/dashboard	tab_overview	Overview
-feature/thing/dashboard	tab_tasks	Tasks
 feature/thing/update	add_blade	Add blade
 feature/thing/update	add_engine	Add Engine
 feature/thing/update	blade_serial_numbers	Blade Serial numbers
@@ -977,4 +912,3 @@ feature/thing/update	remove_engine	Remove Engine
 feature/thing/update	serial	Serial Number
 feature/thing/update	tail_number	Tail Number
 feature/thing/update	update_aircraft	Update Aircraft
-feature/userprofile/sharedassets	anonymous_user	Anonymous User

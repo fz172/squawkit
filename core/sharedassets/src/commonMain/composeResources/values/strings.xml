@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
   <string name="app_name">SquawkIt</string>
-  <string name="edit_profile">Update Profile</string>
   <string name="settings">Settings</string>
   <!-- Generic action names -->
   <string name="back">Back</string>
@@ -38,7 +37,6 @@
   <string name="sync_changes_discarded">Unsaved changes to %1$s were discarded — your access was removed</string>
   <string name="save_failed">Save failed</string>
   <string name="delete_failed">Delete failed</string>
-  <string name="error_occurred">An error occurred</string>
   <string name="details">Details</string>
   <string name="make_model_template">%1$s %2$s</string>
   <string name="select_date">Select Date</string>

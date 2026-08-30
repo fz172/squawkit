@@ -3,11 +3,10 @@
   <string name="compliance_type_ad">Airworthiness Directives (AD)</string>
   <string name="compliance_type_sb">Service Bulletins (SB)</string>
   <string name="compliance_type_routine">Routine Tasks</string>
-  <string name="task_title">Maintenance Task Title</string>
-  <string name="task_description_label">Task Description</string>
+  <string name="task_title">%1$s Title</string>
   <string name="task_description_placeholder">e.g. 100-Hour Inspection</string>
   <string name="task_title_helper">Provide a concise, technical name for this maintenance action as it appears in the service manual.</string>
-  <string name="component_type_description">Select the primary system or component this task pertains to for accurate log grouping.</string>
+  <string name="component_type_description">Select the primary system or %1$s this task pertains to for accurate log grouping.</string>
   <string name="compliance_type_description">Regulatory nature of this task. Mandatory items will trigger critical system alerts.</string>
   <string name="compliance_type_sb_full">SB (Service Bulletin)</string>
   <string name="compliance_type_ad_full">AD (Airworthiness Directive)</string>
@@ -68,9 +67,6 @@
   <string name="schedule_preview_one_time_secondary">One-time · moves to history after first log</string>
 
   <string name="schedule_pick_linked_task">Pick a task to link</string>
-  <string name="override_next_due_engine">Override next due engine hour</string>
-  <string name="override_next_due_date">Override next due date</string>
-  <string name="force_due_engine_hours">Force Due Engine (hours)</string>
 
   <string name="select_task_work">Select Maintenance Work</string>
   <string name="reference_and_component">%1$s • %2$s</string>
@@ -78,21 +74,12 @@
   <string name="compliance_type">Compliance Type</string>
   <string name="compliance_type_routine_short">Routine</string>
   <string name="intervals">Intervals</string>
-  <string name="one_time_compliance">One-Time Task</string>
-  <string name="one_time_compliance_desc">Moves to history after first log</string>
   <string name="reference_number">Reference Number</string>
   <string name="reference_number_hint">e.g. SB-001</string>
   <string name="compliance_authority_hint">e.g. Rotax / Lycoming</string>
   <string name="compliance_notes">Compliance Notes</string>
   <string name="compliance_notes_hint">e.g. One-time inspection of fuel lines...</string>
   <string name="link_to_task">Link to maintenance task</string>
-  <string name="remove_link">Remove link</string>
-  <string name="force_overrides_safety">Force Override</string>
-  <string name="mark_complied">Mark as Completed</string>
-  <string name="interval_months_placeholder">e.g. 12</string>
-  <string name="interval_hours_placeholder">e.g. 100</string>
-  <string name="task_due_warning">Note: This task will be due on whichever comes first.</string>
-  <string name="task_interval_description">Set a recurring interval based on time, engine hours, or both.</string>
 
   <string name="basics">Basics</string>
   <string name="compliance">Compliance</string>
@@ -144,7 +131,7 @@
 
   <!-- Resolve menu (bottom bar) -->
   <string name="resolve_task">Resolve</string>
-  <string name="create_work_log">Create Work Log</string>
+  <string name="create_work_log">Create %1$s</string>
   <string name="create_work_log_subtitle">Opens a new log, pre-linked to this task</string>
   <string name="skip_this_cycle_option">Skip This Cycle</string>
   <string name="skip_this_cycle_option_subtitle">Marks complete without logging</string>
@@ -154,5 +141,5 @@
   <string name="task_updated">Task updated</string>
   <string name="task_deleted">Task deleted</string>
   <string name="task_added">Task added</string>
-  <string name="no_tasks_configured">No tasks configured. Add them from the aircraft overview to track recurring maintenance.</string>
+  <string name="no_tasks_configured">No tasks configured. Add them from the %1$s overview to track recurring maintenance.</string>
 </resources>

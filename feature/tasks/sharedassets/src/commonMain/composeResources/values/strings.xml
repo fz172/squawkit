@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
   <string name="unknown_date">Unknown date</string>
-  <string name="engine_format">Engine: %1$s</string>
 
   <string name="due_with_count">DUE (%1$d)</string>
   <string name="history_with_count">HISTORY (%1$d)</string>
@@ -9,7 +8,6 @@
   <string name="edit_task">Update task</string>
 
   <string name="overdue">Overdue</string>
-  <string name="due_soon">Due Soon</string>
 
   <string name="compliance_authority">Compliance authority</string>
   <string name="compliance_type_ad_short">AD</string>
@@ -18,7 +16,7 @@
   <string name="maintenance_tasks">Maintenance Tasks</string>
   <string name="maintenance_due_title">Maintenance Due</string>
   <string name="add_task">Add task</string>
-  <string name="no_tasks_yet">No maintenance tasks</string>
+  <string name="no_tasks_yet">No %1$s</string>
   <string name="no_tasks_yet_description">Tap + to add inspections, part replacements, and other checks.</string>
   <string name="no_complied_yet">Log work against a task to see its history here.</string>
   <string name="no_task_work_recorded">No task addressed by this log.</string>

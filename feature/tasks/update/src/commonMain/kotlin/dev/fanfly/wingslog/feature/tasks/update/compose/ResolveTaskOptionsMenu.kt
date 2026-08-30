@@ -5,6 +5,9 @@ import androidx.compose.material.icons.automirrored.filled.NoteAdd
 import androidx.compose.material.icons.filled.FastForward
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import dev.fanfly.wingslog.core.template.LexiconFormatter
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.logNoun
 import dev.fanfly.wingslog.core.ui.common.compose.ResolveBubbleMenu
 import dev.fanfly.wingslog.core.ui.common.compose.ResolveMenuAction
 import dev.fanfly.wingslog.core.ui.theme.statusColors
@@ -34,7 +37,10 @@ fun ResolveTaskOptionsMenu(
         icon = Icons.AutoMirrored.Filled.NoteAdd,
         iconBackground = MaterialTheme.colorScheme.primaryContainer,
         iconTint = MaterialTheme.colorScheme.primary,
-        label = stringResource(Res.string.create_work_log),
+        label = stringResource(
+          Res.string.create_work_log,
+          LexiconFormatter.titleCase(LocalThingLexicon.current.logNoun),
+        ),
         subtitle = stringResource(Res.string.create_work_log_subtitle),
         onClick = onCreateWorkLog,
       ),

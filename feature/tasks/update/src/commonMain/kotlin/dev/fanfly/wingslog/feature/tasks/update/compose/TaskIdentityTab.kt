@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -28,15 +27,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.sp
-import dev.fanfly.wingslog.thing.ComponentType
-import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.datetime.toLocalDate
+import dev.fanfly.wingslog.core.template.LexiconFormatter
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.componentNoun
+import dev.fanfly.wingslog.core.template.taskNoun
 import dev.fanfly.wingslog.core.ui.common.compose.FormKeyboard
 import dev.fanfly.wingslog.core.ui.common.compose.FormSectionLabel
 import dev.fanfly.wingslog.core.ui.common.compose.FormTextField
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.logs.sharedassets.util.displayName
+import dev.fanfly.wingslog.thing.ComponentType
+import dev.fanfly.wingslog.thing.MaintenanceLog
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.add
 import wingslog.core.sharedassets.generated.resources.component_type
@@ -76,7 +79,10 @@ fun TaskIdentityTab(
   ) {
     Column(verticalArrangement = Arrangement.spacedBy(Spacing.medium)) {
       FormTextField(
-        label = stringResource(Res.string.task_title),
+        label = stringResource(
+          Res.string.task_title,
+          LexiconFormatter.titleCase(LocalThingLexicon.current.taskNoun),
+        ),
         value = title,
         onValueChange = onTitleChange,
         modifier = Modifier.fillMaxWidth(),
@@ -96,7 +102,10 @@ fun TaskIdentityTab(
 
     IdentitySection(
       header = stringResource(CoreRes.string.component_type),
-      description = stringResource(Res.string.component_type_description),
+      description = stringResource(
+        Res.string.component_type_description,
+        LocalThingLexicon.current.componentNoun.singular,
+      ),
     ) {
       Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
         val componentEntries =
