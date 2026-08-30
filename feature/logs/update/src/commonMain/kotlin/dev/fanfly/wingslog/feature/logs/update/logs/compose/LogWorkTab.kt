@@ -1,7 +1,5 @@
 package dev.fanfly.wingslog.feature.logs.update.logs.compose
 
-import dev.fanfly.wingslog.core.template.LocalThingLexicon
-import dev.fanfly.wingslog.core.template.thingNoun
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -10,13 +8,16 @@ import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
+import dev.fanfly.wingslog.core.template.LocalThingCapabilities
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.thingNoun
 import dev.fanfly.wingslog.core.ui.common.UiText
 import dev.fanfly.wingslog.core.ui.common.compose.FormKeyboard
 import dev.fanfly.wingslog.core.ui.common.compose.FormTextField
 import dev.fanfly.wingslog.core.ui.common.compose.FormValueField
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.Thing
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringResource
@@ -67,21 +68,25 @@ fun LogWorkTab(
       )
     }
 
-    LogSection(
-      header = stringResource(CoreRes.string.component_type),
-      description = stringResource(
-        Res.string.component_section_description,
-        LocalThingLexicon.current.thingNoun.singular,
-      ),
-    ) {
-      ComponentSection(
-        thing = thing,
-        selectedComponentType = selectedComponentType,
-        selectedSubComponent = selectedSubComponent,
-        onComponentTypeChange = onComponentTypeChange,
-        onSubComponentChange = onSubComponentChange,
-        modifier = Modifier.fillMaxWidth(),
-      )
+    // Removed, not disabled, for a template whose things have no parts worth naming. Asking "which
+    // component was serviced" of a thing with one undivided body is a question with one answer.
+    if (LocalThingCapabilities.current.components) {
+      LogSection(
+        header = stringResource(CoreRes.string.component_type),
+        description = stringResource(
+          Res.string.component_section_description,
+          LocalThingLexicon.current.thingNoun.singular,
+        ),
+      ) {
+        ComponentSection(
+          thing = thing,
+          selectedComponentType = selectedComponentType,
+          selectedSubComponent = selectedSubComponent,
+          onComponentTypeChange = onComponentTypeChange,
+          onSubComponentChange = onSubComponentChange,
+          modifier = Modifier.fillMaxWidth(),
+        )
+      }
     }
 
     FormTextField(

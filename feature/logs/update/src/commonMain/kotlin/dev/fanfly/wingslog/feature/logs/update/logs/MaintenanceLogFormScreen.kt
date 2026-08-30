@@ -1,10 +1,5 @@
 package dev.fanfly.wingslog.feature.logs.update.logs
 
-import dev.fanfly.wingslog.core.template.squawkNoun
-import dev.fanfly.wingslog.core.template.taskNoun
-import dev.fanfly.wingslog.core.template.LexiconFormatter
-import dev.fanfly.wingslog.core.template.LocalThingLexicon
-import dev.fanfly.wingslog.core.template.logNoun
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -54,6 +49,12 @@ import androidx.navigation.NavController
 import dev.fanfly.wingslog.core.analytics.LocalAnalytics
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.nav.Screen.Companion.CROSS_SCREEN_SUCCESS_MESSAGE
+import dev.fanfly.wingslog.core.template.LexiconFormatter
+import dev.fanfly.wingslog.core.template.LocalThingCapabilities
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.logNoun
+import dev.fanfly.wingslog.core.template.squawkNoun
+import dev.fanfly.wingslog.core.template.taskNoun
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedTopBar
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
 import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
@@ -62,13 +63,13 @@ import dev.fanfly.wingslog.core.ui.common.compose.UnsavedChangesDialog
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.attachment.viewing.AttachmentFormSection
 import dev.fanfly.wingslog.feature.logs.update.logs.compose.LOG_FORM_TAB_KEYS
-import dev.fanfly.wingslog.feature.logs.update.logs.compose.LOG_HOURS_TAB
-import dev.fanfly.wingslog.feature.logs.update.logs.compose.LOG_RECORDS_TAB
-import dev.fanfly.wingslog.feature.logs.update.logs.compose.LOG_WORK_TAB
+import dev.fanfly.wingslog.feature.logs.update.logs.compose.LogFormTab
 import dev.fanfly.wingslog.feature.logs.update.logs.compose.LogRecordsTab
 import dev.fanfly.wingslog.feature.logs.update.logs.compose.LogTabRow
 import dev.fanfly.wingslog.feature.logs.update.logs.compose.LogTimeTab
 import dev.fanfly.wingslog.feature.logs.update.logs.compose.LogWorkTab
+import dev.fanfly.wingslog.feature.logs.update.logs.compose.logFormTabsFor
+import dev.fanfly.wingslog.feature.logs.update.logs.compose.spec
 import dev.fanfly.wingslog.feature.logs.update.logs.viewmodel.MaintenanceLogFormEvent
 import dev.fanfly.wingslog.feature.logs.update.logs.viewmodel.MaintenanceLogFormViewModel
 import dev.fanfly.wingslog.feature.squawk.viewing.SquawkPickerSheet
@@ -116,7 +117,8 @@ fun MaintenanceLogFormScreen(
   var showDatePicker by remember { mutableStateOf(false) }
   var showUnsavedChangesDialog by remember { mutableStateOf(false) }
   val snackbarHostState = remember { SnackbarHostState() }
-  val pagerState = rememberPagerState(pageCount = { 3 })
+  val tabs = logFormTabsFor(LocalThingCapabilities.current)
+  val pagerState = rememberPagerState(pageCount = { tabs.size })
   val coroutineScope = rememberCoroutineScope()
   val analytics = LocalAnalytics.current
   // Log tab switches (tap or swipe) as page views; drop(1) skips the initial page on open.
@@ -251,7 +253,7 @@ fun MaintenanceLogFormScreen(
           contentAlignment = Alignment.TopCenter
         ) {
           LogTabRow(
-            tabs = listOf(LOG_WORK_TAB, LOG_HOURS_TAB, LOG_RECORDS_TAB),
+            tabs = tabs.map { it.spec },
             selectedIndex = pagerState.currentPage,
             onSelect = {
               coroutineScope.launch {
@@ -297,8 +299,8 @@ fun MaintenanceLogFormScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(Spacing.screenPadding),
             ) {
-              when (page) {
-                0 -> LogWorkTab(
+              when (tabs[page]) {
+                LogFormTab.WORK -> LogWorkTab(
                   maintenanceDate = uiState.maintenanceDate,
                   onDateClick = { showDatePicker = true },
                   workDescription = uiState.workDescription,
@@ -311,7 +313,7 @@ fun MaintenanceLogFormScreen(
                   error = uiState.error,
                 )
 
-                1 -> LogTimeTab(
+                LogFormTab.HOURS -> LogTimeTab(
                   engineTime = uiState.engineTime,
                   onEngineTimeChange = viewModel::onEngineTimeChange,
                   airframeTime = uiState.airframeTime,
@@ -320,7 +322,7 @@ fun MaintenanceLogFormScreen(
                   onPropTimeChange = viewModel::onPropTimeChange,
                 )
 
-                2 -> LogRecordsTab(
+                LogFormTab.RECORDS -> LogRecordsTab(
                   selectedTechnician = uiState.selectedTechnician,
                   onTechnicianClick = viewModel::showTechnicianPicker,
                   selectedSquawkIds = uiState.selectedSquawkIds,
