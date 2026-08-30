@@ -180,10 +180,11 @@ fun TechnicianListScreen(
           // they are account-scoped, not per-thing — so the selected thing's words are the wrong
           // words here even when only one template exists.
           //
-          // The chrome stays neutral permanently. What arrives in Phase 3 is per-person *roles*
-          // (PRD §8.6): a technician names the templates they work on, certificate fields come from
-          // each role rather than from a capability read off some arbitrary Thing, and rows carry
-          // role tags. That is where the domain gets to speak on this screen.
+          // The chrome stays neutral permanently. What arrives in Phase 3 is per-person
+          // certifications (PRD §8.6): a technician holds one or more, their type is a key declared
+          // by a template, and the domain is *derived* from it — an A&P means aviation, an
+          // electrician's licence means home. Rows carry tags read off that. Nothing asks the user
+          // which domain someone belongs to. That is where the domain speaks on this screen.
           item(key = "description") {
             Text(
               text = stringResource(TechnicianRes.string.manage_technicians_description),
