@@ -68,6 +68,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.template.GenericLexicon
 import dev.fanfly.wingslog.core.template.LexiconFormatter
+import dev.fanfly.wingslog.core.template.LocalThingCapabilities
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.logNoun
 import dev.fanfly.wingslog.core.template.squawkNoun
@@ -86,7 +87,7 @@ import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.adaptive.compose.layoutTierFor
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.widget.avataricon.compose.AvatarIcon
-import dev.fanfly.wingslog.core.template.LocalThingCapabilities
+import dev.fanfly.wingslog.thing.Capabilities
 import dev.fanfly.wingslog.thing.Section
 import dev.fanfly.wingslog.thing.ThingTemplate
 import org.jetbrains.compose.resources.painterResource
@@ -186,10 +187,20 @@ private val DEFAULT_PER_THING_SECTIONS =
  * remove navigation. SETTINGS is absent from both — it is account-level and never template-owned.
  */
 @Composable
-private fun perThingSections(): List<ShellSection> {
-  val declared = LocalThingCapabilities.current.sections.mapNotNull { it.toShellSection() }
-  return declared.ifEmpty { DEFAULT_PER_THING_SECTIONS }
-}
+private fun perThingSections(): List<ShellSection> =
+  perThingSectionsFor(LocalThingCapabilities.current)
+
+/**
+ * The decision, separated from the composition so it can be tested with a capability turned *off*.
+ *
+ * That separation is the point. With the airplane set every section is declared, so a gate that
+ * ignored its input would produce exactly the same navigation as one that read it — the two are
+ * indistinguishable on screen and in any test that only exercises the shipped template. Only calling
+ * this with a narrower set can tell them apart.
+ */
+internal fun perThingSectionsFor(capabilities: Capabilities): List<ShellSection> =
+  capabilities.sections.mapNotNull { it.toShellSection() }
+    .ifEmpty { DEFAULT_PER_THING_SECTIONS }
 
 private fun Section.toShellSection(): ShellSection? = when (this) {
   Section.SECTION_DASHBOARD -> ShellSection.DASHBOARD
