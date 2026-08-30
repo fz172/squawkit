@@ -1,6 +1,9 @@
 package dev.fanfly.wingslog.feature.settings
 
 
+import dev.fanfly.wingslog.core.template.LexiconFormatter
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.technicianNoun
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -237,7 +240,10 @@ fun SettingsContent(
           add {
             SettingsRow(
               icon = Icons.Default.Engineering,
-              title = stringResource(TechnicianRes.string.manage_technicians),
+              title = stringResource(
+                TechnicianRes.string.manage_technicians,
+                LexiconFormatter.titleCase(LocalThingLexicon.current.technicianNoun),
+              ),
               subtitle = stringResource(SettingsRes.string.settings_technicians_subtitle),
               onClick = { detailNav.navigate(Screen.ManageTechnicians.route) },
             )

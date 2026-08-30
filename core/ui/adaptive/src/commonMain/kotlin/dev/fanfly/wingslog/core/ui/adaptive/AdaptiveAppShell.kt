@@ -201,12 +201,16 @@ fun AdaptiveAppShell(
 ) {
   BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
     val tier = layoutTierFor(maxWidth)
-    // Per-thing sections render in the selected thing's words; SETTINGS is global and keeps the
-    // generic lexicon, because on a mixed account no single template's word would be right
-    // (template_system_design.md §9). The FAB is wrapped too — it says "New squawk".
-    val sectionLexicon =
-      if (state.section == ShellSection.SETTINGS) GenericLexicon.LEXICON
-      else state.selectedThing?.lexicon ?: GenericLexicon.LEXICON
+    // Every section, SETTINGS included, renders in the selected thing's words. The FAB is wrapped
+    // too — it says "New squawk".
+    //
+    // template_system_design.md §9 says settings should use the *generic* lexicon, because on a
+    // mixed account no single template's word is right. That is correct, and deliberately not
+    // implemented yet: mixed accounts cannot exist until a second preset ships, and forcing generic
+    // now would regress real settings copy the moment it is converted — "Whole fleet in one
+    // logbook" would read "Whole stuff in one logbook" on a single-airplane account. The same
+    // sole-preset reasoning is in CurrentThingLexicon. Reinstate §9 with the second preset.
+    val sectionLexicon = state.selectedThing?.lexicon ?: LocalThingLexicon.current
     val content: @Composable () -> Unit = {
       CompositionLocalProvider(LocalThingLexicon provides sectionLexicon) {
         sectionContent(state.section, state.selectedThingId)

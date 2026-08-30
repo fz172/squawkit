@@ -1,5 +1,8 @@
 package dev.fanfly.wingslog.feature.logs.update.logs.compose
 
+import dev.fanfly.wingslog.core.template.LexiconFormatter
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.technicianNoun
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -55,7 +58,10 @@ fun LogRecordsTab(
       description = stringResource(Res.string.performed_by_description),
     ) {
       val displayText = selectedTechnician?.name
-        ?: stringResource(TechnicianRes.string.select_technician)
+        ?: stringResource(
+          TechnicianRes.string.select_technician,
+          LexiconFormatter.titleCase(LocalThingLexicon.current.technicianNoun),
+        )
       FormValueField(
         value = displayText,
         label = stringResource(TechnicianRes.string.performed_by),

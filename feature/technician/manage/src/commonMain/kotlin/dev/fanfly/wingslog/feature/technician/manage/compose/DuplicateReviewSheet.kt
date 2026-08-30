@@ -1,5 +1,7 @@
 package dev.fanfly.wingslog.feature.technician.manage.compose
 
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.technicianNoun
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -82,7 +84,10 @@ fun DuplicateReviewSheet(
       verticalArrangement = Arrangement.spacedBy(Spacing.medium),
     ) {
       Text(
-        text = stringResource(Res.string.duplicates_review_body),
+        text = stringResource(
+          Res.string.duplicates_review_body,
+          LocalThingLexicon.current.technicianNoun.singular,
+        ),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
       )

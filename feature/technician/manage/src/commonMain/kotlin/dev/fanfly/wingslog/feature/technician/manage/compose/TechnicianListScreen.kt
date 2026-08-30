@@ -1,5 +1,9 @@
 package dev.fanfly.wingslog.feature.technician.manage.compose
 
+import dev.fanfly.wingslog.core.template.LexiconFormatter
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.technicianNoun
+import dev.fanfly.wingslog.core.template.thingNoun
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -82,7 +86,10 @@ fun TechnicianListScreen(
       title = {
         Text(stringResource(TechnicianRes.string.linked_technician_info_title, linked.name))
       },
-      text = { Text(stringResource(TechnicianRes.string.linked_technician_info_body)) },
+      text = { Text(stringResource(
+        TechnicianRes.string.linked_technician_info_body,
+        LexiconFormatter.withArticle(LocalThingLexicon.current.thingNoun),
+      )) },
       confirmButton = {
         TextButton(onClick = { infoFor = null }) {
           Text(stringResource(TechnicianRes.string.linked_technician_info_dismiss))
@@ -104,7 +111,10 @@ fun TechnicianListScreen(
     topBar = {
       ConstrainedTopBar {
         TopAppBar(
-          title = { Text(stringResource(TechnicianRes.string.manage_technicians)) },
+          title = { Text(stringResource(
+            TechnicianRes.string.manage_technicians,
+            LexiconFormatter.titleCase(LocalThingLexicon.current.technicianNoun),
+          )) },
           navigationIcon = {
             IconButton(onClick = onNavigateBack) {
               Icon(
@@ -133,7 +143,10 @@ fun TechnicianListScreen(
         FloatingActionButton(onClick = { onNavigateToEdit(null) }) {
           Icon(
             Icons.Default.Add,
-            contentDescription = stringResource(TechnicianRes.string.add_technician)
+            contentDescription = stringResource(
+              TechnicianRes.string.add_technician,
+              LexiconFormatter.titleCase(LocalThingLexicon.current.technicianNoun),
+            )
           )
         }
       }
@@ -141,8 +154,14 @@ fun TechnicianListScreen(
   ) { paddingValues ->
     if (state.technicians.isEmpty() && state.linkedTechnicians.isEmpty()) {
       EmptyState(
-        title = stringResource(TechnicianRes.string.empty_technicians_title),
-        description = stringResource(TechnicianRes.string.empty_technicians_desc),
+        title = stringResource(
+          TechnicianRes.string.empty_technicians_title,
+          LexiconFormatter.titleCasePlural(LocalThingLexicon.current.technicianNoun),
+        ),
+        description = stringResource(
+          TechnicianRes.string.empty_technicians_desc,
+          LocalThingLexicon.current.technicianNoun.plural,
+        ),
         icon = Icons.Default.Engineering,
         modifier = Modifier
           .fillMaxSize()
@@ -187,7 +206,10 @@ fun TechnicianListScreen(
           // Only headline the personal list when there's a linked section to distinguish it from.
           if (state.linkedTechnicians.isNotEmpty() && state.technicians.isNotEmpty()) {
             item(key = "own-header") {
-              SectionHeader(stringResource(TechnicianRes.string.my_technicians_header))
+              SectionHeader(stringResource(
+                TechnicianRes.string.my_technicians_header,
+                LocalThingLexicon.current.technicianNoun.plural,
+              ))
             }
           }
           items(state.technicians, key = { it.id }) { technician ->
@@ -200,7 +222,10 @@ fun TechnicianListScreen(
 
           if (state.linkedTechnicians.isNotEmpty()) {
             item(key = "linked-header") {
-              SectionHeader(stringResource(TechnicianRes.string.linked_technicians_header))
+              SectionHeader(stringResource(
+                TechnicianRes.string.linked_technicians_header,
+                LocalThingLexicon.current.thingNoun.singular,
+              ))
             }
             // Keyed by source_uid: a linked profile is identified by the account that owns it, and
             // that's what keeps it distinct from any manual entry of the same person.
@@ -250,7 +275,10 @@ private fun DuplicatePrompt(
       verticalArrangement = Arrangement.spacedBy(Spacing.small),
     ) {
       Text(
-        text = stringResource(TechnicianRes.string.duplicates_prompt_title),
+        text = stringResource(
+          TechnicianRes.string.duplicates_prompt_title,
+          LocalThingLexicon.current.technicianNoun.plural,
+        ),
         style = MaterialTheme.typography.bodyMedium,
       )
       Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
