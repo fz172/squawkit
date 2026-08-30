@@ -1,5 +1,7 @@
 package dev.fanfly.wingslog.feature.notifications.viewing
 
+import dev.fanfly.wingslog.core.template.thingNoun
+import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
@@ -25,6 +27,7 @@ import dev.fanfly.wingslog.feature.notifications.model.PendingNotification
  */
 class AndroidLocalNotifier(
   private val context: Context,
+  private val currentThingTemplate: CurrentThingTemplate,
 ) : LocalNotifier {
 
   private val manager = NotificationManagerCompat.from(context)
@@ -121,12 +124,30 @@ class AndroidLocalNotifier(
     }
   )
 
-  private fun NotificationChannel.description(): String = context.getString(
-    when (this) {
-      NotificationChannel.COLLABORATION -> R.string.notification_channel_collaboration_description
-      NotificationChannel.URGENCY_UPDATE -> R.string.notification_channel_urgency_update_description
-    }
-  )
+  /**
+   * The channel description, as it appears in the OS settings app.
+   *
+   * **The one place a lexicon word escapes the app's own surfaces** (PRD §8.5). It reads from the
+   * app-scoped lexicon rather than the selected thing's, because there is **one** set of OS channels
+   * per install, not one per template: the channel is the urgency class, and picking whichever thing
+   * happened to be selected when the app last started would be arbitrary. While a single preset
+   * exists that is its word; once a second ships the holder falls back to the generic noun, which is
+   * the rule this issue asks for and it needs no change here to take effect.
+   *
+   * Registered in `init`, so the description reflects the template as of app start. A user who adds
+   * a differently-shaped thing sees the new wording next launch. Android updates the name and
+   * description when a channel is re-created with the same id — it is only the *id* that is frozen
+   * (#663) — so no migration is needed for that to land.
+   */
+  private fun NotificationChannel.description(): String = when (this) {
+    NotificationChannel.COLLABORATION -> context.getString(
+      R.string.notification_channel_collaboration_description,
+      currentThingTemplate.lexicon.value.thingNoun.singular,
+    )
+
+    NotificationChannel.URGENCY_UPDATE ->
+      context.getString(R.string.notification_channel_urgency_update_description)
+  }
 
   companion object {
     private val log = Logger.withTag("AndroidLocalNotifier")

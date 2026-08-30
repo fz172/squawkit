@@ -357,6 +357,12 @@ class StringSnapshotTest {
     "feature/notifications/sharedassets:notification_n1_body_thing_updated" to { l: Lexicon ->
       mapOf(3 to l.thingNoun.singular)
     },
+    // An Android `res/values` string rather than a Compose resource — the OS channel description,
+    // read with R.string in AndroidLocalNotifier (#662). The snapshot scans every strings.xml, so
+    // it is covered here like any other.
+    frame("feature/notifications/viewing", "notification_channel_collaboration_description") {
+      it.thingNoun.singular
+    },
   )
 
   /** A single-argument frame at position 1, in any module. */
@@ -493,7 +499,11 @@ class StringSnapshotTest {
             ) ||
               Regex("""getString\(\s*[A-Za-z]*Res\.string\.$resource\s*\)""").containsMatchIn(
                 text
-              )
+              ) ||
+              // Android's R.string too, not only Compose's Res.string. The OS notification channel
+              // description is a res/values string read with getString(R.string.…), and a guard
+              // that only knew about Compose resources waved it straight through (#662).
+              Regex("""getString\(\s*R\.string\.$resource\s*\)""").containsMatchIn(text)
           }
           .map { "${file.name}: $it" }
       }
@@ -517,7 +527,7 @@ class StringSnapshotTest {
       .filter { it.extension == "kt" && "/build/" !in it.path && "androidHostTest" !in it.path }
       .flatMap { file ->
         val text = file.readText()
-        Regex("""[A-Za-z]*Res\.string\.([a-z0-9_]+)""").findAll(text)
+        Regex("""(?:[A-Za-z]*Res|R)\.string\.([a-z0-9_]+)""").findAll(text)
           .filter { it.groupValues[1] in LEXICON_ARGS.keys.map { k -> k.substringAfter(":") } }
           .filterNot { match ->
             val before = text.substring(0, match.range.first).trimEnd()
