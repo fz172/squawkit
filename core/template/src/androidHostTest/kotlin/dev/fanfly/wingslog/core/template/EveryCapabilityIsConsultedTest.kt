@@ -33,12 +33,6 @@ class EveryCapabilityIsConsultedTest {
     // Not a removal at a call site but a choice between two export renderers, and the generic
     // layout's columns derive from the lexicon and meter set — Phase 3 (PRD §8.5).
     "export_layout" to "#657 / Phase 3",
-    // **Guards UI that was never built.** PRD §4.8 describes a nag for serials at creation; the
-    // only serial fields that exist are read-only display on ComponentSection. There is nothing to
-    // remove, so wiring this would be writing a gate around nothing. It is the same mistake the
-    // proto itself warns about for the unclaimed field 10 — "a speculative bool is the field most
-    // likely to want a different shape by the time it is real" — already made once at field 6.
-    "component_serial_prompt" to "no UI exists; see #659 discussion",
   )
 
   @Test

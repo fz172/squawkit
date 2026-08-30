@@ -4,13 +4,14 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
+import dev.fanfly.wingslog.core.nav.Screen
+import dev.fanfly.wingslog.core.template.CurrentThingTemplate
+import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
+import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.thing.Engine
 import dev.fanfly.wingslog.thing.Propeller
 import dev.fanfly.wingslog.thing.PropellerBlade
 import dev.fanfly.wingslog.thing.PropellerHub
-import dev.fanfly.wingslog.core.nav.Screen
-import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
-import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.thing.Thing
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,11 +25,18 @@ import kotlinx.coroutines.launch
 class EditThingViewModel(
   private val fleetManager: FleetManager,
   private val sharingManager: SharingManager,
+  currentThingTemplate: CurrentThingTemplate,
   savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
   private val _uiState: MutableStateFlow<EditThingUiState> =
-    MutableStateFlow(EditThingUiState())
+    MutableStateFlow(
+      // Read once at construction: the template of the thing being edited cannot change while the
+      // form is open, and a mid-edit change would silently alter what the form accepts.
+      EditThingUiState(
+        requireSerials = currentThingTemplate.capabilities.value.component_serial_prompt,
+      ),
+    )
   val uiState = _uiState.asStateFlow()
 
   init {

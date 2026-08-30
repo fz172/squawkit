@@ -14,6 +14,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import dev.fanfly.wingslog.core.template.LocalThingCapabilities
 import dev.fanfly.wingslog.core.ui.common.compose.FormTextField
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.thing.update.viewmodel.EditThingViewModel
@@ -64,15 +65,20 @@ fun AirframeSection(
         horizontalArrangement = Arrangement.spacedBy(Spacing.large)
       ) {
         // --- Serial Number ---
-        FormTextField(
-          value = thing.serial, // Read from ViewModel
-          onValueChange = { viewModel.onSerialChanged(it) }, // Update ViewModel
-          label = stringResource(Res.string.serial),
-          modifier = Modifier.weight(1f), // Takes up 50%
-          editable = thing.id == "",
-          isError = showValidationErrors && thing.serial.isBlank(),
-          keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters)
-        )
+        // Removed for a template that has no serials to ask for. The matching validation relaxes
+        // in EditThingUiState.isValid — hiding a required field on its own would block the save
+        // with nothing on screen to explain why.
+        if (LocalThingCapabilities.current.component_serial_prompt) {
+          FormTextField(
+            value = thing.serial, // Read from ViewModel
+            onValueChange = { viewModel.onSerialChanged(it) }, // Update ViewModel
+            label = stringResource(Res.string.serial),
+            modifier = Modifier.weight(1f), // Takes up 50%
+            editable = thing.id == "",
+            isError = showValidationErrors && thing.serial.isBlank(),
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters)
+          )
+        }
         // --- Tail Number ---
         FormTextField(
           value = thing.tail_number, // Read from ViewModel
