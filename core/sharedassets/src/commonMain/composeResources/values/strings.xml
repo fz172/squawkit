@@ -42,12 +42,9 @@
   <string name="select_date">Select Date</string>
   <!-- Shell navigation tabs -->
   <string name="shell_tab_dashboard">Dashboard</string>
-  <string name="shell_tab_squawks">Squawks</string>
   <string name="shell_tab_tasks">Maint.</string>
   <string name="shell_nav_tasks_narrow">Maint. Tasks</string>
   <string name="shell_tab_logs">Logs</string>
-  <string name="shell_title_tasks">Maintenance Tasks</string>
-  <string name="shell_title_logs">Work Logs</string>
   <!-- Aircraft sharing -->
   <string name="thing_shared_badge">Shared</string>
   <!-- Component names -->
