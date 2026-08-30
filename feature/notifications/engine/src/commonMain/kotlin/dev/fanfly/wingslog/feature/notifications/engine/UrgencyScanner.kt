@@ -5,6 +5,10 @@ import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.EntityStore
 import dev.fanfly.wingslog.core.storage.EntityStoreFactory
 import dev.fanfly.wingslog.core.storage.ThingScopeResolver
+import dev.fanfly.wingslog.core.template.CurrentThingTemplate
+import dev.fanfly.wingslog.core.template.LexiconFormatter
+import dev.fanfly.wingslog.core.template.squawkNoun
+import dev.fanfly.wingslog.core.template.taskNoun
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetEntry
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
@@ -32,7 +36,6 @@ import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.getString
 import wingslog.feature.notifications.sharedassets.generated.resources.Res
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_body_due_soon_plural
@@ -44,7 +47,6 @@ import wingslog.feature.notifications.sharedassets.generated.resources.notificat
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_title_due_soon
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_title_overdue
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_title_priority_raised
-import wingslog.feature.notifications.sharedassets.generated.resources.squawk_priority_label_down
 import wingslog.feature.notifications.sharedassets.generated.resources.squawk_priority_label_high
 import wingslog.feature.notifications.sharedassets.generated.resources.squawk_priority_label_low
 import wingslog.feature.notifications.sharedassets.generated.resources.squawk_priority_label_medium
@@ -73,6 +75,7 @@ class UrgencyScanner(
   entityStoreFactory: EntityStoreFactory,
   private val watermarkStore: UrgencyWatermarkStore,
   private val notifier: LocalNotifier,
+  private val currentThingTemplate: CurrentThingTemplate,
   private val lastScanStore: LastScanStore,
   private val telemetry: UrgencyTelemetry = UrgencyTelemetry.NoOp,
   private val clock: Clock = Clock.System,
@@ -344,7 +347,7 @@ class UrgencyScanner(
       body = buildSingleBody(tier, tailNumber, single)
       id = "urgency:${single.collection.wireName}:${single.recordId}"
     } else {
-      body = getString(tier.pluralBodyRes(), tailNumber, group.size)
+      body = tier.pluralBody(tailNumber, group.size)
       id = "urgency:$thingId:${tier.name}"
     }
     return PendingNotification(
@@ -370,16 +373,14 @@ class UrgencyScanner(
     crossing: Crossing
   ): String =
     if (tier == UrgencyTier.PRIORITY_RAISED) {
-      val fromLabel = getString(
-        (crossing.previousRank ?: UrgencyRank.RESOLVED).squawkPriorityLabelRes()
-      )
+      val fromLabel =
+        (crossing.previousRank ?: UrgencyRank.RESOLVED).squawkPriorityLabel()
       // Computed per-crossing, not assumed: PRIORITY_RAISED reports at HIGH or AOG now that AOG
       // folds into it (design decision, 2026-08-26), so "to" can no longer be hardcoded to HIGH.
       // Only squawk crossings ever carry this tier, so newRank is always set here.
-      val toLabel = getString(
+      val toLabel =
         checkNotNull(crossing.newRank) { "PRIORITY_RAISED crossing with no newRank" }
-          .squawkPriorityLabelRes()
-      )
+          .squawkPriorityLabel()
       getString(
         tier.singleBodyRes(),
         tailNumber,
@@ -391,13 +392,17 @@ class UrgencyScanner(
       getString(tier.singleBodyRes(), tailNumber, crossing.title)
     }
 
-  private fun UrgencyRank.squawkPriorityLabelRes(): StringResource =
+  /**
+   * The priority label. The top rung has no resource: "AOG" *is* `Lexicon.down_status`, so a
+   * string holding it would carry no information the lexicon does not (#657).
+   */
+  private suspend fun UrgencyRank.squawkPriorityLabel(): String =
     when (value) {
-      0 -> Res.string.squawk_priority_label_resolved
-      1 -> Res.string.squawk_priority_label_low
-      2 -> Res.string.squawk_priority_label_medium
-      3 -> Res.string.squawk_priority_label_high
-      else -> Res.string.squawk_priority_label_down
+      0 -> getString(Res.string.squawk_priority_label_resolved)
+      1 -> getString(Res.string.squawk_priority_label_low)
+      2 -> getString(Res.string.squawk_priority_label_medium)
+      3 -> getString(Res.string.squawk_priority_label_high)
+      else -> LexiconFormatter.titleCase(currentThingTemplate.lexicon.value.down_status)
     }
 
   // NotificationTapTarget.Aircraft.tab wire values (design §5.3 / P2.9) — a summary notification
@@ -422,10 +427,45 @@ class UrgencyScanner(
     UrgencyTier.DUE_SOON -> Res.string.notification_body_due_soon_single
   }
 
-  private fun UrgencyTier.pluralBodyRes() = when (this) {
-    UrgencyTier.PRIORITY_RAISED -> Res.string.notification_body_priority_raised_plural
-    UrgencyTier.OVERDUE -> Res.string.notification_body_overdue_plural
-    UrgencyTier.DUE_SOON -> Res.string.notification_body_due_soon_plural
+  /**
+   * The summary body — "N1234: 3 maintenance tasks are due soon".
+   *
+   * A function rather than a `StringResource` field, because the noun differs by tier: a priority
+   * raise counts squawks, a due or overdue crossing counts tasks. Returning the resource would have
+   * hidden that the two need different arguments — the shape that shipped a raw placeholder to
+   * users in #692.
+   *
+   * The overdue and due-soon bodies said "inspections" until #683. That is an *example* of a task
+   * everywhere else in the app, not the noun, so they now read the task noun like every other
+   * surface.
+   */
+  private suspend fun UrgencyTier.pluralBody(
+    tailNumber: String,
+    count: Int
+  ): String {
+    val lexicon = currentThingTemplate.lexicon.value
+    return when (this) {
+      UrgencyTier.PRIORITY_RAISED -> getString(
+        Res.string.notification_body_priority_raised_plural,
+        tailNumber,
+        count,
+        lexicon.squawkNoun.plural,
+      )
+
+      UrgencyTier.OVERDUE -> getString(
+        Res.string.notification_body_overdue_plural,
+        tailNumber,
+        count,
+        lexicon.taskNoun.plural,
+      )
+
+      UrgencyTier.DUE_SOON -> getString(
+        Res.string.notification_body_due_soon_plural,
+        tailNumber,
+        count,
+        lexicon.taskNoun.plural,
+      )
+    }
   }
 
   private data class RecordRank(val id: String, val rank: UrgencyRank)

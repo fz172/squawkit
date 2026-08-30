@@ -53,7 +53,10 @@ private suspend fun PushPayload.renderTitle(lexicon: Lexicon): String =
     // The escalation title carries no dynamic content: the tail number lives in the body.
     "notification_title_priority_raised" -> getString(Res.string.notification_title_priority_raised)
     "notification_n1_title_squawk_created" ->
-      getString(Res.string.notification_n1_title_squawk_created)
+      getString(
+        Res.string.notification_n1_title_squawk_created,
+        lexicon.squawkNoun.singular,
+      )
 
     else -> ""
   }
@@ -102,14 +105,17 @@ private suspend fun PushPayload.renderBody(lexicon: Lexicon): String =
         actor(),
         lexicon.thingNoun.singular,
       )
-    // The escalation bodies lead with the tail number instead: "%1$s: %2$s created a new squawk
-    // issue\n\n%3$s" — tail, actor, then the squawk's own title on its own line.
+    // The escalation bodies lead with the tail number instead: "%1$s: %2$s created a new %4$s
+    // \n\n%3$s" — tail, actor, the squawk's own title on its own line, then the squawk noun.
+    // It said "a new squawk issue" until #683: "squawk" already means the issue, so the compound was
+    // redundant in aviation and would have read "a new issue issue" under a generic template.
     "notification_n1_body_squawk_created" ->
       getString(
         Res.string.notification_n1_body_squawk_created,
         tailNumber,
         actor(),
-        recordTitle
+        recordTitle,
+        lexicon.squawkNoun.singular,
       )
 
     "notification_n1_body_squawk_raised" ->
@@ -117,7 +123,8 @@ private suspend fun PushPayload.renderBody(lexicon: Lexicon): String =
         Res.string.notification_n1_body_squawk_raised,
         tailNumber,
         actor(),
-        recordTitle
+        recordTitle,
+        lexicon.squawkNoun.singular,
       )
 
     else -> ""

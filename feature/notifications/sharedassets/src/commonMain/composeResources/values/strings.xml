@@ -24,15 +24,15 @@
   <string name="notification_body_priority_raised_single">%1$s: priority raised from %2$s to %3$s\n\n%4$s</string>
   <!-- Deliberately not "…are now high priority": a summary can batch a HIGH crossing with an AOG
        one, and calling an AOG squawk merely "high priority" would understate it. -->
-  <string name="notification_body_priority_raised_plural">%1$s: %2$d squawks increased in priority</string>
+  <string name="notification_body_priority_raised_plural">%1$s: %2$d %3$s increased in priority</string>
 
   <string name="notification_title_overdue">⚠ Overdue</string>
   <string name="notification_body_overdue_single">%1$s: task is now overdue\n\n%2$s</string>
-  <string name="notification_body_overdue_plural">%1$s: %2$d inspections are now overdue</string>
+  <string name="notification_body_overdue_plural">%1$s: %2$d %3$s are now overdue</string>
 
   <string name="notification_title_due_soon">Due soon</string>
   <string name="notification_body_due_soon_single">%1$s: task is due soon\n\n%2$s</string>
-  <string name="notification_body_due_soon_plural">%1$s: %2$d inspections are due soon</string>
+  <string name="notification_body_due_soon_plural">%1$s: %2$d %3$s are due soon</string>
 
   <!-- N1 collaboration activity, server push (design §7.2, rewritten 2026-08-27: every write gets
        its own concrete notification — no coalescing, no "made N changes" summary, no ceiling. The
@@ -72,12 +72,12 @@
        Same three-segment shape as the N2 single-crossing bodies: tail number + what changed, then
        the squawk's own title on its own line after a blank one. %2$s is the collaborator; the
        client substitutes notification_n1_actor_fallback when the server sends it empty. -->
-  <string name="notification_n1_body_squawk_created">%1$s: %2$s created a new squawk issue\n\n%3$s</string>
-  <string name="notification_n1_body_squawk_raised">%1$s: %2$s raised the priority of 1 squawk issue\n\n%3$s</string>
+  <string name="notification_n1_body_squawk_created">%1$s: %2$s created a new %4$s\n\n%3$s</string>
+  <string name="notification_n1_body_squawk_raised">%1$s: %2$s raised the priority of 1 %4$s\n\n%3$s</string>
   <!-- Paired with notification_n1_body_squawk_created: "Priority raised" would contradict a body
        that says the squawk was just created — including at AOG, which uses this same title now that
        it is not its own headline (design decision, 2026-08-26). -->
-  <string name="notification_n1_title_squawk_created">New squawk</string>
+  <string name="notification_n1_title_squawk_created">New %1$s</string>
 
   <!-- The two sides of notification_body_priority_raised_single's "from X to Y" — a squawk can
        escalate from resolved (reopened) or from any open rank below High, and can land at High or
