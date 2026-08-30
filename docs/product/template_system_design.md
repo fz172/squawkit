@@ -379,9 +379,19 @@ check on web therefore has a real value to compare against.
 > refuse on a web build that already contains the code for it. Set a floor to a `versionCode` that has actually
 > shipped to Android, not to the current working value.
 
-Android still renders `1.0.260828.1.debug` — `versionName` plus a variant suffix, with no `versionCode`. That
-is a display inconsistency only: Android reads its real `versionCode` from `PackageInfo`, and iOS from
-`CFBundleVersion`, so both always had a value for a floor to compare. Web was the only platform that did not.
+All three platforms now render the identical string — `major.minor.buildDate(versionCode)`. Android composes
+it in `app/build.gradle.kts`, iOS from `MARKETING_VERSION` + `CURRENT_PROJECT_VERSION`, web from the generated
+constants.
+
+Two things went with that. **`patch` is gone from `version.properties`**: `versionCode` is already the
+monotonic counter, and a second per-day counter added a number nobody compared. And **Android's version name
+no longer carries a `debug`/`dogfood`/`release` suffix** — the build type is knowable in-app from the
+`DEVELOPER_BUILD` BuildConfig field that `AppCapability` reads, so putting it in the version name made Android
+the odd one out for information the app already had.
+
+Android also composes the date from `buildDate` rather than today's date on non-release builds. It previously
+used `today`, so a debug build showed a date the `versionCode` beside it was never paired with, and drifted
+from iOS and web the moment a day passed without a release.
 
 ---
 

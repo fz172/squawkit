@@ -66,10 +66,10 @@ val generateJsVersionKt by tasks.registering {
       if (versionPropsFile.exists()) versionPropsFile.inputStream()
         .use { load(it) }
     }
-    // Matches the iOS form: MARKETING_VERSION is major.minor.buildDate and CURRENT_PROJECT_VERSION
-    // is the versionCode, rendered as "1.0.260828(1400)". Web previously composed
-    // major.minor.buildDate.patch and carried no versionCode at all — see below for why that
-    // mattered beyond display.
+    // One string on all three platforms: "1.0.260828(1400)". iOS composes it from
+    // MARKETING_VERSION and CURRENT_PROJECT_VERSION, Android from version.properties in
+    // app/build.gradle.kts, and web here. Web previously carried no versionCode at all — see
+    // below for why that mattered beyond display.
     val marketingVersion = "${props["major"]}.${props["minor"]}.${props["buildDate"]}"
     val versionCode = (props["versionCode"] as? String)?.toIntOrNull() ?: 0
 

@@ -35,28 +35,31 @@ val isReleaseBuild = gradle.startParameter.taskNames.any {
   it.contains("Release", ignoreCase = true)
 }
 
-val storedPatch = versionProps.getProperty("patch", "0")
-  .toInt()
 val currentVersionCode = versionProps.getProperty("versionCode", "0")
   .toInt()
 
-var patch: Int
-var nextVersionCode: Int
+// Only a release build advances the counter; every other build reports what is already stamped.
+val nextVersionCode = if (isReleaseBuild) currentVersionCode + 1 else currentVersionCode
 
 if (isReleaseBuild) {
-  patch = if (storedDate == today) storedPatch + 1 else 1
-  nextVersionCode = currentVersionCode + 1
   versionProps["buildDate"] = today
-  versionProps["patch"] = patch.toString()
   versionProps["versionCode"] = nextVersionCode.toString()
   versionPropsFile.outputStream()
     .use { versionProps.store(it, null) }
-} else {
-  patch = storedPatch
-  nextVersionCode = currentVersionCode
 }
 
-val computedVersionName = "$major.$minor.$today.$patch"
+/**
+ * The date the running build's `versionCode` was stamped, not today's date.
+ *
+ * A release build writes both together, so they agree. A debug build must read `buildDate` back
+ * rather than using `today`, or Android shows a date the `versionCode` beside it was never paired
+ * with — and drifts from iOS and web, which only ever read the file.
+ */
+val effectiveDate = if (isReleaseBuild) today else storedDate.ifBlank { today }
+
+// "1.0.260828(1400)" — the same string iOS composes from MARKETING_VERSION and
+// CURRENT_PROJECT_VERSION, and web from GENERATED_VERSION_NAME and GENERATED_VERSION_CODE (#672).
+val computedVersionName = "$major.$minor.$effectiveDate($nextVersionCode)"
 
 // Set via `-PdeveloperBuild=true` to produce a signed, distributable "dogfood-style" release
 // build with developer tooling (Developer Options, stress test) turned on. Debug builds always have it on.
@@ -108,18 +111,10 @@ android {
 
 }
 
-androidComponents {
-  onVariants { variant ->
-    val suffix = when {
-      variant.buildType == "debug" -> "debug"
-      developerBuild -> "dogfood"
-      else -> "release"
-    }
-    variant.outputs.forEach { output ->
-      output.versionName.set("$computedVersionName.$suffix")
-    }
-  }
-}
+// No variant suffix on the version name: all three platforms render the same string, and the
+// build type is already knowable in-app from the DEVELOPER_BUILD BuildConfig field, which
+// AppCapability reads. Putting it in the version name too made Android the odd one out for
+// information the app already had.
 
 
 dependencies {
