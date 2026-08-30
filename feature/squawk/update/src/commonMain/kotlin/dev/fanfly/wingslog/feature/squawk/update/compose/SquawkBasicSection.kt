@@ -11,6 +11,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
+import dev.fanfly.wingslog.core.template.LexiconFormatter
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.ui.common.compose.FormKeyboard
 import dev.fanfly.wingslog.core.ui.common.compose.FormSectionLabel
 import dev.fanfly.wingslog.core.ui.common.compose.FormTextField
@@ -21,7 +23,6 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.squawk.sharedassets.generated.resources.Res
-import wingslog.feature.squawk.sharedassets.generated.resources.priority_down
 import wingslog.feature.squawk.sharedassets.generated.resources.priority_high
 import wingslog.feature.squawk.sharedassets.generated.resources.priority_low
 import wingslog.feature.squawk.sharedassets.generated.resources.priority_medium
@@ -52,7 +53,9 @@ fun SquawkBasicSection(
     SquawkPriority.SQUAWK_PRIORITY_LOW to stringResource(Res.string.priority_low),
     SquawkPriority.SQUAWK_PRIORITY_MEDIUM to stringResource(Res.string.priority_medium),
     SquawkPriority.SQUAWK_PRIORITY_HIGH to stringResource(Res.string.priority_high),
-    SquawkPriority.SQUAWK_PRIORITY_AOG to stringResource(Res.string.priority_down),
+    SquawkPriority.SQUAWK_PRIORITY_AOG to LexiconFormatter.titleCase(
+      LocalThingLexicon.current.down_status
+    ),
   )
 
   Column(

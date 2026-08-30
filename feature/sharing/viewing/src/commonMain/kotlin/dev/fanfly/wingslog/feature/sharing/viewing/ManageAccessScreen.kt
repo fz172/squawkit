@@ -1,9 +1,5 @@
 package dev.fanfly.wingslog.feature.sharing.viewing
 
-import dev.fanfly.wingslog.core.template.LexiconFormatter
-import dev.fanfly.wingslog.core.template.LocalThingLexicon
-import dev.fanfly.wingslog.core.template.technicianNoun
-import dev.fanfly.wingslog.core.template.thingNoun
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -47,6 +43,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import dev.fanfly.wingslog.core.template.LexiconFormatter
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.technicianNoun
+import dev.fanfly.wingslog.core.template.thingNoun
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LayoutTier
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
@@ -73,7 +73,6 @@ import wingslog.feature.sharing.sharedassets.generated.resources.manage_access_e
 import wingslog.feature.sharing.sharedassets.generated.resources.manage_access_empty_title
 import wingslog.feature.sharing.sharedassets.generated.resources.manage_access_role_co_owner
 import wingslog.feature.sharing.sharedassets.generated.resources.manage_access_role_owner
-import wingslog.feature.sharing.sharedassets.generated.resources.manage_access_role_technician
 import wingslog.feature.sharing.sharedassets.generated.resources.manage_access_title
 import wingslog.feature.sharing.sharedassets.generated.resources.manage_access_toast_access_removed
 import wingslog.feature.sharing.sharedassets.generated.resources.manage_access_toast_code_cancelled
@@ -263,7 +262,11 @@ private fun AccessPanel(
   // access), and it takes effect immediately — so it gets the same "ask first" treatment. The member
   // is captured with the tap (not re-looked-up from state.activeMember at render time), same as
   // [revoking] above, so the dialog can't dangle if the roster changes underneath it.
-  var pendingRoleChange by remember { mutableStateOf<Pair<ShareMember, ShareRole>?>(null) }
+  var pendingRoleChange by remember {
+    mutableStateOf<Pair<ShareMember, ShareRole>?>(
+      null
+    )
+  }
 
   // The system/gesture back press otherwise dismisses the whole dialog (it's the Dialog's own
   // onDismissRequest) regardless of which of the four steps is showing. From anywhere but MAIN,
@@ -377,9 +380,10 @@ private fun AccessPanel(
         AccessPanelView.MEMBER -> MemberView(
           state = state,
           onChangeRole = { uid, role ->
-            state.activeMember?.takeIf { it.uid == uid }?.let { member ->
-              pendingRoleChange = member to role
-            }
+            state.activeMember?.takeIf { it.uid == uid }
+              ?.let { member ->
+                pendingRoleChange = member to role
+              }
           },
           onRemove = { state.activeMember?.let { revoking = it } },
         )
@@ -449,6 +453,7 @@ private fun panelTitles(state: ManageAccessUiState): Pair<String, String> =
       Res.string.invite_title,
       LocalThingLexicon.current.thingNoun.singular,
     ) to state.thingLabel
+
     AccessPanelView.CODE -> {
       val invite = state.activeInvite
       val subtitle = if (invite != null) {
@@ -597,7 +602,7 @@ internal fun roleLabel(role: ShareRole, isHost: Boolean): String = when (role) {
     if (isHost) stringResource(Res.string.manage_access_role_owner)
     else stringResource(Res.string.manage_access_role_co_owner)
 
-  ShareRole.TECHNICIAN -> stringResource(Res.string.manage_access_role_technician)
+  ShareRole.TECHNICIAN -> LexiconFormatter.titleCase(LocalThingLexicon.current.technicianNoun)
 }
 
 /** A destructive confirmation: the action is named on the button, so the user reads what they are doing. */

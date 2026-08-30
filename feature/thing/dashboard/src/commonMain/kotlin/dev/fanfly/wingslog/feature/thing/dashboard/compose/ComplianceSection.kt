@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.text.font.FontWeight
+import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.taskNoun
 import dev.fanfly.wingslog.core.ui.adaptive.compose.AdaptiveCardList
@@ -35,7 +36,6 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import wingslog.feature.tasks.sharedassets.generated.resources.due_with_count
 import wingslog.feature.tasks.sharedassets.generated.resources.history_with_count
-import wingslog.feature.tasks.sharedassets.generated.resources.maintenance_tasks
 import wingslog.feature.tasks.sharedassets.generated.resources.no_complied_yet
 import wingslog.feature.tasks.sharedassets.generated.resources.no_tasks_yet
 import wingslog.feature.tasks.sharedassets.generated.resources.no_tasks_yet_description
@@ -60,7 +60,7 @@ fun ComplianceSection(
   ) {
     if (showHeader) {
       Text(
-        text = stringResource(SharedRes.string.maintenance_tasks),
+        text = LexiconFormatter.titleCasePlural(LocalThingLexicon.current.taskNoun),
         style = MaterialTheme.typography.titleMedium,
         fontWeight = FontWeight.Bold,
       )

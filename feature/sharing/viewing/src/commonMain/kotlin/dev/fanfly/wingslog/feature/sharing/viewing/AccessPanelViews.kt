@@ -73,7 +73,6 @@ import wingslog.feature.sharing.sharedassets.generated.resources.invite_link_una
 import wingslog.feature.sharing.sharedassets.generated.resources.invite_qr_desc
 import wingslog.feature.sharing.sharedassets.generated.resources.invite_role_label
 import wingslog.feature.sharing.sharedassets.generated.resources.invite_role_owner
-import wingslog.feature.sharing.sharedassets.generated.resources.invite_role_technician
 import wingslog.feature.sharing.sharedassets.generated.resources.invite_scan_hint
 import wingslog.feature.sharing.sharedassets.generated.resources.manage_access_badge_you
 import wingslog.feature.sharing.sharedassets.generated.resources.manage_access_expires_in
@@ -90,7 +89,6 @@ import wingslog.feature.sharing.sharedassets.generated.resources.manage_access_p
 import wingslog.feature.sharing.sharedassets.generated.resources.manage_access_perm_manage_access
 import wingslog.feature.sharing.sharedassets.generated.resources.manage_access_perm_squawks_tasks
 import wingslog.feature.sharing.sharedassets.generated.resources.manage_access_perm_thing_details
-import wingslog.feature.sharing.sharedassets.generated.resources.manage_access_perm_work_logs
 import wingslog.feature.sharing.sharedassets.generated.resources.manage_access_revoke
 import wingslog.feature.sharing.sharedassets.generated.resources.manage_access_role_co_owner_desc
 import wingslog.feature.sharing.sharedassets.generated.resources.manage_access_role_technician_desc
@@ -120,7 +118,10 @@ internal fun MainView(
         trailing = if (state.members.size == 1) {
           stringResource(Res.string.manage_access_member_count_singular)
         } else {
-          stringResource(Res.string.manage_access_member_count_plural, state.members.size)
+          stringResource(
+            Res.string.manage_access_member_count_plural,
+            state.members.size
+          )
         },
       )
       GroupedList {
@@ -165,10 +166,12 @@ internal fun MainView(
       OutlinedButton(onClick = onLeave, modifier = Modifier.fillMaxWidth()) {
         Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = null)
         Spacer(Modifier.width(Spacing.small))
-        Text(stringResource(
-          Res.string.manage_access_leave,
-          LocalThingLexicon.current.thingNoun.singular,
-        ))
+        Text(
+          stringResource(
+            Res.string.manage_access_leave,
+            LocalThingLexicon.current.thingNoun.singular,
+          )
+        )
       }
     }
   }
@@ -202,11 +205,18 @@ internal fun InviteView(
     Row(
       modifier = Modifier
         .fillMaxWidth()
-        .background(MaterialTheme.colorScheme.surfaceContainer, RoundedCornerShape(Spacing.cardCornerRadius))
+        .background(
+          MaterialTheme.colorScheme.surfaceContainer,
+          RoundedCornerShape(Spacing.cardCornerRadius)
+        )
         .padding(Spacing.medium),
       horizontalArrangement = Arrangement.spacedBy(Spacing.small),
     ) {
-      Icon(Icons.Filled.Schedule, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+      Icon(
+        Icons.Filled.Schedule,
+        contentDescription = null,
+        tint = MaterialTheme.colorScheme.onSurfaceVariant
+      )
       Text(
         stringResource(Res.string.manage_access_expiry_note),
         style = MaterialTheme.typography.bodySmall,
@@ -235,7 +245,10 @@ internal fun CodeView(state: ManageAccessUiState) {
     Column(
       modifier = Modifier
         .fillMaxWidth()
-        .background(MaterialTheme.colorScheme.surfaceContainer, RoundedCornerShape(Spacing.cardCornerRadius))
+        .background(
+          MaterialTheme.colorScheme.surfaceContainer,
+          RoundedCornerShape(Spacing.cardCornerRadius)
+        )
         .padding(Spacing.extraLarge),
       horizontalAlignment = Alignment.CenterHorizontally,
       verticalArrangement = Arrangement.spacedBy(Spacing.small),
@@ -268,7 +281,10 @@ internal fun CodeView(state: ManageAccessUiState) {
 
     if (code != null) {
       val url = "$SHARE_URL_BASE#$code"
-      Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
+      Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(Spacing.small)
+      ) {
         Surface(color = Color.White, modifier = Modifier.size(200.dp)) {
           Image(
             painter = rememberQrCodePainter(url),
@@ -286,7 +302,10 @@ internal fun CodeView(state: ManageAccessUiState) {
 
     Row(
       modifier = Modifier
-        .background(MaterialTheme.statusColors.caution.container, RoundedCornerShape(Spacing.badgeCornerRadius))
+        .background(
+          MaterialTheme.statusColors.caution.container,
+          RoundedCornerShape(Spacing.badgeCornerRadius)
+        )
         .padding(horizontal = Spacing.medium, vertical = Spacing.extraSmall),
       verticalAlignment = Alignment.CenterVertically,
       horizontalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
@@ -298,7 +317,10 @@ internal fun CodeView(state: ManageAccessUiState) {
         modifier = Modifier.size(16.dp),
       )
       Text(
-        stringResource(Res.string.manage_access_expires_in, expiresInLabel(invite.expiresAtEpochMs)),
+        stringResource(
+          Res.string.manage_access_expires_in,
+          expiresInLabel(invite.expiresAtEpochMs)
+        ),
         style = MaterialTheme.typography.labelSmall,
         color = MaterialTheme.statusColors.caution.onContainer,
       )
@@ -323,11 +345,18 @@ internal fun MemberView(
     Row(
       modifier = Modifier
         .fillMaxWidth()
-        .background(MaterialTheme.colorScheme.surfaceContainer, RoundedCornerShape(Spacing.cardCornerRadius))
+        .background(
+          MaterialTheme.colorScheme.surfaceContainer,
+          RoundedCornerShape(Spacing.cardCornerRadius)
+        )
         .padding(Spacing.medium),
       verticalAlignment = Alignment.CenterVertically,
     ) {
-      AvatarIcon(displayName = member.displayName.ifBlank { member.uid }, photoUri = member.photoUrl, size = 48.dp)
+      AvatarIcon(
+        displayName = member.displayName.ifBlank { member.uid },
+        photoUri = member.photoUrl,
+        size = 48.dp
+      )
       Spacer(Modifier.width(Spacing.medium))
       Text(
         member.displayName.ifBlank { stringResource(Res.string.manage_access_unnamed_member) },
@@ -342,12 +371,22 @@ internal fun MemberView(
       RoleOptionCard(
         role = ShareRole.TECHNICIAN,
         selected = member.role == ShareRole.TECHNICIAN,
-        onClick = { if (member.role != ShareRole.TECHNICIAN) onChangeRole(member.uid, ShareRole.TECHNICIAN) },
+        onClick = {
+          if (member.role != ShareRole.TECHNICIAN) onChangeRole(
+            member.uid,
+            ShareRole.TECHNICIAN
+          )
+        },
       )
       RoleOptionCard(
         role = ShareRole.OWNER,
         selected = member.role == ShareRole.OWNER,
-        onClick = { if (member.role != ShareRole.OWNER) onChangeRole(member.uid, ShareRole.OWNER) },
+        onClick = {
+          if (member.role != ShareRole.OWNER) onChangeRole(
+            member.uid,
+            ShareRole.OWNER
+          )
+        },
       )
     }
 
@@ -355,12 +394,19 @@ internal fun MemberView(
       modifier = Modifier
         .fillMaxWidth()
         .clickable(onClick = onRemove)
-        .background(MaterialTheme.colorScheme.errorContainer, RoundedCornerShape(Spacing.cardCornerRadius))
+        .background(
+          MaterialTheme.colorScheme.errorContainer,
+          RoundedCornerShape(Spacing.cardCornerRadius)
+        )
         .padding(Spacing.medium),
       verticalAlignment = Alignment.CenterVertically,
       horizontalArrangement = Arrangement.spacedBy(Spacing.small),
     ) {
-      Icon(Icons.Filled.PersonRemove, contentDescription = null, tint = MaterialTheme.colorScheme.onErrorContainer)
+      Icon(
+        Icons.Filled.PersonRemove,
+        contentDescription = null,
+        tint = MaterialTheme.colorScheme.onErrorContainer
+      )
       Text(
         stringResource(Res.string.manage_access_revoke),
         style = MaterialTheme.typography.titleSmall,
@@ -371,8 +417,13 @@ internal fun MemberView(
 }
 
 @Composable
-private fun RoleOptionCard(role: ShareRole, selected: Boolean, onClick: () -> Unit) {
-  val borderColor = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant
+private fun RoleOptionCard(
+  role: ShareRole,
+  selected: Boolean,
+  onClick: () -> Unit
+) {
+  val borderColor =
+    if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant
   val backgroundColor = if (selected) {
     MaterialTheme.colorScheme.primaryContainer
   } else {
@@ -380,7 +431,7 @@ private fun RoleOptionCard(role: ShareRole, selected: Boolean, onClick: () -> Un
   }
   val (name, desc, icon) = when (role) {
     ShareRole.TECHNICIAN -> Triple(
-      stringResource(Res.string.invite_role_technician),
+      LexiconFormatter.titleCase(LocalThingLexicon.current.technicianNoun),
       stringResource(
         Res.string.manage_access_role_technician_desc,
         LocalThingLexicon.current.squawkNoun.plural,
@@ -406,7 +457,11 @@ private fun RoleOptionCard(role: ShareRole, selected: Boolean, onClick: () -> Un
       .fillMaxWidth()
       .clickable(onClick = onClick)
       .background(backgroundColor, RoundedCornerShape(Spacing.cardCornerRadius))
-      .border(Spacing.hairline, borderColor, RoundedCornerShape(Spacing.cardCornerRadius))
+      .border(
+        Spacing.hairline,
+        borderColor,
+        RoundedCornerShape(Spacing.cardCornerRadius)
+      )
       .padding(Spacing.medium),
     horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
   ) {
@@ -417,13 +472,21 @@ private fun RoleOptionCard(role: ShareRole, selected: Boolean, onClick: () -> Un
     )
     Column {
       Text(name, style = MaterialTheme.typography.titleSmall)
-      Text(desc, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+      Text(
+        desc,
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant
+      )
     }
   }
 }
 
 @Composable
-private fun MemberRow(member: ShareMember, clickable: Boolean, onClick: () -> Unit) {
+private fun MemberRow(
+  member: ShareMember,
+  clickable: Boolean,
+  onClick: () -> Unit
+) {
   Row(
     modifier = Modifier
       .fillMaxWidth()
@@ -431,7 +494,11 @@ private fun MemberRow(member: ShareMember, clickable: Boolean, onClick: () -> Un
       .padding(Spacing.medium),
     verticalAlignment = Alignment.CenterVertically,
   ) {
-    AvatarIcon(displayName = member.displayName.ifBlank { member.uid }, photoUri = member.photoUrl, size = 38.dp)
+    AvatarIcon(
+      displayName = member.displayName.ifBlank { member.uid },
+      photoUri = member.photoUrl,
+      size = 38.dp
+    )
     Spacer(Modifier.width(Spacing.medium))
     Column(Modifier.weight(1f)) {
       Row(verticalAlignment = Alignment.CenterVertically) {
@@ -482,10 +549,17 @@ private fun InviteRow(invite: PendingInvite, onClick: () -> Unit) {
     Box(
       modifier = Modifier
         .size(38.dp)
-        .background(MaterialTheme.statusColors.caution.container, RoundedCornerShape(19.dp)),
+        .background(
+          MaterialTheme.statusColors.caution.container,
+          RoundedCornerShape(19.dp)
+        ),
       contentAlignment = Alignment.Center,
     ) {
-      Icon(Icons.Filled.QrCode2, contentDescription = null, tint = MaterialTheme.statusColors.caution.accent)
+      Icon(
+        Icons.Filled.QrCode2,
+        contentDescription = null,
+        tint = MaterialTheme.statusColors.caution.accent
+      )
     }
     Spacer(Modifier.width(Spacing.medium))
     Column(Modifier.weight(1f)) {
@@ -495,12 +569,20 @@ private fun InviteRow(invite: PendingInvite, onClick: () -> Unit) {
         fontFamily = FontFamily.Monospace,
       )
       Text(
-        stringResource(Res.string.manage_access_invite_meta, roleLabel(invite.role, isHost = false), expiresInLabel(invite.expiresAtEpochMs)),
+        stringResource(
+          Res.string.manage_access_invite_meta,
+          roleLabel(invite.role, isHost = false),
+          expiresInLabel(invite.expiresAtEpochMs)
+        ),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
       )
     }
-    Icon(Icons.Filled.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+    Icon(
+      Icons.Filled.ChevronRight,
+      contentDescription = null,
+      tint = MaterialTheme.colorScheme.onSurfaceVariant
+    )
   }
 }
 
@@ -509,11 +591,18 @@ private fun SoloEmptyCallout() {
   Row(
     modifier = Modifier
       .fillMaxWidth()
-      .background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(Spacing.cardCornerRadius))
+      .background(
+        MaterialTheme.colorScheme.primaryContainer,
+        RoundedCornerShape(Spacing.cardCornerRadius)
+      )
       .padding(Spacing.large),
     horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
   ) {
-    Icon(Icons.Filled.GroupAdd, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer)
+    Icon(
+      Icons.Filled.GroupAdd,
+      contentDescription = null,
+      tint = MaterialTheme.colorScheme.onPrimaryContainer
+    )
     Column {
       Text(
         stringResource(Res.string.manage_access_solo_title),
@@ -538,7 +627,10 @@ private fun PermissionsCard(expanded: Boolean, onToggle: () -> Unit) {
   Column(
     modifier = Modifier
       .fillMaxWidth()
-      .background(MaterialTheme.colorScheme.surfaceContainer, RoundedCornerShape(Spacing.cardCornerRadius)),
+      .background(
+        MaterialTheme.colorScheme.surfaceContainer,
+        RoundedCornerShape(Spacing.cardCornerRadius)
+      ),
   ) {
     Row(
       modifier = Modifier
@@ -548,7 +640,11 @@ private fun PermissionsCard(expanded: Boolean, onToggle: () -> Unit) {
       verticalAlignment = Alignment.CenterVertically,
       horizontalArrangement = Arrangement.spacedBy(Spacing.small),
     ) {
-      Icon(Icons.Filled.Security, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+      Icon(
+        Icons.Filled.Security,
+        contentDescription = null,
+        tint = MaterialTheme.colorScheme.onSurfaceVariant
+      )
       Text(
         stringResource(Res.string.manage_access_help_title),
         style = MaterialTheme.typography.titleSmall,
@@ -561,23 +657,41 @@ private fun PermissionsCard(expanded: Boolean, onToggle: () -> Unit) {
       )
     }
     if (expanded) {
-      Column(modifier = Modifier.padding(start = Spacing.medium, end = Spacing.medium, bottom = Spacing.medium)) {
+      Column(
+        modifier = Modifier.padding(
+          start = Spacing.medium,
+          end = Spacing.medium,
+          bottom = Spacing.medium
+        )
+      ) {
         val rows = listOf(
-          Triple(stringResource(
-            Res.string.manage_access_perm_squawks_tasks,
-            LexiconFormatter.sentenceCasePlural(LocalThingLexicon.current.squawkNoun),
-          ), true, true),
-          Triple(stringResource(Res.string.manage_access_perm_work_logs), true, true),
-          Triple(stringResource(
-            Res.string.manage_access_perm_thing_details,
-            LexiconFormatter.sentenceCase(LocalThingLexicon.current.thingNoun),
-          ), false, true),
-          Triple(stringResource(Res.string.manage_access_perm_manage_access), false, true),
+          Triple(
+            stringResource(
+              Res.string.manage_access_perm_squawks_tasks,
+              LexiconFormatter.sentenceCasePlural(LocalThingLexicon.current.squawkNoun),
+            ), true, true
+          ),
+          Triple(
+            LexiconFormatter.sentenceCasePlural(LocalThingLexicon.current.logNoun),
+            true,
+            true
+          ),
+          Triple(
+            stringResource(
+              Res.string.manage_access_perm_thing_details,
+              LexiconFormatter.sentenceCase(LocalThingLexicon.current.thingNoun),
+            ), false, true
+          ),
+          Triple(
+            stringResource(Res.string.manage_access_perm_manage_access),
+            false,
+            true
+          ),
         )
         Row(Modifier.fillMaxWidth()) {
           Spacer(Modifier.weight(1f))
           Text(
-            stringResource(Res.string.invite_role_technician),
+            LexiconFormatter.titleCase(LocalThingLexicon.current.technicianNoun),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.width(64.dp),
@@ -594,10 +708,15 @@ private fun PermissionsCard(expanded: Boolean, onToggle: () -> Unit) {
         rows.forEach { (label, tech, owner) ->
           HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
           Row(
-            modifier = Modifier.fillMaxWidth().padding(vertical = Spacing.small),
+            modifier = Modifier.fillMaxWidth()
+              .padding(vertical = Spacing.small),
             verticalAlignment = Alignment.CenterVertically,
           ) {
-            Text(label, style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
+            Text(
+              label,
+              style = MaterialTheme.typography.bodySmall,
+              modifier = Modifier.weight(1f)
+            )
             PermCell(tech, Modifier.width(64.dp))
             PermCell(owner, Modifier.width(64.dp))
           }
@@ -634,14 +753,21 @@ private fun PermCell(granted: Boolean, modifier: Modifier = Modifier) {
 
 @Composable
 private fun SectionHeader(title: String, trailing: String? = null) {
-  Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+  Row(
+    Modifier.fillMaxWidth(),
+    horizontalArrangement = Arrangement.SpaceBetween
+  ) {
     Text(
       title.uppercase(),
       style = MaterialTheme.typography.labelSmall,
       color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
     if (trailing != null) {
-      Text(trailing, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+      Text(
+        trailing,
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant
+      )
     }
   }
 }
@@ -650,7 +776,10 @@ private fun SectionHeader(title: String, trailing: String? = null) {
 private fun GroupedList(content: @Composable ColumnScope.() -> Unit) {
   Surface(
     shape = RoundedCornerShape(Spacing.cardCornerRadius),
-    border = BorderStroke(Spacing.hairline, MaterialTheme.colorScheme.outlineVariant),
+    border = BorderStroke(
+      Spacing.hairline,
+      MaterialTheme.colorScheme.outlineVariant
+    ),
     color = MaterialTheme.colorScheme.surfaceContainer,
   ) {
     Column(content = content)
@@ -674,7 +803,8 @@ private fun Pill(text: String) {
 
 /** "23h 41m" / "6d" style countdown to [expiresAtEpochMs]; "Expired" once past. */
 private fun expiresInLabel(expiresAtEpochMs: Long): String {
-  val remainingMs = expiresAtEpochMs - Clock.System.now().toEpochMilliseconds()
+  val remainingMs = expiresAtEpochMs - Clock.System.now()
+    .toEpochMilliseconds()
   if (remainingMs <= 0) return "0m"
   val totalMinutes = remainingMs / 60_000
   val days = totalMinutes / (24 * 60)

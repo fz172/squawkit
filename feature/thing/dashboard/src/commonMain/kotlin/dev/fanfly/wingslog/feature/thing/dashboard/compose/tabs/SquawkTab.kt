@@ -1,7 +1,5 @@
 package dev.fanfly.wingslog.feature.thing.dashboard.compose.tabs
 
-import dev.fanfly.wingslog.core.template.LocalThingLexicon
-import dev.fanfly.wingslog.core.template.squawkNoun
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -30,6 +28,9 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.text.font.FontWeight
 import dev.fanfly.wingslog.core.analytics.LocalAnalytics
+import dev.fanfly.wingslog.core.template.LexiconFormatter
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.squawkNoun
 import dev.fanfly.wingslog.core.ui.adaptive.compose.AdaptiveCardList
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalNavPillClearance
@@ -42,14 +43,14 @@ import dev.fanfly.wingslog.feature.ads.model.AdSurface
 import dev.fanfly.wingslog.feature.ads.model.ListRow
 import dev.fanfly.wingslog.feature.ads.model.withAdSlots
 import dev.fanfly.wingslog.feature.ads.viewing.AdSlot
-import dev.fanfly.wingslog.feature.thing.dashboard.data.AircraftOverviewAction
-import dev.fanfly.wingslog.feature.thing.dashboard.data.ThingOverviewUiState
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
 import dev.fanfly.wingslog.feature.attachment.datamanager.OpenState
 import dev.fanfly.wingslog.feature.squawk.model.SquawkStatus
 import dev.fanfly.wingslog.feature.squawk.model.SquawkWithStatus
 import dev.fanfly.wingslog.feature.squawk.viewing.SquawkCard
 import dev.fanfly.wingslog.feature.squawk.viewing.SquawkDetailSheet
+import dev.fanfly.wingslog.feature.thing.dashboard.data.AircraftOverviewAction
+import dev.fanfly.wingslog.feature.thing.dashboard.data.ThingOverviewUiState
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -61,7 +62,6 @@ import wingslog.feature.squawk.sharedassets.generated.resources.no_closed_squawk
 import wingslog.feature.squawk.sharedassets.generated.resources.no_open_squawks
 import wingslog.feature.squawk.sharedassets.generated.resources.no_open_squawks_description
 import wingslog.feature.squawk.sharedassets.generated.resources.open_with_count
-import wingslog.feature.squawk.sharedassets.generated.resources.squawks
 import kotlin.math.roundToInt
 
 private val squawkOrder = compareByDescending<SquawkWithStatus> {
@@ -105,7 +105,8 @@ fun SquawkTab(
   // can first see the squawk as still OPEN. Re-running once the real status shows up (rather than
   // only once, on id alone) is what corrects showClosed and the scroll target instead of leaving both
   // stuck on Open.
-  val scrollTarget = scrollToSquawkId?.let { id -> state.squawks.find { it.squawk.id == id } }
+  val scrollTarget =
+    scrollToSquawkId?.let { id -> state.squawks.find { it.squawk.id == id } }
   LaunchedEffect(scrollToSquawkId, scrollTarget?.status) {
     val target = scrollTarget ?: return@LaunchedEffect
     showClosed = target.status != SquawkStatus.OPEN
@@ -135,7 +136,7 @@ fun SquawkTab(
 
     if (showHeader) {
       Text(
-        text = stringResource(Res.string.squawks),
+        text = LexiconFormatter.titleCasePlural(LocalThingLexicon.current.squawkNoun),
         style = MaterialTheme.typography.titleMedium,
         fontWeight = FontWeight.Bold,
       )

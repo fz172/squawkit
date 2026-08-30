@@ -8,14 +8,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.text.font.FontWeight
-import dev.fanfly.wingslog.thing.Squawk
+import dev.fanfly.wingslog.core.template.LexiconFormatter
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.squawkNoun
 import dev.fanfly.wingslog.core.ui.common.compose.PickerSelectableRow
 import dev.fanfly.wingslog.core.ui.common.compose.PickerSelectionMode
 import dev.fanfly.wingslog.core.ui.common.compose.PickerSheet
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import org.jetbrains.compose.resources.stringResource
-import wingslog.feature.squawk.sharedassets.generated.resources.Res
-import wingslog.feature.squawk.sharedassets.generated.resources.squawks
+import dev.fanfly.wingslog.thing.Squawk
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -29,7 +29,7 @@ fun SquawkPickerSheet(
     onDismiss = onDismiss,
     headerSlot = {
       Text(
-        text = stringResource(Res.string.squawks),
+        text = LexiconFormatter.titleCasePlural(LocalThingLexicon.current.squawkNoun),
         style = MaterialTheme.typography.titleLarge,
         fontWeight = FontWeight.Bold,
       )
