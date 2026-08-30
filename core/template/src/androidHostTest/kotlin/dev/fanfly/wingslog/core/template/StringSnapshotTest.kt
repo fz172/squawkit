@@ -337,22 +337,18 @@ class StringSnapshotTest {
       "feature/fleet/sharedassets",
       "no_fleet_description"
     ) { it.thingNoun.singular },
-    frame(
-      "feature/subscription/viewing",
-      "subscription_perk_thing_title"
-    ) { it.thingNoun.plural },
-    frame(
-      "feature/subscription/viewing",
-      "subscription_feature_sharing"
-    ) { it.thingNoun.plural },
-    frame(
-      "feature/subscription/viewing",
-      "upsell_body_add_thing"
-    ) { it.thingNoun.plural },
-    frame(
-      "feature/subscription/viewing",
-      "upsell_body_share"
-    ) { it.thingNoun.plural },
+
+    // Account-scoped surfaces that name a thing *in the abstract* (#687). Same case as the
+    // add-thing family: they render with none selected, so CurrentThingTemplate's app-scoped
+    // default answers them and retires itself when a second preset ships. Filing #687 lumped these
+    // in with surfaces that aggregate *existing* things, which is a different problem.
+    frame("feature/export/sharedassets", "export_untitled_thing") { it.thingNoun.singular },
+    frame("feature/export/sharedassets", "export_thing_details_incomplete") {
+      LexiconFormatter.sentenceCase(it.thingNoun)
+    },
+    frame("feature/export/sharedassets", "export_progress_collecting_data") {
+      it.thingNoun.singular
+    },
     // Positions 1 and 2 are the tail number and the actor, both from the push payload.
     "feature/notifications/sharedassets:notification_n1_body_thing_updated" to { l: Lexicon ->
       mapOf(3 to l.thingNoun.singular)

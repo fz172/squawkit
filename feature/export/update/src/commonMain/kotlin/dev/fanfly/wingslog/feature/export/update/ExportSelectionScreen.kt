@@ -478,9 +478,17 @@ private fun AircraftOptionRow(
   onClick: () -> Unit,
 ) {
   GroupedCheckboxRow(
-    title = thing.tailNumber.ifBlank { stringResource(Res.string.export_untitled_thing) },
+    title = thing.tailNumber.ifBlank {
+      stringResource(
+        Res.string.export_untitled_thing,
+        LocalThingLexicon.current.thingNoun.singular,
+      )
+    },
     subtitle = thing.makeModel.ifBlank {
-      stringResource(Res.string.export_thing_details_incomplete)
+      stringResource(
+        Res.string.export_thing_details_incomplete,
+        LexiconFormatter.sentenceCase(LocalThingLexicon.current.thingNoun),
+      )
     },
     titleStyle = WingslogTypography.dataLarge,
     checked = selected,
@@ -754,7 +762,7 @@ private fun ExportBottomBar(
         Text(
           text = stringResource(
             Res.string.export_footer_thing_count,
-            state.selectedThingIds.size
+            state.selectedThingIds.size,
           ),
           style = MaterialTheme.typography.bodySmall,
           color = MaterialTheme.colorScheme.onSurface,
@@ -950,7 +958,11 @@ private fun exportRunningPhases(): List<ExportProgressStep> = listOf(
 
 @Composable
 private fun ExportProgressStep.label(): String = when (this) {
-  ExportProgressStep.COLLECTING_DATA -> stringResource(Res.string.export_progress_collecting_data)
+  ExportProgressStep.COLLECTING_DATA -> stringResource(
+    Res.string.export_progress_collecting_data,
+    LocalThingLexicon.current.thingNoun.singular,
+  )
+
   ExportProgressStep.BUILDING_ARCHIVE -> stringResource(Res.string.export_progress_building_archive)
   ExportProgressStep.COMPRESSING_ARCHIVE -> stringResource(Res.string.export_progress_compressing_archive)
   ExportProgressStep.SAVING_FILE -> stringResource(Res.string.export_progress_saving_file)

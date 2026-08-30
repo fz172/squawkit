@@ -4,20 +4,21 @@
 
   <!-- Non-subscriber comparison view -->
   <string name="subscription_compare_header">Your all-access pass</string>
-  <string name="subscription_compare_subhead">The Basic bundle is free and provides the complete feature set as logbook, backed up and synced. The Pro bundle adds scale, attachments, collaboration and more.</string>
+  <string name="subscription_compare_subhead">The Basic bundle is free and provides the essential functional feature set, backed up and synced. The Pro bundle adds scale, attachments, collaboration and more.</string>
   <!-- Sets expectations before the store paywall opens: SquawkIt never shows a price itself. -->
   <string name="subscription_billing_note">Monthly and annual billing, price and payment method are chosen in the store.</string>
   <string name="subscription_cta_caption">Price shown at checkout. Cancel anytime.</string>
   <string name="subscription_includes_header">What’s included</string>
   <string name="subscription_col_free">Basic</string>
   <string name="subscription_col_pro">Pro</string>
-  <string name="subscription_feature_records">Logs, tasks &amp; squawks</string>
+  <string name="subscription_feature_thing">Things</string>
+  <string name="subscription_feature_records">Logs, tasks &amp; issues</string>
   <string name="subscription_feature_export">Export to this device</string>
   <string name="subscription_feature_backup">Cloud backup &amp; sync</string>
   <string name="subscription_feature_ads">Ad-free experience</string>
   <string name="subscription_feature_attachments">Photo &amp; file attachments</string>
   <string name="subscription_feature_email">Email a copy of exports</string>
-  <string name="subscription_feature_sharing">Share <xliff:g example="aircraft">%1$s</xliff:g> &amp; collaborate with others</string>
+  <string name="subscription_feature_sharing">Share &amp; collaborate with others</string>
   <string name="subscription_thing_free">2</string>
   <!-- Announced in place of subscription_cell_unlimited, which is the glyph shown in its cell. -->
   <string name="subscription_thing_unlimited">Unlimited</string>
@@ -61,12 +62,12 @@
   <string name="subscription_ends">Ends</string>
   <string name="subscription_purchased_on">Purchased on</string>
   <string name="subscription_unlocked_header">Unlocked with Pro</string>
-  <string name="subscription_perk_thing_title">Unlimited <xliff:g example="aircraft">%1$s</xliff:g></string>
+  <string name="subscription_perk_thing_title">Unlimited things</string>
   <string name="subscription_perk_thing_body">All your things logged in one book</string>
   <string name="subscription_perk_attachments_title">Attachments</string>
   <string name="subscription_perk_attachments_body">Photos and files on any log</string>
   <string name="subscription_perk_sharing_title">Sharing</string>
-  <string name="subscription_perk_sharing_body">Invite owners and technicians</string>
+  <string name="subscription_perk_sharing_body">Invite owners and collaborators</string>
 
   <!-- The subscription is real and Pro is unlocked here, but this device's store did not sell it. -->
   <string name="subscription_managed_elsewhere_title">Managed on another platform</string>
@@ -84,8 +85,8 @@
   <string name="subscription_storage_used">Storage used</string>
 
   <!-- Pro upsell sheet -->
-  <string name="upsell_body_add_thing">Add unlimited <xliff:g example="aircraft">%1$s</xliff:g> with SquawkIt Pro.</string>
+  <string name="upsell_body_add_thing">Add unlimited things with SquawkIt Pro.</string>
   <string name="upsell_body_attachment">Attach photos and files to your maintenance records with SquawkIt Pro.</string>
   <string name="upsell_body_email">Email a copy of your exports with SquawkIt Pro.</string>
-  <string name="upsell_body_share">Share <xliff:g example="aircraft">%1$s</xliff:g> and invite others with SquawkIt Pro.</string>
+  <string name="upsell_body_share">Share and invite others with SquawkIt Pro.</string>
 </resources>
