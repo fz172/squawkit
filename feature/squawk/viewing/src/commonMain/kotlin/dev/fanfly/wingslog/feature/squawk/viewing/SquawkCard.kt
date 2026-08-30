@@ -1,7 +1,5 @@
 package dev.fanfly.wingslog.feature.squawk.viewing
 
-import dev.fanfly.wingslog.core.template.LexiconFormatter
-import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -22,6 +20,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.datetime.toLocalDate
+import dev.fanfly.wingslog.core.template.LexiconFormatter
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.ui.common.compose.StatusChip
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.StatusTier
@@ -133,7 +133,10 @@ internal fun PriorityBadge(item: SquawkWithStatus) {
   val priority = item.squawk.priority
   val tier = priority.statusTier()
   val label = when (priority) {
-    SquawkPriority.SQUAWK_PRIORITY_AOG -> LexiconFormatter.titleCase(LocalThingLexicon.current.down_status)
+    SquawkPriority.SQUAWK_PRIORITY_AOG -> LexiconFormatter.titleCase(
+      LocalThingLexicon.current.down_status
+    )
+
     SquawkPriority.SQUAWK_PRIORITY_HIGH -> stringResource(Res.string.priority_high)
     SquawkPriority.SQUAWK_PRIORITY_MEDIUM -> stringResource(Res.string.priority_medium)
     else -> stringResource(Res.string.priority_low)

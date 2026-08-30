@@ -1,9 +1,5 @@
 package dev.fanfly.wingslog.feature.sharing.viewing
 
-import dev.fanfly.wingslog.core.template.technicianNoun
-import dev.fanfly.wingslog.core.template.LexiconFormatter
-import dev.fanfly.wingslog.core.template.LocalThingLexicon
-import dev.fanfly.wingslog.core.template.thingNoun
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
@@ -11,6 +7,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import dev.fanfly.wingslog.core.template.LexiconFormatter
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.technicianNoun
+import dev.fanfly.wingslog.core.template.thingNoun
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.sharing.model.InvitePreview
 import dev.fanfly.wingslog.feature.sharing.model.ShareRole
@@ -18,13 +18,12 @@ import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.accept
 import wingslog.core.sharedassets.generated.resources.not_now
 import wingslog.core.sharedassets.generated.resources.ok
-import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.sharing.sharedassets.generated.resources.Res
 import wingslog.feature.sharing.sharedassets.generated.resources.redeem_already_member_body
 import wingslog.feature.sharing.sharedassets.generated.resources.redeem_already_member_title
 import wingslog.feature.sharing.sharedassets.generated.resources.redeem_confirm_body
-import wingslog.feature.sharing.sharedassets.generated.resources.redeem_confirm_body_role
 import wingslog.feature.sharing.sharedassets.generated.resources.redeem_confirm_body_full
+import wingslog.feature.sharing.sharedassets.generated.resources.redeem_confirm_body_role
 import wingslog.feature.sharing.sharedassets.generated.resources.redeem_confirm_title
 import wingslog.feature.sharing.sharedassets.generated.resources.redeem_failed_body
 import wingslog.feature.sharing.sharedassets.generated.resources.redeem_failed_title
@@ -33,6 +32,7 @@ import wingslog.feature.sharing.sharedassets.generated.resources.redeem_needs_si
 import wingslog.feature.sharing.sharedassets.generated.resources.redeem_role_owner
 import wingslog.feature.sharing.sharedassets.generated.resources.redeem_success_body
 import wingslog.feature.sharing.sharedassets.generated.resources.redeem_success_title
+import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 
 /**
  * State of the thing-invite redemption surface. A non-member can't read the thing before
@@ -41,6 +41,7 @@ import wingslog.feature.sharing.sharedassets.generated.resources.redeem_success_
  */
 sealed interface RedeemUiState {
   data object Hidden : RedeemUiState
+
   /**
    * What you are about to join (#201). Resolved from the code by the server — the invitee holds no
    * thing id, and the rules would (rightly) refuse to resolve one for a non-member.
@@ -49,6 +50,7 @@ sealed interface RedeemUiState {
    * rather than blocking Accept on a call that is only there to inform.
    */
   data class Confirm(val preview: InvitePreview? = null) : RedeemUiState
+
   /** Signed out / guest: the invite stays parked until the user signs in with a real account. */
   data object NeedsSignIn : RedeemUiState
   data object Redeeming : RedeemUiState
@@ -68,10 +70,14 @@ fun RedeemConfirmationSheet(
 
     is RedeemUiState.Confirm -> AlertDialog(
       onDismissRequest = onDismiss,
-      title = { Text(stringResource(
-        Res.string.redeem_confirm_title,
-        LexiconFormatter.sentenceCase(LocalThingLexicon.current.thingNoun),
-      )) },
+      title = {
+        Text(
+          stringResource(
+            Res.string.redeem_confirm_title,
+            LexiconFormatter.sentenceCase(LocalThingLexicon.current.thingNoun),
+          )
+        )
+      },
       text = {
         // Say what they are joining and who is inviting them (#201). Until #164 this was impossible:
         // the invitee held an thing id the rules must refuse to resolve for a non-member, so the
@@ -84,6 +90,7 @@ fun RedeemConfirmationSheet(
               LexiconFormatter.withArticle(LocalThingLexicon.current.thingNoun),
               LexiconFormatter.lowerFirst(LocalThingLexicon.current.collection_label),
             )
+
             preview.hostName.isBlank() || preview.thingLabel.isBlank() ->
               stringResource(
                 Res.string.redeem_confirm_body_role,
@@ -102,8 +109,24 @@ fun RedeemConfirmationSheet(
           },
         )
       },
-      confirmButton = { TextButton(onClick = onAccept) { Text(stringResource(CoreRes.string.accept)) } },
-      dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(CoreRes.string.not_now)) } },
+      confirmButton = {
+        TextButton(onClick = onAccept) {
+          Text(
+            stringResource(
+              CoreRes.string.accept
+            )
+          )
+        }
+      },
+      dismissButton = {
+        TextButton(onClick = onDismiss) {
+          Text(
+            stringResource(
+              CoreRes.string.not_now
+            )
+          )
+        }
+      },
     )
 
     RedeemUiState.NeedsSignIn -> InfoDialog(
@@ -115,10 +138,14 @@ fun RedeemConfirmationSheet(
     RedeemUiState.Redeeming -> AlertDialog(
       onDismissRequest = {},
       confirmButton = {},
-      title = { Text(stringResource(
-        Res.string.redeem_confirm_title,
-        LexiconFormatter.sentenceCase(LocalThingLexicon.current.thingNoun),
-      )) },
+      title = {
+        Text(
+          stringResource(
+            Res.string.redeem_confirm_title,
+            LexiconFormatter.sentenceCase(LocalThingLexicon.current.thingNoun),
+          )
+        )
+      },
       text = { CircularProgressIndicator(Modifier.padding(Spacing.small)) },
     )
 
@@ -158,7 +185,15 @@ private fun InfoDialog(title: String, body: String, onDismiss: () -> Unit) {
     onDismissRequest = onDismiss,
     title = { Text(title) },
     text = { Text(body) },
-    confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(CoreRes.string.ok)) } },
+    confirmButton = {
+      TextButton(onClick = onDismiss) {
+        Text(
+          stringResource(
+            CoreRes.string.ok
+          )
+        )
+      }
+    },
   )
 }
 
