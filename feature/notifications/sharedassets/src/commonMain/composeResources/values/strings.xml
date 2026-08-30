@@ -57,20 +57,12 @@
   <string name="notification_n1_actor_fallback">A collaborator</string>
 
   <!-- Section labels, title case for notification_n1_title. -->
-  <string name="notification_n1_section_squawks">Squawks</string>
-  <string name="notification_n1_section_tasks">Maintenance Tasks</string>
-  <string name="notification_n1_section_logbook">Work Logs</string>
   <!-- Lower-case, mid-sentence section labels for notification_n1_body_single (web only — see
        above; the server-push bodies name the record's own noun instead, below). -->
-  <string name="notification_n1_section_squawks_lower">squawks</string>
-  <string name="notification_n1_section_tasks_lower">maintenance tasks</string>
-  <string name="notification_n1_section_logbook_lower">work logs</string>
   <!-- Aircraft-record activity (make/model/tail edits). Server-side N1 only — the web detector does
        not cover the Aircraft record. -->
 
   <!-- Singular record nouns for notification_n1_body_record_*, e.g. "created a new squawk". -->
-  <string name="notification_n1_noun_task">maintenance task</string>
-  <string name="notification_n1_noun_log">work log</string>
 
   <!-- N1 escalation bodies (design §7.5). Deliberately NOT the N2 bodies above, even though both
        report the same crossing: the server knows WHO made the change and the device-local scanner

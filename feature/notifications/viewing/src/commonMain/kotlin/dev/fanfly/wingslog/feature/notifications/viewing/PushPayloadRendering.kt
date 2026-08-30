@@ -1,7 +1,9 @@
 package dev.fanfly.wingslog.feature.notifications.viewing
 
 import dev.fanfly.wingslog.core.template.LexiconFormatter
+import dev.fanfly.wingslog.core.template.logNoun
 import dev.fanfly.wingslog.core.template.squawkNoun
+import dev.fanfly.wingslog.core.template.taskNoun
 import dev.fanfly.wingslog.core.template.thingNoun
 import dev.fanfly.wingslog.feature.notifications.model.PendingNotification
 import dev.fanfly.wingslog.thing.Lexicon
@@ -14,11 +16,6 @@ import wingslog.feature.notifications.sharedassets.generated.resources.notificat
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_body_squawk_created
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_body_squawk_raised
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_body_thing_updated
-import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_noun_log
-import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_noun_task
-import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_section_logbook
-import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_section_squawks
-import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_section_tasks
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_title
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_n1_title_squawk_created
 import wingslog.feature.notifications.sharedassets.generated.resources.notification_title_priority_raised
@@ -136,34 +133,23 @@ private suspend fun PushPayload.actor(): String =
  * the server has no way to produce (§7.6). An unknown type falls back to the thing label, which
  * reads correctly for anything about the thing as a whole.
  *
- * **Only the thing branch reads the lexicon; the other three keep a string resource.** That is not
- * an oversight mid-refactor, and each has its own reason.
- *
- * "Tasks" and "Logbook" are shorter than what the lexicon gives — this app says "Maintenance Task"
- * and "Work Log" everywhere except here — so substituting would reword them, which the
- * byte-identical test (#658) correctly refuses. Which wording survives is a product decision,
- * tracked in #683, and the short forms here may well be the ones that got it right.
- *
- * "Squawks" *is* the lexicon word, but `notification_n1_section_squawks` is shared with
- * `WebForeignWriteDetector`, whose section enum stores a `StringResource` rather than rendering
- * one. Deleting it there is a bigger change than this, and belongs with #661.
+ * Every branch reads the lexicon now. Until #683 settled that "Work Log" is canonical, three did
+ * and four could not: the notification surface said "Tasks" and "Logbook" where the rest of the app
+ * said "Maintenance Tasks" and "Work Logs", so substituting would have reworded them and the
+ * byte-identical test (#658) correctly refused. Lengthening those four is what made one mechanism
+ * possible here instead of two.
  */
-private suspend fun PushPayload.sectionTitle(lexicon: Lexicon): String =
+private fun PushPayload.sectionTitle(lexicon: Lexicon): String =
   when (recordType) {
-    "squawk" -> getString(Res.string.notification_n1_section_squawks)
-    "task" -> getString(Res.string.notification_n1_section_tasks)
-    "log" -> getString(Res.string.notification_n1_section_logbook)
+    "squawk" -> LexiconFormatter.titleCasePlural(lexicon.squawkNoun)
+    "task" -> LexiconFormatter.titleCasePlural(lexicon.taskNoun)
+    "log" -> LexiconFormatter.titleCasePlural(lexicon.logNoun)
     else -> LexiconFormatter.titleCase(lexicon.thingNoun)
   }
 
-/**
- * The record's own singular noun for the body — "a squawk", "a task", "a logbook entry".
- *
- * Same split, same reason as [sectionTitle].
- */
-private suspend fun PushPayload.noun(lexicon: Lexicon): String =
-  when (recordType) {
-    "squawk" -> lexicon.squawkNoun.singular
-    "task" -> getString(Res.string.notification_n1_noun_task)
-    else -> getString(Res.string.notification_n1_noun_log)
-  }
+/** The record's own singular noun for the body — "a squawk", "a maintenance task", "a work log". */
+private fun PushPayload.noun(lexicon: Lexicon): String = when (recordType) {
+  "squawk" -> lexicon.squawkNoun.singular
+  "task" -> lexicon.taskNoun.singular
+  else -> lexicon.logNoun.singular
+}

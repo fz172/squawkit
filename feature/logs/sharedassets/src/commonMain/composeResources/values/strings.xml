@@ -7,7 +7,7 @@
   <string name="airframe_time_label">Airframe Time</string>
   <string name="prop_time_label">Prop Time</string>
   <string name="add_first_maintenance_log">Log First Entry</string>
-  <string name="no_maintenance_logs_title">Logbook Is Empty</string>
+  <string name="no_maintenance_logs_title">Work log is empty</string>
   <string name="no_maintenance_logs_description">Log your first entry — oil change, annual, 100-hour, or any other airframe, engine, or prop work.</string>
   <string name="propeller_hub">Propeller Hub</string>
   <string name="blade">Blade</string>
