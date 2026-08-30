@@ -115,7 +115,11 @@ class LexiconFormatterTest {
     val l = AirplaneTemplate.AIRPLANE_LEXICON
     assertThat(LexiconFormatter.titleCase(l.down_status)).isEqualTo("AOG")
     assertThat(LexiconFormatter.titleCase(l.down_status_long)).isEqualTo("Aircraft on Ground")
+    // The shell's three per-thing section labels render straight from these, with no string
+    // resource between, so these assertions are that navigation chrome's only coverage.
     assertThat(LexiconFormatter.titleCasePlural(l.squawk!!)).isEqualTo("Squawks")
+    assertThat(LexiconFormatter.titleCasePlural(l.task!!)).isEqualTo("Maintenance Tasks")
+    assertThat(LexiconFormatter.titleCasePlural(l.log!!)).isEqualTo("Work Logs")
     assertThat(LexiconFormatter.sentenceCase(l.thing!!)).isEqualTo("Aircraft")
     // The paywall's feature-row label renders straight from here, with no string resource between,
     // so this assertion is that label's only coverage.

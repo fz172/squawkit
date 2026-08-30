@@ -1,5 +1,8 @@
 package dev.fanfly.wingslog.core.ui.adaptive
 
+import dev.fanfly.wingslog.core.template.logNoun
+import dev.fanfly.wingslog.core.template.squawkNoun
+import dev.fanfly.wingslog.core.template.taskNoun
 import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.thingNoun
 import androidx.compose.animation.core.animate
@@ -96,10 +99,7 @@ import wingslog.core.sharedassets.generated.resources.settings
 import wingslog.core.sharedassets.generated.resources.shell_nav_tasks_narrow
 import wingslog.core.sharedassets.generated.resources.shell_tab_dashboard
 import wingslog.core.sharedassets.generated.resources.shell_tab_logs
-import wingslog.core.sharedassets.generated.resources.shell_tab_squawks
 import wingslog.core.sharedassets.generated.resources.shell_tab_tasks
-import wingslog.core.sharedassets.generated.resources.shell_title_logs
-import wingslog.core.sharedassets.generated.resources.shell_title_tasks
 import wingslog.core.sharedassets.generated.resources.Res as UiRes
 
 /** Lightweight thing projection used by the shell's switcher. */
@@ -121,29 +121,49 @@ data class ShellThing(
 /**
  * Top-level sections of the adaptive shell. The first four are per-thing; [SETTINGS] is global.
  */
-enum class ShellSection(
-  /** Short label for the space-constrained bottom bar tier. */
-  val label: StringResource,
-  val icon: ImageVector,
-  /** Full section name: the content top-bar title, also the wide (EXPANDED/LARGE) sidebar label. */
-  val title: StringResource = label,
-  /** Label for the narrower MEDIUM sidebar; may abbreviate where the full title doesn't fit. */
-  val narrowSidebarLabel: StringResource = title,
-) {
-  DASHBOARD(UiRes.string.shell_tab_dashboard, Icons.Filled.Dashboard),
-  SQUAWKS(UiRes.string.shell_tab_squawks, Icons.Filled.Warning),
-  TASKS(
-    UiRes.string.shell_tab_tasks,
-    Icons.Filled.Checklist,
-    UiRes.string.shell_title_tasks,
-    narrowSidebarLabel = UiRes.string.shell_nav_tasks_narrow,
-  ),
-  LOGS(
-    UiRes.string.shell_tab_logs,
-    Icons.Filled.Description,
-    UiRes.string.shell_title_logs,
-  ),
-  SETTINGS(UiRes.string.settings, Icons.Filled.Settings),
+enum class ShellSection(val icon: ImageVector) {
+  DASHBOARD(Icons.Filled.Dashboard),
+  SQUAWKS(Icons.Filled.Warning),
+  TASKS(Icons.Filled.Checklist),
+  LOGS(Icons.Filled.Description),
+  SETTINGS(Icons.Filled.Settings),
+}
+
+/*
+ * The three label slots are composable functions rather than StringResource fields on the enum.
+ *
+ * Some of these labels are lexicon words and some cannot be: "Squawks", "Maintenance Tasks" and
+ * "Work Logs" come straight from the lexicon, while "Maint.", "Logs" and "Maint. Tasks" are
+ * abbreviations chosen to fit a narrow rail and are not derivable from any noun. An enum field can
+ * only hold one kind, and holding a StringResource is what let ProUpsellSheet render a placeholder
+ * to users (#692): a resource stored as a value hides whether it needs arguments.
+ *
+ * That "Logs" is shorter than the log noun ("Work Logs") is the same wording split tracked in #683.
+ */
+
+/** Short label for the space-constrained bottom bar tier. */
+@Composable
+fun ShellSection.label(): String = when (this) {
+  ShellSection.DASHBOARD -> stringResource(UiRes.string.shell_tab_dashboard)
+  ShellSection.SQUAWKS -> LexiconFormatter.titleCasePlural(LocalThingLexicon.current.squawkNoun)
+  ShellSection.TASKS -> stringResource(UiRes.string.shell_tab_tasks)
+  ShellSection.LOGS -> stringResource(UiRes.string.shell_tab_logs)
+  ShellSection.SETTINGS -> stringResource(UiRes.string.settings)
+}
+
+/** Full section name: the content top-bar title, also the wide (EXPANDED/LARGE) sidebar label. */
+@Composable
+fun ShellSection.title(): String = when (this) {
+  ShellSection.TASKS -> LexiconFormatter.titleCasePlural(LocalThingLexicon.current.taskNoun)
+  ShellSection.LOGS -> LexiconFormatter.titleCasePlural(LocalThingLexicon.current.logNoun)
+  else -> label()
+}
+
+/** Label for the narrower MEDIUM sidebar; may abbreviate where the full title doesn't fit. */
+@Composable
+fun ShellSection.narrowSidebarLabel(): String = when (this) {
+  ShellSection.TASKS -> stringResource(UiRes.string.shell_nav_tasks_narrow)
+  else -> title()
 }
 
 private val PER_THING_SECTIONS =
@@ -359,7 +379,7 @@ private fun EmptyFleetScaffold(
           title = {
             // No thing means no real section to name; only Settings gets a title here.
             Text(
-              if (inSettings) stringResource(state.section.label) else "",
+              if (inSettings) state.section.label() else "",
               maxLines = 1,
               overflow = TextOverflow.Ellipsis,
             )
@@ -588,10 +608,10 @@ private fun SidebarItem(
   muted: Boolean = false,
 ) {
   val label =
-    if (LocalLayoutTier.current.hasWideSidebar) section.title
-    else section.narrowSidebarLabel
+    if (LocalLayoutTier.current.hasWideSidebar) section.title()
+    else section.narrowSidebarLabel()
   NavigationDrawerItem(
-    label = { Text(stringResource(label)) },
+    label = { Text(label) },
     icon = { Icon(section.icon, contentDescription = null) },
     selected = selected,
     onClick = onClick,
@@ -716,7 +736,7 @@ private fun ScaffoldShell(
         FloatingPillNavigationBar(
           items = PER_THING_SECTIONS.map { s ->
             FloatingNavItem(
-              label = stringResource(s.label),
+              label = s.label(),
               icon = s.icon,
               selected = s == state.section,
               onClick = { onSelectSection(s) },
@@ -882,7 +902,7 @@ private fun ShellContent(
 
 @Composable
 private fun ActionBarTitle(state: AdaptiveShellUiState) = Text(
-  stringResource(state.section.title),
+  state.section.title(),
   maxLines = 1,
   overflow = TextOverflow.Ellipsis,
 )
