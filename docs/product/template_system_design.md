@@ -367,9 +367,21 @@ a known state to represent, not an error to swallow.
 - **Web** — there is no install step. The deployed bundle updates on reload, so the prompt is "reload," and a
   stale web client is a cache-lifetime question rather than an install one.
 
-Web reads the same `versionCode` once §11 #1's task lands. Until then the web build renders a version string
-that omits it entirely, so a floor check on web has nothing to compare against — which is why that task gates
-any use of `min_app_version`, not just its display.
+Web reads the same `versionCode` (#672, landed). `core/appinfo` generates it into the JS build as
+`GENERATED_VERSION_CODE`, an `Int` rather than a substring of the display name, and web now renders
+`1.0.260828(1400)` — the shape iOS composes from `MARKETING_VERSION` and `CURRENT_PROJECT_VERSION`. A floor
+check on web therefore has a real value to compare against.
+
+> **Web's `versionCode` can lag, and a floor must account for it.** `assembleRelease` is what increments the
+> counter, so a web-only deploy ships whatever the last *Android release* build stamped. The number stays
+> monotonic and never overstates the build, so a floor is never bypassed — but it can gate web **more
+> aggressively than intended**: a template whose `min_app_version` is set between two Android releases will
+> refuse on a web build that already contains the code for it. Set a floor to a `versionCode` that has actually
+> shipped to Android, not to the current working value.
+
+Android still renders `1.0.260828.1.debug` — `versionName` plus a variant suffix, with no `versionCode`. That
+is a display inconsistency only: Android reads its real `versionCode` from `PackageInfo`, and iOS from
+`CFBundleVersion`, so both always had a value for a floor to compare. Web was the only platform that did not.
 
 ---
 
