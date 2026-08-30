@@ -463,6 +463,60 @@ show/hide means auditing every call site twice.
 
 ---
 
+## 10a. The localisation ceiling
+
+**The lexicon blocks shipping outside English-speaking markets.** Not "makes harder" — the substitution model
+cannot express the grammar most languages need, and the ceiling is the design rather than an unfinished
+implementation. The app ships one locale today (31 `strings.xml` files, all `values`, no variants), so nothing is
+currently broken. This is what to read before committing to a non-English market.
+
+### What Phase 2 actually trades away
+
+Today every one of the 982 strings is independently translatable, and plurals go through the platform's own
+plural resources, which already understand that Russian has three forms and Arabic has a dual. **That is a
+solved problem.**
+
+Phase 2 converts ~230 of them into format strings filled from a `Lexicon` (PRD §10). For English that is a clear
+win — one word changes and every screen follows. For an inflected language it removes the thing that made
+translation work: a translator can no longer write the sentence, because the sentence is assembled at runtime
+from a noun and a frame that were written separately, in English, by someone who assumed neither would inflect.
+
+So the trade is **template flexibility for translatability**, on a quarter of the corpus. It is invisible today
+because there is one locale, and it is the reason this section exists rather than a comment in `LexiconFormatter`.
+
+### Where it breaks, concretely
+
+- **`Noun` has two number forms.** Russian and Polish select among three by number, Arabic has a dual, Chinese
+  and Japanese do not inflect. CLDR defines six categories; two fields carry two.
+- **`article` assumes one exists, precedes, separates, and does not inflect.** Russian, Chinese, and Japanese
+  have no indefinite article — `withArticle` emits a stray word. Swedish and Norwegian suffix them. German and
+  Spanish inflect by gender, German additionally by case.
+- **Title case is an English convention.** German capitalises all nouns; French uses sentence case; Chinese,
+  Japanese, Arabic, Hebrew, and Thai have no case, so `titleCase` and `sentenceCase` are silent no-ops.
+- **And the deepest one is not in the formatter at all.** Substituting a noun into a fixed frame assumes the rest
+  of the sentence does not change when the noun does. German *"Diesen Squawk löschen?"* needs the determiner to
+  agree with the noun's gender, so `"Delete %1$s?"` cannot be filled from a bare noun however it is formatted.
+
+### And it compounds with templates
+
+Per-locale strings alone would not close it either. If a sentence's grammar depends on the substituted noun, and
+the noun depends on the template, the translatable unit becomes **locale × template** rather than locale. Seven
+presets and five locales is thirty-five variants of every affected string — which is the point at which "just
+translate it" stops being a plan.
+
+### The honest options, when it matters
+
+1. **Stay English-only.** Free, and currently true.
+2. **Per-locale full strings for anything a lexicon touches**, keeping substitution for English only. Gives up
+   the lexicon's benefit exactly where the app is not English, which may be the right trade.
+3. **A real ICU MessageFormat pipeline** plus gender and plural-category fields on `Noun`, and per-template
+   sentence frames rather than per-template nouns. A different design, not a bigger `Noun`.
+
+None is cheap, and all three get more expensive after Phase 2C converts the strings. **Decide before the first
+non-English locale, not after.**
+
+---
+
 ## 11. Decisions
 
 Settled with the developer, 2026-08-29. Nothing in this design is open.

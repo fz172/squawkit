@@ -24,6 +24,42 @@ import dev.fanfly.wingslog.thing.Noun
  * uppercases Turkish dotted-i to a dotless capital, so a Turkish device would render a subtly
  * wrong noun. These use [Char.uppercaseChar], which is defined per-character and does not consult
  * a locale.
+ *
+ * ---
+ *
+ * ## THIS IS ENGLISH-ONLY, AND SO IS THE MODEL BEHIND IT
+ *
+ * Not "English-first" or "not yet translated" — the approach does not generalise, and the ceiling
+ * is [Noun] and the substitution pattern rather than anything fixable in this file. The app ships
+ * one locale today (31 `strings.xml` files, all under `values`, no variants), so nothing here is
+ * currently wrong. It is a blocker to reach for the day localisation is on the table.
+ *
+ * **[Noun] cannot express most languages' plurals.** It has exactly two forms. Russian and Polish
+ * select among three depending on the number (1 / 2–4 / 5+); Arabic has a dual distinct from both
+ * singular and plural; Chinese and Japanese inflect for number not at all. CLDR defines six plural
+ * categories, and a two-field message can carry two of them.
+ *
+ * **`article` assumes an article, preceding, separable, and invariant.** Russian, Chinese, and
+ * Japanese have no indefinite article at all, so [withArticle] emits a stray word. Swedish and
+ * Norwegian attach articles as suffixes. German and Spanish inflect them by gender — and in
+ * German also by case, so "a squawk" is *ein* or *einen* depending on where it lands in the
+ * sentence, which is information this function is not given and could not use.
+ *
+ * **Title case is an English convention.** German capitalises every noun regardless of position;
+ * French uses sentence case for titles; Chinese, Japanese, Arabic, Hebrew, and Thai have no case
+ * at all, making [titleCase] and [sentenceCase] silent no-ops there. The minor-word list is a list
+ * of English words.
+ *
+ * **The deepest limit is not in this file.** Substituting a noun into a fixed sentence frame
+ * assumes the rest of the sentence does not change when the noun does. In any language with
+ * grammatical gender or case that is false: German "Diese*n* Squawk löschen?" needs the
+ * determiner to agree with the noun's gender, so `"Delete %1${'$'}s?"` cannot be filled from a
+ * bare noun no matter how the noun is formatted. Fixing that means per-template *sentences*, not
+ * per-template nouns — a different design, not a bigger [Noun].
+ *
+ * If localisation happens, the honest options are grammatical-gender and plural-category fields on
+ * [Noun] plus a real ICU MessageFormat pipeline, or accepting per-locale full strings for anything
+ * a lexicon touches. Growing this object will not get there.
  */
 object LexiconFormatter {
 

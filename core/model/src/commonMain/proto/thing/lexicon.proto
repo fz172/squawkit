@@ -11,6 +11,12 @@ option java_multiple_files = true;
 // screens (settings, the switcher, notification channel names) resolve the GENERIC lexicon
 // instead — on a mixed account there is no single template whose word would be right.
 
+// ENGLISH-ONLY by construction. Two plural forms cannot express Russian or Polish (three, by
+// number), Arabic (a dual), or Chinese and Japanese (no inflection); CLDR defines six categories.
+// `article` assumes one exists, precedes the noun, separates with a space, and does not inflect —
+// false for Russian, for suffixing Swedish, and for gendered German and Spanish. See
+// LexiconFormatter's header for why the ceiling is this message and the substitution model rather
+// than the formatter, and what localisation would actually require.
 message Noun {
   string singular = 1;
   string plural = 2;
