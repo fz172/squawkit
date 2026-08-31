@@ -1,5 +1,7 @@
 package dev.fanfly.wingslog.core.template
 
+import dev.fanfly.wingslog.core.template.ThingInflater.componentId
+import dev.fanfly.wingslog.core.template.ThingInflater.inflate
 import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
 import dev.fanfly.wingslog.thing.Component
 import dev.fanfly.wingslog.thing.Spec
