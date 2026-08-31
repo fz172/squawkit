@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.core.template
 
 import com.google.common.truth.Truth.assertThat
+import dev.fanfly.wingslog.core.appinfo.APP_VERSION_CODE
 import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
 import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
 import dev.fanfly.wingslog.thing.Lexicon
@@ -18,7 +19,8 @@ import org.junit.Test
  */
 class TemplateRegistryTest {
 
-  private val registry = BakedInTemplateRegistry()
+  private val registry =
+    BakedInTemplateRegistry(appVersionCode = APP_VERSION_CODE)
 
   @Test
   fun aThingCarryingDnaResolvesToItsOwnTemplate() {
@@ -26,10 +28,17 @@ class TemplateRegistryTest {
     val custom = ThingTemplate(
       id = "airplane",
       version = 7,
-      lexicon = Lexicon(thing = Noun(singular = "glider", plural = "gliders", article = "a")),
+      lexicon = Lexicon(
+        thing = Noun(
+          singular = "glider",
+          plural = "gliders",
+          article = "a"
+        )
+      ),
     )
 
-    val resolved = registry.forThingWithFallback(Thing(id = "t1", template = custom))
+    val resolved =
+      registry.forThingWithFallback(Thing(id = "t1", template = custom))
 
     assertThat(resolved).isEqualTo(custom)
     assertThat(resolved.lexicon?.thing?.singular).isEqualTo("glider")
@@ -64,7 +73,8 @@ class TemplateRegistryTest {
       ),
     )
 
-    val resolved = registry.forThingWithFallback(Thing(id = "t1", template = customised))
+    val resolved =
+      registry.forThingWithFallback(Thing(id = "t1", template = customised))
 
     assertThat(resolved.lexicon?.squawk?.singular).isEqualTo("gripe")
     assertThat(resolved).isNotEqualTo(AirplaneTemplate.TEMPLATE)
@@ -141,7 +151,8 @@ class AirplaneTemplateTest {
       Section.SECTION_SQUAWKS,
       Section.SECTION_TASKS,
       Section.SECTION_LOGS,
-    ).inOrder()
+    )
+      .inOrder()
   }
 
   @Test
@@ -158,7 +169,11 @@ class AirplaneTemplateTest {
 
     val propeller = engine.children.single()
     assertThat(propeller.slot_key).isEqualTo("propeller")
-    assertThat(propeller.children.map { it.slot_key }).containsExactly("hub", "blade").inOrder()
+    assertThat(propeller.children.map { it.slot_key }).containsExactly(
+      "hub",
+      "blade"
+    )
+      .inOrder()
   }
 
   @Test

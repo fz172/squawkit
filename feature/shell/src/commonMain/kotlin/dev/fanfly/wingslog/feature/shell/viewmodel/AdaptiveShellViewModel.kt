@@ -1,12 +1,13 @@
 package dev.fanfly.wingslog.feature.shell.viewmodel
 
-import dev.fanfly.wingslog.core.template.SpecKeys
-import dev.fanfly.wingslog.core.template.specValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.core.template.CurrentThingTemplate
+import dev.fanfly.wingslog.core.template.SpecKeys
 import dev.fanfly.wingslog.core.template.TemplateRegistry
+import dev.fanfly.wingslog.core.template.TemplateResolution
+import dev.fanfly.wingslog.core.template.specValue
 import dev.fanfly.wingslog.core.ui.adaptive.AdaptiveShellUiState
 import dev.fanfly.wingslog.core.ui.adaptive.ShellSection
 import dev.fanfly.wingslog.core.ui.adaptive.ShellThing
@@ -89,15 +90,20 @@ class AdaptiveShellViewModel(
           _uiState.update { state ->
             val mapped = fleet.map { entry ->
               val ac = entry.thing
+              val resolution = templateRegistry.resolve(ac)
               ShellThing(
                 id = ac.id,
                 tail = ac.specValue(SpecKeys.TAIL_NUMBER),
-                name = listOf(ac.specValue(SpecKeys.MAKE), ac.specValue(SpecKeys.MODEL))
+                name = listOf(
+                  ac.specValue(SpecKeys.MAKE),
+                  ac.specValue(SpecKeys.MODEL)
+                )
                   .filter { it.isNotBlank() }
                   .joinToString(" "),
-                // forThingWithFallback, not ac.template: a Thing created before templates existed
-                // carries none, and reading the field directly would render it in no words at all.
-                template = templateRegistry.forThingWithFallback(ac),
+                // resolve(), not ac.template: a Thing created before templates existed carries
+                // none, and reading the field directly would render it in no words at all.
+                template = resolution.template,
+                renderable = resolution is TemplateResolution.Renderable,
               )
             }
             // Prefer the live selection, then the one remembered from last session; fall back to the

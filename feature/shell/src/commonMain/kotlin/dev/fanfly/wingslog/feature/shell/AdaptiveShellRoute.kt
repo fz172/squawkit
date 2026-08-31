@@ -26,8 +26,6 @@ import dev.fanfly.wingslog.core.nav.Screen.Companion.CROSS_SCREEN_SUCCESS_MESSAG
 import dev.fanfly.wingslog.core.ui.adaptive.AdaptiveAppShell
 import dev.fanfly.wingslog.core.ui.adaptive.ShellSection
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
-import dev.fanfly.wingslog.feature.thing.dashboard.ShellSectionBody
-import dev.fanfly.wingslog.feature.thing.dashboard.ShellSectionFab
 import dev.fanfly.wingslog.feature.fleet.viewing.FleetEmptyState
 import dev.fanfly.wingslog.feature.login.upgrade.AccountUpgradeFlow
 import dev.fanfly.wingslog.feature.login.upgrade.AccountUpgradeViewModel
@@ -37,6 +35,8 @@ import dev.fanfly.wingslog.feature.shell.viewmodel.AdaptiveShellViewModel
 import dev.fanfly.wingslog.feature.subscription.viewing.ProUpsellSheet
 import dev.fanfly.wingslog.feature.subscription.viewing.UpsellTrigger
 import dev.fanfly.wingslog.feature.sync.data.SyncNotice
+import dev.fanfly.wingslog.feature.thing.dashboard.ShellSectionBody
+import dev.fanfly.wingslog.feature.thing.dashboard.ShellSectionFab
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -179,6 +179,7 @@ fun AdaptiveShellRoute(
         section = section,
         thingId = thingId,
         navController = navController,
+        renderable = state.thing.find { it.id == thingId }?.renderable != false,
       )
     },
   )

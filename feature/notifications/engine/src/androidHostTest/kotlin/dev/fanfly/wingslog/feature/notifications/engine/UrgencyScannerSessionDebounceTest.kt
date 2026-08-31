@@ -78,7 +78,11 @@ class UrgencyScannerSessionDebounceTest {
       entityStoreFactory = mockk(relaxed = true),
       watermarkStore = UrgencyWatermarkStore(db),
       notifier = mockk(relaxed = true),
-      currentThingTemplate = CurrentThingTemplate(BakedInTemplateRegistry()),
+      currentThingTemplate = CurrentThingTemplate(
+        BakedInTemplateRegistry(
+          appVersionCode = 1
+        )
+      ),
       lastScanStore = lastScanStore,
       clock = clock,
     )
@@ -138,7 +142,11 @@ class UrgencyScannerSessionDebounceTest {
       entityStoreFactory = mockk(relaxed = true),
       watermarkStore = mockk(relaxed = true),
       notifier = mockk(relaxed = true),
-      currentThingTemplate = CurrentThingTemplate(BakedInTemplateRegistry()),
+      currentThingTemplate = CurrentThingTemplate(
+        BakedInTemplateRegistry(
+          appVersionCode = 1
+        )
+      ),
       lastScanStore = lastScanStore,
       clock = clock,
     )

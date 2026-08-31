@@ -6,4 +6,4 @@ import androidx.compose.runtime.Composable
 // CURRENT_PROJECT_VERSION, so the three platforms are comparable at a glance (#672).
 @Composable
 actual fun getAppVersion(): String =
-  "$GENERATED_VERSION_NAME($GENERATED_VERSION_CODE)"
+  "$GENERATED_VERSION_NAME($APP_VERSION_CODE)"

@@ -1,10 +1,5 @@
 package dev.fanfly.wingslog.feature.fleet.datamanager.impl
 
-import dev.fanfly.wingslog.core.template.SpecKeys
-import dev.fanfly.wingslog.thing.Spec
-import dev.fanfly.wingslog.core.template.ThingInflater
-import io.mockk.slot
-import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.model.sharing.ShareRole
 import dev.fanfly.wingslog.core.model.sharing.SharedAircraftRef
@@ -13,13 +8,18 @@ import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.EntityStore
 import dev.fanfly.wingslog.core.storage.EntityStoreFactory
 import dev.fanfly.wingslog.core.storage.StorageEntity
+import dev.fanfly.wingslog.core.template.SpecKeys
+import dev.fanfly.wingslog.core.template.ThingInflater
+import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
 import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
+import dev.fanfly.wingslog.thing.Spec
 import dev.fanfly.wingslog.thing.Thing
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.auth.FirebaseUser
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.slot
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
@@ -62,7 +62,12 @@ class FleetManagerImplTest {
     every { firebaseAuth.authStateChanged } returns flowOf(mockUser)
 
     manager =
-      FleetManagerImpl(firebaseAuth, BakedInTemplateRegistry(), storeFactory)
+      // appVersionCode is arbitrary here: these tests use the baked-in template, whose floor is 0.
+      FleetManagerImpl(
+        firebaseAuth,
+        BakedInTemplateRegistry(appVersionCode = 1),
+        storeFactory,
+      )
   }
 
   @Test
@@ -382,7 +387,11 @@ class FleetManagerImplTest {
     // inflater does add.
     val stored = slot<Thing>()
     coVerify { store.put("own-1", capture(stored), any()) }
-    assertThat(stored.captured.spec.map { it.key }).containsExactly("make", "model").inOrder()
+    assertThat(stored.captured.spec.map { it.key }).containsExactly(
+      "make",
+      "model"
+    )
+      .inOrder()
     assertThat(stored.captured.template).isEqualTo(AirplaneTemplate.TEMPLATE)
     // A name, derived from spec for a Thing that arrived without one.
     assertThat(stored.captured.name).isEqualTo("Cessna 172")

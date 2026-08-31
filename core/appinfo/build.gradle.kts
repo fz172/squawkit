@@ -36,8 +36,8 @@ kotlin {
     sourceSets.findByName("iosSimulatorArm64Main")
       ?.dependsOn(iosMain)
 
-    jsMain {
-      kotlin.srcDir(layout.buildDirectory.dir("generated/jsMain/kotlin"))
+    commonMain {
+      kotlin.srcDir(layout.buildDirectory.dir("generated/commonMain/kotlin"))
     }
 
     commonMain.dependencies {
@@ -55,9 +55,12 @@ kotlin {
 
 val versionPropsFile = rootProject.file("version.properties")
 
-val generateJsVersionKt by tasks.registering {
+// Generated into commonMain, not jsMain: every platform stamps its versionCode from this same file
+// (Android in app/build.gradle.kts, iOS via the scheme pre-action that writes Version.xcconfig), so
+// the constant is exact everywhere and needs no Context or NSBundle to read (#728).
+val generateVersionKt by tasks.registering {
   val outputDir = layout.buildDirectory.dir(
-    "generated/jsMain/kotlin/dev/fanfly/wingslog/core/appinfo"
+    "generated/commonMain/kotlin/dev/fanfly/wingslog/core/appinfo"
   )
   outputs.dir(outputDir)
   inputs.file(versionPropsFile)
@@ -66,10 +69,7 @@ val generateJsVersionKt by tasks.registering {
       if (versionPropsFile.exists()) versionPropsFile.inputStream()
         .use { load(it) }
     }
-    // One string on all three platforms: "1.0.260828(1400)". iOS composes it from
-    // MARKETING_VERSION and CURRENT_PROJECT_VERSION, Android from version.properties in
-    // app/build.gradle.kts, and web here. Web previously carried no versionCode at all — see
-    // below for why that mattered beyond display.
+    // One string on all three platforms: "1.0.260828(1400)".
     val marketingVersion = "${props["major"]}.${props["minor"]}.${props["buildDate"]}"
     val versionCode = (props["versionCode"] as? String)?.toIntOrNull() ?: 0
 
@@ -79,19 +79,15 @@ val generateJsVersionKt by tasks.registering {
         "package dev.fanfly.wingslog.core.appinfo\n\n" +
           "internal const val GENERATED_VERSION_NAME = \"$marketingVersion\"\n\n" +
           "/**\n" +
-          " * The shared versionCode, as a number rather than a substring of the display name.\n" +
+          " * This build's versionCode, as a number rather than a substring of the display name.\n" +
           " *\n" +
-          " * `min_app_version` in the template system is a versionCode *floor*, and it is what stops\n" +
-          " * a client rendering a template it has no code for. Android reads its own from\n" +
-          " * PackageInfo and iOS from CFBundleVersion; web has no platform source, so without this\n" +
-          " * constant there is nothing on web for a floor to compare against and the gate silently\n" +
-          " * does not apply there. See template_system_design.md §6 and §11.\n" +
+          " * `min_app_version` is a versionCode *floor*, and comparing against it is what stops a\n" +
+          " * client rendering a template it has no code for (template_system_design.md §6).\n" +
           " */\n" +
-          "internal const val GENERATED_VERSION_CODE = $versionCode\n"
+          "const val APP_VERSION_CODE = $versionCode\n"
       )
   }
 }
 
-tasks.configureEach {
-  if (name == "compileKotlinJs") dependsOn(generateJsVersionKt)
-}
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask<*>>()
+  .configureEach { dependsOn(generateVersionKt) }

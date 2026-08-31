@@ -2,6 +2,14 @@
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
   <!-- Empty / error states -->
   <string name="thing_load_error">Couldn't load this <xliff:g example="aircraft">%1$s</xliff:g></string>
+  <!-- Degraded state: DNA this build cannot interpret (#728). Deliberately free of lexicon
+       placeholders — the template whose words would fill them is the one we cannot read. -->
+  <string name="degraded_title">Needs a newer version of the app</string>
+  <string name="degraded_body">This was set up on a device running a newer version. Nothing has been lost — but this version cannot show or edit it properly, so it is shown exactly as stored.</string>
+  <string name="degraded_stored_details">Stored details</string>
+  <string name="degraded_no_stored_details">No details stored.</string>
+  <string name="degraded_update">Update the app</string>
+  <string name="degraded_reload">Reload</string>
   <!-- Overview tab cards -->
   <string name="overview_recent_activity">Recent activity</string>
   <string name="overview_all_logs">All logs</string>

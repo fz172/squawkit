@@ -861,6 +861,12 @@ feature/technician/sharedassets	performed_by	Performed By
 feature/technician/sharedassets	select_technician	Select Technician
 feature/technician/sharedassets	technician	Technician
 feature/technician/sharedassets	you_badge	You
+feature/thing/dashboard	degraded_body	This was set up on a device running a newer version. Nothing has been lost — but this version cannot show or edit it properly, so it is shown exactly as stored.
+feature/thing/dashboard	degraded_no_stored_details	No details stored.
+feature/thing/dashboard	degraded_reload	Reload
+feature/thing/dashboard	degraded_stored_details	Stored details
+feature/thing/dashboard	degraded_title	Needs a newer version of the app
+feature/thing/dashboard	degraded_update	Update the app
 feature/thing/dashboard	overview_all_logs	All logs
 feature/thing/dashboard	overview_next_due	Next due
 feature/thing/dashboard	overview_no_logs_body	Add the first maintenance entry to start the aircraft record.

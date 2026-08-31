@@ -34,6 +34,7 @@ import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
 import dev.fanfly.wingslog.feature.attachment.datamanager.OpenState
 import dev.fanfly.wingslog.feature.tasks.viewing.DeleteTaskConfirmDialog
 import dev.fanfly.wingslog.feature.tasks.viewing.TaskDetailSheet
+import dev.fanfly.wingslog.feature.thing.dashboard.compose.DegradedThingContent
 import dev.fanfly.wingslog.feature.thing.dashboard.compose.tabs.LogsTab
 import dev.fanfly.wingslog.feature.thing.dashboard.compose.tabs.MaintenanceTasksTab
 import dev.fanfly.wingslog.feature.thing.dashboard.compose.tabs.OverviewTab
@@ -121,8 +122,13 @@ fun ShellSectionFab(
   section: ShellSection,
   thingId: String?,
   navController: NavController,
+  /**
+   * False for a thing whose DNA this build cannot interpret. Every add route leads to a form built
+   * from the template, so offering one here would write under rules we cannot read (design §6.2).
+   */
+  renderable: Boolean = true,
 ) {
-  if (thingId == null) return
+  if (thingId == null || !renderable) return
   when (section) {
     ShellSection.SQUAWKS ->
       SectionAddFab(
@@ -342,6 +348,10 @@ fun AircraftSectionContent(
       ) {
         CircularProgressIndicator()
       }
+
+    // Every section, not just the dashboard: which sections a Thing has is itself template-declared,
+    // so an uninterpretable template makes all four meaningless (design §6.2).
+    is ThingOverviewUiState.Degraded -> DegradedThingContent(state.thing)
 
     ThingOverviewUiState.Error ->
       Box(

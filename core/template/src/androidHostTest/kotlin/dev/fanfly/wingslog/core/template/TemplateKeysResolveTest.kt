@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.core.template
 
 import com.google.common.truth.Truth.assertThat
+import dev.fanfly.wingslog.core.appinfo.APP_VERSION_CODE
 import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
 import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
 import dev.fanfly.wingslog.thing.ComponentSlot
@@ -24,7 +25,8 @@ import org.junit.Test
  */
 class TemplateKeysResolveTest {
 
-  private val pool: List<ThingTemplate> = BakedInTemplateRegistry().canonical()
+  private val pool: List<ThingTemplate> =
+    BakedInTemplateRegistry(appVersionCode = APP_VERSION_CODE).canonical()
 
   private fun ThingTemplate.allSlots(): List<ComponentSlot> {
     fun flatten(slots: List<ComponentSlot>): List<ComponentSlot> =
@@ -46,7 +48,9 @@ class TemplateKeysResolveTest {
     // nowhere to render — an engine-hours meter on a template with no engine slot is a reading the
     // UI cannot attach to anything.
     val offenders = pool.flatMap { template ->
-      val slotKeys = template.allSlots().map { it.slot_key }.toSet()
+      val slotKeys = template.allSlots()
+        .map { it.slot_key }
+        .toSet()
       template.meters
         .filter { it.component_slot_key.isNotEmpty() && it.component_slot_key !in slotKeys }
         .map { "${template.id}: meter '${it.key}' -> slot '${it.component_slot_key}'" }
@@ -63,7 +67,8 @@ class TemplateKeysResolveTest {
           .forEach { add("${template.id}: spec field with blank key (label '${it.label}')") }
         template.meters.filter { it.key.isEmpty() }
           .forEach { add("${template.id}: meter with blank key (label '${it.label}')") }
-        template.allSlots().filter { it.slot_key.isEmpty() }
+        template.allSlots()
+          .filter { it.slot_key.isEmpty() }
           .forEach { add("${template.id}: component slot with blank key (label '${it.label}')") }
       }
     }
@@ -77,10 +82,26 @@ class TemplateKeysResolveTest {
     // same `Spec`, so whichever renders second wins and the first silently does nothing.
     val offenders = pool.flatMap { template ->
       buildList {
-        addAll(duplicatesOf(template.id, "spec field", template.spec_fields.map(SpecField::key)))
-        addAll(duplicatesOf(template.id, "meter", template.meters.map(MeterDef::key)))
         addAll(
-          duplicatesOf(template.id, "component slot", template.allSlots().map { it.slot_key })
+          duplicatesOf(
+            template.id,
+            "spec field",
+            template.spec_fields.map(SpecField::key)
+          )
+        )
+        addAll(
+          duplicatesOf(
+            template.id,
+            "meter",
+            template.meters.map(MeterDef::key)
+          )
+        )
+        addAll(
+          duplicatesOf(
+            template.id,
+            "component slot",
+            template.allSlots()
+              .map { it.slot_key })
         )
       }
     }
@@ -88,8 +109,13 @@ class TemplateKeysResolveTest {
     assertThat(offenders).isEmpty()
   }
 
-  private fun duplicatesOf(templateId: String, kind: String, keys: List<String>): List<String> =
-    keys.groupingBy { it }.eachCount()
+  private fun duplicatesOf(
+    templateId: String,
+    kind: String,
+    keys: List<String>
+  ): List<String> =
+    keys.groupingBy { it }
+      .eachCount()
       .filterValues { it > 1 }
       .keys
       .map { "$templateId: duplicate $kind key '$it'" }
@@ -108,7 +134,8 @@ class TemplateKeysResolveTest {
   @Test
   fun noTwoTemplatesShareAnId() {
     val duplicates = pool.map { it.id }
-      .groupingBy { it }.eachCount()
+      .groupingBy { it }
+      .eachCount()
       .filterValues { it > 1 }.keys
 
     assertThat(duplicates).isEmpty()
@@ -124,7 +151,9 @@ class TemplateKeysResolveTest {
   @Test
   fun theInflaterUsesOnlySlotKeysTheAirplaneTemplateDeclares() {
     val airplane = pool.single { it.id == AirplaneTemplate.ID }
-    val declared = airplane.allSlots().map { it.slot_key }.toSet()
+    val declared = airplane.allSlots()
+      .map { it.slot_key }
+      .toSet()
 
     // The keys buildLegacyAirplaneComponents emits, transcribed from it.
     val emitted = setOf("airframe", "engine", "propeller", "hub", "blade")
@@ -140,7 +169,8 @@ class TemplateKeysResolveTest {
   @Test
   fun theInflaterUsesOnlySpecKeysTheAirplaneTemplateDeclares() {
     val airplane = pool.single { it.id == AirplaneTemplate.ID }
-    val declared = airplane.spec_fields.map { it.key }.toSet()
+    val declared = airplane.spec_fields.map { it.key }
+      .toSet()
 
     val emitted = setOf("make", "model", "serial", "tail_number")
 
