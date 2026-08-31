@@ -645,9 +645,7 @@ object FakeDataGenerator {
     val serial = "S${serialLetters.random()}${(10000..99999).random()}"
     val tailNumber = "N${(1000..9999).random()}${('A'..'Z').random()}"
 
-    // Builds the component tree directly (#668 part 3). The transitional fields are gone, so there
-    // is nothing left to derive from — the generator produces the same shape the form and the
-    // cutover produce, which is what makes it a usable fixture rather than a special case.
+    // Builds the component tree directly — the same shape the form produces (#668).
     val engines = (1..config.engineCount).map { engineIndex ->
       val engineSerial = "E${(10000..99999).random()}"
       val propSerial = "P${(10000..99999).random()}"

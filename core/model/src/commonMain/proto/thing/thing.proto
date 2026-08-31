@@ -11,27 +11,8 @@ option java_multiple_files = true;
 message Thing {
   string id = 1;
 
-  // --- retired, never reuse (#668) ---
-  //
-  // 2-6 held make / model / serial / tail_number / engine. They were the aircraft-shaped identity
-  // fields, and a house has none of them (PRD §4.2) — so they were always going to go once the
-  // template system could describe a Thing generically.
-  //
-  // What replaced them: `spec` (10) holds the identity values by key, and `components` (11) holds
-  // the part tree that `engine` used to. The four conventional spec keys — make, model, serial,
-  // tail_number — survive as *conventions* an airplane template declares, not as schema.
-  //
-  // The order that made removing them safe, and why it took three steps rather than one:
-  //   1. #717 — the client began writing spec/components on every write. Until then only the
-  //      backend cutover ever had, so a Thing created after the cutover had neither.
-  //   2. #718 — an audit confirmed zero Things were missing them, across every account, after a
-  //      release carrying step 1 had reached every device. No backfill was ever needed.
-  //   3. #668 — every reader, then the form and the fake-data generator, moved across; only then
-  //      were these reserved.
-  //
-  // Reserved by number *and* by name so neither can be reintroduced with a different type. The
-  // bytes still present in already-migrated documents decode as unknown fields and are retained
-  // (`ThingUnknownFieldRetentionTest`), exactly as happened for 7 and 8.
+  // Deprecated in Project Universe: identity moved to `spec` (10) and the part tree to
+  // `components` (11). Reserved by number and name so neither is reused (#668).
   reserved 2, 3, 4, 5, 6;
   reserved "make", "model", "serial", "tail_number", "engine";
 

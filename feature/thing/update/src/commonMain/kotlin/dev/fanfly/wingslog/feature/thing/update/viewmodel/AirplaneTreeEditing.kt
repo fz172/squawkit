@@ -11,27 +11,12 @@ import dev.fanfly.wingslog.thing.Component
 import dev.fanfly.wingslog.thing.Thing
 
 /**
- * Where an airplane's parts sit in the component tree — **paths, not operations**.
+ * Airplane component paths. The operations they feed are generic and live in `core:template`.
  *
- * The operations are generic and live in `core:template`: [updateComponentAt] and friends take a
- * path and know nothing about aviation. This file supplies the paths, which is the only part that
- * *is* airplane-specific, and it is small because that is all the domain knowledge amounts to.
+ * #729 and #739 build paths from the template's own slots and delete this file.
  *
- * That split matters for what comes next. #729 renders a component tree whose shape comes from the
- * template, and #739 builds a create form from the template's own slots — both build paths from
- * `ThingTemplate.component_slots` instead of hardcoding them here, and neither has to replace the
- * editing primitives to do it. This file is what they delete; `core:template` is what they keep.
- *
- * ## Where a value lives
- *
- * `make`, `model` and `serial` are stored **twice** in an inflated Thing: as `spec` entries and on
- * the `airframe` component. Both were derived from the same legacy fields by the cutover, so they
- * have always agreed, and nothing had to decide which was authoritative until the form began
- * writing them directly.
- *
- * **`spec` is the authority** — it is what every reader moved to in part 1, and it is the
- * template-shaped one. The airframe's copy is kept in step so the stored document does not
- * contradict itself, but no reader depends on it. Removing that redundancy belongs with #729.
+ * `make`/`model`/`serial` are stored twice — as `spec` and on the airframe. `spec` is the
+ * authority (every reader uses it); the airframe copy is kept in step. #729 resolves that.
  */
 
 private val AIRFRAME: ComponentPath = listOf(SlotKeys.AIRFRAME to 0)
@@ -52,13 +37,7 @@ internal fun bladePath(engineIndex: Int, bladeIndex: Int): ComponentPath =
 internal val Thing.engines: List<Component>
   get() = rootComponentInSlot(SlotKeys.AIRFRAME)?.childrenInSlot(SlotKeys.ENGINE).orEmpty()
 
-/**
- * A new engine, with a propeller and one blade.
- *
- * Not an empty engine: the form has always started one this way, so the user types into a propeller
- * and a first blade rather than adding them. Preserved deliberately — changing it would be a
- * product change riding along on a refactor.
- */
+/** A new engine, with a propeller and one blade — what the form has always created. */
 internal fun newEngine(): Component = Component(
   slot_key = SlotKeys.ENGINE,
   children = listOf(
@@ -69,12 +48,7 @@ internal fun newEngine(): Component = Component(
   ),
 )
 
-/**
- * Sets a Thing-level identity value in both places it is stored — see the note above.
- *
- * Only make, model and serial live on the airframe; a tail number belongs to the Thing rather than
- * to any component, so it is spec-only.
- */
+/** Writes both places identity lives. Tail number is spec-only — it belongs to the Thing. */
 internal fun Thing.setIdentity(key: String, value: String): Thing {
   val updated = withSpec(key, value)
   return when (key) {

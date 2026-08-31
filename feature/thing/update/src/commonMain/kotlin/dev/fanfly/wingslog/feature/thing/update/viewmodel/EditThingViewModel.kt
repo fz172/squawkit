@@ -172,11 +172,7 @@ class EditThingViewModel(
     }
   }
 
-  // The form edits `spec` and the component tree directly now (#668 part 3). Fields 2-6 are gone,
-  // so there is nothing left to derive from — what the user types is what is stored.
-  //
-  // `setIdentity` writes both places make/model/serial live: the spec entry, which every reader
-  // uses, and the airframe component's copy, which keeps the stored document self-consistent.
+  // The form edits spec and the component tree directly (#668).
 
   fun onMakeChanged(newValue: String) {
     _uiState.update {
@@ -212,7 +208,6 @@ class EditThingViewModel(
   }
 
   fun onTailNumberChanged(newValue: String) {
-    // Spec-only: a tail number belongs to the Thing, not to a component.
     _uiState.update {
       it.copy(
         thing = it.thing.setIdentity(

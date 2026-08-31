@@ -28,9 +28,7 @@ export function tailNumberOf(doc: SyncDocWire | undefined): string | null {
   const bytes = payloadBytes(doc?.payload);
   if (bytes == null) return null;
   try {
-    // Read from `spec`, not the retired field 5. Fields 2-6 are reserved (#668) — a Thing's
-    // identity values live under conventional spec keys now, which is also what every client
-    // reads, so a push notification is labelled with exactly what the app shows.
+    // From `spec`, not the retired field 5 (#668) — the same key the clients read.
     const tail = Thing.decode(bytes).spec.find(entry => entry.key === "tail_number")?.value ?? "";
     return tail.length > 0 ? tail : null;
   } catch (e) {

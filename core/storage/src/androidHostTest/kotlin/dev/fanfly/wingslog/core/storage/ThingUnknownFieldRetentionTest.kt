@@ -11,34 +11,14 @@ import okio.ByteString
 import org.junit.Test
 
 /**
- * Task A11 of the Aircraft → Thing migration (docs/product/thing_migration_design.md §6, PRD §9.2).
- *
- * The migration's whole safety argument rests on one property of the wire format: **a client built
- * against an older version of the schema round-trips fields it has never heard of.** During the
- * migration window a device on the pre-migration build can read, edit, and write back a Thing whose
- * fields 7–11 the server has already backfilled (§5.1 step 2a) — and if that write dropped them, the
- * backfill would silently un-happen for every account with a stale device, with nothing to notice it.
- *
- * **This now also covers the retired fields 2–6.** They were reserved in #668, so the current
- * `Thing` cannot even name them — which makes it exactly the older-schema reader this test is
- * about, meeting bytes it has no definition for. A migrated document still carries them, and
- * they have to survive a read-edit-write cycle or the reservation would quietly destroy data it
- * promised only to stop using.
- *
- * Note what is and isn't simulated here. There is no longer a generated class for the pre-migration
- * schema (fields 1–6) to decode with — the rename replaced it. So the test exercises the same
- * mechanism one version further along: the CURRENT `Thing` (fields 1–11) reads bytes carrying a field
- * 12 it does not know, edits a field it does, and writes back. That is structurally the identical
- * case — an adapter meeting a higher-numbered field it has no definition for — and it runs against
- * the real generated adapter rather than a hand-rolled stand-in.
+ * A client round-trips fields it has never heard of. The migration's safety rests on it, and so
+ * does the #668 reservation: the current `Thing` cannot name fields 2-6, so a migrated document's
+ * bytes for them must survive a read-edit-write cycle.
  */
 class ThingUnknownFieldRetentionTest {
 
   private val thing = Thing(
     id = "ac-1",
-    // Fields 2-6 are reserved (#668) — a Thing cannot set them any more, which is itself
-    // part of what this test now demonstrates: the bytes for them survive in migrated
-    // documents as unknown fields, exactly as fields 7 and 8 did before them.
     name = "N12345",
     // `value_`, not `value`: Wire escapes the proto field name in Kotlin codegen. The wire format
     // and the TypeScript bindings are unaffected — only the Kotlin identifier changes.

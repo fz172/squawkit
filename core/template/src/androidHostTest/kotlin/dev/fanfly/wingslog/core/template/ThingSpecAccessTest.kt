@@ -7,11 +7,9 @@ import dev.fanfly.wingslog.thing.Thing
 import org.junit.Test
 
 /**
- * The accessors readers and the form use instead of the transitional fields (#668).
+ * The accessors readers and the form use instead of the retired fields (#668).
  *
- * [withDerivedComponentIds] carries the most weight here. Component ids are the join key logs,
- * tasks and squawks use to point at a component, so a derivation that drifts — between this and
- * `ThingInflater`, or between two runs over the same Thing — silently repoints every one of them.
+ * Ids are a stored join key, so a derivation that drifts repoints every log silently.
  */
 class ThingSpecAccessTest {
 
@@ -75,9 +73,7 @@ class ThingSpecAccessTest {
 
   @Test
   fun clearingASpecRemovesItRatherThanStoringABlank() {
-    // ThingInflater and the backend cutover both drop empty values, so a Thing edited to clear its
-    // serial has to end up in the same shape as one that never had one — otherwise two Things with
-    // no serial compare unequal.
+    // Empty values are dropped, so a cleared serial matches one that never existed.
     val thing = twin()
 
     val cleared = thing.withSpec(SpecKeys.SERIAL, "")
@@ -126,8 +122,7 @@ class ThingSpecAccessTest {
 
   @Test
   fun derivationIsStableAcrossRepeatedSaves() {
-    // Every save re-derives. If that were not stable, an unrelated edit would renumber components
-    // and orphan every log pointing at one.
+    // An unrelated edit must not renumber components.
     val once = twin()
 
     assertThat(once.withDerivedComponentIds().components).isEqualTo(once.components)
@@ -159,10 +154,8 @@ class ThingSpecAccessTest {
 
   @Test
   fun siblingsAreNumberedPerSlotNotPerPosition() {
-    // A hub beside a blade must not push the blade's index along, or a propeller's first blade
-    // becomes "blade.1" and stops matching the id its logs already point at.
-    // Nested under an engine, which is the only shape that occurs — a propeller is never a root,
-    // and the root-exclusion rule above would otherwise be what this measured.
+    // A hub beside a blade must not shift the blade's index. Nested under an engine, the only
+    // shape that occurs — a root propeller would measure the root-exclusion rule instead.
     val thing = Thing(
       id = "t-9",
       components = listOf(
@@ -235,9 +228,7 @@ class ThingSpecAccessTest {
 
   @Test
   fun aThingWithNoIdYetProducesIdsItWillNotKeep() {
-    // The constraint that shapes the form's design: ids embed the Thing id, which does not exist
-    // until save. This documents the consequence rather than pretending it does not exist — the
-    // form edits an id-less tree and FleetManagerImpl re-derives after assigning the id.
+    // Ids embed the Thing id, which does not exist until save — hence re-derivation there.
     val unsaved =
       Thing(id = "", components = listOf(Component(slot_key = "airframe")))
 

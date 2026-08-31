@@ -155,13 +155,8 @@ class FleetManagerImpl(
       val isNew = thing.id.isEmpty()
       val withId =
         if (isNew) thing.copy(id = generateRandomId()) else thing
-      // Inflate before writing, not at creation only (#717). `spec` and `components` were meant to
-      // be dual-written from Phase 1 and only the server half shipped, so every Thing written since
-      // the cutover has its values in fields 2-6 alone. Doing it at this choke point means the
-      // population without them shrinks through ordinary use rather than needing a second migration
-      // for anything edited after this ships. Inflation is idempotent, so an already-inflated Thing
-      // round-trips unchanged. Note it runs *after* the id is assigned: component ids derive from
-      // the Thing id, so inflating a Thing whose id is still empty would bake "" into every one.
+      // Inflate on every write, not just creation (#717). After the id is assigned: component
+      // ids derive from it.
       val inflated =
         ThingInflater.inflate(
           withId,
