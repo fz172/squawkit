@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.core.template
 
 import dev.fanfly.wingslog.thing.Component
+import dev.fanfly.wingslog.thing.Spec
 import dev.fanfly.wingslog.thing.Thing
 
 /**
@@ -111,4 +112,79 @@ fun Thing.allComponentsInSlot(slotKey: String): List<Component> {
       (if (component.slot_key == slotKey) listOf(component) else emptyList()) + walk(component.children)
     }
   return walk(components)
+}
+
+// ---------------------------------------------------------------------------------------------
+// Editing
+// ---------------------------------------------------------------------------------------------
+
+/**
+ * This Thing with [key] set to [value], preserving the order of the other entries.
+ *
+ * An empty [value] removes the entry rather than storing a blank, which is what `ThingInflater`
+ * does and what the backend cutover did — so a Thing edited to clear its serial ends up in the same
+ * shape as one that never had one.
+ */
+fun Thing.withSpec(key: String, value: String): Thing {
+  val without = spec.filterNot { it.key == key }
+  return copy(spec = if (value.isEmpty()) without else without + Spec(key = key, value_ = value))
+}
+
+/**
+ * This Thing with every component id re-derived from its position.
+ *
+ * **Why the form cannot assign ids itself.** A component id is `"$thingId:$path"`, and a Thing being
+ * created has no id until it is saved — so a form that built final ids would bake an empty one into
+ * every component. Deriving them here, at save, is what lets the form edit a tree without knowing
+ * the Thing's identity.
+ *
+ * It is also what keeps the ids *stable*: they come from position, so re-running this over an
+ * already-saved Thing reproduces exactly the same ids. That matters because the ids are the join key
+ * logs, tasks and squawks use to point at a component — a derivation that drifted would silently
+ * repoint all of them.
+ */
+fun Thing.withDerivedComponentIds(): Thing {
+  // Roots are numbered, but their path is not passed down — see walkPreservingOrder's note.
+  val counters = mutableMapOf<String, Int>()
+  return copy(
+    components = components.map { root ->
+      val index = counters.getOrElse(root.slot_key) { 0 }
+      counters[root.slot_key] = index + 1
+      root.copy(
+        id = ThingInflater.componentId(id, listOf(root.slot_key, index.toString())),
+        children = walkPreservingOrder(root.children, emptyList(), id),
+      )
+    },
+  )
+}
+
+/**
+ * Depth-first re-derivation that keeps declared order.
+ *
+ * Index within a slot is what the path uses — `engine.0`, `engine.1` — so siblings are numbered per
+ * slot key rather than per position in the list. Two blades under different propellers therefore do
+ * not collide, and a hub beside a blade does not push the blade's index along.
+ *
+ * **The root does not appear in its descendants' paths**, which is an irregularity rather than a
+ * design: an engine is `engine.0`, not `airframe.0.engine.0`, while a propeller *is*
+ * `engine.0.propeller.0`. `thingPayloads.ts` built the ids that way during the cutover and
+ * `ThingInflater` matched it, so the ids in production have this shape. It is preserved rather than
+ * tidied because these ids are the join key logs, tasks and squawks point at — regularising the
+ * scheme would silently repoint every one of them.
+ */
+private fun walkPreservingOrder(
+  list: List<Component>,
+  prefix: List<String>,
+  thingId: String,
+): List<Component> {
+  val counters = mutableMapOf<String, Int>()
+  return list.map { component ->
+    val index = counters.getOrElse(component.slot_key) { 0 }
+    counters[component.slot_key] = index + 1
+    val path = prefix + listOf(component.slot_key, index.toString())
+    component.copy(
+      id = ThingInflater.componentId(thingId, path),
+      children = walkPreservingOrder(component.children, path, thingId),
+    )
+  }
 }
