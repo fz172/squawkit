@@ -1,7 +1,9 @@
 package dev.fanfly.wingslog.feature.fleet.datamanager.impl
 
+import dev.fanfly.wingslog.core.template.ThingInflater
+import io.mockk.slot
+import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
 import com.google.common.truth.Truth.assertThat
-import dev.fanfly.wingslog.thing.Thing
 import dev.fanfly.wingslog.core.model.sharing.ShareRole
 import dev.fanfly.wingslog.core.model.sharing.SharedAircraftRef
 import dev.fanfly.wingslog.core.storage.CollectionKind
@@ -9,6 +11,8 @@ import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.EntityStore
 import dev.fanfly.wingslog.core.storage.EntityStoreFactory
 import dev.fanfly.wingslog.core.storage.StorageEntity
+import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
+import dev.fanfly.wingslog.thing.Thing
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.auth.FirebaseUser
 import io.mockk.coVerify
@@ -55,7 +59,8 @@ class FleetManagerImplTest {
     every { firebaseAuth.currentUser } returns mockUser
     every { firebaseAuth.authStateChanged } returns flowOf(mockUser)
 
-    manager = FleetManagerImpl(firebaseAuth, storeFactory)
+    manager =
+      FleetManagerImpl(firebaseAuth, BakedInTemplateRegistry(), storeFactory)
   }
 
   @Test
@@ -250,7 +255,8 @@ class FleetManagerImplTest {
     coVerify {
       store.put(
         TEST_AIRCRAFT_ID,
-        thing,
+        // Inflated on the way out (#717) — these assertions are about id and scope, not payload.
+        ThingInflater.inflate(thing, AirplaneTemplate.TEMPLATE),
         EntityScope.userRoot(TEST_USER_ID)
       )
     }
@@ -323,7 +329,13 @@ class FleetManagerImplTest {
     val result = manager.updateThing(edited)
 
     assertThat(result.isSuccess).isTrue()
-    coVerify { store.put("shared-1", edited, EntityScope.userRoot(HOST_UID)) }
+    coVerify {
+      store.put(
+        "shared-1",
+        ThingInflater.inflate(edited, AirplaneTemplate.TEMPLATE),
+        EntityScope.userRoot(HOST_UID),
+      )
+    }
     coVerify(exactly = 0) {
       store.put(
         "shared-1",
@@ -339,7 +351,21 @@ class FleetManagerImplTest {
 
     manager.updateThing(mine)
 
-    coVerify { store.put("own-1", mine, EntityScope.userRoot(TEST_USER_ID)) }
+    coVerify {
+      store.put(
+        "own-1",
+        ThingInflater.inflate(mine, AirplaneTemplate.TEMPLATE),
+        EntityScope.userRoot(TEST_USER_ID),
+      )
+    }
+
+    // And the point of that inflation: what lands in the store carries spec and components, which
+    // before #717 nothing on the client ever wrote.
+    val stored = slot<Thing>()
+    coVerify { store.put("own-1", capture(stored), any()) }
+    assertThat(stored.captured.spec.map { it.key }).containsExactly("make", "model").inOrder()
+    assertThat(stored.captured.components.single().id).isEqualTo("own-1:airframe.0")
+    assertThat(stored.captured.template).isEqualTo(AirplaneTemplate.TEMPLATE)
   }
 
   @Test
