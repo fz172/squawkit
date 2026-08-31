@@ -29,6 +29,8 @@ kotlin {
     commonMain.dependencies {
       implementation(project(":core:ui"))
       implementation(project(":core:template"))
+      // APP_VERSION_CODE, for the "DNA from a newer build" fixture (#728).
+      implementation(project(":core:appinfo"))
       implementation(project(":core:ui:adaptive"))
       implementation(project(":core:ui:theme"))
       implementation(project(":core:model"))

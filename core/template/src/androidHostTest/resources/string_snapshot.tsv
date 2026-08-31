@@ -550,6 +550,7 @@ feature/squawk/update	resolve_issue	Resolve
 feature/stresstest	stress_test_complete	Generation complete
 feature/stresstest	stress_test_config_blades_per_engine	Blades per engine
 feature/stresstest	stress_test_config_engines	Engines
+feature/stresstest	stress_test_config_future_dna	Write DNA from a newer build (degraded state)
 feature/stresstest	stress_test_config_log_entries	Log entries
 feature/stresstest	stress_test_config_records	Maintenance records
 feature/stresstest	stress_test_config_squawks	Squawk count

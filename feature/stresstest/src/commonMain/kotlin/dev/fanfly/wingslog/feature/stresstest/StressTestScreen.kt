@@ -30,6 +30,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -51,6 +52,7 @@ import wingslog.feature.stresstest.generated.resources.Res
 import wingslog.feature.stresstest.generated.resources.stress_test_complete
 import wingslog.feature.stresstest.generated.resources.stress_test_config_blades_per_engine
 import wingslog.feature.stresstest.generated.resources.stress_test_config_engines
+import wingslog.feature.stresstest.generated.resources.stress_test_config_future_dna
 import wingslog.feature.stresstest.generated.resources.stress_test_config_log_entries
 import wingslog.feature.stresstest.generated.resources.stress_test_config_records
 import wingslog.feature.stresstest.generated.resources.stress_test_config_squawks
@@ -190,6 +192,11 @@ fun StressTestScreen(
                 value = config.technicianCount,
                 range = 1..5,
                 onValueChange = { viewModel.setTechnicianCount(it) },
+              )
+              SwitchRow(
+                label = stringResource(Res.string.stress_test_config_future_dna),
+                checked = config.dnaFromANewerBuild,
+                onCheckedChange = { viewModel.setDnaFromANewerBuild(it) },
               )
             }
 
@@ -348,6 +355,26 @@ private fun ConfigSection(
         content()
       }
     }
+  }
+}
+
+@Composable
+private fun SwitchRow(
+  label: String,
+  checked: Boolean,
+  onCheckedChange: (Boolean) -> Unit,
+) {
+  Row(
+    modifier = Modifier.fillMaxWidth(),
+    horizontalArrangement = Arrangement.SpaceBetween,
+    verticalAlignment = Alignment.CenterVertically,
+  ) {
+    Text(
+      text = label,
+      style = MaterialTheme.typography.bodyMedium,
+      modifier = Modifier.weight(1f),
+    )
+    Switch(checked = checked, onCheckedChange = onCheckedChange)
   }
 }
 
