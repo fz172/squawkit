@@ -13,7 +13,7 @@ import java.io.File
  * protobuf text-format parser, so turning `airplane.v1.textproto` into bytes needs `protoc`, which
  * this build otherwise has no use for — Wire does all codegen. Rather than put a native binary on
  * every developer's Gradle configuration path for an asset that changes about once per preset, the
- * `.pb` is committed and `templates/compile-template.sh` regenerates it. This test is what keeps
+ * `.pb` is committed and `templates/compile-template.sh` regenerates it into `templates/binary`. This test is what keeps
  * that honest: it is the only thing standing between an edited `.textproto` and stale bytes
  * shipping.
  */
@@ -30,7 +30,7 @@ class AirplaneTemplateAssetTest {
   }
 
   private val asset: File
-    get() = File(repoRoot(), "core/template/templates/airplane.v1.pb")
+    get() = File(repoRoot(), "core/template/templates/binary/airplane.v1.pb")
 
   private val decoded: ThingTemplate
     get() = ThingTemplate.ADAPTER.decode(asset.readBytes())

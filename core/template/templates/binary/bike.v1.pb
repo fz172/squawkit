@@ -1,0 +1,21 @@
+
+bike"¿
+
+bikebikesa
+issueissuesan
+serviceservicesa"$
+service recordservice recordsa*
+partpartsa2
+personpeoplea:ReadyBDownJOut of serviceRGaragejManufacturer* :BH2
+makeMake2
+modelModel2,
+frame_numberFrame Number *WTU123K0001Z:
+
+drivetrain
+Drivetrain:
+brakesBrakes:
+wheelWheelB
+odometerDistancemiB
+
+ride_hours
+Ride Hourshrs RBikeZbike`

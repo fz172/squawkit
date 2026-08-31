@@ -38,9 +38,11 @@ class CurrentThingTemplate(registry: TemplateRegistry) {
    * something generic there would show "Join a shared thing" to a user the app has always said
    * "Join a shared aircraft" to.
    *
-   * It retires itself. The moment a second canonical preset ships there is no single right answer,
-   * and this becomes null — at which point the lexicon falls back to [GenericLexicon] and
-   * capabilities to [ALL_ENABLED], both below (design §9).
+   * **It has now retired itself** (#721-#723). Seven presets ship, so [TemplateRegistry.canonical]
+   * no longer returns one and this is null: the lexicon falls back to [GenericLexicon] and
+   * capabilities to [ALL_ENABLED] (design §9). The consequence is deliberate and visible — the
+   * account-level screens above described here read the generic words now, because on an account
+   * that can hold a house and an airplane no template's word is right for both.
    */
   private val default: ThingTemplate? = registry.canonical()
     .singleOrNull()

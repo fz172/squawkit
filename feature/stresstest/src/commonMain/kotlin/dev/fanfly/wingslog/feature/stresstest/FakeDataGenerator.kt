@@ -4,6 +4,7 @@ import dev.fanfly.wingslog.core.appinfo.APP_VERSION_CODE
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.model.id.generateRandomId
 import dev.fanfly.wingslog.core.template.SlotKeys
+import dev.fanfly.wingslog.core.template.canonical.CanonicalTemplates
 import dev.fanfly.wingslog.core.template.SpecKeys
 import dev.fanfly.wingslog.core.template.allComponentsInSlot
 import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
@@ -13,6 +14,7 @@ import dev.fanfly.wingslog.thing.CertExpireLimit
 import dev.fanfly.wingslog.thing.CertificateType
 import dev.fanfly.wingslog.thing.ComplianceType
 import dev.fanfly.wingslog.thing.Component
+import dev.fanfly.wingslog.thing.ComponentSlot
 import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.EngineHourRule
 import dev.fanfly.wingslog.thing.ImmediateRule
@@ -26,6 +28,7 @@ import dev.fanfly.wingslog.thing.SquawkDismissReason
 import dev.fanfly.wingslog.thing.SquawkPriority
 import dev.fanfly.wingslog.thing.Technician
 import dev.fanfly.wingslog.thing.Thing
+import dev.fanfly.wingslog.thing.ThingTemplate
 import dev.fanfly.wingslog.thing.TimeRule
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
@@ -611,7 +614,14 @@ object FakeDataGenerator {
 
     val spec = AIRCRAFT_SPECS.random()
     val thingId = generateRandomId()
-    val thing = buildAircraft(spec, thingId, config)
+    val template = CanonicalTemplates.ALL.firstOrNull { it.id == config.templateId }
+      ?: AirplaneTemplate.TEMPLATE
+    // Airplane keeps its own builder: the aviation fixture below (engine/propeller logs, component
+    // squawks) expects the specific airframe -> engine -> propeller -> hub/blade tree, and
+    // engineCount / bladesPerEngine configure it. Every other preset is built from its template.
+    val thing =
+      if (template.id == AirplaneTemplate.ID) buildAircraft(spec, thingId, config)
+      else buildFromTemplate(template, thingId)
     val technicians = buildTechnicians(config.technicianCount)
     val tasks = buildTasks(config.taskCount, now)
     val squawks =
@@ -710,6 +720,78 @@ object FakeDataGenerator {
         )
       }
   }
+
+  /**
+   * A Thing built from whatever its template declares, for the presets that have no bespoke
+   * fixture (#721-#723).
+   *
+   * **Reads the template rather than hardcoding a shape**, which is the whole reason this is
+   * useful before the picker exists: it will render a home with no components and no meters, and a
+   * boat with two engines, because that is what those templates say — not because this function
+   * knows anything about houses or boats. A preset added later needs no change here.
+   */
+  private fun buildFromTemplate(template: ThingTemplate, thingId: String): Thing {
+    val spec = template.spec_fields.map { field ->
+      Spec(key = field.key, value_ = sampleSpecValue(field.key, field.label))
+    }
+    return Thing(
+      id = thingId,
+      // Set explicitly: ThingInflater derives a name from tail_number or make/model, none of which
+      // a home declares — so without this a fake house would arrive nameless.
+      name = sampleName(template.id, spec),
+      spec = spec,
+      components = template.component_slots.flatMap { buildSlot(it) },
+      template = template,
+    ).withDerivedComponentIds()
+  }
+
+  /** Instantiates a slot, twice when it repeats — one of anything hides off-by-one bugs. */
+  private fun buildSlot(slot: ComponentSlot): List<Component> {
+    val count = if (slot.repeatable) 2 else 1
+    return (1..count).map { index ->
+      Component(
+        slot_key = slot.slot_key,
+        make = SAMPLE_MAKES.random(),
+        model = "${('A'..'Z').random()}${(100..999).random()}",
+        serial = if (slot.serial_expected) {
+          "${slot.slot_key.take(2).uppercase()}$index-${(10000..99999).random()}"
+        } else {
+          ""
+        },
+        children = slot.children.flatMap { buildSlot(it) },
+      )
+    }
+  }
+
+  private fun sampleSpecValue(key: String, label: String): String = when (key) {
+    SpecKeys.MAKE -> SAMPLE_MAKES.random()
+    SpecKeys.MODEL -> "${('A'..'Z').random()}${(100..999).random()}"
+    SpecKeys.SERIAL -> "S${(10000..99999).random()}"
+    SpecKeys.TAIL_NUMBER -> "N${(1000..9999).random()}${('A'..'Z').random()}"
+    "vin" -> "1${('A'..'Z').random()}GBH41JXMN${(100000..999999).random()}"
+    "hull_id" -> "${('A'..'Z').random()}BC${(10000..99999).random()}D616"
+    "frame_number" -> "WTU${(100..999).random()}K${(1000..9999).random()}Z"
+    "year", "year_built" -> (1960..2024).random().toString()
+    "address" -> "${(100..9999).random()} ${SAMPLE_STREETS.random()}"
+    // Deliberately generic: a preset added later gets something readable without editing this.
+    else -> "Sample $label"
+  }
+
+  private fun sampleName(templateId: String, spec: List<Spec>): String {
+    val byKey = spec.associate { it.key to it.value_ }
+    return byKey["address"]
+      ?: listOfNotNull(byKey[SpecKeys.MAKE], byKey[SpecKeys.MODEL])
+        .joinToString(" ")
+        .ifBlank { "Sample ${templateId.replaceFirstChar { it.uppercase() }}" }
+  }
+
+  private val SAMPLE_MAKES = listOf(
+    "Acme", "Corellian", "Kuat", "Sienar", "Incom", "Rendili",
+  )
+
+  private val SAMPLE_STREETS = listOf(
+    "Maple Street", "Oak Avenue", "Cedar Lane", "Birch Road", "Willow Way",
+  )
 
   private fun buildTechnicians(count: Int): List<Technician> {
     val shuffled = TECHNICIAN_NAMES.shuffled()

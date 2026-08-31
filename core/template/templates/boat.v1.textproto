@@ -1,0 +1,99 @@
+# The boat preset — canonical template (id "boat", version 1).
+#
+# The only non-aviation preset with a PER-COMPONENT meter: engine hours belong to the engine, and a
+# twin-engine boat has two of them accruing separately. That makes this the preset that exercises
+# `component_slot_key` outside the airplane, which is the field a single-engine assumption hides.
+#
+# See templates/README.md before editing, and compile with ./compile-template.sh boat.v1
+
+id: "boat"
+version: 1
+min_app_version: 0
+
+display_name: "Boat"
+icon: "boat"
+sort_order: 3
+
+lexicon {
+  thing { singular: "boat" plural: "boats" article: "a" }
+  squawk { singular: "issue" plural: "issues" article: "an" }
+  task { singular: "service" plural: "services" article: "a" }
+  log { singular: "service record" plural: "service records" article: "a" }
+  component { singular: "part" plural: "parts" article: "a" }
+  technician { singular: "mechanic" plural: "mechanics" article: "a" }
+
+  ready_status: "Ready"
+  # Same shape as the airplane's AOG / "Aircraft on Ground": a short form for the status chip and
+  # the full phrase for the notification channel a user sees in system settings (PRD §8.5).
+  down_status: "DIW"
+  down_status_long: "Dead in the Water"
+
+  collection_label: "Fleet"
+  authority_label: "Manufacturer"
+
+  # compliance is off below; terms deliberately absent.
+}
+
+capabilities {
+  components: true
+  meters: true
+  compliance: false
+  technicians: true
+  technician_certificates: false
+  component_serial_prompt: false
+
+  priorities: SQUAWK_PRIORITY_LOW
+  priorities: SQUAWK_PRIORITY_MEDIUM
+  priorities: SQUAWK_PRIORITY_HIGH
+  priorities: SQUAWK_PRIORITY_AOG
+
+  sections: SECTION_DASHBOARD
+  sections: SECTION_SQUAWKS
+  sections: SECTION_TASKS
+  sections: SECTION_LOGS
+
+  export_layout: EXPORT_LAYOUT_GENERIC
+}
+
+spec_fields { key: "make" label: "Make" }
+spec_fields { key: "model" label: "Model" }
+spec_fields { key: "year" label: "Year" placeholder: "2016" }
+spec_fields {
+  key: "hull_id"
+  label: "Hull ID"
+  is_identifier: true
+  placeholder: "ABC12345D616"
+}
+
+component_slots {
+  slot_key: "hull"
+  label: "Hull"
+  serial_expected: true
+}
+# Repeatable, and that is the point — a twin-engine boat accrues hours on each engine separately.
+component_slots {
+  slot_key: "engine"
+  label: "Engine"
+  repeatable: true
+  serial_expected: true
+  children {
+    slot_key: "outdrive"
+    label: "Outdrive"
+    serial_expected: true
+  }
+}
+component_slots {
+  slot_key: "battery"
+  label: "Battery"
+  repeatable: true
+}
+
+# Scoped to the engine slot, exactly as the airplane's engine hours are. A Thing-level meter here
+# would report one number for a boat that has two engines with different histories.
+meters {
+  key: "engine_hours"
+  label: "Engine Hours"
+  unit_label: "hrs"
+  decimal: true
+  component_slot_key: "engine"
+}

@@ -143,12 +143,26 @@ class AdaptiveShellViewModelTest {
   }
 
   @Test
-  fun anEmptyFleetStillSpeaksTheSolePresetsWords() = runTest(testDispatcher) {
-    // A technician with no thing of their own lands on the redeem / invite-code flow as their
-    // first screen, with nothing selected. While airplane is the only preset it is the only right
-    // answer there — the generic lexicon would say "Join a shared thing" to a user the app has
-    // always said "Join a shared aircraft" to.
+  fun anEmptyFleetSpeaksTheGenericWords() = runTest(testDispatcher) {
+    // A technician with no thing of their own lands on the redeem / invite-code flow as their first
+    // screen, with nothing selected. This used to say "aircraft": while airplane was the only
+    // preset it was the only right answer. Six more presets ship now (#721-#723), so there is no
+    // single right answer and the generic lexicon is what an account holding a house and an
+    // airplane can honestly be shown — the retirement CurrentThingTemplate.default always
+    // described.
     fleet.value = emptyList()
+    viewModel()
+
+    assertThat(currentThingTemplate.lexicon.value.thingNoun.singular).isEqualTo(
+      "thing"
+    )
+  }
+
+  @Test
+  fun selectingAThingStillSpeaksItsOwnWords() = runTest(testDispatcher) {
+    // The other half, and the one that matters more: a fleet with an airplane in it reads
+    // "aircraft" exactly as before. The generic fallback applies to no-selection surfaces only.
+    fleet.value = listOf(thing("a1", "N1"))
     viewModel()
 
     assertThat(currentThingTemplate.lexicon.value.thingNoun.singular).isEqualTo(

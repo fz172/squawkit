@@ -1,0 +1,86 @@
+# The home preset — canonical template (id "home", version 1).
+#
+# THE LOAD-BEARING ONE (pivot_rollout_design.md §5). A house has no make, no model and no serial
+# number (PRD §4.2), and its meter list is EMPTY (§4.4). Everything this file leaves out is the
+# point: it is the preset that finds screens with an aviation assumption baked in. `car` would find
+# almost none of them — it maps onto the airplane shape almost field for field.
+#
+# See templates/README.md before editing, and compile with ./compile-template.sh home.v1
+
+id: "home"
+version: 1
+min_app_version: 0
+
+display_name: "Home"
+icon: "home"
+sort_order: 4
+
+lexicon {
+  thing { singular: "home" plural: "homes" article: "a" }
+
+  # PRD §4.5 resolves this to "attention" for home: outside aviation the line between a one-off
+  # task and a defect is not sharp, and a homeowner tracking "the fence gate is broken" alongside
+  # "clean the gutters" wants one inbox rather than a judgment call. Written as a countable noun
+  # because every render site needs one — the UI says "Add %s" and "3 open %s", neither of which
+  # works with a mass noun.
+  squawk { singular: "attention item" plural: "attention items" article: "an" }
+
+  task { singular: "task" plural: "tasks" article: "a" }
+  log { singular: "service record" plural: "service records" article: "a" }
+  component { singular: "part" plural: "parts" article: "a" }
+
+  # "person", not "technician" (PRD §4.8). A homeowner splitting chores with a spouse, or doing the
+  # work themselves, is at least as common as hiring one out.
+  technician { singular: "person" plural: "people" article: "a" }
+
+  ready_status: "Good"
+  # Names the OS notification channel a user sees in system settings (PRD §8.5). The channel *id*
+  # stays "GROUNDED" regardless — renaming an id drops every user's per-channel settings.
+  down_status: "Urgent"
+  down_status_long: "Needs urgent attention"
+
+  collection_label: "Property"
+  authority_label: "Manufacturer"
+
+  # compliance_mandatory and compliance_advisory are deliberately absent: `compliance` is off below,
+  # so nothing should read them. Leaving them empty rather than filling them in is what turns a
+  # capability flag into a real check — any screen that renders a compliance term without consulting
+  # the capability will show a blank here rather than quietly borrowing a plausible word.
+}
+
+# PRD §4.8, the home column. Components and meters are the two that matter: a homeowner should never
+# see a component tree or a greyed-out "Engine hours" field.
+capabilities {
+  components: false
+  meters: false
+  compliance: false
+  technicians: true
+  technician_certificates: false
+  component_serial_prompt: false
+
+  # The top tier is labelled from `down_status` above, so this reads "Urgent" here and "AOG" on an
+  # airplane. Same enum, same lifecycle, different word.
+  priorities: SQUAWK_PRIORITY_LOW
+  priorities: SQUAWK_PRIORITY_MEDIUM
+  priorities: SQUAWK_PRIORITY_HIGH
+  priorities: SQUAWK_PRIORITY_AOG
+
+  sections: SECTION_DASHBOARD
+  sections: SECTION_SQUAWKS
+  sections: SECTION_TASKS
+  sections: SECTION_LOGS
+
+  export_layout: EXPORT_LAYOUT_GENERIC
+}
+
+# No make, no model, no serial — the fields PRD §4.2 used to kill the idea of a universal core.
+spec_fields { key: "address" label: "Address" }
+spec_fields { key: "year_built" label: "Year Built" placeholder: "1974" }
+
+# NO component_slots. PRD §4.3: "Home declares zero component slots — capability, not compromise,
+# and the strongest proof that the tree is not a hidden second universal core."
+
+# NO meters. PRD §4.4: a house accumulates no usage a homeowner would ever record. This must mean no
+# meter fields on the log form, no meter column in export, no meter rule type in the task editor,
+# and a due-status computation that runs purely on dates. If any of those degrade to a blank
+# "0.0 hrs" field, the config system has failed its first real test.

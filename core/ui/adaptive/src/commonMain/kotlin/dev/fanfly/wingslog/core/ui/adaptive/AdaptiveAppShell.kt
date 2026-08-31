@@ -92,7 +92,7 @@ import dev.fanfly.wingslog.thing.Section
 import dev.fanfly.wingslog.thing.ThingTemplate
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
-import wingslog.core.sharedassets.generated.resources.add_thing
+import wingslog.core.sharedassets.generated.resources.switcher_add_thing
 import wingslog.core.sharedassets.generated.resources.app_name
 import wingslog.core.sharedassets.generated.resources.back
 import wingslog.core.sharedassets.generated.resources.enter_invite_code
@@ -1021,12 +1021,10 @@ private fun AircraftDropdown(
     if (onAddAircraft != null) {
       DropdownMenuItem(
         text = {
-          Text(
-            stringResource(
-              UiRes.string.add_thing,
-              LexiconFormatter.titleCase(LocalThingLexicon.current.thingNoun),
-            )
-          )
+          // Neutral, not the selected thing's word: the switcher is where a user moves between
+          // templates, so "Add Aircraft" would offer to add another airplane to someone whose next
+          // Thing is a house.
+          Text(stringResource(UiRes.string.switcher_add_thing))
         },
         leadingIcon = { Icon(Icons.Filled.Add, contentDescription = null) },
         onClick = {

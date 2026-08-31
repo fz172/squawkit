@@ -34,6 +34,8 @@ case "$(uname -s)-$(uname -m)" in
   *) echo "unsupported host: $(uname -s)-$(uname -m)" >&2; exit 1 ;;
 esac
 
+mkdir -p "$here/binary"
+
 work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT
 
@@ -65,6 +67,6 @@ mkdir -p "$work/wkt"
   --proto_path="$work/wkt" \
   --encode=ThingTemplate thing/template.proto \
   < "$here/$name.textproto" \
-  > "$here/$name.pb"
+  > "$here/binary/$name.pb"
 
-echo "wrote $here/$name.pb ($(wc -c < "$here/$name.pb" | tr -d ' ') bytes)"
+echo "wrote $here/binary/$name.pb ($(wc -c < "$here/binary/$name.pb" | tr -d ' ') bytes)"

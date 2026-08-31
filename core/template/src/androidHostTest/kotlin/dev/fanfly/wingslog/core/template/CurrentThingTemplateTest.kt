@@ -23,7 +23,13 @@ class CurrentThingTemplateTest {
 
   @Test
   fun publishesTheTemplatesOwnCapabilitiesNotTheFailOpenDefault() {
-    val capabilities = holder().capabilities.value
+    val holder = holder()
+    // Selecting is now required to get a template's own capabilities. Until the six presets of
+    // #721-#723 shipped, one preset was the only possible answer and construction alone was
+    // enough; `default` retires itself the moment a second preset exists, exactly as its KDoc
+    // said it would.
+    holder.set(AirplaneTemplate.TEMPLATE)
+    val capabilities = holder.capabilities.value
 
     // The distinguishing fact: ALL_ENABLED declares no sections and no priorities, because a
     // fail-open default has no template to take an order from. The airplane set declares both.
@@ -65,22 +71,37 @@ class CurrentThingTemplateTest {
 
   @Test
   fun capabilitiesAreUsableImmediatelyAfterConstruction() {
-    // The other failure #660 names: a capability read *before the registry resolves*. There is no
-    // such window — the registry is baked into the build, so the holder resolves in its constructor
-    // and the first read already has the airplane set rather than an empty one.
-    assertThat(holder().capabilities.value.sections).isNotEmpty()
-    assertThat(holder().template.value).isNotNull()
+    // The failure #660 names: a capability read *before* anything is selected must not remove UI.
+    // It fails open rather than resolving to a preset — with seven presets there is no single right
+    // answer, so the guarantee is that the first read is usable, not that it is anyone's template.
+    assertThat(holder().capabilities.value).isEqualTo(CurrentThingTemplate.ALL_ENABLED)
+    assertThat(holder().capabilities.value.components).isTrue()
+    assertThat(holder().capabilities.value.meters).isTrue()
   }
 
   @Test
-  fun clearRestoresTheSolePresetRatherThanEmptying() {
-    // An empty fleet is not "no template" while one preset exists — the same rule the lexicon
-    // follows, and the reason a technician with no thing of their own still reads "aircraft".
+  fun withNoSelectionTheWordsAreGenericRatherThanAnyOnePresets() {
+    // The user-visible consequence of shipping the six presets (#721-#723), and a deliberate one:
+    // account-level screens — settings, redeem, invite — used to read "aircraft" because airplane
+    // was the only preset. On a mixed account no template's word is right, so they now read the
+    // generic lexicon. Picking one arbitrarily would caption a homeowner's screen in aviation.
     val holder = holder()
+
+    assertThat(holder.template.value).isNull()
+    assertThat(holder.lexicon.value).isEqualTo(GenericLexicon.LEXICON)
+    assertThat(holder.templateId).isEqualTo(CurrentThingTemplate.UNKNOWN_TEMPLATE_ID)
+  }
+
+  @Test
+  fun clearReturnsToTheNoSelectionDefault() {
+    // An empty fleet is "no template" now that more than one preset exists — clear() must restore
+    // that state rather than leaving the last selection's words behind.
+    val holder = holder()
+    holder.set(AirplaneTemplate.TEMPLATE)
     holder.clear()
 
-    assertThat(holder.capabilities.value.sections).isNotEmpty()
-    assertThat(holder.lexicon.value).isEqualTo(AirplaneTemplate.AIRPLANE_LEXICON)
+    assertThat(holder.template.value).isNull()
+    assertThat(holder.lexicon.value).isEqualTo(GenericLexicon.LEXICON)
   }
 
   @Test

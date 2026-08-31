@@ -3,10 +3,17 @@
 The source of truth for each canonical preset, and the compiled bytes the app bakes in.
 
 ```
-airplane.v1.textproto   authored, reviewed, explained — edit this
-airplane.v1.pb          compiled from it — committed, never hand-edited
+*.textproto             authored, reviewed, explained — edit these
+binary/*.pb             compiled from them — committed, never hand-edited
 compile-template.sh     the compiler
 ```
+
+Six presets ship: `airplane`, `automotive`, `bike`, `boat`, `home`, `custom`. `automotive` covers
+cars and motorcycles together — PRD §4.8 lists them as separate rows and is stale on that point.
+Two of the six carry more weight than the rest. **`home` is load-bearing** — no make, no model, no serial, no component
+slots, an empty meter list — so it is the one that finds screens with an aviation assumption baked
+in. **`custom` is the floor**: it declares almost nothing, so a screen that breaks on it is reading
+something no template promises.
 
 ## Editing a template
 
@@ -15,8 +22,8 @@ compile-template.sh     the compiler
 ./gradlew :core:template:testAndroidHostTest
 ```
 
-Both steps. `AirplaneTemplateAssetTest` is what tells you the `.pb` is stale, and it is wired into
-Gradle's inputs so it re-runs whenever a `.pb` changes.
+Both steps. `AirplaneTemplateAssetTest` and `CanonicalTemplatesTest` are what tell you a `.pb` is stale or a
+preset is invalid, and they are wired into Gradle's inputs so they re-run whenever a `.pb` changes.
 
 > **A published template is never edited.** `(id, version)` has to always name the same bytes
 > (`template_system_design.md` §5), so a correction after publication is a new `version` — a new
@@ -55,6 +62,7 @@ script:
 | `theEmbeddedTemplateMatchesTheCommittedAsset` | the Gradle generator skipped, mis-wired, or stale |
 | `theLexiconStillSaysWhatTheAppSays` | a wrong word at the source — the `.pb` is binary, so review will not |
 | `theStructureTheAirplaneScreensAssumeIsIntact` | a dropped identifier flag, a reordered section, a meter on the wrong slot |
+| `CanonicalTemplatesTest` | the PRD §4.7 rules over every preset — duplicate keys, an empty noun, meters claimed but not declared, a meter scoped to a slot that does not exist |
 | `TemplateKeysResolveTest` | a slot or spec key the app emits that the template does not declare |
 | `StringSnapshotTest` | any rendered string drifting from what the app shipped |
 

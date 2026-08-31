@@ -95,6 +95,10 @@ class StressTestViewModel(
     _config.value = _config.value.copy(technicianCount = count)
   }
 
+  fun setTemplateId(id: String) {
+    _config.value = _config.value.copy(templateId = id)
+  }
+
   fun setDnaFromANewerBuild(value: Boolean) {
     _config.value = _config.value.copy(dnaFromANewerBuild = value)
   }

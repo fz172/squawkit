@@ -1,6 +1,16 @@
 package dev.fanfly.wingslog.feature.stresstest
 
+import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
+
 data class StressTestConfig(
+  /**
+   * Which canonical preset the generated thing uses (#721-#723).
+   *
+   * The only way to exercise a preset before the picker (#738) exists — and the reason the presets
+   * are testable at all right now. Airplane keeps the bespoke aviation fixture; every other id
+   * builds its thing from whatever the template declares.
+   */
+  val templateId: String = AirplaneTemplate.ID,
   val engineCount: Int = 1,
   val bladesPerEngine: Int = 2,
   val squawkCount: Int = 6,

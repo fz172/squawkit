@@ -81,10 +81,30 @@ class TemplateRegistryTest {
   }
 
   @Test
-  fun theCanonicalPoolOffersOnlyAirplane() {
-    assertThat(registry.canonical()).containsExactly(AirplaneTemplate.TEMPLATE)
+  fun theCanonicalPoolOffersEveryBakedInPresetInPickerOrder() {
+    // canonical() is what a picker offers, so the order is the templates' own sort_order rather
+    // than declaration order — the list this returns is the list the user reads top to bottom.
+    assertThat(
+      registry.canonical()
+        .map { it.id })
+      .containsExactly(
+        "airplane",
+        "automotive",
+        "bike",
+        "boat",
+        "home",
+        "custom"
+      )
+      .inOrder()
     assertThat(registry.canonicalById("airplane")).isEqualTo(AirplaneTemplate.TEMPLATE)
-    assertThat(registry.canonicalById("boat")).isNull()
+    assertThat(registry.canonicalById("boat")?.id).isEqualTo("boat")
+  }
+
+  @Test
+  fun anIdNoPresetClaimsStillResolvesToNothing() {
+    // Null is the answer a fetched-template lookup will need once #726 exists; it must not start
+    // returning a fallback just because the pool grew.
+    assertThat(registry.canonicalById("submarine")).isNull()
   }
 }
 

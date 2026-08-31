@@ -60,6 +60,7 @@ core/sharedassets	shell_nav_tasks_narrow	Maint. Tasks
 core/sharedassets	shell_tab_dashboard	Dashboard
 core/sharedassets	shell_tab_logs	Logs
 core/sharedassets	shell_tab_tasks	Maint.
+core/sharedassets	switcher_add_thing	Add a new thing
 core/sharedassets	sync_changes_discarded	Unsaved changes to %1$s were discarded — your access was removed
 core/sharedassets	term_with_abbreviation	%1$s (%2$s)
 core/sharedassets	thing_shared_badge	Shared
@@ -556,6 +557,7 @@ feature/stresstest	stress_test_config_records	Maintenance records
 feature/stresstest	stress_test_config_squawks	Squawk count
 feature/stresstest	stress_test_config_tasks	Task count
 feature/stresstest	stress_test_config_technicians	Technician count
+feature/stresstest	stress_test_config_template	Template
 feature/stresstest	stress_test_config_thing	Thing
 feature/stresstest	stress_test_decrement	−
 feature/stresstest	stress_test_description	Generates realistic aviation records for UI stress testing. Data is written to your account.
