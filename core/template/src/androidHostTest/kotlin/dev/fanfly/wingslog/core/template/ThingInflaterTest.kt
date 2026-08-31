@@ -39,7 +39,11 @@ class ThingInflaterTest {
         model = "IO-470",
         serial = "E-1",
         propeller = Propeller(
-          hub = PropellerHub(make = "McCauley", model = "HUB-1", serial = "H-1"),
+          hub = PropellerHub(
+            make = "McCauley",
+            model = "HUB-1",
+            serial = "H-1"
+          ),
           blades = listOf(
             PropellerBlade(make = "McCauley", model = "BL", serial = "B-1"),
             PropellerBlade(make = "McCauley", model = "BL", serial = "B-2"),
@@ -55,7 +59,19 @@ class ThingInflaterTest {
     // `${thingId}:${path.join(".")}` — transcribed from thingPayloads.ts.
     assertThat(ThingInflater.componentId("thing-1", listOf("airframe", "0")))
       .isEqualTo("thing-1:airframe.0")
-    assertThat(ThingInflater.componentId("thing-1", listOf("engine", "1", "propeller", "0", "blade", "2")))
+    assertThat(
+      ThingInflater.componentId(
+        "thing-1",
+        listOf(
+          "engine",
+          "1",
+          "propeller",
+          "0",
+          "blade",
+          "2"
+        )
+      )
+    )
       .isEqualTo("thing-1:engine.1.propeller.0.blade.2")
   }
 
@@ -64,9 +80,11 @@ class ThingInflaterTest {
     val inflated = ThingInflater.inflate(twin(), airplane)
 
     assertThat(inflated.spec.map { it.key })
-      .containsExactly("make", "model", "serial", "tail_number").inOrder()
+      .containsExactly("make", "model", "serial", "tail_number")
+      .inOrder()
     assertThat(inflated.spec.map { it.value_ })
-      .containsExactly("Cessna", "310", "SN-1", "N123AB").inOrder()
+      .containsExactly("Cessna", "310", "SN-1", "N123AB")
+      .inOrder()
   }
 
   @Test
@@ -77,7 +95,8 @@ class ThingInflaterTest {
 
     val inflated = ThingInflater.inflate(noTail, airplane)
 
-    assertThat(inflated.spec.map { it.key }).containsExactly("make", "model").inOrder()
+    assertThat(inflated.spec.map { it.key }).containsExactly("make", "model")
+      .inOrder()
   }
 
   @Test
@@ -92,9 +111,11 @@ class ThingInflaterTest {
 
     val engines = airframe.children
     assertThat(engines.map { it.id })
-      .containsExactly("thing-1:engine.0", "thing-1:engine.1").inOrder()
+      .containsExactly("thing-1:engine.0", "thing-1:engine.1")
+      .inOrder()
     // Numbered because there is more than one; a single-engine aircraft says just "Engine".
-    assertThat(engines.map { it.label }).containsExactly("Engine 1", "Engine 2").inOrder()
+    assertThat(engines.map { it.label }).containsExactly("Engine 1", "Engine 2")
+      .inOrder()
 
     val propeller = engines[0].children.single()
     assertThat(propeller.id).isEqualTo("thing-1:engine.0.propeller.0")
@@ -106,9 +127,11 @@ class ThingInflaterTest {
       "thing-1:engine.0.propeller.0.hub.0",
       "thing-1:engine.0.propeller.0.blade.0",
       "thing-1:engine.0.propeller.0.blade.1",
-    ).inOrder()
+    )
+      .inOrder()
     assertThat(propeller.children.map { it.label })
-      .containsExactly("Hub", "Blade 1", "Blade 2").inOrder()
+      .containsExactly("Hub", "Blade 1", "Blade 2")
+      .inOrder()
 
     // The second engine has no propeller, so no children at all.
     assertThat(engines[1].children).isEmpty()
@@ -116,7 +139,8 @@ class ThingInflaterTest {
 
   @Test
   fun aSingleEngineIsLabelledWithoutANumber() {
-    val single = twin().copy(engine = listOf(Engine(make = "Lycoming", model = "O-320")))
+    val single =
+      twin().copy(engine = listOf(Engine(make = "Lycoming", model = "O-320")))
 
     val inflated = ThingInflater.inflate(single, airplane)
 
@@ -129,7 +153,15 @@ class ThingInflaterTest {
     // filling a field in later renumbers nothing.
     val blank = Thing(
       id = "thing-2",
-      engine = listOf(Engine(propeller = Propeller(blades = listOf(PropellerBlade())))),
+      engine = listOf(
+        Engine(
+          propeller = Propeller(
+            blades = listOf(
+              PropellerBlade()
+            )
+          )
+        )
+      ),
     )
 
     val inflated = ThingInflater.inflate(blank, airplane)
@@ -143,11 +175,59 @@ class ThingInflaterTest {
   }
 
   @Test
+  fun aThingWithNoEnginesGetsAnAirframeAndNothingElse() {
+    // Cardinality is 0-or-more at every level. An airframe with no engines is a real shape — a
+    // glider, or an aircraft whose engine records were never filled in — and it must still produce
+    // its airframe so logs have something to hang off.
+    val engineless = Thing(id = "t-1", make = "Schweizer", model = "SGS 1-26")
+
+    val inflated = ThingInflater.inflate(engineless, airplane)
+
+    val airframe = inflated.components.single()
+    assertThat(airframe.slot_key).isEqualTo("airframe")
+    assertThat(airframe.children).isEmpty()
+  }
+
+  @Test
+  fun aPropellerWithNoBladesStillGetsItsPropellerComponent() {
+    // Same at the leaf: blades are 0-or-more, and a propeller with none recorded is not the same as
+    // no propeller. Collapsing the two would lose the propeller's own make/model/serial.
+    val noBlades = Thing(
+      id = "t-2",
+      engine = listOf(Engine(propeller = Propeller(hub = PropellerHub(serial = "H-1")))),
+    )
+
+    val inflated = ThingInflater.inflate(noBlades, airplane)
+
+    val propeller =
+      inflated.components.single().children.single().children.single()
+    assertThat(propeller.slot_key).isEqualTo("propeller")
+    assertThat(propeller.children.map { it.slot_key }).containsExactly("hub")
+  }
+
+  @Test
+  fun engineCountIsPreservedExactly() {
+    // The count the UI iterates comes from this tree now, so an off-by-one here is an engine that
+    // vanishes from the dashboard.
+    val twin = twin()
+
+    val engines =
+      ThingInflater.inflate(twin, airplane).components.single().children
+
+    assertThat(engines).hasSize(twin.engine.size)
+  }
+
+  @Test
   fun nameFallsBackFromTailNumberToMakeAndModel() {
     assertThat(ThingInflater.inflate(twin(), airplane).name).isEqualTo("N123AB")
 
     val noTail = twin().copy(tail_number = "")
-    assertThat(ThingInflater.inflate(noTail, airplane).name).isEqualTo("Cessna 310")
+    assertThat(
+      ThingInflater.inflate(
+        noTail,
+        airplane
+      ).name
+    ).isEqualTo("Cessna 310")
 
     val nothing = Thing(id = "t")
     assertThat(ThingInflater.inflate(nothing, airplane).name).isEmpty()
@@ -158,7 +238,12 @@ class ThingInflaterTest {
     // The user named it. Regenerating from make/model on every write would silently rename it back.
     val named = twin().copy(name = "The Old Girl")
 
-    assertThat(ThingInflater.inflate(named, airplane).name).isEqualTo("The Old Girl")
+    assertThat(
+      ThingInflater.inflate(
+        named,
+        airplane
+      ).name
+    ).isEqualTo("The Old Girl")
   }
 
   @Test
@@ -170,17 +255,64 @@ class ThingInflaterTest {
   }
 
   @Test
-  fun anAlreadyInflatedThingKeepsItsComponentsEvenIfLegacyFieldsChanged() {
-    // Editing the make must not rebuild the tree: component ids are a join key, and rebuilding
-    // would be a no-op here only because ids are derived. Keeping the existing tree is what makes
-    // that guarantee independent of the derivation.
+  fun rebuildingPreservesIdsWhenTheStructureIsUnchanged() {
+    // Every write rebuilds spec and the tree from fields 2-6. That is safe precisely because the
+    // derivation is positional: editing a value must not renumber anything, or every log pointing
+    // at a component is orphaned by an unrelated edit.
     val once = ThingInflater.inflate(twin(), airplane)
     val edited = once.copy(make = "Beechcraft")
 
     val reInflated = ThingInflater.inflate(edited, airplane)
 
-    assertThat(reInflated.components).isEqualTo(once.components)
-    assertThat(reInflated.spec).isEqualTo(once.spec)
+    assertThat(reInflated.components.map { it.id }).isEqualTo(once.components.map { it.id })
+    assertThat(reInflated.specValue("make")).isEqualTo("Beechcraft")
+  }
+
+  @Test
+  fun editingAValueReachesTheSpec() {
+    // The regression this guards, found while working out how to test part 2: gating spec on
+    // "already has one" meant an edited make never reached it. Harmless while the UI read
+    // fields 2-6; invisible data loss once the UI reads spec (#668 part 1).
+    val saved = ThingInflater.inflate(twin(), airplane)
+
+    val reSaved =
+      ThingInflater.inflate(saved.copy(make = "Beechcraft"), airplane)
+
+    assertThat(reSaved.specValue("make")).isEqualTo("Beechcraft")
+  }
+
+  @Test
+  fun addingAnEngineReachesTheComponentTree() {
+    // The same regression, structurally: the tree was frozen after the first inflation, so an
+    // engine added in the form never appeared on a dashboard that reads components.
+    val saved = ThingInflater.inflate(
+      Thing(
+        id = "t",
+        make = "Cessna",
+        engine = listOf(Engine(make = "Lycoming"))
+      ),
+      airplane,
+    )
+    assertThat(saved.allComponentsInSlot(SlotKeys.ENGINE)).hasSize(1)
+
+    val reSaved =
+      ThingInflater.inflate(
+        saved.copy(engine = saved.engine + Engine(make = "Continental")),
+        airplane
+      )
+
+    assertThat(reSaved.allComponentsInSlot(SlotKeys.ENGINE)).hasSize(2)
+  }
+
+  @Test
+  fun removingAnEngineReachesTheComponentTree() {
+    val saved = ThingInflater.inflate(twin(), airplane)
+    assertThat(saved.allComponentsInSlot(SlotKeys.ENGINE)).hasSize(2)
+
+    val reSaved =
+      ThingInflater.inflate(saved.copy(engine = saved.engine.take(1)), airplane)
+
+    assertThat(reSaved.allComponentsInSlot(SlotKeys.ENGINE)).hasSize(1)
   }
 
   @Test

@@ -40,6 +40,8 @@ import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.datetime.toLocalDate
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.SpecKeys
+import dev.fanfly.wingslog.core.template.specValue
 import dev.fanfly.wingslog.core.template.squawkNoun
 import dev.fanfly.wingslog.core.template.thingNoun
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LayoutTier
@@ -64,9 +66,9 @@ import dev.fanfly.wingslog.feature.thing.dashboard.data.ThingOverviewUiState
 import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.MaintenanceLog
 import org.jetbrains.compose.resources.stringResource
-import wingslog.core.sharedassets.generated.resources.thing_shared_badge
 import wingslog.core.sharedassets.generated.resources.all
 import wingslog.core.sharedassets.generated.resources.make_model_template
+import wingslog.core.sharedassets.generated.resources.thing_shared_badge
 import wingslog.feature.squawk.sharedassets.generated.resources.no_open_squawks
 import wingslog.feature.tasks.sharedassets.generated.resources.unknown_date
 import wingslog.feature.thing.dashboard.generated.resources.Res
@@ -261,14 +263,16 @@ private fun OverviewHero(
       Text(
         text = stringResource(
           CoreRes.string.make_model_template,
-          state.thing.make.trim(),
-          state.thing.model.trim()
+          state.thing.specValue(SpecKeys.MAKE)
+            .trim(),
+          state.thing.specValue(SpecKeys.MODEL)
+            .trim()
         ),
         style = WingslogTypography.heroDisplay,
         color = MaterialTheme.colorScheme.onSurface
       )
       Text(
-        text = state.thing.tail_number,
+        text = state.thing.specValue(SpecKeys.TAIL_NUMBER),
         style = WingslogTypography.heroDisplay,
         color = MaterialTheme.colorScheme.primary
       )

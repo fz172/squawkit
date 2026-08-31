@@ -36,6 +36,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.SlotKeys
+import dev.fanfly.wingslog.core.template.SpecKeys
+import dev.fanfly.wingslog.core.template.childrenInSlot
+import dev.fanfly.wingslog.core.template.rootComponentInSlot
+import dev.fanfly.wingslog.core.template.specValue
 import dev.fanfly.wingslog.core.template.thingNoun
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.thing.Thing
@@ -135,14 +140,18 @@ fun ThingDataCard(
             category = stringResource(CoreRes.string.component_airframe).uppercase(),
             name = stringResource(
               CoreRes.string.make_model_template,
-              thing.make,
-              thing.model,
+              thing.specValue(SpecKeys.MAKE),
+              thing.specValue(SpecKeys.MODEL),
             ),
-            serial = thing.serial
+            serial = thing.specValue(SpecKeys.SERIAL)
           )
 
-          thing.engine.forEachIndexed { index, engine ->
-            val label = if (thing.engine.size > 1) {
+          // The airframe's engine children, not the transitional `Thing.engine` field (#668).
+          val engines = thing.rootComponentInSlot(SlotKeys.AIRFRAME)
+            ?.childrenInSlot(SlotKeys.ENGINE)
+            .orEmpty()
+          engines.forEachIndexed { index, engine ->
+            val label = if (engines.size > 1) {
               stringResource(
                 SharedRes.string.engine_with_index,
                 index + 1

@@ -1,5 +1,7 @@
 package dev.fanfly.wingslog.feature.export.datamanager.impl
 
+import dev.fanfly.wingslog.core.template.ThingInflater
+import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.thing.Attachment
 import dev.fanfly.wingslog.thing.AttachmentType
@@ -399,7 +401,10 @@ class LogbookExportArchiveBuilderTest {
     ),
   ) = ThingBundle(
     logs = logs,
-    thing = thing,
+    // Inflated, because that is the only shape production produces since #717: the builder reads
+    // the component tree, and a fixture carrying only the transitional fields would exercise a
+    // Thing that can no longer exist.
+    thing = ThingInflater.inflate(thing, AirplaneTemplate.TEMPLATE),
     tasks = emptyList(),
     dueByTaskId = emptyMap(),
     lastCompliedByTaskId = emptyMap(),

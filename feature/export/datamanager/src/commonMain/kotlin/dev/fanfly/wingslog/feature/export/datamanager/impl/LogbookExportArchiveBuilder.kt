@@ -1,5 +1,16 @@
 package dev.fanfly.wingslog.feature.export.datamanager.impl
 
+import dev.fanfly.wingslog.core.datetime.toLocalDate
+import dev.fanfly.wingslog.core.template.SlotKeys
+import dev.fanfly.wingslog.core.template.SpecKeys
+import dev.fanfly.wingslog.core.template.allComponentsInSlot
+import dev.fanfly.wingslog.core.template.childInSlot
+import dev.fanfly.wingslog.core.template.childrenInSlot
+import dev.fanfly.wingslog.core.template.specValue
+import dev.fanfly.wingslog.feature.export.datamanager.ExportDateRange
+import dev.fanfly.wingslog.feature.export.datamanager.ExportFormat
+import dev.fanfly.wingslog.feature.export.datamanager.ExportRequest
+import dev.fanfly.wingslog.thing.Component
 import dev.fanfly.wingslog.thing.Attachment
 import dev.fanfly.wingslog.thing.AttachmentType
 import dev.fanfly.wingslog.thing.CertExpireLimit
@@ -14,10 +25,6 @@ import dev.fanfly.wingslog.thing.Squawk
 import dev.fanfly.wingslog.thing.SquawkDismissReason
 import dev.fanfly.wingslog.thing.SquawkPriority
 import dev.fanfly.wingslog.thing.Technician
-import dev.fanfly.wingslog.core.datetime.toLocalDate
-import dev.fanfly.wingslog.feature.export.datamanager.ExportDateRange
-import dev.fanfly.wingslog.feature.export.datamanager.ExportFormat
-import dev.fanfly.wingslog.feature.export.datamanager.ExportRequest
 import dev.fanfly.wingslog.thing.Thing
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
@@ -147,7 +154,7 @@ class LogbookExportArchiveBuilder(
             rows = airframeRows(bundle, attachments, timeZone),
           )
         )
-        bundle.thing.engine.forEachIndexed { index, engine ->
+        bundle.thing.allComponentsInSlot(SlotKeys.ENGINE).forEachIndexed { index, engine ->
           add(
             LogbookExportTable(
               csvPath = engineCsvName(bundle.thing, index),
@@ -162,14 +169,14 @@ class LogbookExportArchiveBuilder(
               rows = propellerRows(
                 bundle,
                 attachments,
-                engine.propeller,
+                engine.childInSlot(SlotKeys.PROPELLER),
                 index,
                 timeZone
               ),
             )
           )
         }
-        if (bundle.thing.engine.isEmpty()) {
+        if (bundle.thing.allComponentsInSlot(SlotKeys.ENGINE).isEmpty()) {
           add(
             LogbookExportTable(
               csvPath = "02_Engine_Unknown.csv",
@@ -238,23 +245,24 @@ class LogbookExportArchiveBuilder(
       it.timestamp?.getEpochSecond() ?: Long.MIN_VALUE
     }
     val engineTimeLabel =
-      if (thing.engine.size <= 1) "Current Engine Time" else "Current Engine 1 Time"
+      if (thing.allComponentsInSlot(SlotKeys.ENGINE).size <= 1) "Current Engine Time"
+      else "Current Engine 1 Time"
     val propellerTimeLabel =
-      if (thing.engine.count { it.propeller != null } <= 1) {
+      if (thing.allComponentsInSlot(SlotKeys.PROPELLER).size <= 1) {
         "Current Propeller Time"
       } else {
         "Current Propeller 1 Time"
       }
     return listOf(
       listOf("Field", "Value"),
-      listOf("Tail Number", thing.tail_number),
-      listOf("Make", thing.make),
-      listOf("Model", thing.model),
-      listOf("Serial Number", thing.serial),
-      listOf("Engines", thing.engine.size.toString()),
+      listOf("Tail Number", thing.specValue(SpecKeys.TAIL_NUMBER)),
+      listOf("Make", thing.specValue(SpecKeys.MAKE)),
+      listOf("Model", thing.specValue(SpecKeys.MODEL)),
+      listOf("Serial Number", thing.specValue(SpecKeys.SERIAL)),
+      listOf("Engines", thing.allComponentsInSlot(SlotKeys.ENGINE).size.toString()),
       listOf(
         "Propellers",
-        thing.engine.count { it.propeller != null }
+        thing.allComponentsInSlot(SlotKeys.PROPELLER).size
           .toString()
       ),
       listOf("Current Airframe Time", latestLog?.airframe_time.formatHours()),
@@ -276,7 +284,8 @@ class LogbookExportArchiveBuilder(
   ): List<List<String>> =
     buildList {
       val engineTimeHeader =
-        if (bundle.thing.engine.size <= 1) "Engine Time" else "Engine 1 Time"
+        if (bundle.thing.allComponentsInSlot(SlotKeys.ENGINE).size <= 1) "Engine Time"
+        else "Engine 1 Time"
       add(
         listOf(
           "Date",
@@ -311,7 +320,7 @@ class LogbookExportArchiveBuilder(
   private fun engineRows(
     bundle: ThingBundle,
     attachments: AttachmentExportManifest,
-    engine: Engine?,
+    engine: Component?,
     index: Int,
     timeZone: TimeZone,
   ): List<List<String>> =
@@ -359,17 +368,17 @@ class LogbookExportArchiveBuilder(
   private fun propellerRows(
     bundle: ThingBundle,
     attachments: AttachmentExportManifest,
-    propeller: Propeller?,
+    propeller: Component?,
     index: Int,
     timeZone: TimeZone,
   ): List<List<String>> =
     buildList {
-      val hub = propeller?.hub
+      val hub = propeller?.childInSlot(SlotKeys.HUB)
       add(listOf("Propeller Position", "${index + 1} (Engine ${index + 1})"))
       add(listOf("Hub Make", hub?.make.orEmpty()))
       add(listOf("Hub Model", hub?.model.orEmpty()))
       add(listOf("Hub Serial", hub?.serial.orEmpty()))
-      propeller?.blades.orEmpty()
+      propeller?.childrenInSlot(SlotKeys.BLADE).orEmpty()
         .forEachIndexed { bladeIndex, blade ->
           add(listOf("Blade ${bladeIndex + 1} Make", blade.make))
           add(listOf("Blade ${bladeIndex + 1} Model", blade.model))
@@ -559,7 +568,11 @@ class LogbookExportArchiveBuilder(
   ): AircraftPdfDocument {
     val thing = export.bundle.thing
     return AircraftPdfDocument(
-      title = listOf(thing.make, thing.model, thing.tail_number)
+      title = listOf(
+        thing.specValue(SpecKeys.MAKE),
+        thing.specValue(SpecKeys.MODEL),
+        thing.specValue(SpecKeys.TAIL_NUMBER)
+      )
         .filter { it.isNotBlank() }
         .joinToString(separator = " ")
         .ifBlank { thing.id.ifBlank { "Aircraft Export" } },
@@ -594,16 +607,21 @@ class LogbookExportArchiveBuilder(
                 rows = listOf(
                   PdfSummaryRow(
                     "Tail Number",
-                    thing.tail_number.ifBlank { thing.id }),
-                  PdfSummaryRow("Make", thing.make),
-                  PdfSummaryRow("Model", thing.model),
-                  PdfSummaryRow("Serial Number", thing.serial),
+                    thing.specValue(SpecKeys.TAIL_NUMBER)
+                      .ifBlank { thing.id }),
+                  PdfSummaryRow("Make", thing.specValue(SpecKeys.MAKE)),
+                  PdfSummaryRow("Model", thing.specValue(SpecKeys.MODEL)),
+                  PdfSummaryRow(
+                    "Serial Number",
+                    thing.specValue(SpecKeys.SERIAL)
+                  ),
                 )
               )
             ),
           )
         )
-        val componentCards = thing.engine.flatMapIndexed { index, engine ->
+        val componentCards = thing.allComponentsInSlot(SlotKeys.ENGINE)
+          .flatMapIndexed { index, engine ->
           buildList {
             add(
               PdfSummaryCard(
@@ -615,7 +633,7 @@ class LogbookExportArchiveBuilder(
                 )
               )
             )
-            engine.propeller?.let { propeller ->
+            engine.childInSlot(SlotKeys.PROPELLER)?.let { propeller ->
               add(
                 PdfSummaryCard(
                   title = propellerCardTitle(thing, index),
@@ -623,22 +641,23 @@ class LogbookExportArchiveBuilder(
                     add(
                       PdfSummaryRow(
                         "Hub Make",
-                        propeller.hub?.make.orEmpty()
+                        propeller.childInSlot(SlotKeys.HUB)?.make.orEmpty()
                       )
                     )
                     add(
                       PdfSummaryRow(
                         "Hub Model",
-                        propeller.hub?.model.orEmpty()
+                        propeller.childInSlot(SlotKeys.HUB)?.model.orEmpty()
                       )
                     )
                     add(
                       PdfSummaryRow(
                         "Hub Serial",
-                        propeller.hub?.serial.orEmpty()
+                        propeller.childInSlot(SlotKeys.HUB)?.serial.orEmpty()
                       )
                     )
-                    propeller.blades.forEachIndexed { bladeIndex, blade ->
+                    propeller.childrenInSlot(SlotKeys.BLADE)
+                      .forEachIndexed { bladeIndex, blade ->
                       add(
                         PdfSummaryRow(
                           "Blade ${bladeIndex + 1}",
@@ -736,22 +755,28 @@ class LogbookExportArchiveBuilder(
       ?: bundle.techniciansById[technician_id]
 
   private fun engineCsvName(thing: Thing, index: Int): String =
-    if (thing.engine.size <= 1) "02_Engine.csv" else "02_Engine_${index + 1}.csv"
+    if (thing.allComponentsInSlot(SlotKeys.ENGINE).size <= 1) "02_Engine.csv"
+    else "02_Engine_${index + 1}.csv"
 
   private fun propellerCsvName(thing: Thing, index: Int): String =
-    if (thing.engine.count { it.propeller != null } <= 1) "03_Propeller.csv" else "03_Propeller_${index + 1}.csv"
+    if (thing.allComponentsInSlot(SlotKeys.PROPELLER).size <= 1) "03_Propeller.csv"
+    else "03_Propeller_${index + 1}.csv"
 
   private fun engineSheetName(thing: Thing, index: Int): String =
-    if (thing.engine.size <= 1) "02 Engine" else "02 Engine ${index + 1}"
+    if (thing.allComponentsInSlot(SlotKeys.ENGINE).size <= 1) "02 Engine"
+    else "02 Engine ${index + 1}"
 
   private fun propellerSheetName(thing: Thing, index: Int): String =
-    if (thing.engine.count { it.propeller != null } <= 1) "03 Prop" else "03 Prop ${index + 1}"
+    if (thing.allComponentsInSlot(SlotKeys.PROPELLER).size <= 1) "03 Prop"
+    else "03 Prop ${index + 1}"
 
   private fun engineCardTitle(thing: Thing, index: Int): String =
-    if (thing.engine.size <= 1) "Engine" else "Engine ${index + 1}"
+    if (thing.allComponentsInSlot(SlotKeys.ENGINE).size <= 1) "Engine"
+    else "Engine ${index + 1}"
 
   private fun propellerCardTitle(thing: Thing, index: Int): String =
-    if (thing.engine.count { it.propeller != null } <= 1) "Propeller" else "Propeller ${index + 1}"
+    if (thing.allComponentsInSlot(SlotKeys.PROPELLER).size <= 1) "Propeller"
+    else "Propeller ${index + 1}"
 
   private fun MaintenanceLog.inspectionTitles(bundle: ThingBundle): String =
     inspection_ids.joinToString("\n") { id ->

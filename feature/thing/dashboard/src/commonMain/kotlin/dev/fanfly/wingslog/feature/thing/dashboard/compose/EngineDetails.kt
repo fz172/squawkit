@@ -10,7 +10,10 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
-import dev.fanfly.wingslog.thing.Engine
+import dev.fanfly.wingslog.core.template.SlotKeys
+import dev.fanfly.wingslog.core.template.childInSlot
+import dev.fanfly.wingslog.core.template.childrenInSlot
+import dev.fanfly.wingslog.thing.Component
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.component_propeller
@@ -23,8 +26,13 @@ import wingslog.feature.logs.viewing.generated.resources.Res as MaintenanceRes
 @Composable
 fun EngineDetails(
   label: String,
-  engine: Engine,
+  engine: Component,
 ) {
+  // Reads the inflated component tree rather than the transitional `Thing.engine` field (#668).
+  // Same shape either way — ThingInflater builds airframe -> engine -> propeller -> hub/blade, and
+  // TemplateKeysResolveTest asserts those slot keys against the airplane template — so this is a
+  // change of source, not of layout. Rendering a tree whose shape comes from the *template* is
+  // separate work (#729).
   ComponentCard(
     category = label,
     name = stringResource(
@@ -34,7 +42,7 @@ fun EngineDetails(
     ),
     serial = engine.serial,
     content = {
-      val propeller = engine.propeller
+      val propeller = engine.childInSlot(SlotKeys.PROPELLER)
       if (propeller != null) {
         Column {
           Text(
@@ -51,8 +59,8 @@ fun EngineDetails(
           Text(
             text = stringResource(
               CoreRes.string.make_model_template,
-              propeller.hub?.make.orEmpty(),
-              propeller.hub?.model.orEmpty(),
+              propeller.childInSlot(SlotKeys.HUB)?.make.orEmpty(),
+              propeller.childInSlot(SlotKeys.HUB)?.model.orEmpty(),
             ),
             modifier = Modifier.padding(top = Spacing.extraSmall),
             style = TextStyle(
@@ -66,7 +74,7 @@ fun EngineDetails(
           Text(
             text = stringResource(
               MaintenanceRes.string.s_n_placeholder,
-              propeller.hub?.serial ?: ""
+              propeller.childInSlot(SlotKeys.HUB)?.serial.orEmpty()
             ),
             modifier = Modifier.padding(top = Spacing.extraSmall),
             style = TextStyle(
@@ -77,9 +85,10 @@ fun EngineDetails(
             color = MaterialTheme.colorScheme.onSurfaceVariant
           )
 
-          if (propeller.blades.isNotEmpty()) {
+          val blades = propeller.childrenInSlot(SlotKeys.BLADE)
+          if (blades.isNotEmpty()) {
             Column(modifier = Modifier.padding(top = Spacing.large)) {
-              BladeChipsOverview(propeller.blades)
+              BladeChipsOverview(blades)
             }
           }
         }
