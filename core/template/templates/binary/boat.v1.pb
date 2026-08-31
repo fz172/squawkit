@@ -1,10 +1,10 @@
 
-boat"Å
+boat"ß
 
-boatboatsa
-issueissuesan
-serviceservicesa"$
-service recordservice recordsa*
+boatboatsa
+issueissuesan"Issues
+serviceservicesa"Service"-
+service recordservice recordsa"Records*
 partpartsa2
 mechanic	mechanicsa:ReadyBDIWJDead in the WaterRFleetjManufacturer* :BH2
 makeMake2

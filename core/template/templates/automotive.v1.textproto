@@ -22,9 +22,9 @@ lexicon {
   thing { singular: "vehicle" plural: "vehicles" article: "a" }
   # A defect-shaped word, unlike home and custom: for a vehicle the line between "something is
   # wrong" and "something is scheduled" is clean enough to keep two concepts (PRD §4.5).
-  squawk { singular: "issue" plural: "issues" article: "an" }
-  task { singular: "service" plural: "services" article: "a" }
-  log { singular: "service record" plural: "service records" article: "a" }
+  squawk { singular: "issue" plural: "issues" article: "an" short_plural: "Issues" }
+  task { singular: "service" plural: "services" article: "a" short_plural: "Service" }
+  log { singular: "service record" plural: "service records" article: "a" short_plural: "Records" }
   component { singular: "part" plural: "parts" article: "a" }
   technician { singular: "mechanic" plural: "mechanics" article: "a" }
 

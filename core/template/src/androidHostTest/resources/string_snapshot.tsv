@@ -58,9 +58,8 @@ core/sharedassets	select_date	Select Date
 core/sharedassets	settings	Settings
 core/sharedassets	shell_nav_tasks_narrow	Maint. Tasks
 core/sharedassets	shell_tab_dashboard	Dashboard
-core/sharedassets	shell_tab_logs	Logs
-core/sharedassets	shell_tab_tasks	Maint.
 core/sharedassets	switcher_add_thing	Add a new thing
+core/sharedassets	switcher_select_thing	Select
 core/sharedassets	sync_changes_discarded	Unsaved changes to %1$s were discarded — your access was removed
 core/sharedassets	term_with_abbreviation	%1$s (%2$s)
 core/sharedassets	thing_shared_badge	Shared

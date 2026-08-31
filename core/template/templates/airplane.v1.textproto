@@ -38,9 +38,9 @@ lexicon {
   # "aircraft" is its own plural, and takes "an" — exactly the case that makes `article` a stored
   # field rather than something derived from the first letter.
   thing { singular: "aircraft" plural: "aircraft" article: "an" }
-  squawk { singular: "squawk" plural: "squawks" article: "a" }
-  task { singular: "maintenance task" plural: "maintenance tasks" article: "a" }
-  log { singular: "work log" plural: "work logs" article: "a" }
+  squawk { singular: "squawk" plural: "squawks" article: "a" short_plural: "Squawks" }
+  task { singular: "maintenance task" plural: "maintenance tasks" article: "a" short_plural: "Maint." }
+  log { singular: "work log" plural: "work logs" article: "a" short_plural: "Logs" }
   component { singular: "component" plural: "components" article: "a" }
   technician { singular: "technician" plural: "technicians" article: "a" }
 

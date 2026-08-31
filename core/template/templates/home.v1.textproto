@@ -23,10 +23,10 @@ lexicon {
   # "clean the gutters" wants one inbox rather than a judgment call. Written as a countable noun
   # because every render site needs one — the UI says "Add %s" and "3 open %s", neither of which
   # works with a mass noun.
-  squawk { singular: "attention item" plural: "attention items" article: "an" }
+  squawk { singular: "attention item" plural: "attention items" article: "an" short_plural: "Attention" }
 
-  task { singular: "task" plural: "tasks" article: "a" }
-  log { singular: "service record" plural: "service records" article: "a" }
+  task { singular: "task" plural: "tasks" article: "a" short_plural: "Tasks" }
+  log { singular: "service record" plural: "service records" article: "a" short_plural: "Records" }
   component { singular: "part" plural: "parts" article: "a" }
 
   # "person", not "technician" (PRD §4.8). A homeowner splitting chores with a spouse, or doing the

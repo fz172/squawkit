@@ -23,6 +23,17 @@ message Noun {
   // "a" / "an". Stored rather than derived: English article selection is not a function of the
   // first letter — "an hour", "a unicycle" — and a wrong article is visible in every empty state.
   string article = 3;
+
+  // The bottom navigation bar's label, where four tabs share one row and the full plural does not
+  // fit — "Attention Items" pushed "Logs" off the bar entirely.
+  //
+  // Stored rather than derived for the same reason as `article`: no rule produces all of these.
+  // First word gives "Work" for "work logs"; last word gives "Items" for "attention items". Both
+  // are wrong, and which one is wrong changes per template.
+  //
+  // Empty means the plural fits — the caller falls back to it, so a template that never needs an
+  // abbreviation declares nothing.
+  string short_plural = 4;
 }
 
 /**

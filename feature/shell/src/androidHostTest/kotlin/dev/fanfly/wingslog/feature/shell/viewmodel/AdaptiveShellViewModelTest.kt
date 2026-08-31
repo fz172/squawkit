@@ -9,6 +9,7 @@ import dev.fanfly.wingslog.core.model.sharing.ShareRole
 import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import dev.fanfly.wingslog.core.template.SpecKeys
 import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
+import dev.fanfly.wingslog.core.template.canonical.CanonicalTemplates
 import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
 import dev.fanfly.wingslog.core.template.squawkNoun
 import dev.fanfly.wingslog.core.template.thingNoun
@@ -246,11 +247,36 @@ class AdaptiveShellViewModelTest {
     val vm = viewModel()
 
     val s = vm.uiState.value
-    assertThat(s.thing.map { it.tail }).containsExactly("N1", "N2")
+    // An airplane with no name of its own falls back to its identifier — the tail number — so the
+    // switcher reads exactly as it did before the label became template-driven.
+    assertThat(s.thing.map { it.label }).containsExactly("N1", "N2")
       .inOrder()
-    assertThat(s.thing.first().name).isEqualTo("Cessna 172")
+    assertThat(s.thing.first().subtitle).isEqualTo("Cessna 172")
     assertThat(s.selectedThingId).isEqualTo("a1")
     assertThat(s.section).isEqualTo(ShellSection.DASHBOARD)
+  }
+
+  @Test
+  fun aThingWithNoAviationSpecKeysStillHasASwitcherLabel() {
+    // The bug home found: both switcher lines came from tail number and make/model, which a home
+    // declares none of — so its row rendered as a blank gap with a checkmark beside it.
+    val home = FleetEntry(
+      thing = Thing(
+        id = "h1",
+        name = "1421 Maple Street",
+        spec = listOf(Spec(key = "address", value_ = "1421 Maple Street")),
+        template = CanonicalTemplates.HOME,
+      ),
+      shared = false,
+      role = ShareRole.SHARE_ROLE_OWNER,
+    )
+    fleet.value = listOf(home)
+
+    val row = viewModel().uiState.value.thing.single()
+
+    assertThat(row.label).isEqualTo("1421 Maple Street")
+    // Nothing to add: no make, no model, and the name already is the only thing it has.
+    assertThat(row.subtitle).isEmpty()
   }
 
   @Test

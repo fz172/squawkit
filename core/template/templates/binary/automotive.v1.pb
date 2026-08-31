@@ -1,11 +1,11 @@
 
 
-automotive"¢
+automotive"¼
 
-vehiclevehiclesa
-issueissuesan
-serviceservicesa"$
-service recordservice recordsa*
+vehiclevehiclesa
+issueissuesan"Issues
+serviceservicesa"Service"-
+service recordservice recordsa"Records*
 partpartsa2
 mechanic	mechanicsa:ReadyBDownJOff the roadRGaragejNHTSAr
 Safety recallSafety recallsz>

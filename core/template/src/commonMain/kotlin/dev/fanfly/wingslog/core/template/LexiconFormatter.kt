@@ -133,4 +133,16 @@ object LexiconFormatter {
 
   /** Plural, title-cased: what a section header or a tab label wants. */
   fun titleCasePlural(noun: Noun): String = titleCase(noun.plural)
+
+  /**
+   * The bottom navigation bar's label: [Noun.short_plural] when the template declares one, else the
+   * title-cased plural.
+   *
+   * Four tabs share one row, and the full plural does not always fit — "Attention Items" pushed
+   * "Logs" off the bar entirely. No rule derives the short form from the plural (first word gives
+   * "Work" for "work logs", last word gives "Items" for "attention items"), so the template states
+   * it and the fallback covers the templates that never needed one.
+   */
+  fun shortPlural(noun: Noun): String =
+    noun.short_plural.ifEmpty { titleCase(noun.plural) }
 }

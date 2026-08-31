@@ -28,9 +28,9 @@ sort_order: 5
 # illustrative example — the same rule airplane.v1 follows where the two disagree.
 lexicon {
   thing { singular: "thing" plural: "things" article: "a" }
-  squawk { singular: "issue" plural: "issues" article: "an" }
-  task { singular: "task" plural: "tasks" article: "a" }
-  log { singular: "log" plural: "logs" article: "a" }
+  squawk { singular: "issue" plural: "issues" article: "an" short_plural: "Issues" }
+  task { singular: "task" plural: "tasks" article: "a" short_plural: "Tasks" }
+  log { singular: "log" plural: "logs" article: "a" short_plural: "Logs" }
   component { singular: "part" plural: "parts" article: "a" }
   # "person", not "technician" — the generic lexicon has to hold for a home, where the entry is
   # "buy milk" and whoever did it is nobody's technician.
