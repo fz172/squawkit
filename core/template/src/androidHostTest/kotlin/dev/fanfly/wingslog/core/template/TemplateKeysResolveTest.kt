@@ -142,32 +142,39 @@ class TemplateKeysResolveTest {
   }
 
   /**
-   * The coupling this file exists to make visible: [ThingInflater] emits a component tree using
-   * hardcoded slot keys, and the template declares which slots exist. Nothing links them.
+   * The coupling this file exists to make visible: the airplane edit form builds a component tree
+   * from hardcoded slot keys, and the template declares which slots exist. Nothing links them.
    *
-   * If a slot key is renamed on one side only, the inflater writes components the template cannot
+   * If a slot key is renamed on one side only, the form writes components the template cannot
    * label — and because the ids are stored, the wrong tree persists rather than failing at render.
+   *
+   * The emitter moved in #668: it used to be `ThingInflater.buildLegacyAirplaneComponents`, which
+   * derived the tree on write. The form owns the tree now, so the keys come from
+   * `AirplaneTreeEditing` — and go away with it when #729/#739 build paths from the template's own
+   * slots. The assertion outlives both; only its subject changes.
    */
   @Test
-  fun theInflaterUsesOnlySlotKeysTheAirplaneTemplateDeclares() {
+  fun theAirplaneEditFormUsesOnlySlotKeysTheTemplateDeclares() {
     val airplane = pool.single { it.id == AirplaneTemplate.ID }
     val declared = airplane.allSlots()
       .map { it.slot_key }
       .toSet()
 
-    // The keys buildLegacyAirplaneComponents emits, transcribed from it.
+    // The keys AirplaneTreeEditing emits, transcribed from it.
     val emitted = setOf("airframe", "engine", "propeller", "hub", "blade")
 
     assertThat(declared).containsAtLeastElementsIn(emitted)
   }
 
   /**
-   * The same coupling for spec keys. `ThingInflater.specOf` writes exactly these four, so the
-   * airplane template has to declare them or a legacy Thing's values land under keys the template
-   * has no field for — present in the data, invisible on screen.
+   * The same coupling for spec keys. `EditThingViewModel` writes exactly these four, so the
+   * airplane template has to declare them or the values land under keys the template has no field
+   * for — present in the data, invisible on screen.
+   *
+   * Also moved in #668, from the since-deleted `ThingInflater.specOf`.
    */
   @Test
-  fun theInflaterUsesOnlySpecKeysTheAirplaneTemplateDeclares() {
+  fun theAirplaneEditFormUsesOnlySpecKeysTheTemplateDeclares() {
     val airplane = pool.single { it.id == AirplaneTemplate.ID }
     val declared = airplane.spec_fields.map { it.key }
       .toSet()

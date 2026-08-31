@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.core.template
 
 import dev.fanfly.wingslog.thing.Thing
+import dev.fanfly.wingslog.thing.ThingTemplate
 
 /**
  * Fills in a Thing's `name` and `template` before it is written.
@@ -13,7 +14,7 @@ object ThingInflater {
   /** [template] is the resolved template, written as the Thing's own DNA (design §5). */
   fun inflate(
     thing: Thing,
-    template: dev.fanfly.wingslog.thing.ThingTemplate?
+    template: ThingTemplate?
   ): Thing =
     thing.copy(
       name = thing.name.ifEmpty { nameOf(thing) },
