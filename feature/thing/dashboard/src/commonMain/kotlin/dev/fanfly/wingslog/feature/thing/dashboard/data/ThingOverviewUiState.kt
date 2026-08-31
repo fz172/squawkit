@@ -1,11 +1,12 @@
 package dev.fanfly.wingslog.feature.thing.dashboard.data
 
-import dev.fanfly.wingslog.thing.MaintenanceLog
-import dev.fanfly.wingslog.thing.Squawk
+import dev.fanfly.wingslog.core.template.DegradedReason
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
 import dev.fanfly.wingslog.feature.sharing.model.ShareRole
 import dev.fanfly.wingslog.feature.squawk.model.SquawkWithStatus
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
+import dev.fanfly.wingslog.thing.MaintenanceLog
+import dev.fanfly.wingslog.thing.Squawk
 import dev.fanfly.wingslog.thing.Thing
 
 data class LogStats(
@@ -21,6 +22,18 @@ data class LogStats(
 sealed interface ThingOverviewUiState {
   data object Loading : ThingOverviewUiState
   data object Error : ThingOverviewUiState
+
+  /**
+   * DNA this build cannot interpret (`template_system_design.md` §6.2).
+   *
+   * Distinct from [Error], which means the Thing did not load. This one *did* load — it is intact,
+   * it stays in the switcher, and it counts against the fleet limit. What is missing is the code to
+   * render it, so it shows the [thing]'s raw spec rather than a fallback template's labels.
+   */
+  data class Degraded(
+    val thing: Thing,
+    val reason: DegradedReason,
+  ) : ThingOverviewUiState
 
   data class Success(
     val thing: Thing,

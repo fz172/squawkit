@@ -36,6 +36,15 @@ interface TemplateRegistry {
   fun forThingWithFallback(thing: Thing): ThingTemplate
 
   /**
+   * [forThingWithFallback], plus whether this build can actually interpret what it found (§6.2).
+   *
+   * Every surface that *renders* a Thing wants this one rather than the template alone: the
+   * template is readable in both outcomes, so a caller reading only the field cannot tell a
+   * renderable Thing from one it is about to draw wrong.
+   */
+  fun resolve(thing: Thing): TemplateResolution
+
+  /**
    * Templates a picker may offer, in [ThingTemplate.sort_order].
    *
    * Only ever the **canonical** pool — never a Thing's DNA. A user's customised template is theirs

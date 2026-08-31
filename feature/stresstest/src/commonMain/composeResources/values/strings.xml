@@ -9,6 +9,7 @@
   <string name="stress_test_config_tasks">Task count</string>
   <string name="stress_test_config_log_entries">Log entries</string>
   <string name="stress_test_config_technicians">Technician count</string>
+  <string name="stress_test_config_future_dna">Write DNA from a newer build (degraded state)</string>
   <string name="stress_test_generate">Generate Fake Data</string>
   <string name="stress_test_working">Working…</string>
   <string name="stress_test_complete">Generation complete</string>

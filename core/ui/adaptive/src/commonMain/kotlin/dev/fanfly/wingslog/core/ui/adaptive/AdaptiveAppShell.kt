@@ -118,6 +118,13 @@ data class ShellThing(
    * gets the generic lexicon and every capability enabled.
    */
   val template: ThingTemplate? = null,
+  /**
+   * False when this build cannot interpret [template] and the thing renders degraded (#728).
+   *
+   * Carried on the switcher projection so the thing still *appears* — never hiding it is the point
+   * — while the surfaces that would write to it can tell that they must not.
+   */
+  val renderable: Boolean = true,
 )
 
 /**

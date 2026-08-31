@@ -1,7 +1,5 @@
 package dev.fanfly.wingslog.feature.shell.viewmodel
 
-import dev.fanfly.wingslog.core.template.SpecKeys
-import dev.fanfly.wingslog.thing.Spec
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.auth.AccountUpgradeResult
 import dev.fanfly.wingslog.core.auth.AuthManager
@@ -9,6 +7,8 @@ import dev.fanfly.wingslog.core.auth.AuthProvider
 import dev.fanfly.wingslog.core.auth.SendLinkResult
 import dev.fanfly.wingslog.core.model.sharing.ShareRole
 import dev.fanfly.wingslog.core.template.CurrentThingTemplate
+import dev.fanfly.wingslog.core.template.SpecKeys
+import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
 import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
 import dev.fanfly.wingslog.core.template.squawkNoun
 import dev.fanfly.wingslog.core.template.thingNoun
@@ -22,8 +22,10 @@ import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
 import dev.fanfly.wingslog.feature.sync.data.SyncEngine
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import dev.fanfly.wingslog.feature.technician.datamanager.merge.DuplicateGroup
+import dev.fanfly.wingslog.thing.Spec
 import dev.fanfly.wingslog.thing.Technician
 import dev.fanfly.wingslog.thing.Thing
+import dev.fanfly.wingslog.thing.ThingTemplate
 import dev.gitlive.firebase.auth.AuthCredential
 import dev.gitlive.firebase.auth.FirebaseUser
 import io.mockk.every
@@ -160,6 +162,7 @@ class AdaptiveShellViewModelTest {
     make: String = "Cessna",
     model: String = "172",
     shared: Boolean = false,
+    template: ThingTemplate? = null,
   ) =
     FleetEntry(
       // Spec entries, not fields 2-6 — those are reserved (#668), and the shell reads the same
@@ -171,10 +174,15 @@ class AdaptiveShellViewModelTest {
           Spec(key = SpecKeys.MODEL, value_ = model),
           Spec(key = SpecKeys.TAIL_NUMBER, value_ = tail),
         ),
+        template = template,
       ),
       shared = shared,
       role = ShareRole.SHARE_ROLE_OWNER,
     )
+
+  /** DNA from a build newer than this one — the §6.2 case. */
+  private fun fromANewerBuild(): ThingTemplate =
+    AirplaneTemplate.TEMPLATE.copy(min_app_version = THIS_BUILD + 1)
 
   // The shell republishes the technician mirror on app start (design §7.2); irrelevant to these
   // assertions, so a relaxed mock keeps it out of the way.
@@ -201,7 +209,8 @@ class AdaptiveShellViewModelTest {
 
   // The real registry, not a mock: it is pure data with no I/O, and a mock here would let a
   // ShellThing be built with a lexicon no template would ever produce.
-  private val templateRegistry = BakedInTemplateRegistry()
+  private val templateRegistry =
+    BakedInTemplateRegistry(appVersionCode = THIS_BUILD)
 
   private val currentThingTemplate = CurrentThingTemplate(templateRegistry)
 
@@ -507,4 +516,36 @@ class AdaptiveShellViewModelTest {
     // later does not re-run the jump.
     assertThat(vm.pendingScrollTargetId.value).isNull()
   }
+
+  // --- A Thing this build cannot render is degraded, never hidden (#728) ---
+
+  @Test
+  fun aThingWithDnaFromANewerBuildStaysInTheSwitcher() {
+    // The rule that makes this state safe: it is the user's data, so it is listed either way. Only
+    // `renderable` differs, and that is what stops the sections drawing it under wrong labels.
+    fleet.value = listOf(
+      thing("a1", "N1"),
+      thing("a2", "N2", template = fromANewerBuild()),
+    )
+
+    val s = viewModel().uiState.value
+
+    assertThat(s.thing.map { it.id }).containsExactly("a1", "a2")
+      .inOrder()
+    assertThat(s.thing.map { it.renderable }).containsExactly(true, false)
+      .inOrder()
+  }
+
+  @Test
+  fun aDegradedThingStillCountsAgainstTheOwnedLimit() =
+    runTest(testDispatcher) {
+      // Hiding it from the count would hand out a free slot for data the account really holds.
+      thingLimit.value = 1
+      fleet.value = listOf(thing("a1", "N1", template = fromANewerBuild()))
+
+      assertThat(viewModel().atThingLimit.value).isTrue()
+    }
 }
+
+/** Any fixed value; the tests build DNA relative to it rather than to the real versionCode. */
+private const val THIS_BUILD = 1000

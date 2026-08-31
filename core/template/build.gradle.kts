@@ -28,6 +28,8 @@ kotlin {
   sourceSets {
     commonMain.dependencies {
       api(project(":core:model"))
+      // For APP_VERSION_CODE — the floor a template's min_app_version is compared against (#728).
+      implementation(project(":core:appinfo"))
       api(libs.koin.core)
       api(libs.kotlinx.coroutines.core)
       // Runtime only — this module provides a CompositionLocal, not UI. Nothing here draws.

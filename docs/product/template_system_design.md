@@ -378,6 +378,22 @@ Note this state is now *permanent until the app updates*, not transient. That ma
 earlier design needed — there is no "loading" case to distinguish — but it also means the prompt is the whole
 remedy, which is why §6.3 matters.
 
+**Landed (#728.)** `TemplateRegistry.resolve()` returns `Renderable` or `Degraded`, and
+`ShellSectionBody` renders `DegradedThingContent` for *every* per-thing section rather than only the
+dashboard — which of the four sections a Thing has is itself template-declared, so an uninterpretable
+template makes all of them meaningless. The thing stays in the switcher and still counts against the owned
+limit; the section FAB and the edit route are the two write affordances, and both are suppressed.
+
+Two checks, and the second is the one that does the real work. The floor comparison is only as good as the
+number an author remembered to set. The second check needs nobody to get anything right: Wire does not fail
+on an unrecognised enum value — it moves the value into `unknownFields` **tagged with its original field
+number** and leaves the typed field at its default, so a future `ExportLayout` decodes as
+`EXPORT_LAYOUT_UNKNOWN` and renders as if the template asked for nothing. Because a *defined* value would
+have parsed into the typed field, a known enum field number appearing in `unknownFields` can only mean a
+value this build cannot name. Reading the number is what separates that from an ordinary new field — a
+`Capabilities` field 10 added later lands there too, and must be ignored rather than degrading every Thing
+on the older build.
+
 This is the same shape as `BlobDownloadDriver`'s "a 404 is an answer, not an outage": an unresolvable template is
 a known state to represent, not an error to swallow.
 

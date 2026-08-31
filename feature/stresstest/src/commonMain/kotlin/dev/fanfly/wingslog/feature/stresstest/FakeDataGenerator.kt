@@ -1,10 +1,12 @@
 package dev.fanfly.wingslog.feature.stresstest
 
+import dev.fanfly.wingslog.core.appinfo.APP_VERSION_CODE
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.model.id.generateRandomId
 import dev.fanfly.wingslog.core.template.SlotKeys
 import dev.fanfly.wingslog.core.template.SpecKeys
 import dev.fanfly.wingslog.core.template.allComponentsInSlot
+import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
 import dev.fanfly.wingslog.core.template.specValue
 import dev.fanfly.wingslog.core.template.withDerivedComponentIds
 import dev.fanfly.wingslog.thing.CertExpireLimit
@@ -697,6 +699,16 @@ object FakeDataGenerator {
         ),
       ),
     ).withDerivedComponentIds()
+      .let { thing ->
+        // ThingInflater writes DNA on save only when the Thing carries none, so DNA set here
+        // survives the write and is what makes the thing resolve as Degraded.
+        if (!config.dnaFromANewerBuild) thing
+        else thing.copy(
+          template = AirplaneTemplate.TEMPLATE.copy(
+            min_app_version = APP_VERSION_CODE + 1,
+          ),
+        )
+      }
   }
 
   private fun buildTechnicians(count: Int): List<Technician> {

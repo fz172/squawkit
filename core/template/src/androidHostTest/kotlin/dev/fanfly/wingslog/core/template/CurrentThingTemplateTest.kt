@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.core.template
 
 import com.google.common.truth.Truth.assertThat
+import dev.fanfly.wingslog.core.appinfo.APP_VERSION_CODE
 import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
 import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
 import dev.fanfly.wingslog.thing.Section
@@ -17,7 +18,8 @@ import org.junit.Test
  */
 class CurrentThingTemplateTest {
 
-  private fun holder() = CurrentThingTemplate(BakedInTemplateRegistry())
+  private fun holder() =
+    CurrentThingTemplate(BakedInTemplateRegistry(appVersionCode = APP_VERSION_CODE))
 
   @Test
   fun publishesTheTemplatesOwnCapabilitiesNotTheFailOpenDefault() {
@@ -34,7 +36,8 @@ class CurrentThingTemplateTest {
       Section.SECTION_SQUAWKS,
       Section.SECTION_TASKS,
       Section.SECTION_LOGS,
-    ).inOrder()
+    )
+      .inOrder()
   }
 
   @Test

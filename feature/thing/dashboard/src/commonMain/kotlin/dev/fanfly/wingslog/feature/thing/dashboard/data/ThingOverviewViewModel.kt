@@ -2,10 +2,9 @@ package dev.fanfly.wingslog.feature.thing.dashboard.data
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dev.fanfly.wingslog.thing.ComponentType
-import dev.fanfly.wingslog.thing.MaintenanceLog
-import dev.fanfly.wingslog.thing.Squawk
 import dev.fanfly.wingslog.core.storage.ThingScopeResolver
+import dev.fanfly.wingslog.core.template.TemplateRegistry
+import dev.fanfly.wingslog.core.template.TemplateResolution
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
@@ -20,6 +19,9 @@ import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDueManager
 import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
+import dev.fanfly.wingslog.thing.ComponentType
+import dev.fanfly.wingslog.thing.MaintenanceLog
+import dev.fanfly.wingslog.thing.Squawk
 import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
@@ -55,6 +57,7 @@ class ThingOverviewViewModel(
   private val squawkManager: SquawkManager,
   private val sharingManager: SharingManager,
   private val thingScopeResolver: ThingScopeResolver,
+  private val templateRegistry: TemplateRegistry,
   private val auth: FirebaseAuth,
   private val thingId: String,
 ) : ViewModel() {
@@ -152,7 +155,15 @@ class ThingOverviewViewModel(
       ) { thing, logs, taskCards, overview, shareContext ->
         val (squawkList, syncStates, myRole, isShared) = shareContext
         cachedLogs = logs
-        if (thing != null) {
+        val degraded = thing?.let {
+          templateRegistry.resolve(it) as? TemplateResolution.Degraded
+        }
+        if (degraded != null) {
+          // Before anything else is computed: the stats and due-status work below reads the
+          // template's meters, and running it under DNA we cannot interpret is what produces the
+          // wrong numbers this state exists to avoid showing (design §6.2).
+          ThingOverviewUiState.Degraded(thing, degraded.reason)
+        } else if (thing != null) {
           val stats = if (overview != null) {
             LogStats(
               total = overview.total_log_count.toLong(),
