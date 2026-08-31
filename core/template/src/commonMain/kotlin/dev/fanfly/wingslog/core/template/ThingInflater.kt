@@ -1,6 +1,5 @@
 package dev.fanfly.wingslog.core.template
 
-import dev.fanfly.wingslog.core.template.ThingInflater.componentId
 import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
 import dev.fanfly.wingslog.thing.Component
 import dev.fanfly.wingslog.thing.Spec
@@ -61,15 +60,16 @@ object ThingInflater {
     // this guard it would be handed a lone "Airframe" component and that would be *stored*.
     // Leaving it empty is recoverable; writing the wrong tree is not, because component ids are a
     // join key.
-    val isLegacyAirplane = template == null || template.id == AirplaneTemplate.ID
+    val isLegacyAirplane =
+      template == null || template.id == AirplaneTemplate.ID
 
     return thing.copy(
-      name = if (thing.name.isNotEmpty()) thing.name else nameOf(thing),
+      name = thing.name.ifEmpty { nameOf(thing) },
       // Keyed off `spec` itself rather than off `alreadyInflated`. A Thing created from a template
       // has its spec filled by the create form before it ever reaches here, and its components are
       // still empty — so deriving `alreadyInflated` from components and using it to gate spec would
       // overwrite the form's values with the empty derivation from fields 2-6.
-      spec = if (thing.spec.isNotEmpty()) thing.spec else specOf(thing),
+      spec = thing.spec.ifEmpty { specOf(thing) },
       components = when {
         alreadyInflated -> thing.components
         isLegacyAirplane -> buildLegacyAirplaneComponents(thing)
