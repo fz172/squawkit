@@ -1,0 +1,156 @@
+# The airplane preset — canonical template (id "airplane", version 1).
+#
+# THIS FILE IS THE SOURCE OF TRUTH. `airplane.v1.pb` beside it is compiled from this file and is
+# what the app actually bakes in; see templates/README.md for the command and why the compile
+# happens out of band rather than in Gradle.
+#
+# Every value here came from the shipped strings.xml, not from the PRD's illustrative examples.
+# That distinction is the point: the byte-identical snapshot test (#658) compares what this renders
+# against what the app renders today, so a word invented here becomes a wrong assertion rather than
+# a caught bug. Where the two disagree, the shipped string wins.
+#
+# A published canonical template is NEVER edited — a correction is a new version, because (id,
+# version) has to always name the same bytes (template_system_design.md §5). Editing this file after
+# publication means editing what an already-distributed version means.
+
+id: "airplane"
+version: 1
+
+# No floor. This template ships inside every build that can read it, so a client can never
+# encounter it from the future — the floor exists for FETCHED templates (§6), and a baked-in one is
+# by definition never newer than the build carrying it.
+min_app_version: 0
+
+display_name: "Airplane"
+icon: "airplane"
+sort_order: 0
+
+# The words the app uses today.
+#
+# Two fields have no current rendering anywhere, so the snapshot test cannot check them and they
+# take the PRD's §4.5 values on faith: `ready_status` — the app has no "Airworthy" string, it says
+# "No open squawks" — and `collection_label`, which appears only inside no_fleet_title, never as a
+# label.
+#
+# One field disagrees with the PRD. §4.5 suggests `task` resolves to "inspection" for airplanes;
+# the app ships shell_title_tasks = "Maintenance Tasks". The shipped string wins.
+lexicon {
+  # "aircraft" is its own plural, and takes "an" — exactly the case that makes `article` a stored
+  # field rather than something derived from the first letter.
+  thing { singular: "aircraft" plural: "aircraft" article: "an" }
+  squawk { singular: "squawk" plural: "squawks" article: "a" }
+  task { singular: "maintenance task" plural: "maintenance tasks" article: "a" }
+  log { singular: "work log" plural: "work logs" article: "a" }
+  component { singular: "component" plural: "components" article: "a" }
+  technician { singular: "technician" plural: "technicians" article: "a" }
+
+  ready_status: "Airworthy"
+
+  # These two name the OS notification channel a user sees in system settings (PRD §8.5), which is
+  # why they are whole strings rather than substitutions — and why the channel *id* stays
+  # "GROUNDED" forever while only the display name comes from here.
+  down_status: "AOG"
+  down_status_long: "Aircraft on Ground"
+
+  collection_label: "Fleet"
+  authority_label: "FAA"
+
+  compliance_mandatory {
+    singular: "Airworthiness Directive"
+    plural: "Airworthiness Directives"
+    abbreviation: "AD"
+  }
+  compliance_advisory {
+    singular: "Service Bulletin"
+    plural: "Service Bulletins"
+    abbreviation: "SB"
+  }
+}
+
+# Everything on. The airplane column of PRD §4.8 is on for every capability, which is what makes
+# Phase 2's capability wiring invisible: the flags are consulted everywhere and always answer the
+# same way (#659, #660).
+capabilities {
+  components: true
+  meters: true
+  compliance: true
+  technicians: true
+  technician_certificates: true
+  component_serial_prompt: true
+
+  priorities: SQUAWK_PRIORITY_LOW
+  priorities: SQUAWK_PRIORITY_MEDIUM
+  priorities: SQUAWK_PRIORITY_HIGH
+  priorities: SQUAWK_PRIORITY_AOG
+
+  # Order matters — this is what the shell renders, in this sequence.
+  sections: SECTION_DASHBOARD
+  sections: SECTION_SQUAWKS
+  sections: SECTION_TASKS
+  sections: SECTION_LOGS
+
+  export_layout: EXPORT_LAYOUT_LOGBOOK
+}
+
+# The conventional keys that map onto the legacy Thing fields 2-5, which Phase 1 also mirrored into
+# `spec` (#586). They survive as TEMPLATE-DECLARED fields rather than a privileged core: a house has
+# no make, model, or serial (PRD §4.2).
+spec_fields { key: "tail_number" label: "Tail Number" is_identifier: true }
+spec_fields { key: "make" label: "Make" }
+spec_fields { key: "model" label: "Model" }
+spec_fields { key: "serial" label: "Serial Number" is_identifier: true }
+
+# Mirrors the tree Phase 1's backfill builds: airframe -> engine(s) -> propeller -> hub/blades.
+component_slots {
+  slot_key: "airframe"
+  label: "Airframe"
+  serial_expected: true
+  children {
+    slot_key: "engine"
+    label: "Engine"
+    repeatable: true
+    serial_expected: true
+    children {
+      slot_key: "propeller"
+      label: "Propeller"
+      children {
+        slot_key: "hub"
+        label: "Hub"
+        serial_expected: true
+      }
+      children {
+        slot_key: "blade"
+        label: "Blade"
+        repeatable: true
+        serial_expected: true
+      }
+    }
+  }
+}
+
+# The three meters the log form already collects. `component_slot_key` is what makes engine hours
+# the ENGINE's rather than the airframe's — a distinction `float interval_hours` could not express,
+# and the reason MeterRule is a new message rather than a renamed EngineHourRule (§11.1).
+meters {
+  key: "airframe_hours"
+  label: "Airframe Time"
+  unit_label: "hrs"
+  decimal: true
+}
+meters {
+  key: "engine_hours"
+  label: "Engine Time"
+  unit_label: "hrs"
+  decimal: true
+  component_slot_key: "engine"
+}
+meters {
+  key: "prop_hours"
+  label: "Prop Time"
+  unit_label: "hrs"
+  decimal: true
+  component_slot_key: "propeller"
+}
+
+# starter_tasks is deliberately absent. Starter packs are Phase 3 content (PRD §4.9); the field is
+# declared in the schema so the shape is settled, not because there is anything to put in it yet.
