@@ -10,6 +10,8 @@ import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.EntityStore
 import dev.fanfly.wingslog.core.storage.blob.LocalBlobStore
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
+import dev.fanfly.wingslog.core.template.SpecKeys
+import dev.fanfly.wingslog.core.template.specValue
 import dev.fanfly.wingslog.thing.Thing
 import kotlinx.coroutines.flow.first
 
@@ -195,7 +197,7 @@ class SharedScopeJanitor(
       ?.observe(thingId, EntityScope.userRoot(hostUid))
       ?.first()
       ?.value
-      ?.tail_number
+      ?.specValue(SpecKeys.TAIL_NUMBER)
       ?.takeIf { it.isNotBlank() }
     return tail ?: "a shared aircraft"
   }

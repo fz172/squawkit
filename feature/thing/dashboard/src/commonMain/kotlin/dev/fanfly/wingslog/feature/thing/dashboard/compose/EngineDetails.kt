@@ -28,11 +28,8 @@ fun EngineDetails(
   label: String,
   engine: Component,
 ) {
-  // Reads the inflated component tree rather than the transitional `Thing.engine` field (#668).
-  // Same shape either way — ThingInflater builds airframe -> engine -> propeller -> hub/blade, and
-  // TemplateKeysResolveTest asserts those slot keys against the airplane template — so this is a
-  // change of source, not of layout. Rendering a tree whose shape comes from the *template* is
-  // separate work (#729).
+  // Reads the component tree, not the retired `Thing.engine` (#668). Same shape; #729 makes it
+  // template-driven.
   ComponentCard(
     category = label,
     name = stringResource(

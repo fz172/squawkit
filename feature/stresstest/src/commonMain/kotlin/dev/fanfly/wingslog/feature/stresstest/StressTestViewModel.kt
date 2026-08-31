@@ -2,6 +2,10 @@ package dev.fanfly.wingslog.feature.stresstest
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dev.fanfly.wingslog.core.template.SlotKeys
+import dev.fanfly.wingslog.core.template.SpecKeys
+import dev.fanfly.wingslog.core.template.allComponentsInSlot
+import dev.fanfly.wingslog.core.template.specValue
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
@@ -123,7 +127,7 @@ class StressTestViewModel(
 
         progress(
           StressTestProgressStep.CreatingAircraft,
-          data.thing.tail_number
+          data.thing.specValue(SpecKeys.TAIL_NUMBER)
         )
         fleetManager.updateThing(data.thing)
           .getOrThrow()
@@ -167,12 +171,14 @@ class StressTestViewModel(
         val openCount =
           data.squawks.size - data.addressedSquawks.size - data.dismissedSquawks.size
         val summary = StressTestSummary(
-          aircraftMake = data.thing.make,
-          aircraftModel = data.thing.model,
-          tailNumber = data.thing.tail_number,
-          serialNumber = data.thing.serial,
-          engineCount = data.thing.engine.size,
-          engineModel = data.thing.engine.firstOrNull()?.model.orEmpty(),
+          aircraftMake = data.thing.specValue(SpecKeys.MAKE),
+          aircraftModel = data.thing.specValue(SpecKeys.MODEL),
+          tailNumber = data.thing.specValue(SpecKeys.TAIL_NUMBER),
+          serialNumber = data.thing.specValue(SpecKeys.SERIAL),
+          engineCount = data.thing.allComponentsInSlot(SlotKeys.ENGINE).size,
+          engineModel =
+            data.thing.allComponentsInSlot(SlotKeys.ENGINE)
+              .firstOrNull()?.model.orEmpty(),
           technicianCount = data.technicians.size,
           taskCount = data.tasks.size,
           logCount = data.logs.size,

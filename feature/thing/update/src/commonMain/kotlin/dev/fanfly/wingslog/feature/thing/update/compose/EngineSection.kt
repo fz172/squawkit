@@ -26,12 +26,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.template.LocalThingCapabilities
+import dev.fanfly.wingslog.core.template.SlotKeys
+import dev.fanfly.wingslog.core.template.childInSlot
+import dev.fanfly.wingslog.core.template.childrenInSlot
 import dev.fanfly.wingslog.core.ui.common.compose.DashedButton
 import dev.fanfly.wingslog.core.ui.common.compose.FormTextField
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.thing.update.viewmodel.EditThingViewModel
-import dev.fanfly.wingslog.thing.Engine
-import dev.fanfly.wingslog.thing.PropellerHub
+import dev.fanfly.wingslog.thing.Component
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.logs.sharedassets.generated.resources.blade_with_index
 import wingslog.feature.logs.sharedassets.generated.resources.engine_with_index
@@ -49,7 +51,7 @@ import wingslog.feature.logs.sharedassets.generated.resources.Res as SharedRes
 @Composable
 fun EngineSection(
   engineIndex: Int,
-  engine: Engine,
+  engine: Component,
   viewModel: EditThingViewModel,
   showValidationErrors: Boolean,
 ) {
@@ -137,7 +139,9 @@ fun EngineSection(
         style = MaterialTheme.typography.labelSmall,
         modifier = Modifier.padding(top = Spacing.extraSmall),
       )
-      val hub = engine.propeller?.hub ?: PropellerHub()
+      val hub = engine.childInSlot(SlotKeys.PROPELLER)
+        ?.childInSlot(SlotKeys.HUB)
+        ?: Component(slot_key = SlotKeys.HUB)
       FormTextField(
         label = stringResource(Res.string.make),
         value = hub.make,
@@ -196,7 +200,9 @@ fun EngineSection(
           style = MaterialTheme.typography.labelSmall,
           modifier = Modifier.padding(top = Spacing.extraSmall),
         )
-        val blades = engine.propeller?.blades ?: emptyList()
+        val blades = engine.childInSlot(SlotKeys.PROPELLER)
+          ?.childrenInSlot(SlotKeys.BLADE)
+          .orEmpty()
         // Chunked(2) allows us to create rows of 2 for that 50/50 look
         blades.withIndex()
           .chunked(2)

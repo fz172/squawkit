@@ -1,9 +1,5 @@
 package dev.fanfly.wingslog.feature.logs.update.logs.compose
 
-import dev.fanfly.wingslog.core.template.SlotKeys
-import dev.fanfly.wingslog.core.template.allComponentsInSlot
-import dev.fanfly.wingslog.core.template.childInSlot
-import dev.fanfly.wingslog.core.template.childrenInSlot
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -22,6 +18,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.SlotKeys
+import dev.fanfly.wingslog.core.template.SpecKeys
+import dev.fanfly.wingslog.core.template.allComponentsInSlot
+import dev.fanfly.wingslog.core.template.childInSlot
+import dev.fanfly.wingslog.core.template.childrenInSlot
+import dev.fanfly.wingslog.core.template.specValue
 import dev.fanfly.wingslog.core.template.thingNoun
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
@@ -83,7 +85,8 @@ fun ComponentSection(
         // Display thing serial (read-only)
         ReadOnlyComponentField(
           label = stringResource(Res.string.airframe_serial),
-          value = thing?.serial ?: "",
+          value = thing?.specValue(SpecKeys.SERIAL)
+            .orEmpty(),
           modifier = Modifier.fillMaxWidth(),
         )
       }
@@ -157,36 +160,38 @@ fun ComponentSection(
         } else {
           // Collect all propeller components from all engines
           val options = mutableListOf<Pair<String, String>>()
-          thing.allComponentsInSlot(SlotKeys.ENGINE).forEach { engine ->
-            val prop = engine.childInSlot(SlotKeys.PROPELLER)
-            val hub = prop?.childInSlot(SlotKeys.HUB)
-            if (hub?.serial?.isNotEmpty() == true) {
-              val makeModel = listOf(hub.make, hub.model)
-                .filter { it.isNotBlank() }
-                .joinToString(" ")
-              val label = stringResource(
-                Res.string.type_make_model_serial,
-                stringResource(LogRes.string.propeller_hub),
-                makeModel,
-                hub.serial,
-              )
-              options.add(label to hub.serial)
-            }
-            prop?.childrenInSlot(SlotKeys.BLADE)?.forEach { blade ->
-              if (blade.serial.isNotEmpty()) {
-                val makeModel = listOf(blade.make, blade.model)
+          thing.allComponentsInSlot(SlotKeys.ENGINE)
+            .forEach { engine ->
+              val prop = engine.childInSlot(SlotKeys.PROPELLER)
+              val hub = prop?.childInSlot(SlotKeys.HUB)
+              if (hub?.serial?.isNotEmpty() == true) {
+                val makeModel = listOf(hub.make, hub.model)
                   .filter { it.isNotBlank() }
                   .joinToString(" ")
                 val label = stringResource(
                   Res.string.type_make_model_serial,
-                  stringResource(LogRes.string.blade),
+                  stringResource(LogRes.string.propeller_hub),
                   makeModel,
-                  blade.serial,
+                  hub.serial,
                 )
-                options.add(label to blade.serial)
+                options.add(label to hub.serial)
               }
+              prop?.childrenInSlot(SlotKeys.BLADE)
+                ?.forEach { blade ->
+                  if (blade.serial.isNotEmpty()) {
+                    val makeModel = listOf(blade.make, blade.model)
+                      .filter { it.isNotBlank() }
+                      .joinToString(" ")
+                    val label = stringResource(
+                      Res.string.type_make_model_serial,
+                      stringResource(LogRes.string.blade),
+                      makeModel,
+                      blade.serial,
+                    )
+                    options.add(label to blade.serial)
+                  }
+                }
             }
-          }
 
           if (options.isEmpty()) {
             Text(

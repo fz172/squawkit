@@ -1,5 +1,7 @@
 package dev.fanfly.wingslog.feature.shell.viewmodel
 
+import dev.fanfly.wingslog.core.template.SpecKeys
+import dev.fanfly.wingslog.thing.Spec
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.auth.AccountUpgradeResult
 import dev.fanfly.wingslog.core.auth.AuthManager
@@ -160,11 +162,15 @@ class AdaptiveShellViewModelTest {
     shared: Boolean = false,
   ) =
     FleetEntry(
+      // Spec entries, not fields 2-6 — those are reserved (#668), and the shell reads the same
+      // keys the rest of the app does.
       thing = Thing(
         id = id,
-        make = make,
-        model = model,
-        tail_number = tail
+        spec = listOf(
+          Spec(key = SpecKeys.MAKE, value_ = make),
+          Spec(key = SpecKeys.MODEL, value_ = model),
+          Spec(key = SpecKeys.TAIL_NUMBER, value_ = tail),
+        ),
       ),
       shared = shared,
       role = ShareRole.SHARE_ROLE_OWNER,

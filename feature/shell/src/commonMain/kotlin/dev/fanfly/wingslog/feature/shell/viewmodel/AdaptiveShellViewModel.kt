@@ -1,5 +1,7 @@
 package dev.fanfly.wingslog.feature.shell.viewmodel
 
+import dev.fanfly.wingslog.core.template.SpecKeys
+import dev.fanfly.wingslog.core.template.specValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.fanfly.wingslog.core.auth.AuthManager
@@ -89,8 +91,9 @@ class AdaptiveShellViewModel(
               val ac = entry.thing
               ShellThing(
                 id = ac.id,
-                tail = ac.tail_number,
-                name = listOf(ac.make, ac.model).filter { it.isNotBlank() }
+                tail = ac.specValue(SpecKeys.TAIL_NUMBER),
+                name = listOf(ac.specValue(SpecKeys.MAKE), ac.specValue(SpecKeys.MODEL))
+                  .filter { it.isNotBlank() }
                   .joinToString(" "),
                 // forThingWithFallback, not ac.template: a Thing created before templates existed
                 // carries none, and reading the field directly would render it in no words at all.

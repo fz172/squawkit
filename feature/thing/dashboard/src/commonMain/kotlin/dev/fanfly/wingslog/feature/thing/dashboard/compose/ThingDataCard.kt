@@ -146,7 +146,7 @@ fun ThingDataCard(
             serial = thing.specValue(SpecKeys.SERIAL)
           )
 
-          // The airframe's engine children, not the transitional `Thing.engine` field (#668).
+          // The airframe's engine children (#668).
           val engines = thing.rootComponentInSlot(SlotKeys.AIRFRAME)
             ?.childrenInSlot(SlotKeys.ENGINE)
             .orEmpty()

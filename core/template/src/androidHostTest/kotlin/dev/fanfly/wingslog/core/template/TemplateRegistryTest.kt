@@ -39,7 +39,8 @@ class TemplateRegistryTest {
   fun aThingWithoutDnaResolvesToAirplane() {
     // Every Thing created before templates existed. A closed set, and all of them airplanes —
     // which is why no stored hint is needed and Thing.template_id could be removed.
-    val legacy = Thing(id = "t1", make = "Cessna", model = "172")
+    // Fields 2-6 are reserved (#668); a legacy Thing is now simply one with no `template`.
+    val legacy = Thing(id = "t1")
 
     assertThat(registry.forThingWithFallback(legacy)).isEqualTo(AirplaneTemplate.TEMPLATE)
   }

@@ -11,6 +11,12 @@ import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.model.id.generateRandomId
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.template.CurrentThingTemplate
+import dev.fanfly.wingslog.core.template.SlotKeys
+import dev.fanfly.wingslog.core.template.SpecKeys
+import dev.fanfly.wingslog.core.template.allComponentsInSlot
+import dev.fanfly.wingslog.core.template.childInSlot
+import dev.fanfly.wingslog.core.template.childrenInSlot
+import dev.fanfly.wingslog.core.template.specValue
 import dev.fanfly.wingslog.core.ui.common.UiText
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentFormController
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
@@ -425,24 +431,29 @@ class MaintenanceLogFormViewModel(
       val thing = state.thing
       val autoSerial = when (value) {
         ComponentType.COMPONENT_AIRFRAME ->
-          thing?.serial?.takeIf { it.isNotEmpty() }
+          thing?.specValue(SpecKeys.SERIAL)
+            ?.takeIf { it.isNotEmpty() }
 
         ComponentType.COMPONENT_ENGINE -> {
-          val engines = thing?.engine ?: emptyList()
+          val engines = thing?.allComponentsInSlot(SlotKeys.ENGINE)
+            .orEmpty()
           engines.singleOrNull()?.serial?.takeIf { it.isNotEmpty() }
         }
 
         ComponentType.COMPONENT_PROPELLER -> {
-          val propSerials = thing?.engine?.flatMap { engine ->
-            buildList {
-              engine.propeller?.hub?.serial?.takeIf { it.isNotEmpty() }
-                ?.let { add(it) }
-              engine.propeller?.blades?.forEach { blade ->
-                blade.serial.takeIf { it.isNotEmpty() }
+          val propSerials = thing?.allComponentsInSlot(SlotKeys.ENGINE)
+            ?.flatMap { engine ->
+              buildList {
+                val propeller = engine.childInSlot(SlotKeys.PROPELLER)
+                propeller?.childInSlot(SlotKeys.HUB)?.serial?.takeIf { it.isNotEmpty() }
                   ?.let { add(it) }
+                propeller?.childrenInSlot(SlotKeys.BLADE)
+                  ?.forEach { blade ->
+                    blade.serial.takeIf { it.isNotEmpty() }
+                      ?.let { add(it) }
+                  }
               }
-            }
-          } ?: emptyList()
+            } ?: emptyList()
           propSerials.singleOrNull()
         }
 
@@ -525,7 +536,10 @@ class MaintenanceLogFormViewModel(
 
       // Save log
       val componentSerial = when (state.selectedComponentType) {
-        ComponentType.COMPONENT_AIRFRAME -> state.thing?.serial ?: ""
+        ComponentType.COMPONENT_AIRFRAME ->
+          state.thing?.specValue(SpecKeys.SERIAL)
+            .orEmpty()
+
         else -> state.selectedSubComponent ?: ""
       }
       val now = Clock.System.now()

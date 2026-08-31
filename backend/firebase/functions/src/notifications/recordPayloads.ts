@@ -28,7 +28,8 @@ export function tailNumberOf(doc: SyncDocWire | undefined): string | null {
   const bytes = payloadBytes(doc?.payload);
   if (bytes == null) return null;
   try {
-    const tail = Thing.decode(bytes).tailNumber;
+    // From `spec`, not the retired field 5 (#668) — the same key the clients read.
+    const tail = Thing.decode(bytes).spec.find(entry => entry.key === "tail_number")?.value ?? "";
     return tail.length > 0 ? tail : null;
   } catch (e) {
     logger.warn("Could not decode an aircraft payload for a notification", { error: String(e) });

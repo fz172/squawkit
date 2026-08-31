@@ -1,5 +1,7 @@
 package dev.fanfly.wingslog.feature.fleet.datamanager.impl
 
+import dev.fanfly.wingslog.core.template.SpecKeys
+import dev.fanfly.wingslog.thing.Spec
 import dev.fanfly.wingslog.core.template.ThingInflater
 import io.mockk.slot
 import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
@@ -298,7 +300,14 @@ class FleetManagerImplTest {
     id: String = TEST_AIRCRAFT_ID,
     make: String = "Cessna",
     model: String = "172",
-  ): Thing = Thing(id = id, make = make, model = model)
+  ): Thing = Thing(
+    id = id,
+    // Spec entries: fields 2-6 are reserved (#668).
+    spec = listOf(
+      Spec(key = SpecKeys.MAKE, value_ = make),
+      Spec(key = SpecKeys.MODEL, value_ = model),
+    ),
+  )
 
   // --- Writes must land in the tree the thing actually lives in (#143) ---
 
@@ -321,9 +330,11 @@ class FleetManagerImplTest {
     )
     val edited = Thing(
       id = "shared-1",
-      make = "Cessna",
-      model = "172",
-      tail_number = "N999XX"
+      spec = listOf(
+        Spec(key = SpecKeys.MAKE, value_ = "Cessna"),
+        Spec(key = SpecKeys.MODEL, value_ = "172"),
+        Spec(key = SpecKeys.TAIL_NUMBER, value_ = "N999XX"),
+      ),
     )
 
     val result = manager.updateThing(edited)
@@ -347,7 +358,13 @@ class FleetManagerImplTest {
 
   @Test
   fun updateThing_own_writesToOwnTree() = runTest {
-    val mine = Thing(id = "own-1", make = "Cessna", model = "172")
+    val mine = Thing(
+      id = "own-1",
+      spec = listOf(
+        Spec(key = SpecKeys.MAKE, value_ = "Cessna"),
+        Spec(key = SpecKeys.MODEL, value_ = "172"),
+      ),
+    )
 
     manager.updateThing(mine)
 
@@ -359,13 +376,16 @@ class FleetManagerImplTest {
       )
     }
 
-    // And the point of that inflation: what lands in the store carries spec and components, which
-    // before #717 nothing on the client ever wrote.
+    // What the inflater still contributes on the way to the store. It no longer *derives* spec or
+    // components — the form writes those, and deriving would overwrite them (#668 part 3) — so what
+    // is asserted here is that the caller's values reach the store untouched, plus the DNA the
+    // inflater does add.
     val stored = slot<Thing>()
     coVerify { store.put("own-1", capture(stored), any()) }
     assertThat(stored.captured.spec.map { it.key }).containsExactly("make", "model").inOrder()
-    assertThat(stored.captured.components.single().id).isEqualTo("own-1:airframe.0")
     assertThat(stored.captured.template).isEqualTo(AirplaneTemplate.TEMPLATE)
+    // A name, derived from spec for a Thing that arrived without one.
+    assertThat(stored.captured.name).isEqualTo("Cessna 172")
   }
 
   @Test

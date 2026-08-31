@@ -5,31 +5,10 @@ import dev.fanfly.wingslog.thing.Spec
 import dev.fanfly.wingslog.thing.Thing
 
 /**
- * Reading a Thing's spec values by key, instead of off the transitional fields 2–6.
+ * Reading and editing a Thing's `spec` and `components`, by key and by path.
  *
- * ## Why these exist
- *
- * `make`, `model`, `serial` and `tail_number` are proto fields on `Thing` *and* entries in its
- * `spec` list. Two places holding the same truth is the state #668 ends, and the fields are the half
- * that goes: they are airplane vocabulary baked into the schema, and a house has none of them
- * (PRD §4.2).
- *
- * ## Why a key lookup rather than named properties
- *
- * It would be easy to add `Thing.make` back as an extension reading `spec`, and it would be wrong.
- * The point of the template system is that **which spec fields exist is the template's decision** —
- * a car declares a VIN, a boat a hull id, a house nothing at all. A named accessor per key
- * reintroduces the assumption the schema change removes, one extension at a time.
- *
- * So callers ask for a key. Where that key is a *convention* rather than a template's own
- * invention, [SpecKeys] names it once so the string is not scattered.
- *
- * ## The keys here are conventions, not guarantees
- *
- * `make` / `model` / `serial` / `tail_number` are the four the airplane template declares and the
- * four `ThingInflater` writes, which is why they are worth naming. **They are not promised to
- * exist** — [specValue] returns empty for a Thing whose template never declared them, which is the
- * correct answer rather than an error. A screen that must not render an empty row should check.
+ * Key lookups rather than named accessors: which spec fields exist is the template's decision,
+ * so a `Thing.make` extension would reintroduce the assumption #668 removed.
  */
 object SpecKeys {
   const val MAKE = "make"
@@ -38,13 +17,7 @@ object SpecKeys {
   const val TAIL_NUMBER = "tail_number"
 }
 
-/**
- * The value stored under [key], or empty if this Thing has none.
- *
- * Empty rather than null: every caller renders a string, and the absent case and the blank case are
- * the same thing to a reader. `ThingInflater` drops empty values rather than storing blanks, so a
- * key that is present is a key with a value.
- */
+/** The value under [key], or empty. Absent and blank read the same to a caller. */
 fun Thing.specValue(key: String): String =
   spec.firstOrNull { it.key == key }?.value_.orEmpty()
 
@@ -55,16 +28,7 @@ fun Thing.hasSpec(key: String): Boolean = specValue(key).isNotEmpty()
 // Component tree access
 // ---------------------------------------------------------------------------------------------
 
-/**
- * Slot keys the airplane template declares, and `ThingInflater` writes.
- *
- * Named here so the strings are not scattered, and asserted against the template itself by
- * `TemplateKeysResolveTest` — a rename on one side without the other fails there rather than
- * silently rendering an empty tree.
- *
- * These are **airplane** slots. A car or a house declares its own, which is why navigation below
- * takes a key rather than offering `thing.engines`.
- */
+/** Airplane slot keys. Asserted against the template by `TemplateKeysResolveTest`. */
 object SlotKeys {
   const val AIRFRAME = "airframe"
   const val ENGINE = "engine"
@@ -81,14 +45,7 @@ fun Component.childrenInSlot(slotKey: String): List<Component> =
 fun Component.childInSlot(slotKey: String): Component? =
   children.firstOrNull { it.slot_key == slotKey }
 
-/**
- * Top-level components in [slotKey].
- *
- * The airplane tree has a single `airframe` root with engines beneath it, so most callers want
- * [Component.childrenInSlot] on the airframe rather than this. Kept separate because "the roots" and
- * "anything with this key, anywhere" are different questions and conflating them is how a blade
- * under engine 0 gets returned for a query about engine 1.
- */
+/** Top-level components in [slotKey]. For nested slots use [Component.childrenInSlot]. */
 fun Thing.rootComponentsInSlot(slotKey: String): List<Component> =
   components.filter { it.slot_key == slotKey }
 
@@ -97,19 +54,17 @@ fun Thing.rootComponentInSlot(slotKey: String): Component? =
   components.firstOrNull { it.slot_key == slotKey }
 
 /**
- * Every component anywhere in the tree with [slotKey], depth-first in declared order.
+ * Every component with [slotKey], anywhere in the tree.
  *
- * For a slot that appears at one level this is simply "all of them" — `allComponentsInSlot(ENGINE)`
- * returns the aircraft's engines without the caller navigating through the airframe first, and it
- * keeps working if a template ever nests them differently.
- *
- * Prefer [Component.childrenInSlot] when the *parent* matters: the blades of engine 1 are a
- * different question from every blade on the aircraft, and this cannot tell them apart.
+ * Use [Component.childrenInSlot] when the parent matters — this cannot tell engine 1's blades
+ * from engine 0's.
  */
 fun Thing.allComponentsInSlot(slotKey: String): List<Component> {
   fun walk(list: List<Component>): List<Component> =
     list.flatMap { component ->
-      (if (component.slot_key == slotKey) listOf(component) else emptyList()) + walk(component.children)
+      (if (component.slot_key == slotKey) listOf(component) else emptyList()) + walk(
+        component.children
+      )
     }
   return walk(components)
 }
@@ -118,30 +73,23 @@ fun Thing.allComponentsInSlot(slotKey: String): List<Component> {
 // Editing
 // ---------------------------------------------------------------------------------------------
 
-/**
- * This Thing with [key] set to [value], preserving the order of the other entries.
- *
- * An empty [value] removes the entry rather than storing a blank, which is what `ThingInflater`
- * does and what the backend cutover did — so a Thing edited to clear its serial ends up in the same
- * shape as one that never had one.
- */
+/** Sets [key], preserving order. An empty [value] removes the entry rather than storing a blank. */
 fun Thing.withSpec(key: String, value: String): Thing {
   val without = spec.filterNot { it.key == key }
-  return copy(spec = if (value.isEmpty()) without else without + Spec(key = key, value_ = value))
+  return copy(
+    spec = if (value.isEmpty()) without else without + Spec(
+      key = key,
+      value_ = value
+    )
+  )
 }
 
 /**
- * This Thing with every component id re-derived from its position.
+ * Re-derives every component id from its position.
  *
- * **Why the form cannot assign ids itself.** A component id is `"$thingId:$path"`, and a Thing being
- * created has no id until it is saved — so a form that built final ids would bake an empty one into
- * every component. Deriving them here, at save, is what lets the form edit a tree without knowing
- * the Thing's identity.
- *
- * It is also what keeps the ids *stable*: they come from position, so re-running this over an
- * already-saved Thing reproduces exactly the same ids. That matters because the ids are the join key
- * logs, tasks and squawks use to point at a component — a derivation that drifted would silently
- * repoint all of them.
+ * Ids embed the Thing id, which a Thing being created does not have yet — so the form edits an
+ * id-less tree and this runs at save. Positional derivation keeps ids stable across saves, which
+ * matters because they are the join key logs and tasks point at.
  */
 fun Thing.withDerivedComponentIds(): Thing {
   // Roots are numbered, but their path is not passed down — see walkPreservingOrder's note.
@@ -151,7 +99,10 @@ fun Thing.withDerivedComponentIds(): Thing {
       val index = counters.getOrElse(root.slot_key) { 0 }
       counters[root.slot_key] = index + 1
       root.copy(
-        id = ThingInflater.componentId(id, listOf(root.slot_key, index.toString())),
+        id = ThingInflater.componentId(
+          id,
+          listOf(root.slot_key, index.toString())
+        ),
         children = walkPreservingOrder(root.children, emptyList(), id),
       )
     },
@@ -159,18 +110,10 @@ fun Thing.withDerivedComponentIds(): Thing {
 }
 
 /**
- * Depth-first re-derivation that keeps declared order.
+ * Siblings are numbered per slot key, so a hub beside a blade does not shift the blade's index.
  *
- * Index within a slot is what the path uses — `engine.0`, `engine.1` — so siblings are numbered per
- * slot key rather than per position in the list. Two blades under different propellers therefore do
- * not collide, and a hub beside a blade does not push the blade's index along.
- *
- * **The root does not appear in its descendants' paths**, which is an irregularity rather than a
- * design: an engine is `engine.0`, not `airframe.0.engine.0`, while a propeller *is*
- * `engine.0.propeller.0`. `thingPayloads.ts` built the ids that way during the cutover and
- * `ThingInflater` matched it, so the ids in production have this shape. It is preserved rather than
- * tidied because these ids are the join key logs, tasks and squawks point at — regularising the
- * scheme would silently repoint every one of them.
+ * The root is absent from its descendants' paths — an engine is `engine.0`, not
+ * `airframe.0.engine.0`. An irregularity from the cutover, preserved because these ids are stored.
  */
 private fun walkPreservingOrder(
   list: List<Component>,
@@ -187,4 +130,103 @@ private fun walkPreservingOrder(
       children = walkPreservingOrder(component.children, path, thingId),
     )
   }
+}
+
+/**
+ * A component address: slot key and index within that slot, one entry per level.
+ *
+ * Indexing within a slot rather than the child list keeps a path stable when other slots are
+ * added beside it, and matches how ids are derived.
+ */
+typealias ComponentPath = List<Pair<String, Int>>
+
+private fun List<Component>.at(slotKey: String, index: Int): Component? =
+  filter { it.slot_key == slotKey }.getOrNull(index)
+
+/** The component at [path], or null if any step is missing. */
+fun Thing.componentAt(path: ComponentPath): Component? {
+  var current: Component? = null
+  var siblings = components
+  for ((slotKey, index) in path) {
+    current = siblings.at(slotKey, index) ?: return null
+    siblings = current.children
+  }
+  return current
+}
+
+/** Replaces the component at [path]; a no-op if absent. Template-agnostic — the path carries the domain. */
+fun Thing.updateComponentAt(
+  path: ComponentPath,
+  transform: (Component) -> Component
+): Thing {
+  if (path.isEmpty()) return this
+  return copy(components = updateIn(components, path, transform))
+}
+
+private fun updateIn(
+  siblings: List<Component>,
+  path: ComponentPath,
+  transform: (Component) -> Component,
+): List<Component> {
+  val (slotKey, index) = path.first()
+  var seen = -1
+  return siblings.map { component ->
+    if (component.slot_key != slotKey) return@map component
+    seen++
+    if (seen != index) return@map component
+    if (path.size == 1) {
+      transform(component)
+    } else {
+      component.copy(
+        children = updateIn(
+          component.children,
+          path.drop(1),
+          transform
+        )
+      )
+    }
+  }
+}
+
+/** Appends under [parent], or at the root when empty. An absent parent is a no-op, not invented. */
+fun Thing.addComponent(parent: ComponentPath, component: Component): Thing =
+  if (parent.isEmpty()) {
+    copy(components = components + component)
+  } else {
+    updateComponentAt(parent) { it.copy(children = it.children + component) }
+  }
+
+/** Removes the component at [path]. A no-op if it does not exist. */
+fun Thing.removeComponentAt(path: ComponentPath): Thing {
+  if (path.isEmpty()) return this
+  val parent = path.dropLast(1)
+  val (slotKey, index) = path.last()
+  fun prune(siblings: List<Component>): List<Component> {
+    var seen = -1
+    return siblings.filterNot { component ->
+      if (component.slot_key != slotKey) return@filterNot false
+      seen++
+      seen == index
+    }
+  }
+  return if (parent.isEmpty()) {
+    copy(components = prune(components))
+  } else {
+    updateComponentAt(parent) { it.copy(children = prune(it.children)) }
+  }
+}
+
+/** Creates [path] and any missing ancestors — typing into a hub on an engine with no propeller. */
+fun Thing.ensureComponentAt(path: ComponentPath): Thing {
+  var result = this
+  for (depth in path.indices) {
+    val prefix = path.subList(0, depth + 1)
+    if (result.componentAt(prefix) == null) {
+      result = result.addComponent(
+        prefix.dropLast(1),
+        Component(slot_key = prefix.last().first),
+      )
+    }
+  }
+  return result
 }

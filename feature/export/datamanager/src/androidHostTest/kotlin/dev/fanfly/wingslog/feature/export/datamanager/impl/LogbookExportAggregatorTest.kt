@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.export.datamanager.impl
 
+import dev.fanfly.wingslog.thing.Spec
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.MaintenanceLog
@@ -53,10 +54,12 @@ class LogbookExportAggregatorTest {
       every { loadThing(thingId) } returns flowOf(
         Thing(
           id = thingId,
-          make = "Cessna",
-          model = "172",
-          serial = "1",
-          tail_number = "N12345"
+          spec = listOf(
+            Spec(key = "make", value_ = "Cessna"),
+            Spec(key = "model", value_ = "172"),
+            Spec(key = "serial", value_ = "1"),
+            Spec(key = "tail_number", value_ = "N12345"),
+          ),
         ),
       )
     }

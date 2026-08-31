@@ -15,6 +15,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import dev.fanfly.wingslog.core.template.LocalThingCapabilities
+import dev.fanfly.wingslog.core.template.SpecKeys
+import dev.fanfly.wingslog.core.template.specValue
 import dev.fanfly.wingslog.core.ui.common.compose.FormTextField
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.thing.update.viewmodel.EditThingViewModel
@@ -46,19 +48,21 @@ fun AirframeSection(
 
       // --- Make Number ---
       FormTextField(
-        value = thing.make, // Read from ViewModel
+        value = thing.specValue(SpecKeys.MAKE), // Read from ViewModel
         onValueChange = { viewModel.onMakeChanged(it) }, // Update ViewModel
         label = stringResource(Res.string.make),
         editable = thing.id == "",
-        isError = showValidationErrors && thing.make.isBlank()
+        isError = showValidationErrors && thing.specValue(SpecKeys.MAKE)
+          .isBlank()
       )
       // --- Model Number ---
       FormTextField(
-        value = thing.model, // Read from ViewModel
+        value = thing.specValue(SpecKeys.MODEL), // Read from ViewModel
         onValueChange = { viewModel.onModelChanged(it) }, // Update ViewModel
         label = stringResource(Res.string.model),
         editable = thing.id == "",
-        isError = showValidationErrors && thing.model.isBlank()
+        isError = showValidationErrors && thing.specValue(SpecKeys.MODEL)
+          .isBlank()
       )
       Row(
         modifier = Modifier.fillMaxWidth(),
@@ -70,18 +74,19 @@ fun AirframeSection(
         // with nothing on screen to explain why.
         if (LocalThingCapabilities.current.component_serial_prompt) {
           FormTextField(
-            value = thing.serial, // Read from ViewModel
+            value = thing.specValue(SpecKeys.SERIAL), // Read from ViewModel
             onValueChange = { viewModel.onSerialChanged(it) }, // Update ViewModel
             label = stringResource(Res.string.serial),
             modifier = Modifier.weight(1f), // Takes up 50%
             editable = thing.id == "",
-            isError = showValidationErrors && thing.serial.isBlank(),
+            isError = showValidationErrors && thing.specValue(SpecKeys.SERIAL)
+              .isBlank(),
             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters)
           )
         }
         // --- Tail Number ---
         FormTextField(
-          value = thing.tail_number, // Read from ViewModel
+          value = thing.specValue(SpecKeys.TAIL_NUMBER), // Read from ViewModel
           onValueChange = { viewModel.onTailNumberChanged(it) }, // Update ViewModel
           label = stringResource(Res.string.tail_number),
           modifier = Modifier.weight(1f), // Takes up 50%

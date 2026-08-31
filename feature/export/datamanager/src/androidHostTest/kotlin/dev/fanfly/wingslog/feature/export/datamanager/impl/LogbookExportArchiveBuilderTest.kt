@@ -1,20 +1,19 @@
 package dev.fanfly.wingslog.feature.export.datamanager.impl
 
+import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.template.ThingInflater
 import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
-import com.google.common.truth.Truth.assertThat
-import dev.fanfly.wingslog.thing.Attachment
-import dev.fanfly.wingslog.thing.AttachmentType
-import dev.fanfly.wingslog.thing.ComponentType
-import dev.fanfly.wingslog.thing.Engine
-import dev.fanfly.wingslog.thing.MaintenanceLog
-import dev.fanfly.wingslog.thing.Propeller
-import dev.fanfly.wingslog.thing.PropellerHub
-import dev.fanfly.wingslog.thing.Squawk
-import dev.fanfly.wingslog.thing.SquawkDismissReason
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDateRange
 import dev.fanfly.wingslog.feature.export.datamanager.ExportFormat
 import dev.fanfly.wingslog.feature.export.datamanager.ExportRequest
+import dev.fanfly.wingslog.thing.Attachment
+import dev.fanfly.wingslog.thing.AttachmentType
+import dev.fanfly.wingslog.thing.Component
+import dev.fanfly.wingslog.thing.ComponentType
+import dev.fanfly.wingslog.thing.MaintenanceLog
+import dev.fanfly.wingslog.thing.Spec
+import dev.fanfly.wingslog.thing.Squawk
+import dev.fanfly.wingslog.thing.SquawkDismissReason
 import dev.fanfly.wingslog.thing.Thing
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
@@ -124,25 +123,44 @@ class LogbookExportArchiveBuilderTest {
 
   @Test
   fun buildEntries_singleEngineAndPropellerUseUnnumberedTimeLabels() {
+    // Built as a component tree, which is the only shape that exists since #668 part 3 — the
+    // transitional fields are gone and nothing derives the tree from them any more.
     val thing = Thing(
       id = "aircraft-1",
-      make = "Cessna",
-      model = "172",
-      serial = "172001",
-      tail_number = "N12345",
-      engine = listOf(
-        Engine(
-          make = "Lycoming",
-          model = "IO-360",
-          serial = "ENG-1",
-          propeller = Propeller(
-            hub = PropellerHub(
-              make = "McCauley",
-              model = "2A34C",
-              serial = "PROP-1",
-            )
+      spec = listOf(
+        Spec(key = "make", value_ = "Cessna"),
+        Spec(key = "model", value_ = "172"),
+        Spec(key = "serial", value_ = "172001"),
+        Spec(key = "tail_number", value_ = "N12345"),
+      ),
+      components = listOf(
+        Component(
+          slot_key = "airframe",
+          make = "Cessna",
+          model = "172",
+          serial = "172001",
+          children = listOf(
+            Component(
+              slot_key = "engine",
+              make = "Lycoming",
+              model = "IO-360",
+              serial = "ENG-1",
+              children = listOf(
+                Component(
+                  slot_key = "propeller",
+                  children = listOf(
+                    Component(
+                      slot_key = "hub",
+                      make = "McCauley",
+                      model = "2A34C",
+                      serial = "PROP-1",
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ),
-        )
+        ),
       ),
     )
     val bundle = aircraftBundle(
@@ -324,13 +342,7 @@ class LogbookExportArchiveBuilderTest {
 
   @Test
   fun buildEntries_multiAircraftUsesOneFolderPerAircraftAndRootReadme() {
-    val secondThing = Thing(
-      id = "aircraft-2",
-      make = "Beechcraft",
-      model = "Bonanza",
-      serial = "BE35-1",
-      tail_number = "N54321",
-    )
+    val secondThing = airplane("aircraft-2", "Beechcraft", "Bonanza", "BE35-1", "N54321")
     val firstBundle = aircraftBundle(
       logs = listOf(
         MaintenanceLog(
@@ -389,21 +401,37 @@ class LogbookExportArchiveBuilderTest {
       }
     }
 
+  /** An airplane-shaped Thing: spec identity plus the component tree the builder reads. */
+  private fun airplane(
+    id: String,
+    make: String,
+    model: String,
+    serial: String,
+    tail: String,
+  ) = Thing(
+    id = id,
+    spec = listOf(
+      Spec(key = "make", value_ = make),
+      Spec(key = "model", value_ = model),
+      Spec(key = "serial", value_ = serial),
+      Spec(key = "tail_number", value_ = tail),
+    ),
+    components = listOf(
+      Component(
+        slot_key = "airframe",
+        make = make,
+        model = model,
+        serial = serial,
+      ),
+    ),
+  )
+
   private fun aircraftBundle(
     logs: List<MaintenanceLog>,
     squawks: List<Squawk> = emptyList(),
-    thing: Thing = Thing(
-      id = "aircraft-1",
-      make = "Cessna",
-      model = "172",
-      serial = "172001",
-      tail_number = "N12345",
-    ),
+    thing: Thing = airplane("aircraft-1", "Cessna", "172", "172001", "N12345"),
   ) = ThingBundle(
     logs = logs,
-    // Inflated, because that is the only shape production produces since #717: the builder reads
-    // the component tree, and a fixture carrying only the transitional fields would exercise a
-    // Thing that can no longer exist.
     thing = ThingInflater.inflate(thing, AirplaneTemplate.TEMPLATE),
     tasks = emptyList(),
     dueByTaskId = emptyMap(),

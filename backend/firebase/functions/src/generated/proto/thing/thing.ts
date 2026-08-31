@@ -7,7 +7,6 @@
 /* eslint-disable */
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
 import { Component } from "./component";
-import { Engine } from "./engine";
 import { Spec } from "./spec";
 import { ThingTemplate } from "./template";
 
@@ -15,23 +14,6 @@ export const protobufPackage = "";
 
 export interface Thing {
   id: string;
-  /**
-   * --- transitional. Superseded by `spec` (10) and `components` (11), but NOT yet redundant.
-   *
-   * These were intended to be dual-written. Only half of that shipped: the backend cutover script
-   * (`thingPayloads.ts`) populates spec/components on migrated Things, and the client has never
-   * written either — so a Thing created since the cutover has its make/model/serial/engine values
-   * *only* here. Removing these fields before that is repaired loses the data outright.
-   *
-   * The ordering that makes removal safe is pivot_rollout_design.md §7, tracked as #717 (inflate on
-   * write), #718 (backfill the gap), then #668 (move readers, reserve 2-6).
-   * (docs/product/thing_migration_design.md §6, §9) ---
-   */
-  make: string;
-  model: string;
-  serial: string;
-  tailNumber: string;
-  engine: Engine[];
   name: string;
   /** mirrors of make/model/serial/tail_number */
   spec: Spec[];
@@ -51,39 +33,13 @@ export interface Thing {
 }
 
 function createBaseThing(): Thing {
-  return {
-    id: "",
-    make: "",
-    model: "",
-    serial: "",
-    tailNumber: "",
-    engine: [],
-    name: "",
-    spec: [],
-    components: [],
-    template: undefined,
-  };
+  return { id: "", name: "", spec: [], components: [], template: undefined };
 }
 
 export const Thing: MessageFns<Thing> = {
   encode(message: Thing, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
     if (message.id !== "") {
       writer.uint32(10).string(message.id);
-    }
-    if (message.make !== "") {
-      writer.uint32(18).string(message.make);
-    }
-    if (message.model !== "") {
-      writer.uint32(26).string(message.model);
-    }
-    if (message.serial !== "") {
-      writer.uint32(34).string(message.serial);
-    }
-    if (message.tailNumber !== "") {
-      writer.uint32(42).string(message.tailNumber);
-    }
-    for (const v of message.engine) {
-      Engine.encode(v!, writer.uint32(50).fork()).join();
     }
     if (message.name !== "") {
       writer.uint32(74).string(message.name);
@@ -113,46 +69,6 @@ export const Thing: MessageFns<Thing> = {
           }
 
           message.id = reader.string();
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-
-          message.make = reader.string();
-          continue;
-        }
-        case 3: {
-          if (tag !== 26) {
-            break;
-          }
-
-          message.model = reader.string();
-          continue;
-        }
-        case 4: {
-          if (tag !== 34) {
-            break;
-          }
-
-          message.serial = reader.string();
-          continue;
-        }
-        case 5: {
-          if (tag !== 42) {
-            break;
-          }
-
-          message.tailNumber = reader.string();
-          continue;
-        }
-        case 6: {
-          if (tag !== 50) {
-            break;
-          }
-
-          message.engine.push(Engine.decode(reader, reader.uint32()));
           continue;
         }
         case 9: {
@@ -199,15 +115,6 @@ export const Thing: MessageFns<Thing> = {
   fromJSON(object: any): Thing {
     return {
       id: isSet(object.id) ? globalThis.String(object.id) : "",
-      make: isSet(object.make) ? globalThis.String(object.make) : "",
-      model: isSet(object.model) ? globalThis.String(object.model) : "",
-      serial: isSet(object.serial) ? globalThis.String(object.serial) : "",
-      tailNumber: isSet(object.tailNumber)
-        ? globalThis.String(object.tailNumber)
-        : isSet(object.tail_number)
-        ? globalThis.String(object.tail_number)
-        : "",
-      engine: globalThis.Array.isArray(object?.engine) ? object.engine.map((e: any) => Engine.fromJSON(e)) : [],
       name: isSet(object.name) ? globalThis.String(object.name) : "",
       spec: globalThis.Array.isArray(object?.spec) ? object.spec.map((e: any) => Spec.fromJSON(e)) : [],
       components: globalThis.Array.isArray(object?.components)
@@ -221,21 +128,6 @@ export const Thing: MessageFns<Thing> = {
     const obj: any = {};
     if (message.id !== "") {
       obj.id = message.id;
-    }
-    if (message.make !== "") {
-      obj.make = message.make;
-    }
-    if (message.model !== "") {
-      obj.model = message.model;
-    }
-    if (message.serial !== "") {
-      obj.serial = message.serial;
-    }
-    if (message.tailNumber !== "") {
-      obj.tailNumber = message.tailNumber;
-    }
-    if (message.engine?.length) {
-      obj.engine = message.engine.map((e) => Engine.toJSON(e));
     }
     if (message.name !== "") {
       obj.name = message.name;
@@ -258,11 +150,6 @@ export const Thing: MessageFns<Thing> = {
   fromPartial<I extends Exact<DeepPartial<Thing>, I>>(object: I): Thing {
     const message = createBaseThing();
     message.id = object.id ?? "";
-    message.make = object.make ?? "";
-    message.model = object.model ?? "";
-    message.serial = object.serial ?? "";
-    message.tailNumber = object.tailNumber ?? "";
-    message.engine = object.engine?.map((e) => Engine.fromPartial(e)) || [];
     message.name = object.name ?? "";
     message.spec = object.spec?.map((e) => Spec.fromPartial(e)) || [];
     message.components = object.components?.map((e) => Component.fromPartial(e)) || [];

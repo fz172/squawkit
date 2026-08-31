@@ -1,5 +1,7 @@
 package dev.fanfly.wingslog.feature.notifications.engine
 
+import dev.fanfly.wingslog.core.template.SpecKeys
+import dev.fanfly.wingslog.core.template.specValue
 import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.EntityScope
@@ -221,7 +223,7 @@ class WebForeignWriteDetector(
           .first()
           .firstOrNull { it.thing.id == thingId }
           ?.thing
-          ?.tail_number
+          ?.specValue(SpecKeys.TAIL_NUMBER)
       } ?: run {
         log.w { "N1 tail number read timed out for $thingId; falling back to the id" }
         null
