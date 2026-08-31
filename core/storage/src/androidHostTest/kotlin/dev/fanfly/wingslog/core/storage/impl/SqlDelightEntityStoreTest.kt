@@ -109,7 +109,7 @@ class SqlDelightEntityStoreTest {
       .first()
     assertThat(emissions).hasSize(1)
     assertThat(emissions[0].id).isEqualTo(TEST_AIRCRAFT_ID)
-    assertThat(emissions[0].value.tail_number).isEqualTo("N12345")
+    assertThat(emissions[0].value.name).isEqualTo("N12345")
   }
 
   // ---- delete + observe + observeAll ----
@@ -241,7 +241,7 @@ class SqlDelightEntityStoreTest {
     val entity = store.observe(TEST_AIRCRAFT_ID, scopeA)
       .first()
     assertThat(entity).isNotNull()
-    assertThat(entity!!.value.tail_number).isEqualTo("N54321")
+    assertThat(entity!!.value.name).isEqualTo("N54321")
   }
 
   @Test
@@ -260,9 +260,7 @@ class SqlDelightEntityStoreTest {
     model: String = "172",
   ): Thing = Thing(
     id = id,
-    tail_number = tailNumber,
-    make = make,
-    model = model,
+    name = tailNumber,
   )
 }
 

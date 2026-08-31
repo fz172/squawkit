@@ -1,27 +1,30 @@
 package dev.fanfly.wingslog.feature.stresstest
 
+import dev.fanfly.wingslog.core.datetime.toWireInstant
+import dev.fanfly.wingslog.core.model.id.generateRandomId
+import dev.fanfly.wingslog.core.template.SlotKeys
+import dev.fanfly.wingslog.core.template.SpecKeys
+import dev.fanfly.wingslog.core.template.allComponentsInSlot
+import dev.fanfly.wingslog.core.template.specValue
+import dev.fanfly.wingslog.core.template.withDerivedComponentIds
 import dev.fanfly.wingslog.thing.CertExpireLimit
 import dev.fanfly.wingslog.thing.CertificateType
 import dev.fanfly.wingslog.thing.ComplianceType
+import dev.fanfly.wingslog.thing.Component
 import dev.fanfly.wingslog.thing.ComponentType
-import dev.fanfly.wingslog.thing.Engine
 import dev.fanfly.wingslog.thing.EngineHourRule
 import dev.fanfly.wingslog.thing.ImmediateRule
 import dev.fanfly.wingslog.thing.InspectionRule
 import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.thing.MaintenanceTask
 import dev.fanfly.wingslog.thing.OnConditionRule
-import dev.fanfly.wingslog.thing.Propeller
-import dev.fanfly.wingslog.thing.PropellerBlade
-import dev.fanfly.wingslog.thing.PropellerHub
+import dev.fanfly.wingslog.thing.Spec
 import dev.fanfly.wingslog.thing.Squawk
 import dev.fanfly.wingslog.thing.SquawkDismissReason
 import dev.fanfly.wingslog.thing.SquawkPriority
 import dev.fanfly.wingslog.thing.Technician
-import dev.fanfly.wingslog.thing.TimeRule
-import dev.fanfly.wingslog.core.datetime.toWireInstant
-import dev.fanfly.wingslog.core.model.id.generateRandomId
 import dev.fanfly.wingslog.thing.Thing
+import dev.fanfly.wingslog.thing.TimeRule
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Instant
@@ -642,41 +645,60 @@ object FakeDataGenerator {
     val serial = "S${serialLetters.random()}${(10000..99999).random()}"
     val tailNumber = "N${(1000..9999).random()}${('A'..'Z').random()}"
 
+    // Builds the component tree directly (#668 part 3). The transitional fields are gone, so there
+    // is nothing left to derive from — the generator produces the same shape the form and the
+    // cutover produce, which is what makes it a usable fixture rather than a special case.
     val engines = (1..config.engineCount).map { engineIndex ->
       val engineSerial = "E${(10000..99999).random()}"
       val propSerial = "P${(10000..99999).random()}"
       val blades = (1..config.bladesPerEngine).map { bladeIndex ->
-        val bladeSerial =
-          "B${engineIndex}${bladeIndex}-${(1000..9999).random()}"
-        PropellerBlade(
+        Component(
+          slot_key = SlotKeys.BLADE,
           make = spec.propMake,
           model = spec.propModel,
-          serial = bladeSerial
+          serial = "B${engineIndex}${bladeIndex}-${(1000..9999).random()}",
         )
       }
-      Engine(
+      Component(
+        slot_key = SlotKeys.ENGINE,
         make = spec.engineMake,
         model = spec.engineModel,
         serial = engineSerial,
-        propeller = Propeller(
-          hub = PropellerHub(
-            make = spec.propMake,
-            model = spec.propModel,
-            serial = propSerial
+        children = listOf(
+          Component(
+            slot_key = SlotKeys.PROPELLER,
+            children = listOf(
+              Component(
+                slot_key = SlotKeys.HUB,
+                make = spec.propMake,
+                model = spec.propModel,
+                serial = propSerial,
+              ),
+            ) + blades,
           ),
-          blades = blades,
         ),
       )
     }
 
     return Thing(
       id = thingId,
-      make = spec.make,
-      model = spec.model,
-      serial = serial,
-      tail_number = tailNumber,
-      engine = engines,
-    )
+      name = tailNumber,
+      spec = listOf(
+        Spec(key = SpecKeys.MAKE, value_ = spec.make),
+        Spec(key = SpecKeys.MODEL, value_ = spec.model),
+        Spec(key = SpecKeys.SERIAL, value_ = serial),
+        Spec(key = SpecKeys.TAIL_NUMBER, value_ = tailNumber),
+      ),
+      components = listOf(
+        Component(
+          slot_key = SlotKeys.AIRFRAME,
+          make = spec.make,
+          model = spec.model,
+          serial = serial,
+          children = engines,
+        ),
+      ),
+    ).withDerivedComponentIds()
   }
 
   private fun buildTechnicians(count: Int): List<Technician> {
@@ -805,13 +827,17 @@ object FakeDataGenerator {
         if (pool.size == 1) 0.5 else i.toDouble() / (pool.size - 1)
       val squawkInstant = startInstant + (span * fraction)
       val serial = when (template.component) {
-        ComponentType.COMPONENT_ENGINE -> thing.engine.firstOrNull()?.serial
-          ?: thing.serial
+        ComponentType.COMPONENT_ENGINE ->
+          thing.allComponentsInSlot(SlotKeys.ENGINE)
+            .firstOrNull()?.serial
+            ?: thing.specValue(SpecKeys.SERIAL)
 
-        ComponentType.COMPONENT_PROPELLER -> thing.engine.firstOrNull()?.propeller?.hub?.serial
-          ?: thing.serial
+        ComponentType.COMPONENT_PROPELLER ->
+          thing.allComponentsInSlot(SlotKeys.HUB)
+            .firstOrNull()?.serial
+            ?: thing.specValue(SpecKeys.SERIAL)
 
-        else -> thing.serial
+        else -> thing.specValue(SpecKeys.SERIAL)
       }
       Squawk(
         id = generateRandomId(),
@@ -884,13 +910,17 @@ object FakeDataGenerator {
         }
 
       val componentSerial = when (template.component) {
-        ComponentType.COMPONENT_ENGINE -> thing.engine.firstOrNull()?.serial
-          ?: thing.serial
+        ComponentType.COMPONENT_ENGINE ->
+          thing.allComponentsInSlot(SlotKeys.ENGINE)
+            .firstOrNull()?.serial
+            ?: thing.specValue(SpecKeys.SERIAL)
 
-        ComponentType.COMPONENT_PROPELLER -> thing.engine.firstOrNull()?.propeller?.hub?.serial
-          ?: thing.serial
+        ComponentType.COMPONENT_PROPELLER ->
+          thing.allComponentsInSlot(SlotKeys.HUB)
+            .firstOrNull()?.serial
+            ?: thing.specValue(SpecKeys.SERIAL)
 
-        else -> thing.serial
+        else -> thing.specValue(SpecKeys.SERIAL)
       }
 
       MaintenanceLog(

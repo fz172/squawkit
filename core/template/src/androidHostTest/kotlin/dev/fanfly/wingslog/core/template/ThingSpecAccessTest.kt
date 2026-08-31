@@ -1,12 +1,7 @@
 package dev.fanfly.wingslog.core.template
 
 import com.google.common.truth.Truth.assertThat
-import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
 import dev.fanfly.wingslog.thing.Component
-import dev.fanfly.wingslog.thing.Engine
-import dev.fanfly.wingslog.thing.Propeller
-import dev.fanfly.wingslog.thing.PropellerBlade
-import dev.fanfly.wingslog.thing.PropellerHub
 import dev.fanfly.wingslog.thing.Spec
 import dev.fanfly.wingslog.thing.Thing
 import org.junit.Test
@@ -20,29 +15,45 @@ import org.junit.Test
  */
 class ThingSpecAccessTest {
 
+  /** A twin, built the way the form and the generator build one — the tree is the source. */
   private fun twin() = Thing(
     id = "thing-1",
-    make = "Cessna",
-    model = "310",
-    serial = "SN-1",
-    tail_number = "N123AB",
-    engine = listOf(
-      Engine(
-        make = "Continental",
-        propeller = Propeller(
-          hub = PropellerHub(serial = "H-1"),
-          blades = listOf(PropellerBlade(serial = "B-1"), PropellerBlade(serial = "B-2")),
+    spec = listOf(
+      Spec(key = SpecKeys.MAKE, value_ = "Cessna"),
+      Spec(key = SpecKeys.MODEL, value_ = "310"),
+      Spec(key = SpecKeys.SERIAL, value_ = "SN-1"),
+      Spec(key = SpecKeys.TAIL_NUMBER, value_ = "N123AB"),
+    ),
+    components = listOf(
+      Component(
+        slot_key = SlotKeys.AIRFRAME,
+        make = "Cessna",
+        children = listOf(
+          Component(
+            slot_key = SlotKeys.ENGINE,
+            make = "Continental",
+            children = listOf(
+              Component(
+                slot_key = SlotKeys.PROPELLER,
+                children = listOf(
+                  Component(slot_key = SlotKeys.HUB, serial = "H-1"),
+                  Component(slot_key = SlotKeys.BLADE, serial = "B-1"),
+                  Component(slot_key = SlotKeys.BLADE, serial = "B-2"),
+                ),
+              ),
+            ),
+          ),
+          Component(slot_key = SlotKeys.ENGINE, make = "Continental"),
         ),
       ),
-      Engine(make = "Continental"),
     ),
-  )
+  ).withDerivedComponentIds()
 
   // ---- spec ----
 
   @Test
   fun specValueReadsByKeyAndIsEmptyWhenAbsent() {
-    val thing = ThingInflater.inflate(twin(), AirplaneTemplate.TEMPLATE)
+    val thing = twin()
 
     assertThat(thing.specValue(SpecKeys.MAKE)).isEqualTo("Cessna")
     assertThat(thing.specValue("vin")).isEmpty()
@@ -52,7 +63,7 @@ class ThingSpecAccessTest {
 
   @Test
   fun withSpecReplacesInPlaceRatherThanAppendingADuplicate() {
-    val thing = ThingInflater.inflate(twin(), AirplaneTemplate.TEMPLATE)
+    val thing = twin()
 
     val edited = thing.withSpec(SpecKeys.MAKE, "Beechcraft")
 
@@ -67,7 +78,7 @@ class ThingSpecAccessTest {
     // ThingInflater and the backend cutover both drop empty values, so a Thing edited to clear its
     // serial has to end up in the same shape as one that never had one — otherwise two Things with
     // no serial compare unequal.
-    val thing = ThingInflater.inflate(twin(), AirplaneTemplate.TEMPLATE)
+    val thing = twin()
 
     val cleared = thing.withSpec(SpecKeys.SERIAL, "")
 
@@ -78,7 +89,7 @@ class ThingSpecAccessTest {
 
   @Test
   fun slotNavigationFindsChildrenAtTheRightLevel() {
-    val thing = ThingInflater.inflate(twin(), AirplaneTemplate.TEMPLATE)
+    val thing = twin()
 
     val airframe = thing.rootComponentInSlot(SlotKeys.AIRFRAME)
     assertThat(airframe).isNotNull()
@@ -95,7 +106,7 @@ class ThingSpecAccessTest {
 
   @Test
   fun allComponentsInSlotSearchesTheWholeTree() {
-    val thing = ThingInflater.inflate(twin(), AirplaneTemplate.TEMPLATE)
+    val thing = twin()
 
     // Engines are one level down and blades three, but both are found without navigating.
     assertThat(thing.allComponentsInSlot(SlotKeys.ENGINE)).hasSize(2)
@@ -114,14 +125,12 @@ class ThingSpecAccessTest {
   // ---- id derivation ----
 
   @Test
-  fun derivedIdsMatchWhatTheInflaterProduces() {
-    // The two must agree exactly. If the form's tree is re-derived differently from the inflater's,
-    // saving an edited Thing renumbers its components and every log pointing at one is orphaned.
-    val inflated = ThingInflater.inflate(twin(), AirplaneTemplate.TEMPLATE)
+  fun derivationIsStableAcrossRepeatedSaves() {
+    // Every save re-derives. If that were not stable, an unrelated edit would renumber components
+    // and orphan every log pointing at one.
+    val once = twin()
 
-    val reDerived = inflated.withDerivedComponentIds()
-
-    assertThat(reDerived.components).isEqualTo(inflated.components)
+    assertThat(once.withDerivedComponentIds().components).isEqualTo(once.components)
   }
 
   @Test
@@ -144,7 +153,8 @@ class ThingSpecAccessTest {
     val airframe = derived.components.single()
     assertThat(airframe.id).isEqualTo("t-9:airframe.0")
     assertThat(airframe.children.map { it.id })
-      .containsExactly("t-9:engine.0", "t-9:engine.1").inOrder()
+      .containsExactly("t-9:engine.0", "t-9:engine.1")
+      .inOrder()
   }
 
   @Test
@@ -172,30 +182,42 @@ class ThingSpecAccessTest {
       ),
     )
 
-    val propeller = thing.withDerivedComponentIds().components.single().children.single()
+    val propeller =
+      thing.withDerivedComponentIds().components.single().children.single()
 
     assertThat(propeller.children.map { it.id }).containsExactly(
       "t-9:propeller.0.hub.0",
       "t-9:propeller.0.blade.0",
       "t-9:propeller.0.blade.1",
-    ).inOrder()
+    )
+      .inOrder()
   }
 
   @Test
   fun bladesUnderDifferentPropellersDoNotCollide() {
-    // The path prefix is what keeps them apart — this is the case componentId's KDoc calls out.
-    val thing = ThingInflater.inflate(
-      Thing(
-        id = "t-2",
-        engine = listOf(
-          Engine(propeller = Propeller(blades = listOf(PropellerBlade()))),
-          Engine(propeller = Propeller(blades = listOf(PropellerBlade()))),
+    // The path prefix is what keeps them apart — the case componentId's KDoc calls out.
+    fun engineWithOneBlade() = Component(
+      slot_key = SlotKeys.ENGINE,
+      children = listOf(
+        Component(
+          slot_key = SlotKeys.PROPELLER,
+          children = listOf(Component(slot_key = SlotKeys.BLADE)),
         ),
       ),
-      AirplaneTemplate.TEMPLATE,
     )
 
-    val bladeIds = thing.allComponentsInSlot(SlotKeys.BLADE).map { it.id }
+    val thing = Thing(
+      id = "t-2",
+      components = listOf(
+        Component(
+          slot_key = SlotKeys.AIRFRAME,
+          children = listOf(engineWithOneBlade(), engineWithOneBlade()),
+        ),
+      ),
+    ).withDerivedComponentIds()
+
+    val bladeIds = thing.allComponentsInSlot(SlotKeys.BLADE)
+      .map { it.id }
 
     assertThat(bladeIds).containsExactly(
       "t-2:engine.0.propeller.0.blade.0",
@@ -206,7 +228,7 @@ class ThingSpecAccessTest {
 
   @Test
   fun derivationIsIdempotent() {
-    val once = ThingInflater.inflate(twin(), AirplaneTemplate.TEMPLATE).withDerivedComponentIds()
+    val once = twin().withDerivedComponentIds()
 
     assertThat(once.withDerivedComponentIds()).isEqualTo(once)
   }
@@ -216,7 +238,8 @@ class ThingSpecAccessTest {
     // The constraint that shapes the form's design: ids embed the Thing id, which does not exist
     // until save. This documents the consequence rather than pretending it does not exist — the
     // form edits an id-less tree and FleetManagerImpl re-derives after assigning the id.
-    val unsaved = Thing(id = "", components = listOf(Component(slot_key = "airframe")))
+    val unsaved =
+      Thing(id = "", components = listOf(Component(slot_key = "airframe")))
 
     val derived = unsaved.withDerivedComponentIds()
 

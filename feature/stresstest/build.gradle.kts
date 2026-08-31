@@ -28,6 +28,7 @@ kotlin {
   sourceSets {
     commonMain.dependencies {
       implementation(project(":core:ui"))
+      implementation(project(":core:template"))
       implementation(project(":core:ui:adaptive"))
       implementation(project(":core:ui:theme"))
       implementation(project(":core:model"))

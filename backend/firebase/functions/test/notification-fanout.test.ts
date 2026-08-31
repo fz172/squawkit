@@ -81,7 +81,11 @@ function envelope(
 
 function aircraftEnvelope(acId: string, tail: string, writerUid = HOST) {
   return envelope(
-    Thing.encode(Thing.fromPartial({ id: acId, tailNumber: tail })).finish(),
+    // Spec, not the retired field 5 — fields 2-6 are reserved (#668), and the notification
+    // path reads the tail number from the same conventional key the app does.
+    Thing.encode(
+      Thing.fromPartial({ id: acId, spec: [{ key: "tail_number", value: tail }] }),
+    ).finish(),
     "thing.Thing",
     writerUid,
   );

@@ -1,6 +1,10 @@
 package dev.fanfly.wingslog.feature.thing.update.viewmodel
 
-import dev.fanfly.wingslog.thing.PropellerHub
+import dev.fanfly.wingslog.core.template.SlotKeys
+import dev.fanfly.wingslog.core.template.SpecKeys
+import dev.fanfly.wingslog.core.template.childInSlot
+import dev.fanfly.wingslog.core.template.childrenInSlot
+import dev.fanfly.wingslog.core.template.specValue
 import dev.fanfly.wingslog.thing.Thing
 
 data class EditThingUiState(
@@ -38,21 +42,30 @@ data class EditThingUiState(
 
   val isValid: Boolean
     get() {
-      if (thing.make.isBlank() || thing.model.isBlank()) return false
-      if (requireSerials && thing.serial.isBlank()) return false
-      thing.engine.forEach { engine ->
+      if (thing.specValue(SpecKeys.MAKE)
+          .isBlank() ||
+        thing.specValue(SpecKeys.MODEL)
+          .isBlank()
+      ) {
+        return false
+      }
+      if (requireSerials && thing.specValue(SpecKeys.SERIAL)
+          .isBlank()
+      ) return false
+      thing.engines.forEach { engine ->
         if (engine.make.isBlank() || engine.model.isBlank()) return false
         if (requireSerials && engine.serial.isBlank()) return false
-        val hub = engine.propeller?.hub ?: PropellerHub()
-        if (hub.make.isBlank() || hub.model.isBlank()) return false
+        val hub = engine.childInSlot(SlotKeys.PROPELLER)
+          ?.childInSlot(SlotKeys.HUB)
+        if (hub == null || hub.make.isBlank() || hub.model.isBlank()) return false
         // The hub's own serial is shown with an error indicator but has never been enforced here.
         // Left as it was rather than fixed in passing: making it required would start rejecting
         // saves that succeed today, which is a product change and not this commit's business.
         // See the #659 discussion.
         if (requireSerials) {
-          engine.propeller?.blades?.forEach { blade ->
-            if (blade.serial.isBlank()) return false
-          }
+          engine.childInSlot(SlotKeys.PROPELLER)
+            ?.childrenInSlot(SlotKeys.BLADE)
+            ?.forEach { blade -> if (blade.serial.isBlank()) return false }
         }
       }
       return true

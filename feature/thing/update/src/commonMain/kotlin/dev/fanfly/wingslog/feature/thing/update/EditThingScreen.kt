@@ -48,6 +48,7 @@ import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.thing.update.compose.AirframeSection
 import dev.fanfly.wingslog.feature.thing.update.compose.EngineSection
 import dev.fanfly.wingslog.feature.thing.update.viewmodel.EditThingViewModel
+import dev.fanfly.wingslog.feature.thing.update.viewmodel.engines
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.core.sharedassets.generated.resources.add_thing
@@ -214,7 +215,7 @@ fun EditAircraftScreen(
         Text(
           text = stringResource(CoreRes.string.component_engine).uppercase()
         )
-        uiState.thing.engine.forEachIndexed { index, engine ->
+        uiState.thing.engines.forEachIndexed { index, engine ->
           EngineSection(
             engineIndex = index,
             engine = engine,

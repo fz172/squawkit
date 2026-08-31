@@ -28,7 +28,10 @@ export function tailNumberOf(doc: SyncDocWire | undefined): string | null {
   const bytes = payloadBytes(doc?.payload);
   if (bytes == null) return null;
   try {
-    const tail = Thing.decode(bytes).tailNumber;
+    // Read from `spec`, not the retired field 5. Fields 2-6 are reserved (#668) — a Thing's
+    // identity values live under conventional spec keys now, which is also what every client
+    // reads, so a push notification is labelled with exactly what the app shows.
+    const tail = Thing.decode(bytes).spec.find(entry => entry.key === "tail_number")?.value ?? "";
     return tail.length > 0 ? tail : null;
   } catch (e) {
     logger.warn("Could not decode an aircraft payload for a notification", { error: String(e) });

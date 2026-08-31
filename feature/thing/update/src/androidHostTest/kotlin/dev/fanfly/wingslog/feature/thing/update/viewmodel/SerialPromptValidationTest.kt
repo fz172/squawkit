@@ -1,7 +1,13 @@
 package dev.fanfly.wingslog.feature.thing.update.viewmodel
 
-import dev.fanfly.wingslog.core.template.CurrentThingTemplate
+import dev.fanfly.wingslog.core.template.SlotKeys
+import dev.fanfly.wingslog.core.template.SpecKeys
+import dev.fanfly.wingslog.thing.Component
+import dev.fanfly.wingslog.thing.Spec
 import com.google.common.truth.Truth.assertThat
+import dev.fanfly.wingslog.core.template.CurrentThingTemplate
+import dev.fanfly.wingslog.core.template.ThingInflater
+import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
 import dev.fanfly.wingslog.thing.Engine
 import dev.fanfly.wingslog.thing.Propeller
 import dev.fanfly.wingslog.thing.PropellerBlade
@@ -23,18 +29,32 @@ import org.junit.Test
  */
 class SerialPromptValidationTest {
 
+  /** Spec plus the component tree — the shape the form now produces (#668 part 3). */
   private fun thing(serials: Boolean) = Thing(
-    make = "Cessna",
-    model = "172",
-    serial = if (serials) "SN-1" else "",
-    engine = listOf(
-      Engine(
-        make = "Lycoming",
-        model = "O-320",
-        serial = if (serials) "E-1" else "",
-        propeller = Propeller(
-          hub = PropellerHub(make = "McCauley", model = "1C160"),
-          blades = listOf(PropellerBlade(serial = if (serials) "B-1" else "")),
+    spec = listOf(
+      Spec(key = SpecKeys.MAKE, value_ = "Cessna"),
+      Spec(key = SpecKeys.MODEL, value_ = "172"),
+      Spec(key = SpecKeys.SERIAL, value_ = if (serials) "SN-1" else ""),
+    ),
+    components = listOf(
+      Component(
+        slot_key = SlotKeys.AIRFRAME,
+        children = listOf(
+          Component(
+            slot_key = SlotKeys.ENGINE,
+            make = "Lycoming",
+            model = "O-320",
+            serial = if (serials) "E-1" else "",
+            children = listOf(
+              Component(
+                slot_key = SlotKeys.PROPELLER,
+                children = listOf(
+                  Component(slot_key = SlotKeys.HUB, make = "McCauley", model = "1C160"),
+                  Component(slot_key = SlotKeys.BLADE, serial = if (serials) "B-1" else ""),
+                ),
+              ),
+            ),
+          ),
         ),
       ),
     ),
@@ -72,7 +92,7 @@ class SerialPromptValidationTest {
   fun makeAndModelStayRequiredEitherWay() {
     // Only the serials are template-controlled. A thing with no make or model is unusable whatever
     // it is, so relaxing serials must not relax everything alongside it.
-    val nameless = Thing(make = "", model = "", serial = "SN-1")
+    val nameless = Thing(spec = listOf(Spec(key = SpecKeys.SERIAL, value_ = "SN-1")))
 
     assertThat(
       EditThingUiState(

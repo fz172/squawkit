@@ -10,17 +10,15 @@ import dev.fanfly.wingslog.core.template.specValue
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDateRange
 import dev.fanfly.wingslog.feature.export.datamanager.ExportFormat
 import dev.fanfly.wingslog.feature.export.datamanager.ExportRequest
-import dev.fanfly.wingslog.thing.Component
 import dev.fanfly.wingslog.thing.Attachment
 import dev.fanfly.wingslog.thing.AttachmentType
 import dev.fanfly.wingslog.thing.CertExpireLimit
 import dev.fanfly.wingslog.thing.CertificateType
 import dev.fanfly.wingslog.thing.ComplianceType
+import dev.fanfly.wingslog.thing.Component
 import dev.fanfly.wingslog.thing.ComponentType
-import dev.fanfly.wingslog.thing.Engine
 import dev.fanfly.wingslog.thing.InspectionRule
 import dev.fanfly.wingslog.thing.MaintenanceLog
-import dev.fanfly.wingslog.thing.Propeller
 import dev.fanfly.wingslog.thing.Squawk
 import dev.fanfly.wingslog.thing.SquawkDismissReason
 import dev.fanfly.wingslog.thing.SquawkPriority
@@ -154,29 +152,32 @@ class LogbookExportArchiveBuilder(
             rows = airframeRows(bundle, attachments, timeZone),
           )
         )
-        bundle.thing.allComponentsInSlot(SlotKeys.ENGINE).forEachIndexed { index, engine ->
-          add(
-            LogbookExportTable(
-              csvPath = engineCsvName(bundle.thing, index),
-              sheetName = engineSheetName(bundle.thing, index),
-              rows = engineRows(bundle, attachments, engine, index, timeZone),
+        bundle.thing.allComponentsInSlot(SlotKeys.ENGINE)
+          .forEachIndexed { index, engine ->
+            add(
+              LogbookExportTable(
+                csvPath = engineCsvName(bundle.thing, index),
+                sheetName = engineSheetName(bundle.thing, index),
+                rows = engineRows(bundle, attachments, engine, index, timeZone),
+              )
             )
-          )
-          add(
-            LogbookExportTable(
-              csvPath = propellerCsvName(bundle.thing, index),
-              sheetName = propellerSheetName(bundle.thing, index),
-              rows = propellerRows(
-                bundle,
-                attachments,
-                engine.childInSlot(SlotKeys.PROPELLER),
-                index,
-                timeZone
-              ),
+            add(
+              LogbookExportTable(
+                csvPath = propellerCsvName(bundle.thing, index),
+                sheetName = propellerSheetName(bundle.thing, index),
+                rows = propellerRows(
+                  bundle,
+                  attachments,
+                  engine.childInSlot(SlotKeys.PROPELLER),
+                  index,
+                  timeZone
+                ),
+              )
             )
-          )
-        }
-        if (bundle.thing.allComponentsInSlot(SlotKeys.ENGINE).isEmpty()) {
+          }
+        if (bundle.thing.allComponentsInSlot(SlotKeys.ENGINE)
+            .isEmpty()
+        ) {
           add(
             LogbookExportTable(
               csvPath = "02_Engine_Unknown.csv",
@@ -259,7 +260,10 @@ class LogbookExportArchiveBuilder(
       listOf("Make", thing.specValue(SpecKeys.MAKE)),
       listOf("Model", thing.specValue(SpecKeys.MODEL)),
       listOf("Serial Number", thing.specValue(SpecKeys.SERIAL)),
-      listOf("Engines", thing.allComponentsInSlot(SlotKeys.ENGINE).size.toString()),
+      listOf(
+        "Engines",
+        thing.allComponentsInSlot(SlotKeys.ENGINE).size.toString()
+      ),
       listOf(
         "Propellers",
         thing.allComponentsInSlot(SlotKeys.PROPELLER).size
@@ -378,7 +382,8 @@ class LogbookExportArchiveBuilder(
       add(listOf("Hub Make", hub?.make.orEmpty()))
       add(listOf("Hub Model", hub?.model.orEmpty()))
       add(listOf("Hub Serial", hub?.serial.orEmpty()))
-      propeller?.childrenInSlot(SlotKeys.BLADE).orEmpty()
+      propeller?.childrenInSlot(SlotKeys.BLADE)
+        .orEmpty()
         .forEachIndexed { bladeIndex, blade ->
           add(listOf("Blade ${bladeIndex + 1} Make", blade.make))
           add(listOf("Blade ${bladeIndex + 1} Model", blade.model))
@@ -545,7 +550,13 @@ class LogbookExportArchiveBuilder(
       ?.let { "\nAttachment notes\n$it" }
       .orEmpty()
     val scope = if (bundles.size == 1) {
-      bundles.first().thing.run { "$make $model $tail_number" }
+      bundles.first().thing.run {
+        "${specValue(SpecKeys.MAKE)} ${specValue(SpecKeys.MODEL)} ${
+          specValue(
+            SpecKeys.TAIL_NUMBER
+          )
+        }"
+      }
     } else {
       "${bundles.size} aircraft"
     }
@@ -622,60 +633,61 @@ class LogbookExportArchiveBuilder(
         )
         val componentCards = thing.allComponentsInSlot(SlotKeys.ENGINE)
           .flatMapIndexed { index, engine ->
-          buildList {
-            add(
-              PdfSummaryCard(
-                title = engineCardTitle(thing, index),
-                rows = listOf(
-                  PdfSummaryRow("Make", engine.make),
-                  PdfSummaryRow("Model", engine.model),
-                  PdfSummaryRow("Serial", engine.serial),
-                )
-              )
-            )
-            engine.childInSlot(SlotKeys.PROPELLER)?.let { propeller ->
+            buildList {
               add(
                 PdfSummaryCard(
-                  title = propellerCardTitle(thing, index),
-                  rows = buildList {
-                    add(
-                      PdfSummaryRow(
-                        "Hub Make",
-                        propeller.childInSlot(SlotKeys.HUB)?.make.orEmpty()
-                      )
-                    )
-                    add(
-                      PdfSummaryRow(
-                        "Hub Model",
-                        propeller.childInSlot(SlotKeys.HUB)?.model.orEmpty()
-                      )
-                    )
-                    add(
-                      PdfSummaryRow(
-                        "Hub Serial",
-                        propeller.childInSlot(SlotKeys.HUB)?.serial.orEmpty()
-                      )
-                    )
-                    propeller.childrenInSlot(SlotKeys.BLADE)
-                      .forEachIndexed { bladeIndex, blade ->
-                      add(
-                        PdfSummaryRow(
-                          "Blade ${bladeIndex + 1}",
-                          listOf(
-                            blade.make,
-                            blade.model,
-                            blade.serial
-                          ).filter { it.isNotBlank() }
-                            .joinToString(" · ")
-                        )
-                      )
-                    }
-                  },
+                  title = engineCardTitle(thing, index),
+                  rows = listOf(
+                    PdfSummaryRow("Make", engine.make),
+                    PdfSummaryRow("Model", engine.model),
+                    PdfSummaryRow("Serial", engine.serial),
+                  )
                 )
               )
+              engine.childInSlot(SlotKeys.PROPELLER)
+                ?.let { propeller ->
+                  add(
+                    PdfSummaryCard(
+                      title = propellerCardTitle(thing, index),
+                      rows = buildList {
+                        add(
+                          PdfSummaryRow(
+                            "Hub Make",
+                            propeller.childInSlot(SlotKeys.HUB)?.make.orEmpty()
+                          )
+                        )
+                        add(
+                          PdfSummaryRow(
+                            "Hub Model",
+                            propeller.childInSlot(SlotKeys.HUB)?.model.orEmpty()
+                          )
+                        )
+                        add(
+                          PdfSummaryRow(
+                            "Hub Serial",
+                            propeller.childInSlot(SlotKeys.HUB)?.serial.orEmpty()
+                          )
+                        )
+                        propeller.childrenInSlot(SlotKeys.BLADE)
+                          .forEachIndexed { bladeIndex, blade ->
+                            add(
+                              PdfSummaryRow(
+                                "Blade ${bladeIndex + 1}",
+                                listOf(
+                                  blade.make,
+                                  blade.model,
+                                  blade.serial
+                                ).filter { it.isNotBlank() }
+                                  .joinToString(" · ")
+                              )
+                            )
+                          }
+                      },
+                    )
+                  )
+                }
             }
           }
-        }
         if (componentCards.isNotEmpty()) {
           add(PdfSummarySection(title = "Components", cards = componentCards))
         }
@@ -848,10 +860,11 @@ class LogbookExportArchiveBuilder(
     }
 
   private fun Thing.folderName(): String =
-    "${safeTailNumber()}_${make}_${model}".sanitizePathSegment()
+    "${safeTailNumber()}_${specValue(SpecKeys.MAKE)}_${specValue(SpecKeys.MODEL)}"
+      .sanitizePathSegment()
 
   private fun Thing.safeTailNumber(): String =
-    tail_number.ifBlank { id.ifBlank { "Aircraft" } }
+    specValue(SpecKeys.TAIL_NUMBER).ifBlank { id.ifBlank { "Aircraft" } }
       .sanitizePathSegment()
 
   private fun ComponentType.label(): String =

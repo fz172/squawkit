@@ -109,7 +109,9 @@ fun Thing.rootComponentInSlot(slotKey: String): Component? =
 fun Thing.allComponentsInSlot(slotKey: String): List<Component> {
   fun walk(list: List<Component>): List<Component> =
     list.flatMap { component ->
-      (if (component.slot_key == slotKey) listOf(component) else emptyList()) + walk(component.children)
+      (if (component.slot_key == slotKey) listOf(component) else emptyList()) + walk(
+        component.children
+      )
     }
   return walk(components)
 }
@@ -127,7 +129,12 @@ fun Thing.allComponentsInSlot(slotKey: String): List<Component> {
  */
 fun Thing.withSpec(key: String, value: String): Thing {
   val without = spec.filterNot { it.key == key }
-  return copy(spec = if (value.isEmpty()) without else without + Spec(key = key, value_ = value))
+  return copy(
+    spec = if (value.isEmpty()) without else without + Spec(
+      key = key,
+      value_ = value
+    )
+  )
 }
 
 /**
@@ -151,7 +158,10 @@ fun Thing.withDerivedComponentIds(): Thing {
       val index = counters.getOrElse(root.slot_key) { 0 }
       counters[root.slot_key] = index + 1
       root.copy(
-        id = ThingInflater.componentId(id, listOf(root.slot_key, index.toString())),
+        id = ThingInflater.componentId(
+          id,
+          listOf(root.slot_key, index.toString())
+        ),
         children = walkPreservingOrder(root.children, emptyList(), id),
       )
     },
@@ -187,4 +197,123 @@ private fun walkPreservingOrder(
       children = walkPreservingOrder(component.children, path, thingId),
     )
   }
+}
+
+/**
+ * Addresses a component by slot key and index within that slot, one level per entry.
+ *
+ * `[("airframe", 0), ("engine", 1)]` is the second engine of the first airframe. Indexing *within a
+ * slot* rather than within the child list is what makes a path stable when unrelated slots are added
+ * beside it — and it matches how component ids are derived, so a path and an id describe the same
+ * position.
+ */
+typealias ComponentPath = List<Pair<String, Int>>
+
+private fun List<Component>.at(slotKey: String, index: Int): Component? =
+  filter { it.slot_key == slotKey }.getOrNull(index)
+
+/** The component at [path], or null if any step is missing. */
+fun Thing.componentAt(path: ComponentPath): Component? {
+  var current: Component? = null
+  var siblings = components
+  for ((slotKey, index) in path) {
+    current = siblings.at(slotKey, index) ?: return null
+    siblings = current.children
+  }
+  return current
+}
+
+/**
+ * Replaces the component at [path]. A no-op if it does not exist.
+ *
+ * Template-agnostic on purpose: the caller supplies the path, so the same function edits an
+ * aircraft's propeller hub and a car's brake pads. The domain knowledge is in the path, which is
+ * where it belongs — the *form* knows it is editing an airplane, and #739's template-driven form
+ * will build paths from the template's own slot tree without any of this changing.
+ */
+fun Thing.updateComponentAt(
+  path: ComponentPath,
+  transform: (Component) -> Component
+): Thing {
+  if (path.isEmpty()) return this
+  return copy(components = updateIn(components, path, transform))
+}
+
+private fun updateIn(
+  siblings: List<Component>,
+  path: ComponentPath,
+  transform: (Component) -> Component,
+): List<Component> {
+  val (slotKey, index) = path.first()
+  var seen = -1
+  return siblings.map { component ->
+    if (component.slot_key != slotKey) return@map component
+    seen++
+    if (seen != index) return@map component
+    if (path.size == 1) {
+      transform(component)
+    } else {
+      component.copy(
+        children = updateIn(
+          component.children,
+          path.drop(1),
+          transform
+        )
+      )
+    }
+  }
+}
+
+/**
+ * Appends [component] under the component at [parent], or at the root when [parent] is empty.
+ *
+ * Creates nothing along the way: an absent parent is a no-op rather than a silently invented branch,
+ * because inventing one would produce a tree the template never declared.
+ */
+fun Thing.addComponent(parent: ComponentPath, component: Component): Thing =
+  if (parent.isEmpty()) {
+    copy(components = components + component)
+  } else {
+    updateComponentAt(parent) { it.copy(children = it.children + component) }
+  }
+
+/** Removes the component at [path]. A no-op if it does not exist. */
+fun Thing.removeComponentAt(path: ComponentPath): Thing {
+  if (path.isEmpty()) return this
+  val parent = path.dropLast(1)
+  val (slotKey, index) = path.last()
+  fun prune(siblings: List<Component>): List<Component> {
+    var seen = -1
+    return siblings.filterNot { component ->
+      if (component.slot_key != slotKey) return@filterNot false
+      seen++
+      seen == index
+    }
+  }
+  return if (parent.isEmpty()) {
+    copy(components = prune(components))
+  } else {
+    updateComponentAt(parent) { it.copy(children = prune(it.children)) }
+  }
+}
+
+/**
+ * Ensures a component exists at [path], creating it and any missing ancestors from their slot keys.
+ *
+ * Typing into a hub's field on an engine that has no propeller has to create both. The alternative —
+ * refusing the keystroke — is worse, and it is what the form did before by materialising empty
+ * protos on the way down.
+ */
+fun Thing.ensureComponentAt(path: ComponentPath): Thing {
+  var result = this
+  for (depth in path.indices) {
+    val prefix = path.subList(0, depth + 1)
+    if (result.componentAt(prefix) == null) {
+      result = result.addComponent(
+        prefix.dropLast(1),
+        Component(slot_key = prefix.last().first),
+      )
+    }
+  }
+  return result
 }

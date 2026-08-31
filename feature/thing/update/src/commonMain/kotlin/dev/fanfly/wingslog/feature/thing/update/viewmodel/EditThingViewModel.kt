@@ -9,12 +9,15 @@ import dev.fanfly.wingslog.core.analytics.ThingCreated
 import dev.fanfly.wingslog.core.analytics.log
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.template.CurrentThingTemplate
+import dev.fanfly.wingslog.core.template.SlotKeys
+import dev.fanfly.wingslog.core.template.SpecKeys
+import dev.fanfly.wingslog.core.template.addComponent
+import dev.fanfly.wingslog.core.template.ensureComponentAt
+import dev.fanfly.wingslog.core.template.removeComponentAt
+import dev.fanfly.wingslog.core.template.updateComponentAt
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
-import dev.fanfly.wingslog.thing.Engine
-import dev.fanfly.wingslog.thing.Propeller
-import dev.fanfly.wingslog.thing.PropellerBlade
-import dev.fanfly.wingslog.thing.PropellerHub
+import dev.fanfly.wingslog.thing.Component
 import dev.fanfly.wingslog.thing.Thing
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -169,98 +172,116 @@ class EditThingViewModel(
     }
   }
 
+  // The form edits `spec` and the component tree directly now (#668 part 3). Fields 2-6 are gone,
+  // so there is nothing left to derive from — what the user types is what is stored.
+  //
+  // `setIdentity` writes both places make/model/serial live: the spec entry, which every reader
+  // uses, and the airframe component's copy, which keeps the stored document self-consistent.
+
   fun onMakeChanged(newValue: String) {
     _uiState.update {
       it.copy(
-        thing = it.thing.copy(
-          make = newValue.replaceFirstChar { char -> char.uppercase() }
-        ))
+        thing = it.thing.setIdentity(
+          SpecKeys.MAKE,
+          newValue.replaceFirstChar { char -> char.uppercase() },
+        ),
+      )
     }
   }
 
   fun onModelChanged(newValue: String) {
     _uiState.update {
       it.copy(
-        thing = it.thing.copy(
-          model = newValue.replaceFirstChar { char -> char.uppercase() }
-        ))
+        thing = it.thing.setIdentity(
+          SpecKeys.MODEL,
+          newValue.replaceFirstChar { char -> char.uppercase() },
+        ),
+      )
     }
   }
 
   fun onSerialChanged(newValue: String) {
-    _uiState.update { it.copy(thing = it.thing.copy(serial = newValue.uppercase())) }
+    _uiState.update {
+      it.copy(
+        thing = it.thing.setIdentity(
+          SpecKeys.SERIAL,
+          newValue.uppercase()
+        )
+      )
+    }
   }
 
   fun onTailNumberChanged(newValue: String) {
-    _uiState.update { it.copy(thing = it.thing.copy(tail_number = newValue.uppercase())) }
+    // Spec-only: a tail number belongs to the Thing, not to a component.
+    _uiState.update {
+      it.copy(
+        thing = it.thing.setIdentity(
+          SpecKeys.TAIL_NUMBER,
+          newValue.uppercase()
+        )
+      )
+    }
   }
 
   fun onEngineMakeChanged(engineIndex: Int, newValue: String) {
     _uiState.update {
-      val newEngines = it.thing.engine.toMutableList()
-      newEngines[engineIndex] = newEngines[engineIndex].copy(
-        make = newValue.replaceFirstChar { char -> char.uppercase() }
+      it.copy(
+        thing = it.thing.updateComponentAt(enginePath(engineIndex)) { engine ->
+          engine.copy(make = newValue.replaceFirstChar { char -> char.uppercase() })
+        },
       )
-      it.copy(thing = it.thing.copy(engine = newEngines))
     }
   }
 
   fun onEngineModelChanged(engineIndex: Int, newValue: String) {
     _uiState.update {
-      val newEngines = it.thing.engine.toMutableList()
-      newEngines[engineIndex] = newEngines[engineIndex].copy(
-        model = newValue.replaceFirstChar { char -> char.uppercase() }
+      it.copy(
+        thing = it.thing.updateComponentAt(enginePath(engineIndex)) { engine ->
+          engine.copy(model = newValue.replaceFirstChar { char -> char.uppercase() })
+        },
       )
-      it.copy(thing = it.thing.copy(engine = newEngines))
     }
   }
 
   fun onEngineSerialChanged(engineIndex: Int, newValue: String) {
     _uiState.update {
-      val newEngines = it.thing.engine.toMutableList()
-      newEngines[engineIndex] =
-        newEngines[engineIndex].copy(serial = newValue.uppercase())
-      it.copy(thing = it.thing.copy(engine = newEngines))
+      it.copy(
+        thing = it.thing.updateComponentAt(enginePath(engineIndex)) {
+          it.copy(
+            serial = newValue.uppercase()
+          )
+        },
+      )
     }
   }
 
   fun onPropellerHubMakeChanged(engineIndex: Int, newValue: String) {
     _uiState.update {
-      val newEngines = it.thing.engine.toMutableList()
-      val engine = newEngines[engineIndex]
-      val newHub = (engine.propeller?.hub
-        ?: PropellerHub()).copy(make = newValue.replaceFirstChar { char -> char.uppercase() })
-      val newPropeller =
-        (engine.propeller ?: Propeller()).copy(hub = newHub)
-      newEngines[engineIndex] = engine.copy(propeller = newPropeller)
-      it.copy(thing = it.thing.copy(engine = newEngines))
+      it.copy(
+        thing = it.thing.ensureComponentAt(hubPath(engineIndex))
+          .updateComponentAt(hubPath(engineIndex)) { hub ->
+            hub.copy(make = newValue.replaceFirstChar { char -> char.uppercase() })
+          },
+      )
     }
   }
 
   fun onPropellerHubModelChanged(engineIndex: Int, newValue: String) {
     _uiState.update {
-      val newEngines = it.thing.engine.toMutableList()
-      val engine = newEngines[engineIndex]
-      val newHub = (engine.propeller?.hub
-        ?: PropellerHub()).copy(model = newValue.replaceFirstChar { char -> char.uppercase() })
-      val newPropeller =
-        (engine.propeller ?: Propeller()).copy(hub = newHub)
-      newEngines[engineIndex] = engine.copy(propeller = newPropeller)
-      it.copy(thing = it.thing.copy(engine = newEngines))
+      it.copy(
+        thing = it.thing.ensureComponentAt(hubPath(engineIndex))
+          .updateComponentAt(hubPath(engineIndex)) { hub ->
+            hub.copy(model = newValue.replaceFirstChar { char -> char.uppercase() })
+          },
+      )
     }
   }
 
   fun onPropellerHubSerialChanged(engineIndex: Int, newValue: String) {
     _uiState.update {
-      val newEngines = it.thing.engine.toMutableList()
-      val engine = newEngines[engineIndex]
-      val newHub = (engine.propeller?.hub ?: PropellerHub()).copy(
-        serial = newValue.uppercase()
-      )
-      val newPropeller =
-        (engine.propeller ?: Propeller()).copy(hub = newHub)
-      newEngines[engineIndex] = engine.copy(propeller = newPropeller)
-      it.copy(thing = it.thing.copy(engine = newEngines))
+      it.copy(
+        thing = it.thing.ensureComponentAt(hubPath(engineIndex))
+          .updateComponentAt(hubPath(engineIndex)) { it.copy(serial = newValue.uppercase()) })
     }
   }
 
@@ -270,69 +291,52 @@ class EditThingViewModel(
     newValue: String
   ) {
     _uiState.update {
-      val newEngines = it.thing.engine.toMutableList()
-      val engine = newEngines[engineIndex]
-      val propeller = engine.propeller ?: Propeller()
-      val newBlades = propeller.blades.toMutableList()
-      if (bladeIndex < newBlades.size) {
-        newBlades[bladeIndex] =
-          newBlades[bladeIndex].copy(serial = newValue.uppercase())
-      }
-      val newPropeller = propeller.copy(blades = newBlades)
-      newEngines[engineIndex] = engine.copy(propeller = newPropeller)
-      it.copy(thing = it.thing.copy(engine = newEngines))
+      it.copy(
+        thing = it.thing.updateComponentAt(bladePath(engineIndex, bladeIndex)) {
+          it.copy(serial = newValue.uppercase())
+        },
+      )
     }
   }
 
   fun onAddBlade(engineIndex: Int) {
     _uiState.update {
-      val newEngines = it.thing.engine.toMutableList()
-      val engine = newEngines[engineIndex]
-      val propeller = engine.propeller ?: Propeller()
-      val newBlades = propeller.blades.toMutableList()
-      newBlades.add(PropellerBlade())
-      val newPropeller = propeller.copy(blades = newBlades)
-      newEngines[engineIndex] = engine.copy(propeller = newPropeller)
-      it.copy(thing = it.thing.copy(engine = newEngines))
+      it.copy(
+        thing = it.thing.ensureComponentAt(propellerPath(engineIndex))
+          .addComponent(
+            propellerPath(engineIndex),
+            Component(slot_key = SlotKeys.BLADE)
+          )
+      )
     }
   }
 
   fun onAddEngine() {
     _uiState.update {
-      val newEngines = it.thing.engine.toMutableList()
-      newEngines.add(
-        Engine(
-          propeller = Propeller(
-            blades = listOf(PropellerBlade())
-          )
-        )
+      it.copy(
+        thing = it.thing.ensureComponentAt(listOf(SlotKeys.AIRFRAME to 0))
+          .addComponent(listOf(SlotKeys.AIRFRAME to 0), newEngine())
       )
-      it.copy(thing = it.thing.copy(engine = newEngines))
     }
   }
 
   fun onRemoveEngine(engineIndex: Int) {
     _uiState.update {
-      val newEngines = it.thing.engine.toMutableList()
-      if (engineIndex in newEngines.indices) {
-        newEngines.removeAt(engineIndex)
-      }
-      it.copy(thing = it.thing.copy(engine = newEngines))
+      it.copy(
+        thing = it.thing.removeComponentAt(
+          enginePath(
+            engineIndex
+          )
+        )
+      )
     }
   }
 
   fun onRemoveBlade(engineIndex: Int, bladeIndex: Int) {
     _uiState.update {
-      val newEngines = it.thing.engine.toMutableList()
-      val engine = newEngines[engineIndex]
-      val propeller = engine.propeller ?: Propeller()
-      val newBlades = propeller.blades.toMutableList()
-      if (bladeIndex in newBlades.indices) {
-        newBlades.removeAt(bladeIndex)
-      }
-      val newPropeller = propeller.copy(blades = newBlades)
-      newEngines[engineIndex] = engine.copy(propeller = newPropeller)
-      it.copy(thing = it.thing.copy(engine = newEngines))
+      it.copy(
+        thing = it.thing.removeComponentAt(bladePath(engineIndex, bladeIndex))
+      )
     }
   }
 

@@ -6,6 +6,8 @@ import dev.fanfly.wingslog.core.analytics.AnalyticsManager
 import dev.fanfly.wingslog.core.analytics.ExportCompleted
 import dev.fanfly.wingslog.core.analytics.log
 import dev.fanfly.wingslog.core.template.CurrentThingTemplate
+import dev.fanfly.wingslog.core.template.SpecKeys
+import dev.fanfly.wingslog.core.template.specValue
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDateRange
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDeliveryEmailSource
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDeliveryInfo
@@ -397,10 +399,11 @@ class ExportViewModel(
     attachmentSizeBytes: Long,
   ) = AircraftSelectionRow(
     thingId = id,
-    tailNumber = tail_number,
-    makeModel = listOf(make, model).filter { it.isNotBlank() }
+    tailNumber = specValue(SpecKeys.TAIL_NUMBER),
+    makeModel = listOf(specValue(SpecKeys.MAKE), specValue(SpecKeys.MODEL))
+      .filter { it.isNotBlank() }
       .joinToString(" ")
-      .ifBlank { serial },
+      .ifBlank { specValue(SpecKeys.SERIAL) },
     logCount = logCount,
     attachmentSizeBytes = attachmentSizeBytes,
   )

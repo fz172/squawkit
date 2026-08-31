@@ -6,6 +6,8 @@ import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.storage.CloudSyncSetting
+import dev.fanfly.wingslog.core.template.SpecKeys
+import dev.fanfly.wingslog.core.template.specValue
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.sharing.model.ShareRole
@@ -121,10 +123,16 @@ class ManageAccessViewModel(
         .catch { }
         .collect { thing ->
           val label = thing?.let {
-            listOf(it.tail_number, listOf(it.make, it.model).filter(String::isNotBlank).joinToString(" "))
+            listOf(
+              it.specValue(SpecKeys.TAIL_NUMBER),
+              listOf(it.specValue(SpecKeys.MAKE), it.specValue(SpecKeys.MODEL))
+                .filter(String::isNotBlank)
+                .joinToString(" "),
+            )
               .filter(String::isNotBlank)
               .joinToString(" · ")
-          }.orEmpty()
+          }
+            .orEmpty()
           _uiState.update { it.copy(thingLabel = label) }
         }
     }
@@ -144,16 +152,30 @@ class ManageAccessViewModel(
   }
 
   fun openCode(codeId: String) {
-    _uiState.update { it.copy(view = AccessPanelView.CODE, activeInviteCodeId = codeId) }
+    _uiState.update {
+      it.copy(
+        view = AccessPanelView.CODE,
+        activeInviteCodeId = codeId
+      )
+    }
   }
 
   fun openMember(uid: String) {
-    _uiState.update { it.copy(view = AccessPanelView.MEMBER, activeMemberUid = uid) }
+    _uiState.update {
+      it.copy(
+        view = AccessPanelView.MEMBER,
+        activeMemberUid = uid
+      )
+    }
   }
 
   fun backToMain() {
     _uiState.update {
-      it.copy(view = AccessPanelView.MAIN, activeInviteCodeId = null, activeMemberUid = null)
+      it.copy(
+        view = AccessPanelView.MAIN,
+        activeInviteCodeId = null,
+        activeMemberUid = null
+      )
     }
   }
 
@@ -167,13 +189,28 @@ class ManageAccessViewModel(
     if (_uiState.value.creatingInvite) return
     _uiState.update { it.copy(creatingInvite = true, error = null) }
     viewModelScope.launch {
-      sharingManager.createInvite(thingId, _uiState.value.selectedInviteRole, _uiState.value.thingLabel)
+      sharingManager.createInvite(
+        thingId,
+        _uiState.value.selectedInviteRole,
+        _uiState.value.thingLabel
+      )
         .onSuccess { link ->
           _uiState.update {
-            it.copy(creatingInvite = false, view = AccessPanelView.CODE, activeInviteCodeId = link.codeId)
+            it.copy(
+              creatingInvite = false,
+              view = AccessPanelView.CODE,
+              activeInviteCodeId = link.codeId
+            )
           }
         }
-        .onFailure { e -> _uiState.update { it.copy(creatingInvite = false, error = e.message) } }
+        .onFailure { e ->
+          _uiState.update {
+            it.copy(
+              creatingInvite = false,
+              error = e.message
+            )
+          }
+        }
     }
   }
 
@@ -192,7 +229,14 @@ class ManageAccessViewModel(
             )
           }
         }
-        .onFailure { e -> _uiState.update { it.copy(cancellingInvite = false, error = e.message) } }
+        .onFailure { e ->
+          _uiState.update {
+            it.copy(
+              cancellingInvite = false,
+              error = e.message
+            )
+          }
+        }
     }
   }
 
@@ -219,7 +263,11 @@ class ManageAccessViewModel(
       sharingManager.revokeMember(thingId, uid)
         .onSuccess {
           _uiState.update {
-            it.copy(view = AccessPanelView.MAIN, activeMemberUid = null, toast = AccessToast.ACCESS_REMOVED)
+            it.copy(
+              view = AccessPanelView.MAIN,
+              activeMemberUid = null,
+              toast = AccessToast.ACCESS_REMOVED
+            )
           }
         }
         .onFailure { e -> _uiState.update { it.copy(error = e.message) } }

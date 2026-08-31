@@ -13,8 +13,6 @@
     "deploy": "firebase deploy --only functions",
     "grant": "npm run build && node scripts/grant-entitlement.mjs",
     "test": "firebase emulators:exec --only auth,firestore,storage --project demo-squawkit \"$(command -v node) node_modules/vitest/vitest.mjs run\"",
-    "cutover": "npm run build && node scripts/thing-cutover.mjs",
-    "cleanup": "npm run build && node scripts/thing-cleanup.mjs",
     "dna-audit": "npm run build && node scripts/thing-dna-audit.mjs",
     "share-cutover": "npm run build && node scripts/thing-share-cutover.mjs",
     "share-cleanup": "npm run build && node scripts/thing-share-cleanup.mjs"

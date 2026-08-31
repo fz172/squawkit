@@ -1,10 +1,16 @@
 package dev.fanfly.wingslog.feature.thing.update.viewmodel
 
+import dev.fanfly.wingslog.core.template.SlotKeys
+import dev.fanfly.wingslog.core.template.SpecKeys
+import dev.fanfly.wingslog.thing.Component
+import dev.fanfly.wingslog.thing.Spec
 import androidx.lifecycle.SavedStateHandle
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.analytics.RecordingAnalyticsManager
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.template.CurrentThingTemplate
+import dev.fanfly.wingslog.core.template.ThingInflater
+import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.thing.Engine
@@ -71,17 +77,30 @@ class ThingCreatedAnalyticsTest {
 
   /** Valid enough to pass `isValid` — the save returns early otherwise and emits nothing. */
   private fun completeThing() = Thing(
-    make = "Cessna",
-    model = "172",
-    serial = "SN-1",
-    engine = listOf(
-      Engine(
-        make = "Lycoming",
-        model = "O-320",
-        serial = "E-1",
-        propeller = Propeller(
-          hub = PropellerHub(make = "McCauley", model = "1C160"),
-          blades = listOf(PropellerBlade(serial = "B-1")),
+    spec = listOf(
+      Spec(key = SpecKeys.MAKE, value_ = "Cessna"),
+      Spec(key = SpecKeys.MODEL, value_ = "172"),
+      Spec(key = SpecKeys.SERIAL, value_ = "SN-1"),
+    ),
+    components = listOf(
+      Component(
+        slot_key = SlotKeys.AIRFRAME,
+        children = listOf(
+          Component(
+            slot_key = SlotKeys.ENGINE,
+            make = "Lycoming",
+            model = "O-320",
+            serial = "E-1",
+            children = listOf(
+              Component(
+                slot_key = SlotKeys.PROPELLER,
+                children = listOf(
+                  Component(slot_key = SlotKeys.HUB, make = "McCauley", model = "1C160"),
+                  Component(slot_key = SlotKeys.BLADE, serial = "B-1"),
+                ),
+              ),
+            ),
+          ),
         ),
       ),
     ),
@@ -96,7 +115,10 @@ class ThingCreatedAnalyticsTest {
     advanceUntilIdle()
 
     assertThat(analytics.countOf("thing_created")).isEqualTo(1)
-    assertThat(analytics.paramsFor("thing_created").single())
+    assertThat(
+      analytics.paramsFor("thing_created")
+        .single()
+    )
       .containsEntry("template_id", "airplane")
   }
 
