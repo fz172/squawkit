@@ -9,6 +9,14 @@ import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
 
 export const protobufPackage = "";
 
+/**
+ * ENGLISH-ONLY by construction. Two plural forms cannot express Russian or Polish (three, by
+ * number), Arabic (a dual), or Chinese and Japanese (no inflection); CLDR defines six categories.
+ * `article` assumes one exists, precedes the noun, separates with a space, and does not inflect —
+ * false for Russian, for suffixing Swedish, and for gendered German and Spanish. See
+ * LexiconFormatter's header for why the ceiling is this message and the substitution model rather
+ * than the formatter, and what localisation would actually require.
+ */
 export interface Noun {
   singular: string;
   plural: string;
@@ -17,6 +25,25 @@ export interface Noun {
    * first letter — "an hour", "a unicycle" — and a wrong article is visible in every empty state.
    */
   article: string;
+}
+
+/**
+ * A compliance category, in the three forms the UI actually asks for.
+ *
+ * A plain string could not do the job: the task picker lists the plural ("Airworthiness
+ * Directives (AD)") and the detail tab leads with the abbreviation ("AD (Airworthiness
+ * Directive)"). Both forms are conventional in aviation and neither is derivable from the other.
+ */
+export interface ComplianceTerm {
+  /** "Airworthiness Directive" */
+  singular: string;
+  /** "Airworthiness Directives" */
+  plural: string;
+  /**
+   * May be empty. A home or car template has a mandatory-compliance concept with no abbreviation,
+   * and the UI drops the parenthetical rather than rendering an empty one.
+   */
+  abbreviation: string;
 }
 
 export interface Lexicon {
@@ -63,12 +90,14 @@ export interface Lexicon {
   downStatusLong: string;
   /** "Fleet" · "Garage" · "Stuff" */
   collectionLabel: string;
-  /** "Airworthiness directive" · "Safety recall" */
-  complianceMandatory: string;
-  /** "Service bulletin" · "TSB" */
-  complianceAdvisory: string;
   /** "FAA" · "NHTSA" · "Manufacturer" */
   authorityLabel: string;
+  /** AD · safety recall · code violation */
+  complianceMandatory:
+    | ComplianceTerm
+    | undefined;
+  /** service bulletin · TSB · manufacturer notice */
+  complianceAdvisory: ComplianceTerm | undefined;
 }
 
 function createBaseNoun(): Noun {
@@ -163,6 +192,98 @@ export const Noun: MessageFns<Noun> = {
   },
 };
 
+function createBaseComplianceTerm(): ComplianceTerm {
+  return { singular: "", plural: "", abbreviation: "" };
+}
+
+export const ComplianceTerm: MessageFns<ComplianceTerm> = {
+  encode(message: ComplianceTerm, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.singular !== "") {
+      writer.uint32(10).string(message.singular);
+    }
+    if (message.plural !== "") {
+      writer.uint32(18).string(message.plural);
+    }
+    if (message.abbreviation !== "") {
+      writer.uint32(26).string(message.abbreviation);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ComplianceTerm {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseComplianceTerm();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.singular = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.plural = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.abbreviation = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ComplianceTerm {
+    return {
+      singular: isSet(object.singular) ? globalThis.String(object.singular) : "",
+      plural: isSet(object.plural) ? globalThis.String(object.plural) : "",
+      abbreviation: isSet(object.abbreviation) ? globalThis.String(object.abbreviation) : "",
+    };
+  },
+
+  toJSON(message: ComplianceTerm): unknown {
+    const obj: any = {};
+    if (message.singular !== "") {
+      obj.singular = message.singular;
+    }
+    if (message.plural !== "") {
+      obj.plural = message.plural;
+    }
+    if (message.abbreviation !== "") {
+      obj.abbreviation = message.abbreviation;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ComplianceTerm>, I>>(base?: I): ComplianceTerm {
+    return ComplianceTerm.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ComplianceTerm>, I>>(object: I): ComplianceTerm {
+    const message = createBaseComplianceTerm();
+    message.singular = object.singular ?? "";
+    message.plural = object.plural ?? "";
+    message.abbreviation = object.abbreviation ?? "";
+    return message;
+  },
+};
+
 function createBaseLexicon(): Lexicon {
   return {
     thing: undefined,
@@ -175,9 +296,9 @@ function createBaseLexicon(): Lexicon {
     downStatus: "",
     downStatusLong: "",
     collectionLabel: "",
-    complianceMandatory: "",
-    complianceAdvisory: "",
     authorityLabel: "",
+    complianceMandatory: undefined,
+    complianceAdvisory: undefined,
   };
 }
 
@@ -213,14 +334,14 @@ export const Lexicon: MessageFns<Lexicon> = {
     if (message.collectionLabel !== "") {
       writer.uint32(82).string(message.collectionLabel);
     }
-    if (message.complianceMandatory !== "") {
-      writer.uint32(90).string(message.complianceMandatory);
-    }
-    if (message.complianceAdvisory !== "") {
-      writer.uint32(98).string(message.complianceAdvisory);
-    }
     if (message.authorityLabel !== "") {
       writer.uint32(106).string(message.authorityLabel);
+    }
+    if (message.complianceMandatory !== undefined) {
+      ComplianceTerm.encode(message.complianceMandatory, writer.uint32(114).fork()).join();
+    }
+    if (message.complianceAdvisory !== undefined) {
+      ComplianceTerm.encode(message.complianceAdvisory, writer.uint32(122).fork()).join();
     }
     return writer;
   },
@@ -312,28 +433,28 @@ export const Lexicon: MessageFns<Lexicon> = {
           message.collectionLabel = reader.string();
           continue;
         }
-        case 11: {
-          if (tag !== 90) {
-            break;
-          }
-
-          message.complianceMandatory = reader.string();
-          continue;
-        }
-        case 12: {
-          if (tag !== 98) {
-            break;
-          }
-
-          message.complianceAdvisory = reader.string();
-          continue;
-        }
         case 13: {
           if (tag !== 106) {
             break;
           }
 
           message.authorityLabel = reader.string();
+          continue;
+        }
+        case 14: {
+          if (tag !== 114) {
+            break;
+          }
+
+          message.complianceMandatory = ComplianceTerm.decode(reader, reader.uint32());
+          continue;
+        }
+        case 15: {
+          if (tag !== 122) {
+            break;
+          }
+
+          message.complianceAdvisory = ComplianceTerm.decode(reader, reader.uint32());
           continue;
         }
       }
@@ -373,21 +494,21 @@ export const Lexicon: MessageFns<Lexicon> = {
         : isSet(object.collection_label)
         ? globalThis.String(object.collection_label)
         : "",
-      complianceMandatory: isSet(object.complianceMandatory)
-        ? globalThis.String(object.complianceMandatory)
-        : isSet(object.compliance_mandatory)
-        ? globalThis.String(object.compliance_mandatory)
-        : "",
-      complianceAdvisory: isSet(object.complianceAdvisory)
-        ? globalThis.String(object.complianceAdvisory)
-        : isSet(object.compliance_advisory)
-        ? globalThis.String(object.compliance_advisory)
-        : "",
       authorityLabel: isSet(object.authorityLabel)
         ? globalThis.String(object.authorityLabel)
         : isSet(object.authority_label)
         ? globalThis.String(object.authority_label)
         : "",
+      complianceMandatory: isSet(object.complianceMandatory)
+        ? ComplianceTerm.fromJSON(object.complianceMandatory)
+        : isSet(object.compliance_mandatory)
+        ? ComplianceTerm.fromJSON(object.compliance_mandatory)
+        : undefined,
+      complianceAdvisory: isSet(object.complianceAdvisory)
+        ? ComplianceTerm.fromJSON(object.complianceAdvisory)
+        : isSet(object.compliance_advisory)
+        ? ComplianceTerm.fromJSON(object.compliance_advisory)
+        : undefined,
     };
   },
 
@@ -423,14 +544,14 @@ export const Lexicon: MessageFns<Lexicon> = {
     if (message.collectionLabel !== "") {
       obj.collectionLabel = message.collectionLabel;
     }
-    if (message.complianceMandatory !== "") {
-      obj.complianceMandatory = message.complianceMandatory;
-    }
-    if (message.complianceAdvisory !== "") {
-      obj.complianceAdvisory = message.complianceAdvisory;
-    }
     if (message.authorityLabel !== "") {
       obj.authorityLabel = message.authorityLabel;
+    }
+    if (message.complianceMandatory !== undefined) {
+      obj.complianceMandatory = ComplianceTerm.toJSON(message.complianceMandatory);
+    }
+    if (message.complianceAdvisory !== undefined) {
+      obj.complianceAdvisory = ComplianceTerm.toJSON(message.complianceAdvisory);
     }
     return obj;
   },
@@ -456,9 +577,13 @@ export const Lexicon: MessageFns<Lexicon> = {
     message.downStatus = object.downStatus ?? "";
     message.downStatusLong = object.downStatusLong ?? "";
     message.collectionLabel = object.collectionLabel ?? "";
-    message.complianceMandatory = object.complianceMandatory ?? "";
-    message.complianceAdvisory = object.complianceAdvisory ?? "";
     message.authorityLabel = object.authorityLabel ?? "";
+    message.complianceMandatory = (object.complianceMandatory !== undefined && object.complianceMandatory !== null)
+      ? ComplianceTerm.fromPartial(object.complianceMandatory)
+      : undefined;
+    message.complianceAdvisory = (object.complianceAdvisory !== undefined && object.complianceAdvisory !== null)
+      ? ComplianceTerm.fromPartial(object.complianceAdvisory)
+      : undefined;
     return message;
   },
 };

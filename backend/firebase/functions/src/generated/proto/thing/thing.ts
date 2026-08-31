@@ -16,7 +16,15 @@ export const protobufPackage = "";
 export interface Thing {
   id: string;
   /**
-   * --- transitional, dual-written until every dogfood account has migrated
+   * --- transitional. Superseded by `spec` (10) and `components` (11), but NOT yet redundant.
+   *
+   * These were intended to be dual-written. Only half of that shipped: the backend cutover script
+   * (`thingPayloads.ts`) populates spec/components on migrated Things, and the client has never
+   * written either — so a Thing created since the cutover has its make/model/serial/engine values
+   * *only* here. Removing these fields before that is repaired loses the data outright.
+   *
+   * The ordering that makes removal safe is pivot_rollout_design.md §7, tracked as #717 (inflate on
+   * write), #718 (backfill the gap), then #668 (move readers, reserve 2-6).
    * (docs/product/thing_migration_design.md §6, §9) ---
    */
   make: string;
