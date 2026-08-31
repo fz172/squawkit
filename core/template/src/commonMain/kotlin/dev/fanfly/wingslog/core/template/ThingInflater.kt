@@ -52,7 +52,6 @@ object ThingInflater {
     // `components` is the truer idempotency signal than `template`: it is what this function
     // actually produces, so it cannot report "done" for work that did not happen. Same choice
     // thingPayloads.ts makes, and for the same reason.
-    val alreadyInflated = thing.components.isNotEmpty()
 
     // Gated on the *template*, not on emptiness. Only an airplane has legacy fields 2-6 to derive a
     // tree from, and only an airplane's tree is airframe/engine/propeller-shaped. Once the picker
@@ -65,18 +64,23 @@ object ThingInflater {
 
     return thing.copy(
       name = thing.name.ifEmpty { nameOf(thing) },
-      // Keyed off `spec` itself rather than off `alreadyInflated`. A Thing created from a template
-      // has its spec filled by the create form before it ever reaches here, and its components are
-      // still empty — so deriving `alreadyInflated` from components and using it to gate spec would
-      // overwrite the form's values with the empty derivation from fields 2-6.
-      spec = thing.spec.ifEmpty { specOf(thing) },
-      components = when {
-        alreadyInflated -> thing.components
-        isLegacyAirplane -> buildLegacyAirplaneComponents(thing)
-        // A template-shaped tree is #739's job, in the create flow that knows the cardinality —
-        // how many engines, how many blades. The template declares that `engine` is repeatable; it
-        // cannot say how many this Thing has.
-        else -> emptyList()
+      // Rebuilt from fields 2-6 on every write, not filled in once.
+      //
+      // **This is what keeps them from going stale.** While the form still edits 2-6, those fields
+      // are the source of truth for an airplane — so gating on "already has a spec" would mean
+      // editing the make never updated it, and adding an engine never reached the component tree.
+      // Since the display now reads spec/components (#668 part 1), that is a change the user makes
+      // and does not see. Rebuilding is safe because the derivation is positional and
+      // deterministic: unchanged structure produces byte-identical ids, so nothing is repointed.
+      //
+      // Part 2 inverts this — the form will write spec/components directly and 2-6 will be gone.
+      spec = if (isLegacyAirplane) specOf(thing) else thing.spec,
+      components = if (isLegacyAirplane) {
+        buildLegacyAirplaneComponents(thing)
+      } else {
+        // A template-shaped tree is #739's job, in the create flow that knows the cardinality — the
+        // template says `engine` is repeatable, not how many this Thing has.
+        thing.components
       },
       // Written even when already inflated: a Thing migrated by the cutover has components but no
       // DNA, because the cutover predates field 12. Absent DNA resolves correctly (§5.3), but

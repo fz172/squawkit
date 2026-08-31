@@ -211,17 +211,55 @@ class ThingInflaterTest {
   }
 
   @Test
-  fun anAlreadyInflatedThingKeepsItsComponentsEvenIfLegacyFieldsChanged() {
-    // Editing the make must not rebuild the tree: component ids are a join key, and rebuilding
-    // would be a no-op here only because ids are derived. Keeping the existing tree is what makes
-    // that guarantee independent of the derivation.
+  fun rebuildingPreservesIdsWhenTheStructureIsUnchanged() {
+    // Every write rebuilds spec and the tree from fields 2-6. That is safe precisely because the
+    // derivation is positional: editing a value must not renumber anything, or every log pointing
+    // at a component is orphaned by an unrelated edit.
     val once = ThingInflater.inflate(twin(), airplane)
     val edited = once.copy(make = "Beechcraft")
 
     val reInflated = ThingInflater.inflate(edited, airplane)
 
-    assertThat(reInflated.components).isEqualTo(once.components)
-    assertThat(reInflated.spec).isEqualTo(once.spec)
+    assertThat(reInflated.components.map { it.id }).isEqualTo(once.components.map { it.id })
+    assertThat(reInflated.specValue("make")).isEqualTo("Beechcraft")
+  }
+
+  @Test
+  fun editingAValueReachesTheSpec() {
+    // The regression this guards, found while working out how to test part 2: gating spec on
+    // "already has one" meant an edited make never reached it. Harmless while the UI read
+    // fields 2-6; invisible data loss once the UI reads spec (#668 part 1).
+    val saved = ThingInflater.inflate(twin(), airplane)
+
+    val reSaved = ThingInflater.inflate(saved.copy(make = "Beechcraft"), airplane)
+
+    assertThat(reSaved.specValue("make")).isEqualTo("Beechcraft")
+  }
+
+  @Test
+  fun addingAnEngineReachesTheComponentTree() {
+    // The same regression, structurally: the tree was frozen after the first inflation, so an
+    // engine added in the form never appeared on a dashboard that reads components.
+    val saved = ThingInflater.inflate(
+      Thing(id = "t", make = "Cessna", engine = listOf(Engine(make = "Lycoming"))),
+      airplane,
+    )
+    assertThat(saved.allComponentsInSlot(SlotKeys.ENGINE)).hasSize(1)
+
+    val reSaved =
+      ThingInflater.inflate(saved.copy(engine = saved.engine + Engine(make = "Continental")), airplane)
+
+    assertThat(reSaved.allComponentsInSlot(SlotKeys.ENGINE)).hasSize(2)
+  }
+
+  @Test
+  fun removingAnEngineReachesTheComponentTree() {
+    val saved = ThingInflater.inflate(twin(), airplane)
+    assertThat(saved.allComponentsInSlot(SlotKeys.ENGINE)).hasSize(2)
+
+    val reSaved = ThingInflater.inflate(saved.copy(engine = saved.engine.take(1)), airplane)
+
+    assertThat(reSaved.allComponentsInSlot(SlotKeys.ENGINE)).hasSize(1)
   }
 
   @Test
