@@ -143,6 +143,47 @@ class ThingInflaterTest {
   }
 
   @Test
+  fun aThingWithNoEnginesGetsAnAirframeAndNothingElse() {
+    // Cardinality is 0-or-more at every level. An airframe with no engines is a real shape — a
+    // glider, or an aircraft whose engine records were never filled in — and it must still produce
+    // its airframe so logs have something to hang off.
+    val engineless = Thing(id = "t-1", make = "Schweizer", model = "SGS 1-26")
+
+    val inflated = ThingInflater.inflate(engineless, airplane)
+
+    val airframe = inflated.components.single()
+    assertThat(airframe.slot_key).isEqualTo("airframe")
+    assertThat(airframe.children).isEmpty()
+  }
+
+  @Test
+  fun aPropellerWithNoBladesStillGetsItsPropellerComponent() {
+    // Same at the leaf: blades are 0-or-more, and a propeller with none recorded is not the same as
+    // no propeller. Collapsing the two would lose the propeller's own make/model/serial.
+    val noBlades = Thing(
+      id = "t-2",
+      engine = listOf(Engine(propeller = Propeller(hub = PropellerHub(serial = "H-1")))),
+    )
+
+    val inflated = ThingInflater.inflate(noBlades, airplane)
+
+    val propeller = inflated.components.single().children.single().children.single()
+    assertThat(propeller.slot_key).isEqualTo("propeller")
+    assertThat(propeller.children.map { it.slot_key }).containsExactly("hub")
+  }
+
+  @Test
+  fun engineCountIsPreservedExactly() {
+    // The count the UI iterates comes from this tree now, so an off-by-one here is an engine that
+    // vanishes from the dashboard.
+    val twin = twin()
+
+    val engines = ThingInflater.inflate(twin, airplane).components.single().children
+
+    assertThat(engines).hasSize(twin.engine.size)
+  }
+
+  @Test
   fun nameFallsBackFromTailNumberToMakeAndModel() {
     assertThat(ThingInflater.inflate(twin(), airplane).name).isEqualTo("N123AB")
 

@@ -1,5 +1,9 @@
 package dev.fanfly.wingslog.feature.logs.update.logs.compose
 
+import dev.fanfly.wingslog.core.template.SlotKeys
+import dev.fanfly.wingslog.core.template.allComponentsInSlot
+import dev.fanfly.wingslog.core.template.childInSlot
+import dev.fanfly.wingslog.core.template.childrenInSlot
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -95,7 +99,7 @@ fun ComponentSection(
             color = MaterialTheme.colorScheme.onSurfaceVariant
           )
         } else {
-          val engines = thing.engine
+          val engines = thing.allComponentsInSlot(SlotKeys.ENGINE)
           val options = engines.map { engine ->
             val makeModel = listOf(engine.make, engine.model)
               .filter { it.isNotBlank() }
@@ -153,9 +157,9 @@ fun ComponentSection(
         } else {
           // Collect all propeller components from all engines
           val options = mutableListOf<Pair<String, String>>()
-          thing.engine.forEach { engine ->
-            val prop = engine.propeller
-            val hub = prop?.hub
+          thing.allComponentsInSlot(SlotKeys.ENGINE).forEach { engine ->
+            val prop = engine.childInSlot(SlotKeys.PROPELLER)
+            val hub = prop?.childInSlot(SlotKeys.HUB)
             if (hub?.serial?.isNotEmpty() == true) {
               val makeModel = listOf(hub.make, hub.model)
                 .filter { it.isNotBlank() }
@@ -168,7 +172,7 @@ fun ComponentSection(
               )
               options.add(label to hub.serial)
             }
-            prop?.blades?.forEach { blade ->
+            prop?.childrenInSlot(SlotKeys.BLADE)?.forEach { blade ->
               if (blade.serial.isNotEmpty()) {
                 val makeModel = listOf(blade.make, blade.model)
                   .filter { it.isNotBlank() }

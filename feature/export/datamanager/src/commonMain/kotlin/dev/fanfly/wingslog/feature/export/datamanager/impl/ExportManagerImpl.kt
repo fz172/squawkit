@@ -2,6 +2,8 @@ package dev.fanfly.wingslog.feature.export.datamanager.impl
 
 import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.core.model.id.generateRandomId
+import dev.fanfly.wingslog.core.template.SpecKeys
+import dev.fanfly.wingslog.core.template.specValue
 import dev.fanfly.wingslog.export.ExportRecord
 import dev.fanfly.wingslog.export.ExportRecordAircraft
 import dev.fanfly.wingslog.export.ExportRecordDateRange
@@ -272,7 +274,10 @@ class ExportManagerImpl(
       ?.firstOrNull { it.export_id == exportId }
     local?.file_path
       ?.takeIf { it.isNotBlank() }
-      ?.let { path -> exportFileStore.readBytes(path)?.let { return it } }
+      ?.let { path ->
+        exportFileStore.readBytes(path)
+          ?.let { return it }
+      }
 
     val remoteRef = local?.remote_archive_ref?.takeIf { it.isNotBlank() }
       ?: remoteRepository.listRemoteRecords()
@@ -301,8 +306,11 @@ class ExportManagerImpl(
     date_range = request.dateRange.toRecordDateRange(),
     aircraft = bundles.map { bundle ->
       ExportRecordAircraft(
-        tail_number = bundle.thing.tail_number,
-        make_model = listOf(bundle.thing.make, bundle.thing.model)
+        tail_number = bundle.thing.specValue(SpecKeys.TAIL_NUMBER),
+        make_model = listOf(
+          bundle.thing.specValue(SpecKeys.MAKE),
+          bundle.thing.specValue(SpecKeys.MODEL)
+        )
           .filter { it.isNotBlank() }
           .joinToString(" "),
       )

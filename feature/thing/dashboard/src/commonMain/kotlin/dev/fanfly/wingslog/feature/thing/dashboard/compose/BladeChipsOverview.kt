@@ -18,7 +18,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
-import dev.fanfly.wingslog.thing.PropellerBlade
+import dev.fanfly.wingslog.thing.Component
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.logs.sharedassets.generated.resources.blade_with_index
@@ -29,7 +29,7 @@ import wingslog.feature.logs.viewing.generated.resources.Res as MaintenanceRes
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun BladeChipsOverview(blades: List<PropellerBlade>) {
+fun BladeChipsOverview(blades: List<Component>) {
   FlowRow(
     modifier = Modifier.fillMaxWidth(),
     horizontalArrangement = Arrangement.spacedBy(Spacing.small),

@@ -7,6 +7,8 @@ import dev.fanfly.wingslog.core.storage.EntityStoreFactory
 import dev.fanfly.wingslog.core.storage.ThingScopeResolver
 import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import dev.fanfly.wingslog.core.template.LexiconFormatter
+import dev.fanfly.wingslog.core.template.SpecKeys
+import dev.fanfly.wingslog.core.template.specValue
 import dev.fanfly.wingslog.core.template.squawkNoun
 import dev.fanfly.wingslog.core.template.taskNoun
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetEntry
@@ -166,7 +168,7 @@ class UrgencyScanner(
     settings: NotificationSettings,
   ): Tally {
     val thingId = entry.thing.id
-    val tailNumber = entry.thing.tail_number
+    val tailNumber = entry.thing.specValue(SpecKeys.TAIL_NUMBER)
     // Scope comes from the resolver, never the signed-in uid — a shared thing's records live in
     // the host's tree (design §6.3).
     val scope = scopeResolver.resolveNow(thingId)
