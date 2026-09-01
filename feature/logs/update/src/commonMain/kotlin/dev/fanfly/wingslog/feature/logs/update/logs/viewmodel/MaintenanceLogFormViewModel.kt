@@ -3,9 +3,6 @@ package dev.fanfly.wingslog.feature.logs.update.logs.viewmodel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dev.fanfly.wingslog.feature.tasks.datamanager.withForcedDueMeter
-import dev.fanfly.wingslog.feature.tasks.datamanager.forcedDueMeter
-import dev.fanfly.wingslog.feature.tasks.datamanager.defaultMeterKey
 import dev.fanfly.wingslog.core.analytics.AnalyticsManager
 import dev.fanfly.wingslog.core.analytics.LogCreated
 import dev.fanfly.wingslog.core.analytics.TaskCompleted
@@ -13,8 +10,8 @@ import dev.fanfly.wingslog.core.analytics.log
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.model.id.generateRandomId
 import dev.fanfly.wingslog.core.nav.Screen
-import dev.fanfly.wingslog.core.template.MeterKeys
 import dev.fanfly.wingslog.core.template.CurrentThingTemplate
+import dev.fanfly.wingslog.core.template.MeterKeys
 import dev.fanfly.wingslog.core.template.SlotKeys
 import dev.fanfly.wingslog.core.template.SpecKeys
 import dev.fanfly.wingslog.core.template.allComponentsInSlot
@@ -32,6 +29,9 @@ import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
+import dev.fanfly.wingslog.feature.tasks.datamanager.defaultMeterKey
+import dev.fanfly.wingslog.feature.tasks.datamanager.forcedDueMeter
+import dev.fanfly.wingslog.feature.tasks.datamanager.withForcedDueMeter
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.MaintenanceLog
@@ -342,9 +342,18 @@ class MaintenanceLogFormViewModel(
             selectedSquawkIds = log.squawk_ids,
             selectedInspectionIds = log.inspection_ids,
             selectedTechnician = log.technician ?: it.selectedTechnician,
-            engineTime = if (log.engine_hour > 0.0) log.engine_hour.toString() else "",
-            airframeTime = if (log.airframe_time > 0.0) log.airframe_time.toString() else "",
-            propTime = if (log.prop_time > 0.0) log.prop_time.toString() else "",
+            // Through readingFor, so a log that recorded only `readings` populates these too.
+            // Reading the legacy fields directly left them blank and the next save zeroed them,
+            // which is how a dual-written pair loses the half it was meant to protect (#761).
+            engineTime = log.readingFor(MeterKeys.ENGINE_HOURS)
+              ?.toString()
+              .orEmpty(),
+            airframeTime = log.readingFor(MeterKeys.AIRFRAME_HOURS)
+              ?.toString()
+              .orEmpty(),
+            propTime = log.readingFor(MeterKeys.PROP_HOURS)
+              ?.toString()
+              .orEmpty(),
             // Keyed by meter, from `readings` or the legacy field it falls back to. The three
             // fields above stay bound for now: the export and the due-status rules read them.
             meterValues = currentThingTemplate.template.value?.meters.orEmpty()
@@ -449,7 +458,8 @@ class MaintenanceLogFormViewModel(
    */
   fun onMeterChanged(meterKey: String, value: String) {
     _uiState.update { state ->
-      val next = state.copy(meterValues = state.meterValues + (meterKey to value))
+      val next =
+        state.copy(meterValues = state.meterValues + (meterKey to value))
       when (meterKey) {
         MeterKeys.ENGINE_HOURS -> next.copy(engineTime = value)
         MeterKeys.AIRFRAME_HOURS -> next.copy(airframeTime = value)

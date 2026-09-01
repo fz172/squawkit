@@ -1,11 +1,13 @@
 package dev.fanfly.wingslog.feature.export.datamanager.impl
 
 import dev.fanfly.wingslog.core.datetime.toLocalDate
+import dev.fanfly.wingslog.core.template.MeterKeys
 import dev.fanfly.wingslog.core.template.SlotKeys
 import dev.fanfly.wingslog.core.template.SpecKeys
 import dev.fanfly.wingslog.core.template.allComponentsInSlot
 import dev.fanfly.wingslog.core.template.childInSlot
 import dev.fanfly.wingslog.core.template.childrenInSlot
+import dev.fanfly.wingslog.core.template.readingFor
 import dev.fanfly.wingslog.core.template.specValue
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDateRange
 import dev.fanfly.wingslog.feature.export.datamanager.ExportFormat
@@ -32,6 +34,13 @@ import com.squareup.wire.Instant as WireInstant
 
 /**
  * Builds the CSV entries that make up a SquawkIt logbook export archive.
+ */
+/**
+ * The paper-logbook layout, which is aviation-only by design (`EXPORT_LAYOUT_LOGBOOK`) — it keeps
+ * the airframe / engine / propeller hour concepts because that is what the columns are.
+ *
+ * It reaches them by meter key rather than by field, so a log that recorded only `readings` exports
+ * the same numbers as one written before those existed (#761).
  */
 class LogbookExportArchiveBuilder(
   private val appVersion: String = GENERATED_EXPORT_APP_VERSION,
@@ -269,9 +278,21 @@ class LogbookExportArchiveBuilder(
         thing.allComponentsInSlot(SlotKeys.PROPELLER).size
           .toString()
       ),
-      listOf("Current Airframe Time", latestLog?.airframe_time.formatHours()),
-      listOf(engineTimeLabel, latestLog?.engine_hour.formatHours()),
-      listOf(propellerTimeLabel, latestLog?.prop_time.formatHours()),
+      listOf(
+        "Current Airframe Time",
+        latestLog?.readingFor(MeterKeys.AIRFRAME_HOURS)
+          .formatHours()
+      ),
+      listOf(
+        engineTimeLabel,
+        latestLog?.readingFor(MeterKeys.ENGINE_HOURS)
+          .formatHours()
+      ),
+      listOf(
+        propellerTimeLabel,
+        latestLog?.readingFor(MeterKeys.PROP_HOURS)
+          .formatHours()
+      ),
       listOf("Total Log Entries", bundle.logs.size.toString()),
       listOf("Total Squawks", bundle.squawks.size.toString()),
       listOf("Open Squawks", openSquawks.toString()),
@@ -313,8 +334,8 @@ class LogbookExportArchiveBuilder(
               bundle,
               attachments,
               it,
-              it.airframe_time,
-              it.engine_hour,
+              it.readingFor(MeterKeys.AIRFRAME_HOURS) ?: 0.0,
+              it.readingFor(MeterKeys.ENGINE_HOURS) ?: 0.0,
               timeZone
             )
           )
@@ -361,8 +382,8 @@ class LogbookExportArchiveBuilder(
               bundle,
               attachments,
               it,
-              it.engine_hour,
-              it.airframe_time,
+              it.readingFor(MeterKeys.ENGINE_HOURS) ?: 0.0,
+              it.readingFor(MeterKeys.AIRFRAME_HOURS) ?: 0.0,
               timeZone
             )
           )
@@ -415,8 +436,10 @@ class LogbookExportArchiveBuilder(
           add(
             listOf(
               log.timestamp.date(timeZone),
-              log.prop_time.formatHours(),
-              log.airframe_time.formatHours(),
+              log.readingFor(MeterKeys.PROP_HOURS)
+                .formatHours(),
+              log.readingFor(MeterKeys.AIRFRAME_HOURS)
+                .formatHours(),
               log.work_description,
               log.inspectionTitles(bundle),
               log.referenceNumbers(bundle),

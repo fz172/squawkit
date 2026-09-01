@@ -40,14 +40,16 @@ import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.datetime.toLocalDate
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.LocalThingTemplate
 import dev.fanfly.wingslog.core.template.SpecKeys
+import dev.fanfly.wingslog.core.template.formatMeterValue
+import dev.fanfly.wingslog.core.template.primaryReading
 import dev.fanfly.wingslog.core.template.specValue
 import dev.fanfly.wingslog.core.template.squawkNoun
 import dev.fanfly.wingslog.core.template.thingNoun
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LayoutTier
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalNavPillClearance
-import dev.fanfly.wingslog.core.ui.common.formatToOneDecimalPlace
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.core.ui.theme.statusColors
@@ -476,13 +478,10 @@ private fun RecentLogRow(log: MaintenanceLog, onClick: () -> Unit) {
   val date = log.timestamp?.toLocalDate()
     ?.toDisplayFormat()
     ?: stringResource(TasksRes.string.unknown_date)
-  val hours = when (log.component_type) {
-    ComponentType.COMPONENT_ENGINE -> log.engine_hour
-    ComponentType.COMPONENT_AIRFRAME -> log.airframe_time
-    ComponentType.COMPONENT_PROPELLER -> log.prop_time
-    else -> log.engine_hour.takeIf { it > 0.0 }
-      ?: log.airframe_time.takeIf { it > 0.0 } ?: log.prop_time
-  }
+  // The first meter this template declares that the log recorded. Switching on `component_type`
+  // across the three aviation hour fields left a car's log — which records an odometer — matching
+  // no branch and showing nothing (#761).
+  val primary = LocalThingTemplate.current.primaryReading(log)
   Row(
     modifier = Modifier
       .fillMaxWidth()
@@ -515,9 +514,12 @@ private fun RecentLogRow(log: MaintenanceLog, onClick: () -> Unit) {
         style = WingslogTypography.dataSmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant
       )
-      if (hours > 0.0) {
+      if (primary != null) {
         Text(
-          "${hours.formatToOneDecimalPlace()} hrs",
+          LocalThingTemplate.current.formatMeterValue(
+            primary.first.key,
+            primary.second
+          ),
           style = WingslogTypography.dataSmall,
           color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f),
         )

@@ -7,11 +7,13 @@ import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.EntityStore
 import dev.fanfly.wingslog.core.storage.EntityStoreFactory
 import dev.fanfly.wingslog.core.storage.ThingScopeResolver
+import dev.fanfly.wingslog.core.template.MeterKeys
 import dev.fanfly.wingslog.core.template.currentReadings
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.thing.MaintenanceOverview
+import dev.fanfly.wingslog.thing.MeterReading
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -120,6 +122,10 @@ class MaintenanceLogManagerImpl(
     val logs = logStore.observeAll(scope)
       .first()
       .map { it.value }
+    // Computed once, then projected into both shapes. The three doubles are the same numbers the
+    // keyed list already holds — deriving them separately meant reading the legacy log fields to
+    // populate legacy overview fields, so a log that recorded only `readings` produced zeros.
+    val current = currentReadings(logs)
     val overview = MaintenanceOverview(
       aircraft_id = thingId,
       total_log_count = logs.size,
@@ -128,19 +134,13 @@ class MaintenanceLogManagerImpl(
       propeller_log_count = logs.count { it.component_type == ComponentType.COMPONENT_PROPELLER },
       // Written for older clients only — nothing in this build reads them. A build that predates
       // `current` would otherwise read a document this one wrote and show zero hours (#730).
-      current_airframe_time =
-        logs.filter { it.airframe_time > 0.0 }
-          .maxOfOrNull { it.airframe_time } ?: 0.0,
-      current_engine_time =
-        logs.filter { it.engine_hour > 0.0 }
-          .maxOfOrNull { it.engine_hour } ?: 0.0,
-      current_propeller_time =
-        logs.filter { it.prop_time > 0.0 }
-          .maxOfOrNull { it.prop_time } ?: 0.0,
+      current_airframe_time = current.valueFor(MeterKeys.AIRFRAME_HOURS),
+      current_engine_time = current.valueFor(MeterKeys.ENGINE_HOURS),
+      current_propeller_time = current.valueFor(MeterKeys.PROP_HOURS),
       // Every meter the template declares, computed the same way the three above are. The three
       // stay written because the export and the due-status rules still read them; this is what a
       // car's odometer has to land in, having nowhere to go in a fixed set of aviation doubles.
-      current = currentReadings(logs),
+      current = current,
     )
     overviewStore.put(OVERVIEW_ID, overview, scope)
   }
@@ -153,3 +153,7 @@ class MaintenanceLogManagerImpl(
     private const val OVERVIEW_ID = "main"
   }
 }
+
+/** The value for [meterKey], or 0.0 — the legacy overview fields have no absent state. */
+private fun List<MeterReading>.valueFor(meterKey: String): Double =
+  firstOrNull { it.meter_key == meterKey }?.value_ ?: 0.0

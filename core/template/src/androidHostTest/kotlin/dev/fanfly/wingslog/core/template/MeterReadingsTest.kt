@@ -68,14 +68,32 @@ class MeterReadingsTest {
   @Test
   fun theCurrentReadingIsTheMaximumAcrossLogs() {
     val logs = listOf(
-      MaintenanceLog(id = "a", readings = listOf(MeterReading("odometer", value_ = 80000.0))),
-      MaintenanceLog(id = "b", readings = listOf(MeterReading("odometer", value_ = 84512.0))),
+      MaintenanceLog(
+        id = "a",
+        readings = listOf(
+          MeterReading(
+            "odometer",
+            value_ = 80000.0
+          )
+        )
+      ),
+      MaintenanceLog(
+        id = "b",
+        readings = listOf(
+          MeterReading(
+            "odometer",
+            value_ = 84512.0
+          )
+        )
+      ),
       MaintenanceLog(id = "c", engine_hour = 1041.8),
     )
 
     val current = currentReadings(logs)
 
-    assertThat(current.first { it.meter_key == "odometer" }.value_).isEqualTo(84512.0)
+    assertThat(current.first { it.meter_key == "odometer" }.value_).isEqualTo(
+      84512.0
+    )
     // A legacy field contributes its key without any log carrying a `readings` entry for it.
     assertThat(current.first { it.meter_key == MeterKeys.ENGINE_HOURS }.value_)
       .isEqualTo(1041.8)
@@ -85,7 +103,8 @@ class MeterReadingsTest {
   fun aMeterNoLogTouchedIsAbsentRatherThanZero() {
     // So a reader can tell "not recorded yet" from "reads zero" — the difference between an
     // em dash and a number on the dashboard.
-    val current = currentReadings(listOf(MaintenanceLog(id = "a", engine_hour = 10.0)))
+    val current =
+      currentReadings(listOf(MaintenanceLog(id = "a", engine_hour = 10.0)))
 
     assertThat(current.map { it.meter_key }).containsExactly(MeterKeys.ENGINE_HOURS)
   }
@@ -109,7 +128,10 @@ class MeterReadingsTest {
     val readings = listOf(MeterReading("odometer", value_ = 100.0))
 
     assertThat(readings.withReading("odometer", null)).isEmpty()
-    assertThat(readings.withReading("odometer", 200.0).single().value_).isEqualTo(200.0)
+    assertThat(
+      readings.withReading("odometer", 200.0)
+        .single().value_
+    ).isEqualTo(200.0)
   }
 
   // --- A due value renders in its meter's unit, not always in hours ---
@@ -120,15 +142,30 @@ class MeterReadingsTest {
     // that created it said "mi".
     val automotive = CanonicalTemplates.AUTOMOTIVE
 
-    assertThat(automotive.formatMeterValue("odometer", 5000.0)).isEqualTo("5000 MI")
+    assertThat(
+      automotive.formatMeterValue(
+        "odometer",
+        5000.0
+      )
+    ).isEqualTo("5000 MI")
   }
 
   @Test
   fun anOdometerDropsTheDecimalPointItsMeterDoesNotTake() {
-    assertThat(CanonicalTemplates.AUTOMOTIVE.formatMeterValue("odometer", 84512.0))
+    assertThat(
+      CanonicalTemplates.AUTOMOTIVE.formatMeterValue(
+        "odometer",
+        84512.0
+      )
+    )
       .isEqualTo("84512 MI")
     // Hours keep theirs.
-    assertThat(AirplaneTemplate.TEMPLATE.formatMeterValue(MeterKeys.ENGINE_HOURS, 100.0))
+    assertThat(
+      AirplaneTemplate.TEMPLATE.formatMeterValue(
+        MeterKeys.ENGINE_HOURS,
+        100.0
+      )
+    )
       .isEqualTo("100.0 HRS")
   }
 
@@ -140,5 +177,58 @@ class MeterReadingsTest {
       .isEqualTo("1041.8 HRS")
     assertThat(AirplaneTemplate.TEMPLATE.formatMeterValue("nonesuch", 10.0))
       .isEqualTo("10.0 HRS")
+  }
+
+  // --- The one reading a summary row leads with ---
+
+  @Test
+  fun theLeadReadingIsTheFirstDeclaredMeterTheLogRecorded() {
+    // The log detail sheet and the dashboard's activity row each show one headline number. They
+    // picked it by switching on `component_type` across the three aviation fields, so a car's log
+    // matched no branch and rendered a blank (#761).
+    val log = MaintenanceLog(
+      id = "l1",
+      readings = listOf(MeterReading("odometer", value_ = 84512.0)),
+    )
+
+    val (meter, value) = CanonicalTemplates.AUTOMOTIVE.primaryReading(log)!!
+
+    assertThat(meter.key).isEqualTo("odometer")
+    assertThat(value).isEqualTo(84512.0)
+  }
+
+  @Test
+  fun theLeadReadingFollowsDeclarationOrder() {
+    // The airplane lists airframe hours first, so a log carrying several leads with that one.
+    val log =
+      MaintenanceLog(id = "l1", engine_hour = 1041.8, airframe_time = 1111.0)
+
+    assertThat(AirplaneTemplate.TEMPLATE.primaryReading(log)?.first?.key)
+      .isEqualTo(MeterKeys.AIRFRAME_HOURS)
+  }
+
+  @Test
+  fun aLogThatRecordedNoMeterHasNoLeadReading() {
+    // Null, so the caller renders nothing rather than a zero it would have to explain.
+    assertThat(AirplaneTemplate.TEMPLATE.primaryReading(MaintenanceLog(id = "l1"))).isNull()
+    assertThat(CanonicalTemplates.HOME.primaryReading(MaintenanceLog(id = "l1"))).isNull()
+  }
+
+  @Test
+  fun theNumberAndItsUnitSplitTheWayALayoutNeedsThem() {
+    // Some layouts render the value large and the unit beside it, baseline-aligned.
+    assertThat(
+      CanonicalTemplates.AUTOMOTIVE.formatMeterNumber(
+        "odometer",
+        84512.0
+      )
+    )
+      .isEqualTo("84512")
+    assertThat(CanonicalTemplates.AUTOMOTIVE.meterUnit("odometer")).isEqualTo("MI")
+    assertThat(AirplaneTemplate.TEMPLATE.meterUnit(MeterKeys.ENGINE_HOURS)).isEqualTo(
+      "HRS"
+    )
+    // An unkeyed value still reads as hours, which is what it always meant.
+    assertThat(AirplaneTemplate.TEMPLATE.meterUnit(null)).isEqualTo("HRS")
   }
 }

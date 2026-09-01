@@ -1,10 +1,5 @@
 package dev.fanfly.wingslog.feature.logs.viewing.log.compose
 
-import dev.fanfly.wingslog.core.template.LexiconFormatter
-import dev.fanfly.wingslog.core.template.LocalThingLexicon
-import dev.fanfly.wingslog.core.template.logNoun
-import dev.fanfly.wingslog.core.template.squawkNoun
-import dev.fanfly.wingslog.core.template.taskNoun
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -31,42 +26,41 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import dev.fanfly.wingslog.core.template.LocalThingTemplate
-import dev.fanfly.wingslog.core.template.MeterKeys
-import dev.fanfly.wingslog.core.template.meterLabel
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
-import dev.fanfly.wingslog.thing.Attachment
-import dev.fanfly.wingslog.thing.ComponentType
-import dev.fanfly.wingslog.thing.MaintenanceLog
-import dev.fanfly.wingslog.thing.MaintenanceTask
-import dev.fanfly.wingslog.thing.Squawk
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.datetime.toLocalDate
+import dev.fanfly.wingslog.core.template.LexiconFormatter
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.LocalThingTemplate
+import dev.fanfly.wingslog.core.template.formatMeterNumber
+import dev.fanfly.wingslog.core.template.logNoun
+import dev.fanfly.wingslog.core.template.meterUnit
+import dev.fanfly.wingslog.core.template.primaryReading
+import dev.fanfly.wingslog.core.template.squawkNoun
+import dev.fanfly.wingslog.core.template.taskNoun
 import dev.fanfly.wingslog.core.ui.common.compose.DetailSheet
-import dev.fanfly.wingslog.feature.logs.datamanager.authorship.LogAuthorship
-import dev.fanfly.wingslog.core.ui.common.formatToOneDecimalPlace
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
 import dev.fanfly.wingslog.feature.attachment.viewing.AttachmentSection
+import dev.fanfly.wingslog.feature.logs.datamanager.authorship.LogAuthorship
+import dev.fanfly.wingslog.thing.Attachment
+import dev.fanfly.wingslog.thing.MaintenanceLog
+import dev.fanfly.wingslog.thing.MaintenanceTask
+import dev.fanfly.wingslog.thing.Squawk
 import org.jetbrains.compose.resources.stringResource
-import wingslog.core.sharedassets.generated.resources.unit_hours
-import wingslog.feature.logs.sharedassets.generated.resources.airframe_time_label
 import wingslog.feature.logs.sharedassets.generated.resources.edit_log
-import wingslog.feature.logs.sharedassets.generated.resources.engine_time_label
-import wingslog.feature.logs.sharedassets.generated.resources.prop_time_label
+import wingslog.feature.logs.sharedassets.generated.resources.log_assigned_by
+import wingslog.feature.logs.sharedassets.generated.resources.log_assigned_by_unknown
+import wingslog.feature.logs.sharedassets.generated.resources.log_unverified_technician
 import wingslog.feature.logs.viewing.generated.resources.affected_maintenance_tasks
 import wingslog.feature.logs.viewing.generated.resources.no_tasks_linked
 import wingslog.feature.logs.viewing.generated.resources.resolved_squawks
 import wingslog.feature.logs.viewing.generated.resources.unknown_squawk
 import wingslog.feature.tasks.sharedassets.generated.resources.unknown_date
 import wingslog.feature.tasks.sharedassets.generated.resources.unknown_task
-import wingslog.core.sharedassets.generated.resources.Res as CoreRes
-import wingslog.feature.logs.sharedassets.generated.resources.log_assigned_by
-import wingslog.feature.logs.sharedassets.generated.resources.log_assigned_by_unknown
-import wingslog.feature.logs.sharedassets.generated.resources.log_unverified_technician
 import wingslog.feature.logs.sharedassets.generated.resources.Res as MaintenanceRes
 import wingslog.feature.logs.viewing.generated.resources.Res as ViewingRes
 import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedTaskRes
@@ -97,10 +91,12 @@ fun MaintenanceLogDetailSheet(
     actionSlot = {
       if (onEditClick != null) {
         TextButton(onClick = onEditClick) {
-          Text(stringResource(
-            MaintenanceRes.string.edit_log,
-            LexiconFormatter.titleCase(LocalThingLexicon.current.logNoun),
-          ))
+          Text(
+            stringResource(
+              MaintenanceRes.string.edit_log,
+              LexiconFormatter.titleCase(LocalThingLexicon.current.logNoun),
+            )
+          )
         }
       }
     },
@@ -192,23 +188,12 @@ fun MaintenanceLogDetailSheet(
 
 @Composable
 private fun SheetHeroMetric(log: MaintenanceLog) {
-  val engineLabel = stringResource(MaintenanceRes.string.engine_time_label)
-  val airframeLabel = LocalThingTemplate.current.meterLabel(
-    MeterKeys.AIRFRAME_HOURS,
-    ifAbsent = stringResource(MaintenanceRes.string.airframe_time_label),
-  )
-  val propLabel = stringResource(MaintenanceRes.string.prop_time_label)
-
-  val (label, value) = when (log.component_type) {
-    ComponentType.COMPONENT_ENGINE -> engineLabel to log.engine_hour
-    ComponentType.COMPONENT_AIRFRAME -> airframeLabel to log.airframe_time
-    ComponentType.COMPONENT_PROPELLER -> propLabel to log.prop_time
-    else -> when {
-      log.engine_hour > 0.0 -> engineLabel to log.engine_hour
-      log.airframe_time > 0.0 -> airframeLabel to log.airframe_time
-      else -> propLabel to log.prop_time
-    }
-  }
+  // The first meter this template declares that the log recorded. It used to switch on
+  // `component_type` across the three aviation hour fields, so a car's log — which records an
+  // odometer — matched no branch and rendered a blank (#761).
+  val primary = LocalThingTemplate.current.primaryReading(log) ?: return
+  val (meter, value) = primary
+  val label = meter.label
 
   Column {
     Text(
@@ -222,13 +207,15 @@ private fun SheetHeroMetric(log: MaintenanceLog) {
     Spacer(Modifier.height(Spacing.extraSmall))
     Row {
       Text(
-        text = value.formatToOneDecimalPlace(),
+        // The meter's own decimal place — an odometer reads "84512", not "84512.0".
+        text = LocalThingTemplate.current.formatMeterNumber(meter.key, value),
         style = WingslogTypography.heroDisplay,
         color = MaterialTheme.colorScheme.primary,
         modifier = Modifier.alignByBaseline(),
       )
       Text(
-        text = stringResource(CoreRes.string.unit_hours),
+        // The meter's own unit, beside the number as before — "MI" on a car.
+        text = LocalThingTemplate.current.meterUnit(meter.key),
         style = MaterialTheme.typography.bodyLarge,
         fontWeight = FontWeight.Medium,
         modifier = Modifier.alignByBaseline()
