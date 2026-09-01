@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -18,7 +17,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -33,6 +31,7 @@ import dev.fanfly.wingslog.core.template.LocalThingTemplate
 import dev.fanfly.wingslog.core.template.addableSlotsUnder
 import dev.fanfly.wingslog.core.template.componentTree
 import dev.fanfly.wingslog.core.template.valueOf
+import dev.fanfly.wingslog.core.ui.common.compose.DashedButton
 import dev.fanfly.wingslog.core.ui.common.compose.FormTextField
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.thing.update.viewmodel.EditThingViewModel
@@ -68,7 +67,12 @@ fun ComponentTreeSection(
   val template = LocalThingTemplate.current
   if (!LocalThingCapabilities.current.components) return
   val nodes = template.componentTree(thing)
-  if (nodes.isEmpty()) return
+  // Not `nodes.isEmpty()`: removing the last engine emptied the tree and took the Add control with
+  // it, leaving no way to add one back. The section is empty only when the template declares
+  // nothing to add either — home and custom.
+  if (nodes.isEmpty() && template.addableSlotsUnder(emptyList())
+      .isEmpty()
+  ) return
 
   Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
     nodes.forEach { node ->
@@ -246,7 +250,13 @@ private fun InlineGroup(
       style = MaterialTheme.typography.titleSmall,
       fontWeight = FontWeight.SemiBold,
     )
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.medium)) {
+    // Two to a line, with room between the rows. `maxItemsInEachRow` rather than a width fraction:
+    // a weighted child in a FlowRow otherwise takes the whole line and the pairing never happens.
+    FlowRow(
+      horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
+      verticalArrangement = Arrangement.spacedBy(Spacing.small),
+      maxItemsInEachRow = 2,
+    ) {
       group.forEach { node ->
         val row = node.row
         row.fields.filter { it.isVisibleOn(row) }
@@ -260,6 +270,9 @@ private fun InlineGroup(
               // Numbered by instance rather than by field: the heading already said "Blade", so the
               // input only has to say which one.
               labelOverride = row.label,
+              // Removing is a cross on the field itself, where the old form put it. A button below
+              // the group would not say which one it drops.
+              onRemove = { viewModel.onRemoveComponent(row.path) }.takeIf { row.canRemove },
             )
           }
       }
@@ -275,6 +288,7 @@ private fun ComponentFieldInput(
   showValidationErrors: Boolean,
   modifier: Modifier = Modifier,
   labelOverride: String? = null,
+  onRemove: (() -> Unit)? = null,
 ) {
   FormTextField(
     value = row.component?.valueOf(field)
@@ -291,6 +305,16 @@ private fun ComponentFieldInput(
       KeyboardOptions(capitalization = KeyboardCapitalization.Characters)
     } else {
       KeyboardOptions.Default
+    },
+    trailingIcon = onRemove?.let {
+      {
+        IconButton(onClick = it) {
+          Icon(
+            Icons.Default.Close,
+            contentDescription = stringResource(CoreRes.string.remove),
+          )
+        }
+      }
     },
   )
 }
@@ -312,12 +336,15 @@ private fun AddSlotButtons(
 ) {
   val addable = LocalThingTemplate.current.addableSlotsUnder(parentPath)
   if (addable.isEmpty()) return
-  Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
+  Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
     addable.forEach { slot ->
-      TextButton(onClick = { viewModel.onAddComponent(parentPath, slot) }) {
-        Icon(Icons.Default.Add, contentDescription = null)
-        Text(" ${stringResource(CoreRes.string.add)} ${slot.label}")
-      }
+      // Dashed, as every add control on this form has been: it reads as a placeholder for
+      // something not there yet rather than as an action on what is.
+      DashedButton(
+        label = "${stringResource(CoreRes.string.add)} ${slot.label}",
+        onClick = { viewModel.onAddComponent(parentPath, slot) },
+        modifier = Modifier.fillMaxWidth(),
+      )
     }
   }
 }

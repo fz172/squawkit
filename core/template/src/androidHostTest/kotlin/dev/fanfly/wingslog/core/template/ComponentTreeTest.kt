@@ -435,4 +435,26 @@ class ComponentTreeTest {
     assertThat(propeller.inlineBlockGroups).isEmpty()
     assertThat(propeller.chipChildren).hasSize(2)
   }
+
+  @Test
+  fun aThingWithNoComponentsCanStillBeGivenOne() {
+    // Removing the last engine emptied the tree, and the form treated an empty tree as nothing to
+    // draw — taking the Add control with it and leaving no way back. What may be added comes from
+    // the template, so it survives the components being gone.
+    val empty = Thing(id = "t")
+
+    assertThat(airplane.componentRows(empty)).isEmpty()
+    assertThat(airplane.addableSlotsUnder(emptyList()).map { it.slot_key })
+      .containsExactly("engine")
+  }
+
+  @Test
+  fun aTemplateWithNothingToAddHasNothingToDraw() {
+    // The other half of the same rule: home and custom declare no slots at all, so the section is
+    // genuinely empty rather than empty-with-a-button.
+    listOf(CanonicalTemplates.HOME, CanonicalTemplates.CUSTOM).forEach { template ->
+      assertThat(template.componentRows(Thing(id = "t"))).isEmpty()
+      assertThat(template.addableSlotsUnder(emptyList())).isEmpty()
+    }
+  }
 }
