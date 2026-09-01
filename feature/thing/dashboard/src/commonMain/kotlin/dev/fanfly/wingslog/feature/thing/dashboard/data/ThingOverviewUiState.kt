@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.feature.thing.dashboard.data
 
 import dev.fanfly.wingslog.core.template.DegradedReason
+import dev.fanfly.wingslog.core.template.MeterKeys
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
 import dev.fanfly.wingslog.feature.sharing.model.ShareRole
 import dev.fanfly.wingslog.feature.squawk.model.SquawkWithStatus
@@ -17,7 +18,22 @@ data class LogStats(
   val currentEngineTime: Double? = null,
   val currentAirframeTime: Double? = null,
   val currentPropTime: Double? = null,
-)
+) {
+  /**
+   * The current reading for a meter key, or null when nothing stores one.
+   *
+   * The three fields above are the only readings that exist: a log carries `airframe_time`,
+   * `engine_hour` and `prop_time` and nothing else, so a template declaring an odometer has no
+   * source here. Null rather than 0.0 on purpose — an invented zero renders as a real measurement.
+   * #730 replaces this mapping with per-meter-key readings on the log itself.
+   */
+  fun valueFor(meterKey: String): Double? = when (meterKey) {
+    MeterKeys.AIRFRAME_HOURS -> currentAirframeTime
+    MeterKeys.ENGINE_HOURS -> currentEngineTime
+    MeterKeys.PROP_HOURS -> currentPropTime
+    else -> null
+  }
+}
 
 sealed interface ThingOverviewUiState {
   data object Loading : ThingOverviewUiState

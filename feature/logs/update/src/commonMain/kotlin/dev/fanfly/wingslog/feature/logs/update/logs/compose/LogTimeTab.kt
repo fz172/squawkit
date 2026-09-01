@@ -6,6 +6,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import dev.fanfly.wingslog.core.template.LocalThingTemplate
+import dev.fanfly.wingslog.core.template.MeterKeys
+import dev.fanfly.wingslog.core.template.meterLabelWithUnit
 import androidx.compose.ui.text.input.KeyboardType
 import dev.fanfly.wingslog.core.ui.common.compose.FormTextField
 import dev.fanfly.wingslog.core.ui.theme.Spacing
@@ -47,7 +50,10 @@ fun LogTimeTab(
         FormTextField(
           value = airframeTime,
           onValueChange = onAirframeTimeChange,
-          label = stringResource(Res.string.airframe_time_hours),
+          label = LocalThingTemplate.current.meterLabelWithUnit(
+            MeterKeys.AIRFRAME_HOURS,
+            ifAbsent = stringResource(Res.string.airframe_time_hours),
+          ),
           modifier = Modifier.fillMaxWidth(),
           singleLine = true,
           keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),

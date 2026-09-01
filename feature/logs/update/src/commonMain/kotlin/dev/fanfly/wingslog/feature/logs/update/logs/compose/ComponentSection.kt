@@ -16,6 +16,8 @@ import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import dev.fanfly.wingslog.core.template.LocalThingTemplate
+import dev.fanfly.wingslog.core.template.slotSerialLabel
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.SlotKeys
@@ -84,7 +86,10 @@ fun ComponentSection(
       ComponentType.COMPONENT_AIRFRAME -> {
         // Display thing serial (read-only)
         ReadOnlyComponentField(
-          label = stringResource(Res.string.airframe_serial),
+          label = LocalThingTemplate.current.slotSerialLabel(
+            SlotKeys.AIRFRAME,
+            ifAbsent = stringResource(Res.string.airframe_serial),
+          ),
           value = thing?.specValue(SpecKeys.SERIAL)
             .orEmpty(),
           modifier = Modifier.fillMaxWidth(),

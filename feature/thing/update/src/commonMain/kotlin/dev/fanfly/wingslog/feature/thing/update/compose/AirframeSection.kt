@@ -13,6 +13,8 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import dev.fanfly.wingslog.core.template.LocalThingTemplate
+import dev.fanfly.wingslog.core.template.specLabel
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import dev.fanfly.wingslog.core.template.LocalThingCapabilities
 import dev.fanfly.wingslog.core.template.SpecKeys
@@ -88,7 +90,10 @@ fun AirframeSection(
         FormTextField(
           value = thing.specValue(SpecKeys.TAIL_NUMBER), // Read from ViewModel
           onValueChange = { viewModel.onTailNumberChanged(it) }, // Update ViewModel
-          label = stringResource(Res.string.tail_number),
+          label = LocalThingTemplate.current.specLabel(
+            SpecKeys.TAIL_NUMBER,
+            ifAbsent = stringResource(Res.string.tail_number),
+          ),
           modifier = Modifier.weight(1f), // Takes up 50%
           keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters)
         )

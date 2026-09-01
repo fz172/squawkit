@@ -101,7 +101,10 @@ fun TaskIdentityTab(
       .filter { it != ComponentType.COMPONENT_UNKNOWN }
 
     IdentitySection(
-      header = stringResource(CoreRes.string.component_type),
+      // The lexicon's own noun: "Component" on an airplane, "Part" everywhere else. The header
+      // names the thing being picked, so a fixed "Component Type" was aviation leaking into a
+      // screen the template already has a word for.
+      header = LexiconFormatter.titleCase(LocalThingLexicon.current.componentNoun),
       description = stringResource(
         Res.string.component_type_description,
         LocalThingLexicon.current.componentNoun.singular,
