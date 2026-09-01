@@ -63,21 +63,25 @@ fun LogStatsSection(
       ) {
         // One cell per meter the TEMPLATE declares, not three hardcoded aviation ones. A bike
         // showed "Airframe / Engine Time / Prop Time" because the cells were fixed and only their
-        // values came from data; reading the meter set is what makes an automotive thing able to
-        // show an odometer instead.
+        // values came from data; reading the meter set is what puts an odometer on a car.
         //
-        // A declared meter with no reading yet draws nothing rather than "0.0" — logs only carry
-        // the three aviation hour fields until #730 stores readings per meter key, so a car's
-        // odometer has no source and an invented zero would read as a real measurement.
+        // A declared meter with no reading shows an em dash, not 0.0 and not nothing. Zero would
+        // read as a real measurement; hiding the cell would deny the meter exists, which is wrong
+        // for a car whose odometer is simply unlogged. Logs carry only the three aviation hour
+        // fields until #730 stores readings per meter key, so today every non-aviation meter is in
+        // that state.
         //
         // The whole block is behind `meters` because a capability removes UI: a homeowner should
         // never see a meter cell at all (PRD §4.8).
         if (meters) {
           template?.meters.orEmpty().forEach { meter ->
-            val value = stats.valueFor(meter.key) ?: return@forEach
             StatCell(
               label = meter.label,
-              value = value.formatToOneDecimalPlace(),
+              // `decimal` is the template's own call: hours take a decimal place, an odometer
+              // does not, and "84512.0 mi" is not how anyone writes mileage.
+              value = stats.valueFor(meter.key)
+                ?.let { if (meter.decimal) it.formatToOneDecimalPlace() else it.toLong().toString() }
+                ?: NO_READING,
               modifier = Modifier.weight(1f),
             )
           }
@@ -118,3 +122,6 @@ private fun StatCell(
     )
   }
 }
+
+/** Shown for a meter the template declares but nothing has recorded a reading for yet. */
+private const val NO_READING = "\u2014"
