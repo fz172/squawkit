@@ -1,6 +1,8 @@
 package dev.fanfly.wingslog.feature.logs.update.logs.viewmodel
 
 import dev.fanfly.wingslog.core.template.CurrentThingTemplate
+import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
+import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
 import dev.fanfly.wingslog.core.analytics.NoOpAnalyticsManager
 import androidx.lifecycle.SavedStateHandle
 import com.google.common.truth.Truth.assertThat
@@ -47,6 +49,19 @@ private const val LINKED_UID = "uid-linked-mechanic"
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class MaintenanceLogFormViewModelTest {
+
+  /**
+   * A real holder over the baked-in registry, not a relaxed mock.
+   *
+   * The form reads `template.value.meters` to know which meter fields to render (#730), and a
+   * relaxed mock answers a `StateFlow<ThingTemplate?>` with a bare Object — which casts fine until
+   * something dereferences it, then throws inside a coroutine. A real holder is also the truer
+   * fixture: these tests care what the form does with an airplane's three meters.
+   */
+  private fun airplaneTemplateHolder() = CurrentThingTemplate(
+    BakedInTemplateRegistry(appVersionCode = 1),
+  ).apply { set(AirplaneTemplate.TEMPLATE) }
+
 
   private val testDispatcher = UnconfinedTestDispatcher()
 
@@ -262,7 +277,7 @@ class MaintenanceLogFormViewModelTest {
         sharingManager = sharingManager,
         auth = auth,
         subscriptionManager = subscriptionManager,
-        currentThingTemplate = mockk<CurrentThingTemplate>(relaxed = true),
+        currentThingTemplate = airplaneTemplateHolder(),
         analytics = NoOpAnalyticsManager,
         savedStateHandle = SavedStateHandle(
           mapOf(
@@ -319,7 +334,7 @@ class MaintenanceLogFormViewModelTest {
         sharingManager = sharingManager,
         auth = auth,
         subscriptionManager = subscriptionManager,
-        currentThingTemplate = mockk<CurrentThingTemplate>(relaxed = true),
+        currentThingTemplate = airplaneTemplateHolder(),
         analytics = NoOpAnalyticsManager,
         savedStateHandle = SavedStateHandle(
           mapOf(
@@ -596,7 +611,7 @@ class MaintenanceLogFormViewModelTest {
       sharingManager = sharingManager,
       auth = auth,
       subscriptionManager = subscriptionManager,
-      currentThingTemplate = mockk<CurrentThingTemplate>(relaxed = true),
+      currentThingTemplate = airplaneTemplateHolder(),
       analytics = NoOpAnalyticsManager,
       savedStateHandle = SavedStateHandle(
         mapOf(
@@ -620,7 +635,7 @@ class MaintenanceLogFormViewModelTest {
       sharingManager = sharingManager,
       auth = auth,
       subscriptionManager = subscriptionManager,
-      currentThingTemplate = mockk<CurrentThingTemplate>(relaxed = true),
+      currentThingTemplate = airplaneTemplateHolder(),
       analytics = NoOpAnalyticsManager,
       savedStateHandle = SavedStateHandle(
         buildMap {

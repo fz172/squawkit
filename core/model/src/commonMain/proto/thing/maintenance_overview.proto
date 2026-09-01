@@ -1,5 +1,7 @@
 syntax = "proto3";
 
+import "thing/meter_reading.proto";
+
 option java_package = "dev.fanfly.wingslog.thing";
 option java_multiple_files = true;
 
@@ -18,8 +20,23 @@ message MaintenanceOverview {
   reserved 9;
   reserved "avionics_log_count";
 
-  // Current accumulated times
+  // Current accumulated times. Aviation-only by construction and superseded by `current` below.
+  //
+  // NOTHING IN THE APP READS THESE ANY MORE. Every reader moved to `current`, by meter key, with
+  // `currentFor` falling back here so an overview written before `current` existed still answers.
+  //
+  // They are still WRITTEN, and the reason is not inertia: an older build reading a document a
+  // newer one wrote would find them absent and show an aeroplane as having flown zero hours. They
+  // can stop being written once no client in the field predates `current`, and be deleted — number
+  // reserved, not reused — a release after that.
   double current_airframe_time = 6;
   double current_engine_time = 7;
   double current_propeller_time = 8;
+
+  // The current reading for every meter the template declares, computed the same way the three
+  // fields above are: the maximum over this Thing's logs (PRD §4.4).
+  //
+  // A car's odometer has nowhere to go in the three doubles, which is why the dashboard could ask
+  // for one and never be answered.
+  repeated MeterReading current = 10;
 }

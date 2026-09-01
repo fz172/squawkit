@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+option java_package = "dev.fanfly.wingslog.thing";
+option java_multiple_files = true;
+
+// One meter's value, as recorded on a log or accumulated on a Thing. PRD §4.4.
+//
+// Replaces the three `double` hour fields that could only ever describe an aeroplane. A car's
+// odometer, a bike's ride hours and an airframe's tach all land here because the KEY carries the
+// meaning — which is what makes "every 5,000 miles" and "every 100 hours" the same feature.
+message MeterReading {
+  // Matches MeterDef.key on the template. A key no template declares is kept, never dropped: it is
+  // the user's reading, and a template can stop declaring a meter while its history remains.
+  string meter_key = 1;
+
+  // Which component this reading belongs to, empty for a Thing-level meter. An engine's hours are
+  // that engine's, and a twin records two of them; airframe time belongs to the Thing.
+  //
+  // The stable `Component.id`, not a serial: a blank serial is universal on bikes and common on
+  // home fixtures, and replacing a part with a new serial silently re-points its history (§4.3).
+  string component_id = 2;
+
+  double value = 3;
+}

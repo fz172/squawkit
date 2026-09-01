@@ -26,6 +26,8 @@ kotlin {
     commonMain.dependencies {
       implementation(project(":core:model"))
       implementation(project(":core:storage"))
+      // currentReadings — the overview holds a value per meter key now (#730).
+      implementation(project(":core:template"))
       implementation(libs.gitlive.firebase.auth)
 
       implementation(libs.kermit)

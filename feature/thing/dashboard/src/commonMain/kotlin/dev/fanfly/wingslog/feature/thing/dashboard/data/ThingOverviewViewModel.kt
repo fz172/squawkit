@@ -3,8 +3,11 @@ package dev.fanfly.wingslog.feature.thing.dashboard.data
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.fanfly.wingslog.core.storage.ThingScopeResolver
+import dev.fanfly.wingslog.core.template.MeterKeys
 import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.core.template.TemplateResolution
+import dev.fanfly.wingslog.core.template.currentFor
+import dev.fanfly.wingslog.core.template.currentReadings
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
@@ -164,25 +167,26 @@ class ThingOverviewViewModel(
           // wrong numbers this state exists to avoid showing (design §6.2).
           ThingOverviewUiState.Degraded(thing, degraded.reason)
         } else if (thing != null) {
+          val template = templateRegistry.forThingWithFallback(thing)
           val stats = if (overview != null) {
             LogStats(
               total = overview.total_log_count.toLong(),
               airframe = overview.airframe_log_count.toLong(),
               engine = overview.engine_log_count.toLong(),
               propeller = overview.propeller_log_count.toLong(),
-              currentAirframeTime = overview.current_airframe_time,
-              currentEngineTime = overview.current_engine_time,
-              currentPropTime = overview.current_propeller_time
+              // Every meter this template declares that the overview has a value for. `currentFor`
+              // falls back to the three aviation fields, so an overview written before `current`
+              // existed still answers (#730).
+              readings = template.meters.mapNotNull { meter ->
+                overview.currentFor(meter.key)
+                  ?.let { meter.key to it }
+              }
+                .toMap(),
             )
           } else {
-            val currentEngineTime =
-              logs.filter { it.engine_hour > 0.0 }
-                .maxOfOrNull { it.engine_hour }
-            val currentAirframeTime =
-              logs.filter { it.airframe_time > 0.0 }
-                .maxOfOrNull { it.airframe_time }
-            val currentPropTime = logs.filter { it.prop_time > 0.0 }
-              .maxOfOrNull { it.prop_time }
+            // No overview stored yet — compute the same readings straight from the logs.
+            val fromLogs =
+              currentReadings(logs).associate { it.meter_key to it.value_ }
             LogStats(
               total = logs.size.toLong(),
               airframe = logs.count { it.component_type == ComponentType.COMPONENT_AIRFRAME }
@@ -191,9 +195,11 @@ class ThingOverviewViewModel(
                 .toLong(),
               propeller = logs.count { it.component_type == ComponentType.COMPONENT_PROPELLER }
                 .toLong(),
-              currentEngineTime = currentEngineTime,
-              currentAirframeTime = currentAirframeTime,
-              currentPropTime = currentPropTime)
+              readings = template.meters.mapNotNull { meter ->
+                fromLogs[meter.key]?.let { meter.key to it }
+              }
+                .toMap(),
+            )
           }
 
           val cardsWithStatus = taskCards.map { card ->
@@ -208,7 +214,7 @@ class ThingOverviewViewModel(
           }
           val today = Clock.System.now()
             .toLocalDateTime(TimeZone.currentSystemDefault()).date
-          val currentEngineHours = stats.currentEngineTime ?: 0.0
+          val currentEngineHours = stats.valueFor(MeterKeys.ENGINE_HOURS) ?: 0.0
           val active = cardsWithStatus
             .filter { it.dueStatus.status != DueStatus.COMPLIED }
             .sortedBy { task ->
