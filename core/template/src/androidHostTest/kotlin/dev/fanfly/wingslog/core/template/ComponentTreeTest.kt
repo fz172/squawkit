@@ -33,7 +33,8 @@ class ComponentTreeTest {
     // hull, steering and rigging. Its repeating categories yield none, for the same reason.
     val rows = CanonicalTemplates.BOAT.componentRows(Thing(id = "t"))
     assertThat(rows.map { it.slot.slot_key })
-      .containsExactly("hull", "steering", "rigging").inOrder()
+      .containsExactly("hull", "steering", "rigging")
+      .inOrder()
     assertThat(rows.map { it.component }).containsExactly(null, null, null)
   }
 
@@ -64,14 +65,17 @@ class ComponentTreeTest {
     // One engine, so no index on it; two blades, so they take one.
     assertThat(rows.map { it.label }).containsExactly(
       "Engine", "Propeller", "Blade 1", "Blade 2",
-    ).inOrder()
-    assertThat(rows.map { it.depth }).containsExactly(0, 1, 2, 2).inOrder()
+    )
+      .inOrder()
+    assertThat(rows.map { it.depth }).containsExactly(0, 1, 2, 2)
+      .inOrder()
     // The path is what every edit action addresses, so it has to survive the walk intact.
     assertThat(rows.last().path).containsExactly(
       SlotKeys.ENGINE to 0,
       SlotKeys.PROPELLER to 0,
       SlotKeys.BLADE to 1,
-    ).inOrder()
+    )
+      .inOrder()
   }
 
   @Test
@@ -87,7 +91,8 @@ class ComponentTreeTest {
       ),
     )
 
-    val labels = bike.componentRows(thing).map { it.label }
+    val labels = bike.componentRows(thing)
+      .map { it.label }
 
     assertThat(labels).containsExactly("Drivetrain", "Wheel 1", "Wheel 2")
   }
@@ -96,7 +101,8 @@ class ComponentTreeTest {
   fun aBikeCannotBeGivenAnEngine() {
     // The reported bug, stated as a rule: what may be added comes from the template's slots, so a
     // preset that never declares an engine can never be offered one.
-    val addable = bike.addableSlotsUnder(emptyList()).map { it.slot_key }
+    val addable = bike.addableSlotsUnder(emptyList())
+      .map { it.slot_key }
 
     assertThat(addable).doesNotContain("engine")
     assertThat(addable).containsExactly("brakes", "wheel")
@@ -106,7 +112,9 @@ class ComponentTreeTest {
   fun anAutomotiveEngineIsAddableBecauseItsSlotRepeats() {
     // Optional is expressed as repeatable — the only cardinality the schema has — so an EV can
     // hold none and a twin can hold two.
-    assertThat(automotive.addableSlotsUnder(emptyList()).map { it.slot_key })
+    assertThat(
+      automotive.addableSlotsUnder(emptyList())
+        .map { it.slot_key })
       .containsExactly("engine", "brakes", "tire")
   }
 
@@ -114,10 +122,17 @@ class ComponentTreeTest {
   fun addableSlotsAreScopedToTheirParent() {
     // A blade belongs under a propeller, not at the root. Offering it anywhere else would build a
     // tree the template cannot describe.
-    assertThat(airplane.addableSlotsUnder(emptyList()).map { it.slot_key })
+    assertThat(
+      airplane.addableSlotsUnder(emptyList())
+        .map { it.slot_key })
       .containsExactly("engine")
     assertThat(
-      airplane.addableSlotsUnder(listOf(SlotKeys.ENGINE to 0, SlotKeys.PROPELLER to 0))
+      airplane.addableSlotsUnder(
+        listOf(
+          SlotKeys.ENGINE to 0,
+          SlotKeys.PROPELLER to 0
+        )
+      )
         .map { it.slot_key },
     ).containsExactly("blade")
   }
@@ -171,7 +186,9 @@ class ComponentTreeTest {
       components = listOf(Component(slot_key = SlotKeys.ENGINE, serial = "")),
     )
 
-    assertThat(airplane.componentsMissingSerials(thing).map { it.label })
+    assertThat(
+      airplane.componentsMissingSerials(thing)
+        .map { it.label })
       .containsExactly("Engine")
   }
 
@@ -251,7 +268,8 @@ class ComponentTreeTest {
           ),
         ),
       ),
-    ).single { it.slot.slot_key == SlotKeys.BLADE }
+    )
+      .single { it.slot.slot_key == SlotKeys.BLADE }
 
     assertThat(blade.fields).containsExactly(ComponentField.SERIAL)
   }
@@ -260,14 +278,19 @@ class ComponentTreeTest {
   fun aSlotThatDeclaresNoFieldsAsksForAllThree() {
     // The default keeps every preset that has not thought about it unchanged.
     val engine = airplane.componentRows(
-      Thing(id = "t", components = listOf(Component(slot_key = SlotKeys.ENGINE))),
-    ).single { it.slot.slot_key == SlotKeys.ENGINE }
+      Thing(
+        id = "t",
+        components = listOf(Component(slot_key = SlotKeys.ENGINE))
+      ),
+    )
+      .single { it.slot.slot_key == SlotKeys.ENGINE }
 
     assertThat(engine.fields).containsExactly(
       ComponentField.MAKE,
       ComponentField.MODEL,
       ComponentField.SERIAL,
-    ).inOrder()
+    )
+      .inOrder()
   }
 
   @Test
@@ -292,16 +315,19 @@ class ComponentTreeTest {
       ),
     )
 
-    val engine = airplane.componentTree(thing).single()
+    val engine = airplane.componentTree(thing)
+      .single()
 
     assertThat(engine.row.label).isEqualTo("Engine")
     // The propeller flows inside the engine's card rather than nesting into one of its own.
-    val propeller = engine.inlineGroups.single().single()
+    val propeller = engine.inlineGroups.single()
+      .single()
     assertThat(propeller.row.label).isEqualTo("Propeller")
     // Blades hang off the propeller as chips, not as cards beside it.
     assertThat(propeller.cardChildren).isEmpty()
     assertThat(propeller.chipChildren.map { it.row.label })
-      .containsExactly("Blade 1", "Blade 2").inOrder()
+      .containsExactly("Blade 1", "Blade 2")
+      .inOrder()
   }
 
   // --- How a slot asks to be laid out ---
@@ -324,10 +350,12 @@ class ComponentTreeTest {
       ),
     )
 
-    val engine = airplane.componentTree(thing).single()
+    val engine = airplane.componentTree(thing)
+      .single()
 
     assertThat(engine.cardChildren).isEmpty()
-    val propeller = engine.inlineGroups.single().single()
+    val propeller = engine.inlineGroups.single()
+      .single()
     assertThat(propeller.row.slot.slot_key).isEqualTo(SlotKeys.PROPELLER)
     // Its blades hang off it as chips, still inside the same card.
     assertThat(propeller.chipChildren.map { it.row.label }).containsExactly("Blade")
@@ -337,13 +365,18 @@ class ComponentTreeTest {
   fun compactFieldsPutEverythingOnItsOwnLineExceptTheLastTwo() {
     // Make alone, then model beside serial — the shape a plate reads in.
     val engine = airplane.componentRows(
-      Thing(id = "t", components = listOf(Component(slot_key = SlotKeys.ENGINE))),
-    ).single { it.slot.slot_key == SlotKeys.ENGINE }
+      Thing(
+        id = "t",
+        components = listOf(Component(slot_key = SlotKeys.ENGINE))
+      ),
+    )
+      .single { it.slot.slot_key == SlotKeys.ENGINE }
 
     assertThat(engine.slot.compact_fields).isTrue()
     assertThat(engine.leadingFields).containsExactly(ComponentField.MAKE)
     assertThat(engine.pairedFields)
-      .containsExactly(ComponentField.MODEL, ComponentField.SERIAL).inOrder()
+      .containsExactly(ComponentField.MODEL, ComponentField.SERIAL)
+      .inOrder()
   }
 
   @Test
@@ -364,7 +397,8 @@ class ComponentTreeTest {
           ),
         ),
       ),
-    ).single { it.slot.slot_key == SlotKeys.BLADE }
+    )
+      .single { it.slot.slot_key == SlotKeys.BLADE }
 
     assertThat(blade.compact_fields).isTrue()
     assertThat(row.leadingFields).isEmpty()
@@ -375,9 +409,12 @@ class ComponentTreeTest {
   fun theSpecBlockAsksInTheOrderTheFormAlwaysHas() {
     // make, model, then serial and tail number sharing a line.
     assertThat(airplane.spec_fields.map { it.key })
-      .containsExactly("make", "model", "serial", "tail_number").inOrder()
-    assertThat(airplane.spec_fields.filter { it.compact }.map { it.key })
-      .containsExactly("serial", "tail_number").inOrder()
+      .containsExactly("make", "model", "serial", "tail_number")
+      .inOrder()
+    assertThat(airplane.spec_fields.filter { it.compact }
+                 .map { it.key })
+      .containsExactly("serial", "tail_number")
+      .inOrder()
   }
 
   @Test
@@ -389,7 +426,8 @@ class ComponentTreeTest {
       components = listOf(Component(slot_key = SlotKeys.ENGINE)),
     )
     assertThat(
-      airplane.componentRows(one).single { it.slot.slot_key == SlotKeys.ENGINE }.label,
+      airplane.componentRows(one)
+        .single { it.slot.slot_key == SlotKeys.ENGINE }.label,
     ).isEqualTo("Engine")
 
     val two = Thing(
@@ -400,9 +438,11 @@ class ComponentTreeTest {
       ),
     )
     assertThat(
-      airplane.componentRows(two).filter { it.slot.slot_key == SlotKeys.ENGINE }
+      airplane.componentRows(two)
+        .filter { it.slot.slot_key == SlotKeys.ENGINE }
         .map { it.label },
-    ).containsExactly("Engine 1", "Engine 2").inOrder()
+    ).containsExactly("Engine 1", "Engine 2")
+      .inOrder()
   }
 
   @Test
@@ -427,10 +467,15 @@ class ComponentTreeTest {
       ),
     )
 
-    val propeller = airplane.componentTree(thing).single().inlineGroups.single().single()
+    val propeller = airplane.componentTree(thing)
+      .single().inlineGroups.single()
+      .single()
 
-    assertThat(propeller.inlineGroups.single().map { it.row.label })
-      .containsExactly("Blade 1", "Blade 2").inOrder()
+    assertThat(
+      propeller.inlineGroups.single()
+        .map { it.row.label })
+      .containsExactly("Blade 1", "Blade 2")
+      .inOrder()
     // The dashboard still splits them out as chips rather than blocks.
     assertThat(propeller.inlineBlockGroups).isEmpty()
     assertThat(propeller.chipChildren).hasSize(2)
@@ -444,7 +489,9 @@ class ComponentTreeTest {
     val empty = Thing(id = "t")
 
     assertThat(airplane.componentRows(empty)).isEmpty()
-    assertThat(airplane.addableSlotsUnder(emptyList()).map { it.slot_key })
+    assertThat(
+      airplane.addableSlotsUnder(emptyList())
+        .map { it.slot_key })
       .containsExactly("engine")
   }
 
@@ -452,7 +499,10 @@ class ComponentTreeTest {
   fun aTemplateWithNothingToAddHasNothingToDraw() {
     // The other half of the same rule: home and custom declare no slots at all, so the section is
     // genuinely empty rather than empty-with-a-button.
-    listOf(CanonicalTemplates.HOME, CanonicalTemplates.CUSTOM).forEach { template ->
+    listOf(
+      CanonicalTemplates.HOME,
+      CanonicalTemplates.CUSTOM
+    ).forEach { template ->
       assertThat(template.componentRows(Thing(id = "t"))).isEmpty()
       assertThat(template.addableSlotsUnder(emptyList())).isEmpty()
     }

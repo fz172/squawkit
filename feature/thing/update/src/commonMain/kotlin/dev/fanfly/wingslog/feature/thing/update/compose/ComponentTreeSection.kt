@@ -3,8 +3,8 @@ package dev.fanfly.wingslog.feature.thing.update.compose
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -22,6 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.template.ComponentField
 import dev.fanfly.wingslog.core.template.ComponentNode
 import dev.fanfly.wingslog.core.template.ComponentPath
@@ -247,36 +248,37 @@ private fun InlineGroup(
   Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
     Text(
       text = first.slot.label,
-      style = MaterialTheme.typography.titleSmall,
-      fontWeight = FontWeight.SemiBold,
+      style = MaterialTheme.typography.labelSmall,
     )
-    // Two to a line, with room between the rows. `maxItemsInEachRow` rather than a width fraction:
-    // a weighted child in a FlowRow otherwise takes the whole line and the pairing never happens.
-    FlowRow(
-      horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
-      verticalArrangement = Arrangement.spacedBy(Spacing.small),
-      maxItemsInEachRow = 2,
-    ) {
-      group.forEach { node ->
-        val row = node.row
-        row.fields.filter { it.isVisibleOn(row) }
-          .forEach { field ->
-            ComponentFieldInput(
-              row = row,
-              field = field,
-              viewModel = viewModel,
-              showValidationErrors = showValidationErrors,
-              modifier = Modifier.weight(1f),
-              // Numbered by instance rather than by field: the heading already said "Blade", so the
-              // input only has to say which one.
-              labelOverride = row.label,
-              // Removing is a cross on the field itself, where the old form put it. A button below
-              // the group would not say which one it drops.
-              onRemove = { viewModel.onRemoveComponent(row.path) }.takeIf { row.canRemove },
-            )
+    // chunked(2) into Rows, which is how this form has always laid these out. A weighted child in
+    // a FlowRow takes the whole line instead of half of it, so the pairing silently never happens
+    // — the trailing Spacer is what keeps a lone last input at half width rather than stretching.
+    group.chunked(2)
+      .forEach { pair ->
+        Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
+          pair.forEach { node ->
+            val row = node.row
+            row.fields.filter { it.isVisibleOn(row) }
+              .forEach { field ->
+                ComponentFieldInput(
+                  row = row,
+                  field = field,
+                  viewModel = viewModel,
+                  showValidationErrors = showValidationErrors,
+                  modifier = Modifier.weight(1f),
+                  // Numbered by instance rather than by field: the heading already said "Blade", so
+                  // the input only has to say which one.
+                  labelOverride = row.label,
+                  dense = true,
+                  // A cross on the field itself, where the old form put it. A control below the group
+                  // could not say which one it drops.
+                  onRemove = { viewModel.onRemoveComponent(row.path) }.takeIf { row.canRemove },
+                )
+              }
           }
+          if (pair.size == 1) Spacer(Modifier.weight(1f))
+        }
       }
-    }
   }
 }
 
@@ -288,6 +290,7 @@ private fun ComponentFieldInput(
   showValidationErrors: Boolean,
   modifier: Modifier = Modifier,
   labelOverride: String? = null,
+  dense: Boolean = false,
   onRemove: (() -> Unit)? = null,
 ) {
   FormTextField(
@@ -298,6 +301,12 @@ private fun ComponentFieldInput(
     // on every input reads as noise once there are three of them.
     label = labelOverride ?: field.caption(),
     modifier = modifier,
+    dense = dense,
+    textStyle = if (dense) {
+      MaterialTheme.typography.bodyMedium
+    } else {
+      MaterialTheme.typography.bodyLarge
+    },
     isError = field == ComponentField.SERIAL &&
       showValidationErrors &&
       row.component?.serial?.isBlank() == true,
@@ -340,11 +349,28 @@ private fun AddSlotButtons(
     addable.forEach { slot ->
       // Dashed, as every add control on this form has been: it reads as a placeholder for
       // something not there yet rather than as an action on what is.
-      DashedButton(
-        label = "${stringResource(CoreRes.string.add)} ${slot.label}",
-        onClick = { viewModel.onAddComponent(parentPath, slot) },
-        modifier = Modifier.fillMaxWidth(),
-      )
+      // Half width only for a slot whose instances pack into a group — Add Blade sits beside the
+      // serials it adds to. Add Engine spans the form as it always has.
+      //
+      // Keyed on the packing, not on `compact_fields`: the engine sets that too, because its own
+      // make, model and serial pair up. One flag was doing two jobs and shortened the wrong button.
+      if (slot.inline_with_parent && slot.repeatable) {
+        Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
+          DashedButton(
+            label = "${stringResource(CoreRes.string.add)} ${slot.label}",
+            onClick = { viewModel.onAddComponent(parentPath, slot) },
+            modifier = Modifier.weight(1f),
+            height = 44.dp,
+          )
+          Spacer(Modifier.weight(1f))
+        }
+      } else {
+        DashedButton(
+          label = "${stringResource(CoreRes.string.add)} ${slot.label}",
+          onClick = { viewModel.onAddComponent(parentPath, slot) },
+          modifier = Modifier.fillMaxWidth(),
+        )
+      }
     }
   }
 }
