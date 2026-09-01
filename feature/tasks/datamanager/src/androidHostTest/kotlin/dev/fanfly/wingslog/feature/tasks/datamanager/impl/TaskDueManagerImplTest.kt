@@ -207,7 +207,92 @@ class TaskDueManagerImplTest {
     val result = manager.computeNextDue(card, listOf(log), listOf(card))
 
     assertThat(result.nextDueEngine).isEqualTo(505f)
-    assertThat(result.status).isEqualTo(DueStatus.DUE_SOON)
+    // NORMAL is the tell: a full 5-hour cycle is left. Reading engine hours by mistake would put
+    // this 9,494 hours past due.
+    assertThat(result.status).isEqualTo(DueStatus.NORMAL)
+  }
+
+  @Test
+  fun aMileageRuleGoesOverdueAgainstItsOwnMeter() {
+    // The status comparison used to read whatever meter the card's *component* implied, so an
+    // odometer due of 85,000 was measured against 0 airframe hours and stayed NORMAL forever.
+    val card = card(id = "c1", rules = listOf(meterRule("odometer", 5000f)))
+    val logs = listOf(
+      log(
+        id = "l1",
+        inspectionIds = listOf("c1"),
+        readings = listOf(MeterReading("odometer", value_ = 80000.0))
+      ),
+      log(
+        id = "l2",
+        readings = listOf(MeterReading("odometer", value_ = 86000.0))
+      ),
+    )
+
+    val result = manager.computeNextDue(card, logs, listOf(card))
+
+    assertThat(result.nextDueEngine).isEqualTo(85000f)
+    assertThat(result.status).isEqualTo(DueStatus.OVERDUE)
+  }
+
+  @Test
+  fun theDueSoonWindowScalesWithTheInterval() {
+    // 500 miles out of 5,000 is a warning; the old fixed window was 10, which in miles is the
+    // rest of the afternoon.
+    val card = card(id = "c1", rules = listOf(meterRule("odometer", 5000f)))
+    val logs = listOf(
+      log(
+        id = "l1",
+        inspectionIds = listOf("c1"),
+        readings = listOf(MeterReading("odometer", value_ = 80000.0))
+      ),
+      log(
+        id = "l2",
+        readings = listOf(MeterReading("odometer", value_ = 84600.0))
+      ),
+    )
+
+    assertThat(manager.computeNextDue(card, logs, listOf(card)).status)
+      .isEqualTo(DueStatus.DUE_SOON)
+  }
+
+  @Test
+  fun aShortIntervalIsNotPermanentlyDueSoon() {
+    // The fixed 10-hour window meant any rule with an interval under 10 hours reported DUE_SOON
+    // from the moment it was logged.
+    val card = card(id = "c1", rules = listOf(engineRule(5f)))
+    val log = log(id = "l1", inspectionIds = listOf("c1"), airframeTime = 500.0)
+
+    assertThat(manager.computeNextDue(card, listOf(log), listOf(card)).status)
+      .isEqualTo(DueStatus.NORMAL)
+  }
+
+  @Test
+  fun theNearestDueWinsAcrossDifferentMeters() {
+    // Two rules in different units. Comparing the raw due values picks the 105-hour inspection
+    // purely because 105 < 85,000, with 50 miles left on the other. Remaining-until-due at least
+    // asks how far each has to go.
+    val card = card(
+      id = "c1",
+      rules = listOf(meterRule("odometer", 5000f), engineRule(100f)),
+    )
+    val logs = listOf(
+      log(
+        id = "l1",
+        inspectionIds = listOf("c1"),
+        airframeTime = 5.0,
+        readings = listOf(MeterReading("odometer", value_ = 80000.0)),
+      ),
+      log(
+        id = "l2",
+        readings = listOf(MeterReading("odometer", value_ = 84950.0))
+      ),
+    )
+
+    val result = manager.computeNextDue(card, logs, listOf(card))
+
+    assertThat(result.nextDueMeterKey).isEqualTo("odometer")
+    assertThat(result.nextDueEngine).isEqualTo(85000f)
   }
 
   @Test
@@ -529,6 +614,9 @@ class TaskDueManagerImplTest {
         creation_date = creationDate
       )
     )
+
+  private fun meterRule(key: String, interval: Float): InspectionRule =
+    InspectionRule(meter_rule = MeterRule(meter_key = key, interval = interval))
 
   private fun engineRule(hours: Float): InspectionRule =
     InspectionRule(engine_hour_rule = EngineHourRule(interval_hours = hours))

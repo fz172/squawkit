@@ -3,6 +3,7 @@ package dev.fanfly.wingslog.feature.stresstest
 import dev.fanfly.wingslog.core.appinfo.APP_VERSION_CODE
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.model.id.generateRandomId
+import dev.fanfly.wingslog.core.template.MeterKeys
 import dev.fanfly.wingslog.core.template.SlotKeys
 import dev.fanfly.wingslog.core.template.SpecKeys
 import dev.fanfly.wingslog.core.template.allComponentsInSlot
@@ -21,6 +22,8 @@ import dev.fanfly.wingslog.thing.ImmediateRule
 import dev.fanfly.wingslog.thing.InspectionRule
 import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.thing.MaintenanceTask
+import dev.fanfly.wingslog.thing.MeterReading
+import dev.fanfly.wingslog.thing.MeterRule
 import dev.fanfly.wingslog.thing.OnConditionRule
 import dev.fanfly.wingslog.thing.Spec
 import dev.fanfly.wingslog.thing.Squawk
@@ -140,6 +143,10 @@ object FakeDataGenerator {
     val isOneTime: Boolean = false,
   )
 
+  /**
+   * The aviation pool. Kept under its old name because the airplane fixture is the one with real
+   * Things behind it; every other preset gets its own below.
+   */
   private val TASK_TEMPLATES = listOf(
     TaskTemplate(
       "Annual Inspection",
@@ -607,6 +614,192 @@ object FakeDataGenerator {
     ),
   )
 
+  private fun meterRule(key: String, interval: Float): InspectionRule =
+    InspectionRule(meter_rule = MeterRule(meter_key = key, interval = interval))
+
+  private fun months(count: Int): InspectionRule =
+    InspectionRule(time_rule = TimeRule(interval_months = count))
+
+  /**
+   * A car pool, scheduled in miles. This is the point of the whole fixture: until it existed the
+   * generator handed a car the aviation pool, so nothing anyone dogfooded ever exercised a keyed
+   * rule and every fake log recorded aeroplane hours a car has no meter for.
+   */
+  private val AUTOMOTIVE_TASK_TEMPLATES = listOf(
+    TaskTemplate(
+      "Oil and Filter Change",
+      ComponentType.COMPONENT_ENGINE,
+      ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
+      meterRule(MeterKeys.ODOMETER, 5000f),
+      notes = "Full synthetic 0W-20. Reset the maintenance minder afterwards.",
+    ),
+    TaskTemplate(
+      "Tire Rotation",
+      ComponentType.COMPONENT_UNKNOWN,
+      ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
+      meterRule(MeterKeys.ODOMETER, 7500f),
+      notes = "Front to back, same side. Check pressures cold and inspect for uneven wear.",
+    ),
+    TaskTemplate(
+      "Brake Inspection",
+      ComponentType.COMPONENT_UNKNOWN,
+      ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
+      meterRule(MeterKeys.ODOMETER, 15000f),
+      notes = "Measure pad thickness and rotor runout. Flush fluid every three years regardless.",
+    ),
+    TaskTemplate(
+      "Engine Air Filter",
+      ComponentType.COMPONENT_ENGINE,
+      ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
+      meterRule(MeterKeys.ODOMETER, 30000f),
+      notes = "Sooner in dusty conditions. Inspect the cabin filter at the same time.",
+    ),
+    TaskTemplate(
+      "State Safety Inspection",
+      ComponentType.COMPONENT_UNKNOWN,
+      ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
+      months(12),
+      notes = "Sticker expires at the end of the month. Bring registration and proof of insurance.",
+    ),
+    TaskTemplate(
+      "Registration Renewal",
+      ComponentType.COMPONENT_UNKNOWN,
+      ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
+      months(12),
+      notes = "Renew online. Emissions test required in some counties.",
+    ),
+  )
+
+  /** A bike pool, deliberately split across two meters so both get exercised. */
+  private val BIKE_TASK_TEMPLATES = listOf(
+    TaskTemplate(
+      "Chain Wear Check",
+      ComponentType.COMPONENT_UNKNOWN,
+      ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
+      meterRule(MeterKeys.ODOMETER, 500f),
+      notes = "Replace at 0.5% stretch, before it starts eating the cassette.",
+    ),
+    TaskTemplate(
+      "Drivetrain Service",
+      ComponentType.COMPONENT_UNKNOWN,
+      ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
+      meterRule(MeterKeys.RIDE_HOURS, 100f),
+      notes = "Degrease, re-lube, check derailleur alignment.",
+    ),
+    TaskTemplate(
+      "Brake Pad Inspection",
+      ComponentType.COMPONENT_UNKNOWN,
+      ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
+      meterRule(MeterKeys.ODOMETER, 1000f),
+      notes = "Replace under 1mm of pad material. Bed new pads in before the first descent.",
+    ),
+    TaskTemplate(
+      "Annual Tune-Up",
+      ComponentType.COMPONENT_UNKNOWN,
+      ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
+      months(12),
+      notes = "Bearing check, true the wheels, replace cables and housing.",
+    ),
+  )
+
+  /** A boat pool. Engine hours, which is the same shape as aviation but under a keyed rule. */
+  private val BOAT_TASK_TEMPLATES = listOf(
+    TaskTemplate(
+      "Engine Oil Change",
+      ComponentType.COMPONENT_ENGINE,
+      ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
+      meterRule(MeterKeys.ENGINE_HOURS, 100f),
+      notes = "Change the gear oil at the same interval. Check for water intrusion in the sample.",
+    ),
+    TaskTemplate(
+      "Impeller Replacement",
+      ComponentType.COMPONENT_ENGINE,
+      ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
+      meterRule(MeterKeys.ENGINE_HOURS, 200f),
+      notes = "Annually regardless of hours. Count the vanes — a missing one is downstream.",
+    ),
+    TaskTemplate(
+      "Zinc Anode Inspection",
+      ComponentType.COMPONENT_UNKNOWN,
+      ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
+      months(6),
+      notes = "Replace at 50% erosion. Never paint them.",
+    ),
+    TaskTemplate(
+      "Hull Cleaning and Inspection",
+      ComponentType.COMPONENT_UNKNOWN,
+      ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
+      months(6),
+      notes = "Check through-hulls and the running gear while she is out.",
+    ),
+  )
+
+  /** A home pool. No meters at all, so everything here is calendar-driven. */
+  private val HOME_TASK_TEMPLATES = listOf(
+    TaskTemplate(
+      "HVAC Filter Replacement",
+      ComponentType.COMPONENT_UNKNOWN,
+      ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
+      months(3),
+      notes = "MERV 11. Note the size on the filter housing so the next one is right.",
+    ),
+    TaskTemplate(
+      "Water Heater Flush",
+      ComponentType.COMPONENT_UNKNOWN,
+      ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
+      months(12),
+      notes = "Drain the sediment and check the anode rod while the tank is empty.",
+    ),
+    TaskTemplate(
+      "Gutter Cleaning",
+      ComponentType.COMPONENT_UNKNOWN,
+      ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
+      months(6),
+      notes = "Spring and late autumn. Check the downspout runs clear of the foundation.",
+    ),
+    TaskTemplate(
+      "Smoke Detector Batteries",
+      ComponentType.COMPONENT_UNKNOWN,
+      ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
+      months(12),
+      notes = "Test every unit. Replace the detector itself after ten years.",
+    ),
+    TaskTemplate(
+      "Dryer Vent Cleaning",
+      ComponentType.COMPONENT_UNKNOWN,
+      ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
+      months(12),
+      notes = "The whole run, not just the trap. Longer drying times are the tell.",
+    ),
+  )
+
+  /** Custom declares nothing, so its fixture is the one that has to work with no vocabulary. */
+  private val CUSTOM_TASK_TEMPLATES = listOf(
+    TaskTemplate(
+      "Routine Inspection",
+      ComponentType.COMPONENT_UNKNOWN,
+      ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
+      months(6),
+    ),
+    TaskTemplate(
+      "Annual Service",
+      ComponentType.COMPONENT_UNKNOWN,
+      ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
+      months(12),
+    ),
+  )
+
+  /** Which pool a preset draws from. Airplane is the default because it is the richest. */
+  private fun taskPoolFor(template: ThingTemplate): List<TaskTemplate> =
+    when (template.id) {
+      CanonicalTemplates.AUTOMOTIVE.id -> AUTOMOTIVE_TASK_TEMPLATES
+      CanonicalTemplates.BIKE.id -> BIKE_TASK_TEMPLATES
+      CanonicalTemplates.BOAT.id -> BOAT_TASK_TEMPLATES
+      CanonicalTemplates.HOME.id -> HOME_TASK_TEMPLATES
+      CanonicalTemplates.CUSTOM.id -> CUSTOM_TASK_TEMPLATES
+      else -> TASK_TEMPLATES
+    }
+
   fun generate(config: StressTestConfig): StressTestData {
     val now = Clock.System.now()
     val spanDays = (4 * 365).days
@@ -628,12 +821,13 @@ object FakeDataGenerator {
       )
       else buildFromTemplate(template, thingId)
     val technicians = buildTechnicians(config.technicianCount)
-    val tasks = buildTasks(config.taskCount, now)
+    val tasks = buildTasks(config.taskCount, now, template)
     val squawks =
       buildSquawks(config.squawkCount, thing, startInstant, now)
     val (logs, addressedSquawks) = buildLogs(
       config.logCount,
       thing,
+      template,
       technicians,
       tasks,
       squawks,
@@ -815,9 +1009,14 @@ object FakeDataGenerator {
     }
   }
 
-  private fun buildTasks(count: Int, now: Instant): List<MaintenanceTask> {
-    val pool = TASK_TEMPLATES.shuffled()
-      .take(count.coerceAtMost(TASK_TEMPLATES.size))
+  private fun buildTasks(
+    count: Int,
+    now: Instant,
+    template: ThingTemplate,
+  ): List<MaintenanceTask> {
+    val templates = taskPoolFor(template)
+    val pool = templates.shuffled()
+      .take(count.coerceAtMost(templates.size))
     val overdueCreationInstant = now - (4 * 365).days
 
     return pool.mapIndexed { index, template ->
@@ -825,7 +1024,10 @@ object FakeDataGenerator {
       val rule = template.rule
       val isOnCondition =
         rule.on_condition_rule != null || rule.immediate_rule != null
-      val isEngineHour = rule.engine_hour_rule != null
+      // A keyed rule is the same shape for this purpose: its base comes from a logged reading,
+      // which does not exist yet at task-creation time.
+      val isMeterBased =
+        rule.engine_hour_rule != null || rule.meter_rule != null
       val dueGroup = if (isOnCondition) -1 else index % 3
 
       // Approximate the rule interval in days for creation_date arithmetic.
@@ -856,7 +1058,7 @@ object FakeDataGenerator {
       // NORMAL/DUE_SOON use force_due_date and OVERDUE is natural (base=0,
       // interval=100, current≈1200 → OVERDUE without any override).
       val creationInstant: Instant = when {
-        isEngineHour || isOnCondition -> overdueCreationInstant
+        isMeterBased || isOnCondition -> overdueCreationInstant
         dueGroup == 2 -> overdueCreationInstant
         dueGroup == 0 && intervalDays >= 40 -> {
           val offsetDays =
@@ -885,7 +1087,7 @@ object FakeDataGenerator {
       }
 
       val forceDueDate = when {
-        isOnCondition || !isEngineHour -> null
+        isOnCondition || !isMeterBased -> null
         dueGroup == 0 -> (now + (60..240).random().days).toWireInstant()
         dueGroup == 1 -> (now + (1..25).random().days).toWireInstant()
         else -> null
@@ -948,6 +1150,7 @@ object FakeDataGenerator {
   private fun buildLogs(
     count: Int,
     thing: Thing,
+    template: ThingTemplate,
     technicians: List<Technician>,
     tasks: List<MaintenanceTask>,
     squawks: List<Squawk>,
@@ -961,6 +1164,26 @@ object FakeDataGenerator {
       .toDouble()
     val totalHoursFlown = (300..600).random()
       .toDouble()
+
+    // Where each of this template's own meters starts and how far it climbs over the log span.
+    // Fixed for the run so readings only ever increase — a meter that went backwards would make
+    // every due calculation downstream nonsense. The aviation three are handled below instead,
+    // so the airplane fixture keeps the exact numbers it always had.
+    val meterRuns = template.meters.associate { meter ->
+      meter.key to if (meter.decimal) {
+        (400..900).random()
+          .toDouble() to (200..500).random()
+          .toDouble()
+      } else {
+        (20_000..60_000).random()
+          .toDouble() to (30_000..60_000).random()
+          .toDouble()
+      }
+    }
+
+    val isAirplane = template.id == AirplaneTemplate.ID
+    // Hoisted: the log lambda below binds its own `template`, which is a log fixture, not this one.
+    val thingMeters = template.meters
 
     val openSquawks = squawks.toMutableList()
     val addressedSquawks = mutableMapOf<String, String>()
@@ -976,6 +1199,21 @@ object FakeDataGenerator {
       val engineHours = startEngineHours + (fraction * totalHoursFlown)
       val airframeTime = engineHours + (30..80).random()
       val propTime = engineHours - (5..20).random()
+
+      // One reading per meter the template declares. Before this every fake log carried three
+      // aeroplane hour fields and nothing else, so a generated car had no odometer to read.
+      val readings = thingMeters.map { meter ->
+        val value = when (meter.key) {
+          MeterKeys.AIRFRAME_HOURS -> airframeTime
+          MeterKeys.ENGINE_HOURS -> engineHours
+          MeterKeys.PROP_HOURS -> propTime
+          else -> {
+            val (meterStart, meterSpan) = meterRuns.getValue(meter.key)
+            meterStart + (fraction * meterSpan)
+          }
+        }
+        MeterReading(meter_key = meter.key, value_ = value)
+      }
 
       val logId = generateRandomId()
       val technician =
@@ -1023,9 +1261,13 @@ object FakeDataGenerator {
         work_description = template.description,
         component_type = template.component,
         component_serial = componentSerial,
-        engine_hour = engineHours,
-        airframe_time = airframeTime,
-        prop_time = propTime,
+        // Written alongside `readings` for the airplane only, which is what a log saved by any
+        // build in the field looks like. Every other preset gets the keyed form on its own, so
+        // the fixture proves those screens never needed the aviation fields.
+        engine_hour = if (isAirplane) engineHours else 0.0,
+        airframe_time = if (isAirplane) airframeTime else 0.0,
+        prop_time = if (isAirplane) propTime else 0.0,
+        readings = readings,
         inspection_ids = matchedTaskIds,
         squawk_ids = squawkIds,
         technician = technician,

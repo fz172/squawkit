@@ -379,9 +379,9 @@ private class PdfLayoutEngine(
       "Addressed By - Date" -> "Addr. Date"
       "Action Date" -> "Action Date"
       "Last Complied - Date" -> "Last Date"
-      "Last Complied - Hours" -> "Last Hrs"
+      "Last Complied - Meter" -> "Last Meter"
       "Next Due - Date" -> "Next Date"
-      "Next Due - Hours" -> "Next Hrs"
+      "Next Due - Meter" -> "Next Meter"
       else -> header
     }
 

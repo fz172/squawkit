@@ -59,7 +59,8 @@ fun ThingTemplate?.meterLabel(key: String, ifAbsent: String): String =
 fun ThingTemplate?.meterLabelWithUnit(key: String, ifAbsent: String): String {
   val meter = meter(key) ?: return ifAbsent
   val label = meter.label.takeIf { it.isNotEmpty() } ?: return ifAbsent
-  return meter.unit_label.takeIf { it.isNotEmpty() }?.let { "$label ($it)" } ?: label
+  return meter.unit_label.takeIf { it.isNotEmpty() }
+    ?.let { "$label ($it)" } ?: label
 }
 
 /** A slot's label, falling back to [ifAbsent]. See [meterLabel] on why the fallback exists. */
@@ -77,11 +78,25 @@ fun ThingTemplate?.specLabel(key: String, ifAbsent: String): String =
  * second string per slot would be one more thing to keep in step with it.
  */
 fun ThingTemplate?.slotSerialLabel(key: String, ifAbsent: String): String =
-  slot(key)?.label?.takeIf { it.isNotEmpty() }?.let { "$it Serial" } ?: ifAbsent
+  slot(key)?.label?.takeIf { it.isNotEmpty() }
+    ?.let { "$it Serial" } ?: ifAbsent
 
-/** Meter keys the airplane template declares, and the only ones any stored log has values for. */
+/**
+ * Meter keys the canonical presets declare.
+ *
+ * A key is a join: a template's `MeterDef.key`, a log's `MeterReading.meter_key` and a
+ * `MeterRule.meter_key` all have to spell it the same way, and a typo is silent — the reading is
+ * kept, it just never matches a rule. Naming them here is what keeps the three in step.
+ *
+ * The three hour keys are also the only ones any log stored before `readings` existed has values
+ * for, which is why the read fallbacks in `MeterReadings` name exactly these.
+ */
 object MeterKeys {
   const val AIRFRAME_HOURS = "airframe_hours"
   const val ENGINE_HOURS = "engine_hours"
   const val PROP_HOURS = "prop_hours"
+
+  /** Automotive and bike. Miles, no decimal — "84512.0 mi" is not how anyone writes mileage. */
+  const val ODOMETER = "odometer"
+  const val RIDE_HOURS = "ride_hours"
 }

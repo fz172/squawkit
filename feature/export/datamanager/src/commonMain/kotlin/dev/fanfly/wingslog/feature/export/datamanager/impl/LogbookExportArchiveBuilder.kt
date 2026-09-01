@@ -7,11 +7,15 @@ import dev.fanfly.wingslog.core.template.SpecKeys
 import dev.fanfly.wingslog.core.template.allComponentsInSlot
 import dev.fanfly.wingslog.core.template.childInSlot
 import dev.fanfly.wingslog.core.template.childrenInSlot
+import dev.fanfly.wingslog.core.template.formatMeterNumber
+import dev.fanfly.wingslog.core.template.meter
+import dev.fanfly.wingslog.core.template.meterUnit
 import dev.fanfly.wingslog.core.template.readingFor
 import dev.fanfly.wingslog.core.template.specValue
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDateRange
 import dev.fanfly.wingslog.feature.export.datamanager.ExportFormat
 import dev.fanfly.wingslog.feature.export.datamanager.ExportRequest
+import dev.fanfly.wingslog.feature.tasks.datamanager.meterKeyFor
 import dev.fanfly.wingslog.thing.Attachment
 import dev.fanfly.wingslog.thing.AttachmentType
 import dev.fanfly.wingslog.thing.CertExpireLimit
@@ -466,9 +470,9 @@ class LogbookExportArchiveBuilder(
           "Authority",
           "Schedule",
           "Last Complied - Date",
-          "Last Complied - Hours",
+          "Last Complied - Meter",
           "Next Due - Date",
-          "Next Due - Hours",
+          "Next Due - Meter",
           "One-Time",
           "Notes",
           "Task Details",
@@ -477,6 +481,9 @@ class LogbookExportArchiveBuilder(
       bundle.tasks.forEach { task ->
         val due = bundle.dueByTaskId[task.id]
         val lastLog = bundle.lastCompliedByTaskId[task.id]
+        // A keyed rule names its meter; an aviation task falls back to whatever its component
+        // always implied, so these two columns keep reading hours for an aeroplane.
+        val taskMeterKey = meterKeyFor(task.component, task.rules)
         add(
           listOf(
             task.title,
@@ -486,11 +493,12 @@ class LogbookExportArchiveBuilder(
             task.compliance_authority,
             task.rules.scheduleLabel(bundle),
             (lastLog?.timestamp).date(timeZone),
-            lastLog?.componentHours(task.component)
-              .formatHours(),
+            lastLog?.readingFor(taskMeterKey)
+              .meterCell(bundle, taskMeterKey),
             due?.nextDueDate?.toString()
               .orEmpty(),
-            (due?.nextDueEngine).formatHours(),
+            due?.nextDueEngine?.toDouble()
+              .meterCell(bundle, due?.nextDueMeterKey ?: taskMeterKey),
             if (task.is_one_time) "Yes" else "No",
             task.notes,
             task.compliance_details,
@@ -855,6 +863,18 @@ class LogbookExportArchiveBuilder(
           }
         }
 
+        rule.meter_rule != null -> rule.meter_rule!!.run {
+          val template = bundle.thing.template
+          val amount = template.formatMeterNumber(meter_key, interval.toDouble())
+          val unit = template.meterUnit(meter_key)
+            .lowercase()
+          // The unit alone is ambiguous where several meters share it — an aeroplane has three
+          // in hours — so the meter's own name follows it.
+          template.meter(meter_key)
+            ?.let { "Every $amount $unit (${it.label})" }
+            ?: "Every $amount $unit"
+        }
+
         rule.engine_hour_rule != null -> "Every ${rule.engine_hour_rule!!.interval_hours.formatHours()} engine hours"
         rule.on_condition_rule != null -> rule.on_condition_rule!!.description.ifBlank { "On condition" }
         rule.linked_rule != null -> "Linked to ${
@@ -864,15 +884,6 @@ class LogbookExportArchiveBuilder(
         rule.immediate_rule != null -> "Immediate"
         else -> "Unknown"
       }
-    }
-
-  private fun MaintenanceLog.componentHours(componentType: ComponentType): Double =
-    when (componentType) {
-      ComponentType.COMPONENT_ENGINE -> engine_hour
-      ComponentType.COMPONENT_PROPELLER -> prop_time
-      ComponentType.COMPONENT_AIRFRAME,
-      ComponentType.COMPONENT_UNKNOWN,
-        -> airframe_time
     }
 
   private fun ExportDateRange.label(): String =
@@ -980,6 +991,27 @@ class LogbookExportArchiveBuilder(
       minute.toString()
         .padStart(2, '0')
     } ${timeZone.id}"
+
+  /**
+   * A meter value with its unit — "1041.8 hrs", "85000 mi". The unit is spelled out because these
+   * columns can now hold either, and a bare number under an hours-shaped header was how a car's
+   * 5,000-mile service read as 5,000 hours.
+   */
+  private fun Double?.meterCell(
+    bundle: ThingBundle,
+    meterKey: String?
+  ): String {
+    val value = this?.takeIf { it > 0.0 } ?: return ""
+    // The Thing's own DNA: this is the template it was created against, which is what its stored
+    // readings were recorded under.
+    val template = bundle.thing.template
+    return "${template.formatMeterNumber(meterKey, value)} ${
+      template.meterUnit(
+        meterKey
+      )
+        .lowercase()
+    }"
+  }
 
   private fun Double?.formatHours(): String =
     this?.takeIf { it > 0.0 }
