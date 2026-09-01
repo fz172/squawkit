@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
@@ -29,9 +28,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import dev.fanfly.wingslog.core.template.SlotKeys
-import dev.fanfly.wingslog.core.template.LocalThingTemplate
-import dev.fanfly.wingslog.core.template.slotLabel
 import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -44,23 +40,18 @@ import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedTopBar
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
 import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
-import dev.fanfly.wingslog.core.ui.common.compose.DashedButton
 import dev.fanfly.wingslog.core.ui.common.compose.UnsavedChangesDialog
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import dev.fanfly.wingslog.feature.thing.update.compose.AirframeSection
-import dev.fanfly.wingslog.feature.thing.update.compose.EngineSection
+import dev.fanfly.wingslog.feature.thing.update.compose.ComponentTreeSection
+import dev.fanfly.wingslog.feature.thing.update.compose.SpecFieldsSection
 import dev.fanfly.wingslog.feature.thing.update.viewmodel.EditThingViewModel
-import dev.fanfly.wingslog.feature.thing.update.viewmodel.engines
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.core.sharedassets.generated.resources.add_thing
 import wingslog.core.sharedassets.generated.resources.cancel
-import wingslog.core.sharedassets.generated.resources.component_airframe
-import wingslog.core.sharedassets.generated.resources.component_engine
 import wingslog.core.sharedassets.generated.resources.delete
 import wingslog.feature.logs.sharedassets.generated.resources.this_action_cannot_be_undone
-import wingslog.feature.thing.update.generated.resources.add_engine
 import wingslog.feature.thing.update.generated.resources.delete_thing
 import wingslog.feature.thing.update.generated.resources.delete_thing_member_plural
 import wingslog.feature.thing.update.generated.resources.delete_thing_member_singular
@@ -204,38 +195,18 @@ fun EditAircraftScreen(
           ),
         verticalArrangement = Arrangement.spacedBy(Spacing.extraLarge)
       ) {
-        // AIRFRAME
-        Text(
-          text = LocalThingTemplate.current.slotLabel(
-            SlotKeys.AIRFRAME,
-            ifAbsent = stringResource(CoreRes.string.component_airframe),
-          ).uppercase()
-        )
-        AirframeSection(
+        // Identity, then the component tree — both from what the template declares (#729). The
+        // fixed AIRFRAME and ENGINE headings went with the airplane-shaped sections: a heading
+        // naming one preset's slots is the same bug as a field naming them.
+        SpecFieldsSection(
           uiState.thing,
           viewModel,
-          uiState.showValidationErrors
+          uiState.showValidationErrors,
         )
-
-        // ENGINE
-        Text(
-          text = stringResource(CoreRes.string.component_engine).uppercase()
-        )
-        uiState.thing.engines.forEachIndexed { index, engine ->
-          EngineSection(
-            engineIndex = index,
-            engine = engine,
-            viewModel = viewModel,
-            showValidationErrors = uiState.showValidationErrors
-          )
-        }
-
-        DashedButton(
-          label = stringResource(
-            AircraftRes.string.add_engine
-          ),
-          modifier = Modifier.fillMaxWidth(),
-          onClick = { viewModel.onAddEngine() },
+        ComponentTreeSection(
+          uiState.thing,
+          viewModel,
+          uiState.showValidationErrors,
         )
 
         Spacer(Modifier.height(Spacing.buttonHeight + Spacing.huge))

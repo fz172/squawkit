@@ -8,16 +8,21 @@ import dev.fanfly.wingslog.core.analytics.AnalyticsManager
 import dev.fanfly.wingslog.core.analytics.ThingCreated
 import dev.fanfly.wingslog.core.analytics.log
 import dev.fanfly.wingslog.core.nav.Screen
+import dev.fanfly.wingslog.core.template.ComponentField
+import dev.fanfly.wingslog.core.template.ComponentPath
 import dev.fanfly.wingslog.core.template.CurrentThingTemplate
-import dev.fanfly.wingslog.core.template.SlotKeys
 import dev.fanfly.wingslog.core.template.SpecKeys
+import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.core.template.addComponent
 import dev.fanfly.wingslog.core.template.ensureComponentAt
+import dev.fanfly.wingslog.core.template.newComponentFor
 import dev.fanfly.wingslog.core.template.removeComponentAt
 import dev.fanfly.wingslog.core.template.updateComponentAt
+import dev.fanfly.wingslog.core.template.with
+import dev.fanfly.wingslog.core.template.withSpec
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
-import dev.fanfly.wingslog.thing.Component
+import dev.fanfly.wingslog.thing.ComponentSlot
 import dev.fanfly.wingslog.thing.Thing
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,6 +37,7 @@ class EditThingViewModel(
   private val fleetManager: FleetManager,
   private val sharingManager: SharingManager,
   private val currentThingTemplate: CurrentThingTemplate,
+  private val templateRegistry: TemplateRegistry,
   private val analytics: AnalyticsManager,
   savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
@@ -40,11 +46,23 @@ class EditThingViewModel(
     MutableStateFlow(
       // Read once at construction: the template of the thing being edited cannot change while the
       // form is open, and a mid-edit change would silently alter what the form accepts.
-      EditThingUiState(
-        requireSerials = currentThingTemplate.capabilities.value.component_serial_prompt,
-      ),
+      // forThingWithFallback, not the selected template: on a create nothing is selected, and a
+      // null template would render a form with no fields and validate nothing. This resolves the
+      // same way FleetManagerImpl does on write, so the form asks for exactly what the Thing will
+      // be saved under. #739 replaces the fallback with the picker's choice.
+      stateFor(Thing()),
     )
   val uiState = _uiState.asStateFlow()
+
+  /** Form state for [thing], with the template it resolves under and the rules that follow. */
+  private fun stateFor(thing: Thing): EditThingUiState {
+    val template = templateRegistry.forThingWithFallback(thing)
+    return EditThingUiState(
+      thing = thing,
+      template = template,
+      requireSerials = template.capabilities?.component_serial_prompt ?: true,
+    )
+  }
 
   /**
    * A create rather than an edit. Read once from the route argument, because the same form serves
@@ -105,8 +123,9 @@ class EditThingViewModel(
           .collect { thing ->
             if (thing != null) {
               _uiState.update {
-                it.copy(
-                  thing = thing,
+                // The loaded thing carries its own DNA, so the template resolves from it rather
+                // than from whatever was selected in the shell.
+                stateFor(thing).copy(
                   initialAircraft = it.initialAircraft ?: thing,
                   isLoading = false,
                 )
@@ -127,8 +146,7 @@ class EditThingViewModel(
 
   fun loadThing(thing: Thing) {
     _uiState.update {
-      it.copy(
-        thing = thing,
+      stateFor(thing).copy(
         initialAircraft = it.initialAircraft ?: thing,
         isLoading = false,
       )
@@ -172,167 +190,74 @@ class EditThingViewModel(
     }
   }
 
-  // The form edits spec and the component tree directly (#668).
+  // The form edits spec and the component tree directly (#668), and both are driven by what the
+  // template declares rather than by airplane knowledge (#729).
 
-  fun onMakeChanged(newValue: String) {
+  /**
+   * A spec field the template declares — make, model, VIN, address.
+   *
+   * **Spec is the only home for identity now.** make/model/serial used to be written twice, to
+   * `spec` and onto the airframe component, with `spec` authoritative and a helper keeping them in
+   * step. The duplicate existed because the retired proto carried those fields on the airframe; it
+   * has no reason to outlive them, and a second copy that nothing reads is a copy that will drift.
+   */
+  fun onSpecChanged(key: String, newValue: String) {
     _uiState.update {
       it.copy(
-        thing = it.thing.setIdentity(
-          SpecKeys.MAKE,
-          newValue.replaceFirstChar { char -> char.uppercase() },
-        ),
-      )
-    }
-  }
-
-  fun onModelChanged(newValue: String) {
-    _uiState.update {
-      it.copy(
-        thing = it.thing.setIdentity(
-          SpecKeys.MODEL,
-          newValue.replaceFirstChar { char -> char.uppercase() },
-        ),
-      )
-    }
-  }
-
-  fun onSerialChanged(newValue: String) {
-    _uiState.update {
-      it.copy(
-        thing = it.thing.setIdentity(
-          SpecKeys.SERIAL,
-          newValue.uppercase()
+        thing = it.thing.withSpec(
+          key,
+          normalise(key, newValue)
         )
       )
     }
   }
 
-  fun onTailNumberChanged(newValue: String) {
-    _uiState.update {
-      it.copy(
-        thing = it.thing.setIdentity(
-          SpecKeys.TAIL_NUMBER,
-          newValue.uppercase()
-        )
-      )
-    }
-  }
-
-  fun onEngineMakeChanged(engineIndex: Int, newValue: String) {
-    _uiState.update {
-      it.copy(
-        thing = it.thing.updateComponentAt(enginePath(engineIndex)) { engine ->
-          engine.copy(make = newValue.replaceFirstChar { char -> char.uppercase() })
-        },
-      )
-    }
-  }
-
-  fun onEngineModelChanged(engineIndex: Int, newValue: String) {
-    _uiState.update {
-      it.copy(
-        thing = it.thing.updateComponentAt(enginePath(engineIndex)) { engine ->
-          engine.copy(model = newValue.replaceFirstChar { char -> char.uppercase() })
-        },
-      )
-    }
-  }
-
-  fun onEngineSerialChanged(engineIndex: Int, newValue: String) {
-    _uiState.update {
-      it.copy(
-        thing = it.thing.updateComponentAt(enginePath(engineIndex)) {
-          it.copy(
-            serial = newValue.uppercase()
-          )
-        },
-      )
-    }
-  }
-
-  fun onPropellerHubMakeChanged(engineIndex: Int, newValue: String) {
-    _uiState.update {
-      it.copy(
-        thing = it.thing.ensureComponentAt(hubPath(engineIndex))
-          .updateComponentAt(hubPath(engineIndex)) { hub ->
-            hub.copy(make = newValue.replaceFirstChar { char -> char.uppercase() })
-          },
-      )
-    }
-  }
-
-  fun onPropellerHubModelChanged(engineIndex: Int, newValue: String) {
-    _uiState.update {
-      it.copy(
-        thing = it.thing.ensureComponentAt(hubPath(engineIndex))
-          .updateComponentAt(hubPath(engineIndex)) { hub ->
-            hub.copy(model = newValue.replaceFirstChar { char -> char.uppercase() })
-          },
-      )
-    }
-  }
-
-  fun onPropellerHubSerialChanged(engineIndex: Int, newValue: String) {
-    _uiState.update {
-      it.copy(
-        thing = it.thing.ensureComponentAt(hubPath(engineIndex))
-          .updateComponentAt(hubPath(engineIndex)) { it.copy(serial = newValue.uppercase()) })
-    }
-  }
-
-  fun onPropellerBladeSerialChanged(
-    engineIndex: Int,
-    bladeIndex: Int,
-    newValue: String
+  /** A field on the component at [path], wherever in the tree that is. */
+  fun onComponentFieldChanged(
+    path: ComponentPath,
+    field: ComponentField,
+    newValue: String,
   ) {
-    _uiState.update {
-      it.copy(
-        thing = it.thing.updateComponentAt(bladePath(engineIndex, bladeIndex)) {
-          it.copy(serial = newValue.uppercase())
-        },
+    val value = if (field == ComponentField.SERIAL) {
+      newValue.uppercase()
+    } else {
+      newValue.replaceFirstChar { it.uppercase() }
+    }
+    _uiState.update { state ->
+      // ensureComponentAt first: a fixed slot renders a row before anything is stored, so the
+      // first keystroke into an empty one has to create it and its ancestors.
+      state.copy(
+        thing = state.thing.ensureComponentAt(path)
+          .updateComponentAt(path) { it.with(field, value) },
       )
     }
   }
 
-  fun onAddBlade(engineIndex: Int) {
-    _uiState.update {
-      it.copy(
-        thing = it.thing.ensureComponentAt(propellerPath(engineIndex))
-          .addComponent(
-            propellerPath(engineIndex),
-            Component(slot_key = SlotKeys.BLADE)
-          )
+  /** Adds another [slot] under [parentPath]. Only repeatable slots reach here — see `addableSlotsUnder`. */
+  fun onAddComponent(parentPath: ComponentPath, slot: ComponentSlot) {
+    _uiState.update { state ->
+      state.copy(
+        thing = state.thing.ensureComponentAt(parentPath)
+          .addComponent(parentPath, newComponentFor(slot)),
       )
     }
   }
 
-  fun onAddEngine() {
-    _uiState.update {
-      it.copy(
-        thing = it.thing.ensureComponentAt(listOf(SlotKeys.AIRFRAME to 0))
-          .addComponent(listOf(SlotKeys.AIRFRAME to 0), newEngine())
-      )
-    }
+  fun onRemoveComponent(path: ComponentPath) {
+    _uiState.update { it.copy(thing = it.thing.removeComponentAt(path)) }
   }
 
-  fun onRemoveEngine(engineIndex: Int) {
-    _uiState.update {
-      it.copy(
-        thing = it.thing.removeComponentAt(
-          enginePath(
-            engineIndex
-          )
-        )
-      )
-    }
-  }
-
-  fun onRemoveBlade(engineIndex: Int, bladeIndex: Int) {
-    _uiState.update {
-      it.copy(
-        thing = it.thing.removeComponentAt(bladePath(engineIndex, bladeIndex))
-      )
-    }
+  /**
+   * Serials are upper-cased, everything else gets a capital first letter.
+   *
+   * Keyed by the conventional spec keys rather than by a template-declared flag: `SpecField` has no
+   * casing hint, and inventing one for this would be a schema change for a typing convenience. A
+   * key no preset declares falls through untouched, which is the right default for an address.
+   */
+  private fun normalise(key: String, value: String): String = when (key) {
+    SpecKeys.SERIAL, SpecKeys.TAIL_NUMBER -> value.uppercase()
+    SpecKeys.MAKE, SpecKeys.MODEL -> value.replaceFirstChar { it.uppercase() }
+    else -> value
   }
 
   companion object {

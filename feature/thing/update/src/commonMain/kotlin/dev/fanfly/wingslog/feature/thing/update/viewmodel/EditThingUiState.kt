@@ -1,11 +1,10 @@
 package dev.fanfly.wingslog.feature.thing.update.viewmodel
 
-import dev.fanfly.wingslog.core.template.SlotKeys
 import dev.fanfly.wingslog.core.template.SpecKeys
-import dev.fanfly.wingslog.core.template.childInSlot
-import dev.fanfly.wingslog.core.template.childrenInSlot
+import dev.fanfly.wingslog.core.template.componentsMissingSerials
 import dev.fanfly.wingslog.core.template.specValue
 import dev.fanfly.wingslog.thing.Thing
+import dev.fanfly.wingslog.thing.ThingTemplate
 
 data class EditThingUiState(
   val thing: Thing = Thing(),
@@ -33,6 +32,12 @@ data class EditThingUiState(
    * field the user is being blocked on is not on screen. Defaults true, which is what shipped.
    */
   val requireSerials: Boolean = true,
+  /**
+   * The template being edited under, which is what says which fields exist at all.
+   *
+   * Null only before the load resolves, when there is nothing to validate yet.
+   */
+  val template: ThingTemplate? = null,
 ) {
   /** Deleting is the hosting owner's call alone; rules enforce it, this keeps the UI honest. */
   val canDelete: Boolean get() = hostedByMe && thing.id.isNotEmpty()
@@ -40,34 +45,32 @@ data class EditThingUiState(
   val hasChanges: Boolean
     get() = initialAircraft != null && thing != initialAircraft
 
+  /**
+   * **A field is required when it is on screen and the template asks for it.**
+   *
+   * Two rules, both walking what the template declares rather than an airplane:
+   *
+   * - a `SpecField` marked `required` has a value;
+   * - a component that is *present* has a serial, where its slot expects one.
+   *
+   * Present is the operative word for the second. A slot with no component has nothing to validate
+   * — a car with no engine recorded is complete, not invalid — so the check reads what is stored,
+   * not what could be.
+   *
+   * [requireSerials] relaxes both. Hiding a required input without relaxing its rule refuses the
+   * save and gives no reason, because the field being blocked on is not on screen.
+   */
   val isValid: Boolean
     get() {
-      if (thing.specValue(SpecKeys.MAKE)
-          .isBlank() ||
-        thing.specValue(SpecKeys.MODEL)
-          .isBlank()
-      ) {
-        return false
-      }
-      if (requireSerials && thing.specValue(SpecKeys.SERIAL)
-          .isBlank()
-      ) return false
-      thing.engines.forEach { engine ->
-        if (engine.make.isBlank() || engine.model.isBlank()) return false
-        if (requireSerials && engine.serial.isBlank()) return false
-        val hub = engine.childInSlot(SlotKeys.PROPELLER)
-          ?.childInSlot(SlotKeys.HUB)
-        if (hub == null || hub.make.isBlank() || hub.model.isBlank()) return false
-        // The hub's own serial is shown with an error indicator but has never been enforced here.
-        // Left as it was rather than fixed in passing: making it required would start rejecting
-        // saves that succeed today, which is a product change and not this commit's business.
-        // See the #659 discussion.
-        if (requireSerials) {
-          engine.childInSlot(SlotKeys.PROPELLER)
-            ?.childrenInSlot(SlotKeys.BLADE)
-            ?.forEach { blade -> if (blade.serial.isBlank()) return false }
+      val specOk = template?.spec_fields.orEmpty()
+        .all { field ->
+          val hidden = field.key == SpecKeys.SERIAL && !requireSerials
+          !field.required || hidden || thing.specValue(field.key)
+            .isNotBlank()
         }
-      }
-      return true
+      if (!specOk) return false
+      if (!requireSerials) return true
+      return template.componentsMissingSerials(thing)
+        .isEmpty()
     }
 }

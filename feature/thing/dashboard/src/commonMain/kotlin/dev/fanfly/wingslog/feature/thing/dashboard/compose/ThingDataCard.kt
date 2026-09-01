@@ -28,7 +28,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import dev.fanfly.wingslog.core.template.LexiconFormatter
+import dev.fanfly.wingslog.core.template.LocalThingCapabilities
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.LocalThingTemplate
+import dev.fanfly.wingslog.core.template.componentRows
+import dev.fanfly.wingslog.core.template.thingNoun
 import dev.fanfly.wingslog.core.template.slotLabel
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
@@ -36,19 +41,14 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
-import dev.fanfly.wingslog.core.template.LexiconFormatter
-import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.SlotKeys
 import dev.fanfly.wingslog.core.template.SpecKeys
 import dev.fanfly.wingslog.core.template.childrenInSlot
 import dev.fanfly.wingslog.core.template.rootComponentInSlot
 import dev.fanfly.wingslog.core.template.specValue
-import dev.fanfly.wingslog.core.template.thingNoun
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.thing.Thing
 import org.jetbrains.compose.resources.stringResource
-import wingslog.core.sharedassets.generated.resources.component_airframe
-import wingslog.core.sharedassets.generated.resources.component_engine
 import wingslog.core.sharedassets.generated.resources.edit
 import wingslog.core.sharedassets.generated.resources.make_model_template
 import wingslog.core.sharedassets.generated.resources.manage_access
@@ -138,36 +138,35 @@ fun ThingDataCard(
           ),
           verticalArrangement = Arrangement.spacedBy(Spacing.large)
         ) {
-          ComponentCard(
-            category = LocalThingTemplate.current.slotLabel(
-              SlotKeys.AIRFRAME,
-              ifAbsent = stringResource(CoreRes.string.component_airframe),
-            ).uppercase(),
-            name = stringResource(
-              CoreRes.string.make_model_template,
-              thing.specValue(SpecKeys.MAKE),
-              thing.specValue(SpecKeys.MODEL),
-            ),
-            serial = thing.specValue(SpecKeys.SERIAL)
-          )
-
-          // The airframe's engine children (#668).
-          val engines = thing.rootComponentInSlot(SlotKeys.AIRFRAME)
-            ?.childrenInSlot(SlotKeys.ENGINE)
-            .orEmpty()
-          engines.forEachIndexed { index, engine ->
-            val label = if (engines.size > 1) {
-              stringResource(
-                SharedRes.string.engine_with_index,
-                index + 1
-              )
-            } else {
-              stringResource(CoreRes.string.component_engine)
-            }.uppercase()
-            EngineDetails(
-              label = label,
-              engine = engine
+          // The thing's identity, from the spec fields the template declares. It used to be
+          // captioned AIRFRAME and read make/model/serial, which a home has none of (#729).
+          val template = LocalThingTemplate.current
+          val identity = template?.spec_fields.orEmpty()
+            .filterNot { it.key == SpecKeys.SERIAL }
+            .map { it.label to thing.specValue(it.key) }
+            .filter { (_, value) -> value.isNotBlank() }
+          if (identity.isNotEmpty()) {
+            ComponentCard(
+              category = LexiconFormatter.titleCase(
+                LocalThingLexicon.current.thingNoun
+              ).uppercase(),
+              name = identity.joinToString("  ·  ") { (_, value) -> value },
+              serial = thing.specValue(SpecKeys.SERIAL),
             )
+          }
+
+          // Every stored component, walked from the template's slots rather than from
+          // airframe-then-engines. A bike shows its drivetrain and wheels; a home shows nothing,
+          // which is what `components: false` means.
+          if (LocalThingCapabilities.current.components) {
+            template.componentRows(thing)
+              .filter { it.component != null }
+              .forEach { row ->
+                ComponentDetails(
+                  label = row.label.uppercase(),
+                  component = row.component!!,
+                )
+              }
           }
 
           if (onEditClick != null || onManageAccessClick != null) {

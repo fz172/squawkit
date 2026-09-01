@@ -26,6 +26,11 @@ import org.junit.Test
  *
  * The airplane template sets the capability true, so none of this is reachable from the shipped
  * preset — which is exactly why it is asserted rather than assumed.
+ *
+ * **The hub's serial is now enforced, and was not before.** The old hardcoded validation skipped it
+ * deliberately — "making it required would start rejecting saves that succeed today" — but the rule
+ * is now the template's: a component that is present, whose slot expects a serial, must have one.
+ * The hub qualifies on both counts, so the exception went with the hardcoding (#729).
  */
 class SerialPromptValidationTest {
 
@@ -49,7 +54,12 @@ class SerialPromptValidationTest {
               Component(
                 slot_key = SlotKeys.PROPELLER,
                 children = listOf(
-                  Component(slot_key = SlotKeys.HUB, make = "McCauley", model = "1C160"),
+                  Component(
+                    slot_key = SlotKeys.HUB,
+                    make = "McCauley",
+                    model = "1C160",
+                    serial = if (serials) "H-1" else "",
+                  ),
                   Component(slot_key = SlotKeys.BLADE, serial = if (serials) "B-1" else ""),
                 ),
               ),
@@ -67,6 +77,7 @@ class SerialPromptValidationTest {
     val state = EditThingUiState(
       thing = thing(serials = false),
       requireSerials = CurrentThingTemplate.ALL_ENABLED.component_serial_prompt,
+      template = AirplaneTemplate.TEMPLATE,
     )
 
     assertThat(state.isValid).isFalse()
@@ -75,7 +86,11 @@ class SerialPromptValidationTest {
   @Test
   fun blankSerialsBlockSavingWhenTheTemplateAsksForThem() {
     val state =
-      EditThingUiState(thing = thing(serials = false), requireSerials = true)
+      EditThingUiState(
+        thing = thing(serials = false),
+        requireSerials = true,
+        template = AirplaneTemplate.TEMPLATE,
+      )
 
     assertThat(state.isValid).isFalse()
   }
@@ -83,7 +98,11 @@ class SerialPromptValidationTest {
   @Test
   fun blankSerialsDoNotBlockSavingWhenTheTemplateDoesNot() {
     val state =
-      EditThingUiState(thing = thing(serials = false), requireSerials = false)
+      EditThingUiState(
+        thing = thing(serials = false),
+        requireSerials = false,
+        template = AirplaneTemplate.TEMPLATE,
+      )
 
     assertThat(state.isValid).isTrue()
   }
@@ -96,22 +115,30 @@ class SerialPromptValidationTest {
 
     assertThat(
       EditThingUiState(
-        thing = nameless,
-        requireSerials = false
-      ).isValid
+      thing = nameless,
+      requireSerials = false,
+      template = AirplaneTemplate.TEMPLATE,
+    ).isValid
     ).isFalse()
     assertThat(
       EditThingUiState(
-        thing = nameless,
-        requireSerials = true
-      ).isValid
+      thing = nameless,
+      requireSerials = true,
+      template = AirplaneTemplate.TEMPLATE,
+    ).isValid
     ).isFalse()
   }
 
   @Test
   fun theDefaultIsWhatShipped() {
     // Phase 2's acceptance criterion: a state constructed without the flag behaves as before.
-    assertThat(EditThingUiState(thing = thing(serials = false)).isValid).isFalse()
-    assertThat(EditThingUiState(thing = thing(serials = true)).isValid).isTrue()
+    assertThat(EditThingUiState(
+        thing = thing(serials = false),
+        template = AirplaneTemplate.TEMPLATE,
+      ).isValid).isFalse()
+    assertThat(EditThingUiState(
+        thing = thing(serials = true),
+        template = AirplaneTemplate.TEMPLATE,
+      ).isValid).isTrue()
   }
 }

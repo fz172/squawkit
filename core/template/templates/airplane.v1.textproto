@@ -96,15 +96,17 @@ capabilities {
 # `spec` (#586). They survive as TEMPLATE-DECLARED fields rather than a privileged core: a house has
 # no make, model, or serial (PRD §4.2).
 spec_fields { key: "tail_number" label: "Tail Number" is_identifier: true }
-spec_fields { key: "make" label: "Make" }
-spec_fields { key: "model" label: "Model" }
+spec_fields { key: "make" label: "Make" required: true }
+spec_fields { key: "model" label: "Model" required: true }
 spec_fields { key: "serial" label: "Serial Number" is_identifier: true }
 
 # Mirrors the tree Phase 1's backfill builds: airframe -> engine(s) -> propeller -> hub/blades.
+# The airframe carries no serial of its own: it *is* the thing, and its serial is the Thing's,
+# declared as the `serial` spec field above. Identity lives in spec and nowhere else (#729) — it
+# used to be written to both and kept in step by a helper, which is a duplicate waiting to drift.
 component_slots {
   slot_key: "airframe"
   label: "Airframe"
-  serial_expected: true
   children {
     slot_key: "engine"
     label: "Engine"
