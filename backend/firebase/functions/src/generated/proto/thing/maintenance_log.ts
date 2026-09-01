@@ -9,6 +9,7 @@ import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
 import { Timestamp } from "../google/protobuf/timestamp";
 import { Attachment } from "./attachment";
 import { ComponentType, componentTypeFromJSON, componentTypeToJSON } from "./component_type";
+import { MeterReading } from "./meter_reading";
 import { Technician } from "./technician";
 
 export const protobufPackage = "";
@@ -38,6 +39,28 @@ export interface MaintenanceLog {
     | undefined;
   /** Squawks addressed by this log entry */
   squawkIds: string[];
+  /**
+   * What the meters read when this work was done (PRD §4.4).
+   *
+   * Supersedes `engine_hour`, `airframe_time` and `prop_time` above, which can only describe an
+   * aeroplane. Those three are still written alongside for the airplane meter keys.
+   *
+   * WHAT ACTUALLY BLOCKS REMOVING THEM, in the order it has to happen:
+   *
+   *   1. `EngineHourRule` and `MaintenanceTask.force_due_engine_hour` schedule work against "engine
+   *      hours" as a named concept, so `TaskDueManagerImpl` reads `engine_hour` directly. PRD §11.1
+   *      replaces the rule with a `MeterRule` carrying a meter key; until that lands, a car cannot
+   *      be scheduled on mileage and this field is load-bearing.
+   *   2. The logbook export reads all three. That layout is aviation-only by design
+   *      (`EXPORT_LAYOUT_LOGBOOK`), so it keeps the concepts — but it should reach them by meter
+   *      key rather than by field, which is the same change as (1) at a different call site.
+   *   3. Every log already stored has its value only in these fields. Removing them without either
+   *      a backfill or a permanent read fallback loses the history behind every hour reading.
+   *
+   * Until then `readingFor` prefers `readings` and falls back here, so a reader written today is
+   * correct for both. Reserve the numbers rather than reusing them when they do go.
+   */
+  readings: MeterReading[];
 }
 
 function createBaseMaintenanceLog(): MaintenanceLog {
@@ -55,6 +78,7 @@ function createBaseMaintenanceLog(): MaintenanceLog {
     inspectionIds: [],
     technician: undefined,
     squawkIds: [],
+    readings: [],
   };
 }
 
@@ -98,6 +122,9 @@ export const MaintenanceLog: MessageFns<MaintenanceLog> = {
     }
     for (const v of message.squawkIds) {
       writer.uint32(114).string(v!);
+    }
+    for (const v of message.readings) {
+      MeterReading.encode(v!, writer.uint32(122).fork()).join();
     }
     return writer;
   },
@@ -213,6 +240,14 @@ export const MaintenanceLog: MessageFns<MaintenanceLog> = {
           message.squawkIds.push(reader.string());
           continue;
         }
+        case 15: {
+          if (tag !== 122) {
+            break;
+          }
+
+          message.readings.push(MeterReading.decode(reader, reader.uint32()));
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -275,6 +310,9 @@ export const MaintenanceLog: MessageFns<MaintenanceLog> = {
         : globalThis.Array.isArray(object?.squawk_ids)
         ? object.squawk_ids.map((e: any) => globalThis.String(e))
         : [],
+      readings: globalThis.Array.isArray(object?.readings)
+        ? object.readings.map((e: any) => MeterReading.fromJSON(e))
+        : [],
     };
   },
 
@@ -319,6 +357,9 @@ export const MaintenanceLog: MessageFns<MaintenanceLog> = {
     if (message.squawkIds?.length) {
       obj.squawkIds = message.squawkIds;
     }
+    if (message.readings?.length) {
+      obj.readings = message.readings.map((e) => MeterReading.toJSON(e));
+    }
     return obj;
   },
 
@@ -342,6 +383,7 @@ export const MaintenanceLog: MessageFns<MaintenanceLog> = {
       ? Technician.fromPartial(object.technician)
       : undefined;
     message.squawkIds = object.squawkIds?.map((e) => e) || [];
+    message.readings = object.readings?.map((e) => MeterReading.fromPartial(e)) || [];
     return message;
   },
 };

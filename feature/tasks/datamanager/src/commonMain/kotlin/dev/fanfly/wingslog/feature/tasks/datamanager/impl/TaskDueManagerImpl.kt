@@ -5,6 +5,7 @@ import dev.fanfly.wingslog.core.datetime.toLocalDate
 import dev.fanfly.wingslog.core.template.readingFor
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDueManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.defaultMeterKey
+import dev.fanfly.wingslog.feature.tasks.datamanager.forcedDueMeter
 import dev.fanfly.wingslog.feature.tasks.datamanager.meterIntervalFor
 import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
 import dev.fanfly.wingslog.feature.tasks.model.DueStatus
@@ -56,11 +57,11 @@ class TaskDueManagerImpl(
     val forceDueDate = card.force_due_date
     val hasForcedDate =
       forceDueDate != null && (forceDueDate.getEpochSecond() > 0L)
-    // The forced override, keyed. `force_due_meter` supersedes `force_due_engine_hour`, which
-    // could only ever mean engine hours (#759).
-    val forcedMeter = card.force_due_meter?.takeIf { it.value_ > 0.0 }
-    val hasForcedEngine = forcedMeter != null || card.force_due_engine_hour > 0f
-    val forcedMeterKey = forcedMeter?.meter_key ?: card.defaultMeterKey()
+    // The forced override and the meter it is measured in — keyed, falling back to the legacy
+    // float for an override set before `force_due_meter` existed (#759).
+    val forcedDue = card.forcedDueMeter()
+    val hasForcedEngine = forcedDue != null
+    val forcedMeterKey = forcedDue?.first ?: card.defaultMeterKey()
 
     /** The highest reading any log carries for [meterKey]. */
     fun currentReading(meterKey: String): Float =
@@ -79,11 +80,7 @@ class TaskDueManagerImpl(
       val nextDueDate = if (hasForcedDate) {
         forceDueDate.toLocalDate(timeZone)
       } else null
-      val nextDueEngine = when {
-        forcedMeter != null -> forcedMeter.value_.toFloat()
-        card.force_due_engine_hour > 0f -> card.force_due_engine_hour
-        else -> null
-      }
+      val nextDueEngine = forcedDue?.second
 
       val status = when {
         (nextDueDate != null && nextDueDate < currentDate) ||

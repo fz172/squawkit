@@ -9,6 +9,7 @@ import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
 import { Timestamp } from "../google/protobuf/timestamp";
 import { Attachment } from "./attachment";
 import { ComponentType, componentTypeFromJSON, componentTypeToJSON } from "./component_type";
+import { MeterReading } from "./meter_reading";
 
 export const protobufPackage = "";
 
@@ -64,9 +65,27 @@ export interface TimeRule {
   intervalYears: number;
 }
 
-/** A engine-hour-based rule (e.g. every 100 hours) */
+/**
+ * A engine-hour-based rule (e.g. every 100 hours).
+ *
+ * SUPERSEDED BY MeterRule. Kept because every aviation task in the field uses one, and a task that
+ * silently stops coming due is worse than one that cannot be created. Read both, write MeterRule.
+ */
 export interface EngineHourRule {
   intervalHours: number;
+}
+
+/**
+ * A rule against any meter the template declares — "every 5,000 miles", "every 100 hours",
+ * "every 200 ride hours". PRD §11.1.
+ *
+ * `EngineHourRule` could not express these because it named the meter in its type rather than
+ * carrying it: an interval with no unit is only a number, and a car could not be scheduled at all.
+ */
+export interface MeterRule {
+  /** Matches MeterDef.key on the template, and MeterReading.meter_key on the logs it reads. */
+  meterKey: string;
+  interval: number;
 }
 
 /** Inspection is performed on condition (no fixed interval) */
@@ -89,12 +108,18 @@ export interface InspectionRule {
   onConditionRule?: OnConditionRule | undefined;
   linkedRule?: LinkedRule | undefined;
   immediateRule?: ImmediateRule | undefined;
+  meterRule?: MeterRule | undefined;
 }
 
 /** Status to track when an inspection was forcefully marked as complied with */
 export interface ForceCompliedStatus {
-  compliedDate: Date | undefined;
+  compliedDate:
+    | Date
+    | undefined;
+  /** Superseded by `complied_meter`; still read for statuses recorded before it existed. */
   compliedEngineHours: number;
+  /** What the meter read when this was marked complied, keyed. Empty key means none was recorded. */
+  compliedMeter: MeterReading | undefined;
 }
 
 /** A configured maintenance task card for an aircraft */
@@ -104,7 +129,10 @@ export interface MaintenanceTask {
   component: ComponentType;
   rules: InspectionRule[];
   /** Optional force overrides — when set, skip computed due calculation */
-  forceDueDate: Date | undefined;
+  forceDueDate:
+    | Date
+    | undefined;
+  /** Superseded by `force_due_meter`; still read for overrides set before it existed. */
   forceDueEngineHour: number;
   /** Optional free-text notes or comments for this maintenance task */
   notes: string;
@@ -117,7 +145,14 @@ export interface MaintenanceTask {
   /** If true, moves to history after first log */
   isOneTime: boolean;
   attachments: Attachment[];
-  forceCompliedStatus: ForceCompliedStatus | undefined;
+  forceCompliedStatus:
+    | ForceCompliedStatus
+    | undefined;
+  /**
+   * The meter reading this task is forced due at, keyed. Supersedes `force_due_engine_hour`, which
+   * could only ever mean engine hours (PRD §11.1).
+   */
+  forceDueMeter: MeterReading | undefined;
 }
 
 function createBaseTimeRule(): TimeRule {
@@ -308,6 +343,86 @@ export const EngineHourRule: MessageFns<EngineHourRule> = {
   },
 };
 
+function createBaseMeterRule(): MeterRule {
+  return { meterKey: "", interval: 0 };
+}
+
+export const MeterRule: MessageFns<MeterRule> = {
+  encode(message: MeterRule, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.meterKey !== "") {
+      writer.uint32(10).string(message.meterKey);
+    }
+    if (message.interval !== 0) {
+      writer.uint32(21).float(message.interval);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): MeterRule {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseMeterRule();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.meterKey = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 21) {
+            break;
+          }
+
+          message.interval = reader.float();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): MeterRule {
+    return {
+      meterKey: isSet(object.meterKey)
+        ? globalThis.String(object.meterKey)
+        : isSet(object.meter_key)
+        ? globalThis.String(object.meter_key)
+        : "",
+      interval: isSet(object.interval) ? globalThis.Number(object.interval) : 0,
+    };
+  },
+
+  toJSON(message: MeterRule): unknown {
+    const obj: any = {};
+    if (message.meterKey !== "") {
+      obj.meterKey = message.meterKey;
+    }
+    if (message.interval !== 0) {
+      obj.interval = message.interval;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<MeterRule>, I>>(base?: I): MeterRule {
+    return MeterRule.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<MeterRule>, I>>(object: I): MeterRule {
+    const message = createBaseMeterRule();
+    message.meterKey = object.meterKey ?? "";
+    message.interval = object.interval ?? 0;
+    return message;
+  },
+};
+
 function createBaseOnConditionRule(): OnConditionRule {
   return { description: "" };
 }
@@ -480,6 +595,7 @@ function createBaseInspectionRule(): InspectionRule {
     onConditionRule: undefined,
     linkedRule: undefined,
     immediateRule: undefined,
+    meterRule: undefined,
   };
 }
 
@@ -499,6 +615,9 @@ export const InspectionRule: MessageFns<InspectionRule> = {
     }
     if (message.immediateRule !== undefined) {
       ImmediateRule.encode(message.immediateRule, writer.uint32(42).fork()).join();
+    }
+    if (message.meterRule !== undefined) {
+      MeterRule.encode(message.meterRule, writer.uint32(50).fork()).join();
     }
     return writer;
   },
@@ -550,6 +669,14 @@ export const InspectionRule: MessageFns<InspectionRule> = {
           message.immediateRule = ImmediateRule.decode(reader, reader.uint32());
           continue;
         }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.meterRule = MeterRule.decode(reader, reader.uint32());
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -586,6 +713,11 @@ export const InspectionRule: MessageFns<InspectionRule> = {
         : isSet(object.immediate_rule)
         ? ImmediateRule.fromJSON(object.immediate_rule)
         : undefined,
+      meterRule: isSet(object.meterRule)
+        ? MeterRule.fromJSON(object.meterRule)
+        : isSet(object.meter_rule)
+        ? MeterRule.fromJSON(object.meter_rule)
+        : undefined,
     };
   },
 
@@ -605,6 +737,9 @@ export const InspectionRule: MessageFns<InspectionRule> = {
     }
     if (message.immediateRule !== undefined) {
       obj.immediateRule = ImmediateRule.toJSON(message.immediateRule);
+    }
+    if (message.meterRule !== undefined) {
+      obj.meterRule = MeterRule.toJSON(message.meterRule);
     }
     return obj;
   },
@@ -629,12 +764,15 @@ export const InspectionRule: MessageFns<InspectionRule> = {
     message.immediateRule = (object.immediateRule !== undefined && object.immediateRule !== null)
       ? ImmediateRule.fromPartial(object.immediateRule)
       : undefined;
+    message.meterRule = (object.meterRule !== undefined && object.meterRule !== null)
+      ? MeterRule.fromPartial(object.meterRule)
+      : undefined;
     return message;
   },
 };
 
 function createBaseForceCompliedStatus(): ForceCompliedStatus {
-  return { compliedDate: undefined, compliedEngineHours: 0 };
+  return { compliedDate: undefined, compliedEngineHours: 0, compliedMeter: undefined };
 }
 
 export const ForceCompliedStatus: MessageFns<ForceCompliedStatus> = {
@@ -644,6 +782,9 @@ export const ForceCompliedStatus: MessageFns<ForceCompliedStatus> = {
     }
     if (message.compliedEngineHours !== 0) {
       writer.uint32(21).float(message.compliedEngineHours);
+    }
+    if (message.compliedMeter !== undefined) {
+      MeterReading.encode(message.compliedMeter, writer.uint32(26).fork()).join();
     }
     return writer;
   },
@@ -671,6 +812,14 @@ export const ForceCompliedStatus: MessageFns<ForceCompliedStatus> = {
           message.compliedEngineHours = reader.float();
           continue;
         }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.compliedMeter = MeterReading.decode(reader, reader.uint32());
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -692,6 +841,11 @@ export const ForceCompliedStatus: MessageFns<ForceCompliedStatus> = {
         : isSet(object.complied_engine_hours)
         ? globalThis.Number(object.complied_engine_hours)
         : 0,
+      compliedMeter: isSet(object.compliedMeter)
+        ? MeterReading.fromJSON(object.compliedMeter)
+        : isSet(object.complied_meter)
+        ? MeterReading.fromJSON(object.complied_meter)
+        : undefined,
     };
   },
 
@@ -703,6 +857,9 @@ export const ForceCompliedStatus: MessageFns<ForceCompliedStatus> = {
     if (message.compliedEngineHours !== 0) {
       obj.compliedEngineHours = message.compliedEngineHours;
     }
+    if (message.compliedMeter !== undefined) {
+      obj.compliedMeter = MeterReading.toJSON(message.compliedMeter);
+    }
     return obj;
   },
 
@@ -713,6 +870,9 @@ export const ForceCompliedStatus: MessageFns<ForceCompliedStatus> = {
     const message = createBaseForceCompliedStatus();
     message.compliedDate = object.compliedDate ?? undefined;
     message.compliedEngineHours = object.compliedEngineHours ?? 0;
+    message.compliedMeter = (object.compliedMeter !== undefined && object.compliedMeter !== null)
+      ? MeterReading.fromPartial(object.compliedMeter)
+      : undefined;
     return message;
   },
 };
@@ -733,6 +893,7 @@ function createBaseMaintenanceTask(): MaintenanceTask {
     isOneTime: false,
     attachments: [],
     forceCompliedStatus: undefined,
+    forceDueMeter: undefined,
   };
 }
 
@@ -779,6 +940,9 @@ export const MaintenanceTask: MessageFns<MaintenanceTask> = {
     }
     if (message.forceCompliedStatus !== undefined) {
       ForceCompliedStatus.encode(message.forceCompliedStatus, writer.uint32(114).fork()).join();
+    }
+    if (message.forceDueMeter !== undefined) {
+      MeterReading.encode(message.forceDueMeter, writer.uint32(122).fork()).join();
     }
     return writer;
   },
@@ -902,6 +1066,14 @@ export const MaintenanceTask: MessageFns<MaintenanceTask> = {
           message.forceCompliedStatus = ForceCompliedStatus.decode(reader, reader.uint32());
           continue;
         }
+        case 15: {
+          if (tag !== 122) {
+            break;
+          }
+
+          message.forceDueMeter = MeterReading.decode(reader, reader.uint32());
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -957,6 +1129,11 @@ export const MaintenanceTask: MessageFns<MaintenanceTask> = {
         : isSet(object.force_complied_status)
         ? ForceCompliedStatus.fromJSON(object.force_complied_status)
         : undefined,
+      forceDueMeter: isSet(object.forceDueMeter)
+        ? MeterReading.fromJSON(object.forceDueMeter)
+        : isSet(object.force_due_meter)
+        ? MeterReading.fromJSON(object.force_due_meter)
+        : undefined,
     };
   },
 
@@ -1004,6 +1181,9 @@ export const MaintenanceTask: MessageFns<MaintenanceTask> = {
     if (message.forceCompliedStatus !== undefined) {
       obj.forceCompliedStatus = ForceCompliedStatus.toJSON(message.forceCompliedStatus);
     }
+    if (message.forceDueMeter !== undefined) {
+      obj.forceDueMeter = MeterReading.toJSON(message.forceDueMeter);
+    }
     return obj;
   },
 
@@ -1027,6 +1207,9 @@ export const MaintenanceTask: MessageFns<MaintenanceTask> = {
     message.attachments = object.attachments?.map((e) => Attachment.fromPartial(e)) || [];
     message.forceCompliedStatus = (object.forceCompliedStatus !== undefined && object.forceCompliedStatus !== null)
       ? ForceCompliedStatus.fromPartial(object.forceCompliedStatus)
+      : undefined;
+    message.forceDueMeter = (object.forceDueMeter !== undefined && object.forceDueMeter !== null)
+      ? MeterReading.fromPartial(object.forceDueMeter)
       : undefined;
     return message;
   },

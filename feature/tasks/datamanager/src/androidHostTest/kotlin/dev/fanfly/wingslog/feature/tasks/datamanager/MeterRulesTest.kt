@@ -110,4 +110,58 @@ class MeterRulesTest {
 
     assertThat(card.meterIntervalFor(card.rules.single())).isNull()
   }
+
+  // --- The forced override, keyed (#759) ---
+
+  @Test
+  fun anOverrideSetBeforeTheKeyedFieldExistedStillReads() {
+    // Every override in the field is in the legacy float. It meant whichever meter the card's
+    // component implied, which is what the fallback preserves.
+    val card = task().copy(force_due_engine_hour = 250f)
+
+    assertThat(card.forcedDueMeter()).isEqualTo(MeterKeys.ENGINE_HOURS to 250f)
+  }
+
+  @Test
+  fun aKeyedOverrideWinsAndCarriesItsMeter() {
+    val card = task().withForcedDueMeter("odometer", 90000f)
+
+    assertThat(card.forcedDueMeter()).isEqualTo("odometer" to 90000f)
+  }
+
+  @Test
+  fun settingAnOverrideWritesBothFields() {
+    // The legacy float is kept in step so a client that predates `force_due_meter` still sees the
+    // override rather than losing it — the same bargain the overview's aviation fields make.
+    val card = task().withForcedDueMeter("odometer", 90000f)
+
+    assertThat(card.force_due_meter?.meter_key).isEqualTo("odometer")
+    assertThat(card.force_due_engine_hour).isEqualTo(90000f)
+  }
+
+  @Test
+  fun clearingAnOverrideClearsBoth() {
+    // Zeroing only the keyed one would leave an old build showing an override the user removed.
+    val cleared = task().withForcedDueMeter("odometer", 90000f)
+      .withForcedDueMeter("odometer", null)
+
+    assertThat(cleared.force_due_meter).isNull()
+    assertThat(cleared.force_due_engine_hour).isEqualTo(0f)
+    assertThat(cleared.forcedDueMeter()).isNull()
+  }
+
+  @Test
+  fun theOverrideMeterFollowsTheRulesItIsMeasuredAgainst() {
+    // An override is in the same meter the schedule is, so a car's is in miles.
+    assertThat(
+      meterKeyFor(
+        ComponentType.COMPONENT_ENGINE,
+        listOf(InspectionRule(meter_rule = MeterRule("odometer", 5000f))),
+      ),
+    ).isEqualTo("odometer")
+
+    // With no meter rule it is whatever EngineHourRule always meant.
+    assertThat(meterKeyFor(ComponentType.COMPONENT_AIRFRAME, emptyList()))
+      .isEqualTo(MeterKeys.AIRFRAME_HOURS)
+  }
 }

@@ -4,29 +4,34 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.squareup.wire.Instant
-import dev.fanfly.wingslog.core.template.currentFor
+import dev.fanfly.wingslog.core.datetime.toWireInstant
+import dev.fanfly.wingslog.core.model.id.generateRandomId
+import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.template.MeterKeys
+import dev.fanfly.wingslog.core.template.currentFor
+import dev.fanfly.wingslog.core.ui.common.UiText
+import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentFormController
+import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
+import dev.fanfly.wingslog.feature.attachment.model.PendingAttachment
+import dev.fanfly.wingslog.feature.attachment.model.PickedFile
+import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
+import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
+import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
+import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
+import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDueManager
+import dev.fanfly.wingslog.feature.tasks.datamanager.defaultMeterKey
+import dev.fanfly.wingslog.feature.tasks.datamanager.forcedDueMeter
+import dev.fanfly.wingslog.feature.tasks.datamanager.meterKeyFor
+import dev.fanfly.wingslog.feature.tasks.datamanager.withForcedDueMeter
+import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
+import dev.fanfly.wingslog.feature.tasks.update.compose.ScheduleState
 import dev.fanfly.wingslog.thing.ComplianceType
 import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.ForceCompliedStatus
 import dev.fanfly.wingslog.thing.InspectionRule
 import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.thing.MaintenanceTask
-import dev.fanfly.wingslog.core.datetime.toWireInstant
-import dev.fanfly.wingslog.core.model.id.generateRandomId
-import dev.fanfly.wingslog.core.nav.Screen
-import dev.fanfly.wingslog.core.ui.common.UiText
-import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentFormController
-import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
-import dev.fanfly.wingslog.feature.attachment.model.PendingAttachment
-import dev.fanfly.wingslog.feature.attachment.model.PickedFile
-import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
-import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
-import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
-import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDueManager
-import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
-import dev.fanfly.wingslog.feature.tasks.update.compose.ScheduleState
-import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
+import dev.fanfly.wingslog.thing.MeterReading
 import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -61,7 +66,8 @@ sealed interface TaskUiState {
 
 sealed interface TaskFormEvent {
   data object PickError : TaskFormEvent
-  data class NavigateToCreateLog(val thingId: String, val cardId: String) : TaskFormEvent
+  data class NavigateToCreateLog(val thingId: String, val cardId: String) :
+    TaskFormEvent
 }
 
 /**
@@ -114,11 +120,14 @@ data class TaskFormState(
   companion object {
     fun fromTask(card: MaintenanceTask): TaskFormState {
       val schedule = ScheduleState.fromTask(card)
-      val forceOverrideEngine = card.force_due_engine_hour > 0f
-      val forcedEngineHours =
-        if (forceOverrideEngine) card.force_due_engine_hour.toString() else ""
+      // `force_due_meter` first, falling back to the legacy float — the override may have been
+      // set by a build that predates the keyed field (#759).
+      val forcedDue = card.forcedDueMeter()
+      val forceOverrideEngine = forcedDue != null
+      val forcedEngineHours = forcedDue?.second?.toString() ?: ""
       val forceOverrideDate = card.force_due_date != null
-      val forcedDateMillis = card.force_due_date?.let { it.getEpochSecond() * 1000 }
+      val forcedDateMillis =
+        card.force_due_date?.let { it.getEpochSecond() * 1000 }
       return TaskFormState(
         title = card.title,
         component = card.component,
@@ -223,7 +232,8 @@ class TaskViewModel(
         // By meter key, not by field name. `currentFor` falls back to the aviation field, so an
         // overview written before `current` existed still answers (#730).
         val engineHours =
-          overview?.currentFor(MeterKeys.ENGINE_HOURS)?.toFloat() ?: 0f
+          overview?.currentFor(MeterKeys.ENGINE_HOURS)
+            ?.toFloat() ?: 0f
         val editedCard = cardId?.let { id -> cards.firstOrNull { it.id == id } }
         // The rules-only "natural" next-due, so the adjustments preview banner can show what
         // the schedule alone would say absent any force-override or force-complied state.
@@ -231,8 +241,8 @@ class TaskViewModel(
           val stripped = card.copy(
             force_complied_status = null,
             force_due_date = null,
-            force_due_engine_hour = 0f,
           )
+            .withForcedDueMeter(card.defaultMeterKey(), null)
           taskDueManager.computeNextDue(stripped, logs, cards)
         }
         // The same computation the dashboard task cards run, so the banner's "Current" reading
@@ -253,13 +263,14 @@ class TaskViewModel(
         }
         // Pre-load attachments and seed the form once when editing.
         if (cardId != null) {
-          cards.firstOrNull { it.id == cardId }?.let { card ->
-            attachmentForm.seedIfEmpty(card.attachments)
-            if (!formSeeded) {
-              formSeeded = true
-              _formState.value = TaskFormState.fromTask(card)
+          cards.firstOrNull { it.id == cardId }
+            ?.let { card ->
+              attachmentForm.seedIfEmpty(card.attachments)
+              if (!formSeeded) {
+                formSeeded = true
+                _formState.value = TaskFormState.fromTask(card)
+              }
             }
-          }
         }
       }
     }
@@ -267,17 +278,20 @@ class TaskViewModel(
 
   // ── Form field changes ───────────────────────────────────────────────────
 
-  fun onTitleChange(value: String) = _formState.update { it.copy(title = value) }
+  fun onTitleChange(value: String) =
+    _formState.update { it.copy(title = value) }
 
   fun onComponentChange(value: ComponentType) =
     _formState.update { it.copy(component = value) }
 
-  fun onTypeChange(value: ComplianceType) = _formState.update { it.copy(type = value) }
+  fun onTypeChange(value: ComplianceType) =
+    _formState.update { it.copy(type = value) }
 
   fun onScheduleChange(value: ScheduleState) =
     _formState.update { it.copy(schedule = value) }
 
-  fun onRefNumberChange(value: String) = _formState.update { it.copy(refNumber = value) }
+  fun onRefNumberChange(value: String) =
+    _formState.update { it.copy(refNumber = value) }
 
   fun onComplianceAuthorityChange(value: String) =
     _formState.update { it.copy(complianceAuthority = value) }
@@ -334,14 +348,19 @@ class TaskViewModel(
   ) {
     _formState.update { it.copy(showResolveMenu = false) }
     viewModelScope.launch {
-      val skipped = card.copy(
-        force_due_date = null,
-        force_due_engine_hour = 0f,
-        force_complied_status = ForceCompliedStatus(
-          complied_date = toWireInstant(Clock.System.now().epochSeconds),
-          complied_engine_hours = currentEngineHours,
+      val skipped = card.withForcedDueMeter(card.defaultMeterKey(), null)
+        .copy(
+          force_due_date = null,
+          force_complied_status = ForceCompliedStatus(
+            complied_date = toWireInstant(Clock.System.now().epochSeconds),
+            complied_engine_hours = currentEngineHours,
+            // Keyed alongside, so a complied status records which meter it was measured in.
+            complied_meter = MeterReading(
+              meter_key = card.defaultMeterKey(),
+              value_ = currentEngineHours.toDouble(),
+            ),
+          )
         )
-      )
       inspectionDataManager.updateTask(thingId, skipped)
         .onSuccess { onSuccess() }
     }
@@ -459,9 +478,12 @@ class TaskViewModel(
           compliance_details = complianceDetails,
           is_one_time = isOneTime,
           force_due_date = forceDueDate,
-          force_due_engine_hour = forceDueEngine,
           notes = notes,
           attachments = attachments,
+        ).withForcedDueMeter(
+          // The meter the rules schedule against — an override is measured in the same one.
+          meterKeyFor(component, rules),
+          forceDueEngine.takeIf { it > 0f },
         )
         inspectionDataManager.addTask(
           thingId,
@@ -498,7 +520,7 @@ class TaskViewModel(
     return rules != stored.rules ||
       isOneTime != stored.is_one_time ||
       forceDueDate != stored.force_due_date ||
-      forceDueEngine != stored.force_due_engine_hour
+      forceDueEngine != (stored.forcedDueMeter()?.second ?: 0f)
   }
 
   fun saveEditedTask(
@@ -533,9 +555,14 @@ class TaskViewModel(
           compliance_details = complianceDetails,
           is_one_time = isOneTime,
           force_due_date = forceDueDate,
-          force_due_engine_hour = forceDueEngine,
           force_complied_status = if (
-            isScheduleChanged(cardId, rules, isOneTime, forceDueDate, forceDueEngine)
+            isScheduleChanged(
+              cardId,
+              rules,
+              isOneTime,
+              forceDueDate,
+              forceDueEngine
+            )
           ) null else forceCompliedStatus,
           notes = notes,
           attachments = attachments,
@@ -571,17 +598,18 @@ class TaskViewModel(
  * dropped without a word — the pickers cannot cap multi-select or filter out files that are
  * already attached, so the form is where they find out.
  */
-private fun AttachmentFormController.AddFileError.toUiText(): UiText = when (this) {
-  AttachmentFormController.AddFileError.FileTooLarge ->
-    UiText.StringRes(AttachRes.string.file_too_large)
+private fun AttachmentFormController.AddFileError.toUiText(): UiText =
+  when (this) {
+    AttachmentFormController.AddFileError.FileTooLarge ->
+      UiText.StringRes(AttachRes.string.file_too_large)
 
-  AttachmentFormController.AddFileError.Duplicate ->
-    UiText.StringRes(AttachRes.string.duplicate_file_skipped)
+    AttachmentFormController.AddFileError.Duplicate ->
+      UiText.StringRes(AttachRes.string.duplicate_file_skipped)
 
-  is AttachmentFormController.AddFileError.LimitExceeded ->
-    UiText.StringRes(AttachRes.string.files_over_limit_skipped)
+    is AttachmentFormController.AddFileError.LimitExceeded ->
+      UiText.StringRes(AttachRes.string.files_over_limit_skipped)
 
-  is AttachmentFormController.AddFileError.Failed ->
-    message?.let { UiText.DynamicString(it) }
-      ?: UiText.StringRes(AttachRes.string.add_file_failed)
-}
+    is AttachmentFormController.AddFileError.Failed ->
+      message?.let { UiText.DynamicString(it) }
+        ?: UiText.StringRes(AttachRes.string.add_file_failed)
+  }
