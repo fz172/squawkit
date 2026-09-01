@@ -43,7 +43,10 @@ fun SpecFieldsSection(
     modifier = Modifier.padding(vertical = Spacing.small),
     shape = RoundedCornerShape(Spacing.cardCornerRadius),
     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-    border = BorderStroke(Spacing.hairline, MaterialTheme.colorScheme.outlineVariant),
+    border = BorderStroke(
+      Spacing.hairline,
+      MaterialTheme.colorScheme.outlineVariant
+    ),
     elevation = CardDefaults.cardElevation(defaultElevation = Spacing.none),
   ) {
     Column(modifier = Modifier.padding(Spacing.medium)) {

@@ -14,11 +14,12 @@ fun Component.valueOf(field: ComponentField): String = when (field) {
   ComponentField.SERIAL -> serial
 }
 
-fun Component.with(field: ComponentField, value: String): Component = when (field) {
-  ComponentField.MAKE -> copy(make = value)
-  ComponentField.MODEL -> copy(model = value)
-  ComponentField.SERIAL -> copy(serial = value)
-}
+fun Component.with(field: ComponentField, value: String): Component =
+  when (field) {
+    ComponentField.MAKE -> copy(make = value)
+    ComponentField.MODEL -> copy(model = value)
+    ComponentField.SERIAL -> copy(serial = value)
+  }
 
 /**
  * One row of the component tree: a slot the template declares, paired with the component filling it.
@@ -93,7 +94,8 @@ fun ThingTemplate?.addableSlotsUnder(parentPath: ComponentPath): List<ComponentS
     found = slots.firstOrNull { it.slot_key == slotKey } ?: return emptyList()
     slots = found.children
   }
-  return found?.children.orEmpty().filter { it.repeatable }
+  return found?.children.orEmpty()
+    .filter { it.repeatable }
 }
 
 /** A new component for [slot], with the non-repeatable descendants the template expects. */
@@ -101,7 +103,8 @@ fun newComponentFor(slot: ComponentSlot): Component = Component(
   slot_key = slot.slot_key,
   // Only the slots that always exist. A repeatable child is the user's to add — creating one
   // would assert a count the template deliberately leaves open.
-  children = slot.children.filterNot { it.repeatable }.map { newComponentFor(it) },
+  children = slot.children.filterNot { it.repeatable }
+    .map { newComponentFor(it) },
 )
 
 /**

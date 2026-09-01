@@ -95,10 +95,14 @@ private fun ComponentRowCard(
   val askForSerials = LocalThingCapabilities.current.component_serial_prompt
 
   Card(
-    modifier = Modifier.fillMaxWidth().padding(start = indent),
+    modifier = Modifier.fillMaxWidth()
+      .padding(start = indent),
     shape = RoundedCornerShape(Spacing.cardCornerRadius),
     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-    border = BorderStroke(Spacing.hairline, MaterialTheme.colorScheme.outlineVariant),
+    border = BorderStroke(
+      Spacing.hairline,
+      MaterialTheme.colorScheme.outlineVariant
+    ),
     elevation = CardDefaults.cardElevation(defaultElevation = Spacing.none),
   ) {
     Column(modifier = Modifier.padding(Spacing.medium)) {
@@ -158,7 +162,8 @@ private fun ComponentFieldRow(
   isError: Boolean = false,
 ) {
   FormTextField(
-    value = row.component?.valueOf(field).orEmpty(),
+    value = row.component?.valueOf(field)
+      .orEmpty(),
     onValueChange = { viewModel.onComponentFieldChanged(row.path, field, it) },
     label = "${row.label} ${field.caption()}",
     isError = isError,
@@ -171,7 +176,10 @@ private fun ComponentFieldRow(
 }
 
 @Composable
-private fun AddSlotButtons(parentPath: ComponentPath, viewModel: EditThingViewModel) {
+private fun AddSlotButtons(
+  parentPath: ComponentPath,
+  viewModel: EditThingViewModel
+) {
   val addable = LocalThingTemplate.current.addableSlotsUnder(parentPath)
   if (addable.isEmpty()) return
   Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {

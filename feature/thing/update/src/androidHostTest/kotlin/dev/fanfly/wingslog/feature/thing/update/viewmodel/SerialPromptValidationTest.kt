@@ -1,17 +1,12 @@
 package dev.fanfly.wingslog.feature.thing.update.viewmodel
 
-import dev.fanfly.wingslog.core.template.SlotKeys
-import dev.fanfly.wingslog.core.template.SpecKeys
-import dev.fanfly.wingslog.thing.Component
-import dev.fanfly.wingslog.thing.Spec
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.template.CurrentThingTemplate
-import dev.fanfly.wingslog.core.template.ThingInflater
+import dev.fanfly.wingslog.core.template.SlotKeys
+import dev.fanfly.wingslog.core.template.SpecKeys
 import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
-import dev.fanfly.wingslog.thing.Engine
-import dev.fanfly.wingslog.thing.Propeller
-import dev.fanfly.wingslog.thing.PropellerBlade
-import dev.fanfly.wingslog.thing.PropellerHub
+import dev.fanfly.wingslog.thing.Component
+import dev.fanfly.wingslog.thing.Spec
 import dev.fanfly.wingslog.thing.Thing
 import org.junit.Test
 
@@ -60,7 +55,10 @@ class SerialPromptValidationTest {
                     model = "1C160",
                     serial = if (serials) "H-1" else "",
                   ),
-                  Component(slot_key = SlotKeys.BLADE, serial = if (serials) "B-1" else ""),
+                  Component(
+                    slot_key = SlotKeys.BLADE,
+                    serial = if (serials) "B-1" else ""
+                  ),
                 ),
               ),
             ),
@@ -111,34 +109,39 @@ class SerialPromptValidationTest {
   fun makeAndModelStayRequiredEitherWay() {
     // Only the serials are template-controlled. A thing with no make or model is unusable whatever
     // it is, so relaxing serials must not relax everything alongside it.
-    val nameless = Thing(spec = listOf(Spec(key = SpecKeys.SERIAL, value_ = "SN-1")))
+    val nameless =
+      Thing(spec = listOf(Spec(key = SpecKeys.SERIAL, value_ = "SN-1")))
 
     assertThat(
       EditThingUiState(
-      thing = nameless,
-      requireSerials = false,
-      template = AirplaneTemplate.TEMPLATE,
-    ).isValid
+        thing = nameless,
+        requireSerials = false,
+        template = AirplaneTemplate.TEMPLATE,
+      ).isValid
     ).isFalse()
     assertThat(
       EditThingUiState(
-      thing = nameless,
-      requireSerials = true,
-      template = AirplaneTemplate.TEMPLATE,
-    ).isValid
+        thing = nameless,
+        requireSerials = true,
+        template = AirplaneTemplate.TEMPLATE,
+      ).isValid
     ).isFalse()
   }
 
   @Test
   fun theDefaultIsWhatShipped() {
     // Phase 2's acceptance criterion: a state constructed without the flag behaves as before.
-    assertThat(EditThingUiState(
+    assertThat(
+      EditThingUiState(
         thing = thing(serials = false),
         template = AirplaneTemplate.TEMPLATE,
-      ).isValid).isFalse()
-    assertThat(EditThingUiState(
+      ).isValid
+    ).isFalse()
+    assertThat(
+      EditThingUiState(
         thing = thing(serials = true),
         template = AirplaneTemplate.TEMPLATE,
-      ).isValid).isTrue()
+      ).isValid
+    ).isTrue()
   }
 }

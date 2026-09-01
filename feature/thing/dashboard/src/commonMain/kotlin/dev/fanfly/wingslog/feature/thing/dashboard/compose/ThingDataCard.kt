@@ -28,37 +28,30 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import dev.fanfly.wingslog.core.template.LexiconFormatter
-import dev.fanfly.wingslog.core.template.LocalThingCapabilities
-import dev.fanfly.wingslog.core.template.LocalThingLexicon
-import dev.fanfly.wingslog.core.template.LocalThingTemplate
-import dev.fanfly.wingslog.core.template.componentRows
-import dev.fanfly.wingslog.core.template.thingNoun
-import dev.fanfly.wingslog.core.template.slotLabel
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
-import dev.fanfly.wingslog.core.template.SlotKeys
+import dev.fanfly.wingslog.core.template.LexiconFormatter
+import dev.fanfly.wingslog.core.template.LocalThingCapabilities
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.LocalThingTemplate
 import dev.fanfly.wingslog.core.template.SpecKeys
-import dev.fanfly.wingslog.core.template.childrenInSlot
-import dev.fanfly.wingslog.core.template.rootComponentInSlot
+import dev.fanfly.wingslog.core.template.componentRows
 import dev.fanfly.wingslog.core.template.specValue
+import dev.fanfly.wingslog.core.template.thingNoun
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.thing.Thing
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.edit
-import wingslog.core.sharedassets.generated.resources.make_model_template
 import wingslog.core.sharedassets.generated.resources.manage_access
-import wingslog.feature.logs.sharedassets.generated.resources.engine_with_index
 import wingslog.feature.logs.viewing.generated.resources.collapse_details
 import wingslog.feature.logs.viewing.generated.resources.expand_details
 import wingslog.feature.logs.viewing.generated.resources.s_n_placeholder
 import wingslog.feature.logs.viewing.generated.resources.thing_data
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
-import wingslog.feature.logs.sharedassets.generated.resources.Res as SharedRes
 import wingslog.feature.logs.viewing.generated.resources.Res as MaintenanceRes
 
 
@@ -149,7 +142,8 @@ fun ThingDataCard(
             ComponentCard(
               category = LexiconFormatter.titleCase(
                 LocalThingLexicon.current.thingNoun
-              ).uppercase(),
+              )
+                .uppercase(),
               name = identity.joinToString("  ·  ") { (_, value) -> value },
               serial = thing.specValue(SpecKeys.SERIAL),
             )
