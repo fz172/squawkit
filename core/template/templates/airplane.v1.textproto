@@ -95,10 +95,19 @@ capabilities {
 # The conventional keys that map onto the legacy Thing fields 2-5, which Phase 1 also mirrored into
 # `spec` (#586). They survive as TEMPLATE-DECLARED fields rather than a privileged core: a house has
 # no make, model, or serial (PRD §4.2).
-spec_fields { key: "tail_number" label: "Tail Number" is_identifier: true }
+# Declaration order is render order, and this is the order the form has always asked in: make,
+# then model, then the serial and tail number sharing a line.
 spec_fields { key: "make" label: "Make" required: true }
 spec_fields { key: "model" label: "Model" required: true }
-spec_fields { key: "serial" label: "Serial Number" is_identifier: true }
+spec_fields { key: "serial" label: "Serial Number" is_identifier: true compact: true }
+spec_fields {
+  key: "tail_number"
+  label: "Tail Number"
+  is_identifier: true
+  compact: true
+  # What an owner calls the aeroplane by, so it names the thing when nothing else has.
+  title_candidate: true
+}
 
 # Mirrors the tree Phase 1's backfill builds: airframe -> engine(s) -> propeller -> hub/blades.
 # The tree follows how the parts actually attach: a propeller is bolted to an engine, and blades
@@ -122,10 +131,15 @@ component_slots {
   label: "Engine"
   repeatable: true
   serial_expected: true
+  compact_fields: true
+  # Flows under the engine's own fields rather than into a card of its own: a propeller is part of
+  # how an owner describes the engine, not somewhere they navigate into.
   children {
     slot_key: "propeller"
     label: "Propeller"
     serial_expected: true
+    inline_with_parent: true
+    compact_fields: true
     # Serial only. Blades are a matched set — their make and model are the propeller's, and
     # asking per blade invites a mix that cannot exist on a real aeroplane.
     children {
@@ -134,6 +148,8 @@ component_slots {
       repeatable: true
       serial_expected: true
       spec_keys: "serial"
+      inline_with_parent: true
+      compact_fields: true
     }
   }
 }

@@ -3,6 +3,7 @@ package dev.fanfly.wingslog.feature.thing.update.compose
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -89,11 +90,6 @@ private fun ComponentNodeCard(
   viewModel: EditThingViewModel,
   showValidationErrors: Boolean,
 ) {
-  // Nesting is drawn by containment: a propeller's card sits inside its engine's. The border
-  // already says what an indent would, and it matches how the dashboard renders the same tree.
-  val row = node.row
-  val askForSerials = LocalThingCapabilities.current.component_serial_prompt
-
   Card(
     modifier = Modifier.fillMaxWidth(),
     shape = RoundedCornerShape(Spacing.cardCornerRadius),
@@ -104,7 +100,38 @@ private fun ComponentNodeCard(
     ),
     elevation = CardDefaults.cardElevation(defaultElevation = Spacing.none),
   ) {
-    Column(modifier = Modifier.padding(Spacing.medium)) {
+    Column(
+      modifier = Modifier.padding(Spacing.medium),
+      verticalArrangement = Arrangement.spacedBy(Spacing.medium),
+    ) {
+      ComponentBlock(node, viewModel, showValidationErrors)
+
+      // Slots the template marks inline flow underneath this card's own fields rather than into a
+      // card of their own — a propeller under its engine, its blades under that.
+      node.inlineGroups.forEach { group ->
+        InlineGroup(group, viewModel, showValidationErrors)
+      }
+
+      node.cardChildren.forEach { child ->
+        ComponentNodeCard(child, viewModel, showValidationErrors)
+      }
+
+      AddSlotButtons(parentPath = node.row.path, viewModel = viewModel)
+    }
+  }
+}
+
+/** One component's heading, remove control and fields — no card of its own. */
+@Composable
+private fun ComponentBlock(
+  node: ComponentNode,
+  viewModel: EditThingViewModel,
+  showValidationErrors: Boolean,
+  showHeader: Boolean = true,
+) {
+  val row = node.row
+  Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
+    if (showHeader) {
       Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -124,57 +151,125 @@ private fun ComponentNodeCard(
           }
         }
       }
+    }
+    ComponentFields(node, viewModel, showValidationErrors)
+  }
+}
 
-      // Only the fields this slot asks for. A blade declares `serial` alone — blades are a matched
-      // set, so their make and model are the propeller's and asking per blade invites a mix that
-      // cannot exist.
-      row.fields.forEach { field ->
-        // Two gates on the serial, and they mean different things. `serial_expected` is the
-        // template saying this kind of component has one worth recording; the capability is the
-        // preset saying not to ask at creation at all. Hidden either way means not required —
-        // EditThingUiState relaxes identically, or the form blocks on a field not on screen.
-        if (field == ComponentField.SERIAL &&
-          !(row.slot.serial_expected && askForSerials)
-        ) {
-          return@forEach
-        }
-        ComponentFieldRow(
-          row = row,
-          field = field,
-          viewModel = viewModel,
-          isError = field == ComponentField.SERIAL &&
-            showValidationErrors &&
-            row.component?.serial?.isBlank() == true,
-        )
+/**
+ * The slot's fields, on one line each or packed when the template asks for it.
+ *
+ * Compact puts make on its own line and pairs model with serial beside it — the shape an owner
+ * reads a plate in, rather than three stacked inputs each half empty.
+ */
+@Composable
+private fun ComponentFields(
+  node: ComponentNode,
+  viewModel: EditThingViewModel,
+  showValidationErrors: Boolean,
+) {
+  val row = node.row
+  val visible = row.fields.filter { it.isVisibleOn(row) }
+  if (visible.isEmpty()) return
+
+  if (!row.slot.compact_fields) {
+    visible.forEach { field ->
+      ComponentFieldInput(
+        row,
+        field,
+        viewModel,
+        showValidationErrors,
+        Modifier.fillMaxWidth()
+      )
+    }
+    return
+  }
+
+  row.leadingFields.filter { it in visible }
+    .forEach {
+      ComponentFieldInput(
+        row,
+        it,
+        viewModel,
+        showValidationErrors,
+        Modifier.fillMaxWidth()
+      )
+    }
+  val paired = row.pairedFields.filter { it in visible }
+  if (paired.isEmpty()) return
+  Row(horizontalArrangement = Arrangement.spacedBy(Spacing.medium)) {
+    paired.forEach { field ->
+      ComponentFieldInput(
+        row, field, viewModel, showValidationErrors, Modifier.weight(1f),
+      )
+    }
+  }
+}
+
+/**
+ * A repeating inline slot: one heading, then its instances' inputs packed together.
+ *
+ * Blade serials are the case — four of them belong under one "Blade" heading on two lines, not as
+ * four headed blocks.
+ */
+@Composable
+private fun InlineGroup(
+  group: List<ComponentNode>,
+  viewModel: EditThingViewModel,
+  showValidationErrors: Boolean,
+) {
+  val first = group.first().row
+  if (!first.slot.repeatable) {
+    group.forEach { ComponentBlock(it, viewModel, showValidationErrors) }
+    return
+  }
+  Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
+    Text(
+      text = first.slot.label,
+      style = MaterialTheme.typography.titleSmall,
+      fontWeight = FontWeight.SemiBold,
+    )
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.medium)) {
+      group.forEach { node ->
+        val row = node.row
+        row.fields.filter { it.isVisibleOn(row) }
+          .forEach { field ->
+            ComponentFieldInput(
+              row = row,
+              field = field,
+              viewModel = viewModel,
+              showValidationErrors = showValidationErrors,
+              modifier = Modifier.weight(1f),
+              // Numbered by instance rather than by field: the heading already said "Blade", so the
+              // input only has to say which one.
+              labelOverride = row.label,
+            )
+          }
       }
-
-      // Nested components live inside this card, so the tree is legible without an indent.
-      node.children.forEach { child ->
-        ComponentNodeCard(
-          node = child,
-          viewModel = viewModel,
-          showValidationErrors = showValidationErrors,
-        )
-      }
-
-      AddSlotButtons(parentPath = row.path, viewModel = viewModel)
     }
   }
 }
 
 @Composable
-private fun ComponentFieldRow(
+private fun ComponentFieldInput(
   row: ComponentRow,
   field: ComponentField,
   viewModel: EditThingViewModel,
-  isError: Boolean = false,
+  showValidationErrors: Boolean,
+  modifier: Modifier = Modifier,
+  labelOverride: String? = null,
 ) {
   FormTextField(
     value = row.component?.valueOf(field)
       .orEmpty(),
     onValueChange = { viewModel.onComponentFieldChanged(row.path, field, it) },
-    label = "${row.label} ${field.caption()}",
-    isError = isError,
+    // Just "Make" — the heading above already said which component this is, and "Engine 2 Make"
+    // on every input reads as noise once there are three of them.
+    label = labelOverride ?: field.caption(),
+    modifier = modifier,
+    isError = field == ComponentField.SERIAL &&
+      showValidationErrors &&
+      row.component?.serial?.isBlank() == true,
     keyboardOptions = if (field == ComponentField.SERIAL) {
       KeyboardOptions(capitalization = KeyboardCapitalization.Characters)
     } else {
@@ -182,6 +277,16 @@ private fun ComponentFieldRow(
     },
   )
 }
+
+/**
+ * A serial is hidden when the preset does not ask for one at creation, or the slot expects none.
+ * Hidden means not required — `EditThingUiState` relaxes identically, or the form blocks on a
+ * field that is not on screen.
+ */
+@Composable
+private fun ComponentField.isVisibleOn(row: ComponentRow): Boolean =
+  this != ComponentField.SERIAL ||
+    (row.slot.serial_expected && LocalThingCapabilities.current.component_serial_prompt)
 
 @Composable
 private fun AddSlotButtons(

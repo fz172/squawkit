@@ -39,15 +39,21 @@ data class ComponentRow(
   val depth: Int,
   /** Index among siblings in the same slot — the "2" in "Blade 2". Null when the slot holds one. */
   val ordinal: Int?,
+  /** How many components fill this slot here. One means the label carries no number. */
+  val siblingCount: Int,
 ) {
   /**
-   * "Engine", or "Blade 2" when the slot repeats.
+   * "Engine", or "Blade 2" when there is more than one.
    *
-   * Numbered only when repeatable: an airframe is never "Airframe 1", and a car with one engine
-   * should not read "Engine 1" either.
+   * A single engine is just "Engine" — the number only earns its place once there is something to
+   * tell it apart from, which is how the form has always read.
    */
   val label: String
-    get() = if (ordinal == null) slot.label else "${slot.label} ${ordinal + 1}"
+    get() = if (ordinal == null || siblingCount <= 1) {
+      slot.label
+    } else {
+      "${slot.label} ${ordinal + 1}"
+    }
 
   /**
    * Which of make / model / serial this slot asks for (PRD §4.3's `spec_keys`).
@@ -62,6 +68,20 @@ data class ComponentRow(
     } else {
       ComponentField.entries.filter { it.key in slot.spec_keys }
     }
+
+  /**
+   * With [ComponentSlot.compact_fields], every field takes a line of its own except the final two,
+   * which share one.
+   *
+   * The same rule the spec block follows: make alone, then model beside serial. It reads the way a
+   * plate does, rather than as three inputs each half empty. A slot asking for a serial alone has
+   * nothing to pair and packs its instances instead.
+   */
+  val leadingFields: List<ComponentField>
+    get() = if (fields.size > 1) fields.dropLast(2) else emptyList()
+
+  val pairedFields: List<ComponentField>
+    get() = if (fields.size > 1) fields.takeLast(2) else fields
 
   /**
    * Renders as a chip rather than a card: a repeating leaf slot **inside** another component.
@@ -105,7 +125,7 @@ fun ThingTemplate?.componentRows(thing: Thing): List<ComponentRow> {
     }
     occurrences.flatMapIndexed { index, (component, ordinal) ->
       val path = parentPath + (slot.slot_key to index)
-      listOf(ComponentRow(slot, path, component, depth, ordinal)) +
+      listOf(ComponentRow(slot, path, component, depth, ordinal, occurrences.size)) +
         walk(slot.children, path, component?.children.orEmpty(), depth + 1)
     }
   }
@@ -168,7 +188,28 @@ data class ComponentNode(
   val chipChildren: List<ComponentNode> get() = children.filter { it.row.rendersAsChip }
 
   /** Children that draw as their own nested card. */
-  val cardChildren: List<ComponentNode> get() = children.filterNot { it.row.rendersAsChip }
+  val cardChildren: List<ComponentNode>
+    get() = children.filterNot { it.row.slot.inline_with_parent }
+
+  /**
+   * Children that flow inside this card instead of nesting into one, grouped by slot.
+   *
+   * Grouped because a repeating inline slot is one block with several inputs rather than several
+   * blocks — four blade serials under a single "Blade" heading, not four headings.
+   *
+   * **Includes the ones the dashboard draws as chips.** `rendersAsChip` is a display choice that
+   * surface makes; the edit form needs every inline child, and filtering here once dropped blades
+   * from the form entirely — they were in neither this list nor [cardChildren].
+   */
+  val inlineGroups: List<List<ComponentNode>>
+    get() = children.filter { it.row.slot.inline_with_parent }
+      .groupBy { it.row.slot.slot_key }
+      .values
+      .toList()
+
+  /** [inlineGroups] minus the chip ones — what the dashboard draws as blocks. */
+  val inlineBlockGroups: List<List<ComponentNode>>
+    get() = inlineGroups.filterNot { it.first().row.rendersAsChip }
 }
 
 fun ThingTemplate?.componentTree(thing: Thing): List<ComponentNode> {

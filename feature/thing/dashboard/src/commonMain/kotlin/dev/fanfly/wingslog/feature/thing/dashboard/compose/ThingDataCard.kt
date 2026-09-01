@@ -199,47 +199,7 @@ fun ComponentCard(
     )
   ) {
     Column(modifier = Modifier.padding(Spacing.large)) {
-      Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-      ) {
-        Column(modifier = Modifier.weight(1f)) {
-          Text(
-            text = category,
-            style = TextStyle(
-              fontFamily = FontFamily.SansSerif,
-              fontWeight = FontWeight.Bold,
-              fontSize = 10.sp,
-              letterSpacing = 0.1.sp
-            ),
-            color = MaterialTheme.colorScheme.primary
-          )
-          Text(
-            text = name,
-            modifier = Modifier.padding(top = Spacing.extraSmall),
-            style = TextStyle(
-              fontFamily = FontFamily.SansSerif,
-              fontWeight = FontWeight.SemiBold,
-              fontSize = 16.sp
-            ),
-            color = MaterialTheme.colorScheme.onSurface
-          )
-          Text(
-            text = stringResource(
-              MaintenanceRes.string.s_n_placeholder,
-              serial
-            ),
-            modifier = Modifier.padding(top = Spacing.extraSmall),
-            style = TextStyle(
-              fontFamily = FontFamily.SansSerif,
-              fontWeight = FontWeight.Normal,
-              fontSize = 13.sp
-            ),
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-          )
-        }
-      }
+      ComponentSummary(category = category, name = name, serial = serial)
 
       if (content != null) {
         Column(modifier = Modifier.padding(top = Spacing.large)) {
@@ -247,5 +207,47 @@ fun ComponentCard(
         }
       }
     }
+  }
+}
+
+/**
+ * The category, make/model and serial lines a component shows.
+ *
+ * Extracted from [ComponentCard] so a slot the template marks `inline_with_parent` renders exactly
+ * the same three lines inside its parent's card, with no card of its own — the propeller case.
+ */
+@Composable
+fun ComponentSummary(category: String, name: String, serial: String) {
+  Column(modifier = Modifier.fillMaxWidth()) {
+    Text(
+      text = category,
+      style = TextStyle(
+        fontFamily = FontFamily.SansSerif,
+        fontWeight = FontWeight.Bold,
+        fontSize = 10.sp,
+        letterSpacing = 0.1.sp,
+      ),
+      color = MaterialTheme.colorScheme.primary,
+    )
+    Text(
+      text = name,
+      modifier = Modifier.padding(top = Spacing.extraSmall),
+      style = TextStyle(
+        fontFamily = FontFamily.SansSerif,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 16.sp,
+      ),
+      color = MaterialTheme.colorScheme.onSurface,
+    )
+    Text(
+      text = stringResource(MaintenanceRes.string.s_n_placeholder, serial),
+      modifier = Modifier.padding(top = Spacing.extraSmall),
+      style = TextStyle(
+        fontFamily = FontFamily.SansSerif,
+        fontWeight = FontWeight.Normal,
+        fontSize = 13.sp,
+      ),
+      color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
   }
 }

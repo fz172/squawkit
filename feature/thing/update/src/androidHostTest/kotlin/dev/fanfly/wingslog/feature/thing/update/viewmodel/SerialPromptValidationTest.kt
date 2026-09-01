@@ -138,4 +138,19 @@ class SerialPromptValidationTest {
       ).isValid
     ).isTrue()
   }
+
+  @Test
+  fun loadingAThingDoesNotClearWhatOtherFlowsOwn() {
+    // Delete vanished from the edit screen because the load rebuilt the state from scratch, and
+    // `hostedByMe` — which arrives from its own collector, before or after the load — went back to
+    // false with it. Only the hosting owner may delete, so false hides the button entirely.
+    val loaded = EditThingUiState(
+      hostedByMe = true,
+      otherMemberCount = 3,
+      template = AirplaneTemplate.TEMPLATE,
+    ).copy(thing = thing(serials = true))
+
+    assertThat(loaded.hostedByMe).isTrue()
+    assertThat(loaded.otherMemberCount).isEqualTo(3)
+  }
 }

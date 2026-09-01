@@ -50,14 +50,20 @@ class EditThingViewModel(
       // null template would render a form with no fields and validate nothing. This resolves the
       // same way FleetManagerImpl does on write, so the form asks for exactly what the Thing will
       // be saved under. #739 replaces the fallback with the picker's choice.
-      stateFor(Thing()),
+      EditThingUiState().withThing(Thing()),
     )
   val uiState = _uiState.asStateFlow()
 
-  /** Form state for [thing], with the template it resolves under and the rules that follow. */
-  private fun stateFor(thing: Thing): EditThingUiState {
+  /**
+   * Applies [thing] and the template it resolves under, **without disturbing anything else**.
+   *
+   * A copy rather than a fresh state: `hostedByMe` and `otherMemberCount` arrive from their own
+   * collectors and may land before or after the load. Rebuilding the state here reset them to
+   * their defaults, and `hostedByMe = false` is what hides Delete.
+   */
+  private fun EditThingUiState.withThing(thing: Thing): EditThingUiState {
     val template = templateRegistry.forThingWithFallback(thing)
-    return EditThingUiState(
+    return copy(
       thing = thing,
       template = template,
       requireSerials = template.capabilities?.component_serial_prompt ?: true,
@@ -125,10 +131,11 @@ class EditThingViewModel(
               _uiState.update {
                 // The loaded thing carries its own DNA, so the template resolves from it rather
                 // than from whatever was selected in the shell.
-                stateFor(thing).copy(
-                  initialAircraft = it.initialAircraft ?: thing,
-                  isLoading = false,
-                )
+                it.withThing(thing)
+                  .copy(
+                    initialAircraft = it.initialAircraft ?: thing,
+                    isLoading = false,
+                  )
               }
             } else {
               // Handle error or not found
@@ -146,10 +153,11 @@ class EditThingViewModel(
 
   fun loadThing(thing: Thing) {
     _uiState.update {
-      stateFor(thing).copy(
-        initialAircraft = it.initialAircraft ?: thing,
-        isLoading = false,
-      )
+      it.withThing(thing)
+        .copy(
+          initialAircraft = it.initialAircraft ?: thing,
+          isLoading = false,
+        )
     }
   }
 

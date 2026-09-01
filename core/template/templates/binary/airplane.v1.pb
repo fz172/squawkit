@@ -10,14 +10,14 @@ componentsa2
 
 techniciantechniciansa:	AirworthyBAOGJAircraft on GroundRFleetjFAAr7
 Airworthiness DirectiveAirworthiness DirectivesADz)
-Service BulletinService BulletinsSB* (0:BH2
-tail_numberTail Number 2
+Service BulletinService BulletinsSB* (0:BH2
 makeMake2
-modelModel2
-serialSerial Number :J
-engineEngine"4
-	propeller	Propeller"
-bladeBlade(2serial((B&
+modelModel2
+serialSerial Number 02 
+tail_numberTail Number 08:T
+engineEngine"<
+	propeller	Propeller"
+bladeBlade(2serial8@(8@(@B&
 airframe_hoursAirframe Timehrs B*
 engine_hoursEngine Timehrs *engineB)
 

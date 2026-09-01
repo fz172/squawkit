@@ -61,8 +61,9 @@ class ComponentTreeTest {
 
     // Engine at the root, propeller on the engine, blades on the propeller — how the parts
     // actually attach. No airframe row repeating the thing's identity, and no separate hub.
+    // One engine, so no index on it; two blades, so they take one.
     assertThat(rows.map { it.label }).containsExactly(
-      "Engine 1", "Propeller", "Blade 1", "Blade 2",
+      "Engine", "Propeller", "Blade 1", "Blade 2",
     ).inOrder()
     assertThat(rows.map { it.depth }).containsExactly(0, 1, 2, 2).inOrder()
     // The path is what every edit action addresses, so it has to survive the walk intact.
@@ -171,7 +172,7 @@ class ComponentTreeTest {
     )
 
     assertThat(airplane.componentsMissingSerials(thing).map { it.label })
-      .containsExactly("Engine 1")
+      .containsExactly("Engine")
   }
 
   @Test
@@ -293,12 +294,145 @@ class ComponentTreeTest {
 
     val engine = airplane.componentTree(thing).single()
 
-    assertThat(engine.row.label).isEqualTo("Engine 1")
-    val propeller = engine.cardChildren.single()
+    assertThat(engine.row.label).isEqualTo("Engine")
+    // The propeller flows inside the engine's card rather than nesting into one of its own.
+    val propeller = engine.inlineGroups.single().single()
     assertThat(propeller.row.label).isEqualTo("Propeller")
     // Blades hang off the propeller as chips, not as cards beside it.
     assertThat(propeller.cardChildren).isEmpty()
     assertThat(propeller.chipChildren.map { it.row.label })
       .containsExactly("Blade 1", "Blade 2").inOrder()
+  }
+
+  // --- How a slot asks to be laid out ---
+
+  @Test
+  fun aPropellerFlowsIntoItsEnginesCardRatherThanNestingIntoOne() {
+    // A propeller is part of how an owner describes the engine, not somewhere to navigate into.
+    val thing = Thing(
+      id = "t",
+      components = listOf(
+        Component(
+          slot_key = SlotKeys.ENGINE,
+          children = listOf(
+            Component(
+              slot_key = SlotKeys.PROPELLER,
+              children = listOf(Component(slot_key = SlotKeys.BLADE)),
+            ),
+          ),
+        ),
+      ),
+    )
+
+    val engine = airplane.componentTree(thing).single()
+
+    assertThat(engine.cardChildren).isEmpty()
+    val propeller = engine.inlineGroups.single().single()
+    assertThat(propeller.row.slot.slot_key).isEqualTo(SlotKeys.PROPELLER)
+    // Its blades hang off it as chips, still inside the same card.
+    assertThat(propeller.chipChildren.map { it.row.label }).containsExactly("Blade")
+  }
+
+  @Test
+  fun compactFieldsPutEverythingOnItsOwnLineExceptTheLastTwo() {
+    // Make alone, then model beside serial — the shape a plate reads in.
+    val engine = airplane.componentRows(
+      Thing(id = "t", components = listOf(Component(slot_key = SlotKeys.ENGINE))),
+    ).single { it.slot.slot_key == SlotKeys.ENGINE }
+
+    assertThat(engine.slot.compact_fields).isTrue()
+    assertThat(engine.leadingFields).containsExactly(ComponentField.MAKE)
+    assertThat(engine.pairedFields)
+      .containsExactly(ComponentField.MODEL, ComponentField.SERIAL).inOrder()
+  }
+
+  @Test
+  fun aSerialOnlySlotHasNothingToPairAndPacksItsInstancesInstead() {
+    val blade = airplane.slot(SlotKeys.BLADE)!!
+    val row = airplane.componentRows(
+      Thing(
+        id = "t",
+        components = listOf(
+          Component(
+            slot_key = SlotKeys.ENGINE,
+            children = listOf(
+              Component(
+                slot_key = SlotKeys.PROPELLER,
+                children = listOf(Component(slot_key = SlotKeys.BLADE)),
+              ),
+            ),
+          ),
+        ),
+      ),
+    ).single { it.slot.slot_key == SlotKeys.BLADE }
+
+    assertThat(blade.compact_fields).isTrue()
+    assertThat(row.leadingFields).isEmpty()
+    assertThat(row.pairedFields).containsExactly(ComponentField.SERIAL)
+  }
+
+  @Test
+  fun theSpecBlockAsksInTheOrderTheFormAlwaysHas() {
+    // make, model, then serial and tail number sharing a line.
+    assertThat(airplane.spec_fields.map { it.key })
+      .containsExactly("make", "model", "serial", "tail_number").inOrder()
+    assertThat(airplane.spec_fields.filter { it.compact }.map { it.key })
+      .containsExactly("serial", "tail_number").inOrder()
+  }
+
+  @Test
+  fun asingleComponentDropsTheIndexFromItsLabel() {
+    // "Engine", not "Engine 1". A number only earns its place once there is something to tell it
+    // apart from, which is how the form has always read.
+    val one = Thing(
+      id = "t",
+      components = listOf(Component(slot_key = SlotKeys.ENGINE)),
+    )
+    assertThat(
+      airplane.componentRows(one).single { it.slot.slot_key == SlotKeys.ENGINE }.label,
+    ).isEqualTo("Engine")
+
+    val two = Thing(
+      id = "t",
+      components = listOf(
+        Component(slot_key = SlotKeys.ENGINE),
+        Component(slot_key = SlotKeys.ENGINE),
+      ),
+    )
+    assertThat(
+      airplane.componentRows(two).filter { it.slot.slot_key == SlotKeys.ENGINE }
+        .map { it.label },
+    ).containsExactly("Engine 1", "Engine 2").inOrder()
+  }
+
+  @Test
+  fun bladesReachTheEditFormEvenThoughTheDashboardDrawsThemAsChips() {
+    // They once reached neither list: filtered out of the inline groups for being chips, and out
+    // of cardChildren for being inline. The edit form rendered no blades at all.
+    val thing = Thing(
+      id = "t",
+      components = listOf(
+        Component(
+          slot_key = SlotKeys.ENGINE,
+          children = listOf(
+            Component(
+              slot_key = SlotKeys.PROPELLER,
+              children = listOf(
+                Component(slot_key = SlotKeys.BLADE),
+                Component(slot_key = SlotKeys.BLADE),
+              ),
+            ),
+          ),
+        ),
+      ),
+    )
+
+    val propeller = airplane.componentTree(thing).single().inlineGroups.single().single()
+
+    assertThat(propeller.inlineGroups.single().map { it.row.label })
+      .containsExactly("Blade 1", "Blade 2").inOrder()
+    // The dashboard still splits them out as chips rather than blocks.
+    assertThat(propeller.inlineBlockGroups).isEmpty()
+    assertThat(propeller.chipChildren).hasSize(2)
   }
 }

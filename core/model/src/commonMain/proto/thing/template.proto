@@ -33,6 +33,22 @@ message SpecField {
   // validation rule.
   bool is_identifier = 4;
   string placeholder = 5;
+
+  // May share a line with the next field that also sets it — serial beside tail number, where
+  // both are short and neither earns a row of its own.
+  //
+  // Stated per field rather than per template because spec fields are authored freely: a home's
+  // address needs the full width and its year built does not, and no rule over key names knows
+  // that. Components take a slot-level flag instead, since their field set is the fixed
+  // make/model/serial triple.
+  bool compact = 6;
+
+  // May stand in as the Thing's display name when the user has not set one. PRD §4.2.
+  //
+  // Distinct from `is_identifier`, which says a value is matched exactly and renders in mono — an
+  // airplane has two such fields and only the tail number is what an owner calls it by. Without
+  // this the switcher picked whichever identifier the template happened to declare first.
+  bool title_candidate = 7;
 }
 
 // A slot in the component tree the template expects — airframe, engine, propeller, hub, blade.
@@ -50,6 +66,22 @@ message ComponentSlot {
   // that needs it: propeller blades are a matched set, so their make and model are the propeller's
   // and only the serials differ. Asking per blade invites data that cannot be true.
   repeated string spec_keys = 6;
+
+  // Render this slot's fields inside its PARENT's card rather than a card of its own.
+  //
+  // Nesting stays the default — a card in a card is how the tree reads — but the depth at which
+  // that stops helping is a property of the domain, not of the widget. A propeller is not a thing
+  // an owner navigates *into*: it is part of how they describe the engine, so it flows underneath
+  // the engine's own fields. Named for what it does rather than `nested`, because a proto3 bool
+  // defaults to false and "nested by default" has to be the false case.
+  bool inline_with_parent = 7;
+
+  // Pack this slot's inputs onto shared lines instead of one per line.
+  //
+  // Make takes a line of its own — it is the manufacturer and reads as a heading for what follows
+  // — while model and serial pair up beside each other. A slot whose only field is a serial packs
+  // its *instances* instead, which is what puts four blade serials on two lines.
+  bool compact_fields = 8;
 }
 
 // A meter a Thing accumulates and rules can be written against — hours, miles, cycles, seasons.
