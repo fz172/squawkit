@@ -1,6 +1,8 @@
 package dev.fanfly.wingslog.feature.tasks.datamanager.impl
 
 import com.google.common.truth.Truth.assertThat
+import dev.fanfly.wingslog.core.template.MeterKeys
+import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.EngineHourRule
 import dev.fanfly.wingslog.thing.ForceCompliedStatus
@@ -9,9 +11,10 @@ import dev.fanfly.wingslog.thing.InspectionRule
 import dev.fanfly.wingslog.thing.LinkedRule
 import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.thing.MaintenanceTask
+import dev.fanfly.wingslog.thing.MeterReading
+import dev.fanfly.wingslog.thing.MeterRule
 import dev.fanfly.wingslog.thing.OnConditionRule
 import dev.fanfly.wingslog.thing.TimeRule
-import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.datetime.LocalDate
@@ -421,6 +424,56 @@ class TaskDueManagerImplTest {
     assertThat(result.nextDueDate).isEqualTo(LocalDate(2025, 5, 31))
   }
 
+  // --- The due value carries the meter it is measured in (#759) ---
+
+  @Test
+  fun aMeterRuleReportsItsOwnKey() {
+    // Without this the card fell back to hours, so a car scheduled every 5,000 miles rendered
+    // "5000.0 HRS" while the editor that created it said "mi".
+    val card = card(
+      id = "c1",
+      component = ComponentType.COMPONENT_ENGINE,
+      rules = listOf(InspectionRule(meter_rule = MeterRule("odometer", 5000f))),
+    )
+    // Referencing the card is what makes this its last completion — the interval counts from there.
+    val log = log(
+      id = "l1",
+      inspectionIds = listOf("c1"),
+      readings = listOf(MeterReading("odometer", value_ = 80000.0)),
+    )
+
+    val result = manager.computeNextDue(card, listOf(log), listOf(card))
+
+    assertThat(result.nextDueMeterKey).isEqualTo("odometer")
+    assertThat(result.nextDueEngine).isEqualTo(85000f)
+  }
+
+  @Test
+  fun anEngineHourRuleReportsTheMeterItAlwaysMeant() {
+    // An airframe card tracked airframe time, everything else engine hours. Preserved, so an
+    // aviation task renders exactly as before.
+    val airframe = card(
+      id = "c1",
+      component = ComponentType.COMPONENT_AIRFRAME,
+      rules = listOf(InspectionRule(engine_hour_rule = EngineHourRule(50f))),
+    )
+
+    val result = manager.computeNextDue(
+      airframe,
+      listOf(
+        log(
+          id = "l1",
+          inspectionIds = listOf("c1"),
+          airframeTime = 100.0
+        )
+      ),
+      listOf(airframe),
+    )
+
+    assertThat(result.nextDueMeterKey).isEqualTo(MeterKeys.AIRFRAME_HOURS)
+    assertThat(result.nextDueEngine).isEqualTo(150f)
+  }
+
   private fun card(
     id: String = "card",
     isOneTime: Boolean = false,
@@ -445,12 +498,14 @@ class TaskDueManagerImplTest {
     airframeTime: Double = 0.0,
     engineHour: Double = 0.0,
     inspectionIds: List<String> = emptyList(),
+    readings: List<MeterReading> = emptyList(),
   ): MaintenanceLog = MaintenanceLog(
     id = id,
     timestamp = timestamp,
     airframe_time = airframeTime,
     engine_hour = engineHour,
     inspection_ids = inspectionIds,
+    readings = readings,
   )
 
   private fun timeRule(

@@ -285,6 +285,9 @@ class TaskDueManagerImpl(
     return DueMetadata(
       nextDueDate = nextDueDate,
       nextDueEngine = nextDueEngine,
+      // Set by whichever rule produced nextDueEngine above. Without it every card fell back to
+      // hours, so a car scheduled in miles still read "5000.0 HRS" (#759).
+      nextDueMeterKey = nextDueMeterKey,
       isOnCondition = isOnCondition,
       isImmediate = isImmediate,
       status = status
