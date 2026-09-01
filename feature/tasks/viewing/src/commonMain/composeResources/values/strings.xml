@@ -8,7 +8,10 @@
   <string name="maintenance_due_subtitle"><xliff:g example="maintenance tasks">%1$s</xliff:g> pending</string>
   <string name="compliance_details">Compliance Details</string>
   <string name="next_due_date">NEXT DUE DATE</string>
-  <string name="next_due_engine_hrs">NEXT DUE ENGINE HRS</string>
+  <!-- Names whichever meter the task is scheduled against — "NEXT DUE ODOMETER" (#759). -->
+  <string name="next_due_meter">NEXT DUE <xliff:g example="ODOMETER">%1$s</xliff:g></string>
+  <!-- The fallback meter name for a task written before meter rules existed. -->
+  <string name="engine_hours_label">Engine Hours</string>
   <string name="days_remaining"><xliff:g example="3">%1$d</xliff:g> Days Remaining</string>
   <string name="days_overdue_count"><xliff:g example="3">%1$d</xliff:g> Days Overdue</string>
   <string name="due_today">Due Today</string>

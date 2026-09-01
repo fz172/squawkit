@@ -17,14 +17,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import dev.fanfly.wingslog.thing.Attachment
-import dev.fanfly.wingslog.thing.ComplianceType
-import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.datetime.toLocalDate
+import dev.fanfly.wingslog.core.template.LocalThingTemplate
+import dev.fanfly.wingslog.core.template.formatMeterValue
+import dev.fanfly.wingslog.core.template.meter
 import dev.fanfly.wingslog.core.ui.common.compose.DetailSheet
 import dev.fanfly.wingslog.core.ui.common.compose.StatusChip
-import dev.fanfly.wingslog.core.ui.common.formatToOneDecimalPlace
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.StatusTier
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
@@ -34,6 +33,9 @@ import dev.fanfly.wingslog.feature.attachment.viewing.AttachmentSection
 import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
 import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
+import dev.fanfly.wingslog.thing.Attachment
+import dev.fanfly.wingslog.thing.ComplianceType
+import dev.fanfly.wingslog.thing.MaintenanceLog
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.daysUntil
 import kotlinx.datetime.toLocalDateTime
@@ -50,8 +52,9 @@ import wingslog.feature.tasks.viewing.generated.resources.completed
 import wingslog.feature.tasks.viewing.generated.resources.days_overdue_count
 import wingslog.feature.tasks.viewing.generated.resources.days_remaining
 import wingslog.feature.tasks.viewing.generated.resources.due_today
+import wingslog.feature.tasks.viewing.generated.resources.engine_hours_label
 import wingslog.feature.tasks.viewing.generated.resources.next_due_date
-import wingslog.feature.tasks.viewing.generated.resources.next_due_engine_hrs
+import wingslog.feature.tasks.viewing.generated.resources.next_due_meter
 import wingslog.feature.tasks.viewing.generated.resources.no_maintenance_logs_for_task
 import wingslog.feature.tasks.viewing.generated.resources.on_condition
 import kotlin.time.Clock
@@ -309,15 +312,25 @@ private fun DueDateHero(dueStatus: DueMetadata) {
 
       dueStatus.nextDueEngine != null -> {
         Text(
-          text = stringResource(ViewingRes.string.next_due_engine_hrs),
+          // "NEXT DUE ODOMETER" on a car. The heading named the meter as well as the value, so
+          // both had to stop assuming hours (#759).
+          text = stringResource(
+            ViewingRes.string.next_due_meter,
+            (
+              LocalThingTemplate.current.meter(dueStatus.nextDueMeterKey.orEmpty())?.label
+                ?: stringResource(ViewingRes.string.engine_hours_label)
+              ).uppercase(),
+          ),
           style = MaterialTheme.typography.labelMedium.copy(
             fontWeight = FontWeight.SemiBold,
           ),
           color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Text(
-          text = dueStatus.nextDueEngine!!.toDouble()
-            .formatToOneDecimalPlace(),
+          text = LocalThingTemplate.current.formatMeterValue(
+            dueStatus.nextDueMeterKey,
+            dueStatus.nextDueEngine!!.toDouble(),
+          ),
           style = WingslogTypography.heroDisplay,
           color = accentColor,
         )

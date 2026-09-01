@@ -1,6 +1,8 @@
 package dev.fanfly.wingslog.core.template
 
 import com.google.common.truth.Truth.assertThat
+import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
+import dev.fanfly.wingslog.core.template.canonical.CanonicalTemplates
 import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.thing.MaintenanceOverview
 import dev.fanfly.wingslog.thing.MeterReading
@@ -108,5 +110,35 @@ class MeterReadingsTest {
 
     assertThat(readings.withReading("odometer", null)).isEmpty()
     assertThat(readings.withReading("odometer", 200.0).single().value_).isEqualTo(200.0)
+  }
+
+  // --- A due value renders in its meter's unit, not always in hours ---
+
+  @Test
+  fun aValueRendersInItsMetersUnit() {
+    // The bug: a car scheduled every 5,000 miles read "5000.0 HRS" on its card while the editor
+    // that created it said "mi".
+    val automotive = CanonicalTemplates.AUTOMOTIVE
+
+    assertThat(automotive.formatMeterValue("odometer", 5000.0)).isEqualTo("5000 MI")
+  }
+
+  @Test
+  fun anOdometerDropsTheDecimalPointItsMeterDoesNotTake() {
+    assertThat(CanonicalTemplates.AUTOMOTIVE.formatMeterValue("odometer", 84512.0))
+      .isEqualTo("84512 MI")
+    // Hours keep theirs.
+    assertThat(AirplaneTemplate.TEMPLATE.formatMeterValue(MeterKeys.ENGINE_HOURS, 100.0))
+      .isEqualTo("100.0 HRS")
+  }
+
+  @Test
+  fun aValueWithNoMeterKeyStillReadsAsHours() {
+    // Every value written before meter rules existed meant engine hours, so an unkeyed one has to
+    // keep saying so rather than losing its unit.
+    assertThat(AirplaneTemplate.TEMPLATE.formatMeterValue(null, 1041.8))
+      .isEqualTo("1041.8 HRS")
+    assertThat(AirplaneTemplate.TEMPLATE.formatMeterValue("nonesuch", 10.0))
+      .isEqualTo("10.0 HRS")
   }
 }

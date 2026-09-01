@@ -3,6 +3,7 @@ package dev.fanfly.wingslog.core.template
 import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.thing.MaintenanceOverview
 import dev.fanfly.wingslog.thing.MeterReading
+import dev.fanfly.wingslog.thing.ThingTemplate
 
 /**
  * Reading and writing meter values by key, across the change from three hour fields to a declared
@@ -92,4 +93,30 @@ fun List<MeterReading>.withReading(
     meterKey,
     value_ = value
   )
+}
+
+/**
+ * A meter value with its unit — "5000 MI", "100.0 HRS".
+ *
+ * Every renderer of a due value hardcoded "HRS", so a car scheduled every 5,000 miles read
+ * "5000.0 HRS" on its card while the editor that created it said "mi" (#759). The unit belongs to
+ * the meter, and so does whether it takes a decimal point.
+ *
+ * [meterKey] null or unknown falls back to hours, which is what every value written before meter
+ * rules existed meant.
+ */
+fun ThingTemplate?.formatMeterValue(meterKey: String?, value: Double): String {
+  val meter =
+    meterKey?.let { key -> this?.meters?.firstOrNull { it.key == key } }
+  val unit = meter?.unit_label?.takeIf { it.isNotEmpty() } ?: "hrs"
+  val text = if (meter?.decimal == false) {
+    value.toLong()
+      .toString()
+  } else {
+    val rounded = (value * 10).toLong() / 10.0
+    if (rounded == rounded.toLong()
+        .toDouble()
+    ) "${rounded.toLong()}.0" else rounded.toString()
+  }
+  return "$text ${unit.uppercase()}"
 }

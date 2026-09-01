@@ -25,6 +25,8 @@ import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.LocalThingTemplate
+import dev.fanfly.wingslog.core.template.formatMeterValue
 import dev.fanfly.wingslog.core.template.taskNoun
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.statusColors
@@ -35,7 +37,6 @@ import wingslog.feature.tasks.sharedassets.generated.resources.Res
 import wingslog.feature.tasks.sharedassets.generated.resources.maintenance_due_title
 import wingslog.feature.tasks.viewing.generated.resources.critical_airworthiness
 import wingslog.feature.tasks.viewing.generated.resources.due_date
-import wingslog.feature.tasks.viewing.generated.resources.engine_hours_upper
 import wingslog.feature.tasks.viewing.generated.resources.label_due_engine_value
 import wingslog.feature.tasks.viewing.generated.resources.label_expired
 import wingslog.feature.tasks.viewing.generated.resources.maintenance_due_subtitle
@@ -129,6 +130,7 @@ private fun CriticalAlertItem(
 
   val dueDate = cardWithStatus.dueStatus.nextDueDate
   val dueEngine = cardWithStatus.dueStatus.nextDueEngine
+  val dueMeterKey = cardWithStatus.dueStatus.nextDueMeterKey
   val statusText = when {
     isOverdue && dueDate != null ->
       stringResource(
@@ -139,9 +141,9 @@ private fun CriticalAlertItem(
     isOverdue && dueEngine != null ->
       stringResource(
         ViewingRes.string.label_expired,
-        stringResource(
-          ViewingRes.string.engine_hours_upper,
-          dueEngine.toString()
+        LocalThingTemplate.current.formatMeterValue(
+          dueMeterKey,
+          dueEngine.toDouble()
         )
       )
 
@@ -154,9 +156,9 @@ private fun CriticalAlertItem(
     dueEngine != null ->
       stringResource(
         ViewingRes.string.label_due_engine_value,
-        stringResource(
-          ViewingRes.string.engine_hours_upper,
-          dueEngine.toString()
+        LocalThingTemplate.current.formatMeterValue(
+          dueMeterKey,
+          dueEngine.toDouble()
         )
       )
 
