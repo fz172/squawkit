@@ -46,12 +46,20 @@ data class ComponentRow(
     get() = if (ordinal == null) slot.label else "${slot.label} ${ordinal + 1}"
 
   /**
-   * Renders as a chip rather than a card: a repeating slot with no children of its own.
+   * Renders as a chip rather than a card: a repeating leaf slot **inside** another component.
    *
-   * Blades, tyres, wheels, batteries — near-identical parts told apart by a serial. A card each
-   * buries the rest of the tree in scroll and says nothing a chip does not.
+   * Blades on a propeller are near-identical parts told apart by a serial, and a card each buries
+   * the rest of the tree in scroll. A *top-level* repeating slot is different — a boat's propulsion
+   * or a car's tyre is a component in its own right, whose make and model are worth reading, and a
+   * chip shows only the serial.
+   *
+   * **Depth is a heuristic standing in for a schema field that does not exist.** What actually
+   * distinguishes the two is whether the part has an identity of its own worth showing, which PRD
+   * §4.3 designed `spec_keys` to say and the shipped `ComponentSlot` cannot. Recorded on #732 with
+   * the other §4.2/§4.3 gaps; when that field arrives this reads it instead of guessing from nesting.
    */
-  val rendersAsChip: Boolean get() = slot.repeatable && slot.children.isEmpty()
+  val rendersAsChip: Boolean
+    get() = slot.repeatable && slot.children.isEmpty() && depth > 0
 
   /** A slot that repeats can always take another; one that does not is created with the tree. */
   val canRemove: Boolean get() = slot.repeatable && component != null

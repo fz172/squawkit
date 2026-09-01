@@ -29,9 +29,12 @@ class ComponentTreeTest {
     // decide and the add control belongs to the parent. A preset with a fixed slot does yield one.
     assertThat(airplane.componentRows(Thing(id = "t"))).isEmpty()
 
+    // A preset with fixed slots yields a row each, with no component behind them yet — the boat's
+    // hull, steering and rigging. Its repeating categories yield none, for the same reason.
     val rows = CanonicalTemplates.BOAT.componentRows(Thing(id = "t"))
-    assertThat(rows.map { it.slot.slot_key }).containsExactly("hull")
-    assertThat(rows.single().component).isNull()
+    assertThat(rows.map { it.slot.slot_key })
+      .containsExactly("hull", "steering", "rigging").inOrder()
+    assertThat(rows.map { it.component }).containsExactly(null, null, null)
   }
 
   @Test
@@ -132,6 +135,22 @@ class ComponentTreeTest {
     val propeller = engine.children.single()
     assertThat(propeller.slot_key).isEqualTo(SlotKeys.PROPELLER)
     assertThat(propeller.children).isEmpty()
+  }
+
+  @Test
+  fun aTopLevelRepeatingPartStaysACardWhileANestedOneBecomesAChip() {
+    // The boat groups by function, so a propulsion item is a component in its own right — its make
+    // and model are worth reading, and a chip would show only the serial. A blade inside a
+    // propeller is the opposite case.
+    val boat = Thing(
+      id = "t",
+      components = listOf(Component(slot_key = "propulsion", make = "Yanmar")),
+    )
+
+    assertThat(
+      CanonicalTemplates.BOAT.componentRows(boat)
+        .single { it.slot.slot_key == "propulsion" }.rendersAsChip,
+    ).isFalse()
   }
 
   @Test

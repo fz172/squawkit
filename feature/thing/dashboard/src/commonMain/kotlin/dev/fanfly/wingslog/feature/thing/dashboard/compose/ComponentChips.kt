@@ -34,9 +34,13 @@ import wingslog.feature.logs.viewing.generated.resources.Res as MaintenanceRes
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun ComponentChips(label: String, components: List<Component>) {
+fun ComponentChips(
+  label: String,
+  components: List<Component>,
+  modifier: Modifier = Modifier,
+) {
   FlowRow(
-    modifier = Modifier.fillMaxWidth(),
+    modifier = modifier.fillMaxWidth(),
     horizontalArrangement = Arrangement.spacedBy(Spacing.small),
     verticalArrangement = Arrangement.spacedBy(Spacing.small)
   ) {

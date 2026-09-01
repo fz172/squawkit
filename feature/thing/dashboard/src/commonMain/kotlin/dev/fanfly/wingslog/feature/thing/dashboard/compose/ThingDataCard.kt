@@ -28,6 +28,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
@@ -155,18 +157,23 @@ fun ThingDataCard(
           if (LocalThingCapabilities.current.components) {
             val rows = template.componentRows(thing).filter { it.component != null }
             rows.filterNot { it.rendersAsChip }.forEach { row ->
+              // Indented by depth so the tree reads as a tree: a propeller sits under its engine
+              // and its blades under it, rather than four cards in a flat stack that say nothing
+              // about what is attached to what.
               ComponentDetails(
                 label = row.label.uppercase(),
                 component = row.component!!,
+                depth = row.depth,
               )
               // Its repeating leaf children ride along as chips under their parent — blades under
-              // a propeller, tyres under a car — rather than as a card each.
+              // a propeller — rather than as a card each, one level further in again.
               rows.filter { it.rendersAsChip && it.path.dropLast(1) == row.path }
                 .groupBy { it.slot.slot_key }
                 .forEach { (_, chips) ->
                   ComponentChips(
                     label = chips.first().slot.label,
                     components = chips.mapNotNull { it.component },
+                    modifier = Modifier.padding(start = indentFor(row.depth + 1)),
                   )
                 }
             }
@@ -200,10 +207,11 @@ fun ComponentCard(
   category: String,
   name: String,
   serial: String,
+  modifier: Modifier = Modifier,
   content: @Composable (() -> Unit)? = null,
 ) {
   Surface(
-    modifier = Modifier.fillMaxWidth(),
+    modifier = modifier.fillMaxWidth(),
     shape = RoundedCornerShape(Spacing.cardCornerRadius),
     color = Color.Transparent,
     border = BorderStroke(
@@ -262,3 +270,12 @@ fun ComponentCard(
     }
   }
 }
+
+/**
+ * How far a component at [depth] is inset.
+ *
+ * Small on purpose: the card border already separates rows, so the indent only has to say which
+ * one owns which. A full step per level runs out of width by the third — an aeroplane's blades are
+ * three deep — on the phone this card is mostly read on.
+ */
+internal fun indentFor(depth: Int): Dp = (depth * 12).dp

@@ -1,6 +1,8 @@
 package dev.fanfly.wingslog.feature.thing.dashboard.compose
 
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import dev.fanfly.wingslog.thing.Component
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.make_model_template
@@ -18,8 +20,10 @@ import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 fun ComponentDetails(
   label: String,
   component: Component,
+  depth: Int = 0,
 ) {
   ComponentCard(
+    modifier = Modifier.padding(start = indentFor(depth)),
     category = label,
     name = stringResource(
       CoreRes.string.make_model_template,
