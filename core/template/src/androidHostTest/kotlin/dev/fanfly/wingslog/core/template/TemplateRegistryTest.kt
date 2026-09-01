@@ -176,24 +176,27 @@ class AirplaneTemplateTest {
   }
 
   @Test
-  fun theComponentTreeMatchesWhatTheMigrationBackfilled() {
-    // Phase 1's cutover built airframe -> engine(s) -> propeller -> hub/blades and derived every
-    // Component.id from (thing_id, slot_key, index). If the template's slots disagreed with the
-    // tree already in production, existing Components would not match any declared slot.
-    val airframe = AirplaneTemplate.AIRPLANE_COMPONENT_SLOTS.single()
-    assertThat(airframe.slot_key).isEqualTo("airframe")
-
-    val engine = airframe.children.single()
+  fun theComponentTreeFollowsHowThePartsAttach() {
+    // Engine at the root, propeller on the engine, blades on the propeller (#729).
+    //
+    // **This deliberately no longer matches what Phase 1's cutover stored.** That backfill built
+    // airframe -> engine -> propeller -> hub/blades, so every Thing in production still carries an
+    // airframe wrapper and a separate hub. Reconciling them is the one-off migration this change
+    // is paired with; until it runs, an aircraft stored under the old shape walks these slots and
+    // matches nothing.
+    val engine = AirplaneTemplate.AIRPLANE_COMPONENT_SLOTS.single()
     assertThat(engine.slot_key).isEqualTo("engine")
     assertThat(engine.repeatable).isTrue()
 
     val propeller = engine.children.single()
     assertThat(propeller.slot_key).isEqualTo("propeller")
-    assertThat(propeller.children.map { it.slot_key }).containsExactly(
-      "hub",
-      "blade"
-    )
-      .inOrder()
+    // The propeller carries the make, model and serial the hub used to: in a working aeroplane
+    // they are the same part, and asking for both asked the same question twice.
+    assertThat(propeller.serial_expected).isTrue()
+
+    val blade = propeller.children.single()
+    assertThat(blade.slot_key).isEqualTo("blade")
+    assertThat(blade.repeatable).isTrue()
   }
 
   @Test

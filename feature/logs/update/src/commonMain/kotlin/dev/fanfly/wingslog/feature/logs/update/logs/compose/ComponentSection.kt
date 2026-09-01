@@ -86,10 +86,9 @@ fun ComponentSection(
       ComponentType.COMPONENT_AIRFRAME -> {
         // Display thing serial (read-only)
         ReadOnlyComponentField(
-          label = LocalThingTemplate.current.slotSerialLabel(
-            SlotKeys.AIRFRAME,
-            ifAbsent = stringResource(Res.string.airframe_serial),
-          ),
+          // The thing's own serial, from its spec — there is no airframe component to label it
+          // after any more (#729).
+          label = stringResource(Res.string.airframe_serial),
           value = thing?.specValue(SpecKeys.SERIAL)
             .orEmpty(),
           modifier = Modifier.fillMaxWidth(),
@@ -168,7 +167,7 @@ fun ComponentSection(
           thing.allComponentsInSlot(SlotKeys.ENGINE)
             .forEach { engine ->
               val prop = engine.childInSlot(SlotKeys.PROPELLER)
-              val hub = prop?.childInSlot(SlotKeys.HUB)
+              val hub = prop
               if (hub?.serial?.isNotEmpty() == true) {
                 val makeModel = listOf(hub.make, hub.model)
                   .filter { it.isNotBlank() }

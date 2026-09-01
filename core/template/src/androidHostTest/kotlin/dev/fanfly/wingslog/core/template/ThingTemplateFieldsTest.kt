@@ -39,8 +39,8 @@ class ThingTemplateFieldsTest {
     // Slots nest — an engine lives under the airframe — so a top-level scan would miss every
     // component a log actually attaches to.
     assertThat(airplane.slot("engine")?.label).isEqualTo("Engine")
+    assertThat(airplane.slot("propeller")?.label).isEqualTo("Propeller")
     assertThat(airplane.slot("blade")?.label).isEqualTo("Blade")
-    assertThat(airplane.slot(SlotKeys.AIRFRAME)?.label).isEqualTo("Airframe")
   }
 
   @Test
@@ -55,8 +55,8 @@ class ThingTemplateFieldsTest {
 
   @Test
   fun theSerialLabelIsComposedFromTheSlotName() {
-    assertThat(airplane.slotSerialLabel(SlotKeys.AIRFRAME, ifAbsent = "x"))
-      .isEqualTo("Airframe Serial")
+    assertThat(airplane.slotSerialLabel(SlotKeys.PROPELLER, ifAbsent = "x"))
+      .isEqualTo("Propeller Serial")
   }
 
   @Test
@@ -66,8 +66,8 @@ class ThingTemplateFieldsTest {
     // string.
     assertThat(CanonicalTemplates.HOME.meterLabel(MeterKeys.ENGINE_HOURS, ifAbsent = "Engine Time"))
       .isEqualTo("Engine Time")
-    assertThat(CanonicalTemplates.CUSTOM.slotLabel(SlotKeys.AIRFRAME, ifAbsent = "Airframe"))
-      .isEqualTo("Airframe")
+    assertThat(CanonicalTemplates.CUSTOM.slotLabel(SlotKeys.ENGINE, ifAbsent = "Engine"))
+      .isEqualTo("Engine")
   }
 
   @Test

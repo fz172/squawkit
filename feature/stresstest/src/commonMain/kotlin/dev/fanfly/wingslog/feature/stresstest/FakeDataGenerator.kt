@@ -662,10 +662,9 @@ object FakeDataGenerator {
     val serial = "S${serialLetters.random()}${(10000..99999).random()}"
     val tailNumber = "N${(1000..9999).random()}${('A'..'Z').random()}"
 
-    // Builds the component tree directly — the same shape the form produces (#668).
+    // Builds the component tree directly — the same shape the form produces. Engines sit at the
+    // root and the propeller carries what the hub used to (#729).
     val engines = (1..config.engineCount).map { engineIndex ->
-      val engineSerial = "E${(10000..99999).random()}"
-      val propSerial = "P${(10000..99999).random()}"
       val blades = (1..config.bladesPerEngine).map { bladeIndex ->
         Component(
           slot_key = SlotKeys.BLADE,
@@ -678,18 +677,14 @@ object FakeDataGenerator {
         slot_key = SlotKeys.ENGINE,
         make = spec.engineMake,
         model = spec.engineModel,
-        serial = engineSerial,
+        serial = "E${(10000..99999).random()}",
         children = listOf(
           Component(
             slot_key = SlotKeys.PROPELLER,
-            children = listOf(
-              Component(
-                slot_key = SlotKeys.HUB,
-                make = spec.propMake,
-                model = spec.propModel,
-                serial = propSerial,
-              ),
-            ) + blades,
+            make = spec.propMake,
+            model = spec.propModel,
+            serial = "P${(10000..99999).random()}",
+            children = blades,
           ),
         ),
       )
@@ -704,15 +699,9 @@ object FakeDataGenerator {
         Spec(key = SpecKeys.SERIAL, value_ = serial),
         Spec(key = SpecKeys.TAIL_NUMBER, value_ = tailNumber),
       ),
-      components = listOf(
-        Component(
-          slot_key = SlotKeys.AIRFRAME,
-          make = spec.make,
-          model = spec.model,
-          serial = serial,
-          children = engines,
-        ),
-      ),
+      // No airframe wrapper: the airframe was the thing, and its make/model/serial are the spec
+      // entries above (#729).
+      components = engines,
     ).withDerivedComponentIds()
       .let { thing ->
         // ThingInflater writes DNA on save only when the Thing carries none, so DNA set here
@@ -938,7 +927,7 @@ object FakeDataGenerator {
             ?: thing.specValue(SpecKeys.SERIAL)
 
         ComponentType.COMPONENT_PROPELLER ->
-          thing.allComponentsInSlot(SlotKeys.HUB)
+          thing.allComponentsInSlot(SlotKeys.PROPELLER)
             .firstOrNull()?.serial
             ?: thing.specValue(SpecKeys.SERIAL)
 
@@ -1021,7 +1010,7 @@ object FakeDataGenerator {
             ?: thing.specValue(SpecKeys.SERIAL)
 
         ComponentType.COMPONENT_PROPELLER ->
-          thing.allComponentsInSlot(SlotKeys.HUB)
+          thing.allComponentsInSlot(SlotKeys.PROPELLER)
             .firstOrNull()?.serial
             ?: thing.specValue(SpecKeys.SERIAL)
 

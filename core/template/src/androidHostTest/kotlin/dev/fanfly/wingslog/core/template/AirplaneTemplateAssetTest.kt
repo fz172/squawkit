@@ -141,8 +141,9 @@ class AirplaneTemplateAssetTest {
   fun theStructureTheAirplaneScreensAssumeIsIntact() {
     // Labels and order, not just the keys TemplateKeysResolveTest checks: the shell renders
     // `sections` in this sequence, and the export path branches on the layout.
+    // Declaration order is render order: make, model, then serial beside tail number.
     assertThat(AirplaneTemplate.AIRPLANE_SPEC_FIELDS.map { it.key })
-      .containsExactly("tail_number", "make", "model", "serial")
+      .containsExactly("make", "model", "serial", "tail_number")
       .inOrder()
     assertThat(AirplaneTemplate.AIRPLANE_SPEC_FIELDS.filter { it.is_identifier }
                  .map { it.key })

@@ -18,24 +18,29 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
-import dev.fanfly.wingslog.thing.Component
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.thing.Component
 import org.jetbrains.compose.resources.stringResource
-import wingslog.feature.logs.sharedassets.generated.resources.blade_with_index
 import wingslog.feature.logs.viewing.generated.resources.s_n_empty
-import wingslog.feature.logs.sharedassets.generated.resources.Res as SharedRes
 import wingslog.feature.logs.viewing.generated.resources.Res as MaintenanceRes
 
 
+/**
+ * A repeatable leaf slot, as chips rather than a card each (#729).
+ *
+ * Was `BladeChipsOverview`, which knew about blades. The rule generalises without loss: a slot that
+ * repeats and has no children of its own is a set of near-identical parts told apart by serial —
+ * blades, tyres, wheels, batteries — and a full card each buries the tree in scroll for no gain.
+ */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun BladeChipsOverview(blades: List<Component>) {
+fun ComponentChips(label: String, components: List<Component>) {
   FlowRow(
     modifier = Modifier.fillMaxWidth(),
     horizontalArrangement = Arrangement.spacedBy(Spacing.small),
     verticalArrangement = Arrangement.spacedBy(Spacing.small)
   ) {
-    blades.forEachIndexed { index, blade ->
+    components.forEachIndexed { index, component ->
       Surface(
         shape = RoundedCornerShape(Spacing.badgeCornerRadius),
         color = Color.Transparent,
@@ -51,10 +56,7 @@ fun BladeChipsOverview(blades: List<Component>) {
           ),
         ) {
           Text(
-            text = stringResource(
-              SharedRes.string.blade_with_index,
-              index + 1
-            ),
+            text = "$label ${index + 1}",
             style = TextStyle(
               fontFamily = FontFamily.SansSerif,
               fontWeight = FontWeight.Bold,
@@ -64,7 +66,7 @@ fun BladeChipsOverview(blades: List<Component>) {
             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
           )
           Text(
-            text = blade.serial.ifBlank { stringResource(MaintenanceRes.string.s_n_empty) },
+            text = component.serial.ifBlank { stringResource(MaintenanceRes.string.s_n_empty) },
             modifier = Modifier.padding(top = Spacing.extraSmall),
             style = TextStyle(
               fontFamily = FontFamily.SansSerif,

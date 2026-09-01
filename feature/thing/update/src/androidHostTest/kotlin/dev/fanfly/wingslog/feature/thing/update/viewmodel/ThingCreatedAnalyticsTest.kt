@@ -9,6 +9,7 @@ import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.analytics.RecordingAnalyticsManager
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.template.CurrentThingTemplate
+import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
 import dev.fanfly.wingslog.core.template.ThingInflater
 import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
@@ -69,6 +70,7 @@ class ThingCreatedAnalyticsTest {
     fleetManager = fleetManager,
     sharingManager = sharingManager,
     currentThingTemplate = template,
+    templateRegistry = BakedInTemplateRegistry(appVersionCode = 1),
     analytics = analytics,
     savedStateHandle = SavedStateHandle(
       if (existingId == null) emptyMap() else mapOf(Screen.AIRCRAFT_ID to existingId)
@@ -84,7 +86,7 @@ class ThingCreatedAnalyticsTest {
     ),
     components = listOf(
       Component(
-        slot_key = SlotKeys.AIRFRAME,
+        slot_key = SlotKeys.LEGACY_AIRFRAME,
         children = listOf(
           Component(
             slot_key = SlotKeys.ENGINE,
@@ -95,7 +97,7 @@ class ThingCreatedAnalyticsTest {
               Component(
                 slot_key = SlotKeys.PROPELLER,
                 children = listOf(
-                  Component(slot_key = SlotKeys.HUB, make = "McCauley", model = "1C160"),
+                  Component(slot_key = SlotKeys.LEGACY_HUB, make = "McCauley", model = "1C160", serial = "H-1"),
                   Component(slot_key = SlotKeys.BLADE, serial = "B-1"),
                 ),
               ),

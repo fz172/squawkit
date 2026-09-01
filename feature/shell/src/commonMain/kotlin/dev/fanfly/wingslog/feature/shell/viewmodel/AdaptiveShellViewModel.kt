@@ -100,11 +100,21 @@ class AdaptiveShellViewModel(
                 ac.specValue(SpecKeys.MAKE),
                 ac.specValue(SpecKeys.MODEL),
               ).filter { it.isNotBlank() }.joinToString(" ")
+              // The template says which field names the thing — an airplane has two identifiers
+              // and only the tail number is what an owner calls it by (PRD §4.2). Picking the
+              // first identifier instead showed the serial the moment the template reordered.
+              val title = resolution.template.spec_fields
+                .firstOrNull { it.title_candidate }
+                ?.let { ac.specValue(it.key) }
+                .orEmpty()
               val identifier = resolution.template.spec_fields
                 .firstOrNull { it.is_identifier }
                 ?.let { ac.specValue(it.key) }
                 .orEmpty()
-              val label = ac.name.ifBlank { identifier.ifBlank { makeAndModel } }
+              val label = ac.name
+                .ifBlank { title }
+                .ifBlank { makeAndModel }
+                .ifBlank { identifier }
               ShellThing(
                 id = ac.id,
                 label = label,

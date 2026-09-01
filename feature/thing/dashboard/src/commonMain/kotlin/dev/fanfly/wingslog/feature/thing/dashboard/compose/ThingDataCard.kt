@@ -28,8 +28,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import dev.fanfly.wingslog.core.template.LocalThingTemplate
-import dev.fanfly.wingslog.core.template.slotLabel
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
@@ -37,28 +35,22 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.core.template.LexiconFormatter
+import dev.fanfly.wingslog.core.template.LocalThingCapabilities
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
-import dev.fanfly.wingslog.core.template.SlotKeys
-import dev.fanfly.wingslog.core.template.SpecKeys
-import dev.fanfly.wingslog.core.template.childrenInSlot
-import dev.fanfly.wingslog.core.template.rootComponentInSlot
+import dev.fanfly.wingslog.core.template.LocalThingTemplate
+import dev.fanfly.wingslog.core.template.componentTree
 import dev.fanfly.wingslog.core.template.specValue
 import dev.fanfly.wingslog.core.template.thingNoun
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.thing.Thing
 import org.jetbrains.compose.resources.stringResource
-import wingslog.core.sharedassets.generated.resources.component_airframe
-import wingslog.core.sharedassets.generated.resources.component_engine
 import wingslog.core.sharedassets.generated.resources.edit
-import wingslog.core.sharedassets.generated.resources.make_model_template
 import wingslog.core.sharedassets.generated.resources.manage_access
-import wingslog.feature.logs.sharedassets.generated.resources.engine_with_index
 import wingslog.feature.logs.viewing.generated.resources.collapse_details
 import wingslog.feature.logs.viewing.generated.resources.expand_details
 import wingslog.feature.logs.viewing.generated.resources.s_n_placeholder
 import wingslog.feature.logs.viewing.generated.resources.thing_data
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
-import wingslog.feature.logs.sharedassets.generated.resources.Res as SharedRes
 import wingslog.feature.logs.viewing.generated.resources.Res as MaintenanceRes
 
 
@@ -138,36 +130,41 @@ fun ThingDataCard(
           ),
           verticalArrangement = Arrangement.spacedBy(Spacing.large)
         ) {
-          ComponentCard(
-            category = LocalThingTemplate.current.slotLabel(
-              SlotKeys.AIRFRAME,
-              ifAbsent = stringResource(CoreRes.string.component_airframe),
-            ).uppercase(),
-            name = stringResource(
-              CoreRes.string.make_model_template,
-              thing.specValue(SpecKeys.MAKE),
-              thing.specValue(SpecKeys.MODEL),
-            ),
-            serial = thing.specValue(SpecKeys.SERIAL)
-          )
-
-          // The airframe's engine children (#668).
-          val engines = thing.rootComponentInSlot(SlotKeys.AIRFRAME)
-            ?.childrenInSlot(SlotKeys.ENGINE)
-            .orEmpty()
-          engines.forEachIndexed { index, engine ->
-            val label = if (engines.size > 1) {
-              stringResource(
-                SharedRes.string.engine_with_index,
-                index + 1
+          // The thing's identity, from the spec fields the template declares. It used to be
+          // captioned AIRFRAME and read make/model/serial, which a home has none of (#729).
+          val template = LocalThingTemplate.current
+          // The identifier line is whichever field the template marks, minus the one already
+          // naming the thing — the airplane's serial, a car's VIN, a boat's hull ID. Reading
+          // `serial` by key showed a car a blank S/N and a home an empty one.
+          val identifierField = template?.spec_fields.orEmpty()
+            .filter { it.is_identifier && !it.title_candidate }
+            .firstOrNull {
+              thing.specValue(it.key)
+                .isNotBlank()
+            }
+          val identity = template?.spec_fields.orEmpty()
+            .filterNot { it.key == identifierField?.key }
+            .map { thing.specValue(it.key) }
+            .filter { it.isNotBlank() }
+          if (identity.isNotEmpty()) {
+            ComponentCard(
+              category = LexiconFormatter.titleCase(
+                LocalThingLexicon.current.thingNoun
               )
-            } else {
-              stringResource(CoreRes.string.component_engine)
-            }.uppercase()
-            EngineDetails(
-              label = label,
-              engine = engine
+                .uppercase(),
+              name = identity.joinToString("  ·  "),
+              serial = identifierField?.let { thing.specValue(it.key) }
+                .orEmpty(),
             )
+          }
+
+          // Every stored component, walked from the template's slots. Drawn as a tree by
+          // containment — an engine's propeller sits inside its card — rather than as a flat
+          // stack that says nothing about what is attached to what.
+          if (LocalThingCapabilities.current.components) {
+            template.componentTree(thing)
+              .filter { it.row.component != null }
+              .forEach { ComponentDetails(it) }
           }
 
           if (onEditClick != null || onManageAccessClick != null) {
@@ -198,10 +195,11 @@ fun ComponentCard(
   category: String,
   name: String,
   serial: String,
+  modifier: Modifier = Modifier,
   content: @Composable (() -> Unit)? = null,
 ) {
   Surface(
-    modifier = Modifier.fillMaxWidth(),
+    modifier = modifier.fillMaxWidth(),
     shape = RoundedCornerShape(Spacing.cardCornerRadius),
     color = Color.Transparent,
     border = BorderStroke(
@@ -210,53 +208,63 @@ fun ComponentCard(
     )
   ) {
     Column(modifier = Modifier.padding(Spacing.large)) {
-      Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-      ) {
-        Column(modifier = Modifier.weight(1f)) {
-          Text(
-            text = category,
-            style = TextStyle(
-              fontFamily = FontFamily.SansSerif,
-              fontWeight = FontWeight.Bold,
-              fontSize = 10.sp,
-              letterSpacing = 0.1.sp
-            ),
-            color = MaterialTheme.colorScheme.primary
-          )
-          Text(
-            text = name,
-            modifier = Modifier.padding(top = Spacing.extraSmall),
-            style = TextStyle(
-              fontFamily = FontFamily.SansSerif,
-              fontWeight = FontWeight.SemiBold,
-              fontSize = 16.sp
-            ),
-            color = MaterialTheme.colorScheme.onSurface
-          )
-          Text(
-            text = stringResource(
-              MaintenanceRes.string.s_n_placeholder,
-              serial
-            ),
-            modifier = Modifier.padding(top = Spacing.extraSmall),
-            style = TextStyle(
-              fontFamily = FontFamily.SansSerif,
-              fontWeight = FontWeight.Normal,
-              fontSize = 13.sp
-            ),
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-          )
-        }
-      }
+      ComponentSummary(category = category, name = name, serial = serial)
 
       if (content != null) {
         Column(modifier = Modifier.padding(top = Spacing.large)) {
           content()
         }
       }
+    }
+  }
+}
+
+/**
+ * The category, make/model and serial lines a component shows.
+ *
+ * Extracted from [ComponentCard] so a slot the template marks `inline_with_parent` renders exactly
+ * the same three lines inside its parent's card, with no card of its own — the propeller case.
+ */
+@Composable
+fun ComponentSummary(category: String, name: String, serial: String) {
+  Column(modifier = Modifier.fillMaxWidth()) {
+    Text(
+      text = category,
+      style = TextStyle(
+        fontFamily = FontFamily.SansSerif,
+        fontWeight = FontWeight.Bold,
+        fontSize = 10.sp,
+        letterSpacing = 0.1.sp,
+      ),
+      color = MaterialTheme.colorScheme.primary,
+    )
+    // Same reasoning as the serial below: a component recorded with neither make nor model has
+    // nothing to show on this line, and a blank one reads as a load that failed.
+    if (name.isNotBlank()) {
+      Text(
+        text = name,
+        modifier = Modifier.padding(top = Spacing.extraSmall),
+        style = TextStyle(
+          fontFamily = FontFamily.SansSerif,
+          fontWeight = FontWeight.SemiBold,
+          fontSize = 16.sp,
+        ),
+        color = MaterialTheme.colorScheme.onSurface,
+      )
+    }
+    // Omitted entirely when there is none. A home has no serial to give, and "S/N:" followed by
+    // nothing reads as data that failed to load rather than data that does not exist.
+    if (serial.isNotBlank()) {
+      Text(
+        text = stringResource(MaintenanceRes.string.s_n_placeholder, serial),
+        modifier = Modifier.padding(top = Spacing.extraSmall),
+        style = TextStyle(
+          fontFamily = FontFamily.SansSerif,
+          fontWeight = FontWeight.Normal,
+          fontSize = 13.sp,
+        ),
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+      )
     }
   }
 }

@@ -76,7 +76,7 @@ class ThingInflaterTest {
     val edited = Thing(
       id = "t",
       spec = listOf(Spec(key = SpecKeys.MAKE, value_ = "Beechcraft")),
-      components = listOf(Component(slot_key = SlotKeys.AIRFRAME)),
+      components = listOf(Component(slot_key = SlotKeys.LEGACY_AIRFRAME)),
     )
 
     val inflated = ThingInflater.inflate(edited, airplane)

@@ -65,35 +65,50 @@ spec_fields {
   placeholder: "ABC12345D616"
 }
 
+# Grouped by FUNCTION, not by what is bolted to what. A boat owner thinks in systems — propulsion,
+# electrics, steering, rigging — and the same category holds an inboard, an outboard or a sail
+# drive without the template having to name any of them. The specific part is the component's own
+# make and model.
+#
+# That is a different shape from the airplane's (#729), which nests by attachment because an
+# aeroplane's parts genuinely form one chain: propeller on engine, blades on propeller. Neither
+# shape is the template system's opinion — each preset describes its own domain, which is the point.
 component_slots {
   slot_key: "hull"
   label: "Hull"
-  serial_expected: true
+  # No serial: the boat's identifying number is the `hull_id` spec field above, and asking again
+  # here would be the duplicate the airplane's airframe slot was removed for.
 }
-# Repeatable, and that is the point — a twin-engine boat accrues hours on each engine separately.
+# Zero or more: an engine, an outboard, a sail drive. The meter below is scoped to this slot, so a
+# twin accrues hours on each separately rather than on the boat.
 component_slots {
-  slot_key: "engine"
-  label: "Engine"
+  slot_key: "propulsion"
+  label: "Propulsion"
   repeatable: true
   serial_expected: true
-  children {
-    slot_key: "outdrive"
-    label: "Outdrive"
-    serial_expected: true
-  }
+}
+# Batteries, radio, GPS, EPIRB — things with a serial and a service life, and no natural parent.
+component_slots {
+  slot_key: "electrical_safety"
+  label: "Electrical & Safety"
+  repeatable: true
+  serial_expected: true
 }
 component_slots {
-  slot_key: "battery"
-  label: "Battery"
-  repeatable: true
+  slot_key: "steering"
+  label: "Steering"
+}
+component_slots {
+  slot_key: "rigging"
+  label: "Rigging"
 }
 
-# Scoped to the engine slot, exactly as the airplane's engine hours are. A Thing-level meter here
+# Scoped to the propulsion slot, exactly as the airplane's engine hours are scoped to its engine. A Thing-level meter here
 # would report one number for a boat that has two engines with different histories.
 meters {
   key: "engine_hours"
   label: "Engine Hours"
   unit_label: "hrs"
   decimal: true
-  component_slot_key: "engine"
+  component_slot_key: "propulsion"
 }
