@@ -28,6 +28,24 @@ export interface SpecField {
    */
   isIdentifier: boolean;
   placeholder: string;
+  /**
+   * May share a line with the next field that also sets it — serial beside tail number, where
+   * both are short and neither earns a row of its own.
+   *
+   * Stated per field rather than per template because spec fields are authored freely: a home's
+   * address needs the full width and its year built does not, and no rule over key names knows
+   * that. Components take a slot-level flag instead, since their field set is the fixed
+   * make/model/serial triple.
+   */
+  compact: boolean;
+  /**
+   * May stand in as the Thing's display name when the user has not set one. PRD §4.2.
+   *
+   * Distinct from `is_identifier`, which says a value is matched exactly and renders in mono — an
+   * airplane has two such fields and only the tail number is what an owner calls it by. Without
+   * this the switcher picked whichever identifier the template happened to declare first.
+   */
+  titleCandidate: boolean;
 }
 
 /**
@@ -39,9 +57,35 @@ export interface ComponentSlot {
   label: string;
   /** an airplane has N engines */
   repeatable: boolean;
-  /** engine -> propeller -> hub/blade */
+  /** engine -> propeller -> blade */
   children: ComponentSlot[];
   serialExpected: boolean;
+  /**
+   * Which of make / model / serial this slot asks for. PRD §4.3's `spec_keys`.
+   *
+   * Empty means all three, so every preset that has not thought about it is unchanged. The case
+   * that needs it: propeller blades are a matched set, so their make and model are the propeller's
+   * and only the serials differ. Asking per blade invites data that cannot be true.
+   */
+  specKeys: string[];
+  /**
+   * Render this slot's fields inside its PARENT's card rather than a card of its own.
+   *
+   * Nesting stays the default — a card in a card is how the tree reads — but the depth at which
+   * that stops helping is a property of the domain, not of the widget. A propeller is not a thing
+   * an owner navigates *into*: it is part of how they describe the engine, so it flows underneath
+   * the engine's own fields. Named for what it does rather than `nested`, because a proto3 bool
+   * defaults to false and "nested by default" has to be the false case.
+   */
+  inlineWithParent: boolean;
+  /**
+   * Pack this slot's inputs onto shared lines instead of one per line.
+   *
+   * Make takes a line of its own — it is the manufacturer and reads as a heading for what follows
+   * — while model and serial pair up beside each other. A slot whose only field is a serial packs
+   * its *instances* instead, which is what puts four blade serials on two lines.
+   */
+  compactFields: boolean;
 }
 
 /**
@@ -115,7 +159,15 @@ export interface ThingTemplate {
 }
 
 function createBaseSpecField(): SpecField {
-  return { key: "", label: "", required: false, isIdentifier: false, placeholder: "" };
+  return {
+    key: "",
+    label: "",
+    required: false,
+    isIdentifier: false,
+    placeholder: "",
+    compact: false,
+    titleCandidate: false,
+  };
 }
 
 export const SpecField: MessageFns<SpecField> = {
@@ -134,6 +186,12 @@ export const SpecField: MessageFns<SpecField> = {
     }
     if (message.placeholder !== "") {
       writer.uint32(42).string(message.placeholder);
+    }
+    if (message.compact !== false) {
+      writer.uint32(48).bool(message.compact);
+    }
+    if (message.titleCandidate !== false) {
+      writer.uint32(56).bool(message.titleCandidate);
     }
     return writer;
   },
@@ -185,6 +243,22 @@ export const SpecField: MessageFns<SpecField> = {
           message.placeholder = reader.string();
           continue;
         }
+        case 6: {
+          if (tag !== 48) {
+            break;
+          }
+
+          message.compact = reader.bool();
+          continue;
+        }
+        case 7: {
+          if (tag !== 56) {
+            break;
+          }
+
+          message.titleCandidate = reader.bool();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -205,6 +279,12 @@ export const SpecField: MessageFns<SpecField> = {
         ? globalThis.Boolean(object.is_identifier)
         : false,
       placeholder: isSet(object.placeholder) ? globalThis.String(object.placeholder) : "",
+      compact: isSet(object.compact) ? globalThis.Boolean(object.compact) : false,
+      titleCandidate: isSet(object.titleCandidate)
+        ? globalThis.Boolean(object.titleCandidate)
+        : isSet(object.title_candidate)
+        ? globalThis.Boolean(object.title_candidate)
+        : false,
     };
   },
 
@@ -225,6 +305,12 @@ export const SpecField: MessageFns<SpecField> = {
     if (message.placeholder !== "") {
       obj.placeholder = message.placeholder;
     }
+    if (message.compact !== false) {
+      obj.compact = message.compact;
+    }
+    if (message.titleCandidate !== false) {
+      obj.titleCandidate = message.titleCandidate;
+    }
     return obj;
   },
 
@@ -238,12 +324,23 @@ export const SpecField: MessageFns<SpecField> = {
     message.required = object.required ?? false;
     message.isIdentifier = object.isIdentifier ?? false;
     message.placeholder = object.placeholder ?? "";
+    message.compact = object.compact ?? false;
+    message.titleCandidate = object.titleCandidate ?? false;
     return message;
   },
 };
 
 function createBaseComponentSlot(): ComponentSlot {
-  return { slotKey: "", label: "", repeatable: false, children: [], serialExpected: false };
+  return {
+    slotKey: "",
+    label: "",
+    repeatable: false,
+    children: [],
+    serialExpected: false,
+    specKeys: [],
+    inlineWithParent: false,
+    compactFields: false,
+  };
 }
 
 export const ComponentSlot: MessageFns<ComponentSlot> = {
@@ -262,6 +359,15 @@ export const ComponentSlot: MessageFns<ComponentSlot> = {
     }
     if (message.serialExpected !== false) {
       writer.uint32(40).bool(message.serialExpected);
+    }
+    for (const v of message.specKeys) {
+      writer.uint32(50).string(v!);
+    }
+    if (message.inlineWithParent !== false) {
+      writer.uint32(56).bool(message.inlineWithParent);
+    }
+    if (message.compactFields !== false) {
+      writer.uint32(64).bool(message.compactFields);
     }
     return writer;
   },
@@ -313,6 +419,30 @@ export const ComponentSlot: MessageFns<ComponentSlot> = {
           message.serialExpected = reader.bool();
           continue;
         }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.specKeys.push(reader.string());
+          continue;
+        }
+        case 7: {
+          if (tag !== 56) {
+            break;
+          }
+
+          message.inlineWithParent = reader.bool();
+          continue;
+        }
+        case 8: {
+          if (tag !== 64) {
+            break;
+          }
+
+          message.compactFields = reader.bool();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -339,6 +469,21 @@ export const ComponentSlot: MessageFns<ComponentSlot> = {
         : isSet(object.serial_expected)
         ? globalThis.Boolean(object.serial_expected)
         : false,
+      specKeys: globalThis.Array.isArray(object?.specKeys)
+        ? object.specKeys.map((e: any) => globalThis.String(e))
+        : globalThis.Array.isArray(object?.spec_keys)
+        ? object.spec_keys.map((e: any) => globalThis.String(e))
+        : [],
+      inlineWithParent: isSet(object.inlineWithParent)
+        ? globalThis.Boolean(object.inlineWithParent)
+        : isSet(object.inline_with_parent)
+        ? globalThis.Boolean(object.inline_with_parent)
+        : false,
+      compactFields: isSet(object.compactFields)
+        ? globalThis.Boolean(object.compactFields)
+        : isSet(object.compact_fields)
+        ? globalThis.Boolean(object.compact_fields)
+        : false,
     };
   },
 
@@ -359,6 +504,15 @@ export const ComponentSlot: MessageFns<ComponentSlot> = {
     if (message.serialExpected !== false) {
       obj.serialExpected = message.serialExpected;
     }
+    if (message.specKeys?.length) {
+      obj.specKeys = message.specKeys;
+    }
+    if (message.inlineWithParent !== false) {
+      obj.inlineWithParent = message.inlineWithParent;
+    }
+    if (message.compactFields !== false) {
+      obj.compactFields = message.compactFields;
+    }
     return obj;
   },
 
@@ -372,6 +526,9 @@ export const ComponentSlot: MessageFns<ComponentSlot> = {
     message.repeatable = object.repeatable ?? false;
     message.children = object.children?.map((e) => ComponentSlot.fromPartial(e)) || [];
     message.serialExpected = object.serialExpected ?? false;
+    message.specKeys = object.specKeys?.map((e) => e) || [];
+    message.inlineWithParent = object.inlineWithParent ?? false;
+    message.compactFields = object.compactFields ?? false;
     return message;
   },
 };
