@@ -228,4 +228,77 @@ class ComponentTreeTest {
 
     assertThat(automotive.componentsMissingSerials(thing)).isEmpty()
   }
+
+  // --- Which fields a slot asks for, and how the tree nests ---
+
+  @Test
+  fun aBladeAsksForItsSerialAndNothingElse() {
+    // Blades are a matched set: their make and model are the propeller's, and asking per blade
+    // invites a mix that cannot exist on a real aeroplane (PRD §4.3's spec_keys).
+    val blade = airplane.componentRows(
+      Thing(
+        id = "t",
+        components = listOf(
+          Component(
+            slot_key = SlotKeys.ENGINE,
+            children = listOf(
+              Component(
+                slot_key = SlotKeys.PROPELLER,
+                children = listOf(Component(slot_key = SlotKeys.BLADE)),
+              ),
+            ),
+          ),
+        ),
+      ),
+    ).single { it.slot.slot_key == SlotKeys.BLADE }
+
+    assertThat(blade.fields).containsExactly(ComponentField.SERIAL)
+  }
+
+  @Test
+  fun aSlotThatDeclaresNoFieldsAsksForAllThree() {
+    // The default keeps every preset that has not thought about it unchanged.
+    val engine = airplane.componentRows(
+      Thing(id = "t", components = listOf(Component(slot_key = SlotKeys.ENGINE))),
+    ).single { it.slot.slot_key == SlotKeys.ENGINE }
+
+    assertThat(engine.fields).containsExactly(
+      ComponentField.MAKE,
+      ComponentField.MODEL,
+      ComponentField.SERIAL,
+    ).inOrder()
+  }
+
+  @Test
+  fun theTreeNestsChildrenUnderTheirParent() {
+    // What draws containment: an engine holding its propeller, holding its blades. The flat walk
+    // still exists for validation and ordering, but nothing renders from it any more.
+    val thing = Thing(
+      id = "t",
+      components = listOf(
+        Component(
+          slot_key = SlotKeys.ENGINE,
+          children = listOf(
+            Component(
+              slot_key = SlotKeys.PROPELLER,
+              children = listOf(
+                Component(slot_key = SlotKeys.BLADE),
+                Component(slot_key = SlotKeys.BLADE),
+              ),
+            ),
+          ),
+        ),
+      ),
+    )
+
+    val engine = airplane.componentTree(thing).single()
+
+    assertThat(engine.row.label).isEqualTo("Engine 1")
+    val propeller = engine.cardChildren.single()
+    assertThat(propeller.row.label).isEqualTo("Propeller")
+    // Blades hang off the propeller as chips, not as cards beside it.
+    assertThat(propeller.cardChildren).isEmpty()
+    assertThat(propeller.chipChildren.map { it.row.label })
+      .containsExactly("Blade 1", "Blade 2").inOrder()
+  }
 }

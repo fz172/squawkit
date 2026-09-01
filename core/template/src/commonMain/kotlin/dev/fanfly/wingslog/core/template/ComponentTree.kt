@@ -6,7 +6,11 @@ import dev.fanfly.wingslog.thing.Thing
 import dev.fanfly.wingslog.thing.ThingTemplate
 
 /** The three fields every component carries, whatever slot it fills. */
-enum class ComponentField { MAKE, MODEL, SERIAL }
+enum class ComponentField(val key: String) {
+  MAKE("make"),
+  MODEL("model"),
+  SERIAL("serial"),
+}
 
 fun Component.valueOf(field: ComponentField): String = when (field) {
   ComponentField.MAKE -> make
@@ -44,6 +48,20 @@ data class ComponentRow(
    */
   val label: String
     get() = if (ordinal == null) slot.label else "${slot.label} ${ordinal + 1}"
+
+  /**
+   * Which of make / model / serial this slot asks for (PRD §4.3's `spec_keys`).
+   *
+   * Empty in the template means all three, so a preset that has not thought about it is unchanged.
+   * Blades declare `serial` alone: they are a matched set, so their make and model are the
+   * propeller's and asking per blade invites data that cannot be true.
+   */
+  val fields: List<ComponentField>
+    get() = if (slot.spec_keys.isEmpty()) {
+      ComponentField.entries
+    } else {
+      ComponentField.entries.filter { it.key in slot.spec_keys }
+    }
 
   /**
    * Renders as a chip rather than a card: a repeating leaf slot **inside** another component.
@@ -134,3 +152,29 @@ fun ThingTemplate?.componentsMissingSerials(thing: Thing): List<ComponentRow> =
   componentRows(thing).filter { row ->
     row.slot.serial_expected && row.component != null && row.component.serial.isBlank()
   }
+
+/**
+ * The rows of [componentRows], nested as they actually are.
+ *
+ * Both shapes exist because both are wanted: the flat walk answers "every component, in order",
+ * which validation and the dashboard's chip grouping need, while this one is what draws a tree —
+ * a propeller *inside* its engine's card rather than a card beside it with an indent.
+ */
+data class ComponentNode(
+  val row: ComponentRow,
+  val children: List<ComponentNode>,
+) {
+  /** Children that draw as chips — a matched set of blades, rendered under the card, not in it. */
+  val chipChildren: List<ComponentNode> get() = children.filter { it.row.rendersAsChip }
+
+  /** Children that draw as their own nested card. */
+  val cardChildren: List<ComponentNode> get() = children.filterNot { it.row.rendersAsChip }
+}
+
+fun ThingTemplate?.componentTree(thing: Thing): List<ComponentNode> {
+  val rows = componentRows(thing)
+  fun nodesAt(parent: ComponentPath): List<ComponentNode> =
+    rows.filter { it.path.size == parent.size + 1 && it.path.dropLast(1) == parent }
+      .map { ComponentNode(it, nodesAt(it.path)) }
+  return nodesAt(emptyList())
+}

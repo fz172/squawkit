@@ -14,10 +14,10 @@ techniciantechniciansa:	AirworthyBAOGJAircraft on GroundRFleetjFAAr7
 tail_numberTail Number 2
 makeMake2
 modelModel2
-serialSerial Number :B
-engineEngine",
-	propeller	Propeller"
-bladeBlade(((B&
+serialSerial Number :J
+engineEngine"4
+	propeller	Propeller"
+bladeBlade(2serial((B&
 airframe_hoursAirframe Timehrs B*
 engine_hoursEngine Timehrs *engineB)
 

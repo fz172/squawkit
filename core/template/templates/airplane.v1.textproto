@@ -126,11 +126,14 @@ component_slots {
     slot_key: "propeller"
     label: "Propeller"
     serial_expected: true
+    # Serial only. Blades are a matched set — their make and model are the propeller's, and
+    # asking per blade invites a mix that cannot exist on a real aeroplane.
     children {
       slot_key: "blade"
       label: "Blade"
       repeatable: true
       serial_expected: true
+      spec_keys: "serial"
     }
   }
 }

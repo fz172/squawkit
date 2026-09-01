@@ -41,8 +41,15 @@ message ComponentSlot {
   string slot_key = 1;
   string label = 2;
   bool repeatable = 3;                    // an airplane has N engines
-  repeated ComponentSlot children = 4;    // engine -> propeller -> hub/blade
+  repeated ComponentSlot children = 4;    // engine -> propeller -> blade
   bool serial_expected = 5;
+
+  // Which of make / model / serial this slot asks for. PRD §4.3's `spec_keys`.
+  //
+  // Empty means all three, so every preset that has not thought about it is unchanged. The case
+  // that needs it: propeller blades are a matched set, so their make and model are the propeller's
+  // and only the serials differ. Asking per blade invites data that cannot be true.
+  repeated string spec_keys = 6;
 }
 
 // A meter a Thing accumulates and rules can be written against — hours, miles, cycles, seasons.

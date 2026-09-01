@@ -18,8 +18,8 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
-import dev.fanfly.wingslog.thing.Component
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.thing.Component
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.logs.viewing.generated.resources.s_n_empty
 import wingslog.feature.logs.viewing.generated.resources.Res as MaintenanceRes
@@ -34,13 +34,9 @@ import wingslog.feature.logs.viewing.generated.resources.Res as MaintenanceRes
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun ComponentChips(
-  label: String,
-  components: List<Component>,
-  modifier: Modifier = Modifier,
-) {
+fun ComponentChips(label: String, components: List<Component>) {
   FlowRow(
-    modifier = modifier.fillMaxWidth(),
+    modifier = Modifier.fillMaxWidth(),
     horizontalArrangement = Arrangement.spacedBy(Spacing.small),
     verticalArrangement = Arrangement.spacedBy(Spacing.small)
   ) {

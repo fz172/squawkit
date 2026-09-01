@@ -28,8 +28,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
@@ -41,7 +39,7 @@ import dev.fanfly.wingslog.core.template.LocalThingCapabilities
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.LocalThingTemplate
 import dev.fanfly.wingslog.core.template.SpecKeys
-import dev.fanfly.wingslog.core.template.componentRows
+import dev.fanfly.wingslog.core.template.componentTree
 import dev.fanfly.wingslog.core.template.specValue
 import dev.fanfly.wingslog.core.template.thingNoun
 import dev.fanfly.wingslog.core.ui.theme.Spacing
@@ -151,32 +149,13 @@ fun ThingDataCard(
             )
           }
 
-          // Every stored component, walked from the template's slots rather than from
-          // airframe-then-engines. A bike shows its drivetrain and wheels; a home shows nothing,
-          // which is what `components: false` means.
+          // Every stored component, walked from the template's slots. Drawn as a tree by
+          // containment — an engine's propeller sits inside its card — rather than as a flat
+          // stack that says nothing about what is attached to what.
           if (LocalThingCapabilities.current.components) {
-            val rows = template.componentRows(thing).filter { it.component != null }
-            rows.filterNot { it.rendersAsChip }.forEach { row ->
-              // Indented by depth so the tree reads as a tree: a propeller sits under its engine
-              // and its blades under it, rather than four cards in a flat stack that say nothing
-              // about what is attached to what.
-              ComponentDetails(
-                label = row.label.uppercase(),
-                component = row.component!!,
-                depth = row.depth,
-              )
-              // Its repeating leaf children ride along as chips under their parent — blades under
-              // a propeller — rather than as a card each, one level further in again.
-              rows.filter { it.rendersAsChip && it.path.dropLast(1) == row.path }
-                .groupBy { it.slot.slot_key }
-                .forEach { (_, chips) ->
-                  ComponentChips(
-                    label = chips.first().slot.label,
-                    components = chips.mapNotNull { it.component },
-                    modifier = Modifier.padding(start = indentFor(row.depth + 1)),
-                  )
-                }
-            }
+            template.componentTree(thing)
+              .filter { it.row.component != null }
+              .forEach { ComponentDetails(it) }
           }
 
           if (onEditClick != null || onManageAccessClick != null) {
@@ -270,12 +249,3 @@ fun ComponentCard(
     }
   }
 }
-
-/**
- * How far a component at [depth] is inset.
- *
- * Small on purpose: the card border already separates rows, so the indent only has to say which
- * one owns which. A full step per level runs out of width by the third — an aeroplane's blades are
- * three deep — on the phone this card is mostly read on.
- */
-internal fun indentFor(depth: Int): Dp = (depth * 12).dp

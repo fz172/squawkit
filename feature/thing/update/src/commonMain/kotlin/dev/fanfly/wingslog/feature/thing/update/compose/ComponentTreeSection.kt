@@ -23,14 +23,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
-import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.template.ComponentField
+import dev.fanfly.wingslog.core.template.ComponentNode
 import dev.fanfly.wingslog.core.template.ComponentPath
 import dev.fanfly.wingslog.core.template.ComponentRow
 import dev.fanfly.wingslog.core.template.LocalThingCapabilities
 import dev.fanfly.wingslog.core.template.LocalThingTemplate
 import dev.fanfly.wingslog.core.template.addableSlotsUnder
-import dev.fanfly.wingslog.core.template.componentRows
+import dev.fanfly.wingslog.core.template.componentTree
 import dev.fanfly.wingslog.core.template.valueOf
 import dev.fanfly.wingslog.core.ui.common.compose.FormTextField
 import dev.fanfly.wingslog.core.ui.theme.Spacing
@@ -66,13 +66,13 @@ fun ComponentTreeSection(
 ) {
   val template = LocalThingTemplate.current
   if (!LocalThingCapabilities.current.components) return
-  val rows = template.componentRows(thing)
-  if (rows.isEmpty()) return
+  val nodes = template.componentTree(thing)
+  if (nodes.isEmpty()) return
 
   Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
-    rows.forEach { row ->
-      ComponentRowCard(
-        row = row,
+    nodes.forEach { node ->
+      ComponentNodeCard(
+        node = node,
         viewModel = viewModel,
         showValidationErrors = showValidationErrors,
       )
@@ -84,19 +84,18 @@ fun ComponentTreeSection(
 }
 
 @Composable
-private fun ComponentRowCard(
-  row: ComponentRow,
+private fun ComponentNodeCard(
+  node: ComponentNode,
   viewModel: EditThingViewModel,
   showValidationErrors: Boolean,
 ) {
-  // Indentation is the only thing depth changes. Nesting is already legible from the order and the
-  // labels, and a card-in-a-card at four levels deep leaves no room to type on a phone.
-  val indent = (row.depth * 12).dp
+  // Nesting is drawn by containment: a propeller's card sits inside its engine's. The border
+  // already says what an indent would, and it matches how the dashboard renders the same tree.
+  val row = node.row
   val askForSerials = LocalThingCapabilities.current.component_serial_prompt
 
   Card(
-    modifier = Modifier.fillMaxWidth()
-      .padding(start = indent),
+    modifier = Modifier.fillMaxWidth(),
     shape = RoundedCornerShape(Spacing.cardCornerRadius),
     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
     border = BorderStroke(
@@ -126,26 +125,35 @@ private fun ComponentRowCard(
         }
       }
 
-      ComponentFieldRow(
-        row = row,
-        field = ComponentField.MAKE,
-        viewModel = viewModel,
-      )
-      ComponentFieldRow(
-        row = row,
-        field = ComponentField.MODEL,
-        viewModel = viewModel,
-      )
-      // Two gates, and they mean different things. `serial_expected` is the template saying this
-      // kind of component has a serial worth recording; the capability is the preset saying not to
-      // ask at creation at all. Hidden either way means not required — EditThingUiState relaxes
-      // identically, or the form blocks on a field that is not on screen.
-      if (row.slot.serial_expected && askForSerials) {
+      // Only the fields this slot asks for. A blade declares `serial` alone — blades are a matched
+      // set, so their make and model are the propeller's and asking per blade invites a mix that
+      // cannot exist.
+      row.fields.forEach { field ->
+        // Two gates on the serial, and they mean different things. `serial_expected` is the
+        // template saying this kind of component has one worth recording; the capability is the
+        // preset saying not to ask at creation at all. Hidden either way means not required —
+        // EditThingUiState relaxes identically, or the form blocks on a field not on screen.
+        if (field == ComponentField.SERIAL &&
+          !(row.slot.serial_expected && askForSerials)
+        ) {
+          return@forEach
+        }
         ComponentFieldRow(
           row = row,
-          field = ComponentField.SERIAL,
+          field = field,
           viewModel = viewModel,
-          isError = showValidationErrors && row.component?.serial?.isBlank() == true,
+          isError = field == ComponentField.SERIAL &&
+            showValidationErrors &&
+            row.component?.serial?.isBlank() == true,
+        )
+      }
+
+      // Nested components live inside this card, so the tree is legible without an indent.
+      node.children.forEach { child ->
+        ComponentNodeCard(
+          node = child,
+          viewModel = viewModel,
+          showValidationErrors = showValidationErrors,
         )
       }
 
