@@ -12,6 +12,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -21,10 +22,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import dev.fanfly.wingslog.thing.MaintenanceTask
+import dev.fanfly.wingslog.core.template.LocalThingTemplate
+import dev.fanfly.wingslog.core.template.meter
 import dev.fanfly.wingslog.core.ui.common.compose.PreviewBanner
 import dev.fanfly.wingslog.core.ui.common.compose.PreviewBannerTone
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.thing.MaintenanceTask
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.tasks.update.generated.resources.Res
@@ -185,16 +188,39 @@ fun TaskScheduleTab(
             )
           }
 
-          ScheduleMode.HOURS -> IntervalNumberInput(
-            value = state.hourValue,
-            onChange = { onChange(state.copy(hourValue = it)) },
-            suffix = stringResource(Res.string.schedule_unit_tach_hours),
-            prefix = stringResource(
-              if (state.recurrence == ScheduleRecurrence.ONE_TIME) Res.string.schedule_prefix_in
-              else Res.string.schedule_prefix_every
-            ),
-            keyboard = KeyboardType.Decimal,
-          )
+          ScheduleMode.HOURS -> {
+            // A new task carries the default engine-hours key, which a car's template never
+            // declares — fall back to its first meter so an automotive task schedules on the
+            // odometer rather than on a meter that does not exist.
+            val template = LocalThingTemplate.current
+            val meter =
+              template.meter(state.meterKey) ?: template?.meters?.firstOrNull()
+            LaunchedEffect(meter?.key) {
+              val key = meter?.key
+              if (key != null && key != state.meterKey) {
+                onChange(state.copy(meterKey = key))
+              }
+            }
+            IntervalNumberInput(
+              value = state.hourValue,
+              onChange = { onChange(state.copy(hourValue = it)) },
+              // The meter's own unit — "every 5,000 mi" on a car, "every 100 hrs" on an
+              // aeroplane. A fixed "tach hours" was the reason a car could not express this at
+              // all (#759).
+              suffix = meter?.unit_label?.takeIf { it.isNotEmpty() }
+                ?: stringResource(Res.string.schedule_unit_tach_hours),
+              prefix = stringResource(
+                if (state.recurrence == ScheduleRecurrence.ONE_TIME) Res.string.schedule_prefix_in
+                else Res.string.schedule_prefix_every
+              ),
+              // An odometer takes no decimal point.
+              keyboard = if (meter?.decimal != false) {
+                KeyboardType.Decimal
+              } else {
+                KeyboardType.Number
+              },
+            )
+          }
         }
       }
     }

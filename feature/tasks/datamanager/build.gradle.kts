@@ -27,6 +27,8 @@ kotlin {
     commonMain.dependencies {
       implementation(project(":core:datetime"))
       implementation(project(":core:storage"))
+      // readingFor / MeterKeys — a rule schedules against a meter key now (#759).
+      implementation(project(":core:template"))
       implementation(libs.gitlive.firebase.auth)
       implementation(project(":feature:tasks:model"))
       implementation(libs.kermit)
