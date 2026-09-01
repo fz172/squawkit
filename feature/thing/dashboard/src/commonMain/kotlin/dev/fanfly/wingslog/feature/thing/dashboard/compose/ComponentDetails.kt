@@ -5,9 +5,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
 import dev.fanfly.wingslog.core.template.ComponentNode
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import org.jetbrains.compose.resources.stringResource
-import wingslog.core.sharedassets.generated.resources.make_model_template
-import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 
 /**
  * One component and everything attached to it (#729).
@@ -25,24 +22,26 @@ fun ComponentDetails(node: ComponentNode) {
   val component = node.row.component ?: return
   ComponentCard(
     category = node.row.label.uppercase(),
-    name = stringResource(
-      CoreRes.string.make_model_template,
-      component.make,
-      component.model,
-    ),
+    // Joined here rather than through the two-slot template string: a component with only a make
+    // would otherwise render it followed by a dangling separator.
+    name = listOf(component.make, component.model)
+      .filter { it.isNotBlank() }
+      .joinToString(" "),
     serial = component.serial,
     content = if (node.children.isEmpty()) {
       null
     } else {
       {
         Column(verticalArrangement = Arrangement.spacedBy(Spacing.large)) {
-          node.inlineBlockGroups.flatten().forEach { InlineComponentBlock(it) }
-          node.chipChildren.groupBy { it.row.slot.slot_key }.forEach { (_, chips) ->
-            ComponentChips(
-              label = chips.first().row.slot.label,
-              components = chips.mapNotNull { it.row.component },
-            )
-          }
+          node.inlineBlockGroups.flatten()
+            .forEach { InlineComponentBlock(it) }
+          node.chipChildren.groupBy { it.row.slot.slot_key }
+            .forEach { (_, chips) ->
+              ComponentChips(
+                label = chips.first().row.slot.label,
+                components = chips.mapNotNull { it.row.component },
+              )
+            }
           node.cardChildren.forEach { ComponentDetails(it) }
         }
       }
@@ -57,20 +56,20 @@ private fun InlineComponentBlock(node: ComponentNode) {
   Column(verticalArrangement = Arrangement.spacedBy(Spacing.large)) {
     ComponentSummary(
       category = node.row.label.uppercase(),
-      name = stringResource(
-        CoreRes.string.make_model_template,
-        component.make,
-        component.model,
-      ),
+      name = listOf(component.make, component.model)
+        .filter { it.isNotBlank() }
+        .joinToString(" "),
       serial = component.serial,
     )
-    node.inlineBlockGroups.flatten().forEach { InlineComponentBlock(it) }
-    node.chipChildren.groupBy { it.row.slot.slot_key }.forEach { (_, chips) ->
-      ComponentChips(
-        label = chips.first().row.slot.label,
-        components = chips.mapNotNull { it.row.component },
-      )
-    }
+    node.inlineBlockGroups.flatten()
+      .forEach { InlineComponentBlock(it) }
+    node.chipChildren.groupBy { it.row.slot.slot_key }
+      .forEach { (_, chips) ->
+        ComponentChips(
+          label = chips.first().row.slot.label,
+          components = chips.mapNotNull { it.row.component },
+        )
+      }
     node.cardChildren.forEach { ComponentDetails(it) }
   }
 }

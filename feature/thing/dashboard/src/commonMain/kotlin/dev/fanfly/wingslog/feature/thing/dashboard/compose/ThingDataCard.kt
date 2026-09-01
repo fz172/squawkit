@@ -38,7 +38,6 @@ import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.LocalThingCapabilities
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.LocalThingTemplate
-import dev.fanfly.wingslog.core.template.SpecKeys
 import dev.fanfly.wingslog.core.template.componentTree
 import dev.fanfly.wingslog.core.template.specValue
 import dev.fanfly.wingslog.core.template.thingNoun
@@ -134,18 +133,28 @@ fun ThingDataCard(
           // The thing's identity, from the spec fields the template declares. It used to be
           // captioned AIRFRAME and read make/model/serial, which a home has none of (#729).
           val template = LocalThingTemplate.current
+          // The identifier line is whichever field the template marks, minus the one already
+          // naming the thing — the airplane's serial, a car's VIN, a boat's hull ID. Reading
+          // `serial` by key showed a car a blank S/N and a home an empty one.
+          val identifierField = template?.spec_fields.orEmpty()
+            .filter { it.is_identifier && !it.title_candidate }
+            .firstOrNull {
+              thing.specValue(it.key)
+                .isNotBlank()
+            }
           val identity = template?.spec_fields.orEmpty()
-            .filterNot { it.key == SpecKeys.SERIAL }
-            .map { it.label to thing.specValue(it.key) }
-            .filter { (_, value) -> value.isNotBlank() }
+            .filterNot { it.key == identifierField?.key }
+            .map { thing.specValue(it.key) }
+            .filter { it.isNotBlank() }
           if (identity.isNotEmpty()) {
             ComponentCard(
               category = LexiconFormatter.titleCase(
                 LocalThingLexicon.current.thingNoun
               )
                 .uppercase(),
-              name = identity.joinToString("  ·  ") { (_, value) -> value },
-              serial = thing.specValue(SpecKeys.SERIAL),
+              name = identity.joinToString("  ·  "),
+              serial = identifierField?.let { thing.specValue(it.key) }
+                .orEmpty(),
             )
           }
 
@@ -229,25 +238,33 @@ fun ComponentSummary(category: String, name: String, serial: String) {
       ),
       color = MaterialTheme.colorScheme.primary,
     )
-    Text(
-      text = name,
-      modifier = Modifier.padding(top = Spacing.extraSmall),
-      style = TextStyle(
-        fontFamily = FontFamily.SansSerif,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 16.sp,
-      ),
-      color = MaterialTheme.colorScheme.onSurface,
-    )
-    Text(
-      text = stringResource(MaintenanceRes.string.s_n_placeholder, serial),
-      modifier = Modifier.padding(top = Spacing.extraSmall),
-      style = TextStyle(
-        fontFamily = FontFamily.SansSerif,
-        fontWeight = FontWeight.Normal,
-        fontSize = 13.sp,
-      ),
-      color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
+    // Same reasoning as the serial below: a component recorded with neither make nor model has
+    // nothing to show on this line, and a blank one reads as a load that failed.
+    if (name.isNotBlank()) {
+      Text(
+        text = name,
+        modifier = Modifier.padding(top = Spacing.extraSmall),
+        style = TextStyle(
+          fontFamily = FontFamily.SansSerif,
+          fontWeight = FontWeight.SemiBold,
+          fontSize = 16.sp,
+        ),
+        color = MaterialTheme.colorScheme.onSurface,
+      )
+    }
+    // Omitted entirely when there is none. A home has no serial to give, and "S/N:" followed by
+    // nothing reads as data that failed to load rather than data that does not exist.
+    if (serial.isNotBlank()) {
+      Text(
+        text = stringResource(MaintenanceRes.string.s_n_placeholder, serial),
+        modifier = Modifier.padding(top = Spacing.extraSmall),
+        style = TextStyle(
+          fontFamily = FontFamily.SansSerif,
+          fontWeight = FontWeight.Normal,
+          fontSize = 13.sp,
+        ),
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+      )
+    }
   }
 }
