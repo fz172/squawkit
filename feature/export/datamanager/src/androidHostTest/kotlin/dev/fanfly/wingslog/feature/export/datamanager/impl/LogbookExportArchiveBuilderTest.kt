@@ -6,6 +6,13 @@ import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDateRange
 import dev.fanfly.wingslog.feature.export.datamanager.ExportFormat
 import dev.fanfly.wingslog.feature.export.datamanager.ExportRequest
+import dev.fanfly.wingslog.core.template.MeterKeys
+import dev.fanfly.wingslog.core.template.canonical.CanonicalTemplates
+import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
+import dev.fanfly.wingslog.thing.MaintenanceTask
+import dev.fanfly.wingslog.thing.MeterReading
+import dev.fanfly.wingslog.thing.MeterRule
+import dev.fanfly.wingslog.thing.InspectionRule
 import dev.fanfly.wingslog.thing.Attachment
 import dev.fanfly.wingslog.thing.AttachmentType
 import dev.fanfly.wingslog.thing.Component
@@ -425,6 +432,76 @@ class LogbookExportArchiveBuilderTest {
       ),
     ),
   )
+
+  @Test
+  fun buildEntries_writesAMileageTaskInItsOwnMeter() {
+    // A keyed rule used to fall through scheduleLabel's `else` and export as "Unknown", and both
+    // meter columns read the three aeroplane hour doubles a car never writes — so a car's tasks
+    // table was a column of blanks under a schedule nobody could act on.
+    val car = Thing(
+      id = "car-1",
+      spec = listOf(
+        Spec(key = "make", value_ = "Honda"),
+        Spec(key = "model", value_ = "Civic"),
+        Spec(key = "serial", value_ = "VIN123"),
+      ),
+    )
+    val task = MaintenanceTask(
+      id = "task-1",
+      title = "Oil and Filter Change",
+      rules = listOf(
+        InspectionRule(
+          meter_rule = MeterRule(meter_key = MeterKeys.ODOMETER, interval = 5000f)
+        )
+      ),
+    )
+    val lastComplied = MaintenanceLog(
+      id = "log-1",
+      work_description = "Oil change",
+      readings = listOf(MeterReading(meter_key = MeterKeys.ODOMETER, value_ = 80000.0)),
+      inspection_ids = listOf(task.id),
+    )
+    val bundle = ThingBundle(
+      thing = ThingInflater.inflate(car, CanonicalTemplates.AUTOMOTIVE),
+      logs = listOf(lastComplied),
+      tasks = listOf(task),
+      dueByTaskId = mapOf(
+        task.id to DueMetadata(
+          nextDueEngine = 85000f,
+          nextDueMeterKey = MeterKeys.ODOMETER,
+        )
+      ),
+      lastCompliedByTaskId = mapOf(task.id to lastComplied),
+      squawks = emptyList(),
+      tasksById = mapOf(task.id to task),
+      squawksById = emptyMap(),
+      techniciansById = emptyMap(),
+    )
+
+    val entries = LogbookExportArchiveBuilder(
+      appVersion = "SquawkIt 1.0.260519.10 (364)",
+    ).buildEntries(
+      request = ExportRequest(
+        thingIds = listOf(bundle.thing.id),
+        dateRange = ExportDateRange.AllTime,
+        includeOpenSquawks = true,
+      ),
+      bundles = listOf(bundle),
+      attachmentManifests = emptyMap(),
+      generatedAt = LocalDateTime(2026, 5, 19, 14, 45),
+      timeZone = TimeZone.UTC,
+    )
+      .associateBy { entry -> entry.path }
+
+    val tasksCsv = entries.entries.first { it.key.endsWith("10_Tasks.csv") }
+      .value.bytes.decodeToString()
+
+    assertThat(tasksCsv).contains("Every 5000 mi (Odometer)")
+    assertThat(tasksCsv).contains("80000 mi")
+    assertThat(tasksCsv).contains("85000 mi")
+    // The Component column still reads "Unknown" for a car, which is the aviation-only export
+    // layout's problem, not the meter's — EXPORT_LAYOUT_GENERIC is unimplemented (#732).
+  }
 
   private fun aircraftBundle(
     logs: List<MaintenanceLog>,

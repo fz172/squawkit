@@ -73,6 +73,13 @@ class TaskDueManagerImpl(
     // for comparing the override, which carries its key with it.
     val currentMetricTime = currentReading(forcedMeterKey)
 
+    /**
+     * How close to [interval] still counts as due-soon. Proportional because the window has to
+     * mean the same thing in every unit: 10 hours out of a 100-hour inspection is a warning,
+     * 10 miles out of a 5,000-mile oil change is not (#759).
+     */
+    fun dueSoonWindowFor(interval: Float): Float = interval * DUE_SOON_FRACTION
+
     val currentDate = clock.now()
       .toLocalDateTime(timeZone).date
 
@@ -81,6 +88,11 @@ class TaskDueManagerImpl(
         forceDueDate.toLocalDate(timeZone)
       } else null
       val nextDueEngine = forcedDue?.second
+      // An override carries no interval, so borrow one from a rule measured in the same meter.
+      val window = card.rules.firstNotNullOfOrNull { card.meterIntervalFor(it) }
+        ?.takeIf { (key, _) -> key == forcedMeterKey }
+        ?.let { (_, interval) -> dueSoonWindowFor(interval) }
+        ?: DEFAULT_DUE_SOON_WINDOW
 
       val status = when {
         (nextDueDate != null && nextDueDate < currentDate) ||
@@ -90,7 +102,7 @@ class TaskDueManagerImpl(
           1,
           DateTimeUnit.MONTH
         )) ||
-          (nextDueEngine != null && nextDueEngine <= currentMetricTime + 10f) -> DueStatus.DUE_SOON
+          (nextDueEngine != null && nextDueEngine <= currentMetricTime + window) -> DueStatus.DUE_SOON
 
         else -> DueStatus.NORMAL
       }
@@ -109,6 +121,13 @@ class TaskDueManagerImpl(
     var isOnCondition = false
     var isImmediate = false
     var nextDueMeterKey: String? = null
+    // Which rule is *closest to due*, measured in its own meter. Picking the smallest raw
+    // `nextDueEngine` compared a 5,000-mile oil change against a 100-hour inspection and let the
+    // arithmetic decide; remaining-until-due is the only comparison meaningful across units.
+    var nextDueRemaining: Float? = null
+    // Sized by the winning rule's interval; null when a linked rule supplied the due, which
+    // carries no interval of its own.
+    var dueSoonWindow: Float? = null
 
     for (rule in card.rules) {
       val timeRule = rule.time_rule
@@ -161,9 +180,12 @@ class TaskDueManagerImpl(
           val base = latestLog?.readingFor(meterKey)
             ?.toFloat() ?: 0f
           val calculated = base + interval
-          if (nextDueEngine == null || calculated < nextDueEngine) {
+          val remaining = calculated - currentReading(meterKey)
+          if (nextDueRemaining == null || remaining < nextDueRemaining) {
             nextDueEngine = calculated
             nextDueMeterKey = meterKey
+            nextDueRemaining = remaining
+            dueSoonWindow = dueSoonWindowFor(interval)
           }
         }
 
@@ -208,8 +230,18 @@ class TaskDueManagerImpl(
               nextDueDate = pNextDate
             }
             val pNextEngine = parentMetadata.nextDueEngine
-            if (pNextEngine != null && (nextDueEngine == null || pNextEngine < nextDueEngine)) {
-              nextDueEngine = pNextEngine
+            if (pNextEngine != null) {
+              // The parent's due is measured in the parent's meter, so inherit the key with it —
+              // otherwise a mileage parent hands down a number read as hours.
+              val pMeterKey =
+                parentMetadata.nextDueMeterKey ?: card.defaultMeterKey()
+              val pRemaining = pNextEngine - currentReading(pMeterKey)
+              if (nextDueRemaining == null || pRemaining < nextDueRemaining) {
+                nextDueEngine = pNextEngine
+                nextDueMeterKey = pMeterKey
+                nextDueRemaining = pRemaining
+                dueSoonWindow = null
+              }
             }
             if (parentMetadata.isOnCondition) isOnCondition = true
             if (parentMetadata.isImmediate) isImmediate = true
@@ -265,16 +297,22 @@ class TaskDueManagerImpl(
       }
     }
 
+    // Read fresh rather than reusing nextDueRemaining: the force-complied pass above advances
+    // nextDueEngine past whatever the loop computed.
+    val currentForNextDue =
+      nextDueMeterKey?.let { currentReading(it) } ?: currentMetricTime
+    val window = dueSoonWindow ?: DEFAULT_DUE_SOON_WINDOW
+
     val status = when {
       isImmediate -> DueStatus.OVERDUE
       (nextDueDate != null && nextDueDate < currentDate) ||
-        (nextDueEngine != null && nextDueEngine < currentMetricTime) -> DueStatus.OVERDUE
+        (nextDueEngine != null && nextDueEngine < currentForNextDue) -> DueStatus.OVERDUE
 
       (nextDueDate != null && nextDueDate <= currentDate.plus(
         1,
         DateTimeUnit.MONTH
       )) ||
-        (nextDueEngine != null && nextDueEngine <= currentMetricTime + 10f) -> DueStatus.DUE_SOON
+        (nextDueEngine != null && nextDueEngine <= currentForNextDue + window) -> DueStatus.DUE_SOON
 
       else -> DueStatus.NORMAL
     }
@@ -293,6 +331,16 @@ class TaskDueManagerImpl(
 
   companion object {
     private val logger = Logger.withTag("TaskDueManager")
+
+    /**
+     * Fraction of a rule's interval that still counts as due-soon. A tenth reproduces the fixed
+     * 10-hour window this used to hard-code, which only ever fitted the 100-hour inspection it was
+     * written for.
+     */
+    private const val DUE_SOON_FRACTION = 0.1f
+
+    /** Used when the due came from somewhere with no interval to scale — a linked or forced due. */
+    private const val DEFAULT_DUE_SOON_WINDOW = 10f
   }
 }
 

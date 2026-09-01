@@ -3,7 +3,6 @@ package dev.fanfly.wingslog.feature.thing.dashboard.data
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.fanfly.wingslog.core.storage.ThingScopeResolver
-import dev.fanfly.wingslog.core.template.MeterKeys
 import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.core.template.TemplateResolution
 import dev.fanfly.wingslog.core.template.currentFor
@@ -214,7 +213,6 @@ class ThingOverviewViewModel(
           }
           val today = Clock.System.now()
             .toLocalDateTime(TimeZone.currentSystemDefault()).date
-          val currentEngineHours = stats.valueFor(MeterKeys.ENGINE_HOURS) ?: 0.0
           val active = cardsWithStatus
             .filter { it.dueStatus.status != DueStatus.COMPLIED }
             .sortedBy { task ->
@@ -225,7 +223,11 @@ class ThingOverviewViewModel(
                 candidates.add(it.toEpochDays() - today.toEpochDays())
               }
               due.nextDueEngine?.let {
-                candidates.add((it.toDouble() - currentEngineHours).toLong())
+                // Against the meter the due is measured in. Subtracting engine hours from an
+                // odometer sorted every mileage task to the bottom of the list, behind items
+                // years away (#759).
+                val current = stats.valueFor(due.nextDueMeterKey.orEmpty()) ?: 0.0
+                candidates.add((it.toDouble() - current).toLong())
               }
               candidates.minOrNull() ?: Long.MAX_VALUE
             }
