@@ -101,31 +101,36 @@ spec_fields { key: "model" label: "Model" required: true }
 spec_fields { key: "serial" label: "Serial Number" is_identifier: true }
 
 # Mirrors the tree Phase 1's backfill builds: airframe -> engine(s) -> propeller -> hub/blades.
-# The airframe carries no serial of its own: it *is* the thing, and its serial is the Thing's,
-# declared as the `serial` spec field above. Identity lives in spec and nowhere else (#729) — it
-# used to be written to both and kept in step by a helper, which is a duplicate waiting to drift.
+# The tree follows how the parts actually attach: a propeller is bolted to an engine, and blades
+# are bolted to the propeller hub.
+#
+# THERE IS NO SEPARATE HUB SLOT. A propeller's make, model and serial ARE the hub's — asking for
+# both meant asking the same question twice, so the propeller carries them and the blades hang off
+# it directly.
+#
+# THERE IS NO AIRFRAME SLOT EITHER. The airframe is the thing: its make, model and serial are the
+# Thing's, declared as spec fields above. A component row for it repeated the identity block
+# verbatim, and it existed only to parent the engines, which the root can do.
+#
+# Edited in place rather than published as v2 (§5's rule is that a version always names the same
+# bytes). Nothing fetches templates yet — the only copies of v1 are inside Thing DNA, and the
+# one-off migration that restructures those components rewrites their DNA in the same pass. A v2
+# would have to run that migration anyway and would leave migrated aircraft citing a version this
+# build does not carry.
 component_slots {
-  slot_key: "airframe"
-  label: "Airframe"
+  slot_key: "engine"
+  label: "Engine"
+  repeatable: true
+  serial_expected: true
   children {
-    slot_key: "engine"
-    label: "Engine"
-    repeatable: true
+    slot_key: "propeller"
+    label: "Propeller"
     serial_expected: true
     children {
-      slot_key: "propeller"
-      label: "Propeller"
-      children {
-        slot_key: "hub"
-        label: "Hub"
-        serial_expected: true
-      }
-      children {
-        slot_key: "blade"
-        label: "Blade"
-        repeatable: true
-        serial_expected: true
-      }
+      slot_key: "blade"
+      label: "Blade"
+      repeatable: true
+      serial_expected: true
     }
   }
 }

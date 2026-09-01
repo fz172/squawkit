@@ -377,7 +377,7 @@ class LogbookExportArchiveBuilder(
     timeZone: TimeZone,
   ): List<List<String>> =
     buildList {
-      val hub = propeller?.childInSlot(SlotKeys.HUB)
+      val hub = propeller
       add(listOf("Propeller Position", "${index + 1} (Engine ${index + 1})"))
       add(listOf("Hub Make", hub?.make.orEmpty()))
       add(listOf("Hub Model", hub?.model.orEmpty()))
@@ -653,19 +653,19 @@ class LogbookExportArchiveBuilder(
                         add(
                           PdfSummaryRow(
                             "Hub Make",
-                            propeller.childInSlot(SlotKeys.HUB)?.make.orEmpty()
+                            propeller.make.orEmpty()
                           )
                         )
                         add(
                           PdfSummaryRow(
                             "Hub Model",
-                            propeller.childInSlot(SlotKeys.HUB)?.model.orEmpty()
+                            propeller.model.orEmpty()
                           )
                         )
                         add(
                           PdfSummaryRow(
                             "Hub Serial",
-                            propeller.childInSlot(SlotKeys.HUB)?.serial.orEmpty()
+                            propeller.serial.orEmpty()
                           )
                         )
                         propeller.childrenInSlot(SlotKeys.BLADE)

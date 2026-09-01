@@ -45,6 +45,14 @@ data class ComponentRow(
   val label: String
     get() = if (ordinal == null) slot.label else "${slot.label} ${ordinal + 1}"
 
+  /**
+   * Renders as a chip rather than a card: a repeating slot with no children of its own.
+   *
+   * Blades, tyres, wheels, batteries — near-identical parts told apart by a serial. A card each
+   * buries the rest of the tree in scroll and says nothing a chip does not.
+   */
+  val rendersAsChip: Boolean get() = slot.repeatable && slot.children.isEmpty()
+
   /** A slot that repeats can always take another; one that does not is created with the tree. */
   val canRemove: Boolean get() = slot.repeatable && component != null
 }

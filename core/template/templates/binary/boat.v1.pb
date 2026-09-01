@@ -10,9 +10,10 @@
 makeMake2
 modelModel2
 yearYear*20162"
-hull_idHull ID *ABC12345D616:
-hullHull(:,
-engineEngine"
-outdriveOutdrive((:
-batteryBatteryB+
+hull_idHull ID *ABC12345D616:h
+hullHull".
+engineEngine"
+	propeller	Propeller(("
+rudderRudder"
+batteryBattery(B+
 engine_hoursEngine Hourshrs *engineRBoatZboat`

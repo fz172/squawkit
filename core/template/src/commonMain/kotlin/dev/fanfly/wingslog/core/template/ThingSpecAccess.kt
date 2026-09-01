@@ -30,11 +30,20 @@ fun Thing.hasSpec(key: String): Boolean = specValue(key).isNotEmpty()
 
 /** Airplane slot keys. Asserted against the template by `TemplateKeysResolveTest`. */
 object SlotKeys {
-  const val AIRFRAME = "airframe"
   const val ENGINE = "engine"
   const val PROPELLER = "propeller"
-  const val HUB = "hub"
   const val BLADE = "blade"
+
+  /**
+   * Slots the airplane template no longer declares (#729).
+   *
+   * `airframe` was a component row repeating the Thing's own identity, and `hub` asked for the make,
+   * model and serial the propeller already carries. Both are gone from the template; these remain
+   * only for the one-off migration that restructures Things stored under the old shape, and go with
+   * it once no stored Thing predates the change.
+   */
+  const val LEGACY_AIRFRAME = "airframe"
+  const val LEGACY_HUB = "hub"
 }
 
 /** Direct children of this component in [slotKey], in declared order. */

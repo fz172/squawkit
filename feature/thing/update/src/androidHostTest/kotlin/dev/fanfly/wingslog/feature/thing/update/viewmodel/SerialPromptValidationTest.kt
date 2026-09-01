@@ -29,37 +29,31 @@ import org.junit.Test
  */
 class SerialPromptValidationTest {
 
-  /** Spec plus the component tree — the shape the form now produces (#668 part 3). */
+  /** Spec plus the component tree, in the hierarchy the parts actually attach in (#729). */
   private fun thing(serials: Boolean) = Thing(
     spec = listOf(
       Spec(key = SpecKeys.MAKE, value_ = "Cessna"),
       Spec(key = SpecKeys.MODEL, value_ = "172"),
       Spec(key = SpecKeys.SERIAL, value_ = if (serials) "SN-1" else ""),
     ),
+    // Engines at the root — there is no airframe component, because the airframe is the thing and
+    // its identity is the spec above. The propeller carries what the hub used to.
     components = listOf(
       Component(
-        slot_key = SlotKeys.AIRFRAME,
+        slot_key = SlotKeys.ENGINE,
+        make = "Lycoming",
+        model = "O-320",
+        serial = if (serials) "E-1" else "",
         children = listOf(
           Component(
-            slot_key = SlotKeys.ENGINE,
-            make = "Lycoming",
-            model = "O-320",
-            serial = if (serials) "E-1" else "",
+            slot_key = SlotKeys.PROPELLER,
+            make = "McCauley",
+            model = "1C160",
+            serial = if (serials) "P-1" else "",
             children = listOf(
               Component(
-                slot_key = SlotKeys.PROPELLER,
-                children = listOf(
-                  Component(
-                    slot_key = SlotKeys.HUB,
-                    make = "McCauley",
-                    model = "1C160",
-                    serial = if (serials) "H-1" else "",
-                  ),
-                  Component(
-                    slot_key = SlotKeys.BLADE,
-                    serial = if (serials) "B-1" else ""
-                  ),
-                ),
+                slot_key = SlotKeys.BLADE,
+                serial = if (serials) "B-1" else "",
               ),
             ),
           ),

@@ -25,11 +25,13 @@ class ComponentTreeTest {
   fun anEmptyThingStillOffersItsFixedSlotsToFillIn() {
     // A non-repeatable slot yields a row with no component, which is what makes a blank form
     // typeable. Without it the user is shown nothing and cannot start.
-    val rows = airplane.componentRows(Thing(id = "t"))
+    // Engine repeats, so an empty airplane offers no rows at all — "how many" is the user's to
+    // decide and the add control belongs to the parent. A preset with a fixed slot does yield one.
+    assertThat(airplane.componentRows(Thing(id = "t"))).isEmpty()
 
-    assertThat(rows.map { it.slot.slot_key }).containsExactly("airframe")
+    val rows = CanonicalTemplates.BOAT.componentRows(Thing(id = "t"))
+    assertThat(rows.map { it.slot.slot_key }).containsExactly("hull")
     assertThat(rows.single().component).isNull()
-    assertThat(rows.single().path).containsExactly(SlotKeys.AIRFRAME to 0)
   }
 
   @Test
@@ -38,19 +40,13 @@ class ComponentTreeTest {
       id = "t",
       components = listOf(
         Component(
-          slot_key = SlotKeys.AIRFRAME,
+          slot_key = SlotKeys.ENGINE,
           children = listOf(
             Component(
-              slot_key = SlotKeys.ENGINE,
+              slot_key = SlotKeys.PROPELLER,
               children = listOf(
-                Component(
-                  slot_key = SlotKeys.PROPELLER,
-                  children = listOf(
-                    Component(slot_key = SlotKeys.HUB),
-                    Component(slot_key = SlotKeys.BLADE),
-                    Component(slot_key = SlotKeys.BLADE),
-                  ),
-                ),
+                Component(slot_key = SlotKeys.BLADE),
+                Component(slot_key = SlotKeys.BLADE),
               ),
             ),
           ),
@@ -60,13 +56,14 @@ class ComponentTreeTest {
 
     val rows = airplane.componentRows(thing)
 
+    // Engine at the root, propeller on the engine, blades on the propeller — how the parts
+    // actually attach. No airframe row repeating the thing's identity, and no separate hub.
     assertThat(rows.map { it.label }).containsExactly(
-      "Airframe", "Engine 1", "Propeller", "Hub", "Blade 1", "Blade 2",
+      "Engine 1", "Propeller", "Blade 1", "Blade 2",
     ).inOrder()
-    assertThat(rows.map { it.depth }).containsExactly(0, 1, 2, 3, 3, 3).inOrder()
+    assertThat(rows.map { it.depth }).containsExactly(0, 1, 2, 2).inOrder()
     // The path is what every edit action addresses, so it has to survive the walk intact.
     assertThat(rows.last().path).containsExactly(
-      SlotKeys.AIRFRAME to 0,
       SlotKeys.ENGINE to 0,
       SlotKeys.PROPELLER to 0,
       SlotKeys.BLADE to 1,
@@ -113,14 +110,11 @@ class ComponentTreeTest {
   fun addableSlotsAreScopedToTheirParent() {
     // A blade belongs under a propeller, not at the root. Offering it anywhere else would build a
     // tree the template cannot describe.
-    assertThat(airplane.addableSlotsUnder(emptyList()).map { it.slot_key }).isEmpty()
+    assertThat(airplane.addableSlotsUnder(emptyList()).map { it.slot_key })
+      .containsExactly("engine")
     assertThat(
-      airplane.addableSlotsUnder(listOf(SlotKeys.AIRFRAME to 0)).map { it.slot_key },
-    ).containsExactly("engine")
-    assertThat(
-      airplane.addableSlotsUnder(
-        listOf(SlotKeys.AIRFRAME to 0, SlotKeys.ENGINE to 0, SlotKeys.PROPELLER to 0),
-      ).map { it.slot_key },
+      airplane.addableSlotsUnder(listOf(SlotKeys.ENGINE to 0, SlotKeys.PROPELLER to 0))
+        .map { it.slot_key },
     ).containsExactly("blade")
   }
 
@@ -133,9 +127,11 @@ class ComponentTreeTest {
     val engine = newComponentFor(engineSlot)
 
     assertThat(engine.slot_key).isEqualTo(SlotKeys.ENGINE)
+    // Its propeller, because a propeller always exists on an engine — but no blade, whose count
+    // the template deliberately leaves to the user.
     val propeller = engine.children.single()
     assertThat(propeller.slot_key).isEqualTo(SlotKeys.PROPELLER)
-    assertThat(propeller.children.map { it.slot_key }).containsExactly(SlotKeys.HUB)
+    assertThat(propeller.children).isEmpty()
   }
 
   @Test
@@ -150,16 +146,9 @@ class ComponentTreeTest {
 
   @Test
   fun aPresentComponentMissingAnExpectedSerialIsReported() {
-    // The engine, not the airframe: the airframe *is* the thing, so its serial is the Thing's and
-    // lives in spec. Its slot expects none (#729).
     val thing = Thing(
       id = "t",
-      components = listOf(
-        Component(
-          slot_key = SlotKeys.AIRFRAME,
-          children = listOf(Component(slot_key = SlotKeys.ENGINE, serial = "")),
-        ),
-      ),
+      components = listOf(Component(slot_key = SlotKeys.ENGINE, serial = "")),
     )
 
     assertThat(airplane.componentsMissingSerials(thing).map { it.label })
@@ -167,16 +156,41 @@ class ComponentTreeTest {
   }
 
   @Test
-  fun theAirframeExpectsNoSerialOfItsOwn() {
-    // Identity lives in spec and nowhere else. A blank airframe serial is not a validation failure
-    // because the airframe has no serial to give — the Thing's `serial` spec field holds it.
+  fun theAirplaneDeclaresNoAirframeOrHubSlot() {
+    // The airframe *is* the thing — a row for it repeated the identity block verbatim — and a
+    // propeller's make, model and serial ARE the hub's, so asking for both asked twice (#729).
+    assertThat(airplane.slot(SlotKeys.LEGACY_AIRFRAME)).isNull()
+    assertThat(airplane.slot(SlotKeys.LEGACY_HUB)).isNull()
+    assertThat(airplane.component_slots.map { it.slot_key }).containsExactly("engine")
+    assertThat(airplane.slot(SlotKeys.PROPELLER)?.serial_expected).isTrue()
+  }
+
+  @Test
+  fun aRepeatingLeafSlotRendersAsChips() {
+    // Blades, wheels, tyres, rudders — near-identical parts told apart by a serial. A card each
+    // buries the tree in scroll and says nothing a chip does not.
     val thing = Thing(
       id = "t",
-      components = listOf(Component(slot_key = SlotKeys.AIRFRAME, serial = "")),
+      components = listOf(
+        Component(
+          slot_key = SlotKeys.ENGINE,
+          children = listOf(
+            Component(
+              slot_key = SlotKeys.PROPELLER,
+              children = listOf(Component(slot_key = SlotKeys.BLADE)),
+            ),
+          ),
+        ),
+      ),
     )
 
-    assertThat(airplane.slot(SlotKeys.AIRFRAME)?.serial_expected).isFalse()
-    assertThat(airplane.componentsMissingSerials(thing)).isEmpty()
+    val rows = airplane.componentRows(thing)
+
+    assertThat(rows.single { it.slot.slot_key == SlotKeys.BLADE }.rendersAsChip).isTrue()
+    // A propeller repeats nothing and has children of its own, so it stays a card.
+    assertThat(rows.single { it.slot.slot_key == SlotKeys.PROPELLER }.rendersAsChip)
+      .isFalse()
+    assertThat(rows.single { it.slot.slot_key == SlotKeys.ENGINE }.rendersAsChip).isFalse()
   }
 
   @Test

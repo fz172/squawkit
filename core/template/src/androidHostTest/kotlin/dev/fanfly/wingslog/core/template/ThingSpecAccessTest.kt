@@ -24,7 +24,7 @@ class ThingSpecAccessTest {
     ),
     components = listOf(
       Component(
-        slot_key = SlotKeys.AIRFRAME,
+        slot_key = SlotKeys.LEGACY_AIRFRAME,
         make = "Cessna",
         children = listOf(
           Component(
@@ -34,7 +34,7 @@ class ThingSpecAccessTest {
               Component(
                 slot_key = SlotKeys.PROPELLER,
                 children = listOf(
-                  Component(slot_key = SlotKeys.HUB, serial = "H-1"),
+                  Component(slot_key = SlotKeys.LEGACY_HUB, serial = "H-1"),
                   Component(slot_key = SlotKeys.BLADE, serial = "B-1"),
                   Component(slot_key = SlotKeys.BLADE, serial = "B-2"),
                 ),
@@ -87,7 +87,7 @@ class ThingSpecAccessTest {
   fun slotNavigationFindsChildrenAtTheRightLevel() {
     val thing = twin()
 
-    val airframe = thing.rootComponentInSlot(SlotKeys.AIRFRAME)
+    val airframe = thing.rootComponentInSlot(SlotKeys.LEGACY_AIRFRAME)
     assertThat(airframe).isNotNull()
 
     val engines = airframe!!.childrenInSlot(SlotKeys.ENGINE)
@@ -114,7 +114,7 @@ class ThingSpecAccessTest {
   fun navigationOnAnEmptyTreeIsEmptyRatherThanThrowing() {
     val bare = Thing(id = "t")
 
-    assertThat(bare.rootComponentInSlot(SlotKeys.AIRFRAME)).isNull()
+    assertThat(bare.rootComponentInSlot(SlotKeys.LEGACY_AIRFRAME)).isNull()
     assertThat(bare.allComponentsInSlot(SlotKeys.ENGINE)).isEmpty()
   }
 
@@ -203,7 +203,7 @@ class ThingSpecAccessTest {
       id = "t-2",
       components = listOf(
         Component(
-          slot_key = SlotKeys.AIRFRAME,
+          slot_key = SlotKeys.LEGACY_AIRFRAME,
           children = listOf(engineWithOneBlade(), engineWithOneBlade()),
         ),
       ),

@@ -86,7 +86,7 @@ class ThingCreatedAnalyticsTest {
     ),
     components = listOf(
       Component(
-        slot_key = SlotKeys.AIRFRAME,
+        slot_key = SlotKeys.LEGACY_AIRFRAME,
         children = listOf(
           Component(
             slot_key = SlotKeys.ENGINE,
@@ -97,7 +97,7 @@ class ThingCreatedAnalyticsTest {
               Component(
                 slot_key = SlotKeys.PROPELLER,
                 children = listOf(
-                  Component(slot_key = SlotKeys.HUB, make = "McCauley", model = "1C160", serial = "H-1"),
+                  Component(slot_key = SlotKeys.LEGACY_HUB, make = "McCauley", model = "1C160", serial = "H-1"),
                   Component(slot_key = SlotKeys.BLADE, serial = "B-1"),
                 ),
               ),

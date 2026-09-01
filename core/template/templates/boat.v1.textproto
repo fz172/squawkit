@@ -65,27 +65,36 @@ spec_fields {
   placeholder: "ABC12345D616"
 }
 
+# The tree follows how the parts attach: engines and rudders are mounted to the hull, and a
+# propeller to its engine. Same reasoning as the airplane (#729) — a hierarchy that mirrors the
+# machine is one an owner can navigate without being taught it.
 component_slots {
   slot_key: "hull"
   label: "Hull"
   serial_expected: true
-}
-# Repeatable, and that is the point — a twin-engine boat accrues hours on each engine separately.
-component_slots {
-  slot_key: "engine"
-  label: "Engine"
-  repeatable: true
-  serial_expected: true
+  # Zero or more, and that is the point: a twin accrues hours on each engine separately, and the
+  # meter below is scoped to this slot so it follows them rather than the boat.
   children {
-    slot_key: "outdrive"
-    label: "Outdrive"
+    slot_key: "engine"
+    label: "Engine"
+    repeatable: true
     serial_expected: true
+    children {
+      slot_key: "propeller"
+      label: "Propeller"
+      serial_expected: true
+    }
   }
-}
-component_slots {
-  slot_key: "battery"
-  label: "Battery"
-  repeatable: true
+  children {
+    slot_key: "rudder"
+    label: "Rudder"
+    repeatable: true
+  }
+  children {
+    slot_key: "battery"
+    label: "Battery"
+    repeatable: true
+  }
 }
 
 # Scoped to the engine slot, exactly as the airplane's engine hours are. A Thing-level meter here

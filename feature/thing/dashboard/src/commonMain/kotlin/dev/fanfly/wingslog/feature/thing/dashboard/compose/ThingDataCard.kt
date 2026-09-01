@@ -153,14 +153,23 @@ fun ThingDataCard(
           // airframe-then-engines. A bike shows its drivetrain and wheels; a home shows nothing,
           // which is what `components: false` means.
           if (LocalThingCapabilities.current.components) {
-            template.componentRows(thing)
-              .filter { it.component != null }
-              .forEach { row ->
-                ComponentDetails(
-                  label = row.label.uppercase(),
-                  component = row.component!!,
-                )
-              }
+            val rows = template.componentRows(thing).filter { it.component != null }
+            rows.filterNot { it.rendersAsChip }.forEach { row ->
+              ComponentDetails(
+                label = row.label.uppercase(),
+                component = row.component!!,
+              )
+              // Its repeating leaf children ride along as chips under their parent — blades under
+              // a propeller, tyres under a car — rather than as a card each.
+              rows.filter { it.rendersAsChip && it.path.dropLast(1) == row.path }
+                .groupBy { it.slot.slot_key }
+                .forEach { (_, chips) ->
+                  ComponentChips(
+                    label = chips.first().slot.label,
+                    components = chips.mapNotNull { it.component },
+                  )
+                }
+            }
           }
 
           if (onEditClick != null || onManageAccessClick != null) {

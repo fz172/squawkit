@@ -142,36 +142,15 @@ class TemplateKeysResolveTest {
   }
 
   /**
-   * The coupling this file exists to make visible: the airplane edit form builds a component tree
-   * from hardcoded slot keys, and the template declares which slots exist. Nothing links them.
+   * The spec-key coupling: `EditThingViewModel` normalises casing by conventional key name, so the
+   * airplane template has to declare these four or the values land under keys it has no field for
+   * — present in the data, invisible on screen.
    *
-   * If a slot key is renamed on one side only, the form writes components the template cannot
-   * label — and because the ids are stored, the wrong tree persists rather than failing at render.
-   *
-   * The emitter moved in #668: it used to be `ThingInflater.buildLegacyAirplaneComponents`, which
-   * derived the tree on write. The form owns the tree now, so the keys come from
-   * `AirplaneTreeEditing` — and go away with it when #729/#739 build paths from the template's own
-   * slots. The assertion outlives both; only its subject changes.
-   */
-  @Test
-  fun theAirplaneEditFormUsesOnlySlotKeysTheTemplateDeclares() {
-    val airplane = pool.single { it.id == AirplaneTemplate.ID }
-    val declared = airplane.allSlots()
-      .map { it.slot_key }
-      .toSet()
-
-    // The keys AirplaneTreeEditing emits, transcribed from it.
-    val emitted = setOf("airframe", "engine", "propeller", "hub", "blade")
-
-    assertThat(declared).containsAtLeastElementsIn(emitted)
-  }
-
-  /**
-   * The same coupling for spec keys. `EditThingViewModel` writes exactly these four, so the
-   * airplane template has to declare them or the values land under keys the template has no field
-   * for — present in the data, invisible on screen.
-   *
-   * Also moved in #668, from the since-deleted `ThingInflater.specOf`.
+   * **The slot-key half of this pair is gone**, and its absence is the point. The edit form used to
+   * build a component tree from hardcoded slot keys while the template declared its own, with
+   * nothing linking them; #729 deleted that side, so the form walks the template's slots and cannot
+   * emit a key the template does not declare. The assertion would now check the template against
+   * itself.
    */
   @Test
   fun theAirplaneEditFormUsesOnlySpecKeysTheTemplateDeclares() {

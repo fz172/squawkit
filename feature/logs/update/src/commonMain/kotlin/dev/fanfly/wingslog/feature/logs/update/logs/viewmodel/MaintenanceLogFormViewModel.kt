@@ -445,7 +445,7 @@ class MaintenanceLogFormViewModel(
             ?.flatMap { engine ->
               buildList {
                 val propeller = engine.childInSlot(SlotKeys.PROPELLER)
-                propeller?.childInSlot(SlotKeys.HUB)?.serial?.takeIf { it.isNotEmpty() }
+                propeller?.serial?.takeIf { it.isNotEmpty() }
                   ?.let { add(it) }
                 propeller?.childrenInSlot(SlotKeys.BLADE)
                   ?.forEach { blade ->
