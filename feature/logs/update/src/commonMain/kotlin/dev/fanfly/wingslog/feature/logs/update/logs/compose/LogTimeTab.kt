@@ -6,66 +6,66 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import dev.fanfly.wingslog.core.template.LocalThingTemplate
-import dev.fanfly.wingslog.core.template.MeterKeys
-import dev.fanfly.wingslog.core.template.meterLabelWithUnit
 import androidx.compose.ui.text.input.KeyboardType
+import dev.fanfly.wingslog.core.template.LocalThingCapabilities
+import dev.fanfly.wingslog.core.template.LocalThingTemplate
+import dev.fanfly.wingslog.core.template.meterLabelWithUnit
 import dev.fanfly.wingslog.core.ui.common.compose.FormTextField
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.logs.update.generated.resources.Res
-import wingslog.feature.logs.update.generated.resources.airframe_time_hours
-import wingslog.feature.logs.update.generated.resources.engine_time_hours
 import wingslog.feature.logs.update.generated.resources.hours_section_description
 import wingslog.feature.logs.update.generated.resources.log_tab_hours
-import wingslog.feature.logs.update.generated.resources.prop_time_hours
 
 @Composable
 fun LogTimeTab(
-  engineTime: String,
-  onEngineTimeChange: (String) -> Unit,
-  airframeTime: String,
-  onAirframeTimeChange: (String) -> Unit,
-  propTime: String,
-  onPropTimeChange: (String) -> Unit,
+  /** The value typed for each meter the template declares, by key (#730). */
+  meterValues: Map<String, String>,
+  onMeterChange: (String, String) -> Unit,
   modifier: Modifier = Modifier,
 ) {
   Column(
     modifier = modifier.fillMaxWidth(),
     verticalArrangement = Arrangement.spacedBy(Spacing.massive),
   ) {
-    LogSection(
-      header = stringResource(Res.string.log_tab_hours),
-      description = stringResource(Res.string.hours_section_description),
-    ) {
-      Column(verticalArrangement = Arrangement.spacedBy(Spacing.large)) {
-        FormTextField(
-          value = engineTime,
-          onValueChange = onEngineTimeChange,
-          label = stringResource(Res.string.engine_time_hours),
-          modifier = Modifier.fillMaxWidth(),
-          singleLine = true,
-          keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-        )
-        FormTextField(
-          value = airframeTime,
-          onValueChange = onAirframeTimeChange,
-          label = LocalThingTemplate.current.meterLabelWithUnit(
-            MeterKeys.AIRFRAME_HOURS,
-            ifAbsent = stringResource(Res.string.airframe_time_hours),
-          ),
-          modifier = Modifier.fillMaxWidth(),
-          singleLine = true,
-          keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-        )
-        FormTextField(
-          value = propTime,
-          onValueChange = onPropTimeChange,
-          label = stringResource(Res.string.prop_time_hours),
-          modifier = Modifier.fillMaxWidth(),
-          singleLine = true,
-          keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-        )
+    // One field per meter the TEMPLATE declares, not three aviation hours. A home declares none,
+    // so the whole section — heading and description included — does not render: a "Hours" block
+    // with nothing in it is worse than no block (#730).
+    //
+    // `capabilities.meters` gates it too, because a capability removes UI rather than emptying it.
+    val meters = if (LocalThingCapabilities.current.meters) {
+      LocalThingTemplate.current?.meters.orEmpty()
+    } else {
+      emptyList()
+    }
+    if (meters.isNotEmpty()) {
+      LogSection(
+        header = stringResource(Res.string.log_tab_hours),
+        description = stringResource(Res.string.hours_section_description),
+      ) {
+        Column(verticalArrangement = Arrangement.spacedBy(Spacing.large)) {
+          meters.forEach { meter ->
+            FormTextField(
+              value = meterValues[meter.key].orEmpty(),
+              onValueChange = { onMeterChange(meter.key, it) },
+              label = LocalThingTemplate.current.meterLabelWithUnit(
+                meter.key,
+                ifAbsent = meter.label,
+              ),
+              modifier = Modifier.fillMaxWidth(),
+              singleLine = true,
+              keyboardOptions = KeyboardOptions(
+                // The template says whether this meter takes decimals: an odometer does not, and
+                // a number pad that offers a point invites "84512.0 mi".
+                keyboardType = if (meter.decimal) {
+                  KeyboardType.Decimal
+                } else {
+                  KeyboardType.Number
+                },
+              ),
+            )
+          }
+        }
       }
     }
   }

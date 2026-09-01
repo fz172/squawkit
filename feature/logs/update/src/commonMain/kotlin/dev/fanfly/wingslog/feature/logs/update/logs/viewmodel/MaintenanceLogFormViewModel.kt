@@ -10,12 +10,14 @@ import dev.fanfly.wingslog.core.analytics.log
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.model.id.generateRandomId
 import dev.fanfly.wingslog.core.nav.Screen
+import dev.fanfly.wingslog.core.template.MeterKeys
 import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import dev.fanfly.wingslog.core.template.SlotKeys
 import dev.fanfly.wingslog.core.template.SpecKeys
 import dev.fanfly.wingslog.core.template.allComponentsInSlot
 import dev.fanfly.wingslog.core.template.childInSlot
 import dev.fanfly.wingslog.core.template.childrenInSlot
+import dev.fanfly.wingslog.core.template.readingFor
 import dev.fanfly.wingslog.core.template.specValue
 import dev.fanfly.wingslog.core.ui.common.UiText
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentFormController
@@ -30,6 +32,7 @@ import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.MaintenanceLog
+import dev.fanfly.wingslog.thing.MeterReading
 import dev.fanfly.wingslog.thing.Technician
 import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.Job
@@ -339,6 +342,14 @@ class MaintenanceLogFormViewModel(
             engineTime = if (log.engine_hour > 0.0) log.engine_hour.toString() else "",
             airframeTime = if (log.airframe_time > 0.0) log.airframe_time.toString() else "",
             propTime = if (log.prop_time > 0.0) log.prop_time.toString() else "",
+            // Keyed by meter, from `readings` or the legacy field it falls back to. The three
+            // fields above stay bound for now: the export and the due-status rules read them.
+            meterValues = currentThingTemplate.template.value?.meters.orEmpty()
+              .mapNotNull { meter ->
+                log.readingFor(meter.key)
+                  ?.let { meter.key to it.toString() }
+              }
+              .toMap(),
             selectedComponentType = log.component_type,
             selectedSubComponent = log.component_serial.ifEmpty { null },
             maintenanceDate = logDate,
@@ -425,6 +436,25 @@ class MaintenanceLogFormViewModel(
 
   fun onPropTimeChange(value: String) =
     _uiState.update { it.copy(propTime = value) }
+
+  /**
+   * A meter field, by the key the template declares (#730).
+   *
+   * The three named setters above stay because they still feed `engine_hour`, `airframe_time` and
+   * `prop_time`, which the export and the due-status rules read. For the airplane keys this keeps
+   * both in step; a car's odometer has nothing else to keep.
+   */
+  fun onMeterChanged(meterKey: String, value: String) {
+    _uiState.update { state ->
+      val next = state.copy(meterValues = state.meterValues + (meterKey to value))
+      when (meterKey) {
+        MeterKeys.ENGINE_HOURS -> next.copy(engineTime = value)
+        MeterKeys.AIRFRAME_HOURS -> next.copy(airframeTime = value)
+        MeterKeys.PROP_HOURS -> next.copy(propTime = value)
+        else -> next
+      }
+    }
+  }
 
   fun onComponentTypeChange(value: ComponentType) {
     _uiState.update { state ->
@@ -558,6 +588,13 @@ class MaintenanceLogFormViewModel(
         engine_hour = state.engineTime.toDoubleOrNull() ?: 0.0,
         airframe_time = state.airframeTime.toDoubleOrNull() ?: 0.0,
         prop_time = state.propTime.toDoubleOrNull() ?: 0.0,
+        // Every meter the form collected. The three fields above are written too, for the readers
+        // that have not moved yet — an aeroplane's log carries the same number in both places.
+        readings = state.meterValues.mapNotNull { (key, text) ->
+          text.toDoubleOrNull()
+            ?.takeIf { it > 0.0 }
+            ?.let { MeterReading(meter_key = key, value_ = it) }
+        },
         component_type = state.selectedComponentType,
         component_serial = componentSerial,
         attachments = finalAttachments,

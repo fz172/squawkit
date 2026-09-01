@@ -4,6 +4,8 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.squareup.wire.Instant
+import dev.fanfly.wingslog.core.template.currentFor
+import dev.fanfly.wingslog.core.template.MeterKeys
 import dev.fanfly.wingslog.thing.ComplianceType
 import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.ForceCompliedStatus
@@ -218,7 +220,10 @@ class TaskViewModel(
       ) { cards, logs, overview ->
         Triple(cards, logs, overview)
       }.collect { (cards, logs, overview) ->
-        val engineHours = overview?.current_engine_time?.toFloat() ?: 0f
+        // By meter key, not by field name. `currentFor` falls back to the aviation field, so an
+        // overview written before `current` existed still answers (#730).
+        val engineHours =
+          overview?.currentFor(MeterKeys.ENGINE_HOURS)?.toFloat() ?: 0f
         val editedCard = cardId?.let { id -> cards.firstOrNull { it.id == id } }
         // The rules-only "natural" next-due, so the adjustments preview banner can show what
         // the schedule alone would say absent any force-override or force-complied state.

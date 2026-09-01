@@ -1,7 +1,6 @@
 package dev.fanfly.wingslog.feature.thing.dashboard.data
 
 import dev.fanfly.wingslog.core.template.DegradedReason
-import dev.fanfly.wingslog.core.template.MeterKeys
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
 import dev.fanfly.wingslog.feature.sharing.model.ShareRole
 import dev.fanfly.wingslog.feature.squawk.model.SquawkWithStatus
@@ -15,24 +14,19 @@ data class LogStats(
   val airframe: Long,
   val engine: Long,
   val propeller: Long,
-  val currentEngineTime: Double? = null,
-  val currentAirframeTime: Double? = null,
-  val currentPropTime: Double? = null,
+  /** Current value per meter key, from `MaintenanceOverview.current` (#730). */
+  val readings: Map<String, Double> = emptyMap(),
 ) {
   /**
-   * The current reading for a meter key, or null when nothing stores one.
+   * The current reading for a meter key, or null when nothing has recorded one.
    *
-   * The three fields above are the only readings that exist: a log carries `airframe_time`,
-   * `engine_hour` and `prop_time` and nothing else, so a template declaring an odometer has no
-   * source here. Null rather than 0.0 on purpose — an invented zero renders as a real measurement.
-   * #730 replaces this mapping with per-meter-key readings on the log itself.
+   * Reads whatever the overview holds. It used to map three aviation fields by name, so a car's
+   * odometer had no answer to give and the dashboard drew a dash — now every declared meter lands
+   * in `MaintenanceOverview.current` and this is a lookup (#730).
+   *
+   * Null rather than 0.0 on purpose: a meter nobody has recorded is not a meter reading zero.
    */
-  fun valueFor(meterKey: String): Double? = when (meterKey) {
-    MeterKeys.AIRFRAME_HOURS -> currentAirframeTime
-    MeterKeys.ENGINE_HOURS -> currentEngineTime
-    MeterKeys.PROP_HOURS -> currentPropTime
-    else -> null
-  }
+  fun valueFor(meterKey: String): Double? = readings[meterKey]
 }
 
 sealed interface ThingOverviewUiState {

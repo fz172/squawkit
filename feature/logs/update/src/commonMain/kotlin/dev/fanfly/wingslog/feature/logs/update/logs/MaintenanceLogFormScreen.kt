@@ -314,12 +314,8 @@ fun MaintenanceLogFormScreen(
                 )
 
                 LogFormTab.HOURS -> LogTimeTab(
-                  engineTime = uiState.engineTime,
-                  onEngineTimeChange = viewModel::onEngineTimeChange,
-                  airframeTime = uiState.airframeTime,
-                  onAirframeTimeChange = viewModel::onAirframeTimeChange,
-                  propTime = uiState.propTime,
-                  onPropTimeChange = viewModel::onPropTimeChange,
+              meterValues = uiState.meterValues,
+              onMeterChange = viewModel::onMeterChanged,
                 )
 
                 LogFormTab.RECORDS -> LogRecordsTab(

@@ -1,14 +1,14 @@
 package dev.fanfly.wingslog.feature.logs.update.logs.viewmodel
 
-import dev.fanfly.wingslog.thing.ComponentType
-import dev.fanfly.wingslog.thing.MaintenanceTask
-import dev.fanfly.wingslog.thing.Squawk
-import dev.fanfly.wingslog.thing.Technician
 import dev.fanfly.wingslog.core.ui.common.UiText
 import dev.fanfly.wingslog.feature.attachment.datamanager.QuotaChecker
 import dev.fanfly.wingslog.feature.attachment.model.PendingAttachment
 import dev.fanfly.wingslog.feature.attachment.model.fileCount
 import dev.fanfly.wingslog.feature.attachment.model.visible
+import dev.fanfly.wingslog.thing.ComponentType
+import dev.fanfly.wingslog.thing.MaintenanceTask
+import dev.fanfly.wingslog.thing.Squawk
+import dev.fanfly.wingslog.thing.Technician
 import dev.fanfly.wingslog.thing.Thing
 import kotlinx.datetime.LocalDate
 
@@ -20,6 +20,13 @@ data class MaintenanceLogFormUiState(
   val engineTime: String = "",
   val airframeTime: String = "",
   val propTime: String = "",
+  /**
+   * The value typed for each meter the template declares, by key (#730).
+   *
+   * Keyed rather than three named fields because the set is the template's: an aeroplane has three,
+   * a car has an odometer, a home has none and the section does not render at all.
+   */
+  val meterValues: Map<String, String> = emptyMap(),
   val thing: Thing? = null,
   val selectedComponentType: ComponentType = ComponentType.COMPONENT_AIRFRAME,
   val selectedSubComponent: String? = null,
