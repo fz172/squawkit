@@ -91,8 +91,10 @@ class ThingInflaterTest {
     val migrated = thing(SpecKeys.MAKE to "Cessna")
     assertThat(migrated.template).isNull()
 
+    // Everything but the words: the lexicon is app UI and is resolved by template id at render,
+    // so storing a copy would fork the app's vocabulary into user data (see LexiconOwnershipTest).
     assertThat(ThingInflater.inflate(migrated, airplane).template).isEqualTo(
-      airplane
+      airplane.copy(lexicon = null)
     )
   }
 

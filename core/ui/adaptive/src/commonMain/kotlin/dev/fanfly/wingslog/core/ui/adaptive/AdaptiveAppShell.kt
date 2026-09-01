@@ -295,7 +295,10 @@ fun AdaptiveAppShell(
     // The FAB is wrapped too, since it says "New squawk".
     val sectionLexicon =
       if (state.section == ShellSection.SETTINGS) GenericLexicon.LEXICON
-      else state.selectedThing?.template?.lexicon ?: LocalThingLexicon.current
+      // LocalThingLexicon, not the Thing's stored copy: the words are resolved once from this
+      // build by CurrentThingTemplate and provided above both NavHosts. Reading the DNA here would
+      // reintroduce the frozen-at-creation lexicon on exactly the per-thing surfaces that matter.
+      else LocalThingLexicon.current
     val content: @Composable () -> Unit = {
       CompositionLocalProvider(LocalThingLexicon provides sectionLexicon) {
         sectionContent(state.section, state.selectedThingId)

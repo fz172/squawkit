@@ -19,7 +19,13 @@ object ThingInflater {
     thing.copy(
       name = thing.name.ifEmpty { nameOf(thing) },
       // A Thing migrated by the cutover has no DNA — the cutover predates field 12.
-      template = thing.template ?: template,
+      //
+      // The lexicon is stripped before storing. It is app UI, written against the screens of a
+      // particular release, so freezing a copy into user data makes every Thing a fork of the
+      // app's vocabulary that no later release can correct. Readers resolve words by template id
+      // instead (TemplateRegistry.lexiconFor), which is why nothing has to migrate: a Thing that
+      // already carries one simply has it ignored.
+      template = (thing.template ?: template)?.copy(lexicon = null),
     )
 
   /** `tail_number`, else `"$make $model"`, else empty — PRD §9.1's order, read from spec. */

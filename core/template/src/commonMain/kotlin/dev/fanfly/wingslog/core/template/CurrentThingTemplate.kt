@@ -27,7 +27,7 @@ import kotlinx.coroutines.flow.asStateFlow
  * NavHosts (`AppEntry` on Android/iOS, `WebApp` on web) so content and dialogs see the same words
  * and the same set of features.
  */
-class CurrentThingTemplate(registry: TemplateRegistry) {
+class CurrentThingTemplate(private val registry: TemplateRegistry) {
 
   /**
    * What applies when nothing is selected — an empty fleet, or before the first load.
@@ -97,8 +97,11 @@ class CurrentThingTemplate(registry: TemplateRegistry) {
     _capabilities.value = value.capabilitiesOrAllEnabled()
   }
 
-  private fun ThingTemplate?.lexiconOrGeneric(): Lexicon =
-    this?.lexicon ?: GenericLexicon.LEXICON
+  /**
+   * The words come from [TemplateRegistry.lexiconFor], never from the selected Thing's own copy —
+   * see its doc for why a lexicon is app UI rather than user data.
+   */
+  private fun ThingTemplate?.lexiconOrGeneric(): Lexicon = registry.lexiconFor(this)
 
   private fun ThingTemplate?.capabilitiesOrAllEnabled(): Capabilities =
     this?.capabilities ?: ALL_ENABLED

@@ -4,10 +4,10 @@ import dev.fanfly.wingslog.core.appinfo.APP_VERSION_CODE
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.model.id.generateRandomId
 import dev.fanfly.wingslog.core.template.SlotKeys
-import dev.fanfly.wingslog.core.template.canonical.CanonicalTemplates
 import dev.fanfly.wingslog.core.template.SpecKeys
 import dev.fanfly.wingslog.core.template.allComponentsInSlot
 import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
+import dev.fanfly.wingslog.core.template.canonical.CanonicalTemplates
 import dev.fanfly.wingslog.core.template.specValue
 import dev.fanfly.wingslog.core.template.withDerivedComponentIds
 import dev.fanfly.wingslog.thing.CertExpireLimit
@@ -614,13 +614,18 @@ object FakeDataGenerator {
 
     val spec = AIRCRAFT_SPECS.random()
     val thingId = generateRandomId()
-    val template = CanonicalTemplates.ALL.firstOrNull { it.id == config.templateId }
-      ?: AirplaneTemplate.TEMPLATE
+    val template =
+      CanonicalTemplates.ALL.firstOrNull { it.id == config.templateId }
+        ?: AirplaneTemplate.TEMPLATE
     // Airplane keeps its own builder: the aviation fixture below (engine/propeller logs, component
     // squawks) expects the specific airframe -> engine -> propeller -> hub/blade tree, and
     // engineCount / bladesPerEngine configure it. Every other preset is built from its template.
     val thing =
-      if (template.id == AirplaneTemplate.ID) buildAircraft(spec, thingId, config)
+      if (template.id == AirplaneTemplate.ID) buildAircraft(
+        spec,
+        thingId,
+        config
+      )
       else buildFromTemplate(template, thingId)
     val technicians = buildTechnicians(config.technicianCount)
     val tasks = buildTasks(config.taskCount, now)
@@ -730,7 +735,10 @@ object FakeDataGenerator {
    * boat with two engines, because that is what those templates say — not because this function
    * knows anything about houses or boats. A preset added later needs no change here.
    */
-  private fun buildFromTemplate(template: ThingTemplate, thingId: String): Thing {
+  private fun buildFromTemplate(
+    template: ThingTemplate,
+    thingId: String
+  ): Thing {
     val spec = template.spec_fields.map { field ->
       Spec(key = field.key, value_ = sampleSpecValue(field.key, field.label))
     }
@@ -754,7 +762,10 @@ object FakeDataGenerator {
         make = SAMPLE_MAKES.random(),
         model = "${('A'..'Z').random()}${(100..999).random()}",
         serial = if (slot.serial_expected) {
-          "${slot.slot_key.take(2).uppercase()}$index-${(10000..99999).random()}"
+          "${
+            slot.slot_key.take(2)
+              .uppercase()
+          }$index-${(10000..99999).random()}"
         } else {
           ""
         },
@@ -771,7 +782,9 @@ object FakeDataGenerator {
     "vin" -> "1${('A'..'Z').random()}GBH41JXMN${(100000..999999).random()}"
     "hull_id" -> "${('A'..'Z').random()}BC${(10000..99999).random()}D616"
     "frame_number" -> "WTU${(100..999).random()}K${(1000..9999).random()}Z"
-    "year", "year_built" -> (1960..2024).random().toString()
+    "year", "year_built" -> (1960..2024).random()
+      .toString()
+
     "address" -> "${(100..9999).random()} ${SAMPLE_STREETS.random()}"
     // Deliberately generic: a preset added later gets something readable without editing this.
     else -> "Sample $label"
