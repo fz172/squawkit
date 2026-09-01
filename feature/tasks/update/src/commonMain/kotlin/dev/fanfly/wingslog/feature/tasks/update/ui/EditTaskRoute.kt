@@ -7,6 +7,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import dev.fanfly.wingslog.feature.tasks.datamanager.forcedDueMeter
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.nav.Screen.Companion.CROSS_SCREEN_SUCCESS_MESSAGE
 import dev.fanfly.wingslog.feature.attachment.model.visible
@@ -126,7 +127,7 @@ fun EditTaskRoute(
           complianceDetails = updatedCard.compliance_details,
           isOneTime = updatedCard.is_one_time,
           forceDueDate = updatedCard.force_due_date,
-          forceDueEngine = updatedCard.force_due_engine_hour,
+          forceDueEngine = updatedCard.forcedDueMeter()?.second ?: 0f,
           forceCompliedStatus = updatedCard.force_complied_status,
           notes = updatedCard.notes,
           onSuccess = {

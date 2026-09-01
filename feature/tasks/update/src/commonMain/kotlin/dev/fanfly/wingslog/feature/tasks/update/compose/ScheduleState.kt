@@ -1,13 +1,15 @@
 package dev.fanfly.wingslog.feature.tasks.update.compose
 
 import com.squareup.wire.Instant
-import dev.fanfly.wingslog.thing.EngineHourRule
+import dev.fanfly.wingslog.core.datetime.toWireInstant
+import dev.fanfly.wingslog.core.template.MeterKeys
+import dev.fanfly.wingslog.feature.tasks.datamanager.defaultMeterKey
 import dev.fanfly.wingslog.thing.ImmediateRule
 import dev.fanfly.wingslog.thing.InspectionRule
 import dev.fanfly.wingslog.thing.LinkedRule
 import dev.fanfly.wingslog.thing.MaintenanceTask
+import dev.fanfly.wingslog.thing.MeterRule
 import dev.fanfly.wingslog.thing.TimeRule
-import dev.fanfly.wingslog.core.datetime.toWireInstant
 import kotlin.time.Clock
 
 enum class ScheduleMode { TIME, HOURS, LINKED }
@@ -28,6 +30,13 @@ data class ScheduleState(
   val calValue: String = "",
   val calUnit: ScheduleTimeUnit = ScheduleTimeUnit.MONTHS,
   val hourValue: String = "",
+  /**
+   * Which meter [hourValue] is an interval of (#759).
+   *
+   * Defaults to engine hours so a task written before meter rules existed edits as it always has.
+   * A car's task carries "odometer" and the same field means miles.
+   */
+  val meterKey: String = MeterKeys.ENGINE_HOURS,
   val linkedToId: String? = null,
 ) {
   /** Recurrence maps to is_one_time: only ONE_TIME is one-time; ASAP & REPEATING are not. */
@@ -73,7 +82,13 @@ data class ScheduleState(
           listOf(InspectionRule(immediate_rule = ImmediateRule()))
         } else {
           val v = hourValue.toFloatOrNull() ?: return emptyList()
-          listOf(InspectionRule(engine_hour_rule = EngineHourRule(interval_hours = v)))
+          // A MeterRule carrying the key, which is what lets "every 5,000 miles" exist at all —
+          // an EngineHourRule named its meter in its type and could only mean hours (#759).
+          listOf(
+            InspectionRule(
+              meter_rule = MeterRule(meter_key = meterKey, interval = v),
+            ),
+          )
         }
       }
 
@@ -84,6 +99,9 @@ data class ScheduleState(
   companion object {
     fun fromTask(task: MaintenanceTask): ScheduleState {
       val timeRule = task.rules.firstNotNullOfOrNull { it.time_rule }
+      // Either rule opens the same editor. A task written before MeterRule existed has no key of
+      // its own, so the caller supplies the default its component always implied.
+      val meterRule = task.rules.firstNotNullOfOrNull { it.meter_rule }
       val engineRule = task.rules.firstNotNullOfOrNull { it.engine_hour_rule }
       val linkedRule = task.rules.firstNotNullOfOrNull { it.linked_rule }
       val immediateRule = task.rules.firstNotNullOfOrNull { it.immediate_rule }
@@ -115,16 +133,21 @@ data class ScheduleState(
           )
         }
 
-        engineRule != null -> ScheduleState(
+        meterRule != null || engineRule != null -> ScheduleState(
           mode = ScheduleMode.HOURS,
           recurrence = baseRecurrence,
-          hourValue = engineRule.interval_hours.takeIf { it > 0f }
+          hourValue = (meterRule?.interval ?: engineRule?.interval_hours ?: 0f)
+            .takeIf { it > 0f }
             ?.let {
               if (it == it.toInt()
                   .toFloat()
               ) it.toInt()
                 .toString() else it.toString()
             } ?: "",
+          // An EngineHourRule carries no key — it meant whichever meter its card's component
+          // implied, which is what `defaultMeterKey` preserves.
+          meterKey = meterRule?.meter_key?.takeIf { it.isNotEmpty() }
+            ?: task.defaultMeterKey(),
         )
 
         immediateRule != null -> {

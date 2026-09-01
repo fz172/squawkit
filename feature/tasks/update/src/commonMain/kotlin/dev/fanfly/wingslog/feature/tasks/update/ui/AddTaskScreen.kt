@@ -241,7 +241,6 @@ fun AddTaskScreen(
             compliance_details = state.complianceNotes.takeIf { it.isNotBlank() }
               ?: "",
             is_one_time = state.schedule.isOneTime,
-            force_due_engine_hour = 0f,
             force_due_date = null,
             notes = "",
           )

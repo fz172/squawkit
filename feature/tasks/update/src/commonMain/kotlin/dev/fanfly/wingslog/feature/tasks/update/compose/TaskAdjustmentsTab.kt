@@ -37,6 +37,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
+import dev.fanfly.wingslog.core.template.LocalThingTemplate
 import dev.fanfly.wingslog.core.ui.common.compose.FormSectionLabel
 import dev.fanfly.wingslog.core.ui.common.compose.PreviewBanner
 import dev.fanfly.wingslog.core.ui.common.compose.PreviewBannerTone
@@ -151,7 +152,8 @@ fun TaskAdjustmentsTab(
     modifier = modifier.fillMaxWidth(),
     verticalArrangement = Arrangement.spacedBy(Spacing.extraLarge),
   ) {
-    val bannerTone = if (rescheduleOn) PreviewBannerTone.Active else PreviewBannerTone.Neutral
+    val bannerTone =
+      if (rescheduleOn) PreviewBannerTone.Active else PreviewBannerTone.Neutral
     val bannerLabel = stringResource(
       if (rescheduleOn) Res.string.schedule_preview_label
       else Res.string.adj_preview_label_neutral
@@ -427,12 +429,23 @@ private fun RescheduleCard(
           }
 
           ScheduleMode.HOURS -> {
+            // The meter's own unit, like the schedule tab beside it — a car's override read
+            // "tach hrs" while the schedule that produced it said "mi" (#759).
+            // This tab has no rule in scope, only the mode — so the template's own meter is the
+            // best available answer, and it is the right one for every preset that declares just
+            // the one. #732 revisits it if a preset ever ships two.
+            val meter = LocalThingTemplate.current?.meters?.firstOrNull()
             IntervalNumberInput(
               value = forcedEngineHours,
               onChange = { onForcedEngineHoursChange(it.filter { c -> c.isDigit() || c == '.' }) },
-              suffix = "tach hrs",
+              suffix = meter?.unit_label?.takeIf { it.isNotEmpty() }
+                ?: "tach hrs",
               prefix = "At",
-              keyboard = androidx.compose.ui.text.input.KeyboardType.Decimal,
+              keyboard = if (meter?.decimal != false) {
+                androidx.compose.ui.text.input.KeyboardType.Decimal
+              } else {
+                androidx.compose.ui.text.input.KeyboardType.Number
+              },
             )
             if (forcedEngineHours.isNotBlank()) {
               Text(

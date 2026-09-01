@@ -52,8 +52,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import dev.fanfly.wingslog.thing.MaintenanceTask
+import dev.fanfly.wingslog.core.template.LocalThingTemplate
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.thing.MaintenanceTask
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.tasks.update.generated.resources.Res
@@ -81,7 +82,10 @@ internal fun TrackingModeChoice(
     )
     TrackingModeButton(
       icon = Icons.Default.Schedule,
-      label = stringResource(Res.string.schedule_track_tach_hours),
+      // The meter's own name — "Odometer" on a car. "Tach Hours" offered an aeroplane's meter to
+      // every template, which is the same bug as the unit beside the value (#759).
+      label = LocalThingTemplate.current?.meters?.firstOrNull()?.label
+        ?: stringResource(Res.string.schedule_track_tach_hours),
       selected = selected == ScheduleMode.HOURS,
       onClick = { onSelect(ScheduleMode.HOURS) },
       modifier = Modifier.weight(1f),

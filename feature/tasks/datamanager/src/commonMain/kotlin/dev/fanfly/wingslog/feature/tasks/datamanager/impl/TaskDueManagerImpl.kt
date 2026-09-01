@@ -1,13 +1,16 @@
 package dev.fanfly.wingslog.feature.tasks.datamanager.impl
 
 import co.touchlab.kermit.Logger
-import dev.fanfly.wingslog.thing.ComponentType
-import dev.fanfly.wingslog.thing.MaintenanceLog
-import dev.fanfly.wingslog.thing.MaintenanceTask
 import dev.fanfly.wingslog.core.datetime.toLocalDate
+import dev.fanfly.wingslog.core.template.readingFor
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDueManager
+import dev.fanfly.wingslog.feature.tasks.datamanager.defaultMeterKey
+import dev.fanfly.wingslog.feature.tasks.datamanager.forcedDueMeter
+import dev.fanfly.wingslog.feature.tasks.datamanager.meterIntervalFor
 import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
 import dev.fanfly.wingslog.feature.tasks.model.DueStatus
+import dev.fanfly.wingslog.thing.MaintenanceLog
+import dev.fanfly.wingslog.thing.MaintenanceTask
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -54,20 +57,21 @@ class TaskDueManagerImpl(
     val forceDueDate = card.force_due_date
     val hasForcedDate =
       forceDueDate != null && (forceDueDate.getEpochSecond() > 0L)
-    val hasForcedEngine = card.force_due_engine_hour > 0f
+    // The forced override and the meter it is measured in — keyed, falling back to the legacy
+    // float for an override set before `force_due_meter` existed (#759).
+    val forcedDue = card.forcedDueMeter()
+    val hasForcedEngine = forcedDue != null
+    val forcedMeterKey = forcedDue?.first ?: card.defaultMeterKey()
 
-    // Determine which metric to track against based on component type
-    // Airframe tracks airframe_time, others track engine_hour
-    val currentMetricTime =
-      if (card.component == ComponentType.COMPONENT_AIRFRAME) {
-        allLogs.filter { it.airframe_time > 0.0 }
-          .maxOfOrNull { it.airframe_time }
-          ?.toFloat() ?: 0f
-      } else {
-        allLogs.filter { it.engine_hour > 0.0 }
-          .maxOfOrNull { it.engine_hour }
-          ?.toFloat() ?: 0f
-      }
+    /** The highest reading any log carries for [meterKey]. */
+    fun currentReading(meterKey: String): Float =
+      allLogs.mapNotNull { it.readingFor(meterKey) }
+        .maxOrNull()
+        ?.toFloat() ?: 0f
+
+    // The meter the *forced* value is measured against. A rule names its own below — this is only
+    // for comparing the override, which carries its key with it.
+    val currentMetricTime = currentReading(forcedMeterKey)
 
     val currentDate = clock.now()
       .toLocalDateTime(timeZone).date
@@ -76,8 +80,7 @@ class TaskDueManagerImpl(
       val nextDueDate = if (hasForcedDate) {
         forceDueDate.toLocalDate(timeZone)
       } else null
-      val nextDueEngine =
-        if (hasForcedEngine) card.force_due_engine_hour else null
+      val nextDueEngine = forcedDue?.second
 
       val status = when {
         (nextDueDate != null && nextDueDate < currentDate) ||
@@ -95,6 +98,7 @@ class TaskDueManagerImpl(
       return DueMetadata(
         nextDueDate = nextDueDate,
         nextDueEngine = nextDueEngine,
+        nextDueMeterKey = forcedMeterKey,
         status = status
       )
     }
@@ -104,10 +108,13 @@ class TaskDueManagerImpl(
     var nextDueEngine: Float? = null
     var isOnCondition = false
     var isImmediate = false
+    var nextDueMeterKey: String? = null
 
     for (rule in card.rules) {
       val timeRule = rule.time_rule
-      val engineRule = rule.engine_hour_rule
+      // A MeterRule carries its key; an EngineHourRule means whichever meter this card's component
+      // has always implied. Both land here so an existing aviation task computes exactly as before.
+      val meterRule = card.meterIntervalFor(rule)
       val onConditionRule = rule.on_condition_rule
       val linkedRule = rule.linked_rule
       val immediateRule = rule.immediate_rule
@@ -149,16 +156,14 @@ class TaskDueManagerImpl(
           }
         }
 
-        engineRule != null -> {
-          val baseEngine =
-            if (card.component == ComponentType.COMPONENT_AIRFRAME) {
-              latestLog?.airframe_time?.toFloat() ?: 0f
-            } else {
-              latestLog?.engine_hour?.toFloat() ?: 0f
-            }
-          val calculated = baseEngine + engineRule.interval_hours
+        meterRule != null -> {
+          val (meterKey, interval) = meterRule
+          val base = latestLog?.readingFor(meterKey)
+            ?.toFloat() ?: 0f
+          val calculated = base + interval
           if (nextDueEngine == null || calculated < nextDueEngine) {
             nextDueEngine = calculated
+            nextDueMeterKey = meterKey
           }
         }
 
@@ -245,15 +250,17 @@ class TaskDueManagerImpl(
               advanced
             }
           }
-          rule.engine_hour_rule?.let { engineRule ->
-            if (engineRule.interval_hours > 0f) {
-              nextDueEngine = nextDueEngine?.let { e ->
-                var advanced = e + engineRule.interval_hours
-                while (advanced <= currentMetricTime) advanced += engineRule.interval_hours
-                advanced
+          card.meterIntervalFor(rule)
+            ?.let { (meterKey, interval) ->
+              if (interval > 0f) {
+                val current = currentReading(meterKey)
+                nextDueEngine = nextDueEngine?.let { e ->
+                  var advanced = e + interval
+                  while (advanced <= current) advanced += interval
+                  advanced
+                }
               }
             }
-          }
         }
       }
     }
@@ -275,6 +282,9 @@ class TaskDueManagerImpl(
     return DueMetadata(
       nextDueDate = nextDueDate,
       nextDueEngine = nextDueEngine,
+      // Set by whichever rule produced nextDueEngine above. Without it every card fell back to
+      // hours, so a car scheduled in miles still read "5000.0 HRS" (#759).
+      nextDueMeterKey = nextDueMeterKey,
       isOnCondition = isOnCondition,
       isImmediate = isImmediate,
       status = status
@@ -290,4 +300,3 @@ private fun LocalDate.endOfMonth(): LocalDate {
   val firstOfNextMonth = LocalDate(year, month, 1).plus(1, DateTimeUnit.MONTH)
   return firstOfNextMonth.minus(1, DateTimeUnit.DAY)
 }
-

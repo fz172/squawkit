@@ -3,6 +3,9 @@ package dev.fanfly.wingslog.feature.logs.update.logs.viewmodel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dev.fanfly.wingslog.feature.tasks.datamanager.withForcedDueMeter
+import dev.fanfly.wingslog.feature.tasks.datamanager.forcedDueMeter
+import dev.fanfly.wingslog.feature.tasks.datamanager.defaultMeterKey
 import dev.fanfly.wingslog.core.analytics.AnalyticsManager
 import dev.fanfly.wingslog.core.analytics.LogCreated
 import dev.fanfly.wingslog.core.analytics.TaskCompleted
@@ -620,16 +623,18 @@ class MaintenanceLogFormViewModel(
           state.selectedInspectionIds.forEach { cardId ->
             state.availableInspectionCards.find { it.id == cardId }
               ?.let { card ->
-                if (card.force_due_date != null || card.force_due_engine_hour > 0f ||
+                if (card.force_due_date != null || card.forcedDueMeter() != null ||
                   card.force_complied_status != null
                 ) {
                   inspectionDataManager.updateTask(
                     thingId,
-                    card.copy(
-                      force_due_date = null,
-                      force_due_engine_hour = 0f,
-                      force_complied_status = null,
-                    )
+                    // Clears both the keyed override and the legacy float, so a build that
+                    // predates `force_due_meter` does not keep showing one the user cleared.
+                    card.withForcedDueMeter(card.defaultMeterKey(), null)
+                      .copy(
+                        force_due_date = null,
+                        force_complied_status = null,
+                      )
                   )
                 }
               }

@@ -41,6 +41,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import dev.fanfly.wingslog.feature.tasks.datamanager.meterKeyFor
+import dev.fanfly.wingslog.feature.tasks.datamanager.withForcedDueMeter
 import dev.fanfly.wingslog.core.analytics.LocalAnalytics
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.template.LocalThingCapabilities
@@ -335,13 +337,16 @@ fun EditTaskScreen(
               ?: "",
             compliance_details = state.complianceNotes.takeIf { it.isNotBlank() }
               ?: "",
-            force_due_engine_hour = updatedForceDueEngine,
             force_due_date = updatedForceDueDate,
             // Skip This Cycle is a separate, immediately-persisted action off the Resolve menu
             // (see TaskViewModel.skipThisCycle), so this form only carries the stored value
             // forward. Dropping it when the schedule it was recorded against changes is
             // TaskViewModel.isScheduleChanged's job, not the form's.
             force_complied_status = card.force_complied_status
+          ).withForcedDueMeter(
+            // The meter this task schedules against — the override is in the same one.
+            meterKeyFor(state.component, ruleList),
+            updatedForceDueEngine.takeIf { it > 0f },
           )
           onSave(updated)
         },

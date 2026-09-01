@@ -813,6 +813,7 @@ feature/tasks/viewing	days_overdue_count	%1$d Days Overdue
 feature/tasks/viewing	days_remaining	%1$d Days Remaining
 feature/tasks/viewing	due_date	Due %1$s
 feature/tasks/viewing	due_today	Due Today
+feature/tasks/viewing	engine_hours_label	Engine Hours
 feature/tasks/viewing	engine_hours_upper	%1$s HRS
 feature/tasks/viewing	label_deadline	DEADLINE
 feature/tasks/viewing	label_due_engine	DUE @
@@ -820,7 +821,7 @@ feature/tasks/viewing	label_due_engine_value	DUE @ %1$s
 feature/tasks/viewing	label_expired	EXPIRED %1$s
 feature/tasks/viewing	maintenance_due_subtitle	Maintenance tasks pending
 feature/tasks/viewing	next_due_date	NEXT DUE DATE
-feature/tasks/viewing	next_due_engine_hrs	NEXT DUE ENGINE HRS
+feature/tasks/viewing	next_due_meter	NEXT DUE %1$s
 feature/tasks/viewing	no_maintenance_logs_for_task	No logs yet. Add a maintenance entry and tag this task to see history here.
 feature/tasks/viewing	on_condition	On Condition
 feature/technician/sharedassets	add_technician	Add Technician

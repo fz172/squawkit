@@ -3,6 +3,7 @@ syntax = "proto3";
 import "google/protobuf/timestamp.proto";
 import "thing/attachment.proto";
 import "thing/component_type.proto";
+import "thing/meter_reading.proto";
 
 option java_package = "dev.fanfly.wingslog.thing";
 option java_multiple_files = true;
@@ -24,9 +25,23 @@ message TimeRule {
   int32 interval_years = 4;
 }
 
-// A engine-hour-based rule (e.g. every 100 hours)
+// A engine-hour-based rule (e.g. every 100 hours).
+//
+// SUPERSEDED BY MeterRule. Kept because every aviation task in the field uses one, and a task that
+// silently stops coming due is worse than one that cannot be created. Read both, write MeterRule.
 message EngineHourRule {
   float interval_hours = 1;
+}
+
+// A rule against any meter the template declares — "every 5,000 miles", "every 100 hours",
+// "every 200 ride hours". PRD §11.1.
+//
+// `EngineHourRule` could not express these because it named the meter in its type rather than
+// carrying it: an interval with no unit is only a number, and a car could not be scheduled at all.
+message MeterRule {
+  // Matches MeterDef.key on the template, and MeterReading.meter_key on the logs it reads.
+  string meter_key = 1;
+  float interval = 2;
 }
 
 // Inspection is performed on condition (no fixed interval)
@@ -48,13 +63,17 @@ message InspectionRule {
     OnConditionRule on_condition_rule = 3;
     LinkedRule linked_rule = 4;
     ImmediateRule immediate_rule = 5;
+    MeterRule meter_rule = 6;
   }
 }
 
 // Status to track when an inspection was forcefully marked as complied with
 message ForceCompliedStatus {
   google.protobuf.Timestamp complied_date = 1;
+  // Superseded by `complied_meter`; still read for statuses recorded before it existed.
   float complied_engine_hours = 2;
+  // What the meter read when this was marked complied, keyed. Empty key means none was recorded.
+  MeterReading complied_meter = 3;
 }
 
 // A configured maintenance task card for an aircraft
@@ -66,6 +85,7 @@ message MaintenanceTask {
 
   // Optional force overrides — when set, skip computed due calculation
   google.protobuf.Timestamp force_due_date = 5;
+  // Superseded by `force_due_meter`; still read for overrides set before it existed.
   float force_due_engine_hour = 6;
 
   // Optional free-text notes or comments for this maintenance task
@@ -80,4 +100,9 @@ message MaintenanceTask {
   repeated Attachment attachments = 13;
 
   ForceCompliedStatus force_complied_status = 14;
+
+  // The meter reading this task is forced due at, keyed. Supersedes `force_due_engine_hour`, which
+  // could only ever mean engine hours (PRD §11.1).
+  MeterReading force_due_meter = 15;
+
 }
