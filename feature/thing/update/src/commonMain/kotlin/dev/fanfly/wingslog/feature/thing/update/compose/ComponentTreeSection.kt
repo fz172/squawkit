@@ -220,7 +220,24 @@ private fun InlineGroup(
 ) {
   val first = group.first().row
   if (!first.slot.repeatable) {
-    group.forEach { ComponentBlock(it, viewModel, showValidationErrors) }
+    // One block per component, and then whatever hangs off it. The recursion is the point: a
+    // propeller is inline under its engine and its blades are inline under the propeller, so
+    // rendering only this node's own fields dropped the blades entirely.
+    group.forEach { node ->
+      ComponentBlock(node, viewModel, showValidationErrors)
+      node.inlineGroups.forEach {
+        InlineGroup(
+          it,
+          viewModel,
+          showValidationErrors
+        )
+      }
+      node.cardChildren.forEach {
+        ComponentNodeCard(it, viewModel, showValidationErrors)
+      }
+      // "Add Blade" belongs to the propeller, which has no card of its own to carry it.
+      AddSlotButtons(parentPath = node.row.path, viewModel = viewModel)
+    }
     return
   }
   Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {

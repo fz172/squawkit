@@ -585,6 +585,33 @@ class AdaptiveShellViewModelTest {
 
       assertThat(viewModel().atThingLimit.value).isTrue()
     }
+
+  @Test
+  fun anAirplaneIsNamedByItsTailNumberRatherThanItsSerial() {
+    // The airplane declares two identifiers, and picking "the first" showed the serial the moment
+    // the spec fields were reordered. The template says which one names the thing (PRD §4.2).
+    fleet.value = listOf(
+      FleetEntry(
+        thing = Thing(
+          id = "a1",
+          spec = listOf(
+            Spec(key = SpecKeys.MAKE, value_ = "Cessna"),
+            Spec(key = SpecKeys.MODEL, value_ = "172"),
+            Spec(key = SpecKeys.SERIAL, value_ = "SN-99999"),
+            Spec(key = SpecKeys.TAIL_NUMBER, value_ = "N123AB"),
+          ),
+          template = AirplaneTemplate.TEMPLATE,
+        ),
+        shared = false,
+        role = ShareRole.SHARE_ROLE_OWNER,
+      ),
+    )
+
+    val row = viewModel().uiState.value.thing.single()
+
+    assertThat(row.label).isEqualTo("N123AB")
+    assertThat(row.subtitle).isEqualTo("Cessna 172")
+  }
 }
 
 /** Any fixed value; the tests build DNA relative to it rather than to the real versionCode. */
