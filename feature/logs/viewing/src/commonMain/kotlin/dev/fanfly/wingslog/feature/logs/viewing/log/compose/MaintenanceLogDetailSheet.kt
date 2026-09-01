@@ -31,6 +31,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import dev.fanfly.wingslog.core.template.LocalThingTemplate
+import dev.fanfly.wingslog.core.template.MeterKeys
+import dev.fanfly.wingslog.core.template.meterLabel
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
@@ -190,7 +193,10 @@ fun MaintenanceLogDetailSheet(
 @Composable
 private fun SheetHeroMetric(log: MaintenanceLog) {
   val engineLabel = stringResource(MaintenanceRes.string.engine_time_label)
-  val airframeLabel = stringResource(MaintenanceRes.string.airframe_time_label)
+  val airframeLabel = LocalThingTemplate.current.meterLabel(
+    MeterKeys.AIRFRAME_HOURS,
+    ifAbsent = stringResource(MaintenanceRes.string.airframe_time_label),
+  )
   val propLabel = stringResource(MaintenanceRes.string.prop_time_label)
 
   val (label, value) = when (log.component_type) {

@@ -29,6 +29,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import dev.fanfly.wingslog.core.template.SlotKeys
+import dev.fanfly.wingslog.core.template.LocalThingTemplate
+import dev.fanfly.wingslog.core.template.slotLabel
 import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -203,7 +206,10 @@ fun EditAircraftScreen(
       ) {
         // AIRFRAME
         Text(
-          text = stringResource(CoreRes.string.component_airframe).uppercase()
+          text = LocalThingTemplate.current.slotLabel(
+            SlotKeys.AIRFRAME,
+            ifAbsent = stringResource(CoreRes.string.component_airframe),
+          ).uppercase()
         )
         AirframeSection(
           uiState.thing,

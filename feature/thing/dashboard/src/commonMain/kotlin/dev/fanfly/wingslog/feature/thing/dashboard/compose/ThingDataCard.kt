@@ -28,6 +28,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import dev.fanfly.wingslog.core.template.LocalThingTemplate
+import dev.fanfly.wingslog.core.template.slotLabel
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
@@ -137,7 +139,10 @@ fun ThingDataCard(
           verticalArrangement = Arrangement.spacedBy(Spacing.large)
         ) {
           ComponentCard(
-            category = stringResource(CoreRes.string.component_airframe).uppercase(),
+            category = LocalThingTemplate.current.slotLabel(
+              SlotKeys.AIRFRAME,
+              ifAbsent = stringResource(CoreRes.string.component_airframe),
+            ).uppercase(),
             name = stringResource(
               CoreRes.string.make_model_template,
               thing.specValue(SpecKeys.MAKE),

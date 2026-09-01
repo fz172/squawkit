@@ -31,8 +31,9 @@ class EveryCapabilityIsConsultedTest {
     // Superseded by #684, where certifications move onto the person and roles are derived.
     "technician_certificates" to "#684",
     // Not a removal at a call site but a choice between two export renderers, and the generic
-    // layout's columns derive from the lexicon and meter set — Phase 3 (PRD §8.5).
-    "export_layout" to "#657 / Phase 3",
+    // layout's columns derive from the lexicon and the meter set (PRD §8.5). #703 made the meter
+    // set readable, which was the precondition; building the second renderer is what remains.
+    "export_layout" to "#730",
   )
 
   @Test

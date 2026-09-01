@@ -15,13 +15,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import dev.fanfly.wingslog.core.template.LocalThingCapabilities
+import dev.fanfly.wingslog.core.template.LocalThingTemplate
 import dev.fanfly.wingslog.core.ui.common.formatToOneDecimalPlace
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.thing.dashboard.data.LogStats
 import org.jetbrains.compose.resources.stringResource
-import wingslog.feature.logs.sharedassets.generated.resources.airframe_time_label
-import wingslog.feature.logs.sharedassets.generated.resources.engine_time_label
-import wingslog.feature.logs.sharedassets.generated.resources.prop_time_label
 import wingslog.feature.logs.viewing.generated.resources.maintenance_summary
 import wingslog.feature.logs.viewing.generated.resources.total_logs
 import wingslog.feature.logs.sharedassets.generated.resources.Res as SharedRes
@@ -34,6 +32,7 @@ fun LogStatsSection(
   modifier: Modifier = Modifier,
 ) {
   val meters = LocalThingCapabilities.current.meters
+  val template = LocalThingTemplate.current
   Column(
     modifier = modifier,
     verticalArrangement = Arrangement.spacedBy(Spacing.medium)
@@ -62,32 +61,26 @@ fun LogStatsSection(
           ),
         horizontalArrangement = Arrangement.spacedBy(Spacing.medium)
       ) {
-        // A capability removes UI rather than blanking it: a homeowner should never see
-        // "Engine Time 0.0" on a template that declares no meters at all (PRD §4.8). The three
-        // aviation meters are still hardcoded — #703 and #730 render the template's own meter set —
-        // but showing them on a home was wrong data, not just the wrong labels.
+        // One cell per meter the TEMPLATE declares, not three hardcoded aviation ones. A bike
+        // showed "Airframe / Engine Time / Prop Time" because the cells were fixed and only their
+        // values came from data; reading the meter set is what makes an automotive thing able to
+        // show an odometer instead.
+        //
+        // A declared meter with no reading yet draws nothing rather than "0.0" — logs only carry
+        // the three aviation hour fields until #730 stores readings per meter key, so a car's
+        // odometer has no source and an invented zero would read as a real measurement.
+        //
+        // The whole block is behind `meters` because a capability removes UI: a homeowner should
+        // never see a meter cell at all (PRD §4.8).
         if (meters) {
-        stats.currentAirframeTime?.let {
-          StatCell(
-            label = stringResource(SharedRes.string.airframe_time_label),
-            value = it.formatToOneDecimalPlace(),
-            modifier = Modifier.weight(1f)
-          )
-        }
-        stats.currentEngineTime?.let {
-          StatCell(
-            label = stringResource(SharedRes.string.engine_time_label),
-            value = it.formatToOneDecimalPlace(),
-            modifier = Modifier.weight(1f)
-          )
-        }
-        stats.currentPropTime?.let {
-          StatCell(
-            label = stringResource(SharedRes.string.prop_time_label),
-            value = it.formatToOneDecimalPlace(),
-            modifier = Modifier.weight(1f)
-          )
-        }
+          template?.meters.orEmpty().forEach { meter ->
+            val value = stats.valueFor(meter.key) ?: return@forEach
+            StatCell(
+              label = meter.label,
+              value = value.formatToOneDecimalPlace(),
+              modifier = Modifier.weight(1f),
+            )
+          }
         }
         // Not a meter — a log count is meaningful for every template, so it survives the gate.
         StatCell(

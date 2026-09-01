@@ -25,6 +25,7 @@ import dev.fanfly.wingslog.core.storage.DatabaseHealth
 import dev.fanfly.wingslog.core.storage.DatabaseIntegrityChecker
 import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import dev.fanfly.wingslog.core.template.LocalThingCapabilities
+import dev.fanfly.wingslog.core.template.LocalThingTemplate
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.ui.theme.AppearanceController
 import dev.fanfly.wingslog.core.ui.theme.WingslogTheme
@@ -102,10 +103,13 @@ fun AppEntry() {
       // destinations composed in DialogHost, a sibling of the shell (CurrentThingTemplate).
       val thingLexicon by currentThingTemplate.lexicon.collectAsState()
       val thingCapabilities by currentThingTemplate.capabilities.collectAsState()
+      val thingTemplate by currentThingTemplate.template.collectAsState()
       CompositionLocalProvider(
         LocalAnalytics provides analytics,
         LocalThingLexicon provides thingLexicon,
         LocalThingCapabilities provides thingCapabilities,
+        // The fields a template declares — its meters, slots and spec fields (#703).
+        LocalThingTemplate provides thingTemplate,
       ) {
         NavHost(
           navController,
