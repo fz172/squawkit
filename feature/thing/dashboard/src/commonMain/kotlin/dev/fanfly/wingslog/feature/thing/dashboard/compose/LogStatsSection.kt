@@ -14,6 +14,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import dev.fanfly.wingslog.core.template.LocalThingCapabilities
 import dev.fanfly.wingslog.core.ui.common.formatToOneDecimalPlace
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.thing.dashboard.data.LogStats
@@ -32,6 +33,7 @@ fun LogStatsSection(
   stats: LogStats,
   modifier: Modifier = Modifier,
 ) {
+  val meters = LocalThingCapabilities.current.meters
   Column(
     modifier = modifier,
     verticalArrangement = Arrangement.spacedBy(Spacing.medium)
@@ -60,6 +62,11 @@ fun LogStatsSection(
           ),
         horizontalArrangement = Arrangement.spacedBy(Spacing.medium)
       ) {
+        // A capability removes UI rather than blanking it: a homeowner should never see
+        // "Engine Time 0.0" on a template that declares no meters at all (PRD §4.8). The three
+        // aviation meters are still hardcoded — #703 and #730 render the template's own meter set —
+        // but showing them on a home was wrong data, not just the wrong labels.
+        if (meters) {
         stats.currentAirframeTime?.let {
           StatCell(
             label = stringResource(SharedRes.string.airframe_time_label),
@@ -81,6 +88,8 @@ fun LogStatsSection(
             modifier = Modifier.weight(1f)
           )
         }
+        }
+        // Not a meter — a log count is meaningful for every template, so it survives the gate.
         StatCell(
           label = stringResource(MaintenanceRes.string.total_logs),
           value = stats.total.toString(),

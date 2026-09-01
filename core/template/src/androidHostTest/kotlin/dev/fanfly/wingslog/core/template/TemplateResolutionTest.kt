@@ -26,6 +26,7 @@ class TemplateResolutionTest {
   class ThingTemplateBuilder {
     var minAppVersion: Int = 0
     var capabilities: Capabilities? = AirplaneTemplate.TEMPLATE.capabilities
+
     fun build() = AirplaneTemplate.TEMPLATE.copy(
       min_app_version = minAppVersion,
       capabilities = capabilities,

@@ -1,0 +1,99 @@
+# The bike preset — canonical template (id "bike", version 1), pedal bicycles.
+#
+# The second-most informative preset after `home`, for one reason: its Thing-level identity is a
+# frame number, not make/model/serial (PRD §4.3), and it carries TWO meters where every other
+# vehicle carries one. A screen that assumes a single usage number will show it here.
+#
+# See templates/README.md before editing, and compile with ./compile-template.sh bike.v1
+
+id: "bike"
+version: 1
+min_app_version: 0
+
+display_name: "Bike"
+icon: "bike"
+sort_order: 2
+
+lexicon {
+  thing { singular: "bike" plural: "bikes" article: "a" }
+  squawk { singular: "issue" plural: "issues" article: "an" short_plural: "Issues" }
+  task { singular: "service" plural: "services" article: "a" short_plural: "Service" }
+  log { singular: "service record" plural: "service records" article: "a" short_plural: "Records" }
+  component { singular: "part" plural: "parts" article: "a" }
+
+  # "person", not "mechanic", unlike car and motorcycle. Bike maintenance is overwhelmingly
+  # self-performed, and the same reasoning the PRD applies to home applies here: a word that
+  # assumes a paid contractor reads wrong for the person who actually did the work.
+  technician { singular: "person" plural: "people" article: "a" }
+
+  ready_status: "Ready"
+  down_status: "Down"
+  down_status_long: "Out of service"
+
+  collection_label: "Garage"
+  authority_label: "Manufacturer"
+
+  # compliance is off below, so the terms are deliberately absent — see home.v1.textproto for why
+  # leaving them empty is what makes the capability a real check.
+}
+
+capabilities {
+  components: true
+  meters: true
+  compliance: false
+  technicians: true
+  technician_certificates: false
+  component_serial_prompt: false
+
+  priorities: SQUAWK_PRIORITY_LOW
+  priorities: SQUAWK_PRIORITY_MEDIUM
+  priorities: SQUAWK_PRIORITY_HIGH
+  priorities: SQUAWK_PRIORITY_AOG
+
+  sections: SECTION_DASHBOARD
+  sections: SECTION_SQUAWKS
+  sections: SECTION_TASKS
+  sections: SECTION_LOGS
+
+  export_layout: EXPORT_LAYOUT_GENERIC
+}
+
+spec_fields { key: "make" label: "Make" }
+spec_fields { key: "model" label: "Model" }
+# The identifier is the frame number. There is no serial at the Thing level (PRD §4.3).
+spec_fields {
+  key: "frame_number"
+  label: "Frame Number"
+  is_identifier: true
+  placeholder: "WTU123K0001Z"
+}
+
+component_slots {
+  slot_key: "drivetrain"
+  label: "Drivetrain"
+}
+component_slots {
+  slot_key: "brakes"
+  label: "Brakes"
+  repeatable: true
+}
+component_slots {
+  slot_key: "wheel"
+  label: "Wheel"
+  repeatable: true
+}
+
+# Two meters, and they are not interchangeable: chain wear tracks distance, suspension service
+# tracks time in the saddle. A template with one usage number cannot express both.
+meters {
+  key: "odometer"
+  label: "Distance"
+  unit_label: "mi"
+  decimal: false
+}
+meters {
+  key: "ride_hours"
+  label: "Ride Hours"
+  unit_label: "hrs"
+  decimal: true
+}

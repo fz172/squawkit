@@ -27,7 +27,7 @@ import kotlinx.coroutines.flow.asStateFlow
  * NavHosts (`AppEntry` on Android/iOS, `WebApp` on web) so content and dialogs see the same words
  * and the same set of features.
  */
-class CurrentThingTemplate(registry: TemplateRegistry) {
+class CurrentThingTemplate(private val registry: TemplateRegistry) {
 
   /**
    * What applies when nothing is selected — an empty fleet, or before the first load.
@@ -38,9 +38,11 @@ class CurrentThingTemplate(registry: TemplateRegistry) {
    * something generic there would show "Join a shared thing" to a user the app has always said
    * "Join a shared aircraft" to.
    *
-   * It retires itself. The moment a second canonical preset ships there is no single right answer,
-   * and this becomes null — at which point the lexicon falls back to [GenericLexicon] and
-   * capabilities to [ALL_ENABLED], both below (design §9).
+   * **It has now retired itself** (#721-#723). Seven presets ship, so [TemplateRegistry.canonical]
+   * no longer returns one and this is null: the lexicon falls back to [GenericLexicon] and
+   * capabilities to [ALL_ENABLED] (design §9). The consequence is deliberate and visible — the
+   * account-level screens above described here read the generic words now, because on an account
+   * that can hold a house and an airplane no template's word is right for both.
    */
   private val default: ThingTemplate? = registry.canonical()
     .singleOrNull()
@@ -95,8 +97,11 @@ class CurrentThingTemplate(registry: TemplateRegistry) {
     _capabilities.value = value.capabilitiesOrAllEnabled()
   }
 
-  private fun ThingTemplate?.lexiconOrGeneric(): Lexicon =
-    this?.lexicon ?: GenericLexicon.LEXICON
+  /**
+   * The words come from [TemplateRegistry.lexiconFor], never from the selected Thing's own copy —
+   * see its doc for why a lexicon is app UI rather than user data.
+   */
+  private fun ThingTemplate?.lexiconOrGeneric(): Lexicon = registry.lexiconFor(this)
 
   private fun ThingTemplate?.capabilitiesOrAllEnabled(): Capabilities =
     this?.capabilities ?: ALL_ENABLED

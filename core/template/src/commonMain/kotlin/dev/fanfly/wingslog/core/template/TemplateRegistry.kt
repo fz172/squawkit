@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.core.template
 
+import dev.fanfly.wingslog.thing.Lexicon
 import dev.fanfly.wingslog.thing.Thing
 import dev.fanfly.wingslog.thing.ThingTemplate
 
@@ -43,6 +44,24 @@ interface TemplateRegistry {
    * renderable Thing from one it is about to draw wrong.
    */
   fun resolve(thing: Thing): TemplateResolution
+
+  /**
+   * The words to render [template] in — **from this build, not from the Thing**.
+   *
+   * A lexicon is app UI, not user data. It is written against screens that exist in a particular
+   * release, so it belongs to the app the way `strings.xml` does; a copy frozen into each Thing at
+   * creation makes every user a fork of the app's vocabulary. That is why a corrected word reached
+   * nothing that already existed: adding `short_plural` to every preset left the navigation bar of
+   * existing Things on the old plural, with the corrected asset unused in the binary.
+   *
+   * So resolution goes by **template id** and the stored `lexicon` is ignored. Nothing migrates:
+   * old Things keep carrying a lexicon nobody reads, and every release's words reach every Thing.
+   *
+   * The Thing's own copy is the fallback for an id this build does not carry — a preset introduced
+   * by a newer release, where the DNA's words are the only ones that describe it. That path renders
+   * degraded anyway (§6.2); having the right nouns there is better than generic ones.
+   */
+  fun lexiconFor(template: ThingTemplate?): Lexicon
 
   /**
    * Templates a picker may offer, in [ThingTemplate.sort_order].

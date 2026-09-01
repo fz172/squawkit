@@ -1,10 +1,10 @@
 
-airplane"Â
+airplane"Ù
 
-aircraftaircraftan
-squawksquawksa(
-maintenance taskmaintenance tasksa"
-work log	work logsa*
+aircraftaircraftan
+squawksquawksa"Squawks0
+maintenance taskmaintenance tasksa"Maint."
+work log	work logsa"Logs*
 	component
 componentsa2
 

@@ -392,7 +392,10 @@ class FleetManagerImplTest {
       "model"
     )
       .inOrder()
-    assertThat(stored.captured.template).isEqualTo(AirplaneTemplate.TEMPLATE)
+    // Everything but the words. The lexicon is app UI resolved by template id at render, so it is
+    // stripped before storing rather than forked into every Thing (see LexiconOwnershipTest).
+    assertThat(stored.captured.template)
+      .isEqualTo(AirplaneTemplate.TEMPLATE.copy(lexicon = null))
     // A name, derived from spec for a Thing that arrived without one.
     assertThat(stored.captured.name).isEqualTo("Cessna 172")
   }

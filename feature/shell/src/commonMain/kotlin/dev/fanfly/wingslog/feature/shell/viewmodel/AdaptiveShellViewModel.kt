@@ -91,15 +91,27 @@ class AdaptiveShellViewModel(
             val mapped = fleet.map { entry ->
               val ac = entry.thing
               val resolution = templateRegistry.resolve(ac)
+              // Both switcher lines used to come from aviation spec keys — tail number, then make
+              // and model. A home declares none of the three, so its row rendered as a blank gap
+              // with a checkmark. The name is the one label every Thing has; the identifier comes
+              // from whichever spec field the template marks, so it is a VIN on a vehicle and a
+              // hull ID on a boat without this code knowing either exists.
+              val makeAndModel = listOf(
+                ac.specValue(SpecKeys.MAKE),
+                ac.specValue(SpecKeys.MODEL),
+              ).filter { it.isNotBlank() }.joinToString(" ")
+              val identifier = resolution.template.spec_fields
+                .firstOrNull { it.is_identifier }
+                ?.let { ac.specValue(it.key) }
+                .orEmpty()
+              val label = ac.name.ifBlank { identifier.ifBlank { makeAndModel } }
               ShellThing(
                 id = ac.id,
-                tail = ac.specValue(SpecKeys.TAIL_NUMBER),
-                name = listOf(
-                  ac.specValue(SpecKeys.MAKE),
-                  ac.specValue(SpecKeys.MODEL)
-                )
-                  .filter { it.isNotBlank() }
-                  .joinToString(" "),
+                label = label,
+                // Never repeats the primary line: the name is usually the tail number or the make
+                // and model already, and a row saying the same thing twice reads as a bug.
+                subtitle = makeAndModel.takeIf { it.isNotBlank() && it != label }
+                  ?: identifier.takeIf { it != label }.orEmpty(),
                 // resolve(), not ac.template: a Thing created before templates existed carries
                 // none, and reading the field directly would render it in no words at all.
                 template = resolution.template,

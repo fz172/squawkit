@@ -9,6 +9,7 @@ import dev.fanfly.wingslog.core.model.sharing.ShareRole
 import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import dev.fanfly.wingslog.core.template.SpecKeys
 import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
+import dev.fanfly.wingslog.core.template.canonical.CanonicalTemplates
 import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
 import dev.fanfly.wingslog.core.template.squawkNoun
 import dev.fanfly.wingslog.core.template.thingNoun
@@ -143,12 +144,26 @@ class AdaptiveShellViewModelTest {
   }
 
   @Test
-  fun anEmptyFleetStillSpeaksTheSolePresetsWords() = runTest(testDispatcher) {
-    // A technician with no thing of their own lands on the redeem / invite-code flow as their
-    // first screen, with nothing selected. While airplane is the only preset it is the only right
-    // answer there — the generic lexicon would say "Join a shared thing" to a user the app has
-    // always said "Join a shared aircraft" to.
+  fun anEmptyFleetSpeaksTheGenericWords() = runTest(testDispatcher) {
+    // A technician with no thing of their own lands on the redeem / invite-code flow as their first
+    // screen, with nothing selected. This used to say "aircraft": while airplane was the only
+    // preset it was the only right answer. Six more presets ship now (#721-#723), so there is no
+    // single right answer and the generic lexicon is what an account holding a house and an
+    // airplane can honestly be shown — the retirement CurrentThingTemplate.default always
+    // described.
     fleet.value = emptyList()
+    viewModel()
+
+    assertThat(currentThingTemplate.lexicon.value.thingNoun.singular).isEqualTo(
+      "thing"
+    )
+  }
+
+  @Test
+  fun selectingAThingStillSpeaksItsOwnWords() = runTest(testDispatcher) {
+    // The other half, and the one that matters more: a fleet with an airplane in it reads
+    // "aircraft" exactly as before. The generic fallback applies to no-selection surfaces only.
+    fleet.value = listOf(thing("a1", "N1"))
     viewModel()
 
     assertThat(currentThingTemplate.lexicon.value.thingNoun.singular).isEqualTo(
@@ -232,11 +247,36 @@ class AdaptiveShellViewModelTest {
     val vm = viewModel()
 
     val s = vm.uiState.value
-    assertThat(s.thing.map { it.tail }).containsExactly("N1", "N2")
+    // An airplane with no name of its own falls back to its identifier — the tail number — so the
+    // switcher reads exactly as it did before the label became template-driven.
+    assertThat(s.thing.map { it.label }).containsExactly("N1", "N2")
       .inOrder()
-    assertThat(s.thing.first().name).isEqualTo("Cessna 172")
+    assertThat(s.thing.first().subtitle).isEqualTo("Cessna 172")
     assertThat(s.selectedThingId).isEqualTo("a1")
     assertThat(s.section).isEqualTo(ShellSection.DASHBOARD)
+  }
+
+  @Test
+  fun aThingWithNoAviationSpecKeysStillHasASwitcherLabel() {
+    // The bug home found: both switcher lines came from tail number and make/model, which a home
+    // declares none of — so its row rendered as a blank gap with a checkmark beside it.
+    val home = FleetEntry(
+      thing = Thing(
+        id = "h1",
+        name = "1421 Maple Street",
+        spec = listOf(Spec(key = "address", value_ = "1421 Maple Street")),
+        template = CanonicalTemplates.HOME,
+      ),
+      shared = false,
+      role = ShareRole.SHARE_ROLE_OWNER,
+    )
+    fleet.value = listOf(home)
+
+    val row = viewModel().uiState.value.thing.single()
+
+    assertThat(row.label).isEqualTo("1421 Maple Street")
+    // Nothing to add: no make, no model, and the name already is the only thing it has.
+    assertThat(row.subtitle).isEmpty()
   }
 
   @Test

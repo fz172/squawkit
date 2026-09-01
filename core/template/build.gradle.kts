@@ -62,11 +62,11 @@ dependencies {
  * a large change to how the app starts, to load bytes that are known at build time.
  */
 val generateTemplateAssets by tasks.registering {
-  val templateDir = layout.projectDirectory.dir("templates")
+  val templateDir = layout.projectDirectory.dir("templates/binary")
   val outputDir = layout.buildDirectory.dir(
     "generated/templates/kotlin/dev/fanfly/wingslog/core/template/canonical"
   )
-  inputs.files(project.fileTree("templates") { include("**/*.pb") })
+  inputs.files(project.fileTree("templates/binary") { include("**/*.pb") })
     .withPropertyName("compiledTemplates")
     .withPathSensitivity(PathSensitivity.RELATIVE)
   outputs.dir(outputDir)
@@ -75,12 +75,17 @@ val generateTemplateAssets by tasks.registering {
       .orEmpty()
       .filter { it.extension == "pb" }
       .sortedBy { it.name }
-    check(assets.isNotEmpty()) { "no compiled .pb templates in ${templateDir.asFile}" }
+    check(assets.isNotEmpty()) {
+      "no compiled templates in ${templateDir.asFile} — run templates/compile-template.sh"
+    }
 
     val constants = assets.joinToString("\n\n") { file ->
       // "airplane.v1.pb" -> AIRPLANE_V1_BYTES
-      val name = file.name.removeSuffix(".pb").replace('.', '_').uppercase()
-      val base64 = Base64.getEncoder().encodeToString(file.readBytes())
+      val name = file.name.removeSuffix(".pb")
+        .replace('.', '_')
+        .uppercase()
+      val base64 = Base64.getEncoder()
+        .encodeToString(file.readBytes())
       "/** `${file.name}`, ${file.length()} bytes. */\n" +
         "internal const val ${name}_BASE64: String =\n  \"$base64\""
     }
@@ -89,7 +94,7 @@ val generateTemplateAssets by tasks.registering {
       .resolve("GeneratedTemplateAssets.kt")
       .writeText(
         "package dev.fanfly.wingslog.core.template.canonical\n\n" +
-          "// Generated from core/template/templates/*.pb. Do not edit.\n\n" +
+          "// Generated from core/template/templates/binary. Do not edit.\n\n" +
           constants + "\n",
       )
   }
@@ -108,29 +113,34 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask<*>>()
  * in `feature/login`. The guard would be skipped on exactly the change it exists to catch, and a
  * skipped task reports success. Verified by mutating a string and watching the test not run.
  */
-tasks.withType<Test>().configureEach {
-  inputs.files(
-    rootProject.fileTree(rootProject.projectDir) {
-      include("**/src/**/values/strings.xml")
-      exclude("**/build/**")
-    },
-  ).withPropertyName("repoStringResources").withPathSensitivity(PathSensitivity.RELATIVE)
+tasks.withType<Test>()
+  .configureEach {
+    inputs.files(
+      rootProject.fileTree(rootProject.projectDir) {
+        include("**/src/**/values/strings.xml")
+        exclude("**/build/**")
+      },
+    )
+      .withPropertyName("repoStringResources")
+      .withPathSensitivity(PathSensitivity.RELATIVE)
 
-  // The call-site guards read Kotlin, not just resources. Without this they are UP-TO-DATE whenever
-  // core/template is unchanged — which is every commit that only touches a call site, exactly the
-  // commits they exist to police. Found by mutating ProUpsellSheet and watching the suite pass in
-  // two seconds without running.
-  inputs.files(
-    rootProject.fileTree(rootProject.projectDir) {
-      include("**/src/**/*.kt")
-      exclude("**/build/**")
-    },
-  ).withPropertyName("repoKotlinSources").withPathSensitivity(PathSensitivity.RELATIVE)
+    // The call-site guards read Kotlin, not just resources. Without this they are UP-TO-DATE whenever
+    // core/template is unchanged — which is every commit that only touches a call site, exactly the
+    // commits they exist to police. Found by mutating ProUpsellSheet and watching the suite pass in
+    // two seconds without running.
+    inputs.files(
+      rootProject.fileTree(rootProject.projectDir) {
+        include("**/src/**/*.kt")
+        exclude("**/build/**")
+      },
+    )
+      .withPropertyName("repoKotlinSources")
+      .withPathSensitivity(PathSensitivity.RELATIVE)
 
-  // AirplaneTemplateAssetTest reads templates/*.pb off the filesystem, which Gradle cannot see for
-  // the same reason as above — and the commit that recompiles a template touches nothing else, so
-  // without this the one check on the new bytes is the thing that gets skipped.
-  inputs.files(project.fileTree("templates") { include("**/*.pb") })
-    .withPropertyName("canonicalTemplateAssets")
-    .withPathSensitivity(PathSensitivity.RELATIVE)
-}
+    // The asset tests read templates/binary off the filesystem, which Gradle cannot see for
+    // the same reason as above — and the commit that recompiles a template touches nothing else, so
+    // without this the one check on the new bytes is the thing that gets skipped.
+    inputs.files(project.fileTree("templates/binary") { include("**/*.pb") })
+      .withPropertyName("canonicalTemplateAssets")
+      .withPathSensitivity(PathSensitivity.RELATIVE)
+  }

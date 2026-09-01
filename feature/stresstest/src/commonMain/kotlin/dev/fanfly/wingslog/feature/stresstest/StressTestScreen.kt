@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -23,6 +24,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -40,6 +42,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import dev.fanfly.wingslog.core.template.canonical.CanonicalTemplates
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedTopBar
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
 import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
@@ -58,6 +61,7 @@ import wingslog.feature.stresstest.generated.resources.stress_test_config_record
 import wingslog.feature.stresstest.generated.resources.stress_test_config_squawks
 import wingslog.feature.stresstest.generated.resources.stress_test_config_tasks
 import wingslog.feature.stresstest.generated.resources.stress_test_config_technicians
+import wingslog.feature.stresstest.generated.resources.stress_test_config_template
 import wingslog.feature.stresstest.generated.resources.stress_test_config_thing
 import wingslog.feature.stresstest.generated.resources.stress_test_decrement
 import wingslog.feature.stresstest.generated.resources.stress_test_description
@@ -192,6 +196,10 @@ fun StressTestScreen(
                 value = config.technicianCount,
                 range = 1..5,
                 onValueChange = { viewModel.setTechnicianCount(it) },
+              )
+              TemplateRow(
+                selectedId = config.templateId,
+                onSelect = { viewModel.setTemplateId(it) },
               )
               SwitchRow(
                 label = stringResource(Res.string.stress_test_config_future_dna),
@@ -354,6 +362,28 @@ private fun ConfigSection(
       ) {
         content()
       }
+    }
+  }
+}
+
+@Composable
+private fun TemplateRow(selectedId: String, onSelect: (String) -> Unit) {
+  Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
+    Text(
+      text = stringResource(Res.string.stress_test_config_template),
+      style = MaterialTheme.typography.bodyMedium,
+    )
+    // Read from the registry rather than a hardcoded list, so a preset added to
+    // CanonicalTemplates.ALL appears here without touching this screen.
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
+      CanonicalTemplates.ALL.sortedBy { it.sort_order }
+        .forEach { template ->
+          FilterChip(
+            selected = template.id == selectedId,
+            onClick = { onSelect(template.id) },
+            label = { Text(template.display_name) },
+          )
+        }
     }
   }
 }

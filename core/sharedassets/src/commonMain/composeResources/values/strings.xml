@@ -7,6 +7,10 @@
   <string name="add">Add</string>
   <string name="edit">Update</string>
   <string name="add_thing">Add <xliff:g example="aircraft">%1$s</xliff:g></string>
+  <!-- The switcher spans every template on the account, so this one takes no lexicon word:
+       adding a new Thing is not adding another of whatever is currently selected. -->
+  <string name="switcher_add_thing">Add a new thing</string>
+  <string name="switcher_select_thing">Select</string>
   <string name="enter_invite_code">Enter invite code</string>
   <string name="empty_add_thing">Add <xliff:g example="aircraft">%1$s</xliff:g> to get started</string>
   <string name="remove">Remove</string>
@@ -42,9 +46,7 @@
   <string name="select_date">Select Date</string>
   <!-- Shell navigation tabs -->
   <string name="shell_tab_dashboard">Dashboard</string>
-  <string name="shell_tab_tasks">Maint.</string>
   <string name="shell_nav_tasks_narrow">Maint. Tasks</string>
-  <string name="shell_tab_logs">Logs</string>
   <!-- Aircraft sharing -->
   <string name="thing_shared_badge">Shared</string>
   <!-- Component names -->

@@ -1,0 +1,84 @@
+# The custom preset — canonical template (id "custom", version 1).
+#
+# THE FLOOR. It declares almost nothing (PRD §4.7: no components, no meters, generic lexicon), so
+# every screen has to render something sensible for a template that promises almost nothing. That
+# makes it the cheapest test of the template-driven boundary — if a screen breaks on custom, it is
+# reading something the template does not promise (pivot_rollout_design.md §6).
+#
+# Where home proves the system is not aviation with the nouns swapped, this proves the system
+# degrades to nothing gracefully. The two failures are different, which is why both presets exist.
+#
+# See templates/README.md before editing, and compile with ./compile-template.sh custom.v1
+
+id: "custom"
+version: 1
+min_app_version: 0
+
+display_name: "Custom"
+icon: "custom"
+sort_order: 5
+
+# Word for word the lexicon `GenericLexicon.LEXICON` already ships as the no-template fallback, and
+# that is deliberate rather than lazy. The generic lexicon is what account-level screens render on a
+# mixed account today; if custom said something different the app would carry two "neutral"
+# vocabularies that drift, and a user would see one word in settings and another on the Thing.
+#
+# PRD §4.5 suggests "attention" here as it does for home. The shipped GenericLexicon chose "issue",
+# with its reasoning recorded there, and matching what already renders beats matching the PRD's
+# illustrative example — the same rule airplane.v1 follows where the two disagree.
+lexicon {
+  thing { singular: "thing" plural: "things" article: "a" }
+  squawk { singular: "issue" plural: "issues" article: "an" short_plural: "Issues" }
+  task { singular: "task" plural: "tasks" article: "a" short_plural: "Tasks" }
+  log { singular: "log" plural: "logs" article: "a" short_plural: "Logs" }
+  component { singular: "part" plural: "parts" article: "a" }
+  # "person", not "technician" — the generic lexicon has to hold for a home, where the entry is
+  # "buy milk" and whoever did it is nobody's technician.
+  technician { singular: "person" plural: "people" article: "a" }
+
+  ready_status: "Ready"
+  down_status: "Down"
+  down_status_long: "Out of service"
+
+  collection_label: "Stuff"
+  authority_label: "Manufacturer"
+
+  # No abbreviation, and that is the case that keeps the UI honest: it must drop the parenthetical
+  # rather than render "Safety recalls ()".
+  compliance_mandatory {
+    singular: "Safety recall"
+    plural: "Safety recalls"
+  }
+  compliance_advisory {
+    singular: "Service bulletin"
+    plural: "Service bulletins"
+  }
+}
+
+capabilities {
+  components: false
+  # Off, not on. PRD §4.8's table marks meters available for custom, but §4.7 also makes a config
+  # invalid if it enables METER rules while declaring no meters — and this template declares none.
+  # The table describes what a user-authored custom template MAY switch on; this is the base preset
+  # they start from, and it has to be internally consistent.
+  meters: false
+  compliance: false
+  technicians: true
+  technician_certificates: false
+  component_serial_prompt: false
+
+  priorities: SQUAWK_PRIORITY_LOW
+  priorities: SQUAWK_PRIORITY_MEDIUM
+  priorities: SQUAWK_PRIORITY_HIGH
+  priorities: SQUAWK_PRIORITY_AOG
+
+  sections: SECTION_DASHBOARD
+  sections: SECTION_SQUAWKS
+  sections: SECTION_TASKS
+  sections: SECTION_LOGS
+
+  export_layout: EXPORT_LAYOUT_GENERIC
+}
+
+# NO spec_fields, NO component_slots, NO meters. A Thing on this template has a name and nothing
+# else the template asked for — which is the state every screen has to survive.

@@ -1,0 +1,115 @@
+# The automotive preset — canonical template (id "automotive", version 1).
+#
+# Covers cars and motorcycles under one preset. PRD §4.8 argued for keeping them separate — the
+# component vocabulary differs (final drive vs transmission) and motorcyclists bristle at being
+# folded into "automobile" — but a merged preset is the call taken here, so the vocabulary is the
+# intersection rather than either domain's: `vehicle`, and a component set that reads correctly for
+# both. The PRD table still lists them as two rows and is stale on this point.
+#
+# See templates/README.md before editing, and compile with ./compile-template.sh automotive.v1
+
+id: "automotive"
+version: 1
+min_app_version: 0
+
+display_name: "Automotive"
+icon: "automotive"
+sort_order: 1
+
+lexicon {
+  # "vehicle", not "car" — the word has to be right for a motorcycle too, which is the cost of the
+  # merge and the reason it is worth stating here rather than discovering on screen.
+  thing { singular: "vehicle" plural: "vehicles" article: "a" }
+  # A defect-shaped word, unlike home and custom: for a vehicle the line between "something is
+  # wrong" and "something is scheduled" is clean enough to keep two concepts (PRD §4.5).
+  squawk { singular: "issue" plural: "issues" article: "an" short_plural: "Issues" }
+  task { singular: "service" plural: "services" article: "a" short_plural: "Service" }
+  log { singular: "service record" plural: "service records" article: "a" short_plural: "Records" }
+  component { singular: "part" plural: "parts" article: "a" }
+  technician { singular: "mechanic" plural: "mechanics" article: "a" }
+
+  ready_status: "Ready"
+  down_status: "Down"
+  down_status_long: "Off the road"
+
+  collection_label: "Garage"
+  authority_label: "NHTSA"
+
+  # A recall has no two-letter name, so `abbreviation` is empty and the UI must drop the
+  # parenthetical rather than render "Safety recalls ()".
+  compliance_mandatory {
+    singular: "Safety recall"
+    plural: "Safety recalls"
+  }
+  compliance_advisory {
+    singular: "Technical Service Bulletin"
+    plural: "Technical Service Bulletins"
+    abbreviation: "TSB"
+  }
+}
+
+capabilities {
+  components: true
+  meters: true
+  compliance: true
+  technicians: true
+  # No certificates: an A&P signs an airframe logbook, a mechanic does not sign for an oil change.
+  technician_certificates: false
+  # Most owners do not know their engine or chassis serial off-hand, and accepting one later costs
+  # nothing (PRD §4.8). No vehicle preset prompts at creation.
+  component_serial_prompt: false
+
+  priorities: SQUAWK_PRIORITY_LOW
+  priorities: SQUAWK_PRIORITY_MEDIUM
+  priorities: SQUAWK_PRIORITY_HIGH
+  priorities: SQUAWK_PRIORITY_AOG
+
+  sections: SECTION_DASHBOARD
+  sections: SECTION_SQUAWKS
+  sections: SECTION_TASKS
+  sections: SECTION_LOGS
+
+  # The paper-logbook tab layout is aviation-specific; everything else derives its columns from the
+  # lexicon and meter set.
+  export_layout: EXPORT_LAYOUT_GENERIC
+}
+
+spec_fields { key: "make" label: "Make" }
+spec_fields { key: "model" label: "Model" }
+spec_fields { key: "year" label: "Year" placeholder: "2019" }
+spec_fields { key: "vin" label: "VIN" is_identifier: true placeholder: "1HGBH41JXMN109186" }
+
+# Engine is OPTIONAL, expressed as `repeatable` because that is the only cardinality this schema
+# has: PRD §4.3 designed EXACTLY_ONE / ZERO_OR_ONE / ZERO_OR_MORE, and the shipped ComponentSlot
+# carries a single bool. `repeatable` means zero-or-more, which is the honest reading for a slot an
+# EV will never fill and a twin-engine vehicle could fill twice. A non-repeatable slot implies
+# exactly one, which would be wrong here.
+component_slots {
+  slot_key: "engine"
+  label: "Engine"
+  repeatable: true
+  serial_expected: true
+}
+component_slots {
+  slot_key: "battery"
+  label: "Battery"
+}
+component_slots {
+  slot_key: "brakes"
+  label: "Brakes"
+  repeatable: true
+}
+component_slots {
+  slot_key: "tire"
+  label: "Tire"
+  repeatable: true
+}
+
+# One meter, and the reason the generalisation matters: "every 5,000 miles" and "every 100 hours"
+# are the same feature once the unit is declared rather than assumed (PRD §4.4).
+meters {
+  key: "odometer"
+  label: "Odometer"
+  unit_label: "mi"
+  decimal: false
+}

@@ -92,7 +92,8 @@ import dev.fanfly.wingslog.thing.Section
 import dev.fanfly.wingslog.thing.ThingTemplate
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
-import wingslog.core.sharedassets.generated.resources.add_thing
+import wingslog.core.sharedassets.generated.resources.switcher_add_thing
+import wingslog.core.sharedassets.generated.resources.switcher_select_thing
 import wingslog.core.sharedassets.generated.resources.app_name
 import wingslog.core.sharedassets.generated.resources.back
 import wingslog.core.sharedassets.generated.resources.enter_invite_code
@@ -100,15 +101,21 @@ import wingslog.core.sharedassets.generated.resources.ic_launcher_foreground
 import wingslog.core.sharedassets.generated.resources.settings
 import wingslog.core.sharedassets.generated.resources.shell_nav_tasks_narrow
 import wingslog.core.sharedassets.generated.resources.shell_tab_dashboard
-import wingslog.core.sharedassets.generated.resources.shell_tab_logs
-import wingslog.core.sharedassets.generated.resources.shell_tab_tasks
 import wingslog.core.sharedassets.generated.resources.Res as UiRes
 
 /** Lightweight thing projection used by the shell's switcher. */
 data class ShellThing(
   val id: String,
-  val tail: String,
-  val name: String,
+  /**
+   * The switcher's primary line — the Thing's own name.
+   *
+   * Was the tail number, which is a spec key only aviation declares: a home has no tail number and
+   * no make or model either, so both lines came out blank and the row rendered as an empty gap with
+   * a checkmark. The name is the one label every Thing has.
+   */
+  val label: String,
+  /** The second line: make and model, or the template's identifier. Blank when neither adds anything. */
+  val subtitle: String,
   /**
    * This thing's template DNA — the words it is described in, and the features it has.
    *
@@ -154,9 +161,12 @@ enum class ShellSection(val icon: ImageVector) {
 @Composable
 fun ShellSection.label(): String = when (this) {
   ShellSection.DASHBOARD -> stringResource(UiRes.string.shell_tab_dashboard)
-  ShellSection.SQUAWKS -> LexiconFormatter.titleCasePlural(LocalThingLexicon.current.squawkNoun)
-  ShellSection.TASKS -> stringResource(UiRes.string.shell_tab_tasks)
-  ShellSection.LOGS -> stringResource(UiRes.string.shell_tab_logs)
+  // All three read the template. Tasks and Logs used fixed "Maint." / "Logs" strings, so the two
+  // right-hand tabs kept aviation wording on every preset — the one place in the shell that never
+  // changed with the thing.
+  ShellSection.SQUAWKS -> LexiconFormatter.shortPlural(LocalThingLexicon.current.squawkNoun)
+  ShellSection.TASKS -> LexiconFormatter.shortPlural(LocalThingLexicon.current.taskNoun)
+  ShellSection.LOGS -> LexiconFormatter.shortPlural(LocalThingLexicon.current.logNoun)
   ShellSection.SETTINGS -> stringResource(UiRes.string.settings)
 }
 
@@ -285,7 +295,10 @@ fun AdaptiveAppShell(
     // The FAB is wrapped too, since it says "New squawk".
     val sectionLexicon =
       if (state.section == ShellSection.SETTINGS) GenericLexicon.LEXICON
-      else state.selectedThing?.template?.lexicon ?: LocalThingLexicon.current
+      // LocalThingLexicon, not the Thing's stored copy: the words are resolved once from this
+      // build by CurrentThingTemplate and provided above both NavHosts. Reading the DNA here would
+      // reintroduce the frozen-at-creation lexicon on exactly the per-thing surfaces that matter.
+      else LocalThingLexicon.current
     val content: @Composable () -> Unit = {
       CompositionLocalProvider(LocalThingLexicon provides sectionLexicon) {
         sectionContent(state.section, state.selectedThingId)
@@ -690,10 +703,11 @@ private fun SidebarSwitcher(
       ) {
         Column(modifier = Modifier.weight(1f)) {
           Text(
-            state.selectedThing?.tail ?: "Select aircraft",
+            state.selectedThing?.label
+              ?: stringResource(UiRes.string.switcher_select_thing),
             style = MaterialTheme.typography.titleSmall,
           )
-          state.selectedThing?.name?.takeIf { it.isNotBlank() }
+          state.selectedThing?.subtitle?.takeIf { it.isNotBlank() }
             ?.let {
               Text(
                 it,
@@ -970,7 +984,10 @@ private fun TopBarSwitcher(
   var open by remember { mutableStateOf(false) }
   Box {
     TextButton(onClick = { open = true }) {
-      Text(state.selectedThing?.tail ?: "Select aircraft")
+      Text(
+        state.selectedThing?.label
+          ?: stringResource(UiRes.string.switcher_select_thing)
+      )
       Icon(Icons.Filled.ArrowDropDown, contentDescription = null)
     }
     AircraftDropdown(
@@ -998,9 +1015,9 @@ private fun AircraftDropdown(
       DropdownMenuItem(
         text = {
           Column {
-            Text(ac.tail, style = MaterialTheme.typography.titleSmall)
-            if (ac.name.isNotBlank()) {
-              Text(ac.name, style = MaterialTheme.typography.bodySmall)
+            Text(ac.label, style = MaterialTheme.typography.titleSmall)
+            if (ac.subtitle.isNotBlank()) {
+              Text(ac.subtitle, style = MaterialTheme.typography.bodySmall)
             }
           }
         },
@@ -1021,12 +1038,10 @@ private fun AircraftDropdown(
     if (onAddAircraft != null) {
       DropdownMenuItem(
         text = {
-          Text(
-            stringResource(
-              UiRes.string.add_thing,
-              LexiconFormatter.titleCase(LocalThingLexicon.current.thingNoun),
-            )
-          )
+          // Neutral, not the selected thing's word: the switcher is where a user moves between
+          // templates, so "Add Aircraft" would offer to add another airplane to someone whose next
+          // Thing is a house.
+          Text(stringResource(UiRes.string.switcher_add_thing))
         },
         leadingIcon = { Icon(Icons.Filled.Add, contentDescription = null) },
         onClick = {
