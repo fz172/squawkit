@@ -15,7 +15,8 @@
     "test": "firebase emulators:exec --only auth,firestore,storage --project demo-squawkit \"$(command -v node) node_modules/vitest/vitest.mjs run\"",
     "dna-audit": "npm run build && node scripts/thing-dna-audit.mjs",
     "share-cutover": "npm run build && node scripts/thing-share-cutover.mjs",
-    "share-cleanup": "npm run build && node scripts/thing-share-cleanup.mjs"
+    "share-cleanup": "npm run build && node scripts/thing-share-cleanup.mjs",
+    "airplane-tree": "npm run build && node scripts/airplane-tree-migration.mjs"
   },
   "dependencies": {
     "@bufbuild/protobuf": "^2.11.0",

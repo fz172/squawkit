@@ -25,6 +25,18 @@ export interface Noun {
    * first letter — "an hour", "a unicycle" — and a wrong article is visible in every empty state.
    */
   article: string;
+  /**
+   * The bottom navigation bar's label, where four tabs share one row and the full plural does not
+   * fit — "Attention Items" pushed "Logs" off the bar entirely.
+   *
+   * Stored rather than derived for the same reason as `article`: no rule produces all of these.
+   * First word gives "Work" for "work logs"; last word gives "Items" for "attention items". Both
+   * are wrong, and which one is wrong changes per template.
+   *
+   * Empty means the plural fits — the caller falls back to it, so a template that never needs an
+   * abbreviation declares nothing.
+   */
+  shortPlural: string;
 }
 
 /**
@@ -101,7 +113,7 @@ export interface Lexicon {
 }
 
 function createBaseNoun(): Noun {
-  return { singular: "", plural: "", article: "" };
+  return { singular: "", plural: "", article: "", shortPlural: "" };
 }
 
 export const Noun: MessageFns<Noun> = {
@@ -114,6 +126,9 @@ export const Noun: MessageFns<Noun> = {
     }
     if (message.article !== "") {
       writer.uint32(26).string(message.article);
+    }
+    if (message.shortPlural !== "") {
+      writer.uint32(34).string(message.shortPlural);
     }
     return writer;
   },
@@ -149,6 +164,14 @@ export const Noun: MessageFns<Noun> = {
           message.article = reader.string();
           continue;
         }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.shortPlural = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -163,6 +186,11 @@ export const Noun: MessageFns<Noun> = {
       singular: isSet(object.singular) ? globalThis.String(object.singular) : "",
       plural: isSet(object.plural) ? globalThis.String(object.plural) : "",
       article: isSet(object.article) ? globalThis.String(object.article) : "",
+      shortPlural: isSet(object.shortPlural)
+        ? globalThis.String(object.shortPlural)
+        : isSet(object.short_plural)
+        ? globalThis.String(object.short_plural)
+        : "",
     };
   },
 
@@ -177,6 +205,9 @@ export const Noun: MessageFns<Noun> = {
     if (message.article !== "") {
       obj.article = message.article;
     }
+    if (message.shortPlural !== "") {
+      obj.shortPlural = message.shortPlural;
+    }
     return obj;
   },
 
@@ -188,6 +219,7 @@ export const Noun: MessageFns<Noun> = {
     message.singular = object.singular ?? "";
     message.plural = object.plural ?? "";
     message.article = object.article ?? "";
+    message.shortPlural = object.shortPlural ?? "";
     return message;
   },
 };
