@@ -19,7 +19,7 @@ class TechnicianOnboardingActions(
    * Writes the name to the local technician record *and* mirrors it to the Firebase auth profile.
    *
    * The local record is the source of truth in-app, but Cloud Functions cannot read it — they see
-   * only the ID token. `createAircraftShareInvite` stamps an invite's `hostName` from `token.name`,
+   * only the ID token. `createThingShareInvite` stamps an invite's `hostName` from `token.name`,
    * so without the mirror an invitee sees a blank or provider-supplied host instead of the name the
    * user actually chose. This matters most for Sign in with Apple, which supplies no display name
    * at all after the first authorization, but it is the same reasoning `AccountUpgradeViewModel`

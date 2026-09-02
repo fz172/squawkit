@@ -31,7 +31,7 @@ type PreviewResponse = {
  * redeem does, so leaving it unmetered would hand an attacker a free oracle against a ~39-bit code —
  * the easy mistake, because preview feels harmless.
  */
-export const previewAircraftShareInvite = onCall<PreviewRequest, Promise<PreviewResponse>>(
+export const previewThingShareInvite = onCall<PreviewRequest, Promise<PreviewResponse>>(
   { region: FUNCTION_REGION, enforceAppCheck: true },
   async (request): Promise<PreviewResponse> => {
     const { uid } = requireAuthenticatedApp(request);

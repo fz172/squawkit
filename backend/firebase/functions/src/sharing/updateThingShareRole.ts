@@ -23,7 +23,7 @@ type UpdateRoleRequest = { hostUid: string; aircraftId: string; memberUid: strin
  * Changes a member's role. Owner-only. Updates the ACL, the member doc, and rewrites the member's
  * ref payload so the advisory role stays consistent. The hosting owner's role is immutable. See §3.3.
  */
-export const updateAircraftShareRole = onCall<UpdateRoleRequest, Promise<{ ok: true }>>(
+export const updateThingShareRole = onCall<UpdateRoleRequest, Promise<{ ok: true }>>(
   { region: FUNCTION_REGION, enforceAppCheck: true },
   async (request) => {
     const { uid } = requireAuthenticatedApp(request);
@@ -71,7 +71,7 @@ function parseRequest(data: unknown): UpdateRoleRequest {
     throw new HttpsError("invalid-argument", "hostUid is required.");
   }
   if (aircraftId.length === 0 || memberUid.length === 0) {
-    throw new HttpsError("invalid-argument", "updateAircraftShareRole requires aircraftId and memberUid.");
+    throw new HttpsError("invalid-argument", "updateThingShareRole requires aircraftId and memberUid.");
   }
   if (role !== SHARE_ROLE.OWNER && role !== SHARE_ROLE.TECHNICIAN) {
     throw new HttpsError("invalid-argument", "role must be 'owner' or 'technician'.");

@@ -38,7 +38,7 @@ private const val GOOGLE_NAME = "Fan Zhang"
  * seeds a blank profile.
  *
  * And the reverse direction matters too: Cloud Functions cannot read the self-technician record —
- * they see only the ID token — and `createAircraftShareInvite` stamps an invite's `hostName` from
+ * they see only the ID token — and `createThingShareInvite` stamps an invite's `hostName` from
  * `token.name`. So the in-app name has to be pushed ONTO the auth profile, or the person you invite
  * sees your Google name while the rest of the app shows the name you chose.
  */

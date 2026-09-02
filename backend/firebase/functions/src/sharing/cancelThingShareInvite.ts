@@ -24,7 +24,7 @@ type CancelRequest = { aircraftId: string; codeId: string };
  * The owner identifies the invite by `codeId` (SHA-256 of the code) — what they can see. They cannot
  * see the code itself, and neither can anyone else.
  */
-export const cancelAircraftShareInvite = onCall<CancelRequest, Promise<{ ok: true }>>(
+export const cancelThingShareInvite = onCall<CancelRequest, Promise<{ ok: true }>>(
   { region: FUNCTION_REGION, enforceAppCheck: true },
   async (request): Promise<{ ok: true }> => {
     const { uid } = requireAuthenticatedApp(request);

@@ -169,7 +169,7 @@ describe("aircraft_shares ACL root", () => {
   });
 
   it("NOBODY creates a share from a client — the invite callable bootstraps it (#164)", async () => {
-    // Even the genuine host is denied: createAircraftShareInvite does this as admin. That retires
+    // Even the genuine host is denied: createThingShareInvite does this as admin. That retires
     // the last forgeable check, which leaned on "I have an aircraft with this id in my tree".
     await testEnv.withSecurityRulesDisabled(async (ctx) => {
       await setDoc(doc(ctx.firestore(), `users/${HOST}/aircraft/ac-new`), { registration: "N2" });
@@ -387,7 +387,7 @@ describe("aircraft_shares ACL root — first share (no ACL doc yet)", () => {
 
   // Before the first invite there is no ACL — and nothing about it is readable or writable from a
   // client, by anyone, including the owner (#202 + #164). There is nothing to read: the roster is
-  // empty and the ACL does not exist. And there is nothing to write: createAircraftShareInvite
+  // empty and the ACL does not exist. And there is nothing to write: createThingShareInvite
   // bootstraps it server-side.
   //
   // Denying is safe because the client expects it. Manage Access maps the denial to

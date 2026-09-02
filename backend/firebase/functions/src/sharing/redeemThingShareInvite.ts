@@ -34,7 +34,7 @@ type RedeemResponse = {
  * Single-use is total: the code doc is DELETED on success. "Already used" and "never existed" then
  * collapse into one state — which is the same error the PRD wants for both (C3/C4/C5).
  */
-export const redeemAircraftShareInvite = onCall<RedeemRequest, Promise<RedeemResponse>>(
+export const redeemThingShareInvite = onCall<RedeemRequest, Promise<RedeemResponse>>(
   { region: FUNCTION_REGION, enforceAppCheck: true },
   async (request): Promise<RedeemResponse> => {
     const { uid } = requireAuthenticatedApp(request);

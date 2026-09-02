@@ -197,9 +197,9 @@ enum ShareRole {
       </ol>
       <p>Only the hash is stored, so a read of the invites subcollection (or a backend leak) yields nothing redeemable; the secret exists only inside the link the owner chose to share. Cancelling an invite sets <code>revoked: true</code>.</p>
 
-      <h3 id="redeem">3.2 Redemption — callable function <code>redeemAircraftShareInvite</code></h3>
+      <h3 id="redeem">3.2 Redemption — callable function <code>redeemThingShareInvite</code></h3>
       <p>Redemption must write into <em>two</em> account trees (the share's member list and the member's own <code>shared_aircraft_ref</code>) and enforce invite validity atomically — a job for a callable Cloud Function with the Admin SDK (precedent: <code>requestExportDelivery</code> in <code>backend/firebase/functions</code>), not for client writes + rules:</p>
-      <pre><code>redeemAircraftShareInvite({ aircraftId, secret })   // caller: any signed-in non-anonymous user
+      <pre><code>redeemThingShareInvite({ aircraftId, secret })   // caller: any signed-in non-anonymous user
   1. require auth != null &amp;&amp; !auth.token.firebase.sign_in_provider == "anonymous"
   2. tokenHash = sha256(secret); tx.read aircraft_shares/{hostUid}/aircraft/{acId} + invites/{tokenHash}
   3. validate: exists, !revoked, now &lt; expires_at, use_count &lt; max_uses
@@ -216,9 +216,9 @@ enum ShareRole {
       <table>
         <thead><tr><th>Operation</th><th>Caller</th><th>Mechanism</th></tr></thead>
         <tbody>
-          <tr><td><b>Revoke member</b></td><td>Any owner</td><td>Callable <code>revokeAircraftShare({acId, memberUid})</code>: transactionally remove from <code>member_roles</code>, delete <code>members/{uid}</code>, and write a <b>tombstone</b> <code>SyncDocWire</code> (<code>deleted: true</code>) to <code>users/{memberUid}/shared_aircraft_ref/{acId}</code>. The tombstone is what tells the ex-member's devices to purge (§5.4). Hosting owner cannot be revoked (function-enforced).</td></tr>
+          <tr><td><b>Revoke member</b></td><td>Any owner</td><td>Callable <code>revokeThingShare({acId, memberUid})</code>: transactionally remove from <code>member_roles</code>, delete <code>members/{uid}</code>, and write a <b>tombstone</b> <code>SyncDocWire</code> (<code>deleted: true</code>) to <code>users/{memberUid}/shared_aircraft_ref/{acId}</code>. The tombstone is what tells the ex-member's devices to purge (§5.4). Hosting owner cannot be revoked (function-enforced).</td></tr>
           <tr><td><b>Leave</b></td><td>The member</td><td>Same function, <code>memberUid = caller</code>. Hosting owner cannot leave.</td></tr>
-          <tr><td><b>Change role</b></td><td>Any owner</td><td>Callable <code>updateAircraftShareRole({acId, memberUid, role})</code>: updates <code>member_roles</code> + member doc + rewrites the member's ref payload. (A function rather than a client write so the ref mirror stays consistent.)</td></tr>
+          <tr><td><b>Change role</b></td><td>Any owner</td><td>Callable <code>updateThingShareRole({acId, memberUid, role})</code>: updates <code>member_roles</code> + member doc + rewrites the member's ref payload. (A function rather than a client write so the ref mirror stays consistent.)</td></tr>
           <tr><td><b>Aircraft deleted</b></td><td>Hosting owner</td><td>Client tombstones the aircraft entity as today. A Firestore <b>trigger</b> on <code>users/{uid}/aircraft/{acId}</code> (<code>deleted == true</code>) tears down <code>aircraft_shares/{hostUid}/aircraft/{acId}</code> and tombstones every member's ref. Members' aircraft rows also die naturally via the normal pull of the aircraft tombstone.</td></tr>
         </tbody>
       </table>
@@ -456,7 +456,7 @@ match /aircraft_shares/{acId} {
           </tr>
         </tbody>
       </table>
-      <p>The broker lives under <code>backend/firebase/functions/src/storage/</code> (alongside <code>blobRefs.ts</code>, <code>storageSweep.ts</code>) and reuses the ACL-check helper the existing sharing functions already use (<code>revokeAircraftShare</code>, <code>updateAircraftShareRole</code>, <code>onAircraftDeleted</code>).</p>
+      <p>The broker lives under <code>backend/firebase/functions/src/storage/</code> (alongside <code>blobRefs.ts</code>, <code>storageSweep.ts</code>) and reuses the ACL-check helper the existing sharing functions already use (<code>revokeThingShare</code>, <code>updateThingShareRole</code>, <code>onAircraftDeleted</code>).</p>
 
       <h4>9.2.1 Reads go through an authorizing proxy, not a signed URL</h4>
       <p>A signed URL cannot meet the requirement: it is a <b>bearer credential</b> whose ACL is checked once, at mint time, and then works for anyone who holds it until it expires. That leaves two gaps the requirement forbids — a member revoked just after minting keeps reading until the TTL lapses, and a leaked URL is usable by <i>anyone</i> for that same window. Shrinking the TTL narrows both but never closes them, so signed URLs are out for downloads.</p>
@@ -493,7 +493,7 @@ match /aircraft_shares/{acId} {
 
       <h3>9.6 Revoke and deletion</h3>
       <ul>
-        <li><b>Revoke never deletes host bytes</b> (requirement 3). Removing member B purges B's <i>local cache</i> only; the canonical blob stays put and reachable for the host and every remaining member. <code>revokeAircraftShare</code> / <code>onAircraftDeleted</code> must not touch <code>users/{hostUid}/…/blobs</code>.</li>
+        <li><b>Revoke never deletes host bytes</b> (requirement 3). Removing member B purges B's <i>local cache</i> only; the canonical blob stays put and reachable for the host and every remaining member. <code>revokeThingShare</code> / <code>onAircraftDeleted</code> must not touch <code>users/{hostUid}/…/blobs</code>.</li>
         <li><b>Deletion cleans up for everyone</b> (requirement 4). Deleting an attachment, its parent record, or the aircraft tombstones the blob, and the cross-account sweep from [P7] #155 (<code>onRecordDeleted.ts</code>, <code>storageSweep.ts</code>) reclaims the bytes — no orphans accruing cost. A member-initiated delete must produce a tombstone the sweep picks up, not be dropped as a foreign-tree write.</li>
       </ul>
 

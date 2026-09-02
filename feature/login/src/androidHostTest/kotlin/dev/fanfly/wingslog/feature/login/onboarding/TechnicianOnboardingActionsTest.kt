@@ -15,7 +15,7 @@ private const val CHOSEN_NAME = "Sponge Bob"
  * The onboarding name step has to reach the Firebase auth profile, not just the local record.
  *
  * Cloud Functions cannot read the self-technician row — they see only the ID token — and
- * `createAircraftShareInvite` stamps an invite's `hostName` from `token.name`. Saving only locally
+ * `createThingShareInvite` stamps an invite's `hostName` from `token.name`. Saving only locally
  * leaves `token.name` empty, so everyone the user invites sees a blank host while the app itself
  * shows the name they chose.
  *

@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import { adminDb, fft, req } from "./helpers.js";
 
-import { createAircraftShareInvite } from "../src/sharing/createAircraftShareInvite.js";
+import { createThingShareInvite } from "../src/sharing/createThingShareInvite.js";
 import {
   aircraftShareDocPath,
   SHARE_ROLE,
@@ -170,8 +170,8 @@ describe("projectAttachmentEntitlement trigger", () => {
   });
 });
 
-describe("createAircraftShareInvite stamps attachmentsEnabled at bootstrap", () => {
-  const wrappedCreate = fft.wrap(createAircraftShareInvite);
+describe("createThingShareInvite stamps attachmentsEnabled at bootstrap", () => {
+  const wrappedCreate = fft.wrap(createThingShareInvite);
 
   beforeEach(async () => {
     await adminDb.doc(subscriptionDocPath(HOST)).delete();

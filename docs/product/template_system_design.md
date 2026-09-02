@@ -140,7 +140,7 @@ message FetchTemplatesResponse {
 ```
 
 **Authentication: App Check *and* a signed-in user.** `enforceAppCheck: true` plus `requireAuthenticatedApp` —
-the same pair `requestExportDelivery` and `createAircraftShareInvite` already use.
+the same pair `requestExportDelivery` and `createThingShareInvite` already use.
 
 The user identity is **not** there for authorization. Canonical templates are neither per-user nor secret, and
 every caller sees the same pool. It is there to make throttling real.

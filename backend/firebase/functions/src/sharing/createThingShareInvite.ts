@@ -38,7 +38,7 @@ type CreateResponse = { code: string; formattedCode: string; codeId: string; exp
  * share in their own namespace (rules pin `{hostUid}` to the token), and here that is structural:
  * `hostUid` IS the caller.
  */
-export const createAircraftShareInvite = onCall<CreateRequest, Promise<CreateResponse>>(
+export const createThingShareInvite = onCall<CreateRequest, Promise<CreateResponse>>(
   { region: FUNCTION_REGION, enforceAppCheck: true },
   async (request): Promise<CreateResponse> => {
     const { uid } = requireAuthenticatedApp(request);
