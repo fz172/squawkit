@@ -738,7 +738,7 @@ describe("the Aircraft record's own trigger", () => {
     expect(sentMessages[0].data.recordType).toBe("aircraft");
     expect(sentMessages[0].data.tailNumber).toBe("N123AB");
     // The aircraft has no per-record title to name, so it gets its own body regardless of kind.
-    expect(sentMessages[0].data.bodyKey).toBe("notification_n1_body_aircraft_updated");
+    expect(sentMessages[0].data.bodyKey).toBe("notification_n1_body_thing_updated");
     expect(sentMessages[0].data.tapTarget).toBe(`aircraft:${AC_A}:overview`);
   });
 

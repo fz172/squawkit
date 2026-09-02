@@ -34,7 +34,7 @@ import {
  *
  * ## Why `recipientUid` is stamped at send time and is not a field of [PushData]
  *
- * One [PushData] addresses a whole fan-out — every recipient of one aircraft's activity gets the
+ * One [PushData] addresses a whole fan-out — every recipient of one Thing's activity gets the
  * same text. The *address* is the one thing that differs per device, so [toDataMap] takes it as a
  * second argument and `sendPush` supplies it per recipient group. Putting it in [PushData] would
  * mean rebuilding the message once per recipient for a field none of the builders can know.
@@ -71,7 +71,7 @@ export const PUSH_TTL_SECONDS = 24 * 60 * 60;
 export type ActivityMessageInput = {
   thingId: string;
   recordType: RecordType;
-  /** The record's Firestore document id — the aircraft's own id for the `aircraft` record type. */
+  /** The record's Firestore document id — the Thing's own id for the `aircraft` record type. */
   recordId: string;
   /** The record's own title/description, or `""` for `aircraft` (its identity is [tailNumber]). */
   recordTitle: string;
@@ -87,11 +87,11 @@ export type ActivityMessageInput = {
  * happened to it (design decision, 2026-08-27; see [activityNotificationId] for what this replaced
  * and why).
  *
- * The aircraft record itself has no per-record title to name, so it gets its own body regardless of
+ * The Thing record itself has no per-record title to name, so it gets its own body regardless of
  * [ActivityMessageInput.kind] — a tail-number edit is always "updated," never created or deleted
  * through this trigger (`onNotifiableAircraftWritten` already filters the tombstone case).
  *
- * A deleted record has nothing left to tap into, so its push falls back to the aircraft-and-tab
+ * A deleted record has nothing left to tap into, so its push falls back to the thing-and-tab
  * target instead of a record the pilot can no longer open.
  */
 export function activityPushData(input: ActivityMessageInput): PushData {
@@ -102,7 +102,7 @@ export function activityPushData(input: ActivityMessageInput): PushData {
       ? `aircraft:${input.thingId}:${thingTabForRecordType(input.recordType)}`
       : `${input.recordType}:${input.thingId}:${input.recordId}`;
   const bodyKey = isThing
-    ? "notification_n1_body_aircraft_updated"
+    ? "notification_n1_body_thing_updated"
     : `notification_n1_body_record_${input.kind}`;
   return {
     class: "collaboration",

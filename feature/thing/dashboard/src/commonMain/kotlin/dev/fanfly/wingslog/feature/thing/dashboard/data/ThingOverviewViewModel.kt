@@ -226,7 +226,8 @@ class ThingOverviewViewModel(
                 // Against the meter the due is measured in. Subtracting engine hours from an
                 // odometer sorted every mileage task to the bottom of the list, behind items
                 // years away (#759).
-                val current = stats.valueFor(due.nextDueMeterKey.orEmpty()) ?: 0.0
+                val current =
+                  stats.valueFor(due.nextDueMeterKey.orEmpty()) ?: 0.0
                 candidates.add((it.toDouble() - current).toLong())
               }
               candidates.minOrNull() ?: Long.MAX_VALUE

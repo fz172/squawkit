@@ -93,12 +93,7 @@ private suspend fun PushPayload.renderBody(lexicon: Lexicon): String =
         recordTitle
       )
     // The Thing record has no per-record title to name, so its body is two segments, not four.
-    //
-    // The key keeps "aircraft" while the resource it renders is now ..._thing_updated. That is not
-    // an oversight: bodyKey is a **wire value** the backend sends (pushMessages.ts), so renaming it
-    // here would stop matching every push already in flight and every one sent by a function that
-    // has not been redeployed. Wire identity is grandfathered — see #638.
-    "notification_n1_body_aircraft_updated" ->
+    "notification_n1_body_thing_updated" ->
       getString(
         Res.string.notification_n1_body_thing_updated,
         tailNumber,
