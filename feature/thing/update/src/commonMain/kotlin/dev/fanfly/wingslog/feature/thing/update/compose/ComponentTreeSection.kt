@@ -53,7 +53,6 @@ import dev.fanfly.wingslog.thing.Thing
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.add
 import wingslog.core.sharedassets.generated.resources.remove
-import wingslog.feature.thing.update.generated.resources.component_spec_unset
 import wingslog.feature.thing.update.generated.resources.make
 import wingslog.feature.thing.update.generated.resources.model
 import wingslog.feature.thing.update.generated.resources.serial
@@ -85,7 +84,9 @@ fun ComponentTreeSection(
   // Not `nodes.isEmpty()`: removing the last engine emptied the tree and took the Add control with
   // it, leaving no way to add one back. The section is empty only when the template declares
   // nothing to add either — home and custom.
-  if (nodes.isEmpty() && template.addableSlotsUnder(emptyList(), nodes.map { it.row })
+  if (nodes.isEmpty() && template.addableSlotsUnder(
+      emptyList(),
+      nodes.map { it.row })
       .isEmpty()
   ) return
 
@@ -184,10 +185,15 @@ private fun ComponentBlock(
 }
 
 /**
- * The slot's fields, on one line each or packed when the template asks for it.
+ * The slot's fields: the make/model/serial triple, then whatever else the slot declares.
  *
  * Compact puts make on its own line and pairs model with serial beside it — the shape an owner
  * reads a plate in, rather than three stacked inputs each half empty.
+ *
+ * **The declared fields are drawn unconditionally**, after the triple and outside every branch
+ * above. Hanging them off the end of the compact path meant a tyre — which packs nothing, so it
+ * takes the plain branch — rendered neither its position nor its pressure, on a form where the
+ * only evidence was their absence.
  */
 @Composable
 private fun ComponentFields(
@@ -196,6 +202,17 @@ private fun ComponentFields(
   showValidationErrors: Boolean,
 ) {
   val row = node.row
+  TripleFields(row, viewModel, showValidationErrors)
+  SlotSpecFields(row, viewModel)
+}
+
+/** Make, model and serial — the three every component carries, however the slot packs them. */
+@Composable
+private fun TripleFields(
+  row: ComponentRow,
+  viewModel: EditThingViewModel,
+  showValidationErrors: Boolean,
+) {
   val visible = row.fields.filter { it.isVisibleOn(row) }
   if (visible.isEmpty()) return
 
@@ -223,16 +240,14 @@ private fun ComponentFields(
       )
     }
   val paired = row.pairedFields.filter { it in visible }
-  if (paired.isNotEmpty()) {
-    Row(horizontalArrangement = Arrangement.spacedBy(Spacing.medium)) {
-      paired.forEach { field ->
-        ComponentFieldInput(
-          row, field, viewModel, showValidationErrors, Modifier.weight(1f),
-        )
-      }
+  if (paired.isEmpty()) return
+  Row(horizontalArrangement = Arrangement.spacedBy(Spacing.medium)) {
+    paired.forEach { field ->
+      ComponentFieldInput(
+        row, field, viewModel, showValidationErrors, Modifier.weight(1f),
+      )
     }
   }
-  SlotSpecFields(row, viewModel)
 }
 
 /**
@@ -300,16 +315,11 @@ private fun SlotSpecFieldInput(
       modifier = Modifier.fillMaxWidth()
         .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
     )
-    ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-      // A blank entry first: every one of these is optional, and a picker with no way back to
-      // unset is a field the user can fill in but never correct to empty.
-      DropdownMenuItem(
-        text = { Text(stringResource(UpdateRes.string.component_spec_unset)) },
-        onClick = {
-          viewModel.onComponentSpecChanged(row.path, field, "")
-          expanded = false
-        },
-      )
+    // The options and nothing else. No blank entry: a wheel is somewhere on the vehicle, so an
+    // "unset" row would be an answer nobody means to give, sitting above the four that are true.
+    ExposedDropdownMenu(
+      expanded = expanded,
+      onDismissRequest = { expanded = false }) {
       field.options.forEach { option ->
         DropdownMenuItem(
           text = { Text(option) },
@@ -462,7 +472,8 @@ private fun AddSlotButtons(
 ) {
   // `existing` is what caps a slot: a car's engine is repeatable so an EV can have none, and
   // `max_instances: 1` so a hatchback is not offered a second one.
-  val addable = LocalThingTemplate.current.addableSlotsUnder(parentPath, existing)
+  val addable =
+    LocalThingTemplate.current.addableSlotsUnder(parentPath, existing)
   if (addable.isEmpty()) return
   Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
     addable.forEach { slot ->

@@ -855,7 +855,6 @@ feature/thing/dashboard	overview_open_squawks	Open squawks
 feature/thing/dashboard	overview_recent_activity	Recent activity
 feature/thing/dashboard	spec_line_label	%1$s:
 feature/thing/dashboard	thing_load_error	Couldn't load this aircraft
-feature/thing/update	component_spec_unset	None
 feature/thing/update	delete_thing	Delete Aircraft?
 feature/thing/update	delete_thing_member_plural	people will
 feature/thing/update	delete_thing_member_singular	person will

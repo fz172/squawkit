@@ -4,9 +4,6 @@
   <string name="make">Make</string>
   <string name="model">Model</string>
   <string name="serial">Serial Number</string>
-  <!-- The blank entry in a component's option picker: every declared field is optional, so there
-       has to be a way back to unset once one has been chosen. -->
-  <string name="component_spec_unset">None</string>
   <string name="delete_thing">Delete <xliff:g example="aircraft">%1$s</xliff:g>?</string>
   <!-- PRD D5: deleting a shared aircraft tears the share down for everyone on it. Say how many
        people that is — "cannot be undone" does not convey that you are deleting someone else's

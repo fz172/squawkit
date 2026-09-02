@@ -14,11 +14,11 @@ automotive"¼
 modelModel2
 yearYear*20192
 vinVIN *1HGBH41JXMN109186:
-engineEngine(P:µ
-tireTire2make2modelHZ}
+engineEngine(P:…
+tireTire2make2modelHZM
 positionPosition8B
 Front LeftBFront RightB	Rear LeftB
-Rear RightBFrontBRearBRear Left InnerBRear Right InnerBSpareZ
+Rear RightBSpareZ
 psi
 Normal PSI*32HB
 odometerOdometermiR

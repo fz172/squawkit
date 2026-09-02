@@ -388,6 +388,40 @@ class ComponentTreeTest {
   }
 
   @Test
+  fun tyresAreLaidOutByPositionWithTheUnplacedOnesTrailing() {
+    // Two to a row on a phone, so ordering by the template's own list makes the block read as the
+    // car: front left beside front right, rear left beside rear right. Typed order would scatter
+    // them. A wheel with no position cannot claim a corner, so it goes after the ones that can.
+    fun tire(position: String?, make: String) = Component(
+      slot_key = "tire",
+      make = make,
+      spec = position?.let { listOf(Spec(key = "position", value_ = it)) }.orEmpty(),
+    )
+
+    val car = Thing(
+      id = "t",
+      components = listOf(
+        tire("Spare", "E"),
+        tire(null, "F"),
+        tire("Rear Right", "D"),
+        tire("Front Left", "A"),
+        tire("Rear Left", "C"),
+        tire("Front Right", "B"),
+      ),
+    )
+    val chips = (
+      automotive.componentTree(car)
+        .filter { it.row.component != null }
+        .componentGroups()
+        .single() as ComponentGroup.Chips
+      ).nodes
+
+    assertThat(chips.map { it.row.component?.make })
+      .containsExactly("A", "B", "C", "D", "E", "F")
+      .inOrder()
+  }
+
+  @Test
   fun everyTyreOfACarLandsInOneBlock() {
     val car = Thing(
       id = "t",

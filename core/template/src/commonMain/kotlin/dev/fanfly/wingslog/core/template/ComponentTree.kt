@@ -140,7 +140,8 @@ data class ComponentRow(
         .map { component.valueOf(it) }
         .filter { it.isNotBlank() }
         .joinToString(" ")
-      val serial = if (ComponentField.SERIAL in visible) component.serial else ""
+      val serial =
+        if (ComponentField.SERIAL in visible) component.serial else ""
       val naming = slot.spec_fields.firstOrNull { it.title_candidate }
       return ComponentChipLines(
         label = naming?.let { component.specValue(it.key) }
@@ -166,8 +167,39 @@ data class ComponentRow(
       return slot.spec_fields.mapNotNull { field ->
         component.specValue(field.key)
           .takeIf { it.isNotBlank() }
-          ?.let { SpecLine(label = field.label, value = it, isIdentifier = field.is_identifier) }
+          ?.let {
+            SpecLine(
+              label = field.label,
+              value = it,
+              isIdentifier = field.is_identifier
+            )
+          }
       }
+    }
+
+  /**
+   * Where this instance sorts among its siblings: its position's index in the template's own list.
+   *
+   * So a car's tyres read as the car — front left, front right, then rear left, rear right —
+   * rather than in whatever order they were typed. The template's `options` order IS the layout
+   * order, which is why that list is written the way a driver walks around the vehicle.
+   *
+   * Anything without a position, or with one no longer in the list, sorts last: an unplaced wheel
+   * cannot claim a corner, and putting it in the middle would push a known one out of place. Ties
+   * hold their storage order, so [label]'s ordinal still matches what the form shows.
+   *
+   * Dashboard only. The edit form deliberately does not sort — rows must not jump under the
+   * user's finger the moment a position is picked.
+   */
+  val chipOrder: Int
+    get() {
+      val naming = slot.spec_fields.firstOrNull { it.title_candidate }
+        ?: return Int.MAX_VALUE
+      val value = component?.specValue(naming.key)
+        .orEmpty()
+      return naming.options.indexOf(value)
+        .takeIf { it >= 0 }
+        ?: Int.MAX_VALUE
     }
 
   /** A slot that repeats can always take another; one that does not is created with the tree. */
@@ -196,7 +228,16 @@ fun ThingTemplate?.componentRows(thing: Thing): List<ComponentRow> {
     }
     occurrences.flatMapIndexed { index, (component, ordinal) ->
       val path = parentPath + (slot.slot_key to index)
-      listOf(ComponentRow(slot, path, component, depth, ordinal, occurrences.size)) +
+      listOf(
+        ComponentRow(
+          slot,
+          path,
+          component,
+          depth,
+          ordinal,
+          occurrences.size
+        )
+      ) +
         walk(slot.children, path, component?.children.orEmpty(), depth + 1)
     }
   }
@@ -331,6 +372,7 @@ fun ThingTemplate?.componentTree(thing: Thing): List<ComponentNode> {
  */
 sealed interface ComponentGroup {
   data class Card(val node: ComponentNode) : ComponentGroup
+
   /** Every component of one slot, drawn together — "Tire 1 … Tire 4" as one block. */
   data class Chips(val nodes: List<ComponentNode>) : ComponentGroup
 }
@@ -357,3 +399,13 @@ fun List<ComponentNode>.componentGroups(): List<ComponentGroup> =
     }
     groups
   }
+    // Inside a chip block, position wins over storage order: front left, front right, then rear
+    // left, rear right, so the grid reads as the vehicle. sortedBy is stable, so the unpositioned
+    // ones trail in the order they were entered rather than shuffling among themselves.
+    .map { group ->
+      if (group is ComponentGroup.Chips) {
+        ComponentGroup.Chips(group.nodes.sortedBy { it.row.chipOrder })
+      } else {
+        group
+      }
+    }

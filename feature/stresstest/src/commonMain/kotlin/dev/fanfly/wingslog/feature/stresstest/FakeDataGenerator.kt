@@ -25,6 +25,7 @@ import dev.fanfly.wingslog.thing.MeterReading
 import dev.fanfly.wingslog.thing.MeterRule
 import dev.fanfly.wingslog.thing.OnConditionRule
 import dev.fanfly.wingslog.thing.Spec
+import dev.fanfly.wingslog.thing.SpecField
 import dev.fanfly.wingslog.thing.Squawk
 import dev.fanfly.wingslog.thing.SquawkDismissReason
 import dev.fanfly.wingslog.thing.SquawkPriority
@@ -935,10 +936,15 @@ object FakeDataGenerator {
     ).withDerivedComponentIds()
   }
 
-  /** Instantiates a slot, twice when it repeats — one of anything hides off-by-one bugs. */
-  private fun buildSlot(slot: ComponentSlot): List<Component> {
-    val count = if (slot.repeatable) 2 else 1
-    return (1..count).map { index ->
+  /**
+   * Instantiates a slot, several times when it repeats — one of anything hides off-by-one bugs.
+   *
+   * **Fills the slot's own declared fields too**, not just make/model/serial. A fake car whose
+   * tyres had no position or pressure was a car that could not show what the template had just
+   * been taught to ask for — the fixture has to exercise the whole slot or it proves nothing.
+   */
+  private fun buildSlot(slot: ComponentSlot): List<Component> =
+    (0 until instanceCount(slot)).map { index ->
       Component(
         slot_key = slot.slot_key,
         make = SAMPLE_MAKES.random(),
@@ -947,13 +953,53 @@ object FakeDataGenerator {
           "${
             slot.slot_key.take(2)
               .uppercase()
-          }$index-${(10000..99999).random()}"
+          }${index + 1}-${(10000..99999).random()}"
         } else {
           ""
+        },
+        spec = slot.spec_fields.mapNotNull { field ->
+          sampleComponentSpec(field, index)
+            .takeIf { it.isNotBlank() }
+            ?.let { Spec(key = field.key, value_ = it) }
         },
         children = slot.children.flatMap { buildSlot(it) },
       )
     }
+
+  /**
+   * How many of a repeating slot to make up.
+   *
+   * Two by default, capped by `max_instances` — without that cap a fake car arrived with two
+   * engines, which the template had just said it cannot have.
+   *
+   * A slot whose naming field enumerates its positions makes one PER POSITION instead, up to four:
+   * a car with four tyres, one at each corner, is the shape the dashboard's grid exists for, and
+   * two would have demonstrated half of it. A bike's cap of two trims the same rule to a front
+   * and a rear.
+   */
+  private fun instanceCount(slot: ComponentSlot): Int {
+    if (!slot.repeatable) return 1
+    val positions =
+      slot.spec_fields.firstOrNull { it.title_candidate }?.options.orEmpty()
+    val wanted = if (positions.isEmpty()) 2 else positions.size.coerceAtMost(4)
+    return if (slot.max_instances > 0) wanted.coerceAtMost(slot.max_instances) else wanted
+  }
+
+  /**
+   * A value for one of a slot's declared fields.
+   *
+   * Options are taken IN ORDER by instance, not at random: four tyres want front left, front
+   * right, rear left and rear right — four random picks would put two wheels in the same corner,
+   * which is exactly the data an owner could never enter.
+   */
+  private fun sampleComponentSpec(field: SpecField, index: Int): String = when {
+    field.options.isNotEmpty() -> field.options.getOrElse(index) { "" }
+    field.numeric -> field.placeholder.ifBlank {
+      (10..99).random()
+        .toString()
+    }
+
+    else -> "Sample ${field.label}"
   }
 
   private fun sampleSpecValue(key: String, label: String): String = when (key) {
