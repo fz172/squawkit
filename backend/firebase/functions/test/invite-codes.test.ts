@@ -2,15 +2,15 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import { adminDb, fft, req, sha256 } from "./helpers.js";
 
-import { cancelAircraftShareInvite } from "../src/sharing/cancelAircraftShareInvite.js";
-import { createAircraftShareInvite } from "../src/sharing/createAircraftShareInvite.js";
-import { previewAircraftShareInvite } from "../src/sharing/previewAircraftShareInvite.js";
-import { redeemAircraftShareInvite } from "../src/sharing/redeemAircraftShareInvite.js";
+import { cancelThingShareInvite } from "../src/sharing/cancelThingShareInvite.js";
+import { createThingShareInvite } from "../src/sharing/createThingShareInvite.js";
+import { previewThingShareInvite } from "../src/sharing/previewThingShareInvite.js";
+import { redeemThingShareInvite } from "../src/sharing/redeemThingShareInvite.js";
 
-const wrappedCreate = fft.wrap(createAircraftShareInvite);
-const wrappedPreview = fft.wrap(previewAircraftShareInvite);
-const wrappedRedeem = fft.wrap(redeemAircraftShareInvite);
-const wrappedCancel = fft.wrap(cancelAircraftShareInvite);
+const wrappedCreate = fft.wrap(createThingShareInvite);
+const wrappedPreview = fft.wrap(previewThingShareInvite);
+const wrappedRedeem = fft.wrap(redeemThingShareInvite);
+const wrappedCancel = fft.wrap(cancelThingShareInvite);
 
 const HOST = "host-uid";
 const TECH = "tech-uid";
@@ -35,7 +35,7 @@ beforeEach(async () => {
   await seedAircraft();
 });
 
-describe("createAircraftShareInvite", () => {
+describe("createThingShareInvite", () => {
   it("mints a code, bootstraps the ACL, and never stores the code where a client can read it", async () => {
     const res = (await wrappedCreate(
       req(HOST, { aircraftId: AC, role: "technician", aircraftLabel: "N2037O · Cessna 172" }),
@@ -64,7 +64,7 @@ describe("createAircraftShareInvite", () => {
   });
 });
 
-describe("redeemAircraftShareInvite", () => {
+describe("redeemThingShareInvite", () => {
   it("joins by code alone — no aircraft id, no host uid from the caller", async () => {
     const code = await mintCode();
 
@@ -121,7 +121,7 @@ describe("redeemAircraftShareInvite", () => {
   });
 });
 
-describe("previewAircraftShareInvite (#201)", () => {
+describe("previewThingShareInvite (#201)", () => {
   it("shows what you are joining, and leaks no ids", async () => {
     const code = await mintCode("owner");
 
@@ -186,7 +186,7 @@ describe("rate limiting — the brute-force budget", () => {
   });
 });
 
-describe("cancelAircraftShareInvite", () => {
+describe("cancelThingShareInvite", () => {
   it("finds the code by a single equality filter (no composite index needed)", async () => {
     // The first cut filtered on (hostUid, aircraftId) and hash-matched the results — a compound
     // query needing a composite index. The emulator does not enforce indexes, so it passed here and

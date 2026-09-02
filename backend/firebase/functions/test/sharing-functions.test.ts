@@ -6,14 +6,14 @@ import { afterAll, afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { adminDb, adminStorage } from "../src/config/firebaseAdmin.js";
 import { onThingDeleted } from "../src/sharing/onAircraftDeleted.js";
-import { redeemAircraftShareInvite } from "../src/sharing/redeemAircraftShareInvite.js";
-import { revokeAircraftShare as revoke } from "../src/sharing/revokeAircraftShare.js";
-import { updateAircraftShareRole } from "../src/sharing/updateAircraftShareRole.js";
+import { redeemThingShareInvite } from "../src/sharing/redeemThingShareInvite.js";
+import { revokeThingShare as revoke } from "../src/sharing/revokeThingShare.js";
+import { updateThingShareRole } from "../src/sharing/updateThingShareRole.js";
 
 const fft = functionsTest();
-const wrappedRedeem = fft.wrap(redeemAircraftShareInvite);
+const wrappedRedeem = fft.wrap(redeemThingShareInvite);
 const wrappedRevoke = fft.wrap(revoke);
-const wrappedUpdateRole = fft.wrap(updateAircraftShareRole);
+const wrappedUpdateRole = fft.wrap(updateThingShareRole);
 const wrappedDeleted = fft.wrap(onThingDeleted);
 
 const APP_ID = "1:811416892017:android:27fbaf1c76bb16a3f961d0";
@@ -63,10 +63,10 @@ beforeEach(wipe);
 afterEach(wipe);
 afterAll(() => fft.cleanup());
 
-// redeemAircraftShareInvite is now pairing-code based (#164) — see invite-codes.test.ts. The old
+// redeemThingShareInvite is now pairing-code based (#164) — see invite-codes.test.ts. The old
 // secret-in-the-link mechanism it used to test is gone, along with the aircraft id it exposed.
 
-describe("revokeAircraftShare", () => {
+describe("revokeThingShare", () => {
   it("an owner removes a member: ACL cleared, member doc deleted, ref tombstoned", async () => {
     await seedShare({ [HOST]: "owner", [TECH]: "technician" });
     await adminDb.doc(`thing_shares/${HOST}/thing/${AC}/members/${TECH}`).set({ role: "technician" });
@@ -107,7 +107,7 @@ describe("revokeAircraftShare", () => {
   });
 });
 
-describe("updateAircraftShareRole", () => {
+describe("updateThingShareRole", () => {
   it("an owner promotes a technician to owner and rewrites the ref", async () => {
     await seedShare({ [HOST]: "owner", [TECH]: "technician" });
     await adminDb.doc(`thing_shares/${HOST}/thing/${AC}/members/${TECH}`).set({ role: "technician" });

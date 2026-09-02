@@ -24,7 +24,7 @@ interface AuthManager {
    * Writes [name] to the Firebase Auth profile, so the ID token carries it.
    *
    * The in-app name is the source of truth, but it lives in the local self-technician record, which
-   * Cloud Functions cannot read — they see only the token. `createAircraftShareInvite` stamps the
+   * Cloud Functions cannot read — they see only the token. `createThingShareInvite` stamps the
    * invite's `hostName` from `token.name`, so without this an invitee would be shown the user's
    * Google name while everyone else in the app sees the name they actually chose.
    */

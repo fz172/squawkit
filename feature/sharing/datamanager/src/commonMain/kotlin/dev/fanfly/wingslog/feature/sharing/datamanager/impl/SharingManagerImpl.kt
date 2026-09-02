@@ -2,9 +2,6 @@ package dev.fanfly.wingslog.feature.sharing.datamanager.impl
 
 import app.cash.sqldelight.async.coroutines.awaitAsOneOrNull
 import co.touchlab.kermit.Logger
-import dev.fanfly.wingslog.thing.CertExpireLimit
-import dev.fanfly.wingslog.thing.CertificateType
-import dev.fanfly.wingslog.thing.Technician
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.model.sharing.SharedAircraftRef
 import dev.fanfly.wingslog.core.storage.CollectionKind
@@ -22,6 +19,9 @@ import dev.fanfly.wingslog.feature.sharing.model.SHARE_URL_BASE
 import dev.fanfly.wingslog.feature.sharing.model.ShareMember
 import dev.fanfly.wingslog.feature.sharing.model.ShareRole
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
+import dev.fanfly.wingslog.thing.CertExpireLimit
+import dev.fanfly.wingslog.thing.CertificateType
+import dev.fanfly.wingslog.thing.Technician
 import dev.fanfly.wingslog.thing.Thing
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.firestore.FirebaseFirestore
@@ -281,7 +281,7 @@ class SharingManagerImpl(
     role: ShareRole,
     thingLabel: String,
   ): Result<InviteLink> = runCatching {
-    val res = functions.httpsCallable("createAircraftShareInvite")
+    val res = functions.httpsCallable("createThingShareInvite")
       .invoke(
         CreateInviteRequest(
           thingId = acId,
@@ -317,7 +317,7 @@ class SharingManagerImpl(
     acId: String,
     codeId: String
   ): Result<Unit> = runCatching {
-    functions.httpsCallable("cancelAircraftShareInvite")
+    functions.httpsCallable("cancelThingShareInvite")
       .invoke(CancelInviteRequest(thingId = acId, codeId = codeId))
     val uid = requireUid()
     writeLock.withLock {
@@ -331,7 +331,7 @@ class SharingManagerImpl(
 
   override suspend fun redeemInvite(code: String): Result<RedeemOutcome> =
     runCatching {
-      val res = functions.httpsCallable("redeemAircraftShareInvite")
+      val res = functions.httpsCallable("redeemThingShareInvite")
         .invoke(RedeemRequest(code = code))
         .data<RedeemResponse>()
       RedeemOutcome(
@@ -344,7 +344,7 @@ class SharingManagerImpl(
 
   override suspend fun previewInvite(code: String): Result<InvitePreview> =
     runCatching {
-      val res = functions.httpsCallable("previewAircraftShareInvite")
+      val res = functions.httpsCallable("previewThingShareInvite")
         .invoke(PreviewRequest(code = code))
         .data<PreviewResponse>()
       InvitePreview(
@@ -356,7 +356,7 @@ class SharingManagerImpl(
 
   override suspend fun revokeMember(acId: String, uid: String): Result<Unit> =
     runCatching {
-      functions.httpsCallable("revokeAircraftShare")
+      functions.httpsCallable("revokeThingShare")
         .invoke(
           RevokeRequest(
             hostUid = hostUidFor(acId),
@@ -371,7 +371,7 @@ class SharingManagerImpl(
     uid: String,
     role: ShareRole
   ): Result<Unit> = runCatching {
-    functions.httpsCallable("updateAircraftShareRole")
+    functions.httpsCallable("updateThingShareRole")
       .invoke(
         UpdateRoleRequest(
           hostUid = hostUidFor(acId),
@@ -553,6 +553,7 @@ class SharingManagerImpl(
 
   companion object {
     private val logger = Logger.withTag("SharingManager")
+
     // MIGRATION (Phase G3, docs/product/thing_migration_design.md §5.4): the ACL tree moved from
     // aircraft_shares/{hostUid}/thing/{acId} to thing_shares/{hostUid}/thing/{acId}.
     //

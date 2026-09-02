@@ -241,7 +241,7 @@ same reason**: one deployed version answers every account's invocation, so the p
 for all of them or wrong for some. Three call sites:
 
 ```
-createAircraftShareInvite.ts   adminDb.doc(`users/${uid}/aircraft/${aircraftId}`)   (existence check)
+createThingShareInvite.ts   adminDb.doc(`users/${uid}/aircraft/${aircraftId}`)   (existence check)
 blobBroker.ts:16               blobObjectPath() → `users/${hostUid}/aircraft/${acId}/blobs/${blobId}`
                                — used by the getBlobUploadSession and streamBlob callables
 ```
@@ -364,8 +364,8 @@ export function aircraftShareDocPath(hostUid, aircraftId) { … }   // ${AIRCRAF
 export function shareMemberDocPath(hostUid, aircraftId, uid) { … }
 ```
 
-All eleven backend consumers (`createAircraftShareInvite.ts`, `redeemAircraftShareInvite.ts`,
-`revokeAircraftShare.ts`, `updateAircraftShareRole.ts`, `onAircraftDeleted.ts`, `blobBroker.ts`,
+All eleven backend consumers (`createThingShareInvite.ts`, `redeemThingShareInvite.ts`,
+`revokeThingShare.ts`, `updateThingShareRole.ts`, `onAircraftDeleted.ts`, `blobBroker.ts`,
 `projectAttachmentEntitlement.ts`, `audience.ts`, `deleteMyAccount.ts`, plus `sharingModels.ts` itself) import
 these constants/helpers rather than hardcoding the literal — confirmed by grep, none of them holds an independent
 copy. Renaming the two constants' *values* is therefore a one-file change that cascades correctly everywhere on
@@ -381,8 +381,8 @@ at*, because the client build that knows about `/thing/` ships to that account o
 over. The ACL tree breaks that property, in two independent ways:
 
 1. **The six sharing functions are `onCall` HTTPS callables, not per-document triggers** (confirmed — none of
-   `createAircraftShareInvite`/`redeemAircraftShareInvite`/`revokeAircraftShare`/`updateAircraftShareRole`/
-   `previewAircraftShareInvite`/`cancelAircraftShareInvite` register an `onDocumentWritten`/`onDocumentCreated`
+   `createThingShareInvite`/`redeemThingShareInvite`/`revokeThingShare`/`updateThingShareRole`/
+   `previewThingShareInvite`/`cancelThingShareInvite` register an `onDocumentWritten`/`onDocumentCreated`
    trigger). A callable's code is **one globally-deployed version answering every account's calls**. Flipping
    `sharingModels.ts`'s constants is not "redeploy and it takes effect for accounts that have migrated" — it
    takes effect for *every* account's next call, migrated or not, the instant it's deployed.
@@ -818,7 +818,7 @@ parallel or in any order. **Ref** points at the section that specifies the task 
 | B6 | Update `sharingModels.ts`'s `AIRCRAFT_SHARES_COLLECTION`/`SHARE_AIRCRAFT_SUBCOLLECTION` values — **write now, hold on an unmerged branch; do not merge until G3.** Merging to `main` deploys (§2.7b). | — | §2.9, §3.2, §5.4, §2.7b |
 | B7 | Add a new `match /thing/{acId} { ... }` block to `firestore.rules`, alongside the existing `match /aircraft/{acId} { ... }` block, mirroring `isShareMember`/`isShareOwner`/`writerIsSelf`/`isSharedAircraftKind`. | — | §2.4a, §3.2 |
 | B8 | Add a new `match /thing_shares/{hostUid}/thing/{acId} { ... }` block to `firestore.rules`, alongside the existing ACL block — added now, inert until Phase G. Do **not** repoint `shareRole()` yet. | — | §2.9, §3.2 |
-| B9a | Write the **Checkpoint 2** flip for the globally-deployed callables that cannot be dual-deployed: `blobBroker.ts`'s `blobObjectPath()` and `createAircraftShareInvite.ts`'s existence check. Write now, **hold on the unmerged `feat/thing-migration-checkpoint-2` branch** — merging to `main` deploys (§2.7b), so this must not land there until C2. | — | §2.7a, §2.7b |
+| B9a | Write the **Checkpoint 2** flip for the globally-deployed callables that cannot be dual-deployed: `blobBroker.ts`'s `blobObjectPath()` and `createThingShareInvite.ts`'s existence check. Write now, **hold on the unmerged `feat/thing-migration-checkpoint-2` branch** — merging to `main` deploys (§2.7b), so this must not land there until C2. | — | §2.7a, §2.7b |
 | B9 | Write new versions of the four Cloud Functions (`onNotifiableRecordWritten`, `onNotifiableAircraftWritten`, `onAircraftDeleted`, `onRecordDeleted`) registered on `users/{uid}/thing/{acId}...`, to deploy *alongside* (not replacing) the existing ones. **Hold on the same unmerged branch as B9a** — these must not be live while the Phase D copy runs (§2.7c). | — | §2.7, §2.7c, §5.2 |
 | B10 | Update `firestore-rules.test.ts` and `sharing-rules.test.ts` with a parallel set of assertions against the `/thing/`- and `thing_shares`-shaped paths, keeping every existing `aircraft`-shaped assertion passing. | B7, B8 | §6 |
 | B11 | Test the cutover script end-to-end against the Firestore/Storage emulator with a seeded fixture — including the payload-transform assertions that replace the withdrawn A8: `storage_path` rewritten, backfill matches PRD §9.1, and the transform is byte-identical when run twice. | B1, B2 | §6, §4.3 |
@@ -828,7 +828,7 @@ parallel or in any order. **Ref** points at the section that specifies the task 
 | # | Task | Depends on | Ref |
 |---|---|---|---|
 | C1 | **Checkpoint 1 (rules only — additive, safe any time).** Happens automatically when the Phase A/B branch merges (§2.7b). Deploys the new `/thing/{acId}` and `/thing_shares/...` `firestore.rules` blocks (B7, B8) alongside everything existing, unchanged. Must precede D2 so the copied documents are readable. Nothing here removes or repoints a path, so no account can be broken by it. **The `/thing/` Cloud Function triggers are deliberately NOT part of this** — see C2. | B7, B8, B10 | §5.2, §2.7c |
-| C2 | **Checkpoint 2 (timing is load-bearing).** Merge the held branch, deploying two things together: **(a)** the four `/thing/` trigger registrations (B9) — held back so the Phase D copy could not trip them (§2.7c); **(b)** the callable flip (B9a) — `blobObjectPath()` and `createAircraftShareInvite`'s existence check. Must land **after D3** (copy complete) and **at or before E2** (devices get the Phase 1 build). The callable flip is coupled to the *client build*, not to D3: the client chooses the segment it writes, and the broker has to name the same one or shared attachments 404 and get marked permanently missing. | B9, B9a, D3 | §2.7a, §2.7c |
+| C2 | **Checkpoint 2 (timing is load-bearing).** Merge the held branch, deploying two things together: **(a)** the four `/thing/` trigger registrations (B9) — held back so the Phase D copy could not trip them (§2.7c); **(b)** the callable flip (B9a) — `blobObjectPath()` and `createThingShareInvite`'s existence check. Must land **after D3** (copy complete) and **at or before E2** (devices get the Phase 1 build). The callable flip is coupled to the *client build*, not to D3: the client chooses the segment it writes, and the broker has to name the same one or shared attachments 404 and get marked permanently missing. | B9, B9a, D3 | §2.7a, §2.7c |
 
 ### Phase D — Run the entity/blob migration batch (must reach zero failures before Phase E/G)
 

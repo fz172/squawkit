@@ -24,7 +24,7 @@ type RevokeRequest = { hostUid: string; aircraftId: string; memberUid: string };
  * hosting owner cannot be removed. Transactionally clears the ACL entry, deletes the member doc, and
  * tombstones the ex-member's ref — the tombstone is what tells their devices to purge. See §3.3.
  */
-export const revokeAircraftShare = onCall<RevokeRequest, Promise<{ ok: true }>>(
+export const revokeThingShare = onCall<RevokeRequest, Promise<{ ok: true }>>(
   { region: FUNCTION_REGION, enforceAppCheck: true },
   async (request) => {
     const { uid } = requireAuthenticatedApp(request);
@@ -71,7 +71,7 @@ function parseRequest(data: unknown): RevokeRequest {
     throw new HttpsError("invalid-argument", "hostUid is required.");
   }
   if (aircraftId.length === 0 || memberUid.length === 0) {
-    throw new HttpsError("invalid-argument", "revokeAircraftShare requires aircraftId and memberUid.");
+    throw new HttpsError("invalid-argument", "revokeThingShare requires aircraftId and memberUid.");
   }
   return { hostUid, aircraftId, memberUid };
 }
