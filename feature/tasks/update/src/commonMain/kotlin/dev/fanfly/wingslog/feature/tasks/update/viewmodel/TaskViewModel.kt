@@ -353,8 +353,7 @@ class TaskViewModel(
           force_due_date = null,
           force_complied_status = ForceCompliedStatus(
             complied_date = toWireInstant(Clock.System.now().epochSeconds),
-            complied_engine_hours = currentEngineHours,
-            // Keyed alongside, so a complied status records which meter it was measured in.
+            // Keyed, so a complied status records which meter it was measured in.
             complied_meter = MeterReading(
               meter_key = card.defaultMeterKey(),
               value_ = currentEngineHours.toDouble(),

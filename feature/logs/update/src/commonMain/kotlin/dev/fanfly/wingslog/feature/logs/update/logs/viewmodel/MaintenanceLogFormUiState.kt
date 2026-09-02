@@ -17,9 +17,6 @@ data class MaintenanceLogFormUiState(
   val isSaving: Boolean = false,
   val workDescription: String = "",
   val selectedInspectionIds: List<String> = emptyList(),
-  val engineTime: String = "",
-  val airframeTime: String = "",
-  val propTime: String = "",
   /**
    * The value typed for each meter the template declares, by key (#730).
    *
@@ -84,9 +81,6 @@ data class MaintenanceLogFormUiState(
     workDescription = workDescription,
     selectedSquawkIds = selectedSquawkIds,
     selectedInspectionIds = selectedInspectionIds,
-    engineTime = engineTime,
-    airframeTime = airframeTime,
-    propTime = propTime,
     selectedComponentType = selectedComponentType,
     selectedSubComponent = selectedSubComponent,
     selectedTechnicianId = selectedTechnician?.id,
@@ -101,9 +95,6 @@ data class MaintenanceLogFormUiState(
     val workDescription: String,
     val selectedSquawkIds: List<String>,
     val selectedInspectionIds: List<String>,
-    val engineTime: String,
-    val airframeTime: String,
-    val propTime: String,
     val selectedComponentType: ComponentType,
     val selectedSubComponent: String?,
     val selectedTechnicianId: String?,

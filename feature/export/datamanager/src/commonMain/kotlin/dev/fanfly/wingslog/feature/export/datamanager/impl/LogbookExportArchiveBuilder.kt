@@ -865,7 +865,8 @@ class LogbookExportArchiveBuilder(
 
         rule.meter_rule != null -> rule.meter_rule!!.run {
           val template = bundle.thing.template
-          val amount = template.formatMeterNumber(meter_key, interval.toDouble())
+          val amount =
+            template.formatMeterNumber(meter_key, interval.toDouble())
           val unit = template.meterUnit(meter_key)
             .lowercase()
           // The unit alone is ambiguous where several meters share it — an aeroplane has three
@@ -875,7 +876,6 @@ class LogbookExportArchiveBuilder(
             ?: "Every $amount $unit"
         }
 
-        rule.engine_hour_rule != null -> "Every ${rule.engine_hour_rule!!.interval_hours.formatHours()} engine hours"
         rule.on_condition_rule != null -> rule.on_condition_rule!!.description.ifBlank { "On condition" }
         rule.linked_rule != null -> "Linked to ${
           bundle.tasksById[rule.linked_rule!!.parent_inspection_id]?.title ?: "[deleted]"

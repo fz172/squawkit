@@ -9,48 +9,54 @@ import dev.fanfly.wingslog.thing.MeterReading
 import org.junit.Test
 
 /**
- * Reading meter values across the change from three hour fields to a declared set (#730).
+ * Reading meter values by key (#730).
  *
- * The fallback is the part that matters. `engine_hour`, `airframe_time` and `prop_time` hold the
- * value on every log written before this, and there are years of them — a reader consulting only
- * `readings` would report an aeroplane with a full logbook as having flown zero hours.
+ * The three aviation doubles these replaced were retired in #761, after a backfill wrote the keyed
+ * form onto every stored record. Nothing falls back any more, so a log reporting nothing for a
+ * meter genuinely recorded nothing for it — which is why the null-versus-zero distinction below is
+ * the load-bearing one.
  */
 class MeterReadingsTest {
 
   @Test
-  fun aLogWrittenBeforeReadingsExistedStillAnswers() {
-    val legacy = MaintenanceLog(
-      id = "l1",
-      engine_hour = 1041.8,
-      airframe_time = 1111.0,
-      prop_time = 1029.8,
-    )
-
-    assertThat(legacy.readingFor(MeterKeys.ENGINE_HOURS)).isEqualTo(1041.8)
-    assertThat(legacy.readingFor(MeterKeys.AIRFRAME_HOURS)).isEqualTo(1111.0)
-    assertThat(legacy.readingFor(MeterKeys.PROP_HOURS)).isEqualTo(1029.8)
-  }
-
-  @Test
-  fun readingsWinOverTheLegacyFieldTheyDuplicate() {
-    // Both are written today, so they agree. If they ever did not, the keyed one is the newer.
+  fun anAviationLogIsCarriedByKeyLikeAnyOther() {
     val log = MaintenanceLog(
       id = "l1",
-      engine_hour = 100.0,
-      readings = listOf(MeterReading(MeterKeys.ENGINE_HOURS, value_ = 200.0)),
+      readings = listOf(
+        MeterReading(MeterKeys.ENGINE_HOURS, value_ = 1041.8),
+        MeterReading(MeterKeys.AIRFRAME_HOURS, value_ = 1111.0),
+        MeterReading(MeterKeys.PROP_HOURS, value_ = 1029.8),
+      ),
     )
 
-    assertThat(log.readingFor(MeterKeys.ENGINE_HOURS)).isEqualTo(200.0)
+    assertThat(log.readingFor(MeterKeys.ENGINE_HOURS)).isEqualTo(1041.8)
+    assertThat(log.readingFor(MeterKeys.AIRFRAME_HOURS)).isEqualTo(1111.0)
+    assertThat(log.readingFor(MeterKeys.PROP_HOURS)).isEqualTo(1029.8)
   }
 
   @Test
   fun aMeterTheLogDidNotRecordIsNullRatherThanZero() {
     // A log that did not touch a meter is not a log reporting zero, and the difference decides
     // whether it counts toward the current reading.
-    val log = MaintenanceLog(id = "l1", engine_hour = 100.0)
+    val log = MaintenanceLog(
+      id = "l1",
+      readings = listOf(MeterReading(MeterKeys.ENGINE_HOURS, value_ = 100.0)),
+    )
 
     assertThat(log.readingFor(MeterKeys.AIRFRAME_HOURS)).isNull()
     assertThat(log.readingFor("odometer")).isNull()
+  }
+
+  @Test
+  fun aReadingOfZeroCountsAsNotRecorded() {
+    // The keyed form can hold an explicit zero where the doubles could not be told apart from
+    // absence; both still mean "not recorded", so nothing downstream has to special-case it.
+    val log = MaintenanceLog(
+      id = "l1",
+      readings = listOf(MeterReading(MeterKeys.ENGINE_HOURS, value_ = 0.0)),
+    )
+
+    assertThat(log.readingFor(MeterKeys.ENGINE_HOURS)).isNull()
   }
 
   @Test
@@ -86,7 +92,10 @@ class MeterReadingsTest {
           )
         )
       ),
-      MaintenanceLog(id = "c", engine_hour = 1041.8),
+      MaintenanceLog(
+        id = "c",
+        readings = listOf(MeterReading(MeterKeys.ENGINE_HOURS, value_ = 1041.8))
+      ),
     )
 
     val current = currentReadings(logs)
@@ -94,7 +103,7 @@ class MeterReadingsTest {
     assertThat(current.first { it.meter_key == "odometer" }.value_).isEqualTo(
       84512.0
     )
-    // A legacy field contributes its key without any log carrying a `readings` entry for it.
+    // Meters are independent: a key only one log carries still reports that log's value.
     assertThat(current.first { it.meter_key == MeterKeys.ENGINE_HOURS }.value_)
       .isEqualTo(1041.8)
   }
@@ -103,18 +112,23 @@ class MeterReadingsTest {
   fun aMeterNoLogTouchedIsAbsentRatherThanZero() {
     // So a reader can tell "not recorded yet" from "reads zero" — the difference between an
     // em dash and a number on the dashboard.
-    val current =
-      currentReadings(listOf(MaintenanceLog(id = "a", engine_hour = 10.0)))
+    val current = currentReadings(
+      listOf(
+        MaintenanceLog(
+          id = "a",
+          readings = listOf(MeterReading(MeterKeys.ENGINE_HOURS, value_ = 10.0))
+        )
+      )
+    )
 
     assertThat(current.map { it.meter_key }).containsExactly(MeterKeys.ENGINE_HOURS)
   }
 
   @Test
-  fun anOverviewComputedBeforeCurrentExistedStillAnswers() {
-    // Recomputed on the next log write, but until then the three doubles are all it has.
+  fun theOverviewAnswersByKeyAndIsSilentAboutMetersItHasNot() {
     val overview = MaintenanceOverview(
       aircraft_id = "t",
-      current_engine_time = 1041.8,
+      current = listOf(MeterReading(MeterKeys.ENGINE_HOURS, value_ = 1041.8)),
     )
 
     assertThat(overview.currentFor(MeterKeys.ENGINE_HOURS)).isEqualTo(1041.8)
@@ -200,8 +214,13 @@ class MeterReadingsTest {
   @Test
   fun theLeadReadingFollowsDeclarationOrder() {
     // The airplane lists airframe hours first, so a log carrying several leads with that one.
-    val log =
-      MaintenanceLog(id = "l1", engine_hour = 1041.8, airframe_time = 1111.0)
+    val log = MaintenanceLog(
+      id = "l1",
+      readings = listOf(
+        MeterReading(MeterKeys.ENGINE_HOURS, value_ = 1041.8),
+        MeterReading(MeterKeys.AIRFRAME_HOURS, value_ = 1111.0),
+      ),
+    )
 
     assertThat(AirplaneTemplate.TEMPLATE.primaryReading(log)?.first?.key)
       .isEqualTo(MeterKeys.AIRFRAME_HOURS)

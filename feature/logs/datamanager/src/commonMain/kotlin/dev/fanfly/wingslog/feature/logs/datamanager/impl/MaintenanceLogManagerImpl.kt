@@ -7,7 +7,6 @@ import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.EntityStore
 import dev.fanfly.wingslog.core.storage.EntityStoreFactory
 import dev.fanfly.wingslog.core.storage.ThingScopeResolver
-import dev.fanfly.wingslog.core.template.MeterKeys
 import dev.fanfly.wingslog.core.template.currentReadings
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.thing.ComponentType
@@ -122,9 +121,6 @@ class MaintenanceLogManagerImpl(
     val logs = logStore.observeAll(scope)
       .first()
       .map { it.value }
-    // Computed once, then projected into both shapes. The three doubles are the same numbers the
-    // keyed list already holds — deriving them separately meant reading the legacy log fields to
-    // populate legacy overview fields, so a log that recorded only `readings` produced zeros.
     val current = currentReadings(logs)
     val overview = MaintenanceOverview(
       aircraft_id = thingId,
@@ -132,14 +128,8 @@ class MaintenanceLogManagerImpl(
       airframe_log_count = logs.count { it.component_type == ComponentType.COMPONENT_AIRFRAME },
       engine_log_count = logs.count { it.component_type == ComponentType.COMPONENT_ENGINE },
       propeller_log_count = logs.count { it.component_type == ComponentType.COMPONENT_PROPELLER },
-      // Written for older clients only — nothing in this build reads them. A build that predates
-      // `current` would otherwise read a document this one wrote and show zero hours (#730).
-      current_airframe_time = current.valueFor(MeterKeys.AIRFRAME_HOURS),
-      current_engine_time = current.valueFor(MeterKeys.ENGINE_HOURS),
-      current_propeller_time = current.valueFor(MeterKeys.PROP_HOURS),
-      // Every meter the template declares, computed the same way the three above are. The three
-      // stay written because the export and the due-status rules still read them; this is what a
-      // car's odometer has to land in, having nowhere to go in a fixed set of aviation doubles.
+      // The maximum this Thing's logs record for each meter, whatever meters those are — which is
+      // what a car's odometer needed and a fixed set of aviation doubles could never hold (#730).
       current = current,
     )
     overviewStore.put(OVERVIEW_ID, overview, scope)
