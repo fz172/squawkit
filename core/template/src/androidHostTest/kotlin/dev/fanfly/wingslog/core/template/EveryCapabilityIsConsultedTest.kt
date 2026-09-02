@@ -32,8 +32,10 @@ class EveryCapabilityIsConsultedTest {
     "technician_certificates" to "#684",
     // Not a removal at a call site but a choice between two export renderers, and the generic
     // layout's columns derive from the lexicon and the meter set (PRD §8.5). #703 made the meter
-    // set readable, which was the precondition; building the second renderer is what remains.
-    "export_layout" to "#730",
+    // set readable, which was the precondition; building the second renderer is what remains, and
+    // #770 is where it is tracked — this pointed at #730 until that closed with the renderer still
+    // unbuilt, which is how a deferral quietly outlives the issue it defers to.
+    "export_layout" to "#770",
   )
 
   @Test

@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.core.template
 
 import androidx.compose.runtime.staticCompositionLocalOf
+import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
 import dev.fanfly.wingslog.thing.ComponentSlot
 import dev.fanfly.wingslog.thing.MeterDef
 import dev.fanfly.wingslog.thing.SpecField
@@ -18,6 +19,25 @@ import dev.fanfly.wingslog.thing.ThingTemplate
  * account-level screen has no template and must still render a label.
  */
 val LocalThingTemplate = staticCompositionLocalOf<ThingTemplate?> { null }
+
+/**
+ * True when `ComponentType` — the frozen airframe / engine / propeller enum — describes this
+ * template's parts.
+ *
+ * The task and log forms ask "which component?" with a control whose three options are that enum,
+ * and the enum is aviation's alone: PRD §6 freezes it rather than extending it, because an enum
+ * can never cover the slots a template declares. Offering it to a boat or a car asks a question
+ * with no true answer, and to a home a question about parts it does not have — so those presets
+ * get **no picker at all** and the record is filed against the thing itself, which is what every
+ * task on a preset with no components has always meant.
+ *
+ * **Null counts as aviation.** A template reaches the composition from the selected Thing's own
+ * DNA, and a Thing migrated by the cutover carries none (see [ThingInflater]) — it predates the
+ * pivot, so it can only be an aeroplane. Reading null as "not aviation" would take the picker away
+ * from exactly the accounts that have always had it.
+ */
+val ThingTemplate?.usesComponentTypes: Boolean
+  get() = this == null || id == AirplaneTemplate.ID
 
 /** The meter [key] names, or null when this template does not declare it. */
 fun ThingTemplate?.meter(key: String): MeterDef? =

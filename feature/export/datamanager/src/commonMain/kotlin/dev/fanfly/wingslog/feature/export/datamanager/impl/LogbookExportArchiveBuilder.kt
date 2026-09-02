@@ -12,6 +12,7 @@ import dev.fanfly.wingslog.core.template.meter
 import dev.fanfly.wingslog.core.template.meterUnit
 import dev.fanfly.wingslog.core.template.readingFor
 import dev.fanfly.wingslog.core.template.specValue
+import dev.fanfly.wingslog.core.template.usesComponentTypes
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDateRange
 import dev.fanfly.wingslog.feature.export.datamanager.ExportFormat
 import dev.fanfly.wingslog.feature.export.datamanager.ExportRequest
@@ -461,22 +462,30 @@ class LogbookExportArchiveBuilder(
     timeZone: TimeZone
   ): List<List<String>> =
     buildList {
+      // Airframe / engine / propeller is `ComponentType`, and no preset outside aviation has parts
+      // that enum can name — so on a car or a house the column could only ever read "Airframe" for
+      // every row, which is a column of noise rather than data (#732).
+      val showComponent = bundle.thing.template.usesComponentTypes
       add(
-        listOf(
-          "Title",
-          "Component",
-          "Type",
-          "Reference #",
-          "Authority",
-          "Schedule",
-          "Last Complied - Date",
-          "Last Complied - Meter",
-          "Next Due - Date",
-          "Next Due - Meter",
-          "One-Time",
-          "Notes",
-          "Task Details",
-        )
+        buildList {
+          add("Title")
+          if (showComponent) add("Component")
+          addAll(
+            listOf(
+              "Type",
+              "Reference #",
+              "Authority",
+              "Schedule",
+              "Last Complied - Date",
+              "Last Complied - Meter",
+              "Next Due - Date",
+              "Next Due - Meter",
+              "One-Time",
+              "Notes",
+              "Task Details",
+            )
+          )
+        }
       )
       bundle.tasks.forEach { task ->
         val due = bundle.dueByTaskId[task.id]
@@ -485,24 +494,28 @@ class LogbookExportArchiveBuilder(
         // always implied, so these two columns keep reading hours for an aeroplane.
         val taskMeterKey = meterKeyFor(task.component, task.rules)
         add(
-          listOf(
-            task.title,
-            task.component.label(),
-            task.type.label(),
-            task.reference_number,
-            task.compliance_authority,
-            task.rules.scheduleLabel(bundle),
-            (lastLog?.timestamp).date(timeZone),
-            lastLog?.readingFor(taskMeterKey)
-              .meterCell(bundle, taskMeterKey),
-            due?.nextDueDate?.toString()
-              .orEmpty(),
-            due?.nextDueEngine?.toDouble()
-              .meterCell(bundle, due?.nextDueMeterKey ?: taskMeterKey),
-            if (task.is_one_time) "Yes" else "No",
-            task.notes,
-            task.compliance_details,
-          )
+          buildList {
+            add(task.title)
+            if (showComponent) add(task.component.label())
+            addAll(
+              listOf(
+                task.type.label(),
+                task.reference_number,
+                task.compliance_authority,
+                task.rules.scheduleLabel(bundle),
+                (lastLog?.timestamp).date(timeZone),
+                lastLog?.readingFor(taskMeterKey)
+                  .meterCell(bundle, taskMeterKey),
+                due?.nextDueDate?.toString()
+                  .orEmpty(),
+                due?.nextDueEngine?.toDouble()
+                  .meterCell(bundle, due?.nextDueMeterKey ?: taskMeterKey),
+                if (task.is_one_time) "Yes" else "No",
+                task.notes,
+                task.compliance_details,
+              )
+            )
+          }
         )
       }
     }
@@ -512,14 +525,19 @@ class LogbookExportArchiveBuilder(
     timeZone: TimeZone
   ): List<List<String>> =
     buildList {
+      // No Component or Component Serial columns, on any preset (#748).
+      //
+      // Unconditional rather than gated the way the compliance table's is, because a squawk has
+      // never carried a component to print: the form's own state defaults to COMPONENT_UNKNOWN and
+      // no screen has ever offered to change it. The two columns therefore read "Unknown" and
+      // blank on every row of every export ever produced — noise for an aeroplane exactly as much
+      // as for a car.
       add(
         listOf(
           "Created",
           "Title",
           "Description",
           "Priority",
-          "Component",
-          "Component Serial",
           "Status",
           "Action Date",
         )
@@ -531,8 +549,6 @@ class LogbookExportArchiveBuilder(
             squawk.title,
             squawk.description,
             squawk.priority.label(),
-            squawk.component_type.label(),
-            squawk.component_serial,
             squawk.statusLabel(),
             squawk.actionDate(bundle, timeZone),
           )
