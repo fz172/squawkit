@@ -213,7 +213,7 @@ class AdaptiveShellViewModelTest {
   }
 
   // In-memory device-local selection store; starts empty so tests behave like a fresh install
-  // unless they seed [selectedAircraftStore.saved].
+  // unless they seed [selectedThingStore.saved].
   private val selectedThingStore = object : SelectedThingStore {
     var saved: String? = null
     override fun load(): String? = saved
@@ -249,9 +249,9 @@ class AdaptiveShellViewModelTest {
     val s = vm.uiState.value
     // An airplane with no name of its own falls back to its identifier — the tail number — so the
     // switcher reads exactly as it did before the label became template-driven.
-    assertThat(s.thing.map { it.label }).containsExactly("N1", "N2")
+    assertThat(s.things.map { it.label }).containsExactly("N1", "N2")
       .inOrder()
-    assertThat(s.thing.first().subtitle).isEqualTo("Cessna 172")
+    assertThat(s.things.first().subtitle).isEqualTo("Cessna 172")
     assertThat(s.selectedThingId).isEqualTo("a1")
     assertThat(s.section).isEqualTo(ShellSection.DASHBOARD)
   }
@@ -272,7 +272,7 @@ class AdaptiveShellViewModelTest {
     )
     fleet.value = listOf(home)
 
-    val row = viewModel().uiState.value.thing.single()
+    val row = viewModel().uiState.value.things.single()
 
     assertThat(row.label).isEqualTo("1421 Maple Street")
     // Nothing to add: no make, no model, and the name already is the only thing it has.
@@ -296,7 +296,7 @@ class AdaptiveShellViewModelTest {
     }
 
   @Test
-  fun selectsFirstAircraftWhenFleetArrivesAfterEmptyState() =
+  fun selectsFirstThingWhenFleetArrivesAfterEmptyState() =
     runTest(testDispatcher) {
       fleet.value = emptyList()
       val vm = viewModel()
@@ -311,7 +311,7 @@ class AdaptiveShellViewModelTest {
     }
 
   @Test
-  fun restoresRememberedAircraftFromStore() = runTest(testDispatcher) {
+  fun restoresRememberedThingFromStore() = runTest(testDispatcher) {
     // Simulate a previous session that left "a2" selected on this device.
     selectedThingStore.saved = "a2"
     fleet.value = listOf(thing("a1", "N1"), thing("a2", "N2"))
@@ -321,7 +321,7 @@ class AdaptiveShellViewModelTest {
   }
 
   @Test
-  fun fallsBackToFirstWhenRememberedAircraftIsGone() = runTest(testDispatcher) {
+  fun fallsBackToFirstWhenRememberedThingIsGone() = runTest(testDispatcher) {
     // The remembered thing was deleted since last session.
     selectedThingStore.saved = "deleted"
     fleet.value = listOf(thing("a1", "N1"), thing("a2", "N2"))
@@ -359,7 +359,7 @@ class AdaptiveShellViewModelTest {
   }
 
   @Test
-  fun notAtLimitWhenAircraftLimitIsUnlimited() = runTest(testDispatcher) {
+  fun notAtLimitWhenThingLimitIsUnlimited() = runTest(testDispatcher) {
     thingLimit.value = null
     fleet.value = listOf(thing("a1", "N1"), thing("a2", "N2"))
     val vm = viewModel()
@@ -403,7 +403,7 @@ class AdaptiveShellViewModelTest {
   // record variants additionally publish a scroll target instead of opening the record's edit form.
 
   @Test
-  fun notificationTap_squawk_selectsAircraftSectionAndScrollTarget() =
+  fun notificationTap_squawk_selectsThingSectionAndScrollTarget() =
     runTest(testDispatcher) {
       fleet.value = listOf(thing("a1", "N1"), thing("a2", "N2"))
       val vm = viewModel()
@@ -421,7 +421,7 @@ class AdaptiveShellViewModelTest {
     }
 
   @Test
-  fun notificationTap_task_selectsAircraftSectionAndScrollTarget() =
+  fun notificationTap_task_selectsThingSectionAndScrollTarget() =
     runTest(testDispatcher) {
       fleet.value = listOf(thing("a1", "N1"))
       val vm = viewModel()
@@ -438,7 +438,7 @@ class AdaptiveShellViewModelTest {
     }
 
   @Test
-  fun notificationTap_log_selectsAircraftSectionAndScrollTarget() =
+  fun notificationTap_log_selectsThingSectionAndScrollTarget() =
     runTest(testDispatcher) {
       fleet.value = listOf(thing("a1", "N1"))
       val vm = viewModel()
@@ -461,7 +461,7 @@ class AdaptiveShellViewModelTest {
       val vm = viewModel()
 
       vm.onNotificationTap(
-        NotificationTapTarget.Aircraft(
+        NotificationTapTarget.Thing(
           thingId = "a1",
           tab = "tasks"
         )
@@ -473,7 +473,7 @@ class AdaptiveShellViewModelTest {
     }
 
   /**
-   * The server names four tabs (`aircraftTabForRecordType`), not two. `logs` reaches a pilot whenever
+   * The server names four tabs (`thingTabForRecordType`), not two. `logs` reaches a pilot whenever
    * a collaborator adds a logbook entry, and `overview` carries both thing-level activity and the
    * §7.4 high-volume notice — an unmapped tab silently leaves the pilot wherever they already were.
    */
@@ -490,7 +490,7 @@ class AdaptiveShellViewModelTest {
       )) {
         val vm = viewModel()
         vm.onNotificationTap(
-          NotificationTapTarget.Aircraft(
+          NotificationTapTarget.Thing(
             thingId = "a1",
             tab = tab
           )
@@ -512,7 +512,7 @@ class AdaptiveShellViewModelTest {
       )
 
       vm.onNotificationTap(
-        NotificationTapTarget.Aircraft(
+        NotificationTapTarget.Thing(
           thingId = "a1",
           tab = "tasks"
         )
@@ -530,7 +530,7 @@ class AdaptiveShellViewModelTest {
       vm.selectSection(ShellSection.LOGS)
 
       vm.onNotificationTap(
-        NotificationTapTarget.Aircraft(
+        NotificationTapTarget.Thing(
           thingId = "a1",
           tab = null
         )
@@ -570,9 +570,9 @@ class AdaptiveShellViewModelTest {
 
     val s = viewModel().uiState.value
 
-    assertThat(s.thing.map { it.id }).containsExactly("a1", "a2")
+    assertThat(s.things.map { it.id }).containsExactly("a1", "a2")
       .inOrder()
-    assertThat(s.thing.map { it.renderable }).containsExactly(true, false)
+    assertThat(s.things.map { it.renderable }).containsExactly(true, false)
       .inOrder()
   }
 
@@ -607,7 +607,7 @@ class AdaptiveShellViewModelTest {
       ),
     )
 
-    val row = viewModel().uiState.value.thing.single()
+    val row = viewModel().uiState.value.things.single()
 
     assertThat(row.label).isEqualTo("N123AB")
     assertThat(row.subtitle).isEqualTo("Cessna 172")

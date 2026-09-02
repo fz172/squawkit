@@ -49,7 +49,7 @@ import dev.fanfly.wingslog.feature.squawk.model.SquawkStatus
 import dev.fanfly.wingslog.feature.squawk.model.SquawkWithStatus
 import dev.fanfly.wingslog.feature.squawk.viewing.SquawkCard
 import dev.fanfly.wingslog.feature.squawk.viewing.SquawkDetailSheet
-import dev.fanfly.wingslog.feature.thing.dashboard.data.AircraftOverviewAction
+import dev.fanfly.wingslog.feature.thing.dashboard.data.ThingOverviewAction
 import dev.fanfly.wingslog.feature.thing.dashboard.data.ThingOverviewUiState
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
@@ -71,8 +71,8 @@ private val squawkOrder = compareByDescending<SquawkWithStatus> {
 @Composable
 fun SquawkTab(
   state: ThingOverviewUiState.Success,
-  onAction: (AircraftOverviewAction) -> Unit,
-  onMutationAction: ((AircraftOverviewAction) -> Unit)? = onAction,
+  onAction: (ThingOverviewAction) -> Unit,
+  onMutationAction: ((ThingOverviewAction) -> Unit)? = onAction,
   onLogClick: ((logId: String) -> Unit)? = null,
   /** Jumped-to squawk (from a log's Resolved Squawks): switch to its sub-view and scroll to it. */
   scrollToSquawkId: String? = null,
@@ -208,7 +208,7 @@ fun SquawkTab(
             val isJumpTarget = item.squawk.id == scrollToSquawkId
             SquawkCard(
               item = item,
-              onClick = { onAction(AircraftOverviewAction.ShowSquawkDetail(item)) },
+              onClick = { onAction(ThingOverviewAction.ShowSquawkDetail(item)) },
               modifier = Modifier.fillMaxWidth()
                 .then(
                   if (isJumpTarget) {
@@ -236,7 +236,7 @@ fun SquawkTab(
       onLogClick = onLogClick,
       onDismiss = {
         openError = null
-        onAction(AircraftOverviewAction.DismissSquawkDetail)
+        onAction(ThingOverviewAction.DismissSquawkDetail)
       },
       onAttachmentTap = { attachment ->
         openError = null
@@ -252,9 +252,9 @@ fun SquawkTab(
       openError = openError,
       onEditClick = onMutationAction?.let { mutate ->
         {
-          onAction(AircraftOverviewAction.DismissSquawkDetail)
+          onAction(ThingOverviewAction.DismissSquawkDetail)
           mutate(
-            AircraftOverviewAction.EditSquawkClick(
+            ThingOverviewAction.EditSquawkClick(
               state.thing.id,
               selected.squawk.id
             )

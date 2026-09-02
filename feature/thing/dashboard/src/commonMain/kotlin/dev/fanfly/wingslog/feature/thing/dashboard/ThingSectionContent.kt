@@ -39,7 +39,7 @@ import dev.fanfly.wingslog.feature.thing.dashboard.compose.tabs.LogsTab
 import dev.fanfly.wingslog.feature.thing.dashboard.compose.tabs.MaintenanceTasksTab
 import dev.fanfly.wingslog.feature.thing.dashboard.compose.tabs.OverviewTab
 import dev.fanfly.wingslog.feature.thing.dashboard.compose.tabs.SquawkTab
-import dev.fanfly.wingslog.feature.thing.dashboard.data.AircraftOverviewAction
+import dev.fanfly.wingslog.feature.thing.dashboard.data.ThingOverviewAction
 import dev.fanfly.wingslog.feature.thing.dashboard.data.ThingOverviewUiState
 import dev.fanfly.wingslog.feature.thing.dashboard.data.ThingOverviewViewModel
 import kotlinx.coroutines.launch
@@ -64,7 +64,7 @@ import wingslog.feature.thing.dashboard.generated.resources.Res as DashboardRes
  * from the shell's `sectionContent` slot for everything except [dev.fanfly.wingslog.core.ui.adaptive.ShellSection.SETTINGS], which is
  * global and rendered by the host directly (it depends on `feature:settings`).
  *
- * - per-thing sections → [AircraftSectionContent], or an empty state when no thing exists.
+ * - per-thing sections → [ThingSectionContent], or an empty state when no thing exists.
  */
 @Composable
 fun ShellSectionBody(
@@ -83,7 +83,7 @@ fun ShellSectionBody(
   onScrollTargetConsumed: () -> Unit = {},
 ) {
   if (thingId != null) {
-    AircraftSectionContent(
+    ThingSectionContent(
       thingId = thingId,
       section = section,
       navController = navController,
@@ -110,8 +110,8 @@ fun ShellSectionBody(
 /**
  * The per-section floating action button for the adaptive shell's `sectionFab` slot: Add Squawk /
  * Task / Log for the matching section, navigating into the same add screens that
- * [AircraftSectionContent]'s `onAction` uses. Dashboard has no primary add action and Settings is
- * global, so neither shows a FAB. Returns nothing until an thing is selected — the add routes are
+ * [ThingSectionContent]'s `onAction` uses. Dashboard has no primary add action and Settings is
+ * global, so neither shows a FAB. Returns nothing until a thing is selected — the add routes are
  * all thing-scoped.
  *
  * Lives here (not in `core:ui`) because the shell cannot depend on the feature add-screen routes; it
@@ -203,7 +203,7 @@ private fun SectionAddFab(label: String, onClick: () -> Unit) {
  * [dev.fanfly.wingslog.core.ui.adaptive.ShellSection.SETTINGS] is global and handled by the host, not here.
  */
 @Composable
-fun AircraftSectionContent(
+fun ThingSectionContent(
   thingId: String,
   section: ShellSection,
   navController: NavController,
@@ -278,18 +278,18 @@ fun AircraftSectionContent(
   // logs, squawks, and the thing on one deterministic path and removes the cross-ViewModel event
   // relay that previously dropped log navigation. Edit actions dismiss their detail overlay first so
   // it doesn't float above the pushed screen.
-  val onAction: (AircraftOverviewAction) -> Unit =
+  val onAction: (ThingOverviewAction) -> Unit =
     remember(viewModel, navController, thingId) {
       { action ->
         when (action) {
-          is AircraftOverviewAction.AddLogClick ->
+          is ThingOverviewAction.AddLogClick ->
             navController.navigate(
               Screen.AddMaintenanceLog.createRoute(
                 thingId
               )
             )
 
-          is AircraftOverviewAction.EditLogClick ->
+          is ThingOverviewAction.EditLogClick ->
             navController.navigate(
               Screen.EditMaintenanceLog.createRoute(
                 thingId,
@@ -297,15 +297,15 @@ fun AircraftSectionContent(
               )
             )
 
-          is AircraftOverviewAction.AddTaskClick ->
+          is ThingOverviewAction.AddTaskClick ->
             navController.navigate(
               Screen.AddMaintenanceTask.createRoute(
                 thingId
               )
             )
 
-          is AircraftOverviewAction.EditTaskClick -> {
-            viewModel.onAction(AircraftOverviewAction.DismissTaskDetail)
+          is ThingOverviewAction.EditTaskClick -> {
+            viewModel.onAction(ThingOverviewAction.DismissTaskDetail)
             navController.navigate(
               Screen.EditMaintenanceTask.createRoute(
                 thingId,
@@ -314,11 +314,11 @@ fun AircraftSectionContent(
             )
           }
 
-          is AircraftOverviewAction.AddSquawkClick ->
+          is ThingOverviewAction.AddSquawkClick ->
             navController.navigate(Screen.AddSquawk.createRoute(thingId))
 
-          is AircraftOverviewAction.EditSquawkClick -> {
-            viewModel.onAction(AircraftOverviewAction.DismissSquawkDetail)
+          is ThingOverviewAction.EditSquawkClick -> {
+            viewModel.onAction(ThingOverviewAction.DismissSquawkDetail)
             navController.navigate(
               Screen.EditSquawk.createRoute(
                 thingId,
@@ -327,13 +327,13 @@ fun AircraftSectionContent(
             )
           }
 
-          is AircraftOverviewAction.EditClick ->
-            navController.navigate(Screen.EditAircraft.createRoute(thingId))
+          is ThingOverviewAction.EditClick ->
+            navController.navigate(Screen.EditThing.createRoute(thingId))
 
-          is AircraftOverviewAction.ManageAccessClick ->
+          is ThingOverviewAction.ManageAccessClick ->
             navController.navigate(Screen.ManageAccess.createRoute(thingId))
 
-          AircraftOverviewAction.BackClick -> Unit
+          ThingOverviewAction.BackClick -> Unit
 
           else -> viewModel.onAction(action)
         }
@@ -389,7 +389,7 @@ fun AircraftSectionContent(
           onAction = onAction,
           onMutationAction = onAction,
           onLogClick = { logId ->
-            onAction(AircraftOverviewAction.DismissSquawkDetail)
+            onAction(ThingOverviewAction.DismissSquawkDetail)
             pendingLogScrollTarget = logId
             onNavigateToSection(ShellSection.LOGS)
           },
@@ -404,13 +404,13 @@ fun AircraftSectionContent(
           // Route through the same onAction wrapper as every other section, which navigates directly.
           onNavigateToAddLog = {
             onAction(
-              AircraftOverviewAction.AddLogClick(
+              ThingOverviewAction.AddLogClick(
                 thingId
               )
             )
           },
           onNavigateToEditLog = { logId ->
-            onAction(AircraftOverviewAction.EditLogClick(thingId, logId))
+            onAction(ThingOverviewAction.EditLogClick(thingId, logId))
           },
           onTaskClick = { taskId ->
             pendingTaskScrollTarget = taskId
@@ -435,11 +435,11 @@ fun AircraftSectionContent(
           logs = state.logsForSelectedTask,
           onDismiss = {
             taskSheetOpenError = null
-            onAction(AircraftOverviewAction.DismissTaskDetail)
+            onAction(ThingOverviewAction.DismissTaskDetail)
           },
           onEditClick = {
             onAction(
-              AircraftOverviewAction.EditTaskClick(
+              ThingOverviewAction.EditTaskClick(
                 thingId,
                 selectedTask.card.id
               )
@@ -465,8 +465,8 @@ fun AircraftSectionContent(
           .find { it.card.id == deletingId }?.card?.title ?: ""
         DeleteTaskConfirmDialog(
           title = title,
-          onConfirm = { onAction(AircraftOverviewAction.ConfirmDeleteTask) },
-          onDismiss = { onAction(AircraftOverviewAction.CancelDeleteTask) },
+          onConfirm = { onAction(ThingOverviewAction.ConfirmDeleteTask) },
+          onDismiss = { onAction(ThingOverviewAction.CancelDeleteTask) },
         )
       }
     }

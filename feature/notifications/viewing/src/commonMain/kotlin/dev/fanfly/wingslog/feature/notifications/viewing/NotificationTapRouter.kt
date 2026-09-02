@@ -2,6 +2,10 @@ package dev.fanfly.wingslog.feature.notifications.viewing
 
 import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.feature.notifications.model.NotificationTapTarget
+import dev.fanfly.wingslog.feature.notifications.viewing.NotificationTapRouter.decode
+import dev.fanfly.wingslog.feature.notifications.viewing.NotificationTapRouter.deliver
+import dev.fanfly.wingslog.feature.notifications.viewing.NotificationTapRouter.encode
+import dev.fanfly.wingslog.feature.notifications.viewing.NotificationTapRouter.pending
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -27,7 +31,7 @@ private const val HOST = "notification-tap"
  * plain `"$SCHEME://$HOST/…"` string — deliberately not `android.net.Uri`, which doesn't exist
  * outside androidMain. [AndroidLocalNotifier] calls [encode] when building a notification's tap
  * `PendingIntent`; `MainActivity.handleDeepLink` calls [deliver] (which calls [decode]) as one more
- * link in the existing `AircraftShareDeepLinks` / `EmailLinkDeepLinks` chain.
+ * link in the existing `ThingShareDeepLinks` / `EmailLinkDeepLinks` chain.
  */
 object NotificationTapRouter {
   private val _pending = MutableStateFlow<NotificationTapTarget?>(null)
@@ -36,7 +40,7 @@ object NotificationTapRouter {
   /**
    * Called by a host's launch-intent handler with whatever URI the OS handed it. Returns `false`
    * (delivering nothing) for a URI this router doesn't own, so callers can fall through to their
-   * next deep-link handler — same contract as `AircraftShareDeepLinks.deliver`.
+   * next deep-link handler — same contract as `ThingShareDeepLinks.deliver`.
    */
   fun deliver(uri: String): Boolean {
     val target = decode(uri) ?: return false
@@ -60,8 +64,9 @@ object NotificationTapRouter {
     is NotificationTapTarget.Squawk -> "$SCHEME://$HOST/squawk/${target.thingId}/${target.squawkId}"
     is NotificationTapTarget.Task -> "$SCHEME://$HOST/task/${target.thingId}/${target.taskId}"
     is NotificationTapTarget.Log -> "$SCHEME://$HOST/log/${target.thingId}/${target.logId}"
-    is NotificationTapTarget.Aircraft ->
-      "$SCHEME://$HOST/aircraft/${target.thingId}" + (target.tab?.let { "?tab=$it" } ?: "")
+    is NotificationTapTarget.Thing ->
+      "$SCHEME://$HOST/thing/${target.thingId}" + (target.tab?.let { "?tab=$it" }
+        ?: "")
   }
 
   private fun decode(uri: String): NotificationTapTarget? {
@@ -69,8 +74,12 @@ object NotificationTapRouter {
     if (!uri.startsWith(prefix)) return null
     val withoutPrefix = uri.removePrefix(prefix)
     val queryIndex = withoutPrefix.indexOf('?')
-    val path = if (queryIndex >= 0) withoutPrefix.substring(0, queryIndex) else withoutPrefix
-    val query = if (queryIndex >= 0) withoutPrefix.substring(queryIndex + 1) else null
+    val path = if (queryIndex >= 0) withoutPrefix.substring(
+      0,
+      queryIndex
+    ) else withoutPrefix
+    val query =
+      if (queryIndex >= 0) withoutPrefix.substring(queryIndex + 1) else null
     val segments = path.split("/")
     val tab = query
       ?.split("&")
@@ -80,10 +89,16 @@ object NotificationTapRouter {
       }
     val thingId = segments.getOrNull(1) ?: return null
     return when (segments.getOrNull(0)) {
-      "squawk" -> segments.getOrNull(2)?.let { NotificationTapTarget.Squawk(thingId, it) }
-      "task" -> segments.getOrNull(2)?.let { NotificationTapTarget.Task(thingId, it) }
-      "log" -> segments.getOrNull(2)?.let { NotificationTapTarget.Log(thingId, it) }
-      "aircraft" -> NotificationTapTarget.Aircraft(thingId, tab)
+      "squawk" -> segments.getOrNull(2)
+        ?.let { NotificationTapTarget.Squawk(thingId, it) }
+
+      "task" -> segments.getOrNull(2)
+        ?.let { NotificationTapTarget.Task(thingId, it) }
+
+      "log" -> segments.getOrNull(2)
+        ?.let { NotificationTapTarget.Log(thingId, it) }
+
+      "thing" -> NotificationTapTarget.Thing(thingId, tab)
       else -> null
     }
   }

@@ -14,7 +14,7 @@ sealed interface ExportUiState {
    * Editable export setup with live thing selection and size estimates.
    */
   data class Configuring(
-    val thing: List<AircraftSelectionRow> = emptyList(),
+    val things: List<ThingSelectionRow> = emptyList(),
     val selectedThingIds: Set<String> = emptySet(),
     val formats: Set<ExportFormat> = ExportFormat.ALL,
     val dateRange: DateRangeOption = DateRangeOption.AllTime,
@@ -27,7 +27,7 @@ sealed interface ExportUiState {
     val emailDeliveryLocked: Boolean = false,
     val estimatedSizeBytes: Long = 0L,
     val estimatedLogCount: Int = 0,
-    val isLoadingAircraft: Boolean = true,
+    val isLoadingThings: Boolean = true,
   ) : ExportUiState
 
   data class Running(val step: ExportProgressStep, val percent: Int) :

@@ -73,7 +73,6 @@ import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.logNoun
 import dev.fanfly.wingslog.core.template.squawkNoun
 import dev.fanfly.wingslog.core.template.taskNoun
-import dev.fanfly.wingslog.core.template.thingNoun
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedFloatingAction
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedTopBar
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
@@ -92,8 +91,6 @@ import dev.fanfly.wingslog.thing.Section
 import dev.fanfly.wingslog.thing.ThingTemplate
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
-import wingslog.core.sharedassets.generated.resources.switcher_add_thing
-import wingslog.core.sharedassets.generated.resources.switcher_select_thing
 import wingslog.core.sharedassets.generated.resources.app_name
 import wingslog.core.sharedassets.generated.resources.back
 import wingslog.core.sharedassets.generated.resources.enter_invite_code
@@ -101,6 +98,8 @@ import wingslog.core.sharedassets.generated.resources.ic_launcher_foreground
 import wingslog.core.sharedassets.generated.resources.settings
 import wingslog.core.sharedassets.generated.resources.shell_nav_tasks_narrow
 import wingslog.core.sharedassets.generated.resources.shell_tab_dashboard
+import wingslog.core.sharedassets.generated.resources.switcher_add_thing
+import wingslog.core.sharedassets.generated.resources.switcher_select_thing
 import wingslog.core.sharedassets.generated.resources.Res as UiRes
 
 /** Lightweight thing projection used by the shell's switcher. */
@@ -231,7 +230,7 @@ private fun Section.toShellSection(): ShellSection? = when (this) {
 
 /** Plain UI state for [AdaptiveAppShell]; produced by a host-side ViewModel. */
 data class AdaptiveShellUiState(
-  val thing: List<ShellThing> = emptyList(),
+  val things: List<ShellThing> = emptyList(),
   val selectedThingId: String? = null,
   val section: ShellSection = ShellSection.DASHBOARD,
   /** Current user's display name + photo, for the sidebar account/settings entry. */
@@ -239,7 +238,7 @@ data class AdaptiveShellUiState(
   val accountPhotoUrl: String? = null,
 ) {
   val selectedThing: ShellThing?
-    get() = thing.firstOrNull { it.id == selectedThingId }
+    get() = things.firstOrNull { it.id == selectedThingId }
 }
 
 /**
@@ -249,7 +248,7 @@ data class AdaptiveShellUiState(
  * - **EXPANDED / LARGE** — a custom [WingsSidebar] (brand + thing switcher + sections + account
  *   footer), matching the design mock (D2: custom sidebar).
  * - **MEDIUM** — `NavigationSuiteScaffold` icon rail, with the switcher in the top bar.
- * - **COMPACT** — the same section shell as rail tiers once an thing exists.
+ * - **COMPACT** — the same section shell as rail tiers once a thing exists.
  *
  * Section bodies are supplied by the host via [sectionContent] (M3: real per-thing content), and
  * the no-thing prompt by [emptyFleetContent] — both are host slots because real content lives in
@@ -260,9 +259,9 @@ data class AdaptiveShellUiState(
 fun AdaptiveAppShell(
   state: AdaptiveShellUiState,
   onSelectSection: (ShellSection) -> Unit,
-  onSelectAircraft: (String) -> Unit,
+  onSelectThing: (String) -> Unit,
   onOpenSettings: () -> Unit,
-  onAddAircraft: () -> Unit,
+  onAddThing: () -> Unit,
   // #209: opens the manual invite-code entry surface. Null when thing sharing is gated off for
   // the build, which removes the switcher affordance entirely.
   onEnterInviteCode: (() -> Unit)? = null,
@@ -310,7 +309,7 @@ fun AdaptiveAppShell(
       }
     }
     CompositionLocalProvider(LocalLayoutTier provides tier) {
-      if (state.thing.isEmpty()) {
+      if (state.things.isEmpty()) {
         EmptyFleetShell(
           tier = tier,
           state = state,
@@ -325,9 +324,9 @@ fun AdaptiveAppShell(
           tier = tier,
           state = state,
           onSelectSection = onSelectSection,
-          onSelectAircraft = onSelectAircraft,
+          onSelectThing = onSelectThing,
           onOpenSettings = onOpenSettings,
-          onAddAircraft = onAddAircraft,
+          onAddThing = onAddThing,
           onEnterInviteCode = onEnterInviteCode,
           content = content,
           fab = fab,
@@ -376,8 +375,8 @@ private fun EmptyFleetShell(
       WingsSidebar(
         state = state,
         onSelectSection = onSelectSection,
-        onSelectAircraft = {},
-        onAddAircraft = {},
+        onSelectThing = {},
+        onAddThing = {},
         onOpenAccount = toggleSettings,
         sectionsMuted = true,
         showSwitcher = false,
@@ -492,9 +491,9 @@ private fun ShellForTier(
   tier: LayoutTier,
   state: AdaptiveShellUiState,
   onSelectSection: (ShellSection) -> Unit,
-  onSelectAircraft: (String) -> Unit,
+  onSelectThing: (String) -> Unit,
   onOpenSettings: () -> Unit,
-  onAddAircraft: () -> Unit,
+  onAddThing: () -> Unit,
   onEnterInviteCode: (() -> Unit)?,
   content: @Composable () -> Unit,
   fab: @Composable () -> Unit,
@@ -505,9 +504,9 @@ private fun ShellForTier(
       SidebarShell(
         state = state,
         onSelectSection = onSelectSection,
-        onSelectAircraft = onSelectAircraft,
+        onSelectThing = onSelectThing,
         onOpenSettings = onOpenSettings,
-        onAddAircraft = onAddAircraft,
+        onAddThing = onAddThing,
         onEnterInviteCode = onEnterInviteCode,
         content = content,
         fab = fab,
@@ -518,9 +517,9 @@ private fun ShellForTier(
       ScaffoldShell(
         state = state,
         onSelectSection = onSelectSection,
-        onSelectAircraft = onSelectAircraft,
+        onSelectThing = onSelectThing,
         onOpenSettings = onOpenSettings,
-        onAddAircraft = onAddAircraft,
+        onAddThing = onAddThing,
         onEnterInviteCode = onEnterInviteCode,
         content = content,
         fab = fab,
@@ -537,9 +536,9 @@ private fun ShellForTier(
 private fun SidebarShell(
   state: AdaptiveShellUiState,
   onSelectSection: (ShellSection) -> Unit,
-  onSelectAircraft: (String) -> Unit,
+  onSelectThing: (String) -> Unit,
   onOpenSettings: () -> Unit,
-  onAddAircraft: () -> Unit,
+  onAddThing: () -> Unit,
   onEnterInviteCode: (() -> Unit)?,
   content: @Composable () -> Unit,
   fab: @Composable () -> Unit,
@@ -549,8 +548,8 @@ private fun SidebarShell(
     WingsSidebar(
       state = state,
       onSelectSection = onSelectSection,
-      onSelectAircraft = onSelectAircraft,
-      onAddAircraft = onAddAircraft,
+      onSelectThing = onSelectThing,
+      onAddThing = onAddThing,
       onEnterInviteCode = onEnterInviteCode,
       onOpenAccount = onOpenSettings,
     )
@@ -562,7 +561,7 @@ private fun SidebarShell(
       ShellContent(
         state = state,
         showTopBarSwitcher = false,
-        onSelectAircraft = onSelectAircraft,
+        onSelectThing = onSelectThing,
         // Settings owns its chrome in sidebar mode: the section is a nested NavHost whose root and
         // detail screens render their own headers, so the shell bar would just double up.
         showTopBar = state.section != ShellSection.SETTINGS,
@@ -578,8 +577,8 @@ private fun SidebarShell(
 private fun WingsSidebar(
   state: AdaptiveShellUiState,
   onSelectSection: (ShellSection) -> Unit,
-  onSelectAircraft: (String) -> Unit,
-  onAddAircraft: () -> Unit,
+  onSelectThing: (String) -> Unit,
+  onAddThing: () -> Unit,
   onEnterInviteCode: (() -> Unit)? = null,
   onOpenAccount: () -> Unit,
   // When true (empty fleet) the switcher is hidden and the per-thing sections are muted — but
@@ -619,8 +618,8 @@ private fun WingsSidebar(
       if (showSwitcher) {
         SidebarSwitcher(
           state = state,
-          onSelectAircraft = onSelectAircraft,
-          onAddAircraft = onAddAircraft,
+          onSelectThing = onSelectThing,
+          onAddThing = onAddThing,
           onEnterInviteCode = onEnterInviteCode,
           modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
         )
@@ -684,8 +683,8 @@ private const val DisabledSectionAlpha = 0.38f
 @Composable
 private fun SidebarSwitcher(
   state: AdaptiveShellUiState,
-  onSelectAircraft: (String) -> Unit,
-  onAddAircraft: () -> Unit,
+  onSelectThing: (String) -> Unit,
+  onAddThing: () -> Unit,
   onEnterInviteCode: (() -> Unit)?,
   modifier: Modifier = Modifier,
 ) {
@@ -719,12 +718,12 @@ private fun SidebarSwitcher(
         Icon(Icons.Filled.ArrowDropDown, contentDescription = null)
       }
     }
-    AircraftDropdown(
+    ThingDropdown(
       expanded = open,
       onDismiss = { open = false },
       state = state,
-      onSelectAircraft = onSelectAircraft,
-      onAddAircraft = onAddAircraft,
+      onSelectThing = onSelectThing,
+      onAddThing = onAddThing,
       onEnterInviteCode = onEnterInviteCode,
     )
   }
@@ -739,9 +738,9 @@ private fun SidebarSwitcher(
 private fun ScaffoldShell(
   state: AdaptiveShellUiState,
   onSelectSection: (ShellSection) -> Unit,
-  onSelectAircraft: (String) -> Unit,
+  onSelectThing: (String) -> Unit,
   onOpenSettings: () -> Unit,
-  onAddAircraft: () -> Unit,
+  onAddThing: () -> Unit,
   onEnterInviteCode: (() -> Unit)?,
   content: @Composable () -> Unit,
   fab: @Composable () -> Unit,
@@ -773,8 +772,8 @@ private fun ScaffoldShell(
     // The switcher lives in the top bar on COMPACT — there is no sidebar to host it, so it is the
     // only in-place way to switch thing.
     showTopBarSwitcher = true,
-    onSelectAircraft = onSelectAircraft,
-    onAddAircraft = onAddAircraft,
+    onSelectThing = onSelectThing,
+    onAddThing = onAddThing,
     onEnterInviteCode = onEnterInviteCode,
     onOpenSettings = onOpenSettings,
     onExitSettings = { onSelectSection(backTarget.value) },
@@ -818,8 +817,8 @@ private fun ScaffoldShell(
 private fun ShellContent(
   state: AdaptiveShellUiState,
   showTopBarSwitcher: Boolean,
-  onSelectAircraft: (String) -> Unit,
-  onAddAircraft: (() -> Unit)? = null,
+  onSelectThing: (String) -> Unit,
+  onAddThing: (() -> Unit)? = null,
   onEnterInviteCode: (() -> Unit)? = null,
   onOpenSettings: (() -> Unit)? = null,
   // Non-sidebar tiers only: leaves the Settings section back to the tabbed views. Null in sidebar
@@ -913,8 +912,8 @@ private fun ShellContent(
               if (showTopBarSwitcher && state.section != ShellSection.SETTINGS) {
                 TopBarSwitcher(
                   state = state,
-                  onSelectAircraft = onSelectAircraft,
-                  onAddAircraft = onAddAircraft,
+                  onSelectThing = onSelectThing,
+                  onAddThing = onAddThing,
                   onEnterInviteCode = onEnterInviteCode,
                 )
               }
@@ -977,8 +976,8 @@ private fun AccountLabel(state: AdaptiveShellUiState) = Text(
 @Composable
 private fun TopBarSwitcher(
   state: AdaptiveShellUiState,
-  onSelectAircraft: (String) -> Unit,
-  onAddAircraft: (() -> Unit)?,
+  onSelectThing: (String) -> Unit,
+  onAddThing: (() -> Unit)?,
   onEnterInviteCode: (() -> Unit)?,
 ) {
   var open by remember { mutableStateOf(false) }
@@ -990,28 +989,28 @@ private fun TopBarSwitcher(
       )
       Icon(Icons.Filled.ArrowDropDown, contentDescription = null)
     }
-    AircraftDropdown(
+    ThingDropdown(
       expanded = open,
       onDismiss = { open = false },
       state = state,
-      onSelectAircraft = onSelectAircraft,
-      onAddAircraft = onAddAircraft,
+      onSelectThing = onSelectThing,
+      onAddThing = onAddThing,
       onEnterInviteCode = onEnterInviteCode,
     )
   }
 }
 
 @Composable
-private fun AircraftDropdown(
+private fun ThingDropdown(
   expanded: Boolean,
   onDismiss: () -> Unit,
   state: AdaptiveShellUiState,
-  onSelectAircraft: (String) -> Unit,
-  onAddAircraft: (() -> Unit)?,
+  onSelectThing: (String) -> Unit,
+  onAddThing: (() -> Unit)?,
   onEnterInviteCode: (() -> Unit)?,
 ) {
   DropdownMenu(expanded = expanded, onDismissRequest = onDismiss) {
-    state.thing.forEach { ac ->
+    state.things.forEach { ac ->
       DropdownMenuItem(
         text = {
           Column {
@@ -1022,7 +1021,7 @@ private fun AircraftDropdown(
           }
         },
         onClick = {
-          onSelectAircraft(ac.id)
+          onSelectThing(ac.id)
           onDismiss()
         },
         trailingIcon = {
@@ -1032,10 +1031,10 @@ private fun AircraftDropdown(
         },
       )
     }
-    if (onAddAircraft != null || onEnterInviteCode != null) {
+    if (onAddThing != null || onEnterInviteCode != null) {
       HorizontalDivider()
     }
-    if (onAddAircraft != null) {
+    if (onAddThing != null) {
       DropdownMenuItem(
         text = {
           // Neutral, not the selected thing's word: the switcher is where a user moves between
@@ -1045,7 +1044,7 @@ private fun AircraftDropdown(
         },
         leadingIcon = { Icon(Icons.Filled.Add, contentDescription = null) },
         onClick = {
-          onAddAircraft()
+          onAddThing()
           onDismiss()
         },
       )

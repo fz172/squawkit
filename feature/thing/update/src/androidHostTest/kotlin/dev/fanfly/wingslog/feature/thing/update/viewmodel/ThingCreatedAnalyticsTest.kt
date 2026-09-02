@@ -73,7 +73,7 @@ class ThingCreatedAnalyticsTest {
     templateRegistry = BakedInTemplateRegistry(appVersionCode = 1),
     analytics = analytics,
     savedStateHandle = SavedStateHandle(
-      if (existingId == null) emptyMap() else mapOf(Screen.AIRCRAFT_ID to existingId)
+      if (existingId == null) emptyMap() else mapOf(Screen.THING_ID to existingId)
     ),
   )
 
@@ -113,7 +113,7 @@ class ThingCreatedAnalyticsTest {
     val vm = viewModel(existingId = null)
     vm.loadThing(completeThing())
 
-    vm.saveAircraft()
+    vm.saveThing()
     advanceUntilIdle()
 
     assertThat(analytics.countOf("thing_created")).isEqualTo(1)
@@ -132,7 +132,7 @@ class ThingCreatedAnalyticsTest {
     advanceUntilIdle()
     vm.loadThing(completeThing())
 
-    vm.saveAircraft()
+    vm.saveThing()
     advanceUntilIdle()
 
     assertThat(analytics.countOf("thing_created")).isEqualTo(0)
@@ -147,7 +147,7 @@ class ThingCreatedAnalyticsTest {
     val vm = viewModel(existingId = null)
     vm.loadThing(completeThing())
 
-    vm.saveAircraft()
+    vm.saveThing()
     advanceUntilIdle()
 
     assertThat(analytics.countOf("thing_created")).isEqualTo(0)
@@ -158,7 +158,7 @@ class ThingCreatedAnalyticsTest {
     val vm = viewModel(existingId = null)
     vm.loadThing(Thing()) // blank: isValid is false
 
-    vm.saveAircraft()
+    vm.saveThing()
     advanceUntilIdle()
 
     assertThat(analytics.countOf("thing_created")).isEqualTo(0)

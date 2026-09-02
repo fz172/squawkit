@@ -19,7 +19,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
 private const val TEST_USER_ID = "test-user-123"
-private const val TEST_AIRCRAFT_ID = "aircraft-abc"
+private const val TEST_THING_ID = "thing-abc"
 private const val TEST_SHA256 =
   "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890"
 
@@ -27,7 +27,7 @@ private const val TEST_SHA256 =
 class BlobIndexReconcilerTest {
 
   private val scope =
-    EntityScope.thingChildUnsafe(TEST_USER_ID, TEST_AIRCRAFT_ID)
+    EntityScope.thingChildUnsafe(TEST_USER_ID, TEST_THING_ID)
 
   private fun buildAttachment(
     id: String = "att-1",

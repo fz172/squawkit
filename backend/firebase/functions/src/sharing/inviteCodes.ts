@@ -30,7 +30,7 @@ export function inviteCodeDocPath(code: string): string {
  */
 export type InviteCodeDoc = {
   hostUid: string;
-  aircraftId: string;
+  thingId: string;
   role: ShareRole;
   createdBy: string;
   createdAt: Timestamp;
@@ -41,12 +41,12 @@ export type InviteCodeDoc = {
    * cannot decode it, so it cannot read the registration out of the record itself. The owner's client
    * supplies the label (it is their own aircraft) and the host name comes from the caller's token.
    */
-  aircraftLabel: string;
+  thingLabel: string;
   hostName: string;
   /**
    * SHA-256 of the code — the same id the owner sees in their pending list, denormalized here so a
    * cancel can find this doc with ONE equality filter. Without it, cancel had to filter on
-   * (hostUid, aircraftId) and hash-match every candidate: a compound query needing a composite index
+   * (hostUid, thingId) and hash-match every candidate: a compound query needing a composite index
    * that the emulator does not enforce, so it passed in tests and would have failed in production.
    */
   codeId: string;

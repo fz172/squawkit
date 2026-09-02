@@ -36,7 +36,7 @@ class SquawkManagerImpl(
         store.observeAll(scope)
           .map { rows -> rows.map { it.value } }
           .catch { e ->
-            logger.w(e) { "Error observing squawks for aircraft $thingId" }
+            logger.w(e) { "Error observing squawks for thing $thingId" }
             emit(emptyList())
           }
       }

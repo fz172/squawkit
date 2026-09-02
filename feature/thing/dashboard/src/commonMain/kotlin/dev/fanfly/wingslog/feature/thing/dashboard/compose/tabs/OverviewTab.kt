@@ -62,7 +62,7 @@ import dev.fanfly.wingslog.feature.tasks.viewing.TaskCardItem
 import dev.fanfly.wingslog.feature.thing.dashboard.compose.LogOnboardingCard
 import dev.fanfly.wingslog.feature.thing.dashboard.compose.LogStatsSection
 import dev.fanfly.wingslog.feature.thing.dashboard.compose.ThingDataCard
-import dev.fanfly.wingslog.feature.thing.dashboard.data.AircraftOverviewAction
+import dev.fanfly.wingslog.feature.thing.dashboard.data.ThingOverviewAction
 import dev.fanfly.wingslog.feature.thing.dashboard.data.ThingOverviewUiState
 import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.MaintenanceLog
@@ -89,10 +89,10 @@ import wingslog.feature.tasks.sharedassets.generated.resources.Res as TasksRes
 @Composable
 fun OverviewTab(
   state: ThingOverviewUiState.Success,
-  onAction: (AircraftOverviewAction) -> Unit,
+  onAction: (ThingOverviewAction) -> Unit,
   onViewSquawksTab: () -> Unit = {},
   onViewLogsTab: () -> Unit = {},
-  onMutationAction: ((AircraftOverviewAction) -> Unit)? = onAction,
+  onMutationAction: ((ThingOverviewAction) -> Unit)? = onAction,
   modifier: Modifier = Modifier,
 ) {
   val tier = LocalLayoutTier.current
@@ -131,10 +131,10 @@ fun OverviewTab(
         initiallyExpanded = overdueTasks.isEmpty(),
         // Edit + Manage Access are owner-only; technicians get a read-only thing card (§6.3).
         onEditClick = manageAction(state, onMutationAction) {
-          AircraftOverviewAction.EditClick(state.thing.id)
+          ThingOverviewAction.EditClick(state.thing.id)
         },
         onManageAccessClick = memberAction(state, onMutationAction) {
-          AircraftOverviewAction.ManageAccessClick(state.thing.id)
+          ThingOverviewAction.ManageAccessClick(state.thing.id)
         },
       )
     }
@@ -150,7 +150,7 @@ fun OverviewTab(
     if (overdueTasks.isNotEmpty()) {
       CriticalAlertsSection(
         overdueTasks = overdueTasks,
-        onCardClick = { onAction(AircraftOverviewAction.TaskCardClick(it)) },
+        onCardClick = { onAction(ThingOverviewAction.TaskCardClick(it)) },
         modifier = Modifier.padding(horizontal = Spacing.screenPadding)
       )
     }
@@ -160,7 +160,7 @@ fun OverviewTab(
         LogOnboardingCard(
           onAddLogClick = {
             onMutationAction(
-              AircraftOverviewAction.AddLogClick(
+              ThingOverviewAction.AddLogClick(
                 state.thing.id
               )
             )
@@ -182,10 +182,10 @@ fun OverviewTab(
 @Composable
 private fun LargeOverviewTab(
   state: ThingOverviewUiState.Success,
-  onAction: (AircraftOverviewAction) -> Unit,
+  onAction: (ThingOverviewAction) -> Unit,
   onViewSquawksTab: () -> Unit,
   onViewLogsTab: () -> Unit,
-  onMutationAction: ((AircraftOverviewAction) -> Unit)?,
+  onMutationAction: ((ThingOverviewAction) -> Unit)?,
   modifier: Modifier = Modifier,
 ) {
   val overdueTasks =
@@ -204,10 +204,10 @@ private fun LargeOverviewTab(
       state.thing,
       initiallyExpanded = overdueTasks.isEmpty(),
       onEditClick = manageAction(state, onMutationAction) {
-        AircraftOverviewAction.EditClick(state.thing.id)
+        ThingOverviewAction.EditClick(state.thing.id)
       },
       onManageAccessClick = memberAction(state, onMutationAction) {
-        AircraftOverviewAction.ManageAccessClick(state.thing.id)
+        ThingOverviewAction.ManageAccessClick(state.thing.id)
       },
     )
 
@@ -221,7 +221,7 @@ private fun LargeOverviewTab(
     if (overdueTasks.isNotEmpty()) {
       CriticalAlertsSection(
         overdueTasks = overdueTasks,
-        onCardClick = { onAction(AircraftOverviewAction.TaskCardClick(it)) },
+        onCardClick = { onAction(ThingOverviewAction.TaskCardClick(it)) },
       )
     }
 
@@ -230,7 +230,7 @@ private fun LargeOverviewTab(
         LogOnboardingCard(
           onAddLogClick = {
             onMutationAction(
-              AircraftOverviewAction.AddLogClick(
+              ThingOverviewAction.AddLogClick(
                 state.thing.id
               )
             )
@@ -243,7 +243,7 @@ private fun LargeOverviewTab(
 
     DashboardLowerGrid(
       state = state,
-      onTaskClick = { onAction(AircraftOverviewAction.TaskCardClick(it)) },
+      onTaskClick = { onAction(ThingOverviewAction.TaskCardClick(it)) },
       onLogsClick = onViewLogsTab,
       onViewSquawksClick = onViewSquawksTab,
     )
@@ -290,7 +290,7 @@ private fun OverviewHero(
 }
 
 /**
- * Marks an thing that is part of a share (§6.3) — shown to *every* partner in it, the hosting
+ * Marks a thing that is part of a share (§6.3) — shown to *every* partner in it, the hosting
  * owner and co-owners included, not just the accounts it was shared into. Everyone in the share
  * needs to know that what they write here is visible to the others.
  *
@@ -642,10 +642,10 @@ private fun EmptyRailState(
  */
 private fun manageAction(
   state: ThingOverviewUiState.Success,
-  onMutationAction: ((AircraftOverviewAction) -> Unit)?,
-  action: () -> AircraftOverviewAction,
+  onMutationAction: ((ThingOverviewAction) -> Unit)?,
+  action: () -> ThingOverviewAction,
 ): (() -> Unit)? =
-  if (state.canManageAircraft && onMutationAction != null) {
+  if (state.canManageThing && onMutationAction != null) {
     { onMutationAction(action()) }
   } else {
     null
@@ -662,8 +662,8 @@ private fun manageAction(
  */
 private fun memberAction(
   state: ThingOverviewUiState.Success,
-  onMutationAction: ((AircraftOverviewAction) -> Unit)?,
-  action: () -> AircraftOverviewAction,
+  onMutationAction: ((ThingOverviewAction) -> Unit)?,
+  action: () -> ThingOverviewAction,
 ): (() -> Unit)? =
   if (state.canOpenManageAccess && onMutationAction != null) {
     { onMutationAction(action()) }

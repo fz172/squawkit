@@ -1,7 +1,7 @@
 package dev.fanfly.wingslog.feature.export.datamanager.impl
 
 /**
- * Resolved binary attachment ready to be placed in an thing export folder.
+ * Resolved binary attachment ready to be placed in a thing export folder.
  */
 data class AttachmentExportPayload(
   val attachmentId: String,

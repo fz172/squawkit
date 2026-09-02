@@ -16,13 +16,13 @@ const HOST = "host-uid";
 const TECH = "tech-uid";
 const AC = "ac-code-1";
 
-async function seedAircraft() {
+async function seedThing() {
   await adminDb.doc(`users/${HOST}/thing/${AC}`).set({ deleted: false, writerUid: HOST });
 }
 
 async function mintCode(role = "technician"): Promise<string> {
   const res = (await wrappedCreate(
-    req(HOST, { aircraftId: AC, role, aircraftLabel: "N2037O · Cessna 172" }),
+    req(HOST, { thingId: AC, role, thingLabel: "N2037O · Cessna 172" }),
   )) as { code: string };
   return res.code;
 }
@@ -32,13 +32,13 @@ beforeEach(async () => {
   await adminDb.recursiveDelete(adminDb.collection("invite_codes"));
   await adminDb.recursiveDelete(adminDb.collection("invite_attempts"));
   await adminDb.recursiveDelete(adminDb.doc(`users/${TECH}`));
-  await seedAircraft();
+  await seedThing();
 });
 
 describe("createThingShareInvite", () => {
   it("mints a code, bootstraps the ACL, and never stores the code where a client can read it", async () => {
     const res = (await wrappedCreate(
-      req(HOST, { aircraftId: AC, role: "technician", aircraftLabel: "N2037O · Cessna 172" }),
+      req(HOST, { thingId: AC, role: "technician", thingLabel: "N2037O · Cessna 172" }),
     )) as { code: string; formattedCode: string; codeId: string };
 
     expect(res.code).toMatch(/^[A-Z2-9]{8}$/);
@@ -59,7 +59,7 @@ describe("createThingShareInvite", () => {
   it("refuses a non-owner", async () => {
     await mintCode();
     await expect(
-      wrappedCreate(req(TECH, { aircraftId: AC, role: "technician", aircraftLabel: "x" })),
+      wrappedCreate(req(TECH, { thingId: AC, role: "technician", thingLabel: "x" })),
     ).rejects.toThrow();
   });
 });
@@ -70,7 +70,7 @@ describe("redeemThingShareInvite", () => {
 
     const res = (await wrappedRedeem(req(TECH, { code }))) as Record<string, unknown>;
 
-    expect(res).toMatchObject({ aircraftId: AC, hostUid: HOST, role: "technician", alreadyMember: false });
+    expect(res).toMatchObject({ thingId: AC, hostUid: HOST, role: "technician", alreadyMember: false });
     const share = (await adminDb.doc(`thing_shares/${HOST}/thing/${AC}`).get()).data();
     expect(share?.memberRoles[TECH]).toBe("technician");
     const ref = await adminDb.doc(`users/${TECH}/shared_aircraft_ref/${AC}`).get();
@@ -127,7 +127,7 @@ describe("previewThingShareInvite (#201)", () => {
 
     const res = (await wrappedPreview(req(TECH, { code }))) as Record<string, unknown>;
 
-    expect(res).toEqual({ aircraftLabel: "N2037O · Cessna 172", hostName: "", role: "owner" });
+    expect(res).toEqual({ thingLabel: "N2037O · Cessna 172", hostName: "", role: "owner" });
     // The whole point: an invitee must not come away holding an aircraft id or a host uid — those
     // are what #202/#204 turned into a weapon.
     expect(JSON.stringify(res)).not.toContain(AC);
@@ -188,7 +188,7 @@ describe("rate limiting — the brute-force budget", () => {
 
 describe("cancelThingShareInvite", () => {
   it("finds the code by a single equality filter (no composite index needed)", async () => {
-    // The first cut filtered on (hostUid, aircraftId) and hash-matched the results — a compound
+    // The first cut filtered on (hostUid, thingId) and hash-matched the results — a compound
     // query needing a composite index. The emulator does not enforce indexes, so it passed here and
     // would have failed in production with FAILED_PRECONDITION. The code doc now carries codeId.
     const code = await mintCode();
@@ -202,7 +202,7 @@ describe("cancelThingShareInvite", () => {
     const code = await mintCode();
     const codeId = sha256(code);
 
-    await wrappedCancel(req(HOST, { aircraftId: AC, codeId }));
+    await wrappedCancel(req(HOST, { thingId: AC, codeId }));
 
     expect((await adminDb.doc(`invite_codes/${code}`).get()).exists).toBe(false);
     expect(
@@ -214,7 +214,7 @@ describe("cancelThingShareInvite", () => {
   it("refuses a non-owner", async () => {
     const code = await mintCode();
     await expect(
-      wrappedCancel(req(TECH, { aircraftId: AC, codeId: sha256(code) })),
+      wrappedCancel(req(TECH, { thingId: AC, codeId: sha256(code) })),
     ).rejects.toThrow();
   });
 });

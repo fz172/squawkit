@@ -25,7 +25,7 @@ interface MaintenanceLogManager {
   fun observeMaintenanceOverview(thingId: String): Flow<MaintenanceOverview?>
 
   /**
-   * Adds a new maintenance log for an thing.
+   * Adds a new maintenance log for a thing.
    */
   suspend fun addLog(thingId: String, log: MaintenanceLog): Result<Boolean>
 

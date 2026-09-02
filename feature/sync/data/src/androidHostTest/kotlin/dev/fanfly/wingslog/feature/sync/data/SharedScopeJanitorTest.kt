@@ -58,11 +58,11 @@ class SharedScopeJanitorTest {
   }
 
   @Test
-  fun purges_a_shared_aircraft_with_no_live_ref() = runTest {
+  fun purges_a_shared_thing_with_no_live_ref() = runTest {
     seedFixture()
     janitor.purgeRevoked(MEMBER, liveShares = emptySet())
 
-    assertThat(aircraftAt(EntityScope.userRoot(HOST))).isEmpty()
+    assertThat(thingAt(EntityScope.userRoot(HOST))).isEmpty()
     assertThat(
       logsAt(
         EntityScope.thingChildUnsafe(
@@ -80,7 +80,7 @@ class SharedScopeJanitorTest {
       )
     ).isNull()
     // Own thing untouched.
-    assertThat(aircraftAt(EntityScope.userRoot(MEMBER))).hasSize(1)
+    assertThat(thingAt(EntityScope.userRoot(MEMBER))).hasSize(1)
   }
 
   @Test
@@ -115,11 +115,11 @@ class SharedScopeJanitorTest {
   }
 
   @Test
-  fun keeps_a_shared_aircraft_that_still_has_a_live_ref() = runTest {
+  fun keeps_a_shared_thing_that_still_has_a_live_ref() = runTest {
     seedFixture()
     janitor.purgeRevoked(MEMBER, liveShares = setOf(HOST to SHARED_AC))
 
-    assertThat(aircraftAt(EntityScope.userRoot(HOST))).hasSize(1)
+    assertThat(thingAt(EntityScope.userRoot(HOST))).hasSize(1)
     assertThat(
       logsAt(
         EntityScope.thingChildUnsafe(
@@ -158,7 +158,7 @@ class SharedScopeJanitorTest {
     )
   }
 
-  private fun aircraftAt(scope: EntityScope) =
+  private fun thingAt(scope: EntityScope) =
     db.schemaQueries.selectAll(CollectionKind.Thing, scope.toPath())
       .executeAsList()
 
@@ -234,7 +234,7 @@ class SharedScopeJanitorTest {
 
     janitor.purgeRevoked(MEMBER, liveShares = emptySet())
 
-    assertThat(aircraftAt(EntityScope.userRoot(GUEST))).hasSize(1)
+    assertThat(thingAt(EntityScope.userRoot(GUEST))).hasSize(1)
     assertThat(
       logsAt(
         EntityScope.thingChildUnsafe(
@@ -247,7 +247,7 @@ class SharedScopeJanitorTest {
   }
 
   @Test
-  fun purge_countsADirtyAircraftDocToo() = runTest {
+  fun purge_countsADirtyThingDocToo() = runTest {
     // A co-owner's unsynced edit to the thing itself is a row at the host's *root*, not in the
     // nested subtree — counting only the subtree would under-report the loss.
     seedFixture()

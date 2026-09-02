@@ -1,6 +1,6 @@
 import { ENTITY_SEGMENT_THING } from "../config/entitySegment.js";
 import { adminDb } from "../config/firebaseAdmin.js";
-import { aircraftShareDocPath, type AircraftShareDoc } from "../sharing/sharingModels.js";
+import { thingShareDocPath, type ThingShareDoc } from "../sharing/sharingModels.js";
 
 /**
  * Shared authorization core for the attachment broker (design §9.2).
@@ -44,9 +44,9 @@ export function blobObjectPath(hostUid: string, acId: string, blobId: string): s
 export async function loadShare(
   hostUid: string,
   acId: string,
-): Promise<AircraftShareDoc | null> {
-  const snap = await adminDb.doc(aircraftShareDocPath(hostUid, acId)).get();
-  return snap.exists ? (snap.data() as AircraftShareDoc) : null;
+): Promise<ThingShareDoc | null> {
+  const snap = await adminDb.doc(thingShareDocPath(hostUid, acId)).get();
+  return snap.exists ? (snap.data() as ThingShareDoc) : null;
 }
 
 /**
@@ -54,7 +54,7 @@ export async function loadShare(
  * for the host too — an owner viewing their own aircraft through the broker is a legitimate caller,
  * not a special case.
  */
-export function isShareMember(share: AircraftShareDoc, uid: string): boolean {
+export function isShareMember(share: ThingShareDoc, uid: string): boolean {
   return share.memberRoles?.[uid] != null;
 }
 
@@ -67,7 +67,7 @@ export function isShareMember(share: AircraftShareDoc, uid: string): boolean {
  * even ships. Only an explicit `false` denies, so the moment the projector starts writing the field
  * this begins enforcing with no code change.
  */
-export function attachmentsEnabled(share: AircraftShareDoc): boolean {
+export function attachmentsEnabled(share: ThingShareDoc): boolean {
   return share.attachmentsEnabled !== false;
 }
 

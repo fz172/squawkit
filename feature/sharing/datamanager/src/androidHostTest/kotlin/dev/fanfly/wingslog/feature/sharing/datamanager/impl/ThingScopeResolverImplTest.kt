@@ -52,7 +52,7 @@ class ThingScopeResolverImplTest {
   }
 
   @Test
-  fun resolveNow_ownAircraft_usesMyUidScope() = runTest {
+  fun resolveNow_ownThing_usesMyUidScope() = runTest {
     assertThat(resolver.resolveNow(OWN_AC))
       .isEqualTo(EntityScope.thingChildUnsafe(MY_UID, OWN_AC))
   }
@@ -73,7 +73,7 @@ class ThingScopeResolverImplTest {
   }
 
   @Test
-  fun resolve_ownAircraft_emitsMyUidScope() = runTest {
+  fun resolve_ownThing_emitsMyUidScope() = runTest {
     assertThat(
       resolver.resolve(OWN_AC)
         .first()

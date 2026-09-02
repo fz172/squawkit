@@ -31,7 +31,7 @@ fun LogsTab(
   scrollToLogId: String? = null,
   modifier: Modifier = Modifier,
 ) {
-  // Key by aircraftId: in the adaptive shell the switcher swaps thing within the same
+  // Key by thingId: in the adaptive shell the switcher swaps thing within the same
   // composition site, so an unkeyed ViewModel would be reused and keep the previous thing's logs.
   val viewModel: MaintenanceLogListViewModel =
     koinViewModel(key = thingId, parameters = { parametersOf(thingId) })

@@ -177,7 +177,7 @@ class UrgencyScanner(
       watermarkStore.selectInScopePrefix(uid, scope.toPath() + "%")
     // Seeding (design §6.4): no watermark row anywhere under this scope means this device has never
     // scanned this thing before — every record seeds silently regardless of who wrote it.
-    val aircraftKnown = existingWatermarks.isNotEmpty()
+    val thingKnown = existingWatermarks.isNotEmpty()
     val watermarkByKey =
       existingWatermarks.associateBy { it.collection to it.id }
 
@@ -203,7 +203,7 @@ class UrgencyScanner(
           row.writerUid,
           rank,
           watermarkByKey[CollectionKind.MaintenanceTask to row.id],
-          aircraftKnown
+          thingKnown
         )
       if (tier != null && previousRank != null) {
         crossings += Crossing(
@@ -228,7 +228,7 @@ class UrgencyScanner(
           row.writerUid,
           rank,
           watermarkByKey[CollectionKind.Squawk to row.id],
-          aircraftKnown
+          thingKnown
         )
       if (tier != null && previousRank != null) {
         crossings += Crossing(
@@ -319,11 +319,11 @@ class UrgencyScanner(
     writerUid: String?,
     rank: UrgencyRank,
     existing: UrgencyWatermark?,
-    aircraftKnown: Boolean,
+    thingKnown: Boolean,
   ): UrgencyRank? {
     val baseline = when {
       existing != null -> UrgencyRank(existing.rank)
-      !aircraftKnown -> return null
+      !thingKnown -> return null
       writerUid == uid -> return null
       else -> UrgencyRank.RESOLVED
     }
@@ -359,9 +359,9 @@ class UrgencyScanner(
       body = body,
       highPriority = tier == UrgencyTier.OVERDUE,
       tapTarget = single?.tapTarget
-        ?: NotificationTapTarget.Aircraft(
+        ?: NotificationTapTarget.Thing(
           thingId,
-          tab = tier.toAircraftTab()
+          tab = tier.toThingTab()
         ),
     )
   }
@@ -412,7 +412,7 @@ class UrgencyScanner(
   // on (PRD §6.6: "tapping a summary opens that aircraft's task list filtered to the tier"). Plain
   // strings, not ShellSection directly: :engine cannot depend on core:ui:adaptive, and
   // AdaptiveShellViewModel is what actually interprets these.
-  private fun UrgencyTier.toAircraftTab(): String = when (this) {
+  private fun UrgencyTier.toThingTab(): String = when (this) {
     UrgencyTier.PRIORITY_RAISED -> "squawks"
     UrgencyTier.OVERDUE, UrgencyTier.DUE_SOON -> "tasks"
   }

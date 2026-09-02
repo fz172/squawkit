@@ -13,10 +13,10 @@ import {
   INVITE_TTL_MS,
 } from "./inviteCodes.js";
 import {
-  aircraftShareDocPath,
+  thingShareDocPath,
   shareInviteDocPath,
   SHARE_ROLE,
-  type AircraftShareDoc,
+  type ThingShareDoc,
   type ShareRole,
 } from "./sharingModels.js";
 import {
@@ -24,7 +24,7 @@ import {
   subscriptionDocPath,
 } from "../subscription/entitlementModel.js";
 
-type CreateRequest = { aircraftId: string; role: ShareRole; aircraftLabel: string };
+type CreateRequest = { thingId: string; role: ShareRole; thingLabel: string };
 type CreateResponse = { code: string; formattedCode: string; codeId: string; expiresAtMs: number };
 
 /**
@@ -42,7 +42,7 @@ export const createThingShareInvite = onCall<CreateRequest, Promise<CreateRespon
   { region: FUNCTION_REGION, enforceAppCheck: true },
   async (request): Promise<CreateResponse> => {
     const { uid } = requireAuthenticatedApp(request);
-    const { aircraftId, role, aircraftLabel } = parseRequest(request.data);
+    const { thingId, role, thingLabel } = parseRequest(request.data);
 
     // Only the aircraft's owner may invite to it. The aircraft must exist in the CALLER's tree —
     // and since the ACL is namespaced under the caller, an aircraft planted in their own tree only
@@ -52,12 +52,12 @@ export const createThingShareInvite = onCall<CreateRequest, Promise<CreateRespon
     // callable is deployed globally and called by one export name, so this is a hard cutover rather
     // than a dual deploy. DO NOT MERGE BEFORE D3 — merging to main auto-deploys (§2.7b), and
     // flipping early makes this check fail for every un-migrated account.
-    const aircraft = await adminDb.doc(`users/${uid}/${ENTITY_SEGMENT_THING}/${aircraftId}`).get();
+    const aircraft = await adminDb.doc(`users/${uid}/${ENTITY_SEGMENT_THING}/${thingId}`).get();
     if (!aircraft.exists || aircraft.data()?.deleted === true) {
       throw new HttpsError("not-found", "Aircraft not found.");
     }
 
-    const shareRef = adminDb.doc(aircraftShareDocPath(uid, aircraftId));
+    const shareRef = adminDb.doc(thingShareDocPath(uid, thingId));
     const code = generateInviteCode();
     const codeId = inviteCodeId(code);
     const now = Date.now();
@@ -74,14 +74,14 @@ export const createThingShareInvite = onCall<CreateRequest, Promise<CreateRespon
       // Non-owners cannot invite. On a not-yet-shared aircraft there is no ACL, and the caller owns
       // the aircraft (checked above) — so this bootstraps it with them as owner.
       if (shareSnap.exists) {
-        const share = shareSnap.data() as AircraftShareDoc;
+        const share = shareSnap.data() as ThingShareDoc;
         if (share.memberRoles[uid] !== SHARE_ROLE.OWNER) {
           throw new HttpsError("permission-denied", "Only owners can invite to this aircraft.");
         }
       } else {
         tx.set(shareRef, {
           hostUid: uid,
-          aircraftId,
+          thingId,
           memberRoles: { [uid]: SHARE_ROLE.OWNER },
           createdAt: FieldValue.serverTimestamp(),
           // Stamp the host's entitlement at creation so a free host's first share is gated from the
@@ -95,21 +95,21 @@ export const createThingShareInvite = onCall<CreateRequest, Promise<CreateRespon
       // The code doc — the only thing that can be redeemed, and unreadable by any client.
       tx.set(adminDb.doc(inviteCodeDocPath(code)), {
         hostUid: uid,
-        aircraftId,
+        thingId,
         role,
         createdBy: uid,
         createdAt: FieldValue.serverTimestamp(),
         expiresAt,
         // Shown to the invitee before they accept (#201). The server cannot read these out of the
         // aircraft record — it is opaque proto bytes — so they are carried here.
-        aircraftLabel,
+        thingLabel,
         hostName: request.auth?.token?.name ?? "",
         codeId, // lets cancel find this doc by a single equality filter — see inviteCodes.ts
       });
 
       // Owner-visible record: enough to list and cancel a pending invite, with the code itself
       // absent. Reading the invite list yields nothing redeemable.
-      tx.set(adminDb.doc(shareInviteDocPath(uid, aircraftId, codeId)), {
+      tx.set(adminDb.doc(shareInviteDocPath(uid, thingId, codeId)), {
         role,
         createdBy: uid,
         createdAt: FieldValue.serverTimestamp(),
@@ -124,16 +124,16 @@ export const createThingShareInvite = onCall<CreateRequest, Promise<CreateRespon
 
 function parseRequest(data: unknown): CreateRequest {
   const obj = (data ?? {}) as Record<string, unknown>;
-  const aircraftId = typeof obj.aircraftId === "string" ? obj.aircraftId.trim() : "";
+  const thingId = typeof obj.thingId === "string" ? obj.thingId.trim() : "";
   const role = typeof obj.role === "string" ? obj.role : "";
   // Display only, and the owner is describing their own aircraft. Capped so a rogue client cannot
   // stuff the doc; empty is fine — the sheet says less rather than lying.
-  const aircraftLabel = (typeof obj.aircraftLabel === "string" ? obj.aircraftLabel : "").slice(0, 120);
-  if (aircraftId.length === 0) {
-    throw new HttpsError("invalid-argument", "aircraftId is required.");
+  const thingLabel = (typeof obj.thingLabel === "string" ? obj.thingLabel : "").slice(0, 120);
+  if (thingId.length === 0) {
+    throw new HttpsError("invalid-argument", "thingId is required.");
   }
   if (role !== SHARE_ROLE.OWNER && role !== SHARE_ROLE.TECHNICIAN) {
     throw new HttpsError("invalid-argument", "role must be owner or technician.");
   }
-  return { aircraftId, role: role as ShareRole, aircraftLabel };
+  return { thingId, role: role as ShareRole, thingLabel };
 }

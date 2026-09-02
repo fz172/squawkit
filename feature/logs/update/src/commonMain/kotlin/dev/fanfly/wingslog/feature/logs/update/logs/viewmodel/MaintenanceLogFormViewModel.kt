@@ -83,7 +83,7 @@ class MaintenanceLogFormViewModel(
   savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
-  val thingId: String = checkNotNull(savedStateHandle[Screen.AIRCRAFT_ID])
+  val thingId: String = checkNotNull(savedStateHandle[Screen.THING_ID])
   private val logId: String? = savedStateHandle[Screen.LOG_ID]
   val isEditMode: Boolean get() = logId != null
 

@@ -144,7 +144,7 @@ function toManifest(
     displayLocation: readString(data.displayLocation),
     formats: readStringArray(data.formats),
     dateRange: readObject(data.dateRange),
-    aircraft: readAircraftArray(data.aircraft),
+    aircraft: readThingArray(data.aircraft),
     remoteArchiveRef: readNullableString(data.remoteArchiveRef),
     destinationEmail: readNullableString(data.destinationEmail),
     destinationEmailSource: readNullableString(data.destinationEmailSource),
@@ -178,7 +178,7 @@ function readStringArray(value: unknown): string[] {
   return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
 }
 
-function readAircraftArray(value: unknown): ExportManifest["aircraft"] {
+function readThingArray(value: unknown): ExportManifest["aircraft"] {
   if (!Array.isArray(value)) return [];
   return value.flatMap(item => {
     if (typeof item !== "object" || item == null) return [];

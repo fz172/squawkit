@@ -62,7 +62,7 @@ fun ExportSelectionRoute(
     state = state,
     onNavigateBack = { navController.popBackStack() },
     onNavigateToHistory = onNavigateToHistory,
-    onToggleAircraft = viewModel::onToggleAircraft,
+    onToggleThing = viewModel::onToggleThing,
     onSelectAll = viewModel::onSelectAll,
     onClearAll = viewModel::onClearAll,
     onToggleFormat = viewModel::onToggleFormat,

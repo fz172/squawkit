@@ -21,7 +21,7 @@ import kotlin.time.Clock
 import kotlin.time.Instant
 
 private const val TEST_USER_ID = "user-test-001"
-private const val TEST_AIRCRAFT_ID = "aircraft-test-001"
+private const val TEST_THING_ID = "thing-test-001"
 private const val OTHER_USER_ID = "user-other-999"
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -63,13 +63,13 @@ class SqlDelightEntityStoreTest {
   @Test
   fun put_stamps_the_writing_account_as_author() = runTest(ioContext) {
     val thing =
-      buildTestThing(id = TEST_AIRCRAFT_ID, tailNumber = "N12345")
+      buildTestThing(id = TEST_THING_ID, tailNumber = "N12345")
 
-    store.put(TEST_AIRCRAFT_ID, thing, scopeA)
+    store.put(TEST_THING_ID, thing, scopeA)
 
     // Who wrote this revision is what §7.5 attests: it is read back to tell a technician signing
     // their own work apart from someone else attributing work to them.
-    val row = store.observe(TEST_AIRCRAFT_ID, scopeA)
+    val row = store.observe(TEST_THING_ID, scopeA)
       .first()
     assertThat(row?.writerUid).isEqualTo(CURRENT_UID)
   }
@@ -85,13 +85,13 @@ class SqlDelightEntityStoreTest {
       currentUid = { null },
     )
     val thing =
-      buildTestThing(id = TEST_AIRCRAFT_ID, tailNumber = "N12345")
+      buildTestThing(id = TEST_THING_ID, tailNumber = "N12345")
 
-    anonymous.put(TEST_AIRCRAFT_ID, thing, scopeA)
+    anonymous.put(TEST_THING_ID, thing, scopeA)
 
     // Null means "unknown", which the UI reports as neither signed nor assigned.
     assertThat(
-      anonymous.observe(TEST_AIRCRAFT_ID, scopeA)
+      anonymous.observe(TEST_THING_ID, scopeA)
         .first()?.writerUid
     ).isNull()
   }
@@ -101,14 +101,14 @@ class SqlDelightEntityStoreTest {
   @Test
   fun put_then_observeAll_emits_row() = runTest(ioContext) {
     val thing =
-      buildTestThing(id = TEST_AIRCRAFT_ID, tailNumber = "N12345")
+      buildTestThing(id = TEST_THING_ID, tailNumber = "N12345")
 
-    store.put(TEST_AIRCRAFT_ID, thing, scopeA)
+    store.put(TEST_THING_ID, thing, scopeA)
 
     val emissions: List<StorageEntity<Thing>> = store.observeAll(scopeA)
       .first()
     assertThat(emissions).hasSize(1)
-    assertThat(emissions[0].id).isEqualTo(TEST_AIRCRAFT_ID)
+    assertThat(emissions[0].id).isEqualTo(TEST_THING_ID)
     assertThat(emissions[0].value.name).isEqualTo("N12345")
   }
 
@@ -117,13 +117,13 @@ class SqlDelightEntityStoreTest {
   @Test
   fun delete_makes_observe_emit_null() = runTest(ioContext) {
     store.put(
-      TEST_AIRCRAFT_ID,
-      buildTestThing(id = TEST_AIRCRAFT_ID),
+      TEST_THING_ID,
+      buildTestThing(id = TEST_THING_ID),
       scopeA
     )
-    store.delete(TEST_AIRCRAFT_ID, scopeA)
+    store.delete(TEST_THING_ID, scopeA)
 
-    val result = store.observe(TEST_AIRCRAFT_ID, scopeA)
+    val result = store.observe(TEST_THING_ID, scopeA)
       .first()
 
     assertThat(result).isNull()
@@ -132,11 +132,11 @@ class SqlDelightEntityStoreTest {
   @Test
   fun delete_makes_observeAll_omit_deleted_row() = runTest(ioContext) {
     store.put(
-      TEST_AIRCRAFT_ID,
-      buildTestThing(id = TEST_AIRCRAFT_ID),
+      TEST_THING_ID,
+      buildTestThing(id = TEST_THING_ID),
       scopeA
     )
-    store.delete(TEST_AIRCRAFT_ID, scopeA)
+    store.delete(TEST_THING_ID, scopeA)
 
     val emissions: List<StorageEntity<Thing>> = store.observeAll(scopeA)
       .first()
@@ -149,8 +149,8 @@ class SqlDelightEntityStoreTest {
   @Test
   fun scopes_are_isolated_put_in_A_not_visible_in_B() = runTest(ioContext) {
     store.put(
-      TEST_AIRCRAFT_ID,
-      buildTestThing(id = TEST_AIRCRAFT_ID),
+      TEST_THING_ID,
+      buildTestThing(id = TEST_THING_ID),
       scopeA
     )
 
@@ -165,8 +165,8 @@ class SqlDelightEntityStoreTest {
   @Test
   fun put_marks_row_as_dirty() = runTest(ioContext) {
     store.put(
-      TEST_AIRCRAFT_ID,
-      buildTestThing(id = TEST_AIRCRAFT_ID),
+      TEST_THING_ID,
+      buildTestThing(id = TEST_THING_ID),
       scopeA
     )
 
@@ -174,7 +174,7 @@ class SqlDelightEntityStoreTest {
       .awaitAsList()
 
     assertThat(dirtyRows).hasSize(1)
-    assertThat(dirtyRows[0].id).isEqualTo(TEST_AIRCRAFT_ID)
+    assertThat(dirtyRows[0].id).isEqualTo(TEST_THING_ID)
     assertThat(dirtyRows[0].deleted).isFalse()
   }
 
@@ -183,19 +183,19 @@ class SqlDelightEntityStoreTest {
   @Test
   fun delete_marks_row_dirty_and_deleted() = runTest(ioContext) {
     store.put(
-      TEST_AIRCRAFT_ID,
-      buildTestThing(id = TEST_AIRCRAFT_ID),
+      TEST_THING_ID,
+      buildTestThing(id = TEST_THING_ID),
       scopeA
     )
     // Advance clock so the delete gets a later timestamp than the put.
     testClock.advanceBy(1_000L)
-    store.delete(TEST_AIRCRAFT_ID, scopeA)
+    store.delete(TEST_THING_ID, scopeA)
 
     val dirtyRows = db.schemaQueries.selectDirty(limit = 10L)
       .awaitAsList()
 
     // Only one row for this id (upsert replaces).
-    val row = dirtyRows.single { it.id == TEST_AIRCRAFT_ID }
+    val row = dirtyRows.single { it.id == TEST_THING_ID }
     assertThat(row.deleted).isTrue()
   }
 
@@ -203,8 +203,8 @@ class SqlDelightEntityStoreTest {
 
   @Test
   fun observeAll_orders_by_updatedAt_DESC() = runTest(ioContext) {
-    val idOlder = "aircraft-older"
-    val idNewer = "aircraft-newer"
+    val idOlder = "thing-older"
+    val idNewer = "thing-newer"
 
     // Put older first at t=1_000_000.
     store.put(
@@ -234,11 +234,11 @@ class SqlDelightEntityStoreTest {
   @Test
   fun put_then_observe_emits_the_entity() = runTest(ioContext) {
     val thing =
-      buildTestThing(id = TEST_AIRCRAFT_ID, tailNumber = "N54321")
+      buildTestThing(id = TEST_THING_ID, tailNumber = "N54321")
 
-    store.put(TEST_AIRCRAFT_ID, thing, scopeA)
+    store.put(TEST_THING_ID, thing, scopeA)
 
-    val entity = store.observe(TEST_AIRCRAFT_ID, scopeA)
+    val entity = store.observe(TEST_THING_ID, scopeA)
       .first()
     assertThat(entity).isNotNull()
     assertThat(entity!!.value.name).isEqualTo("N54321")
@@ -254,7 +254,7 @@ class SqlDelightEntityStoreTest {
   // ---- helpers ----
 
   private fun buildTestThing(
-    id: String = TEST_AIRCRAFT_ID,
+    id: String = TEST_THING_ID,
     tailNumber: String = "N00000",
     make: String = "Cessna",
     model: String = "172",

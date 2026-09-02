@@ -76,7 +76,7 @@ class SubscriptionManagerImpl(
   override fun canHostShare(): Flow<Boolean> = gate(Subscription.Status.STATUS_PRO)
 
   override fun thingLimit(): Flow<Int?> =
-    status().map { if (it >= Subscription.Status.STATUS_PRO) null else FREE_AIRCRAFT_LIMIT }
+    status().map { if (it >= Subscription.Status.STATUS_PRO) null else FREE_THING_LIMIT }
 
   override fun shouldShowAds(): Flow<Boolean> =
     // No ads unless we can also sell their removal.
@@ -100,6 +100,6 @@ class SubscriptionManagerImpl(
      * second thing, and 2 covers the owner-plus-partnership case. Enforced client-side only;
      * no Cloud Function or Firestore rule checks thing count.
      */
-    const val FREE_AIRCRAFT_LIMIT = 2
+    const val FREE_THING_LIMIT = 2
   }
 }

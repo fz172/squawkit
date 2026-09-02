@@ -5,11 +5,11 @@ import { adminDb, adminStorage, fft } from "./helpers.js";
 import { Attachment, AttachmentType } from "../src/generated/proto/thing/attachment.js";
 import { MaintenanceLog } from "../src/generated/proto/thing/maintenance_log.js";
 import { Squawk } from "../src/generated/proto/thing/squawk.js";
-import { onThingDeleted } from "../src/sharing/onAircraftDeleted.js";
+import { onThingDeleted } from "../src/sharing/onThingDeleted.js";
 import { onThingRecordDeleted } from "../src/storage/onRecordDeleted.js";
 
 const wrappedRecord = fft.wrap(onThingRecordDeleted);
-const wrappedAircraft = fft.wrap(onThingDeleted);
+const wrappedThing = fft.wrap(onThingDeleted);
 
 const UID = "user-gc";
 const AC = "ac-gc";
@@ -201,7 +201,7 @@ describe("onRecordDeleted — a deleted record takes its photos with it (#158)",
   });
 });
 
-describe("onAircraftDeleted — the aircraft takes all its blobs with it", () => {
+describe("onThingDeleted — the aircraft takes all its blobs with it", () => {
   it("deletes the whole blobs/ prefix, no decoding needed", async () => {
     // Blobs are aircraft-scoped, so the prefix dies with the aircraft and "which record owned this?"
     // never has to be asked.
@@ -211,7 +211,7 @@ describe("onAircraftDeleted — the aircraft takes all its blobs with it", () =>
     const before = fft.firestore.makeDocumentSnapshot({ deleted: false }, path);
     const after = fft.firestore.makeDocumentSnapshot({ deleted: true }, path);
 
-    await wrappedAircraft({ data: fft.makeChange(before, after), params: { uid: UID, acId: AC } } as never);
+    await wrappedThing({ data: fft.makeChange(before, after), params: { uid: UID, acId: AC } } as never);
 
     expect(await blobExists("blob-a")).toBe(false);
     expect(await blobExists("blob-b")).toBe(false);

@@ -104,16 +104,17 @@ data class PushPayload(
       val thingId = parts[1].takeIf { it.isNotBlank() } ?: return null
       val recordId = parts.getOrNull(2)?.takeIf { it.isNotBlank() }
       return when (parts[0]) {
-        "aircraft" -> NotificationTapTarget.Aircraft(thingId, tab = recordId)
+        // Wire value: the server sends `aircraft:` and old clients only understand it (#638).
+        "aircraft" -> NotificationTapTarget.Thing(thingId, tab = recordId)
         // The record variants are useless without an id — a tap would scroll to nothing. Falling
         // back to the thing still lands the pilot on the right thing, which is the part every
         // variant shares.
         "squawk" -> recordId?.let { NotificationTapTarget.Squawk(thingId, it) }
-          ?: NotificationTapTarget.Aircraft(thingId, tab = "squawks")
+          ?: NotificationTapTarget.Thing(thingId, tab = "squawks")
         "task" -> recordId?.let { NotificationTapTarget.Task(thingId, it) }
-          ?: NotificationTapTarget.Aircraft(thingId, tab = "tasks")
+          ?: NotificationTapTarget.Thing(thingId, tab = "tasks")
         "log" -> recordId?.let { NotificationTapTarget.Log(thingId, it) }
-          ?: NotificationTapTarget.Aircraft(thingId, tab = "logs")
+          ?: NotificationTapTarget.Thing(thingId, tab = "logs")
         else -> null
       }
     }

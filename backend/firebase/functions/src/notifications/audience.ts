@@ -2,9 +2,9 @@ import { logger } from "firebase-functions/v2";
 
 import { adminDb } from "../config/firebaseAdmin.js";
 import {
-  aircraftShareDocPath,
+  thingShareDocPath,
   shareMemberDocPath,
-  type AircraftShareDoc,
+  type ThingShareDoc,
   type ShareMemberDoc,
 } from "../sharing/sharingModels.js";
 import { NotificationSettings } from "../generated/proto/settings/notification_settings.js";
@@ -36,11 +36,11 @@ export type ShareAudience = {
  */
 export async function readShareAudience(
   hostUid: string,
-  aircraftId: string,
+  thingId: string,
 ): Promise<ShareAudience | null> {
-  const snap = await adminDb.doc(aircraftShareDocPath(hostUid, aircraftId)).get();
+  const snap = await adminDb.doc(thingShareDocPath(hostUid, thingId)).get();
   if (!snap.exists) return null;
-  const share = snap.data() as AircraftShareDoc;
+  const share = snap.data() as ThingShareDoc;
   if (share.hostUid !== hostUid) return null; // someone else's aircraft that merely shares the id
   const memberUids = Object.keys(share.memberRoles ?? {});
   if (memberUids.length <= 1) return null; // unshared, or a share nobody is left in
@@ -55,15 +55,15 @@ export async function readShareAudience(
  */
 export async function readActorDisplayName(
   hostUid: string,
-  aircraftId: string,
+  thingId: string,
   actorUid: string,
 ): Promise<string> {
   try {
-    const snap = await adminDb.doc(shareMemberDocPath(hostUid, aircraftId, actorUid)).get();
+    const snap = await adminDb.doc(shareMemberDocPath(hostUid, thingId, actorUid)).get();
     if (!snap.exists) return "";
     return (snap.data() as ShareMemberDoc).displayName ?? "";
   } catch (e) {
-    logger.warn("Could not read an actor display name", { hostUid, aircraftId, actorUid, error: String(e) });
+    logger.warn("Could not read an actor display name", { hostUid, thingId, actorUid, error: String(e) });
     return "";
   }
 }

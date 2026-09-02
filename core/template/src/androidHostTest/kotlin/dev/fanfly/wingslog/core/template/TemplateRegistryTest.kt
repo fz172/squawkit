@@ -140,7 +140,7 @@ class AirplaneTemplateTest {
   }
 
   @Test
-  fun aircraftIsItsOwnPluralAndTakesAn() {
+  fun thingIsItsOwnPluralAndTakesAn() {
     // The case that makes `article` a stored field rather than something derived from the first
     // letter, and the case a naive pluraliser gets wrong.
     val thing = AirplaneTemplate.AIRPLANE_LEXICON.thing!!

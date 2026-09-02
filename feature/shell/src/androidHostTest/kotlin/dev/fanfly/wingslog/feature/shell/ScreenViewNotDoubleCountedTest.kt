@@ -8,7 +8,7 @@ import java.io.File
  * That no screen is counted twice.
  *
  * **The bug this exists for**, found in DebugView during #667: opening the squawk form emitted two
- * `screen_view` events — `squawk_edit/{aircraftId}/{squawkId}` from the root back-stack observer and
+ * `screen_view` events — `squawk_edit/{thingId}/{squawkId}` from the root back-stack observer and
  * `squawk_form` from the screen's own `LaunchedEffect`. One screen open, counted twice, split across
  * two names, so neither series was the real number. The task and log forms had it too.
  *

@@ -37,7 +37,7 @@ data class PendingInvite(
 )
 
 /** Snapshot of a share's members and pending invites (Firestore-backed, online-only). */
-data class AircraftShareState(
+data class ThingShareState(
   val members: List<ShareMember> = emptyList(),
   val invites: List<PendingInvite> = emptyList(),
   /**

@@ -29,7 +29,7 @@ const exists = async (p: string) => (await adminDb.doc(p).get()).exists;
 async function seedShare(host = HOST, ac = AC) {
   await adminDb.doc(legacy(host, ac)).set({
     hostUid: host,
-    aircraftId: ac,
+    thingId: ac,
     memberRoles: { [host]: "owner", [TECH]: "technician" },
   });
   await adminDb.doc(`${legacy(host, ac)}/members/${TECH}`).set({ role: "technician" });

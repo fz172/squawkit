@@ -10,7 +10,7 @@ import dev.fanfly.wingslog.feature.thing.update.viewmodel.EditThingViewModel
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
-val aircraftUpdateModule = module {
+val thingUpdateModule = module {
   viewModel {
     EditThingViewModel(
       fleetManager = get<FleetManager>(),

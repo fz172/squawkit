@@ -80,7 +80,7 @@ fun RedeemConfirmationSheet(
       },
       text = {
         // Say what they are joining and who is inviting them (#201). Until #164 this was impossible:
-        // the invitee held an thing id the rules must refuse to resolve for a non-member, so the
+        // the invitee held a thing id the rules must refuse to resolve for a non-member, so the
         // sheet could only say "an aircraft" — and accepting meant accepting blind.
         val preview = state.preview
         Text(

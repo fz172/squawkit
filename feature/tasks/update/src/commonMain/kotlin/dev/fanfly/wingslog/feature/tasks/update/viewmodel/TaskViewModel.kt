@@ -168,7 +168,7 @@ class TaskViewModel(
 ) : ViewModel() {
 
   private val thingId: String =
-    checkNotNull(savedStateHandle[Screen.AIRCRAFT_ID])
+    checkNotNull(savedStateHandle[Screen.THING_ID])
   val cardId: String? = savedStateHandle[Screen.CARD_ID]
 
   private val _uiState = MutableStateFlow<TaskUiState>(TaskUiState.Loading)

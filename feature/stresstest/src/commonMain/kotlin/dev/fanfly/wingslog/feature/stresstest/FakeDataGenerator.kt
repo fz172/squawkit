@@ -49,7 +49,7 @@ data class StressTestData(
 
 object FakeDataGenerator {
 
-  private data class AircraftSpec(
+  private data class ThingSpec(
     val make: String,
     val model: String,
     val engineMake: String,
@@ -58,8 +58,8 @@ object FakeDataGenerator {
     val propModel: String,
   )
 
-  private val AIRCRAFT_SPECS = listOf(
-    AircraftSpec(
+  private val THING_SPECS = listOf(
+    ThingSpec(
       "Incom",
       "T-65B",
       "Lycoming",
@@ -67,7 +67,7 @@ object FakeDataGenerator {
       "Sensenich",
       "76EM8S5-0-62"
     ),
-    AircraftSpec(
+    ThingSpec(
       "Corellian Engineering",
       "YT-1300F",
       "Continental",
@@ -75,7 +75,7 @@ object FakeDataGenerator {
       "McCauley",
       "1C172/ATM7553"
     ),
-    AircraftSpec(
+    ThingSpec(
       "MandalMotors",
       "Kom'rk 452",
       "Lycoming",
@@ -83,7 +83,7 @@ object FakeDataGenerator {
       "Sensenich",
       "74DM6S5-0-58"
     ),
-    AircraftSpec(
+    ThingSpec(
       "Kuat Systems",
       "RZ-1 A-wing",
       "Continental",
@@ -91,7 +91,7 @@ object FakeDataGenerator {
       "Hartzell",
       "HC-C2YK-1BF"
     ),
-    AircraftSpec(
+    ThingSpec(
       "SoroSuub",
       "N-1 Scout",
       "Continental",
@@ -99,7 +99,7 @@ object FakeDataGenerator {
       "Hartzell",
       "HC-E2YR-2ALTUF"
     ),
-    AircraftSpec(
+    ThingSpec(
       "Incom",
       "Z-95-AF4",
       "Lycoming",
@@ -107,7 +107,7 @@ object FakeDataGenerator {
       "MT-Propeller",
       "MTV-6-A-200"
     ),
-    AircraftSpec(
+    ThingSpec(
       "Kuat Systems",
       "BTL-B",
       "Lycoming",
@@ -115,7 +115,7 @@ object FakeDataGenerator {
       "McCauley",
       "2A34C82/82NCA"
     ),
-    AircraftSpec(
+    ThingSpec(
       "Corellian Engineering",
       "G9 Rigger",
       "Lycoming",
@@ -805,7 +805,7 @@ object FakeDataGenerator {
     val spanDays = (4 * 365).days
     val startInstant = now - spanDays
 
-    val spec = AIRCRAFT_SPECS.random()
+    val spec = THING_SPECS.random()
     val thingId = generateRandomId()
     val template =
       CanonicalTemplates.ALL.firstOrNull { it.id == config.templateId }
@@ -814,7 +814,7 @@ object FakeDataGenerator {
     // squawks) expects the specific airframe -> engine -> propeller -> hub/blade tree, and
     // engineCount / bladesPerEngine configure it. Every other preset is built from its template.
     val thing =
-      if (template.id == AirplaneTemplate.ID) buildAircraft(
+      if (template.id == AirplaneTemplate.ID) buildThing(
         spec,
         thingId,
         config
@@ -847,8 +847,8 @@ object FakeDataGenerator {
     )
   }
 
-  private fun buildAircraft(
-    spec: AircraftSpec,
+  private fun buildThing(
+    spec: ThingSpec,
     thingId: String,
     config: StressTestConfig
   ): Thing {

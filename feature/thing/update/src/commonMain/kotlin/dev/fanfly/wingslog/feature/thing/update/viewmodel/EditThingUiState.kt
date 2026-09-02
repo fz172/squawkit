@@ -8,7 +8,7 @@ import dev.fanfly.wingslog.thing.ThingTemplate
 
 data class EditThingUiState(
   val thing: Thing = Thing(),
-  val initialAircraft: Thing? = null,
+  val initialThing: Thing? = null,
   val isLoading: Boolean = true,
   val isSaved: Boolean = false,
   val isDeleted: Boolean = false,
@@ -43,7 +43,7 @@ data class EditThingUiState(
   val canDelete: Boolean get() = hostedByMe && thing.id.isNotEmpty()
 
   val hasChanges: Boolean
-    get() = initialAircraft != null && thing != initialAircraft
+    get() = initialThing != null && thing != initialThing
 
   /**
    * **A field is required when it is on screen and the template asks for it.**

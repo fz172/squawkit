@@ -37,7 +37,7 @@ class AttachmentExportResolver(
    *
    * **Concurrency.** These coroutines spend nearly all their time *waiting* on
    * `AttachmentManager.ensureLocal`, whose own timeout is per attachment. Resolved one at a time,
-   * an thing with 11 unfetchable attachments cost 11 × that timeout — five and a half silent
+   * a thing with 11 unfetchable attachments cost 11 × that timeout — five and a half silent
    * minutes, which is exactly how #426 was first reported. Run together, the worst case is one
    * timeout regardless of count. The real network work is not done here anyway; it is scheduled
    * through WorkManager, which does its own throttling.

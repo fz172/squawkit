@@ -20,7 +20,7 @@ const RUN = { dryRun: false, onlyHosts: [HOST] };
 async function seedShare(host = HOST, ac = AC) {
   await adminDb.doc(legacy(host, ac)).set({
     hostUid: host,
-    aircraftId: ac,
+    thingId: ac,
     memberRoles: { [host]: "owner", [OWNER2]: "owner", [TECH]: "technician" },
     attachmentsEnabled: true,
   });
@@ -73,9 +73,9 @@ describe("ACL cutover — the copy", () => {
       [TECH]: "technician",
     });
     // Field names and values are unchanged: this migration moves the ACL's location, not its
-    // schema. Renaming hostUid/aircraftId would break shareRole() and every reader for no gain.
+    // schema. Renaming hostUid/thingId would break shareRole() and every reader for no gain.
     expect(dest?.hostUid).toBe(HOST);
-    expect(dest?.aircraftId).toBe(AC);
+    expect(dest?.thingId).toBe(AC);
     expect(dest?.attachmentsEnabled).toBe(true);
   });
 

@@ -9,7 +9,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import dev.fanfly.wingslog.core.auth.EmailLinkDeepLinks
 import dev.fanfly.wingslog.feature.notifications.permission.AndroidNotificationPermissionBridge
 import dev.fanfly.wingslog.feature.notifications.viewing.NotificationTapRouter
-import dev.fanfly.wingslog.feature.sharing.datamanager.AircraftShareDeepLinks
+import dev.fanfly.wingslog.feature.sharing.datamanager.ThingShareDeepLinks
 
 class MainActivity : ComponentActivity() {
 
@@ -48,7 +48,7 @@ class MainActivity : ComponentActivity() {
     val data = intent?.data?.toString() ?: return
     // A share invite is parked for the redeem flow; a tapped notification's target goes to
     // NotificationTapRouter (design §5.3); anything else (email sign-in) goes to AuthFlow.
-    if (AircraftShareDeepLinks.deliver(data)) return
+    if (ThingShareDeepLinks.deliver(data)) return
     if (NotificationTapRouter.deliver(data)) return
     EmailLinkDeepLinks.deliver(data)
   }

@@ -8,24 +8,24 @@ import androidx.navigation.compose.dialog
 import androidx.navigation.navArgument
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.ui.adaptive.compose.AdaptiveFormDialogFrame
-import dev.fanfly.wingslog.feature.thing.update.EditAircraftScreen
 import dev.fanfly.wingslog.feature.developeroptions.plugin.DeveloperOptionsNavContributor
 import dev.fanfly.wingslog.feature.export.update.ExportHistoryRoute
 import dev.fanfly.wingslog.feature.export.update.ExportSelectionRoute
 import dev.fanfly.wingslog.feature.logs.update.logs.MaintenanceLogFormScreen
+import dev.fanfly.wingslog.feature.notifications.settings.NotificationSettingsScreen
 import dev.fanfly.wingslog.feature.settings.developeroptions.DeveloperOptionsScreen
 import dev.fanfly.wingslog.feature.sharing.update.EnterInviteCodeRoute
 import dev.fanfly.wingslog.feature.sharing.update.ManageAccessRoute
 import dev.fanfly.wingslog.feature.squawk.update.ui.AddSquawkRoute
 import dev.fanfly.wingslog.feature.squawk.update.ui.EditSquawkRoute
 import dev.fanfly.wingslog.feature.subscription.viewing.SubscriptionScreen
-import dev.fanfly.wingslog.feature.notifications.settings.NotificationSettingsScreen
 import dev.fanfly.wingslog.feature.sync.settings.SyncSettingsScreen
 import dev.fanfly.wingslog.feature.tasks.update.ui.AddTaskRoute
 import dev.fanfly.wingslog.feature.tasks.update.ui.EditTaskRoute
 import dev.fanfly.wingslog.feature.technician.manage.compose.EditTechnicianScreen
 import dev.fanfly.wingslog.feature.technician.manage.compose.TechnicianListScreen
 import dev.fanfly.wingslog.feature.technician.manage.viewmodel.TechnicianListViewModel
+import dev.fanfly.wingslog.feature.thing.update.EditThingScreen
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.mp.KoinPlatform
 
@@ -36,11 +36,11 @@ import org.koin.mp.KoinPlatform
  */
 fun NavGraphBuilder.formDialogs(navController: NavController) {
   dialog(
-    route = Screen.AddAircraft.route,
+    route = Screen.AddThing.route,
     dialogProperties = formDialogProperties(),
   ) {
     AdaptiveFormDialogFrame {
-      EditAircraftScreen(navController = navController)
+      EditThingScreen(navController = navController)
     }
   }
   // A real centered dialog (not the full-screen form frame): the screen renders its own card over
@@ -52,20 +52,20 @@ fun NavGraphBuilder.formDialogs(navController: NavController) {
     EnterInviteCodeRoute(navController = navController)
   }
   dialog(
-    route = Screen.EditAircraft.route,
-    arguments = listOf(navArgument(Screen.AIRCRAFT_ID) {
+    route = Screen.EditThing.route,
+    arguments = listOf(navArgument(Screen.THING_ID) {
       type = NavType.StringType
       nullable = true
     }),
     dialogProperties = formDialogProperties(),
   ) {
     AdaptiveFormDialogFrame {
-      EditAircraftScreen(navController = navController)
+      EditThingScreen(navController = navController)
     }
   }
   dialog(
     route = Screen.AddMaintenanceTask.route,
-    arguments = listOf(navArgument(Screen.AIRCRAFT_ID) {
+    arguments = listOf(navArgument(Screen.THING_ID) {
       type = NavType.StringType
     }),
     dialogProperties = formDialogProperties(),
@@ -77,7 +77,7 @@ fun NavGraphBuilder.formDialogs(navController: NavController) {
   dialog(
     route = Screen.EditMaintenanceTask.route,
     arguments = listOf(
-      navArgument(Screen.AIRCRAFT_ID) { type = NavType.StringType },
+      navArgument(Screen.THING_ID) { type = NavType.StringType },
       navArgument(Screen.CARD_ID) { type = NavType.StringType },
     ),
     dialogProperties = formDialogProperties(),
@@ -89,7 +89,7 @@ fun NavGraphBuilder.formDialogs(navController: NavController) {
   dialog(
     route = Screen.AddMaintenanceLog.route,
     arguments = listOf(
-      navArgument(Screen.AIRCRAFT_ID) { type = NavType.StringType },
+      navArgument(Screen.THING_ID) { type = NavType.StringType },
       navArgument(Screen.SQUAWK_ID) {
         type = NavType.StringType
         nullable = true
@@ -110,7 +110,7 @@ fun NavGraphBuilder.formDialogs(navController: NavController) {
   dialog(
     route = Screen.EditMaintenanceLog.route,
     arguments = listOf(
-      navArgument(Screen.AIRCRAFT_ID) { type = NavType.StringType },
+      navArgument(Screen.THING_ID) { type = NavType.StringType },
       navArgument(Screen.LOG_ID) { type = NavType.StringType },
     ),
     dialogProperties = formDialogProperties(),
@@ -121,7 +121,7 @@ fun NavGraphBuilder.formDialogs(navController: NavController) {
   }
   dialog(
     route = Screen.AddSquawk.route,
-    arguments = listOf(navArgument(Screen.AIRCRAFT_ID) {
+    arguments = listOf(navArgument(Screen.THING_ID) {
       type = NavType.StringType
     }),
     dialogProperties = formDialogProperties(),
@@ -133,7 +133,7 @@ fun NavGraphBuilder.formDialogs(navController: NavController) {
   dialog(
     route = Screen.EditSquawk.route,
     arguments = listOf(
-      navArgument(Screen.AIRCRAFT_ID) { type = NavType.StringType },
+      navArgument(Screen.THING_ID) { type = NavType.StringType },
       navArgument(Screen.SQUAWK_ID) { type = NavType.StringType },
     ),
     dialogProperties = formDialogProperties(),
@@ -156,12 +156,12 @@ fun NavGraphBuilder.formDialogs(navController: NavController) {
  */
 /**
  * Per-thing sharing destinations, registered once on the root graph so both hosts render them.
- * Reached from an thing's context (the entry point + role-gated visibility land with #133).
+ * Reached from a thing's context (the entry point + role-gated visibility land with #133).
  */
 fun NavGraphBuilder.sharingRoutes(navController: NavController) {
   dialog(
     route = Screen.ManageAccess.route,
-    arguments = listOf(navArgument(Screen.AIRCRAFT_ID) {
+    arguments = listOf(navArgument(Screen.THING_ID) {
       type = NavType.StringType
     }),
     dialogProperties = formDialogProperties(),

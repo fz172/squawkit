@@ -3,7 +3,7 @@ package dev.fanfly.wingslog.core.storage
 import kotlinx.coroutines.flow.Flow
 
 /**
- * Resolves the [EntityScope] that holds an thing's nested maintenance data (logs, tasks,
+ * Resolves the [EntityScope] that holds a thing's nested maintenance data (logs, tasks,
  * squawks, overview). Per-thing managers must not derive scopes from the signed-in uid any more:
  *
  * - **Own thing** → `thingChildUnsafe(myUid, thingId)` (unchanged).

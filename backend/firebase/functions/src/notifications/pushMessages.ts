@@ -1,5 +1,5 @@
 import {
-  aircraftTabForRecordType,
+  thingTabForRecordType,
   activityNotificationId,
   escalationNotificationId,
   RECORD_TYPE,
@@ -50,6 +50,7 @@ export type PushData = {
   channel: "COLLABORATION" | "URGENCY";
   notificationId: string;
   highPriority: "true" | "false";
+  /** Wire key: renaming it breaks tap routing on every client older than the rename. */
   aircraftId: string;
   recordType: RecordType;
   tapTarget: string;
@@ -68,7 +69,7 @@ export type PushData = {
 export const PUSH_TTL_SECONDS = 24 * 60 * 60;
 
 export type ActivityMessageInput = {
-  aircraftId: string;
+  thingId: string;
   recordType: RecordType;
   /** The record's Firestore document id — the aircraft's own id for the `aircraft` record type. */
   recordId: string;
@@ -95,12 +96,12 @@ export type ActivityMessageInput = {
  */
 export function activityPushData(input: ActivityMessageInput): PushData {
   const notificationId = activityNotificationId(input.recordType, input.recordId, input.atMs);
-  const isAircraft = input.recordType === RECORD_TYPE.AIRCRAFT;
+  const isThing = input.recordType === RECORD_TYPE.AIRCRAFT;
   const tapTarget =
-    isAircraft || input.kind === "deleted"
-      ? `aircraft:${input.aircraftId}:${aircraftTabForRecordType(input.recordType)}`
-      : `${input.recordType}:${input.aircraftId}:${input.recordId}`;
-  const bodyKey = isAircraft
+    isThing || input.kind === "deleted"
+      ? `aircraft:${input.thingId}:${thingTabForRecordType(input.recordType)}`
+      : `${input.recordType}:${input.thingId}:${input.recordId}`;
+  const bodyKey = isThing
     ? "notification_n1_body_aircraft_updated"
     : `notification_n1_body_record_${input.kind}`;
   return {
@@ -110,7 +111,7 @@ export function activityPushData(input: ActivityMessageInput): PushData {
     // Collaboration activity is never high priority — that is what N2's urgency tiers are for, and
     // §7.3 is explicit that an activity summary must never replace a grounding alert.
     highPriority: "false",
-    aircraftId: input.aircraftId,
+    aircraftId: input.thingId,
     recordType: input.recordType,
     tapTarget,
     titleKey: "notification_n1_title",
@@ -123,7 +124,7 @@ export function activityPushData(input: ActivityMessageInput): PushData {
 }
 
 export type EscalationMessageInput = {
-  aircraftId: string;
+  thingId: string;
   squawkId: string;
   title: string;
   kind: "created" | "raised";
@@ -132,7 +133,7 @@ export type EscalationMessageInput = {
 };
 
 /**
- * The §7.5 bypass, under `n1esc:{aircraftId}:{squawkId}` so no later routine edit can replace an
+ * The §7.5 bypass, under `n1esc:{thingId}:{squawkId}` so no later routine edit can replace an
  * escalation alert.
  *
  * **The bodies are N1's own, not the N2 ones §7.5 originally reused.** Both can fire for the same
@@ -150,11 +151,11 @@ export function escalationPushData(input: EscalationMessageInput): PushData {
   return {
     class: "urgency",
     channel: "URGENCY",
-    notificationId: escalationNotificationId(input.aircraftId, input.squawkId),
+    notificationId: escalationNotificationId(input.thingId, input.squawkId),
     highPriority: "false",
-    aircraftId: input.aircraftId,
+    aircraftId: input.thingId,
     recordType: "squawk",
-    tapTarget: `squawk:${input.aircraftId}:${input.squawkId}`,
+    tapTarget: `squawk:${input.thingId}:${input.squawkId}`,
     titleKey: created ? "notification_n1_title_squawk_created" : "notification_title_priority_raised",
     bodyKey: created
       ? "notification_n1_body_squawk_created"

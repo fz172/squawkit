@@ -1,11 +1,11 @@
 package dev.fanfly.wingslog.feature.sharing.datamanager
 
-import dev.fanfly.wingslog.thing.Technician
-import dev.fanfly.wingslog.feature.sharing.model.AircraftShareState
 import dev.fanfly.wingslog.feature.sharing.model.InviteLink
 import dev.fanfly.wingslog.feature.sharing.model.InvitePreview
 import dev.fanfly.wingslog.feature.sharing.model.RedeemOutcome
 import dev.fanfly.wingslog.feature.sharing.model.ShareRole
+import dev.fanfly.wingslog.feature.sharing.model.ThingShareState
+import dev.fanfly.wingslog.thing.Technician
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -20,7 +20,7 @@ import kotlinx.coroutines.flow.Flow
  */
 interface SharingManager {
   /** Members + pending invites for [acId], from Firestore snapshots (online-only). */
-  fun observeShareState(acId: String): Flow<AircraftShareState>
+  fun observeShareState(acId: String): Flow<ThingShareState>
 
   /** The caller's role on [acId], resolved locally (refs store / own thing) — instant, offline-correct. */
   fun observeMyRole(acId: String): Flow<ShareRole?>
@@ -39,7 +39,7 @@ interface SharingManager {
 
   /**
    * Whether this thing is part of a share at all — true for *every* partner in it, the hosting
-   * owner included, false for an thing nobody else can see.
+   * owner included, false for a thing nobody else can see.
    *
    * This is what gates anything that only makes sense when more than one person can write: the
    * shared marker, and the authorship attestations on logs. On an unshared thing the only author
@@ -54,7 +54,7 @@ interface SharingManager {
 
   /**
    * Mints a pairing code (#164). Server-side: the code doc lives in a collection no client may read,
-   * which is what keeps an thing id out of the invitee's hands (#202/#204).
+   * which is what keeps a thing id out of the invitee's hands (#202/#204).
    *
    * [thingLabel] is display-only, shown to the invitee before they accept (#201) — the server
    * cannot read it out of the thing record, which is opaque proto bytes.
@@ -83,7 +83,11 @@ interface SharingManager {
 
   suspend fun revokeMember(acId: String, uid: String): Result<Unit>
 
-  suspend fun updateRole(acId: String, uid: String, role: ShareRole): Result<Unit>
+  suspend fun updateRole(
+    acId: String,
+    uid: String,
+    role: ShareRole
+  ): Result<Unit>
 
   suspend fun leave(acId: String): Result<Unit>
 

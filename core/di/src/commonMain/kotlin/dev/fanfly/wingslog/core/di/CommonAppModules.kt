@@ -15,8 +15,6 @@ import dev.fanfly.wingslog.core.ui.theme.di.appearanceModule
 import dev.fanfly.wingslog.core.ui.theme.di.appearanceStoreModule
 import dev.fanfly.wingslog.feature.ads.datamanager.di.adsModule
 import dev.fanfly.wingslog.feature.ads.datamanager.di.platformAdConsentModule
-import dev.fanfly.wingslog.feature.thing.dashboard.di.aircraftDashboardModule
-import dev.fanfly.wingslog.feature.thing.update.di.aircraftUpdateModule
 import dev.fanfly.wingslog.feature.attachment.datamanager.attachmentModule
 import dev.fanfly.wingslog.feature.attachment.datamanager.platformAttachmentModule
 import dev.fanfly.wingslog.feature.developeroptions.datamanager.di.developerOptionsModule
@@ -47,6 +45,8 @@ import dev.fanfly.wingslog.feature.tasks.datamanager.tasksModule
 import dev.fanfly.wingslog.feature.tasks.update.viewmodel.tasksUiModule
 import dev.fanfly.wingslog.feature.technician.datamanager.di.technicianDataManagerModule
 import dev.fanfly.wingslog.feature.technician.manage.di.technicianManageModule
+import dev.fanfly.wingslog.feature.thing.dashboard.di.thingDashboardModule
+import dev.fanfly.wingslog.feature.thing.update.di.thingUpdateModule
 import org.koin.core.module.Module
 
 /**
@@ -102,8 +102,8 @@ val commonAppModules: List<Module> = listOf(
   maintenanceDataManagerModule,
   maintenanceViewingModule,
   maintenanceUpdateModule,
-  aircraftDashboardModule,
-  aircraftUpdateModule,
+  thingDashboardModule,
+  thingUpdateModule,
   tasksModule,
   tasksUiModule,
   squawkModule,

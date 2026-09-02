@@ -96,7 +96,7 @@ class AndroidLocalNotifier(
    * `getLaunchIntentForPackage` rather than a direct `MainActivity` reference — `:viewing` cannot
    * depend on the `app` module (wrong direction; §3), and this is the standard way to target "this
    * app's launcher activity" without one. `MainActivity.handleDeepLink` decodes the URI via
-   * [NotificationTapRouter], the same chain `AircraftShareDeepLinks`/`EmailLinkDeepLinks` already use
+   * [NotificationTapRouter], the same chain `ThingShareDeepLinks`/`EmailLinkDeepLinks` already use
    * (design §5.3). `null` (no launcher found) means [NotificationCompat.Builder.setContentIntent]
    * gets a no-op — same tray entry, just not tappable, rather than a crash.
    */

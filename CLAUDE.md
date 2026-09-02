@@ -68,7 +68,7 @@ These are enforced or load-bearing; the reasoning for each is in AGENTS.md.
 - `get<ClassType>()` in Koin modules, never bare `get()` — a repo hook rejects it.
 - No `\'` in Kotlin strings or `strings.xml` — use `’`. Also hook-enforced.
 - User-facing strings always come from `strings.xml`; reuse before adding.
-- Per-aircraft data resolves its scope through `AircraftScopeResolver`, never from the signed-in uid.
+- Per-thing data resolves its scope through `ThingScopeResolver`, never from the signed-in uid.
 - Three separate gating mechanisms — `AppCapability` (build/platform), `SubscriptionManager`
   (entitlement), `DeveloperFlags` (developer override). Don't invent a fourth; **FeatureLab was
   removed**. [§ Gating](AGENTS.md#gating-three-mechanisms-kept-separate).

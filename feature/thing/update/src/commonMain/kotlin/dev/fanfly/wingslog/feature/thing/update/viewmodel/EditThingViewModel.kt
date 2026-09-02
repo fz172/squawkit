@@ -73,20 +73,20 @@ class EditThingViewModel(
 
   /**
    * A create rather than an edit. Read once from the route argument, because the same form serves
-   * both and [saveAircraft] cannot tell them apart afterwards — by then the thing has an id either
+   * both and [saveThing] cannot tell them apart afterwards — by then the thing has an id either
    * way, and counting an edit as a create would inflate the §13 Things-per-account metric.
    */
   private val isNewThing: Boolean =
-    savedStateHandle.get<String>(Screen.AIRCRAFT_ID)
+    savedStateHandle.get<String>(Screen.THING_ID)
       .isNullOrEmpty()
 
   init {
-    val thingId: String? = savedStateHandle[Screen.AIRCRAFT_ID]
+    val thingId: String? = savedStateHandle[Screen.THING_ID]
     if (thingId.isNullOrEmpty()) {
-      logger.i { "Initializing the view model with empty aircraft" }
+      logger.i { "Initializing the view model with empty thing" }
       loadThing(Thing())
     } else {
-      logger.i { "Loading aircraft $thingId" }
+      logger.i { "Loading thing $thingId" }
       loadThingById(thingId)
       observeHostedByMe(thingId)
       observeOtherMembers(thingId)
@@ -123,7 +123,7 @@ class EditThingViewModel(
   fun loadThingById(id: String) {
     _uiState.update { it.copy(isLoading = true) }
     viewModelScope.launch {
-      // We need a way to get one thing. FleetManager.loadAircraft returns a Flow.
+      // We need a way to get one thing. FleetManager.loadThing returns a Flow.
       // We can take the first emission.
       try {
         fleetManager.loadThing(id)
@@ -134,7 +134,7 @@ class EditThingViewModel(
                 // than from whatever was selected in the shell.
                 it.withThing(thing)
                   .copy(
-                    initialAircraft = it.initialAircraft ?: thing,
+                    initialThing = it.initialThing ?: thing,
                     isLoading = false,
                   )
               }
@@ -146,7 +146,7 @@ class EditThingViewModel(
       } catch (e: CancellationException) {
         throw e
       } catch (e: Exception) {
-        logger.w(e) { "Failed to load aircraft by id: $id" }
+        logger.w(e) { "Failed to load thing by id: $id" }
         _uiState.update { it.copy(isLoading = false) }
       }
     }
@@ -156,13 +156,13 @@ class EditThingViewModel(
     _uiState.update {
       it.withThing(thing)
         .copy(
-          initialAircraft = it.initialAircraft ?: thing,
+          initialThing = it.initialThing ?: thing,
           isLoading = false,
         )
     }
   }
 
-  fun saveAircraft() {
+  fun saveThing() {
     viewModelScope.launch {
       if (!uiState.value.isValid) {
         _uiState.update { it.copy(showValidationErrors = true) }
@@ -293,7 +293,7 @@ class EditThingViewModel(
   }
 
   companion object {
-    private val logger = Logger.withTag("EditAircraftViewModel")
+    private val logger = Logger.withTag("EditThingViewModel")
 
     /**
      * How the Thing was created. Only the manual form exists today; the template picker and any

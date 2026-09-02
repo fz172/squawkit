@@ -42,7 +42,7 @@ class ThingScopeResolverImpl(
 
   override suspend fun resolveNow(thingId: String): EntityScope {
     val uid = auth.currentUser?.uid
-      ?: error("Cannot resolve aircraft scope when no user is signed in")
+      ?: error("Cannot resolve thing scope when no user is signed in")
     val hostUid = refStore.observe(thingId, EntityScope.userRoot(uid)).first()?.value?.host_uid
     return scopeFor(uid, hostUid, thingId)
   }

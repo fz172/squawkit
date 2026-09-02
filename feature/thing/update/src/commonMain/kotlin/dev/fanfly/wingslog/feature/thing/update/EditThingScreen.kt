@@ -59,11 +59,11 @@ import wingslog.feature.thing.update.generated.resources.delete_thing_shared_war
 import wingslog.feature.thing.update.generated.resources.update_thing
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.logs.sharedassets.generated.resources.Res as SharedRes
-import wingslog.feature.thing.update.generated.resources.Res as AircraftRes
+import wingslog.feature.thing.update.generated.resources.Res as ThingRes
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
-fun EditAircraftScreen(
+fun EditThingScreen(
   viewModel: EditThingViewModel = koinViewModel(),
   navController: NavController,
 ) {
@@ -114,7 +114,7 @@ fun EditAircraftScreen(
       title = {
         Text(
           stringResource(
-            AircraftRes.string.delete_thing,
+            ThingRes.string.delete_thing,
             LexiconFormatter.titleCase(LocalThingLexicon.current.thingNoun),
           )
         )
@@ -128,11 +128,11 @@ fun EditAircraftScreen(
           if (others > 0) {
             Text(
               text = stringResource(
-                AircraftRes.string.delete_thing_shared_warning,
+                ThingRes.string.delete_thing_shared_warning,
                 others,
                 stringResource(
-                  if (others == 1) AircraftRes.string.delete_thing_member_singular
-                  else AircraftRes.string.delete_thing_member_plural
+                  if (others == 1) ThingRes.string.delete_thing_member_singular
+                  else ThingRes.string.delete_thing_member_plural
                 ),
                 LocalThingLexicon.current.thingNoun.singular,
               ),
@@ -169,7 +169,7 @@ fun EditAircraftScreen(
             LexiconFormatter.titleCase(LocalThingLexicon.current.thingNoun),
           )
           else stringResource(
-            AircraftRes.string.update_thing,
+            ThingRes.string.update_thing,
             LexiconFormatter.titleCase(LocalThingLexicon.current.thingNoun),
           ),
           onBackClick = { tryNavigateBack() },
@@ -214,7 +214,7 @@ fun EditAircraftScreen(
       BottomButtons(
         modifier = Modifier.align(Alignment.BottomCenter),
         primaryEnabled = !uiState.isLoading,
-        onPrimaryClick = { viewModel.saveAircraft() },
+        onPrimaryClick = { viewModel.saveThing() },
         onSecondaryClick = { tryNavigateBack() },
         // Delete is the hosting owner's alone — a co-owner holds the same OWNER role but deleting
         // would tear the share down for everyone, and the rules reject their tombstone anyway.
@@ -228,7 +228,7 @@ fun EditAircraftScreen(
           )
         else
           stringResource(
-            AircraftRes.string.update_thing,
+            ThingRes.string.update_thing,
             LexiconFormatter.titleCase(LocalThingLexicon.current.thingNoun),
           )
       )

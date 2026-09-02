@@ -36,7 +36,7 @@ import org.junit.Test
 import kotlin.time.Instant
 import java.util.TimeZone as JavaTimeZone
 
-private const val TEST_AIRCRAFT_ID = "aircraft-456"
+private const val TEST_THING_ID = "thing-456"
 private const val TEST_SQUAWK_ID = "squawk-789"
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -72,10 +72,10 @@ class SquawkFormViewModelTest {
     every { subscriptionManager.canUploadAttachments() } returns flowOf(false)
     // Own thing by default; foreign-hosted tests override this.
     every { sharingManager.observeIsForeignHosted(any()) } returns flowOf(false)
-    every { squawkManager.observeSquawks(TEST_AIRCRAFT_ID) } returns flowOf(
+    every { squawkManager.observeSquawks(TEST_THING_ID) } returns flowOf(
       emptyList()
     )
-    every { logManager.observeLogs(TEST_AIRCRAFT_ID) } returns flowOf(emptyList())
+    every { logManager.observeLogs(TEST_THING_ID) } returns flowOf(emptyList())
   }
 
   @After
@@ -147,7 +147,7 @@ class SquawkFormViewModelTest {
 
       coVerify {
         squawkManager.dismissSquawk(
-          TEST_AIRCRAFT_ID,
+          TEST_THING_ID,
           TEST_SQUAWK_ID,
           SquawkDismissReason.SQUAWK_DISMISS_REASON_OBSOLETE,
         )
@@ -242,7 +242,7 @@ class SquawkFormViewModelTest {
       val event = viewModel.events.first()
       assertThat(event).isInstanceOf(SquawkFormEvent.NavigateToCreateLog::class.java)
       val navigateEvent = event as SquawkFormEvent.NavigateToCreateLog
-      assertThat(navigateEvent.thingId).isEqualTo(TEST_AIRCRAFT_ID)
+      assertThat(navigateEvent.thingId).isEqualTo(TEST_THING_ID)
       assertThat(navigateEvent.squawkId).isEqualTo(TEST_SQUAWK_ID)
     }
 
@@ -271,7 +271,7 @@ class SquawkFormViewModelTest {
     advanceUntilIdle()
 
     coVerify {
-      squawkManager.reopenSquawk(TEST_AIRCRAFT_ID, TEST_SQUAWK_ID)
+      squawkManager.reopenSquawk(TEST_THING_ID, TEST_SQUAWK_ID)
     }
   }
 
@@ -317,7 +317,7 @@ class SquawkFormViewModelTest {
     // so we assert the manager was called and trust no success path fired.
     coVerify(exactly = 1) {
       squawkManager.reopenSquawk(
-        TEST_AIRCRAFT_ID,
+        TEST_THING_ID,
         TEST_SQUAWK_ID
       )
     }
@@ -439,7 +439,7 @@ class SquawkFormViewModelTest {
   @Test
   fun save_onEdit_preservesOriginalCreatedAt() = runTest(testDispatcher) {
     val originalCreatedAt = Instant.fromEpochSeconds(1_700_000_000L)
-    every { squawkManager.observeSquawks(TEST_AIRCRAFT_ID) } returns flowOf(
+    every { squawkManager.observeSquawks(TEST_THING_ID) } returns flowOf(
       listOf(
         Squawk(
           id = TEST_SQUAWK_ID,
@@ -464,7 +464,7 @@ class SquawkFormViewModelTest {
 
   @Test
   fun save_onEdit_whenCreatedAtMissing_backfillsIt() = runTest(testDispatcher) {
-    every { squawkManager.observeSquawks(TEST_AIRCRAFT_ID) } returns flowOf(
+    every { squawkManager.observeSquawks(TEST_THING_ID) } returns flowOf(
       listOf(
         Squawk(
           id = TEST_SQUAWK_ID,
@@ -512,7 +512,7 @@ class SquawkFormViewModelTest {
       // 2026-07-13 23:00 PDT — the same instant is already 07/14 in UTC, so reading it back in
       // UTC showed a squawk filed late on the 13th as reported on the 14th.
       val createdAt = Instant.parse("2026-07-14T06:00:00Z")
-      every { squawkManager.observeSquawks(TEST_AIRCRAFT_ID) } returns flowOf(
+      every { squawkManager.observeSquawks(TEST_THING_ID) } returns flowOf(
         listOf(
           Squawk(
             id = TEST_SQUAWK_ID,
@@ -555,7 +555,7 @@ class SquawkFormViewModelTest {
       sharingManager = sharingManager,
       savedStateHandle = SavedStateHandle(
         mapOf(
-          Screen.AIRCRAFT_ID to TEST_AIRCRAFT_ID,
+          Screen.THING_ID to TEST_THING_ID,
           Screen.SQUAWK_ID to TEST_SQUAWK_ID,
         )
       ),
@@ -572,14 +572,14 @@ class SquawkFormViewModelTest {
       subscriptionManager = subscriptionManager,
       sharingManager = sharingManager,
       savedStateHandle = SavedStateHandle(
-        mapOf(Screen.AIRCRAFT_ID to TEST_AIRCRAFT_ID)
+        mapOf(Screen.THING_ID to TEST_THING_ID)
       ),
     )
 
   // --- Attachments on a shared thing (design §9, #146) ---
 
   @Test
-  fun attachAvailable_onAnAircraftHostedByAnotherAccount() =
+  fun attachAvailable_onAnThingHostedByAnotherAccount() =
     runTest(testDispatcher) {
       // A member's upload now travels through the broker into the host's tree (P8.4 §9.2), so the
       // attach button is offered on a shared thing — no longer hard-disabled by hosting.
@@ -592,7 +592,7 @@ class SquawkFormViewModelTest {
     }
 
   @Test
-  fun attachAvailable_onOwnAircraft_whenTheFlagIsOn() =
+  fun attachAvailable_onOwnThing_whenTheFlagIsOn() =
     runTest(testDispatcher) {
       every { subscriptionManager.canUploadAttachments() } returns flowOf(true)
 
@@ -603,7 +603,7 @@ class SquawkFormViewModelTest {
     }
 
   @Test
-  fun attachStaysOff_onOwnAircraft_whenTheEntitlementIsOff() =
+  fun attachStaysOff_onOwnThing_whenTheEntitlementIsOff() =
     runTest(testDispatcher) {
       // On an OWN thing the member's own entitlement has the final say (P8.7 §9.7).
       every { subscriptionManager.canUploadAttachments() } returns flowOf(false)
@@ -618,7 +618,7 @@ class SquawkFormViewModelTest {
     }
 
   @Test
-  fun attachAvailable_onForeignHostedAircraft_evenWithoutOwnEntitlement() =
+  fun attachAvailable_onForeignHostedThing_evenWithoutOwnEntitlement() =
     runTest(testDispatcher) {
       // The host pays and the broker enforces the host's entitlement, so a member with no subscription
       // of their own can still attach on a paid owner's thing (P8.7 §9.7).

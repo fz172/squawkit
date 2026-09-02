@@ -29,11 +29,11 @@ const AC = "ac-shared";
 const LOG = "log-1";
 
 // MIGRATION (task F3/F4): the entity tree is `/thing/` now — Phase F2 deleted the `/aircraft/`
-// documents and F3 removed the rules block that governed them. `legacyAircraftDoc` survives only so
+// documents and F3 removed the rules block that governed them. `legacyThingDoc` survives only so
 // F4 can assert that path is genuinely dead rather than merely unused.
-const aircraftDoc = `users/${HOST}/thing/${AC}`;
-const logDoc = `${aircraftDoc}/maintenance_log/${LOG}`;
-const legacyAircraftDoc = `users/${HOST}/aircraft/${AC}`;
+const thingDoc = `users/${HOST}/thing/${AC}`;
+const logDoc = `${thingDoc}/maintenance_log/${LOG}`;
+const legacyThingDoc = `users/${HOST}/aircraft/${AC}`;
 // MIGRATION (Phase G3): the ACL tree has moved. `shareRole()` now resolves against thing_shares,
 // so this is where every fixture below has to seed — the aircraft_shares match block is still in
 // the rules file until G6, but nothing authorizes against it any more.
@@ -59,11 +59,11 @@ beforeEach(async () => {
   await testEnv.clearFirestore();
   await testEnv.withSecurityRulesDisabled(async (ctx) => {
     const db = ctx.firestore();
-    await setDoc(doc(db, aircraftDoc), { registration: "N123", writerUid: HOST });
+    await setDoc(doc(db, thingDoc), { registration: "N123", writerUid: HOST });
     await setDoc(doc(db, logDoc), { note: "oil change", writerUid: HOST });
     await setDoc(doc(db, shareDoc), {
       hostUid: HOST,
-      aircraftId: AC,
+      thingId: AC,
       memberRoles: { [HOST]: "owner", [OWNER2]: "owner", [TECH]: "technician" },
     });
     await setDoc(doc(db, `${shareDoc}/members/${TECH}`), {
@@ -84,11 +84,11 @@ const as = (uid: string | null) =>
 
 describe("shared aircraft document", () => {
   it("member may GET the shared aircraft doc", async () => {
-    await assertSucceeds(getDoc(doc(as(TECH), aircraftDoc)));
+    await assertSucceeds(getDoc(doc(as(TECH), thingDoc)));
   });
 
   it("non-member may NOT get the shared aircraft doc", async () => {
-    await assertFails(getDoc(doc(as(STRANGER), aircraftDoc)));
+    await assertFails(getDoc(doc(as(STRANGER), thingDoc)));
   });
 
   it("member may NOT LIST the host's aircraft collection (keeps other aircraft private)", async () => {
@@ -97,31 +97,31 @@ describe("shared aircraft document", () => {
 
   it("co-owner may edit the aircraft doc (attested, non-delete)", async () => {
     await assertSucceeds(
-      setDoc(doc(as(OWNER2), aircraftDoc), { registration: "N999", deleted: false, writerUid: OWNER2 }),
+      setDoc(doc(as(OWNER2), thingDoc), { registration: "N999", deleted: false, writerUid: OWNER2 }),
     );
   });
 
   it("technician may NOT write the aircraft doc", async () => {
     await assertFails(
-      setDoc(doc(as(TECH), aircraftDoc), { registration: "N999", writerUid: TECH }),
+      setDoc(doc(as(TECH), thingDoc), { registration: "N999", writerUid: TECH }),
     );
   });
 
   it("co-owner may NOT forge writerUid on the aircraft doc", async () => {
     await assertFails(
-      setDoc(doc(as(OWNER2), aircraftDoc), { registration: "N999", writerUid: HOST }),
+      setDoc(doc(as(OWNER2), thingDoc), { registration: "N999", writerUid: HOST }),
     );
   });
 
   it("hosting owner may delete (tombstone) the aircraft", async () => {
     await assertSucceeds(
-      setDoc(doc(as(HOST), aircraftDoc), { registration: "N123", deleted: true, writerUid: HOST }),
+      setDoc(doc(as(HOST), thingDoc), { registration: "N123", deleted: true, writerUid: HOST }),
     );
   });
 
   it("co-owner may NOT delete (tombstone) the aircraft — hosting owner only", async () => {
     await assertFails(
-      setDoc(doc(as(OWNER2), aircraftDoc), { registration: "N123", deleted: true, writerUid: OWNER2 }),
+      setDoc(doc(as(OWNER2), thingDoc), { registration: "N123", deleted: true, writerUid: OWNER2 }),
     );
   });
 });
@@ -132,7 +132,7 @@ describe("nested maintenance data", () => {
   });
 
   it("member may LIST the nested maintenance_log collection", async () => {
-    await assertSucceeds(getDocs(collection(as(TECH), `${aircraftDoc}/maintenance_log`)));
+    await assertSucceeds(getDocs(collection(as(TECH), `${thingDoc}/maintenance_log`)));
   });
 
   it("member may write a log (attested)", async () => {
@@ -154,7 +154,7 @@ describe("nested maintenance data", () => {
 
   it("member may NOT write an unknown kind into the host's subtree", async () => {
     await assertFails(
-      setDoc(doc(as(TECH), `${aircraftDoc}/evil/x`), { data: 1, writerUid: TECH }),
+      setDoc(doc(as(TECH), `${thingDoc}/evil/x`), { data: 1, writerUid: TECH }),
     );
   });
 });
@@ -177,7 +177,7 @@ describe("aircraft_shares ACL root", () => {
     await assertFails(
       setDoc(doc(as(HOST), `thing_shares/${HOST}/thing/ac-new`), {
         hostUid: HOST,
-        aircraftId: "ac-new",
+        thingId: "ac-new",
         memberRoles: { [HOST]: "owner" },
       }),
     );
@@ -187,7 +187,7 @@ describe("aircraft_shares ACL root", () => {
     await assertFails(
       setDoc(doc(as(STRANGER), `thing_shares/${STRANGER}/thing/ac-new`), {
         hostUid: STRANGER,
-        aircraftId: "ac-new",
+        thingId: "ac-new",
         memberRoles: { [STRANGER]: "owner" },
       }),
     );
@@ -200,7 +200,7 @@ describe("aircraft_shares ACL root", () => {
     await assertFails(
       setDoc(doc(as(STRANGER), `thing_shares/${STRANGER}/thing/ac-new`), {
         hostUid: HOST,
-        aircraftId: "ac-new",
+        thingId: "ac-new",
         memberRoles: { [STRANGER]: "owner" },
       }),
     );
@@ -249,7 +249,7 @@ describe("aircraft_shares — a fabricated same-id aircraft grants nothing (#202
 
   it("still may NOT read the victim's aircraft or its records", async () => {
     // The escalation this protects against: fabricating the aircraft must not make you a member.
-    await assertFails(getDoc(doc(as(STRANGER), aircraftDoc)));
+    await assertFails(getDoc(doc(as(STRANGER), thingDoc)));
     await assertFails(getDoc(doc(as(STRANGER), logDoc)));
   });
 });
@@ -264,7 +264,7 @@ describe("invite_codes — clients cannot touch them (#164)", () => {
     await testEnv.withSecurityRulesDisabled(async (ctx) => {
       await setDoc(doc(ctx.firestore(), "invite_codes/ABCD2345"), {
         hostUid: HOST,
-        aircraftId: AC,
+        thingId: AC,
         role: "technician",
       });
       await setDoc(doc(ctx.firestore(), `invite_attempts/${TECH}`), { failures: 3 });
@@ -285,7 +285,7 @@ describe("invite_codes — clients cannot touch them (#164)", () => {
     await assertFails(
       setDoc(doc(as(STRANGER), "invite_codes/EVIL2345"), {
         hostUid: HOST,
-        aircraftId: AC,
+        thingId: AC,
         role: "owner",
       }),
     );
@@ -312,7 +312,7 @@ describe("aircraft_shares — namespaced by host (#204)", () => {
     await assertFails(
       setDoc(doc(as(STRANGER), `thing_shares/${HOST}/thing/${AC}`), {
         hostUid: STRANGER,
-        aircraftId: AC,
+        thingId: AC,
         memberRoles: { [STRANGER]: "owner" },
       }),
     );
@@ -322,7 +322,7 @@ describe("aircraft_shares — namespaced by host (#204)", () => {
     await assertFails(
       setDoc(doc(as(STRANGER), `thing_shares/${HOST}/thing/${AC}`), {
         hostUid: HOST,
-        aircraftId: AC,
+        thingId: AC,
         memberRoles: { [STRANGER]: "owner" },
       }),
     );
@@ -334,14 +334,14 @@ describe("aircraft_shares — namespaced by host (#204)", () => {
     await assertFails(
       setDoc(doc(as(STRANGER), `thing_shares/${STRANGER}/thing/${AC}`), {
         hostUid: STRANGER,
-        aircraftId: AC,
+        thingId: AC,
         memberRoles: { [STRANGER]: "owner" },
       }),
     );
 
     // The victim's aircraft and records remain out of reach: the rules resolve the ACL from the tree
     // being READ (users/{HOST}/...), not from an id the attacker controls.
-    await assertFails(getDoc(doc(as(STRANGER), aircraftDoc)));
+    await assertFails(getDoc(doc(as(STRANGER), thingDoc)));
     await assertFails(getDoc(doc(as(STRANGER), logDoc)));
     await assertFails(getDoc(doc(as(STRANGER), shareDoc)));
   });
@@ -361,13 +361,13 @@ describe("aircraft_shares — namespaced by host (#204)", () => {
     await assertFails(
       setDoc(doc(as(TECH), `thing_shares/${HOST}/thing/${AC}`), {
         hostUid: TECH,
-        aircraftId: AC,
+        thingId: AC,
         memberRoles: { [TECH]: "owner" },
       }),
     );
 
     // And the victim's leftover records stay unreadable.
-    await assertFails(getDoc(doc(as(TECH), aircraftDoc)));
+    await assertFails(getDoc(doc(as(TECH), thingDoc)));
     await assertFails(getDoc(doc(as(TECH), logDoc)));
   });
 });
@@ -407,7 +407,7 @@ describe("aircraft_shares ACL root — first share (no ACL doc yet)", () => {
     await assertFails(
       setDoc(doc(as(HOST), freshShare), {
         hostUid: HOST,
-        aircraftId: FRESH,
+        thingId: FRESH,
         memberRoles: { [HOST]: "owner" },
       }),
     );
@@ -579,8 +579,8 @@ describe("migration: the retired /aircraft/ entity path is dead (task F4)", () =
   // removed block. Sharing is the capability that block uniquely granted.
   beforeEach(async () => {
     await testEnv.withSecurityRulesDisabled(async (ctx) => {
-      await setDoc(doc(ctx.firestore(), legacyAircraftDoc), { registration: "N123" });
-      await setDoc(doc(ctx.firestore(), `${legacyAircraftDoc}/maintenance_log/${LOG}`), {
+      await setDoc(doc(ctx.firestore(), legacyThingDoc), { registration: "N123" });
+      await setDoc(doc(ctx.firestore(), `${legacyThingDoc}/maintenance_log/${LOG}`), {
         note: "old",
         writerUid: HOST,
       });
@@ -588,13 +588,13 @@ describe("migration: the retired /aircraft/ entity path is dead (task F4)", () =
   });
 
   it("denies a member the retired aircraft doc", async () => {
-    await assertFails(getDoc(doc(as(TECH), legacyAircraftDoc)));
+    await assertFails(getDoc(doc(as(TECH), legacyThingDoc)));
   });
 
   it("denies a member its nested records, read and write alike", async () => {
-    await assertFails(getDoc(doc(as(TECH), `${legacyAircraftDoc}/maintenance_log/${LOG}`)));
+    await assertFails(getDoc(doc(as(TECH), `${legacyThingDoc}/maintenance_log/${LOG}`)));
     await assertFails(
-      setDoc(doc(as(TECH), `${legacyAircraftDoc}/maintenance_log/${LOG}`), {
+      setDoc(doc(as(TECH), `${legacyThingDoc}/maintenance_log/${LOG}`), {
         note: "x",
         writerUid: TECH,
       }),
@@ -603,7 +603,7 @@ describe("migration: the retired /aircraft/ entity path is dead (task F4)", () =
 
   it("denies a co-owner the write the removed block used to allow", async () => {
     await assertFails(
-      setDoc(doc(as(OWNER2), legacyAircraftDoc), {
+      setDoc(doc(as(OWNER2), legacyThingDoc), {
         registration: "N999",
         deleted: false,
         writerUid: OWNER2,
@@ -622,24 +622,24 @@ describe("migration: thing_shares is now the live ACL (Phase G3)", () => {
   // exists ONLY in the legacy tree, so the assertion cannot accidentally be satisfied (or defeated)
   // by the membership the outer beforeEach grants on AC.
   const LEGACY_ONLY = "ac-legacy-only";
-  const legacyOnlyAircraft = `users/${HOST}/${"aircraft"}/${LEGACY_ONLY}`;
+  const legacyOnlyThing = `users/${HOST}/${"aircraft"}/${LEGACY_ONLY}`;
   const legacyOnlyShare = `aircraft_shares/${HOST}/aircraft/${LEGACY_ONLY}`;
 
   beforeEach(async () => {
     await testEnv.withSecurityRulesDisabled(async (ctx) => {
       const db = ctx.firestore();
-      await setDoc(doc(db, legacyOnlyAircraft), { registration: "N999", writerUid: HOST });
+      await setDoc(doc(db, legacyOnlyThing), { registration: "N999", writerUid: HOST });
       // A full, valid-looking ACL — at the old address only.
       await setDoc(doc(db, legacyOnlyShare), {
         hostUid: HOST,
-        aircraftId: LEGACY_ONLY,
+        thingId: LEGACY_ONLY,
         memberRoles: { [HOST]: "owner", [TECH]: "technician" },
       });
     });
   });
 
   it("grants no entity access from a doc that exists only in the retired tree", async () => {
-    await assertFails(getDoc(doc(as(TECH), legacyOnlyAircraft)));
+    await assertFails(getDoc(doc(as(TECH), legacyOnlyThing)));
     await assertFails(getDoc(doc(as(TECH), `users/${HOST}/thing/${LEGACY_ONLY}`)));
   });
 

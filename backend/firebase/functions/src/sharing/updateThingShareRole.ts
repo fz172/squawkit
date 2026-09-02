@@ -5,10 +5,10 @@ import { adminDb } from "../config/firebaseAdmin.js";
 import { requireAuthenticatedApp } from "../shared/auth.js";
 import { sharedAircraftRefWireDoc } from "./sharedAircraftRefWire.js";
 import {
-  aircraftShareDocPath,
+  thingShareDocPath,
   shareMemberDocPath,
   SHARE_ROLE,
-  type AircraftShareDoc,
+  type ThingShareDoc,
   type ShareRole,
 } from "./sharingModels.js";
 
@@ -17,7 +17,7 @@ import {
  * caller's rights are still checked against the ACL found at that path, so passing someone else's
  * hostUid opens a share the caller is not in, and the checks below reject them.
  */
-type UpdateRoleRequest = { hostUid: string; aircraftId: string; memberUid: string; role: ShareRole };
+type UpdateRoleRequest = { hostUid: string; thingId: string; memberUid: string; role: ShareRole };
 
 /**
  * Changes a member's role. Owner-only. Updates the ACL, the member doc, and rewrites the member's
@@ -27,13 +27,13 @@ export const updateThingShareRole = onCall<UpdateRoleRequest, Promise<{ ok: true
   { region: FUNCTION_REGION, enforceAppCheck: true },
   async (request) => {
     const { uid } = requireAuthenticatedApp(request);
-    const { hostUid, aircraftId, memberUid, role } = parseRequest(request.data);
-    const shareRef = adminDb.doc(aircraftShareDocPath(hostUid, aircraftId));
+    const { hostUid, thingId, memberUid, role } = parseRequest(request.data);
+    const shareRef = adminDb.doc(thingShareDocPath(hostUid, thingId));
 
     await adminDb.runTransaction(async (tx) => {
       const snap = await tx.get(shareRef);
       if (!snap.exists) throw new HttpsError("not-found", "Share not found.");
-      const share = snap.data() as AircraftShareDoc;
+      const share = snap.data() as ThingShareDoc;
 
       if (share.memberRoles[uid] !== SHARE_ROLE.OWNER) {
         throw new HttpsError("permission-denied", "Only owners can change roles.");
@@ -46,10 +46,10 @@ export const updateThingShareRole = onCall<UpdateRoleRequest, Promise<{ ok: true
       }
 
       tx.update(shareRef, { [`memberRoles.${memberUid}`]: role });
-      tx.update(adminDb.doc(shareMemberDocPath(hostUid, aircraftId, memberUid)), { role });
+      tx.update(adminDb.doc(shareMemberDocPath(hostUid, thingId, memberUid)), { role });
       tx.set(
-        adminDb.doc(`users/${memberUid}/shared_aircraft_ref/${aircraftId}`),
-        sharedAircraftRefWireDoc(aircraftId, share.hostUid, role),
+        adminDb.doc(`users/${memberUid}/shared_aircraft_ref/${thingId}`),
+        sharedAircraftRefWireDoc(thingId, share.hostUid, role),
       );
     });
 
@@ -58,23 +58,23 @@ export const updateThingShareRole = onCall<UpdateRoleRequest, Promise<{ ok: true
 );
 
 /**
- * Expects `{ aircraftId: string, memberUid: string, role: 'owner' | 'technician' }` — the shared
+ * Expects `{ thingId: string, memberUid: string, role: 'owner' | 'technician' }` — the shared
  * aircraft, the member whose role changes, and the new role. All required.
  */
 function parseRequest(data: unknown): UpdateRoleRequest {
   const obj = (data ?? {}) as Record<string, unknown>;
   const hostUid = typeof obj.hostUid === "string" ? obj.hostUid.trim() : "";
-  const aircraftId = typeof obj.aircraftId === "string" ? obj.aircraftId.trim() : "";
+  const thingId = typeof obj.thingId === "string" ? obj.thingId.trim() : "";
   const memberUid = typeof obj.memberUid === "string" ? obj.memberUid.trim() : "";
   const role = obj.role;
   if (hostUid.length === 0) {
     throw new HttpsError("invalid-argument", "hostUid is required.");
   }
-  if (aircraftId.length === 0 || memberUid.length === 0) {
-    throw new HttpsError("invalid-argument", "updateThingShareRole requires aircraftId and memberUid.");
+  if (thingId.length === 0 || memberUid.length === 0) {
+    throw new HttpsError("invalid-argument", "updateThingShareRole requires thingId and memberUid.");
   }
   if (role !== SHARE_ROLE.OWNER && role !== SHARE_ROLE.TECHNICIAN) {
     throw new HttpsError("invalid-argument", "role must be 'owner' or 'technician'.");
   }
-  return { hostUid, aircraftId, memberUid, role };
+  return { hostUid, thingId, memberUid, role };
 }

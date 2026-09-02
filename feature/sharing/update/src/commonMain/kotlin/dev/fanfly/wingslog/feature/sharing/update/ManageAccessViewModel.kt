@@ -35,7 +35,7 @@ class ManageAccessViewModel(
   savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
-  val thingId: String = savedStateHandle.get<String>(Screen.AIRCRAFT_ID)
+  val thingId: String = savedStateHandle.get<String>(Screen.THING_ID)
     .orEmpty()
 
   private val _uiState =
@@ -70,7 +70,7 @@ class ManageAccessViewModel(
           _uiState.update { it.copy(isLoading = false, myRole = role) }
         }
     }
-    // The roster is online-only and, for an thing that hasn't been shared yet, not readable at
+    // The roster is online-only and, for a thing that hasn't been shared yet, not readable at
     // all (the owner isn't in memberRoles until the first invite bootstraps the share doc). Treat a
     // failure as "no members yet" rather than an error, so it can't block the owner from inviting.
     viewModelScope.launch {

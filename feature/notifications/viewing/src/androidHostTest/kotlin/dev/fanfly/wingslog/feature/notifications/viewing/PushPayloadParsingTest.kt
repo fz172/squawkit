@@ -23,7 +23,7 @@ class PushPayloadParsingTest {
     "channel" to "COLLABORATION",
     "notificationId" to "n1:ac-1:task:task-1:1000",
     "highPriority" to "false",
-    "aircraftId" to "ac-1",
+    "thingId" to "ac-1",
     "recordType" to "task",
     "tapTarget" to "task:ac-1:task-1",
     "titleKey" to "notification_n1_title",
@@ -130,7 +130,7 @@ class PushPayloadParsingTest {
       PushPayload.parse(activityData(mapOf("tapTarget" to "squawk:ac-1")))!!
 
     assertThat(parsed.tapTarget).isEqualTo(
-      NotificationTapTarget.Aircraft(
+      NotificationTapTarget.Thing(
         "ac-1",
         tab = "squawks"
       )
@@ -149,7 +149,7 @@ class PushPayloadParsingTest {
     )!!
 
     assertThat(parsed.tapTarget).isEqualTo(
-      NotificationTapTarget.Aircraft(
+      NotificationTapTarget.Thing(
         "ac-1",
         tab = "tasks"
       )

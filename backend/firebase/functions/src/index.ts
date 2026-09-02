@@ -9,7 +9,7 @@ import {
   onNotifiableThingRecordWritten,
   onNotifiableThingWritten,
 } from "./notifications/onRecordWritten.js";
-import { onThingDeleted } from "./sharing/onAircraftDeleted.js";
+import { onThingDeleted } from "./sharing/onThingDeleted.js";
 import { previewThingShareInvite } from "./sharing/previewThingShareInvite.js";
 import { getBlobUploadSession } from "./storage/getBlobUploadSession.js";
 import { onThingRecordDeleted } from "./storage/onRecordDeleted.js";

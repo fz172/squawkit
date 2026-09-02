@@ -47,7 +47,7 @@ class LogbookExportAggregator(
     request: ExportRequest,
     thingId: String
   ): ThingBundle = coroutineScope {
-    val aircraftDeferred = async {
+    val thingDeferred = async {
       fleetManager.loadThing(thingId)
         .first()
     }
@@ -64,7 +64,7 @@ class LogbookExportAggregator(
         .first()
     }
 
-    val thing = requireNotNull(aircraftDeferred.await())
+    val thing = requireNotNull(thingDeferred.await())
     val allLogs = logsDeferred.await()
     val allTasks = tasksDeferred.await()
     val allSquawks = squawksDeferred.await()

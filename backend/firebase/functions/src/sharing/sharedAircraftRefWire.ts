@@ -9,7 +9,7 @@ import { SHARE_ROLE, type ShareRole } from "./sharingModels.js";
 
 /**
  * Builds the SyncDocWire document a Cloud Function writes to
- * `users/{memberUid}/shared_aircraft_ref/{aircraftId}` so the member's sync engine hydrates the
+ * `users/{memberUid}/shared_aircraft_ref/{thingId}` so the member's sync engine hydrates the
  * shared aircraft. The shape must match the client's SyncDocWire (feature/sync SyncDocWire.kt):
  * base64 proto payload + deleted + schema + server-stamped lastUpdateTimestamp. writerUid is
  * omitted — function-written docs are unattested and the field is nullable client-side. See
@@ -26,12 +26,12 @@ function toProtoRole(role: ShareRole): ProtoShareRole {
 
 /** Encode a SharedAircraftRef proto to the base64 payload the client's WireCodec decodes. */
 export function encodeSharedAircraftRef(
-  aircraftId: string,
+  thingId: string,
   hostUid: string,
   role: ShareRole,
 ): string {
   const bytes = SharedAircraftRef.encode({
-    aircraftId,
+    aircraftId: thingId,
     hostUid,
     role: toProtoRole(role),
   }).finish();
@@ -40,12 +40,12 @@ export function encodeSharedAircraftRef(
 
 /** A live ref document pointing the member at a shared aircraft. */
 export function sharedAircraftRefWireDoc(
-  aircraftId: string,
+  thingId: string,
   hostUid: string,
   role: ShareRole,
 ): DocumentData {
   return {
-    payload: encodeSharedAircraftRef(aircraftId, hostUid, role),
+    payload: encodeSharedAircraftRef(thingId, hostUid, role),
     deleted: false,
     schema: SCHEMA,
     lastUpdateTimestamp: FieldValue.serverTimestamp(),
@@ -64,14 +64,14 @@ export function sharedAircraftRefWireDoc(
  */
 export function decodeSharedAircraftRef(
   doc: DocumentData,
-): { aircraftId: string; hostUid: string } | null {
+): { thingId: string; hostUid: string } | null {
   if (doc?.deleted === true) return null;
   const payload = doc?.payload;
   if (typeof payload !== "string" || payload.length === 0) return null;
   try {
     const ref = SharedAircraftRef.decode(Buffer.from(payload, "base64"));
     if (!ref.aircraftId || !ref.hostUid) return null;
-    return { aircraftId: ref.aircraftId, hostUid: ref.hostUid };
+    return { thingId: ref.aircraftId, hostUid: ref.hostUid };
   } catch {
     return null;
   }

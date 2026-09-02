@@ -29,13 +29,13 @@ import org.junit.Before
 import org.junit.Test
 
 private const val TEST_USER_ID = "user-push-001"
-private const val TEST_AIRCRAFT_ID = "aircraft-push-001"
+private const val TEST_THING_ID = "thing-push-001"
 private val TEST_SCOPE =
-  EntityScope.thingChildUnsafe(TEST_USER_ID, TEST_AIRCRAFT_ID)
+  EntityScope.thingChildUnsafe(TEST_USER_ID, TEST_THING_ID)
 private val TEST_KIND = CollectionKind.MaintenanceLog
 
 private const val HOST_UID = "host-push-001"
-private const val SHARED_AC = "aircraft-shared-001"
+private const val SHARED_AC = "thing-shared-001"
 private val SHARED_SCOPE = EntityScope.thingChildUnsafe(HOST_UID, SHARED_AC)
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -80,7 +80,7 @@ class PushWorkerTest {
   }
 
   @Test
-  fun run_drainsSharedAircraftScopeRows_whenARefExists() = runTest(ioContext) {
+  fun run_drainsSharedThingScopeRows_whenARefExists() = runTest(ioContext) {
     // A store factory so the worker can observe the refs store and add the shared prefix.
     val codecs = EntityCodecRegistry().apply {
       register(
@@ -204,7 +204,7 @@ class PushWorkerTest {
   // --- The thing doc itself lives at the host's root, not in the per-thing subtree ---
 
   @Test
-  fun run_drainsTheSharedAircraftDocAtTheHostRoot() = runTest(ioContext) {
+  fun run_drainsTheSharedThingDocAtTheHostRoot() = runTest(ioContext) {
     // A co-owner's edit to the thing *doc* is a row at /users/{host}/ — outside the
     // /users/{host}/thing/{acId}/ subtree. Miss it and the edit stays dirty forever.
     val storeFactory = liveShareStoreFactory()
@@ -241,7 +241,7 @@ class PushWorkerTest {
   }
 
   @Test
-  fun run_permissionDeniedOnTheSharedAircraftDoc_reconcilesAsRevoked() =
+  fun run_permissionDeniedOnTheSharedThingDoc_reconcilesAsRevoked() =
     runTest(ioContext) {
       // The doc row names its thing by row id, not in its scope path — the revocation check has to
       // understand that shape too, or a denial here would be misread as an expired session.

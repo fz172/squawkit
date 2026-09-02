@@ -20,7 +20,7 @@ import { attachmentsEnabled, blobObjectPath, isShareMember, loadShare } from "./
  */
 type UploadSessionRequest = {
   hostUid: string;
-  aircraftId: string;
+  thingId: string;
   blobId: string;
   contentType?: string;
 };
@@ -30,9 +30,9 @@ export const getBlobUploadSession = onCall<
   Promise<{ uploadUrl: string }>
 >({ region: FUNCTION_REGION, enforceAppCheck: true }, async (request) => {
   const { uid } = requireAuthenticatedApp(request);
-  const { hostUid, aircraftId, blobId, contentType } = parseRequest(request.data);
+  const { hostUid, thingId, blobId, contentType } = parseRequest(request.data);
 
-  const share = await loadShare(hostUid, aircraftId);
+  const share = await loadShare(hostUid, thingId);
   if (share == null || !isShareMember(share, uid)) {
     throw new HttpsError("permission-denied", "Not a member of this shared aircraft.");
   }
@@ -40,7 +40,7 @@ export const getBlobUploadSession = onCall<
     throw new HttpsError("failed-precondition", "Attachments are not enabled for this aircraft.");
   }
 
-  const file = adminStorage.bucket().file(blobObjectPath(hostUid, aircraftId, blobId));
+  const file = adminStorage.bucket().file(blobObjectPath(hostUid, thingId, blobId));
   const [uploadUrl] = await file.createResumableUpload({
     // A resumable session created server-side has no browser origin bound to it, so GCS returns no
     // Access-Control-Allow-Origin on the client's PUT and the browser blocks it ("Failed to fetch")
@@ -68,14 +68,14 @@ function callerOrigin(origin: string | string[] | undefined): string | undefined
 function parseRequest(data: unknown): UploadSessionRequest {
   const obj = (data ?? {}) as Record<string, unknown>;
   const hostUid = typeof obj.hostUid === "string" ? obj.hostUid.trim() : "";
-  const aircraftId = typeof obj.aircraftId === "string" ? obj.aircraftId.trim() : "";
+  const thingId = typeof obj.thingId === "string" ? obj.thingId.trim() : "";
   const blobId = typeof obj.blobId === "string" ? obj.blobId.trim() : "";
   const contentType = typeof obj.contentType === "string" ? obj.contentType.trim() : undefined;
   if (hostUid.length === 0) {
     throw new HttpsError("invalid-argument", "hostUid is required.");
   }
-  if (aircraftId.length === 0 || blobId.length === 0) {
-    throw new HttpsError("invalid-argument", "getBlobUploadSession requires aircraftId and blobId.");
+  if (thingId.length === 0 || blobId.length === 0) {
+    throw new HttpsError("invalid-argument", "getBlobUploadSession requires thingId and blobId.");
   }
-  return { hostUid, aircraftId, blobId, contentType };
+  return { hostUid, thingId, blobId, contentType };
 }

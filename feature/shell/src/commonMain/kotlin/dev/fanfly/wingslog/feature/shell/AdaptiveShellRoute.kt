@@ -66,11 +66,11 @@ fun AdaptiveShellRoute(
   // (gate as promo, not a hidden action). Never reached from the empty-fleet state — 0 owned is
   // never at limit. Default-open while the subscription capability is off.
   var showAddThingUpsell by remember { mutableStateOf(false) }
-  val onAddAircraft = {
+  val onAddThing = {
     if (atThingLimit) {
       showAddThingUpsell = true
     } else {
-      navController.navigate(Screen.AddAircraft.route)
+      navController.navigate(Screen.AddThing.route)
     }
   }
 
@@ -147,9 +147,9 @@ fun AdaptiveShellRoute(
     state = state,
     snackbarHostState = snackbarHostState,
     onSelectSection = viewModel::selectSection,
-    onSelectAircraft = viewModel::selectThing,
+    onSelectThing = viewModel::selectThing,
     onOpenSettings = viewModel::openSettings,
-    onAddAircraft = onAddAircraft,
+    onAddThing = onAddThing,
     onEnterInviteCode = onEnterInviteCode,
     sectionContent = { section, thingId ->
       if (section == ShellSection.SETTINGS) {
@@ -170,7 +170,7 @@ fun AdaptiveShellRoute(
     },
     emptyFleetContent = {
       FleetEmptyState(
-        onAddAircraft = { navController.navigate(Screen.AddAircraft.route) },
+        onAddThing = { navController.navigate(Screen.AddThing.route) },
         onEnterInviteCode = onEnterInviteCode,
       )
     },
@@ -179,7 +179,7 @@ fun AdaptiveShellRoute(
         section = section,
         thingId = thingId,
         navController = navController,
-        renderable = state.thing.find { it.id == thingId }?.renderable != false,
+        renderable = state.things.find { it.id == thingId }?.renderable != false,
       )
     },
   )
@@ -199,7 +199,7 @@ fun AdaptiveShellRoute(
 
   if (showAddThingUpsell) {
     ProUpsellSheet(
-      trigger = UpsellTrigger.ADD_AIRCRAFT,
+      trigger = UpsellTrigger.ADD_THING,
       onSeePlans = {
         showAddThingUpsell = false
         navController.navigate(Screen.Subscription.route)

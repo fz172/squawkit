@@ -12,7 +12,7 @@ import dev.fanfly.wingslog.feature.ads.viewing.IosAdViewBridge
 import dev.fanfly.wingslog.feature.notifications.engine.BgTaskUrgencyScanScheduler
 import dev.fanfly.wingslog.feature.notifications.model.PushTokenSink
 import dev.fanfly.wingslog.feature.notifications.viewing.IosNotificationTapDelegate
-import dev.fanfly.wingslog.feature.sharing.datamanager.AircraftShareDeepLinks
+import dev.fanfly.wingslog.feature.sharing.datamanager.ThingShareDeepLinks
 import dev.fanfly.wingslog.feature.sync.data.SyncEngine
 import dev.fanfly.wingslog.feature.sync.data.blob.IosAppCheckBridge
 import dev.fanfly.wingslog.feature.sync.data.blob.UrlSessionUploadScheduler
@@ -170,8 +170,8 @@ object MainEntry {
    * docs/account/email_link_signin_design.html.
    */
   fun handleIncomingUrl(url: String): Boolean {
-    // An thing-share invite is parked for the redeem flow; otherwise fall through to email sign-in.
-    if (AircraftShareDeepLinks.deliver(url)) return true
+    // A thing-share invite is parked for the redeem flow; otherwise fall through to email sign-in.
+    if (ThingShareDeepLinks.deliver(url)) return true
     val authManager = KoinPlatform.getKoin()
       .get<dev.fanfly.wingslog.core.auth.AuthManager>()
     if (!authManager.isSignInWithEmailLink(url)) return false

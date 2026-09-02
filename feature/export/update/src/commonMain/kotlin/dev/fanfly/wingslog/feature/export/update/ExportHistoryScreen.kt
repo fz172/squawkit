@@ -242,7 +242,7 @@ private fun ExportHistoryCard(
 ) {
   var showDeleteConfirm by remember { mutableStateOf(false) }
   var menuExpanded by remember { mutableStateOf(false) }
-  val aircraftTitle = thingSummary(record)
+  val thingTitle = thingSummary(record)
   val scope = scopeLine(record)
   val onDevice = record.file_path.isNotBlank()
   val canRetry =
@@ -297,7 +297,7 @@ private fun ExportHistoryCard(
       verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
     ) {
       Text(
-        text = aircraftTitle,
+        text = thingTitle,
         style = if (record.aircraft.isNotEmpty()) WingslogTypography.dataMedium else MaterialTheme.typography.titleSmall,
         fontWeight = FontWeight.SemiBold,
         maxLines = 2,

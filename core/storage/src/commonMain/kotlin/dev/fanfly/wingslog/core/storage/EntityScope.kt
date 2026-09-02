@@ -19,7 +19,7 @@ data class EntityScope(val segments: List<String>) {
     fun userRoot(uid: String): EntityScope = EntityScope(listOf("users", uid))
 
     /**
-     * The scope of an thing's nested data (logs, tasks, squawks, blobs) at `[uid]`.
+     * The scope of a thing's nested data (logs, tasks, squawks, blobs) at `[uid]`.
      *
      * **`Unsafe` because [uid] is taken at face value.** For a *shared* thing the data lives in
      * the HOST's tree, not the caller's — so passing the signed-in user's uid here silently writes

@@ -47,7 +47,7 @@ class AdaptiveShellViewModel(
 ) : ViewModel() {
 
   /**
-   * Whether the account is at its owned-thing limit (Pro gate). Shared thing are pointers into
+   * Whether the account is at its owned-thing limit (Pro gate). Shared things are pointers into
    * another account's tree and never count against the limit. `false` while the capability is off
    * (default-open) since [SubscriptionManager.thingLimit] is unlimited then. The Add-thing
    * entry consults this to open the upsell instead of navigating; see subscription_design.html §4/§6.
@@ -65,7 +65,7 @@ class AdaptiveShellViewModel(
    * on the same thing. Kept in sync with [SelectedThingStore] as the selection changes; falls
    * back to the first thing when the remembered one no longer exists.
    */
-  private var rememberedAircraftId: String? = selectedThingStore.load()
+  private var rememberedThingId: String? = selectedThingStore.load()
 
   /**
    * Work the sync engine had to throw away (PRD D3). Surfaced from the shell because it outlives
@@ -133,13 +133,13 @@ class AdaptiveShellViewModel(
             // tracks the effective selection (including the fallback after the remembered one is gone).
             val selected = state.selectedThingId
               ?.takeIf { id -> mapped.any { it.id == id } }
-              ?: rememberedAircraftId?.takeIf { id -> mapped.any { it.id == id } }
+              ?: rememberedThingId?.takeIf { id -> mapped.any { it.id == id } }
               ?: mapped.firstOrNull()?.id
-            if (selected != rememberedAircraftId) {
-              rememberedAircraftId = selected
+            if (selected != rememberedThingId) {
+              rememberedThingId = selected
               selectedThingStore.save(selected)
             }
-            state.copy(thing = mapped, selectedThingId = selected)
+            state.copy(things = mapped, selectedThingId = selected)
           }
           // After the update, not inside it: `update` may re-run its lambda under contention, so a
           // side effect there can fire more than once per change.
@@ -183,7 +183,7 @@ class AdaptiveShellViewModel(
     selectThing(target.thingId)
     when (target) {
       // A summary notification: the tier picks the list, and there is no one record to point at.
-      is NotificationTapTarget.Aircraft -> {
+      is NotificationTapTarget.Thing -> {
         _pendingScrollTargetId.value = null
         target.tab?.toShellSection()
           ?.let { selectSection(it) }
@@ -207,7 +207,7 @@ class AdaptiveShellViewModel(
   }
 
   /**
-   * The four tabs the server can name, which are exactly `aircraftTabForRecordType`'s four returns
+   * The four tabs the server can name, which are exactly `thingTabForRecordType`'s four returns
    * plus nothing else — `overview` arrives both for thing-level activity and for the §7.4
    * high-volume notice. Keep this in step with that function: an unmapped tab is not an error, it
    * just leaves the pilot on whatever section was already open with no clue what changed, which
@@ -256,7 +256,7 @@ class AdaptiveShellViewModel(
   fun selectThing(id: String) {
     _uiState.update { it.copy(selectedThingId = id) }
     publishLexicon()
-    rememberedAircraftId = id
+    rememberedThingId = id
     selectedThingStore.save(id)
   }
 

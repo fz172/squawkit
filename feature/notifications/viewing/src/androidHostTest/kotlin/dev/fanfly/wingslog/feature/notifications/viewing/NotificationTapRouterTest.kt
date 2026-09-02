@@ -47,9 +47,9 @@ class NotificationTapRouterTest {
   }
 
   @Test
-  fun encodeThenDeliver_aircraftWithTab_roundTrips() {
+  fun encodeThenDeliver_thingWithTab_roundTrips() {
     val target =
-      NotificationTapTarget.Aircraft(thingId = "ac-1", tab = "tasks")
+      NotificationTapTarget.Thing(thingId = "ac-1", tab = "tasks")
 
     NotificationTapRouter.deliver(NotificationTapRouter.encode(target))
 
@@ -57,8 +57,8 @@ class NotificationTapRouterTest {
   }
 
   @Test
-  fun encodeThenDeliver_aircraftWithoutTab_roundTrips() {
-    val target = NotificationTapTarget.Aircraft(thingId = "ac-1", tab = null)
+  fun encodeThenDeliver_thingWithoutTab_roundTrips() {
+    val target = NotificationTapTarget.Thing(thingId = "ac-1", tab = null)
 
     NotificationTapRouter.deliver(NotificationTapRouter.encode(target))
 
@@ -92,7 +92,7 @@ class NotificationTapRouterTest {
   fun consume_clearsPending() {
     NotificationTapRouter.deliver(
       NotificationTapRouter.encode(
-        NotificationTapTarget.Aircraft("ac-1")
+        NotificationTapTarget.Thing("ac-1")
       )
     )
 
