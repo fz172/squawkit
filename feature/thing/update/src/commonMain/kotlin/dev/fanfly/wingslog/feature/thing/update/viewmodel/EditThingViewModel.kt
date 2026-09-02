@@ -23,6 +23,7 @@ import dev.fanfly.wingslog.core.template.withSpec
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.thing.ComponentSlot
+import dev.fanfly.wingslog.thing.SpecField
 import dev.fanfly.wingslog.thing.Thing
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -237,6 +238,29 @@ class EditThingViewModel(
       state.copy(
         thing = state.thing.ensureComponentAt(path)
           .updateComponentAt(path) { it.with(field, value) },
+      )
+    }
+  }
+
+  /**
+   * One of the slot's own declared fields — a tyre's position or its normal pressure.
+   *
+   * Separate from [onComponentFieldChanged] because these are stored in the component's `spec` bag
+   * rather than as named fields, and because the casing differs: a number is left exactly as
+   * typed, where make and model get a capital first letter.
+   */
+  fun onComponentSpecChanged(
+    path: ComponentPath,
+    field: SpecField,
+    newValue: String,
+  ) {
+    val value = if (field.numeric) newValue else newValue.replaceFirstChar { it.uppercase() }
+    _uiState.update { state ->
+      // ensureComponentAt first, for the same reason the named fields do it: a fixed slot renders
+      // a row before anything is stored.
+      state.copy(
+        thing = state.thing.ensureComponentAt(path)
+          .updateComponentAt(path) { it.withSpec(field.key, value) },
       )
     }
   }

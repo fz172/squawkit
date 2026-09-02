@@ -24,6 +24,23 @@ fun Thing.specValue(key: String): String =
 /** True when [key] has a non-empty value — for deciding whether to render a row at all. */
 fun Thing.hasSpec(key: String): Boolean = specValue(key).isNotEmpty()
 
+/**
+ * The same lookup for a component's own spec — a tyre's pressure and position.
+ *
+ * A component carries make, model and serial as named fields and everything else in this bag, for
+ * the same reason a Thing does: which fields exist is the slot's decision, not this code's.
+ */
+fun Component.specValue(key: String): String =
+  spec.firstOrNull { it.key == key }?.value_.orEmpty()
+
+/** Sets [key] on a component, preserving order. An empty [value] removes the entry. */
+fun Component.withSpec(key: String, value: String): Component {
+  val without = spec.filterNot { it.key == key }
+  return copy(
+    spec = if (value.isEmpty()) without else without + Spec(key = key, value_ = value),
+  )
+}
+
 // ---------------------------------------------------------------------------------------------
 // Component tree access
 // ---------------------------------------------------------------------------------------------

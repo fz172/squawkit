@@ -33,12 +33,22 @@ fun Component.with(field: ComponentField, value: String): Component =
  * screenshot.
  */
 data class ComponentChipLines(
-  /** "Tire 3", or plain "Propulsion" when the slot holds one. */
+  /**
+   * What names this one: "Front Left" when the slot declares a `title_candidate` field and it is
+   * filled, otherwise "Tire 3" — or plain "Propulsion" when the slot holds one.
+   *
+   * A position beats an ordinal wherever there is one. "Tire 3" is a number this code invented
+   * from storage order and means nothing on the car; "Front Left" is where the owner will actually
+   * look for it.
+   */
   val label: String,
   /** "Michelin Pilot Sport", falling back to the serial when the slot names no make or model. */
   val headline: String,
   /** Blank when [headline] is already the serial, or when the slot does not ask for one. */
   val serial: String,
+  /** The slot's own declared fields that are filled in — "Normal PSI 32". Never the position: it
+   * is already the label, and a chip that says "Front Left" twice is a chip with a bug. */
+  val specs: List<SpecLine>,
 )
 
 /**
@@ -131,12 +141,33 @@ data class ComponentRow(
         .filter { it.isNotBlank() }
         .joinToString(" ")
       val serial = if (ComponentField.SERIAL in visible) component.serial else ""
+      val naming = slot.spec_fields.firstOrNull { it.title_candidate }
       return ComponentChipLines(
-        label = label,
+        label = naming?.let { component.specValue(it.key) }
+          ?.takeIf { it.isNotBlank() }
+          ?: label,
         headline = name.ifBlank { serial },
         // Never repeated: when the serial is already the headline there is no second line to draw.
         serial = if (name.isBlank()) "" else serial,
+        specs = specLines.filterNot { line -> line.label == naming?.label },
       )
+    }
+
+  /**
+   * The slot's own declared fields that this component has filled in, each beside its label.
+   *
+   * Blank ones are dropped rather than drawn under their label: "Normal PSI" followed by nothing
+   * reads as data that failed to load rather than a pressure nobody recorded. Every one of these
+   * is optional, so most of them will be blank most of the time.
+   */
+  val specLines: List<SpecLine>
+    get() {
+      val component = component ?: return emptyList()
+      return slot.spec_fields.mapNotNull { field ->
+        component.specValue(field.key)
+          .takeIf { it.isNotBlank() }
+          ?.let { SpecLine(label = field.label, value = it, isIdentifier = field.is_identifier) }
+      }
     }
 
   /** A slot that repeats can always take another; one that does not is created with the tree. */

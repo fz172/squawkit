@@ -15,13 +15,17 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.core.template.ComponentChipLines
 import dev.fanfly.wingslog.core.template.ComponentNode
+import dev.fanfly.wingslog.core.template.SpecLine
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LayoutTier
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.theme.Spacing
@@ -129,6 +133,44 @@ private fun ComponentChip(chip: ComponentChipLines, modifier: Modifier = Modifie
           overflow = TextOverflow.Ellipsis,
         )
       }
+      // The slot's own fields — a tyre's normal pressure. The position is absent by construction:
+      // it is already this chip's label, and saying "Front Left" twice would be a bug.
+      chip.specs.forEach { spec -> ChipSpecLine(spec) }
     }
   }
+}
+
+/**
+ * "Normal PSI 32" — a declared value beside its label, sized to sit under a chip's headline.
+ *
+ * One [Text] rather than a Row of two, for the reason the thing's own spec block gives: a Row
+ * aligns boxes where these need baselines, and a value that outgrows the chip has to wrap under
+ * its label rather than run off the edge.
+ */
+@Composable
+private fun ChipSpecLine(line: SpecLine) {
+  val labelColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+  val valueColor = MaterialTheme.colorScheme.onSurfaceVariant
+  Text(
+    text = buildAnnotatedString {
+      withStyle(
+        SpanStyle(
+          fontFamily = FontFamily.SansSerif,
+          fontWeight = FontWeight.Normal,
+          fontSize = 11.sp,
+          color = labelColor,
+        ),
+      ) {
+        append("${line.label} ")
+      }
+      // Mono for a measurement as well as an identifier, per DESIGN.md — a pressure is a number
+      // read against another number, which is exactly what the face is for.
+      withStyle(WingslogTypography.dataSmall.toSpanStyle().copy(color = valueColor)) {
+        append(line.value)
+      }
+    },
+    modifier = Modifier.padding(top = Spacing.extraSmall),
+    maxLines = 2,
+    overflow = TextOverflow.Ellipsis,
+  )
 }

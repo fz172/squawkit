@@ -101,14 +101,51 @@ component_slots {
   max_instances: 1
   serial_expected: true
 }
-# A SET, not individuals: four near-identical parts told apart by position, the same shape as an
+# A SET, not individuals: near-identical parts told apart by position, the same shape as an
 # aeroplane's propeller blades. Four full-width cards was what made a car look like it tracked more
 # than an aeroplane.
+#
+# Uncapped on purpose, unlike the engine. Four on a car, two on a motorcycle, six on a dually, and
+# a spare on top of any of them — this preset covers all of them and the template does not guess.
 component_slots {
   slot_key: "tire"
   label: "Tire"
   repeatable: true
   compact_instances: true
+  # Make and model only. Tyres do carry a DOT code, but nobody transcribes it off the sidewall,
+  # and a serial field that is blank on every car ever entered is a field that should not exist.
+  spec_keys: "make"
+  spec_keys: "model"
+  # The union of three vehicles under one preset, ordered by how many owners each serves: the four
+  # corners of a car first, then the pair a motorcycle has, then a dually's inner rears, then the
+  # spare. The merge is what forces a union here — PRD §4.8's cost, paid again.
+  #
+  # An enumerated list rather than free text, because typed freely the same wheel is "RR", "rear
+  # right" and "Rear-Right" across three cars and nothing can compare them.
+  #
+  # `title_candidate` is what makes a tyre read as "FRONT LEFT" rather than "Tire 3": an ordinal is
+  # a number invented from storage order and means nothing on the car.
+  spec_fields {
+    key: "position"
+    label: "Position"
+    title_candidate: true
+    options: "Front Left"
+    options: "Front Right"
+    options: "Rear Left"
+    options: "Rear Right"
+    options: "Front"
+    options: "Rear"
+    options: "Rear Left Inner"
+    options: "Rear Right Inner"
+    options: "Spare"
+  }
+  # The pressure it is meant to run at, not today's reading — a number to compare a gauge against.
+  spec_fields {
+    key: "psi"
+    label: "Normal PSI"
+    placeholder: "32"
+    numeric: true
+  }
 }
 
 # One meter, and the reason the generalisation matters: "every 5,000 miles" and "every 100 hours"

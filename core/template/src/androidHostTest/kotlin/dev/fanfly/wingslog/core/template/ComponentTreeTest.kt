@@ -4,6 +4,7 @@ import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
 import dev.fanfly.wingslog.core.template.canonical.CanonicalTemplates
 import dev.fanfly.wingslog.thing.Component
+import dev.fanfly.wingslog.thing.Spec
 import dev.fanfly.wingslog.thing.Thing
 import org.junit.Test
 
@@ -106,7 +107,7 @@ class ComponentTreeTest {
       .map { it.slot_key }
 
     assertThat(addable).doesNotContain("engine")
-    assertThat(addable).containsExactly("brakes", "wheel")
+    assertThat(addable).containsExactly("wheel")
   }
 
   @Test
@@ -114,19 +115,82 @@ class ComponentTreeTest {
     // A bike has a front and a rear, and there is no third. Uncapped, the form offered to add a
     // fifth wheel — a question with no right answer. `repeatable` still makes them optional;
     // `max_instances` makes them finite.
-    fun addableWith(wheels: Int, brakes: Int): List<String> {
-      val thing = Thing(
-        id = "t",
-        components = List(wheels) { Component(slot_key = "wheel") } +
-          List(brakes) { Component(slot_key = "brakes") },
-      )
+    fun addableWith(wheels: Int): List<String> {
+      val thing = Thing(id = "t", components = List(wheels) { Component(slot_key = "wheel") })
       return bike.addableSlotsUnder(emptyList(), bike.componentRows(thing))
         .map { it.slot_key }
     }
 
-    assertThat(addableWith(wheels = 0, brakes = 0)).containsExactly("brakes", "wheel")
-    assertThat(addableWith(wheels = 1, brakes = 2)).containsExactly("wheel")
-    assertThat(addableWith(wheels = 2, brakes = 2)).isEmpty()
+    assertThat(addableWith(wheels = 0)).containsExactly("wheel")
+    assertThat(addableWith(wheels = 1)).containsExactly("wheel")
+    assertThat(addableWith(wheels = 2)).isEmpty()
+  }
+
+  @Test
+  fun neitherAVehicleNorABikeTracksBrakesAsAPart() {
+    // Brake pads and rotors are a SERVICE — a task against distance, and a record when it is done.
+    // Both presets declared a brakes slot, both sat empty on every Thing, and both are gone.
+    assertThat(automotive.component_slots.map { it.slot_key }).doesNotContain("brakes")
+    assertThat(bike.component_slots.map { it.slot_key }).doesNotContain("brakes")
+    assertThat(bike.component_slots.map { it.slot_key }).containsExactly("drivetrain", "wheel")
+      .inOrder()
+  }
+
+  // --- A slot's own declared fields, beyond make/model/serial ---
+
+  @Test
+  fun aWheelAsksForItsPositionAndPressureAsWellAsItsMakeAndModel() {
+    // The make/model/serial triple is a floor, not the whole vocabulary: what tells one tyre from
+    // the other three is where it sits and what it runs at, and neither is any of the three.
+    val tire = automotive.component_slots.single { it.slot_key == "tire" }
+    assertThat(tire.spec_fields.map { it.key }).containsExactly("position", "psi").inOrder()
+    assertThat(tire.spec_keys).containsExactly("make", "model")
+
+    // The vocabulary is the template's, because it is domain knowledge. A car has four corners
+    // and a spare; a bike has a front and a rear and nothing else.
+    val position = tire.spec_fields.single { it.key == "position" }
+    assertThat(position.options).containsAtLeast("Front Left", "Rear Right", "Spare")
+    assertThat(
+      bike.component_slots.single { it.slot_key == "wheel" }
+        .spec_fields.single { it.key == "position" }.options,
+    ).containsExactly("Front", "Rear").inOrder()
+
+    // Free text would let the same wheel be "RR", "rear right" and "Rear-Right" across three cars.
+    assertThat(position.options).isNotEmpty()
+    assertThat(tire.spec_fields.single { it.key == "psi" }.numeric).isTrue()
+  }
+
+  @Test
+  fun aPositionNamesTheWheelInsteadOfAnOrdinal() {
+    // "Tire 3" is a number this code invents from storage order and means nothing on the car.
+    // A position is where the owner will actually look for it, so it takes the chip's label.
+    val car = Thing(
+      id = "t",
+      components = listOf(
+        Component(
+          slot_key = "tire",
+          make = "Michelin",
+          model = "Pilot Sport",
+          spec = listOf(Spec(key = "position", value_ = "Front Left"), Spec(key = "psi", value_ = "32")),
+        ),
+        // The second records nothing but a make, which is the common case: every declared field
+        // is optional, so the ordinal has to still be there to fall back on.
+        Component(slot_key = "tire", make = "Michelin"),
+      ),
+    )
+    val chips = automotive.componentRows(car)
+      .filter { it.slot.slot_key == "tire" }
+      .mapNotNull { it.chipLines }
+
+    assertThat(chips[0].label).isEqualTo("Front Left")
+    assertThat(chips[0].headline).isEqualTo("Michelin Pilot Sport")
+    // The position is NOT repeated as a line — it is already the label.
+    assertThat(chips[0].specs.map { it.label to it.value })
+      .containsExactly("Normal PSI" to "32")
+
+    assertThat(chips[1].label).isEqualTo("Tire 2")
+    // Nothing recorded means nothing drawn: "Normal PSI" over a blank reads as a failed load.
+    assertThat(chips[1].specs).isEmpty()
   }
 
   @Test
