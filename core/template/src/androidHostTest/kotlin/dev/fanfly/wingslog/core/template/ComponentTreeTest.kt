@@ -30,12 +30,13 @@ class ComponentTreeTest {
     assertThat(airplane.componentRows(Thing(id = "t"))).isEmpty()
 
     // A preset with fixed slots yields a row each, with no component behind them yet — the boat's
-    // hull, steering and rigging. Its repeating categories yield none, for the same reason.
+    // steering and rigging. Its repeating categories yield none, for the same reason. There is no
+    // hull row: the hull IS the boat, so its make, model and number are the boat's spec fields.
     val rows = CanonicalTemplates.BOAT.componentRows(Thing(id = "t"))
     assertThat(rows.map { it.slot.slot_key })
-      .containsExactly("hull", "steering", "rigging")
+      .containsExactly("steering", "rigging")
       .inOrder()
-    assertThat(rows.map { it.component }).containsExactly(null, null, null)
+    assertThat(rows.map { it.component }).containsExactly(null, null)
   }
 
   @Test
@@ -154,19 +155,123 @@ class ComponentTreeTest {
   }
 
   @Test
-  fun aTopLevelRepeatingPartStaysACardWhileANestedOneBecomesAChip() {
-    // The boat groups by function, so a propulsion item is a component in its own right — its make
-    // and model are worth reading, and a chip would show only the serial. A blade inside a
-    // propeller is the opposite case.
+  fun theTemplateSaysWhichPartsAreASetRatherThanTheDashboardGuessingFromDepth() {
+    // Nesting used to decide this: a part inside another was a set, a top-level one an individual.
+    // That put a car's four tyres on four full-width rows while an aeroplane's four blades shared
+    // two — so a car appeared to track more than an aeroplane, which is backwards. The slot says
+    // so now, wherever it sits.
     val boat = Thing(
       id = "t",
       components = listOf(Component(slot_key = "propulsion", make = "Yanmar")),
     )
-
     assertThat(
       CanonicalTemplates.BOAT.componentRows(boat)
         .single { it.slot.slot_key == "propulsion" }.rendersAsChip,
-    ).isFalse()
+    ).isTrue()
+
+    val car = Thing(
+      id = "t",
+      components = listOf(
+        Component(slot_key = "engine", make = "Honda"),
+        Component(slot_key = "tire", make = "Michelin"),
+      ),
+    )
+    val byKey = automotive.componentRows(car).associateBy { it.slot.slot_key }
+    assertThat(byKey.getValue("tire").rendersAsChip).isTrue()
+    // The engine is the individual it always was: one part with a history, and the card is where
+    // that history hangs. Compacting everything would have been the opposite mistake.
+    assertThat(byKey.getValue("engine").rendersAsChip).isFalse()
+
+    // The nested case the old rule was written for is unchanged.
+    val plane = Thing(
+      id = "t",
+      components = listOf(
+        Component(
+          slot_key = SlotKeys.ENGINE,
+          children = listOf(
+            Component(
+              slot_key = SlotKeys.PROPELLER,
+              children = listOf(Component(slot_key = SlotKeys.BLADE)),
+            ),
+          ),
+        ),
+      ),
+    )
+    assertThat(
+      airplane.componentRows(plane)
+        .single { it.slot.slot_key == SlotKeys.BLADE }.rendersAsChip,
+    ).isTrue()
+  }
+
+  @Test
+  fun aChipShowsTheMakeAndModelACardWouldAndFallsBackToTheSerialWhenThereIsNone() {
+    // Compacting must not cost information — that was the objection to chips outside the blade
+    // case, and the reason the chip carries all three lines rather than a serial alone.
+    val boat = Thing(
+      id = "t",
+      components = listOf(
+        Component(slot_key = "propulsion", make = "Yamaha", model = "F150", serial = "6CE1001"),
+        Component(slot_key = "propulsion", make = "Yamaha", model = "F150", serial = "6CE1002"),
+      ),
+    )
+    val chips = CanonicalTemplates.BOAT.componentRows(boat)
+      .filter { it.slot.slot_key == "propulsion" }
+      .mapNotNull { it.chipLines }
+
+    assertThat(chips.map { it.label }).containsExactly("Propulsion 1", "Propulsion 2").inOrder()
+    assertThat(chips.map { it.headline }).containsExactly("Yamaha F150", "Yamaha F150")
+    assertThat(chips.map { it.serial }).containsExactly("6CE1001", "6CE1002").inOrder()
+
+    // A blade declares `spec_keys: "serial"`, so it has no make or model to head the chip and its
+    // serial takes that line rather than sitting under a blank one.
+    val plane = Thing(
+      id = "t",
+      components = listOf(
+        Component(
+          slot_key = SlotKeys.ENGINE,
+          children = listOf(
+            Component(
+              slot_key = SlotKeys.PROPELLER,
+              children = listOf(
+                // Make is stored but not declared: the chip must read the SLOT, not the record.
+                Component(slot_key = SlotKeys.BLADE, make = "Hartzell", serial = "J4471"),
+              ),
+            ),
+          ),
+        ),
+      ),
+    )
+    val blade = airplane.componentRows(plane)
+      .single { it.slot.slot_key == SlotKeys.BLADE }.chipLines!!
+    assertThat(blade.headline).isEqualTo("J4471")
+    assertThat(blade.serial).isEmpty()
+  }
+
+  @Test
+  fun chipsOfOneSlotMergeIntoOneBlockWithoutReorderingTheTemplate() {
+    // Collecting every chip slot and drawing it first would be simpler and wrong: a car declares
+    // engine, battery, brakes, tyres, and hoisting the chipped sets above the engine reorders a
+    // list the template deliberately ordered.
+    val car = Thing(
+      id = "t",
+      components = listOf(
+        Component(slot_key = "engine", make = "Honda"),
+        Component(slot_key = "battery", make = "Bosch"),
+        Component(slot_key = "tire", make = "Michelin"),
+        Component(slot_key = "tire", make = "Michelin"),
+        Component(slot_key = "tire", make = "Michelin"),
+        Component(slot_key = "tire", make = "Michelin"),
+      ),
+    )
+    val groups = automotive.componentTree(car)
+      .filter { it.row.component != null }
+      .componentGroups()
+
+    assertThat(groups).hasSize(3)
+    assertThat((groups[0] as ComponentGroup.Card).node.row.slot.slot_key).isEqualTo("engine")
+    assertThat((groups[1] as ComponentGroup.Card).node.row.slot.slot_key).isEqualTo("battery")
+    // All four tyres in ONE block, not four rows — the whole point.
+    assertThat((groups[2] as ComponentGroup.Chips).nodes).hasSize(4)
   }
 
   @Test

@@ -72,15 +72,18 @@ component_slots {
   slot_key: "drivetrain"
   label: "Drivetrain"
 }
+# Two brakes and two wheels, and the same reasoning as the car's: a matched set reads as a set.
 component_slots {
   slot_key: "brakes"
   label: "Brakes"
   repeatable: true
+  compact_instances: true
 }
 component_slots {
   slot_key: "wheel"
   label: "Wheel"
   repeatable: true
+  compact_instances: true
 }
 
 # Two meters, and they are not interchangeable: chain wear tracks distance, suspension service

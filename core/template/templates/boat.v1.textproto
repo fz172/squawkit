@@ -73,12 +73,12 @@ spec_fields {
 # That is a different shape from the airplane's (#729), which nests by attachment because an
 # aeroplane's parts genuinely form one chain: propeller on engine, blades on propeller. Neither
 # shape is the template system's opinion — each preset describes its own domain, which is the point.
-component_slots {
-  slot_key: "hull"
-  label: "Hull"
-  # No serial: the boat's identifying number is the `hull_id` spec field above, and asking again
-  # here would be the duplicate the airplane's airframe slot was removed for.
-}
+# THERE IS NO HULL SLOT. The hull IS the boat: its make and model are the ones declared as spec
+# fields above, and its identifying number is `hull_id` there too. A slot for it repeated the boat's
+# own identity verbatim under a second heading, so an owner read "Sling · TSi" at the top of the
+# card and "HULL / Sling TSi" immediately under it. Removed for the reason the airplane's airframe
+# slot was: the thing does not need a component row standing in for itself, and unlike the airframe
+# this one did not even have children to parent.
 # Zero or more: an engine, an outboard, a sail drive. The meter below is scoped to this slot, so a
 # twin accrues hours on each separately rather than on the boat.
 component_slots {
@@ -86,6 +86,9 @@ component_slots {
   label: "Propulsion"
   repeatable: true
   serial_expected: true
+  # A twin's two engines are a matched pair, read side by side. Two full-width cards said the boat
+  # tracked more parts than an aeroplane does, which is backwards.
+  compact_instances: true
 }
 # Batteries, radio, GPS, EPIRB — things with a serial and a service life, and no natural parent.
 component_slots {
@@ -93,6 +96,9 @@ component_slots {
   label: "Electrical & Safety"
   repeatable: true
   serial_expected: true
+  # A kit list — battery, radio, GPS, EPIRB — and a kit list reads as a grid. Each still shows its
+  # own make, model and serial; a chip carries all three, so nothing is lost by not being a card.
+  compact_instances: true
 }
 component_slots {
   slot_key: "steering"

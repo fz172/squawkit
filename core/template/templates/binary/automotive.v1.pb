@@ -15,9 +15,9 @@ automotive"¼
 yearYear*20192
 vinVIN *1HGBH41JXMN109186:
 engineEngine(:
-batteryBattery:
-brakesBrakes:
-tireTireB
+batteryBattery:
+brakesBrakesH:
+tireTireHB
 odometerOdometermiR
 AutomotiveZ
 automotive`

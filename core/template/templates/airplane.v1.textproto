@@ -150,6 +150,10 @@ component_slots {
       spec_keys: "serial"
       inline_with_parent: true
       compact_fields: true
+      # Says out loud what the dashboard used to infer from nesting depth. Blades were the case
+      # that heuristic was written for, so this changes nothing here — it is what lets a car's
+      # tyres claim the same treatment without being bolted to something.
+      compact_instances: true
     }
   }
 }

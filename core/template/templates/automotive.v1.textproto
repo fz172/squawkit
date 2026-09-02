@@ -94,15 +94,21 @@ component_slots {
   slot_key: "battery"
   label: "Battery"
 }
+# Brakes and tyres are SETS, not individuals: four near-identical parts told apart by position and
+# a serial, the same shape as an aeroplane's propeller blades. A full-width card each put a car at
+# ten component rows against an aeroplane's three, which is not a picture of the two domains anyone
+# recognises. The engine and battery stay cards — those are individuals with a history.
 component_slots {
   slot_key: "brakes"
   label: "Brakes"
   repeatable: true
+  compact_instances: true
 }
 component_slots {
   slot_key: "tire"
   label: "Tire"
   repeatable: true
+  compact_instances: true
 }
 
 # One meter, and the reason the generalisation matters: "every 5,000 miles" and "every 100 hours"

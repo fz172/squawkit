@@ -82,6 +82,19 @@ message ComponentSlot {
   // — while model and serial pair up beside each other. A slot whose only field is a serial packs
   // its *instances* instead, which is what puts four blade serials on two lines.
   bool compact_fields = 8;
+
+  // Draw each of this slot's components as a chip beside its siblings, not as a card of its own.
+  //
+  // The slot says whether its parts are read as a SET or as individuals. Four tyres, two blades,
+  // two wheels are a set — near-identical parts told apart by a number and a serial — and a
+  // full-width card each buries the rest of the tree in scroll for no gain. An engine is an
+  // individual: one part with a history, and its card is where that history hangs.
+  //
+  // Replaces the `depth > 0` heuristic the dashboard used to guess this with. Nesting was never
+  // the question — a boat's propulsion and a car's tyres are top-level and still a set, which is
+  // why a preset that reads correctly for an aeroplane listed a car's four tyres as four rows.
+  // #732 asked for this field; this is it.
+  bool compact_instances = 9;
 }
 
 // A meter a Thing accumulates and rules can be written against — hours, miles, cycles, seasons.
