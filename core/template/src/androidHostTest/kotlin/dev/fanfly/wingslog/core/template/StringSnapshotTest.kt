@@ -245,7 +245,6 @@ class StringSnapshotTest {
       "feature/logs/viewing",
       "thing_data"
     ) { LexiconFormatter.titleCase(it.thingNoun) },
-    frame("feature/logs/viewing", "edit_thing") { it.thingNoun.singular },
     frame(
       "feature/logs/viewing",
       "log_squawk_count_one"

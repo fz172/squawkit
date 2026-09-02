@@ -3,7 +3,6 @@
   <string name="thing_data"><xliff:g example="aircraft">%1$s</xliff:g> Data</string>
   <string name="s_n_placeholder">S/N: <xliff:g example="SN-1234">%1$s</xliff:g></string>
   <string name="s_n_empty">No S/N</string>
-  <string name="edit_thing">Update <xliff:g example="aircraft">%1$s</xliff:g></string>
   <string name="search_logs">Search logs…</string>
   <string name="no_logs_match_filter">No logs match your filter.</string>
   <string name="clear_filter">Clear Filter</string>
@@ -14,7 +13,6 @@
   <string name="log_task_count_plural"><xliff:g example="3">%1$d</xliff:g> tasks</string>
   <string name="log_squawk_count_one">1 <xliff:g example="squawks">%1$s</xliff:g></string>
   <string name="log_squawk_count_plural"><xliff:g example="3">%1$d</xliff:g> <xliff:g example="squawks">%2$s</xliff:g></string>
-  <string name="hours_abbr_value"><xliff:g example="12.5">%1$s</xliff:g> hrs</string>
   <string name="failed_to_load_logs">Could not load maintenance logs</string>
   <string name="maintenance_summary">Maintenance Summary</string>
   <string name="total_logs">Total Logs</string>

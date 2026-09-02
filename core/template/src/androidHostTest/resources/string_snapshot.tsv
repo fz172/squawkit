@@ -26,12 +26,10 @@ core/sharedassets	component_airframe	Airframe
 core/sharedassets	component_engine	Engine
 core/sharedassets	component_propeller	Propeller
 core/sharedassets	component_type	Component Type
-core/sharedassets	configuration	Configuration
 core/sharedassets	continue_action	Continue
 core/sharedassets	dash	—
 core/sharedassets	delete	Delete
 core/sharedassets	delete_failed	Delete failed
-core/sharedassets	details	Details
 core/sharedassets	discard	Discard
 core/sharedassets	dismiss	Dismiss
 core/sharedassets	done	Done
@@ -42,12 +40,10 @@ core/sharedassets	file_size_bytes	%1$s B
 core/sharedassets	file_size_kb	%1$s KB
 core/sharedassets	file_size_mb	%1$s MB
 core/sharedassets	file_size_zero_kb	0 KB
-core/sharedassets	make_model_template	%1$s %2$s
 core/sharedassets	manage_access	Manage Access
 core/sharedassets	none	None
 core/sharedassets	not_now	Not now
 core/sharedassets	ok	OK
-core/sharedassets	or	OR
 core/sharedassets	remove	Remove
 core/sharedassets	required	Required
 core/sharedassets	retry	Try Again
@@ -63,7 +59,6 @@ core/sharedassets	switcher_select_thing	Select
 core/sharedassets	sync_changes_discarded	Unsaved changes to %1$s were discarded — your access was removed
 core/sharedassets	term_with_abbreviation	%1$s (%2$s)
 core/sharedassets	thing_shared_badge	Shared
-core/sharedassets	unit_hours	hrs
 core/sharedassets	unknown	Unknown
 core/sharedassets	unsaved_changes	Unsaved Changes
 core/sharedassets	unsaved_changes_message	You have unsaved changes. Are you sure you want to leave?
@@ -238,12 +233,8 @@ feature/login	upgrade_provider_email	email address
 feature/login	upgrade_provider_google	Google account
 feature/logs/sharedassets	add_first_maintenance_log	Log First Entry
 feature/logs/sharedassets	add_log	Add Work Log
-feature/logs/sharedassets	airframe_time_label	Airframe Time
 feature/logs/sharedassets	blade	Blade
-feature/logs/sharedassets	blade_with_index	Blade %1$d
 feature/logs/sharedassets	edit_log	Update Work Log
-feature/logs/sharedassets	engine_time_label	Engine Time
-feature/logs/sharedassets	engine_with_index	Engine %1$d
 feature/logs/sharedassets	log_assigned_by	Logged by %1$s
 feature/logs/sharedassets	log_assigned_by_unknown	Logged by another member
 feature/logs/sharedassets	log_unverified_technician	Not verified — name entered manually
@@ -251,17 +242,14 @@ feature/logs/sharedassets	maintenance_date	Work Date
 feature/logs/sharedassets	maintenance_history	Maintenance History
 feature/logs/sharedassets	no_maintenance_logs_description	Log your first entry — oil change, annual, 100-hour, or any other airframe, engine, or prop work.
 feature/logs/sharedassets	no_maintenance_logs_title	Work log is empty
-feature/logs/sharedassets	prop_time_label	Prop Time
 feature/logs/sharedassets	propeller_hub	Propeller Hub
 feature/logs/sharedassets	resolve_squawk_work_description	Resolve squawk "%1$s"
 feature/logs/sharedassets	resolve_task_work_description	Performed maintenance task "%1$s"
 feature/logs/sharedassets	this_action_cannot_be_undone	This action cannot be undone.
 feature/logs/update	airframe_serial	Airframe Serial
-feature/logs/update	airframe_time_hours	Airframe Time (hours)
 feature/logs/update	component_section_description	Which part of the aircraft was serviced
 feature/logs/update	date_section_description	When this work was performed
 feature/logs/update	delete_log	Delete Log?
-feature/logs/update	engine_time_hours	Engine Time (hours)
 feature/logs/update	hours_section_description	Fill the fields that apply to this work event
 feature/logs/update	loading_thing	Loading aircraft…
 feature/logs/update	log_deleted	Log deleted
@@ -275,7 +263,6 @@ feature/logs/update	make_model_serial	%1$s (%2$s)
 feature/logs/update	no_engines_found	No engines found for this aircraft.
 feature/logs/update	no_propeller_components_found	No propeller components found for this aircraft.
 feature/logs/update	performed_by_description	The technician who performed this work
-feature/logs/update	prop_time_hours	Prop Time (hours)
 feature/logs/update	propeller_component	Propeller Component
 feature/logs/update	squawks_section_header	Squawks Addressed
 feature/logs/update	tap_to_change_date	Tap to change date
@@ -285,11 +272,9 @@ feature/logs/update	work_description_required	Work Description *
 feature/logs/viewing	affected_maintenance_tasks	Affected Maintenance Tasks
 feature/logs/viewing	clear_filter	Clear Filter
 feature/logs/viewing	collapse_details	Collapse details
-feature/logs/viewing	edit_thing	Update aircraft
 feature/logs/viewing	expand_details	Expand details
 feature/logs/viewing	failed_to_load_logs	Could not load maintenance logs
 feature/logs/viewing	filter_by_type	Filter by Type
-feature/logs/viewing	hours_abbr_value	%1$s hrs
 feature/logs/viewing	log_count_n_entries	%1$d Entries
 feature/logs/viewing	log_count_one_entry	1 Entry
 feature/logs/viewing	log_onboarding_description	Log your current airframe, engine, and prop times to start tracking maintenance intervals accurately. This will serve as your logbook's baseline.
@@ -671,7 +656,6 @@ feature/sync/settings	sync_subtitle_off	Your data stays on this device only.
 feature/sync/settings	sync_subtitle_signin	Sign in to enable cloud sync.
 feature/sync/sharedassets	feature_name_backup_and_sync	Backup &amp; Sync
 feature/tasks/sharedassets	add_task	Add task
-feature/tasks/sharedassets	affects_n_tasks	Affects %1$d maintenance task(s)
 feature/tasks/sharedassets	compliance_authority	Compliance authority
 feature/tasks/sharedassets	compliance_type_ad_short	AD
 feature/tasks/sharedassets	compliance_type_sb_short	SB
@@ -685,7 +669,6 @@ feature/tasks/sharedassets	no_complied_yet	Log work against a task to see its hi
 feature/tasks/sharedassets	no_task_work_recorded	No task addressed by this log.
 feature/tasks/sharedassets	no_tasks_yet	No maintenance tasks
 feature/tasks/sharedassets	no_tasks_yet_description	Tap + to add inspections, part replacements, and other checks.
-feature/tasks/sharedassets	overdue	Overdue
 feature/tasks/sharedassets	skip_task_confirm_action	Skip
 feature/tasks/sharedassets	skip_task_confirm_body	Marks complete without logging and snoozes one cycle to the next due target. This can’t be undone.
 feature/tasks/sharedassets	skip_task_confirm_title	Skip This Cycle?
@@ -737,10 +720,6 @@ feature/tasks/update	create_work_log_subtitle	Opens a new log, pre-linked to thi
 feature/tasks/update	delete_task_section_label	Delete Task
 feature/tasks/update	delete_this_task_subtitle	Permanently removes this task and its maintenance schedule.
 feature/tasks/update	delete_this_task_title	Delete this task
-feature/tasks/update	interval_hours	Interval (hours)
-feature/tasks/update	interval_months	Interval (months)
-feature/tasks/update	intervals	Intervals
-feature/tasks/update	link_to_task	Link to maintenance task
 feature/tasks/update	no_log_history	No maintenance logs recorded for this task.
 feature/tasks/update	no_tasks_configured	No tasks configured. Add them from the aircraft overview to track recurring maintenance.
 feature/tasks/update	reference_and_component	%1$s • %2$s
@@ -798,7 +777,6 @@ feature/tasks/update	skip_this_cycle_option_subtitle	Marks complete without logg
 feature/tasks/update	task_added	Task added
 feature/tasks/update	task_deleted	Task deleted
 feature/tasks/update	task_description_placeholder	e.g. 100-Hour Inspection
-feature/tasks/update	task_identity_description	Define the core name and component category for this maintenance requirement.
 feature/tasks/update	task_skipped	Cycle skipped — next due rescheduled
 feature/tasks/update	task_title	Maintenance Task Title
 feature/tasks/update	task_title_helper	Provide a concise, technical name for this maintenance action as it appears in the service manual.
@@ -807,14 +785,12 @@ feature/tasks/viewing	authority_reference_number	%1$s · %2$s
 feature/tasks/viewing	badge_due	DUE
 feature/tasks/viewing	badge_overdue	OVERDUE
 feature/tasks/viewing	completed	Completed
-feature/tasks/viewing	compliance_details	Compliance Details
 feature/tasks/viewing	critical_airworthiness	URGENT ATTENTION REQUIRED
 feature/tasks/viewing	days_overdue_count	%1$d Days Overdue
 feature/tasks/viewing	days_remaining	%1$d Days Remaining
 feature/tasks/viewing	due_date	Due %1$s
 feature/tasks/viewing	due_today	Due Today
 feature/tasks/viewing	engine_hours_label	Engine Hours
-feature/tasks/viewing	engine_hours_upper	%1$s HRS
 feature/tasks/viewing	label_deadline	DEADLINE
 feature/tasks/viewing	label_due_engine	DUE @
 feature/tasks/viewing	label_due_engine_value	DUE @ %1$s
@@ -856,13 +832,11 @@ feature/technician/sharedassets	manage_technicians	Who Does the Work
 feature/technician/sharedassets	manage_technicians_description	Everyone who works on what you track. Add them here so you can pick them when recording work.
 feature/technician/sharedassets	my_profile	My Profile
 feature/technician/sharedassets	my_technicians_header	My technicians
-feature/technician/sharedassets	name	Name
 feature/technician/sharedassets	name_required	Name (Required)
 feature/technician/sharedassets	never	Never
 feature/technician/sharedassets	no_certificate	No certificate provided
 feature/technician/sharedassets	performed_by	Performed By
 feature/technician/sharedassets	select_technician	Select Technician
-feature/technician/sharedassets	technician	Technician
 feature/technician/sharedassets	you_badge	You
 feature/thing/dashboard	degraded_body	This was set up on a device running a newer version. Nothing has been lost — but this version cannot show or edit it properly, so it is shown exactly as stored.
 feature/thing/dashboard	degraded_no_stored_details	No details stored.
@@ -879,18 +853,13 @@ feature/thing/dashboard	overview_no_tasks_body	Scheduled maintenance is up to da
 feature/thing/dashboard	overview_no_tasks_title	No upcoming tasks
 feature/thing/dashboard	overview_open_squawks	Open squawks
 feature/thing/dashboard	overview_recent_activity	Recent activity
+feature/thing/dashboard	spec_line_label	%1$s:
 feature/thing/dashboard	thing_load_error	Couldn't load this aircraft
-feature/thing/update	add_blade	Add blade
-feature/thing/update	add_engine	Add Engine
-feature/thing/update	blade_serial_numbers	Blade Serial numbers
 feature/thing/update	delete_thing	Delete Aircraft?
 feature/thing/update	delete_thing_member_plural	people will
 feature/thing/update	delete_thing_member_singular	person will
 feature/thing/update	delete_thing_shared_warning	%1$d other %2$s lose access to this aircraft and its records.
 feature/thing/update	make	Make
 feature/thing/update	model	Model
-feature/thing/update	remove_blade	Remove Blade
-feature/thing/update	remove_engine	Remove Engine
 feature/thing/update	serial	Serial Number
-feature/thing/update	tail_number	Tail Number
 feature/thing/update	update_thing	Update Aircraft

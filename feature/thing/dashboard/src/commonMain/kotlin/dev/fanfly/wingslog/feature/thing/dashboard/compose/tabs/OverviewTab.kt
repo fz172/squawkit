@@ -41,10 +41,9 @@ import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.datetime.toLocalDate
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.LocalThingTemplate
-import dev.fanfly.wingslog.core.template.SpecKeys
 import dev.fanfly.wingslog.core.template.formatMeterValue
 import dev.fanfly.wingslog.core.template.primaryReading
-import dev.fanfly.wingslog.core.template.specValue
+import dev.fanfly.wingslog.core.template.specLines
 import dev.fanfly.wingslog.core.template.squawkNoun
 import dev.fanfly.wingslog.core.template.thingNoun
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LayoutTier
@@ -69,7 +68,6 @@ import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.MaintenanceLog
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.all
-import wingslog.core.sharedassets.generated.resources.make_model_template
 import wingslog.core.sharedassets.generated.resources.thing_shared_badge
 import wingslog.feature.squawk.sharedassets.generated.resources.no_open_squawks
 import wingslog.feature.tasks.sharedassets.generated.resources.unknown_date
@@ -260,24 +258,30 @@ private fun OverviewHero(
   state: ThingOverviewUiState.Success,
   modifier: Modifier = Modifier,
 ) {
+  // Was make, model and tail number read by key, which only an aeroplane has: a car showed its
+  // make and model trailed by a blank, and a home — no make, no model, no tail number — got an
+  // empty hero. Both halves come from the template now. The accent is the field it marks
+  // `title_candidate`, so it is a tail number and never a VIN: what an owner calls the thing by,
+  // not merely the first identifier declared.
+  val spec = LocalThingTemplate.current.specLines(state.thing)
+  // A preset naming neither falls back to the name, which is the one label every Thing has.
+  val headline = spec.headline.ifBlank { state.thing.name }
   Column(modifier = modifier) {
     FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
-      Text(
-        text = stringResource(
-          CoreRes.string.make_model_template,
-          state.thing.specValue(SpecKeys.MAKE)
-            .trim(),
-          state.thing.specValue(SpecKeys.MODEL)
-            .trim()
-        ),
-        style = WingslogTypography.heroDisplay,
-        color = MaterialTheme.colorScheme.onSurface
-      )
-      Text(
-        text = state.thing.specValue(SpecKeys.TAIL_NUMBER),
-        style = WingslogTypography.heroDisplay,
-        color = MaterialTheme.colorScheme.primary
-      )
+      if (headline.isNotBlank()) {
+        Text(
+          text = headline,
+          style = WingslogTypography.heroDisplay,
+          color = MaterialTheme.colorScheme.onSurface
+        )
+      }
+      if (spec.title.isNotBlank() && spec.title != headline) {
+        Text(
+          text = spec.title,
+          style = WingslogTypography.heroDisplay,
+          color = MaterialTheme.colorScheme.primary
+        )
+      }
     }
     if (state.shared) {
       SharedMarker()
