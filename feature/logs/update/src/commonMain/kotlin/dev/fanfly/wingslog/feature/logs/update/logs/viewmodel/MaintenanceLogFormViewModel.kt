@@ -342,20 +342,7 @@ class MaintenanceLogFormViewModel(
             selectedSquawkIds = log.squawk_ids,
             selectedInspectionIds = log.inspection_ids,
             selectedTechnician = log.technician ?: it.selectedTechnician,
-            // Through readingFor, so a log that recorded only `readings` populates these too.
-            // Reading the legacy fields directly left them blank and the next save zeroed them,
-            // which is how a dual-written pair loses the half it was meant to protect (#761).
-            engineTime = log.readingFor(MeterKeys.ENGINE_HOURS)
-              ?.toString()
-              .orEmpty(),
-            airframeTime = log.readingFor(MeterKeys.AIRFRAME_HOURS)
-              ?.toString()
-              .orEmpty(),
-            propTime = log.readingFor(MeterKeys.PROP_HOURS)
-              ?.toString()
-              .orEmpty(),
-            // Keyed by meter, from `readings` or the legacy field it falls back to. The three
-            // fields above stay bound for now: the export and the due-status rules read them.
+            // Every meter this template declares that the log recorded, by key.
             meterValues = currentThingTemplate.template.value?.meters.orEmpty()
               .mapNotNull { meter ->
                 log.readingFor(meter.key)
@@ -440,32 +427,16 @@ class MaintenanceLogFormViewModel(
     }
   }
 
-  fun onEngineTimeChange(value: String) =
-    _uiState.update { it.copy(engineTime = value) }
-
-  fun onAirframeTimeChange(value: String) =
-    _uiState.update { it.copy(airframeTime = value) }
-
-  fun onPropTimeChange(value: String) =
-    _uiState.update { it.copy(propTime = value) }
-
   /**
    * A meter field, by the key the template declares (#730).
    *
-   * The three named setters above stay because they still feed `engine_hour`, `airframe_time` and
-   * `prop_time`, which the export and the due-status rules read. For the airplane keys this keeps
-   * both in step; a car's odometer has nothing else to keep.
+   * The only meter setter there is. Three named ones mirrored this into `engineTime`,
+   * `airframeTime` and `propTime` to keep the aviation log fields in step; those fields went with
+   * the log fields in #761, and a car's odometer never had a named setter to begin with.
    */
   fun onMeterChanged(meterKey: String, value: String) {
     _uiState.update { state ->
-      val next =
-        state.copy(meterValues = state.meterValues + (meterKey to value))
-      when (meterKey) {
-        MeterKeys.ENGINE_HOURS -> next.copy(engineTime = value)
-        MeterKeys.AIRFRAME_HOURS -> next.copy(airframeTime = value)
-        MeterKeys.PROP_HOURS -> next.copy(propTime = value)
-        else -> next
-      }
+      state.copy(meterValues = state.meterValues + (meterKey to value))
     }
   }
 
@@ -598,11 +569,7 @@ class MaintenanceLogFormViewModel(
         work_description = state.workDescription,
         squawk_ids = state.selectedSquawkIds,
         inspection_ids = state.selectedInspectionIds,
-        engine_hour = state.engineTime.toDoubleOrNull() ?: 0.0,
-        airframe_time = state.airframeTime.toDoubleOrNull() ?: 0.0,
-        prop_time = state.propTime.toDoubleOrNull() ?: 0.0,
-        // Every meter the form collected. The three fields above are written too, for the readers
-        // that have not moved yet — an aeroplane's log carries the same number in both places.
+        // Every meter the form collected, and the only place a reading lives (#761).
         readings = state.meterValues.mapNotNull { (key, text) ->
           text.toDoubleOrNull()
             ?.takeIf { it > 0.0 }

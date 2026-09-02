@@ -10,11 +10,7 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import dev.fanfly.wingslog.feature.ads.model.AdSurface
-import dev.fanfly.wingslog.feature.ads.model.ListRow
-import dev.fanfly.wingslog.feature.ads.viewing.AdSlot
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -34,18 +30,20 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import dev.fanfly.wingslog.thing.ComponentType
-import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.datetime.toLocalDate
+import dev.fanfly.wingslog.core.template.LocalThingTemplate
+import dev.fanfly.wingslog.core.template.formatMeterValue
+import dev.fanfly.wingslog.core.template.primaryReading
 import dev.fanfly.wingslog.core.ui.common.compose.jumpTargetHighlight
-import dev.fanfly.wingslog.core.ui.common.formatToOneDecimalPlace
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
+import dev.fanfly.wingslog.feature.ads.model.AdSurface
+import dev.fanfly.wingslog.feature.ads.model.ListRow
+import dev.fanfly.wingslog.feature.ads.viewing.AdSlot
+import dev.fanfly.wingslog.thing.MaintenanceLog
 import org.jetbrains.compose.resources.stringResource
-import wingslog.feature.logs.viewing.generated.resources.hours_abbr_value
 import wingslog.feature.tasks.sharedassets.generated.resources.unknown_date
-import wingslog.feature.logs.viewing.generated.resources.Res as MaintenanceRes
 import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedRes
 
 // Shared column weights so the header and every row stay aligned.
@@ -168,7 +166,10 @@ private fun LogRow(
   val dateStr = log.timestamp?.toLocalDate()
     ?.toDisplayFormat()
     ?: stringResource(SharedRes.string.unknown_date)
-  val hours = log.primaryTableHours()
+  // Same fix as the card: the first declared meter this log recorded, rather than a switch on
+  // `component_type` across three aviation fields (#761).
+  val template = LocalThingTemplate.current
+  val primary = template.primaryReading(log)
 
   Row(
     modifier = Modifier
@@ -203,14 +204,9 @@ private fun LogRow(
         .padding(end = Spacing.medium),
     )
     Text(
-      text = if (hours > 0.0) {
-        stringResource(
-          MaintenanceRes.string.hours_abbr_value,
-          hours.formatToOneDecimalPlace()
-        )
-      } else {
-        "—"
-      },
+      text = primary
+        ?.let { (meter, value) -> template.formatMeterValue(meter.key, value) }
+        ?: "—",
       style = WingslogTypography.dataSmall,
       color = MaterialTheme.colorScheme.onSurfaceVariant,
       textAlign = TextAlign.End,
@@ -235,10 +231,3 @@ private fun LogRow(
   }
 }
 
-private fun MaintenanceLog.primaryTableHours(): Double = when (component_type) {
-  ComponentType.COMPONENT_ENGINE -> engine_hour
-  ComponentType.COMPONENT_AIRFRAME -> airframe_time
-  ComponentType.COMPONENT_PROPELLER -> prop_time
-  else -> engine_hour.takeIf { it > 0.0 } ?: airframe_time.takeIf { it > 0.0 }
-  ?: prop_time
-}

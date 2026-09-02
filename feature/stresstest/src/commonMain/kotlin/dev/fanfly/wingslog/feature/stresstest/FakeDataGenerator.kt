@@ -17,7 +17,6 @@ import dev.fanfly.wingslog.thing.ComplianceType
 import dev.fanfly.wingslog.thing.Component
 import dev.fanfly.wingslog.thing.ComponentSlot
 import dev.fanfly.wingslog.thing.ComponentType
-import dev.fanfly.wingslog.thing.EngineHourRule
 import dev.fanfly.wingslog.thing.ImmediateRule
 import dev.fanfly.wingslog.thing.InspectionRule
 import dev.fanfly.wingslog.thing.MaintenanceLog
@@ -159,21 +158,21 @@ object FakeDataGenerator {
       "100-Hour Inspection",
       ComponentType.COMPONENT_ENGINE,
       ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
-      InspectionRule(engine_hour_rule = EngineHourRule(interval_hours = 100f)),
+      meterRule(MeterKeys.ENGINE_HOURS, 100f),
       notes = "Required for hire operations. FAR 91.409(b). Follows Annual inspection checklist.",
     ),
     TaskTemplate(
       "Engine Oil Change",
       ComponentType.COMPONENT_ENGINE,
       ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
-      InspectionRule(engine_hour_rule = EngineHourRule(interval_hours = 50f)),
+      meterRule(MeterKeys.ENGINE_HOURS, 50f),
       notes = "Replace oil filter and send sample for analysis. Use AeroShell W80 Plus or equivalent.",
     ),
     TaskTemplate(
       "Spark Plug Rotation",
       ComponentType.COMPONENT_ENGINE,
       ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
-      InspectionRule(engine_hour_rule = EngineHourRule(interval_hours = 100f)),
+      meterRule(MeterKeys.ENGINE_HOURS, 100f),
       notes = "Rotate top to bottom. Check gap 0.015–0.019 in. Replace if electrodes worn more than 50%.",
     ),
     TaskTemplate(
@@ -215,21 +214,21 @@ object FakeDataGenerator {
       "Engine TBO",
       ComponentType.COMPONENT_ENGINE,
       ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
-      InspectionRule(engine_hour_rule = EngineHourRule(interval_hours = 2000f)),
+      meterRule(MeterKeys.ENGINE_HOURS, 2000f),
       notes = "Manufacturer recommended TBO. Not mandatory for Part 91, but highly recommended.",
     ),
     TaskTemplate(
       "Alternator Belt Inspection",
       ComponentType.COMPONENT_ENGINE,
       ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
-      InspectionRule(engine_hour_rule = EngineHourRule(interval_hours = 100f)),
+      meterRule(MeterKeys.ENGINE_HOURS, 100f),
       notes = "Check tension, fraying, and cracking. Replace if belt deflects more than 1/2 inch.",
     ),
     TaskTemplate(
       "Magneto Timing Check",
       ComponentType.COMPONENT_ENGINE,
       ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
-      InspectionRule(engine_hour_rule = EngineHourRule(interval_hours = 500f)),
+      meterRule(MeterKeys.ENGINE_HOURS, 500f),
       notes = "Check timing at 25° BTC ±1°. Inspect points, condenser, and distributor block.",
     ),
     TaskTemplate(
@@ -281,7 +280,7 @@ object FakeDataGenerator {
       "Brake System Service",
       ComponentType.COMPONENT_AIRFRAME,
       ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
-      InspectionRule(engine_hour_rule = EngineHourRule(interval_hours = 100f)),
+      meterRule(MeterKeys.ENGINE_HOURS, 100f),
       notes = "Check fluid level, inspect lines and calipers, measure pad thickness. Flush fluid annually.",
     ),
     TaskTemplate(
@@ -1024,10 +1023,9 @@ object FakeDataGenerator {
       val rule = template.rule
       val isOnCondition =
         rule.on_condition_rule != null || rule.immediate_rule != null
-      // A keyed rule is the same shape for this purpose: its base comes from a logged reading,
-      // which does not exist yet at task-creation time.
-      val isMeterBased =
-        rule.engine_hour_rule != null || rule.meter_rule != null
+      // A meter rule's base comes from a logged reading, which does not exist yet at
+      // task-creation time — so its due status is driven by an override instead.
+      val isMeterBased = rule.meter_rule != null
       val dueGroup = if (isOnCondition) -1 else index % 3
 
       // Approximate the rule interval in days for creation_date arithmetic.
@@ -1181,7 +1179,6 @@ object FakeDataGenerator {
       }
     }
 
-    val isAirplane = template.id == AirplaneTemplate.ID
     // Hoisted: the log lambda below binds its own `template`, which is a log fixture, not this one.
     val thingMeters = template.meters
 
@@ -1261,12 +1258,6 @@ object FakeDataGenerator {
         work_description = template.description,
         component_type = template.component,
         component_serial = componentSerial,
-        // Written alongside `readings` for the airplane only, which is what a log saved by any
-        // build in the field looks like. Every other preset gets the keyed form on its own, so
-        // the fixture proves those screens never needed the aviation fields.
-        engine_hour = if (isAirplane) engineHours else 0.0,
-        airframe_time = if (isAirplane) airframeTime else 0.0,
-        prop_time = if (isAirplane) propTime else 0.0,
         readings = readings,
         inspection_ids = matchedTaskIds,
         squawk_ids = squawkIds,

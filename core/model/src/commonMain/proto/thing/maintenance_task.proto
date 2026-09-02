@@ -25,19 +25,12 @@ message TimeRule {
   int32 interval_years = 4;
 }
 
-// A engine-hour-based rule (e.g. every 100 hours).
-//
-// SUPERSEDED BY MeterRule. Kept because every aviation task in the field uses one, and a task that
-// silently stops coming due is worse than one that cannot be created. Read both, write MeterRule.
-message EngineHourRule {
-  float interval_hours = 1;
-}
-
 // A rule against any meter the template declares — "every 5,000 miles", "every 100 hours",
 // "every 200 ride hours". PRD §11.1.
 //
-// `EngineHourRule` could not express these because it named the meter in its type rather than
-// carrying it: an interval with no unit is only a number, and a car could not be scheduled at all.
+// Replaced `EngineHourRule`, which could not express these because it named the meter in its type
+// rather than carrying it: an interval with no unit is only a number, and a car could not be
+// scheduled at all.
 message MeterRule {
   // Matches MeterDef.key on the template, and MeterReading.meter_key on the logs it reads.
   string meter_key = 1;
@@ -59,21 +52,27 @@ message ImmediateRule {}
 message InspectionRule {
   oneof rule {
     TimeRule time_rule = 1;
-    EngineHourRule engine_hour_rule = 2;
     OnConditionRule on_condition_rule = 3;
     LinkedRule linked_rule = 4;
     ImmediateRule immediate_rule = 5;
     MeterRule meter_rule = 6;
   }
+
+  // `EngineHourRule engine_hour_rule = 2`, retired in #761 once the backfill converted every
+  // stored rule. See maintenance_log.proto for why the number is reserved rather than reused.
+  reserved 2;
+  reserved "engine_hour_rule";
 }
 
 // Status to track when an inspection was forcefully marked as complied with
 message ForceCompliedStatus {
   google.protobuf.Timestamp complied_date = 1;
-  // Superseded by `complied_meter`; still read for statuses recorded before it existed.
-  float complied_engine_hours = 2;
   // What the meter read when this was marked complied, keyed. Empty key means none was recorded.
+  // Replaced `complied_engine_hours` (2), retired in #761.
   MeterReading complied_meter = 3;
+
+  reserved 2;
+  reserved "complied_engine_hours";
 }
 
 // A configured maintenance task card for an aircraft
@@ -85,8 +84,6 @@ message MaintenanceTask {
 
   // Optional force overrides — when set, skip computed due calculation
   google.protobuf.Timestamp force_due_date = 5;
-  // Superseded by `force_due_meter`; still read for overrides set before it existed.
-  float force_due_engine_hour = 6;
 
   // Optional free-text notes or comments for this maintenance task
   string notes = 7;
@@ -101,8 +98,10 @@ message MaintenanceTask {
 
   ForceCompliedStatus force_complied_status = 14;
 
-  // The meter reading this task is forced due at, keyed. Supersedes `force_due_engine_hour`, which
-  // could only ever mean engine hours (PRD §11.1).
+  // The meter reading this task is forced due at, keyed. Replaced `force_due_engine_hour` (6),
+  // which could only ever mean engine hours (PRD §11.1), retired in #761.
   MeterReading force_due_meter = 15;
 
+  reserved 6;
+  reserved "force_due_engine_hour";
 }

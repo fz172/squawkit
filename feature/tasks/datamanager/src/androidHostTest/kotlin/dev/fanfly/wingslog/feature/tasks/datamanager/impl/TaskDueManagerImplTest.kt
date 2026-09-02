@@ -2,9 +2,10 @@ package dev.fanfly.wingslog.feature.tasks.datamanager.impl
 
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.template.MeterKeys
+import dev.fanfly.wingslog.feature.tasks.datamanager.defaultMeterKey
+import dev.fanfly.wingslog.feature.tasks.datamanager.withForcedDueMeter
 import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import dev.fanfly.wingslog.thing.ComponentType
-import dev.fanfly.wingslog.thing.EngineHourRule
 import dev.fanfly.wingslog.thing.ForceCompliedStatus
 import dev.fanfly.wingslog.thing.ImmediateRule
 import dev.fanfly.wingslog.thing.InspectionRule
@@ -192,11 +193,11 @@ class TaskDueManagerImplTest {
   }
 
   @Test
-  fun engineRule_airframeComponent_tracksAirframeTime() {
+  fun aRuleOnAirframeHoursIgnoresEngineHours() {
     val card = card(
       id = "c1",
       component = ComponentType.COMPONENT_AIRFRAME,
-      rules = listOf(engineRule(5f)),
+      rules = listOf(meterRule(MeterKeys.AIRFRAME_HOURS, 5f)),
     )
     val log = log(
       inspectionIds = listOf("c1"),
@@ -260,7 +261,7 @@ class TaskDueManagerImplTest {
   fun aShortIntervalIsNotPermanentlyDueSoon() {
     // The fixed 10-hour window meant any rule with an interval under 10 hours reported DUE_SOON
     // from the moment it was logged.
-    val card = card(id = "c1", rules = listOf(engineRule(5f)))
+    val card = card(id = "c1", rules = listOf(meterRule(MeterKeys.AIRFRAME_HOURS, 5f)))
     val log = log(id = "l1", inspectionIds = listOf("c1"), airframeTime = 500.0)
 
     assertThat(manager.computeNextDue(card, listOf(log), listOf(card)).status)
@@ -274,7 +275,10 @@ class TaskDueManagerImplTest {
     // asks how far each has to go.
     val card = card(
       id = "c1",
-      rules = listOf(meterRule("odometer", 5000f), engineRule(100f)),
+      rules = listOf(
+        meterRule("odometer", 5000f),
+        meterRule(MeterKeys.AIRFRAME_HOURS, 100f),
+      ),
     )
     val logs = listOf(
       log(
@@ -296,11 +300,11 @@ class TaskDueManagerImplTest {
   }
 
   @Test
-  fun engineRule_engineComponent_tracksEngineHour() {
+  fun aRuleOnEngineHoursIgnoresAirframeTime() {
     val card = card(
       id = "c1",
       component = ComponentType.COMPONENT_ENGINE,
-      rules = listOf(engineRule(10f)),
+      rules = listOf(meterRule(MeterKeys.ENGINE_HOURS, 10f)),
     )
     val log = log(
       inspectionIds = listOf("c1"),
@@ -479,7 +483,7 @@ class TaskDueManagerImplTest {
     val card = card(
       id = "c1",
       component = ComponentType.COMPONENT_ENGINE,
-      rules = listOf(engineRule(50f)),
+      rules = listOf(meterRule(MeterKeys.ENGINE_HOURS, 50f)),
       forceComplied = ForceCompliedStatus(complied_date = iso("2026-04-13")),
     )
     val complianceLog = log(inspectionIds = listOf("c1"), engineHour = 100.0)
@@ -534,13 +538,13 @@ class TaskDueManagerImplTest {
   }
 
   @Test
-  fun anEngineHourRuleReportsTheMeterItAlwaysMeant() {
+  fun anAviationRuleReportsTheMeterItNames() {
     // An airframe card tracked airframe time, everything else engine hours. Preserved, so an
     // aviation task renders exactly as before.
     val airframe = card(
       id = "c1",
       component = ComponentType.COMPONENT_AIRFRAME,
-      rules = listOf(InspectionRule(engine_hour_rule = EngineHourRule(50f))),
+      rules = listOf(meterRule(MeterKeys.AIRFRAME_HOURS, 50f)),
     )
 
     val result = manager.computeNextDue(
@@ -572,10 +576,17 @@ class TaskDueManagerImplTest {
     component = component,
     rules = rules,
     force_due_date = forceDueDate,
-    force_due_engine_hour = forceDueEngine,
     is_one_time = isOneTime,
     force_complied_status = forceComplied,
-  )
+  ).let { task ->
+    // The override lands in whichever meter the card implies, which is what the retired
+    // `force_due_engine_hour` always meant (#761).
+    if (forceDueEngine > 0f) {
+      task.withForcedDueMeter(task.defaultMeterKey(), forceDueEngine)
+    } else {
+      task
+    }
+  }
 
   private fun log(
     id: String = "log",
@@ -587,10 +598,16 @@ class TaskDueManagerImplTest {
   ): MaintenanceLog = MaintenanceLog(
     id = id,
     timestamp = timestamp,
-    airframe_time = airframeTime,
-    engine_hour = engineHour,
     inspection_ids = inspectionIds,
-    readings = readings,
+    // The aviation parameters stay, as the readings they always described — a fixture saying
+    // "a log with 500 airframe hours" reads better than one spelling out a MeterReading (#761).
+    readings = readings +
+      listOfNotNull(
+        airframeTime.takeIf { it > 0.0 }
+          ?.let { MeterReading(MeterKeys.AIRFRAME_HOURS, value_ = it) },
+        engineHour.takeIf { it > 0.0 }
+          ?.let { MeterReading(MeterKeys.ENGINE_HOURS, value_ = it) },
+      ),
   )
 
   private fun timeRule(
@@ -617,9 +634,6 @@ class TaskDueManagerImplTest {
 
   private fun meterRule(key: String, interval: Float): InspectionRule =
     InspectionRule(meter_rule = MeterRule(meter_key = key, interval = interval))
-
-  private fun engineRule(hours: Float): InspectionRule =
-    InspectionRule(engine_hour_rule = EngineHourRule(interval_hours = hours))
 
   private fun iso(date: String): WireInstant =
     WireInstant.ofEpochSecond(Instant.parse("${date}T00:00:00Z").epochSeconds)

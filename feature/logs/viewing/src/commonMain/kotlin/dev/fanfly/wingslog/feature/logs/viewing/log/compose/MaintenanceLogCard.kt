@@ -1,7 +1,5 @@
 package dev.fanfly.wingslog.feature.logs.viewing.log.compose
 
-import dev.fanfly.wingslog.core.template.LocalThingLexicon
-import dev.fanfly.wingslog.core.template.squawkNoun
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -28,18 +26,23 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
-import dev.fanfly.wingslog.thing.ComponentType
-import dev.fanfly.wingslog.thing.MaintenanceLog
-import dev.fanfly.wingslog.thing.Technician
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.datetime.toLocalDate
 import dev.fanfly.wingslog.core.datetime.toWireInstant
-import dev.fanfly.wingslog.core.ui.common.formatToOneDecimalPlace
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.LocalThingTemplate
+import dev.fanfly.wingslog.core.template.MeterKeys
+import dev.fanfly.wingslog.core.template.formatMeterValue
+import dev.fanfly.wingslog.core.template.primaryReading
+import dev.fanfly.wingslog.core.template.squawkNoun
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.feature.logs.sharedassets.util.displayName
+import dev.fanfly.wingslog.thing.ComponentType
+import dev.fanfly.wingslog.thing.MaintenanceLog
+import dev.fanfly.wingslog.thing.MeterReading
+import dev.fanfly.wingslog.thing.Technician
 import org.jetbrains.compose.resources.stringResource
-import wingslog.feature.logs.viewing.generated.resources.hours_abbr_value
 import wingslog.feature.logs.viewing.generated.resources.log_squawk_count_one
 import wingslog.feature.logs.viewing.generated.resources.log_squawk_count_plural
 import wingslog.feature.logs.viewing.generated.resources.log_task_count_one
@@ -58,7 +61,11 @@ fun MaintenanceLogCard(
   val dateStr = log.timestamp?.toLocalDate()
     ?.toDisplayFormat()
     ?: stringResource(SharedRes.string.unknown_date)
-  val tacHours = log.primaryHours()
+  // The first meter this template declares that the log actually recorded. This used to switch on
+  // `component_type` across three aviation fields, so a car's log matched nothing and showed a
+  // blank where its odometer belonged (#761).
+  val template = LocalThingTemplate.current
+  val primary = template.primaryReading(log)
 
   Card(
     onClick = onClick,
@@ -87,12 +94,9 @@ fun MaintenanceLogCard(
       ) {
         ComponentTypeBadge(log.component_type)
         Spacer(Modifier.weight(1f))
-        if (tacHours > 0.0) {
+        if (primary != null) {
           Text(
-            text = stringResource(
-              MaintenanceRes.string.hours_abbr_value,
-              tacHours.formatToOneDecimalPlace(),
-            ),
+            text = template.formatMeterValue(primary.first.key, primary.second),
             style = WingslogTypography.dataSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
           )
@@ -233,14 +237,6 @@ internal fun ComponentTypeBadge(
   }
 }
 
-private fun MaintenanceLog.primaryHours(): Double = when (component_type) {
-  ComponentType.COMPONENT_ENGINE -> engine_hour
-  ComponentType.COMPONENT_AIRFRAME -> airframe_time
-  ComponentType.COMPONENT_PROPELLER -> prop_time
-  else -> engine_hour.takeIf { it > 0.0 } ?: airframe_time.takeIf { it > 0.0 }
-  ?: prop_time
-}
-
 @Preview
 @Composable
 private fun PreviewMaintenanceLogCard() {
@@ -251,7 +247,7 @@ private fun PreviewMaintenanceLogCard() {
         .toWireInstant(),
       work_description = "Replaced left magneto per SB-1234. Performed mag drop check — within limits.",
       component_type = ComponentType.COMPONENT_ENGINE,
-      engine_hour = 1432.5,
+      readings = listOf(MeterReading(MeterKeys.ENGINE_HOURS, value_ = 1432.5)),
       inspection_ids = listOf(
         "insp-1",
         "insp-2"

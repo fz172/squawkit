@@ -6,22 +6,14 @@ import dev.fanfly.wingslog.thing.MeterDef
 import dev.fanfly.wingslog.thing.MeterReading
 import dev.fanfly.wingslog.thing.ThingTemplate
 
-/**d
- * Reading and writing meter values by key, across the change from three hour fields to a declared
- * set (#730).
+/**
+ * Reading and writing meter values by key (#730).
  *
- * **Every read falls back to the legacy fields.** `engine_hour`, `airframe_time` and `prop_time`
- * hold the value on every log written before this, and there are a lot of them. Migrating them is a
- * separate decision; until then a reader that only consulted `readings` would report an aeroplane
- * with years of history as having flown zero hours.
+ * `readings` is the only place a value lives. The three aviation doubles it replaced were retired
+ * in #761, after a backfill wrote the keyed form onto every stored record — so the read fallbacks
+ * that stood here are gone with them, and a log that reports nothing for a meter genuinely has
+ * nothing for it.
  */
-
-/** The three keys whose values also live in the legacy fields, and always will for old logs. */
-private val LEGACY_FIELD_KEYS = mapOf<String, (MaintenanceLog) -> Double>(
-  MeterKeys.AIRFRAME_HOURS to { it.airframe_time },
-  MeterKeys.ENGINE_HOURS to { it.engine_hour },
-  MeterKeys.PROP_HOURS to { it.prop_time },
-)
 
 /**
  * This log's value for [meterKey], or null when it recorded none.
@@ -29,12 +21,10 @@ private val LEGACY_FIELD_KEYS = mapOf<String, (MaintenanceLog) -> Double>(
  * Null rather than 0.0 throughout: a log that did not touch a meter is not a log reporting zero,
  * and the difference decides whether it counts toward the current reading.
  */
-fun MaintenanceLog.readingFor(meterKey: String): Double? {
+fun MaintenanceLog.readingFor(meterKey: String): Double? =
   readings.firstOrNull { it.meter_key == meterKey }
-    ?.let { return it.value_.takeIf { value -> value > 0.0 } }
-  return LEGACY_FIELD_KEYS[meterKey]?.invoke(this)
+    ?.value_
     ?.takeIf { it > 0.0 }
-}
 
 /**
  * The current reading for every meter [logs] carry — the maximum over them, per key.
@@ -49,10 +39,7 @@ fun MaintenanceLog.readingFor(meterKey: String): Double? {
  */
 fun currentReadings(logs: List<MaintenanceLog>): List<MeterReading> {
   val keys = buildSet {
-    logs.forEach { log ->
-      log.readings.forEach { add(it.meter_key) }
-      LEGACY_FIELD_KEYS.forEach { (key, read) -> if (read(log) > 0.0) add(key) }
-    }
+    logs.forEach { log -> log.readings.forEach { add(it.meter_key) } }
   }
   return keys.sorted()
     .mapNotNull { key ->
@@ -62,22 +49,11 @@ fun currentReadings(logs: List<MaintenanceLog>): List<MeterReading> {
     }
 }
 
-/**
- * The overview's current value for [meterKey], from the declared set or the legacy fields.
- *
- * The fallback matters for an overview computed by a build that predates `current` — it is
- * recomputed on the next log write, but until then the three doubles are all it has.
- */
-fun MaintenanceOverview.currentFor(meterKey: String): Double? {
+/** The overview's current value for [meterKey], or null when no log has recorded one. */
+fun MaintenanceOverview.currentFor(meterKey: String): Double? =
   current.firstOrNull { it.meter_key == meterKey }
-    ?.let { return it.value_.takeIf { value -> value > 0.0 } }
-  return when (meterKey) {
-    MeterKeys.AIRFRAME_HOURS -> current_airframe_time
-    MeterKeys.ENGINE_HOURS -> current_engine_time
-    MeterKeys.PROP_HOURS -> current_propeller_time
-    else -> null
-  }?.takeIf { it > 0.0 }
-}
+    ?.value_
+    ?.takeIf { it > 0.0 }
 
 /**
  * [readings] with [meterKey] set to [value], or removed when it is null.

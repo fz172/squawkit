@@ -99,10 +99,7 @@ data class ScheduleState(
   companion object {
     fun fromTask(task: MaintenanceTask): ScheduleState {
       val timeRule = task.rules.firstNotNullOfOrNull { it.time_rule }
-      // Either rule opens the same editor. A task written before MeterRule existed has no key of
-      // its own, so the caller supplies the default its component always implied.
       val meterRule = task.rules.firstNotNullOfOrNull { it.meter_rule }
-      val engineRule = task.rules.firstNotNullOfOrNull { it.engine_hour_rule }
       val linkedRule = task.rules.firstNotNullOfOrNull { it.linked_rule }
       val immediateRule = task.rules.firstNotNullOfOrNull { it.immediate_rule }
 
@@ -133,10 +130,10 @@ data class ScheduleState(
           )
         }
 
-        meterRule != null || engineRule != null -> ScheduleState(
+        meterRule != null -> ScheduleState(
           mode = ScheduleMode.HOURS,
           recurrence = baseRecurrence,
-          hourValue = (meterRule?.interval ?: engineRule?.interval_hours ?: 0f)
+          hourValue = meterRule.interval
             .takeIf { it > 0f }
             ?.let {
               if (it == it.toInt()
@@ -144,9 +141,9 @@ data class ScheduleState(
               ) it.toInt()
                 .toString() else it.toString()
             } ?: "",
-          // An EngineHourRule carries no key — it meant whichever meter its card's component
-          // implied, which is what `defaultMeterKey` preserves.
-          meterKey = meterRule?.meter_key?.takeIf { it.isNotEmpty() }
+          // A rule stored without a key predates MeterRule carrying one; the default is what its
+          // component always implied.
+          meterKey = meterRule.meter_key.takeIf { it.isNotEmpty() }
             ?: task.defaultMeterKey(),
         )
 

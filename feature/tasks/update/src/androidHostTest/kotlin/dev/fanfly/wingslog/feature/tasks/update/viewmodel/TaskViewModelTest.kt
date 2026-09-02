@@ -16,6 +16,11 @@ import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDueManager
 import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
+import dev.fanfly.wingslog.feature.tasks.datamanager.defaultMeterKey
+import dev.fanfly.wingslog.feature.tasks.datamanager.withForcedDueMeter
+import dev.fanfly.wingslog.feature.tasks.datamanager.forcedDueMeter
+import dev.fanfly.wingslog.core.template.MeterKeys
+import dev.fanfly.wingslog.thing.MeterReading
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.auth.FirebaseUser
 import io.mockk.coEvery
@@ -333,7 +338,7 @@ class TaskViewModelTest {
       }
       val status = persisted.captured.force_complied_status
       assertThat(status).isNotNull()
-      assertThat(status!!.complied_engine_hours).isEqualTo(42f)
+      assertThat(status!!.complied_meter?.value_).isEqualTo(42.0)
       assertThat(status.complied_date).isNotNull()
     }
 
@@ -353,7 +358,6 @@ class TaskViewModelTest {
       id = TEST_CARD_ID,
       title = "Oil change",
       force_due_date = toWireInstant(1_800_000_000L),
-      force_due_engine_hour = 1500f,
     )
 
     viewModel.skipThisCycle(
@@ -371,7 +375,7 @@ class TaskViewModelTest {
       )
     }
     assertThat(persisted.captured.force_due_date).isNull()
-    assertThat(persisted.captured.force_due_engine_hour).isEqualTo(0f)
+    assertThat(persisted.captured.force_due_meter).isNull()
     assertThat(persisted.captured.force_complied_status).isNotNull()
   }
 
@@ -388,7 +392,9 @@ class TaskViewModelTest {
       val skipped = MaintenanceTask(
         id = TEST_CARD_ID,
         title = "Oil change",
-        force_complied_status = ForceCompliedStatus(complied_engine_hours = 10f),
+        force_complied_status = ForceCompliedStatus(
+          complied_meter = MeterReading(MeterKeys.ENGINE_HOURS, value_ = 10.0)
+        ),
       )
       every { inspectionDataManager.observeTasks(TEST_AIRCRAFT_ID) } returns flowOf(
         listOf(skipped)
@@ -443,7 +449,9 @@ class TaskViewModelTest {
       val viewModel = buildViewModelForEdit()
       advanceUntilIdle()
 
-      viewModel.saveEditedTaskFrom(stored.copy(force_due_engine_hour = 1500f))
+      viewModel.saveEditedTaskFrom(
+        stored.withForcedDueMeter(stored.defaultMeterKey(), 1500f)
+      )
       advanceUntilIdle()
 
       val persisted = slot<MaintenanceTask>()
@@ -488,8 +496,9 @@ class TaskViewModelTest {
   private fun skippedCard(forceDueEngine: Float) = MaintenanceTask(
     id = TEST_CARD_ID,
     title = "Oil change",
-    force_due_engine_hour = forceDueEngine,
-    force_complied_status = ForceCompliedStatus(complied_engine_hours = 10f),
+    force_complied_status = ForceCompliedStatus(
+      complied_meter = MeterReading(MeterKeys.ENGINE_HOURS, value_ = 10.0)
+    ),
   )
 
   /** Calls [TaskViewModel.saveEditedTask] with the field values carried by [card]. */
@@ -505,7 +514,7 @@ class TaskViewModelTest {
       complianceDetails = card.compliance_details,
       isOneTime = card.is_one_time,
       forceDueDate = card.force_due_date,
-      forceDueEngine = card.force_due_engine_hour,
+      forceDueEngine = card.forcedDueMeter()?.second ?: 0f,
       forceCompliedStatus = card.force_complied_status,
       notes = card.notes,
       onSuccess = {},

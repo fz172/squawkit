@@ -19,15 +19,9 @@ message MaintenanceLog {
 
   string component_serial = 6; // References Engine/Prop/Blade Serial
 
-  double engine_hour = 8;
-
   // Field 9 repurposed from repeated string attachment_urls.
   // Safe because no data was ever written to field 9 before this change.
   repeated Attachment attachments = 9;
-
-  // Separate time tracking for each component category
-  double airframe_time = 10;
-  double prop_time = 11;
 
   // Inspection cards associated with this log entry
   repeated string inspection_ids = 12;
@@ -40,22 +34,14 @@ message MaintenanceLog {
 
   // What the meters read when this work was done (PRD §4.4).
   //
-  // Supersedes `engine_hour`, `airframe_time` and `prop_time` above, which can only describe an
-  // aeroplane. Those three are still written alongside for the airplane meter keys.
-  //
-  // WHAT ACTUALLY BLOCKS REMOVING THEM, in the order it has to happen:
-  //
-  //   1. `EngineHourRule` and `MaintenanceTask.force_due_engine_hour` schedule work against "engine
-  //      hours" as a named concept, so `TaskDueManagerImpl` reads `engine_hour` directly. PRD §11.1
-  //      replaces the rule with a `MeterRule` carrying a meter key; until that lands, a car cannot
-  //      be scheduled on mileage and this field is load-bearing.
-  //   2. The logbook export reads all three. That layout is aviation-only by design
-  //      (`EXPORT_LAYOUT_LOGBOOK`), so it keeps the concepts — but it should reach them by meter
-  //      key rather than by field, which is the same change as (1) at a different call site.
-  //   3. Every log already stored has its value only in these fields. Removing them without either
-  //      a backfill or a permanent read fallback loses the history behind every hour reading.
-  //
-  // Until then `readingFor` prefers `readings` and falls back here, so a reader written today is
-  // correct for both. Reserve the numbers rather than reusing them when they do go.
+  // The only place a reading lives. Replaced `engine_hour` (8), `airframe_time` (10) and
+  // `prop_time` (11), which could only ever describe an aeroplane — a car's odometer had nowhere
+  // to go, which is what made "every 5,000 miles" unexpressible.
   repeated MeterReading readings = 15;
+
+  // Retired in #761 once every stored log carried the keyed form. Bytes written before that still
+  // carry these numbers and decode as unknown fields, which is harmless — but reusing a number
+  // would silently reinterpret them as the new field's type.
+  reserved 8, 10, 11;
+  reserved "engine_hour", "airframe_time", "prop_time";
 }

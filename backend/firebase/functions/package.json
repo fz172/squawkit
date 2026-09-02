@@ -16,8 +16,7 @@
     "dna-audit": "npm run build && node scripts/thing-dna-audit.mjs",
     "share-cutover": "npm run build && node scripts/thing-share-cutover.mjs",
     "share-cleanup": "npm run build && node scripts/thing-share-cleanup.mjs",
-    "airplane-tree": "npm run build && node scripts/airplane-tree-migration.mjs",
-    "legacy-meters": "npm run build && node scripts/legacy-meter-backfill.mjs"
+    "airplane-tree": "npm run build && node scripts/airplane-tree-migration.mjs"
   },
   "dependencies": {
     "@bufbuild/protobuf": "^2.11.0",
