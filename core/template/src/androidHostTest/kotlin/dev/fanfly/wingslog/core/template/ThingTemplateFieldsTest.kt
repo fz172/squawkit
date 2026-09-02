@@ -3,6 +3,7 @@ package dev.fanfly.wingslog.core.template
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
 import dev.fanfly.wingslog.core.template.canonical.CanonicalTemplates
+import dev.fanfly.wingslog.thing.ThingTemplate
 import org.junit.Test
 
 /**
@@ -41,6 +42,28 @@ class ThingTemplateFieldsTest {
     assertThat(airplane.slot("engine")?.label).isEqualTo("Engine")
     assertThat(airplane.slot("propeller")?.label).isEqualTo("Propeller")
     assertThat(airplane.slot("blade")?.label).isEqualTo("Blade")
+  }
+
+  @Test
+  fun onlyTheAeroplaneIsDescribedByComponentType() {
+    // The gate on the task and log forms' component picker. Its three options ARE `ComponentType`,
+    // which PRD §6 freezes to aviation — so a boat's propulsion, a car's tyres and a house's
+    // nothing-at-all cannot be named by it, and those presets get no picker (#732).
+    assertThat(airplane.usesComponentTypes).isTrue()
+    assertThat(CanonicalTemplates.BOAT.usesComponentTypes).isFalse()
+    assertThat(CanonicalTemplates.AUTOMOTIVE.usesComponentTypes).isFalse()
+    assertThat(CanonicalTemplates.BIKE.usesComponentTypes).isFalse()
+    assertThat(CanonicalTemplates.HOME.usesComponentTypes).isFalse()
+    assertThat(CanonicalTemplates.CUSTOM.usesComponentTypes).isFalse()
+  }
+
+  @Test
+  fun aThingWithNoTemplateOfItsOwnCountsAsAnAeroplane() {
+    // A template reaches the composition from the selected Thing's DNA, and a Thing migrated by
+    // the cutover carries none — it predates the pivot, so it can only be an aeroplane. Reading
+    // null as "not aviation" would take the picker away from exactly the accounts that have
+    // always had it.
+    assertThat((null as ThingTemplate?).usesComponentTypes).isTrue()
   }
 
   @Test

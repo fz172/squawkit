@@ -286,7 +286,11 @@ class LogbookExportArchiveBuilderTest {
     )
     val workbookText = workbookEntries.values.joinToString(separator = "\n")
 
-    assertThat(squawkCsv).contains("Created,Title,Description,Priority,Component,Component Serial,Status,Action Date")
+    // No Component or Component Serial (#748): a squawk has never carried one — the form defaults
+    // to COMPONENT_UNKNOWN and offers no way to change it — so both columns were noise on every
+    // export, an aeroplane's included.
+    assertThat(squawkCsv).contains("Created,Title,Description,Priority,Status,Action Date")
+    assertThat(squawkCsv).doesNotContain("Component")
     assertThat(squawkCsv).doesNotContain("Dismiss Reason")
     assertThat(squawkCsv).doesNotContain("Addressed By - Date")
     assertThat(squawkCsv).contains("Oil seep")
@@ -499,8 +503,44 @@ class LogbookExportArchiveBuilderTest {
     assertThat(tasksCsv).contains("Every 5000 mi (Odometer)")
     assertThat(tasksCsv).contains("80000 mi")
     assertThat(tasksCsv).contains("85000 mi")
-    // The Component column still reads "Unknown" for a car, which is the aviation-only export
-    // layout's problem, not the meter's — EXPORT_LAYOUT_GENERIC is unimplemented (#732).
+    // And no Component column at all. It used to read "Airframe" on every row of a car's task
+    // table, because the value is `ComponentType` and a car has no part that enum can name (#732).
+    assertThat(tasksCsv).doesNotContain("Component")
+  }
+
+  @Test
+  fun anAeroplanesTaskTableKeepsItsComponentColumn() {
+    // The other half of the rule above, and the one that matters: this column is real data on an
+    // aeroplane — the task form sets it — so hiding it everywhere would have been a regression
+    // dressed up as a cleanup.
+    val task = MaintenanceTask(
+      id = "task-1",
+      title = "Annual",
+      component = ComponentType.COMPONENT_ENGINE,
+    )
+    val bundle = aircraftBundle(logs = emptyList())
+      .copy(tasks = listOf(task), tasksById = mapOf(task.id to task))
+
+    val entries = LogbookExportArchiveBuilder(
+      appVersion = "SquawkIt 1.0.260519.10 (364)",
+    ).buildEntries(
+      request = ExportRequest(
+        thingIds = listOf(bundle.thing.id),
+        dateRange = ExportDateRange.AllTime,
+        includeOpenSquawks = true,
+      ),
+      bundles = listOf(bundle),
+      attachmentManifests = emptyMap(),
+      generatedAt = LocalDateTime(2026, 5, 19, 14, 45),
+      timeZone = TimeZone.UTC,
+    )
+      .associateBy { entry -> entry.path }
+
+    val tasksCsv = entries.entries.first { it.key.endsWith("10_Tasks.csv") }
+      .value.bytes.decodeToString()
+
+    assertThat(tasksCsv).contains("Title,Component,Type")
+    assertThat(tasksCsv).contains("Engine")
   }
 
   private fun aircraftBundle(

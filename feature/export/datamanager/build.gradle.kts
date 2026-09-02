@@ -98,8 +98,20 @@ kotlin {
 
   sourceSets {
     commonMain {
-      kotlin.srcDir(layout.buildDirectory.dir("generated/exportVersion/commonMain/kotlin"))
-      kotlin.srcDir(layout.buildDirectory.dir("generated/exportReadmeTemplate/commonMain/kotlin"))
+      // `builtBy`, not a bare directory. A plain path carries no task dependency, so every
+      // compilation consuming these sources had to be named in a `tasks.configureEach` filter
+      // matching "compile*Kotlin*" — and the AGP KMP Android task is `compileAndroidMain`, which
+      // that pattern never matched. Gradle 9 fails the gap as an implicit dependency, so any build
+      // that actually had to regenerate these files could not then compile them. Declaring the
+      // dependency on the source itself is what removes the filter, and the class of bug with it.
+      kotlin.srcDir(
+        files(layout.buildDirectory.dir("generated/exportVersion/commonMain/kotlin"))
+          .builtBy(generateExportVersionKt)
+      )
+      kotlin.srcDir(
+        files(layout.buildDirectory.dir("generated/exportReadmeTemplate/commonMain/kotlin"))
+          .builtBy(generateExportReadmeTemplateKt)
+      )
     }
 
     commonMain.dependencies {
@@ -126,13 +138,6 @@ kotlin {
       implementation(libs.gitlive.firebase.functions)
       implementation(libs.gitlive.firebase.storage)
     }
-  }
-}
-
-tasks.configureEach {
-  if (name.startsWith("compile") && name.contains("Kotlin")) {
-    dependsOn(generateExportVersionKt)
-    dependsOn(generateExportReadmeTemplateKt)
   }
 }
 

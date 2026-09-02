@@ -11,7 +11,9 @@ import androidx.compose.ui.Modifier
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.template.LocalThingCapabilities
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.LocalThingTemplate
 import dev.fanfly.wingslog.core.template.thingNoun
+import dev.fanfly.wingslog.core.template.usesComponentTypes
 import dev.fanfly.wingslog.core.ui.common.UiText
 import dev.fanfly.wingslog.core.ui.common.compose.FormKeyboard
 import dev.fanfly.wingslog.core.ui.common.compose.FormTextField
@@ -70,7 +72,14 @@ fun LogWorkTab(
 
     // Removed, not disabled, for a template whose things have no parts worth naming. Asking "which
     // component was serviced" of a thing with one undivided body is a question with one answer.
-    if (LocalThingCapabilities.current.components) {
+    //
+    // And removed for every preset outside aviation, whatever its capability says: the control's
+    // three options are `ComponentType`, an enum frozen to airframe / engine / propeller, so a
+    // boat's propulsion and a car's tyres cannot be named by it at all (#732). Their logs are
+    // filed against the thing itself. See [usesComponentTypes].
+    if (LocalThingCapabilities.current.components &&
+      LocalThingTemplate.current.usesComponentTypes
+    ) {
       LogSection(
         header = stringResource(CoreRes.string.component_type),
         description = stringResource(
