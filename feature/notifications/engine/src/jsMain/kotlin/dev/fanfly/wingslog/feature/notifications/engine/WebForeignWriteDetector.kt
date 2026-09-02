@@ -44,7 +44,7 @@ import kotlin.time.Duration.Companion.seconds
  *
  * An open tab already runs the sync engine, so it already receives a collaborator's write the
  * instant Firestore delivers it, and `RemoteEntity.writerUid` carries rules-enforced authorship on
- * the envelope. A write we applied, authored by someone else, on an thing that is part of a
+ * the envelope. A write we applied, authored by someone else, on a thing that is part of a
  * share, **is** an N1 event — the same test the server-side trigger makes, run locally.
  *
  * **Bound in `jsMain` only.** Android and iOS receive N1 by push; running both paths would
@@ -87,7 +87,7 @@ class WebForeignWriteDetector(
     }
     val thingId = scope.thingIdOrNull()
     if (thingId == null) {
-      log.d { "N1 skipped: ${scope.toPath()} is not an aircraft scope" }
+      log.d { "N1 skipped: ${scope.toPath()} is not a thing scope" }
       return
     }
     log.d { "N1 foreign write: ${kind.wireName}/$id on $thingId by $writerUid" }
@@ -139,7 +139,7 @@ class WebForeignWriteDetector(
     }
     if (roster == null) {
       // Offline, or the roster listener never answered. Staying silent is the safe direction: the
-      // alternative is notifying about an thing we cannot confirm is shared.
+      // alternative is notifying about a thing we cannot confirm is shared.
       log.d { "N1 skipped: roster read timed out for $thingId" }
       return
     }
@@ -183,7 +183,7 @@ class WebForeignWriteDetector(
     )
     return PendingNotification(
       // One id per write, never replaced by the next one — matching the backend's own scheme
-      // (`n1:{recordType}:{recordId}:{atMs}`, no aircraftId — see activityNotificationId's doc
+      // (`n1:{recordType}:{recordId}:{atMs}`, no thingId — see activityNotificationId's doc
       // comment for why the server dropped it: APNs enforces a 64-byte collapse-id limit) now that
       // neither side coalesces.
       id = "n1:${recordType.wire}:$recordId:${

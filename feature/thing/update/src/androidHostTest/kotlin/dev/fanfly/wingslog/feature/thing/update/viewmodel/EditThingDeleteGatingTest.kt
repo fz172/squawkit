@@ -5,7 +5,7 @@ import dev.fanfly.wingslog.thing.Thing
 import org.junit.Test
 
 /**
- * Who may delete an thing. Deleting tears the whole share down for every member (§3.3), so it
+ * Who may delete a thing. Deleting tears the whole share down for every member (§3.3), so it
  * belongs to the account the thing lives under — not to anyone merely holding the OWNER role.
  * The rules enforce this server-side; these cover the UI telling the same story.
  */
@@ -34,7 +34,7 @@ class EditThingDeleteGatingTest {
   }
 
   @Test
-  fun unsavedNewAircraft_hasNothingToDelete() {
+  fun unsavedNewThing_hasNothingToDelete() {
     assertThat(state(hostedByMe = true, id = "").canDelete).isFalse()
   }
 }

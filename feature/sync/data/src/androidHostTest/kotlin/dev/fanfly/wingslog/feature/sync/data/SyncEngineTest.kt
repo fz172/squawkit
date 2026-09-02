@@ -171,7 +171,7 @@ class SyncEngineTest {
     }
 
   @Test
-  fun schedulePendingBlobs_widensToSharedAircraftScope() = runTest(ioContext) {
+  fun schedulePendingBlobs_widensToSharedThingScope() = runTest(ioContext) {
     seedRef()
     // A member's own pending upload, and one on the shared thing (host's tree). The old
     // own-tree-only scan (`/users/{member}/%`) would have found the first and stranded the second.

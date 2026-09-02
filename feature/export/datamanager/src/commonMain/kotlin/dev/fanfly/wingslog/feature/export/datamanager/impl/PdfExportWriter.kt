@@ -8,8 +8,8 @@ import kotlin.math.max
  * The output intentionally uses a small subset of PDF 1.4 primitives so it remains portable
  * across Android/JVM and iOS/native without introducing a platform PDF dependency.
  */
-class PdfExportWriter : AircraftPdfWriter {
-  override fun write(document: AircraftPdfDocument): ByteArray {
+class PdfExportWriter : ThingPdfWriter {
+  override fun write(document: ThingPdfDocument): ByteArray {
     val layout = PdfLayoutEngine(document)
     val pages = layout.render()
     return SimplePdfFileWriter.write(pages)
@@ -17,7 +17,7 @@ class PdfExportWriter : AircraftPdfWriter {
 }
 
 private class PdfLayoutEngine(
-  private val document: AircraftPdfDocument,
+  private val document: ThingPdfDocument,
 ) {
   private val pages = mutableListOf<PdfPageCanvas>()
   private var page = PdfPageCanvas()

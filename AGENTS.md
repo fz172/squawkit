@@ -111,7 +111,7 @@ core/
                         #   functionsModule (the one Cloud Functions client every callable injects)
   storage/              # Local-first foundation: SQLDelight Schema.sq (entity, sync_cursor, sync_config,
                         #   blob_object), EntityStore, EntityScope, CollectionKind, EntityCodecRegistry,
-                        #   CloudSyncSetting, AircraftScopeResolver (interface), DatabaseIntegrityChecker,
+                        #   CloudSyncSetting, ThingScopeResolver (interface), DatabaseIntegrityChecker,
                         #   DatabaseWriteLock, LocalAccountMigrator, TombstoneGc;
                         #   blob/ — LocalBlobStore + SqlDelightLocalBlobStore, BlobRef, BlobFilesystem,
                         #   UploadScheduler, AttachmentRefs, sha256Hex, BlobId, RemoteState
@@ -171,7 +171,7 @@ feature/
     update/             #   ExportSelectionScreen, ExportHistoryScreen, ViewModels, ExportFileSharer
   sharing/              # Multi-user aircraft access (GA). See docs/sharing/
     model/              #   ShareRole, AircraftShareState, InviteLink, InvitePreview, RedeemOutcome, InviteCode
-    datamanager/        #   SharingManager (+Impl), AircraftScopeResolverImpl, AircraftShareDeepLinks
+    datamanager/        #   SharingManager (+Impl), AircraftScopeResolverImpl, ThingShareDeepLinks
     sharedassets/       #   Shared strings
     viewing/            #   ManageAccessScreen, AccessPanelViews, EnterInviteCodeScreen, RedeemConfirmationSheet
     update/             #   ManageAccessRoute/ViewModel, RedeemHost/ViewModel, LinkSharer (per-platform)
@@ -382,7 +382,7 @@ Shared aircraft data lives **in place under the host's tree** — refs are point
 drives the sync engine's foreign-scope fan-out.
 
 Per-aircraft managers (logs, tasks, squawks, overview) **must not derive a scope from the signed-in
-uid**. They inject `AircraftScopeResolver` (interface in `core:storage` so they need no dependency on
+uid**. They inject `ThingScopeResolver` (interface in `core:storage` so they need no dependency on
 the sharing feature; implementation in `feature/sharing/datamanager`, bound via Koin — the same
 pattern as `CloudSyncSetting`):
 
@@ -565,7 +565,9 @@ constants (camera capture, anonymous login), and `isAdsSupported`.
 
 - **Thing, not aircraft**: the domain is **Things**, not aircraft (Milestone 1, `docs/product/thing_migration_design.md`). New types, properties, wire names, and schema names use Thing vocabulary. Use aviation vocabulary **only** when the subject is genuinely and permanently an airplane — `Engine`, `Propeller`, `PropellerHub`, `EngineHourRule` qualify; anything that will one day hold a boat, a house, or a 3D printer does not.
 
-  What survives with aviation names is **grandfathered, not exemplary**: `CollectionKind`'s five `aircraft.*` `schemaName`s, `SharedAircraftRef`, `ExportRecordAircraft`, the `"aircraft"` deep-link segment, and `strings.xml`. Issue #638 records why they stay — renaming stored identity is a data migration, not a refactor. Do not copy them.
+  What survives with aviation names is **grandfathered, not exemplary**: `CollectionKind`'s five `aircraft.*` `schemaName`s, the `shared_aircraft_ref` wireName, the `SharedAircraftRef` and `ExportRecordAircraft` proto messages (and the Kotlin/TS names that mirror them), the `aircraft_id` proto field, the push payload's `aircraftId` key and its `*_aircraft_updated` bodyKeys, and the `airframe_hours` / `airframe` template keys. Issue #638 records why they stay — renaming stored identity is a data migration, not a refactor. Do not copy them.
+
+  Everything else was renamed in #637: types, parameters, test constants, log messages, nav routes and the notification tap-URI segment now all say Thing.
 
   The cost is asymmetric and that is the whole point. A wrong name in Kotlin is a compiler-verified rename; a wrong `wireName` or `schemaName` is a global batch, a grace window, and a coordinated client release across three platforms. Milestone 1 did that once, deliberately. Get the name right when it is free.
 - **Instants**: always `kotlin.time.Instant`, never `kotlinx.datetime.Instant`.
@@ -586,7 +588,7 @@ constants (camera capture, anonymous login), and `isAdsSupported`.
   `ThingScopedEvent`, which requires `template_id` — the dimension PRD §13 splits every metric by.
 - **Feature managers read/write `EntityStore` only** — the sync engine is the Firestore client, with
   the two documented online-only exceptions above.
-- **Per-aircraft scopes** come from `AircraftScopeResolver`, never from the signed-in uid.
+- **Per-thing scopes** come from `ThingScopeResolver`, never from the signed-in uid.
 - **Capabilities**: build-time/platform gates go through the injected `AppCapability` singleton, not
   ad-hoc `isDeveloperBuild` checks or `expect`/`actual` booleans scattered across feature modules.
 - **Entitlement gates** go through `SubscriptionManager`, not a per-feature copy of the tier logic.

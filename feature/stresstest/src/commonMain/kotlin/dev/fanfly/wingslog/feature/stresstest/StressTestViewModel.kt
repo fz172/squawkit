@@ -32,7 +32,7 @@ sealed interface StressTestState {
 }
 
 enum class StressTestProgressStep {
-  CreatingAircraft,
+  CreatingThing,
   CreatingTechnician,
   CreatingTask,
   CreatingSquawk,
@@ -42,8 +42,8 @@ enum class StressTestProgressStep {
 }
 
 data class StressTestSummary(
-  val aircraftMake: String,
-  val aircraftModel: String,
+  val thingMake: String,
+  val thingModel: String,
   val tailNumber: String,
   val serialNumber: String,
   val engineCount: Int,
@@ -134,7 +134,7 @@ class StressTestViewModel(
         }
 
         progress(
-          StressTestProgressStep.CreatingAircraft,
+          StressTestProgressStep.CreatingThing,
           data.thing.specValue(SpecKeys.TAIL_NUMBER)
         )
         fleetManager.updateThing(data.thing)
@@ -179,8 +179,8 @@ class StressTestViewModel(
         val openCount =
           data.squawks.size - data.addressedSquawks.size - data.dismissedSquawks.size
         val summary = StressTestSummary(
-          aircraftMake = data.thing.specValue(SpecKeys.MAKE),
-          aircraftModel = data.thing.specValue(SpecKeys.MODEL),
+          thingMake = data.thing.specValue(SpecKeys.MAKE),
+          thingModel = data.thing.specValue(SpecKeys.MODEL),
           tailNumber = data.thing.specValue(SpecKeys.TAIL_NUMBER),
           serialNumber = data.thing.specValue(SpecKeys.SERIAL),
           engineCount = data.thing.allComponentsInSlot(SlotKeys.ENGINE).size,

@@ -41,7 +41,7 @@ export type SweepReport = {
   tombstonesPurged: number;
   orphanBlobsCollected: number;
   /** Aircraft skipped because a live record would not decode — see [collectOrphanBlobs]. */
-  aircraftSkipped: number;
+  thingSkipped: number;
   /**
    * WHAT it touched, not just how much.
    *
@@ -84,7 +84,7 @@ export async function runStorageSweep(options: SweepOptions): Promise<SweepRepor
     usersScanned: 0,
     tombstonesPurged: 0,
     orphanBlobsCollected: 0,
-    aircraftSkipped: 0,
+    thingSkipped: 0,
     orphanBlobPaths: [],
     purgedTombstonePaths: [],
     truncated: false,
@@ -115,7 +115,7 @@ export async function runStorageSweep(options: SweepOptions): Promise<SweepRepor
     usersScanned: report.usersScanned,
     tombstonesPurged: report.tombstonesPurged,
     orphanBlobsCollected: report.orphanBlobsCollected,
-    aircraftSkipped: report.aircraftSkipped,
+    thingSkipped: report.thingSkipped,
     accountsMeasured: Object.keys(report.storageBytesByUid).length,
     truncated: report.truncated,
   });
@@ -217,13 +217,13 @@ async function collectOrphanBlobsIn(
   options: SweepOptions,
   report: SweepReport,
 ): Promise<void> {
-  const aircraftRefs = await adminDb.collection(`users/${uid}/${segment}`).listDocuments();
+  const thingRefs = await adminDb.collection(`users/${uid}/${segment}`).listDocuments();
 
-  for (const aircraftRef of aircraftRefs) {
-    const acId = aircraftRef.id;
+  for (const thingRef of thingRefs) {
+    const acId = thingRef.id;
     const referenced = await blobsReferencedByLiveRecords(uid, acId, segment);
     if (referenced == null) {
-      report.aircraftSkipped++;
+      report.thingSkipped++;
       logger.warn("Skipping an aircraft: a live record would not decode", { uid, acId, segment });
       continue;
     }

@@ -127,7 +127,7 @@ class SubscriptionManagerImplTest {
     assertThat(
       m.thingLimit()
         .first()
-    ).isEqualTo(SubscriptionManagerImpl.FREE_AIRCRAFT_LIMIT)
+    ).isEqualTo(SubscriptionManagerImpl.FREE_THING_LIMIT)
   }
 
   @Test

@@ -51,7 +51,7 @@ class LogbookExportArchiveBuilder(
   private val appVersion: String = GENERATED_EXPORT_APP_VERSION,
   private val readmeTemplate: String = GENERATED_EXPORT_README_TEMPLATE,
   private val xlsxWorkbookWriter: XlsxWorkbookWriter = XlsxWorkbookWriter(),
-  private val aircraftPdfWriter: AircraftPdfWriter = PdfExportWriter(),
+  private val thingPdfWriter: ThingPdfWriter = PdfExportWriter(),
 ) {
 
   /**
@@ -65,8 +65,8 @@ class LogbookExportArchiveBuilder(
     timeZone: TimeZone,
   ): List<ZipEntryPayload> {
     val entries = mutableListOf<ZipEntryPayload>()
-    val aircraftExports = bundles.map { bundle ->
-      aircraftExport(
+    val thingExports = bundles.map { bundle ->
+      thingExport(
         request = request,
         bundle = bundle,
         attachments = attachmentManifests[bundle.thing.id]
@@ -90,7 +90,7 @@ class LogbookExportArchiveBuilder(
         timeZone
       )
     )
-    aircraftExports.forEach { export ->
+    thingExports.forEach { export ->
       val thingFolder = export.bundle.thing.folderName()
       if (ExportFormat.CSV in formats) {
         export.tables.forEach { table ->
@@ -119,7 +119,7 @@ class LogbookExportArchiveBuilder(
       if (ExportFormat.PDF in formats) {
         entries += ZipEntryPayload(
           path = "$thingFolder/${export.bundle.thing.folderName()}.pdf",
-          bytes = aircraftPdfWriter.write(
+          bytes = thingPdfWriter.write(
             buildPdfDocument(
               export = export,
               request = request,
@@ -140,23 +140,23 @@ class LogbookExportArchiveBuilder(
     return entries
   }
 
-  private fun aircraftExport(
+  private fun thingExport(
     request: ExportRequest,
     bundle: ThingBundle,
     attachments: AttachmentExportManifest,
     generatedAt: LocalDateTime,
     timeZone: TimeZone,
-  ): AircraftExport {
-    return AircraftExport(
+  ): ThingExport {
+    return ThingExport(
       bundle = bundle,
       attachments = attachments,
       sheetPrefix = "",
       tables = buildList {
         add(
           LogbookExportTable(
-            csvPath = "00_Aircraft_Info.csv",
-            sheetName = "00 Aircraft Info",
-            rows = aircraftInfoRows(bundle, request, generatedAt, timeZone),
+            csvPath = "00_Thing_Info.csv",
+            sheetName = "00 Thing Info",
+            rows = thingInfoRows(bundle, request, generatedAt, timeZone),
           )
         )
         add(
@@ -248,7 +248,7 @@ class LogbookExportArchiveBuilder(
   ): String =
     fileName(listOf(bundle), date).removeSuffix(".zip") + ".xlsx"
 
-  private fun aircraftInfoRows(
+  private fun thingInfoRows(
     bundle: ThingBundle,
     request: ExportRequest,
     generatedAt: LocalDateTime,
@@ -619,13 +619,13 @@ class LogbookExportArchiveBuilder(
   }
 
   private fun buildPdfDocument(
-    export: AircraftExport,
+    export: ThingExport,
     request: ExportRequest,
     generatedAt: LocalDateTime,
     timeZone: TimeZone,
-  ): AircraftPdfDocument {
+  ): ThingPdfDocument {
     val thing = export.bundle.thing
-    return AircraftPdfDocument(
+    return ThingPdfDocument(
       title = listOf(
         thing.specValue(SpecKeys.MAKE),
         thing.specValue(SpecKeys.MODEL),
@@ -763,7 +763,7 @@ class LogbookExportArchiveBuilder(
       },
       tableSections = export.tables
         .filterNot {
-          it.csvPath.endsWith("00_Aircraft_Info.csv") || it.csvPath.endsWith(
+          it.csvPath.endsWith("00_Thing_Info.csv") || it.csvPath.endsWith(
             "20_Technicians.csv"
           )
         }
@@ -1049,7 +1049,7 @@ class LogbookExportArchiveBuilder(
     return if (headerIndex > 0) drop(headerIndex) else this
   }
 
-  private data class AircraftExport(
+  private data class ThingExport(
     val bundle: ThingBundle,
     val attachments: AttachmentExportManifest,
     val sheetPrefix: String,

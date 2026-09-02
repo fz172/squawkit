@@ -47,7 +47,7 @@ interface AttachmentBroker {
 /**
  * Where a blob's bytes live, parsed from its scope path `["users", ownerUid, "thing", acId]`.
  * [ownerUid] is the tree the object sits in — the signed-in user for an owned thing, the host for
- * a shared one. Returns `null` when the scope is not an thing-child path (nothing to broker).
+ * a shared one. Returns `null` when the scope is not a thing-child path (nothing to broker).
  */
 data class BlobLocation(val ownerUid: String, val thingId: String) {
   /** A blob is foreign — and must go through the broker — when its owning tree isn't the caller's. */

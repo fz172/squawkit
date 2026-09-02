@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.asStateFlow
 /**
  * A pairing code carried in a `/share#{code}` deep link (#164).
  *
- * Note what is NOT here: the thing id and the host uid. Older links carried both, and an thing
+ * Note what is NOT here: the thing id and the host uid. Older links carried both, and a thing
  * id turned out to be a capability — anyone holding one could fabricate a same-id thing in their
  * own tree and read the victim's ACL, roster, and technician certificate numbers (#202), or re-claim
  * an abandoned share outright (#204). The code names nothing real. Only the server can dereference
@@ -22,7 +22,7 @@ import kotlinx.coroutines.flow.asStateFlow
  */
 data class ShareInvite(val code: String, val autoAccept: Boolean = false)
 
-object AircraftShareDeepLinks {
+object ThingShareDeepLinks {
   private val _pendingInvite = MutableStateFlow<ShareInvite?>(null)
 
   /** Held (parked) until a consumer redeems it — survives the sign-in / guest-upgrade round trip. */

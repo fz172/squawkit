@@ -120,9 +120,9 @@ class SyncEngine(
       .first()
       .map { it.id }
     for (thingId in thingIds) {
-      val aircraftScope = EntityScope.thingChildUnsafe(uid, thingId)
+      val thingScope = EntityScope.thingChildUnsafe(uid, thingId)
       for (kind in PER_THING_KINDS) {
-        success = hydrationRunner.runFor(uid, kind, aircraftScope) && success
+        success = hydrationRunner.runFor(uid, kind, thingScope) && success
       }
     }
     return success
@@ -293,9 +293,9 @@ class SyncEngine(
         }
         .distinctUntilChanged()
         .collectLatest { thingIds ->
-          aircraftSubScopeSupervisor.cancel()
+          thingSubScopeSupervisor.cancel()
           val subSupervisor = SupervisorJob(scope.coroutineContext[Job])
-          aircraftSubScopeSupervisor = subSupervisor
+          thingSubScopeSupervisor = subSupervisor
           val subScope = CoroutineScope(subSupervisor + ioContext)
           for (thingId in thingIds) {
             val acScope = EntityScope.thingChildUnsafe(
@@ -317,7 +317,7 @@ class SyncEngine(
 
     // Shared thing: the refs store (hydrated as a TOP_LEVEL_KIND) names foreign scopes that live
     // under each host's tree. Mirror the own-thing fan-out, but hydrate/listen the per-thing
-    // kinds at aircraftChildUnsafe(hostUid, acId). The shared thing doc itself needs a doc-level pull
+    // kinds at thingChildUnsafe(hostUid, acId). The shared thing doc itself needs a doc-level pull
     // (§5.2, #123); this branch covers the nested maintenance data. See docs/sharing §5.1.
     val refStore: EntityStore<SharedAircraftRef> =
       storeFactory.create(CollectionKind.SharedAircraftRef)
@@ -433,7 +433,7 @@ class SyncEngine(
   }
 
   /** Per-cycle supervisor for the thing-child listeners; recreated each time the id-set changes. */
-  private var aircraftSubScopeSupervisor: Job = Job().apply { complete() }
+  private var thingSubScopeSupervisor: Job = Job().apply { complete() }
 
   /** Per-cycle supervisor for the shared-thing (foreign-scope) listeners; recreated on ref changes. */
   private var sharedSubScopeSupervisor: Job = Job().apply { complete() }

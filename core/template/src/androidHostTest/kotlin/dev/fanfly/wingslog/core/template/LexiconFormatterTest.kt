@@ -12,7 +12,7 @@ import org.junit.Test
  */
 class LexiconFormatterTest {
 
-  private val aircraft = AirplaneTemplate.AIRPLANE_LEXICON.thing!!
+  private val thing = AirplaneTemplate.AIRPLANE_LEXICON.thing!!
   private val squawk = AirplaneTemplate.AIRPLANE_LEXICON.squawk!!
 
   // --- article ---
@@ -21,7 +21,7 @@ class LexiconFormatterTest {
   fun articleComesFromTheNounRatherThanTheFirstLetter() {
     // "aircraft" needs "an" and starts with a vowel, so a vowel check would agree by accident.
     // The next two cases are why the field exists.
-    assertThat(LexiconFormatter.withArticle(aircraft)).isEqualTo("an aircraft")
+    assertThat(LexiconFormatter.withArticle(thing)).isEqualTo("an aircraft")
   }
 
   @Test
@@ -51,7 +51,7 @@ class LexiconFormatterTest {
   @Test
   fun pluralComesFromTheNounRatherThanASuffixRule() {
     // "aircraft" is its own plural. A +s rule is wrong on the very first preset.
-    assertThat(LexiconFormatter.plural(aircraft)).isEqualTo("aircraft")
+    assertThat(LexiconFormatter.plural(thing)).isEqualTo("aircraft")
     assertThat(LexiconFormatter.plural(squawk)).isEqualTo("squawks")
   }
 
@@ -59,7 +59,7 @@ class LexiconFormatterTest {
 
   @Test
   fun sentenceCaseRaisesOnlyTheFirstCharacter() {
-    assertThat(LexiconFormatter.sentenceCase(aircraft)).isEqualTo("Aircraft")
+    assertThat(LexiconFormatter.sentenceCase(thing)).isEqualTo("Aircraft")
     assertThat(LexiconFormatter.sentenceCase("an aircraft")).isEqualTo("An aircraft")
     assertThat(LexiconFormatter.sentenceCasePlural(squawk)).isEqualTo("Squawks")
   }
@@ -103,7 +103,7 @@ class LexiconFormatterTest {
   @Test
   fun titleCasePluralIsWhatASectionHeaderWants() {
     assertThat(LexiconFormatter.titleCasePlural(squawk)).isEqualTo("Squawks")
-    assertThat(LexiconFormatter.titleCasePlural(aircraft)).isEqualTo("Aircraft")
+    assertThat(LexiconFormatter.titleCasePlural(thing)).isEqualTo("Aircraft")
   }
 
   // --- the airplane lexicon, rendered ---

@@ -6,10 +6,10 @@ import { adminDb } from "../config/firebaseAdmin.js";
 import { requireAuthenticatedApp } from "../shared/auth.js";
 import { sharedAircraftRefTombstone } from "./sharedAircraftRefWire.js";
 import {
-  aircraftShareDocPath,
+  thingShareDocPath,
   shareMemberDocPath,
   SHARE_ROLE,
-  type AircraftShareDoc,
+  type ThingShareDoc,
 } from "./sharingModels.js";
 
 /**
@@ -17,7 +17,7 @@ import {
  * caller's rights are still checked against the ACL found at that path, so passing someone else's
  * hostUid opens a share the caller is not in, and the checks below reject them.
  */
-type RevokeRequest = { hostUid: string; aircraftId: string; memberUid: string };
+type RevokeRequest = { hostUid: string; thingId: string; memberUid: string };
 
 /**
  * Removes a member from a share. Callable by any owner, or by the member themselves (leave). The
@@ -28,13 +28,13 @@ export const revokeThingShare = onCall<RevokeRequest, Promise<{ ok: true }>>(
   { region: FUNCTION_REGION, enforceAppCheck: true },
   async (request) => {
     const { uid } = requireAuthenticatedApp(request);
-    const { hostUid, aircraftId, memberUid } = parseRequest(request.data);
-    const shareRef = adminDb.doc(aircraftShareDocPath(hostUid, aircraftId));
+    const { hostUid, thingId, memberUid } = parseRequest(request.data);
+    const shareRef = adminDb.doc(thingShareDocPath(hostUid, thingId));
 
     await adminDb.runTransaction(async (tx) => {
       const snap = await tx.get(shareRef);
       if (!snap.exists) throw new HttpsError("not-found", "Share not found.");
-      const share = snap.data() as AircraftShareDoc;
+      const share = snap.data() as ThingShareDoc;
 
       const isOwner = share.memberRoles[uid] === SHARE_ROLE.OWNER;
       const isSelf = uid === memberUid;
@@ -47,9 +47,9 @@ export const revokeThingShare = onCall<RevokeRequest, Promise<{ ok: true }>>(
       if (share.memberRoles[memberUid] == null) return; // already not a member — no-op
 
       tx.update(shareRef, { [`memberRoles.${memberUid}`]: FieldValue.delete() });
-      tx.delete(adminDb.doc(shareMemberDocPath(hostUid, aircraftId, memberUid)));
+      tx.delete(adminDb.doc(shareMemberDocPath(hostUid, thingId, memberUid)));
       tx.set(
-        adminDb.doc(`users/${memberUid}/shared_aircraft_ref/${aircraftId}`),
+        adminDb.doc(`users/${memberUid}/shared_aircraft_ref/${thingId}`),
         sharedAircraftRefTombstone(),
       );
     });
@@ -59,19 +59,19 @@ export const revokeThingShare = onCall<RevokeRequest, Promise<{ ok: true }>>(
 );
 
 /**
- * Expects `{ aircraftId: string, memberUid: string }` — the shared aircraft and the member to
+ * Expects `{ thingId: string, memberUid: string }` — the shared aircraft and the member to
  * remove (memberUid === caller for the "leave" case). Both required and non-empty.
  */
 function parseRequest(data: unknown): RevokeRequest {
   const obj = (data ?? {}) as Record<string, unknown>;
   const hostUid = typeof obj.hostUid === "string" ? obj.hostUid.trim() : "";
-  const aircraftId = typeof obj.aircraftId === "string" ? obj.aircraftId.trim() : "";
+  const thingId = typeof obj.thingId === "string" ? obj.thingId.trim() : "";
   const memberUid = typeof obj.memberUid === "string" ? obj.memberUid.trim() : "";
   if (hostUid.length === 0) {
     throw new HttpsError("invalid-argument", "hostUid is required.");
   }
-  if (aircraftId.length === 0 || memberUid.length === 0) {
-    throw new HttpsError("invalid-argument", "revokeThingShare requires aircraftId and memberUid.");
+  if (thingId.length === 0 || memberUid.length === 0) {
+    throw new HttpsError("invalid-argument", "revokeThingShare requires thingId and memberUid.");
   }
-  return { hostUid, aircraftId, memberUid };
+  return { hostUid, thingId, memberUid };
 }

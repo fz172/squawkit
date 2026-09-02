@@ -28,7 +28,7 @@ import org.junit.Test
 import kotlin.time.Instant
 
 private const val TEST_USER_ID = "test-user-123"
-private const val TEST_AIRCRAFT_ID = "aircraft-456"
+private const val TEST_THING_ID = "thing-456"
 private const val HOST_UID = "host-user-999"
 
 class FleetManagerImplTest {
@@ -84,9 +84,9 @@ class FleetManagerImplTest {
   @Test
   fun observeFleetDashboard_loggedIn_delegatesToStoreWithUserRootAndUnwrapsValues() =
     runTest {
-      val thing = buildTestThing(id = TEST_AIRCRAFT_ID)
+      val thing = buildTestThing(id = TEST_THING_ID)
       val entity = StorageEntity(
-        id = TEST_AIRCRAFT_ID,
+        id = TEST_THING_ID,
         value = thing,
         updatedAt = Instant.DISTANT_PAST
       )
@@ -98,14 +98,14 @@ class FleetManagerImplTest {
         .first()
 
       assertThat(result).hasSize(1)
-      assertThat(result.first().thing.id).isEqualTo(TEST_AIRCRAFT_ID)
+      assertThat(result.first().thing.id).isEqualTo(TEST_THING_ID)
       assertThat(result.first().shared).isFalse()
       assertThat(result.first().role).isEqualTo(ShareRole.SHARE_ROLE_OWNER)
       io.mockk.verify { store.observeAll(EntityScope.userRoot(TEST_USER_ID)) }
     }
 
   @Test
-  fun observeFleetDashboard_withSharedRef_includesHostAircraftTaggedShared() =
+  fun observeFleetDashboard_withSharedRef_includesHostThingTaggedShared() =
     runTest {
       val own = buildTestThing(id = "own-1")
       val shared =
@@ -171,7 +171,7 @@ class FleetManagerImplTest {
     every { firebaseAuth.currentUser } returns null
     every { firebaseAuth.authStateChanged } returns flowOf(null)
 
-    val result = manager.loadThing(TEST_AIRCRAFT_ID)
+    val result = manager.loadThing(TEST_THING_ID)
       .first()
 
     assertThat(result).isNull()
@@ -179,27 +179,27 @@ class FleetManagerImplTest {
 
   @Test
   fun loadThing_loggedIn_delegatesToStoreAndUnwrapsValue() = runTest {
-    val thing = buildTestThing(id = TEST_AIRCRAFT_ID)
+    val thing = buildTestThing(id = TEST_THING_ID)
     val entity = StorageEntity(
-      id = TEST_AIRCRAFT_ID,
+      id = TEST_THING_ID,
       value = thing,
       updatedAt = Instant.DISTANT_PAST
     )
     every {
       store.observe(
-        TEST_AIRCRAFT_ID,
+        TEST_THING_ID,
         EntityScope.userRoot(TEST_USER_ID)
       )
     } returns flowOf(entity)
 
-    val result = manager.loadThing(TEST_AIRCRAFT_ID)
+    val result = manager.loadThing(TEST_THING_ID)
       .first()
 
     assertThat(result).isEqualTo(thing)
   }
 
   @Test
-  fun loadThing_sharedAircraft_readsFromHostRoot() = runTest {
+  fun loadThing_sharedThing_readsFromHostRoot() = runTest {
     val shared =
       buildTestThing(id = "shared-1", make = "Piper", model = "PA-28")
     // A ref for this id names the host; the doc lives under the host's root.
@@ -254,14 +254,14 @@ class FleetManagerImplTest {
 
   @Test
   fun updateThing_withExistingId_preservesIdAndCallsStorePut() = runTest {
-    val thing = buildTestThing(id = TEST_AIRCRAFT_ID)
+    val thing = buildTestThing(id = TEST_THING_ID)
 
     val result = manager.updateThing(thing)
 
     assertThat(result.isSuccess).isTrue()
     coVerify {
       store.put(
-        TEST_AIRCRAFT_ID,
+        TEST_THING_ID,
         // Inflated on the way out (#717) — these assertions are about id and scope, not payload.
         ThingInflater.inflate(thing, AirplaneTemplate.TEMPLATE),
         EntityScope.userRoot(TEST_USER_ID)
@@ -274,19 +274,19 @@ class FleetManagerImplTest {
     every { firebaseAuth.currentUser } returns null
 
     val result =
-      manager.updateThing(buildTestThing(id = TEST_AIRCRAFT_ID))
+      manager.updateThing(buildTestThing(id = TEST_THING_ID))
 
     assertThat(result.isFailure).isTrue()
   }
 
   @Test
   fun deleteThing_loggedIn_callsStoreDeleteAndReturnsSuccess() = runTest {
-    val result = manager.deleteThing(TEST_AIRCRAFT_ID)
+    val result = manager.deleteThing(TEST_THING_ID)
 
     assertThat(result.isSuccess).isTrue()
     coVerify {
       store.delete(
-        TEST_AIRCRAFT_ID,
+        TEST_THING_ID,
         EntityScope.userRoot(TEST_USER_ID)
       )
     }
@@ -296,13 +296,13 @@ class FleetManagerImplTest {
   fun deleteThing_withoutLoggedInUser_returnsFailure() = runTest {
     every { firebaseAuth.currentUser } returns null
 
-    val result = manager.deleteThing(TEST_AIRCRAFT_ID)
+    val result = manager.deleteThing(TEST_THING_ID)
 
     assertThat(result.isFailure).isTrue()
   }
 
   private fun buildTestThing(
-    id: String = TEST_AIRCRAFT_ID,
+    id: String = TEST_THING_ID,
     make: String = "Cessna",
     model: String = "172",
   ): Thing = Thing(

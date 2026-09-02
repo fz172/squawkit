@@ -37,7 +37,7 @@ fun NavigateToLoginOnSignOut(navController: NavController) {
  * Routes whose screens log their own view, so feeder 1 must not log the raw route as well.
  *
  * **The failure this prevents**, caught in DebugView during #667: opening the squawk form produced
- * *two* `screen_view` events — `squawk_edit/{aircraftId}/{squawkId}` from the back-stack observer
+ * *two* `screen_view` events — `squawk_edit/{thingId}/{squawkId}` from the back-stack observer
  * and `squawk_form` from the screen itself. One screen open, counted twice, split across two names,
  * so neither series is the real number.
  *

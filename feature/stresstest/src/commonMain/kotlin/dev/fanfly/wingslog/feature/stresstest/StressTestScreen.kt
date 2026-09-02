@@ -503,7 +503,7 @@ private fun StepperRow(
 
 @Composable
 private fun StressTestState.Running.displayText(): String = when (step) {
-  StressTestProgressStep.CreatingAircraft -> stringResource(
+  StressTestProgressStep.CreatingThing -> stringResource(
     Res.string.stress_test_progress_creating_thing,
     subject.orEmpty(),
   )
@@ -537,8 +537,8 @@ private fun StressTestState.Running.displayText(): String = when (step) {
 private fun StressTestSummary.displayText(): String = listOf(
   stringResource(
     Res.string.stress_test_summary_thing,
-    aircraftMake,
-    aircraftModel,
+    thingMake,
+    thingModel,
     tailNumber,
   ),
   stringResource(

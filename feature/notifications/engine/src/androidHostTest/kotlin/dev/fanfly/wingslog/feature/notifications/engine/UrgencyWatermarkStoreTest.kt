@@ -14,10 +14,10 @@ import org.junit.Test
 class UrgencyWatermarkStoreTest {
   companion object {
     private const val TEST_UID = "user-watermark-001"
-    private const val TEST_AIRCRAFT_ID = "aircraft-watermark-001"
+    private const val TEST_THING_ID = "thing-watermark-001"
     private val TEST_SCOPE = EntityScope.thingChildUnsafe(
       TEST_UID,
-      TEST_AIRCRAFT_ID
+      TEST_THING_ID
     )
     private val TEST_KIND = CollectionKind.MaintenanceTask
   }
@@ -155,7 +155,7 @@ class UrgencyWatermarkStoreTest {
   fun pruneNotIn_doesNotTouchOtherScopes() = runTest {
     val otherScope = EntityScope.thingChildUnsafe(
       TEST_UID,
-      "other-aircraft"
+      "other-thing"
     )
     store.upsert(
       TEST_UID,
@@ -247,7 +247,7 @@ class UrgencyWatermarkStoreTest {
     val otherUid = "user-watermark-002"
     val otherScope = EntityScope.thingChildUnsafe(
       otherUid,
-      TEST_AIRCRAFT_ID
+      TEST_THING_ID
     )
     store.upsert(
       TEST_UID,

@@ -137,7 +137,7 @@ async function copyHost(
     const snap = await shareRef.get();
     if (snap.exists) {
       outcome.sharesCopied++;
-      // Copied verbatim. `hostUid` and `aircraftId` keep their field names and values — this
+      // Copied verbatim. `hostUid` and `thingId` keep their field names and values — this
       // migration moves the ACL's LOCATION, not its schema, and renaming fields here would break
       // `shareRole()` and every function that reads the doc for no gain (§3.3).
       if (!options.dryRun) await adminDb.doc(destPath).set(snap.data() as Record<string, unknown>);

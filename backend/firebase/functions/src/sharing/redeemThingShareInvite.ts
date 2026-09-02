@@ -8,17 +8,17 @@ import { inviteCodeDocPath, inviteCodeId, normalizeInviteCode } from "./inviteCo
 import { recordFailedAttempt, requireAttemptsRemaining } from "./rateLimit.js";
 import { sharedAircraftRefWireDoc } from "./sharedAircraftRefWire.js";
 import {
-  aircraftShareDocPath,
+  thingShareDocPath,
   shareInviteDocPath,
   shareMemberDocPath,
-  type AircraftShareDoc,
+  type ThingShareDoc,
   type InviteCodeDoc,
   type ShareRole,
 } from "./sharingModels.js";
 
 type RedeemRequest = { code: string };
 type RedeemResponse = {
-  aircraftId: string;
+  thingId: string;
   hostUid: string;
   role: ShareRole;
   alreadyMember: boolean;
@@ -57,8 +57,8 @@ export const redeemThingShareInvite = onCall<RedeemRequest, Promise<RedeemRespon
       throw new HttpsError("not-found", "This invite is no longer valid.");
     }
 
-    const { hostUid, aircraftId, role } = invite;
-    const shareRef = adminDb.doc(aircraftShareDocPath(hostUid, aircraftId));
+    const { hostUid, thingId, role } = invite;
+    const shareRef = adminDb.doc(thingShareDocPath(hostUid, thingId));
 
     return adminDb.runTransaction(async (tx): Promise<RedeemResponse> => {
       // Re-read the code inside the transaction: two devices racing the same code must not both win.
@@ -67,17 +67,17 @@ export const redeemThingShareInvite = onCall<RedeemRequest, Promise<RedeemRespon
         throw new HttpsError("not-found", "This invite is no longer valid.");
       }
 
-      const share = shareSnap.data() as AircraftShareDoc;
+      const share = shareSnap.data() as ThingShareDoc;
 
       // Already a member → friendly no-op, and the code is NOT burned: the owner may still be waiting
       // for the person they actually meant to invite.
       const existingRole = share.memberRoles[uid];
       if (existingRole != null) {
-        return { aircraftId, hostUid, role: existingRole, alreadyMember: true };
+        return { thingId, hostUid, role: existingRole, alreadyMember: true };
       }
 
       tx.update(shareRef, { [`memberRoles.${uid}`]: role });
-      tx.set(adminDb.doc(shareMemberDocPath(hostUid, aircraftId, uid)), {
+      tx.set(adminDb.doc(shareMemberDocPath(hostUid, thingId, uid)), {
         role,
         displayName: request.auth?.token?.name ?? "",
         photoUrl: request.auth?.token?.picture ?? null,
@@ -86,15 +86,15 @@ export const redeemThingShareInvite = onCall<RedeemRequest, Promise<RedeemRespon
         invitedBy: invite.createdBy,
       });
       tx.set(
-        adminDb.doc(`users/${uid}/shared_aircraft_ref/${aircraftId}`),
-        sharedAircraftRefWireDoc(aircraftId, hostUid, role),
+        adminDb.doc(`users/${uid}/shared_aircraft_ref/${thingId}`),
+        sharedAircraftRefWireDoc(thingId, hostUid, role),
       );
 
       // Burn it: the code doc and the owner's pending-invite record both go.
       tx.delete(codeRef);
-      tx.delete(adminDb.doc(shareInviteDocPath(hostUid, aircraftId, inviteCodeId(code))));
+      tx.delete(adminDb.doc(shareInviteDocPath(hostUid, thingId, inviteCodeId(code))));
 
-      return { aircraftId, hostUid, role, alreadyMember: false };
+      return { thingId, hostUid, role, alreadyMember: false };
     });
   },
 );

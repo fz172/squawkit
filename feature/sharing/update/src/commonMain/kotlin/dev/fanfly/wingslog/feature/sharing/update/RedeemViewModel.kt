@@ -2,7 +2,7 @@ package dev.fanfly.wingslog.feature.sharing.update
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dev.fanfly.wingslog.feature.sharing.datamanager.AircraftShareDeepLinks
+import dev.fanfly.wingslog.feature.sharing.datamanager.ThingShareDeepLinks
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.sharing.viewing.RedeemUiState
 import dev.gitlive.firebase.auth.FirebaseAuth
@@ -13,7 +13,7 @@ import kotlinx.coroutines.launch
 
 /**
  * Drives the thing-invite redemption surface (docs/sharing §3.2). Observes the parked deep link
- * ([AircraftShareDeepLinks]) alongside auth state so a signed-out/guest redeemer resumes
+ * ([ThingShareDeepLinks]) alongside auth state so a signed-out/guest redeemer resumes
  * automatically once they sign in with a real account, then calls the redeem function on Accept.
  *
  * The freshly-written `shared_aircraft_ref` arrives through the always-on refs pull listener, so no
@@ -29,7 +29,7 @@ class RedeemViewModel(
 
   init {
     viewModelScope.launch {
-      combine(AircraftShareDeepLinks.pendingInvite, auth.authStateChanged) { invite, user ->
+      combine(ThingShareDeepLinks.pendingInvite, auth.authStateChanged) { invite, user ->
         invite to user
       }.collect { (invite, user) ->
         when {
@@ -72,7 +72,7 @@ class RedeemViewModel(
   }
 
   fun accept() {
-    val invite = AircraftShareDeepLinks.pendingInvite.value ?: return
+    val invite = ThingShareDeepLinks.pendingInvite.value ?: return
     // Redeem requires a real (non-anonymous) account.
     if (auth.currentUser?.isAnonymous != false) {
       _uiState.value = RedeemUiState.NeedsSignIn
@@ -99,7 +99,7 @@ class RedeemViewModel(
   }
 
   fun dismiss() {
-    AircraftShareDeepLinks.consume()
+    ThingShareDeepLinks.consume()
     _uiState.value = RedeemUiState.Hidden
   }
 }

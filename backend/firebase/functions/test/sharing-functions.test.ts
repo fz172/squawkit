@@ -5,7 +5,7 @@ import functionsTest from "firebase-functions-test";
 import { afterAll, afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { adminDb, adminStorage } from "../src/config/firebaseAdmin.js";
-import { onThingDeleted } from "../src/sharing/onAircraftDeleted.js";
+import { onThingDeleted } from "../src/sharing/onThingDeleted.js";
 import { redeemThingShareInvite } from "../src/sharing/redeemThingShareInvite.js";
 import { revokeThingShare as revoke } from "../src/sharing/revokeThingShare.js";
 import { updateThingShareRole } from "../src/sharing/updateThingShareRole.js";
@@ -33,7 +33,7 @@ function req(uid: string, data: unknown, provider = "google.com") {
 }
 
 async function seedShare(memberRoles: Record<string, string> = { [HOST]: "owner" }) {
-  await adminDb.doc(`thing_shares/${HOST}/thing/${AC}`).set({ hostUid: HOST, aircraftId: AC, memberRoles });
+  await adminDb.doc(`thing_shares/${HOST}/thing/${AC}`).set({ hostUid: HOST, thingId: AC, memberRoles });
 }
 
 async function seedInvite(overrides: Record<string, unknown> = {}) {
@@ -72,7 +72,7 @@ describe("revokeThingShare", () => {
     await adminDb.doc(`thing_shares/${HOST}/thing/${AC}/members/${TECH}`).set({ role: "technician" });
     await adminDb.doc(`users/${TECH}/shared_aircraft_ref/${AC}`).set({ deleted: false });
 
-    await wrappedRevoke(req(HOST, { hostUid: HOST, aircraftId: AC, memberUid: TECH }));
+    await wrappedRevoke(req(HOST, { hostUid: HOST, thingId: AC, memberUid: TECH }));
 
     const share = (await adminDb.doc(`thing_shares/${HOST}/thing/${AC}`).get()).data();
     expect(share?.memberRoles[TECH]).toBeUndefined();
@@ -90,7 +90,7 @@ describe("revokeThingShare", () => {
     const blob = `users/${HOST}/thing/${AC}/blobs/keep-me`;
     await adminStorage.bucket().file(blob).save(Buffer.from([1, 2, 3]));
 
-    await wrappedRevoke(req(HOST, { hostUid: HOST, aircraftId: AC, memberUid: TECH }));
+    await wrappedRevoke(req(HOST, { hostUid: HOST, thingId: AC, memberUid: TECH }));
 
     const [exists] = await adminStorage.bucket().file(blob).exists();
     expect(exists).toBe(true);
@@ -98,12 +98,12 @@ describe("revokeThingShare", () => {
 
   it("cannot remove the hosting owner", async () => {
     await seedShare({ [HOST]: "owner", [OWNER2]: "owner" });
-    await expect(wrappedRevoke(req(OWNER2, { hostUid: HOST, aircraftId: AC, memberUid: HOST }))).rejects.toThrow();
+    await expect(wrappedRevoke(req(OWNER2, { hostUid: HOST, thingId: AC, memberUid: HOST }))).rejects.toThrow();
   });
 
   it("a technician cannot remove another member", async () => {
     await seedShare({ [HOST]: "owner", [TECH]: "technician", [OWNER2]: "owner" });
-    await expect(wrappedRevoke(req(TECH, { hostUid: HOST, aircraftId: AC, memberUid: OWNER2 }))).rejects.toThrow();
+    await expect(wrappedRevoke(req(TECH, { hostUid: HOST, thingId: AC, memberUid: OWNER2 }))).rejects.toThrow();
   });
 });
 
@@ -112,7 +112,7 @@ describe("updateThingShareRole", () => {
     await seedShare({ [HOST]: "owner", [TECH]: "technician" });
     await adminDb.doc(`thing_shares/${HOST}/thing/${AC}/members/${TECH}`).set({ role: "technician" });
 
-    await wrappedUpdateRole(req(HOST, { hostUid: HOST, aircraftId: AC, memberUid: TECH, role: "owner" }));
+    await wrappedUpdateRole(req(HOST, { hostUid: HOST, thingId: AC, memberUid: TECH, role: "owner" }));
 
     const share = (await adminDb.doc(`thing_shares/${HOST}/thing/${AC}`).get()).data();
     expect(share?.memberRoles[TECH]).toBe("owner");
@@ -123,24 +123,24 @@ describe("updateThingShareRole", () => {
   it("cannot change the hosting owner's role", async () => {
     await seedShare({ [HOST]: "owner", [OWNER2]: "owner" });
     await expect(
-      wrappedUpdateRole(req(OWNER2, { hostUid: HOST, aircraftId: AC, memberUid: HOST, role: "technician" })),
+      wrappedUpdateRole(req(OWNER2, { hostUid: HOST, thingId: AC, memberUid: HOST, role: "technician" })),
     ).rejects.toThrow();
   });
 
   it("a technician cannot change roles", async () => {
     await seedShare({ [HOST]: "owner", [TECH]: "technician" });
     await expect(
-      wrappedUpdateRole(req(TECH, { hostUid: HOST, aircraftId: AC, memberUid: TECH, role: "owner" })),
+      wrappedUpdateRole(req(TECH, { hostUid: HOST, thingId: AC, memberUid: TECH, role: "owner" })),
     ).rejects.toThrow();
   });
 });
 
 describe("onThingDeleted", () => {
-  const aircraftPath = `users/${HOST}/thing/${AC}`;
+  const thingPath = `users/${HOST}/thing/${AC}`;
 
   function change(beforeDeleted: boolean, afterDeleted: boolean) {
-    const before = fft.firestore.makeDocumentSnapshot({ deleted: beforeDeleted }, aircraftPath);
-    const after = fft.firestore.makeDocumentSnapshot({ deleted: afterDeleted }, aircraftPath);
+    const before = fft.firestore.makeDocumentSnapshot({ deleted: beforeDeleted }, thingPath);
+    const after = fft.firestore.makeDocumentSnapshot({ deleted: afterDeleted }, thingPath);
     return { data: fft.makeChange(before, after), params: { uid: HOST, acId: AC } };
   }
 
@@ -155,13 +155,13 @@ describe("onThingDeleted", () => {
   });
 
   it("cascades: tombstones child records", async () => {
-    await adminDb.doc(`${aircraftPath}/maintenance_log/log-1`).set({ deleted: false, note: "x" });
-    await adminDb.doc(`${aircraftPath}/squawk/sq-1`).set({ deleted: false });
+    await adminDb.doc(`${thingPath}/maintenance_log/log-1`).set({ deleted: false, note: "x" });
+    await adminDb.doc(`${thingPath}/squawk/sq-1`).set({ deleted: false });
 
     await wrappedDeleted(change(false, true) as never);
 
-    expect((await adminDb.doc(`${aircraftPath}/maintenance_log/log-1`).get()).data()?.deleted).toBe(true);
-    expect((await adminDb.doc(`${aircraftPath}/squawk/sq-1`).get()).data()?.deleted).toBe(true);
+    expect((await adminDb.doc(`${thingPath}/maintenance_log/log-1`).get()).data()?.deleted).toBe(true);
+    expect((await adminDb.doc(`${thingPath}/squawk/sq-1`).get()).data()?.deleted).toBe(true);
   });
 
   it("does NOT tear down a share when a DIFFERENT user deletes an aircraft with the same id", async () => {
@@ -204,8 +204,8 @@ describe("onThingDeleted", () => {
   });
 
   it("ignores a non-delete write (deleted stays false)", async () => {
-    await adminDb.doc(`${aircraftPath}/maintenance_log/log-1`).set({ deleted: false });
+    await adminDb.doc(`${thingPath}/maintenance_log/log-1`).set({ deleted: false });
     await wrappedDeleted(change(false, false) as never);
-    expect((await adminDb.doc(`${aircraftPath}/maintenance_log/log-1`).get()).data()?.deleted).toBe(false);
+    expect((await adminDb.doc(`${thingPath}/maintenance_log/log-1`).get()).data()?.deleted).toBe(false);
   });
 });

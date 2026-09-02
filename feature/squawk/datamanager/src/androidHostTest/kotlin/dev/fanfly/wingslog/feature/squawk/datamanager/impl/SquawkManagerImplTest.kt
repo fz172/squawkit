@@ -23,7 +23,7 @@ import org.junit.Test
 import kotlin.time.Instant
 
 private const val TEST_USER_ID = "test-user-123"
-private const val TEST_AIRCRAFT_ID = "aircraft-456"
+private const val TEST_THING_ID = "thing-456"
 private const val TEST_SQUAWK_ID = "squawk-789"
 
 class SquawkManagerImplTest {
@@ -34,7 +34,7 @@ class SquawkManagerImplTest {
   private lateinit var manager: SquawkManagerImpl
 
   private val testScope =
-    EntityScope.thingChildUnsafe(TEST_USER_ID, TEST_AIRCRAFT_ID)
+    EntityScope.thingChildUnsafe(TEST_USER_ID, TEST_THING_ID)
 
   @Before
   fun setUp() {
@@ -72,7 +72,7 @@ class SquawkManagerImplTest {
     )
 
     val result = manager.dismissSquawk(
-      TEST_AIRCRAFT_ID,
+      TEST_THING_ID,
       TEST_SQUAWK_ID,
       SquawkDismissReason.SQUAWK_DISMISS_REASON_OBSOLETE,
     )
@@ -101,7 +101,7 @@ class SquawkManagerImplTest {
     )
 
     val result = manager.dismissSquawk(
-      TEST_AIRCRAFT_ID,
+      TEST_THING_ID,
       TEST_SQUAWK_ID,
       SquawkDismissReason.SQUAWK_DISMISS_REASON_NOT_REPRODUCIBLE,
     )
@@ -124,7 +124,7 @@ class SquawkManagerImplTest {
     every { store.observeAll(testScope) } returns flowOf(emptyList())
 
     val result = manager.dismissSquawk(
-      TEST_AIRCRAFT_ID,
+      TEST_THING_ID,
       TEST_SQUAWK_ID,
       SquawkDismissReason.SQUAWK_DISMISS_REASON_DUPLICATE,
     )
@@ -146,7 +146,7 @@ class SquawkManagerImplTest {
     )
 
     val result = manager.dismissSquawk(
-      TEST_AIRCRAFT_ID,
+      TEST_THING_ID,
       TEST_SQUAWK_ID,
       SquawkDismissReason.SQUAWK_DISMISS_REASON_OBSOLETE,
     )
@@ -161,7 +161,7 @@ class SquawkManagerImplTest {
     every { firebaseAuth.currentUser } returns null
 
     val result = manager.dismissSquawk(
-      TEST_AIRCRAFT_ID,
+      TEST_THING_ID,
       TEST_SQUAWK_ID,
       SquawkDismissReason.SQUAWK_DISMISS_REASON_OBSOLETE,
     )
@@ -187,7 +187,7 @@ class SquawkManagerImplTest {
       )
     )
 
-    val result = manager.reopenSquawk(TEST_AIRCRAFT_ID, TEST_SQUAWK_ID)
+    val result = manager.reopenSquawk(TEST_THING_ID, TEST_SQUAWK_ID)
 
     assertThat(result.isSuccess).isTrue()
     coVerify {
@@ -215,7 +215,7 @@ class SquawkManagerImplTest {
       )
     )
 
-    val result = manager.reopenSquawk(TEST_AIRCRAFT_ID, TEST_SQUAWK_ID)
+    val result = manager.reopenSquawk(TEST_THING_ID, TEST_SQUAWK_ID)
 
     assertThat(result.isSuccess).isTrue()
     coVerify {
@@ -233,7 +233,7 @@ class SquawkManagerImplTest {
   fun reopenSquawk_squawkNotFound_returnsFailure() = runTest {
     every { store.observeAll(testScope) } returns flowOf(emptyList())
 
-    val result = manager.reopenSquawk(TEST_AIRCRAFT_ID, TEST_SQUAWK_ID)
+    val result = manager.reopenSquawk(TEST_THING_ID, TEST_SQUAWK_ID)
 
     assertThat(result.isFailure).isTrue()
   }
@@ -244,7 +244,7 @@ class SquawkManagerImplTest {
   fun reopenSquawk_withoutLoggedInUser_returnsFailure() = runTest {
     every { firebaseAuth.currentUser } returns null
 
-    val result = manager.reopenSquawk(TEST_AIRCRAFT_ID, TEST_SQUAWK_ID)
+    val result = manager.reopenSquawk(TEST_THING_ID, TEST_SQUAWK_ID)
 
     assertThat(result.isFailure).isTrue()
   }

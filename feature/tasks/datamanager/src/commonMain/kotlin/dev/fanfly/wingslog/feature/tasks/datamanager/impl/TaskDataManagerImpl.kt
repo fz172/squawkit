@@ -27,13 +27,13 @@ class TaskDataManagerImpl(
   override fun observeTasks(thingId: String): Flow<List<MaintenanceTask>> =
     scopeResolver.resolve(thingId).flatMapLatest { scope ->
       if (scope == null) {
-        logger.d { "No signed-in user; stopping tasks observation for aircraft $thingId" }
+        logger.d { "No signed-in user; stopping tasks observation for thing $thingId" }
         flowOf(emptyList())
       } else {
         store.observeAll(scope)
           .map { rows -> rows.map { it.value } }
           .catch { e ->
-            logger.w(e) { "Error observing tasks for aircraft $thingId" }
+            logger.w(e) { "Error observing tasks for thing $thingId" }
             emit(emptyList())
           }
       }

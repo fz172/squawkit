@@ -103,7 +103,7 @@ const handleRecordDeleted =
     });
   };
 
-// MIGRATION (task F3): the `aircraft`-path registration is gone — see onAircraftDeleted.
+// MIGRATION (task F3): the `aircraft`-path registration is gone — see onThingDeleted.
 // MIGRATION (thing_migration_design.md §2.7c / task B9): deployed with C2, NOT with the Phase A/B
 // branch. A cutover copy CREATES each document, so `before` never exists and every record the Phase
 // D script copies would read as a fresh authored write here. By C2 the copy is done, and nothing

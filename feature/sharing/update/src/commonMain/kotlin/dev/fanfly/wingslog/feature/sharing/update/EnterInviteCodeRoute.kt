@@ -2,7 +2,7 @@ package dev.fanfly.wingslog.feature.sharing.update
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavController
-import dev.fanfly.wingslog.feature.sharing.datamanager.AircraftShareDeepLinks
+import dev.fanfly.wingslog.feature.sharing.datamanager.ThingShareDeepLinks
 import dev.fanfly.wingslog.feature.sharing.viewing.EnterInviteCodeScreen
 
 /**
@@ -15,7 +15,7 @@ import dev.fanfly.wingslog.feature.sharing.viewing.EnterInviteCodeScreen
 fun EnterInviteCodeRoute(navController: NavController) {
   EnterInviteCodeScreen(
     onSubmit = { rawCode ->
-      AircraftShareDeepLinks.deliverCode(rawCode)
+      ThingShareDeepLinks.deliverCode(rawCode)
       // Return to the fleet; the confirmation sheet floats over it via RedeemHost. Popping first
       // means dismissing/accepting the sheet leaves the user on the fleet, not back on this form.
       navController.popBackStack()

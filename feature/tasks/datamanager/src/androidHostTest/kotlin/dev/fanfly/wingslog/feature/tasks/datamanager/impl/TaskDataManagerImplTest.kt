@@ -23,7 +23,7 @@ import org.junit.Test
 import kotlin.time.Instant
 
 private const val TEST_USER_ID = "test-user-123"
-private const val TEST_AIRCRAFT_ID = "aircraft-456"
+private const val TEST_THING_ID = "thing-456"
 private const val TEST_TASK_ID = "task-789"
 
 class TaskDataManagerImplTest {
@@ -55,14 +55,14 @@ class TaskDataManagerImplTest {
     every { firebaseAuth.currentUser } returns null
     every { firebaseAuth.authStateChanged } returns flowOf(null)
 
-    val result = manager.observeTasks(TEST_AIRCRAFT_ID)
+    val result = manager.observeTasks(TEST_THING_ID)
       .first()
 
     assertThat(result).isEmpty()
   }
 
   @Test
-  fun observeTasks_loggedIn_delegatesToStoreWithAircraftChildScopeAndUnwrapsValues() =
+  fun observeTasks_loggedIn_delegatesToStoreWithThingChildScopeAndUnwrapsValues() =
     runTest {
       val task = buildTestTask(id = TEST_TASK_ID)
       val entity = StorageEntity(
@@ -71,10 +71,10 @@ class TaskDataManagerImplTest {
         updatedAt = Instant.DISTANT_PAST
       )
       val scope =
-        EntityScope.thingChildUnsafe(TEST_USER_ID, TEST_AIRCRAFT_ID)
+        EntityScope.thingChildUnsafe(TEST_USER_ID, TEST_THING_ID)
       every { store.observeAll(scope) } returns flowOf(listOf(entity))
 
-      val result = manager.observeTasks(TEST_AIRCRAFT_ID)
+      val result = manager.observeTasks(TEST_THING_ID)
         .first()
 
       assertThat(result).hasSize(1)
@@ -86,14 +86,14 @@ class TaskDataManagerImplTest {
   fun addTask_withEmptyId_generatesIdAndCallsStorePut() = runTest {
     val task = buildTestTask(id = "")
 
-    val result = manager.addTask(TEST_AIRCRAFT_ID, task)
+    val result = manager.addTask(TEST_THING_ID, task)
 
     assertThat(result.isSuccess).isTrue()
     coVerify {
       store.put(
         match { it.isNotEmpty() },
         match { it.id.isNotEmpty() },
-        EntityScope.thingChildUnsafe(TEST_USER_ID, TEST_AIRCRAFT_ID),
+        EntityScope.thingChildUnsafe(TEST_USER_ID, TEST_THING_ID),
       )
     }
   }
@@ -102,14 +102,14 @@ class TaskDataManagerImplTest {
   fun addTask_withExistingId_preservesIdAndCallsStorePut() = runTest {
     val task = buildTestTask(id = TEST_TASK_ID)
 
-    val result = manager.addTask(TEST_AIRCRAFT_ID, task)
+    val result = manager.addTask(TEST_THING_ID, task)
 
     assertThat(result.isSuccess).isTrue()
     coVerify {
       store.put(
         TEST_TASK_ID,
         task,
-        EntityScope.thingChildUnsafe(TEST_USER_ID, TEST_AIRCRAFT_ID)
+        EntityScope.thingChildUnsafe(TEST_USER_ID, TEST_THING_ID)
       )
     }
   }
@@ -119,7 +119,7 @@ class TaskDataManagerImplTest {
     every { firebaseAuth.currentUser } returns null
 
     val result =
-      manager.addTask(TEST_AIRCRAFT_ID, buildTestTask(id = TEST_TASK_ID))
+      manager.addTask(TEST_THING_ID, buildTestTask(id = TEST_TASK_ID))
 
     assertThat(result.isFailure).isTrue()
   }
@@ -128,14 +128,14 @@ class TaskDataManagerImplTest {
   fun updateTask_loggedIn_callsStorePutAndReturnsSuccess() = runTest {
     val task = buildTestTask(id = TEST_TASK_ID)
 
-    val result = manager.updateTask(TEST_AIRCRAFT_ID, task)
+    val result = manager.updateTask(TEST_THING_ID, task)
 
     assertThat(result.isSuccess).isTrue()
     coVerify {
       store.put(
         TEST_TASK_ID,
         task,
-        EntityScope.thingChildUnsafe(TEST_USER_ID, TEST_AIRCRAFT_ID)
+        EntityScope.thingChildUnsafe(TEST_USER_ID, TEST_THING_ID)
       )
     }
   }
@@ -145,20 +145,20 @@ class TaskDataManagerImplTest {
     every { firebaseAuth.currentUser } returns null
 
     val result =
-      manager.updateTask(TEST_AIRCRAFT_ID, buildTestTask(id = TEST_TASK_ID))
+      manager.updateTask(TEST_THING_ID, buildTestTask(id = TEST_TASK_ID))
 
     assertThat(result.isFailure).isTrue()
   }
 
   @Test
   fun deleteTask_loggedIn_callsStoreDeleteAndReturnsSuccess() = runTest {
-    val result = manager.deleteTask(TEST_AIRCRAFT_ID, TEST_TASK_ID)
+    val result = manager.deleteTask(TEST_THING_ID, TEST_TASK_ID)
 
     assertThat(result.isSuccess).isTrue()
     coVerify {
       store.delete(
         TEST_TASK_ID,
-        EntityScope.thingChildUnsafe(TEST_USER_ID, TEST_AIRCRAFT_ID)
+        EntityScope.thingChildUnsafe(TEST_USER_ID, TEST_THING_ID)
       )
     }
   }
@@ -167,7 +167,7 @@ class TaskDataManagerImplTest {
   fun deleteTask_withoutLoggedInUser_returnsFailure() = runTest {
     every { firebaseAuth.currentUser } returns null
 
-    val result = manager.deleteTask(TEST_AIRCRAFT_ID, TEST_TASK_ID)
+    val result = manager.deleteTask(TEST_THING_ID, TEST_TASK_ID)
 
     assertThat(result.isFailure).isTrue()
   }

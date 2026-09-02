@@ -17,12 +17,12 @@ import dev.gitlive.firebase.auth.FirebaseAuth
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
-val aircraftDashboardModule = module {
-  // aircraftId comes from an explicit parameter (adaptive shell, ambient selection) when present,
-  // otherwise from the navigation SavedStateHandle (legacy maintenance_overview/{aircraftId} route).
+val thingDashboardModule = module {
+  // thingId comes from an explicit parameter (adaptive shell, ambient selection) when present,
+  // otherwise from the navigation SavedStateHandle (legacy maintenance_overview/{thingId} route).
   viewModel { params ->
     val thingId = params.getOrNull<String>()
-      ?: checkNotNull(get<SavedStateHandle>().get<String>(Screen.AIRCRAFT_ID))
+      ?: checkNotNull(get<SavedStateHandle>().get<String>(Screen.THING_ID))
     ThingOverviewViewModel(
       get<FleetManager>(),
       get<MaintenanceLogManager>(),

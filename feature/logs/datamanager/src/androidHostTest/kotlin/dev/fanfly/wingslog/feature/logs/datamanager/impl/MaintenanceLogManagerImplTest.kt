@@ -19,7 +19,7 @@ import org.junit.Before
 import org.junit.Test
 
 private const val TEST_USER_ID = "test-user-123"
-private const val TEST_AIRCRAFT_ID = "aircraft-456"
+private const val TEST_THING_ID = "thing-456"
 
 class MaintenanceLogManagerImplTest {
 
@@ -56,7 +56,7 @@ class MaintenanceLogManagerImplTest {
     every { firebaseAuth.authStateChanged } returns flowOf(null)
 
     var emittedList: List<MaintenanceLog>? = null
-    manager.observeLogs(TEST_AIRCRAFT_ID)
+    manager.observeLogs(TEST_THING_ID)
       .collect {
         emittedList = it
       }
@@ -65,18 +65,18 @@ class MaintenanceLogManagerImplTest {
   }
 
   @Test
-  fun observeLogs_loggedIn_delegatesToStoreWithAircraftScope() = runTest {
+  fun observeLogs_loggedIn_delegatesToStoreWithThingScope() = runTest {
     every {
       logStore.observeAll(
         EntityScope.thingChildUnsafe(
           TEST_USER_ID,
-          TEST_AIRCRAFT_ID
+          TEST_THING_ID
         )
       )
     } returns flowOf(emptyList())
 
     val result = mutableListOf<List<MaintenanceLog>>()
-    manager.observeLogs(TEST_AIRCRAFT_ID)
+    manager.observeLogs(TEST_THING_ID)
       .collect { result += it }
 
     assertThat(result).hasSize(1)
@@ -85,7 +85,7 @@ class MaintenanceLogManagerImplTest {
       logStore.observeAll(
         EntityScope.thingChildUnsafe(
           TEST_USER_ID,
-          TEST_AIRCRAFT_ID
+          TEST_THING_ID
         )
       )
     }

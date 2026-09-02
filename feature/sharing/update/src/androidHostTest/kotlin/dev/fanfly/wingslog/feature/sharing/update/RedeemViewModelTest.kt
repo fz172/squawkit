@@ -1,7 +1,7 @@
 package dev.fanfly.wingslog.feature.sharing.update
 
 import com.google.common.truth.Truth.assertThat
-import dev.fanfly.wingslog.feature.sharing.datamanager.AircraftShareDeepLinks
+import dev.fanfly.wingslog.feature.sharing.datamanager.ThingShareDeepLinks
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.sharing.model.InvitePreview
 import dev.fanfly.wingslog.feature.sharing.model.RedeemOutcome
@@ -60,12 +60,12 @@ class RedeemViewModelTest {
         role = ShareRole.TECHNICIAN
       ),
     )
-    AircraftShareDeepLinks.consume()
+    ThingShareDeepLinks.consume()
   }
 
   @After
   fun tearDown() {
-    AircraftShareDeepLinks.consume()
+    ThingShareDeepLinks.consume()
     Dispatchers.resetMain()
   }
 
@@ -85,7 +85,7 @@ class RedeemViewModelTest {
   fun pendingInvite_signedIn_showsConfirm() = runTest {
     authState.value = user(anonymous = false)
     every { auth.currentUser } returns authState.value
-    AircraftShareDeepLinks.deliver(SHARE_URL)
+    ThingShareDeepLinks.deliver(SHARE_URL)
 
     assertThat(viewModel().uiState.value).isInstanceOf(RedeemUiState.Confirm::class.java)
   }
@@ -93,7 +93,7 @@ class RedeemViewModelTest {
   @Test
   fun pendingInvite_anonymous_needsSignIn() = runTest {
     authState.value = user(anonymous = true)
-    AircraftShareDeepLinks.deliver(SHARE_URL)
+    ThingShareDeepLinks.deliver(SHARE_URL)
 
     assertThat(viewModel().uiState.value).isEqualTo(RedeemUiState.NeedsSignIn)
   }
@@ -103,7 +103,7 @@ class RedeemViewModelTest {
     val signedIn = user(anonymous = false)
     authState.value = signedIn
     every { auth.currentUser } returns signedIn
-    AircraftShareDeepLinks.deliver(SHARE_URL)
+    ThingShareDeepLinks.deliver(SHARE_URL)
     coEvery { sharing.redeemInvite(CODE) } returns Result.success(
       RedeemOutcome(
         thingId = AC_ID,
@@ -123,7 +123,7 @@ class RedeemViewModelTest {
     val signedIn = user(anonymous = false)
     authState.value = signedIn
     every { auth.currentUser } returns signedIn
-    AircraftShareDeepLinks.deliver(SHARE_URL)
+    ThingShareDeepLinks.deliver(SHARE_URL)
     coEvery { sharing.redeemInvite(CODE) } returns Result.success(
       RedeemOutcome(
         thingId = AC_ID,
@@ -144,7 +144,7 @@ class RedeemViewModelTest {
     val signedIn = user(anonymous = false)
     authState.value = signedIn
     every { auth.currentUser } returns signedIn
-    AircraftShareDeepLinks.deliver(SHARE_URL)
+    ThingShareDeepLinks.deliver(SHARE_URL)
     coEvery { sharing.redeemInvite(CODE) } returns
       Result.failure(RuntimeException("expired"))
 
@@ -158,7 +158,7 @@ class RedeemViewModelTest {
     val signedIn = user(anonymous = false)
     authState.value = signedIn
     every { auth.currentUser } returns signedIn
-    AircraftShareDeepLinks.deliver(SHARE_URL)
+    ThingShareDeepLinks.deliver(SHARE_URL)
     coEvery { sharing.redeemInvite(CODE) } returns Result.success(
       RedeemOutcome(
         thingId = AC_ID,
@@ -179,7 +179,7 @@ class RedeemViewModelTest {
     val signedIn = user(anonymous = false)
     authState.value = signedIn
     every { auth.currentUser } returns signedIn
-    AircraftShareDeepLinks.deliver(SHARE_URL)
+    ThingShareDeepLinks.deliver(SHARE_URL)
     coEvery { sharing.redeemInvite(CODE) } returns
       Result.failure(RuntimeException("expired"))
 
@@ -204,7 +204,7 @@ class RedeemViewModelTest {
       ),
     )
 
-    AircraftShareDeepLinks.deliverCode(CODE)
+    ThingShareDeepLinks.deliverCode(CODE)
 
     assertThat(viewModel().uiState.value).isEqualTo(
       RedeemUiState.Success(
@@ -225,7 +225,7 @@ class RedeemViewModelTest {
         role = ShareRole.TECHNICIAN
       ),
     )
-    AircraftShareDeepLinks.deliverCode(CODE)
+    ThingShareDeepLinks.deliverCode(CODE)
     val vm = viewModel()
     assertThat(vm.uiState.value).isEqualTo(RedeemUiState.NeedsSignIn)
 
@@ -240,18 +240,18 @@ class RedeemViewModelTest {
   fun dismiss_consumesInviteAndHides() = runTest {
     authState.value = user(anonymous = false)
     every { auth.currentUser } returns authState.value
-    AircraftShareDeepLinks.deliver(SHARE_URL)
+    ThingShareDeepLinks.deliver(SHARE_URL)
     val vm = viewModel()
 
     vm.dismiss()
 
     assertThat(vm.uiState.value).isEqualTo(RedeemUiState.Hidden)
-    assertThat(AircraftShareDeepLinks.pendingInvite.value).isNull()
+    assertThat(ThingShareDeepLinks.pendingInvite.value).isNull()
   }
 
   @Test
   fun confirm_showsWhatYouAreJoining() = runTest {
-    // Until #164 this was impossible: the invitee held an thing id the rules must refuse to
+    // Until #164 this was impossible: the invitee held a thing id the rules must refuse to
     // resolve for a non-member, so the sheet could only say "an aircraft" and accepting meant
     // accepting blind.
     val signedIn = user(anonymous = false)
@@ -264,7 +264,7 @@ class RedeemViewModelTest {
         role = ShareRole.TECHNICIAN,
       ),
     )
-    AircraftShareDeepLinks.deliver(SHARE_URL)
+    ThingShareDeepLinks.deliver(SHARE_URL)
 
     val state = viewModel().uiState.value
 
@@ -283,7 +283,7 @@ class RedeemViewModelTest {
     coEvery { sharing.previewInvite(CODE) } returns Result.failure(
       RuntimeException("offline")
     )
-    AircraftShareDeepLinks.deliver(SHARE_URL)
+    ThingShareDeepLinks.deliver(SHARE_URL)
 
     val state = viewModel().uiState.value
 

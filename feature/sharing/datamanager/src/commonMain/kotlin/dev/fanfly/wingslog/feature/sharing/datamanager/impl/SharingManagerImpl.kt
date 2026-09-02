@@ -10,7 +10,6 @@ import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.EntityStoreFactory
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
-import dev.fanfly.wingslog.feature.sharing.model.AircraftShareState
 import dev.fanfly.wingslog.feature.sharing.model.InviteLink
 import dev.fanfly.wingslog.feature.sharing.model.InvitePreview
 import dev.fanfly.wingslog.feature.sharing.model.PendingInvite
@@ -18,6 +17,7 @@ import dev.fanfly.wingslog.feature.sharing.model.RedeemOutcome
 import dev.fanfly.wingslog.feature.sharing.model.SHARE_URL_BASE
 import dev.fanfly.wingslog.feature.sharing.model.ShareMember
 import dev.fanfly.wingslog.feature.sharing.model.ShareRole
+import dev.fanfly.wingslog.feature.sharing.model.ThingShareState
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import dev.fanfly.wingslog.thing.CertExpireLimit
 import dev.fanfly.wingslog.thing.CertificateType
@@ -67,13 +67,13 @@ class SharingManagerImpl(
     storeFactory.create<Thing>(CollectionKind.Thing)
 
   /**
-   * The ACL for [acId] under [hostUid]. Keyed by host since #204: an thing id is unique only
+   * The ACL for [acId] under [hostUid]. Keyed by host since #204: a thing id is unique only
    * within a tree, so a globally-keyed ACL could be claimed by anyone who knew the id.
    */
   private fun shareDoc(hostUid: String, acId: String) =
     firestore.collection(SHARES)
       .document(hostUid)
-      .collection(SHARE_AIRCRAFT)
+      .collection(SHARE_THING)
       .document(acId)
 
   /**
@@ -101,7 +101,7 @@ class SharingManagerImpl(
   /** One-shot [observeHostUid], for the suspend paths (invite create/cancel, callables). */
   private suspend fun hostUidFor(acId: String): String =
     observeHostUid(acId).first()
-      ?: error("Not a member of aircraft $acId; cannot resolve its share")
+      ?: error("Not a member of thing $acId; cannot resolve its share")
 
   /**
    * Bumped after a successful [createInvite] to force the roster listener in [observeShareState]
@@ -112,10 +112,10 @@ class SharingManagerImpl(
    */
   private val rosterRetryTrigger = MutableStateFlow(0)
 
-  override fun observeShareState(acId: String): Flow<AircraftShareState> =
+  override fun observeShareState(acId: String): Flow<ThingShareState> =
     combine(observeHostUid(acId), rosterRetryTrigger) { hostUid, _ -> hostUid }
       .flatMapLatest { hostUid ->
-        if (hostUid == null) flowOf(AircraftShareState()) else shareStateIn(
+        if (hostUid == null) flowOf(ThingShareState()) else shareStateIn(
           hostUid,
           acId
         )
@@ -124,7 +124,7 @@ class SharingManagerImpl(
   private fun shareStateIn(
     hostUid: String,
     acId: String
-  ): Flow<AircraftShareState> {
+  ): Flow<ThingShareState> {
     val myUid = auth.currentUser?.uid
     val root = shareDoc(hostUid, acId).snapshots.map {
       it.takeIf { s -> s.exists }
@@ -168,7 +168,7 @@ class SharingManagerImpl(
       // only carries display detail. Drive the roster from the former so a member with no doc yet
       // still appears — notably the hosting owner, who never redeems and so is never written by a
       // function. Union with the docs so a doc that outlives its ACL entry isn't silently dropped.
-      AircraftShareState(
+      ThingShareState(
         members = (memberRoles.keys + docs.keys)
           .map { uid ->
             val m = docs[uid]
@@ -212,7 +212,7 @@ class SharingManagerImpl(
         if (hostUid == myUid) {
           val user = auth.currentUser
           emit(
-            AircraftShareState(
+            ThingShareState(
               members = listOf(
                 ShareMember(
                   uid = hostUid,
@@ -226,7 +226,7 @@ class SharingManagerImpl(
             ),
           )
         } else {
-          emit(AircraftShareState(accessDenied = true))
+          emit(ThingShareState(accessDenied = true))
         }
       }
   }
@@ -416,7 +416,7 @@ class SharingManagerImpl(
       )
 
       // A just-redeemed thing isn't in the local stores yet — its ref is still syncing down — so it
-      // is named explicitly. The ACL check below is what keeps that safe: naming an thing we are
+      // is named explicitly. The ACL check below is what keeps that safe: naming a thing we are
       // not actually a member of publishes nothing.
       val targets = (memberships(uid) + listOfNotNull(alsoPublishTo)).distinct()
 
@@ -489,7 +489,7 @@ class SharingManagerImpl(
    * The members of one share who have published a mirror, excluding [selfUid] — the caller's own
    * record is listed separately and comes from their local store, not from a mirror.
    *
-   * An thing that was never shared just yields an empty roster; a denied read degrades to empty
+   * A thing that was never shared just yields an empty roster; a denied read degrades to empty
    * rather than taking the caller's whole list down.
    */
   private fun linkedTechniciansIn(
@@ -565,12 +565,12 @@ class SharingManagerImpl(
     // this build talking to a backend without them reads an ACL nobody writes; the reverse reads
     // one nobody authorizes against. Either way a member looks like they lost access.
     private const val SHARES = "thing_shares"
-    private const val SHARE_AIRCRAFT = "thing"
+    private const val SHARE_THING = "thing"
     private const val MEMBERS = "members"
     private const val INVITES = "invites"
 
     // Matches the App Link / Universal Link host verified for deep linking (see AndroidManifest and
-    // AircraftShareDeepLinks) so the link opens the app; the web app serves the same URL as a fallback.
+    // ThingShareDeepLinks) so the link opens the app; the web app serves the same URL as a fallback.
     private const val INVITE_TTL_SECONDS = 7L * 24 * 60 * 60
     private const val INVITE_URL_KEY_PREFIX = "share_invite_url:"
   }

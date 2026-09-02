@@ -1,8 +1,8 @@
 import type { Timestamp } from "firebase-admin/firestore";
 
 /**
- * Schema for the `aircraft_shares` ACL tree — the plain-field (non-entity) documents that govern
- * aircraft sharing. These live OUTSIDE the opaque SyncDocWire entity path precisely so that
+ * Schema for the `thing_shares` ACL tree — the plain-field (non-entity) documents that govern
+ * Thing sharing. These live OUTSIDE the opaque SyncDocWire entity path precisely so that
  * security rules can read `member_roles` and Cloud Functions can validate invites. See
  * docs/sharing/aircraft_sharing_design.html §2.1.
  *
@@ -19,27 +19,14 @@ export const SHARE_ROLE = {
 export type ShareRole = (typeof SHARE_ROLE)[keyof typeof SHARE_ROLE];
 
 /**
- * Collection and subcollection names under `thing_shares/{hostUid}/thing/{aircraftId}`.
+ * Collection and subcollection names under `thing_shares/{hostUid}/thing/{thingId}`.
  *
- * MIGRATION (Phase G3, task B6 — thing_migration_design.md §5.4): **THIS IS THE FLIP.** The
- * constant NAMES keep saying "aircraft" deliberately; only their values move. Renaming the symbols
- * would balloon this diff across every call site for no behavioural gain, and §3.3 draws the line
- * exactly here: rename what is stored identity, leave alone what is only a name in code.
- *
- * DO NOT MERGE THIS BRANCH before G2 reports a clean copy. Merging to main auto-deploys
- * (§2.7b), and these values decide where `aircraftShareDocPath` and every function built on it
- * read and write. Flipped before `thing_shares` holds a faithful replica, every share lookup
- * resolves to a document that does not exist — which reads to a member as having been removed from
- * the aircraft.
- *
- * It must also deploy TOGETHER with two other changes, in one release (G3):
- *   1. `firestore.rules`' `shareRole()` repointed at `thing_shares/.../thing/...`;
- *   2. a client release updating `SharingManagerImpl`'s `SHARES` / `SHARE_AIRCRAFT` constants.
- * Ship any one of the three alone and the client, the rules, and the functions disagree about
- * where the ACL lives.
+ * These three have to agree or every share lookup resolves to a document that does not exist,
+ * which a member experiences as being removed: these constants, `firestore.rules`' `shareRole()`,
+ * and `SharingManagerImpl`'s `SHARES` / `SHARE_THING`. They were flipped together at G3.
  */
-export const AIRCRAFT_SHARES_COLLECTION = "thing_shares";
-export const SHARE_AIRCRAFT_SUBCOLLECTION = "thing";
+export const THING_SHARES_COLLECTION = "thing_shares";
+export const SHARE_THING_SUBCOLLECTION = "thing";
 export const SHARE_MEMBERS_SUBCOLLECTION = "members";
 export const SHARE_INVITES_SUBCOLLECTION = "invites";
 
@@ -51,32 +38,32 @@ export const SHARE_INVITES_SUBCOLLECTION = "invites";
  * by aircraft id alone, would consult that doc to authorize access to someone else's aircraft.
  * Under the host means a share a caller can create only ever governs the caller's own tree.
  */
-export function aircraftShareDocPath(hostUid: string, aircraftId: string): string {
-  return `${AIRCRAFT_SHARES_COLLECTION}/${hostUid}/${SHARE_AIRCRAFT_SUBCOLLECTION}/${aircraftId}`;
+export function thingShareDocPath(hostUid: string, thingId: string): string {
+  return `${THING_SHARES_COLLECTION}/${hostUid}/${SHARE_THING_SUBCOLLECTION}/${thingId}`;
 }
 
-export function shareMemberDocPath(hostUid: string, aircraftId: string, uid: string): string {
-  return `${aircraftShareDocPath(hostUid, aircraftId)}/${SHARE_MEMBERS_SUBCOLLECTION}/${uid}`;
+export function shareMemberDocPath(hostUid: string, thingId: string, uid: string): string {
+  return `${thingShareDocPath(hostUid, thingId)}/${SHARE_MEMBERS_SUBCOLLECTION}/${uid}`;
 }
 
 export function shareInviteDocPath(
   hostUid: string,
-  aircraftId: string,
+  thingId: string,
   tokenHash: string,
 ): string {
-  return `${aircraftShareDocPath(hostUid, aircraftId)}/${SHARE_INVITES_SUBCOLLECTION}/${tokenHash}`;
+  return `${thingShareDocPath(hostUid, thingId)}/${SHARE_INVITES_SUBCOLLECTION}/${tokenHash}`;
 }
 
 /**
- * Root ACL document at `aircraft_shares/{aircraftId}`. Kept tiny and low-contention: rules perform
+ * Root ACL document at `aircraft_shares/{thingId}`. Kept tiny and low-contention: rules perform
  * exactly one `get()` on it per shared-scope request to read `member_roles`. The redeem/revoke
  * functions keep `member_roles` transactionally in step with the `members` subcollection.
  */
-export type AircraftShareDoc = {
+export type ThingShareDoc = {
   /** Account whose tree physically holds the aircraft and its records. Also present in member_roles as "owner". */
   hostUid: string;
   /** == the document id; denormalized for collection-group queries. */
-  aircraftId: string;
+  thingId: string;
   /** uid → role. Denormalized onto the root so a rule check is a single get(). Includes hostUid → "owner". */
   memberRoles: Record<string, ShareRole>;
   createdAt: Timestamp;
@@ -104,7 +91,7 @@ export type TechnicianMirror = {
 };
 
 /**
- * One document per member at `aircraft_shares/{aircraftId}/members/{uid}`. Carries display + the
+ * One document per member at `aircraft_shares/{thingId}/members/{uid}`. Carries display + the
  * technician mirror so the root doc stays small. The member maintains their own display fields and
  * mirror; `role` is immutable from clients (rules enforce this) and function-managed.
  */
@@ -118,7 +105,7 @@ export type ShareMemberDoc = {
 };
 
 /**
- * A pending invite at `aircraft_shares/{aircraftId}/invites/{tokenHash}`, where
+ * A pending invite at `aircraft_shares/{thingId}/invites/{tokenHash}`, where
  * `tokenHash = SHA-256(secret)`. Only the hash is stored, so a read of the collection yields
  * nothing redeemable — the secret exists only in the link the owner shares.
  */

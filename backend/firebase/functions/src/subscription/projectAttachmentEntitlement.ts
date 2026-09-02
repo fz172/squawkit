@@ -4,12 +4,12 @@ import { logger } from "firebase-functions/v2";
 import { adminDb } from "../config/firebaseAdmin.js";
 import { FUNCTION_REGION } from "../config/env.js";
 import {
-  AIRCRAFT_SHARES_COLLECTION,
-  SHARE_AIRCRAFT_SUBCOLLECTION,
+  THING_SHARES_COLLECTION,
+  SHARE_THING_SUBCOLLECTION,
 } from "../sharing/sharingModels.js";
 import { isEntitledToAttachments } from "./entitlementModel.js";
 
-// Firestore caps a WriteBatch at 500 ops; 400 leaves headroom, matching onAircraftDeleted's fan-out.
+// Firestore caps a WriteBatch at 500 ops; 400 leaves headroom, matching onThingDeleted's fan-out.
 const BATCH_LIMIT = 400;
 
 /**
@@ -55,7 +55,7 @@ export async function projectAttachmentsEnabled(
   enabled: boolean,
 ): Promise<void> {
   const shares = await adminDb
-    .collection(`${AIRCRAFT_SHARES_COLLECTION}/${hostUid}/${SHARE_AIRCRAFT_SUBCOLLECTION}`)
+    .collection(`${THING_SHARES_COLLECTION}/${hostUid}/${SHARE_THING_SUBCOLLECTION}`)
     .get();
 
   let batch = adminDb.batch();

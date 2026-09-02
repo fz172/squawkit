@@ -34,7 +34,7 @@ import wingslog.feature.fleet.sharedassets.generated.resources.Res as FleetRes
 
 @Composable
 fun FleetEmptyState(
-  onAddAircraft: () -> Unit,
+  onAddThing: () -> Unit,
   modifier: Modifier = Modifier,
   // #209: join-by-code, offered next to create-thing. Null when sharing is gated off for the
   // build, which drops the affordance entirely rather than showing a door that does not open.
@@ -85,7 +85,7 @@ fun FleetEmptyState(
         FleetRes.string.add_first_thing,
         LexiconFormatter.titleCase(LocalThingLexicon.current.thingNoun),
       ),
-      onActionClick = onAddAircraft,
+      onActionClick = onAddThing,
       secondaryActionText = onEnterInviteCode?.let { stringResource(FleetRes.string.have_invite_code) },
       onSecondaryActionClick = onEnterInviteCode,
     )

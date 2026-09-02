@@ -68,7 +68,7 @@ class ThingOverviewViewModel(
     MutableStateFlow<ThingOverviewUiState>(ThingOverviewUiState.Loading)
   val uiState: StateFlow<ThingOverviewUiState> = _uiState.asStateFlow()
 
-  private val _events = Channel<AircraftOverviewEvent>()
+  private val _events = Channel<ThingOverviewEvent>()
   private var cachedLogs: List<MaintenanceLog> = emptyList()
 
   /**
@@ -93,7 +93,7 @@ class ThingOverviewViewModel(
   // Blob sync state must be observed at the scope that actually holds this thing's data: the
   // caller's own tree for an owned plane, or the host's tree for a shared one. Deriving the path
   // from the uid alone (the old `/users/$uid/thing/...`) missed a member's shared thing
-  // entirely, so sync state never resolved. Drive it off [AircraftScopeResolver] instead, which
+  // entirely, so sync state never resolved. Drive it off [ThingScopeResolver] instead, which
   // re-emits when the thing flips own ↔ shared. See docs/sharing §6.3 and P8.3 (#244).
   @OptIn(ExperimentalCoroutinesApi::class)
   private fun blobStatesFlow(): Flow<Map<String, BlobSyncState>> =
@@ -226,7 +226,8 @@ class ThingOverviewViewModel(
                 // Against the meter the due is measured in. Subtracting engine hours from an
                 // odometer sorted every mileage task to the bottom of the list, behind items
                 // years away (#759).
-                val current = stats.valueFor(due.nextDueMeterKey.orEmpty()) ?: 0.0
+                val current =
+                  stats.valueFor(due.nextDueMeterKey.orEmpty()) ?: 0.0
                 candidates.add((it.toDouble() - current).toLong())
               }
               candidates.minOrNull() ?: Long.MAX_VALUE
@@ -274,50 +275,50 @@ class ThingOverviewViewModel(
     }
   }
 
-  fun onAction(action: AircraftOverviewAction) {
+  fun onAction(action: ThingOverviewAction) {
     when (action) {
-      AircraftOverviewAction.BackClick -> {
-        viewModelScope.launch { _events.send(AircraftOverviewEvent.NavigateBack) }
+      ThingOverviewAction.BackClick -> {
+        viewModelScope.launch { _events.send(ThingOverviewEvent.NavigateBack) }
       }
 
-      is AircraftOverviewAction.EditClick -> {
+      is ThingOverviewAction.EditClick -> {
         viewModelScope.launch {
           _events.send(
-            AircraftOverviewEvent.NavigateToEditAircraft(
+            ThingOverviewEvent.NavigateToEditThing(
               action.thingId
             )
           )
         }
       }
 
-      AircraftOverviewAction.DeleteConfirm -> {
+      ThingOverviewAction.DeleteConfirm -> {
         deleteThing()
       }
 
-      is AircraftOverviewAction.ManageAccessClick -> {
+      is ThingOverviewAction.ManageAccessClick -> {
         viewModelScope.launch {
           _events.send(
-            AircraftOverviewEvent.NavigateToManageAccess(
+            ThingOverviewEvent.NavigateToManageAccess(
               action.thingId
             )
           )
         }
       }
 
-      is AircraftOverviewAction.AddLogClick -> {
+      is ThingOverviewAction.AddLogClick -> {
         viewModelScope.launch {
           _events.send(
-            AircraftOverviewEvent.NavigateToAddLog(
+            ThingOverviewEvent.NavigateToAddLog(
               action.thingId
             )
           )
         }
       }
 
-      is AircraftOverviewAction.EditLogClick -> {
+      is ThingOverviewAction.EditLogClick -> {
         viewModelScope.launch {
           _events.send(
-            AircraftOverviewEvent.NavigateToEditLog(
+            ThingOverviewEvent.NavigateToEditLog(
               action.thingId,
               action.logId
             )
@@ -325,29 +326,29 @@ class ThingOverviewViewModel(
         }
       }
 
-      is AircraftOverviewAction.AddTaskClick -> {
+      is ThingOverviewAction.AddTaskClick -> {
         viewModelScope.launch {
           _events.send(
-            AircraftOverviewEvent.NavigateToAddTask(
+            ThingOverviewEvent.NavigateToAddTask(
               action.thingId
             )
           )
         }
       }
 
-      is AircraftOverviewAction.TaskCardClick -> {
+      is ThingOverviewAction.TaskCardClick -> {
         showTaskDetails(action.card)
       }
 
-      AircraftOverviewAction.DismissTaskDetail -> {
+      ThingOverviewAction.DismissTaskDetail -> {
         hideTaskDetail()
       }
 
-      is AircraftOverviewAction.EditTaskClick -> {
+      is ThingOverviewAction.EditTaskClick -> {
         hideTaskDetail()
         viewModelScope.launch {
           _events.send(
-            AircraftOverviewEvent.NavigateToEditTask(
+            ThingOverviewEvent.NavigateToEditTask(
               action.thingId,
               action.cardId
             )
@@ -355,25 +356,25 @@ class ThingOverviewViewModel(
         }
       }
 
-      AircraftOverviewAction.CancelDeleteTask -> {
+      ThingOverviewAction.CancelDeleteTask -> {
         cancelDeleteTask()
       }
 
-      AircraftOverviewAction.ConfirmDeleteTask -> {
+      ThingOverviewAction.ConfirmDeleteTask -> {
         confirmDeleteTask()
       }
 
-      is AircraftOverviewAction.AddSquawkClick -> {
+      is ThingOverviewAction.AddSquawkClick -> {
         viewModelScope.launch {
           _events.send(
-            AircraftOverviewEvent.NavigateToAddSquawk(
+            ThingOverviewEvent.NavigateToAddSquawk(
               action.thingId
             )
           )
         }
       }
 
-      is AircraftOverviewAction.ShowSquawkDetail -> {
+      is ThingOverviewAction.ShowSquawkDetail -> {
         val log =
           cachedLogs.firstOrNull { it.id == action.squawk.squawk.addressed_by_log_id }
         _uiState.update { state ->
@@ -386,7 +387,7 @@ class ThingOverviewViewModel(
         }
       }
 
-      AircraftOverviewAction.DismissSquawkDetail -> {
+      ThingOverviewAction.DismissSquawkDetail -> {
         _uiState.update { state ->
           if (state is ThingOverviewUiState.Success)
             state.copy(
@@ -397,10 +398,10 @@ class ThingOverviewViewModel(
         }
       }
 
-      is AircraftOverviewAction.EditSquawkClick -> {
+      is ThingOverviewAction.EditSquawkClick -> {
         viewModelScope.launch {
           _events.send(
-            AircraftOverviewEvent.NavigateToEditSquawk(
+            ThingOverviewEvent.NavigateToEditSquawk(
               action.thingId,
               action.squawkId
             )
@@ -472,11 +473,11 @@ class ThingOverviewViewModel(
     viewModelScope.launch {
       fleetManager.deleteThing(thingId)
         .onSuccess {
-          _events.send(AircraftOverviewEvent.NavigateBack)
+          _events.send(ThingOverviewEvent.NavigateBack)
         }
         .onFailure { error ->
           _events.send(
-            AircraftOverviewEvent.ShowError(
+            ThingOverviewEvent.ShowError(
               error.message
             )
           )

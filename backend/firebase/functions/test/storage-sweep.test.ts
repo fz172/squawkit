@@ -140,7 +140,7 @@ describe("orphan blob collection", () => {
 
     const report = await runStorageSweep({ ...DEFAULTS, orphanGraceDays: 0 });
 
-    expect(report.aircraftSkipped).toBe(1);
+    expect(report.thingSkipped).toBe(1);
     expect(report.orphanBlobsCollected).toBe(0);
     expect(await blobExists("maybe-orphan")).toBe(true);
   });
@@ -159,7 +159,7 @@ describe("orphan blob collection", () => {
 
     const report = await runStorageSweep({ ...DEFAULTS, orphanGraceDays: 0 });
 
-    expect(report.aircraftSkipped).toBe(1);
+    expect(report.thingSkipped).toBe(1);
     expect(report.orphanBlobsCollected).toBe(0);
     expect(await blobExists("keep-me")).toBe(true);
   });

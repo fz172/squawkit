@@ -15,7 +15,7 @@ import {
   type EntitySegment,
 } from "../config/entitySegment.js";
 import { sharedAircraftRefTombstone } from "./sharedAircraftRefWire.js";
-import { aircraftShareDocPath, type AircraftShareDoc } from "./sharingModels.js";
+import { thingShareDocPath, type ThingShareDoc } from "./sharingModels.js";
 
 // Firestore caps a WriteBatch at 500 operations; we chunk child tombstones at 400 for headroom so
 // an aircraft with many logs/tasks/squawks tombstones in a few batched round-trips, not N writes.
@@ -51,7 +51,7 @@ const handleDelete =
     // one notification per record. See onRecordWritten's `readChange`.
     await tearDownShare(uid, acId);
     await tombstoneChildren(uid, acId, segment);
-    await deleteAircraftBlobs(uid, acId, segment);
+    await deleteThingBlobs(uid, acId, segment);
   };
 
 // MIGRATION (task F3): the `aircraft`-path registration is gone. Phase F2 deleted the documents
@@ -78,11 +78,11 @@ export const onThingDeleted = onDocumentWritten(
  * victim's share.
  */
 async function tearDownShare(deletedBy: string, acId: string): Promise<void> {
-  const shareRef = adminDb.doc(aircraftShareDocPath(deletedBy, acId));
+  const shareRef = adminDb.doc(thingShareDocPath(deletedBy, acId));
   const snap = await shareRef.get();
   if (!snap.exists) return;
 
-  const share = snap.data() as AircraftShareDoc;
+  const share = snap.data() as ThingShareDoc;
   if (share.hostUid !== deletedBy) return; // someone else's aircraft that merely shares the id
 
   await Promise.all(
@@ -107,7 +107,7 @@ async function tearDownShare(deletedBy: string, acId: string): Promise<void> {
  * The per-record trigger will also fire for each child this cascade tombstones, and will find the
  * bytes already gone. That is fine — deleting an absent object is a no-op.
  */
-async function deleteAircraftBlobs(
+async function deleteThingBlobs(
   uid: string,
   acId: string,
   segment: EntitySegment,

@@ -38,7 +38,7 @@ class LogbookExportArchiveBuilderTest {
     val availableAttachment =
       attachment(id = "abcd1234", name = "inspection photo.jpg")
     val missingAttachment = attachment(id = "efgh5678", name = "missing.pdf")
-    val bundle = aircraftBundle(
+    val bundle = thingBundle(
       logs = listOf(
         MaintenanceLog(
           id = "log-1",
@@ -86,7 +86,7 @@ class LogbookExportArchiveBuilderTest {
       )
     assertThat(entries["README.txt"]?.bytes?.decodeToString())
       .contains("Attachment efgh5678 has no local blob record.")
-    assertThat(entries["$thingFolder/csv/00_Aircraft_Info.csv"]?.bytes?.decodeToString())
+    assertThat(entries["$thingFolder/csv/00_Thing_Info.csv"]?.bytes?.decodeToString())
       .contains("Export App Version,SquawkIt 1.0.260519.10 (364)")
     assertThat(entries["README.txt"]?.bytes?.decodeToString())
       .contains("App:       SquawkIt 1.0.260519.10 (364)")
@@ -115,7 +115,7 @@ class LogbookExportArchiveBuilderTest {
       "xl/worksheets/sheet1.xml",
     )
     assertThat(workbookEntries["xl/workbook.xml"])
-      .contains("<sheet name=\"00 Aircraft Info\"")
+      .contains("<sheet name=\"00 Thing Info\"")
     assertThat(workbookEntries["xl/workbook.xml"])
       .contains("<sheet name=\"01 Airframe\"")
     assertThat(workbookEntries["xl/workbook.xml"])
@@ -133,7 +133,7 @@ class LogbookExportArchiveBuilderTest {
     // Built as a component tree, which is the only shape that exists since #668 part 3 — the
     // transitional fields are gone and nothing derives the tree from them any more.
     val thing = Thing(
-      id = "aircraft-1",
+      id = "thing-1",
       spec = listOf(
         Spec(key = "make", value_ = "Cessna"),
         Spec(key = "model", value_ = "172"),
@@ -170,7 +170,7 @@ class LogbookExportArchiveBuilderTest {
         ),
       ),
     )
-    val bundle = aircraftBundle(
+    val bundle = thingBundle(
       thing = thing,
       logs = listOf(
         MaintenanceLog(
@@ -196,8 +196,8 @@ class LogbookExportArchiveBuilderTest {
     )
       .associateBy { entry -> entry.path }
 
-    val aircraftInfoCsv =
-      requireNotNull(entries["$thingFolder/csv/00_Aircraft_Info.csv"]?.bytes?.decodeToString())
+    val thingInfoCsv =
+      requireNotNull(entries["$thingFolder/csv/00_Thing_Info.csv"]?.bytes?.decodeToString())
     val airframeCsv =
       requireNotNull(entries["$thingFolder/csv/01_Airframe.csv"]?.bytes?.decodeToString())
     val engineCsv =
@@ -215,10 +215,10 @@ class LogbookExportArchiveBuilderTest {
     assertThat(entries.keys).contains("$thingFolder/csv/03_Propeller.csv")
     assertThat(entries.keys).doesNotContain("$thingFolder/csv/02_Engine_1.csv")
     assertThat(entries.keys).doesNotContain("$thingFolder/csv/03_Propeller_1.csv")
-    assertThat(aircraftInfoCsv).contains("Current Engine Time")
-    assertThat(aircraftInfoCsv).contains("Current Propeller Time")
-    assertThat(aircraftInfoCsv).doesNotContain("Current Engine 1 Time")
-    assertThat(aircraftInfoCsv).doesNotContain("Current Propeller 1 Time")
+    assertThat(thingInfoCsv).contains("Current Engine Time")
+    assertThat(thingInfoCsv).contains("Current Propeller Time")
+    assertThat(thingInfoCsv).doesNotContain("Current Engine 1 Time")
+    assertThat(thingInfoCsv).doesNotContain("Current Propeller 1 Time")
     assertThat(airframeCsv).contains("Date,Airframe Time,Engine Time,Work Description")
     assertThat(airframeCsv).doesNotContain("Engine 1 Time")
     assertThat(engineCsv).contains("Engine Time,Airframe Time,Work Description")
@@ -243,7 +243,7 @@ class LogbookExportArchiveBuilderTest {
       timestamp = WireInstant.ofEpochSecond(1_715_728_000L),
       work_description = "Resolved squawk",
     )
-    val bundle = aircraftBundle(
+    val bundle = thingBundle(
       logs = listOf(addressedLog),
       squawks = listOf(
         Squawk(
@@ -306,7 +306,7 @@ class LogbookExportArchiveBuilderTest {
   @Test
   fun buildEntries_onlyWritesSelectedReportFormatsButAlwaysKeepsAttachmentsAndReadme() {
     val photo = attachment(id = "abcd1234", name = "inspection photo.jpg")
-    val bundle = aircraftBundle(
+    val bundle = thingBundle(
       logs = listOf(
         MaintenanceLog(
           id = "log-1",
@@ -343,7 +343,7 @@ class LogbookExportArchiveBuilderTest {
       .associateBy { it.path }
 
     // CSV selected → CSV present; PDF and XLSX omitted.
-    assertThat(entries.keys).contains("$thingFolder/csv/00_Aircraft_Info.csv")
+    assertThat(entries.keys).contains("$thingFolder/csv/00_Thing_Info.csv")
     assertThat(entries.keys).doesNotContain("$thingFolder/N12345_Cessna_172.pdf")
     assertThat(entries.keys).doesNotContain("$thingFolder/SquawkIt_Logs_N12345_20260520.xlsx")
     // Attachments and README ride along regardless of the format selection.
@@ -352,9 +352,9 @@ class LogbookExportArchiveBuilderTest {
   }
 
   @Test
-  fun buildEntries_multiAircraftUsesOneFolderPerAircraftAndRootReadme() {
-    val secondThing = airplane("aircraft-2", "Beechcraft", "Bonanza", "BE35-1", "N54321")
-    val firstBundle = aircraftBundle(
+  fun buildEntries_multiThingUsesOneFolderPerThingAndRootReadme() {
+    val secondThing = airplane("thing-2", "Beechcraft", "Bonanza", "BE35-1", "N54321")
+    val firstBundle = thingBundle(
       logs = listOf(
         MaintenanceLog(
           id = "log-1",
@@ -363,7 +363,7 @@ class LogbookExportArchiveBuilderTest {
         )
       )
     )
-    val secondBundle = aircraftBundle(
+    val secondBundle = thingBundle(
       logs = listOf(
         MaintenanceLog(
           id = "log-2",
@@ -388,10 +388,10 @@ class LogbookExportArchiveBuilderTest {
       .associateBy { it.path }
 
     assertThat(entries.keys).contains("README.txt")
-    assertThat(entries.keys).contains("N12345_Cessna_172/csv/00_Aircraft_Info.csv")
+    assertThat(entries.keys).contains("N12345_Cessna_172/csv/00_Thing_Info.csv")
     assertThat(entries.keys).contains("N12345_Cessna_172/SquawkIt_Logs_N12345_20260520.xlsx")
     assertThat(entries.keys).contains("N12345_Cessna_172/N12345_Cessna_172.pdf")
-    assertThat(entries.keys).contains("N54321_Beechcraft_Bonanza/csv/00_Aircraft_Info.csv")
+    assertThat(entries.keys).contains("N54321_Beechcraft_Bonanza/csv/00_Thing_Info.csv")
     assertThat(entries.keys).contains("N54321_Beechcraft_Bonanza/SquawkIt_Logs_N54321_20260520.xlsx")
     assertThat(entries.keys).contains("N54321_Beechcraft_Bonanza/N54321_Beechcraft_Bonanza.pdf")
     assertThat(entries.keys).doesNotContain("00_Fleet_Summary.csv")
@@ -518,7 +518,7 @@ class LogbookExportArchiveBuilderTest {
       title = "Annual",
       component = ComponentType.COMPONENT_ENGINE,
     )
-    val bundle = aircraftBundle(logs = emptyList())
+    val bundle = thingBundle(logs = emptyList())
       .copy(tasks = listOf(task), tasksById = mapOf(task.id to task))
 
     val entries = LogbookExportArchiveBuilder(
@@ -543,10 +543,10 @@ class LogbookExportArchiveBuilderTest {
     assertThat(tasksCsv).contains("Engine")
   }
 
-  private fun aircraftBundle(
+  private fun thingBundle(
     logs: List<MaintenanceLog>,
     squawks: List<Squawk> = emptyList(),
-    thing: Thing = airplane("aircraft-1", "Cessna", "172", "172001", "N12345"),
+    thing: Thing = airplane("thing-1", "Cessna", "172", "172001", "N12345"),
   ) = ThingBundle(
     logs = logs,
     thing = ThingInflater.inflate(thing, AirplaneTemplate.TEMPLATE),

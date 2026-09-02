@@ -43,7 +43,7 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 
-private const val TEST_AIRCRAFT_ID = "aircraft-456"
+private const val TEST_THING_ID = "thing-456"
 private const val TEST_CARD_ID = "card-789"
 
 /**
@@ -83,13 +83,13 @@ class TaskViewModelTest {
     every { subscriptionManager.canUploadAttachments() } returns flowOf(false)
     // Own thing by default; foreign-hosted tests override this.
     every { sharingManager.observeIsForeignHosted(any()) } returns flowOf(false)
-    every { inspectionDataManager.observeTasks(TEST_AIRCRAFT_ID) } returns flowOf(
+    every { inspectionDataManager.observeTasks(TEST_THING_ID) } returns flowOf(
       emptyList()
     )
-    every { maintenanceLogManager.observeLogs(TEST_AIRCRAFT_ID) } returns flowOf(
+    every { maintenanceLogManager.observeLogs(TEST_THING_ID) } returns flowOf(
       emptyList()
     )
-    every { maintenanceLogManager.observeMaintenanceOverview(TEST_AIRCRAFT_ID) } returns flowOf(
+    every { maintenanceLogManager.observeMaintenanceOverview(TEST_THING_ID) } returns flowOf(
       null
     )
   }
@@ -176,7 +176,7 @@ class TaskViewModelTest {
   // ---- attachment gate (P8.7 §9.7) ----
 
   @Test
-  fun attachAvailable_onForeignHostedAircraft_evenWithoutOwnEntitlement() =
+  fun attachAvailable_onForeignHostedThing_evenWithoutOwnEntitlement() =
     runTest(testDispatcher) {
       // The host pays and the broker enforces the host's entitlement, so a member with no subscription
       // of their own can still attach on a paid owner's thing.
@@ -190,7 +190,7 @@ class TaskViewModelTest {
     }
 
   @Test
-  fun attachStaysOff_onOwnAircraft_whenTheEntitlementIsOff() =
+  fun attachStaysOff_onOwnThing_whenTheEntitlementIsOff() =
     runTest(testDispatcher) {
       every { subscriptionManager.canUploadAttachments() } returns flowOf(false)
       every { sharingManager.observeIsForeignHosted(any()) } returns flowOf(
@@ -207,7 +207,7 @@ class TaskViewModelTest {
 
   @Test
   fun editMode_seedsFormStateFromCard() = runTest(testDispatcher) {
-    every { inspectionDataManager.observeTasks(TEST_AIRCRAFT_ID) } returns flowOf(
+    every { inspectionDataManager.observeTasks(TEST_THING_ID) } returns flowOf(
       listOf(
         MaintenanceTask(
           id = TEST_CARD_ID,
@@ -231,7 +231,7 @@ class TaskViewModelTest {
       val tasksFlow = MutableStateFlow(
         listOf(MaintenanceTask(id = TEST_CARD_ID, title = "Oil change"))
       )
-      every { inspectionDataManager.observeTasks(TEST_AIRCRAFT_ID) } returns tasksFlow
+      every { inspectionDataManager.observeTasks(TEST_THING_ID) } returns tasksFlow
       val viewModel = buildViewModelForEdit()
       advanceUntilIdle()
 
@@ -282,7 +282,7 @@ class TaskViewModelTest {
       advanceUntilIdle()
 
       assertThat(events).containsExactly(
-        TaskFormEvent.NavigateToCreateLog(TEST_AIRCRAFT_ID, TEST_CARD_ID)
+        TaskFormEvent.NavigateToCreateLog(TEST_THING_ID, TEST_CARD_ID)
       )
       assertThat(viewModel.formState.value.showResolveMenu).isFalse()
       collectJob.cancel()
@@ -314,7 +314,7 @@ class TaskViewModelTest {
   fun skipThisCycle_persistsForceCompliedStatusAtCurrentEngineHours_andInvokesOnSuccess() =
     runTest(testDispatcher) {
       coEvery {
-        inspectionDataManager.updateTask(TEST_AIRCRAFT_ID, any())
+        inspectionDataManager.updateTask(TEST_THING_ID, any())
       } returns Result.success(true)
       val viewModel = buildViewModelForEdit()
       advanceUntilIdle()
@@ -332,7 +332,7 @@ class TaskViewModelTest {
       val persisted = slot<MaintenanceTask>()
       coVerify {
         inspectionDataManager.updateTask(
-          TEST_AIRCRAFT_ID,
+          TEST_THING_ID,
           capture(persisted)
         )
       }
@@ -350,7 +350,7 @@ class TaskViewModelTest {
   @Test
   fun skipThisCycle_clearsRescheduleOverride() = runTest(testDispatcher) {
     coEvery {
-      inspectionDataManager.updateTask(TEST_AIRCRAFT_ID, any())
+      inspectionDataManager.updateTask(TEST_THING_ID, any())
     } returns Result.success(true)
     val viewModel = buildViewModelForEdit()
     advanceUntilIdle()
@@ -370,7 +370,7 @@ class TaskViewModelTest {
     val persisted = slot<MaintenanceTask>()
     coVerify {
       inspectionDataManager.updateTask(
-        TEST_AIRCRAFT_ID,
+        TEST_THING_ID,
         capture(persisted)
       )
     }
@@ -396,7 +396,7 @@ class TaskViewModelTest {
           complied_meter = MeterReading(MeterKeys.ENGINE_HOURS, value_ = 10.0)
         ),
       )
-      every { inspectionDataManager.observeTasks(TEST_AIRCRAFT_ID) } returns flowOf(
+      every { inspectionDataManager.observeTasks(TEST_THING_ID) } returns flowOf(
         listOf(skipped)
       )
       every { taskDueManager.computeNextDue(any(), any(), any()) } answers {
@@ -440,11 +440,11 @@ class TaskViewModelTest {
   fun saveEditedTask_dropsForceCompliedStatus_whenScheduleChanged() =
     runTest(testDispatcher) {
       val stored = skippedCard(forceDueEngine = 0f)
-      every { inspectionDataManager.observeTasks(TEST_AIRCRAFT_ID) } returns flowOf(
+      every { inspectionDataManager.observeTasks(TEST_THING_ID) } returns flowOf(
         listOf(stored)
       )
       coEvery {
-        inspectionDataManager.updateTask(TEST_AIRCRAFT_ID, any())
+        inspectionDataManager.updateTask(TEST_THING_ID, any())
       } returns Result.success(true)
       val viewModel = buildViewModelForEdit()
       advanceUntilIdle()
@@ -457,7 +457,7 @@ class TaskViewModelTest {
       val persisted = slot<MaintenanceTask>()
       coVerify {
         inspectionDataManager.updateTask(
-          TEST_AIRCRAFT_ID,
+          TEST_THING_ID,
           capture(persisted)
         )
       }
@@ -468,11 +468,11 @@ class TaskViewModelTest {
   fun saveEditedTask_keepsForceCompliedStatus_whenScheduleUnchanged() =
     runTest(testDispatcher) {
       val stored = skippedCard(forceDueEngine = 0f)
-      every { inspectionDataManager.observeTasks(TEST_AIRCRAFT_ID) } returns flowOf(
+      every { inspectionDataManager.observeTasks(TEST_THING_ID) } returns flowOf(
         listOf(stored)
       )
       coEvery {
-        inspectionDataManager.updateTask(TEST_AIRCRAFT_ID, any())
+        inspectionDataManager.updateTask(TEST_THING_ID, any())
       } returns Result.success(true)
       val viewModel = buildViewModelForEdit()
       advanceUntilIdle()
@@ -484,7 +484,7 @@ class TaskViewModelTest {
       val persisted = slot<MaintenanceTask>()
       coVerify {
         inspectionDataManager.updateTask(
-          TEST_AIRCRAFT_ID,
+          TEST_THING_ID,
           capture(persisted)
         )
       }
@@ -529,7 +529,7 @@ class TaskViewModelTest {
       subscriptionManager = subscriptionManager,
       sharingManager = sharingManager,
       taskDueManager = taskDueManager,
-      savedStateHandle = SavedStateHandle(mapOf(Screen.AIRCRAFT_ID to TEST_AIRCRAFT_ID)),
+      savedStateHandle = SavedStateHandle(mapOf(Screen.THING_ID to TEST_THING_ID)),
     )
 
   private fun buildViewModelForEdit(): TaskViewModel =
@@ -543,7 +543,7 @@ class TaskViewModelTest {
       taskDueManager = taskDueManager,
       savedStateHandle = SavedStateHandle(
         mapOf(
-          Screen.AIRCRAFT_ID to TEST_AIRCRAFT_ID,
+          Screen.THING_ID to TEST_THING_ID,
           Screen.CARD_ID to TEST_CARD_ID,
         )
       ),

@@ -90,15 +90,15 @@ class ExportViewModel(
     viewModelScope.launch {
       fleetManager.observeFleetDashboard()
         .flatMapLatest { entries ->
-          // Export operates on the user's own logbook only; shared thing are read-through
+          // Export operates on the user's own logbook only; shared things are read-through
           // pointers into another account's tree and aren't exported here.
-          val thing = entries.filter { !it.shared }
+          val things = entries.filter { !it.shared }
             .map { it.thing }
-          if (thing.isEmpty()) {
+          if (things.isEmpty()) {
             flowOf(emptyList())
           } else {
             combine(
-              thing.map { item ->
+              things.map { item ->
                 combine(
                   logsManager.observeLogs(item.id),
                   taskDataManager.observeTasks(item.id),
@@ -130,9 +130,9 @@ class ExportViewModel(
               currentConfig.selectedThingIds.intersect(rowIds)
             }
             currentConfig.copy(
-              thing = rows,
+              things = rows,
               selectedThingIds = selectedIds,
-              isLoadingAircraft = false,
+              isLoadingThings = false,
             )
               .recomputeEstimates()
           }
@@ -182,7 +182,7 @@ class ExportViewModel(
     }
   }
 
-  fun onToggleAircraft(id: String) = reduceConfiguring { current ->
+  fun onToggleThing(id: String) = reduceConfiguring { current ->
     val selected = if (id in current.selectedThingIds) {
       current.selectedThingIds - id
     } else {
@@ -194,7 +194,7 @@ class ExportViewModel(
 
   fun onSelectAll() = reduceConfiguring { current ->
     current.copy(
-      selectedThingIds = current.thing.map { it.thingId }
+      selectedThingIds = current.things.map { it.thingId }
         .toSet()
     )
       .recomputeEstimates()
@@ -361,7 +361,7 @@ class ExportViewModel(
       filePath = filePath,
       sizeBytes = sizeBytes,
       formats = lastConfiguring.formats,
-      selectedTailNumbers = lastConfiguring.thing
+      selectedTailNumbers = lastConfiguring.things
         .filter { it.thingId in lastConfiguring.selectedThingIds }
         .map { it.tailNumber },
       dateRange = lastConfiguring.dateRange,
@@ -377,7 +377,7 @@ class ExportViewModel(
   }
 
   private fun ExportUiState.Configuring.recomputeEstimates(): ExportUiState.Configuring {
-    val selectedRows = thing.filter { it.thingId in selectedThingIds }
+    val selectedRows = things.filter { it.thingId in selectedThingIds }
     val logCount = selectedRows.sumOf { it.logCount }
     val attachmentBytes = selectedRows.sumOf { it.attachmentSizeBytes }
     // Per-format contribution; attachments and README ride along regardless of selection.
@@ -397,7 +397,7 @@ class ExportViewModel(
   private fun Thing.toSelectionRow(
     logCount: Int,
     attachmentSizeBytes: Long,
-  ) = AircraftSelectionRow(
+  ) = ThingSelectionRow(
     thingId = id,
     tailNumber = specValue(SpecKeys.TAIL_NUMBER),
     makeModel = listOf(specValue(SpecKeys.MAKE), specValue(SpecKeys.MODEL))

@@ -69,14 +69,14 @@ const handleRecordWritten =
   (segment: EntitySegment) =>
   async (event: WriteEvent) => {
     const hostUid = event.params.uid;
-    const aircraftId = event.params.acId;
+    const thingId = event.params.acId;
     const recordType = recordTypeForKind(event.params.kind);
     if (recordType == null) return; // maintenance_overview and anything else: not notifiable
 
     const change = readChange(event);
     if (change == null) return;
 
-    const audience = await readShareAudience(hostUid, aircraftId);
+    const audience = await readShareAudience(hostUid, thingId);
     if (audience == null) return; // unshared — the early exit that keeps this cheap
 
     const recipients = audience.memberUids.filter((uid) => uid !== change.actorUid);
@@ -94,7 +94,7 @@ const handleRecordWritten =
       // `escalationOf`'s note on why the two are not interchangeable.
       await fanOutEscalation(
         hostUid,
-        aircraftId,
+        thingId,
         event.params.docId,
         change.actorUid,
         recipients,
@@ -106,7 +106,7 @@ const handleRecordWritten =
 
     await fanOutActivity({
       hostUid,
-      aircraftId,
+      thingId,
       recordType,
       recordId: event.params.docId,
       recordTitle: recordTitleOf(recordType, change.after) ?? "",
@@ -134,22 +134,22 @@ export const onNotifiableThingRecordWritten = onDocumentWritten(
  * The Aircraft record itself — a tail number or a make/model correction is collaboration activity
  * too, and `collaboration_disabled` is the toggle that governs it.
  *
- * A tombstone write is skipped: deleting an aircraft tears down the share (`onAircraftDeleted`), so
+ * A tombstone write is skipped: deleting an aircraft tears down the share (`onThingDeleted`), so
  * "someone made a change to the aircraft" would be both wrong and the last thing the recipient ever
  * heard about it. That also means this trigger's writes are always "updated" — never created (the
  * aircraft already exists once it can be shared) or deleted (filtered here).
  */
-const handleAircraftWritten =
+const handleThingWritten =
   (segment: EntitySegment) =>
   async (event: WriteEvent) => {
     const hostUid = event.params.uid;
-    const aircraftId = event.params.acId;
+    const thingId = event.params.acId;
 
     const change = readChange(event);
     if (change == null) return;
     if (change.after.deleted === true) return;
 
-    const audience = await readShareAudience(hostUid, aircraftId);
+    const audience = await readShareAudience(hostUid, thingId);
     if (audience == null) return;
 
     const recipients = audience.memberUids.filter((uid) => uid !== change.actorUid);
@@ -157,9 +157,9 @@ const handleAircraftWritten =
 
     await fanOutActivity({
       hostUid,
-      aircraftId,
+      thingId,
       recordType: RECORD_TYPE.AIRCRAFT,
-      recordId: aircraftId,
+      recordId: thingId,
       recordTitle: "",
       kind: "updated",
       actorUid: change.actorUid,
@@ -171,11 +171,11 @@ const handleAircraftWritten =
     });
   };
 
-// MIGRATION (task F3): both `aircraft`-path registrations are gone — see onAircraftDeleted.
+// MIGRATION (task F3): both `aircraft`-path registrations are gone — see onThingDeleted.
 
 export const onNotifiableThingWritten = onDocumentWritten(
   { document: `users/{uid}/${ENTITY_SEGMENT_THING}/{acId}`, region: FUNCTION_REGION },
-  handleAircraftWritten(ENTITY_SEGMENT_THING),
+  handleThingWritten(ENTITY_SEGMENT_THING),
 );
 
 // --- The write itself --------------------------------------------------------------------------
@@ -195,12 +195,12 @@ type Change = {
  * - **A hard delete.** `after` is gone, so this is the tombstone GC reclaiming a record months
  *   later, not somebody touching it.
  * - **A write with no `writerUid`.** A pre-attestation document, or a Cloud Function write that
- *   creates a document outright. Note what this does **not** catch: `onAircraftDeleted`'s tombstone
+ *   creates a document outright. Note what this does **not** catch: `onThingDeleted`'s tombstone
  *   cascade uses `batch.update`, which *preserves* the existing `writerUid`, so those writes look
  *   exactly like the original author deleting each record. What actually keeps them silent is that
- *   `onAircraftDeleted` tears the share down *before* it tombstones the children, so the ACL is gone
+ *   `onThingDeleted` tears the share down *before* it tombstones the children, so the ACL is gone
  *   and `readShareAudience` returns null. That ordering is load-bearing for this feature and is
- *   flagged as such in `onAircraftDeleted`; the test below pins the real cascade shape rather than a
+ *   flagged as such in `onThingDeleted`; the test below pins the real cascade shape rather than a
  *   hand-stripped one.
  * - **A write that changed nothing.** A client re-pushing an identical revision is not news.
  */
@@ -242,7 +242,7 @@ function activityKindOf(change: Change): "created" | "updated" | "deleted" {
 
 type ActivityFanOut = {
   hostUid: string;
-  aircraftId: string;
+  thingId: string;
   recordType: RecordType;
   recordId: string;
   recordTitle: string;
@@ -257,17 +257,17 @@ type ActivityFanOut = {
 
 /** One concrete notification per write, naming the record and what happened to it. */
 async function fanOutActivity(input: ActivityFanOut): Promise<void> {
-  const { hostUid, aircraftId, recordType, recordId, recordTitle, kind, actorUid, nowMs, recipients } =
+  const { hostUid, thingId, recordType, recordId, recordTitle, kind, actorUid, nowMs, recipients } =
     input;
 
-  const label = input.tailNumber ?? (await readTailNumber(hostUid, aircraftId, input.segment));
-  const actorName = await readActorDisplayName(hostUid, aircraftId, actorUid);
+  const label = input.tailNumber ?? (await readTailNumber(hostUid, thingId, input.segment));
+  const actorName = await readActorDisplayName(hostUid, thingId, actorUid);
 
   const sent = await fanOut(
     recipients,
     honorsActivity,
     activityPushData({
-      aircraftId,
+      thingId,
       recordType,
       recordId,
       recordTitle,
@@ -280,7 +280,7 @@ async function fanOutActivity(input: ActivityFanOut): Promise<void> {
   );
 
   logger.info("N1 activity fan-out", {
-    aircraftId,
+    thingId,
     recordType,
     recordId,
     kind,
@@ -295,7 +295,7 @@ async function fanOutActivity(input: ActivityFanOut): Promise<void> {
  */
 async function fanOutEscalation(
   hostUid: string,
-  aircraftId: string,
+  thingId: string,
   /** The record's Firestore document id — its authoritative identity. */
   squawkId: string,
   actorUid: string,
@@ -304,15 +304,15 @@ async function fanOutEscalation(
   segment: EntitySegment,
 ): Promise<void> {
   const [tailNumber, actorName] = await Promise.all([
-    readTailNumber(hostUid, aircraftId, segment),
-    readActorDisplayName(hostUid, aircraftId, actorUid),
+    readTailNumber(hostUid, thingId, segment),
+    readActorDisplayName(hostUid, thingId, actorUid),
   ]);
 
   const sent = await fanOut(
     recipients,
     (settings) => honorsEscalation(settings),
     escalationPushData({
-      aircraftId,
+      thingId,
       squawkId,
       title: escalation.title,
       kind: escalation.kind,
@@ -322,7 +322,7 @@ async function fanOutEscalation(
   );
 
   logger.info("N1 escalation fan-out", {
-    aircraftId,
+    thingId,
     squawkId,
     kind: escalation.kind,
     recipients: recipients.length,
@@ -373,17 +373,17 @@ async function fanOut(
  */
 async function readTailNumber(
   hostUid: string,
-  aircraftId: string,
+  thingId: string,
   segment: EntitySegment,
 ): Promise<string> {
   try {
-    const snap = await adminDb.doc(entityDocPath(hostUid, aircraftId, segment)).get();
+    const snap = await adminDb.doc(entityDocPath(hostUid, thingId, segment)).get();
     if (!snap.exists) return "";
     return tailNumberOf(snap.data() as SyncDocWire) ?? "";
   } catch (e) {
     logger.warn("Could not read a tail number for a notification", {
       hostUid,
-      aircraftId,
+      thingId,
       error: String(e),
     });
     return "";

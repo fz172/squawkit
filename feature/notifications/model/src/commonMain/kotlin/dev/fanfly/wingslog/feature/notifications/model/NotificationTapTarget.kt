@@ -21,7 +21,7 @@ package dev.fanfly.wingslog.feature.notifications.model
 sealed interface NotificationTapTarget {
   val thingId: String
 
-  data class Aircraft(override val thingId: String, val tab: String? = null) :
+  data class Thing(override val thingId: String, val tab: String? = null) :
     NotificationTapTarget
 
   data class Squawk(override val thingId: String, val squawkId: String) :

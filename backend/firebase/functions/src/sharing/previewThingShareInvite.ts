@@ -10,7 +10,7 @@ import { type InviteCodeDoc, type ShareRole } from "./sharingModels.js";
 type PreviewRequest = { code: string };
 type PreviewResponse = {
   /** e.g. "N2037O · Cessna 172". Denormalized at creation — the aircraft record is opaque bytes. */
-  aircraftLabel: string;
+  thingLabel: string;
   hostName: string;
   role: ShareRole;
 };
@@ -59,7 +59,7 @@ export const previewThingShareInvite = onCall<PreviewRequest, Promise<PreviewRes
     // Note what is NOT returned: the aircraft id and the host uid. A preview must leave the caller
     // holding nothing they could fabricate a same-id aircraft against (#202/#204).
     return {
-      aircraftLabel: invite.aircraftLabel ?? "",
+      thingLabel: invite.thingLabel ?? "",
       hostName: invite.hostName ?? "",
       role: invite.role,
     };

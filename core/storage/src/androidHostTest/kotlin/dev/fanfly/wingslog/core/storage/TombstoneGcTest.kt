@@ -4,12 +4,12 @@ import app.cash.sqldelight.async.coroutines.awaitAsOneOrNull
 import app.cash.sqldelight.async.coroutines.synchronous
 import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
 import com.google.common.truth.Truth.assertThat
-import dev.fanfly.wingslog.thing.Attachment
-import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.core.storage.blob.BlobId
 import dev.fanfly.wingslog.core.storage.blob.BlobRef
 import dev.fanfly.wingslog.core.storage.blob.LocalBlobStore
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
+import dev.fanfly.wingslog.thing.Attachment
+import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.thing.Thing
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.test.runTest
@@ -20,7 +20,7 @@ import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
 private const val UID = "u1"
-private const val AIRCRAFT_ID = "ac-1"
+private const val THING_ID = "ac-1"
 private const val SHA =
   "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890"
 
@@ -30,7 +30,7 @@ private val RECENTLY = NOW - 3.days
 
 private val USER_ROOT = EntityScope.userRoot(UID)
   .toPath()
-private val AIRCRAFT_SCOPE = EntityScope.thingChildUnsafe(UID, AIRCRAFT_ID)
+private val THING_SCOPE = EntityScope.thingChildUnsafe(UID, THING_ID)
   .toPath()
 
 @OptIn(ExperimentalTime::class)
@@ -134,7 +134,7 @@ class TombstoneGcTest {
   }
 
   @Test
-  fun keepsABlobALiveRecordInAnotherAircraftStillReferences() = runTest {
+  fun keepsABlobALiveRecordInAnotherThingStillReferences() = runTest {
     putLog(
       id = "old",
       at = LONG_AGO,
@@ -163,7 +163,7 @@ class TombstoneGcTest {
   /** The cascade (server-side) tombstones the children; the client pulls them down as deleted rows. */
   @Test
   fun reclaimsBlobsOfCascadeProducedChildTombstones() = runTest {
-    putAircraft(at = LONG_AGO, deleted = true)
+    putThing(at = LONG_AGO, deleted = true)
     putLog(
       id = "child",
       at = LONG_AGO,
@@ -173,17 +173,17 @@ class TombstoneGcTest {
 
     gc.runOnce(NOW)
 
-    assertThat(aircraftExists()).isFalse()
+    assertThat(thingExists()).isFalse()
     assertThat(logExists("child")).isFalse()
     assertThat(blobs.purged).contains(BlobId("blob-a"))
   }
 
   /** Blobs are thing-scoped: a deleted thing takes its whole blob prefix with it (§5.2). */
   @Test
-  fun purgedAircraftReclaimsEveryBlobInItsScope_evenOnesNoPayloadNames() =
+  fun purgedThingReclaimsEveryBlobInItsScope_evenOnesNoPayloadNames() =
     runTest {
-      putAircraft(at = LONG_AGO, deleted = true)
-      blobs.rows[BlobId("orphan")] = AIRCRAFT_SCOPE
+      putThing(at = LONG_AGO, deleted = true)
+      blobs.rows[BlobId("orphan")] = THING_SCOPE
 
       gc.runOnce(NOW)
 
@@ -191,9 +191,9 @@ class TombstoneGcTest {
     }
 
   @Test
-  fun purgedAircraftLeavesAnotherAircraftsBlobsAlone() = runTest {
-    putAircraft(at = LONG_AGO, deleted = true)
-    blobs.rows[BlobId("mine")] = AIRCRAFT_SCOPE
+  fun purgedThingLeavesAnotherThingsBlobsAlone() = runTest {
+    putThing(at = LONG_AGO, deleted = true)
+    blobs.rows[BlobId("mine")] = THING_SCOPE
     blobs.rows[BlobId("theirs")] = EntityScope.thingChildUnsafe(UID, "ac-2")
       .toPath()
 
@@ -206,7 +206,7 @@ class TombstoneGcTest {
   fun aCorruptPayloadKeepsItsBlobsAndDoesNotStopTheSweep() = runTest {
     putEntity(
       kind = CollectionKind.MaintenanceLog,
-      scope = AIRCRAFT_SCOPE,
+      scope = THING_SCOPE,
       id = "corrupt",
       payload = byteArrayOf(0x08, 0x08, 0x08, 0x7F),
       at = LONG_AGO,
@@ -248,16 +248,16 @@ class TombstoneGcTest {
   private suspend fun logExists(id: String): Boolean =
     db.schemaQueries.selectOneForSync(
       CollectionKind.MaintenanceLog,
-      AIRCRAFT_SCOPE,
+      THING_SCOPE,
       id
     )
       .awaitAsOneOrNull() != null
 
-  private suspend fun aircraftExists(): Boolean =
+  private suspend fun thingExists(): Boolean =
     db.schemaQueries.selectOneForSync(
       CollectionKind.Thing,
       USER_ROOT,
-      AIRCRAFT_ID
+      THING_ID
     )
       .awaitAsOneOrNull() != null
 
@@ -274,7 +274,7 @@ class TombstoneGcTest {
     ).encode()
     putEntity(
       CollectionKind.MaintenanceLog,
-      AIRCRAFT_SCOPE,
+      THING_SCOPE,
       id,
       payload,
       at,
@@ -283,12 +283,12 @@ class TombstoneGcTest {
     )
   }
 
-  private suspend fun putAircraft(at: Instant, deleted: Boolean) {
+  private suspend fun putThing(at: Instant, deleted: Boolean) {
     putEntity(
       kind = CollectionKind.Thing,
       scope = USER_ROOT,
-      id = AIRCRAFT_ID,
-      payload = Thing(id = AIRCRAFT_ID).encode(),
+      id = THING_ID,
+      payload = Thing(id = THING_ID).encode(),
       at = at,
       deleted = deleted,
     )

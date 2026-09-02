@@ -73,7 +73,7 @@ sealed interface ThingOverviewUiState {
      * Owner-only affordances: Edit Aircraft, Delete, Manage Access. Technicians get a read-only
      * screen (they can still add maintenance). Server rules are the real enforcement (§6.3).
      */
-    val canManageAircraft: Boolean get() = myRole != ShareRole.TECHNICIAN
+    val canManageThing: Boolean get() = myRole != ShareRole.TECHNICIAN
 
     /**
      * Sharing is not available to a guest: redeeming and inviting both require a permanent account

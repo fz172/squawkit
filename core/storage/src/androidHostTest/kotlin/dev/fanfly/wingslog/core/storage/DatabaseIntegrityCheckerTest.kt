@@ -36,9 +36,9 @@ class DatabaseIntegrityCheckerTest {
     db.schemaQueries.upsert(
       collection = CollectionKind.Thing,
       scope_path = "/users/$TEST_UID/fleet",
-      id = "aircraft-1",
+      id = "thing-1",
       payload = byteArrayOf(1, 2, 3),
-      payload_schema = "Aircraft",
+      payload_schema = "Thing",
       updated_at = 1_000_000L,
       remote_updated_at = null,
       dirty = false,
@@ -128,9 +128,9 @@ class DatabaseIntegrityCheckerTest {
     db.schemaQueries.upsert(
       collection = CollectionKind.Thing,
       scope_path = "/users/$TEST_UID/fleet",
-      id = "aircraft-target",
+      id = "thing-target",
       payload = byteArrayOf(1),
-      payload_schema = "Aircraft",
+      payload_schema = "Thing",
       updated_at = 1_000_000L,
       remote_updated_at = null,
       dirty = false,
@@ -140,9 +140,9 @@ class DatabaseIntegrityCheckerTest {
     db.schemaQueries.upsert(
       collection = CollectionKind.Thing,
       scope_path = "/users/$OTHER_UID/fleet",
-      id = "aircraft-other",
+      id = "thing-other",
       payload = byteArrayOf(2),
-      payload_schema = "Aircraft",
+      payload_schema = "Thing",
       updated_at = 1_000_000L,
       remote_updated_at = null,
       dirty = false,
@@ -158,7 +158,7 @@ class DatabaseIntegrityCheckerTest {
     )
       .awaitAsList()
     assertThat(otherUserEntities).hasSize(1)
-    assertThat(otherUserEntities[0].id).isEqualTo("aircraft-other")
+    assertThat(otherUserEntities[0].id).isEqualTo("thing-other")
   }
 
   @Test
@@ -208,9 +208,9 @@ class DatabaseIntegrityCheckerTest {
     db.schemaQueries.upsert(
       collection = CollectionKind.Thing,
       scope_path = "/users/$OTHER_UID/references/$TEST_UID/extra",
-      id = "aircraft-unrelated",
+      id = "thing-unrelated",
       payload = byteArrayOf(9),
-      payload_schema = "Aircraft",
+      payload_schema = "Thing",
       updated_at = 1_000_000L,
       remote_updated_at = null,
       dirty = false,

@@ -6,12 +6,12 @@ import kotlinx.coroutines.flow.Flow
 interface TaskDataManager {
 
   /**
-   * Observe all task cards for an thing in real-time.
+   * Observe all task cards for a thing in real-time.
    */
   fun observeTasks(thingId: String): Flow<List<MaintenanceTask>>
 
   /**
-   * Add a new task card to an thing.
+   * Add a new task card to a thing.
    */
   suspend fun addTask(
     thingId: String,

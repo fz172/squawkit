@@ -105,7 +105,7 @@ import dev.fanfly.wingslog.core.ui.theme.statusColors
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDisplayLocation
 import dev.fanfly.wingslog.feature.export.datamanager.ExportFormat
 import dev.fanfly.wingslog.feature.export.datamanager.ExportProgressStep
-import dev.fanfly.wingslog.feature.export.update.viewmodel.AircraftSelectionRow
+import dev.fanfly.wingslog.feature.export.update.viewmodel.ThingSelectionRow
 import dev.fanfly.wingslog.feature.export.update.viewmodel.DateRangeOption
 import dev.fanfly.wingslog.feature.export.update.viewmodel.ExportUiState
 import dev.fanfly.wingslog.feature.subscription.viewing.ProUpsellSheet
@@ -180,7 +180,7 @@ fun ExportSelectionScreen(
   state: ExportUiState,
   onNavigateBack: () -> Unit,
   onNavigateToHistory: () -> Unit,
-  onToggleAircraft: (String) -> Unit,
+  onToggleThing: (String) -> Unit,
   onSelectAll: () -> Unit,
   onClearAll: () -> Unit,
   onToggleFormat: (ExportFormat) -> Unit,
@@ -215,7 +215,7 @@ fun ExportSelectionScreen(
             else -> onNavigateBack
           },
           actions = {
-            if (state is ExportUiState.Configuring && state.thing.isNotEmpty()) {
+            if (state is ExportUiState.Configuring && state.things.isNotEmpty()) {
               IconButton(onClick = onNavigateToHistory) {
                 Icon(
                   imageVector = Icons.Default.History,
@@ -248,7 +248,7 @@ fun ExportSelectionScreen(
           start = innerPadding.calculateStartPadding(layoutDirection),
           end = innerPadding.calculateEndPadding(layoutDirection),
         ),
-        onToggleAircraft = onToggleAircraft,
+        onToggleThing = onToggleThing,
         onSelectAll = onSelectAll,
         onClearAll = onClearAll,
         onToggleFormat = onToggleFormat,
@@ -289,7 +289,7 @@ fun ExportSelectionScreen(
 private fun ConfiguringContent(
   state: ExportUiState.Configuring,
   modifier: Modifier,
-  onToggleAircraft: (String) -> Unit,
+  onToggleThing: (String) -> Unit,
   onSelectAll: () -> Unit,
   onClearAll: () -> Unit,
   onToggleFormat: (ExportFormat) -> Unit,
@@ -298,8 +298,8 @@ private fun ConfiguringContent(
   onNavigateToHistory: () -> Unit,
   onExport: () -> Unit,
 ) {
-  if (!state.isLoadingAircraft && state.thing.isEmpty()) {
-    EmptyAircraftContent(modifier, onNavigateToHistory)
+  if (!state.isLoadingThings && state.things.isEmpty()) {
+    EmptyThingContent(modifier, onNavigateToHistory)
     return
   }
 
@@ -309,7 +309,7 @@ private fun ConfiguringContent(
   ) {
     ExportSetupList(
       state = state,
-      onToggleAircraft = onToggleAircraft,
+      onToggleThing = onToggleThing,
       onSelectAll = onSelectAll,
       onClearAll = onClearAll,
       onToggleFormat = onToggleFormat,
@@ -321,7 +321,7 @@ private fun ConfiguringContent(
         .padding(horizontal = Spacing.screenPadding),
       bottomPadding = ExportBottomBarReservedHeight,
     )
-    if (state.thing.isNotEmpty()) {
+    if (state.things.isNotEmpty()) {
       Box(
         modifier = Modifier.align(Alignment.BottomCenter),
       ) {
@@ -334,7 +334,7 @@ private fun ConfiguringContent(
 @Composable
 private fun ExportSetupList(
   state: ExportUiState.Configuring,
-  onToggleAircraft: (String) -> Unit,
+  onToggleThing: (String) -> Unit,
   onSelectAll: () -> Unit,
   onClearAll: () -> Unit,
   onToggleFormat: (ExportFormat) -> Unit,
@@ -353,10 +353,10 @@ private fun ExportSetupList(
     }
 
     item {
-      val allSelected = state.selectedThingIds.size == state.thing.size
+      val allSelected = state.selectedThingIds.size == state.things.size
       Section(
         title = LexiconFormatter.titleCase(LocalThingLexicon.current.thingNoun),
-        action = if (state.thing.size > 1) {
+        action = if (state.things.size > 1) {
           {
             TextButton(onClick = if (allSelected) onClearAll else onSelectAll) {
               Text(
@@ -371,12 +371,12 @@ private fun ExportSetupList(
         },
       ) {
         GroupedRowGroup(
-          rows = state.thing.map { thing ->
+          rows = state.things.map { thing ->
             {
-              AircraftOptionRow(
+              ThingOptionRow(
                 thing = thing,
                 selected = thing.thingId in state.selectedThingIds,
-                onClick = { onToggleAircraft(thing.thingId) },
+                onClick = { onToggleThing(thing.thingId) },
               )
             }
           }
@@ -472,8 +472,8 @@ private fun FormatSection(
 // ─── Setup · Aircraft ───────────────────────────────────────────────────────
 
 @Composable
-private fun AircraftOptionRow(
-  thing: AircraftSelectionRow,
+private fun ThingOptionRow(
+  thing: ThingSelectionRow,
   selected: Boolean,
   onClick: () -> Unit,
 ) {
@@ -1474,7 +1474,7 @@ private fun ResultSecondaryButton(
 // ─── Empty thing ─────────────────────────────────────────────────────────
 
 @Composable
-private fun EmptyAircraftContent(
+private fun EmptyThingContent(
   modifier: Modifier,
   onNavigateToHistory: () -> Unit,
 ) {

@@ -24,7 +24,7 @@ async function seedShare(
 ) {
   await adminDb
     .doc(`thing_shares/${HOST}/thing/${AC}`)
-    .set({ hostUid: HOST, aircraftId: AC, memberRoles, ...extra });
+    .set({ hostUid: HOST, thingId: AC, memberRoles, ...extra });
 }
 
 async function wipe() {
@@ -90,7 +90,7 @@ describe("getBlobUploadSession", () => {
   it("mints a resumable upload session for a member", async () => {
     await seedShare();
     const out = await wrappedUploadSession(
-      req(MEMBER, { hostUid: HOST, aircraftId: AC, blobId: BLOB, contentType: "image/jpeg" }),
+      req(MEMBER, { hostUid: HOST, thingId: AC, blobId: BLOB, contentType: "image/jpeg" }),
     );
     expect(typeof out.uploadUrl).toBe("string");
     expect(out.uploadUrl.length).toBeGreaterThan(0);
@@ -99,21 +99,21 @@ describe("getBlobUploadSession", () => {
   it("rejects a non-member", async () => {
     await seedShare({ [HOST]: "owner" });
     await expect(
-      wrappedUploadSession(req(STRANGER, { hostUid: HOST, aircraftId: AC, blobId: BLOB })),
+      wrappedUploadSession(req(STRANGER, { hostUid: HOST, thingId: AC, blobId: BLOB })),
     ).rejects.toThrow();
   });
 
   it("rejects when attachments are explicitly disabled for the aircraft", async () => {
     await seedShare(undefined, { attachmentsEnabled: false });
     await expect(
-      wrappedUploadSession(req(MEMBER, { hostUid: HOST, aircraftId: AC, blobId: BLOB })),
+      wrappedUploadSession(req(MEMBER, { hostUid: HOST, thingId: AC, blobId: BLOB })),
     ).rejects.toThrow();
   });
 
   it("allows when attachmentsEnabled is absent (projector not built yet — stub true)", async () => {
     await seedShare(); // no attachmentsEnabled field
     const out = await wrappedUploadSession(
-      req(MEMBER, { hostUid: HOST, aircraftId: AC, blobId: BLOB }),
+      req(MEMBER, { hostUid: HOST, thingId: AC, blobId: BLOB }),
     );
     expect(typeof out.uploadUrl).toBe("string");
   });

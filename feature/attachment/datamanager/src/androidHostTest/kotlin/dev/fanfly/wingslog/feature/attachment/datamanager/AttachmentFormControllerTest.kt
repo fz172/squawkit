@@ -26,7 +26,7 @@ class AttachmentFormControllerTest {
     // Unconfined scope so discardUnsavedLocalBlobs' fire-and-forget launch runs synchronously.
     controller = AttachmentFormController(
       attachmentManager,
-      AIRCRAFT_ID,
+      THING_ID,
       CoroutineScope(UnconfinedTestDispatcher()),
     )
   }
@@ -57,7 +57,7 @@ class AttachmentFormControllerTest {
   @Test
   fun addLocalFiles_appendsLocalAndReturnsTrue() = runTest {
     coEvery {
-      attachmentManager.addPickedFile(AIRCRAFT_ID, any(), any())
+      attachmentManager.addPickedFile(THING_ID, any(), any())
     } returns fileAttachment("new")
 
     val anyAdded = controller.addLocalFiles(listOf(pickedFile())) { }
@@ -72,7 +72,7 @@ class AttachmentFormControllerTest {
     runTest {
       // Non-photos are gated up front on their picked size, before we read them into memory.
       coEvery {
-        attachmentManager.addPickedFile(AIRCRAFT_ID, any(), any())
+        attachmentManager.addPickedFile(THING_ID, any(), any())
       } returns fileAttachment("new")
       val errors = mutableListOf<AttachmentFormController.AddFileError>()
 
@@ -93,7 +93,7 @@ class AttachmentFormControllerTest {
       // The oversized non-photo is never handed to the manager.
       coVerify(exactly = 1) {
         attachmentManager.addPickedFile(
-          AIRCRAFT_ID,
+          THING_ID,
           any(),
           any()
         )
@@ -106,7 +106,7 @@ class AttachmentFormControllerTest {
       // A photo over the cap is NOT pre-rejected — it goes to the manager, which compresses it and
       // decides. Here the manager admits it (post-compression).
       coEvery {
-        attachmentManager.addPickedFile(AIRCRAFT_ID, any(), any())
+        attachmentManager.addPickedFile(THING_ID, any(), any())
       } returns fileAttachment("compressed")
       val errors = mutableListOf<AttachmentFormController.AddFileError>()
 
@@ -123,7 +123,7 @@ class AttachmentFormControllerTest {
       assertThat(anyAdded).isTrue()
       coVerify(exactly = 1) {
         attachmentManager.addPickedFile(
-          AIRCRAFT_ID,
+          THING_ID,
           any(),
           any()
         )
@@ -135,7 +135,7 @@ class AttachmentFormControllerTest {
     runTest {
       // Photo still over the cap after compression — the manager throws, the controller maps it.
       coEvery {
-        attachmentManager.addPickedFile(AIRCRAFT_ID, any(), any())
+        attachmentManager.addPickedFile(THING_ID, any(), any())
       } throws FileTooLargeException(9_000_000L)
       val errors = mutableListOf<AttachmentFormController.AddFileError>()
 
@@ -157,7 +157,7 @@ class AttachmentFormControllerTest {
   fun addLocalFiles_stopsAtFileCap_andReportsWhatWasSkipped() = runTest {
     var next = 0
     coEvery {
-      attachmentManager.addPickedFile(AIRCRAFT_ID, any(), any())
+      attachmentManager.addPickedFile(THING_ID, any(), any())
     } answers { fileAttachment("new-${next++}") }
     val errors = mutableListOf<AttachmentFormController.AddFileError>()
 
@@ -179,7 +179,7 @@ class AttachmentFormControllerTest {
   fun addLocalFiles_whenSeededNearCap_countsOnlyTheOverflow() = runTest {
     controller.seedIfEmpty(listOf(fileAttachment("a1"), fileAttachment("a2")))
     coEvery {
-      attachmentManager.addPickedFile(AIRCRAFT_ID, any(), any())
+      attachmentManager.addPickedFile(THING_ID, any(), any())
     } returns fileAttachment("new")
     val errors = mutableListOf<AttachmentFormController.AddFileError>()
 
@@ -197,7 +197,7 @@ class AttachmentFormControllerTest {
   fun addLocalFiles_whenEverythingFits_reportsNothing() = runTest {
     var next = 0
     coEvery {
-      attachmentManager.addPickedFile(AIRCRAFT_ID, any(), any())
+      attachmentManager.addPickedFile(THING_ID, any(), any())
     } answers { fileAttachment("new-${next++}", sha256 = "sha-${next}") }
     val errors = mutableListOf<AttachmentFormController.AddFileError>()
 
@@ -216,7 +216,7 @@ class AttachmentFormControllerTest {
       val copy = fileAttachment("copy", sha256 = SHA)
       coEvery {
         attachmentManager.addPickedFile(
-          AIRCRAFT_ID,
+          THING_ID,
           any(),
           any()
         )
@@ -237,7 +237,7 @@ class AttachmentFormControllerTest {
   fun addLocalFiles_sameFileTwiceInOneBatch_addsItOnce() = runTest {
     var next = 0
     coEvery {
-      attachmentManager.addPickedFile(AIRCRAFT_ID, any(), any())
+      attachmentManager.addPickedFile(THING_ID, any(), any())
     } answers { fileAttachment("new-${next++}", sha256 = SHA) }
     val errors = mutableListOf<AttachmentFormController.AddFileError>()
 
@@ -258,7 +258,7 @@ class AttachmentFormControllerTest {
       )
     )
     coEvery {
-      attachmentManager.addPickedFile(AIRCRAFT_ID, any(), any())
+      attachmentManager.addPickedFile(THING_ID, any(), any())
     } returns fileAttachment("new")
     val errors = mutableListOf<AttachmentFormController.AddFileError>()
 
@@ -275,7 +275,7 @@ class AttachmentFormControllerTest {
     controller.seedIfEmpty(listOf(fileAttachment("saved", sha256 = SHA)))
     controller.remove("saved")
     coEvery {
-      attachmentManager.addPickedFile(AIRCRAFT_ID, any(), any())
+      attachmentManager.addPickedFile(THING_ID, any(), any())
     } returns fileAttachment("copy", sha256 = SHA)
     val errors = mutableListOf<AttachmentFormController.AddFileError>()
 
@@ -289,7 +289,7 @@ class AttachmentFormControllerTest {
   @Test
   fun addLocalFiles_whenManagerThrows_reportsFailedWithMessage() = runTest {
     coEvery {
-      attachmentManager.addPickedFile(AIRCRAFT_ID, any(), any())
+      attachmentManager.addPickedFile(THING_ID, any(), any())
     } throws RuntimeException("disk full")
     val errors = mutableListOf<AttachmentFormController.AddFileError>()
 
@@ -421,7 +421,7 @@ class AttachmentFormControllerTest {
     // tombstone that blob or it orphans (locally, and in gs:// once the upload lands).
     val local = fileAttachment("local-1")
     coEvery {
-      attachmentManager.addPickedFile(AIRCRAFT_ID, any(), any())
+      attachmentManager.addPickedFile(THING_ID, any(), any())
     } returns local
     controller.addLocalFiles(listOf(pickedFile())) { }
 
@@ -452,7 +452,7 @@ class AttachmentFormControllerTest {
     val local = fileAttachment("local")
     val link = linkAttachment("link")
     coEvery {
-      attachmentManager.addPickedFile(AIRCRAFT_ID, any(), any())
+      attachmentManager.addPickedFile(THING_ID, any(), any())
     } returns local
     every { attachmentManager.makeLink(any(), any()) } returns link
 
@@ -472,7 +472,7 @@ class AttachmentFormControllerTest {
   fun discardUnsavedLocalBlobs_whenNotSaved_tombstonesLocalFiles() = runTest {
     val local = fileAttachment("local-1")
     coEvery {
-      attachmentManager.addPickedFile(AIRCRAFT_ID, any(), any())
+      attachmentManager.addPickedFile(THING_ID, any(), any())
     } returns local
     controller.addLocalFiles(listOf(pickedFile())) { }
 
@@ -487,7 +487,7 @@ class AttachmentFormControllerTest {
     // afterwards (e.g. onCleared firing post-save) must not delete them.
     val local = fileAttachment("local-1")
     coEvery {
-      attachmentManager.addPickedFile(AIRCRAFT_ID, any(), any())
+      attachmentManager.addPickedFile(THING_ID, any(), any())
     } returns local
     controller.addLocalFiles(listOf(pickedFile())) { }
     controller.resolveForSave()
@@ -548,7 +548,7 @@ class AttachmentFormControllerTest {
   )
 
   private companion object {
-    const val AIRCRAFT_ID = "aircraft-1"
+    const val THING_ID = "thing-1"
     const val SHA = "abc123"
   }
 }

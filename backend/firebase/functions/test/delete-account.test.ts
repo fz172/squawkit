@@ -41,7 +41,7 @@ async function seedAccount() {
   // A share USER hosts, with someone else in it.
   await adminDb.doc(`thing_shares/${USER}/thing/${OWN_AC}`).set({
     hostUid: USER,
-    aircraftId: OWN_AC,
+    thingId: OWN_AC,
     memberRoles: { [USER]: "owner", [MEMBER]: "technician" },
   });
   await adminDb
@@ -51,7 +51,7 @@ async function seedAccount() {
   // A share USER merely belongs to, hosted by someone else.
   await adminDb.doc(`thing_shares/${OTHER_HOST}/thing/${JOINED_AC}`).set({
     hostUid: OTHER_HOST,
-    aircraftId: JOINED_AC,
+    thingId: JOINED_AC,
     memberRoles: { [OTHER_HOST]: "owner", [USER]: "technician" },
   });
   await adminDb

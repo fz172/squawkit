@@ -6,7 +6,7 @@ import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.storage.CloudSyncSetting
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
-import dev.fanfly.wingslog.feature.sharing.model.AircraftShareState
+import dev.fanfly.wingslog.feature.sharing.model.ThingShareState
 import dev.fanfly.wingslog.feature.sharing.model.InviteLink
 import dev.fanfly.wingslog.feature.sharing.model.PendingInvite
 import dev.fanfly.wingslog.feature.sharing.model.ShareMember
@@ -41,7 +41,7 @@ class ManageAccessViewModelTest {
   private lateinit var cloudSync: CloudSyncSetting
   private lateinit var subscription: SubscriptionManager
   private val role = MutableStateFlow<ShareRole?>(ShareRole.OWNER)
-  private val share = MutableStateFlow(AircraftShareState())
+  private val share = MutableStateFlow(ThingShareState())
 
   // Host-a-share gate; on (default-open) unless a test flips it.
   private val canHostShare = MutableStateFlow(true)
@@ -73,12 +73,12 @@ class ManageAccessViewModelTest {
     cloudSync = cloudSync,
     subscriptionManager = subscription,
     fleetManager = fleet,
-    savedStateHandle = SavedStateHandle(mapOf(Screen.AIRCRAFT_ID to AC_ID)),
+    savedStateHandle = SavedStateHandle(mapOf(Screen.THING_ID to AC_ID)),
   )
 
   @Test
   fun state_reflectsRoleAndMembers() = runTest {
-    share.value = AircraftShareState(
+    share.value = ThingShareState(
       members = listOf(
         ShareMember(
           uid = "host",
@@ -172,7 +172,7 @@ class ManageAccessViewModelTest {
   fun accessDeniedAfterAppearingInRoster_closesTheScreen() = runTest {
     // B is on the roster, then A revokes them: the rules cut B's roster listener the moment B leaves
     // memberRoles. Leaving the screen up would show B a roster that still lists B as a member.
-    share.value = AircraftShareState(
+    share.value = ThingShareState(
       members = listOf(
         ShareMember(
           uid = "host",
@@ -191,7 +191,7 @@ class ManageAccessViewModelTest {
     val vm = viewModel()
     assertThat(vm.uiState.value.accessRevoked).isFalse()
 
-    share.value = AircraftShareState(accessDenied = true)
+    share.value = ThingShareState(accessDenied = true)
 
     assertThat(vm.uiState.value.accessRevoked).isTrue()
   }
@@ -203,7 +203,7 @@ class ManageAccessViewModelTest {
       // Nothing has been revoked — there is nothing to revoke — so the screen must stay put and let
       // them invite.
       role.value = ShareRole.OWNER
-      share.value = AircraftShareState(accessDenied = true)
+      share.value = ThingShareState(accessDenied = true)
 
       val vm = viewModel()
 
@@ -212,7 +212,7 @@ class ManageAccessViewModelTest {
 
   @Test
   fun accessDenied_doesNotStrandTheStaleRoster() = runTest {
-    share.value = AircraftShareState(
+    share.value = ThingShareState(
       members = listOf(
         ShareMember(
           uid = "me",
@@ -224,7 +224,7 @@ class ManageAccessViewModelTest {
     )
     val vm = viewModel()
 
-    share.value = AircraftShareState(accessDenied = true)
+    share.value = ThingShareState(accessDenied = true)
 
     // The roster we last saw is not overwritten with an empty one (that would flash an empty screen
     // on the way out), but the screen is on its way out — that is what accessRevoked means.
@@ -239,7 +239,7 @@ class ManageAccessViewModelTest {
     // Sharing is a cloud feature end to end: with sync off there is nothing to share into and
     // nothing to receive from. Offering invite / remove / leave here would fail on tap.
     cloudSync = CloudSyncSetting { false }
-    share.value = AircraftShareState(
+    share.value = ThingShareState(
       members = listOf(
         ShareMember(
           uid = "host",
@@ -266,7 +266,7 @@ class ManageAccessViewModelTest {
   @Test
   fun syncOn_ownerCanManage() = runTest {
     role.value = ShareRole.OWNER
-    share.value = AircraftShareState(
+    share.value = ThingShareState(
       members = listOf(
         ShareMember(
           uid = "host",
@@ -380,7 +380,7 @@ class ManageAccessViewModelTest {
   @Test
   fun pendingInvites_reflectShareState() = runTest {
     val vm = viewModel()
-    share.value = AircraftShareState(
+    share.value = ThingShareState(
       invites = listOf(
         PendingInvite(
           codeId = "t1",
@@ -400,7 +400,7 @@ class ManageAccessViewModelTest {
     // e.g. redeemed on another device: nothing local ever calls cancelInvite, the code just drops
     // out of the next roster snapshot. The CODE view has nothing left to show and must not be left
     // stranded there.
-    share.value = AircraftShareState(
+    share.value = ThingShareState(
       members = listOf(
         ShareMember(
           uid = "host",
@@ -423,7 +423,7 @@ class ManageAccessViewModelTest {
     vm.openCode("t1")
     assertThat(vm.uiState.value.view).isEqualTo(AccessPanelView.CODE)
 
-    share.value = AircraftShareState(
+    share.value = ThingShareState(
       members = listOf(
         ShareMember(
           uid = "host",
@@ -450,7 +450,7 @@ class ManageAccessViewModelTest {
   fun otherInviteVanishing_doesNotDisturbTheOpenCodeView() = runTest {
     // Only the invite currently on screen should trigger the close — an unrelated code expiring or
     // being cancelled elsewhere shouldn't yank the owner out of what they're looking at.
-    share.value = AircraftShareState(
+    share.value = ThingShareState(
       invites = listOf(
         PendingInvite(
           codeId = "t1",
@@ -469,7 +469,7 @@ class ManageAccessViewModelTest {
     val vm = viewModel()
     vm.openCode("t1")
 
-    share.value = AircraftShareState(
+    share.value = ThingShareState(
       invites = listOf(
         PendingInvite(
           codeId = "t1",

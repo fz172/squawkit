@@ -30,7 +30,7 @@ import wingslog.feature.subscription.viewing.generated.resources.upsell_body_sha
  * lands). See docs/subscription/subscription_design.html §9.
  */
 enum class UpsellTrigger {
-  ADD_AIRCRAFT,
+  ADD_THING,
   ATTACHMENT_UPLOAD,
   EMAIL_EXPORT,
   SHARE_HOST,
@@ -49,7 +49,7 @@ enum class UpsellTrigger {
  */
 @Composable
 private fun UpsellTrigger.body(): String = when (this) {
-  UpsellTrigger.ADD_AIRCRAFT -> stringResource(Res.string.upsell_body_add_thing)
+  UpsellTrigger.ADD_THING -> stringResource(Res.string.upsell_body_add_thing)
 
   UpsellTrigger.SHARE_HOST -> stringResource(Res.string.upsell_body_share)
 

@@ -15,10 +15,10 @@ import org.junit.Test
 class SyncCursorStoreTest {
   companion object {
     private const val TEST_UID = "user-cursor-001"
-    private const val TEST_AIRCRAFT_ID = "aircraft-cursor-001"
+    private const val TEST_THING_ID = "thing-cursor-001"
     private val TEST_SCOPE = EntityScope.thingChildUnsafe(
       TEST_UID,
-      TEST_AIRCRAFT_ID
+      TEST_THING_ID
     )
     private val TEST_KIND = CollectionKind.MaintenanceLog
   }
@@ -248,7 +248,7 @@ class SyncCursorStoreTest {
   fun cursors_differentScopesSameKind_areIsolated() = runTest {
     val scopeOther = EntityScope.thingChildUnsafe(
       TEST_UID,
-      "other-aircraft"
+      "other-thing"
     )
     store.markHydrated(
       TEST_UID,

@@ -11,11 +11,11 @@ import {
   sharedAircraftRefTombstone,
 } from "../sharing/sharedAircraftRefWire.js";
 import {
-  AIRCRAFT_SHARES_COLLECTION,
-  SHARE_AIRCRAFT_SUBCOLLECTION,
-  aircraftShareDocPath,
+  THING_SHARES_COLLECTION,
+  SHARE_THING_SUBCOLLECTION,
+  thingShareDocPath,
   shareMemberDocPath,
-  type AircraftShareDoc,
+  type ThingShareDoc,
 } from "../sharing/sharingModels.js";
 
 /**
@@ -37,7 +37,7 @@ import {
  * ## Shared aircraft
  *
  * Shares this user hosts are torn down and every member loses access (#418). That matches what
- * already happens when a host deletes an aircraft (`onAircraftDeleted`): the data lives in the
+ * already happens when a host deletes an aircraft (`onThingDeleted`): the data lives in the
  * host's tree, so it cannot outlive the host. Members are tombstoned rather than silently dropped,
  * which is what tells their devices to purge the local copy.
  *
@@ -84,14 +84,14 @@ export const deleteMyAccount = onCall<void, Promise<{ ok: true }>>(
  */
 async function tearDownHostedShares(uid: string): Promise<void> {
   const hosted = await adminDb
-    .collection(AIRCRAFT_SHARES_COLLECTION)
+    .collection(THING_SHARES_COLLECTION)
     .doc(uid)
-    .collection(SHARE_AIRCRAFT_SUBCOLLECTION)
+    .collection(SHARE_THING_SUBCOLLECTION)
     .get();
 
   for (const shareDoc of hosted.docs) {
-    const share = shareDoc.data() as AircraftShareDoc;
-    if (share.hostUid !== uid) continue; // not ours to tear down; see onAircraftDeleted's note
+    const share = shareDoc.data() as ThingShareDoc;
+    if (share.hostUid !== uid) continue; // not ours to tear down; see onThingDeleted's note
     await Promise.all(
       Object.keys(share.memberRoles ?? {})
         .filter((memberUid) => memberUid !== uid) // the host holds the data directly, so has no ref
@@ -103,7 +103,7 @@ async function tearDownHostedShares(uid: string): Promise<void> {
     );
   }
 
-  await adminDb.recursiveDelete(adminDb.collection(AIRCRAFT_SHARES_COLLECTION).doc(uid));
+  await adminDb.recursiveDelete(adminDb.collection(THING_SHARES_COLLECTION).doc(uid));
 }
 
 /**
@@ -126,17 +126,17 @@ async function leaveJoinedShares(uid: string): Promise<void> {
 
     try {
       await adminDb.runTransaction(async (tx) => {
-        const shareRef = adminDb.doc(aircraftShareDocPath(ref.hostUid, ref.aircraftId));
+        const shareRef = adminDb.doc(thingShareDocPath(ref.hostUid, ref.thingId));
         const snap = await tx.get(shareRef);
         if (!snap.exists) return;
         tx.update(shareRef, { [`memberRoles.${uid}`]: FieldValue.delete() });
-        tx.delete(adminDb.doc(shareMemberDocPath(ref.hostUid, ref.aircraftId, uid)));
+        tx.delete(adminDb.doc(shareMemberDocPath(ref.hostUid, ref.thingId, uid)));
       });
     } catch (e) {
       logger.error("Could not leave a share during account deletion", {
         uid,
         hostUid: ref.hostUid,
-        aircraftId: ref.aircraftId,
+        thingId: ref.thingId,
         error: String(e),
       });
     }
@@ -148,7 +148,7 @@ async function leaveJoinedShares(uid: string): Promise<void> {
  * `users/{uid}/{segment}/{acId}/blobs/`, so the single user prefix covers all of them
  * regardless of which entity segment the account is on during the migration window.
  *
- * Logged and swallowed on failure, like `onAircraftDeleted`'s sweep: orphaned bytes are picked up
+ * Logged and swallowed on failure, like `onThingDeleted`'s sweep: orphaned bytes are picked up
  * by `scheduledStorageSweep`, whereas a throw here would abandon the deletion with the account
  * still live.
  */

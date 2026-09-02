@@ -23,7 +23,7 @@ import dev.fanfly.wingslog.core.analytics.LocalAnalytics
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalNavPillClearance
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.thing.dashboard.compose.ComplianceSection
-import dev.fanfly.wingslog.feature.thing.dashboard.data.AircraftOverviewAction
+import dev.fanfly.wingslog.feature.thing.dashboard.data.ThingOverviewAction
 import dev.fanfly.wingslog.feature.thing.dashboard.data.ThingOverviewUiState
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
@@ -32,7 +32,7 @@ import kotlin.math.roundToInt
 @Composable
 fun MaintenanceTasksTab(
   state: ThingOverviewUiState.Success,
-  onAction: (AircraftOverviewAction) -> Unit,
+  onAction: (ThingOverviewAction) -> Unit,
   /** Jumped-to task (from a log's Affected Tasks): switch to its sub-view and scroll to it. */
   scrollToTaskId: String? = null,
   showHeader: Boolean = true,
@@ -91,7 +91,7 @@ fun MaintenanceTasksTab(
         showComplied = it
         analytics.logScreenView("shell/tasks/${if (it) "complied" else "active"}")
       },
-      onCardClick = { onAction(AircraftOverviewAction.TaskCardClick(it)) },
+      onCardClick = { onAction(ThingOverviewAction.TaskCardClick(it)) },
       scrollTargetId = scrollToTaskId,
       onTargetPositioned = { targetCardY = it },
       showHeader = showHeader,

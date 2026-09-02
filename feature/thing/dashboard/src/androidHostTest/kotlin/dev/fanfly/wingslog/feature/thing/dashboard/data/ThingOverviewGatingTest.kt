@@ -19,19 +19,19 @@ class ThingOverviewGatingTest {
 
   @Test
   fun owner_canManage() {
-    assertThat(state(ShareRole.OWNER).canManageAircraft).isTrue()
+    assertThat(state(ShareRole.OWNER).canManageThing).isTrue()
   }
 
   @Test
   fun technician_cannotManage() {
-    assertThat(state(ShareRole.TECHNICIAN).canManageAircraft).isFalse()
+    assertThat(state(ShareRole.TECHNICIAN).canManageThing).isFalse()
   }
 
   @Test
   fun unresolvedRole_defaultsToManageable() {
     // null only appears briefly before the role resolves; own thing resolve to OWNER, so
     // defaulting to manageable avoids hiding an owner's controls on first frame.
-    assertThat(state(null).canManageAircraft).isTrue()
+    assertThat(state(null).canManageThing).isTrue()
   }
 
   // --- Sharing is not available to a guest (PRD F1) ---

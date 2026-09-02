@@ -39,7 +39,7 @@ class MaintenanceLogManagerImpl(
         else logStore.observeAll(scope)
           .map { rows -> rows.associate { it.id to it.writerUid } }
           .catch { e ->
-            logger.w(e) { "Error observing log authorship for aircraft $thingId" }
+            logger.w(e) { "Error observing log authorship for thing $thingId" }
             emit(emptyMap())
           }
       }
@@ -49,7 +49,7 @@ class MaintenanceLogManagerImpl(
     scopeResolver.resolve(thingId)
       .flatMapLatest { scope ->
         if (scope == null) {
-          logger.d { "No signed-in user; stopping logs observation for aircraft $thingId" }
+          logger.d { "No signed-in user; stopping logs observation for thing $thingId" }
           flowOf(emptyList())
         } else {
           logStore.observeAll(scope)
@@ -58,7 +58,7 @@ class MaintenanceLogManagerImpl(
                 .sortedByDescending { it.timestamp?.getEpochSecond() ?: 0L }
             }
             .catch { e ->
-              logger.w(e) { "Error observing logs for aircraft $thingId" }
+              logger.w(e) { "Error observing logs for thing $thingId" }
               emit(emptyList())
             }
         }
@@ -74,7 +74,7 @@ class MaintenanceLogManagerImpl(
           overviewStore.observe(OVERVIEW_ID, scope)
             .map { it?.value }
             .catch { e ->
-              logger.w(e) { "Error observing overview for aircraft $thingId" }
+              logger.w(e) { "Error observing overview for thing $thingId" }
               emit(null)
             }
         }

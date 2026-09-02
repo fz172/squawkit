@@ -35,7 +35,7 @@ import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
 private const val TEST_USER_ID = "test-user-123"
-private const val TEST_AIRCRAFT_ID = "aircraft-abc"
+private const val TEST_THING_ID = "thing-abc"
 private const val TEST_SHA256 =
   "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890"
 private val FIXED_EPOCH_SECONDS = 1_700_000_000L
@@ -72,7 +72,7 @@ class LocalFirstAttachmentManagerImplTest {
     every { auth.getCurrentUser() } returns mockUser
 
     // Default: own thing — the resolver hands back the caller's own tree. A shared-thing case
-    // would return aircraftChildUnsafe(hostUid, ...); the manager just uses whatever scope it is given.
+    // would return thingChildUnsafe(hostUid, ...); the manager just uses whatever scope it is given.
     thingScopeResolver = mockk(relaxed = true)
     coEvery { thingScopeResolver.resolveNow(any()) } answers {
       EntityScope.thingChildUnsafe(TEST_USER_ID, firstArg())
@@ -136,13 +136,13 @@ class LocalFirstAttachmentManagerImplTest {
   // ---- addPickedFile ----
 
   @Test
-  fun addPickedFile_onSharedAircraft_scopesBlobToHostTree() = runTest {
+  fun addPickedFile_onSharedThing_scopesBlobToHostTree() = runTest {
     // Regression: a technician's upload was scoped to their OWN tree, so the bytes never reached the
     // host and the host's download 404'd. The blob must land in the host's tree (design §9), which is
     // also what makes the upload driver route it through the broker (P8.4).
     val hostUid = "host-eng-42"
-    coEvery { thingScopeResolver.resolveNow(TEST_AIRCRAFT_ID) } returns
-      EntityScope.thingChildUnsafe(hostUid, TEST_AIRCRAFT_ID)
+    coEvery { thingScopeResolver.resolveNow(TEST_THING_ID) } returns
+      EntityScope.thingChildUnsafe(hostUid, TEST_THING_ID)
     val picked = buildPickedFile(
       uri = "content://example/photo.jpg",
       mimeType = "image/jpeg"
@@ -160,19 +160,19 @@ class LocalFirstAttachmentManagerImplTest {
       buildBlobRef(sha256 = TEST_SHA256)
 
     val result = manager.addPickedFile(
-      TEST_AIRCRAFT_ID,
+      TEST_THING_ID,
       picked,
       displayName = "shared.jpg"
     )
 
     assertThat(result.storage_path)
-      .startsWith("users/$hostUid/thing/$TEST_AIRCRAFT_ID/blobs/")
+      .startsWith("users/$hostUid/thing/$TEST_THING_ID/blobs/")
     coVerify {
       blobs.put(
         any(),
         fakeBytes,
         contentType = any(),
-        scope = EntityScope.thingChildUnsafe(hostUid, TEST_AIRCRAFT_ID),
+        scope = EntityScope.thingChildUnsafe(hostUid, TEST_THING_ID),
       )
     }
   }
@@ -196,18 +196,18 @@ class LocalFirstAttachmentManagerImplTest {
       buildBlobRef(sha256 = TEST_SHA256)
 
     val result =
-      manager.addPickedFile(TEST_AIRCRAFT_ID, picked, displayName = "My Photo")
+      manager.addPickedFile(TEST_THING_ID, picked, displayName = "My Photo")
 
     assertThat(result.sha256).isEqualTo(TEST_SHA256)
     assertThat(result.storage_path)
-      .startsWith("users/$TEST_USER_ID/thing/$TEST_AIRCRAFT_ID/blobs/")
-    // storage_path must be: users/{uid}/thing/{aircraftId}/blobs/{id}
+      .startsWith("users/$TEST_USER_ID/thing/$TEST_THING_ID/blobs/")
+    // storage_path must be: users/{uid}/thing/{thingId}/blobs/{id}
     val parts = result.storage_path.split("/")
     assertThat(parts).hasSize(6)
     assertThat(parts[0]).isEqualTo("users")
     assertThat(parts[1]).isEqualTo(TEST_USER_ID)
     assertThat(parts[2]).isEqualTo("thing")
-    assertThat(parts[3]).isEqualTo(TEST_AIRCRAFT_ID)
+    assertThat(parts[3]).isEqualTo(TEST_THING_ID)
     assertThat(parts[4]).isEqualTo("blobs")
     assertThat(parts[5]).isNotEmpty()
   }
@@ -226,7 +226,7 @@ class LocalFirstAttachmentManagerImplTest {
     } returns buildBlobRef()
 
     val result =
-      manager.addPickedFile(TEST_AIRCRAFT_ID, picked, displayName = "file")
+      manager.addPickedFile(TEST_THING_ID, picked, displayName = "file")
 
     assertThat(result.created_at).isNotNull()
     assertThat(result.created_at!!.getEpochSecond()).isEqualTo(
@@ -241,7 +241,7 @@ class LocalFirstAttachmentManagerImplTest {
     var caught: Throwable? = null
     try {
       manager.addPickedFile(
-        TEST_AIRCRAFT_ID,
+        TEST_THING_ID,
         buildPickedFile(),
         displayName = "file"
       )
@@ -259,7 +259,7 @@ class LocalFirstAttachmentManagerImplTest {
     var caught: Throwable? = null
     try {
       manager.addPickedFile(
-        TEST_AIRCRAFT_ID,
+        TEST_THING_ID,
         buildPickedFile(),
         displayName = "file"
       )
@@ -284,7 +284,7 @@ class LocalFirstAttachmentManagerImplTest {
     } returns buildBlobRef()
 
     val result =
-      manager.addPickedFile(TEST_AIRCRAFT_ID, picked, displayName = "pic")
+      manager.addPickedFile(TEST_THING_ID, picked, displayName = "pic")
 
     assertThat(result.type.name).isEqualTo("ATTACHMENT_TYPE_IMAGE")
   }
@@ -303,7 +303,7 @@ class LocalFirstAttachmentManagerImplTest {
     } returns buildBlobRef()
 
     val result =
-      manager.addPickedFile(TEST_AIRCRAFT_ID, picked, displayName = "doc.pdf")
+      manager.addPickedFile(TEST_THING_ID, picked, displayName = "doc.pdf")
 
     assertThat(result.type.name).isEqualTo("ATTACHMENT_TYPE_PDF")
   }
@@ -322,7 +322,7 @@ class LocalFirstAttachmentManagerImplTest {
     } returns buildBlobRef()
 
     val result =
-      manager.addPickedFile(TEST_AIRCRAFT_ID, picked, displayName = "notes.txt")
+      manager.addPickedFile(TEST_THING_ID, picked, displayName = "notes.txt")
 
     assertThat(result.type.name).isEqualTo("ATTACHMENT_TYPE_FILE")
   }
@@ -349,7 +349,7 @@ class LocalFirstAttachmentManagerImplTest {
 
       val result =
         manager.addPickedFile(
-          TEST_AIRCRAFT_ID,
+          TEST_THING_ID,
           picked,
           displayName = "My Photo"
         )
@@ -381,7 +381,7 @@ class LocalFirstAttachmentManagerImplTest {
     } returns buildBlobRef()
 
     val result =
-      manager.addPickedFile(TEST_AIRCRAFT_ID, picked, displayName = "photo.jpg")
+      manager.addPickedFile(TEST_THING_ID, picked, displayName = "photo.jpg")
 
     coVerify(exactly = 1) {
       blobs.put(any(), rawBytes, contentType = "image/jpeg", scope = any())
@@ -398,7 +398,7 @@ class LocalFirstAttachmentManagerImplTest {
       blobs.put(any(), any(), contentType = any(), scope = any())
     } returns buildBlobRef()
 
-    manager.addPickedFile(TEST_AIRCRAFT_ID, picked, displayName = "doc.pdf")
+    manager.addPickedFile(TEST_THING_ID, picked, displayName = "doc.pdf")
 
     coVerify(exactly = 0) { imageCompressor.compressToJpeg(any()) }
   }
@@ -414,7 +414,7 @@ class LocalFirstAttachmentManagerImplTest {
     } returns buildBlobRef()
 
     val result =
-      manager.addPickedFile(TEST_AIRCRAFT_ID, picked, displayName = "chart.png")
+      manager.addPickedFile(TEST_THING_ID, picked, displayName = "chart.png")
 
     coVerify(exactly = 0) { imageCompressor.compressToJpeg(any()) }
     assertThat(result.mime_type).isEqualTo("image/png")
@@ -434,7 +434,7 @@ class LocalFirstAttachmentManagerImplTest {
 
       var caught: Throwable? = null
       try {
-        manager.addPickedFile(TEST_AIRCRAFT_ID, picked, displayName = "big.jpg")
+        manager.addPickedFile(TEST_THING_ID, picked, displayName = "big.jpg")
       } catch (e: FileTooLargeException) {
         caught = e
       }
@@ -496,7 +496,7 @@ class LocalFirstAttachmentManagerImplTest {
       blobs.put(any(), any(), contentType = any(), scope = any())
     } returns buildBlobRef()
     val attachment = manager.addPickedFile(
-      TEST_AIRCRAFT_ID,
+      TEST_THING_ID,
       buildPickedFile(),
       displayName = "file"
     )
@@ -519,7 +519,7 @@ class LocalFirstAttachmentManagerImplTest {
       )
     } returns buildBlobRef()
     val attachment = manager.addPickedFile(
-      TEST_AIRCRAFT_ID,
+      TEST_THING_ID,
       buildPickedFile(),
       displayName = "file"
     )

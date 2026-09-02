@@ -93,7 +93,7 @@ class SquawkFormViewModel(
 ) : ViewModel() {
 
   private val thingId: String =
-    checkNotNull(savedStateHandle[Screen.AIRCRAFT_ID])
+    checkNotNull(savedStateHandle[Screen.THING_ID])
   private val squawkId: String? = savedStateHandle[Screen.SQUAWK_ID]
 
   private val _state = MutableStateFlow(

@@ -16,10 +16,10 @@ import org.junit.Test
 
 class HydrationRunnerTest {
   private val TEST_UID = "user-hydration-001"
-  private val TEST_AIRCRAFT_ID = "aircraft-hydration-001"
+  private val TEST_THING_ID = "thing-hydration-001"
   private val TEST_SCOPE = EntityScope.thingChildUnsafe(
     TEST_UID,
-    TEST_AIRCRAFT_ID
+    TEST_THING_ID
   )
   private val TEST_KIND = CollectionKind.MaintenanceLog
 

@@ -40,7 +40,7 @@ class LocalAccountMigratorTest {
       scope_path = "/users/$uid/fleet",
       id = id,
       payload = byteArrayOf(1),
-      payload_schema = "Aircraft",
+      payload_schema = "Thing",
       updated_at = 1_000L,
       remote_updated_at = remoteUpdatedAt,
       dirty = dirty,

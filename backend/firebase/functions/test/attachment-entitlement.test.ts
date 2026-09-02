@@ -4,7 +4,7 @@ import { adminDb, fft, req } from "./helpers.js";
 
 import { createThingShareInvite } from "../src/sharing/createThingShareInvite.js";
 import {
-  aircraftShareDocPath,
+  thingShareDocPath,
   SHARE_ROLE,
 } from "../src/sharing/sharingModels.js";
 import {
@@ -105,16 +105,16 @@ const proDoc = {
 const freeDoc = { status: SUBSCRIPTION_STATUS.FREE, lifecycle: SUBSCRIPTION_LIFECYCLE.NONE };
 
 async function seedShare(hostUid: string, acId: string, attachmentsEnabled?: boolean) {
-  await adminDb.doc(aircraftShareDocPath(hostUid, acId)).set({
+  await adminDb.doc(thingShareDocPath(hostUid, acId)).set({
     hostUid,
-    aircraftId: acId,
+    thingId: acId,
     memberRoles: { [hostUid]: SHARE_ROLE.OWNER },
     ...(attachmentsEnabled === undefined ? {} : { attachmentsEnabled }),
   });
 }
 
 const attachmentsEnabledOf = async (hostUid: string, acId: string) =>
-  (await adminDb.doc(aircraftShareDocPath(hostUid, acId)).get()).data()?.attachmentsEnabled;
+  (await adminDb.doc(thingShareDocPath(hostUid, acId)).get()).data()?.attachmentsEnabled;
 
 beforeEach(async () => {
   await adminDb.recursiveDelete(adminDb.collection(`thing_shares/${HOST}/thing`));
@@ -179,7 +179,7 @@ describe("createThingShareInvite stamps attachmentsEnabled at bootstrap", () => 
   });
 
   const createReq = () =>
-    req(HOST, { aircraftId: AC1, role: SHARE_ROLE.TECHNICIAN, aircraftLabel: "N123" });
+    req(HOST, { thingId: AC1, role: SHARE_ROLE.TECHNICIAN, thingLabel: "N123" });
 
   it("bootstraps a free host's share disabled", async () => {
     await wrappedCreate(createReq());

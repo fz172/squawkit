@@ -94,7 +94,7 @@ export function recordTypeForKind(kind: string): RecordType | null {
 }
 
 /** The shell section a tap on this record type should land on (`NotificationTapTarget.Aircraft`). */
-export function aircraftTabForRecordType(recordType: RecordType): string {
+export function thingTabForRecordType(recordType: RecordType): string {
   switch (recordType) {
     case RECORD_TYPE.SQUAWK:
       return "squawks";
@@ -115,20 +115,12 @@ export function aircraftTabForRecordType(recordType: RecordType): string {
  * to it, and nothing here ever collapses one tray entry onto another; the timestamp only keeps two
  * rapid writes to the same record from racing onto an identical id.
  *
- * **No `aircraftId`, on purpose — and not merely for brevity.** FCM enforces a **hard 64-byte limit
- * on the `apns-collapse-id` header** (`sendPush` sets it to this id, §7.6), and both `aircraftId` and
- * `recordId` are 20-character client-generated ids (`IdGenerator.kt`). The original format —
- * `n1:{aircraftId}:{recordType}:{recordId}:{atMs}` — ran 65 bytes for `recordType: "squawk"` and 67
- * for `"aircraft"` (whose `recordId` duplicates `aircraftId`), both over the limit. FCM rejects the
- * **entire multicast** with `messaging/invalid-argument` when that happens, which fails silently:
- * `sendToRecipient` catches and logs the per-token error but never surfaces it to the write's
- * caller, so the record itself saves fine and nothing points at the push. It shipped, deployed to
- * production, and made every squawk (and aircraft) activity notification fail outright — caught only
- * because a reopened squawk went unreported and someone noticed. `task` (63 bytes) and `log` (62)
- * happened to survive by one and two bytes; that is luck, not a property of the design. Dropping
- * `aircraftId` — already carried in the push payload's own `aircraftId` field for anything that needs
- * it — brings the worst case (`aircraft`, whose `recordId` is the 20-char aircraft id) down to 46
- * bytes, with headroom to spare rather than margin measured in single bytes.
+ * **No thing id, on purpose.** `apns-collapse-id` is capped at 64 bytes and both the thing id and
+ * `recordId` are 20 chars, so the original `n1:{thingId}:{recordType}:{recordId}:{atMs}` ran 65-67
+ * bytes for `squawk` and `aircraft`. FCM then rejects the whole multicast with
+ * `messaging/invalid-argument`, and `sendToRecipient` only logs it — the record saves and the push
+ * silently never lands. Dropping it brings the worst case to 46 bytes. The thing id is still in the
+ * push payload's own `aircraftId` field (wire name, #638) for anything that needs it.
  */
 export function activityNotificationId(
   recordType: RecordType,
@@ -139,13 +131,13 @@ export function activityNotificationId(
 }
 
 /**
- * `n1esc:{aircraftId}:{squawkId}` — an escalation's own id, never the activity id (§7.5).
+ * `n1esc:{thingId}:{squawkId}` — an escalation's own id, never the activity id (§7.5).
  *
  * That distinction is the whole rule: folding an escalation into the activity id would let the next
  * routine edit's push overwrite "Sarah raised Left brake dragging to AOG" with a mundane update
  * notice, silently replacing a grounding alert. It carries no actor, so nothing can collapse onto it
  * either.
  */
-export function escalationNotificationId(aircraftId: string, squawkId: string): string {
-  return `n1esc:${aircraftId}:${squawkId}`;
+export function escalationNotificationId(thingId: string, squawkId: string): string {
+  return `n1esc:${thingId}:${squawkId}`;
 }
