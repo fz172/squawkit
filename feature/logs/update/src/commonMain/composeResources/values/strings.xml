@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
   <string name="work_description_required">Work Description *</string>
-  <string name="engine_time_hours">Engine Time (hours)</string>
   <string name="airframe_serial">Airframe Serial</string>
   <string name="loading_thing">Loading <xliff:g example="aircraft">%1$s</xliff:g>…</string>
   <string name="no_engines_found">No engines found for this <xliff:g example="aircraft">%1$s</xliff:g>.</string>
@@ -10,8 +9,6 @@
   <string name="make_model_serial"><xliff:g example="Cessna">%1$s</xliff:g> (<xliff:g example="SN-1234">%2$s</xliff:g>)</string>
   <string name="type_make_model_serial"><xliff:g example="Engine">%1$s</xliff:g> - <xliff:g example="Lycoming O-320">%2$s</xliff:g> (<xliff:g example="SN-1234">%3$s</xliff:g>)</string>
   <string name="delete_log">Delete Log?</string>
-  <string name="airframe_time_hours">Airframe Time (hours)</string>
-  <string name="prop_time_hours">Prop Time (hours)</string>
   <string name="tap_to_change_date">Tap to change date</string>
   <string name="log_not_found">Log not found</string>
   <string name="log_updated">Log updated</string>

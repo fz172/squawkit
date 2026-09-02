@@ -1,5 +1,4 @@
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-  <string name="technician">Technician</string>
   <string name="add_technician">Add Technician</string>
   <string name="edit_technician">Update Technician</string>
   <string name="manage_technicians_description">Everyone who works on what you track. Add them here so you can pick them when recording work.</string>
@@ -7,7 +6,6 @@
   <string name="select_technician">Select Technician</string>
   <string name="performed_by">Performed By</string>
 
-  <string name="name">Name</string>
   <string name="name_required">Name (Required)</string>
   <string name="certificate_type">Certificate Type</string>
   <string name="certificate_number">Certificate Number</string>

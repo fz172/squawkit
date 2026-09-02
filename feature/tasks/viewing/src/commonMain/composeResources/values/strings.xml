@@ -6,7 +6,6 @@
 
   <string name="critical_airworthiness">URGENT ATTENTION REQUIRED</string>
   <string name="maintenance_due_subtitle"><xliff:g example="maintenance tasks">%1$s</xliff:g> pending</string>
-  <string name="compliance_details">Compliance Details</string>
   <string name="next_due_date">NEXT DUE DATE</string>
   <!-- Names whichever meter the task is scheduled against — "NEXT DUE ODOMETER" (#759). -->
   <string name="next_due_meter">NEXT DUE <xliff:g example="ODOMETER">%1$s</xliff:g></string>
@@ -21,7 +20,6 @@
   <string name="label_deadline">DEADLINE</string>
   <string name="label_due_engine">DUE @</string>
   <string name="label_due_engine_value">DUE @ <xliff:g example="3">%1$s</xliff:g></string>
-  <string name="engine_hours_upper"><xliff:g example="12 Mar 2026 14:03">%1$s</xliff:g> HRS</string>
   <string name="label_expired">EXPIRED <xliff:g example="12 Mar 2026">%1$s</xliff:g></string>
   <string name="no_maintenance_logs_for_task">No logs yet. Add a maintenance entry and tag this task to see history here.</string>
 </resources>
