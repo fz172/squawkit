@@ -173,15 +173,27 @@ fun ThingTemplate?.componentRows(thing: Thing): List<ComponentRow> {
 }
 
 /**
- * Slots under [parentPath] that the user may add another of.
+ * Slots under [parentPath] that the user may add another of, given the [existing] rows there.
  *
- * Only repeatable ones. `ComponentSlot` carries a single bool where PRD §4.3 designed a three-way
- * cardinality, so "may add" and "may hold several" are the same question here — a non-repeatable
- * slot already has its row and adding a second would produce a tree the template cannot describe.
+ * Repeatable ones that are not already full. A non-repeatable slot already has its row, and adding
+ * a second would produce a tree the template cannot describe.
+ *
+ * [existing] is what makes `max_instances` real: a car's engine is repeatable so that an EV can
+ * have none, and capped at one so a hatchback is not offered a second. Passed in rather than
+ * re-walked from the Thing because every caller is already holding the rows at that path.
  */
-fun ThingTemplate?.addableSlotsUnder(parentPath: ComponentPath): List<ComponentSlot> {
+fun ThingTemplate?.addableSlotsUnder(
+  parentPath: ComponentPath,
+  existing: List<ComponentRow> = emptyList(),
+): List<ComponentSlot> {
   if (this == null) return emptyList()
-  if (parentPath.isEmpty()) return component_slots.filter { it.repeatable }
+  fun notFull(slot: ComponentSlot): Boolean {
+    if (!slot.repeatable) return false
+    if (slot.max_instances <= 0) return true
+    return existing.count { it.slot.slot_key == slot.slot_key && it.component != null } <
+      slot.max_instances
+  }
+  if (parentPath.isEmpty()) return component_slots.filter(::notFull)
   var slots: List<ComponentSlot> = component_slots
   var found: ComponentSlot? = null
   for ((slotKey, _) in parentPath) {
@@ -189,7 +201,7 @@ fun ThingTemplate?.addableSlotsUnder(parentPath: ComponentPath): List<ComponentS
     slots = found.children
   }
   return found?.children.orEmpty()
-    .filter { it.repeatable }
+    .filter(::notFull)
 }
 
 /** A new component for [slot], with the non-repeatable descendants the template expects. */

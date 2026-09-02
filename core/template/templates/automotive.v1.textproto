@@ -79,31 +79,31 @@ spec_fields { key: "model" label: "Model" }
 spec_fields { key: "year" label: "Year" placeholder: "2019" }
 spec_fields { key: "vin" label: "VIN" is_identifier: true placeholder: "1HGBH41JXMN109186" }
 
-# Engine is OPTIONAL, expressed as `repeatable` because that is the only cardinality this schema
-# has: PRD §4.3 designed EXACTLY_ONE / ZERO_OR_ONE / ZERO_OR_MORE, and the shipped ComponentSlot
-# carries a single bool. `repeatable` means zero-or-more, which is the honest reading for a slot an
-# EV will never fill and a twin-engine vehicle could fill twice. A non-repeatable slot implies
-# exactly one, which would be wrong here.
+# TWO SLOTS, and that is the whole vehicle: an engine and a set of tyres.
+#
+# THERE IS NO BATTERY SLOT AND NO BRAKES SLOT. Nobody logs the make and serial of their car
+# battery, and nobody logs their brakes as parts — they log the SERVICE, which is a task and a
+# record, not a component. A slot for each meant a car declared more trackable parts than an
+# aeroplane does, and every one of them sat empty. A component slot has to earn its place by being
+# something an owner would actually type an identity into; these did not.
+#
+# Anything with a life an owner does track — a timing belt, a set of pads — is a maintenance task
+# against the odometer, which the meter below already expresses.
+
+# Engine is OPTIONAL and SINGULAR. `repeatable` is what makes it optional — an EV fills it never —
+# and `max_instances` is what stops the form offering a hatchback a second one. PRD §4.3 designed
+# this as ZERO_OR_ONE; the shipped bool could only say "exactly one" or "any number", so the field
+# is new here.
 component_slots {
   slot_key: "engine"
   label: "Engine"
   repeatable: true
+  max_instances: 1
   serial_expected: true
 }
-component_slots {
-  slot_key: "battery"
-  label: "Battery"
-}
-# Brakes and tyres are SETS, not individuals: four near-identical parts told apart by position and
-# a serial, the same shape as an aeroplane's propeller blades. A full-width card each put a car at
-# ten component rows against an aeroplane's three, which is not a picture of the two domains anyone
-# recognises. The engine and battery stay cards — those are individuals with a history.
-component_slots {
-  slot_key: "brakes"
-  label: "Brakes"
-  repeatable: true
-  compact_instances: true
-}
+# A SET, not individuals: four near-identical parts told apart by position, the same shape as an
+# aeroplane's propeller blades. Four full-width cards was what made a car look like it tracked more
+# than an aeroplane.
 component_slots {
   slot_key: "tire"
   label: "Tire"

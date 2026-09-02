@@ -71,7 +71,7 @@ fun ComponentTreeSection(
   // Not `nodes.isEmpty()`: removing the last engine emptied the tree and took the Add control with
   // it, leaving no way to add one back. The section is empty only when the template declares
   // nothing to add either — home and custom.
-  if (nodes.isEmpty() && template.addableSlotsUnder(emptyList())
+  if (nodes.isEmpty() && template.addableSlotsUnder(emptyList(), nodes.map { it.row })
       .isEmpty()
   ) return
 
@@ -85,7 +85,11 @@ fun ComponentTreeSection(
     }
     // Root-level adds. A slot nested under a component is offered on that component's own card,
     // where the thing being added to is unambiguous.
-    AddSlotButtons(parentPath = emptyList(), viewModel = viewModel)
+    AddSlotButtons(
+      parentPath = emptyList(),
+      existing = nodes.map { it.row },
+      viewModel = viewModel,
+    )
   }
 }
 
@@ -121,7 +125,11 @@ private fun ComponentNodeCard(
         ComponentNodeCard(child, viewModel, showValidationErrors)
       }
 
-      AddSlotButtons(parentPath = node.row.path, viewModel = viewModel)
+      AddSlotButtons(
+        parentPath = node.row.path,
+        existing = node.children.map { it.row },
+        viewModel = viewModel,
+      )
     }
   }
 }
@@ -241,7 +249,11 @@ private fun InlineGroup(
         ComponentNodeCard(it, viewModel, showValidationErrors)
       }
       // "Add Blade" belongs to the propeller, which has no card of its own to carry it.
-      AddSlotButtons(parentPath = node.row.path, viewModel = viewModel)
+      AddSlotButtons(
+        parentPath = node.row.path,
+        existing = node.children.map { it.row },
+        viewModel = viewModel,
+      )
     }
     return
   }
@@ -341,9 +353,12 @@ private fun ComponentField.isVisibleOn(row: ComponentRow): Boolean =
 @Composable
 private fun AddSlotButtons(
   parentPath: ComponentPath,
+  existing: List<ComponentRow>,
   viewModel: EditThingViewModel
 ) {
-  val addable = LocalThingTemplate.current.addableSlotsUnder(parentPath)
+  // `existing` is what caps a slot: a car's engine is repeatable so an EV can have none, and
+  // `max_instances: 1` so a hatchback is not offered a second one.
+  val addable = LocalThingTemplate.current.addableSlotsUnder(parentPath, existing)
   if (addable.isEmpty()) return
   Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
     addable.forEach { slot ->

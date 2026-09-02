@@ -13,10 +13,8 @@ automotive"¼
 makeMake2
 modelModel2
 yearYear*20192
-vinVIN *1HGBH41JXMN109186:
-engineEngine(:
-batteryBattery:
-brakesBrakesH:
+vinVIN *1HGBH41JXMN109186:
+engineEngine(P:
 tireTireHB
 odometerOdometermiR
 AutomotiveZ

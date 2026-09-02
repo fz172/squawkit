@@ -102,7 +102,7 @@ class ComponentTreeTest {
   fun aBikeCannotBeGivenAnEngine() {
     // The reported bug, stated as a rule: what may be added comes from the template's slots, so a
     // preset that never declares an engine can never be offered one.
-    val addable = bike.addableSlotsUnder(emptyList())
+    val addable = bike.addableSlotsUnder(emptyList(), bike.componentRows(Thing(id = "t")))
       .map { it.slot_key }
 
     assertThat(addable).doesNotContain("engine")
@@ -110,13 +110,45 @@ class ComponentTreeTest {
   }
 
   @Test
-  fun anAutomotiveEngineIsAddableBecauseItsSlotRepeats() {
-    // Optional is expressed as repeatable — the only cardinality the schema has — so an EV can
-    // hold none and a twin can hold two.
+  fun anAutomotiveEngineIsOptionalButCappedAtOne() {
+    // Optional is `repeatable`, which is what lets an EV hold none. Singular is `max_instances`,
+    // which is what the schema could not say before: a bool can only mean "exactly one" — an
+    // unremovable empty Engine block on an EV — or "any number", offering a hatchback a second.
+    val empty = Thing(id = "t")
     assertThat(
-      automotive.addableSlotsUnder(emptyList())
+      automotive.addableSlotsUnder(emptyList(), automotive.componentRows(empty))
         .map { it.slot_key })
-      .containsExactly("engine", "brakes", "tire")
+      .containsExactly("engine", "tire")
+      .inOrder()
+
+    val withEngine = Thing(
+      id = "t",
+      components = listOf(Component(slot_key = "engine", make = "Honda")),
+    )
+    assertThat(
+      automotive.addableSlotsUnder(emptyList(), automotive.componentRows(withEngine))
+        .map { it.slot_key })
+      .containsExactly("tire")
+
+    // Tyres are uncapped: four on a car, six on a pickup, and the template does not guess.
+    val fourTyres = Thing(
+      id = "t",
+      components = List(4) { Component(slot_key = "tire") },
+    )
+    assertThat(
+      automotive.addableSlotsUnder(emptyList(), automotive.componentRows(fourTyres))
+        .map { it.slot_key })
+      .contains("tire")
+  }
+
+  @Test
+  fun aCarTracksItsEngineAndItsTyresAndNothingElse() {
+    // Nobody logs the make and serial of their car battery, and nobody logs brakes as parts — they
+    // log the SERVICE, which is a task and a record. Both slots existed, both sat empty, and
+    // together they made a car declare more trackable parts than an aeroplane has.
+    assertThat(automotive.component_slots.map { it.slot_key })
+      .containsExactly("engine", "tire")
+      .inOrder()
   }
 
   @Test
@@ -249,29 +281,42 @@ class ComponentTreeTest {
 
   @Test
   fun chipsOfOneSlotMergeIntoOneBlockWithoutReorderingTheTemplate() {
-    // Collecting every chip slot and drawing it first would be simpler and wrong: a car declares
-    // engine, battery, brakes, tyres, and hoisting the chipped sets above the engine reorders a
-    // list the template deliberately ordered.
-    val car = Thing(
+    // Collecting every chip slot and drawing it first would be simpler and wrong: it would hoist a
+    // set above the individual the template declared before it. The boat is the case that shows
+    // it — steering and rigging are cards declared AFTER two chipped sets.
+    val boat = Thing(
       id = "t",
       components = listOf(
-        Component(slot_key = "engine", make = "Honda"),
-        Component(slot_key = "battery", make = "Bosch"),
-        Component(slot_key = "tire", make = "Michelin"),
-        Component(slot_key = "tire", make = "Michelin"),
-        Component(slot_key = "tire", make = "Michelin"),
-        Component(slot_key = "tire", make = "Michelin"),
+        Component(slot_key = "propulsion", make = "Yamaha"),
+        Component(slot_key = "propulsion", make = "Yamaha"),
+        Component(slot_key = "steering", make = "SeaStar"),
       ),
+    )
+    val groups = CanonicalTemplates.BOAT.componentTree(boat)
+      .filter { it.row.component != null }
+      .componentGroups()
+
+    assertThat(groups).hasSize(2)
+    // Both engines in ONE block, not two rows — the whole point.
+    assertThat((groups[0] as ComponentGroup.Chips).nodes).hasSize(2)
+    // And steering stays after them, where the template put it.
+    assertThat((groups[1] as ComponentGroup.Card).node.row.slot.slot_key).isEqualTo("steering")
+  }
+
+  @Test
+  fun everyTyreOfACarLandsInOneBlock() {
+    val car = Thing(
+      id = "t",
+      components = listOf(Component(slot_key = "engine", make = "Honda")) +
+        List(4) { Component(slot_key = "tire", make = "Michelin") },
     )
     val groups = automotive.componentTree(car)
       .filter { it.row.component != null }
       .componentGroups()
 
-    assertThat(groups).hasSize(3)
+    assertThat(groups).hasSize(2)
     assertThat((groups[0] as ComponentGroup.Card).node.row.slot.slot_key).isEqualTo("engine")
-    assertThat((groups[1] as ComponentGroup.Card).node.row.slot.slot_key).isEqualTo("battery")
-    // All four tyres in ONE block, not four rows — the whole point.
-    assertThat((groups[2] as ComponentGroup.Chips).nodes).hasSize(4)
+    assertThat((groups[1] as ComponentGroup.Chips).nodes).hasSize(4)
   }
 
   @Test
@@ -344,9 +389,10 @@ class ComponentTreeTest {
 
   @Test
   fun aSlotThatExpectsNoSerialIsNeverReported() {
+    // A tyre has no serial anyone reads off it, so leaving it blank is complete, not invalid.
     val thing = Thing(
       id = "t",
-      components = listOf(Component(slot_key = "battery", serial = "")),
+      components = listOf(Component(slot_key = "tire", serial = "")),
     )
 
     assertThat(automotive.componentsMissingSerials(thing)).isEmpty()

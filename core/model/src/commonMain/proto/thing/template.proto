@@ -95,6 +95,17 @@ message ComponentSlot {
   // why a preset that reads correctly for an aeroplane listed a car's four tyres as four rows.
   // #732 asked for this field; this is it.
   bool compact_instances = 9;
+
+  // How many components this slot may hold. 0 — the proto3 default — means unbounded, so every
+  // preset that has not thought about it is unchanged.
+  //
+  // This is the ZERO_OR_ONE cardinality PRD §4.3 designed and the shipped bool could not express.
+  // `repeatable` alone is a two-way switch: false means exactly one, which puts an unremovable
+  // empty Engine block on an EV's form, and true means zero-or-more, which offers to add a second
+  // engine to a hatchback. A car's engine is optional and singular, and needed a way to say both.
+  //
+  // Only meaningful with `repeatable` — a non-repeatable slot already holds exactly one.
+  int32 max_instances = 10;
 }
 
 // A meter a Thing accumulates and rules can be written against — hours, miles, cycles, seasons.
