@@ -1,4 +1,4 @@
-# The airplane preset — canonical template (id "airplane", version 1).
+# The airplane preset — canonical template (id "airplane", version 2).
 #
 # THIS FILE IS THE SOURCE OF TRUTH. `airplane.v1.pb` beside it is compiled from this file and is
 # what the app actually bakes in; see templates/README.md for the command and why the compile
@@ -12,9 +12,16 @@
 # A published canonical template is NEVER edited — a correction is a new version, because (id,
 # version) has to always name the same bytes (template_system_design.md §5). Editing this file after
 # publication means editing what an already-distributed version means.
+#
+# v1 was edited in place several times before that rule was enforced, on the reasoning that nothing
+# fetches templates and the only copies live inside Thing DNA. It cost exactly what the rule
+# predicts: two aeroplanes both claiming `airplane v1` while carrying different slots, and no way
+# to tell from a payload which one a user is running. THAT is why every template or lexicon change
+# now bumps the version, pre-release included — the version is how a stored copy is identified, and
+# an unbumped edit makes it a lie. `npm run dna-refresh` moves existing Things onto this one.
 
 id: "airplane"
-version: 1
+version: 2
 
 # No floor. This template ships inside every build that can read it, so a client can never
 # encounter it from the future — the floor exists for FETCHED templates (§6), and a baked-in one is
@@ -121,11 +128,10 @@ spec_fields {
 # Thing's, declared as spec fields above. A component row for it repeated the identity block
 # verbatim, and it existed only to parent the engines, which the root can do.
 #
-# Edited in place rather than published as v2 (§5's rule is that a version always names the same
-# bytes). Nothing fetches templates yet — the only copies of v1 are inside Thing DNA, and the
-# one-off migration that restructures those components rewrites their DNA in the same pass. A v2
-# would have to run that migration anyway and would leave migrated aircraft citing a version this
-# build does not carry.
+# Both removals landed as edits to v1, which is the mistake this file's header now records: an
+# aeroplane created before them and one created after both claimed `airplane v1` while walking
+# different slots. They are part of v2 rather than being reverted — the shape is right, the version
+# it shipped under was not.
 component_slots {
   slot_key: "engine"
   label: "Engine"

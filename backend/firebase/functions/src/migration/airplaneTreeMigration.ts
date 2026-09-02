@@ -3,8 +3,10 @@ import { FieldValue } from "firebase-admin/firestore";
 import { adminDb } from "../config/firebaseAdmin.js";
 import { ENTITY_SEGMENT_THING } from "../config/entitySegment.js";
 import { Component } from "../generated/proto/thing/component.js";
+import { ThingTemplate } from "../generated/proto/thing/template.js";
 import { Thing } from "../generated/proto/thing/thing.js";
 import { payloadBytes, type SyncDocWire } from "../shared/syncDocWire.js";
+import { loadCanonicalTemplates } from "./thingDnaRefresh.js";
 
 /**
  * Restructures airplane component trees to the shape the template now declares (#729).
@@ -30,12 +32,14 @@ import { payloadBytes, type SyncDocWire } from "../shared/syncDocWire.js";
  * Both halves of the same document, in one write:
  *
  *   - `components`, restructured as above.
- *   - `template.component_slots`, replaced with the new declaration, because DNA is what the client
- *     walks. Restructuring the components alone would leave a Thing whose tree the app still could
- *     not read.
+ *   - `template`, replaced with the canonical airplane preset, because DNA is what the client walks.
+ *     Restructuring the components alone would leave a Thing whose tree the app still could not
+ *     read — and grafting current slots onto a template still claiming its old version would leave
+ *     one whose version says nothing true about its bytes.
  *
- * Everything else in the DNA — lexicon, capabilities, meters, spec fields, `min_app_version` — is
- * left exactly as stored. This is a structural repair, not a template refresh.
+ * That second half is now `thingDnaRefresh`'s job as well, and doing it here is not duplication but
+ * the same operation reached from the other side: a Thing this restructures must not be left one
+ * write short of consistent.
  *
  * ## Idempotent, and safe to re-run
  *
@@ -81,48 +85,18 @@ const SLOT_HUB = "hub";
 const SLOT_BLADE = "blade";
 
 /**
- * The component tree `airplane.v1` declares now, transcribed from the text proto.
+ * The airplane preset as this repo ships it, read from the compiled asset.
  *
- * Transcribed rather than read from the asset because the backend has no copy of it — the templates
- * are compiled into the app. `CanonicalTemplatesTest` asserts the app's side; if the two ever
- * disagree, a migrated Thing renders under slots this file invented, so the transcription is
- * asserted in `airplane-tree-migration.test.ts` against the same values.
+ * Its slots used to be transcribed by hand into this file, because the backend has no copy of the
+ * templates — with a test asserting the copy against the same values, which is a test asserting a
+ * transcription against itself. `compact_instances` and `spec_fields` landed in #732 and the copy
+ * went stale immediately; it took a compile error to notice, and a compile error is the lucky
+ * outcome. It now reads the same `.pb` the app bakes in, so there is no second copy to keep.
  */
-function newComponentSlots() {
-  return [
-    {
-      slotKey: SLOT_ENGINE,
-      label: "Engine",
-      repeatable: true,
-      serialExpected: true,
-      specKeys: [] as string[],
-      inlineWithParent: false,
-      compactFields: true,
-      children: [
-        {
-          slotKey: SLOT_PROPELLER,
-          label: "Propeller",
-          repeatable: false,
-          serialExpected: true,
-          specKeys: [] as string[],
-          inlineWithParent: true,
-          compactFields: true,
-          children: [
-            {
-              slotKey: SLOT_BLADE,
-              label: "Blade",
-              repeatable: true,
-              serialExpected: true,
-              specKeys: ["serial"],
-              inlineWithParent: true,
-              compactFields: true,
-              children: [],
-            },
-          ],
-        },
-      ],
-    },
-  ];
+function canonicalAirplane(): ThingTemplate {
+  const airplane = loadCanonicalTemplates().get("airplane");
+  if (airplane == null) throw new Error("airplane preset is missing from templates/binary");
+  return airplane;
 }
 
 /** `"$thingId:${path.join(".")}"` — must match ThingInflater.componentId, a stored id. */
@@ -261,12 +235,13 @@ export async function runAirplaneTreeMigration(
       const updated: Thing = {
         ...thing,
         components: restructured.components,
-        // The DNA is what the client walks, so the slots have to move with the components. Only
-        // the slots: lexicon, capabilities, meters and the version floor stay as stored.
-        template:
-          thing.template == null
-            ? thing.template
-            : { ...thing.template, componentSlots: newComponentSlots() },
+        // The DNA is what the client walks, so the slots have to move with the components — and
+        // the WHOLE template moves, not just the slots. Grafting the current slots onto a template
+        // still calling itself v1 would write exactly the lie the version rule exists to prevent:
+        // two Things claiming one version while walking different trees, which is what caused the
+        // #732 blade regression. A Thing with no DNA still gets none; it renders through the
+        // build's own fallback, and freezing a copy into it buys nothing.
+        template: thing.template == null ? thing.template : canonicalAirplane(),
       };
 
       migrated.push({

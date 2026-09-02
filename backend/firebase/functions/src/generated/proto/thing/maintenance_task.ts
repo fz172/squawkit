@@ -66,21 +66,12 @@ export interface TimeRule {
 }
 
 /**
- * A engine-hour-based rule (e.g. every 100 hours).
- *
- * SUPERSEDED BY MeterRule. Kept because every aviation task in the field uses one, and a task that
- * silently stops coming due is worse than one that cannot be created. Read both, write MeterRule.
- */
-export interface EngineHourRule {
-  intervalHours: number;
-}
-
-/**
  * A rule against any meter the template declares — "every 5,000 miles", "every 100 hours",
  * "every 200 ride hours". PRD §11.1.
  *
- * `EngineHourRule` could not express these because it named the meter in its type rather than
- * carrying it: an interval with no unit is only a number, and a car could not be scheduled at all.
+ * Replaced `EngineHourRule`, which could not express these because it named the meter in its type
+ * rather than carrying it: an interval with no unit is only a number, and a car could not be
+ * scheduled at all.
  */
 export interface MeterRule {
   /** Matches MeterDef.key on the template, and MeterReading.meter_key on the logs it reads. */
@@ -104,7 +95,6 @@ export interface ImmediateRule {
 /** A single rule governing when an inspection is due */
 export interface InspectionRule {
   timeRule?: TimeRule | undefined;
-  engineHourRule?: EngineHourRule | undefined;
   onConditionRule?: OnConditionRule | undefined;
   linkedRule?: LinkedRule | undefined;
   immediateRule?: ImmediateRule | undefined;
@@ -116,9 +106,10 @@ export interface ForceCompliedStatus {
   compliedDate:
     | Date
     | undefined;
-  /** Superseded by `complied_meter`; still read for statuses recorded before it existed. */
-  compliedEngineHours: number;
-  /** What the meter read when this was marked complied, keyed. Empty key means none was recorded. */
+  /**
+   * What the meter read when this was marked complied, keyed. Empty key means none was recorded.
+   * Replaced `complied_engine_hours` (2), retired in #761.
+   */
   compliedMeter: MeterReading | undefined;
 }
 
@@ -132,8 +123,6 @@ export interface MaintenanceTask {
   forceDueDate:
     | Date
     | undefined;
-  /** Superseded by `force_due_meter`; still read for overrides set before it existed. */
-  forceDueEngineHour: number;
   /** Optional free-text notes or comments for this maintenance task */
   notes: string;
   /** v2 Compliance Tracking */
@@ -149,8 +138,8 @@ export interface MaintenanceTask {
     | ForceCompliedStatus
     | undefined;
   /**
-   * The meter reading this task is forced due at, keyed. Supersedes `force_due_engine_hour`, which
-   * could only ever mean engine hours (PRD §11.1).
+   * The meter reading this task is forced due at, keyed. Replaced `force_due_engine_hour` (6),
+   * which could only ever mean engine hours (PRD §11.1), retired in #761.
    */
   forceDueMeter: MeterReading | undefined;
 }
@@ -275,70 +264,6 @@ export const TimeRule: MessageFns<TimeRule> = {
     message.creationDate = object.creationDate ?? undefined;
     message.intervalDays = object.intervalDays ?? 0;
     message.intervalYears = object.intervalYears ?? 0;
-    return message;
-  },
-};
-
-function createBaseEngineHourRule(): EngineHourRule {
-  return { intervalHours: 0 };
-}
-
-export const EngineHourRule: MessageFns<EngineHourRule> = {
-  encode(message: EngineHourRule, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.intervalHours !== 0) {
-      writer.uint32(13).float(message.intervalHours);
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): EngineHourRule {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseEngineHourRule();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 13) {
-            break;
-          }
-
-          message.intervalHours = reader.float();
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): EngineHourRule {
-    return {
-      intervalHours: isSet(object.intervalHours)
-        ? globalThis.Number(object.intervalHours)
-        : isSet(object.interval_hours)
-        ? globalThis.Number(object.interval_hours)
-        : 0,
-    };
-  },
-
-  toJSON(message: EngineHourRule): unknown {
-    const obj: any = {};
-    if (message.intervalHours !== 0) {
-      obj.intervalHours = message.intervalHours;
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<EngineHourRule>, I>>(base?: I): EngineHourRule {
-    return EngineHourRule.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<EngineHourRule>, I>>(object: I): EngineHourRule {
-    const message = createBaseEngineHourRule();
-    message.intervalHours = object.intervalHours ?? 0;
     return message;
   },
 };
@@ -591,7 +516,6 @@ export const ImmediateRule: MessageFns<ImmediateRule> = {
 function createBaseInspectionRule(): InspectionRule {
   return {
     timeRule: undefined,
-    engineHourRule: undefined,
     onConditionRule: undefined,
     linkedRule: undefined,
     immediateRule: undefined,
@@ -603,9 +527,6 @@ export const InspectionRule: MessageFns<InspectionRule> = {
   encode(message: InspectionRule, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
     if (message.timeRule !== undefined) {
       TimeRule.encode(message.timeRule, writer.uint32(10).fork()).join();
-    }
-    if (message.engineHourRule !== undefined) {
-      EngineHourRule.encode(message.engineHourRule, writer.uint32(18).fork()).join();
     }
     if (message.onConditionRule !== undefined) {
       OnConditionRule.encode(message.onConditionRule, writer.uint32(26).fork()).join();
@@ -635,14 +556,6 @@ export const InspectionRule: MessageFns<InspectionRule> = {
           }
 
           message.timeRule = TimeRule.decode(reader, reader.uint32());
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-
-          message.engineHourRule = EngineHourRule.decode(reader, reader.uint32());
           continue;
         }
         case 3: {
@@ -693,11 +606,6 @@ export const InspectionRule: MessageFns<InspectionRule> = {
         : isSet(object.time_rule)
         ? TimeRule.fromJSON(object.time_rule)
         : undefined,
-      engineHourRule: isSet(object.engineHourRule)
-        ? EngineHourRule.fromJSON(object.engineHourRule)
-        : isSet(object.engine_hour_rule)
-        ? EngineHourRule.fromJSON(object.engine_hour_rule)
-        : undefined,
       onConditionRule: isSet(object.onConditionRule)
         ? OnConditionRule.fromJSON(object.onConditionRule)
         : isSet(object.on_condition_rule)
@@ -726,9 +634,6 @@ export const InspectionRule: MessageFns<InspectionRule> = {
     if (message.timeRule !== undefined) {
       obj.timeRule = TimeRule.toJSON(message.timeRule);
     }
-    if (message.engineHourRule !== undefined) {
-      obj.engineHourRule = EngineHourRule.toJSON(message.engineHourRule);
-    }
     if (message.onConditionRule !== undefined) {
       obj.onConditionRule = OnConditionRule.toJSON(message.onConditionRule);
     }
@@ -752,9 +657,6 @@ export const InspectionRule: MessageFns<InspectionRule> = {
     message.timeRule = (object.timeRule !== undefined && object.timeRule !== null)
       ? TimeRule.fromPartial(object.timeRule)
       : undefined;
-    message.engineHourRule = (object.engineHourRule !== undefined && object.engineHourRule !== null)
-      ? EngineHourRule.fromPartial(object.engineHourRule)
-      : undefined;
     message.onConditionRule = (object.onConditionRule !== undefined && object.onConditionRule !== null)
       ? OnConditionRule.fromPartial(object.onConditionRule)
       : undefined;
@@ -772,16 +674,13 @@ export const InspectionRule: MessageFns<InspectionRule> = {
 };
 
 function createBaseForceCompliedStatus(): ForceCompliedStatus {
-  return { compliedDate: undefined, compliedEngineHours: 0, compliedMeter: undefined };
+  return { compliedDate: undefined, compliedMeter: undefined };
 }
 
 export const ForceCompliedStatus: MessageFns<ForceCompliedStatus> = {
   encode(message: ForceCompliedStatus, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
     if (message.compliedDate !== undefined) {
       Timestamp.encode(toTimestamp(message.compliedDate), writer.uint32(10).fork()).join();
-    }
-    if (message.compliedEngineHours !== 0) {
-      writer.uint32(21).float(message.compliedEngineHours);
     }
     if (message.compliedMeter !== undefined) {
       MeterReading.encode(message.compliedMeter, writer.uint32(26).fork()).join();
@@ -802,14 +701,6 @@ export const ForceCompliedStatus: MessageFns<ForceCompliedStatus> = {
           }
 
           message.compliedDate = fromTimestamp(Timestamp.decode(reader, reader.uint32()));
-          continue;
-        }
-        case 2: {
-          if (tag !== 21) {
-            break;
-          }
-
-          message.compliedEngineHours = reader.float();
           continue;
         }
         case 3: {
@@ -836,11 +727,6 @@ export const ForceCompliedStatus: MessageFns<ForceCompliedStatus> = {
         : isSet(object.complied_date)
         ? fromJsonTimestamp(object.complied_date)
         : undefined,
-      compliedEngineHours: isSet(object.compliedEngineHours)
-        ? globalThis.Number(object.compliedEngineHours)
-        : isSet(object.complied_engine_hours)
-        ? globalThis.Number(object.complied_engine_hours)
-        : 0,
       compliedMeter: isSet(object.compliedMeter)
         ? MeterReading.fromJSON(object.compliedMeter)
         : isSet(object.complied_meter)
@@ -854,9 +740,6 @@ export const ForceCompliedStatus: MessageFns<ForceCompliedStatus> = {
     if (message.compliedDate !== undefined) {
       obj.compliedDate = message.compliedDate.toISOString();
     }
-    if (message.compliedEngineHours !== 0) {
-      obj.compliedEngineHours = message.compliedEngineHours;
-    }
     if (message.compliedMeter !== undefined) {
       obj.compliedMeter = MeterReading.toJSON(message.compliedMeter);
     }
@@ -869,7 +752,6 @@ export const ForceCompliedStatus: MessageFns<ForceCompliedStatus> = {
   fromPartial<I extends Exact<DeepPartial<ForceCompliedStatus>, I>>(object: I): ForceCompliedStatus {
     const message = createBaseForceCompliedStatus();
     message.compliedDate = object.compliedDate ?? undefined;
-    message.compliedEngineHours = object.compliedEngineHours ?? 0;
     message.compliedMeter = (object.compliedMeter !== undefined && object.compliedMeter !== null)
       ? MeterReading.fromPartial(object.compliedMeter)
       : undefined;
@@ -884,7 +766,6 @@ function createBaseMaintenanceTask(): MaintenanceTask {
     component: 0,
     rules: [],
     forceDueDate: undefined,
-    forceDueEngineHour: 0,
     notes: "",
     type: 0,
     referenceNumber: "",
@@ -913,9 +794,6 @@ export const MaintenanceTask: MessageFns<MaintenanceTask> = {
     }
     if (message.forceDueDate !== undefined) {
       Timestamp.encode(toTimestamp(message.forceDueDate), writer.uint32(42).fork()).join();
-    }
-    if (message.forceDueEngineHour !== 0) {
-      writer.uint32(53).float(message.forceDueEngineHour);
     }
     if (message.notes !== "") {
       writer.uint32(58).string(message.notes);
@@ -992,14 +870,6 @@ export const MaintenanceTask: MessageFns<MaintenanceTask> = {
           }
 
           message.forceDueDate = fromTimestamp(Timestamp.decode(reader, reader.uint32()));
-          continue;
-        }
-        case 6: {
-          if (tag !== 53) {
-            break;
-          }
-
-          message.forceDueEngineHour = reader.float();
           continue;
         }
         case 7: {
@@ -1094,11 +964,6 @@ export const MaintenanceTask: MessageFns<MaintenanceTask> = {
         : isSet(object.force_due_date)
         ? fromJsonTimestamp(object.force_due_date)
         : undefined,
-      forceDueEngineHour: isSet(object.forceDueEngineHour)
-        ? globalThis.Number(object.forceDueEngineHour)
-        : isSet(object.force_due_engine_hour)
-        ? globalThis.Number(object.force_due_engine_hour)
-        : 0,
       notes: isSet(object.notes) ? globalThis.String(object.notes) : "",
       type: isSet(object.type) ? complianceTypeFromJSON(object.type) : 0,
       referenceNumber: isSet(object.referenceNumber)
@@ -1154,9 +1019,6 @@ export const MaintenanceTask: MessageFns<MaintenanceTask> = {
     if (message.forceDueDate !== undefined) {
       obj.forceDueDate = message.forceDueDate.toISOString();
     }
-    if (message.forceDueEngineHour !== 0) {
-      obj.forceDueEngineHour = message.forceDueEngineHour;
-    }
     if (message.notes !== "") {
       obj.notes = message.notes;
     }
@@ -1197,7 +1059,6 @@ export const MaintenanceTask: MessageFns<MaintenanceTask> = {
     message.component = object.component ?? 0;
     message.rules = object.rules?.map((e) => InspectionRule.fromPartial(e)) || [];
     message.forceDueDate = object.forceDueDate ?? undefined;
-    message.forceDueEngineHour = object.forceDueEngineHour ?? 0;
     message.notes = object.notes ?? "";
     message.type = object.type ?? 0;
     message.referenceNumber = object.referenceNumber ?? "";

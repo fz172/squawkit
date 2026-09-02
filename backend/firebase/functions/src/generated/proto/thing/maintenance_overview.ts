@@ -24,23 +24,11 @@ export interface MaintenanceOverview {
   /**
    * Current accumulated times. Aviation-only by construction and superseded by `current` below.
    *
-   * NOTHING IN THE APP READS THESE ANY MORE. Every reader moved to `current`, by meter key, with
-   * `currentFor` falling back here so an overview written before `current` existed still answers.
+   * The current reading for every meter this Thing's logs carry: the maximum per key (PRD §4.4).
    *
-   * They are still WRITTEN, and the reason is not inertia: an older build reading a document a
-   * newer one wrote would find them absent and show an aeroplane as having flown zero hours. They
-   * can stop being written once no client in the field predates `current`, and be deleted — number
-   * reserved, not reused — a release after that.
-   */
-  currentAirframeTime: number;
-  currentEngineTime: number;
-  currentPropellerTime: number;
-  /**
-   * The current reading for every meter the template declares, computed the same way the three
-   * fields above are: the maximum over this Thing's logs (PRD §4.4).
-   *
-   * A car's odometer has nowhere to go in the three doubles, which is why the dashboard could ask
-   * for one and never be answered.
+   * Replaced `current_airframe_time` (6), `current_engine_time` (7) and `current_propeller_time`
+   * (8). A car's odometer had nowhere to go in three aviation doubles, which is why the dashboard
+   * could ask for one and never be answered.
    */
   current: MeterReading[];
 }
@@ -52,9 +40,6 @@ function createBaseMaintenanceOverview(): MaintenanceOverview {
     airframeLogCount: 0,
     engineLogCount: 0,
     propellerLogCount: 0,
-    currentAirframeTime: 0,
-    currentEngineTime: 0,
-    currentPropellerTime: 0,
     current: [],
   };
 }
@@ -75,15 +60,6 @@ export const MaintenanceOverview: MessageFns<MaintenanceOverview> = {
     }
     if (message.propellerLogCount !== 0) {
       writer.uint32(40).uint32(message.propellerLogCount);
-    }
-    if (message.currentAirframeTime !== 0) {
-      writer.uint32(49).double(message.currentAirframeTime);
-    }
-    if (message.currentEngineTime !== 0) {
-      writer.uint32(57).double(message.currentEngineTime);
-    }
-    if (message.currentPropellerTime !== 0) {
-      writer.uint32(65).double(message.currentPropellerTime);
     }
     for (const v of message.current) {
       MeterReading.encode(v!, writer.uint32(82).fork()).join();
@@ -138,30 +114,6 @@ export const MaintenanceOverview: MessageFns<MaintenanceOverview> = {
           message.propellerLogCount = reader.uint32();
           continue;
         }
-        case 6: {
-          if (tag !== 49) {
-            break;
-          }
-
-          message.currentAirframeTime = reader.double();
-          continue;
-        }
-        case 7: {
-          if (tag !== 57) {
-            break;
-          }
-
-          message.currentEngineTime = reader.double();
-          continue;
-        }
-        case 8: {
-          if (tag !== 65) {
-            break;
-          }
-
-          message.currentPropellerTime = reader.double();
-          continue;
-        }
         case 10: {
           if (tag !== 82) {
             break;
@@ -206,21 +158,6 @@ export const MaintenanceOverview: MessageFns<MaintenanceOverview> = {
         : isSet(object.propeller_log_count)
         ? globalThis.Number(object.propeller_log_count)
         : 0,
-      currentAirframeTime: isSet(object.currentAirframeTime)
-        ? globalThis.Number(object.currentAirframeTime)
-        : isSet(object.current_airframe_time)
-        ? globalThis.Number(object.current_airframe_time)
-        : 0,
-      currentEngineTime: isSet(object.currentEngineTime)
-        ? globalThis.Number(object.currentEngineTime)
-        : isSet(object.current_engine_time)
-        ? globalThis.Number(object.current_engine_time)
-        : 0,
-      currentPropellerTime: isSet(object.currentPropellerTime)
-        ? globalThis.Number(object.currentPropellerTime)
-        : isSet(object.current_propeller_time)
-        ? globalThis.Number(object.current_propeller_time)
-        : 0,
       current: globalThis.Array.isArray(object?.current)
         ? object.current.map((e: any) => MeterReading.fromJSON(e))
         : [],
@@ -244,15 +181,6 @@ export const MaintenanceOverview: MessageFns<MaintenanceOverview> = {
     if (message.propellerLogCount !== 0) {
       obj.propellerLogCount = Math.round(message.propellerLogCount);
     }
-    if (message.currentAirframeTime !== 0) {
-      obj.currentAirframeTime = message.currentAirframeTime;
-    }
-    if (message.currentEngineTime !== 0) {
-      obj.currentEngineTime = message.currentEngineTime;
-    }
-    if (message.currentPropellerTime !== 0) {
-      obj.currentPropellerTime = message.currentPropellerTime;
-    }
     if (message.current?.length) {
       obj.current = message.current.map((e) => MeterReading.toJSON(e));
     }
@@ -269,9 +197,6 @@ export const MaintenanceOverview: MessageFns<MaintenanceOverview> = {
     message.airframeLogCount = object.airframeLogCount ?? 0;
     message.engineLogCount = object.engineLogCount ?? 0;
     message.propellerLogCount = object.propellerLogCount ?? 0;
-    message.currentAirframeTime = object.currentAirframeTime ?? 0;
-    message.currentEngineTime = object.currentEngineTime ?? 0;
-    message.currentPropellerTime = object.currentPropellerTime ?? 0;
     message.current = object.current?.map((e) => MeterReading.fromPartial(e)) || [];
     return message;
   },

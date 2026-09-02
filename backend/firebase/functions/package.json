@@ -17,6 +17,7 @@
     "share-cutover": "npm run build && node scripts/thing-share-cutover.mjs",
     "share-cleanup": "npm run build && node scripts/thing-share-cleanup.mjs",
     "airplane-tree": "npm run build && node scripts/airplane-tree-migration.mjs",
+    "dna-refresh": "npm run build && node scripts/thing-dna-refresh.mjs",
     "shape-probe": "npm run build && node scripts/thing-shape-probe.mjs"
   },
   "dependencies": {

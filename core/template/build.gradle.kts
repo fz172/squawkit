@@ -79,15 +79,24 @@ val generateTemplateAssets by tasks.registering {
       "no compiled templates in ${templateDir.asFile} — run templates/compile-template.sh"
     }
 
-    val constants = assets.joinToString("\n\n") { file ->
-      // "airplane.v1.pb" -> AIRPLANE_V1_BYTES
-      val name = file.name.removeSuffix(".pb")
-        .replace('.', '_')
-        .uppercase()
+    // "airplane.v2.pb" -> id "airplane", version 2. Keyed by preset id rather than by file so that
+    // BUMPING A VERSION IS A RENAME AND NOTHING ELSE — no Kotlin constant to chase, which is what
+    // makes "every template edit bumps the version" cheap enough to actually hold to. Highest
+    // version wins, so a v1 left beside its v2 cannot quietly stay the one that ships.
+    val latest = assets.groupBy { it.name.substringBefore(".v") }
+      .mapValues { (id, files) ->
+        files.maxBy {
+          it.name.removePrefix("$id.v").removeSuffix(".pb").toIntOrNull()
+            ?: error("template asset is not <id>.v<version>.pb: ${it.name}")
+        }
+      }
+      .toSortedMap()
+
+    val constants = latest.entries.joinToString("\n\n") { (id, file) ->
       val base64 = Base64.getEncoder()
         .encodeToString(file.readBytes())
       "/** `${file.name}`, ${file.length()} bytes. */\n" +
-        "internal const val ${name}_BASE64: String =\n  \"$base64\""
+        "internal const val ${id.uppercase()}_BASE64: String =\n  \"$base64\""
     }
 
     outputDir.get().asFile.also { it.mkdirs() }
