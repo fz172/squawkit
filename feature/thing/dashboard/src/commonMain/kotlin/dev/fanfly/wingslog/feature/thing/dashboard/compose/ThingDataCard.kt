@@ -39,7 +39,7 @@ import dev.fanfly.wingslog.core.template.LocalThingCapabilities
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.LocalThingTemplate
 import dev.fanfly.wingslog.core.template.componentTree
-import dev.fanfly.wingslog.core.template.specValue
+import dev.fanfly.wingslog.core.template.specLines
 import dev.fanfly.wingslog.core.template.thingNoun
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.thing.Thing
@@ -132,30 +132,16 @@ fun ThingDataCard(
         ) {
           // The thing's identity, from the spec fields the template declares. It used to be
           // captioned AIRFRAME and read make/model/serial, which a home has none of (#729).
+          //
+          // It is drawn into this card directly rather than into a nested one: a nested card is
+          // what says "this is a part attached to the thing", and the spec IS the thing. Every
+          // identifier the template declares now carries its own label, which is what stops an
+          // airplane's tail number from riding along in the make/model run and its serial from
+          // being captioned with the other one's value.
           val template = LocalThingTemplate.current
-          // The identifier line is whichever field the template marks, minus the one already
-          // naming the thing — the airplane's serial, a car's VIN, a boat's hull ID. Reading
-          // `serial` by key showed a car a blank S/N and a home an empty one.
-          val identifierField = template?.spec_fields.orEmpty()
-            .filter { it.is_identifier && !it.title_candidate }
-            .firstOrNull {
-              thing.specValue(it.key)
-                .isNotBlank()
-            }
-          val identity = template?.spec_fields.orEmpty()
-            .filterNot { it.key == identifierField?.key }
-            .map { thing.specValue(it.key) }
-            .filter { it.isNotBlank() }
-          if (identity.isNotEmpty()) {
-            ComponentCard(
-              category = LexiconFormatter.titleCase(
-                LocalThingLexicon.current.thingNoun
-              )
-                .uppercase(),
-              name = identity.joinToString("  ·  "),
-              serial = identifierField?.let { thing.specValue(it.key) }
-                .orEmpty(),
-            )
+          val spec = template.specLines(thing)
+          if (!spec.isEmpty) {
+            ThingSpecBlock(spec)
           }
 
           // Every stored component, walked from the template's slots. Drawn as a tree by
