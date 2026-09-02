@@ -72,17 +72,22 @@ component_slots {
   slot_key: "drivetrain"
   label: "Drivetrain"
 }
-# Two brakes and two wheels, and the same reasoning as the car's: a matched set reads as a set.
+# Two brakes and two wheels, and the same reasoning as the car's tyres: a matched set reads as a
+# set. Capped at two, because a bike has a front and a rear and there is no third — an uncapped
+# slot offered to add a fifth wheel, which is a form asking a question with no right answer.
+# `repeatable` is still what makes them optional; `max_instances` is what makes them finite.
 component_slots {
   slot_key: "brakes"
   label: "Brakes"
   repeatable: true
+  max_instances: 2
   compact_instances: true
 }
 component_slots {
   slot_key: "wheel"
   label: "Wheel"
   repeatable: true
+  max_instances: 2
   compact_instances: true
 }
 

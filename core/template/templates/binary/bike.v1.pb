@@ -12,9 +12,9 @@
 frame_numberFrame Number *WTU123K0001Z:
 
 drivetrain
-Drivetrain:
-brakesBrakesH:
-wheelWheelHB
+Drivetrain:
+brakesBrakesHP:
+wheelWheelHPB
 odometerDistancemiB
 
 ride_hours

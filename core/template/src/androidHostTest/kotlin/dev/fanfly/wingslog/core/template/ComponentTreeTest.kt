@@ -110,6 +110,26 @@ class ComponentTreeTest {
   }
 
   @Test
+  fun aBikeIsOfferedNoThirdWheel() {
+    // A bike has a front and a rear, and there is no third. Uncapped, the form offered to add a
+    // fifth wheel — a question with no right answer. `repeatable` still makes them optional;
+    // `max_instances` makes them finite.
+    fun addableWith(wheels: Int, brakes: Int): List<String> {
+      val thing = Thing(
+        id = "t",
+        components = List(wheels) { Component(slot_key = "wheel") } +
+          List(brakes) { Component(slot_key = "brakes") },
+      )
+      return bike.addableSlotsUnder(emptyList(), bike.componentRows(thing))
+        .map { it.slot_key }
+    }
+
+    assertThat(addableWith(wheels = 0, brakes = 0)).containsExactly("brakes", "wheel")
+    assertThat(addableWith(wheels = 1, brakes = 2)).containsExactly("wheel")
+    assertThat(addableWith(wheels = 2, brakes = 2)).isEmpty()
+  }
+
+  @Test
   fun anAutomotiveEngineIsOptionalButCappedAtOne() {
     // Optional is `repeatable`, which is what lets an EV hold none. Singular is `max_instances`,
     // which is what the schema could not say before: a bool can only mean "exactly one" — an
