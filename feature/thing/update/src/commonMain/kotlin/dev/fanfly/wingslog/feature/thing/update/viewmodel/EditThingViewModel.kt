@@ -25,6 +25,7 @@ import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.thing.ComponentSlot
 import dev.fanfly.wingslog.thing.SpecField
 import dev.fanfly.wingslog.thing.Thing
+import dev.fanfly.wingslog.thing.ThingTemplate
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -43,15 +44,24 @@ class EditThingViewModel(
   savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
+  /**
+   * The type chosen in the picker (#738), carried on the create route.
+   *
+   * Null on an edit, on the empty-state path, and when this build does not carry the id — all of
+   * which fall back the way creation always did rather than refusing to open the form.
+   */
+  private val pickedTemplate: ThingTemplate? =
+    savedStateHandle.get<String>(Screen.TEMPLATE_ID)
+      ?.takeIf { it.isNotEmpty() }
+      ?.let { templateRegistry.canonicalById(it) }
+
   private val _uiState: MutableStateFlow<EditThingUiState> =
     MutableStateFlow(
       // Read once at construction: the template of the thing being edited cannot change while the
       // form is open, and a mid-edit change would silently alter what the form accepts.
-      // forThingWithFallback, not the selected template: on a create nothing is selected, and a
-      // null template would render a form with no fields and validate nothing. This resolves the
-      // same way FleetManagerImpl does on write, so the form asks for exactly what the Thing will
-      // be saved under. #739 replaces the fallback with the picker's choice.
-      EditThingUiState().withThing(Thing()),
+      // forThingWithFallback resolves the same way FleetManagerImpl does on write, so the form asks
+      // for exactly what the Thing will be saved under.
+      EditThingUiState().withThing(Thing(template = pickedTemplate)),
     )
   val uiState = _uiState.asStateFlow()
 
@@ -79,6 +89,7 @@ class EditThingViewModel(
   private val isNewThing: Boolean =
     savedStateHandle.get<String>(Screen.THING_ID)
       .isNullOrEmpty()
+
 
   init {
     val thingId: String? = savedStateHandle[Screen.THING_ID]

@@ -11,6 +11,9 @@
        adding a new Thing is not adding another of whatever is currently selected. -->
   <string name="switcher_add_thing">Add a new thing</string>
   <string name="switcher_select_thing">Select</string>
+  <!-- Switcher title on a mixed account. A homogeneous one overrides it with the template's
+       collection_label — Fleet, Garage, Property. -->
+  <string name="switcher_title">Stuff</string>
   <string name="enter_invite_code">Enter invite code</string>
   <string name="empty_add_thing">Add <xliff:g example="aircraft">%1$s</xliff:g> to get started</string>
   <string name="remove">Remove</string>

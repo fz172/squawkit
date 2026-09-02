@@ -837,23 +837,34 @@ template.
 ### 8.2 The Stuff switcher
 
 There is no fleet *list screen* to generalize — `feature/fleet/viewing` holds exactly one composable,
-`FleetEmptyState`. The fleet is reached through the adaptive shell's **switcher**: `ShellAircraft` rows in the
-sidebar on the wide tiers, the same switcher behind the top bar on compact ones, with `SelectedAircraftStore`
+`FleetEmptyState`. The fleet is reached through the adaptive shell's **switcher**: `ShellThing` rows in the
+sidebar on the wide tiers, the same switcher behind the top bar on compact ones, with `SelectedThingStore`
 persisting the choice per host. Sections then render for whatever is selected.
 
 That makes the mixed-type problem smaller than it looked when this section was first drafted against a list. Each
-switcher row carries its template icon and, where the template declares a primary meter, that meter's current
-value; a home shows its next due chore instead. A status line in that Thing's own lexicon — "2 open squawks ·
-AOG" sitting above "1 open issue · Gutters due in 9 days" — is a row detail rather than a list redesign, and it
-only has to survive at sidebar width. Grouping by template appears once the account holds more than one template
-type.
+row already carries the two lines it needs: the Thing's name, and beneath it the make and model, falling back to
+whatever spec field the template marks `is_identifier` — a VIN for a car, a serial for an airplane, a street
+address for a home. That is the right second line and it stays.
+
+**No meter value on the row, and no next-due chore.** An earlier draft of this section put a primary meter
+reading there, with a home showing its next due chore instead. Both are dropped. The identifier is what
+distinguishes one row from another when a user is choosing between them, which is the only job the switcher has;
+an odometer reading does not help you tell two cars apart, and it costs a `primary` flag on `MeterDef` plus a
+per-Thing reading lookup in the shell projection to display something less useful than what is already there.
+
+What the row still gains is the template's `icon`, so a mixed account can be read at a glance. Grouping by
+template appears once the account holds more than one template type.
 
 The switcher is titled **Stuff**, overridden by `Lexicon.collection_label` when every Thing shares one template —
-so an all-aircraft account still reads **Fleet** and an all-car account reads **Garage**. The create action
-follows the same rule: "Add a new thing" on a mixed account, "Add aircraft" (today's `add_thing` string in
-`core:sharedassets`) on an aviation one. `FleetEmptyState` is the one surface with no Thing to resolve a lexicon
-from, so it defaults to the generic noun — which is correct: a brand-new account genuinely does not yet know
-what it is for.
+so an all-aircraft account still reads **Fleet** and an all-car account reads **Garage**.
+
+The **create action does not** follow that rule: it stays neutral ("Add a new thing", `switcher_add_thing`) on
+every account. The title names what the user already owns, which a homogeneous account genuinely has a word for;
+the create action names what they are about to add, which nothing yet does. Offering "Add aircraft" to an
+all-aircraft owner whose next Thing is a house is the one place the switcher would actively mislead.
+
+`FleetEmptyState` is the one surface with no Thing to resolve a lexicon from, so it defaults to the generic
+noun — which is correct: a brand-new account genuinely does not yet know what it is for.
 
 ### 8.3 Thing overview
 

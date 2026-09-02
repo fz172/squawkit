@@ -99,6 +99,7 @@ import wingslog.core.sharedassets.generated.resources.settings
 import wingslog.core.sharedassets.generated.resources.shell_nav_tasks_narrow
 import wingslog.core.sharedassets.generated.resources.shell_tab_dashboard
 import wingslog.core.sharedassets.generated.resources.switcher_add_thing
+import wingslog.core.sharedassets.generated.resources.switcher_title
 import wingslog.core.sharedassets.generated.resources.switcher_select_thing
 import wingslog.core.sharedassets.generated.resources.Res as UiRes
 
@@ -1000,6 +1001,26 @@ private fun TopBarSwitcher(
   }
 }
 
+/**
+ * "Stuff", or the template's own word when every Thing on the account shares one template.
+ *
+ * A homogeneous account has a name for what it owns — Fleet, Garage, Property — and a mixed one
+ * does not, which is the whole reason the neutral default exists (PRD §8.2).
+ */
+@Composable
+private fun AdaptiveShellUiState.switcherTitle(): String {
+  val templates = things.map { it.template?.id }.distinct()
+  val shared = things.firstOrNull()?.template?.takeIf { templates.size == 1 }
+  return shared?.lexicon?.collection_label?.takeIf { it.isNotEmpty() }
+    ?: stringResource(UiRes.string.switcher_title)
+}
+
+/** Group heading on a mixed account. Falls back to the neutral title for a Thing with no DNA. */
+@Composable
+private fun ThingTemplate?.groupLabel(): String =
+  this?.lexicon?.collection_label?.takeIf { it.isNotEmpty() }
+    ?: stringResource(UiRes.string.switcher_title)
+
 @Composable
 private fun ThingDropdown(
   expanded: Boolean,
@@ -1010,26 +1031,52 @@ private fun ThingDropdown(
   onEnterInviteCode: (() -> Unit)?,
 ) {
   DropdownMenu(expanded = expanded, onDismissRequest = onDismiss) {
-    state.things.forEach { ac ->
-      DropdownMenuItem(
-        text = {
-          Column {
-            Text(ac.label, style = MaterialTheme.typography.titleSmall)
-            if (ac.subtitle.isNotBlank()) {
-              Text(ac.subtitle, style = MaterialTheme.typography.bodySmall)
+    Text(
+      state.switcherTitle(),
+      style = MaterialTheme.typography.labelMedium,
+      color = MaterialTheme.colorScheme.onSurfaceVariant,
+      modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+    )
+    // Grouped only on a mixed account. One group means one heading repeating the title above it.
+    val groups = state.things.groupBy { it.template?.id.orEmpty() }
+    val grouped = groups.size > 1
+    groups.forEach { (_, rows) ->
+      if (grouped) {
+        Text(
+          rows.first().template.groupLabel(),
+          style = MaterialTheme.typography.labelSmall,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+          modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+        )
+      }
+      rows.forEach { ac ->
+        DropdownMenuItem(
+          text = {
+            Column {
+              Text(ac.label, style = MaterialTheme.typography.titleSmall)
+              if (ac.subtitle.isNotBlank()) {
+                Text(ac.subtitle, style = MaterialTheme.typography.bodySmall)
+              }
             }
-          }
-        },
-        onClick = {
-          onSelectThing(ac.id)
-          onDismiss()
-        },
-        trailingIcon = {
-          if (ac.id == state.selectedThingId) {
-            Icon(Icons.Filled.Check, contentDescription = null)
-          }
-        },
-      )
+          },
+          leadingIcon = {
+            Icon(
+              thingIcon(ac.template?.icon.orEmpty()),
+              contentDescription = null,
+              tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+          },
+          onClick = {
+            onSelectThing(ac.id)
+            onDismiss()
+          },
+          trailingIcon = {
+            if (ac.id == state.selectedThingId) {
+              Icon(Icons.Filled.Check, contentDescription = null)
+            }
+          },
+        )
+      }
     }
     if (onAddThing != null || onEnterInviteCode != null) {
       HorizontalDivider()

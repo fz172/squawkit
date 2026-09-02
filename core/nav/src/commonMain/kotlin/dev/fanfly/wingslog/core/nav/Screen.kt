@@ -9,8 +9,15 @@ sealed class Screen(val route: String) {
     const val LOG_ID = "logId"
     const val TECHNICIAN_ID = "technicianId"
     const val SQUAWK_ID = "squawkId"
+    const val TEMPLATE_ID = "templateId"
 
     const val CROSS_SCREEN_SUCCESS_MESSAGE = "success_message"
+
+    /**
+     * Set by the create form's "Change type" so the shell reopens the picker after the form pops.
+     * The picker is a sheet over the shell, not a destination, so it cannot be navigated to.
+     */
+    const val REOPEN_TYPE_PICKER = "reopen_type_picker"
   }
 
   // Navigation route templates
@@ -21,7 +28,15 @@ sealed class Screen(val route: String) {
   data object Notifications : Screen("notifications")
   data object ExportLogs : Screen("export_logs")
   data object ExportHistory : Screen("export_history")
-  data object AddThing : Screen("add_thing")
+  /**
+   * The create form. [TEMPLATE_ID] is optional so the empty state can still open the form directly;
+   * absent, the form falls back the way it always did (#738).
+   */
+  data object AddThing : Screen("add_thing?$TEMPLATE_ID={$TEMPLATE_ID}") {
+    fun createRoute(templateId: String? = null) =
+      if (templateId.isNullOrEmpty()) "add_thing" else "add_thing?$TEMPLATE_ID=$templateId"
+  }
+
   data object EnterInviteCode : Screen("enter_invite_code")
 
   data object ManageTechnicians : Screen("manage_technicians")

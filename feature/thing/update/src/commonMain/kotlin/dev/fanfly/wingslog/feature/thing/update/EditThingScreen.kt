@@ -1,5 +1,11 @@
 package dev.fanfly.wingslog.feature.thing.update
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.Icon
+import dev.fanfly.wingslog.core.ui.adaptive.thingIcon
+import dev.fanfly.wingslog.thing.ThingTemplate
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -56,6 +62,7 @@ import wingslog.feature.thing.update.generated.resources.delete_thing
 import wingslog.feature.thing.update.generated.resources.delete_thing_member_plural
 import wingslog.feature.thing.update.generated.resources.delete_thing_member_singular
 import wingslog.feature.thing.update.generated.resources.delete_thing_shared_warning
+import wingslog.feature.thing.update.generated.resources.pick_type_change
 import wingslog.feature.thing.update.generated.resources.update_thing
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.logs.sharedassets.generated.resources.Res as SharedRes
@@ -195,6 +202,18 @@ fun EditThingScreen(
           ),
         verticalArrangement = Arrangement.spacedBy(Spacing.extraLarge)
       ) {
+        // Only on a create: an existing Thing's template is its stored DNA, and re-picking it
+        // would rewrite the spec fields its records were filed against.
+        if (uiState.thing.id == "") {
+          TypeChipRow(
+            template = uiState.template,
+            onChangeType = {
+              navController.previousBackStackEntry?.savedStateHandle
+                ?.set(Screen.REOPEN_TYPE_PICKER, true)
+              navController.popBackStack()
+            },
+          )
+        }
         // Identity, then the component tree — both from what the template declares (#729). The
         // fixed AIRFRAME and ENGINE headings went with the airplane-shaped sections: a heading
         // naming one preset's slots is the same bug as a field naming them.
@@ -233,5 +252,36 @@ fun EditThingScreen(
           )
       )
     }
+  }
+}
+
+/**
+ * "AIRPLANE · Change type" above the create form — says what the picker chose, and lets it be
+ * changed without losing the form to a back gesture that would close it entirely.
+ */
+@Composable
+private fun TypeChipRow(template: ThingTemplate?, onChangeType: () -> Unit) {
+  Row(
+    verticalAlignment = Alignment.CenterVertically,
+    horizontalArrangement = Arrangement.spacedBy(Spacing.small),
+    modifier = Modifier.fillMaxWidth(),
+  ) {
+    Icon(
+      thingIcon(template?.icon.orEmpty()),
+      contentDescription = null,
+      tint = MaterialTheme.colorScheme.primary,
+    )
+    Text(
+      template?.display_name.orEmpty(),
+      style = MaterialTheme.typography.labelLarge,
+      color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    Spacer(Modifier.weight(1f))
+    Text(
+      stringResource(ThingRes.string.pick_type_change),
+      style = MaterialTheme.typography.labelLarge,
+      color = MaterialTheme.colorScheme.primary,
+      modifier = Modifier.clickable(onClick = onChangeType),
+    )
   }
 }

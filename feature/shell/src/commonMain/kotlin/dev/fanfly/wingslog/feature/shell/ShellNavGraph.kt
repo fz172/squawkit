@@ -37,6 +37,13 @@ import org.koin.mp.KoinPlatform
 fun NavGraphBuilder.formDialogs(navController: NavController) {
   dialog(
     route = Screen.AddThing.route,
+    arguments = listOf(
+      navArgument(Screen.TEMPLATE_ID) {
+        type = NavType.StringType
+        nullable = true
+        defaultValue = null
+      },
+    ),
     dialogProperties = formDialogProperties(),
   ) {
     AdaptiveFormDialogFrame {
