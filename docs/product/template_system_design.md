@@ -197,9 +197,18 @@ script. Not authored in a console, not hand-encoded.
 
 ```
 templates/
-  airplane.v1.textproto
+  airplane.v2.textproto
   car.v1.textproto
 ```
+
+**Every edit bumps the version — pre-release included.** The tempting exception is a template nothing has
+fetched yet, on the reasoning that the only copies live inside Thing DNA. Airplane v1 was edited in place four
+times on exactly that reasoning, and it produced several populations of aeroplane all claiming `airplane v1`
+while walking different slots: the #732 blade regression was one of them, an aeroplane rendering blades from
+bytes frozen before `compact_instances` existed, with nothing in the payload to say which v1 it held. The
+version is how a stored copy is identified; an unbumped edit makes that identification false, and "not released
+yet" does not change what the payload says. Every preset restarted at v2 when the rule was enforced, and
+`npm run dna-refresh` moves the Things already in the field onto the current bytes.
 
 Source control is the point: a template is a product artifact that gets reviewed, diffed, and blamed like code.
 Immutability makes that doubly true — a published template can never be corrected, only superseded (§5), so the

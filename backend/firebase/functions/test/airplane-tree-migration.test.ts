@@ -175,15 +175,17 @@ describe("airplane tree migration", () => {
     expect(stored.template?.componentSlots[0].children[0].children[0].slotKey).toBe("blade");
   });
 
-  it("touches nothing else in the template", async () => {
+  it("leaves the DNA citing the version whose slots it just wrote", async () => {
     await seed(legacyThing());
 
     await runAirplaneTreeMigration(RUN);
 
-    // A structural repair, not a template refresh: everything but the slots is left as stored.
+    // The whole template moves, not just the slots. Writing the current slots under the version the
+    // Thing already claimed would produce two aeroplanes citing one version while walking different
+    // trees — the #732 blade regression, reintroduced by the migration meant to prevent it.
     const stored = await storedThing();
     expect(stored.template?.id).toBe("airplane");
-    expect(stored.template?.version).toBe(1);
+    expect(stored.template?.version).toBeGreaterThan(1);
     expect(stored.template?.minAppVersion).toBe(0);
   });
 

@@ -46,6 +46,17 @@ export interface SpecField {
    * this the switcher picked whichever identifier the template happened to declare first.
    */
   titleCandidate: boolean;
+  /**
+   * The values this field accepts. Empty — the default — means free text.
+   *
+   * A wheel's position is the case: front left, rear right, spare. Typed freely, the same wheel is
+   * "RR", "rear right" and "Rear-Right" across three cars, and nothing can group or compare them.
+   * The list is the TEMPLATE's, because the vocabulary is domain knowledge: a bike has a front and
+   * a rear, a dually has an inner and an outer.
+   */
+  options: string[];
+  /** A number: numeric keypad, and none of the capitalisation a text field applies. */
+  numeric: boolean;
 }
 
 /**
@@ -86,6 +97,45 @@ export interface ComponentSlot {
    * its *instances* instead, which is what puts four blade serials on two lines.
    */
   compactFields: boolean;
+  /**
+   * Draw each of this slot's components as a chip beside its siblings, not as a card of its own.
+   *
+   * The slot says whether its parts are read as a SET or as individuals. Four tyres, two blades,
+   * two wheels are a set — near-identical parts told apart by a number and a serial — and a
+   * full-width card each buries the rest of the tree in scroll for no gain. An engine is an
+   * individual: one part with a history, and its card is where that history hangs.
+   *
+   * Replaces the `depth > 0` heuristic the dashboard used to guess this with. Nesting was never
+   * the question — a boat's propulsion and a car's tyres are top-level and still a set, which is
+   * why a preset that reads correctly for an aeroplane listed a car's four tyres as four rows.
+   * #732 asked for this field; this is it.
+   */
+  compactInstances: boolean;
+  /**
+   * How many components this slot may hold. 0 — the proto3 default — means unbounded, so every
+   * preset that has not thought about it is unchanged.
+   *
+   * This is the ZERO_OR_ONE cardinality PRD §4.3 designed and the shipped bool could not express.
+   * `repeatable` alone is a two-way switch: false means exactly one, which puts an unremovable
+   * empty Engine block on an EV's form, and true means zero-or-more, which offers to add a second
+   * engine to a hatchback. A car's engine is optional and singular, and needed a way to say both.
+   *
+   * Only meaningful with `repeatable` — a non-repeatable slot already holds exactly one.
+   */
+  maxInstances: number;
+  /**
+   * Fields this slot asks for BEYOND make, model and serial, stored in `Component.spec`.
+   *
+   * The triple is a floor, not the whole vocabulary. A tyre has a normal running pressure and a
+   * position on the vehicle, and neither is a make, a model or a serial — they are what tells one
+   * tyre from the other three. `spec_keys` could only ever subtract from the triple; this adds.
+   *
+   * Same message the Thing's own spec fields use, so labels, placeholders, `options` and
+   * `title_candidate` all mean here what they mean there. A field marked `title_candidate` names
+   * the instance: a wheel reads "FRONT LEFT" rather than "Tire 3", which is the point of
+   * recording a position at all.
+   */
+  specFields: SpecField[];
 }
 
 /**
@@ -167,6 +217,8 @@ function createBaseSpecField(): SpecField {
     placeholder: "",
     compact: false,
     titleCandidate: false,
+    options: [],
+    numeric: false,
   };
 }
 
@@ -192,6 +244,12 @@ export const SpecField: MessageFns<SpecField> = {
     }
     if (message.titleCandidate !== false) {
       writer.uint32(56).bool(message.titleCandidate);
+    }
+    for (const v of message.options) {
+      writer.uint32(66).string(v!);
+    }
+    if (message.numeric !== false) {
+      writer.uint32(72).bool(message.numeric);
     }
     return writer;
   },
@@ -259,6 +317,22 @@ export const SpecField: MessageFns<SpecField> = {
           message.titleCandidate = reader.bool();
           continue;
         }
+        case 8: {
+          if (tag !== 66) {
+            break;
+          }
+
+          message.options.push(reader.string());
+          continue;
+        }
+        case 9: {
+          if (tag !== 72) {
+            break;
+          }
+
+          message.numeric = reader.bool();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -285,6 +359,8 @@ export const SpecField: MessageFns<SpecField> = {
         : isSet(object.title_candidate)
         ? globalThis.Boolean(object.title_candidate)
         : false,
+      options: globalThis.Array.isArray(object?.options) ? object.options.map((e: any) => globalThis.String(e)) : [],
+      numeric: isSet(object.numeric) ? globalThis.Boolean(object.numeric) : false,
     };
   },
 
@@ -311,6 +387,12 @@ export const SpecField: MessageFns<SpecField> = {
     if (message.titleCandidate !== false) {
       obj.titleCandidate = message.titleCandidate;
     }
+    if (message.options?.length) {
+      obj.options = message.options;
+    }
+    if (message.numeric !== false) {
+      obj.numeric = message.numeric;
+    }
     return obj;
   },
 
@@ -326,6 +408,8 @@ export const SpecField: MessageFns<SpecField> = {
     message.placeholder = object.placeholder ?? "";
     message.compact = object.compact ?? false;
     message.titleCandidate = object.titleCandidate ?? false;
+    message.options = object.options?.map((e) => e) || [];
+    message.numeric = object.numeric ?? false;
     return message;
   },
 };
@@ -340,6 +424,9 @@ function createBaseComponentSlot(): ComponentSlot {
     specKeys: [],
     inlineWithParent: false,
     compactFields: false,
+    compactInstances: false,
+    maxInstances: 0,
+    specFields: [],
   };
 }
 
@@ -368,6 +455,15 @@ export const ComponentSlot: MessageFns<ComponentSlot> = {
     }
     if (message.compactFields !== false) {
       writer.uint32(64).bool(message.compactFields);
+    }
+    if (message.compactInstances !== false) {
+      writer.uint32(72).bool(message.compactInstances);
+    }
+    if (message.maxInstances !== 0) {
+      writer.uint32(80).int32(message.maxInstances);
+    }
+    for (const v of message.specFields) {
+      SpecField.encode(v!, writer.uint32(90).fork()).join();
     }
     return writer;
   },
@@ -443,6 +539,30 @@ export const ComponentSlot: MessageFns<ComponentSlot> = {
           message.compactFields = reader.bool();
           continue;
         }
+        case 9: {
+          if (tag !== 72) {
+            break;
+          }
+
+          message.compactInstances = reader.bool();
+          continue;
+        }
+        case 10: {
+          if (tag !== 80) {
+            break;
+          }
+
+          message.maxInstances = reader.int32();
+          continue;
+        }
+        case 11: {
+          if (tag !== 90) {
+            break;
+          }
+
+          message.specFields.push(SpecField.decode(reader, reader.uint32()));
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -484,6 +604,21 @@ export const ComponentSlot: MessageFns<ComponentSlot> = {
         : isSet(object.compact_fields)
         ? globalThis.Boolean(object.compact_fields)
         : false,
+      compactInstances: isSet(object.compactInstances)
+        ? globalThis.Boolean(object.compactInstances)
+        : isSet(object.compact_instances)
+        ? globalThis.Boolean(object.compact_instances)
+        : false,
+      maxInstances: isSet(object.maxInstances)
+        ? globalThis.Number(object.maxInstances)
+        : isSet(object.max_instances)
+        ? globalThis.Number(object.max_instances)
+        : 0,
+      specFields: globalThis.Array.isArray(object?.specFields)
+        ? object.specFields.map((e: any) => SpecField.fromJSON(e))
+        : globalThis.Array.isArray(object?.spec_fields)
+        ? object.spec_fields.map((e: any) => SpecField.fromJSON(e))
+        : [],
     };
   },
 
@@ -513,6 +648,15 @@ export const ComponentSlot: MessageFns<ComponentSlot> = {
     if (message.compactFields !== false) {
       obj.compactFields = message.compactFields;
     }
+    if (message.compactInstances !== false) {
+      obj.compactInstances = message.compactInstances;
+    }
+    if (message.maxInstances !== 0) {
+      obj.maxInstances = Math.round(message.maxInstances);
+    }
+    if (message.specFields?.length) {
+      obj.specFields = message.specFields.map((e) => SpecField.toJSON(e));
+    }
     return obj;
   },
 
@@ -529,6 +673,9 @@ export const ComponentSlot: MessageFns<ComponentSlot> = {
     message.specKeys = object.specKeys?.map((e) => e) || [];
     message.inlineWithParent = object.inlineWithParent ?? false;
     message.compactFields = object.compactFields ?? false;
+    message.compactInstances = object.compactInstances ?? false;
+    message.maxInstances = object.maxInstances ?? 0;
+    message.specFields = object.specFields?.map((e) => SpecField.fromPartial(e)) || [];
     return message;
   },
 };

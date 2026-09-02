@@ -22,15 +22,11 @@ export interface MaintenanceLog {
   componentType: ComponentType;
   /** References Engine/Prop/Blade Serial */
   componentSerial: string;
-  engineHour: number;
   /**
    * Field 9 repurposed from repeated string attachment_urls.
    * Safe because no data was ever written to field 9 before this change.
    */
   attachments: Attachment[];
-  /** Separate time tracking for each component category */
-  airframeTime: number;
-  propTime: number;
   /** Inspection cards associated with this log entry */
   inspectionIds: string[];
   /** Technician who performed the work */
@@ -42,23 +38,9 @@ export interface MaintenanceLog {
   /**
    * What the meters read when this work was done (PRD §4.4).
    *
-   * Supersedes `engine_hour`, `airframe_time` and `prop_time` above, which can only describe an
-   * aeroplane. Those three are still written alongside for the airplane meter keys.
-   *
-   * WHAT ACTUALLY BLOCKS REMOVING THEM, in the order it has to happen:
-   *
-   *   1. `EngineHourRule` and `MaintenanceTask.force_due_engine_hour` schedule work against "engine
-   *      hours" as a named concept, so `TaskDueManagerImpl` reads `engine_hour` directly. PRD §11.1
-   *      replaces the rule with a `MeterRule` carrying a meter key; until that lands, a car cannot
-   *      be scheduled on mileage and this field is load-bearing.
-   *   2. The logbook export reads all three. That layout is aviation-only by design
-   *      (`EXPORT_LAYOUT_LOGBOOK`), so it keeps the concepts — but it should reach them by meter
-   *      key rather than by field, which is the same change as (1) at a different call site.
-   *   3. Every log already stored has its value only in these fields. Removing them without either
-   *      a backfill or a permanent read fallback loses the history behind every hour reading.
-   *
-   * Until then `readingFor` prefers `readings` and falls back here, so a reader written today is
-   * correct for both. Reserve the numbers rather than reusing them when they do go.
+   * The only place a reading lives. Replaced `engine_hour` (8), `airframe_time` (10) and
+   * `prop_time` (11), which could only ever describe an aeroplane — a car's odometer had nowhere
+   * to go, which is what made "every 5,000 miles" unexpressible.
    */
   readings: MeterReading[];
 }
@@ -71,10 +53,7 @@ function createBaseMaintenanceLog(): MaintenanceLog {
     workDescription: "",
     componentType: 0,
     componentSerial: "",
-    engineHour: 0,
     attachments: [],
-    airframeTime: 0,
-    propTime: 0,
     inspectionIds: [],
     technician: undefined,
     squawkIds: [],
@@ -102,17 +81,8 @@ export const MaintenanceLog: MessageFns<MaintenanceLog> = {
     if (message.componentSerial !== "") {
       writer.uint32(50).string(message.componentSerial);
     }
-    if (message.engineHour !== 0) {
-      writer.uint32(65).double(message.engineHour);
-    }
     for (const v of message.attachments) {
       Attachment.encode(v!, writer.uint32(74).fork()).join();
-    }
-    if (message.airframeTime !== 0) {
-      writer.uint32(81).double(message.airframeTime);
-    }
-    if (message.propTime !== 0) {
-      writer.uint32(89).double(message.propTime);
     }
     for (const v of message.inspectionIds) {
       writer.uint32(98).string(v!);
@@ -184,36 +154,12 @@ export const MaintenanceLog: MessageFns<MaintenanceLog> = {
           message.componentSerial = reader.string();
           continue;
         }
-        case 8: {
-          if (tag !== 65) {
-            break;
-          }
-
-          message.engineHour = reader.double();
-          continue;
-        }
         case 9: {
           if (tag !== 74) {
             break;
           }
 
           message.attachments.push(Attachment.decode(reader, reader.uint32()));
-          continue;
-        }
-        case 10: {
-          if (tag !== 81) {
-            break;
-          }
-
-          message.airframeTime = reader.double();
-          continue;
-        }
-        case 11: {
-          if (tag !== 89) {
-            break;
-          }
-
-          message.propTime = reader.double();
           continue;
         }
         case 12: {
@@ -281,24 +227,9 @@ export const MaintenanceLog: MessageFns<MaintenanceLog> = {
         : isSet(object.component_serial)
         ? globalThis.String(object.component_serial)
         : "",
-      engineHour: isSet(object.engineHour)
-        ? globalThis.Number(object.engineHour)
-        : isSet(object.engine_hour)
-        ? globalThis.Number(object.engine_hour)
-        : 0,
       attachments: globalThis.Array.isArray(object?.attachments)
         ? object.attachments.map((e: any) => Attachment.fromJSON(e))
         : [],
-      airframeTime: isSet(object.airframeTime)
-        ? globalThis.Number(object.airframeTime)
-        : isSet(object.airframe_time)
-        ? globalThis.Number(object.airframe_time)
-        : 0,
-      propTime: isSet(object.propTime)
-        ? globalThis.Number(object.propTime)
-        : isSet(object.prop_time)
-        ? globalThis.Number(object.prop_time)
-        : 0,
       inspectionIds: globalThis.Array.isArray(object?.inspectionIds)
         ? object.inspectionIds.map((e: any) => globalThis.String(e))
         : globalThis.Array.isArray(object?.inspection_ids)
@@ -336,17 +267,8 @@ export const MaintenanceLog: MessageFns<MaintenanceLog> = {
     if (message.componentSerial !== "") {
       obj.componentSerial = message.componentSerial;
     }
-    if (message.engineHour !== 0) {
-      obj.engineHour = message.engineHour;
-    }
     if (message.attachments?.length) {
       obj.attachments = message.attachments.map((e) => Attachment.toJSON(e));
-    }
-    if (message.airframeTime !== 0) {
-      obj.airframeTime = message.airframeTime;
-    }
-    if (message.propTime !== 0) {
-      obj.propTime = message.propTime;
     }
     if (message.inspectionIds?.length) {
       obj.inspectionIds = message.inspectionIds;
@@ -374,10 +296,7 @@ export const MaintenanceLog: MessageFns<MaintenanceLog> = {
     message.workDescription = object.workDescription ?? "";
     message.componentType = object.componentType ?? 0;
     message.componentSerial = object.componentSerial ?? "";
-    message.engineHour = object.engineHour ?? 0;
     message.attachments = object.attachments?.map((e) => Attachment.fromPartial(e)) || [];
-    message.airframeTime = object.airframeTime ?? 0;
-    message.propTime = object.propTime ?? 0;
     message.inspectionIds = object.inspectionIds?.map((e) => e) || [];
     message.technician = (object.technician !== undefined && object.technician !== null)
       ? Technician.fromPartial(object.technician)

@@ -1,13 +1,13 @@
-# The boat preset — canonical template (id "boat", version 1).
+# The boat preset — canonical template (id "boat", version 2).
 #
 # The only non-aviation preset with a PER-COMPONENT meter: engine hours belong to the engine, and a
 # twin-engine boat has two of them accruing separately. That makes this the preset that exercises
 # `component_slot_key` outside the airplane, which is the field a single-engine assumption hides.
 #
-# See templates/README.md before editing, and compile with ./compile-template.sh boat.v1
+# See templates/README.md before editing, and compile with ./compile-template.sh boat.v2
 
 id: "boat"
-version: 1
+version: 2
 min_app_version: 0
 
 display_name: "Boat"

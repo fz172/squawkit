@@ -17,9 +17,23 @@ something no template promises.
 
 ## Editing a template
 
+**Every edit is a new version.** Copy the file to the next `vN`, change `version:` inside it to
+match, delete the old `.pb`, and compile the new one:
+
 ```bash
-./compile-template.sh airplane.v1        # regenerates airplane.v1.pb
+git mv airplane.v2.textproto airplane.v3.textproto   # and set `version: 3` inside
+git rm binary/airplane.v2.pb
+./compile-template.sh airplane.v3                    # writes binary/airplane.v3.pb
 ./gradlew :core:template:testAndroidHostTest
+```
+
+Nothing else changes: Gradle keys the generated constant on the preset id and takes the highest
+version it finds, so `AIRPLANE_BASE64` follows the rename on its own.
+
+Then move the Things already in the field onto it:
+
+```bash
+cd backend/firebase/functions && npm run dna-refresh -- --dry-run
 ```
 
 Both steps. `AirplaneTemplateAssetTest` and `CanonicalTemplatesTest` are what tell you a `.pb` is stale or a
@@ -29,6 +43,14 @@ preset is invalid, and they are wired into Gradle's inputs so they re-run whenev
 > (`template_system_design.md` §5), so a correction after publication is a new `version` — a new
 > pair of files — not a change to these. Editing in place changes what an already-distributed
 > version means, and clients that cached the old bytes never find out.
+>
+> **This holds pre-release too, and airplane v1 is why.** It was edited in place four times on the
+> reasoning that nothing fetches templates yet and the only copies live inside Thing DNA. What that
+> actually produced was several populations of aeroplane all claiming `airplane v1` and all walking
+> different slots — the #732 blade regression was one of them, an aeroplane rendering its blades
+> from bytes frozen before `compact_instances` existed. A stored template is identified by its
+> version; an unbumped edit makes that identification wrong, and no amount of "not released yet"
+> changes it. Bump on **every** change, including a lexicon word.
 
 ## Why protoc runs here and not in Gradle
 

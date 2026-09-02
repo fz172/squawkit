@@ -24,12 +24,12 @@ object CanonicalTemplates {
       checkNotNull(base64.decodeBase64()) { "$id asset is not valid base64" },
     )
 
-  val HOME: ThingTemplate = decode(HOME_V1_BASE64, "home")
+  val HOME: ThingTemplate = decode(HOME_BASE64, "home")
   /** Cars and motorcycles both — see the text proto for why they are one preset, not two. */
-  val AUTOMOTIVE: ThingTemplate = decode(AUTOMOTIVE_V1_BASE64, "automotive")
-  val BIKE: ThingTemplate = decode(BIKE_V1_BASE64, "bike")
-  val BOAT: ThingTemplate = decode(BOAT_V1_BASE64, "boat")
-  val CUSTOM: ThingTemplate = decode(CUSTOM_V1_BASE64, "custom")
+  val AUTOMOTIVE: ThingTemplate = decode(AUTOMOTIVE_BASE64, "automotive")
+  val BIKE: ThingTemplate = decode(BIKE_BASE64, "bike")
+  val BOAT: ThingTemplate = decode(BOAT_BASE64, "boat")
+  val CUSTOM: ThingTemplate = decode(CUSTOM_BASE64, "custom")
 
   /**
    * The pool, airplane first because it is the only one with Things in the field today.

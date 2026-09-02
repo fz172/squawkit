@@ -42,3 +42,6 @@ docs/product/screenshot_generator/_render_*.html
 
 # impeccable design-skill critique snapshots — local tooling state, not project docs
 /.impeccable/
+
+# One-off pre-migration snapshots of production documents. Real user data — never committed.
+.migration-backups/

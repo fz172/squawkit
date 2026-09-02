@@ -10,7 +10,7 @@ import okio.ByteString.Companion.decodeBase64
 
 /**
  * The airplane preset, decoded from the canonical asset compiled out of
- * `templates/airplane.v1.textproto`.
+ * `templates/airplane.v2.textproto`.
  *
  * **The `.textproto` is the source; this file only decodes it.** Values used to be constructed here
  * in Kotlin, which was the deviation from `template_system_design.md` §4 that #675 closed. The
@@ -27,7 +27,7 @@ import okio.ByteString.Companion.decodeBase64
 object AirplaneTemplate {
 
   const val ID: String = "airplane"
-  const val VERSION: Int = 1
+  const val VERSION: Int = 2
 
   /**
    * Decoded once, eagerly.
@@ -38,8 +38,8 @@ object AirplaneTemplate {
    * binary.
    */
   val TEMPLATE: ThingTemplate = ThingTemplate.ADAPTER.decode(
-    checkNotNull(AIRPLANE_V1_BASE64.decodeBase64()) {
-      "airplane.v1 asset is not valid base64"
+    checkNotNull(AIRPLANE_BASE64.decodeBase64()) {
+      "airplane asset is not valid base64"
     },
   )
 
