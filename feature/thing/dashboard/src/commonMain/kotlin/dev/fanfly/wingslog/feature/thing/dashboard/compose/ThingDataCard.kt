@@ -147,10 +147,15 @@ fun ThingDataCard(
           // Every stored component, walked from the template's slots. Drawn as a tree by
           // containment — an engine's propeller sits inside its card — rather than as a flat
           // stack that says nothing about what is attached to what.
+          //
+          // Top-level slots go through the same grouping as nested ones, which is the fix for a
+          // car listing four tyres and four brakes as eight full-width rows: a slot marked
+          // `compact_instances` draws its components as chips wherever it sits in the tree.
           if (LocalThingCapabilities.current.components) {
-            template.componentTree(thing)
-              .filter { it.row.component != null }
-              .forEach { ComponentDetails(it) }
+            ComponentGroups(
+              template.componentTree(thing)
+                .filter { it.row.component != null },
+            )
           }
 
           if (onEditClick != null || onManageAccessClick != null) {

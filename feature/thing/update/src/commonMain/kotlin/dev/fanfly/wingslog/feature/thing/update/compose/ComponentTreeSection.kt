@@ -13,15 +13,25 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.template.ComponentField
 import dev.fanfly.wingslog.core.template.ComponentNode
@@ -31,11 +41,14 @@ import dev.fanfly.wingslog.core.template.LocalThingCapabilities
 import dev.fanfly.wingslog.core.template.LocalThingTemplate
 import dev.fanfly.wingslog.core.template.addableSlotsUnder
 import dev.fanfly.wingslog.core.template.componentTree
+import dev.fanfly.wingslog.core.template.specValue
 import dev.fanfly.wingslog.core.template.valueOf
 import dev.fanfly.wingslog.core.ui.common.compose.DashedButton
 import dev.fanfly.wingslog.core.ui.common.compose.FormTextField
+import dev.fanfly.wingslog.core.ui.common.compose.FormValueField
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.thing.update.viewmodel.EditThingViewModel
+import dev.fanfly.wingslog.thing.SpecField
 import dev.fanfly.wingslog.thing.Thing
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.add
@@ -71,7 +84,9 @@ fun ComponentTreeSection(
   // Not `nodes.isEmpty()`: removing the last engine emptied the tree and took the Add control with
   // it, leaving no way to add one back. The section is empty only when the template declares
   // nothing to add either — home and custom.
-  if (nodes.isEmpty() && template.addableSlotsUnder(emptyList())
+  if (nodes.isEmpty() && template.addableSlotsUnder(
+      emptyList(),
+      nodes.map { it.row })
       .isEmpty()
   ) return
 
@@ -85,7 +100,11 @@ fun ComponentTreeSection(
     }
     // Root-level adds. A slot nested under a component is offered on that component's own card,
     // where the thing being added to is unambiguous.
-    AddSlotButtons(parentPath = emptyList(), viewModel = viewModel)
+    AddSlotButtons(
+      parentPath = emptyList(),
+      existing = nodes.map { it.row },
+      viewModel = viewModel,
+    )
   }
 }
 
@@ -121,7 +140,11 @@ private fun ComponentNodeCard(
         ComponentNodeCard(child, viewModel, showValidationErrors)
       }
 
-      AddSlotButtons(parentPath = node.row.path, viewModel = viewModel)
+      AddSlotButtons(
+        parentPath = node.row.path,
+        existing = node.children.map { it.row },
+        viewModel = viewModel,
+      )
     }
   }
 }
@@ -162,10 +185,15 @@ private fun ComponentBlock(
 }
 
 /**
- * The slot's fields, on one line each or packed when the template asks for it.
+ * The slot's fields: the make/model/serial triple, then whatever else the slot declares.
  *
  * Compact puts make on its own line and pairs model with serial beside it — the shape an owner
  * reads a plate in, rather than three stacked inputs each half empty.
+ *
+ * **The declared fields are drawn unconditionally**, after the triple and outside every branch
+ * above. Hanging them off the end of the compact path meant a tyre — which packs nothing, so it
+ * takes the plain branch — rendered neither its position nor its pressure, on a form where the
+ * only evidence was their absence.
  */
 @Composable
 private fun ComponentFields(
@@ -174,6 +202,17 @@ private fun ComponentFields(
   showValidationErrors: Boolean,
 ) {
   val row = node.row
+  TripleFields(row, viewModel, showValidationErrors)
+  SlotSpecFields(row, viewModel)
+}
+
+/** Make, model and serial — the three every component carries, however the slot packs them. */
+@Composable
+private fun TripleFields(
+  row: ComponentRow,
+  viewModel: EditThingViewModel,
+  showValidationErrors: Boolean,
+) {
   val visible = row.fields.filter { it.isVisibleOn(row) }
   if (visible.isEmpty()) return
 
@@ -212,6 +251,89 @@ private fun ComponentFields(
 }
 
 /**
+ * The slot's own declared fields — a tyre's position and its normal pressure.
+ *
+ * Paired two to a row like the triple above, because these are short: a position picked from a
+ * list and a two-digit pressure each read fine at half width, and stacking them would make a set
+ * of four tyres four times as tall for no gain.
+ */
+@Composable
+private fun SlotSpecFields(row: ComponentRow, viewModel: EditThingViewModel) {
+  if (row.slot.spec_fields.isEmpty()) return
+  row.slot.spec_fields.chunked(2)
+    .forEach { pair ->
+      Row(horizontalArrangement = Arrangement.spacedBy(Spacing.medium)) {
+        pair.forEach { field ->
+          SlotSpecFieldInput(row, field, viewModel, Modifier.weight(1f))
+        }
+        if (pair.size == 1) Spacer(Modifier.weight(1f))
+      }
+    }
+}
+
+/**
+ * One declared field: a picker when the template lists `options`, a text input otherwise.
+ *
+ * The list is the template's, so a bike offers front and rear while a car offers four corners and
+ * a spare, and neither has to be known here.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SlotSpecFieldInput(
+  row: ComponentRow,
+  field: SpecField,
+  viewModel: EditThingViewModel,
+  modifier: Modifier = Modifier,
+) {
+  val value = row.component?.specValue(field.key)
+    .orEmpty()
+  if (field.options.isEmpty()) {
+    FormTextField(
+      value = value,
+      onValueChange = { viewModel.onComponentSpecChanged(row.path, field, it) },
+      label = field.label,
+      placeholder = field.placeholder,
+      modifier = modifier,
+      keyboardOptions = if (field.numeric) {
+        KeyboardOptions(keyboardType = KeyboardType.Number)
+      } else {
+        KeyboardOptions.Default
+      },
+    )
+    return
+  }
+  var expanded by remember { mutableStateOf(false) }
+  ExposedDropdownMenuBox(
+    expanded = expanded,
+    onExpandedChange = { expanded = it },
+    modifier = modifier,
+  ) {
+    FormValueField(
+      value = value,
+      label = field.label,
+      trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+      modifier = Modifier.fillMaxWidth()
+        .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
+    )
+    // The options and nothing else. No blank entry: a wheel is somewhere on the vehicle, so an
+    // "unset" row would be an answer nobody means to give, sitting above the four that are true.
+    ExposedDropdownMenu(
+      expanded = expanded,
+      onDismissRequest = { expanded = false }) {
+      field.options.forEach { option ->
+        DropdownMenuItem(
+          text = { Text(option) },
+          onClick = {
+            viewModel.onComponentSpecChanged(row.path, field, option)
+            expanded = false
+          },
+        )
+      }
+    }
+  }
+}
+
+/**
  * A repeating inline slot: one heading, then its instances' inputs packed together.
  *
  * Blade serials are the case — four of them belong under one "Blade" heading on two lines, not as
@@ -241,7 +363,11 @@ private fun InlineGroup(
         ComponentNodeCard(it, viewModel, showValidationErrors)
       }
       // "Add Blade" belongs to the propeller, which has no card of its own to carry it.
-      AddSlotButtons(parentPath = node.row.path, viewModel = viewModel)
+      AddSlotButtons(
+        parentPath = node.row.path,
+        existing = node.children.map { it.row },
+        viewModel = viewModel,
+      )
     }
     return
   }
@@ -341,9 +467,13 @@ private fun ComponentField.isVisibleOn(row: ComponentRow): Boolean =
 @Composable
 private fun AddSlotButtons(
   parentPath: ComponentPath,
+  existing: List<ComponentRow>,
   viewModel: EditThingViewModel
 ) {
-  val addable = LocalThingTemplate.current.addableSlotsUnder(parentPath)
+  // `existing` is what caps a slot: a car's engine is repeatable so an EV can have none, and
+  // `max_instances: 1` so a hatchback is not offered a second one.
+  val addable =
+    LocalThingTemplate.current.addableSlotsUnder(parentPath, existing)
   if (addable.isEmpty()) return
   Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
     addable.forEach { slot ->

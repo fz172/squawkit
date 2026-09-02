@@ -79,30 +79,69 @@ spec_fields { key: "model" label: "Model" }
 spec_fields { key: "year" label: "Year" placeholder: "2019" }
 spec_fields { key: "vin" label: "VIN" is_identifier: true placeholder: "1HGBH41JXMN109186" }
 
-# Engine is OPTIONAL, expressed as `repeatable` because that is the only cardinality this schema
-# has: PRD §4.3 designed EXACTLY_ONE / ZERO_OR_ONE / ZERO_OR_MORE, and the shipped ComponentSlot
-# carries a single bool. `repeatable` means zero-or-more, which is the honest reading for a slot an
-# EV will never fill and a twin-engine vehicle could fill twice. A non-repeatable slot implies
-# exactly one, which would be wrong here.
+# TWO SLOTS, and that is the whole vehicle: an engine and a set of tyres.
+#
+# THERE IS NO BATTERY SLOT AND NO BRAKES SLOT. Nobody logs the make and serial of their car
+# battery, and nobody logs their brakes as parts — they log the SERVICE, which is a task and a
+# record, not a component. A slot for each meant a car declared more trackable parts than an
+# aeroplane does, and every one of them sat empty. A component slot has to earn its place by being
+# something an owner would actually type an identity into; these did not.
+#
+# Anything with a life an owner does track — a timing belt, a set of pads — is a maintenance task
+# against the odometer, which the meter below already expresses.
+
+# Engine is OPTIONAL and SINGULAR. `repeatable` is what makes it optional — an EV fills it never —
+# and `max_instances` is what stops the form offering a hatchback a second one. PRD §4.3 designed
+# this as ZERO_OR_ONE; the shipped bool could only say "exactly one" or "any number", so the field
+# is new here.
 component_slots {
   slot_key: "engine"
   label: "Engine"
   repeatable: true
+  max_instances: 1
   serial_expected: true
 }
-component_slots {
-  slot_key: "battery"
-  label: "Battery"
-}
-component_slots {
-  slot_key: "brakes"
-  label: "Brakes"
-  repeatable: true
-}
+# A SET, not individuals: near-identical parts told apart by position, the same shape as an
+# aeroplane's propeller blades. Four full-width cards was what made a car look like it tracked more
+# than an aeroplane.
+#
+# Uncapped on purpose, unlike the engine. Four on a car, two on a motorcycle, six on a dually, and
+# a spare on top of any of them — this preset covers all of them and the template does not guess.
 component_slots {
   slot_key: "tire"
   label: "Tire"
   repeatable: true
+  compact_instances: true
+  # Make and model only. Tyres do carry a DOT code, but nobody transcribes it off the sidewall,
+  # and a serial field that is blank on every car ever entered is a field that should not exist.
+  spec_keys: "make"
+  spec_keys: "model"
+  # The four corners and a spare. DECLARATION ORDER IS LAYOUT ORDER — the dashboard sorts a set by
+  # a position's index in this list, and draws two to a row, so writing it this way is what makes
+  # the block read as the car: front left beside front right, rear left beside rear right.
+  #
+  # An enumerated list rather than free text, because typed freely the same wheel is "RR", "rear
+  # right" and "Rear-Right" across three cars and nothing can compare them.
+  #
+  # `title_candidate` is what makes a tyre read as "FRONT LEFT" rather than "Tire 3": an ordinal is
+  # a number invented from storage order and means nothing on the car.
+  spec_fields {
+    key: "position"
+    label: "Position"
+    title_candidate: true
+    options: "Front Left"
+    options: "Front Right"
+    options: "Rear Left"
+    options: "Rear Right"
+    options: "Spare"
+  }
+  # The pressure it is meant to run at, not today's reading — a number to compare a gauge against.
+  spec_fields {
+    key: "psi"
+    label: "Normal PSI"
+    placeholder: "32"
+    numeric: true
+  }
 }
 
 # One meter, and the reason the generalisation matters: "every 5,000 miles" and "every 100 hours"

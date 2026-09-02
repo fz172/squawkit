@@ -49,6 +49,17 @@ message SpecField {
   // airplane has two such fields and only the tail number is what an owner calls it by. Without
   // this the switcher picked whichever identifier the template happened to declare first.
   bool title_candidate = 7;
+
+  // The values this field accepts. Empty — the default — means free text.
+  //
+  // A wheel's position is the case: front left, rear right, spare. Typed freely, the same wheel is
+  // "RR", "rear right" and "Rear-Right" across three cars, and nothing can group or compare them.
+  // The list is the TEMPLATE's, because the vocabulary is domain knowledge: a bike has a front and
+  // a rear, a dually has an inner and an outer.
+  repeated string options = 8;
+
+  // A number: numeric keypad, and none of the capitalisation a text field applies.
+  bool numeric = 9;
 }
 
 // A slot in the component tree the template expects — airframe, engine, propeller, hub, blade.
@@ -82,6 +93,42 @@ message ComponentSlot {
   // — while model and serial pair up beside each other. A slot whose only field is a serial packs
   // its *instances* instead, which is what puts four blade serials on two lines.
   bool compact_fields = 8;
+
+  // Draw each of this slot's components as a chip beside its siblings, not as a card of its own.
+  //
+  // The slot says whether its parts are read as a SET or as individuals. Four tyres, two blades,
+  // two wheels are a set — near-identical parts told apart by a number and a serial — and a
+  // full-width card each buries the rest of the tree in scroll for no gain. An engine is an
+  // individual: one part with a history, and its card is where that history hangs.
+  //
+  // Replaces the `depth > 0` heuristic the dashboard used to guess this with. Nesting was never
+  // the question — a boat's propulsion and a car's tyres are top-level and still a set, which is
+  // why a preset that reads correctly for an aeroplane listed a car's four tyres as four rows.
+  // #732 asked for this field; this is it.
+  bool compact_instances = 9;
+
+  // How many components this slot may hold. 0 — the proto3 default — means unbounded, so every
+  // preset that has not thought about it is unchanged.
+  //
+  // This is the ZERO_OR_ONE cardinality PRD §4.3 designed and the shipped bool could not express.
+  // `repeatable` alone is a two-way switch: false means exactly one, which puts an unremovable
+  // empty Engine block on an EV's form, and true means zero-or-more, which offers to add a second
+  // engine to a hatchback. A car's engine is optional and singular, and needed a way to say both.
+  //
+  // Only meaningful with `repeatable` — a non-repeatable slot already holds exactly one.
+  int32 max_instances = 10;
+
+  // Fields this slot asks for BEYOND make, model and serial, stored in `Component.spec`.
+  //
+  // The triple is a floor, not the whole vocabulary. A tyre has a normal running pressure and a
+  // position on the vehicle, and neither is a make, a model or a serial — they are what tells one
+  // tyre from the other three. `spec_keys` could only ever subtract from the triple; this adds.
+  //
+  // Same message the Thing's own spec fields use, so labels, placeholders, `options` and
+  // `title_candidate` all mean here what they mean there. A field marked `title_candidate` names
+  // the instance: a wheel reads "FRONT LEFT" rather than "Tire 3", which is the point of
+  // recording a position at all.
+  repeated SpecField spec_fields = 11;
 }
 
 // A meter a Thing accumulates and rules can be written against — hours, miles, cycles, seasons.

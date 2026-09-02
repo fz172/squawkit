@@ -3,7 +3,9 @@ package dev.fanfly.wingslog.feature.thing.dashboard.compose
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
+import dev.fanfly.wingslog.core.template.ComponentGroup
 import dev.fanfly.wingslog.core.template.ComponentNode
+import dev.fanfly.wingslog.core.template.componentGroups
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 
 /**
@@ -31,22 +33,43 @@ fun ComponentDetails(node: ComponentNode) {
     content = if (node.children.isEmpty()) {
       null
     } else {
-      {
-        Column(verticalArrangement = Arrangement.spacedBy(Spacing.large)) {
-          node.inlineBlockGroups.flatten()
-            .forEach { InlineComponentBlock(it) }
-          node.chipChildren.groupBy { it.row.slot.slot_key }
-            .forEach { (_, chips) ->
-              ComponentChips(
-                label = chips.first().row.slot.label,
-                components = chips.mapNotNull { it.row.component },
-              )
-            }
-          node.cardChildren.forEach { ComponentDetails(it) }
-        }
-      }
+      { ComponentChildren(node) }
     },
   )
+}
+
+/**
+ * Everything under a component: its inline blocks first, then its remaining children in the order
+ * the template declares them.
+ *
+ * Inline blocks lead because that is what `inline_with_parent` means — they are part of describing
+ * this component, not things beside it. The rest keeps declaration order, chips and cards
+ * interleaved as the template wrote them.
+ */
+@Composable
+private fun ComponentChildren(node: ComponentNode) {
+  Column(verticalArrangement = Arrangement.spacedBy(Spacing.large)) {
+    node.inlineBlockGroups.flatten()
+      .forEach { InlineComponentBlock(it) }
+    ComponentGroups(node.groupedChildren)
+  }
+}
+
+/**
+ * A run of siblings, each drawn as whatever its slot asks for — a card, or a set of chips.
+ *
+ * The grouping is the template's, not this composable's: [componentGroups] merges a slot's
+ * components into one chip block and leaves everything else standing alone, in order.
+ */
+@Composable
+fun ComponentGroups(nodes: List<ComponentNode>) {
+  nodes.componentGroups()
+    .forEach { group ->
+      when (group) {
+        is ComponentGroup.Chips -> ComponentChips(group.nodes)
+        is ComponentGroup.Card -> ComponentDetails(group.node)
+      }
+    }
 }
 
 /** An inline component: the same three lines a card shows, without a card around them. */
@@ -61,15 +84,6 @@ private fun InlineComponentBlock(node: ComponentNode) {
         .joinToString(" "),
       serial = component.serial,
     )
-    node.inlineBlockGroups.flatten()
-      .forEach { InlineComponentBlock(it) }
-    node.chipChildren.groupBy { it.row.slot.slot_key }
-      .forEach { (_, chips) ->
-        ComponentChips(
-          label = chips.first().row.slot.label,
-          components = chips.mapNotNull { it.row.component },
-        )
-      }
-    node.cardChildren.forEach { ComponentDetails(it) }
+    ComponentChildren(node)
   }
 }

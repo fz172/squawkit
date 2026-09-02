@@ -26,6 +26,32 @@ fun Component.with(field: ComponentField, value: String): Component =
   }
 
 /**
+ * The three lines a compacted component shows, in the order they are drawn.
+ *
+ * Split out here rather than assembled in the composable so the fallback — serial standing in as
+ * the headline for a slot that asks for no make or model — is covered by a test rather than by a
+ * screenshot.
+ */
+data class ComponentChipLines(
+  /**
+   * What names this one: "Front Left" when the slot declares a `title_candidate` field and it is
+   * filled, otherwise "Tire 3" — or plain "Propulsion" when the slot holds one.
+   *
+   * A position beats an ordinal wherever there is one. "Tire 3" is a number this code invented
+   * from storage order and means nothing on the car; "Front Left" is where the owner will actually
+   * look for it.
+   */
+  val label: String,
+  /** "Michelin Pilot Sport", falling back to the serial when the slot names no make or model. */
+  val headline: String,
+  /** Blank when [headline] is already the serial, or when the slot does not ask for one. */
+  val serial: String,
+  /** The slot's own declared fields that are filled in — "Normal PSI 32". Never the position: it
+   * is already the label, and a chip that says "Front Left" twice is a chip with a bug. */
+  val specs: List<SpecLine>,
+)
+
+/**
  * One row of the component tree: a slot the template declares, paired with the component filling it.
  *
  * The tree the edit form draws is a flattened walk of the template's slots (#729). Flattened rather
@@ -84,20 +110,97 @@ data class ComponentRow(
     get() = if (fields.size > 1) fields.takeLast(2) else fields
 
   /**
-   * Renders as a chip rather than a card: a repeating leaf slot **inside** another component.
+   * Renders as a chip beside its siblings rather than as a card of its own.
    *
-   * Blades on a propeller are near-identical parts told apart by a serial, and a card each buries
-   * the rest of the tree in scroll. A *top-level* repeating slot is different — a boat's propulsion
-   * or a car's tyre is a component in its own right, whose make and model are worth reading, and a
-   * chip shows only the serial.
+   * **The template says so now** — `compact_instances`, read verbatim. It used to be guessed from
+   * `depth > 0`, on the theory that a part nested inside another was the matched-set kind and a
+   * top-level one was an individual. Nesting was never the question: a boat's propulsion and a
+   * car's tyres are top-level and still a set, so a rule that read correctly for an aeroplane's
+   * blades listed four tyres as four full-width rows.
    *
-   * **Depth is a heuristic standing in for a schema field that does not exist.** What actually
-   * distinguishes the two is whether the part has an identity of its own worth showing, which PRD
-   * §4.3 designed `spec_keys` to say and the shipped `ComponentSlot` cannot. Recorded on #732 with
-   * the other §4.2/§4.3 gaps; when that field arrives this reads it instead of guessing from nesting.
+   * Guarded on having no children because a chip has nowhere to put them — a slot declaring both
+   * is a template error, and dropping the children silently would be the worse failure.
    */
   val rendersAsChip: Boolean
-    get() = slot.repeatable && slot.children.isEmpty() && depth > 0
+    get() = slot.compact_instances && slot.children.isEmpty()
+
+  /**
+   * What a chip shows: its label, the phrase naming the part, and its serial.
+   *
+   * [ComponentChipLines.headline] falls back to the serial when the slot asks for no make or
+   * model — blades declare `spec_keys: "serial"`, so the serial *is* the identity there and
+   * belongs on the prominent line rather than under an empty one.
+   */
+  val chipLines: ComponentChipLines?
+    get() {
+      val component = component ?: return null
+      val visible = fields.toSet()
+      val name = listOf(ComponentField.MAKE, ComponentField.MODEL)
+        .filter { it in visible }
+        .map { component.valueOf(it) }
+        .filter { it.isNotBlank() }
+        .joinToString(" ")
+      val serial =
+        if (ComponentField.SERIAL in visible) component.serial else ""
+      val naming = slot.spec_fields.firstOrNull { it.title_candidate }
+      return ComponentChipLines(
+        label = naming?.let { component.specValue(it.key) }
+          ?.takeIf { it.isNotBlank() }
+          ?: label,
+        headline = name.ifBlank { serial },
+        // Never repeated: when the serial is already the headline there is no second line to draw.
+        serial = if (name.isBlank()) "" else serial,
+        specs = specLines.filterNot { line -> line.label == naming?.label },
+      )
+    }
+
+  /**
+   * The slot's own declared fields that this component has filled in, each beside its label.
+   *
+   * Blank ones are dropped rather than drawn under their label: "Normal PSI" followed by nothing
+   * reads as data that failed to load rather than a pressure nobody recorded. Every one of these
+   * is optional, so most of them will be blank most of the time.
+   */
+  val specLines: List<SpecLine>
+    get() {
+      val component = component ?: return emptyList()
+      return slot.spec_fields.mapNotNull { field ->
+        component.specValue(field.key)
+          .takeIf { it.isNotBlank() }
+          ?.let {
+            SpecLine(
+              label = field.label,
+              value = it,
+              isIdentifier = field.is_identifier
+            )
+          }
+      }
+    }
+
+  /**
+   * Where this instance sorts among its siblings: its position's index in the template's own list.
+   *
+   * So a car's tyres read as the car — front left, front right, then rear left, rear right —
+   * rather than in whatever order they were typed. The template's `options` order IS the layout
+   * order, which is why that list is written the way a driver walks around the vehicle.
+   *
+   * Anything without a position, or with one no longer in the list, sorts last: an unplaced wheel
+   * cannot claim a corner, and putting it in the middle would push a known one out of place. Ties
+   * hold their storage order, so [label]'s ordinal still matches what the form shows.
+   *
+   * Dashboard only. The edit form deliberately does not sort — rows must not jump under the
+   * user's finger the moment a position is picked.
+   */
+  val chipOrder: Int
+    get() {
+      val naming = slot.spec_fields.firstOrNull { it.title_candidate }
+        ?: return Int.MAX_VALUE
+      val value = component?.specValue(naming.key)
+        .orEmpty()
+      return naming.options.indexOf(value)
+        .takeIf { it >= 0 }
+        ?: Int.MAX_VALUE
+    }
 
   /** A slot that repeats can always take another; one that does not is created with the tree. */
   val canRemove: Boolean get() = slot.repeatable && component != null
@@ -125,7 +228,16 @@ fun ThingTemplate?.componentRows(thing: Thing): List<ComponentRow> {
     }
     occurrences.flatMapIndexed { index, (component, ordinal) ->
       val path = parentPath + (slot.slot_key to index)
-      listOf(ComponentRow(slot, path, component, depth, ordinal, occurrences.size)) +
+      listOf(
+        ComponentRow(
+          slot,
+          path,
+          component,
+          depth,
+          ordinal,
+          occurrences.size
+        )
+      ) +
         walk(slot.children, path, component?.children.orEmpty(), depth + 1)
     }
   }
@@ -133,15 +245,27 @@ fun ThingTemplate?.componentRows(thing: Thing): List<ComponentRow> {
 }
 
 /**
- * Slots under [parentPath] that the user may add another of.
+ * Slots under [parentPath] that the user may add another of, given the [existing] rows there.
  *
- * Only repeatable ones. `ComponentSlot` carries a single bool where PRD §4.3 designed a three-way
- * cardinality, so "may add" and "may hold several" are the same question here — a non-repeatable
- * slot already has its row and adding a second would produce a tree the template cannot describe.
+ * Repeatable ones that are not already full. A non-repeatable slot already has its row, and adding
+ * a second would produce a tree the template cannot describe.
+ *
+ * [existing] is what makes `max_instances` real: a car's engine is repeatable so that an EV can
+ * have none, and capped at one so a hatchback is not offered a second. Passed in rather than
+ * re-walked from the Thing because every caller is already holding the rows at that path.
  */
-fun ThingTemplate?.addableSlotsUnder(parentPath: ComponentPath): List<ComponentSlot> {
+fun ThingTemplate?.addableSlotsUnder(
+  parentPath: ComponentPath,
+  existing: List<ComponentRow> = emptyList(),
+): List<ComponentSlot> {
   if (this == null) return emptyList()
-  if (parentPath.isEmpty()) return component_slots.filter { it.repeatable }
+  fun notFull(slot: ComponentSlot): Boolean {
+    if (!slot.repeatable) return false
+    if (slot.max_instances <= 0) return true
+    return existing.count { it.slot.slot_key == slot.slot_key && it.component != null } <
+      slot.max_instances
+  }
+  if (parentPath.isEmpty()) return component_slots.filter(::notFull)
   var slots: List<ComponentSlot> = component_slots
   var found: ComponentSlot? = null
   for ((slotKey, _) in parentPath) {
@@ -149,7 +273,7 @@ fun ThingTemplate?.addableSlotsUnder(parentPath: ComponentPath): List<ComponentS
     slots = found.children
   }
   return found?.children.orEmpty()
-    .filter { it.repeatable }
+    .filter(::notFull)
 }
 
 /** A new component for [slot], with the non-repeatable descendants the template expects. */
@@ -187,9 +311,15 @@ data class ComponentNode(
   /** Children that draw as chips — a matched set of blades, rendered under the card, not in it. */
   val chipChildren: List<ComponentNode> get() = children.filter { it.row.rendersAsChip }
 
-  /** Children that draw as their own nested card. */
+  /**
+   * Children that draw as their own nested card.
+   *
+   * Chips are excluded as well as inline ones. They used to be excluded only by accident — no
+   * preset declared a chip slot that was not also `inline_with_parent` — and a slot that did
+   * would have been drawn twice, once as a chip and once as a card.
+   */
   val cardChildren: List<ComponentNode>
-    get() = children.filterNot { it.row.slot.inline_with_parent }
+    get() = children.filterNot { it.row.slot.inline_with_parent || it.row.rendersAsChip }
 
   /**
    * Children that flow inside this card instead of nesting into one, grouped by slot.
@@ -210,6 +340,19 @@ data class ComponentNode(
   /** [inlineGroups] minus the chip ones — what the dashboard draws as blocks. */
   val inlineBlockGroups: List<List<ComponentNode>>
     get() = inlineGroups.filterNot { it.first().row.rendersAsChip }
+
+  /**
+   * Everything drawn *after* [inlineBlockGroups], in declaration order: chips and cards together.
+   *
+   * One list rather than a chip list and a card list, because two lists can only be drawn one
+   * after the other — and that reorders a template that interleaves them. A car declares engine,
+   * battery, brakes, tyres; drawing all its chips first would hoist the brakes above the engine.
+   *
+   * Inline chips belong here even though they are inline: a blade has no block of its own to flow
+   * into, and the chip *is* how it flows under the propeller.
+   */
+  val groupedChildren: List<ComponentNode>
+    get() = children.filter { it.row.rendersAsChip || !it.row.slot.inline_with_parent }
 }
 
 fun ThingTemplate?.componentTree(thing: Thing): List<ComponentNode> {
@@ -219,3 +362,50 @@ fun ThingTemplate?.componentTree(thing: Thing): List<ComponentNode> {
       .map { ComponentNode(it, nodesAt(it.path)) }
   return nodesAt(emptyList())
 }
+
+/**
+ * A run of siblings that draw as one widget: a single card, or one slot's components as chips.
+ *
+ * Exists to keep chips **in declaration order**. Collecting every chip slot and drawing it first
+ * would be simpler and wrong: a car declares engine, battery, brakes, tyres, and hoisting the
+ * chipped brakes and tyres above the engine reorders a list the template deliberately ordered.
+ */
+sealed interface ComponentGroup {
+  data class Card(val node: ComponentNode) : ComponentGroup
+
+  /** Every component of one slot, drawn together — "Tire 1 … Tire 4" as one block. */
+  data class Chips(val nodes: List<ComponentNode>) : ComponentGroup
+}
+
+/**
+ * Chunks siblings into the widgets that draw them, in order.
+ *
+ * Consecutive chip nodes of the SAME slot merge into one [ComponentGroup.Chips]; everything else
+ * stands alone. Same-slot components are always adjacent — `componentRows` walks a slot's
+ * occurrences together — so a single pass is enough and no reordering happens.
+ */
+fun List<ComponentNode>.componentGroups(): List<ComponentGroup> =
+  fold(mutableListOf()) { groups: MutableList<ComponentGroup>, node ->
+    val previous = groups.lastOrNull()
+    if (node.row.rendersAsChip &&
+      previous is ComponentGroup.Chips &&
+      previous.nodes.first().row.slot.slot_key == node.row.slot.slot_key
+    ) {
+      groups[groups.lastIndex] = ComponentGroup.Chips(previous.nodes + node)
+    } else if (node.row.rendersAsChip) {
+      groups += ComponentGroup.Chips(listOf(node))
+    } else {
+      groups += ComponentGroup.Card(node)
+    }
+    groups
+  }
+    // Inside a chip block, position wins over storage order: front left, front right, then rear
+    // left, rear right, so the grid reads as the vehicle. sortedBy is stable, so the unpositioned
+    // ones trail in the order they were entered rather than shuffling among themselves.
+    .map { group ->
+      if (group is ComponentGroup.Chips) {
+        ComponentGroup.Chips(group.nodes.sortedBy { it.row.chipOrder })
+      } else {
+        group
+      }
+    }

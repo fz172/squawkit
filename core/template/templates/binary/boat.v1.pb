@@ -10,12 +10,11 @@
 makeMake2
 modelModel2
 yearYear*20162"
-hull_idHull ID *ABC12345D616:
-hullHull:
+hull_idHull ID *ABC12345D616:
 
 propulsion
-Propulsion(:,
-electrical_safetyElectrical & Safety(:
+Propulsion(H:.
+electrical_safetyElectrical & Safety(H:
 steeringSteering:
 riggingRiggingB/
 engine_hoursEngine Hourshrs *

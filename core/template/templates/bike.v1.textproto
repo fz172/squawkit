@@ -72,15 +72,41 @@ component_slots {
   slot_key: "drivetrain"
   label: "Drivetrain"
 }
-component_slots {
-  slot_key: "brakes"
-  label: "Brakes"
-  repeatable: true
-}
+# THERE IS NO BRAKES SLOT. Brake pads and rotors are a SERVICE, not a part anyone types an
+# identity into — the same reason the car lost its brakes slot. What a rider tracks is when the
+# pads were last done, which is a task against distance or ride hours.
+
+# A matched set, capped at two: a bike has a front and a rear and there is no third. Uncapped, the
+# form went on offering a fifth wheel — a question with no right answer. `repeatable` is what makes
+# them optional; `max_instances` is what makes them finite.
 component_slots {
   slot_key: "wheel"
   label: "Wheel"
   repeatable: true
+  max_instances: 2
+  compact_instances: true
+  # Make and model only. A wheel carries no serial anyone reads off it, and asking for one leaves
+  # a field that is blank on every bike ever entered.
+  spec_keys: "make"
+  spec_keys: "model"
+  # Front or rear, and nothing else — this is a bike. `title_candidate` is what makes the wheel
+  # read as "FRONT" rather than "Wheel 1": an ordinal is a number invented from storage order, and
+  # a position is where the rider will actually look for it.
+  spec_fields {
+    key: "position"
+    label: "Position"
+    title_candidate: true
+    options: "Front"
+    options: "Rear"
+  }
+  # The pressure it is meant to run at, not today's reading — a number to compare a gauge against.
+  # A road tyre wants 90 and a fat tyre wants 15, so there is no default worth guessing.
+  spec_fields {
+    key: "psi"
+    label: "Normal PSI"
+    placeholder: "35"
+    numeric: true
+  }
 }
 
 # Two meters, and they are not interchangeable: chain wear tracks distance, suspension service
