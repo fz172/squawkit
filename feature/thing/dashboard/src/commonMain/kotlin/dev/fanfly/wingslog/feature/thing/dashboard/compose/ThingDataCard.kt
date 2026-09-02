@@ -134,10 +134,10 @@ fun ThingDataCard(
           // captioned AIRFRAME and read make/model/serial, which a home has none of (#729).
           //
           // It is drawn into this card directly rather than into a nested one: a nested card is
-          // what says "this is a part attached to the thing", and the spec IS the thing. Every
-          // identifier the template declares now carries its own label, which is what stops an
-          // airplane's tail number from riding along in the make/model run and its serial from
-          // being captioned with the other one's value.
+          // what says "this is a part attached to the thing", and the spec IS the thing. Make and
+          // model head the block as the phrase that names it; everything else carries the label
+          // the template gives it, which is what stops an airplane's tail number from riding
+          // along in the make/model run and its serial from being captioned with that value.
           val template = LocalThingTemplate.current
           val spec = template.specLines(thing)
           if (!spec.isEmpty) {

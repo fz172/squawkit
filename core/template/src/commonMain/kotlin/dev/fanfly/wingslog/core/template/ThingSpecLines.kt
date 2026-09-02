@@ -4,61 +4,98 @@ import dev.fanfly.wingslog.thing.Thing
 import dev.fanfly.wingslog.thing.ThingTemplate
 
 /**
- * One identifier the template declares, paired with what this Thing stores under it.
+ * One stored spec value, paired with the template's own word for it.
  *
- * [label] is the template's own word — "Tail Number", "VIN", "Hull ID" — because which identifiers
- * exist and what they are called is the template's decision, not this code's.
+ * [label] comes from the template — "Tail Number", "VIN", "Hull ID", "Year Built" — because
+ * which fields exist and what they are called is the template's decision, not this code's.
  */
-data class SpecIdentifier(
+data class SpecLine(
   val label: String,
   val value: String,
+  /** Renders in mono: a value matched exactly, where character alignment carries meaning. */
+  val isIdentifier: Boolean,
 )
 
 /**
  * A Thing's own spec, as a screen reads it: a headline naming what the thing *is*, then one
- * labelled line per identifier it carries.
+ * labelled line per remaining field.
  *
- * The identity used to be squashed onto a single "make · model · identifier" line under an
- * S/N caption, which mislabelled every identifier an airplane has: it holds two — the serial and
- * the tail number — and one line can only caption one of them, so the other rode along in the
- * make/model run as if it were a model name. Splitting them means each value is shown beside the
- * word for it, whichever identifiers a preset happens to declare.
+ * The identity used to be squashed onto a single "make · model · identifier" run under an S/N
+ * caption, which mislabelled every identifier an airplane has: it holds two — the serial and the
+ * tail number — and one caption can only name one of them, so the other rode along in the
+ * make/model run as if it were part of the model name. Giving each value the word for it is what
+ * makes the block right for a preset with two identifiers, one, or none.
  */
 data class ThingSpecLines(
-  /** "Sling TSi" — the non-identifier fields, in the order the template declares them. */
+  /**
+   * "Sling TSi" — make and model, the phrase that names the product itself. Empty for a preset
+   * that declares neither.
+   */
   val headline: String,
-  val identifiers: List<SpecIdentifier>,
+  val lines: List<SpecLine>,
+  /**
+   * "N532SL" — the value of whichever field the template marks `title_candidate`, the one an
+   * owner calls the thing by. Empty for a preset that marks none: every preset but airplane.
+   *
+   * Also present in [lines], under its label. The hero shows it big and unlabelled because it
+   * is the thing's name there; the card labels it because a value beside a serial has to say
+   * which of the two it is.
+   */
+  val title: String,
 ) {
   /** True when the template declared nothing, or the Thing has filled none of it in. */
-  val isEmpty: Boolean get() = headline.isBlank() && identifiers.isEmpty()
+  val isEmpty: Boolean get() = headline.isBlank() && lines.isEmpty()
 }
 
 /**
- * Splits [thing]'s stored spec into a headline and its labelled identifiers.
+ * The two keys that read as a phrase rather than as data.
+ *
+ * Every other field is a datum shown beside its label — a year, an address, a VIN. Make and model
+ * are the exception because together they name the product itself: "Sling TSi", "Honda Civic".
+ * Naming them here is not an aviation assumption creeping back in — they are the conventional
+ * keys [SpecKeys] already declares, they are the pair `AdaptiveShellViewModel` already composes
+ * a display label from, and a preset declaring neither (home) simply has no headline.
+ */
+private val HEADLINE_KEYS = setOf(SpecKeys.MAKE, SpecKeys.MODEL)
+
+/**
+ * Splits [thing]'s stored spec into a headline and its labelled lines.
  *
  * Blank values are dropped rather than rendered under their label: "Tail Number:" followed by
  * nothing reads as data that failed to load rather than data that does not exist. A template
- * declaring no spec fields at all — `custom` — yields an empty result, which is a block a screen
- * omits entirely.
+ * declaring no spec fields at all — `custom` — yields an empty result, which is a block a
+ * screen omits entirely.
  *
- * Identifiers lead with the template's `title_candidate`, the one an owner calls the thing by, and
- * the rest follow in declared order. Declared order alone would put an airplane's serial above its
+ * Identifiers sink below the other fields and lead with the template's `title_candidate`, the
+ * one an owner calls the thing by. Declared order alone would put an airplane's serial above its
  * tail number, which is not how anyone identifies an aeroplane.
  */
 fun ThingTemplate?.specLines(thing: Thing): ThingSpecLines {
   val fields = this?.spec_fields.orEmpty()
+  val headlineFields = fields.filter { !it.is_identifier && it.key in HEADLINE_KEYS }
+  val headlineKeys = headlineFields.map { it.key }.toSet()
+  val rest = fields.filterNot { it.key in headlineKeys }
+  // sortedByDescending is stable, so declared order survives inside each group.
+  val ordered = rest.filterNot { it.is_identifier } +
+    rest.filter { it.is_identifier }.sortedByDescending { it.title_candidate }
+
   return ThingSpecLines(
-    headline = fields.filterNot { it.is_identifier }
-      .map { thing.specValue(it.key) }
+    headline = headlineFields.map { thing.specValue(it.key) }
       .filter { it.isNotBlank() }
       .joinToString(" "),
-    // sortedByDescending is stable, so declared order survives inside each group.
-    identifiers = fields.filter { it.is_identifier }
-      .sortedByDescending { it.title_candidate }
-      .mapNotNull { field ->
-        thing.specValue(field.key)
-          .takeIf { it.isNotBlank() }
-          ?.let { SpecIdentifier(label = field.label, value = it) }
-      },
+    lines = ordered.mapNotNull { field ->
+      thing.specValue(field.key)
+        .takeIf { it.isNotBlank() }
+        ?.let {
+          SpecLine(
+            label = field.label,
+            value = it,
+            isIdentifier = field.is_identifier,
+          )
+        }
+    },
+    title = fields.firstOrNull { it.title_candidate }
+      ?.let { thing.specValue(it.key) }
+      .orEmpty(),
   )
 }

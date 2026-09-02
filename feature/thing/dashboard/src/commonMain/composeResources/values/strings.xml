@@ -10,8 +10,8 @@
   <string name="degraded_no_stored_details">No details stored.</string>
   <string name="degraded_update">Update the app</string>
   <string name="degraded_reload">Reload</string>
-  <!-- Thing data card: a spec identifier beside the word the template gives it, e.g. Tail Number: -->
-  <string name="spec_identifier_label"><xliff:g example="Tail Number">%1$s</xliff:g>:</string>
+  <!-- Thing data card: a spec value beside the word the template gives it, e.g. Tail Number: -->
+  <string name="spec_line_label"><xliff:g example="Tail Number">%1$s</xliff:g>:</string>
   <!-- Overview tab cards -->
   <string name="overview_recent_activity">Recent activity</string>
   <string name="overview_all_logs">All logs</string>

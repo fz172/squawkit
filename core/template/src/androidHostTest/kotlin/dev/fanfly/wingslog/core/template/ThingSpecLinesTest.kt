@@ -9,11 +9,15 @@ import dev.fanfly.wingslog.thing.ThingTemplate
 import org.junit.Test
 
 /**
- * The Thing's own spec, split into a headline and its labelled identifiers.
+ * The Thing's own spec, split into a headline and its labelled lines.
  *
  * The bug this replaces: an airplane declares two identifiers, the card captioned one line "S/N"
  * and ran everything else together, so a tail number was shown as a serial and the serial rode
  * along in the make/model run as if it were part of the model name.
+ *
+ * Every canonical preset is walked here, because the shape of the block is different for each and
+ * only one of them is an aeroplane: two identifiers, one, or none; a headline, or nothing to head
+ * with. `home` is the load-bearing case and `custom` the floor.
  */
 class ThingSpecLinesTest {
 
@@ -24,9 +28,14 @@ class ThingSpecLinesTest {
     spec = spec.map { (key, value) -> Spec(key = key, value_ = value) },
   )
 
+  /** "Tail Number: N532SL" — how the block reads, in one string per line. */
+  private fun ThingSpecLines.rendered(): List<String> =
+    listOfNotNull(headline.takeIf { it.isNotBlank() }) +
+      lines.map { "${it.label}: ${it.value}" }
+
   @Test
-  fun everyIdentifierIsShownBesideTheTemplatesWordForIt() {
-    val lines = airplane.specLines(
+  fun anAirplaneShowsBothIdentifiersUnderTheirOwnWords() {
+    val spec = airplane.specLines(
       thing(
         SpecKeys.MAKE to "Sling",
         SpecKeys.MODEL to "TSi",
@@ -35,67 +44,131 @@ class ThingSpecLinesTest {
       ),
     )
 
-    // Make and model name what it is; neither identifier is allowed into that run.
-    assertThat(lines.headline).isEqualTo("Sling TSi")
-    // The tail number leads — it is what an owner calls the aeroplane by — and each value carries
-    // the template's own label, so neither can be read as the other.
-    assertThat(lines.identifiers.map { it.label })
-      .containsExactly("Tail Number", "Serial Number")
+    // Make and model name what it is; neither identifier is allowed into that run, and the tail
+    // number leads the serial because it is what an owner calls the aeroplane by.
+    assertThat(spec.rendered()).containsExactly(
+      "Sling TSi",
+      "Tail Number: N532SL",
+      "Serial Number: 532SK",
+    )
       .inOrder()
-    assertThat(lines.identifiers.map { it.value })
-      .containsExactly("N532SL", "532SK")
-      .inOrder()
+    // Both identifiers render in mono; there is nothing else on the block to render otherwise.
+    assertThat(spec.lines.map { it.isIdentifier }).containsExactly(true, true)
+    // The hero above the card shows this one big and unlabelled — the tail number, never the
+    // serial, because the template marks it title_candidate rather than declaring it first.
+    assertThat(spec.title).isEqualTo("N532SL")
   }
 
   @Test
-  fun anUnfilledIdentifierIsDroppedRatherThanLabelled() {
-    val lines = airplane.specLines(
+  fun anUnfilledFieldIsDroppedRatherThanLabelled() {
+    val spec = airplane.specLines(
       thing(SpecKeys.MAKE to "Sling", SpecKeys.TAIL_NUMBER to "N532SL"),
     )
 
     // "Serial Number:" with nothing after it reads as a load that failed, not as a blank field.
-    assertThat(lines.identifiers.map { it.label }).containsExactly("Tail Number")
-    assertThat(lines.headline).isEqualTo("Sling")
+    assertThat(spec.rendered()).containsExactly("Sling", "Tail Number: N532SL")
+      .inOrder()
   }
 
   @Test
-  fun aPresetWithOneIdentifierLabelsItInItsOwnWords() {
-    val car = CanonicalTemplates.AUTOMOTIVE.specLines(
+  fun aCarSaysVinAndKeepsItsYearOnItsOwnLine() {
+    val spec = CanonicalTemplates.AUTOMOTIVE.specLines(
       thing(
-        "make" to "Honda",
-        "model" to "Civic",
+        SpecKeys.MAKE to "Honda",
+        SpecKeys.MODEL to "Civic",
         "year" to "2019",
         "vin" to "1HGBH41JXMN109186",
       ),
     )
 
-    // Not "S/N" — the label comes from the template, so a car says VIN and a boat says Hull ID
-    // without this code knowing either exists.
-    assertThat(car.headline).isEqualTo("Honda Civic 2019")
-    assertThat(car.identifiers.map { it.label }).containsExactly("VIN")
-
-    val boat = CanonicalTemplates.BOAT.specLines(thing("hull_id" to "ABC12345D616"))
-    assertThat(boat.identifiers.map { it.label }).containsExactly("Hull ID")
+    // Not "S/N" — the label is the template's, so a car says VIN without this code knowing a VIN
+    // exists. The year is a datum, not part of the product's name, so it takes a labelled line.
+    assertThat(spec.rendered()).containsExactly(
+      "Honda Civic",
+      "Year: 2019",
+      "VIN: 1HGBH41JXMN109186",
+    )
+      .inOrder()
+    // Only the VIN is matched exactly, so only the VIN renders in mono.
+    assertThat(spec.lines.filter { it.isIdentifier }.map { it.label }).containsExactly("VIN")
+    // No title_candidate, so the hero shows the make and model alone rather than a 17-character
+    // VIN set in display type.
+    assertThat(spec.title).isEmpty()
   }
 
   @Test
-  fun aPresetWithNoIdentifierShowsOnlyWhatItDeclares() {
-    // The load-bearing case: a home has no make, no model and no serial, so an identifier line
-    // would be an aviation assumption showing through.
-    val home = CanonicalTemplates.HOME.specLines(
+  fun aBikeAndABoatSayTheirOwnIdentifier() {
+    val bike = CanonicalTemplates.BIKE.specLines(
+      thing(SpecKeys.MAKE to "Trek", SpecKeys.MODEL to "Domane", "frame_number" to "WTU123K0001Z"),
+    )
+    assertThat(bike.rendered()).containsExactly(
+      "Trek Domane",
+      "Frame Number: WTU123K0001Z",
+    )
+      .inOrder()
+
+    val boat = CanonicalTemplates.BOAT.specLines(
+      thing(
+        SpecKeys.MAKE to "Beneteau",
+        SpecKeys.MODEL to "Oceanis 40",
+        "year" to "2016",
+        "hull_id" to "ABC12345D616",
+      ),
+    )
+    assertThat(boat.rendered()).containsExactly(
+      "Beneteau Oceanis 40",
+      "Year: 2016",
+      "Hull ID: ABC12345D616",
+    )
+      .inOrder()
+  }
+
+  @Test
+  fun aHomeReadsAsLabelledFactsWithNoHeadlineAndNoIdentifier() {
+    // The load-bearing case: a home has no make, no model and no serial. Its address is a datum
+    // shown beside its label, not a product name — running it into the year built would print
+    // "742 Evergreen Terrace 1974", which reads as one mangled value rather than two facts.
+    val spec = CanonicalTemplates.HOME.specLines(
       thing("address" to "742 Evergreen Terrace", "year_built" to "1974"),
     )
 
-    assertThat(home.headline).isEqualTo("742 Evergreen Terrace 1974")
-    assertThat(home.identifiers).isEmpty()
-    assertThat(home.isEmpty).isFalse()
+    assertThat(spec.headline).isEmpty()
+    assertThat(spec.rendered()).containsExactly(
+      "Address: 742 Evergreen Terrace",
+      "Year Built: 1974",
+    )
+      .inOrder()
+    // No identifier, so nothing on a home renders in mono, and the block is still worth drawing.
+    assertThat(spec.lines.none { it.isIdentifier }).isTrue()
+    assertThat(spec.isEmpty).isFalse()
+    // Nothing for the hero either, which is what makes it fall back to the Thing's own name.
+    assertThat(spec.title).isEmpty()
   }
 
   @Test
   fun aTemplateDeclaringNoSpecFieldsYieldsNothingToDraw() {
-    // `custom` is the floor, and a null template is the account-level screen with nothing selected.
-    assertThat(CanonicalTemplates.CUSTOM.specLines(thing("make" to "Sling")).isEmpty).isTrue()
+    // `custom` is the floor: a Thing with a name and nothing else the template asked for. A value
+    // stored under a key it never declared stays out of the block rather than appearing unlabelled.
+    assertThat(CanonicalTemplates.CUSTOM.specLines(thing(SpecKeys.MAKE to "Sling")).isEmpty)
+      .isTrue()
+    // The account-level screen, where nothing is selected and there is no template at all.
     val nothingSelected: ThingTemplate? = null
     assertThat(nothingSelected.specLines(thing(SpecKeys.MAKE to "Sling")).isEmpty).isTrue()
+  }
+
+  @Test
+  fun everyPresetRendersEveryFieldItDeclaresExactlyOnce() {
+    // The guard against a preset added later falling through the split: whatever a template
+    // declares and a Thing fills in has to come out either in the headline or on a labelled line,
+    // and never in both.
+    CanonicalTemplates.ALL.forEach { template ->
+      val values = template.spec_fields.associate { it.key to "v-${it.key}" }
+      val spec = template.specLines(
+        Thing(id = "t", spec = values.map { (key, value) -> Spec(key = key, value_ = value) }),
+      )
+      val shown = spec.headline.split(" ")
+        .filter { it.isNotBlank() } + spec.lines.map { it.value }
+      assertThat(shown).containsExactlyElementsIn(values.values)
+    }
   }
 }
