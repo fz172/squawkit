@@ -11,13 +11,13 @@ import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.core.template.allComponentsInSlot
 import dev.fanfly.wingslog.core.template.childInSlot
 import dev.fanfly.wingslog.core.template.childrenInSlot
+import dev.fanfly.wingslog.core.template.customSpecs
 import dev.fanfly.wingslog.core.template.displayLabel
 import dev.fanfly.wingslog.core.template.displaySubtitle
 import dev.fanfly.wingslog.core.template.formatMeterNumber
 import dev.fanfly.wingslog.core.template.meter
 import dev.fanfly.wingslog.core.template.meterUnit
 import dev.fanfly.wingslog.core.template.readingFor
-import dev.fanfly.wingslog.core.template.customSpecs
 import dev.fanfly.wingslog.core.template.specValue
 import dev.fanfly.wingslog.core.template.usesComponentTypes
 import dev.fanfly.wingslog.core.template.valueOf
@@ -872,9 +872,15 @@ class LogbookExportArchiveBuilder(
             cards = listOf(
               PdfSummaryCard(
                 rows = buildList {
-                  add(PdfSummaryRow("Name", thing.name.ifBlank { thing.id }))
-                  thing.exportSpecPairs()
-                    .forEach { (label, value) -> add(PdfSummaryRow(label, value)) }
+                  thing.exportIdentityPairs(nameFallback = thing.id)
+                    .forEach { (label, value) ->
+                      add(
+                        PdfSummaryRow(
+                          label,
+                          value
+                        )
+                      )
+                    }
                 }
               )
             ),
@@ -1033,21 +1039,36 @@ class LogbookExportArchiveBuilder(
    * blank rows and no address.
    */
   /**
-   * Every identity value the export prints: what the template declares, then the fields the user
-   * named themselves under the words they chose (#781).
+   * Every identity row the export prints: the Thing's name, what the template declares, then the
+   * fields the user named themselves under the words they chose (#781).
+   *
+   * **The name row is skipped when a declared field already prints it.** `custom` names itself
+   * through a `title_candidate` spec field labelled "Name", so printing `Thing.name` above it put
+   * the same string in the table twice. Every other preset derives its name from fields with
+   * different labels, and keeps the row.
    *
    * Declared fields keep their blank cells — a column that exists and is empty is information —
    * while an unnamed custom field is dropped, since it has no label to print it under.
    */
-  private fun Thing.exportSpecPairs(): List<Pair<String, String>> =
-    template?.spec_fields.orEmpty()
-      .map { field -> field.label.ifBlank { field.key } to specValue(field.key) } +
-      customSpecs()
-        .mapNotNull { spec ->
-          spec.label.trim()
-            .takeIf { it.isNotEmpty() }
-            ?.let { it to spec.value_ }
-        }
+  private fun Thing.exportIdentityPairs(nameFallback: String = ""): List<Pair<String, String>> {
+    val declared = template?.spec_fields.orEmpty()
+    val titleValue = declared.firstOrNull { it.title_candidate }
+      ?.let { specValue(it.key) }
+      .orEmpty()
+    return buildList {
+      if (name.isBlank() || name != titleValue) {
+        add("Name" to name.ifBlank { nameFallback })
+      }
+      declared.forEach { field ->
+        add(field.label.ifBlank { field.key } to specValue(field.key))
+      }
+      customSpecs().forEach { spec ->
+        spec.label.trim()
+          .takeIf { it.isNotEmpty() }
+          ?.let { add(it to spec.value_) }
+      }
+    }
+  }
 
   private fun genericInfoRows(
     bundle: ThingBundle,
@@ -1063,8 +1084,7 @@ class LogbookExportArchiveBuilder(
     }
     return buildList {
       add(listOf("Field", "Value"))
-      add(listOf("Name", thing.name))
-      thing.exportSpecPairs()
+      thing.exportIdentityPairs()
         .forEach { (label, value) -> add(listOf(label, value)) }
       // Only meters the template declares: a home declares none, and a "0.0 hrs" row is exactly
       // the failure PRD §4.4 warns about.

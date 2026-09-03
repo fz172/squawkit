@@ -159,16 +159,60 @@ class ThingSpecLinesTest {
   @Test
   fun everyPresetRendersEveryFieldItDeclaresExactlyOnce() {
     // The guard against a preset added later falling through the split: whatever a template
-    // declares and a Thing fills in has to come out either in the headline or on a labelled line,
-    // and never in both.
+    // declares and a Thing fills in has to come out somewhere the user can read it.
+    //
+    // Three surfaces now, not two. `title` joined them when `custom` arrived: its name IS the
+    // hero, so the row was dropped to stop the card repeating it, and a two-surface check read
+    // that as a field falling through.
     CanonicalTemplates.ALL.forEach { template ->
       val values = template.spec_fields.associate { it.key to "v-${it.key}" }
       val spec = template.specLines(
         Thing(id = "t", spec = values.map { (key, value) -> Spec(key = key, value_ = value) }),
       )
-      val shown = spec.headline.split(" ")
-        .filter { it.isNotBlank() } + spec.lines.map { it.value }
-      assertThat(shown).containsExactlyElementsIn(values.values)
+      val headline = spec.headline.split(" ")
+        .filter { it.isNotBlank() }
+      val lines = spec.lines.map { it.value }
+
+      // The headline and the lines stay a partition — a value in both is the duplication the
+      // split exists to prevent.
+      assertThat(headline.intersect(lines.toSet())).isEmpty()
+      // `title` may legitimately repeat a line: an airplane shows its tail number in the hero
+      // and labels it in the card, because there it sits beside a serial.
+      assertThat((headline + lines + spec.title).filter { it.isNotBlank() }.toSet())
+        .containsExactlyElementsIn(values.values)
     }
+  }
+
+  @Test
+  fun theHeroTitleIsNotRepeatedAsARowBeneathIt() {
+    // custom's only declared field IS the name, and with no make and model the hero renders it —
+    // so the card would print the same string two lines below its own heading.
+    val custom = CanonicalTemplates.CUSTOM
+    val thing = Thing(spec = listOf(Spec(key = "name", value_ = "Espresso Machine")))
+
+    val lines = custom.specLines(thing)
+
+    assertThat(lines.title).isEqualTo("Espresso Machine")
+    assertThat(lines.headline).isEmpty()
+    assertThat(lines.lines).isEmpty()
+  }
+
+  @Test
+  fun anIdentifierUnderAHeadlineKeepsItsRow() {
+    // The airplane case the rule must not break: the hero shows "Sling TSi", and the row says
+    // which of the two identifiers the tail number is.
+    val airplane = AirplaneTemplate.TEMPLATE
+    val thing = Thing(
+      spec = listOf(
+        Spec(key = "make", value_ = "Sling"),
+        Spec(key = "model", value_ = "TSi"),
+        Spec(key = "tail_number", value_ = "N532SL"),
+      ),
+    )
+
+    val lines = airplane.specLines(thing)
+
+    assertThat(lines.headline).isEqualTo("Sling TSi")
+    assertThat(lines.lines.map { it.value }).contains("N532SL")
   }
 }

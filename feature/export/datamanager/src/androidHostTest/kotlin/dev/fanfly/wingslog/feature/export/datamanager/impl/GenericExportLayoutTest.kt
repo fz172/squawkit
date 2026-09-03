@@ -189,6 +189,9 @@ class GenericExportLayoutTest {
     assertThat(csv).contains("Water Hardness")
     assertThat(csv).contains("7 Grains")
     assertThat(csv).doesNotContain("Orphan")
+    // One Name row, not two: custom names itself through a declared field, so the Thing's own
+    // name row would print the same string again.
+    assertThat(csv.lines().count { it.startsWith("Name,") }).isEqualTo(1)
   }
 
   @Test

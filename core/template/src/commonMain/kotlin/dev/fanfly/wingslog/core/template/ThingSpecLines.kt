@@ -37,9 +37,8 @@ data class ThingSpecLines(
    * "N532SL" — the value of whichever field the template marks `title_candidate`, the one an
    * owner calls the thing by. Empty for a preset that marks none: every preset but airplane.
    *
-   * Also present in [lines], under its label. The hero shows it big and unlabelled because it
-   * is the thing's name there; the card labels it because a value beside a serial has to say
-   * which of the two it is.
+   * Also in [lines] under its label — unless there is no headline above it, in which case the
+   * hero is already showing this exact string and the row would repeat it.
    */
   val title: String,
 ) {
@@ -82,23 +81,34 @@ fun ThingTemplate?.specLines(thing: Thing): ThingSpecLines {
     rest.filter { it.is_identifier }
       .sortedByDescending { it.title_candidate }
 
+  val headline = headlineFields.map { thing.specValue(it.key) }
+    .filter { it.isNotBlank() }
+    .joinToString(" ")
+  val title = fields.firstOrNull { it.title_candidate }
+    ?.let { thing.specValue(it.key) }
+    .orEmpty()
+  // With no make and model above it, the hero renders the title itself — so a labelled row
+  // repeating it two lines below is the same string twice. `custom` is the case: its only declared
+  // field IS the name. An airplane keeps its "Tail Number" row, because there the hero is showing
+  // "Sling TSi" and the row says which of two identifiers this one is.
+  val titleIsTheHero = headline.isBlank() && title.isNotBlank()
+
   return ThingSpecLines(
-    headline = headlineFields.map { thing.specValue(it.key) }
-      .filter { it.isNotBlank() }
-      .joinToString(" "),
+    headline = headline,
     // The user's own fields last, under the words they chose. A template declares none of these,
     // so they cannot come from `fields` — but a value nobody can see is a value nobody will type.
-    lines = ordered.mapNotNull { field ->
-      thing.specValue(field.key)
-        .takeIf { it.isNotBlank() }
-        ?.let {
-          SpecLine(
-            label = field.label,
-            value = it,
-            isIdentifier = field.is_identifier,
-          )
-        }
-    } + thing.customSpecs()
+    lines = ordered.filterNot { titleIsTheHero && it.title_candidate }
+      .mapNotNull { field ->
+        thing.specValue(field.key)
+          .takeIf { it.isNotBlank() }
+          ?.let {
+            SpecLine(
+              label = field.label,
+              value = it,
+              isIdentifier = field.is_identifier,
+            )
+          }
+      } + thing.customSpecs()
       .filter { it.label.isNotBlank() && it.value_.isNotBlank() }
       .map {
         SpecLine(
@@ -107,8 +117,6 @@ fun ThingTemplate?.specLines(thing: Thing): ThingSpecLines {
           isIdentifier = false
         )
       },
-    title = fields.firstOrNull { it.title_candidate }
-      ?.let { thing.specValue(it.key) }
-      .orEmpty(),
+    title = title,
   )
 }
