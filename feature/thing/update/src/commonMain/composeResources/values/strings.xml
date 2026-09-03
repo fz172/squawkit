@@ -15,5 +15,4 @@
        template's lexicon applies yet. -->
   <string name="pick_type_title">New Thing</string>
   <string name="pick_type_subtitle">The type sets which details and services get tracked.</string>
-  <string name="pick_type_change">Change type</string>
 </resources>

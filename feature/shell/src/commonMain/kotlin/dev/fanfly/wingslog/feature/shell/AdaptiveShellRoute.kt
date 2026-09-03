@@ -12,7 +12,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import kotlinx.coroutines.flow.MutableStateFlow
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavBackStackEntry
@@ -200,17 +199,6 @@ fun AdaptiveShellRoute(
       }
     },
   )
-
-  // "Change type" pops the form and asks for the picker back (Screen.REOPEN_TYPE_PICKER).
-  val handle = navController.currentBackStackEntry?.savedStateHandle
-  val reopen by (handle?.getStateFlow(Screen.REOPEN_TYPE_PICKER, false)
-    ?: MutableStateFlow(false)).collectAsState()
-  LaunchedEffect(reopen) {
-    if (reopen) {
-      handle?.set(Screen.REOPEN_TYPE_PICKER, false)
-      showTypePicker = true
-    }
-  }
 
   if (showTypePicker) {
     PickThingTypeSheet(

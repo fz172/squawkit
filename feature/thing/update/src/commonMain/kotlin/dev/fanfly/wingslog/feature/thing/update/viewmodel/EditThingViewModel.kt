@@ -77,6 +77,7 @@ class EditThingViewModel(
     return copy(
       thing = thing,
       template = template,
+      lexicon = templateRegistry.lexiconFor(template),
       requireSerials = template.capabilities?.component_serial_prompt ?: true,
     )
   }
@@ -95,7 +96,7 @@ class EditThingViewModel(
     val thingId: String? = savedStateHandle[Screen.THING_ID]
     if (thingId.isNullOrEmpty()) {
       logger.i { "Initializing the view model with empty thing" }
-      loadThing(Thing())
+      loadThing(Thing(template = pickedTemplate))
     } else {
       logger.i { "Loading thing $thingId" }
       loadThingById(thingId)

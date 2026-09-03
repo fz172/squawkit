@@ -12,12 +12,6 @@ sealed class Screen(val route: String) {
     const val TEMPLATE_ID = "templateId"
 
     const val CROSS_SCREEN_SUCCESS_MESSAGE = "success_message"
-
-    /**
-     * Set by the create form's "Change type" so the shell reopens the picker after the form pops.
-     * The picker is a sheet over the shell, not a destination, so it cannot be navigated to.
-     */
-    const val REOPEN_TYPE_PICKER = "reopen_type_picker"
   }
 
   // Navigation route templates
