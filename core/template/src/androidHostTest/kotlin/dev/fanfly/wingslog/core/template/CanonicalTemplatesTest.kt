@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.core.template
 
 import com.google.common.truth.Truth.assertThat
+import com.google.common.truth.Truth.assertWithMessage
 import dev.fanfly.wingslog.core.template.canonical.CanonicalTemplates
 import dev.fanfly.wingslog.thing.ComponentSlot
 import dev.fanfly.wingslog.thing.ThingTemplate
@@ -86,6 +87,41 @@ class CanonicalTemplatesTest {
         // A wrong article is visible in every empty state, and it is not derivable from the first
         // letter — "an hour", "a unicycle".
         assertThat(noun.article).isNotEmpty()
+      }
+    }
+  }
+
+  /**
+   * Every preset writes its own empty-state copy, all nine lines of it.
+   *
+   * These are whole sentences rather than nouns, so the failure mode is not a wrong word — it is a
+   * blank line under a heading, or a heading with nothing beneath it. A proto3 string defaults to
+   * empty, so a preset that simply forgets the block renders exactly that, on the screen a user
+   * sees before they have entered anything. Nothing else would catch it: the copy has no format
+   * placeholder for the snapshot to fill and no key for `TemplateKeysResolveTest` to resolve.
+   *
+   * `custom` is the one that matters. It declares almost nothing on purpose, so it is the preset a
+   * new field is most likely to be left out of — and the floor for the copy has to be plain
+   * wording, not no wording.
+   */
+  @Test
+  fun everyPresetWritesItsOwnEmptyStateCopy() {
+    all.forEach { template ->
+      val lexicon = checkNotNull(template.lexicon) { "${template.id} has no lexicon" }
+      val empty = checkNotNull(lexicon.empty_states) { "${template.id} has no empty_states" }
+      val lines = mapOf(
+        "squawk_hint" to empty.squawk_hint,
+        "task_hint" to empty.task_hint,
+        "task_history_hint" to empty.task_history_hint,
+        "log_hint" to empty.log_hint,
+        "overview_log_title" to empty.overview_log_title,
+        "overview_log_hint" to empty.overview_log_hint,
+        "overview_task_title" to empty.overview_task_title,
+        "overview_task_hint" to empty.overview_task_hint,
+        "overview_squawk_hint" to empty.overview_squawk_hint,
+      )
+      lines.forEach { (field, value) ->
+        assertWithMessage("${template.id}.empty_states.$field").that(value).isNotEmpty()
       }
     }
   }

@@ -30,6 +30,7 @@ import androidx.compose.ui.text.font.FontWeight
 import dev.fanfly.wingslog.core.analytics.LocalAnalytics
 import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.squawkEmptyHint
 import dev.fanfly.wingslog.core.template.squawkNoun
 import dev.fanfly.wingslog.core.ui.adaptive.compose.AdaptiveCardList
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
@@ -60,7 +61,6 @@ import wingslog.feature.squawk.sharedassets.generated.resources.Res
 import wingslog.feature.squawk.sharedassets.generated.resources.closed_with_count
 import wingslog.feature.squawk.sharedassets.generated.resources.no_closed_squawks
 import wingslog.feature.squawk.sharedassets.generated.resources.no_open_squawks
-import wingslog.feature.squawk.sharedassets.generated.resources.no_open_squawks_description
 import wingslog.feature.squawk.sharedassets.generated.resources.open_with_count
 import kotlin.math.roundToInt
 
@@ -175,7 +175,7 @@ fun SquawkTab(
             Res.string.no_open_squawks,
             LocalThingLexicon.current.squawkNoun.plural,
           ),
-          description = stringResource(Res.string.no_open_squawks_description),
+          description = LocalThingLexicon.current.squawkEmptyHint,
           icon = Icons.Default.CheckCircle,
         )
       } else {

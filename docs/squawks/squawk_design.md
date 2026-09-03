@@ -262,7 +262,7 @@ DualSegmentedFilter("Open (N)" / "Addressed (N)")
 | Filter | Condition | UI |
 |--------|-----------|-----|
 | Open (selected) | No open squawks | Bordered card: "No open squawks" body text + "New Squawk" `OutlinedButton` (mirrors the Tasks empty state card) |
-| Addressed (selected) | No addressed squawks | Inline text: "No addressed squawks yet" in `onSurfaceVariant` (mirrors `no_complied_yet` pattern) |
+| Addressed (selected) | No addressed squawks | Inline text: "No addressed squawks yet" in `onSurfaceVariant` (mirrors the Tasks history empty line) |
 
 **FAB context-sensitivity:** The FAB in `AircraftOverviewContent` becomes context-sensitive based on the current pager page:
 

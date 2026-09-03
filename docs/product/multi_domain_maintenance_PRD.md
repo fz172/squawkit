@@ -364,6 +364,14 @@ is why it is a whole string rather than a substitution.
 > the other vehicle presets keep a defect-shaped word (issue, squawk) because for them the one-off-task-vs-defect
 > boundary genuinely is clean.
 
+**And the noun alone is not enough — `empty_states` carries the sentence.** Home resolving `squawk` to "attention
+item" fixes every heading and still leaves the Attention tab reading *"Tap + to report a defect or anomaly"*,
+because that line has no slot to substitute: what makes it useful is the examples. So the lexicon also carries
+nine whole sentences — the copy for the Squawks, Tasks and Logs tabs and the three Dashboard rails — authored per
+template rather than assembled from a noun and an English frame. It is `down_status`'s reasoning applied to copy,
+and the narrow version of the per-string override design §10a sketches for localisation: only the strings that
+actually need replacing, named as fields rather than keyed by resource name.
+
 ### 4.6 Scheduling & due calculation
 
 Three aviation conventions currently live as constants in `TaskDueManagerImpl` and become config:

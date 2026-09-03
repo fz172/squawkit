@@ -611,6 +611,23 @@ every template in the canonical pool.
 lexicon earns its keep only while overrides stay exceptional, so "how many overrides is too many" is worth an
 explicit number before the first non-English template rather than after.
 
+### What actually shipped: `Lexicon.empty_states`
+
+The map above is still unbuilt, and the first real customer for it was not a locale — it was the empty states.
+Nine strings (the Squawks, Tasks and Logs tab bodies, the Tasks history line, and the three Dashboard rails) were
+fixed aviation text with nothing to substitute: *"Log your first entry — oil change, annual, 100-hour, or any
+other airframe, engine, or prop work"* is useful **because of** its examples, and a house's examples are a furnace
+service and a roof repair.
+
+They took the **typed** half of this design rather than the map: an `EmptyStates` message on `Lexicon`, one named
+field per surface, and the `strings.xml` resources deleted — the same call #657 made for labels that *are* a
+lexicon value. That deliberately trades the map's generality for the hazard the map has and this does not: no
+resource-name keys, so no silent miss when a resource is renamed, and no key-resolution test needed. The ceiling
+it needs is the count itself — nine fields is a lexicon; ninety is per-template strings with extra steps.
+
+The map is still the right shape for **localisation**, where the strings needing replacement are discovered per
+locale and cannot be enumerated in a schema ahead of time. Nothing here forecloses it.
+
 ### The four languages actually on the table
 
 *Decided: **ship English only**. Chinese, Japanese, Korean and Spanish are possible future targets, so this

@@ -1,4 +1,4 @@
-# The custom preset — canonical template (id "custom", version 2).
+# The custom preset — canonical template (id "custom", version 3).
 #
 # THE FLOOR. It declares almost nothing (PRD §4.7: no components, no meters, generic lexicon), so
 # every screen has to render something sensible for a template that promises almost nothing. That
@@ -8,7 +8,11 @@
 # Where home proves the system is not aviation with the nouns swapped, this proves the system
 # degrades to nothing gracefully. The two failures are different, which is why both presets exist.
 #
-# See templates/README.md before editing, and compile with ./compile-template.sh custom.v2
+# See templates/README.md before editing, and compile with ./compile-template.sh custom.v3
+#
+# v3 adds `empty_states` — the per-domain empty-state copy that used to be fixed aviation
+# text in strings.xml. A noun could not fix those strings: what makes them useful is the
+# examples, and this preset's examples are its own.
 #
 # v2 carries no change of its own. v1's bytes were edited in place before the bump-every-edit rule
 # was enforced, so `v1` names two different templates depending on when a Thing froze it — which is
@@ -16,7 +20,7 @@
 # a Thing stores is once more a true statement about the bytes it carries.
 
 id: "custom"
-version: 2
+version: 3
 min_app_version: 0
 
 display_name: "Custom"
@@ -57,6 +61,22 @@ lexicon {
   compliance_advisory {
     singular: "Service bulletin"
     plural: "Service bulletins"
+  }
+
+  # The empty-state copy, and the floor for it: no examples, because a template that promises
+  # nothing about its domain cannot name one. Every other preset earns its examples; this one says
+  # only what the screen is for. If that reads thin, that is the floor doing its job.
+  empty_states {
+    squawk_hint: "Tap + to report anything not working right"
+    task_hint: "Tap + to add the checks and replacements that come round again."
+    task_history_hint: "Log work against a task to see its history here."
+    log_hint: "Log your first entry — a repair, a replacement, or any other work on this thing."
+
+    overview_log_title: "No logs yet"
+    overview_log_hint: "Add the first log to start this thing’s history."
+    overview_task_title: "No upcoming tasks"
+    overview_task_hint: "Scheduled work is up to date."
+    overview_squawk_hint: "Nothing needs attention on this thing right now."
   }
 }
 

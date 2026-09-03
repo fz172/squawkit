@@ -4,8 +4,7 @@
   <string name="maintenance_history">Maintenance History</string>
   <string name="maintenance_date">Work Date</string>
   <string name="add_first_maintenance_log">Log First Entry</string>
-  <string name="no_maintenance_logs_title">Work log is empty</string>
-  <string name="no_maintenance_logs_description">Log your first entry — oil change, annual, 100-hour, or any other airframe, engine, or prop work.</string>
+  <string name="no_maintenance_logs_title"><xliff:g example="Work log">%1$s</xliff:g> is empty</string>
   <string name="propeller_hub">Propeller Hub</string>
   <string name="blade">Blade</string>
   <string name="this_action_cannot_be_undone">This action cannot be undone.</string>

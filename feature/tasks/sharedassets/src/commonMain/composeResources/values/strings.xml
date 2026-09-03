@@ -14,8 +14,6 @@
   <string name="maintenance_due_title">Maintenance Due</string>
   <string name="add_task">Add task</string>
   <string name="no_tasks_yet">No <xliff:g example="maintenance tasks">%1$s</xliff:g></string>
-  <string name="no_tasks_yet_description">Tap + to add inspections, part replacements, and other checks.</string>
-  <string name="no_complied_yet">Log work against a task to see its history here.</string>
   <string name="no_task_work_recorded">No task addressed by this log.</string>
   <string name="unknown_task">Unknown task (<xliff:g example="tk_4b1c">%1$s</xliff:g>)</string>
   <string name="delete_task">Delete Task</string>

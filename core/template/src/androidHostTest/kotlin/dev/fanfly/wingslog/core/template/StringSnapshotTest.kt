@@ -189,8 +189,10 @@ class StringSnapshotTest {
     // The task surfaces (#656). All per-thing: a task belongs to one thing, so the selected
     // thing's words are the right words here. Absent on purpose — the four compliance_type_*
     // strings and "Maintenance Tasks" are whole lexicon values (#657), and compliance_notes_hint
-    // and no_tasks_yet_description are per-template *example copy*: "e.g. One-time inspection of
-    // fuel lines" has no noun to substitute, it has to be rewritten per template (design §10a).
+    // is per-template *example copy*: "e.g. One-time inspection of fuel lines" has no noun to
+    // substitute, it has to be rewritten per template (design §10a). no_tasks_yet_description and
+    // no_complied_yet were the same case and are gone — they live in `Lexicon.empty_states` now,
+    // pinned by `theEmptyStateCopyStillSaysWhatTheAppSays` instead of by a row here.
     // Three that were converted here first — link_to_task, task_identity_description,
     // affects_n_tasks — turned out to have no call site at all, and have been deleted along with
     // the other 63 dead strings. A recipe on a string nothing renders passes forever while testing
@@ -219,9 +221,10 @@ class StringSnapshotTest {
 
     // The log surfaces (#656). Per-thing: a log belongs to one thing. Absent on purpose —
     // airframe_serial, airframe_time_hours and airframe_time_label are a component-slot label and
-    // two meter labels, so they are template *fields* rather than lexicon nouns (#657); and
-    // no_maintenance_logs_title ("Logbook Is Empty") is blocked on #683, because the log noun is
-    // "work log" and the app says "Logbook" only here and in the export copy.
+    // two meter labels, so they are template *fields* rather than lexicon nouns (#657).
+    // no_maintenance_logs_description is gone rather than converted: its value is its EXAMPLES —
+    // "oil change, annual, 100-hour" — and no noun substituted into that frame makes it a
+    // homeowner's sentence. It moved to `Lexicon.empty_states`.
     frame(
       "feature/logs/update",
       "component_section_description"
@@ -252,6 +255,9 @@ class StringSnapshotTest {
     frame("feature/logs/viewing", "resolved_squawks") {
       LexiconFormatter.titleCasePlural(it.squawkNoun)
     },
+    frame("feature/logs/sharedassets", "no_maintenance_logs_title") {
+      LexiconFormatter.sentenceCase(it.logNoun)
+    },
     frame("feature/logs/sharedassets", "add_log") {
       LexiconFormatter.titleCase(
         it.logNoun
@@ -277,20 +283,12 @@ class StringSnapshotTest {
     // The remaining per-thing surfaces (#656). Absent on purpose: "Tail Number" is a *spec field*
     // label, not a lexicon noun (PRD §4.2, so #657); the collaboration channel description belongs
     // to #661 with the rest of the notification surface; and the stress-test copy is a developer
-    // surface, excluded wholesale by the classification.
+    // surface, excluded wholesale by the classification. The five overview_no_* strings are gone —
+    // a rail's title is fixed text rather than a frame ("No work logs yet" is not what the aviation
+    // app says), so they moved to `Lexicon.empty_states` with the rest of the empty-state copy.
     frame(
       "feature/thing/dashboard",
       "thing_load_error"
-    ) { it.thingNoun.singular },
-    frame(
-      "feature/thing/dashboard",
-      "overview_no_logs_body"
-    ) { it.thingNoun.singular },
-    // Only the thing noun. "discrepancies" stays literal: the squawk plural is "squawks", so
-    // substituting would reword the sentence rather than translate it.
-    frame(
-      "feature/thing/dashboard",
-      "overview_no_squawks_body"
     ) { it.thingNoun.singular },
     frame(
       "feature/thing/dashboard",
@@ -571,9 +569,10 @@ class StringSnapshotTest {
     //
     // A floor, not a census: the test above already reports additions and removals by name, so
     // this only has to catch a file that got cut off or clobbered. Lower it deliberately when
-    // strings are legitimately deleted (66 dead ones went in #685), never to get to green.
+    // strings are legitimately deleted (66 dead ones went in #685; the nine empty-state strings
+    // that moved into `Lexicon.empty_states` went here), never to get to green.
     val snapshot = loadSnapshot()
-    assertThat(snapshot.size).isAtLeast(850)
+    assertThat(snapshot.size).isAtLeast(840)
     assertThat(snapshot).containsKey("app:app_name")
     assertThat(snapshot.getValue("app:app_name")).isEqualTo("SquawkIt")
   }

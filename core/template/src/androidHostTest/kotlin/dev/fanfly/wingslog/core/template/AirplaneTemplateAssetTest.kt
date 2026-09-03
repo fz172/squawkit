@@ -7,10 +7,10 @@ import org.junit.Test
 import java.io.File
 
 /**
- * That the committed `airplane.v2.pb` is what the app thinks it is (#675).
+ * That the committed `airplane.v3.pb` is what the app thinks it is (#675).
  *
  * **Why a committed binary is checked by a test rather than compiled in Gradle.** Wire has no
- * protobuf text-format parser, so turning `airplane.v2.textproto` into bytes needs `protoc`, which
+ * protobuf text-format parser, so turning `airplane.v3.textproto` into bytes needs `protoc`, which
  * this build otherwise has no use for — Wire does all codegen. Rather than put a native binary on
  * every developer's Gradle configuration path for an asset that changes about once per preset, the
  * `.pb` is committed and `templates/compile-template.sh` regenerates it into `templates/binary`. This test is what keeps
@@ -30,7 +30,7 @@ class AirplaneTemplateAssetTest {
   }
 
   private val asset: File
-    get() = File(repoRoot(), "core/template/templates/binary/airplane.v2.pb")
+    get() = File(repoRoot(), "core/template/templates/binary/airplane.v3.pb")
 
   private val decoded: ThingTemplate
     get() = ThingTemplate.ADAPTER.decode(asset.readBytes())
@@ -47,7 +47,7 @@ class AirplaneTemplateAssetTest {
   /**
    * That what the app carries is what is committed.
    *
-   * Not a tautology, though both sides trace to one file: the left is `airplane.v2.pb` read from
+   * Not a tautology, though both sides trace to one file: the left is `airplane.v3.pb` read from
    * disk, the right is the base64 constant Gradle embedded from it at build time. They agree only
    * while `generateTemplateAssets` is actually wired into compilation — so this is what catches the
    * task being skipped, mis-wired, or its output going stale, none of which produce a build error.
@@ -135,6 +135,42 @@ class AirplaneTemplateAssetTest {
       .isEqualTo("Airworthiness Directives")
     assertThat(lexicon.compliance_advisory?.abbreviation).isEqualTo("SB")
     assertThat(lexicon.compliance_advisory?.plural).isEqualTo("Service Bulletins")
+  }
+
+  /**
+   * The empty-state copy, character for character as the app shipped it.
+   *
+   * **This is what replaced nine rows of `string_snapshot.tsv`.** Those strings were fixed aviation
+   * text with no noun to substitute — the value of "oil change, annual, 100-hour" is the examples —
+   * so they moved into the lexicon rather than becoming format strings, and the snapshot rows came
+   * out in the same commit. Without this the aviation wording would have left the guarded set: the
+   * snapshot cannot see a lexicon value, and every other check in this file compares one link of
+   * the .textproto -> .pb -> constant chain against another, so a reworded sentence at the source
+   * passes all of them.
+   *
+   * PRD §13's guardrail is no regression for the pre-launch aviation cohort. Their copy not
+   * drifting is part of that, and this is now the only thing asserting it.
+   */
+  @Test
+  fun theEmptyStateCopyStillSaysWhatTheAppSays() {
+    val empty = checkNotNull(AirplaneTemplate.AIRPLANE_LEXICON.empty_states)
+
+    assertThat(empty.squawk_hint).isEqualTo("Tap + to report a defect or anomaly")
+    assertThat(empty.task_hint)
+      .isEqualTo("Tap + to add inspections, part replacements, and other checks.")
+    assertThat(empty.task_history_hint)
+      .isEqualTo("Log work against a task to see its history here.")
+    assertThat(empty.log_hint).isEqualTo(
+      "Log your first entry — oil change, annual, 100-hour, or any other airframe, engine, " +
+        "or prop work.",
+    )
+
+    assertThat(empty.overview_log_title).isEqualTo("No logs yet")
+    assertThat(empty.overview_log_hint)
+      .isEqualTo("Add the first maintenance entry to start the aircraft record.")
+    assertThat(empty.overview_task_title).isEqualTo("No upcoming tasks")
+    assertThat(empty.overview_task_hint).isEqualTo("Scheduled maintenance is up to date.")
+    assertThat(empty.overview_squawk_hint).isEqualTo("No active discrepancies for this aircraft.")
   }
 
   @Test
