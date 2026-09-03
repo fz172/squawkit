@@ -175,6 +175,22 @@ describe("thing dna refresh", () => {
     expect(bladeSlot((await storedThing()).template)?.compactInstances).toBe(false);
   });
 
+  it("skips a tombstone, and does not restart its retention clock", async () => {
+    // A deleted record is waiting on the storage sweep's hard delete. The write would stamp
+    // `lastUpdateTimestamp` — the field the sweep ages it by — and buy it another 30 days.
+    await seed(airplane());
+    await adminDb.doc(`users/${UID}/thing/${THING}`).update({ deleted: true });
+    const before = (await adminDb.doc(`users/${UID}/thing/${THING}`).get()).data();
+
+    const report = await runThingDnaRefresh(RUN);
+
+    expect(report.skippedTombstones).toBe(1);
+    expect(report.refreshed).toHaveLength(0);
+    const after = (await adminDb.doc(`users/${UID}/thing/${THING}`).get()).data();
+    expect(after?.payload).toBe(before?.payload);
+    expect(after?.lastUpdateTimestamp).toEqual(before?.lastUpdateTimestamp);
+  });
+
   it("skips a thing already carrying the canonical bytes", async () => {
     await seed(airplane(loadCanonicalTemplates().get("airplane")));
 

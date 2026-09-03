@@ -8,7 +8,8 @@
  * draws its propeller blades as a flat list while a new one draws the same blades as a compact
  * grid: same build, same screen, older bytes.
  *
- * Writes `template` wholesale from `core/template/templates/binary/*.pb`. Components are NOT
+ * Deleted records are skipped — writing one restarts the retention clock the storage sweep ages it
+ * by. Writes `template` wholesale from `core/template/templates/binary/*.pb`. Components are NOT
  * touched — if a Thing still carries the pre-#729 `airframe`/`hub` tree, run `npm run airplane-tree`
  * first, then this.
  *
@@ -89,6 +90,7 @@ async function main() {
   console.log(`  already current:   ${report.alreadyCurrent}`);
   console.log(`  unknown preset:    ${report.unknownTemplateId.length}`);
   console.log(`  filtered out:      ${report.filteredOut}`);
+  console.log(`  tombstones:        ${report.skippedTombstones}`);
   console.log(`  undecodable:       ${report.undecodable.length}`);
   console.log(`  elapsed:           ${report.elapsedMs} ms`);
 
