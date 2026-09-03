@@ -6,4 +6,11 @@ option java_multiple_files = true;
 message Spec {
   string key = 1;
   string value = 2;
+
+  // The user's own word for a field they invented — set only on the `custom_N` fields a template
+  // invites through `ThingTemplate.custom_spec_fields`, empty on everything a template declares.
+  //
+  // Stored beside the value rather than in the key, because the key is a join: it names the same
+  // field across renames, and a label the user retypes must not orphan what they entered under it.
+  string label = 3;
 }

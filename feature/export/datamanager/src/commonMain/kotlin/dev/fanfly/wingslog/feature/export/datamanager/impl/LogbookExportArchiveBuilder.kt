@@ -11,6 +11,7 @@ import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.core.template.allComponentsInSlot
 import dev.fanfly.wingslog.core.template.childInSlot
 import dev.fanfly.wingslog.core.template.childrenInSlot
+import dev.fanfly.wingslog.core.template.customSpecs
 import dev.fanfly.wingslog.core.template.displayLabel
 import dev.fanfly.wingslog.core.template.displaySubtitle
 import dev.fanfly.wingslog.core.template.formatMeterNumber
@@ -871,13 +872,12 @@ class LogbookExportArchiveBuilder(
             cards = listOf(
               PdfSummaryCard(
                 rows = buildList {
-                  add(PdfSummaryRow("Name", thing.name.ifBlank { thing.id }))
-                  template?.spec_fields.orEmpty()
-                    .forEach { field ->
+                  thing.exportIdentityPairs(nameFallback = thing.id)
+                    .forEach { (label, value) ->
                       add(
                         PdfSummaryRow(
-                          field.label.ifBlank { field.key },
-                          thing.specValue(field.key),
+                          label,
+                          value
                         )
                       )
                     }
@@ -1038,6 +1038,38 @@ class LogbookExportArchiveBuilder(
    * A home has an address and a year built and none of the four; asking for them produced four
    * blank rows and no address.
    */
+  /**
+   * Every identity row the export prints: the Thing's name, what the template declares, then the
+   * fields the user named themselves under the words they chose (#781).
+   *
+   * **The name row is skipped when a declared field already prints it.** `custom` names itself
+   * through a `title_candidate` spec field labelled "Name", so printing `Thing.name` above it put
+   * the same string in the table twice. Every other preset derives its name from fields with
+   * different labels, and keeps the row.
+   *
+   * Declared fields keep their blank cells — a column that exists and is empty is information —
+   * while an unnamed custom field is dropped, since it has no label to print it under.
+   */
+  private fun Thing.exportIdentityPairs(nameFallback: String = ""): List<Pair<String, String>> {
+    val declared = template?.spec_fields.orEmpty()
+    val titleValue = declared.firstOrNull { it.title_candidate }
+      ?.let { specValue(it.key) }
+      .orEmpty()
+    return buildList {
+      if (name.isBlank() || name != titleValue) {
+        add("Name" to name.ifBlank { nameFallback })
+      }
+      declared.forEach { field ->
+        add(field.label.ifBlank { field.key } to specValue(field.key))
+      }
+      customSpecs().forEach { spec ->
+        spec.label.trim()
+          .takeIf { it.isNotEmpty() }
+          ?.let { add(it to spec.value_) }
+      }
+    }
+  }
+
   private fun genericInfoRows(
     bundle: ThingBundle,
     request: ExportRequest,
@@ -1052,16 +1084,8 @@ class LogbookExportArchiveBuilder(
     }
     return buildList {
       add(listOf("Field", "Value"))
-      add(listOf("Name", thing.name))
-      template?.spec_fields.orEmpty()
-        .forEach { field ->
-          add(
-            listOf(
-              field.label.ifBlank { field.key },
-              thing.specValue(field.key)
-            )
-          )
-        }
+      thing.exportIdentityPairs()
+        .forEach { (label, value) -> add(listOf(label, value)) }
       // Only meters the template declares: a home declares none, and a "0.0 hrs" row is exactly
       // the failure PRD §4.4 warns about.
       template?.meters.orEmpty()

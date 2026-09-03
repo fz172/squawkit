@@ -202,7 +202,10 @@ class CanonicalTemplatesTest {
       .containsNoneOf("make", "model", "serial")
 
     val custom = CanonicalTemplates.CUSTOM
-    assertThat(custom.spec_fields).isEmpty()
+    // One field, and it is the name — without it the create form was empty and every Thing on
+    // this preset stored no name at all. Everything else is still the user's to invent.
+    assertThat(custom.spec_fields.map { it.key }).containsExactly("name")
+    assertThat(custom.custom_spec_fields).isEqualTo(3)
     assertThat(custom.component_slots).isEmpty()
     assertThat(custom.meters).isEmpty()
   }

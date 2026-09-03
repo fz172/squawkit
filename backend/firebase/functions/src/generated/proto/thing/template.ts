@@ -57,6 +57,11 @@ export interface SpecField {
   options: string[];
   /** A number: numeric keypad, and none of the capitalisation a text field applies. */
   numeric: boolean;
+  /**
+   * Capitalise every word, not just the first — a name, where each word is part of what the thing
+   * is called. Ignored when `numeric` or `is_identifier` already decide the casing.
+   */
+  titleCase: boolean;
 }
 
 /**
@@ -200,6 +205,15 @@ export interface ThingTemplate {
   componentSlots: ComponentSlot[];
   meters: MeterDef[];
   starterTasks: StarterTask[];
+  /**
+   * How many fields of the user's own the form offers, beyond `spec_fields`. 0 — the proto3
+   * default — means none, which is every preset that describes a real domain.
+   *
+   * `custom` is the case: it declares no spec fields at all, because what a user tracks under it
+   * is not knowable in advance. The template still decides HOW MANY, so the answer is a number
+   * here rather than an unbounded list the UI has to invent a limit for.
+   */
+  customSpecFields: number;
   /** picker copy — "Airplane", "Car" */
   displayName: string;
   /** icon key the client maps to a vector */
@@ -219,6 +233,7 @@ function createBaseSpecField(): SpecField {
     titleCandidate: false,
     options: [],
     numeric: false,
+    titleCase: false,
   };
 }
 
@@ -250,6 +265,9 @@ export const SpecField: MessageFns<SpecField> = {
     }
     if (message.numeric !== false) {
       writer.uint32(72).bool(message.numeric);
+    }
+    if (message.titleCase !== false) {
+      writer.uint32(80).bool(message.titleCase);
     }
     return writer;
   },
@@ -333,6 +351,14 @@ export const SpecField: MessageFns<SpecField> = {
           message.numeric = reader.bool();
           continue;
         }
+        case 10: {
+          if (tag !== 80) {
+            break;
+          }
+
+          message.titleCase = reader.bool();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -361,6 +387,11 @@ export const SpecField: MessageFns<SpecField> = {
         : false,
       options: globalThis.Array.isArray(object?.options) ? object.options.map((e: any) => globalThis.String(e)) : [],
       numeric: isSet(object.numeric) ? globalThis.Boolean(object.numeric) : false,
+      titleCase: isSet(object.titleCase)
+        ? globalThis.Boolean(object.titleCase)
+        : isSet(object.title_case)
+        ? globalThis.Boolean(object.title_case)
+        : false,
     };
   },
 
@@ -393,6 +424,9 @@ export const SpecField: MessageFns<SpecField> = {
     if (message.numeric !== false) {
       obj.numeric = message.numeric;
     }
+    if (message.titleCase !== false) {
+      obj.titleCase = message.titleCase;
+    }
     return obj;
   },
 
@@ -410,6 +444,7 @@ export const SpecField: MessageFns<SpecField> = {
     message.titleCandidate = object.titleCandidate ?? false;
     message.options = object.options?.map((e) => e) || [];
     message.numeric = object.numeric ?? false;
+    message.titleCase = object.titleCase ?? false;
     return message;
   },
 };
@@ -975,6 +1010,7 @@ function createBaseThingTemplate(): ThingTemplate {
     componentSlots: [],
     meters: [],
     starterTasks: [],
+    customSpecFields: 0,
     displayName: "",
     icon: "",
     sortOrder: 0,
@@ -1009,6 +1045,9 @@ export const ThingTemplate: MessageFns<ThingTemplate> = {
     }
     for (const v of message.starterTasks) {
       StarterTask.encode(v!, writer.uint32(74).fork()).join();
+    }
+    if (message.customSpecFields !== 0) {
+      writer.uint32(104).int32(message.customSpecFields);
     }
     if (message.displayName !== "") {
       writer.uint32(82).string(message.displayName);
@@ -1101,6 +1140,14 @@ export const ThingTemplate: MessageFns<ThingTemplate> = {
           message.starterTasks.push(StarterTask.decode(reader, reader.uint32()));
           continue;
         }
+        case 13: {
+          if (tag !== 104) {
+            break;
+          }
+
+          message.customSpecFields = reader.int32();
+          continue;
+        }
         case 10: {
           if (tag !== 82) {
             break;
@@ -1163,6 +1210,11 @@ export const ThingTemplate: MessageFns<ThingTemplate> = {
         : globalThis.Array.isArray(object?.starter_tasks)
         ? object.starter_tasks.map((e: any) => StarterTask.fromJSON(e))
         : [],
+      customSpecFields: isSet(object.customSpecFields)
+        ? globalThis.Number(object.customSpecFields)
+        : isSet(object.custom_spec_fields)
+        ? globalThis.Number(object.custom_spec_fields)
+        : 0,
       displayName: isSet(object.displayName)
         ? globalThis.String(object.displayName)
         : isSet(object.display_name)
@@ -1206,6 +1258,9 @@ export const ThingTemplate: MessageFns<ThingTemplate> = {
     if (message.starterTasks?.length) {
       obj.starterTasks = message.starterTasks.map((e) => StarterTask.toJSON(e));
     }
+    if (message.customSpecFields !== 0) {
+      obj.customSpecFields = Math.round(message.customSpecFields);
+    }
     if (message.displayName !== "") {
       obj.displayName = message.displayName;
     }
@@ -1236,6 +1291,7 @@ export const ThingTemplate: MessageFns<ThingTemplate> = {
     message.componentSlots = object.componentSlots?.map((e) => ComponentSlot.fromPartial(e)) || [];
     message.meters = object.meters?.map((e) => MeterDef.fromPartial(e)) || [];
     message.starterTasks = object.starterTasks?.map((e) => StarterTask.fromPartial(e)) || [];
+    message.customSpecFields = object.customSpecFields ?? 0;
     message.displayName = object.displayName ?? "";
     message.icon = object.icon ?? "";
     message.sortOrder = object.sortOrder ?? 0;

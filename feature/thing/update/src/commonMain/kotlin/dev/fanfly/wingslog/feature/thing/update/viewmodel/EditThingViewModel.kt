@@ -15,10 +15,13 @@ import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.core.template.addComponent
 import dev.fanfly.wingslog.core.template.ensureComponentAt
 import dev.fanfly.wingslog.core.template.newComponentFor
+import dev.fanfly.wingslog.core.template.nextCustomSpecKey
 import dev.fanfly.wingslog.core.template.removeComponentAt
+import dev.fanfly.wingslog.core.template.removeSpec
 import dev.fanfly.wingslog.core.template.specField
 import dev.fanfly.wingslog.core.template.updateComponentAt
 import dev.fanfly.wingslog.core.template.with
+import dev.fanfly.wingslog.core.template.withCustomSpec
 import dev.fanfly.wingslog.core.template.withSpec
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
@@ -234,6 +237,41 @@ class EditThingViewModel(
     }
   }
 
+  /**
+   * A field the user named themselves — the label and the value are both theirs.
+   *
+   * Title case and a 50-character ceiling on each: these are the only strings in the app whose
+   * *label* is user input, and one long enough to wrap turns the row it heads into a paragraph.
+   */
+  fun onCustomFieldChanged(key: String, label: String, value: String) {
+    _uiState.update {
+      it.copy(
+        thing = it.thing.withCustomSpec(
+          key = key,
+          label = label.take(CUSTOM_FIELD_MAX)
+            .titleCase(),
+          value = value.take(CUSTOM_FIELD_MAX)
+            .titleCase(),
+        ),
+      )
+    }
+  }
+
+  /** Adds an empty one, or does nothing once the template's allowance is spent. */
+  fun onAddCustomField() {
+    _uiState.update { state ->
+      val limit = state.template?.custom_spec_fields ?: 0
+      val key = state.thing.nextCustomSpecKey(limit) ?: return@update state
+      // A blank-but-present label, because `withCustomSpec` drops a field with neither half
+      // filled: an untouched new row would vanish before the user could type into it.
+      state.copy(thing = state.thing.withCustomSpec(key, " ", ""))
+    }
+  }
+
+  fun onRemoveCustomField(key: String) {
+    _uiState.update { it.copy(thing = it.thing.removeSpec(key)) }
+  }
+
   /** A field on the component at [path], wherever in the tree that is. */
   fun onComponentFieldChanged(
     path: ComponentPath,
@@ -292,6 +330,13 @@ class EditThingViewModel(
   }
 
   /**
+   * Every word's first letter, the rest left as typed — so "IBM" and "McIntosh" survive.
+   * `split(" ")` rather than a regex keeps the spacing the user typed, doubles included.
+   */
+  private fun String.titleCase(): String =
+    split(" ").joinToString(" ") { word -> word.replaceFirstChar { it.uppercase() } }
+
+  /**
    * Casing from what the template declares, not from a list of conventional key names — a boat's
    * hull ID is an identifier as much as a tail number. An undeclared key is left as typed.
    */
@@ -299,6 +344,7 @@ class EditThingViewModel(
     this == null -> value
     numeric -> value
     is_identifier -> value.uppercase()
+    title_case -> value.titleCase()
     else -> value.replaceFirstChar { it.uppercase() }
   }
 
@@ -311,5 +357,8 @@ class EditThingViewModel(
      * "not offered" rather than "offered and declined".
      */
     private const val SOURCE_FORM = "form"
+
+    /** Both halves of a user-named field. Long enough for a real label, short enough to read. */
+    private const val CUSTOM_FIELD_MAX = 50
   }
 }

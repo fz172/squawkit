@@ -54,6 +54,7 @@ import dev.fanfly.wingslog.core.ui.common.compose.UnsavedChangesDialog
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.thing.update.compose.ComponentTreeSection
+import dev.fanfly.wingslog.feature.thing.update.compose.CustomFieldsSection
 import dev.fanfly.wingslog.feature.thing.update.compose.SpecFieldsSection
 import dev.fanfly.wingslog.feature.thing.update.viewmodel.EditThingViewModel
 import org.jetbrains.compose.resources.stringResource
@@ -226,6 +227,8 @@ fun EditThingScreen(
           viewModel,
           uiState.showValidationErrors,
         )
+        // Last: what the template declares comes before what the user invents.
+        CustomFieldsSection(uiState.thing, viewModel)
 
         Spacer(Modifier.height(Spacing.buttonHeight + Spacing.huge))
       }

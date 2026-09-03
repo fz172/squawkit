@@ -60,6 +60,10 @@ message SpecField {
 
   // A number: numeric keypad, and none of the capitalisation a text field applies.
   bool numeric = 9;
+
+  // Capitalise every word, not just the first — a name, where each word is part of what the thing
+  // is called. Ignored when `numeric` or `is_identifier` already decide the casing.
+  bool title_case = 10;
 }
 
 // A slot in the component tree the template expects — airframe, engine, propeller, hub, blade.
@@ -179,6 +183,14 @@ message ThingTemplate {
   repeated ComponentSlot component_slots = 7;
   repeated MeterDef meters = 8;
   repeated StarterTask starter_tasks = 9;
+
+  // How many fields of the user's own the form offers, beyond `spec_fields`. 0 — the proto3
+  // default — means none, which is every preset that describes a real domain.
+  //
+  // `custom` is the case: it declares no spec fields at all, because what a user tracks under it
+  // is not knowable in advance. The template still decides HOW MANY, so the answer is a number
+  // here rather than an unbounded list the UI has to invent a limit for.
+  int32 custom_spec_fields = 13;
 
   string display_name = 10;  // picker copy — "Airplane", "Car"
   string icon = 11;          // icon key the client maps to a vector

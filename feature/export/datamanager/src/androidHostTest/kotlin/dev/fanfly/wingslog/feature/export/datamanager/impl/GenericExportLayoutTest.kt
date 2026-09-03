@@ -170,6 +170,31 @@ class GenericExportLayoutTest {
   }
 
   @Test
+  fun theUsersOwnFieldsAreExportedUnderTheirOwnLabels() {
+    // A value the user can type and never see again is half a feature (#781). The template
+    // declares none of these, so walking spec_fields alone would drop them.
+    val thing = Thing(
+      id = "custom-1",
+      spec = listOf(
+        Spec(key = "name", value_ = "Espresso Machine"),
+        Spec(key = "custom_1", value_ = "7 Grains", label = "Water Hardness"),
+        // No label: nothing to print it under, so it is dropped rather than headed by a blank.
+        Spec(key = "custom_2", value_ = "Orphan"),
+      ),
+    )
+
+    val csv = entries(thing, CanonicalTemplates.CUSTOM)
+      .entries.first { it.key.endsWith("_Info.csv") }.value
+
+    assertThat(csv).contains("Water Hardness")
+    assertThat(csv).contains("7 Grains")
+    assertThat(csv).doesNotContain("Orphan")
+    // One Name row, not two: custom names itself through a declared field, so the Thing's own
+    // name row would print the same string again.
+    assertThat(csv.lines().count { it.startsWith("Name,") }).isEqualTo(1)
+  }
+
+  @Test
   fun anAeroplaneStillGetsThePaperLogbook() {
     // The guarantee that makes the rest of this safe: the logbook renderer is untouched.
     val plane = Thing(

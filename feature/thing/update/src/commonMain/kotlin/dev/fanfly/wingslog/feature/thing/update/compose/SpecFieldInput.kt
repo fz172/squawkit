@@ -22,7 +22,8 @@ import dev.fanfly.wingslog.thing.SpecField
 
 /**
  * One declared field: a picker when the template lists `options`, a numeric keypad when it says
- * `numeric`, an all-caps keyboard when it says `is_identifier`. Shared by both forms (#739).
+ * `numeric`, an all-caps keyboard when it says `is_identifier`, word capitalisation when it says
+ * `title_case`. Shared by both forms (#739).
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -82,5 +83,6 @@ internal fun SpecFieldInput(
 private fun SpecField.keyboardOptions(): KeyboardOptions = when {
   numeric -> KeyboardOptions(keyboardType = KeyboardType.Number)
   is_identifier -> KeyboardOptions(capitalization = KeyboardCapitalization.Characters)
+  title_case -> KeyboardOptions(capitalization = KeyboardCapitalization.Words)
   else -> KeyboardOptions.Default
 }
