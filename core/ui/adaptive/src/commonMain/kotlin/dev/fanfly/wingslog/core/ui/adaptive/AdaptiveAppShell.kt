@@ -99,8 +99,8 @@ import wingslog.core.sharedassets.generated.resources.settings
 import wingslog.core.sharedassets.generated.resources.shell_nav_tasks_narrow
 import wingslog.core.sharedassets.generated.resources.shell_tab_dashboard
 import wingslog.core.sharedassets.generated.resources.switcher_add_thing
-import wingslog.core.sharedassets.generated.resources.switcher_title
 import wingslog.core.sharedassets.generated.resources.switcher_select_thing
+import wingslog.core.sharedassets.generated.resources.switcher_title
 import wingslog.core.sharedassets.generated.resources.Res as UiRes
 
 /** Lightweight thing projection used by the shell's switcher. */
@@ -125,6 +125,14 @@ data class ShellThing(
    * gets the generic lexicon and every capability enabled.
    */
   val template: ThingTemplate? = null,
+  /**
+   * What this Thing's type calls a collection of itself — "Fleet", "Garage", "Property".
+   *
+   * Resolved by the ViewModel rather than read off [template] here: a Thing that froze its DNA
+   * before `collection_label` existed carries an empty one, and the registry prefers this build's
+   * words over whatever was frozen.
+   */
+  val collectionLabel: String = "",
   /**
    * False when this build cannot interpret [template] and the thing renders degraded (#728).
    *
@@ -1009,17 +1017,12 @@ private fun TopBarSwitcher(
  */
 @Composable
 private fun AdaptiveShellUiState.switcherTitle(): String {
-  val templates = things.map { it.template?.id }.distinct()
-  val shared = things.firstOrNull()?.template?.takeIf { templates.size == 1 }
-  return shared?.lexicon?.collection_label?.takeIf { it.isNotEmpty() }
+  val shared = things.map { it.collectionLabel }
+    .distinct()
+    .singleOrNull()
+  return shared?.takeIf { it.isNotEmpty() }
     ?: stringResource(UiRes.string.switcher_title)
 }
-
-/** Group heading on a mixed account. Falls back to the neutral title for a Thing with no DNA. */
-@Composable
-private fun ThingTemplate?.groupLabel(): String =
-  this?.lexicon?.collection_label?.takeIf { it.isNotEmpty() }
-    ?: stringResource(UiRes.string.switcher_title)
 
 @Composable
 private fun ThingDropdown(
@@ -1031,22 +1034,27 @@ private fun ThingDropdown(
   onEnterInviteCode: (() -> Unit)?,
 ) {
   DropdownMenu(expanded = expanded, onDismissRequest = onDismiss) {
-    Text(
-      state.switcherTitle(),
-      style = MaterialTheme.typography.labelMedium,
-      color = MaterialTheme.colorScheme.onSurfaceVariant,
-      modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-    )
-    // Grouped only on a mixed account. One group means one heading repeating the title above it.
+    // Grouped only on a mixed account, where the headings say what the title otherwise would.
+    // Showing both stacks two labels that read the same and say nothing to each other.
     val groups = state.things.groupBy { it.template?.id.orEmpty() }
     val grouped = groups.size > 1
-    groups.forEach { (_, rows) ->
+    if (!grouped) {
+      Text(
+        state.switcherTitle(),
+        style = MaterialTheme.typography.labelMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+      )
+    }
+    groups.values.forEachIndexed { index, rows ->
       if (grouped) {
+        if (index > 0) HorizontalDivider()
         Text(
-          rows.first().template.groupLabel(),
-          style = MaterialTheme.typography.labelSmall,
+          rows.first().collectionLabel
+            .ifEmpty { stringResource(UiRes.string.switcher_title) },
+          style = MaterialTheme.typography.labelMedium,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
-          modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+          modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
         )
       }
       rows.forEach { ac ->

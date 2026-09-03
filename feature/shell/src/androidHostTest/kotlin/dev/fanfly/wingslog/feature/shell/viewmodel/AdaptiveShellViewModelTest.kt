@@ -171,6 +171,54 @@ class AdaptiveShellViewModelTest {
     )
   }
 
+  @Test
+  fun eachRowCarriesItsOwnCollectionLabel() = runTest(testDispatcher) {
+    // The switcher groups by this. Read off the Thing's frozen DNA it came back empty for
+    // anything created before collection_label existed, so every group heading said "Stuff" —
+    // resolving through the registry is what makes them Fleet / Garage / Property.
+    fleet.value = listOf(
+      thing("a1", "N1"),
+      home("h1"),
+    )
+    val rows = viewModel().uiState.value.things
+
+    assertThat(rows.map { it.collectionLabel })
+      .containsExactly("Fleet", "Property")
+  }
+
+  @Test
+  fun aNamelessHomeStillHasARowLabel() = runTest(testDispatcher) {
+    // The home preset declares no title_candidate, no is_identifier, and a house has no make or
+    // model — so a nameless one exhausted every branch and rendered as an icon, a checkmark and a
+    // blank line. Whatever the template *does* ask for stands in.
+    fleet.value = listOf(home("h1"))
+    val row = viewModel().uiState.value.things.single()
+
+    assertThat(row.label).isEqualTo("655 Disko Drive")
+  }
+
+  @Test
+  fun aHomeWithNothingFilledInFallsBackToItsType() = runTest(testDispatcher) {
+    // The floor: no name and no spec values at all still names the row rather than leaving a gap.
+    fleet.value = listOf(home("h1", address = ""))
+    val row = viewModel().uiState.value.things.single()
+
+    assertThat(row.label).isEqualTo("Home")
+  }
+
+  /** A home: no make, no model, no tail number — the preset that finds aviation assumptions. */
+  private fun home(id: String, address: String = "655 Disko Drive") =
+    FleetEntry(
+      thing = Thing(
+        id = id,
+        spec = if (address.isEmpty()) emptyList()
+        else listOf(Spec(key = "address", value_ = address)),
+        template = CanonicalTemplates.HOME,
+      ),
+      shared = false,
+      role = ShareRole.SHARE_ROLE_OWNER,
+    )
+
   private fun thing(
     id: String,
     tail: String,
