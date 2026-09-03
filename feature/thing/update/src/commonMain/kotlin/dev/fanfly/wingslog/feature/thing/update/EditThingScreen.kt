@@ -1,5 +1,15 @@
 package dev.fanfly.wingslog.feature.thing.update
 
+import androidx.compose.runtime.CompositionLocalProvider
+import dev.fanfly.wingslog.core.template.CurrentThingTemplate
+import dev.fanfly.wingslog.core.template.LocalThingCapabilities
+import dev.fanfly.wingslog.core.template.LocalThingTemplate
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.Icon
+import dev.fanfly.wingslog.core.ui.adaptive.thingIcon
+import dev.fanfly.wingslog.thing.ThingTemplate
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -159,6 +169,14 @@ fun EditThingScreen(
       })
   }
 
+  // The form's own template wins over the ambient one for its whole subtree. Those are provided
+  // app-wide from the *selected* Thing (AppEntry), so a create form would otherwise title itself
+  // and lay out its fields after whatever the switcher points at rather than the type just picked.
+  CompositionLocalProvider(
+    LocalThingLexicon provides uiState.lexicon,
+    LocalThingTemplate provides uiState.template,
+    LocalThingCapabilities provides (uiState.template?.capabilities ?: CurrentThingTemplate.ALL_ENABLED),
+  ) {
   Scaffold(
     modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
     topBar = {
@@ -233,5 +251,6 @@ fun EditThingScreen(
           )
       )
     }
+  }
   }
 }

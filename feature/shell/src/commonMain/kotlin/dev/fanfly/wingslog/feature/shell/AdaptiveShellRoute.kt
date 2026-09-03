@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.shell
 
+import dev.fanfly.wingslog.feature.thing.update.PickThingTypeSheet
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
@@ -66,11 +67,13 @@ fun AdaptiveShellRoute(
   // (gate as promo, not a hidden action). Never reached from the empty-fleet state — 0 owned is
   // never at limit. Default-open while the subscription capability is off.
   var showAddThingUpsell by remember { mutableStateOf(false) }
+  // The type picker is a sheet over the shell, not a destination — see PickThingTypeSheet.
+  var showTypePicker by remember { mutableStateOf(false) }
   val onAddThing = {
     if (atThingLimit) {
       showAddThingUpsell = true
     } else {
-      navController.navigate(Screen.AddThing.route)
+      showTypePicker = true
     }
   }
 
@@ -170,7 +173,7 @@ fun AdaptiveShellRoute(
     },
     emptyFleetContent = {
       FleetEmptyState(
-        onAddThing = { navController.navigate(Screen.AddThing.route) },
+        onAddThing = { showTypePicker = true },
         onEnterInviteCode = onEnterInviteCode,
       )
     },
@@ -196,6 +199,16 @@ fun AdaptiveShellRoute(
       }
     },
   )
+
+  if (showTypePicker) {
+    PickThingTypeSheet(
+      onDismiss = { showTypePicker = false },
+      onPick = { templateId ->
+        showTypePicker = false
+        navController.navigate(Screen.AddThing.createRoute(templateId))
+      },
+    )
+  }
 
   if (showAddThingUpsell) {
     ProUpsellSheet(

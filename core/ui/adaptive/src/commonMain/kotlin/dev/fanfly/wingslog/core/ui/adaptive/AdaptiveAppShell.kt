@@ -58,6 +58,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -100,6 +101,7 @@ import wingslog.core.sharedassets.generated.resources.shell_nav_tasks_narrow
 import wingslog.core.sharedassets.generated.resources.shell_tab_dashboard
 import wingslog.core.sharedassets.generated.resources.switcher_add_thing
 import wingslog.core.sharedassets.generated.resources.switcher_select_thing
+import wingslog.core.sharedassets.generated.resources.switcher_title
 import wingslog.core.sharedassets.generated.resources.Res as UiRes
 
 /** Lightweight thing projection used by the shell's switcher. */
@@ -1010,26 +1012,58 @@ private fun ThingDropdown(
   onEnterInviteCode: (() -> Unit)?,
 ) {
   DropdownMenu(expanded = expanded, onDismissRequest = onDismiss) {
-    state.things.forEach { ac ->
-      DropdownMenuItem(
-        text = {
-          Column {
-            Text(ac.label, style = MaterialTheme.typography.titleSmall)
-            if (ac.subtitle.isNotBlank()) {
-              Text(ac.subtitle, style = MaterialTheme.typography.bodySmall)
+    Text(
+      // Never a template's collection_label: the switcher spans the account, so titling it "Fleet"
+      // because today's rows are all aircraft renames the whole surface as the fleet changes.
+      stringResource(UiRes.string.switcher_title),
+      style = MaterialTheme.typography.labelMedium,
+      color = MaterialTheme.colorScheme.onSurfaceVariant,
+      modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+    )
+    // Grouping is a sort, not a section: same-type rows sit together with no heading and no rule
+    // between them. The icon already says which type a row is, and on a short menu a label per
+    // group was more furniture than the grouping was worth.
+    state.things.groupBy { it.template?.id.orEmpty() }.values.forEach { rows ->
+      rows.forEach { ac ->
+        // Colour as well as the checkmark: a tick in the trailing corner is easy to miss while
+        // scanning the labels, and it is the only thing distinguishing the row you are already on.
+        val selected = ac.id == state.selectedThingId
+        val accent = MaterialTheme.colorScheme.primary
+        DropdownMenuItem(
+          text = {
+            Column {
+              Text(
+                ac.label,
+                style = MaterialTheme.typography.titleSmall,
+                color = if (selected) accent else Color.Unspecified,
+              )
+              if (ac.subtitle.isNotBlank()) {
+                Text(
+                  ac.subtitle,
+                  style = MaterialTheme.typography.bodySmall,
+                  color = if (selected) accent else Color.Unspecified,
+                )
+              }
             }
-          }
-        },
-        onClick = {
-          onSelectThing(ac.id)
-          onDismiss()
-        },
-        trailingIcon = {
-          if (ac.id == state.selectedThingId) {
-            Icon(Icons.Filled.Check, contentDescription = null)
-          }
-        },
-      )
+          },
+          leadingIcon = {
+            Icon(
+              thingIcon(ac.template?.icon.orEmpty()),
+              contentDescription = null,
+              tint = if (selected) accent else MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+          },
+          onClick = {
+            onSelectThing(ac.id)
+            onDismiss()
+          },
+          trailingIcon = {
+            if (selected) {
+              Icon(Icons.Filled.Check, contentDescription = null, tint = accent)
+            }
+          },
+        )
+      }
     }
     if (onAddThing != null || onEnterInviteCode != null) {
       HorizontalDivider()

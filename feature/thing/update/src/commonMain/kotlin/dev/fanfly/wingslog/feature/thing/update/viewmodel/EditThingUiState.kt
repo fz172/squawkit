@@ -1,8 +1,10 @@
 package dev.fanfly.wingslog.feature.thing.update.viewmodel
 
+import dev.fanfly.wingslog.core.template.GenericLexicon
 import dev.fanfly.wingslog.core.template.SpecKeys
 import dev.fanfly.wingslog.core.template.componentsMissingSerials
 import dev.fanfly.wingslog.core.template.specValue
+import dev.fanfly.wingslog.thing.Lexicon
 import dev.fanfly.wingslog.thing.Thing
 import dev.fanfly.wingslog.thing.ThingTemplate
 
@@ -38,6 +40,14 @@ data class EditThingUiState(
    * Null only before the load resolves, when there is nothing to validate yet.
    */
   val template: ThingTemplate? = null,
+  /**
+   * The words [template] is described in.
+   *
+   * Carried on the state rather than read from `LocalThingLexicon`, because that one is provided
+   * app-wide from the *selected* Thing: on a create the form would title itself after whatever the
+   * switcher happens to be pointing at, not the type just picked.
+   */
+  val lexicon: Lexicon = GenericLexicon.LEXICON,
 ) {
   /** Deleting is the hosting owner's call alone; rules enforce it, this keeps the UI honest. */
   val canDelete: Boolean get() = hostedByMe && thing.id.isNotEmpty()

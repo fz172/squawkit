@@ -99,7 +99,8 @@ class AdaptiveShellViewModel(
               val makeAndModel = listOf(
                 ac.specValue(SpecKeys.MAKE),
                 ac.specValue(SpecKeys.MODEL),
-              ).filter { it.isNotBlank() }.joinToString(" ")
+              ).filter { it.isNotBlank() }
+                .joinToString(" ")
               // The template says which field names the thing — an airplane has two identifiers
               // and only the tail number is what an owner calls it by (PRD §4.2). Picking the
               // first identifier instead showed the serial the moment the template reordered.
@@ -111,17 +112,29 @@ class AdaptiveShellViewModel(
                 .firstOrNull { it.is_identifier }
                 ?.let { ac.specValue(it.key) }
                 .orEmpty()
+              // A home declares no title_candidate, no is_identifier, and has no make or model, so
+              // a nameless one exhausted every branch above and rendered as an empty row. The last
+              // two guarantee a line: whatever the template does ask for, then the type itself.
+              val firstSpecValue = resolution.template.spec_fields
+                .firstNotNullOfOrNull { f ->
+                  ac.specValue(f.key)
+                    .takeIf { it.isNotBlank() }
+                }
+                .orEmpty()
               val label = ac.name
                 .ifBlank { title }
                 .ifBlank { makeAndModel }
                 .ifBlank { identifier }
+                .ifBlank { firstSpecValue }
+                .ifBlank { resolution.template.display_name }
               ShellThing(
                 id = ac.id,
                 label = label,
                 // Never repeats the primary line: the name is usually the tail number or the make
                 // and model already, and a row saying the same thing twice reads as a bug.
                 subtitle = makeAndModel.takeIf { it.isNotBlank() && it != label }
-                  ?: identifier.takeIf { it != label }.orEmpty(),
+                  ?: identifier.takeIf { it != label }
+                    .orEmpty(),
                 // resolve(), not ac.template: a Thing created before templates existed carries
                 // none, and reading the field directly would render it in no words at all.
                 template = resolution.template,
