@@ -7,33 +7,36 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.core.ui.adaptive.thingIcon
-import dev.fanfly.wingslog.core.ui.common.compose.DetailSheet
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.thing.ThingTemplate
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
-import wingslog.feature.thing.update.generated.resources.Res as ThingRes
 import wingslog.feature.thing.update.generated.resources.pick_type_subtitle
 import wingslog.feature.thing.update.generated.resources.pick_type_title
+import wingslog.feature.thing.update.generated.resources.Res as ThingRes
 
 /**
  * Which template a new Thing is created from (#738).
  *
- * A [DetailSheet], so it is a bottom sheet on a phone and an end drawer on a wide window — the
- * same presentation as viewing a squawk. It is a step on the way to the form, not a screen of its
- * own, and a full-screen dialog said otherwise.
+ * Always a bottom sheet, on every window size. The shared `DetailSheet` switches to an end drawer
+ * above COMPACT, which is right for reading a record beside the list it came from; a picker is a
+ * short interruption on the way to the form, and the sheet reads better wide than a drawer does.
  *
  * Sits ahead of the form rather than inside it: the template decides which spec fields the form
  * asks for. Until this existed, "Add a new thing" always produced an airplane.
@@ -61,9 +64,17 @@ internal fun PickThingTypeSheetContent(
   onDismiss: () -> Unit,
   onPick: (String) -> Unit,
 ) {
-  DetailSheet(
-    onDismiss = onDismiss,
-    headerSlot = {
+  ModalBottomSheet(
+    onDismissRequest = onDismiss,
+    sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+  ) {
+    Column(
+      modifier = Modifier
+        .fillMaxWidth()
+        .verticalScroll(rememberScrollState())
+        .padding(horizontal = Spacing.extraLarge)
+        .padding(bottom = Spacing.extraLarge),
+    ) {
       Text(
         stringResource(ThingRes.string.pick_type_title),
         style = MaterialTheme.typography.titleLarge,
@@ -72,29 +83,32 @@ internal fun PickThingTypeSheetContent(
         stringResource(ThingRes.string.pick_type_subtitle),
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(
+          top = Spacing.extraSmall,
+          bottom = Spacing.large
+        ),
       )
-    },
-  ) {
-    // Two per row, chunked rather than a lazy grid: DetailSheet already scrolls, and nesting a
-    // lazy grid inside a scrolling column crashes on an unbounded height.
-    Spacer(Modifier.padding(top = Spacing.small))
-    templates.chunked(2).forEach { row ->
-      Row(
-        horizontalArrangement = Arrangement.spacedBy(Spacing.small),
-        modifier = Modifier.fillMaxWidth().padding(bottom = Spacing.small),
-      ) {
-        row.forEach { template ->
-          ThingTypeCard(
-            template = template,
-            onClick = { onPick(template.id) },
-            modifier = Modifier.weight(1f),
-          )
+      // Two per row, chunked rather than a lazy grid: the column already scrolls, and a lazy grid
+      // nested in it has no bounded height to measure against.
+      templates.chunked(2)
+        .forEach { row ->
+          Row(
+            horizontalArrangement = Arrangement.spacedBy(Spacing.small),
+            modifier = Modifier.fillMaxWidth()
+              .padding(bottom = Spacing.small),
+          ) {
+            row.forEach { template ->
+              ThingTypeCard(
+                template = template,
+                onClick = { onPick(template.id) },
+                modifier = Modifier.weight(1f),
+              )
+            }
+            // Keeps a lone card on an odd last row at half width instead of stretching it.
+            if (row.size == 1) Spacer(Modifier.weight(1f))
+          }
         }
-        // Keeps a lone card on an odd last row at half width instead of stretching it.
-        if (row.size == 1) Spacer(Modifier.weight(1f))
-      }
     }
-    Spacer(Modifier.padding(bottom = Spacing.extraLarge))
   }
 }
 
