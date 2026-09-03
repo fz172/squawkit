@@ -6,8 +6,9 @@ import dev.fanfly.wingslog.core.analytics.AnalyticsManager
 import dev.fanfly.wingslog.core.analytics.ExportCompleted
 import dev.fanfly.wingslog.core.analytics.log
 import dev.fanfly.wingslog.core.template.CurrentThingTemplate
-import dev.fanfly.wingslog.core.template.SpecKeys
-import dev.fanfly.wingslog.core.template.specValue
+import dev.fanfly.wingslog.core.template.TemplateRegistry
+import dev.fanfly.wingslog.core.template.displayLabel
+import dev.fanfly.wingslog.core.template.displaySubtitle
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDateRange
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDeliveryEmailSource
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDeliveryInfo
@@ -56,6 +57,7 @@ class ExportViewModel(
   private val subscriptionManager: SubscriptionManager,
   private val auth: FirebaseAuth,
   private val currentThingTemplate: CurrentThingTemplate,
+  private val templateRegistry: TemplateRegistry,
   private val analytics: AnalyticsManager,
   clock: Clock = Clock.System,
   timeZone: TimeZone = TimeZone.currentSystemDefault(),
@@ -363,7 +365,7 @@ class ExportViewModel(
       formats = lastConfiguring.formats,
       selectedTailNumbers = lastConfiguring.things
         .filter { it.thingId in lastConfiguring.selectedThingIds }
-        .map { it.tailNumber },
+        .map { it.label },
       dateRange = lastConfiguring.dateRange,
       customStart = lastConfiguring.customStart,
       customEnd = lastConfiguring.customEnd,
@@ -397,16 +399,16 @@ class ExportViewModel(
   private fun Thing.toSelectionRow(
     logCount: Int,
     attachmentSizeBytes: Long,
-  ) = ThingSelectionRow(
-    thingId = id,
-    tailNumber = specValue(SpecKeys.TAIL_NUMBER),
-    makeModel = listOf(specValue(SpecKeys.MAKE), specValue(SpecKeys.MODEL))
-      .filter { it.isNotBlank() }
-      .joinToString(" ")
-      .ifBlank { specValue(SpecKeys.SERIAL) },
-    logCount = logCount,
-    attachmentSizeBytes = attachmentSizeBytes,
-  )
+  ): ThingSelectionRow {
+    val template = templateRegistry.forThingWithFallback(this)
+    return ThingSelectionRow(
+      thingId = id,
+      label = displayLabel(template),
+      subtitle = displaySubtitle(template),
+      logCount = logCount,
+      attachmentSizeBytes = attachmentSizeBytes,
+    )
+  }
 
   private fun List<Attachment>.exportedBytes(): Long = filter { attachment ->
     attachment.type != ATTACHMENT_TYPE_LINK

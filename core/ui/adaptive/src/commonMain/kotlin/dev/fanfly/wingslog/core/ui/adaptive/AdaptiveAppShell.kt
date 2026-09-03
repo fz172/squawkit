@@ -58,9 +58,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
@@ -101,7 +101,7 @@ import wingslog.core.sharedassets.generated.resources.shell_nav_tasks_narrow
 import wingslog.core.sharedassets.generated.resources.shell_tab_dashboard
 import wingslog.core.sharedassets.generated.resources.switcher_add_thing
 import wingslog.core.sharedassets.generated.resources.switcher_select_thing
-import wingslog.core.sharedassets.generated.resources.switcher_title
+import wingslog.core.sharedassets.generated.resources.your_stuff
 import wingslog.core.sharedassets.generated.resources.Res as UiRes
 
 /** Lightweight thing projection used by the shell's switcher. */
@@ -1015,7 +1015,7 @@ private fun ThingDropdown(
     Text(
       // Never a template's collection_label: the switcher spans the account, so titling it "Fleet"
       // because today's rows are all aircraft renames the whole surface as the fleet changes.
-      stringResource(UiRes.string.switcher_title),
+      stringResource(UiRes.string.your_stuff),
       style = MaterialTheme.typography.labelMedium,
       color = MaterialTheme.colorScheme.onSurfaceVariant,
       modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),

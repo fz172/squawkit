@@ -34,6 +34,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Attachment
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Download
@@ -41,7 +42,6 @@ import androidx.compose.material.icons.filled.EditCalendar
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.FileDownload
-import androidx.compose.material.icons.filled.Flight
 import androidx.compose.material.icons.filled.FolderZip
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Lock
@@ -105,9 +105,9 @@ import dev.fanfly.wingslog.core.ui.theme.statusColors
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDisplayLocation
 import dev.fanfly.wingslog.feature.export.datamanager.ExportFormat
 import dev.fanfly.wingslog.feature.export.datamanager.ExportProgressStep
-import dev.fanfly.wingslog.feature.export.update.viewmodel.ThingSelectionRow
 import dev.fanfly.wingslog.feature.export.update.viewmodel.DateRangeOption
 import dev.fanfly.wingslog.feature.export.update.viewmodel.ExportUiState
+import dev.fanfly.wingslog.feature.export.update.viewmodel.ThingSelectionRow
 import dev.fanfly.wingslog.feature.subscription.viewing.ProUpsellSheet
 import dev.fanfly.wingslog.feature.subscription.viewing.UpsellTrigger
 import kotlinx.datetime.LocalDate
@@ -121,6 +121,7 @@ import wingslog.core.sharedassets.generated.resources.cancel
 import wingslog.core.sharedassets.generated.resources.done
 import wingslog.core.sharedassets.generated.resources.empty_add_thing
 import wingslog.core.sharedassets.generated.resources.retry
+import wingslog.core.sharedassets.generated.resources.your_stuff
 import wingslog.feature.export.sharedassets.generated.resources.Res
 import wingslog.feature.export.sharedassets.generated.resources.export_all_time
 import wingslog.feature.export.sharedassets.generated.resources.export_back_to_setup
@@ -167,9 +168,7 @@ import wingslog.feature.export.sharedassets.generated.resources.export_success_d
 import wingslog.feature.export.sharedassets.generated.resources.export_success_delivery_failed
 import wingslog.feature.export.sharedassets.generated.resources.export_success_delivery_failed_title
 import wingslog.feature.export.sharedassets.generated.resources.export_success_title
-import wingslog.feature.export.sharedassets.generated.resources.export_thing_details_incomplete
 import wingslog.feature.export.sharedassets.generated.resources.export_thing_summary_more
-import wingslog.feature.export.sharedassets.generated.resources.export_untitled_thing
 import wingslog.feature.export.sharedassets.generated.resources.export_view_exports
 import wingslog.feature.export.sharedassets.generated.resources.feature_name_export_logs
 import kotlin.time.Instant
@@ -355,7 +354,9 @@ private fun ExportSetupList(
     item {
       val allSelected = state.selectedThingIds.size == state.things.size
       Section(
-        title = LexiconFormatter.titleCase(LocalThingLexicon.current.thingNoun),
+        // Neutral: the list spans every template on the account, so no one Thing's word
+        // describes it — the same rule as the switcher's own chrome (§6).
+        title = stringResource(CoreRes.string.your_stuff),
         action = if (state.things.size > 1) {
           {
             TextButton(onClick = if (allSelected) onClearAll else onSelectAll) {
@@ -469,7 +470,7 @@ private fun FormatSection(
   }
 }
 
-// ─── Setup · Aircraft ───────────────────────────────────────────────────────
+// ─── Setup · Things ─────────────────────────────────────────────────────────
 
 @Composable
 private fun ThingOptionRow(
@@ -478,18 +479,10 @@ private fun ThingOptionRow(
   onClick: () -> Unit,
 ) {
   GroupedCheckboxRow(
-    title = thing.tailNumber.ifBlank {
-      stringResource(
-        Res.string.export_untitled_thing,
-        LocalThingLexicon.current.thingNoun.singular,
-      )
-    },
-    subtitle = thing.makeModel.ifBlank {
-      stringResource(
-        Res.string.export_thing_details_incomplete,
-        LexiconFormatter.sentenceCase(LocalThingLexicon.current.thingNoun),
-      )
-    },
+    // Already resolved per row by the ViewModel, which is the only place that knows each Thing's
+    // own template. The label chain guarantees a line, so there is no "Untitled" case left.
+    title = thing.label,
+    subtitle = thing.subtitle,
     titleStyle = WingslogTypography.dataLarge,
     checked = selected,
     onCheckedChange = { onClick() },
@@ -754,7 +747,8 @@ private fun ExportBottomBar(
         verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
       ) {
         Icon(
-          imageVector = Icons.Default.Flight,
+          // Counts a selection that may hold any mix of types, so not an aeroplane.
+          imageVector = Icons.Default.Category,
           contentDescription = null,
           tint = MaterialTheme.colorScheme.onSurfaceVariant,
           modifier = Modifier.size(14.dp),
@@ -958,10 +952,10 @@ private fun exportRunningPhases(): List<ExportProgressStep> = listOf(
 
 @Composable
 private fun ExportProgressStep.label(): String = when (this) {
-  ExportProgressStep.COLLECTING_DATA -> stringResource(
-    Res.string.export_progress_collecting_data,
-    LocalThingLexicon.current.thingNoun.singular,
-  )
+  // Neutral: one export can cover a car and a house at once, so "Collecting vehicle data" would
+  // be wrong for half of it.
+  ExportProgressStep.COLLECTING_DATA ->
+    stringResource(Res.string.export_progress_collecting_data)
 
   ExportProgressStep.BUILDING_ARCHIVE -> stringResource(Res.string.export_progress_building_archive)
   ExportProgressStep.COMPRESSING_ARCHIVE -> stringResource(Res.string.export_progress_compressing_archive)
@@ -1230,8 +1224,8 @@ private fun ReceiptCard(
     }
     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
     ReceiptRow(
-      Icons.Default.Flight,
-      LexiconFormatter.titleCase(LocalThingLexicon.current.thingNoun),
+      Icons.Default.Category,
+      stringResource(CoreRes.string.your_stuff),
       thingSummary,
       mono = true
     )

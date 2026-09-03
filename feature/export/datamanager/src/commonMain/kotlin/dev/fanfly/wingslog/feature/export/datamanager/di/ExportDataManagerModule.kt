@@ -2,6 +2,7 @@ package dev.fanfly.wingslog.feature.export.datamanager.di
 
 import dev.fanfly.wingslog.core.storage.blob.BlobFilesystem
 import dev.fanfly.wingslog.core.storage.blob.LocalBlobStore
+import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.export.datamanager.ExportManager
 import dev.fanfly.wingslog.feature.export.datamanager.impl.AttachmentExportResolver
@@ -27,7 +28,7 @@ import org.koin.dsl.module
 
 val exportDataManagerModule = module {
   single { ZipFileWriter() }
-  single { LogbookExportArchiveBuilder() }
+  single { LogbookExportArchiveBuilder(templateRegistry = get<TemplateRegistry>()) }
   single {
     AttachmentExportResolver(
       get<AttachmentManager>(),
@@ -56,14 +57,15 @@ val exportDataManagerModule = module {
   single { ExportDeliveryBackend(get<FirebaseFunctions>()) }
   single<ExportManager> {
     ExportManagerImpl(
-      get<LogbookExportAggregator>(),
-      get<AttachmentExportResolver>(),
-      get<LogbookExportArchiveBuilder>(),
-      get<ZipFileWriter>(),
-      get<ExportFileStore>(),
-      get<ExportHistoryRemoteRepository>(),
-      get<ExportDeliveryBackend>(),
-      get<FirebaseAuth>(),
+      aggregator = get<LogbookExportAggregator>(),
+      attachmentExportResolver = get<AttachmentExportResolver>(),
+      archiveBuilder = get<LogbookExportArchiveBuilder>(),
+      templateRegistry = get<TemplateRegistry>(),
+      zipFileWriter = get<ZipFileWriter>(),
+      exportFileStore = get<ExportFileStore>(),
+      remoteRepository = get<ExportHistoryRemoteRepository>(),
+      deliveryBackend = get<ExportDeliveryBackend>(),
+      auth = get<FirebaseAuth>(),
     )
   }
 }

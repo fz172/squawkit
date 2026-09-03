@@ -4,10 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.core.template.CurrentThingTemplate
-import dev.fanfly.wingslog.core.template.SpecKeys
 import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.core.template.TemplateResolution
-import dev.fanfly.wingslog.core.template.specValue
+import dev.fanfly.wingslog.core.template.displayLabel
+import dev.fanfly.wingslog.core.template.displaySubtitle
 import dev.fanfly.wingslog.core.ui.adaptive.AdaptiveShellUiState
 import dev.fanfly.wingslog.core.ui.adaptive.ShellSection
 import dev.fanfly.wingslog.core.ui.adaptive.ShellThing
@@ -91,50 +91,10 @@ class AdaptiveShellViewModel(
             val mapped = fleet.map { entry ->
               val ac = entry.thing
               val resolution = templateRegistry.resolve(ac)
-              // Both switcher lines used to come from aviation spec keys — tail number, then make
-              // and model. A home declares none of the three, so its row rendered as a blank gap
-              // with a checkmark. The name is the one label every Thing has; the identifier comes
-              // from whichever spec field the template marks, so it is a VIN on a vehicle and a
-              // hull ID on a boat without this code knowing either exists.
-              val makeAndModel = listOf(
-                ac.specValue(SpecKeys.MAKE),
-                ac.specValue(SpecKeys.MODEL),
-              ).filter { it.isNotBlank() }
-                .joinToString(" ")
-              // The template says which field names the thing — an airplane has two identifiers
-              // and only the tail number is what an owner calls it by (PRD §4.2). Picking the
-              // first identifier instead showed the serial the moment the template reordered.
-              val title = resolution.template.spec_fields
-                .firstOrNull { it.title_candidate }
-                ?.let { ac.specValue(it.key) }
-                .orEmpty()
-              val identifier = resolution.template.spec_fields
-                .firstOrNull { it.is_identifier }
-                ?.let { ac.specValue(it.key) }
-                .orEmpty()
-              // A home declares no title_candidate, no is_identifier, and has no make or model, so
-              // a nameless one exhausted every branch above and rendered as an empty row. The last
-              // two guarantee a line: whatever the template does ask for, then the type itself.
-              val firstSpecValue = resolution.template.spec_fields
-                .firstNotNullOfOrNull { f ->
-                  ac.specValue(f.key)
-                    .takeIf { it.isNotBlank() }
-                }
-                .orEmpty()
-              val label = ac.name
-                .ifBlank { title }
-                .ifBlank { makeAndModel }
-                .ifBlank { identifier }
-                .ifBlank { firstSpecValue }
-                .ifBlank { resolution.template.display_name }
               ShellThing(
                 id = ac.id,
-                label = label,
-                // Never repeats the primary line: the name is usually the tail number or the make
-                // and model already, and a row saying the same thing twice reads as a bug.
-                subtitle = makeAndModel.takeIf { it.isNotBlank() && it != label }
-                  ?: identifier.takeIf { it != label }
-                    .orEmpty(),
+                label = ac.displayLabel(resolution.template),
+                subtitle = ac.displaySubtitle(resolution.template),
                 // resolve(), not ac.template: a Thing created before templates existed carries
                 // none, and reading the field directly would render it in no words at all.
                 template = resolution.template,

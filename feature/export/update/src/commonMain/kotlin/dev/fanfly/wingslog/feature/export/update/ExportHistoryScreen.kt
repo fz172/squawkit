@@ -390,7 +390,11 @@ private fun ExportHistoryCard(
             },
             onClick = {
               menuExpanded = false
-              onDownloadExport(record.export_id, record.file_path, record.file_name)
+              onDownloadExport(
+                record.export_id,
+                record.file_path,
+                record.file_name
+              )
             },
           )
         }
@@ -487,7 +491,12 @@ private fun deleteConfirmBody(record: ExportRecord): String = when {
 
 /** Aircraft tail summary ("N532SL" / "N532SL +2"), falling back to the file name for legacy records. */
 private fun thingSummary(record: ExportRecord): String {
-  val tails = record.aircraft.map { it.tail_number.ifBlank { "—" } }
+  // Records written before the label fix carry a blank tail number for anything that is not an
+  // aeroplane. Fall through rather than showing a dash for each one.
+  val tails = record.aircraft.map {
+    it.tail_number.ifBlank { it.make_model }
+      .ifBlank { "—" }
+  }
   return when (tails.size) {
     0 -> record.file_name
     1 -> tails[0]

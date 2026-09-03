@@ -1,18 +1,25 @@
 package dev.fanfly.wingslog.feature.export.datamanager.impl
 
 import dev.fanfly.wingslog.core.datetime.toLocalDate
+import dev.fanfly.wingslog.core.template.ComponentField
+import dev.fanfly.wingslog.core.template.GenericLexicon
+import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.MeterKeys
 import dev.fanfly.wingslog.core.template.SlotKeys
 import dev.fanfly.wingslog.core.template.SpecKeys
+import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.core.template.allComponentsInSlot
 import dev.fanfly.wingslog.core.template.childInSlot
 import dev.fanfly.wingslog.core.template.childrenInSlot
+import dev.fanfly.wingslog.core.template.displayLabel
+import dev.fanfly.wingslog.core.template.displaySubtitle
 import dev.fanfly.wingslog.core.template.formatMeterNumber
 import dev.fanfly.wingslog.core.template.meter
 import dev.fanfly.wingslog.core.template.meterUnit
 import dev.fanfly.wingslog.core.template.readingFor
 import dev.fanfly.wingslog.core.template.specValue
 import dev.fanfly.wingslog.core.template.usesComponentTypes
+import dev.fanfly.wingslog.core.template.valueOf
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDateRange
 import dev.fanfly.wingslog.feature.export.datamanager.ExportFormat
 import dev.fanfly.wingslog.feature.export.datamanager.ExportRequest
@@ -23,14 +30,19 @@ import dev.fanfly.wingslog.thing.CertExpireLimit
 import dev.fanfly.wingslog.thing.CertificateType
 import dev.fanfly.wingslog.thing.ComplianceType
 import dev.fanfly.wingslog.thing.Component
+import dev.fanfly.wingslog.thing.ComponentSlot
 import dev.fanfly.wingslog.thing.ComponentType
+import dev.fanfly.wingslog.thing.ExportLayout
 import dev.fanfly.wingslog.thing.InspectionRule
+import dev.fanfly.wingslog.thing.Lexicon
 import dev.fanfly.wingslog.thing.MaintenanceLog
+import dev.fanfly.wingslog.thing.MeterDef
 import dev.fanfly.wingslog.thing.Squawk
 import dev.fanfly.wingslog.thing.SquawkDismissReason
 import dev.fanfly.wingslog.thing.SquawkPriority
 import dev.fanfly.wingslog.thing.Technician
 import dev.fanfly.wingslog.thing.Thing
+import dev.fanfly.wingslog.thing.ThingTemplate
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
@@ -48,6 +60,14 @@ import com.squareup.wire.Instant as WireInstant
  * the same numbers as one written before those existed (#761).
  */
 class LogbookExportArchiveBuilder(
+  /**
+   * Resolves each Thing's words.
+   *
+   * Not read from the Thing's own DNA: [ThingInflater] strips the lexicon before storing, so
+   * `thing.template.lexicon` is always null on anything loaded back — every generic table would be
+   * named from the fallback vocabulary.
+   */
+  private val templateRegistry: TemplateRegistry,
   private val appVersion: String = GENERATED_EXPORT_APP_VERSION,
   private val readmeTemplate: String = GENERATED_EXPORT_README_TEMPLATE,
   private val xlsxWorkbookWriter: XlsxWorkbookWriter = XlsxWorkbookWriter(),
@@ -147,6 +167,20 @@ class LogbookExportArchiveBuilder(
     generatedAt: LocalDateTime,
     timeZone: TimeZone,
   ): ThingExport {
+    if (!bundle.usesLogbookLayout()) {
+      return ThingExport(
+        bundle = bundle,
+        attachments = attachments,
+        sheetPrefix = "",
+        tables = genericTables(
+          bundle,
+          request,
+          attachments,
+          generatedAt,
+          timeZone
+        ),
+      )
+    }
     return ThingExport(
       bundle = bundle,
       attachments = attachments,
@@ -157,6 +191,7 @@ class LogbookExportArchiveBuilder(
             csvPath = "00_Thing_Info.csv",
             sheetName = "00 Thing Info",
             rows = thingInfoRows(bundle, request, generatedAt, timeZone),
+            includeInPdf = false,
           )
         )
         add(
@@ -226,6 +261,7 @@ class LogbookExportArchiveBuilder(
             csvPath = "20_Technicians.csv",
             sheetName = "20 Technicians",
             rows = technicianRows(bundle, timeZone),
+            includeInPdf = false,
           )
         )
       },
@@ -238,7 +274,7 @@ class LogbookExportArchiveBuilder(
   fun fileName(bundles: List<ThingBundle>, date: LocalDate): String {
     val stamp = date.compact()
     val subject =
-      if (bundles.size == 1) bundles.first().thing.safeTailNumber() else "Fleet"
+      if (bundles.size == 1) bundles.first().thing.safeArchiveName() else "Fleet"
     return "SquawkIt_Logs_${subject}_$stamp.zip"
   }
 
@@ -625,6 +661,9 @@ class LogbookExportArchiveBuilder(
     timeZone: TimeZone,
   ): ThingPdfDocument {
     val thing = export.bundle.thing
+    if (!export.bundle.usesLogbookLayout()) {
+      return genericPdfDocument(export, request, generatedAt, timeZone)
+    }
     return ThingPdfDocument(
       title = listOf(
         thing.specValue(SpecKeys.MAKE),
@@ -762,11 +801,7 @@ class LogbookExportArchiveBuilder(
         }
       },
       tableSections = export.tables
-        .filterNot {
-          it.csvPath.endsWith("00_Thing_Info.csv") || it.csvPath.endsWith(
-            "20_Technicians.csv"
-          )
-        }
+        .filter { it.includeInPdf }
         .map { table ->
           PdfTableSection(
             title = table.sheetName.removePrefix(export.sheetPrefix),
@@ -775,6 +810,381 @@ class LogbookExportArchiveBuilder(
         },
     )
   }
+
+
+  /**
+   * The generic PDF: identity from the template's spec fields, and component cards from whatever
+   * slots it declares rather than engines and propellers.
+   */
+  private fun genericPdfDocument(
+    export: ThingExport,
+    request: ExportRequest,
+    generatedAt: LocalDateTime,
+    timeZone: TimeZone,
+  ): ThingPdfDocument {
+    val bundle = export.bundle
+    val thing = bundle.thing
+    val template = thing.template
+    val lexicon = bundle.lexicon()
+    val thingWord = LexiconFormatter.titleCase(
+      lexicon.thing ?: GenericLexicon.LEXICON.thing!!
+    )
+    return ThingPdfDocument(
+      title = thing.name
+        .ifBlank {
+          template?.spec_fields.orEmpty()
+            .firstNotNullOfOrNull { f ->
+              thing.specValue(f.key)
+                .takeIf { it.isNotBlank() }
+            }
+            .orEmpty()
+        }
+        .ifBlank { thing.id }
+        .ifBlank { "$thingWord Export" },
+      subtitle = "SquawkIt ${LexiconFormatter.lowerFirst(thingWord)} export PDF",
+      summarySections = buildList {
+        add(
+          PdfSummarySection(
+            title = "Export",
+            cards = listOf(
+              PdfSummaryCard(
+                rows = listOf(
+                  PdfSummaryRow(
+                    "Generated",
+                    generatedAt.exportTimestamp(timeZone)
+                  ),
+                  PdfSummaryRow("Period", request.dateRange.label()),
+                  PdfSummaryRow("App Version", appVersion),
+                  PdfSummaryRow(
+                    "Attachment Notes",
+                    export.attachments.notes.joinToString(separator = "\n")
+                      .ifBlank { "None" },
+                  ),
+                )
+              )
+            ),
+          )
+        )
+        add(
+          PdfSummarySection(
+            title = thingWord,
+            cards = listOf(
+              PdfSummaryCard(
+                rows = buildList {
+                  add(PdfSummaryRow("Name", thing.name.ifBlank { thing.id }))
+                  template?.spec_fields.orEmpty()
+                    .forEach { field ->
+                      add(
+                        PdfSummaryRow(
+                          field.label.ifBlank { field.key },
+                          thing.specValue(field.key),
+                        )
+                      )
+                    }
+                }
+              )
+            ),
+          )
+        )
+        // Whatever the template declares, walked as a tree. A home declares no slots and gets no
+        // section at all, rather than an empty "Engines" heading.
+        val componentCards = template?.component_slots.orEmpty()
+          .flatMap { slot ->
+            thing.allComponentsInSlot(slot.slot_key)
+              .mapIndexed { index, component ->
+                PdfSummaryCard(
+                  title = slot.label.ifBlank { slot.slot_key }
+                    .let { if (index == 0) it else "$it ${index + 1}" },
+                  // What the slot asks for, not all three. A tyre declares make and model and
+                  // deliberately no serial — nobody transcribes a DOT code off a sidewall — so a
+                  // Serial row on every wheel was a row that could only ever be blank.
+                  rows = slot.declaredFields()
+                    .map { field ->
+                      PdfSummaryRow(
+                        field.exportLabel(),
+                        component.valueOf(field)
+                      )
+                    },
+                )
+              }
+          }
+        if (componentCards.isNotEmpty()) {
+          add(PdfSummarySection(title = "Components", cards = componentCards))
+        }
+        // Name only: every preset outside aviation declares technician_certificates false, so a
+        // Cert Type / Cert # card would be three empty rows.
+        val technicianCards = bundle.techniciansById.values
+          .sortedBy { it.name }
+          .map { technician ->
+            PdfSummaryCard(
+              title = technician.name.ifBlank { "Unnamed" },
+              rows = listOf(PdfSummaryRow("Name", technician.name)),
+            )
+          }
+        if (technicianCards.isNotEmpty()) {
+          add(
+            PdfSummarySection(
+              title = LexiconFormatter.titleCasePlural(
+                lexicon.technician ?: GenericLexicon.LEXICON.technician!!
+              ),
+              cards = technicianCards,
+            )
+          )
+        }
+      },
+      tableSections = export.tables
+        .filter { it.includeInPdf }
+        .map { table ->
+          PdfTableSection(
+            title = table.sheetName.removePrefix(export.sheetPrefix),
+            rows = table.rows.dropMetadataPrelude(),
+          )
+        },
+    )
+  }
+
+
+  /** Empty `spec_keys` means all three, so a preset that has not thought about it is unchanged. */
+  private fun ComponentSlot.declaredFields(): List<ComponentField> =
+    if (spec_keys.isEmpty()) ComponentField.entries
+    else ComponentField.entries.filter { it.key in spec_keys }
+
+  private fun ComponentField.exportLabel(): String = when (this) {
+    ComponentField.MAKE -> "Make"
+    ComponentField.MODEL -> "Model"
+    ComponentField.SERIAL -> "Serial"
+  }
+
+  /* -- EXPORT_LAYOUT_GENERIC ------------------------------------------------------------------ */
+
+  /**
+   * Whether this Thing exports as the aviation paper logbook.
+   *
+   * Null DNA counts as the logbook: a Thing that predates templates can only be an aeroplane, the
+   * same reading [usesComponentTypes] takes. `EXPORT_LAYOUT_UNKNOWN` counts as it too — a template
+   * that forgot to declare one is likelier to be an authoring slip than a request for a layout the
+   * user has never seen.
+   */
+  private fun ThingBundle.usesLogbookLayout(): Boolean =
+    thing.template?.capabilities?.export_layout != ExportLayout.EXPORT_LAYOUT_GENERIC
+
+  /**
+   * The generic layout: identity from the template's spec fields, one work-history table, and the
+   * shared task / defect / people tables.
+   *
+   * The airframe / engine / propeller split is what a paper logbook *is*; a thing that is not an
+   * aeroplane has one work history, and three tabs naming parts it does not have were three tabs
+   * of noise (#770).
+   */
+  private fun genericTables(
+    bundle: ThingBundle,
+    request: ExportRequest,
+    attachments: AttachmentExportManifest,
+    generatedAt: LocalDateTime,
+    timeZone: TimeZone,
+  ): List<LogbookExportTable> {
+    val lexicon = bundle.lexicon()
+    val thingWord = LexiconFormatter.titleCase(
+      lexicon.thing ?: GenericLexicon.LEXICON.thing!!
+    )
+    val logWord = LexiconFormatter.titleCasePlural(
+      lexicon.log ?: GenericLexicon.LEXICON.log!!
+    )
+    val taskWord = LexiconFormatter.titleCasePlural(
+      lexicon.task ?: GenericLexicon.LEXICON.task!!
+    )
+    val squawkWord =
+      LexiconFormatter.titleCasePlural(
+        lexicon.squawk ?: GenericLexicon.LEXICON.squawk!!
+      )
+    val personWord =
+      LexiconFormatter.titleCasePlural(
+        lexicon.technician ?: GenericLexicon.LEXICON.technician!!
+      )
+    return listOf(
+      LogbookExportTable(
+        csvPath = "00_${thingWord.fileToken()}_Info.csv",
+        sheetName = "00 $thingWord Info",
+        rows = genericInfoRows(bundle, request, generatedAt, timeZone),
+        includeInPdf = false,
+      ),
+      LogbookExportTable(
+        csvPath = "01_${logWord.fileToken()}.csv",
+        sheetName = "01 $logWord",
+        rows = genericLogRows(bundle, attachments, timeZone),
+      ),
+      LogbookExportTable(
+        csvPath = "10_${taskWord.fileToken()}.csv",
+        sheetName = "10 $taskWord",
+        rows = complianceRows(bundle, timeZone),
+      ),
+      LogbookExportTable(
+        csvPath = "11_${squawkWord.fileToken()}.csv",
+        sheetName = "11 $squawkWord",
+        rows = squawkRows(bundle, timeZone),
+      ),
+      LogbookExportTable(
+        csvPath = "20_${personWord.fileToken()}.csv",
+        sheetName = "20 $personWord",
+        rows = technicianRows(bundle, timeZone),
+        includeInPdf = false,
+      ),
+    )
+  }
+
+  /**
+   * Identity from what the template declares, not from Tail Number / Make / Model / Serial.
+   *
+   * A home has an address and a year built and none of the four; asking for them produced four
+   * blank rows and no address.
+   */
+  private fun genericInfoRows(
+    bundle: ThingBundle,
+    request: ExportRequest,
+    generatedAt: LocalDateTime,
+    timeZone: TimeZone,
+  ): List<List<String>> {
+    val thing = bundle.thing
+    val template = thing.template
+    val lexicon = bundle.lexicon()
+    val latestLog = bundle.logs.maxByOrNull {
+      it.timestamp?.getEpochSecond() ?: Long.MIN_VALUE
+    }
+    return buildList {
+      add(listOf("Field", "Value"))
+      add(listOf("Name", thing.name))
+      template?.spec_fields.orEmpty()
+        .forEach { field ->
+          add(
+            listOf(
+              field.label.ifBlank { field.key },
+              thing.specValue(field.key)
+            )
+          )
+        }
+      // Only meters the template declares: a home declares none, and a "0.0 hrs" row is exactly
+      // the failure PRD §4.4 warns about.
+      template?.meters.orEmpty()
+        .forEach { meter ->
+          add(
+            listOf(
+              "Current ${meter.label.ifBlank { meter.key }}",
+              latestLog?.readingFor(meter.key)
+                .meterCell(bundle, meter.key),
+            )
+          )
+        }
+      add(
+        listOf(
+          "Total ${LexiconFormatter.titleCasePlural(lexicon.log ?: GenericLexicon.LEXICON.log!!)}",
+          bundle.logs.size.toString(),
+        )
+      )
+      val squawkWord =
+        LexiconFormatter.titleCasePlural(
+          lexicon.squawk ?: GenericLexicon.LEXICON.squawk!!
+        )
+      add(listOf("Total $squawkWord", bundle.squawks.size.toString()))
+      add(
+        listOf(
+          "Open $squawkWord",
+          bundle.squawks.count { it.statusLabel() == "Open" }
+            .toString(),
+        )
+      )
+      add(listOf("Export Generated", generatedAt.exportTimestamp(timeZone)))
+      add(listOf("Export Period", request.dateRange.label()))
+      add(listOf("Export App Version", appVersion))
+    }
+  }
+
+  /**
+   * One work-history table. Its meter columns are whatever the template declares — an Odometer for
+   * a car, nothing at all for a home.
+   *
+   * Every log appears. The logbook layout files rows by [ComponentType], which outside aviation is
+   * always `COMPONENT_UNKNOWN`, so filtering by it here would drop every row (#770).
+   */
+  private fun genericLogRows(
+    bundle: ThingBundle,
+    attachments: AttachmentExportManifest,
+    timeZone: TimeZone,
+  ): List<List<String>> =
+    buildList {
+      val template = bundle.thing.template
+      val lexicon = bundle.lexicon()
+      val meters = template?.meters.orEmpty()
+      // Only when a log actually names one: the column is the component's serial, since
+      // ComponentType cannot name a part outside aviation.
+      val showComponent = bundle.logs.any { it.component_serial.isNotBlank() }
+      // A reference number is an AD or a service bulletin. A preset with compliance off has no
+      // field that fills one, so the column could only ever be empty.
+      val showReferences = template?.capabilities?.compliance == true
+      val taskWord = LexiconFormatter.titleCasePlural(
+        lexicon.task ?: GenericLexicon.LEXICON.task!!
+      )
+      val squawkWord =
+        LexiconFormatter.titleCasePlural(
+          lexicon.squawk ?: GenericLexicon.LEXICON.squawk!!
+        )
+      val personWord =
+        LexiconFormatter.titleCase(
+          lexicon.technician ?: GenericLexicon.LEXICON.technician!!
+        )
+      add(
+        buildList {
+          add("Date")
+          meters.forEach { add(it.columnHeader()) }
+          add("Work Description")
+          if (showComponent) add("Component Serial")
+          add("$taskWord Completed")
+          if (showReferences) add("Reference Numbers")
+          add("$squawkWord Addressed")
+          add(personWord)
+          add("Attachments")
+        }
+      )
+      bundle.logs.forEach { log ->
+        val technician = log.resolveTechnician(bundle)
+        add(
+          buildList {
+            add(log.timestamp.date(timeZone))
+            meters.forEach { meter ->
+              add(
+                log.readingFor(meter.key)
+                  .meterCell(bundle, meter.key)
+              )
+            }
+            add(log.work_description)
+            if (showComponent) add(log.component_serial)
+            add(log.inspectionTitles(bundle))
+            if (showReferences) add(log.referenceNumbers(bundle))
+            add(log.squawkTitles(bundle))
+            add(technician?.name.orEmpty())
+            add(log.attachments.attachmentCell(attachments))
+          }
+        )
+      }
+    }
+
+  /**
+   * "Odometer (mi)", or just the label when the meter declares no unit.
+   *
+   * `unit_label` as authored, not `meterUnit` — that upper-cases for value cells like "5000 MI",
+   * which reads as shouting in a column header.
+   */
+  private fun MeterDef.columnHeader(): String =
+    label.ifBlank { key }
+      .let { if (unit_label.isBlank()) it else "$it ($unit_label)" }
+
+  private fun ThingBundle.lexicon(): Lexicon =
+    templateRegistry.lexiconFor(thing.template)
+
+  /** A lexicon word as a path segment — "Service Records" -> "Service_Records". */
+  private fun String.fileToken(): String =
+    trim().replace(Regex("[^A-Za-z0-9]+"), "_")
+      .trim('_')
+      .ifBlank { "Records" }
 
   private fun logRow(
     bundle: ThingBundle,
@@ -909,13 +1319,31 @@ class LogbookExportArchiveBuilder(
       is ExportDateRange.Custom -> "$start -> $endInclusive"
     }
 
+  /**
+   * "N12345_Cessna_172", "Kuat_X675_1LGBH41JXMN491470" — the Thing's own two lines.
+   *
+   * It was tail number, make and model read straight off the aviation spec keys, so anything else
+   * fell through to `id` and exported as `y8WPyMmKR7Pz6HyVm5L3_Kuat_X675`. Joining only the
+   * non-blank parts also drops the double underscore an aeroplane with no make used to get.
+   *
+   * The aeroplane result is unchanged: its label is the tail number and its subtitle the make and
+   * model, which is what the two segments already were.
+   */
   private fun Thing.folderName(): String =
-    "${safeTailNumber()}_${specValue(SpecKeys.MAKE)}_${specValue(SpecKeys.MODEL)}"
+    listOf(displayLabel(templateOf()), displaySubtitle(templateOf()))
+      .filter { it.isNotBlank() }
+      .joinToString("_")
       .sanitizePathSegment()
+      .ifBlank { id.sanitizePathSegment() }
 
-  private fun Thing.safeTailNumber(): String =
-    specValue(SpecKeys.TAIL_NUMBER).ifBlank { id.ifBlank { "Aircraft" } }
+  /** The archive's subject — one Thing's name, or "Fleet" for several. */
+  private fun Thing.safeArchiveName(): String =
+    displayLabel(templateOf())
       .sanitizePathSegment()
+      .ifBlank { id.sanitizePathSegment() }
+
+  private fun Thing.templateOf(): ThingTemplate? =
+    templateRegistry.forThingWithFallback(this)
 
   private fun ComponentType.label(): String =
     when (this) {

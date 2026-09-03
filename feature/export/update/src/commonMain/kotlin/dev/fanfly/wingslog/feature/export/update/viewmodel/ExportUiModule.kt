@@ -2,6 +2,7 @@ package dev.fanfly.wingslog.feature.export.update.viewmodel
 
 import dev.fanfly.wingslog.core.analytics.AnalyticsManager
 import dev.fanfly.wingslog.core.template.CurrentThingTemplate
+import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.feature.export.datamanager.ExportManager
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
@@ -23,6 +24,7 @@ val exportUiModule = module {
       subscriptionManager = get<SubscriptionManager>(),
       auth = get<FirebaseAuth>(),
       currentThingTemplate = get<CurrentThingTemplate>(),
+      templateRegistry = get<TemplateRegistry>(),
       analytics = get<AnalyticsManager>(),
     )
   }

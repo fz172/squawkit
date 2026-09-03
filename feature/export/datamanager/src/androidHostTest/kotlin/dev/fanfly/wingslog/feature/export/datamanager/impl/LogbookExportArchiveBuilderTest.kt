@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.export.datamanager.impl
 
+import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.template.ThingInflater
 import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
@@ -50,6 +51,7 @@ class LogbookExportArchiveBuilderTest {
     )
 
     val entries = LogbookExportArchiveBuilder(
+      templateRegistry = BakedInTemplateRegistry(appVersionCode = Int.MAX_VALUE),
       appVersion = "SquawkIt 1.0.260519.10 (364)",
     ).buildEntries(
       request = ExportRequest(
@@ -182,6 +184,7 @@ class LogbookExportArchiveBuilderTest {
     )
 
     val entries = LogbookExportArchiveBuilder(
+      templateRegistry = BakedInTemplateRegistry(appVersionCode = Int.MAX_VALUE),
       appVersion = "SquawkIt 1.0.260520.1 (365)",
     ).buildEntries(
       request = ExportRequest(
@@ -265,6 +268,7 @@ class LogbookExportArchiveBuilderTest {
     )
 
     val entries = LogbookExportArchiveBuilder(
+      templateRegistry = BakedInTemplateRegistry(appVersionCode = Int.MAX_VALUE),
       appVersion = "SquawkIt 1.0.260520.2 (366)",
     ).buildEntries(
       request = ExportRequest(
@@ -317,7 +321,9 @@ class LogbookExportArchiveBuilderTest {
       )
     )
 
-    val entries = LogbookExportArchiveBuilder().buildEntries(
+    val entries = LogbookExportArchiveBuilder(
+      templateRegistry = BakedInTemplateRegistry(appVersionCode = Int.MAX_VALUE),
+    ).buildEntries(
       request = ExportRequest(
         thingIds = listOf(bundle.thing.id),
         dateRange = ExportDateRange.AllTime,
@@ -374,7 +380,9 @@ class LogbookExportArchiveBuilderTest {
       thing = secondThing,
     )
 
-    val entries = LogbookExportArchiveBuilder().buildEntries(
+    val entries = LogbookExportArchiveBuilder(
+      templateRegistry = BakedInTemplateRegistry(appVersionCode = Int.MAX_VALUE),
+    ).buildEntries(
       request = ExportRequest(
         thingIds = listOf(firstBundle.thing.id, secondBundle.thing.id),
         dateRange = ExportDateRange.AllTime,
@@ -483,6 +491,7 @@ class LogbookExportArchiveBuilderTest {
     )
 
     val entries = LogbookExportArchiveBuilder(
+      templateRegistry = BakedInTemplateRegistry(appVersionCode = Int.MAX_VALUE),
       appVersion = "SquawkIt 1.0.260519.10 (364)",
     ).buildEntries(
       request = ExportRequest(
@@ -497,7 +506,9 @@ class LogbookExportArchiveBuilderTest {
     )
       .associateBy { entry -> entry.path }
 
-    val tasksCsv = entries.entries.first { it.key.endsWith("10_Tasks.csv") }
+    // "10_Services.csv", not "10_Tasks.csv": the generic layout names its tables from the lexicon,
+    // and a car's tasks are services (#770).
+    val tasksCsv = entries.entries.first { it.key.endsWith("10_Services.csv") }
       .value.bytes.decodeToString()
 
     assertThat(tasksCsv).contains("Every 5000 mi (Odometer)")
@@ -522,6 +533,7 @@ class LogbookExportArchiveBuilderTest {
       .copy(tasks = listOf(task), tasksById = mapOf(task.id to task))
 
     val entries = LogbookExportArchiveBuilder(
+      templateRegistry = BakedInTemplateRegistry(appVersionCode = Int.MAX_VALUE),
       appVersion = "SquawkIt 1.0.260519.10 (364)",
     ).buildEntries(
       request = ExportRequest(
