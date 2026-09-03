@@ -863,6 +863,6 @@ feature/thing/update	make	Make
 feature/thing/update	model	Model
 feature/thing/update	serial	Serial Number
 feature/thing/update	update_thing	Update Aircraft
-core/sharedassets	switcher_title	Stuff
+core/sharedassets	switcher_title	Your Stuff
 feature/thing/update	pick_type_title	New Thing
 feature/thing/update	pick_type_subtitle	The type sets which details and services get tracked.

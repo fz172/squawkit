@@ -138,11 +138,6 @@ class AdaptiveShellViewModel(
                 // resolve(), not ac.template: a Thing created before templates existed carries
                 // none, and reading the field directly would render it in no words at all.
                 template = resolution.template,
-                // Through the registry, not the Thing's frozen DNA: lexiconFor prefers this
-                // build's words, and a Thing that froze a template before collection_label existed
-                // carries an empty one — which is why every group read "Stuff".
-                collectionLabel = templateRegistry.lexiconFor(resolution.template)
-                  .collection_label,
                 renderable = resolution is TemplateResolution.Renderable,
               )
             }

@@ -852,16 +852,22 @@ distinguishes one row from another when a user is choosing between them, which i
 an odometer reading does not help you tell two cars apart, and it costs a `primary` flag on `MeterDef` plus a
 per-Thing reading lookup in the shell projection to display something less useful than what is already there.
 
-What the row still gains is the template's `icon`, so a mixed account can be read at a glance. Grouping by
-template appears once the account holds more than one template type.
+What the row still gains is the template's `icon`, so a mixed account can be read at a glance, and a colour on
+the selected row — a checkmark alone in the trailing corner is easy to miss while scanning labels.
 
-The switcher is titled **Stuff**, overridden by `Lexicon.collection_label` when every Thing shares one template —
-so an all-aircraft account still reads **Fleet** and an all-car account reads **Garage**.
+Rows of the same type sort together, but **grouping is a sort, not a section**: no heading per group and no rule
+between them. On a menu this short a label per group was more furniture than the grouping was worth, and the
+icon already says which type a row is.
 
-The **create action does not** follow that rule: it stays neutral ("Add a new thing", `switcher_add_thing`) on
-every account. The title names what the user already owns, which a homogeneous account genuinely has a word for;
-the create action names what they are about to add, which nothing yet does. Offering "Add aircraft" to an
-all-aircraft owner whose next Thing is a house is the one place the switcher would actively mislead.
+The switcher is titled **Your Stuff**, and stays that way. An earlier draft had `Lexicon.collection_label`
+override it on a homogeneous account — **Fleet** for all-aircraft, **Garage** for all-car. That is dropped: the
+switcher spans the account rather than any one template, so a title that tracks today's rows renames the whole
+surface the moment a second type is added. `collection_label` is still authored on every preset and still renders
+in `no_fleet_title`; it just does not name this.
+
+The **create action is neutral** for the same reason ("Add a new thing", `switcher_add_thing`). It names what the
+user is about to add, which nothing yet describes — offering "Add aircraft" to an all-aircraft owner whose next
+Thing is a house is the one place the switcher would actively mislead. It opens the type picker (§8.2a).
 
 `FleetEmptyState` is the one surface with no Thing to resolve a lexicon from, so it defaults to the generic
 noun — which is correct: a brand-new account genuinely does not yet know what it is for.

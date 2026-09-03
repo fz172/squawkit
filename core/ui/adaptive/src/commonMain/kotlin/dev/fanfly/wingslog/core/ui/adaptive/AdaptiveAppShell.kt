@@ -58,6 +58,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -125,14 +126,6 @@ data class ShellThing(
    * gets the generic lexicon and every capability enabled.
    */
   val template: ThingTemplate? = null,
-  /**
-   * What this Thing's type calls a collection of itself — "Fleet", "Garage", "Property".
-   *
-   * Resolved by the ViewModel rather than read off [template] here: a Thing that froze its DNA
-   * before `collection_label` existed carries an empty one, and the registry prefers this build's
-   * words over whatever was frozen.
-   */
-  val collectionLabel: String = "",
   /**
    * False when this build cannot interpret [template] and the thing renders degraded (#728).
    *
@@ -1009,21 +1002,6 @@ private fun TopBarSwitcher(
   }
 }
 
-/**
- * "Stuff", or the template's own word when every Thing on the account shares one template.
- *
- * A homogeneous account has a name for what it owns — Fleet, Garage, Property — and a mixed one
- * does not, which is the whole reason the neutral default exists (PRD §8.2).
- */
-@Composable
-private fun AdaptiveShellUiState.switcherTitle(): String {
-  val shared = things.map { it.collectionLabel }
-    .distinct()
-    .singleOrNull()
-  return shared?.takeIf { it.isNotEmpty() }
-    ?: stringResource(UiRes.string.switcher_title)
-}
-
 @Composable
 private fun ThingDropdown(
   expanded: Boolean,
@@ -1034,36 +1012,37 @@ private fun ThingDropdown(
   onEnterInviteCode: (() -> Unit)?,
 ) {
   DropdownMenu(expanded = expanded, onDismissRequest = onDismiss) {
-    // Grouped only on a mixed account, where the headings say what the title otherwise would.
-    // Showing both stacks two labels that read the same and say nothing to each other.
-    val groups = state.things.groupBy { it.template?.id.orEmpty() }
-    val grouped = groups.size > 1
-    if (!grouped) {
-      Text(
-        state.switcherTitle(),
-        style = MaterialTheme.typography.labelMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-      )
-    }
-    groups.values.forEachIndexed { index, rows ->
-      if (grouped) {
-        if (index > 0) HorizontalDivider()
-        Text(
-          rows.first().collectionLabel
-            .ifEmpty { stringResource(UiRes.string.switcher_title) },
-          style = MaterialTheme.typography.labelMedium,
-          color = MaterialTheme.colorScheme.onSurfaceVariant,
-          modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-        )
-      }
+    Text(
+      // Never a template's collection_label: the switcher spans the account, so titling it "Fleet"
+      // because today's rows are all aircraft renames the whole surface as the fleet changes.
+      stringResource(UiRes.string.switcher_title),
+      style = MaterialTheme.typography.labelMedium,
+      color = MaterialTheme.colorScheme.onSurfaceVariant,
+      modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+    )
+    // Grouping is a sort, not a section: same-type rows sit together with no heading and no rule
+    // between them. The icon already says which type a row is, and on a short menu a label per
+    // group was more furniture than the grouping was worth.
+    state.things.groupBy { it.template?.id.orEmpty() }.values.forEach { rows ->
       rows.forEach { ac ->
+        // Colour as well as the checkmark: a tick in the trailing corner is easy to miss while
+        // scanning the labels, and it is the only thing distinguishing the row you are already on.
+        val selected = ac.id == state.selectedThingId
+        val accent = MaterialTheme.colorScheme.primary
         DropdownMenuItem(
           text = {
             Column {
-              Text(ac.label, style = MaterialTheme.typography.titleSmall)
+              Text(
+                ac.label,
+                style = MaterialTheme.typography.titleSmall,
+                color = if (selected) accent else Color.Unspecified,
+              )
               if (ac.subtitle.isNotBlank()) {
-                Text(ac.subtitle, style = MaterialTheme.typography.bodySmall)
+                Text(
+                  ac.subtitle,
+                  style = MaterialTheme.typography.bodySmall,
+                  color = if (selected) accent else Color.Unspecified,
+                )
               }
             }
           },
@@ -1071,7 +1050,7 @@ private fun ThingDropdown(
             Icon(
               thingIcon(ac.template?.icon.orEmpty()),
               contentDescription = null,
-              tint = MaterialTheme.colorScheme.onSurfaceVariant,
+              tint = if (selected) accent else MaterialTheme.colorScheme.onSurfaceVariant,
             )
           },
           onClick = {
@@ -1079,8 +1058,8 @@ private fun ThingDropdown(
             onDismiss()
           },
           trailingIcon = {
-            if (ac.id == state.selectedThingId) {
-              Icon(Icons.Filled.Check, contentDescription = null)
+            if (selected) {
+              Icon(Icons.Filled.Check, contentDescription = null, tint = accent)
             }
           },
         )

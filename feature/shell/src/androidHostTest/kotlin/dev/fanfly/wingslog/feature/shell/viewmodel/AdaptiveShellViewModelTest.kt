@@ -172,21 +172,6 @@ class AdaptiveShellViewModelTest {
   }
 
   @Test
-  fun eachRowCarriesItsOwnCollectionLabel() = runTest(testDispatcher) {
-    // The switcher groups by this. Read off the Thing's frozen DNA it came back empty for
-    // anything created before collection_label existed, so every group heading said "Stuff" —
-    // resolving through the registry is what makes them Fleet / Garage / Property.
-    fleet.value = listOf(
-      thing("a1", "N1"),
-      home("h1"),
-    )
-    val rows = viewModel().uiState.value.things
-
-    assertThat(rows.map { it.collectionLabel })
-      .containsExactly("Fleet", "Property")
-  }
-
-  @Test
   fun aNamelessHomeStillHasARowLabel() = runTest(testDispatcher) {
     // The home preset declares no title_candidate, no is_identifier, and a house has no make or
     // model — so a nameless one exhausted every branch and rendered as an icon, a checkmark and a
