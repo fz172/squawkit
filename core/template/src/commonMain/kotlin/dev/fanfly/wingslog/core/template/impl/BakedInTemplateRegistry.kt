@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.core.template.impl
 
+import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.core.template.DegradedReason
 import dev.fanfly.wingslog.core.template.GenericLexicon
 import dev.fanfly.wingslog.core.template.TemplateRegistry
@@ -7,12 +8,13 @@ import dev.fanfly.wingslog.core.template.TemplateResolution
 import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
 import dev.fanfly.wingslog.core.template.canonical.CanonicalTemplates
 import dev.fanfly.wingslog.core.template.namesUnrecognisedEnumValue
+import dev.fanfly.wingslog.core.template.structuralProblems
 import dev.fanfly.wingslog.thing.Lexicon
 import dev.fanfly.wingslog.thing.Thing
 import dev.fanfly.wingslog.thing.ThingTemplate
 
 /**
- * The baked-in registry: the seven presets compiled into this build, no cache, no fetch.
+ * The baked-in registry: the presets compiled into this build, no cache, no fetch.
  *
  * The fetched pool and its local cache (`template_system_design.md` §4, §7.1) are designed but not
  * built — #726 and #727. Until they exist the pool cannot change without a release, which is also
@@ -25,7 +27,11 @@ class BakedInTemplateRegistry(
   private val fallback: ThingTemplate = AirplaneTemplate.TEMPLATE,
 ) : TemplateRegistry {
 
-  private val byId: Map<String, ThingTemplate> = templates.associateBy { it.id }
+  /** The pool minus what this build must not create a Thing from — see [isOfferable] (#740). */
+  private val offerable: List<ThingTemplate> =
+    templates.filter { it.isOfferable() }
+
+  private val byId: Map<String, ThingTemplate> = offerable.associateBy { it.id }
 
   /**
    * The Thing's DNA, verbatim.
@@ -62,7 +68,28 @@ class BakedInTemplateRegistry(
   }
 
   override fun canonical(): List<ThingTemplate> =
-    templates.sortedBy { it.sort_order }
+    offerable.sortedBy { it.sort_order }
+
+  /**
+   * Whether a new Thing may be created from [this]. Filters the canonical pool only — an existing
+   * Thing's DNA still renders, degraded if it must ([resolve]).
+   */
+  private fun ThingTemplate.isOfferable(): Boolean {
+    val problems = structuralProblems()
+    problems.forEach { logger.e { "Refusing template: $it" } }
+    if (min_app_version > appVersionCode) {
+      logger.w {
+        "Refusing template '$id': needs app version $min_app_version, " +
+          "this build is $appVersionCode"
+      }
+      return false
+    }
+    return problems.isEmpty()
+  }
 
   override fun canonicalById(id: String): ThingTemplate? = byId[id]
+
+  private companion object {
+    private val logger = Logger.withTag("TemplateRegistry")
+  }
 }
