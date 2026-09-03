@@ -57,6 +57,11 @@ export interface SpecField {
   options: string[];
   /** A number: numeric keypad, and none of the capitalisation a text field applies. */
   numeric: boolean;
+  /**
+   * Capitalise every word, not just the first — a name, where each word is part of what the thing
+   * is called. Ignored when `numeric` or `is_identifier` already decide the casing.
+   */
+  titleCase: boolean;
 }
 
 /**
@@ -228,6 +233,7 @@ function createBaseSpecField(): SpecField {
     titleCandidate: false,
     options: [],
     numeric: false,
+    titleCase: false,
   };
 }
 
@@ -259,6 +265,9 @@ export const SpecField: MessageFns<SpecField> = {
     }
     if (message.numeric !== false) {
       writer.uint32(72).bool(message.numeric);
+    }
+    if (message.titleCase !== false) {
+      writer.uint32(80).bool(message.titleCase);
     }
     return writer;
   },
@@ -342,6 +351,14 @@ export const SpecField: MessageFns<SpecField> = {
           message.numeric = reader.bool();
           continue;
         }
+        case 10: {
+          if (tag !== 80) {
+            break;
+          }
+
+          message.titleCase = reader.bool();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -370,6 +387,11 @@ export const SpecField: MessageFns<SpecField> = {
         : false,
       options: globalThis.Array.isArray(object?.options) ? object.options.map((e: any) => globalThis.String(e)) : [],
       numeric: isSet(object.numeric) ? globalThis.Boolean(object.numeric) : false,
+      titleCase: isSet(object.titleCase)
+        ? globalThis.Boolean(object.titleCase)
+        : isSet(object.title_case)
+        ? globalThis.Boolean(object.title_case)
+        : false,
     };
   },
 
@@ -402,6 +424,9 @@ export const SpecField: MessageFns<SpecField> = {
     if (message.numeric !== false) {
       obj.numeric = message.numeric;
     }
+    if (message.titleCase !== false) {
+      obj.titleCase = message.titleCase;
+    }
     return obj;
   },
 
@@ -419,6 +444,7 @@ export const SpecField: MessageFns<SpecField> = {
     message.titleCandidate = object.titleCandidate ?? false;
     message.options = object.options?.map((e) => e) || [];
     message.numeric = object.numeric ?? false;
+    message.titleCase = object.titleCase ?? false;
     return message;
   },
 };
