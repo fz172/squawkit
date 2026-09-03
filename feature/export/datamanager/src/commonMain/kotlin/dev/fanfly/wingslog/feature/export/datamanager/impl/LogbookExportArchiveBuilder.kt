@@ -1088,25 +1088,37 @@ class LogbookExportArchiveBuilder(
     timeZone: TimeZone,
   ): List<List<String>> =
     buildList {
-      val meters = bundle.thing.template?.meters.orEmpty()
+      val template = bundle.thing.template
+      val lexicon = bundle.lexicon()
+      val meters = template?.meters.orEmpty()
       // Only when a log actually names one: the column is the component's serial, since
       // ComponentType cannot name a part outside aviation.
       val showComponent = bundle.logs.any { it.component_serial.isNotBlank() }
+      // A reference number is an AD or a service bulletin. A preset with compliance off has no
+      // field that fills one, so the column could only ever be empty.
+      val showReferences = template?.capabilities?.compliance == true
+      val taskWord = LexiconFormatter.titleCasePlural(
+        lexicon.task ?: GenericLexicon.LEXICON.task!!
+      )
+      val squawkWord =
+        LexiconFormatter.titleCasePlural(
+          lexicon.squawk ?: GenericLexicon.LEXICON.squawk!!
+        )
+      val personWord =
+        LexiconFormatter.titleCase(
+          lexicon.technician ?: GenericLexicon.LEXICON.technician!!
+        )
       add(
         buildList {
           add("Date")
-          meters.forEach { add(it.columnHeader(bundle)) }
+          meters.forEach { add(it.columnHeader()) }
           add("Work Description")
           if (showComponent) add("Component Serial")
-          addAll(
-            listOf(
-              "Inspections",
-              "Reference Numbers",
-              "Squawks Addressed",
-              "Technician",
-              "Attachments",
-            )
-          )
+          add("$taskWord Completed")
+          if (showReferences) add("Reference Numbers")
+          add("$squawkWord Addressed")
+          add(personWord)
+          add("Attachments")
         }
       )
       bundle.logs.forEach { log ->
@@ -1122,26 +1134,25 @@ class LogbookExportArchiveBuilder(
             }
             add(log.work_description)
             if (showComponent) add(log.component_serial)
-            addAll(
-              listOf(
-                log.inspectionTitles(bundle),
-                log.referenceNumbers(bundle),
-                log.squawkTitles(bundle),
-                technician?.name.orEmpty(),
-                log.attachments.attachmentCell(attachments),
-              )
-            )
+            add(log.inspectionTitles(bundle))
+            if (showReferences) add(log.referenceNumbers(bundle))
+            add(log.squawkTitles(bundle))
+            add(technician?.name.orEmpty())
+            add(log.attachments.attachmentCell(attachments))
           }
         )
       }
     }
 
-  /** "Odometer (mi)", or just the label when the meter declares no unit. */
-  private fun MeterDef.columnHeader(bundle: ThingBundle): String {
-    val name = label.ifBlank { key }
-    val unit = bundle.thing.template.meterUnit(key)
-    return if (unit.isBlank()) name else "$name ($unit)"
-  }
+  /**
+   * "Odometer (mi)", or just the label when the meter declares no unit.
+   *
+   * `unit_label` as authored, not `meterUnit` — that upper-cases for value cells like "5000 MI",
+   * which reads as shouting in a column header.
+   */
+  private fun MeterDef.columnHeader(): String =
+    label.ifBlank { key }
+      .let { if (unit_label.isBlank()) it else "$it ($unit_label)" }
 
   private fun ThingBundle.lexicon(): Lexicon =
     templateRegistry.lexiconFor(thing.template)

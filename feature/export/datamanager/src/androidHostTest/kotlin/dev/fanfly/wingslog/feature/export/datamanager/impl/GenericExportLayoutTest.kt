@@ -188,4 +188,45 @@ class GenericExportLayoutTest {
       "20_Technicians.csv",
     )
   }
+
+  @Test
+  fun theWorkTableColumnsAreTheTemplatesWords() {
+    val car = entries(car(), CanonicalTemplates.AUTOMOTIVE, listOf(MaintenanceLog(id = "l")))
+      .entries.first { it.key.endsWith("01_Service_Records.csv") }.value
+      .lineSequence().first()
+
+    assertThat(car).isEqualTo(
+      "Date,Odometer (mi),Work Description,Services Completed,Reference Numbers," +
+        "Issues Addressed,Mechanic,Attachments"
+    )
+  }
+
+  @Test
+  fun aReferenceNumberColumnOnlyAppearsWhereComplianceDoes() {
+    // An AD or a service bulletin. A preset with compliance off has no field that fills one, so
+    // the column could only ever be empty — the same rule as the Component column.
+    fun header(thing: Thing, template: ThingTemplate, table: String) =
+      entries(thing, template, listOf(MaintenanceLog(id = "l")))
+        .entries.first { it.key.endsWith(table) }.value.lineSequence().first()
+
+    assertThat(header(car(), CanonicalTemplates.AUTOMOTIVE, "01_Service_Records.csv"))
+      .contains("Reference Numbers")
+    assertThat(header(home(), CanonicalTemplates.HOME, "01_Service_Records.csv"))
+      .doesNotContain("Reference Numbers")
+  }
+
+  @Test
+  fun meterHeadersKeepTheAuthoredUnitCasing() {
+    // meterUnit upper-cases for value cells ("5000 MI"); a column header reads as shouting.
+    val bike = entries(
+      Thing(id = "b-1", name = "Commuter"),
+      CanonicalTemplates.BIKE,
+      listOf(MaintenanceLog(id = "l")),
+    ).entries.first { it.key.endsWith("01_Service_Records.csv") }.value.lineSequence().first()
+
+    assertThat(bike).contains("Distance (mi)")
+    assertThat(bike).contains("Ride Hours (hrs)")
+    assertThat(bike).doesNotContain("(MI)")
+  }
+
 }
