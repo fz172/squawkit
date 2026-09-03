@@ -36,6 +36,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
+import dev.fanfly.wingslog.core.ui.common.compose.FormKeyboard.WordsNext
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.Res
@@ -58,6 +59,15 @@ object FormKeyboard {
    * replaces the Return key, so the user can no longer type line breaks.
    */
   val SentencesDone = Sentences.copy(imeAction = ImeAction.Done)
+
+  /** Names, where every word is part of what the thing is called. Advances to the next field. */
+  val WordsNext = KeyboardOptions(
+    capitalization = KeyboardCapitalization.Words,
+    imeAction = ImeAction.Next,
+  )
+
+  /** [WordsNext], for the last field on a row. */
+  val WordsDone = WordsNext.copy(imeAction = ImeAction.Done)
 
   /** All-caps identifiers (reference numbers, tail numbers) that advance to the next field. */
   val CharactersNext = KeyboardOptions(

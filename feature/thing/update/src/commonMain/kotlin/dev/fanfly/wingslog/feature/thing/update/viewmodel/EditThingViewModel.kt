@@ -240,7 +240,7 @@ class EditThingViewModel(
   /**
    * A field the user named themselves — the label and the value are both theirs.
    *
-   * Sentence case and a 50-character ceiling on each: these are the only strings in the app whose
+   * Title case and a 50-character ceiling on each: these are the only strings in the app whose
    * *label* is user input, and one long enough to wrap turns the row it heads into a paragraph.
    */
   fun onCustomFieldChanged(key: String, label: String, value: String) {
@@ -249,9 +249,9 @@ class EditThingViewModel(
         thing = it.thing.withCustomSpec(
           key = key,
           label = label.take(CUSTOM_FIELD_MAX)
-            .sentenceCase(),
+            .titleCase(),
           value = value.take(CUSTOM_FIELD_MAX)
-            .sentenceCase(),
+            .titleCase(),
         ),
       )
     }
@@ -330,16 +330,21 @@ class EditThingViewModel(
   }
 
   /**
+   * Every word's first letter, the rest left as typed — so "IBM" and "McIntosh" survive.
+   * `split(" ")` rather than a regex keeps the spacing the user typed, doubles included.
+   */
+  private fun String.titleCase(): String =
+    split(" ").joinToString(" ") { word -> word.replaceFirstChar { it.uppercase() } }
+
+  /**
    * Casing from what the template declares, not from a list of conventional key names — a boat's
    * hull ID is an identifier as much as a tail number. An undeclared key is left as typed.
    */
-  private fun String.sentenceCase(): String =
-    replaceFirstChar { it.uppercase() }
-
   private fun SpecField?.normalise(value: String): String = when {
     this == null -> value
     numeric -> value
     is_identifier -> value.uppercase()
+    title_case -> value.titleCase()
     else -> value.replaceFirstChar { it.uppercase() }
   }
 

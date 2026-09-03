@@ -6,6 +6,7 @@ import dev.fanfly.wingslog.core.analytics.RecordingAnalyticsManager
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import dev.fanfly.wingslog.core.template.customSpecs
+import dev.fanfly.wingslog.core.template.specValue
 import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
@@ -72,6 +73,9 @@ class CustomFieldsTest {
     vm.onSpecChanged("name", "espresso machine")
 
     assertThat(vm.uiState.value.isValid).isTrue()
+    // Title case, declared by the field rather than keyed off its name.
+    assertThat(fields.single().title_case).isTrue()
+    assertThat(vm.uiState.value.thing.specValue("name")).isEqualTo("Espresso Machine")
   }
 
   @Test
@@ -81,14 +85,28 @@ class CustomFieldsTest {
     vm.onAddCustomField()
     val key = vm.uiState.value.thing.customSpecs()
       .single().key
-    vm.onCustomFieldChanged(key, "water hardness", "7 grains")
+    vm.onCustomFieldChanged(key, "water hardness", "7 grains gpg")
 
     val field = vm.uiState.value.thing.customSpecs()
       .single()
     assertThat(field.key).isEqualTo("custom_1")
-    // Sentence case on both halves — the label is user input too.
-    assertThat(field.label).isEqualTo("Water hardness")
-    assertThat(field.value_).isEqualTo("7 grains")
+    // Title case on both halves — the label is user input too.
+    assertThat(field.label).isEqualTo("Water Hardness")
+    assertThat(field.value_).isEqualTo("7 Grains Gpg")
+  }
+
+  @Test
+  fun titleCaseKeepsWhatTheUserCapitalised() {
+    // Only the first letter of each word is forced, so an acronym or a McName survives typing.
+    val vm = viewModel("custom")
+    vm.onAddCustomField()
+
+    vm.onCustomFieldChanged("custom_1", "IBM model", "McIntosh 275")
+
+    val field = vm.uiState.value.thing.customSpecs()
+      .single()
+    assertThat(field.label).isEqualTo("IBM Model")
+    assertThat(field.value_).isEqualTo("McIntosh 275")
   }
 
   @Test

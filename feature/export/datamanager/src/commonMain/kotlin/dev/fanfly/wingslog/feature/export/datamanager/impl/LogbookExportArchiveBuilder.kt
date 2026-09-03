@@ -17,6 +17,7 @@ import dev.fanfly.wingslog.core.template.formatMeterNumber
 import dev.fanfly.wingslog.core.template.meter
 import dev.fanfly.wingslog.core.template.meterUnit
 import dev.fanfly.wingslog.core.template.readingFor
+import dev.fanfly.wingslog.core.template.customSpecs
 import dev.fanfly.wingslog.core.template.specValue
 import dev.fanfly.wingslog.core.template.usesComponentTypes
 import dev.fanfly.wingslog.core.template.valueOf
@@ -872,15 +873,8 @@ class LogbookExportArchiveBuilder(
               PdfSummaryCard(
                 rows = buildList {
                   add(PdfSummaryRow("Name", thing.name.ifBlank { thing.id }))
-                  template?.spec_fields.orEmpty()
-                    .forEach { field ->
-                      add(
-                        PdfSummaryRow(
-                          field.label.ifBlank { field.key },
-                          thing.specValue(field.key),
-                        )
-                      )
-                    }
+                  thing.exportSpecPairs()
+                    .forEach { (label, value) -> add(PdfSummaryRow(label, value)) }
                 }
               )
             ),
@@ -1038,6 +1032,23 @@ class LogbookExportArchiveBuilder(
    * A home has an address and a year built and none of the four; asking for them produced four
    * blank rows and no address.
    */
+  /**
+   * Every identity value the export prints: what the template declares, then the fields the user
+   * named themselves under the words they chose (#781).
+   *
+   * Declared fields keep their blank cells — a column that exists and is empty is information —
+   * while an unnamed custom field is dropped, since it has no label to print it under.
+   */
+  private fun Thing.exportSpecPairs(): List<Pair<String, String>> =
+    template?.spec_fields.orEmpty()
+      .map { field -> field.label.ifBlank { field.key } to specValue(field.key) } +
+      customSpecs()
+        .mapNotNull { spec ->
+          spec.label.trim()
+            .takeIf { it.isNotEmpty() }
+            ?.let { it to spec.value_ }
+        }
+
   private fun genericInfoRows(
     bundle: ThingBundle,
     request: ExportRequest,
@@ -1053,15 +1064,8 @@ class LogbookExportArchiveBuilder(
     return buildList {
       add(listOf("Field", "Value"))
       add(listOf("Name", thing.name))
-      template?.spec_fields.orEmpty()
-        .forEach { field ->
-          add(
-            listOf(
-              field.label.ifBlank { field.key },
-              thing.specValue(field.key)
-            )
-          )
-        }
+      thing.exportSpecPairs()
+        .forEach { (label, value) -> add(listOf(label, value)) }
       // Only meters the template declares: a home declares none, and a "0.0 hrs" row is exactly
       // the failure PRD §4.4 warns about.
       template?.meters.orEmpty()

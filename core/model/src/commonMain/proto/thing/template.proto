@@ -60,6 +60,10 @@ message SpecField {
 
   // A number: numeric keypad, and none of the capitalisation a text field applies.
   bool numeric = 9;
+
+  // Capitalise every word, not just the first — a name, where each word is part of what the thing
+  // is called. Ignored when `numeric` or `is_identifier` already decide the casing.
+  bool title_case = 10;
 }
 
 // A slot in the component tree the template expects — airframe, engine, propeller, hub, blade.

@@ -83,7 +83,7 @@ fun CustomFieldsSection(
             },
             label = stringResource(UpdateRes.string.custom_field_name),
             modifier = Modifier.weight(1f),
-            keyboardOptions = FormKeyboard.SentencesNext,
+            keyboardOptions = FormKeyboard.WordsNext,
           )
           FormTextField(
             value = field.value_,
@@ -92,7 +92,7 @@ fun CustomFieldsSection(
             },
             label = stringResource(UpdateRes.string.custom_field_value),
             modifier = Modifier.weight(1f),
-            keyboardOptions = FormKeyboard.SentencesDone,
+            keyboardOptions = FormKeyboard.WordsDone,
           )
           IconButton(onClick = { viewModel.onRemoveCustomField(field.key) }) {
             Icon(
