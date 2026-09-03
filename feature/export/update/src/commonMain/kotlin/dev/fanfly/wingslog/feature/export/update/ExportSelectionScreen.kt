@@ -119,6 +119,7 @@ import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.cancel
 import wingslog.core.sharedassets.generated.resources.done
+import wingslog.core.sharedassets.generated.resources.your_stuff
 import wingslog.core.sharedassets.generated.resources.empty_add_thing
 import wingslog.core.sharedassets.generated.resources.retry
 import wingslog.feature.export.sharedassets.generated.resources.Res
@@ -167,9 +168,7 @@ import wingslog.feature.export.sharedassets.generated.resources.export_success_d
 import wingslog.feature.export.sharedassets.generated.resources.export_success_delivery_failed
 import wingslog.feature.export.sharedassets.generated.resources.export_success_delivery_failed_title
 import wingslog.feature.export.sharedassets.generated.resources.export_success_title
-import wingslog.feature.export.sharedassets.generated.resources.export_thing_details_incomplete
 import wingslog.feature.export.sharedassets.generated.resources.export_thing_summary_more
-import wingslog.feature.export.sharedassets.generated.resources.export_untitled_thing
 import wingslog.feature.export.sharedassets.generated.resources.export_view_exports
 import wingslog.feature.export.sharedassets.generated.resources.feature_name_export_logs
 import kotlin.time.Instant
@@ -355,7 +354,9 @@ private fun ExportSetupList(
     item {
       val allSelected = state.selectedThingIds.size == state.things.size
       Section(
-        title = LexiconFormatter.titleCase(LocalThingLexicon.current.thingNoun),
+        // Neutral: the list spans every template on the account, so no one Thing's word
+        // describes it — the same rule as the switcher's own chrome (§6).
+        title = stringResource(CoreRes.string.your_stuff),
         action = if (state.things.size > 1) {
           {
             TextButton(onClick = if (allSelected) onClearAll else onSelectAll) {
@@ -469,7 +470,7 @@ private fun FormatSection(
   }
 }
 
-// ─── Setup · Aircraft ───────────────────────────────────────────────────────
+// ─── Setup · Things ─────────────────────────────────────────────────────────
 
 @Composable
 private fun ThingOptionRow(
@@ -478,18 +479,10 @@ private fun ThingOptionRow(
   onClick: () -> Unit,
 ) {
   GroupedCheckboxRow(
-    title = thing.tailNumber.ifBlank {
-      stringResource(
-        Res.string.export_untitled_thing,
-        LocalThingLexicon.current.thingNoun.singular,
-      )
-    },
-    subtitle = thing.makeModel.ifBlank {
-      stringResource(
-        Res.string.export_thing_details_incomplete,
-        LexiconFormatter.sentenceCase(LocalThingLexicon.current.thingNoun),
-      )
-    },
+    // Already resolved per row by the ViewModel, which is the only place that knows each Thing's
+    // own template. The label chain guarantees a line, so there is no "Untitled" case left.
+    title = thing.label,
+    subtitle = thing.subtitle,
     titleStyle = WingslogTypography.dataLarge,
     checked = selected,
     onCheckedChange = { onClick() },

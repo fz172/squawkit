@@ -9,11 +9,10 @@
   <string name="export_format_xlsx_sub">Spreadsheet</string>
   <string name="export_format_pick_one">Pick at least one format</string>
 
-  <!-- Setup: aircraft -->
+  <!-- Setup: what to export. The section title is core:sharedassets' your_stuff — the list spans
+       every template on the account, exactly as the switcher does. -->
   <string name="export_select_all">Select all</string>
   <string name="export_clear_all">Clear all</string>
-  <string name="export_untitled_thing">Untitled <xliff:g example="aircraft">%1$s</xliff:g></string>
-  <string name="export_thing_details_incomplete"><xliff:g example="Aircraft">%1$s</xliff:g> details incomplete</string>
   <string name="export_no_thing_title">Nothing to export</string>
 
   <!-- Setup: date range -->

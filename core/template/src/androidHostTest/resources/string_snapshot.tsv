@@ -157,9 +157,7 @@ feature/export/sharedassets	export_success_delivery_auth	Destination: signed-in 
 feature/export/sharedassets	export_success_delivery_failed	Delivery failed. Use Download for now, then try emailing it again.
 feature/export/sharedassets	export_success_delivery_failed_title	Delivery failed
 feature/export/sharedassets	export_success_title	Export ready
-feature/export/sharedassets	export_thing_details_incomplete	Aircraft details incomplete
 feature/export/sharedassets	export_thing_summary_more	%1$s + %2$d more
-feature/export/sharedassets	export_untitled_thing	Untitled aircraft
 feature/export/sharedassets	export_view_exports	View exports
 feature/export/sharedassets	feature_name_export_logs	Export Logs
 feature/fleet/sharedassets	add_first_thing	Add Your First Aircraft
@@ -863,6 +861,6 @@ feature/thing/update	make	Make
 feature/thing/update	model	Model
 feature/thing/update	serial	Serial Number
 feature/thing/update	update_thing	Update Aircraft
-core/sharedassets	switcher_title	Your Stuff
+core/sharedassets	your_stuff	Your Stuff
 feature/thing/update	pick_type_title	New Thing
 feature/thing/update	pick_type_subtitle	The type sets which details and services get tracked.

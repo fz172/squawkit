@@ -341,10 +341,6 @@ class StringSnapshotTest {
     // add-thing family: they render with none selected, so CurrentThingTemplate's app-scoped
     // default answers them and retires itself when a second preset ships. Filing #687 lumped these
     // in with surfaces that aggregate *existing* things, which is a different problem.
-    frame("feature/export/sharedassets", "export_untitled_thing") { it.thingNoun.singular },
-    frame("feature/export/sharedassets", "export_thing_details_incomplete") {
-      LexiconFormatter.sentenceCase(it.thingNoun)
-    },
     frame("feature/export/sharedassets", "export_progress_collecting_data") {
       it.thingNoun.singular
     },

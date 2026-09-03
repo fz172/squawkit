@@ -1,8 +1,9 @@
 package dev.fanfly.wingslog.feature.export.update.viewmodel
 
-import dev.fanfly.wingslog.core.template.CurrentThingTemplate
-import dev.fanfly.wingslog.core.analytics.NoOpAnalyticsManager
 import com.google.common.truth.Truth.assertThat
+import dev.fanfly.wingslog.core.analytics.NoOpAnalyticsManager
+import dev.fanfly.wingslog.core.template.CurrentThingTemplate
+import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDeliveryEmailSource
 import dev.fanfly.wingslog.feature.export.datamanager.ExportManager
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
@@ -75,6 +76,7 @@ class ExportViewModelDeliveryTest {
       subscriptionManager = subscriptionManager,
       auth = auth,
       currentThingTemplate = mockk<CurrentThingTemplate>(relaxed = true),
+      templateRegistry = BakedInTemplateRegistry(appVersionCode = Int.MAX_VALUE),
       analytics = NoOpAnalyticsManager,
     )
   }
