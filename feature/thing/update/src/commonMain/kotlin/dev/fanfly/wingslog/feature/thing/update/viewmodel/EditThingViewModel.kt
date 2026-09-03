@@ -11,12 +11,12 @@ import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.template.ComponentField
 import dev.fanfly.wingslog.core.template.ComponentPath
 import dev.fanfly.wingslog.core.template.CurrentThingTemplate
-import dev.fanfly.wingslog.core.template.SpecKeys
 import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.core.template.addComponent
 import dev.fanfly.wingslog.core.template.ensureComponentAt
 import dev.fanfly.wingslog.core.template.newComponentFor
 import dev.fanfly.wingslog.core.template.removeComponentAt
+import dev.fanfly.wingslog.core.template.specField
 import dev.fanfly.wingslog.core.template.updateComponentAt
 import dev.fanfly.wingslog.core.template.with
 import dev.fanfly.wingslog.core.template.withSpec
@@ -227,7 +227,8 @@ class EditThingViewModel(
       it.copy(
         thing = it.thing.withSpec(
           key,
-          normalise(key, newValue)
+          it.template.specField(key)
+            .normalise(newValue),
         )
       )
     }
@@ -258,15 +259,14 @@ class EditThingViewModel(
    * One of the slot's own declared fields — a tyre's position or its normal pressure.
    *
    * Separate from [onComponentFieldChanged] because these are stored in the component's `spec` bag
-   * rather than as named fields, and because the casing differs: a number is left exactly as
-   * typed, where make and model get a capital first letter.
+   * rather than as named fields. Same message as the Thing's own spec fields, so same casing rule.
    */
   fun onComponentSpecChanged(
     path: ComponentPath,
     field: SpecField,
     newValue: String,
   ) {
-    val value = if (field.numeric) newValue else newValue.replaceFirstChar { it.uppercase() }
+    val value = field.normalise(newValue)
     _uiState.update { state ->
       // ensureComponentAt first, for the same reason the named fields do it: a fixed slot renders
       // a row before anything is stored.
@@ -292,16 +292,14 @@ class EditThingViewModel(
   }
 
   /**
-   * Serials are upper-cased, everything else gets a capital first letter.
-   *
-   * Keyed by the conventional spec keys rather than by a template-declared flag: `SpecField` has no
-   * casing hint, and inventing one for this would be a schema change for a typing convenience. A
-   * key no preset declares falls through untouched, which is the right default for an address.
+   * Casing from what the template declares, not from a list of conventional key names — a boat's
+   * hull ID is an identifier as much as a tail number. An undeclared key is left as typed.
    */
-  private fun normalise(key: String, value: String): String = when (key) {
-    SpecKeys.SERIAL, SpecKeys.TAIL_NUMBER -> value.uppercase()
-    SpecKeys.MAKE, SpecKeys.MODEL -> value.replaceFirstChar { it.uppercase() }
-    else -> value
+  private fun SpecField?.normalise(value: String): String = when {
+    this == null -> value
+    numeric -> value
+    is_identifier -> value.uppercase()
+    else -> value.replaceFirstChar { it.uppercase() }
   }
 
   companion object {

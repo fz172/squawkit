@@ -1,6 +1,6 @@
 
 
-automotive"¼
+automotive"¼
 
 vehiclevehiclesa
 issueissuesan"Issues
@@ -11,8 +11,8 @@ automotive"¼
 Safety recallSafety recallsz>
 Technical Service BulletinTechnical Service BulletinsTSB* :BH2
 makeMake2
-modelModel2
-yearYear*20192
+modelModel2
+yearYear*2019H2
 vinVIN *1HGBH41JXMN109186:
 engineEngine(P:…
 tireTire2make2modelHZM

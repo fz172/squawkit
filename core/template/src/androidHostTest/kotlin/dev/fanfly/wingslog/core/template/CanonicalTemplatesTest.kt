@@ -47,6 +47,16 @@ class CanonicalTemplatesTest {
   }
 
   @Test
+  fun everyYearIsAskedForAsANumber() {
+    // A year on a text keyboard, capitalised like prose. `numeric` is the flag that says otherwise.
+    val years = all.flatMap { it.spec_fields }
+      .filter { it.key == "year" || it.key == "year_built" }
+
+    assertThat(years).isNotEmpty()
+    years.forEach { assertThat(it.numeric).isTrue() }
+  }
+
+  @Test
   fun everyPresetIsIdentifiable() {
     all.forEach { template ->
       assertThat(template.id).isNotEmpty()
