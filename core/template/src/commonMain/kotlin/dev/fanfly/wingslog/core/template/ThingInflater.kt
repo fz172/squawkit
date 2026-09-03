@@ -17,7 +17,7 @@ object ThingInflater {
     template: ThingTemplate?
   ): Thing =
     thing.copy(
-      name = thing.name.ifEmpty { nameOf(thing) },
+      name = thing.name.ifEmpty { nameOf(thing, thing.template ?: template) },
       // A Thing migrated by the cutover has no DNA — the cutover predates field 12.
       //
       // The lexicon is stripped before storing. It is app UI, written against the screens of a
@@ -28,10 +28,18 @@ object ThingInflater {
       template = (thing.template ?: template)?.copy(lexicon = null),
     )
 
-  /** `tail_number`, else `"$make $model"`, else empty — PRD §9.1's order, read from spec. */
-  private fun nameOf(thing: Thing): String {
-    val tail = thing.specValue(SpecKeys.TAIL_NUMBER)
-    if (tail.isNotEmpty()) return tail
+  /**
+   * The template's `title_candidate`, else `"$make $model"`, else empty — PRD §9.1's order.
+   *
+   * Was `tail_number` by key, which named the airplane's title candidate rather than the concept:
+   * a preset marking some other field — `custom`'s own name — stored no name at all and rendered
+   * from the display-name fallback, so every Thing on it read alike.
+   */
+  private fun nameOf(thing: Thing, template: ThingTemplate?): String {
+    val titled = template?.spec_fields?.firstOrNull { it.title_candidate }
+      ?.let { thing.specValue(it.key) }
+      .orEmpty()
+    if (titled.isNotEmpty()) return titled
     return listOf(
       thing.specValue(SpecKeys.MAKE),
       thing.specValue(SpecKeys.MODEL)

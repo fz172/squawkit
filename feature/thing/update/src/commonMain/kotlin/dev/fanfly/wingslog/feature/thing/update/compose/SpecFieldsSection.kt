@@ -117,12 +117,9 @@ private fun ThingSpecFieldInput(
 }
 
 /**
- * Fields that cannot be edited after creation.
- *
- * Carried over rather than derived: `SpecField` has no immutability flag, and the three keys the
- * old form locked are make, model and serial — a thing's serial identifies it, so letting it be
- * edited would silently make the record describe a different machine. Inventing a schema field for it belongs with
- * the other §4.2 gaps recorded on #732.
+ * Fields that cannot be edited after creation — what the thing IS, as opposed to what is true of it
+ * today. `SpecField` has no immutability flag yet; inventing one belongs with the other §4.2 gaps
+ * on #732.
  */
 private val LOCKED_AFTER_CREATION =
-  setOf(SpecKeys.MAKE, SpecKeys.MODEL, SpecKeys.SERIAL)
+  setOf(SpecKeys.MAKE, SpecKeys.MODEL, SpecKeys.SERIAL, SpecKeys.NAME)

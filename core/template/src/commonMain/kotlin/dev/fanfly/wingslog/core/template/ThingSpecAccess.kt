@@ -15,6 +15,33 @@ object SpecKeys {
   const val MODEL = "model"
   const val SERIAL = "serial"
   const val TAIL_NUMBER = "tail_number"
+
+  /** What `custom` calls its Thing. Its own preset declares it; nothing here assumes one exists. */
+  const val NAME = "name"
+
+  /**
+   * Prefix of a field the USER named — `custom_1`, `custom_2`. The number is positional and
+   * permanent: the label is what changes when they retype it, so the value stays where it was.
+   */
+  const val CUSTOM_PREFIX = "custom_"
+}
+
+/** The user-named fields, in key order. Their labels are their own; the template declares none. */
+fun Thing.customSpecs(): List<Spec> =
+  spec.filter { it.key.startsWith(SpecKeys.CUSTOM_PREFIX) }
+    .sortedBy { it.key }
+
+/**
+ * The next free `custom_N` key, or null once [limit] of them exist.
+ *
+ * Fills gaps rather than counting: removing `custom_1` and adding one back must reuse the slot,
+ * not push the next one past the limit.
+ */
+fun Thing.nextCustomSpecKey(limit: Int): String? {
+  val taken = customSpecs().map { it.key }
+    .toSet()
+  return (1..limit).map { "${SpecKeys.CUSTOM_PREFIX}$it" }
+    .firstOrNull { it !in taken }
 }
 
 /** The value under [key], or empty. Absent and blank read the same to a caller. */
@@ -37,7 +64,10 @@ fun Component.specValue(key: String): String =
 fun Component.withSpec(key: String, value: String): Component {
   val without = spec.filterNot { it.key == key }
   return copy(
-    spec = if (value.isEmpty()) without else without + Spec(key = key, value_ = value),
+    spec = if (value.isEmpty()) without else without + Spec(
+      key = key,
+      value_ = value
+    ),
   )
 }
 
@@ -109,6 +139,23 @@ fun Thing.withSpec(key: String, value: String): Thing {
     )
   )
 }
+
+/**
+ * Sets a user-named field's [label] and [value] together, preserving order.
+ *
+ * Unlike [withSpec] this keeps the entry while EITHER half is filled: a field named and not yet
+ * answered is a row the user is in the middle of typing, and dropping it would take the label away
+ * under them. Emptying both removes it, which is what [removeSpec] does deliberately.
+ */
+fun Thing.withCustomSpec(key: String, label: String, value: String): Thing {
+  val without = spec.filterNot { it.key == key }
+  if (label.isEmpty() && value.isEmpty()) return copy(spec = without)
+  return copy(spec = without + Spec(key = key, value_ = value, label = label))
+}
+
+/** Drops [key] entirely, label and all. */
+fun Thing.removeSpec(key: String): Thing =
+  copy(spec = spec.filterNot { it.key == key })
 
 /**
  * Re-derives every component id from its position.

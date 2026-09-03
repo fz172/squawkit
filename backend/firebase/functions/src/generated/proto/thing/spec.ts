@@ -12,10 +12,18 @@ export const protobufPackage = "";
 export interface Spec {
   key: string;
   value: string;
+  /**
+   * The user's own word for a field they invented — set only on the `custom_N` fields a template
+   * invites through `ThingTemplate.custom_spec_fields`, empty on everything a template declares.
+   *
+   * Stored beside the value rather than in the key, because the key is a join: it names the same
+   * field across renames, and a label the user retypes must not orphan what they entered under it.
+   */
+  label: string;
 }
 
 function createBaseSpec(): Spec {
-  return { key: "", value: "" };
+  return { key: "", value: "", label: "" };
 }
 
 export const Spec: MessageFns<Spec> = {
@@ -25,6 +33,9 @@ export const Spec: MessageFns<Spec> = {
     }
     if (message.value !== "") {
       writer.uint32(18).string(message.value);
+    }
+    if (message.label !== "") {
+      writer.uint32(26).string(message.label);
     }
     return writer;
   },
@@ -52,6 +63,14 @@ export const Spec: MessageFns<Spec> = {
           message.value = reader.string();
           continue;
         }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.label = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -65,6 +84,7 @@ export const Spec: MessageFns<Spec> = {
     return {
       key: isSet(object.key) ? globalThis.String(object.key) : "",
       value: isSet(object.value) ? globalThis.String(object.value) : "",
+      label: isSet(object.label) ? globalThis.String(object.label) : "",
     };
   },
 
@@ -76,6 +96,9 @@ export const Spec: MessageFns<Spec> = {
     if (message.value !== "") {
       obj.value = message.value;
     }
+    if (message.label !== "") {
+      obj.label = message.label;
+    }
     return obj;
   },
 
@@ -86,6 +109,7 @@ export const Spec: MessageFns<Spec> = {
     const message = createBaseSpec();
     message.key = object.key ?? "";
     message.value = object.value ?? "";
+    message.label = object.label ?? "";
     return message;
   },
 };

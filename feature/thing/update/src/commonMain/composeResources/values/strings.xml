@@ -13,6 +13,10 @@
   <string name="delete_thing_member_plural">people will</string>
   <!-- Type picker (#738). Neutral throughout: the user is choosing what a Thing will be, so no
        template's lexicon applies yet. -->
+  <string name="custom_fields_title">Your own fields</string>
+  <string name="custom_field_name">Field name</string>
+  <string name="custom_field_value">Value</string>
+  <string name="custom_field_add">Add a field</string>
   <string name="pick_type_title">New Thing</string>
   <string name="pick_type_subtitle">The type sets which details and services get tracked.</string>
 </resources>

@@ -72,17 +72,22 @@ private val HEADLINE_KEYS = setOf(SpecKeys.MAKE, SpecKeys.MODEL)
  */
 fun ThingTemplate?.specLines(thing: Thing): ThingSpecLines {
   val fields = this?.spec_fields.orEmpty()
-  val headlineFields = fields.filter { !it.is_identifier && it.key in HEADLINE_KEYS }
-  val headlineKeys = headlineFields.map { it.key }.toSet()
+  val headlineFields =
+    fields.filter { !it.is_identifier && it.key in HEADLINE_KEYS }
+  val headlineKeys = headlineFields.map { it.key }
+    .toSet()
   val rest = fields.filterNot { it.key in headlineKeys }
   // sortedByDescending is stable, so declared order survives inside each group.
   val ordered = rest.filterNot { it.is_identifier } +
-    rest.filter { it.is_identifier }.sortedByDescending { it.title_candidate }
+    rest.filter { it.is_identifier }
+      .sortedByDescending { it.title_candidate }
 
   return ThingSpecLines(
     headline = headlineFields.map { thing.specValue(it.key) }
       .filter { it.isNotBlank() }
       .joinToString(" "),
+    // The user's own fields last, under the words they chose. A template declares none of these,
+    // so they cannot come from `fields` — but a value nobody can see is a value nobody will type.
     lines = ordered.mapNotNull { field ->
       thing.specValue(field.key)
         .takeIf { it.isNotBlank() }
@@ -93,7 +98,15 @@ fun ThingTemplate?.specLines(thing: Thing): ThingSpecLines {
             isIdentifier = field.is_identifier,
           )
         }
-    },
+    } + thing.customSpecs()
+      .filter { it.label.isNotBlank() && it.value_.isNotBlank() }
+      .map {
+        SpecLine(
+          label = it.label,
+          value = it.value_,
+          isIdentifier = false
+        )
+      },
     title = fields.firstOrNull { it.title_candidate }
       ?.let { thing.specValue(it.key) }
       .orEmpty(),
