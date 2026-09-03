@@ -13,25 +13,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuAnchorType
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.template.ComponentField
 import dev.fanfly.wingslog.core.template.ComponentNode
@@ -45,7 +35,6 @@ import dev.fanfly.wingslog.core.template.specValue
 import dev.fanfly.wingslog.core.template.valueOf
 import dev.fanfly.wingslog.core.ui.common.compose.DashedButton
 import dev.fanfly.wingslog.core.ui.common.compose.FormTextField
-import dev.fanfly.wingslog.core.ui.common.compose.FormValueField
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.thing.update.viewmodel.EditThingViewModel
 import dev.fanfly.wingslog.thing.SpecField
@@ -271,13 +260,7 @@ private fun SlotSpecFields(row: ComponentRow, viewModel: EditThingViewModel) {
     }
 }
 
-/**
- * One declared field: a picker when the template lists `options`, a text input otherwise.
- *
- * The list is the template's, so a bike offers front and rear while a car offers four corners and
- * a spare, and neither has to be known here.
- */
-@OptIn(ExperimentalMaterial3Api::class)
+/** Binds one of a slot's declared fields to the component at [row]; [SpecFieldInput] draws it. */
 @Composable
 private fun SlotSpecFieldInput(
   row: ComponentRow,
@@ -285,52 +268,13 @@ private fun SlotSpecFieldInput(
   viewModel: EditThingViewModel,
   modifier: Modifier = Modifier,
 ) {
-  val value = row.component?.specValue(field.key)
-    .orEmpty()
-  if (field.options.isEmpty()) {
-    FormTextField(
-      value = value,
-      onValueChange = { viewModel.onComponentSpecChanged(row.path, field, it) },
-      label = field.label,
-      placeholder = field.placeholder,
-      modifier = modifier,
-      keyboardOptions = if (field.numeric) {
-        KeyboardOptions(keyboardType = KeyboardType.Number)
-      } else {
-        KeyboardOptions.Default
-      },
-    )
-    return
-  }
-  var expanded by remember { mutableStateOf(false) }
-  ExposedDropdownMenuBox(
-    expanded = expanded,
-    onExpandedChange = { expanded = it },
+  SpecFieldInput(
+    field = field,
+    value = row.component?.specValue(field.key)
+      .orEmpty(),
+    onValueChange = { viewModel.onComponentSpecChanged(row.path, field, it) },
     modifier = modifier,
-  ) {
-    FormValueField(
-      value = value,
-      label = field.label,
-      trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-      modifier = Modifier.fillMaxWidth()
-        .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
-    )
-    // The options and nothing else. No blank entry: a wheel is somewhere on the vehicle, so an
-    // "unset" row would be an answer nobody means to give, sitting above the four that are true.
-    ExposedDropdownMenu(
-      expanded = expanded,
-      onDismissRequest = { expanded = false }) {
-      field.options.forEach { option ->
-        DropdownMenuItem(
-          text = { Text(option) },
-          onClick = {
-            viewModel.onComponentSpecChanged(row.path, field, option)
-            expanded = false
-          },
-        )
-      }
-    }
-  }
+  )
 }
 
 /**

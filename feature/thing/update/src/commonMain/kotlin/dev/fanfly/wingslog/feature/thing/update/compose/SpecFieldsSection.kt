@@ -7,18 +7,15 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.KeyboardCapitalization
 import dev.fanfly.wingslog.core.template.LocalThingCapabilities
 import dev.fanfly.wingslog.core.template.LocalThingTemplate
 import dev.fanfly.wingslog.core.template.SpecKeys
 import dev.fanfly.wingslog.core.template.specValue
-import dev.fanfly.wingslog.core.ui.common.compose.FormTextField
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.thing.update.viewmodel.EditThingViewModel
 import dev.fanfly.wingslog.thing.SpecField
@@ -67,7 +64,7 @@ fun SpecFieldsSection(
         val partner = visible.getOrNull(index + 1)
           ?.takeIf { field.compact && it.compact }
         if (partner == null) {
-          SpecFieldInput(
+          ThingSpecFieldInput(
             field,
             thing,
             viewModel,
@@ -77,14 +74,14 @@ fun SpecFieldsSection(
           index++
         } else {
           Row(horizontalArrangement = Arrangement.spacedBy(Spacing.medium)) {
-            SpecFieldInput(
+            ThingSpecFieldInput(
               field,
               thing,
               viewModel,
               showValidationErrors,
               Modifier.weight(1f),
             )
-            SpecFieldInput(
+            ThingSpecFieldInput(
               partner,
               thing,
               viewModel,
@@ -100,7 +97,7 @@ fun SpecFieldsSection(
 }
 
 @Composable
-private fun SpecFieldInput(
+private fun ThingSpecFieldInput(
   field: SpecField,
   thing: Thing,
   viewModel: EditThingViewModel,
@@ -108,20 +105,14 @@ private fun SpecFieldInput(
   modifier: Modifier = Modifier,
 ) {
   val value = thing.specValue(field.key)
-  FormTextField(
+  SpecFieldInput(
+    field = field,
     value = value,
     onValueChange = { viewModel.onSpecChanged(field.key, it) },
-    label = field.label,
     modifier = modifier,
-    placeholder = field.placeholder.takeIf { it.isNotEmpty() },
     // Make, model and serial identify the thing and are fixed once it exists, as they always were.
     editable = thing.id.isEmpty() || field.key !in LOCKED_AFTER_CREATION,
     isError = showValidationErrors && field.required && value.isBlank(),
-    keyboardOptions = if (field.is_identifier) {
-      KeyboardOptions(capitalization = KeyboardCapitalization.Characters)
-    } else {
-      KeyboardOptions.Default
-    },
   )
 }
 

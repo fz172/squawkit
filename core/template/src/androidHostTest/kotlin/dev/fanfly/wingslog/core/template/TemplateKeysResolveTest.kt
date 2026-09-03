@@ -142,15 +142,8 @@ class TemplateKeysResolveTest {
   }
 
   /**
-   * The spec-key coupling: `EditThingViewModel` normalises casing by conventional key name, so the
-   * airplane template has to declare these four or the values land under keys it has no field for
-   * — present in the data, invisible on screen.
-   *
-   * **The slot-key half of this pair is gone**, and its absence is the point. The edit form used to
-   * build a component tree from hardcoded slot keys while the template declared its own, with
-   * nothing linking them; #729 deleted that side, so the form walks the template's slots and cannot
-   * emit a key the template does not declare. The assertion would now check the template against
-   * itself.
+   * The coupling that is left: `ThingInflater` names a new Thing from `tail_number`, else make and
+   * model. #729 took the slot keys and #739 the casing rule; these four are what remain.
    */
   @Test
   fun theAirplaneEditFormUsesOnlySpecKeysTheTemplateDeclares() {
