@@ -872,6 +872,26 @@ Thing is a house is the one place the switcher would actively mislead. It opens 
 `FleetEmptyState` is the one surface with no Thing to resolve a lexicon from, so it defaults to the generic
 noun — which is correct: a brand-new account genuinely does not yet know what it is for.
 
+### 8.2a The type picker
+
+"Add a new thing" opens a picker before the form, because the template decides which spec fields the form asks
+for — a picker inside the form would rebuild it on every change. Until it existed, creating a Thing always
+produced an airplane whatever the account held.
+
+Cards are the template's `display_name` and `icon`, two per row, drawn from `TemplateRegistry.canonical()` — which
+is already ordered by `sort_order` and already filtered to what the build can render, so a template naming a
+`min_app_version` above the client never appears. An icon key the build does not recognise falls back to a
+generic vector rather than failing: a type is never unpickable because we could not draw it.
+
+**Always a bottom sheet**, at every window size. `DetailSheet` switches to an end drawer above COMPACT, which is
+right for reading a record beside the list it came from; the picker is a short interruption on the way to the
+form, and the sheet reads better wide than a drawer does.
+
+The chosen template rides to the form on the route (`add_thing?templateId=`), and the form provides its own
+template locals for its subtree — `LocalThingLexicon` and friends are provided app-wide from the *selected*
+Thing, so without that the form titles itself after whatever the switcher points at. **The type cannot be changed
+from inside the form.** Cancel and pick again.
+
 ### 8.3 Thing overview
 
 The four per-Thing surfaces are preserved. They are no longer tabs inside an aircraft screen: since this document
