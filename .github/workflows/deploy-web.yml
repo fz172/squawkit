@@ -3,22 +3,23 @@ name: Deploy Web App
 on:
   workflow_dispatch:
     inputs:
-      variant:
-        description: "Which web build to deploy"
+      target:
+        description: "Where to deploy the web app"
         type: choice
         options:
-          - release
-          - debug
-        default: release
+          - live         # production site, release build
+          - alpha        # preview channel, release build
+          - debug        # preview channel, debug build (developer surfaces on)
+        default: alpha
 
-# One in-flight deploy per variant; release and debug don't cancel each other.
+# One in-flight deploy per target; live, alpha and debug don't cancel each other.
 concurrency:
-  group: deploy-web-${{ inputs.variant }}
+  group: deploy-web-${{ inputs.target }}
   cancel-in-progress: false
 
 jobs:
   deploy:
-    name: Build & Deploy ${{ inputs.variant }} to Firebase Hosting
+    name: Build & Deploy to Firebase Hosting (${{ inputs.target }})
     runs-on: ubuntu-latest
 
     steps:
@@ -55,36 +56,42 @@ jobs:
       # Raise Node's heap: webpack bundling the large Compose/Skiko output exceeds Node's default
       # ~2 GB cap and dies with ERR_WORKER_OUT_OF_MEMORY. NODE_OPTIONS propagates to the worker
       # thread too. 4 GB for Node + the Gradle daemon stays within the 7 GB private-repo runner.
-      # WINGSLOG_WEB_DEBUG=true (debug variant) flips the webpack-injected __WINGSLOG_DEBUG__ flag,
-      # which turns on developer surfaces like Feature Lab; release leaves it off.
+      # WINGSLOG_WEB_DEBUG=true (debug target) flips the webpack-injected __WINGSLOG_DEBUG__ flag,
+      # which turns on developer surfaces; live and alpha leave it off.
       - name: Build production web bundle
         env:
           NODE_OPTIONS: --max-old-space-size=4096
-          WINGSLOG_WEB_DEBUG: ${{ inputs.variant == 'debug' }}
+          WINGSLOG_WEB_DEBUG: ${{ inputs.target == 'debug' }}
         run: ./gradlew :webApp:jsBrowserDistribution --stacktrace
 
       # Deploy via firebase-tools directly rather than FirebaseExtended/action-hosting-deploy.
       # On this runner every HTTPS request hits "premature close" and firebase-tools retries; the
-      # non-idempotent channel-release POST then fails the retry with "version … is the current
-      # active version" even though the first attempt already released it. The action treats that
-      # as a failure (and auto-reruns with --debug, deploying again). Calling the CLI ourselves lets
-      # us treat that specific precondition as success, because the channel is already updated.
-      # release -> 'alpha' channel, debug -> 'debug' channel (both on the wingslog-9ca4e site).
+      # non-idempotent release POST then fails the retry with "version … is the current active
+      # version" even though the first attempt already released it. The action treats that as a
+      # failure (and auto-reruns with --debug, deploying again). Calling the CLI ourselves lets us
+      # treat that specific precondition as success, because the target is already updated.
+      # live -> the production site; alpha/debug -> the preview channel of that name
+      # (all on the wingslog-9ca4e site).
       - name: Deploy to Firebase Hosting
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_WINGSLOG_9CA4E }}
-          CHANNEL: ${{ inputs.variant == 'debug' && 'debug' || 'alpha' }}
+          TARGET: ${{ inputs.target }}
         run: |
           printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/firebase-sa.json"
           export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/firebase-sa.json"
+          if [ "$TARGET" = "live" ]; then
+            set -- deploy --only hosting
+          else
+            set -- hosting:channel:deploy "$TARGET" --expires 7d
+          fi
           set +e
-          out=$(npx firebase-tools@latest hosting:channel:deploy "$CHANNEL" \
-            --expires 7d --project wingslog-9ca4e --non-interactive 2>&1)
+          out=$(npx firebase-tools@latest "$@" \
+            --project wingslog-9ca4e --non-interactive 2>&1)
           code=$?
           echo "$out"
           rm -f "$RUNNER_TEMP/firebase-sa.json"
           if [ "$code" -ne 0 ] && echo "$out" | grep -q "is the current active version"; then
-            echo "::notice::Channel '$CHANNEL' already points to this version — deploy succeeded; ignoring the non-idempotent release-retry error."
+            echo "::notice::'$TARGET' already points to this version — deploy succeeded; ignoring the non-idempotent release-retry error."
             exit 0
           fi
           exit "$code"

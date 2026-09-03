@@ -72,8 +72,7 @@ npm run serve     # firebase emulators:start --only functions
 | `deploy-functions.yml` | PR + push to `main` under `functions/**` | emulator test suite as the gate; deploys functions on merge |
 | `deploy-firestore-rules.yml` | PR + push to `main` on `firestore.rules` | emulator rules suite; deploys rules on merge |
 | `deploy-storage-rules.yml` | PR + push to `main` on `storage.rules` | emulator rules suite; deploys rules on merge |
-| `deploy-web.yml` | manual | `:webApp:jsBrowserDistribution` → Firebase Hosting `alpha` (release) or `debug` channel |
-| `promote-web.yml` | manual | promotes the alpha channel to live |
+| `deploy-web.yml` | manual | `:webApp:jsBrowserDistribution` → Firebase Hosting `live` (production), or the `alpha` / `debug` preview channel |
 
 **The Kotlin build does not run automatically on PRs or pushes.** Run `./gradlew lint
 testDebugUnitTest testAndroidHostTest` locally before pushing anything non-trivial. iOS is never
