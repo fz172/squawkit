@@ -98,6 +98,8 @@ export type ThingDnaRefreshReport = {
   unknownTemplateId: Array<{ uid: string; thingId: string; templateId: string }>;
   /** Excluded by `onlyTemplateIds`. */
   filteredOut: number;
+  /** Tombstones — deleted records, skipped. See the scan loop for why they must not be written. */
+  skippedTombstones: number;
   /** Payloads that would not decode. Reported, never guessed at. */
   undecodable: Array<{ uid: string; thingId: string }>;
   elapsedMs: number;
@@ -198,6 +200,7 @@ export async function runThingDnaRefresh(
   let alreadyCurrent = 0;
   let filteredOut = 0;
   let leftWithoutDna = 0;
+  let skippedTombstones = 0;
 
   for (const uid of uids) {
     const snapshot = await adminDb.collection(`users/${uid}/${ENTITY_SEGMENT_THING}`).get();
@@ -205,6 +208,14 @@ export async function runThingDnaRefresh(
     for (const doc of snapshot.docs) {
       scannedThings++;
       const wire = doc.data() as SyncDocWire;
+      // A tombstone is a deleted record awaiting the storage sweep's hard delete. Refreshing one
+      // writes DNA nobody will read AND restarts its retention clock, since the write stamps
+      // `lastUpdateTimestamp` — the field the sweep ages it by — so a dead record outlives its
+      // window by another TOMBSTONE_RETENTION_DAYS for each run that touches it.
+      if (wire.deleted === true) {
+        skippedTombstones++;
+        continue;
+      }
       const bytes = payloadBytes(wire.payload);
       if (bytes == null) {
         undecodable.push({ uid, thingId: doc.id });
@@ -274,6 +285,7 @@ export async function runThingDnaRefresh(
     alreadyCurrent,
     unknownTemplateId,
     filteredOut,
+    skippedTombstones,
     undecodable,
     elapsedMs: Date.now() - startedAtMs,
   };
