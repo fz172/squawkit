@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.export.datamanager.di
 
+import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.core.storage.blob.BlobFilesystem
 import dev.fanfly.wingslog.core.storage.blob.LocalBlobStore
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
@@ -27,7 +28,7 @@ import org.koin.dsl.module
 
 val exportDataManagerModule = module {
   single { ZipFileWriter() }
-  single { LogbookExportArchiveBuilder() }
+  single { LogbookExportArchiveBuilder(templateRegistry = get<TemplateRegistry>()) }
   single {
     AttachmentExportResolver(
       get<AttachmentManager>(),
