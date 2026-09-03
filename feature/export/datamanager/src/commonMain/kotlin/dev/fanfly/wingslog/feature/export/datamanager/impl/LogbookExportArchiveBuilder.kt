@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.feature.export.datamanager.impl
 
 import dev.fanfly.wingslog.core.datetime.toLocalDate
+import dev.fanfly.wingslog.core.template.ComponentField
 import dev.fanfly.wingslog.core.template.GenericLexicon
 import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.MeterKeys
@@ -10,12 +11,15 @@ import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.core.template.allComponentsInSlot
 import dev.fanfly.wingslog.core.template.childInSlot
 import dev.fanfly.wingslog.core.template.childrenInSlot
+import dev.fanfly.wingslog.core.template.displayLabel
+import dev.fanfly.wingslog.core.template.displaySubtitle
 import dev.fanfly.wingslog.core.template.formatMeterNumber
 import dev.fanfly.wingslog.core.template.meter
 import dev.fanfly.wingslog.core.template.meterUnit
 import dev.fanfly.wingslog.core.template.readingFor
 import dev.fanfly.wingslog.core.template.specValue
 import dev.fanfly.wingslog.core.template.usesComponentTypes
+import dev.fanfly.wingslog.core.template.valueOf
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDateRange
 import dev.fanfly.wingslog.feature.export.datamanager.ExportFormat
 import dev.fanfly.wingslog.feature.export.datamanager.ExportRequest
@@ -26,6 +30,7 @@ import dev.fanfly.wingslog.thing.CertExpireLimit
 import dev.fanfly.wingslog.thing.CertificateType
 import dev.fanfly.wingslog.thing.ComplianceType
 import dev.fanfly.wingslog.thing.Component
+import dev.fanfly.wingslog.thing.ComponentSlot
 import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.ExportLayout
 import dev.fanfly.wingslog.thing.InspectionRule
@@ -37,6 +42,7 @@ import dev.fanfly.wingslog.thing.SquawkDismissReason
 import dev.fanfly.wingslog.thing.SquawkPriority
 import dev.fanfly.wingslog.thing.Technician
 import dev.fanfly.wingslog.thing.Thing
+import dev.fanfly.wingslog.thing.ThingTemplate
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
@@ -268,7 +274,7 @@ class LogbookExportArchiveBuilder(
   fun fileName(bundles: List<ThingBundle>, date: LocalDate): String {
     val stamp = date.compact()
     val subject =
-      if (bundles.size == 1) bundles.first().thing.safeTailNumber() else "Fleet"
+      if (bundles.size == 1) bundles.first().thing.safeArchiveName() else "Fleet"
     return "SquawkIt_Logs_${subject}_$stamp.zip"
   }
 
@@ -889,11 +895,16 @@ class LogbookExportArchiveBuilder(
                 PdfSummaryCard(
                   title = slot.label.ifBlank { slot.slot_key }
                     .let { if (index == 0) it else "$it ${index + 1}" },
-                  rows = listOf(
-                    PdfSummaryRow("Make", component.make),
-                    PdfSummaryRow("Model", component.model),
-                    PdfSummaryRow("Serial", component.serial),
-                  ),
+                  // What the slot asks for, not all three. A tyre declares make and model and
+                  // deliberately no serial — nobody transcribes a DOT code off a sidewall — so a
+                  // Serial row on every wheel was a row that could only ever be blank.
+                  rows = slot.declaredFields()
+                    .map { field ->
+                      PdfSummaryRow(
+                        field.exportLabel(),
+                        component.valueOf(field)
+                      )
+                    },
                 )
               }
           }
@@ -930,6 +941,18 @@ class LogbookExportArchiveBuilder(
           )
         },
     )
+  }
+
+
+  /** Empty `spec_keys` means all three, so a preset that has not thought about it is unchanged. */
+  private fun ComponentSlot.declaredFields(): List<ComponentField> =
+    if (spec_keys.isEmpty()) ComponentField.entries
+    else ComponentField.entries.filter { it.key in spec_keys }
+
+  private fun ComponentField.exportLabel(): String = when (this) {
+    ComponentField.MAKE -> "Make"
+    ComponentField.MODEL -> "Model"
+    ComponentField.SERIAL -> "Serial"
   }
 
   /* -- EXPORT_LAYOUT_GENERIC ------------------------------------------------------------------ */
@@ -1296,13 +1319,31 @@ class LogbookExportArchiveBuilder(
       is ExportDateRange.Custom -> "$start -> $endInclusive"
     }
 
+  /**
+   * "N12345_Cessna_172", "Kuat_X675_1LGBH41JXMN491470" — the Thing's own two lines.
+   *
+   * It was tail number, make and model read straight off the aviation spec keys, so anything else
+   * fell through to `id` and exported as `y8WPyMmKR7Pz6HyVm5L3_Kuat_X675`. Joining only the
+   * non-blank parts also drops the double underscore an aeroplane with no make used to get.
+   *
+   * The aeroplane result is unchanged: its label is the tail number and its subtitle the make and
+   * model, which is what the two segments already were.
+   */
   private fun Thing.folderName(): String =
-    "${safeTailNumber()}_${specValue(SpecKeys.MAKE)}_${specValue(SpecKeys.MODEL)}"
+    listOf(displayLabel(templateOf()), displaySubtitle(templateOf()))
+      .filter { it.isNotBlank() }
+      .joinToString("_")
       .sanitizePathSegment()
+      .ifBlank { id.sanitizePathSegment() }
 
-  private fun Thing.safeTailNumber(): String =
-    specValue(SpecKeys.TAIL_NUMBER).ifBlank { id.ifBlank { "Aircraft" } }
+  /** The archive's subject — one Thing's name, or "Fleet" for several. */
+  private fun Thing.safeArchiveName(): String =
+    displayLabel(templateOf())
       .sanitizePathSegment()
+      .ifBlank { id.sanitizePathSegment() }
+
+  private fun Thing.templateOf(): ThingTemplate? =
+    templateRegistry.forThingWithFallback(this)
 
   private fun ComponentType.label(): String =
     when (this) {

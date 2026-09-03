@@ -29,6 +29,12 @@ class GenericExportLayoutTest {
   private fun paths(thing: Thing, template: ThingTemplate, logs: List<MaintenanceLog>): List<String> =
     entries(thing, template, logs).keys.toList()
 
+  /** The archive's per-thing directory — the root README sits beside it, not inside it. */
+  private fun folder(thing: Thing, template: ThingTemplate): String =
+    paths(thing, template, emptyList())
+      .first { it.contains('/') }
+      .substringBefore('/')
+
   private fun entries(
     thing: Thing,
     template: ThingTemplate,
@@ -227,6 +233,42 @@ class GenericExportLayoutTest {
     assertThat(bike).contains("Distance (mi)")
     assertThat(bike).contains("Ride Hours (hrs)")
     assertThat(bike).doesNotContain("(MI)")
+  }
+
+  @Test
+  fun theFolderIsNamedAfterTheThingNotItsGeneratedId() {
+    // A car exported as "y8WPyMmKR7Pz6HyVm5L3_Kuat_X675": the folder was tail number, make and
+    // model read off the aviation spec keys, so anything else fell through to the random id.
+    val folder = folder(
+      Thing(id = "y8WPyMmKR7Pz6HyVm5L3", name = "Kuat X675"),
+      CanonicalTemplates.AUTOMOTIVE,
+    )
+
+    assertThat(folder).startsWith("Kuat_X675")
+    assertThat(folder).doesNotContain("y8WPyMmKR7Pz6HyVm5L3")
+  }
+
+  @Test
+  fun anAeroplaneFolderIsUnchangedAndLosesItsDoubleUnderscore() {
+    val cessna = Thing(
+      id = "p1",
+      spec = listOf(
+        Spec(key = "tail_number", value_ = "N12345"),
+        Spec(key = "make", value_ = "Cessna"),
+        Spec(key = "model", value_ = "172"),
+      ),
+    )
+    assertThat(folder(cessna, AirplaneTemplate.TEMPLATE)).isEqualTo("N12345_Cessna_172")
+
+    // A blank make used to leave "N532SL__Sling_TSi" — an empty segment between two separators.
+    val noMake = Thing(
+      id = "p2",
+      spec = listOf(
+        Spec(key = "tail_number", value_ = "N532SL"),
+        Spec(key = "model", value_ = "Sling TSi"),
+      ),
+    )
+    assertThat(folder(noMake, AirplaneTemplate.TEMPLATE)).doesNotContain("__")
   }
 
 }
