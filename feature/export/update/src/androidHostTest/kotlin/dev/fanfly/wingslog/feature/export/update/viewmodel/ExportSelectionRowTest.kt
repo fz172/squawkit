@@ -2,22 +2,21 @@ package dev.fanfly.wingslog.feature.export.update.viewmodel
 
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.analytics.NoOpAnalyticsManager
+import dev.fanfly.wingslog.core.model.sharing.ShareRole
 import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import dev.fanfly.wingslog.core.template.ThingInflater
 import dev.fanfly.wingslog.core.template.canonical.CanonicalTemplates
 import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
-import dev.fanfly.wingslog.feature.export.datamanager.ExportManager
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetEntry
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
-import dev.fanfly.wingslog.core.model.sharing.ShareRole
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
-import dev.gitlive.firebase.auth.FirebaseAuth
-import dev.gitlive.firebase.auth.FirebaseUser
 import dev.fanfly.wingslog.thing.Spec
 import dev.fanfly.wingslog.thing.Thing
+import dev.gitlive.firebase.auth.FirebaseAuth
+import dev.gitlive.firebase.auth.FirebaseUser
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
@@ -80,7 +79,10 @@ class ExportSelectionRowTest {
   private fun rows(vm: ExportViewModel): List<ThingSelectionRow> =
     (vm.state.value as ExportUiState.Configuring).things
 
-  private fun entry(thing: Thing, template: dev.fanfly.wingslog.thing.ThingTemplate) =
+  private fun entry(
+    thing: Thing,
+    template: dev.fanfly.wingslog.thing.ThingTemplate
+  ) =
     FleetEntry(
       thing = ThingInflater.inflate(thing, template),
       shared = false,
@@ -88,54 +90,81 @@ class ExportSelectionRowTest {
     )
 
   @Test
-  fun `a home is named by its address, not "Untitled aircraft"`() = runTest(dispatcher) {
-    fleet.value = listOf(
-      entry(
-        Thing(id = "h1", spec = listOf(Spec(key = "address", value_ = "655 Disko Drive"))),
-        CanonicalTemplates.HOME,
+  fun `a home is named by its address, not "Untitled aircraft"`() =
+    runTest(dispatcher) {
+      fleet.value = listOf(
+        entry(
+          Thing(
+            id = "h1",
+            spec = listOf(Spec(key = "address", value_ = "655 Disko Drive"))
+          ),
+          CanonicalTemplates.HOME,
+        )
       )
-    )
-    val vm = viewModel()
-    advanceUntilIdle()
+      val vm = viewModel()
+      advanceUntilIdle()
 
-    val row = rows(vm).single()
-    assertThat(row.label).isEqualTo("655 Disko Drive")
-    assertThat(row.label).doesNotContain("aircraft")
-    assertThat(row.subtitle).doesNotContain("Aircraft")
-  }
+      val row = rows(vm).single()
+      assertThat(row.label).isEqualTo("655 Disko Drive")
+      assertThat(row.label).doesNotContain("aircraft")
+      assertThat(row.subtitle).doesNotContain("Aircraft")
+    }
 
   @Test
-  fun `a mixed fleet names each row from its own template`() = runTest(dispatcher) {
-    // The reason one ambient lexicon cannot serve this screen: these two rows need different words
-    // at the same moment.
-    fleet.value = listOf(
-      entry(
-        Thing(
-          id = "c1",
-          spec = listOf(
-            Spec(key = "make", value_ = "Honda"),
-            Spec(key = "model", value_ = "Civic"),
+  fun `a mixed fleet names each row from its own template`() =
+    runTest(dispatcher) {
+      // The reason one ambient lexicon cannot serve this screen: these two rows need different words
+      // at the same moment.
+      fleet.value = listOf(
+        entry(
+          Thing(
+            id = "c1",
+            spec = listOf(
+              Spec(key = "make", value_ = "Honda"),
+              Spec(key = "model", value_ = "Civic"),
+            ),
           ),
+          CanonicalTemplates.AUTOMOTIVE,
         ),
+        entry(
+          Thing(id = "h1", name = "Lake house"),
+          CanonicalTemplates.HOME,
+        ),
+      )
+      val vm = viewModel()
+      advanceUntilIdle()
+
+      assertThat(rows(vm).map { it.label }).containsExactly(
+        "Honda Civic",
+        "Lake house"
+      )
+    }
+
+  @Test
+  fun `a Thing with nothing filled in falls back to its type`() =
+    runTest(dispatcher) {
+      fleet.value = listOf(entry(Thing(id = "h1"), CanonicalTemplates.HOME))
+      val vm = viewModel()
+      advanceUntilIdle()
+
+      assertThat(rows(vm).single().label).isEqualTo("Home")
+    }
+  @Test
+  fun `a mixed export names each row rather than a row of dashes`() = runTest(dispatcher) {
+    // The history row renders these as "{first} +{n}". Filled from the aviation spec keys, three
+    // mixed Things wrote three blanks and the title read "— +2".
+    fleet.value = listOf(
+      entry(Thing(id = "h1", name = "Lake house"), CanonicalTemplates.HOME),
+      entry(
+        Thing(id = "c1", spec = listOf(Spec(key = "make", value_ = "Honda"))),
         CanonicalTemplates.AUTOMOTIVE,
       ),
-      entry(
-        Thing(id = "h1", name = "Lake house"),
-        CanonicalTemplates.HOME,
-      ),
+      entry(Thing(id = "b1", name = "Commuter"), CanonicalTemplates.BIKE),
     )
     val vm = viewModel()
     advanceUntilIdle()
 
-    assertThat(rows(vm).map { it.label }).containsExactly("Honda Civic", "Lake house")
+    assertThat(rows(vm).map { it.label }).containsNoneOf("", "—")
   }
 
-  @Test
-  fun `a Thing with nothing filled in falls back to its type`() = runTest(dispatcher) {
-    fleet.value = listOf(entry(Thing(id = "h1"), CanonicalTemplates.HOME))
-    val vm = viewModel()
-    advanceUntilIdle()
-
-    assertThat(rows(vm).single().label).isEqualTo("Home")
-  }
 }

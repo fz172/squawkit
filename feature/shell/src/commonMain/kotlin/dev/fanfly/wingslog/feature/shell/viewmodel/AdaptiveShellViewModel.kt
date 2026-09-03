@@ -4,12 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.core.template.CurrentThingTemplate
-import dev.fanfly.wingslog.core.template.SpecKeys
 import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.core.template.TemplateResolution
 import dev.fanfly.wingslog.core.template.displayLabel
 import dev.fanfly.wingslog.core.template.displaySubtitle
-import dev.fanfly.wingslog.core.template.specValue
 import dev.fanfly.wingslog.core.ui.adaptive.AdaptiveShellUiState
 import dev.fanfly.wingslog.core.ui.adaptive.ShellSection
 import dev.fanfly.wingslog.core.ui.adaptive.ShellThing

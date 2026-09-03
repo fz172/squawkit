@@ -33,7 +33,8 @@
   <!-- Running -->
   <string name="export_running_title">Preparing export</string>
   <string name="export_running_stage_counter"><xliff:g example="3">%1$d</xliff:g> / <xliff:g example="3">%2$d</xliff:g></string>
-  <string name="export_progress_collecting_data">Collecting <xliff:g example="aircraft">%1$s</xliff:g> data...</string>
+  <!-- No thing noun: an export can span several templates at once, so there is no one word. -->
+  <string name="export_progress_collecting_data">Collecting data...</string>
   <string name="export_progress_building_archive">Generating reports...</string>
   <string name="export_progress_compressing_archive">Compressing files...</string>
   <string name="export_progress_saving_file">Saving export...</string>

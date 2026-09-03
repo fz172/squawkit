@@ -1,5 +1,8 @@
 package dev.fanfly.wingslog.feature.export.datamanager.impl
 
+import dev.fanfly.wingslog.core.template.TemplateRegistry
+import dev.fanfly.wingslog.core.template.displayLabel
+import dev.fanfly.wingslog.core.template.displaySubtitle
 import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.core.model.id.generateRandomId
 import dev.fanfly.wingslog.core.template.SpecKeys
@@ -28,6 +31,7 @@ class ExportManagerImpl(
   private val aggregator: LogbookExportAggregator,
   private val attachmentExportResolver: AttachmentExportResolver,
   private val archiveBuilder: LogbookExportArchiveBuilder,
+  private val templateRegistry: TemplateRegistry,
   private val zipFileWriter: ZipFileWriter,
   private val exportFileStore: ExportFileStore,
   private val remoteRepository: ExportHistoryRemoteRepository,
@@ -304,15 +308,15 @@ class ExportManagerImpl(
     formats = ExportFormat.entries.filter { it in request.formats }
       .map { it.name },
     date_range = request.dateRange.toRecordDateRange(),
+    // The two field NAMES are frozen wire (#638); what goes in them is not. They were filled from
+    // the aviation spec keys, so a car or a house wrote two blanks and the history row rendered
+    // "— +2" for three of them. These are display strings, so they take the same label the
+    // switcher and the export picker use.
     aircraft = bundles.map { bundle ->
+      val template = templateRegistry.forThingWithFallback(bundle.thing)
       ExportRecordAircraft(
-        tail_number = bundle.thing.specValue(SpecKeys.TAIL_NUMBER),
-        make_model = listOf(
-          bundle.thing.specValue(SpecKeys.MAKE),
-          bundle.thing.specValue(SpecKeys.MODEL)
-        )
-          .filter { it.isNotBlank() }
-          .joinToString(" "),
+        tail_number = bundle.thing.displayLabel(template),
+        make_model = bundle.thing.displaySubtitle(template),
       )
     },
     destination_email = request.destinationEmail.orEmpty(),

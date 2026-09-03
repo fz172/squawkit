@@ -34,6 +34,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Attachment
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Download
@@ -41,7 +42,6 @@ import androidx.compose.material.icons.filled.EditCalendar
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.FileDownload
-import androidx.compose.material.icons.filled.Flight
 import androidx.compose.material.icons.filled.FolderZip
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Lock
@@ -105,9 +105,9 @@ import dev.fanfly.wingslog.core.ui.theme.statusColors
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDisplayLocation
 import dev.fanfly.wingslog.feature.export.datamanager.ExportFormat
 import dev.fanfly.wingslog.feature.export.datamanager.ExportProgressStep
-import dev.fanfly.wingslog.feature.export.update.viewmodel.ThingSelectionRow
 import dev.fanfly.wingslog.feature.export.update.viewmodel.DateRangeOption
 import dev.fanfly.wingslog.feature.export.update.viewmodel.ExportUiState
+import dev.fanfly.wingslog.feature.export.update.viewmodel.ThingSelectionRow
 import dev.fanfly.wingslog.feature.subscription.viewing.ProUpsellSheet
 import dev.fanfly.wingslog.feature.subscription.viewing.UpsellTrigger
 import kotlinx.datetime.LocalDate
@@ -119,9 +119,9 @@ import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.cancel
 import wingslog.core.sharedassets.generated.resources.done
-import wingslog.core.sharedassets.generated.resources.your_stuff
 import wingslog.core.sharedassets.generated.resources.empty_add_thing
 import wingslog.core.sharedassets.generated.resources.retry
+import wingslog.core.sharedassets.generated.resources.your_stuff
 import wingslog.feature.export.sharedassets.generated.resources.Res
 import wingslog.feature.export.sharedassets.generated.resources.export_all_time
 import wingslog.feature.export.sharedassets.generated.resources.export_back_to_setup
@@ -747,7 +747,8 @@ private fun ExportBottomBar(
         verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
       ) {
         Icon(
-          imageVector = Icons.Default.Flight,
+          // Counts a selection that may hold any mix of types, so not an aeroplane.
+          imageVector = Icons.Default.Category,
           contentDescription = null,
           tint = MaterialTheme.colorScheme.onSurfaceVariant,
           modifier = Modifier.size(14.dp),
@@ -951,10 +952,10 @@ private fun exportRunningPhases(): List<ExportProgressStep> = listOf(
 
 @Composable
 private fun ExportProgressStep.label(): String = when (this) {
-  ExportProgressStep.COLLECTING_DATA -> stringResource(
-    Res.string.export_progress_collecting_data,
-    LocalThingLexicon.current.thingNoun.singular,
-  )
+  // Neutral: one export can cover a car and a house at once, so "Collecting vehicle data" would
+  // be wrong for half of it.
+  ExportProgressStep.COLLECTING_DATA ->
+    stringResource(Res.string.export_progress_collecting_data)
 
   ExportProgressStep.BUILDING_ARCHIVE -> stringResource(Res.string.export_progress_building_archive)
   ExportProgressStep.COMPRESSING_ARCHIVE -> stringResource(Res.string.export_progress_compressing_archive)
@@ -1223,8 +1224,8 @@ private fun ReceiptCard(
     }
     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
     ReceiptRow(
-      Icons.Default.Flight,
-      LexiconFormatter.titleCase(LocalThingLexicon.current.thingNoun),
+      Icons.Default.Category,
+      stringResource(CoreRes.string.your_stuff),
       thingSummary,
       mono = true
     )
