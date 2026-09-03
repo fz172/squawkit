@@ -1,4 +1,4 @@
-# The automotive preset — canonical template (id "automotive", version 2).
+# The automotive preset — canonical template (id "automotive", version 3).
 #
 # Covers cars and motorcycles under one preset. PRD §4.8 argued for keeping them separate — the
 # component vocabulary differs (final drive vs transmission) and motorcyclists bristle at being
@@ -6,10 +6,12 @@
 # intersection rather than either domain's: `vehicle`, and a component set that reads correctly for
 # both. The PRD table still lists them as two rows and is stale on this point.
 #
-# See templates/README.md before editing, and compile with ./compile-template.sh automotive.v2
+# See templates/README.md before editing, and compile with ./compile-template.sh automotive.v3
+#
+# v3 marks `year` numeric, so the form gives it a keypad and leaves its casing alone (#739).
 
 id: "automotive"
-version: 2
+version: 3
 min_app_version: 0
 
 display_name: "Automotive"
@@ -76,7 +78,7 @@ capabilities {
 
 spec_fields { key: "make" label: "Make" }
 spec_fields { key: "model" label: "Model" }
-spec_fields { key: "year" label: "Year" placeholder: "2019" }
+spec_fields { key: "year" label: "Year" placeholder: "2019" numeric: true }
 spec_fields { key: "vin" label: "VIN" is_identifier: true placeholder: "1HGBH41JXMN109186" }
 
 # TWO SLOTS, and that is the whole vehicle: an engine and a set of tyres.
