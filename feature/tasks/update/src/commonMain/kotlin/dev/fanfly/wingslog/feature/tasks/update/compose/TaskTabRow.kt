@@ -40,17 +40,9 @@ fun TaskTabRow(
   selectedIndex: Int,
   onSelect: (Int) -> Unit,
   modifier: Modifier = Modifier,
-  /** Drawn on the comments tab only; see [IconLabelTabSpec.badgeCount] for the zero case. */
-  commentCount: Int = 0,
 ) {
   IconLabelTabRow(
-    tabs = tabs.map {
-      IconLabelTabSpec(
-        icon = it.icon,
-        label = stringResource(it.label),
-        badgeCount = if (it == COMMENTS_TAB) commentCount else null,
-      )
-    },
+    tabs = tabs.map { IconLabelTabSpec(it.icon, stringResource(it.label)) },
     selectedIndex = selectedIndex,
     onSelect = onSelect,
     modifier = modifier,

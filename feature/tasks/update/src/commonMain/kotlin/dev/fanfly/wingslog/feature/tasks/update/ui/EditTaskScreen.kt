@@ -120,7 +120,6 @@ fun EditTaskScreen(
   onRemoveLog: (MaintenanceLog) -> Unit = {},
   snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
   attachmentSection: @Composable () -> Unit = {},
-  commentCount: Int = 0,
   /** An unposted comment draft or an open inline editor — text that exists nowhere else yet. */
   hasCommentDraft: Boolean = false,
   commentsSection: @Composable () -> Unit = {},
@@ -228,7 +227,6 @@ fun EditTaskScreen(
         ) {
           TaskTabRow(
             tabs = tabs.map { it.spec },
-            commentCount = commentCount,
             selectedIndex = pagerState.currentPage,
             onSelect = {
               coroutineScope.launch {

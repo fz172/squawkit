@@ -90,7 +90,6 @@ fun SquawkFormScreen(
   modifier: Modifier = Modifier,
   snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
   attachmentSection: @Composable () -> Unit = {},
-  commentCount: Int = 0,
   /** An unposted comment draft or an open inline editor — text that exists nowhere else yet. */
   hasCommentDraft: Boolean = false,
   commentsSection: @Composable () -> Unit = {},
@@ -184,7 +183,6 @@ fun SquawkFormScreen(
               onSelect = {
                 coroutineScope.launch { pagerState.animateScrollToPage(it) }
               },
-              commentCount = commentCount,
               modifier = Modifier.constrainedContentWidth(ContentWidth.Form),
             )
           }

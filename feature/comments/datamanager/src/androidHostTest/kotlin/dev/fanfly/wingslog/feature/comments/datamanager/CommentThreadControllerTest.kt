@@ -124,21 +124,6 @@ class CommentThreadControllerTest {
     assertThat(controller.state.value.menuOpenId).isNull()
   }
 
-  @Test
-  fun countTracksLiveCommentsOnly() = runTest {
-    val manager = FakeCommentManager()
-    val controller = controllerOn(manager)
-
-    assertThat(controller.state.value.count).isEqualTo(0)
-    manager.emit(listOf(entry("c1"), entry("c2")))
-    assertThat(controller.state.value.count).isEqualTo(2)
-
-    // The tombstone keeps its card in the thread, but the badge is "is there anything to read".
-    manager.emit(listOf(entry("c1"), entry("c2", "", deleted = true)))
-    assertThat(controller.state.value.comments).hasSize(2)
-    assertThat(controller.state.value.count).isEqualTo(1)
-  }
-
   private fun TestScope.controllerOn(manager: CommentManager) =
     CommentThreadController(
       commentManager = manager,

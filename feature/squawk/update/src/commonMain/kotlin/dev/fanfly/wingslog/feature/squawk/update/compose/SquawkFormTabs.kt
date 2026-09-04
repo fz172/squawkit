@@ -43,7 +43,6 @@ fun SquawkTabRow(
   selectedIndex: Int,
   onSelect: (Int) -> Unit,
   modifier: Modifier = Modifier,
-  commentCount: Int = 0,
 ) {
   IconLabelTabRow(
     tabs = tabs.map { tab ->
@@ -56,7 +55,6 @@ fun SquawkTabRow(
         SquawkFormTab.COMMENTS -> IconLabelTabSpec(
           icon = Icons.Default.Forum,
           label = stringResource(CommentsRes.string.comments_tab),
-          badgeCount = commentCount,
         )
       }
     },

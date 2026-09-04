@@ -25,8 +25,12 @@ containing only their own comment, and the later write would erase the earlier o
 no tombstone and nothing to reconcile. A feature whose entire purpose is more than one person
 writing cannot be built on a single-document LWW cell.
 
-Separate rows also mean an edit or a delete touches one small document, and the count on the tab
-comes from the row count rather than from re-decoding the parent.
+Separate rows also mean an edit or a delete touches one small document rather than rewriting the
+parent.
+
+The Comments tab carries no count. A total is not what a glance at a tab wants to know — whether
+there is something *new* is — and the app has no per-user read watermark to answer that. A number
+that means "total" where the eye reads "unread" is worse than no number.
 
 ### One collection per Thing, not per record
 
@@ -83,8 +87,6 @@ Two consequences follow, and both are enforced in `CommentManagerImpl`:
 - **Deleting twice does nothing.** Re-stamping would move the recorded time, which is the one fact
   the tombstone exists to pin down.
 
-The tab badge counts live comments only. A tombstone still occupies a card, but the badge answers
-"is there anything here to read", and a withdrawn comment is not.
 
 ## 3. Who may write
 

@@ -61,11 +61,6 @@ data class CommentThreadState(
   /** A post is in flight — the send button is inert until it lands, so a double tap posts once. */
   val isPosting: Boolean = false,
 ) {
-  /**
-   * Live comments only. A tombstone still occupies a card in the thread, but it is not something
-   * to go and read, and the badge is an at-a-glance "is there anything here".
-   */
-  val count: Int get() = comments.count { !it.isDeleted }
   val canPost: Boolean get() = draft.isNotBlank() && !isPosting
   val canSaveEdit: Boolean get() = editDraft.isNotBlank()
 

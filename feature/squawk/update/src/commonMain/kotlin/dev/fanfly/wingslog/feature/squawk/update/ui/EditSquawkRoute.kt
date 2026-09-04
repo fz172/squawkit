@@ -118,7 +118,6 @@ fun EditSquawkRoute(
         onSeePlans = { navController.navigate(Screen.Subscription.route) },
       )
     },
-    commentCount = commentState.count,
     hasCommentDraft = commentState.hasUnsavedInput,
     commentsSection = {
       val thread = viewModel.comments
