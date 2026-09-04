@@ -1,4 +1,4 @@
-# The airplane preset — canonical template (id "airplane", version 2).
+# The airplane preset — canonical template (id "airplane", version 3).
 #
 # THIS FILE IS THE SOURCE OF TRUTH. `airplane.v1.pb` beside it is compiled from this file and is
 # what the app actually bakes in; see templates/README.md for the command and why the compile
@@ -19,9 +19,13 @@
 # to tell from a payload which one a user is running. THAT is why every template or lexicon change
 # now bumps the version, pre-release included — the version is how a stored copy is identified, and
 # an unbumped edit makes it a lie. `npm run dna-refresh` moves existing Things onto this one.
+#
+# v3 adds `empty_states`. Every sentence in it is the string the app shipped, character for
+# character — the empty-state resources were deleted and this is where they went, so a word
+# invented here would be a silent change to aviation copy rather than a translation of it.
 
 id: "airplane"
-version: 2
+version: 3
 
 # No floor. This template ships inside every build that can read it, so a client can never
 # encounter it from the future — the floor exists for FETCHED templates (§6), and a baked-in one is
@@ -71,6 +75,22 @@ lexicon {
     singular: "Service Bulletin"
     plural: "Service Bulletins"
     abbreviation: "SB"
+  }
+
+  # The empty-state copy, moved here from strings.xml. VERBATIM — `theLexiconStillSaysWhatTheAppSays`
+  # compares each of these against the wording the app shipped, and the snapshot rows they replaced
+  # came out of `string_snapshot.tsv` in the same commit.
+  empty_states {
+    squawk_hint: "Tap + to report a defect or anomaly"
+    task_hint: "Tap + to add inspections, part replacements, and other checks."
+    task_history_hint: "Log work against a task to see its history here."
+    log_hint: "Log your first entry — oil change, annual, 100-hour, or any other airframe, engine, or prop work."
+
+    overview_log_title: "No logs yet"
+    overview_log_hint: "Add the first maintenance entry to start the aircraft record."
+    overview_task_title: "No upcoming tasks"
+    overview_task_hint: "Scheduled maintenance is up to date."
+    overview_squawk_hint: "No active discrepancies for this aircraft."
   }
 }
 

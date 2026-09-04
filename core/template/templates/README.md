@@ -21,9 +21,9 @@ something no template promises.
 match, delete the old `.pb`, and compile the new one:
 
 ```bash
-git mv airplane.v2.textproto airplane.v3.textproto   # and set `version: 3` inside
-git rm binary/airplane.v2.pb
-./compile-template.sh airplane.v3                    # writes binary/airplane.v3.pb
+git mv airplane.v3.textproto airplane.v4.textproto   # and set `version: 4` inside
+git rm binary/airplane.v3.pb
+./compile-template.sh airplane.v4                    # writes binary/airplane.v4.pb
 ./gradlew :core:template:testAndroidHostTest
 ```
 
@@ -83,6 +83,7 @@ script:
 |---|---|
 | `theEmbeddedTemplateMatchesTheCommittedAsset` | the Gradle generator skipped, mis-wired, or stale |
 | `theLexiconStillSaysWhatTheAppSays` | a wrong word at the source — the `.pb` is binary, so review will not |
+| `theEmptyStateCopyStillSaysWhatTheAppSays` | aviation empty-state copy drifting — the only guard on it since it left `strings.xml` |
 | `theStructureTheAirplaneScreensAssumeIsIntact` | a dropped identifier flag, a reordered section, a meter on the wrong slot |
 | `CanonicalTemplatesTest` | the PRD §4.7 rules over every preset — duplicate keys, an empty noun, meters claimed but not declared, a meter scoped to a slot that does not exist |
 | `TemplateKeysResolveTest` | a slot or spec key the app emits that the template does not declare |

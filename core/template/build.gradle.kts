@@ -79,7 +79,7 @@ val generateTemplateAssets by tasks.registering {
       "no compiled templates in ${templateDir.asFile} — run templates/compile-template.sh"
     }
 
-    // "airplane.v2.pb" -> id "airplane", version 2. Keyed by preset id rather than by file so that
+    // "airplane.v3.pb" -> id "airplane", version 3. Keyed by preset id rather than by file so that
     // BUMPING A VERSION IS A RENAME AND NOTHING ELSE — no Kotlin constant to chase, which is what
     // makes "every template edit bumps the version" cheap enough to actually hold to. Highest
     // version wins, so a v1 left beside its v2 cannot quietly stay the one that ships.

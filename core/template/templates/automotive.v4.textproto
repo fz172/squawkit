@@ -1,4 +1,4 @@
-# The automotive preset — canonical template (id "automotive", version 3).
+# The automotive preset — canonical template (id "automotive", version 4).
 #
 # Covers cars and motorcycles under one preset. PRD §4.8 argued for keeping them separate — the
 # component vocabulary differs (final drive vs transmission) and motorcyclists bristle at being
@@ -6,12 +6,16 @@
 # intersection rather than either domain's: `vehicle`, and a component set that reads correctly for
 # both. The PRD table still lists them as two rows and is stale on this point.
 #
-# See templates/README.md before editing, and compile with ./compile-template.sh automotive.v3
+# See templates/README.md before editing, and compile with ./compile-template.sh automotive.v4
+#
+# v4 adds `empty_states` — the per-domain empty-state copy that used to be fixed aviation
+# text in strings.xml. A noun could not fix those strings: what makes them useful is the
+# examples, and this preset's examples are its own.
 #
 # v3 marks `year` numeric, so the form gives it a keypad and leaves its casing alone (#739).
 
 id: "automotive"
-version: 3
+version: 4
 min_app_version: 0
 
 display_name: "Automotive"
@@ -47,6 +51,21 @@ lexicon {
     singular: "Technical Service Bulletin"
     plural: "Technical Service Bulletins"
     abbreviation: "TSB"
+  }
+
+  # The empty-state copy. Cars and motorcycles share it, so the examples are the ones both do —
+  # an oil change and a brake job, never a chain or a valve adjustment.
+  empty_states {
+    squawk_hint: "Tap + to report a fault, a noise, or a warning light"
+    task_hint: "Tap + to add oil changes, brake service, and other scheduled work."
+    task_history_hint: "Log work against a service to see its history here."
+    log_hint: "Log your first entry — an oil change, a brake job, or any other work on the vehicle."
+
+    overview_log_title: "No records yet"
+    overview_log_hint: "Add the first service record to start the vehicle history."
+    overview_task_title: "No upcoming service"
+    overview_task_hint: "Scheduled service is up to date."
+    overview_squawk_hint: "Nothing needs attention on this vehicle right now."
   }
 }
 

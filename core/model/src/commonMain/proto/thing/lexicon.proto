@@ -51,6 +51,46 @@ message ComplianceTerm {
   string abbreviation = 3;  // "AD"
 }
 
+/**
+ * The empty-state copy a template writes for its own screens.
+ *
+ * A noun cannot fix these. "Log your first entry — oil change, annual, 100-hour, or any other
+ * airframe, engine, or prop work" has no slot to substitute: what makes it useful is the
+ * *examples*, and a house's examples are a furnace service and a roof repair. Substituting the log
+ * noun into that frame produces a correctly-worded sentence about the wrong subject, which is the
+ * failure mode the lexicon exists to prevent and the one no formatter can see.
+ *
+ * So these are whole sentences per template rather than frames, for the same reason `down_status`
+ * is (design §10a's per-string override, scoped to the strings that actually need it). They are
+ * the copy the app used to hold in `strings.xml`; the resources are gone, and these replaced them.
+ *
+ * **Every one of these is a PER-THING surface** — a tab or a rail inside a selected Thing, where
+ * exactly one template is in scope. The fleet empty state is deliberately not here: it renders
+ * with nothing selected.
+ *
+ * An empty field renders an empty line, so `CanonicalTemplatesTest` requires all of them.
+ */
+message EmptyStates {
+  // Squawks tab, Open — the line under "No open squawks".
+  string squawk_hint = 1;
+  // Tasks tab, Due — the line under "No maintenance tasks".
+  string task_hint = 2;
+  // Tasks tab, History. The whole state, with no title above it.
+  string task_history_hint = 3;
+  // Logs tab — the line under "Work log is empty", above the "Log First Entry" button.
+  string log_hint = 4;
+
+  // The Overview rails. Their titles are here too, unlike the tabs above, because a rail title is
+  // fixed text rather than a frame — "No logs yet" names the log noun in a sentence the noun does
+  // not fit ("No work logs yet" is not what the aviation app says). The squawk rail is the
+  // exception: its title reuses the tab's "No open %1$s", which already substitutes.
+  string overview_log_title = 5;
+  string overview_log_hint = 6;
+  string overview_task_title = 7;
+  string overview_task_hint = 8;
+  string overview_squawk_hint = 9;
+}
+
 message Lexicon {
   // Field names here are the CODE vocabulary; their values are the user-facing words. A Lexicon
   // holding "attention" still lives in `squawk`, because that is what the concept is called
@@ -84,4 +124,6 @@ message Lexicon {
 
   ComplianceTerm compliance_mandatory = 14;  // AD · safety recall · code violation
   ComplianceTerm compliance_advisory = 15;   // service bulletin · TSB · manufacturer notice
+
+  EmptyStates empty_states = 16;
 }

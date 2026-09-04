@@ -24,6 +24,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import dev.fanfly.wingslog.core.template.LexiconFormatter
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.logNoun
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.logs.sharedassets.generated.resources.add_first_maintenance_log
@@ -59,7 +62,10 @@ fun LogOnboardingCard(
           modifier = Modifier.size(Spacing.huge)
         )
         Text(
-          text = stringResource(SharedRes.string.no_maintenance_logs_title),
+          text = stringResource(
+            SharedRes.string.no_maintenance_logs_title,
+            LexiconFormatter.sentenceCase(LocalThingLexicon.current.logNoun),
+          ),
           style = MaterialTheme.typography.titleLarge,
           fontWeight = FontWeight.Bold
         )

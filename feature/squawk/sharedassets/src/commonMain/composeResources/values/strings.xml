@@ -5,7 +5,6 @@
   <string name="open_with_count">OPEN (<xliff:g example="3">%1$d</xliff:g>)</string>
   <string name="closed_with_count">CLOSED (<xliff:g example="3">%1$d</xliff:g>)</string>
   <string name="no_open_squawks">No open <xliff:g example="squawks">%1$s</xliff:g></string>
-  <string name="no_open_squawks_description">Tap + to report a defect or anomaly</string>
   <string name="no_closed_squawks">No closed <xliff:g example="squawks">%1$s</xliff:g> yet.</string>
   <string name="priority_low">Low</string>
   <string name="priority_medium">Medium</string>

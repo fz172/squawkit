@@ -1,13 +1,17 @@
-# The bike preset — canonical template (id "bike", version 2), pedal bicycles.
+# The bike preset — canonical template (id "bike", version 3), pedal bicycles.
 #
 # The second-most informative preset after `home`, for one reason: its Thing-level identity is a
 # frame number, not make/model/serial (PRD §4.3), and it carries TWO meters where every other
 # vehicle carries one. A screen that assumes a single usage number will show it here.
 #
-# See templates/README.md before editing, and compile with ./compile-template.sh bike.v2
+# See templates/README.md before editing, and compile with ./compile-template.sh bike.v3
+#
+# v3 adds `empty_states` — the per-domain empty-state copy that used to be fixed aviation
+# text in strings.xml. A noun could not fix those strings: what makes them useful is the
+# examples, and this preset's examples are its own.
 
 id: "bike"
-version: 2
+version: 3
 min_app_version: 0
 
 display_name: "Bike"
@@ -35,6 +39,21 @@ lexicon {
 
   # compliance is off below, so the terms are deliberately absent — see home.v1.textproto for why
   # leaving them empty is what makes the capability a real check.
+
+  # The empty-state copy. The examples are the jobs a rider actually does, and the squawk hint
+  # avoids "defect" for the same reason `technician` is "person": most of this work is self-done.
+  empty_states {
+    squawk_hint: "Tap + to report a creak, a rub, or anything not working right"
+    task_hint: "Tap + to add chain wear checks, brake bleeds, and other recurring service."
+    task_history_hint: "Log work against a service to see its history here."
+    log_hint: "Log your first entry — a chain replacement, a brake bleed, or any other work on the bike."
+
+    overview_log_title: "No records yet"
+    overview_log_hint: "Add the first service record to start the bike history."
+    overview_task_title: "No upcoming service"
+    overview_task_hint: "Scheduled service is up to date."
+    overview_squawk_hint: "Nothing needs attention on this bike right now."
+  }
 }
 
 capabilities {
