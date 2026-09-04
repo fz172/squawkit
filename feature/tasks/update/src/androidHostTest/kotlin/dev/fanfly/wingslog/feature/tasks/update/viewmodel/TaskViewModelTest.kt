@@ -9,6 +9,7 @@ import dev.fanfly.wingslog.thing.MaintenanceTask
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
+import dev.fanfly.wingslog.feature.comments.datamanager.CommentManager
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
@@ -57,6 +58,7 @@ class TaskViewModelTest {
 
   private lateinit var inspectionDataManager: TaskDataManager
   private lateinit var attachmentManager: AttachmentManager
+  private lateinit var commentManager: CommentManager
   private lateinit var auth: FirebaseAuth
   private lateinit var maintenanceLogManager: MaintenanceLogManager
   private lateinit var subscriptionManager: SubscriptionManager
@@ -69,6 +71,8 @@ class TaskViewModelTest {
 
     inspectionDataManager = mockk(relaxed = true)
     attachmentManager = mockk(relaxed = true)
+    commentManager = mockk(relaxed = true)
+    every { commentManager.observeComments(any()) } returns flowOf(emptyList())
     auth = mockk(relaxed = true)
     maintenanceLogManager = mockk(relaxed = true)
     subscriptionManager = mockk(relaxed = true)
@@ -524,6 +528,7 @@ class TaskViewModelTest {
     TaskViewModel(
       inspectionDataManager = inspectionDataManager,
       attachmentManager = attachmentManager,
+      commentManager = commentManager,
       auth = auth,
       maintenanceLogManager = maintenanceLogManager,
       subscriptionManager = subscriptionManager,
@@ -536,6 +541,7 @@ class TaskViewModelTest {
     TaskViewModel(
       inspectionDataManager = inspectionDataManager,
       attachmentManager = attachmentManager,
+      commentManager = commentManager,
       auth = auth,
       maintenanceLogManager = maintenanceLogManager,
       subscriptionManager = subscriptionManager,

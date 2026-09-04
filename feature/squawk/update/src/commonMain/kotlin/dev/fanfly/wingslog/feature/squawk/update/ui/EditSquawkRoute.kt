@@ -14,6 +14,7 @@ import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.nav.Screen.Companion.CROSS_SCREEN_SUCCESS_MESSAGE
 import dev.fanfly.wingslog.feature.attachment.model.visible
 import dev.fanfly.wingslog.feature.attachment.viewing.AttachmentFormSection
+import dev.fanfly.wingslog.feature.comments.viewing.CommentThreadSection
 import dev.fanfly.wingslog.feature.squawk.update.viewmodel.SquawkFormEvent
 import dev.fanfly.wingslog.feature.squawk.update.viewmodel.SquawkFormViewModel
 import org.jetbrains.compose.resources.stringResource
@@ -34,6 +35,7 @@ fun EditSquawkRoute(
   val pendingAttachments by viewModel.pendingAttachments.collectAsStateWithLifecycle()
   val showAttachmentPicker by viewModel.showAttachmentPicker.collectAsStateWithLifecycle()
   val attachmentUploadEnabled by viewModel.attachmentUploadEnabled.collectAsStateWithLifecycle()
+  val commentState by viewModel.commentState.collectAsStateWithLifecycle()
   val squawkWord = LexiconFormatter.sentenceCase(LocalThingLexicon.current.squawkNoun)
   val successMessage = stringResource(Res.string.squawk_updated, squawkWord)
   val dismissedMessage = stringResource(Res.string.squawk_dismissed, squawkWord)
@@ -115,6 +117,24 @@ fun EditSquawkRoute(
         onPickError = viewModel::onFilePickError,
         onSeePlans = { navController.navigate(Screen.Subscription.route) },
       )
+    },
+    commentCount = commentState.count,
+    commentsSection = {
+      val thread = viewModel.comments
+      if (thread != null) {
+        CommentThreadSection(
+          state = commentState,
+          onDraftChange = thread::onDraftChange,
+          onPost = thread::post,
+          onToggleMenu = thread::toggleMenu,
+          onDismissMenu = thread::dismissMenu,
+          onEdit = thread::startEdit,
+          onDelete = thread::delete,
+          onEditDraftChange = thread::onEditDraftChange,
+          onCancelEdit = thread::cancelEdit,
+          onSaveEdit = thread::saveEdit,
+        )
+      }
     },
   )
 }

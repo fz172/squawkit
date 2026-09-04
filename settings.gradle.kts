@@ -89,6 +89,11 @@ include(":feature:export:update")
 include(":feature:developeroptions:datamanager")
 include(":feature:developeroptions:plugin")
 
+include(":feature:comments:model")
+include(":feature:comments:datamanager")
+include(":feature:comments:sharedassets")
+include(":feature:comments:viewing")
+
 include(":feature:squawk:model")
 include(":feature:squawk:datamanager")
 include(":feature:squawk:sharedassets")

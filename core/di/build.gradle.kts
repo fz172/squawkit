@@ -35,6 +35,7 @@ kotlin {
       implementation(project(":feature:ads:datamanager"))
       implementation(project(":feature:thing:update"))
       implementation(project(":feature:attachment:datamanager"))
+      implementation(project(":feature:comments:datamanager"))
       implementation(project(":feature:export:datamanager"))
       implementation(project(":feature:export:update"))
       implementation(project(":feature:developeroptions:datamanager"))

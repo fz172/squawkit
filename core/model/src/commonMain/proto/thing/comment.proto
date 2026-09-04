@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+option java_package = "dev.fanfly.wingslog.thing";
+option java_multiple_files = true;
+
+// Which record a comment hangs off. One `comment` collection per Thing carries the comments for
+// every record under it, so the thread is selected by (parent_type, parent_id) rather than by a
+// collection path — one sync listener instead of one per record.
+enum CommentParentType {
+  COMMENT_PARENT_TYPE_UNKNOWN = 0;
+  COMMENT_PARENT_TYPE_SQUAWK = 1;
+  COMMENT_PARENT_TYPE_MAINTENANCE_TASK = 2;
+}
+
+// A note one collaborator leaves on a squawk or a maintenance task: troubleshooting steps, parts
+// status, "holding this until the 100-hr". Its own entity, not a repeated field on the parent,
+// because two members commenting at once must not last-writer-wins each other away.
+message Comment {
+  string id = 1;
+  string parent_id = 2;
+  CommentParentType parent_type = 3;
+  string text = 4;
+
+  // Who wrote it. The uid is the identity the edit/delete gate checks; the name is denormalized at
+  // post time so the thread reads correctly offline, and keeps reading correctly after the author
+  // leaves the share or renames themselves.
+  string author_uid = 5;
+  string author_name = 6;
+
+  google.protobuf.Timestamp created_at = 7;
+  // Unset until the author edits the text. Drives the "Edited …" line.
+  google.protobuf.Timestamp edited_at = 8;
+}

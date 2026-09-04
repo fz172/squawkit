@@ -51,6 +51,10 @@ kotlin {
       implementation(project(":feature:attachment:sharedassets"))
       implementation(project(":feature:attachment:datamanager"))
       implementation(project(":feature:attachment:viewing"))
+      implementation(project(":feature:comments:datamanager"))
+      implementation(project(":feature:comments:model"))
+      implementation(project(":feature:comments:sharedassets"))
+      implementation(project(":feature:comments:viewing"))
 
       implementation(libs.koin.compose.viewmodel)
       implementation(libs.kermit)

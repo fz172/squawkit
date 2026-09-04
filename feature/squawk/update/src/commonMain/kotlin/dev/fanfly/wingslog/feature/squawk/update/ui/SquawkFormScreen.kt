@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -29,7 +31,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -49,7 +53,12 @@ import dev.fanfly.wingslog.feature.squawk.update.compose.DismissSquawkDialog
 import dev.fanfly.wingslog.feature.squawk.update.compose.ResolveOptionsMenu
 import dev.fanfly.wingslog.feature.squawk.update.compose.SquawkBasicSection
 import dev.fanfly.wingslog.feature.squawk.update.compose.SquawkDetailsSection
+import dev.fanfly.wingslog.feature.squawk.update.compose.SquawkFormTab
+import dev.fanfly.wingslog.feature.squawk.update.compose.SquawkTabRow
+import dev.fanfly.wingslog.feature.squawk.update.compose.squawkFormTabsFor
 import dev.fanfly.wingslog.feature.squawk.update.viewmodel.SquawkFormState
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.squawk.sharedassets.generated.resources.Res
 import wingslog.feature.squawk.sharedassets.generated.resources.add_squawk
@@ -81,6 +90,8 @@ fun SquawkFormScreen(
   modifier: Modifier = Modifier,
   snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
   attachmentSection: @Composable () -> Unit = {},
+  commentCount: Int = 0,
+  commentsSection: @Composable () -> Unit = {},
 ) {
   val isEdit = state.squawkId != null
   val isDismissed =
@@ -114,35 +125,68 @@ fun SquawkFormScreen(
     )
   }
 
+  // Details on an existing squawk, plus Comments; the add form has only the one tab and skips the
+  // row entirely (nothing to switch to, and no id for a comment to point at).
+  val tabs = squawkFormTabsFor(isEdit)
+  val pagerState = rememberPagerState(pageCount = { tabs.size })
+  val coroutineScope = rememberCoroutineScope()
+
   val analytics = LocalAnalytics.current
   LaunchedEffect(Unit) { analytics.logScreenView("squawk_form") }
+  // Tab switches (tap or swipe) as page views; drop(1) skips the initial page on open, which the
+  // line above has already logged.
+  LaunchedEffect(pagerState, tabs) {
+    snapshotFlow { pagerState.currentPage }
+      .drop(1)
+      .collect { page ->
+        analytics.logScreenView("squawk_form/${tabs[page].analyticsKey}")
+      }
+  }
 
   Scaffold(
     modifier = modifier.imePadding(),
     containerColor = MaterialTheme.colorScheme.background,
     topBar = {
-      ConstrainedTopBar(ContentWidth.Form) {
-        TopAppBar(
-          title = {
-            Text(
-              text = screenTitle.uppercase(),
-              style = MaterialTheme.typography.titleLarge,
-              fontWeight = FontWeight.Bold,
-            )
-          },
-          navigationIcon = {
-            IconButton(onClick = { tryBack() }) {
-              Icon(
-                Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = null
+      Column {
+        ConstrainedTopBar(ContentWidth.Form) {
+          TopAppBar(
+            title = {
+              Text(
+                text = screenTitle.uppercase(),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
               )
-            }
-          },
-          colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = Color.Transparent,
-            scrolledContainerColor = Color.Transparent,
-          ),
-        )
+            },
+            navigationIcon = {
+              IconButton(onClick = { tryBack() }) {
+                Icon(
+                  Icons.AutoMirrored.Filled.ArrowBack,
+                  contentDescription = null
+                )
+              }
+            },
+            colors = TopAppBarDefaults.topAppBarColors(
+              containerColor = Color.Transparent,
+              scrolledContainerColor = Color.Transparent,
+            ),
+          )
+        }
+        if (tabs.size > 1) {
+          Box(
+            modifier = Modifier.fillMaxWidth(),
+            contentAlignment = Alignment.TopCenter,
+          ) {
+            SquawkTabRow(
+              tabs = tabs,
+              selectedIndex = pagerState.currentPage,
+              onSelect = {
+                coroutineScope.launch { pagerState.animateScrollToPage(it) }
+              },
+              commentCount = commentCount,
+              modifier = Modifier.constrainedContentWidth(ContentWidth.Form),
+            )
+          }
+        }
       }
     },
     snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -152,43 +196,53 @@ fun SquawkFormScreen(
         .padding(padding)
         .fillMaxSize(),
     ) {
-      Box(
-        modifier = Modifier
-          .weight(1f)
-          .fillMaxWidth(),
-        contentAlignment = Alignment.TopCenter,
-      ) {
-        Column(
-          modifier = Modifier
-            .fillMaxHeight()
-            .constrainedContentWidth(ContentWidth.Form)
-            .verticalScroll(rememberScrollState())
-            .padding(Spacing.screenPadding),
-          verticalArrangement = Arrangement.spacedBy(Spacing.large),
+      HorizontalPager(
+        state = pagerState,
+        modifier = Modifier.weight(1f),
+        verticalAlignment = Alignment.Top,
+      ) { page ->
+        Box(
+          modifier = Modifier.fillMaxSize(),
+          contentAlignment = Alignment.TopCenter,
         ) {
-          SquawkBasicSection(
-            title = state.title,
-            onTitleChange = onTitleChange,
-            priority = state.priority,
-            onPriorityChange = onPriorityChange,
-            reportedDateFormatted = state.reportedDateFormatted,
-            readOnly = state.isAddressedReadOnly,
-            titleError = state.titleError,
-          )
+          Column(
+            modifier = Modifier
+              .fillMaxHeight()
+              .constrainedContentWidth(ContentWidth.Form)
+              .verticalScroll(rememberScrollState())
+              .padding(Spacing.screenPadding),
+            verticalArrangement = Arrangement.spacedBy(Spacing.large),
+          ) {
+            when (tabs[page]) {
+              SquawkFormTab.DETAILS -> {
+                SquawkBasicSection(
+                  title = state.title,
+                  onTitleChange = onTitleChange,
+                  priority = state.priority,
+                  onPriorityChange = onPriorityChange,
+                  reportedDateFormatted = state.reportedDateFormatted,
+                  readOnly = state.isAddressedReadOnly,
+                  titleError = state.titleError,
+                )
 
-          SquawkDetailsSection(
-            description = state.description,
-            onDescriptionChange = onDescriptionChange,
-            isEdit = isEdit,
-            addressedByLogId = state.addressedByLogId,
-            availableLogs = state.availableLogs,
-            onAddLog = onAddLog,
-            onClearLog = onClearLog,
-            readOnly = state.isAddressedReadOnly,
-            dismissReason = state.dismissReason,
-            dismissedAtFormatted = state.dismissedAtFormatted,
-            attachmentSection = attachmentSection,
-          )
+                SquawkDetailsSection(
+                  description = state.description,
+                  onDescriptionChange = onDescriptionChange,
+                  isEdit = isEdit,
+                  addressedByLogId = state.addressedByLogId,
+                  availableLogs = state.availableLogs,
+                  onAddLog = onAddLog,
+                  onClearLog = onClearLog,
+                  readOnly = state.isAddressedReadOnly,
+                  dismissReason = state.dismissReason,
+                  dismissedAtFormatted = state.dismissedAtFormatted,
+                  attachmentSection = attachmentSection,
+                )
+              }
+
+              SquawkFormTab.COMMENTS -> commentsSection()
+            }
+          }
         }
       }
 

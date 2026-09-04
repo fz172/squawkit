@@ -30,6 +30,7 @@ object AttachmentRefs {
       // to a proto forces a decision here instead of silently skipping both reconciliation and GC —
       // the way CollectionKind.Squawk was skipped before this was one list.
       CollectionKind.Thing,
+      CollectionKind.Comment,
       CollectionKind.MaintenanceOverview,
       CollectionKind.Technician,
       CollectionKind.UserInfo,

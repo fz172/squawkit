@@ -52,10 +52,13 @@ service cloud.firestore {
         || request.resource.data.writerUid == request.auth.uid;
     }
 
-    // Only the four synced per-aircraft kinds may be written into a shared aircraft's subtree,
-    // so a member can't create arbitrary subcollections in the host's tree.
+    // Only the synced per-thing kinds may be written into a shared thing's subtree, so a member
+    // can't create arbitrary subcollections in the host's tree. `comment` is here because a
+    // technician leaving a note is the entire point of the comments feature — a member who can read
+    // a squawk but not comment on it has a read-only thread.
     function isSharedAircraftKind(kind) {
-      return kind in ['maintenance_log', 'maintenance_task', 'maintenance_overview', 'squawk'];
+      return kind in ['maintenance_log', 'maintenance_task', 'maintenance_overview', 'squawk',
+                      'comment'];
     }
 
     // --- Default deny --------------------------------------------------------------------------

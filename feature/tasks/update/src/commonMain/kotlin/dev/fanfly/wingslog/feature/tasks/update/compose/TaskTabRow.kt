@@ -3,6 +3,7 @@ package dev.fanfly.wingslog.feature.tasks.update.compose
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Forum
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.runtime.Composable
@@ -18,20 +19,20 @@ import wingslog.feature.tasks.update.generated.resources.adjustments
 import wingslog.feature.tasks.update.generated.resources.basics
 import wingslog.feature.tasks.update.generated.resources.compliance
 import wingslog.feature.tasks.update.generated.resources.schedule
+import wingslog.feature.comments.sharedassets.generated.resources.Res as CommentsRes
+import wingslog.feature.comments.sharedassets.generated.resources.comments_tab
 
 data class TaskTabSpec(
   val icon: ImageVector,
   val label: StringResource,
 )
 
-/** Stable, locale-independent analytics keys for the task-form tabs, in tab order. */
-val TASK_FORM_TAB_KEYS =
-  listOf("basics", "compliance", "schedule", "adjustments")
-
 var BASIC_TAB = TaskTabSpec(Icons.Default.Edit, Res.string.basics)
 var COMPLIANCE_TAB = TaskTabSpec(Icons.Default.Info, Res.string.compliance)
 var SCHEDULE_TAB = TaskTabSpec(Icons.Default.DateRange, Res.string.schedule)
 var ADJUSTMENT_TAB = TaskTabSpec(Icons.Default.Tune, Res.string.adjustments)
+var COMMENTS_TAB =
+  TaskTabSpec(Icons.Default.Forum, CommentsRes.string.comments_tab)
 
 @Composable
 fun TaskTabRow(
@@ -39,9 +40,17 @@ fun TaskTabRow(
   selectedIndex: Int,
   onSelect: (Int) -> Unit,
   modifier: Modifier = Modifier,
+  /** Drawn on the comments tab only; see [IconLabelTabSpec.badgeCount] for the zero case. */
+  commentCount: Int = 0,
 ) {
   IconLabelTabRow(
-    tabs = tabs.map { IconLabelTabSpec(it.icon, stringResource(it.label)) },
+    tabs = tabs.map {
+      IconLabelTabSpec(
+        icon = it.icon,
+        label = stringResource(it.label),
+        badgeCount = if (it == COMMENTS_TAB) commentCount else null,
+      )
+    },
     selectedIndex = selectedIndex,
     onSelect = onSelect,
     modifier = modifier,
@@ -63,6 +72,20 @@ enum class TaskFormTab {
 
   /** Edit only — there is nothing to adjust on a task that does not exist yet. */
   ADJUSTMENTS,
+
+  /** Edit only, same reason: a task that does not exist yet has no id to hang a thread on. */
+  COMMENTS,
+  ;
+
+  /** Stable, locale-independent analytics key. Tied to the identity, not to a tab's position. */
+  val analyticsKey: String
+    get() = when (this) {
+      IDENTITY -> "basics"
+      COMPLIANCE -> "compliance"
+      SCHEDULE -> "schedule"
+      ADJUSTMENTS -> "adjustments"
+      COMMENTS -> "comments"
+    }
 }
 
 internal val TaskFormTab.spec: TaskTabSpec
@@ -71,6 +94,7 @@ internal val TaskFormTab.spec: TaskTabSpec
     TaskFormTab.COMPLIANCE -> COMPLIANCE_TAB
     TaskFormTab.SCHEDULE -> SCHEDULE_TAB
     TaskFormTab.ADJUSTMENTS -> ADJUSTMENT_TAB
+    TaskFormTab.COMMENTS -> COMMENTS_TAB
   }
 
 /**
@@ -86,10 +110,12 @@ internal val TaskFormTab.spec: TaskTabSpec
 internal fun taskFormTabsFor(
   capabilities: Capabilities,
   includeAdjustments: Boolean,
+  includeComments: Boolean,
 ): List<TaskFormTab> = TaskFormTab.entries.filter {
   when (it) {
     TaskFormTab.COMPLIANCE -> capabilities.compliance
     TaskFormTab.ADJUSTMENTS -> includeAdjustments
+    TaskFormTab.COMMENTS -> includeComments
     else -> true
   }
 }

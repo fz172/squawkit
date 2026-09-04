@@ -17,6 +17,7 @@ import dev.fanfly.wingslog.feature.ads.datamanager.di.adsModule
 import dev.fanfly.wingslog.feature.ads.datamanager.di.platformAdConsentModule
 import dev.fanfly.wingslog.feature.attachment.datamanager.attachmentModule
 import dev.fanfly.wingslog.feature.attachment.datamanager.platformAttachmentModule
+import dev.fanfly.wingslog.feature.comments.datamanager.commentsModule
 import dev.fanfly.wingslog.feature.developeroptions.datamanager.di.developerOptionsModule
 import dev.fanfly.wingslog.feature.export.datamanager.di.exportDataManagerModule
 import dev.fanfly.wingslog.feature.export.datamanager.di.exportPlatformModule
@@ -108,6 +109,7 @@ val commonAppModules: List<Module> = listOf(
   tasksUiModule,
   squawkModule,
   squawkUiModule,
+  commentsModule,
   fleetDataManagerModule,
   sharingModule,
   sharingUiModule,

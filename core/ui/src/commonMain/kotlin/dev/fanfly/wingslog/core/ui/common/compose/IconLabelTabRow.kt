@@ -16,13 +16,18 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -37,6 +42,12 @@ import dev.fanfly.wingslog.core.ui.theme.WingslogTheme
 data class IconLabelTabSpec(
   val icon: ImageVector,
   val label: String,
+  /**
+   * Count shown alongside the tab — a pill after the label when the tab is selected, a badge on the
+   * icon when it is collapsed. Null (or 0) draws nothing: an empty thread should read as an empty
+   * thread, not as a zero worth looking at.
+   */
+  val badgeCount: Int? = null,
 )
 
 private val MaxSelectedTabWidth = 200.dp
@@ -97,6 +108,7 @@ fun IconLabelTabRow(
               .clickable { onSelect(index) },
             contentAlignment = Alignment.Center,
           ) {
+            val badge = spec.badgeCount?.takeIf { it > 0 }
             if (selected) {
               Row(
                 horizontalArrangement = Arrangement.spacedBy(
@@ -117,6 +129,16 @@ fun IconLabelTabRow(
                   style = MaterialTheme.typography.labelLarge,
                   maxLines = 1,
                   softWrap = false,
+                )
+                if (badge != null) CountPill(badge)
+              }
+            } else if (badge != null) {
+              BadgedBox(badge = { Badge { Text("$badge") } }) {
+                Icon(
+                  spec.icon,
+                  contentDescription = spec.label,
+                  tint = contentColor,
+                  modifier = Modifier.size(Spacing.xLarge),
                 )
               }
             } else {
@@ -149,6 +171,24 @@ fun IconLabelTabRow(
   }
 }
 
+@Composable
+private fun CountPill(count: Int) {
+  Surface(
+    shape = RoundedCornerShape(Spacing.badgeCornerRadius),
+    color = MaterialTheme.colorScheme.surfaceVariant,
+  ) {
+    Text(
+      text = "$count",
+      style = MaterialTheme.typography.labelSmall,
+      color = MaterialTheme.colorScheme.onSurfaceVariant,
+      modifier = Modifier.padding(
+        horizontal = Spacing.small,
+        vertical = 1.dp
+      ),
+    )
+  }
+}
+
 @Preview(showBackground = true)
 @Composable
 fun IconLabelTabRowPreview() {
@@ -157,7 +197,7 @@ fun IconLabelTabRowPreview() {
       tabs = listOf(
         IconLabelTabSpec(icon = Icons.Default.Build, label = "Maintenance"),
         IconLabelTabSpec(icon = Icons.Default.Schedule, label = "Schedule"),
-        IconLabelTabSpec(icon = Icons.Default.Link, label = "Records"),
+        IconLabelTabSpec(icon = Icons.Default.Link, label = "Records", badgeCount = 3),
       ),
       selectedIndex = 0,
       onSelect = {}

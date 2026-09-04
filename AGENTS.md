@@ -150,7 +150,13 @@ feature/
     datamanager/        #   SquawkManager (CRUD + markAddressed + dismiss/reopen) over EntityStore<Squawk>
     sharedassets/       #   Strings, priority colors, dismiss-reason labels
     viewing/            #   SquawkCard, SquawkDetailSheet, SquawkPickerSheet, AogAlertSection
-    update/             #   SquawkFormScreen (2-tab add/edit), DismissSquawkDialog, SquawkFormViewModel
+    update/             #   SquawkFormScreen (Details / Comments tabs), DismissSquawkDialog,
+                        #   SquawkFormViewModel
+  comments/             # Collaborator notes on a squawk or a task (#749). See docs/comments/
+    model/              #   CommentEntry, CommentThreadState, CommentTarget, CommentParentKind
+    datamanager/        #   CommentManager over EntityStore<Comment>, CommentThreadController
+    sharedassets/       #   Strings
+    viewing/            #   CommentThreadSection — the tab body, shared by both forms
   technician/           # Technician management
     datamanager/        #   TechnicianManager
     manage/             #   Combined list + edit screens and ViewModels
@@ -330,8 +336,9 @@ EntityStore<Aircraft>.observeAll (SQLDelight Flow, FleetManagerImpl)
 ### Local-first storage (R1 — shipped, the only path)
 
 `core/storage` provides `EntityStore` (SQLDelight-backed), `EntityScope`, `EntityCodecRegistry`,
-Koin modules, and `CollectionKind` — **10 kinds**: Aircraft, MaintenanceTask, MaintenanceLog,
-MaintenanceOverview, Technician, UserInfo, DeveloperOptions, Subscription, Squawk, SharedAircraftRef.
+Koin modules, and `CollectionKind` — **12 kinds**: Thing, MaintenanceTask, MaintenanceLog,
+MaintenanceOverview, Technician, UserInfo, DeveloperOptions, Subscription, Squawk, Comment,
+SharedAircraftRef, NotificationSettings.
 `CollectionKind.ALL` is asserted complete against `sealedSubclasses` by a coverage test, so a
 forgotten entry fails the build instead of corrupting data at runtime. The `collection` column is
 `TEXT`, so adding a kind is a zero-migration change.
@@ -347,7 +354,7 @@ key).
 non-anonymous **and** cloud-sync-enabled. On sign-in it hydrates top-level scopes (Aircraft,
 Technician, UserInfo) under the user's root, attaches pull listeners at the cursor watermark, starts
 `PushWorker`, and observes the local aircraft list to spin up per-aircraft listeners for nested kinds
-(logs, tasks, overview, squawks). On sign-out it tears down the per-user scope; data on disk is left
+(logs, tasks, overview, squawks, comments). On sign-out it tears down the per-user scope; data on disk is left
 alone (a different user gets their own `users/{uid}/…` scope, so there is no leakage).
 
 Supporting pieces: `HydrationRunner`, `PullListener` / `FirestorePullSubscription`, `PushWorker` +
@@ -494,6 +501,7 @@ Feature PRDs and architecture design docs live in `docs/`, organized into per-to
   `deletion_gc_design.html`
 - `docs/attachments/` — `attachments_PRD.md`, `attachments_design.md`
 - `docs/squawks/` — `user_squawking_prd.md`, `squawk_design.md`
+- `docs/comments/` — `comments_design.md`
 - `docs/export/` — `export_logs_PRD.md`, `export_logs_design.md`,
   `export_email_automation_design.html`, plus the `export_logs_sample/` reference bundle
 - `docs/technician/` — `technician_design.md`, `userprofile_as_technician.md`

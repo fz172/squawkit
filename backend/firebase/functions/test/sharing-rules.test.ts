@@ -152,6 +152,27 @@ describe("nested maintenance data", () => {
     await assertFails(setDoc(doc(as(STRANGER), logDoc), { note: "x", writerUid: STRANGER }));
   });
 
+  it("member may write a comment (attested)", async () => {
+    // The point of the comments feature: a technician leaving a note on the host's squawk. Without
+    // `comment` in isSharedAircraftKind this fails and the thread is read-only for everyone but
+    // the host.
+    await assertSucceeds(
+      setDoc(doc(as(TECH), `${thingDoc}/comment/c1`), {
+        payload: "x",
+        writerUid: TECH,
+      }),
+    );
+  });
+
+  it("member may NOT forge writerUid on a comment", async () => {
+    await assertFails(
+      setDoc(doc(as(TECH), `${thingDoc}/comment/c1`), {
+        payload: "x",
+        writerUid: OWNER2,
+      }),
+    );
+  });
+
   it("member may NOT write an unknown kind into the host's subtree", async () => {
     await assertFails(
       setDoc(doc(as(TECH), `${thingDoc}/evil/x`), { data: 1, writerUid: TECH }),

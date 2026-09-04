@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+  <string name="squawk_tab_details">Details</string>
   <string name="dismiss_issue">Dismiss Issue</string>
   <string name="reopen_issue">Reopen Issue</string>
   <string name="resolve_issue">Resolve</string>
