@@ -73,13 +73,14 @@ import dev.fanfly.wingslog.core.ui.adaptive.thingIcon
 import dev.fanfly.wingslog.core.ui.theme.rememberBrandHeadlineFamily
 import dev.fanfly.wingslog.feature.login.LoginButtonContent
 import dev.fanfly.wingslog.feature.login.data.LoginViewModel
-import kotlin.math.roundToInt
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.feature.login.generated.resources.Res
 import wingslog.feature.login.generated.resources.privacy_notice
+import kotlin.math.roundToInt
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Which sign-in request is currently awaiting a result, so the pressed button shows a spinner while
@@ -858,7 +859,7 @@ private fun Carousel(
 
   LaunchedEffect(index, hovered, clock) {
     if (hovered || slides.size < 2) return@LaunchedEffect
-    delay(autoAdvanceMillis)
+    delay(autoAdvanceMillis.milliseconds)
     forward = true
     index = (index + 1) % slides.size
   }
@@ -882,8 +883,14 @@ private fun Carousel(
           targetState = index,
           transitionSpec = {
             val sign = if (forward) 1 else -1
-            (slideInHorizontally(tween(420)) { sign * it / 3 } + fadeIn(tween(320))) togetherWith
-              (slideOutHorizontally(tween(420)) { -sign * it / 3 } + fadeOut(tween(220)))
+            (slideInHorizontally(tween(420)) { sign * it / 3 } + fadeIn(
+              tween(
+                320
+              )
+            )) togetherWith
+              (slideOutHorizontally(tween(420)) { -sign * it / 3 } + fadeOut(
+                tween(220)
+              ))
           },
           // Every slide sits in the same frame: a stage that changes height between slides would
           // push the dots and the section below it up and down on every advance.
@@ -916,7 +923,11 @@ private fun Carousel(
 }
 
 @Composable
-private fun CarouselArrow(colors: LandingColors, previous: Boolean, onClick: () -> Unit) {
+private fun CarouselArrow(
+  colors: LandingColors,
+  previous: Boolean,
+  onClick: () -> Unit
+) {
   Box(
     modifier = Modifier
       .size(40.dp)
@@ -955,7 +966,10 @@ private fun SpotlightCard(
     .clip(shape)
     .background(cardColor)
     .border(1.dp, colors.outline, shape)
-    .padding(horizontal = if (compact) 26.dp else 34.dp, vertical = if (compact) 28.dp else 32.dp)
+    .padding(
+      horizontal = if (compact) 26.dp else 34.dp,
+      vertical = if (compact) 28.dp else 32.dp
+    )
 
   val badge: @Composable () -> Unit = {
     val size = if (compact) 50.dp else 64.dp
@@ -977,11 +991,16 @@ private fun SpotlightCard(
           ),
         )
       }
+
       slide.icon != null -> Box(
         modifier = Modifier.size(size)
           .clip(RoundedCornerShape(radius))
           .background(colors.blue.copy(alpha = 0.10f))
-          .border(1.dp, colors.blue.copy(alpha = 0.22f), RoundedCornerShape(radius)),
+          .border(
+            1.dp,
+            colors.blue.copy(alpha = 0.22f),
+            RoundedCornerShape(radius)
+          ),
         contentAlignment = Alignment.Center,
       ) {
         Icon(
@@ -1062,7 +1081,7 @@ private fun FeaturesSection(
         slides = listOf(
           Slide(
             icon = IconLayers,
-            title = "Every kind of thing",
+            title = "Track anything you want",
             body = "Airplane, car or motorcycle, bike, boat, home — or anything else. Each type brings its own vocabulary, fields, meters and parts, so a home never asks for a tail number and an airplane never asks for an odometer.",
           ),
           Slide(
