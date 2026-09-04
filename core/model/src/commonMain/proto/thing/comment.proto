@@ -32,4 +32,16 @@ message Comment {
   google.protobuf.Timestamp created_at = 7;
   // Unset until the author edits the text. Drives the "Edited …" line.
   google.protobuf.Timestamp edited_at = 8;
+
+  // Set when the author deletes the comment. The row is NOT removed, and nothing in the app ever
+  // hard-deletes a comment.
+  //
+  // This is a paper trail, not a cosmetic choice. An edit is stamped with `edited_at` and shows an
+  // "Edited …" line, so a rewrite is visible to everyone who can read the thread. If a delete
+  // erased the row, an author could delete and re-post instead of editing and the rewrite would
+  // leave no trace — the audit trail defeated by the cheapest possible route. Keeping the
+  // tombstone means the thread still shows that something was said here and then taken back.
+  //
+  // `text` is cleared at the same time: the content is gone, the fact and the time remain.
+  google.protobuf.Timestamp deleted_at = 9;
 }

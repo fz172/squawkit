@@ -54,6 +54,28 @@ comment says who wrote it *then*, and still reads correctly after that person le
 reads. Saving the editor without changing anything writes nothing — opening a box is not an edit,
 and branding the comment would be a lie the reader cannot check.
 
+## 2a. Delete is a tombstone, never a removal
+
+Deleting clears `text` and stamps `deleted_at`. The row stays, and the thread keeps its card:
+struck through, muted, reading "Comment deleted on 09/03/2026 09:18 PM". Nothing in the app calls
+`EntityStore.delete` for a comment.
+
+**This is the paper trail, not a nicety.** An edit is visible — `edited_at` puts an "Edited …" line
+on the card, so a rewrite is on the record for everyone who can read the thread. If a delete erased
+the row, an author who wanted to rewrite without the line could delete and re-post instead, and the
+audit trail would be defeated by the cheapest possible route. Keeping the tombstone means the
+thread still shows that something was said here and then withdrawn.
+
+Two consequences follow, and both are enforced in `CommentManagerImpl`:
+
+- **A tombstone is final.** `updateComment` refuses to write to one — reviving a deleted comment
+  would erase the record of the deletion.
+- **Deleting twice does nothing.** Re-stamping would move the recorded time, which is the one fact
+  the tombstone exists to pin down.
+
+The tab badge counts live comments only. A tombstone still occupies a card, but the badge answers
+"is there anything here to read", and a withdrawn comment is not.
+
 ## 3. Who may write
 
 `firestore.rules` adds `comment` to `isSharedAircraftKind`, so a share member may write into the
@@ -71,7 +93,8 @@ per-Thing kind.
 ## 4. UI
 
 `CommentThreadSection` (in `feature/comments/viewing`) is stateless and renders the whole tab: the
-thread oldest-first, then the composer. Both forms render the same composable, and both drive it
+thread oldest-first, tombstones included, then the composer. The ⋮ menu appears only on a comment
+that is both yours and not already deleted. Both forms render the same composable, and both drive it
 through `CommentThreadController` — a UI-free state machine in `datamanager`, the same shape as
 `AttachmentFormController`, so neither ViewModel re-implements drafts, the inline editor or the
 menu.

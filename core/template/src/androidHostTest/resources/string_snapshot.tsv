@@ -93,6 +93,7 @@ feature/comments/sharedassets	comment_actions	Comment actions
 feature/comments/sharedassets	comment_author_unknown	Unknown
 feature/comments/sharedassets	comment_delete	Delete
 feature/comments/sharedassets	comment_delete_failed	Could not delete that comment.
+feature/comments/sharedassets	comment_deleted	Comment deleted on %1$s
 feature/comments/sharedassets	comment_edit	Update comment
 feature/comments/sharedassets	comment_edit_failed	Could not save your edit.
 feature/comments/sharedassets	comment_edited	Edited %1$s

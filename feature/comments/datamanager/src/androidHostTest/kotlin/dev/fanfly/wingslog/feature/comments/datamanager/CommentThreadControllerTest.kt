@@ -95,8 +95,9 @@ class CommentThreadControllerTest {
     controller.startEdit("c1")
     controller.toggleMenu("c1")
 
-    // The author deleted it on their other device and the tombstone synced down.
-    manager.emit(emptyList())
+    // The author deleted it on their other device and the tombstone synced down. The row is still
+    // there — it is a tombstone, not a removal — but it can no longer be saved.
+    manager.emit(listOf(entry("c1", "", deleted = true)))
 
     assertThat(controller.state.value.editingId).isNull()
     assertThat(controller.state.value.editDraft).isEmpty()
@@ -104,13 +105,18 @@ class CommentThreadControllerTest {
   }
 
   @Test
-  fun countTracksTheThread() = runTest {
+  fun countTracksLiveCommentsOnly() = runTest {
     val manager = FakeCommentManager()
     val controller = controllerOn(manager)
 
     assertThat(controller.state.value.count).isEqualTo(0)
     manager.emit(listOf(entry("c1"), entry("c2")))
     assertThat(controller.state.value.count).isEqualTo(2)
+
+    // The tombstone keeps its card in the thread, but the badge is "is there anything to read".
+    manager.emit(listOf(entry("c1"), entry("c2", "", deleted = true)))
+    assertThat(controller.state.value.comments).hasSize(2)
+    assertThat(controller.state.value.count).isEqualTo(1)
   }
 
   private fun TestScope.controllerOn(manager: CommentManager) =
@@ -122,12 +128,17 @@ class CommentThreadControllerTest {
       scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler)),
     )
 
-  private fun entry(id: String, text: String = "body") = CommentEntry(
+  private fun entry(
+    id: String,
+    text: String = "body",
+    deleted: Boolean = false,
+  ) = CommentEntry(
     id = id,
     authorName = "Fan Zhang",
     text = text,
     createdAt = Instant.fromEpochSeconds(1),
     editedAt = null,
+    deletedAt = if (deleted) Instant.fromEpochSeconds(2) else null,
     isMine = true,
   )
 

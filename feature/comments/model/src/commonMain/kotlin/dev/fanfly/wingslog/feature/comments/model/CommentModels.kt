@@ -29,9 +29,20 @@ data class CommentEntry(
   val createdAt: Instant,
   /** Non-null once the author has edited the text. */
   val editedAt: Instant?,
-  /** The signed-in account wrote this one — the only person offered Edit and Delete. */
+  /**
+   * Non-null once the author has deleted it. The entry stays in the thread as a tombstone —
+   * [text] is empty and the card says only that a comment was deleted, and when. See comment.proto
+   * for why a delete never removes the row.
+   */
+  val deletedAt: Instant?,
+  /** The signed-in account wrote this one — the only person offered Update and Delete. */
   val isMine: Boolean,
-)
+) {
+  val isDeleted: Boolean get() = deletedAt != null
+
+  /** Only a live comment of your own can be updated or deleted. */
+  val isActionable: Boolean get() = isMine && !isDeleted
+}
 
 /**
  * Everything the comments tab draws, the in-progress draft and edit included.
@@ -50,7 +61,11 @@ data class CommentThreadState(
   /** A post is in flight — the send button is inert until it lands, so a double tap posts once. */
   val isPosting: Boolean = false,
 ) {
-  val count: Int get() = comments.size
+  /**
+   * Live comments only. A tombstone still occupies a card in the thread, but it is not something
+   * to go and read, and the badge is an at-a-glance "is there anything here".
+   */
+  val count: Int get() = comments.count { !it.isDeleted }
   val canPost: Boolean get() = draft.isNotBlank() && !isPosting
   val canSaveEdit: Boolean get() = editDraft.isNotBlank()
 }

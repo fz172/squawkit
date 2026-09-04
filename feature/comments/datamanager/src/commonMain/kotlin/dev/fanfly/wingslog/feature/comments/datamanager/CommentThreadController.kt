@@ -45,10 +45,12 @@ class CommentThreadController(
       commentManager.observeComments(target)
         .collect { comments ->
           _state.update { prev ->
-            // A comment can vanish under an open menu or an open editor — the author deleted it on
-            // their other device, or a sync pulled the tombstone down. Drop the transient state
-            // rather than leaving an editor bound to a row that is no longer there.
-            val ids = comments.mapTo(mutableSetOf()) { it.id }
+            // A comment can stop being editable under an open menu or an open editor — the author
+            // deleted it on their other device and the tombstone synced down. Drop the transient
+            // state rather than leaving an editor bound to a comment that can no longer be saved.
+            val ids = comments.asSequence()
+              .filter { !it.isDeleted }
+              .mapTo(mutableSetOf()) { it.id }
             val editing = prev.editingId?.takeIf { it in ids }
             prev.copy(
               comments = comments,

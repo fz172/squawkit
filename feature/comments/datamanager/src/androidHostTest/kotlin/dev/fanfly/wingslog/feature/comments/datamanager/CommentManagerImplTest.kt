@@ -200,13 +200,60 @@ class CommentManagerImplTest {
   // ---- deleteComment ----
 
   @Test
-  fun deleteComment_removesYourOwn() = runTest {
+  fun deleteComment_tombstonesRatherThanRemoving() = runTest {
     every { store.observe("c1", scope) } returns
-      flowOf(row(comment("c1", authorUid = ME)))
+      flowOf(row(comment("c1", authorUid = ME, text = "said too much")))
+    val written = slot<Comment>()
 
     assertThat(manager.deleteComment(target, "c1").isSuccess).isTrue()
 
-    coVerify { store.delete("c1", scope) }
+    // Never store.delete: an edit shows an "Edited …" line, so a hard delete would let an author
+    // launder a rewrite by deleting and re-posting. The row stays, the content goes.
+    coVerify(exactly = 0) { store.delete(any(), any()) }
+    coVerify { store.put("c1", capture(written), scope) }
+    assertThat(written.captured.text).isEmpty()
+    assertThat(written.captured.deleted_at).isNotNull()
+  }
+
+  @Test
+  fun deleteComment_leavesAnAlreadyDeletedCommentAlone() = runTest {
+    every { store.observe("c1", scope) } returns
+      flowOf(row(comment("c1", authorUid = ME, deletedAtSeconds = 5)))
+
+    // Re-stamping would move the recorded deletion time, which is the one thing the tombstone is
+    // there to pin down.
+    assertThat(manager.deleteComment(target, "c1").isSuccess).isTrue()
+
+    coVerify(exactly = 0) { store.put(any(), any(), any()) }
+  }
+
+  @Test
+  fun updateComment_refusesToReviveATombstone() = runTest {
+    every { store.observe("c1", scope) } returns
+      flowOf(row(comment("c1", authorUid = ME, deletedAtSeconds = 5)))
+
+    val result = manager.updateComment(target, "c1", "back from the dead")
+
+    assertThat(result.isFailure).isTrue()
+    coVerify(exactly = 0) { store.put(any(), any(), any()) }
+  }
+
+  @Test
+  fun observeComments_keepsTombstonesInTheThread() = runTest {
+    every { store.observeAll(scope) } returns flowOf(
+      listOf(
+        row(comment("live", createdAtSeconds = 100)),
+        row(comment("gone", createdAtSeconds = 200, deletedAtSeconds = 300)),
+      )
+    )
+
+    val thread = manager.observeComments(target)
+      .first()
+
+    assertThat(thread.map { it.id })
+      .containsExactly("live", "gone")
+      .inOrder()
+    assertThat(thread.first { it.id == "gone" }.isDeleted).isTrue()
   }
 
   @Test
@@ -219,6 +266,7 @@ class CommentManagerImplTest {
     val result = manager.deleteComment(target, "c1")
 
     assertThat(result.isFailure).isTrue()
+    coVerify(exactly = 0) { store.put(any(), any(), any()) }
     coVerify(exactly = 0) { store.delete(any(), any()) }
   }
 
@@ -231,6 +279,7 @@ class CommentManagerImplTest {
     authorUid: String = ME,
     text: String = "body",
     createdAtSeconds: Long = 1L,
+    deletedAtSeconds: Long? = null,
   ) = Comment(
     id = id,
     parent_id = parentId,
@@ -240,6 +289,10 @@ class CommentManagerImplTest {
     author_name = "Someone",
     created_at = Instant.fromEpochSeconds(createdAtSeconds)
       .toWireInstant(),
+    deleted_at = deletedAtSeconds?.let {
+      Instant.fromEpochSeconds(it)
+        .toWireInstant()
+    },
   )
 
   private fun row(value: Comment) = StorageEntity(

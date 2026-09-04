@@ -98,6 +98,8 @@ class CommentManagerImpl(
     if (body.isEmpty()) return@runCatching
     val scope = scopeResolver.resolveNow(target.thingId)
     val existing = mine(scope, commentId)
+    // A tombstone is final — reviving one would erase the record of the deletion.
+    check(existing.deleted_at == null) { "Comment $commentId is deleted" }
     if (existing.text == body) return@runCatching
     store.put(
       commentId,
@@ -110,13 +112,28 @@ class CommentManagerImpl(
     )
   }.onFailure { logger.w(it) { "Error updating comment $commentId" } }
 
+  /**
+   * Tombstones the comment: clears the text and stamps `deleted_at`, leaving the row in place.
+   *
+   * Deliberately not `store.delete`. An edit is visible as an "Edited …" line, so a hard delete
+   * would let an author launder a rewrite by deleting and re-posting. See comment.proto.
+   */
   override suspend fun deleteComment(
     target: CommentTarget,
     commentId: String,
   ): Result<Unit> = runCatching {
     val scope = scopeResolver.resolveNow(target.thingId)
-    mine(scope, commentId)
-    store.delete(commentId, scope)
+    val existing = mine(scope, commentId)
+    if (existing.deleted_at != null) return@runCatching
+    store.put(
+      commentId,
+      existing.copy(
+        text = "",
+        deleted_at = Clock.System.now()
+          .toWireInstant(),
+      ),
+      scope,
+    )
   }.onFailure { logger.w(it) { "Error deleting comment $commentId" } }
 
   /**
@@ -154,6 +171,7 @@ class CommentManagerImpl(
     text = text,
     createdAt = created_at?.toInstant() ?: Instant.DISTANT_PAST,
     editedAt = edited_at?.toInstant(),
+    deletedAt = deleted_at?.toInstant(),
     isMine = me != null && author_uid == me,
   )
 

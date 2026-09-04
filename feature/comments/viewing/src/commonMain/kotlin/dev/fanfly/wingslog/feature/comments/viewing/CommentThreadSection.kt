@@ -29,7 +29,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -48,6 +50,7 @@ import wingslog.feature.comments.sharedassets.generated.resources.Res
 import wingslog.feature.comments.sharedassets.generated.resources.comment_actions
 import wingslog.feature.comments.sharedassets.generated.resources.comment_author_unknown
 import wingslog.feature.comments.sharedassets.generated.resources.comment_delete
+import wingslog.feature.comments.sharedassets.generated.resources.comment_deleted
 import wingslog.feature.comments.sharedassets.generated.resources.comment_edit
 import wingslog.feature.comments.sharedassets.generated.resources.comment_edited
 import wingslog.feature.comments.sharedassets.generated.resources.comment_new_label
@@ -193,20 +196,33 @@ private fun CommentCard(
             style = WingslogTypography.dataSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
           )
-          comment.editedAt?.let { editedAt ->
-            Text(
-              text = stringResource(
-                Res.string.comment_edited,
-                editedAt.toDisplayDateTime()
-              ),
-              style = WingslogTypography.dataSmall,
-              // Caution, the app's "something changed here" tone — the same amber the due-state
-              // language uses. Never a fourth colour invented for this one line.
-              color = MaterialTheme.statusColors.caution.accent,
-            )
+          comment.editedAt?.takeIf { !comment.isDeleted }
+            ?.let { editedAt ->
+            // Caution, the app's "something changed here" tone — the same amber the due-state
+            // language uses. Never a fourth colour invented for this one line.
+            val editedTone = MaterialTheme.statusColors.caution.accent
+            Row(
+              horizontalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
+              verticalAlignment = Alignment.CenterVertically,
+            ) {
+              Icon(
+                Icons.Default.Edit,
+                contentDescription = null,
+                tint = editedTone,
+                modifier = Modifier.size(Spacing.medium),
+              )
+              Text(
+                text = stringResource(
+                  Res.string.comment_edited,
+                  editedAt.toDisplayDateTime()
+                ),
+                style = WingslogTypography.dataSmall,
+                color = editedTone,
+              )
+            }
           }
         }
-        if (comment.isMine) {
+        if (comment.isActionable) {
           Box {
             IconButton(onClick = onToggleMenu) {
               Icon(
@@ -248,7 +264,9 @@ private fun CommentCard(
         }
       }
 
-      if (isEditing) {
+      if (comment.isDeleted) {
+        DeletedBody(comment.deletedAt)
+      } else if (isEditing) {
         FormTextField(
           label = stringResource(Res.string.comment_edit),
           value = editDraft,
@@ -280,6 +298,25 @@ private fun CommentCard(
       }
     }
   }
+}
+
+/**
+ * What a deleted comment says instead of its text. Struck through and muted, so it reads as a gap
+ * in the conversation rather than as something to go and read — but it stays in place, because the
+ * record that a comment was made and withdrawn is the point. See comment.proto.
+ */
+@Composable
+private fun DeletedBody(deletedAt: Instant?) {
+  Text(
+    text = stringResource(
+      Res.string.comment_deleted,
+      deletedAt?.toDisplayDateTime().orEmpty(),
+    ),
+    style = MaterialTheme.typography.bodyMedium,
+    color = MaterialTheme.colorScheme.onSurfaceVariant,
+    textDecoration = TextDecoration.LineThrough,
+    fontStyle = FontStyle.Italic,
+  )
 }
 
 @Composable
@@ -345,6 +382,7 @@ private fun CommentThreadSectionPreview() {
               "double-check before install.",
             createdAt = Instant.fromEpochSeconds(1_787_000_000),
             editedAt = null,
+            deletedAt = null,
             isMine = false,
           ),
           CommentEntry(
@@ -353,7 +391,17 @@ private fun CommentThreadSectionPreview() {
             text = "Holding this until the 100-hr next week so we only pull the panel once.",
             createdAt = Instant.fromEpochSeconds(1_787_100_000),
             editedAt = Instant.fromEpochSeconds(1_787_100_600),
+            deletedAt = null,
             isMine = true,
+          ),
+          CommentEntry(
+            id = "c3",
+            authorName = "Tom Okafor",
+            text = "",
+            createdAt = Instant.fromEpochSeconds(1_787_200_000),
+            editedAt = null,
+            deletedAt = Instant.fromEpochSeconds(1_787_260_000),
+            isMine = false,
           ),
         ),
       ),
