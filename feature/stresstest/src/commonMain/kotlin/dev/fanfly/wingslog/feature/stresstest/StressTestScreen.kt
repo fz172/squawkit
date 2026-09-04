@@ -18,8 +18,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AirplanemodeActive
 import androidx.compose.material.icons.filled.BugReport
+import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -40,8 +40,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
 import dev.fanfly.wingslog.core.template.canonical.CanonicalTemplates
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedTopBar
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
@@ -49,15 +51,20 @@ import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.statusColors
+import dev.fanfly.wingslog.thing.ThingTemplate
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.feature.stresstest.generated.resources.Res
 import wingslog.feature.stresstest.generated.resources.stress_test_complete
 import wingslog.feature.stresstest.generated.resources.stress_test_config_blades_per_engine
+import wingslog.feature.stresstest.generated.resources.stress_test_config_components
 import wingslog.feature.stresstest.generated.resources.stress_test_config_engines
 import wingslog.feature.stresstest.generated.resources.stress_test_config_future_dna
 import wingslog.feature.stresstest.generated.resources.stress_test_config_log_entries
+import wingslog.feature.stresstest.generated.resources.stress_test_config_meters
+import wingslog.feature.stresstest.generated.resources.stress_test_config_none
 import wingslog.feature.stresstest.generated.resources.stress_test_config_records
+import wingslog.feature.stresstest.generated.resources.stress_test_config_slot_count
 import wingslog.feature.stresstest.generated.resources.stress_test_config_squawks
 import wingslog.feature.stresstest.generated.resources.stress_test_config_tasks
 import wingslog.feature.stresstest.generated.resources.stress_test_config_technicians
@@ -79,16 +86,15 @@ import wingslog.feature.stresstest.generated.resources.stress_test_progress_mark
 import wingslog.feature.stresstest.generated.resources.stress_test_regenerate
 import wingslog.feature.stresstest.generated.resources.stress_test_summary_addressed_squawks
 import wingslog.feature.stresstest.generated.resources.stress_test_summary_dismissed_squawks
-import wingslog.feature.stresstest.generated.resources.stress_test_summary_engines
+import wingslog.feature.stresstest.generated.resources.stress_test_summary_components
 import wingslog.feature.stresstest.generated.resources.stress_test_summary_log_entries
 import wingslog.feature.stresstest.generated.resources.stress_test_summary_log_entry_one
 import wingslog.feature.stresstest.generated.resources.stress_test_summary_open_squawks
 import wingslog.feature.stresstest.generated.resources.stress_test_summary_squawks
-import wingslog.feature.stresstest.generated.resources.stress_test_summary_tail
+import wingslog.feature.stresstest.generated.resources.stress_test_summary_spec
 import wingslog.feature.stresstest.generated.resources.stress_test_summary_tasks
 import wingslog.feature.stresstest.generated.resources.stress_test_summary_technicians
 import wingslog.feature.stresstest.generated.resources.stress_test_summary_thing
-import wingslog.feature.stresstest.generated.resources.stress_test_summary_unknown_engine
 import wingslog.feature.stresstest.generated.resources.stress_test_title
 import wingslog.feature.stresstest.generated.resources.stress_test_unknown_error
 import wingslog.feature.stresstest.generated.resources.stress_test_working
@@ -155,34 +161,54 @@ fun StressTestScreen(
 
         AnimatedVisibility(visible = isIdle || isError) {
           Column(verticalArrangement = Arrangement.spacedBy(Spacing.large)) {
+            // The template drives everything below it, so it comes first. Airplane is the only
+            // preset with knobs of its own; every other thing is built from what its template
+            // declares, and the preview says what that will be.
+            val template = viewModel.templateFor(config.templateId)
+            val limits = viewModel.poolLimits(config.templateId)
             ConfigSection(title = stringResource(Res.string.stress_test_config_thing)) {
-              StepperRow(
-                label = stringResource(Res.string.stress_test_config_engines),
-                value = config.engineCount,
-                range = 1..2,
-                onDecrement = { viewModel.setEngineCount(config.engineCount - 1) },
-                onIncrement = { viewModel.setEngineCount(config.engineCount + 1) },
+              TemplateRow(
+                selectedId = config.templateId,
+                onSelect = { viewModel.setTemplateId(it) },
               )
-              StepperRow(
-                label = stringResource(Res.string.stress_test_config_blades_per_engine),
-                value = config.bladesPerEngine,
-                range = 2..4,
-                onDecrement = { viewModel.setBladesPerEngine(config.bladesPerEngine - 1) },
-                onIncrement = { viewModel.setBladesPerEngine(config.bladesPerEngine + 1) },
+              if (template.id == AirplaneTemplate.ID) {
+                StepperRow(
+                  label = stringResource(Res.string.stress_test_config_engines),
+                  value = config.engineCount,
+                  range = 1..2,
+                  onDecrement = { viewModel.setEngineCount(config.engineCount - 1) },
+                  onIncrement = { viewModel.setEngineCount(config.engineCount + 1) },
+                )
+                StepperRow(
+                  label = stringResource(Res.string.stress_test_config_blades_per_engine),
+                  value = config.bladesPerEngine,
+                  range = 2..4,
+                  onDecrement = { viewModel.setBladesPerEngine(config.bladesPerEngine - 1) },
+                  onIncrement = { viewModel.setBladesPerEngine(config.bladesPerEngine + 1) },
+                )
+              } else {
+                TemplatePreview(template)
+              }
+              SwitchRow(
+                label = stringResource(Res.string.stress_test_config_future_dna),
+                checked = config.dnaFromANewerBuild,
+                onCheckedChange = { viewModel.setDnaFromANewerBuild(it) },
               )
             }
 
+            // Tasks and squawks stop at the preset's pool: the generator never makes more distinct
+            // records than it has samples for, so the slider should not offer them either.
             ConfigSection(title = stringResource(Res.string.stress_test_config_records)) {
               SliderRow(
                 label = stringResource(Res.string.stress_test_config_squawks),
                 value = config.squawkCount,
-                range = 2..15,
+                range = 1..limits.squawks,
                 onValueChange = { viewModel.setSquawkCount(it) },
               )
               SliderRow(
                 label = stringResource(Res.string.stress_test_config_tasks),
                 value = config.taskCount,
-                range = 5..20,
+                range = 1..limits.tasks,
                 onValueChange = { viewModel.setTaskCount(it) },
               )
               SliderRow(
@@ -196,15 +222,6 @@ fun StressTestScreen(
                 value = config.technicianCount,
                 range = 1..5,
                 onValueChange = { viewModel.setTechnicianCount(it) },
-              )
-              TemplateRow(
-                selectedId = config.templateId,
-                onSelect = { viewModel.setTemplateId(it) },
-              )
-              SwitchRow(
-                label = stringResource(Res.string.stress_test_config_future_dna),
-                checked = config.dnaFromANewerBuild,
-                onCheckedChange = { viewModel.setDnaFromANewerBuild(it) },
               )
             }
 
@@ -235,7 +252,7 @@ fun StressTestScreen(
               shape = RoundedCornerShape(Spacing.buttonCornerRadius),
             ) {
               Icon(
-                imageVector = Icons.Default.AirplanemodeActive,
+                imageVector = Icons.Default.Build,
                 contentDescription = null,
                 modifier = Modifier.padding(end = Spacing.small),
               )
@@ -363,6 +380,54 @@ private fun ConfigSection(
         content()
       }
     }
+  }
+}
+
+/**
+ * What [FakeDataGenerator] will build for a preset that has no knobs of its own: each top-level
+ * slot with the count it will get, and the meters its logs will read. Read from the template so a
+ * preset added later previews correctly without touching this screen.
+ */
+@Composable
+private fun TemplatePreview(template: ThingTemplate) {
+  val none = stringResource(Res.string.stress_test_config_none)
+  val components = template.component_slots.map { slot ->
+    stringResource(
+      Res.string.stress_test_config_slot_count,
+      slot.label,
+      FakeDataGenerator.instanceCount(slot),
+    )
+  }
+  val meters = template.meters.map { it.label }
+  ReadOnlyRow(
+    label = stringResource(Res.string.stress_test_config_components),
+    value = components.ifEmpty { listOf(none) }.joinToString(" · "),
+  )
+  ReadOnlyRow(
+    label = stringResource(Res.string.stress_test_config_meters),
+    value = meters.ifEmpty { listOf(none) }.joinToString(" · "),
+  )
+}
+
+@Composable
+private fun ReadOnlyRow(label: String, value: String) {
+  Row(
+    modifier = Modifier.fillMaxWidth(),
+    horizontalArrangement = Arrangement.SpaceBetween,
+    verticalAlignment = Alignment.CenterVertically,
+  ) {
+    Text(
+      text = label,
+      style = MaterialTheme.typography.bodyMedium,
+    )
+    Text(
+      text = value,
+      style = MaterialTheme.typography.bodyMedium,
+      fontWeight = FontWeight.SemiBold,
+      color = MaterialTheme.colorScheme.primary,
+      textAlign = TextAlign.End,
+      modifier = Modifier.padding(start = Spacing.medium),
+    )
   }
 }
 
@@ -534,39 +599,34 @@ private fun StressTestState.Running.displayText(): String = when (step) {
 }
 
 @Composable
-private fun StressTestSummary.displayText(): String = listOf(
-  stringResource(
-    Res.string.stress_test_summary_thing,
-    thingMake,
-    thingModel,
-    tailNumber,
-  ),
-  stringResource(
-    Res.string.stress_test_summary_tail,
-    tailNumber,
-    serialNumber,
-  ),
-  stringResource(
-    Res.string.stress_test_summary_engines,
-    engineCount,
-    engineModel.ifBlank { stringResource(Res.string.stress_test_summary_unknown_engine) },
-  ),
-  "",
-  stringResource(Res.string.stress_test_summary_technicians, technicianCount),
-  stringResource(Res.string.stress_test_summary_tasks, taskCount),
-  stringResource(
-    if (logCount == 1) Res.string.stress_test_summary_log_entry_one
-    else Res.string.stress_test_summary_log_entries,
-    logCount,
-  ),
-  stringResource(Res.string.stress_test_summary_squawks, squawkCount),
-  stringResource(Res.string.stress_test_summary_open_squawks, openSquawkCount),
-  stringResource(
-    Res.string.stress_test_summary_addressed_squawks,
-    addressedSquawkCount
-  ),
-  stringResource(
-    Res.string.stress_test_summary_dismissed_squawks,
-    dismissedSquawkCount
-  ),
-).joinToString("\n")
+private fun StressTestSummary.displayText(): String = buildList {
+  add(stringResource(Res.string.stress_test_summary_thing, thingName, templateName))
+  specs.forEach { (label, value) ->
+    add(stringResource(Res.string.stress_test_summary_spec, label, value))
+  }
+  val none = stringResource(Res.string.stress_test_config_none)
+  add(
+    stringResource(
+      Res.string.stress_test_summary_components,
+      components.map { (label, count) ->
+        stringResource(Res.string.stress_test_config_slot_count, label, count)
+      }
+        .ifEmpty { listOf(none) }
+        .joinToString(" · "),
+    )
+  )
+  add("")
+  add(stringResource(Res.string.stress_test_summary_technicians, technicianCount))
+  add(stringResource(Res.string.stress_test_summary_tasks, taskCount))
+  add(
+    stringResource(
+      if (logCount == 1) Res.string.stress_test_summary_log_entry_one
+      else Res.string.stress_test_summary_log_entries,
+      logCount,
+    )
+  )
+  add(stringResource(Res.string.stress_test_summary_squawks, squawkCount))
+  add(stringResource(Res.string.stress_test_summary_open_squawks, openSquawkCount))
+  add(stringResource(Res.string.stress_test_summary_addressed_squawks, addressedSquawkCount))
+  add(stringResource(Res.string.stress_test_summary_dismissed_squawks, dismissedSquawkCount))
+}.joinToString("\n")

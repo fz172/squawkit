@@ -11,30 +11,28 @@ import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
 import dev.fanfly.wingslog.core.template.canonical.CanonicalTemplates
 import dev.fanfly.wingslog.core.template.specValue
 import dev.fanfly.wingslog.core.template.withDerivedComponentIds
+import dev.fanfly.wingslog.feature.stresstest.fixtures.FakeDataPool
+import dev.fanfly.wingslog.feature.stresstest.fixtures.FakeDataPools
+import dev.fanfly.wingslog.feature.stresstest.fixtures.LogTemplate
+import dev.fanfly.wingslog.feature.stresstest.fixtures.SampleNames
 import dev.fanfly.wingslog.thing.CertExpireLimit
 import dev.fanfly.wingslog.core.model.technician.FAA_AMT
 import dev.fanfly.wingslog.core.model.technician.FAA_REPAIRMAN
 import dev.fanfly.wingslog.thing.Certification
-import dev.fanfly.wingslog.thing.ComplianceType
 import dev.fanfly.wingslog.thing.Component
 import dev.fanfly.wingslog.thing.ComponentSlot
 import dev.fanfly.wingslog.thing.ComponentType
-import dev.fanfly.wingslog.thing.ImmediateRule
-import dev.fanfly.wingslog.thing.InspectionRule
 import dev.fanfly.wingslog.thing.MaintenanceLog
+import dev.fanfly.wingslog.thing.InspectionRule
 import dev.fanfly.wingslog.thing.MaintenanceTask
 import dev.fanfly.wingslog.thing.MeterReading
-import dev.fanfly.wingslog.thing.MeterRule
-import dev.fanfly.wingslog.thing.OnConditionRule
 import dev.fanfly.wingslog.thing.Spec
 import dev.fanfly.wingslog.thing.SpecField
 import dev.fanfly.wingslog.thing.Squawk
 import dev.fanfly.wingslog.thing.SquawkDismissReason
-import dev.fanfly.wingslog.thing.SquawkPriority
 import dev.fanfly.wingslog.thing.Technician
 import dev.fanfly.wingslog.thing.Thing
 import dev.fanfly.wingslog.thing.ThingTemplate
-import dev.fanfly.wingslog.thing.TimeRule
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Instant
@@ -51,785 +49,43 @@ data class StressTestData(
 
 object FakeDataGenerator {
 
-  private data class ThingSpec(
-    val make: String,
-    val model: String,
-    val engineMake: String,
-    val engineModel: String,
-    val propMake: String,
-    val propModel: String,
-  )
-
-  private val THING_SPECS = listOf(
-    ThingSpec(
-      "Incom",
-      "T-65B",
-      "Lycoming",
-      "O-320-E2D",
-      "Sensenich",
-      "76EM8S5-0-62"
-    ),
-    ThingSpec(
-      "Corellian Engineering",
-      "YT-1300F",
-      "Continental",
-      "O-470-U",
-      "McCauley",
-      "1C172/ATM7553"
-    ),
-    ThingSpec(
-      "MandalMotors",
-      "Kom'rk 452",
-      "Lycoming",
-      "O-360-A4M",
-      "Sensenich",
-      "74DM6S5-0-58"
-    ),
-    ThingSpec(
-      "Kuat Systems",
-      "RZ-1 A-wing",
-      "Continental",
-      "IO-520-BB",
-      "Hartzell",
-      "HC-C2YK-1BF"
-    ),
-    ThingSpec(
-      "SoroSuub",
-      "N-1 Scout",
-      "Continental",
-      "IO-550-N",
-      "Hartzell",
-      "HC-E2YR-2ALTUF"
-    ),
-    ThingSpec(
-      "Incom",
-      "Z-95-AF4",
-      "Lycoming",
-      "IO-360-M1A",
-      "MT-Propeller",
-      "MTV-6-A-200"
-    ),
-    ThingSpec(
-      "Kuat Systems",
-      "BTL-B",
-      "Lycoming",
-      "IO-360-A3B6D",
-      "McCauley",
-      "2A34C82/82NCA"
-    ),
-    ThingSpec(
-      "Corellian Engineering",
-      "G9 Rigger",
-      "Lycoming",
-      "O-360-A1H6",
-      "Hartzell",
-      "HC-C2YK-1BF"
-    ),
-  )
-
-  private val TECHNICIAN_NAMES = listOf(
-    "Anakin Skywalker", "Han Solo", "Rey Palpatine",
-    "Poe Dameron", "Ahsoka Tano", "Bodhi Rook",
-    "Cassian Andor", "Hera Syndulla",
-  )
-
-  private data class TaskTemplate(
-    val title: String,
-    val component: ComponentType,
-    val type: ComplianceType,
-    val rule: InspectionRule,
-    val notes: String = "",
-    val referenceNumber: String = "",
-    val complianceAuthority: String = "",
-    val complianceDetails: String = "",
-    val isOneTime: Boolean = false,
-  )
-
-  /**
-   * The aviation pool. Kept under its old name because the airplane fixture is the one with real
-   * Things behind it; every other preset gets its own below.
-   */
-  private val TASK_TEMPLATES = listOf(
-    TaskTemplate(
-      "Annual Inspection",
-      ComponentType.COMPONENT_AIRFRAME,
-      ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
-      InspectionRule(time_rule = TimeRule(interval_months = 12)),
-      notes = "FAR 43 Appendix D. Must be performed by A&P with IA or certified repair station.",
-    ),
-    TaskTemplate(
-      "100-Hour Inspection",
-      ComponentType.COMPONENT_ENGINE,
-      ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
-      meterRule(MeterKeys.ENGINE_HOURS, 100f),
-      notes = "Required for hire operations. FAR 91.409(b). Follows Annual inspection checklist.",
-    ),
-    TaskTemplate(
-      "Engine Oil Change",
-      ComponentType.COMPONENT_ENGINE,
-      ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
-      meterRule(MeterKeys.ENGINE_HOURS, 50f),
-      notes = "Replace oil filter and send sample for analysis. Use AeroShell W80 Plus or equivalent.",
-    ),
-    TaskTemplate(
-      "Spark Plug Rotation",
-      ComponentType.COMPONENT_ENGINE,
-      ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
-      meterRule(MeterKeys.ENGINE_HOURS, 100f),
-      notes = "Rotate top to bottom. Check gap 0.015–0.019 in. Replace if electrodes worn more than 50%.",
-    ),
-    TaskTemplate(
-      "ELT Battery Replacement",
-      ComponentType.COMPONENT_AIRFRAME,
-      ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
-      InspectionRule(time_rule = TimeRule(interval_months = 24)),
-      notes = "Replace when 50% cumulative battery life used OR after any activation. FAR 91.207(c).",
-    ),
-    TaskTemplate(
-      "Pitot-Static System Check",
-      ComponentType.COMPONENT_AIRFRAME,
-      ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
-      InspectionRule(time_rule = TimeRule(interval_months = 24)),
-      notes = "FAR 91.411. Required for IFR operations. Altimeter, VSI, and ASI. Log date of test.",
-    ),
-    TaskTemplate(
-      "Transponder Certification",
-      ComponentType.COMPONENT_AIRFRAME,
-      ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
-      InspectionRule(time_rule = TimeRule(interval_months = 24)),
-      notes = "FAR 91.413. Modes A, C, and S. Must be performed by certificated repair station.",
-    ),
-    TaskTemplate(
-      "VOR Operational Check",
-      ComponentType.COMPONENT_AIRFRAME,
-      ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
-      InspectionRule(time_rule = TimeRule(interval_days = 30)),
-      notes = "FAR 91.171. Required for IFR flight. Max ±4° from ground check or ±6° from airborne.",
-    ),
-    TaskTemplate(
-      "Propeller Overhaul",
-      ComponentType.COMPONENT_PROPELLER,
-      ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
-      InspectionRule(time_rule = TimeRule(interval_years = 5)),
-      notes = "Send to FAA-certified prop shop. Factory TBO is 5 years or 2,000 hours, whichever first.",
-    ),
-    TaskTemplate(
-      "Engine TBO",
-      ComponentType.COMPONENT_ENGINE,
-      ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
-      meterRule(MeterKeys.ENGINE_HOURS, 2000f),
-      notes = "Manufacturer recommended TBO. Not mandatory for Part 91, but highly recommended.",
-    ),
-    TaskTemplate(
-      "Alternator Belt Inspection",
-      ComponentType.COMPONENT_ENGINE,
-      ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
-      meterRule(MeterKeys.ENGINE_HOURS, 100f),
-      notes = "Check tension, fraying, and cracking. Replace if belt deflects more than 1/2 inch.",
-    ),
-    TaskTemplate(
-      "Magneto Timing Check",
-      ComponentType.COMPONENT_ENGINE,
-      ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
-      meterRule(MeterKeys.ENGINE_HOURS, 500f),
-      notes = "Check timing at 25° BTC ±1°. Inspect points, condenser, and distributor block.",
-    ),
-    TaskTemplate(
-      "Avionics Database Update",
-      ComponentType.COMPONENT_AIRFRAME,
-      ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
-      InspectionRule(time_rule = TimeRule(interval_days = 28)),
-      notes = "Garmin 28-day nav database cycle. Required for IFR approaches. Update terrain/obstacles annually.",
-    ),
-    TaskTemplate(
-      "Fuel System Inspection",
-      ComponentType.COMPONENT_AIRFRAME,
-      ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
-      InspectionRule(time_rule = TimeRule(interval_months = 12)),
-      notes = "Inspect tanks, lines, valves, drains, and fuel selector. Clean finger strainer.",
-    ),
-    TaskTemplate(
-      "AD 2019-09-11: Seat Rail Inspection",
-      ComponentType.COMPONENT_AIRFRAME,
-      ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE,
-      InspectionRule(time_rule = TimeRule(interval_months = 12)),
-      referenceNumber = "AD 2019-09-11",
-      complianceAuthority = "FAA",
-      complianceDetails = "Inspect seat tracks and stop bolts for cracks. Replace if crack found.",
-      notes = "Mandatory recurrent. Applies to specified S/N range. See AD for applicability.",
-    ),
-    TaskTemplate(
-      "SB 39-2018-01: Carburetor Heat System",
-      ComponentType.COMPONENT_ENGINE,
-      ComplianceType.COMPLIANCE_TYPE_SERVICE_BULLETIN,
-      InspectionRule(on_condition_rule = OnConditionRule(description = "Inspect when carb heat effectiveness is reduced or upon annual inspection.")),
-      referenceNumber = "SB-39-2018-01",
-      complianceAuthority = "Manufacturer",
-      complianceDetails = "Inspect heat muff and duct for cracks or loose clamps. Replace as needed.",
-      notes = "Manufacturer service bulletin. Recommended at annual or upon reduced carb heat effectiveness.",
-    ),
-    TaskTemplate(
-      "AD 2022-15-03: Fuel Cap Seal Inspection",
-      ComponentType.COMPONENT_AIRFRAME,
-      ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE,
-      InspectionRule(immediate_rule = ImmediateRule()),
-      referenceNumber = "AD 2022-15-03",
-      complianceAuthority = "FAA",
-      complianceDetails = "Replace fuel cap seal O-ring per kit P/N AN6227-11A. One-time compliance.",
-      notes = "One-time AD. Inspect and replace both fuel cap O-rings.",
-      isOneTime = true,
-    ),
-    TaskTemplate(
-      "Brake System Service",
-      ComponentType.COMPONENT_AIRFRAME,
-      ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
-      meterRule(MeterKeys.ENGINE_HOURS, 100f),
-      notes = "Check fluid level, inspect lines and calipers, measure pad thickness. Flush fluid annually.",
-    ),
-    TaskTemplate(
-      "Control Cable Tension Check",
-      ComponentType.COMPONENT_AIRFRAME,
-      ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
-      InspectionRule(time_rule = TimeRule(interval_months = 12)),
-      notes = "Check all primary flight control cable tensions per rigging chart. Adjust as needed.",
-    ),
-    TaskTemplate(
-      "Stall Warning System Check",
-      ComponentType.COMPONENT_AIRFRAME,
-      ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
-      InspectionRule(time_rule = TimeRule(interval_months = 12)),
-      notes = "Verify stall warning activates 5–10 kts above stall. Clean vane and check wiring.",
-    ),
-  )
-
-  private data class SquawkTemplate(
-    val title: String,
-    val description: String,
-    val priority: SquawkPriority,
-    val component: ComponentType,
-  )
-
-  private val SQUAWK_TEMPLATES = listOf(
-    SquawkTemplate(
-      "Left landing light inoperative",
-      "Landing light bulb burned out on left main gear. Navigation light functioning normally. Right landing light OK.",
-      SquawkPriority.SQUAWK_PRIORITY_LOW,
-      ComponentType.COMPONENT_AIRFRAME,
-    ),
-    SquawkTemplate(
-      "Oil filler cap O-ring deteriorated",
-      "O-ring on oil filler cap is cracked and has lost elasticity. No leakage observed but replacement recommended before next flight.",
-      SquawkPriority.SQUAWK_PRIORITY_MEDIUM,
-      ComponentType.COMPONENT_ENGINE,
-    ),
-    SquawkTemplate(
-      "Left brake dragging on rollout",
-      "Left main wheel brake exhibits slight drag during landing rollout and slow taxi. Consistent across three flights. Brake caliper or shimmy dampener suspected.",
-      SquawkPriority.SQUAWK_PRIORITY_LOW,
-      ComponentType.COMPONENT_AIRFRAME,
-    ),
-    SquawkTemplate(
-      "COM1 intermittent static above FL080",
-      "COM1 radio develops intermittent static and occasional dropout above 8,000 ft MSL. COM2 unaffected. Issue began approximately 20 flight hours ago.",
-      SquawkPriority.SQUAWK_PRIORITY_MEDIUM,
-      ComponentType.COMPONENT_AIRFRAME,
-    ),
-    SquawkTemplate(
-      "Propeller blade nick – leading edge",
-      "Small nick found on leading edge of propeller blade #1 approximately 4 inches from tip during preflight. Estimated depth 0.040 inches. Flight restricted pending inspection.",
-      SquawkPriority.SQUAWK_PRIORITY_HIGH,
-      ComponentType.COMPONENT_PROPELLER,
-    ),
-    SquawkTemplate(
-      "Engine won't start – fuel issue suspected",
-      "Engine fails to start after repeated attempts. Fuel pressure reads normal. Starter engagement confirmed. Vapor lock or possible contaminated fuel suspected.",
-      SquawkPriority.SQUAWK_PRIORITY_AOG, ComponentType.COMPONENT_ENGINE,
-    ),
-    SquawkTemplate(
-      "Static wick missing – left aileron",
-      "Static wick found missing from left aileron trailing edge. All other static wicks intact. No precipitation static issues reported in flight.",
-      SquawkPriority.SQUAWK_PRIORITY_LOW,
-      ComponentType.COMPONENT_AIRFRAME,
-    ),
-    SquawkTemplate(
-      "ELT inadvertent activation",
-      "ELT activated during hard landing. ATC notified and activation cancelled. Battery replaced. Unit requires inspection, testing, and recertification before return to service.",
-      SquawkPriority.SQUAWK_PRIORITY_HIGH,
-      ComponentType.COMPONENT_AIRFRAME,
-    ),
-    SquawkTemplate(
-      "Right rear door seal air leak",
-      "Right rear passenger door seal leaking air at cruise altitude. Cabin noise level noticeably increased above 100 KIAS. Door closes and latches properly.",
-      SquawkPriority.SQUAWK_PRIORITY_LOW,
-      ComponentType.COMPONENT_AIRFRAME,
-    ),
-    SquawkTemplate(
-      "Transponder Mode C altitude error",
-      "Transponder not squawking correct altitude in Mode C. Altimeter reading matches actual altitude. Altitude encoder is suspected to be out of calibration.",
-      SquawkPriority.SQUAWK_PRIORITY_MEDIUM,
-      ComponentType.COMPONENT_AIRFRAME,
-    ),
-    SquawkTemplate(
-      "Exhaust stack crack at cylinder #3",
-      "Small crack found in exhaust stack at cylinder #3 flange. Carbon deposits visible around crack. Elevated CO risk in cabin. Aircraft grounded pending repair.",
-      SquawkPriority.SQUAWK_PRIORITY_HIGH, ComponentType.COMPONENT_ENGINE,
-    ),
-    SquawkTemplate(
-      "Oil temperature consistently high",
-      "Oil temperature reaching upper yellow arc at cruise power settings. Oil level checked normal. Oil cooler baffling or thermostat suspected.",
-      SquawkPriority.SQUAWK_PRIORITY_HIGH, ComponentType.COMPONENT_ENGINE,
-    ),
-    SquawkTemplate(
-      "Nose gear shimmy on touchdown",
-      "Nose gear shimmy onset above 60 KIAS on touchdown. Shimmy diminishes as aircraft slows below 40 KIAS. Shimmy dampener service likely needed.",
-      SquawkPriority.SQUAWK_PRIORITY_MEDIUM,
-      ComponentType.COMPONENT_AIRFRAME,
-    ),
-    SquawkTemplate(
-      "Avionics master CB intermittent trip",
-      "Avionics master circuit breaker trips intermittently during engine start sequence. CB resets and holds after one attempt. Potential wiring short or overloaded circuit.",
-      SquawkPriority.SQUAWK_PRIORITY_MEDIUM,
-      ComponentType.COMPONENT_AIRFRAME,
-    ),
-    SquawkTemplate(
-      "Fuel cap O-ring pilot side",
-      "Pilot-side fuel cap O-ring slightly compressed and beginning to lose seating. No leakage confirmed, but preventive replacement recommended per AD 2022-15-03.",
-      SquawkPriority.SQUAWK_PRIORITY_LOW,
-      ComponentType.COMPONENT_AIRFRAME,
-    ),
-  )
-
-  private data class LogTemplate(
-    val description: String,
-    val component: ComponentType,
-    val taskHints: List<String> = emptyList(),
-  )
-
-  private val LOG_TEMPLATES = listOf(
-    // AIRFRAME
-    LogTemplate(
-      "Annual inspection completed per FAR 43 Appendix D. All airframe structures, flight controls, landing gear, and systems inspected. Airworthiness Directive status current. Logbook entries made. Aircraft found airworthy and returned to service.",
-      ComponentType.COMPONENT_AIRFRAME,
-      taskHints = listOf(
-        "Annual",
-        "Seat Rail",
-        "Fuel System",
-        "Control Cable"
-      ),
-    ),
-    LogTemplate(
-      "Replaced pilot-side seat belt and shoulder harness assembly. Old hardware showed UV degradation and webbing fraying. New assembly P/N Aero-520-013 installed, torqued, and inspected. Returned to service.",
-      ComponentType.COMPONENT_AIRFRAME,
-    ),
-    LogTemplate(
-      "Replaced windshield. Original windshield showed haze, crazing, and minor de-lamination. New windshield installed and sealed per MM 56-10-00. Integrity verified. No leaks.",
-      ComponentType.COMPONENT_AIRFRAME,
-    ),
-    LogTemplate(
-      "Control surface lubrication per MM section 12-20. All hinges, bearings, and pivot points lubricated with MIL-G-81322 grease. Cable tensions checked within limits.",
-      ComponentType.COMPONENT_AIRFRAME,
-      taskHints = listOf("Control Cable"),
-    ),
-    LogTemplate(
-      "Replaced left main gear landing light bulb. P/N GE4596. Bulb tested and verified prior to reinstall. All other lights confirmed operational.",
-      ComponentType.COMPONENT_AIRFRAME,
-    ),
-    LogTemplate(
-      "Replaced right rear door seal. Old seal compressed flat and no longer sealing. New seal P/N MC-SE-002 installed. Door verified fully sealed at all airspeeds during test flight.",
-      ComponentType.COMPONENT_AIRFRAME,
-    ),
-    LogTemplate(
-      "Replaced missing static wick on left aileron trailing edge. P/N Av-SW-003. All eight static wicks confirmed installed and secure.",
-      ComponentType.COMPONENT_AIRFRAME,
-    ),
-    LogTemplate(
-      "Nose gear shimmy dampener serviced. Unit removed, disassembled, seals replaced, fluid replenished, and reassembled per MM 32-40. Reinstalled and taxi tested. No shimmy observed at any speed.",
-      ComponentType.COMPONENT_AIRFRAME,
-    ),
-    LogTemplate(
-      "Pitot-static system check per FAR 91.411. Altimeter, VSI, and ASI calibrated and tested. Encoder agrees with altimeter within 75 ft at 10,000 ft. All instruments within IFR tolerances. System tight – no leaks. Good for 24 months.",
-      ComponentType.COMPONENT_AIRFRAME,
-      taskHints = listOf("Pitot-Static"),
-    ),
-    LogTemplate(
-      "AD 2019-09-11 compliance: Seat rail inspection completed. All four seat rails inspected per AD instructions. No cracks found. Stop bolts present and secure. AD complied with.",
-      ComponentType.COMPONENT_AIRFRAME,
-      taskHints = listOf("Seat Rail"),
-    ),
-    LogTemplate(
-      "Fuel cap O-ring replacement per AD 2022-15-03. Replaced O-rings on both fuel caps (pilot and co-pilot) with AN6227-11A. Caps tested: no leakage. AD one-time compliance complete.",
-      ComponentType.COMPONENT_AIRFRAME,
-      taskHints = listOf("Fuel Cap Seal"),
-    ),
-    LogTemplate(
-      "Brake system service. Inspected calipers, brake pads, and lines. Left caliper pistons stuck – rebuilt per MM. Fluid flushed and replaced. Brake action tested and confirmed firm on both sides.",
-      ComponentType.COMPONENT_AIRFRAME,
-      taskHints = listOf("Brake System"),
-    ),
-    LogTemplate(
-      "Stall warning system check. Vane cleaned and pivot lubricated. System activates at 5 kts above published stall speed. Wiring inspected – no chafing. System functional.",
-      ComponentType.COMPONENT_AIRFRAME,
-      taskHints = listOf("Stall Warning"),
-    ),
-    LogTemplate(
-      "Control cable tension check per rigging chart. Aileron cables within tolerance. Left elevator cable tension 30 lb – adjusted to 32 lb per spec. Rudder cables nominal.",
-      ComponentType.COMPONENT_AIRFRAME,
-      taskHints = listOf("Control Cable"),
-    ),
-    LogTemplate(
-      "Fuel system inspection. Tanks sump-drained. Selector valve operated all positions. Finger strainer cleaned. Gascolator drained and bowl cleaned. Fuel lines and vents inspected – no leaks.",
-      ComponentType.COMPONENT_AIRFRAME,
-      taskHints = listOf("Fuel System"),
-    ),
-    // ENGINE
-    LogTemplate(
-      "Engine oil change at 50-hour interval. Drained 12 qt AeroShell W80 Plus. New Tempest AA48109 oil filter installed and safety-wired. Oil analysis sample sent to AVLAB. System refilled.",
-      ComponentType.COMPONENT_ENGINE,
-      taskHints = listOf("Oil Change"),
-    ),
-    LogTemplate(
-      "100-hour inspection completed. Engine oil changed, spark plugs cleaned/gapped/rotated (top to bottom), magneto timing verified 25° BTC, compression check: 78/80, 76/80, 79/80, 77/80. All within service limits.",
-      ComponentType.COMPONENT_ENGINE,
-      taskHints = listOf(
-        "100-Hour",
-        "Oil Change",
-        "Spark Plug",
-        "Magneto"
-      ),
-    ),
-    LogTemplate(
-      "Spark plugs cleaned, gapped to 0.017 in, and rotated top-to-bottom. All four plugs show normal wear patterns. No fouling or lead deposits. Anti-seize applied to threads.",
-      ComponentType.COMPONENT_ENGINE,
-      taskHints = listOf("Spark Plug"),
-    ),
-    LogTemplate(
-      "Magneto timing check and adjustment. Left mag: 24.5° BTC → adjusted to 25.0° BTC. Right mag: 25.0° BTC – no adjustment needed. Both within ±1° tolerance. Points and condensers inspected serviceable.",
-      ComponentType.COMPONENT_ENGINE,
-      taskHints = listOf("Magneto"),
-    ),
-    LogTemplate(
-      "Carburetor removed, disassembled, cleaned, and calibrated per MM 73-10-02. Float level set to 7/8 in. All jets cleaned. Bowl O-ring replaced. Reinstalled and ground run performed – smooth idle, no stumble.",
-      ComponentType.COMPONENT_ENGINE,
-      taskHints = listOf("Carburetor Heat"),
-    ),
-    LogTemplate(
-      "Engine compression check performed. Results: Cyl 1: 76/80, Cyl 2: 78/80, Cyl 3: 79/80, Cyl 4: 75/80. All cylinders within FAA-approved service limits. No cylinder removal required.",
-      ComponentType.COMPONENT_ENGINE,
-    ),
-    LogTemplate(
-      "Oil cooler serviced. Removed, back-flushed with MEK, inspected for cracks – none found. Reinstalled with new O-rings and gaskets. Pressure tested to 80 PSI. No leaks.",
-      ComponentType.COMPONENT_ENGINE,
-    ),
-    LogTemplate(
-      "Exhaust stack crack repaired. Cylinder #3 exhaust stack removed. Crack welded by certified welder per field approval A-4521. CO inspection post-repair – no leaks. Engine run-up completed without issues.",
-      ComponentType.COMPONENT_ENGINE,
-    ),
-    LogTemplate(
-      "Oil temperature issue investigated. Thermostat valve replaced (P/N: 72534). Oil cooler baffling readjusted to increase airflow. Ground test: oil temp stable in green arc at cruise power.",
-      ComponentType.COMPONENT_ENGINE,
-    ),
-    LogTemplate(
-      "Alternator belt tension checked and adjusted. Belt deflects 3/8 in under 5 lb force – within spec (1/4 – 1/2 in). No cracks or fraying observed. Alternator output: 28.1 V at 1,200 RPM.",
-      ComponentType.COMPONENT_ENGINE,
-      taskHints = listOf("Alternator Belt"),
-    ),
-    LogTemplate(
-      "Fuel injector cleaning and flow balance. All injectors removed and ultrasonically cleaned. Flow rates measured and found within 3% of each other. Reinstalled and engine run confirmed smooth at all power settings.",
-      ComponentType.COMPONENT_ENGINE,
-    ),
-    LogTemplate(
-      "Engine overhaul completed (TBO). Engine removed and sent to Mattituck Aviation for factory overhaul. Overhauled engine returned and installed per MM 71-00-00. Engine run-in procedure completed. TBO clock reset to 0 hours.",
-      ComponentType.COMPONENT_ENGINE,
-      taskHints = listOf("Engine TBO"),
-    ),
-    LogTemplate(
-      "SB 39-2018-01 compliance: Carburetor heat system inspection. Heat muff inspected – no cracks. Inlet duct secure. Carb heat operation confirmed effective during ground run (RPM drop >50 RPM). Complied with SB.",
-      ComponentType.COMPONENT_ENGINE,
-      taskHints = listOf("Carburetor Heat"),
-    ),
-    // PROPELLER
-    LogTemplate(
-      "Propeller inspection per manufacturer SL-2021-02. Leading and trailing edges checked for nicks and corrosion. Blade tracking checked – within 1/8 in tolerance. Hub bolts torque-checked. Propeller returned to service.",
-      ComponentType.COMPONENT_PROPELLER,
-      taskHints = listOf("Propeller Overhaul"),
-    ),
-    LogTemplate(
-      "Propeller dynamic balance. Balanced using DynaVib Smart Balancer II. Initial IPS: 0.24 at 2,300 RPM. Final IPS: 0.06. Vibration eliminated. Weights added at 12 o'clock position.",
-      ComponentType.COMPONENT_PROPELLER,
-    ),
-    LogTemplate(
-      "Propeller nick repair. Nick on blade #1 leading edge measured 0.038 in deep and 0.25 in wide. Dressed per MM using file and emery cloth. Nick within manufacturer's allowable limits. Blade limits not exceeded. Returned to service.",
-      ComponentType.COMPONENT_PROPELLER,
-    ),
-    LogTemplate(
-      "Propeller hub inspection. Hub removed, disassembled, cleaned, and inspected. New seals and O-rings installed (kit P/N: H-200-K). Hub reassembled to specified torque. Propeller re-installed and safety-wired.",
-      ComponentType.COMPONENT_PROPELLER,
-    ),
-    LogTemplate(
-      "Propeller overhaul completed (5-year/2,000-hour TBO). Propeller removed and sent to Hartzell Propeller Service Center. Fully overhauled and returned with new blades. Reinstalled per MM. Dynamic balance performed.",
-      ComponentType.COMPONENT_PROPELLER,
-      taskHints = listOf("Propeller Overhaul"),
-    ),
-    // Avionics work (filed under airframe)
-    LogTemplate(
-      "ELT battery replacement. Replaced battery in ACK E-04 ELT with Panasonic CR123A. Activated briefly (<1 sec) to verify function. Squawk code [unique to aircraft] verified with Unicom. Registration card updated. Next replacement: 24 months.",
-      ComponentType.COMPONENT_AIRFRAME,
-      taskHints = listOf("ELT Battery"),
-    ),
-    LogTemplate(
-      "Transponder certification per FAR 91.413. Modes A, C, and S tested and certified. Encoder tested – agrees with altimeter within 125 ft at all test altitudes. All within TSO-C74c limits. Certificate issued. Next check: 24 months.",
-      ComponentType.COMPONENT_AIRFRAME,
-      taskHints = listOf("Transponder"),
-    ),
-    LogTemplate(
-      "Altimeter and pitot-static check per FAR 91.411. Encoder/altimeter agreement: <75 ft error at 10,000 ft. VSI checked. All within limits. IFR certification current for 24 months.",
-      ComponentType.COMPONENT_AIRFRAME,
-      taskHints = listOf("Pitot-Static"),
-    ),
-    LogTemplate(
-      "VOR operational check per FAR 91.171. Checked on Gainesville VOR 116.2 MHz at 180° radial ground check point. Receiver indication: 179.5°. Error: 0.5°. Within ±4° tolerance. Check logged.",
-      ComponentType.COMPONENT_AIRFRAME,
-      taskHints = listOf("VOR"),
-    ),
-    LogTemplate(
-      "Garmin G1000 nav/terrain database updated. Navigation database updated to current 28-day cycle. Terrain database updated to current version. GTN 750 approach plates verified current. Both units confirm valid data.",
-      ComponentType.COMPONENT_AIRFRAME,
-      taskHints = listOf("Database"),
-    ),
-    LogTemplate(
-      "COM1 radio serviced. Internal PCB connector reseated. Antenna connection cleaned. Radio tested on ground and confirmed clear on 121.5, 122.8, and 123.45 MHz. No static above 10,000 ft during test flight.",
-      ComponentType.COMPONENT_AIRFRAME,
-    ),
-    LogTemplate(
-      "Avionics master circuit breaker replaced. Failed 5A CB replaced with OEM part (P/N: MS25244-5). Root cause: intermittent short in co-pilot avionics bus traced to chafed wire. Wire repaired and secured. Ground test – no trips.",
-      ComponentType.COMPONENT_AIRFRAME,
-    ),
-    LogTemplate(
-      "ELT serviced after inadvertent activation during hard landing. Activation sensor spring replaced. Unit inspected for damage – none. Unit re-certified and returned to service. Battery verified >50% life remaining.",
-      ComponentType.COMPONENT_AIRFRAME,
-      taskHints = listOf("ELT Battery"),
-    ),
-    LogTemplate(
-      "Altitude encoder replaced. Encoder P/N ENC-A-1000 installed and calibrated. ATC verified mode C encoding correct on ground check. Pitot-static system integrity verified after encoder swap.",
-      ComponentType.COMPONENT_AIRFRAME,
-      taskHints = listOf("Transponder"),
-    ),
-  )
-
-  private fun meterRule(key: String, interval: Float): InspectionRule =
-    InspectionRule(meter_rule = MeterRule(meter_key = key, interval = interval))
-
-  private fun months(count: Int): InspectionRule =
-    InspectionRule(time_rule = TimeRule(interval_months = count))
-
-  /**
-   * A car pool, scheduled in miles. This is the point of the whole fixture: until it existed the
-   * generator handed a car the aviation pool, so nothing anyone dogfooded ever exercised a keyed
-   * rule and every fake log recorded aeroplane hours a car has no meter for.
-   */
-  private val AUTOMOTIVE_TASK_TEMPLATES = listOf(
-    TaskTemplate(
-      "Oil and Filter Change",
-      ComponentType.COMPONENT_ENGINE,
-      ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
-      meterRule(MeterKeys.ODOMETER, 5000f),
-      notes = "Full synthetic 0W-20. Reset the maintenance minder afterwards.",
-    ),
-    TaskTemplate(
-      "Tire Rotation",
-      ComponentType.COMPONENT_UNKNOWN,
-      ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
-      meterRule(MeterKeys.ODOMETER, 7500f),
-      notes = "Front to back, same side. Check pressures cold and inspect for uneven wear.",
-    ),
-    TaskTemplate(
-      "Brake Inspection",
-      ComponentType.COMPONENT_UNKNOWN,
-      ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
-      meterRule(MeterKeys.ODOMETER, 15000f),
-      notes = "Measure pad thickness and rotor runout. Flush fluid every three years regardless.",
-    ),
-    TaskTemplate(
-      "Engine Air Filter",
-      ComponentType.COMPONENT_ENGINE,
-      ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
-      meterRule(MeterKeys.ODOMETER, 30000f),
-      notes = "Sooner in dusty conditions. Inspect the cabin filter at the same time.",
-    ),
-    TaskTemplate(
-      "State Safety Inspection",
-      ComponentType.COMPONENT_UNKNOWN,
-      ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
-      months(12),
-      notes = "Sticker expires at the end of the month. Bring registration and proof of insurance.",
-    ),
-    TaskTemplate(
-      "Registration Renewal",
-      ComponentType.COMPONENT_UNKNOWN,
-      ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
-      months(12),
-      notes = "Renew online. Emissions test required in some counties.",
-    ),
-  )
-
-  /** A bike pool, deliberately split across two meters so both get exercised. */
-  private val BIKE_TASK_TEMPLATES = listOf(
-    TaskTemplate(
-      "Chain Wear Check",
-      ComponentType.COMPONENT_UNKNOWN,
-      ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
-      meterRule(MeterKeys.ODOMETER, 500f),
-      notes = "Replace at 0.5% stretch, before it starts eating the cassette.",
-    ),
-    TaskTemplate(
-      "Drivetrain Service",
-      ComponentType.COMPONENT_UNKNOWN,
-      ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
-      meterRule(MeterKeys.RIDE_HOURS, 100f),
-      notes = "Degrease, re-lube, check derailleur alignment.",
-    ),
-    TaskTemplate(
-      "Brake Pad Inspection",
-      ComponentType.COMPONENT_UNKNOWN,
-      ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
-      meterRule(MeterKeys.ODOMETER, 1000f),
-      notes = "Replace under 1mm of pad material. Bed new pads in before the first descent.",
-    ),
-    TaskTemplate(
-      "Annual Tune-Up",
-      ComponentType.COMPONENT_UNKNOWN,
-      ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
-      months(12),
-      notes = "Bearing check, true the wheels, replace cables and housing.",
-    ),
-  )
-
-  /** A boat pool. Engine hours, which is the same shape as aviation but under a keyed rule. */
-  private val BOAT_TASK_TEMPLATES = listOf(
-    TaskTemplate(
-      "Engine Oil Change",
-      ComponentType.COMPONENT_ENGINE,
-      ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
-      meterRule(MeterKeys.ENGINE_HOURS, 100f),
-      notes = "Change the gear oil at the same interval. Check for water intrusion in the sample.",
-    ),
-    TaskTemplate(
-      "Impeller Replacement",
-      ComponentType.COMPONENT_ENGINE,
-      ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
-      meterRule(MeterKeys.ENGINE_HOURS, 200f),
-      notes = "Annually regardless of hours. Count the vanes — a missing one is downstream.",
-    ),
-    TaskTemplate(
-      "Zinc Anode Inspection",
-      ComponentType.COMPONENT_UNKNOWN,
-      ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
-      months(6),
-      notes = "Replace at 50% erosion. Never paint them.",
-    ),
-    TaskTemplate(
-      "Hull Cleaning and Inspection",
-      ComponentType.COMPONENT_UNKNOWN,
-      ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
-      months(6),
-      notes = "Check through-hulls and the running gear while she is out.",
-    ),
-  )
-
-  /** A home pool. No meters at all, so everything here is calendar-driven. */
-  private val HOME_TASK_TEMPLATES = listOf(
-    TaskTemplate(
-      "HVAC Filter Replacement",
-      ComponentType.COMPONENT_UNKNOWN,
-      ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
-      months(3),
-      notes = "MERV 11. Note the size on the filter housing so the next one is right.",
-    ),
-    TaskTemplate(
-      "Water Heater Flush",
-      ComponentType.COMPONENT_UNKNOWN,
-      ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
-      months(12),
-      notes = "Drain the sediment and check the anode rod while the tank is empty.",
-    ),
-    TaskTemplate(
-      "Gutter Cleaning",
-      ComponentType.COMPONENT_UNKNOWN,
-      ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
-      months(6),
-      notes = "Spring and late autumn. Check the downspout runs clear of the foundation.",
-    ),
-    TaskTemplate(
-      "Smoke Detector Batteries",
-      ComponentType.COMPONENT_UNKNOWN,
-      ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
-      months(12),
-      notes = "Test every unit. Replace the detector itself after ten years.",
-    ),
-    TaskTemplate(
-      "Dryer Vent Cleaning",
-      ComponentType.COMPONENT_UNKNOWN,
-      ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
-      months(12),
-      notes = "The whole run, not just the trap. Longer drying times are the tell.",
-    ),
-  )
-
-  /** Custom declares nothing, so its fixture is the one that has to work with no vocabulary. */
-  private val CUSTOM_TASK_TEMPLATES = listOf(
-    TaskTemplate(
-      "Routine Inspection",
-      ComponentType.COMPONENT_UNKNOWN,
-      ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
-      months(6),
-    ),
-    TaskTemplate(
-      "Annual Service",
-      ComponentType.COMPONENT_UNKNOWN,
-      ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
-      months(12),
-    ),
-  )
-
-  /** Which pool a preset draws from. Airplane is the default because it is the richest. */
-  private fun taskPoolFor(template: ThingTemplate): List<TaskTemplate> =
-    when (template.id) {
-      CanonicalTemplates.AUTOMOTIVE.id -> AUTOMOTIVE_TASK_TEMPLATES
-      CanonicalTemplates.BIKE.id -> BIKE_TASK_TEMPLATES
-      CanonicalTemplates.BOAT.id -> BOAT_TASK_TEMPLATES
-      CanonicalTemplates.HOME.id -> HOME_TASK_TEMPLATES
-      CanonicalTemplates.CUSTOM.id -> CUSTOM_TASK_TEMPLATES
-      else -> TASK_TEMPLATES
-    }
-
   fun generate(config: StressTestConfig): StressTestData {
     val now = Clock.System.now()
     val spanDays = (4 * 365).days
     val startInstant = now - spanDays
 
-    val spec = THING_SPECS.random()
+    val spec = SampleNames.THING_SPECS.random()
     val thingId = generateRandomId()
     val template =
       CanonicalTemplates.ALL.firstOrNull { it.id == config.templateId }
         ?: AirplaneTemplate.TEMPLATE
-    // Airplane keeps its own builder: the aviation fixture below (engine/propeller logs, component
-    // squawks) expects the specific airframe -> engine -> propeller -> hub/blade tree, and
-    // engineCount / bladesPerEngine configure it. Every other preset is built from its template.
+    // Squawks, tasks and logs all come from the preset's own pool: a car gets check-engine lights
+    // and oil changes in miles, not a propeller nick and an annual it has no airframe for.
+    val pool = FakeDataPools.forTemplate(template)
+    // Airplane keeps its own builder: the aviation fixture (engine/propeller logs, component
+    // squawks) expects the specific engine -> propeller -> blade tree, and engineCount /
+    // bladesPerEngine configure it. Every other preset is built from its template.
     val thing =
-      if (template.id == AirplaneTemplate.ID) buildThing(
-        spec,
-        thingId,
-        config
-      )
-      else buildFromTemplate(template, thingId)
+      if (template.id == AirplaneTemplate.ID) {
+        buildThing(spec, thingId, config.engineCount, config.bladesPerEngine)
+      } else {
+        buildFromTemplate(template, thingId)
+      }
+    // ThingInflater writes DNA on save only when the Thing carries none, so DNA set here survives
+    // the write and is what makes the thing resolve as Degraded. Applied after the build so the
+    // switch means the same thing for every preset.
+    val stampedThing =
+      if (!config.dnaFromANewerBuild) thing
+      else thing.copy(template = template.copy(min_app_version = APP_VERSION_CODE + 1))
     val technicians = buildTechnicians(config.technicianCount)
-    val tasks = buildTasks(config.taskCount, now, template)
+    val tasks = buildTasks(config.taskCount, now, pool)
     val squawks =
-      buildSquawks(config.squawkCount, thing, startInstant, now)
+      buildSquawks(config.squawkCount, stampedThing, pool, startInstant, now)
     val (logs, addressedSquawks) = buildLogs(
       config.logCount,
-      thing,
+      stampedThing,
       template,
+      pool,
       technicians,
       tasks,
       squawks,
@@ -839,7 +95,7 @@ object FakeDataGenerator {
     val dismissedSquawks = buildDismissedSquawks(squawks, addressedSquawks)
 
     return StressTestData(
-      thing = thing,
+      thing = stampedThing,
       technicians = technicians,
       tasks = tasks,
       squawks = squawks,
@@ -850,9 +106,10 @@ object FakeDataGenerator {
   }
 
   private fun buildThing(
-    spec: ThingSpec,
+    spec: SampleNames.ThingSpec,
     thingId: String,
-    config: StressTestConfig
+    engineCount: Int,
+    bladesPerEngine: Int,
   ): Thing {
     val serialLetters = ('A'..'Z').toList()
     val serial = "S${serialLetters.random()}${(10000..99999).random()}"
@@ -860,8 +117,8 @@ object FakeDataGenerator {
 
     // Builds the component tree directly — the same shape the form produces. Engines sit at the
     // root and the propeller carries what the hub used to (#729).
-    val engines = (1..config.engineCount).map { engineIndex ->
-      val blades = (1..config.bladesPerEngine).map { bladeIndex ->
+    val engines = (1..engineCount).map { engineIndex ->
+      val blades = (1..bladesPerEngine).map { bladeIndex ->
         Component(
           slot_key = SlotKeys.BLADE,
           make = spec.propMake,
@@ -899,16 +156,6 @@ object FakeDataGenerator {
       // entries above (#729).
       components = engines,
     ).withDerivedComponentIds()
-      .let { thing ->
-        // ThingInflater writes DNA on save only when the Thing carries none, so DNA set here
-        // survives the write and is what makes the thing resolve as Degraded.
-        if (!config.dnaFromANewerBuild) thing
-        else thing.copy(
-          template = AirplaneTemplate.TEMPLATE.copy(
-            min_app_version = APP_VERSION_CODE + 1,
-          ),
-        )
-      }
   }
 
   /**
@@ -949,7 +196,7 @@ object FakeDataGenerator {
     (0 until instanceCount(slot)).map { index ->
       Component(
         slot_key = slot.slot_key,
-        make = SAMPLE_MAKES.random(),
+        make = SampleNames.MAKES.random(),
         model = "${('A'..'Z').random()}${(100..999).random()}",
         serial = if (slot.serial_expected) {
           "${
@@ -979,7 +226,7 @@ object FakeDataGenerator {
    * two would have demonstrated half of it. A bike's cap of two trims the same rule to a front
    * and a rear.
    */
-  private fun instanceCount(slot: ComponentSlot): Int {
+  internal fun instanceCount(slot: ComponentSlot): Int {
     if (!slot.repeatable) return 1
     val positions =
       slot.spec_fields.firstOrNull { it.title_candidate }?.options.orEmpty()
@@ -1005,7 +252,7 @@ object FakeDataGenerator {
   }
 
   private fun sampleSpecValue(key: String, label: String): String = when (key) {
-    SpecKeys.MAKE -> SAMPLE_MAKES.random()
+    SpecKeys.MAKE -> SampleNames.MAKES.random()
     SpecKeys.MODEL -> "${('A'..'Z').random()}${(100..999).random()}"
     SpecKeys.SERIAL -> "S${(10000..99999).random()}"
     SpecKeys.TAIL_NUMBER -> "N${(1000..9999).random()}${('A'..'Z').random()}"
@@ -1015,7 +262,7 @@ object FakeDataGenerator {
     "year", "year_built" -> (1960..2024).random()
       .toString()
 
-    "address" -> "${(100..9999).random()} ${SAMPLE_STREETS.random()}"
+    "address" -> "${(100..9999).random()} ${SampleNames.STREETS.random()}"
     // Deliberately generic: a preset added later gets something readable without editing this.
     else -> "Sample $label"
   }
@@ -1028,17 +275,10 @@ object FakeDataGenerator {
         .ifBlank { "Sample ${templateId.replaceFirstChar { it.uppercase() }}" }
   }
 
-  private val SAMPLE_MAKES = listOf(
-    "Acme", "Corellian", "Kuat", "Sienar", "Incom", "Rendili",
-  )
-
-  private val SAMPLE_STREETS = listOf(
-    "Maple Street", "Oak Avenue", "Cedar Lane", "Birch Road", "Willow Way",
-  )
-
   private fun buildTechnicians(count: Int): List<Technician> {
-    val shuffled = TECHNICIAN_NAMES.shuffled()
-      .take(count.coerceAtMost(TECHNICIAN_NAMES.size))
+    val names = SampleNames.TECHNICIAN_NAMES
+    val shuffled = names.shuffled()
+      .take(count.coerceAtMost(names.size))
     return shuffled.mapIndexed { index, name ->
       val isAmt = index % 3 != 2
       val certNumber =
@@ -1063,11 +303,10 @@ object FakeDataGenerator {
   private fun buildTasks(
     count: Int,
     now: Instant,
-    template: ThingTemplate,
+    fixtures: FakeDataPool,
   ): List<MaintenanceTask> {
-    val templates = taskPoolFor(template)
-    val pool = templates.shuffled()
-      .take(count.coerceAtMost(templates.size))
+    val pool = fixtures.tasks.shuffled()
+      .take(count.coerceAtMost(fixtures.tasks.size))
     val overdueCreationInstant = now - (4 * 365).days
 
     return pool.mapIndexed { index, template ->
@@ -1162,36 +401,24 @@ object FakeDataGenerator {
   private fun buildSquawks(
     count: Int,
     thing: Thing,
+    fixtures: FakeDataPool,
     startInstant: Instant,
     now: Instant,
   ): List<Squawk> {
-    val pool = SQUAWK_TEMPLATES.shuffled()
-      .take(count.coerceAtMost(SQUAWK_TEMPLATES.size))
+    val pool = fixtures.squawks.shuffled()
+      .take(count.coerceAtMost(fixtures.squawks.size))
     val span = now - startInstant
     return pool.mapIndexed { i, template ->
       val fraction =
         if (pool.size == 1) 0.5 else i.toDouble() / (pool.size - 1)
       val squawkInstant = startInstant + (span * fraction)
-      val serial = when (template.component) {
-        ComponentType.COMPONENT_ENGINE ->
-          thing.allComponentsInSlot(SlotKeys.ENGINE)
-            .firstOrNull()?.serial
-            ?: thing.specValue(SpecKeys.SERIAL)
-
-        ComponentType.COMPONENT_PROPELLER ->
-          thing.allComponentsInSlot(SlotKeys.PROPELLER)
-            .firstOrNull()?.serial
-            ?: thing.specValue(SpecKeys.SERIAL)
-
-        else -> thing.specValue(SpecKeys.SERIAL)
-      }
       Squawk(
         id = generateRandomId(),
         title = template.title,
         description = template.description,
         priority = template.priority,
         component_type = template.component,
-        component_serial = serial,
+        component_serial = componentSerialFor(thing, template.component),
         created_at = squawkInstant.toWireInstant(),
       )
     }
@@ -1201,6 +428,7 @@ object FakeDataGenerator {
     count: Int,
     thing: Thing,
     template: ThingTemplate,
+    fixtures: FakeDataPool,
     technicians: List<Technician>,
     tasks: List<MaintenanceTask>,
     squawks: List<Squawk>,
@@ -1209,7 +437,7 @@ object FakeDataGenerator {
   ): Pair<List<MaintenanceLog>, Map<String, String>> {
 
     val span = now - startInstant
-    val pool = buildLogPool(count)
+    val pool = buildLogPool(count, fixtures.logs)
     val startEngineHours = (800..1200).random()
       .toDouble()
     val totalHoursFlown = (300..600).random()
@@ -1290,26 +518,12 @@ object FakeDataGenerator {
           sq.id
         }
 
-      val componentSerial = when (template.component) {
-        ComponentType.COMPONENT_ENGINE ->
-          thing.allComponentsInSlot(SlotKeys.ENGINE)
-            .firstOrNull()?.serial
-            ?: thing.specValue(SpecKeys.SERIAL)
-
-        ComponentType.COMPONENT_PROPELLER ->
-          thing.allComponentsInSlot(SlotKeys.PROPELLER)
-            .firstOrNull()?.serial
-            ?: thing.specValue(SpecKeys.SERIAL)
-
-        else -> thing.specValue(SpecKeys.SERIAL)
-      }
-
       MaintenanceLog(
         id = logId,
         timestamp = logInstant.toWireInstant(),
         work_description = template.description,
         component_type = template.component,
-        component_serial = componentSerial,
+        component_serial = componentSerialFor(thing, template.component),
         readings = readings,
         inspection_ids = matchedTaskIds,
         squawk_ids = squawkIds,
@@ -1358,11 +572,34 @@ object FakeDataGenerator {
       .associateWith { reasons.random() }
   }
 
-  private fun buildLogPool(count: Int): List<LogTemplate> {
-    if (count <= LOG_TEMPLATES.size) return LOG_TEMPLATES.shuffled()
+  /** [count] logs, cycling the fixtures when asked for more than there are. */
+  private fun buildLogPool(count: Int, fixtures: List<LogTemplate>): List<LogTemplate> {
+    if (count <= fixtures.size) return fixtures.shuffled()
       .take(count)
     val pool = mutableListOf<LogTemplate>()
-    while (pool.size < count) pool.addAll(LOG_TEMPLATES.shuffled())
+    while (pool.size < count) pool.addAll(fixtures.shuffled())
     return pool.take(count)
   }
+
+  /**
+   * The serial a record filed against [component] carries, mirroring the forms: the first engine
+   * or propeller, the thing's own serial for the airframe, and nothing for a preset whose records
+   * the type enum does not describe.
+   */
+  private fun componentSerialFor(thing: Thing, component: ComponentType): String =
+    when (component) {
+      ComponentType.COMPONENT_ENGINE ->
+        thing.allComponentsInSlot(SlotKeys.ENGINE)
+          .firstOrNull()?.serial
+          ?: thing.specValue(SpecKeys.SERIAL)
+
+      ComponentType.COMPONENT_PROPELLER ->
+        thing.allComponentsInSlot(SlotKeys.PROPELLER)
+          .firstOrNull()?.serial
+          ?: thing.specValue(SpecKeys.SERIAL)
+
+      ComponentType.COMPONENT_AIRFRAME -> thing.specValue(SpecKeys.SERIAL)
+
+      else -> ""
+    }
 }
