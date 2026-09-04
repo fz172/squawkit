@@ -13,6 +13,8 @@ sealed interface ThingOverviewAction {
     ThingOverviewAction
 
   data class AddTaskClick(val thingId: String) : ThingOverviewAction
+  /** The template's starter pack, re-offered from an empty Tasks tab (PRD §4.9). */
+  data class AddStarterPackClick(val thingId: String) : ThingOverviewAction
   data class TaskCardClick(val card: MaintenanceTaskWithStatus) :
     ThingOverviewAction
 

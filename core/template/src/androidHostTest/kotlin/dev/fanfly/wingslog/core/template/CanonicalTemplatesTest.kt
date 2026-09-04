@@ -2,6 +2,7 @@ package dev.fanfly.wingslog.core.template
 
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
+import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
 import dev.fanfly.wingslog.core.template.canonical.CanonicalTemplates
 import dev.fanfly.wingslog.thing.ComponentSlot
 import dev.fanfly.wingslog.thing.ThingTemplate
@@ -245,6 +246,64 @@ class CanonicalTemplatesTest {
     assertThat(custom.custom_spec_fields).isEqualTo(3)
     assertThat(custom.component_slots).isEmpty()
     assertThat(custom.meters).isEmpty()
+  }
+
+  /**
+   * PRD §4.9: every preset but `custom` ships a starter pack, and what it ships is something the
+   * task form could have produced. `structuralProblems` is the same check the client runs on a
+   * fetched template; this is what makes sure the baked-in ones would pass it too.
+   */
+  @Test
+  fun everyPresetButCustomShipsAValidStarterPack() {
+    all.forEach { template ->
+      assertWithMessage(template.id).that(template.structuralProblems()).isEmpty()
+      if (template.id == "custom") {
+        // Custom declares nothing on purpose — a pack would be a guess about a Thing it has never
+        // seen, and offering one puts every custom Thing into the §13 denominator.
+        assertThat(template.starter_tasks).isEmpty()
+        return@forEach
+      }
+      assertWithMessage("${template.id} ships no starter pack").that(template.starter_tasks)
+        .isNotEmpty()
+      // A pack nobody would keep as offered is a pack that reads as declined.
+      assertWithMessage("${template.id} pre-selects nothing")
+        .that(template.starter_tasks.any { it.default_selected }).isTrue()
+      template.starter_tasks.forEach { task ->
+        // The description is the value: "flush the water heater" tells a new homeowner nothing
+        // about why, and why is what earns the checkbox.
+        assertWithMessage("${template.id}: '${task.title}' has no description")
+          .that(task.description).isNotEmpty()
+      }
+    }
+  }
+
+  /**
+   * The airplane pack carries only universal intervals (PRD §4.9's liability posture): the Part
+   * 91 items, the experimental condition inspection, one engine interval — never an AD or SB,
+   * never a model-specific interval. Nothing structural expresses that, so the pack is pinned by
+   * content: a change here is a product decision, not a typo.
+   */
+  @Test
+  fun theAirplanePackIsUniversalOnly() {
+    val pack = AirplaneTemplate.TEMPLATE.starter_tasks
+    assertThat(pack.map { it.title }).containsExactly(
+      "Conditional inspection",
+      "100-hour inspection",
+      "ELT inspection",
+      "Transponder test",
+      "Altimeter & pitot-static test",
+      "Oil change",
+    )
+    // Only for-hire operation needs the 100-hour; offering it pre-checked to every owner would
+    // put a wrong interval on most of them.
+    val hundredHour = pack.single { it.title == "100-hour inspection" }
+    assertThat(hundredHour.default_selected).isFalse()
+    assertThat(hundredHour.meter_key).isEqualTo(MeterKeys.AIRFRAME_HOURS)
+    // The one engine item is filed against the engine and its own meter, not the airframe.
+    val oil = pack.single { it.title == "Oil change" }
+    assertThat(oil.component_slot_key).isEqualTo(SlotKeys.ENGINE)
+    assertThat(oil.meter_key).isEqualTo(MeterKeys.ENGINE_HOURS)
+    assertThat(oil.interval).isEqualTo(50f)
   }
 
   @Test

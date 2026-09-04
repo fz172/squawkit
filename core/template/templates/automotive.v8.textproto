@@ -6,7 +6,7 @@
 # intersection rather than either domain's: `vehicle`, and a component set that reads correctly for
 # both. The PRD table still lists them as two rows and is stale on this point.
 #
-# See templates/README.md before editing, and compile with ./compile-template.sh automotive.v5
+# See templates/README.md before editing, and compile with ./compile-template.sh automotive.v8
 #
 # v4 adds `empty_states` — the per-domain empty-state copy that used to be fixed aviation
 # text in strings.xml. A noun could not fix those strings: what makes them useful is the
@@ -26,8 +26,10 @@
 # rather than a meter. The log form's tab said "Hours" for every preset, aviation's word
 # on a car's odometer. Here: the one meter this preset declares, so the tab names it rather than a unit.
 #
+# v8 ships the starter pack (PRD §4.9).
+#
 id: "automotive"
-version: 7
+version: 8
 min_app_version: 0
 
 display_name: "Automotive"
@@ -196,4 +198,60 @@ certifications {
   label: "ASE Certified"
   number_label: "Certification Number"
   number_placeholder: "ASE number"
+}
+
+# The starter pack (PRD §4.9). Generic intervals a service manual would not argue with; the
+# screen labels them recommendations and points at the manual. Cars and motorcycles share the
+# preset, so the items that apply to only one say so and the motorcycle-only one is off by
+# default. `interval` is on the odometer, so it reads in the meter's own unit (mi).
+starter_tasks {
+  title: "Engine oil & filter"
+  description: "Whichever comes first. Check the manual for the oil grade and the interval that applies to your engine."
+  default_selected: true
+  meter_key: "odometer"
+  interval: 5000
+  interval_months: 6
+}
+starter_tasks {
+  title: "Tire rotation"
+  description: "Evens out wear across all four tires. Cars and trucks only."
+  default_selected: true
+  meter_key: "odometer"
+  interval: 6000
+}
+starter_tasks {
+  title: "Engine air filter"
+  description: "Sooner on dusty roads; a clogged filter costs power and fuel."
+  default_selected: true
+  interval_months: 12
+}
+starter_tasks {
+  title: "Cabin air filter"
+  description: "Keeps the ventilation clean. Cars and trucks only."
+  default_selected: true
+  interval_months: 12
+}
+starter_tasks {
+  title: "Brake fluid flush"
+  description: "Brake fluid absorbs water over time and loses its boiling point."
+  default_selected: true
+  interval_months: 24
+}
+starter_tasks {
+  title: "Coolant flush"
+  description: "Long-life coolants run further — confirm the interval in the manual."
+  default_selected: true
+  interval_months: 60
+}
+starter_tasks {
+  title: "Registration renewal"
+  description: "Annual in most places; adjust to your state or province."
+  default_selected: true
+  interval_months: 12
+}
+starter_tasks {
+  title: "Chain lube & adjustment"
+  description: "Motorcycles with a chain final drive. Sooner after rain."
+  meter_key: "odometer"
+  interval: 500
 }

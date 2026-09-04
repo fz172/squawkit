@@ -13,6 +13,7 @@
 
   <string name="maintenance_due_title">Maintenance Due</string>
   <string name="add_task">Add task</string>
+  <string name="starter_pack_empty_action">Add recommended <xliff:g example="tasks">%1$s</xliff:g></string>
   <string name="no_tasks_yet">No <xliff:g example="maintenance tasks">%1$s</xliff:g></string>
   <string name="no_task_work_recorded">No <xliff:g example="tasks">%1$s</xliff:g> addressed by this <xliff:g example="log">%2$s</xliff:g></string>
   <string name="unknown_task">Unknown <xliff:g example="task">%2$s</xliff:g> (<xliff:g example="tk_4b1c">%1$s</xliff:g>)</string>

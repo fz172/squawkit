@@ -60,7 +60,15 @@ class ThingCreatedAnalyticsTest {
       kotlinx.coroutines.flow.MutableStateFlow(CurrentThingTemplate.ALL_ENABLED)
     every { fleetManager.observeFleetDashboard() } returns emptyFlow()
     every { sharingManager.observeShareState(any()) } returns emptyFlow()
-    coEvery { fleetManager.updateThing(any()) } returns Result.success(true)
+    // Echoes the Thing back inflated under the airplane template, the way the real write does.
+    coEvery { fleetManager.updateThing(any()) } answers {
+      Result.success(
+        ThingInflater.inflate(
+          firstArg<Thing>().copy(id = "thing-new"),
+          AirplaneTemplate.TEMPLATE,
+        )
+      )
+    }
   }
 
   @After
@@ -125,6 +133,39 @@ class ThingCreatedAnalyticsTest {
   }
 
   @Test
+  fun creatingAThingWithAPackHandsOffToTheStarterPackStep() = runTest(dispatcher) {
+    // PRD §8.1 step 4. The hand-off carries the written Thing's id — the form never had one.
+    val vm = viewModel(existingId = null)
+    vm.loadThing(completeThing())
+
+    vm.saveThing()
+    advanceUntilIdle()
+
+    assertThat(vm.uiState.value.isSaved).isTrue()
+    assertThat(vm.uiState.value.createdThingId).isEqualTo("thing-new")
+    assertThat(vm.uiState.value.starterPackThingId).isEqualTo("thing-new")
+  }
+
+  @Test
+  fun creatingAThingWithoutAPackJustCloses() = runTest(dispatcher) {
+    // A template with no pack must not reach the step: it would count in the §13 denominator as
+    // a pack offered and declined.
+    val packless = AirplaneTemplate.TEMPLATE.copy(starter_tasks = emptyList())
+    coEvery { fleetManager.updateThing(any()) } answers {
+      Result.success(ThingInflater.inflate(firstArg<Thing>().copy(id = "thing-new"), packless))
+    }
+    val vm = viewModel(existingId = null)
+    vm.loadThing(completeThing())
+
+    vm.saveThing()
+    advanceUntilIdle()
+
+    assertThat(vm.uiState.value.isSaved).isTrue()
+    assertThat(vm.uiState.value.createdThingId).isEqualTo("thing-new")
+    assertThat(vm.uiState.value.starterPackThingId).isNull()
+  }
+
+  @Test
   fun editingAnExistingThingEmitsNothing() = runTest(dispatcher) {
     every { fleetManager.loadThing("thing-1") } returns flowOf(completeThing())
 
@@ -136,6 +177,8 @@ class ThingCreatedAnalyticsTest {
     advanceUntilIdle()
 
     assertThat(analytics.countOf("thing_created")).isEqualTo(0)
+    assertThat(vm.uiState.value.createdThingId).isNull()
+    assertThat(vm.uiState.value.starterPackThingId).isNull()
   }
 
   @Test

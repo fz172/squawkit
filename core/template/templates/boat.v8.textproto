@@ -4,7 +4,7 @@
 # twin-engine boat has two of them accruing separately. That makes this the preset that exercises
 # `component_slot_key` outside the airplane, which is the field a single-engine assumption hides.
 #
-# See templates/README.md before editing, and compile with ./compile-template.sh boat.v5
+# See templates/README.md before editing, and compile with ./compile-template.sh boat.v8
 #
 # v4 adds `empty_states` — the per-domain empty-state copy that used to be fixed aviation
 # text in strings.xml. A noun could not fix those strings: what makes them useful is the
@@ -24,8 +24,10 @@
 # rather than a meter. The log form's tab said "Hours" for every preset, aviation's word
 # on a car's odometer. Here: engine hours are the only meter, and "Hours" is the word an operator uses for them.
 #
+# v8 ships the starter pack (PRD §4.9).
+#
 id: "boat"
-version: 7
+version: 8
 min_app_version: 0
 
 display_name: "Boat"
@@ -162,4 +164,59 @@ certifications {
   label: "ABYC Certified"
   number_label: "Certification Number"
   number_placeholder: "ABYC number"
+}
+
+# The starter pack (PRD §4.9). Engine hours are the boat's meter, so the engine items schedule on
+# it with a calendar backstop for a boat that barely leaves the slip. Winterizing is seasonal; the
+# engine has no calendar-anchored rule yet, so it is a 12-month interval dated from creation —
+# log it once before the first freeze and it lands on the right month from then on.
+starter_tasks {
+  title: "Engine oil & filter"
+  description: "Whichever comes first. Check the manual for the interval that applies to your engine."
+  default_selected: true
+  meter_key: "engine_hours"
+  interval: 100
+  interval_months: 12
+}
+starter_tasks {
+  title: "Raw-water pump impeller"
+  description: "Rubber vanes fail without warning and take the engine's cooling with them."
+  default_selected: true
+  interval_months: 12
+}
+starter_tasks {
+  title: "Lower unit / gear oil"
+  description: "Milky oil means a failed seal — check the drained oil before refilling."
+  default_selected: true
+  interval_months: 12
+}
+starter_tasks {
+  title: "Winterize"
+  description: "Before the first freeze: drain or antifreeze the raw-water side, fog the engine, stabilize the fuel."
+  default_selected: true
+  interval_months: 12
+}
+starter_tasks {
+  title: "Sacrificial anodes"
+  description: "Replace at half gone. Sooner in a marina with stray current."
+  default_selected: true
+  interval_months: 12
+}
+starter_tasks {
+  title: "Bottom paint & hull inspection"
+  description: "Antifouling, through-hulls, and a look at the running gear while it is out."
+  default_selected: true
+  interval_months: 12
+}
+starter_tasks {
+  title: "Safety gear check"
+  description: "Fire extinguisher gauge, flare expiry dates, life jacket condition."
+  default_selected: true
+  interval_months: 12
+}
+starter_tasks {
+  title: "Registration renewal"
+  description: "Annual in most places; some states register for two or three years."
+  default_selected: true
+  interval_months: 12
 }

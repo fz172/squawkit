@@ -68,6 +68,13 @@ class AdaptiveShellViewModel(
   private var rememberedThingId: String? = selectedThingStore.load()
 
   /**
+   * A Thing just created, to be selected as soon as the fleet carries it. Held aside rather than
+   * selected outright: the create form's write and the fleet flow's next emission race, and a
+   * selection the collector cannot find in the fleet is what it treats as a deleted Thing.
+   */
+  private var pendingNewThingId: String? = null
+
+  /**
    * Work the sync engine had to throw away (PRD D3). Surfaced from the shell because it outlives
    * whatever screen the user was on — the purge usually lands while they are somewhere else, or
    * while the app is backgrounded entirely.
@@ -87,6 +94,10 @@ class AdaptiveShellViewModel(
     viewModelScope.launch {
       fleetManager.observeFleetDashboard()
         .collect { fleet ->
+          // Outside `update`: it may re-run its lambda under contention, and clearing the pending
+          // id is a side effect that must happen exactly once.
+          val arrived = pendingNewThingId?.takeIf { id -> fleet.any { it.thing.id == id } }
+          if (arrived != null) pendingNewThingId = null
           _uiState.update { state ->
             val mapped = fleet.map { entry ->
               val ac = entry.thing
@@ -101,11 +112,13 @@ class AdaptiveShellViewModel(
                 renderable = resolution is TemplateResolution.Renderable,
               )
             }
-            // Prefer the live selection, then the one remembered from last session; fall back to the
-            // first thing when neither still exists. Persist whatever we land on so the memory
-            // tracks the effective selection (including the fallback after the remembered one is gone).
-            val selected = state.selectedThingId
-              ?.takeIf { id -> mapped.any { it.id == id } }
+            // A Thing just created wins; then the live selection, then the one remembered from
+            // last session; fall back to the first thing when none still exists. Persist whatever
+            // we land on so the memory tracks the effective selection (including the fallback
+            // after the remembered one is gone).
+            val selected = arrived
+              ?: state.selectedThingId
+                ?.takeIf { id -> mapped.any { it.id == id } }
               ?: rememberedThingId?.takeIf { id -> mapped.any { it.id == id } }
               ?: mapped.firstOrNull()?.id
             if (selected != rememberedThingId) {
@@ -222,6 +235,18 @@ class AdaptiveShellViewModel(
             )
           }
         }
+    }
+  }
+
+  /**
+   * A Thing the create form just wrote. Selected now if the fleet already carries it, otherwise
+   * the moment it does — see [pendingNewThingId].
+   */
+  fun selectNewThing(id: String) {
+    if (uiState.value.things.any { it.id == id }) {
+      selectThing(id)
+    } else {
+      pendingNewThingId = id
     }
   }
 

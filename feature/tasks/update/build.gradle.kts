@@ -34,6 +34,7 @@ kotlin {
       implementation(project(":feature:tasks:model"))
       implementation(libs.gitlive.firebase.auth)
       implementation(project(":feature:tasks:datamanager"))
+      implementation(project(":feature:fleet:datamanager"))
       implementation(project(":feature:tasks:sharedassets"))
       implementation(project(":feature:tasks:viewing"))
       implementation(project(":core:template"))

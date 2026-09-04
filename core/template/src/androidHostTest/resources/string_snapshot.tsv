@@ -882,3 +882,17 @@ feature/thing/update	custom_fields_title	Your own fields
 feature/thing/update	custom_field_name	Field name
 feature/thing/update	custom_field_value	Value
 feature/thing/update	custom_field_add	Add a field
+feature/tasks/update	starter_pack_screen_title	Recommended %1$s
+feature/tasks/update	starter_pack_title	Add recommended %1$s?
+feature/tasks/update	starter_pack_subtitle	A starting schedule for this %1$s. Untick anything that doesn’t apply — every item stays editable afterwards.
+feature/tasks/update	starter_pack_disclaimer	Recommendations, not requirements. Confirm each interval against the manufacturer’s service manual for your %1$s.
+feature/tasks/update	starter_pack_add	Add %1$d %2$s
+feature/tasks/update	starter_pack_skip	Skip
+feature/tasks/update	starter_pack_added	%1$d %2$s added
+feature/tasks/update	starter_rule_every_month	Every month
+feature/tasks/update	starter_rule_every_months	Every %1$d months
+feature/tasks/update	starter_rule_every_year	Every year
+feature/tasks/update	starter_rule_every_years	Every %1$d years
+feature/tasks/update	starter_rule_every_meter	Every %1$s %2$s
+feature/tasks/update	starter_rule_either	%1$s or %2$s
+feature/tasks/sharedassets	starter_pack_empty_action	Add recommended %1$s

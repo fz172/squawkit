@@ -23,6 +23,7 @@ import androidx.navigation.compose.rememberNavController
 import dev.fanfly.wingslog.core.analytics.LocalAnalytics
 import dev.fanfly.wingslog.core.analytics.trackScreenViews
 import dev.fanfly.wingslog.core.nav.Screen
+import dev.fanfly.wingslog.core.nav.Screen.Companion.CROSS_SCREEN_SELECT_THING_ID
 import dev.fanfly.wingslog.core.nav.Screen.Companion.CROSS_SCREEN_SUCCESS_MESSAGE
 import dev.fanfly.wingslog.core.ui.adaptive.AdaptiveAppShell
 import dev.fanfly.wingslog.core.ui.adaptive.ShellSection
@@ -107,6 +108,16 @@ fun AdaptiveShellRoute(
     val message = successMessage ?: return@LaunchedEffect
     shellEntry.savedStateHandle[CROSS_SCREEN_SUCCESS_MESSAGE] = null
     snackbarHostState.showSnackbar(message = message)
+  }
+
+  // Same channel, for the create form: switch to the Thing it just made.
+  val selectThingId by shellEntry.savedStateHandle
+    .getStateFlow<String?>(CROSS_SCREEN_SELECT_THING_ID, null)
+    .collectAsState()
+  LaunchedEffect(selectThingId) {
+    val id = selectThingId ?: return@LaunchedEffect
+    shellEntry.savedStateHandle[CROSS_SCREEN_SELECT_THING_ID] = null
+    viewModel.selectNewThing(id)
   }
 
   // Work that was destroyed when a share ended (PRD D3 — the one data-loss window). Held open until

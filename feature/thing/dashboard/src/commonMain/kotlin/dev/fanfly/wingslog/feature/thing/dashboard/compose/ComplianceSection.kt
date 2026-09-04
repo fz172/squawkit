@@ -39,6 +39,7 @@ import org.koin.compose.koinInject
 import wingslog.feature.tasks.sharedassets.generated.resources.due_with_count
 import wingslog.feature.tasks.sharedassets.generated.resources.history_with_count
 import wingslog.feature.tasks.sharedassets.generated.resources.no_tasks_yet
+import wingslog.feature.tasks.sharedassets.generated.resources.starter_pack_empty_action
 import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedRes
 
 @Composable
@@ -48,6 +49,8 @@ fun ComplianceSection(
   showComplied: Boolean,
   onToggleComplied: (Boolean) -> Unit,
   onCardClick: (MaintenanceTaskWithStatus) -> Unit = {},
+  /** Offers the template's starter pack from the empty state; null when there is none to offer. */
+  onAddStarterPack: (() -> Unit)? = null,
   /** Task to report the on-screen position of, so the tab can scroll it into view. */
   scrollTargetId: String? = null,
   onTargetPositioned: (Float) -> Unit = {},
@@ -102,6 +105,13 @@ fun ComplianceSection(
           ),
           description = LocalThingLexicon.current.taskEmptyHint,
           icon = Icons.Default.CheckCircle,
+          actionText = onAddStarterPack?.let {
+            stringResource(
+              SharedRes.string.starter_pack_empty_action,
+              LocalThingLexicon.current.taskNoun.plural,
+            )
+          },
+          onActionClick = onAddStarterPack,
         )
       } else {
         Text(
