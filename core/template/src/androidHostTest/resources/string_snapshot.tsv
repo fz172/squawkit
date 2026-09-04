@@ -292,11 +292,11 @@ feature/logs/viewing	log_count_n_entries	%1$d Entries
 feature/logs/viewing	log_count_one_entry	1 Entry
 feature/logs/viewing	log_squawk_count_one	1 squawk
 feature/logs/viewing	log_squawk_count_plural	%1$d squawks
-feature/logs/viewing	log_task_count_one	1 task
-feature/logs/viewing	log_task_count_plural	%1$d tasks
+feature/logs/viewing	log_task_count_one	1 maintenance task
+feature/logs/viewing	log_task_count_plural	%1$d maintenance tasks
 feature/logs/viewing	maintenance_summary	Maintenance Summary
 feature/logs/viewing	no_logs_match_filter	No logs match your filter.
-feature/logs/viewing	no_tasks_linked	No tasks linked to this entry
+feature/logs/viewing	no_tasks_linked	No maintenance tasks linked to this work log
 feature/logs/viewing	resolved_squawks	Resolved Squawks
 feature/logs/viewing	s_n_empty	No S/N
 feature/logs/viewing	s_n_placeholder	S/N: %1$s
@@ -515,7 +515,7 @@ feature/squawk/sharedassets	down_alert_subtitle	AOG squawks must be resolved bef
 feature/squawk/sharedassets	edit_squawk	Update squawk
 feature/squawk/sharedassets	no_closed_squawks	No closed squawks yet.
 feature/squawk/sharedassets	no_open_squawks	No open squawks
-feature/squawk/sharedassets	no_squawk_work_recorded	No squawks addressed by this log
+feature/squawk/sharedassets	no_squawk_work_recorded	No squawks addressed by this work log
 feature/squawk/sharedassets	no_work_recorded	No work recorded yet.
 feature/squawk/sharedassets	open_with_count	OPEN (%1$d)
 feature/squawk/sharedassets	priority_high	High
@@ -680,13 +680,13 @@ feature/tasks/sharedassets	due_with_count	DUE (%1$d)
 feature/tasks/sharedassets	edit_task	Update task
 feature/tasks/sharedassets	history_with_count	HISTORY (%1$d)
 feature/tasks/sharedassets	maintenance_due_title	Maintenance Due
-feature/tasks/sharedassets	no_task_work_recorded	No task addressed by this log.
+feature/tasks/sharedassets	no_task_work_recorded	No maintenance tasks addressed by this work log
 feature/tasks/sharedassets	no_tasks_yet	No maintenance tasks
 feature/tasks/sharedassets	skip_task_confirm_action	Skip
 feature/tasks/sharedassets	skip_task_confirm_body	Marks complete without logging and snoozes one cycle to the next due target. This can’t be undone.
 feature/tasks/sharedassets	skip_task_confirm_title	Skip This Cycle?
 feature/tasks/sharedassets	unknown_date	Unknown date
-feature/tasks/sharedassets	unknown_task	Unknown task (%1$s)
+feature/tasks/sharedassets	unknown_task	Unknown maintenance task (%1$s)
 feature/tasks/update	adj_preview_hint	What will happen
 feature/tasks/update	adj_preview_label_neutral	Current
 feature/tasks/update	adj_preview_neutral_primary	No adjustments
@@ -733,7 +733,7 @@ feature/tasks/update	create_work_log_subtitle	Opens a new log, pre-linked to thi
 feature/tasks/update	delete_task_section_label	Delete Task
 feature/tasks/update	delete_this_task_subtitle	Permanently removes this task and its maintenance schedule.
 feature/tasks/update	delete_this_task_title	Delete this task
-feature/tasks/update	no_log_history	No maintenance logs recorded for this task.
+feature/tasks/update	no_log_history	No work logs recorded for this maintenance task.
 feature/tasks/update	no_tasks_configured	No tasks configured. Add them from the aircraft overview to track recurring maintenance.
 feature/tasks/update	reference_and_component	%1$s • %2$s
 feature/tasks/update	reference_number	Reference Number
@@ -811,7 +811,7 @@ feature/tasks/viewing	label_expired	EXPIRED %1$s
 feature/tasks/viewing	maintenance_due_subtitle	Maintenance tasks pending
 feature/tasks/viewing	next_due_date	NEXT DUE DATE
 feature/tasks/viewing	next_due_meter	NEXT DUE %1$s
-feature/tasks/viewing	no_maintenance_logs_for_task	No logs yet. Add a maintenance entry and tag this task to see history here.
+feature/tasks/viewing	no_maintenance_logs_for_task	No work logs yet. Add one and tag this maintenance task to see history here.
 feature/tasks/viewing	on_condition	On Condition
 feature/technician/sharedassets	add_certification	Add Certification
 feature/technician/sharedassets	add_technician	Add Technician

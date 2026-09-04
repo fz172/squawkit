@@ -33,6 +33,7 @@ import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.LocalThingTemplate
 import dev.fanfly.wingslog.core.template.componentNoun
+import dev.fanfly.wingslog.core.template.logNoun
 import dev.fanfly.wingslog.core.template.taskNoun
 import dev.fanfly.wingslog.core.template.usesComponentTypes
 import dev.fanfly.wingslog.core.ui.common.compose.FormKeyboard
@@ -189,7 +190,11 @@ private fun MaintenanceHistorySection(
 
     if (linkedLogs.isEmpty()) {
       Text(
-        text = stringResource(Res.string.no_log_history),
+        text = stringResource(
+          Res.string.no_log_history,
+          LocalThingLexicon.current.logNoun.plural,
+          LocalThingLexicon.current.taskNoun.singular,
+        ),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
       )

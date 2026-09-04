@@ -128,7 +128,7 @@
   <string name="skip_this_cycle_option_subtitle">Marks complete without logging</string>
   <string name="task_skipped">Cycle skipped — next due rescheduled</string>
 
-  <string name="no_log_history">No maintenance logs recorded for this task.</string>
+  <string name="no_log_history">No <xliff:g example="logs">%1$s</xliff:g> recorded for this <xliff:g example="task">%2$s</xliff:g>.</string>
   <string name="task_updated">Task updated</string>
   <string name="task_deleted">Task deleted</string>
   <string name="task_added">Task added</string>

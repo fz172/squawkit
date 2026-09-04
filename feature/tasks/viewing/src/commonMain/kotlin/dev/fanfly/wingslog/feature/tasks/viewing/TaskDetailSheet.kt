@@ -19,9 +19,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.datetime.toLocalDate
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.LocalThingTemplate
 import dev.fanfly.wingslog.core.template.formatMeterValue
+import dev.fanfly.wingslog.core.template.logNoun
 import dev.fanfly.wingslog.core.template.meter
+import dev.fanfly.wingslog.core.template.taskNoun
 import dev.fanfly.wingslog.core.ui.common.compose.DetailSheet
 import dev.fanfly.wingslog.core.ui.common.compose.StatusChip
 import dev.fanfly.wingslog.core.ui.theme.Spacing
@@ -210,7 +213,11 @@ fun TaskDetailSheet(
 
     if (logs.isEmpty()) {
       Text(
-        text = stringResource(ViewingRes.string.no_maintenance_logs_for_task),
+        text = stringResource(
+          ViewingRes.string.no_maintenance_logs_for_task,
+          LocalThingLexicon.current.logNoun.plural,
+          LocalThingLexicon.current.taskNoun.singular,
+        ),
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
       )

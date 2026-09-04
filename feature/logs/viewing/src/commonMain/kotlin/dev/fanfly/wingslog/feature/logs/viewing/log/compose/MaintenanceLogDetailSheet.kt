@@ -252,7 +252,11 @@ private fun AffectedTasksSection(
       contentAlignment = Alignment.Center,
     ) {
       Text(
-        text = stringResource(ViewingRes.string.no_tasks_linked),
+        text = stringResource(
+          ViewingRes.string.no_tasks_linked,
+          LocalThingLexicon.current.taskNoun.plural,
+          LocalThingLexicon.current.logNoun.singular,
+        ),
         style = MaterialTheme.typography.bodyMedium.copy(fontStyle = FontStyle.Italic),
         color = MaterialTheme.colorScheme.onSurfaceVariant,
       )
@@ -263,7 +267,8 @@ private fun AffectedTasksSection(
         val card = availableCards.find { it.id == cardId }
         val title = card?.title ?: stringResource(
           SharedTaskRes.string.unknown_task,
-          cardId
+          cardId,
+          LocalThingLexicon.current.taskNoun.singular,
         )
         LinkedEntityRow(
           title = title,

@@ -17,7 +17,7 @@
   <string name="squawk_title_required">Issue summary is required</string>
   <string name="squawk_added"><xliff:g example="squawks">%1$s</xliff:g> reported</string>
   <string name="squawk_updated"><xliff:g example="squawk">%1$s</xliff:g> updated</string>
-  <string name="no_squawk_work_recorded">No <xliff:g example="squawks">%1$s</xliff:g> addressed by this log</string>
+  <string name="no_squawk_work_recorded">No <xliff:g example="squawks">%1$s</xliff:g> addressed by this <xliff:g example="log">%2$s</xliff:g></string>
   <string name="reported">Reported</string>
   <string name="work_history">Work History</string>
   <string name="no_work_recorded">No work recorded yet.</string>

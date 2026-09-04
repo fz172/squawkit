@@ -36,6 +36,7 @@ import dev.fanfly.wingslog.core.template.componentTypesApply
 import dev.fanfly.wingslog.core.template.formatMeterValue
 import dev.fanfly.wingslog.core.template.primaryReading
 import dev.fanfly.wingslog.core.template.squawkNoun
+import dev.fanfly.wingslog.core.template.taskNoun
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.feature.logs.sharedassets.util.displayName
@@ -138,10 +139,14 @@ fun MaintenanceLogCard(
         val squawkCount = log.squawk_ids.size
         if (taskCount > 0) {
           val taskLabel =
-            if (taskCount == 1) stringResource(MaintenanceRes.string.log_task_count_one)
+            if (taskCount == 1) stringResource(
+              MaintenanceRes.string.log_task_count_one,
+              LocalThingLexicon.current.taskNoun.singular,
+            )
             else stringResource(
               MaintenanceRes.string.log_task_count_plural,
-              taskCount
+              taskCount,
+              LocalThingLexicon.current.taskNoun.plural,
             )
           Text(
             text = taskLabel,
