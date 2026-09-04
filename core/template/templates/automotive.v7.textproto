@@ -22,8 +22,12 @@
 # derived from the credentials they hold, and a per-Thing flag cannot answer for a roster the
 # account shares across every Thing (#684).
 #
+# v7 adds `meters_label` — what to call the meter set where a screen names the group
+# rather than a meter. The log form's tab said "Hours" for every preset, aviation's word
+# on a car's odometer. Here: the one meter this preset declares, so the tab names it rather than a unit.
+#
 id: "automotive"
-version: 6
+version: 7
 min_app_version: 0
 
 display_name: "Automotive"
@@ -182,6 +186,9 @@ meters {
   unit_label: "mi"
   decimal: false
 }
+
+# See ThingTemplate.meters_label: the word for the SET, which no single meter above supplies.
+meters_label: "Odometer"
 
 # PRD §8.6. ASE is the credential a US car owner would recognise on an invoice.
 certifications {

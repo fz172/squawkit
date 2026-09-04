@@ -58,6 +58,57 @@ export interface ComplianceTerm {
   abbreviation: string;
 }
 
+/**
+ * The empty-state copy a template writes for its own screens.
+ *
+ * A noun cannot fix these. "Log your first entry — oil change, annual, 100-hour, or any other
+ * airframe, engine, or prop work" has no slot to substitute: what makes it useful is the
+ * *examples*, and a house's examples are a furnace service and a roof repair. Substituting the log
+ * noun into that frame produces a correctly-worded sentence about the wrong subject, which is the
+ * failure mode the lexicon exists to prevent and the one no formatter can see.
+ *
+ * So these are whole sentences per template rather than frames, for the same reason `down_status`
+ * is (design §10a's per-string override, scoped to the strings that actually need it). They are
+ * the copy the app used to hold in `strings.xml`; the resources are gone, and these replaced them.
+ *
+ * **Every one of these is a PER-THING surface** — a tab or a rail inside a selected Thing, where
+ * exactly one template is in scope. The fleet empty state is deliberately not here: it renders
+ * with nothing selected.
+ *
+ * An empty field renders an empty line, so `CanonicalTemplatesTest` requires all of them.
+ */
+export interface EmptyStates {
+  /** Squawks tab, Open — the line under "No open squawks". */
+  squawkHint: string;
+  /** Tasks tab, Due — the line under "No maintenance tasks". */
+  taskHint: string;
+  /** Tasks tab, History. The whole state, with no title above it. */
+  taskHistoryHint: string;
+  /** Logs tab — the line under "Work log is empty", above the "Log First Entry" button. */
+  logHint: string;
+  /**
+   * The Overview rails. Their titles are here too, unlike the tabs above, because a rail title is
+   * fixed text rather than a frame — "No logs yet" names the log noun in a sentence the noun does
+   * not fit ("No work logs yet" is not what the aviation app says). The squawk rail is the
+   * exception: its title reuses the tab's "No open %1$s", which already substitutes.
+   */
+  overviewLogTitle: string;
+  overviewLogHint: string;
+  overviewTaskTitle: string;
+  overviewTaskHint: string;
+  overviewSquawkHint: string;
+  /**
+   * The Dashboard's log-onboarding card, shown on a Thing with no logs at all.
+   *
+   * The one line here that is not only about wording: it tells the user which METERS to record a
+   * baseline for, and a template may declare none. The aviation copy asked a homeowner for
+   * "airframe, engine, and prop times" — three readings a house does not have and the form does
+   * not offer. So a meterless preset writes a sentence about the record instead, which is the
+   * capability shaping the copy rather than a noun being swapped into it.
+   */
+  logOnboardingHint: string;
+}
+
 export interface Lexicon {
   /**
    * Field names here are the CODE vocabulary; their values are the user-facing words. A Lexicon
@@ -110,6 +161,7 @@ export interface Lexicon {
     | undefined;
   /** service bulletin · TSB · manufacturer notice */
   complianceAdvisory: ComplianceTerm | undefined;
+  emptyStates: EmptyStates | undefined;
 }
 
 function createBaseNoun(): Noun {
@@ -316,6 +368,261 @@ export const ComplianceTerm: MessageFns<ComplianceTerm> = {
   },
 };
 
+function createBaseEmptyStates(): EmptyStates {
+  return {
+    squawkHint: "",
+    taskHint: "",
+    taskHistoryHint: "",
+    logHint: "",
+    overviewLogTitle: "",
+    overviewLogHint: "",
+    overviewTaskTitle: "",
+    overviewTaskHint: "",
+    overviewSquawkHint: "",
+    logOnboardingHint: "",
+  };
+}
+
+export const EmptyStates: MessageFns<EmptyStates> = {
+  encode(message: EmptyStates, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.squawkHint !== "") {
+      writer.uint32(10).string(message.squawkHint);
+    }
+    if (message.taskHint !== "") {
+      writer.uint32(18).string(message.taskHint);
+    }
+    if (message.taskHistoryHint !== "") {
+      writer.uint32(26).string(message.taskHistoryHint);
+    }
+    if (message.logHint !== "") {
+      writer.uint32(34).string(message.logHint);
+    }
+    if (message.overviewLogTitle !== "") {
+      writer.uint32(42).string(message.overviewLogTitle);
+    }
+    if (message.overviewLogHint !== "") {
+      writer.uint32(50).string(message.overviewLogHint);
+    }
+    if (message.overviewTaskTitle !== "") {
+      writer.uint32(58).string(message.overviewTaskTitle);
+    }
+    if (message.overviewTaskHint !== "") {
+      writer.uint32(66).string(message.overviewTaskHint);
+    }
+    if (message.overviewSquawkHint !== "") {
+      writer.uint32(74).string(message.overviewSquawkHint);
+    }
+    if (message.logOnboardingHint !== "") {
+      writer.uint32(82).string(message.logOnboardingHint);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): EmptyStates {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseEmptyStates();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.squawkHint = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.taskHint = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.taskHistoryHint = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.logHint = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.overviewLogTitle = reader.string();
+          continue;
+        }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.overviewLogHint = reader.string();
+          continue;
+        }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+
+          message.overviewTaskTitle = reader.string();
+          continue;
+        }
+        case 8: {
+          if (tag !== 66) {
+            break;
+          }
+
+          message.overviewTaskHint = reader.string();
+          continue;
+        }
+        case 9: {
+          if (tag !== 74) {
+            break;
+          }
+
+          message.overviewSquawkHint = reader.string();
+          continue;
+        }
+        case 10: {
+          if (tag !== 82) {
+            break;
+          }
+
+          message.logOnboardingHint = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): EmptyStates {
+    return {
+      squawkHint: isSet(object.squawkHint)
+        ? globalThis.String(object.squawkHint)
+        : isSet(object.squawk_hint)
+        ? globalThis.String(object.squawk_hint)
+        : "",
+      taskHint: isSet(object.taskHint)
+        ? globalThis.String(object.taskHint)
+        : isSet(object.task_hint)
+        ? globalThis.String(object.task_hint)
+        : "",
+      taskHistoryHint: isSet(object.taskHistoryHint)
+        ? globalThis.String(object.taskHistoryHint)
+        : isSet(object.task_history_hint)
+        ? globalThis.String(object.task_history_hint)
+        : "",
+      logHint: isSet(object.logHint)
+        ? globalThis.String(object.logHint)
+        : isSet(object.log_hint)
+        ? globalThis.String(object.log_hint)
+        : "",
+      overviewLogTitle: isSet(object.overviewLogTitle)
+        ? globalThis.String(object.overviewLogTitle)
+        : isSet(object.overview_log_title)
+        ? globalThis.String(object.overview_log_title)
+        : "",
+      overviewLogHint: isSet(object.overviewLogHint)
+        ? globalThis.String(object.overviewLogHint)
+        : isSet(object.overview_log_hint)
+        ? globalThis.String(object.overview_log_hint)
+        : "",
+      overviewTaskTitle: isSet(object.overviewTaskTitle)
+        ? globalThis.String(object.overviewTaskTitle)
+        : isSet(object.overview_task_title)
+        ? globalThis.String(object.overview_task_title)
+        : "",
+      overviewTaskHint: isSet(object.overviewTaskHint)
+        ? globalThis.String(object.overviewTaskHint)
+        : isSet(object.overview_task_hint)
+        ? globalThis.String(object.overview_task_hint)
+        : "",
+      overviewSquawkHint: isSet(object.overviewSquawkHint)
+        ? globalThis.String(object.overviewSquawkHint)
+        : isSet(object.overview_squawk_hint)
+        ? globalThis.String(object.overview_squawk_hint)
+        : "",
+      logOnboardingHint: isSet(object.logOnboardingHint)
+        ? globalThis.String(object.logOnboardingHint)
+        : isSet(object.log_onboarding_hint)
+        ? globalThis.String(object.log_onboarding_hint)
+        : "",
+    };
+  },
+
+  toJSON(message: EmptyStates): unknown {
+    const obj: any = {};
+    if (message.squawkHint !== "") {
+      obj.squawkHint = message.squawkHint;
+    }
+    if (message.taskHint !== "") {
+      obj.taskHint = message.taskHint;
+    }
+    if (message.taskHistoryHint !== "") {
+      obj.taskHistoryHint = message.taskHistoryHint;
+    }
+    if (message.logHint !== "") {
+      obj.logHint = message.logHint;
+    }
+    if (message.overviewLogTitle !== "") {
+      obj.overviewLogTitle = message.overviewLogTitle;
+    }
+    if (message.overviewLogHint !== "") {
+      obj.overviewLogHint = message.overviewLogHint;
+    }
+    if (message.overviewTaskTitle !== "") {
+      obj.overviewTaskTitle = message.overviewTaskTitle;
+    }
+    if (message.overviewTaskHint !== "") {
+      obj.overviewTaskHint = message.overviewTaskHint;
+    }
+    if (message.overviewSquawkHint !== "") {
+      obj.overviewSquawkHint = message.overviewSquawkHint;
+    }
+    if (message.logOnboardingHint !== "") {
+      obj.logOnboardingHint = message.logOnboardingHint;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<EmptyStates>, I>>(base?: I): EmptyStates {
+    return EmptyStates.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<EmptyStates>, I>>(object: I): EmptyStates {
+    const message = createBaseEmptyStates();
+    message.squawkHint = object.squawkHint ?? "";
+    message.taskHint = object.taskHint ?? "";
+    message.taskHistoryHint = object.taskHistoryHint ?? "";
+    message.logHint = object.logHint ?? "";
+    message.overviewLogTitle = object.overviewLogTitle ?? "";
+    message.overviewLogHint = object.overviewLogHint ?? "";
+    message.overviewTaskTitle = object.overviewTaskTitle ?? "";
+    message.overviewTaskHint = object.overviewTaskHint ?? "";
+    message.overviewSquawkHint = object.overviewSquawkHint ?? "";
+    message.logOnboardingHint = object.logOnboardingHint ?? "";
+    return message;
+  },
+};
+
 function createBaseLexicon(): Lexicon {
   return {
     thing: undefined,
@@ -331,6 +638,7 @@ function createBaseLexicon(): Lexicon {
     authorityLabel: "",
     complianceMandatory: undefined,
     complianceAdvisory: undefined,
+    emptyStates: undefined,
   };
 }
 
@@ -374,6 +682,9 @@ export const Lexicon: MessageFns<Lexicon> = {
     }
     if (message.complianceAdvisory !== undefined) {
       ComplianceTerm.encode(message.complianceAdvisory, writer.uint32(122).fork()).join();
+    }
+    if (message.emptyStates !== undefined) {
+      EmptyStates.encode(message.emptyStates, writer.uint32(130).fork()).join();
     }
     return writer;
   },
@@ -489,6 +800,14 @@ export const Lexicon: MessageFns<Lexicon> = {
           message.complianceAdvisory = ComplianceTerm.decode(reader, reader.uint32());
           continue;
         }
+        case 16: {
+          if (tag !== 130) {
+            break;
+          }
+
+          message.emptyStates = EmptyStates.decode(reader, reader.uint32());
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -541,6 +860,11 @@ export const Lexicon: MessageFns<Lexicon> = {
         : isSet(object.compliance_advisory)
         ? ComplianceTerm.fromJSON(object.compliance_advisory)
         : undefined,
+      emptyStates: isSet(object.emptyStates)
+        ? EmptyStates.fromJSON(object.emptyStates)
+        : isSet(object.empty_states)
+        ? EmptyStates.fromJSON(object.empty_states)
+        : undefined,
     };
   },
 
@@ -585,6 +909,9 @@ export const Lexicon: MessageFns<Lexicon> = {
     if (message.complianceAdvisory !== undefined) {
       obj.complianceAdvisory = ComplianceTerm.toJSON(message.complianceAdvisory);
     }
+    if (message.emptyStates !== undefined) {
+      obj.emptyStates = EmptyStates.toJSON(message.emptyStates);
+    }
     return obj;
   },
 
@@ -615,6 +942,9 @@ export const Lexicon: MessageFns<Lexicon> = {
       : undefined;
     message.complianceAdvisory = (object.complianceAdvisory !== undefined && object.complianceAdvisory !== null)
       ? ComplianceTerm.fromPartial(object.complianceAdvisory)
+      : undefined;
+    message.emptyStates = (object.emptyStates !== undefined && object.emptyStates !== null)
+      ? EmptyStates.fromPartial(object.emptyStates)
       : undefined;
     return message;
   },

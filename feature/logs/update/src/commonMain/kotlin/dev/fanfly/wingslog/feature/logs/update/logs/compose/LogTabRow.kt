@@ -8,6 +8,8 @@ import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import dev.fanfly.wingslog.core.template.LocalThingTemplate
+import dev.fanfly.wingslog.core.template.metersLabel
 import dev.fanfly.wingslog.core.ui.common.compose.IconLabelTabRow
 import dev.fanfly.wingslog.core.ui.common.compose.IconLabelTabSpec
 import org.jetbrains.compose.resources.StringResource
@@ -31,17 +33,34 @@ val LOG_FORM_TAB_KEYS = listOf("work", "hours", "records")
 
 @Composable
 fun LogTabRow(
-  tabs: List<LogTabSpec>,
+  tabs: List<LogFormTab>,
   selectedIndex: Int,
   onSelect: (Int) -> Unit,
   modifier: Modifier = Modifier,
 ) {
   IconLabelTabRow(
-    tabs = tabs.map { IconLabelTabSpec(it.icon, stringResource(it.label)) },
+    tabs = tabs.map { IconLabelTabSpec(it.spec.icon, it.label()) },
     selectedIndex = selectedIndex,
     onSelect = onSelect,
     modifier = modifier,
   )
+}
+
+/**
+ * The tab's caption.
+ *
+ * [LogFormTab.HOURS] takes the template's own word for its meters, because the tab holds whatever
+ * that template declares — "Odometer" on a car, and "Hours" only on the presets that measure in
+ * them.
+ */
+@Composable
+private fun LogFormTab.label(): String {
+  val shipped = stringResource(spec.label)
+  return if (this == LogFormTab.HOURS) {
+    LocalThingTemplate.current.metersLabel(ifAbsent = shipped)
+  } else {
+    shipped
+  }
 }
 
 /**
@@ -54,7 +73,7 @@ fun LogTabRow(
 enum class LogFormTab {
   WORK,
 
-  /** Meter readings — airframe, engine and prop time on an airplane. */
+  /** Meter readings — whatever the template declares; see [label]. */
   HOURS,
   RECORDS,
 }

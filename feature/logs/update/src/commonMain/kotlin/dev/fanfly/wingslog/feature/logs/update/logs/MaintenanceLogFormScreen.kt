@@ -69,7 +69,6 @@ import dev.fanfly.wingslog.feature.logs.update.logs.compose.LogTabRow
 import dev.fanfly.wingslog.feature.logs.update.logs.compose.LogTimeTab
 import dev.fanfly.wingslog.feature.logs.update.logs.compose.LogWorkTab
 import dev.fanfly.wingslog.feature.logs.update.logs.compose.logFormTabsFor
-import dev.fanfly.wingslog.feature.logs.update.logs.compose.spec
 import dev.fanfly.wingslog.feature.logs.update.logs.viewmodel.MaintenanceLogFormEvent
 import dev.fanfly.wingslog.feature.logs.update.logs.viewmodel.MaintenanceLogFormViewModel
 import dev.fanfly.wingslog.feature.squawk.viewing.SquawkPickerSheet
@@ -253,7 +252,7 @@ fun MaintenanceLogFormScreen(
           contentAlignment = Alignment.TopCenter
         ) {
           LogTabRow(
-            tabs = tabs.map { it.spec },
+            tabs = tabs,
             selectedIndex = pagerState.currentPage,
             onSelect = {
               coroutineScope.launch {

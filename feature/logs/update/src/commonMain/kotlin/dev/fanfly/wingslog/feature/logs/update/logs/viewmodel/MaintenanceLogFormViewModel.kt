@@ -11,7 +11,6 @@ import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.model.id.generateRandomId
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.template.CurrentThingTemplate
-import dev.fanfly.wingslog.core.template.MeterKeys
 import dev.fanfly.wingslog.core.template.SlotKeys
 import dev.fanfly.wingslog.core.template.SpecKeys
 import dev.fanfly.wingslog.core.template.TemplateRegistry
@@ -21,6 +20,7 @@ import dev.fanfly.wingslog.core.template.childrenInSlot
 import dev.fanfly.wingslog.core.template.knownCertifications
 import dev.fanfly.wingslog.core.template.readingFor
 import dev.fanfly.wingslog.core.template.specValue
+import dev.fanfly.wingslog.core.template.usesComponentTypes
 import dev.fanfly.wingslog.core.ui.common.UiText
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentFormController
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
@@ -349,11 +349,20 @@ class MaintenanceLogFormViewModel(
             selectedSquawkIds = log.squawk_ids,
             selectedInspectionIds = log.inspection_ids,
             selectedTechnician = log.technician ?: it.selectedTechnician,
-            // Every meter this template declares that the log recorded, by key.
+            // Every meter this template declares that the log recorded, by key. The meter says
+            // whether it takes a fraction: an odometer does not, and a car's log opened for edit
+            // showed "84512.0" in a field whose keyboard offers no decimal point.
             meterValues = currentThingTemplate.template.value?.meters.orEmpty()
               .mapNotNull { meter ->
                 log.readingFor(meter.key)
-                  ?.let { meter.key to it.toString() }
+                  ?.let { reading ->
+                    meter.key to if (meter.decimal) {
+                      reading.toString()
+                    } else {
+                      reading.toLong()
+                        .toString()
+                    }
+                  }
               }
               .toMap(),
             selectedComponentType = log.component_type,
@@ -555,9 +564,18 @@ class MaintenanceLogFormViewModel(
       // Tombstone deleted attachments and build the final list
       val finalAttachments = attachmentForm.resolveForSave()
 
-      // Save log
-      val componentSerial = when (state.selectedComponentType) {
-        ComponentType.COMPONENT_AIRFRAME ->
+      // Save log. The picker only appears where `ComponentType` describes the thing; everywhere
+      // else the log is filed against the thing itself, and the form's airframe default would put
+      // an "Airframe" pill on a car's every log. See [usesComponentTypes].
+      val componentsApply =
+        currentThingTemplate.capabilities.value.components &&
+          currentThingTemplate.template.value.usesComponentTypes
+      val componentType =
+        if (componentsApply) state.selectedComponentType else ComponentType.COMPONENT_UNKNOWN
+      val componentSerial = when {
+        !componentsApply -> ""
+
+        componentType == ComponentType.COMPONENT_AIRFRAME ->
           state.thing?.specValue(SpecKeys.SERIAL)
             .orEmpty()
 
@@ -582,7 +600,7 @@ class MaintenanceLogFormViewModel(
             ?.takeIf { it > 0.0 }
             ?.let { MeterReading(meter_key = key, value_ = it) }
         },
-        component_type = state.selectedComponentType,
+        component_type = componentType,
         component_serial = componentSerial,
         attachments = finalAttachments,
         technician = state.selectedTechnician,

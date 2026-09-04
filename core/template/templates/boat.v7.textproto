@@ -20,8 +20,12 @@
 # derived from the credentials they hold, and a per-Thing flag cannot answer for a roster the
 # account shares across every Thing (#684).
 #
+# v7 adds `meters_label` — what to call the meter set where a screen names the group
+# rather than a meter. The log form's tab said "Hours" for every preset, aviation's word
+# on a car's odometer. Here: engine hours are the only meter, and "Hours" is the word an operator uses for them.
+#
 id: "boat"
-version: 6
+version: 7
 min_app_version: 0
 
 display_name: "Boat"
@@ -148,6 +152,9 @@ meters {
   decimal: true
   component_slot_key: "propulsion"
 }
+
+# See ThingTemplate.meters_label: the word for the SET, which no single meter above supplies.
+meters_label: "Hours"
 
 # PRD §8.6. ABYC is the marine analogue of the A&P — the certification a yard's technician holds.
 certifications {

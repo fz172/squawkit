@@ -101,7 +101,7 @@ fun MaintenanceLogDetailSheet(
       }
     },
     headerSlot = {
-      ComponentTypeBadge(log.component_type)
+      LogComponentBadge(log.component_type)
     },
   ) {
     // Hero metric

@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.core.template
 
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.staticCompositionLocalOf
 import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
 import dev.fanfly.wingslog.thing.ComponentSlot
@@ -38,6 +39,17 @@ val LocalThingTemplate = staticCompositionLocalOf<ThingTemplate?> { null }
  */
 val ThingTemplate?.usesComponentTypes: Boolean
   get() = this == null || id == AirplaneTemplate.ID
+
+/**
+ * True when `ComponentType` describes the thing in composition — the form may offer the picker, and
+ * a log card may show the pill.
+ *
+ * Both halves are load-bearing. A boat declares `components` yet cannot be named by the frozen
+ * airframe / engine / propeller enum ([usesComponentTypes]); a home declares neither.
+ */
+val componentTypesApply: Boolean
+  @Composable get() = LocalThingCapabilities.current.components &&
+    LocalThingTemplate.current.usesComponentTypes
 
 /** The meter [key] names, or null when this template does not declare it. */
 fun ThingTemplate?.meter(key: String): MeterDef? =
@@ -82,6 +94,19 @@ fun ThingTemplate?.meterLabelWithUnit(key: String, ifAbsent: String): String {
   return meter.unit_label.takeIf { it.isNotEmpty() }
     ?.let { "$label ($it)" } ?: label
 }
+
+/**
+ * What to call this template's meter set — the log form's tab and the section heading inside it.
+ *
+ * Declared by the template, because no rule names all of them: "Hours" for an airplane's three
+ * hour meters, "Odometer" for a car's one, "Readings" for a bike carrying a distance and ride
+ * hours. A preset published before `meters_label` existed declares nothing, so a template with a
+ * single meter falls back to that meter's own label and everything else to [ifAbsent].
+ */
+fun ThingTemplate?.metersLabel(ifAbsent: String): String =
+  this?.meters_label?.takeIf { it.isNotEmpty() }
+    ?: this?.meters?.singleOrNull()?.label?.takeIf { it.isNotEmpty() }
+    ?: ifAbsent
 
 /** A slot's label, falling back to [ifAbsent]. See [meterLabel] on why the fallback exists. */
 fun ThingTemplate?.slotLabel(key: String, ifAbsent: String): String =
