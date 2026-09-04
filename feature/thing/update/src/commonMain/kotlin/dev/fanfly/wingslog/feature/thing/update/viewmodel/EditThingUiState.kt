@@ -13,9 +13,11 @@ data class EditThingUiState(
   val initialThing: Thing? = null,
   val isLoading: Boolean = true,
   val isSaved: Boolean = false,
+  /** Set alongside [isSaved] on a create: the id the write assigned, for the shell to switch to. */
+  val createdThingId: String? = null,
   /**
-   * Set alongside [isSaved] when the create should continue into the starter-pack step rather
-   * than close: the id of the Thing just written, whose DNA carries the pack.
+   * Set alongside [createdThingId] when the create should continue into the starter-pack step
+   * rather than close — the Thing's DNA carries a pack.
    */
   val starterPackThingId: String? = null,
   val isDeleted: Boolean = false,

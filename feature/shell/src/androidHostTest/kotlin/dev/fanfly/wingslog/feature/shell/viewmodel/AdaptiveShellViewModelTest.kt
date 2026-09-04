@@ -53,7 +53,7 @@ class AdaptiveShellViewModelTest {
   private val fleetManager = object : FleetManager {
     override fun observeFleetDashboard(): Flow<List<FleetEntry>> = fleet
     override suspend fun updateThing(thing: Thing) =
-      Result.success(true)
+      Result.success(thing)
 
     override fun loadThing(id: String): Flow<Thing?> =
       MutableStateFlow(null)
@@ -273,6 +273,35 @@ class AdaptiveShellViewModelTest {
     templateRegistry = templateRegistry,
     currentThingTemplate = currentThingTemplate,
   )
+
+  @Test
+  fun aNewThingIsSelectedOnceTheFleetCarriesIt() = runTest(testDispatcher) {
+    // The create form reports the id before the fleet flow has necessarily emitted the new row.
+    // Selecting it outright would look like a deleted Thing to the collector and fall back to
+    // the first one; holding it until it arrives is what makes the switcher land on it.
+    fleet.value = listOf(thing("a1", "N1"))
+    val vm = viewModel()
+    assertThat(vm.uiState.value.selectedThingId).isEqualTo("a1")
+
+    vm.selectNewThing("a2")
+    assertThat(vm.uiState.value.selectedThingId).isEqualTo("a1")
+
+    fleet.value = listOf(thing("a1", "N1"), thing("a2", "N2"))
+    assertThat(vm.uiState.value.selectedThingId).isEqualTo("a2")
+    assertThat(selectedThingStore.saved).isEqualTo("a2")
+    assertThat(currentThingTemplate.lexicon.value.thingNoun.singular).isEqualTo("aircraft")
+  }
+
+  @Test
+  fun aNewThingAlreadyInTheFleetIsSelectedAtOnce() = runTest(testDispatcher) {
+    fleet.value = listOf(thing("a1", "N1"), home("h1"))
+    val vm = viewModel()
+
+    vm.selectNewThing("h1")
+
+    assertThat(vm.uiState.value.selectedThingId).isEqualTo("h1")
+    assertThat(currentThingTemplate.lexicon.value.thingNoun.singular).isEqualTo("home")
+  }
 
   @Test
   fun mapsFleetAndSelectsFirstByDefault() = runTest(testDispatcher) {

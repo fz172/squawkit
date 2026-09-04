@@ -201,6 +201,7 @@ class EditThingViewModel(
         _uiState.update {
           it.copy(
             isSaved = true,
+            createdThingId = written.id.takeIf { isNewThing },
             // Step 4 of the create flow (PRD §8.1). Only a create, and only a template that ships
             // a pack: an edit has nothing to offer, and a Thing with no pack should not see the
             // step — or count in the §13 denominator.

@@ -142,6 +142,7 @@ class ThingCreatedAnalyticsTest {
     advanceUntilIdle()
 
     assertThat(vm.uiState.value.isSaved).isTrue()
+    assertThat(vm.uiState.value.createdThingId).isEqualTo("thing-new")
     assertThat(vm.uiState.value.starterPackThingId).isEqualTo("thing-new")
   }
 
@@ -160,6 +161,7 @@ class ThingCreatedAnalyticsTest {
     advanceUntilIdle()
 
     assertThat(vm.uiState.value.isSaved).isTrue()
+    assertThat(vm.uiState.value.createdThingId).isEqualTo("thing-new")
     assertThat(vm.uiState.value.starterPackThingId).isNull()
   }
 
@@ -175,6 +177,7 @@ class ThingCreatedAnalyticsTest {
     advanceUntilIdle()
 
     assertThat(analytics.countOf("thing_created")).isEqualTo(0)
+    assertThat(vm.uiState.value.createdThingId).isNull()
     assertThat(vm.uiState.value.starterPackThingId).isNull()
   }
 

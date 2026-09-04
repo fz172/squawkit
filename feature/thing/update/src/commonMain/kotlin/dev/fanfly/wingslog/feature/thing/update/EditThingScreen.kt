@@ -107,6 +107,14 @@ fun EditThingScreen(
   // This effect will run when isSaved becomes true
   LaunchedEffect(uiState.isSaved, uiState.isDeleted) {
     val packThingId = uiState.starterPackThingId
+    // The shell beneath this dialog switches to the new Thing once we close; staying on the one
+    // the switcher happened to point at would show the form's work on a different Thing.
+    uiState.createdThingId?.let { id ->
+      navController.previousBackStackEntry?.savedStateHandle?.set(
+        Screen.CROSS_SCREEN_SELECT_THING_ID,
+        id,
+      )
+    }
     when {
       uiState.isDeleted -> navController.popBackStack(
         Screen.AdaptiveShell.route,
