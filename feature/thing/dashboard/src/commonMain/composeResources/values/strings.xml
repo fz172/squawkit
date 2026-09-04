@@ -15,11 +15,6 @@
   <!-- Overview tab cards -->
   <string name="overview_recent_activity">Recent activity</string>
   <string name="overview_all_logs">All logs</string>
-  <string name="overview_no_logs_title">No logs yet</string>
-  <string name="overview_no_logs_body">Add the first maintenance entry to start the <xliff:g example="aircraft">%1$s</xliff:g> record.</string>
   <string name="overview_next_due">Next due</string>
-  <string name="overview_no_tasks_title">No upcoming tasks</string>
-  <string name="overview_no_tasks_body">Scheduled maintenance is up to date.</string>
   <string name="overview_open_squawks">Open <xliff:g example="squawks">%1$s</xliff:g></string>
-  <string name="overview_no_squawks_body">No active discrepancies for this <xliff:g example="aircraft">%1$s</xliff:g>.</string>
 </resources>

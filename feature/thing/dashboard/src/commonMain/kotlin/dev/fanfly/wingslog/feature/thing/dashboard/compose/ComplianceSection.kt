@@ -18,6 +18,8 @@ import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.text.font.FontWeight
 import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.taskEmptyHint
+import dev.fanfly.wingslog.core.template.taskHistoryEmptyHint
 import dev.fanfly.wingslog.core.template.taskNoun
 import dev.fanfly.wingslog.core.ui.adaptive.compose.AdaptiveCardList
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
@@ -36,9 +38,7 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import wingslog.feature.tasks.sharedassets.generated.resources.due_with_count
 import wingslog.feature.tasks.sharedassets.generated.resources.history_with_count
-import wingslog.feature.tasks.sharedassets.generated.resources.no_complied_yet
 import wingslog.feature.tasks.sharedassets.generated.resources.no_tasks_yet
-import wingslog.feature.tasks.sharedassets.generated.resources.no_tasks_yet_description
 import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedRes
 
 @Composable
@@ -100,12 +100,12 @@ fun ComplianceSection(
             SharedRes.string.no_tasks_yet,
             LocalThingLexicon.current.taskNoun.plural,
           ),
-          description = stringResource(SharedRes.string.no_tasks_yet_description),
+          description = LocalThingLexicon.current.taskEmptyHint,
           icon = Icons.Default.CheckCircle,
         )
       } else {
         Text(
-          text = stringResource(SharedRes.string.no_complied_yet),
+          text = LocalThingLexicon.current.taskHistoryEmptyHint,
           style = MaterialTheme.typography.bodyMedium,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
           modifier = Modifier.padding(vertical = Spacing.large)

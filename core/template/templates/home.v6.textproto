@@ -1,11 +1,15 @@
-# The home preset — canonical template (id "home", version 3).
+# The home preset — canonical template (id "home", version 5).
 #
 # THE LOAD-BEARING ONE (pivot_rollout_design.md §5). A house has no make, no model and no serial
 # number (PRD §4.2), and its meter list is EMPTY (§4.4). Everything this file leaves out is the
 # point: it is the preset that finds screens with an aviation assumption baked in. `car` would find
 # almost none of them — it maps onto the airplane shape almost field for field.
 #
-# See templates/README.md before editing, and compile with ./compile-template.sh home.v3
+# See templates/README.md before editing, and compile with ./compile-template.sh home.v5
+#
+# v4 adds `empty_states` — the per-domain empty-state copy that used to be fixed aviation
+# text in strings.xml. A noun could not fix those strings: what makes them useful is the
+# examples, and this preset's examples are its own.
 #
 # v3 marks `year_built` numeric, so the form gives it a keypad and leaves its casing alone (#739).
 #
@@ -13,16 +17,17 @@
 # was enforced, so `v1` names two different templates depending on when a Thing froze it — which is
 # the whole problem versioning exists to prevent. Every preset starts again at v2, where the version
 # a Thing stores is once more a true statement about the bytes it carries.
+#
+# v5 adds `log_onboarding_hint`. The Dashboard's log-onboarding card was still asking every
+# owner for "airframe, engine, and prop times" — and the card is not gated on meters, so a
+# preset that declares none was asking for readings its own form does not offer.
 
-# v4 declares `certifications` and drops `technician_certificates`: a technician's roles are
+# v6 declares `certifications` and drops `technician_certificates`: a technician's roles are
 # derived from the credentials they hold, and a per-Thing flag cannot answer for a roster the
 # account shares across every Thing (#684).
 #
-# v5 drops the per-credential `expires` switch, made redundant by the form's own "Never"
-# checkbox — see the reserved slot in template.proto.
-#
 id: "home"
-version: 5
+version: 6
 min_app_version: 0
 
 display_name: "Home"
@@ -60,6 +65,32 @@ lexicon {
   # so nothing should read them. Leaving them empty rather than filling them in is what turns a
   # capability flag into a real check — any screen that renders a compliance term without consulting
   # the capability will show a blank here rather than quietly borrowing a plausible word.
+
+  # The empty-state copy, and the preset that proves why it is per-template rather than a noun.
+  # "Tap + to report a defect or anomaly" was the shipped line for every Thing; a homeowner noting
+  # that the fence gate sticks is not reporting a defect. Same screen, different sentence — which
+  # is what `squawk` resolving to "attention item" above is for, and what a substitution into the
+  # aviation frame could not have done.
+  empty_states {
+    squawk_hint: "Tap + to note anything that needs looking at"
+    task_hint: "Tap + to add filter changes, seasonal upkeep, and other recurring chores."
+    task_history_hint: "Log work against a task to see its history here."
+    log_hint: "Log your first entry — a furnace service, a roof repair, or any other work on the house."
+
+    overview_log_title: "No records yet"
+    overview_log_hint: "Add the first service record to start the home history."
+    overview_task_title: "No upcoming tasks"
+    overview_task_hint: "Nothing is due right now."
+    overview_squawk_hint: "Nothing needs attention in this home right now."
+
+    # No meters at all (§4.4), so there is no reading to ask for — the aviation copy asked a
+    # homeowner for airframe, engine and prop times. Capability shaping copy, not a noun swap.
+    #
+    # And no "baseline" either: that word names a starting METER reading, so with no meters it
+    # points at nothing. What the first entry actually does here is date the recurring work —
+    # a TimeRule bases its next due date on the latest log's date (TaskDueManagerImpl).
+    log_onboarding_hint: "Log what has already been done to the house — a recent service, a repair, whatever you know. Recurring tasks are scheduled from the date of the most recent entry."
+  }
 }
 
 # PRD §4.8, the home column. Components and meters are the two that matter: a homeowner should never

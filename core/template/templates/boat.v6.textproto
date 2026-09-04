@@ -1,22 +1,27 @@
-# The boat preset — canonical template (id "boat", version 3).
+# The boat preset — canonical template (id "boat", version 5).
 #
 # The only non-aviation preset with a PER-COMPONENT meter: engine hours belong to the engine, and a
 # twin-engine boat has two of them accruing separately. That makes this the preset that exercises
 # `component_slot_key` outside the airplane, which is the field a single-engine assumption hides.
 #
-# See templates/README.md before editing, and compile with ./compile-template.sh boat.v3
+# See templates/README.md before editing, and compile with ./compile-template.sh boat.v5
+#
+# v4 adds `empty_states` — the per-domain empty-state copy that used to be fixed aviation
+# text in strings.xml. A noun could not fix those strings: what makes them useful is the
+# examples, and this preset's examples are its own.
 #
 # v3 marks `year` numeric, so the form gives it a keypad and leaves its casing alone (#739).
+#
+# v5 adds `log_onboarding_hint`. The Dashboard's log-onboarding card was still asking every
+# owner for "airframe, engine, and prop times" — and the card is not gated on meters, so a
+# preset that declares none was asking for readings its own form does not offer.
 
-# v4 declares `certifications` and drops `technician_certificates`: a technician's roles are
+# v6 declares `certifications` and drops `technician_certificates`: a technician's roles are
 # derived from the credentials they hold, and a per-Thing flag cannot answer for a roster the
 # account shares across every Thing (#684).
 #
-# v5 drops the per-credential `expires` switch, made redundant by the form's own "Never"
-# checkbox — see the reserved slot in template.proto.
-#
 id: "boat"
-version: 5
+version: 6
 min_app_version: 0
 
 display_name: "Boat"
@@ -41,6 +46,23 @@ lexicon {
   authority_label: "Manufacturer"
 
   # compliance is off below; terms deliberately absent.
+
+  # The empty-state copy. Seasonal haul-out work is what a boat owner logs, so it leads the
+  # examples where an aeroplane leads with an annual.
+  empty_states {
+    squawk_hint: "Tap + to report a fault, a leak, or anything not working right"
+    task_hint: "Tap + to add impeller changes, bottom paint, and other recurring service."
+    task_history_hint: "Log work against a service to see its history here."
+    log_hint: "Log your first entry — an impeller change, a haul-out, or any other work on the boat."
+
+    overview_log_title: "No records yet"
+    overview_log_hint: "Add the first service record to start the boat history."
+    overview_task_title: "No upcoming service"
+    overview_task_hint: "Scheduled service is up to date."
+    overview_squawk_hint: "Nothing needs attention on this boat right now."
+
+    log_onboarding_hint: "Log your current engine hours to start tracking service intervals accurately. Hour-based services count from this first reading."
+  }
 }
 
 capabilities {

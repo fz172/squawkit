@@ -2,6 +2,7 @@ package dev.fanfly.wingslog.core.template
 
 import androidx.compose.runtime.staticCompositionLocalOf
 import dev.fanfly.wingslog.thing.ComplianceTerm
+import dev.fanfly.wingslog.thing.EmptyStates
 import dev.fanfly.wingslog.thing.Lexicon
 import dev.fanfly.wingslog.thing.Noun
 
@@ -70,5 +71,24 @@ object GenericLexicon {
       plural = "Service bulletins",
     ),
     authority_label = "Manufacturer",
+    // Never rendered on a per-thing surface — every Thing resolves a template, and every preset
+    // authors its own. This is what a template that omits the block falls back to, and the reason
+    // it is written rather than left blank: the fallback for missing copy is plainer copy, not an
+    // empty line under a heading.
+    empty_states = EmptyStates(
+      squawk_hint = "Tap + to report anything not working right",
+      task_hint = "Tap + to add the checks and replacements that come round again.",
+      task_history_hint = "Log work against a task to see its history here.",
+      log_hint = "Log your first entry — a repair, a replacement, or any other work done.",
+      overview_log_title = "No logs yet",
+      overview_log_hint = "Add the first log to start the record.",
+      overview_task_title = "No upcoming tasks",
+      overview_task_hint = "Scheduled work is up to date.",
+      overview_squawk_hint = "Nothing needs attention right now.",
+      // No meters assumed: the generic lexicon has to hold for a home, which declares none — so
+      // no "baseline" either, since that word names a starting meter reading.
+      log_onboarding_hint = "Log whatever has already been done. Recurring tasks are scheduled " +
+        "from the date of the most recent entry.",
+    ),
   )
 }

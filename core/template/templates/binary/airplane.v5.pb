@@ -1,5 +1,5 @@
 
-airplane"Ù
+airplane"ž
 
 aircraftaircraftan
 squawksquawksa"Squawks0
@@ -10,7 +10,8 @@ componentsa2
 
 techniciantechniciansa:	AirworthyBAOGJAircraft on GroundRFleetjFAAr7
 Airworthiness DirectiveAirworthiness DirectivesADz)
-Service BulletinService BulletinsSB* 0:BH2
+Service BulletinService BulletinsSB‚Á
+#Tap + to report a defect or anomaly>Tap + to add inspections, part replacements, and other checks.0Log work against a task to see its history here."cLog your first entry â€” oil change, annual, 100-hour, or any other airframe, engine, or prop work.*No logs yet2=Add the first maintenance entry to start the aircraft record.:No upcoming tasksB$Scheduled maintenance is up to date.J*No active discrepancies for this aircraft.R‘Log your current airframe, engine, and prop times to start tracking maintenance intervals accurately. This will serve as your logbook's baseline.* 0:BH2
 makeMake2
 modelModel2
 serialSerial Number 02 

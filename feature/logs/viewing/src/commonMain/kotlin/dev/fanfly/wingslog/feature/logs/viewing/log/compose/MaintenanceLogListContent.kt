@@ -55,6 +55,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.fanfly.wingslog.core.template.LexiconFormatter
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.logEmptyHint
+import dev.fanfly.wingslog.core.template.logNoun
 import dev.fanfly.wingslog.thing.Attachment
 import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.MaintenanceLog
@@ -80,7 +84,6 @@ import org.koin.compose.koinInject
 import wingslog.core.sharedassets.generated.resources.done
 import wingslog.core.sharedassets.generated.resources.retry
 import wingslog.feature.logs.sharedassets.generated.resources.add_first_maintenance_log
-import wingslog.feature.logs.sharedassets.generated.resources.no_maintenance_logs_description
 import wingslog.feature.logs.sharedassets.generated.resources.no_maintenance_logs_title
 import wingslog.feature.logs.viewing.generated.resources.clear_filter
 import wingslog.feature.logs.viewing.generated.resources.failed_to_load_logs
@@ -199,8 +202,11 @@ fun MaintenanceLogListContent(
 
         if (uiState.totalCount == 0) {
           EmptyState(
-            title = stringResource(SharedRes.string.no_maintenance_logs_title),
-            description = stringResource(SharedRes.string.no_maintenance_logs_description),
+            title = stringResource(
+              SharedRes.string.no_maintenance_logs_title,
+              LexiconFormatter.sentenceCase(LocalThingLexicon.current.logNoun),
+            ),
+            description = LocalThingLexicon.current.logEmptyHint,
             icon = Icons.Default.History,
             actionText = onAddLog?.let { stringResource(SharedRes.string.add_first_maintenance_log) },
             onActionClick = onAddLog

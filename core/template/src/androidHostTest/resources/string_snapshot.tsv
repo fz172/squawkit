@@ -238,7 +238,6 @@ feature/logs/sharedassets	log_assigned_by_unknown	Logged by another member
 feature/logs/sharedassets	log_unverified_technician	Not verified — name entered manually
 feature/logs/sharedassets	maintenance_date	Work Date
 feature/logs/sharedassets	maintenance_history	Maintenance History
-feature/logs/sharedassets	no_maintenance_logs_description	Log your first entry — oil change, annual, 100-hour, or any other airframe, engine, or prop work.
 feature/logs/sharedassets	no_maintenance_logs_title	Work log is empty
 feature/logs/sharedassets	propeller_hub	Propeller Hub
 feature/logs/sharedassets	resolve_squawk_work_description	Resolve squawk "%1$s"
@@ -275,7 +274,6 @@ feature/logs/viewing	failed_to_load_logs	Could not load maintenance logs
 feature/logs/viewing	filter_by_type	Filter by Type
 feature/logs/viewing	log_count_n_entries	%1$d Entries
 feature/logs/viewing	log_count_one_entry	1 Entry
-feature/logs/viewing	log_onboarding_description	Log your current airframe, engine, and prop times to start tracking maintenance intervals accurately. This will serve as your logbook's baseline.
 feature/logs/viewing	log_squawk_count_one	1 squawk
 feature/logs/viewing	log_squawk_count_plural	%1$d squawks
 feature/logs/viewing	log_task_count_one	1 task
@@ -501,7 +499,6 @@ feature/squawk/sharedassets	down_alert_subtitle	AOG squawks must be resolved bef
 feature/squawk/sharedassets	edit_squawk	Update squawk
 feature/squawk/sharedassets	no_closed_squawks	No closed squawks yet.
 feature/squawk/sharedassets	no_open_squawks	No open squawks
-feature/squawk/sharedassets	no_open_squawks_description	Tap + to report a defect or anomaly
 feature/squawk/sharedassets	no_squawk_work_recorded	No squawks addressed by this log
 feature/squawk/sharedassets	no_work_recorded	No work recorded yet.
 feature/squawk/sharedassets	open_with_count	OPEN (%1$d)
@@ -663,10 +660,8 @@ feature/tasks/sharedassets	due_with_count	DUE (%1$d)
 feature/tasks/sharedassets	edit_task	Update task
 feature/tasks/sharedassets	history_with_count	HISTORY (%1$d)
 feature/tasks/sharedassets	maintenance_due_title	Maintenance Due
-feature/tasks/sharedassets	no_complied_yet	Log work against a task to see its history here.
 feature/tasks/sharedassets	no_task_work_recorded	No task addressed by this log.
 feature/tasks/sharedassets	no_tasks_yet	No maintenance tasks
-feature/tasks/sharedassets	no_tasks_yet_description	Tap + to add inspections, part replacements, and other checks.
 feature/tasks/sharedassets	skip_task_confirm_action	Skip
 feature/tasks/sharedassets	skip_task_confirm_body	Marks complete without logging and snoozes one cycle to the next due target. This can’t be undone.
 feature/tasks/sharedassets	skip_task_confirm_title	Skip This Cycle?
@@ -848,11 +843,6 @@ feature/thing/dashboard	degraded_title	Needs a newer version of the app
 feature/thing/dashboard	degraded_update	Update the app
 feature/thing/dashboard	overview_all_logs	All logs
 feature/thing/dashboard	overview_next_due	Next due
-feature/thing/dashboard	overview_no_logs_body	Add the first maintenance entry to start the aircraft record.
-feature/thing/dashboard	overview_no_logs_title	No logs yet
-feature/thing/dashboard	overview_no_squawks_body	No active discrepancies for this aircraft.
-feature/thing/dashboard	overview_no_tasks_body	Scheduled maintenance is up to date.
-feature/thing/dashboard	overview_no_tasks_title	No upcoming tasks
 feature/thing/dashboard	overview_open_squawks	Open squawks
 feature/thing/dashboard	overview_recent_activity	Recent activity
 feature/thing/dashboard	spec_line_label	%1$s:

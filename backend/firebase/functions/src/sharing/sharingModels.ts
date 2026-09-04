@@ -79,15 +79,35 @@ export type ThingShareDoc = {
 
 /**
  * The technician profile fields a member publishes into the share so other members can select them
- * on a signed log without reading the member's private technician record. See §7. Certificate
- * fields may be empty (e.g. an owner doing FAR 43 preventive maintenance with no A&P certificate).
+ * on a signed log without reading the member's private technician record. See §7. Credentials may
+ * be empty (e.g. an owner doing FAR 43 preventive maintenance with no A&P certificate).
  */
 export type TechnicianMirror = {
   name: string;
+  /**
+   * Every credential the member holds — one person can be both an A&P and an ASE mechanic (#684).
+   * What a current client publishes.
+   */
+  certifications?: CertificationMirror[];
+  /**
+   * The single FAA certificate a mirror carried before #684. Read-only: still written by clients
+   * that have not updated, never by a current one.
+   */
   certificateType: string;
   certNumber: string;
   certExpiration?: Timestamp | null;
   certExpireLimit: string;
+};
+
+/** One credential, flattened the same way and for the same reason as its parent. */
+export type CertificationMirror = {
+  /** The `CertificationDef.key` a template declares, or `custom_N` for one the user named. */
+  type: string;
+  number: string;
+  expiration?: Timestamp | null;
+  expireLimit: string;
+  /** The member's own word, on a `custom_N` credential only. */
+  label?: string;
 };
 
 /**
