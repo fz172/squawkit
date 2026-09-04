@@ -431,7 +431,7 @@ private fun HeroCopy(
   Column(horizontalAlignment = align) {
     Text(
       text = buildAnnotatedString {
-        append("Aircraft maintenance logbook, ")
+        append("Maintenance records for everything you own, ")
         withStyle(SpanStyle(color = colors.skyDim)) { append("simplified") }
       },
       style = TextStyle(
