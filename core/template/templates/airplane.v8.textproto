@@ -38,8 +38,11 @@
 #
 # v7 ships the starter pack (PRD §4.9). Regulatory-universal intervals only — see the block itself.
 #
+# v8 reframes the pack for the experimental fleet: the 12-month inspection is the condition
+# inspection an operating-limitations letter asks for, and a 50-hour oil change joins it.
+#
 id: "airplane"
-version: 7
+version: 8
 
 # No floor. This template ships inside every build that can read it, so a client can never
 # encounter it from the future — the floor exists for FETCHED templates (§6), and a baked-in one is
@@ -226,13 +229,17 @@ meters {
 # See ThingTemplate.meters_label: the word for the SET, which no single meter above supplies.
 meters_label: "Hours"
 
-# The starter pack (PRD §4.9). REGULATORY-UNIVERSAL INTERVALS ONLY: the PRD's liability posture
-# limits this pack to what 14 CFR Part 91 asks of every certificated aircraft — never a
+# The starter pack (PRD §4.9). UNIVERSAL INTERVALS ONLY: what every aircraft needs regardless of
+# make — the Part 91 items, plus the one engine interval no engine manual argues with. Never a
 # model-specific interval, never an AD or SB, which stay user-entered. Recommendations, not
 # authority; the screen says so. No `component_slot_key` means airframe (StarterTasks.kt).
+#
+# Framed for the experimental fleet, which is who builds a logbook from scratch: the 12-month
+# inspection is the condition inspection the operating limitations require, not the certificated
+# annual — the interval is the same, the authority is not.
 starter_tasks {
-  title: "Annual inspection"
-  description: "Required within the preceding 12 calendar months for most aircraft (14 CFR 91.409(a))."
+  title: "Conditional inspection"
+  description: "Experimental aircraft: the operating limitations require a condition inspection within the preceding 12 calendar months, to the scope of 14 CFR Part 43 Appendix D, by the holder of the repairman certificate or an A&P."
   default_selected: true
   interval_months: 12
 }
@@ -261,6 +268,14 @@ starter_tasks {
   description: "Required for IFR operations; within the preceding 24 calendar months (14 CFR 91.411)."
   default_selected: true
   interval_months: 24
+}
+starter_tasks {
+  title: "Oil change"
+  description: "Oil and filter every 50 engine hours. Sooner if the engine manual says so, or if the airplane sits between flights."
+  default_selected: true
+  component_slot_key: "engine"
+  meter_key: "engine_hours"
+  interval: 50
 }
 
 # The credentials this preset recognises (PRD §8.6). A technician's roles are derived from the keys

@@ -278,25 +278,32 @@ class CanonicalTemplatesTest {
   }
 
   /**
-   * The airplane pack carries only regulatory-universal intervals (PRD §4.9's liability posture):
-   * never an AD or SB, never a model-specific interval. Nothing structural expresses that, so the
-   * pack is pinned by content — a change here is a product decision, not a typo.
+   * The airplane pack carries only universal intervals (PRD §4.9's liability posture): the Part
+   * 91 items, the experimental condition inspection, one engine interval — never an AD or SB,
+   * never a model-specific interval. Nothing structural expresses that, so the pack is pinned by
+   * content: a change here is a product decision, not a typo.
    */
   @Test
-  fun theAirplanePackIsRegulatoryUniversalOnly() {
-    val titles = AirplaneTemplate.TEMPLATE.starter_tasks.map { it.title }
-    assertThat(titles).containsExactly(
-      "Annual inspection",
+  fun theAirplanePackIsUniversalOnly() {
+    val pack = AirplaneTemplate.TEMPLATE.starter_tasks
+    assertThat(pack.map { it.title }).containsExactly(
+      "Conditional inspection",
       "100-hour inspection",
       "ELT inspection",
       "Transponder test",
       "Altimeter & pitot-static test",
+      "Oil change",
     )
     // Only for-hire operation needs the 100-hour; offering it pre-checked to every owner would
     // put a wrong interval on most of them.
-    val hundredHour = AirplaneTemplate.TEMPLATE.starter_tasks.single { it.title == "100-hour inspection" }
+    val hundredHour = pack.single { it.title == "100-hour inspection" }
     assertThat(hundredHour.default_selected).isFalse()
     assertThat(hundredHour.meter_key).isEqualTo(MeterKeys.AIRFRAME_HOURS)
+    // The one engine item is filed against the engine and its own meter, not the airframe.
+    val oil = pack.single { it.title == "Oil change" }
+    assertThat(oil.component_slot_key).isEqualTo(SlotKeys.ENGINE)
+    assertThat(oil.meter_key).isEqualTo(MeterKeys.ENGINE_HOURS)
+    assertThat(oil.interval).isEqualTo(50f)
   }
 
   @Test
