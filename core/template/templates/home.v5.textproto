@@ -18,8 +18,11 @@
 # derived from the credentials they hold, and a per-Thing flag cannot answer for a roster the
 # account shares across every Thing (#684).
 #
+# v5 drops the per-credential `expires` switch, made redundant by the form's own "Never"
+# checkbox — see the reserved slot in template.proto.
+#
 id: "home"
-version: 4
+version: 5
 min_app_version: 0
 
 display_name: "Home"
@@ -102,31 +105,26 @@ spec_fields { key: "year_built" label: "Year Built" placeholder: "1974" numeric:
 certifications {
   key: "electrician"
   label: "Electrician"
-  expires: true
   number_label: "License Number"
   number_placeholder: "License number"
 }
 certifications {
   key: "plumber"
   label: "Plumber"
-  expires: true
   number_label: "License Number"
   number_placeholder: "License number"
 }
-# The one credential in any shipped preset that genuinely never expires: EPA Section 608 is issued
-# for life. `expires: false` REMOVES the date row rather than greying it — a certification with no
-# expiry has no date the user could be asked for.
+# EPA Section 608 is issued for life. Nothing here says so: the form's "Never" checkbox is where a
+# credential's expiry is settled, by the person who holds it rather than by a template guessing.
 certifications {
   key: "hvac_epa608"
   label: "HVAC (EPA 608)"
-  expires: false
   number_label: "Certification Number"
   number_placeholder: "Certification number"
 }
 certifications {
   key: "general_contractor"
   label: "General Contractor"
-  expires: true
   number_label: "License Number"
   number_placeholder: "License number"
 }

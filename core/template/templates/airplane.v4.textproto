@@ -24,8 +24,11 @@
 # derived from the credentials they hold, and a per-Thing flag cannot answer for a roster the
 # account shares across every Thing (#684).
 #
+# v4 drops the per-credential `expires` switch, made redundant by the form's own "Never"
+# checkbox — see the reserved slot in template.proto.
+#
 id: "airplane"
-version: 3
+version: 4
 
 # No floor. This template ships inside every build that can read it, so a client can never
 # encounter it from the future — the floor exists for FETCHED templates (§6), and a baked-in one is
@@ -200,21 +203,18 @@ meters {
 # Exactly the two values the frozen `CertificateType` enum carried, so the transitional read of a
 # pre-#684 record is lossless: REPAIRMAN and AMT map onto these keys and nothing else was storable.
 #
-# `expires: true` on both, even though an FAA mechanic certificate does not itself expire. The form
-# has offered an expiration date since v1 and records in the field carry one — an IA renewal, a
-# company badge date, whatever the user meant by it. Declaring the truth about the FAA certificate
-# here would hide data users have already entered.
+# Neither declares anything about expiry. An FAA mechanic certificate does not itself expire, but
+# records in the field carry dates against one anyway — an IA renewal, a company badge date — and
+# the form's "Never" checkbox lets the holder say which without a template having to guess.
 certifications {
   key: "faa_repairman"
   label: "Repairman"
-  expires: true
   number_label: "Certificate Number"
   number_placeholder: "Certificate number"
 }
 certifications {
   key: "faa_amt"
   label: "A&P Mechanic"
-  expires: true
   number_label: "Certificate Number"
   number_placeholder: "Certificate number"
 }

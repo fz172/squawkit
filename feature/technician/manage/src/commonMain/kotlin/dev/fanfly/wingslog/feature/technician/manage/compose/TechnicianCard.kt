@@ -100,7 +100,12 @@ fun TechnicianCard(
           roles.forEach { role ->
             SuggestionChip(
               onClick = {},
-              label = { Text(role, style = MaterialTheme.typography.labelSmall) },
+              label = {
+                Text(
+                  role,
+                  style = MaterialTheme.typography.labelSmall
+                )
+              },
             )
           }
         }
@@ -113,20 +118,15 @@ fun TechnicianCard(
           color = MaterialTheme.colorScheme.outline,
         )
       } else {
+        // One row per credential, expiry inline — "A&P Mechanic · A7584747 (Exp 08/31/2031)".
+        // Stacking the date under the number made a person holding three credentials six lines
+        // deep, and split one fact about one credential across two rows.
         certifications.forEach { line ->
           Text(
             text = line.summary(),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
           )
-          val expiration = line.expiration
-          if (expiration != null) {
-            Text(
-              text = expiration,
-              style = MaterialTheme.typography.bodySmall,
-              color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-          }
         }
       }
     }

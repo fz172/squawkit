@@ -1,8 +1,8 @@
 package dev.fanfly.wingslog.core.model.technician
 
 import dev.fanfly.wingslog.thing.CertExpireLimit
-import dev.fanfly.wingslog.thing.Certification
 import dev.fanfly.wingslog.thing.CertificateType
+import dev.fanfly.wingslog.thing.Certification
 import dev.fanfly.wingslog.thing.Technician
 
 /** The `Certification.type` an airplane's `faa_repairman` is stored under. */
@@ -54,7 +54,12 @@ private fun Technician.legacyCertificationKey(): String? {
   val type = when {
     certificate_type != CertificateType.CERTIFICATE_TYPE_NONE -> certificate_type
     cert_type.isBlank() -> return null
-    else -> runCatching { CertificateType.valueOf(cert_type.trim().uppercase()) }
+    else -> runCatching {
+      CertificateType.valueOf(
+        cert_type.trim()
+          .uppercase()
+      )
+    }
       .getOrNull() ?: return null
   }
   return when (type) {

@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.model.technician.resolvedCertifications
 import dev.fanfly.wingslog.core.nav.Screen
+import dev.fanfly.wingslog.core.template.CUSTOM_CERTIFICATION_PREFIX
 import dev.fanfly.wingslog.core.template.OfferedCertification
 import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.core.template.offeredCertifications
@@ -80,10 +81,12 @@ class EditTechnicianViewModel(
    */
   private fun observeOfferedCertifications() {
     viewModelScope.launch {
-      fleetManager.observeFleetDashboard().collect { entries ->
-        val offered = templateRegistry.offeredCertifications(entries.map { it.thing })
-        _uiState.update { it.copy(offered = offered) }
-      }
+      fleetManager.observeFleetDashboard()
+        .collect { entries ->
+          val offered =
+            templateRegistry.offeredCertifications(entries.map { it.thing })
+          _uiState.update { it.copy(offered = offered) }
+        }
     }
   }
 
@@ -101,7 +104,12 @@ class EditTechnicianViewModel(
       val technician = technicianManager.loadTechnician(id)
         .firstOrNull()
       if (technician == null) {
-        _uiState.update { it.copy(isLoading = false, error = "Failed to load technician") }
+        _uiState.update {
+          it.copy(
+            isLoading = false,
+            error = "Failed to load technician"
+          )
+        }
         return@launch
       }
       loaded = technician
@@ -111,16 +119,18 @@ class EditTechnicianViewModel(
           name = technician.name,
           // resolvedCertifications, not the field: a record written before #684 carries its one
           // certificate in fields 3-7, and reading the list directly would show it as uncertified.
-          certifications = technician.resolvedCertifications().map { certification ->
-            CertificationEntry(
-              type = certification.type,
-              number = certification.number,
-              expireLimit = certification.expire_limit,
-              expiration = certification.expiration?.let { ts ->
-                Instant.fromEpochSeconds(ts.getEpochSecond(), ts.getNano())
-              },
-            )
-          },
+          certifications = technician.resolvedCertifications()
+            .map { certification ->
+              CertificationEntry(
+                type = certification.type,
+                number = certification.number,
+                label = certification.label,
+                expireLimit = certification.expire_limit,
+                expiration = certification.expiration?.let { ts ->
+                  Instant.fromEpochSeconds(ts.getEpochSecond(), ts.getNano())
+                },
+              )
+            },
           isLoading = false,
         )
       }
@@ -138,6 +148,28 @@ class EditTechnicianViewModel(
     }
   }
 
+  /**
+   * A credential no template declares, named by the user.
+   *
+   * The key is `custom_N` over the entries already present, so two customs on one record stay
+   * distinct and a renamed one keeps the number and expiry recorded under it — the same reason
+   * `Spec.label` sits beside the key rather than inside it (#781).
+   */
+  fun addCustomCertification() {
+    _uiState.update { state ->
+      val taken = state.certifications.filter { it.isCustom }
+        .mapNotNull {
+          it.type.removePrefix(CUSTOM_CERTIFICATION_PREFIX)
+            .toIntOrNull()
+        }
+      val next = generateSequence(1) { it + 1 }.first { it !in taken }
+      state.copy(
+        certifications = state.certifications +
+          CertificationEntry(type = "$CUSTOM_CERTIFICATION_PREFIX$next"),
+      )
+    }
+  }
+
   fun removeCertification(index: Int) {
     _uiState.update { state ->
       state.copy(
@@ -146,8 +178,18 @@ class EditTechnicianViewModel(
     }
   }
 
+  /**
+   * Upper-cased as typed, the way an `is_identifier` spec field is. A certificate number is matched
+   * exactly — duplicate detection decides two rows are one person by comparing them — so the casing
+   * has to be settled on the way in rather than at each comparison.
+   */
   fun updateCertificationNumber(index: Int, number: String) {
-    updateCertification(index) { it.copy(number = number) }
+    updateCertification(index) { it.copy(number = number.uppercase()) }
+  }
+
+  /** Title-cased as typed — a credential is a name, so it reads like one. */
+  fun updateCertificationLabel(index: Int, label: String) {
+    updateCertification(index) { it.copy(label = label.titleCase()) }
   }
 
   fun updateCertificationExpireLimit(index: Int, expireLimit: CertExpireLimit) {
@@ -158,7 +200,10 @@ class EditTechnicianViewModel(
     updateCertification(index) { it.copy(expiration = expiration) }
   }
 
-  private fun updateCertification(index: Int, edit: (CertificationEntry) -> CertificationEntry) {
+  private fun updateCertification(
+    index: Int,
+    edit: (CertificationEntry) -> CertificationEntry
+  ) {
     _uiState.update { state ->
       state.copy(
         certifications = state.certifications.mapIndexed { i, entry ->
@@ -229,9 +274,20 @@ class EditTechnicianViewModel(
     }
   }
 
+  /**
+   * Every word's first letter, the rest left as typed — so "IBM" and "McIntosh" survive.
+   *
+   * The same rule the Thing form applies to a `title_case` spec field (#781), not
+   * `LexiconFormatter.titleCase`: that one is for words the app or a template author wrote, and its
+   * minor-word handling rewrites what the user typed as they type it.
+   */
+  private fun String.titleCase(): String =
+    split(" ").joinToString(" ") { word -> word.replaceFirstChar { it.uppercase() } }
+
   private fun CertificationEntry.toCertification() = Certification(
     type = type,
     number = number,
+    label = label,
     expiration = if (expireLimit == CertExpireLimit.CERT_EXPIRE_LIMIT_NEVER_EXPIRES) {
       null
     } else {

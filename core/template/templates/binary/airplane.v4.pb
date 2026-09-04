@@ -1,5 +1,5 @@
 
-airplane"Ù
+airplane"Ù
 
 aircraftaircraftan
 squawksquawksa"Squawks0
@@ -21,6 +21,6 @@ techniciantechniciansa:	AirworthyBAOGJAircraft on GroundRFleetjFAAr7
 airframe_hoursAirframe Timehrs B*
 engine_hoursEngine Timehrs *engineB)
 
-prop_hours	Prop Timehrs *	propellerRAirplaneZairplanerD
-faa_repairman	Repairman"Certificate Number*Certificate numberrA
-faa_amtA&P Mechanic"Certificate Number*Certificate number
+prop_hours	Prop Timehrs *	propellerRAirplaneZairplanerB
+faa_repairman	Repairman"Certificate Number*Certificate numberr?
+faa_amtA&P Mechanic"Certificate Number*Certificate number

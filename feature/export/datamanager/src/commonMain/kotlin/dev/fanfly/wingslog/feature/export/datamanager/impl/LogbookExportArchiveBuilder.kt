@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.feature.export.datamanager.impl
 
 import dev.fanfly.wingslog.core.datetime.toLocalDate
+import dev.fanfly.wingslog.core.model.technician.resolvedCertifications
 import dev.fanfly.wingslog.core.template.ComponentField
 import dev.fanfly.wingslog.core.template.GenericLexicon
 import dev.fanfly.wingslog.core.template.LexiconFormatter
@@ -14,7 +15,9 @@ import dev.fanfly.wingslog.core.template.childrenInSlot
 import dev.fanfly.wingslog.core.template.customSpecs
 import dev.fanfly.wingslog.core.template.displayLabel
 import dev.fanfly.wingslog.core.template.displaySubtitle
+import dev.fanfly.wingslog.core.template.forKey
 import dev.fanfly.wingslog.core.template.formatMeterNumber
+import dev.fanfly.wingslog.core.template.knownCertifications
 import dev.fanfly.wingslog.core.template.meter
 import dev.fanfly.wingslog.core.template.meterUnit
 import dev.fanfly.wingslog.core.template.readingFor
@@ -27,9 +30,6 @@ import dev.fanfly.wingslog.feature.export.datamanager.ExportRequest
 import dev.fanfly.wingslog.feature.tasks.datamanager.meterKeyFor
 import dev.fanfly.wingslog.thing.Attachment
 import dev.fanfly.wingslog.thing.AttachmentType
-import dev.fanfly.wingslog.core.model.technician.resolvedCertifications
-import dev.fanfly.wingslog.core.template.forKey
-import dev.fanfly.wingslog.core.template.knownCertifications
 import dev.fanfly.wingslog.thing.CertExpireLimit
 import dev.fanfly.wingslog.thing.Certification
 import dev.fanfly.wingslog.thing.ComplianceType
@@ -785,7 +785,10 @@ class LogbookExportArchiveBuilder(
               rows = listOf(
                 PdfSummaryRow("Cert Type", technician.certTypeLabel()),
                 PdfSummaryRow("Cert #", technician.certNumbers()),
-                PdfSummaryRow("Cert Expiration", technician.certExpirations(timeZone)),
+                PdfSummaryRow(
+                  "Cert Expiration",
+                  technician.certExpirations(timeZone)
+                ),
               ),
             )
           }
@@ -913,11 +916,14 @@ class LogbookExportArchiveBuilder(
               title = technician.name.ifBlank { "Unnamed" },
               rows = listOfNotNull(
                 PdfSummaryRow("Name", technician.name),
-                technician.certTypeLabel().takeIf { it.isNotBlank() }
+                technician.certTypeLabel()
+                  .takeIf { it.isNotBlank() }
                   ?.let { PdfSummaryRow("Certifications", it) },
-                technician.certNumbers().takeIf { it.isNotBlank() }
+                technician.certNumbers()
+                  .takeIf { it.isNotBlank() }
                   ?.let { PdfSummaryRow("Numbers", it) },
-                technician.certExpirations(timeZone).takeIf { it.isNotBlank() }
+                technician.certExpirations(timeZone)
+                  .takeIf { it.isNotBlank() }
                   ?.let { PdfSummaryRow("Expiration", it) },
               ),
             )
@@ -1442,10 +1448,18 @@ class LogbookExportArchiveBuilder(
    * of a row line up.
    */
   private fun Technician?.certTypeLabel(): String =
-    this?.certificationCells { knownCertifications.forKey(it.type)?.label ?: it.type }.orEmpty()
+    this?.certificationCells { certification ->
+      // The user's own word first: a custom credential is named by whoever added it, and no
+      // template declares its key.
+      certification.label.takeIf { it.isNotBlank() }
+        ?: knownCertifications.forKey(certification.type)?.label
+        ?: certification.type
+    }
+      .orEmpty()
 
   private fun Technician?.certNumbers(): String =
-    this?.certificationCells { it.number }.orEmpty()
+    this?.certificationCells { it.number }
+      .orEmpty()
 
   private fun Technician?.certExpirations(timeZone: TimeZone): String =
     this?.certificationCells { certification ->
@@ -1454,7 +1468,8 @@ class LogbookExportArchiveBuilder(
       } else {
         certification.expiration.date(timeZone)
       }
-    }.orEmpty()
+    }
+      .orEmpty()
 
   private fun Technician.certificationCells(cell: (Certification) -> String): String =
     resolvedCertifications().joinToString(CERT_SEPARATOR, transform = cell)

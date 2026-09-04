@@ -195,12 +195,7 @@ export interface CertificationDef {
   key: string;
   /** "A&P Mechanic" */
   label: string;
-  /**
-   * Whether the credential has an expiry date at all. False removes the date row rather than
-   * greying it: a licence that does not expire has no date the user could be asked for.
-   */
-  expires: boolean;
-  /** "Certificate number" · "Licence number" */
+  /** "Certificate Number" · "License Number" */
   numberLabel: string;
   numberPlaceholder: string;
 }
@@ -1030,7 +1025,7 @@ export const StarterTask: MessageFns<StarterTask> = {
 };
 
 function createBaseCertificationDef(): CertificationDef {
-  return { key: "", label: "", expires: false, numberLabel: "", numberPlaceholder: "" };
+  return { key: "", label: "", numberLabel: "", numberPlaceholder: "" };
 }
 
 export const CertificationDef: MessageFns<CertificationDef> = {
@@ -1040,9 +1035,6 @@ export const CertificationDef: MessageFns<CertificationDef> = {
     }
     if (message.label !== "") {
       writer.uint32(18).string(message.label);
-    }
-    if (message.expires !== false) {
-      writer.uint32(24).bool(message.expires);
     }
     if (message.numberLabel !== "") {
       writer.uint32(34).string(message.numberLabel);
@@ -1076,14 +1068,6 @@ export const CertificationDef: MessageFns<CertificationDef> = {
           message.label = reader.string();
           continue;
         }
-        case 3: {
-          if (tag !== 24) {
-            break;
-          }
-
-          message.expires = reader.bool();
-          continue;
-        }
         case 4: {
           if (tag !== 34) {
             break;
@@ -1113,7 +1097,6 @@ export const CertificationDef: MessageFns<CertificationDef> = {
     return {
       key: isSet(object.key) ? globalThis.String(object.key) : "",
       label: isSet(object.label) ? globalThis.String(object.label) : "",
-      expires: isSet(object.expires) ? globalThis.Boolean(object.expires) : false,
       numberLabel: isSet(object.numberLabel)
         ? globalThis.String(object.numberLabel)
         : isSet(object.number_label)
@@ -1135,9 +1118,6 @@ export const CertificationDef: MessageFns<CertificationDef> = {
     if (message.label !== "") {
       obj.label = message.label;
     }
-    if (message.expires !== false) {
-      obj.expires = message.expires;
-    }
     if (message.numberLabel !== "") {
       obj.numberLabel = message.numberLabel;
     }
@@ -1154,7 +1134,6 @@ export const CertificationDef: MessageFns<CertificationDef> = {
     const message = createBaseCertificationDef();
     message.key = object.key ?? "";
     message.label = object.label ?? "";
-    message.expires = object.expires ?? false;
     message.numberLabel = object.numberLabel ?? "";
     message.numberPlaceholder = object.numberPlaceholder ?? "";
     return message;

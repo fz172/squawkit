@@ -4,6 +4,7 @@ import app.cash.sqldelight.async.coroutines.awaitAsOneOrNull
 import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.model.sharing.SharedAircraftRef
+import dev.fanfly.wingslog.core.model.technician.resolvedCertifications
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.DatabaseWriteLock
 import dev.fanfly.wingslog.core.storage.EntityScope
@@ -20,7 +21,6 @@ import dev.fanfly.wingslog.feature.sharing.model.ShareRole
 import dev.fanfly.wingslog.feature.sharing.model.ThingShareState
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import dev.fanfly.wingslog.thing.CertExpireLimit
-import dev.fanfly.wingslog.core.model.technician.resolvedCertifications
 import dev.fanfly.wingslog.thing.CertificateType
 import dev.fanfly.wingslog.thing.Certification
 import dev.fanfly.wingslog.thing.Technician
@@ -595,8 +595,14 @@ internal fun Technician.toMirrorWire(): TechnicianMirrorWire =
       CertificationWire(
         type = it.type,
         number = it.number,
-        expiration = it.expiration?.let { ts -> Timestamp(ts.getEpochSecond(), 0) },
+        expiration = it.expiration?.let { ts ->
+          Timestamp(
+            ts.getEpochSecond(),
+            0
+          )
+        },
         expireLimit = it.expire_limit.name,
+        label = it.label,
       )
     },
   )
@@ -617,8 +623,14 @@ internal fun TechnicianMirrorWire.toTechnician(memberUid: String): Technician =
       Certification(
         type = it.type,
         number = it.number,
-        expiration = it.expiration?.let { ts -> toWireInstant(ts.seconds, ts.nanoseconds) },
+        expiration = it.expiration?.let { ts ->
+          toWireInstant(
+            ts.seconds,
+            ts.nanoseconds
+          )
+        },
         expire_limit = it.expireLimit.toCertExpireLimitOrUnknown(),
+        label = it.label,
       )
     },
     // The legacy flat fields go back into the legacy proto fields, so a mirror from an older client
@@ -720,6 +732,8 @@ internal data class CertificationWire(
   val number: String = "",
   val expiration: Timestamp? = null,
   val expireLimit: String = "",
+  /** The member's own word for a credential no template declares — empty otherwise. */
+  val label: String = "",
 )
 
 /** Partial member-doc update: display fields + mirror. `role` is omitted so rules see it unchanged. */

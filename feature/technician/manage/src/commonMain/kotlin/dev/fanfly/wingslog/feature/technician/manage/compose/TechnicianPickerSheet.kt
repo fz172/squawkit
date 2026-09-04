@@ -12,7 +12,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import dev.fanfly.wingslog.thing.Technician
+import dev.fanfly.wingslog.core.template.OfferedCertification
 import dev.fanfly.wingslog.core.ui.common.compose.PickerActionButton
 import dev.fanfly.wingslog.core.ui.common.compose.PickerDoneButton
 import dev.fanfly.wingslog.core.ui.common.compose.PickerSectionHeader
@@ -20,9 +20,9 @@ import dev.fanfly.wingslog.core.ui.common.compose.PickerSelectableRow
 import dev.fanfly.wingslog.core.ui.common.compose.PickerSelectionMode
 import dev.fanfly.wingslog.core.ui.common.compose.PickerSheet
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import dev.fanfly.wingslog.core.template.OfferedCertification
 import dev.fanfly.wingslog.feature.technician.sharedassets.compose.certificationLines
-import dev.fanfly.wingslog.feature.technician.sharedassets.compose.summary
+import dev.fanfly.wingslog.feature.technician.sharedassets.compose.short
+import dev.fanfly.wingslog.thing.Technician
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.done
 import wingslog.feature.technician.sharedassets.generated.resources.add_technician
@@ -90,7 +90,13 @@ fun TechnicianPickerSheet(
         PickerSectionHeader(stringResource(TechnicianRes.string.linked_technicians_header))
         val linkedBadge = stringResource(TechnicianRes.string.linked_badge)
         linkedTechnicians.forEach { technician ->
-          TechnicianRow(technician, knownCertifications, selectedId, onSelect, badge = linkedBadge)
+          TechnicianRow(
+            technician,
+            knownCertifications,
+            selectedId,
+            onSelect,
+            badge = linkedBadge
+          )
         }
       }
 
@@ -130,7 +136,8 @@ private fun TechnicianRow(
   val certText = if (certifications.isEmpty()) {
     stringResource(TechnicianRes.string.no_certifications)
   } else {
-    certifications.joinToString(" · ") { it.summary() }
+    // Comma-separated, because the credential and its number are themselves "·"-joined.
+    certifications.joinToString(", ") { it.short() }
   }
 
   PickerSelectableRow(

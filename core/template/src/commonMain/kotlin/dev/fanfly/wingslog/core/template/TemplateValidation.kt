@@ -24,6 +24,11 @@ fun ThingTemplate.structuralProblems(): List<String> = buildList {
   // technician holding it would be tagged with a blank.
   certifications.filter { it.label.isEmpty() }
     .forEach { add("$id: certification '${it.key}' has no label") }
+  // `custom_N` is the add flow's own namespace for a credential the user names themselves. A
+  // template claiming one would collide with whatever they typed, under a key that then means two
+  // different things depending on who wrote it.
+  certifications.filter { it.key.startsWith(CUSTOM_CERTIFICATION_PREFIX) }
+    .forEach { add("$id: certification '${it.key}' uses the reserved custom_ prefix") }
 
   addAll(duplicates("spec field", spec_fields.map { it.key }))
   addAll(duplicates("meter", meters.map { it.key }))
@@ -54,3 +59,6 @@ private fun ThingTemplate.duplicates(
     .filterValues { it > 1 }
     .keys
     .map { "$id: duplicate $kind key '$it'" }
+
+/** The add flow's namespace for a credential the user names themselves — see `Certification.label`. */
+const val CUSTOM_CERTIFICATION_PREFIX = "custom_"

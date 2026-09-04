@@ -251,4 +251,29 @@ class TechnicianCertificationsTest {
       }
     }
   }
+
+  @Test
+  fun noPresetClaimsTheCustomNamespace() {
+    // `custom_N` belongs to the add flow, for a credential the user names themselves. A template
+    // claiming one would collide with whatever they typed.
+    CanonicalTemplates.ALL.forEach { template ->
+      assertThat(template.structuralProblems()).isEmpty()
+      template.certifications.forEach { def ->
+        assertThat(def.key).doesNotContain(CUSTOM_CERTIFICATION_PREFIX)
+      }
+    }
+  }
+
+  @Test
+  fun aCustomCredentialCarriesNoRole() {
+    // Nothing declares it, so nothing implies a domain — the same answer as an uncertified person,
+    // reached the same way.
+    val custom = Technician(
+      certifications = listOf(
+        Certification(type = "custom_1", label = "Certified Welding Inspector"),
+      ),
+    )
+
+    assertThat(custom.derivedRoles(registry.knownCertifications())).isEmpty()
+  }
 }

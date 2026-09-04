@@ -14,8 +14,11 @@
 # derived from the credentials they hold, and a per-Thing flag cannot answer for a roster the
 # account shares across every Thing (#684).
 #
+# v5 drops the per-credential `expires` switch, made redundant by the form's own "Never"
+# checkbox — see the reserved slot in template.proto.
+#
 id: "automotive"
-version: 4
+version: 5
 min_app_version: 0
 
 display_name: "Automotive"
@@ -158,13 +161,10 @@ meters {
   decimal: false
 }
 
-# PRD §8.6. ASE is the credential a US car owner would recognise on an invoice, and it recertifies
-# on a five-year cycle — so unlike the aviation certificates, the expiration date here is the
-# credential's own rather than a field the form happens to offer.
+# PRD §8.6. ASE is the credential a US car owner would recognise on an invoice.
 certifications {
   key: "ase"
   label: "ASE Certified"
-  expires: true
   number_label: "Certification Number"
   number_placeholder: "ASE number"
 }

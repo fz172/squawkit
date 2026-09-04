@@ -18,6 +18,11 @@
   <string name="remove_certification">Remove certification</string>
   <!-- Header for a legacy row that carried a number and nothing naming what it is for. -->
   <string name="unnamed_certification">Certification</string>
+  <!-- The add menu's last entry: a credential no template declares, named by the user. -->
+  <string name="custom_certification">Custom</string>
+  <string name="certification_name">Certification Name</string>
+  <!-- Trails the certification on a list row: "A&amp;P Mechanic · A7584747 (Exp 08/31/2031)". -->
+  <string name="certification_expires_on">(Exp <xliff:g example="08/31/2031">%1$s</xliff:g>)</string>
 
   <string name="you_badge">You</string>
   <string name="my_profile">My Profile</string>

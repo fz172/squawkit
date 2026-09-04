@@ -85,6 +85,11 @@ class EditTechnicianViewModelTest {
     savedStateHandle = SavedStateHandle(mapOf(Screen.TECHNICIAN_ID to (id ?: "new"))),
   )
 
+  private fun EditTechnicianViewModel.updateCertificationNumberOn(type: String, number: String) {
+    addCertification(type)
+    updateCertificationNumber(0, number)
+  }
+
   @Test
   fun theFormOffersWhatTheAccountsTemplatesDeclare() = runTest(testDispatcher) {
     fleetOf(CanonicalTemplates.HOME)
@@ -102,13 +107,68 @@ class EditTechnicianViewModelTest {
   }
 
   @Test
-  fun anAccountWithNoCredentialedTemplateOffersNothing() = runTest(testDispatcher) {
-    // The form draws no certification section at all in this case — an empty section header is a
-    // promise of a control that is not coming.
+  fun anAccountWithNoCredentialedTemplateOffersNothingButCustom() = runTest(testDispatcher) {
+    // Nothing declared, but the form still renders: Custom is always on the menu, so a bike-only
+    // account can still record the licence its mechanic actually holds.
     fleetOf(CanonicalTemplates.BIKE)
+    val vm = viewModel()
 
-    assertThat(viewModel().uiState.value.offered).isEmpty()
+    assertThat(vm.uiState.value.offered).isEmpty()
+
+    vm.addCustomCertification()
+    assertThat(vm.uiState.value.certifications.single().isCustom).isTrue()
   }
+
+  @Test
+  fun aCertificateNumberIsStoredUpperCased() {
+    // Matched exactly by duplicate detection, so the casing is settled on the way in rather than at
+    // every comparison.
+    val vm = viewModel()
+    vm.updateCertificationNumberOn(FAA_AMT, "amt-4471")
+
+    assertThat(vm.uiState.value.certifications.single().number).isEqualTo("AMT-4471")
+  }
+
+  @Test
+  fun aCustomCredentialIsNamedByTheUserAndTitleCased() {
+    val vm = viewModel()
+    vm.addCustomCertification()
+    vm.updateCertificationLabel(0, "certified welding inspector")
+
+    assertThat(vm.uiState.value.certifications.single().label)
+      .isEqualTo("Certified Welding Inspector")
+  }
+
+  @Test
+  fun aSecondCustomGetsItsOwnKey() {
+    // Two customs on one record stay distinct, and renaming one keeps the number recorded under it.
+    val vm = viewModel()
+    vm.addCustomCertification()
+    vm.addCustomCertification()
+
+    assertThat(vm.uiState.value.certifications.map { it.type })
+      .containsExactly("custom_1", "custom_2")
+      .inOrder()
+  }
+
+  @Test
+  fun aCustomCredentialSurvivesTheSave() = runTest(testDispatcher) {
+    val vm = viewModel()
+    vm.updateName("Avery")
+    vm.addCustomCertification()
+    vm.updateCertificationLabel(0, "certified welding inspector")
+    vm.updateCertificationNumber(0, "cwi-88")
+    val written = slot<Technician>()
+    coEvery { technicianManager.updateTechnician(capture(written)) } returns Result.success(true)
+
+    vm.save()
+
+    val saved = written.captured.certifications.single()
+    assertThat(saved.type).isEqualTo("custom_1")
+    assertThat(saved.label).isEqualTo("Certified Welding Inspector")
+    assertThat(saved.number).isEqualTo("CWI-88")
+  }
+
 
   @Test
   fun aPre684RecordLoadsAsOneCertification() = runTest(testDispatcher) {

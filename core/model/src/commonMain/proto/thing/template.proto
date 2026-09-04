@@ -173,11 +173,14 @@ message CertificationDef {
   string key = 1;                 // stored as Certification.type — "faa_amt", "ase"
   string label = 2;               // "A&P Mechanic"
 
-  // Whether the credential has an expiry date at all. False removes the date row rather than
-  // greying it: a licence that does not expire has no date the user could be asked for.
-  bool expires = 3;
+  // 3 was `expires`, a per-credential switch for whether the expiry row rendered at all. Removed as
+  // redundant: the form already carries a "Never" checkbox, so the user can say a credential does
+  // not expire without a template having to predict it — and the prediction was wrong as often as
+  // right, since an FAA certificate that does not expire still had dates recorded against it.
+  reserved 3;
+  reserved "expires";
 
-  string number_label = 4;        // "Certificate number" · "Licence number"
+  string number_label = 4;        // "Certificate Number" · "License Number"
   string number_placeholder = 5;
 }
 

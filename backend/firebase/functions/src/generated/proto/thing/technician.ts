@@ -114,6 +114,15 @@ export interface Certification {
   number: string;
   expiration: Date | undefined;
   expireLimit: CertExpireLimit;
+  /**
+   * The user's own word for a credential no template declares — set only on the `custom_N` entries
+   * the add flow offers, empty on everything a template names.
+   *
+   * Stored beside the key rather than in it, for the same reason `Spec.label` is: the key is a
+   * join, naming the same credential across renames, and a label the user retypes must not orphan
+   * the number and expiry recorded under it.
+   */
+  label: string;
 }
 
 export interface Technician {
@@ -143,7 +152,7 @@ export interface Technician {
 }
 
 function createBaseCertification(): Certification {
-  return { type: "", number: "", expiration: undefined, expireLimit: 0 };
+  return { type: "", number: "", expiration: undefined, expireLimit: 0, label: "" };
 }
 
 export const Certification: MessageFns<Certification> = {
@@ -159,6 +168,9 @@ export const Certification: MessageFns<Certification> = {
     }
     if (message.expireLimit !== 0) {
       writer.uint32(32).int32(message.expireLimit);
+    }
+    if (message.label !== "") {
+      writer.uint32(42).string(message.label);
     }
     return writer;
   },
@@ -202,6 +214,14 @@ export const Certification: MessageFns<Certification> = {
           message.expireLimit = reader.int32() as any;
           continue;
         }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.label = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -221,6 +241,7 @@ export const Certification: MessageFns<Certification> = {
         : isSet(object.expire_limit)
         ? certExpireLimitFromJSON(object.expire_limit)
         : 0,
+      label: isSet(object.label) ? globalThis.String(object.label) : "",
     };
   },
 
@@ -238,6 +259,9 @@ export const Certification: MessageFns<Certification> = {
     if (message.expireLimit !== 0) {
       obj.expireLimit = certExpireLimitToJSON(message.expireLimit);
     }
+    if (message.label !== "") {
+      obj.label = message.label;
+    }
     return obj;
   },
 
@@ -250,6 +274,7 @@ export const Certification: MessageFns<Certification> = {
     message.number = object.number ?? "";
     message.expiration = object.expiration ?? undefined;
     message.expireLimit = object.expireLimit ?? 0;
+    message.label = object.label ?? "";
     return message;
   },
 };

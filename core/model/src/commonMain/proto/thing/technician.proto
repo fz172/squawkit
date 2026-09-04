@@ -22,6 +22,14 @@ message Certification {
   string number = 2;
   google.protobuf.Timestamp expiration = 3;
   CertExpireLimit expire_limit = 4;
+
+  // The user's own word for a credential no template declares — set only on the `custom_N` entries
+  // the add flow offers, empty on everything a template names.
+  //
+  // Stored beside the key rather than in it, for the same reason `Spec.label` is: the key is a
+  // join, naming the same credential across renames, and a label the user retypes must not orphan
+  // the number and expiry recorded under it.
+  string label = 5;
 }
 
 message Technician {
