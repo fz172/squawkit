@@ -85,6 +85,10 @@ object GenericLexicon {
       overview_task_title = "No upcoming tasks",
       overview_task_hint = "Scheduled work is up to date.",
       overview_squawk_hint = "Nothing needs attention right now.",
+      // No meters assumed: the generic lexicon has to hold for a home, which declares none — so
+      // no "baseline" either, since that word names a starting meter reading.
+      log_onboarding_hint = "Log whatever has already been done. Recurring tasks are scheduled " +
+        "from the date of the most recent entry.",
     ),
   )
 }

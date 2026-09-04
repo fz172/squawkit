@@ -119,6 +119,7 @@ class CanonicalTemplatesTest {
         "overview_task_title" to empty.overview_task_title,
         "overview_task_hint" to empty.overview_task_hint,
         "overview_squawk_hint" to empty.overview_squawk_hint,
+        "log_onboarding_hint" to empty.log_onboarding_hint,
       )
       lines.forEach { (field, value) ->
         assertWithMessage("${template.id}.empty_states.$field").that(value).isNotEmpty()

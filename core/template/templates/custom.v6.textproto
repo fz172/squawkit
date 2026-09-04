@@ -1,4 +1,4 @@
-# The custom preset — canonical template (id "custom", version 5).
+# The custom preset — canonical template (id "custom", version 6).
 #
 # THE FLOOR. It declares almost nothing (PRD §4.7: no components, no meters, generic lexicon), so
 # every screen has to render something sensible for a template that promises almost nothing. That
@@ -8,7 +8,7 @@
 # Where home proves the system is not aviation with the nouns swapped, this proves the system
 # degrades to nothing gracefully. The two failures are different, which is why both presets exist.
 #
-# See templates/README.md before editing, and compile with ./compile-template.sh custom.v5
+# See templates/README.md before editing, and compile with ./compile-template.sh custom.v6
 #
 # v5 is a MERGE FIX, and the reason it exists is worth reading before the next parallel branch.
 # #781 and #783 each bumped this preset to v3 — one adding `name` and custom_spec_fields, the
@@ -22,9 +22,13 @@
 # was enforced, so `v1` names two different templates depending on when a Thing froze it — which is
 # the whole problem versioning exists to prevent. Every preset starts again at v2, where the version
 # a Thing stores is once more a true statement about the bytes it carries.
+#
+# v6 adds `log_onboarding_hint`. The Dashboard's log-onboarding card was still asking every
+# owner for "airframe, engine, and prop times" — and the card is not gated on meters, so a
+# preset that declares none was asking for readings its own form does not offer.
 
 id: "custom"
-version: 5
+version: 6
 min_app_version: 0
 
 display_name: "Custom"
@@ -81,6 +85,9 @@ lexicon {
     overview_task_title: "No upcoming tasks"
     overview_task_hint: "Scheduled work is up to date."
     overview_squawk_hint: "Nothing needs attention on this thing right now."
+
+    # The floor: no meters, and no domain to name a first job from.
+    log_onboarding_hint: "Log whatever has already been done. Recurring tasks are scheduled from the date of the most recent entry."
   }
 }
 
