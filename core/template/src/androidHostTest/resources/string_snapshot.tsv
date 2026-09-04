@@ -904,3 +904,8 @@ feature/tasks/update	schedule_recurrence_seasonal_one_time_sub	Next listed month
 feature/tasks/update	schedule_preview_set_months_primary	Pick the months
 feature/tasks/update	schedule_preview_due_seasonal	Due every %1$s
 feature/tasks/update	schedule_preview_due_seasonal_once	Due next %1$s
+feature/tasks/update	initial_due_section_label	First due
+feature/tasks/update	initial_due_title	Set when this is first due
+feature/tasks/update	initial_due_subtitle	Otherwise the first due is counted from today or the current reading. The schedule takes over after the first log.
+feature/tasks/update	schedule_preview_first_due_date	First due %1$s
+feature/tasks/update	schedule_preview_first_due_meter	First due at %1$s %2$s

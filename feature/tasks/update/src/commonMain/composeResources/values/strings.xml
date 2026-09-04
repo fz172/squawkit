@@ -123,6 +123,13 @@
   <string name="adj_reschedule_was_hours">Original reading set by schedule</string>
   <string name="adj_reschedule_prefix_at">At</string>
 
+  <!-- First due, on the create form: the same override, written once -->
+  <string name="initial_due_section_label">First due</string>
+  <string name="initial_due_title">Set when this is first due</string>
+  <string name="initial_due_subtitle">Otherwise the first due is counted from today or the current reading. The schedule takes over after the first log.</string>
+  <string name="schedule_preview_first_due_date">First due <xliff:g example="15 Sep 2026">%1$s</xliff:g></string>
+  <string name="schedule_preview_first_due_meter">First due at <xliff:g example="1,250">%1$s</xliff:g> <xliff:g example="hrs">%2$s</xliff:g></string>
+
   <!-- Adjustments tab — delete task section -->
   <string name="delete_task_section_label">Delete Task</string>
   <string name="delete_this_task_title">Delete this task</string>

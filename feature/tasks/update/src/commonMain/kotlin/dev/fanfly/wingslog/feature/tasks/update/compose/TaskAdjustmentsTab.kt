@@ -317,8 +317,13 @@ fun TaskAdjustmentsTab(
 
 // ─── Reschedule section ──────────────────────────────────────────────────────
 
+/**
+ * The forced next-due controls: a switch, then a date or a meter reading. Shared with the create
+ * form's "First due" section, which is the same override written once — the first cycle is
+ * whatever the user says, and the schedule takes over after the first log clears it.
+ */
 @Composable
-private fun RescheduleCard(
+internal fun RescheduleCard(
   mode: ScheduleMode?,
   rescheduleOn: Boolean,
   onToggle: (Boolean) -> Unit,
@@ -328,6 +333,8 @@ private fun RescheduleCard(
   onDateClick: () -> Unit,
   meter: MeterDef?,
   meterUnit: String,
+  title: String = stringResource(Res.string.adj_reschedule_title),
+  subtitle: String = stringResource(Res.string.adj_reschedule_subtitle),
 ) {
   val isLinked = mode == ScheduleMode.LINKED
   val noMode = mode == null
@@ -364,18 +371,18 @@ private fun RescheduleCard(
     ) {
       Column(modifier = Modifier.weight(1f)) {
         Text(
-          stringResource(Res.string.adj_reschedule_title),
+          title,
           style = MaterialTheme.typography.bodyLarge,
           fontWeight = FontWeight.SemiBold,
           color = MaterialTheme.colorScheme.onSurface,
         )
-        val subtitle = when {
+        val caption = when {
           isLinked -> stringResource(Res.string.adj_reschedule_disabled_linked)
           noMode -> stringResource(Res.string.adj_reschedule_disabled_unset)
-          else -> stringResource(Res.string.adj_reschedule_subtitle)
+          else -> subtitle
         }
         Text(
-          subtitle,
+          caption,
           style = MaterialTheme.typography.bodySmall,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
         )

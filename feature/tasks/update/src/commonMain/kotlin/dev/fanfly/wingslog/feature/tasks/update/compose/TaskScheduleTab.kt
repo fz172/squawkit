@@ -22,15 +22,22 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.template.LocalThingTemplate
 import dev.fanfly.wingslog.core.template.meter
 import dev.fanfly.wingslog.core.ui.common.compose.PreviewBanner
 import dev.fanfly.wingslog.core.ui.common.compose.PreviewBannerTone
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.thing.MaintenanceTask
+import kotlin.time.Instant
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.tasks.update.generated.resources.Res
+import wingslog.feature.tasks.update.generated.resources.initial_due_section_label
+import wingslog.feature.tasks.update.generated.resources.initial_due_subtitle
+import wingslog.feature.tasks.update.generated.resources.initial_due_title
 import wingslog.feature.tasks.update.generated.resources.schedule_prefix_every
 import wingslog.feature.tasks.update.generated.resources.schedule_prefix_in
 import wingslog.feature.tasks.update.generated.resources.schedule_preview_asap_primary
@@ -43,6 +50,8 @@ import wingslog.feature.tasks.update.generated.resources.schedule_preview_due_se
 import wingslog.feature.tasks.update.generated.resources.schedule_preview_due_seasonal_once
 import wingslog.feature.tasks.update.generated.resources.schedule_preview_empty_primary
 import wingslog.feature.tasks.update.generated.resources.schedule_preview_empty_secondary
+import wingslog.feature.tasks.update.generated.resources.schedule_preview_first_due_date
+import wingslog.feature.tasks.update.generated.resources.schedule_preview_first_due_meter
 import wingslog.feature.tasks.update.generated.resources.schedule_preview_hint
 import wingslog.feature.tasks.update.generated.resources.schedule_preview_label
 import wingslog.feature.tasks.update.generated.resources.schedule_preview_linked_one_time_secondary
@@ -77,12 +86,30 @@ import wingslog.feature.tasks.update.generated.resources.schedule_unit_months
 import wingslog.feature.tasks.update.generated.resources.schedule_unit_tach_hours
 import wingslog.feature.tasks.update.generated.resources.schedule_unit_years
 
+/**
+ * The create form's "First due" controls — the force-due override, offered once, at creation.
+ *
+ * Absent on edit: an existing task reschedules from the Adjustments tab, where the banner can
+ * show what the schedule currently says next to what the user is changing it to.
+ */
+data class InitialDueControls(
+  val forceOverrideDate: Boolean,
+  val onForceOverrideDateChange: (Boolean) -> Unit,
+  val forcedDateMillis: Long?,
+  val onDateClick: () -> Unit,
+  val forceOverrideEngine: Boolean,
+  val onForceOverrideEngineChange: (Boolean) -> Unit,
+  val forcedEngineHours: String,
+  val onForcedEngineHoursChange: (String) -> Unit,
+)
+
 @Composable
 fun TaskScheduleTab(
   state: ScheduleState,
   onChange: (ScheduleState) -> Unit,
   availableInspections: List<MaintenanceTask>,
   modifier: Modifier = Modifier,
+  initialDue: InitialDueControls? = null,
 ) {
   var advancedOpen by remember(state.mode) { mutableStateOf(state.mode == ScheduleMode.LINKED) }
 
@@ -104,11 +131,32 @@ fun TaskScheduleTab(
       linkedTaskName = availableInspections.firstOrNull { it.id == state.linkedToId }?.title,
       meterUnit = meterUnit,
     )
+    // A first due the user set replaces the generic second line: it is the more useful fact.
+    val firstDueLine = initialDue?.let { controls ->
+      when {
+        state.isDated && controls.forceOverrideDate && controls.forcedDateMillis != null ->
+          stringResource(
+            Res.string.schedule_preview_first_due_date,
+            Instant.fromEpochMilliseconds(controls.forcedDateMillis)
+              .toLocalDateTime(TimeZone.currentSystemDefault()).date.toDisplayFormat(),
+          )
+
+        state.mode == ScheduleMode.HOURS && controls.forceOverrideEngine &&
+          controls.forcedEngineHours.toFloatOrNull() != null ->
+          stringResource(
+            Res.string.schedule_preview_first_due_meter,
+            formatEngineHours(controls.forcedEngineHours.toFloat()),
+            meterUnit,
+          )
+
+        else -> null
+      }
+    }
     PreviewBanner(
       label = stringResource(Res.string.schedule_preview_label),
       hint = stringResource(Res.string.schedule_preview_hint),
       primary = AnnotatedString(previewPrimary),
-      secondary = AnnotatedString(previewSecondary),
+      secondary = AnnotatedString(firstDueLine ?: previewSecondary),
       tone = if (previewIsEmpty) PreviewBannerTone.Neutral else PreviewBannerTone.Active,
     )
 
@@ -270,6 +318,37 @@ fun TaskScheduleTab(
               )
             )
           },
+        )
+      }
+    }
+
+    // First due — create only, and only once the schedule it overrides exists.
+    if (initialDue != null && state.isComplete) {
+      val on = if (state.isDated) initialDue.forceOverrideDate else initialDue.forceOverrideEngine
+      ScheduleSection(
+        labelRes = Res.string.initial_due_section_label,
+        complete = on,
+      ) {
+        RescheduleCard(
+          mode = state.mode,
+          rescheduleOn = on,
+          onToggle = { turnOn ->
+            if (state.isDated) {
+              initialDue.onForceOverrideDateChange(turnOn)
+              if (turnOn) initialDue.onForceOverrideEngineChange(false)
+            } else {
+              initialDue.onForceOverrideEngineChange(turnOn)
+              if (turnOn) initialDue.onForceOverrideDateChange(false)
+            }
+          },
+          forcedEngineHours = initialDue.forcedEngineHours,
+          onForcedEngineHoursChange = initialDue.onForcedEngineHoursChange,
+          forcedDateMillis = initialDue.forcedDateMillis,
+          onDateClick = initialDue.onDateClick,
+          meter = meter,
+          meterUnit = meterUnit,
+          title = stringResource(Res.string.initial_due_title),
+          subtitle = stringResource(Res.string.initial_due_subtitle),
         )
       }
     }
@@ -450,6 +529,19 @@ private fun previewText(
     false
   )
 }
+
+/** TIME and SEASONAL schedules are dated; a first due for them is a date. */
+private val ScheduleState.isDated: Boolean
+  get() = mode == ScheduleMode.TIME || mode == ScheduleMode.SEASONAL
+
+/** Enough of a schedule to have a first due: an interval, a meter value, or months — and not ASAP. */
+private val ScheduleState.isComplete: Boolean
+  get() = recurrence != null && recurrence != ScheduleRecurrence.ASAP && when (mode) {
+    ScheduleMode.TIME -> calValue.toIntOrNull() != null
+    ScheduleMode.HOURS -> hourValue.toFloatOrNull() != null
+    ScheduleMode.SEASONAL -> seasonalMonths.isNotEmpty()
+    else -> false
+  }
 
 private fun ScheduleTimeUnit.label(): StringResource = when (this) {
   ScheduleTimeUnit.DAYS -> Res.string.schedule_unit_days
