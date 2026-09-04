@@ -126,6 +126,39 @@ internal val IconSquawk: ImageVector = strokeIcon(
   "M12 9v5M12 17.5v.5",
 )
 
+/** Feature — every kind of thing (stacked layers). */
+internal val IconLayers: ImageVector = strokeIcon(
+  1.8f,
+  "m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z",
+  "m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65",
+  "m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65",
+)
+
+/** Feature — collaboration (two people). */
+internal val IconPeople: ImageVector = strokeIcon(
+  1.8f,
+  "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2",
+  "M13 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0",
+  "M22 21v-2a4 4 0 0 0-3-3.87",
+  "M16 3.13a4 4 0 0 1 0 7.75",
+)
+
+/** Feature — starter schedules (a checked list). */
+internal val IconListChecks: ImageVector = strokeIcon(
+  1.8f,
+  "m3 17 2 2 4-4",
+  "m3 7 2 2 4-4",
+  "M13 6h8",
+  "M13 12h8",
+  "M13 18h8",
+)
+
+/** Feature — attachments and export (paperclip). */
+internal val IconPaperclip: ImageVector = strokeIcon(
+  1.8f,
+  "m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48",
+)
+
 /** Feature 3 — on the web today (monitor). */
 internal val IconMonitor: ImageVector = strokeIcon(
   1.8f,

@@ -1,28 +1,21 @@
 # PRD: Things & Templates — Multi-Domain Maintenance
 
-> **Implementation status.** **Phases 1 and 2 have shipped. Phase 3 is designed but unstarted.**
+> **Implementation status.** **Phases 1, 2 and 3 have shipped; Phase 5's cleanup shipped inside Phase 3.**
 >
 > | Phase | State |
 > |---|---|
 > | **1 — Migration** | **Shipped 2026-08-28/29.** The `Thing` proto, its Firestore and Cloud Storage paths, the `thing_shares` ACL tree, and a completed data migration across every account — see [`thing_migration_design.md`](thing_migration_design.md). |
-> | **2 — Lexicon plumbing** | **Shipped 2026-08-29/30.** `core:template`, `TemplateRegistry`, `CurrentThingTemplate`, the lexicon and its formatter, ~230 strings converted with a byte-identical snapshot test, capability flags wired (all `true`), notification copy, and the analytics taxonomy with `template_id` on Thing-scoped events. Still **invisible to users** by design — see [`template_system_design.md`](template_system_design.md). |
-> | **3 — The pivot ships** | **Designed, unstarted.** [`pivot_rollout_design.md`](pivot_rollout_design.md). The first phase a user can see. |
-> | **4–5** | Proposed. |
+> | **2 — Lexicon plumbing** | **Shipped 2026-08-29/30.** `core:template`, `TemplateRegistry`, `CurrentThingTemplate`, the lexicon and its formatter, ~230 strings converted with a byte-identical snapshot test, capability flags wired, notification copy, and the analytics taxonomy — see [`template_system_design.md`](template_system_design.md). |
+> | **3 — The pivot ships** | **Shipped 2026-08-31 → 09-04**, per [`pivot_rollout_design.md`](pivot_rollout_design.md): inflate-on-write and the backfill (the hard gate), presets as `.textproto` assets, all six presets, the type picker and template-driven create form, template-driven rendering (spec, component tree, meters, export), the degraded state, `MeterRule`, technician certifications with derived roles, starter packs with both §13 events, the subscription rename, this document's companions (`PRODUCT.md`, `DESIGN.md`, store and web copy), and the snapshot narrowed into the aviation cohort's copy guardrail. **Still open from Phase 3:** the publishing script, the `fetch_templates` RPC and the canonical cache (#725–#727) — every template is baked in, none is fetched. |
+> | **4 — Depth** | Proposed. |
+> | **5 — Cleanup** | **Shipped with Phase 3** (#668): the transitional fields 2–6 are reserved and every reader is on `spec` / `components`. |
 >
-> What still does **not** exist: any preset other than airplane, the template picker, the create flow, the fetch
-> RPC, and template-driven rendering. §5, §7, §8 and §10–§14 below are still a design rather than a description.
->
-> **One correction to what this banner used to claim.** It said every `Thing` carries a backfilled
-> `template_id = "airplane"`, `spec`, and `components`. Neither half holds:
->
-> - `template_id` (field 7) and `template_version` (8) are **reserved and removed**. A Thing's template is
->   inflated into the `Thing` document itself (`template_system_design.md` §5), and an absent one resolves to
->   airplane over a closed set — so no stored hint is needed.
-> - `spec` and `components` are populated **only on Things the backend cutover migrated.** The client has never
->   written either, so every Thing created since the cutover has both empty. Repairing that is the hard gate at
->   the front of Phase 3 (`pivot_rollout_design.md` §3.1, issues #717 / #718).
+> What still does **not** exist: a template that arrives any way other than baked into the build; the custom
+> template editor; per-preset export layouts beyond the logbook/generic split; a calendar-anchored ("seasonal")
+> task rule, which the home starter pack approximates with 6- and 12-month intervals. §5, §7, §8 and §10–§14 are
+> now a description of what shipped, with the open decisions in §16 still open.
 
-**Owner:** Product · **Status:** Phases 1–2 shipped; Phase 3 designed; 4–5 proposed · **Date:** 2026-08-12 · **Refreshed:** 2026-08-30
+**Owner:** Product · **Status:** Phases 1–3 and 5 shipped; Phase 4 proposed · **Date:** 2026-08-12 · **Refreshed:** 2026-09-04
 **Related:** [Product overview](PRD.md) · [Storage R1 design](../storage/storage_r1_design.md) · [Squawk design](../squawks/squawk_design.md) · [Subscription PRD](../subscription/subscription_PRD.html) · [Export PRD](../export/export_logs_PRD.md) · [Sharing PRD](../sharing/aircraft_sharing_PRD.html) · [Notifications PRD](../notifications/notifications_PRD.md) · [Display ads PRD](../ads/display_ads_PRD.md) · [Aircraft overview tabs](../aircraft/aircraft_overview_tabs.md) *(historical — predates the shell sections)*
 
 > **What changed under this document since it was drafted.** Every code claim below was re-verified against
@@ -533,9 +526,10 @@ risk, and the sprinklers need blowing out before the first freeze. An app that t
 and starter packs are the cheapest possible content moat, because they are data.
 
 > **Liability posture.** Packs are labeled **recommendations, not authority**, with a one-line disclaimer pointing
-> to the manufacturer's service manual. The airplane pack contains only regulatory-universal intervals (annual,
-> 100-hour, ELT, transponder, pitot-static) — never model-specific intervals, and never an AD or SB, which must
-> remain user-entered.
+> to the manufacturer's service manual. The airplane pack contains only universal intervals — the 12-month
+> condition inspection (framed for the experimental fleet, which is who builds a logbook from scratch), the
+> 100-hour (off by default), ELT, transponder, pitot-static, and a 50-hour oil change — never model-specific
+> intervals, and never an AD or SB, which must remain user-entered. Pinned by content in `CanonicalTemplatesTest`.
 
 ---
 
@@ -1183,6 +1177,11 @@ treatment before launch; out of scope here.
 
 ## 12. Subscription & Entitlement Impact
 
+> **Shipped (Phase 3, #735).** `thingLimit()` / `FREE_THING_LIMIT` replaced the aircraft names, and the
+> subscription and upsell copy is neutral fixed text — "Unlimited things", "Logs, tasks & issues" — under the
+> account-scoped rule from #687 rather than lexicon substitution (§6). The free limit is still **2**; the
+> decision below on raising it to 3 is open.
+
 Mechanically trivial: `aircraftLimit()` → `thingLimit()`, `FREE_AIRCRAFT_LIMIT` → `FREE_THING_LIMIT`, and the
 `upsell_body_*` strings drop "aircraft" for the neutral noun. The other four gates —
 `canUploadAttachments()`, `canEmailExports()`, `canHostShare()`, `shouldShowAds()` — are unaffected; none of them
@@ -1246,9 +1245,9 @@ rollout whose guardrail metric cannot be measured is not a guarded rollout.
 | **0 — Decisions** | Resolve the open decisions in §16. The free-tier limit and the squawk-word question are cheap now and expensive later. | No |
 | **1 — Migration** *(hard gate)* | Non-UI only. `Thing` / `Component` / `Meter` / `ThingTemplate` protos replace the aircraft protos. **`core:template` and `TemplateRegistry` were *not* built here** — `thing_migration_design.md` §1 put them out of scope, and Phase 2 built them (#648). Phase 1 shipped the proto shapes and the data cutover, nothing that reads a template. The developer runs the manual backend cutover (§9.1 step 1) covering Firestore and attachment Storage paths per account, *then* distributes the build to that account's devices, where local backfill (§9.1 step 2) runs automatically. **No template picker, no non-airplane preset, no other new functionality ships until every account has cut over.** | **No — by design.** The app must be indistinguishable, and there is nothing else to see yet. |
 | **2 — Lexicon plumbing** *(shipped)* | **Shipped 2026-08-29/30.** String parameterization across all 31 `strings.xml` files, `LocalThingLexicon`, formatter, byte-identical snapshot test. Capability flags wired into the UI, all still on. Notification tier titles resolve through the lexicon; OS channel names stay neutral and their ids are pinned (§8.5). Analytics event taxonomy defined and emitted (§13). Aviation-only. Starts only after Phase 1 has closed out on every account. | No |
-| **3 — The pivot ships** *(designed — [`pivot_rollout_design.md`](pivot_rollout_design.md))* | Six remaining presets + starter packs, template picker and create flow, generic component tree UI, meter-driven log form, Stuff switcher, technician certifications and derived role tags (§8.6), subscription rename, `PRODUCT.md`/`DESIGN.md` revisions. No version-floor work here — Phase 1 already guaranteed every device is on the new shape before this phase can start. | **Yes** |
-| **4 — Depth** | Custom template editor, template-declared spec fields on technician certifications (§8.6), per-preset export layouts, template-aware search, additional presets (3D printer, equipment), store repositioning. | Yes |
-| **5 — Cleanup** | **Not yet done.** `Thing` still carries the transitional fields 2–6 (`make`, `model`, `serial`, `tail_number`, `engine`) — still populated and still read. Phase 1's precondition for removing them *is* met (every account migrated, every device on the new build), so the removal is now possible; it is tracked as #668. It is a **stored-data change**: fields 2–6 must be reserved and never reused, and every reader has to move to `spec`/`components` first — #638 discipline, not cleanup. | No |
+| **3 — The pivot ships** *(shipped 2026-08-31 → 09-04 — [`pivot_rollout_design.md`](pivot_rollout_design.md))* | **Shipped:** inflate-on-write and the backfill (#717, #718), presets as assets (#675), the six presets (#721–#723), the type picker and template-driven create form (#738–#740, #781), template-driven rendering of spec, components, meters and export (#703, #729, #730, #770), the switcher (#731), the degraded state (#728), `MeterRule` replacing `EngineHourRule` (#759, #761), technician certifications with derived roles (#684), starter packs with both §13 events (#733, #707), the subscription rename (#735), `PRODUCT.md`/`DESIGN.md` and the store/web repositioning copy (#736), and the snapshot narrowed into the aviation cohort's guardrail (#734). **Still open:** the publishing script, `fetch_templates` RPC and canonical cache (#725–#727). | **Yes** |
+| **4 — Depth** | Custom template editor, template-declared spec fields on technician certifications (§8.6), per-preset export layouts beyond logbook/generic, template-aware search, additional presets (3D printer, equipment), a calendar-anchored task rule for seasonal chores. | Yes |
+| **5 — Cleanup** | **Shipped inside Phase 3** (#668): fields 2–6 (`make`, `model`, `serial`, `tail_number`, `engine`) are reserved and never reused, and every reader moved to `spec`/`components` first — a stored-data change sequenced with #638 discipline, exactly as this row once demanded. | No |
 
 ---
 

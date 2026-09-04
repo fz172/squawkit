@@ -491,10 +491,12 @@ over Density, Progressive Disclosure). Dynamic color is disabled; the aviation p
 Feature PRDs and architecture design docs live in `docs/`, organized into per-topic subfolders:
 
 - `docs/product/` — `PRD.md`, `multi_domain_maintenance_PRD.md` (the pivot from aircraft-only to any
-  maintainable “Thing” via a template configuration system — **Phase 1 shipped 2026-08-29; Phases 2–5 are
+  maintainable “Thing” via a template configuration system — **Phases 1–3 shipped by 2026-09-04; Phase 4 is
   proposed**), `thing_migration_design.md` (**shipped** — the Phase 1 proto/Firestore/Storage migration, and the
-  reference for how a stored-identity change is sequenced), `template_system_design.md` (proposed — how a
-  template is defined, distributed, versioned, and resolved; Phase 2's foundation),
+  reference for how a stored-identity change is sequenced), `template_system_design.md` (**shipped** except the
+  fetch RPC, publishing script and canonical cache — how a template is defined, distributed, versioned, and
+  resolved), `pivot_rollout_design.md` (**shipped** — Phase 3: inflate-on-write, the presets, template-driven
+  rendering, starter packs, the create flow),
   `platform_feature_parity.html`, store assets
   and screenshots
 - `docs/storage/` — `storage_mode_PRD.md`, `storage_r1_design.md`, `storage_r2_design.md`,

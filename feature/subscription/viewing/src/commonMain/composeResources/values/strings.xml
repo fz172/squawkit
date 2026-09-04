@@ -24,7 +24,7 @@
   <string name="subscription_thing_unlimited">Unlimited</string>
   <!-- Comparison table: the tier does not include this feature. An em dash, not a crossed box. -->
   <string name="subscription_cell_excluded">—</string>
-  <!-- Comparison table: no aircraft limit. Reads as the infinity glyph, speaks as "Unlimited". -->
+  <!-- Comparison table: no limit on Things. Reads as the infinity glyph, speaks as "Unlimited". -->
   <string name="subscription_cell_unlimited">∞</string>
   <string name="subscription_cta_subscribe">Subscribe</string>
   <!-- A guest account cannot be recovered on another device, so it must not hold a subscription. -->
@@ -36,7 +36,7 @@
 
   <!-- Subscriber status view -->
   <string name="subscription_member_since">Member since</string>
-  <!-- Where the subscription was bought, so the pilot knows where to cancel it. -->
+  <!-- Where the subscription was bought, so the user knows where to cancel it. -->
   <string name="subscription_platform_app_store">App Store</string>
   <string name="subscription_platform_mac_app_store">Mac App Store</string>
   <string name="subscription_platform_play_store">Google Play</string>
@@ -48,13 +48,13 @@
   <string name="subscription_manage_caption">Plan changes and cancellation are handled by the store.</string>
   <!--
     Under a Manage button that leaves for the store's own page, rather than opening the in-app
-    Customer Center. Says "opens" because the pilot is about to leave the app — on web, in a new tab.
+    Customer Center. Says "opens" because the user is about to leave the app — on web, in a new tab.
   -->
   <string name="subscription_manage_link_caption">Opens the store page where this subscription is billed.</string>
   <!--
     The same button, but pointing at the store's general subscriptions list rather than a deep link
     to this plan — used when the store reports no direct URL. Worded so it does not promise more
-    than it delivers; the pilot may have to pick the subscription once they arrive.
+    than it delivers; the user may have to pick the subscription once they arrive.
   -->
   <string name="subscription_manage_store_caption">Opens your subscriptions in the store that billed this plan.</string>
   <string name="subscription_renews">Renews</string>

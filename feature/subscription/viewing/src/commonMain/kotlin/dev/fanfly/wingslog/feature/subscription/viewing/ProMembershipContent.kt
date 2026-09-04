@@ -18,9 +18,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
-import androidx.compose.material.icons.filled.AirplanemodeActive
 import androidx.compose.material.icons.filled.Android
 import androidx.compose.material.icons.filled.AttachFile
+import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Language
@@ -334,7 +334,9 @@ private fun PerkGrid() {
   Column(verticalArrangement = Arrangement.spacedBy(Spacing.medium)) {
     Row(horizontalArrangement = Arrangement.spacedBy(Spacing.medium)) {
       PerkCard(
-        icon = Icons.Default.AirplanemodeActive,
+        // The switcher's own glyph for "any kind of thing" (ThingIcons.kt), not an aeroplane: the
+        // perk is unlimited Things of every preset.
+        icon = Icons.Default.Category,
         title = stringResource(Res.string.subscription_perk_thing_title),
         body = stringResource(Res.string.subscription_perk_thing_body),
         modifier = Modifier.weight(1f),

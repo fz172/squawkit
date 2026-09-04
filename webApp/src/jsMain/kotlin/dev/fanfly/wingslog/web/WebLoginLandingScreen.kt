@@ -1,5 +1,13 @@
 package dev.fanfly.wingslog.web
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -10,13 +18,14 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -35,6 +44,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
@@ -42,6 +52,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalUriHandler
@@ -57,16 +69,18 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.core.ui.adaptive.compose.layoutTierFor
+import dev.fanfly.wingslog.core.ui.adaptive.thingIcon
 import dev.fanfly.wingslog.core.ui.theme.rememberBrandHeadlineFamily
 import dev.fanfly.wingslog.feature.login.LoginButtonContent
 import dev.fanfly.wingslog.feature.login.data.LoginViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
-import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.feature.login.generated.resources.Res
 import wingslog.feature.login.generated.resources.privacy_notice
 import kotlin.math.roundToInt
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Which sign-in request is currently awaiting a result, so the pressed button shows a spinner while
@@ -167,11 +181,6 @@ internal fun WebLoginLandingScreen(
     val w = maxWidth
     val isCompact = layoutTierFor(w).isCompact
     val heroStacked = w < 920.dp
-    val gridColumns = when {
-      w < 680.dp -> 1
-      w < 1080.dp -> 2
-      else -> 3
-    }
 
     Column(
       modifier = Modifier
@@ -209,7 +218,6 @@ internal fun WebLoginLandingScreen(
         },
         colors = colors,
         headline = headline,
-        columns = gridColumns,
         compact = heroStacked,
       )
 
@@ -219,7 +227,6 @@ internal fun WebLoginLandingScreen(
         },
         colors = colors,
         headline = headline,
-        columns = gridColumns,
         compact = heroStacked,
       )
 
@@ -410,7 +417,7 @@ private fun Hero(
               signingIn = signingIn,
               error = error,
               onGoogle = onGoogle,
-                onApple = onApple,
+              onApple = onApple,
               onChooseEmail = onChooseEmail,
             )
           }
@@ -429,9 +436,12 @@ private fun HeroCopy(
   val align = if (centered) Alignment.CenterHorizontally else Alignment.Start
   val textAlign = if (centered) TextAlign.Center else TextAlign.Start
   Column(horizontalAlignment = align) {
+    // The one-line announcement of the pivot, ahead of the headline: the returning aviation user
+    // reads it as "still for me, and now for more"; the new one reads it as an invitation.
+    Spacer(Modifier.height(20.dp))
     Text(
       text = buildAnnotatedString {
-        append("Aircraft maintenance logbook, ")
+        append("Maintenance records for everything you own, ")
         withStyle(SpanStyle(color = colors.skyDim)) { append("simplified") }
       },
       style = TextStyle(
@@ -446,20 +456,26 @@ private fun HeroCopy(
     )
     Spacer(Modifier.height(22.dp))
     Text(
-      text = "Track inspections, service bulletins, squawks across your whole fleet, and share reports with others.",
+      text = "From the annual on your airplane to the oil change on your car and the filter in your furnace — know what's due, log what's done, and share it with the people who help.",
       style = TextStyle(
         fontSize = 18.sp,
         lineHeight = 28.sp,
         color = colors.skyDim,
         textAlign = textAlign,
       ),
-      modifier = Modifier.widthIn(max = if (centered) 460.dp else 380.dp),
+      modifier = Modifier.widthIn(max = if (centered) 480.dp else 440.dp),
     )
+    Spacer(Modifier.height(24.dp))
+    ThingStrip(colors = colors, centered = centered)
     Spacer(Modifier.height(28.dp))
+    // Six short lines: two columns of three on wide layouts, and a line that wraps breaks the
+    // checkmark rhythm, so each stays under ~34 characters.
     val trust = listOf(
-      "Due-soon & overdue reminders",
       "Works offline, syncs everywhere",
-      "Export reports on-demand",
+      "Due-soon and overdue reminders",
+      "Export logs on demand",
+      "Share with co-owners & mechanics",
+      "Starter schedules for every thing",
       "Free to start",
     )
     Column(
@@ -471,23 +487,22 @@ private fun HeroCopy(
       if (centered) {
         trust.forEach { TrustItem(it, colors) }
       } else {
-        // Two fixed columns (column-major, like the design's `repeat(2, max-content)`) so the
+        // Two fixed columns, column-major (like the design's `repeat(2, max-content)`) so the
         // checkmarks line up vertically within each column instead of drifting with text width.
+        val half = (trust.size + 1) / 2
         Row(horizontalArrangement = Arrangement.spacedBy(28.dp)) {
-          Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            TrustItem(trust[0], colors)
-            TrustItem(trust[2], colors)
-          }
-          Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            TrustItem(trust[1], colors)
-            TrustItem(trust[3], colors)
-          }
+          trust.chunked(half)
+            .forEach { column ->
+              Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                column.forEach { TrustItem(it, colors) }
+              }
+            }
         }
       }
     }
     Spacer(Modifier.height(30.dp))
     Text(
-      text = "Built for everything from a non-powered glider to multiple engine fleets",
+      text = "Plus anything else you maintain — from a garage project to an airplane fleet. On the web, iOS and Android.",
       style = TextStyle(
         fontSize = 13.sp,
         lineHeight = 19.sp,
@@ -495,6 +510,61 @@ private fun HeroCopy(
         textAlign = textAlign
       ),
     )
+  }
+}
+
+/**
+ * The presets, as a row of chips: the fastest way to say "not just airplanes" is to show the
+ * other five. Same icons the app's switcher uses, so the promise and the product match.
+ */
+@Composable
+private fun ThingStrip(colors: LandingColors, centered: Boolean) {
+  // The five named presets; "anything else" is said in the line beneath, because a sixth chip
+  // orphans onto its own row at the hero's width and a lone chip reads as an afterthought.
+  val things = listOf(
+    "airplane" to "Airplane",
+    "automotive" to "Car & motorcycle",
+    "bike" to "Bike",
+    "boat" to "Boat",
+    "home" to "Home",
+  )
+  FlowRow(
+    horizontalArrangement = Arrangement.spacedBy(
+      8.dp,
+      if (centered) Alignment.CenterHorizontally else Alignment.Start,
+    ),
+    verticalArrangement = Arrangement.spacedBy(8.dp),
+  ) {
+    things.forEach { (key, label) ->
+      Row(
+        modifier = Modifier
+          .clip(RoundedCornerShape(999.dp))
+          .background(Color.White.copy(alpha = 0.07f))
+          .border(
+            1.dp,
+            Color.White.copy(alpha = 0.16f),
+            RoundedCornerShape(999.dp)
+          )
+          .padding(horizontal = 12.dp, vertical = 7.dp),
+        verticalAlignment = Alignment.CenterVertically,
+      ) {
+        Icon(
+          imageVector = thingIcon(key),
+          contentDescription = null,
+          modifier = Modifier.size(15.dp),
+          tint = colors.blueBright,
+        )
+        Spacer(Modifier.width(7.dp))
+        Text(
+          text = label,
+          style = TextStyle(
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Medium,
+            color = colors.trustText,
+          ),
+        )
+      }
+    }
   }
 }
 
@@ -546,7 +616,7 @@ private fun LoginCard(
     )
     Spacer(Modifier.height(8.dp))
     Text(
-      text = "Log in to manage your aircraft maintenance records. Your fleet stays synced across every device.",
+      text = "Sign in to keep your maintenance records in one place. Everything you track stays synced across every device.",
       style = TextStyle(
         fontSize = 14.5.sp,
         lineHeight = 22.sp,
@@ -627,7 +697,7 @@ private fun LoginCard(
     )
     Spacer(Modifier.height(18.dp))
     Text(
-      text = "SquawkIt is a personal convenience tool and is not a certified maintenance record system. It does not replace the official aircraft logbooks required by your aviation authority.",
+      text = "SquawkIt is a personal convenience tool and is not a certified maintenance record system. It does not replace the official aircraft logbooks required by your aviation authority, or any other record you are required to keep.",
       style = TextStyle(
         fontSize = 11.5.sp,
         lineHeight = 18.sp,
@@ -749,27 +819,235 @@ private fun SectionHeading(
   }
 }
 
-/** Lays [cells] out in rows of [columns], each cell taking equal width and matched height. */
+/** One entry of a [Carousel]: what the spotlight card shows for it. */
+private data class Slide(
+  val icon: ImageVector? = null,
+  val step: Int? = null,
+  val title: String,
+  val body: String,
+)
+
+/**
+ * One slide at a time, advancing on its own every [autoAdvanceMillis] and on demand from the
+ * arrows or the dots. Six cards of copy in a grid asked the visitor to read everything at once;
+ * one card, moving, asks them to read one thing.
+ *
+ * Auto-advance pauses while the pointer is over the stage — a slide moving out from under a
+ * reader is the one thing a carousel must not do — and restarts its clock on every manual step,
+ * so a click never gets a half-second follow-on advance.
+ */
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
-private fun CardGrid(columns: Int, cells: List<@Composable () -> Unit>) {
-  Column(verticalArrangement = Arrangement.spacedBy(22.dp)) {
-    cells.chunked(columns)
-      .forEach { rowCells ->
-        Row(
-          modifier = Modifier
-            .fillMaxWidth()
-            .height(IntrinsicSize.Max),
-          horizontalArrangement = Arrangement.spacedBy(22.dp),
-        ) {
-          rowCells.forEach { cell ->
-            Box(
-              modifier = Modifier.weight(1f)
-                .fillMaxHeight()
-            ) { cell() }
-          }
-          repeat(columns - rowCells.size) { Spacer(Modifier.weight(1f)) }
+private fun Carousel(
+  slides: List<Slide>,
+  colors: LandingColors,
+  headline: FontFamily,
+  compact: Boolean,
+  cardColor: Color = colors.card,
+  autoAdvanceMillis: Long = 5_000,
+) {
+  var index by remember { mutableStateOf(0) }
+  var forward by remember { mutableStateOf(true) }
+  var hovered by remember { mutableStateOf(false) }
+  // Bumped on every manual step so the auto-advance delay restarts from that moment.
+  var clock by remember { mutableStateOf(0) }
+  val step = { delta: Int ->
+    forward = delta > 0
+    index = (index + delta).mod(slides.size)
+    clock++
+  }
+
+  LaunchedEffect(index, hovered, clock) {
+    if (hovered || slides.size < 2) return@LaunchedEffect
+    delay(autoAdvanceMillis.milliseconds)
+    forward = true
+    index = (index + 1) % slides.size
+  }
+
+  Column(
+    modifier = Modifier
+      .fillMaxWidth()
+      .widthIn(max = 820.dp)
+      .onPointerEvent(PointerEventType.Enter) { hovered = true }
+      .onPointerEvent(PointerEventType.Exit) { hovered = false },
+    horizontalAlignment = Alignment.CenterHorizontally,
+  ) {
+    Row(
+      modifier = Modifier.fillMaxWidth(),
+      verticalAlignment = Alignment.CenterVertically,
+      horizontalArrangement = Arrangement.spacedBy(if (compact) 8.dp else 18.dp),
+    ) {
+      CarouselArrow(colors, previous = true, onClick = { step(-1) })
+      Box(modifier = Modifier.weight(1f)) {
+        AnimatedContent(
+          targetState = index,
+          transitionSpec = {
+            val sign = if (forward) 1 else -1
+            (slideInHorizontally(tween(420)) { sign * it / 3 } + fadeIn(
+              tween(
+                320
+              )
+            )) togetherWith
+              (slideOutHorizontally(tween(420)) { -sign * it / 3 } + fadeOut(
+                tween(220)
+              ))
+          },
+          // Every slide sits in the same frame: a stage that changes height between slides would
+          // push the dots and the section below it up and down on every advance.
+          modifier = Modifier.animateContentSize(tween(320)),
+        ) { i ->
+          SpotlightCard(slides[i], colors, headline, compact, cardColor)
         }
       }
+      CarouselArrow(colors, previous = false, onClick = { step(1) })
+    }
+    Spacer(Modifier.height(22.dp))
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+      slides.indices.forEach { i ->
+        val active = i == index
+        Box(
+          modifier = Modifier
+            .height(8.dp)
+            .width(if (active) 26.dp else 8.dp)
+            .clip(RoundedCornerShape(999.dp))
+            .background(if (active) colors.blue else colors.outline)
+            .clickable {
+              forward = i > index
+              index = i
+              clock++
+            },
+        )
+      }
+    }
+  }
+}
+
+@Composable
+private fun CarouselArrow(
+  colors: LandingColors,
+  previous: Boolean,
+  onClick: () -> Unit
+) {
+  Box(
+    modifier = Modifier
+      .size(40.dp)
+      .clip(RoundedCornerShape(999.dp))
+      .background(colors.panel)
+      .border(1.dp, colors.outline, RoundedCornerShape(999.dp))
+      .clickable { onClick() },
+    contentAlignment = Alignment.Center,
+  ) {
+    Icon(
+      imageVector = IconChevronDown,
+      contentDescription = if (previous) "Previous" else "Next",
+      modifier = Modifier.size(18.dp)
+        .rotate(if (previous) 90f else -90f),
+      tint = colors.blue,
+    )
+  }
+}
+
+/**
+ * The one card on stage. Wide layouts put the icon (or step number) beside the copy so the card
+ * fills its frame at a reading width; compact stacks them the way the grid cards did.
+ */
+@Composable
+private fun SpotlightCard(
+  slide: Slide,
+  colors: LandingColors,
+  headline: FontFamily,
+  compact: Boolean,
+  cardColor: Color,
+) {
+  val shape = RoundedCornerShape(20.dp)
+  val frame = Modifier
+    .fillMaxWidth()
+    .heightIn(min = if (compact) 300.dp else 172.dp)
+    .clip(shape)
+    .background(cardColor)
+    .border(1.dp, colors.outline, shape)
+    .padding(
+      horizontal = if (compact) 26.dp else 34.dp,
+      vertical = if (compact) 28.dp else 32.dp
+    )
+
+  val badge: @Composable () -> Unit = {
+    val size = if (compact) 50.dp else 64.dp
+    val radius = if (compact) 13.dp else 16.dp
+    when {
+      slide.step != null -> Box(
+        modifier = Modifier.size(size)
+          .clip(RoundedCornerShape(radius))
+          .background(colors.blue),
+        contentAlignment = Alignment.Center,
+      ) {
+        Text(
+          text = slide.step.toString(),
+          style = TextStyle(
+            fontFamily = headline,
+            fontWeight = FontWeight.Bold,
+            fontSize = if (compact) 18.sp else 24.sp,
+            color = Color.White,
+          ),
+        )
+      }
+
+      slide.icon != null -> Box(
+        modifier = Modifier.size(size)
+          .clip(RoundedCornerShape(radius))
+          .background(colors.blue.copy(alpha = 0.10f))
+          .border(
+            1.dp,
+            colors.blue.copy(alpha = 0.22f),
+            RoundedCornerShape(radius)
+          ),
+        contentAlignment = Alignment.Center,
+      ) {
+        Icon(
+          imageVector = slide.icon,
+          contentDescription = null,
+          modifier = Modifier.size(if (compact) 25.dp else 32.dp),
+          tint = colors.blue,
+        )
+      }
+    }
+  }
+  val copy: @Composable ColumnScope.() -> Unit = {
+    Text(
+      text = slide.title,
+      style = TextStyle(
+        fontFamily = headline,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = if (compact) 20.sp else 24.sp,
+        lineHeight = if (compact) 26.sp else 30.sp,
+        color = colors.heading,
+      ),
+    )
+    Spacer(Modifier.height(if (compact) 10.dp else 12.dp))
+    Text(
+      text = slide.body,
+      style = TextStyle(
+        fontSize = if (compact) 15.sp else 17.sp,
+        lineHeight = if (compact) 24.sp else 27.sp,
+        color = colors.slate,
+      ),
+    )
+  }
+
+  if (compact) {
+    Column(modifier = frame) {
+      badge()
+      Spacer(Modifier.height(18.dp))
+      copy()
+    }
+  } else {
+    // Centred, not top-aligned: slides differ in length, and a short one sitting in the top half
+    // of a fixed frame reads as unfinished where a centred one reads as deliberate.
+    Row(modifier = frame, verticalAlignment = Alignment.CenterVertically) {
+      badge()
+      Spacer(Modifier.width(26.dp))
+      Column(modifier = Modifier.weight(1f)) { copy() }
+    }
   }
 }
 
@@ -778,7 +1056,6 @@ private fun FeaturesSection(
   modifier: Modifier,
   colors: LandingColors,
   headline: FontFamily,
-  columns: Int,
   compact: Boolean,
 ) {
   Box(
@@ -796,90 +1073,48 @@ private fun FeaturesSection(
         colors = colors,
         headline = headline,
         kick = "What it does",
-        title = "Everything that keeps your airplane airworthy",
-        subtitle = "One place for the inspections, directives, and defects that matter — so nothing slips between annuals.",
+        title = "Everything that keeps your things in service",
+        subtitle = "One place for the inspections, recurring tasks, and issues that matter — so nothing slips between services, whatever you're maintaining.",
       )
-      Spacer(Modifier.height(if (compact) 40.dp else 52.dp))
-      CardGrid(
-        columns = columns,
-        cells = listOf(
-          {
-            FeatureCard(
-              colors, headline, IconInspection,
-              "Inspection & SB tracking",
-              "Annuals, 100-hours, transponder & ELT checks, and service bulletins — time-based, engine-hour, or on-condition. SquawkIt counts down to every due date.",
-            )
-          },
-          {
-            FeatureCard(
-              colors, headline, IconSquawk,
-              "Squawk log",
-              "Report defects the moment you spot them and track each one to resolution. Grounding and AOG squawks are surfaced first, so no-go items never get buried.",
-            )
-          },
-          {
-            FeatureCard(
-              colors, headline, IconMonitor,
-              "On the web today",
-              "Use SquawkIt in any browser — local-first, so your records open instantly in the hangar and sync in the background once you're back online. Native iOS and Android apps are coming soon.",
-            )
-          },
+      Spacer(Modifier.height(if (compact) 36.dp else 48.dp))
+      Carousel(
+        slides = listOf(
+          Slide(
+            icon = IconLayers,
+            title = "Track anything you want",
+            body = "Airplane, car or motorcycle, bike, boat, home — or anything else. Each type brings its own vocabulary, fields, meters and parts, so a home never asks for a tail number and an airplane never asks for an odometer.",
+          ),
+          Slide(
+            icon = IconInspection,
+            title = "Schedules that do the math",
+            body = "Recurring tasks by calendar, by meter — engine hours, odometer, ride distance — or on condition. Due-soon and overdue work rises to the top of every list, so status is the first thing you see.",
+          ),
+          Slide(
+            icon = IconSquawk,
+            title = "An issue log that fits the thing",
+            body = "Squawks on an airplane, issues on a car, attention items at home. Report it the moment you spot it and track it to resolution — anything that grounds the airplane or parks the car surfaces first.",
+          ),
+          Slide(
+            icon = IconPeople,
+            title = "Built for more than one person",
+            body = "Invite co-owners, family, or your mechanic with a code. Owners edit, technicians sign off their own work, viewers read — and every change syncs to everyone on the share.",
+          ),
+          Slide(
+            icon = IconListChecks,
+            title = "Start with a real schedule",
+            body = "Each type ships a recommended starter pack — the annual and ELT check, oil changes and brake fluid, gutters and the water-heater flush. Keep what applies, skip the rest, edit anything later.",
+          ),
+          Slide(
+            icon = IconPaperclip,
+            title = "The paperwork travels with the record",
+            body = "Photos, invoices and inspection reports attach to the entry they belong to. Export PDF, CSV and XLSX on demand — for a pre-buy, a resale, or a backup that's yours to keep.",
+          ),
         ),
+        colors = colors,
+        headline = headline,
+        compact = compact,
       )
     }
-  }
-}
-
-@Composable
-private fun FeatureCard(
-  colors: LandingColors,
-  headline: FontFamily,
-  icon: ImageVector,
-  title: String,
-  body: String,
-) {
-  Column(
-    modifier = Modifier
-      .fillMaxHeight()
-      .clip(RoundedCornerShape(18.dp))
-      .background(colors.card)
-      .border(1.dp, colors.outline, RoundedCornerShape(18.dp))
-      .padding(horizontal = 26.dp, vertical = 30.dp),
-  ) {
-    Box(
-      modifier = Modifier
-        .size(50.dp)
-        .clip(RoundedCornerShape(13.dp))
-        .background(colors.panel)
-        .border(1.dp, colors.outline, RoundedCornerShape(13.dp)),
-      contentAlignment = Alignment.Center,
-    ) {
-      Icon(
-        imageVector = icon,
-        contentDescription = null,
-        modifier = Modifier.size(25.dp),
-        tint = colors.blue
-      )
-    }
-    Spacer(Modifier.height(20.dp))
-    Text(
-      text = title,
-      style = TextStyle(
-        fontFamily = headline,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 19.sp,
-        color = colors.heading
-      ),
-    )
-    Spacer(Modifier.height(11.dp))
-    Text(
-      text = body,
-      style = TextStyle(
-        fontSize = 15.sp,
-        lineHeight = 24.sp,
-        color = colors.slate
-      ),
-    )
   }
 }
 
@@ -888,7 +1123,6 @@ private fun HowItWorksSection(
   modifier: Modifier,
   colors: LandingColors,
   headline: FontFamily,
-  columns: Int,
   compact: Boolean,
 ) {
   Box(
@@ -906,88 +1140,36 @@ private fun HowItWorksSection(
         colors = colors,
         headline = headline,
         kick = "How it works",
-        title = "From sign-in to airworthy in three steps",
+        title = "From sign-in to in service in three steps",
       )
-      Spacer(Modifier.height(if (compact) 40.dp else 52.dp))
-      CardGrid(
-        columns = columns,
-        cells = listOf(
-          {
-            StepCard(
-              colors, headline, 1, "Add your aircraft",
-              "Sign in with Google or Apple and enter a tail number, make, and model. Track one airplane or a whole fleet.",
-            )
-          },
-          {
-            StepCard(
-              colors, headline, 2, "Set up your schedule",
-              "Add inspections, SBs, and recurring tasks with their intervals. SquawkIt does the date and engine-hour math for you.",
-            )
-          },
-          {
-            StepCard(
-              colors, headline, 3, "Log as you fly",
-              "Record squawks and maintenance work, and get due-soon and overdue reminders before anything lapses.",
-            )
-          },
+      Spacer(Modifier.height(if (compact) 36.dp else 48.dp))
+      Carousel(
+        slides = listOf(
+          Slide(
+            step = 1,
+            title = "Pick what you're maintaining",
+            body = "Sign in with Google or Apple, choose airplane, car, bike, boat, home or custom, and fill in the details that type asks for — no more, no less.",
+          ),
+          Slide(
+            step = 2,
+            title = "Accept a starter schedule",
+            body = "Keep the recommended tasks that apply, add your own intervals, and let SquawkIt do the date and meter math from then on.",
+          ),
+          Slide(
+            step = 3,
+            title = "Log as you go — together",
+            body = "Record work and issues from any device, invite the people who help, and get due-soon and overdue reminders before anything lapses.",
+          ),
         ),
+        colors = colors,
+        headline = headline,
+        compact = compact,
+        // On the `card` surface, so the stage card takes the panel colour to stand off it.
+        cardColor = colors.panel,
+        // Three steps read slower than six features; give each one longer on stage.
+        autoAdvanceMillis = 6_500,
       )
     }
-  }
-}
-
-@Composable
-private fun StepCard(
-  colors: LandingColors,
-  headline: FontFamily,
-  number: Int,
-  title: String,
-  body: String,
-) {
-  Column(
-    modifier = Modifier
-      .fillMaxHeight()
-      .clip(RoundedCornerShape(18.dp))
-      .background(colors.panel)
-      .border(1.dp, colors.outline, RoundedCornerShape(18.dp))
-      .padding(horizontal = 26.dp, vertical = 30.dp),
-  ) {
-    Box(
-      modifier = Modifier
-        .size(34.dp)
-        .clip(RoundedCornerShape(10.dp))
-        .background(colors.blue),
-      contentAlignment = Alignment.Center,
-    ) {
-      Text(
-        text = number.toString(),
-        style = TextStyle(
-          fontFamily = headline,
-          fontWeight = FontWeight.Bold,
-          fontSize = 15.sp,
-          color = Color.White
-        ),
-      )
-    }
-    Spacer(Modifier.height(18.dp))
-    Text(
-      text = title,
-      style = TextStyle(
-        fontFamily = headline,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 18.sp,
-        color = colors.heading
-      ),
-    )
-    Spacer(Modifier.height(10.dp))
-    Text(
-      text = body,
-      style = TextStyle(
-        fontSize = 14.5.sp,
-        lineHeight = 23.sp,
-        color = colors.slate
-      ),
-    )
   }
 }
 
@@ -1023,28 +1205,33 @@ private fun FaqSection(
       ) {
         FaqRow(
           colors, headline, initiallyOpen = true,
-          question = "Is SquawkIt a certified maintenance record system?",
-          answer = "No. SquawkIt is a personal convenience tool. It does not replace the official aircraft logbooks required by your aviation authority — keep your certified records as you always have. Think of it as the heads-up layer that helps you stay ahead of them.",
+          question = "What can I track?",
+          answer = "Aircraft (airframe, engine, propeller), cars and motorcycles, bikes, boats, homes — or anything else you maintain, with a custom type. Each kind of thing comes with its own vocabulary, fields, meters and a recommended starter schedule. Tasks recur by calendar time, by meter — engine hours, odometer, ride distance — or on condition.",
+        )
+        FaqRow(
+          colors, headline, initiallyOpen = false,
+          question = "Can I share a thing with someone else?",
+          answer = "Yes. Invite a co-owner, a family member or your mechanic with a code. Roles decide who can edit, who signs off their own work, and who only reads. Shared records sync to everyone, and the host can revoke access at any time.",
         )
         FaqRow(
           colors, headline, initiallyOpen = false,
           question = "Does SquawkIt work offline?",
-          answer = "Yes. SquawkIt is local-first, so your records are always available — even with no signal in the hangar. Changes sync automatically in the background once you reconnect.",
+          answer = "Yes. SquawkIt is local-first, so your records are always available — in the hangar, the garage, or the marina, with no signal at all. Changes sync automatically in the background once you reconnect.",
         )
         FaqRow(
           colors, headline, initiallyOpen = false,
-          question = "How does exporting reports work?",
-          answer = "Export any aircraft's records on demand — pick a date range and SquawkIt generates a clean PDF report covering inspections, service bulletins, squawks, and completed work, with current hours and due dates. Download it or share the link with a mechanic, buyer, or your A&P/IA for a pre-buy or annual. Your certified logbooks stay the source of truth; the export is a convenient, up-to-date snapshot.",
+          question = "How does exporting work?",
+          answer = "Export any thing's records on demand — pick a date range and SquawkIt generates a PDF, CSV and XLSX bundle covering inspections, tasks, issues and completed work, with current readings and due dates. Download it, or email a copy to a mechanic, a buyer, or your A&P for a pre-buy or an annual. Your certified records stay the source of truth; the export is a convenient, up-to-date snapshot.",
         )
         FaqRow(
           colors, headline, initiallyOpen = false,
-          question = "What aircraft and maintenance items can I track?",
-          answer = "Track a single airplane or a whole fleet — airframe, engine, and propeller. SquawkIt supports time-based, engine-hour, and on-condition inspections, service bulletins, and recurring tasks.",
+          question = "Is SquawkIt a certified maintenance record system?",
+          answer = "No. SquawkIt is a personal convenience tool. It does not replace the official aircraft logbooks required by your aviation authority, or any other record you are required to keep. Think of it as the heads-up layer that helps you stay ahead of them.",
         )
         FaqRow(
           colors, headline, initiallyOpen = false,
           question = "Which platforms is SquawkIt available on?",
-          answer = "SquawkIt runs on the web today, with native iOS and Android apps coming soon. Your fleet syncs across every device.",
+          answer = "SquawkIt runs on the web, iOS and Android, and a subscription bought on one works on all of them. Everything you track syncs across every device you sign in on.",
         )
       }
     }
@@ -1143,7 +1330,7 @@ private fun FinalCta(
       horizontalAlignment = Alignment.CenterHorizontally,
     ) {
       Text(
-        text = "Start your aircraft logbook today",
+        text = "Start keeping better records today",
         style = TextStyle(
           fontFamily = headline,
           fontWeight = FontWeight.Bold,
@@ -1157,7 +1344,7 @@ private fun FinalCta(
       )
       Spacer(Modifier.height(18.dp))
       Text(
-        text = "Free to start. Sign in and add your first aircraft in under a minute.",
+        text = "Free to start. Sign in, pick what you're maintaining, and have a schedule in under a minute.",
         style = TextStyle(
           fontSize = 18.sp,
           lineHeight = 27.sp,
@@ -1271,7 +1458,7 @@ private fun LandingFooter(colors: LandingColors) {
           .padding(horizontal = 24.dp, vertical = 40.dp),
       ) {
         Text(
-          text = "© 2026 SquawkIt. A personal convenience tool — not a certified maintenance record system, and not a replacement for the official aircraft logbooks required by your aviation authority. Aircraft maintenance logbook app for pilots, owners, and mechanics.",
+          text = "© 2026 SquawkIt. A personal convenience tool — not a certified maintenance record system, and not a replacement for the official aircraft logbooks required by your aviation authority or any other record you are required to keep. Maintenance records for aircraft, cars, bikes, boats and homes.",
           style = TextStyle(
             fontSize = 12.5.sp,
             lineHeight = 19.sp,

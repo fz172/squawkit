@@ -1,32 +1,30 @@
 # Design: The Template System — Definition, Distribution, and Resolution
 
-> **Implementation status.** **Phase 2 shipped 2026-08-29/30. The Phase 3 half of this design is unbuilt.**
+> **Implementation status.** **Shipped, except the distribution half — every template is baked in, none is fetched.**
 >
 > | Designed here | State |
 > |---|---|
-> | `ThingTemplate` / `Lexicon` / `Capabilities` protos (§3) | Shipped |
-> | `core:template`, `TemplateRegistry`, `CurrentThingTemplate` (§3) | Shipped |
-> | Lexicon plumbing, formatter, byte-identical snapshot (§9) | Shipped |
-> | Capabilities wired, every airplane flag `true` (§10) | Shipped — inert by design (§12.1) |
+> | `ThingTemplate` / `Lexicon` / `Capabilities` protos (§3) | Shipped (Phase 2) |
+> | `core:template`, `TemplateRegistry`, `CurrentThingTemplate` (§3) | Shipped (Phase 2) |
+> | Lexicon plumbing, formatter, byte-identical snapshot (§9) | Shipped (Phase 2); the snapshot is now the aviation cohort's copy guardrail (`pivot_rollout_design.md` §8, #734) |
+> | Capabilities wired (§10) | Shipped; per-preset values chosen in Phase 3 (#732) |
 > | `Thing.template` field 12 — **read** path (§5) | Shipped: `forThingWithFallback(thing) = thing.template ?: fallback` |
+> | `Thing.template` — **write** path, and inflate-on-write (§5.3) | **Shipped** (#717), with the one-off backfill verified empty (#718) |
 > | Web's shared `versionCode` (§6) | Shipped |
-> | The airplane preset **as a binary asset** (§4) | **Not shipped** — it is Kotlin (`canonical/AirplaneTemplate.kt`), because `protoc` is not available to Gradle here |
-> | `Thing.template` — **write** path, and inflate-on-write (§5.3) | **Not shipped.** Nothing in the app writes it |
-> | Fetch RPC and throttle (§4), publishing script (§4.1), canonical cache (§7.1) | Not shipped — deferred to Phase 3 (§12.2) |
-> | The unresolvable-template degraded state (§6.2) | Not shipped — nothing could trigger it until a template can fail to resolve |
+> | Baked-in presets **as binary assets** (§4) | **Shipped** (#675): `core/template/templates/*.textproto`, compiled by `protoc` outside Gradle, decoded and validated on the same path a fetched template would take |
+> | The unresolvable-template degraded state (§6.2) | **Shipped** (#728, #740): refused before inflating on create, rendered read-only afterwards |
+> | Fetch RPC and throttle (§4), publishing script (§4.1), canonical cache (§7.1) | **Not shipped** — #725, #726, #727 remain open. Until they land, `(id, version)` only ever names bytes this build carries, and a template edit reaches the field through a new build plus `npm run dna-refresh` |
 >
 > **One correction to §5.3, found while planning Phase 3.** Its "no backfill" conclusion is right for
 > `Thing.template` and does **not** extend to `spec` (10) and `components` (11). `template` is *derivable* — the
 > fallback reconstructs it exactly, because a Thing without DNA can only be an airplane. `spec` and `components`
-> are the Thing's **own values**, and no template can supply them. They are populated only on Things the backend
-> cutover migrated; the client has never written either. See
-> [`pivot_rollout_design.md`](pivot_rollout_design.md) §2.1 and §3.
+> are the Thing's **own values**, and no template can supply them. Phase 3 populated them on write (#717) and
+> repaired the Things created before that (#718). See [`pivot_rollout_design.md`](pivot_rollout_design.md) §3.
 >
-> Every open question in §11 was decided before Phase 2. This designs the machinery Phase 2 needed plus the
-> compatibility rules Phases 3–4 depend on. It does **not** design the six non-airplane presets; that is Phase 3
-> product work.
+> Every open question in §11 was decided before Phase 2. The six non-airplane presets it deliberately did not
+> design are authored in `core/template/templates/` (Phase 3).
 
-**Owner:** Engineering · **Status:** Phase 2 portion shipped; Phase 3 portion unbuilt · **Date:** 2026-08-29 · **Refreshed:** 2026-08-30
+**Owner:** Engineering · **Status:** Shipped, except the fetch RPC, publishing script and canonical cache · **Date:** 2026-08-29 · **Refreshed:** 2026-09-04
 **Related:** [Multi-domain maintenance PRD](multi_domain_maintenance_PRD.md) (§4 the config blocks, §4.5 lexicon,
 §4.8 capabilities, §15 rollout) · [Aircraft → Thing migration](thing_migration_design.md) (the phase this builds
 on, and the source of the wire-identity discipline below)
