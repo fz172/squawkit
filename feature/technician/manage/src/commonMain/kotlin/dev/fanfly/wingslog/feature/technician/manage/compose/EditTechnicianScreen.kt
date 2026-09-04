@@ -37,7 +37,7 @@ import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
 import dev.fanfly.wingslog.core.ui.common.compose.FormTextField
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.technician.manage.viewmodel.EditTechnicianViewModel
-import dev.fanfly.wingslog.feature.technician.sharedassets.compose.CertificateInputFields
+import dev.fanfly.wingslog.feature.technician.sharedassets.compose.CertificationInputFields
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.cancel
 import wingslog.feature.technician.sharedassets.generated.resources.add_technician
@@ -151,15 +151,14 @@ fun EditTechnicianScreen(
             singleLine = true,
           )
 
-          CertificateInputFields(
-            certType = uiState.certType,
-            onCertTypeChanged = viewModel::updateCertType,
-            certNumber = uiState.certNumber,
-            onCertNumberChanged = viewModel::updateCertNumber,
-            expireLimit = uiState.certExpireLimit,
-            onExpireLimitChanged = viewModel::updateCertExpireLimit,
-            expirationDate = uiState.certExpiration,
-            onExpirationDateChanged = viewModel::updateCertExpiration,
+          CertificationInputFields(
+            entries = uiState.certifications,
+            offered = uiState.offered,
+            onAdd = viewModel::addCertification,
+            onRemove = viewModel::removeCertification,
+            onNumberChanged = viewModel::updateCertificationNumber,
+            onExpireLimitChanged = viewModel::updateCertificationExpireLimit,
+            onExpirationChanged = viewModel::updateCertificationExpiration,
             modifier = Modifier.fillMaxWidth(),
           )
         }

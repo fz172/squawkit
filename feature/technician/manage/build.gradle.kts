@@ -39,6 +39,10 @@ kotlin {
       implementation(project(":feature:technician:sharedassets"))
       // Editing the self-record republishes the technician mirror to every share (design §7.2).
       implementation(project(":feature:sharing:datamanager"))
+      // The roster is account-scoped, so the certifications it offers come from the whole fleet's
+      // templates rather than from whichever thing is selected (PRD §8.6).
+      implementation(project(":feature:fleet:datamanager"))
+      implementation(project(":core:template"))
 
       // Compose
 

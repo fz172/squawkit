@@ -12,7 +12,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import dev.fanfly.wingslog.thing.CertificateType
 import dev.fanfly.wingslog.thing.Technician
 import dev.fanfly.wingslog.core.ui.common.compose.PickerActionButton
 import dev.fanfly.wingslog.core.ui.common.compose.PickerDoneButton
@@ -21,8 +20,9 @@ import dev.fanfly.wingslog.core.ui.common.compose.PickerSelectableRow
 import dev.fanfly.wingslog.core.ui.common.compose.PickerSelectionMode
 import dev.fanfly.wingslog.core.ui.common.compose.PickerSheet
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import dev.fanfly.wingslog.feature.technician.sharedassets.compose.displayResId
-import dev.fanfly.wingslog.feature.technician.sharedassets.compose.resolvedCertificateType
+import dev.fanfly.wingslog.core.template.OfferedCertification
+import dev.fanfly.wingslog.feature.technician.sharedassets.compose.certificationLines
+import dev.fanfly.wingslog.feature.technician.sharedassets.compose.summary
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.done
 import wingslog.feature.technician.sharedassets.generated.resources.add_technician
@@ -30,7 +30,7 @@ import wingslog.feature.technician.sharedassets.generated.resources.linked_badge
 import wingslog.feature.technician.sharedassets.generated.resources.linked_technicians_header
 import wingslog.feature.technician.sharedassets.generated.resources.my_profile
 import wingslog.feature.technician.sharedassets.generated.resources.my_technicians_header
-import wingslog.feature.technician.sharedassets.generated.resources.no_certificate
+import wingslog.feature.technician.sharedassets.generated.resources.no_certifications
 import wingslog.feature.technician.sharedassets.generated.resources.select_technician
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.technician.sharedassets.generated.resources.Res as TechnicianRes
@@ -39,6 +39,8 @@ import wingslog.feature.technician.sharedassets.generated.resources.Res as Techn
 @Composable
 fun TechnicianPickerSheet(
   availableTechnicians: List<Technician>,
+  /** Every certification this build knows, so a stored key renders as its word and not as itself. */
+  knownCertifications: List<OfferedCertification>,
   selectedId: String?,
   onSelect: (Technician?) -> Unit,
   onAddClick: () -> Unit,
@@ -80,7 +82,7 @@ fun TechnicianPickerSheet(
           PickerSectionHeader(stringResource(TechnicianRes.string.my_profile))
         }
         self.forEach { technician ->
-          TechnicianRow(technician, selectedId, onSelect)
+          TechnicianRow(technician, knownCertifications, selectedId, onSelect)
         }
       }
 
@@ -88,7 +90,7 @@ fun TechnicianPickerSheet(
         PickerSectionHeader(stringResource(TechnicianRes.string.linked_technicians_header))
         val linkedBadge = stringResource(TechnicianRes.string.linked_badge)
         linkedTechnicians.forEach { technician ->
-          TechnicianRow(technician, selectedId, onSelect, badge = linkedBadge)
+          TechnicianRow(technician, knownCertifications, selectedId, onSelect, badge = linkedBadge)
         }
       }
 
@@ -97,7 +99,7 @@ fun TechnicianPickerSheet(
           PickerSectionHeader(stringResource(TechnicianRes.string.my_technicians_header))
         }
         manual.forEach { technician ->
-          TechnicianRow(technician, selectedId, onSelect)
+          TechnicianRow(technician, knownCertifications, selectedId, onSelect)
         }
       }
 
@@ -117,20 +119,18 @@ fun TechnicianPickerSheet(
 @Composable
 private fun TechnicianRow(
   technician: Technician,
+  knownCertifications: List<OfferedCertification>,
   selectedId: String?,
   onSelect: (Technician?) -> Unit,
   badge: String? = null,
 ) {
-  val certType = technician.resolvedCertificateType()
+  val certifications = technician.certificationLines(knownCertifications)
   // Every row gets a subtitle, including the uncertificated ones. A blank line here made rows look
   // like they belonged to whichever section had subtitles, rather than to their own.
-  val certText = if (certType == CertificateType.CERTIFICATE_TYPE_NONE) {
-    stringResource(TechnicianRes.string.no_certificate)
+  val certText = if (certifications.isEmpty()) {
+    stringResource(TechnicianRes.string.no_certifications)
   } else {
-    listOfNotNull(
-      stringResource(certType.displayResId()),
-      technician.cert_number.takeIf { it.isNotBlank() },
-    ).joinToString(" · ")
+    certifications.joinToString(" · ") { it.summary() }
   }
 
   PickerSelectableRow(

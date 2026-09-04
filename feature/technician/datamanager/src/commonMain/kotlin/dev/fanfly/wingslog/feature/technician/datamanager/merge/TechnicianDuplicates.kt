@@ -1,5 +1,7 @@
 package dev.fanfly.wingslog.feature.technician.datamanager.merge
 
+import dev.fanfly.wingslog.core.model.technician.resolvedCertifications
+import dev.fanfly.wingslog.thing.Certification
 import dev.fanfly.wingslog.thing.Technician
 
 /**
@@ -79,7 +81,7 @@ fun findDuplicates(
         resolution = DuplicateResolution.MERGE_MANUAL,
         keep = self,
         duplicates = matches,
-        autoSafe = matches.all { it.certKey() != null && it.certKey() == self.certKey() },
+        autoSafe = matches.all { it.sharesACertNumberWith(self) },
       )
     }
   }
@@ -95,15 +97,20 @@ fun findDuplicates(
       keep = mirror,
       duplicates = matches,
       // Only a certificate-number match is strong enough to pre-check.
-      autoSafe = matches.all { it.certKey() != null && it.certKey() == mirror.certKey() },
+      autoSafe = matches.all { it.sharesACertNumberWith(mirror) },
     )
   }
 
   // 3. Manual ↔ manual, by certificate number. Auto-safe: a cert number identifies one person.
-  val remaining = manual.filter { it.id !in claimed }
-  remaining.groupBy { it.certKey() }
-    .forEach { (certKey, rows) ->
-      if (certKey == null || rows.size < 2) return@forEach
+  //    A row is filed under EVERY number it carries, because one person can hold several
+  //    certifications and two rows sharing any one of them are that person twice (#684).
+  manual.filter { it.id !in claimed }
+    .flatMap { row -> row.certKeys().map { it to row } }
+    .groupBy({ it.first }, { it.second })
+    .forEach { (_, filed) ->
+      val rows = filed.filter { it.id !in claimed }
+        .distinctBy { it.id }
+      if (rows.size < 2) return@forEach
       val keep = rows.maxWith(RICHEST)
       rows.forEach { claimed += it.id }
       groups += DuplicateGroup(
@@ -123,7 +130,7 @@ fun findDuplicates(
       // A certificate number is definitive: two rows carrying *different* ones are two different
       // people, however alike their names read. Only a name match unopposed by conflicting
       // certificates is a candidate.
-      if (rows.mapNotNull { it.certKey() }.distinct().size > 1) return@forEach
+      if (rows.map { it.certKeys() }.filter { it.isNotEmpty() }.distinct().size > 1) return@forEach
       val keep = rows.maxWith(RICHEST)
       rows.forEach { claimed += it.id }
       groups += DuplicateGroup(
@@ -135,9 +142,10 @@ fun findDuplicates(
     }
 
   // 5. Mirror ↔ mirror sharing a certificate number. Never merged — two members are two people.
-  mirrors.groupBy { it.certKey() }
-    .forEach { (certKey, rows) ->
-      if (certKey == null || rows.size < 2) return@forEach
+  mirrors.flatMap { row -> row.certKeys().map { it to row } }
+    .groupBy({ it.first }, { it.second })
+    .forEach { (_, rows) ->
+      if (rows.size < 2) return@forEach
       groups += DuplicateGroup(
         resolution = DuplicateResolution.WARN_MIRROR_CONFLICT,
         keep = rows.first(),
@@ -165,47 +173,84 @@ fun List<DuplicateGroup>.signature(): String =
     .sorted()
     .joinToString("|")
 
+/**
+ * The keeper's certifications, plus any kind only a duplicate carried (#684).
+ *
+ * **The union is the whole point of deriving roles from credentials.** The A&P who also services
+ * the user's car is one contact holding two certifications; merging by taking only the keeper's
+ * would silently drop the second, which is the same information loss that pushing users toward one
+ * record per domain would have caused.
+ *
+ * The keeper wins on a kind both rows carry: it is the richer row by construction, and a duplicate
+ * number for the same credential is the typo the merge exists to resolve.
+ */
+fun DuplicateGroup.mergedCertifications(): List<Certification> {
+  val kept = keep.resolvedCertifications()
+  val keptTypes = kept.map { it.type }
+    .toSet()
+  return kept + duplicates.flatMap { it.resolvedCertifications() }
+    .filterNot { it.type in keptTypes }
+    .distinctBy { it.type }
+}
+
 /** Certificate number match, else name. Callers decide how much confirmation each deserves. */
 private fun Technician.matches(other: Technician): Boolean {
-  val cert = certKey()
-  val otherCert = other.certKey()
-  if (cert != null && otherCert != null) return cert == otherCert
+  if (certKeys().isNotEmpty() && other.certKeys().isNotEmpty()) {
+    return sharesACertNumberWith(other)
+  }
   return nameKey().isNotEmpty() && nameKey() == other.nameKey()
 }
 
 /**
- * The certificate number as a match key, or null when there isn't one.
+ * Every certificate number the person carries, as match keys.
  *
  * A blank certificate number is never a key. The marquee case — an owner doing FAR 43 preventive
  * maintenance with no certificate — is a name-only entry, and treating two blanks as equal would
  * collapse every uncertificated technician into a single person.
+ *
+ * Reads through `resolvedCertifications`, so a row written before #684 still compares on the single
+ * certificate it stored.
  */
-private fun Technician.certKey(): String? =
-  cert_number.trim()
-    .uppercase()
-    .takeIf { it.isNotEmpty() }
+private fun Technician.certKeys(): Set<String> =
+  resolvedCertifications()
+    .mapNotNull {
+      it.number.trim()
+        .uppercase()
+        .takeIf { number -> number.isNotEmpty() }
+    }
+    .toSet()
+
+/** One shared number is enough: a certificate number identifies a person, not a credential. */
+private fun Technician.sharesACertNumberWith(other: Technician): Boolean =
+  certKeys().intersect(other.certKeys()).isNotEmpty()
 
 private fun Technician.nameKey(): String =
   name.trim()
     .lowercase()
     .replace(WHITESPACE, " ")
 
-/** Both the enum and the legacy string field, so a pre-enum row still compares. */
+/**
+ * The set of credentials the person holds, as a grouping key.
+ *
+ * Two same-named rows holding different credentials are not obviously one person — an A&P Bob and
+ * an electrician Bob plausibly are two — so they are not proposed as a name match.
+ */
 private fun Technician.resolvedCertTypeKey(): String =
-  certificate_type.name.takeIf { it != NONE_CERT } ?: cert_type.trim().uppercase()
+  resolvedCertifications().map { it.type }
+    .sorted()
+    .joinToString(",")
 
 /**
  * "Most complete" row, per §7.4. Technician carries no edited-at timestamp, so completeness is all
- * we have to go on: certificate first, then how many fields are filled, then expiry, and finally
- * the fuller name — without that last tiebreak "Bob" and "Bob Squarepants" score identically and
- * the keeper is decided by list order.
+ * we have to go on: how many credentials it carries, then how much of each is filled in, then
+ * expiry, and finally the fuller name — without that last tiebreak "Bob" and "Bob Squarepants"
+ * score identically and the keeper is decided by list order.
  */
 private val RICHEST = compareBy<Technician>(
-  { it.cert_number.isNotBlank() },
-  { listOf(it.name, it.cert_number).count { field -> field.isNotBlank() } },
-  { it.cert_expiration != null },
+  { it.certKeys().size },
+  { it.name.isNotBlank() },
+  { it.resolvedCertifications().any { certification -> certification.expiration != null } },
   { it.name.trim().length },
 )
 
-private const val NONE_CERT = "CERTIFICATE_TYPE_NONE"
 private val WHITESPACE = Regex("\\s+")

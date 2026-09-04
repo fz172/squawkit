@@ -10,6 +10,11 @@ import { Timestamp } from "../google/protobuf/timestamp";
 
 export const protobufPackage = "";
 
+/**
+ * FROZEN, alongside ComponentType (PRD §8.6). Retained only so the transitional read path above can
+ * name what a pre-#684 record stored; a new certificate kind is a `CertificationDef` on a template,
+ * never a value here.
+ */
 export enum CertificateType {
   CERTIFICATE_TYPE_NONE = 0,
   CERTIFICATE_TYPE_REPAIRMAN = 1,
@@ -88,10 +93,40 @@ export function certExpireLimitToJSON(object: CertExpireLimit): string {
   }
 }
 
+/**
+ * One credential a person holds, of a kind some template declares. PRD §8.6.
+ *
+ * The credential is what says which domain the person works in — an A&P means aviation, an
+ * electrician's licence means home — so a technician's roles are DERIVED from the certifications
+ * present rather than picked from a list. Nothing stores a role: a stored one could disagree with
+ * the certifications beneath it, and a derived one cannot.
+ */
+export interface Certification {
+  /**
+   * The `CertificationDef.key` this is an instance of — "faa_amt", "ase", "electrician".
+   *
+   * A template-declared string, never an enum, for the reason ComponentType already demonstrated
+   * (PRD §6): an enum cannot be extended by a template, which is the entire point. A key no
+   * installed template declares — a shared technician from a preset this build lacks — renders
+   * untagged rather than failing, matching `canonicalById` returning null as ordinary (§4.7).
+   */
+  type: string;
+  number: string;
+  expiration: Date | undefined;
+  expireLimit: CertExpireLimit;
+}
+
 export interface Technician {
   id: string;
   name: string;
-  /** legacy string field — prefer certificate_type (field 7) */
+  /**
+   * 3-7 are the single FAA certificate this record carried before #684 made certifications a
+   * repeated, template-declared list. TRANSITIONAL READ PATH ONLY — nothing writes them.
+   *
+   * Not migrated, because the backfill is derivable rather than stored: every record carrying them
+   * was created when airplane was the only preset, so the set is closed and the aviation key is
+   * implied. Same argument that let `Thing.template_id` be dropped rather than kept as a hint.
+   */
   certType: string;
   certNumber: string;
   certExpiration: Date | undefined;
@@ -103,7 +138,121 @@ export interface Technician {
    * hand. Drives the provenance label and the self-signed check (design §7.3/§7.5).
    */
   sourceUid: string;
+  /** Empty means "read fields 3-7 instead", which is what every pre-#684 record has. */
+  certifications: Certification[];
 }
+
+function createBaseCertification(): Certification {
+  return { type: "", number: "", expiration: undefined, expireLimit: 0 };
+}
+
+export const Certification: MessageFns<Certification> = {
+  encode(message: Certification, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.type !== "") {
+      writer.uint32(10).string(message.type);
+    }
+    if (message.number !== "") {
+      writer.uint32(18).string(message.number);
+    }
+    if (message.expiration !== undefined) {
+      Timestamp.encode(toTimestamp(message.expiration), writer.uint32(26).fork()).join();
+    }
+    if (message.expireLimit !== 0) {
+      writer.uint32(32).int32(message.expireLimit);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): Certification {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCertification();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.type = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.number = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.expiration = fromTimestamp(Timestamp.decode(reader, reader.uint32()));
+          continue;
+        }
+        case 4: {
+          if (tag !== 32) {
+            break;
+          }
+
+          message.expireLimit = reader.int32() as any;
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): Certification {
+    return {
+      type: isSet(object.type) ? globalThis.String(object.type) : "",
+      number: isSet(object.number) ? globalThis.String(object.number) : "",
+      expiration: isSet(object.expiration) ? fromJsonTimestamp(object.expiration) : undefined,
+      expireLimit: isSet(object.expireLimit)
+        ? certExpireLimitFromJSON(object.expireLimit)
+        : isSet(object.expire_limit)
+        ? certExpireLimitFromJSON(object.expire_limit)
+        : 0,
+    };
+  },
+
+  toJSON(message: Certification): unknown {
+    const obj: any = {};
+    if (message.type !== "") {
+      obj.type = message.type;
+    }
+    if (message.number !== "") {
+      obj.number = message.number;
+    }
+    if (message.expiration !== undefined) {
+      obj.expiration = message.expiration.toISOString();
+    }
+    if (message.expireLimit !== 0) {
+      obj.expireLimit = certExpireLimitToJSON(message.expireLimit);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<Certification>, I>>(base?: I): Certification {
+    return Certification.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<Certification>, I>>(object: I): Certification {
+    const message = createBaseCertification();
+    message.type = object.type ?? "";
+    message.number = object.number ?? "";
+    message.expiration = object.expiration ?? undefined;
+    message.expireLimit = object.expireLimit ?? 0;
+    return message;
+  },
+};
 
 function createBaseTechnician(): Technician {
   return {
@@ -115,6 +264,7 @@ function createBaseTechnician(): Technician {
     certExpireLimit: 0,
     certificateType: 0,
     sourceUid: "",
+    certifications: [],
   };
 }
 
@@ -143,6 +293,9 @@ export const Technician: MessageFns<Technician> = {
     }
     if (message.sourceUid !== "") {
       writer.uint32(66).string(message.sourceUid);
+    }
+    for (const v of message.certifications) {
+      Certification.encode(v!, writer.uint32(82).fork()).join();
     }
     return writer;
   },
@@ -218,6 +371,14 @@ export const Technician: MessageFns<Technician> = {
           message.sourceUid = reader.string();
           continue;
         }
+        case 10: {
+          if (tag !== 82) {
+            break;
+          }
+
+          message.certifications.push(Certification.decode(reader, reader.uint32()));
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -261,6 +422,9 @@ export const Technician: MessageFns<Technician> = {
         : isSet(object.source_uid)
         ? globalThis.String(object.source_uid)
         : "",
+      certifications: globalThis.Array.isArray(object?.certifications)
+        ? object.certifications.map((e: any) => Certification.fromJSON(e))
+        : [],
     };
   },
 
@@ -290,6 +454,9 @@ export const Technician: MessageFns<Technician> = {
     if (message.sourceUid !== "") {
       obj.sourceUid = message.sourceUid;
     }
+    if (message.certifications?.length) {
+      obj.certifications = message.certifications.map((e) => Certification.toJSON(e));
+    }
     return obj;
   },
 
@@ -306,6 +473,7 @@ export const Technician: MessageFns<Technician> = {
     message.certExpireLimit = object.certExpireLimit ?? 0;
     message.certificateType = object.certificateType ?? 0;
     message.sourceUid = object.sourceUid ?? "";
+    message.certifications = object.certifications?.map((e) => Certification.fromPartial(e)) || [];
     return message;
   },
 };

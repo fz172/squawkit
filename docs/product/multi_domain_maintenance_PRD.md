@@ -463,7 +463,7 @@ message Capabilities {
   bool meters = 2;                     // meter fields on logs; METER rules
   bool compliance = 3;                 // type chip, reference number, authority
   bool technicians = 4;                // technician picker on the log form
-  bool technician_certificates = 5;    // certificate fields on the technician record
+  reserved 5;                          // was technician_certificates — retired by §8.6
   bool component_serial_prompt = 6;    // nag for serials at creation
   repeated SquawkPriority priorities = 7;  // which priority values are offered
   repeated Section sections = 8;       // which of Dashboard/Defects/Tasks/Logs appear, and order
@@ -478,12 +478,16 @@ message Capabilities {
 | Meters | ✓ | ✓ | ✓ | ✓ | ✓ | — | ✓ |
 | Compliance (recalls / ADs) | ✓ | ✓ | ✓ | — | — | — | off |
 | Technician picker | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Technician certificates | ✓ | — | — | — | — | — | off |
 | Serial prompt at creation | ✓ | — | — | — | — | off | off |
 | Seasonal rules | — | — | ✓ | — | ✓ | ✓ | ✓ |
 | Export layout | logbook | generic | generic | generic | generic | generic | generic |
 | Due-soon window | 30 d | 30 d | 30 d | 14 d | 30 d | 14 d | 30 d |
 | End-of-month snap | ✓ | — | — | — | — | — | — |
+
+> **`technician_certificates` is gone from this table**, retired by §8.6 rather than reworked. It gated fields on
+> a record the technician roster aggregates *across the account*, so no single Thing's template could answer it.
+> What replaced it is not another flag: a template declares the `certifications` it recognises, and a template
+> declaring none offers none — the same statement, made where the scope is right.
 
 > **Why Car and Motorcycle stay separate presets.** They look alike at this table's altitude — engine, brakes,
 > suspension — but the component and spec vocabulary genuinely differs (final drive vs. transmission, no

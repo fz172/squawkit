@@ -1,5 +1,5 @@
 
-airplane"Ù
+airplane"Ù
 
 aircraftaircraftan
 squawksquawksa"Squawks0
@@ -10,7 +10,7 @@ componentsa2
 
 techniciantechniciansa:	AirworthyBAOGJAircraft on GroundRFleetjFAAr7
 Airworthiness DirectiveAirworthiness DirectivesADz)
-Service BulletinService BulletinsSB* (0:BH2
+Service BulletinService BulletinsSB* 0:BH2
 makeMake2
 modelModel2
 serialSerial Number 02 
@@ -21,4 +21,6 @@ techniciantechniciansa:	AirworthyBAOGJAircraft on GroundRFleetjFAAr7
 airframe_hoursAirframe Timehrs B*
 engine_hoursEngine Timehrs *engineB)
 
-prop_hours	Prop Timehrs *	propellerRAirplaneZairplane
+prop_hours	Prop Timehrs *	propellerRAirplaneZairplanerD
+faa_repairman	Repairman"Certificate Number*Certificate numberrA
+faa_amtA&P Mechanic"Certificate Number*Certificate number

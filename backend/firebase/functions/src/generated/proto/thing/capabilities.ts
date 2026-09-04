@@ -116,8 +116,6 @@ export interface Capabilities {
   compliance: boolean;
   /** technician picker on the log form */
   technicians: boolean;
-  /** certificate fields on the technician record */
-  technicianCertificates: boolean;
   /** nag for serials at creation */
   componentSerialPrompt: boolean;
   /**
@@ -140,7 +138,6 @@ function createBaseCapabilities(): Capabilities {
     meters: false,
     compliance: false,
     technicians: false,
-    technicianCertificates: false,
     componentSerialPrompt: false,
     priorities: [],
     sections: [],
@@ -161,9 +158,6 @@ export const Capabilities: MessageFns<Capabilities> = {
     }
     if (message.technicians !== false) {
       writer.uint32(32).bool(message.technicians);
-    }
-    if (message.technicianCertificates !== false) {
-      writer.uint32(40).bool(message.technicianCertificates);
     }
     if (message.componentSerialPrompt !== false) {
       writer.uint32(48).bool(message.componentSerialPrompt);
@@ -221,14 +215,6 @@ export const Capabilities: MessageFns<Capabilities> = {
           }
 
           message.technicians = reader.bool();
-          continue;
-        }
-        case 5: {
-          if (tag !== 40) {
-            break;
-          }
-
-          message.technicianCertificates = reader.bool();
           continue;
         }
         case 6: {
@@ -298,11 +284,6 @@ export const Capabilities: MessageFns<Capabilities> = {
       meters: isSet(object.meters) ? globalThis.Boolean(object.meters) : false,
       compliance: isSet(object.compliance) ? globalThis.Boolean(object.compliance) : false,
       technicians: isSet(object.technicians) ? globalThis.Boolean(object.technicians) : false,
-      technicianCertificates: isSet(object.technicianCertificates)
-        ? globalThis.Boolean(object.technicianCertificates)
-        : isSet(object.technician_certificates)
-        ? globalThis.Boolean(object.technician_certificates)
-        : false,
       componentSerialPrompt: isSet(object.componentSerialPrompt)
         ? globalThis.Boolean(object.componentSerialPrompt)
         : isSet(object.component_serial_prompt)
@@ -334,9 +315,6 @@ export const Capabilities: MessageFns<Capabilities> = {
     if (message.technicians !== false) {
       obj.technicians = message.technicians;
     }
-    if (message.technicianCertificates !== false) {
-      obj.technicianCertificates = message.technicianCertificates;
-    }
     if (message.componentSerialPrompt !== false) {
       obj.componentSerialPrompt = message.componentSerialPrompt;
     }
@@ -361,7 +339,6 @@ export const Capabilities: MessageFns<Capabilities> = {
     message.meters = object.meters ?? false;
     message.compliance = object.compliance ?? false;
     message.technicians = object.technicians ?? false;
-    message.technicianCertificates = object.technicianCertificates ?? false;
     message.componentSerialPrompt = object.componentSerialPrompt ?? false;
     message.priorities = object.priorities?.map((e) => e) || [];
     message.sections = object.sections?.map((e) => e) || [];

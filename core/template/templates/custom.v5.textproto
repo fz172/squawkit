@@ -15,8 +15,12 @@
 # the whole problem versioning exists to prevent. Every preset starts again at v2, where the version
 # a Thing stores is once more a true statement about the bytes it carries.
 
+# v5 drops `technician_certificates`, retired with #684 — see the capability's reserved slot in
+# capabilities.proto. This preset declares no `certifications`, which says the same thing where the
+# scope is right: nothing is offered for it.
+#
 id: "custom"
-version: 4
+version: 5
 min_app_version: 0
 
 display_name: "Custom"
@@ -69,7 +73,6 @@ capabilities {
   meters: false
   compliance: false
   technicians: true
-  technician_certificates: false
   component_serial_prompt: false
 
   priorities: SQUAWK_PRIORITY_LOW

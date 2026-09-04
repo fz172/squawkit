@@ -20,8 +20,12 @@
 # now bumps the version, pre-release included — the version is how a stored copy is identified, and
 # an unbumped edit makes it a lie. `npm run dna-refresh` moves existing Things onto this one.
 
+# v3 declares `certifications` and drops `technician_certificates`: a technician's roles are
+# derived from the credentials they hold, and a per-Thing flag cannot answer for a roster the
+# account shares across every Thing (#684).
+#
 id: "airplane"
-version: 2
+version: 3
 
 # No floor. This template ships inside every build that can read it, so a client can never
 # encounter it from the future — the floor exists for FETCHED templates (§6), and a baked-in one is
@@ -82,7 +86,6 @@ capabilities {
   meters: true
   compliance: true
   technicians: true
-  technician_certificates: true
   component_serial_prompt: true
 
   priorities: SQUAWK_PRIORITY_LOW
@@ -190,3 +193,28 @@ meters {
 
 # starter_tasks is deliberately absent. Starter packs are Phase 3 content (PRD §4.9); the field is
 # declared in the schema so the shape is settled, not because there is anything to put in it yet.
+
+# The credentials this preset recognises (PRD §8.6). A technician's roles are derived from the keys
+# they hold, so this list is what the add flow offers AND what a tag on a list row means.
+#
+# Exactly the two values the frozen `CertificateType` enum carried, so the transitional read of a
+# pre-#684 record is lossless: REPAIRMAN and AMT map onto these keys and nothing else was storable.
+#
+# `expires: true` on both, even though an FAA mechanic certificate does not itself expire. The form
+# has offered an expiration date since v1 and records in the field carry one — an IA renewal, a
+# company badge date, whatever the user meant by it. Declaring the truth about the FAA certificate
+# here would hide data users have already entered.
+certifications {
+  key: "faa_repairman"
+  label: "Repairman"
+  expires: true
+  number_label: "Certificate Number"
+  number_placeholder: "Certificate number"
+}
+certifications {
+  key: "faa_amt"
+  label: "A&P Mechanic"
+  expires: true
+  number_label: "Certificate Number"
+  number_placeholder: "Certificate number"
+}

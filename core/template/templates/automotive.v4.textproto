@@ -10,8 +10,12 @@
 #
 # v3 marks `year` numeric, so the form gives it a keypad and leaves its casing alone (#739).
 
+# v4 declares `certifications` and drops `technician_certificates`: a technician's roles are
+# derived from the credentials they hold, and a per-Thing flag cannot answer for a roster the
+# account shares across every Thing (#684).
+#
 id: "automotive"
-version: 3
+version: 4
 min_app_version: 0
 
 display_name: "Automotive"
@@ -56,7 +60,6 @@ capabilities {
   compliance: true
   technicians: true
   # No certificates: an A&P signs an airframe logbook, a mechanic does not sign for an oil change.
-  technician_certificates: false
   # Most owners do not know their engine or chassis serial off-hand, and accepting one later costs
   # nothing (PRD §4.8). No vehicle preset prompts at creation.
   component_serial_prompt: false
@@ -153,4 +156,15 @@ meters {
   label: "Odometer"
   unit_label: "mi"
   decimal: false
+}
+
+# PRD §8.6. ASE is the credential a US car owner would recognise on an invoice, and it recertifies
+# on a five-year cycle — so unlike the aviation certificates, the expiration date here is the
+# credential's own rather than a field the form happens to offer.
+certifications {
+  key: "ase"
+  label: "ASE Certified"
+  expires: true
+  number_label: "Certification Number"
+  number_placeholder: "ASE number"
 }

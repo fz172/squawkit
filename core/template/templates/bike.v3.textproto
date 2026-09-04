@@ -6,8 +6,12 @@
 #
 # See templates/README.md before editing, and compile with ./compile-template.sh bike.v2
 
+# v3 drops `technician_certificates`, retired with #684 — see the capability's reserved slot in
+# capabilities.proto. This preset declares no `certifications`, which says the same thing where the
+# scope is right: nothing is offered for it.
+#
 id: "bike"
-version: 2
+version: 3
 min_app_version: 0
 
 display_name: "Bike"
@@ -42,7 +46,6 @@ capabilities {
   meters: true
   compliance: false
   technicians: true
-  technician_certificates: false
   component_serial_prompt: false
 
   priorities: SQUAWK_PRIORITY_LOW

@@ -2,6 +2,9 @@ package dev.fanfly.wingslog.feature.technician.manage.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dev.fanfly.wingslog.core.template.OfferedCertification
+import dev.fanfly.wingslog.core.template.TemplateRegistry
+import dev.fanfly.wingslog.core.template.knownCertifications
 import dev.fanfly.wingslog.thing.Technician
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
@@ -25,6 +28,15 @@ data class TechnicianListUiState(
    */
   val linkedTechnicians: List<Technician> = emptyList(),
   val selfId: String? = null,
+  /**
+   * Every certification this build knows, so a stored key renders as its word rather than as
+   * itself — and so a role tag can be derived from it (PRD §8.6).
+   *
+   * The whole installed pool, not the account's own templates: a technician linked from someone
+   * else's shared boat carries a key from a preset this account owns no Thing of, and their
+   * credential still has a name.
+   */
+  val knownCertifications: List<OfferedCertification> = emptyList(),
   /** Rows that look like the same person, for the review sheet (design §7.4). */
   val duplicates: List<DuplicateGroup> = emptyList(),
   /** Identifies *these* duplicates; stored on dismiss so a NEW look-alike still prompts. */
@@ -45,9 +57,13 @@ data class TechnicianListUiState(
 class TechnicianListViewModel(
   private val technicianManager: TechnicianManager,
   sharingManager: SharingManager,
+  templateRegistry: TemplateRegistry,
 ) : ViewModel() {
 
   private val localState = MutableStateFlow(LocalState())
+
+  /** Fixed for the life of the build — the baked-in pool cannot change without a release. */
+  private val knownCertifications = templateRegistry.knownCertifications()
 
   val uiState: StateFlow<TechnicianListUiState> = combine(
     technicianManager.observeTechnicians(),
@@ -68,6 +84,7 @@ class TechnicianListViewModel(
       technicians = listOfNotNull(self) + others,
       linkedTechnicians = linked,
       selfId = selfId,
+      knownCertifications = knownCertifications,
       duplicates = duplicates,
       duplicatesSignature = duplicates.signature(),
       reviewedSignature = reviewedSignature,

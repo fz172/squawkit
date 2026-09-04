@@ -18,10 +18,17 @@ fun ThingTemplate.structuralProblems(): List<String> = buildList {
     .forEach { add("$id: meter with blank key (label '${it.label}')") }
   allSlots().filter { it.slot_key.isEmpty() }
     .forEach { add("$id: component slot with blank key (label '${it.label}')") }
+  certifications.filter { it.key.isEmpty() }
+    .forEach { add("$id: certification with blank key (label '${it.label}')") }
+  // A certification with no label is unpickable: the add flow has nothing to draw for it, and a
+  // technician holding it would be tagged with a blank.
+  certifications.filter { it.label.isEmpty() }
+    .forEach { add("$id: certification '${it.key}' has no label") }
 
   addAll(duplicates("spec field", spec_fields.map { it.key }))
   addAll(duplicates("meter", meters.map { it.key }))
   addAll(duplicates("component slot", allSlots().map { it.slot_key }))
+  addAll(duplicates("certification", certifications.map { it.key }))
 
   // A meter naming no declared slot has nowhere to render.
   val slotKeys = allSlots().map { it.slot_key }

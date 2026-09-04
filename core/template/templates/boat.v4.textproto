@@ -8,8 +8,12 @@
 #
 # v3 marks `year` numeric, so the form gives it a keypad and leaves its casing alone (#739).
 
+# v4 declares `certifications` and drops `technician_certificates`: a technician's roles are
+# derived from the credentials they hold, and a per-Thing flag cannot answer for a roster the
+# account shares across every Thing (#684).
+#
 id: "boat"
-version: 3
+version: 4
 min_app_version: 0
 
 display_name: "Boat"
@@ -41,7 +45,6 @@ capabilities {
   meters: true
   compliance: false
   technicians: true
-  technician_certificates: false
   component_serial_prompt: false
 
   priorities: SQUAWK_PRIORITY_LOW
@@ -119,4 +122,13 @@ meters {
   unit_label: "hrs"
   decimal: true
   component_slot_key: "propulsion"
+}
+
+# PRD §8.6. ABYC is the marine analogue of the A&P — the certification a yard's technician holds.
+certifications {
+  key: "abyc"
+  label: "ABYC Certified"
+  expires: true
+  number_label: "Certification Number"
+  number_placeholder: "ABYC number"
 }

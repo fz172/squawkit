@@ -1,6 +1,6 @@
 
 
-automotive"¼
+automotive"¼
 
 vehiclevehiclesa
 issueissuesan"Issues
@@ -23,4 +23,6 @@ Rear RightBSpareZ
 Normal PSI*32HB
 odometerOdometermiR
 AutomotiveZ
-automotive`
+automotive`r8
+aseASE Certified"Certification Number*
+ASE number

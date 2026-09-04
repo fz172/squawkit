@@ -14,6 +14,7 @@ import dev.fanfly.wingslog.core.storage.EntityStoreFactory
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
 import dev.fanfly.wingslog.feature.technician.datamanager.merge.DuplicateGroup
 import dev.fanfly.wingslog.feature.technician.datamanager.merge.DuplicateResolution
+import dev.fanfly.wingslog.feature.technician.datamanager.merge.mergedCertifications
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.CoroutineScope
@@ -240,12 +241,26 @@ class TechnicianManagerImpl(
 
       groups.forEach { group ->
         when (group.resolution) {
-          // Both merges delete the duplicate rows. They are hand-typed and now redundant — the
-          // keeper is either a richer manual row or the member's live mirror. Logs hold their own
-          // snapshots, so already-signed work keeps the technician it recorded.
-          DuplicateResolution.MERGE_MANUAL,
-          DuplicateResolution.MERGE_INTO_MEMBER,
-          -> group.duplicates.forEach { technicianStore.delete(it.id, userScope) }
+          // The keeper absorbs any credential only a duplicate carried before the duplicates go
+          // (#684): one contact can be both an A&P and an ASE mechanic, and a merge that kept only
+          // the keeper's certifications would delete the other half of who they are.
+          DuplicateResolution.MERGE_MANUAL -> {
+            val merged = group.mergedCertifications()
+            if (merged != group.keep.certifications) {
+              technicianStore.put(
+                group.keep.id,
+                group.keep.copy(certifications = merged),
+                userScope,
+              )
+            }
+            group.duplicates.forEach { technicianStore.delete(it.id, userScope) }
+          }
+
+          // The member's mirror is theirs, not ours: it is republished from their own profile, so
+          // writing our union into it would be overwritten the next time they save. Only the
+          // hand-typed copy goes.
+          DuplicateResolution.MERGE_INTO_MEMBER ->
+            group.duplicates.forEach { technicianStore.delete(it.id, userScope) }
 
           // Two members are two accounts; this is a heads-up about a likely mistyped certificate,
           // not something to apply.

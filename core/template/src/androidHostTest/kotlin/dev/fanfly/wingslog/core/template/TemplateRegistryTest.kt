@@ -157,7 +157,7 @@ class AirplaneTemplateTest {
     assertThat(
       listOf(
         c.components, c.meters, c.compliance, c.technicians,
-        c.technician_certificates, c.component_serial_prompt,
+        c.component_serial_prompt,
       ),
     ).doesNotContain(false)
   }

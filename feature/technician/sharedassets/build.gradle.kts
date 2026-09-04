@@ -33,6 +33,9 @@ kotlin {
       implementation(project(":core:ui"))
       implementation(project(":core:ui:theme"))
       implementation(project(":core:sharedassets"))
+      implementation(project(":core:datetime"))
+      // api: CertificationInputFields takes OfferedCertification, so a caller needs the type.
+      api(project(":core:template"))
 
 
       // Compose

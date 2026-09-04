@@ -59,9 +59,11 @@ class MaintenanceLogFormViewModelTest {
    * fixture: these tests care what the form does with an airplane's three meters.
    */
   private fun airplaneTemplateHolder() = CurrentThingTemplate(
-    BakedInTemplateRegistry(appVersionCode = 1),
+    templateRegistry,
   ).apply { set(AirplaneTemplate.TEMPLATE) }
 
+  /** Real, not mocked: the picker's certification labels come out of the baked-in preset pool. */
+  private val templateRegistry = BakedInTemplateRegistry(appVersionCode = 1)
 
   private val testDispatcher = UnconfinedTestDispatcher()
 
@@ -278,6 +280,7 @@ class MaintenanceLogFormViewModelTest {
         auth = auth,
         subscriptionManager = subscriptionManager,
         currentThingTemplate = airplaneTemplateHolder(),
+        templateRegistry = templateRegistry,
         analytics = NoOpAnalyticsManager,
         savedStateHandle = SavedStateHandle(
           mapOf(
@@ -335,6 +338,7 @@ class MaintenanceLogFormViewModelTest {
         auth = auth,
         subscriptionManager = subscriptionManager,
         currentThingTemplate = airplaneTemplateHolder(),
+        templateRegistry = templateRegistry,
         analytics = NoOpAnalyticsManager,
         savedStateHandle = SavedStateHandle(
           mapOf(
@@ -612,6 +616,7 @@ class MaintenanceLogFormViewModelTest {
       auth = auth,
       subscriptionManager = subscriptionManager,
       currentThingTemplate = airplaneTemplateHolder(),
+      templateRegistry = templateRegistry,
       analytics = NoOpAnalyticsManager,
       savedStateHandle = SavedStateHandle(
         mapOf(
@@ -636,6 +641,7 @@ class MaintenanceLogFormViewModelTest {
       auth = auth,
       subscriptionManager = subscriptionManager,
       currentThingTemplate = airplaneTemplateHolder(),
+      templateRegistry = templateRegistry,
       analytics = NoOpAnalyticsManager,
       savedStateHandle = SavedStateHandle(
         buildMap {

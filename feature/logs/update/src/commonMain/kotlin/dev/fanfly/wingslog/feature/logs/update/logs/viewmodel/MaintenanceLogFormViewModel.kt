@@ -14,9 +14,11 @@ import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import dev.fanfly.wingslog.core.template.MeterKeys
 import dev.fanfly.wingslog.core.template.SlotKeys
 import dev.fanfly.wingslog.core.template.SpecKeys
+import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.core.template.allComponentsInSlot
 import dev.fanfly.wingslog.core.template.childInSlot
 import dev.fanfly.wingslog.core.template.childrenInSlot
+import dev.fanfly.wingslog.core.template.knownCertifications
 import dev.fanfly.wingslog.core.template.readingFor
 import dev.fanfly.wingslog.core.template.specValue
 import dev.fanfly.wingslog.core.ui.common.UiText
@@ -79,9 +81,13 @@ class MaintenanceLogFormViewModel(
   private val auth: FirebaseAuth,
   private val subscriptionManager: SubscriptionManager,
   private val currentThingTemplate: CurrentThingTemplate,
+  templateRegistry: TemplateRegistry,
   private val analytics: AnalyticsManager,
   savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
+
+  /** Fixed for the life of the build — the baked-in pool cannot change without a release. */
+  private val knownCertifications = templateRegistry.knownCertifications()
 
   val thingId: String = checkNotNull(savedStateHandle[Screen.THING_ID])
   private val logId: String? = savedStateHandle[Screen.LOG_ID]
@@ -173,6 +179,7 @@ class MaintenanceLogFormViewModel(
             availableTechnicians = available,
             linkedTechnicians = linked,
             selfTechnicianId = selfTech?.id,
+            knownCertifications = knownCertifications,
             selectedTechnician = newSelected,
           )
         }
