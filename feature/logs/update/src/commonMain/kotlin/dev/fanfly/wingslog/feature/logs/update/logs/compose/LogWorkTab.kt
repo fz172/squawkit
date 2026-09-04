@@ -9,11 +9,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
-import dev.fanfly.wingslog.core.template.LocalThingCapabilities
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
-import dev.fanfly.wingslog.core.template.LocalThingTemplate
+import dev.fanfly.wingslog.core.template.componentTypesApply
 import dev.fanfly.wingslog.core.template.thingNoun
-import dev.fanfly.wingslog.core.template.usesComponentTypes
 import dev.fanfly.wingslog.core.ui.common.UiText
 import dev.fanfly.wingslog.core.ui.common.compose.FormKeyboard
 import dev.fanfly.wingslog.core.ui.common.compose.FormTextField
@@ -76,10 +74,8 @@ fun LogWorkTab(
     // And removed for every preset outside aviation, whatever its capability says: the control's
     // three options are `ComponentType`, an enum frozen to airframe / engine / propeller, so a
     // boat's propulsion and a car's tyres cannot be named by it at all (#732). Their logs are
-    // filed against the thing itself. See [usesComponentTypes].
-    if (LocalThingCapabilities.current.components &&
-      LocalThingTemplate.current.usesComponentTypes
-    ) {
+    // filed against the thing itself. See [componentTypesApply].
+    if (componentTypesApply) {
       LogSection(
         header = stringResource(CoreRes.string.component_type),
         description = stringResource(

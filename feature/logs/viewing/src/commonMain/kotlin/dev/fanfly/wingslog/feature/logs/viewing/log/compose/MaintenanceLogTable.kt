@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.datetime.toLocalDate
 import dev.fanfly.wingslog.core.template.LocalThingTemplate
+import dev.fanfly.wingslog.core.template.componentTypesApply
 import dev.fanfly.wingslog.core.template.formatMeterValue
 import dev.fanfly.wingslog.core.template.primaryReading
 import dev.fanfly.wingslog.core.ui.common.compose.jumpTargetHighlight
@@ -132,7 +133,8 @@ private fun HeaderRow() {
     verticalAlignment = Alignment.CenterVertically,
   ) {
     HeaderCell("Date", W_DATE)
-    HeaderCell("Component", W_COMPONENT)
+    // Gone, not blank, where the pill is — see [LogComponentBadge].
+    if (componentTypesApply) HeaderCell("Component", W_COMPONENT)
     HeaderCell("Description", W_DESC)
     HeaderCell("Hours", W_HOURS, TextAlign.End)
     HeaderCell("Technician", W_TECH)
@@ -188,11 +190,13 @@ private fun LogRow(
       modifier = Modifier.weight(W_DATE)
         .padding(end = Spacing.medium),
     )
-    Box(
-      modifier = Modifier.weight(W_COMPONENT)
-        .padding(end = Spacing.medium)
-    ) {
-      ComponentTypeBadge(log.component_type)
+    if (componentTypesApply) {
+      Box(
+        modifier = Modifier.weight(W_COMPONENT)
+          .padding(end = Spacing.medium)
+      ) {
+        LogComponentBadge(log.component_type)
+      }
     }
     Text(
       text = log.work_description,

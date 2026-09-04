@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.core.template
 
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.staticCompositionLocalOf
 import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
 import dev.fanfly.wingslog.thing.ComponentSlot
@@ -38,6 +39,17 @@ val LocalThingTemplate = staticCompositionLocalOf<ThingTemplate?> { null }
  */
 val ThingTemplate?.usesComponentTypes: Boolean
   get() = this == null || id == AirplaneTemplate.ID
+
+/**
+ * True when `ComponentType` describes the thing in composition — the form may offer the picker, and
+ * a log card may show the pill.
+ *
+ * Both halves are load-bearing. A boat declares `components` yet cannot be named by the frozen
+ * airframe / engine / propeller enum ([usesComponentTypes]); a home declares neither.
+ */
+val componentTypesApply: Boolean
+  @Composable get() = LocalThingCapabilities.current.components &&
+    LocalThingTemplate.current.usesComponentTypes
 
 /** The meter [key] names, or null when this template does not declare it. */
 fun ThingTemplate?.meter(key: String): MeterDef? =
