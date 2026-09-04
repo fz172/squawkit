@@ -52,6 +52,8 @@ import dev.fanfly.wingslog.core.ui.common.compose.UnsavedChangesDialog
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.tasks.datamanager.meterKeyFor
 import dev.fanfly.wingslog.feature.tasks.datamanager.withForcedDueMeter
+import dev.fanfly.wingslog.feature.tasks.datamanager.withoutOverrides
+import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
 import dev.fanfly.wingslog.feature.tasks.update.compose.InitialDueControls
 import dev.fanfly.wingslog.feature.tasks.update.compose.ScheduleState
 import dev.fanfly.wingslog.feature.tasks.update.compose.TaskComplianceTab
@@ -93,6 +95,9 @@ fun AddTaskScreen(
   onForcedEngineHoursChange: (String) -> Unit,
   onForceOverrideDateChange: (Boolean) -> Unit,
   onForcedDateMillisChange: (Long?) -> Unit,
+  /** The due engine over this Thing's logs, for the banner; null until the Thing has loaded. */
+  previewDue: (MaintenanceTask) -> DueMetadata?,
+  currentReading: (String) -> Float,
   onSave: (MaintenanceTask) -> Unit,
   onCancel: () -> Unit,
   isSaving: Boolean = false,
@@ -138,6 +143,38 @@ fun AddTaskScreen(
   }
 
   val capabilities = LocalThingCapabilities.current
+  // The card as Save would write it, built once for the banner and again for Save so the two
+  // can never describe different tasks.
+  val buildDraft: () -> MaintenanceTask = {
+    val rules = state.schedule.toRules(
+      dueOnAnniversary = capabilities.month_intervals_due_on_anniversary,
+    )
+    // The first due is the same override the Adjustments tab writes: the first cycle is the
+    // user's, and the log that clears the first cycle clears the override with it.
+    val firstDueDate =
+      if (state.forceOverrideDate) state.forcedDateMillis?.let { toWireInstant(it / 1000, 0) }
+      else null
+    val firstDueReading =
+      if (state.forceOverrideEngine) state.forcedEngineHours.toFloatOrNull()?.takeIf { it > 0f }
+      else null
+    MaintenanceTask(
+      id = "",
+      title = state.title,
+      component = state.component,
+      type = state.type,
+      rules = rules,
+      reference_number = state.refNumber.takeIf { it.isNotBlank() } ?: "",
+      compliance_authority = state.complianceAuthority.takeIf { it.isNotBlank() } ?: "",
+      compliance_details = state.complianceNotes.takeIf { it.isNotBlank() } ?: "",
+      is_one_time = state.schedule.isOneTime,
+      force_due_date = firstDueDate,
+      notes = "",
+    ).withForcedDueMeter(meterKeyFor(state.component, rules), firstDueReading)
+  }
+  val draft = buildDraft()
+  val effectiveDue = previewDue(draft)
+  val naturalDue = previewDue(draft.withoutOverrides())
+
   val tabs = taskFormTabsFor(
     capabilities,
     includeAdjustments = false,
@@ -263,6 +300,10 @@ fun AddTaskScreen(
                   forcedEngineHours = state.forcedEngineHours,
                   onForcedEngineHoursChange = onForcedEngineHoursChange,
                 ),
+                effectiveDue = effectiveDue,
+                naturalDue = naturalDue,
+                overrideOn = state.forceOverrideDate || state.forceOverrideEngine,
+                currentReading = currentReading,
               )
 
               // Unreachable: this screen passes includeAdjustments = false, so the tab is never in
@@ -275,35 +316,7 @@ fun AddTaskScreen(
       }
 
       BottomButtons(
-        onPrimaryClick = {
-          val rules = state.schedule.toRules(
-            dueOnAnniversary = capabilities.month_intervals_due_on_anniversary,
-          )
-          // The first due is the same override the Adjustments tab writes: the first cycle is
-          // the user's, and the log that clears the first cycle clears the override with it.
-          val firstDueDate =
-            if (state.forceOverrideDate) state.forcedDateMillis?.let { toWireInstant(it / 1000, 0) }
-            else null
-          val firstDueReading =
-            if (state.forceOverrideEngine) state.forcedEngineHours.toFloatOrNull()?.takeIf { it > 0f }
-            else null
-          val card = MaintenanceTask(
-            id = "",
-            title = state.title,
-            component = state.component,
-            type = state.type,
-            rules = rules,
-            reference_number = state.refNumber.takeIf { it.isNotBlank() } ?: "",
-            compliance_authority = state.complianceAuthority.takeIf { it.isNotBlank() }
-              ?: "",
-            compliance_details = state.complianceNotes.takeIf { it.isNotBlank() }
-              ?: "",
-            is_one_time = state.schedule.isOneTime,
-            force_due_date = firstDueDate,
-            notes = "",
-          ).withForcedDueMeter(meterKeyFor(state.component, rules), firstDueReading)
-          onSave(card)
-        },
+        onPrimaryClick = { onSave(buildDraft()) },
         onSecondaryClick = { tryCancel() },
         primaryEnabled = state.title.isNotBlank(),
         isPrimaryFunctionInProgress = isSaving

@@ -53,6 +53,7 @@ import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.logs.sharedassets.compose.LogPickerSheet
 import dev.fanfly.wingslog.feature.tasks.datamanager.meterKeyFor
 import dev.fanfly.wingslog.feature.tasks.datamanager.withForcedDueMeter
+import dev.fanfly.wingslog.feature.tasks.datamanager.withoutOverrides
 import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
 import dev.fanfly.wingslog.feature.tasks.update.compose.ResolveTaskOptionsMenu
 import dev.fanfly.wingslog.feature.tasks.update.compose.ScheduleState
@@ -72,13 +73,13 @@ import dev.fanfly.wingslog.thing.MaintenanceTask
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
+import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.core.sharedassets.generated.resources.back
 import wingslog.core.sharedassets.generated.resources.ok
+import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedTaskRes
 import wingslog.feature.tasks.sharedassets.generated.resources.edit_task
 import wingslog.feature.tasks.update.generated.resources.Res
 import wingslog.feature.tasks.update.generated.resources.resolve_task
-import wingslog.core.sharedassets.generated.resources.Res as CoreRes
-import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedTaskRes
 
 /** The Resolve-menu options that leave the screen, and so have to pass the unsaved-changes gate. */
 private enum class ResolveAction { CreateWorkLog, Skip }
@@ -93,9 +94,9 @@ fun EditTaskScreen(
   state: TaskFormState,
   availableInspections: List<MaintenanceTask>,
   availableLogs: List<MaintenanceLog> = emptyList(),
-  currentEngineHours: Float,
-  naturalDueMetadata: DueMetadata?,
-  effectiveDueMetadata: DueMetadata?,
+  /** The due engine over this Thing's logs, for the banner both tabs share. */
+  previewDue: (MaintenanceTask) -> DueMetadata?,
+  currentReading: (String) -> Float,
   onTitleChange: (String) -> Unit,
   onScheduleChange: (ScheduleState) -> Unit,
   onRefNumberChange: (String) -> Unit,
@@ -176,6 +177,47 @@ fun EditTaskScreen(
   }
 
   val capabilities = LocalThingCapabilities.current
+  // The card as Save would write it, built once for the banner and again for Save so the two
+  // can never describe different tasks.
+  val buildDraft: () -> MaintenanceTask = {
+    val existingTimeRuleCreationDate =
+      card.rules.firstNotNullOfOrNull { it.time_rule?.creation_date }
+    val ruleList = state.schedule.toRules(
+      existingTimeRuleCreationDate,
+      dueOnAnniversary = capabilities.month_intervals_due_on_anniversary,
+    )
+    val updatedForceDueEngine =
+      if (state.forceOverrideEngine) state.forcedEngineHours.toFloatOrNull() ?: 0f else 0f
+    val updatedForceDueDate =
+      if (state.forceOverrideDate) state.forcedDateMillis?.let { toWireInstant(it / 1000, 0) }
+      else null
+    card.copy(
+      title = state.title,
+      component = state.component,
+      type = state.type,
+      rules = ruleList,
+      is_one_time = state.schedule.isOneTime,
+      reference_number = state.refNumber.takeIf { it.isNotBlank() } ?: "",
+      compliance_authority = state.complianceAuthority.takeIf { it.isNotBlank() } ?: "",
+      compliance_details = state.complianceNotes.takeIf { it.isNotBlank() } ?: "",
+      force_due_date = updatedForceDueDate,
+      // Skip This Cycle is a separate, immediately-persisted action off the Resolve menu
+      // (see TaskViewModel.skipThisCycle), so this form only carries the stored value
+      // forward. Dropping it when the schedule it was recorded against changes is
+      // TaskViewModel.isScheduleChanged's job, not the form's.
+      force_complied_status = card.force_complied_status
+    ).withForcedDueMeter(
+      // The meter this task schedules against — the override is in the same one.
+      meterKeyFor(state.component, ruleList),
+      updatedForceDueEngine.takeIf { it > 0f },
+    )
+  }
+  val draft = buildDraft()
+  val effectiveDue = previewDue(draft)
+  val naturalDue = previewDue(draft.withoutOverrides())
+  val linkedTaskName =
+    availableInspections.firstOrNull { it.id == state.schedule.linkedToId }?.title
+
   val tabs = taskFormTabsFor(
     capabilities,
     includeAdjustments = true,
@@ -293,6 +335,10 @@ fun EditTaskScreen(
                 state = state.schedule,
                 onChange = onScheduleChange,
                 availableInspections = availableInspections.filter { it.id != card.id },
+                effectiveDue = effectiveDue,
+                naturalDue = naturalDue,
+                overrideOn = state.forceOverrideDate || state.forceOverrideEngine,
+                currentReading = currentReading,
               )
 
               TaskFormTab.ADJUSTMENTS -> TaskAdjustmentsTab(
@@ -305,11 +351,10 @@ fun EditTaskScreen(
                 onForceOverrideDateChange = onForceOverrideDateChange,
                 forcedDateMillis = state.forcedDateMillis,
                 onDateClick = { showDatePicker = true },
-                naturalDueDate = naturalDueMetadata?.nextDueDate,
-                naturalDueEngine = naturalDueMetadata?.nextDueEngine,
-                currentDueDate = effectiveDueMetadata?.nextDueDate,
-                currentDueEngine = effectiveDueMetadata?.nextDueEngine,
-                currentEngineHours = currentEngineHours,
+                effectiveDue = effectiveDue,
+                naturalDue = naturalDue,
+                currentReading = currentReading,
+                linkedTaskName = linkedTaskName,
                 onDeleteRequest = { showDeleteConfirm = true },
               )
 
@@ -320,50 +365,7 @@ fun EditTaskScreen(
       }
 
       BottomButtons(
-        onPrimaryClick = {
-          val existingTimeRuleCreationDate =
-            card.rules.firstNotNullOfOrNull { it.time_rule?.creation_date }
-          val ruleList = state.schedule.toRules(
-            existingTimeRuleCreationDate,
-            dueOnAnniversary = capabilities.month_intervals_due_on_anniversary,
-          )
-
-          val updatedForceDueEngine =
-            if (state.forceOverrideEngine) state.forcedEngineHours.toFloatOrNull()
-              ?: 0f else 0f
-          val updatedForceDueDate =
-            if (state.forceOverrideDate) state.forcedDateMillis?.let {
-              toWireInstant(
-                it / 1000,
-                0
-              )
-            } else null
-
-          val updated = card.copy(
-            title = state.title,
-            component = state.component,
-            type = state.type,
-            rules = ruleList,
-            is_one_time = state.schedule.isOneTime,
-            reference_number = state.refNumber.takeIf { it.isNotBlank() } ?: "",
-            compliance_authority = state.complianceAuthority.takeIf { it.isNotBlank() }
-              ?: "",
-            compliance_details = state.complianceNotes.takeIf { it.isNotBlank() }
-              ?: "",
-            force_due_date = updatedForceDueDate,
-            // Skip This Cycle is a separate, immediately-persisted action off the Resolve menu
-            // (see TaskViewModel.skipThisCycle), so this form only carries the stored value
-            // forward. Dropping it when the schedule it was recorded against changes is
-            // TaskViewModel.isScheduleChanged's job, not the form's.
-            force_complied_status = card.force_complied_status
-          )
-            .withForcedDueMeter(
-              // The meter this task schedules against — the override is in the same one.
-              meterKeyFor(state.component, ruleList),
-              updatedForceDueEngine.takeIf { it > 0f },
-            )
-          onSave(updated)
-        },
+        onPrimaryClick = { onSave(buildDraft()) },
         onSecondaryClick = { tryCancel() },
         onDangerClick = onResolveClick,
         dangerLabel = stringResource(Res.string.resolve_task),

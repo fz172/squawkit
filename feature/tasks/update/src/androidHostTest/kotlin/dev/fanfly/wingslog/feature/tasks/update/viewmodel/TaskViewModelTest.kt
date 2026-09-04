@@ -2,25 +2,26 @@ package dev.fanfly.wingslog.feature.tasks.update.viewmodel
 
 import androidx.lifecycle.SavedStateHandle
 import com.google.common.truth.Truth.assertThat
-import dev.fanfly.wingslog.thing.Attachment
-import dev.fanfly.wingslog.thing.AttachmentType
-import dev.fanfly.wingslog.thing.ForceCompliedStatus
-import dev.fanfly.wingslog.thing.MaintenanceTask
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.nav.Screen
+import dev.fanfly.wingslog.core.template.MeterKeys
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
-import dev.fanfly.wingslog.feature.comments.datamanager.CommentManager
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
+import dev.fanfly.wingslog.feature.comments.datamanager.CommentManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDueManager
-import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
 import dev.fanfly.wingslog.feature.tasks.datamanager.defaultMeterKey
-import dev.fanfly.wingslog.feature.tasks.datamanager.withForcedDueMeter
 import dev.fanfly.wingslog.feature.tasks.datamanager.forcedDueMeter
-import dev.fanfly.wingslog.core.template.MeterKeys
+import dev.fanfly.wingslog.feature.tasks.datamanager.withForcedDueMeter
+import dev.fanfly.wingslog.feature.tasks.datamanager.withoutOverrides
+import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
+import dev.fanfly.wingslog.thing.Attachment
+import dev.fanfly.wingslog.thing.AttachmentType
+import dev.fanfly.wingslog.thing.ForceCompliedStatus
+import dev.fanfly.wingslog.thing.MaintenanceTask
 import dev.fanfly.wingslog.thing.MeterReading
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.auth.FirebaseUser
@@ -416,21 +417,11 @@ class TaskViewModelTest {
       val viewModel = buildViewModelForEdit()
       advanceUntilIdle()
 
-      val state = viewModel.uiState.value as TaskUiState.Success
-      assertThat(state.effectiveDueMetadata?.nextDueDate).isEqualTo(
-        LocalDate(
-          2026,
-          11,
-          30
-        )
-      )
-      assertThat(state.naturalDueMetadata?.nextDueDate).isEqualTo(
-        LocalDate(
-          2026,
-          9,
-          30
-        )
-      )
+      // The form's banner asks for the draft as saved and the draft stripped of overrides; the
+      // recorded skip makes those two different dates (#347).
+      assertThat(viewModel.previewDue(skipped)?.nextDueDate).isEqualTo(LocalDate(2026, 11, 30))
+      assertThat(viewModel.previewDue(skipped.withoutOverrides())?.nextDueDate)
+        .isEqualTo(LocalDate(2026, 9, 30))
     }
 
   // ---- force-complied status vs. schedule edits ----

@@ -66,10 +66,8 @@ sealed interface TaskUiState {
     val allInspections: List<MaintenanceTask> = emptyList(),
     val availableLogs: List<MaintenanceLog> = emptyList(),
     val currentEngineHours: Float,
-    /** Rules-only next due, ignoring any reschedule override or recorded skip. */
-    val naturalDueMetadata: DueMetadata? = null,
-    /** Next due as the rest of the app shows it, override and recorded skip included. */
-    val effectiveDueMetadata: DueMetadata? = null,
+    /** The latest reading of every meter the overview knows, by key — for the form's banner. */
+    val currentReadings: Map<String, Float> = emptyMap(),
     val error: UiText? = null,
   ) : TaskUiState
 }
@@ -275,30 +273,14 @@ class TaskViewModel(
         val engineHours =
           overview?.currentFor(MeterKeys.ENGINE_HOURS)
             ?.toFloat() ?: 0f
-        val editedCard = cardId?.let { id -> cards.firstOrNull { it.id == id } }
-        // The rules-only "natural" next-due, so the adjustments preview banner can show what
-        // the schedule alone would say absent any force-override or force-complied state.
-        val naturalDue = editedCard?.let { card ->
-          val stripped = card.copy(
-            force_complied_status = null,
-            force_due_date = null,
-          )
-            .withForcedDueMeter(card.defaultMeterKey(), null)
-          taskDueManager.computeNextDue(stripped, logs, cards)
-        }
-        // The same computation the dashboard task cards run, so the banner's "Current" reading
-        // agrees with them once an override or a skip has been persisted (#347).
-        val effectiveDue = editedCard?.let { card ->
-          taskDueManager.computeNextDue(card, logs, cards)
-        }
         _uiState.update { prev ->
           TaskUiState.Success(
             thingId = thingId,
             allInspections = cards,
             availableLogs = logs,
             currentEngineHours = engineHours,
-            naturalDueMetadata = naturalDue,
-            effectiveDueMetadata = effectiveDue,
+            currentReadings = overview?.current.orEmpty()
+              .associate { it.meter_key to it.value_.toFloat() },
             error = (prev as? TaskUiState.Success)?.error,
           )
         }
@@ -318,6 +300,19 @@ class TaskViewModel(
   }
 
   // ── Form field changes ───────────────────────────────────────────────────
+
+  /**
+   * What [draft] — the form as it would be saved — is due against this Thing's real logs and
+   * cards. The same computation the dashboard cards run, so the form's banner agrees with them
+   * (#347); null before the Thing has loaded.
+   */
+  fun previewDue(draft: MaintenanceTask): DueMetadata? {
+    val loaded = _uiState.value as? TaskUiState.Success ?: return null
+    return taskDueManager.computeNextDue(draft, loaded.availableLogs, loaded.allInspections)
+  }
+
+  fun currentReading(meterKey: String): Float =
+    (_uiState.value as? TaskUiState.Success)?.currentReadings?.get(meterKey) ?: 0f
 
   fun onTitleChange(value: String) =
     _formState.update { it.copy(title = value) }

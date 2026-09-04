@@ -75,6 +75,8 @@ fun AddTaskRoute(
       onForcedEngineHoursChange = viewModel::onForcedEngineHoursChange,
       onForceOverrideDateChange = viewModel::onForceOverrideDateChange,
       onForcedDateMillisChange = viewModel::onForcedDateMillisChange,
+      previewDue = viewModel::previewDue,
+      currentReading = viewModel::currentReading,
       isSaving = isSaving,
       snackbarHostState = snackbarHostState,
       onCancel = { navController.popBackStack() },

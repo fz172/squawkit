@@ -687,11 +687,6 @@ feature/tasks/sharedassets	skip_task_confirm_body	Marks complete without logging
 feature/tasks/sharedassets	skip_task_confirm_title	Skip This Cycle?
 feature/tasks/sharedassets	unknown_date	Unknown date
 feature/tasks/sharedassets	unknown_task	Unknown maintenance task (%1$s)
-feature/tasks/update	adj_preview_hint	What will happen
-feature/tasks/update	adj_preview_label_neutral	Current
-feature/tasks/update	adj_preview_neutral_primary	No adjustments
-feature/tasks/update	adj_preview_neutral_secondary_linked	Linked to another task — schedule is automatic
-feature/tasks/update	adj_preview_neutral_secondary_unset	No schedule set yet
 feature/tasks/update	adj_preview_primary_date	Next due %1$s · %2$s
 feature/tasks/update	adj_preview_primary_hours	Next due at %1$s %2$s · %3$s
 feature/tasks/update	adj_preview_rel_due_today	due today
@@ -702,11 +697,6 @@ feature/tasks/update	adj_preview_rel_in_hours	in %1$s %2$s
 feature/tasks/update	adj_preview_rel_over_hours	over by %1$s %2$s
 feature/tasks/update	adj_preview_rel_overdue_day	overdue by 1 day
 feature/tasks/update	adj_preview_rel_overdue_days	overdue by %1$d days
-feature/tasks/update	adj_preview_reschedule_date_primary	Next due %1$s
-feature/tasks/update	adj_preview_reschedule_hours_primary	Next due at %1$s %2$s
-feature/tasks/update	adj_preview_reschedule_was_date	Was set by schedule
-feature/tasks/update	adj_preview_was_date	Was %1$s
-feature/tasks/update	adj_preview_was_hours	Was %1$s %2$s
 feature/tasks/update	adj_reschedule_disabled_linked	Disabled — this task is linked to another
 feature/tasks/update	adj_reschedule_disabled_unset	Set a schedule first to enable rescheduling
 feature/tasks/update	adj_reschedule_section_label	Reschedule next due
@@ -751,7 +741,7 @@ feature/tasks/update	schedule_preview_due_in	Due in %1$d %2$s
 feature/tasks/update	schedule_preview_due_in_hours	Due in %1$s %2$s
 feature/tasks/update	schedule_preview_empty_primary	No schedule yet
 feature/tasks/update	schedule_preview_empty_secondary	Pick how this task is tracked below
-feature/tasks/update	schedule_preview_hint	How this task will appear
+feature/tasks/update	schedule_preview_hint	Next due · schedule · override
 feature/tasks/update	schedule_preview_label	Preview
 feature/tasks/update	schedule_preview_linked_one_time_secondary	Will move to history after first log
 feature/tasks/update	schedule_preview_linked_primary	Due whenever "%1$s" is due
@@ -907,5 +897,5 @@ feature/tasks/update	schedule_preview_due_seasonal_once	Due next %1$s
 feature/tasks/update	initial_due_section_label	First due
 feature/tasks/update	initial_due_title	Set when this is first due
 feature/tasks/update	initial_due_subtitle	Otherwise the first due is counted from today or the current reading. The schedule takes over after the first log.
-feature/tasks/update	schedule_preview_first_due_date	First due %1$s
-feature/tasks/update	schedule_preview_first_due_meter	First due at %1$s %2$s
+feature/tasks/update	due_summary_schedule_alone_date	Schedule alone: %1$s
+feature/tasks/update	due_summary_schedule_alone_meter	Schedule alone: %1$s %2$s

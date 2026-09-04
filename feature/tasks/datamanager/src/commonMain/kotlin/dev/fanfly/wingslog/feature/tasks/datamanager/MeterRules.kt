@@ -59,6 +59,14 @@ fun MaintenanceTask.withForcedDueMeter(
 )
 
 /**
+ * This task with every override stripped — no forced due, no recorded skip — so the due engine
+ * reports what the schedule alone would say. What the form's banner shows beside an override.
+ */
+fun MaintenanceTask.withoutOverrides(): MaintenanceTask =
+  copy(force_due_date = null, force_complied_status = null)
+    .withForcedDueMeter(defaultMeterKey(), null)
+
+/**
  * The meter [rules] schedule against, for a card whose component is [component].
  *
  * A forced override is measured in the same meter the rules are, so this is what a caller setting

@@ -19,19 +19,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.template.LocalThingTemplate
 import dev.fanfly.wingslog.core.template.meter
-import dev.fanfly.wingslog.core.ui.common.compose.PreviewBanner
-import dev.fanfly.wingslog.core.ui.common.compose.PreviewBannerTone
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
 import dev.fanfly.wingslog.thing.MaintenanceTask
-import kotlin.time.Instant
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.tasks.update.generated.resources.Res
@@ -40,31 +34,6 @@ import wingslog.feature.tasks.update.generated.resources.initial_due_subtitle
 import wingslog.feature.tasks.update.generated.resources.initial_due_title
 import wingslog.feature.tasks.update.generated.resources.schedule_prefix_every
 import wingslog.feature.tasks.update.generated.resources.schedule_prefix_in
-import wingslog.feature.tasks.update.generated.resources.schedule_preview_asap_primary
-import wingslog.feature.tasks.update.generated.resources.schedule_preview_asap_secondary
-import wingslog.feature.tasks.update.generated.resources.schedule_preview_due_every
-import wingslog.feature.tasks.update.generated.resources.schedule_preview_due_every_hours
-import wingslog.feature.tasks.update.generated.resources.schedule_preview_due_in
-import wingslog.feature.tasks.update.generated.resources.schedule_preview_due_in_hours
-import wingslog.feature.tasks.update.generated.resources.schedule_preview_due_seasonal
-import wingslog.feature.tasks.update.generated.resources.schedule_preview_due_seasonal_once
-import wingslog.feature.tasks.update.generated.resources.schedule_preview_empty_primary
-import wingslog.feature.tasks.update.generated.resources.schedule_preview_empty_secondary
-import wingslog.feature.tasks.update.generated.resources.schedule_preview_first_due_date
-import wingslog.feature.tasks.update.generated.resources.schedule_preview_first_due_meter
-import wingslog.feature.tasks.update.generated.resources.schedule_preview_hint
-import wingslog.feature.tasks.update.generated.resources.schedule_preview_label
-import wingslog.feature.tasks.update.generated.resources.schedule_preview_linked_one_time_secondary
-import wingslog.feature.tasks.update.generated.resources.schedule_preview_linked_primary
-import wingslog.feature.tasks.update.generated.resources.schedule_preview_linked_repeating_secondary
-import wingslog.feature.tasks.update.generated.resources.schedule_preview_linked_unset_primary
-import wingslog.feature.tasks.update.generated.resources.schedule_preview_linked_unset_secondary
-import wingslog.feature.tasks.update.generated.resources.schedule_preview_one_time_secondary
-import wingslog.feature.tasks.update.generated.resources.schedule_preview_recurring_secondary
-import wingslog.feature.tasks.update.generated.resources.schedule_preview_set_calendar_primary
-import wingslog.feature.tasks.update.generated.resources.schedule_preview_set_hours_primary
-import wingslog.feature.tasks.update.generated.resources.schedule_preview_set_months_primary
-import wingslog.feature.tasks.update.generated.resources.schedule_preview_set_secondary
 import wingslog.feature.tasks.update.generated.resources.schedule_recurrence_asap
 import wingslog.feature.tasks.update.generated.resources.schedule_recurrence_asap_sub
 import wingslog.feature.tasks.update.generated.resources.schedule_recurrence_linked_one_time_sub
@@ -81,10 +50,7 @@ import wingslog.feature.tasks.update.generated.resources.schedule_step_months_la
 import wingslog.feature.tasks.update.generated.resources.schedule_step_recurrence_label
 import wingslog.feature.tasks.update.generated.resources.schedule_step_recurrence_linked_label
 import wingslog.feature.tasks.update.generated.resources.schedule_step_track_label
-import wingslog.feature.tasks.update.generated.resources.schedule_unit_days
-import wingslog.feature.tasks.update.generated.resources.schedule_unit_months
 import wingslog.feature.tasks.update.generated.resources.schedule_unit_tach_hours
-import wingslog.feature.tasks.update.generated.resources.schedule_unit_years
 
 /**
  * The create form's "First due" controls — the force-due override, offered once, at creation.
@@ -110,6 +76,11 @@ fun TaskScheduleTab(
   availableInspections: List<MaintenanceTask>,
   modifier: Modifier = Modifier,
   initialDue: InitialDueControls? = null,
+  /** The draft's due with and without its override, for the banner both tabs share. */
+  effectiveDue: DueMetadata? = null,
+  naturalDue: DueMetadata? = null,
+  overrideOn: Boolean = false,
+  currentReading: (String) -> Float = { 0f },
 ) {
   var advancedOpen by remember(state.mode) { mutableStateOf(state.mode == ScheduleMode.LINKED) }
 
@@ -126,38 +97,14 @@ fun TaskScheduleTab(
     modifier = modifier.fillMaxWidth(),
     verticalArrangement = Arrangement.spacedBy(Spacing.extraLarge),
   ) {
-    val (previewPrimary, previewSecondary, previewIsEmpty) = previewText(
-      state = state,
+    DueSummaryBanner(
+      schedule = state,
       linkedTaskName = availableInspections.firstOrNull { it.id == state.linkedToId }?.title,
       meterUnit = meterUnit,
-    )
-    // A first due the user set replaces the generic second line: it is the more useful fact.
-    val firstDueLine = initialDue?.let { controls ->
-      when {
-        state.isDated && controls.forceOverrideDate && controls.forcedDateMillis != null ->
-          stringResource(
-            Res.string.schedule_preview_first_due_date,
-            Instant.fromEpochMilliseconds(controls.forcedDateMillis)
-              .toLocalDateTime(TimeZone.currentSystemDefault()).date.toDisplayFormat(),
-          )
-
-        state.mode == ScheduleMode.HOURS && controls.forceOverrideEngine &&
-          controls.forcedEngineHours.toFloatOrNull() != null ->
-          stringResource(
-            Res.string.schedule_preview_first_due_meter,
-            formatEngineHours(controls.forcedEngineHours.toFloat()),
-            meterUnit,
-          )
-
-        else -> null
-      }
-    }
-    PreviewBanner(
-      label = stringResource(Res.string.schedule_preview_label),
-      hint = stringResource(Res.string.schedule_preview_hint),
-      primary = AnnotatedString(previewPrimary),
-      secondary = AnnotatedString(firstDueLine ?: previewSecondary),
-      tone = if (previewIsEmpty) PreviewBannerTone.Neutral else PreviewBannerTone.Active,
+      overrideOn = overrideOn,
+      effectiveDue = effectiveDue,
+      naturalDue = naturalDue,
+      currentReading = currentReading,
     )
 
     // Step 1 — How is this tracked?
@@ -418,118 +365,6 @@ private fun ScheduleSection(
   }
 }
 
-@Composable
-private fun previewText(
-  state: ScheduleState,
-  linkedTaskName: String?,
-  meterUnit: String,
-): Triple<String, String, Boolean> {
-  if (state.mode == null) {
-    return Triple(
-      stringResource(Res.string.schedule_preview_empty_primary),
-      stringResource(Res.string.schedule_preview_empty_secondary),
-      true,
-    )
-  }
-  if (state.mode == ScheduleMode.LINKED) {
-    if (state.linkedToId == null || linkedTaskName == null) {
-      return Triple(
-        stringResource(Res.string.schedule_preview_linked_unset_primary),
-        stringResource(Res.string.schedule_preview_linked_unset_secondary),
-        false,
-      )
-    }
-    val secondary = if (state.recurrence == ScheduleRecurrence.ONE_TIME) {
-      stringResource(Res.string.schedule_preview_linked_one_time_secondary)
-    } else {
-      stringResource(Res.string.schedule_preview_linked_repeating_secondary)
-    }
-    return Triple(
-      stringResource(
-        Res.string.schedule_preview_linked_primary,
-        linkedTaskName
-      ),
-      secondary,
-      false,
-    )
-  }
-  if (state.mode == ScheduleMode.SEASONAL) {
-    if (state.seasonalMonths.isEmpty()) {
-      return Triple(
-        stringResource(Res.string.schedule_preview_set_months_primary),
-        stringResource(Res.string.schedule_preview_set_secondary),
-        false,
-      )
-    }
-    val months = formatMonthList(state.seasonalMonths)
-    return if (state.recurrence == ScheduleRecurrence.ONE_TIME) {
-      Triple(
-        stringResource(Res.string.schedule_preview_due_seasonal_once, months),
-        stringResource(Res.string.schedule_preview_one_time_secondary),
-        false,
-      )
-    } else {
-      Triple(
-        stringResource(Res.string.schedule_preview_due_seasonal, months),
-        stringResource(Res.string.schedule_preview_recurring_secondary),
-        false,
-      )
-    }
-  }
-  if (state.recurrence == ScheduleRecurrence.ASAP) {
-    return Triple(
-      stringResource(Res.string.schedule_preview_asap_primary),
-      stringResource(Res.string.schedule_preview_asap_secondary),
-      false,
-    )
-  }
-  if (state.mode == ScheduleMode.TIME) {
-    val n = state.calValue.toIntOrNull()
-    if (n == null) {
-      return Triple(
-        stringResource(
-          Res.string.schedule_preview_set_calendar_primary,
-          stringResource(state.calUnit.label())
-        ),
-        stringResource(Res.string.schedule_preview_set_secondary),
-        false,
-      )
-    }
-    val pluralUnit = stringResource(state.calUnit.label())
-    val unitStr = if (n == 1) pluralUnit.removeSuffix("s") else pluralUnit
-    val primaryRes = if (state.recurrence == ScheduleRecurrence.ONE_TIME)
-      Res.string.schedule_preview_due_in else Res.string.schedule_preview_due_every
-    val secondaryRes = if (state.recurrence == ScheduleRecurrence.ONE_TIME)
-      Res.string.schedule_preview_one_time_secondary else Res.string.schedule_preview_recurring_secondary
-    return Triple(
-      stringResource(
-        primaryRes,
-        n,
-        unitStr
-      ),
-      stringResource(secondaryRes),
-      false
-    )
-  }
-  // HOURS
-  if (state.hourValue.isBlank()) {
-    return Triple(
-      stringResource(Res.string.schedule_preview_set_hours_primary, meterUnit),
-      stringResource(Res.string.schedule_preview_set_secondary),
-      false,
-    )
-  }
-  val primaryRes = if (state.recurrence == ScheduleRecurrence.ONE_TIME)
-    Res.string.schedule_preview_due_in_hours else Res.string.schedule_preview_due_every_hours
-  val secondaryRes = if (state.recurrence == ScheduleRecurrence.ONE_TIME)
-    Res.string.schedule_preview_one_time_secondary else Res.string.schedule_preview_recurring_secondary
-  return Triple(
-    stringResource(primaryRes, state.hourValue, meterUnit),
-    stringResource(secondaryRes),
-    false
-  )
-}
-
 /** TIME and SEASONAL schedules are dated; a first due for them is a date. */
 private val ScheduleState.isDated: Boolean
   get() = mode == ScheduleMode.TIME || mode == ScheduleMode.SEASONAL
@@ -543,9 +378,4 @@ private val ScheduleState.isComplete: Boolean
     else -> false
   }
 
-private fun ScheduleTimeUnit.label(): StringResource = when (this) {
-  ScheduleTimeUnit.DAYS -> Res.string.schedule_unit_days
-  ScheduleTimeUnit.MONTHS -> Res.string.schedule_unit_months
-  ScheduleTimeUnit.YEARS -> Res.string.schedule_unit_years
-}
 

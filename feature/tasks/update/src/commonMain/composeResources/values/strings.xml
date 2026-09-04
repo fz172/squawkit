@@ -86,17 +86,9 @@
   <string name="adjustments">Adjustments</string>
 
   <!-- Adjustments tab — preview banner -->
-  <string name="adj_preview_neutral_primary">No adjustments</string>
-  <string name="adj_preview_neutral_secondary_linked">Linked to another task — schedule is automatic</string>
-  <string name="adj_preview_neutral_secondary_unset">No schedule set yet</string>
-  <string name="adj_preview_reschedule_date_primary">Next due <xliff:g example="12 Mar 2026">%1$s</xliff:g></string>
-  <string name="adj_preview_reschedule_hours_primary">Next due at <xliff:g example="12.5">%1$s</xliff:g> <xliff:g example="hrs">%2$s</xliff:g></string>
-  <string name="adj_preview_reschedule_was_date">Was set by schedule</string>
   <!-- Adjustments tab — preview banner with next-due + relative phrasing -->
   <string name="adj_preview_primary_date">Next due <xliff:g example="12 Mar 2026">%1$s</xliff:g> · <xliff:g example="3">%2$s</xliff:g></string>
   <string name="adj_preview_primary_hours">Next due at <xliff:g example="1250.0">%1$s</xliff:g> <xliff:g example="hrs">%2$s</xliff:g> · <xliff:g example="in 12.5 hrs">%3$s</xliff:g></string>
-  <string name="adj_preview_was_date">Was <xliff:g example="12 Mar 2026">%1$s</xliff:g></string>
-  <string name="adj_preview_was_hours">Was <xliff:g example="1200.0">%1$s</xliff:g> <xliff:g example="hrs">%2$s</xliff:g></string>
   <!-- Relative phrases (days) -->
   <string name="adj_preview_rel_due_today">due today</string>
   <string name="adj_preview_rel_in_day">in 1 day</string>
@@ -109,9 +101,9 @@
   <string name="adj_preview_rel_hours_at">at the current reading</string>
   <!-- Preview banner eyebrow labels and hints -->
   <string name="schedule_preview_label">Preview</string>
-  <string name="schedule_preview_hint">How this task will appear</string>
-  <string name="adj_preview_label_neutral">Current</string>
-  <string name="adj_preview_hint">What will happen</string>
+  <string name="schedule_preview_hint">Next due · schedule · override</string>
+  <string name="due_summary_schedule_alone_date">Schedule alone: <xliff:g example="30 Sep 2026">%1$s</xliff:g></string>
+  <string name="due_summary_schedule_alone_meter">Schedule alone: <xliff:g example="1,200">%1$s</xliff:g> <xliff:g example="hrs">%2$s</xliff:g></string>
 
   <!-- Adjustments tab — reschedule section -->
   <string name="adj_reschedule_section_label">Reschedule next due</string>
@@ -127,8 +119,6 @@
   <string name="initial_due_section_label">First due</string>
   <string name="initial_due_title">Set when this is first due</string>
   <string name="initial_due_subtitle">Otherwise the first due is counted from today or the current reading. The schedule takes over after the first log.</string>
-  <string name="schedule_preview_first_due_date">First due <xliff:g example="15 Sep 2026">%1$s</xliff:g></string>
-  <string name="schedule_preview_first_due_meter">First due at <xliff:g example="1,250">%1$s</xliff:g> <xliff:g example="hrs">%2$s</xliff:g></string>
 
   <!-- Adjustments tab — delete task section -->
   <string name="delete_task_section_label">Delete Task</string>

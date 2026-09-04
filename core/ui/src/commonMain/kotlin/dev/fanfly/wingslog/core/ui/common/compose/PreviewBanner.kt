@@ -49,6 +49,8 @@ fun PreviewBanner(
   secondary: AnnotatedString,
   tone: PreviewBannerTone = PreviewBannerTone.Neutral,
   modifier: Modifier = Modifier,
+  /** A third, quieter line — an override or a caveat — shown only when there is one. */
+  tertiary: AnnotatedString? = null,
 ) {
   val accentColor = when (tone) {
     PreviewBannerTone.Neutral -> MaterialTheme.colorScheme.outline
@@ -127,6 +129,13 @@ fun PreviewBanner(
         style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
         color = MaterialTheme.colorScheme.onSurfaceVariant,
       )
+      if (tertiary != null) {
+        Text(
+          tertiary,
+          style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+      }
     }
   }
 }
