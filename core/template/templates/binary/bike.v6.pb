@@ -1,5 +1,5 @@
 
-bike"½
+bike"½
 
 bikebikesa
 issueissuesan"Issues
@@ -21,4 +21,4 @@ Normal PSI*35HB
 odometerDistancemiB
 
 ride_hours
-Ride Hourshrs RBikeZbike`
+Ride Hourshrs RBikeZbike`zReadings

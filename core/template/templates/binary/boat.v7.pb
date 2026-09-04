@@ -1,5 +1,5 @@
 
-boat"°
+boat"°
 
 boatboatsa
 issueissuesan"Issues
@@ -20,4 +20,4 @@ Propulsion(H:.
 riggingRiggingB/
 engine_hoursEngine Hourshrs *
 propulsionRBoatZboat`r9
-abycABYC Certified"Certification Number*ABYC number
+abycABYC Certified"Certification Number*ABYC numberzHours

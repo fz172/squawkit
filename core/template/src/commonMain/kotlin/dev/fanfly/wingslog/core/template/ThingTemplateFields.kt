@@ -95,6 +95,19 @@ fun ThingTemplate?.meterLabelWithUnit(key: String, ifAbsent: String): String {
     ?.let { "$label ($it)" } ?: label
 }
 
+/**
+ * What to call this template's meter set — the log form's tab and the section heading inside it.
+ *
+ * Declared by the template, because no rule names all of them: "Hours" for an airplane's three
+ * hour meters, "Odometer" for a car's one, "Readings" for a bike carrying a distance and ride
+ * hours. A preset published before `meters_label` existed declares nothing, so a template with a
+ * single meter falls back to that meter's own label and everything else to [ifAbsent].
+ */
+fun ThingTemplate?.metersLabel(ifAbsent: String): String =
+  this?.meters_label?.takeIf { it.isNotEmpty() }
+    ?: this?.meters?.singleOrNull()?.label?.takeIf { it.isNotEmpty() }
+    ?: ifAbsent
+
 /** A slot's label, falling back to [ifAbsent]. See [meterLabel] on why the fallback exists. */
 fun ThingTemplate?.slotLabel(key: String, ifAbsent: String): String =
   slot(key)?.label?.takeIf { it.isNotEmpty() } ?: ifAbsent

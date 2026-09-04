@@ -223,6 +223,17 @@ export interface ThingTemplate {
   specFields: SpecField[];
   componentSlots: ComponentSlot[];
   meters: MeterDef[];
+  /**
+   * What to call the meter set where a screen names the group rather than a meter — the log form's
+   * tab and the section heading inside it.
+   *
+   * Stored rather than derived, for the reason `Noun.short_plural` is: no rule produces all of
+   * them. An airplane's three hour meters are "Hours" and a car's one odometer is "Odometer",
+   * which a single-meter rule gets right; a bike carries a distance AND ride hours, and nothing in
+   * that pair names the pair. Empty falls back to that rule, so a Thing still walking DNA from
+   * before this field renders sensibly.
+   */
+  metersLabel: string;
   starterTasks: StarterTask[];
   /**
    * How many fields of the user's own the form offers, beyond `spec_fields`. 0 — the proto3
@@ -1150,6 +1161,7 @@ function createBaseThingTemplate(): ThingTemplate {
     specFields: [],
     componentSlots: [],
     meters: [],
+    metersLabel: "",
     starterTasks: [],
     customSpecFields: 0,
     certifications: [],
@@ -1184,6 +1196,9 @@ export const ThingTemplate: MessageFns<ThingTemplate> = {
     }
     for (const v of message.meters) {
       MeterDef.encode(v!, writer.uint32(66).fork()).join();
+    }
+    if (message.metersLabel !== "") {
+      writer.uint32(122).string(message.metersLabel);
     }
     for (const v of message.starterTasks) {
       StarterTask.encode(v!, writer.uint32(74).fork()).join();
@@ -1277,6 +1292,14 @@ export const ThingTemplate: MessageFns<ThingTemplate> = {
           message.meters.push(MeterDef.decode(reader, reader.uint32()));
           continue;
         }
+        case 15: {
+          if (tag !== 122) {
+            break;
+          }
+
+          message.metersLabel = reader.string();
+          continue;
+        }
         case 9: {
           if (tag !== 74) {
             break;
@@ -1358,6 +1381,11 @@ export const ThingTemplate: MessageFns<ThingTemplate> = {
       meters: globalThis.Array.isArray(object?.meters)
         ? object.meters.map((e: any) => MeterDef.fromJSON(e))
         : [],
+      metersLabel: isSet(object.metersLabel)
+        ? globalThis.String(object.metersLabel)
+        : isSet(object.meters_label)
+        ? globalThis.String(object.meters_label)
+        : "",
       starterTasks: globalThis.Array.isArray(object?.starterTasks)
         ? object.starterTasks.map((e: any) => StarterTask.fromJSON(e))
         : globalThis.Array.isArray(object?.starter_tasks)
@@ -1411,6 +1439,9 @@ export const ThingTemplate: MessageFns<ThingTemplate> = {
     if (message.meters?.length) {
       obj.meters = message.meters.map((e) => MeterDef.toJSON(e));
     }
+    if (message.metersLabel !== "") {
+      obj.metersLabel = message.metersLabel;
+    }
     if (message.starterTasks?.length) {
       obj.starterTasks = message.starterTasks.map((e) => StarterTask.toJSON(e));
     }
@@ -1449,6 +1480,7 @@ export const ThingTemplate: MessageFns<ThingTemplate> = {
     message.specFields = object.specFields?.map((e) => SpecField.fromPartial(e)) || [];
     message.componentSlots = object.componentSlots?.map((e) => ComponentSlot.fromPartial(e)) || [];
     message.meters = object.meters?.map((e) => MeterDef.fromPartial(e)) || [];
+    message.metersLabel = object.metersLabel ?? "";
     message.starterTasks = object.starterTasks?.map((e) => StarterTask.fromPartial(e)) || [];
     message.customSpecFields = object.customSpecFields ?? 0;
     message.certifications = object.certifications?.map((e) => CertificationDef.fromPartial(e)) || [];

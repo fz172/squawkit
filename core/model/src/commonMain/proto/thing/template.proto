@@ -204,6 +204,17 @@ message ThingTemplate {
   repeated SpecField spec_fields = 6;
   repeated ComponentSlot component_slots = 7;
   repeated MeterDef meters = 8;
+
+  // What to call the meter set where a screen names the group rather than a meter — the log form's
+  // tab and the section heading inside it.
+  //
+  // Stored rather than derived, for the reason `Noun.short_plural` is: no rule produces all of
+  // them. An airplane's three hour meters are "Hours" and a car's one odometer is "Odometer",
+  // which a single-meter rule gets right; a bike carries a distance AND ride hours, and nothing in
+  // that pair names the pair. Empty falls back to that rule, so a Thing still walking DNA from
+  // before this field renders sensibly.
+  string meters_label = 15;
+
   repeated StarterTask starter_tasks = 9;
 
   // How many fields of the user's own the form offers, beyond `spec_fields`. 0 — the proto3

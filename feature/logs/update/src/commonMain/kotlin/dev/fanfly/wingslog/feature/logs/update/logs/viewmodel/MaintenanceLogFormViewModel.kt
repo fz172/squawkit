@@ -349,11 +349,20 @@ class MaintenanceLogFormViewModel(
             selectedSquawkIds = log.squawk_ids,
             selectedInspectionIds = log.inspection_ids,
             selectedTechnician = log.technician ?: it.selectedTechnician,
-            // Every meter this template declares that the log recorded, by key.
+            // Every meter this template declares that the log recorded, by key. The meter says
+            // whether it takes a fraction: an odometer does not, and a car's log opened for edit
+            // showed "84512.0" in a field whose keyboard offers no decimal point.
             meterValues = currentThingTemplate.template.value?.meters.orEmpty()
               .mapNotNull { meter ->
                 log.readingFor(meter.key)
-                  ?.let { meter.key to it.toString() }
+                  ?.let { reading ->
+                    meter.key to if (meter.decimal) {
+                      reading.toString()
+                    } else {
+                      reading.toLong()
+                        .toString()
+                    }
+                  }
               }
               .toMap(),
             selectedComponentType = log.component_type,

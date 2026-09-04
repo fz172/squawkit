@@ -18,8 +18,12 @@
 # capabilities.proto. This preset declares no `certifications`, which says the same thing where the
 # scope is right: nothing is offered for it.
 #
+# v6 adds `meters_label` — what to call the meter set where a screen names the group
+# rather than a meter. The log form's tab said "Hours" for every preset, aviation's word
+# on a car's odometer. Here: a distance AND ride hours — neither word names the pair, which is why the field exists.
+#
 id: "bike"
-version: 5
+version: 6
 min_app_version: 0
 
 display_name: "Bike"
@@ -151,3 +155,6 @@ meters {
   unit_label: "hrs"
   decimal: true
 }
+
+# See ThingTemplate.meters_label: the word for the SET, which no single meter above supplies.
+meters_label: "Readings"
