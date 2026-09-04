@@ -9,6 +9,9 @@ import dev.fanfly.wingslog.core.storage.ThingScopeResolver
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.EntityStore
 import dev.fanfly.wingslog.core.storage.EntityStoreFactory
+import dev.fanfly.wingslog.feature.comments.datamanager.CommentManager
+import dev.fanfly.wingslog.feature.comments.model.CommentParentKind
+import dev.fanfly.wingslog.feature.comments.model.CommentTarget
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -21,6 +24,7 @@ import kotlin.time.Clock
 
 class SquawkManagerImpl(
   private val scopeResolver: ThingScopeResolver,
+  private val commentManager: CommentManager,
   storeFactory: EntityStoreFactory,
 ) : SquawkManager {
 
@@ -71,6 +75,10 @@ class SquawkManagerImpl(
     runCatching {
       val scope = scopeResolver.resolveNow(thingId)
       store.delete(squawkId, scope)
+      // The thread goes with its record; see CommentManager.deleteThread.
+      commentManager.deleteThread(
+        CommentTarget(thingId, squawkId, CommentParentKind.SQUAWK)
+      )
       true
     }.onFailure { logger.w(it) { "Error deleting squawk $squawkId" } }
 

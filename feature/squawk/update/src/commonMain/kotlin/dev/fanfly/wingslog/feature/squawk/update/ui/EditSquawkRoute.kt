@@ -119,11 +119,13 @@ fun EditSquawkRoute(
       )
     },
     commentCount = commentState.count,
+    hasCommentDraft = commentState.hasUnsavedInput,
     commentsSection = {
       val thread = viewModel.comments
       if (thread != null) {
         CommentThreadSection(
           state = commentState,
+          isAnonymous = viewModel.isAnonymous,
           onDraftChange = thread::onDraftChange,
           onPost = thread::post,
           onToggleMenu = thread::toggleMenu,

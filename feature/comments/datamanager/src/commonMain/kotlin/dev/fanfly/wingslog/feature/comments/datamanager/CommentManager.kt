@@ -35,9 +35,22 @@ interface CommentManager {
     text: String,
   ): Result<Unit>
 
-  /** Deletes [commentId]. Same authorship gate as [updateComment]. */
+  /**
+   * Tombstones [commentId] — clears the text, stamps `deleted_at`, keeps the row. Same authorship
+   * gate as [updateComment]. See comment.proto for why this never removes the row.
+   */
   suspend fun deleteComment(
     target: CommentTarget,
     commentId: String,
   ): Result<Unit>
+
+  /**
+   * Removes every comment under [target] — the one place a comment row actually goes away.
+   *
+   * Called by the squawk and task managers when the parent record is deleted: a thread with no
+   * record to hang off would otherwise sit in every member's store and in Firestore forever,
+   * re-hydrated on each sign-in, and a form still open on the deleted record would keep posting
+   * into it. No authorship gate — whoever may delete the parent may take its thread with it.
+   */
+  suspend fun deleteThread(target: CommentTarget): Result<Unit>
 }

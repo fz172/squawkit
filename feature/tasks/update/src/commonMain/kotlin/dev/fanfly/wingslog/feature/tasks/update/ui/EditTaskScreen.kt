@@ -121,6 +121,8 @@ fun EditTaskScreen(
   snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
   attachmentSection: @Composable () -> Unit = {},
   commentCount: Int = 0,
+  /** An unposted comment draft or an open inline editor — text that exists nowhere else yet. */
+  hasCommentDraft: Boolean = false,
   commentsSection: @Composable () -> Unit = {},
 ) {
   var showDatePicker by remember { mutableStateOf(false) }
@@ -131,7 +133,7 @@ fun EditTaskScreen(
   // cancel/back, so discarding continues into that option instead of just leaving the screen.
   var pendingResolveAction by remember { mutableStateOf<ResolveAction?>(null) }
 
-  val hasChanges = state.hasChanges
+  val hasChanges = state.hasChanges || hasCommentDraft
 
   val tryCancel = {
     if (hasChanges) showUnsavedChangesDialog = true else onCancel()
@@ -183,11 +185,12 @@ fun EditTaskScreen(
   val coroutineScope = rememberCoroutineScope()
   val analytics = LocalAnalytics.current
   // Log tab switches (tap or swipe) as page views; drop(1) skips the initial page on open.
-  LaunchedEffect(pagerState) {
+  // Keyed on tabs too: the capability set can resolve while the form is up and change the list.
+  LaunchedEffect(pagerState, tabs) {
     snapshotFlow { pagerState.currentPage }
       .drop(1)
       .collect { page ->
-        analytics.logScreenView("task_form/${tabs[page].analyticsKey}")
+        tabs.getOrNull(page)?.let { analytics.logScreenView("task_form/${it.analyticsKey}") }
       }
   }
 

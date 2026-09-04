@@ -15,6 +15,7 @@ import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
@@ -27,6 +28,10 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontStyle
@@ -45,11 +50,13 @@ import dev.fanfly.wingslog.feature.comments.model.CommentEntry
 import dev.fanfly.wingslog.feature.comments.model.CommentThreadState
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.cancel
+import wingslog.core.sharedassets.generated.resources.delete
 import wingslog.core.sharedassets.generated.resources.save
+import wingslog.core.sharedassets.generated.resources.unknown
 import wingslog.feature.comments.sharedassets.generated.resources.Res
 import wingslog.feature.comments.sharedassets.generated.resources.comment_actions
-import wingslog.feature.comments.sharedassets.generated.resources.comment_author_unknown
-import wingslog.feature.comments.sharedassets.generated.resources.comment_delete
+import wingslog.feature.comments.sharedassets.generated.resources.comment_delete_message
+import wingslog.feature.comments.sharedassets.generated.resources.comment_delete_title
 import wingslog.feature.comments.sharedassets.generated.resources.comment_deleted
 import wingslog.feature.comments.sharedassets.generated.resources.comment_edit
 import wingslog.feature.comments.sharedassets.generated.resources.comment_edited
@@ -58,6 +65,7 @@ import wingslog.feature.comments.sharedassets.generated.resources.comment_placeh
 import wingslog.feature.comments.sharedassets.generated.resources.comment_post
 import wingslog.feature.comments.sharedassets.generated.resources.comment_you
 import wingslog.feature.comments.sharedassets.generated.resources.comments_empty
+import wingslog.feature.comments.sharedassets.generated.resources.sign_in_to_add_comments
 import kotlin.time.Instant
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 
@@ -71,6 +79,13 @@ import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 @Composable
 fun CommentThreadSection(
   state: CommentThreadState,
+  /**
+   * A guest account is fully offline and its uid does not survive a merge into an existing
+   * account (the migrator rewrites scope paths, not payloads), so a comment it posted would be
+   * nobody's afterwards — no menu, no edit, no delete. The thread stays readable; the composer
+   * is replaced by a sign-in line, the same as attachments.
+   */
+  isAnonymous: Boolean,
   onDraftChange: (String) -> Unit,
   onPost: () -> Unit,
   onToggleMenu: (String) -> Unit,
@@ -82,6 +97,17 @@ fun CommentThreadSection(
   onSaveEdit: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
+  // Which comment the Delete item is asking about. Transient — the dialog is either on screen
+  // or it is not — so a composable remember is the right home, as it is for the other confirm
+  // dialogs in the app.
+  var pendingDeleteId by remember { mutableStateOf<String?>(null) }
+  pendingDeleteId?.let { id ->
+    DeleteCommentConfirmDialog(
+      onConfirm = { pendingDeleteId = null; onDelete(id) },
+      onDismiss = { pendingDeleteId = null },
+    )
+  }
+
   Column(
     modifier = modifier.fillMaxWidth(),
     verticalArrangement = Arrangement.spacedBy(Spacing.medium),
@@ -103,7 +129,7 @@ fun CommentThreadSection(
           onToggleMenu = { onToggleMenu(comment.id) },
           onDismissMenu = onDismissMenu,
           onEdit = { onEdit(comment.id) },
-          onDelete = { onDelete(comment.id) },
+          onDelete = { onDismissMenu(); pendingDeleteId = comment.id },
           onEditDraftChange = onEditDraftChange,
           onCancelEdit = onCancelEdit,
           onSaveEdit = onSaveEdit,
@@ -111,34 +137,70 @@ fun CommentThreadSection(
       }
     }
 
-    Row(
-      modifier = Modifier.fillMaxWidth(),
-      horizontalArrangement = Arrangement.spacedBy(Spacing.small),
-      verticalAlignment = Alignment.CenterVertically,
-    ) {
-      FormTextField(
-        label = stringResource(Res.string.comment_new_label),
-        value = state.draft,
-        placeholder = stringResource(Res.string.comment_placeholder),
-        singleLine = false,
-        minLines = 2,
-        onValueChange = onDraftChange,
-        modifier = Modifier.weight(1f),
+    if (isAnonymous) {
+      Text(
+        text = stringResource(Res.string.sign_in_to_add_comments),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
       )
-      FilledIconButton(
-        onClick = onPost,
-        enabled = state.canPost,
-        modifier = Modifier.size(Spacing.buttonHeight),
-        shape = RoundedCornerShape(Spacing.buttonCornerRadius),
+    } else {
+      Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(Spacing.small),
+        verticalAlignment = Alignment.CenterVertically,
       ) {
-        Icon(
-          Icons.AutoMirrored.Filled.Send,
-          contentDescription = stringResource(Res.string.comment_post),
-          modifier = Modifier.size(Spacing.large),
+        FormTextField(
+          label = stringResource(Res.string.comment_new_label),
+          value = state.draft,
+          placeholder = stringResource(Res.string.comment_placeholder),
+          singleLine = false,
+          minLines = 2,
+          onValueChange = onDraftChange,
+          modifier = Modifier.weight(1f),
         )
+        FilledIconButton(
+          onClick = onPost,
+          enabled = state.canPost,
+          modifier = Modifier.size(Spacing.buttonHeight),
+          shape = RoundedCornerShape(Spacing.buttonCornerRadius),
+        ) {
+          Icon(
+            Icons.AutoMirrored.Filled.Send,
+            contentDescription = stringResource(Res.string.comment_post),
+            modifier = Modifier.size(Spacing.large),
+          )
+        }
       }
     }
   }
+}
+
+/**
+ * Deleting is the one comment action that cannot be undone — the tombstone is final by design —
+ * and the item sits one row under "Update comment". Every other destructive action in the app
+ * confirms; this one has more reason to than most.
+ */
+@Composable
+private fun DeleteCommentConfirmDialog(
+  onConfirm: () -> Unit,
+  onDismiss: () -> Unit,
+) {
+  AlertDialog(
+    onDismissRequest = onDismiss,
+    title = { Text(stringResource(Res.string.comment_delete_title)) },
+    text = { Text(stringResource(Res.string.comment_delete_message)) },
+    confirmButton = {
+      TextButton(onClick = onConfirm) {
+        Text(
+          text = stringResource(CoreRes.string.delete),
+          color = MaterialTheme.colorScheme.error,
+        )
+      }
+    },
+    dismissButton = {
+      TextButton(onClick = onDismiss) { Text(stringResource(CoreRes.string.cancel)) }
+    },
+  )
 }
 
 @Composable
@@ -180,9 +242,7 @@ private fun CommentCard(
             verticalAlignment = Alignment.CenterVertically,
           ) {
             Text(
-              text = comment.authorName.ifBlank {
-                stringResource(Res.string.comment_author_unknown)
-              },
+              text = comment.authorName.ifBlank { stringResource(CoreRes.string.unknown) },
               style = MaterialTheme.typography.titleSmall,
               color = MaterialTheme.colorScheme.onSurface,
               maxLines = 1,
@@ -246,7 +306,7 @@ private fun CommentCard(
               DropdownMenuItem(
                 text = {
                   Text(
-                    text = stringResource(Res.string.comment_delete),
+                    text = stringResource(CoreRes.string.delete),
                     color = MaterialTheme.colorScheme.error,
                   )
                 },
@@ -405,6 +465,7 @@ private fun CommentThreadSectionPreview() {
           ),
         ),
       ),
+      isAnonymous = false,
       onDraftChange = {},
       onPost = {},
       onToggleMenu = {},

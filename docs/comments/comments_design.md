@@ -57,8 +57,18 @@ and branding the comment would be a lie the reader cannot check.
 ## 2a. Delete is a tombstone, never a removal
 
 Deleting clears `text` and stamps `deleted_at`. The row stays, and the thread keeps its card:
-struck through, muted, reading "Comment deleted on 09/03/2026 09:18 PM". Nothing in the app calls
-`EntityStore.delete` for a comment.
+struck through, muted, reading "Comment deleted on 09/03/2026 09:18 PM". No action *on a comment*
+calls `EntityStore.delete`.
+
+The one path that does remove comment rows is `CommentManager.deleteThread`, which the squawk and
+task managers call when the **parent record** is deleted. A thread with no record to hang off would
+otherwise sit in every member's store and in Firestore forever, re-hydrated on each sign-in, and a
+form still open on the deleted record would keep posting into it. (Deleting the Thing tombstones
+everything beneath it server-side, comments included.) The audit-trail argument below is about a
+comment outliving the author's regret, not about outliving the record it annotates.
+
+Deleting asks first. It is the one comment action that cannot be undone and the item sits one row
+under "Update comment"; every other destructive action in the app confirms.
 
 **This is the paper trail, not a nicety.** An edit is visible — `edited_at` puts an "Edited …" line
 on the card, so a rewrite is on the record for everyone who can read the thread. If a delete erased
@@ -83,12 +93,24 @@ host's `comment` subtree under the same `writerIsSelf()` attestation as logs, ta
 member who could read a squawk but not comment on it would have a read-only thread, which is not
 the feature.
 
-Edit and delete are the author's alone. The ⋮ menu is only rendered on your own comments, and
-`CommentManagerImpl` re-checks `author_uid` against the signed-in uid before writing — a thread
-other people can write into is exactly where "the UI checks" stops being sufficient. Note the limit
-of that check: it is client-side, so it is a correctness guard, not a security boundary. The rules
-grant any member write access to any comment document in the subtree, the same as for every other
-per-Thing kind.
+Edit and delete are the author's alone, enforced at three levels:
+
+- The ⋮ menu is only rendered on your own, live comments.
+- `CommentManagerImpl` re-checks `author_uid` against the signed-in uid before writing — a thread
+  other people can write into is exactly where "the UI checks" stops being sufficient.
+- `firestore.rules` lets a member **create** a comment but **update** only one whose envelope
+  `writerUid` is their own. `author_uid` lives inside the opaque payload where rules cannot see it,
+  so the attested `writerUid` is the only authorship the server can enforce — and without it a
+  technician could rewrite or strike through the host's comment and the thread would still show it
+  as the host's. Comments are the only per-Thing kind with this restriction; a member may still
+  amend a log or task someone else wrote. The host keeps full write on their own tree, as for every
+  other kind.
+
+**Guests cannot comment.** An anonymous account is fully offline and its uid does not survive a
+merge into an existing account — `LocalAccountMigrator` rewrites scope paths, not payloads — so a
+comment posted as a guest would carry an `author_uid` nobody could ever match: no menu, no edit, no
+delete, forever. The thread stays readable; the composer becomes a "Sign in to add comments" line,
+the same treatment attachments get.
 
 ## 4. UI
 

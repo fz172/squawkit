@@ -118,15 +118,19 @@ class CommentThreadController(
 
   fun cancelEdit() = _state.update { it.copy(editingId = null, editDraft = "") }
 
+  /**
+   * Saves the edit, closing the editor only once the write lands — the same rule as [post]: a
+   * failed save leaves the rewritten text where the author can still see it.
+   */
   fun saveEdit() {
     val id = _state.value.editingId ?: return
     val body = _state.value.editDraft.trim()
     if (body.isEmpty()) return
-    _state.update { it.copy(editingId = null, editDraft = "") }
     scope.launch {
-      if (commentManager.updateComment(target, id, body)
-          .isFailure
-      ) {
+      val result = commentManager.updateComment(target, id, body)
+      if (result.isSuccess) {
+        _state.update { if (it.editingId == id) it.copy(editingId = null, editDraft = "") else it }
+      } else {
         _errors.emit(CommentAction.EDIT)
       }
     }

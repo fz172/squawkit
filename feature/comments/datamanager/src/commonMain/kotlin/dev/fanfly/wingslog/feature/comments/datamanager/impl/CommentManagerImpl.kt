@@ -17,6 +17,7 @@ import dev.fanfly.wingslog.feature.comments.model.CommentTarget
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import dev.fanfly.wingslog.thing.Comment
 import dev.fanfly.wingslog.thing.CommentParentType
+import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -32,6 +33,7 @@ class CommentManagerImpl(
   private val scopeResolver: ThingScopeResolver,
   private val currentUid: CurrentUidProvider,
   private val technicianManager: TechnicianManager,
+  private val auth: FirebaseAuth,
   storeFactory: EntityStoreFactory,
 ) : CommentManager {
 
@@ -136,6 +138,16 @@ class CommentManagerImpl(
     )
   }.onFailure { logger.w(it) { "Error deleting comment $commentId" } }
 
+  override suspend fun deleteThread(target: CommentTarget): Result<Unit> = runCatching {
+    val scope = scopeResolver.resolveNow(target.thingId)
+    store.observeAll(scope)
+      .first()
+      .asSequence()
+      .map { it.value }
+      .filter { it.parent_id == target.parentId && it.parent_type == target.kind.wire }
+      .forEach { store.delete(it.id, scope) }
+  }.onFailure { logger.w(it) { "Error deleting comment thread for ${target.parentId}" } }
+
   /**
    * The stored comment, or a failure if this account did not write it.
    *
@@ -155,15 +167,19 @@ class CommentManagerImpl(
   }
 
   /**
-   * The in-app profile name, which is what the author edits and expects to see — the same
-   * precedence `SharingManagerImpl.publishTechnicianMirror` uses for the share roster.
+   * The in-app profile name first, then the auth account's name, then its email — the same
+   * precedence `SharingManagerImpl.publishTechnicianMirror` uses for the share roster, so a
+   * commenter is bylined the way the roster already shows them. Denormalized at post time, so a
+   * blank here would be a permanent "Unknown"; the fallbacks are what make that rare.
    */
-  private suspend fun selfDisplayName(): String =
-    technicianManager.observeSelf()
+  private suspend fun selfDisplayName(): String {
+    val self = technicianManager.observeSelf()
       .first()
-      ?.name
-      ?.takeIf { it.isNotBlank() }
-      .orEmpty()
+    val user = auth.currentUser
+    return self?.name?.takeIf { it.isNotBlank() }
+      ?: user?.displayName?.takeIf { it.isNotBlank() }
+      ?: user?.email.orEmpty()
+  }
 
   private fun Comment.toEntry(me: String?): CommentEntry = CommentEntry(
     id = id,

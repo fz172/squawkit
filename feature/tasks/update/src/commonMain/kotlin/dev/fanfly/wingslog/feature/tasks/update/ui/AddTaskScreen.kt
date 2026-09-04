@@ -119,11 +119,12 @@ fun AddTaskScreen(
   val coroutineScope = rememberCoroutineScope()
   val analytics = LocalAnalytics.current
   // Log tab switches (tap or swipe) as page views; drop(1) skips the initial page on open.
-  LaunchedEffect(pagerState) {
+  // Keyed on tabs too: the capability set can resolve while the form is up and change the list.
+  LaunchedEffect(pagerState, tabs) {
     snapshotFlow { pagerState.currentPage }
       .drop(1)
       .collect { page ->
-        analytics.logScreenView("task_form/${tabs[page].analyticsKey}")
+        tabs.getOrNull(page)?.let { analytics.logScreenView("task_form/${it.analyticsKey}") }
       }
   }
 

@@ -16,6 +16,8 @@ import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import dev.fanfly.wingslog.thing.Comment
 import dev.fanfly.wingslog.thing.CommentParentType
 import dev.fanfly.wingslog.thing.Technician
+import dev.gitlive.firebase.auth.FirebaseAuth
+import dev.gitlive.firebase.auth.FirebaseUser
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
@@ -39,6 +41,7 @@ class CommentManagerImplTest {
   private lateinit var store: EntityStore<Comment>
   private lateinit var storeFactory: EntityStoreFactory
   private lateinit var technicianManager: TechnicianManager
+  private lateinit var auth: FirebaseAuth
   private lateinit var manager: CommentManagerImpl
 
   private val scope = EntityScope.thingChildUnsafe(HOST_UID, THING_ID)
@@ -55,10 +58,14 @@ class CommentManagerImplTest {
     every { technicianManager.observeSelf() } returns
       flowOf(Technician(id = "t1", name = "Fan Zhang"))
 
+    auth = mockk(relaxed = true)
+    every { auth.currentUser } returns null
+
     manager = CommentManagerImpl(
       scopeResolver = FixedScopeResolver(scope),
       currentUid = CurrentUidProvider { ME },
       technicianManager = technicianManager,
+      auth = auth,
       storeFactory = storeFactory,
     )
   }
@@ -150,6 +157,24 @@ class CommentManagerImplTest {
       assertThat(edited_at).isNull()
       assertThat(id).isNotEmpty()
     }
+  }
+
+  @Test
+  fun addComment_fallsBackToTheAccountNameThenEmailWhenTheProfileIsUnnamed() = runTest {
+    // The same precedence the share roster uses (SharingManagerImpl.publishTechnicianMirror), so
+    // a commenter is bylined the way the roster already shows them — and because the name is
+    // denormalized at post time, a blank here would be a permanent "Unknown".
+    every { technicianManager.observeSelf() } returns flowOf(null)
+    val user = mockk<FirebaseUser>(relaxed = true)
+    every { user.displayName } returns ""
+    every { user.email } returns "fan@example.com"
+    every { auth.currentUser } returns user
+    val written = slot<Comment>()
+
+    manager.addComment(target, "hello")
+
+    coVerify { store.put(any(), capture(written), scope) }
+    assertThat(written.captured.author_name).isEqualTo("fan@example.com")
   }
 
   @Test
@@ -268,6 +293,27 @@ class CommentManagerImplTest {
     assertThat(result.isFailure).isTrue()
     coVerify(exactly = 0) { store.put(any(), any(), any()) }
     coVerify(exactly = 0) { store.delete(any(), any()) }
+  }
+
+  // ---- deleteThread ----
+
+  @Test
+  fun deleteThread_removesOnlyThisParentsRows() = runTest {
+    every { store.observeAll(scope) } returns flowOf(
+      listOf(
+        row(comment("c1", parentId = SQUAWK_ID)),
+        row(comment("c2", parentId = SQUAWK_ID, authorUid = THEM, deletedAtSeconds = 5)),
+        row(comment("other", parentId = "other-squawk")),
+      )
+    )
+
+    // The one path that actually removes comment rows: the parent record is gone, so the thread
+    // has nothing to hang off. No authorship gate — c2 is someone else's tombstone and goes too.
+    assertThat(manager.deleteThread(target).isSuccess).isTrue()
+
+    coVerify { store.delete("c1", scope) }
+    coVerify { store.delete("c2", scope) }
+    coVerify(exactly = 0) { store.delete("other", any()) }
   }
 
   // ---- helpers ----

@@ -31,6 +31,7 @@ kotlin {
       // The author's display name comes from their own technician record — the same precedence
       // SharingManagerImpl publishes to the share roster.
       implementation(project(":feature:technician:datamanager"))
+      implementation(libs.gitlive.firebase.auth)
       implementation(libs.kermit)
       // api, not implementation: commonAppModules names commentsModule, whose type is Koin's.
       api(libs.koin.core)
@@ -39,6 +40,7 @@ kotlin {
 }
 
 dependencies {
+  "androidMainImplementation"(platform(libs.firebase.bom))
   "androidHostTestImplementation"(libs.junit)
   "androidHostTestImplementation"(libs.mockk)
   "androidHostTestImplementation"(libs.truth)

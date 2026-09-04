@@ -33,8 +33,9 @@ message Comment {
   // Unset until the author edits the text. Drives the "Edited …" line.
   google.protobuf.Timestamp edited_at = 8;
 
-  // Set when the author deletes the comment. The row is NOT removed, and nothing in the app ever
-  // hard-deletes a comment.
+  // Set when the author deletes the comment. The row is NOT removed: no action *on a comment*
+  // ever hard-deletes it. (The row does go when its parent goes — deleting the squawk or task
+  // takes the thread with it, and deleting the Thing tombstones everything beneath it.)
   //
   // This is a paper trail, not a cosmetic choice. An edit is stamped with `edited_at` and shows an
   // "Edited …" line, so a rewrite is visible to everyone who can read the thread. If a delete

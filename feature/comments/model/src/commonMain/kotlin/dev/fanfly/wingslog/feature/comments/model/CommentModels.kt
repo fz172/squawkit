@@ -68,6 +68,13 @@ data class CommentThreadState(
   val count: Int get() = comments.count { !it.isDeleted }
   val canPost: Boolean get() = draft.isNotBlank() && !isPosting
   val canSaveEdit: Boolean get() = editDraft.isNotBlank()
+
+  /**
+   * Typed text that has not been written anywhere yet — an unposted draft or an open editor. The
+   * owning form folds this into its unsaved-changes gate, so backing out prompts for it exactly
+   * as it would for an edited description.
+   */
+  val hasUnsavedInput: Boolean get() = draft.isNotBlank() || editingId != null
 }
 
 /** Which comment action failed, so the owning screen can say so in its own words. */

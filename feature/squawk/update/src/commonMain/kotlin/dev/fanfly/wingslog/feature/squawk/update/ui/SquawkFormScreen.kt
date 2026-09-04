@@ -91,6 +91,8 @@ fun SquawkFormScreen(
   snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
   attachmentSection: @Composable () -> Unit = {},
   commentCount: Int = 0,
+  /** An unposted comment draft or an open inline editor — text that exists nowhere else yet. */
+  hasCommentDraft: Boolean = false,
   commentsSection: @Composable () -> Unit = {},
 ) {
   val isEdit = state.squawkId != null
@@ -101,7 +103,7 @@ fun SquawkFormScreen(
   val screenTitle = if (isEdit) stringResource(Res.string.edit_squawk, squawk.singular)
   else stringResource(Res.string.add_squawk, squawk.singular)
 
-  val hasChanges = if (isEdit) {
+  val hasChanges = hasCommentDraft || if (isEdit) {
     state.title != state.initialTitle ||
       state.description != state.initialDescription ||
       state.priority != state.initialPriority ||
@@ -139,7 +141,7 @@ fun SquawkFormScreen(
     snapshotFlow { pagerState.currentPage }
       .drop(1)
       .collect { page ->
-        analytics.logScreenView("squawk_form/${tabs[page].analyticsKey}")
+        tabs.getOrNull(page)?.let { analytics.logScreenView("squawk_form/${it.analyticsKey}") }
       }
   }
 
@@ -199,6 +201,11 @@ fun SquawkFormScreen(
       HorizontalPager(
         state = pagerState,
         modifier = Modifier.weight(1f),
+        // Keep the Details page alive while Comments is showing, so the attachment picker's
+        // registrations and the rest of its remembered state survive a swipe; and on the add
+        // form, where there is one page, a horizontal flick should do nothing at all.
+        beyondViewportPageCount = 1,
+        userScrollEnabled = tabs.size > 1,
         verticalAlignment = Alignment.Top,
       ) { page ->
         Box(

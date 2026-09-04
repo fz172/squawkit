@@ -31,6 +31,8 @@ kotlin {
       implementation(project(":core:template"))
       implementation(libs.gitlive.firebase.auth)
       implementation(project(":feature:tasks:model"))
+      implementation(project(":feature:comments:datamanager"))
+      implementation(project(":feature:comments:model"))
       implementation(libs.kermit)
     }
   }

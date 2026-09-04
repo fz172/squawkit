@@ -88,6 +88,26 @@ class CommentThreadControllerTest {
   }
 
   @Test
+  fun saveEdit_keepsTheEditorOpenAndReportsWhenTheWriteFails() =
+    runTest(UnconfinedTestDispatcher()) {
+      val manager = FakeCommentManager(failing = true)
+      manager.emit(listOf(entry("c1", "as written")))
+      val controller = controllerOn(manager)
+      val seen = mutableListOf<CommentAction>()
+      backgroundScope.launch { controller.errors.collect { seen += it } }
+      controller.startEdit("c1")
+      controller.onEditDraftChange("rewritten")
+
+      controller.saveEdit()
+
+      // Same rule as post(): the rewrite exists nowhere else, so a failed save must not snap the
+      // card back to the old text and lose it.
+      assertThat(controller.state.value.editingId).isEqualTo("c1")
+      assertThat(controller.state.value.editDraft).isEqualTo("rewritten")
+      assertThat(seen).containsExactly(CommentAction.EDIT)
+    }
+
+  @Test
   fun aCommentDeletedElsewhereClosesItsOpenEditorAndMenu() = runTest {
     val manager = FakeCommentManager()
     manager.emit(listOf(entry("c1", "as written")))
@@ -172,6 +192,9 @@ class CommentThreadControllerTest {
       target: CommentTarget,
       commentId: String,
     ): Result<Unit> = outcome { deleted += commentId }
+
+    override suspend fun deleteThread(target: CommentTarget): Result<Unit> =
+      Result.success(Unit)
 
     private fun outcome(record: () -> Unit): Result<Unit> =
       if (failing) Result.failure(IllegalStateException("offline"))
