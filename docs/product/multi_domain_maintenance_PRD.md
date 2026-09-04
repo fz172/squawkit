@@ -1183,6 +1183,11 @@ treatment before launch; out of scope here.
 
 ## 12. Subscription & Entitlement Impact
 
+> **Shipped (Phase 3, #735).** `thingLimit()` / `FREE_THING_LIMIT` replaced the aircraft names, and the
+> subscription and upsell copy is neutral fixed text — "Unlimited things", "Logs, tasks & issues" — under the
+> account-scoped rule from #687 rather than lexicon substitution (§6). The free limit is still **2**; the
+> decision below on raising it to 3 is open.
+
 Mechanically trivial: `aircraftLimit()` → `thingLimit()`, `FREE_AIRCRAFT_LIMIT` → `FREE_THING_LIMIT`, and the
 `upsell_body_*` strings drop "aircraft" for the neutral noun. The other four gates —
 `canUploadAttachments()`, `canEmailExports()`, `canHostShare()`, `shouldShowAds()` — are unaffected; none of them

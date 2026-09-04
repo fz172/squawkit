@@ -95,7 +95,7 @@ class SubscriptionManagerImpl(
     private const val DOC_ID = "main"
 
     /**
-     * Aircraft a free account may own; a Pro account is unlimited. Raised from 1 to 2 alongside
+     * Things a free account may own, of any preset; a Pro account is unlimited. Raised from 1 to 2 alongside
      * display ads (`docs/ads/display_ads_PRD.md` D9) — ad revenue on the free tier pays for the
      * second thing, and 2 covers the owner-plus-partnership case. Enforced client-side only;
      * no Cloud Function or Firestore rule checks thing count.
