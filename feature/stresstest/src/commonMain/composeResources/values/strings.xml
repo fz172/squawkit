@@ -1,6 +1,6 @@
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
   <string name="stress_test_title">Fake Data Generator</string>
-  <string name="stress_test_description">Generates realistic aviation records for UI stress testing. Data is written to your account.</string>
+  <string name="stress_test_description">Generates realistic records for the selected thing type, for UI stress testing. Data is written to your account.</string>
   <string name="stress_test_config_thing">Thing</string>
   <string name="stress_test_config_records">Maintenance records</string>
   <string name="stress_test_config_engines">Engines</string>
@@ -10,6 +10,10 @@
   <string name="stress_test_config_log_entries">Log entries</string>
   <string name="stress_test_config_technicians">Technician count</string>
   <string name="stress_test_config_template">Template</string>
+  <string name="stress_test_config_components">Components</string>
+  <string name="stress_test_config_meters">Meters</string>
+  <string name="stress_test_config_none">None</string>
+  <string name="stress_test_config_slot_count"><xliff:g example="Tire">%1$s</xliff:g> ×<xliff:g example="4">%2$d</xliff:g></string>
   <string name="stress_test_config_future_dna">Write DNA from a newer build (degraded state)</string>
   <string name="stress_test_generate">Generate Fake Data</string>
   <string name="stress_test_working">Working…</string>
@@ -20,17 +24,16 @@
   <string name="stress_test_progress_count"><xliff:g example="3">%1$d</xliff:g> / <xliff:g example="3">%2$d</xliff:g></string>
   <string name="stress_test_decrement">−</string>
   <string name="stress_test_increment">+</string>
-  <string name="stress_test_progress_creating_thing">Creating thing <xliff:g example="N123AA">%1$s</xliff:g>…</string>
+  <string name="stress_test_progress_creating_thing">Creating <xliff:g example="N123AA">%1$s</xliff:g>…</string>
   <string name="stress_test_progress_creating_technician">Creating technician <xliff:g example="N123AA">%1$s</xliff:g>…</string>
   <string name="stress_test_progress_creating_task">Creating task: <xliff:g example="N123AA">%1$s</xliff:g>…</string>
   <string name="stress_test_progress_creating_squawk">Creating squawk: <xliff:g example="N123AA">%1$s</xliff:g>…</string>
   <string name="stress_test_progress_creating_log">Creating log entry…</string>
   <string name="stress_test_progress_marking_squawk_addressed">Marking squawk addressed…</string>
   <string name="stress_test_progress_dismissing_squawk">Dismissing squawk…</string>
-  <string name="stress_test_summary_thing">Thing: <xliff:g example="aircraft">%1$s</xliff:g> <xliff:g example="aircraft">%2$s</xliff:g> (<xliff:g example="N123AA">%3$s</xliff:g>)</string>
-  <string name="stress_test_summary_tail">Tail: <xliff:g example="N123AA">%1$s</xliff:g> · S/N: <xliff:g example="SN-1234">%2$s</xliff:g></string>
-  <string name="stress_test_summary_engines">Engines: <xliff:g example="3">%1$d</xliff:g> × <xliff:g example="Engine">%2$s</xliff:g></string>
-  <string name="stress_test_summary_unknown_engine">-</string>
+  <string name="stress_test_summary_thing"><xliff:g example="N123AA">%1$s</xliff:g> (<xliff:g example="Airplane">%2$s</xliff:g>)</string>
+  <string name="stress_test_summary_spec"><xliff:g example="Tail Number">%1$s</xliff:g>: <xliff:g example="N123AA">%2$s</xliff:g></string>
+  <string name="stress_test_summary_components">Components: <xliff:g example="Engine ×1">%1$s</xliff:g></string>
   <string name="stress_test_summary_technicians"><xliff:g example="3">%1$d</xliff:g> technician(s) created</string>
   <string name="stress_test_summary_tasks"><xliff:g example="3">%1$d</xliff:g> task(s) created</string>
   <string name="stress_test_summary_log_entry_one"><xliff:g example="3">%1$d</xliff:g> log entry created (span: 4 years)</string>

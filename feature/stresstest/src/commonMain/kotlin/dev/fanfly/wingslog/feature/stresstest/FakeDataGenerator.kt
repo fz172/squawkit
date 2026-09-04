@@ -62,23 +62,28 @@ object FakeDataGenerator {
     // Squawks, tasks and logs all come from the preset's own pool: a car gets check-engine lights
     // and oil changes in miles, not a propeller nick and an annual it has no airframe for.
     val pool = FakeDataPools.forTemplate(template)
-    // Airplane keeps its own builder: the aviation fixture below (engine/propeller logs, component
-    // squawks) expects the specific airframe -> engine -> propeller -> hub/blade tree, and
-    // engineCount / bladesPerEngine configure it. Every other preset is built from its template.
+    // Airplane keeps its own builder: the aviation fixture (engine/propeller logs, component
+    // squawks) expects the specific engine -> propeller -> blade tree, and engineCount /
+    // bladesPerEngine configure it. Every other preset is built from its template.
     val thing =
-      if (template.id == AirplaneTemplate.ID) buildThing(
-        spec,
-        thingId,
-        config
-      )
-      else buildFromTemplate(template, thingId)
+      if (template.id == AirplaneTemplate.ID) {
+        buildThing(spec, thingId, config.engineCount, config.bladesPerEngine)
+      } else {
+        buildFromTemplate(template, thingId)
+      }
+    // ThingInflater writes DNA on save only when the Thing carries none, so DNA set here survives
+    // the write and is what makes the thing resolve as Degraded. Applied after the build so the
+    // switch means the same thing for every preset.
+    val stampedThing =
+      if (!config.dnaFromANewerBuild) thing
+      else thing.copy(template = template.copy(min_app_version = APP_VERSION_CODE + 1))
     val technicians = buildTechnicians(config.technicianCount)
     val tasks = buildTasks(config.taskCount, now, pool)
     val squawks =
-      buildSquawks(config.squawkCount, thing, pool, startInstant, now)
+      buildSquawks(config.squawkCount, stampedThing, pool, startInstant, now)
     val (logs, addressedSquawks) = buildLogs(
       config.logCount,
-      thing,
+      stampedThing,
       template,
       pool,
       technicians,
@@ -90,7 +95,7 @@ object FakeDataGenerator {
     val dismissedSquawks = buildDismissedSquawks(squawks, addressedSquawks)
 
     return StressTestData(
-      thing = thing,
+      thing = stampedThing,
       technicians = technicians,
       tasks = tasks,
       squawks = squawks,
@@ -103,7 +108,8 @@ object FakeDataGenerator {
   private fun buildThing(
     spec: SampleNames.ThingSpec,
     thingId: String,
-    config: StressTestConfig
+    engineCount: Int,
+    bladesPerEngine: Int,
   ): Thing {
     val serialLetters = ('A'..'Z').toList()
     val serial = "S${serialLetters.random()}${(10000..99999).random()}"
@@ -111,8 +117,8 @@ object FakeDataGenerator {
 
     // Builds the component tree directly — the same shape the form produces. Engines sit at the
     // root and the propeller carries what the hub used to (#729).
-    val engines = (1..config.engineCount).map { engineIndex ->
-      val blades = (1..config.bladesPerEngine).map { bladeIndex ->
+    val engines = (1..engineCount).map { engineIndex ->
+      val blades = (1..bladesPerEngine).map { bladeIndex ->
         Component(
           slot_key = SlotKeys.BLADE,
           make = spec.propMake,
@@ -150,16 +156,6 @@ object FakeDataGenerator {
       // entries above (#729).
       components = engines,
     ).withDerivedComponentIds()
-      .let { thing ->
-        // ThingInflater writes DNA on save only when the Thing carries none, so DNA set here
-        // survives the write and is what makes the thing resolve as Degraded.
-        if (!config.dnaFromANewerBuild) thing
-        else thing.copy(
-          template = AirplaneTemplate.TEMPLATE.copy(
-            min_app_version = APP_VERSION_CODE + 1,
-          ),
-        )
-      }
   }
 
   /**
@@ -230,7 +226,7 @@ object FakeDataGenerator {
    * two would have demonstrated half of it. A bike's cap of two trims the same rule to a front
    * and a rear.
    */
-  private fun instanceCount(slot: ComponentSlot): Int {
+  internal fun instanceCount(slot: ComponentSlot): Int {
     if (!slot.repeatable) return 1
     val positions =
       slot.spec_fields.firstOrNull { it.title_candidate }?.options.orEmpty()
