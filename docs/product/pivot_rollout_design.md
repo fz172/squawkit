@@ -1,11 +1,15 @@
 # Design Doc: Phase 3 — The Pivot Ships
 
-> **Implementation status.** **Designed 2026-08-30; nothing has shipped.** Phases 1 and 2 are done — see
-> [`thing_migration_design.md`](thing_migration_design.md) and
-> [`template_system_design.md`](template_system_design.md). Phase 3 is the first phase a user can see, and its
-> hard gate (§3.1) has not started.
+> **Implementation status.** **Shipped 2026-08-31 → 2026-09-04**, in the order §11 prescribes: the hard gate
+> first (#717, #718), then presets as assets and the six presets (3B), template-driven rendering (3D), starter
+> packs (3E), technician certifications (3F), the picker and create flow (3H), and the copy, positioning and
+> guardrail work (3G). **Three items of 3B remain open** — the publishing script (#725), the `fetch_templates`
+> RPC (#726) and the canonical cache (#727); every template is baked into the build. Two things shipped
+> differently from this design and are recorded in place: the transitional fields were removed as part of 3C
+> rather than after it (§7, #668), and the snapshot narrowed exactly as §8 describes (#734). The home starter
+> pack's seasonal chores are 6- and 12-month intervals until a calendar-anchored rule exists.
 
-**Owner:** Engineering · **Status:** Proposed · **Date:** 2026-08-30
+**Owner:** Engineering · **Status:** Shipped (3B6–3B8 open) · **Date:** 2026-08-30 · **Refreshed:** 2026-09-04
 **Supersedes nothing.** Builds on `template_system_design.md` (Phase 2) and `thing_migration_design.md` (Phase 1).
 **Milestone:** Milestone 3 — The Pivot Ships (Phase 3)
 
