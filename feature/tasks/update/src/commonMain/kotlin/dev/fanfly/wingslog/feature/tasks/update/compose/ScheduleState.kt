@@ -42,7 +42,15 @@ data class ScheduleState(
   /** Recurrence maps to is_one_time: only ONE_TIME is one-time; ASAP & REPEATING are not. */
   val isOneTime: Boolean get() = recurrence == ScheduleRecurrence.ONE_TIME
 
-  fun toRules(existingTimeRuleCreationDate: Instant? = null): List<InspectionRule> {
+  /**
+   * [dueOnAnniversary] is the template's `month_intervals_due_on_anniversary`, stamped onto the
+   * TimeRule so the due engine can honour it without a template in hand. Aviation leaves it
+   * false and keeps the end-of-month convention.
+   */
+  fun toRules(
+    existingTimeRuleCreationDate: Instant? = null,
+    dueOnAnniversary: Boolean = false,
+  ): List<InspectionRule> {
     val now = Clock.System.now()
     val creationDate = existingTimeRuleCreationDate
       ?: toWireInstant(now.epochSeconds, now.nanosecondsOfSecond)
@@ -60,17 +68,20 @@ data class ScheduleState(
           val rule = when (calUnit) {
             ScheduleTimeUnit.DAYS -> TimeRule(
               interval_days = n,
-              creation_date = creationDate
+              creation_date = creationDate,
+              due_on_anniversary = dueOnAnniversary,
             )
 
             ScheduleTimeUnit.MONTHS -> TimeRule(
               interval_months = n,
-              creation_date = creationDate
+              creation_date = creationDate,
+              due_on_anniversary = dueOnAnniversary,
             )
 
             ScheduleTimeUnit.YEARS -> TimeRule(
               interval_years = n,
-              creation_date = creationDate
+              creation_date = creationDate,
+              due_on_anniversary = dueOnAnniversary,
             )
           }
           listOf(InspectionRule(time_rule = rule))

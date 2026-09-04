@@ -130,6 +130,15 @@ export interface Capabilities {
    */
   sections: Section[];
   exportLayout: ExportLayout;
+  /**
+   * A month- or year-based TimeRule is due on the anniversary of the base date, not at the end
+   * of the month it lands in. False — the default, and what every stored aeroplane implies — is
+   * aviation's convention: logged 14 Dec + 12 months is due 31 Dec, which is what an annual
+   * legally means. Every other preset sets it, because "flush the water heater 12 months after I
+   * last did it" means the anniversary (PRD §4.6). The form copies it onto each TimeRule it writes
+   * (`TimeRule.due_on_anniversary`), so the due engine needs no template in hand.
+   */
+  monthIntervalsDueOnAnniversary: boolean;
 }
 
 function createBaseCapabilities(): Capabilities {
@@ -142,6 +151,7 @@ function createBaseCapabilities(): Capabilities {
     priorities: [],
     sections: [],
     exportLayout: 0,
+    monthIntervalsDueOnAnniversary: false,
   };
 }
 
@@ -174,6 +184,9 @@ export const Capabilities: MessageFns<Capabilities> = {
     writer.join();
     if (message.exportLayout !== 0) {
       writer.uint32(72).int32(message.exportLayout);
+    }
+    if (message.monthIntervalsDueOnAnniversary !== false) {
+      writer.uint32(88).bool(message.monthIntervalsDueOnAnniversary);
     }
     return writer;
   },
@@ -269,6 +282,14 @@ export const Capabilities: MessageFns<Capabilities> = {
           message.exportLayout = reader.int32() as any;
           continue;
         }
+        case 11: {
+          if (tag !== 88) {
+            break;
+          }
+
+          message.monthIntervalsDueOnAnniversary = reader.bool();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -298,6 +319,11 @@ export const Capabilities: MessageFns<Capabilities> = {
         : isSet(object.export_layout)
         ? exportLayoutFromJSON(object.export_layout)
         : 0,
+      monthIntervalsDueOnAnniversary: isSet(object.monthIntervalsDueOnAnniversary)
+        ? globalThis.Boolean(object.monthIntervalsDueOnAnniversary)
+        : isSet(object.month_intervals_due_on_anniversary)
+        ? globalThis.Boolean(object.month_intervals_due_on_anniversary)
+        : false,
     };
   },
 
@@ -327,6 +353,9 @@ export const Capabilities: MessageFns<Capabilities> = {
     if (message.exportLayout !== 0) {
       obj.exportLayout = exportLayoutToJSON(message.exportLayout);
     }
+    if (message.monthIntervalsDueOnAnniversary !== false) {
+      obj.monthIntervalsDueOnAnniversary = message.monthIntervalsDueOnAnniversary;
+    }
     return obj;
   },
 
@@ -343,6 +372,7 @@ export const Capabilities: MessageFns<Capabilities> = {
     message.priorities = object.priorities?.map((e) => e) || [];
     message.sections = object.sections?.map((e) => e) || [];
     message.exportLayout = object.exportLayout ?? 0;
+    message.monthIntervalsDueOnAnniversary = object.monthIntervalsDueOnAnniversary ?? false;
     return message;
   },
 };

@@ -11,6 +11,7 @@ import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
 import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.thing.MaintenanceTask
+import dev.fanfly.wingslog.thing.TimeRule
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -153,23 +154,7 @@ class TaskDueManagerImpl(
               currentDate
             }
           }
-          val calculated = when {
-            timeRule.interval_days > 0 -> baseDate.plus(
-              timeRule.interval_days,
-              DateTimeUnit.DAY
-            )
-            // Month- and year-based intervals snap to end-of-month so a task done
-            // mid-month is due at the close of the calendar month it lands in
-            // (e.g. logged 12/14/2025 + 12mo → due 12/31/2026).
-            timeRule.interval_years > 0 -> baseDate.plus(
-              timeRule.interval_years,
-              DateTimeUnit.YEAR
-            )
-              .endOfMonth()
-
-            else -> baseDate.plus(timeRule.interval_months, DateTimeUnit.MONTH)
-              .endOfMonth()
-          }
+          val calculated = timeRule.advance(baseDate)
           if (nextDueDate == null || calculated < nextDueDate) {
             nextDueDate = calculated
           }
@@ -260,25 +245,9 @@ class TaskDueManagerImpl(
       if (compliedEpoch > latestLogEpoch) {
         for (rule in card.rules) {
           rule.time_rule?.let { timeRule ->
-            fun LocalDate.advance(): LocalDate = when {
-              timeRule.interval_days > 0 -> plus(
-                timeRule.interval_days,
-                DateTimeUnit.DAY
-              )
-
-              timeRule.interval_years > 0 -> plus(
-                timeRule.interval_years,
-                DateTimeUnit.YEAR
-              ).endOfMonth()
-
-              else -> plus(
-                timeRule.interval_months,
-                DateTimeUnit.MONTH
-              ).endOfMonth()
-            }
             nextDueDate = nextDueDate?.let { d ->
-              var advanced = d.advance()
-              while (advanced <= currentDate) advanced = advanced.advance()
+              var advanced = timeRule.advance(d)
+              while (advanced <= currentDate) advanced = timeRule.advance(advanced)
               advanced
             }
           }
@@ -342,6 +311,23 @@ class TaskDueManagerImpl(
     /** Used when the due came from somewhere with no interval to scale — a linked or forced due. */
     private const val DEFAULT_DUE_SOON_WINDOW = 10f
   }
+}
+
+/**
+ * One interval on from [from].
+ *
+ * Month- and year-based intervals snap to the end of the month they land in — logged 14 Dec 2025
+ * + 12 months is due 31 Dec 2026, which is what an annual inspection legally means — unless the
+ * rule was written for a template that asked for the anniversary instead (PRD §4.6): a water
+ * heater flushed on the 14th is next due on the 14th. Day intervals never snap.
+ */
+private fun TimeRule.advance(from: LocalDate): LocalDate {
+  val landed = when {
+    interval_days > 0 -> return from.plus(interval_days, DateTimeUnit.DAY)
+    interval_years > 0 -> from.plus(interval_years, DateTimeUnit.YEAR)
+    else -> from.plus(interval_months, DateTimeUnit.MONTH)
+  }
+  return if (due_on_anniversary) landed else landed.endOfMonth()
 }
 
 private fun LocalDate.endOfMonth(): LocalDate {

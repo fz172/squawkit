@@ -39,6 +39,42 @@ class TaskDueManagerImplTest {
   }
 
   @Test
+  fun monthInterval_snapsToEndOfMonth_byDefault() {
+    // Aviation's convention, and what every rule stored before the flag existed means.
+    val card = card(id = "c1", rules = listOf(timeRule(12)))
+    val log = log(inspectionIds = listOf("c1"), timestamp = iso("2025-12-14"))
+
+    val result = manager.computeNextDue(card, listOf(log), listOf(card))
+
+    assertThat(result.nextDueDate).isEqualTo(LocalDate(2026, 12, 31))
+  }
+
+  @Test
+  fun monthInterval_dueOnAnniversary_whenTheRuleSaysSo() {
+    // A water heater flushed on the 14th is next due on the 14th (PRD §4.6).
+    val card = card(id = "c1", rules = listOf(timeRule(12, dueOnAnniversary = true)))
+    val log = log(inspectionIds = listOf("c1"), timestamp = iso("2025-12-14"))
+
+    val result = manager.computeNextDue(card, listOf(log), listOf(card))
+
+    assertThat(result.nextDueDate).isEqualTo(LocalDate(2026, 12, 14))
+  }
+
+  @Test
+  fun forceComplied_advancesOnTheAnniversaryToo() {
+    val card = card(
+      id = "c1",
+      rules = listOf(timeRule(6, creationDate = iso("2025-01-10"), dueOnAnniversary = true)),
+      forceComplied = ForceCompliedStatus(complied_date = iso("2026-04-01")),
+    )
+
+    val result = manager.computeNextDue(card, emptyList(), listOf(card))
+
+    // 10 Jan 2025 → 10 Jul 2025 → 10 Jan 2026 → 10 Jul 2026: the first cycle past 13 Apr 2026.
+    assertThat(result.nextDueDate).isEqualTo(LocalDate(2026, 7, 10))
+  }
+
+  @Test
   fun oneTimeCard_withMatchingLog_returnsComplied() {
     val card = card(id = "c1", isOneTime = true, rules = listOf(timeRule(12)))
     val log = log(inspectionIds = listOf("c1"), timestamp = iso("2024-01-01"))
@@ -612,12 +648,14 @@ class TaskDueManagerImplTest {
 
   private fun timeRule(
     months: Int,
-    creationDate: WireInstant? = null
+    creationDate: WireInstant? = null,
+    dueOnAnniversary: Boolean = false,
   ): InspectionRule =
     InspectionRule(
       time_rule = TimeRule(
         interval_months = months,
-        creation_date = creationDate
+        creation_date = creationDate,
+        due_on_anniversary = dueOnAnniversary,
       )
     )
 

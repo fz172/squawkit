@@ -41,8 +41,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import dev.fanfly.wingslog.feature.tasks.datamanager.meterKeyFor
-import dev.fanfly.wingslog.feature.tasks.datamanager.withForcedDueMeter
 import dev.fanfly.wingslog.core.analytics.LocalAnalytics
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.template.LocalThingCapabilities
@@ -53,6 +51,8 @@ import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
 import dev.fanfly.wingslog.core.ui.common.compose.UnsavedChangesDialog
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.logs.sharedassets.compose.LogPickerSheet
+import dev.fanfly.wingslog.feature.tasks.datamanager.meterKeyFor
+import dev.fanfly.wingslog.feature.tasks.datamanager.withForcedDueMeter
 import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
 import dev.fanfly.wingslog.feature.tasks.update.compose.ResolveTaskOptionsMenu
 import dev.fanfly.wingslog.feature.tasks.update.compose.ScheduleState
@@ -175,8 +175,9 @@ fun EditTaskScreen(
     )
   }
 
+  val capabilities = LocalThingCapabilities.current
   val tabs = taskFormTabsFor(
-    LocalThingCapabilities.current,
+    capabilities,
     includeAdjustments = true,
     includeComments = true,
   )
@@ -189,7 +190,8 @@ fun EditTaskScreen(
     snapshotFlow { pagerState.currentPage }
       .drop(1)
       .collect { page ->
-        tabs.getOrNull(page)?.let { analytics.logScreenView("task_form/${it.analyticsKey}") }
+        tabs.getOrNull(page)
+          ?.let { analytics.logScreenView("task_form/${it.analyticsKey}") }
       }
   }
 
@@ -321,7 +323,10 @@ fun EditTaskScreen(
         onPrimaryClick = {
           val existingTimeRuleCreationDate =
             card.rules.firstNotNullOfOrNull { it.time_rule?.creation_date }
-          val ruleList = state.schedule.toRules(existingTimeRuleCreationDate)
+          val ruleList = state.schedule.toRules(
+            existingTimeRuleCreationDate,
+            dueOnAnniversary = capabilities.month_intervals_due_on_anniversary,
+          )
 
           val updatedForceDueEngine =
             if (state.forceOverrideEngine) state.forcedEngineHours.toFloatOrNull()
@@ -351,11 +356,12 @@ fun EditTaskScreen(
             // forward. Dropping it when the schedule it was recorded against changes is
             // TaskViewModel.isScheduleChanged's job, not the form's.
             force_complied_status = card.force_complied_status
-          ).withForcedDueMeter(
-            // The meter this task schedules against — the override is in the same one.
-            meterKeyFor(state.component, ruleList),
-            updatedForceDueEngine.takeIf { it > 0f },
           )
+            .withForcedDueMeter(
+              // The meter this task schedules against — the override is in the same one.
+              meterKeyFor(state.component, ruleList),
+              updatedForceDueEngine.takeIf { it > 0f },
+            )
           onSave(updated)
         },
         onSecondaryClick = { tryCancel() },

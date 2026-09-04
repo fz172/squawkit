@@ -109,8 +109,9 @@ fun AddTaskScreen(
     )
   }
 
+  val capabilities = LocalThingCapabilities.current
   val tabs = taskFormTabsFor(
-    LocalThingCapabilities.current,
+    capabilities,
     includeAdjustments = false,
     // A task that does not exist yet has no id for a comment to point at.
     includeComments = false,
@@ -124,7 +125,8 @@ fun AddTaskScreen(
     snapshotFlow { pagerState.currentPage }
       .drop(1)
       .collect { page ->
-        tabs.getOrNull(page)?.let { analytics.logScreenView("task_form/${it.analyticsKey}") }
+        tabs.getOrNull(page)
+          ?.let { analytics.logScreenView("task_form/${it.analyticsKey}") }
       }
   }
 
@@ -239,7 +241,9 @@ fun AddTaskScreen(
             title = state.title,
             component = state.component,
             type = state.type,
-            rules = state.schedule.toRules(),
+            rules = state.schedule.toRules(
+              dueOnAnniversary = capabilities.month_intervals_due_on_anniversary,
+            ),
             reference_number = state.refNumber.takeIf { it.isNotBlank() } ?: "",
             compliance_authority = state.complianceAuthority.takeIf { it.isNotBlank() }
               ?: "",

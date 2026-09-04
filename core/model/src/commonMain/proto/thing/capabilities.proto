@@ -58,4 +58,12 @@ message Capabilities {
   // 10 deliberately unused. PRD §4.8 sketches a `weight_balance` flag, left out until something
   // needs it: a speculative bool is the field most likely to want a different shape by the time
   // it is real, and an unused number costs nothing to claim later.
+
+  // A month- or year-based TimeRule is due on the anniversary of the base date, not at the end
+  // of the month it lands in. False — the default, and what every stored aeroplane implies — is
+  // aviation's convention: logged 14 Dec + 12 months is due 31 Dec, which is what an annual
+  // legally means. Every other preset sets it, because "flush the water heater 12 months after I
+  // last did it" means the anniversary (PRD §4.6). The form copies it onto each TimeRule it writes
+  // (`TimeRule.due_on_anniversary`), so the due engine needs no template in hand.
+  bool month_intervals_due_on_anniversary = 11;
 }

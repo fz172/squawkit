@@ -23,6 +23,10 @@ message TimeRule {
   google.protobuf.Timestamp creation_date = 2;
   int32 interval_days = 3;
   int32 interval_years = 4;
+  // Due on the anniversary of the base date rather than at the end of the month it lands in.
+  // Copied from the template's `month_intervals_due_on_anniversary` when the rule is written;
+  // false is aviation's end-of-month convention, so every existing rule keeps its meaning.
+  bool due_on_anniversary = 5;
 }
 
 // A rule against any meter the template declares — "every 5,000 miles", "every 100 hours",

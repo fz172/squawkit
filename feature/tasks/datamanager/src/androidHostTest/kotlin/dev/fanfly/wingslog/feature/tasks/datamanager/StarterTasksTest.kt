@@ -4,9 +4,11 @@ import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
 import dev.fanfly.wingslog.core.template.canonical.CanonicalTemplates
+import dev.fanfly.wingslog.thing.Capabilities
 import dev.fanfly.wingslog.thing.ComplianceType
 import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.StarterTask
+import dev.fanfly.wingslog.thing.ThingTemplate
 import org.junit.Test
 
 /** What an accepted starter task turns into — an ordinary card the form could have produced. */
@@ -27,6 +29,22 @@ class StarterTasksTest {
     assertThat(rule?.interval_months).isEqualTo(3)
     // Without this the due engine falls back to "today" on every read — and logs a warning.
     assertThat(rule?.creation_date).isEqualTo(now)
+  }
+
+  @Test
+  fun theTimeRuleTakesTheTemplatesMonthConvention() {
+    // Aviation snaps to the end of the month; everything else is due on the anniversary.
+    val airplane = StarterTask(title = "Annual", interval_months = 12)
+      .toMaintenanceTask(AirplaneTemplate.TEMPLATE, now)
+    assertThat(airplane.rules.single().time_rule?.due_on_anniversary).isFalse()
+
+    val anniversary = ThingTemplate(
+      id = "home",
+      capabilities = Capabilities(month_intervals_due_on_anniversary = true),
+    )
+    val home = StarterTask(title = "Flush water heater", interval_months = 12)
+      .toMaintenanceTask(anniversary, now)
+    assertThat(home.rules.single().time_rule?.due_on_anniversary).isTrue()
   }
 
   @Test

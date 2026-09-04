@@ -63,6 +63,12 @@ export interface TimeRule {
   creationDate: Date | undefined;
   intervalDays: number;
   intervalYears: number;
+  /**
+   * Due on the anniversary of the base date rather than at the end of the month it lands in.
+   * Copied from the template's `month_intervals_due_on_anniversary` when the rule is written;
+   * false is aviation's end-of-month convention, so every existing rule keeps its meaning.
+   */
+  dueOnAnniversary: boolean;
 }
 
 /**
@@ -145,7 +151,7 @@ export interface MaintenanceTask {
 }
 
 function createBaseTimeRule(): TimeRule {
-  return { intervalMonths: 0, creationDate: undefined, intervalDays: 0, intervalYears: 0 };
+  return { intervalMonths: 0, creationDate: undefined, intervalDays: 0, intervalYears: 0, dueOnAnniversary: false };
 }
 
 export const TimeRule: MessageFns<TimeRule> = {
@@ -161,6 +167,9 @@ export const TimeRule: MessageFns<TimeRule> = {
     }
     if (message.intervalYears !== 0) {
       writer.uint32(32).int32(message.intervalYears);
+    }
+    if (message.dueOnAnniversary !== false) {
+      writer.uint32(40).bool(message.dueOnAnniversary);
     }
     return writer;
   },
@@ -204,6 +213,14 @@ export const TimeRule: MessageFns<TimeRule> = {
           message.intervalYears = reader.int32();
           continue;
         }
+        case 5: {
+          if (tag !== 40) {
+            break;
+          }
+
+          message.dueOnAnniversary = reader.bool();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -235,6 +252,11 @@ export const TimeRule: MessageFns<TimeRule> = {
         : isSet(object.interval_years)
         ? globalThis.Number(object.interval_years)
         : 0,
+      dueOnAnniversary: isSet(object.dueOnAnniversary)
+        ? globalThis.Boolean(object.dueOnAnniversary)
+        : isSet(object.due_on_anniversary)
+        ? globalThis.Boolean(object.due_on_anniversary)
+        : false,
     };
   },
 
@@ -252,6 +274,9 @@ export const TimeRule: MessageFns<TimeRule> = {
     if (message.intervalYears !== 0) {
       obj.intervalYears = Math.round(message.intervalYears);
     }
+    if (message.dueOnAnniversary !== false) {
+      obj.dueOnAnniversary = message.dueOnAnniversary;
+    }
     return obj;
   },
 
@@ -264,6 +289,7 @@ export const TimeRule: MessageFns<TimeRule> = {
     message.creationDate = object.creationDate ?? undefined;
     message.intervalDays = object.intervalDays ?? 0;
     message.intervalYears = object.intervalYears ?? 0;
+    message.dueOnAnniversary = object.dueOnAnniversary ?? false;
     return message;
   },
 };
