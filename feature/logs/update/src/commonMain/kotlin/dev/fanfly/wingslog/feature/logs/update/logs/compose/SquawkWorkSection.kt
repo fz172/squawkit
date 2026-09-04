@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.feature.logs.update.logs.compose
 
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.logNoun
 import dev.fanfly.wingslog.core.template.squawkNoun
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -39,6 +40,7 @@ fun SquawkWorkSection(
         text = stringResource(
           SquawkRes.string.no_squawk_work_recorded,
           LocalThingLexicon.current.squawkNoun.plural,
+          LocalThingLexicon.current.logNoun.singular,
         ),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,

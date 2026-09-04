@@ -9,8 +9,8 @@
   <string name="filter_by_type">Filter by Type</string>
   <string name="log_count_one_entry">1 Entry</string>
   <string name="log_count_n_entries"><xliff:g example="3">%1$d</xliff:g> Entries</string>
-  <string name="log_task_count_one">1 task</string>
-  <string name="log_task_count_plural"><xliff:g example="3">%1$d</xliff:g> tasks</string>
+  <string name="log_task_count_one">1 <xliff:g example="task">%1$s</xliff:g></string>
+  <string name="log_task_count_plural"><xliff:g example="3">%1$d</xliff:g> <xliff:g example="tasks">%2$s</xliff:g></string>
   <string name="log_squawk_count_one">1 <xliff:g example="squawks">%1$s</xliff:g></string>
   <string name="log_squawk_count_plural"><xliff:g example="3">%1$d</xliff:g> <xliff:g example="squawks">%2$s</xliff:g></string>
   <string name="failed_to_load_logs">Could not load maintenance logs</string>
@@ -19,7 +19,7 @@
   <string name="collapse_details">Collapse details</string>
   <string name="expand_details">Expand details</string>
   <string name="affected_maintenance_tasks">Affected <xliff:g example="maintenance tasks">%1$s</xliff:g></string>
-  <string name="no_tasks_linked">No tasks linked to this entry</string>
+  <string name="no_tasks_linked">No <xliff:g example="tasks">%1$s</xliff:g> linked to this <xliff:g example="logbook entry">%2$s</xliff:g></string>
   <string name="resolved_squawks">Resolved <xliff:g example="squawks">%1$s</xliff:g></string>
   <string name="unknown_squawk">Unknown <xliff:g example="squawks">%2$s</xliff:g> (<xliff:g example="sq_8f2a">%1$s</xliff:g>)</string>
 </resources>

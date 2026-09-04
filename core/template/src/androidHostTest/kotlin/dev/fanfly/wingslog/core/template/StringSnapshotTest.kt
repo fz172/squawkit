@@ -105,7 +105,11 @@ class StringSnapshotTest {
     squawkFrame("edit_squawk") { it.singular },
     squawkFrame("no_open_squawks") { it.plural },
     squawkFrame("no_closed_squawks") { it.plural },
-    squawkFrame("no_squawk_work_recorded") { it.plural },
+    // Position 2 is the log noun, added with the task-side conversion below — the sentence named
+    // "this log" literally while its subject came from the lexicon.
+    "feature/squawk/sharedassets:no_squawk_work_recorded" to { l: Lexicon ->
+      mapOf(1 to l.squawkNoun.plural, 2 to l.logNoun.singular)
+    },
     squawkFrame("view_squawks") { LexiconFormatter.titleCasePlural(it) },
     squawkFrame("squawk_added") { LexiconFormatter.sentenceCase(it) },
     squawkFrame("squawk_updated") { LexiconFormatter.sentenceCase(it) },
@@ -273,6 +277,31 @@ class StringSnapshotTest {
       mapOf(2 to l.squawkNoun.plural)
     },
     "feature/logs/viewing:unknown_squawk" to { l: Lexicon -> mapOf(2 to l.squawkNoun.singular) },
+
+    // The task half of the same association surfaces (#732). The squawk half was converted and
+    // this was not, so a boat's log card counted "1 task" beside "1 issue" — one noun from the
+    // template and one from the app. Each of these reads longer for aviation than it did, because
+    // the airplane task noun is "maintenance task": the snapshot rows below record that, and the
+    // log detail sheet has rendered "Affected Maintenance Tasks" from the same noun since #656.
+    frame("feature/logs/viewing", "log_task_count_one") { it.taskNoun.singular },
+    "feature/logs/viewing:log_task_count_plural" to { l: Lexicon ->
+      mapOf(2 to l.taskNoun.plural)
+    },
+    "feature/logs/viewing:no_tasks_linked" to { l: Lexicon ->
+      mapOf(1 to l.taskNoun.plural, 2 to l.logNoun.singular)
+    },
+    "feature/tasks/sharedassets:no_task_work_recorded" to { l: Lexicon ->
+      mapOf(1 to l.taskNoun.plural, 2 to l.logNoun.singular)
+    },
+    "feature/tasks/sharedassets:unknown_task" to { l: Lexicon ->
+      mapOf(2 to l.taskNoun.singular)
+    },
+    "feature/tasks/update:no_log_history" to { l: Lexicon ->
+      mapOf(1 to l.logNoun.plural, 2 to l.taskNoun.singular)
+    },
+    "feature/tasks/viewing:no_maintenance_logs_for_task" to { l: Lexicon ->
+      mapOf(1 to l.logNoun.plural, 2 to l.taskNoun.singular)
+    },
     "feature/logs/sharedassets:resolve_squawk_work_description" to { l: Lexicon ->
       mapOf(2 to l.squawkNoun.singular)
     },

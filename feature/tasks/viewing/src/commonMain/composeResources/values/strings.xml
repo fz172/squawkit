@@ -21,5 +21,5 @@
   <string name="label_due_engine">DUE @</string>
   <string name="label_due_engine_value">DUE @ <xliff:g example="3">%1$s</xliff:g></string>
   <string name="label_expired">EXPIRED <xliff:g example="12 Mar 2026">%1$s</xliff:g></string>
-  <string name="no_maintenance_logs_for_task">No logs yet. Add a maintenance entry and tag this task to see history here.</string>
+  <string name="no_maintenance_logs_for_task">No <xliff:g example="logs">%1$s</xliff:g> yet. Add one and tag this <xliff:g example="task">%2$s</xliff:g> to see history here.</string>
 </resources>

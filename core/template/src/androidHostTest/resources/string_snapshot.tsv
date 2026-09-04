@@ -292,11 +292,11 @@ feature/logs/viewing	log_count_n_entries	%1$d Entries
 feature/logs/viewing	log_count_one_entry	1 Entry
 feature/logs/viewing	log_squawk_count_one	1 squawk
 feature/logs/viewing	log_squawk_count_plural	%1$d squawks
-feature/logs/viewing	log_task_count_one	1 task
-feature/logs/viewing	log_task_count_plural	%1$d tasks
+feature/logs/viewing	log_task_count_one	1 maintenance task
+feature/logs/viewing	log_task_count_plural	%1$d maintenance tasks
 feature/logs/viewing	maintenance_summary	Maintenance Summary
 feature/logs/viewing	no_logs_match_filter	No logs match your filter.
-feature/logs/viewing	no_tasks_linked	No tasks linked to this entry
+feature/logs/viewing	no_tasks_linked	No maintenance tasks linked to this work log
 feature/logs/viewing	resolved_squawks	Resolved Squawks
 feature/logs/viewing	s_n_empty	No S/N
 feature/logs/viewing	s_n_placeholder	S/N: %1$s
@@ -515,7 +515,7 @@ feature/squawk/sharedassets	down_alert_subtitle	AOG squawks must be resolved bef
 feature/squawk/sharedassets	edit_squawk	Update squawk
 feature/squawk/sharedassets	no_closed_squawks	No closed squawks yet.
 feature/squawk/sharedassets	no_open_squawks	No open squawks
-feature/squawk/sharedassets	no_squawk_work_recorded	No squawks addressed by this log
+feature/squawk/sharedassets	no_squawk_work_recorded	No squawks addressed by this work log
 feature/squawk/sharedassets	no_work_recorded	No work recorded yet.
 feature/squawk/sharedassets	open_with_count	OPEN (%1$d)
 feature/squawk/sharedassets	priority_high	High
@@ -546,17 +546,21 @@ feature/squawk/update	resolve_issue	Resolve
 feature/squawk/update	squawk_tab_details	Details
 feature/stresstest	stress_test_complete	Generation complete
 feature/stresstest	stress_test_config_blades_per_engine	Blades per engine
+feature/stresstest	stress_test_config_components	Components
 feature/stresstest	stress_test_config_engines	Engines
 feature/stresstest	stress_test_config_future_dna	Write DNA from a newer build (degraded state)
 feature/stresstest	stress_test_config_log_entries	Log entries
+feature/stresstest	stress_test_config_meters	Meters
+feature/stresstest	stress_test_config_none	None
 feature/stresstest	stress_test_config_records	Maintenance records
+feature/stresstest	stress_test_config_slot_count	%1$s ×%2$d
 feature/stresstest	stress_test_config_squawks	Squawk count
 feature/stresstest	stress_test_config_tasks	Task count
 feature/stresstest	stress_test_config_technicians	Technician count
 feature/stresstest	stress_test_config_template	Template
 feature/stresstest	stress_test_config_thing	Thing
 feature/stresstest	stress_test_decrement	−
-feature/stresstest	stress_test_description	Generates realistic aviation records for UI stress testing. Data is written to your account.
+feature/stresstest	stress_test_description	Generates realistic records for the selected thing type, for UI stress testing. Data is written to your account.
 feature/stresstest	stress_test_error_message	Error: %1$s
 feature/stresstest	stress_test_generate	Generate Fake Data
 feature/stresstest	stress_test_increment	+
@@ -565,22 +569,21 @@ feature/stresstest	stress_test_progress_creating_log	Creating log entry…
 feature/stresstest	stress_test_progress_creating_squawk	Creating squawk: %1$s…
 feature/stresstest	stress_test_progress_creating_task	Creating task: %1$s…
 feature/stresstest	stress_test_progress_creating_technician	Creating technician %1$s…
-feature/stresstest	stress_test_progress_creating_thing	Creating thing %1$s…
+feature/stresstest	stress_test_progress_creating_thing	Creating %1$s…
 feature/stresstest	stress_test_progress_dismissing_squawk	Dismissing squawk…
 feature/stresstest	stress_test_progress_marking_squawk_addressed	Marking squawk addressed…
 feature/stresstest	stress_test_regenerate	Generate Another
 feature/stresstest	stress_test_summary_addressed_squawks	  • %1$d addressed
+feature/stresstest	stress_test_summary_components	Components: %1$s
 feature/stresstest	stress_test_summary_dismissed_squawks	  • %1$d dismissed
-feature/stresstest	stress_test_summary_engines	Engines: %1$d × %2$s
 feature/stresstest	stress_test_summary_log_entries	%1$d log entries created (span: 4 years)
 feature/stresstest	stress_test_summary_log_entry_one	%1$d log entry created (span: 4 years)
 feature/stresstest	stress_test_summary_open_squawks	  • %1$d open
+feature/stresstest	stress_test_summary_spec	%1$s: %2$s
 feature/stresstest	stress_test_summary_squawks	%1$d squawk(s) created:
-feature/stresstest	stress_test_summary_tail	Tail: %1$s · S/N: %2$s
 feature/stresstest	stress_test_summary_tasks	%1$d task(s) created
 feature/stresstest	stress_test_summary_technicians	%1$d technician(s) created
-feature/stresstest	stress_test_summary_thing	Thing: %1$s %2$s (%3$s)
-feature/stresstest	stress_test_summary_unknown_engine	-
+feature/stresstest	stress_test_summary_thing	%1$s (%2$s)
 feature/stresstest	stress_test_title	Fake Data Generator
 feature/stresstest	stress_test_unknown_error	Unknown error
 feature/stresstest	stress_test_working	Working…
@@ -677,13 +680,13 @@ feature/tasks/sharedassets	due_with_count	DUE (%1$d)
 feature/tasks/sharedassets	edit_task	Update task
 feature/tasks/sharedassets	history_with_count	HISTORY (%1$d)
 feature/tasks/sharedassets	maintenance_due_title	Maintenance Due
-feature/tasks/sharedassets	no_task_work_recorded	No task addressed by this log.
+feature/tasks/sharedassets	no_task_work_recorded	No maintenance tasks addressed by this work log
 feature/tasks/sharedassets	no_tasks_yet	No maintenance tasks
 feature/tasks/sharedassets	skip_task_confirm_action	Skip
 feature/tasks/sharedassets	skip_task_confirm_body	Marks complete without logging and snoozes one cycle to the next due target. This can’t be undone.
 feature/tasks/sharedassets	skip_task_confirm_title	Skip This Cycle?
 feature/tasks/sharedassets	unknown_date	Unknown date
-feature/tasks/sharedassets	unknown_task	Unknown task (%1$s)
+feature/tasks/sharedassets	unknown_task	Unknown maintenance task (%1$s)
 feature/tasks/update	adj_preview_hint	What will happen
 feature/tasks/update	adj_preview_label_neutral	Current
 feature/tasks/update	adj_preview_neutral_primary	No adjustments
@@ -730,7 +733,7 @@ feature/tasks/update	create_work_log_subtitle	Opens a new log, pre-linked to thi
 feature/tasks/update	delete_task_section_label	Delete Task
 feature/tasks/update	delete_this_task_subtitle	Permanently removes this task and its maintenance schedule.
 feature/tasks/update	delete_this_task_title	Delete this task
-feature/tasks/update	no_log_history	No maintenance logs recorded for this task.
+feature/tasks/update	no_log_history	No work logs recorded for this maintenance task.
 feature/tasks/update	no_tasks_configured	No tasks configured. Add them from the aircraft overview to track recurring maintenance.
 feature/tasks/update	reference_and_component	%1$s • %2$s
 feature/tasks/update	reference_number	Reference Number
@@ -808,7 +811,7 @@ feature/tasks/viewing	label_expired	EXPIRED %1$s
 feature/tasks/viewing	maintenance_due_subtitle	Maintenance tasks pending
 feature/tasks/viewing	next_due_date	NEXT DUE DATE
 feature/tasks/viewing	next_due_meter	NEXT DUE %1$s
-feature/tasks/viewing	no_maintenance_logs_for_task	No logs yet. Add a maintenance entry and tag this task to see history here.
+feature/tasks/viewing	no_maintenance_logs_for_task	No work logs yet. Add one and tag this maintenance task to see history here.
 feature/tasks/viewing	on_condition	On Condition
 feature/technician/sharedassets	add_certification	Add Certification
 feature/technician/sharedassets	add_technician	Add Technician
