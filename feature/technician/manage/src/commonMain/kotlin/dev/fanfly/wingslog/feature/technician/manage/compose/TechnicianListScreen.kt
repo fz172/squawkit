@@ -211,6 +211,7 @@ fun TechnicianListScreen(
           items(state.technicians, key = { it.id }) { technician ->
             TechnicianCard(
               technician = technician,
+              offered = state.knownCertifications,
               onClick = { onNavigateToEdit(technician.id) },
               isSelf = technician.id == state.selfId,
             )
@@ -225,6 +226,7 @@ fun TechnicianListScreen(
             items(state.linkedTechnicians, key = { "linked-${it.source_uid}" }) { linked ->
               TechnicianCard(
                 technician = linked,
+                offered = state.knownCertifications,
                 onClick = { infoFor = linked },
                 isLinked = true,
               )

@@ -4,6 +4,7 @@ import app.cash.sqldelight.async.coroutines.awaitAsOneOrNull
 import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.model.sharing.SharedAircraftRef
+import dev.fanfly.wingslog.core.model.technician.resolvedCertifications
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.DatabaseWriteLock
 import dev.fanfly.wingslog.core.storage.EntityScope
@@ -21,6 +22,7 @@ import dev.fanfly.wingslog.feature.sharing.model.ThingShareState
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import dev.fanfly.wingslog.thing.CertExpireLimit
 import dev.fanfly.wingslog.thing.CertificateType
+import dev.fanfly.wingslog.thing.Certification
 import dev.fanfly.wingslog.thing.Technician
 import dev.fanfly.wingslog.thing.Thing
 import dev.gitlive.firebase.auth.FirebaseAuth
@@ -577,17 +579,32 @@ class SharingManagerImpl(
 }
 
 /**
- * Flattens the self-technician proto into the plain-field mirror. Certificate fields are optional —
- * an owner doing FAR 43 preventive maintenance with no A&P certificate still publishes a valid
+ * Flattens the self-technician proto into the plain-field mirror. Certifications are optional — an
+ * owner doing FAR 43 preventive maintenance with no A&P certificate still publishes a valid
  * name-only mirror (design §7).
+ *
+ * Goes through `resolvedCertifications`, so a member whose own record still carries the pre-#684
+ * single certificate publishes it as one certification rather than as nothing. The legacy flat
+ * fields are deliberately left unwritten: they are a read path, and two answers to the same
+ * question that nothing keeps in step is what the repeated field replaced.
  */
 internal fun Technician.toMirrorWire(): TechnicianMirrorWire =
   TechnicianMirrorWire(
     name = name,
-    certificateType = certificate_type.name,
-    certNumber = cert_number,
-    certExpiration = cert_expiration?.let { Timestamp(it.getEpochSecond(), 0) },
-    certExpireLimit = cert_expire_limit.name,
+    certifications = resolvedCertifications().map {
+      CertificationWire(
+        type = it.type,
+        number = it.number,
+        expiration = it.expiration?.let { ts ->
+          Timestamp(
+            ts.getEpochSecond(),
+            0
+          )
+        },
+        expireLimit = it.expire_limit.name,
+        label = it.label,
+      )
+    },
   )
 
 /**
@@ -602,6 +619,22 @@ internal fun TechnicianMirrorWire.toTechnician(memberUid: String): Technician =
   Technician(
     id = memberUid,
     name = name,
+    certifications = certifications.map {
+      Certification(
+        type = it.type,
+        number = it.number,
+        expiration = it.expiration?.let { ts ->
+          toWireInstant(
+            ts.seconds,
+            ts.nanoseconds
+          )
+        },
+        expire_limit = it.expireLimit.toCertExpireLimitOrUnknown(),
+        label = it.label,
+      )
+    },
+    // The legacy flat fields go back into the legacy proto fields, so a mirror from an older client
+    // resolves through exactly the transitional path a local record of the same vintage does.
     certificate_type = certificateType.toCertificateTypeOrNone(),
     cert_number = certNumber,
     cert_expiration = certExpiration?.let {
@@ -679,10 +712,28 @@ private data class MemberWire(
 @Serializable
 internal data class TechnicianMirrorWire(
   val name: String = "",
+  /**
+   * The single FAA certificate a mirror carried before #684. **Read-only**: a current client
+   * publishes [certifications] instead, and these survive only so a mirror last written by an
+   * older build still resolves.
+   */
   val certificateType: String = "",
   val certNumber: String = "",
   val certExpiration: Timestamp? = null,
   val certExpireLimit: String = "",
+  /** Every credential the member holds — one person can be both an A&P and an ASE mechanic. */
+  val certifications: List<CertificationWire> = emptyList(),
+)
+
+/** One certification, flattened the same way and for the same reason as its parent. */
+@Serializable
+internal data class CertificationWire(
+  val type: String = "",
+  val number: String = "",
+  val expiration: Timestamp? = null,
+  val expireLimit: String = "",
+  /** The member's own word for a credential no template declares — empty otherwise. */
+  val label: String = "",
 )
 
 /** Partial member-doc update: display fields + mirror. `role` is omitted so rules see it unchanged. */

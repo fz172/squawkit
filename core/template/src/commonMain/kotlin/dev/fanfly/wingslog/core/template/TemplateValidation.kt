@@ -18,10 +18,22 @@ fun ThingTemplate.structuralProblems(): List<String> = buildList {
     .forEach { add("$id: meter with blank key (label '${it.label}')") }
   allSlots().filter { it.slot_key.isEmpty() }
     .forEach { add("$id: component slot with blank key (label '${it.label}')") }
+  certifications.filter { it.key.isEmpty() }
+    .forEach { add("$id: certification with blank key (label '${it.label}')") }
+  // A certification with no label is unpickable: the add flow has nothing to draw for it, and a
+  // technician holding it would be tagged with a blank.
+  certifications.filter { it.label.isEmpty() }
+    .forEach { add("$id: certification '${it.key}' has no label") }
+  // `custom_N` is the add flow's own namespace for a credential the user names themselves. A
+  // template claiming one would collide with whatever they typed, under a key that then means two
+  // different things depending on who wrote it.
+  certifications.filter { it.key.startsWith(CUSTOM_CERTIFICATION_PREFIX) }
+    .forEach { add("$id: certification '${it.key}' uses the reserved custom_ prefix") }
 
   addAll(duplicates("spec field", spec_fields.map { it.key }))
   addAll(duplicates("meter", meters.map { it.key }))
   addAll(duplicates("component slot", allSlots().map { it.slot_key }))
+  addAll(duplicates("certification", certifications.map { it.key }))
 
   // A meter naming no declared slot has nowhere to render.
   val slotKeys = allSlots().map { it.slot_key }
@@ -47,3 +59,6 @@ private fun ThingTemplate.duplicates(
     .filterValues { it > 1 }
     .keys
     .map { "$id: duplicate $kind key '$it'" }
+
+/** The add flow's namespace for a credential the user names themselves — see `Certification.label`. */
+const val CUSTOM_CERTIFICATION_PREFIX = "custom_"

@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.logs.update.logs.viewmodel
 
+import dev.fanfly.wingslog.core.template.OfferedCertification
 import dev.fanfly.wingslog.core.ui.common.UiText
 import dev.fanfly.wingslog.feature.attachment.datamanager.QuotaChecker
 import dev.fanfly.wingslog.feature.attachment.model.PendingAttachment
@@ -41,6 +42,8 @@ data class MaintenanceLogFormUiState(
   val linkedTechnicians: List<Technician> = emptyList(),
   /** The caller's own technician record, listed first in the picker. */
   val selfTechnicianId: String? = null,
+  /** Every certification this build knows, so the picker's rows name credentials, not keys. */
+  val knownCertifications: List<OfferedCertification> = emptyList(),
   val showTechnicianPicker: Boolean = false,
   /** The maintenance date for this log entry (date only, no time). Null means "use current time". */
   val maintenanceDate: LocalDate? = null,

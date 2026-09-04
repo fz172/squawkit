@@ -17,34 +17,33 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import dev.fanfly.wingslog.thing.CertificateType
-import dev.fanfly.wingslog.thing.Technician
-import dev.fanfly.wingslog.core.datetime.toDisplayFormat
-import dev.fanfly.wingslog.core.datetime.toLocalDate
+import dev.fanfly.wingslog.core.template.OfferedCertification
+import dev.fanfly.wingslog.core.template.derivedRoles
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import dev.fanfly.wingslog.feature.technician.sharedassets.compose.displayResId
-import dev.fanfly.wingslog.feature.technician.sharedassets.compose.resolvedCertificateType
-import kotlinx.datetime.TimeZone
+import dev.fanfly.wingslog.feature.technician.sharedassets.compose.certificationLines
+import dev.fanfly.wingslog.feature.technician.sharedassets.compose.summary
+import dev.fanfly.wingslog.thing.Technician
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.technician.sharedassets.generated.resources.Res
 import wingslog.feature.technician.sharedassets.generated.resources.linked_badge
-import wingslog.feature.technician.sharedassets.generated.resources.no_certificate
+import wingslog.feature.technician.sharedassets.generated.resources.no_certifications
 import wingslog.feature.technician.sharedassets.generated.resources.you_badge
 
 @Composable
 fun TechnicianCard(
   technician: Technician,
+  /** What the account's templates declare — the words a stored certification key renders under. */
+  offered: List<OfferedCertification>,
   onClick: () -> Unit,
   modifier: Modifier = Modifier,
   isSelf: Boolean = false,
   /** A profile mirrored from a share member: shown read-only, badged, and not editable (§7.3). */
   isLinked: Boolean = false,
 ) {
-  val certType = technician.resolvedCertificateType()
-  val certNumber = technician.cert_number.takeIf { it.isNotBlank() }
-  // Picked wall date stored as UTC midnight — read it back in UTC, not the device zone.
-  val expiration = technician.cert_expiration?.toLocalDate(TimeZone.UTC)
-    ?.toDisplayFormat()
+  val certifications = technician.certificationLines(offered)
+  // Derived, never stored (PRD §8.6). Empty for someone uncertified, and for a credential whose
+  // template this build does not carry — untagged rather than an error, in both cases.
+  val roles = technician.derivedRoles(offered)
 
   Card(
     onClick = onClick,
@@ -96,26 +95,36 @@ fun TechnicianCard(
         }
       }
 
-      if (certType == CertificateType.CERTIFICATE_TYPE_NONE) {
+      if (roles.isNotEmpty()) {
+        Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
+          roles.forEach { role ->
+            SuggestionChip(
+              onClick = {},
+              label = {
+                Text(
+                  role,
+                  style = MaterialTheme.typography.labelSmall
+                )
+              },
+            )
+          }
+        }
+      }
+
+      if (certifications.isEmpty()) {
         Text(
-          text = stringResource(Res.string.no_certificate),
+          text = stringResource(Res.string.no_certifications),
           style = MaterialTheme.typography.bodyMedium,
           color = MaterialTheme.colorScheme.outline,
         )
       } else {
-        val certLine = listOfNotNull(
-          stringResource(certType.displayResId()),
-          certNumber,
-        ).joinToString(" · ")
-        Text(
-          text = certLine,
-          style = MaterialTheme.typography.bodyMedium,
-          color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        if (expiration != null) {
+        // One row per credential, expiry inline — "A&P Mechanic · A7584747 (Exp 08/31/2031)".
+        // Stacking the date under the number made a person holding three credentials six lines
+        // deep, and split one fact about one credential across two rows.
+        certifications.forEach { line ->
           Text(
-            text = expiration,
-            style = MaterialTheme.typography.bodySmall,
+            text = line.summary(),
+            style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
           )
         }

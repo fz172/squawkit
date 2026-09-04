@@ -122,7 +122,6 @@ class CurrentThingTemplate(private val registry: TemplateRegistry) {
       meters = true,
       compliance = true,
       technicians = true,
-      technician_certificates = true,
       component_serial_prompt = true,
     )
   }

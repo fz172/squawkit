@@ -7,10 +7,10 @@ import org.junit.Test
 import java.io.File
 
 /**
- * That the committed `airplane.v4.pb` is what the app thinks it is (#675).
+ * That the committed `airplane.v5.pb` is what the app thinks it is (#675).
  *
  * **Why a committed binary is checked by a test rather than compiled in Gradle.** Wire has no
- * protobuf text-format parser, so turning `airplane.v4.textproto` into bytes needs `protoc`, which
+ * protobuf text-format parser, so turning `airplane.v5.textproto` into bytes needs `protoc`, which
  * this build otherwise has no use for — Wire does all codegen. Rather than put a native binary on
  * every developer's Gradle configuration path for an asset that changes about once per preset, the
  * `.pb` is committed and `templates/compile-template.sh` regenerates it into `templates/binary`. This test is what keeps
@@ -30,7 +30,7 @@ class AirplaneTemplateAssetTest {
   }
 
   private val asset: File
-    get() = File(repoRoot(), "core/template/templates/binary/airplane.v4.pb")
+    get() = File(repoRoot(), "core/template/templates/binary/airplane.v5.pb")
 
   private val decoded: ThingTemplate
     get() = ThingTemplate.ADAPTER.decode(asset.readBytes())
@@ -47,7 +47,7 @@ class AirplaneTemplateAssetTest {
   /**
    * That what the app carries is what is committed.
    *
-   * Not a tautology, though both sides trace to one file: the left is `airplane.v4.pb` read from
+   * Not a tautology, though both sides trace to one file: the left is `airplane.v5.pb` read from
    * disk, the right is the base64 constant Gradle embedded from it at build time. They agree only
    * while `generateTemplateAssets` is actually wired into compilation — so this is what catches the
    * task being skipped, mis-wired, or its output going stale, none of which produce a build error.
@@ -211,7 +211,6 @@ class AirplaneTemplateAssetTest {
     assertThat(capabilities.meters).isTrue()
     assertThat(capabilities.compliance).isTrue()
     assertThat(capabilities.technicians).isTrue()
-    assertThat(capabilities.technician_certificates).isTrue()
     assertThat(capabilities.component_serial_prompt).isTrue()
   }
 

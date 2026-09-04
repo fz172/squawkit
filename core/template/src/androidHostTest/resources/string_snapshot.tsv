@@ -793,11 +793,13 @@ feature/tasks/viewing	next_due_date	NEXT DUE DATE
 feature/tasks/viewing	next_due_meter	NEXT DUE %1$s
 feature/tasks/viewing	no_maintenance_logs_for_task	No logs yet. Add a maintenance entry and tag this task to see history here.
 feature/tasks/viewing	on_condition	On Condition
+feature/technician/sharedassets	add_certification	Add Certification
 feature/technician/sharedassets	add_technician	Add Technician
 feature/technician/sharedassets	certificate_number	Certificate Number
-feature/technician/sharedassets	certificate_type	Certificate Type
-feature/technician/sharedassets	certificate_type_amt	A&amp;P Mechanic
-feature/technician/sharedassets	certificate_type_repairman	Repairman
+feature/technician/sharedassets	certification_expires_on	(Exp %1$s)
+feature/technician/sharedassets	certification_name	Certification Name
+feature/technician/sharedassets	certifications	Certifications
+feature/technician/sharedassets	custom_certification	Custom
 feature/technician/sharedassets	delete_technician	Delete Technician
 feature/technician/sharedassets	delete_technician_confirmation	Are you sure you want to delete this technician? This will prevent them from being added to future logs, but it will not remove them from past logs.
 feature/technician/sharedassets	duplicates_apply	Merge selected
@@ -817,19 +819,21 @@ feature/technician/sharedassets	empty_technicians_desc	You haven't added any tec
 feature/technician/sharedassets	empty_technicians_title	No Technicians
 feature/technician/sharedassets	expiration_date	Expiration Date
 feature/technician/sharedassets	linked_badge	Linked
-feature/technician/sharedassets	linked_technician_info_body	This profile comes from an aircraft you share. It’s kept up to date by the person it belongs to, so you can’t edit or delete it here — but you can select them when logging maintenance.
+feature/technician/sharedassets	linked_technician_info_body	This profile comes from something you share. It’s kept up to date by the person it belongs to, so you can’t edit or delete it here — but you can select them when logging maintenance.
 feature/technician/sharedassets	linked_technician_info_dismiss	Got it
 feature/technician/sharedassets	linked_technician_info_title	Maintained by %1$s
-feature/technician/sharedassets	linked_technicians_header	Linked from shared aircraft
+feature/technician/sharedassets	linked_technicians_header	Linked from what others share with you
 feature/technician/sharedassets	manage_technicians	Who Does the Work
 feature/technician/sharedassets	manage_technicians_description	Everyone who works on what you track. Add them here so you can pick them when recording work.
 feature/technician/sharedassets	my_profile	My Profile
 feature/technician/sharedassets	my_technicians_header	My technicians
 feature/technician/sharedassets	name_required	Name (Required)
 feature/technician/sharedassets	never	Never
-feature/technician/sharedassets	no_certificate	No certificate provided
+feature/technician/sharedassets	no_certifications	No certifications recorded
 feature/technician/sharedassets	performed_by	Performed By
+feature/technician/sharedassets	remove_certification	Remove certification
 feature/technician/sharedassets	select_technician	Select Technician
+feature/technician/sharedassets	unnamed_certification	Certification
 feature/technician/sharedassets	you_badge	You
 feature/thing/dashboard	degraded_body	This was set up on a device running a newer version. Nothing has been lost — but this version cannot show or edit it properly, so it is shown exactly as stored.
 feature/thing/dashboard	degraded_no_stored_details	No details stored.

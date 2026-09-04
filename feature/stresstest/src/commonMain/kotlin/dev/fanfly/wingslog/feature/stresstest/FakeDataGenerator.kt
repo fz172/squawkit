@@ -12,7 +12,9 @@ import dev.fanfly.wingslog.core.template.canonical.CanonicalTemplates
 import dev.fanfly.wingslog.core.template.specValue
 import dev.fanfly.wingslog.core.template.withDerivedComponentIds
 import dev.fanfly.wingslog.thing.CertExpireLimit
-import dev.fanfly.wingslog.thing.CertificateType
+import dev.fanfly.wingslog.core.model.technician.FAA_AMT
+import dev.fanfly.wingslog.core.model.technician.FAA_REPAIRMAN
+import dev.fanfly.wingslog.thing.Certification
 import dev.fanfly.wingslog.thing.ComplianceType
 import dev.fanfly.wingslog.thing.Component
 import dev.fanfly.wingslog.thing.ComponentSlot
@@ -1046,10 +1048,14 @@ object FakeDataGenerator {
       Technician(
         id = generateRandomId(),
         name = name,
-        certificate_type = if (isAmt) CertificateType.CERTIFICATE_TYPE_AMT else CertificateType.CERTIFICATE_TYPE_REPAIRMAN,
-        cert_number = certNumber,
-        cert_expire_limit = CertExpireLimit.CERT_EXPIRE_LIMIT_EXPIRES,
-        cert_expiration = expInstant.toWireInstant(),
+        certifications = listOf(
+          Certification(
+            type = if (isAmt) FAA_AMT else FAA_REPAIRMAN,
+            number = certNumber,
+            expire_limit = CertExpireLimit.CERT_EXPIRE_LIMIT_EXPIRES,
+            expiration = expInstant.toWireInstant(),
+          )
+        ),
       )
     }
   }

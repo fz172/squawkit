@@ -162,6 +162,28 @@ message StarterTask {
   int32 interval_months = 6;
 }
 
+// A credential a template recognises — an A&P for an airplane, an ASE for a car, an electrician's
+// licence for a home. PRD §8.6.
+//
+// The template owns this list because the credential is domain knowledge: only the aviation preset
+// knows what an A&P is, and only it should offer one. A technician's roles are then derived from
+// the keys they hold, so this list is simultaneously what the add flow offers and what the tags on
+// the list rows mean.
+message CertificationDef {
+  string key = 1;                 // stored as Certification.type — "faa_amt", "ase"
+  string label = 2;               // "A&P Mechanic"
+
+  // 3 was `expires`, a per-credential switch for whether the expiry row rendered at all. Removed as
+  // redundant: the form already carries a "Never" checkbox, so the user can say a credential does
+  // not expire without a template having to predict it — and the prediction was wrong as often as
+  // right, since an FAA certificate that does not expire still had dates recorded against it.
+  reserved 3;
+  reserved "expires";
+
+  string number_label = 4;        // "Certificate Number" · "License Number"
+  string number_placeholder = 5;
+}
+
 message ThingTemplate {
   string id = 1;       // "airplane" · "car" · "home" — stable across versions
   // Bumped on every publication. Immutable in the sense that (id, version) always names the same
@@ -191,6 +213,11 @@ message ThingTemplate {
   // is not knowable in advance. The template still decides HOW MANY, so the answer is a number
   // here rather than an unbounded list the UI has to invent a limit for.
   int32 custom_spec_fields = 13;
+
+  // The credentials this template recognises. Empty — every preset that has no notion of one —
+  // means the add flow offers nothing for it, which is what `capabilities.technician_certificates`
+  // used to say per Thing and could not say for an account-scoped list (PRD §8.6).
+  repeated CertificationDef certifications = 14;
 
   string display_name = 10;  // picker copy — "Airplane", "Car"
   string icon = 11;          // icon key the client maps to a vector

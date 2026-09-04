@@ -3,6 +3,7 @@ package dev.fanfly.wingslog.feature.logs.update.di
 import androidx.lifecycle.SavedStateHandle
 import dev.fanfly.wingslog.core.analytics.AnalyticsManager
 import dev.fanfly.wingslog.core.template.CurrentThingTemplate
+import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
@@ -29,6 +30,7 @@ val maintenanceUpdateModule = module {
       auth = get<FirebaseAuth>(),
       subscriptionManager = get<SubscriptionManager>(),
       currentThingTemplate = get<CurrentThingTemplate>(),
+      templateRegistry = get<TemplateRegistry>(),
       analytics = get<AnalyticsManager>(),
       savedStateHandle = get<SavedStateHandle>(),
     )

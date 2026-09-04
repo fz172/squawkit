@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.technician.manage.viewmodel
 
+import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.thing.Technician
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
@@ -257,5 +258,7 @@ class TechnicianListViewModelTest {
   private fun viewModel() = TechnicianListViewModel(
     technicianManager = technicianManager,
     sharingManager = sharingManager,
+    // Real, not mocked: the certification labels a row renders come out of the baked-in presets.
+    templateRegistry = BakedInTemplateRegistry(appVersionCode = 1),
   )
 }

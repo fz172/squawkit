@@ -22,15 +22,12 @@ class EveryCapabilityIsConsultedTest {
    * Capabilities that deliberately have no reader, each with the reason and where it went.
    *
    * An exemption has to be argued, which is the point of listing them here rather than dropping
-   * them from the scan.
+   * them from the scan. **Empty, and worth keeping empty**: the one entry it ever held,
+   * `technician_certificates`, was retired by #684 rather than given a reader — a roster the
+   * account shares across every Thing cannot be answered by one Thing's template, so what replaced
+   * it is a template declaring no `certifications` at all.
    */
-  private val deferred = mapOf(
-    // The certificate fields it guards live on EditTechnicianScreen, a root destination reachable
-    // from both settings and the log form. Technicians are account-scoped, so no single thing's
-    // template can answer it — the same scope problem as the technician string revert (#682).
-    // Superseded by #684, where certifications move onto the person and roles are derived.
-    "technician_certificates" to "#684",
-  )
+  private val deferred = emptyMap<String, String>()
 
   @Test
   fun everyCapabilityFieldIsReadSomewhere() {

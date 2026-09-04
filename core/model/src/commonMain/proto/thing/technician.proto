@@ -5,10 +5,44 @@ import "google/protobuf/timestamp.proto";
 option java_package = "dev.fanfly.wingslog.thing";
 option java_multiple_files = true;
 
+// One credential a person holds, of a kind some template declares. PRD §8.6.
+//
+// The credential is what says which domain the person works in — an A&P means aviation, an
+// electrician's licence means home — so a technician's roles are DERIVED from the certifications
+// present rather than picked from a list. Nothing stores a role: a stored one could disagree with
+// the certifications beneath it, and a derived one cannot.
+message Certification {
+  // The `CertificationDef.key` this is an instance of — "faa_amt", "ase", "electrician".
+  //
+  // A template-declared string, never an enum, for the reason ComponentType already demonstrated
+  // (PRD §6): an enum cannot be extended by a template, which is the entire point. A key no
+  // installed template declares — a shared technician from a preset this build lacks — renders
+  // untagged rather than failing, matching `canonicalById` returning null as ordinary (§4.7).
+  string type = 1;
+  string number = 2;
+  google.protobuf.Timestamp expiration = 3;
+  CertExpireLimit expire_limit = 4;
+
+  // The user's own word for a credential no template declares — set only on the `custom_N` entries
+  // the add flow offers, empty on everything a template names.
+  //
+  // Stored beside the key rather than in it, for the same reason `Spec.label` is: the key is a
+  // join, naming the same credential across renames, and a label the user retypes must not orphan
+  // the number and expiry recorded under it.
+  string label = 5;
+}
+
 message Technician {
   string id = 1;
   string name = 2;
-  string cert_type = 3; // legacy string field — prefer certificate_type (field 7)
+
+  // 3-7 are the single FAA certificate this record carried before #684 made certifications a
+  // repeated, template-declared list. TRANSITIONAL READ PATH ONLY — nothing writes them.
+  //
+  // Not migrated, because the backfill is derivable rather than stored: every record carrying them
+  // was created when airplane was the only preset, so the set is closed and the aviation key is
+  // implied. Same argument that let `Thing.template_id` be dropped rather than kept as a hint.
+  string cert_type = 3;
   string cert_number = 4;
   google.protobuf.Timestamp cert_expiration = 5;
   CertExpireLimit cert_expire_limit = 6;
@@ -22,8 +56,14 @@ message Technician {
   // 9 was superseded_by_uid: a soft alias from a manual row to the share member that superseded it.
   // Reconciling a duplicate now deletes the manual row outright, so nothing needs aliasing.
   reserved 9;
+
+  // Empty means "read fields 3-7 instead", which is what every pre-#684 record has.
+  repeated Certification certifications = 10;
 }
 
+// FROZEN, alongside ComponentType (PRD §8.6). Retained only so the transitional read path above can
+// name what a pre-#684 record stored; a new certificate kind is a `CertificationDef` on a template,
+// never a value here.
 enum CertificateType {
   CERTIFICATE_TYPE_NONE = 0;
   CERTIFICATE_TYPE_REPAIRMAN = 1;

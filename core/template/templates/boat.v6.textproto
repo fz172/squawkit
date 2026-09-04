@@ -16,8 +16,12 @@
 # owner for "airframe, engine, and prop times" — and the card is not gated on meters, so a
 # preset that declares none was asking for readings its own form does not offer.
 
+# v6 declares `certifications` and drops `technician_certificates`: a technician's roles are
+# derived from the credentials they hold, and a per-Thing flag cannot answer for a roster the
+# account shares across every Thing (#684).
+#
 id: "boat"
-version: 5
+version: 6
 min_app_version: 0
 
 display_name: "Boat"
@@ -66,7 +70,6 @@ capabilities {
   meters: true
   compliance: false
   technicians: true
-  technician_certificates: false
   component_serial_prompt: false
 
   priorities: SQUAWK_PRIORITY_LOW
@@ -144,4 +147,12 @@ meters {
   unit_label: "hrs"
   decimal: true
   component_slot_key: "propulsion"
+}
+
+# PRD §8.6. ABYC is the marine analogue of the A&P — the certification a yard's technician holds.
+certifications {
+  key: "abyc"
+  label: "ABYC Certified"
+  number_label: "Certification Number"
+  number_placeholder: "ABYC number"
 }

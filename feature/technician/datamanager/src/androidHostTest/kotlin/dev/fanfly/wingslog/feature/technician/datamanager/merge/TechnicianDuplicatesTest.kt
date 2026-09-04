@@ -1,7 +1,9 @@
 package dev.fanfly.wingslog.feature.technician.datamanager.merge
 
 import com.google.common.truth.Truth.assertThat
+import dev.fanfly.wingslog.core.model.technician.FAA_AMT
 import dev.fanfly.wingslog.thing.CertificateType
+import dev.fanfly.wingslog.thing.Certification
 import dev.fanfly.wingslog.thing.Technician
 import org.junit.Test
 
@@ -292,5 +294,77 @@ class TechnicianDuplicatesTest {
     val member = mirror(MEMBER_UID, "Carol", cert = "AP-333")
 
     assertThat(findDuplicates(listOf(a, b), listOf(member))).isEmpty()
+  }
+
+  // ---- several certifications per person (#684) ----
+
+  private fun certified(id: String, name: String, vararg certs: Pair<String, String>) =
+    Technician(
+      id = id,
+      name = name,
+      certifications = certs.map { (type, number) ->
+        Certification(type = type, number = number)
+      },
+    )
+
+  @Test
+  fun rowsSharingAnyOneCertNumber_areTheSamePerson() {
+    // The A&P who also services the car, entered twice: once off an aviation invoice and once off a
+    // garage one. Only one of the two numbers is common, and that is enough.
+    val fromTheAnnual = certified("m1", "Sponge Bob", FAA_AMT to "AP-123")
+    val fromTheGarage =
+      certified("m2", "S. Bob", FAA_AMT to "AP-123", "ase" to "ASE-77")
+
+    val groups = findDuplicates(listOf(fromTheAnnual, fromTheGarage), emptyList())
+
+    assertThat(groups).hasSize(1)
+    assertThat(groups.single().resolution).isEqualTo(DuplicateResolution.MERGE_MANUAL)
+    assertThat(groups.single().autoSafe).isTrue()
+    // The richer row keeps: two credentials beat one.
+    assertThat(groups.single().keep.id).isEqualTo("m2")
+  }
+
+  @Test
+  fun mergingUnionsTheCertificationsRatherThanKeepingOnlyTheKeepers() {
+    // Losing the second credential here is the failure the derived-role model exists to avoid: it
+    // would leave the person tagged for one domain when they work in two.
+    val airplaneSide = certified("m1", "Sponge Bob", FAA_AMT to "AP-123", "abyc" to "AB-1")
+    val carSide = certified("m2", "Sponge Bob", FAA_AMT to "AP-123", "ase" to "ASE-77")
+
+    val group = findDuplicates(listOf(airplaneSide, carSide), emptyList()).single()
+
+    assertThat(group.mergedCertifications().map { it.type })
+      .containsExactly(FAA_AMT, "abyc", "ase")
+  }
+
+  @Test
+  fun theKeepersOwnCopyWinsOnACredentialBothCarry() {
+    // The keeper is the richer row by construction, and a differing number for the same credential
+    // is the typo the merge is resolving — not a second credential.
+    val keep = certified("m1", "Sponge Bob", FAA_AMT to "AP-123", "ase" to "ASE-77")
+    val other = certified("m2", "Sponge Bob", FAA_AMT to "AP-123 ")
+
+    val group = findDuplicates(listOf(keep, other), emptyList()).single()
+
+    assertThat(group.keep.id).isEqualTo("m1")
+    assertThat(group.mergedCertifications().first { it.type == FAA_AMT }.number)
+      .isEqualTo("AP-123")
+  }
+
+  @Test
+  fun aPre684RowUnionsWithATypedOne() {
+    // The union reads through the transitional path, so nothing has to be migrated first.
+    val legacy = Technician(
+      id = "m1",
+      name = "Sponge Bob",
+      certificate_type = CertificateType.CERTIFICATE_TYPE_AMT,
+      cert_number = "AP-123",
+    )
+    val current = certified("m2", "Sponge Bob", FAA_AMT to "AP-123", "ase" to "ASE-77")
+
+    val group = findDuplicates(listOf(legacy, current), emptyList()).single()
+
+    assertThat(group.mergedCertifications().map { it.type })
+      .containsExactly(FAA_AMT, "ase")
   }
 }

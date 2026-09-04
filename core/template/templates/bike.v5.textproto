@@ -14,8 +14,12 @@
 # owner for "airframe, engine, and prop times" — and the card is not gated on meters, so a
 # preset that declares none was asking for readings its own form does not offer.
 
+# v5 drops `technician_certificates`, retired with #684 — see the capability's reserved slot in
+# capabilities.proto. This preset declares no `certifications`, which says the same thing where the
+# scope is right: nothing is offered for it.
+#
 id: "bike"
-version: 4
+version: 5
 min_app_version: 0
 
 display_name: "Bike"
@@ -67,7 +71,6 @@ capabilities {
   meters: true
   compliance: false
   technicians: true
-  technician_certificates: false
   component_serial_prompt: false
 
   priorities: SQUAWK_PRIORITY_LOW

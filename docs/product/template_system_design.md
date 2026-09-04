@@ -88,6 +88,8 @@ message ThingTemplate {
   repeated ComponentSlot component_slots = 7;
   repeated MeterDef meters = 8;
   repeated StarterTask starter_tasks = 9;
+  int32 custom_spec_fields = 13;  // how many fields of the user's own the form offers
+  repeated CertificationDef certifications = 14;  // credentials this domain recognises; PRD §8.6
 
   string display_name = 10;
   string icon = 11;

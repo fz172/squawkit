@@ -7,22 +7,31 @@
   <string name="performed_by">Performed By</string>
 
   <string name="name_required">Name (Required)</string>
-  <string name="certificate_type">Certificate Type</string>
+  <!-- Fallback only: a certification names its own number label, and this covers one whose template
+       this build does not carry. -->
   <string name="certificate_number">Certificate Number</string>
   <string name="expiration_date">Expiration Date</string>
   <string name="never">Never</string>
 
-  <string name="certificate_type_repairman">Repairman</string>
-  <string name="certificate_type_amt">A&amp;P Mechanic</string>
+  <string name="certifications">Certifications</string>
+  <string name="add_certification">Add Certification</string>
+  <string name="remove_certification">Remove certification</string>
+  <!-- Header for a legacy row that carried a number and nothing naming what it is for. -->
+  <string name="unnamed_certification">Certification</string>
+  <!-- The add menu's last entry: a credential no template declares, named by the user. -->
+  <string name="custom_certification">Custom</string>
+  <string name="certification_name">Certification Name</string>
+  <!-- Trails the certification on a list row: "A&amp;P Mechanic · A7584747 (Exp 08/31/2031)". -->
+  <string name="certification_expires_on">(Exp <xliff:g example="08/31/2031">%1$s</xliff:g>)</string>
 
   <string name="you_badge">You</string>
   <string name="my_profile">My Profile</string>
 
   <string name="linked_badge">Linked</string>
-  <string name="linked_technicians_header">Linked from shared aircraft</string>
+  <string name="linked_technicians_header">Linked from what others share with you</string>
   <string name="my_technicians_header">My technicians</string>
   <string name="linked_technician_info_title">Maintained by <xliff:g example="Google">%1$s</xliff:g></string>
-  <string name="linked_technician_info_body">This profile comes from an aircraft you share. It’s kept up to date by the person it belongs to, so you can’t edit or delete it here — but you can select them when logging maintenance.</string>
+  <string name="linked_technician_info_body">This profile comes from something you share. It’s kept up to date by the person it belongs to, so you can’t edit or delete it here — but you can select them when logging maintenance.</string>
   <string name="linked_technician_info_dismiss">Got it</string>
 
   <string name="duplicates_prompt_title">Some technicians look like the same person</string>
@@ -38,7 +47,7 @@
   <string name="duplicates_apply">Merge selected</string>
   <string name="duplicates_no_selection">Nothing selected</string>
 
-  <string name="no_certificate">No certificate provided</string>
+  <string name="no_certifications">No certifications recorded</string>
   <string name="empty_technicians_title">No Technicians</string>
   <string name="empty_technicians_desc">You haven't added any technicians yet. Add one to keep track of who performs your maintenance.</string>
   <string name="delete_technician">Delete Technician</string>

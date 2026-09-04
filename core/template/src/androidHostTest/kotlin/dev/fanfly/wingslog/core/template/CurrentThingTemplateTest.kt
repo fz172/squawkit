@@ -65,7 +65,6 @@ class CurrentThingTemplateTest {
     assertThat(default.meters).isEqualTo(airplane.meters)
     assertThat(default.compliance).isEqualTo(airplane.compliance)
     assertThat(default.technicians).isEqualTo(airplane.technicians)
-    assertThat(default.technician_certificates).isEqualTo(airplane.technician_certificates)
     assertThat(default.component_serial_prompt).isEqualTo(airplane.component_serial_prompt)
   }
 

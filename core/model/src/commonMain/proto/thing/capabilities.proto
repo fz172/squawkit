@@ -35,7 +35,13 @@ message Capabilities {
   bool meters = 2;                  // meter fields on logs; METER-based rules
   bool compliance = 3;              // type chip, reference number, authority
   bool technicians = 4;             // technician picker on the log form
-  bool technician_certificates = 5; // certificate fields on the technician record
+  // 5 was technician_certificates. Removed by #684 rather than reworked: it gated the certificate
+  // fields on a record the technician list aggregates ACROSS the account, so no single Thing's
+  // template could answer it. What replaced it is not another flag — a template declaring no
+  // `certifications` offers none, which is the same statement made where the scope is right.
+  reserved 5;
+  reserved "technician_certificates";
+
   bool component_serial_prompt = 6; // nag for serials at creation
 
   // Which priority values the template offers. The SquawkPriority enum keeps every value

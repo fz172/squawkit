@@ -181,6 +181,25 @@ export interface StarterTask {
   intervalMonths: number;
 }
 
+/**
+ * A credential a template recognises — an A&P for an airplane, an ASE for a car, an electrician's
+ * licence for a home. PRD §8.6.
+ *
+ * The template owns this list because the credential is domain knowledge: only the aviation preset
+ * knows what an A&P is, and only it should offer one. A technician's roles are then derived from
+ * the keys they hold, so this list is simultaneously what the add flow offers and what the tags on
+ * the list rows mean.
+ */
+export interface CertificationDef {
+  /** stored as Certification.type — "faa_amt", "ase" */
+  key: string;
+  /** "A&P Mechanic" */
+  label: string;
+  /** "Certificate Number" · "License Number" */
+  numberLabel: string;
+  numberPlaceholder: string;
+}
+
 export interface ThingTemplate {
   /** "airplane" · "car" · "home" — stable across versions */
   id: string;
@@ -214,6 +233,12 @@ export interface ThingTemplate {
    * here rather than an unbounded list the UI has to invent a limit for.
    */
   customSpecFields: number;
+  /**
+   * The credentials this template recognises. Empty — every preset that has no notion of one —
+   * means the add flow offers nothing for it, which is what `capabilities.technician_certificates`
+   * used to say per Thing and could not say for an account-scoped list (PRD §8.6).
+   */
+  certifications: CertificationDef[];
   /** picker copy — "Airplane", "Car" */
   displayName: string;
   /** icon key the client maps to a vector */
@@ -999,6 +1024,122 @@ export const StarterTask: MessageFns<StarterTask> = {
   },
 };
 
+function createBaseCertificationDef(): CertificationDef {
+  return { key: "", label: "", numberLabel: "", numberPlaceholder: "" };
+}
+
+export const CertificationDef: MessageFns<CertificationDef> = {
+  encode(message: CertificationDef, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.key !== "") {
+      writer.uint32(10).string(message.key);
+    }
+    if (message.label !== "") {
+      writer.uint32(18).string(message.label);
+    }
+    if (message.numberLabel !== "") {
+      writer.uint32(34).string(message.numberLabel);
+    }
+    if (message.numberPlaceholder !== "") {
+      writer.uint32(42).string(message.numberPlaceholder);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): CertificationDef {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseCertificationDef();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.key = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.label = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.numberLabel = reader.string();
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.numberPlaceholder = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): CertificationDef {
+    return {
+      key: isSet(object.key) ? globalThis.String(object.key) : "",
+      label: isSet(object.label) ? globalThis.String(object.label) : "",
+      numberLabel: isSet(object.numberLabel)
+        ? globalThis.String(object.numberLabel)
+        : isSet(object.number_label)
+        ? globalThis.String(object.number_label)
+        : "",
+      numberPlaceholder: isSet(object.numberPlaceholder)
+        ? globalThis.String(object.numberPlaceholder)
+        : isSet(object.number_placeholder)
+        ? globalThis.String(object.number_placeholder)
+        : "",
+    };
+  },
+
+  toJSON(message: CertificationDef): unknown {
+    const obj: any = {};
+    if (message.key !== "") {
+      obj.key = message.key;
+    }
+    if (message.label !== "") {
+      obj.label = message.label;
+    }
+    if (message.numberLabel !== "") {
+      obj.numberLabel = message.numberLabel;
+    }
+    if (message.numberPlaceholder !== "") {
+      obj.numberPlaceholder = message.numberPlaceholder;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<CertificationDef>, I>>(base?: I): CertificationDef {
+    return CertificationDef.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<CertificationDef>, I>>(object: I): CertificationDef {
+    const message = createBaseCertificationDef();
+    message.key = object.key ?? "";
+    message.label = object.label ?? "";
+    message.numberLabel = object.numberLabel ?? "";
+    message.numberPlaceholder = object.numberPlaceholder ?? "";
+    return message;
+  },
+};
+
 function createBaseThingTemplate(): ThingTemplate {
   return {
     id: "",
@@ -1011,6 +1152,7 @@ function createBaseThingTemplate(): ThingTemplate {
     meters: [],
     starterTasks: [],
     customSpecFields: 0,
+    certifications: [],
     displayName: "",
     icon: "",
     sortOrder: 0,
@@ -1048,6 +1190,9 @@ export const ThingTemplate: MessageFns<ThingTemplate> = {
     }
     if (message.customSpecFields !== 0) {
       writer.uint32(104).int32(message.customSpecFields);
+    }
+    for (const v of message.certifications) {
+      CertificationDef.encode(v!, writer.uint32(114).fork()).join();
     }
     if (message.displayName !== "") {
       writer.uint32(82).string(message.displayName);
@@ -1148,6 +1293,14 @@ export const ThingTemplate: MessageFns<ThingTemplate> = {
           message.customSpecFields = reader.int32();
           continue;
         }
+        case 14: {
+          if (tag !== 114) {
+            break;
+          }
+
+          message.certifications.push(CertificationDef.decode(reader, reader.uint32()));
+          continue;
+        }
         case 10: {
           if (tag !== 82) {
             break;
@@ -1215,6 +1368,9 @@ export const ThingTemplate: MessageFns<ThingTemplate> = {
         : isSet(object.custom_spec_fields)
         ? globalThis.Number(object.custom_spec_fields)
         : 0,
+      certifications: globalThis.Array.isArray(object?.certifications)
+        ? object.certifications.map((e: any) => CertificationDef.fromJSON(e))
+        : [],
       displayName: isSet(object.displayName)
         ? globalThis.String(object.displayName)
         : isSet(object.display_name)
@@ -1261,6 +1417,9 @@ export const ThingTemplate: MessageFns<ThingTemplate> = {
     if (message.customSpecFields !== 0) {
       obj.customSpecFields = Math.round(message.customSpecFields);
     }
+    if (message.certifications?.length) {
+      obj.certifications = message.certifications.map((e) => CertificationDef.toJSON(e));
+    }
     if (message.displayName !== "") {
       obj.displayName = message.displayName;
     }
@@ -1292,6 +1451,7 @@ export const ThingTemplate: MessageFns<ThingTemplate> = {
     message.meters = object.meters?.map((e) => MeterDef.fromPartial(e)) || [];
     message.starterTasks = object.starterTasks?.map((e) => StarterTask.fromPartial(e)) || [];
     message.customSpecFields = object.customSpecFields ?? 0;
+    message.certifications = object.certifications?.map((e) => CertificationDef.fromPartial(e)) || [];
     message.displayName = object.displayName ?? "";
     message.icon = object.icon ?? "";
     message.sortOrder = object.sortOrder ?? 0;

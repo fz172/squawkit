@@ -22,8 +22,12 @@
 # owner for "airframe, engine, and prop times" — and the card is not gated on meters, so a
 # preset that declares none was asking for readings its own form does not offer.
 
+# v6 declares `certifications` and drops `technician_certificates`: a technician's roles are
+# derived from the credentials they hold, and a per-Thing flag cannot answer for a roster the
+# account shares across every Thing (#684).
+#
 id: "home"
-version: 5
+version: 6
 min_app_version: 0
 
 display_name: "Home"
@@ -96,7 +100,6 @@ capabilities {
   meters: false
   compliance: false
   technicians: true
-  technician_certificates: false
   component_serial_prompt: false
 
   # The top tier is labelled from `down_status` above, so this reads "Urgent" here and "AOG" on an
@@ -125,3 +128,34 @@ spec_fields { key: "year_built" label: "Year Built" placeholder: "1974" numeric:
 # meter fields on the log form, no meter column in export, no meter rule type in the task editor,
 # and a due-status computation that runs purely on dates. If any of those degrade to a blank
 # "0.0 hrs" field, the config system has failed its first real test.
+
+# PRD §8.6, and the reason certifications live on the person rather than behind a per-Thing flag: a
+# homeowner's roster holds an electrician, a plumber, and the neighbor who clears the gutters. The
+# last of those has no credential, carries no role, and is offered on every Thing — which is the
+# right answer, not a gap.
+certifications {
+  key: "electrician"
+  label: "Electrician"
+  number_label: "License Number"
+  number_placeholder: "License number"
+}
+certifications {
+  key: "plumber"
+  label: "Plumber"
+  number_label: "License Number"
+  number_placeholder: "License number"
+}
+# EPA Section 608 is issued for life. Nothing here says so: the form's "Never" checkbox is where a
+# credential's expiry is settled, by the person who holds it rather than by a template guessing.
+certifications {
+  key: "hvac_epa608"
+  label: "HVAC (EPA 608)"
+  number_label: "Certification Number"
+  number_placeholder: "Certification number"
+}
+certifications {
+  key: "general_contractor"
+  label: "General Contractor"
+  number_label: "License Number"
+  number_placeholder: "License number"
+}

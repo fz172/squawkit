@@ -1,5 +1,5 @@
 
-home"Ë
+home"Ë
 
 homehomesa0
 attention itemattention itemsan"	Attention
@@ -11,4 +11,8 @@
 addressAddress2 
 
 year_built
-Year Built*1974HRHomeZhome`
+Year Built*1974HRHomeZhome`r:
+electricianElectrician"License Number*License numberr2
+plumberPlumber"License Number*License numberrI
+hvac_epa608HVAC (EPA 608)"Certification Number*Certification numberrH
+general_contractorGeneral Contractor"License Number*License number

@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.feature.export.datamanager.impl
 
 import dev.fanfly.wingslog.core.datetime.toLocalDate
+import dev.fanfly.wingslog.core.model.technician.resolvedCertifications
 import dev.fanfly.wingslog.core.template.ComponentField
 import dev.fanfly.wingslog.core.template.GenericLexicon
 import dev.fanfly.wingslog.core.template.LexiconFormatter
@@ -14,7 +15,9 @@ import dev.fanfly.wingslog.core.template.childrenInSlot
 import dev.fanfly.wingslog.core.template.customSpecs
 import dev.fanfly.wingslog.core.template.displayLabel
 import dev.fanfly.wingslog.core.template.displaySubtitle
+import dev.fanfly.wingslog.core.template.forKey
 import dev.fanfly.wingslog.core.template.formatMeterNumber
+import dev.fanfly.wingslog.core.template.knownCertifications
 import dev.fanfly.wingslog.core.template.meter
 import dev.fanfly.wingslog.core.template.meterUnit
 import dev.fanfly.wingslog.core.template.readingFor
@@ -28,7 +31,7 @@ import dev.fanfly.wingslog.feature.tasks.datamanager.meterKeyFor
 import dev.fanfly.wingslog.thing.Attachment
 import dev.fanfly.wingslog.thing.AttachmentType
 import dev.fanfly.wingslog.thing.CertExpireLimit
-import dev.fanfly.wingslog.thing.CertificateType
+import dev.fanfly.wingslog.thing.Certification
 import dev.fanfly.wingslog.thing.ComplianceType
 import dev.fanfly.wingslog.thing.Component
 import dev.fanfly.wingslog.thing.ComponentSlot
@@ -487,7 +490,7 @@ class LogbookExportArchiveBuilder(
               log.referenceNumbers(bundle),
               technician?.name.orEmpty(),
               technician.certTypeLabel(),
-              technician?.cert_number.orEmpty(),
+              technician.certNumbers(),
               log.attachments.attachmentCell(attachments),
             )
           )
@@ -605,12 +608,8 @@ class LogbookExportArchiveBuilder(
             listOf(
               technician.name,
               technician.certTypeLabel(),
-              technician.cert_number,
-              if (technician.cert_expire_limit == CertExpireLimit.CERT_EXPIRE_LIMIT_NEVER_EXPIRES) {
-                "Never expires"
-              } else {
-                technician.cert_expiration.date(timeZone)
-              },
+              technician.certNumbers(),
+              technician.certExpirations(timeZone),
             )
           )
         }
@@ -785,14 +784,10 @@ class LogbookExportArchiveBuilder(
               title = technician.name.ifBlank { "Technician" },
               rows = listOf(
                 PdfSummaryRow("Cert Type", technician.certTypeLabel()),
-                PdfSummaryRow("Cert #", technician.cert_number),
+                PdfSummaryRow("Cert #", technician.certNumbers()),
                 PdfSummaryRow(
                   "Cert Expiration",
-                  if (technician.cert_expire_limit == CertExpireLimit.CERT_EXPIRE_LIMIT_NEVER_EXPIRES) {
-                    "Never expires"
-                  } else {
-                    technician.cert_expiration.date(timeZone)
-                  }
+                  technician.certExpirations(timeZone)
                 ),
               ),
             )
@@ -911,14 +906,26 @@ class LogbookExportArchiveBuilder(
         if (componentCards.isNotEmpty()) {
           add(PdfSummarySection(title = "Components", cards = componentCards))
         }
-        // Name only: every preset outside aviation declares technician_certificates false, so a
-        // Cert Type / Cert # card would be three empty rows.
+        // The credentials are the person's, not the Thing's, so they belong in every layout — a
+        // household electrician has a license number for the same reason an A&P does (#684). Rows
+        // for credentials nobody recorded are dropped rather than exported blank.
         val technicianCards = bundle.techniciansById.values
           .sortedBy { it.name }
           .map { technician ->
             PdfSummaryCard(
               title = technician.name.ifBlank { "Unnamed" },
-              rows = listOf(PdfSummaryRow("Name", technician.name)),
+              rows = listOfNotNull(
+                PdfSummaryRow("Name", technician.name),
+                technician.certTypeLabel()
+                  .takeIf { it.isNotBlank() }
+                  ?.let { PdfSummaryRow("Certifications", it) },
+                technician.certNumbers()
+                  .takeIf { it.isNotBlank() }
+                  ?.let { PdfSummaryRow("Numbers", it) },
+                technician.certExpirations(timeZone)
+                  .takeIf { it.isNotBlank() }
+                  ?.let { PdfSummaryRow("Expiration", it) },
+              ),
             )
           }
         if (technicianCards.isNotEmpty()) {
@@ -1229,7 +1236,7 @@ class LogbookExportArchiveBuilder(
       log.squawkTitles(bundle),
       technician?.name.orEmpty(),
       technician.certTypeLabel(),
-      technician?.cert_number.orEmpty(),
+      technician.certNumbers(),
       log.attachments.attachmentCell(attachments),
     )
   }
@@ -1425,14 +1432,47 @@ class LogbookExportArchiveBuilder(
       else -> ""
     }
 
+  /**
+   * Every certification this build knows, so an exported row names a credential rather than the key
+   * it is stored under. Fixed for the life of the process — the baked-in pool cannot change without
+   * a release.
+   */
+  private val knownCertifications = templateRegistry.knownCertifications()
+
+  /**
+   * The credentials a person holds, as one cell (#684).
+   *
+   * A person can hold several — the A&P who also services the car — and a column that showed only
+   * the first would be a quietly wrong export rather than an incomplete one. `certTypeLabel`,
+   * `certNumbers` and `certExpirations` iterate the same list in the same order, so the three cells
+   * of a row line up.
+   */
   private fun Technician?.certTypeLabel(): String =
-    when (this?.certificate_type) {
-      CertificateType.CERTIFICATE_TYPE_REPAIRMAN -> "Repairman"
-      CertificateType.CERTIFICATE_TYPE_AMT -> this.cert_type.ifBlank { "A&P" }
-      CertificateType.CERTIFICATE_TYPE_NONE,
-      null,
-        -> this?.cert_type.orEmpty()
+    this?.certificationCells { certification ->
+      // The user's own word first: a custom credential is named by whoever added it, and no
+      // template declares its key.
+      certification.label.takeIf { it.isNotBlank() }
+        ?: knownCertifications.forKey(certification.type)?.label
+        ?: certification.type
     }
+      .orEmpty()
+
+  private fun Technician?.certNumbers(): String =
+    this?.certificationCells { it.number }
+      .orEmpty()
+
+  private fun Technician?.certExpirations(timeZone: TimeZone): String =
+    this?.certificationCells { certification ->
+      if (certification.expire_limit == CertExpireLimit.CERT_EXPIRE_LIMIT_NEVER_EXPIRES) {
+        "Never expires"
+      } else {
+        certification.expiration.date(timeZone)
+      }
+    }
+      .orEmpty()
+
+  private fun Technician.certificationCells(cell: (Certification) -> String): String =
+    resolvedCertifications().joinToString(CERT_SEPARATOR, transform = cell)
 
   private fun WireInstant?.date(timeZone: TimeZone): String =
     this?.toLocalDate(timeZone)
@@ -1507,4 +1547,9 @@ class LogbookExportArchiveBuilder(
     val sheetPrefix: String,
     val tables: List<LogbookExportTable>,
   )
+
+  private companion object {
+    /** Separates a person's several credentials inside one cell. */
+    const val CERT_SEPARATOR = "; "
+  }
 }
