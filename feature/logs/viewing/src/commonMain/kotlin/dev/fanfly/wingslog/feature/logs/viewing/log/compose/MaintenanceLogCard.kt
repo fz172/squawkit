@@ -32,6 +32,7 @@ import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.LocalThingTemplate
 import dev.fanfly.wingslog.core.template.MeterKeys
+import dev.fanfly.wingslog.core.template.componentTypesApply
 import dev.fanfly.wingslog.core.template.formatMeterValue
 import dev.fanfly.wingslog.core.template.primaryReading
 import dev.fanfly.wingslog.core.template.squawkNoun
@@ -92,7 +93,7 @@ fun MaintenanceLogCard(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
       ) {
-        ComponentTypeBadge(log.component_type)
+        LogComponentBadge(log.component_type)
         Spacer(Modifier.weight(1f))
         if (primary != null) {
           Text(
@@ -206,6 +207,21 @@ private fun badgeSchemeFor(type: ComponentType): BadgeScheme = when (type) {
     MaterialTheme.colorScheme.surfaceContainerHigh,
     MaterialTheme.colorScheme.onSurfaceVariant,
   )
+}
+
+/**
+ * The component pill, or nothing when the type describes nothing the user picked.
+ *
+ * The form defaults to `COMPONENT_AIRFRAME` and stamped it on even where the picker never appeared,
+ * so a car's every log wore an "Airframe" pill.
+ */
+@Composable
+internal fun LogComponentBadge(
+  type: ComponentType,
+  modifier: Modifier = Modifier,
+) {
+  if (!componentTypesApply || type == ComponentType.COMPONENT_UNKNOWN) return
+  ComponentTypeBadge(type, modifier)
 }
 
 @Composable

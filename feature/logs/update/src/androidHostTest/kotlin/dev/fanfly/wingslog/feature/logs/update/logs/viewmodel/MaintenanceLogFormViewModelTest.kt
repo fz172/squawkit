@@ -1,28 +1,32 @@
 package dev.fanfly.wingslog.feature.logs.update.logs.viewmodel
 
-import dev.fanfly.wingslog.core.template.CurrentThingTemplate
-import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
-import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
-import dev.fanfly.wingslog.core.analytics.NoOpAnalyticsManager
 import androidx.lifecycle.SavedStateHandle
 import com.google.common.truth.Truth.assertThat
-import dev.fanfly.wingslog.thing.MaintenanceLog
-import dev.fanfly.wingslog.thing.MaintenanceTask
-import dev.fanfly.wingslog.thing.Squawk
-import dev.fanfly.wingslog.thing.Technician
+import dev.fanfly.wingslog.core.analytics.NoOpAnalyticsManager
 import dev.fanfly.wingslog.core.nav.Screen
+import dev.fanfly.wingslog.core.template.CurrentThingTemplate
+import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
+import dev.fanfly.wingslog.core.template.canonical.CanonicalTemplates
+import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
-import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
+import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
+import dev.fanfly.wingslog.thing.ComponentType
+import dev.fanfly.wingslog.thing.MaintenanceLog
+import dev.fanfly.wingslog.thing.MaintenanceTask
+import dev.fanfly.wingslog.thing.Squawk
+import dev.fanfly.wingslog.thing.Technician
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.auth.FirebaseUser
+import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.slot
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flow
@@ -61,6 +65,11 @@ class MaintenanceLogFormViewModelTest {
   private fun airplaneTemplateHolder() = CurrentThingTemplate(
     templateRegistry,
   ).apply { set(AirplaneTemplate.TEMPLATE) }
+
+  /** A preset with no components at all — the one that finds aviation assumptions (#732). */
+  private fun homeTemplateHolder() = CurrentThingTemplate(
+    templateRegistry,
+  ).apply { set(CanonicalTemplates.HOME) }
 
   /** Real, not mocked: the picker's certification labels come out of the baked-in preset pool. */
   private val templateRegistry = BakedInTemplateRegistry(appVersionCode = 1)
@@ -602,6 +611,53 @@ class MaintenanceLogFormViewModelTest {
       assertThat(selected?.source_uid).isEqualTo(LINKED_UID)
     }
 
+  // ---- component type (#732: the picker only exists where ComponentType describes the thing) ----
+
+  @Test
+  fun save_onATemplateWithoutComponents_storesNoComponentType() =
+    runTest(testDispatcher) {
+      val saved = slot<MaintenanceLog>()
+      coEvery {
+        logManager.addLog(
+          TEST_THING_ID,
+          capture(saved)
+        )
+      } returns Result.success(true)
+
+      val viewModel =
+        buildViewModelForNew(templateHolder = homeTemplateHolder())
+      advanceUntilIdle()
+      viewModel.onWorkDescriptionChange("Replaced the water heater anode")
+      viewModel.save()
+      advanceUntilIdle()
+
+      // Not COMPONENT_AIRFRAME, the form's default — that is what put an "Airframe" pill on every
+      // card of a thing that has no airframe.
+      assertThat(saved.captured.component_type).isEqualTo(ComponentType.COMPONENT_UNKNOWN)
+      assertThat(saved.captured.component_serial).isEmpty()
+    }
+
+  @Test
+  fun save_onAnAirplane_keepsTheComponentTheUserPicked() =
+    runTest(testDispatcher) {
+      val saved = slot<MaintenanceLog>()
+      coEvery {
+        logManager.addLog(
+          TEST_THING_ID,
+          capture(saved)
+        )
+      } returns Result.success(true)
+
+      val viewModel = buildViewModelForNew()
+      advanceUntilIdle()
+      viewModel.onWorkDescriptionChange("Replaced left magneto")
+      viewModel.onComponentTypeChange(ComponentType.COMPONENT_ENGINE)
+      viewModel.save()
+      advanceUntilIdle()
+
+      assertThat(saved.captured.component_type).isEqualTo(ComponentType.COMPONENT_ENGINE)
+    }
+
   // ---- helpers ----
 
   private fun buildViewModelForEdit(): MaintenanceLogFormViewModel =
@@ -629,6 +685,7 @@ class MaintenanceLogFormViewModelTest {
   private fun buildViewModelForNew(
     preselectedSquawkId: String? = null,
     preselectedCardId: String? = null,
+    templateHolder: CurrentThingTemplate = airplaneTemplateHolder(),
   ): MaintenanceLogFormViewModel =
     MaintenanceLogFormViewModel(
       logManager = logManager,
@@ -640,7 +697,7 @@ class MaintenanceLogFormViewModelTest {
       sharingManager = sharingManager,
       auth = auth,
       subscriptionManager = subscriptionManager,
-      currentThingTemplate = airplaneTemplateHolder(),
+      currentThingTemplate = templateHolder,
       templateRegistry = templateRegistry,
       analytics = NoOpAnalyticsManager,
       savedStateHandle = SavedStateHandle(

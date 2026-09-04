@@ -10,6 +10,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import dev.fanfly.wingslog.core.template.LocalThingCapabilities
 import dev.fanfly.wingslog.core.template.LocalThingTemplate
 import dev.fanfly.wingslog.core.template.meterLabelWithUnit
+import dev.fanfly.wingslog.core.template.metersLabel
 import dev.fanfly.wingslog.core.ui.common.compose.FormTextField
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
@@ -40,7 +41,10 @@ fun LogTimeTab(
     }
     if (meters.isNotEmpty()) {
       LogSection(
-        header = stringResource(Res.string.log_tab_hours),
+        // The template's word for its meters, matching the tab above it.
+        header = LocalThingTemplate.current.metersLabel(
+          ifAbsent = stringResource(Res.string.log_tab_hours),
+        ),
         description = stringResource(Res.string.hours_section_description),
       ) {
         Column(verticalArrangement = Arrangement.spacedBy(Spacing.large)) {

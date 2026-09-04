@@ -94,6 +94,30 @@ class ThingTemplateFieldsTest {
   }
 
   @Test
+  fun everyPresetNamesItsOwnMeterSet() {
+    // The log form's tab said "Hours" for all of them — aviation's word on a car's odometer.
+    assertThat(AirplaneTemplate.TEMPLATE.metersLabel(ifAbsent = "Hours")).isEqualTo("Hours")
+    assertThat(CanonicalTemplates.AUTOMOTIVE.metersLabel(ifAbsent = "Hours"))
+      .isEqualTo("Odometer")
+    // A distance and ride hours: the pair needs a word neither of them supplies.
+    assertThat(CanonicalTemplates.BIKE.metersLabel(ifAbsent = "Hours")).isEqualTo("Readings")
+    assertThat(CanonicalTemplates.BOAT.metersLabel(ifAbsent = "Hours")).isEqualTo("Hours")
+  }
+
+  @Test
+  fun aTemplateDeclaringNoMetersLabelFallsBackToItsOnlyMeter() {
+    // DNA written before `meters_label` existed still reaches the form, and a preset with one
+    // meter is named perfectly well by that meter.
+    val oneMeter = CanonicalTemplates.AUTOMOTIVE.copy(meters_label = "")
+    assertThat(oneMeter.metersLabel(ifAbsent = "Hours")).isEqualTo("Odometer")
+
+    // Several meters and no declared word: only then does the caller's own string stand.
+    val several = AirplaneTemplate.TEMPLATE.copy(meters_label = "")
+    assertThat(several.metersLabel(ifAbsent = "Hours")).isEqualTo("Hours")
+    assertThat(CanonicalTemplates.HOME.metersLabel(ifAbsent = "Hours")).isEqualTo("Hours")
+  }
+
+  @Test
   fun noTemplateAtAllStillRendersALabel() {
     // An account-level screen has no template selected and must still caption its fields.
     val none: dev.fanfly.wingslog.thing.ThingTemplate? = null

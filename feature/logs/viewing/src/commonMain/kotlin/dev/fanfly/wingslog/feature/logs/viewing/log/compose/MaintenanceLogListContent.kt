@@ -57,11 +57,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.componentTypesApply
 import dev.fanfly.wingslog.core.template.logEmptyHint
 import dev.fanfly.wingslog.core.template.logNoun
-import dev.fanfly.wingslog.thing.Attachment
-import dev.fanfly.wingslog.thing.ComponentType
-import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalNavPillClearance
 import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
@@ -75,6 +73,9 @@ import dev.fanfly.wingslog.feature.ads.viewing.AdSlot
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
 import dev.fanfly.wingslog.feature.logs.sharedassets.util.displayName
 import dev.fanfly.wingslog.feature.logs.viewing.log.data.MaintenanceLogListUiState
+import dev.fanfly.wingslog.thing.Attachment
+import dev.fanfly.wingslog.thing.ComponentType
+import dev.fanfly.wingslog.thing.MaintenanceLog
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -143,7 +144,11 @@ fun MaintenanceLogListContent(
   // LazyColumn actually renders — see the scroll target immediately after.
   val rows by remember {
     derivedStateOf {
-      if (showAds) withAdSlots(currentLogs) else currentLogs.map { ListRow.Item(it) }
+      if (showAds) withAdSlots(currentLogs) else currentLogs.map {
+        ListRow.Item(
+          it
+        )
+      }
     }
   }
   LaunchedEffect(scrollToLogId) {
@@ -257,7 +262,9 @@ fun MaintenanceLogListContent(
                 ),
               )
 
-              Surface(
+              // Filtering by airframe / engine / propeller means nothing to a thing that has no
+              // such parts — see [LogComponentBadge].
+              if (componentTypesApply) Surface(
                 onClick = { showFilterSheet = true },
                 shape = RoundedCornerShape(Spacing.smallCornerRadius),
                 color = if (filterActive) MaterialTheme.colorScheme.primaryContainer
@@ -281,7 +288,7 @@ fun MaintenanceLogListContent(
             }
 
             // Active filter chips
-            if (uiState.filter.components.isNotEmpty()) {
+            if (componentTypesApply && uiState.filter.components.isNotEmpty()) {
               LazyRow(
                 contentPadding = PaddingValues(horizontal = Spacing.screenPadding),
                 horizontalArrangement = Arrangement.spacedBy(Spacing.small),
