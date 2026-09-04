@@ -6,7 +6,7 @@
 # intersection rather than either domain's: `vehicle`, and a component set that reads correctly for
 # both. The PRD table still lists them as two rows and is stale on this point.
 #
-# See templates/README.md before editing, and compile with ./compile-template.sh automotive.v8
+# See templates/README.md before editing, and compile with ./compile-template.sh automotive.v9
 #
 # v4 adds `empty_states` — the per-domain empty-state copy that used to be fixed aviation
 # text in strings.xml. A noun could not fix those strings: what makes them useful is the
@@ -28,8 +28,11 @@
 #
 # v8 ships the starter pack (PRD §4.9).
 #
+# v9 sets `month_intervals_due_on_anniversary`: month intervals fall on the anniversary, not
+# the end of the month — the aviation snap was the app's default until the capability existed.
+#
 id: "automotive"
-version: 8
+version: 9
 min_app_version: 0
 
 display_name: "Automotive"
@@ -94,6 +97,11 @@ capabilities {
   # Most owners do not know their engine or chassis serial off-hand, and accepting one later costs
   # nothing (PRD §4.8). No vehicle preset prompts at creation.
   component_serial_prompt: false
+
+  # Month and year intervals are due on the anniversary of the last service, not at the end of the
+  # month it lands in (PRD §4.6). The end-of-month snap is aviation's: an annual legally means the
+  # last day of the month, a water heater flushed on the 14th means the 14th.
+  month_intervals_due_on_anniversary: true
 
   priorities: SQUAWK_PRIORITY_LOW
   priorities: SQUAWK_PRIORITY_MEDIUM

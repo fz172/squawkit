@@ -4,7 +4,7 @@
 # twin-engine boat has two of them accruing separately. That makes this the preset that exercises
 # `component_slot_key` outside the airplane, which is the field a single-engine assumption hides.
 #
-# See templates/README.md before editing, and compile with ./compile-template.sh boat.v8
+# See templates/README.md before editing, and compile with ./compile-template.sh boat.v9
 #
 # v4 adds `empty_states` — the per-domain empty-state copy that used to be fixed aviation
 # text in strings.xml. A noun could not fix those strings: what makes them useful is the
@@ -26,8 +26,12 @@
 #
 # v8 ships the starter pack (PRD §4.9).
 #
+# v9 sets `month_intervals_due_on_anniversary`: month intervals fall on the anniversary, not
+# the end of the month — the aviation snap was the app's default until the capability existed.
+# The winterize starter task becomes a SeasonalRule (October).
+#
 id: "boat"
-version: 8
+version: 9
 min_app_version: 0
 
 display_name: "Boat"
@@ -77,6 +81,11 @@ capabilities {
   compliance: false
   technicians: true
   component_serial_prompt: false
+
+  # Month and year intervals are due on the anniversary of the last service, not at the end of the
+  # month it lands in (PRD §4.6). The end-of-month snap is aviation's: an annual legally means the
+  # last day of the month, a water heater flushed on the 14th means the 14th.
+  month_intervals_due_on_anniversary: true
 
   priorities: SQUAWK_PRIORITY_LOW
   priorities: SQUAWK_PRIORITY_MEDIUM
@@ -167,9 +176,9 @@ certifications {
 }
 
 # The starter pack (PRD §4.9). Engine hours are the boat's meter, so the engine items schedule on
-# it with a calendar backstop for a boat that barely leaves the slip. Winterizing is seasonal; the
-# engine has no calendar-anchored rule yet, so it is a 12-month interval dated from creation —
-# log it once before the first freeze and it lands on the right month from then on.
+# it with a calendar backstop for a boat that barely leaves the slip. Winterizing is calendar-
+# anchored — `months` makes it a SeasonalRule due by the end of October whatever month the boat
+# was last laid up.
 starter_tasks {
   title: "Engine oil & filter"
   description: "Whichever comes first. Check the manual for the interval that applies to your engine."
@@ -194,7 +203,7 @@ starter_tasks {
   title: "Winterize"
   description: "Before the first freeze: drain or antifreeze the raw-water side, fog the engine, stabilize the fuel."
   default_selected: true
-  interval_months: 12
+  months: 10
 }
 starter_tasks {
   title: "Sacrificial anodes"

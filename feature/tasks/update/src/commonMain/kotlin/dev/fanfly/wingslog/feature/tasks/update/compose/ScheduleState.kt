@@ -9,10 +9,11 @@ import dev.fanfly.wingslog.thing.InspectionRule
 import dev.fanfly.wingslog.thing.LinkedRule
 import dev.fanfly.wingslog.thing.MaintenanceTask
 import dev.fanfly.wingslog.thing.MeterRule
+import dev.fanfly.wingslog.thing.SeasonalRule
 import dev.fanfly.wingslog.thing.TimeRule
 import kotlin.time.Clock
 
-enum class ScheduleMode { TIME, HOURS, LINKED }
+enum class ScheduleMode { TIME, HOURS, SEASONAL, LINKED }
 enum class ScheduleRecurrence { REPEATING, ONE_TIME, ASAP }
 enum class ScheduleTimeUnit { DAYS, MONTHS, YEARS }
 
@@ -37,6 +38,8 @@ data class ScheduleState(
    * A car's task carries "odometer" and the same field means miles.
    */
   val meterKey: String = MeterKeys.ENGINE_HOURS,
+  /** Calendar months (1–12) a SEASONAL schedule is anchored to — "April and October" (PRD §4.6). */
+  val seasonalMonths: Set<Int> = emptySet(),
   val linkedToId: String? = null,
 ) {
   /** Recurrence maps to is_one_time: only ONE_TIME is one-time; ASAP & REPEATING are not. */
@@ -88,6 +91,16 @@ data class ScheduleState(
         }
       }
 
+      ScheduleMode.SEASONAL -> {
+        if (seasonalMonths.isEmpty()) return emptyList()
+        // Due at the end of each listed month: "in April" means by the time April is over.
+        listOf(
+          InspectionRule(
+            seasonal_rule = SeasonalRule(months = seasonalMonths.sorted(), day_of_month = 0),
+          ),
+        )
+      }
+
       ScheduleMode.HOURS -> {
         if (recurrence == ScheduleRecurrence.ASAP) {
           listOf(InspectionRule(immediate_rule = ImmediateRule()))
@@ -111,6 +124,7 @@ data class ScheduleState(
     fun fromTask(task: MaintenanceTask): ScheduleState {
       val timeRule = task.rules.firstNotNullOfOrNull { it.time_rule }
       val meterRule = task.rules.firstNotNullOfOrNull { it.meter_rule }
+      val seasonalRule = task.rules.firstNotNullOfOrNull { it.seasonal_rule }
       val linkedRule = task.rules.firstNotNullOfOrNull { it.linked_rule }
       val immediateRule = task.rules.firstNotNullOfOrNull { it.immediate_rule }
 
@@ -140,6 +154,12 @@ data class ScheduleState(
             calUnit = unit,
           )
         }
+
+        seasonalRule != null -> ScheduleState(
+          mode = ScheduleMode.SEASONAL,
+          recurrence = if (baseRecurrence == ScheduleRecurrence.ASAP) ScheduleRecurrence.REPEATING else baseRecurrence,
+          seasonalMonths = seasonalRule.months.filter { it in 1..12 }.toSet(),
+        )
 
         meterRule != null -> ScheduleState(
           mode = ScheduleMode.HOURS,

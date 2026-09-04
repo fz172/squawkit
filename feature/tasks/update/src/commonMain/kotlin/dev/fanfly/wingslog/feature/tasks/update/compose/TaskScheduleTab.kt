@@ -39,6 +39,8 @@ import wingslog.feature.tasks.update.generated.resources.schedule_preview_due_ev
 import wingslog.feature.tasks.update.generated.resources.schedule_preview_due_every_hours
 import wingslog.feature.tasks.update.generated.resources.schedule_preview_due_in
 import wingslog.feature.tasks.update.generated.resources.schedule_preview_due_in_hours
+import wingslog.feature.tasks.update.generated.resources.schedule_preview_due_seasonal
+import wingslog.feature.tasks.update.generated.resources.schedule_preview_due_seasonal_once
 import wingslog.feature.tasks.update.generated.resources.schedule_preview_empty_primary
 import wingslog.feature.tasks.update.generated.resources.schedule_preview_empty_secondary
 import wingslog.feature.tasks.update.generated.resources.schedule_preview_hint
@@ -52,6 +54,7 @@ import wingslog.feature.tasks.update.generated.resources.schedule_preview_one_ti
 import wingslog.feature.tasks.update.generated.resources.schedule_preview_recurring_secondary
 import wingslog.feature.tasks.update.generated.resources.schedule_preview_set_calendar_primary
 import wingslog.feature.tasks.update.generated.resources.schedule_preview_set_hours_primary
+import wingslog.feature.tasks.update.generated.resources.schedule_preview_set_months_primary
 import wingslog.feature.tasks.update.generated.resources.schedule_preview_set_secondary
 import wingslog.feature.tasks.update.generated.resources.schedule_recurrence_asap
 import wingslog.feature.tasks.update.generated.resources.schedule_recurrence_asap_sub
@@ -61,8 +64,11 @@ import wingslog.feature.tasks.update.generated.resources.schedule_recurrence_one
 import wingslog.feature.tasks.update.generated.resources.schedule_recurrence_one_time_sub
 import wingslog.feature.tasks.update.generated.resources.schedule_recurrence_repeating
 import wingslog.feature.tasks.update.generated.resources.schedule_recurrence_repeating_sub
+import wingslog.feature.tasks.update.generated.resources.schedule_recurrence_seasonal_one_time_sub
+import wingslog.feature.tasks.update.generated.resources.schedule_recurrence_seasonal_repeating_sub
 import wingslog.feature.tasks.update.generated.resources.schedule_step_interval_how_often
 import wingslog.feature.tasks.update.generated.resources.schedule_step_interval_in_how_long
+import wingslog.feature.tasks.update.generated.resources.schedule_step_months_label
 import wingslog.feature.tasks.update.generated.resources.schedule_step_recurrence_label
 import wingslog.feature.tasks.update.generated.resources.schedule_step_recurrence_linked_label
 import wingslog.feature.tasks.update.generated.resources.schedule_step_track_label
@@ -142,6 +148,21 @@ fun TaskScheduleTab(
           onSelect = { onChange(state.copy(recurrence = it)) },
         )
       }
+    } else if (state.mode == ScheduleMode.SEASONAL) {
+      // No ASAP: a seasonal task is due in its months, never "now".
+      ScheduleSection(
+        labelRes = Res.string.schedule_step_recurrence_label,
+        complete = state.recurrence != null,
+      ) {
+        RecurrenceChoice(
+          selected = state.recurrence,
+          options = listOf(
+            ScheduleRecurrence.REPEATING to (Res.string.schedule_recurrence_repeating to Res.string.schedule_recurrence_seasonal_repeating_sub),
+            ScheduleRecurrence.ONE_TIME to (Res.string.schedule_recurrence_one_time to Res.string.schedule_recurrence_seasonal_one_time_sub),
+          ),
+          onSelect = { onChange(state.copy(recurrence = it)) },
+        )
+      }
     } else if (state.mode == ScheduleMode.LINKED) {
       ScheduleSection(
         labelRes = Res.string.schedule_step_recurrence_linked_label,
@@ -171,6 +192,7 @@ fun TaskScheduleTab(
       val complete = when (state.mode) {
         ScheduleMode.TIME -> state.calValue.isNotBlank()
         ScheduleMode.HOURS -> state.hourValue.isNotBlank()
+        else -> false
       }
       ScheduleSection(
         labelRes = intervalLabel,
@@ -226,7 +248,29 @@ fun TaskScheduleTab(
               },
             )
           }
+
+          else -> Unit
         }
+      }
+    }
+
+    // Step 3 for a seasonal schedule — which months.
+    if (state.mode == ScheduleMode.SEASONAL && state.recurrence != null) {
+      ScheduleSection(
+        labelRes = Res.string.schedule_step_months_label,
+        complete = state.seasonalMonths.isNotEmpty(),
+      ) {
+        MonthGrid(
+          selected = state.seasonalMonths,
+          onToggle = { month ->
+            onChange(
+              state.copy(
+                seasonalMonths = if (month in state.seasonalMonths) state.seasonalMonths - month
+                else state.seasonalMonths + month,
+              )
+            )
+          },
+        )
       }
     }
 
@@ -329,6 +373,29 @@ private fun previewText(
       secondary,
       false,
     )
+  }
+  if (state.mode == ScheduleMode.SEASONAL) {
+    if (state.seasonalMonths.isEmpty()) {
+      return Triple(
+        stringResource(Res.string.schedule_preview_set_months_primary),
+        stringResource(Res.string.schedule_preview_set_secondary),
+        false,
+      )
+    }
+    val months = formatMonthList(state.seasonalMonths)
+    return if (state.recurrence == ScheduleRecurrence.ONE_TIME) {
+      Triple(
+        stringResource(Res.string.schedule_preview_due_seasonal_once, months),
+        stringResource(Res.string.schedule_preview_one_time_secondary),
+        false,
+      )
+    } else {
+      Triple(
+        stringResource(Res.string.schedule_preview_due_seasonal, months),
+        stringResource(Res.string.schedule_preview_recurring_secondary),
+        false,
+      )
+    }
   }
   if (state.recurrence == ScheduleRecurrence.ASAP) {
     return Triple(

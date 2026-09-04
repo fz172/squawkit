@@ -7,6 +7,7 @@ import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.InspectionRule
 import dev.fanfly.wingslog.thing.MaintenanceTask
 import dev.fanfly.wingslog.thing.MeterRule
+import dev.fanfly.wingslog.thing.SeasonalRule
 import dev.fanfly.wingslog.thing.StarterTask
 import dev.fanfly.wingslog.thing.ThingTemplate
 import dev.fanfly.wingslog.thing.TimeRule
@@ -28,6 +29,14 @@ fun StarterTask.toMaintenanceTask(
   component = componentTypeFor(template),
   type = ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
   rules = buildList {
+    if (months.isNotEmpty()) {
+      // Calendar-anchored, due by the end of each listed month (PRD §4.6).
+      add(
+        InspectionRule(
+          seasonal_rule = SeasonalRule(months = months.filter { it in 1..12 }.distinct().sorted()),
+        )
+      )
+    }
     if (interval_months > 0) {
       add(
         InspectionRule(

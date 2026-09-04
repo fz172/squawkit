@@ -48,6 +48,16 @@ class StarterTasksTest {
   }
 
   @Test
+  fun listedMonthsBecomeASeasonalRule() {
+    val card = StarterTask(title = "Clean gutters", months = listOf(10, 4))
+      .toMaintenanceTask(CanonicalTemplates.HOME, now)
+
+    val rule = card.rules.single().seasonal_rule
+    assertThat(rule?.months).containsExactly(4, 10).inOrder()
+    assertThat(rule?.day_of_month).isEqualTo(0)
+  }
+
+  @Test
   fun aMeterIntervalBecomesAMeterRuleAndBothSurviveTogether() {
     val card = StarterTask(
       title = "Oil change",

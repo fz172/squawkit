@@ -897,3 +897,10 @@ feature/tasks/update	starter_rule_every_meter	Every %1$s %2$s
 feature/tasks/update	starter_rule_either	%1$s or %2$s
 feature/tasks/sharedassets	starter_pack_empty_action	Add recommended %1$s
 feature/tasks/update	adj_reschedule_prefix_at	At
+feature/tasks/update	schedule_track_seasonal	Seasonal
+feature/tasks/update	schedule_step_months_label	Step 3 · Which months?
+feature/tasks/update	schedule_recurrence_seasonal_repeating_sub	Every listed month
+feature/tasks/update	schedule_recurrence_seasonal_one_time_sub	Next listed month, then history
+feature/tasks/update	schedule_preview_set_months_primary	Pick the months
+feature/tasks/update	schedule_preview_due_seasonal	Due every %1$s
+feature/tasks/update	schedule_preview_due_seasonal_once	Due next %1$s

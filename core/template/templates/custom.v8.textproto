@@ -31,8 +31,11 @@
 # capabilities.proto. This preset declares no `certifications`, which says the same thing where the
 # scope is right: nothing is offered for it.
 #
+# v8 sets `month_intervals_due_on_anniversary`: month intervals fall on the anniversary, not
+# the end of the month — the aviation snap was the app's default until the capability existed.
+#
 id: "custom"
-version: 7
+version: 8
 min_app_version: 0
 
 display_name: "Custom"
@@ -105,6 +108,11 @@ capabilities {
   compliance: false
   technicians: true
   component_serial_prompt: false
+
+  # Month and year intervals are due on the anniversary of the last service, not at the end of the
+  # month it lands in (PRD §4.6). The end-of-month snap is aviation's: an annual legally means the
+  # last day of the month, a water heater flushed on the 14th means the 14th.
+  month_intervals_due_on_anniversary: true
 
   priorities: SQUAWK_PRIORITY_LOW
   priorities: SQUAWK_PRIORITY_MEDIUM

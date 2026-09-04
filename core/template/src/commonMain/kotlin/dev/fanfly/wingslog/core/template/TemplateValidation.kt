@@ -48,9 +48,11 @@ fun ThingTemplate.structuralProblems(): List<String> = buildList {
   starter_tasks.forEach { task ->
     val label = task.title.ifEmpty { "(untitled)" }
     if (task.title.isEmpty()) add("$id: starter task with blank title")
-    if (task.interval_months <= 0 && (task.meter_key.isEmpty() || task.interval <= 0f)) {
-      add("$id: starter task '$label' carries no rule")
-    }
+    val hasRule = task.interval_months > 0 || task.months.isNotEmpty() ||
+      (task.meter_key.isNotEmpty() && task.interval > 0f)
+    if (!hasRule) add("$id: starter task '$label' carries no rule")
+    task.months.filter { it !in 1..12 }
+      .forEach { add("$id: starter task '$label' names month $it, which is not 1–12") }
     if (task.meter_key.isNotEmpty() && task.meter_key !in meterKeys) {
       add("$id: starter task '$label' schedules against meter '${task.meter_key}', which is not declared")
     }

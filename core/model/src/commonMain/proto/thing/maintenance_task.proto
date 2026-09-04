@@ -42,6 +42,15 @@ message MeterRule {
 }
 
 // Inspection is performed on condition (no fixed interval)
+// Calendar-anchored rather than interval-from-last-service: gutters in April and October whatever
+// month they were last done, sprinklers blown out before the first freeze (PRD §4.6). The next due
+// is the first listed month strictly after the last compliance, or on/after today for a task never
+// complied. Date-only, so a preset with no meters — home — schedules with it. Field 7 of the oneof.
+message SeasonalRule {
+  repeated int32 months = 1;   // 1–12
+  int32 day_of_month = 2;      // 0 = the last day of the month
+}
+
 message OnConditionRule {
   string description = 1;
 }
@@ -60,6 +69,7 @@ message InspectionRule {
     LinkedRule linked_rule = 4;
     ImmediateRule immediate_rule = 5;
     MeterRule meter_rule = 6;
+    SeasonalRule seasonal_rule = 7;
   }
 
   // `EngineHourRule engine_hour_rule = 2`, retired in #761 once the backfill converted every

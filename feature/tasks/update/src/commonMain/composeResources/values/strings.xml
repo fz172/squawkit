@@ -21,6 +21,13 @@
 
   <string name="schedule_track_calendar_time">Calendar Time</string>
   <string name="schedule_track_tach_hours">Tach Hours</string>
+  <string name="schedule_track_seasonal">Seasonal</string>
+  <string name="schedule_step_months_label">Step 3 · Which months?</string>
+  <string name="schedule_recurrence_seasonal_repeating_sub">Every listed month</string>
+  <string name="schedule_recurrence_seasonal_one_time_sub">Next listed month, then history</string>
+  <string name="schedule_preview_set_months_primary">Pick the months</string>
+  <string name="schedule_preview_due_seasonal">Due every <xliff:g example="April &amp; October">%1$s</xliff:g></string>
+  <string name="schedule_preview_due_seasonal_once">Due next <xliff:g example="April">%1$s</xliff:g></string>
 
   <string name="schedule_recurrence_repeating">Repeating</string>
   <string name="schedule_recurrence_repeating_sub">Every interval</string>

@@ -115,25 +115,25 @@ fun TaskAdjustmentsTab(
   modifier: Modifier = Modifier,
 ) {
   val mode = schedule.mode
-  val rescheduleOn = when (mode) {
-    ScheduleMode.TIME -> forceOverrideDate
-    ScheduleMode.HOURS -> forceOverrideEngine
+  // A seasonal schedule is a date schedule for every purpose here: it reschedules by date.
+  val datedMode = mode == ScheduleMode.TIME || mode == ScheduleMode.SEASONAL
+  val rescheduleOn = when {
+    datedMode -> forceOverrideDate
+    mode == ScheduleMode.HOURS -> forceOverrideEngine
     else -> false
   }
 
   fun setReschedule(on: Boolean) {
-    when (mode) {
-      ScheduleMode.TIME -> {
+    when {
+      datedMode -> {
         onForceOverrideDateChange(on)
         if (on) onForceOverrideEngineChange(false)
       }
 
-      ScheduleMode.HOURS -> {
+      mode == ScheduleMode.HOURS -> {
         onForceOverrideEngineChange(on)
         if (on) onForceOverrideDateChange(false)
       }
-
-      else -> {}
     }
   }
 
@@ -175,7 +175,7 @@ fun TaskAdjustmentsTab(
     val bannerSecondary: AnnotatedString
     when {
       // ── Reschedule on, TIME mode ─────────────────────────────────────────
-      rescheduleOn && mode == ScheduleMode.TIME -> {
+      rescheduleOn && datedMode -> {
         if (rescheduledDate != null) {
           val rescheduledStr = rescheduledDate.toDisplayFormat()
           bannerPrimary = monoOn(
@@ -238,7 +238,7 @@ fun TaskAdjustmentsTab(
       }
 
       // ── Neutral, TIME mode with a known due ──────────────────────────────
-      mode == ScheduleMode.TIME && neutralDueDate != null -> {
+      datedMode && neutralDueDate != null -> {
         val dueStr = neutralDueDate.toDisplayFormat()
         bannerPrimary = monoOn(
           stringResource(
@@ -407,7 +407,7 @@ private fun RescheduleCard(
         verticalArrangement = Arrangement.spacedBy(Spacing.small),
       ) {
         when (mode) {
-          ScheduleMode.TIME -> {
+          ScheduleMode.TIME, ScheduleMode.SEASONAL -> {
             val dateStr = forcedDateMillis?.let {
               Instant.fromEpochMilliseconds(it)
                 .toLocalDateTime(TimeZone.currentSystemDefault()).date.toString()

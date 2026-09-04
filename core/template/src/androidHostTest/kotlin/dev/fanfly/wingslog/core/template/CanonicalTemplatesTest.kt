@@ -306,6 +306,29 @@ class CanonicalTemplatesTest {
     assertThat(oil.interval).isEqualTo(50f)
   }
 
+  /**
+   * End-of-month snapping is aviation's convention and nobody else's (PRD §4.6). The flag is
+   * inverted — `due_on_anniversary` — so the airplane, and every rule stored before the flag
+   * existed, keeps snapping by default; this pins that the others opted out.
+   */
+  @Test
+  fun onlyTheAirplaneSnapsMonthIntervalsToTheEndOfTheMonth() {
+    all.forEach { template ->
+      val anniversary = template.capabilities?.month_intervals_due_on_anniversary == true
+      assertWithMessage(template.id).that(anniversary).isEqualTo(template.id != "airplane")
+    }
+  }
+
+  @Test
+  fun theHomePackIsSeasonalWhereThePrdSaysSo() {
+    // PRD §5.1: HVAC service and gutters in April & October, the sprinkler blowout in October.
+    val byTitle = CanonicalTemplates.HOME.starter_tasks.associateBy { it.title }
+    assertThat(byTitle.getValue("HVAC service").months).containsExactly(4, 10).inOrder()
+    assertThat(byTitle.getValue("Clean gutters").months).containsExactly(4, 10).inOrder()
+    assertThat(byTitle.getValue("Sprinkler blowout").months).containsExactly(10)
+    assertThat(byTitle.getValue("Sprinkler blowout").interval_months).isEqualTo(0)
+  }
+
   @Test
   fun everyPresetDecodesWithoutUnknownFields() {
     // An unknown field means the committed .pb was compiled against a schema this build does not

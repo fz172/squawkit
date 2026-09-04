@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.export.datamanager.impl
 
+import com.squareup.wire.Instant as WireInstant
 import dev.fanfly.wingslog.core.datetime.toLocalDate
 import dev.fanfly.wingslog.core.model.technician.resolvedCertifications
 import dev.fanfly.wingslog.core.template.ComponentField
@@ -49,9 +50,9 @@ import dev.fanfly.wingslog.thing.Thing
 import dev.fanfly.wingslog.thing.ThingTemplate
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.Month
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.number
-import com.squareup.wire.Instant as WireInstant
 
 /**
  * Builds the CSV entries that make up a SquawkIt logbook export archive.
@@ -1332,6 +1333,14 @@ class LogbookExportArchiveBuilder(
             ?.let { "Every $amount $unit (${it.label})" }
             ?: "Every $amount $unit"
         }
+
+        rule.seasonal_rule != null -> rule.seasonal_rule!!.months
+          .filter { it in 1..12 }.distinct().sorted()
+          .map { Month(it).name.lowercase().replaceFirstChar { c -> c.titlecase() } }
+          .let { names ->
+            if (names.size <= 1) "Every ${names.joinToString()}"
+            else "Every ${names.dropLast(1).joinToString(", ")} & ${names.last()}"
+          }
 
         rule.on_condition_rule != null -> rule.on_condition_rule!!.description.ifBlank { "On condition" }
         rule.linked_rule != null -> "Linked to ${
