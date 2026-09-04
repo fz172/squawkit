@@ -1,11 +1,11 @@
-# The home preset — canonical template (id "home", version 4).
+# The home preset — canonical template (id "home", version 5).
 #
 # THE LOAD-BEARING ONE (pivot_rollout_design.md §5). A house has no make, no model and no serial
 # number (PRD §4.2), and its meter list is EMPTY (§4.4). Everything this file leaves out is the
 # point: it is the preset that finds screens with an aviation assumption baked in. `car` would find
 # almost none of them — it maps onto the airplane shape almost field for field.
 #
-# See templates/README.md before editing, and compile with ./compile-template.sh home.v4
+# See templates/README.md before editing, and compile with ./compile-template.sh home.v5
 #
 # v4 adds `empty_states` — the per-domain empty-state copy that used to be fixed aviation
 # text in strings.xml. A noun could not fix those strings: what makes them useful is the
@@ -17,9 +17,13 @@
 # was enforced, so `v1` names two different templates depending on when a Thing froze it — which is
 # the whole problem versioning exists to prevent. Every preset starts again at v2, where the version
 # a Thing stores is once more a true statement about the bytes it carries.
+#
+# v5 adds `log_onboarding_hint`. The Dashboard's log-onboarding card was still asking every
+# owner for "airframe, engine, and prop times" — and the card is not gated on meters, so a
+# preset that declares none was asking for readings its own form does not offer.
 
 id: "home"
-version: 4
+version: 5
 min_app_version: 0
 
 display_name: "Home"
@@ -74,6 +78,14 @@ lexicon {
     overview_task_title: "No upcoming tasks"
     overview_task_hint: "Nothing is due right now."
     overview_squawk_hint: "Nothing needs attention in this home right now."
+
+    # No meters at all (§4.4), so there is no reading to ask for — the aviation copy asked a
+    # homeowner for airframe, engine and prop times. Capability shaping copy, not a noun swap.
+    #
+    # And no "baseline" either: that word names a starting METER reading, so with no meters it
+    # points at nothing. What the first entry actually does here is date the recurring work —
+    # a TimeRule bases its next due date on the latest log's date (TaskDueManagerImpl).
+    log_onboarding_hint: "Log what has already been done to the house — a recent service, a repair, whatever you know. Recurring tasks are scheduled from the date of the most recent entry."
   }
 }
 

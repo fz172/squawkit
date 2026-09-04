@@ -1,6 +1,6 @@
-# The airplane preset — canonical template (id "airplane", version 3).
+# The airplane preset — canonical template (id "airplane", version 4).
 #
-# THIS FILE IS THE SOURCE OF TRUTH. `airplane.v1.pb` beside it is compiled from this file and is
+# THIS FILE IS THE SOURCE OF TRUTH. `airplane.v4.pb` beside it is compiled from this file and is
 # what the app actually bakes in; see templates/README.md for the command and why the compile
 # happens out of band rather than in Gradle.
 #
@@ -23,9 +23,13 @@
 # v3 adds `empty_states`. Every sentence in it is the string the app shipped, character for
 # character — the empty-state resources were deleted and this is where they went, so a word
 # invented here would be a silent change to aviation copy rather than a translation of it.
+#
+# v4 adds `log_onboarding_hint`. The Dashboard's log-onboarding card was still asking every
+# owner for "airframe, engine, and prop times" — and the card is not gated on meters, so a
+# preset that declares none was asking for readings its own form does not offer.
 
 id: "airplane"
-version: 3
+version: 4
 
 # No floor. This template ships inside every build that can read it, so a client can never
 # encounter it from the future — the floor exists for FETCHED templates (§6), and a baked-in one is
@@ -91,6 +95,8 @@ lexicon {
     overview_task_title: "No upcoming tasks"
     overview_task_hint: "Scheduled maintenance is up to date."
     overview_squawk_hint: "No active discrepancies for this aircraft."
+
+    log_onboarding_hint: "Log your current airframe, engine, and prop times to start tracking maintenance intervals accurately. This will serve as your logbook's baseline."
   }
 }
 

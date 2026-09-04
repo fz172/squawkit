@@ -21,14 +21,20 @@ something no template promises.
 match, delete the old `.pb`, and compile the new one:
 
 ```bash
-git mv airplane.v3.textproto airplane.v4.textproto   # and set `version: 4` inside
-git rm binary/airplane.v3.pb
-./compile-template.sh airplane.v4                    # writes binary/airplane.v4.pb
+git mv airplane.v4.textproto airplane.v5.textproto   # and set `version: 5` inside
+git rm binary/airplane.v4.pb
+./compile-template.sh airplane.v5                    # writes binary/airplane.v5.pb
 ./gradlew :core:template:testAndroidHostTest
 ```
 
 Nothing else changes: Gradle keys the generated constant on the preset id and takes the highest
 version it finds, so `AIRPLANE_BASE64` follows the rename on its own.
+
+> **A version bump is not a merge conflict.** Two branches that each bump the same preset produce
+> two different *files*, so git merges both cleanly and leaves them side by side — and because the
+> generator takes the highest version, the later bump wins and the other branch's change vanishes
+> with nothing failing. #781 and #783 did exactly this to `custom`. Rebase onto the other bump and
+> fold both changes into one version; `TemplateAssetDirectoryTest` is what catches it if you do not.
 
 Then move the Things already in the field onto it:
 
@@ -88,6 +94,7 @@ script:
 | `CanonicalTemplatesTest` | the PRD §4.7 rules over every preset — duplicate keys, an empty noun, meters claimed but not declared, a meter scoped to a slot that does not exist |
 | `TemplateKeysResolveTest` | a slot or spec key the app emits that the template does not declare |
 | `StringSnapshotTest` | any rendered string drifting from what the app shipped |
+| `TemplateAssetDirectoryTest` | two versions of one preset left on disk — the generator takes the highest and drops the other silently |
 
 The content assertions are deliberate duplication: `.textproto` → `.pb` → embedded constant is
 self-consistent, so every structural check compares one link against another and a wrong value at

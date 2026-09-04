@@ -274,7 +274,6 @@ feature/logs/viewing	failed_to_load_logs	Could not load maintenance logs
 feature/logs/viewing	filter_by_type	Filter by Type
 feature/logs/viewing	log_count_n_entries	%1$d Entries
 feature/logs/viewing	log_count_one_entry	1 Entry
-feature/logs/viewing	log_onboarding_description	Log your current airframe, engine, and prop times to start tracking maintenance intervals accurately. This will serve as your logbook's baseline.
 feature/logs/viewing	log_squawk_count_one	1 squawk
 feature/logs/viewing	log_squawk_count_plural	%1$d squawks
 feature/logs/viewing	log_task_count_one	1 task

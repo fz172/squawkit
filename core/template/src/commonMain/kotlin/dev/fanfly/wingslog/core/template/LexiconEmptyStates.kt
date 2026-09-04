@@ -56,3 +56,13 @@ val Lexicon.overviewTaskEmptyHint: String get() = copy { it.overview_task_hint }
 
 /** Overview, open-squawks rail. Its title reuses the tab's "No open %1${'$'}s", which substitutes. */
 val Lexicon.overviewSquawkEmptyHint: String get() = copy { it.overview_squawk_hint }
+
+/**
+ * The Dashboard's log-onboarding card, on a Thing with no logs at all.
+ *
+ * The one line here that is not only about wording: it names the METERS to record a baseline for,
+ * and a template may declare none. The card is not gated on `capabilities.meters`, so the aviation
+ * copy asked a homeowner for airframe, engine and prop times — readings the log form does not even
+ * offer them. A meterless preset writes a sentence about the record instead.
+ */
+val Lexicon.logOnboardingHint: String get() = copy { it.log_onboarding_hint }

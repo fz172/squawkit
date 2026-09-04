@@ -89,6 +89,15 @@ message EmptyStates {
   string overview_task_title = 7;
   string overview_task_hint = 8;
   string overview_squawk_hint = 9;
+
+  // The Dashboard's log-onboarding card, shown on a Thing with no logs at all.
+  //
+  // The one line here that is not only about wording: it tells the user which METERS to record a
+  // baseline for, and a template may declare none. The aviation copy asked a homeowner for
+  // "airframe, engine, and prop times" — three readings a house does not have and the form does
+  // not offer. So a meterless preset writes a sentence about the record instead, which is the
+  // capability shaping the copy rather than a noun being swapped into it.
+  string log_onboarding_hint = 10;
 }
 
 message Lexicon {
