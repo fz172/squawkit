@@ -1,5 +1,13 @@
 package dev.fanfly.wingslog.web
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -10,14 +18,14 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -36,6 +44,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
@@ -43,6 +52,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalUriHandler
@@ -63,6 +74,7 @@ import dev.fanfly.wingslog.core.ui.theme.rememberBrandHeadlineFamily
 import dev.fanfly.wingslog.feature.login.LoginButtonContent
 import dev.fanfly.wingslog.feature.login.data.LoginViewModel
 import kotlin.math.roundToInt
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -168,11 +180,6 @@ internal fun WebLoginLandingScreen(
     val w = maxWidth
     val isCompact = layoutTierFor(w).isCompact
     val heroStacked = w < 920.dp
-    val gridColumns = when {
-      w < 680.dp -> 1
-      w < 1080.dp -> 2
-      else -> 3
-    }
 
     Column(
       modifier = Modifier
@@ -210,7 +217,6 @@ internal fun WebLoginLandingScreen(
         },
         colors = colors,
         headline = headline,
-        columns = gridColumns,
         compact = heroStacked,
       )
 
@@ -220,7 +226,6 @@ internal fun WebLoginLandingScreen(
         },
         colors = colors,
         headline = headline,
-        columns = gridColumns,
         compact = heroStacked,
       )
 
@@ -432,23 +437,6 @@ private fun HeroCopy(
   Column(horizontalAlignment = align) {
     // The one-line announcement of the pivot, ahead of the headline: the returning aviation user
     // reads it as "still for me, and now for more"; the new one reads it as an invitation.
-    Box(
-      modifier = Modifier
-        .clip(RoundedCornerShape(999.dp))
-        .border(1.dp, colors.blueBright.copy(alpha = 0.55f), RoundedCornerShape(999.dp))
-        .background(colors.blueBright.copy(alpha = 0.14f))
-        .padding(horizontal = 14.dp, vertical = 6.dp),
-    ) {
-      Text(
-        text = "NOW FOR EVERYTHING YOU MAINTAIN — NOT JUST AIRPLANES",
-        style = TextStyle(
-          fontSize = 11.5.sp,
-          fontWeight = FontWeight.SemiBold,
-          letterSpacing = 0.8.sp,
-          color = colors.sky,
-        ),
-      )
-    }
     Spacer(Modifier.height(20.dp))
     Text(
       text = buildAnnotatedString {
@@ -484,7 +472,7 @@ private fun HeroCopy(
     val trust = listOf(
       "Works offline, syncs everywhere",
       "Due-soon and overdue reminders",
-      "Export PDF, CSV & XLSX on demand",
+      "Export logs on demand",
       "Share with co-owners & mechanics",
       "Starter schedules for every thing",
       "Free to start",
@@ -502,11 +490,12 @@ private fun HeroCopy(
         // checkmarks line up vertically within each column instead of drifting with text width.
         val half = (trust.size + 1) / 2
         Row(horizontalArrangement = Arrangement.spacedBy(28.dp)) {
-          trust.chunked(half).forEach { column ->
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-              column.forEach { TrustItem(it, colors) }
+          trust.chunked(half)
+            .forEach { column ->
+              Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                column.forEach { TrustItem(it, colors) }
+              }
             }
-          }
         }
       }
     }
@@ -550,7 +539,11 @@ private fun ThingStrip(colors: LandingColors, centered: Boolean) {
         modifier = Modifier
           .clip(RoundedCornerShape(999.dp))
           .background(Color.White.copy(alpha = 0.07f))
-          .border(1.dp, Color.White.copy(alpha = 0.16f), RoundedCornerShape(999.dp))
+          .border(
+            1.dp,
+            Color.White.copy(alpha = 0.16f),
+            RoundedCornerShape(999.dp)
+          )
           .padding(horizontal = 12.dp, vertical = 7.dp),
         verticalAlignment = Alignment.CenterVertically,
       ) {
@@ -825,27 +818,217 @@ private fun SectionHeading(
   }
 }
 
-/** Lays [cells] out in rows of [columns], each cell taking equal width and matched height. */
+/** One entry of a [Carousel]: what the spotlight card shows for it. */
+private data class Slide(
+  val icon: ImageVector? = null,
+  val step: Int? = null,
+  val title: String,
+  val body: String,
+)
+
+/**
+ * One slide at a time, advancing on its own every [autoAdvanceMillis] and on demand from the
+ * arrows or the dots. Six cards of copy in a grid asked the visitor to read everything at once;
+ * one card, moving, asks them to read one thing.
+ *
+ * Auto-advance pauses while the pointer is over the stage — a slide moving out from under a
+ * reader is the one thing a carousel must not do — and restarts its clock on every manual step,
+ * so a click never gets a half-second follow-on advance.
+ */
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
-private fun CardGrid(columns: Int, cells: List<@Composable () -> Unit>) {
-  Column(verticalArrangement = Arrangement.spacedBy(22.dp)) {
-    cells.chunked(columns)
-      .forEach { rowCells ->
-        Row(
-          modifier = Modifier
-            .fillMaxWidth()
-            .height(IntrinsicSize.Max),
-          horizontalArrangement = Arrangement.spacedBy(22.dp),
-        ) {
-          rowCells.forEach { cell ->
-            Box(
-              modifier = Modifier.weight(1f)
-                .fillMaxHeight()
-            ) { cell() }
-          }
-          repeat(columns - rowCells.size) { Spacer(Modifier.weight(1f)) }
+private fun Carousel(
+  slides: List<Slide>,
+  colors: LandingColors,
+  headline: FontFamily,
+  compact: Boolean,
+  cardColor: Color = colors.card,
+  autoAdvanceMillis: Long = 5_000,
+) {
+  var index by remember { mutableStateOf(0) }
+  var forward by remember { mutableStateOf(true) }
+  var hovered by remember { mutableStateOf(false) }
+  // Bumped on every manual step so the auto-advance delay restarts from that moment.
+  var clock by remember { mutableStateOf(0) }
+  val step = { delta: Int ->
+    forward = delta > 0
+    index = (index + delta).mod(slides.size)
+    clock++
+  }
+
+  LaunchedEffect(index, hovered, clock) {
+    if (hovered || slides.size < 2) return@LaunchedEffect
+    delay(autoAdvanceMillis)
+    forward = true
+    index = (index + 1) % slides.size
+  }
+
+  Column(
+    modifier = Modifier
+      .fillMaxWidth()
+      .widthIn(max = 820.dp)
+      .onPointerEvent(PointerEventType.Enter) { hovered = true }
+      .onPointerEvent(PointerEventType.Exit) { hovered = false },
+    horizontalAlignment = Alignment.CenterHorizontally,
+  ) {
+    Row(
+      modifier = Modifier.fillMaxWidth(),
+      verticalAlignment = Alignment.CenterVertically,
+      horizontalArrangement = Arrangement.spacedBy(if (compact) 8.dp else 18.dp),
+    ) {
+      CarouselArrow(colors, previous = true, onClick = { step(-1) })
+      Box(modifier = Modifier.weight(1f)) {
+        AnimatedContent(
+          targetState = index,
+          transitionSpec = {
+            val sign = if (forward) 1 else -1
+            (slideInHorizontally(tween(420)) { sign * it / 3 } + fadeIn(tween(320))) togetherWith
+              (slideOutHorizontally(tween(420)) { -sign * it / 3 } + fadeOut(tween(220)))
+          },
+          // Every slide sits in the same frame: a stage that changes height between slides would
+          // push the dots and the section below it up and down on every advance.
+          modifier = Modifier.animateContentSize(tween(320)),
+        ) { i ->
+          SpotlightCard(slides[i], colors, headline, compact, cardColor)
         }
       }
+      CarouselArrow(colors, previous = false, onClick = { step(1) })
+    }
+    Spacer(Modifier.height(22.dp))
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+      slides.indices.forEach { i ->
+        val active = i == index
+        Box(
+          modifier = Modifier
+            .height(8.dp)
+            .width(if (active) 26.dp else 8.dp)
+            .clip(RoundedCornerShape(999.dp))
+            .background(if (active) colors.blue else colors.outline)
+            .clickable {
+              forward = i > index
+              index = i
+              clock++
+            },
+        )
+      }
+    }
+  }
+}
+
+@Composable
+private fun CarouselArrow(colors: LandingColors, previous: Boolean, onClick: () -> Unit) {
+  Box(
+    modifier = Modifier
+      .size(40.dp)
+      .clip(RoundedCornerShape(999.dp))
+      .background(colors.panel)
+      .border(1.dp, colors.outline, RoundedCornerShape(999.dp))
+      .clickable { onClick() },
+    contentAlignment = Alignment.Center,
+  ) {
+    Icon(
+      imageVector = IconChevronDown,
+      contentDescription = if (previous) "Previous" else "Next",
+      modifier = Modifier.size(18.dp)
+        .rotate(if (previous) 90f else -90f),
+      tint = colors.blue,
+    )
+  }
+}
+
+/**
+ * The one card on stage. Wide layouts put the icon (or step number) beside the copy so the card
+ * fills its frame at a reading width; compact stacks them the way the grid cards did.
+ */
+@Composable
+private fun SpotlightCard(
+  slide: Slide,
+  colors: LandingColors,
+  headline: FontFamily,
+  compact: Boolean,
+  cardColor: Color,
+) {
+  val shape = RoundedCornerShape(20.dp)
+  val frame = Modifier
+    .fillMaxWidth()
+    .heightIn(min = if (compact) 300.dp else 172.dp)
+    .clip(shape)
+    .background(cardColor)
+    .border(1.dp, colors.outline, shape)
+    .padding(horizontal = if (compact) 26.dp else 34.dp, vertical = if (compact) 28.dp else 32.dp)
+
+  val badge: @Composable () -> Unit = {
+    val size = if (compact) 50.dp else 64.dp
+    val radius = if (compact) 13.dp else 16.dp
+    when {
+      slide.step != null -> Box(
+        modifier = Modifier.size(size)
+          .clip(RoundedCornerShape(radius))
+          .background(colors.blue),
+        contentAlignment = Alignment.Center,
+      ) {
+        Text(
+          text = slide.step.toString(),
+          style = TextStyle(
+            fontFamily = headline,
+            fontWeight = FontWeight.Bold,
+            fontSize = if (compact) 18.sp else 24.sp,
+            color = Color.White,
+          ),
+        )
+      }
+      slide.icon != null -> Box(
+        modifier = Modifier.size(size)
+          .clip(RoundedCornerShape(radius))
+          .background(colors.blue.copy(alpha = 0.10f))
+          .border(1.dp, colors.blue.copy(alpha = 0.22f), RoundedCornerShape(radius)),
+        contentAlignment = Alignment.Center,
+      ) {
+        Icon(
+          imageVector = slide.icon,
+          contentDescription = null,
+          modifier = Modifier.size(if (compact) 25.dp else 32.dp),
+          tint = colors.blue,
+        )
+      }
+    }
+  }
+  val copy: @Composable ColumnScope.() -> Unit = {
+    Text(
+      text = slide.title,
+      style = TextStyle(
+        fontFamily = headline,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = if (compact) 20.sp else 24.sp,
+        lineHeight = if (compact) 26.sp else 30.sp,
+        color = colors.heading,
+      ),
+    )
+    Spacer(Modifier.height(if (compact) 10.dp else 12.dp))
+    Text(
+      text = slide.body,
+      style = TextStyle(
+        fontSize = if (compact) 15.sp else 17.sp,
+        lineHeight = if (compact) 24.sp else 27.sp,
+        color = colors.slate,
+      ),
+    )
+  }
+
+  if (compact) {
+    Column(modifier = frame) {
+      badge()
+      Spacer(Modifier.height(18.dp))
+      copy()
+    }
+  } else {
+    // Centred, not top-aligned: slides differ in length, and a short one sitting in the top half
+    // of a fixed frame reads as unfinished where a centred one reads as deliberate.
+    Row(modifier = frame, verticalAlignment = Alignment.CenterVertically) {
+      badge()
+      Spacer(Modifier.width(26.dp))
+      Column(modifier = Modifier.weight(1f)) { copy() }
+    }
   }
 }
 
@@ -854,7 +1037,6 @@ private fun FeaturesSection(
   modifier: Modifier,
   colors: LandingColors,
   headline: FontFamily,
-  columns: Int,
   compact: Boolean,
 ) {
   Box(
@@ -875,108 +1057,45 @@ private fun FeaturesSection(
         title = "Everything that keeps your things in service",
         subtitle = "One place for the inspections, recurring tasks, and issues that matter — so nothing slips between services, whatever you're maintaining.",
       )
-      Spacer(Modifier.height(if (compact) 40.dp else 52.dp))
-      CardGrid(
-        columns = columns,
-        cells = listOf(
-          {
-            FeatureCard(
-              colors, headline, IconLayers,
-              "Every kind of thing",
-              "Airplane, car or motorcycle, bike, boat, home — or anything else. Each type brings its own vocabulary, fields, meters and parts, so a home never asks for a tail number and an airplane never asks for an odometer.",
-            )
-          },
-          {
-            FeatureCard(
-              colors, headline, IconInspection,
-              "Schedules that do the math",
-              "Recurring tasks by calendar, by meter — engine hours, odometer, ride distance — or on condition. Due-soon and overdue work rises to the top of every list, so status is the first thing you see.",
-            )
-          },
-          {
-            FeatureCard(
-              colors, headline, IconSquawk,
-              "An issue log that fits the thing",
-              "Squawks on an airplane, issues on a car, attention items at home. Report it the moment you spot it and track it to resolution — anything that grounds the airplane or parks the car surfaces first.",
-            )
-          },
-          {
-            FeatureCard(
-              colors, headline, IconPeople,
-              "Built for more than one person",
-              "Invite co-owners, family, or your mechanic with a code. Owners edit, technicians sign off their own work, viewers read — and every change syncs to everyone on the share.",
-            )
-          },
-          {
-            FeatureCard(
-              colors, headline, IconListChecks,
-              "Start with a real schedule",
-              "Each type ships a recommended starter pack — the annual and ELT check, oil changes and brake fluid, gutters and the water-heater flush. Keep what applies, skip the rest, edit anything later.",
-            )
-          },
-          {
-            FeatureCard(
-              colors, headline, IconPaperclip,
-              "The paperwork travels with the record",
-              "Photos, invoices and inspection reports attach to the entry they belong to. Export PDF, CSV and XLSX on demand — for a pre-buy, a resale, or a backup that's yours to keep.",
-            )
-          },
+      Spacer(Modifier.height(if (compact) 36.dp else 48.dp))
+      Carousel(
+        slides = listOf(
+          Slide(
+            icon = IconLayers,
+            title = "Every kind of thing",
+            body = "Airplane, car or motorcycle, bike, boat, home — or anything else. Each type brings its own vocabulary, fields, meters and parts, so a home never asks for a tail number and an airplane never asks for an odometer.",
+          ),
+          Slide(
+            icon = IconInspection,
+            title = "Schedules that do the math",
+            body = "Recurring tasks by calendar, by meter — engine hours, odometer, ride distance — or on condition. Due-soon and overdue work rises to the top of every list, so status is the first thing you see.",
+          ),
+          Slide(
+            icon = IconSquawk,
+            title = "An issue log that fits the thing",
+            body = "Squawks on an airplane, issues on a car, attention items at home. Report it the moment you spot it and track it to resolution — anything that grounds the airplane or parks the car surfaces first.",
+          ),
+          Slide(
+            icon = IconPeople,
+            title = "Built for more than one person",
+            body = "Invite co-owners, family, or your mechanic with a code. Owners edit, technicians sign off their own work, viewers read — and every change syncs to everyone on the share.",
+          ),
+          Slide(
+            icon = IconListChecks,
+            title = "Start with a real schedule",
+            body = "Each type ships a recommended starter pack — the annual and ELT check, oil changes and brake fluid, gutters and the water-heater flush. Keep what applies, skip the rest, edit anything later.",
+          ),
+          Slide(
+            icon = IconPaperclip,
+            title = "The paperwork travels with the record",
+            body = "Photos, invoices and inspection reports attach to the entry they belong to. Export PDF, CSV and XLSX on demand — for a pre-buy, a resale, or a backup that's yours to keep.",
+          ),
         ),
+        colors = colors,
+        headline = headline,
+        compact = compact,
       )
     }
-  }
-}
-
-@Composable
-private fun FeatureCard(
-  colors: LandingColors,
-  headline: FontFamily,
-  icon: ImageVector,
-  title: String,
-  body: String,
-) {
-  Column(
-    modifier = Modifier
-      .fillMaxHeight()
-      .clip(RoundedCornerShape(18.dp))
-      .background(colors.card)
-      .border(1.dp, colors.outline, RoundedCornerShape(18.dp))
-      .padding(horizontal = 26.dp, vertical = 30.dp),
-  ) {
-    Box(
-      modifier = Modifier
-        .size(50.dp)
-        .clip(RoundedCornerShape(13.dp))
-        .background(colors.blue.copy(alpha = 0.10f))
-        .border(1.dp, colors.blue.copy(alpha = 0.22f), RoundedCornerShape(13.dp)),
-      contentAlignment = Alignment.Center,
-    ) {
-      Icon(
-        imageVector = icon,
-        contentDescription = null,
-        modifier = Modifier.size(25.dp),
-        tint = colors.blue
-      )
-    }
-    Spacer(Modifier.height(20.dp))
-    Text(
-      text = title,
-      style = TextStyle(
-        fontFamily = headline,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 19.sp,
-        color = colors.heading
-      ),
-    )
-    Spacer(Modifier.height(11.dp))
-    Text(
-      text = body,
-      style = TextStyle(
-        fontSize = 15.sp,
-        lineHeight = 24.sp,
-        color = colors.slate
-      ),
-    )
   }
 }
 
@@ -985,7 +1104,6 @@ private fun HowItWorksSection(
   modifier: Modifier,
   colors: LandingColors,
   headline: FontFamily,
-  columns: Int,
   compact: Boolean,
 ) {
   Box(
@@ -1005,86 +1123,34 @@ private fun HowItWorksSection(
         kick = "How it works",
         title = "From sign-in to in service in three steps",
       )
-      Spacer(Modifier.height(if (compact) 40.dp else 52.dp))
-      CardGrid(
-        columns = columns,
-        cells = listOf(
-          {
-            StepCard(
-              colors, headline, 1, "Pick what you're maintaining",
-              "Sign in with Google or Apple, choose airplane, car, bike, boat, home or custom, and fill in the details that type asks for — no more, no less.",
-            )
-          },
-          {
-            StepCard(
-              colors, headline, 2, "Accept a starter schedule",
-              "Keep the recommended tasks that apply, add your own intervals, and let SquawkIt do the date and meter math from then on.",
-            )
-          },
-          {
-            StepCard(
-              colors, headline, 3, "Log as you go — together",
-              "Record work and issues from any device, invite the people who help, and get due-soon and overdue reminders before anything lapses.",
-            )
-          },
+      Spacer(Modifier.height(if (compact) 36.dp else 48.dp))
+      Carousel(
+        slides = listOf(
+          Slide(
+            step = 1,
+            title = "Pick what you're maintaining",
+            body = "Sign in with Google or Apple, choose airplane, car, bike, boat, home or custom, and fill in the details that type asks for — no more, no less.",
+          ),
+          Slide(
+            step = 2,
+            title = "Accept a starter schedule",
+            body = "Keep the recommended tasks that apply, add your own intervals, and let SquawkIt do the date and meter math from then on.",
+          ),
+          Slide(
+            step = 3,
+            title = "Log as you go — together",
+            body = "Record work and issues from any device, invite the people who help, and get due-soon and overdue reminders before anything lapses.",
+          ),
         ),
+        colors = colors,
+        headline = headline,
+        compact = compact,
+        // On the `card` surface, so the stage card takes the panel colour to stand off it.
+        cardColor = colors.panel,
+        // Three steps read slower than six features; give each one longer on stage.
+        autoAdvanceMillis = 6_500,
       )
     }
-  }
-}
-
-@Composable
-private fun StepCard(
-  colors: LandingColors,
-  headline: FontFamily,
-  number: Int,
-  title: String,
-  body: String,
-) {
-  Column(
-    modifier = Modifier
-      .fillMaxHeight()
-      .clip(RoundedCornerShape(18.dp))
-      .background(colors.panel)
-      .border(1.dp, colors.outline, RoundedCornerShape(18.dp))
-      .padding(horizontal = 26.dp, vertical = 30.dp),
-  ) {
-    Box(
-      modifier = Modifier
-        .size(34.dp)
-        .clip(RoundedCornerShape(10.dp))
-        .background(colors.blue),
-      contentAlignment = Alignment.Center,
-    ) {
-      Text(
-        text = number.toString(),
-        style = TextStyle(
-          fontFamily = headline,
-          fontWeight = FontWeight.Bold,
-          fontSize = 15.sp,
-          color = Color.White
-        ),
-      )
-    }
-    Spacer(Modifier.height(18.dp))
-    Text(
-      text = title,
-      style = TextStyle(
-        fontFamily = headline,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 18.sp,
-        color = colors.heading
-      ),
-    )
-    Spacer(Modifier.height(10.dp))
-    Text(
-      text = body,
-      style = TextStyle(
-        fontSize = 14.5.sp,
-        lineHeight = 23.sp,
-        color = colors.slate
-      ),
-    )
   }
 }
 
