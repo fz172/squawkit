@@ -8,12 +8,26 @@ import org.junit.Test
 import java.io.File
 
 /**
- * **Phase 2's whole safety argument** (#658, PRD §10, §14 "Dilution").
+ * **The aviation cohort's copy guardrail** (PRD §13; `pivot_rollout_design.md` §8).
  *
- * Phase 2C converts ~189 strings from fixed text into format strings filled from a lexicon. The
- * claim that justifies doing that at all is that an aviation user's app stays *verbally identical*
- * — not "mostly the same". This holds that claim to account: a snapshot of every string as it read
- * **before** any conversion, compared against what the airplane lexicon renders after.
+ * Phase 2C converted ~230 strings from fixed text into format strings filled from a lexicon, on
+ * the claim that an aviation user's app stays *verbally identical* — not "mostly the same". This
+ * held that claim to account: a snapshot of every string as it read **before** any conversion,
+ * compared against what the airplane lexicon renders after.
+ *
+ * ## Phase 3 narrowed it; it did not retire it
+ *
+ * The pivot deliberately changes what users see, so "byte-identical to Phase 1" stopped being the
+ * whole contract. What remains is PRD §13's guardrail — *no regression for the pre-launch aviation
+ * cohort* — and that cohort's copy not drifting is part of not regressing. So the test still pins
+ * what **the airplane lexicon** renders, and says nothing about the other presets: a string a
+ * boat or a home renders differently is the point, and a string that moved into per-template
+ * `empty_states` left the snapshot when it left `strings.xml`.
+ *
+ * The narrowing happens one row at a time, in the commit that makes the change, never by
+ * regenerating the file: a deliberate rewording updates its row, a retired string deletes its
+ * row, a new string adds one. Aviation copy therefore changes in exactly one of two ways —
+ * visibly in the diff, or by failing here. (#734)
  *
  * ## It compares renders, not source
  *
@@ -434,7 +448,7 @@ class StringSnapshotTest {
   )
 
   @Test
-  fun everyStringStillReadsExactlyAsItDidBeforePhase2() {
+  fun aviationCopyStillReadsExactlyAsItDidBeforeThePivot() {
     val snapshot = loadSnapshot()
     val current = readAllStrings()
     val lexicon = AirplaneTemplate.AIRPLANE_LEXICON
