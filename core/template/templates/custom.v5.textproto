@@ -1,4 +1,4 @@
-# The custom preset — canonical template (id "custom", version 3).
+# The custom preset — canonical template (id "custom", version 5).
 #
 # THE FLOOR. It declares almost nothing (PRD §4.7: no components, no meters, generic lexicon), so
 # every screen has to render something sensible for a template that promises almost nothing. That
@@ -8,11 +8,15 @@
 # Where home proves the system is not aviation with the nouns swapped, this proves the system
 # degrades to nothing gracefully. The two failures are different, which is why both presets exist.
 #
-# See templates/README.md before editing, and compile with ./compile-template.sh custom.v3
+# See templates/README.md before editing, and compile with ./compile-template.sh custom.v5
 #
-# v3 adds `empty_states` — the per-domain empty-state copy that used to be fixed aviation
-# text in strings.xml. A noun could not fix those strings: what makes them useful is the
-# examples, and this preset's examples are its own.
+# v5 is a MERGE FIX, and the reason it exists is worth reading before the next parallel branch.
+# #781 and #783 each bumped this preset to v3 — one adding `name` and custom_spec_fields, the
+# other adding `empty_states`. The files do not overlap, so git merged both cleanly and left two
+# presets on disk; Gradle keys the constant on the id and takes the highest version, so the
+# later bump silently won and `custom` shipped without its empty-state copy. A version bump is
+# not a merge conflict, and nothing in the tooling makes it one — only
+# `everyPresetWritesItsOwnEmptyStateCopy` caught it. v5 carries both changes.
 #
 # v2 carries no change of its own. v1's bytes were edited in place before the bump-every-edit rule
 # was enforced, so `v1` names two different templates depending on when a Thing froze it — which is
@@ -20,7 +24,7 @@
 # a Thing stores is once more a true statement about the bytes it carries.
 
 id: "custom"
-version: 3
+version: 5
 min_app_version: 0
 
 display_name: "Custom"
@@ -105,5 +109,27 @@ capabilities {
   export_layout: EXPORT_LAYOUT_GENERIC
 }
 
-# NO spec_fields, NO component_slots, NO meters. A Thing on this template has a name and nothing
-# else the template asked for — which is the state every screen has to survive.
+# v4 title-cases that name. v3 was never merged, but it did reach a device, and a stored template
+# is identified by its version — so it gets a new one rather than an edit (README, airplane v1).
+#
+# v3 gave the name it always claimed to have a field to be typed into, and three fields the user
+# names themselves. Before it, the create form rendered NOTHING — no spec fields, no slots — and
+# every Thing made from it stored an empty name and read as "Custom" in the switcher.
+#
+# ONE DECLARED FIELD, and it is the name. Required, because it is the only thing distinguishing one
+# of these from another, and `title_candidate` so it is what the Thing is called everywhere.
+spec_fields {
+  key: "name"
+  label: "Name"
+  required: true
+  title_candidate: true
+  # A name is capitalised word by word — "Espresso Machine", not "Espresso machine".
+  title_case: true
+}
+
+# Three fields the user names themselves. The template says HOW MANY, not what they are: what
+# someone tracks under `custom` is not knowable here, which is the whole reason this preset exists.
+custom_spec_fields: 3
+
+# NO component_slots, NO meters. Still the floor: a Thing on this template has a name, whatever
+# the user chose to record beside it, and nothing else — the state every screen has to survive.
