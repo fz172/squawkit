@@ -15,6 +15,11 @@ slots, an empty meter list — so it is the one that finds screens with an aviat
 in. **`custom` is the floor**: it declares almost nothing, so a screen that breaks on it is reading
 something no template promises.
 
+Every preset but `custom` ends with a `starter_tasks` block — the schedule offered when a Thing is
+created and again from an empty Tasks tab (PRD §4.9). `CanonicalTemplatesTest` holds each item to
+what the task form could produce: a title, a description, at least one rule, and a meter or slot
+the preset declares. The airplane pack is pinned by content to regulatory-universal intervals.
+
 ## Editing a template
 
 **Every edit is a new version.** Copy the file to the next `vN`, change `version:` inside it to

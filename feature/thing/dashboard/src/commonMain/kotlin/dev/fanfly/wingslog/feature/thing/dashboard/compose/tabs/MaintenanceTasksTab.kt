@@ -92,6 +92,14 @@ fun MaintenanceTasksTab(
         analytics.logScreenView("shell/tasks/${if (it) "complied" else "active"}")
       },
       onCardClick = { onAction(ThingOverviewAction.TaskCardClick(it)) },
+      // "Can add it later from an empty Tasks tab" (PRD §4.9): only while the tab is empty in
+      // both sub-views, and only when this Thing's own DNA still carries a pack.
+      onAddStarterPack = if (
+        state.thing.template?.starter_tasks.orEmpty().isNotEmpty() &&
+        state.activeTasks.isEmpty() && state.completedTasks.isEmpty()
+      ) {
+        { onAction(ThingOverviewAction.AddStarterPackClick(state.thing.id)) }
+      } else null,
       scrollTargetId = scrollToTaskId,
       onTargetPositioned = { targetCardY = it },
       showHeader = showHeader,

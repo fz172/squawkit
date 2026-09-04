@@ -4,7 +4,7 @@
 # frame number, not make/model/serial (PRD §4.3), and it carries TWO meters where every other
 # vehicle carries one. A screen that assumes a single usage number will show it here.
 #
-# See templates/README.md before editing, and compile with ./compile-template.sh bike.v4
+# See templates/README.md before editing, and compile with ./compile-template.sh bike.v7
 #
 # v3 adds `empty_states` — the per-domain empty-state copy that used to be fixed aviation
 # text in strings.xml. A noun could not fix those strings: what makes them useful is the
@@ -22,8 +22,10 @@
 # rather than a meter. The log form's tab said "Hours" for every preset, aviation's word
 # on a car's odometer. Here: a distance AND ride hours — neither word names the pair, which is why the field exists.
 #
+# v7 ships the starter pack (PRD §4.9).
+#
 id: "bike"
-version: 6
+version: 7
 min_app_version: 0
 
 display_name: "Bike"
@@ -158,3 +160,43 @@ meters {
 
 # See ThingTemplate.meters_label: the word for the SET, which no single meter above supplies.
 meters_label: "Readings"
+
+# The starter pack (PRD §4.9). The two most common neglects first — a dry chain and a worn one —
+# then the shop-visit items. Tubeless and suspension are off by default: plenty of bikes have
+# neither, and an interval for a part the bike does not have is worse than none.
+starter_tasks {
+  title: "Lube the chain"
+  description: "More often in wet or dusty conditions. A dry chain wears the whole drivetrain."
+  default_selected: true
+  meter_key: "odometer"
+  interval: 150
+}
+starter_tasks {
+  title: "Check chain wear"
+  description: "Replace at 0.5% stretch before it takes the cassette and chainrings with it."
+  default_selected: true
+  interval_months: 6
+}
+starter_tasks {
+  title: "Check brake pads & cables"
+  description: "Pad thickness, cable fray, hydraulic feel."
+  default_selected: true
+  interval_months: 6
+}
+starter_tasks {
+  title: "Full tune-up"
+  description: "Bearings, derailleur adjustment, wheel true, bolt torque."
+  default_selected: true
+  interval_months: 12
+}
+starter_tasks {
+  title: "Refresh tubeless sealant"
+  description: "Tubeless tires only. Sealant dries out whether or not you ride."
+  interval_months: 6
+}
+starter_tasks {
+  title: "Suspension service"
+  description: "Fork and shock, per the manufacturer's hour interval."
+  meter_key: "ride_hours"
+  interval: 50
+}

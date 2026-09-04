@@ -147,7 +147,7 @@ class FleetManagerImpl(
     return EntityScope.userRoot(hostUid ?: uid)
   }
 
-  override suspend fun updateThing(thing: Thing): Result<Boolean> =
+  override suspend fun updateThing(thing: Thing): Result<Thing> =
     runCatching {
       val uid = firebaseAuth.currentUser?.uid
         ?: error("Cannot update thing when no user is signed in")
@@ -166,7 +166,7 @@ class FleetManagerImpl(
         if (isNew) EntityScope.userRoot(uid) else rootScopeOf(inflated.id, uid)
       store.put(inflated.id, inflated, scope)
       logger.d { "Thing ${inflated.id} written to local store at ${scope.toPath()}" }
-      true
+      inflated
     }.onFailure { logger.w(it) { "Error updating thing" } }
 
   /**

@@ -27,7 +27,7 @@ import okio.ByteString.Companion.decodeBase64
 object AirplaneTemplate {
 
   const val ID: String = "airplane"
-  const val VERSION: Int = 6
+  const val VERSION: Int = 7
 
   /**
    * Decoded once, eagerly.

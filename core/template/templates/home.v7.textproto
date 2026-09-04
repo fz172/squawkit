@@ -5,7 +5,7 @@
 # point: it is the preset that finds screens with an aviation assumption baked in. `car` would find
 # almost none of them — it maps onto the airplane shape almost field for field.
 #
-# See templates/README.md before editing, and compile with ./compile-template.sh home.v5
+# See templates/README.md before editing, and compile with ./compile-template.sh home.v7
 #
 # v4 adds `empty_states` — the per-domain empty-state copy that used to be fixed aviation
 # text in strings.xml. A noun could not fix those strings: what makes them useful is the
@@ -26,8 +26,10 @@
 # derived from the credentials they hold, and a per-Thing flag cannot answer for a roster the
 # account shares across every Thing (#684).
 #
+# v7 ships the starter pack (PRD §4.9, §5.1) — see the block at the end of the file.
+#
 id: "home"
-version: 6
+version: 7
 min_app_version: 0
 
 display_name: "Home"
@@ -158,4 +160,73 @@ certifications {
   label: "General Contractor"
   number_label: "License Number"
   number_placeholder: "License number"
+}
+
+# The starter pack (PRD §4.9, §5.1) — the highest-value pack in the catalog, because a homeowner
+# is the one owner who genuinely does not know the water heater wants a flush. Every item is a
+# Thing-level task: no meters, no components (see above).
+#
+# PRD §5.1 schedules three of these seasonally (April & October; October). There is no
+# calendar-anchored rule in the due engine yet, so they are 6- and 12-month intervals dated from
+# creation: log each one once in its season and it lands on the right month from then on. Revisit
+# when a seasonal rule exists.
+#
+# Off by default where a house may simply not have the thing — a chimney, a sprinkler system, a
+# septic tank — because a wrong task is worse than a missing one.
+starter_tasks {
+  title: "Replace HVAC filter"
+  description: "Every season, sooner with pets. A clogged filter is the most common cause of a struggling system."
+  default_selected: true
+  interval_months: 3
+}
+starter_tasks {
+  title: "HVAC service"
+  description: "Spring and fall — before the cooling and heating seasons."
+  default_selected: true
+  interval_months: 6
+}
+starter_tasks {
+  title: "Clean gutters"
+  description: "Spring and fall. Overflowing gutters send water into the foundation."
+  default_selected: true
+  interval_months: 6
+}
+starter_tasks {
+  title: "Smoke & CO detector batteries"
+  description: "Replace the batteries and press the test button on every unit."
+  default_selected: true
+  interval_months: 12
+}
+starter_tasks {
+  title: "Flush water heater"
+  description: "Drains the sediment that shortens the tank's life and its efficiency."
+  default_selected: true
+  interval_months: 12
+}
+starter_tasks {
+  title: "Clean dryer vent"
+  description: "Lint in the duct is a fire risk, not just a slow dryer."
+  default_selected: true
+  interval_months: 12
+}
+starter_tasks {
+  title: "Refrigerator water filter"
+  description: "Or per the fridge's own indicator."
+  default_selected: true
+  interval_months: 6
+}
+starter_tasks {
+  title: "Sprinkler blowout"
+  description: "Before the first freeze, if the house has an irrigation system."
+  interval_months: 12
+}
+starter_tasks {
+  title: "Chimney sweep & inspection"
+  description: "If the house has a wood-burning fireplace or stove. Creosote is a fire risk."
+  interval_months: 12
+}
+starter_tasks {
+  title: "Septic pump-out"
+  description: "If the house is on septic. Every three to five years depending on household size."
+  interval_months: 36
 }

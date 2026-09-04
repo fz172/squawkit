@@ -94,7 +94,6 @@ class EditThingViewModel(
     savedStateHandle.get<String>(Screen.THING_ID)
       .isNullOrEmpty()
 
-
   init {
     val thingId: String? = savedStateHandle[Screen.THING_ID]
     if (thingId.isNullOrEmpty()) {
@@ -185,19 +184,32 @@ class EditThingViewModel(
       }
 
       _uiState.update { it.copy(isLoading = true) }
-      val result = fleetManager.updateThing(uiState.value.thing)
-      if (result.isSuccess) {
+      val written = fleetManager.updateThing(uiState.value.thing)
+        .getOrNull()
+      if (written != null) {
         // Only on the write actually landing: a create that failed is not a Thing, and §13 counts
-        // Things that exist.
+        // Things that exist. The template is the written Thing's own, not the shell's: the
+        // ambient one is whatever the switcher points at, which on a create is a different Thing.
         if (isNewThing) {
           analytics.log(
             ThingCreated(
-              templateId = currentThingTemplate.templateId,
+              templateId = written.template?.id ?: currentThingTemplate.templateId,
               source = SOURCE_FORM
             )
           )
         }
-        _uiState.update { it.copy(isSaved = true) }
+        _uiState.update {
+          it.copy(
+            isSaved = true,
+            // Step 4 of the create flow (PRD §8.1). Only a create, and only a template that ships
+            // a pack: an edit has nothing to offer, and a Thing with no pack should not see the
+            // step — or count in the §13 denominator.
+            starterPackThingId = written.id.takeIf {
+              isNewThing && written.template?.starter_tasks.orEmpty()
+                .isNotEmpty()
+            },
+          )
+        }
       }
       _uiState.update { it.copy(isLoading = false) }
     }

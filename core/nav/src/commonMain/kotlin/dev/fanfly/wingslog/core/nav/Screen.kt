@@ -1,5 +1,8 @@
 package dev.fanfly.wingslog.core.nav
 
+import dev.fanfly.wingslog.core.nav.Screen.Companion.TEMPLATE_ID
+
+
 sealed class Screen(val route: String) {
 
   // Canonical navigation parameters
@@ -22,6 +25,7 @@ sealed class Screen(val route: String) {
   data object Notifications : Screen("notifications")
   data object ExportLogs : Screen("export_logs")
   data object ExportHistory : Screen("export_history")
+
   /**
    * The create form. [TEMPLATE_ID] is optional so the empty state can still open the form directly;
    * absent, the form falls back the way it always did (#738).
@@ -29,6 +33,15 @@ sealed class Screen(val route: String) {
   data object AddThing : Screen("add_thing?$TEMPLATE_ID={$TEMPLATE_ID}") {
     fun createRoute(templateId: String? = null) =
       if (templateId.isNullOrEmpty()) "add_thing" else "add_thing?$TEMPLATE_ID=$templateId"
+  }
+
+  /**
+   * The template's recommended schedule, offered once the Thing exists (PRD §4.9). Reached from
+   * the create form's hand-off and from an empty Tasks tab; both read the pack off the Thing's own
+   * DNA, so the id is all the route carries.
+   */
+  data object StarterPack : Screen("starter_pack/{$THING_ID}") {
+    fun createRoute(thingId: String) = "starter_pack/$thingId"
   }
 
   data object EnterInviteCode : Screen("enter_invite_code")

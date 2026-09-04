@@ -304,6 +304,9 @@ fun ThingSectionContent(
               )
             )
 
+          is ThingOverviewAction.AddStarterPackClick ->
+            navController.navigate(Screen.StarterPack.createRoute(thingId))
+
           is ThingOverviewAction.EditTaskClick -> {
             viewModel.onAction(ThingOverviewAction.DismissTaskDetail)
             navController.navigate(

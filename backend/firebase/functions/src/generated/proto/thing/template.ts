@@ -179,6 +179,13 @@ export interface StarterTask {
   meterKey: string;
   interval: number;
   intervalMonths: number;
+  /**
+   * Which component slot the task is filed against, empty for a Thing-level task. Only the
+   * airplane preset sets it: `MaintenanceTask.component` is the frozen airframe / engine /
+   * propeller enum, and an annual filed against nothing would land in the form's picker with no
+   * option selected. Same field, same meaning, as MeterDef.component_slot_key.
+   */
+  componentSlotKey: string;
 }
 
 /**
@@ -884,7 +891,15 @@ export const MeterDef: MessageFns<MeterDef> = {
 };
 
 function createBaseStarterTask(): StarterTask {
-  return { title: "", description: "", defaultSelected: false, meterKey: "", interval: 0, intervalMonths: 0 };
+  return {
+    title: "",
+    description: "",
+    defaultSelected: false,
+    meterKey: "",
+    interval: 0,
+    intervalMonths: 0,
+    componentSlotKey: "",
+  };
 }
 
 export const StarterTask: MessageFns<StarterTask> = {
@@ -906,6 +921,9 @@ export const StarterTask: MessageFns<StarterTask> = {
     }
     if (message.intervalMonths !== 0) {
       writer.uint32(48).int32(message.intervalMonths);
+    }
+    if (message.componentSlotKey !== "") {
+      writer.uint32(58).string(message.componentSlotKey);
     }
     return writer;
   },
@@ -965,6 +983,14 @@ export const StarterTask: MessageFns<StarterTask> = {
           message.intervalMonths = reader.int32();
           continue;
         }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+
+          message.componentSlotKey = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -994,6 +1020,11 @@ export const StarterTask: MessageFns<StarterTask> = {
         : isSet(object.interval_months)
         ? globalThis.Number(object.interval_months)
         : 0,
+      componentSlotKey: isSet(object.componentSlotKey)
+        ? globalThis.String(object.componentSlotKey)
+        : isSet(object.component_slot_key)
+        ? globalThis.String(object.component_slot_key)
+        : "",
     };
   },
 
@@ -1017,6 +1048,9 @@ export const StarterTask: MessageFns<StarterTask> = {
     if (message.intervalMonths !== 0) {
       obj.intervalMonths = Math.round(message.intervalMonths);
     }
+    if (message.componentSlotKey !== "") {
+      obj.componentSlotKey = message.componentSlotKey;
+    }
     return obj;
   },
 
@@ -1031,6 +1065,7 @@ export const StarterTask: MessageFns<StarterTask> = {
     message.meterKey = object.meterKey ?? "";
     message.interval = object.interval ?? 0;
     message.intervalMonths = object.intervalMonths ?? 0;
+    message.componentSlotKey = object.componentSlotKey ?? "";
     return message;
   },
 };

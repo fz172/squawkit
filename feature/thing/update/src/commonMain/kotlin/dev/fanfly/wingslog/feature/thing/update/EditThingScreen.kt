@@ -106,16 +106,20 @@ fun EditThingScreen(
 
   // This effect will run when isSaved becomes true
   LaunchedEffect(uiState.isSaved, uiState.isDeleted) {
-    if (uiState.isSaved || uiState.isDeleted) {
-      // Navigate back when save or delete is successful
-      if (uiState.isDeleted) {
-        navController.popBackStack(
-          Screen.AdaptiveShell.route,
-          inclusive = false
-        )
-      } else {
-        navController.popBackStack()
-      }
+    val packThingId = uiState.starterPackThingId
+    when {
+      uiState.isDeleted -> navController.popBackStack(
+        Screen.AdaptiveShell.route,
+        inclusive = false
+      )
+      // A create whose template ships a pack continues into step 4 (PRD §8.1) in place of this
+      // form: the form leaves the stack so Back from the pack lands on the shell, not on a
+      // second copy of a Thing that already exists.
+      uiState.isSaved && packThingId != null ->
+        navController.navigate(Screen.StarterPack.createRoute(packThingId)) {
+          popUpTo(Screen.AddThing.route) { inclusive = true }
+        }
+      uiState.isSaved -> navController.popBackStack()
     }
   }
 

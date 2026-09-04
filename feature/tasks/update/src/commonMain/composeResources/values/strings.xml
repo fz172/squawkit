@@ -133,4 +133,19 @@
   <string name="task_deleted">Task deleted</string>
   <string name="task_added">Task added</string>
   <string name="no_tasks_configured">No tasks configured. Add them from the <xliff:g example="aircraft">%1$s</xliff:g> overview to track recurring maintenance.</string>
+
+  <!-- Starter pack (PRD §4.9): the template's recommended schedule, offered once a Thing exists -->
+  <string name="starter_pack_screen_title">Recommended <xliff:g example="Tasks">%1$s</xliff:g></string>
+  <string name="starter_pack_title">Add recommended <xliff:g example="tasks">%1$s</xliff:g>?</string>
+  <string name="starter_pack_subtitle">A starting schedule for this <xliff:g example="home">%1$s</xliff:g>. Untick anything that doesn’t apply — every item stays editable afterwards.</string>
+  <string name="starter_pack_disclaimer">Recommendations, not requirements. Confirm each interval against the manufacturer’s service manual for your <xliff:g example="car">%1$s</xliff:g>.</string>
+  <string name="starter_pack_add">Add <xliff:g example="8">%1$d</xliff:g> <xliff:g example="tasks">%2$s</xliff:g></string>
+  <string name="starter_pack_skip">Skip</string>
+  <string name="starter_pack_added"><xliff:g example="8">%1$d</xliff:g> <xliff:g example="tasks">%2$s</xliff:g> added</string>
+  <string name="starter_rule_every_month">Every month</string>
+  <string name="starter_rule_every_months">Every <xliff:g example="6">%1$d</xliff:g> months</string>
+  <string name="starter_rule_every_year">Every year</string>
+  <string name="starter_rule_every_years">Every <xliff:g example="2">%1$d</xliff:g> years</string>
+  <string name="starter_rule_every_meter">Every <xliff:g example="5,000">%1$s</xliff:g> <xliff:g example="mi">%2$s</xliff:g></string>
+  <string name="starter_rule_either"><xliff:g example="Every 5,000 mi">%1$s</xliff:g> or <xliff:g example="every 6 months">%2$s</xliff:g></string>
 </resources>

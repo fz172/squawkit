@@ -160,6 +160,11 @@ message StarterTask {
   string meter_key = 4;
   float interval = 5;
   int32 interval_months = 6;
+  // Which component slot the task is filed against, empty for a Thing-level task. Only the
+  // airplane preset sets it: `MaintenanceTask.component` is the frozen airframe / engine /
+  // propeller enum, and an annual filed against nothing would land in the form's picker with no
+  // option selected. Same field, same meaning, as MeterDef.component_slot_key.
+  string component_slot_key = 7;
 }
 
 // A credential a template recognises — an A&P for an airplane, an ASE for a car, an electrician's

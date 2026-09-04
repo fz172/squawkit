@@ -13,6 +13,11 @@ data class EditThingUiState(
   val initialThing: Thing? = null,
   val isLoading: Boolean = true,
   val isSaved: Boolean = false,
+  /**
+   * Set alongside [isSaved] when the create should continue into the starter-pack step rather
+   * than close: the id of the Thing just written, whose DNA carries the pack.
+   */
+  val starterPackThingId: String? = null,
   val isDeleted: Boolean = false,
   val showValidationErrors: Boolean = false,
   /**

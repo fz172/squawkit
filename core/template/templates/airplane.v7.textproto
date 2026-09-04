@@ -36,8 +36,10 @@
 # rather than a meter. The log form's tab said "Hours" for every preset, aviation's word
 # on a car's odometer. Here: the three hour meters share one word, and it is the one the app has always shown.
 #
+# v7 ships the starter pack (PRD §4.9). Regulatory-universal intervals only — see the block itself.
+#
 id: "airplane"
-version: 6
+version: 7
 
 # No floor. This template ships inside every build that can read it, so a client can never
 # encounter it from the future — the floor exists for FETCHED templates (§6), and a baked-in one is
@@ -224,8 +226,42 @@ meters {
 # See ThingTemplate.meters_label: the word for the SET, which no single meter above supplies.
 meters_label: "Hours"
 
-# starter_tasks is deliberately absent. Starter packs are Phase 3 content (PRD §4.9); the field is
-# declared in the schema so the shape is settled, not because there is anything to put in it yet.
+# The starter pack (PRD §4.9). REGULATORY-UNIVERSAL INTERVALS ONLY: the PRD's liability posture
+# limits this pack to what 14 CFR Part 91 asks of every certificated aircraft — never a
+# model-specific interval, never an AD or SB, which stay user-entered. Recommendations, not
+# authority; the screen says so. No `component_slot_key` means airframe (StarterTasks.kt).
+starter_tasks {
+  title: "Annual inspection"
+  description: "Required within the preceding 12 calendar months for most aircraft (14 CFR 91.409(a))."
+  default_selected: true
+  interval_months: 12
+}
+# Off by default: only aircraft operated for hire or used for flight instruction for hire need it,
+# and a pre-checked 100-hour puts a wrong interval on most owners.
+starter_tasks {
+  title: "100-hour inspection"
+  description: "Only if operated for hire or used for flight instruction for hire (14 CFR 91.409(b))."
+  meter_key: "airframe_hours"
+  interval: 100
+}
+starter_tasks {
+  title: "ELT inspection"
+  description: "Emergency locator transmitter inspected within the preceding 12 calendar months (14 CFR 91.207(d))."
+  default_selected: true
+  interval_months: 12
+}
+starter_tasks {
+  title: "Transponder test"
+  description: "Tested and inspected within the preceding 24 calendar months (14 CFR 91.413)."
+  default_selected: true
+  interval_months: 24
+}
+starter_tasks {
+  title: "Altimeter & pitot-static test"
+  description: "Required for IFR operations; within the preceding 24 calendar months (14 CFR 91.411)."
+  default_selected: true
+  interval_months: 24
+}
 
 # The credentials this preset recognises (PRD §8.6). A technician's roles are derived from the keys
 # they hold, so this list is what the add flow offers AND what a tag on a list row means.
