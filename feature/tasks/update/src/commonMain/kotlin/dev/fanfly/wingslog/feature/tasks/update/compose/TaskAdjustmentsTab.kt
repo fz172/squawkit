@@ -35,20 +35,28 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.template.LocalThingTemplate
+import dev.fanfly.wingslog.core.template.meter
 import dev.fanfly.wingslog.core.ui.common.compose.FormSectionLabel
 import dev.fanfly.wingslog.core.ui.common.compose.PreviewBanner
 import dev.fanfly.wingslog.core.ui.common.compose.PreviewBannerTone
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.core.ui.theme.statusColors
+import dev.fanfly.wingslog.thing.MeterDef
+import kotlin.math.abs
+import kotlin.math.roundToInt
+import kotlin.time.Clock
+import kotlin.time.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.daysUntil
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
+import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.core.sharedassets.generated.resources.select_date
 import wingslog.feature.tasks.update.generated.resources.Res
 import wingslog.feature.tasks.update.generated.resources.adj_preview_hint
@@ -73,6 +81,7 @@ import wingslog.feature.tasks.update.generated.resources.adj_preview_was_date
 import wingslog.feature.tasks.update.generated.resources.adj_preview_was_hours
 import wingslog.feature.tasks.update.generated.resources.adj_reschedule_disabled_linked
 import wingslog.feature.tasks.update.generated.resources.adj_reschedule_disabled_unset
+import wingslog.feature.tasks.update.generated.resources.adj_reschedule_prefix_at
 import wingslog.feature.tasks.update.generated.resources.adj_reschedule_section_label
 import wingslog.feature.tasks.update.generated.resources.adj_reschedule_subtitle
 import wingslog.feature.tasks.update.generated.resources.adj_reschedule_title
@@ -82,11 +91,7 @@ import wingslog.feature.tasks.update.generated.resources.delete_task_section_lab
 import wingslog.feature.tasks.update.generated.resources.delete_this_task_subtitle
 import wingslog.feature.tasks.update.generated.resources.delete_this_task_title
 import wingslog.feature.tasks.update.generated.resources.schedule_preview_label
-import kotlin.math.abs
-import kotlin.math.roundToInt
-import kotlin.time.Clock
-import kotlin.time.Instant
-import wingslog.core.sharedassets.generated.resources.Res as CoreRes
+import wingslog.feature.tasks.update.generated.resources.schedule_unit_tach_hours
 
 @Composable
 fun TaskAdjustmentsTab(
@@ -131,6 +136,14 @@ fun TaskAdjustmentsTab(
       else -> {}
     }
   }
+
+  // The meter the schedule counts in, so every banner here says "mi" where the input says "mi"
+  // (#785). Same resolution as the schedule tab; the aviation word only when the template
+  // declares no meter at all.
+  val template = LocalThingTemplate.current
+  val meter = template.meter(schedule.meterKey) ?: template?.meters?.firstOrNull()
+  val meterUnit = meter?.unit_label?.takeIf { it.isNotEmpty() }
+    ?: stringResource(Res.string.schedule_unit_tach_hours)
 
   val timeZone = TimeZone.currentSystemDefault()
   val today = remember {
@@ -198,14 +211,15 @@ fun TaskAdjustmentsTab(
             stringResource(
               Res.string.adj_preview_primary_hours,
               rescheduledStr,
-              relativeEnginePhrase(rescheduledEngine - currentEngineHours),
+              meterUnit,
+              relativeEnginePhrase(rescheduledEngine - currentEngineHours, meterUnit),
             ),
             rescheduledStr,
           )
           bannerSecondary = naturalDueEngine?.let {
             val natStr = formatEngineHours(it)
             monoOn(
-              stringResource(Res.string.adj_preview_was_hours, natStr),
+              stringResource(Res.string.adj_preview_was_hours, natStr, meterUnit),
               natStr
             )
           }
@@ -215,6 +229,7 @@ fun TaskAdjustmentsTab(
             stringResource(
               Res.string.adj_preview_reschedule_hours_primary,
               forcedEngineHours.ifBlank { "—" },
+              meterUnit,
             )
           )
           bannerSecondary =
@@ -243,7 +258,8 @@ fun TaskAdjustmentsTab(
           stringResource(
             Res.string.adj_preview_primary_hours,
             dueStr,
-            relativeEnginePhrase(neutralDueEngine - currentEngineHours),
+            meterUnit,
+            relativeEnginePhrase(neutralDueEngine - currentEngineHours, meterUnit),
           ),
           dueStr,
         )
@@ -285,6 +301,8 @@ fun TaskAdjustmentsTab(
       onForcedEngineHoursChange = onForcedEngineHoursChange,
       forcedDateMillis = forcedDateMillis,
       onDateClick = onDateClick,
+      meter = meter,
+      meterUnit = meterUnit,
     )
 
     // Delete task — kept separate from the Resolve menu (Create Work Log / Skip This Cycle)
@@ -308,6 +326,8 @@ private fun RescheduleCard(
   onForcedEngineHoursChange: (String) -> Unit,
   forcedDateMillis: Long?,
   onDateClick: () -> Unit,
+  meter: MeterDef?,
+  meterUnit: String,
 ) {
   val isLinked = mode == ScheduleMode.LINKED
   val noMode = mode == null
@@ -429,23 +449,12 @@ private fun RescheduleCard(
           }
 
           ScheduleMode.HOURS -> {
-            // The meter's own unit, like the schedule tab beside it — a car's override read
-            // "tach hrs" while the schedule that produced it said "mi" (#759).
-            // This tab has no rule in scope, only the mode — so the template's own meter is the
-            // best available answer, and it is the right one for every preset that declares just
-            // the one. #732 revisits it if a preset ever ships two.
-            val meter = LocalThingTemplate.current?.meters?.firstOrNull()
             IntervalNumberInput(
               value = forcedEngineHours,
               onChange = { onForcedEngineHoursChange(it.filter { c -> c.isDigit() || c == '.' }) },
-              suffix = meter?.unit_label?.takeIf { it.isNotEmpty() }
-                ?: "tach hrs",
-              prefix = "At",
-              keyboard = if (meter?.decimal != false) {
-                androidx.compose.ui.text.input.KeyboardType.Decimal
-              } else {
-                androidx.compose.ui.text.input.KeyboardType.Number
-              },
+              suffix = meterUnit,
+              prefix = stringResource(Res.string.adj_reschedule_prefix_at),
+              keyboard = if (meter?.decimal != false) KeyboardType.Decimal else KeyboardType.Number,
             )
             if (forcedEngineHours.isNotBlank()) {
               Text(
@@ -565,14 +574,14 @@ private fun relativeDaysPhrase(days: Int): String = when {
 }
 
 @Composable
-private fun relativeEnginePhrase(deltaHours: Float): String {
-  val absDelta = abs(deltaHours)
+private fun relativeEnginePhrase(delta: Float, meterUnit: String): String {
+  val absDelta = abs(delta)
   if (absDelta < 0.05f) return stringResource(Res.string.adj_preview_rel_hours_at)
   val formatted = formatEngineHours(absDelta)
-  return if (deltaHours > 0f) {
-    stringResource(Res.string.adj_preview_rel_in_hours, formatted)
+  return if (delta > 0f) {
+    stringResource(Res.string.adj_preview_rel_in_hours, formatted, meterUnit)
   } else {
-    stringResource(Res.string.adj_preview_rel_over_hours, formatted)
+    stringResource(Res.string.adj_preview_rel_over_hours, formatted, meterUnit)
   }
 }
 

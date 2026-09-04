@@ -51,12 +51,12 @@
   <string name="schedule_preview_asap_primary">Due now — ASAP</string>
   <string name="schedule_preview_asap_secondary">Will appear immediately on the dashboard</string>
   <string name="schedule_preview_set_calendar_primary">Set how often (<xliff:g example="Work Logs">%1$s</xliff:g>)</string>
-  <string name="schedule_preview_set_hours_primary">Set how many tach hours</string>
+  <string name="schedule_preview_set_hours_primary">Set how many <xliff:g example="mi">%1$s</xliff:g></string>
   <string name="schedule_preview_set_secondary">Enter an interval below</string>
   <string name="schedule_preview_due_every">Due every <xliff:g example="3">%1$d</xliff:g> <xliff:g example="months">%2$s</xliff:g></string>
   <string name="schedule_preview_due_in">Due in <xliff:g example="3">%1$d</xliff:g> <xliff:g example="months">%2$s</xliff:g></string>
-  <string name="schedule_preview_due_every_hours">Due every <xliff:g example="100">%1$s</xliff:g> tach hrs</string>
-  <string name="schedule_preview_due_in_hours">Due in <xliff:g example="12.5">%1$s</xliff:g> tach hrs</string>
+  <string name="schedule_preview_due_every_hours">Due every <xliff:g example="100">%1$s</xliff:g> <xliff:g example="hrs">%2$s</xliff:g></string>
+  <string name="schedule_preview_due_in_hours">Due in <xliff:g example="12.5">%1$s</xliff:g> <xliff:g example="hrs">%2$s</xliff:g></string>
   <string name="schedule_preview_recurring_secondary">Recurring schedule</string>
   <string name="schedule_preview_one_time_secondary">One-time · moves to history after first log</string>
 
@@ -83,13 +83,13 @@
   <string name="adj_preview_neutral_secondary_linked">Linked to another task — schedule is automatic</string>
   <string name="adj_preview_neutral_secondary_unset">No schedule set yet</string>
   <string name="adj_preview_reschedule_date_primary">Next due <xliff:g example="12 Mar 2026">%1$s</xliff:g></string>
-  <string name="adj_preview_reschedule_hours_primary">Next due at <xliff:g example="12.5">%1$s</xliff:g> tach hrs</string>
+  <string name="adj_preview_reschedule_hours_primary">Next due at <xliff:g example="12.5">%1$s</xliff:g> <xliff:g example="hrs">%2$s</xliff:g></string>
   <string name="adj_preview_reschedule_was_date">Was set by schedule</string>
   <!-- Adjustments tab — preview banner with next-due + relative phrasing -->
   <string name="adj_preview_primary_date">Next due <xliff:g example="12 Mar 2026">%1$s</xliff:g> · <xliff:g example="3">%2$s</xliff:g></string>
-  <string name="adj_preview_primary_hours">Next due at <xliff:g example="1250.0">%1$s</xliff:g> tach hrs · <xliff:g example="12.5">%2$s</xliff:g></string>
+  <string name="adj_preview_primary_hours">Next due at <xliff:g example="1250.0">%1$s</xliff:g> <xliff:g example="hrs">%2$s</xliff:g> · <xliff:g example="in 12.5 hrs">%3$s</xliff:g></string>
   <string name="adj_preview_was_date">Was <xliff:g example="12 Mar 2026">%1$s</xliff:g></string>
-  <string name="adj_preview_was_hours">Was <xliff:g example="1200.0">%1$s</xliff:g> tach hrs</string>
+  <string name="adj_preview_was_hours">Was <xliff:g example="1200.0">%1$s</xliff:g> <xliff:g example="hrs">%2$s</xliff:g></string>
   <!-- Relative phrases (days) -->
   <string name="adj_preview_rel_due_today">due today</string>
   <string name="adj_preview_rel_in_day">in 1 day</string>
@@ -97,9 +97,9 @@
   <string name="adj_preview_rel_overdue_day">overdue by 1 day</string>
   <string name="adj_preview_rel_overdue_days">overdue by <xliff:g example="3">%1$d</xliff:g> days</string>
   <!-- Relative phrases (tach hours) -->
-  <string name="adj_preview_rel_in_hours">in <xliff:g example="12.5">%1$s</xliff:g> tach hrs</string>
-  <string name="adj_preview_rel_over_hours">over by <xliff:g example="12.5">%1$s</xliff:g> tach hrs</string>
-  <string name="adj_preview_rel_hours_at">at current hours</string>
+  <string name="adj_preview_rel_in_hours">in <xliff:g example="12.5">%1$s</xliff:g> <xliff:g example="hrs">%2$s</xliff:g></string>
+  <string name="adj_preview_rel_over_hours">over by <xliff:g example="12.5">%1$s</xliff:g> <xliff:g example="hrs">%2$s</xliff:g></string>
+  <string name="adj_preview_rel_hours_at">at the current reading</string>
   <!-- Preview banner eyebrow labels and hints -->
   <string name="schedule_preview_label">Preview</string>
   <string name="schedule_preview_hint">How this task will appear</string>
@@ -113,7 +113,8 @@
   <string name="adj_reschedule_disabled_linked">Disabled — this task is linked to another</string>
   <string name="adj_reschedule_disabled_unset">Set a schedule first to enable rescheduling</string>
   <string name="adj_reschedule_was_date">Original date set by schedule</string>
-  <string name="adj_reschedule_was_hours">Original hours set by schedule</string>
+  <string name="adj_reschedule_was_hours">Original reading set by schedule</string>
+  <string name="adj_reschedule_prefix_at">At</string>
 
   <!-- Adjustments tab — delete task section -->
   <string name="delete_task_section_label">Delete Task</string>

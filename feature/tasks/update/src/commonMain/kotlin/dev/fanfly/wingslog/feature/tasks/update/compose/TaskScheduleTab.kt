@@ -80,6 +80,15 @@ fun TaskScheduleTab(
 ) {
   var advancedOpen by remember(state.mode) { mutableStateOf(state.mode == ScheduleMode.LINKED) }
 
+  // The meter this schedule counts in, resolved once for the input and the preview alike — the
+  // two used to disagree, the input saying "mi" beside a banner saying "tach hrs" (#785). A new
+  // task carries the default engine-hours key, which a car's template never declares, so fall
+  // back to the template's first meter; a template with none keeps the aviation word.
+  val template = LocalThingTemplate.current
+  val meter = template.meter(state.meterKey) ?: template?.meters?.firstOrNull()
+  val meterUnit = meter?.unit_label?.takeIf { it.isNotEmpty() }
+    ?: stringResource(Res.string.schedule_unit_tach_hours)
+
   Column(
     modifier = modifier.fillMaxWidth(),
     verticalArrangement = Arrangement.spacedBy(Spacing.extraLarge),
@@ -87,6 +96,7 @@ fun TaskScheduleTab(
     val (previewPrimary, previewSecondary, previewIsEmpty) = previewText(
       state = state,
       linkedTaskName = availableInspections.firstOrNull { it.id == state.linkedToId }?.title,
+      meterUnit = meterUnit,
     )
     PreviewBanner(
       label = stringResource(Res.string.schedule_preview_label),
@@ -189,12 +199,8 @@ fun TaskScheduleTab(
           }
 
           ScheduleMode.HOURS -> {
-            // A new task carries the default engine-hours key, which a car's template never
-            // declares — fall back to its first meter so an automotive task schedules on the
-            // odometer rather than on a meter that does not exist.
-            val template = LocalThingTemplate.current
-            val meter =
-              template.meter(state.meterKey) ?: template?.meters?.firstOrNull()
+            // Store the resolved meter's key, so an automotive task schedules on the odometer
+            // rather than on the engine-hours default its template never declares.
             LaunchedEffect(meter?.key) {
               val key = meter?.key
               if (key != null && key != state.meterKey) {
@@ -207,8 +213,7 @@ fun TaskScheduleTab(
               // The meter's own unit — "every 5,000 mi" on a car, "every 100 hrs" on an
               // aeroplane. A fixed "tach hours" was the reason a car could not express this at
               // all (#759).
-              suffix = meter?.unit_label?.takeIf { it.isNotEmpty() }
-                ?: stringResource(Res.string.schedule_unit_tach_hours),
+              suffix = meterUnit,
               prefix = stringResource(
                 if (state.recurrence == ScheduleRecurrence.ONE_TIME) Res.string.schedule_prefix_in
                 else Res.string.schedule_prefix_every
@@ -294,6 +299,7 @@ private fun ScheduleSection(
 private fun previewText(
   state: ScheduleState,
   linkedTaskName: String?,
+  meterUnit: String,
 ): Triple<String, String, Boolean> {
   if (state.mode == null) {
     return Triple(
@@ -362,7 +368,7 @@ private fun previewText(
   // HOURS
   if (state.hourValue.isBlank()) {
     return Triple(
-      stringResource(Res.string.schedule_preview_set_hours_primary),
+      stringResource(Res.string.schedule_preview_set_hours_primary, meterUnit),
       stringResource(Res.string.schedule_preview_set_secondary),
       false,
     )
@@ -372,10 +378,7 @@ private fun previewText(
   val secondaryRes = if (state.recurrence == ScheduleRecurrence.ONE_TIME)
     Res.string.schedule_preview_one_time_secondary else Res.string.schedule_preview_recurring_secondary
   return Triple(
-    stringResource(
-      primaryRes,
-      state.hourValue
-    ),
+    stringResource(primaryRes, state.hourValue, meterUnit),
     stringResource(secondaryRes),
     false
   )
