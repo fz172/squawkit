@@ -56,7 +56,6 @@ import dev.fanfly.wingslog.feature.logs.sharedassets.compose.LogPickerSheet
 import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
 import dev.fanfly.wingslog.feature.tasks.update.compose.ResolveTaskOptionsMenu
 import dev.fanfly.wingslog.feature.tasks.update.compose.ScheduleState
-import dev.fanfly.wingslog.feature.tasks.update.compose.TASK_FORM_TAB_KEYS
 import dev.fanfly.wingslog.feature.tasks.update.compose.TaskAdjustmentsTab
 import dev.fanfly.wingslog.feature.tasks.update.compose.TaskComplianceTab
 import dev.fanfly.wingslog.feature.tasks.update.compose.TaskFormTab
@@ -121,6 +120,9 @@ fun EditTaskScreen(
   onRemoveLog: (MaintenanceLog) -> Unit = {},
   snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
   attachmentSection: @Composable () -> Unit = {},
+  /** An unposted comment draft or an open inline editor — text that exists nowhere else yet. */
+  hasCommentDraft: Boolean = false,
+  commentsSection: @Composable () -> Unit = {},
 ) {
   var showDatePicker by remember { mutableStateOf(false) }
   var showDeleteConfirm by remember { mutableStateOf(false) }
@@ -130,7 +132,7 @@ fun EditTaskScreen(
   // cancel/back, so discarding continues into that option instead of just leaving the screen.
   var pendingResolveAction by remember { mutableStateOf<ResolveAction?>(null) }
 
-  val hasChanges = state.hasChanges
+  val hasChanges = state.hasChanges || hasCommentDraft
 
   val tryCancel = {
     if (hasChanges) showUnsavedChangesDialog = true else onCancel()
@@ -173,17 +175,21 @@ fun EditTaskScreen(
     )
   }
 
-  val tabs =
-    taskFormTabsFor(LocalThingCapabilities.current, includeAdjustments = true)
+  val tabs = taskFormTabsFor(
+    LocalThingCapabilities.current,
+    includeAdjustments = true,
+    includeComments = true,
+  )
   val pagerState = rememberPagerState(pageCount = { tabs.size })
   val coroutineScope = rememberCoroutineScope()
   val analytics = LocalAnalytics.current
   // Log tab switches (tap or swipe) as page views; drop(1) skips the initial page on open.
-  LaunchedEffect(pagerState) {
+  // Keyed on tabs too: the capability set can resolve while the form is up and change the list.
+  LaunchedEffect(pagerState, tabs) {
     snapshotFlow { pagerState.currentPage }
       .drop(1)
       .collect { page ->
-        analytics.logScreenView("task_form/${TASK_FORM_TAB_KEYS.getOrElse(page) { "$page" }}")
+        tabs.getOrNull(page)?.let { analytics.logScreenView("task_form/${it.analyticsKey}") }
       }
   }
 
@@ -304,6 +310,8 @@ fun EditTaskScreen(
                 currentEngineHours = currentEngineHours,
                 onDeleteRequest = { showDeleteConfirm = true },
               )
+
+              TaskFormTab.COMMENTS -> commentsSection()
             }
           }
         }

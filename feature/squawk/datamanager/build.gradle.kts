@@ -27,6 +27,8 @@ kotlin {
       implementation(project(":core:datetime"))
       implementation(project(":core:storage"))
       implementation(project(":feature:squawk:model"))
+      implementation(project(":feature:comments:datamanager"))
+      implementation(project(":feature:comments:model"))
       implementation(libs.gitlive.firebase.auth)
       implementation(libs.kermit)
     }

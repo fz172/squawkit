@@ -8,6 +8,9 @@ import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.EntityStore
 import dev.fanfly.wingslog.core.storage.EntityStoreFactory
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
+import dev.fanfly.wingslog.feature.comments.datamanager.CommentManager
+import dev.fanfly.wingslog.feature.comments.model.CommentParentKind
+import dev.fanfly.wingslog.feature.comments.model.CommentTarget
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -17,6 +20,7 @@ import kotlinx.coroutines.flow.map
 
 class TaskDataManagerImpl(
   private val scopeResolver: ThingScopeResolver,
+  private val commentManager: CommentManager,
   storeFactory: EntityStoreFactory,
 ) : TaskDataManager {
 
@@ -68,6 +72,10 @@ class TaskDataManagerImpl(
     runCatching {
       val scope = scopeResolver.resolveNow(thingId)
       store.delete(cardId, scope)
+      // The thread goes with its record; see CommentManager.deleteThread.
+      commentManager.deleteThread(
+        CommentTarget(thingId, cardId, CommentParentKind.MAINTENANCE_TASK)
+      )
       true
     }.onFailure { logger.w(it) { "Error deleting task $cardId" } }
 

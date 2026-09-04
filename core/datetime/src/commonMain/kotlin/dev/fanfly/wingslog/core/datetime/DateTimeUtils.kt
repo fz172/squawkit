@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.core.datetime
 
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.format.MonthNames
 import kotlinx.datetime.format.char
@@ -54,3 +55,22 @@ fun LocalDate.toDisplayFormat(numberOnly: Boolean = true): String {
   return if (numberOnly) DisplayDateFormat.format(this)
   else WordDateFormat.format(this)
 }
+
+private val DisplayDateTimeFormat = LocalDateTime.Format {
+  date(DisplayDateFormat)
+  char(' ')
+  amPmHour()
+  char(':')
+  minute()
+  char(' ')
+  amPmMarker("AM", "PM")
+}
+
+/**
+ * `09/02/2026 1:30 AM` in [timeZone] — the device's zone by default, which is the wall clock the
+ * reader is holding. No zone abbreviation: kotlinx-datetime cannot name a zone on every target we
+ * build for, and a label that is right on Android and blank on web is worse than none.
+ */
+fun Instant.toDisplayDateTime(
+  timeZone: TimeZone = TimeZone.currentSystemDefault(),
+): String = DisplayDateTimeFormat.format(toLocalDateTime(timeZone))

@@ -14,6 +14,12 @@ import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentFormControll
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.model.PendingAttachment
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
+import dev.fanfly.wingslog.feature.comments.datamanager.CommentManager
+import dev.fanfly.wingslog.feature.comments.datamanager.CommentThreadController
+import dev.fanfly.wingslog.feature.comments.model.CommentAction
+import dev.fanfly.wingslog.feature.comments.model.CommentParentKind
+import dev.fanfly.wingslog.feature.comments.model.CommentTarget
+import dev.fanfly.wingslog.feature.comments.model.CommentThreadState
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
@@ -42,12 +48,16 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import wingslog.feature.comments.sharedassets.generated.resources.comment_delete_failed
+import wingslog.feature.comments.sharedassets.generated.resources.comment_edit_failed
+import wingslog.feature.comments.sharedassets.generated.resources.comment_post_failed
 import wingslog.feature.attachment.sharedassets.generated.resources.add_file_failed
 import wingslog.feature.attachment.sharedassets.generated.resources.duplicate_file_skipped
 import wingslog.feature.attachment.sharedassets.generated.resources.file_too_large
 import wingslog.feature.attachment.sharedassets.generated.resources.files_over_limit_skipped
 import kotlin.time.Clock
 import wingslog.feature.attachment.sharedassets.generated.resources.Res as AttachRes
+import wingslog.feature.comments.sharedassets.generated.resources.Res as CommentsRes
 
 sealed interface TaskUiState {
   data object Loading : TaskUiState
@@ -159,6 +169,7 @@ data class TaskFormState(
 class TaskViewModel(
   private val inspectionDataManager: TaskDataManager,
   private val attachmentManager: AttachmentManager,
+  private val commentManager: CommentManager,
   private val auth: FirebaseAuth,
   private val maintenanceLogManager: MaintenanceLogManager,
   private val subscriptionManager: SubscriptionManager,
@@ -202,11 +213,41 @@ class TaskViewModel(
   val attachmentUploadEnabled: StateFlow<Boolean> =
     _attachmentUploadEnabled.asStateFlow()
 
+  /**
+   * The comments thread, present only when editing: a task that has not been saved yet has no id
+   * for a comment to point at. Null on the add form, where the tab is absent too.
+   */
+  val comments: CommentThreadController? = cardId?.let { id ->
+    CommentThreadController(
+      commentManager = commentManager,
+      target = CommentTarget(thingId, id, CommentParentKind.MAINTENANCE_TASK),
+      scope = viewModelScope,
+    )
+  }
+  val commentState: StateFlow<CommentThreadState> =
+    comments?.state ?: MutableStateFlow(CommentThreadState())
+      .asStateFlow()
+
   val isAnonymous: Boolean get() = auth.currentUser?.isAnonymous ?: true
   val filesAtLimit: Boolean get() = attachmentForm.filesAtLimit
 
   init {
     loadData()
+    comments?.let { thread ->
+      viewModelScope.launch {
+        thread.errors.collect { action ->
+          val message = when (action) {
+            CommentAction.POST -> CommentsRes.string.comment_post_failed
+            CommentAction.EDIT -> CommentsRes.string.comment_edit_failed
+            CommentAction.DELETE -> CommentsRes.string.comment_delete_failed
+          }
+          _uiState.update { prev ->
+            (prev as? TaskUiState.Success)?.copy(error = UiText.StringRes(message))
+              ?: prev
+          }
+        }
+      }
+    }
     viewModelScope.launch {
       // The attachment gate is thing-scoped (§9.7): on a foreign host's thing the host pays and
       // the broker enforces the host's entitlement, so the member is never gated by their own

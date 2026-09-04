@@ -52,10 +52,13 @@ service cloud.firestore {
         || request.resource.data.writerUid == request.auth.uid;
     }
 
-    // Only the four synced per-aircraft kinds may be written into a shared aircraft's subtree,
-    // so a member can't create arbitrary subcollections in the host's tree.
+    // Only the synced per-thing kinds may be written into a shared thing's subtree, so a member
+    // can't create arbitrary subcollections in the host's tree. `comment` is here because a
+    // technician leaving a note is the entire point of the comments feature — a member who can read
+    // a squawk but not comment on it has a read-only thread.
     function isSharedAircraftKind(kind) {
-      return kind in ['maintenance_log', 'maintenance_task', 'maintenance_overview', 'squawk'];
+      return kind in ['maintenance_log', 'maintenance_task', 'maintenance_overview', 'squawk',
+                      'comment'];
     }
 
     // --- Default deny --------------------------------------------------------------------------
@@ -94,8 +97,21 @@ service cloud.firestore {
 
         match /{kind}/{docId} {
           allow read: if request.auth.uid == userId || isShareMember(userId, acId);
-          allow write: if request.auth.uid == userId
-            || (isSharedAircraftKind(kind) && isShareMember(userId, acId) && writerIsSelf());
+          // The host has full write on their own tree, as everywhere else in it.
+          allow write: if request.auth.uid == userId;
+          // A member may create any synced kind (attested), and update it — except that a
+          // comment may only be updated by the member who wrote it. A comment's authorship is
+          // what the ⋮ menu, the "Edited" line and the delete tombstone all rest on, and the
+          // envelope's writerUid is the only attested copy of it: author_uid lives inside the
+          // opaque payload, where rules cannot see it. Without this a technician could rewrite
+          // or strike through the host's comment and the thread would show it as the host's.
+          // Members never had delete: a delete request carries no request.resource, so the
+          // former writerIsSelf() check always failed it.
+          allow create: if isSharedAircraftKind(kind) && isShareMember(userId, acId)
+            && writerIsSelf();
+          allow update: if isSharedAircraftKind(kind) && isShareMember(userId, acId)
+            && writerIsSelf()
+            && (kind != 'comment' || resource.data.writerUid == request.auth.uid);
         }
       }
     }

@@ -89,6 +89,22 @@ feature/attachment/sharedassets	remove_attachment	Remove attachment
 feature/attachment/sharedassets	sign_in_to_add_attachments	Sign in to add attachments
 feature/attachment/sharedassets	subtitle_separator	 · 
 feature/attachment/sharedassets	take_photo	Take photo
+feature/comments/sharedassets	comment_actions	Comment actions
+feature/comments/sharedassets	comment_delete_message	The text is removed for everyone. The comment stays in the thread as “deleted”, and cannot be restored.
+feature/comments/sharedassets	comment_delete_title	Delete this comment?
+feature/comments/sharedassets	comment_delete_failed	Could not delete that comment.
+feature/comments/sharedassets	comment_deleted	Comment deleted on %1$s
+feature/comments/sharedassets	comment_edit	Update comment
+feature/comments/sharedassets	comment_edit_failed	Could not save your edit.
+feature/comments/sharedassets	comment_edited	Edited %1$s
+feature/comments/sharedassets	comment_new_label	New comment
+feature/comments/sharedassets	comment_placeholder	Add a comment for collaborators
+feature/comments/sharedassets	comment_post	Post comment
+feature/comments/sharedassets	comment_post_failed	Could not post your comment. It is still in the box — try again.
+feature/comments/sharedassets	comment_you	You
+feature/comments/sharedassets	comments_empty	No comments yet — be the first to add one.
+feature/comments/sharedassets	comments_tab	Comments
+feature/comments/sharedassets	sign_in_to_add_comments	Sign in to add comments
 feature/export/sharedassets	export_all_time	All time
 feature/export/sharedassets	export_back_to_setup	Back to setup
 feature/export/sharedassets	export_clear_all	Clear all
@@ -527,6 +543,7 @@ feature/squawk/update	dismiss_squawk_warning	This squawk will be closed without 
 feature/squawk/update	fixed_option_label	Fixed
 feature/squawk/update	reopen_issue	Reopen Issue
 feature/squawk/update	resolve_issue	Resolve
+feature/squawk/update	squawk_tab_details	Details
 feature/stresstest	stress_test_complete	Generation complete
 feature/stresstest	stress_test_config_blades_per_engine	Blades per engine
 feature/stresstest	stress_test_config_engines	Engines

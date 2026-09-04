@@ -11,6 +11,9 @@ import dev.fanfly.wingslog.core.storage.EntityStoreFactory
 import dev.fanfly.wingslog.core.storage.StorageEntity
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.auth.FirebaseUser
+import dev.fanfly.wingslog.feature.comments.datamanager.CommentManager
+import dev.fanfly.wingslog.feature.comments.model.CommentParentKind
+import dev.fanfly.wingslog.feature.comments.model.CommentTarget
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
@@ -30,6 +33,7 @@ class SquawkManagerImplTest {
 
   private lateinit var firebaseAuth: FirebaseAuth
   private lateinit var storeFactory: EntityStoreFactory
+  private lateinit var commentManager: CommentManager
   private lateinit var store: EntityStore<Squawk>
   private lateinit var manager: SquawkManagerImpl
 
@@ -50,7 +54,8 @@ class SquawkManagerImplTest {
     every { firebaseAuth.currentUser } returns mockUser
     every { firebaseAuth.authStateChanged } returns flowOf(mockUser)
 
-    manager = SquawkManagerImpl(FakeScopeResolver(firebaseAuth), storeFactory)
+    commentManager = mockk(relaxed = true)
+    manager = SquawkManagerImpl(FakeScopeResolver(firebaseAuth), commentManager, storeFactory)
   }
 
   // ---- dismissSquawk — happy path ----
@@ -262,6 +267,18 @@ class SquawkManagerImplTest {
     addressed_by_log_id = addressedByLogId,
     dismiss_reason = dismissReason,
   )
+
+  @Test
+  fun deleteSquawk_takesItsCommentThreadWithIt() = runTest {
+    // A thread with no record to hang off would otherwise sit in every member's store forever.
+    manager.deleteSquawk(TEST_THING_ID, TEST_SQUAWK_ID)
+
+    coVerify {
+      commentManager.deleteThread(
+        CommentTarget(TEST_THING_ID, TEST_SQUAWK_ID, CommentParentKind.SQUAWK)
+      )
+    }
+  }
 }
 
 /**

@@ -19,18 +19,26 @@ class TaskFormTabsTest {
   @Test
   fun theFailOpenDefaultRemovesNothing() {
     // #660: a wrong default must not silently drop the compliance tab for aviation users.
-    assertThat(taskFormTabsFor(CurrentThingTemplate.ALL_ENABLED, includeAdjustments = true))
+    assertThat(
+      taskFormTabsFor(
+        CurrentThingTemplate.ALL_ENABLED,
+        includeAdjustments = true,
+        includeComments = true,
+      )
+    )
       .containsExactly(
         TaskFormTab.IDENTITY,
         TaskFormTab.COMPLIANCE,
         TaskFormTab.SCHEDULE,
         TaskFormTab.ADJUSTMENTS,
+        TaskFormTab.COMMENTS,
       ).inOrder()
   }
 
   @Test
   fun aTemplateWithoutComplianceHasNoComplianceTab() {
-    val tabs = taskFormTabsFor(house, includeAdjustments = false)
+    val tabs =
+      taskFormTabsFor(house, includeAdjustments = false, includeComments = false)
 
     assertThat(tabs).doesNotContain(TaskFormTab.COMPLIANCE)
     assertThat(tabs).containsExactly(TaskFormTab.IDENTITY, TaskFormTab.SCHEDULE)
@@ -42,7 +50,8 @@ class TaskFormTabsTest {
     // The reason the screens dispatch on identity rather than page number. With `0 -> 1 -> 2 ->`,
     // dropping compliance would have made page 1 the schedule tab while the row still labelled it
     // "Compliance" — the schedule form rendered under the wrong heading, with no error anywhere.
-    val tabs = taskFormTabsFor(house, includeAdjustments = true)
+    val tabs =
+      taskFormTabsFor(house, includeAdjustments = true, includeComments = true)
 
     assertThat(tabs[1]).isEqualTo(TaskFormTab.SCHEDULE)
     assertThat(tabs[1].spec).isEqualTo(SCHEDULE_TAB)
@@ -51,24 +60,28 @@ class TaskFormTabsTest {
 
   @Test
   fun theAirplaneSetIsUnchangedFromWhatShipped() {
-    // Phase 2's acceptance criterion, for this gate: four tabs on edit, three on add, same order.
+    // Phase 2's acceptance criterion, for this gate: the four tabs that shipped, in order, ahead
+    // of the comments tab #749 appended.
     assertThat(
       taskFormTabsFor(
         airplane,
-        includeAdjustments = true
+        includeAdjustments = true,
+        includeComments = true,
       )
     ).containsExactly(
       TaskFormTab.IDENTITY,
       TaskFormTab.COMPLIANCE,
       TaskFormTab.SCHEDULE,
       TaskFormTab.ADJUSTMENTS,
+      TaskFormTab.COMMENTS,
     )
       .inOrder()
 
     assertThat(
       taskFormTabsFor(
         airplane,
-        includeAdjustments = false
+        includeAdjustments = false,
+        includeComments = false,
       )
     ).containsExactly(
       TaskFormTab.IDENTITY,
@@ -81,7 +94,42 @@ class TaskFormTabsTest {
   @Test
   fun addNeverOffersAdjustments() {
     // There is nothing to adjust on a task that does not exist yet.
-    assertThat(taskFormTabsFor(airplane, includeAdjustments = false))
+    assertThat(
+      taskFormTabsFor(
+        airplane,
+        includeAdjustments = false,
+        includeComments = false
+      )
+    )
       .doesNotContain(TaskFormTab.ADJUSTMENTS)
+  }
+
+  @Test
+  fun addNeverOffersComments() {
+    // Same reason, one step earlier: a comment needs a task id to point at, and the add form has
+    // none until the first save.
+    assertThat(
+      taskFormTabsFor(
+        airplane,
+        includeAdjustments = false,
+        includeComments = false
+      )
+    )
+      .doesNotContain(TaskFormTab.COMMENTS)
+  }
+
+  @Test
+  fun analyticsKeysAreOnePerTabAndTiedToIdentity() {
+    // The keys used to be a positional list, which silently mislabelled every tab after a removed
+    // one. Reading them off the identity is what makes that impossible.
+    assertThat(TaskFormTab.entries.map { it.analyticsKey })
+      .containsExactly(
+        "basics",
+        "compliance",
+        "schedule",
+        "adjustments",
+        "comments"
+      )
+      .inOrder()
   }
 }

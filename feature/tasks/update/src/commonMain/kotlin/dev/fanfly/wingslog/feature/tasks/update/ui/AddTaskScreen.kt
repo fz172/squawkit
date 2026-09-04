@@ -46,7 +46,6 @@ import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
 import dev.fanfly.wingslog.core.ui.common.compose.UnsavedChangesDialog
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.tasks.update.compose.ScheduleState
-import dev.fanfly.wingslog.feature.tasks.update.compose.TASK_FORM_TAB_KEYS
 import dev.fanfly.wingslog.feature.tasks.update.compose.TaskComplianceTab
 import dev.fanfly.wingslog.feature.tasks.update.compose.TaskFormTab
 import dev.fanfly.wingslog.feature.tasks.update.compose.TaskIdentityTab
@@ -110,16 +109,22 @@ fun AddTaskScreen(
     )
   }
 
-  val tabs = taskFormTabsFor(LocalThingCapabilities.current, includeAdjustments = false)
+  val tabs = taskFormTabsFor(
+    LocalThingCapabilities.current,
+    includeAdjustments = false,
+    // A task that does not exist yet has no id for a comment to point at.
+    includeComments = false,
+  )
   val pagerState = rememberPagerState(pageCount = { tabs.size })
   val coroutineScope = rememberCoroutineScope()
   val analytics = LocalAnalytics.current
   // Log tab switches (tap or swipe) as page views; drop(1) skips the initial page on open.
-  LaunchedEffect(pagerState) {
+  // Keyed on tabs too: the capability set can resolve while the form is up and change the list.
+  LaunchedEffect(pagerState, tabs) {
     snapshotFlow { pagerState.currentPage }
       .drop(1)
       .collect { page ->
-        analytics.logScreenView("task_form/${TASK_FORM_TAB_KEYS.getOrElse(page) { "$page" }}")
+        tabs.getOrNull(page)?.let { analytics.logScreenView("task_form/${it.analyticsKey}") }
       }
   }
 
@@ -221,7 +226,7 @@ fun AddTaskScreen(
               // Unreachable: this screen passes includeAdjustments = false, so the tab is never in
               // the list. Spelled out rather than covered by an `else`, because an `else` would also
               // swallow a tab added later and render a blank page instead of failing the build.
-              TaskFormTab.ADJUSTMENTS -> Unit
+              TaskFormTab.ADJUSTMENTS, TaskFormTab.COMMENTS -> Unit
             }
           }
         }

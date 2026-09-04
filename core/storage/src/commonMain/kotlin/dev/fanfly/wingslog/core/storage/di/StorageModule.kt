@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.core.storage.di
 
 import app.cash.sqldelight.db.SqlDriver
+import dev.fanfly.wingslog.thing.Comment
 import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.thing.MaintenanceOverview
 import dev.fanfly.wingslog.thing.MaintenanceTask
@@ -86,6 +87,10 @@ val storageModule: Module = module {
       register(
         CollectionKind.Squawk,
         WireCodec(Squawk.ADAPTER)
+      )
+      register(
+        CollectionKind.Comment,
+        WireCodec(Comment.ADAPTER)
       )
       register(
         CollectionKind.SharedAircraftRef,

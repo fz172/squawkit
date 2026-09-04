@@ -98,6 +98,16 @@ sealed interface CollectionKind {
   }
 
   /**
+   * Comments on a Thing's records (squawks, maintenance tasks). One collection per Thing, with the
+   * thread selected by the payload's `parent_type` + `parent_id` — see comment.proto for why the
+   * comments are their own rows rather than a repeated field on the parent.
+   */
+  data object Comment : CollectionKind {
+    override val wireName = "comment"
+    override val schemaName = "thing.Comment"
+  }
+
+  /**
    * Member-side index of thing shared *into* this account. Lives at
    * `users/{uid}/shared_aircraft_ref/{thingId}` and drives the sync engine's foreign-scope
    * fan-out. See docs/sharing §2.2.
@@ -123,6 +133,7 @@ sealed interface CollectionKind {
       DeveloperOptions,
       Subscription,
       Squawk,
+      Comment,
       SharedAircraftRef,
       NotificationSettings,
     )

@@ -644,6 +644,7 @@ class SyncEngine(
       CollectionKind.MaintenanceTask,
       CollectionKind.MaintenanceOverview,
       CollectionKind.Squawk,
+      CollectionKind.Comment,
     )
   }
 }

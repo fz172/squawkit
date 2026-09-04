@@ -152,6 +152,81 @@ describe("nested maintenance data", () => {
     await assertFails(setDoc(doc(as(STRANGER), logDoc), { note: "x", writerUid: STRANGER }));
   });
 
+  it("member may write a comment (attested)", async () => {
+    // The point of the comments feature: a technician leaving a note on the host's squawk. Without
+    // `comment` in isSharedAircraftKind this fails and the thread is read-only for everyone but
+    // the host.
+    await assertSucceeds(
+      setDoc(doc(as(TECH), `${thingDoc}/comment/c1`), {
+        payload: "x",
+        writerUid: TECH,
+      }),
+    );
+  });
+
+  it("member may update their own comment", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), `${thingDoc}/comment/mine`), {
+        payload: "x",
+        writerUid: TECH,
+      });
+    });
+    await assertSucceeds(
+      setDoc(doc(as(TECH), `${thingDoc}/comment/mine`), {
+        payload: "y",
+        writerUid: TECH,
+      }),
+    );
+  });
+
+  it("member may NOT update a comment someone else wrote", async () => {
+    // author_uid is inside the opaque payload, so the envelope's attested writerUid is the only
+    // authorship rules can enforce. Without this a technician could rewrite or tombstone the
+    // host's comment and the thread would still show it as the host's.
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), `${thingDoc}/comment/hosts`), {
+        payload: "x",
+        writerUid: HOST,
+      });
+    });
+    await assertFails(
+      setDoc(doc(as(TECH), `${thingDoc}/comment/hosts`), {
+        payload: "rewritten",
+        writerUid: TECH,
+      }),
+    );
+  });
+
+  it("host may still update any comment in their own tree", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), `${thingDoc}/comment/techs`), {
+        payload: "x",
+        writerUid: TECH,
+      });
+    });
+    await assertSucceeds(
+      setDoc(doc(as(HOST), `${thingDoc}/comment/techs`), {
+        payload: "y",
+        writerUid: HOST,
+      }),
+    );
+  });
+
+  it("member may still update a log someone else wrote (comments are the exception)", async () => {
+    await assertSucceeds(
+      setDoc(doc(as(TECH), logDoc), { note: "amended", writerUid: TECH }),
+    );
+  });
+
+  it("member may NOT forge writerUid on a comment", async () => {
+    await assertFails(
+      setDoc(doc(as(TECH), `${thingDoc}/comment/c1`), {
+        payload: "x",
+        writerUid: OWNER2,
+      }),
+    );
+  });
+
   it("member may NOT write an unknown kind into the host's subtree", async () => {
     await assertFails(
       setDoc(doc(as(TECH), `${thingDoc}/evil/x`), { data: 1, writerUid: TECH }),

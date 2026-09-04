@@ -10,6 +10,9 @@ import dev.fanfly.wingslog.core.storage.EntityStoreFactory
 import dev.fanfly.wingslog.core.storage.StorageEntity
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.auth.FirebaseUser
+import dev.fanfly.wingslog.feature.comments.datamanager.CommentManager
+import dev.fanfly.wingslog.feature.comments.model.CommentParentKind
+import dev.fanfly.wingslog.feature.comments.model.CommentTarget
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
@@ -30,6 +33,7 @@ class TaskDataManagerImplTest {
 
   private lateinit var firebaseAuth: FirebaseAuth
   private lateinit var storeFactory: EntityStoreFactory
+  private lateinit var commentManager: CommentManager
   private lateinit var store: EntityStore<MaintenanceTask>
   private lateinit var manager: TaskDataManagerImpl
 
@@ -47,7 +51,8 @@ class TaskDataManagerImplTest {
     every { firebaseAuth.currentUser } returns mockUser
     every { firebaseAuth.authStateChanged } returns flowOf(mockUser)
 
-    manager = TaskDataManagerImpl(FakeScopeResolver(firebaseAuth), storeFactory)
+    commentManager = mockk(relaxed = true)
+    manager = TaskDataManagerImpl(FakeScopeResolver(firebaseAuth), commentManager, storeFactory)
   }
 
   @Test
@@ -176,6 +181,18 @@ class TaskDataManagerImplTest {
     id: String = TEST_TASK_ID,
     title: String = "Annual Inspection",
   ): MaintenanceTask = MaintenanceTask(id = id, title = title)
+
+  @Test
+  fun deleteTask_takesItsCommentThreadWithIt() = runTest {
+    // A thread with no record to hang off would otherwise sit in every member's store forever.
+    manager.deleteTask(TEST_THING_ID, TEST_TASK_ID)
+
+    coVerify {
+      commentManager.deleteThread(
+        CommentTarget(TEST_THING_ID, TEST_TASK_ID, CommentParentKind.MAINTENANCE_TASK)
+      )
+    }
+  }
 }
 
 /**

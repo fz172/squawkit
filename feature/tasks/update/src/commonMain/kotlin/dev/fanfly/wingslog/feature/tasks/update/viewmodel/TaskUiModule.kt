@@ -2,6 +2,7 @@ package dev.fanfly.wingslog.feature.tasks.update.viewmodel
 
 import androidx.lifecycle.SavedStateHandle
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
+import dev.fanfly.wingslog.feature.comments.datamanager.CommentManager
 import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
@@ -16,6 +17,7 @@ val tasksUiModule = module {
     TaskViewModel(
       get<TaskDataManager>(),
       get<AttachmentManager>(),
+      get<CommentManager>(),
       get<FirebaseAuth>(),
       get<MaintenanceLogManager>(),
       get<SubscriptionManager>(),
