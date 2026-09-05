@@ -20,7 +20,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -33,6 +32,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LayoutTier
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
+import dev.fanfly.wingslog.core.ui.adaptive.compose.TextSelectionLayer
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 
 /**
@@ -88,36 +88,38 @@ private fun DetailBody(
   headerSlot: @Composable ColumnScope.() -> Unit,
   content: @Composable ColumnScope.() -> Unit,
 ) {
-  Column(
-    modifier = Modifier
-      .fillMaxWidth()
-      .padding(horizontal = Spacing.extraLarge)
-      .verticalScroll(rememberScrollState()),
-    verticalArrangement = Arrangement.spacedBy(Spacing.small),
-  ) {
-    Spacer(Modifier.height(Spacing.large))
-
-    // Header Row
-    Row(
-      modifier = Modifier.fillMaxWidth(),
-      horizontalArrangement = Arrangement.SpaceBetween,
-      verticalAlignment = Alignment.CenterVertically,
+  TextSelectionLayer {
+    Column(
+      modifier = Modifier
+        .fillMaxWidth()
+        .padding(horizontal = Spacing.extraLarge)
+        .verticalScroll(rememberScrollState()),
+      verticalArrangement = Arrangement.spacedBy(Spacing.small),
     ) {
-      Column(
-        modifier = Modifier
-          .weight(1f)
-          .padding(end = Spacing.small),
+      Spacer(Modifier.height(Spacing.large))
+
+      // Header Row
+      Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
       ) {
-        headerSlot()
+        Column(
+          modifier = Modifier
+            .weight(1f)
+            .padding(end = Spacing.small),
+        ) {
+          headerSlot()
+        }
+        actionSlot?.invoke()
       }
-      actionSlot?.invoke()
+
+      // Body Content
+      content()
+
+      // Footer Spacer
+      Spacer(Modifier.height(Spacing.huge))
     }
-
-    // Body Content
-    content()
-
-    // Footer Spacer
-    Spacer(Modifier.height(Spacing.huge))
   }
 }
 

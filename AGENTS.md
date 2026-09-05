@@ -639,6 +639,27 @@ reviewable.
 4. **Import ordering** — `kotlin.*` before `kotlinx.*`, alphabetical within each group.
 5. **Other formatting issues** — inconsistent indentation, long lines that should wrap.
 
+### Popups start their own text-selection scope (hook-enforced)
+
+The web host wraps the app in a `SelectionContainer` (via `TextSelectionLayer`,
+`core/ui/adaptive`) so text can be selected and copied like on any web page. Compose can only
+select across text that shares a layout root with that container, and every popup — dialog, sheet,
+menu — draws in a root of its own: a text inside one that inherits the outer scope crashes
+foundation on mouse-down (`layouts are not part of the same hierarchy`). So every popup boundary
+starts a fresh scope:
+
+- `AlertDialog`, `ModalBottomSheet`, `DropdownMenu`, `DatePickerDialog` come from
+  `dev.fanfly.wingslog.core.ui.common.compose` (`SelectionSafePopups.kt`), never from Material
+  directly. Same names and signatures; only the import differs.
+- Nav dialog destinations are registered with `selectionDialog(...)` (`feature/shell`), never the
+  raw `dialog(...)` builder.
+- A raw `Dialog` / `Popup` / `ExposedDropdownMenu` wraps its content in `TextSelectionLayer`
+  (content stays selectable — detail sheets) or `DisableSelection` (menus).
+
+The `.claude/hooks/no-raw-popups.sh` hook rejects the raw Material imports and a raw popup in a
+file that names neither wrapper. The mobile hosts leave `LocalTextSelectionLayers` off, so none of
+this changes their behaviour.
+
 ### User-facing strings must live in `strings.xml` (required)
 
 Every user-facing string must be defined in a `strings.xml` resource and referenced via the generated

@@ -1,7 +1,6 @@
 package dev.fanfly.wingslog.feature.sharing.viewing
 
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -11,6 +10,7 @@ import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.technicianNoun
 import dev.fanfly.wingslog.core.template.thingNoun
+import dev.fanfly.wingslog.core.ui.common.compose.AlertDialog
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.sharing.model.InvitePreview
 import dev.fanfly.wingslog.feature.sharing.model.ShareRole

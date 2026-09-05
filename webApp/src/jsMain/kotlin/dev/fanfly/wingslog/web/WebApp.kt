@@ -24,6 +24,8 @@ import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import dev.fanfly.wingslog.core.template.LocalThingCapabilities
 import dev.fanfly.wingslog.core.template.LocalThingTemplate
+import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalTextSelectionLayers
+import dev.fanfly.wingslog.core.ui.adaptive.compose.TextSelectionLayer
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.ui.theme.AppearanceController
 import dev.fanfly.wingslog.core.ui.theme.WingslogTheme
@@ -119,40 +121,45 @@ fun WebApp() {
           LocalThingCapabilities provides thingCapabilities,
           // The fields a template declares — its meters, slots and spec fields (#703).
           LocalThingTemplate provides thingTemplate,
+          // Compose draws to a canvas, so the browser's own text selection never applies; without
+          // this nothing on the page can be selected or copied. See TextSelectionLayer.
+          LocalTextSelectionLayers provides true,
         ) {
-          NavHost(
-            navController = navController,
-            startDestination = Screen.Login.route,
-          ) {
-            composable(Screen.Login.route) {
-              AuthFlow(
-                onComplete = {
-                  navController.navigate(Screen.AdaptiveShell.route) {
-                    popUpTo(Screen.Login.route) { inclusive = true }
-                  }
-                  browserNavigationBound = true
-                },
-                // Web swaps the shared LoginScreen for the SEO landing page; the onboarding tail
-                // (name entry + welcome) and Firebase auth wiring are reused unchanged.
-                loginContent = { onLoginSuccess, onChooseEmail ->
-                  WebLoginLandingScreen(
-                    onLoginSuccess = onLoginSuccess,
-                    onChooseEmail = onChooseEmail,
-                  )
-                },
-              )
+          TextSelectionLayer {
+            NavHost(
+              navController = navController,
+              startDestination = Screen.Login.route,
+            ) {
+              composable(Screen.Login.route) {
+                AuthFlow(
+                  onComplete = {
+                    navController.navigate(Screen.AdaptiveShell.route) {
+                      popUpTo(Screen.Login.route) { inclusive = true }
+                    }
+                    browserNavigationBound = true
+                  },
+                  // Web swaps the shared LoginScreen for the SEO landing page; the onboarding tail
+                  // (name entry + welcome) and Firebase auth wiring are reused unchanged.
+                  loginContent = { onLoginSuccess, onChooseEmail ->
+                    WebLoginLandingScreen(
+                      onLoginSuccess = onLoginSuccess,
+                      onChooseEmail = onChooseEmail,
+                    )
+                  },
+                )
+              }
+              composable(Screen.AdaptiveShell.route) { entry ->
+                AdaptiveShellRoute(
+                  navController = navController,
+                  shellEntry = entry,
+                  navigationMirror = shellNavigation,
+                )
+              }
+              formDialogs(navController)
+              sharingRoutes(navController)
+              // Compact tiers (no sidebar) open settings detail pages as full-screen routes.
+              settingsDetailRoutes(navController)
             }
-            composable(Screen.AdaptiveShell.route) { entry ->
-              AdaptiveShellRoute(
-                navController = navController,
-                shellEntry = entry,
-                navigationMirror = shellNavigation,
-              )
-            }
-            formDialogs(navController)
-            sharingRoutes(navController)
-            // Compact tiers (no sidebar) open settings detail pages as full-screen routes.
-            settingsDetailRoutes(navController)
           }
           // App-root overlay for inbound share deep links (parked invites), above the nav graph.
           RedeemHost()

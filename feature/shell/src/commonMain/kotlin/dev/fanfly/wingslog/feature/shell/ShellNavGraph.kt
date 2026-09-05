@@ -4,7 +4,6 @@ import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavType
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.dialog
 import androidx.navigation.navArgument
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.ui.adaptive.compose.AdaptiveFormDialogFrame
@@ -36,7 +35,7 @@ import org.koin.mp.KoinPlatform
  * larger tiers a centered dialog.
  */
 fun NavGraphBuilder.formDialogs(navController: NavController) {
-  dialog(
+  selectionDialog(
     route = Screen.AddThing.route,
     arguments = listOf(
       navArgument(Screen.TEMPLATE_ID) {
@@ -53,13 +52,13 @@ fun NavGraphBuilder.formDialogs(navController: NavController) {
   }
   // A real centered dialog (not the full-screen form frame): the screen renders its own card over
   // the scrimmed fleet, so it looks the same on a phone and a wide window.
-  dialog(
+  selectionDialog(
     route = Screen.EnterInviteCode.route,
     dialogProperties = formDialogProperties(),
   ) {
     EnterInviteCodeRoute(navController = navController)
   }
-  dialog(
+  selectionDialog(
     route = Screen.EditThing.route,
     arguments = listOf(navArgument(Screen.THING_ID) {
       type = NavType.StringType
@@ -71,7 +70,7 @@ fun NavGraphBuilder.formDialogs(navController: NavController) {
       EditThingScreen(navController = navController)
     }
   }
-  dialog(
+  selectionDialog(
     route = Screen.StarterPack.route,
     arguments = listOf(navArgument(Screen.THING_ID) {
       type = NavType.StringType
@@ -82,7 +81,7 @@ fun NavGraphBuilder.formDialogs(navController: NavController) {
       StarterPackRoute(navController = navController)
     }
   }
-  dialog(
+  selectionDialog(
     route = Screen.AddMaintenanceTask.route,
     arguments = listOf(navArgument(Screen.THING_ID) {
       type = NavType.StringType
@@ -93,7 +92,7 @@ fun NavGraphBuilder.formDialogs(navController: NavController) {
       AddTaskRoute(navController = navController)
     }
   }
-  dialog(
+  selectionDialog(
     route = Screen.EditMaintenanceTask.route,
     arguments = listOf(
       navArgument(Screen.THING_ID) { type = NavType.StringType },
@@ -105,7 +104,7 @@ fun NavGraphBuilder.formDialogs(navController: NavController) {
       EditTaskRoute(navController = navController)
     }
   }
-  dialog(
+  selectionDialog(
     route = Screen.AddMaintenanceLog.route,
     arguments = listOf(
       navArgument(Screen.THING_ID) { type = NavType.StringType },
@@ -126,7 +125,7 @@ fun NavGraphBuilder.formDialogs(navController: NavController) {
       MaintenanceLogFormScreen(navController = navController)
     }
   }
-  dialog(
+  selectionDialog(
     route = Screen.EditMaintenanceLog.route,
     arguments = listOf(
       navArgument(Screen.THING_ID) { type = NavType.StringType },
@@ -138,7 +137,7 @@ fun NavGraphBuilder.formDialogs(navController: NavController) {
       MaintenanceLogFormScreen(navController = navController)
     }
   }
-  dialog(
+  selectionDialog(
     route = Screen.AddSquawk.route,
     arguments = listOf(navArgument(Screen.THING_ID) {
       type = NavType.StringType
@@ -149,7 +148,7 @@ fun NavGraphBuilder.formDialogs(navController: NavController) {
       AddSquawkRoute(navController = navController)
     }
   }
-  dialog(
+  selectionDialog(
     route = Screen.EditSquawk.route,
     arguments = listOf(
       navArgument(Screen.THING_ID) { type = NavType.StringType },
@@ -178,7 +177,7 @@ fun NavGraphBuilder.formDialogs(navController: NavController) {
  * Reached from a thing's context (the entry point + role-gated visibility land with #133).
  */
 fun NavGraphBuilder.sharingRoutes(navController: NavController) {
-  dialog(
+  selectionDialog(
     route = Screen.ManageAccess.route,
     arguments = listOf(navArgument(Screen.THING_ID) {
       type = NavType.StringType
