@@ -79,11 +79,3 @@ content (maintenance records, photos, documents), device push token,
 analytics events (Firebase Analytics), crash data, and advertising identifier
 for AdMob on the free tier. All of it is linked to the account. Offline-only
 use collects nothing.
-
-## Open question before submitting
-
-`play_store_description.txt` says "We don't sell your data or use it to serve
-ads." The free tier shows AdMob ads, and the consent flow (`AdConsentState`)
-allows personalized ads once the user consents, which does use their data to
-serve ads. Shorten the sentence to "We don't sell your data." before both
-submissions, or keep it only if ads are forced non-personalized.
