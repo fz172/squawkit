@@ -30,6 +30,8 @@ kotlin {
       implementation(project(":feature:comments:model"))
       // The author's display name comes from their own technician record — the same precedence
       // SharingManagerImpl publishes to the share roster.
+      implementation(project(":feature:sharing:datamanager"))
+      implementation(project(":feature:sharing:model"))
       implementation(project(":feature:technician:datamanager"))
       implementation(libs.gitlive.firebase.auth)
       implementation(libs.kermit)

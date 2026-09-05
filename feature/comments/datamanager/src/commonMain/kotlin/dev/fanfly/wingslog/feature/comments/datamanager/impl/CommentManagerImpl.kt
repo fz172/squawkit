@@ -14,6 +14,7 @@ import dev.fanfly.wingslog.feature.comments.datamanager.CommentManager
 import dev.fanfly.wingslog.feature.comments.model.CommentEntry
 import dev.fanfly.wingslog.feature.comments.model.CommentParentKind
 import dev.fanfly.wingslog.feature.comments.model.CommentTarget
+import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import dev.fanfly.wingslog.thing.Comment
 import dev.fanfly.wingslog.thing.CommentParentType
@@ -21,11 +22,14 @@ import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlin.time.Clock
 import kotlin.time.Instant
 
@@ -33,6 +37,7 @@ class CommentManagerImpl(
   private val scopeResolver: ThingScopeResolver,
   private val currentUid: CurrentUidProvider,
   private val technicianManager: TechnicianManager,
+  private val sharingManager: SharingManager,
   private val auth: FirebaseAuth,
   storeFactory: EntityStoreFactory,
 ) : CommentManager {
@@ -47,18 +52,20 @@ class CommentManagerImpl(
         if (scope == null) {
           flowOf(emptyList())
         } else {
-          store.observeAll(scope)
-            .map { rows ->
-              val me = currentUid.currentUid()
-              rows.asSequence()
-                .map { it.value }
-                .filter { it.parent_id == target.parentId && it.parent_type == target.kind.wire }
-                // The store orders by local wall clock; a thread has to read in the order it was
-                // written, which is what created_at records.
-                .sortedBy { it.created_at?.toInstant() ?: Instant.DISTANT_PAST }
-                .map { it.toEntry(me) }
-                .toList()
-            }
+          combine(
+            store.observeAll(scope),
+            authorPhotos(target.thingId)
+          ) { rows, photos ->
+            val me = currentUid.currentUid()
+            rows.asSequence()
+              .map { it.value }
+              .filter { it.parent_id == target.parentId && it.parent_type == target.kind.wire }
+              // The store orders by local wall clock; a thread has to read in the order it was
+              // written, which is what created_at records.
+              .sortedBy { it.created_at?.toInstant() ?: Instant.DISTANT_PAST }
+              .map { it.toEntry(me, photos) }
+              .toList()
+          }
             .catch { e ->
               logger.w(e) { "Error observing comments for ${target.parentId}" }
               emit(emptyList())
@@ -138,15 +145,16 @@ class CommentManagerImpl(
     )
   }.onFailure { logger.w(it) { "Error deleting comment $commentId" } }
 
-  override suspend fun deleteThread(target: CommentTarget): Result<Unit> = runCatching {
-    val scope = scopeResolver.resolveNow(target.thingId)
-    store.observeAll(scope)
-      .first()
-      .asSequence()
-      .map { it.value }
-      .filter { it.parent_id == target.parentId && it.parent_type == target.kind.wire }
-      .forEach { store.delete(it.id, scope) }
-  }.onFailure { logger.w(it) { "Error deleting comment thread for ${target.parentId}" } }
+  override suspend fun deleteThread(target: CommentTarget): Result<Unit> =
+    runCatching {
+      val scope = scopeResolver.resolveNow(target.thingId)
+      store.observeAll(scope)
+        .first()
+        .asSequence()
+        .map { it.value }
+        .filter { it.parent_id == target.parentId && it.parent_type == target.kind.wire }
+        .forEach { store.delete(it.id, scope) }
+    }.onFailure { logger.w(it) { "Error deleting comment thread for ${target.parentId}" } }
 
   /**
    * The stored comment, or a failure if this account did not write it.
@@ -181,9 +189,34 @@ class CommentManagerImpl(
       ?: user?.email.orEmpty()
   }
 
-  private fun Comment.toEntry(me: String?): CommentEntry = CommentEntry(
+  /**
+   * Author uid → photo URL from the share roster. Starts empty so the thread never waits on the
+   * roster (Firestore-backed, online-only): comments render at once and photos fill in.
+   */
+  private fun authorPhotos(thingId: String): Flow<Map<String, String>> =
+    sharingManager.observeShareState(thingId)
+      .map { state ->
+        state.members
+          .mapNotNull { m ->
+            m.photoUrl?.takeIf { it.isNotBlank() }
+              ?.let { m.uid to it }
+          }
+          .toMap()
+      }
+      .catch { emit(emptyMap()) }
+      .onStart { emit(emptyMap()) }
+      .distinctUntilChanged()
+
+  private fun Comment.toEntry(
+    me: String?,
+    photos: Map<String, String>
+  ): CommentEntry = CommentEntry(
     id = id,
     authorName = author_name,
+    // Your own rows use the account photo the shell shows, which is fresher than the roster copy
+    // and present even on an unshared thing that has no roster at all.
+    authorPhotoUrl = auth.currentUser?.photoURL?.takeIf { author_uid == me && it.isNotBlank() }
+      ?: photos[author_uid],
     text = text,
     createdAt = created_at?.toInstant() ?: Instant.DISTANT_PAST,
     editedAt = edited_at?.toInstant(),

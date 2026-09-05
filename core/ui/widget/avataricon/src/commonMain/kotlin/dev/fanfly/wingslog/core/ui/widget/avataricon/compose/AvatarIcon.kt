@@ -36,8 +36,7 @@ fun AvatarIcon(
 
   when {
     hasPhoto -> Box(
-      modifier = modifier
-        .size(size)
+      modifier = modifier.size(size)
         .clip(CircleShape),
       contentAlignment = Alignment.Center,
     ) {
@@ -102,8 +101,7 @@ private fun InitialsCircle(
   textStyle: TextStyle,
 ) {
   Box(
-    modifier = modifier
-      .size(size)
+    modifier = modifier.size(size)
       .clip(CircleShape)
       .background(MaterialTheme.colorScheme.primaryContainer),
     contentAlignment = Alignment.Center,
@@ -117,14 +115,12 @@ private fun InitialsCircle(
   }
 }
 
-fun String?.toInitials(): String? =
-  this
-    ?.split(" ")
-    ?.filter { it.isNotBlank() }
-    ?.take(2)
-    ?.map {
-      it.first()
-        .uppercaseChar()
-    }
-    ?.joinToString("")
-    ?.takeIf { it.isNotBlank() }
+fun String?.toInitials(): String? = this?.split(" ")
+  ?.filter { it.isNotBlank() }
+  ?.take(2)
+  ?.map {
+    it.first()
+      .uppercaseChar()
+  }
+  ?.joinToString("")
+  ?.takeIf { it.isNotBlank() }

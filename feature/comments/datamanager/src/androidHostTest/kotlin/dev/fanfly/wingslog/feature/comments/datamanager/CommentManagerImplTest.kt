@@ -12,6 +12,10 @@ import dev.fanfly.wingslog.core.storage.ThingScopeResolver
 import dev.fanfly.wingslog.feature.comments.datamanager.impl.CommentManagerImpl
 import dev.fanfly.wingslog.feature.comments.model.CommentParentKind
 import dev.fanfly.wingslog.feature.comments.model.CommentTarget
+import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
+import dev.fanfly.wingslog.feature.sharing.model.ShareMember
+import dev.fanfly.wingslog.feature.sharing.model.ShareRole
+import dev.fanfly.wingslog.feature.sharing.model.ThingShareState
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import dev.fanfly.wingslog.thing.Comment
 import dev.fanfly.wingslog.thing.CommentParentType
@@ -24,7 +28,9 @@ import io.mockk.mockk
 import io.mockk.slot
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
@@ -41,6 +47,7 @@ class CommentManagerImplTest {
   private lateinit var store: EntityStore<Comment>
   private lateinit var storeFactory: EntityStoreFactory
   private lateinit var technicianManager: TechnicianManager
+  private lateinit var sharingManager: SharingManager
   private lateinit var auth: FirebaseAuth
   private lateinit var manager: CommentManagerImpl
 
@@ -61,10 +68,14 @@ class CommentManagerImplTest {
     auth = mockk(relaxed = true)
     every { auth.currentUser } returns null
 
+    sharingManager = mockk(relaxed = true)
+    every { sharingManager.observeShareState(THING_ID) } returns flowOf(ThingShareState())
+
     manager = CommentManagerImpl(
       scopeResolver = FixedScopeResolver(scope),
       currentUid = CurrentUidProvider { ME },
       technicianManager = technicianManager,
+      sharingManager = sharingManager,
       auth = auth,
       storeFactory = storeFactory,
     )
@@ -136,6 +147,55 @@ class CommentManagerImplTest {
     assertThat(byId.getValue("theirs").isMine).isFalse()
     // An empty author is "unknown", not "me" — the ⋮ menu must not appear on it.
     assertThat(byId.getValue("unattributed").isMine).isFalse()
+  }
+
+  @Test
+  fun observeComments_resolvesAuthorPhotosFromTheRosterAndTheAccount() = runTest {
+    every { store.observeAll(scope) } returns flowOf(
+      listOf(
+        row(comment("mine", authorUid = ME)),
+        row(comment("theirs", authorUid = THEM)),
+        row(comment("stranger", authorUid = "left-the-share")),
+      )
+    )
+    every { sharingManager.observeShareState(THING_ID) } returns flowOf(
+      ThingShareState(
+        members = listOf(
+          ShareMember(THEM, "Them", ShareRole.TECHNICIAN, photoUrl = "https://x/them.jpg"),
+          // A stale roster copy of my own photo: the account's is what the shell shows.
+          ShareMember(ME, "Me", ShareRole.OWNER, photoUrl = "https://x/me-old.jpg"),
+        )
+      )
+    )
+    val user = mockk<FirebaseUser>(relaxed = true)
+    every { user.photoURL } returns "https://x/me.jpg"
+    every { auth.currentUser } returns user
+
+    // The thread starts before the roster answers, so take the emission that has it.
+    val byId = manager.observeComments(target)
+      .toList()
+      .last()
+      .associateBy { it.id }
+
+    assertThat(byId.getValue("theirs").authorPhotoUrl).isEqualTo("https://x/them.jpg")
+    assertThat(byId.getValue("mine").authorPhotoUrl).isEqualTo("https://x/me.jpg")
+    assertThat(byId.getValue("stranger").authorPhotoUrl).isNull()
+  }
+
+  @Test
+  fun observeComments_rendersWithoutPhotosWhenTheRosterFails() = runTest {
+    every { store.observeAll(scope) } returns
+      flowOf(listOf(row(comment("c1", authorUid = THEM))))
+    every { sharingManager.observeShareState(THING_ID) } returns
+      flow { throw IllegalStateException("PERMISSION_DENIED") }
+
+    val thread = manager.observeComments(target)
+      .toList()
+      .last()
+
+    // An offline or denied roster must never take the thread down with it.
+    assertThat(thread.map { it.id }).containsExactly("c1")
+    assertThat(thread.single().authorPhotoUrl).isNull()
   }
 
   // ---- addComment ----
