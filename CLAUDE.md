@@ -68,6 +68,10 @@ These are enforced or load-bearing; the reasoning for each is in AGENTS.md.
 - `get<ClassType>()` in Koin modules, never bare `get()` — a repo hook rejects it.
 - No `\'` in Kotlin strings or `strings.xml` — use `’`. Also hook-enforced.
 - User-facing strings always come from `strings.xml`; reuse before adding.
+- Popups (`AlertDialog`, `ModalBottomSheet`, `DropdownMenu`, `DatePickerDialog`) are imported from
+  `core.ui.common.compose`, not Material; nav dialogs use `selectionDialog`, not `dialog`; a raw
+  `Dialog`/`Popup` wraps its content in `TextSelectionLayer` or `DisableSelection`. Hook-enforced — the web SelectionContainer crashes
+  otherwise. [§ Popups](AGENTS.md#popups-start-their-own-text-selection-scope-hook-enforced).
 - Per-thing data resolves its scope through `ThingScopeResolver`, never from the signed-in uid.
 - Three separate gating mechanisms — `AppCapability` (build/platform), `SubscriptionManager`
   (entitlement), `DeveloperFlags` (developer override). Don't invent a fourth; **FeatureLab was

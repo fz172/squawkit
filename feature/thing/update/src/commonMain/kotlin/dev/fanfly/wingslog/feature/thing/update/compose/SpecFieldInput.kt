@@ -2,6 +2,7 @@ package dev.fanfly.wingslog.feature.thing.update.compose
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.selection.DisableSelection
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
@@ -66,14 +67,16 @@ internal fun SpecFieldInput(
     ExposedDropdownMenu(
       expanded = expanded,
       onDismissRequest = { expanded = false }) {
-      field.options.forEach { option ->
-        DropdownMenuItem(
-          text = { Text(option) },
-          onClick = {
-            onValueChange(option)
-            expanded = false
-          },
-        )
+      DisableSelection {
+        field.options.forEach { option ->
+          DropdownMenuItem(
+            text = { Text(option) },
+            onClick = {
+              onValueChange(option)
+              expanded = false
+            },
+          )
+        }
       }
     }
   }

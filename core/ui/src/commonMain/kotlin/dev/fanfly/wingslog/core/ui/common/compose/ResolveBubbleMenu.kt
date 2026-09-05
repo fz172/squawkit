@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.selection.DisableSelection
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -99,40 +100,42 @@ fun ResolveBubbleMenu(
     onDismissRequest = onDismissRequest,
     properties = PopupProperties(focusable = true),
   ) {
-    val bubbleShape = remember {
-      SpeechBubbleShape(
-        tailWidth = BubbleTailWidth,
-        tailHeight = BubbleTailHeight,
-        cornerRadius = BubbleCornerRadius,
-      )
-    }
-    Box(
-      modifier = Modifier
-        .width(BubbleWidth)
-        .shadow(elevation = 8.dp, shape = bubbleShape, clip = false)
-        .background(MaterialTheme.colorScheme.surfaceContainerHigh, bubbleShape)
-        .border(
-          Spacing.hairline,
-          MaterialTheme.colorScheme.outlineVariant,
-          bubbleShape
-        ),
-    ) {
-      Column(
+    DisableSelection {
+      val bubbleShape = remember {
+        SpeechBubbleShape(
+          tailWidth = BubbleTailWidth,
+          tailHeight = BubbleTailHeight,
+          cornerRadius = BubbleCornerRadius,
+        )
+      }
+      Box(
         modifier = Modifier
-          .padding(bottom = BubbleTailHeight)
-          .padding(BubbleContentPadding),
+          .width(BubbleWidth)
+          .shadow(elevation = 8.dp, shape = bubbleShape, clip = false)
+          .background(MaterialTheme.colorScheme.surfaceContainerHigh, bubbleShape)
+          .border(
+            Spacing.hairline,
+            MaterialTheme.colorScheme.outlineVariant,
+            bubbleShape
+          ),
       ) {
-        actions.forEachIndexed { index, action ->
-          if (index > 0) {
-            HorizontalDivider(
-              modifier = Modifier.padding(
-                horizontal = Spacing.small,
-                vertical = Spacing.extraSmall
-              ),
-              color = MaterialTheme.colorScheme.outlineVariant,
-            )
+        Column(
+          modifier = Modifier
+            .padding(bottom = BubbleTailHeight)
+            .padding(BubbleContentPadding),
+        ) {
+          actions.forEachIndexed { index, action ->
+            if (index > 0) {
+              HorizontalDivider(
+                modifier = Modifier.padding(
+                  horizontal = Spacing.small,
+                  vertical = Spacing.extraSmall
+                ),
+                color = MaterialTheme.colorScheme.outlineVariant,
+              )
+            }
+            ResolveMenuItem(action)
           }
-          ResolveMenuItem(action)
         }
       }
     }

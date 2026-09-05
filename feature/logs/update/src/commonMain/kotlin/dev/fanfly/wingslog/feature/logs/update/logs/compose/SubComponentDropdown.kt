@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.feature.logs.update.logs.compose
 
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.text.selection.DisableSelection
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
@@ -44,15 +45,17 @@ fun SubComponentDropdown(
     ExposedDropdownMenu(
       expanded = expanded,
       onDismissRequest = { expanded = false }) {
-      options.forEach { (displayLabel, serial) ->
-        DropdownMenuItem(
-          text = { Text(displayLabel) },
-          onClick = {
-            onSelected(serial)
-            expanded = false
-          }
-        )
-      }
+        DisableSelection {
+        options.forEach { (displayLabel, serial) ->
+          DropdownMenuItem(
+            text = { Text(displayLabel) },
+            onClick = {
+              onSelected(serial)
+              expanded = false
+            }
+          )
+        }
+        }
     }
   }
 }

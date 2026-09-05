@@ -1,6 +1,5 @@
 package dev.fanfly.wingslog.core.ui.common.compose
 
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
