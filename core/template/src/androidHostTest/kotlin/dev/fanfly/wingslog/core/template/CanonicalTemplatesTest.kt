@@ -5,6 +5,7 @@ import com.google.common.truth.Truth.assertWithMessage
 import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
 import dev.fanfly.wingslog.core.template.canonical.CanonicalTemplates
 import dev.fanfly.wingslog.thing.ComponentSlot
+import dev.fanfly.wingslog.thing.ScheduleType
 import dev.fanfly.wingslog.thing.ThingTemplate
 import org.junit.Test
 
@@ -333,13 +334,25 @@ class CanonicalTemplatesTest {
     }
   }
 
-  /** Seasonal scheduling is a house's (PRD §4.6): every other preset tracks on its meter or the calendar. */
+  /**
+   * Each preset says which ways its tasks can be scheduled, and says all of it (PRD §4.6). METER
+   * is the odometer on a car and tach hours on an aeroplane; SEASONAL is a house's alone; the
+   * custom preset, declaring no meters, has only the calendar.
+   */
   @Test
-  fun onlyTheHomeOffersSeasonalRules() {
+  fun everyPresetListsItsScheduleTypesExplicitly() {
+    val expected = mapOf(
+      "airplane" to listOf(ScheduleType.SCHEDULE_TYPE_CALENDAR, ScheduleType.SCHEDULE_TYPE_METER),
+      "automotive" to listOf(ScheduleType.SCHEDULE_TYPE_CALENDAR, ScheduleType.SCHEDULE_TYPE_METER),
+      "bike" to listOf(ScheduleType.SCHEDULE_TYPE_CALENDAR, ScheduleType.SCHEDULE_TYPE_METER),
+      "boat" to listOf(ScheduleType.SCHEDULE_TYPE_CALENDAR, ScheduleType.SCHEDULE_TYPE_METER),
+      "home" to listOf(ScheduleType.SCHEDULE_TYPE_CALENDAR, ScheduleType.SCHEDULE_TYPE_SEASONAL),
+      "custom" to listOf(ScheduleType.SCHEDULE_TYPE_CALENDAR),
+    )
     all.forEach { template ->
-      val seasonal = template.capabilities?.seasonal_rules == true
-      assertWithMessage(template.id).that(seasonal)
-        .isEqualTo(template.id == "home")
+      assertWithMessage(template.id).that(template.capabilities?.schedule_types)
+        .containsExactlyElementsIn(expected.getValue(template.id))
+        .inOrder()
     }
   }
 

@@ -55,8 +55,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.core.template.LocalThingCapabilities
 import dev.fanfly.wingslog.core.template.LocalThingTemplate
+import dev.fanfly.wingslog.core.template.scheduleTypesOffered
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.thing.MaintenanceTask
+import dev.fanfly.wingslog.thing.ScheduleType
 import kotlinx.datetime.Month
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
@@ -72,10 +74,9 @@ import wingslog.feature.tasks.update.generated.resources.schedule_with_another_w
 import wingslog.feature.tasks.update.generated.resources.schedule_with_another_work_description
 
 /**
- * Which ways of tracking the template offers (PRD §4.6): calendar time always; the meter only
- * where `capabilities.meters` declares one — a home has nothing to count — and the seasonal
- * anchor only where `capabilities.seasonal_rules` asks for it. A mode a stored task already uses
- * stays visible so the task can still be edited if its preset later stopped offering it.
+ * The tracking modes the template's `schedule_types` lists (PRD §4.6) — calendar time, the
+ * meter, the seasonal anchor — each as a button. A mode a stored task already uses stays visible
+ * so the task can still be edited if its preset later stopped offering it.
  */
 @Composable
 internal fun TrackingModeChoice(
@@ -83,15 +84,18 @@ internal fun TrackingModeChoice(
   onSelect: (ScheduleMode) -> Unit,
 ) {
   val capabilities = LocalThingCapabilities.current
+  val offered = scheduleTypesOffered(capabilities.schedule_types)
   Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
-    TrackingModeButton(
-      icon = Icons.Default.CalendarToday,
-      label = stringResource(Res.string.schedule_track_calendar_time),
-      selected = selected == ScheduleMode.TIME,
-      onClick = { onSelect(ScheduleMode.TIME) },
-      modifier = Modifier.weight(1f),
-    )
-    if (capabilities.meters || selected == ScheduleMode.HOURS) {
+    if (ScheduleType.SCHEDULE_TYPE_CALENDAR in offered || selected == ScheduleMode.TIME) {
+      TrackingModeButton(
+        icon = Icons.Default.CalendarToday,
+        label = stringResource(Res.string.schedule_track_calendar_time),
+        selected = selected == ScheduleMode.TIME,
+        onClick = { onSelect(ScheduleMode.TIME) },
+        modifier = Modifier.weight(1f),
+      )
+    }
+    if (ScheduleType.SCHEDULE_TYPE_METER in offered || selected == ScheduleMode.HOURS) {
       TrackingModeButton(
         icon = Icons.Default.Schedule,
         // The meter's own name — "Odometer" on a car. "Tach Hours" offered an aeroplane's meter to
@@ -103,7 +107,7 @@ internal fun TrackingModeChoice(
         modifier = Modifier.weight(1f),
       )
     }
-    if (capabilities.seasonal_rules || selected == ScheduleMode.SEASONAL) {
+    if (ScheduleType.SCHEDULE_TYPE_SEASONAL in offered || selected == ScheduleMode.SEASONAL) {
       TrackingModeButton(
         icon = Icons.Default.EventRepeat,
         label = stringResource(Res.string.schedule_track_seasonal),

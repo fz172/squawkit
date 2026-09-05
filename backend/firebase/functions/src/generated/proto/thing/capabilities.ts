@@ -107,6 +107,59 @@ export function exportLayoutToJSON(object: ExportLayout): string {
   }
 }
 
+/**
+ * How a task on this kind of Thing can be scheduled — what the task form's "How is this tracked?"
+ * step offers. Named for what they are, not for aviation's word for them: METER is tach hours on
+ * an aeroplane and the odometer on a car.
+ */
+export enum ScheduleType {
+  SCHEDULE_TYPE_UNKNOWN = 0,
+  /** SCHEDULE_TYPE_CALENDAR - every N days / months / years from the last service */
+  SCHEDULE_TYPE_CALENDAR = 1,
+  /** SCHEDULE_TYPE_METER - every N of a declared meter — needs `meters` */
+  SCHEDULE_TYPE_METER = 2,
+  /** SCHEDULE_TYPE_SEASONAL - in named calendar months, whatever month it was last done */
+  SCHEDULE_TYPE_SEASONAL = 3,
+  UNRECOGNIZED = -1,
+}
+
+export function scheduleTypeFromJSON(object: any): ScheduleType {
+  switch (object) {
+    case 0:
+    case "SCHEDULE_TYPE_UNKNOWN":
+      return ScheduleType.SCHEDULE_TYPE_UNKNOWN;
+    case 1:
+    case "SCHEDULE_TYPE_CALENDAR":
+      return ScheduleType.SCHEDULE_TYPE_CALENDAR;
+    case 2:
+    case "SCHEDULE_TYPE_METER":
+      return ScheduleType.SCHEDULE_TYPE_METER;
+    case 3:
+    case "SCHEDULE_TYPE_SEASONAL":
+      return ScheduleType.SCHEDULE_TYPE_SEASONAL;
+    case -1:
+    case "UNRECOGNIZED":
+    default:
+      return ScheduleType.UNRECOGNIZED;
+  }
+}
+
+export function scheduleTypeToJSON(object: ScheduleType): string {
+  switch (object) {
+    case ScheduleType.SCHEDULE_TYPE_UNKNOWN:
+      return "SCHEDULE_TYPE_UNKNOWN";
+    case ScheduleType.SCHEDULE_TYPE_CALENDAR:
+      return "SCHEDULE_TYPE_CALENDAR";
+    case ScheduleType.SCHEDULE_TYPE_METER:
+      return "SCHEDULE_TYPE_METER";
+    case ScheduleType.SCHEDULE_TYPE_SEASONAL:
+      return "SCHEDULE_TYPE_SEASONAL";
+    case ScheduleType.UNRECOGNIZED:
+    default:
+      return "UNRECOGNIZED";
+  }
+}
+
 export interface Capabilities {
   /** component tree UI, picker, config card */
   components: boolean;
@@ -140,11 +193,13 @@ export interface Capabilities {
    */
   monthIntervalsDueOnAnniversary: boolean;
   /**
-   * Offers the calendar-anchored SeasonalRule in the task form. Home only: gutters in April and
-   * October is a fact about a house, and a vehicle's upkeep is interval-from-last-service on its
-   * meter. A preset with `meters` off and this off would have only calendar time, which is fine.
+   * The schedule types the task form offers, explicitly — `[CALENDAR, METER]` for a vehicle,
+   * `[CALENDAR, SEASONAL]` for a home, `[CALENDAR]` for the custom preset. Every canonical preset
+   * lists its set and the validator refuses an empty one; an empty list is read as CALENDAR +
+   * METER only because that is what the field's absence meant on every aeroplane stored before
+   * it existed (`scheduleTypesOffered`).
    */
-  seasonalRules: boolean;
+  scheduleTypes: ScheduleType[];
 }
 
 function createBaseCapabilities(): Capabilities {
@@ -158,7 +213,7 @@ function createBaseCapabilities(): Capabilities {
     sections: [],
     exportLayout: 0,
     monthIntervalsDueOnAnniversary: false,
-    seasonalRules: false,
+    scheduleTypes: [],
   };
 }
 
@@ -195,9 +250,11 @@ export const Capabilities: MessageFns<Capabilities> = {
     if (message.monthIntervalsDueOnAnniversary !== false) {
       writer.uint32(88).bool(message.monthIntervalsDueOnAnniversary);
     }
-    if (message.seasonalRules !== false) {
-      writer.uint32(96).bool(message.seasonalRules);
+    writer.uint32(106).fork();
+    for (const v of message.scheduleTypes) {
+      writer.int32(v);
     }
+    writer.join();
     return writer;
   },
 
@@ -300,13 +357,23 @@ export const Capabilities: MessageFns<Capabilities> = {
           message.monthIntervalsDueOnAnniversary = reader.bool();
           continue;
         }
-        case 12: {
-          if (tag !== 96) {
-            break;
+        case 13: {
+          if (tag === 104) {
+            message.scheduleTypes.push(reader.int32() as any);
+
+            continue;
           }
 
-          message.seasonalRules = reader.bool();
-          continue;
+          if (tag === 106) {
+            const end2 = reader.uint32() + reader.pos;
+            while (reader.pos < end2) {
+              message.scheduleTypes.push(reader.int32() as any);
+            }
+
+            continue;
+          }
+
+          break;
         }
       }
       if ((tag & 7) === 4 || tag === 0) {
@@ -342,11 +409,11 @@ export const Capabilities: MessageFns<Capabilities> = {
         : isSet(object.month_intervals_due_on_anniversary)
         ? globalThis.Boolean(object.month_intervals_due_on_anniversary)
         : false,
-      seasonalRules: isSet(object.seasonalRules)
-        ? globalThis.Boolean(object.seasonalRules)
-        : isSet(object.seasonal_rules)
-        ? globalThis.Boolean(object.seasonal_rules)
-        : false,
+      scheduleTypes: globalThis.Array.isArray(object?.scheduleTypes)
+        ? object.scheduleTypes.map((e: any) => scheduleTypeFromJSON(e))
+        : globalThis.Array.isArray(object?.schedule_types)
+        ? object.schedule_types.map((e: any) => scheduleTypeFromJSON(e))
+        : [],
     };
   },
 
@@ -379,8 +446,8 @@ export const Capabilities: MessageFns<Capabilities> = {
     if (message.monthIntervalsDueOnAnniversary !== false) {
       obj.monthIntervalsDueOnAnniversary = message.monthIntervalsDueOnAnniversary;
     }
-    if (message.seasonalRules !== false) {
-      obj.seasonalRules = message.seasonalRules;
+    if (message.scheduleTypes?.length) {
+      obj.scheduleTypes = message.scheduleTypes.map((e) => scheduleTypeToJSON(e));
     }
     return obj;
   },
@@ -399,7 +466,7 @@ export const Capabilities: MessageFns<Capabilities> = {
     message.sections = object.sections?.map((e) => e) || [];
     message.exportLayout = object.exportLayout ?? 0;
     message.monthIntervalsDueOnAnniversary = object.monthIntervalsDueOnAnniversary ?? false;
-    message.seasonalRules = object.seasonalRules ?? false;
+    message.scheduleTypes = object.scheduleTypes?.map((e) => e) || [];
     return message;
   },
 };

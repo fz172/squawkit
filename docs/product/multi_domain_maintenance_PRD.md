@@ -371,8 +371,9 @@ actually need replacing, named as fields rather than keyed by resource name.
 > home and boat starter packs). End-of-month snapping is the one `Scheduling` flag that shipped, as
 > `Capabilities.month_intervals_due_on_anniversary` — inverted so the default keeps aviation's behaviour for every
 > stored rule — and the form stamps it onto each `TimeRule` it writes, so the due engine needs no template in
-> hand. `enabled_rules`, `due_soon_days` and `due_engine` are not built; METER rules are gated by the `meters`
-> capability and the due-soon window is still the constant it always was.
+> hand. `enabled_rules` shipped as `Capabilities.schedule_types` — an explicit `[CALENDAR, METER]` /
+> `[CALENDAR, SEASONAL]` / `[CALENDAR]` per preset that decides which tracking modes the task form offers.
+> `due_soon_days` and `due_engine` are not built; the due-soon window is still the constant it always was.
 
 Three aviation conventions currently live as constants in `TaskDueManagerImpl` and become config:
 

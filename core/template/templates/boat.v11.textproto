@@ -4,7 +4,7 @@
 # twin-engine boat has two of them accruing separately. That makes this the preset that exercises
 # `component_slot_key` outside the airplane, which is the field a single-engine assumption hides.
 #
-# See templates/README.md before editing, and compile with ./compile-template.sh boat.v10
+# See templates/README.md before editing, and compile with ./compile-template.sh boat.v11
 #
 # v4 adds `empty_states` — the per-domain empty-state copy that used to be fixed aviation
 # text in strings.xml. A noun could not fix those strings: what makes them useful is the
@@ -33,8 +33,10 @@
 # v10 puts winterize back on a 12-month interval: seasonal scheduling is the home preset's alone,
 # and a task the form cannot edit is worse than an interval the owner can.
 #
+# v11 lists `schedule_types` explicitly: calendar time and the meter (engine hours).
+#
 id: "boat"
-version: 10
+version: 11
 min_app_version: 0
 
 display_name: "Boat"
@@ -101,6 +103,12 @@ capabilities {
   sections: SECTION_LOGS
 
   export_layout: EXPORT_LAYOUT_GENERIC
+
+  # How a task here can be scheduled — what the form's "How is this tracked?" step offers, listed
+  # in full (PRD §4.6). METER means whatever meters this preset declares; SEASONAL is the
+  # calendar-anchored rule a house needs and a vehicle does not.
+  schedule_types: SCHEDULE_TYPE_CALENDAR
+  schedule_types: SCHEDULE_TYPE_METER
 }
 
 spec_fields { key: "make" label: "Make" }

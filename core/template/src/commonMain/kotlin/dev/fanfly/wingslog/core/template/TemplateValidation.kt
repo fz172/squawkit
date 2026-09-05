@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.core.template
 
 import dev.fanfly.wingslog.thing.ComponentSlot
+import dev.fanfly.wingslog.thing.ScheduleType
 import dev.fanfly.wingslog.thing.ThingTemplate
 
 /**
@@ -41,6 +42,17 @@ fun ThingTemplate.structuralProblems(): List<String> = buildList {
   meters.filter { it.component_slot_key.isNotEmpty() && it.component_slot_key !in slotKeys }
     .forEach { add("$id: meter '${it.key}' names slot '${it.component_slot_key}', which is not declared") }
 
+  // Explicit, not defaulted: a preset says which schedule types its form offers, and a type that
+  // needs machinery the preset turned off is a form step that cannot complete.
+  val declared = capabilities?.schedule_types.orEmpty()
+  if (declared.isEmpty()) add("$id: capabilities.schedule_types is empty")
+  addAll(duplicates("schedule type", declared.map { it.name }))
+  if (ScheduleType.SCHEDULE_TYPE_UNKNOWN in declared) add("$id: schedule_types lists UNKNOWN")
+  if (ScheduleType.SCHEDULE_TYPE_METER in declared && capabilities?.meters != true) {
+    add("$id: schedule_types lists METER but meters is off")
+  }
+  val offered = scheduleTypesOffered(declared)
+
   // A starter task becomes an ordinary MaintenanceTask the moment it is accepted, so anything the
   // task form would refuse — no title, no rule, a meter the Thing cannot read — is refused here.
   val meterKeys = meters.map { it.key }
@@ -53,9 +65,12 @@ fun ThingTemplate.structuralProblems(): List<String> = buildList {
     if (!hasRule) add("$id: starter task '$label' carries no rule")
     task.months.filter { it !in 1..12 }
       .forEach { add("$id: starter task '$label' names month $it, which is not 1–12") }
-    // A seasonal task on a preset whose form cannot edit one is a task the user cannot change.
-    if (task.months.isNotEmpty() && capabilities?.seasonal_rules != true) {
-      add("$id: starter task '$label' is seasonal but the preset does not enable seasonal_rules")
+    // A starter task the preset's own form could not edit is a task the user cannot change.
+    if (task.months.isNotEmpty() && ScheduleType.SCHEDULE_TYPE_SEASONAL !in offered) {
+      add("$id: starter task '$label' is seasonal but schedule_types does not list SEASONAL")
+    }
+    if (task.meter_key.isNotEmpty() && ScheduleType.SCHEDULE_TYPE_METER !in offered) {
+      add("$id: starter task '$label' is metered but schedule_types does not list METER")
     }
     if (task.meter_key.isNotEmpty() && task.meter_key !in meterKeys) {
       add("$id: starter task '$label' schedules against meter '${task.meter_key}', which is not declared")

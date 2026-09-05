@@ -6,7 +6,7 @@
 # intersection rather than either domain's: `vehicle`, and a component set that reads correctly for
 # both. The PRD table still lists them as two rows and is stale on this point.
 #
-# See templates/README.md before editing, and compile with ./compile-template.sh automotive.v9
+# See templates/README.md before editing, and compile with ./compile-template.sh automotive.v10
 #
 # v4 adds `empty_states` — the per-domain empty-state copy that used to be fixed aviation
 # text in strings.xml. A noun could not fix those strings: what makes them useful is the
@@ -31,8 +31,10 @@
 # v9 sets `month_intervals_due_on_anniversary`: month intervals fall on the anniversary, not
 # the end of the month — the aviation snap was the app's default until the capability existed.
 #
+# v10 lists `schedule_types` explicitly: calendar time and the meter (the odometer).
+#
 id: "automotive"
-version: 9
+version: 10
 min_app_version: 0
 
 display_name: "Automotive"
@@ -116,6 +118,12 @@ capabilities {
   # The paper-logbook tab layout is aviation-specific; everything else derives its columns from the
   # lexicon and meter set.
   export_layout: EXPORT_LAYOUT_GENERIC
+
+  # How a task here can be scheduled — what the form's "How is this tracked?" step offers, listed
+  # in full (PRD §4.6). METER means whatever meters this preset declares; SEASONAL is the
+  # calendar-anchored rule a house needs and a vehicle does not.
+  schedule_types: SCHEDULE_TYPE_CALENDAR
+  schedule_types: SCHEDULE_TYPE_METER
 }
 
 spec_fields { key: "make" label: "Make" }

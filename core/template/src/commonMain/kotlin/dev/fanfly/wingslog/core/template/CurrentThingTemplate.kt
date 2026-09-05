@@ -123,6 +123,8 @@ class CurrentThingTemplate(private val registry: TemplateRegistry) {
       compliance = true,
       technicians = true,
       component_serial_prompt = true,
+      // The aeroplane's set: every Thing this stands in for is one.
+      schedule_types = LEGACY_SCHEDULE_TYPES.toList(),
     )
   }
 }
