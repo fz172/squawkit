@@ -1,13 +1,13 @@
 
-home"ð
+home"Þ
 
 homehomesa0
-attention itemattention itemsan"	Attention'
-upkeep taskupkeep tasksan"Upkeep"5
-maintenance recordmaintenance historya"History*
+attention itemattention itemsan"	Attention0
+maintenance taskmaintenance tasksa"Maint."
+work log	work logsa"Logs*
 partpartsa2
-personpeoplea:GoodBUrgentJNeeds urgent attentionRPropertyjManufacturer‚ã
-,Tap + to note anything that needs looking atITap + to add filter changes, seasonal upkeep, and other recurring chores.8Log work against an upkeep task to see its history here."ZLog your first entry â€” a furnace service, a roof repair, or any other work on the house.*No history yet2;Add the first maintenance record to start the home history.:No upcoming upkeepBNothing is due right now.J/Nothing needs attention in this home right now.R¤Log what has already been done to the house â€” a recent service, a repair, whatever you know. Recurring tasks are scheduled from the date of the most recent entry.* :BHXj2
+personpeoplea:GoodBUrgentJNeeds urgent attentionRPropertyjManufacturer‚ß
+,Tap + to note anything that needs looking atITap + to add filter changes, seasonal upkeep, and other recurring chores.<Log work against a maintenance task to see its history here."ZLog your first entry â€” a furnace service, a roof repair, or any other work on the house.*No logs yet21Add the first work log to start the home history.:No upcoming maintenanceBNothing is due right now.J/Nothing needs attention in this home right now.R¤Log what has already been done to the house â€” a recent service, a repair, whatever you know. Recurring tasks are scheduled from the date of the most recent entry.* :BHXj2
 addressAddress2 
 
 year_built

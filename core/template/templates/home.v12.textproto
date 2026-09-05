@@ -1,11 +1,11 @@
-# The home preset — canonical template (id "home", version 11).
+# The home preset — canonical template (id "home", version 12).
 #
 # THE LOAD-BEARING ONE (pivot_rollout_design.md §5). A house has no make, no model and no serial
 # number (PRD §4.2), and its meter list is EMPTY (§4.4). Everything this file leaves out is the
 # point: it is the preset that finds screens with an aviation assumption baked in. `car` would find
 # almost none of them — it maps onto the airplane shape almost field for field.
 #
-# See templates/README.md before editing, and compile with ./compile-template.sh home.v11
+# See templates/README.md before editing, and compile with ./compile-template.sh home.v12
 #
 # v4 adds `empty_states` — the per-domain empty-state copy that used to be fixed aviation
 # text in strings.xml. A noun could not fix those strings: what makes them useful is the
@@ -39,8 +39,11 @@
 # v11 renames the nouns a homeowner reads most: tasks are "upkeep" and the log is the "maintenance
 # history" — "service record" is what a garage hands you, not what a house keeps.
 #
+# v12 takes the airplane's nouns — "maintenance task" and "work log" — in place of v11's "upkeep"
+# and "maintenance history".
+#
 id: "home"
-version: 11
+version: 12
 min_app_version: 0
 
 display_name: "Home"
@@ -57,10 +60,8 @@ lexicon {
   # works with a mass noun.
   squawk { singular: "attention item" plural: "attention items" article: "an" short_plural: "Attention" }
 
-  task { singular: "upkeep task" plural: "upkeep tasks" article: "an" short_plural: "Upkeep" }
-  # The plural is the section name — "Maintenance history" — not a count; the few count strings
-  # that read it ("changed two …") are a notification body and tolerate it.
-  log { singular: "maintenance record" plural: "maintenance history" article: "a" short_plural: "History" }
+  task { singular: "maintenance task" plural: "maintenance tasks" article: "a" short_plural: "Maint." }
+  log { singular: "work log" plural: "work logs" article: "a" short_plural: "Logs" }
   component { singular: "part" plural: "parts" article: "a" }
 
   # "person", not "technician" (PRD §4.8). A homeowner splitting chores with a spouse, or doing the
@@ -89,12 +90,12 @@ lexicon {
   empty_states {
     squawk_hint: "Tap + to note anything that needs looking at"
     task_hint: "Tap + to add filter changes, seasonal upkeep, and other recurring chores."
-    task_history_hint: "Log work against an upkeep task to see its history here."
+    task_history_hint: "Log work against a maintenance task to see its history here."
     log_hint: "Log your first entry — a furnace service, a roof repair, or any other work on the house."
 
-    overview_log_title: "No history yet"
-    overview_log_hint: "Add the first maintenance record to start the home history."
-    overview_task_title: "No upcoming upkeep"
+    overview_log_title: "No logs yet"
+    overview_log_hint: "Add the first work log to start the home history."
+    overview_task_title: "No upcoming maintenance"
     overview_task_hint: "Nothing is due right now."
     overview_squawk_hint: "Nothing needs attention in this home right now."
 
