@@ -58,7 +58,16 @@ best. The multi-pane tablet layout reads best in landscape.
 The phone captures in `phone/` also feed the feature graphic: `overview_1.png`
 appears in the device on its right side. Without it the icon takes that spot.
 
-Capture in dark mode. It reads best against the light canvas.
+Capture in dark mode, with the Android demo-mode status bar (5:00, LTE, 100). A capture taken
+outside demo mode, or with a sheet's scrim dimming the bar, can be brought in line afterwards:
+
+```bash
+python3 docs/product/screenshot_generator/normalize_status_bar.py \
+    docs/product/screenshots/phone/log_detail.png docs/product/screenshots/phone/logs.png
+```
+
+That rewrites the first capture's status bar with the second's glyphs on the first's own
+background colour. Needs ffmpeg.
 
 ## Adding or changing a screen
 
@@ -111,3 +120,5 @@ flat capture with the app's own card radius would serve better.
 | `templates/portrait.html` | Portrait canvas. Phone or tablet frame chosen per target. |
 | `templates/landscape.html` | Landscape canvas for tablet and iPad captures. |
 | `templates/feature_graphic.html` | The 1024×500 Play feature graphic. |
+| `normalize_status_bar.py` | Rewrites one capture's Android status bar to match another's. |
+| `check_listing.py` | Checks `store_listing.md` copy against each console's character limits. |
