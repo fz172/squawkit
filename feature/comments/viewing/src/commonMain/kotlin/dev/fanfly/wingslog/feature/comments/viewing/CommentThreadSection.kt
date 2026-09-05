@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.datetime.toDisplayDateTime
 import dev.fanfly.wingslog.core.ui.common.compose.AlertDialog
 import dev.fanfly.wingslog.core.ui.common.compose.DropdownMenu
+import dev.fanfly.wingslog.core.ui.common.compose.FormKeyboard
 import dev.fanfly.wingslog.core.ui.common.compose.FormTextField
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTheme
@@ -157,6 +158,7 @@ fun CommentThreadSection(
           minLines = 2,
           onValueChange = onDraftChange,
           modifier = Modifier.weight(1f),
+          keyboardOptions = FormKeyboard.Sentences,
         )
         FilledIconButton(
           onClick = onPost,
