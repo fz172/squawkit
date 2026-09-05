@@ -116,9 +116,8 @@
   <string name="adj_reschedule_prefix_at">At</string>
 
   <!-- First due, on the create form: the same override, written once -->
-  <string name="initial_due_section_label">First due</string>
-  <string name="initial_due_title">Set when this is first due</string>
-  <string name="initial_due_subtitle">Otherwise the first due is counted from today or the current reading. The schedule takes over after the first log.</string>
+  <string name="initial_due_section_label">First due · optional</string>
+  <string name="initial_due_subtitle">Leave it empty and the first due is counted from today or the current reading. The schedule takes over after the first log.</string>
 
   <!-- Adjustments tab — delete task section -->
   <string name="delete_task_section_label">Delete Task</string>

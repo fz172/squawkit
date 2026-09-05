@@ -134,7 +134,9 @@ fun AddTaskScreen(
       onDismissRequest = { showDatePicker = false },
       confirmButton = {
         TextButton(onClick = {
+          // Picking a date is what sets the first due; there is no separate switch on create.
           onForcedDateMillisChange(datePickerState.selectedDateMillis)
+          onForceOverrideDateChange(datePickerState.selectedDateMillis != null)
           showDatePicker = false
         }) { Text(stringResource(CoreRes.string.ok)) }
       }) {
@@ -294,6 +296,7 @@ fun AddTaskScreen(
                   forceOverrideDate = state.forceOverrideDate,
                   onForceOverrideDateChange = onForceOverrideDateChange,
                   forcedDateMillis = state.forcedDateMillis,
+                  onForcedDateMillisChange = onForcedDateMillisChange,
                   onDateClick = { showDatePicker = true },
                   forceOverrideEngine = state.forceOverrideEngine,
                   onForceOverrideEngineChange = onForceOverrideEngineChange,

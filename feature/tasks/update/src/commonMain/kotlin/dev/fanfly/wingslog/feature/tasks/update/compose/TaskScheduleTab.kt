@@ -1,13 +1,19 @@
 package dev.fanfly.wingslog.feature.tasks.update.compose
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -19,19 +25,29 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.template.LocalThingTemplate
 import dev.fanfly.wingslog.core.template.meter
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
 import dev.fanfly.wingslog.thing.MaintenanceTask
+import dev.fanfly.wingslog.thing.MeterDef
+import kotlin.time.Instant
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
+import wingslog.core.sharedassets.generated.resources.Res as CoreRes
+import wingslog.core.sharedassets.generated.resources.remove
+import wingslog.core.sharedassets.generated.resources.select_date
 import wingslog.feature.tasks.update.generated.resources.Res
+import wingslog.feature.tasks.update.generated.resources.adj_reschedule_prefix_at
 import wingslog.feature.tasks.update.generated.resources.initial_due_section_label
 import wingslog.feature.tasks.update.generated.resources.initial_due_subtitle
-import wingslog.feature.tasks.update.generated.resources.initial_due_title
 import wingslog.feature.tasks.update.generated.resources.schedule_prefix_every
 import wingslog.feature.tasks.update.generated.resources.schedule_prefix_in
 import wingslog.feature.tasks.update.generated.resources.schedule_recurrence_asap
@@ -62,6 +78,7 @@ data class InitialDueControls(
   val forceOverrideDate: Boolean,
   val onForceOverrideDateChange: (Boolean) -> Unit,
   val forcedDateMillis: Long?,
+  val onForcedDateMillisChange: (Long?) -> Unit,
   val onDateClick: () -> Unit,
   val forceOverrideEngine: Boolean,
   val onForceOverrideEngineChange: (Boolean) -> Unit,
@@ -269,33 +286,20 @@ fun TaskScheduleTab(
       }
     }
 
-    // First due — create only, and only once the schedule it overrides exists.
+    // First due — create only, and only once the schedule it overrides exists. No switch: the
+    // field is there, and leaving it empty means the schedule counts from today.
     if (initialDue != null && state.isComplete) {
-      val on = if (state.isDated) initialDue.forceOverrideDate else initialDue.forceOverrideEngine
+      val set = if (state.isDated) initialDue.forcedDateMillis != null
+      else initialDue.forcedEngineHours.isNotBlank()
       ScheduleSection(
         labelRes = Res.string.initial_due_section_label,
-        complete = on,
+        complete = set,
       ) {
-        RescheduleCard(
-          mode = state.mode,
-          rescheduleOn = on,
-          onToggle = { turnOn ->
-            if (state.isDated) {
-              initialDue.onForceOverrideDateChange(turnOn)
-              if (turnOn) initialDue.onForceOverrideEngineChange(false)
-            } else {
-              initialDue.onForceOverrideEngineChange(turnOn)
-              if (turnOn) initialDue.onForceOverrideDateChange(false)
-            }
-          },
-          forcedEngineHours = initialDue.forcedEngineHours,
-          onForcedEngineHoursChange = initialDue.onForcedEngineHoursChange,
-          forcedDateMillis = initialDue.forcedDateMillis,
-          onDateClick = initialDue.onDateClick,
+        FirstDueCard(
+          dated = state.isDated,
+          controls = initialDue,
           meter = meter,
           meterUnit = meterUnit,
-          title = stringResource(Res.string.initial_due_title),
-          subtitle = stringResource(Res.string.initial_due_subtitle),
         )
       }
     }
@@ -362,6 +366,97 @@ private fun ScheduleSection(
       )
     }
     content()
+  }
+}
+
+/**
+ * The first-due field: a date row for a dated schedule, a meter reading for a metered one, and a
+ * clear affordance once something is set. Setting a value is what turns the override on — there
+ * is no switch to remember to flip, and an empty field is simply no override.
+ */
+@Composable
+private fun FirstDueCard(
+  dated: Boolean,
+  controls: InitialDueControls,
+  meter: MeterDef?,
+  meterUnit: String,
+) {
+  Column(
+    modifier = Modifier
+      .fillMaxWidth()
+      .clip(RoundedCornerShape(Spacing.cardCornerRadius))
+      .background(MaterialTheme.colorScheme.surfaceContainer)
+      .border(
+        Spacing.hairline,
+        MaterialTheme.colorScheme.outlineVariant,
+        RoundedCornerShape(Spacing.cardCornerRadius)
+      )
+      .padding(horizontal = Spacing.large, vertical = Spacing.medium),
+    verticalArrangement = Arrangement.spacedBy(Spacing.small),
+  ) {
+    if (dated) {
+      val dateStr = controls.forcedDateMillis?.let {
+        Instant.fromEpochMilliseconds(it)
+          .toLocalDateTime(TimeZone.currentSystemDefault()).date.toDisplayFormat()
+      }
+      Row(
+        modifier = Modifier
+          .fillMaxWidth()
+          .clip(RoundedCornerShape(Spacing.cardCornerRadius))
+          .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+          .clickable(role = Role.Button) { controls.onDateClick() }
+          .padding(horizontal = Spacing.medium, vertical = Spacing.medium),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(Spacing.small),
+      ) {
+        Icon(
+          Icons.Default.CalendarToday,
+          contentDescription = null,
+          modifier = Modifier.size(Spacing.large),
+          tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Text(
+          dateStr ?: stringResource(CoreRes.string.select_date),
+          style = MaterialTheme.typography.bodyLarge,
+          fontWeight = if (dateStr != null) FontWeight.Bold else FontWeight.Normal,
+          color = if (dateStr != null) MaterialTheme.colorScheme.onSurface
+          else MaterialTheme.colorScheme.onSurfaceVariant,
+          modifier = Modifier.weight(1f),
+        )
+        if (dateStr != null) {
+          Icon(
+            Icons.Default.Close,
+            contentDescription = stringResource(CoreRes.string.remove),
+            modifier = Modifier
+              .size(Spacing.xLarge)
+              .clip(RoundedCornerShape(Spacing.smallCornerRadius))
+              .clickable {
+                controls.onForcedDateMillisChange(null)
+                controls.onForceOverrideDateChange(false)
+              }
+              .padding(Spacing.extraSmall),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+          )
+        }
+      }
+    } else {
+      IntervalNumberInput(
+        value = controls.forcedEngineHours,
+        onChange = { v ->
+          val filtered = v.filter { c -> c.isDigit() || c == '.' }
+          controls.onForcedEngineHoursChange(filtered)
+          controls.onForceOverrideEngineChange(filtered.toFloatOrNull()?.let { it > 0f } == true)
+        },
+        suffix = meterUnit,
+        prefix = stringResource(Res.string.adj_reschedule_prefix_at),
+        keyboard = if (meter?.decimal != false) KeyboardType.Decimal else KeyboardType.Number,
+      )
+    }
+    Text(
+      stringResource(Res.string.initial_due_subtitle),
+      style = MaterialTheme.typography.bodySmall,
+      color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
   }
 }
 
