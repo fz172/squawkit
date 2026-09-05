@@ -566,6 +566,9 @@ private fun SquawkRailRow(
   }
 }
 
+/** Wide enough for the longest pill, "PROPELLER". */
+private val RAIL_BADGE_WIDTH = 88.dp
+
 @Composable
 private fun RailComponentTypeBadge(type: ComponentType) {
   val (background, content) = when (type) {
@@ -574,9 +577,11 @@ private fun RailComponentTypeBadge(type: ComponentType) {
     ComponentType.COMPONENT_PROPELLER -> MaterialTheme.colorScheme.secondaryContainer to MaterialTheme.colorScheme.onSecondaryContainer
     else -> MaterialTheme.colorScheme.surfaceContainerHigh to MaterialTheme.colorScheme.onSurfaceVariant
   }
+  // Fixed width so the titles beside pills of different lengths line up down the list.
   Surface(
     shape = RoundedCornerShape(Spacing.badgeCornerRadius),
     color = background,
+    modifier = Modifier.width(RAIL_BADGE_WIDTH),
   ) {
     Text(
       text = type.displayName()
@@ -584,6 +589,8 @@ private fun RailComponentTypeBadge(type: ComponentType) {
       style = MaterialTheme.typography.labelSmall,
       fontWeight = FontWeight.SemiBold,
       color = content,
+      textAlign = TextAlign.Center,
+      maxLines = 1,
       modifier = Modifier.padding(
         horizontal = Spacing.small,
         vertical = Spacing.extraSmall
