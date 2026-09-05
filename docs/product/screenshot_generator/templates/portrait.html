@@ -113,6 +113,16 @@
     z-index: 3;
   }
 
+  /* Stack: several devices, the front one lower-right, each one behind it
+     stepping up and to the left so its header stays visible. */
+  .stack .device {
+    right: calc(-9cqw + var(--i) * 12cqw);
+    bottom: calc(-4cqh + var(--i) * 2cqh);
+    z-index: calc(3 - var(--i));
+  }
+  .stack .device.phone { width: 74cqw; }
+  .stack .device.tablet { width: 66cqw; }
+
   /* Tablet: thin even bezel, small radius, no notch, gentle tilt. */
   .device.tablet {
     width: 78cqw;
@@ -122,7 +132,7 @@
   }
 </style>
 
-<div class="canvas">
+<div class="canvas __CANVAS_CLASS__">
   <div class="bg"></div>
 
   <div class="headline">
@@ -131,7 +141,5 @@
     <p class="wordmark">Squawk<b>It</b> · __FEATURE_LABEL__</p>
   </div>
 
-  <div class="device __DEVICE__">
-    <img src="data:image/png;base64,__SCREENSHOT_B64__" alt="" />
-  </div>
+__DEVICES__
 </div>

@@ -50,10 +50,14 @@ CHROME = os.environ.get(
 # Screens. One entry per listing image; "num" is the upload order. "src" is the
 # capture filename (without .png) inside every target folder, so the same list
 # drives phone, tablet, iPhone and iPad. A target simply skips screens whose
-# capture is missing.
+# capture is missing. "src" may also be a list: the first capture is the front
+# device and the rest stack behind it, up-left, so several dashboards show in
+# one image. Only the first is required.
 #
 # Headline and label describe the FEATURE, never today's content: no counts,
-# names, tail numbers or dates. Every user's app state differs.
+# names, tail numbers or dates. Every user's app state differs. Avoid aviation
+# jargon and words that imply something is broken; the app covers cars, boats
+# and homes too.
 #
 # object_position picks which part of a capture shows through the frame when
 # the frame crops it ("50% 0%" = anchored to the top).
@@ -61,7 +65,7 @@ CHROME = os.environ.get(
 SCREENS = [
     {
         "num": "01",
-        "src": "overview",
+        "src": ["overview_1", "overview_2", "overview_3"],
         "feature_label": "Dashboard",
         "l1": "Airplane, Car, Home.",
         "l2": "One Record.",
@@ -78,9 +82,9 @@ SCREENS = [
     {
         "num": "03",
         "src": "squawks",
-        "feature_label": "Squawks & Issues",
-        "l1": "Spot It, Log It,",
-        "l2": "Track It to Closed.",
+        "feature_label": "Observations",
+        "l1": "Notice It, Note It,",
+        "l2": "See It Through.",
         "object_position": "50% 0%",
     },
     {
@@ -158,7 +162,7 @@ FEATURE_GRAPHIC = {
     "size": (1024, 500),
     "l1": "Every thing you maintain.",
     "l2": "One record.",
-    "phone_src": os.path.join("phone", "overview.png"),
+    "phone_src": os.path.join("phone", "overview_1.png"),
 }
 
 
@@ -211,13 +215,33 @@ def render(html, size, out_path):
     print("wrote", os.path.relpath(out_path, REPO_ROOT))
 
 
+def sources(screen):
+    src = screen["src"]
+    return list(src) if isinstance(src, (list, tuple)) else [src]
+
+
 def captures_for(target):
+    """Returns (present, missing): present pairs each screen with the capture
+    paths that exist, front first; a screen is missing when its first capture is."""
     src_dir = os.path.join(SCREENSHOTS_DIR, target["src_dir"])
     present, missing = [], []
     for s in SCREENS:
-        path = os.path.join(src_dir, f"{s['src']}.png")
-        (present if os.path.isfile(path) else missing).append((s, path))
+        paths = [os.path.join(src_dir, f"{name}.png") for name in sources(s)]
+        found = [p for p in paths if os.path.isfile(p)]
+        if found and found[0] == paths[0]:
+            present.append((s, found))
+        else:
+            missing.append((s, paths[0]))
     return present, missing
+
+
+def device_html(captures, device):
+    """One .device div per capture; index 0 is the front device."""
+    return "\n".join(
+        f'<div class="device {device} d{i}" style="--i: {i}">'
+        f'<img src="data:image/png;base64,{b64_file(path)}" alt="" /></div>'
+        for i, path in enumerate(captures)
+    )
 
 
 def render_target(name, target, fonts):
@@ -225,11 +249,11 @@ def render_target(name, target, fonts):
     if not present:
         print(f"[{name}] no captures in docs/product/screenshots/{target['src_dir']}/ — skipped")
         return
-    for s, _ in missing:
-        print(f"[{name}] no capture for '{s['src']}' — skipped")
+    for s, path in missing:
+        print(f"[{name}] no capture {os.path.basename(path)} — skipped")
 
-    for s, capture in present:
-        w, h = png_size(capture)
+    for s, captures in present:
+        w, h = png_size(captures[0])
         orientation = "portrait" if h >= w else "landscape"
         size = target["canvas"][orientation]
         template = load_template(f"{orientation}.html")
@@ -239,16 +263,17 @@ def render_target(name, target, fonts):
                 **fonts,
                 "CANVAS_W": size[0],
                 "CANVAS_H": size[1],
-                "DEVICE": target["device"],
+                "CANVAS_CLASS": "stack" if len(captures) > 1 else "",
                 "DEVICE_ASPECT": f"{w} / {h}",
-                "SCREENSHOT_B64": b64_file(capture),
+                "DEVICES": device_html(captures, target["device"]),
                 "HEADLINE_L1": s["l1"],
                 "HEADLINE_L2": s["l2"],
                 "FEATURE_LABEL": s["feature_label"],
                 "OBJECT_POSITION": s["object_position"],
             },
         )
-        out_path = os.path.join(OUT_DIR, target["out_dir"], f"{s['num']}_{s['src']}.png")
+        out_name = sources(s)[0].rsplit("_", 1)[0] if len(sources(s)) > 1 else sources(s)[0]
+        out_path = os.path.join(OUT_DIR, target["out_dir"], f"{s['num']}_{out_name}.png")
         render(html, size, out_path)
 
 
@@ -258,7 +283,7 @@ def render_feature_graphic(fonts):
     phone = os.path.join(SCREENSHOTS_DIR, FEATURE_GRAPHIC["phone_src"])
     has_phone = os.path.isfile(phone)
     if not has_phone:
-        print("[feature_graphic] no phone/overview.png capture — rendering without a device")
+        print("[feature_graphic] no phone/overview_1.png capture — rendering without a device")
     aspect = "%d / %d" % png_size(phone) if has_phone else "1080 / 2364"
     html = fill(
         load_template("feature_graphic.html"),
@@ -281,11 +306,15 @@ def check():
         present, missing = captures_for(target)
         print(f"{name}  ({target['store']})")
         print(f"  folder: docs/product/screenshots/{target['src_dir']}/")
-        for s, _ in present:
-            print(f"    ✓ {s['src']}.png")
+        for s, found in present:
+            for name in sources(s):
+                mark = "✓" if any(f.endswith(f"{name}.png") for f in found) else "·"
+                print(f"    {mark} {name}.png")
         for s, _ in missing:
-            print(f"    ✗ {s['src']}.png")
+            for i, name in enumerate(sources(s)):
+                print(f"    {'✗' if i == 0 else '·'} {name}.png")
         ok = ok and not missing
+    print("✓ present   ✗ missing   · optional stack capture, not present")
     return ok
 
 

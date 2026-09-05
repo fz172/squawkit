@@ -35,9 +35,14 @@ Drop raw captures here, named by screen, one folder per device class:
 | `iphone/` | iPhone 16 Pro Max simulator | 1320×2868 | `store_assets/appstore/iphone_6_9/` 1320×2868 |
 | `ipad/` | iPad Pro 13-inch simulator | 2064×2752 or 2752×2064 | `store_assets/appstore/ipad_13/` same orientation |
 
-Screen filenames, in upload order: `overview`, `tasks`, `squawks`, `logs`,
+Screen filenames, in upload order: `overview_1`, `tasks`, `squawks`, `logs`,
 `work_logs`, `export`, `sharing` (all `.png`). A folder may hold any subset;
 missing screens are skipped with a message, so a partial set still renders.
+
+The first image stacks up to three dashboards: `overview_1.png` is the front
+device, `overview_2.png` and `overview_3.png` sit behind it, up and to the
+left, so each one's header stays visible. Capture three different kinds of
+Thing (say an airplane, a car, and a home). Only `overview_1` is required.
 
 Orientation is read from each capture. A landscape capture gets the landscape
 layout (copy on the left, device on the right); a portrait capture gets the
@@ -45,7 +50,7 @@ portrait layout (copy on top, device below). Play accepts either for tablets,
 and the App Store accepts either for iPad, so shoot whichever shows the screen
 best. The multi-pane tablet layout reads best in landscape.
 
-The phone captures in `phone/` also feed the feature graphic: `overview.png`
+The phone captures in `phone/` also feed the feature graphic: `overview_1.png`
 appears in the device on its right side. Without it the icon takes that spot.
 
 Capture in dark mode. It reads best against the light canvas.
@@ -57,7 +62,7 @@ Edit the `SCREENS` list in `generate.py`:
 ```python
 {
     "num": "08",                        # upload order
-    "src": "your_screen",               # <src>.png in every capture folder
+    "src": "your_screen",               # <src>.png in every capture folder; a list stacks several
     "feature_label": "Feature Name",    # small wordmark line
     "l1": "First headline line,",
     "l2": "Second line.",
@@ -66,7 +71,10 @@ Edit the `SCREENS` list in `generate.py`:
 ```
 
 Keep headlines short. The portrait canvas fits about 20 characters per line at
-phone width; the landscape column fits about 22.
+phone width; the landscape column fits about 22. Avoid aviation jargon and
+words that imply something is broken (issues, defects, faults): the app
+covers cars, boats and homes too, and the copy should read as neutral
+record-keeping.
 
 ## The one rule that matters: no per-user data on the canvas
 

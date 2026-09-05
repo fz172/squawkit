@@ -93,6 +93,15 @@
     overflow: hidden;
     z-index: 2;
   }
+  /* Stack: several devices, the front one lower-right, each one behind it
+     stepping up and to the left so its header stays visible. */
+  .stack .device {
+    width: 58cqw;
+    right: calc(-8cqw + var(--i) * 10cqw);
+    bottom: calc(-10cqh + var(--i) * 12cqh);
+    z-index: calc(3 - var(--i));
+  }
+
   /* A landscape phone capture is unusual but allowed; give it phone bezels. */
   .device.phone {
     border-radius: 5cqw;
@@ -107,7 +116,7 @@
   }
 </style>
 
-<div class="canvas">
+<div class="canvas __CANVAS_CLASS__">
   <div class="bg"></div>
 
   <div class="headline">
@@ -117,7 +126,5 @@
 
   <p class="wordmark">Squawk<b>It</b> · __FEATURE_LABEL__</p>
 
-  <div class="device __DEVICE__">
-    <img src="data:image/png;base64,__SCREENSHOT_B64__" alt="" />
-  </div>
+__DEVICES__
 </div>
