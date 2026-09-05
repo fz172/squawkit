@@ -139,4 +139,9 @@ message Lexicon {
   // due". Not derivable from `task` — the airplane's noun is "maintenance task" and its tab
   // "Maint.", neither of which is the word this card has always shown (design §10a).
   string due_status = 17;
+
+  // The line under the Dashboard's down-tier alert title. A whole sentence per template, like
+  // `down_status`: "AOG squawks must be resolved before flight" has no slot a noun could fill —
+  // "before flight" is the aviation part, and a house has no equivalent verb. Blank hides the line.
+  string down_alert_hint = 18;  // "AOG squawks must be resolved before flight" · "Down issues must be fixed before driving"
 }

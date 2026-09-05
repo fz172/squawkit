@@ -39,7 +39,7 @@
 # v10 adds `due_status` — the label the dashboard's due card carries, "Tasks due".
 
 id: "custom"
-version: 10
+version: 11
 min_app_version: 0
 
 display_name: "Custom"
@@ -67,6 +67,7 @@ lexicon {
   ready_status: "Ready"
   down_status: "Down"
   down_status_long: "Out of service"
+  down_alert_hint: "Down issues must be resolved before use"
   due_status: "Tasks due"
 
   collection_label: "Stuff"
@@ -143,6 +144,9 @@ capabilities {
 # v3 gave the name it always claimed to have a field to be typed into, and three fields the user
 # names themselves. Before it, the create form rendered NOTHING — no spec fields, no slots — and
 # every Thing made from it stored an empty name and read as "Custom" in the switcher.
+#
+# v11 adds `down_alert_hint` — the sentence under the Dashboard down-tier alert. It was one aviation
+# string in strings.xml, "AOG squawks must be resolved before flight", shown to every preset.
 #
 # ONE DECLARED FIELD, and it is the name. Required, because it is the only thing distinguishing one
 # of these from another, and `title_candidate` so it is what the Thing is called everywhere.

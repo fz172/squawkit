@@ -30,9 +30,12 @@
 # v9 lists `schedule_types` explicitly: calendar time and the meter (distance).
 #
 # v10 adds `due_status` — the label the dashboard's due card carries, "Service due".
+#
+# v11 adds `down_alert_hint` — the sentence under the Dashboard down-tier alert. It was one aviation
+# string in strings.xml, "AOG squawks must be resolved before flight", shown to every preset.
 
 id: "bike"
-version: 10
+version: 11
 min_app_version: 0
 
 display_name: "Bike"
@@ -54,6 +57,7 @@ lexicon {
   ready_status: "Ready"
   down_status: "Down"
   down_status_long: "Out of service"
+  down_alert_hint: "Down issues must be fixed before riding"
   due_status: "Service due"
 
   collection_label: "Garage"

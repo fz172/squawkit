@@ -164,7 +164,8 @@ class GenericLexiconTest {
     }
     assertThat(
       listOf(
-        l.ready_status, l.down_status, l.down_status_long, l.due_status, l.collection_label,
+        l.ready_status, l.down_status, l.down_status_long, l.down_alert_hint, l.due_status,
+        l.collection_label,
         l.compliance_mandatory, l.compliance_advisory, l.authority_label,
       ),
     ).doesNotContain("")

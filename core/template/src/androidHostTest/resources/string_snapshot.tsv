@@ -511,7 +511,6 @@ feature/squawk/sharedassets	dismiss_reason_intended_behavior	Intended behavior
 feature/squawk/sharedassets	dismiss_reason_not_reproducible	Not reproducible
 feature/squawk/sharedassets	dismiss_reason_obsolete	Obsolete
 feature/squawk/sharedassets	dismissed_label	Dismissed — %1$s
-feature/squawk/sharedassets	down_alert_subtitle	AOG squawks must be resolved before flight
 feature/squawk/sharedassets	edit_squawk	Update squawk
 feature/squawk/sharedassets	no_closed_squawks	No closed squawks yet.
 feature/squawk/sharedassets	no_open_squawks	No open squawks

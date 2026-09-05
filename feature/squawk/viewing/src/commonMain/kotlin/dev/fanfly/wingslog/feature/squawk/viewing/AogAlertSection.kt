@@ -34,7 +34,6 @@ import dev.fanfly.wingslog.core.ui.theme.statusColors
 import dev.fanfly.wingslog.thing.Squawk
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.squawk.sharedassets.generated.resources.Res
-import wingslog.feature.squawk.sharedassets.generated.resources.down_alert_subtitle
 import wingslog.feature.squawk.sharedassets.generated.resources.view_squawks
 
 @Composable
@@ -76,11 +75,15 @@ fun AogAlertSection(
           fontWeight = FontWeight.Bold,
           color = blocking.accent,
         )
-        Text(
-          text = stringResource(Res.string.down_alert_subtitle),
-          style = MaterialTheme.typography.bodySmall,
-          color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        // Per-template sentence; a Thing frozen on an older template has none and shows no line.
+        val hint = LocalThingLexicon.current.down_alert_hint
+        if (hint.isNotBlank()) {
+          Text(
+            text = hint,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+          )
+        }
       }
 
       HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.25f))

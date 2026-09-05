@@ -170,6 +170,12 @@ export interface Lexicon {
    * "Maint.", neither of which is the word this card has always shown (design §10a).
    */
   dueStatus: string;
+  /**
+   * The line under the Dashboard's down-tier alert title. A whole sentence per template, like
+   * `down_status`: "AOG squawks must be resolved before flight" has no slot a noun could fill —
+   * "before flight" is the aviation part, and a house has no equivalent verb. Blank hides the line.
+   */
+  downAlertHint: string;
 }
 
 function createBaseNoun(): Noun {
@@ -648,6 +654,7 @@ function createBaseLexicon(): Lexicon {
     complianceAdvisory: undefined,
     emptyStates: undefined,
     dueStatus: "",
+    downAlertHint: "",
   };
 }
 
@@ -697,6 +704,9 @@ export const Lexicon: MessageFns<Lexicon> = {
     }
     if (message.dueStatus !== "") {
       writer.uint32(138).string(message.dueStatus);
+    }
+    if (message.downAlertHint !== "") {
+      writer.uint32(146).string(message.downAlertHint);
     }
     return writer;
   },
@@ -828,6 +838,14 @@ export const Lexicon: MessageFns<Lexicon> = {
           message.dueStatus = reader.string();
           continue;
         }
+        case 18: {
+          if (tag !== 146) {
+            break;
+          }
+
+          message.downAlertHint = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -890,6 +908,11 @@ export const Lexicon: MessageFns<Lexicon> = {
         : isSet(object.due_status)
         ? globalThis.String(object.due_status)
         : "",
+      downAlertHint: isSet(object.downAlertHint)
+        ? globalThis.String(object.downAlertHint)
+        : isSet(object.down_alert_hint)
+        ? globalThis.String(object.down_alert_hint)
+        : "",
     };
   },
 
@@ -940,6 +963,9 @@ export const Lexicon: MessageFns<Lexicon> = {
     if (message.dueStatus !== "") {
       obj.dueStatus = message.dueStatus;
     }
+    if (message.downAlertHint !== "") {
+      obj.downAlertHint = message.downAlertHint;
+    }
     return obj;
   },
 
@@ -975,6 +1001,7 @@ export const Lexicon: MessageFns<Lexicon> = {
       ? EmptyStates.fromPartial(object.emptyStates)
       : undefined;
     message.dueStatus = object.dueStatus ?? "";
+    message.downAlertHint = object.downAlertHint ?? "";
     return message;
   },
 };

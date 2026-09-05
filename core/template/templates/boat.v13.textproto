@@ -36,9 +36,12 @@
 # v11 lists `schedule_types` explicitly: calendar time and the meter (engine hours).
 #
 # v12 adds `due_status` — the label the dashboard's due card carries, "Service due".
+#
+# v13 adds `down_alert_hint` — the sentence under the Dashboard down-tier alert. It was one aviation
+# string in strings.xml, "AOG squawks must be resolved before flight", shown to every preset.
 
 id: "boat"
-version: 12
+version: 13
 min_app_version: 0
 
 display_name: "Boat"
@@ -58,6 +61,7 @@ lexicon {
   # the full phrase for the notification channel a user sees in system settings (PRD §8.5).
   down_status: "DIW"
   down_status_long: "Dead in the Water"
+  down_alert_hint: "Dead-in-the-water issues must be fixed before leaving the dock"
   due_status: "Service due"
 
   collection_label: "Fleet"
