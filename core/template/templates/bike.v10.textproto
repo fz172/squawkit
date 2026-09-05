@@ -4,7 +4,7 @@
 # frame number, not make/model/serial (PRD §4.3), and it carries TWO meters where every other
 # vehicle carries one. A screen that assumes a single usage number will show it here.
 #
-# See templates/README.md before editing, and compile with ./compile-template.sh bike.v9
+# See templates/README.md before editing, and compile with ./compile-template.sh bike.v10
 #
 # v3 adds `empty_states` — the per-domain empty-state copy that used to be fixed aviation
 # text in strings.xml. A noun could not fix those strings: what makes them useful is the
@@ -29,8 +29,10 @@
 #
 # v9 lists `schedule_types` explicitly: calendar time and the meter (distance).
 #
+# v10 adds `due_status` — the label the dashboard's due card carries, "Service due".
+
 id: "bike"
-version: 9
+version: 10
 min_app_version: 0
 
 display_name: "Bike"
@@ -52,6 +54,7 @@ lexicon {
   ready_status: "Ready"
   down_status: "Down"
   down_status_long: "Out of service"
+  due_status: "Service due"
 
   collection_label: "Garage"
   authority_label: "Manufacturer"

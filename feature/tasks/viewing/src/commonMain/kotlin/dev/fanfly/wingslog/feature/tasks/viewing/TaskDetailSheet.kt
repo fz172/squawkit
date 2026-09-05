@@ -19,6 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.datetime.toLocalDate
+import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.LocalThingTemplate
 import dev.fanfly.wingslog.core.template.formatMeterValue
@@ -43,11 +44,9 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.daysUntil
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
-import wingslog.feature.logs.sharedassets.generated.resources.maintenance_history
 import wingslog.feature.tasks.sharedassets.generated.resources.compliance_type_ad_short
 import wingslog.feature.tasks.sharedassets.generated.resources.compliance_type_sb_short
 import wingslog.feature.tasks.sharedassets.generated.resources.edit_task
-import wingslog.feature.tasks.sharedassets.generated.resources.maintenance_due_title
 import wingslog.feature.tasks.sharedassets.generated.resources.unknown_date
 import wingslog.feature.tasks.viewing.generated.resources.authority_reference_number
 import wingslog.feature.tasks.viewing.generated.resources.badge_overdue
@@ -61,7 +60,6 @@ import wingslog.feature.tasks.viewing.generated.resources.next_due_meter
 import wingslog.feature.tasks.viewing.generated.resources.no_maintenance_logs_for_task
 import wingslog.feature.tasks.viewing.generated.resources.on_condition
 import kotlin.time.Clock
-import wingslog.feature.logs.sharedassets.generated.resources.Res as LogsRes
 import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedRes
 import wingslog.feature.tasks.viewing.generated.resources.Res as ViewingRes
 
@@ -204,7 +202,7 @@ fun TaskDetailSheet(
     }
 
     Text(
-      text = stringResource(LogsRes.string.maintenance_history),
+      text = LexiconFormatter.titleCasePlural(LocalThingLexicon.current.logNoun),
       style = MaterialTheme.typography.titleMedium,
       fontWeight = FontWeight.SemiBold,
     )
@@ -247,7 +245,7 @@ private fun StatusBadge(dueStatus: DueMetadata) {
     )
 
     DueStatus.DUE_SOON -> Pair(
-      stringResource(SharedRes.string.maintenance_due_title),
+      LexiconFormatter.titleCase(LocalThingLexicon.current.due_status),
       StatusTier.CAUTION,
     )
 

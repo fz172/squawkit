@@ -41,6 +41,7 @@ import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.datetime.toLocalDate
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.LocalThingTemplate
+import dev.fanfly.wingslog.core.template.componentTypesApply
 import dev.fanfly.wingslog.core.template.formatMeterValue
 import dev.fanfly.wingslog.core.template.overviewLogEmptyHint
 import dev.fanfly.wingslog.core.template.overviewLogEmptyTitle
@@ -488,23 +489,18 @@ private fun RecentLogRow(log: MaintenanceLog, onClick: () -> Unit) {
     verticalAlignment = Alignment.CenterVertically,
     horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
   ) {
-    RailComponentTypeBadge(log.component_type)
-    Column(modifier = Modifier.weight(1f)) {
-      Text(
-        text = log.component_type.displayName(),
-        style = MaterialTheme.typography.titleSmall,
-        color = MaterialTheme.colorScheme.onSurface,
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis,
-      )
-      Text(
-        text = log.work_description,
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis,
-      )
+    // Same rule as the log card: the pill names an aviation part, so a home or a car gets none.
+    if (componentTypesApply && log.component_type != ComponentType.COMPONENT_UNKNOWN) {
+      RailComponentTypeBadge(log.component_type)
     }
+    Text(
+      text = log.work_description,
+      style = MaterialTheme.typography.titleSmall,
+      color = MaterialTheme.colorScheme.onSurface,
+      maxLines = 2,
+      overflow = TextOverflow.Ellipsis,
+      modifier = Modifier.weight(1f),
+    )
     Column(horizontalAlignment = Alignment.End) {
       Text(
         date,
@@ -570,6 +566,9 @@ private fun SquawkRailRow(
   }
 }
 
+/** Wide enough for the longest pill, "PROPELLER". */
+private val RAIL_BADGE_WIDTH = 88.dp
+
 @Composable
 private fun RailComponentTypeBadge(type: ComponentType) {
   val (background, content) = when (type) {
@@ -578,9 +577,11 @@ private fun RailComponentTypeBadge(type: ComponentType) {
     ComponentType.COMPONENT_PROPELLER -> MaterialTheme.colorScheme.secondaryContainer to MaterialTheme.colorScheme.onSecondaryContainer
     else -> MaterialTheme.colorScheme.surfaceContainerHigh to MaterialTheme.colorScheme.onSurfaceVariant
   }
+  // Fixed width so the titles beside pills of different lengths line up down the list.
   Surface(
     shape = RoundedCornerShape(Spacing.badgeCornerRadius),
     color = background,
+    modifier = Modifier.width(RAIL_BADGE_WIDTH),
   ) {
     Text(
       text = type.displayName()
@@ -588,6 +589,8 @@ private fun RailComponentTypeBadge(type: ComponentType) {
       style = MaterialTheme.typography.labelSmall,
       fontWeight = FontWeight.SemiBold,
       color = content,
+      textAlign = TextAlign.Center,
+      maxLines = 1,
       modifier = Modifier.padding(
         horizontal = Spacing.small,
         vertical = Spacing.extraSmall

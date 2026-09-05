@@ -253,7 +253,6 @@ feature/logs/sharedassets	log_assigned_by	Logged by %1$s
 feature/logs/sharedassets	log_assigned_by_unknown	Logged by another member
 feature/logs/sharedassets	log_unverified_technician	Not verified — name entered manually
 feature/logs/sharedassets	maintenance_date	Work Date
-feature/logs/sharedassets	maintenance_history	Maintenance History
 feature/logs/sharedassets	no_maintenance_logs_title	Work log is empty
 feature/logs/sharedassets	propeller_hub	Propeller Hub
 feature/logs/sharedassets	resolve_squawk_work_description	Resolve squawk "%1$s"
@@ -679,7 +678,6 @@ feature/tasks/sharedassets	delete_task_confirmation	Delete "%1$s"? This cannot b
 feature/tasks/sharedassets	due_with_count	DUE (%1$d)
 feature/tasks/sharedassets	edit_task	Update task
 feature/tasks/sharedassets	history_with_count	HISTORY (%1$d)
-feature/tasks/sharedassets	maintenance_due_title	Maintenance Due
 feature/tasks/sharedassets	no_task_work_recorded	No maintenance tasks addressed by this work log
 feature/tasks/sharedassets	no_tasks_yet	No maintenance tasks
 feature/tasks/sharedassets	skip_task_confirm_action	Skip

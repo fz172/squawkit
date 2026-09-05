@@ -11,7 +11,6 @@
   <string name="compliance_type_ad_short">AD</string>
   <string name="compliance_type_sb_short">SB</string>
 
-  <string name="maintenance_due_title">Maintenance Due</string>
   <string name="add_task">Add task</string>
   <string name="starter_pack_empty_action">Add recommended <xliff:g example="tasks">%1$s</xliff:g></string>
   <string name="no_tasks_yet">No <xliff:g example="maintenance tasks">%1$s</xliff:g></string>

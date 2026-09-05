@@ -20,6 +20,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
+import dev.fanfly.wingslog.core.template.LexiconFormatter
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.logNoun
 import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.thing.SquawkDismissReason
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
@@ -32,13 +35,11 @@ import dev.fanfly.wingslog.feature.squawk.sharedassets.toLabel
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.add
 import wingslog.core.sharedassets.generated.resources.remove
-import wingslog.feature.logs.sharedassets.generated.resources.maintenance_history
 import wingslog.feature.squawk.sharedassets.generated.resources.Res
 import wingslog.feature.squawk.sharedassets.generated.resources.dismissed_label
 import wingslog.feature.squawk.sharedassets.generated.resources.squawk_description_label
 import wingslog.feature.squawk.sharedassets.generated.resources.squawk_not_yet_addressed
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
-import wingslog.feature.logs.sharedassets.generated.resources.Res as LogsRes
 
 @Composable
 fun SquawkDetailsSection(
@@ -83,7 +84,7 @@ fun SquawkDetailsSection(
           verticalAlignment = Alignment.CenterVertically,
           horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-          FormSectionLabel(stringResource(LogsRes.string.maintenance_history))
+          FormSectionLabel(LexiconFormatter.titleCasePlural(LocalThingLexicon.current.logNoun))
           if (addressedByLogId.isEmpty() && !isDismissed) {
             OutlinedButton(
               onClick = onAddLog,

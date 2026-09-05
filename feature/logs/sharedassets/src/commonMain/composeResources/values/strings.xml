@@ -1,7 +1,6 @@
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
   <string name="add_log">Add <xliff:g example="work logs">%1$s</xliff:g></string>
   <string name="edit_log">Update <xliff:g example="work logs">%1$s</xliff:g></string>
-  <string name="maintenance_history">Maintenance History</string>
   <string name="maintenance_date">Work Date</string>
   <string name="add_first_maintenance_log">Log First Entry</string>
   <string name="no_maintenance_logs_title"><xliff:g example="Work log">%1$s</xliff:g> is empty</string>

@@ -115,6 +115,8 @@ class LexiconFormatterTest {
     val l = AirplaneTemplate.AIRPLANE_LEXICON
     assertThat(LexiconFormatter.titleCase(l.down_status)).isEqualTo("AOG")
     assertThat(LexiconFormatter.titleCase(l.down_status_long)).isEqualTo("Aircraft on Ground")
+    // The dashboard's due card and the task-detail chip render straight from here.
+    assertThat(LexiconFormatter.titleCase(l.due_status)).isEqualTo("Maintenance Due")
     // The shell's three per-thing section labels render straight from these, with no string
     // resource between, so these assertions are that navigation chrome's only coverage.
     assertThat(LexiconFormatter.titleCasePlural(l.squawk!!)).isEqualTo("Squawks")
@@ -162,7 +164,7 @@ class GenericLexiconTest {
     }
     assertThat(
       listOf(
-        l.ready_status, l.down_status, l.down_status_long, l.collection_label,
+        l.ready_status, l.down_status, l.down_status_long, l.due_status, l.collection_label,
         l.compliance_mandatory, l.compliance_advisory, l.authority_label,
       ),
     ).doesNotContain("")
