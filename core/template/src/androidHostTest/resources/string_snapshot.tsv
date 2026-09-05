@@ -200,7 +200,7 @@ feature/login	email_use_different	Use a different email
 feature/login	google_logo	Google Logo
 feature/login	legal_disclaimer	SquawkIt is a personal convenience tool and is not a certified maintenance record system. It does not replace the official logbooks required by applicable authority.
 feature/login	login_prompt	Log in or continue anonymously to manage your maintenance records.
-feature/login	mission_statement	Track the important stuff you maintain
+feature/login	mission_statement	Track the important stuff
 feature/login	onboarding_ads_consent_body	Ads cover the servers, so SquawkIt stays free. Next, choose how they can use your data.
 feature/login	onboarding_ads_consent_eyebrow	Keeping the lights on
 feature/login	onboarding_ads_consent_headline	A few small ads 📣
