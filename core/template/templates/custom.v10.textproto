@@ -8,7 +8,7 @@
 # Where home proves the system is not aviation with the nouns swapped, this proves the system
 # degrades to nothing gracefully. The two failures are different, which is why both presets exist.
 #
-# See templates/README.md before editing, and compile with ./compile-template.sh custom.v6
+# See templates/README.md before editing, and compile with ./compile-template.sh custom.v10
 #
 # v5 is a MERGE FIX, and the reason it exists is worth reading before the next parallel branch.
 # #781 and #783 each bumped this preset to v3 — one adding `name` and custom_spec_fields, the
@@ -36,8 +36,10 @@
 #
 # v9 lists `schedule_types` explicitly: calendar time only: the preset declares no meter to schedule against.
 #
+# v10 adds `due_status` — the label the dashboard's due card carries, "Tasks due".
+
 id: "custom"
-version: 9
+version: 10
 min_app_version: 0
 
 display_name: "Custom"
@@ -65,6 +67,7 @@ lexicon {
   ready_status: "Ready"
   down_status: "Down"
   down_status_long: "Out of service"
+  due_status: "Tasks due"
 
   collection_label: "Stuff"
   authority_label: "Manufacturer"

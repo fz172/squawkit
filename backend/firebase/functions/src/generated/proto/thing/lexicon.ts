@@ -161,7 +161,15 @@ export interface Lexicon {
     | undefined;
   /** service bulletin · TSB · manufacturer notice */
   complianceAdvisory: ComplianceTerm | undefined;
-  emptyStates: EmptyStates | undefined;
+  emptyStates:
+    | EmptyStates
+    | undefined;
+  /**
+   * The label the dashboard's due card and the task chip carry: "Maintenance due" · "Service
+   * due". Not derivable from `task` — the airplane's noun is "maintenance task" and its tab
+   * "Maint.", neither of which is the word this card has always shown (design §10a).
+   */
+  dueStatus: string;
 }
 
 function createBaseNoun(): Noun {
@@ -639,6 +647,7 @@ function createBaseLexicon(): Lexicon {
     complianceMandatory: undefined,
     complianceAdvisory: undefined,
     emptyStates: undefined,
+    dueStatus: "",
   };
 }
 
@@ -685,6 +694,9 @@ export const Lexicon: MessageFns<Lexicon> = {
     }
     if (message.emptyStates !== undefined) {
       EmptyStates.encode(message.emptyStates, writer.uint32(130).fork()).join();
+    }
+    if (message.dueStatus !== "") {
+      writer.uint32(138).string(message.dueStatus);
     }
     return writer;
   },
@@ -808,6 +820,14 @@ export const Lexicon: MessageFns<Lexicon> = {
           message.emptyStates = EmptyStates.decode(reader, reader.uint32());
           continue;
         }
+        case 17: {
+          if (tag !== 138) {
+            break;
+          }
+
+          message.dueStatus = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -865,6 +885,11 @@ export const Lexicon: MessageFns<Lexicon> = {
         : isSet(object.empty_states)
         ? EmptyStates.fromJSON(object.empty_states)
         : undefined,
+      dueStatus: isSet(object.dueStatus)
+        ? globalThis.String(object.dueStatus)
+        : isSet(object.due_status)
+        ? globalThis.String(object.due_status)
+        : "",
     };
   },
 
@@ -912,6 +937,9 @@ export const Lexicon: MessageFns<Lexicon> = {
     if (message.emptyStates !== undefined) {
       obj.emptyStates = EmptyStates.toJSON(message.emptyStates);
     }
+    if (message.dueStatus !== "") {
+      obj.dueStatus = message.dueStatus;
+    }
     return obj;
   },
 
@@ -946,6 +974,7 @@ export const Lexicon: MessageFns<Lexicon> = {
     message.emptyStates = (object.emptyStates !== undefined && object.emptyStates !== null)
       ? EmptyStates.fromPartial(object.emptyStates)
       : undefined;
+    message.dueStatus = object.dueStatus ?? "";
     return message;
   },
 };

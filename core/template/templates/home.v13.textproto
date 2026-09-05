@@ -1,11 +1,11 @@
-# The home preset — canonical template (id "home", version 12).
+# The home preset — canonical template (id "home", version 13).
 #
 # THE LOAD-BEARING ONE (pivot_rollout_design.md §5). A house has no make, no model and no serial
 # number (PRD §4.2), and its meter list is EMPTY (§4.4). Everything this file leaves out is the
 # point: it is the preset that finds screens with an aviation assumption baked in. `car` would find
 # almost none of them — it maps onto the airplane shape almost field for field.
 #
-# See templates/README.md before editing, and compile with ./compile-template.sh home.v12
+# See templates/README.md before editing, and compile with ./compile-template.sh home.v13
 #
 # v4 adds `empty_states` — the per-domain empty-state copy that used to be fixed aviation
 # text in strings.xml. A noun could not fix those strings: what makes them useful is the
@@ -42,8 +42,10 @@
 # v12 takes the airplane's nouns — "maintenance task" and "work log" — in place of v11's "upkeep"
 # and "maintenance history".
 #
+# v13 adds `due_status` — the label the dashboard's due card carries, "Maintenance due".
+
 id: "home"
-version: 12
+version: 13
 min_app_version: 0
 
 display_name: "Home"
@@ -73,6 +75,7 @@ lexicon {
   # stays "GROUNDED" regardless — renaming an id drops every user's per-channel settings.
   down_status: "Urgent"
   down_status_long: "Needs urgent attention"
+  due_status: "Maintenance due"
 
   collection_label: "Property"
   authority_label: "Manufacturer"

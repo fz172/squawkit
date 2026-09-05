@@ -33,8 +33,6 @@ import dev.fanfly.wingslog.core.ui.theme.statusColors
 import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
 import org.jetbrains.compose.resources.stringResource
-import wingslog.feature.tasks.sharedassets.generated.resources.Res
-import wingslog.feature.tasks.sharedassets.generated.resources.maintenance_due_title
 import wingslog.feature.tasks.viewing.generated.resources.critical_airworthiness
 import wingslog.feature.tasks.viewing.generated.resources.due_date
 import wingslog.feature.tasks.viewing.generated.resources.label_due_engine_value
@@ -77,7 +75,7 @@ fun CriticalAlertsSection(
         verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
       ) {
         Text(
-          text = stringResource(Res.string.maintenance_due_title),
+          text = LexiconFormatter.titleCase(LocalThingLexicon.current.due_status),
           style = MaterialTheme.typography.headlineSmall,
           fontWeight = FontWeight.Bold,
           color = titleColor,

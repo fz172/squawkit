@@ -6,7 +6,7 @@
 # intersection rather than either domain's: `vehicle`, and a component set that reads correctly for
 # both. The PRD table still lists them as two rows and is stale on this point.
 #
-# See templates/README.md before editing, and compile with ./compile-template.sh automotive.v10
+# See templates/README.md before editing, and compile with ./compile-template.sh automotive.v11
 #
 # v4 adds `empty_states` — the per-domain empty-state copy that used to be fixed aviation
 # text in strings.xml. A noun could not fix those strings: what makes them useful is the
@@ -33,8 +33,10 @@
 #
 # v10 lists `schedule_types` explicitly: calendar time and the meter (the odometer).
 #
+# v11 adds `due_status` — the label the dashboard's due card carries, "Service due".
+
 id: "automotive"
-version: 10
+version: 11
 min_app_version: 0
 
 display_name: "Automotive"
@@ -56,6 +58,7 @@ lexicon {
   ready_status: "Ready"
   down_status: "Down"
   down_status_long: "Off the road"
+  due_status: "Service due"
 
   collection_label: "Garage"
   authority_label: "NHTSA"

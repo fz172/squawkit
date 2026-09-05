@@ -46,7 +46,6 @@ import dev.fanfly.wingslog.thing.MaintenanceLog
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.add
 import wingslog.core.sharedassets.generated.resources.remove
-import wingslog.feature.logs.sharedassets.generated.resources.maintenance_history
 import wingslog.feature.tasks.update.generated.resources.Res
 import wingslog.feature.tasks.update.generated.resources.component_type_description
 import wingslog.feature.tasks.update.generated.resources.no_log_history
@@ -54,7 +53,6 @@ import wingslog.feature.tasks.update.generated.resources.task_description_placeh
 import wingslog.feature.tasks.update.generated.resources.task_title
 import wingslog.feature.tasks.update.generated.resources.task_title_helper
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
-import wingslog.feature.logs.sharedassets.generated.resources.Res as LogsRes
 
 /**
  * Basics tab for Add/Edit Maintenance Task screens.
@@ -167,7 +165,7 @@ private fun MaintenanceHistorySection(
       verticalAlignment = Alignment.CenterVertically,
       horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-      FormSectionLabel(stringResource(LogsRes.string.maintenance_history))
+      FormSectionLabel(LexiconFormatter.titleCasePlural(LocalThingLexicon.current.logNoun))
       OutlinedButton(
         onClick = onAddLog,
         contentPadding = PaddingValues(

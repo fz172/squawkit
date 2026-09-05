@@ -135,4 +135,8 @@ message Lexicon {
   ComplianceTerm compliance_advisory = 15;   // service bulletin · TSB · manufacturer notice
 
   EmptyStates empty_states = 16;
+  // The label the dashboard's due card and the task chip carry: "Maintenance due" · "Service
+  // due". Not derivable from `task` — the airplane's noun is "maintenance task" and its tab
+  // "Maint.", neither of which is the word this card has always shown (design §10a).
+  string due_status = 17;
 }

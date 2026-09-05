@@ -4,7 +4,7 @@
 # twin-engine boat has two of them accruing separately. That makes this the preset that exercises
 # `component_slot_key` outside the airplane, which is the field a single-engine assumption hides.
 #
-# See templates/README.md before editing, and compile with ./compile-template.sh boat.v11
+# See templates/README.md before editing, and compile with ./compile-template.sh boat.v12
 #
 # v4 adds `empty_states` — the per-domain empty-state copy that used to be fixed aviation
 # text in strings.xml. A noun could not fix those strings: what makes them useful is the
@@ -35,8 +35,10 @@
 #
 # v11 lists `schedule_types` explicitly: calendar time and the meter (engine hours).
 #
+# v12 adds `due_status` — the label the dashboard's due card carries, "Service due".
+
 id: "boat"
-version: 11
+version: 12
 min_app_version: 0
 
 display_name: "Boat"
@@ -56,6 +58,7 @@ lexicon {
   # the full phrase for the notification channel a user sees in system settings (PRD §8.5).
   down_status: "DIW"
   down_status_long: "Dead in the Water"
+  due_status: "Service due"
 
   collection_label: "Fleet"
   authority_label: "Manufacturer"
