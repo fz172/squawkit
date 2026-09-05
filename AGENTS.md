@@ -639,7 +639,7 @@ reviewable.
 4. **Import ordering** — `kotlin.*` before `kotlinx.*`, alphabetical within each group.
 5. **Other formatting issues** — inconsistent indentation, long lines that should wrap.
 
-### Popups start their own text-selection scope (hook-enforced)
+### Popups start their own text-selection scope (enforced)
 
 The web host wraps the app in a `SelectionContainer` (via `TextSelectionLayer`,
 `core/ui/adaptive`) so text can be selected and copied like on any web page. Compose can only
@@ -653,12 +653,19 @@ starts a fresh scope:
   directly. Same names and signatures; only the import differs.
 - Nav dialog destinations are registered with `selectionDialog(...)` (`feature/shell`), never the
   raw `dialog(...)` builder.
-- A raw `Dialog` / `Popup` / `ExposedDropdownMenu` wraps its content in `TextSelectionLayer`
-  (content stays selectable — detail sheets) or `DisableSelection` (menus).
+- Every other popup-creating API — `ui.window.Dialog` / `Popup`, `BasicAlertDialog`,
+  `ExposedDropdownMenu`, the tooltips, the expanded search bars, `ModalWideNavigationRail` — wraps
+  its content in `TextSelectionLayer` (content stays selectable — detail sheets) or
+  `DisableSelection` (menus). A module that cannot depend on `core/ui` imports a shadowed popup
+  under an alias (`as M3DropdownMenu`) and does the same.
+- No wildcard import of `material3`, `foundation` or `ui.window`.
 
-The `.claude/hooks/no-raw-popups.sh` hook rejects the raw Material imports and a raw popup in a
-file that names neither wrapper. The mobile hosts leave `LocalTextSelectionLayers` off, so none of
-this changes their behaviour.
+`scripts/check-popup-selection-scopes.sh` enforces all of it. It runs as the Gradle task
+`checkPopupSelectionScopes` under every module's `lint` (so CI and the pre-push checklist), and
+the `.claude/hooks/no-raw-popups.sh` hook runs it per edit. There is no runtime catch — the crash
+fires inside foundation's pointer handling and takes the composition down — so the static rules
+are the only guard; extend the script's lists when a Material upgrade adds a popup. The mobile
+hosts leave `LocalTextSelectionLayers` off, so none of this changes their behaviour.
 
 ### User-facing strings must live in `strings.xml` (required)
 

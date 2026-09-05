@@ -36,3 +36,30 @@ subprojects {
     }
   }
 }
+// Static guard for the web text-selection crash (AGENTS.md § Popups start their own
+// text-selection scope). Runs under every module's `lint`, so CI and the pre-push checklist
+// cover it; the .claude hook runs the same script per edit.
+val checkPopupSelectionScopes by tasks.registering(Exec::class) {
+  group = "verification"
+  description = "Checks every popup resets the text-selection scope at its boundary"
+  val script = layout.projectDirectory.file("scripts/check-popup-selection-scopes.sh")
+  inputs.file(script)
+  inputs.files(
+    fileTree(layout.projectDirectory) {
+      include("**/src/**/*.kt")
+      exclude("**/build/**", "**/node_modules/**", ".gradle/**")
+    }
+  )
+  val marker = layout.buildDirectory.file("reports/popup-selection-scopes.txt")
+  outputs.file(marker)
+  commandLine("bash", script.asFile.absolutePath)
+  doLast {
+    marker.get().asFile.apply {
+      parentFile.mkdirs()
+      writeText("ok\n")
+    }
+  }
+}
+allprojects {
+  tasks.matching { it.name == "lint" }.configureEach { dependsOn(checkPopupSelectionScopes) }
+}

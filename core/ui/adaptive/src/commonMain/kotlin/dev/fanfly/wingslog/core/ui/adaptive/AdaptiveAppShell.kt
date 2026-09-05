@@ -31,7 +31,6 @@ import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Keyboard
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -104,6 +103,8 @@ import wingslog.core.sharedassets.generated.resources.switcher_add_thing
 import wingslog.core.sharedassets.generated.resources.switcher_select_thing
 import wingslog.core.sharedassets.generated.resources.your_stuff
 import wingslog.core.sharedassets.generated.resources.Res as UiRes
+// core/ui/adaptive cannot use the core/ui shadow; the menu body resets the scope itself.
+import androidx.compose.material3.DropdownMenu as M3DropdownMenu
 
 /** Lightweight thing projection used by the shell's switcher. */
 data class ShellThing(
@@ -1012,7 +1013,7 @@ private fun ThingDropdown(
   onAddThing: (() -> Unit)?,
   onEnterInviteCode: (() -> Unit)?,
 ) {
-  DropdownMenu(expanded = expanded, onDismissRequest = onDismiss) {
+  M3DropdownMenu(expanded = expanded, onDismissRequest = onDismiss) {
     DisableSelection {
       Text(
         // Never a template's collection_label: the switcher spans the account, so titling it "Fleet"
