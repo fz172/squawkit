@@ -1,5 +1,5 @@
 <meta charset="utf-8">
-<title>export</title>
+<title>portrait</title>
 <style>
   @font-face {
     font-family: 'Space Grotesk';
@@ -18,21 +18,22 @@
     --deep-navy: #001849;
     --aviation-blue: #1A5FAE;
     --panel-slate: #525E72;
+    --bezel: #14141A;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body {
-    width: 1080px;
-    height: 2364px;
+    width: __CANVAS_W__px;
+    height: __CANVAS_H__px;
     overflow: hidden;
     background: #fff;
   }
 
   .canvas {
     position: relative;
-    width: 1080px;
-    height: 2364px;
-    container-type: inline-size;
+    width: __CANVAS_W__px;
+    height: __CANVAS_H__px;
+    container-type: size;
   }
 
   .bg {
@@ -45,9 +46,9 @@
 
   .headline {
     position: absolute;
-    top: 6.5%;
-    left: 7.5%;
-    right: 8%;
+    top: 6.5cqh;
+    left: 7.5cqw;
+    right: 8cqw;
     z-index: 4;
   }
   .headline .l1, .headline .l2 {
@@ -61,10 +62,7 @@
   .headline .l2 { color: var(--aviation-blue); }
 
   .wordmark {
-    position: absolute;
-    left: 7.5%;
-    top: 17.5%;
-    z-index: 4;
+    margin-top: 3.2cqw;
     font-family: 'JetBrains Mono', monospace;
     font-weight: 500;
     font-size: 3cqw;
@@ -74,24 +72,35 @@
   }
   .wordmark b { color: var(--aviation-blue); font-weight: 500; }
 
-  .phone {
+  .device {
     position: absolute;
-    width: 82%;
-    aspect-ratio: 1080 / 2364;
-    right: -9%;
-    bottom: -4%;
-    transform: rotate(-6.5deg);
+    aspect-ratio: __DEVICE_ASPECT__;
+    right: -9cqw;
+    bottom: -4cqh;
     transform-origin: bottom right;
-    border-radius: 9.5cqw;
-    border: 2.4cqw solid #14141A;
-    background: #14141A;
+    background: var(--bezel);
     box-shadow:
       0 6cqw 8cqw -3cqw rgba(0, 24, 73, 0.45),
       0 1.4cqw 0 rgba(255,255,255,0.08) inset;
     overflow: hidden;
     z-index: 2;
   }
-  .phone::before {
+  .device img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: __OBJECT_POSITION__;
+    display: block;
+  }
+
+  /* Phone: thick bezel, big radius, a notch, tilted harder. */
+  .device.phone {
+    width: 82cqw;
+    transform: rotate(-6.5deg);
+    border-radius: 9.5cqw;
+    border: 2.4cqw solid var(--bezel);
+  }
+  .device.phone::before {
     content: "";
     position: absolute;
     top: 0;
@@ -99,16 +108,17 @@
     transform: translateX(-50%);
     width: 34%;
     height: 3.6%;
-    background: #14141A;
+    background: var(--bezel);
     border-radius: 0 0 18px 18px;
     z-index: 3;
   }
-  .phone img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: __OBJECT_POSITION__;
-    display: block;
+
+  /* Tablet: thin even bezel, small radius, no notch, gentle tilt. */
+  .device.tablet {
+    width: 78cqw;
+    transform: rotate(-4deg);
+    border-radius: 3.2cqw;
+    border: 1.4cqw solid var(--bezel);
   }
 </style>
 
@@ -118,11 +128,10 @@
   <div class="headline">
     <p class="l1">__HEADLINE_L1__</p>
     <p class="l2">__HEADLINE_L2__</p>
+    <p class="wordmark">Squawk<b>It</b> · __FEATURE_LABEL__</p>
   </div>
 
-  <p class="wordmark">Squawk<b>It</b> · __FEATURE_LABEL__</p>
-
-  <div class="phone">
+  <div class="device __DEVICE__">
     <img src="data:image/png;base64,__SCREENSHOT_B64__" alt="" />
   </div>
 </div>
