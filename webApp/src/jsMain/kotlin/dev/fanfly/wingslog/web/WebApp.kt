@@ -12,8 +12,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.navigation.ExperimentalBrowserHistoryApi
-import androidx.navigation.bindToBrowserNavigation
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -35,6 +33,7 @@ import dev.fanfly.wingslog.feature.sharing.update.RedeemHost
 import dev.fanfly.wingslog.feature.shell.AdaptiveShellRoute
 import dev.fanfly.wingslog.feature.shell.NavigateToLoginOnSignOut
 import dev.fanfly.wingslog.feature.shell.PopToShellOnNotificationTap
+import dev.fanfly.wingslog.feature.shell.ShellNavigationMirror
 import dev.fanfly.wingslog.feature.shell.TrackRootScreenViews
 import dev.fanfly.wingslog.feature.shell.formDialogs
 import dev.fanfly.wingslog.feature.shell.settingsDetailRoutes
@@ -53,7 +52,6 @@ import wingslog.core.sharedassets.generated.resources.Res as UiRes
  * binding, the resource warm-up workaround, the SEO login landing page, the browser gutter
  * color, and the tab-retitling analytics wrapper.
  */
-@OptIn(ExperimentalBrowserHistoryApi::class)
 @Composable
 fun WebApp() {
   val appearanceController: AppearanceController = koinInject()
@@ -95,13 +93,16 @@ fun WebApp() {
         val analytics =
           remember(baseAnalytics) { BrowserTitleAnalytics(baseAnalytics) }
         var browserNavigationBound by remember { mutableStateOf(false) }
+        // Tabs and sidebar-tier Settings pages navigate outside the root controller; the history
+        // binding reads them through this. See ShellBrowserHistory.kt.
+        val shellNavigation = remember { ShellNavigationMirror() }
 
         NavigateToLoginOnSignOut(navController)
         PopToShellOnNotificationTap(navController)
 
         LaunchedEffect(browserNavigationBound) {
           if (browserNavigationBound) {
-            navController.bindToBrowserNavigation()
+            bindToBrowserHistory(navController, shellNavigation)
           }
         }
 
@@ -118,8 +119,6 @@ fun WebApp() {
           LocalThingCapabilities provides thingCapabilities,
           // The fields a template declares — its meters, slots and spec fields (#703).
           LocalThingTemplate provides thingTemplate,
-        // The fields a template declares — its meters, slots and spec fields (#703).
-        LocalThingTemplate provides thingTemplate,
         ) {
           NavHost(
             navController = navController,
@@ -147,6 +146,7 @@ fun WebApp() {
               AdaptiveShellRoute(
                 navController = navController,
                 shellEntry = entry,
+                navigationMirror = shellNavigation,
               )
             }
             formDialogs(navController)
