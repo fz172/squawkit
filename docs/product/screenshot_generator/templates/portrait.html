@@ -1,0 +1,206 @@
+<meta charset="utf-8">
+<title>portrait</title>
+<style>
+  @font-face {
+    font-family: 'Space Grotesk';
+    font-weight: 700;
+    font-style: normal;
+    src: url(data:font/ttf;base64,__SG_BOLD__) format('truetype');
+  }
+  @font-face {
+    font-family: 'JetBrains Mono';
+    font-weight: 500;
+    font-style: normal;
+    src: url(data:font/ttf;base64,__JBM_MEDIUM__) format('truetype');
+  }
+
+  :root {
+    --deep-navy: #001849;
+    --aviation-blue: #1A5FAE;
+    --panel-slate: #525E72;
+    --bezel: #14141A;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    width: __CANVAS_W__px;
+    height: __CANVAS_H__px;
+    overflow: hidden;
+    background: #fff;
+  }
+
+  .canvas {
+    position: relative;
+    width: __CANVAS_W__px;
+    height: __CANVAS_H__px;
+    container-type: size;
+  }
+
+  .bg {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(120% 70% at 15% 0%, #E7EFFD 0%, transparent 55%),
+      linear-gradient(165deg, #DCE7FC 0%, #F3F6FC 46%, #FDFCF9 100%);
+  }
+
+  .headline {
+    position: absolute;
+    top: 6.5cqh;
+    left: 7.5cqw;
+    right: 8cqw;
+    z-index: 4;
+  }
+  .headline .l1, .headline .l2 {
+    font-family: 'Space Grotesk', system-ui, sans-serif;
+    font-weight: 700;
+    font-size: calc(7.6cqw * __HEADLINE_SCALE__);
+    line-height: 0.98;
+    letter-spacing: -0.01em;
+  }
+  .headline .l1 { color: var(--deep-navy); }
+  .headline .l2 { color: var(--aviation-blue); }
+
+  .wordmark {
+    margin-top: 3.2cqw;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 500;
+    font-size: 3cqw;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--panel-slate);
+  }
+  .wordmark b { color: var(--aviation-blue); font-weight: 500; }
+
+  .device {
+    position: absolute;
+    aspect-ratio: __DEVICE_ASPECT__;
+    right: -9cqw;
+    bottom: -4cqh;
+    transform-origin: bottom right;
+    background: var(--bezel);
+    box-shadow:
+      0 6cqw 8cqw -3cqw rgba(0, 24, 73, 0.45),
+      0 1.4cqw 0 rgba(255,255,255,0.08) inset;
+    overflow: hidden;
+    z-index: 2;
+  }
+
+  /* The screen fills the frame; the image covers it. */
+  .screen {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    container-type: inline-size;
+  }
+  .screen img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: __OBJECT_POSITION__;
+    display: block;
+  }
+
+  /* Derived iOS screen: shift the capture up past its Android status bar and draw an iOS bar over
+     the strip that opens up. Sizes are iPhone 16 Pro Max points at 3x, as a fraction of width. */
+  .screen.ios img {
+    height: auto;
+    margin-top: calc(var(--crop) * -1 + 12.3cqw);
+  }
+  .screen.ios .statusbar {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 12.3cqw;
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 8cqw 0 8.5cqw;
+    padding-top: 3.2cqw;
+    color: #fff;
+    fill: #fff;
+    stroke: #fff;
+    font-family: -apple-system, 'SF Pro Text', 'Helvetica Neue', system-ui, sans-serif;
+    font-weight: 600;
+    font-size: 4.1cqw;
+    letter-spacing: -0.02em;
+  }
+  .screen.ios .icons { display: flex; align-items: center; gap: 1.6cqw; }
+  .screen.ios .cell { width: 4.6cqw; height: 2.8cqw; }
+  .screen.ios .wifi { width: 4.1cqw; height: 3.1cqw; }
+  .screen.ios .battery { width: 6.8cqw; height: 3.2cqw; }
+
+  /* Phone: thick bezel, big radius, a notch, tilted harder. */
+  .device.phone {
+    width: 82cqw;
+    transform: rotate(-6.5deg);
+    border-radius: 9.5cqw;
+    border: 2.4cqw solid var(--bezel);
+  }
+  .device.phone::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 34%;
+    height: 3.6%;
+    background: var(--bezel);
+    border-radius: 0 0 18px 18px;
+    z-index: 3;
+  }
+
+  /* iPhone: a floating Dynamic Island instead of the notch. */
+  .device.iphone::before {
+    top: 1.4cqw;
+    width: 28%;
+    height: 3.6%;
+    border-radius: 999px;
+  }
+
+  /* Stack: several devices, the front one lower-right, each one behind it
+     stepping up and to the left so its header stays visible. */
+  .stack .device {
+    right: calc(-9cqw + var(--i) * 12cqw);
+    bottom: calc(-4cqh + var(--i) * 2cqh);
+    z-index: calc(3 - var(--i));
+  }
+  .stack .device.phone { width: 74cqw; }
+  .stack .device.tablet { width: 66cqw; }
+
+  /* Tablet: thin even bezel, small radius, no notch, gentle tilt. */
+  .device.tablet {
+    width: 78cqw;
+    transform: rotate(-4deg);
+    border-radius: 3.2cqw;
+    border: 1.4cqw solid var(--bezel);
+  }
+</style>
+
+<div class="canvas __CANVAS_CLASS__">
+  <div class="bg"></div>
+
+  <div class="headline">
+    <p class="l1">__HEADLINE_L1__</p>
+    <p class="l2">__HEADLINE_L2__</p>
+    <p class="wordmark">Squawk<b>It</b> · __FEATURE_LABEL__</p>
+  </div>
+
+__DEVICES__
+</div>
+
+<script>
+  // Colour the iOS status bar like the app's own top edge: sample the capture just inside the
+  // strip that used to be the Android status bar. data: images do not taint the canvas.
+  addEventListener('load', () => {
+    document.querySelectorAll('.screen.ios').forEach((screen) => {
+      const img = screen.querySelector('img');
+      const c = document.createElement('canvas');
+      c.width = img.naturalWidth; c.height = img.naturalHeight;
+      c.getContext('2d').drawImage(img, 0, 0);
+      const crop = parseFloat(screen.style.getPropertyValue('--crop')) / 100 * img.naturalWidth;
+      const [r, g, b] = c.getContext('2d').getImageData(Math.round(img.naturalWidth / 2), Math.round(crop / 2), 1, 1).data;
+      screen.querySelector('.statusbar').style.background = `rgb(${r},${g},${b})`;
+    });
+  });
+</script>
