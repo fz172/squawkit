@@ -422,40 +422,53 @@ class SharingManagerImpl(
       // not actually a member of publishes nothing.
       val targets = (memberships(uid) + listOfNotNull(alsoPublishTo)).distinct()
 
+      // Each target on its own: the rules deny the ACL read for an own thing that was never shared
+      // (no doc to find our uid in), and one such denial must not skip the shares after it.
       targets.forEach { acId ->
-        // Each target sits in its host's namespace (#204): our own thing under us, a shared one
-        // under whoever hosts it. A target we can place in neither is not ours to publish into.
-        val hostUid = observeHostUid(acId).first() ?: return@forEach
-
-        // The ACL decides whether we're a member at all, and with what role. An own thing that was
-        // never shared has no ACL doc — skip it rather than bootstrapping a share nobody asked for.
-        val myRole = shareDoc(hostUid, acId).get()
-          .takeIf { it.exists }
-          ?.data<RootWire>()
-          ?.memberRoles
-          ?.get(uid)
-          ?: return@forEach
-
-        val memberDoc = shareDoc(hostUid, acId).collection(MEMBERS)
-          .document(uid)
-        if (memberDoc.get().exists) {
-          memberDoc.set(update, merge = true)
-        } else {
-          // No doc yet: the hosting owner, who never redeems. Create it with the role the ACL already
-          // grants — rules pin it to exactly that, so this can't mint membership or escalate.
-          memberDoc.set(
-            MemberCreateWire(
-              role = myRole,
-              displayName = update.displayName,
-              photoUrl = update.photoUrl,
-              technicianMirror = update.technicianMirror,
-              addedAt = Timestamp.now(),
-              invitedBy = uid,
-            ),
-          )
-        }
+        runCatching { publishMirrorTo(uid, acId, update) }
+          .onFailure {
+            logger.d(it) { "Mirror publish skipped for one thing; retries on next app start" }
+          }
       }
     }.onFailure { logger.w(it) { "Mirror publish failed; retries on next app start" } }
+
+  private suspend fun publishMirrorTo(
+    uid: String,
+    acId: String,
+    update: MemberSelfUpdateWire,
+  ) {
+    // Each target sits in its host's namespace (#204): our own thing under us, a shared one
+    // under whoever hosts it. A target we can place in neither is not ours to publish into.
+    val hostUid = observeHostUid(acId).first() ?: return
+
+    // The ACL decides whether we're a member at all, and with what role. An own thing that was
+    // never shared has no ACL doc — skip it rather than bootstrapping a share nobody asked for.
+    val myRole = shareDoc(hostUid, acId).get()
+      .takeIf { it.exists }
+      ?.data<RootWire>()
+      ?.memberRoles
+      ?.get(uid)
+      ?: return
+
+    val memberDoc = shareDoc(hostUid, acId).collection(MEMBERS)
+      .document(uid)
+    if (memberDoc.get().exists) {
+      memberDoc.set(update, merge = true)
+    } else {
+      // No doc yet: the hosting owner, who never redeems. Create it with the role the ACL already
+      // grants — rules pin it to exactly that, so this can't mint membership or escalate.
+      memberDoc.set(
+        MemberCreateWire(
+          role = myRole,
+          displayName = update.displayName,
+          photoUrl = update.photoUrl,
+          technicianMirror = update.technicianMirror,
+          addedAt = Timestamp.now(),
+          invitedBy = uid,
+        ),
+      )
+    }
+  }
 
   @OptIn(ExperimentalCoroutinesApi::class)
   override fun observeLinkedTechnicians(): Flow<List<Technician>> {

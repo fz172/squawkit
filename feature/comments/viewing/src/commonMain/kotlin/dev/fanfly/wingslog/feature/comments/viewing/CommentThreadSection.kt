@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
@@ -41,11 +40,13 @@ import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.datetime.toDisplayDateTime
 import dev.fanfly.wingslog.core.ui.common.compose.AlertDialog
 import dev.fanfly.wingslog.core.ui.common.compose.DropdownMenu
+import dev.fanfly.wingslog.core.ui.common.compose.FormKeyboard
 import dev.fanfly.wingslog.core.ui.common.compose.FormTextField
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.core.ui.theme.WingslogTheme
+import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.core.ui.theme.statusColors
+import dev.fanfly.wingslog.core.ui.widget.avataricon.compose.AvatarIcon
 import dev.fanfly.wingslog.feature.comments.model.CommentEntry
 import dev.fanfly.wingslog.feature.comments.model.CommentThreadState
 import org.jetbrains.compose.resources.stringResource
@@ -157,6 +158,7 @@ fun CommentThreadSection(
           minLines = 2,
           onValueChange = onDraftChange,
           modifier = Modifier.weight(1f),
+          keyboardOptions = FormKeyboard.Sentences,
         )
         FilledIconButton(
           onClick = onPost,
@@ -235,7 +237,11 @@ private fun CommentCard(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
       ) {
-        AuthorAvatar(comment.authorName)
+        AvatarIcon(
+          displayName = comment.authorName,
+          photoUri = comment.authorPhotoUrl,
+          size = Spacing.huge,
+        )
         Column(modifier = Modifier.weight(1f)) {
           Row(
             horizontalArrangement = Arrangement.spacedBy(Spacing.small),
@@ -258,29 +264,29 @@ private fun CommentCard(
           )
           comment.editedAt?.takeIf { !comment.isDeleted }
             ?.let { editedAt ->
-            // Caution, the app's "something changed here" tone — the same amber the due-state
-            // language uses. Never a fourth colour invented for this one line.
-            val editedTone = MaterialTheme.statusColors.caution.accent
-            Row(
-              horizontalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
-              verticalAlignment = Alignment.CenterVertically,
-            ) {
-              Icon(
-                Icons.Default.Edit,
-                contentDescription = null,
-                tint = editedTone,
-                modifier = Modifier.size(Spacing.medium),
-              )
-              Text(
-                text = stringResource(
-                  Res.string.comment_edited,
-                  editedAt.toDisplayDateTime()
-                ),
-                style = WingslogTypography.dataSmall,
-                color = editedTone,
-              )
+              // Caution, the app's "something changed here" tone — the same amber the due-state
+              // language uses. Never a fourth colour invented for this one line.
+              val editedTone = MaterialTheme.statusColors.caution.accent
+              Row(
+                horizontalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
+                verticalAlignment = Alignment.CenterVertically,
+              ) {
+                Icon(
+                  Icons.Default.Edit,
+                  contentDescription = null,
+                  tint = editedTone,
+                  modifier = Modifier.size(Spacing.medium),
+                )
+                Text(
+                  text = stringResource(
+                    Res.string.comment_edited,
+                    editedAt.toDisplayDateTime()
+                  ),
+                  style = WingslogTypography.dataSmall,
+                  color = editedTone,
+                )
+              }
             }
-          }
         }
         if (comment.isActionable) {
           Box {
@@ -291,7 +297,10 @@ private fun CommentCard(
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
               )
             }
-            DropdownMenu(expanded = menuOpen, onDismissRequest = onDismissMenu) {
+            DropdownMenu(
+              expanded = menuOpen,
+              onDismissRequest = onDismissMenu
+            ) {
               DropdownMenuItem(
                 text = { Text(stringResource(Res.string.comment_edit)) },
                 leadingIcon = {
@@ -370,31 +379,14 @@ private fun DeletedBody(deletedAt: Instant?) {
   Text(
     text = stringResource(
       Res.string.comment_deleted,
-      deletedAt?.toDisplayDateTime().orEmpty(),
+      deletedAt?.toDisplayDateTime()
+        .orEmpty(),
     ),
     style = MaterialTheme.typography.bodyMedium,
     color = MaterialTheme.colorScheme.onSurfaceVariant,
     textDecoration = TextDecoration.LineThrough,
     fontStyle = FontStyle.Italic,
   )
-}
-
-@Composable
-private fun AuthorAvatar(authorName: String) {
-  Surface(
-    shape = CircleShape,
-    color = MaterialTheme.colorScheme.secondaryContainer,
-    modifier = Modifier.size(Spacing.huge),
-  ) {
-    Box(contentAlignment = Alignment.Center) {
-      Text(
-        text = authorName.initials(),
-        style = MaterialTheme.typography.labelLarge,
-        fontWeight = FontWeight.Bold,
-        color = MaterialTheme.colorScheme.onSecondaryContainer,
-      )
-    }
-  }
 }
 
 @Composable
@@ -416,18 +408,6 @@ private fun MineBadge() {
   }
 }
 
-/**
- * Up to two initials from a display name. Falls back to `?` rather than an empty circle, so an
- * unnamed author still reads as a person rather than as a rendering fault.
- */
-internal fun String.initials(): String =
-  split(' ')
-    .filter { it.isNotBlank() }
-    .take(2)
-    .map { it.first().uppercaseChar() }
-    .joinToString("")
-    .ifEmpty { "?" }
-
 @Preview(showBackground = true)
 @Composable
 private fun CommentThreadSectionPreview() {
@@ -448,6 +428,7 @@ private fun CommentThreadSectionPreview() {
           CommentEntry(
             id = "c2",
             authorName = "Fan Zhang",
+            authorPhotoUrl = "https://example.invalid/fan.jpg",
             text = "Holding this until the 100-hr next week so we only pull the panel once.",
             createdAt = Instant.fromEpochSeconds(1_787_100_000),
             editedAt = Instant.fromEpochSeconds(1_787_100_600),

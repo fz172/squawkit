@@ -25,6 +25,11 @@ data class CommentEntry(
   val id: String,
   /** Denormalized at post time — see comment.proto. Blank when the author never had a name. */
   val authorName: String,
+  /**
+   * Resolved at render time from the share roster (or the signed-in account for your own rows),
+   * never stored — so it follows the author's current picture. Null → initials.
+   */
+  val authorPhotoUrl: String? = null,
   val text: String,
   val createdAt: Instant,
   /** Non-null once the author has edited the text. */
