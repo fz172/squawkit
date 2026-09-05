@@ -1,11 +1,5 @@
 package dev.fanfly.wingslog.feature.login
 
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -18,16 +12,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -44,14 +34,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
 import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
+import dev.fanfly.wingslog.core.ui.brand.ThingHero
 import dev.fanfly.wingslog.core.ui.theme.AviationBlue10
 import dev.fanfly.wingslog.core.ui.theme.AviationBlue80
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.rememberBrandHeadlineFamily
-import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.app_name
-import wingslog.core.sharedassets.generated.resources.ic_launcher_foreground
 import wingslog.feature.login.generated.resources.Res
 import wingslog.feature.login.generated.resources.legal_disclaimer
 import wingslog.feature.login.generated.resources.mission_statement
@@ -66,6 +55,9 @@ internal val LoginOnBackgroundMuted = Color(0xFF8AAAD4)
 internal val LoginErrorText = Color(0xFFFF8A80)
 internal val AppleButtonBackground = Color(0xFF000000)
 internal val AppleButtonContent = Color(0xFFFFFFFF)
+
+/** The part of the brand name set in blue, on every host. */
+private const val BRAND_SUFFIX = "It"
 
 internal val LoginButtonLabelStyle = TextStyle(
   fontWeight = FontWeight.SemiBold,
@@ -155,57 +147,37 @@ internal fun LoginBackdrop(content: @Composable ColumnScope.() -> Unit) {
   }
 }
 
-/** The bobbing brand-plane mark at the top of the sign-in surfaces. */
+/**
+ * The brand hero at the top of the sign-in surfaces: Thing glyphs fly into a crate that becomes the
+ * plane (see `ThingHero`). [animate] false shows the resting state, for surfaces reached from the
+ * login page where replaying the sequence would be noise.
+ */
 @Composable
-internal fun LoginPlaneArt() {
-  val bobTransition = rememberInfiniteTransition(label = "bob")
-  val bobY by bobTransition.animateFloat(
-    initialValue = 0f,
-    targetValue = -6f,
-    animationSpec = infiniteRepeatable(
-      animation = tween(1700, easing = FastOutSlowInEasing),
-      repeatMode = RepeatMode.Reverse,
-    ),
-    label = "bobY",
-  )
-  val bobRotation by bobTransition.animateFloat(
-    initialValue = -1.5f,
-    targetValue = 1f,
-    animationSpec = infiniteRepeatable(
-      animation = tween(1700, easing = FastOutSlowInEasing),
-      repeatMode = RepeatMode.Reverse,
-    ),
-    label = "bobRotation",
-  )
-
+internal fun LoginPlaneArt(animate: Boolean = true) {
   Box(
     modifier = Modifier
       .fillMaxWidth()
       .height(240.dp),
     contentAlignment = Alignment.Center,
   ) {
-    Icon(
-      painter = painterResource(UiRes.drawable.ic_launcher_foreground),
-      contentDescription = null,
-      modifier = Modifier
-        .size(180.dp)
-        .offset(y = bobY.dp)
-        .rotate(bobRotation),
+    ThingHero(
+      size = 220.dp,
       tint = AviationBlue80,
+      fanTint = AviationBlue80.copy(alpha = 0.55f),
+      animate = animate,
     )
   }
 }
 
-/** The "SquawkIt." wordmark with the blue trailing dot, plus the mission statement beneath it. */
+/** The "SquawkIt" wordmark, "It" in the brand light blue, plus the mission statement beneath it. */
 @Composable
 internal fun LoginWordmark() {
   val headlineFamily = rememberBrandHeadlineFamily()
+  val appName = stringResource(UiRes.string.app_name)
   Text(
     text = buildAnnotatedString {
-      append(stringResource(UiRes.string.app_name))
-      withStyle(SpanStyle(color = AviationBlue80)) {
-        append(".")
-      }
+      append(appName.removeSuffix(BRAND_SUFFIX))
+      withStyle(SpanStyle(color = AviationBlue80)) { append(BRAND_SUFFIX) }
     },
     style = TextStyle(
       fontFamily = headlineFamily,

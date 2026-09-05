@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="crate">
+  <defs><linearGradient id="g" gradientUnits="userSpaceOnUse" x1="200" y1="200" x2="830" y2="830"><stop offset="0" stop-color="#00E5FF"/><stop offset="1" stop-color="#651FFF"/></linearGradient></defs>
+  <path d="M250,500Q250,470 231.5,446.4L158.5,353.6Q140,330 170,330L365,330Q395,330 405.1,358.3L434.9,441.7Q445,470 475,470L549,470Q579,470 589.1,441.7L618.9,358.3Q629,330 659,330L854,330Q884,330 865.5,353.6L792.5,446.4Q774,470 774,500L774,790Q774,820 744,820L280,820Q250,820 250,790ZM292,527Q292,545 310,545L714,545Q732,545 732,527L732,488Q732,470 714,470L310,470Q292,470 292,488Z" fill="url(#g)" fill-rule="nonzero"/>
+</svg>
