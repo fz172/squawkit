@@ -26,11 +26,12 @@ import androidx.compose.ui.unit.Dp
 
 /**
  * The brand hero for the sign-in surfaces: five Thing glyphs fly into a crate, the crate becomes
- * the plane, and the glyphs settle behind it. See [ThingHeroTimeline] for the choreography.
+ * the plane, the glyphs show behind it for a beat and drift away, and the plane bobs alone. See
+ * [ThingHeroTimeline] for the choreography.
  *
  * [size] is the square the plane and its fan are laid out in; flying glyphs start outside it, so
  * a parent that clips (a card) will cut them at its edge, which reads as flying into the card.
- * With [animate] false the hero renders its resting state, still wobbling.
+ * With [animate] false the hero renders its resting state: the plane, bobbing.
  */
 @Composable
 fun ThingHero(
@@ -40,12 +41,16 @@ fun ThingHero(
   modifier: Modifier = Modifier,
   animate: Boolean = true,
 ) {
-  val clock = remember { Animatable(if (animate) 0f else ThingHeroTimeline.TOTAL_MS.toFloat()) }
+  val clock =
+    remember { Animatable(if (animate) 0f else ThingHeroTimeline.TOTAL_MS.toFloat()) }
   LaunchedEffect(animate) {
     if (animate && clock.value < ThingHeroTimeline.TOTAL_MS) {
       clock.animateTo(
         ThingHeroTimeline.TOTAL_MS.toFloat(),
-        tween(ThingHeroTimeline.TOTAL_MS - clock.value.toInt(), easing = LinearEasing),
+        tween(
+          ThingHeroTimeline.TOTAL_MS - clock.value.toInt(),
+          easing = LinearEasing
+        ),
       )
     }
   }
@@ -54,7 +59,10 @@ fun ThingHero(
     initialValue = 0f,
     targetValue = ThingHeroTimeline.TWO_PI,
     animationSpec = infiniteRepeatable(
-      animation = tween(ThingHeroTimeline.IDLE_PERIOD_MS, easing = LinearEasing),
+      animation = tween(
+        ThingHeroTimeline.IDLE_PERIOD_MS,
+        easing = LinearEasing
+      ),
       repeatMode = RepeatMode.Restart,
     ),
     label = "heroPhase",
@@ -77,22 +85,14 @@ fun ThingHero(
   val planeSize = size * ThingHeroTimeline.PLANE_SIZE
 
   Box(modifier = modifier.size(size), contentAlignment = Alignment.Center) {
-    // Fan: the glyphs at rest, behind the plane.
+    // Fan: the glyphs re-emerging behind the plane for a beat before they drift away.
     for (i in 0 until ThingHeroTimeline.GLYPH_COUNT) {
       Glyph(
         vector = ThingGlyphs.heroSequence[i],
         size = size * ThingHeroTimeline.FAN_SIZE,
         tint = fanTint,
         sizePx = sizePx,
-        frame = {
-          val ms = clock.value.toInt()
-          val f = ThingHeroTimeline.fanned(i, ms)
-          val w = ThingHeroTimeline.idleWeight(ms)
-          f.copy(
-            y = f.y + ThingHeroTimeline.fanWobbleY(i, phase) * w,
-            rotation = f.rotation + ThingHeroTimeline.fanWobbleRotation(i, phase) * w,
-          )
-        },
+        frame = { ThingHeroTimeline.fanned(i, clock.value.toInt()) },
       )
     }
 
@@ -109,7 +109,9 @@ fun ThingHero(
     Canvas(
       modifier = Modifier
         .size(planeSize)
-        .graphicsLayer { alpha = ThingHeroTimeline.morphOutlineAlpha(clock.value.toInt()) },
+        .graphicsLayer {
+          alpha = ThingHeroTimeline.morphOutlineAlpha(clock.value.toInt())
+        },
     ) {
       val t = ThingHeroTimeline.morph(clock.value.toInt())
       drawPath(morph.pathAt(t, this.size.width, morphPath), color = tint)
@@ -122,7 +124,12 @@ fun ThingHero(
       tint = tint,
       sizePx = sizePx,
       frame = {
-        ThingHeroTimeline.Frame(0f, 0f, 1f, ThingHeroTimeline.detailsAlpha(clock.value.toInt()))
+        ThingHeroTimeline.Frame(
+          0f,
+          0f,
+          1f,
+          ThingHeroTimeline.detailsAlpha(clock.value.toInt())
+        )
       },
     )
 

@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.core.ui.brand
 
+import dev.fanfly.wingslog.core.ui.brand.ThingHeroTimeline.FLY_DISTANCE
 import kotlin.math.PI
 import kotlin.math.sin
 
@@ -12,11 +13,11 @@ import kotlin.math.sin
  * 1. The crate pops in at the centre.
  * 2. Five Thing glyphs fly in from off-screen, one after another, shrinking into the crate.
  * 3. The crate's outline morphs into the plane body; the plane's details fade in over it.
- * 4. The five glyphs re-emerge smaller behind the plane and settle into a fan.
- * 5. Everything wobbles gently, forever.
+ * 4. The five glyphs re-emerge smaller behind the plane, hold a beat, then drift out and fade.
+ * 5. The plane, alone, bobs gently forever.
  */
 object ThingHeroTimeline {
-  const val TOTAL_MS = 4600
+  const val GLYPH_COUNT = 5
 
   private const val CRATE_IN_START = 0
   private const val CRATE_IN_MS = 420
@@ -29,9 +30,13 @@ object ThingHeroTimeline {
   const val FAN_START = MORPH_END
   private const val FAN_STAGGER = 90
   private const val FAN_MS = 620
+  private const val FAN_HOLD_MS = 900
+  private const val FAN_OUT_MS = 700
+  const val FAN_OUT_START =
+    FAN_START + (GLYPH_COUNT - 1) * FAN_STAGGER + FAN_MS + FAN_HOLD_MS
+  const val FAN_END = FAN_OUT_START + (GLYPH_COUNT - 1) * FAN_STAGGER / 2 + FAN_OUT_MS
   const val IDLE_START = FAN_START + 540
-
-  const val GLYPH_COUNT = 5
+  const val TOTAL_MS = FAN_END
 
   /** Where each glyph flies in from, as a direction; multiplied by [FLY_DISTANCE]. */
   private val FLY_FROM = listOf(
@@ -43,7 +48,7 @@ object ThingHeroTimeline {
   )
   private const val FLY_DISTANCE = 0.95f
 
-  /** Where each glyph settles in the fan behind the plane. */
+  /** Where each glyph pauses in the fan behind the plane before drifting out along the same line. */
   private val FAN_AT = listOf(
     -0.36f to -0.20f,
     0.36f to -0.18f,
@@ -57,7 +62,13 @@ object ThingHeroTimeline {
   const val FLY_SIZE = 0.34f
   const val FAN_SIZE = 0.28f
 
-  data class Frame(val x: Float, val y: Float, val scale: Float, val alpha: Float, val rotation: Float = 0f)
+  data class Frame(
+    val x: Float,
+    val y: Float,
+    val scale: Float,
+    val alpha: Float,
+    val rotation: Float = 0f
+  )
 
   /** The crate as a full vector: visible until the morph starts, then handed to the outline. */
   fun crate(ms: Int): Frame {
@@ -75,11 +86,16 @@ object ThingHeroTimeline {
     return 1f - progress(ms, MORPH_START + MORPH_MS - 140, 140)
   }
 
-  fun planeAlpha(ms: Int): Float = progress(ms, MORPH_START + MORPH_MS - 140, 140)
+  fun planeAlpha(ms: Int): Float =
+    progress(ms, MORPH_START + MORPH_MS - 140, 140)
 
   /** Tail pieces and speed dashes fade in over the second half of the morph. */
   fun detailsAlpha(ms: Int): Float =
-    progress(ms, MORPH_START + MORPH_MS / 2, MORPH_MS / 2) * (1f - planeAlpha(ms))
+    progress(
+      ms,
+      MORPH_START + MORPH_MS / 2,
+      MORPH_MS / 2
+    ) * (1f - planeAlpha(ms))
 
   /** Glyph [index] on its way into the crate; alpha 0 before and after. */
   fun flying(index: Int, ms: Int): Frame {
@@ -98,28 +114,35 @@ object ThingHeroTimeline {
     )
   }
 
-  /** Glyph [index] re-emerging behind the plane into its fan slot. */
+  /**
+   * Glyph [index] behind the plane: emerging into its fan slot, holding, then drifting further out
+   * along the same line while fading. Hidden before and after, so the idle state is the plane alone.
+   */
   fun fanned(index: Int, ms: Int): Frame {
     val p = ease(progress(ms, FAN_START + index * FAN_STAGGER, FAN_MS))
     if (p <= 0f) return HIDDEN
+    val out =
+      ease(progress(ms, FAN_OUT_START + index * FAN_STAGGER / 2, FAN_OUT_MS))
+    if (out >= 1f) return HIDDEN
     val (fx, fy) = FAN_AT[index]
-    return Frame(x = fx * p, y = fy * p, scale = 0.4f + 0.6f * p, alpha = 0.6f * p)
+    val reach = p + 0.45f * out
+    return Frame(
+      x = fx * reach,
+      y = fy * reach,
+      scale = 0.4f + 0.6f * p,
+      alpha = 0.6f * p * (1f - out)
+    )
   }
 
   /** 0 before the idle wobble begins, 1 once it is fully in. */
   fun idleWeight(ms: Int): Float = progress(ms, IDLE_START, 600)
 
-  /** Slow rotation in degrees for a fanned glyph; [phase] is the shared idle clock in radians. */
-  fun fanWobbleRotation(index: Int, phase: Float): Float =
-    4f * sin(phase + index * 1.3f).toFloat()
-
-  fun fanWobbleY(index: Int, phase: Float): Float =
-    0.012f * sin(phase * 0.8f + index * 0.9f).toFloat()
-
   /** The plane's bob, matching the pre-existing hero: about six points up and a degree of roll. */
-  fun planeBobY(phase: Float): Float = -0.017f * (0.5f + 0.5f * sin(phase).toFloat())
+  fun planeBobY(phase: Float): Float =
+    -0.017f * (0.5f + 0.5f * sin(phase).toFloat())
 
-  fun planeBobRotation(phase: Float): Float = -0.25f + 1.25f * sin(phase).toFloat()
+  fun planeBobRotation(phase: Float): Float =
+    -0.25f + 1.25f * sin(phase).toFloat()
 
   const val IDLE_PERIOD_MS = 3400
   const val TWO_PI = (2 * PI).toFloat()
