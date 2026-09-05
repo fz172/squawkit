@@ -4,10 +4,6 @@ plugins {
   alias(libs.plugins.kotlin.compose)
 }
 
-compose.resources {
-  publicResClass = true
-}
-
 kotlin {
   jvmToolchain(21)
 
