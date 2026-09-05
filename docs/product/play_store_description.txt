@@ -1,47 +1,47 @@
 SquawkIt keeps a maintenance record for everything you own — an aircraft, a car or motorcycle, a bike, a boat, a home — in one app that works wherever you are, with or without a signal.
 
-Your records are written to your device first, so SquawkIt works fully offline. No spinner waiting on a connection before you can note a squawk after landing, log an oil change in the driveway, or check whether the furnace service is due. When you're signed in and back online, everything syncs automatically and stays backed up and consistent across every device you use.
+Records are written to your device first, so SquawkIt works fully offline. Note a squawk after landing, log an oil change in the driveway, or check whether the furnace service is due without waiting on a connection. When you're signed in and back online, everything syncs automatically across every device you use.
 
 Every Thing speaks its own language
-Pick what you're maintaining and SquawkIt adapts: an airplane has an airframe, engines and propellers, tail numbers and tach time, squawks and AOG; a car has a VIN and an odometer; a home has no meters at all, just chores and attention items. The fields, the words, and the schedule come with the type — you never fill in a form that was written for something else.
+Pick what you're maintaining and SquawkIt adapts: an airplane has an airframe, engines and propellers, tail numbers and tach time, squawks and AOG; a car has a VIN and an odometer; a home has no meters at all, just chores and attention items. The fields, the words, and the schedule come with the type.
 
 Start with a recommended schedule
-Each type ships a starter pack: the annual, ELT, transponder and pitot-static checks for an airplane; oil changes, tire rotation and brake fluid for a car; HVAC filters, gutters, water-heater flush and dryer vent for a house. Keep what applies, skip what doesn't, edit anything later. Recommendations, not authority — your manufacturer's manual is the source of truth.
+Each type ships a starter pack: the annual, ELT, transponder and pitot-static checks for an airplane; oil changes, tire rotation and brake fluid for a car; HVAC filters, gutters and water-heater flush for a house. Keep what applies, skip what doesn't, edit anything later. Recommendations, not authority — your manufacturer's manual is the source of truth.
 
 Never miss a due date
-Recurring tasks track by calendar time, by meter — engine hours, odometer, ride distance — or on condition, and OVERDUE and DUE SOON items surface at the top of every list. Status is the first thing you see, not something you dig for.
+Recurring tasks track by calendar time, by meter — engine hours, odometer, ride distance — or on condition. OVERDUE and DUE SOON items surface at the top of every list.
 
 Log issues the moment you spot them
 Squawks on an airplane, issues on a car, attention items at home — record what's wrong, track it to resolution, and let anything that grounds the airplane or takes the car off the road jump to the top.
 
 Keep a real history
-Every piece of work is logged against the Thing it belongs to, with a summary of counts and current readings so you can see the whole story at a glance — for a pre-buy inspection, an annual, a resale, or handing the house keys to a new owner.
+Every piece of work is logged against the Thing it belongs to, with a summary of counts and current readings — for a pre-buy inspection, an annual, a resale, or handing the keys to a new owner.
 
 Attribute work to the right person
 Keep a roster of the people who work on your things — an A&P, an ASE mechanic, an electrician, or yourself — with their certifications, and attach their sign-offs to the work they performed.
 
 Attach the paperwork
-Photos and documents — logbook pages, invoices, inspection reports, receipts — attach directly to the record they belong to, so the paper trail travels with the digital one.
+Photos and documents — logbook pages, invoices, inspection reports, receipts — attach directly to the record they belong to.
 
 Export anytime
-Generate PDF, CSV, and XLSX exports of your records — for one Thing or all of them, optionally filtered by date — bundled into a single download. Email a copy to yourself, your mechanic, or a buyer whenever you need to hand off records.
+Generate PDF, CSV, and XLSX exports for one Thing or all of them, optionally filtered by date, in a single download. Email a copy to yourself, your mechanic, or a buyer.
 
 Built to feel like an instrument, not a spreadsheet
-SquawkIt's design borrows from the instrument panel: a calm blue palette, clear status colors, and monospaced technical data so identifiers and readings are always easy to scan. No clutter, no hunting through menus — just the information you need, when you need it.
+A calm blue palette, clear status colors, and monospaced technical data so identifiers and readings are always easy to scan. No clutter, no hunting through menus.
 
 One app, every screen size
-The same interface adapts from phone to tablet to the web — a focused single-column view in your pocket, a full sidebar and multi-pane layout on a bigger screen. Learn it once, use it anywhere.
+The same interface adapts from phone to tablet to the web — a focused single-column view in your pocket, a full sidebar and multi-pane layout on a bigger screen.
 
 YOUR DATA, BACKED UP AND UNDER YOUR CONTROL
 
-Sign in with Google or Apple and your records are automatically backed up to the cloud and kept in sync across every device where you're signed in — phone, tablet, and the web. Prefer to work fully offline? SquawkIt keeps working; sync picks up the moment you're back online.
+Sign in with Google or Apple and your records are backed up to the cloud and kept in sync across phone, tablet, and the web. Prefer to work fully offline? SquawkIt keeps working; sync picks up the moment you're back online.
 
-Your records are yours. We don't sell your data or use it to serve ads, and you can export a complete copy at any time — for a sale, an inspection, or simply a personal backup that survives any future migration.
+Your records are yours. We don't sell your data or use it to serve ads, and you can export a complete copy at any time.
 
 A NOTE ON CERTIFIED RECORDS
 
-SquawkIt is a personal convenience tool — it doesn't replace the official aircraft logbooks required by your aviation authority, or any other record you're required to keep. Keep your certified records as you always have, and treat SquawkIt's exports as backups and snapshots, not the legal source of truth.
+SquawkIt is a personal convenience tool — it doesn't replace the official aircraft logbooks required by your aviation authority, or any other record you're required to keep. Treat SquawkIt's exports as backups and snapshots, not the legal source of truth.
 
 WHO IT'S FOR
 
-Aircraft owners tracking their airplane's inspections and squawks. Mechanics managing sign-offs across a shop's worth of aircraft. Anyone who owns a car, a boat, a bike, or a house and wants to stop finding out about maintenance the expensive way.
+Aircraft owners tracking inspections and squawks. Mechanics managing sign-offs across a shop's worth of aircraft. Anyone who owns a car, a boat, a bike, or a house and wants to stop finding out about maintenance the expensive way.
