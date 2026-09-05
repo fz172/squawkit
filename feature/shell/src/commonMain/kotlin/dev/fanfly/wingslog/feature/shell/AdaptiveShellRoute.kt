@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -49,14 +50,25 @@ import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 /**
  * The adaptive-shell destination body shared by every host: wires [AdaptiveShellViewModel]
  * into [AdaptiveAppShell] and logs section changes as page views. Hosts register it on
- * [Screen.AdaptiveShell]'s route.
+ * [Screen.AdaptiveShell]'s route. [navigationMirror] is for a host that mirrors the shell's
+ * non-route navigation state elsewhere (web's browser history); see [ShellNavigationMirror].
  */
 @Composable
 fun AdaptiveShellRoute(
   navController: NavController,
   shellEntry: NavBackStackEntry,
+  navigationMirror: ShellNavigationMirror? = null,
 ) {
   val viewModel = koinViewModel<AdaptiveShellViewModel>()
+  if (navigationMirror != null) {
+    DisposableEffect(navigationMirror, viewModel) {
+      navigationMirror.attachShell(viewModel::selectSection)
+      onDispose { navigationMirror.detachShell() }
+    }
+    LaunchedEffect(navigationMirror, viewModel) {
+      viewModel.uiState.collect { navigationMirror.publishSection(it.section) }
+    }
+  }
   // Hoisted to the shell, not to Settings: an email upgrade link reopens the app on whatever
   // destination it starts at, so the flow has to be mounted for the link to be seen at all.
   val upgradeViewModel = koinViewModel<AccountUpgradeViewModel>()
@@ -170,6 +182,7 @@ fun AdaptiveShellRoute(
         SettingsSection(
           rootNavController = navController,
           upgradeViewModel = upgradeViewModel,
+          navigationMirror = navigationMirror,
         )
       } else {
         ShellSectionBody(
@@ -246,9 +259,16 @@ private const val SETTINGS_ROOT_ROUTE = "settings_root"
 private fun SettingsSection(
   rootNavController: NavController,
   upgradeViewModel: AccountUpgradeViewModel,
+  navigationMirror: ShellNavigationMirror?,
 ) {
   if (LocalLayoutTier.current.hasFullSidebar) {
     val settingsNav: NavHostController = rememberNavController()
+    if (navigationMirror != null) {
+      DisposableEffect(navigationMirror, settingsNav) {
+        navigationMirror.attachSettingsNav(settingsNav)
+        onDispose { navigationMirror.detachSettingsNav(settingsNav) }
+      }
+    }
     // Page-view feeder 3: sidebar-tier settings sub-pages run on this separate NavController,
     // which the root observer doesn't watch.
     val analytics = LocalAnalytics.current
