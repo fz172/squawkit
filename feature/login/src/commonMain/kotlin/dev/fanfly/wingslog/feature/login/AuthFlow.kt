@@ -17,6 +17,7 @@ import dev.fanfly.wingslog.feature.login.onboarding.NotificationPrimerScreen
 import dev.fanfly.wingslog.feature.login.onboarding.OnboardingActions
 import dev.fanfly.wingslog.feature.login.onboarding.OnboardingPreferences
 import dev.fanfly.wingslog.feature.login.onboarding.WelcomeScreen
+import dev.fanfly.wingslog.feature.login.onboarding.resolveWelcomeName
 import dev.fanfly.wingslog.feature.notifications.permission.NotificationPermission
 import dev.fanfly.wingslog.feature.notifications.permission.PermissionState
 import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
@@ -72,6 +73,13 @@ fun AuthFlow(
   val selfName by actions.observeSelfName()
     .collectAsState(null)
 
+  // The name the welcome step greets, resolved on the way into it rather than read live from
+  // [selfName]. That flow starts null and reaches the local technician record only after the store
+  // read settles — and on a fresh Google/Apple signup there is no local record at all yet, just the
+  // provider's display name — so greeting straight off it showed the no-name fallback (sometimes
+  // long enough to be the whole welcome, sometimes flipping to the real name mid-animation).
+  var welcomeName by remember { mutableStateOf("") }
+
   // The primer's Continue must re-enter here, below the notification check, rather than back through
   // proceedPastOnboarding() — that would re-read a permission state the OS may not have committed yet
   // and show the primer again. This is the one place ads consent gets resolved, instead of leaving it
@@ -117,7 +125,12 @@ fun AuthFlow(
   // authStateChanged (below), which can race the manual onLoginSuccess call. Reset whenever we
   // return to the Login step so a user who backs out can sign in again.
   var advanced by remember { mutableStateOf(false) }
-  LaunchedEffect(step) { if (step == AuthStep.Login) advanced = false }
+  LaunchedEffect(step) {
+    if (step == AuthStep.Login) {
+      advanced = false
+      welcomeName = ""
+    }
+  }
 
   // A returning user who already finished onboarding skips straight through; otherwise route to
   // name entry / welcome. Shared by every sign-in path (Google/Apple/email/anonymous).
@@ -132,6 +145,7 @@ fun AuthFlow(
         if (accountName.isBlank() && localSelfName.isBlank()) {
           step = AuthStep.NameEntry
         } else if (!onboardingPreferences.checkHasSeenWelcome()) {
+          welcomeName = resolveWelcomeName(localSelfName, accountName)
           step = AuthStep.Welcome
         } else {
           proceedPastOnboarding()
@@ -191,13 +205,14 @@ fun AuthFlow(
       onNext = { name ->
         scope.launch {
           actions.saveSelfName(name)
+          welcomeName = name.trim()
           step = AuthStep.Welcome
         }
       },
     )
 
     AuthStep.Welcome -> WelcomeScreen(
-      name = selfName.orEmpty(),
+      name = welcomeName.ifBlank { selfName.orEmpty().trim() },
       onDone = {
         scope.launch {
           onboardingPreferences.setHasSeenWelcome()
