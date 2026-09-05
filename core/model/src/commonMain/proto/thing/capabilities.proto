@@ -66,4 +66,9 @@ message Capabilities {
   // last did it" means the anniversary (PRD §4.6). The form copies it onto each TimeRule it writes
   // (`TimeRule.due_on_anniversary`), so the due engine needs no template in hand.
   bool month_intervals_due_on_anniversary = 11;
+
+  // Offers the calendar-anchored SeasonalRule in the task form. Home only: gutters in April and
+  // October is a fact about a house, and a vehicle's upkeep is interval-from-last-service on its
+  // meter. A preset with `meters` off and this off would have only calendar time, which is fine.
+  bool seasonal_rules = 12;
 }

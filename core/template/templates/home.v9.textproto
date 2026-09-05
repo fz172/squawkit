@@ -5,7 +5,7 @@
 # point: it is the preset that finds screens with an aviation assumption baked in. `car` would find
 # almost none of them — it maps onto the airplane shape almost field for field.
 #
-# See templates/README.md before editing, and compile with ./compile-template.sh home.v8
+# See templates/README.md before editing, and compile with ./compile-template.sh home.v9
 #
 # v4 adds `empty_states` — the per-domain empty-state copy that used to be fixed aviation
 # text in strings.xml. A noun could not fix those strings: what makes them useful is the
@@ -32,8 +32,10 @@
 # the end of the month — the aviation snap was the app's default until the capability existed.
 # The three seasonal chores become SeasonalRules instead of 6- and 12-month approximations.
 #
+# v9 enables `seasonal_rules`: the form offers the calendar-anchored schedule here and nowhere else.
+#
 id: "home"
-version: 8
+version: 9
 min_app_version: 0
 
 display_name: "Home"
@@ -112,6 +114,10 @@ capabilities {
   # month it lands in (PRD §4.6). The end-of-month snap is aviation's: an annual legally means the
   # last day of the month, a water heater flushed on the 14th means the 14th.
   month_intervals_due_on_anniversary: true
+
+  # The only preset that offers the seasonal tracking mode (PRD §4.6). Gutters in April and October
+  # is a fact about a house; a vehicle's upkeep runs from its last service on its meter.
+  seasonal_rules: true
 
   # The top tier is labelled from `down_status` above, so this reads "Urgent" here and "AOG" on an
   # airplane. Same enum, same lifecycle, different word.

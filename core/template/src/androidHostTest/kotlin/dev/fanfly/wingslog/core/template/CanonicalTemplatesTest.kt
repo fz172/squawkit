@@ -319,6 +319,15 @@ class CanonicalTemplatesTest {
     }
   }
 
+  /** Seasonal scheduling is a house's (PRD §4.6): every other preset tracks on its meter or the calendar. */
+  @Test
+  fun onlyTheHomeOffersSeasonalRules() {
+    all.forEach { template ->
+      val seasonal = template.capabilities?.seasonal_rules == true
+      assertWithMessage(template.id).that(seasonal).isEqualTo(template.id == "home")
+    }
+  }
+
   @Test
   fun theHomePackIsSeasonalWhereThePrdSaysSo() {
     // PRD §5.1: HVAC service and gutters in April & October, the sprinkler blowout in October.

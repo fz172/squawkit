@@ -4,7 +4,7 @@
 # twin-engine boat has two of them accruing separately. That makes this the preset that exercises
 # `component_slot_key` outside the airplane, which is the field a single-engine assumption hides.
 #
-# See templates/README.md before editing, and compile with ./compile-template.sh boat.v9
+# See templates/README.md before editing, and compile with ./compile-template.sh boat.v10
 #
 # v4 adds `empty_states` — the per-domain empty-state copy that used to be fixed aviation
 # text in strings.xml. A noun could not fix those strings: what makes them useful is the
@@ -30,8 +30,11 @@
 # the end of the month — the aviation snap was the app's default until the capability existed.
 # The winterize starter task becomes a SeasonalRule (October).
 #
+# v10 puts winterize back on a 12-month interval: seasonal scheduling is the home preset's alone,
+# and a task the form cannot edit is worse than an interval the owner can.
+#
 id: "boat"
-version: 9
+version: 10
 min_app_version: 0
 
 display_name: "Boat"
@@ -176,9 +179,9 @@ certifications {
 }
 
 # The starter pack (PRD §4.9). Engine hours are the boat's meter, so the engine items schedule on
-# it with a calendar backstop for a boat that barely leaves the slip. Winterizing is calendar-
-# anchored — `months` makes it a SeasonalRule due by the end of October whatever month the boat
-# was last laid up.
+# it with a calendar backstop for a boat that barely leaves the slip. Winterizing is a 12-month
+# interval dated from creation rather than a SeasonalRule: only the home preset offers seasonal
+# scheduling, and a boat's owner can move the first due to October from the form.
 starter_tasks {
   title: "Engine oil & filter"
   description: "Whichever comes first. Check the manual for the interval that applies to your engine."
@@ -203,7 +206,7 @@ starter_tasks {
   title: "Winterize"
   description: "Before the first freeze: drain or antifreeze the raw-water side, fog the engine, stabilize the fuel."
   default_selected: true
-  months: 10
+  interval_months: 12
 }
 starter_tasks {
   title: "Sacrificial anodes"

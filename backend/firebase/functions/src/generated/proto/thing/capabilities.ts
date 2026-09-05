@@ -139,6 +139,12 @@ export interface Capabilities {
    * (`TimeRule.due_on_anniversary`), so the due engine needs no template in hand.
    */
   monthIntervalsDueOnAnniversary: boolean;
+  /**
+   * Offers the calendar-anchored SeasonalRule in the task form. Home only: gutters in April and
+   * October is a fact about a house, and a vehicle's upkeep is interval-from-last-service on its
+   * meter. A preset with `meters` off and this off would have only calendar time, which is fine.
+   */
+  seasonalRules: boolean;
 }
 
 function createBaseCapabilities(): Capabilities {
@@ -152,6 +158,7 @@ function createBaseCapabilities(): Capabilities {
     sections: [],
     exportLayout: 0,
     monthIntervalsDueOnAnniversary: false,
+    seasonalRules: false,
   };
 }
 
@@ -187,6 +194,9 @@ export const Capabilities: MessageFns<Capabilities> = {
     }
     if (message.monthIntervalsDueOnAnniversary !== false) {
       writer.uint32(88).bool(message.monthIntervalsDueOnAnniversary);
+    }
+    if (message.seasonalRules !== false) {
+      writer.uint32(96).bool(message.seasonalRules);
     }
     return writer;
   },
@@ -290,6 +300,14 @@ export const Capabilities: MessageFns<Capabilities> = {
           message.monthIntervalsDueOnAnniversary = reader.bool();
           continue;
         }
+        case 12: {
+          if (tag !== 96) {
+            break;
+          }
+
+          message.seasonalRules = reader.bool();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -324,6 +342,11 @@ export const Capabilities: MessageFns<Capabilities> = {
         : isSet(object.month_intervals_due_on_anniversary)
         ? globalThis.Boolean(object.month_intervals_due_on_anniversary)
         : false,
+      seasonalRules: isSet(object.seasonalRules)
+        ? globalThis.Boolean(object.seasonalRules)
+        : isSet(object.seasonal_rules)
+        ? globalThis.Boolean(object.seasonal_rules)
+        : false,
     };
   },
 
@@ -356,6 +379,9 @@ export const Capabilities: MessageFns<Capabilities> = {
     if (message.monthIntervalsDueOnAnniversary !== false) {
       obj.monthIntervalsDueOnAnniversary = message.monthIntervalsDueOnAnniversary;
     }
+    if (message.seasonalRules !== false) {
+      obj.seasonalRules = message.seasonalRules;
+    }
     return obj;
   },
 
@@ -373,6 +399,7 @@ export const Capabilities: MessageFns<Capabilities> = {
     message.sections = object.sections?.map((e) => e) || [];
     message.exportLayout = object.exportLayout ?? 0;
     message.monthIntervalsDueOnAnniversary = object.monthIntervalsDueOnAnniversary ?? false;
+    message.seasonalRules = object.seasonalRules ?? false;
     return message;
   },
 };

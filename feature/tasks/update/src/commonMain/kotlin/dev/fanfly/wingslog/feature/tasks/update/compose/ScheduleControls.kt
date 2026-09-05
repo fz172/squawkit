@@ -53,6 +53,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.fanfly.wingslog.core.template.LocalThingCapabilities
 import dev.fanfly.wingslog.core.template.LocalThingTemplate
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.thing.MaintenanceTask
@@ -70,11 +71,18 @@ import wingslog.feature.tasks.update.generated.resources.schedule_unit_years
 import wingslog.feature.tasks.update.generated.resources.schedule_with_another_work
 import wingslog.feature.tasks.update.generated.resources.schedule_with_another_work_description
 
+/**
+ * Which ways of tracking the template offers (PRD §4.6): calendar time always; the meter only
+ * where `capabilities.meters` declares one — a home has nothing to count — and the seasonal
+ * anchor only where `capabilities.seasonal_rules` asks for it. A mode a stored task already uses
+ * stays visible so the task can still be edited if its preset later stopped offering it.
+ */
 @Composable
 internal fun TrackingModeChoice(
   selected: ScheduleMode?,
   onSelect: (ScheduleMode) -> Unit,
 ) {
+  val capabilities = LocalThingCapabilities.current
   Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
     TrackingModeButton(
       icon = Icons.Default.CalendarToday,
@@ -83,25 +91,27 @@ internal fun TrackingModeChoice(
       onClick = { onSelect(ScheduleMode.TIME) },
       modifier = Modifier.weight(1f),
     )
-    TrackingModeButton(
-      icon = Icons.Default.Schedule,
-      // The meter's own name — "Odometer" on a car. "Tach Hours" offered an aeroplane's meter to
-      // every template, which is the same bug as the unit beside the value (#759).
-      label = LocalThingTemplate.current?.meters?.firstOrNull()?.label
-        ?: stringResource(Res.string.schedule_track_tach_hours),
-      selected = selected == ScheduleMode.HOURS,
-      onClick = { onSelect(ScheduleMode.HOURS) },
-      modifier = Modifier.weight(1f),
-    )
-    // Calendar-anchored: due in named months whatever the last date was (PRD §4.6). Offered on
-    // every preset — an aircraft can want a pre-season check as much as a house wants its gutters.
-    TrackingModeButton(
-      icon = Icons.Default.EventRepeat,
-      label = stringResource(Res.string.schedule_track_seasonal),
-      selected = selected == ScheduleMode.SEASONAL,
-      onClick = { onSelect(ScheduleMode.SEASONAL) },
-      modifier = Modifier.weight(1f),
-    )
+    if (capabilities.meters || selected == ScheduleMode.HOURS) {
+      TrackingModeButton(
+        icon = Icons.Default.Schedule,
+        // The meter's own name — "Odometer" on a car. "Tach Hours" offered an aeroplane's meter to
+        // every template, which is the same bug as the unit beside the value (#759).
+        label = LocalThingTemplate.current?.meters?.firstOrNull()?.label
+          ?: stringResource(Res.string.schedule_track_tach_hours),
+        selected = selected == ScheduleMode.HOURS,
+        onClick = { onSelect(ScheduleMode.HOURS) },
+        modifier = Modifier.weight(1f),
+      )
+    }
+    if (capabilities.seasonal_rules || selected == ScheduleMode.SEASONAL) {
+      TrackingModeButton(
+        icon = Icons.Default.EventRepeat,
+        label = stringResource(Res.string.schedule_track_seasonal),
+        selected = selected == ScheduleMode.SEASONAL,
+        onClick = { onSelect(ScheduleMode.SEASONAL) },
+        modifier = Modifier.weight(1f),
+      )
+    }
   }
 }
 

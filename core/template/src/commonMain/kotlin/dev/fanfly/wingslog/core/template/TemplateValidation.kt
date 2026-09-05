@@ -53,6 +53,10 @@ fun ThingTemplate.structuralProblems(): List<String> = buildList {
     if (!hasRule) add("$id: starter task '$label' carries no rule")
     task.months.filter { it !in 1..12 }
       .forEach { add("$id: starter task '$label' names month $it, which is not 1–12") }
+    // A seasonal task on a preset whose form cannot edit one is a task the user cannot change.
+    if (task.months.isNotEmpty() && capabilities?.seasonal_rules != true) {
+      add("$id: starter task '$label' is seasonal but the preset does not enable seasonal_rules")
+    }
     if (task.meter_key.isNotEmpty() && task.meter_key !in meterKeys) {
       add("$id: starter task '$label' schedules against meter '${task.meter_key}', which is not declared")
     }
