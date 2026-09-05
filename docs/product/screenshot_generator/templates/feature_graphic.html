@@ -1,0 +1,163 @@
+<meta charset="utf-8">
+<title>feature graphic</title>
+<style>
+  @font-face {
+    font-family: 'Space Grotesk';
+    font-weight: 700;
+    font-style: normal;
+    src: url(data:font/ttf;base64,__SG_BOLD__) format('truetype');
+  }
+  @font-face {
+    font-family: 'JetBrains Mono';
+    font-weight: 500;
+    font-style: normal;
+    src: url(data:font/ttf;base64,__JBM_MEDIUM__) format('truetype');
+  }
+
+  :root {
+    --deep-navy: #001849;
+    --aviation-blue: #1A5FAE;
+    --panel-slate: #525E72;
+    --bezel: #14141A;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1024px; height: 500px; overflow: hidden; background: #fff; }
+
+  .canvas { position: relative; width: 1024px; height: 500px; }
+
+  .bg {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(70% 120% at 0% 15%, #E7EFFD 0%, transparent 55%),
+      linear-gradient(120deg, #DCE7FC 0%, #F3F6FC 46%, #FDFCF9 100%);
+  }
+
+  .brand {
+    position: absolute;
+    top: 64px;
+    left: 64px;
+    display: flex;
+    align-items: center;
+    gap: 22px;
+    z-index: 4;
+  }
+  .brand img {
+    width: 92px;
+    height: 92px;
+    border-radius: 22px;
+    box-shadow: 0 8px 20px -6px rgba(0, 24, 73, 0.35);
+    display: block;
+  }
+  .brand .name {
+    font-family: 'Space Grotesk', system-ui, sans-serif;
+    font-weight: 700;
+    font-size: 58px;
+    line-height: 1;
+    letter-spacing: -0.01em;
+    color: var(--deep-navy);
+  }
+  .brand .name b { color: var(--aviation-blue); font-weight: 700; }
+
+  .headline {
+    position: absolute;
+    top: 208px;
+    left: 64px;
+    width: 560px;
+    z-index: 4;
+  }
+  .headline .l1, .headline .l2 {
+    font-family: 'Space Grotesk', system-ui, sans-serif;
+    font-weight: 700;
+    font-size: 44px;
+    line-height: 1.04;
+    letter-spacing: -0.01em;
+  }
+  .headline .l1 { color: var(--deep-navy); }
+  .headline .l2 { color: var(--aviation-blue); }
+
+  .tagline {
+    position: absolute;
+    left: 64px;
+    bottom: 56px;
+    z-index: 4;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 500;
+    font-size: 17px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--panel-slate);
+  }
+
+  .device {
+    position: absolute;
+    aspect-ratio: __DEVICE_ASPECT__;
+    width: 330px;
+    right: 48px;
+    top: 48px;
+    transform: rotate(-8deg);
+    transform-origin: top right;
+    background: var(--bezel);
+    border-radius: 42px;
+    border: 11px solid var(--bezel);
+    box-shadow: 0 30px 40px -18px rgba(0, 24, 73, 0.5);
+    overflow: hidden;
+    z-index: 2;
+  }
+  .device::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 34%;
+    height: 3.6%;
+    background: var(--bezel);
+    border-radius: 0 0 12px 12px;
+    z-index: 3;
+  }
+  .device img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 50% 0%;
+    display: block;
+  }
+  .device.hidden { display: none; }
+
+  /* Without a device, let the icon carry the right side. */
+  .hero-icon {
+    position: absolute;
+    right: 120px;
+    top: 90px;
+    width: 320px;
+    height: 320px;
+    border-radius: 72px;
+    box-shadow: 0 30px 40px -18px rgba(0, 24, 73, 0.4);
+    z-index: 2;
+    display: none;
+  }
+  .device.hidden ~ .hero-icon { display: block; }
+</style>
+
+<div class="canvas">
+  <div class="bg"></div>
+
+  <div class="brand">
+    <img src="data:image/png;base64,__ICON_B64__" alt="" />
+    <p class="name">Squawk<b>It</b></p>
+  </div>
+
+  <div class="headline">
+    <p class="l1">__HEADLINE_L1__</p>
+    <p class="l2">__HEADLINE_L2__</p>
+  </div>
+
+  <p class="tagline">Works offline · Syncs everywhere</p>
+
+  <div class="device __HAS_PHONE__">
+    <img src="data:image/png;base64,__SCREENSHOT_B64__" alt="" />
+  </div>
+  <img class="hero-icon" src="data:image/png;base64,__ICON_B64__" alt="" />
+</div>
