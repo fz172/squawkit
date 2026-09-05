@@ -7,19 +7,20 @@ import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDueManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.defaultMeterKey
 import dev.fanfly.wingslog.feature.tasks.datamanager.forcedDueMeter
 import dev.fanfly.wingslog.feature.tasks.datamanager.meterIntervalFor
+import dev.fanfly.wingslog.feature.tasks.datamanager.toDueDate
 import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
 import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.thing.MaintenanceTask
 import dev.fanfly.wingslog.thing.SeasonalRule
 import dev.fanfly.wingslog.thing.TimeRule
+import kotlin.time.Clock
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
 import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
-import kotlin.time.Clock
 
 class TaskDueManagerImpl(
   private val clock: Clock = Clock.System,
@@ -87,7 +88,7 @@ class TaskDueManagerImpl(
 
     if (hasForcedDate || hasForcedEngine) {
       val nextDueDate = if (hasForcedDate) {
-        forceDueDate.toLocalDate(timeZone)
+        forceDueDate.toDueDate()
       } else null
       val nextDueEngine = forcedDue?.second
       // An override carries no interval, so borrow one from a rule measured in the same meter.

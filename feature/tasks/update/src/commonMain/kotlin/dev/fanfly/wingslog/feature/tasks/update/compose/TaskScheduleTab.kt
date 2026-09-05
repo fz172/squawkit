@@ -33,12 +33,10 @@ import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.template.LocalThingTemplate
 import dev.fanfly.wingslog.core.template.meter
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.feature.tasks.datamanager.pickerMillisToDate
 import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
 import dev.fanfly.wingslog.thing.MaintenanceTask
 import dev.fanfly.wingslog.thing.MeterDef
-import kotlin.time.Instant
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
@@ -395,10 +393,7 @@ private fun FirstDueCard(
     verticalArrangement = Arrangement.spacedBy(Spacing.small),
   ) {
     if (dated) {
-      val dateStr = controls.forcedDateMillis?.let {
-        Instant.fromEpochMilliseconds(it)
-          .toLocalDateTime(TimeZone.currentSystemDefault()).date.toDisplayFormat()
-      }
+      val dateStr = controls.forcedDateMillis?.pickerMillisToDate()?.toDisplayFormat()
       Row(
         modifier = Modifier
           .fillMaxWidth()
@@ -445,7 +440,9 @@ private fun FirstDueCard(
         onChange = { v ->
           val filtered = v.filter { c -> c.isDigit() || c == '.' }
           controls.onForcedEngineHoursChange(filtered)
-          controls.onForceOverrideEngineChange(filtered.toFloatOrNull()?.let { it > 0f } == true)
+          controls.onForceOverrideEngineChange(
+            filtered.toFloatOrNull()
+              ?.let { it > 0f } == true)
         },
         suffix = meterUnit,
         prefix = stringResource(Res.string.adj_reschedule_prefix_at),

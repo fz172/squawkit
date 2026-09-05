@@ -177,6 +177,18 @@ class TaskDueManagerImplTest {
   }
 
   @Test
+  fun forcedDueDate_readsAsThePickedDay_westOfGreenwich() {
+    // Older builds stored the picker's UTC midnight; in Los Angeles that instant is 17:00 the
+    // evening before. The stored date still means the day that was picked.
+    val pacific = TaskDueManagerImpl(clock, TimeZone.of("America/Los_Angeles"))
+    val card = card(forceDueDate = iso("2026-09-15"))
+
+    val result = pacific.computeNextDue(card, emptyList(), listOf(card))
+
+    assertThat(result.nextDueDate).isEqualTo(LocalDate(2026, 9, 15))
+  }
+
+  @Test
   fun forcedDueDate_inPast_overdue() {
     val card = card(forceDueDate = iso("2026-03-01"))
 

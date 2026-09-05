@@ -42,7 +42,6 @@ import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import dev.fanfly.wingslog.core.analytics.LocalAnalytics
-import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.template.LocalThingCapabilities
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedTopBar
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
@@ -52,6 +51,8 @@ import dev.fanfly.wingslog.core.ui.common.compose.UnsavedChangesDialog
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.logs.sharedassets.compose.LogPickerSheet
 import dev.fanfly.wingslog.feature.tasks.datamanager.meterKeyFor
+import dev.fanfly.wingslog.feature.tasks.datamanager.pickerMillisToDate
+import dev.fanfly.wingslog.feature.tasks.datamanager.toDueInstant
 import dev.fanfly.wingslog.feature.tasks.datamanager.withForcedDueMeter
 import dev.fanfly.wingslog.feature.tasks.datamanager.withoutOverrides
 import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
@@ -189,7 +190,7 @@ fun EditTaskScreen(
     val updatedForceDueEngine =
       if (state.forceOverrideEngine) state.forcedEngineHours.toFloatOrNull() ?: 0f else 0f
     val updatedForceDueDate =
-      if (state.forceOverrideDate) state.forcedDateMillis?.let { toWireInstant(it / 1000, 0) }
+      if (state.forceOverrideDate) state.forcedDateMillis?.pickerMillisToDate()?.toDueInstant()
       else null
     card.copy(
       title = state.title,

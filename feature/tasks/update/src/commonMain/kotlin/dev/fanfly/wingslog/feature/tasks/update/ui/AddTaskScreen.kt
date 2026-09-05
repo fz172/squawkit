@@ -42,7 +42,6 @@ import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import dev.fanfly.wingslog.core.analytics.LocalAnalytics
-import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.template.LocalThingCapabilities
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedTopBar
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
@@ -51,6 +50,8 @@ import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
 import dev.fanfly.wingslog.core.ui.common.compose.UnsavedChangesDialog
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.tasks.datamanager.meterKeyFor
+import dev.fanfly.wingslog.feature.tasks.datamanager.pickerMillisToDate
+import dev.fanfly.wingslog.feature.tasks.datamanager.toDueInstant
 import dev.fanfly.wingslog.feature.tasks.datamanager.withForcedDueMeter
 import dev.fanfly.wingslog.feature.tasks.datamanager.withoutOverrides
 import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
@@ -154,10 +155,11 @@ fun AddTaskScreen(
     // The first due is the same override the Adjustments tab writes: the first cycle is the
     // user's, and the log that clears the first cycle clears the override with it.
     val firstDueDate =
-      if (state.forceOverrideDate) state.forcedDateMillis?.let { toWireInstant(it / 1000, 0) }
+      if (state.forceOverrideDate) state.forcedDateMillis?.pickerMillisToDate()?.toDueInstant()
       else null
     val firstDueReading =
-      if (state.forceOverrideEngine) state.forcedEngineHours.toFloatOrNull()?.takeIf { it > 0f }
+      if (state.forceOverrideEngine) state.forcedEngineHours.toFloatOrNull()
+        ?.takeIf { it > 0f }
       else null
     MaintenanceTask(
       id = "",
@@ -166,8 +168,10 @@ fun AddTaskScreen(
       type = state.type,
       rules = rules,
       reference_number = state.refNumber.takeIf { it.isNotBlank() } ?: "",
-      compliance_authority = state.complianceAuthority.takeIf { it.isNotBlank() } ?: "",
-      compliance_details = state.complianceNotes.takeIf { it.isNotBlank() } ?: "",
+      compliance_authority = state.complianceAuthority.takeIf { it.isNotBlank() }
+        ?: "",
+      compliance_details = state.complianceNotes.takeIf { it.isNotBlank() }
+        ?: "",
       is_one_time = state.schedule.isOneTime,
       force_due_date = firstDueDate,
       notes = "",

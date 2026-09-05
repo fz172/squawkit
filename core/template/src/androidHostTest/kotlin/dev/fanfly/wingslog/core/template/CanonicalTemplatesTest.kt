@@ -72,7 +72,8 @@ class CanonicalTemplatesTest {
   @Test
   fun noPresetShipsAnEmptyLexiconNoun() {
     all.forEach { template ->
-      val lexicon = checkNotNull(template.lexicon) { "${template.id} has no lexicon" }
+      val lexicon =
+        checkNotNull(template.lexicon) { "${template.id} has no lexicon" }
       val nouns = listOf(
         "thing" to lexicon.thing,
         "squawk" to lexicon.squawk,
@@ -108,8 +109,10 @@ class CanonicalTemplatesTest {
   @Test
   fun everyPresetWritesItsOwnEmptyStateCopy() {
     all.forEach { template ->
-      val lexicon = checkNotNull(template.lexicon) { "${template.id} has no lexicon" }
-      val empty = checkNotNull(lexicon.empty_states) { "${template.id} has no empty_states" }
+      val lexicon =
+        checkNotNull(template.lexicon) { "${template.id} has no lexicon" }
+      val empty =
+        checkNotNull(lexicon.empty_states) { "${template.id} has no empty_states" }
       val lines = mapOf(
         "squawk_hint" to empty.squawk_hint,
         "task_hint" to empty.task_hint,
@@ -123,7 +126,8 @@ class CanonicalTemplatesTest {
         "log_onboarding_hint" to empty.log_onboarding_hint,
       )
       lines.forEach { (field, value) ->
-        assertWithMessage("${template.id}.empty_states.$field").that(value).isNotEmpty()
+        assertWithMessage("${template.id}.empty_states.$field").that(value)
+          .isNotEmpty()
       }
     }
   }
@@ -153,7 +157,9 @@ class CanonicalTemplatesTest {
   @Test
   fun everyMeterScopesToASlotTheTemplateDeclares() {
     all.forEach { template ->
-      val slots = template.allSlots().map { it.slot_key }.toSet()
+      val slots = template.allSlots()
+        .map { it.slot_key }
+        .toSet()
       template.meters.forEach { meter ->
         if (meter.component_slot_key.isNotEmpty()) {
           assertThat(slots).contains(meter.component_slot_key)
@@ -169,7 +175,9 @@ class CanonicalTemplatesTest {
       assertThat(template.meters.map { it.key }).containsNoDuplicates()
       // Slot keys form the stored component id ("$thingId:engine.1.blade.0"), so a duplicate at the
       // same level would make two components share an id.
-      assertThat(template.allSlots().map { it.slot_key }).containsNoDuplicates()
+      assertThat(
+        template.allSlots()
+          .map { it.slot_key }).containsNoDuplicates()
     }
   }
 
@@ -185,10 +193,11 @@ class CanonicalTemplatesTest {
         assertThat(it.label).isNotEmpty()
         assertThat(it.unit_label).isNotEmpty()
       }
-      template.allSlots().forEach {
-        assertThat(it.slot_key).isNotEmpty()
-        assertThat(it.label).isNotEmpty()
-      }
+      template.allSlots()
+        .forEach {
+          assertThat(it.slot_key).isNotEmpty()
+          assertThat(it.label).isNotEmpty()
+        }
     }
   }
 
@@ -256,7 +265,8 @@ class CanonicalTemplatesTest {
   @Test
   fun everyPresetButCustomShipsAValidStarterPack() {
     all.forEach { template ->
-      assertWithMessage(template.id).that(template.structuralProblems()).isEmpty()
+      assertWithMessage(template.id).that(template.structuralProblems())
+        .isEmpty()
       if (template.id == "custom") {
         // Custom declares nothing on purpose — a pack would be a guess about a Thing it has never
         // seen, and offering one puts every custom Thing into the §13 denominator.
@@ -267,12 +277,14 @@ class CanonicalTemplatesTest {
         .isNotEmpty()
       // A pack nobody would keep as offered is a pack that reads as declined.
       assertWithMessage("${template.id} pre-selects nothing")
-        .that(template.starter_tasks.any { it.default_selected }).isTrue()
+        .that(template.starter_tasks.any { it.default_selected })
+        .isTrue()
       template.starter_tasks.forEach { task ->
         // The description is the value: "flush the water heater" tells a new homeowner nothing
         // about why, and why is what earns the checkbox.
         assertWithMessage("${template.id}: '${task.title}' has no description")
-          .that(task.description).isNotEmpty()
+          .that(task.description)
+          .isNotEmpty()
       }
     }
   }
@@ -314,8 +326,10 @@ class CanonicalTemplatesTest {
   @Test
   fun onlyTheAirplaneSnapsMonthIntervalsToTheEndOfTheMonth() {
     all.forEach { template ->
-      val anniversary = template.capabilities?.month_intervals_due_on_anniversary == true
-      assertWithMessage(template.id).that(anniversary).isEqualTo(template.id != "airplane")
+      val anniversary =
+        template.capabilities?.month_intervals_due_on_anniversary == true
+      assertWithMessage(template.id).that(anniversary)
+        .isEqualTo(template.id != "airplane")
     }
   }
 
@@ -324,7 +338,8 @@ class CanonicalTemplatesTest {
   fun onlyTheHomeOffersSeasonalRules() {
     all.forEach { template ->
       val seasonal = template.capabilities?.seasonal_rules == true
-      assertWithMessage(template.id).that(seasonal).isEqualTo(template.id == "home")
+      assertWithMessage(template.id).that(seasonal)
+        .isEqualTo(template.id == "home")
     }
   }
 
@@ -332,10 +347,14 @@ class CanonicalTemplatesTest {
   fun theHomePackIsSeasonalWhereThePrdSaysSo() {
     // PRD §5.1: HVAC service and gutters in April & October, the sprinkler blowout in October.
     val byTitle = CanonicalTemplates.HOME.starter_tasks.associateBy { it.title }
-    assertThat(byTitle.getValue("HVAC service").months).containsExactly(4, 10).inOrder()
-    assertThat(byTitle.getValue("Clean gutters").months).containsExactly(4, 10).inOrder()
+    assertThat(byTitle.getValue("HVAC service").months).containsExactly(4, 10)
+      .inOrder()
+    assertThat(byTitle.getValue("Clean gutters").months).containsExactly(4, 10)
+      .inOrder()
     assertThat(byTitle.getValue("Sprinkler blowout").months).containsExactly(10)
-    assertThat(byTitle.getValue("Sprinkler blowout").interval_months).isEqualTo(0)
+    assertThat(byTitle.getValue("Sprinkler blowout").interval_months).isEqualTo(
+      0
+    )
   }
 
   @Test
