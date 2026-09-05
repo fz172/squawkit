@@ -144,9 +144,12 @@ TARGETS = {
     "appstore_iphone": {
         "src_dir": "iphone",
         "out_dir": os.path.join("appstore", "iphone_6_9"),
-        "device": "phone",
+        "device": "phone iphone",
         "canvas": {"portrait": (1320, 2868), "landscape": (2868, 1320)},
         "store": "App Store · iPhone 6.9-inch",
+        # With no iphone/ captures, reuse the Android phone captures: the Android status bar is
+        # cropped off and an iOS one drawn in its place, so the frame reads as an iPhone.
+        "derive_from": "phone",
     },
     "appstore_ipad": {
         "src_dir": "ipad",
@@ -156,6 +159,10 @@ TARGETS = {
         "store": "App Store · iPad 13-inch",
     },
 }
+
+# Height of the Android status bar in a 1080px-wide Pixel capture (time, icons, and the padding
+# under them). Scaled by the capture's width for other densities.
+ANDROID_STATUS_BAR_PX = 150
 
 FEATURE_GRAPHIC = {
     "out": os.path.join("play", "feature_graphic.png"),
@@ -224,6 +231,10 @@ def captures_for(target):
     """Returns (present, missing): present pairs each screen with the capture
     paths that exist, front first; a screen is missing when its first capture is."""
     src_dir = os.path.join(SCREENSHOTS_DIR, target["src_dir"])
+    derived = False
+    if not any(f.endswith(".png") for f in os.listdir(src_dir)) and target.get("derive_from"):
+        src_dir = os.path.join(SCREENSHOTS_DIR, target["derive_from"])
+        derived = True
     present, missing = [], []
     for s in SCREENS:
         paths = [os.path.join(src_dir, f"{name}.png") for name in sources(s)]
@@ -232,23 +243,49 @@ def captures_for(target):
             present.append((s, found))
         else:
             missing.append((s, paths[0]))
-    return present, missing
+    return present, missing, derived
 
 
-def device_html(captures, device):
-    """One .device div per capture; index 0 is the front device."""
-    return "\n".join(
-        f'<div class="device {device} d{i}" style="--i: {i}">'
-        f'<img src="data:image/png;base64,{b64_file(path)}" alt="" /></div>'
-        for i, path in enumerate(captures)
-    )
+IOS_STATUS_BAR = """<div class="statusbar">
+  <span class="time">9:41</span>
+  <span class="icons">
+    <svg viewBox="0 0 20 12" class="cell"><rect x="0" y="8" width="3.5" height="4" rx="0.8"/><rect x="5.5" y="5.5" width="3.5" height="6.5" rx="0.8"/><rect x="11" y="3" width="3.5" height="9" rx="0.8"/><rect x="16.5" y="0" width="3.5" height="12" rx="0.8"/></svg>
+    <svg viewBox="0 0 16 12" class="wifi"><path d="M8 11.2a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3Zm-3.3-4.3a4.7 4.7 0 0 1 6.6 0l-1.2 1.2a3 3 0 0 0-4.2 0Zm-2.4-2.4a8 8 0 0 1 11.4 0l-1.2 1.2a6.3 6.3 0 0 0-9 0ZM0 2.1A11.3 11.3 0 0 1 16 2.1l-1.2 1.2a9.6 9.6 0 0 0-13.6 0Z"/></svg>
+    <svg viewBox="0 0 28 13" class="battery"><rect x="0.5" y="0.5" width="24" height="12" rx="3.5" fill="none" stroke-width="1"/><rect x="2" y="2" width="21" height="9" rx="2"/><path d="M26 4.5v4a2 2 0 0 0 0-4Z"/></svg>
+  </span>
+</div>"""
+
+
+def device_html(captures, device, ios_bar=False):
+    """One .device div per capture; index 0 is the front device.
+
+    With ios_bar, the capture's Android status bar is cropped off (margin as a fraction of the
+    screen width, since that is what percentage margins resolve against) and an iOS-style bar is
+    drawn over the strip. The bar's colour is sampled from the capture by a script in the template.
+    """
+    out = []
+    for i, path in enumerate(captures):
+        w, _ = png_size(path)
+        img = f'<img src="data:image/png;base64,{b64_file(path)}" alt="" />'
+        if ios_bar:
+            crop = ANDROID_STATUS_BAR_PX * w / 1080
+            screen = (
+                f'<div class="screen ios" style="--crop: {crop / w * 100:.3f}%">'
+                f"{img}{IOS_STATUS_BAR}</div>"
+            )
+        else:
+            screen = f'<div class="screen">{img}</div>'
+        out.append(f'<div class="device {device} d{i}" style="--i: {i}">{screen}</div>')
+    return "\n".join(out)
 
 
 def render_target(name, target, fonts):
-    present, missing = captures_for(target)
+    present, missing, derived = captures_for(target)
     if not present:
         print(f"[{name}] no captures in docs/product/screenshots/{target['src_dir']}/ — skipped")
         return
+    if derived:
+        print(f"[{name}] deriving from {target['derive_from']}/ captures with an iOS status bar")
     for s, path in missing:
         print(f"[{name}] no capture {os.path.basename(path)} — skipped")
 
@@ -265,7 +302,7 @@ def render_target(name, target, fonts):
                 "CANVAS_H": size[1],
                 "CANVAS_CLASS": "stack" if len(captures) > 1 else "",
                 "DEVICE_ASPECT": f"{w} / {h}",
-                "DEVICES": device_html(captures, target["device"]),
+                "DEVICES": device_html(captures, target["device"], ios_bar=derived),
                 "HEADLINE_L1": s["l1"],
                 "HEADLINE_L2": s["l2"],
                 "FEATURE_LABEL": s["feature_label"],
@@ -303,9 +340,10 @@ def render_feature_graphic(fonts):
 def check():
     ok = True
     for name, target in TARGETS.items():
-        present, missing = captures_for(target)
+        present, missing, derived = captures_for(target)
         print(f"{name}  ({target['store']})")
-        print(f"  folder: docs/product/screenshots/{target['src_dir']}/")
+        folder = target["derive_from"] if derived else target["src_dir"]
+        print(f"  folder: docs/product/screenshots/{folder}/" + (" (derived)" if derived else ""))
         for s, found in present:
             for name in sources(s):
                 mark = "✓" if any(f.endswith(f"{name}.png") for f in found) else "·"

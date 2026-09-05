@@ -32,7 +32,7 @@ Drop raw captures here, named by screen, one folder per device class:
 |---|---|---|---|
 | `phone/` | Pixel 8 class Android phone | 1080×2364 | `store_assets/play/phone/` 1080×2364 |
 | `tablet/` | Pixel Tablet emulator, landscape | 2560×1600 | `store_assets/play/tablet/` 2560×1600 |
-| `iphone/` | iPhone 16 Pro Max simulator | 1320×2868 | `store_assets/appstore/iphone_6_9/` 1320×2868 |
+| `iphone/` | iPhone 16 Pro Max simulator, or leave empty to derive from `phone/` | 1320×2868 | `store_assets/appstore/iphone_6_9/` 1320×2868 |
 | `ipad/` | iPad Pro 13-inch simulator | 2064×2752 or 2752×2064 | `store_assets/appstore/ipad_13/` same orientation |
 
 Screen filenames, in upload order: `overview_1`, `tasks`, `squawks`, `logs`,
@@ -43,6 +43,11 @@ The first image stacks up to three dashboards: `overview_1.png` is the front
 device, `overview_2.png` and `overview_3.png` sit behind it, up and to the
 left, so each one's header stays visible. Capture three different kinds of
 Thing (say an airplane, a car, and a home). Only `overview_1` is required.
+
+When `iphone/` is empty the iPhone set is derived from the Android phone captures: the Android
+status bar (the top `ANDROID_STATUS_BAR_PX` of a 1080-wide capture) is cropped off and an
+iOS-style bar with a Dynamic Island is drawn in its place, coloured from the capture's own top
+edge. Drop real simulator captures into `iphone/` to bypass this.
 
 Orientation is read from each capture. A landscape capture gets the landscape
 layout (copy on the left, device on the right); a portrait capture gets the
