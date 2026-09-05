@@ -54,10 +54,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.core.template.LocalThingCapabilities
-import dev.fanfly.wingslog.core.template.LocalThingTemplate
 import dev.fanfly.wingslog.core.template.scheduleTypesOffered
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.thing.MaintenanceTask
+import dev.fanfly.wingslog.thing.MeterDef
 import dev.fanfly.wingslog.thing.ScheduleType
 import kotlinx.datetime.Month
 import org.jetbrains.compose.resources.StringResource
@@ -82,6 +82,8 @@ import wingslog.feature.tasks.update.generated.resources.schedule_with_another_w
 internal fun TrackingModeChoice(
   selected: ScheduleMode?,
   onSelect: (ScheduleMode) -> Unit,
+  /** The meter this task would count in — its label names the button ("Engine Time", "Odometer"). */
+  meter: MeterDef?,
 ) {
   val capabilities = LocalThingCapabilities.current
   val offered = scheduleTypesOffered(capabilities.schedule_types)
@@ -98,9 +100,9 @@ internal fun TrackingModeChoice(
     if (ScheduleType.SCHEDULE_TYPE_METER in offered || selected == ScheduleMode.HOURS) {
       TrackingModeButton(
         icon = Icons.Default.Schedule,
-        // The meter's own name — "Odometer" on a car. "Tach Hours" offered an aeroplane's meter to
-        // every template, which is the same bug as the unit beside the value (#759).
-        label = LocalThingTemplate.current?.meters?.firstOrNull()?.label
+        // The meter's own name — "Odometer" on a car, "Engine Time" for an engine task on an
+        // aeroplane. A fixed "Tach Hours", and then a fixed first meter, both named the wrong one.
+        label = meter?.label?.takeIf { it.isNotEmpty() }
           ?: stringResource(Res.string.schedule_track_tach_hours),
         selected = selected == ScheduleMode.HOURS,
         onClick = { onSelect(ScheduleMode.HOURS) },

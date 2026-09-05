@@ -71,11 +71,11 @@ import dev.fanfly.wingslog.thing.MaintenanceTask
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
-import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.core.sharedassets.generated.resources.back
 import wingslog.core.sharedassets.generated.resources.ok
-import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedTaskRes
 import wingslog.feature.tasks.sharedassets.generated.resources.add_task
+import wingslog.core.sharedassets.generated.resources.Res as CoreRes
+import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedTaskRes
 
 @OptIn(
   ExperimentalMaterial3Api::class,
@@ -155,7 +155,8 @@ fun AddTaskScreen(
     // The first due is the same override the Adjustments tab writes: the first cycle is the
     // user's, and the log that clears the first cycle clears the override with it.
     val firstDueDate =
-      if (state.forceOverrideDate) state.forcedDateMillis?.pickerMillisToDate()?.toDueInstant()
+      if (state.forceOverrideDate) state.forcedDateMillis?.pickerMillisToDate()
+        ?.toDueInstant()
       else null
     val firstDueReading =
       if (state.forceOverrideEngine) state.forcedEngineHours.toFloatOrNull()
@@ -293,6 +294,7 @@ fun AddTaskScreen(
               TaskFormTab.SCHEDULE -> TaskScheduleTab(
                 state = state.schedule,
                 onChange = onScheduleChange,
+                component = state.component,
                 availableInspections = availableInspections,
                 // "Due every 12 months, first on 15 Sep" — the first cycle set here, the schedule
                 // from then on. Create only; an existing task reschedules from Adjustments.

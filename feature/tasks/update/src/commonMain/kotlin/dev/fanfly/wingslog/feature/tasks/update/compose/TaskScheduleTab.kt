@@ -31,15 +31,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.template.LocalThingTemplate
-import dev.fanfly.wingslog.core.template.meter
+import dev.fanfly.wingslog.core.template.meterForComponent
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.tasks.datamanager.pickerMillisToDate
 import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
+import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.MaintenanceTask
 import dev.fanfly.wingslog.thing.MeterDef
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
-import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.core.sharedassets.generated.resources.remove
 import wingslog.core.sharedassets.generated.resources.select_date
 import wingslog.feature.tasks.update.generated.resources.Res
@@ -65,6 +65,7 @@ import wingslog.feature.tasks.update.generated.resources.schedule_step_recurrenc
 import wingslog.feature.tasks.update.generated.resources.schedule_step_recurrence_linked_label
 import wingslog.feature.tasks.update.generated.resources.schedule_step_track_label
 import wingslog.feature.tasks.update.generated.resources.schedule_unit_tach_hours
+import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 
 /**
  * The create form's "First due" controls — the force-due override, offered once, at creation.
@@ -89,6 +90,8 @@ fun TaskScheduleTab(
   state: ScheduleState,
   onChange: (ScheduleState) -> Unit,
   availableInspections: List<MaintenanceTask>,
+  /** What the task is filed against; on the airplane this picks the meter (engine vs prop vs airframe). */
+  component: ComponentType,
   modifier: Modifier = Modifier,
   initialDue: InitialDueControls? = null,
   /** The draft's due with and without its override, for the banner both tabs share. */
@@ -99,12 +102,12 @@ fun TaskScheduleTab(
 ) {
   var advancedOpen by remember(state.mode) { mutableStateOf(state.mode == ScheduleMode.LINKED) }
 
-  // The meter this schedule counts in, resolved once for the input and the preview alike — the
-  // two used to disagree, the input saying "mi" beside a banner saying "tach hrs" (#785). A new
-  // task carries the default engine-hours key, which a car's template never declares, so fall
-  // back to the template's first meter; a template with none keeps the aviation word.
+  // The meter this schedule counts in, resolved once for the mode button, the input and the
+  // preview alike — they used to disagree (#785). On the airplane the component decides (an
+  // engine task counts engine hours, a prop task prop hours, an airframe task airframe time);
+  // elsewhere the template's one meter does. A template with none keeps the aviation word.
   val template = LocalThingTemplate.current
-  val meter = template.meter(state.meterKey) ?: template?.meters?.firstOrNull()
+  val meter = template.meterForComponent(component)
   val meterUnit = meter?.unit_label?.takeIf { it.isNotEmpty() }
     ?: stringResource(Res.string.schedule_unit_tach_hours)
 
@@ -129,6 +132,7 @@ fun TaskScheduleTab(
     ) {
       TrackingModeChoice(
         selected = if (state.mode == ScheduleMode.LINKED) null else state.mode,
+        meter = meter,
         onSelect = { picked ->
           // Switching mode resets dependent fields to avoid carrying stale values
           onChange(
@@ -231,8 +235,8 @@ fun TaskScheduleTab(
           }
 
           ScheduleMode.HOURS -> {
-            // Store the resolved meter's key, so an automotive task schedules on the odometer
-            // rather than on the engine-hours default its template never declares.
+            // Store the resolved meter's key, so the rule counts what the button says — the
+            // odometer on a car, the prop's hours for a propeller task.
             LaunchedEffect(meter?.key) {
               val key = meter?.key
               if (key != null && key != state.meterKey) {
@@ -393,7 +397,8 @@ private fun FirstDueCard(
     verticalArrangement = Arrangement.spacedBy(Spacing.small),
   ) {
     if (dated) {
-      val dateStr = controls.forcedDateMillis?.pickerMillisToDate()?.toDisplayFormat()
+      val dateStr = controls.forcedDateMillis?.pickerMillisToDate()
+        ?.toDisplayFormat()
       Row(
         modifier = Modifier
           .fillMaxWidth()

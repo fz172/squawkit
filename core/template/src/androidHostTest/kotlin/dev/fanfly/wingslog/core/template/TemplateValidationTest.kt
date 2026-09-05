@@ -28,7 +28,12 @@ class TemplateValidationTest {
     display_name = "Car",
     min_app_version = minAppVersion,
     spec_fields = listOf(SpecField(key = "vin", label = "VIN")),
-    component_slots = listOf(ComponentSlot(slot_key = "engine", label = "Engine")),
+    component_slots = listOf(
+      ComponentSlot(
+        slot_key = "engine",
+        label = "Engine"
+      )
+    ),
     meters = listOf(
       MeterDef(
         key = "odometer",
@@ -38,7 +43,10 @@ class TemplateValidationTest {
     ),
     capabilities = Capabilities(
       meters = true,
-      schedule_types = listOf(ScheduleType.SCHEDULE_TYPE_CALENDAR, ScheduleType.SCHEDULE_TYPE_METER),
+      schedule_types = listOf(
+        ScheduleType.SCHEDULE_TYPE_CALENDAR,
+        ScheduleType.SCHEDULE_TYPE_METER
+      ),
     ),
   )
 
@@ -57,7 +65,10 @@ class TemplateValidationTest {
     val meterless = valid().copy(
       capabilities = Capabilities(
         meters = false,
-        schedule_types = listOf(ScheduleType.SCHEDULE_TYPE_CALENDAR, ScheduleType.SCHEDULE_TYPE_METER),
+        schedule_types = listOf(
+          ScheduleType.SCHEDULE_TYPE_CALENDAR,
+          ScheduleType.SCHEDULE_TYPE_METER
+        ),
       ),
     )
     assertThat(meterless.structuralProblems())
@@ -67,7 +78,13 @@ class TemplateValidationTest {
   @Test
   fun aStarterTaskNeedsTheScheduleTypeItUses() {
     val seasonalOnACar = valid().copy(
-      starter_tasks = listOf(StarterTask(title = "Wax", description = "Spring", months = listOf(4))),
+      starter_tasks = listOf(
+        StarterTask(
+          title = "Wax",
+          description = "Spring",
+          months = listOf(4)
+        )
+      ),
     )
     assertThat(seasonalOnACar.structuralProblems())
       .containsExactly("car: starter task 'Wax' is seasonal but schedule_types does not list SEASONAL")
@@ -163,9 +180,21 @@ class TemplateValidationTest {
 
     val resolution = registry.resolve(Thing(id = "t1", template = tooNew))
 
-    assertThat(registry.forThingWithFallback(Thing(id = "t1", template = tooNew)))
+    assertThat(
+      registry.forThingWithFallback(
+        Thing(
+          id = "t1",
+          template = tooNew
+        )
+      )
+    )
       .isEqualTo(tooNew)
     assertThat(resolution)
-      .isEqualTo(TemplateResolution.Degraded(tooNew, DegradedReason.APP_TOO_OLD))
+      .isEqualTo(
+        TemplateResolution.Degraded(
+          tooNew,
+          DegradedReason.APP_TOO_OLD
+        )
+      )
   }
 }

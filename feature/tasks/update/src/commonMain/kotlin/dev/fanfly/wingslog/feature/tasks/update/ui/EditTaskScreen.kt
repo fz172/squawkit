@@ -75,13 +75,13 @@ import dev.fanfly.wingslog.thing.MaintenanceTask
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
-import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.core.sharedassets.generated.resources.back
 import wingslog.core.sharedassets.generated.resources.ok
-import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedTaskRes
 import wingslog.feature.tasks.sharedassets.generated.resources.edit_task
 import wingslog.feature.tasks.update.generated.resources.Res
 import wingslog.feature.tasks.update.generated.resources.resolve_task
+import wingslog.core.sharedassets.generated.resources.Res as CoreRes
+import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedTaskRes
 
 /** The Resolve-menu options that leave the screen, and so have to pass the unsaved-changes gate. */
 private enum class ResolveAction { CreateWorkLog, Skip }
@@ -189,9 +189,11 @@ fun EditTaskScreen(
       dueOnAnniversary = capabilities.month_intervals_due_on_anniversary,
     )
     val updatedForceDueEngine =
-      if (state.forceOverrideEngine) state.forcedEngineHours.toFloatOrNull() ?: 0f else 0f
+      if (state.forceOverrideEngine) state.forcedEngineHours.toFloatOrNull()
+        ?: 0f else 0f
     val updatedForceDueDate =
-      if (state.forceOverrideDate) state.forcedDateMillis?.pickerMillisToDate()?.toDueInstant()
+      if (state.forceOverrideDate) state.forcedDateMillis?.pickerMillisToDate()
+        ?.toDueInstant()
       else null
     card.copy(
       title = state.title,
@@ -200,19 +202,22 @@ fun EditTaskScreen(
       rules = ruleList,
       is_one_time = state.schedule.isOneTime,
       reference_number = state.refNumber.takeIf { it.isNotBlank() } ?: "",
-      compliance_authority = state.complianceAuthority.takeIf { it.isNotBlank() } ?: "",
-      compliance_details = state.complianceNotes.takeIf { it.isNotBlank() } ?: "",
+      compliance_authority = state.complianceAuthority.takeIf { it.isNotBlank() }
+        ?: "",
+      compliance_details = state.complianceNotes.takeIf { it.isNotBlank() }
+        ?: "",
       force_due_date = updatedForceDueDate,
       // Skip This Cycle is a separate, immediately-persisted action off the Resolve menu
       // (see TaskViewModel.skipThisCycle), so this form only carries the stored value
       // forward. Dropping it when the schedule it was recorded against changes is
       // TaskViewModel.isScheduleChanged's job, not the form's.
       force_complied_status = card.force_complied_status
-    ).withForcedDueMeter(
-      // The meter this task schedules against — the override is in the same one.
-      meterKeyFor(state.component, ruleList),
-      updatedForceDueEngine.takeIf { it > 0f },
     )
+      .withForcedDueMeter(
+        // The meter this task schedules against — the override is in the same one.
+        meterKeyFor(state.component, ruleList),
+        updatedForceDueEngine.takeIf { it > 0f },
+      )
   }
   val draft = buildDraft()
   val effectiveDue = previewDue(draft)
@@ -336,6 +341,7 @@ fun EditTaskScreen(
               TaskFormTab.SCHEDULE -> TaskScheduleTab(
                 state = state.schedule,
                 onChange = onScheduleChange,
+                component = state.component,
                 availableInspections = availableInspections.filter { it.id != card.id },
                 effectiveDue = effectiveDue,
                 naturalDue = naturalDue,
@@ -357,6 +363,7 @@ fun EditTaskScreen(
                 naturalDue = naturalDue,
                 currentReading = currentReading,
                 linkedTaskName = linkedTaskName,
+                component = state.component,
                 onDeleteRequest = { showDeleteConfirm = true },
               )
 

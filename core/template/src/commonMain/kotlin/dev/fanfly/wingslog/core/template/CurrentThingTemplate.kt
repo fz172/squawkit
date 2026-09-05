@@ -101,7 +101,8 @@ class CurrentThingTemplate(private val registry: TemplateRegistry) {
    * The words come from [TemplateRegistry.lexiconFor], never from the selected Thing's own copy —
    * see its doc for why a lexicon is app UI rather than user data.
    */
-  private fun ThingTemplate?.lexiconOrGeneric(): Lexicon = registry.lexiconFor(this)
+  private fun ThingTemplate?.lexiconOrGeneric(): Lexicon =
+    registry.lexiconFor(this)
 
   private fun ThingTemplate?.capabilitiesOrAllEnabled(): Capabilities =
     this?.capabilities ?: ALL_ENABLED

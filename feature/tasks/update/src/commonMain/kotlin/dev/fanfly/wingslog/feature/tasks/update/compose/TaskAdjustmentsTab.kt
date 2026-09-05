@@ -35,15 +35,15 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.template.LocalThingTemplate
-import dev.fanfly.wingslog.core.template.meter
+import dev.fanfly.wingslog.core.template.meterForComponent
 import dev.fanfly.wingslog.core.ui.common.compose.FormSectionLabel
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.statusColors
 import dev.fanfly.wingslog.feature.tasks.datamanager.pickerMillisToDate
 import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
+import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.MeterDef
 import org.jetbrains.compose.resources.stringResource
-import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.core.sharedassets.generated.resources.select_date
 import wingslog.feature.tasks.update.generated.resources.Res
 import wingslog.feature.tasks.update.generated.resources.adj_reschedule_disabled_linked
@@ -58,6 +58,7 @@ import wingslog.feature.tasks.update.generated.resources.delete_task_section_lab
 import wingslog.feature.tasks.update.generated.resources.delete_this_task_subtitle
 import wingslog.feature.tasks.update.generated.resources.delete_this_task_title
 import wingslog.feature.tasks.update.generated.resources.schedule_unit_tach_hours
+import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 
 @Composable
 fun TaskAdjustmentsTab(
@@ -75,6 +76,7 @@ fun TaskAdjustmentsTab(
   naturalDue: DueMetadata?,
   currentReading: (String) -> Float,
   linkedTaskName: String?,
+  component: ComponentType,
   onDeleteRequest: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
@@ -102,10 +104,9 @@ fun TaskAdjustmentsTab(
   }
 
   // The meter the schedule counts in, so every banner here says "mi" where the input says "mi"
-  // (#785). Same resolution as the schedule tab; the aviation word only when the template
-  // declares no meter at all.
-  val template = LocalThingTemplate.current
-  val meter = template.meter(schedule.meterKey) ?: template?.meters?.firstOrNull()
+  // (#785). Same resolution as the schedule tab — by component on the airplane — so the two tabs
+  // name the same meter; the aviation word only when the template declares no meter at all.
+  val meter = LocalThingTemplate.current.meterForComponent(component)
   val meterUnit = meter?.unit_label?.takeIf { it.isNotEmpty() }
     ?: stringResource(Res.string.schedule_unit_tach_hours)
 
@@ -250,7 +251,8 @@ internal fun RescheduleCard(
       ) {
         when (mode) {
           ScheduleMode.TIME, ScheduleMode.SEASONAL -> {
-            val dateStr = forcedDateMillis?.pickerMillisToDate()?.toDisplayFormat()
+            val dateStr = forcedDateMillis?.pickerMillisToDate()
+              ?.toDisplayFormat()
             Row(
               modifier = Modifier
                 .fillMaxWidth()
