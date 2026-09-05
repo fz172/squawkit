@@ -218,6 +218,7 @@ feature/login	onboarding_notifications_denied_headline	Turn them back on
 feature/login	onboarding_notifications_eyebrow	Stay in the loop
 feature/login	onboarding_notifications_headline	Know when it matters
 feature/login	onboarding_welcome_aboard	Welcome aboard
+feature/login	onboarding_welcome_no_name	there
 feature/login	onboarding_welcome_tagline	Let's get your hangar set up.
 feature/login	privacy_notice	Privacy Notice
 feature/login	sign_in_anonymous_error	Could not continue anonymously. Please try again.
