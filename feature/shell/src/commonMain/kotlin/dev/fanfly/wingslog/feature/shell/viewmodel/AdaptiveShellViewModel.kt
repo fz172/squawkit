@@ -19,6 +19,7 @@ import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
 import dev.fanfly.wingslog.feature.sync.data.SyncEngine
 import dev.fanfly.wingslog.feature.sync.data.SyncNotice
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
+import dev.fanfly.wingslog.feature.technician.datamanager.selfDisplayName
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -229,9 +230,7 @@ class AdaptiveShellViewModel(
           _uiState.update {
             it.copy(
               accountPhotoUrl = user?.photoURL,
-              accountName = self?.name?.takeIf { name -> name.isNotBlank() }
-                ?: user?.displayName?.takeIf { name -> name.isNotBlank() }
-                ?: user?.email?.takeIf { email -> email.isNotBlank() },
+              accountName = selfDisplayName(self, user),
             )
           }
         }
