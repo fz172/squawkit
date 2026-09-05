@@ -1,7 +1,5 @@
 package dev.fanfly.wingslog.feature.squawk.update.ui
 
-import dev.fanfly.wingslog.core.template.LocalThingLexicon
-import dev.fanfly.wingslog.core.template.squawkNoun
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -40,14 +38,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import dev.fanfly.wingslog.thing.SquawkDismissReason
 import dev.fanfly.wingslog.core.analytics.LocalAnalytics
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.squawkNoun
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedTopBar
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
 import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
 import dev.fanfly.wingslog.core.ui.common.compose.UnsavedChangesDialog
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.core.ui.theme.statusColors
 import dev.fanfly.wingslog.feature.logs.sharedassets.compose.LogPickerSheet
 import dev.fanfly.wingslog.feature.squawk.update.compose.DismissSquawkDialog
 import dev.fanfly.wingslog.feature.squawk.update.compose.ResolveOptionsMenu
@@ -57,15 +57,16 @@ import dev.fanfly.wingslog.feature.squawk.update.compose.SquawkFormTab
 import dev.fanfly.wingslog.feature.squawk.update.compose.SquawkTabRow
 import dev.fanfly.wingslog.feature.squawk.update.compose.squawkFormTabsFor
 import dev.fanfly.wingslog.feature.squawk.update.viewmodel.SquawkFormState
+import dev.fanfly.wingslog.thing.SquawkDismissReason
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.squawk.sharedassets.generated.resources.Res
 import wingslog.feature.squawk.sharedassets.generated.resources.add_squawk
 import wingslog.feature.squawk.sharedassets.generated.resources.edit_squawk
+import wingslog.feature.squawk.update.generated.resources.Res as UpdateRes
 import wingslog.feature.squawk.update.generated.resources.reopen_issue
 import wingslog.feature.squawk.update.generated.resources.resolve_issue
-import wingslog.feature.squawk.update.generated.resources.Res as UpdateRes
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
@@ -265,6 +266,8 @@ fun SquawkFormScreen(
           isDismissed -> stringResource(UpdateRes.string.reopen_issue)
           else -> stringResource(UpdateRes.string.resolve_issue)
         },
+        // Resolve and Reopen are both forward steps, not destructive ones.
+        dangerColor = MaterialTheme.statusColors.positive.accent,
         dangerMenuContent = {
           if (showResolveButton) {
             ResolveOptionsMenu(

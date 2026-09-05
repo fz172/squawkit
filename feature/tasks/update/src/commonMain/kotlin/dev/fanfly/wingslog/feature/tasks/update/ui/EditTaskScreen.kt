@@ -49,6 +49,7 @@ import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
 import dev.fanfly.wingslog.core.ui.common.compose.UnsavedChangesDialog
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.core.ui.theme.statusColors
 import dev.fanfly.wingslog.feature.logs.sharedassets.compose.LogPickerSheet
 import dev.fanfly.wingslog.feature.tasks.datamanager.meterKeyFor
 import dev.fanfly.wingslog.feature.tasks.datamanager.pickerMillisToDate
@@ -370,6 +371,8 @@ fun EditTaskScreen(
         onSecondaryClick = { tryCancel() },
         onDangerClick = onResolveClick,
         dangerLabel = stringResource(Res.string.resolve_task),
+        // Resolving is the good outcome, not a destructive one: the same green the squawk form uses.
+        dangerColor = MaterialTheme.statusColors.positive.accent,
         dangerMenuContent = {
           ResolveTaskOptionsMenu(
             expanded = state.showResolveMenu,
