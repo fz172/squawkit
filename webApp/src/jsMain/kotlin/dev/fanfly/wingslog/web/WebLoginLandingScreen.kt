@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -70,6 +71,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.core.ui.adaptive.compose.layoutTierFor
 import dev.fanfly.wingslog.core.ui.adaptive.thingIcon
+import dev.fanfly.wingslog.core.ui.brand.BrandPlane
+import dev.fanfly.wingslog.core.ui.brand.ThingHero
 import dev.fanfly.wingslog.core.ui.theme.rememberBrandHeadlineFamily
 import dev.fanfly.wingslog.feature.login.LoginButtonContent
 import dev.fanfly.wingslog.feature.login.data.LoginViewModel
@@ -265,7 +268,7 @@ private fun BrandMark(size: Dp, colors: LandingColors) {
   )
 }
 
-/** "SquawkIt" wordmark with the blue trailing dot. */
+/** "SquawkIt" wordmark, "It" in the brand blue, as the store listing sets it. */
 @Composable
 private fun BrandWordmark(
   colors: LandingColors,
@@ -274,8 +277,8 @@ private fun BrandWordmark(
 ) {
   Text(
     text = buildAnnotatedString {
-      append("SquawkIt")
-      withStyle(SpanStyle(color = colors.blue)) { append(".") }
+      append("Squawk")
+      withStyle(SpanStyle(color = colors.blue)) { append("It") }
     },
     style = TextStyle(
       fontFamily = headline,
@@ -467,73 +470,33 @@ private fun HeroCopy(
     )
     Spacer(Modifier.height(24.dp))
     ThingStrip(colors = colors, centered = centered)
-    Spacer(Modifier.height(28.dp))
-    // Six short lines: two columns of three on wide layouts, and a line that wraps breaks the
-    // checkmark rhythm, so each stays under ~34 characters.
-    val trust = listOf(
-      "Works offline, syncs everywhere",
-      "Due-soon and overdue reminders",
-      "Export logs on demand",
-      "Share with co-owners & mechanics",
-      "Starter schedules for every thing",
-      "Free to start",
-    )
-    Column(
-      verticalArrangement = Arrangement.spacedBy(12.dp),
-      // Items are left-aligned so the checkmarks share an x; the block as a whole is still centered
-      // (in compact) by the parent column, since this column wraps to its content width.
-      horizontalAlignment = Alignment.Start,
-    ) {
-      if (centered) {
-        trust.forEach { TrustItem(it, colors) }
-      } else {
-        // Two fixed columns, column-major (like the design's `repeat(2, max-content)`) so the
-        // checkmarks line up vertically within each column instead of drifting with text width.
-        val half = (trust.size + 1) / 2
-        Row(horizontalArrangement = Arrangement.spacedBy(28.dp)) {
-          trust.chunked(half)
-            .forEach { column ->
-              Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                column.forEach { TrustItem(it, colors) }
-              }
-            }
-        }
-      }
-    }
-    Spacer(Modifier.height(30.dp))
-    Text(
-      text = "Plus anything else you maintain — from a garage project to an airplane fleet. On the web, iOS and Android.",
-      style = TextStyle(
-        fontSize = 13.sp,
-        lineHeight = 19.sp,
-        color = colors.skyDim,
-        textAlign = textAlign
-      ),
-    )
   }
 }
 
 /**
- * The presets, as a row of chips: the fastest way to say "not just airplanes" is to show the
- * other five. Same icons the app's switcher uses, so the promise and the product match.
+ * The presets, as chips: the fastest way to say "not just airplanes" is to show the others, and
+ * "And more" for whatever is not named. Same icons the app's switcher uses, so the promise and the
+ * product match.
  */
 @Composable
 private fun ThingStrip(colors: LandingColors, centered: Boolean) {
-  // The five named presets; "anything else" is said in the line beneath, because a sixth chip
-  // orphans onto its own row at the hero's width and a lone chip reads as an afterthought.
   val things = listOf(
     "airplane" to "Airplane",
     "automotive" to "Car & motorcycle",
     "bike" to "Bike",
     "boat" to "Boat",
     "home" to "Home",
+    "custom" to "And more",
   )
+  // Two rows of three: six chips do not fit the hero column on one line, and a single chip
+  // orphaned onto a second row reads as an afterthought rather than a list.
   FlowRow(
     horizontalArrangement = Arrangement.spacedBy(
       8.dp,
       if (centered) Alignment.CenterHorizontally else Alignment.Start,
     ),
     verticalArrangement = Arrangement.spacedBy(8.dp),
+    maxItemsInEachRow = 3,
   ) {
     things.forEach { (key, label) ->
       Row(
@@ -569,23 +532,6 @@ private fun ThingStrip(colors: LandingColors, centered: Boolean) {
 }
 
 @Composable
-private fun TrustItem(label: String, colors: LandingColors) {
-  Row(verticalAlignment = Alignment.CenterVertically) {
-    Icon(
-      imageVector = IconCheck,
-      contentDescription = null,
-      modifier = Modifier.size(18.dp),
-      tint = colors.blueBright,
-    )
-    Spacer(Modifier.width(9.dp))
-    Text(
-      text = label,
-      style = TextStyle(fontSize = 14.5.sp, color = colors.trustText),
-    )
-  }
-}
-
-@Composable
 private fun LoginCard(
   modifier: Modifier,
   colors: LandingColors,
@@ -603,8 +549,15 @@ private fun LoginCard(
       .border(1.dp, colors.outline, RoundedCornerShape(24.dp))
       .padding(horizontal = 32.dp, vertical = 34.dp),
   ) {
-    BrandMark(size = 54.dp, colors = colors)
-    Spacer(Modifier.height(18.dp))
+    // Same hero as the app's login screen, at card scale. Glyphs fly in from beyond the card and
+    // are clipped at its edge, which reads as flying into it.
+    ThingHero(
+      size = 96.dp,
+      tint = colors.blue,
+      fanTint = colors.blue.copy(alpha = 0.45f),
+      modifier = Modifier.offset(x = (-12).dp, y = (-10).dp),
+    )
+    Spacer(Modifier.height(6.dp))
     Text(
       text = "Log in to SquawkIt",
       style = TextStyle(
@@ -697,7 +650,7 @@ private fun LoginCard(
     )
     Spacer(Modifier.height(18.dp))
     Text(
-      text = "SquawkIt is a personal convenience tool and is not a certified maintenance record system. It does not replace the official aircraft logbooks required by your aviation authority, or any other record you are required to keep.",
+      text = "SquawkIt is a personal convenience tool and is not a certified maintenance record system. It does not replace the official logbooks or records required by any applicable authority.",
       style = TextStyle(
         fontSize = 11.5.sp,
         lineHeight = 18.sp,
@@ -1082,12 +1035,17 @@ private fun FeaturesSection(
           Slide(
             icon = IconLayers,
             title = "Track anything you want",
-            body = "Airplane, car or motorcycle, bike, boat, home — or anything else. Each type brings its own vocabulary, fields, meters and parts, so a home never asks for a tail number and an airplane never asks for an odometer.",
+            body = "Airplane, car or motorcycle, bike, boat, home — or anything else. Each type brings its own vocabulary, fields, meters and parts, so a home never asks for a tail number and an airplane never asks for an odometer. Free to start.",
+          ),
+          Slide(
+            icon = IconOffline,
+            title = "Works offline, syncs everywhere",
+            body = "Records are written to your device first, so the hangar with no signal and the driveway with no Wi-Fi both work. Sign in and everything syncs across phone, tablet and the web the moment you are back online.",
           ),
           Slide(
             icon = IconInspection,
             title = "Schedules that do the math",
-            body = "Recurring tasks by calendar, by meter — engine hours, odometer, ride distance — or on condition. Due-soon and overdue work rises to the top of every list, so status is the first thing you see.",
+            body = "Recurring tasks by calendar, by meter — engine hours, odometer, ride distance — or on condition. Due-soon and overdue reminders rise to the top of every list, so status is the first thing you see.",
           ),
           Slide(
             icon = IconSquawk,

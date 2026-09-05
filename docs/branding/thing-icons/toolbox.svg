@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="toolbox">
+  <path d="M200,514Q200,470 244,470L780,470Q824,470 824,514L824,756Q824,800 780,800L244,800Q200,800 200,756ZM200,578Q200,590 212,590L812,590Q824,590 824,578L824,578Q824,566 812,566L212,566Q200,566 200,578ZM478,614Q478,628 492,628L532,628Q546,628 546,614L546,542Q546,528 532,528L492,528Q478,528 478,542Z" fill="currentColor" fill-rule="nonzero"/>
+  <path d="M400,470 L400,410 Q400,340 470,340 L554,340 Q624,340 624,410 L624,470" fill="none" stroke="currentColor" stroke-width="52" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

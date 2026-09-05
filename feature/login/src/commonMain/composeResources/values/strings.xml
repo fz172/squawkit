@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-  <string name="mission_statement">Track the important stuff you maintain</string>
+  <string name="mission_statement">Track the important stuff</string>
   <string name="login_prompt">Log in or continue anonymously to manage your maintenance records.</string>
   <string name="google_logo">Google Logo</string>
   <string name="apple_logo">Apple Logo</string>

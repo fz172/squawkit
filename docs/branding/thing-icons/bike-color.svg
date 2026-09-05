@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="bike">
+  <defs><linearGradient id="g" gradientUnits="userSpaceOnUse" x1="200" y1="200" x2="830" y2="830"><stop offset="0" stop-color="#00E5FF"/><stop offset="1" stop-color="#651FFF"/></linearGradient></defs>
+  <path d="M230,660A150,150 0 1 1 530,660A150,150 0 1 1 230,660ZM282,660A98,98 0 1 0 478,660A98,98 0 1 0 282,660ZM650,660A150,150 0 1 1 950,660A150,150 0 1 1 650,660ZM702,660A98,98 0 1 0 898,660A98,98 0 1 0 702,660Z" fill="url(#g)" fill-rule="nonzero"/>
+  <path d="M380,660 L590,672 L520,410 L740,410 L800,660 M590,672 L740,410 M380,660 L520,410 M520,410 L505,350 M455,345 L560,345 M740,410 L716,330 M672,320 L775,300" fill="none" stroke="url(#g)" stroke-width="50" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

@@ -170,7 +170,7 @@ fun EmailSignInScreen(
   LoginBackdrop {
     Spacer(Modifier.height(76.dp))
 
-    LoginPlaneArt()
+    LoginPlaneArt(animate = false)
 
     Spacer(Modifier.weight(1f))
 
