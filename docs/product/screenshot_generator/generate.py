@@ -60,7 +60,8 @@ CHROME = os.environ.get(
 # and homes too.
 #
 # object_position picks which part of a capture shows through the frame when
-# the frame crops it ("50% 0%" = anchored to the top).
+# the frame crops it ("50% 0%" = anchored to the top). headline_scale (default 1)
+# shrinks the headline for a line that would otherwise wrap.
 # ---------------------------------------------------------------------------
 SCREENS = [
     {
@@ -108,15 +109,16 @@ SCREENS = [
         "src": "export",
         "feature_label": "Export",
         "l1": "Your Records,",
-        "l2": "Ready to Share.",
+        "l2": "Ready to Archive.",
         "object_position": "50% 0%",
     },
     {
         "num": "07",
         "src": "sharing",
         "feature_label": "Sharing",
-        "l1": "Your Mechanic,",
-        "l2": "On the Same Page.",
+        "l1": "Collaboration,",
+        "l2": "Always on the Same Page.",
+        "headline_scale": 0.84,
         "object_position": "50% 0%",
     },
 ]
@@ -305,6 +307,7 @@ def render_target(name, target, fonts):
                 "DEVICES": device_html(captures, target["device"], ios_bar=derived),
                 "HEADLINE_L1": s["l1"],
                 "HEADLINE_L2": s["l2"],
+                "HEADLINE_SCALE": s.get("headline_scale", 1),
                 "FEATURE_LABEL": s["feature_label"],
                 "OBJECT_POSITION": s["object_position"],
             },
