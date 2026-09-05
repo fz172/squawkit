@@ -35,6 +35,8 @@
   <string name="onboarding_name_hint">e.g. Amelia Earhart</string>
   <!-- Onboarding: welcome -->
   <string name="onboarding_welcome_aboard">Welcome aboard</string>
+  <!-- Stands in for the user’s name when we have none to greet. -->
+  <string name="onboarding_welcome_no_name">there</string>
   <string name="onboarding_welcome_tagline">Let's get your hangar set up.</string>
   <!-- Onboarding: ads consent priming, shown once before the platform's own consent dialog -->
   <string name="onboarding_ads_consent_eyebrow">Keeping the lights on</string>

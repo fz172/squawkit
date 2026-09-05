@@ -49,10 +49,16 @@ import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.ic_launcher_foreground
 import wingslog.feature.login.generated.resources.Res
 import wingslog.feature.login.generated.resources.onboarding_welcome_aboard
+import wingslog.feature.login.generated.resources.onboarding_welcome_no_name
 import wingslog.feature.login.generated.resources.onboarding_welcome_tagline
 import kotlin.time.Duration.Companion.milliseconds
 import wingslog.core.sharedassets.generated.resources.Res as UiRes
 
+/**
+ * The post-sign-in greeting. [name] is resolved by the caller before this step is entered — see
+ * `AuthFlow` — because the screen reveals its text on a fixed 800ms timer and cannot wait for a
+ * name that arrives late. The blank fallback is a greeting, never a repeat of the line above it.
+ */
 @Composable
 fun WelcomeScreen(
   name: String,
@@ -179,7 +185,7 @@ fun WelcomeScreen(
         horizontalArrangement = Arrangement.Center,
       ) {
         Text(
-          text = name.ifBlank { "aboard" },
+          text = name.ifBlank { stringResource(Res.string.onboarding_welcome_no_name) },
           style = TextStyle(
             fontFamily = headlineFamily,
             fontWeight = FontWeight.Bold,
