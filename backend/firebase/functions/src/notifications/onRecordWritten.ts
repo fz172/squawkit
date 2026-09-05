@@ -26,7 +26,7 @@ import {
   type PushData,
 } from "./pushMessages.js";
 import { enabledTokensFor, sendPush, type PushTarget } from "./pushSender.js";
-import { escalationOf, recordTitleOf, tailNumberOf, type Escalation } from "./recordPayloads.js";
+import { escalationOf, recordTitleOf, thingLabelOf, type Escalation } from "./recordPayloads.js";
 
 /**
  * N1 collaboration fan-out (docs/notifications/notifications_design.md §7.2).
@@ -62,7 +62,7 @@ type WriteEvent = FirestoreEvent<
  * segment" wildcard, and a deploy is global. The original export names stay bound to the legacy
  * segment so the already-deployed functions are not torn down and recreated; Phase F3 deletes them.
  *
- * [segment] is threaded into the handler because the tail-number read below builds an entity path,
+ * [segment] is threaded into the handler because the Thing-label read below builds an entity path,
  * which must stay in the tree the write happened in.
  */
 const handleRecordWritten =
@@ -166,8 +166,8 @@ const handleThingWritten =
       nowMs: Date.now(),
       recipients,
       segment,
-      // The write in hand IS the aircraft, so its tail number needs no second read.
-      tailNumber: tailNumberOf(change.after) ?? undefined,
+      // The write in hand IS the Thing, so its label needs no second read.
+      thingLabel: thingLabelOf(change.after) ?? undefined,
     });
   };
 
@@ -250,7 +250,7 @@ type ActivityFanOut = {
   actorUid: string;
   nowMs: number;
   recipients: string[];
-  tailNumber?: string;
+  thingLabel?: string;
   /** The entity segment the triggering write landed on — see config/entitySegment.ts. */
   segment: EntitySegment;
 };
@@ -260,7 +260,7 @@ async function fanOutActivity(input: ActivityFanOut): Promise<void> {
   const { hostUid, thingId, recordType, recordId, recordTitle, kind, actorUid, nowMs, recipients } =
     input;
 
-  const label = input.tailNumber ?? (await readTailNumber(hostUid, thingId, input.segment));
+  const label = input.thingLabel ?? (await readThingLabel(hostUid, thingId, input.segment));
   const actorName = await readActorDisplayName(hostUid, thingId, actorUid);
 
   const sent = await fanOut(
@@ -304,7 +304,7 @@ async function fanOutEscalation(
   segment: EntitySegment,
 ): Promise<void> {
   const [tailNumber, actorName] = await Promise.all([
-    readTailNumber(hostUid, thingId, segment),
+    readThingLabel(hostUid, thingId, segment),
     readActorDisplayName(hostUid, thingId, actorUid),
   ]);
 
@@ -366,12 +366,12 @@ async function fanOut(
 }
 
 /**
- * The aircraft's tail number, or `""` when it will not resolve.
+ * The Thing's display label (see `thingLabelOf`), or `""` when it will not resolve.
  *
  * Empty is passed through rather than substituted with the id: the title is "%1$s · Squawks", and a
  * raw UUID there is worse than a title that simply reads "Squawks".
  */
-async function readTailNumber(
+async function readThingLabel(
   hostUid: string,
   thingId: string,
   segment: EntitySegment,
@@ -379,9 +379,9 @@ async function readTailNumber(
   try {
     const snap = await adminDb.doc(entityDocPath(hostUid, thingId, segment)).get();
     if (!snap.exists) return "";
-    return tailNumberOf(snap.data() as SyncDocWire) ?? "";
+    return thingLabelOf(snap.data() as SyncDocWire) ?? "";
   } catch (e) {
-    logger.warn("Could not read a tail number for a notification", {
+    logger.warn("Could not read a Thing label for a notification", {
       hostUid,
       thingId,
       error: String(e),

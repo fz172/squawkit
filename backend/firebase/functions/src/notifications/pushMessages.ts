@@ -24,7 +24,7 @@ import {
  * | key | meaning |
  * |:--|:--|
  * | `titleKey` / `bodyKey` | `strings.xml` resource names in `feature/notifications/sharedassets` |
- * | `tailNumber` | `%1$s` of every title and body here |
+ * | `tailNumber` | `%1$s` of every title and body here — the Thing's display label (a tail number for an airplane, a name for a home); the key predates Things and is kept for older clients |
  * | `actorName` | the collaborator's display name; **empty** means fall back to `notification_n1_actor_fallback` |
  * | `recordType` | `squawk` \| `task` \| `log` \| `aircraft`; the client maps it to the section labels |
  * | `recordId` | the record's Firestore document id — escalation always, activity whenever it names one |

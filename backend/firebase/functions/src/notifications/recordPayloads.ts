@@ -8,8 +8,8 @@ import { payloadBytes, type SyncDocWire } from "../shared/syncDocWire.js";
 import { RECORD_TYPE, type RecordType } from "./notificationModels.js";
 
 /**
- * The things the fan-out needs out of an otherwise opaque entity payload: an aircraft's tail
- * number, a squawk's urgency (§7.2 step 4), and — since coalescing was removed (design decision,
+ * The things the fan-out needs out of an otherwise opaque entity payload: a Thing's display label,
+ * a squawk's urgency (§7.2 step 4), and — since coalescing was removed (design decision,
  * 2026-08-27) — every record type's own title, because the activity path now names the specific
  * record in every push instead of summarizing "N changes."
  *
@@ -23,18 +23,48 @@ export const SCHEMA = {
   SQUAWK: "aircraft.Squawk",
 } as const;
 
-/** Tail number carried by a Thing envelope, or `null` if it will not decode. */
-export function tailNumberOf(doc: SyncDocWire | undefined): string | null {
+/**
+ * The label a Thing envelope names itself by, or `null` if it will not decode or nothing names it.
+ *
+ * Mirrors `Thing.displayLabel` in `core/template` (PRD §9.1): the owner's name, then the template's
+ * `title_candidate` field, then make and model, then its `is_identifier` field, then whatever the
+ * template does ask for, then the template's own display name. Reading only `tail_number` — which
+ * this did until a home's notification opened with a bare ": task is due soon" — leaves every
+ * non-airplane Thing nameless.
+ *
+ * The one addition to the client's order is the final `tail_number` read: a Thing with no DNA can
+ * only be an airplane (template_system_design.md §5), and the client gets that fallback from its
+ * baked-in registry, which the server does not carry.
+ */
+export function thingLabelOf(doc: SyncDocWire | undefined): string | null {
   const bytes = payloadBytes(doc?.payload);
   if (bytes == null) return null;
   try {
-    // From `spec`, not the retired field 5 (#668) — the same key the clients read.
-    const tail = Thing.decode(bytes).spec.find(entry => entry.key === "tail_number")?.value ?? "";
-    return tail.length > 0 ? tail : null;
+    return displayLabelOf(Thing.decode(bytes));
   } catch (e) {
-    logger.warn("Could not decode an aircraft payload for a notification", { error: String(e) });
+    logger.warn("Could not decode a Thing payload for a notification", { error: String(e) });
     return null;
   }
+}
+
+function displayLabelOf(thing: Thing): string | null {
+  // From `spec`, not the retired field 5 (#668) — the same keys the clients read.
+  const spec = (key: string) => thing.spec.find(entry => entry.key === key)?.value ?? "";
+  const fields = thing.template?.specFields ?? [];
+  const candidates = [
+    () => thing.name,
+    () => fields.filter(f => f.titleCandidate).map(f => spec(f.key))[0] ?? "",
+    () => [spec("make"), spec("model")].filter(v => v.length > 0).join(" "),
+    () => fields.filter(f => f.isIdentifier).map(f => spec(f.key))[0] ?? "",
+    () => fields.map(f => spec(f.key)).find(v => v.length > 0) ?? "",
+    () => thing.template?.displayName ?? "",
+    () => spec("tail_number"),
+  ];
+  for (const candidate of candidates) {
+    const value = candidate().trim();
+    if (value.length > 0) return value;
+  }
+  return null;
 }
 
 function decodeSquawk(doc: SyncDocWire | undefined): Squawk | null {
@@ -50,8 +80,8 @@ function decodeSquawk(doc: SyncDocWire | undefined): Squawk | null {
 
 /**
  * The record's own title/description, resolved per [RecordType] — the specific thing a concrete
- * activity notification names. `null` for `aircraft` (there is no per-record title; the aircraft's
- * own identity is its tail number, via [tailNumberOf]) and whenever the payload will not decode.
+ * activity notification names. `null` for `aircraft` (there is no per-record title; the Thing's
+ * own identity is its label, via [thingLabelOf]) and whenever the payload will not decode.
  */
 export function recordTitleOf(recordType: RecordType, doc: SyncDocWire | undefined): string | null {
   const bytes = payloadBytes(doc?.payload);
@@ -135,7 +165,7 @@ export type Escalation = {
  * rules let any member write squawks into a shared aircraft but cannot see inside a payload, a
  * member could carry *another* squawk's id and overwrite that alert in everyone's tray.
  *
- * The caller passes `event.params.docId` instead. Decoding is still right for the tail number and
+ * The caller passes `event.params.docId` instead. Decoding is still right for the thing label and
  * the title, which exist only in the payload; the record id has a canonical home in the path.
  */
 

@@ -90,6 +90,30 @@ function thingEnvelope(acId: string, tail: string, writerUid = HOST) {
   );
 }
 
+/**
+ * A Thing that is not an airplane: a home preset carries no `tail_number`, declares no
+ * `title_candidate` or `is_identifier`, and has no make or model — so only its name or, failing
+ * that, whatever spec field the template does declare can label it.
+ */
+function homeEnvelope(thingId: string, name: string, address = "", writerUid = HOST) {
+  return envelope(
+    Thing.encode(
+      Thing.fromPartial({
+        id: thingId,
+        name,
+        spec: address.length > 0 ? [{ key: "address", value: address }] : [],
+        template: {
+          id: "home",
+          displayName: "Home",
+          specFields: [{ key: "address", label: "Address" }],
+        },
+      }),
+    ).finish(),
+    "thing.Thing",
+    writerUid,
+  );
+}
+
 function squawkEnvelope(
   id: string,
   priority: SquawkPriority,
@@ -629,6 +653,36 @@ describe("§7.4 audience and preferences, re-derived on every send", () => {
     expect(sentMessages[0].data.tailNumber).toBe("N4589T");
     expect(sentMessages[0].data.recordType).toBe("task");
   });
+
+  it("names a Thing with no tail number by its name — a home is not an airplane", async () => {
+    await adminDb.doc(`users/${HOST}/thing/${AC_A}`).set(homeEnvelope(AC_A, "Lake House"));
+    await shareThing(AC_A, { [HOST]: "owner", [MEMBER]: "technician" });
+
+    await taskEdit(AC_A, 1);
+
+    expect(sentMessages).toHaveLength(1);
+    expect(sentMessages[0].data.tailNumber).toBe("Lake House");
+  });
+
+  it("falls back to whatever the template does declare when a home has no name", async () => {
+    await adminDb
+      .doc(`users/${HOST}/thing/${AC_A}`)
+      .set(homeEnvelope(AC_A, "", "12 Elm Street"));
+    await shareThing(AC_A, { [HOST]: "owner", [MEMBER]: "technician" });
+
+    await taskEdit(AC_A, 1);
+
+    expect(sentMessages[0].data.tailNumber).toBe("12 Elm Street");
+  });
+
+  it("falls back to the template's own name when nothing else names the Thing", async () => {
+    await adminDb.doc(`users/${HOST}/thing/${AC_A}`).set(homeEnvelope(AC_A, ""));
+    await shareThing(AC_A, { [HOST]: "owner", [MEMBER]: "technician" });
+
+    await taskEdit(AC_A, 1);
+
+    expect(sentMessages[0].data.tailNumber).toBe("Home");
+  });
 });
 
 describe("what is not collaboration activity", () => {
@@ -740,6 +794,18 @@ describe("the Aircraft record's own trigger", () => {
     // The aircraft has no per-record title to name, so it gets its own body regardless of kind.
     expect(sentMessages[0].data.bodyKey).toBe("notification_n1_body_thing_updated");
     expect(sentMessages[0].data.tapTarget).toBe(`aircraft:${AC_A}:overview`);
+  });
+
+  it("labels a home edit by the written name, not a tail number it does not have", async () => {
+    await shareThing(AC_A, { [HOST]: "owner", [MEMBER]: "technician" });
+
+    await wrappedThing(
+      thingWrite(AC_A, homeEnvelope(AC_A, "Lake House"), homeEnvelope(AC_A, "Cabin")),
+    );
+
+    expect(sentMessages).toHaveLength(1);
+    expect(sentMessages[0].data.tailNumber).toBe("Cabin");
+    expect(sentMessages[0].data.bodyKey).toBe("notification_n1_body_thing_updated");
   });
 
   it("stays silent for a tombstoned aircraft — deleting it tears the share down", async () => {

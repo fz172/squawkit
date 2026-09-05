@@ -5,8 +5,9 @@
        finds two or more, per PRD §6.6's "3 inspections are now overdue" example.
 
        Titles carry no dynamic content — the record's own title is user-authored and can be long,
-       so it (and the aircraft) live in the body instead, on their own line, rather than folded into
-       a run-on title or sentence. Single-crossing bodies are three segments: tail number + what
+       so it (and the thing) live in the body instead, on their own line, rather than folded into
+       a run-on title or sentence. Single-crossing bodies are three segments: the thing's display
+       label (Thing.displayLabel — a tail number for an airplane, a name for a home) + what
        changed, the record's own title, then a tap hint — separated by a blank line (\n\n) rather
        than a bare line break, for visual breathing room between them. \n\n, not a single \n, is
        deliberate: notification bodies are plain text on all three platforms (Android's
@@ -36,7 +37,7 @@
 
   <!-- N1 collaboration activity, server push (design §7.2, rewritten 2026-08-27: every write gets
        its own concrete notification — no coalescing, no "made N changes" summary, no ceiling. The
-       title still carries the tail number and section, both short and bounded unlike a
+       title still carries the thing's display label and section, both short and bounded unlike a
        user-authored record title (%1$s · %2$s); the body names the actor and what happened to the
        specific record, with the record's own title on its own line — the same three/four-segment
        shape as the N2 and escalation bodies below. -->

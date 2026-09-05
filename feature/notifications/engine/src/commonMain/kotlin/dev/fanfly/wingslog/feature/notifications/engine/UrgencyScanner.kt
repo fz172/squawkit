@@ -5,10 +5,9 @@ import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.EntityStore
 import dev.fanfly.wingslog.core.storage.EntityStoreFactory
 import dev.fanfly.wingslog.core.storage.ThingScopeResolver
-import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import dev.fanfly.wingslog.core.template.LexiconFormatter
-import dev.fanfly.wingslog.core.template.SpecKeys
-import dev.fanfly.wingslog.core.template.specValue
+import dev.fanfly.wingslog.core.template.TemplateRegistry
+import dev.fanfly.wingslog.core.template.displayLabel
 import dev.fanfly.wingslog.core.template.squawkNoun
 import dev.fanfly.wingslog.core.template.taskNoun
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetEntry
@@ -32,6 +31,7 @@ import dev.fanfly.wingslog.feature.notifications.permission.PermissionState
 import dev.fanfly.wingslog.feature.notifications.viewing.LocalNotifier
 import dev.fanfly.wingslog.feature.squawk.model.toWithStatus
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDueManager
+import dev.fanfly.wingslog.thing.Lexicon
 import dev.fanfly.wingslog.thing.MaintenanceTask
 import dev.fanfly.wingslog.thing.Squawk
 import dev.gitlive.firebase.auth.FirebaseAuth
@@ -77,7 +77,7 @@ class UrgencyScanner(
   entityStoreFactory: EntityStoreFactory,
   private val watermarkStore: UrgencyWatermarkStore,
   private val notifier: LocalNotifier,
-  private val currentThingTemplate: CurrentThingTemplate,
+  private val templateRegistry: TemplateRegistry,
   private val lastScanStore: LastScanStore,
   private val telemetry: UrgencyTelemetry = UrgencyTelemetry.NoOp,
   private val clock: Clock = Clock.System,
@@ -168,7 +168,12 @@ class UrgencyScanner(
     settings: NotificationSettings,
   ): Tally {
     val thingId = entry.thing.id
-    val tailNumber = entry.thing.specValue(SpecKeys.TAIL_NUMBER)
+    // The same label the switcher shows, not the tail-number spec: a home has none, and the body
+    // then opened with a bare ": task is due soon". Words come from THIS thing's template too — the
+    // selected thing's lexicon is wrong for a scan that walks the whole fleet.
+    val template = templateRegistry.forThingWithFallback(entry.thing)
+    val thingLabel = entry.thing.displayLabel(template)
+    val lexicon = templateRegistry.lexiconFor(template)
     // Scope comes from the resolver, never the signed-in uid — a shared thing's records live in
     // the host's tree (design §6.3).
     val scope = scopeResolver.resolveNow(thingId)
@@ -253,7 +258,8 @@ class UrgencyScanner(
       .map { (tier, group) ->
         buildNotification(
           thingId,
-          tailNumber,
+          thingLabel,
+          lexicon,
           tier,
           group
         )
@@ -332,7 +338,8 @@ class UrgencyScanner(
 
   private suspend fun buildNotification(
     thingId: String,
-    tailNumber: String,
+    thingLabel: String,
+    lexicon: Lexicon,
     tier: UrgencyTier,
     group: List<Crossing>,
   ): PendingNotification {
@@ -346,10 +353,10 @@ class UrgencyScanner(
     // overwriting a still-unread notification about the first one.
     val id: String
     if (single != null) {
-      body = buildSingleBody(tier, tailNumber, single)
+      body = buildSingleBody(tier, thingLabel, lexicon, single)
       id = "urgency:${single.collection.wireName}:${single.recordId}"
     } else {
-      body = tier.pluralBody(tailNumber, group.size)
+      body = tier.pluralBody(thingLabel, lexicon, group.size)
       id = "urgency:$thingId:${tier.name}"
     }
     return PendingNotification(
@@ -366,45 +373,46 @@ class UrgencyScanner(
     )
   }
 
-  // Two paragraphs — tail + what changed, then the record's own (possibly long) title on its own
-  // line — rather than folding a user-authored title into one run-on sentence. No tap hint: every
-  // notification is tappable, so saying so on each one is noise.
+  // Two paragraphs — thing label + what changed, then the record's own (possibly long) title on
+  // its own line — rather than folding a user-authored title into one run-on sentence. No tap hint:
+  // every notification is tappable, so saying so on each one is noise.
   private suspend fun buildSingleBody(
     tier: UrgencyTier,
-    tailNumber: String,
+    thingLabel: String,
+    lexicon: Lexicon,
     crossing: Crossing
   ): String =
     if (tier == UrgencyTier.PRIORITY_RAISED) {
       val fromLabel =
-        (crossing.previousRank ?: UrgencyRank.RESOLVED).squawkPriorityLabel()
+        (crossing.previousRank ?: UrgencyRank.RESOLVED).squawkPriorityLabel(lexicon)
       // Computed per-crossing, not assumed: PRIORITY_RAISED reports at HIGH or AOG now that AOG
       // folds into it (design decision, 2026-08-26), so "to" can no longer be hardcoded to HIGH.
       // Only squawk crossings ever carry this tier, so newRank is always set here.
       val toLabel =
         checkNotNull(crossing.newRank) { "PRIORITY_RAISED crossing with no newRank" }
-          .squawkPriorityLabel()
+          .squawkPriorityLabel(lexicon)
       getString(
         tier.singleBodyRes(),
-        tailNumber,
+        thingLabel,
         fromLabel,
         toLabel,
         crossing.title
       )
     } else {
-      getString(tier.singleBodyRes(), tailNumber, crossing.title)
+      getString(tier.singleBodyRes(), thingLabel, crossing.title)
     }
 
   /**
    * The priority label. The top rung has no resource: "AOG" *is* `Lexicon.down_status`, so a
    * string holding it would carry no information the lexicon does not (#657).
    */
-  private suspend fun UrgencyRank.squawkPriorityLabel(): String =
+  private suspend fun UrgencyRank.squawkPriorityLabel(lexicon: Lexicon): String =
     when (value) {
       0 -> getString(Res.string.squawk_priority_label_resolved)
       1 -> getString(Res.string.squawk_priority_label_low)
       2 -> getString(Res.string.squawk_priority_label_medium)
       3 -> getString(Res.string.squawk_priority_label_high)
-      else -> LexiconFormatter.titleCase(currentThingTemplate.lexicon.value.down_status)
+      else -> LexiconFormatter.titleCase(lexicon.down_status)
     }
 
   // NotificationTapTarget.Aircraft.tab wire values (design §5.3 / P2.9) — a summary notification
@@ -442,33 +450,32 @@ class UrgencyScanner(
    * surface.
    */
   private suspend fun UrgencyTier.pluralBody(
-    tailNumber: String,
+    thingLabel: String,
+    lexicon: Lexicon,
     count: Int
-  ): String {
-    val lexicon = currentThingTemplate.lexicon.value
-    return when (this) {
+  ): String =
+    when (this) {
       UrgencyTier.PRIORITY_RAISED -> getString(
         Res.string.notification_body_priority_raised_plural,
-        tailNumber,
+        thingLabel,
         count,
         lexicon.squawkNoun.plural,
       )
 
       UrgencyTier.OVERDUE -> getString(
         Res.string.notification_body_overdue_plural,
-        tailNumber,
+        thingLabel,
         count,
         lexicon.taskNoun.plural,
       )
 
       UrgencyTier.DUE_SOON -> getString(
         Res.string.notification_body_due_soon_plural,
-        tailNumber,
+        thingLabel,
         count,
         lexicon.taskNoun.plural,
       )
     }
-  }
 
   private data class RecordRank(val id: String, val rank: UrgencyRank)
 

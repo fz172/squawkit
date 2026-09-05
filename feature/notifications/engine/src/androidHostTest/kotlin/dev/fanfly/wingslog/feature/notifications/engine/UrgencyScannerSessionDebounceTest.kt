@@ -6,7 +6,6 @@ import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.model.settings.NotificationSettings
 import dev.fanfly.wingslog.core.storage.createWingsLogDatabase
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
-import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
 import dev.fanfly.wingslog.feature.notifications.datamanager.NotificationPrefsManager
 import dev.fanfly.wingslog.feature.notifications.datamanager.PrefsState
@@ -78,11 +77,7 @@ class UrgencyScannerSessionDebounceTest {
       entityStoreFactory = mockk(relaxed = true),
       watermarkStore = UrgencyWatermarkStore(db),
       notifier = mockk(relaxed = true),
-      currentThingTemplate = CurrentThingTemplate(
-        BakedInTemplateRegistry(
-          appVersionCode = 1
-        )
-      ),
+      templateRegistry = BakedInTemplateRegistry(appVersionCode = 1),
       lastScanStore = lastScanStore,
       clock = clock,
     )
@@ -142,11 +137,7 @@ class UrgencyScannerSessionDebounceTest {
       entityStoreFactory = mockk(relaxed = true),
       watermarkStore = mockk(relaxed = true),
       notifier = mockk(relaxed = true),
-      currentThingTemplate = CurrentThingTemplate(
-        BakedInTemplateRegistry(
-          appVersionCode = 1
-        )
-      ),
+      templateRegistry = BakedInTemplateRegistry(appVersionCode = 1),
       lastScanStore = lastScanStore,
       clock = clock,
     )
