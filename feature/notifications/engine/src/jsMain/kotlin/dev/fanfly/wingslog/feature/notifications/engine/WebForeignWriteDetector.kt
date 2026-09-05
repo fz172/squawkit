@@ -1,12 +1,11 @@
 package dev.fanfly.wingslog.feature.notifications.engine
 
-import dev.fanfly.wingslog.core.template.SpecKeys
-import dev.fanfly.wingslog.core.template.specValue
 import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.ForeignWriteListener
-import dev.fanfly.wingslog.core.template.CurrentThingTemplate
+import dev.fanfly.wingslog.core.template.TemplateRegistry
+import dev.fanfly.wingslog.core.template.displayLabel
 import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.logNoun
 import dev.fanfly.wingslog.core.template.squawkNoun
@@ -25,6 +24,7 @@ import dev.fanfly.wingslog.feature.notifications.permission.PermissionState
 import dev.fanfly.wingslog.feature.notifications.viewing.LocalNotifier
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.thing.Lexicon
+import dev.fanfly.wingslog.thing.Thing
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -69,7 +69,7 @@ class WebForeignWriteDetector(
   private val prefsManager: NotificationPrefsManager,
   private val permission: NotificationPermission,
   private val notifier: LocalNotifier,
-  private val currentThingTemplate: CurrentThingTemplate,
+  private val templateRegistry: TemplateRegistry,
   private val clock: Clock = Clock.System,
   private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
 ) : ForeignWriteListener {
@@ -171,11 +171,15 @@ class WebForeignWriteDetector(
     /** What the body says. */
     actor: String,
   ): PendingNotification {
-    val tailNumber = tailNumberOf(thingId)
+    val thing = thingOf(thingId)
     // Between this and "N1 built" there is nothing but string resource loads, so the pair of lines
     // says which half of the build is slow or stuck without another round of guessing.
-    log.d { "N1 tail number resolved for $thingId, rendering strings" }
-    val lexicon = currentThingTemplate.lexicon.value
+    log.d { "N1 thing resolved for $thingId, rendering strings" }
+    // This thing's own template, not the selected thing's: the write can land on any shared thing
+    // in the fleet, and a home's label is its name, not a tail number it does not have.
+    val template = thing?.let { templateRegistry.forThingWithFallback(it) }
+    val thingLabel = thing?.displayLabel(template) ?: thingId
+    val lexicon = templateRegistry.lexiconFor(template)
     val body = getString(
       Res.string.notification_n1_body_single,
       actor,
@@ -193,7 +197,7 @@ class WebForeignWriteDetector(
       channel = NotificationChannel.COLLABORATION,
       title = getString(
         Res.string.notification_n1_title,
-        tailNumber,
+        thingLabel,
         recordType.titleLabel(lexicon),
       ),
       body = body,
@@ -205,30 +209,29 @@ class WebForeignWriteDetector(
   }
 
   /**
-   * Falls back to the id, which is never shown in practice — the fleet always has the thing a
-   * write arrived for.
+   * Null makes the caller fall back to the id, which is never shown in practice — the fleet always
+   * has the thing a write arrived for.
    *
    * **Bounded, for the same reason the roster read above is.** `observeFleetDashboard()` is
    * `authStateChanged.flatMapLatest { combine(ownAircraft, sharedThing) }`, and a `combine`
    * emits nothing until every source has emitted once — so a single source that never answers makes
    * `.first()` suspend rather than fail. `runCatching` does not help with that: there is no
-   * exception, just a coroutine that never returns, and since this is evaluated as the argument to
+   * exception, just a coroutine that never returns, and since this feeds the argument to
    * `notifier.post(...)` the notification is silently never posted. A title reading as the thing
    * id is a bad title; no notification at all is a lost one.
    */
-  private suspend fun tailNumberOf(thingId: String): String =
+  private suspend fun thingOf(thingId: String): Thing? =
     runCatching {
       withTimeoutOrNull(FLEET_READ_TIMEOUT) {
         fleetManager.observeFleetDashboard()
           .first()
           .firstOrNull { it.thing.id == thingId }
           ?.thing
-          ?.specValue(SpecKeys.TAIL_NUMBER)
       } ?: run {
-        log.w { "N1 tail number read timed out for $thingId; falling back to the id" }
+        log.w { "N1 fleet read timed out for $thingId; falling back to the id" }
         null
       }
-    }.getOrNull() ?: thingId
+    }.getOrNull()
 
   /** The three record types §8 treats as collaboration activity. Anything else is not N1. */
   /**
