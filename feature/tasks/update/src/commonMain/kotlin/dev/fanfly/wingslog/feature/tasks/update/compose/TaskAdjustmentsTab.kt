@@ -25,54 +25,30 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.template.LocalThingTemplate
+import dev.fanfly.wingslog.core.template.meterForComponent
 import dev.fanfly.wingslog.core.ui.common.compose.FormSectionLabel
-import dev.fanfly.wingslog.core.ui.common.compose.PreviewBanner
-import dev.fanfly.wingslog.core.ui.common.compose.PreviewBannerTone
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.core.ui.theme.statusColors
-import kotlinx.datetime.LocalDate
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.daysUntil
-import kotlinx.datetime.toLocalDateTime
+import dev.fanfly.wingslog.feature.tasks.datamanager.pickerMillisToDate
+import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
+import dev.fanfly.wingslog.thing.ComponentType
+import dev.fanfly.wingslog.thing.MeterDef
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.select_date
 import wingslog.feature.tasks.update.generated.resources.Res
-import wingslog.feature.tasks.update.generated.resources.adj_preview_hint
-import wingslog.feature.tasks.update.generated.resources.adj_preview_label_neutral
-import wingslog.feature.tasks.update.generated.resources.adj_preview_neutral_primary
-import wingslog.feature.tasks.update.generated.resources.adj_preview_neutral_secondary_linked
-import wingslog.feature.tasks.update.generated.resources.adj_preview_neutral_secondary_unset
-import wingslog.feature.tasks.update.generated.resources.adj_preview_primary_date
-import wingslog.feature.tasks.update.generated.resources.adj_preview_primary_hours
-import wingslog.feature.tasks.update.generated.resources.adj_preview_rel_due_today
-import wingslog.feature.tasks.update.generated.resources.adj_preview_rel_hours_at
-import wingslog.feature.tasks.update.generated.resources.adj_preview_rel_in_day
-import wingslog.feature.tasks.update.generated.resources.adj_preview_rel_in_days
-import wingslog.feature.tasks.update.generated.resources.adj_preview_rel_in_hours
-import wingslog.feature.tasks.update.generated.resources.adj_preview_rel_over_hours
-import wingslog.feature.tasks.update.generated.resources.adj_preview_rel_overdue_day
-import wingslog.feature.tasks.update.generated.resources.adj_preview_rel_overdue_days
-import wingslog.feature.tasks.update.generated.resources.adj_preview_reschedule_date_primary
-import wingslog.feature.tasks.update.generated.resources.adj_preview_reschedule_hours_primary
-import wingslog.feature.tasks.update.generated.resources.adj_preview_reschedule_was_date
-import wingslog.feature.tasks.update.generated.resources.adj_preview_was_date
-import wingslog.feature.tasks.update.generated.resources.adj_preview_was_hours
 import wingslog.feature.tasks.update.generated.resources.adj_reschedule_disabled_linked
 import wingslog.feature.tasks.update.generated.resources.adj_reschedule_disabled_unset
+import wingslog.feature.tasks.update.generated.resources.adj_reschedule_prefix_at
 import wingslog.feature.tasks.update.generated.resources.adj_reschedule_section_label
 import wingslog.feature.tasks.update.generated.resources.adj_reschedule_subtitle
 import wingslog.feature.tasks.update.generated.resources.adj_reschedule_title
@@ -81,11 +57,7 @@ import wingslog.feature.tasks.update.generated.resources.adj_reschedule_was_hour
 import wingslog.feature.tasks.update.generated.resources.delete_task_section_label
 import wingslog.feature.tasks.update.generated.resources.delete_this_task_subtitle
 import wingslog.feature.tasks.update.generated.resources.delete_this_task_title
-import wingslog.feature.tasks.update.generated.resources.schedule_preview_label
-import kotlin.math.abs
-import kotlin.math.roundToInt
-import kotlin.time.Clock
-import kotlin.time.Instant
+import wingslog.feature.tasks.update.generated.resources.schedule_unit_tach_hours
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 
 @Composable
@@ -99,177 +71,57 @@ fun TaskAdjustmentsTab(
   onForceOverrideDateChange: (Boolean) -> Unit,
   forcedDateMillis: Long?,
   onDateClick: () -> Unit,
-  naturalDueDate: LocalDate?,
-  naturalDueEngine: Float?,
-  // What this task's next due actually reads as right now — a recorded skip or a saved
-  // reschedule included. Falls back to the natural due when it can't be computed.
-  currentDueDate: LocalDate?,
-  currentDueEngine: Float?,
-  currentEngineHours: Float,
+  /** The draft's due with and without its override — the same inputs the schedule tab shows. */
+  effectiveDue: DueMetadata?,
+  naturalDue: DueMetadata?,
+  currentReading: (String) -> Float,
+  linkedTaskName: String?,
+  component: ComponentType,
   onDeleteRequest: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
   val mode = schedule.mode
-  val rescheduleOn = when (mode) {
-    ScheduleMode.TIME -> forceOverrideDate
-    ScheduleMode.HOURS -> forceOverrideEngine
+  // A seasonal schedule is a date schedule for every purpose here: it reschedules by date.
+  val datedMode = mode == ScheduleMode.TIME || mode == ScheduleMode.SEASONAL
+  val rescheduleOn = when {
+    datedMode -> forceOverrideDate
+    mode == ScheduleMode.HOURS -> forceOverrideEngine
     else -> false
   }
 
   fun setReschedule(on: Boolean) {
-    when (mode) {
-      ScheduleMode.TIME -> {
+    when {
+      datedMode -> {
         onForceOverrideDateChange(on)
         if (on) onForceOverrideEngineChange(false)
       }
 
-      ScheduleMode.HOURS -> {
+      mode == ScheduleMode.HOURS -> {
         onForceOverrideEngineChange(on)
         if (on) onForceOverrideDateChange(false)
       }
-
-      else -> {}
     }
   }
 
-  val timeZone = TimeZone.currentSystemDefault()
-  val today = remember {
-    Clock.System.now()
-      .toLocalDateTime(timeZone).date
-  }
-  val rescheduledDate = forcedDateMillis?.let {
-    Instant.fromEpochMilliseconds(it)
-      .toLocalDateTime(timeZone).date
-  }
-  val rescheduledEngine = forcedEngineHours.toFloatOrNull()
-  // What the neutral banner reports. Prefers the effective due so a persisted skip or override
-  // reads the same here as on the dashboard (#347), falling back to the rules-only due for
-  // schedules the due manager can't resolve to a date.
-  val neutralDueDate = currentDueDate ?: naturalDueDate
-  val neutralDueEngine = currentDueEngine ?: naturalDueEngine
+  // The meter the schedule counts in, so every banner here says "mi" where the input says "mi"
+  // (#785). Same resolution as the schedule tab — by component on the airplane — so the two tabs
+  // name the same meter; the aviation word only when the template declares no meter at all.
+  val meter = LocalThingTemplate.current.meterForComponent(component)
+  val meterUnit = meter?.unit_label?.takeIf { it.isNotEmpty() }
+    ?: stringResource(Res.string.schedule_unit_tach_hours)
 
   Column(
     modifier = modifier.fillMaxWidth(),
     verticalArrangement = Arrangement.spacedBy(Spacing.extraLarge),
   ) {
-    val bannerTone =
-      if (rescheduleOn) PreviewBannerTone.Active else PreviewBannerTone.Neutral
-    val bannerLabel = stringResource(
-      if (rescheduleOn) Res.string.schedule_preview_label
-      else Res.string.adj_preview_label_neutral
-    )
-    val bannerPrimary: AnnotatedString
-    val bannerSecondary: AnnotatedString
-    when {
-      // ── Reschedule on, TIME mode ─────────────────────────────────────────
-      rescheduleOn && mode == ScheduleMode.TIME -> {
-        if (rescheduledDate != null) {
-          val rescheduledStr = rescheduledDate.toDisplayFormat()
-          bannerPrimary = monoOn(
-            stringResource(
-              Res.string.adj_preview_primary_date,
-              rescheduledStr,
-              relativeDaysPhrase(today.daysUntil(rescheduledDate)),
-            ),
-            rescheduledStr,
-          )
-          bannerSecondary = naturalDueDate?.let {
-            val natStr = it.toDisplayFormat()
-            monoOn(
-              stringResource(Res.string.adj_preview_was_date, natStr),
-              natStr
-            )
-          }
-            ?: AnnotatedString(stringResource(Res.string.adj_preview_reschedule_was_date))
-        } else {
-          bannerPrimary = AnnotatedString(
-            stringResource(Res.string.adj_preview_reschedule_date_primary, "—")
-          )
-          bannerSecondary =
-            AnnotatedString(stringResource(Res.string.adj_preview_reschedule_was_date))
-        }
-      }
-
-      // ── Reschedule on, HOURS mode ────────────────────────────────────────
-      rescheduleOn && mode == ScheduleMode.HOURS -> {
-        if (rescheduledEngine != null) {
-          val rescheduledStr = formatEngineHours(rescheduledEngine)
-          bannerPrimary = monoOn(
-            stringResource(
-              Res.string.adj_preview_primary_hours,
-              rescheduledStr,
-              relativeEnginePhrase(rescheduledEngine - currentEngineHours),
-            ),
-            rescheduledStr,
-          )
-          bannerSecondary = naturalDueEngine?.let {
-            val natStr = formatEngineHours(it)
-            monoOn(
-              stringResource(Res.string.adj_preview_was_hours, natStr),
-              natStr
-            )
-          }
-            ?: AnnotatedString(stringResource(Res.string.adj_preview_reschedule_was_date))
-        } else {
-          bannerPrimary = AnnotatedString(
-            stringResource(
-              Res.string.adj_preview_reschedule_hours_primary,
-              forcedEngineHours.ifBlank { "—" },
-            )
-          )
-          bannerSecondary =
-            AnnotatedString(stringResource(Res.string.adj_preview_reschedule_was_date))
-        }
-      }
-
-      // ── Neutral, TIME mode with a known due ──────────────────────────────
-      mode == ScheduleMode.TIME && neutralDueDate != null -> {
-        val dueStr = neutralDueDate.toDisplayFormat()
-        bannerPrimary = monoOn(
-          stringResource(
-            Res.string.adj_preview_primary_date,
-            dueStr,
-            relativeDaysPhrase(today.daysUntil(neutralDueDate)),
-          ),
-          dueStr,
-        )
-        bannerSecondary = AnnotatedString("")
-      }
-
-      // ── Neutral, HOURS mode with a known due ─────────────────────────────
-      mode == ScheduleMode.HOURS && neutralDueEngine != null -> {
-        val dueStr = formatEngineHours(neutralDueEngine)
-        bannerPrimary = monoOn(
-          stringResource(
-            Res.string.adj_preview_primary_hours,
-            dueStr,
-            relativeEnginePhrase(neutralDueEngine - currentEngineHours),
-          ),
-          dueStr,
-        )
-        bannerSecondary = AnnotatedString("")
-      }
-
-      mode == ScheduleMode.LINKED -> {
-        bannerPrimary =
-          AnnotatedString(stringResource(Res.string.adj_preview_neutral_primary))
-        bannerSecondary =
-          AnnotatedString(stringResource(Res.string.adj_preview_neutral_secondary_linked))
-      }
-
-      else -> {
-        bannerPrimary =
-          AnnotatedString(stringResource(Res.string.adj_preview_neutral_primary))
-        bannerSecondary =
-          AnnotatedString(stringResource(Res.string.adj_preview_neutral_secondary_unset))
-      }
-    }
-    PreviewBanner(
-      label = bannerLabel,
-      hint = stringResource(Res.string.adj_preview_hint),
-      primary = bannerPrimary,
-      secondary = bannerSecondary,
-      tone = bannerTone,
+    DueSummaryBanner(
+      schedule = schedule,
+      linkedTaskName = linkedTaskName,
+      meterUnit = meterUnit,
+      overrideOn = rescheduleOn,
+      effectiveDue = effectiveDue,
+      naturalDue = naturalDue,
+      currentReading = currentReading,
     )
 
     // Section 1 — Reschedule next due
@@ -285,6 +137,8 @@ fun TaskAdjustmentsTab(
       onForcedEngineHoursChange = onForcedEngineHoursChange,
       forcedDateMillis = forcedDateMillis,
       onDateClick = onDateClick,
+      meter = meter,
+      meterUnit = meterUnit,
     )
 
     // Delete task — kept separate from the Resolve menu (Create Work Log / Skip This Cycle)
@@ -299,8 +153,13 @@ fun TaskAdjustmentsTab(
 
 // ─── Reschedule section ──────────────────────────────────────────────────────
 
+/**
+ * The forced next-due controls: a switch, then a date or a meter reading. Shared with the create
+ * form's "First due" section, which is the same override written once — the first cycle is
+ * whatever the user says, and the schedule takes over after the first log clears it.
+ */
 @Composable
-private fun RescheduleCard(
+internal fun RescheduleCard(
   mode: ScheduleMode?,
   rescheduleOn: Boolean,
   onToggle: (Boolean) -> Unit,
@@ -308,6 +167,10 @@ private fun RescheduleCard(
   onForcedEngineHoursChange: (String) -> Unit,
   forcedDateMillis: Long?,
   onDateClick: () -> Unit,
+  meter: MeterDef?,
+  meterUnit: String,
+  title: String = stringResource(Res.string.adj_reschedule_title),
+  subtitle: String = stringResource(Res.string.adj_reschedule_subtitle),
 ) {
   val isLinked = mode == ScheduleMode.LINKED
   val noMode = mode == null
@@ -344,18 +207,18 @@ private fun RescheduleCard(
     ) {
       Column(modifier = Modifier.weight(1f)) {
         Text(
-          stringResource(Res.string.adj_reschedule_title),
+          title,
           style = MaterialTheme.typography.bodyLarge,
           fontWeight = FontWeight.SemiBold,
           color = MaterialTheme.colorScheme.onSurface,
         )
-        val subtitle = when {
+        val caption = when {
           isLinked -> stringResource(Res.string.adj_reschedule_disabled_linked)
           noMode -> stringResource(Res.string.adj_reschedule_disabled_unset)
-          else -> stringResource(Res.string.adj_reschedule_subtitle)
+          else -> subtitle
         }
         Text(
-          subtitle,
+          caption,
           style = MaterialTheme.typography.bodySmall,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -387,11 +250,9 @@ private fun RescheduleCard(
         verticalArrangement = Arrangement.spacedBy(Spacing.small),
       ) {
         when (mode) {
-          ScheduleMode.TIME -> {
-            val dateStr = forcedDateMillis?.let {
-              Instant.fromEpochMilliseconds(it)
-                .toLocalDateTime(TimeZone.currentSystemDefault()).date.toString()
-            }
+          ScheduleMode.TIME, ScheduleMode.SEASONAL -> {
+            val dateStr = forcedDateMillis?.pickerMillisToDate()
+              ?.toDisplayFormat()
             Row(
               modifier = Modifier
                 .fillMaxWidth()
@@ -429,23 +290,12 @@ private fun RescheduleCard(
           }
 
           ScheduleMode.HOURS -> {
-            // The meter's own unit, like the schedule tab beside it — a car's override read
-            // "tach hrs" while the schedule that produced it said "mi" (#759).
-            // This tab has no rule in scope, only the mode — so the template's own meter is the
-            // best available answer, and it is the right one for every preset that declares just
-            // the one. #732 revisits it if a preset ever ships two.
-            val meter = LocalThingTemplate.current?.meters?.firstOrNull()
             IntervalNumberInput(
               value = forcedEngineHours,
               onChange = { onForcedEngineHoursChange(it.filter { c -> c.isDigit() || c == '.' }) },
-              suffix = meter?.unit_label?.takeIf { it.isNotEmpty() }
-                ?: "tach hrs",
-              prefix = "At",
-              keyboard = if (meter?.decimal != false) {
-                androidx.compose.ui.text.input.KeyboardType.Decimal
-              } else {
-                androidx.compose.ui.text.input.KeyboardType.Number
-              },
+              suffix = meterUnit,
+              prefix = stringResource(Res.string.adj_reschedule_prefix_at),
+              keyboard = if (meter?.decimal != false) KeyboardType.Decimal else KeyboardType.Number,
             )
             if (forcedEngineHours.isNotBlank()) {
               Text(
@@ -550,57 +400,5 @@ private fun AdjSectionLabel(
       }
     }
     FormSectionLabel(text = label)
-  }
-}
-
-// ─── Banner helpers ──────────────────────────────────────────────────────────
-
-@Composable
-private fun relativeDaysPhrase(days: Int): String = when {
-  days == 0 -> stringResource(Res.string.adj_preview_rel_due_today)
-  days == 1 -> stringResource(Res.string.adj_preview_rel_in_day)
-  days > 1 -> stringResource(Res.string.adj_preview_rel_in_days, days)
-  days == -1 -> stringResource(Res.string.adj_preview_rel_overdue_day)
-  else -> stringResource(Res.string.adj_preview_rel_overdue_days, -days)
-}
-
-@Composable
-private fun relativeEnginePhrase(deltaHours: Float): String {
-  val absDelta = abs(deltaHours)
-  if (absDelta < 0.05f) return stringResource(Res.string.adj_preview_rel_hours_at)
-  val formatted = formatEngineHours(absDelta)
-  return if (deltaHours > 0f) {
-    stringResource(Res.string.adj_preview_rel_in_hours, formatted)
-  } else {
-    stringResource(Res.string.adj_preview_rel_over_hours, formatted)
-  }
-}
-
-internal fun formatEngineHours(value: Float): String {
-  // Show integers without trailing decimal, otherwise one decimal place.
-  val rounded = (value * 10f).roundToInt() / 10f
-  return if (rounded == rounded.toInt()
-      .toFloat()
-  ) rounded.toInt()
-    .toString()
-  else rounded.toString()
-}
-
-/**
- * Returns [text] as an AnnotatedString with each [fragment]'s first occurrence styled
- * in JetBrains Mono (via [dev.fanfly.wingslog.core.ui.theme.WingslogTypography.dataMedium]). The surrounding text's
- * fontSize is preserved — only the font family and letter spacing are overridden.
- */
-@Composable
-private fun monoOn(text: String, vararg fragments: String): AnnotatedString {
-  val monoFamily = WingslogTypography.dataMedium.fontFamily
-  return buildAnnotatedString {
-    append(text)
-    val span = SpanStyle(fontFamily = monoFamily, letterSpacing = 0.sp)
-    for (fragment in fragments) {
-      if (fragment.isEmpty()) continue
-      val idx = text.indexOf(fragment)
-      if (idx >= 0) addStyle(span, idx, idx + fragment.length)
-    }
   }
 }

@@ -41,8 +41,10 @@
 # v8 reframes the pack for the experimental fleet: the 12-month inspection is the condition
 # inspection an operating-limitations letter asks for, and a 50-hour oil change joins it.
 #
+# v9 lists `schedule_types` explicitly: calendar time and the meter (tach hours).
+#
 id: "airplane"
-version: 8
+version: 9
 
 # No floor. This template ships inside every build that can read it, so a client can never
 # encounter it from the future — the floor exists for FETCHED templates (§6), and a baked-in one is
@@ -135,6 +137,12 @@ capabilities {
   sections: SECTION_LOGS
 
   export_layout: EXPORT_LAYOUT_LOGBOOK
+
+  # How a task here can be scheduled — what the form's "How is this tracked?" step offers, listed
+  # in full (PRD §4.6). METER means whatever meters this preset declares; SEASONAL is the
+  # calendar-anchored rule a house needs and a vehicle does not.
+  schedule_types: SCHEDULE_TYPE_CALENDAR
+  schedule_types: SCHEDULE_TYPE_METER
 }
 
 # The conventional keys that map onto the legacy Thing fields 2-5, which Phase 1 also mirrored into

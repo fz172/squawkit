@@ -28,6 +28,8 @@ import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDueManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.defaultMeterKey
 import dev.fanfly.wingslog.feature.tasks.datamanager.forcedDueMeter
 import dev.fanfly.wingslog.feature.tasks.datamanager.meterKeyFor
+import dev.fanfly.wingslog.feature.tasks.datamanager.toDueDate
+import dev.fanfly.wingslog.feature.tasks.datamanager.toPickerMillis
 import dev.fanfly.wingslog.feature.tasks.datamanager.withForcedDueMeter
 import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
 import dev.fanfly.wingslog.feature.tasks.update.compose.ScheduleState
@@ -39,6 +41,7 @@ import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.thing.MaintenanceTask
 import dev.fanfly.wingslog.thing.MeterReading
 import dev.gitlive.firebase.auth.FirebaseAuth
+import kotlin.time.Clock
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -48,16 +51,15 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import wingslog.feature.comments.sharedassets.generated.resources.comment_delete_failed
-import wingslog.feature.comments.sharedassets.generated.resources.comment_edit_failed
-import wingslog.feature.comments.sharedassets.generated.resources.comment_post_failed
+import wingslog.feature.attachment.sharedassets.generated.resources.Res as AttachRes
 import wingslog.feature.attachment.sharedassets.generated.resources.add_file_failed
 import wingslog.feature.attachment.sharedassets.generated.resources.duplicate_file_skipped
 import wingslog.feature.attachment.sharedassets.generated.resources.file_too_large
 import wingslog.feature.attachment.sharedassets.generated.resources.files_over_limit_skipped
-import kotlin.time.Clock
-import wingslog.feature.attachment.sharedassets.generated.resources.Res as AttachRes
 import wingslog.feature.comments.sharedassets.generated.resources.Res as CommentsRes
+import wingslog.feature.comments.sharedassets.generated.resources.comment_delete_failed
+import wingslog.feature.comments.sharedassets.generated.resources.comment_edit_failed
+import wingslog.feature.comments.sharedassets.generated.resources.comment_post_failed
 
 sealed interface TaskUiState {
   data object Loading : TaskUiState
@@ -66,10 +68,8 @@ sealed interface TaskUiState {
     val allInspections: List<MaintenanceTask> = emptyList(),
     val availableLogs: List<MaintenanceLog> = emptyList(),
     val currentEngineHours: Float,
-    /** Rules-only next due, ignoring any reschedule override or recorded skip. */
-    val naturalDueMetadata: DueMetadata? = null,
-    /** Next due as the rest of the app shows it, override and recorded skip included. */
-    val effectiveDueMetadata: DueMetadata? = null,
+    /** The latest reading of every meter the overview knows, by key — for the form's banner. */
+    val currentReadings: Map<String, Float> = emptyMap(),
     val error: UiText? = null,
   ) : TaskUiState
 }
@@ -137,7 +137,7 @@ data class TaskFormState(
       val forcedEngineHours = forcedDue?.second?.toString() ?: ""
       val forceOverrideDate = card.force_due_date != null
       val forcedDateMillis =
-        card.force_due_date?.let { it.getEpochSecond() * 1000 }
+        card.force_due_date?.toDueDate()?.toPickerMillis()
       return TaskFormState(
         title = card.title,
         component = card.component,
@@ -275,30 +275,14 @@ class TaskViewModel(
         val engineHours =
           overview?.currentFor(MeterKeys.ENGINE_HOURS)
             ?.toFloat() ?: 0f
-        val editedCard = cardId?.let { id -> cards.firstOrNull { it.id == id } }
-        // The rules-only "natural" next-due, so the adjustments preview banner can show what
-        // the schedule alone would say absent any force-override or force-complied state.
-        val naturalDue = editedCard?.let { card ->
-          val stripped = card.copy(
-            force_complied_status = null,
-            force_due_date = null,
-          )
-            .withForcedDueMeter(card.defaultMeterKey(), null)
-          taskDueManager.computeNextDue(stripped, logs, cards)
-        }
-        // The same computation the dashboard task cards run, so the banner's "Current" reading
-        // agrees with them once an override or a skip has been persisted (#347).
-        val effectiveDue = editedCard?.let { card ->
-          taskDueManager.computeNextDue(card, logs, cards)
-        }
         _uiState.update { prev ->
           TaskUiState.Success(
             thingId = thingId,
             allInspections = cards,
             availableLogs = logs,
             currentEngineHours = engineHours,
-            naturalDueMetadata = naturalDue,
-            effectiveDueMetadata = effectiveDue,
+            currentReadings = overview?.current.orEmpty()
+              .associate { it.meter_key to it.value_.toFloat() },
             error = (prev as? TaskUiState.Success)?.error,
           )
         }
@@ -318,6 +302,19 @@ class TaskViewModel(
   }
 
   // ── Form field changes ───────────────────────────────────────────────────
+
+  /**
+   * What [draft] — the form as it would be saved — is due against this Thing's real logs and
+   * cards. The same computation the dashboard cards run, so the form's banner agrees with them
+   * (#347); null before the Thing has loaded.
+   */
+  fun previewDue(draft: MaintenanceTask): DueMetadata? {
+    val loaded = _uiState.value as? TaskUiState.Success ?: return null
+    return taskDueManager.computeNextDue(draft, loaded.availableLogs, loaded.allInspections)
+  }
+
+  fun currentReading(meterKey: String): Float =
+    (_uiState.value as? TaskUiState.Success)?.currentReadings?.get(meterKey) ?: 0f
 
   fun onTitleChange(value: String) =
     _formState.update { it.copy(title = value) }

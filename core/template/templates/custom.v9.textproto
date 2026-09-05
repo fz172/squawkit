@@ -31,8 +31,13 @@
 # capabilities.proto. This preset declares no `certifications`, which says the same thing where the
 # scope is right: nothing is offered for it.
 #
+# v8 sets `month_intervals_due_on_anniversary`: month intervals fall on the anniversary, not
+# the end of the month — the aviation snap was the app's default until the capability existed.
+#
+# v9 lists `schedule_types` explicitly: calendar time only: the preset declares no meter to schedule against.
+#
 id: "custom"
-version: 7
+version: 9
 min_app_version: 0
 
 display_name: "Custom"
@@ -106,6 +111,11 @@ capabilities {
   technicians: true
   component_serial_prompt: false
 
+  # Month and year intervals are due on the anniversary of the last service, not at the end of the
+  # month it lands in (PRD §4.6). The end-of-month snap is aviation's: an annual legally means the
+  # last day of the month, a water heater flushed on the 14th means the 14th.
+  month_intervals_due_on_anniversary: true
+
   priorities: SQUAWK_PRIORITY_LOW
   priorities: SQUAWK_PRIORITY_MEDIUM
   priorities: SQUAWK_PRIORITY_HIGH
@@ -117,6 +127,11 @@ capabilities {
   sections: SECTION_LOGS
 
   export_layout: EXPORT_LAYOUT_GENERIC
+
+  # How a task here can be scheduled — what the form's "How is this tracked?" step offers, listed
+  # in full (PRD §4.6). METER means whatever meters this preset declares; SEASONAL is the
+  # calendar-anchored rule a house needs and a vehicle does not.
+  schedule_types: SCHEDULE_TYPE_CALENDAR
 }
 
 # v4 title-cases that name. v3 was never merged, but it did reach a device, and a stored template

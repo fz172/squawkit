@@ -63,6 +63,12 @@ export interface TimeRule {
   creationDate: Date | undefined;
   intervalDays: number;
   intervalYears: number;
+  /**
+   * Due on the anniversary of the base date rather than at the end of the month it lands in.
+   * Copied from the template's `month_intervals_due_on_anniversary` when the rule is written;
+   * false is aviation's end-of-month convention, so every existing rule keeps its meaning.
+   */
+  dueOnAnniversary: boolean;
 }
 
 /**
@@ -79,7 +85,20 @@ export interface MeterRule {
   interval: number;
 }
 
-/** Inspection is performed on condition (no fixed interval) */
+/**
+ * Inspection is performed on condition (no fixed interval)
+ * Calendar-anchored rather than interval-from-last-service: gutters in April and October whatever
+ * month they were last done, sprinklers blown out before the first freeze (PRD §4.6). The next due
+ * is the first listed month strictly after the last compliance, or on/after today for a task never
+ * complied. Date-only, so a preset with no meters — home — schedules with it. Field 7 of the oneof.
+ */
+export interface SeasonalRule {
+  /** 1–12 */
+  months: number[];
+  /** 0 = the last day of the month */
+  dayOfMonth: number;
+}
+
 export interface OnConditionRule {
   description: string;
 }
@@ -99,6 +118,7 @@ export interface InspectionRule {
   linkedRule?: LinkedRule | undefined;
   immediateRule?: ImmediateRule | undefined;
   meterRule?: MeterRule | undefined;
+  seasonalRule?: SeasonalRule | undefined;
 }
 
 /** Status to track when an inspection was forcefully marked as complied with */
@@ -145,7 +165,7 @@ export interface MaintenanceTask {
 }
 
 function createBaseTimeRule(): TimeRule {
-  return { intervalMonths: 0, creationDate: undefined, intervalDays: 0, intervalYears: 0 };
+  return { intervalMonths: 0, creationDate: undefined, intervalDays: 0, intervalYears: 0, dueOnAnniversary: false };
 }
 
 export const TimeRule: MessageFns<TimeRule> = {
@@ -161,6 +181,9 @@ export const TimeRule: MessageFns<TimeRule> = {
     }
     if (message.intervalYears !== 0) {
       writer.uint32(32).int32(message.intervalYears);
+    }
+    if (message.dueOnAnniversary !== false) {
+      writer.uint32(40).bool(message.dueOnAnniversary);
     }
     return writer;
   },
@@ -204,6 +227,14 @@ export const TimeRule: MessageFns<TimeRule> = {
           message.intervalYears = reader.int32();
           continue;
         }
+        case 5: {
+          if (tag !== 40) {
+            break;
+          }
+
+          message.dueOnAnniversary = reader.bool();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -235,6 +266,11 @@ export const TimeRule: MessageFns<TimeRule> = {
         : isSet(object.interval_years)
         ? globalThis.Number(object.interval_years)
         : 0,
+      dueOnAnniversary: isSet(object.dueOnAnniversary)
+        ? globalThis.Boolean(object.dueOnAnniversary)
+        : isSet(object.due_on_anniversary)
+        ? globalThis.Boolean(object.due_on_anniversary)
+        : false,
     };
   },
 
@@ -252,6 +288,9 @@ export const TimeRule: MessageFns<TimeRule> = {
     if (message.intervalYears !== 0) {
       obj.intervalYears = Math.round(message.intervalYears);
     }
+    if (message.dueOnAnniversary !== false) {
+      obj.dueOnAnniversary = message.dueOnAnniversary;
+    }
     return obj;
   },
 
@@ -264,6 +303,7 @@ export const TimeRule: MessageFns<TimeRule> = {
     message.creationDate = object.creationDate ?? undefined;
     message.intervalDays = object.intervalDays ?? 0;
     message.intervalYears = object.intervalYears ?? 0;
+    message.dueOnAnniversary = object.dueOnAnniversary ?? false;
     return message;
   },
 };
@@ -344,6 +384,98 @@ export const MeterRule: MessageFns<MeterRule> = {
     const message = createBaseMeterRule();
     message.meterKey = object.meterKey ?? "";
     message.interval = object.interval ?? 0;
+    return message;
+  },
+};
+
+function createBaseSeasonalRule(): SeasonalRule {
+  return { months: [], dayOfMonth: 0 };
+}
+
+export const SeasonalRule: MessageFns<SeasonalRule> = {
+  encode(message: SeasonalRule, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    writer.uint32(10).fork();
+    for (const v of message.months) {
+      writer.int32(v);
+    }
+    writer.join();
+    if (message.dayOfMonth !== 0) {
+      writer.uint32(16).int32(message.dayOfMonth);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): SeasonalRule {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseSeasonalRule();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag === 8) {
+            message.months.push(reader.int32());
+
+            continue;
+          }
+
+          if (tag === 10) {
+            const end2 = reader.uint32() + reader.pos;
+            while (reader.pos < end2) {
+              message.months.push(reader.int32());
+            }
+
+            continue;
+          }
+
+          break;
+        }
+        case 2: {
+          if (tag !== 16) {
+            break;
+          }
+
+          message.dayOfMonth = reader.int32();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): SeasonalRule {
+    return {
+      months: globalThis.Array.isArray(object?.months) ? object.months.map((e: any) => globalThis.Number(e)) : [],
+      dayOfMonth: isSet(object.dayOfMonth)
+        ? globalThis.Number(object.dayOfMonth)
+        : isSet(object.day_of_month)
+        ? globalThis.Number(object.day_of_month)
+        : 0,
+    };
+  },
+
+  toJSON(message: SeasonalRule): unknown {
+    const obj: any = {};
+    if (message.months?.length) {
+      obj.months = message.months.map((e) => Math.round(e));
+    }
+    if (message.dayOfMonth !== 0) {
+      obj.dayOfMonth = Math.round(message.dayOfMonth);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<SeasonalRule>, I>>(base?: I): SeasonalRule {
+    return SeasonalRule.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<SeasonalRule>, I>>(object: I): SeasonalRule {
+    const message = createBaseSeasonalRule();
+    message.months = object.months?.map((e) => e) || [];
+    message.dayOfMonth = object.dayOfMonth ?? 0;
     return message;
   },
 };
@@ -520,6 +652,7 @@ function createBaseInspectionRule(): InspectionRule {
     linkedRule: undefined,
     immediateRule: undefined,
     meterRule: undefined,
+    seasonalRule: undefined,
   };
 }
 
@@ -539,6 +672,9 @@ export const InspectionRule: MessageFns<InspectionRule> = {
     }
     if (message.meterRule !== undefined) {
       MeterRule.encode(message.meterRule, writer.uint32(50).fork()).join();
+    }
+    if (message.seasonalRule !== undefined) {
+      SeasonalRule.encode(message.seasonalRule, writer.uint32(58).fork()).join();
     }
     return writer;
   },
@@ -590,6 +726,14 @@ export const InspectionRule: MessageFns<InspectionRule> = {
           message.meterRule = MeterRule.decode(reader, reader.uint32());
           continue;
         }
+        case 7: {
+          if (tag !== 58) {
+            break;
+          }
+
+          message.seasonalRule = SeasonalRule.decode(reader, reader.uint32());
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -626,6 +770,11 @@ export const InspectionRule: MessageFns<InspectionRule> = {
         : isSet(object.meter_rule)
         ? MeterRule.fromJSON(object.meter_rule)
         : undefined,
+      seasonalRule: isSet(object.seasonalRule)
+        ? SeasonalRule.fromJSON(object.seasonalRule)
+        : isSet(object.seasonal_rule)
+        ? SeasonalRule.fromJSON(object.seasonal_rule)
+        : undefined,
     };
   },
 
@@ -645,6 +794,9 @@ export const InspectionRule: MessageFns<InspectionRule> = {
     }
     if (message.meterRule !== undefined) {
       obj.meterRule = MeterRule.toJSON(message.meterRule);
+    }
+    if (message.seasonalRule !== undefined) {
+      obj.seasonalRule = SeasonalRule.toJSON(message.seasonalRule);
     }
     return obj;
   },
@@ -668,6 +820,9 @@ export const InspectionRule: MessageFns<InspectionRule> = {
       : undefined;
     message.meterRule = (object.meterRule !== undefined && object.meterRule !== null)
       ? MeterRule.fromPartial(object.meterRule)
+      : undefined;
+    message.seasonalRule = (object.seasonalRule !== undefined && object.seasonalRule !== null)
+      ? SeasonalRule.fromPartial(object.seasonalRule)
       : undefined;
     return message;
   },

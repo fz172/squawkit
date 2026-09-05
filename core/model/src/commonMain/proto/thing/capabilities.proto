@@ -30,6 +30,16 @@ enum ExportLayout {
   EXPORT_LAYOUT_GENERIC = 2;
 }
 
+// How a task on this kind of Thing can be scheduled — what the task form's "How is this tracked?"
+// step offers. Named for what they are, not for aviation's word for them: METER is tach hours on
+// an aeroplane and the odometer on a car.
+enum ScheduleType {
+  SCHEDULE_TYPE_UNKNOWN = 0;
+  SCHEDULE_TYPE_CALENDAR = 1;   // every N days / months / years from the last service
+  SCHEDULE_TYPE_METER = 2;      // every N of a declared meter — needs `meters`
+  SCHEDULE_TYPE_SEASONAL = 3;   // in named calendar months, whatever month it was last done
+}
+
 message Capabilities {
   bool components = 1;              // component tree UI, picker, config card
   bool meters = 2;                  // meter fields on logs; METER-based rules
@@ -58,4 +68,24 @@ message Capabilities {
   // 10 deliberately unused. PRD §4.8 sketches a `weight_balance` flag, left out until something
   // needs it: a speculative bool is the field most likely to want a different shape by the time
   // it is real, and an unused number costs nothing to claim later.
+
+  // A month- or year-based TimeRule is due on the anniversary of the base date, not at the end
+  // of the month it lands in. False — the default, and what every stored aeroplane implies — is
+  // aviation's convention: logged 14 Dec + 12 months is due 31 Dec, which is what an annual
+  // legally means. Every other preset sets it, because "flush the water heater 12 months after I
+  // last did it" means the anniversary (PRD §4.6). The form copies it onto each TimeRule it writes
+  // (`TimeRule.due_on_anniversary`), so the due engine needs no template in hand.
+  bool month_intervals_due_on_anniversary = 11;
+
+  // 12 was `seasonal_rules`, a single bool; the list below replaced it before it reached any
+  // released build, and the number stays reserved the way every retired field's does.
+  reserved 12;
+  reserved "seasonal_rules";
+
+  // The schedule types the task form offers, explicitly — `[CALENDAR, METER]` for a vehicle,
+  // `[CALENDAR, SEASONAL]` for a home, `[CALENDAR]` for the custom preset. Every canonical preset
+  // lists its set and the validator refuses an empty one; an empty list is read as CALENDAR +
+  // METER only because that is what the field's absence meant on every aeroplane stored before
+  // it existed (`scheduleTypesOffered`).
+  repeated ScheduleType schedule_types = 13;
 }

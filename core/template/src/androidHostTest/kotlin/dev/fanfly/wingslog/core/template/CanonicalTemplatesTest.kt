@@ -5,6 +5,7 @@ import com.google.common.truth.Truth.assertWithMessage
 import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
 import dev.fanfly.wingslog.core.template.canonical.CanonicalTemplates
 import dev.fanfly.wingslog.thing.ComponentSlot
+import dev.fanfly.wingslog.thing.ScheduleType
 import dev.fanfly.wingslog.thing.ThingTemplate
 import org.junit.Test
 
@@ -72,7 +73,8 @@ class CanonicalTemplatesTest {
   @Test
   fun noPresetShipsAnEmptyLexiconNoun() {
     all.forEach { template ->
-      val lexicon = checkNotNull(template.lexicon) { "${template.id} has no lexicon" }
+      val lexicon =
+        checkNotNull(template.lexicon) { "${template.id} has no lexicon" }
       val nouns = listOf(
         "thing" to lexicon.thing,
         "squawk" to lexicon.squawk,
@@ -108,8 +110,10 @@ class CanonicalTemplatesTest {
   @Test
   fun everyPresetWritesItsOwnEmptyStateCopy() {
     all.forEach { template ->
-      val lexicon = checkNotNull(template.lexicon) { "${template.id} has no lexicon" }
-      val empty = checkNotNull(lexicon.empty_states) { "${template.id} has no empty_states" }
+      val lexicon =
+        checkNotNull(template.lexicon) { "${template.id} has no lexicon" }
+      val empty =
+        checkNotNull(lexicon.empty_states) { "${template.id} has no empty_states" }
       val lines = mapOf(
         "squawk_hint" to empty.squawk_hint,
         "task_hint" to empty.task_hint,
@@ -123,7 +127,8 @@ class CanonicalTemplatesTest {
         "log_onboarding_hint" to empty.log_onboarding_hint,
       )
       lines.forEach { (field, value) ->
-        assertWithMessage("${template.id}.empty_states.$field").that(value).isNotEmpty()
+        assertWithMessage("${template.id}.empty_states.$field").that(value)
+          .isNotEmpty()
       }
     }
   }
@@ -153,7 +158,9 @@ class CanonicalTemplatesTest {
   @Test
   fun everyMeterScopesToASlotTheTemplateDeclares() {
     all.forEach { template ->
-      val slots = template.allSlots().map { it.slot_key }.toSet()
+      val slots = template.allSlots()
+        .map { it.slot_key }
+        .toSet()
       template.meters.forEach { meter ->
         if (meter.component_slot_key.isNotEmpty()) {
           assertThat(slots).contains(meter.component_slot_key)
@@ -169,7 +176,9 @@ class CanonicalTemplatesTest {
       assertThat(template.meters.map { it.key }).containsNoDuplicates()
       // Slot keys form the stored component id ("$thingId:engine.1.blade.0"), so a duplicate at the
       // same level would make two components share an id.
-      assertThat(template.allSlots().map { it.slot_key }).containsNoDuplicates()
+      assertThat(
+        template.allSlots()
+          .map { it.slot_key }).containsNoDuplicates()
     }
   }
 
@@ -185,10 +194,11 @@ class CanonicalTemplatesTest {
         assertThat(it.label).isNotEmpty()
         assertThat(it.unit_label).isNotEmpty()
       }
-      template.allSlots().forEach {
-        assertThat(it.slot_key).isNotEmpty()
-        assertThat(it.label).isNotEmpty()
-      }
+      template.allSlots()
+        .forEach {
+          assertThat(it.slot_key).isNotEmpty()
+          assertThat(it.label).isNotEmpty()
+        }
     }
   }
 
@@ -256,7 +266,8 @@ class CanonicalTemplatesTest {
   @Test
   fun everyPresetButCustomShipsAValidStarterPack() {
     all.forEach { template ->
-      assertWithMessage(template.id).that(template.structuralProblems()).isEmpty()
+      assertWithMessage(template.id).that(template.structuralProblems())
+        .isEmpty()
       if (template.id == "custom") {
         // Custom declares nothing on purpose — a pack would be a guess about a Thing it has never
         // seen, and offering one puts every custom Thing into the §13 denominator.
@@ -267,12 +278,14 @@ class CanonicalTemplatesTest {
         .isNotEmpty()
       // A pack nobody would keep as offered is a pack that reads as declined.
       assertWithMessage("${template.id} pre-selects nothing")
-        .that(template.starter_tasks.any { it.default_selected }).isTrue()
+        .that(template.starter_tasks.any { it.default_selected })
+        .isTrue()
       template.starter_tasks.forEach { task ->
         // The description is the value: "flush the water heater" tells a new homeowner nothing
         // about why, and why is what earns the checkbox.
         assertWithMessage("${template.id}: '${task.title}' has no description")
-          .that(task.description).isNotEmpty()
+          .that(task.description)
+          .isNotEmpty()
       }
     }
   }
@@ -304,6 +317,57 @@ class CanonicalTemplatesTest {
     assertThat(oil.component_slot_key).isEqualTo(SlotKeys.ENGINE)
     assertThat(oil.meter_key).isEqualTo(MeterKeys.ENGINE_HOURS)
     assertThat(oil.interval).isEqualTo(50f)
+  }
+
+  /**
+   * End-of-month snapping is aviation's convention and nobody else's (PRD §4.6). The flag is
+   * inverted — `due_on_anniversary` — so the airplane, and every rule stored before the flag
+   * existed, keeps snapping by default; this pins that the others opted out.
+   */
+  @Test
+  fun onlyTheAirplaneSnapsMonthIntervalsToTheEndOfTheMonth() {
+    all.forEach { template ->
+      val anniversary =
+        template.capabilities?.month_intervals_due_on_anniversary == true
+      assertWithMessage(template.id).that(anniversary)
+        .isEqualTo(template.id != "airplane")
+    }
+  }
+
+  /**
+   * Each preset says which ways its tasks can be scheduled, and says all of it (PRD §4.6). METER
+   * is the odometer on a car and tach hours on an aeroplane; SEASONAL is a house's alone; the
+   * custom preset, declaring no meters, has only the calendar.
+   */
+  @Test
+  fun everyPresetListsItsScheduleTypesExplicitly() {
+    val expected = mapOf(
+      "airplane" to listOf(ScheduleType.SCHEDULE_TYPE_CALENDAR, ScheduleType.SCHEDULE_TYPE_METER),
+      "automotive" to listOf(ScheduleType.SCHEDULE_TYPE_CALENDAR, ScheduleType.SCHEDULE_TYPE_METER),
+      "bike" to listOf(ScheduleType.SCHEDULE_TYPE_CALENDAR, ScheduleType.SCHEDULE_TYPE_METER),
+      "boat" to listOf(ScheduleType.SCHEDULE_TYPE_CALENDAR, ScheduleType.SCHEDULE_TYPE_METER),
+      "home" to listOf(ScheduleType.SCHEDULE_TYPE_CALENDAR, ScheduleType.SCHEDULE_TYPE_SEASONAL),
+      "custom" to listOf(ScheduleType.SCHEDULE_TYPE_CALENDAR),
+    )
+    all.forEach { template ->
+      assertWithMessage(template.id).that(template.capabilities?.schedule_types)
+        .containsExactlyElementsIn(expected.getValue(template.id))
+        .inOrder()
+    }
+  }
+
+  @Test
+  fun theHomePackIsSeasonalWhereThePrdSaysSo() {
+    // PRD §5.1: HVAC service and gutters in April & October, the sprinkler blowout in October.
+    val byTitle = CanonicalTemplates.HOME.starter_tasks.associateBy { it.title }
+    assertThat(byTitle.getValue("HVAC service").months).containsExactly(4, 10)
+      .inOrder()
+    assertThat(byTitle.getValue("Clean gutters").months).containsExactly(4, 10)
+      .inOrder()
+    assertThat(byTitle.getValue("Sprinkler blowout").months).containsExactly(10)
+    assertThat(byTitle.getValue("Sprinkler blowout").interval_months).isEqualTo(
+      0
+    )
   }
 
   @Test

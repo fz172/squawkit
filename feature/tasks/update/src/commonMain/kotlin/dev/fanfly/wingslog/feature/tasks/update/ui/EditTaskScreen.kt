@@ -41,10 +41,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import dev.fanfly.wingslog.feature.tasks.datamanager.meterKeyFor
-import dev.fanfly.wingslog.feature.tasks.datamanager.withForcedDueMeter
 import dev.fanfly.wingslog.core.analytics.LocalAnalytics
-import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.template.LocalThingCapabilities
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedTopBar
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
@@ -52,7 +49,13 @@ import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
 import dev.fanfly.wingslog.core.ui.common.compose.UnsavedChangesDialog
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.core.ui.theme.statusColors
 import dev.fanfly.wingslog.feature.logs.sharedassets.compose.LogPickerSheet
+import dev.fanfly.wingslog.feature.tasks.datamanager.meterKeyFor
+import dev.fanfly.wingslog.feature.tasks.datamanager.pickerMillisToDate
+import dev.fanfly.wingslog.feature.tasks.datamanager.toDueInstant
+import dev.fanfly.wingslog.feature.tasks.datamanager.withForcedDueMeter
+import dev.fanfly.wingslog.feature.tasks.datamanager.withoutOverrides
 import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
 import dev.fanfly.wingslog.feature.tasks.update.compose.ResolveTaskOptionsMenu
 import dev.fanfly.wingslog.feature.tasks.update.compose.ScheduleState
@@ -93,9 +96,9 @@ fun EditTaskScreen(
   state: TaskFormState,
   availableInspections: List<MaintenanceTask>,
   availableLogs: List<MaintenanceLog> = emptyList(),
-  currentEngineHours: Float,
-  naturalDueMetadata: DueMetadata?,
-  effectiveDueMetadata: DueMetadata?,
+  /** The due engine over this Thing's logs, for the banner both tabs share. */
+  previewDue: (MaintenanceTask) -> DueMetadata?,
+  currentReading: (String) -> Float,
   onTitleChange: (String) -> Unit,
   onScheduleChange: (ScheduleState) -> Unit,
   onRefNumberChange: (String) -> Unit,
@@ -175,8 +178,55 @@ fun EditTaskScreen(
     )
   }
 
+  val capabilities = LocalThingCapabilities.current
+  // The card as Save would write it, built once for the banner and again for Save so the two
+  // can never describe different tasks.
+  val buildDraft: () -> MaintenanceTask = {
+    val existingTimeRuleCreationDate =
+      card.rules.firstNotNullOfOrNull { it.time_rule?.creation_date }
+    val ruleList = state.schedule.toRules(
+      existingTimeRuleCreationDate,
+      dueOnAnniversary = capabilities.month_intervals_due_on_anniversary,
+    )
+    val updatedForceDueEngine =
+      if (state.forceOverrideEngine) state.forcedEngineHours.toFloatOrNull()
+        ?: 0f else 0f
+    val updatedForceDueDate =
+      if (state.forceOverrideDate) state.forcedDateMillis?.pickerMillisToDate()
+        ?.toDueInstant()
+      else null
+    card.copy(
+      title = state.title,
+      component = state.component,
+      type = state.type,
+      rules = ruleList,
+      is_one_time = state.schedule.isOneTime,
+      reference_number = state.refNumber.takeIf { it.isNotBlank() } ?: "",
+      compliance_authority = state.complianceAuthority.takeIf { it.isNotBlank() }
+        ?: "",
+      compliance_details = state.complianceNotes.takeIf { it.isNotBlank() }
+        ?: "",
+      force_due_date = updatedForceDueDate,
+      // Skip This Cycle is a separate, immediately-persisted action off the Resolve menu
+      // (see TaskViewModel.skipThisCycle), so this form only carries the stored value
+      // forward. Dropping it when the schedule it was recorded against changes is
+      // TaskViewModel.isScheduleChanged's job, not the form's.
+      force_complied_status = card.force_complied_status
+    )
+      .withForcedDueMeter(
+        // The meter this task schedules against — the override is in the same one.
+        meterKeyFor(state.component, ruleList),
+        updatedForceDueEngine.takeIf { it > 0f },
+      )
+  }
+  val draft = buildDraft()
+  val effectiveDue = previewDue(draft)
+  val naturalDue = previewDue(draft.withoutOverrides())
+  val linkedTaskName =
+    availableInspections.firstOrNull { it.id == state.schedule.linkedToId }?.title
+
   val tabs = taskFormTabsFor(
-    LocalThingCapabilities.current,
+    capabilities,
     includeAdjustments = true,
     includeComments = true,
   )
@@ -189,7 +239,8 @@ fun EditTaskScreen(
     snapshotFlow { pagerState.currentPage }
       .drop(1)
       .collect { page ->
-        tabs.getOrNull(page)?.let { analytics.logScreenView("task_form/${it.analyticsKey}") }
+        tabs.getOrNull(page)
+          ?.let { analytics.logScreenView("task_form/${it.analyticsKey}") }
       }
   }
 
@@ -290,7 +341,12 @@ fun EditTaskScreen(
               TaskFormTab.SCHEDULE -> TaskScheduleTab(
                 state = state.schedule,
                 onChange = onScheduleChange,
+                component = state.component,
                 availableInspections = availableInspections.filter { it.id != card.id },
+                effectiveDue = effectiveDue,
+                naturalDue = naturalDue,
+                overrideOn = state.forceOverrideDate || state.forceOverrideEngine,
+                currentReading = currentReading,
               )
 
               TaskFormTab.ADJUSTMENTS -> TaskAdjustmentsTab(
@@ -303,11 +359,11 @@ fun EditTaskScreen(
                 onForceOverrideDateChange = onForceOverrideDateChange,
                 forcedDateMillis = state.forcedDateMillis,
                 onDateClick = { showDatePicker = true },
-                naturalDueDate = naturalDueMetadata?.nextDueDate,
-                naturalDueEngine = naturalDueMetadata?.nextDueEngine,
-                currentDueDate = effectiveDueMetadata?.nextDueDate,
-                currentDueEngine = effectiveDueMetadata?.nextDueEngine,
-                currentEngineHours = currentEngineHours,
+                effectiveDue = effectiveDue,
+                naturalDue = naturalDue,
+                currentReading = currentReading,
+                linkedTaskName = linkedTaskName,
+                component = state.component,
                 onDeleteRequest = { showDeleteConfirm = true },
               )
 
@@ -318,49 +374,12 @@ fun EditTaskScreen(
       }
 
       BottomButtons(
-        onPrimaryClick = {
-          val existingTimeRuleCreationDate =
-            card.rules.firstNotNullOfOrNull { it.time_rule?.creation_date }
-          val ruleList = state.schedule.toRules(existingTimeRuleCreationDate)
-
-          val updatedForceDueEngine =
-            if (state.forceOverrideEngine) state.forcedEngineHours.toFloatOrNull()
-              ?: 0f else 0f
-          val updatedForceDueDate =
-            if (state.forceOverrideDate) state.forcedDateMillis?.let {
-              toWireInstant(
-                it / 1000,
-                0
-              )
-            } else null
-
-          val updated = card.copy(
-            title = state.title,
-            component = state.component,
-            type = state.type,
-            rules = ruleList,
-            is_one_time = state.schedule.isOneTime,
-            reference_number = state.refNumber.takeIf { it.isNotBlank() } ?: "",
-            compliance_authority = state.complianceAuthority.takeIf { it.isNotBlank() }
-              ?: "",
-            compliance_details = state.complianceNotes.takeIf { it.isNotBlank() }
-              ?: "",
-            force_due_date = updatedForceDueDate,
-            // Skip This Cycle is a separate, immediately-persisted action off the Resolve menu
-            // (see TaskViewModel.skipThisCycle), so this form only carries the stored value
-            // forward. Dropping it when the schedule it was recorded against changes is
-            // TaskViewModel.isScheduleChanged's job, not the form's.
-            force_complied_status = card.force_complied_status
-          ).withForcedDueMeter(
-            // The meter this task schedules against — the override is in the same one.
-            meterKeyFor(state.component, ruleList),
-            updatedForceDueEngine.takeIf { it > 0f },
-          )
-          onSave(updated)
-        },
+        onPrimaryClick = { onSave(buildDraft()) },
         onSecondaryClick = { tryCancel() },
         onDangerClick = onResolveClick,
         dangerLabel = stringResource(Res.string.resolve_task),
+        // Resolving is the good outcome, not a destructive one: the same green the squawk form uses.
+        dangerColor = MaterialTheme.statusColors.positive.accent,
         dangerMenuContent = {
           ResolveTaskOptionsMenu(
             expanded = state.showResolveMenu,

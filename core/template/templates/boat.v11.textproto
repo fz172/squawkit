@@ -4,7 +4,7 @@
 # twin-engine boat has two of them accruing separately. That makes this the preset that exercises
 # `component_slot_key` outside the airplane, which is the field a single-engine assumption hides.
 #
-# See templates/README.md before editing, and compile with ./compile-template.sh boat.v8
+# See templates/README.md before editing, and compile with ./compile-template.sh boat.v11
 #
 # v4 adds `empty_states` — the per-domain empty-state copy that used to be fixed aviation
 # text in strings.xml. A noun could not fix those strings: what makes them useful is the
@@ -26,8 +26,17 @@
 #
 # v8 ships the starter pack (PRD §4.9).
 #
+# v9 sets `month_intervals_due_on_anniversary`: month intervals fall on the anniversary, not
+# the end of the month — the aviation snap was the app's default until the capability existed.
+# The winterize starter task becomes a SeasonalRule (October).
+#
+# v10 puts winterize back on a 12-month interval: seasonal scheduling is the home preset's alone,
+# and a task the form cannot edit is worse than an interval the owner can.
+#
+# v11 lists `schedule_types` explicitly: calendar time and the meter (engine hours).
+#
 id: "boat"
-version: 8
+version: 11
 min_app_version: 0
 
 display_name: "Boat"
@@ -78,6 +87,11 @@ capabilities {
   technicians: true
   component_serial_prompt: false
 
+  # Month and year intervals are due on the anniversary of the last service, not at the end of the
+  # month it lands in (PRD §4.6). The end-of-month snap is aviation's: an annual legally means the
+  # last day of the month, a water heater flushed on the 14th means the 14th.
+  month_intervals_due_on_anniversary: true
+
   priorities: SQUAWK_PRIORITY_LOW
   priorities: SQUAWK_PRIORITY_MEDIUM
   priorities: SQUAWK_PRIORITY_HIGH
@@ -89,6 +103,12 @@ capabilities {
   sections: SECTION_LOGS
 
   export_layout: EXPORT_LAYOUT_GENERIC
+
+  # How a task here can be scheduled — what the form's "How is this tracked?" step offers, listed
+  # in full (PRD §4.6). METER means whatever meters this preset declares; SEASONAL is the
+  # calendar-anchored rule a house needs and a vehicle does not.
+  schedule_types: SCHEDULE_TYPE_CALENDAR
+  schedule_types: SCHEDULE_TYPE_METER
 }
 
 spec_fields { key: "make" label: "Make" }
@@ -167,9 +187,9 @@ certifications {
 }
 
 # The starter pack (PRD §4.9). Engine hours are the boat's meter, so the engine items schedule on
-# it with a calendar backstop for a boat that barely leaves the slip. Winterizing is seasonal; the
-# engine has no calendar-anchored rule yet, so it is a 12-month interval dated from creation —
-# log it once before the first freeze and it lands on the right month from then on.
+# it with a calendar backstop for a boat that barely leaves the slip. Winterizing is a 12-month
+# interval dated from creation rather than a SeasonalRule: only the home preset offers seasonal
+# scheduling, and a boat's owner can move the first due to October from the form.
 starter_tasks {
   title: "Engine oil & filter"
   description: "Whichever comes first. Check the manual for the interval that applies to your engine."

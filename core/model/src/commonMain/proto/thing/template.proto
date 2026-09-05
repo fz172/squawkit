@@ -165,6 +165,9 @@ message StarterTask {
   // propeller enum, and an annual filed against nothing would land in the form's picker with no
   // option selected. Same field, same meaning, as MeterDef.component_slot_key.
   string component_slot_key = 7;
+  // Calendar-anchored months (1–12) — the task becomes a SeasonalRule instead of a TimeRule.
+  // "Gutters in April and October" is a fact about the calendar, not about the last cleaning.
+  repeated int32 months = 8;
 }
 
 // A credential a template recognises — an A&P for an airplane, an ASE for a car, an electrician's

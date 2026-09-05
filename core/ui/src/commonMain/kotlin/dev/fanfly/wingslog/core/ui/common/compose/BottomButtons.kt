@@ -41,6 +41,11 @@ fun BottomButtons(
   modifier: Modifier = Modifier,
   onDangerClick: (() -> Unit)? = null,
   dangerLabel: String = stringResource(Res.string.delete),
+  /**
+   * The outlined third button's colour. Red by default, because its usual job is Delete; a form
+   * whose third action is a positive one — Resolve — passes the positive status tone instead.
+   */
+  dangerColor: Color = MaterialTheme.colorScheme.error,
   primaryEnabled: Boolean = true,
   secondaryEnabled: Boolean = true,
   isPrimaryFunctionInProgress: Boolean = false,
@@ -97,13 +102,13 @@ fun BottomButtons(
             shape = RoundedCornerShape(Spacing.buttonCornerRadius),
             colors = ButtonDefaults.outlinedButtonColors(
               containerColor = MaterialTheme.colorScheme.surface,
-              contentColor = MaterialTheme.colorScheme.error,
+              contentColor = dangerColor,
               disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
               disabledContentColor = MaterialTheme.colorScheme.outline
             ),
             border = BorderStroke(
               Spacing.hairline,
-              if (!isPrimaryFunctionInProgress) MaterialTheme.colorScheme.error
+              if (!isPrimaryFunctionInProgress) dangerColor
               else MaterialTheme.colorScheme.outline
             )
           ) {

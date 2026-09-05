@@ -2,9 +2,12 @@ package dev.fanfly.wingslog.core.template
 
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
+import dev.fanfly.wingslog.thing.Capabilities
 import dev.fanfly.wingslog.thing.ComponentSlot
 import dev.fanfly.wingslog.thing.MeterDef
+import dev.fanfly.wingslog.thing.ScheduleType
 import dev.fanfly.wingslog.thing.SpecField
+import dev.fanfly.wingslog.thing.StarterTask
 import dev.fanfly.wingslog.thing.Thing
 import dev.fanfly.wingslog.thing.ThingTemplate
 import org.junit.Test
@@ -25,7 +28,12 @@ class TemplateValidationTest {
     display_name = "Car",
     min_app_version = minAppVersion,
     spec_fields = listOf(SpecField(key = "vin", label = "VIN")),
-    component_slots = listOf(ComponentSlot(slot_key = "engine", label = "Engine")),
+    component_slots = listOf(
+      ComponentSlot(
+        slot_key = "engine",
+        label = "Engine"
+      )
+    ),
     meters = listOf(
       MeterDef(
         key = "odometer",
@@ -33,11 +41,53 @@ class TemplateValidationTest {
         component_slot_key = "engine"
       )
     ),
+    capabilities = Capabilities(
+      meters = true,
+      schedule_types = listOf(
+        ScheduleType.SCHEDULE_TYPE_CALENDAR,
+        ScheduleType.SCHEDULE_TYPE_METER
+      ),
+    ),
   )
 
   @Test
   fun aWellFormedTemplateHasNoProblems() {
     assertThat(valid().structuralProblems()).isEmpty()
+  }
+
+  @Test
+  fun scheduleTypesMustBeDeclaredAndBackedByWhatTheyNeed() {
+    // Explicit, not defaulted: an empty list is a preset that has not said how its tasks are
+    // scheduled, and METER without a meter is a form step that cannot complete.
+    val undeclared = valid().copy(capabilities = Capabilities(meters = true))
+    assertThat(undeclared.structuralProblems()).containsExactly("car: capabilities.schedule_types is empty")
+
+    val meterless = valid().copy(
+      capabilities = Capabilities(
+        meters = false,
+        schedule_types = listOf(
+          ScheduleType.SCHEDULE_TYPE_CALENDAR,
+          ScheduleType.SCHEDULE_TYPE_METER
+        ),
+      ),
+    )
+    assertThat(meterless.structuralProblems())
+      .containsExactly("car: schedule_types lists METER but meters is off")
+  }
+
+  @Test
+  fun aStarterTaskNeedsTheScheduleTypeItUses() {
+    val seasonalOnACar = valid().copy(
+      starter_tasks = listOf(
+        StarterTask(
+          title = "Wax",
+          description = "Spring",
+          months = listOf(4)
+        )
+      ),
+    )
+    assertThat(seasonalOnACar.structuralProblems())
+      .containsExactly("car: starter task 'Wax' is seasonal but schedule_types does not list SEASONAL")
   }
 
   @Test
@@ -130,9 +180,21 @@ class TemplateValidationTest {
 
     val resolution = registry.resolve(Thing(id = "t1", template = tooNew))
 
-    assertThat(registry.forThingWithFallback(Thing(id = "t1", template = tooNew)))
+    assertThat(
+      registry.forThingWithFallback(
+        Thing(
+          id = "t1",
+          template = tooNew
+        )
+      )
+    )
       .isEqualTo(tooNew)
     assertThat(resolution)
-      .isEqualTo(TemplateResolution.Degraded(tooNew, DegradedReason.APP_TOO_OLD))
+      .isEqualTo(
+        TemplateResolution.Degraded(
+          tooNew,
+          DegradedReason.APP_TOO_OLD
+        )
+      )
   }
 }

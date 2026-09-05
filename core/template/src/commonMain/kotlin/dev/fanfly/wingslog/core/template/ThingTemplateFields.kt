@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.staticCompositionLocalOf
 import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
 import dev.fanfly.wingslog.thing.ComponentSlot
+import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.MeterDef
 import dev.fanfly.wingslog.thing.SpecField
 import dev.fanfly.wingslog.thing.ThingTemplate
@@ -54,6 +55,26 @@ val componentTypesApply: Boolean
 /** The meter [key] names, or null when this template does not declare it. */
 fun ThingTemplate?.meter(key: String): MeterDef? =
   this?.meters?.firstOrNull { it.key == key }
+
+/**
+ * The meter a task filed against [component] counts in.
+ *
+ * On the airplane — the one template `ComponentType` describes — the component decides: an engine
+ * task tracks the engine's hours, a propeller task the prop's, and an airframe task the meter no
+ * slot owns, which is airframe time. Everywhere else the enum means nothing and the template's
+ * first meter is the answer, as it always was. Null when the template declares no meter.
+ */
+fun ThingTemplate?.meterForComponent(component: ComponentType): MeterDef? {
+  val meters = this?.meters.orEmpty()
+  if (!usesComponentTypes) return meters.firstOrNull()
+  val slotKey = when (component) {
+    ComponentType.COMPONENT_ENGINE -> SlotKeys.ENGINE
+    ComponentType.COMPONENT_PROPELLER -> SlotKeys.PROPELLER
+    else -> ""
+  }
+  return meters.firstOrNull { it.component_slot_key == slotKey }
+    ?: meters.firstOrNull()
+}
 
 /** The spec field [key] names, or null when this template does not declare it. */
 fun ThingTemplate?.specField(key: String): SpecField? =

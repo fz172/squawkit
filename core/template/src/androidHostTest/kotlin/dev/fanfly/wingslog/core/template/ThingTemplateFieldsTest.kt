@@ -3,6 +3,7 @@ package dev.fanfly.wingslog.core.template
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
 import dev.fanfly.wingslog.core.template.canonical.CanonicalTemplates
+import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.ThingTemplate
 import org.junit.Test
 
@@ -18,10 +19,35 @@ class ThingTemplateFieldsTest {
   private val airplane = AirplaneTemplate.TEMPLATE
 
   @Test
+  fun onTheAirplaneTheComponentPicksTheMeter() {
+    // An engine task counts engine hours, a prop task prop hours; the airframe owns the meter no
+    // slot claims. "Airframe Time" on an engine task was the label the form used to show.
+    assertThat(airplane.meterForComponent(ComponentType.COMPONENT_ENGINE)?.key)
+      .isEqualTo(MeterKeys.ENGINE_HOURS)
+    assertThat(airplane.meterForComponent(ComponentType.COMPONENT_PROPELLER)?.key)
+      .isEqualTo(MeterKeys.PROP_HOURS)
+    assertThat(airplane.meterForComponent(ComponentType.COMPONENT_AIRFRAME)?.key)
+      .isEqualTo(MeterKeys.AIRFRAME_HOURS)
+  }
+
+  @Test
+  fun offTheAirplaneTheComponentIsIgnoredAndTheFirstMeterWins() {
+    // The enum is aviation's; a car's task is filed against the car and counts its odometer.
+    assertThat(CanonicalTemplates.AUTOMOTIVE.meterForComponent(ComponentType.COMPONENT_ENGINE)?.key)
+      .isEqualTo(MeterKeys.ODOMETER)
+    assertThat(CanonicalTemplates.HOME.meterForComponent(ComponentType.COMPONENT_AIRFRAME)).isNull()
+  }
+
+  @Test
   fun aMeterLabelComesFromTheTemplate() {
     assertThat(airplane.meterLabel(MeterKeys.AIRFRAME_HOURS, ifAbsent = "x"))
       .isEqualTo("Airframe Time")
-    assertThat(airplane.meterLabelWithUnit(MeterKeys.AIRFRAME_HOURS, ifAbsent = "x"))
+    assertThat(
+      airplane.meterLabelWithUnit(
+        MeterKeys.AIRFRAME_HOURS,
+        ifAbsent = "x"
+      )
+    )
       .isEqualTo("Airframe Time (hrs)")
   }
 
@@ -87,21 +113,37 @@ class ThingTemplateFieldsTest {
     // These call sites are aviation-shaped screens that #729 and #730 replace. Until then a preset
     // declaring none of these keys still reaches them, and a blank label is worse than the shipped
     // string.
-    assertThat(CanonicalTemplates.HOME.meterLabel(MeterKeys.ENGINE_HOURS, ifAbsent = "Engine Time"))
+    assertThat(
+      CanonicalTemplates.HOME.meterLabel(
+        MeterKeys.ENGINE_HOURS,
+        ifAbsent = "Engine Time"
+      )
+    )
       .isEqualTo("Engine Time")
-    assertThat(CanonicalTemplates.CUSTOM.slotLabel(SlotKeys.ENGINE, ifAbsent = "Engine"))
+    assertThat(
+      CanonicalTemplates.CUSTOM.slotLabel(
+        SlotKeys.ENGINE,
+        ifAbsent = "Engine"
+      )
+    )
       .isEqualTo("Engine")
   }
 
   @Test
   fun everyPresetNamesItsOwnMeterSet() {
     // The log form's tab said "Hours" for all of them — aviation's word on a car's odometer.
-    assertThat(AirplaneTemplate.TEMPLATE.metersLabel(ifAbsent = "Hours")).isEqualTo("Hours")
+    assertThat(AirplaneTemplate.TEMPLATE.metersLabel(ifAbsent = "Hours")).isEqualTo(
+      "Hours"
+    )
     assertThat(CanonicalTemplates.AUTOMOTIVE.metersLabel(ifAbsent = "Hours"))
       .isEqualTo("Odometer")
     // A distance and ride hours: the pair needs a word neither of them supplies.
-    assertThat(CanonicalTemplates.BIKE.metersLabel(ifAbsent = "Hours")).isEqualTo("Readings")
-    assertThat(CanonicalTemplates.BOAT.metersLabel(ifAbsent = "Hours")).isEqualTo("Hours")
+    assertThat(CanonicalTemplates.BIKE.metersLabel(ifAbsent = "Hours")).isEqualTo(
+      "Readings"
+    )
+    assertThat(CanonicalTemplates.BOAT.metersLabel(ifAbsent = "Hours")).isEqualTo(
+      "Hours"
+    )
   }
 
   @Test
@@ -114,15 +156,22 @@ class ThingTemplateFieldsTest {
     // Several meters and no declared word: only then does the caller's own string stand.
     val several = AirplaneTemplate.TEMPLATE.copy(meters_label = "")
     assertThat(several.metersLabel(ifAbsent = "Hours")).isEqualTo("Hours")
-    assertThat(CanonicalTemplates.HOME.metersLabel(ifAbsent = "Hours")).isEqualTo("Hours")
+    assertThat(CanonicalTemplates.HOME.metersLabel(ifAbsent = "Hours")).isEqualTo(
+      "Hours"
+    )
   }
 
   @Test
   fun noTemplateAtAllStillRendersALabel() {
     // An account-level screen has no template selected and must still caption its fields.
-    val none: dev.fanfly.wingslog.thing.ThingTemplate? = null
+    val none: ThingTemplate? = null
 
-    assertThat(none.meterLabel(MeterKeys.AIRFRAME_HOURS, ifAbsent = "Airframe Time"))
+    assertThat(
+      none.meterLabel(
+        MeterKeys.AIRFRAME_HOURS,
+        ifAbsent = "Airframe Time"
+      )
+    )
       .isEqualTo("Airframe Time")
     assertThat(none.slot("engine")).isNull()
     assertThat(none.specField(SpecKeys.MAKE)).isNull()

@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.feature.tasks.datamanager.impl
 
 import com.google.common.truth.Truth.assertThat
+import com.squareup.wire.Instant as WireInstant
 import dev.fanfly.wingslog.core.template.MeterKeys
 import dev.fanfly.wingslog.feature.tasks.datamanager.defaultMeterKey
 import dev.fanfly.wingslog.feature.tasks.datamanager.withForcedDueMeter
@@ -15,16 +16,16 @@ import dev.fanfly.wingslog.thing.MaintenanceTask
 import dev.fanfly.wingslog.thing.MeterReading
 import dev.fanfly.wingslog.thing.MeterRule
 import dev.fanfly.wingslog.thing.OnConditionRule
+import dev.fanfly.wingslog.thing.SeasonalRule
 import dev.fanfly.wingslog.thing.TimeRule
 import io.mockk.every
 import io.mockk.mockk
+import kotlin.time.Clock
+import kotlin.time.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import org.junit.Before
 import org.junit.Test
-import kotlin.time.Clock
-import kotlin.time.Instant
-import com.squareup.wire.Instant as WireInstant
 
 class TaskDueManagerImplTest {
 
@@ -36,6 +37,110 @@ class TaskDueManagerImplTest {
     clock = mockk()
     every { clock.now() } returns CURRENT_INSTANT
     manager = TaskDueManagerImpl(clock, TimeZone.UTC)
+  }
+
+  @Test
+  fun monthInterval_snapsToEndOfMonth_byDefault() {
+    // Aviation's convention, and what every rule stored before the flag existed means.
+    val card = card(id = "c1", rules = listOf(timeRule(12)))
+    val log = log(inspectionIds = listOf("c1"), timestamp = iso("2025-12-14"))
+
+    val result = manager.computeNextDue(card, listOf(log), listOf(card))
+
+    assertThat(result.nextDueDate).isEqualTo(LocalDate(2026, 12, 31))
+  }
+
+  @Test
+  fun monthInterval_dueOnAnniversary_whenTheRuleSaysSo() {
+    // A water heater flushed on the 14th is next due on the 14th (PRD §4.6).
+    val card =
+      card(id = "c1", rules = listOf(timeRule(12, dueOnAnniversary = true)))
+    val log = log(inspectionIds = listOf("c1"), timestamp = iso("2025-12-14"))
+
+    val result = manager.computeNextDue(card, listOf(log), listOf(card))
+
+    assertThat(result.nextDueDate).isEqualTo(LocalDate(2026, 12, 14))
+  }
+
+  @Test
+  fun forceComplied_advancesOnTheAnniversaryToo() {
+    val card = card(
+      id = "c1",
+      rules = listOf(
+        timeRule(
+          6,
+          creationDate = iso("2025-01-10"),
+          dueOnAnniversary = true
+        )
+      ),
+      forceComplied = ForceCompliedStatus(complied_date = iso("2026-04-01")),
+    )
+
+    val result = manager.computeNextDue(card, emptyList(), listOf(card))
+
+    // 10 Jan 2025 → 10 Jul 2025 → 10 Jan 2026 → 10 Jul 2026: the first cycle past 13 Apr 2026.
+    assertThat(result.nextDueDate).isEqualTo(LocalDate(2026, 7, 10))
+  }
+
+  // ── Seasonal rules (PRD §4.6) — today is 13 Apr 2026 ────────────────────────────────────────
+
+  @Test
+  fun seasonal_neverComplied_isDueAtTheEndOfTheFirstListedMonthNotYetPassed() {
+    // Created in April with April & October listed: April is not over, so April it is.
+    val card = card(id = "c1", rules = listOf(seasonalRule(4, 10)))
+
+    val result = manager.computeNextDue(card, emptyList(), listOf(card))
+
+    assertThat(result.nextDueDate).isEqualTo(LocalDate(2026, 4, 30))
+    assertThat(result.status).isEqualTo(DueStatus.DUE_SOON)
+  }
+
+  @Test
+  fun seasonal_complied_isDueTheNextListedMonthStrictlyAfterTheLog() {
+    // Done on the last day of April — October, not April again.
+    val card = card(id = "c1", rules = listOf(seasonalRule(4, 10)))
+    val log = log(inspectionIds = listOf("c1"), timestamp = iso("2026-04-30"))
+
+    val result = manager.computeNextDue(card, listOf(log), listOf(card))
+
+    assertThat(result.nextDueDate).isEqualTo(LocalDate(2026, 10, 31))
+    assertThat(result.status).isEqualTo(DueStatus.NORMAL)
+  }
+
+  @Test
+  fun seasonal_missedMonth_isOverdue() {
+    // Done April 2025, October 2025 skipped: overdue since 31 Oct 2025.
+    val card = card(id = "c1", rules = listOf(seasonalRule(4, 10)))
+    val log = log(inspectionIds = listOf("c1"), timestamp = iso("2025-04-20"))
+
+    val result = manager.computeNextDue(card, listOf(log), listOf(card))
+
+    assertThat(result.nextDueDate).isEqualTo(LocalDate(2025, 10, 31))
+    assertThat(result.status).isEqualTo(DueStatus.OVERDUE)
+  }
+
+  @Test
+  fun seasonal_wrapsIntoTheNextYear() {
+    val card = card(id = "c1", rules = listOf(seasonalRule(10)))
+    val log = log(inspectionIds = listOf("c1"), timestamp = iso("2025-10-31"))
+
+    val result = manager.computeNextDue(card, listOf(log), listOf(card))
+
+    assertThat(result.nextDueDate).isEqualTo(LocalDate(2026, 10, 31))
+  }
+
+  @Test
+  fun seasonal_forceComplied_advancesPastEveryMissedMonth() {
+    val card = card(
+      id = "c1",
+      rules = listOf(seasonalRule(4, 10)),
+      forceComplied = ForceCompliedStatus(complied_date = iso("2026-04-10")),
+    )
+
+    val result = manager.computeNextDue(card, emptyList(), listOf(card))
+
+    // The skip stands in for April 2026, so the next cycle is October.
+    assertThat(result.nextDueDate).isEqualTo(LocalDate(2026, 10, 31))
   }
 
   @Test
@@ -69,6 +174,18 @@ class TaskDueManagerImplTest {
     val result = manager.computeNextDue(card, emptyList(), listOf(card))
 
     assertThat(result.status).isNotEqualTo(DueStatus.COMPLIED)
+  }
+
+  @Test
+  fun forcedDueDate_readsAsThePickedDay_westOfGreenwich() {
+    // Older builds stored the picker's UTC midnight; in Los Angeles that instant is 17:00 the
+    // evening before. The stored date still means the day that was picked.
+    val pacific = TaskDueManagerImpl(clock, TimeZone.of("America/Los_Angeles"))
+    val card = card(forceDueDate = iso("2026-09-15"))
+
+    val result = pacific.computeNextDue(card, emptyList(), listOf(card))
+
+    assertThat(result.nextDueDate).isEqualTo(LocalDate(2026, 9, 15))
   }
 
   @Test
@@ -261,7 +378,8 @@ class TaskDueManagerImplTest {
   fun aShortIntervalIsNotPermanentlyDueSoon() {
     // The fixed 10-hour window meant any rule with an interval under 10 hours reported DUE_SOON
     // from the moment it was logged.
-    val card = card(id = "c1", rules = listOf(meterRule(MeterKeys.AIRFRAME_HOURS, 5f)))
+    val card =
+      card(id = "c1", rules = listOf(meterRule(MeterKeys.AIRFRAME_HOURS, 5f)))
     val log = log(id = "l1", inspectionIds = listOf("c1"), airframeTime = 500.0)
 
     assertThat(manager.computeNextDue(card, listOf(log), listOf(card)).status)
@@ -612,12 +730,14 @@ class TaskDueManagerImplTest {
 
   private fun timeRule(
     months: Int,
-    creationDate: WireInstant? = null
+    creationDate: WireInstant? = null,
+    dueOnAnniversary: Boolean = false,
   ): InspectionRule =
     InspectionRule(
       time_rule = TimeRule(
         interval_months = months,
-        creation_date = creationDate
+        creation_date = creationDate,
+        due_on_anniversary = dueOnAnniversary,
       )
     )
 
@@ -631,6 +751,9 @@ class TaskDueManagerImplTest {
         creation_date = creationDate
       )
     )
+
+  private fun seasonalRule(vararg months: Int): InspectionRule =
+    InspectionRule(seasonal_rule = SeasonalRule(months = months.toList()))
 
   private fun meterRule(key: String, interval: Float): InspectionRule =
     InspectionRule(meter_rule = MeterRule(meter_key = key, interval = interval))

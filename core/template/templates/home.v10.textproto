@@ -5,7 +5,7 @@
 # point: it is the preset that finds screens with an aviation assumption baked in. `car` would find
 # almost none of them — it maps onto the airplane shape almost field for field.
 #
-# See templates/README.md before editing, and compile with ./compile-template.sh home.v7
+# See templates/README.md before editing, and compile with ./compile-template.sh home.v10
 #
 # v4 adds `empty_states` — the per-domain empty-state copy that used to be fixed aviation
 # text in strings.xml. A noun could not fix those strings: what makes them useful is the
@@ -28,8 +28,16 @@
 #
 # v7 ships the starter pack (PRD §4.9, §5.1) — see the block at the end of the file.
 #
+# v8 sets `month_intervals_due_on_anniversary`: month intervals fall on the anniversary, not
+# the end of the month — the aviation snap was the app's default until the capability existed.
+# The three seasonal chores become SeasonalRules instead of 6- and 12-month approximations.
+#
+# v9 enabled `seasonal_rules`, since replaced by the `schedule_types` list below.
+#
+# v10 lists `schedule_types` explicitly: calendar time and the seasonal anchor — the only preset with SEASONAL, and no meter.
+#
 id: "home"
-version: 7
+version: 10
 min_app_version: 0
 
 display_name: "Home"
@@ -104,6 +112,12 @@ capabilities {
   technicians: true
   component_serial_prompt: false
 
+  # Month and year intervals are due on the anniversary of the last service, not at the end of the
+  # month it lands in (PRD §4.6). The end-of-month snap is aviation's: an annual legally means the
+  # last day of the month, a water heater flushed on the 14th means the 14th.
+  month_intervals_due_on_anniversary: true
+
+
   # The top tier is labelled from `down_status` above, so this reads "Urgent" here and "AOG" on an
   # airplane. Same enum, same lifecycle, different word.
   priorities: SQUAWK_PRIORITY_LOW
@@ -117,6 +131,12 @@ capabilities {
   sections: SECTION_LOGS
 
   export_layout: EXPORT_LAYOUT_GENERIC
+
+  # How a task here can be scheduled — what the form's "How is this tracked?" step offers, listed
+  # in full (PRD §4.6). METER means whatever meters this preset declares; SEASONAL is the
+  # calendar-anchored rule a house needs and a vehicle does not.
+  schedule_types: SCHEDULE_TYPE_CALENDAR
+  schedule_types: SCHEDULE_TYPE_SEASONAL
 }
 
 # No make, no model, no serial — the fields PRD §4.2 used to kill the idea of a universal core.
@@ -166,10 +186,8 @@ certifications {
 # is the one owner who genuinely does not know the water heater wants a flush. Every item is a
 # Thing-level task: no meters, no components (see above).
 #
-# PRD §5.1 schedules three of these seasonally (April & October; October). There is no
-# calendar-anchored rule in the due engine yet, so they are 6- and 12-month intervals dated from
-# creation: log each one once in its season and it lands on the right month from then on. Revisit
-# when a seasonal rule exists.
+# PRD §5.1 schedules three of these seasonally (April & October; October). `months` makes each a
+# SeasonalRule: due by the end of the listed month whatever month it was last done.
 #
 # Off by default where a house may simply not have the thing — a chimney, a sprinkler system, a
 # septic tank — because a wrong task is worse than a missing one.
@@ -183,13 +201,15 @@ starter_tasks {
   title: "HVAC service"
   description: "Spring and fall — before the cooling and heating seasons."
   default_selected: true
-  interval_months: 6
+  months: 4
+  months: 10
 }
 starter_tasks {
   title: "Clean gutters"
   description: "Spring and fall. Overflowing gutters send water into the foundation."
   default_selected: true
-  interval_months: 6
+  months: 4
+  months: 10
 }
 starter_tasks {
   title: "Smoke & CO detector batteries"
@@ -218,7 +238,7 @@ starter_tasks {
 starter_tasks {
   title: "Sprinkler blowout"
   description: "Before the first freeze, if the house has an irrigation system."
-  interval_months: 12
+  months: 10
 }
 starter_tasks {
   title: "Chimney sweep & inspection"

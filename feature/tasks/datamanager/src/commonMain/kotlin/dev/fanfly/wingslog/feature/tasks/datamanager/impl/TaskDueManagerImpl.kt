@@ -7,17 +7,20 @@ import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDueManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.defaultMeterKey
 import dev.fanfly.wingslog.feature.tasks.datamanager.forcedDueMeter
 import dev.fanfly.wingslog.feature.tasks.datamanager.meterIntervalFor
+import dev.fanfly.wingslog.feature.tasks.datamanager.toDueDate
 import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
 import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.thing.MaintenanceTask
+import dev.fanfly.wingslog.thing.SeasonalRule
+import dev.fanfly.wingslog.thing.TimeRule
+import kotlin.time.Clock
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
 import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
-import kotlin.time.Clock
 
 class TaskDueManagerImpl(
   private val clock: Clock = Clock.System,
@@ -85,7 +88,7 @@ class TaskDueManagerImpl(
 
     if (hasForcedDate || hasForcedEngine) {
       val nextDueDate = if (hasForcedDate) {
-        forceDueDate.toLocalDate(timeZone)
+        forceDueDate.toDueDate()
       } else null
       val nextDueEngine = forcedDue?.second
       // An override carries no interval, so borrow one from a rule measured in the same meter.
@@ -95,14 +98,11 @@ class TaskDueManagerImpl(
         ?: DEFAULT_DUE_SOON_WINDOW
 
       val status = when {
-        (nextDueDate != null && nextDueDate < currentDate) ||
-          (nextDueEngine != null && nextDueEngine < currentMetricTime) -> DueStatus.OVERDUE
+        (nextDueDate != null && nextDueDate < currentDate) || (nextDueEngine != null && nextDueEngine < currentMetricTime) -> DueStatus.OVERDUE
 
         (nextDueDate != null && nextDueDate <= currentDate.plus(
-          1,
-          DateTimeUnit.MONTH
-        )) ||
-          (nextDueEngine != null && nextDueEngine <= currentMetricTime + window) -> DueStatus.DUE_SOON
+          1, DateTimeUnit.MONTH
+        )) || (nextDueEngine != null && nextDueEngine <= currentMetricTime + window) -> DueStatus.DUE_SOON
 
         else -> DueStatus.NORMAL
       }
@@ -137,6 +137,7 @@ class TaskDueManagerImpl(
       val onConditionRule = rule.on_condition_rule
       val linkedRule = rule.linked_rule
       val immediateRule = rule.immediate_rule
+      val seasonalRule = rule.seasonal_rule?.takeIf { it.listedMonths().isNotEmpty() }
 
       when {
         timeRule != null -> {
@@ -153,23 +154,19 @@ class TaskDueManagerImpl(
               currentDate
             }
           }
-          val calculated = when {
-            timeRule.interval_days > 0 -> baseDate.plus(
-              timeRule.interval_days,
-              DateTimeUnit.DAY
-            )
-            // Month- and year-based intervals snap to end-of-month so a task done
-            // mid-month is due at the close of the calendar month it lands in
-            // (e.g. logged 12/14/2025 + 12mo → due 12/31/2026).
-            timeRule.interval_years > 0 -> baseDate.plus(
-              timeRule.interval_years,
-              DateTimeUnit.YEAR
-            )
-              .endOfMonth()
-
-            else -> baseDate.plus(timeRule.interval_months, DateTimeUnit.MONTH)
-              .endOfMonth()
+          val calculated = timeRule.advance(baseDate)
+          if (nextDueDate == null || calculated < nextDueDate) {
+            nextDueDate = calculated
           }
+        }
+
+        seasonalRule != null -> {
+          // The first listed month after the one the last compliance fell in — a chore done in
+          // April is next due in October — and, never complied, the first listed month that has
+          // not passed: a task created today cannot be born overdue.
+          val calculated = latestLog?.timestamp?.toLocalDate(timeZone)
+            ?.let { seasonalRule.firstOccurrenceAfter(it) }
+            ?: seasonalRule.firstOccurrenceOnOrAfter(currentDate)
           if (nextDueDate == null || calculated < nextDueDate) {
             nextDueDate = calculated
           }
@@ -215,14 +212,9 @@ class TaskDueManagerImpl(
               }
             }
 
-            val parentMetadata =
-              computeNextDueRecursive(
-                parentCard,
-                parentLogs,
-                allLogs,
-                allCards,
-                visited
-              )
+            val parentMetadata = computeNextDueRecursive(
+              parentCard, parentLogs, allLogs, allCards, visited
+            )
 
             // Inherit due properties from parent
             val pNextDate = parentMetadata.nextDueDate
@@ -260,25 +252,17 @@ class TaskDueManagerImpl(
       if (compliedEpoch > latestLogEpoch) {
         for (rule in card.rules) {
           rule.time_rule?.let { timeRule ->
-            fun LocalDate.advance(): LocalDate = when {
-              timeRule.interval_days > 0 -> plus(
-                timeRule.interval_days,
-                DateTimeUnit.DAY
-              )
-
-              timeRule.interval_years > 0 -> plus(
-                timeRule.interval_years,
-                DateTimeUnit.YEAR
-              ).endOfMonth()
-
-              else -> plus(
-                timeRule.interval_months,
-                DateTimeUnit.MONTH
-              ).endOfMonth()
-            }
             nextDueDate = nextDueDate?.let { d ->
-              var advanced = d.advance()
-              while (advanced <= currentDate) advanced = advanced.advance()
+              var advanced = timeRule.advance(d)
+              while (advanced <= currentDate) advanced =
+                timeRule.advance(advanced)
+              advanced
+            }
+          }
+          rule.seasonal_rule?.takeIf { it.listedMonths().isNotEmpty() }?.let { seasonal ->
+            nextDueDate = nextDueDate?.let { d ->
+              var advanced = seasonal.firstOccurrenceAfter(d)
+              while (advanced <= currentDate) advanced = seasonal.firstOccurrenceAfter(advanced)
               advanced
             }
           }
@@ -305,14 +289,11 @@ class TaskDueManagerImpl(
 
     val status = when {
       isImmediate -> DueStatus.OVERDUE
-      (nextDueDate != null && nextDueDate < currentDate) ||
-        (nextDueEngine != null && nextDueEngine < currentForNextDue) -> DueStatus.OVERDUE
+      (nextDueDate != null && nextDueDate < currentDate) || (nextDueEngine != null && nextDueEngine < currentForNextDue) -> DueStatus.OVERDUE
 
       (nextDueDate != null && nextDueDate <= currentDate.plus(
-        1,
-        DateTimeUnit.MONTH
-      )) ||
-        (nextDueEngine != null && nextDueEngine <= currentForNextDue + window) -> DueStatus.DUE_SOON
+        1, DateTimeUnit.MONTH
+      )) || (nextDueEngine != null && nextDueEngine <= currentForNextDue + window) -> DueStatus.DUE_SOON
 
       else -> DueStatus.NORMAL
     }
@@ -343,6 +324,52 @@ class TaskDueManagerImpl(
     private const val DEFAULT_DUE_SOON_WINDOW = 10f
   }
 }
+
+/**
+ * One interval on from [from].
+ *
+ * Month- and year-based intervals snap to the end of the month they land in — logged 14 Dec 2025
+ * + 12 months is due 31 Dec 2026, which is what an annual inspection legally means — unless the
+ * rule was written for a template that asked for the anniversary instead (PRD §4.6): a water
+ * heater flushed on the 14th is next due on the 14th. Day intervals never snap.
+ */
+private fun TimeRule.advance(from: LocalDate): LocalDate {
+  val landed = when {
+    interval_days > 0 -> return from.plus(interval_days, DateTimeUnit.DAY)
+    interval_years > 0 -> from.plus(interval_years, DateTimeUnit.YEAR)
+    else -> from.plus(interval_months, DateTimeUnit.MONTH)
+  }
+  return if (due_on_anniversary) landed else landed.endOfMonth()
+}
+
+/** The months a rule names, in calendar order, ignoring anything a bad write put outside 1–12. */
+private fun SeasonalRule.listedMonths(): List<Int> =
+  months.filter { it in 1..12 }.distinct().sorted()
+
+/** This rule's due date in [year] for [month]: the named day, or the month's last day for 0. */
+private fun SeasonalRule.dueDateIn(year: Int, month: Int): LocalDate {
+  val last = LocalDate(year, month, 1).endOfMonth()
+  return if (day_of_month in 1..last.day) LocalDate(year, month, day_of_month) else last
+}
+
+private fun SeasonalRule.firstOccurrenceOnOrAfter(date: LocalDate): LocalDate {
+  val listed = listedMonths()
+  var year = date.year
+  while (true) {
+    listed.forEach { month ->
+      val due = dueDateIn(year, month)
+      if (due >= date) return due
+    }
+    year++
+  }
+}
+
+/**
+ * The first listed month after the one [date] falls in. By month, not by day: gutters cleaned on
+ * 20 April count April as done, so the next occurrence is October, not the 30th.
+ */
+private fun SeasonalRule.firstOccurrenceAfter(date: LocalDate): LocalDate =
+  firstOccurrenceOnOrAfter(LocalDate(date.year, date.month, 1).plus(1, DateTimeUnit.MONTH))
 
 private fun LocalDate.endOfMonth(): LocalDate {
   val firstOfNextMonth = LocalDate(year, month, 1).plus(1, DateTimeUnit.MONTH)

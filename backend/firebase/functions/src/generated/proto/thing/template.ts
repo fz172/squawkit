@@ -186,6 +186,11 @@ export interface StarterTask {
    * option selected. Same field, same meaning, as MeterDef.component_slot_key.
    */
   componentSlotKey: string;
+  /**
+   * Calendar-anchored months (1–12) — the task becomes a SeasonalRule instead of a TimeRule.
+   * "Gutters in April and October" is a fact about the calendar, not about the last cleaning.
+   */
+  months: number[];
 }
 
 /**
@@ -899,6 +904,7 @@ function createBaseStarterTask(): StarterTask {
     interval: 0,
     intervalMonths: 0,
     componentSlotKey: "",
+    months: [],
   };
 }
 
@@ -925,6 +931,11 @@ export const StarterTask: MessageFns<StarterTask> = {
     if (message.componentSlotKey !== "") {
       writer.uint32(58).string(message.componentSlotKey);
     }
+    writer.uint32(66).fork();
+    for (const v of message.months) {
+      writer.int32(v);
+    }
+    writer.join();
     return writer;
   },
 
@@ -991,6 +1002,24 @@ export const StarterTask: MessageFns<StarterTask> = {
           message.componentSlotKey = reader.string();
           continue;
         }
+        case 8: {
+          if (tag === 64) {
+            message.months.push(reader.int32());
+
+            continue;
+          }
+
+          if (tag === 66) {
+            const end2 = reader.uint32() + reader.pos;
+            while (reader.pos < end2) {
+              message.months.push(reader.int32());
+            }
+
+            continue;
+          }
+
+          break;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -1025,6 +1054,9 @@ export const StarterTask: MessageFns<StarterTask> = {
         : isSet(object.component_slot_key)
         ? globalThis.String(object.component_slot_key)
         : "",
+      months: globalThis.Array.isArray(object?.months)
+        ? object.months.map((e: any) => globalThis.Number(e))
+        : [],
     };
   },
 
@@ -1051,6 +1083,9 @@ export const StarterTask: MessageFns<StarterTask> = {
     if (message.componentSlotKey !== "") {
       obj.componentSlotKey = message.componentSlotKey;
     }
+    if (message.months?.length) {
+      obj.months = message.months.map((e) => Math.round(e));
+    }
     return obj;
   },
 
@@ -1066,6 +1101,7 @@ export const StarterTask: MessageFns<StarterTask> = {
     message.interval = object.interval ?? 0;
     message.intervalMonths = object.intervalMonths ?? 0;
     message.componentSlotKey = object.componentSlotKey ?? "";
+    message.months = object.months?.map((e) => e) || [];
     return message;
   },
 };

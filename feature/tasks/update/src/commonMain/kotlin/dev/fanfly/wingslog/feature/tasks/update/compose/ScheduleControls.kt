@@ -29,6 +29,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.EventRepeat
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Schedule
@@ -52,14 +53,19 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import dev.fanfly.wingslog.core.template.LocalThingTemplate
+import dev.fanfly.wingslog.core.template.LocalThingCapabilities
+import dev.fanfly.wingslog.core.template.scheduleTypesOffered
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.thing.MaintenanceTask
+import dev.fanfly.wingslog.thing.MeterDef
+import dev.fanfly.wingslog.thing.ScheduleType
+import kotlinx.datetime.Month
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.tasks.update.generated.resources.Res
 import wingslog.feature.tasks.update.generated.resources.schedule_pick_linked_task
 import wingslog.feature.tasks.update.generated.resources.schedule_track_calendar_time
+import wingslog.feature.tasks.update.generated.resources.schedule_track_seasonal
 import wingslog.feature.tasks.update.generated.resources.schedule_track_tach_hours
 import wingslog.feature.tasks.update.generated.resources.schedule_unit_days
 import wingslog.feature.tasks.update.generated.resources.schedule_unit_months
@@ -67,29 +73,119 @@ import wingslog.feature.tasks.update.generated.resources.schedule_unit_years
 import wingslog.feature.tasks.update.generated.resources.schedule_with_another_work
 import wingslog.feature.tasks.update.generated.resources.schedule_with_another_work_description
 
+/**
+ * The tracking modes the template's `schedule_types` lists (PRD §4.6) — calendar time, the
+ * meter, the seasonal anchor — each as a button. A mode a stored task already uses stays visible
+ * so the task can still be edited if its preset later stopped offering it.
+ */
 @Composable
 internal fun TrackingModeChoice(
   selected: ScheduleMode?,
   onSelect: (ScheduleMode) -> Unit,
+  /** The meter this task would count in — its label names the button ("Engine Time", "Odometer"). */
+  meter: MeterDef?,
 ) {
+  val capabilities = LocalThingCapabilities.current
+  val offered = scheduleTypesOffered(capabilities.schedule_types)
   Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
-    TrackingModeButton(
-      icon = Icons.Default.CalendarToday,
-      label = stringResource(Res.string.schedule_track_calendar_time),
-      selected = selected == ScheduleMode.TIME,
-      onClick = { onSelect(ScheduleMode.TIME) },
-      modifier = Modifier.weight(1f),
-    )
-    TrackingModeButton(
-      icon = Icons.Default.Schedule,
-      // The meter's own name — "Odometer" on a car. "Tach Hours" offered an aeroplane's meter to
-      // every template, which is the same bug as the unit beside the value (#759).
-      label = LocalThingTemplate.current?.meters?.firstOrNull()?.label
-        ?: stringResource(Res.string.schedule_track_tach_hours),
-      selected = selected == ScheduleMode.HOURS,
-      onClick = { onSelect(ScheduleMode.HOURS) },
-      modifier = Modifier.weight(1f),
-    )
+    if (ScheduleType.SCHEDULE_TYPE_CALENDAR in offered || selected == ScheduleMode.TIME) {
+      TrackingModeButton(
+        icon = Icons.Default.CalendarToday,
+        label = stringResource(Res.string.schedule_track_calendar_time),
+        selected = selected == ScheduleMode.TIME,
+        onClick = { onSelect(ScheduleMode.TIME) },
+        modifier = Modifier.weight(1f),
+      )
+    }
+    if (ScheduleType.SCHEDULE_TYPE_METER in offered || selected == ScheduleMode.HOURS) {
+      TrackingModeButton(
+        icon = Icons.Default.Schedule,
+        // The meter's own name — "Odometer" on a car, "Engine Time" for an engine task on an
+        // aeroplane. A fixed "Tach Hours", and then a fixed first meter, both named the wrong one.
+        label = meter?.label?.takeIf { it.isNotEmpty() }
+          ?: stringResource(Res.string.schedule_track_tach_hours),
+        selected = selected == ScheduleMode.HOURS,
+        onClick = { onSelect(ScheduleMode.HOURS) },
+        modifier = Modifier.weight(1f),
+      )
+    }
+    if (ScheduleType.SCHEDULE_TYPE_SEASONAL in offered || selected == ScheduleMode.SEASONAL) {
+      TrackingModeButton(
+        icon = Icons.Default.EventRepeat,
+        label = stringResource(Res.string.schedule_track_seasonal),
+        selected = selected == ScheduleMode.SEASONAL,
+        onClick = { onSelect(ScheduleMode.SEASONAL) },
+        modifier = Modifier.weight(1f),
+      )
+    }
+  }
+}
+
+/** Twelve toggles, three rows of four, for a SEASONAL schedule's months. */
+@Composable
+internal fun MonthGrid(
+  selected: Set<Int>,
+  onToggle: (Int) -> Unit,
+) {
+  Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
+    (1..12).chunked(4)
+      .forEach { row ->
+        Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
+          row.forEach { month ->
+            val active = month in selected
+            Box(
+              modifier = Modifier
+                .weight(1f)
+                .heightIn(min = 44.dp)
+                .clip(RoundedCornerShape(Spacing.smallCornerRadius))
+                .background(
+                  if (active) MaterialTheme.colorScheme.primary
+                  else MaterialTheme.colorScheme.surfaceContainer
+                )
+                .border(
+                  Spacing.hairline,
+                  if (active) MaterialTheme.colorScheme.primary
+                  else MaterialTheme.colorScheme.outlineVariant,
+                  RoundedCornerShape(Spacing.smallCornerRadius)
+                )
+                .clickable { onToggle(month) },
+              contentAlignment = Alignment.Center,
+            ) {
+              Text(
+                shortMonthName(month),
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = if (active) FontWeight.SemiBold else FontWeight.Medium,
+                color = if (active) MaterialTheme.colorScheme.onPrimary
+                else MaterialTheme.colorScheme.onSurface,
+              )
+            }
+          }
+        }
+      }
+  }
+}
+
+/**
+ * English month names from the platform enum. The app ships in English only, and localising
+ * these is part of the same decision as the lexicon (`template_system_design.md` §13).
+ */
+internal fun monthName(month: Int): String =
+  Month(month).name.lowercase()
+    .replaceFirstChar { it.titlecase() }
+
+internal fun shortMonthName(month: Int): String = monthName(month).take(3)
+
+/** "April", "April & October", "April, July & October". */
+internal fun formatMonthList(months: Collection<Int>): String {
+  val names = months.filter { it in 1..12 }
+    .distinct()
+    .sorted()
+    .map(::monthName)
+  return when (names.size) {
+    0 -> ""
+    1 -> names.single()
+    else -> names.dropLast(1)
+      .joinToString(", ") + " & " + names.last()
   }
 }
 

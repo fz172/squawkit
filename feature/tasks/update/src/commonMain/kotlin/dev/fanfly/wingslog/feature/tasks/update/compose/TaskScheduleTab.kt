@@ -1,13 +1,19 @@
 package dev.fanfly.wingslog.feature.tasks.update.compose
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -19,40 +25,29 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.template.LocalThingTemplate
-import dev.fanfly.wingslog.core.template.meter
-import dev.fanfly.wingslog.core.ui.common.compose.PreviewBanner
-import dev.fanfly.wingslog.core.ui.common.compose.PreviewBannerTone
+import dev.fanfly.wingslog.core.template.meterForComponent
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.feature.tasks.datamanager.pickerMillisToDate
+import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
+import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.MaintenanceTask
+import dev.fanfly.wingslog.thing.MeterDef
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
+import wingslog.core.sharedassets.generated.resources.remove
+import wingslog.core.sharedassets.generated.resources.select_date
 import wingslog.feature.tasks.update.generated.resources.Res
+import wingslog.feature.tasks.update.generated.resources.adj_reschedule_prefix_at
+import wingslog.feature.tasks.update.generated.resources.initial_due_section_label
+import wingslog.feature.tasks.update.generated.resources.initial_due_subtitle
 import wingslog.feature.tasks.update.generated.resources.schedule_prefix_every
 import wingslog.feature.tasks.update.generated.resources.schedule_prefix_in
-import wingslog.feature.tasks.update.generated.resources.schedule_preview_asap_primary
-import wingslog.feature.tasks.update.generated.resources.schedule_preview_asap_secondary
-import wingslog.feature.tasks.update.generated.resources.schedule_preview_due_every
-import wingslog.feature.tasks.update.generated.resources.schedule_preview_due_every_hours
-import wingslog.feature.tasks.update.generated.resources.schedule_preview_due_in
-import wingslog.feature.tasks.update.generated.resources.schedule_preview_due_in_hours
-import wingslog.feature.tasks.update.generated.resources.schedule_preview_empty_primary
-import wingslog.feature.tasks.update.generated.resources.schedule_preview_empty_secondary
-import wingslog.feature.tasks.update.generated.resources.schedule_preview_hint
-import wingslog.feature.tasks.update.generated.resources.schedule_preview_label
-import wingslog.feature.tasks.update.generated.resources.schedule_preview_linked_one_time_secondary
-import wingslog.feature.tasks.update.generated.resources.schedule_preview_linked_primary
-import wingslog.feature.tasks.update.generated.resources.schedule_preview_linked_repeating_secondary
-import wingslog.feature.tasks.update.generated.resources.schedule_preview_linked_unset_primary
-import wingslog.feature.tasks.update.generated.resources.schedule_preview_linked_unset_secondary
-import wingslog.feature.tasks.update.generated.resources.schedule_preview_one_time_secondary
-import wingslog.feature.tasks.update.generated.resources.schedule_preview_recurring_secondary
-import wingslog.feature.tasks.update.generated.resources.schedule_preview_set_calendar_primary
-import wingslog.feature.tasks.update.generated.resources.schedule_preview_set_hours_primary
-import wingslog.feature.tasks.update.generated.resources.schedule_preview_set_secondary
 import wingslog.feature.tasks.update.generated.resources.schedule_recurrence_asap
 import wingslog.feature.tasks.update.generated.resources.schedule_recurrence_asap_sub
 import wingslog.feature.tasks.update.generated.resources.schedule_recurrence_linked_one_time_sub
@@ -61,39 +56,73 @@ import wingslog.feature.tasks.update.generated.resources.schedule_recurrence_one
 import wingslog.feature.tasks.update.generated.resources.schedule_recurrence_one_time_sub
 import wingslog.feature.tasks.update.generated.resources.schedule_recurrence_repeating
 import wingslog.feature.tasks.update.generated.resources.schedule_recurrence_repeating_sub
+import wingslog.feature.tasks.update.generated.resources.schedule_recurrence_seasonal_one_time_sub
+import wingslog.feature.tasks.update.generated.resources.schedule_recurrence_seasonal_repeating_sub
 import wingslog.feature.tasks.update.generated.resources.schedule_step_interval_how_often
 import wingslog.feature.tasks.update.generated.resources.schedule_step_interval_in_how_long
+import wingslog.feature.tasks.update.generated.resources.schedule_step_months_label
 import wingslog.feature.tasks.update.generated.resources.schedule_step_recurrence_label
 import wingslog.feature.tasks.update.generated.resources.schedule_step_recurrence_linked_label
 import wingslog.feature.tasks.update.generated.resources.schedule_step_track_label
-import wingslog.feature.tasks.update.generated.resources.schedule_unit_days
-import wingslog.feature.tasks.update.generated.resources.schedule_unit_months
 import wingslog.feature.tasks.update.generated.resources.schedule_unit_tach_hours
-import wingslog.feature.tasks.update.generated.resources.schedule_unit_years
+import wingslog.core.sharedassets.generated.resources.Res as CoreRes
+
+/**
+ * The create form's "First due" controls — the force-due override, offered once, at creation.
+ *
+ * Absent on edit: an existing task reschedules from the Adjustments tab, where the banner can
+ * show what the schedule currently says next to what the user is changing it to.
+ */
+data class InitialDueControls(
+  val forceOverrideDate: Boolean,
+  val onForceOverrideDateChange: (Boolean) -> Unit,
+  val forcedDateMillis: Long?,
+  val onForcedDateMillisChange: (Long?) -> Unit,
+  val onDateClick: () -> Unit,
+  val forceOverrideEngine: Boolean,
+  val onForceOverrideEngineChange: (Boolean) -> Unit,
+  val forcedEngineHours: String,
+  val onForcedEngineHoursChange: (String) -> Unit,
+)
 
 @Composable
 fun TaskScheduleTab(
   state: ScheduleState,
   onChange: (ScheduleState) -> Unit,
   availableInspections: List<MaintenanceTask>,
+  /** What the task is filed against; on the airplane this picks the meter (engine vs prop vs airframe). */
+  component: ComponentType,
   modifier: Modifier = Modifier,
+  initialDue: InitialDueControls? = null,
+  /** The draft's due with and without its override, for the banner both tabs share. */
+  effectiveDue: DueMetadata? = null,
+  naturalDue: DueMetadata? = null,
+  overrideOn: Boolean = false,
+  currentReading: (String) -> Float = { 0f },
 ) {
   var advancedOpen by remember(state.mode) { mutableStateOf(state.mode == ScheduleMode.LINKED) }
+
+  // The meter this schedule counts in, resolved once for the mode button, the input and the
+  // preview alike — they used to disagree (#785). On the airplane the component decides (an
+  // engine task counts engine hours, a prop task prop hours, an airframe task airframe time);
+  // elsewhere the template's one meter does. A template with none keeps the aviation word.
+  val template = LocalThingTemplate.current
+  val meter = template.meterForComponent(component)
+  val meterUnit = meter?.unit_label?.takeIf { it.isNotEmpty() }
+    ?: stringResource(Res.string.schedule_unit_tach_hours)
 
   Column(
     modifier = modifier.fillMaxWidth(),
     verticalArrangement = Arrangement.spacedBy(Spacing.extraLarge),
   ) {
-    val (previewPrimary, previewSecondary, previewIsEmpty) = previewText(
-      state = state,
+    DueSummaryBanner(
+      schedule = state,
       linkedTaskName = availableInspections.firstOrNull { it.id == state.linkedToId }?.title,
-    )
-    PreviewBanner(
-      label = stringResource(Res.string.schedule_preview_label),
-      hint = stringResource(Res.string.schedule_preview_hint),
-      primary = AnnotatedString(previewPrimary),
-      secondary = AnnotatedString(previewSecondary),
-      tone = if (previewIsEmpty) PreviewBannerTone.Neutral else PreviewBannerTone.Active,
+      meterUnit = meterUnit,
+      overrideOn = overrideOn,
+      effectiveDue = effectiveDue,
+      naturalDue = naturalDue,
+      currentReading = currentReading,
     )
 
     // Step 1 — How is this tracked?
@@ -103,6 +132,7 @@ fun TaskScheduleTab(
     ) {
       TrackingModeChoice(
         selected = if (state.mode == ScheduleMode.LINKED) null else state.mode,
+        meter = meter,
         onSelect = { picked ->
           // Switching mode resets dependent fields to avoid carrying stale values
           onChange(
@@ -128,6 +158,21 @@ fun TaskScheduleTab(
             ScheduleRecurrence.REPEATING to (Res.string.schedule_recurrence_repeating to Res.string.schedule_recurrence_repeating_sub),
             ScheduleRecurrence.ONE_TIME to (Res.string.schedule_recurrence_one_time to Res.string.schedule_recurrence_one_time_sub),
             ScheduleRecurrence.ASAP to (Res.string.schedule_recurrence_asap to Res.string.schedule_recurrence_asap_sub),
+          ),
+          onSelect = { onChange(state.copy(recurrence = it)) },
+        )
+      }
+    } else if (state.mode == ScheduleMode.SEASONAL) {
+      // No ASAP: a seasonal task is due in its months, never "now".
+      ScheduleSection(
+        labelRes = Res.string.schedule_step_recurrence_label,
+        complete = state.recurrence != null,
+      ) {
+        RecurrenceChoice(
+          selected = state.recurrence,
+          options = listOf(
+            ScheduleRecurrence.REPEATING to (Res.string.schedule_recurrence_repeating to Res.string.schedule_recurrence_seasonal_repeating_sub),
+            ScheduleRecurrence.ONE_TIME to (Res.string.schedule_recurrence_one_time to Res.string.schedule_recurrence_seasonal_one_time_sub),
           ),
           onSelect = { onChange(state.copy(recurrence = it)) },
         )
@@ -161,6 +206,7 @@ fun TaskScheduleTab(
       val complete = when (state.mode) {
         ScheduleMode.TIME -> state.calValue.isNotBlank()
         ScheduleMode.HOURS -> state.hourValue.isNotBlank()
+        else -> false
       }
       ScheduleSection(
         labelRes = intervalLabel,
@@ -189,12 +235,8 @@ fun TaskScheduleTab(
           }
 
           ScheduleMode.HOURS -> {
-            // A new task carries the default engine-hours key, which a car's template never
-            // declares — fall back to its first meter so an automotive task schedules on the
-            // odometer rather than on a meter that does not exist.
-            val template = LocalThingTemplate.current
-            val meter =
-              template.meter(state.meterKey) ?: template?.meters?.firstOrNull()
+            // Store the resolved meter's key, so the rule counts what the button says — the
+            // odometer on a car, the prop's hours for a propeller task.
             LaunchedEffect(meter?.key) {
               val key = meter?.key
               if (key != null && key != state.meterKey) {
@@ -207,8 +249,7 @@ fun TaskScheduleTab(
               // The meter's own unit — "every 5,000 mi" on a car, "every 100 hrs" on an
               // aeroplane. A fixed "tach hours" was the reason a car could not express this at
               // all (#759).
-              suffix = meter?.unit_label?.takeIf { it.isNotEmpty() }
-                ?: stringResource(Res.string.schedule_unit_tach_hours),
+              suffix = meterUnit,
               prefix = stringResource(
                 if (state.recurrence == ScheduleRecurrence.ONE_TIME) Res.string.schedule_prefix_in
                 else Res.string.schedule_prefix_every
@@ -221,7 +262,47 @@ fun TaskScheduleTab(
               },
             )
           }
+
+          else -> Unit
         }
+      }
+    }
+
+    // Step 3 for a seasonal schedule — which months.
+    if (state.mode == ScheduleMode.SEASONAL && state.recurrence != null) {
+      ScheduleSection(
+        labelRes = Res.string.schedule_step_months_label,
+        complete = state.seasonalMonths.isNotEmpty(),
+      ) {
+        MonthGrid(
+          selected = state.seasonalMonths,
+          onToggle = { month ->
+            onChange(
+              state.copy(
+                seasonalMonths = if (month in state.seasonalMonths) state.seasonalMonths - month
+                else state.seasonalMonths + month,
+              )
+            )
+          },
+        )
+      }
+    }
+
+    // First due — create only, and only once the schedule it overrides exists. No switch: the
+    // field is there, and leaving it empty means the schedule counts from today.
+    if (initialDue != null && state.isComplete) {
+      val set = if (state.isDated) initialDue.forcedDateMillis != null
+      else initialDue.forcedEngineHours.isNotBlank()
+      ScheduleSection(
+        labelRes = Res.string.initial_due_section_label,
+        complete = set,
+      ) {
+        FirstDueCard(
+          dated = state.isDated,
+          controls = initialDue,
+          meter = meter,
+          meterUnit = meterUnit,
+        )
       }
     }
 
@@ -290,100 +371,108 @@ private fun ScheduleSection(
   }
 }
 
+/**
+ * The first-due field: a date row for a dated schedule, a meter reading for a metered one, and a
+ * clear affordance once something is set. Setting a value is what turns the override on — there
+ * is no switch to remember to flip, and an empty field is simply no override.
+ */
 @Composable
-private fun previewText(
-  state: ScheduleState,
-  linkedTaskName: String?,
-): Triple<String, String, Boolean> {
-  if (state.mode == null) {
-    return Triple(
-      stringResource(Res.string.schedule_preview_empty_primary),
-      stringResource(Res.string.schedule_preview_empty_secondary),
-      true,
-    )
-  }
-  if (state.mode == ScheduleMode.LINKED) {
-    if (state.linkedToId == null || linkedTaskName == null) {
-      return Triple(
-        stringResource(Res.string.schedule_preview_linked_unset_primary),
-        stringResource(Res.string.schedule_preview_linked_unset_secondary),
-        false,
+private fun FirstDueCard(
+  dated: Boolean,
+  controls: InitialDueControls,
+  meter: MeterDef?,
+  meterUnit: String,
+) {
+  Column(
+    modifier = Modifier
+      .fillMaxWidth()
+      .clip(RoundedCornerShape(Spacing.cardCornerRadius))
+      .background(MaterialTheme.colorScheme.surfaceContainer)
+      .border(
+        Spacing.hairline,
+        MaterialTheme.colorScheme.outlineVariant,
+        RoundedCornerShape(Spacing.cardCornerRadius)
       )
-    }
-    val secondary = if (state.recurrence == ScheduleRecurrence.ONE_TIME) {
-      stringResource(Res.string.schedule_preview_linked_one_time_secondary)
+      .padding(horizontal = Spacing.large, vertical = Spacing.medium),
+    verticalArrangement = Arrangement.spacedBy(Spacing.small),
+  ) {
+    if (dated) {
+      val dateStr = controls.forcedDateMillis?.pickerMillisToDate()
+        ?.toDisplayFormat()
+      Row(
+        modifier = Modifier
+          .fillMaxWidth()
+          .clip(RoundedCornerShape(Spacing.cardCornerRadius))
+          .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+          .clickable(role = Role.Button) { controls.onDateClick() }
+          .padding(horizontal = Spacing.medium, vertical = Spacing.medium),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(Spacing.small),
+      ) {
+        Icon(
+          Icons.Default.CalendarToday,
+          contentDescription = null,
+          modifier = Modifier.size(Spacing.large),
+          tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Text(
+          dateStr ?: stringResource(CoreRes.string.select_date),
+          style = MaterialTheme.typography.bodyLarge,
+          fontWeight = if (dateStr != null) FontWeight.Bold else FontWeight.Normal,
+          color = if (dateStr != null) MaterialTheme.colorScheme.onSurface
+          else MaterialTheme.colorScheme.onSurfaceVariant,
+          modifier = Modifier.weight(1f),
+        )
+        if (dateStr != null) {
+          Icon(
+            Icons.Default.Close,
+            contentDescription = stringResource(CoreRes.string.remove),
+            modifier = Modifier
+              .size(Spacing.xLarge)
+              .clip(RoundedCornerShape(Spacing.smallCornerRadius))
+              .clickable {
+                controls.onForcedDateMillisChange(null)
+                controls.onForceOverrideDateChange(false)
+              }
+              .padding(Spacing.extraSmall),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+          )
+        }
+      }
     } else {
-      stringResource(Res.string.schedule_preview_linked_repeating_secondary)
-    }
-    return Triple(
-      stringResource(
-        Res.string.schedule_preview_linked_primary,
-        linkedTaskName
-      ),
-      secondary,
-      false,
-    )
-  }
-  if (state.recurrence == ScheduleRecurrence.ASAP) {
-    return Triple(
-      stringResource(Res.string.schedule_preview_asap_primary),
-      stringResource(Res.string.schedule_preview_asap_secondary),
-      false,
-    )
-  }
-  if (state.mode == ScheduleMode.TIME) {
-    val n = state.calValue.toIntOrNull()
-    if (n == null) {
-      return Triple(
-        stringResource(
-          Res.string.schedule_preview_set_calendar_primary,
-          stringResource(state.calUnit.label())
-        ),
-        stringResource(Res.string.schedule_preview_set_secondary),
-        false,
+      IntervalNumberInput(
+        value = controls.forcedEngineHours,
+        onChange = { v ->
+          val filtered = v.filter { c -> c.isDigit() || c == '.' }
+          controls.onForcedEngineHoursChange(filtered)
+          controls.onForceOverrideEngineChange(
+            filtered.toFloatOrNull()
+              ?.let { it > 0f } == true)
+        },
+        suffix = meterUnit,
+        prefix = stringResource(Res.string.adj_reschedule_prefix_at),
+        keyboard = if (meter?.decimal != false) KeyboardType.Decimal else KeyboardType.Number,
       )
     }
-    val pluralUnit = stringResource(state.calUnit.label())
-    val unitStr = if (n == 1) pluralUnit.removeSuffix("s") else pluralUnit
-    val primaryRes = if (state.recurrence == ScheduleRecurrence.ONE_TIME)
-      Res.string.schedule_preview_due_in else Res.string.schedule_preview_due_every
-    val secondaryRes = if (state.recurrence == ScheduleRecurrence.ONE_TIME)
-      Res.string.schedule_preview_one_time_secondary else Res.string.schedule_preview_recurring_secondary
-    return Triple(
-      stringResource(
-        primaryRes,
-        n,
-        unitStr
-      ),
-      stringResource(secondaryRes),
-      false
+    Text(
+      stringResource(Res.string.initial_due_subtitle),
+      style = MaterialTheme.typography.bodySmall,
+      color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
   }
-  // HOURS
-  if (state.hourValue.isBlank()) {
-    return Triple(
-      stringResource(Res.string.schedule_preview_set_hours_primary),
-      stringResource(Res.string.schedule_preview_set_secondary),
-      false,
-    )
-  }
-  val primaryRes = if (state.recurrence == ScheduleRecurrence.ONE_TIME)
-    Res.string.schedule_preview_due_in_hours else Res.string.schedule_preview_due_every_hours
-  val secondaryRes = if (state.recurrence == ScheduleRecurrence.ONE_TIME)
-    Res.string.schedule_preview_one_time_secondary else Res.string.schedule_preview_recurring_secondary
-  return Triple(
-    stringResource(
-      primaryRes,
-      state.hourValue
-    ),
-    stringResource(secondaryRes),
-    false
-  )
 }
 
-private fun ScheduleTimeUnit.label(): StringResource = when (this) {
-  ScheduleTimeUnit.DAYS -> Res.string.schedule_unit_days
-  ScheduleTimeUnit.MONTHS -> Res.string.schedule_unit_months
-  ScheduleTimeUnit.YEARS -> Res.string.schedule_unit_years
-}
+/** TIME and SEASONAL schedules are dated; a first due for them is a date. */
+private val ScheduleState.isDated: Boolean
+  get() = mode == ScheduleMode.TIME || mode == ScheduleMode.SEASONAL
+
+/** Enough of a schedule to have a first due: an interval, a meter value, or months — and not ASAP. */
+private val ScheduleState.isComplete: Boolean
+  get() = recurrence != null && recurrence != ScheduleRecurrence.ASAP && when (mode) {
+    ScheduleMode.TIME -> calValue.toIntOrNull() != null
+    ScheduleMode.HOURS -> hourValue.toFloatOrNull() != null
+    ScheduleMode.SEASONAL -> seasonalMonths.isNotEmpty()
+    else -> false
+  }
+
 

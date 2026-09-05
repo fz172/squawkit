@@ -6,8 +6,9 @@
 > guardrail work (3G). **Three items of 3B remain open** — the publishing script (#725), the `fetch_templates`
 > RPC (#726) and the canonical cache (#727); every template is baked into the build. Two things shipped
 > differently from this design and are recorded in place: the transitional fields were removed as part of 3C
-> rather than after it (§7, #668), and the snapshot narrowed exactly as §8 describes (#734). The home starter
-> pack's seasonal chores are 6- and 12-month intervals until a calendar-anchored rule exists.
+> rather than after it (§7, #668), and the snapshot narrowed exactly as §8 describes (#734). The `SeasonalRule`
+> and the per-template end-of-month convention (PRD §4.6) followed on 2026-09-05; the home pack's seasonal chores
+> are seasonal.
 
 **Owner:** Engineering · **Status:** Shipped (3B6–3B8 open) · **Date:** 2026-08-30 · **Refreshed:** 2026-09-04
 **Supersedes nothing.** Builds on `template_system_design.md` (Phase 2) and `thing_migration_design.md` (Phase 1).

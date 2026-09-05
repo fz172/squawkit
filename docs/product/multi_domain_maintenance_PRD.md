@@ -11,11 +11,10 @@
 > | **5 — Cleanup** | **Shipped with Phase 3** (#668): the transitional fields 2–6 are reserved and every reader is on `spec` / `components`. |
 >
 > What still does **not** exist: a template that arrives any way other than baked into the build; the custom
-> template editor; per-preset export layouts beyond the logbook/generic split; a calendar-anchored ("seasonal")
-> task rule, which the home starter pack approximates with 6- and 12-month intervals. §5, §7, §8 and §10–§14 are
-> now a description of what shipped, with the open decisions in §16 still open.
+> template editor; per-preset export layouts beyond the logbook/generic split. §5, §7, §8 and §10–§14 are now a
+> description of what shipped, with the open decisions in §16 still open.
 
-**Owner:** Product · **Status:** Phases 1–3 and 5 shipped; Phase 4 proposed · **Date:** 2026-08-12 · **Refreshed:** 2026-09-04
+**Owner:** Product · **Status:** Phases 1–3 and 5 shipped; Phase 4 proposed · **Date:** 2026-08-12 · **Refreshed:** 2026-09-05
 **Related:** [Product overview](PRD.md) · [Storage R1 design](../storage/storage_r1_design.md) · [Squawk design](../squawks/squawk_design.md) · [Subscription PRD](../subscription/subscription_PRD.html) · [Export PRD](../export/export_logs_PRD.md) · [Sharing PRD](../sharing/aircraft_sharing_PRD.html) · [Notifications PRD](../notifications/notifications_PRD.md) · [Display ads PRD](../ads/display_ads_PRD.md) · [Aircraft overview tabs](../aircraft/aircraft_overview_tabs.md) *(historical — predates the shell sections)*
 
 > **What changed under this document since it was drafted.** Every code claim below was re-verified against
@@ -366,6 +365,15 @@ and the narrow version of the per-string override design §10a sketches for loca
 actually need replacing, named as fields rather than keyed by resource name.
 
 ### 4.6 Scheduling & due calculation
+
+> **Shipped 2026-09-05, narrower than sketched.** `SeasonalRule` exists as designed below (field 7 of the
+> `InspectionRule` oneof, offered in the task form as a third tracking mode with a month grid, and used by the
+> home and boat starter packs). End-of-month snapping is the one `Scheduling` flag that shipped, as
+> `Capabilities.month_intervals_due_on_anniversary` — inverted so the default keeps aviation's behaviour for every
+> stored rule — and the form stamps it onto each `TimeRule` it writes, so the due engine needs no template in
+> hand. `enabled_rules` shipped as `Capabilities.schedule_types` — an explicit `[CALENDAR, METER]` /
+> `[CALENDAR, SEASONAL]` / `[CALENDAR]` per preset that decides which tracking modes the task form offers.
+> `due_soon_days` and `due_engine` are not built; the due-soon window is still the constant it always was.
 
 Three aviation conventions currently live as constants in `TaskDueManagerImpl` and become config:
 
@@ -1246,7 +1254,7 @@ rollout whose guardrail metric cannot be measured is not a guarded rollout.
 | **1 — Migration** *(hard gate)* | Non-UI only. `Thing` / `Component` / `Meter` / `ThingTemplate` protos replace the aircraft protos. **`core:template` and `TemplateRegistry` were *not* built here** — `thing_migration_design.md` §1 put them out of scope, and Phase 2 built them (#648). Phase 1 shipped the proto shapes and the data cutover, nothing that reads a template. The developer runs the manual backend cutover (§9.1 step 1) covering Firestore and attachment Storage paths per account, *then* distributes the build to that account's devices, where local backfill (§9.1 step 2) runs automatically. **No template picker, no non-airplane preset, no other new functionality ships until every account has cut over.** | **No — by design.** The app must be indistinguishable, and there is nothing else to see yet. |
 | **2 — Lexicon plumbing** *(shipped)* | **Shipped 2026-08-29/30.** String parameterization across all 31 `strings.xml` files, `LocalThingLexicon`, formatter, byte-identical snapshot test. Capability flags wired into the UI, all still on. Notification tier titles resolve through the lexicon; OS channel names stay neutral and their ids are pinned (§8.5). Analytics event taxonomy defined and emitted (§13). Aviation-only. Starts only after Phase 1 has closed out on every account. | No |
 | **3 — The pivot ships** *(shipped 2026-08-31 → 09-04 — [`pivot_rollout_design.md`](pivot_rollout_design.md))* | **Shipped:** inflate-on-write and the backfill (#717, #718), presets as assets (#675), the six presets (#721–#723), the type picker and template-driven create form (#738–#740, #781), template-driven rendering of spec, components, meters and export (#703, #729, #730, #770), the switcher (#731), the degraded state (#728), `MeterRule` replacing `EngineHourRule` (#759, #761), technician certifications with derived roles (#684), starter packs with both §13 events (#733, #707), the subscription rename (#735), `PRODUCT.md`/`DESIGN.md` and the store/web repositioning copy (#736), and the snapshot narrowed into the aviation cohort's guardrail (#734). **Still open:** the publishing script, `fetch_templates` RPC and canonical cache (#725–#727). | **Yes** |
-| **4 — Depth** | Custom template editor, template-declared spec fields on technician certifications (§8.6), per-preset export layouts beyond logbook/generic, template-aware search, additional presets (3D printer, equipment), a calendar-anchored task rule for seasonal chores. | Yes |
+| **4 — Depth** | Custom template editor, template-declared spec fields on technician certifications (§8.6), per-preset export layouts beyond logbook/generic, template-aware search, additional presets (3D printer, equipment). | Yes |
 | **5 — Cleanup** | **Shipped inside Phase 3** (#668): fields 2–6 (`make`, `model`, `serial`, `tail_number`, `engine`) are reserved and never reused, and every reader moved to `spec`/`components` first — a stored-data change sequenced with #638 discipline, exactly as this row once demanded. | No |
 
 ---
