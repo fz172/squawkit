@@ -97,10 +97,10 @@ SCREENS = [
     },
     {
         "num": "05",
-        "src": "work_logs",
-        "feature_label": "Work Logs",
-        "l1": "Every Job,",
-        "l2": "On the Record.",
+        "src": "log_detail",
+        "feature_label": "Attachments",
+        "l1": "Photos and Receipts,",
+        "l2": "Kept With the Entry.",
         "object_position": "50% 0%",
     },
     {

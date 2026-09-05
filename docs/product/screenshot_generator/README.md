@@ -36,7 +36,7 @@ Drop raw captures here, named by screen, one folder per device class:
 | `ipad/` | iPad Pro 13-inch simulator | 2064×2752 or 2752×2064 | `store_assets/appstore/ipad_13/` same orientation |
 
 Screen filenames, in upload order: `overview_1`, `tasks`, `squawks`, `logs`,
-`work_logs`, `export`, `sharing` (all `.png`). A folder may hold any subset;
+`log_detail`, `export`, `sharing` (all `.png`). A folder may hold any subset;
 missing screens are skipped with a message, so a partial set still renders.
 
 The first image stacks up to three dashboards: `overview_1.png` is the front
