@@ -20,6 +20,7 @@ import dev.fanfly.wingslog.feature.sharing.model.ShareMember
 import dev.fanfly.wingslog.feature.sharing.model.ShareRole
 import dev.fanfly.wingslog.feature.sharing.model.ThingShareState
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
+import dev.fanfly.wingslog.feature.technician.datamanager.selfDisplayName
 import dev.fanfly.wingslog.thing.CertExpireLimit
 import dev.fanfly.wingslog.thing.CertificateType
 import dev.fanfly.wingslog.thing.Certification
@@ -39,6 +40,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
@@ -157,11 +159,14 @@ class SharingManagerImpl(
             .filter { it.expiresAtEpochMs > now }
         }
         .catch { emit(emptyList()) }
+    // Our own row prefers the local self-technician: the member doc is a mirror of it and can lag.
+    val self = technicianManager.observeSelf()
     return combine(
       root,
       members,
-      invites
-    ) { rootDoc, memberSnaps, pendingInvites ->
+      invites,
+      self,
+    ) { rootDoc, memberSnaps, pendingInvites, selfTech ->
       val hostUid = rootDoc?.hostUid
       val memberRoles = rootDoc?.memberRoles.orEmpty()
       val docs =
@@ -176,7 +181,11 @@ class SharingManagerImpl(
             val m = docs[uid]
             ShareMember(
               uid = uid,
-              displayName = m?.displayName.orEmpty(),
+              displayName = if (uid == myUid) {
+                selfDisplayName(selfTech, auth.currentUser) ?: m?.displayName.orEmpty()
+              } else {
+                m?.displayName.orEmpty()
+              },
               role = (m?.role ?: memberRoles[uid]).orEmpty()
                 .toModel(),
               photoUrl = m?.photoUrl,
@@ -213,19 +222,21 @@ class SharingManagerImpl(
         if (!isPermissionDenied(e)) throw e
         if (hostUid == myUid) {
           val user = auth.currentUser
-          emit(
-            ThingShareState(
-              members = listOf(
-                ShareMember(
-                  uid = hostUid,
-                  displayName = user?.displayName.orEmpty(),
-                  role = ShareRole.OWNER,
-                  photoUrl = user?.photoURL,
-                  isHost = true,
-                  isSelf = true,
+          emitAll(
+            technicianManager.observeSelf().map { selfTech ->
+              ThingShareState(
+                members = listOf(
+                  ShareMember(
+                    uid = hostUid,
+                    displayName = selfDisplayName(selfTech, user).orEmpty(),
+                    role = ShareRole.OWNER,
+                    photoUrl = user?.photoURL,
+                    isHost = true,
+                    isSelf = true,
+                  ),
                 ),
-              ),
-            ),
+              )
+            },
           )
         } else {
           emit(ThingShareState(accessDenied = true))
@@ -405,14 +416,9 @@ class SharingManagerImpl(
 
       val self = technicianManager.observeSelf()
         .first()
-      // The in-app profile name wins over the Firebase Auth account name. The redeem function seeds
-      // displayName from the auth token because it has nothing else to go on, but the account name
-      // (e.g. from Google) is not what the user edits or expects to see — the self-technician record
-      // is. Same precedence the shell uses for the account row.
+      // The redeem function seeds displayName from the auth token; the in-app name overwrites it.
       val update = MemberSelfUpdateWire(
-        displayName = self?.name?.takeIf { it.isNotBlank() }
-          ?: user.displayName?.takeIf { it.isNotBlank() }
-          ?: user.email.orEmpty(),
+        displayName = selfDisplayName(self, user).orEmpty(),
         photoUrl = user.photoURL,
         technicianMirror = self?.toMirrorWire(),
       )

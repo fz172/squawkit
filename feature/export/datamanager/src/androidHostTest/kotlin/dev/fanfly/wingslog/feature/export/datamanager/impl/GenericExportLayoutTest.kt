@@ -76,6 +76,9 @@ class GenericExportLayoutTest {
     ),
   )
 
+  /** The home lexicon calls its log a "work log" (home.v13), so its work table is not the car's. */
+  private val HOME_WORK_TABLE = "01_Work_Logs.csv"
+
   private fun home() = Thing(
     id = "home-1",
     name = "Lake house",
@@ -134,7 +137,7 @@ class GenericExportLayoutTest {
     // about — a number that looks like data and is not.
     val log = MaintenanceLog(id = "log-1", work_description = "Gutters cleaned")
     val csv = entries(home(), CanonicalTemplates.HOME, listOf(log))
-      .entries.first { it.key.endsWith("01_Service_Records.csv") }.value
+      .entries.first { it.key.endsWith(HOME_WORK_TABLE) }.value
     val header = csv.lineSequence().first()
 
     assertThat(header).doesNotContain("hrs")
@@ -150,7 +153,7 @@ class GenericExportLayoutTest {
       MaintenanceLog(id = "log-$it", work_description = "Work $it")
     }
     val csv = entries(home(), CanonicalTemplates.HOME, logs)
-      .entries.first { it.key.endsWith("01_Service_Records.csv") }.value
+      .entries.first { it.key.endsWith(HOME_WORK_TABLE) }.value
 
     assertThat(csv).contains("Work 1")
     assertThat(csv).contains("Work 2")
@@ -242,7 +245,7 @@ class GenericExportLayoutTest {
 
     assertThat(header(car(), CanonicalTemplates.AUTOMOTIVE, "01_Service_Records.csv"))
       .contains("Reference Numbers")
-    assertThat(header(home(), CanonicalTemplates.HOME, "01_Service_Records.csv"))
+    assertThat(header(home(), CanonicalTemplates.HOME, HOME_WORK_TABLE))
       .doesNotContain("Reference Numbers")
   }
 

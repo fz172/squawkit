@@ -63,7 +63,7 @@ class CommentManagerImplTest {
 
     technicianManager = mockk(relaxed = true)
     every { technicianManager.observeSelf() } returns
-      flowOf(Technician(id = "t1", name = "Fan Zhang"))
+      flowOf(Technician(id = "t1", name = "Jordan Reyes"))
 
     auth = mockk(relaxed = true)
     every { auth.currentUser } returns null
@@ -210,7 +210,7 @@ class CommentManagerImplTest {
     with(written.captured) {
       assertThat(text).isEqualTo("Parts arrived.")
       assertThat(author_uid).isEqualTo(ME)
-      assertThat(author_name).isEqualTo("Fan Zhang")
+      assertThat(author_name).isEqualTo("Jordan Reyes")
       assertThat(parent_id).isEqualTo(SQUAWK_ID)
       assertThat(parent_type)
         .isEqualTo(CommentParentType.COMMENT_PARENT_TYPE_SQUAWK)
@@ -227,14 +227,14 @@ class CommentManagerImplTest {
     every { technicianManager.observeSelf() } returns flowOf(null)
     val user = mockk<FirebaseUser>(relaxed = true)
     every { user.displayName } returns ""
-    every { user.email } returns "fan@example.com"
+    every { user.email } returns "jordan@example.com"
     every { auth.currentUser } returns user
     val written = slot<Comment>()
 
     manager.addComment(target, "hello")
 
     coVerify { store.put(any(), capture(written), scope) }
-    assertThat(written.captured.author_name).isEqualTo("fan@example.com")
+    assertThat(written.captured.author_name).isEqualTo("jordan@example.com")
   }
 
   @Test

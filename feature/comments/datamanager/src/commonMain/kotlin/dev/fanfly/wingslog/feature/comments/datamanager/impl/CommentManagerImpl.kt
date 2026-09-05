@@ -16,6 +16,7 @@ import dev.fanfly.wingslog.feature.comments.model.CommentParentKind
 import dev.fanfly.wingslog.feature.comments.model.CommentTarget
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
+import dev.fanfly.wingslog.feature.technician.datamanager.selfDisplayName
 import dev.fanfly.wingslog.thing.Comment
 import dev.fanfly.wingslog.thing.CommentParentType
 import dev.gitlive.firebase.auth.FirebaseAuth
@@ -90,7 +91,7 @@ class CommentManagerImpl(
         text = body,
         author_uid = currentUid.currentUid()
           .orEmpty(),
-        author_name = selfDisplayName(),
+        author_name = authorDisplayName(),
         created_at = Clock.System.now()
           .toWireInstant(),
       ),
@@ -174,20 +175,9 @@ class CommentManagerImpl(
     return existing
   }
 
-  /**
-   * The in-app profile name first, then the auth account's name, then its email — the same
-   * precedence `SharingManagerImpl.publishTechnicianMirror` uses for the share roster, so a
-   * commenter is bylined the way the roster already shows them. Denormalized at post time, so a
-   * blank here would be a permanent "Unknown"; the fallbacks are what make that rare.
-   */
-  private suspend fun selfDisplayName(): String {
-    val self = technicianManager.observeSelf()
-      .first()
-    val user = auth.currentUser
-    return self?.name?.takeIf { it.isNotBlank() }
-      ?: user?.displayName?.takeIf { it.isNotBlank() }
-      ?: user?.email.orEmpty()
-  }
+  /** Denormalized at post time, so a blank here would be a permanent "Unknown". */
+  private suspend fun authorDisplayName(): String =
+    selfDisplayName(technicianManager.observeSelf().first(), auth.currentUser).orEmpty()
 
   /**
    * Author uid → photo URL from the share roster. Starts empty so the thread never waits on the

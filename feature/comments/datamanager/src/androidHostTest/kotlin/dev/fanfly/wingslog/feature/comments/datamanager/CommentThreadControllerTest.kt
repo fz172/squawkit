@@ -139,7 +139,7 @@ class CommentThreadControllerTest {
     deleted: Boolean = false,
   ) = CommentEntry(
     id = id,
-    authorName = "Fan Zhang",
+    authorName = "Jordan Reyes",
     text = text,
     createdAt = Instant.fromEpochSeconds(1),
     editedAt = null,
