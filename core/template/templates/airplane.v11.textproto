@@ -44,9 +44,12 @@
 # v9 lists `schedule_types` explicitly: calendar time and the meter (tach hours).
 #
 # v10 adds `due_status` — the label the dashboard's due card carries, "Maintenance due".
+#
+# v11 adds `down_alert_hint` — the sentence under the Dashboard down-tier alert. It was one aviation
+# string in strings.xml, "AOG squawks must be resolved before flight", shown to every preset.
 
 id: "airplane"
-version: 10
+version: 11
 
 # No floor. This template ships inside every build that can read it, so a client can never
 # encounter it from the future — the floor exists for FETCHED templates (§6), and a baked-in one is
@@ -83,6 +86,7 @@ lexicon {
   # "GROUNDED" forever while only the display name comes from here.
   down_status: "AOG"
   down_status_long: "Aircraft on Ground"
+  down_alert_hint: "AOG squawks must be resolved before flight"
   due_status: "Maintenance due"
 
   collection_label: "Fleet"

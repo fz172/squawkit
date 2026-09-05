@@ -43,9 +43,12 @@
 # and "maintenance history".
 #
 # v13 adds `due_status` — the label the dashboard's due card carries, "Maintenance due".
+#
+# v14 adds `down_alert_hint` — the sentence under the Dashboard down-tier alert. It was one aviation
+# string in strings.xml, "AOG squawks must be resolved before flight", shown to every preset.
 
 id: "home"
-version: 13
+version: 14
 min_app_version: 0
 
 display_name: "Home"
@@ -75,6 +78,7 @@ lexicon {
   # stays "GROUNDED" regardless — renaming an id drops every user's per-channel settings.
   down_status: "Urgent"
   down_status_long: "Needs urgent attention"
+  down_alert_hint: "Urgent attention items should be dealt with right away"
   due_status: "Maintenance due"
 
   collection_label: "Property"

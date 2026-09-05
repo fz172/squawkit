@@ -59,6 +59,7 @@ object GenericLexicon {
     // renaming an id drops every user's per-channel settings.
     down_status = "Down",
     down_status_long = "Out of service",
+    down_alert_hint = "Down issues must be resolved before use",
     due_status = "Tasks due",
     collection_label = "Stuff",
     // No abbreviation: a house has mandatory work with no two-letter name for it. This is the

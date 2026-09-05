@@ -107,6 +107,16 @@ class CanonicalTemplatesTest {
    * new field is most likely to be left out of — and the floor for the copy has to be plain
    * wording, not no wording.
    */
+  /** Same reasoning as the empty states: a blank here is a heading with nothing under it. */
+  @Test
+  fun everyPresetWritesItsOwnDownAlertHint() {
+    all.forEach { template ->
+      assertWithMessage("${template.id}.lexicon.down_alert_hint")
+        .that(template.lexicon?.down_alert_hint)
+        .isNotEmpty()
+    }
+  }
+
   @Test
   fun everyPresetWritesItsOwnEmptyStateCopy() {
     all.forEach { template ->
