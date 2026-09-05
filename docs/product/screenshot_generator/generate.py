@@ -67,8 +67,8 @@ SCREENS = [
         "num": "01",
         "src": ["overview_1", "overview_2", "overview_3"],
         "feature_label": "Dashboard",
-        "l1": "Airplane, Car, Home.",
-        "l2": "One Record.",
+        "l1": "Airplane, Car, Home,",
+        "l2": "And More. One Record.",
         "object_position": "50% 6%",
     },
     {
