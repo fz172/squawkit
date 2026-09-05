@@ -9,11 +9,10 @@ import dev.fanfly.wingslog.feature.sync.data.SyncEngine
 import dev.fanfly.wingslog.feature.sync.data.blob.WebAppCheckBridge
 import dev.fanfly.wingslog.web.ActiveElsewhereScreen
 import dev.fanfly.wingslog.web.EmailLinkCompletionScreen
-import dev.fanfly.wingslog.web.EmojiFallbackProvider
+import dev.fanfly.wingslog.web.ReCaptchaV3Provider
 import dev.fanfly.wingslog.web.WebApp
 import dev.fanfly.wingslog.web.createSqliteWorker
 import dev.fanfly.wingslog.web.gateSingleTab
-import dev.fanfly.wingslog.web.ReCaptchaV3Provider
 import dev.fanfly.wingslog.web.getToken
 import dev.fanfly.wingslog.web.initializeApp
 import dev.fanfly.wingslog.web.initializeAppCheck
@@ -79,7 +78,8 @@ fun main() {
 // reCAPTCHA v3 site key for the web app's App Check (Firebase Console → App Check → register the web
 // app with reCAPTCHA v3). Public value, safe to commit — like apiKey. Empty leaves App Check OFF, in
 // which case enforceAppCheck callables (redeem/revoke/updateRole/export) are rejected on web.
-private const val APP_CHECK_SITE_KEY = "6LcZmU0tAAAAAP_VR4YiIPgzwmQLztoaYRVg56dw"
+private const val APP_CHECK_SITE_KEY =
+  "6LcZmU0tAAAAAP_VR4YiIPgzwmQLztoaYRVg56dw"
 
 private fun initializeFirebase() {
   val app = initializeApp(
@@ -144,8 +144,6 @@ private fun startPrimaryTab() {
     .start()
 
   ComposeViewport(viewportContainerId = "ComposeTarget") {
-    EmojiFallbackProvider {
-      WebApp()
-    }
+    WebApp()
   }
 }
