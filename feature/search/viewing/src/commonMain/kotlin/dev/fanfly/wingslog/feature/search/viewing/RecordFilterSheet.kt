@@ -1,6 +1,5 @@
 package dev.fanfly.wingslog.feature.search.viewing
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -39,8 +38,6 @@ import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.search.model.RecordFilter
 import dev.fanfly.wingslog.feature.search.model.TimeWindow
 import dev.fanfly.wingslog.thing.ComponentType
-import kotlin.time.Clock
-import kotlin.time.Instant
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -48,7 +45,6 @@ import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.minus
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
-import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.core.sharedassets.generated.resources.cancel
 import wingslog.core.sharedassets.generated.resources.done
 import wingslog.core.sharedassets.generated.resources.ok
@@ -60,6 +56,9 @@ import wingslog.feature.search.sharedassets.generated.resources.filter_component
 import wingslog.feature.search.sharedassets.generated.resources.filter_due_within
 import wingslog.feature.search.sharedassets.generated.resources.filter_period
 import wingslog.feature.search.sharedassets.generated.resources.filter_scope_note
+import kotlin.time.Clock
+import kotlin.time.Instant
+import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 
 private val COMPONENT_OPTIONS = listOf(
   ComponentType.COMPONENT_AIRFRAME,
@@ -89,7 +88,8 @@ fun RecordFilterSheet(
     sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
   ) {
     Column(
-      modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.xLarge),
+      modifier = Modifier.fillMaxWidth()
+        .padding(horizontal = Spacing.xLarge),
       verticalArrangement = Arrangement.spacedBy(Spacing.large),
     ) {
       Column {
@@ -154,7 +154,11 @@ fun FilterSection(
       verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
     ) { chips() }
     if (note != null) {
-      Text(note, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+      Text(
+        note,
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant
+      )
     }
   }
 }
@@ -179,8 +183,12 @@ private fun TimeSection(
   note: String?,
   onTimeWindowChange: (TimeWindow) -> Unit,
 ) {
-  val today = remember { Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date }
-  val presets = listOf(TimeWindow.All, TimeWindow.LastMonths(3), TimeWindow.LastMonths(12))
+  val today = remember {
+    Clock.System.now()
+      .toLocalDateTime(TimeZone.currentSystemDefault()).date
+  }
+  val presets =
+    listOf(TimeWindow.All, TimeWindow.LastMonths(3), TimeWindow.LastMonths(12))
   val custom = time as? TimeWindow.Custom
   FilterSection(
     label = stringResource(if (dueWithin) Res.string.filter_due_within else Res.string.filter_period),
@@ -194,10 +202,18 @@ private fun TimeSection(
       )
     }
     ChoiceChip(
-      label = TimeWindow.Custom(today, today).optionLabel(dueWithin),
+      label = TimeWindow.Custom(today, today)
+        .optionLabel(dueWithin),
       selected = custom != null,
       onClick = {
-        if (custom == null) onTimeWindowChange(TimeWindow.Custom(today.minus(3, DateTimeUnit.MONTH), today))
+        if (custom == null) onTimeWindowChange(
+          TimeWindow.Custom(
+            today.minus(
+              3,
+              DateTimeUnit.MONTH
+            ), today
+          )
+        )
       },
     )
   }
@@ -209,13 +225,32 @@ private fun TimeSection(
       DateField(
         label = stringResource(Res.string.custom_from),
         date = custom.start,
-        onDateChange = { onTimeWindowChange(custom.copy(start = it, end = maxOf(custom.end, it))) },
+        onDateChange = {
+          onTimeWindowChange(
+            custom.copy(
+              start = it,
+              end = maxOf(
+                custom.end,
+                it
+              )
+            )
+          )
+        },
         modifier = Modifier.weight(1f),
       )
       DateField(
         label = stringResource(Res.string.custom_to),
         date = custom.end,
-        onDateChange = { onTimeWindowChange(custom.copy(start = minOf(custom.start, it), end = it)) },
+        onDateChange = {
+          onTimeWindowChange(
+            custom.copy(
+              start = minOf(
+                custom.start,
+                it
+              ), end = it
+            )
+          )
+        },
         modifier = Modifier.weight(1f),
       )
     }
@@ -236,20 +271,30 @@ private fun DateField(
   }
   if (showPicker) {
     val state = rememberDatePickerState(
-      initialSelectedDateMillis = date.atStartOfDayIn(TimeZone.UTC).toEpochMilliseconds(),
+      initialSelectedDateMillis = date.atStartOfDayIn(TimeZone.UTC)
+        .toEpochMilliseconds(),
     )
     DatePickerDialog(
       onDismissRequest = { showPicker = false },
       confirmButton = {
         TextButton(onClick = {
           state.selectedDateMillis?.let {
-            onDateChange(Instant.fromEpochMilliseconds(it).toLocalDateTime(TimeZone.UTC).date)
+            onDateChange(
+              Instant.fromEpochMilliseconds(it)
+                .toLocalDateTime(TimeZone.UTC).date
+            )
           }
           showPicker = false
         }) { Text(stringResource(CoreRes.string.ok)) }
       },
       dismissButton = {
-        TextButton(onClick = { showPicker = false }) { Text(stringResource(CoreRes.string.cancel)) }
+        TextButton(onClick = { showPicker = false }) {
+          Text(
+            stringResource(
+              CoreRes.string.cancel
+            )
+          )
+        }
       },
     ) {
       DatePicker(state = state)

@@ -19,12 +19,24 @@ sealed interface TimeWindow {
 /** Back from today (work done) or forward (task due). */
 enum class TimeDirection { PAST, FUTURE }
 
-fun TimeWindow.contains(date: LocalDate, today: LocalDate, direction: TimeDirection): Boolean =
+fun TimeWindow.contains(
+  date: LocalDate,
+  today: LocalDate,
+  direction: TimeDirection
+): Boolean =
   when (this) {
     TimeWindow.All -> true
     is TimeWindow.LastMonths -> when (direction) {
-      TimeDirection.PAST -> date >= today.minus(months, DateTimeUnit.MONTH) && date <= today
-      TimeDirection.FUTURE -> date >= today && date <= today.plus(months, DateTimeUnit.MONTH)
+      TimeDirection.PAST -> date >= today.minus(
+        months,
+        DateTimeUnit.MONTH
+      ) && date <= today
+
+      TimeDirection.FUTURE -> date >= today && date <= today.plus(
+        months,
+        DateTimeUnit.MONTH
+      )
     }
+
     is TimeWindow.Custom -> date >= start && date <= end
   }

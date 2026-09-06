@@ -22,12 +22,18 @@ fun TimeWindow.optionLabel(dueWithin: Boolean): String = when (this) {
     months <= 3 -> stringResource(if (dueWithin) Res.string.due_within_3_months else Res.string.period_last_3_months)
     else -> stringResource(if (dueWithin) Res.string.due_within_12_months else Res.string.period_last_12_months)
   }
+
   is TimeWindow.Custom -> stringResource(Res.string.period_custom)
 }
 
 /** The active-filter chip label: the option label, or the dates for a custom range. */
 @Composable
 fun TimeWindow.chipLabel(dueWithin: Boolean): String = when (this) {
-  is TimeWindow.Custom -> stringResource(Res.string.custom_range_chip, start.toDisplayFormat(), end.toDisplayFormat())
+  is TimeWindow.Custom -> stringResource(
+    Res.string.custom_range_chip,
+    start.toDisplayFormat(),
+    end.toDisplayFormat()
+  )
+
   else -> optionLabel(dueWithin)
 }

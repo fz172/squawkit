@@ -58,7 +58,12 @@ fun RecordFilterBar(
     Row(
       modifier = Modifier
         .fillMaxWidth()
-        .padding(start = Spacing.screenPadding, end = Spacing.small, top = Spacing.small, bottom = Spacing.small),
+        .padding(
+          start = Spacing.screenPadding,
+          end = Spacing.small,
+          top = Spacing.small,
+          bottom = Spacing.small
+        ),
       verticalAlignment = Alignment.CenterVertically,
       horizontalArrangement = Arrangement.spacedBy(Spacing.small),
     ) {
@@ -71,7 +76,10 @@ fun RecordFilterBar(
         trailingIcon = {
           if (filter.query.isNotBlank()) {
             IconButton(onClick = { onQueryChange("") }) {
-              Icon(Icons.Default.Close, contentDescription = stringResource(Res.string.clear_search))
+              Icon(
+                Icons.Default.Close,
+                contentDescription = stringResource(Res.string.clear_search)
+              )
             }
           }
         },
@@ -86,19 +94,28 @@ fun RecordFilterBar(
       FilterButton(active = filter.hasNonQueryFilter, onClick = onOpenFilters)
     }
 
-    val componentChips = if (showComponentFilter) filter.components.toList() else emptyList()
+    val componentChips =
+      if (showComponentFilter) filter.components.toList() else emptyList()
     val time = filter.time
     if (componentChips.isNotEmpty() || time != TimeWindow.All) {
       LazyRow(
         contentPadding = PaddingValues(horizontal = Spacing.screenPadding),
         horizontalArrangement = Arrangement.spacedBy(Spacing.small),
-        modifier = Modifier.fillMaxWidth().padding(bottom = Spacing.small),
+        modifier = Modifier.fillMaxWidth()
+          .padding(bottom = Spacing.small),
       ) {
         items(componentChips) { component ->
-          ActiveFilterChip(label = componentLabel(component), onDismiss = { onRemoveComponent(component) })
+          ActiveFilterChip(
+            label = componentLabel(component),
+            onDismiss = { onRemoveComponent(component) })
         }
         if (time != TimeWindow.All) {
-          item { ActiveFilterChip(label = time.chipLabel(dueWithin), onDismiss = onClearTime) }
+          item {
+            ActiveFilterChip(
+              label = time.chipLabel(dueWithin),
+              onDismiss = onClearTime
+            )
+          }
         }
       }
     }
@@ -126,7 +143,8 @@ private fun FilterButton(active: Boolean, onClick: () -> Unit) {
       if (active) {
         Badge(
           containerColor = MaterialTheme.colorScheme.tertiary,
-          modifier = Modifier.align(Alignment.TopEnd).padding(Spacing.small),
+          modifier = Modifier.align(Alignment.TopEnd)
+            .padding(Spacing.small),
         )
       }
     }
@@ -146,14 +164,20 @@ fun RecordCountRow(
   Row(
     modifier = modifier
       .fillMaxWidth()
-      .padding(horizontal = Spacing.screenPadding, vertical = Spacing.extraSmall),
+      .padding(
+        horizontal = Spacing.screenPadding,
+        vertical = Spacing.extraSmall
+      ),
     verticalAlignment = Alignment.CenterVertically,
   ) {
     Text(
       text = (
-        if (count == 1) stringResource(Res.string.record_count_one, nounSingular)
+        if (count == 1) stringResource(
+          Res.string.record_count_one,
+          nounSingular
+        )
         else stringResource(Res.string.record_count_other, count, nounPlural)
-      ).uppercase(),
+        ).uppercase(),
       style = MaterialTheme.typography.labelMedium.copy(letterSpacing = 0.6.sp),
       color = MaterialTheme.colorScheme.onSurfaceVariant,
       modifier = Modifier.weight(1f),
@@ -163,7 +187,8 @@ fun RecordCountRow(
         text = stringResource(Res.string.clear),
         style = MaterialTheme.typography.labelLarge,
         color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(start = Spacing.small).clickableText(onClear),
+        modifier = Modifier.padding(start = Spacing.small)
+          .clickableText(onClear),
       )
     }
   }
