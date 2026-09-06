@@ -8,17 +8,30 @@ import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
-import dev.fanfly.wingslog.feature.search.datamanager.SearchEngine
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
-import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDueManager
+import dev.fanfly.wingslog.feature.tasks.datamanager.TaskStatusManager
+import dev.fanfly.wingslog.feature.search.datamanager.SearchEngine
+import dev.fanfly.wingslog.feature.thing.dashboard.data.SquawkTabViewModel
+import dev.fanfly.wingslog.feature.thing.dashboard.data.TaskTabViewModel
 import dev.fanfly.wingslog.feature.thing.dashboard.data.ThingOverviewViewModel
 import dev.gitlive.firebase.auth.FirebaseAuth
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 val thingDashboardModule = module {
+  viewModel { params ->
+    SquawkTabViewModel(
+      get<SquawkManager>(),
+      get<MaintenanceLogManager>(),
+      get<SearchEngine>(),
+      params.get<String>(),
+    )
+  }
+  viewModel { params ->
+    TaskTabViewModel(get<TaskStatusManager>(), get<SearchEngine>(), params.get<String>())
+  }
   // thingId comes from an explicit parameter (adaptive shell, ambient selection) when present,
   // otherwise from the navigation SavedStateHandle (legacy maintenance_overview/{thingId} route).
   viewModel { params ->
@@ -28,7 +41,7 @@ val thingDashboardModule = module {
       get<FleetManager>(),
       get<MaintenanceLogManager>(),
       get<TaskDataManager>(),
-      get<TaskDueManager>(),
+      get<TaskStatusManager>(),
       get<AttachmentOpener>(),
       get<AttachmentManager>(),
       get<SquawkManager>(),
@@ -36,7 +49,6 @@ val thingDashboardModule = module {
       get<ThingScopeResolver>(),
       get<TemplateRegistry>(),
       get<FirebaseAuth>(),
-      get<SearchEngine>(),
       thingId,
     )
   }

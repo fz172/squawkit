@@ -55,7 +55,10 @@ class TaskDueManagerImpl(
     if (card.is_one_time && (latestLog != null || card.force_complied_status != null)) {
       val compliedDate = latestLog?.timestamp?.toLocalDate(timeZone)
         ?: card.force_complied_status?.complied_date?.toLocalDate(timeZone)
-      return DueMetadata(status = DueStatus.COMPLIED, compliedDate = compliedDate)
+      return DueMetadata(
+        status = DueStatus.COMPLIED,
+        compliedDate = compliedDate
+      )
     }
 
     // 1. Force overrides
@@ -139,7 +142,10 @@ class TaskDueManagerImpl(
       val onConditionRule = rule.on_condition_rule
       val linkedRule = rule.linked_rule
       val immediateRule = rule.immediate_rule
-      val seasonalRule = rule.seasonal_rule?.takeIf { it.listedMonths().isNotEmpty() }
+      val seasonalRule = rule.seasonal_rule?.takeIf {
+        it.listedMonths()
+          .isNotEmpty()
+      }
 
       when {
         timeRule != null -> {
@@ -261,13 +267,18 @@ class TaskDueManagerImpl(
               advanced
             }
           }
-          rule.seasonal_rule?.takeIf { it.listedMonths().isNotEmpty() }?.let { seasonal ->
-            nextDueDate = nextDueDate?.let { d ->
-              var advanced = seasonal.firstOccurrenceAfter(d)
-              while (advanced <= currentDate) advanced = seasonal.firstOccurrenceAfter(advanced)
-              advanced
-            }
+          rule.seasonal_rule?.takeIf {
+            it.listedMonths()
+              .isNotEmpty()
           }
+            ?.let { seasonal ->
+              nextDueDate = nextDueDate?.let { d ->
+                var advanced = seasonal.firstOccurrenceAfter(d)
+                while (advanced <= currentDate) advanced =
+                  seasonal.firstOccurrenceAfter(advanced)
+                advanced
+              }
+            }
           card.meterIntervalFor(rule)
             ?.let { (meterKey, interval) ->
               if (interval > 0f) {
@@ -346,12 +357,18 @@ private fun TimeRule.advance(from: LocalDate): LocalDate {
 
 /** The months a rule names, in calendar order, ignoring anything a bad write put outside 1–12. */
 private fun SeasonalRule.listedMonths(): List<Int> =
-  months.filter { it in 1..12 }.distinct().sorted()
+  months.filter { it in 1..12 }
+    .distinct()
+    .sorted()
 
 /** This rule's due date in [year] for [month]: the named day, or the month's last day for 0. */
 private fun SeasonalRule.dueDateIn(year: Int, month: Int): LocalDate {
   val last = LocalDate(year, month, 1).endOfMonth()
-  return if (day_of_month in 1..last.day) LocalDate(year, month, day_of_month) else last
+  return if (day_of_month in 1..last.day) LocalDate(
+    year,
+    month,
+    day_of_month
+  ) else last
 }
 
 private fun SeasonalRule.firstOccurrenceOnOrAfter(date: LocalDate): LocalDate {
@@ -371,7 +388,12 @@ private fun SeasonalRule.firstOccurrenceOnOrAfter(date: LocalDate): LocalDate {
  * 20 April count April as done, so the next occurrence is October, not the 30th.
  */
 private fun SeasonalRule.firstOccurrenceAfter(date: LocalDate): LocalDate =
-  firstOccurrenceOnOrAfter(LocalDate(date.year, date.month, 1).plus(1, DateTimeUnit.MONTH))
+  firstOccurrenceOnOrAfter(
+    LocalDate(date.year, date.month, 1).plus(
+      1,
+      DateTimeUnit.MONTH
+    )
+  )
 
 private fun LocalDate.endOfMonth(): LocalDate {
   val firstOfNextMonth = LocalDate(year, month, 1).plus(1, DateTimeUnit.MONTH)

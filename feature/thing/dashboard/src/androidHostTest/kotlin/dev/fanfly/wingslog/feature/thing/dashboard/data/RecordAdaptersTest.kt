@@ -18,7 +18,8 @@ import org.junit.Test
 
 class RecordAdaptersTest {
 
-  private fun at(date: String) = toWireInstant(Instant.parse("${date}T12:00:00Z").epochSeconds)
+  private fun at(date: String) =
+    toWireInstant(Instant.parse("${date}T12:00:00Z").epochSeconds)
 
   private val squawk = Squawk(
     id = "s1",
@@ -33,7 +34,14 @@ class RecordAdaptersTest {
   fun squawk_fieldsAndComponent() {
     val adapter = SquawkAdapter(TimeZone.UTC)
     val item = SquawkWithStatus(squawk, SquawkStatus.OPEN)
-    assertThat(adapter.fields(item).map { it.name }).containsExactly("component_serial", "title", "description").inOrder()
+    assertThat(
+      adapter.fields(item)
+        .map { it.name }).containsExactly(
+      "component_serial",
+      "title",
+      "description"
+    )
+      .inOrder()
     assertThat(adapter.component(item)).isEqualTo(ComponentType.COMPONENT_AIRFRAME)
     assertThat(adapter.direction(item)).isEqualTo(TimeDirection.PAST)
     assertThat(adapter.nullDateMatches).isFalse()
@@ -41,17 +49,48 @@ class RecordAdaptersTest {
 
   @Test
   fun squawk_dateFollowsStatus() {
-    val adapter = SquawkAdapter(TimeZone.UTC, logDates = mapOf("l9" to LocalDate(2026, 8, 25)))
-    assertThat(adapter.date(SquawkWithStatus(squawk, SquawkStatus.OPEN))).isEqualTo(LocalDate(2026, 8, 22))
+    val adapter = SquawkAdapter(
+      TimeZone.UTC,
+      logDates = mapOf("l9" to LocalDate(2026, 8, 25))
+    )
+    assertThat(
+      adapter.date(
+        SquawkWithStatus(
+          squawk,
+          SquawkStatus.OPEN
+        )
+      )
+    ).isEqualTo(LocalDate(2026, 8, 22))
 
     val dismissed = squawk.copy(dismissed_at = at("2026-09-01"))
-    assertThat(adapter.date(SquawkWithStatus(dismissed, SquawkStatus.DISMISSED))).isEqualTo(LocalDate(2026, 9, 1))
+    assertThat(
+      adapter.date(
+        SquawkWithStatus(
+          dismissed,
+          SquawkStatus.DISMISSED
+        )
+      )
+    ).isEqualTo(LocalDate(2026, 9, 1))
 
     val addressed = squawk.copy(addressed_by_log_id = "l9")
-    assertThat(adapter.date(SquawkWithStatus(addressed, SquawkStatus.ADDRESSED))).isEqualTo(LocalDate(2026, 8, 25))
+    assertThat(
+      adapter.date(
+        SquawkWithStatus(
+          addressed,
+          SquawkStatus.ADDRESSED
+        )
+      )
+    ).isEqualTo(LocalDate(2026, 8, 25))
 
     val addressedUnknownLog = squawk.copy(addressed_by_log_id = "gone")
-    assertThat(adapter.date(SquawkWithStatus(addressedUnknownLog, SquawkStatus.ADDRESSED))).isEqualTo(LocalDate(2026, 8, 22))
+    assertThat(
+      adapter.date(
+        SquawkWithStatus(
+          addressedUnknownLog,
+          SquawkStatus.ADDRESSED
+        )
+      )
+    ).isEqualTo(LocalDate(2026, 8, 22))
   }
 
   private val card = MaintenanceTask(
@@ -66,8 +105,17 @@ class RecordAdaptersTest {
   fun task_fieldsAndComponent() {
     val adapter = TaskAdapter()
     val item = MaintenanceTaskWithStatus(card, DueMetadata())
-    assertThat(adapter.fields(item).map { it.name })
-      .containsExactly("reference_number", "title", "notes", "compliance_authority", "compliance_details").inOrder()
+    assertThat(
+      adapter.fields(item)
+        .map { it.name })
+      .containsExactly(
+        "reference_number",
+        "title",
+        "notes",
+        "compliance_authority",
+        "compliance_details"
+      )
+      .inOrder()
     assertThat(adapter.component(item)).isEqualTo(ComponentType.COMPONENT_AIRFRAME)
     assertThat(adapter.nullDateMatches).isTrue()
   }
@@ -75,16 +123,23 @@ class RecordAdaptersTest {
   @Test
   fun task_activeLooksForwardToDue_compliedLooksBack() {
     val adapter = TaskAdapter()
-    val active = MaintenanceTaskWithStatus(card, DueMetadata(nextDueDate = LocalDate(2027, 5, 20)))
+    val active = MaintenanceTaskWithStatus(
+      card,
+      DueMetadata(nextDueDate = LocalDate(2027, 5, 20))
+    )
     assertThat(adapter.date(active)).isEqualTo(LocalDate(2027, 5, 20))
     assertThat(adapter.direction(active)).isEqualTo(TimeDirection.FUTURE)
 
-    val meterOnly = MaintenanceTaskWithStatus(card, DueMetadata(nextDueEngine = 2889f))
+    val meterOnly =
+      MaintenanceTaskWithStatus(card, DueMetadata(nextDueEngine = 2889f))
     assertThat(adapter.date(meterOnly)).isNull()
 
     val complied = MaintenanceTaskWithStatus(
       card,
-      DueMetadata(status = DueStatus.COMPLIED, compliedDate = LocalDate(2026, 3, 14)),
+      DueMetadata(
+        status = DueStatus.COMPLIED,
+        compliedDate = LocalDate(2026, 3, 14)
+      ),
     )
     assertThat(adapter.date(complied)).isEqualTo(LocalDate(2026, 3, 14))
     assertThat(adapter.direction(complied)).isEqualTo(TimeDirection.PAST)

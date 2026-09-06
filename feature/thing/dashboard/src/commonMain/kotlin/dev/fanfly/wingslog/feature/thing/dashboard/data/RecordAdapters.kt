@@ -25,14 +25,18 @@ class SquawkAdapter(
     SearchField("description", item.squawk.description, weight = 1),
   )
 
-  override fun component(item: SquawkWithStatus): ComponentType = item.squawk.component_type
+  override fun component(item: SquawkWithStatus): ComponentType =
+    item.squawk.component_type
 
   override fun date(item: SquawkWithStatus): LocalDate? {
     val created = item.squawk.created_at?.toLocalDate(timeZone)
     return when (item.status) {
       SquawkStatus.OPEN -> created
-      SquawkStatus.DISMISSED -> item.squawk.dismissed_at?.toLocalDate(timeZone) ?: created
-      SquawkStatus.ADDRESSED -> logDates[item.squawk.addressed_by_log_id] ?: created
+      SquawkStatus.DISMISSED -> item.squawk.dismissed_at?.toLocalDate(timeZone)
+        ?: created
+
+      SquawkStatus.ADDRESSED -> logDates[item.squawk.addressed_by_log_id]
+        ?: created
     }
   }
 }
@@ -40,15 +44,25 @@ class SquawkAdapter(
 /** Tasks: active ones read a preset as “due within”; complied ones date from compliance. A meter-only task has no date and always shows. */
 class TaskAdapter : RecordAdapter<MaintenanceTaskWithStatus> {
 
-  override fun fields(item: MaintenanceTaskWithStatus): List<SearchField> = listOf(
-    SearchField("reference_number", item.card.reference_number, weight = 4),
-    SearchField("title", item.card.title, weight = 3),
-    SearchField("notes", item.card.notes, weight = 1),
-    SearchField("compliance_authority", item.card.compliance_authority, weight = 1),
-    SearchField("compliance_details", item.card.compliance_details, weight = 1),
-  )
+  override fun fields(item: MaintenanceTaskWithStatus): List<SearchField> =
+    listOf(
+      SearchField("reference_number", item.card.reference_number, weight = 4),
+      SearchField("title", item.card.title, weight = 3),
+      SearchField("notes", item.card.notes, weight = 1),
+      SearchField(
+        "compliance_authority",
+        item.card.compliance_authority,
+        weight = 1
+      ),
+      SearchField(
+        "compliance_details",
+        item.card.compliance_details,
+        weight = 1
+      ),
+    )
 
-  override fun component(item: MaintenanceTaskWithStatus): ComponentType = item.card.component
+  override fun component(item: MaintenanceTaskWithStatus): ComponentType =
+    item.card.component
 
   override fun date(item: MaintenanceTaskWithStatus): LocalDate? =
     if (item.isComplied) item.dueStatus.compliedDate else item.dueStatus.nextDueDate

@@ -141,7 +141,7 @@ feature/
     update/             #   MaintenanceLogFormScreen, form ViewModels
   tasks/                # Inspection compliance (canonical layout — the reference implementation)
     model/              #   DueMetadata, MaintenanceTaskWithStatus, domain enums
-    datamanager/        #   TaskDataManager + TaskDueManager, Koin module
+    datamanager/        #   TaskDataManager + TaskDueManager, TaskStatusManager (the one due-status flow every screen reads), Koin module
     sharedassets/       #   Strings, drawables
     viewing/            #   TaskCard, TaskDetailSheet
     update/             #   AddTaskScreen, EditTaskScreen, ViewModels, form sections

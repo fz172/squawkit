@@ -15,10 +15,13 @@ builds by `AppCapability.isSearchFilterSupported`. Deltas from the design as wri
 - Modules are `feature/search/{model,datamanager,sharedassets,viewing}`, not `core/search` + `core/ui`.
 - `SearchEngine` is an interface bound in Koin (`searchModule`) and injected, not constructed per VM.
 - The squawk and task adapters live in `feature/thing/dashboard/data/RecordAdapters.kt`.
-- Filters on the overview VM are applied on the way out (`applyFilters` over the base state) so
-  typing never re-runs due computation; the state carries `filteredSquawks` / `filteredActiveTasks`
-  / `filteredCompletedTasks` next to the raw lists.
-- The addressed-squawk date comes from the logs the overview VM already holds (id → work date),
+- Each tab observes its own data and owns its filter: `SquawkTabViewModel` (squawks + logs, for
+  the addressed-squawk date) and `TaskTabViewModel` (tasks with status), both keyed per thing in
+  `feature/thing/dashboard/data`, beside the adapters. `ThingOverviewViewModel` carries no filter
+  state and no search dependency.
+- Due status is computed in one place, `TaskStatusManager` (`feature/tasks/datamanager`), which
+  the task tab and the overview both read; `refreshDueStatus()` replaces the overview’s resume tick.
+- The addressed-squawk date comes from the logs the squawk tab already observes (id → work date),
   so no `observeLogDates` projection was needed (§12 Q1 resolved).
 - The count row reads "5 work logs", not "5 of 12".
 - `ComplianceSection` gained `filterBar` / `countRow` / `noMatch` slots rather than the Tasks tab

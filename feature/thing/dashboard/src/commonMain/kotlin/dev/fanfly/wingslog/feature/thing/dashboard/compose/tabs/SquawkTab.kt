@@ -24,6 +24,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.text.font.FontWeight
@@ -49,7 +50,6 @@ import dev.fanfly.wingslog.feature.ads.viewing.AdSlot
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
 import dev.fanfly.wingslog.feature.attachment.datamanager.OpenState
 import dev.fanfly.wingslog.feature.logs.sharedassets.util.displayName
-import dev.fanfly.wingslog.feature.search.model.RecordFilter
 import dev.fanfly.wingslog.feature.search.model.TimeWindow
 import dev.fanfly.wingslog.feature.search.viewing.NoRecordsMatch
 import dev.fanfly.wingslog.feature.search.viewing.RecordCountRow
@@ -59,6 +59,7 @@ import dev.fanfly.wingslog.feature.squawk.model.SquawkStatus
 import dev.fanfly.wingslog.feature.squawk.model.SquawkWithStatus
 import dev.fanfly.wingslog.feature.squawk.viewing.SquawkCard
 import dev.fanfly.wingslog.feature.squawk.viewing.SquawkDetailSheet
+import dev.fanfly.wingslog.feature.thing.dashboard.data.SquawkTabViewModel
 import dev.fanfly.wingslog.feature.thing.dashboard.data.ThingOverviewAction
 import dev.fanfly.wingslog.feature.thing.dashboard.data.ThingOverviewUiState
 import kotlin.math.roundToInt
@@ -67,6 +68,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 import wingslog.feature.search.sharedassets.generated.resources.Res as SearchRes
 import wingslog.feature.search.sharedassets.generated.resources.filter_records
 import wingslog.feature.search.sharedassets.generated.resources.search_records
@@ -99,15 +102,17 @@ fun SquawkTab(
   var openError by remember { mutableStateOf<String?>(null) }
   val useFilterBar = koinInject<AppCapability>().isSearchFilterSupported
   var showFilterSheet by remember { mutableStateOf(false) }
-  val squawkFilter = state.squawkFilter
-  val setFilter = { filter: RecordFilter -> onAction(ThingOverviewAction.SquawkFilterChange(filter)) }
+  val tabViewModel: SquawkTabViewModel =
+    koinViewModel(key = "squawks:${state.thing.id}", parameters = { parametersOf(state.thing.id) })
+  val tabState by tabViewModel.uiState.collectAsStateWithLifecycle()
+  val squawkFilter = tabState.filter
+  val setFilter = tabViewModel::onFilterChange
   val squawkNoun = LocalThingLexicon.current.squawkNoun
 
-  val squawkSource = if (useFilterBar) state.filteredSquawks else state.squawks
-  val openSquawks = squawkSource
+  val openSquawks = tabState.squawks
     .filter { it.status == SquawkStatus.OPEN }
     .sortedWith(squawkOrder)
-  val closedSquawks = squawkSource
+  val closedSquawks = tabState.squawks
     .filter { it.status == SquawkStatus.ADDRESSED || it.status == SquawkStatus.DISMISSED }
     .sortedByDescending { it.squawk.created_at?.getEpochSecond() ?: 0L }
 
@@ -123,13 +128,15 @@ fun SquawkTab(
   // can first see the squawk as still OPEN. Re-running once the real status shows up (rather than
   // only once, on id alone) is what corrects showClosed and the scroll target instead of leaving both
   // stuck on Open.
+  // A jump target must be reachable whatever was filtered before.
+  LaunchedEffect(scrollToSquawkId) {
+    if (scrollToSquawkId != null && squawkFilter.isActive) tabViewModel.clearFilter()
+  }
   val scrollTarget =
-    scrollToSquawkId?.let { id -> state.squawks.find { it.squawk.id == id } }
+    scrollToSquawkId?.let { id -> tabState.squawks.find { it.squawk.id == id } }
   LaunchedEffect(scrollToSquawkId, scrollTarget?.status) {
     val target = scrollTarget ?: return@LaunchedEffect
     showClosed = target.status != SquawkStatus.OPEN
-    // A jump target must be reachable whatever was filtered before.
-    if (useFilterBar && squawkFilter.isActive) setFilter(RecordFilter())
     // Reset (not just on a fresh id, but on the status flip re-run too) — the target card just moved
     // between sub-views, so its old on-screen position no longer means anything.
     targetCardY = null
@@ -196,7 +203,7 @@ fun SquawkTab(
         nounSingular = squawkNoun.singular,
         nounPlural = squawkNoun.plural,
         filterActive = squawkFilter.isActive,
-        onClear = { setFilter(RecordFilter()) },
+        onClear = { tabViewModel.clearFilter() },
         horizontalPadding = Spacing.none,
       )
     }
@@ -214,7 +221,7 @@ fun SquawkTab(
 
     if (displayList.isEmpty()) {
       if (useFilterBar && squawkFilter.isActive) {
-        NoRecordsMatch(nounPlural = squawkNoun.plural, onClearFilters = { setFilter(RecordFilter()) })
+        NoRecordsMatch(nounPlural = squawkNoun.plural, onClearFilters = { tabViewModel.clearFilter() })
       } else if (!showClosed) {
         EmptyState(
           title = stringResource(

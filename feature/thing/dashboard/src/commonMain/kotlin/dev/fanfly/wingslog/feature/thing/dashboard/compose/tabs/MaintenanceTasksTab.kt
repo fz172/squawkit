@@ -17,6 +17,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import dev.fanfly.wingslog.core.analytics.LocalAnalytics
@@ -28,13 +29,13 @@ import dev.fanfly.wingslog.core.template.taskNoun
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalNavPillClearance
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.logs.sharedassets.util.displayName
-import dev.fanfly.wingslog.feature.search.model.RecordFilter
 import dev.fanfly.wingslog.feature.search.model.TimeWindow
 import dev.fanfly.wingslog.feature.search.viewing.NoRecordsMatch
 import dev.fanfly.wingslog.feature.search.viewing.RecordCountRow
 import dev.fanfly.wingslog.feature.search.viewing.RecordFilterBar
 import dev.fanfly.wingslog.feature.search.viewing.RecordFilterSheet
 import dev.fanfly.wingslog.feature.thing.dashboard.compose.ComplianceSection
+import dev.fanfly.wingslog.feature.thing.dashboard.data.TaskTabViewModel
 import dev.fanfly.wingslog.feature.thing.dashboard.data.ThingOverviewAction
 import dev.fanfly.wingslog.feature.thing.dashboard.data.ThingOverviewUiState
 import kotlin.math.roundToInt
@@ -42,6 +43,8 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 import wingslog.feature.search.sharedassets.generated.resources.Res as SearchRes
 import wingslog.feature.search.sharedassets.generated.resources.filter_records
 import wingslog.feature.search.sharedassets.generated.resources.meter_task_note
@@ -61,10 +64,13 @@ fun MaintenanceTasksTab(
   val analytics = LocalAnalytics.current
   val useFilterBar = koinInject<AppCapability>().isSearchFilterSupported
   var showFilterSheet by remember { mutableStateOf(false) }
-  val taskFilter = state.taskFilter
-  val setFilter = { filter: RecordFilter -> onAction(ThingOverviewAction.TaskFilterChange(filter)) }
-  val activeTasks = if (useFilterBar) state.filteredActiveTasks else state.activeTasks
-  val completedTasks = if (useFilterBar) state.filteredCompletedTasks else state.completedTasks
+  val tabViewModel: TaskTabViewModel =
+    koinViewModel(key = "tasks:${state.thing.id}", parameters = { parametersOf(state.thing.id) })
+  val tabState by tabViewModel.uiState.collectAsStateWithLifecycle()
+  val taskFilter = tabState.filter
+  val setFilter = tabViewModel::onFilterChange
+  val activeTasks = tabState.activeTasks
+  val completedTasks = tabState.completedTasks
   val taskNoun = LocalThingLexicon.current.taskNoun
 
   // Jump-to-task from a log: switch to the sub-view holding the target, then scroll it into view.
@@ -75,6 +81,10 @@ fun MaintenanceTasksTab(
   // not-yet-synced tap and a status flip both re-trigger below (see SquawkTab for why: a tapped
   // notification can arrive and be acted on before the local sync pull carrying the very status
   // change it announced has landed).
+  // A jump target must be reachable whatever was filtered before.
+  LaunchedEffect(scrollToTaskId) {
+    if (scrollToTaskId != null && taskFilter.isActive) tabViewModel.clearFilter()
+  }
   val taskInHistory: Boolean? = scrollToTaskId?.let { id ->
     when {
       state.completedTasks.any { it.card.id == id } -> true
@@ -85,8 +95,6 @@ fun MaintenanceTasksTab(
   LaunchedEffect(scrollToTaskId, taskInHistory) {
     val inHistory = taskInHistory ?: return@LaunchedEffect
     showComplied = inHistory
-    // A jump target must be reachable whatever was filtered before.
-    if (useFilterBar && taskFilter.isActive) setFilter(RecordFilter())
     // Reset on the re-run too — the target card just moved between sub-views, so its old on-screen
     // position no longer means anything.
     targetCardY = null
@@ -153,13 +161,13 @@ fun MaintenanceTasksTab(
             nounSingular = taskNoun.singular,
             nounPlural = taskNoun.plural,
             filterActive = taskFilter.isActive,
-            onClear = { setFilter(RecordFilter()) },
+            onClear = { tabViewModel.clearFilter() },
             horizontalPadding = Spacing.none,
           )
         }
       } else null,
       noMatch = if (useFilterBar && taskFilter.isActive) {
-        { NoRecordsMatch(nounPlural = taskNoun.plural, onClearFilters = { setFilter(RecordFilter()) }) }
+        { NoRecordsMatch(nounPlural = taskNoun.plural, onClearFilters = { tabViewModel.clearFilter() }) }
       } else null,
     )
 

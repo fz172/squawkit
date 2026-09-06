@@ -1,13 +1,10 @@
 package dev.fanfly.wingslog.feature.thing.dashboard.data
 
-import dev.fanfly.wingslog.feature.search.model.RecordFilter
 import dev.fanfly.wingslog.feature.squawk.model.SquawkWithStatus
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
 
 sealed interface ThingOverviewAction {
   data object BackClick : ThingOverviewAction
-  data class SquawkFilterChange(val filter: RecordFilter) : ThingOverviewAction
-  data class TaskFilterChange(val filter: RecordFilter) : ThingOverviewAction
   data class EditClick(val thingId: String) : ThingOverviewAction
   data class ManageAccessClick(val thingId: String) : ThingOverviewAction
   data object DeleteConfirm : ThingOverviewAction
@@ -16,6 +13,7 @@ sealed interface ThingOverviewAction {
     ThingOverviewAction
 
   data class AddTaskClick(val thingId: String) : ThingOverviewAction
+
   /** The template's starter pack, re-offered from an empty Tasks tab (PRD §4.9). */
   data class AddStarterPackClick(val thingId: String) : ThingOverviewAction
   data class TaskCardClick(val card: MaintenanceTaskWithStatus) :
