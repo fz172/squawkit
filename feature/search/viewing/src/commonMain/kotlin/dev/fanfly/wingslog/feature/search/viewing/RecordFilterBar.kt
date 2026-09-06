@@ -62,7 +62,7 @@ fun RecordFilterBar(
         .fillMaxWidth()
         .padding(
           start = horizontalPadding,
-          end = Spacing.small,
+          end = horizontalPadding,
           top = Spacing.small,
           bottom = Spacing.small
         ),
