@@ -107,7 +107,7 @@ Three experiences were mocked and compared before this PRD was written:
 
 | ID | Requirement |
 |---|---|
-| FR.16 | **Component.** Multi-select over Airframe, Engine, Propeller and Unspecified. Shown only when the thing's template uses component types (the same rule that shows the component picker on the log form). Absent otherwise, on every tab. |
+| FR.16 | **Component.** Multi-select over Airframe, Engine, Propeller and Unspecified. Shown on Tasks and Logs only when the thing's template uses component types (the same rule that shows the component picker on the log form). Never shown on Squawks, which are filed against the thing rather than a component. |
 | FR.17 | **Time.** Single-select: All time, Last 3 months, Last 12 months, Custom range. Custom opens start and end date pickers. Presets are relative to today at the time of filtering. |
 | FR.18 | Time means something different per tab, and the sheet labels it accordingly. **Logs:** the work date. **Squawks:** Open sub-view by created date; Closed sub-view by the date it was addressed or dismissed. **Tasks:** Active sub-view reads the presets as "due within" against the next due date; Complied sub-view by the date of compliance. |
 | FR.19 | An active task whose only rule is meter-based has no due date and is never excluded by a time filter. The sheet says so in one line. |

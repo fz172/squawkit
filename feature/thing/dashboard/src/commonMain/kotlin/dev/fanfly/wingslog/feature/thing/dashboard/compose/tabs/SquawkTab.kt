@@ -32,7 +32,6 @@ import dev.fanfly.wingslog.core.analytics.LocalAnalytics
 import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
-import dev.fanfly.wingslog.core.template.componentTypesApply
 import dev.fanfly.wingslog.core.template.squawkEmptyHint
 import dev.fanfly.wingslog.core.template.squawkNoun
 import dev.fanfly.wingslog.core.ui.adaptive.compose.AdaptiveCardList
@@ -173,7 +172,8 @@ fun SquawkTab(
       RecordFilterBar(
         filter = squawkFilter,
         placeholder = stringResource(SearchRes.string.search_placeholder),
-        showComponentFilter = componentTypesApply,
+        // Squawks are filed against the thing, not a component, so the section would be dead.
+        showComponentFilter = false,
         componentLabel = { it.displayName() },
         onQueryChange = { setFilter(squawkFilter.copy(query = it)) },
         onOpenFilters = { showFilterSheet = true },
@@ -283,7 +283,8 @@ fun SquawkTab(
       RecordFilterSheet(
         title = stringResource(SearchRes.string.filter_records, squawkNoun.plural),
         filter = squawkFilter,
-        showComponentFilter = componentTypesApply,
+        // Squawks are filed against the thing, not a component, so the section would be dead.
+        showComponentFilter = false,
         componentLabel = { it.displayName() },
         onComponentToggle = { setFilter(squawkFilter.toggleComponent(it)) },
         onTimeWindowChange = { setFilter(squawkFilter.copy(time = it)) },
