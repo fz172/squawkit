@@ -16,7 +16,7 @@ import wingslog.core.ui.theme.generated.resources.jetbrains_mono_medium
 expect fun rememberBrandHeadlineFamily(): FontFamily
 
 @Composable
-private fun rememberJetBrainsMonoFamily(): FontFamily {
+fun rememberBrandMonoFamily(): FontFamily {
   val medium = Font(Res.font.jetbrains_mono_medium, weight = FontWeight.Medium)
   val bold = Font(Res.font.jetbrains_mono_bold, weight = FontWeight.Bold)
   return remember(medium, bold) { FontFamily(medium, bold) }
@@ -157,7 +157,7 @@ object WingslogTypography {
 
   val dataLarge: TextStyle
     @Composable get() {
-      val family = rememberJetBrainsMonoFamily()
+      val family = rememberBrandMonoFamily()
       return remember(family) {
         TextStyle(
           fontFamily = family,
@@ -171,7 +171,7 @@ object WingslogTypography {
 
   val dataMedium: TextStyle
     @Composable get() {
-      val family = rememberJetBrainsMonoFamily()
+      val family = rememberBrandMonoFamily()
       return remember(family) {
         TextStyle(
           fontFamily = family,
@@ -185,7 +185,7 @@ object WingslogTypography {
 
   val dataSmall: TextStyle
     @Composable get() {
-      val family = rememberJetBrainsMonoFamily()
+      val family = rememberBrandMonoFamily()
       return remember(family) {
         TextStyle(
           fontFamily = family,
