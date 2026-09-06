@@ -75,6 +75,55 @@ aircraft,airplane,pilot,mechanic,inspection,annual,car,boat,home,tracker,repair,
 iPad screenshots are required because the target's device family includes
 iPad.
 
+## Release notes, initial release
+
+Store search indexes the title, subtitle or short description, keywords, and long description.
+Release notes carry little ranking weight, but they are the first paragraph many people read on
+the listing after the screenshots, so they repeat the phrases people actually search for:
+maintenance log, aircraft logbook, car maintenance tracker, boat and home maintenance, offline.
+
+**Google Play release notes (500)**
+
+```
+SquawkIt 1.0 is here: one maintenance log for everything you own.
+
+• Aircraft logbook with squawks, inspections, and AD compliance
+• Car, motorcycle, bike, boat, and home maintenance tracker
+• Recurring tasks by date, hours, or mileage, with due reminders
+• Works offline, syncs across phone, tablet, and web
+• Share with your mechanic or co-owner; sign-offs stay attached
+• Photos and receipts on every entry
+• Export PDF, CSV, and XLSX
+
+Free to start. Built for owners who keep records.
+```
+
+**App Store “What’s New” (4000)**
+
+```
+Welcome to SquawkIt 1.0, the maintenance log for everything you own.
+
+AIRCRAFT LOGBOOK
+Track squawks, annuals, 100-hour inspections, ELT and transponder checks, and airworthiness directive compliance by tach or Hobbs time. Log AOG items and see what is grounding the airplane at a glance.
+
+CAR, MOTORCYCLE, BIKE, BOAT, AND HOME
+Every kind of thing gets its own vocabulary and meters: odometer for a car, ride distance for a bike, engine hours for a boat, and a chore schedule for a house. Each type ships a recommended starter schedule you can keep, skip, or edit.
+
+NEVER MISS A DUE DATE
+Recurring maintenance tasks by calendar, by meter, or on condition. Overdue and due-soon work rises to the top of every list.
+
+WORKS OFFLINE, SYNCS EVERYWHERE
+Records are written to your device first, so the hangar and the driveway both work without a signal. Sign in with Apple or Google and everything syncs across iPhone, iPad, and the web.
+
+SHARE WITH THE PEOPLE WHO HELP
+Invite a mechanic or co-owner with a code. Technicians sign off their own work, and their sign-offs stay attached to the record.
+
+PAPERWORK THAT TRAVELS WITH THE RECORD
+Attach photos, invoices, and inspection reports to the entry they belong to. Export PDF, CSV, and XLSX for a pre-buy, a resale, or a backup that is yours.
+
+Free to start. Questions or ideas: https://squawkit.fanfly.dev
+```
+
 ## Data disclosures
 
 Answer Play Data Safety and App Store Privacy the same way. What the app
