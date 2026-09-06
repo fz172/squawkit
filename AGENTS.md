@@ -155,6 +155,8 @@ feature/
   search/               # Per-tab search and filter (docs/search/search_filter_design.md, project #11)
     model/              #   RecordFilter, TimeWindow, RecordAdapter, SearchHit — pure Kotlin
     datamanager/        #   SearchEngine (swappable TokenMatcher), LogAdapter
+    sharedassets/       #   bar / sheet strings
+    viewing/            #   RecordFilterBar, RecordFilterSheet, RecordCountRow, NoRecordsMatch, ActiveFilterChip
   comments/             # Collaborator notes on a squawk or a task (#749). See docs/comments/
     model/              #   CommentEntry, CommentThreadState, CommentTarget, CommentParentKind
     datamanager/        #   CommentManager over EntityStore<Comment>, CommentThreadController

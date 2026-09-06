@@ -2,18 +2,22 @@ package dev.fanfly.wingslog.feature.logs.viewing.log.data
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
+import dev.fanfly.wingslog.feature.logs.datamanager.authorship.LogAuthorship
+import dev.fanfly.wingslog.feature.logs.datamanager.authorship.authorship
+import dev.fanfly.wingslog.feature.search.datamanager.LogAdapter
+import dev.fanfly.wingslog.feature.search.datamanager.SearchEngine
+import dev.fanfly.wingslog.feature.search.model.RecordFilter
+import dev.fanfly.wingslog.feature.search.model.TimeWindow
+import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
+import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
+import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
+import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.thing.MaintenanceTask
 import dev.fanfly.wingslog.thing.Squawk
-import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
-import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
-import dev.fanfly.wingslog.feature.logs.datamanager.authorship.LogAuthorship
-import dev.fanfly.wingslog.feature.logs.datamanager.authorship.authorship
-import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
-import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import dev.gitlive.firebase.auth.FirebaseAuth
-import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -23,6 +27,9 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Clock
 
 /** The share-derived facts the log list needs, combined so they fit one slot of the outer combine. */
 private data class AuthorshipContext(
@@ -44,8 +51,13 @@ class MaintenanceLogListViewModel(
   private val technicianManager: TechnicianManager,
   private val squawkManager: SquawkManager,
   private val auth: FirebaseAuth,
+  private val searchEngine: SearchEngine,
   val thingId: String,
+  private val clock: Clock = Clock.System,
+  private val timeZone: TimeZone = TimeZone.currentSystemDefault(),
 ) : ViewModel() {
+
+  private val logAdapter = LogAdapter(timeZone)
 
   private val _uiState =
     MutableStateFlow<MaintenanceLogListUiState>(MaintenanceLogListUiState.Loading)
@@ -56,7 +68,7 @@ class MaintenanceLogListViewModel(
 
   private val _logsLoadState =
     MutableStateFlow<LogsLoadState>(LogsLoadState.Loading)
-  private val _filter = MutableStateFlow(LogFilter())
+  private val _filter = MutableStateFlow(RecordFilter())
   private val _selectedLog = MutableStateFlow<MaintenanceLog?>(null)
   private val _availableCards =
     MutableStateFlow<List<MaintenanceTask>>(emptyList())
@@ -105,13 +117,11 @@ class MaintenanceLogListViewModel(
             val sorted = logsState.logs.sortedByDescending {
               it.timestamp?.getEpochSecond() ?: 0L
             }
-            val filtered = sorted.filter { log ->
-              (filter.components.isEmpty() || log.component_type in filter.components) &&
-                (filter.query.isBlank() || log.work_description.contains(
-                  filter.query,
-                  ignoreCase = true
-                ))
-            }
+            val today = clock.now()
+              .toLocalDateTime(timeZone).date
+            val filtered =
+              searchEngine.search(sorted, logAdapter, filter, today)
+                .map { it.item }
             MaintenanceLogListUiState.Success(
               logs = filtered,
               totalCount = logsState.logs.size,
@@ -196,14 +206,15 @@ class MaintenanceLogListViewModel(
   }
 
   fun onComponentFilterToggle(component: ComponentType) {
-    val current = _filter.value.components
-    _filter.value = _filter.value.copy(
-      components = if (component in current) current - component else current + component
-    )
+    _filter.value = _filter.value.toggleComponent(component)
+  }
+
+  fun onTimeWindowChange(window: TimeWindow) {
+    _filter.value = _filter.value.copy(time = window)
   }
 
   fun clearFilter() {
-    _filter.value = LogFilter()
+    _filter.value = RecordFilter()
   }
 
   fun retryLoading() {

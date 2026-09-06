@@ -1,24 +1,17 @@
 package dev.fanfly.wingslog.feature.logs.viewing.log.data
 
-import dev.fanfly.wingslog.thing.ComponentType
+import dev.fanfly.wingslog.feature.logs.datamanager.authorship.LogAuthorship
+import dev.fanfly.wingslog.feature.search.model.RecordFilter
 import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.thing.MaintenanceTask
 import dev.fanfly.wingslog.thing.Squawk
-import dev.fanfly.wingslog.feature.logs.datamanager.authorship.LogAuthorship
-
-data class LogFilter(
-  val query: String = "",
-  val components: Set<ComponentType> = emptySet(),
-) {
-  val isActive: Boolean get() = query.isNotBlank() || components.isNotEmpty()
-}
 
 sealed interface MaintenanceLogListUiState {
   data object Loading : MaintenanceLogListUiState
   data class Success(
     val logs: List<MaintenanceLog>,
     val totalCount: Int,
-    val filter: LogFilter = LogFilter(),
+    val filter: RecordFilter = RecordFilter(),
     val selectedLog: MaintenanceLog? = null,
     /** Whether the technician named on the selected log actually wrote it (design §7.5). */
     val selectedAuthorship: LogAuthorship = LogAuthorship.Unknown,

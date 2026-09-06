@@ -101,6 +101,8 @@ include(":feature:squawk:viewing")
 include(":feature:squawk:update")
 include(":feature:search:model")
 include(":feature:search:datamanager")
+include(":feature:search:sharedassets")
+include(":feature:search:viewing")
 
 include(":feature:ads:model")
 include(":feature:ads:datamanager")
