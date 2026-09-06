@@ -4,6 +4,7 @@
 **Last updated:** 2026-09-05
 **Design doc:** `docs/search/search_filter_design.md`
 **Related:** `docs/search/intelligentsearch.md` (engine research; superseded for v1 by the design doc, kept as the escalation path)
+**Tracking:** GitHub Project #11 “Search and Filter” — epics #817 (P1), #818 (P2), #819 (P3)
 
 ---
 
@@ -175,9 +176,9 @@ user picks.
 
 | Phase | Scope | Ships alone? |
 |---|---|---|
-| **P1 – One bar, three tabs** | Shared filter model and composables; component and time filters (with custom range) on all three tabs; search widened to the fields in FR.9 with the existing substring matching; jump-target clearing on all tabs | Yes. Replaces the Logs-only sheet |
-| **P2 – Tolerant search** | Tokenizer, stemmer, synonym packs, edit-distance matching, ranking, explanations on cards, ground-truth test suite | Yes |
-| **P3 – Tab-specific filters and polish** | Priority, compliance type, technician; web keyboard shortcuts; analytics | Yes |
+| **P1 – One bar, three tabs** (#817) | Shared filter model and composables; component and time filters (with custom range) on all three tabs; search widened to the fields in FR.9 with the existing substring matching; jump-target clearing on all tabs | Yes. Replaces the Logs-only sheet |
+| **P2 – Tolerant search** (#818) | Tokenizer, stemmer, synonym packs, edit-distance matching, ranking, explanations on cards, ground-truth test suite | Yes |
+| **P3 – Tab-specific filters and polish** (#819) | Priority, compliance type, technician; web keyboard shortcuts; analytics | Yes |
 
 ---
 

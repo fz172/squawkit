@@ -3,6 +3,7 @@
 **PRD:** `docs/search/search_filter_PRD.md`
 **Status:** 📋 Proposed
 **Last updated:** 2026-09-05
+**Tracking:** GitHub Project #11 “Search and Filter” — sub-issues #820–#844 follow the §10 order
 
 ---
 
