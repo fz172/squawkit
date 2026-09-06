@@ -1,14 +1,15 @@
 package dev.fanfly.wingslog.feature.logs.viewing.log.data
 
 import com.google.common.truth.Truth.assertThat
-import dev.fanfly.wingslog.thing.MaintenanceLog
-import dev.fanfly.wingslog.thing.Technician
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.logs.datamanager.authorship.LogAuthorship
+import dev.fanfly.wingslog.feature.search.datamanager.impl.SearchEngineImpl
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
+import dev.fanfly.wingslog.thing.MaintenanceLog
+import dev.fanfly.wingslog.thing.Technician
 import dev.gitlive.firebase.auth.FirebaseAuth
 import io.mockk.every
 import io.mockk.mockk
@@ -71,6 +72,7 @@ class LogAuthorshipGatingTest {
     technicianManager = technicians,
     squawkManager = squawks,
     auth = auth,
+    searchEngine = SearchEngineImpl(),
     thingId = AC_ID,
   )
 

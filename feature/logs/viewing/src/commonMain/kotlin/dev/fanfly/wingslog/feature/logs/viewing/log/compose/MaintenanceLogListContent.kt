@@ -73,6 +73,11 @@ import dev.fanfly.wingslog.feature.ads.viewing.AdSlot
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
 import dev.fanfly.wingslog.feature.logs.sharedassets.util.displayName
 import dev.fanfly.wingslog.feature.logs.viewing.log.data.MaintenanceLogListUiState
+import dev.fanfly.wingslog.feature.search.model.TimeWindow
+import dev.fanfly.wingslog.feature.search.viewing.NoRecordsMatch
+import dev.fanfly.wingslog.feature.search.viewing.RecordCountRow
+import dev.fanfly.wingslog.feature.search.viewing.RecordFilterBar
+import dev.fanfly.wingslog.feature.search.viewing.RecordFilterSheet
 import dev.fanfly.wingslog.thing.Attachment
 import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.MaintenanceLog
@@ -93,10 +98,13 @@ import wingslog.feature.logs.viewing.generated.resources.log_count_n_entries
 import wingslog.feature.logs.viewing.generated.resources.log_count_one_entry
 import wingslog.feature.logs.viewing.generated.resources.no_logs_match_filter
 import wingslog.feature.logs.viewing.generated.resources.search_logs
+import wingslog.feature.search.sharedassets.generated.resources.filter_records
+import wingslog.feature.search.sharedassets.generated.resources.search_records
 import kotlin.time.Duration.Companion.milliseconds
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.logs.sharedassets.generated.resources.Res as SharedRes
 import wingslog.feature.logs.viewing.generated.resources.Res as MaintenanceRes
+import wingslog.feature.search.sharedassets.generated.resources.Res as SearchRes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -105,6 +113,7 @@ fun MaintenanceLogListContent(
   syncStates: Map<String, BlobSyncState> = emptyMap(),
   onSearchQueryChange: (String) -> Unit,
   onComponentFilterToggle: (ComponentType) -> Unit,
+  onTimeWindowChange: (TimeWindow) -> Unit,
   onClearFilter: () -> Unit,
   onRetry: () -> Unit,
   onLogClick: (MaintenanceLog) -> Unit,
@@ -121,6 +130,8 @@ fun MaintenanceLogListContent(
    * tab and drops its scroll position; it should be cleared only once the section is left.
    */
   scrollToLogId: String? = null,
+  /** The shared per-tab bar (`AppCapability.isSearchFilterSupported`); false keeps the original UI. */
+  useSharedFilterBar: Boolean = false,
   modifier: Modifier = Modifier,
 ) {
   // Hoisted above the when(uiState) so it is one stable instance across Loading→Success flips and is
@@ -159,9 +170,7 @@ fun MaintenanceLogListContent(
     // tabs have on their Open/Closed and Active/Complied splits, just via a filter here instead of a
     // segmented toggle.
     val filter = (uiState as? MaintenanceLogListUiState.Success)?.filter
-    if (filter != null && (filter.query.isNotBlank() || filter.components.isNotEmpty())) {
-      onClearFilter()
-    }
+    if (filter?.isActive == true) onClearFilter()
     coroutineScope {
       val pinning = launch {
         // Resolve against the DISPLAY list. Using the item index would drift by the number of ads
@@ -218,109 +227,135 @@ fun MaintenanceLogListContent(
           )
         } else {
           Column(modifier = Modifier.fillMaxSize()) {
-            // Search bar + filter button
-            Row(
-              modifier = Modifier
-                .fillMaxWidth()
-                .padding(
-                  start = Spacing.screenPadding,
-                  end = Spacing.small,
-                  top = Spacing.small,
-                  bottom = Spacing.small
+            val logNounPlural =
+              LexiconFormatter.plural(LocalThingLexicon.current.logNoun)
+            if (useSharedFilterBar) {
+              RecordFilterBar(
+                filter = uiState.filter,
+                placeholder = stringResource(
+                  SearchRes.string.search_records,
+                  logNounPlural
                 ),
-              verticalAlignment = Alignment.CenterVertically,
-              horizontalArrangement = Arrangement.spacedBy(Spacing.small),
-            ) {
-              val filterActive = uiState.filter.components.isNotEmpty()
-              OutlinedTextField(
-                value = uiState.filter.query,
-                onValueChange = onSearchQueryChange,
-                modifier = Modifier.weight(1f),
-                placeholder = { Text(stringResource(MaintenanceRes.string.search_logs)) },
-                leadingIcon = {
-                  Icon(
-                    Icons.Default.Search,
-                    contentDescription = null
-                  )
-                },
-                trailingIcon = {
-                  if (uiState.filter.query.isNotBlank()) {
-                    IconButton(onClick = { onSearchQueryChange("") }) {
-                      Icon(
-                        Icons.Default.Close,
-                        contentDescription = null
-                      )
-                    }
-                  }
-                },
-                singleLine = true,
-                shape = RoundedCornerShape(Spacing.smallCornerRadius),
-                colors = OutlinedTextFieldDefaults.colors(
-                  unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                  focusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                  unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
-                ),
+                showComponentFilter = componentTypesApply,
+                componentLabel = { it.displayName() },
+                onQueryChange = onSearchQueryChange,
+                onOpenFilters = { showFilterSheet = true },
+                onRemoveComponent = onComponentFilterToggle,
+                onClearTime = { onTimeWindowChange(TimeWindow.All) },
               )
-
-              // Filtering by airframe / engine / propeller means nothing to a thing that has no
-              // such parts — see [LogComponentBadge].
-              if (componentTypesApply) Surface(
-                onClick = { showFilterSheet = true },
-                shape = RoundedCornerShape(Spacing.smallCornerRadius),
-                color = if (filterActive) MaterialTheme.colorScheme.primaryContainer
-                else MaterialTheme.colorScheme.surfaceContainer,
-                border = BorderStroke(
-                  Spacing.hairline,
-                  if (filterActive) MaterialTheme.colorScheme.primary
-                  else MaterialTheme.colorScheme.outlineVariant
-                ),
-                modifier = Modifier.size(Spacing.buttonHeight),
-              ) {
-                Box(contentAlignment = Alignment.Center) {
-                  Icon(
-                    Icons.Default.FilterList,
-                    contentDescription = stringResource(MaintenanceRes.string.filter_by_type),
-                    tint = if (filterActive) MaterialTheme.colorScheme.primary
-                    else MaterialTheme.colorScheme.onSurfaceVariant,
-                  )
-                }
-              }
-            }
-
-            // Active filter chips
-            if (componentTypesApply && uiState.filter.components.isNotEmpty()) {
-              LazyRow(
-                contentPadding = PaddingValues(horizontal = Spacing.screenPadding),
+              RecordCountRow(
+                count = uiState.logs.size,
+                nounSingular = LocalThingLexicon.current.logNoun.singular,
+                nounPlural = logNounPlural,
+                filterActive = uiState.filter.isActive,
+                onClear = onClearFilter,
+              )
+            } else {
+              // Search bar + filter button
+              Row(
+                modifier = Modifier
+                  .fillMaxWidth()
+                  .padding(
+                    start = Spacing.screenPadding,
+                    end = Spacing.small,
+                    top = Spacing.small,
+                    bottom = Spacing.small
+                  ),
+                verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(Spacing.small),
-                modifier = Modifier.fillMaxWidth()
-                  .padding(bottom = Spacing.small),
               ) {
-                items(uiState.filter.components.toList()) { component ->
-                  ActiveFilterChip(
-                    label = component.displayName(),
-                    onDismiss = { onComponentFilterToggle(component) },
-                  )
+                val filterActive = uiState.filter.components.isNotEmpty()
+                OutlinedTextField(
+                  value = uiState.filter.query,
+                  onValueChange = onSearchQueryChange,
+                  modifier = Modifier.weight(1f),
+                  placeholder = { Text(stringResource(MaintenanceRes.string.search_logs)) },
+                  leadingIcon = {
+                    Icon(
+                      Icons.Default.Search,
+                      contentDescription = null
+                    )
+                  },
+                  trailingIcon = {
+                    if (uiState.filter.query.isNotBlank()) {
+                      IconButton(onClick = { onSearchQueryChange("") }) {
+                        Icon(
+                          Icons.Default.Close,
+                          contentDescription = null
+                        )
+                      }
+                    }
+                  },
+                  singleLine = true,
+                  shape = RoundedCornerShape(Spacing.smallCornerRadius),
+                  colors = OutlinedTextFieldDefaults.colors(
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                  ),
+                )
+
+                // Filtering by airframe / engine / propeller means nothing to a thing that has no
+                // such parts — see [LogComponentBadge].
+                if (componentTypesApply) Surface(
+                  onClick = { showFilterSheet = true },
+                  shape = RoundedCornerShape(Spacing.smallCornerRadius),
+                  color = if (filterActive) MaterialTheme.colorScheme.primaryContainer
+                  else MaterialTheme.colorScheme.surfaceContainer,
+                  border = BorderStroke(
+                    Spacing.hairline,
+                    if (filterActive) MaterialTheme.colorScheme.primary
+                    else MaterialTheme.colorScheme.outlineVariant
+                  ),
+                  modifier = Modifier.size(Spacing.buttonHeight),
+                ) {
+                  Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                      Icons.Default.FilterList,
+                      contentDescription = stringResource(MaintenanceRes.string.filter_by_type),
+                      tint = if (filterActive) MaterialTheme.colorScheme.primary
+                      else MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                  }
                 }
               }
-            }
 
-            // Entry count label
-            val count = uiState.logs.size
-            val countLabel =
-              if (count == 1) stringResource(MaintenanceRes.string.log_count_one_entry)
-              else stringResource(
-                MaintenanceRes.string.log_count_n_entries,
-                count
+              // Active filter chips
+              if (componentTypesApply && uiState.filter.components.isNotEmpty()) {
+                LazyRow(
+                  contentPadding = PaddingValues(horizontal = Spacing.screenPadding),
+                  horizontalArrangement = Arrangement.spacedBy(Spacing.small),
+                  modifier = Modifier.fillMaxWidth()
+                    .padding(bottom = Spacing.small),
+                ) {
+                  items(uiState.filter.components.toList()) { component ->
+                    ActiveFilterChip(
+                      label = component.displayName(),
+                      onDismiss = { onComponentFilterToggle(component) },
+                    )
+                  }
+                }
+              }
+
+              // Entry count label
+              val count = uiState.logs.size
+              val countLabel =
+                if (count == 1) stringResource(MaintenanceRes.string.log_count_one_entry)
+                else stringResource(
+                  MaintenanceRes.string.log_count_n_entries,
+                  count
+                )
+              Text(
+                text = countLabel.uppercase(),
+                style = MaterialTheme.typography.labelMedium.copy(letterSpacing = 0.6.sp),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(
+                  horizontal = Spacing.screenPadding,
+                  vertical = Spacing.extraSmall
+                ),
               )
-            Text(
-              text = countLabel.uppercase(),
-              style = MaterialTheme.typography.labelMedium.copy(letterSpacing = 0.6.sp),
-              color = MaterialTheme.colorScheme.onSurfaceVariant,
-              modifier = Modifier.padding(
-                horizontal = Spacing.screenPadding,
-                vertical = Spacing.extraSmall
-              ),
-            )
+
+            }
 
             if (uiState.logs.isEmpty()) {
               Box(
@@ -328,7 +363,12 @@ fun MaintenanceLogListContent(
                   .fillMaxWidth(),
                 contentAlignment = Alignment.Center
               ) {
-                Column(
+                if (useSharedFilterBar) {
+                  NoRecordsMatch(
+                    nounPlural = logNounPlural,
+                    onClearFilters = onClearFilter
+                  )
+                } else Column(
                   horizontalAlignment = Alignment.CenterHorizontally,
                   verticalArrangement = Arrangement.spacedBy(Spacing.medium)
                 ) {
@@ -436,7 +476,19 @@ fun MaintenanceLogListContent(
         }
 
         if (showFilterSheet) {
-          ModalBottomSheet(
+          if (useSharedFilterBar) RecordFilterSheet(
+            title = stringResource(
+              SearchRes.string.filter_records,
+              LexiconFormatter.plural(LocalThingLexicon.current.logNoun),
+            ),
+            filter = uiState.filter,
+            showComponentFilter = componentTypesApply,
+            componentLabel = { it.displayName() },
+            onComponentToggle = onComponentFilterToggle,
+            onTimeWindowChange = onTimeWindowChange,
+            onClear = { onClearFilter() },
+            onDismiss = { showFilterSheet = false },
+          ) else ModalBottomSheet(
             onDismissRequest = { showFilterSheet = false },
             sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
           ) {

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+  <string name="search_records">Search <xliff:g example="work logs">%1$s</xliff:g>…</string>
+  <string name="clear_search">Clear search</string>
+  <string name="filters">Filters</string>
+  <string name="filter_records">Filter <xliff:g example="work logs">%1$s</xliff:g></string>
+  <string name="filter_scope_note">Applies to this tab only</string>
+  <string name="filter_component">Component</string>
+  <string name="filter_period">Period</string>
+  <string name="filter_due_within">Due within</string>
+  <string name="period_all">All time</string>
+  <string name="period_last_3_months">Last 3 months</string>
+  <string name="period_last_12_months">Last 12 months</string>
+  <string name="period_custom">Custom range</string>
+  <string name="due_within_any">Any time</string>
+  <string name="due_within_3_months">3 months</string>
+  <string name="due_within_12_months">12 months</string>
+  <string name="custom_from">From</string>
+  <string name="custom_to">To</string>
+  <string name="custom_range_chip"><xliff:g example="01/01/2026">%1$s</xliff:g> – <xliff:g example="06/30/2026">%2$s</xliff:g></string>
+  <string name="clear">Clear</string>
+  <string name="clear_filters">Clear filters</string>
+  <string name="record_count_one">1 <xliff:g example="work log">%1$s</xliff:g></string>
+  <string name="record_count_other"><xliff:g example="5">%1$d</xliff:g> <xliff:g example="work logs">%2$s</xliff:g></string>
+  <string name="no_records_match">No <xliff:g example="work logs">%1$s</xliff:g> match these filters.</string>
+</resources>

@@ -56,6 +56,10 @@ kotlin {
       implementation(project(":feature:tasks:sharedassets"))
       implementation(project(":feature:tasks:viewing"))
       implementation(project(":feature:squawk:datamanager"))
+      implementation(project(":feature:search:model"))
+      implementation(project(":feature:search:datamanager"))
+      implementation(project(":feature:search:sharedassets"))
+      implementation(project(":feature:search:viewing"))
 
       implementation(project(":feature:attachment:model"))
       implementation(project(":feature:attachment:sharedassets"))

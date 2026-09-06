@@ -9,6 +9,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
 import dev.fanfly.wingslog.feature.attachment.datamanager.OpenState
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
@@ -37,6 +38,7 @@ fun LogsTab(
     koinViewModel(key = thingId, parameters = { parametersOf(thingId) })
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
   val attachmentOpener: AttachmentOpener = koinInject()
+  val appCapability: AppCapability = koinInject()
   val coroutineScope = rememberCoroutineScope()
   var openError by remember { mutableStateOf<String?>(null) }
 
@@ -56,6 +58,7 @@ fun LogsTab(
     syncStates = syncStates,
     onSearchQueryChange = viewModel::onSearchQueryChange,
     onComponentFilterToggle = viewModel::onComponentFilterToggle,
+    onTimeWindowChange = viewModel::onTimeWindowChange,
     onClearFilter = viewModel::clearFilter,
     onRetry = viewModel::retryLoading,
     onLogClick = viewModel::onLogClick,
@@ -78,6 +81,7 @@ fun LogsTab(
       }
     },
     openError = openError,
+    useSharedFilterBar = appCapability.isSearchFilterSupported,
     onTaskClick = onTaskClick,
     onSquawkClick = onSquawkClick,
     scrollToLogId = scrollToLogId,

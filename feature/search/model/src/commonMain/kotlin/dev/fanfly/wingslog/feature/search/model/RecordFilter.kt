@@ -20,7 +20,8 @@ data class RecordFilter(
   fun toggleComponent(component: ComponentType): RecordFilter =
     copy(components = if (component in components) components - component else components + component)
 
-  fun withoutFilters(): RecordFilter = copy(components = emptySet(), time = TimeWindow.All, facet = null)
+  fun withoutFilters(): RecordFilter =
+    copy(components = emptySet(), time = TimeWindow.All, facet = null)
 }
 
 /** The one tab-specific filter a sheet offers. */
