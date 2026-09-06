@@ -20,8 +20,10 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -166,6 +168,7 @@ internal fun WebLoginLandingScreen(
   var featuresY by remember { mutableStateOf(0f) }
   var howY by remember { mutableStateOf(0f) }
   var faqY by remember { mutableStateOf(0f) }
+  var appY by remember { mutableStateOf(0f) }
   val scrollTo = { rawY: Float ->
     scope.launch {
       scrollState.animateScrollTo(
@@ -199,6 +202,7 @@ internal fun WebLoginLandingScreen(
         onNavFeatures = { scrollTo(featuresY) },
         onNavHow = { scrollTo(howY) },
         onNavFaq = { scrollTo(faqY) },
+        onNavApp = { scrollTo(appY) },
       )
 
       Hero(
@@ -250,6 +254,15 @@ internal fun WebLoginLandingScreen(
         onSeeFeatures = { scrollTo(featuresY) },
       )
 
+      GetTheAppSection(
+        modifier = Modifier.onGloballyPositioned {
+          appY = it.positionInRoot().y
+        },
+        colors = colors,
+        headline = headline,
+        compact = heroStacked,
+      )
+
       LandingFooter(colors = colors)
     }
   }
@@ -298,6 +311,7 @@ private fun LandingHeader(
   onNavFeatures: () -> Unit,
   onNavHow: () -> Unit,
   onNavFaq: () -> Unit,
+  onNavApp: () -> Unit,
 ) {
   Box(
     modifier = Modifier
@@ -325,6 +339,8 @@ private fun LandingHeader(
           NavLink("How it works", colors, onNavHow)
           Spacer(Modifier.width(28.dp))
           NavLink("FAQ", colors, onNavFaq)
+          Spacer(Modifier.width(28.dp))
+          NavLink("Get the app", colors, onNavApp)
         }
       }
     }
@@ -1390,6 +1406,173 @@ private fun PillButton(
         color = if (primary) colors.navy else Color.White,
       ),
     )
+  }
+}
+
+private const val PlayStoreUrl = "https://play.google.com/store/apps/details?id=dev.fanfly.wingslog"
+
+/**
+ * Store links for the mobile apps. Google Play is live; the App Store card is a placeholder until
+ * the iOS build is approved, so it stays unclickable rather than linking to a page that 404s.
+ */
+@Composable
+private fun GetTheAppSection(
+  modifier: Modifier,
+  colors: LandingColors,
+  headline: FontFamily,
+  compact: Boolean,
+) {
+  val uriHandler = LocalUriHandler.current
+  Box(
+    modifier = modifier.fillMaxWidth()
+      .background(colors.surface),
+    contentAlignment = Alignment.TopCenter,
+  ) {
+    Column(
+      modifier = Modifier
+        .widthIn(max = ContentMaxWidth)
+        .fillMaxWidth()
+        .padding(horizontal = 24.dp, vertical = if (compact) 64.dp else 88.dp),
+      horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+      SectionHeading(
+        colors = colors,
+        headline = headline,
+        kick = "Mobile apps",
+        title = "Take SquawkIt to the hangar",
+        subtitle = "The same records on your phone and tablet, offline, and in sync with the web.",
+      )
+      Spacer(Modifier.height(if (compact) 36.dp else 44.dp))
+      val play: @Composable (Modifier) -> Unit = {
+        StoreCard(
+          modifier = it,
+          colors = colors,
+          headline = headline,
+          icon = GooglePlayLogo,
+          tint = null,
+          eyebrow = "Get it on",
+          name = "Google Play",
+          caption = "Available now for Android phones and tablets.",
+          onClick = { uriHandler.openUri(PlayStoreUrl) },
+        )
+      }
+      val appStore: @Composable (Modifier) -> Unit = {
+        StoreCard(
+          modifier = it,
+          colors = colors,
+          headline = headline,
+          icon = AppleLogo,
+          tint = colors.heading,
+          eyebrow = "Coming soon",
+          name = "App Store",
+          caption = "The iPhone and iPad app is on its way.",
+          onClick = null,
+        )
+      }
+      if (compact) {
+        Column(
+          modifier = Modifier.fillMaxWidth(),
+          verticalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+          play(Modifier.fillMaxWidth())
+          appStore(Modifier.fillMaxWidth())
+        }
+      } else {
+        // Intrinsic height so both cards match the taller one's copy.
+        Row(
+          modifier = Modifier.widthIn(max = 780.dp)
+            .fillMaxWidth()
+            .height(IntrinsicSize.Max),
+          horizontalArrangement = Arrangement.spacedBy(18.dp),
+        ) {
+          play(Modifier.weight(1f).fillMaxHeight())
+          appStore(Modifier.weight(1f).fillMaxHeight())
+        }
+      }
+    }
+  }
+}
+
+/** One store entry. A null [onClick] renders it as an inert, dimmed placeholder. */
+@Composable
+private fun StoreCard(
+  modifier: Modifier,
+  colors: LandingColors,
+  headline: FontFamily,
+  icon: ImageVector,
+  tint: Color?,
+  eyebrow: String,
+  name: String,
+  caption: String,
+  onClick: (() -> Unit)?,
+) {
+  val shape = RoundedCornerShape(20.dp)
+  val enabled = onClick != null
+  Row(
+    modifier = modifier
+      .clip(shape)
+      .background(colors.card)
+      .border(1.dp, colors.outline, shape)
+      .then(if (onClick != null) Modifier.clickable { onClick() } else Modifier)
+      .padding(horizontal = 24.dp, vertical = 22.dp),
+    verticalAlignment = Alignment.CenterVertically,
+    horizontalArrangement = Arrangement.spacedBy(18.dp),
+  ) {
+    Box(
+      modifier = Modifier.size(56.dp)
+        .clip(RoundedCornerShape(14.dp))
+        .background(colors.panel)
+        .border(1.dp, colors.outline, RoundedCornerShape(14.dp)),
+      contentAlignment = Alignment.Center,
+    ) {
+      if (tint == null) {
+        Image(imageVector = icon, contentDescription = null, modifier = Modifier.size(28.dp))
+      } else {
+        Icon(
+          imageVector = icon,
+          contentDescription = null,
+          modifier = Modifier.size(28.dp),
+          tint = if (enabled) tint else tint.copy(alpha = 0.55f),
+        )
+      }
+    }
+    Column(modifier = Modifier.weight(1f)) {
+      Text(
+        text = eyebrow.uppercase(),
+        style = TextStyle(
+          fontSize = 11.5.sp,
+          fontWeight = FontWeight.SemiBold,
+          letterSpacing = 1.sp,
+          color = if (enabled) colors.blue else colors.amber,
+        ),
+      )
+      Spacer(Modifier.height(4.dp))
+      Text(
+        text = name,
+        style = TextStyle(
+          fontFamily = headline,
+          fontWeight = FontWeight.Bold,
+          fontSize = 21.sp,
+          lineHeight = 26.sp,
+          letterSpacing = (-0.3).sp,
+          color = if (enabled) colors.heading else colors.heading.copy(alpha = 0.7f),
+        ),
+      )
+      Spacer(Modifier.height(6.dp))
+      Text(
+        text = caption,
+        style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp, color = colors.slate),
+      )
+    }
+    if (enabled) {
+      Icon(
+        imageVector = IconChevronDown,
+        contentDescription = null,
+        modifier = Modifier.size(20.dp)
+          .rotate(-90f),
+        tint = colors.blue,
+      )
+    }
   }
 }
 

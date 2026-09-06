@@ -227,3 +227,36 @@ internal val AppleLogo: ImageVector = ImageVector.Builder(
     )
   }
   .build()
+
+/** The Google Play triangle in its four brand colours. */
+internal val GooglePlayLogo: ImageVector = ImageVector.Builder(
+  defaultWidth = 24.dp,
+  defaultHeight = 24.dp,
+  viewportWidth = 24f,
+  viewportHeight = 24f,
+)
+  .apply {
+    addPath(
+      PathParser().parsePathString("M3.6 1.8 13.9 12 3.6 22.2c-.4-.2-.6-.6-.6-1.1V2.9c0-.5.2-.9.6-1.1z")
+        .toNodes(),
+      fill = SolidColor(Color(0xFF00D7FE)),
+    )
+    addPath(
+      PathParser().parsePathString("M17.4 8.5 13.9 12 3.6 1.8c.3-.2.8-.2 1.2.1L17.4 8.5z")
+        .toNodes(),
+      fill = SolidColor(Color(0xFF00F076)),
+    )
+    addPath(
+      PathParser().parsePathString("M17.4 15.5 4.8 22.1c-.4.3-.9.3-1.2.1L13.9 12l3.5 3.5z")
+        .toNodes(),
+      fill = SolidColor(Color(0xFFFF3A44)),
+    )
+    addPath(
+      PathParser().parsePathString(
+        "M21.2 10.6c.9.5.9 2.3 0 2.8l-3.8 2.1L13.9 12l3.5-3.5 3.8 2.1z"
+      )
+        .toNodes(),
+      fill = SolidColor(Color(0xFFFFD500)),
+    )
+  }
+  .build()
