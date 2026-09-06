@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.feature.search.datamanager
 
 import com.google.common.truth.Truth.assertThat
+import dev.fanfly.wingslog.feature.search.datamanager.impl.SearchEngineImpl
 import dev.fanfly.wingslog.feature.search.model.Facet
 import dev.fanfly.wingslog.feature.search.model.RecordAdapter
 import dev.fanfly.wingslog.feature.search.model.RecordFilter
@@ -36,7 +37,7 @@ class SearchEngineTest {
   }
 
   private val today = LocalDate(2026, 9, 6)
-  private val engine = SearchEngine()
+  private val engine: SearchEngine = SearchEngineImpl()
 
   private fun ids(hits: List<SearchHit<Record>>) = hits.map { it.item.id }
 

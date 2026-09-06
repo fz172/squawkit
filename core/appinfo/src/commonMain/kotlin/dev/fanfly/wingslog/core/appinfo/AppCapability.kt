@@ -20,12 +20,7 @@ data class AppCapability(
    * `SubscriptionManager.showsAds()` enforces this; see the design doc §6.
    */
   val isAdsSupported: Boolean,
-  /**
-   * The per-tab search and filter bar on Squawks, Tasks and Logs
-   * (`docs/search/search_filter_PRD.md`). Developer builds only until every phase has landed; off
-   * means the Logs tab keeps its original search and component sheet and the other two tabs show
-   * no bar at all.
-   */
+  /** Per-tab search and filter (project #11). Dev builds only until every phase lands. */
   val isSearchFilterSupported: Boolean,
 )
 

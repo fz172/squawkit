@@ -66,8 +66,9 @@ Dependency direction: consumers (`feature/logs/viewing`, `feature/thing/dashboar
 `feature/tasks/model` types, which `feature/search` must not depend on, so they live beside the
 ViewModel that lists them (`feature/thing/dashboard`); only the log adapter is here.
 
-Both submodules are registered in `settings.gradle.kts`. No Koin module yet: the engine is a plain
-class the ViewModels construct.
+Both submodules are registered in `settings.gradle.kts`. `SearchEngine` is an interface with
+`impl/SearchEngineImpl`, bound by `searchModule` (registered in `core/di/CommonAppModules.kt`) and
+injected into the ViewModels.
 
 ---
 
@@ -311,8 +312,8 @@ Already the pattern. Changes:
   can render the explanation. `totalCount` stays.
 - New intents: `onTimeWindowChange`, `onFacetChange`. `onComponentFilterToggle` and `clearFilter`
   keep their names.
-- The engine is built once in `init` from `packFor(template.id)`; the VM already has the thing id
-  and can observe the template through the manager it uses today.
+- The engine is injected; the synonym pack (P2) reaches it through the adapter or a per-thing call
+  rather than a per-VM construction.
 
 ### 5.2 Squawks and Tasks — `ThingOverviewViewModel` (`feature/thing/dashboard`)
 

@@ -27,6 +27,7 @@ kotlin {
       api(project(":feature:search:model"))
       api(project(":core:model"))
       implementation(project(":core:datetime"))
+      api(libs.koin.core)
     }
   }
 }

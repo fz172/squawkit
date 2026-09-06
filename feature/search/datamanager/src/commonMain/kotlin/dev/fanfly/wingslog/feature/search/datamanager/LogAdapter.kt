@@ -8,7 +8,7 @@ import dev.fanfly.wingslog.thing.MaintenanceLog
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 
-/** Work logs: searched by serial, description and technician; filtered by the work date. */
+/** Work logs: searched by serial, description and technician; filtered by work date. */
 class LogAdapter(
   private val timeZone: TimeZone = TimeZone.currentSystemDefault(),
 ) : RecordAdapter<MaintenanceLog> {
