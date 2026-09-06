@@ -99,6 +99,9 @@ private enum class PendingSignIn { Google, Apple }
 private const val PlayStoreUrl =
   "https://play.google.com/store/apps/details?id=dev.fanfly.wingslog"
 
+/** The static support page next to the app (`webApp/src/jsMain/resources/support.html`). */
+private const val SupportUrl = "/support.html"
+
 /** The App Store listing once the iOS build is approved. Null leaves the button out. */
 private val AppStoreUrl: String? = null
 
@@ -1160,14 +1163,26 @@ private fun FaqSection(
     background = colors.surface,
     verticalPadding = metrics.sectionPadding
   ) {
+    val uriHandler = LocalUriHandler.current
     val heading: @Composable () -> Unit = {
-      SectionHeading(
-        colors = colors,
-        type = type,
-        metrics = metrics,
-        kick = "Questions",
-        title = "Frequently asked questions",
-      )
+      Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        SectionHeading(
+          colors = colors,
+          type = type,
+          metrics = metrics,
+          kick = "Questions",
+          title = "Frequently asked questions",
+        )
+        Text(
+          text = buildAnnotatedString {
+            append("Something else? ")
+            withStyle(SpanStyle(color = colors.blue)) { append("Contact support") }
+            append(".")
+          },
+          style = TextStyle(fontSize = 16.sp, lineHeight = 24.sp, color = colors.slate),
+          modifier = Modifier.clickable { uriHandler.openUri(SupportUrl) },
+        )
+      }
     }
     if (stacked) {
       Column(verticalArrangement = Arrangement.spacedBy(48.dp)) {
@@ -1729,6 +1744,7 @@ private fun LandingFooter(colors: LandingColors, onNavApp: () -> Unit) {
           FooterLink(stringResource(Res.string.privacy_notice), colors) {
             uriHandler.openUri("/privacy.html")
           }
+          FooterLink("Support", colors) { uriHandler.openUri(SupportUrl) }
           FooterLink("Android app", colors, onNavApp)
         }
       }
