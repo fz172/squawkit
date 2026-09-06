@@ -31,9 +31,9 @@ Drop raw captures here, named by screen, one folder per device class:
 | Folder under `docs/product/screenshots/` | Capture on | Native size | Renders to |
 |---|---|---|---|
 | `phone/` | Pixel 8 class Android phone | 1080×2364 | `store_assets/play/phone/` 1080×2364 |
-| `tablet/` | Pixel Tablet emulator, landscape | 2560×1600 | `store_assets/play/tablet/` 2560×1600 |
+| `tablet/` | Pixel Tablet emulator, landscape, or leave empty to derive from `ipad/` | 2560×1600 | `store_assets/play/tablet/` 2560×1600 |
 | `iphone/` | iPhone 16 Pro Max simulator, or leave empty to derive from `phone/` | 1320×2868 | `store_assets/appstore/iphone_6_9/` 1320×2868 |
-| `ipad/` | iPad Pro 13-inch simulator | 2064×2752 or 2752×2064 | `store_assets/appstore/ipad_13/` same orientation |
+| `ipad/` | Any iPad Pro simulator (the frame scales the capture) | e.g. 2420×1668 | `store_assets/appstore/ipad_13/` 2752×2064, or 2064×2752 for a portrait capture |
 
 Screen filenames, in upload order: `overview_1`, `tasks`, `squawks`, `logs`,
 `log_detail`, `export`, `sharing` (all `.png`). A folder may hold any subset;
@@ -48,6 +48,13 @@ When `iphone/` is empty the iPhone set is derived from the Android phone capture
 status bar (the top `ANDROID_STATUS_BAR_PX` of a 1080-wide capture) is cropped off and an
 iOS-style bar with a Dynamic Island is drawn in its place, coloured from the capture's own top
 edge. Drop real simulator captures into `iphone/` to bypass this.
+
+Tablet captures get the reverse treatment. The iPad simulator has no demo mode, so its real clock
+and battery readout are painted over with `9:41 AM  Mon Jun 9` and full-battery glyphs, each patch
+coloured from the capture right beside it (so a sheet's scrim is respected). When `tablet/` is empty
+the Play tablet set is derived from the same `ipad/` captures with an Android bar (`5:00`, Wi-Fi,
+the Pixel battery pill) painted in the same spots; the app lays out identically on both. Drop
+Pixel Tablet captures into `tablet/` to bypass this.
 
 Orientation is read from each capture. A landscape capture gets the landscape
 layout (copy on the left, device on the right); a portrait capture gets the
