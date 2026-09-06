@@ -18,6 +18,7 @@ import dev.fanfly.wingslog.core.template.displayLabel
 import dev.fanfly.wingslog.core.template.displaySubtitle
 import dev.fanfly.wingslog.core.template.forKey
 import dev.fanfly.wingslog.core.template.formatMeterNumber
+import dev.fanfly.wingslog.core.template.joinAsPhrase
 import dev.fanfly.wingslog.core.template.knownCertifications
 import dev.fanfly.wingslog.core.template.meter
 import dev.fanfly.wingslog.core.template.meterUnit
@@ -635,11 +636,11 @@ class LogbookExportArchiveBuilder(
       .orEmpty()
     val scope = if (bundles.size == 1) {
       bundles.first().thing.run {
-        "${specValue(SpecKeys.MAKE)} ${specValue(SpecKeys.MODEL)} ${
-          specValue(
-            SpecKeys.TAIL_NUMBER
-          )
-        }"
+        listOf(
+          specValue(SpecKeys.MAKE),
+          specValue(SpecKeys.MODEL),
+          specValue(SpecKeys.TAIL_NUMBER),
+        ).joinAsPhrase()
       }
     } else {
       "${bundles.size} aircraft"

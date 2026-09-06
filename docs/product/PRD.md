@@ -223,7 +223,7 @@ starter tasks. The product is the squawk / task / log triad: *something is wrong
 ### 3.15 Future
 
 - **Weight & Balance** calculator: stations, weights, CG, envelope plot. No code exists.
-- **Intelligent search** (FTS5 + embeddings): research only, `docs/search/intelligentsearch.md`.
+- **Search and filter** (per-tab bars, time and component filters, typo- and acronym-tolerant matching): proposed, `docs/search/search_filter_PRD.md` and `search_filter_design.md`. The earlier FTS5 + embeddings research in `docs/search/intelligentsearch.md` stays as the escalation path.
 - **Component life limits** (TSN / TSO / TBO, #50) and **utilization-based forecasting** (#53).
 - **Multi-domain Phase 4** as proposed in the multi-domain PRD.
 

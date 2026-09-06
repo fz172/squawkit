@@ -59,6 +59,19 @@ class ThingSpecLinesTest {
     assertThat(spec.title).isEqualTo("N532SL")
   }
 
+  /**
+   * The read side normalises too: a make saved before writes were cleaned still carries its
+   * trailing space, and one already stored is not going to trim itself.
+   */
+  @Test
+  fun aHeadlineJoinsWithOneSpaceEvenWhenTheStoredMakeCarriesItsOwn() {
+    val spec = airplane.specLines(
+      thing(SpecKeys.MAKE to "Sling ", SpecKeys.MODEL to "TSi"),
+    )
+
+    assertThat(spec.headline).isEqualTo("Sling TSi")
+  }
+
   @Test
   fun anUnfilledFieldIsDroppedRatherThanLabelled() {
     val spec = airplane.specLines(

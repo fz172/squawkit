@@ -43,9 +43,7 @@ object ThingInflater {
     return listOf(
       thing.specValue(SpecKeys.MAKE),
       thing.specValue(SpecKeys.MODEL)
-    )
-      .filter { it.isNotEmpty() }
-      .joinToString(" ")
+    ).joinAsPhrase()
   }
 
   /** `"$thingId:$path"`. Must match `thingPayloads.ts` — these ids are a stored join key. */

@@ -7,6 +7,7 @@ import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.storage.CloudSyncSetting
 import dev.fanfly.wingslog.core.template.SpecKeys
+import dev.fanfly.wingslog.core.template.joinAsPhrase
 import dev.fanfly.wingslog.core.template.specValue
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
@@ -126,8 +127,7 @@ class ManageAccessViewModel(
             listOf(
               it.specValue(SpecKeys.TAIL_NUMBER),
               listOf(it.specValue(SpecKeys.MAKE), it.specValue(SpecKeys.MODEL))
-                .filter(String::isNotBlank)
-                .joinToString(" "),
+                .joinAsPhrase(),
             )
               .filter(String::isNotBlank)
               .joinToString(" · ")

@@ -8,10 +8,13 @@ import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.EntityStore
 import dev.fanfly.wingslog.core.storage.EntityStoreFactory
 import dev.fanfly.wingslog.core.storage.StorageEntity
+import dev.fanfly.wingslog.core.template.SlotKeys
 import dev.fanfly.wingslog.core.template.SpecKeys
 import dev.fanfly.wingslog.core.template.ThingInflater
 import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
 import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
+import dev.fanfly.wingslog.core.template.specValue
+import dev.fanfly.wingslog.thing.Component
 import dev.fanfly.wingslog.thing.Spec
 import dev.fanfly.wingslog.thing.Thing
 import dev.gitlive.firebase.auth.FirebaseAuth
@@ -398,6 +401,36 @@ class FleetManagerImplTest {
       .isEqualTo(AirplaneTemplate.TEMPLATE.copy(lexicon = null))
     // A name, derived from spec for a Thing that arrived without one.
     assertThat(stored.captured.name).isEqualTo("Cessna 172")
+  }
+
+  @Test
+  fun updateThing_trimsTheWhitespaceTheFormLetThrough() = runTest {
+    // A trailing space is invisible in a text field, and the value is only ever seen joined to the
+    // next one — "Sling  TSi". The form cannot trim as the user types without eating the space
+    // between two words, so the write path does it.
+    val typed = Thing(
+      id = "own-1",
+      spec = listOf(
+        Spec(key = SpecKeys.MAKE, value_ = "Sling "),
+        Spec(key = SpecKeys.MODEL, value_ = "TSi"),
+      ),
+      components = listOf(
+        Component(
+          id = "own-1:engine.1",
+          slot_key = SlotKeys.ENGINE,
+          make = "Rotax ",
+          model = "915 IS3A",
+        ),
+      ),
+    )
+
+    manager.updateThing(typed)
+
+    val stored = slot<Thing>()
+    coVerify { store.put("own-1", capture(stored), any()) }
+    assertThat(stored.captured.specValue(SpecKeys.MAKE)).isEqualTo("Sling")
+    assertThat(stored.captured.components.single().make).isEqualTo("Rotax")
+    assertThat(stored.captured.name).isEqualTo("Sling TSi")
   }
 
   @Test

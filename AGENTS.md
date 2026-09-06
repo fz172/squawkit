@@ -518,7 +518,7 @@ Feature PRDs and architecture design docs live in `docs/`, organized into per-to
 - `docs/aircraft/` — `aircraft_overview_tabs.md`
 - `docs/cards/` — `card_swipe_actions_PRD.md`, `card_swipe_actions_design.md` (**proposed** — swipe-to-reveal
   quick actions on squawk/task/log cards, and squawk deletion)
-- `docs/search/` — `intelligentsearch.md`
+- `docs/search/` — `search_filter_PRD.md`, `search_filter_design.md` (📋 proposed — per-tab search and filter bars with a tolerant in-memory matcher), `intelligentsearch.md` (engine research, kept as the escalation path)
 - `docs/web/` — `web_target_expansion_plan.md`, `web_attachments_design.md`,
   `web_adaptive_layout_design.html`, `promo_site_design.html`
 - `docs/cleanup/` — `codebase_cleanup_plan.md` (the 2026-07 cleanup; phases 1–5 executed, kept as the

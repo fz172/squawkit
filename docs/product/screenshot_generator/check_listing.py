@@ -20,6 +20,8 @@ LIMITS = {
     "Subtitle": 30,
     "Promotional text": 170,
     "Keywords": 100,
+    "Google Play release notes": 500,
+    "App Store “What’s New”": 4000,
 }
 NAME_LIMIT = 30
 DESCRIPTION_LIMIT = 4000
@@ -51,7 +53,7 @@ def main():
 def report(label, text, limit, failures):
     n = len(text)
     status = "ok" if n <= limit else "OVER"
-    print(f"{label:18} {n:>5}/{limit:<5} {status}")
+    print(f"{label:26} {n:>5}/{limit:<5} {status}")
     if n > limit:
         failures.append(f"{label} is {n - limit} over its {limit}-character limit")
 
