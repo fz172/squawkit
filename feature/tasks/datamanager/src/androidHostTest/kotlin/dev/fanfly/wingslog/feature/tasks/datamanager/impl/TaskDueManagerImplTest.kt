@@ -168,6 +168,31 @@ class TaskDueManagerImplTest {
   }
 
   @Test
+  fun oneTimeCard_compliedDate_fromLatestLog() {
+    val card = card(id = "c1", isOneTime = true, rules = listOf(timeRule(12)))
+    val logs = listOf(
+      log(inspectionIds = listOf("c1"), timestamp = iso("2024-01-01")),
+      log(inspectionIds = listOf("c1"), timestamp = iso("2025-03-14")),
+    )
+
+    assertThat(manager.computeNextDue(card, logs, listOf(card)).compliedDate)
+      .isEqualTo(LocalDate(2025, 3, 14))
+  }
+
+  @Test
+  fun oneTimeCard_compliedDate_fromForceComplied() {
+    val card = card(
+      id = "c1",
+      isOneTime = true,
+      rules = listOf(timeRule(12)),
+      forceComplied = ForceCompliedStatus(complied_date = iso("2024-01-01")),
+    )
+
+    assertThat(manager.computeNextDue(card, emptyList(), listOf(card)).compliedDate)
+      .isEqualTo(LocalDate(2024, 1, 1))
+  }
+
+  @Test
   fun oneTimeCard_withoutLogOrForceComplied_notComplied() {
     val card = card(id = "c1", isOneTime = true, rules = listOf(timeRule(12)))
 

@@ -28,8 +28,10 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.text.font.FontWeight
 import dev.fanfly.wingslog.core.analytics.LocalAnalytics
+import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.componentTypesApply
 import dev.fanfly.wingslog.core.template.squawkEmptyHint
 import dev.fanfly.wingslog.core.template.squawkNoun
 import dev.fanfly.wingslog.core.ui.adaptive.compose.AdaptiveCardList
@@ -46,23 +48,33 @@ import dev.fanfly.wingslog.feature.ads.model.withAdSlots
 import dev.fanfly.wingslog.feature.ads.viewing.AdSlot
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
 import dev.fanfly.wingslog.feature.attachment.datamanager.OpenState
+import dev.fanfly.wingslog.feature.logs.sharedassets.util.displayName
+import dev.fanfly.wingslog.feature.search.model.RecordFilter
+import dev.fanfly.wingslog.feature.search.model.TimeWindow
+import dev.fanfly.wingslog.feature.search.viewing.NoRecordsMatch
+import dev.fanfly.wingslog.feature.search.viewing.RecordCountRow
+import dev.fanfly.wingslog.feature.search.viewing.RecordFilterBar
+import dev.fanfly.wingslog.feature.search.viewing.RecordFilterSheet
 import dev.fanfly.wingslog.feature.squawk.model.SquawkStatus
 import dev.fanfly.wingslog.feature.squawk.model.SquawkWithStatus
 import dev.fanfly.wingslog.feature.squawk.viewing.SquawkCard
 import dev.fanfly.wingslog.feature.squawk.viewing.SquawkDetailSheet
 import dev.fanfly.wingslog.feature.thing.dashboard.data.ThingOverviewAction
 import dev.fanfly.wingslog.feature.thing.dashboard.data.ThingOverviewUiState
+import kotlin.math.roundToInt
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
+import wingslog.feature.search.sharedassets.generated.resources.Res as SearchRes
+import wingslog.feature.search.sharedassets.generated.resources.filter_records
+import wingslog.feature.search.sharedassets.generated.resources.search_records
 import wingslog.feature.squawk.sharedassets.generated.resources.Res
 import wingslog.feature.squawk.sharedassets.generated.resources.closed_with_count
 import wingslog.feature.squawk.sharedassets.generated.resources.no_closed_squawks
 import wingslog.feature.squawk.sharedassets.generated.resources.no_open_squawks
 import wingslog.feature.squawk.sharedassets.generated.resources.open_with_count
-import kotlin.math.roundToInt
 
 private val squawkOrder = compareByDescending<SquawkWithStatus> {
   it.squawk.priority
@@ -85,11 +97,17 @@ fun SquawkTab(
   val adsManager: AdsManager = koinInject()
   val coroutineScope = rememberCoroutineScope()
   var openError by remember { mutableStateOf<String?>(null) }
+  val useFilterBar = koinInject<AppCapability>().isSearchFilterSupported
+  var showFilterSheet by remember { mutableStateOf(false) }
+  val squawkFilter = state.squawkFilter
+  val setFilter = { filter: RecordFilter -> onAction(ThingOverviewAction.SquawkFilterChange(filter)) }
+  val squawkNoun = LocalThingLexicon.current.squawkNoun
 
-  val openSquawks = state.squawks
+  val squawkSource = if (useFilterBar) state.filteredSquawks else state.squawks
+  val openSquawks = squawkSource
     .filter { it.status == SquawkStatus.OPEN }
     .sortedWith(squawkOrder)
-  val closedSquawks = state.squawks
+  val closedSquawks = squawkSource
     .filter { it.status == SquawkStatus.ADDRESSED || it.status == SquawkStatus.DISMISSED }
     .sortedByDescending { it.squawk.created_at?.getEpochSecond() ?: 0L }
 
@@ -110,6 +128,8 @@ fun SquawkTab(
   LaunchedEffect(scrollToSquawkId, scrollTarget?.status) {
     val target = scrollTarget ?: return@LaunchedEffect
     showClosed = target.status != SquawkStatus.OPEN
+    // A jump target must be reachable whatever was filtered before.
+    if (useFilterBar && squawkFilter.isActive) setFilter(RecordFilter())
     // Reset (not just on a fresh id, but on the status flip re-run too) — the target card just moved
     // between sub-views, so its old on-screen position no longer means anything.
     targetCardY = null
@@ -142,6 +162,20 @@ fun SquawkTab(
       )
     }
 
+    if (useFilterBar) {
+      RecordFilterBar(
+        filter = squawkFilter,
+        placeholder = stringResource(SearchRes.string.search_records, squawkNoun.plural),
+        showComponentFilter = componentTypesApply,
+        componentLabel = { it.displayName() },
+        onQueryChange = { setFilter(squawkFilter.copy(query = it)) },
+        onOpenFilters = { showFilterSheet = true },
+        onRemoveComponent = { setFilter(squawkFilter.toggleComponent(it)) },
+        onClearTime = { setFilter(squawkFilter.copy(time = TimeWindow.All)) },
+        horizontalPadding = Spacing.none,
+      )
+    }
+
     DualSegmentedFilter(
       option1 = stringResource(Res.string.open_with_count, openSquawks.size),
       option2 = stringResource(
@@ -156,6 +190,16 @@ fun SquawkTab(
     )
 
     val displayList = if (showClosed) closedSquawks else openSquawks
+    if (useFilterBar) {
+      RecordCountRow(
+        count = displayList.size,
+        nounSingular = squawkNoun.singular,
+        nounPlural = squawkNoun.plural,
+        filterActive = squawkFilter.isActive,
+        onClear = { setFilter(RecordFilter()) },
+        horizontalPadding = Spacing.none,
+      )
+    }
     // Each sub-view is its own list with its own counter — switching the toggle re-evaluates from
     // scratch, which falls out of wrapping the filtered list rather than the union.
     val showAds by adsManager.shouldShowsAds()
@@ -169,7 +213,9 @@ fun SquawkTab(
     }
 
     if (displayList.isEmpty()) {
-      if (!showClosed) {
+      if (useFilterBar && squawkFilter.isActive) {
+        NoRecordsMatch(nounPlural = squawkNoun.plural, onClearFilters = { setFilter(RecordFilter()) })
+      } else if (!showClosed) {
         EmptyState(
           title = stringResource(
             Res.string.no_open_squawks,
@@ -224,6 +270,19 @@ fun SquawkTab(
           }
         }
       }
+    }
+
+    if (showFilterSheet) {
+      RecordFilterSheet(
+        title = stringResource(SearchRes.string.filter_records, squawkNoun.plural),
+        filter = squawkFilter,
+        showComponentFilter = componentTypesApply,
+        componentLabel = { it.displayName() },
+        onComponentToggle = { setFilter(squawkFilter.toggleComponent(it)) },
+        onTimeWindowChange = { setFilter(squawkFilter.copy(time = it)) },
+        onClear = { setFilter(squawkFilter.withoutFilters()) },
+        onDismiss = { showFilterSheet = false },
+      )
     }
 
     Spacer(Modifier.height(Spacing.buttonHeight + Spacing.screenPadding))

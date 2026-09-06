@@ -27,6 +27,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.search.model.RecordFilter
@@ -53,13 +54,14 @@ fun RecordFilterBar(
   onClearTime: () -> Unit,
   modifier: Modifier = Modifier,
   dueWithin: Boolean = false,
+  horizontalPadding: Dp = Spacing.screenPadding,
 ) {
   Column(modifier = modifier.fillMaxWidth()) {
     Row(
       modifier = Modifier
         .fillMaxWidth()
         .padding(
-          start = Spacing.screenPadding,
+          start = horizontalPadding,
           end = Spacing.small,
           top = Spacing.small,
           bottom = Spacing.small
@@ -99,7 +101,7 @@ fun RecordFilterBar(
     val time = filter.time
     if (componentChips.isNotEmpty() || time != TimeWindow.All) {
       LazyRow(
-        contentPadding = PaddingValues(horizontal = Spacing.screenPadding),
+        contentPadding = PaddingValues(horizontal = horizontalPadding),
         horizontalArrangement = Arrangement.spacedBy(Spacing.small),
         modifier = Modifier.fillMaxWidth()
           .padding(bottom = Spacing.small),
@@ -160,12 +162,13 @@ fun RecordCountRow(
   filterActive: Boolean,
   onClear: () -> Unit,
   modifier: Modifier = Modifier,
+  horizontalPadding: Dp = Spacing.screenPadding,
 ) {
   Row(
     modifier = modifier
       .fillMaxWidth()
       .padding(
-        horizontal = Spacing.screenPadding,
+        horizontal = horizontalPadding,
         vertical = Spacing.extraSmall
       ),
     verticalAlignment = Alignment.CenterVertically,

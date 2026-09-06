@@ -1,7 +1,7 @@
 # PRD: Search and Filter
 
-**Status:** 📋 Proposed
-**Last updated:** 2026-09-05
+**Status:** 🚧 P1 built (developer builds only, behind `AppCapability.isSearchFilterSupported`); P2 and P3 not started
+**Last updated:** 2026-09-06
 **Design doc:** `docs/search/search_filter_design.md`
 **Related:** `docs/search/intelligentsearch.md` (engine research; superseded for v1 by the design doc, kept as the escalation path)
 **Tracking:** GitHub Project #11 “Search and Filter” — epics #817 (P1), #818 (P2), #819 (P3)

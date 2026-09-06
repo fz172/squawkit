@@ -12,6 +12,8 @@ import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
+import dev.fanfly.wingslog.feature.search.datamanager.SearchEngine
+import dev.fanfly.wingslog.feature.search.model.RecordFilter
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.sharing.model.ShareRole
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
@@ -25,21 +27,22 @@ import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.thing.Squawk
 import dev.gitlive.firebase.auth.FirebaseAuth
+import kotlin.time.Clock
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import kotlin.time.Clock
 
 /** The share-related flows, combined so they fit in one slot of the outer [combine]. */
 private data class ShareContext(
@@ -61,12 +64,30 @@ class ThingOverviewViewModel(
   private val thingScopeResolver: ThingScopeResolver,
   private val templateRegistry: TemplateRegistry,
   private val auth: FirebaseAuth,
+  private val searchEngine: SearchEngine,
   private val thingId: String,
+  private val clock: Clock = Clock.System,
+  private val timeZone: TimeZone = TimeZone.currentSystemDefault(),
 ) : ViewModel() {
 
   private val _uiState =
     MutableStateFlow<ThingOverviewUiState>(ThingOverviewUiState.Loading)
-  val uiState: StateFlow<ThingOverviewUiState> = _uiState.asStateFlow()
+  private val _squawkFilter = MutableStateFlow(RecordFilter())
+  private val _taskFilter = MutableStateFlow(RecordFilter())
+
+  // Filters apply on the way out, so typing never re-runs the due computation.
+  val uiState: StateFlow<ThingOverviewUiState> =
+    combine(_uiState, _squawkFilter, _taskFilter) { state, squawkFilter, taskFilter ->
+      if (state !is ThingOverviewUiState.Success) state
+      else state.applyFilters(
+        squawkFilter = squawkFilter,
+        taskFilter = taskFilter,
+        searchEngine = searchEngine,
+        logs = cachedLogs,
+        today = clock.now().toLocalDateTime(timeZone).date,
+        timeZone = timeZone,
+      )
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, ThingOverviewUiState.Loading)
 
   private val _events = Channel<ThingOverviewEvent>()
   private var cachedLogs: List<MaintenanceLog> = emptyList()
@@ -211,8 +232,8 @@ class ThingOverviewViewModel(
               ),
             )
           }
-          val today = Clock.System.now()
-            .toLocalDateTime(TimeZone.currentSystemDefault()).date
+          val today = clock.now()
+            .toLocalDateTime(timeZone).date
           val active = cardsWithStatus
             .filter { it.dueStatus.status != DueStatus.COMPLIED }
             .sortedBy { task ->
@@ -277,6 +298,9 @@ class ThingOverviewViewModel(
 
   fun onAction(action: ThingOverviewAction) {
     when (action) {
+      is ThingOverviewAction.SquawkFilterChange -> _squawkFilter.value = action.filter
+      is ThingOverviewAction.TaskFilterChange -> _taskFilter.value = action.filter
+
       ThingOverviewAction.BackClick -> {
         viewModelScope.launch { _events.send(ThingOverviewEvent.NavigateBack) }
       }

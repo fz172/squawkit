@@ -2,6 +2,7 @@ package dev.fanfly.wingslog.feature.thing.dashboard.data
 
 import dev.fanfly.wingslog.core.template.DegradedReason
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
+import dev.fanfly.wingslog.feature.search.model.RecordFilter
 import dev.fanfly.wingslog.feature.sharing.model.ShareRole
 import dev.fanfly.wingslog.feature.squawk.model.SquawkWithStatus
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
@@ -68,6 +69,12 @@ sealed interface ThingOverviewUiState {
     val shared: Boolean = false,
     /** Guest account. Sharing needs a permanent one, so its entry points are hidden entirely. */
     val isAnonymous: Boolean = false,
+    val squawkFilter: RecordFilter = RecordFilter(),
+    val taskFilter: RecordFilter = RecordFilter(),
+    /** The raw lists above narrowed by their tab’s filter; the Overview tab keeps reading the raw ones. */
+    val filteredSquawks: List<SquawkWithStatus> = emptyList(),
+    val filteredActiveTasks: List<MaintenanceTaskWithStatus> = emptyList(),
+    val filteredCompletedTasks: List<MaintenanceTaskWithStatus> = emptyList(),
   ) : ThingOverviewUiState {
     /**
      * Owner-only affordances: Edit Aircraft, Delete, Manage Access. Technicians get a read-only

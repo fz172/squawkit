@@ -22,5 +22,6 @@
   <string name="clear_filters">Clear filters</string>
   <string name="record_count_one">1 <xliff:g example="work log">%1$s</xliff:g></string>
   <string name="record_count_other"><xliff:g example="5">%1$d</xliff:g> <xliff:g example="work logs">%2$s</xliff:g></string>
+  <string name="meter_task_note"><xliff:g example="Inspections">%1$s</xliff:g> tracked only by a meter have no date and always show.</string>
   <string name="no_records_match">No <xliff:g example="work logs">%1$s</xliff:g> match these filters.</string>
 </resources>

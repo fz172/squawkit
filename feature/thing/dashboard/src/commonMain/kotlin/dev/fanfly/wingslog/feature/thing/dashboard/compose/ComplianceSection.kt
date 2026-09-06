@@ -36,11 +36,11 @@ import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
 import dev.fanfly.wingslog.feature.tasks.viewing.TaskCardItem
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
+import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedRes
 import wingslog.feature.tasks.sharedassets.generated.resources.due_with_count
 import wingslog.feature.tasks.sharedassets.generated.resources.history_with_count
 import wingslog.feature.tasks.sharedassets.generated.resources.no_tasks_yet
 import wingslog.feature.tasks.sharedassets.generated.resources.starter_pack_empty_action
-import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedRes
 
 @Composable
 fun ComplianceSection(
@@ -55,6 +55,11 @@ fun ComplianceSection(
   scrollTargetId: String? = null,
   onTargetPositioned: (Float) -> Unit = {},
   showHeader: Boolean = true,
+  /** The per-tab search and filter bar, under the header; null keeps the section as it was. */
+  filterBar: (@Composable () -> Unit)? = null,
+  countRow: (@Composable () -> Unit)? = null,
+  /** Shown instead of the empty states when a filter left nothing to list. */
+  noMatch: (@Composable () -> Unit)? = null,
   modifier: Modifier = Modifier,
 ) {
   Column(
@@ -69,6 +74,8 @@ fun ComplianceSection(
       )
     }
 
+    filterBar?.invoke()
+
     DualSegmentedFilter(
       option1 = stringResource(
         SharedRes.string.due_with_count,
@@ -81,6 +88,8 @@ fun ComplianceSection(
       selectedIndex = if (showComplied) 1 else 0,
       onSelect = { onToggleComplied(it == 1) },
     )
+
+    countRow?.invoke()
 
     val displayList = if (showComplied) completedTasks else activeTasks
     // Due / History are independent lists with independent counters, exactly like squawks
@@ -97,7 +106,9 @@ fun ComplianceSection(
     }
 
     if (displayList.isEmpty()) {
-      if (!showComplied) {
+      if (noMatch != null) {
+        noMatch()
+      } else if (!showComplied) {
         EmptyState(
           title = stringResource(
             SharedRes.string.no_tasks_yet,

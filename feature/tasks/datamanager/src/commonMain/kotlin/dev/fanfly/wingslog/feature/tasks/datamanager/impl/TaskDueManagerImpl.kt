@@ -53,7 +53,9 @@ class TaskDueManagerImpl(
     val latestLog = relevantLogs.firstOrNull()
 
     if (card.is_one_time && (latestLog != null || card.force_complied_status != null)) {
-      return DueMetadata(status = DueStatus.COMPLIED)
+      val compliedDate = latestLog?.timestamp?.toLocalDate(timeZone)
+        ?: card.force_complied_status?.complied_date?.toLocalDate(timeZone)
+      return DueMetadata(status = DueStatus.COMPLIED, compliedDate = compliedDate)
     }
 
     // 1. Force overrides

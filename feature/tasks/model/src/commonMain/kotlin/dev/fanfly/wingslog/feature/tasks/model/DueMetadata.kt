@@ -25,4 +25,6 @@ data class DueMetadata(
   val isOnCondition: Boolean = false,
   val isImmediate: Boolean = false,
   val status: DueStatus = DueStatus.NORMAL,
+  /** When a complied task was last complied; null while it is still due. */
+  val compliedDate: LocalDate? = null,
 )
