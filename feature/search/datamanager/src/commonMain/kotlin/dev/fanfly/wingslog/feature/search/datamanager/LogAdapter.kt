@@ -19,7 +19,9 @@ class LogAdapter(
     SearchField("technician", item.technician?.name.orEmpty(), weight = 1),
   )
 
-  override fun component(item: MaintenanceLog): ComponentType = item.component_type
+  override fun component(item: MaintenanceLog): ComponentType =
+    item.component_type
 
-  override fun date(item: MaintenanceLog): LocalDate? = item.timestamp?.toLocalDate(timeZone)
+  override fun date(item: MaintenanceLog): LocalDate? =
+    item.timestamp?.toLocalDate(timeZone)
 }

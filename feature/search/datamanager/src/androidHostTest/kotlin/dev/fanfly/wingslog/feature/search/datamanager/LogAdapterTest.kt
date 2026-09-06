@@ -27,21 +27,36 @@ class LogAdapterTest {
   @Test
   fun fields_serialOutweighsDescriptionAndTechnician() {
     val fields = adapter.fields(log)
-    assertThat(fields.map { it.name }).containsExactly("component_serial", "work_description", "technician").inOrder()
-    assertThat(fields.map { it.text }).containsExactly("3AB012345", "Installed GTX 335 transponder", "R. Alvarez").inOrder()
+    assertThat(fields.map { it.name }).containsExactly(
+      "component_serial",
+      "work_description",
+      "technician"
+    )
+      .inOrder()
+    assertThat(fields.map { it.text }).containsExactly(
+      "3AB012345",
+      "Installed GTX 335 transponder",
+      "R. Alvarez"
+    )
+      .inOrder()
     assertThat(fields.first().weight).isGreaterThan(fields.last().weight)
   }
 
   @Test
   fun fields_toleratesMissingTechnician() {
-    assertThat(adapter.fields(log.copy(technician = null)).last().text).isEmpty()
+    assertThat(
+      adapter.fields(log.copy(technician = null))
+        .last().text
+    ).isEmpty()
   }
 
   @Test
   fun component_andDate_inTheAdapterZone() {
     assertThat(adapter.component(log)).isEqualTo(ComponentType.COMPONENT_AIRFRAME)
     assertThat(adapter.date(log)).isEqualTo(LocalDate(2026, 8, 25))
-    assertThat(LogAdapter(TimeZone.of("Pacific/Auckland")).date(log)).isEqualTo(LocalDate(2026, 8, 26))
+    assertThat(LogAdapter(TimeZone.of("Pacific/Auckland")).date(log)).isEqualTo(
+      LocalDate(2026, 8, 26)
+    )
     assertThat(adapter.date(log.copy(timestamp = null))).isNull()
     assertThat(adapter.direction(log)).isEqualTo(TimeDirection.PAST)
     assertThat(adapter.nullDateMatches).isFalse()
