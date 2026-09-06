@@ -95,9 +95,9 @@ import kotlin.math.roundToInt
  */
 private enum class PendingSignIn { Google, Apple }
 
-/** The Android app's listing. Closed testing for now; swap for the public listing at launch. */
+/** The Android app's Google Play listing. */
 private const val PlayStoreUrl =
-  "https://play.google.com/apps/testing/dev.fanfly.wingslog"
+  "https://play.google.com/store/apps/details?id=dev.fanfly.wingslog"
 
 /** The App Store listing once the iOS build is approved. Null leaves the button out. */
 private val AppStoreUrl: String? = null
