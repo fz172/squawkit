@@ -75,7 +75,7 @@
 <main>
   <div class="hero">
     <div>
-      <span class="pill amber">Status: Proposed — not implemented</span>
+      <span class="pill green">Status: Shipped — 2026-07</span>
       <span class="pill">Design Doc</span>
       <span class="pill">Sharing · Sync · Security Rules · Cloud Functions</span>
     </div>
@@ -334,7 +334,7 @@ match /aircraft_shares/{acId} {
   viewing/        MemberRow, RoleChip, SharedBadge (fleet-card + overview affordances)
   update/         ManageAccessScreen, InviteSheet (QR + share-link), RedeemConfirmationSheet,
                   ManageAccessViewModel, RedeemViewModel</code></pre>
-      <p>Register the Koin modules in <code>initKoin.kt</code> as usual. All UI is gated by <code>FeatureFlags.aircraftSharingEnabled</code> (new Feature Lab flag) and hidden for anonymous users.</p>
+      <p>Register the Koin modules in <code>initKoin.kt</code> as usual. All UI is hidden for anonymous users. <i>(Historical: the <code>FeatureFlags.aircraftSharingEnabled</code> Feature Lab flag was removed with FeatureLab; hosting a share is gated by <code>SubscriptionManager.canHostShare()</code>.)</i></p>
 
       <h3 id="manager">6.2 <code>SharingManager</code> — a deliberate exception to "managers never touch Firestore"</h3>
       <p>Share ACL docs are plain-field, rules-inspected, function-written — they can't ride the entity-sync path. <code>SharingManager</code> therefore talks to Firestore/Functions directly, an <b>online-only surface</b>, following the existing precedent of <code>ExportHistoryRemoteRepository</code>/<code>ExportDeliveryBackend</code> in <code>feature/export</code>. Sharing management inherently requires connectivity (you're granting cloud access); the shared <em>content</em> remains fully local-first.</p>
@@ -425,7 +425,7 @@ match /aircraft_shares/{acId} {
 
       <div class="callout note">
         <strong>Implementation Status</strong>
-        Designed here; <b>not yet built</b>. Sharing v1 ships an honest degradation (issue #146): a member sees the attachment exists and is told it is not available on a shared aircraft, the attach affordance is hidden, and plain link URLs in the payload still work. This section is the design for the fast-follow, tracked as epic <b>#196 [P8]</b> and its sub-issues (P8.1–P8.8). It supersedes the earlier "custom-claims, maybe" sketch.
+        <b>Shipped.</b> Sharing v1 (P1–P6, #102–#107) landed 2026-07-09 → 07-19 and this section's fast-follow, epic <b>#196 [P8]</b> with sub-issues P8.1–P8.8, closed 2026-07-24: the ACL-checked blob broker (<code>getBlobUploadSession</code>, <code>streamBlob</code>), blob drivers routed through it for foreign-hosted aircraft, member-cache-only purge on revoke, cross-account deletion and GC, and the aircraft-scoped entitlement gate (the host's Pro entitlement governs). The v1 degradation described here (issue #146) is therefore gone. The Feature Lab flag in §5 was removed with FeatureLab; the 2026-08 Thing migration moved the ACL to <code>thing_shares/{hostUid}/thing/{id}</code>. Status refreshed 2026-09-05.
       </div>
 
       <p>Blob objects live in Firebase Storage under user-scoped paths, with matching Storage rules and a per-scope transfer pipeline keyed to <code>/users/{uid}/%</code> (see <a href="../storage/storage_r2_design.md">R2 design</a>). An attachment on aircraft <code>acId</code> hosted by <code>hostUid</code> lands at <code>users/{hostUid}/aircraft/{acId}/blobs/{blobId}</code>. Firestore record data crosses the account boundary via the <code>aircraft_shares</code> ACL; the blobs hanging off those records do not.</p>

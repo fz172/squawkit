@@ -1,12 +1,11 @@
 # PRD: Display Ads (Free Tier)
 
-> **Implementation status.** **Proposed — nothing has shipped.** No `feature/ads` module exists yet,
-> no ad SDK is integrated, and the in-app comparison table
-> ([`ProPaywallContent.kt`](../../feature/subscription/viewing/src/commonMain/kotlin/dev/fanfly/wingslog/feature/subscription/viewing/ProPaywallContent.kt))
-> does not yet carry the Ad-free row specified in §9. The comparison table in
-> [`subscription_PRD.html`](../subscription/subscription_PRD.html) §3 has been updated to match this
-> PRD; the app-side row ships with the feature, not before it (advertising "ad-free" while no one
-> sees ads is a lie in the other direction).
+> **Implementation status.** **Shipped — GA on Android and iOS 2026-08-17** (epic #377, phases P1–P9,
+> #378–#386). `feature/ads` holds the placement core, session cap, and tier gate; AdMob renders in-list
+> banners on both platforms with a UMP consent step during onboarding; the Ad-free row is in the Pro
+> comparison table. `SubscriptionManager.shouldShowAds()` is false wherever `AppCapability.isAdsSupported`
+> is off, so the web build never shows ads. **Not started:** phase 2 web ads on Google Ad Manager (#387, #388).
+> See [`ads_design.html`](ads_design.html) for the per-phase record. Status refreshed 2026-09-05.
 
 > **Tier naming.** Shipped user-facing copy calls the tiers **Basic** (free) and **Pro** (paid) —
 > renamed from "Core" / "Heavy" (which had themselves been renamed from "Free" / "SquawkIt Pro" in
@@ -15,7 +14,7 @@
 > entitlement id — "Pro" as display copy now also matches that entitlement id exactly. This PRD uses
 > **Basic / Pro for anything a pilot reads** and the enum names when talking about gating.
 
-**Owner:** Product · **Status:** Proposed · **Date:** 2026-07-28
+**Owner:** Product · **Status:** Shipped — GA 2026-08-17 (web ads pending) · **Date:** 2026-07-28
 **Revised:** 2026-07-29 — session cap 10 → 5 (D1); AdMob on Android/iOS in v1 (D6); web scheduled as
 phase 2 on Ad Manager rather than dropped (D5, §8.2); fixed `BANNER` sizes (D7); no daily cap (D8);
 free aircraft limit 1 → 2, implemented in this change (D9)

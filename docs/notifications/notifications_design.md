@@ -1,8 +1,8 @@
 # Design Doc: Notifications
 
 **PRD:** [notifications_PRD.md](notifications_PRD.md)
-**Status:** 📋 Proposed — not implemented
-**Last updated:** 2026-08-17
+**Status:** ✅ Shipped — 2026-08-19 → 08-26
+**Last updated:** 2026-09-05
 **Areas:** `feature/notifications` (new) · `core/storage` · `core/model` · `core/nav` · `core/appinfo` ·
 `core/ui` · `feature/shell` · `feature/settings` · `feature/stresstest/config` · `feature/login` ·
 `feature/sync/data` · `backend/firebase/functions`
@@ -15,11 +15,23 @@
 
 ---
 
-## Implementation status — 📋 NOT STARTED
+## Implementation status — ✅ SHIPPED
 
-Nothing in this doc exists yet. There is no `feature/notifications` module, no FCM/APNs dependency,
-no `POST_NOTIFICATIONS` declaration in any manifest, and no notification-related `CollectionKind`,
-proto, table, or Cloud Function. Every file path below is a proposal.
+Built across epics P0–P6 (#454–#460), closed 2026-08-19 → 08-26. `feature/notifications` has ten
+submodules — `model`, `datamanager`, `engine`, `permission`, `settings`, `viewing`, `analytics`,
+`devoptions`, `sharedassets`, `di` — with Android, iOS, and JS actuals for the notifier, permission, and
+push-token sink. `notification_settings.proto` is a synced `CollectionKind`; the backend fan-out is
+`onNotifiableThingRecordWritten` / `onNotifiableThingWritten` in `backend/firebase/functions/src/notifications/`.
+Deltas from the design as written:
+
+- **Urgency tiers are `PRIORITY_RAISED` / `OVERDUE` / `DUE_SOON`.** AOG is not a separate tier (decision
+  2026-08-26); a raise to High or AOG reports as `PRIORITY_RAISED`.
+- **No coalescing for N1.** Every write sends its own notification; the session/throttle/ceiling ideas were
+  dropped and should not be reintroduced without a product decision.
+- **Lexicon copy.** Tier titles and bodies and the grounded channel's display name resolve through the
+  Thing's lexicon (#661–#663); the channel *id* is pinned by a test so it never changes.
+- **Web** ships both the sync-driven in-tab path (P3) and web push (P6, V1.1).
+- Paths below that say `aircraft` now read `thing` after the 2026-08 migration.
 
 ---
 
