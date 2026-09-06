@@ -13,7 +13,8 @@ Reads:
 
 Writes (all under docs/product/store_assets/):
   - play/phone/<NN>_<screen>.png             1080x2364
-  - play/tablet/<NN>_<screen>.png            2560x1600 (or 1600x2560 for a portrait capture)
+  - play/tablet/<NN>_<screen>.png            2560x1600 (or 1600x2560 for a portrait capture;
+                                             derived from ipad/ captures when tablet/ is empty)
   - play/feature_graphic.png                 1024x500
   - appstore/iphone_6_9/<NN>_<screen>.png    1320x2868
   - appstore/ipad_13/<NN>_<screen>.png       2752x2064 (or 2064x2752 for a portrait capture)
@@ -142,6 +143,10 @@ TARGETS = {
         "device": "tablet",
         "canvas": {"portrait": (1600, 2560), "landscape": (2560, 1600)},
         "store": "Google Play · 7-inch and 10-inch tablet (upload the same set to both)",
+        # With no tablet/ captures, reuse the iPad captures with an Android status bar painted
+        # over the iPadOS one. The app lays out identically on both.
+        "derive_from": "ipad",
+        "derived_bar": "android_tablet",
     },
     "appstore_iphone": {
         "src_dir": "iphone",
@@ -152,6 +157,7 @@ TARGETS = {
         # With no iphone/ captures, reuse the Android phone captures: the Android status bar is
         # cropped off and an iOS one drawn in its place, so the frame reads as an iPhone.
         "derive_from": "phone",
+        "derived_bar": "iphone",
     },
     "appstore_ipad": {
         "src_dir": "ipad",
@@ -159,6 +165,8 @@ TARGETS = {
         "device": "tablet",
         "canvas": {"portrait": (2064, 2752), "landscape": (2752, 2064)},
         "store": "App Store · iPad 13-inch",
+        # Simulator captures carry the real clock; repaint it as 9:41 with a full battery.
+        "status_bar": "ipad",
     },
 }
 
@@ -248,33 +256,51 @@ def captures_for(target):
     return present, missing, derived
 
 
-IOS_STATUS_BAR = """<div class="statusbar">
+WIFI_SVG = """<svg viewBox="0 0 16 12" class="wifi"><path d="M8 11.2a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3Zm-3.3-4.3a4.7 4.7 0 0 1 6.6 0l-1.2 1.2a3 3 0 0 0-4.2 0Zm-2.4-2.4a8 8 0 0 1 11.4 0l-1.2 1.2a6.3 6.3 0 0 0-9 0ZM0 2.1A11.3 11.3 0 0 1 16 2.1l-1.2 1.2a9.6 9.6 0 0 0-13.6 0Z"/></svg>"""
+CELL_SVG = """<svg viewBox="0 0 20 12" class="cell"><rect x="0" y="8" width="3.5" height="4" rx="0.8"/><rect x="5.5" y="5.5" width="3.5" height="6.5" rx="0.8"/><rect x="11" y="3" width="3.5" height="9" rx="0.8"/><rect x="16.5" y="0" width="3.5" height="12" rx="0.8"/></svg>"""
+BATTERY_SVG = """<svg viewBox="0 0 28 13" class="battery"><rect x="0.5" y="0.5" width="24" height="12" rx="3.5" fill="none" stroke-width="1"/><rect x="2" y="2" width="21" height="9" rx="2"/><path d="M26 4.5v4a2 2 0 0 0 0-4Z"/></svg>"""
+
+# Full-width bar drawn over the strip left by cropping an Android phone capture's status bar.
+IPHONE_STATUS_BAR = f"""<div class="statusbar">
   <span class="time">9:41</span>
-  <span class="icons">
-    <svg viewBox="0 0 20 12" class="cell"><rect x="0" y="8" width="3.5" height="4" rx="0.8"/><rect x="5.5" y="5.5" width="3.5" height="6.5" rx="0.8"/><rect x="11" y="3" width="3.5" height="9" rx="0.8"/><rect x="16.5" y="0" width="3.5" height="12" rx="0.8"/></svg>
-    <svg viewBox="0 0 16 12" class="wifi"><path d="M8 11.2a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3Zm-3.3-4.3a4.7 4.7 0 0 1 6.6 0l-1.2 1.2a3 3 0 0 0-4.2 0Zm-2.4-2.4a8 8 0 0 1 11.4 0l-1.2 1.2a6.3 6.3 0 0 0-9 0ZM0 2.1A11.3 11.3 0 0 1 16 2.1l-1.2 1.2a9.6 9.6 0 0 0-13.6 0Z"/></svg>
-    <svg viewBox="0 0 28 13" class="battery"><rect x="0.5" y="0.5" width="24" height="12" rx="3.5" fill="none" stroke-width="1"/><rect x="2" y="2" width="21" height="9" rx="2"/><path d="M26 4.5v4a2 2 0 0 0 0-4Z"/></svg>
-  </span>
+  <span class="icons">{CELL_SVG}{WIFI_SVG}{BATTERY_SVG}</span>
 </div>"""
 
+# Two patches, each painted in the bar's own colour by the template script, covering the clock
+# on the left and the battery readout on the right of a tablet capture. Nothing else is touched.
+IPAD_STATUS_BAR = f"""<div class="patch clock"><span>9:41 AM</span><span class="date">Mon Jun 9</span></div>
+<div class="patch status">{WIFI_SVG}{BATTERY_SVG}</div>"""
+ANDROID_TABLET_STATUS_BAR = f"""<div class="patch clock android"><span>5:00</span></div>
+<div class="patch status android">{WIFI_SVG}<span class="pill">100</span></div>"""
 
-def device_html(captures, device, ios_bar=False):
+STATUS_BARS = {
+    "iphone": IPHONE_STATUS_BAR,
+    "ipad": IPAD_STATUS_BAR,
+    "android_tablet": ANDROID_TABLET_STATUS_BAR,
+}
+
+
+def device_html(captures, device, bar=None):
     """One .device div per capture; index 0 is the front device.
 
-    With ios_bar, the capture's Android status bar is cropped off (margin as a fraction of the
-    screen width, since that is what percentage margins resolve against) and an iOS-style bar is
-    drawn over the strip. The bar's colour is sampled from the capture by a script in the template.
+    bar names a status-bar treatment from STATUS_BARS. "iphone" crops the capture's Android
+    status bar off (margin as a fraction of the screen width, since that is what percentage
+    margins resolve against) and draws an iOS bar over the strip. "ipad" and "android_tablet"
+    leave the capture in place and paint patches over its clock and battery readout. The
+    template script colours every bar from the capture itself.
     """
     out = []
     for i, path in enumerate(captures):
         w, _ = png_size(path)
         img = f'<img src="data:image/png;base64,{b64_file(path)}" alt="" />'
-        if ios_bar:
+        if bar == "iphone":
             crop = ANDROID_STATUS_BAR_PX * w / 1080
             screen = (
                 f'<div class="screen ios" style="--crop: {crop / w * 100:.3f}%">'
-                f"{img}{IOS_STATUS_BAR}</div>"
+                f"{img}{STATUS_BARS[bar]}</div>"
             )
+        elif bar:
+            screen = f'<div class="screen">{img}{STATUS_BARS[bar]}</div>'
         else:
             screen = f'<div class="screen">{img}</div>'
         out.append(f'<div class="device {device} d{i}" style="--i: {i}">{screen}</div>')
@@ -286,8 +312,9 @@ def render_target(name, target, fonts):
     if not present:
         print(f"[{name}] no captures in docs/product/screenshots/{target['src_dir']}/ — skipped")
         return
+    bar = target.get("derived_bar") if derived else target.get("status_bar")
     if derived:
-        print(f"[{name}] deriving from {target['derive_from']}/ captures with an iOS status bar")
+        print(f"[{name}] deriving from {target['derive_from']}/ captures with a {bar} status bar")
     for s, path in missing:
         print(f"[{name}] no capture {os.path.basename(path)} — skipped")
 
@@ -304,7 +331,7 @@ def render_target(name, target, fonts):
                 "CANVAS_H": size[1],
                 "CANVAS_CLASS": "stack" if len(captures) > 1 else "",
                 "DEVICE_ASPECT": f"{w} / {h}",
-                "DEVICES": device_html(captures, target["device"], ios_bar=derived),
+                "DEVICES": device_html(captures, target["device"], bar),
                 "HEADLINE_L1": s["l1"],
                 "HEADLINE_L2": s["l2"],
                 "HEADLINE_SCALE": s.get("headline_scale", 1),

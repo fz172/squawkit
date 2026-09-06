@@ -151,6 +151,42 @@
   .screen.ios .cell { width: 4.6cqw; height: 2.8cqw; }
   .screen.ios .wifi { width: 4.1cqw; height: 3.1cqw; }
   .screen.ios .battery { width: 6.8cqw; height: 3.2cqw; }
+
+  /* Tablet capture taken outside demo mode: two patches, painted in the bar's own colour by the
+     script below, cover the clock and the battery readout, and demo-mode glyphs sit on top.
+     Sizes are iPadOS points at 2x, as a fraction of the capture width. */
+  .screen .patch {
+    position: absolute;
+    top: 0;
+    height: 2.3cqw;
+    padding-top: 0.3cqw;
+    display: flex;
+    align-items: center;
+    gap: 0.6cqw;
+    color: #fff;
+    fill: #fff;
+    stroke: #fff;
+    font-family: -apple-system, 'SF Pro Text', 'Helvetica Neue', system-ui, sans-serif;
+    font-weight: 600;
+    font-size: 1.24cqw;
+    letter-spacing: -0.01em;
+  }
+  .screen .patch.clock { left: 1.5cqw; width: 12.5cqw; padding-left: 0.65cqw; }
+  .screen .patch.clock .date { margin-left: 0.5cqw; }
+  .screen .patch.status { right: 1.5cqw; width: 10cqw; justify-content: flex-end; padding-right: 0.6cqw; }
+  .screen .patch .wifi { width: 1.3cqw; height: 1cqw; }
+  .screen .patch .battery { width: 2.25cqw; height: 1.05cqw; }
+  /* Android flavour: Roboto-weight clock and the Pixel battery pill. */
+  .screen .patch.android { font-weight: 500; font-size: 1.16cqw; letter-spacing: 0; }
+  .screen .patch .pill {
+    background: #fff;
+    color: var(--bezel);
+    border-radius: 0.4cqw;
+    padding: 0 0.28cqw;
+    font-size: 0.92cqw;
+    font-weight: 700;
+    line-height: 1.05cqw;
+  }
 </style>
 
 <div class="canvas __CANVAS_CLASS__">
@@ -167,17 +203,32 @@ __DEVICES__
 </div>
 
 <script>
-  // Colour the iOS status bar like the app's own top edge: sample the capture just inside the
-  // strip that used to be the Android status bar. data: images do not taint the canvas.
+  // Colour every painted status bar from the capture itself, so it matches the app's own top edge
+  // (and any sheet scrim dimming it). data: images do not taint the canvas.
   addEventListener('load', () => {
-    document.querySelectorAll('.screen.ios').forEach((screen) => {
-      const img = screen.querySelector('img');
+    const sampler = (img) => {
       const c = document.createElement('canvas');
       c.width = img.naturalWidth; c.height = img.naturalHeight;
-      c.getContext('2d').drawImage(img, 0, 0);
+      const ctx = c.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      return (x, y) => {
+        const [r, g, b] = ctx.getImageData(Math.round(x), Math.round(y), 1, 1).data;
+        return `rgb(${r},${g},${b})`;
+      };
+    };
+    // Derived iPhone: the strip that used to be the Android status bar, sampled at its centre.
+    document.querySelectorAll('.screen.ios').forEach((screen) => {
+      const img = screen.querySelector('img');
       const crop = parseFloat(screen.style.getPropertyValue('--crop')) / 100 * img.naturalWidth;
-      const [r, g, b] = c.getContext('2d').getImageData(Math.round(img.naturalWidth / 2), Math.round(crop / 2), 1, 1).data;
-      screen.querySelector('.statusbar').style.background = `rgb(${r},${g},${b})`;
+      screen.querySelector('.statusbar').style.background = sampler(img)(img.naturalWidth / 2, crop / 2);
+    });
+    // Tablet patches: each one sampled just above its own text, in capture pixels.
+    document.querySelectorAll('.screen .patch').forEach((patch) => {
+      const screen = patch.parentElement;
+      const img = screen.querySelector('img');
+      const scale = img.naturalWidth / screen.clientWidth;
+      const x = (patch.offsetLeft + patch.offsetWidth / 2) * scale;
+      patch.style.background = sampler(img)(x, patch.offsetHeight * scale * 0.1);
     });
   });
 </script>
