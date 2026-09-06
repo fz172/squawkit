@@ -512,9 +512,9 @@ Feature PRDs and architecture design docs live in `docs/`, organized into per-to
 - `docs/ads/` — `display_ads_PRD.md`, `ads_design.html`
 - `docs/account/` — `account_upgrade_PRD.html`, `account_upgrade_design.html`,
   `email_link_signin_design.html`
-- `docs/analytics/` — `analytics_design.html` (proposed, not implemented)
-- `docs/notifications/` — `notifications_PRD.md`, `notifications_design.md` (proposed, not
-  implemented)
+- `docs/analytics/` — `analytics_design.html` (**shipped** 2026-08-30 — `core/analytics`, typed GA4 taxonomy)
+- `docs/notifications/` — `notifications_PRD.md`, `notifications_design.md` (**shipped** 2026-08-19 → 08-26,
+  `feature/notifications`)
 - `docs/aircraft/` — `aircraft_overview_tabs.md`
 - `docs/search/` — `intelligentsearch.md`
 - `docs/web/` — `web_target_expansion_plan.md`, `web_attachments_design.md`,

@@ -69,7 +69,7 @@
 <main>
   <div class="hero">
     <div>
-      <span class="pill amber">Status: Proposed</span>
+      <span class="pill green">Status: Shipped</span>
       <span class="pill">Design Doc</span>
       <span class="pill">core:auth · feature:login</span>
       <span class="pill">Android · iOS · Web</span>
@@ -80,6 +80,11 @@
 
   <div class="page-shell">
     <div class="doc-body">
+
+      <div class="callout note">
+        <strong>Implementation Status</strong>
+        <b>Shipped on Android, iOS, and web.</b> <code>EmailLinkAuthenticator</code>, <code>EmailLinkDeepLinks</code> and the email-link <code>AuthProvider</code> live in <code>core/auth</code>; <code>feature/login</code> carries the "Log in with email" entry, the pending-email cache, and the completion screen (<code>EmailLinkCompletionScreen</code> on web). The Feature Lab gate in §9 was removed with FeatureLab. Status refreshed 2026-09-05.
+      </div>
 
       <h2 id="goal">1. Goal &amp; Scope</h2>
       <p>Firebase's <b>Email/Password</b> provider with <b>Email link (passwordless sign-in)</b> is already enabled in the console. This design wires that provider into SquawkIt as a first-class sign-in method, ranked third in the login UI:</p>

@@ -1,9 +1,10 @@
 # Aircraft Overview: 3-Tab Refactor Plan
 
-**Status: IMPLEMENTED — now 4 tabs.** Code lives in `feature/thing/dashboard/`. This doc describes the
-original 3-tab split (Overview / Maintenance Tasks / Logs). A **Squawks** tab was later inserted at index 1, so
-the shipped order is **Overview → Squawks → Tasks → Logs** (see `../squawks/squawk_design.md` §6). Tab indices are now an
-`AircraftTab` enum and the FAB is context-sensitive to the active tab.
+**Status: IMPLEMENTED — historical.** This doc describes the original 3-tab split (Overview / Maintenance Tasks /
+Logs). A **Squawks** tab was later inserted at index 1, and the tabs were then replaced by **shell sections**: the
+`AircraftTab` enum and tab host are gone, and the adaptive shell (`core/ui/adaptive`, `ShellSection.DASHBOARD /
+SQUAWKS / TASKS / LOGS / SETTINGS`) renders the sections from `feature/thing/dashboard/` with a context-sensitive
+FAB. Since the 2026-09 pivot the dashboard renders from the Thing's template. Status refreshed 2026-09-05.
 
 ## Goal
 

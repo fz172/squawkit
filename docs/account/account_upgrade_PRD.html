@@ -76,7 +76,7 @@
 <main>
   <div class="hero">
     <div>
-      <span class="pill amber">Status: Proposed</span>
+      <span class="pill green">Status: Shipped</span>
       <span class="pill">PRD</span>
       <span class="pill">Auth · Local-first · Sync</span>
     </div>
@@ -216,7 +216,7 @@
 
       <div class="callout note">
         <strong>Implementation Status</strong>
-        Proposed. Not yet built. The companion <a href="account_upgrade_design.html">Design Doc</a> specifies the auth, storage, and sync changes. This note will be updated to reflect what actually ships.
+        <b>Shipped.</b> Guest → account upgrade is live on Android, iOS, and web: Google and Apple linking (iOS Sign in with Apple #398, iOS Google linking #415, web Apple sign-in #400) with both the clean-link and merge paths, plus the passwordless email-link provider (<a href="email_link_signin_design.html">design</a>). The Feature Lab gate was removed with FeatureLab. Still open: the launch-time reconciliation described in the design doc's §9 — an upgrade interrupted between sign-in and reassign leaves the guest's rows preserved but unrecovered — and one unreproduced iOS failure (#422). See the companion <a href="account_upgrade_design.html">Design Doc</a> for the per-platform detail. Status refreshed 2026-09-05.
       </div>
 
     </div>

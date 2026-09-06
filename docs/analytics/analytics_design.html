@@ -69,7 +69,7 @@
 <main>
   <div class="hero">
     <div>
-      <span class="pill amber">Status: Proposed</span>
+      <span class="pill green">Status: Shipped — 2026-08-30</span>
       <span class="pill">Design Doc</span>
       <span class="pill">core:analytics · composeApp · feature:sync · feature:export</span>
     </div>
@@ -358,7 +358,7 @@
   </ol>
 
   <h2 id="status">11. Implementation Status</h2>
-  <p class="muted">Proposed — not yet implemented. This doc is the design for review prior to any code changes.</p>
+  <p class="muted"><b>Shipped.</b> <code>core/analytics</code> (<code>AnalyticsManager</code>, <code>AnalyticsEvent</code>, <code>ScreenTracking</code>, <code>AnalyticsPreference</code>) reports to Firebase Analytics → GA4 on Android, iOS, and web. Phase 2F of the multi-domain pivot (#645, closed 2026-08-30) defined the typed event taxonomy (#664), replaced every untyped <code>logEvent</code> call site (#665), added <code>template_id</code> to Thing-scoped events (#666), and verified events arrive in GA4 (#667); background-vs-foreground notification delivery is instrumented (#486) and the starter-pack events were wired in #707. Status refreshed 2026-09-05.</p>
 
   </div>
 

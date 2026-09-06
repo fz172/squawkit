@@ -6,6 +6,9 @@ description for both stores is `play_store_description.txt`. Images come from
 
 Character limits are checked by `screenshot_generator/check_listing.py`.
 
+**Launch status (2026-09-05):** Google Play — live in production. App Store — listing, privacy label and
+App Review submission still open (#440).
+
 ## Shared
 
 | Field | Value |

@@ -2,8 +2,9 @@
 
 > **Implementation status.** Attachments shipped via the local-first **R2** design
 > ([`storage_r2_design.md`](../storage/storage_r2_design.md)) — `feature/attachment/` with a local blob store and background
-> upload/download, available on logs, tasks, and squawks. The feature is gated behind the `attachmentUploadEnabled`
-> feature-lab flag. The product requirements below remain the source of truth for behavior; the storage mechanism
+> upload/download, available on logs, tasks, and squawks. File and photo upload are gated by the Pro subscription
+> (`SubscriptionManager.canUploadAttachments()`); link attachments are free. The former `attachmentUploadEnabled`
+> feature-lab flag was removed with FeatureLab. Attachments also work across shared Things via the blob broker. The product requirements below remain the source of truth for behavior; the storage mechanism
 > follows R2, not the older `attachments_design.md`.
 
 ## Overview

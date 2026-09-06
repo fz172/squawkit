@@ -1,7 +1,17 @@
 # PRD: Notifications
 
-**Status:** 📋 Proposed — not implemented
-**Last updated:** 2026-08-17
+**Status:** ✅ Shipped — 2026-08-19 → 08-26
+**Last updated:** 2026-09-05
+
+> **Implementation status.** Shipped in `feature/notifications` (ten submodules) across epics P0–P6
+> (#454–#460, closed 2026-08-19 → 08-26): urgency escalation (N2) on Android and iOS, collaboration
+> notifications (N1) with a backend fan-out on Android, iOS, web push (V1.1), and sync-driven in-tab
+> alerts on the web, plus a per-category settings screen and developer-options plumbing. Two decisions
+> made during the build: **every write sends its own N1 notification** — no session coalescing, throttle,
+> or ceiling — and **AOG is not its own urgency tier**; a raise to High or AOG reports as `PRIORITY_RAISED`.
+> Since Phase 2 of the multi-domain pivot, tier titles and bodies and the grounded channel's display name
+> come from the Thing's lexicon (#661–#663). See [notifications_design.md](notifications_design.md) for
+> the as-built detail.
 **Areas:** `feature/notifications` (new) · `feature/login` · `feature/sharing` · `feature/tasks` ·
 `feature/squawk` · `feature/sync` · `core/appinfo` · `backend/firebase/functions`
 **Related docs:** [notifications_design.md](notifications_design.md) ·

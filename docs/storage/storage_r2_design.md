@@ -7,7 +7,7 @@
 
 ---
 
-## Implementation status — ✅ SUBSTANTIALLY IMPLEMENTED (UI behind a feature flag)
+## Implementation status — ✅ SHIPPED
 
 The R2 architecture is built and wired:
 
@@ -20,8 +20,10 @@ The R2 architecture is built and wired:
 - **Storage path change:** blobs upload to `users/{uid}/aircraft/{aircraftId}/blobs/{id}` (aircraft-scoped),
   not the flat `users/{uid}/blobs/{id}` this doc originally specified — see the history note in §3.
 
-**Gating:** the attachment UI (and the *Sync on Cellular* toggle) is shown only when the `attachmentUploadEnabled`
-feature-lab flag is on — so the feature is present but not yet enabled for general use.
+**Gating:** the `attachmentUploadEnabled` feature-lab flag is gone (FeatureLab was removed). File and photo upload
+are gated by `SubscriptionManager.canUploadAttachments()` (Pro); link attachments are always free. On a shared
+Thing the host's entitlement governs, enforced by the Cloud Function blob broker (sharing P8, #196). Blobs now
+live under `users/{uid}/thing/{thingId}/blobs/{id}` after the 2026-08 migration. Status refreshed 2026-09-05.
 
 **De-registration:** `core/attachments` was removed from `settings.gradle.kts` (superseded by `feature/attachment`),
 though its stale build files still exist on disk and are slated for deletion.

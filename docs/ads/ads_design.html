@@ -71,7 +71,7 @@
 <main>
   <div class="hero">
     <div>
-      <span class="pill amber">Status: Proposed</span>
+      <span class="pill green">Status: Shipped — GA 2026-08-17</span>
       <span class="pill">Design Doc</span>
       <span class="pill">AdMob · Compose · Consent</span>
     </div>
@@ -84,7 +84,7 @@
 
       <div class="callout note">
         <strong>Implementation Status</strong>
-        P1–P8 shipped (#378–#385): placement core, the session cap, the tier gate, Android AdMob end to end, consent (UMP on both platforms — the iOS CMP added mid-P8; ATT deliberately dropped, see §8), and the iOS ad view via the Swift bridge, with real Android and iOS AdMob app ids and per-surface ad units on both platforms. <b>Revised post-P7:</b> the CMP dialog moved from a lazy <code>AdSlot</code>-triggered call to a one-time <code>AuthFlow</code> onboarding step with its own priming explainer, covering new and returning users alike — see the P7 roadmap entry. P9 (store disclosures, flipping <code>isAdsSupported</code> for GA) and P10 (phase 2 web ads) have not started. The PRD's decisions D1–D9 are settled inputs here and are not re-litigated; where this doc contradicts an <em>assumption</em> the PRD made about existing infrastructure, §3 and §5 say so explicitly.
+        P1–P8 shipped (#378–#385): placement core, the session cap, the tier gate, Android AdMob end to end, consent (UMP on both platforms — the iOS CMP added mid-P8; ATT deliberately dropped, see §8), and the iOS ad view via the Swift bridge, with real Android and iOS AdMob app ids and per-surface ad units on both platforms. <b>Revised post-P7:</b> the CMP dialog moved from a lazy <code>AdSlot</code>-triggered call to a one-time <code>AuthFlow</code> onboarding step with its own priming explainer, covering new and returning users alike — see the P7 roadmap entry. P9 shipped 2026-08-17 (#386): store disclosures are in place and <code>isAdsSupported</code> is on for Android and iOS (the iOS UMP form landed in #445). P10 (phase 2 web ads on Ad Manager, #387/#388) has not started; the web build stays ad-free. Status refreshed 2026-09-05. The PRD's decisions D1–D9 are settled inputs here and are not re-litigated; where this doc contradicts an <em>assumption</em> the PRD made about existing infrastructure, §3 and §5 say so explicitly.
       </div>
 
       <h2 id="overview">1. Overview &amp; Principles</h2>

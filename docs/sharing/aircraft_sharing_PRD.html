@@ -76,7 +76,7 @@
 <main>
   <div class="hero">
     <div>
-      <span class="pill amber">Status: Proposed — not implemented</span>
+      <span class="pill green">Status: Shipped — 2026-07</span>
       <span class="pill">PRD</span>
       <span class="pill">Sharing · Multi-user · Sync</span>
     </div>
@@ -86,6 +86,11 @@
 
   <div class="page-shell">
     <div class="doc-body">
+
+      <div class="callout note">
+        <strong>Implementation Status</strong>
+        <b>Shipped.</b> Epics P1–P6 (#102–#107) closed 2026-07-09 → 07-19: data model and rules, membership Cloud Functions and deep-link invites, the sync engine's foreign-scope fan-out, Manage Access and the scope resolver, technician linkage, and hardening. Attachments across shared aircraft followed as P8 (#196, closed 2026-07-24) via the ACL-checked blob broker. The Feature Lab flag named below was removed with FeatureLab: hosting a share is gated by the Pro entitlement (<code>SubscriptionManager.canHostShare()</code>) and accepting an invite is never gated. The 2026-08 Thing migration moved the ACL to <code>thing_shares/{hostUid}/thing/{id}</code> and renamed the callables (<code>createThingShareInvite</code>, <code>redeemThingShareInvite</code>, …); "aircraft" below reads as "Thing". Comments (#749) and collaboration notifications build on this membership model. Status refreshed 2026-09-05.
+      </div>
 
       <div class="callout note">
         <strong>Decisions locked for this PRD</strong>
