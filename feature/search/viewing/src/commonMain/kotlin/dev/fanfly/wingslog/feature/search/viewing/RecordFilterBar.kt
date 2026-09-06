@@ -36,8 +36,9 @@ import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.search.sharedassets.generated.resources.Res
 import wingslog.feature.search.sharedassets.generated.resources.clear
 import wingslog.feature.search.sharedassets.generated.resources.clear_search
-import wingslog.feature.search.sharedassets.generated.resources.count_of_total
 import wingslog.feature.search.sharedassets.generated.resources.filters
+import wingslog.feature.search.sharedassets.generated.resources.record_count_one
+import wingslog.feature.search.sharedassets.generated.resources.record_count_other
 
 /** Search field, filter button and the chips for what is applied. Stateless; one per tab. */
 @Composable
@@ -132,11 +133,11 @@ private fun FilterButton(active: Boolean, onClick: () -> Unit) {
   }
 }
 
-/** “5 of 12 work logs”, with a Clear action once anything narrows the list. */
+/** “5 work logs”, with a Clear action once anything narrows the list. */
 @Composable
 fun RecordCountRow(
-  shown: Int,
-  total: Int,
+  count: Int,
+  nounSingular: String,
   nounPlural: String,
   filterActive: Boolean,
   onClear: () -> Unit,
@@ -149,7 +150,10 @@ fun RecordCountRow(
     verticalAlignment = Alignment.CenterVertically,
   ) {
     Text(
-      text = stringResource(Res.string.count_of_total, shown, total, nounPlural).uppercase(),
+      text = (
+        if (count == 1) stringResource(Res.string.record_count_one, nounSingular)
+        else stringResource(Res.string.record_count_other, count, nounPlural)
+      ).uppercase(),
       style = MaterialTheme.typography.labelMedium.copy(letterSpacing = 0.6.sp),
       color = MaterialTheme.colorScheme.onSurfaceVariant,
       modifier = Modifier.weight(1f),

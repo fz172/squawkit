@@ -244,8 +244,8 @@ fun MaintenanceLogListContent(
                 onClearTime = { onTimeWindowChange(TimeWindow.All) },
               )
               RecordCountRow(
-                shown = uiState.logs.size,
-                total = uiState.totalCount,
+                count = uiState.logs.size,
+                nounSingular = LocalThingLexicon.current.logNoun.singular,
                 nounPlural = logNounPlural,
                 filterActive = uiState.filter.isActive,
                 onClear = onClearFilter,
