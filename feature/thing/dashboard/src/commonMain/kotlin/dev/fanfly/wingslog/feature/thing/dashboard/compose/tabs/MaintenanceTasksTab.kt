@@ -27,13 +27,14 @@ import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.componentTypesApply
 import dev.fanfly.wingslog.core.template.taskNoun
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalNavPillClearance
+import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.logs.sharedassets.util.displayName
 import dev.fanfly.wingslog.feature.search.model.TimeWindow
 import dev.fanfly.wingslog.feature.search.viewing.NoRecordsMatch
 import dev.fanfly.wingslog.feature.search.viewing.RecordCountRow
 import dev.fanfly.wingslog.feature.search.viewing.RecordFilterBar
-import dev.fanfly.wingslog.feature.search.viewing.RecordFilterSheet
+import dev.fanfly.wingslog.feature.search.viewing.RecordFilterControls
 import dev.fanfly.wingslog.feature.thing.dashboard.compose.ComplianceSection
 import dev.fanfly.wingslog.feature.thing.dashboard.data.TaskTabViewModel
 import dev.fanfly.wingslog.feature.thing.dashboard.data.ThingOverviewAction
@@ -153,6 +154,24 @@ fun MaintenanceTasksTab(
             dueWithin = !showComplied,
             horizontalPadding = Spacing.none,
           )
+          RecordFilterControls(
+            expanded = showFilterSheet,
+            inline = LocalLayoutTier.current.hasSideNav,
+            title = stringResource(SearchRes.string.filter_records, taskNoun.plural),
+            filter = taskFilter,
+            showComponentFilter = componentTypesApply,
+            componentLabel = { it.displayName() },
+            onComponentToggle = { setFilter(taskFilter.toggleComponent(it)) },
+            onTimeWindowChange = { setFilter(taskFilter.copy(time = it)) },
+            onClear = { setFilter(taskFilter.withoutFilters()) },
+            onDismiss = { showFilterSheet = false },
+            dueWithin = !showComplied,
+            timeNote = if (showComplied) null else stringResource(
+              SearchRes.string.meter_task_note,
+              LexiconFormatter.sentenceCasePlural(taskNoun),
+            ),
+            horizontalPadding = Spacing.none,
+          )
         }
       } else null,
       countRow = if (useFilterBar) {
@@ -171,24 +190,6 @@ fun MaintenanceTasksTab(
         { NoRecordsMatch(nounPlural = taskNoun.plural, onClearFilters = { tabViewModel.clearFilter() }) }
       } else null,
     )
-
-    if (showFilterSheet) {
-      RecordFilterSheet(
-        title = stringResource(SearchRes.string.filter_records, taskNoun.plural),
-        filter = taskFilter,
-        showComponentFilter = componentTypesApply,
-        componentLabel = { it.displayName() },
-        onComponentToggle = { setFilter(taskFilter.toggleComponent(it)) },
-        onTimeWindowChange = { setFilter(taskFilter.copy(time = it)) },
-        onClear = { setFilter(taskFilter.withoutFilters()) },
-        onDismiss = { showFilterSheet = false },
-        dueWithin = !showComplied,
-        timeNote = if (showComplied) null else stringResource(
-          SearchRes.string.meter_task_note,
-          LexiconFormatter.sentenceCasePlural(taskNoun),
-        ),
-      )
-    }
 
     Spacer(Modifier.height(Spacing.buttonHeight + Spacing.screenPadding))
   }

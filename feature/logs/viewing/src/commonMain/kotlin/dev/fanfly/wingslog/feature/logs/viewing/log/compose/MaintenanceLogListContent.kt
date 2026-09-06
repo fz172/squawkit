@@ -77,7 +77,7 @@ import dev.fanfly.wingslog.feature.search.model.TimeWindow
 import dev.fanfly.wingslog.feature.search.viewing.NoRecordsMatch
 import dev.fanfly.wingslog.feature.search.viewing.RecordCountRow
 import dev.fanfly.wingslog.feature.search.viewing.RecordFilterBar
-import dev.fanfly.wingslog.feature.search.viewing.RecordFilterSheet
+import dev.fanfly.wingslog.feature.search.viewing.RecordFilterControls
 import dev.fanfly.wingslog.thing.Attachment
 import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.MaintenanceLog
@@ -239,6 +239,18 @@ fun MaintenanceLogListContent(
                 onOpenFilters = { showFilterSheet = true },
                 onRemoveComponent = onComponentFilterToggle,
                 onClearTime = { onTimeWindowChange(TimeWindow.All) },
+              )
+              RecordFilterControls(
+                expanded = showFilterSheet,
+                inline = LocalLayoutTier.current.hasSideNav,
+                title = stringResource(SearchRes.string.filter_records, logNounPlural),
+                filter = uiState.filter,
+                showComponentFilter = componentTypesApply,
+                componentLabel = { it.displayName() },
+                onComponentToggle = onComponentFilterToggle,
+                onTimeWindowChange = onTimeWindowChange,
+                onClear = { onClearFilter() },
+                onDismiss = { showFilterSheet = false },
               )
               RecordCountRow(
                 count = uiState.logs.size,
@@ -472,20 +484,8 @@ fun MaintenanceLogListContent(
           }
         }
 
-        if (showFilterSheet) {
-          if (useSharedFilterBar) RecordFilterSheet(
-            title = stringResource(
-              SearchRes.string.filter_records,
-              LexiconFormatter.plural(LocalThingLexicon.current.logNoun),
-            ),
-            filter = uiState.filter,
-            showComponentFilter = componentTypesApply,
-            componentLabel = { it.displayName() },
-            onComponentToggle = onComponentFilterToggle,
-            onTimeWindowChange = onTimeWindowChange,
-            onClear = { onClearFilter() },
-            onDismiss = { showFilterSheet = false },
-          ) else ModalBottomSheet(
+        if (showFilterSheet && !useSharedFilterBar) {
+          ModalBottomSheet(
             onDismissRequest = { showFilterSheet = false },
             sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
           ) {

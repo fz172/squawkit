@@ -53,7 +53,7 @@ import dev.fanfly.wingslog.feature.search.model.TimeWindow
 import dev.fanfly.wingslog.feature.search.viewing.NoRecordsMatch
 import dev.fanfly.wingslog.feature.search.viewing.RecordCountRow
 import dev.fanfly.wingslog.feature.search.viewing.RecordFilterBar
-import dev.fanfly.wingslog.feature.search.viewing.RecordFilterSheet
+import dev.fanfly.wingslog.feature.search.viewing.RecordFilterControls
 import dev.fanfly.wingslog.feature.squawk.model.SquawkStatus
 import dev.fanfly.wingslog.feature.squawk.model.SquawkWithStatus
 import dev.fanfly.wingslog.feature.squawk.viewing.SquawkCard
@@ -182,6 +182,20 @@ fun SquawkTab(
         onClearTime = { setFilter(squawkFilter.copy(time = TimeWindow.All)) },
         horizontalPadding = Spacing.none,
       )
+      RecordFilterControls(
+        expanded = showFilterSheet,
+        inline = LocalLayoutTier.current.hasSideNav,
+        title = stringResource(SearchRes.string.filter_records, squawkNoun.plural),
+        filter = squawkFilter,
+        // Squawks are filed against the thing, not a component, so the section would be dead.
+        showComponentFilter = false,
+        componentLabel = { it.displayName() },
+        onComponentToggle = { setFilter(squawkFilter.toggleComponent(it)) },
+        onTimeWindowChange = { setFilter(squawkFilter.copy(time = it)) },
+        onClear = { setFilter(squawkFilter.withoutFilters()) },
+        onDismiss = { showFilterSheet = false },
+        horizontalPadding = Spacing.none,
+      )
     }
 
     DualSegmentedFilter(
@@ -278,20 +292,6 @@ fun SquawkTab(
           }
         }
       }
-    }
-
-    if (showFilterSheet) {
-      RecordFilterSheet(
-        title = stringResource(SearchRes.string.filter_records, squawkNoun.plural),
-        filter = squawkFilter,
-        // Squawks are filed against the thing, not a component, so the section would be dead.
-        showComponentFilter = false,
-        componentLabel = { it.displayName() },
-        onComponentToggle = { setFilter(squawkFilter.toggleComponent(it)) },
-        onTimeWindowChange = { setFilter(squawkFilter.copy(time = it)) },
-        onClear = { setFilter(squawkFilter.withoutFilters()) },
-        onDismiss = { showFilterSheet = false },
-      )
     }
 
     Spacer(Modifier.height(Spacing.buttonHeight + Spacing.screenPadding))
