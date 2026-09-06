@@ -117,8 +117,6 @@ core/
   datetime/             # Date/time utilities — WireInstantFactory, platform-specific formatters
   appinfo/              # App version/build info + AppCapability & createAppCapability (expect/actual),
                         #   logging configuration
-  search/               # Per-tab search and filter: RecordFilter, TimeWindow, RecordAdapter, SearchEngine,
-                        #   LogAdapter — pure Kotlin, no Compose (docs/search/search_filter_design.md)
 feature/
   shell/                # Shared app nav graph — the composable counterpart to core:di's Koin aggregator:
                         #   formDialogs, sharingRoutes, settingsDetailRoutes, AdaptiveShellRoute (+ nested
@@ -154,6 +152,9 @@ feature/
     viewing/            #   SquawkCard, SquawkDetailSheet, SquawkPickerSheet, AogAlertSection
     update/             #   SquawkFormScreen (Details / Comments tabs), DismissSquawkDialog,
                         #   SquawkFormViewModel
+  search/               # Per-tab search and filter (docs/search/search_filter_design.md, project #11)
+    model/              #   RecordFilter, TimeWindow, RecordAdapter, SearchHit — pure Kotlin
+    datamanager/        #   SearchEngine (swappable TokenMatcher), LogAdapter
   comments/             # Collaborator notes on a squawk or a task (#749). See docs/comments/
     model/              #   CommentEntry, CommentThreadState, CommentTarget, CommentParentKind
     datamanager/        #   CommentManager over EntityStore<Comment>, CommentThreadController
