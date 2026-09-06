@@ -72,7 +72,7 @@ import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import wingslog.feature.search.sharedassets.generated.resources.Res as SearchRes
 import wingslog.feature.search.sharedassets.generated.resources.filter_records
-import wingslog.feature.search.sharedassets.generated.resources.search_records
+import wingslog.feature.search.sharedassets.generated.resources.search_placeholder
 import wingslog.feature.squawk.sharedassets.generated.resources.Res
 import wingslog.feature.squawk.sharedassets.generated.resources.closed_with_count
 import wingslog.feature.squawk.sharedassets.generated.resources.no_closed_squawks
@@ -172,7 +172,7 @@ fun SquawkTab(
     if (useFilterBar) {
       RecordFilterBar(
         filter = squawkFilter,
-        placeholder = stringResource(SearchRes.string.search_records, squawkNoun.plural),
+        placeholder = stringResource(SearchRes.string.search_placeholder),
         showComponentFilter = componentTypesApply,
         componentLabel = { it.displayName() },
         onQueryChange = { setFilter(squawkFilter.copy(query = it)) },

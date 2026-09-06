@@ -48,7 +48,7 @@ import org.koin.core.parameter.parametersOf
 import wingslog.feature.search.sharedassets.generated.resources.Res as SearchRes
 import wingslog.feature.search.sharedassets.generated.resources.filter_records
 import wingslog.feature.search.sharedassets.generated.resources.meter_task_note
-import wingslog.feature.search.sharedassets.generated.resources.search_records
+import wingslog.feature.search.sharedassets.generated.resources.search_placeholder
 
 @Composable
 fun MaintenanceTasksTab(
@@ -142,7 +142,7 @@ fun MaintenanceTasksTab(
         {
           RecordFilterBar(
             filter = taskFilter,
-            placeholder = stringResource(SearchRes.string.search_records, taskNoun.plural),
+            placeholder = stringResource(SearchRes.string.search_placeholder),
             showComponentFilter = componentTypesApply,
             componentLabel = { it.displayName() },
             onQueryChange = { setFilter(taskFilter.copy(query = it)) },
