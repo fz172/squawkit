@@ -647,6 +647,7 @@ class SubscriptionUiStateTest {
       isCameraCaptureSupported = false,
       isAnonymousLoginSupported = false,
       isAdsSupported = isAdsSupported,
+      isSearchFilterSupported = false,
     ),
     activationGraceMillis = GRACE,
   )

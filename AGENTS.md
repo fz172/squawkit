@@ -117,6 +117,8 @@ core/
   datetime/             # Date/time utilities — WireInstantFactory, platform-specific formatters
   appinfo/              # App version/build info + AppCapability & createAppCapability (expect/actual),
                         #   logging configuration
+  search/               # Per-tab search and filter: RecordFilter, TimeWindow, RecordAdapter, SearchEngine,
+                        #   LogAdapter — pure Kotlin, no Compose (docs/search/search_filter_design.md)
 feature/
   shell/                # Shared app nav graph — the composable counterpart to core:di's Koin aggregator:
                         #   formDialogs, sharingRoutes, settingsDetailRoutes, AdaptiveShellRoute (+ nested
@@ -407,7 +409,8 @@ their own subscription — the host's entitlement governs and the blob broker en
 | Is a developer overriding it locally? | `DeveloperOptionsManager` / `DeveloperFlags` |
 
 `AppCapability` fields: `isDeveloperOptionsSupported`, `isStressTestSupported`,
-`isCameraCaptureSupported`, `isAnonymousLoginSupported`, `isAdsSupported`. Constructed once per host
+`isCameraCaptureSupported`, `isAnonymousLoginSupported`, `isAdsSupported`, `isSearchFilterSupported`
+(dev-only until the search and filter phases land — project #11). Constructed once per host
 at Koin startup via `createAppCapability(isDeveloperBuild)`.
 
 `SubscriptionManager` gates: `status()`, `entitlement()`, `canUploadAttachments()` (links stay free),

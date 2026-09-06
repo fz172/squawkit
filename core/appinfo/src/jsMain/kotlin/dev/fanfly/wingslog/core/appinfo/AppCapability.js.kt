@@ -9,4 +9,6 @@ actual fun createAppCapability(isDeveloperBuild: Boolean) = AppCapability(
   // puts one on Ad Manager (design §7.3, PRD D5) — the `jsMain` AdView actual renders nothing
   // regardless of this flag's value.
   isAdsSupported = false,
+  // Dev-only while the search and filter phases land (project #11).
+  isSearchFilterSupported = isDeveloperBuild,
 )
