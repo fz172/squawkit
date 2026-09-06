@@ -8,11 +8,11 @@ import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
+import dev.fanfly.wingslog.feature.search.datamanager.SearchEngine
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskStatusManager
-import dev.fanfly.wingslog.feature.search.datamanager.SearchEngine
 import dev.fanfly.wingslog.feature.thing.dashboard.data.SquawkTabViewModel
 import dev.fanfly.wingslog.feature.thing.dashboard.data.TaskTabViewModel
 import dev.fanfly.wingslog.feature.thing.dashboard.data.ThingOverviewViewModel
