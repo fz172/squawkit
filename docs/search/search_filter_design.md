@@ -9,7 +9,7 @@
 
 ## 1. Overview
 
-Three tabs, one bar, one matcher. The Logs tab already owns a `LogFilter`, a search field, a
+Per-tab search, built once. Each tab searches and filters only its own records; what is shared is the code, not the scope. The Logs tab already owns a `LogFilter`, a search field, a
 component sheet and active chips inside `feature/logs/viewing`. This design lifts that pattern out
 into shared code, adds a time window and a tolerant matcher, and wires the same bar into the Squawks
 and Tasks tabs rendered by `feature/thing/dashboard`.

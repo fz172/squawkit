@@ -176,7 +176,7 @@ user picks.
 
 | Phase | Scope | Ships alone? |
 |---|---|---|
-| **P1 – One bar, three tabs** (#817) | Shared filter model and composables; component and time filters (with custom range) on all three tabs; search widened to the fields in FR.9 with the existing substring matching; jump-target clearing on all tabs | Yes. Replaces the Logs-only sheet |
+| **P1 – Per-tab search and filter** (#817) | One shared bar and sheet component, placed on each tab and scoped to that tab's records; filter model; component and time filters (with custom range) on all three tabs; search widened to the fields in FR.9 with the existing substring matching; jump-target clearing on all tabs | Yes. Replaces the Logs-only sheet |
 | **P2 – Tolerant search** (#818) | Tokenizer, stemmer, synonym packs, edit-distance matching, ranking, explanations on cards, ground-truth test suite | Yes |
 | **P3 – Tab-specific filters and polish** (#819) | Priority, compliance type, technician; web keyboard shortcuts; analytics | Yes |
 
