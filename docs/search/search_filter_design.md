@@ -16,7 +16,8 @@ and Tasks tabs rendered by `feature/thing/dashboard`.
 
 Two new pieces of shared code:
 
-- **`core/search`** — pure Kotlin, `commonMain` only, no Compose, no Koin. The filter model, the
+- **`feature/search`** (`model` + `datamanager`; `viewing` and `sharedassets` arrive with the bar) —
+  pure Kotlin, `commonMain` only, no Compose, no Koin. The filter model, the
   time-window semantics, the tokenizer, stemmer, synonym packs, edit-distance matcher, scorer and
   the `SearchHit` result with its explanation. Fully unit-testable on the JVM.
 - **`core/ui`** additions — `RecordFilterBar`, `RecordFilterSheet`, `ActiveFilterChip`,
@@ -31,12 +32,15 @@ the schema. One small model addition (`DueMetadata.compliedDate`) is called out 
 ## 2. Module Layout
 
 ```
-core/search/                                   NEW  (pure Kotlin)
-  src/commonMain/kotlin/dev/fanfly/wingslog/core/search/
-    RecordFilter.kt          RecordFilter, TimeWindow, Facet
+feature/search/                                NEW  (canonical layout, pure Kotlin)
+  model/  …/feature/search/model/
+    RecordFilter.kt          RecordFilter, Facet
+    TimeWindow.kt            TimeWindow, TimeDirection, contains()
     RecordAdapter.kt         how a kind exposes its searchable fields, component and dates
-    SearchEngine.kt          search(items, adapter, filter, today) -> List<SearchHit<T>>
     SearchHit.kt             SearchHit<T>, MatchExplanation
+  datamanager/  …/feature/search/datamanager/
+    SearchEngine.kt          search(items, adapter, filter, today) -> List<SearchHit<T>>
+    LogAdapter.kt            the MaintenanceLog adapter (core:model type, so it can live here)
     text/Tokenizer.kt        normalise + tokenise, keeps whole serial/reference tokens
     text/Stemmer.kt          the dozen suffix rules
     text/EditDistance.kt     Damerau–Levenshtein with a cap
@@ -55,16 +59,20 @@ feature/tasks/model/                           CHANGED  DueMetadata.compliedDate
 feature/tasks/datamanager/                     CHANGED  TaskDueManager fills compliedDate
 ```
 
-Dependency direction: `feature/*` → `core/ui` → `core/search` → `core/model`. `core/search` needs
-`core/model` for `ComponentType` and the record types used by the adapters; the adapters themselves
-live in `core/search` so the three ViewModels share them.
+Dependency direction: consumers (`feature/logs/viewing`, `feature/thing/dashboard`) →
+`feature/search/viewing` → `feature/search/model`; `feature/search/datamanager` → `model`,
+`core/model`, `core/datetime`. `core/ui` cannot depend on a feature, so the bar and sheet live in
+`feature/search/viewing`, not `core/ui`. The squawk and task adapters need `feature/squawk/model` and
+`feature/tasks/model` types, which `feature/search` must not depend on, so they live beside the
+ViewModel that lists them (`feature/thing/dashboard`); only the log adapter is here.
 
-`core/search` is registered like every other core module: `settings.gradle.kts` include and the
-`core/di` wiring is not needed because the engine is a plain class the ViewModels construct.
+Both submodules are registered in `settings.gradle.kts`. `SearchEngine` is an interface with
+`impl/SearchEngineImpl`, bound by `searchModule` (registered in `core/di/CommonAppModules.kt`) and
+injected into the ViewModels.
 
 ---
 
-## 3. The Filter Model (`core/search`)
+## 3. The Filter Model (`feature/search/model`)
 
 ```kotlin
 data class RecordFilter(
@@ -155,7 +163,7 @@ Fields per adapter (PRD FR.9), with weights:
 
 ---
 
-## 4. The Matcher (`core/search`)
+## 4. The Matcher (`feature/search/datamanager`)
 
 Everything runs in memory over the list the tab already holds. A thing's logbook is hundreds of
 records, rarely thousands; a full scan per keystroke is well under a millisecond of work on every
@@ -304,8 +312,8 @@ Already the pattern. Changes:
   can render the explanation. `totalCount` stays.
 - New intents: `onTimeWindowChange`, `onFacetChange`. `onComponentFilterToggle` and `clearFilter`
   keep their names.
-- The engine is built once in `init` from `packFor(template.id)`; the VM already has the thing id
-  and can observe the template through the manager it uses today.
+- The engine is injected; the synonym pack (P2) reaches it through the adapter or a per-thing call
+  rather than a per-VM construction.
 
 ### 5.2 Squawks and Tasks — `ThingOverviewViewModel` (`feature/thing/dashboard`)
 
@@ -459,7 +467,7 @@ Never the query text. Fired from the ViewModels, on the debounced query and on e
 
 ## 8. Testing
 
-**`core/search` (JVM, JUnit 4 + Truth):**
+**`feature/search` (JVM, JUnit 4 + Truth):**
 
 - Tokenizer: serials and references kept whole and split; accents folded; numeric-ish detection.
 - Stemmer: the rule table, and a guard that `magneto`, `bulletin`, `annual` are untouched.
@@ -486,7 +494,7 @@ Never the query text. Fired from the ViewModels, on the debounced query and on e
 
 ## 9. Migration of the Logs Tab
 
-1. Add `core/search` with `RecordFilter` and a `SearchEngine` whose query step is plain substring
+1. Add `feature/search` with `RecordFilter` and a `SearchEngine` whose query step is plain substring
    (P1), swapped for §4 in P2.
 2. Replace `LogFilter` with `RecordFilter` in `MaintenanceLogListUiState` and the VM.
 3. Move `ActiveFilterChip` to `core/ui`; replace the inline search row and `FilterSheetContent`
@@ -502,7 +510,7 @@ checkpoint before touching Squawks and Tasks.
 
 | Step | Modules | Phase |
 |---|---|---|
-| 1 | `core/search`: model, time window, adapters, substring engine, tests | P1 |
+| 1 | `feature/search` model + datamanager: filter, time window, log adapter, substring engine, tests | P1 |
 | 2 | `core/ui`: bar, sheet, chip, count row, strings | P1 |
 | 3 | Logs tab migration (§9) | P1 |
 | 4 | `DueMetadata.compliedDate` + `TaskDueManagerImpl` | P1 |

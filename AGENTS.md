@@ -152,6 +152,9 @@ feature/
     viewing/            #   SquawkCard, SquawkDetailSheet, SquawkPickerSheet, AogAlertSection
     update/             #   SquawkFormScreen (Details / Comments tabs), DismissSquawkDialog,
                         #   SquawkFormViewModel
+  search/               # Per-tab search and filter (docs/search/search_filter_design.md, project #11)
+    model/              #   RecordFilter, TimeWindow, RecordAdapter, SearchHit — pure Kotlin
+    datamanager/        #   SearchEngine (swappable TokenMatcher), LogAdapter
   comments/             # Collaborator notes on a squawk or a task (#749). See docs/comments/
     model/              #   CommentEntry, CommentThreadState, CommentTarget, CommentParentKind
     datamanager/        #   CommentManager over EntityStore<Comment>, CommentThreadController
@@ -407,7 +410,8 @@ their own subscription — the host's entitlement governs and the blob broker en
 | Is a developer overriding it locally? | `DeveloperOptionsManager` / `DeveloperFlags` |
 
 `AppCapability` fields: `isDeveloperOptionsSupported`, `isStressTestSupported`,
-`isCameraCaptureSupported`, `isAnonymousLoginSupported`, `isAdsSupported`. Constructed once per host
+`isCameraCaptureSupported`, `isAnonymousLoginSupported`, `isAdsSupported`, `isSearchFilterSupported`
+(dev-only until the search and filter phases land — project #11). Constructed once per host
 at Koin startup via `createAppCapability(isDeveloperBuild)`.
 
 `SubscriptionManager` gates: `status()`, `entitlement()`, `canUploadAttachments()` (links stay free),

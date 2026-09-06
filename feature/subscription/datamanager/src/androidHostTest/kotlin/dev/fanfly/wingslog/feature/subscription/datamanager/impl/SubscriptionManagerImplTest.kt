@@ -50,6 +50,7 @@ class SubscriptionManagerImplTest {
     isCameraCaptureSupported = false,
     isAnonymousLoginSupported = false,
     isAdsSupported = ads,
+    isSearchFilterSupported = false,
   )
 
   private fun manager(

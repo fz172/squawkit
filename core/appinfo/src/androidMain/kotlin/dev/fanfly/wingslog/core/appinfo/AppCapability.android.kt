@@ -7,4 +7,5 @@ actual fun createAppCapability(isDeveloperBuild: Boolean) = AppCapability(
   isAnonymousLoginSupported = true,
   // GA (#386, P9): was dev + dogfood only until ads GA. Off = NO ads.
   isAdsSupported = true,
+  isSearchFilterSupported = isDeveloperBuild,
 )

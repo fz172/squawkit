@@ -99,6 +99,8 @@ include(":feature:squawk:datamanager")
 include(":feature:squawk:sharedassets")
 include(":feature:squawk:viewing")
 include(":feature:squawk:update")
+include(":feature:search:model")
+include(":feature:search:datamanager")
 
 include(":feature:ads:model")
 include(":feature:ads:datamanager")

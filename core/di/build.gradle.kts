@@ -55,6 +55,7 @@ kotlin {
       implementation(project(":feature:sharing:datamanager"))
       implementation(project(":feature:sharing:update"))
       implementation(project(":feature:squawk:datamanager"))
+      implementation(project(":feature:search:datamanager"))
       implementation(project(":feature:squawk:update"))
       implementation(project(":feature:sync:data"))
       implementation(project(":feature:sync:settings"))

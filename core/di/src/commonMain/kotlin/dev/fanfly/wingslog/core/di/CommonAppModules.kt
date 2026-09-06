@@ -29,6 +29,7 @@ import dev.fanfly.wingslog.feature.logs.datamanager.impl.maintenanceDataManagerM
 import dev.fanfly.wingslog.feature.logs.update.di.maintenanceUpdateModule
 import dev.fanfly.wingslog.feature.logs.viewing.di.maintenanceViewingModule
 import dev.fanfly.wingslog.feature.notifications.di.notificationsModule
+import dev.fanfly.wingslog.feature.search.datamanager.di.searchModule
 import dev.fanfly.wingslog.feature.settings.di.settingsModule
 import dev.fanfly.wingslog.feature.sharing.datamanager.sharingModule
 import dev.fanfly.wingslog.feature.sharing.update.di.sharingUiModule
@@ -108,6 +109,7 @@ val commonAppModules: List<Module> = listOf(
   tasksModule,
   tasksUiModule,
   squawkModule,
+  searchModule,
   squawkUiModule,
   commentsModule,
   fleetDataManagerModule,
