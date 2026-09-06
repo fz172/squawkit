@@ -24,6 +24,9 @@ Implemented in `feature/squawk/` (canonical layout), local-first over `EntitySto
   visibility is provided by the Overview-tab `AogAlertSection`, which is considered sufficient; surfacing AOG on
   the fleet cards is not planned.
 - Attachment fields in the squawk form are gated behind the `attachmentUploadEnabled` feature-lab flag.
+- **Deletion is proposed, not built.** `SquawkManager.deleteSquawk()` exists with no UI caller; the card
+  swipe action and the edit-form delete card are specified in
+  [`../cards/card_swipe_actions_design.md`](../cards/card_swipe_actions_design.md).
 
 ---
 

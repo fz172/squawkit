@@ -516,6 +516,8 @@ Feature PRDs and architecture design docs live in `docs/`, organized into per-to
 - `docs/notifications/` — `notifications_PRD.md`, `notifications_design.md` (**shipped** 2026-08-19 → 08-26,
   `feature/notifications`)
 - `docs/aircraft/` — `aircraft_overview_tabs.md`
+- `docs/cards/` — `card_swipe_actions_PRD.md`, `card_swipe_actions_design.md` (**proposed** — swipe-to-reveal
+  quick actions on squawk/task/log cards, and squawk deletion)
 - `docs/search/` — `intelligentsearch.md`
 - `docs/web/` — `web_target_expansion_plan.md`, `web_attachments_design.md`,
   `web_adaptive_layout_design.html`, `promo_site_design.html`
