@@ -1,14 +1,5 @@
 package dev.fanfly.wingslog.web
 
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -18,15 +9,15 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -34,6 +25,18 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.Category
+import androidx.compose.material.icons.outlined.Download
+import androidx.compose.material.icons.outlined.EventRepeat
+import androidx.compose.material.icons.outlined.ExpandMore
+import androidx.compose.material.icons.outlined.Group
+import androidx.compose.material.icons.outlined.MailOutline
+import androidx.compose.material.icons.outlined.NotificationsActive
+import androidx.compose.material.icons.outlined.Smartphone
+import androidx.compose.material.icons.outlined.WarningAmber
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -45,18 +48,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.input.pointer.PointerEventType
-import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
@@ -64,55 +66,59 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.core.ui.adaptive.compose.layoutTierFor
 import dev.fanfly.wingslog.core.ui.adaptive.thingIcon
 import dev.fanfly.wingslog.core.ui.brand.BrandPlane
-import dev.fanfly.wingslog.core.ui.brand.ThingHero
 import dev.fanfly.wingslog.core.ui.theme.rememberBrandHeadlineFamily
+import dev.fanfly.wingslog.core.ui.theme.rememberBrandMonoFamily
 import dev.fanfly.wingslog.feature.login.LoginButtonContent
 import dev.fanfly.wingslog.feature.login.data.LoginViewModel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.feature.login.generated.resources.Res
 import wingslog.feature.login.generated.resources.privacy_notice
 import kotlin.math.roundToInt
-import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Which sign-in request is currently awaiting a result, so the pressed button shows a spinner while
  * the others are disabled. Null means idle.
  *
- * This is not the list of login methods the page offers — it is only those that suspend *on this
- * page*. The other two options never reach an in-flight state here:
- *
- * - **Email** does not sign in on this page. Its button navigates away to the shared
- *   `EmailSignInScreen`, which owns its own progress state for both legs of the link flow.
- * - **Anonymous** does not exist on web at all: `AppCapability.isAnonymousLoginSupported` is false
- *   here and `AuthManagerImpl.signInAnonymously` refuses, because web requires a real account.
- *
- * Adding entries for them would create states that can never be set.
+ * Only the providers that suspend on this page. Email navigates away to the shared
+ * `EmailSignInScreen`, which owns its own progress state, and anonymous sign-in does not exist on
+ * web (`AppCapability.isAnonymousLoginSupported` is false here).
  */
 private enum class PendingSignIn { Google, Apple }
 
+/** The Android app's Google Play listing. */
+private const val PlayStoreUrl =
+  "https://play.google.com/store/apps/details?id=dev.fanfly.wingslog"
+
+/** The App Store listing once the iOS build is approved. Null leaves the button out. */
+private val AppStoreUrl: String? = null
+
+/** Show the App Store as a dashed "coming soon" placeholder while [AppStoreUrl] is null. */
+private const val ShowAppStoreComingSoon = false
+
+/** The "Now on Android" tile inside the login card. */
+private const val ShowHeroPromo = true
+
 /**
- * The web-only SquawkIt sign-in / SEO landing page — a full marketing page (header, navy hero with
- * the login card, features, how-it-works, FAQ, final CTA, footer) rendered in Compose to match the
- * approved `SquawkIt Login.html` design. Swapped into [dev.fanfly.wingslog.feature.login.AuthFlow]
- * via its `loginContent` slot by [WebApp], so the shared onboarding tail (name entry + welcome) and
- * the real Firebase auth wiring ([LoginViewModel]) are reused unchanged.
+ * The web-only SquawkIt sign-in / SEO landing page: sticky header, navy hero with the login card,
+ * features, how-it-works, FAQ, Get-the-app, final CTA, footer. Rendered in Compose to match the
+ * `Login Page.dc.html` design. Swapped into [dev.fanfly.wingslog.feature.login.AuthFlow] via its
+ * `loginContent` slot by [WebApp], so the shared onboarding tail and the real Firebase auth wiring
+ * ([LoginViewModel]) are reused unchanged.
  *
  * Web only: the native Android and iOS [dev.fanfly.wingslog.feature.login.LoginScreen] is untouched.
  *
- * Colors and stroke icons come from [WebLandingAssets]. Responsiveness mirrors the design's own CSS
- * breakpoints via [BoxWithConstraints]; light/dark is driven by the app's [AppearanceController] so
- * the whole app stays consistent after sign-in.
+ * Colors and marks come from [WebLandingAssets]. Breakpoints mirror the design's CSS grids via
+ * [BoxWithConstraints]; light/dark follows the OS setting.
  */
 @Composable
 internal fun WebLoginLandingScreen(
@@ -120,10 +126,12 @@ internal fun WebLoginLandingScreen(
   onChooseEmail: () -> Unit,
   loginViewModel: LoginViewModel = koinViewModel(),
 ) {
-  // The landing page follows the OS light/dark setting (no in-page theme switcher).
-  val isDark = isSystemInDarkTheme()
-  val colors = if (isDark) DarkLandingColors else LightLandingColors
-  val headline = rememberBrandHeadlineFamily()
+  val colors =
+    if (isSystemInDarkTheme()) DarkLandingColors else LightLandingColors
+  val type = LandingType(
+    headline = rememberBrandHeadlineFamily(),
+    mono = rememberBrandMonoFamily(),
+  )
   val scope = rememberCoroutineScope()
   val scrollState = rememberScrollState()
 
@@ -145,35 +153,33 @@ internal fun WebLoginLandingScreen(
           PendingSignIn.Google -> loginViewModel.login()
           PendingSignIn.Apple -> loginViewModel.loginWithApple()
         }
-        if (credential != null) onLoginSuccess() else error =
-          "Sign-in failed. Please try again."
+        if (credential != null) onLoginSuccess() else error = SignInFailed
       } catch (t: Throwable) {
-        error = "Sign-in failed. Please try again."
+        error = SignInFailed
       } finally {
         signingIn = null
       }
     }
     Unit
   }
-  val signInWithGoogle = { signIn(PendingSignIn.Google) }
-  val signInWithApple = { signIn(PendingSignIn.Apple) }
 
-  // Section anchors for in-page navigation. Each section reports its top in root coordinates; the
-  // scroll container reports its own top. Their difference is the scroll-invariant content offset
-  // to animate to (positionInParent() isn't available in this Compose version).
-  var contentTopY by remember { mutableStateOf(0f) }
+  // Section anchors for in-page navigation: each section's offset inside the scroll column, which
+  // does not move as the page scrolls (root coordinates would, and are not re-dispatched for
+  // sections that are off screen).
   var heroY by remember { mutableStateOf(0f) }
   var featuresY by remember { mutableStateOf(0f) }
   var howY by remember { mutableStateOf(0f) }
   var faqY by remember { mutableStateOf(0f) }
-  val scrollTo = { rawY: Float ->
-    scope.launch {
-      scrollState.animateScrollTo(
-        (rawY - contentTopY).roundToInt()
-          .coerceAtLeast(0)
-      )
-    }
+  var appY by remember { mutableStateOf(0f) }
+  val scrollTo = { y: Float ->
+    scope.launch { scrollState.animateScrollTo(y.roundToInt().coerceAtLeast(0)) }
     Unit
+  }
+  val anchor = { set: (Float) -> Unit ->
+    Modifier.onGloballyPositioned { coordinates ->
+      val parent = coordinates.parentLayoutCoordinates ?: return@onGloballyPositioned
+      set(parent.localPositionOf(coordinates, Offset.Zero).y)
+    }
   }
 
   BoxWithConstraints(
@@ -182,152 +188,190 @@ internal fun WebLoginLandingScreen(
       .background(colors.surface),
   ) {
     val w = maxWidth
-    val isCompact = layoutTierFor(w).isCompact
-    val heroStacked = w < 920.dp
+    val compact = layoutTierFor(w).isCompact
+    // Below this the hero copy and the login card stack, as do the two-column sections.
+    val stacked = w < 880.dp
+    val metrics = LandingMetrics(
+      heroTitle = (w.value * 0.05f).coerceIn(40f, 60f).sp,
+      sectionTitle = (w.value * 0.034f).coerceIn(28f, 40f).sp,
+      sectionPadding = if (stacked) 64.dp else 88.dp,
+    )
 
-    Column(
-      modifier = Modifier
-        .fillMaxSize()
-        .verticalScroll(scrollState)
-        .onGloballyPositioned { contentTopY = it.positionInRoot().y },
-    ) {
+    Column(modifier = Modifier.fillMaxSize()) {
+      // Outside the scroll container so it stays put, like the design's sticky header.
       LandingHeader(
         colors = colors,
-        headline = headline,
-        // Compact tier (phone): drop the nav links, leaving just the brand.
-        showNavLinks = !isCompact,
+        type = type,
+        showNavLinks = !compact,
         onNavFeatures = { scrollTo(featuresY) },
         onNavHow = { scrollTo(howY) },
         onNavFaq = { scrollTo(faqY) },
+        onNavApp = { scrollTo(appY) },
       )
-
-      Hero(
-        modifier = Modifier.onGloballyPositioned {
-          heroY = it.positionInRoot().y
-        },
-        colors = colors,
-        headline = headline,
-        stacked = heroStacked,
-        signingIn = signingIn,
-        error = error,
-        onGoogle = signInWithGoogle,
-        onApple = signInWithApple,
-        onChooseEmail = onChooseEmail,
-      )
-
-      FeaturesSection(
-        modifier = Modifier.onGloballyPositioned {
-          featuresY = it.positionInRoot().y
-        },
-        colors = colors,
-        headline = headline,
-        compact = heroStacked,
-      )
-
-      HowItWorksSection(
-        modifier = Modifier.onGloballyPositioned {
-          howY = it.positionInRoot().y
-        },
-        colors = colors,
-        headline = headline,
-        compact = heroStacked,
-      )
-
-      FaqSection(
-        modifier = Modifier.onGloballyPositioned {
-          faqY = it.positionInRoot().y
-        },
-        colors = colors,
-        headline = headline,
-        compact = heroStacked,
-      )
-
-      FinalCta(
-        colors = colors,
-        headline = headline,
-        compact = heroStacked,
-        onGetStarted = { scrollTo(heroY) },
-        onSeeFeatures = { scrollTo(featuresY) },
-      )
-
-      LandingFooter(colors = colors)
+      Column(
+        modifier = Modifier
+          .weight(1f)
+          .fillMaxWidth()
+          .verticalScroll(scrollState),
+      ) {
+        Hero(
+          modifier = anchor { heroY = it },
+          colors = colors,
+          type = type,
+          metrics = metrics,
+          stacked = stacked,
+          signingIn = signingIn,
+          error = error,
+          onGoogle = { signIn(PendingSignIn.Google) },
+          onApple = { signIn(PendingSignIn.Apple) },
+          onChooseEmail = onChooseEmail,
+          onNavApp = { scrollTo(appY) },
+        )
+        FeaturesSection(anchor { featuresY = it }, colors, type, metrics)
+        HowItWorksSection(anchor { howY = it }, colors, type, metrics)
+        FaqSection(anchor { faqY = it }, colors, type, metrics, stacked)
+        GetTheAppSection(anchor { appY = it }, colors, type, metrics)
+        FinalCta(
+          colors = colors,
+          type = type,
+          metrics = metrics,
+          onGetStarted = { scrollTo(heroY) },
+          onGetApp = { scrollTo(appY) },
+        )
+        LandingFooter(colors = colors, onNavApp = { scrollTo(appY) })
+      }
     }
   }
 }
 
-private val ContentMaxWidth = 1152.dp
+private const val SignInFailed = "Sign-in failed. Please try again."
 
-/** App-icon brand mark: the brand plane vector in the brand blue, no background tile. */
-@Composable
-private fun BrandMark(size: Dp, colors: LandingColors) {
-  Icon(
-    imageVector = BrandPlane,
-    contentDescription = null,
-    modifier = Modifier.size(size),
-    tint = colors.blue,
-  )
-}
+/** The design's `max-width: 1200px` content column. */
+private val ContentMaxWidth = 1200.dp
+private val PagePadding = 24.dp
 
-/** "SquawkIt" wordmark, "It" in the brand blue, as the store listing sets it. */
+private val CardShape = RoundedCornerShape(12.dp)
+private val ButtonShape = RoundedCornerShape(16.dp)
+
+private data class LandingType(val headline: FontFamily, val mono: FontFamily)
+
+/** Sizes that follow the viewport, standing in for the design's `clamp()` values. */
+private data class LandingMetrics(
+  val heroTitle: TextUnit,
+  val sectionTitle: TextUnit,
+  val sectionPadding: Dp,
+)
+
+/** A full-width band with the content column centred in it. */
 @Composable
-private fun BrandWordmark(
-  colors: LandingColors,
-  headline: FontFamily,
-  fontSize: Int
+private fun Band(
+  modifier: Modifier = Modifier,
+  background: Color,
+  verticalPadding: Dp,
+  content: @Composable () -> Unit,
 ) {
-  Text(
-    text = buildAnnotatedString {
-      append("Squawk")
-      withStyle(SpanStyle(color = colors.blue)) { append("It") }
-    },
-    style = TextStyle(
-      fontFamily = headline,
-      fontWeight = FontWeight.Bold,
-      fontSize = fontSize.sp,
-      letterSpacing = (-0.4).sp,
-      color = colors.heading,
-    ),
+  Box(
+    modifier = modifier
+      .fillMaxWidth()
+      .background(background),
+    contentAlignment = Alignment.TopCenter,
+  ) {
+    Box(
+      modifier = Modifier
+        .widthIn(max = ContentMaxWidth)
+        .fillMaxWidth()
+        .padding(horizontal = PagePadding, vertical = verticalPadding),
+    ) {
+      content()
+    }
+  }
+}
+
+@Composable
+private fun HairlineRule(color: Color) {
+  Box(
+    modifier = Modifier
+      .fillMaxWidth()
+      .height(1.dp)
+      .background(color),
   )
 }
+
+// ---------------------------------------------------------------------------------------------
+// Header
+// ---------------------------------------------------------------------------------------------
 
 @Composable
 private fun LandingHeader(
   colors: LandingColors,
-  headline: FontFamily,
+  type: LandingType,
   showNavLinks: Boolean,
   onNavFeatures: () -> Unit,
   onNavHow: () -> Unit,
   onNavFaq: () -> Unit,
+  onNavApp: () -> Unit,
 ) {
-  Box(
-    modifier = Modifier
-      .fillMaxWidth()
-      .background(colors.surface),
-    contentAlignment = Alignment.TopCenter,
+  Column(
+    modifier = Modifier.fillMaxWidth()
+      .background(colors.panel)
   ) {
-    Row(
-      modifier = Modifier
-        .widthIn(max = ContentMaxWidth)
-        .fillMaxWidth()
-        .padding(horizontal = 24.dp, vertical = 16.dp),
-      verticalAlignment = Alignment.CenterVertically,
+    Box(
+      modifier = Modifier.fillMaxWidth(),
+      contentAlignment = Alignment.TopCenter
     ) {
-      Row(verticalAlignment = Alignment.CenterVertically) {
-        BrandMark(size = 34.dp, colors = colors)
-        Spacer(Modifier.width(11.dp))
-        BrandWordmark(colors = colors, headline = headline, fontSize = 21)
-      }
-      Spacer(Modifier.weight(1f))
-      if (showNavLinks) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-          NavLink("Features", colors, onNavFeatures)
-          Spacer(Modifier.width(28.dp))
-          NavLink("How it works", colors, onNavHow)
-          Spacer(Modifier.width(28.dp))
-          NavLink("FAQ", colors, onNavFaq)
+      Row(
+        modifier = Modifier
+          .widthIn(max = ContentMaxWidth)
+          .fillMaxWidth()
+          .height(64.dp)
+          .padding(horizontal = PagePadding),
+        verticalAlignment = Alignment.CenterVertically,
+      ) {
+        Brand(colors, type)
+        Spacer(Modifier.weight(1f))
+        Row(
+          verticalAlignment = Alignment.CenterVertically,
+          horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+          if (showNavLinks) {
+            NavLink("Features", colors, onNavFeatures)
+            NavLink("How it works", colors, onNavHow)
+            NavLink("FAQ", colors, onNavFaq)
+          }
+          GetTheAppLink(colors, onNavApp)
         }
       }
     }
+    HairlineRule(colors.outline)
+  }
+}
+
+/** The brand plane in the brand blue, no tile, then the wordmark with "It" in blue. */
+@Composable
+private fun Brand(colors: LandingColors, type: LandingType) {
+  Row(
+    verticalAlignment = Alignment.CenterVertically,
+    horizontalArrangement = Arrangement.spacedBy(10.dp),
+  ) {
+    Icon(
+      imageVector = BrandPlane,
+      contentDescription = null,
+      modifier = Modifier.size(32.dp),
+      tint = colors.blue,
+    )
+    Text(
+      text = buildAnnotatedString {
+        append("Squawk")
+        withStyle(SpanStyle(color = colors.blue)) { append("It") }
+      },
+      style = TextStyle(
+        fontFamily = type.headline,
+        fontWeight = FontWeight.Bold,
+        fontSize = 20.sp,
+        letterSpacing = (-0.2).sp,
+        color = colors.heading,
+      ),
+    )
   }
 }
 
@@ -336,25 +380,62 @@ private fun NavLink(label: String, colors: LandingColors, onClick: () -> Unit) {
   Text(
     text = label,
     style = TextStyle(
-      fontSize = 14.5.sp,
+      fontSize = 14.sp,
       fontWeight = FontWeight.Medium,
       color = colors.slate
     ),
-    modifier = Modifier.clickable { onClick() },
+    modifier = Modifier
+      .clip(CardShape)
+      .clickable { onClick() }
+      .padding(horizontal = 12.dp, vertical = 8.dp),
   )
 }
+
+@Composable
+private fun GetTheAppLink(colors: LandingColors, onClick: () -> Unit) {
+  Row(
+    modifier = Modifier
+      .clip(CardShape)
+      .background(colors.sky)
+      .clickable { onClick() }
+      .padding(horizontal = 14.dp, vertical = 8.dp),
+    verticalAlignment = Alignment.CenterVertically,
+    horizontalArrangement = Arrangement.spacedBy(6.dp),
+  ) {
+    Icon(
+      imageVector = Icons.Outlined.Smartphone,
+      contentDescription = null,
+      modifier = Modifier.size(18.dp),
+      tint = colors.onSky,
+    )
+    Text(
+      text = "Get the app",
+      style = TextStyle(
+        fontSize = 14.sp,
+        fontWeight = FontWeight.Medium,
+        color = colors.onSky
+      ),
+    )
+  }
+}
+
+// ---------------------------------------------------------------------------------------------
+// Hero + login card
+// ---------------------------------------------------------------------------------------------
 
 @Composable
 private fun Hero(
   modifier: Modifier,
   colors: LandingColors,
-  headline: FontFamily,
+  type: LandingType,
+  metrics: LandingMetrics,
   stacked: Boolean,
   signingIn: PendingSignIn?,
   error: String?,
   onGoogle: () -> Unit,
   onApple: () -> Unit,
   onChooseEmail: () -> Unit,
+  onNavApp: () -> Unit,
 ) {
   Box(
     modifier = modifier
@@ -362,46 +443,41 @@ private fun Hero(
       .background(colors.navy),
     contentAlignment = Alignment.TopCenter,
   ) {
-    // Soft radial glow at the top of the hero (mirrors the design's ::before gradient).
-    Canvas(modifier = Modifier.matchParentSize()) {
-      drawCircle(
-        brush = Brush.radialGradient(
-          colors = listOf(
-            colors.blueBright.copy(alpha = 0.22f),
-            Color.Transparent
-          ),
-          center = Offset(size.width / 2f, size.height * 0.04f),
-          radius = size.width * 0.6f,
-        ),
-        center = Offset(size.width / 2f, size.height * 0.04f),
-        radius = size.width * 0.6f,
-      )
-    }
-
-    Column(
+    Box(
       modifier = Modifier
         .widthIn(max = ContentMaxWidth)
         .fillMaxWidth()
-        .padding(horizontal = 24.dp)
-        .padding(top = if (stacked) 44.dp else 64.dp, bottom = 96.dp),
+        .padding(horizontal = PagePadding)
+        .padding(
+          top = if (stacked) 56.dp else 72.dp,
+          bottom = if (stacked) 64.dp else 80.dp
+        ),
     ) {
+      val card: @Composable (Modifier) -> Unit = {
+        LoginCard(
+          modifier = it,
+          colors = colors,
+          type = type,
+          signingIn = signingIn,
+          error = error,
+          onGoogle = onGoogle,
+          onApple = onApple,
+          onChooseEmail = onChooseEmail,
+          onNavApp = onNavApp,
+        )
+      }
       if (stacked) {
-        HeroCopy(colors, headline, centered = true)
-        Spacer(Modifier.height(40.dp))
-        Box(
-          modifier = Modifier.fillMaxWidth(),
-          contentAlignment = Alignment.Center
-        ) {
-          LoginCard(
-            modifier = Modifier.widthIn(max = 460.dp),
-            colors = colors,
-            headline = headline,
-            signingIn = signingIn,
-            error = error,
-            onGoogle = onGoogle,
-            onApple = onApple,
-            onChooseEmail = onChooseEmail,
-          )
+        Column(verticalArrangement = Arrangement.spacedBy(56.dp)) {
+          HeroCopy(colors, type, metrics)
+          Box(
+            modifier = Modifier.fillMaxWidth(),
+            contentAlignment = Alignment.Center
+          ) {
+            card(
+              Modifier.widthIn(max = 460.dp)
+                .fillMaxWidth()
+            )
+          }
         }
       } else {
         Row(
@@ -409,19 +485,20 @@ private fun Hero(
           horizontalArrangement = Arrangement.spacedBy(56.dp),
           verticalAlignment = Alignment.CenterVertically,
         ) {
-          Box(modifier = Modifier.weight(1.05f)) {
-            HeroCopy(colors, headline, centered = false)
+          Box(modifier = Modifier.weight(1f)) {
+            HeroCopy(
+              colors,
+              type,
+              metrics
+            )
           }
-          Box(modifier = Modifier.weight(0.95f)) {
-            LoginCard(
-              modifier = Modifier.fillMaxWidth(),
-              colors = colors,
-              headline = headline,
-              signingIn = signingIn,
-              error = error,
-              onGoogle = onGoogle,
-              onApple = onApple,
-              onChooseEmail = onChooseEmail,
+          Box(
+            modifier = Modifier.weight(1f),
+            contentAlignment = Alignment.Center
+          ) {
+            card(
+              Modifier.widthIn(max = 460.dp)
+                .fillMaxWidth()
             )
           }
         }
@@ -433,53 +510,43 @@ private fun Hero(
 @Composable
 private fun HeroCopy(
   colors: LandingColors,
-  headline: FontFamily,
-  centered: Boolean
+  type: LandingType,
+  metrics: LandingMetrics
 ) {
-  val align = if (centered) Alignment.CenterHorizontally else Alignment.Start
-  val textAlign = if (centered) TextAlign.Center else TextAlign.Start
-  Column(horizontalAlignment = align) {
-    // The one-line announcement of the pivot, ahead of the headline: the returning aviation user
-    // reads it as "still for me, and now for more"; the new one reads it as an invitation.
-    Spacer(Modifier.height(20.dp))
+  Column(
+    modifier = Modifier.widthIn(max = 600.dp),
+    verticalArrangement = Arrangement.spacedBy(24.dp),
+  ) {
     Text(
       text = buildAnnotatedString {
-        append("Maintenance records for everything you own, ")
-        withStyle(SpanStyle(color = colors.skyDim)) { append("simplified") }
+        append("Know what’s due.\nLog what’s done.\n")
+        withStyle(SpanStyle(color = colors.heroAccent)) { append("For everything you own.") }
       },
       style = TextStyle(
-        fontFamily = headline,
+        fontFamily = type.headline,
         fontWeight = FontWeight.Bold,
-        fontSize = if (centered) 36.sp else 52.sp,
-        lineHeight = if (centered) 42.sp else 56.sp,
+        fontSize = metrics.heroTitle,
+        lineHeight = metrics.heroTitle * 1.05f,
         letterSpacing = (-1).sp,
         color = Color.White,
-        textAlign = textAlign,
       ),
     )
-    Spacer(Modifier.height(22.dp))
     Text(
-      text = "From the annual on your airplane to the oil change on your car and the filter in your furnace — know what's due, log what's done, and share it with the people who help.",
+      text = "From the annual on your airplane to the oil change on your car and the filter in your furnace — one place for every schedule, every issue, and the people who help.",
       style = TextStyle(
         fontSize = 18.sp,
         lineHeight = 28.sp,
-        color = colors.skyDim,
-        textAlign = textAlign,
+        color = colors.heroBody
       ),
-      modifier = Modifier.widthIn(max = if (centered) 480.dp else 440.dp),
+      modifier = Modifier.widthIn(max = 520.dp),
     )
-    Spacer(Modifier.height(24.dp))
-    ThingStrip(colors = colors, centered = centered)
+    ThingChips(colors)
   }
 }
 
-/**
- * The presets, as chips: the fastest way to say "not just airplanes" is to show the others, and
- * "And more" for whatever is not named. Same icons the app's switcher uses, so the promise and the
- * product match.
- */
+/** The presets as chips: the fastest way to say "not just airplanes" is to show the others. */
 @Composable
-private fun ThingStrip(colors: LandingColors, centered: Boolean) {
+private fun ThingChips(colors: LandingColors) {
   val things = listOf(
     "airplane" to "Airplane",
     "automotive" to "Car & motorcycle",
@@ -488,42 +555,32 @@ private fun ThingStrip(colors: LandingColors, centered: Boolean) {
     "home" to "Home",
     "custom" to "And more",
   )
-  // Two rows of three: six chips do not fit the hero column on one line, and a single chip
-  // orphaned onto a second row reads as an afterthought rather than a list.
   FlowRow(
-    horizontalArrangement = Arrangement.spacedBy(
-      8.dp,
-      if (centered) Alignment.CenterHorizontally else Alignment.Start,
-    ),
+    horizontalArrangement = Arrangement.spacedBy(8.dp),
     verticalArrangement = Arrangement.spacedBy(8.dp),
-    maxItemsInEachRow = 3,
   ) {
     things.forEach { (key, label) ->
       Row(
         modifier = Modifier
-          .clip(RoundedCornerShape(999.dp))
-          .background(Color.White.copy(alpha = 0.07f))
-          .border(
-            1.dp,
-            Color.White.copy(alpha = 0.16f),
-            RoundedCornerShape(999.dp)
-          )
-          .padding(horizontal = 12.dp, vertical = 7.dp),
+          .clip(CardShape)
+          .background(colors.heroChipBackground)
+          .border(1.dp, colors.heroChipBorder, CardShape)
+          .padding(horizontal = 12.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
       ) {
         Icon(
           imageVector = thingIcon(key),
           contentDescription = null,
-          modifier = Modifier.size(15.dp),
-          tint = colors.blueBright,
+          modifier = Modifier.size(16.dp),
+          tint = colors.heroBody,
         )
-        Spacer(Modifier.width(7.dp))
         Text(
           text = label,
           style = TextStyle(
             fontSize = 13.sp,
             fontWeight = FontWeight.Medium,
-            color = colors.trustText,
+            color = colors.heroBody
           ),
         )
       }
@@ -535,127 +592,166 @@ private fun ThingStrip(colors: LandingColors, centered: Boolean) {
 private fun LoginCard(
   modifier: Modifier,
   colors: LandingColors,
-  headline: FontFamily,
+  type: LandingType,
   signingIn: PendingSignIn?,
   error: String?,
   onGoogle: () -> Unit,
   onApple: () -> Unit,
   onChooseEmail: () -> Unit,
+  onNavApp: () -> Unit,
 ) {
   Column(
     modifier = modifier
-      .clip(RoundedCornerShape(24.dp))
+      .clip(CardShape)
       .background(colors.panel)
-      .border(1.dp, colors.outline, RoundedCornerShape(24.dp))
-      .padding(horizontal = 32.dp, vertical = 34.dp),
+      .border(1.dp, colors.outline, CardShape)
+      .padding(32.dp),
+    verticalArrangement = Arrangement.spacedBy(24.dp),
   ) {
-    // Same hero as the app's login screen, at card scale. Glyphs fly in from beyond the card and
-    // are clipped at its edge, which reads as flying into it.
-    ThingHero(
-      size = 96.dp,
-      tint = colors.blue,
-      fanTint = colors.blue.copy(alpha = 0.45f),
-      modifier = Modifier.offset(x = (-12).dp, y = (-10).dp),
-    )
-    Spacer(Modifier.height(6.dp))
-    Text(
-      text = "Log in to SquawkIt",
-      style = TextStyle(
-        fontFamily = headline,
-        fontWeight = FontWeight.Bold,
-        fontSize = 23.sp,
-        color = colors.heading
-      ),
-    )
-    Spacer(Modifier.height(8.dp))
-    Text(
-      text = "Sign in to keep your maintenance records in one place. Everything you track stays synced across every device.",
-      style = TextStyle(
-        fontSize = 14.5.sp,
-        lineHeight = 22.sp,
-        color = colors.slate
-      ),
-    )
-    Spacer(Modifier.height(26.dp))
-
-    AuthButton(
-      container = Color.White,
-      contentColor = Color(0xFF1F1F1F),
-      border = colors.outline,
-      enabled = signingIn == null,
-      loading = signingIn == PendingSignIn.Google,
-      onClick = onGoogle,
-      label = "Log in with Google",
-      leading = {
-        Image(
-          imageVector = GoogleLogo,
-          contentDescription = null,
-          modifier = Modifier.size(AuthButtonIconSize)
-        )
-      },
-    )
-    // Offered on every platform, like the shared LoginScreen.
-    Spacer(Modifier.height(12.dp))
-    AuthButton(
-      container = Color.Black,
-      contentColor = Color.White,
-      border = null,
-      enabled = signingIn == null,
-      loading = signingIn == PendingSignIn.Apple,
-      onClick = onApple,
-      label = "Log in with Apple",
-      leading = {
-        Icon(
-          imageVector = AppleLogo,
-          contentDescription = null,
-          modifier = Modifier.size(AuthButtonIconSize),
-          tint = Color.White
-        )
-      },
-    )
-    Spacer(Modifier.height(12.dp))
-    // Passwordless email link — navigates to the shared EmailSignInScreen, leaving the promo page.
-    AuthButton(
-      container = colors.card,
-      contentColor = colors.heading,
-      border = colors.outline,
-      enabled = signingIn == null,
-      loading = false,
-      onClick = onChooseEmail,
-      label = "Log in with email",
-      leading = {
-        Icon(
-          imageVector = IconMail,
-          contentDescription = null,
-          modifier = Modifier.size(AuthButtonIconSize),
-          tint = colors.heading
-        )
-      },
-    )
-
-    if (error != null) {
-      Spacer(Modifier.height(14.dp))
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
       Text(
-        text = error,
-        style = TextStyle(fontSize = 13.sp, color = Color(0xFFD64545)),
+        text = "Log in to SquawkIt",
+        style = TextStyle(
+          fontFamily = type.headline,
+          fontWeight = FontWeight.Bold,
+          fontSize = 24.sp,
+          lineHeight = 32.sp,
+          color = colors.heading,
+        ),
+      )
+      Text(
+        text = "Your records stay synced across every device.",
+        style = TextStyle(
+          fontSize = 14.sp,
+          lineHeight = 20.sp,
+          color = colors.muted
+        ),
       )
     }
 
-    Spacer(Modifier.height(18.dp))
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+      AuthButton(
+        colors = colors,
+        enabled = signingIn == null,
+        loading = signingIn == PendingSignIn.Google,
+        onClick = onGoogle,
+        label = "Continue with Google",
+        leading = {
+          Image(
+            imageVector = GoogleLogo,
+            contentDescription = null,
+            modifier = Modifier.size(AuthButtonIconSize),
+          )
+        },
+      )
+      // Offered on every platform, like the shared LoginScreen.
+      AuthButton(
+        colors = colors,
+        enabled = signingIn == null,
+        loading = signingIn == PendingSignIn.Apple,
+        onClick = onApple,
+        label = "Continue with Apple",
+        leading = {
+          Icon(
+            imageVector = AppleLogo,
+            contentDescription = null,
+            modifier = Modifier.size(AuthButtonIconSize),
+            tint = colors.ink,
+          )
+        },
+      )
+      // Passwordless email link — navigates to the shared EmailSignInScreen.
+      AuthButton(
+        colors = colors,
+        enabled = signingIn == null,
+        loading = false,
+        onClick = onChooseEmail,
+        label = "Continue with email",
+        leading = {
+          Icon(
+            imageVector = Icons.Outlined.MailOutline,
+            contentDescription = null,
+            modifier = Modifier.size(AuthButtonIconSize),
+            tint = colors.blue,
+          )
+        },
+      )
+      if (error != null) {
+        Text(
+          text = error,
+          style = TextStyle(fontSize = 13.sp, color = Color(0xFFBA1A1A))
+        )
+      }
+    }
+
+    if (ShowHeroPromo) HeroPromo(colors, onNavApp)
+
+    Column {
+      HairlineRule(colors.buttonOutline.copy(alpha = 0.4f))
+      Text(
+        text = "SquawkIt is a personal convenience tool, not a certified maintenance record system. It does not replace official logbooks or records required by any authority.",
+        style = TextStyle(
+          fontSize = 12.sp,
+          lineHeight = 18.sp,
+          color = colors.muted
+        ),
+        modifier = Modifier.padding(top = 16.dp),
+      )
+    }
+  }
+}
+
+/** The "Now on Android" tile inside the login card; jumps to the Get-the-app section. */
+@Composable
+private fun HeroPromo(colors: LandingColors, onClick: () -> Unit) {
+  Row(
+    modifier = Modifier
+      .fillMaxWidth()
+      .clip(CardShape)
+      .background(colors.card)
+      .border(1.dp, colors.outline, CardShape)
+      .clickable { onClick() }
+      .padding(horizontal = 14.dp, vertical = 12.dp),
+    verticalAlignment = Alignment.CenterVertically,
+    horizontalArrangement = Arrangement.spacedBy(12.dp),
+  ) {
     Box(
       modifier = Modifier
-        .fillMaxWidth()
-        .height(1.dp)
-        .background(colors.card),
-    )
-    Spacer(Modifier.height(18.dp))
-    Text(
-      text = "SquawkIt is a personal convenience tool and is not a certified maintenance record system. It does not replace the official logbooks or records required by any applicable authority.",
-      style = TextStyle(
-        fontSize = 11.5.sp,
-        lineHeight = 18.sp,
-        color = colors.disclaimer
-      ),
+        .size(36.dp)
+        .clip(RoundedCornerShape(8.dp))
+        .background(colors.sky),
+      contentAlignment = Alignment.Center,
+    ) {
+      Icon(
+        imageVector = Icons.Outlined.Smartphone,
+        contentDescription = null,
+        modifier = Modifier.size(20.dp),
+        tint = colors.onSky,
+      )
+    }
+    Column(
+      modifier = Modifier.weight(1f),
+      verticalArrangement = Arrangement.spacedBy(2.dp)
+    ) {
+      Text(
+        text = "Now on Android",
+        style = TextStyle(
+          fontSize = 14.sp,
+          fontWeight = FontWeight.SemiBold,
+          color = colors.heading
+        ),
+      )
+      Text(
+        text = "Log work from the hangar or the garage.",
+        style = TextStyle(fontSize = 12.sp, color = colors.muted),
+      )
+    }
+    Icon(
+      imageVector = Icons.Outlined.ExpandMore,
+      contentDescription = null,
+      modifier = Modifier.size(20.dp)
+        .rotate(-90f),
+      tint = colors.muted.copy(alpha = 0.6f),
     )
   }
 }
@@ -664,35 +760,26 @@ private fun LoginCard(
  * The provider mark in an [AuthButton]. A single value because the trailing spacer that balances it
  * has to match: if they drift, the label stops being centred.
  */
-private val AuthButtonIconSize = 19.dp
+private val AuthButtonIconSize = 20.dp
 
 @Composable
 private fun AuthButton(
-  container: Color,
-  contentColor: Color,
-  border: Color?,
+  colors: LandingColors,
   enabled: Boolean,
   loading: Boolean,
   onClick: () -> Unit,
   label: String,
   leading: @Composable () -> Unit,
 ) {
-  val shape = RoundedCornerShape(14.dp)
   Row(
     modifier = Modifier
       .fillMaxWidth()
-      .height(54.dp)
-      .clip(shape)
-      .background(container)
-      .then(
-        if (border != null) Modifier.border(
-          1.dp,
-          border,
-          shape
-        ) else Modifier
-      )
+      .height(52.dp)
+      .clip(ButtonShape)
+      .background(colors.panel)
+      .border(1.dp, colors.buttonOutline, ButtonShape)
       .clickable(enabled = enabled) { onClick() }
-      .padding(horizontal = 20.dp),
+      .padding(horizontal = 16.dp),
     horizontalArrangement = Arrangement.Center,
     verticalAlignment = Alignment.CenterVertically,
   ) {
@@ -700,19 +787,17 @@ private fun AuthButton(
       CircularProgressIndicator(
         modifier = Modifier.size(22.dp),
         strokeWidth = 2.dp,
-        color = contentColor
+        color = colors.ink,
       )
     } else {
       // The same layout rule the native sign-in buttons use — icon pinned to the leading edge,
-      // label centred in what is left — rather than a second copy of it. Only the metrics differ
-      // here (this page's own icon size and label style); the alignment is not this page's to have
-      // an opinion about, and having one is what let it drift out of step in the first place.
+      // label centred in what is left — so the two never drift apart.
       LoginButtonContent(
         label = label,
         labelStyle = TextStyle(
-          fontSize = 15.5.sp,
-          fontWeight = FontWeight.SemiBold,
-          color = contentColor
+          fontSize = 15.sp,
+          fontWeight = FontWeight.Medium,
+          color = colors.ink
         ),
         iconSize = AuthButtonIconSize,
         icon = leading,
@@ -721,634 +806,489 @@ private fun AuthButton(
   }
 }
 
+// ---------------------------------------------------------------------------------------------
+// Section furniture
+// ---------------------------------------------------------------------------------------------
+
+/** Kicker in the mono face, the section title, and an optional lede. Left-aligned, 640 wide. */
 @Composable
 private fun SectionHeading(
   colors: LandingColors,
-  headline: FontFamily,
+  type: LandingType,
+  metrics: LandingMetrics,
   kick: String,
   title: String,
   subtitle: String? = null,
+  kickColor: Color = colors.blue,
+  titleColor: Color = colors.heading,
+  subtitleColor: Color = colors.slate,
+  maxWidth: Dp = 640.dp,
 ) {
   Column(
-    modifier = Modifier
-      .fillMaxWidth()
-      .widthIn(max = 660.dp),
-    horizontalAlignment = Alignment.CenterHorizontally,
+    modifier = Modifier.widthIn(max = maxWidth),
+    verticalArrangement = Arrangement.spacedBy(12.dp),
   ) {
-    Text(
-      text = kick.uppercase(),
-      style = TextStyle(
-        fontSize = 13.sp,
-        fontWeight = FontWeight.SemiBold,
-        letterSpacing = 1.sp,
-        color = colors.blue
-      ),
-    )
-    Spacer(Modifier.height(12.dp))
-    Text(
-      text = title,
-      style = TextStyle(
-        fontFamily = headline,
-        fontWeight = FontWeight.Bold,
-        fontSize = 32.sp,
-        lineHeight = 38.sp,
-        letterSpacing = (-0.6).sp,
-        color = colors.heading,
-        textAlign = TextAlign.Center,
-      ),
-    )
+    Kicker(kick, type, kickColor)
+    SectionTitle(title, type, metrics, titleColor)
     if (subtitle != null) {
-      Spacer(Modifier.height(14.dp))
       Text(
         text = subtitle,
         style = TextStyle(
-          fontSize = 17.sp,
-          lineHeight = 26.sp,
-          color = colors.slate,
-          textAlign = TextAlign.Center
+          fontSize = 16.sp,
+          lineHeight = 24.sp,
+          color = subtitleColor
         ),
       )
     }
   }
 }
 
-/** One entry of a [Carousel]: what the spotlight card shows for it. */
-private data class Slide(
-  val icon: ImageVector? = null,
-  val step: Int? = null,
-  val title: String,
-  val body: String,
-)
+@Composable
+private fun Kicker(text: String, type: LandingType, color: Color) {
+  Text(
+    text = text.uppercase(),
+    style = TextStyle(
+      fontFamily = type.mono,
+      fontWeight = FontWeight.Medium,
+      fontSize = 12.sp,
+      color = color,
+    ),
+  )
+}
+
+@Composable
+private fun SectionTitle(
+  text: String,
+  type: LandingType,
+  metrics: LandingMetrics,
+  color: Color,
+  textAlign: TextAlign = TextAlign.Start,
+) {
+  Text(
+    text = text,
+    style = TextStyle(
+      fontFamily = type.headline,
+      fontWeight = FontWeight.Bold,
+      fontSize = metrics.sectionTitle,
+      lineHeight = metrics.sectionTitle * 1.15f,
+      letterSpacing = (-0.5).sp,
+      color = color,
+      textAlign = textAlign,
+    ),
+  )
+}
 
 /**
- * One slide at a time, advancing on its own every [autoAdvanceMillis] and on demand from the
- * arrows or the dots. Six cards of copy in a grid asked the visitor to read everything at once;
- * one card, moving, asks them to read one thing.
- *
- * Auto-advance pauses while the pointer is over the stage — a slide moving out from under a
- * reader is the one thing a carousel must not do — and restarts its clock on every manual step,
- * so a click never gets a half-second follow-on advance.
+ * The design's `repeat(auto-fit, minmax(minItemWidth, 1fr))` grid: as many equal columns as fit,
+ * every card in a row stretched to the tallest.
  */
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
-private fun Carousel(
-  slides: List<Slide>,
-  colors: LandingColors,
-  headline: FontFamily,
-  compact: Boolean,
-  cardColor: Color = colors.card,
-  autoAdvanceMillis: Long = 5_000,
+private fun CardGrid(
+  count: Int,
+  minItemWidth: Dp,
+  gap: Dp,
+  item: @Composable (index: Int, modifier: Modifier) -> Unit,
 ) {
-  var index by remember { mutableStateOf(0) }
-  var forward by remember { mutableStateOf(true) }
-  var hovered by remember { mutableStateOf(false) }
-  // Bumped on every manual step so the auto-advance delay restarts from that moment.
-  var clock by remember { mutableStateOf(0) }
-  val step = { delta: Int ->
-    forward = delta > 0
-    index = (index + delta).mod(slides.size)
-    clock++
-  }
-
-  LaunchedEffect(index, hovered, clock) {
-    if (hovered || slides.size < 2) return@LaunchedEffect
-    delay(autoAdvanceMillis.milliseconds)
-    forward = true
-    index = (index + 1) % slides.size
-  }
-
-  Column(
-    modifier = Modifier
-      .fillMaxWidth()
-      .widthIn(max = 820.dp)
-      .onPointerEvent(PointerEventType.Enter) { hovered = true }
-      .onPointerEvent(PointerEventType.Exit) { hovered = false },
-    horizontalAlignment = Alignment.CenterHorizontally,
-  ) {
-    Row(
-      modifier = Modifier.fillMaxWidth(),
-      verticalAlignment = Alignment.CenterVertically,
-      horizontalArrangement = Arrangement.spacedBy(if (compact) 8.dp else 18.dp),
-    ) {
-      CarouselArrow(colors, previous = true, onClick = { step(-1) })
-      Box(modifier = Modifier.weight(1f)) {
-        AnimatedContent(
-          targetState = index,
-          transitionSpec = {
-            val sign = if (forward) 1 else -1
-            (slideInHorizontally(tween(420)) { sign * it / 3 } + fadeIn(
-              tween(
-                320
+  BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+    val columns = ((maxWidth + gap) / (minItemWidth + gap)).toInt()
+      .coerceIn(1, count)
+    val rows = (count + columns - 1) / columns
+    Column(verticalArrangement = Arrangement.spacedBy(gap)) {
+      for (row in 0 until rows) {
+        Row(
+          modifier = Modifier
+            .fillMaxWidth()
+            .height(IntrinsicSize.Max),
+          horizontalArrangement = Arrangement.spacedBy(gap),
+        ) {
+          for (column in 0 until columns) {
+            val index = row * columns + column
+            if (index < count) {
+              item(
+                index,
+                Modifier.weight(1f)
+                  .fillMaxHeight()
               )
-            )) togetherWith
-              (slideOutHorizontally(tween(420)) { -sign * it / 3 } + fadeOut(
-                tween(220)
-              ))
-          },
-          // Every slide sits in the same frame: a stage that changes height between slides would
-          // push the dots and the section below it up and down on every advance.
-          modifier = Modifier.animateContentSize(tween(320)),
-        ) { i ->
-          SpotlightCard(slides[i], colors, headline, compact, cardColor)
+            } else {
+              Spacer(Modifier.weight(1f))
+            }
+          }
         }
       }
-      CarouselArrow(colors, previous = false, onClick = { step(1) })
-    }
-    Spacer(Modifier.height(22.dp))
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-      slides.indices.forEach { i ->
-        val active = i == index
-        Box(
-          modifier = Modifier
-            .height(8.dp)
-            .width(if (active) 26.dp else 8.dp)
-            .clip(RoundedCornerShape(999.dp))
-            .background(if (active) colors.blue else colors.outline)
-            .clickable {
-              forward = i > index
-              index = i
-              clock++
-            },
-        )
-      }
     }
   }
 }
 
-@Composable
-private fun CarouselArrow(
-  colors: LandingColors,
-  previous: Boolean,
-  onClick: () -> Unit
-) {
-  Box(
-    modifier = Modifier
-      .size(40.dp)
-      .clip(RoundedCornerShape(999.dp))
-      .background(colors.panel)
-      .border(1.dp, colors.outline, RoundedCornerShape(999.dp))
-      .clickable { onClick() },
-    contentAlignment = Alignment.Center,
-  ) {
-    Icon(
-      imageVector = IconChevronDown,
-      contentDescription = if (previous) "Previous" else "Next",
-      modifier = Modifier.size(18.dp)
-        .rotate(if (previous) 90f else -90f),
-      tint = colors.blue,
-    )
-  }
-}
+// ---------------------------------------------------------------------------------------------
+// Features
+// ---------------------------------------------------------------------------------------------
 
-/**
- * The one card on stage. Wide layouts put the icon (or step number) beside the copy so the card
- * fills its frame at a reading width; compact stacks them the way the grid cards did.
- */
-@Composable
-private fun SpotlightCard(
-  slide: Slide,
-  colors: LandingColors,
-  headline: FontFamily,
-  compact: Boolean,
-  cardColor: Color,
-) {
-  val shape = RoundedCornerShape(20.dp)
-  val frame = Modifier
-    .fillMaxWidth()
-    .heightIn(min = if (compact) 300.dp else 172.dp)
-    .clip(shape)
-    .background(cardColor)
-    .border(1.dp, colors.outline, shape)
-    .padding(
-      horizontal = if (compact) 26.dp else 34.dp,
-      vertical = if (compact) 28.dp else 32.dp
-    )
+private class Feature(
+  val icon: ImageVector,
+  val title: String,
+  val body: String
+)
 
-  val badge: @Composable () -> Unit = {
-    val size = if (compact) 50.dp else 64.dp
-    val radius = if (compact) 13.dp else 16.dp
-    when {
-      slide.step != null -> Box(
-        modifier = Modifier.size(size)
-          .clip(RoundedCornerShape(radius))
-          .background(colors.blue),
-        contentAlignment = Alignment.Center,
-      ) {
-        Text(
-          text = slide.step.toString(),
-          style = TextStyle(
-            fontFamily = headline,
-            fontWeight = FontWeight.Bold,
-            fontSize = if (compact) 18.sp else 24.sp,
-            color = Color.White,
-          ),
-        )
-      }
-
-      slide.icon != null -> Box(
-        modifier = Modifier.size(size)
-          .clip(RoundedCornerShape(radius))
-          .background(colors.blue.copy(alpha = 0.10f))
-          .border(
-            1.dp,
-            colors.blue.copy(alpha = 0.22f),
-            RoundedCornerShape(radius)
-          ),
-        contentAlignment = Alignment.Center,
-      ) {
-        Icon(
-          imageVector = slide.icon,
-          contentDescription = null,
-          modifier = Modifier.size(if (compact) 25.dp else 32.dp),
-          tint = colors.blue,
-        )
-      }
-    }
-  }
-  val copy: @Composable ColumnScope.() -> Unit = {
-    Text(
-      text = slide.title,
-      style = TextStyle(
-        fontFamily = headline,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = if (compact) 20.sp else 24.sp,
-        lineHeight = if (compact) 26.sp else 30.sp,
-        color = colors.heading,
-      ),
-    )
-    Spacer(Modifier.height(if (compact) 10.dp else 12.dp))
-    Text(
-      text = slide.body,
-      style = TextStyle(
-        fontSize = if (compact) 15.sp else 17.sp,
-        lineHeight = if (compact) 24.sp else 27.sp,
-        color = colors.slate,
-      ),
-    )
-  }
-
-  if (compact) {
-    Column(modifier = frame) {
-      badge()
-      Spacer(Modifier.height(18.dp))
-      copy()
-    }
-  } else {
-    // Centred, not top-aligned: slides differ in length, and a short one sitting in the top half
-    // of a fixed frame reads as unfinished where a centred one reads as deliberate.
-    Row(modifier = frame, verticalAlignment = Alignment.CenterVertically) {
-      badge()
-      Spacer(Modifier.width(26.dp))
-      Column(modifier = Modifier.weight(1f)) { copy() }
-    }
-  }
-}
+private val Features = listOf(
+  Feature(
+    Icons.Outlined.Category,
+    "Track anything you want",
+    "Airplane, car, bike, boat, home — or a custom type. Each brings its own fields, meters and a recommended starter schedule.",
+  ),
+  Feature(
+    Icons.Outlined.EventRepeat,
+    "Tasks that recur the right way",
+    "By calendar time, by meter — engine hours, odometer, ride distance — or on condition. Whichever comes first.",
+  ),
+  Feature(
+    Icons.Outlined.WarningAmber,
+    "An issue log that fits the thing",
+    "Squawks on an airplane, issues on a car, attention items at home. Anything that grounds it surfaces first.",
+  ),
+  Feature(
+    Icons.Outlined.NotificationsActive,
+    "Due-soon and overdue reminders",
+    "Know before anything lapses. Safety-critical items always sit at the top of the list.",
+  ),
+  Feature(
+    Icons.Outlined.Group,
+    "Share with the people who help",
+    "Invite a mechanic, co-owner or family member. Everyone logs against the same record.",
+  ),
+  Feature(
+    Icons.Outlined.Download,
+    "Export your records",
+    "PDF or CSV of a thing’s full history, any time. Your data is yours.",
+  ),
+)
 
 @Composable
 private fun FeaturesSection(
   modifier: Modifier,
   colors: LandingColors,
-  headline: FontFamily,
-  compact: Boolean,
+  type: LandingType,
+  metrics: LandingMetrics,
 ) {
-  Box(
-    modifier = modifier.fillMaxWidth()
-      .background(colors.surface), contentAlignment = Alignment.TopCenter
+  Band(
+    modifier = modifier,
+    background = colors.surface,
+    verticalPadding = metrics.sectionPadding
   ) {
-    Column(
-      modifier = Modifier
-        .widthIn(max = ContentMaxWidth)
-        .fillMaxWidth()
-        .padding(horizontal = 24.dp, vertical = if (compact) 64.dp else 88.dp),
-      horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
+    Column(verticalArrangement = Arrangement.spacedBy(48.dp)) {
       SectionHeading(
         colors = colors,
-        headline = headline,
+        type = type,
+        metrics = metrics,
         kick = "What it does",
         title = "Everything that keeps your things in service",
-        subtitle = "One place for the inspections, recurring tasks, and issues that matter — so nothing slips between services, whatever you're maintaining.",
+        subtitle = "Inspections, recurring tasks, and issues in one place — so nothing slips between services.",
       )
-      Spacer(Modifier.height(if (compact) 36.dp else 48.dp))
-      Carousel(
-        slides = listOf(
-          Slide(
-            icon = IconLayers,
-            title = "Track anything you want",
-            body = "Airplane, car or motorcycle, bike, boat, home — or anything else. Each type brings its own vocabulary, fields, meters and parts, so a home never asks for a tail number and an airplane never asks for an odometer. Free to start.",
-          ),
-          Slide(
-            icon = IconOffline,
-            title = "Works offline, syncs everywhere",
-            body = "Records are written to your device first, so the hangar with no signal and the driveway with no Wi-Fi both work. Sign in and everything syncs across phone, tablet and the web the moment you are back online.",
-          ),
-          Slide(
-            icon = IconInspection,
-            title = "Schedules that do the math",
-            body = "Recurring tasks by calendar, by meter — engine hours, odometer, ride distance — or on condition. Due-soon and overdue reminders rise to the top of every list, so status is the first thing you see.",
-          ),
-          Slide(
-            icon = IconSquawk,
-            title = "An issue log that fits the thing",
-            body = "Squawks on an airplane, issues on a car, attention items at home. Report it the moment you spot it and track it to resolution — anything that grounds the airplane or parks the car surfaces first.",
-          ),
-          Slide(
-            icon = IconPeople,
-            title = "Built for more than one person",
-            body = "Invite co-owners, family, or your mechanic with a code. Owners edit, technicians sign off their own work, viewers read — and every change syncs to everyone on the share.",
-          ),
-          Slide(
-            icon = IconListChecks,
-            title = "Start with a real schedule",
-            body = "Each type ships a recommended starter pack — the annual and ELT check, oil changes and brake fluid, gutters and the water-heater flush. Keep what applies, skip the rest, edit anything later.",
-          ),
-          Slide(
-            icon = IconPaperclip,
-            title = "The paperwork travels with the record",
-            body = "Photos, invoices and inspection reports attach to the entry they belong to. Export PDF, CSV and XLSX on demand — for a pre-buy, a resale, or a backup that's yours to keep.",
-          ),
-        ),
-        colors = colors,
-        headline = headline,
-        compact = compact,
-      )
+      CardGrid(
+        count = Features.size,
+        minItemWidth = 300.dp,
+        gap = 16.dp
+      ) { index, itemModifier ->
+        val feature = Features[index]
+        Column(
+          modifier = itemModifier
+            .clip(CardShape)
+            .background(colors.card)
+            .border(1.dp, colors.outline, CardShape)
+            .padding(24.dp),
+          verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+          Box(
+            modifier = Modifier
+              .size(44.dp)
+              .clip(CardShape)
+              .background(colors.sky),
+            contentAlignment = Alignment.Center,
+          ) {
+            Icon(
+              imageVector = feature.icon,
+              contentDescription = null,
+              modifier = Modifier.size(24.dp),
+              tint = colors.blue,
+            )
+          }
+          Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text(
+              text = feature.title,
+              style = TextStyle(
+                fontFamily = type.headline,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 18.sp,
+                lineHeight = 24.sp,
+                color = colors.heading,
+              ),
+            )
+            Text(
+              text = feature.body,
+              style = TextStyle(
+                fontSize = 14.sp,
+                lineHeight = 21.sp,
+                color = colors.slate
+              ),
+            )
+          }
+        }
+      }
     }
   }
 }
+
+// ---------------------------------------------------------------------------------------------
+// How it works
+// ---------------------------------------------------------------------------------------------
+
+private class Step(val title: String, val body: String)
+
+private val Steps = listOf(
+  Step(
+    "Sign in",
+    "Google, Apple or email. No setup — your records are ready wherever you log in."
+  ),
+  Step(
+    "Pick what you maintain",
+    "Add a thing, choose its type, and get a starter schedule you can edit."
+  ),
+  Step(
+    "Log as you go — together",
+    "Record work and issues from any device, invite the people who help, and get reminders before anything lapses.",
+  ),
+)
 
 @Composable
 private fun HowItWorksSection(
   modifier: Modifier,
   colors: LandingColors,
-  headline: FontFamily,
-  compact: Boolean,
+  type: LandingType,
+  metrics: LandingMetrics,
 ) {
-  Box(
-    modifier = modifier.fillMaxWidth()
-      .background(colors.card), contentAlignment = Alignment.TopCenter
-  ) {
-    Column(
-      modifier = Modifier
-        .widthIn(max = ContentMaxWidth)
-        .fillMaxWidth()
-        .padding(horizontal = 24.dp, vertical = if (compact) 64.dp else 88.dp),
-      horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-      SectionHeading(
-        colors = colors,
-        headline = headline,
-        kick = "How it works",
-        title = "From sign-in to in service in three steps",
-      )
-      Spacer(Modifier.height(if (compact) 36.dp else 48.dp))
-      Carousel(
-        slides = listOf(
-          Slide(
-            step = 1,
-            title = "Pick what you're maintaining",
-            body = "Sign in with Google or Apple, choose airplane, car, bike, boat, home or custom, and fill in the details that type asks for — no more, no less.",
-          ),
-          Slide(
-            step = 2,
-            title = "Accept a starter schedule",
-            body = "Keep the recommended tasks that apply, add your own intervals, and let SquawkIt do the date and meter math from then on.",
-          ),
-          Slide(
-            step = 3,
-            title = "Log as you go — together",
-            body = "Record work and issues from any device, invite the people who help, and get due-soon and overdue reminders before anything lapses.",
-          ),
-        ),
-        colors = colors,
-        headline = headline,
-        compact = compact,
-        // On the `card` surface, so the stage card takes the panel colour to stand off it.
-        cardColor = colors.panel,
-        // Three steps read slower than six features; give each one longer on stage.
-        autoAdvanceMillis = 6_500,
-      )
+  Column(modifier = modifier.fillMaxWidth()) {
+    HairlineRule(colors.outline)
+    Band(background = colors.panel, verticalPadding = metrics.sectionPadding) {
+      Column(verticalArrangement = Arrangement.spacedBy(48.dp)) {
+        SectionHeading(
+          colors = colors,
+          type = type,
+          metrics = metrics,
+          kick = "How it works",
+          title = "From sign-in to in service in three steps",
+        )
+        CardGrid(
+          count = Steps.size,
+          minItemWidth = 280.dp,
+          gap = 16.dp
+        ) { index, itemModifier ->
+          val step = Steps[index]
+          Column(
+            modifier = itemModifier
+              .clip(CardShape)
+              .background(colors.panel)
+              .border(1.dp, colors.outline, CardShape)
+              .padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp),
+          ) {
+            Text(
+              text = (index + 1).toString()
+                .padStart(2, '0'),
+              style = TextStyle(
+                fontFamily = type.mono,
+                fontWeight = FontWeight.Medium,
+                fontSize = 14.sp,
+                color = colors.blue,
+              ),
+            )
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+              Text(
+                text = step.title,
+                style = TextStyle(
+                  fontFamily = type.headline,
+                  fontWeight = FontWeight.SemiBold,
+                  fontSize = 20.sp,
+                  lineHeight = 26.sp,
+                  color = colors.heading,
+                ),
+              )
+              Text(
+                text = step.body,
+                style = TextStyle(
+                  fontSize = 14.sp,
+                  lineHeight = 21.sp,
+                  color = colors.slate
+                ),
+              )
+            }
+          }
+        }
+      }
     }
+    HairlineRule(colors.outline)
   }
 }
+
+// ---------------------------------------------------------------------------------------------
+// FAQ
+// ---------------------------------------------------------------------------------------------
+
+private val Faqs = listOf(
+  "What can I track?" to
+    "Aircraft (airframe, engine, propeller), cars and motorcycles, bikes, boats, homes — or anything else you maintain, with a custom type. Each kind of thing comes with its own vocabulary, fields, meters and a recommended starter schedule. Tasks recur by calendar time, by meter — engine hours, odometer, ride distance — or on condition.",
+  "Can I share a thing with someone else?" to
+    "Yes. Invite a co-owner, mechanic or family member to a specific thing. They see its schedule and history and can log work against it; you stay the owner.",
+  "Does SquawkIt work offline?" to
+    "The Android app keeps your records on the device and syncs when you reconnect. The web app needs a connection.",
+  "How does exporting work?" to
+    "Any thing can be exported as a PDF or CSV of its full history from the Overview screen. Exports include every log entry, task and issue.",
+  "Is SquawkIt a certified maintenance record system?" to
+    "No. SquawkIt is a personal convenience tool. It does not replace official logbooks or records required by your aviation authority or any other regulator.",
+  "Which platforms is SquawkIt available on?" to
+    "The web app works in any modern browser. The Android app is available on Google Play.",
+)
 
 @Composable
 private fun FaqSection(
   modifier: Modifier,
   colors: LandingColors,
-  headline: FontFamily,
-  compact: Boolean,
+  type: LandingType,
+  metrics: LandingMetrics,
+  stacked: Boolean,
 ) {
-  Box(
-    modifier = modifier.fillMaxWidth()
-      .background(colors.surface), contentAlignment = Alignment.TopCenter
+  Band(
+    modifier = modifier,
+    background = colors.surface,
+    verticalPadding = metrics.sectionPadding
   ) {
-    Column(
-      modifier = Modifier
-        .widthIn(max = ContentMaxWidth)
-        .fillMaxWidth()
-        .padding(horizontal = 24.dp, vertical = if (compact) 64.dp else 88.dp),
-      horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
+    val heading: @Composable () -> Unit = {
       SectionHeading(
         colors = colors,
-        headline = headline,
+        type = type,
+        metrics = metrics,
         kick = "Questions",
         title = "Frequently asked questions",
       )
-      Spacer(Modifier.height(if (compact) 40.dp else 52.dp))
-      Column(
-        modifier = Modifier.widthIn(max = 780.dp)
-          .fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
-      ) {
-        FaqRow(
-          colors, headline, initiallyOpen = true,
-          question = "What can I track?",
-          answer = "Aircraft (airframe, engine, propeller), cars and motorcycles, bikes, boats, homes — or anything else you maintain, with a custom type. Each kind of thing comes with its own vocabulary, fields, meters and a recommended starter schedule. Tasks recur by calendar time, by meter — engine hours, odometer, ride distance — or on condition.",
-        )
-        FaqRow(
-          colors, headline, initiallyOpen = false,
-          question = "Can I share a thing with someone else?",
-          answer = "Yes. Invite a co-owner, a family member or your mechanic with a code. Roles decide who can edit, who signs off their own work, and who only reads. Shared records sync to everyone, and the host can revoke access at any time.",
-        )
-        FaqRow(
-          colors, headline, initiallyOpen = false,
-          question = "Does SquawkIt work offline?",
-          answer = "Yes. SquawkIt is local-first, so your records are always available — in the hangar, the garage, or the marina, with no signal at all. Changes sync automatically in the background once you reconnect.",
-        )
-        FaqRow(
-          colors, headline, initiallyOpen = false,
-          question = "How does exporting work?",
-          answer = "Export any thing's records on demand — pick a date range and SquawkIt generates a PDF, CSV and XLSX bundle covering inspections, tasks, issues and completed work, with current readings and due dates. Download it, or email a copy to a mechanic, a buyer, or your A&P for a pre-buy or an annual. Your certified records stay the source of truth; the export is a convenient, up-to-date snapshot.",
-        )
-        FaqRow(
-          colors, headline, initiallyOpen = false,
-          question = "Is SquawkIt a certified maintenance record system?",
-          answer = "No. SquawkIt is a personal convenience tool. It does not replace the official aircraft logbooks required by your aviation authority, or any other record you are required to keep. Think of it as the heads-up layer that helps you stay ahead of them.",
-        )
-        FaqRow(
-          colors, headline, initiallyOpen = false,
-          question = "Which platforms is SquawkIt available on?",
-          answer = "SquawkIt runs on the web, iOS and Android, and a subscription bought on one works on all of them. Everything you track syncs across every device you sign in on.",
-        )
+    }
+    if (stacked) {
+      Column(verticalArrangement = Arrangement.spacedBy(48.dp)) {
+        heading()
+        FaqList(colors, type)
+      }
+    } else {
+      // The design's 1:2 split: heading in the first column, the list spanning the other two.
+      Row(horizontalArrangement = Arrangement.spacedBy(48.dp)) {
+        Box(modifier = Modifier.weight(1f)) { heading() }
+        Box(modifier = Modifier.weight(2f)) { FaqList(colors, type) }
       }
     }
   }
 }
 
+/** One question open at a time, the first by default. */
 @Composable
-private fun FaqRow(
-  colors: LandingColors,
-  headline: FontFamily,
-  initiallyOpen: Boolean,
-  question: String,
-  answer: String,
-) {
-  var open by remember { mutableStateOf(initiallyOpen) }
-  val shape = RoundedCornerShape(14.dp)
-  Column(
-    modifier = Modifier
-      .fillMaxWidth()
-      .clip(shape)
-      .background(colors.panel)
-      .border(1.dp, if (open) colors.blue else colors.outline, shape)
-      .clickable { open = !open }
-      .padding(horizontal = 22.dp),
-  ) {
-    Row(
-      modifier = Modifier.fillMaxWidth()
-        .padding(vertical = 18.dp),
-      verticalAlignment = Alignment.CenterVertically,
-    ) {
-      Text(
-        text = question,
-        style = TextStyle(
-          fontFamily = headline,
-          fontWeight = FontWeight.SemiBold,
-          fontSize = 17.sp,
-          color = colors.heading
-        ),
-        modifier = Modifier.weight(1f),
-      )
-      Spacer(Modifier.width(16.dp))
-      Icon(
-        imageVector = IconChevronDown,
-        contentDescription = null,
-        modifier = Modifier.size(20.dp)
-          .rotate(if (open) 180f else 0f),
-        tint = colors.blue,
-      )
-    }
-    if (open) {
-      Text(
-        text = answer,
-        style = TextStyle(
-          fontSize = 15.sp,
-          lineHeight = 25.sp,
-          color = colors.slate
-        ),
-        modifier = Modifier.padding(bottom = 20.dp),
-      )
-    }
-  }
-}
-
-@Composable
-private fun FinalCta(
-  colors: LandingColors,
-  headline: FontFamily,
-  compact: Boolean,
-  onGetStarted: () -> Unit,
-  onSeeFeatures: () -> Unit,
-) {
-  Box(
-    modifier = Modifier.fillMaxWidth()
-      .background(colors.navy),
-    contentAlignment = Alignment.TopCenter,
-  ) {
-    Canvas(modifier = Modifier.matchParentSize()) {
-      drawCircle(
-        brush = Brush.radialGradient(
-          colors = listOf(
-            colors.blueBright.copy(alpha = 0.3f),
-            Color.Transparent
-          ),
-          center = Offset(size.width / 2f, size.height * 1.1f),
-          radius = size.width * 0.5f,
-        ),
-        center = Offset(size.width / 2f, size.height * 1.1f),
-        radius = size.width * 0.5f,
-      )
-    }
-    Column(
-      modifier = Modifier
-        .widthIn(max = ContentMaxWidth)
-        .fillMaxWidth()
-        .padding(horizontal = 24.dp, vertical = if (compact) 72.dp else 96.dp),
-      horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-      Text(
-        text = "Start keeping better records today",
-        style = TextStyle(
-          fontFamily = headline,
-          fontWeight = FontWeight.Bold,
-          fontSize = if (compact) 30.sp else 40.sp,
-          lineHeight = if (compact) 36.sp else 46.sp,
-          letterSpacing = (-0.6).sp,
-          color = Color.White,
-          textAlign = TextAlign.Center,
-        ),
-        modifier = Modifier.widthIn(max = 460.dp),
-      )
-      Spacer(Modifier.height(18.dp))
-      Text(
-        text = "Free to start. Sign in, pick what you're maintaining, and have a schedule in under a minute.",
-        style = TextStyle(
-          fontSize = 18.sp,
-          lineHeight = 27.sp,
-          color = colors.skyDim,
-          textAlign = TextAlign.Center
-        ),
-        modifier = Modifier.widthIn(max = 420.dp),
-      )
-      Spacer(Modifier.height(32.dp))
-      if (compact) {
-        Column(
-          modifier = Modifier.fillMaxWidth(),
-          verticalArrangement = Arrangement.spacedBy(14.dp),
-          horizontalAlignment = Alignment.CenterHorizontally,
+private fun FaqList(colors: LandingColors, type: LandingType) {
+  var openIndex by remember { mutableStateOf(0) }
+  Column(modifier = Modifier.fillMaxWidth()) {
+    HairlineRule(colors.outline)
+    Faqs.forEachIndexed { index, (question, answer) ->
+      val open = index == openIndex
+      Column(modifier = Modifier.fillMaxWidth()) {
+        Row(
+          modifier = Modifier
+            .fillMaxWidth()
+            .clickable { openIndex = if (open) -1 else index }
+            .padding(horizontal = 4.dp, vertical = 20.dp),
+          verticalAlignment = Alignment.CenterVertically,
+          horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-          PillButton(
-            "Log in to get started",
-            primary = true,
-            colors = colors,
-            fillWidth = true,
-            onClick = onGetStarted
+          Text(
+            text = question,
+            style = TextStyle(
+              fontFamily = type.headline,
+              fontWeight = FontWeight.SemiBold,
+              fontSize = 17.sp,
+              lineHeight = 24.sp,
+              color = colors.heading,
+            ),
+            modifier = Modifier.weight(1f),
           )
-          PillButton(
-            "See features",
-            primary = false,
-            colors = colors,
-            fillWidth = true,
-            onClick = onSeeFeatures
+          Icon(
+            imageVector = Icons.Outlined.ExpandMore,
+            contentDescription = null,
+            modifier = Modifier.size(22.dp)
+              .rotate(if (open) 180f else 0f),
+            tint = colors.blue,
           )
         }
-      } else {
-        Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-          PillButton(
-            "Log in to get started",
-            primary = true,
-            colors = colors,
-            fillWidth = false,
-            onClick = onGetStarted
+        if (open) {
+          Text(
+            text = answer,
+            style = TextStyle(
+              fontSize = 15.sp,
+              lineHeight = 23.sp,
+              color = colors.slate
+            ),
+            modifier = Modifier
+              .widthIn(max = 680.dp)
+              .padding(start = 4.dp, end = 4.dp, bottom = 20.dp),
           )
-          PillButton(
-            "See features",
-            primary = false,
-            colors = colors,
-            fillWidth = false,
-            onClick = onSeeFeatures
-          )
+        }
+        HairlineRule(colors.outline)
+      }
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------------------------
+// Get the app
+// ---------------------------------------------------------------------------------------------
+
+@Composable
+private fun GetTheAppSection(
+  modifier: Modifier,
+  colors: LandingColors,
+  type: LandingType,
+  metrics: LandingMetrics,
+) {
+  Column(modifier = modifier.fillMaxWidth()) {
+    HairlineRule(colors.outline)
+    Band(background = colors.panel, verticalPadding = metrics.sectionPadding) {
+      BoxWithConstraints {
+        // clamp(32px, 5vw, 64px)
+        val inset = (maxWidth.value * 0.05f).coerceIn(32f, 64f).dp
+        val gap = 48.dp
+        val twoColumns = maxWidth - inset * 2 >= 320.dp * 2 + gap
+        val copy: @Composable (Modifier) -> Unit =
+          { GetTheAppCopy(it, colors, type, metrics) }
+        val phone: @Composable () -> Unit = { PhoneMockup(colors, type) }
+        Box(
+          modifier = Modifier
+            .fillMaxWidth()
+            .clip(CardShape)
+            .background(colors.sky)
+            .border(1.dp, colors.skyBorder, CardShape)
+            .padding(inset),
+        ) {
+          if (twoColumns) {
+            Row(
+              horizontalArrangement = Arrangement.spacedBy(gap),
+              verticalAlignment = Alignment.CenterVertically,
+            ) {
+              copy(Modifier.weight(1f))
+              Box(
+                modifier = Modifier.weight(1f),
+                contentAlignment = Alignment.Center
+              ) { phone() }
+            }
+          } else {
+            Column(verticalArrangement = Arrangement.spacedBy(gap)) {
+              copy(Modifier.fillMaxWidth())
+              Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center
+              ) { phone() }
+            }
+          }
         }
       }
     }
@@ -1356,86 +1296,459 @@ private fun FinalCta(
 }
 
 @Composable
-private fun PillButton(
-  label: String,
-  primary: Boolean,
+private fun GetTheAppCopy(
+  modifier: Modifier,
   colors: LandingColors,
-  fillWidth: Boolean,
-  onClick: () -> Unit,
+  type: LandingType,
+  metrics: LandingMetrics,
 ) {
-  val shape = RoundedCornerShape(14.dp)
-  val base = if (fillWidth) Modifier.fillMaxWidth() else Modifier
-  Box(
-    modifier = base
-      .height(54.dp)
-      .clip(shape)
-      .then(
-        if (primary) Modifier.background(Color.White) else Modifier.border(
-          1.dp,
-          Color.White.copy(
-            alpha = 0.28f
-          ),
-          shape
-        )
-      )
-      .clickable { onClick() }
-      .padding(horizontal = 26.dp),
-    contentAlignment = Alignment.Center,
+  val uriHandler = LocalUriHandler.current
+  Column(
+    modifier = modifier.widthIn(max = 520.dp),
+    verticalArrangement = Arrangement.spacedBy(20.dp),
   ) {
+    SectionHeading(
+      colors = colors,
+      type = type,
+      metrics = metrics,
+      kick = "Mobile app",
+      title = "Take SquawkIt to the hangar",
+      subtitle = "Log tach time, close out a squawk, or snap a photo of the work order right where it happens. Everything syncs with the web app.",
+      kickColor = colors.blueDeep,
+      titleColor = colors.onSky,
+      subtitleColor = colors.onSkyBody,
+      maxWidth = 520.dp,
+    )
+    FlowRow(
+      horizontalArrangement = Arrangement.spacedBy(12.dp),
+      verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+      StoreButton(
+        colors = colors,
+        type = type,
+        icon = {
+          Icon(
+            Icons.Filled.PlayArrow,
+            null,
+            Modifier.size(24.dp),
+            tint = Color.White
+          )
+        },
+        eyebrow = "Get it on",
+        name = "Google Play",
+        onClick = { uriHandler.openUri(PlayStoreUrl) },
+      )
+      val appStoreUrl = AppStoreUrl
+      if (appStoreUrl != null) {
+        StoreButton(
+          colors = colors,
+          type = type,
+          icon = {
+            Icon(
+              AppleLogo,
+              null,
+              Modifier.size(22.dp),
+              tint = Color.White
+            )
+          },
+          eyebrow = "Download on the",
+          name = "App Store",
+          onClick = { uriHandler.openUri(appStoreUrl) },
+        )
+      } else if (ShowAppStoreComingSoon) {
+        ComingSoonStore(colors, type, name = "App Store") {
+          Icon(AppleLogo, null, Modifier.size(22.dp), tint = colors.slate)
+        }
+      }
+    }
     Text(
-      text = label,
+      text = "Android 13 or later.",
       style = TextStyle(
-        fontSize = 15.5.sp,
-        fontWeight = FontWeight.SemiBold,
-        color = if (primary) colors.navy else Color.White,
+        fontSize = 12.sp,
+        lineHeight = 18.sp,
+        color = colors.onSkyMuted
       ),
     )
   }
 }
 
+/** A store badge: eyebrow over the store name, on navy. */
 @Composable
-private fun LandingFooter(colors: LandingColors) {
+private fun StoreButton(
+  colors: LandingColors,
+  type: LandingType,
+  icon: @Composable () -> Unit,
+  eyebrow: String,
+  name: String,
+  onClick: () -> Unit,
+) {
+  Row(
+    modifier = Modifier
+      .height(52.dp)
+      .clip(ButtonShape)
+      .background(colors.navy)
+      .clickable { onClick() }
+      .padding(start = 14.dp, end = 18.dp),
+    verticalAlignment = Alignment.CenterVertically,
+    horizontalArrangement = Arrangement.spacedBy(10.dp),
+  ) {
+    icon()
+    StoreLabel(
+      type,
+      eyebrow,
+      name,
+      eyebrowColor = Color.White.copy(alpha = 0.85f),
+      nameColor = Color.White
+    )
+  }
+}
+
+/** The dashed, inert stand-in for a store the app is not on yet. */
+@Composable
+private fun ComingSoonStore(
+  colors: LandingColors,
+  type: LandingType,
+  name: String,
+  icon: @Composable () -> Unit,
+) {
+  Row(
+    modifier = Modifier
+      .height(52.dp)
+      .drawBehind {
+        drawRoundRect(
+          color = colors.slate,
+          cornerRadius = CornerRadius(16.dp.toPx()),
+          style = Stroke(
+            width = 1.dp.toPx(),
+            pathEffect = PathEffect.dashPathEffect(
+              floatArrayOf(
+                6.dp.toPx(),
+                4.dp.toPx()
+              )
+            ),
+          ),
+        )
+      }
+      .padding(start = 14.dp, end = 18.dp),
+    verticalAlignment = Alignment.CenterVertically,
+    horizontalArrangement = Arrangement.spacedBy(10.dp),
+  ) {
+    icon()
+    StoreLabel(
+      type,
+      "Coming soon",
+      name,
+      eyebrowColor = colors.slate,
+      nameColor = colors.slate
+    )
+  }
+}
+
+@Composable
+private fun StoreLabel(
+  type: LandingType,
+  eyebrow: String,
+  name: String,
+  eyebrowColor: Color,
+  nameColor: Color,
+) {
+  Column {
+    Text(
+      text = eyebrow.uppercase(),
+      style = TextStyle(
+        fontSize = 10.sp,
+        lineHeight = 11.sp,
+        fontWeight = FontWeight.Medium,
+        letterSpacing = 0.4.sp,
+        color = eyebrowColor,
+      ),
+    )
+    Text(
+      text = name,
+      style = TextStyle(
+        fontFamily = type.headline,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 17.sp,
+        lineHeight = 19.sp,
+        color = nameColor,
+      ),
+    )
+  }
+}
+
+/** The design's phone illustration: a fleet list with one overdue, one due-soon and one clear. */
+@Composable
+private fun PhoneMockup(colors: LandingColors, type: LandingType) {
+  Box(
+    modifier = Modifier
+      .width(260.dp)
+      .aspectRatio(9f / 19f)
+      .clip(RoundedCornerShape(32.dp))
+      .background(colors.navy)
+      .padding(10.dp),
+  ) {
+    Column(
+      modifier = Modifier
+        .fillMaxSize()
+        .clip(RoundedCornerShape(24.dp))
+        .background(colors.panel)
+        .padding(start = 14.dp, top = 44.dp, end = 14.dp, bottom = 14.dp),
+      verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+      Text(
+        text = "Fleet",
+        style = TextStyle(
+          fontFamily = type.headline,
+          fontWeight = FontWeight.Bold,
+          fontSize = 16.sp,
+          color = colors.heading,
+        ),
+      )
+      MockThingCard(
+        colors,
+        type,
+        "N172SP",
+        "Cessna 172S · Annual",
+        border = Color(0xFFBA1A1A)
+      ) {
+        MockBadge(
+          "OVERDUE",
+          background = Color(0xFFFFDAD6),
+          color = Color(0xFF410002)
+        )
+      }
+      MockThingCard(
+        colors,
+        type,
+        "4Runner",
+        "Oil change · 210 mi",
+        border = Color(0xFF8B5E00)
+      ) {
+        MockBadge(
+          "DUE SOON",
+          background = Color(0xFFFFECB3),
+          color = Color(0xFF5B3D00)
+        )
+      }
+      MockThingCard(
+        colors,
+        type,
+        "Furnace",
+        "Filter · 34 days",
+        border = colors.outline,
+        badge = null
+      )
+      Spacer(Modifier.weight(1f))
+      Box(
+        modifier = Modifier
+          .align(Alignment.End)
+          .size(44.dp)
+          .clip(RoundedCornerShape(14.dp))
+          .background(colors.blue),
+        contentAlignment = Alignment.Center,
+      ) {
+        Icon(Icons.Outlined.Add, null, Modifier.size(22.dp), tint = Color.White)
+      }
+    }
+  }
+}
+
+@Composable
+private fun MockThingCard(
+  colors: LandingColors,
+  type: LandingType,
+  name: String,
+  caption: String,
+  border: Color,
+  badge: (@Composable () -> Unit)?,
+) {
   Column(
     modifier = Modifier
       .fillMaxWidth()
-      .background(colors.panel),
+      .clip(CardShape)
+      .background(colors.card)
+      .border(1.dp, border, CardShape)
+      .padding(12.dp),
+    verticalArrangement = Arrangement.spacedBy(8.dp),
   ) {
-    Box(
-      modifier = Modifier.fillMaxWidth()
-        .height(1.dp)
-        .background(colors.outline)
+    Row(
+      modifier = Modifier.fillMaxWidth(),
+      verticalAlignment = Alignment.CenterVertically,
+      horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+      Text(
+        text = name,
+        style = TextStyle(
+          fontFamily = type.mono,
+          fontWeight = FontWeight.Medium,
+          fontSize = 12.sp,
+          color = colors.ink,
+        ),
+      )
+      badge?.invoke()
+    }
+    Text(
+      text = caption,
+      style = TextStyle(fontSize = 11.sp, color = colors.muted)
     )
+  }
+}
+
+@Composable
+private fun MockBadge(text: String, background: Color, color: Color) {
+  Text(
+    text = text,
+    style = TextStyle(
+      fontSize = 9.sp,
+      fontWeight = FontWeight.SemiBold,
+      color = color
+    ),
+    modifier = Modifier
+      .clip(RoundedCornerShape(4.dp))
+      .background(background)
+      .padding(horizontal = 6.dp, vertical = 2.dp),
+  )
+}
+
+// ---------------------------------------------------------------------------------------------
+// Final CTA + footer
+// ---------------------------------------------------------------------------------------------
+
+@Composable
+private fun FinalCta(
+  colors: LandingColors,
+  type: LandingType,
+  metrics: LandingMetrics,
+  onGetStarted: () -> Unit,
+  onGetApp: () -> Unit,
+) {
+  Band(background = colors.navy, verticalPadding = metrics.sectionPadding) {
     Box(
       modifier = Modifier.fillMaxWidth(),
       contentAlignment = Alignment.TopCenter
     ) {
       Column(
-        modifier = Modifier
-          .widthIn(max = ContentMaxWidth)
-          .fillMaxWidth()
-          .padding(horizontal = 24.dp, vertical = 40.dp),
+        modifier = Modifier.widthIn(max = 640.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(20.dp),
       ) {
+        SectionTitle(
+          text = "Start keeping better records today",
+          type = type,
+          metrics = metrics,
+          color = Color.White,
+          textAlign = TextAlign.Center,
+        )
         Text(
-          text = "© 2026 SquawkIt. A personal convenience tool — not a certified maintenance record system, and not a replacement for the official aircraft logbooks required by your aviation authority or any other record you are required to keep. Maintenance records for aircraft, cars, bikes, boats and homes.",
+          text = "Free to start. Sign in, pick what you’re maintaining, and have a schedule in under a minute.",
           style = TextStyle(
-            fontSize = 12.5.sp,
-            lineHeight = 19.sp,
-            color = colors.footerCopy
+            fontSize = 17.sp,
+            lineHeight = 26.sp,
+            color = colors.heroBody,
+            textAlign = TextAlign.Center,
           ),
         )
-        Spacer(Modifier.height(14.dp))
-        val uriHandler = LocalUriHandler.current
-        Text(
-          text = stringResource(Res.string.privacy_notice),
-          style = TextStyle(
-            fontSize = 12.5.sp,
-            lineHeight = 19.sp,
-            color = colors.blue,
-            textDecoration = TextDecoration.Underline,
+        FlowRow(
+          modifier = Modifier.padding(top = 8.dp),
+          horizontalArrangement = Arrangement.spacedBy(
+            12.dp,
+            Alignment.CenterHorizontally
           ),
-          modifier = Modifier.clickable { uriHandler.openUri("/privacy.html") },
-        )
+          verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+          Box(
+            modifier = Modifier
+              .height(52.dp)
+              .clip(ButtonShape)
+              .background(Color.White)
+              .clickable { onGetStarted() }
+              .padding(horizontal = 24.dp),
+            contentAlignment = Alignment.Center,
+          ) {
+            Text(
+              text = "Log in to get started",
+              style = TextStyle(
+                fontSize = 15.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = Color(0xFF001849)
+              ),
+            )
+          }
+          Row(
+            modifier = Modifier
+              .height(52.dp)
+              .clip(ButtonShape)
+              .border(1.dp, colors.heroAccent, ButtonShape)
+              .clickable { onGetApp() }
+              .padding(horizontal = 24.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+          ) {
+            Icon(
+              Icons.Outlined.Smartphone,
+              null,
+              Modifier.size(20.dp),
+              tint = Color.White
+            )
+            Text(
+              text = "Get the Android app",
+              style = TextStyle(
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Medium,
+                color = Color.White
+              ),
+            )
+          }
+        }
       }
     }
   }
+}
+
+@Composable
+private fun LandingFooter(colors: LandingColors, onNavApp: () -> Unit) {
+  val uriHandler = LocalUriHandler.current
+  Column(modifier = Modifier.fillMaxWidth()) {
+    HairlineRule(colors.outline)
+    Band(background = colors.panel, verticalPadding = 32.dp) {
+      FlowRow(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(32.dp, Alignment.Start),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+      ) {
+        Text(
+          text = "© 2026 SquawkIt. A personal convenience tool — not a certified maintenance record system, and not a replacement for the official aircraft logbooks required by your aviation authority or any other record you are required to keep.",
+          style = TextStyle(
+            fontSize = 12.sp,
+            lineHeight = 18.sp,
+            color = colors.muted
+          ),
+          modifier = Modifier.widthIn(max = 760.dp),
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
+          FooterLink(stringResource(Res.string.privacy_notice), colors) {
+            uriHandler.openUri("/privacy.html")
+          }
+          FooterLink("Android app", colors, onNavApp)
+        }
+      }
+    }
+  }
+}
+
+@Composable
+private fun FooterLink(
+  label: String,
+  colors: LandingColors,
+  onClick: () -> Unit
+) {
+  Text(
+    text = label,
+    style = TextStyle(
+      fontSize = 13.sp,
+      fontWeight = FontWeight.Medium,
+      color = colors.blue
+    ),
+    modifier = Modifier.clickable { onClick() },
+  )
 }

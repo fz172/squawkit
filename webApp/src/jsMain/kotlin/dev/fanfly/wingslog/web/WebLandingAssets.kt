@@ -2,173 +2,86 @@ package dev.fanfly.wingslog.web
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.unit.dp
 
 /**
  * Design tokens and vector assets for the web-only SquawkIt login / SEO landing page
- * (see [WebLoginLandingScreen]). These mirror the `:root` / `[data-theme="dark"]` CSS custom
- * properties and inline SVGs of the source `SquawkIt Login.html` so the Compose render matches the
- * approved design. Web-only: the native Android and iOS login experiences are unchanged.
+ * (see [WebLoginLandingScreen]). The light set mirrors the `Login Page.dc.html` design verbatim;
+ * the dark set keeps the same roles on the app's dark surfaces. Web-only: the native Android and
+ * iOS login experiences are unchanged.
  */
 internal data class LandingColors(
+  /** Hero and final-CTA background. */
   val navy: Color,
-  val navy2: Color,
   val blue: Color,
-  val blueBright: Color,
+  /** Deeper blue for kickers on a sky container. */
+  val blueDeep: Color,
+  /** Light-blue container: chips, tiles, the Get-the-app panel. */
   val sky: Color,
-  val skyDim: Color,
-  val slate: Color,
+  val skyBorder: Color,
   val surface: Color,
+  /** Header, cards on `surface`, the login card. */
+  val panel: Color,
+  /** Tinted card on `surface` or `panel`. */
   val card: Color,
   val outline: Color,
-  val amber: Color,
-  val green: Color,
-  val ink: Color,
-  val panel: Color,
+  val buttonOutline: Color,
   val heading: Color,
+  val ink: Color,
+  val slate: Color,
+  val muted: Color,
+  /** Text on `sky`. */
+  val onSky: Color,
+  val onSkyBody: Color,
+  val onSkyMuted: Color,
 ) {
-  // Fixed across themes (white text + muted captions on the navy/card surfaces).
-  val onNavy: Color get() = Color.White
-  val trustText: Color get() = Color(0xFFCDD9F0)
-  val disclaimer: Color get() = Color(0xFF8A93A3)
-  val footerCopy: Color get() = Color(0xFF9AA3B2)
+  // The hero and CTA sit on navy in both themes, so their text and chips do not change.
+  val heroAccent: Color get() = Color(0xFFA7C8FF)
+  val heroBody: Color get() = Color(0xFFD5E3FF)
+  val heroChipBorder: Color get() = Color(0xFF004785)
+  val heroChipBackground: Color get() = Color(0xFF004785).copy(alpha = 0.35f)
 }
 
 internal val LightLandingColors = LandingColors(
   navy = Color(0xFF001849),
-  navy2 = Color(0xFF04205C),
   blue = Color(0xFF1A5FAE),
-  blueBright = Color(0xFF3B82E0),
+  blueDeep = Color(0xFF004785),
   sky = Color(0xFFD5E3FF),
-  skyDim = Color(0xFFA9C2EE),
-  slate = Color(0xFF525E72),
-  surface = Color(0xFFF8F9FC),
-  card = Color(0xFFEEF1F6),
-  outline = Color(0xFFD7DCE6),
-  amber = Color(0xFFFFBA4E),
-  green = Color(0xFF276B39),
-  ink = Color(0xFF0E1726),
+  skyBorder = Color(0xFFA7C8FF),
+  surface = Color(0xFFFAFAFA),
   panel = Color(0xFFFFFFFF),
+  card = Color(0xFFF2F2F7),
+  outline = Color(0xFFE0E0E5),
+  buttonOutline = Color(0xFFC6C6C8),
   heading = Color(0xFF001849),
+  ink = Color(0xFF1C1C1E),
+  slate = Color(0xFF525E72),
+  muted = Color(0xFF636366),
+  onSky = Color(0xFF001849),
+  onSkyBody = Color(0xFF0E1C2B),
+  onSkyMuted = Color(0xFF3A4557),
 )
 
 internal val DarkLandingColors = LandingColors(
   navy = Color(0xFF06101F),
-  navy2 = Color(0xFF04205C),
   blue = Color(0xFF5B9BE8),
-  blueBright = Color(0xFF3B82E0),
-  sky = Color(0xFFD5E3FF),
-  skyDim = Color(0xFFAEC4EA),
-  slate = Color(0xFF9AA7BD),
+  blueDeep = Color(0xFFA7C8FF),
+  sky = Color(0xFF12305E),
+  skyBorder = Color(0xFF2C5AA0),
   surface = Color(0xFF0B1120),
-  card = Color(0xFF111A2C),
+  panel = Color(0xFF111A2C),
+  card = Color(0xFF172033),
   outline = Color(0xFF26324A),
-  amber = Color(0xFFFFBA4E),
-  green = Color(0xFF276B39),
-  ink = Color(0xFFE7EDF8),
-  panel = Color(0xFF161F33),
+  buttonOutline = Color(0xFF3A4761),
   heading = Color(0xFFF2F6FF),
-)
-
-/** Builds a single-color stroke icon (Lucide style) from one or more raw SVG path `d` strings. */
-private fun strokeIcon(
-  strokeWidth: Float = 2f,
-  vararg pathData: String,
-): ImageVector {
-  val builder = ImageVector.Builder(
-    defaultWidth = 24.dp,
-    defaultHeight = 24.dp,
-    viewportWidth = 24f,
-    viewportHeight = 24f,
-  )
-  for (d in pathData) {
-    builder.addPath(
-      pathData = PathParser().parsePathString(d)
-        .toNodes(),
-      fill = null,
-      stroke = SolidColor(Color.Black),
-      strokeLineWidth = strokeWidth,
-      strokeLineCap = StrokeCap.Round,
-      strokeLineJoin = StrokeJoin.Round,
-    )
-  }
-  return builder.build()
-}
-
-/** Chevron used by the FAQ disclosure rows. */
-internal val IconChevronDown: ImageVector = strokeIcon(2f, "m6 9 6 6 6-6")
-
-/** Envelope used by the "Log in with email" button. */
-internal val IconMail: ImageVector = strokeIcon(
-  2f,
-  "M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z",
-  "m22 6-10 7L2 6",
-)
-
-/** Feature 1 — inspection & service-bulletin tracking (check inside an open card). */
-internal val IconInspection: ImageVector = strokeIcon(
-  1.8f,
-  "M9 11l3 3L22 4",
-  "M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11",
-)
-
-/** Feature 2 — squawk log (warning triangle). */
-internal val IconSquawk: ImageVector = strokeIcon(
-  1.8f,
-  "M10.3 4.3L2 19a1.5 1.5 0 0 0 1.3 2.2h17.4A1.5 1.5 0 0 0 22 19L13.7 4.3a1.5 1.5 0 0 0-2.6 0z",
-  "M12 9v5M12 17.5v.5",
-)
-
-/** Feature — every kind of thing (stacked layers). */
-internal val IconLayers: ImageVector = strokeIcon(
-  1.8f,
-  "m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z",
-  "m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65",
-  "m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65",
-)
-
-/** Feature — collaboration (two people). */
-internal val IconPeople: ImageVector = strokeIcon(
-  1.8f,
-  "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2",
-  "M13 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0",
-  "M22 21v-2a4 4 0 0 0-3-3.87",
-  "M16 3.13a4 4 0 0 1 0 7.75",
-)
-
-/** Feature — starter schedules (a checked list). */
-internal val IconListChecks: ImageVector = strokeIcon(
-  1.8f,
-  "m3 17 2 2 4-4",
-  "m3 7 2 2 4-4",
-  "M13 6h8",
-  "M13 12h8",
-  "M13 18h8",
-)
-
-/** Feature — attachments and export (paperclip). */
-internal val IconPaperclip: ImageVector = strokeIcon(
-  1.8f,
-  "m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48",
-)
-
-/** Feature 3 — on the web today (monitor). */
-internal val IconMonitor: ImageVector = strokeIcon(
-  1.8f,
-  "M4 3h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z",
-  "M8 21h8M12 17v4",
-)
-
-/** Feature — offline first (a cloud with a slash, the sync that happens later). */
-internal val IconOffline: ImageVector = strokeIcon(
-  1.8f,
-  "m2 2 20 20",
-  "M5.782 5.782A7 7 0 0 0 9 19h8.5a4.5 4.5 0 0 0 1.307-.193",
-  "M21.532 16.5A4.5 4.5 0 0 0 17.5 10h-1.79A7.008 7.008 0 0 0 10 5.07",
+  ink = Color(0xFFE7EDF8),
+  slate = Color(0xFF9AA7BD),
+  muted = Color(0xFF8C97AB),
+  onSky = Color(0xFFD5E3FF),
+  onSkyBody = Color(0xFFC9D6EE),
+  onSkyMuted = Color(0xFF9DB2D6),
 )
 
 /** The multi-color Google "G" mark (rendered with Image, not tinted). */
