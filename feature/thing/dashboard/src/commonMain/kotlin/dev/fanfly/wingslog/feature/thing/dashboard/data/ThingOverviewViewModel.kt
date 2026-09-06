@@ -18,7 +18,7 @@ import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.feature.squawk.model.openAog
 import dev.fanfly.wingslog.feature.squawk.model.toWithStatus
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
-import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDueManager
+import dev.fanfly.wingslog.feature.tasks.datamanager.TaskStatusManager
 import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
 import dev.fanfly.wingslog.thing.ComponentType
@@ -37,9 +37,6 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
-import kotlin.time.Clock
 
 /** The share-related flows, combined so they fit in one slot of the outer [combine]. */
 private data class ShareContext(
@@ -53,7 +50,7 @@ class ThingOverviewViewModel(
   private val fleetManager: FleetManager,
   private val logManager: MaintenanceLogManager,
   private val taskDataManager: TaskDataManager,
-  private val taskDueManager: TaskDueManager,
+  private val taskStatusManager: TaskStatusManager,
   private val attachmentOpener: AttachmentOpener,
   private val attachmentManager: AttachmentManager,
   private val squawkManager: SquawkManager,
@@ -71,19 +68,9 @@ class ThingOverviewViewModel(
   private val _events = Channel<ThingOverviewEvent>()
   private var cachedLogs: List<MaintenanceLog> = emptyList()
 
-  /**
-   * Bumped when the screen resumes, to re-run due-status computation against a fresh clock.
-   *
-   * [dev.fanfly.wingslog.feature.tasks.datamanager.TaskDueManager] compares due dates against
-   * `Clock.System`, so a card's status is a function of the stored data *and* the current time —
-   * but the store flows only re-emit when data changes. Without this, an app backgrounded overnight
-   * comes back still rendering yesterday's NORMAL for a card that is now DUE_SOON.
-   */
-  private val resumeTick = MutableStateFlow(0)
-
-  /** Call when the dashboard becomes visible again; see [resumeTick]. */
+  /** Due status depends on the clock, not only on stored data; re-evaluate when the screen returns. */
   fun onResumed() {
-    resumeTick.value++
+    taskStatusManager.refreshDueStatus()
   }
 
   init {
@@ -117,15 +104,8 @@ class ThingOverviewViewModel(
           .distinctUntilChanged(),
         logManager.observeLogs(thingId)
           .distinctUntilChanged(),
-        // The resume tick rides along with the tasks flow rather than occupying a combine slot of
-        // its own: `combine` tops out at five typed sources, and re-emitting the task list is
-        // exactly what re-runs computeNextDue below. distinctUntilChanged sits *upstream* of the
-        // tick, so a resume still gets through.
-        combine(
-          taskDataManager.observeTasks(thingId)
-            .distinctUntilChanged(),
-          resumeTick,
-        ) { tasks, _ -> tasks },
+        taskStatusManager.observeTasksWithStatus(thingId)
+          .distinctUntilChanged(),
         logManager.observeMaintenanceOverview(thingId)
           .distinctUntilChanged(),
         combine(
@@ -154,7 +134,7 @@ class ThingOverviewViewModel(
         ) { squawks, syncs, myRole, shared ->
           ShareContext(squawks, syncs, myRole, shared)
         }
-      ) { thing, logs, taskCards, overview, shareContext ->
+      ) { thing, logs, cardsWithStatus, overview, shareContext ->
         val (squawkList, syncStates, myRole, isShared) = shareContext
         cachedLogs = logs
         val degraded = thing?.let {
@@ -201,37 +181,7 @@ class ThingOverviewViewModel(
             )
           }
 
-          val cardsWithStatus = taskCards.map { card ->
-            MaintenanceTaskWithStatus(
-              card = card,
-              dueStatus = taskDueManager.computeNextDue(
-                card,
-                logs,
-                taskCards
-              ),
-            )
-          }
-          val today = Clock.System.now()
-            .toLocalDateTime(TimeZone.currentSystemDefault()).date
-          val active = cardsWithStatus
-            .filter { it.dueStatus.status != DueStatus.COMPLIED }
-            .sortedBy { task ->
-              val due = task.dueStatus
-              if (due.isImmediate) return@sortedBy Long.MIN_VALUE
-              val candidates = mutableListOf<Long>()
-              due.nextDueDate?.let {
-                candidates.add(it.toEpochDays() - today.toEpochDays())
-              }
-              due.nextDueEngine?.let {
-                // Against the meter the due is measured in. Subtracting engine hours from an
-                // odometer sorted every mileage task to the bottom of the list, behind items
-                // years away (#759).
-                val current =
-                  stats.valueFor(due.nextDueMeterKey.orEmpty()) ?: 0.0
-                candidates.add((it.toDouble() - current).toLong())
-              }
-              candidates.minOrNull() ?: Long.MAX_VALUE
-            }
+          val active = cardsWithStatus.filter { it.dueStatus.status != DueStatus.COMPLIED }
           val complied =
             cardsWithStatus.filter { it.dueStatus.status == DueStatus.COMPLIED }
 

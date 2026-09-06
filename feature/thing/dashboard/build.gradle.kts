@@ -56,6 +56,10 @@ kotlin {
       implementation(project(":feature:logs:sharedassets"))
       implementation(project(":feature:logs:viewing"))
       implementation(project(":feature:search:model"))
+      implementation(project(":feature:search:datamanager"))
+      implementation(project(":feature:search:sharedassets"))
+      implementation(project(":feature:search:viewing"))
+      implementation(project(":core:datetime"))
       implementation(project(":feature:squawk:model"))
       implementation(project(":feature:squawk:datamanager"))
       implementation(project(":feature:squawk:sharedassets"))
@@ -77,6 +81,8 @@ dependencies {
   "androidMainImplementation"(platform(libs.firebase.bom))
   "androidHostTestImplementation"(libs.junit)
   "androidHostTestImplementation"(libs.truth)
+  "androidHostTestImplementation"(libs.mockk)
+  "androidHostTestImplementation"(libs.kotlinx.coroutines.test)
 }
 
 compose.resources {

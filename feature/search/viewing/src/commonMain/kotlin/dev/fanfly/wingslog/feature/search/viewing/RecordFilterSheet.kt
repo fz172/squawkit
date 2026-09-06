@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.search.viewing
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -20,6 +21,7 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
@@ -31,6 +33,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.Dp
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.ui.common.compose.DatePickerDialog
 import dev.fanfly.wingslog.core.ui.common.compose.ModalBottomSheet
@@ -67,10 +70,11 @@ private val COMPONENT_OPTIONS = listOf(
   ComponentType.COMPONENT_UNKNOWN,
 )
 
-/** One sheet for every tab: component, period, then the tab’s own [facetSection]. Choices apply immediately. */
-@OptIn(ExperimentalMaterial3Api::class)
+/** Opens the filters: an inline panel under the bar on wide tiers, a bottom sheet on compact. */
 @Composable
-fun RecordFilterSheet(
+fun RecordFilterControls(
+  expanded: Boolean,
+  inline: Boolean,
   title: String,
   filter: RecordFilter,
   showComponentFilter: Boolean,
@@ -81,58 +85,116 @@ fun RecordFilterSheet(
   onDismiss: () -> Unit,
   dueWithin: Boolean = false,
   timeNote: String? = null,
+  horizontalPadding: Dp = Spacing.screenPadding,
   facetSection: (@Composable ColumnScope.() -> Unit)? = null,
 ) {
+  if (!expanded) return
+  val content: @Composable ColumnScope.() -> Unit = {
+    RecordFilterPanelContent(
+      title = title,
+      filter = filter,
+      showComponentFilter = showComponentFilter,
+      componentLabel = componentLabel,
+      onComponentToggle = onComponentToggle,
+      onTimeWindowChange = onTimeWindowChange,
+      onClear = onClear,
+      onDone = onDismiss,
+      dueWithin = dueWithin,
+      timeNote = timeNote,
+      facetSection = facetSection,
+    )
+  }
+  if (inline) RecordFilterPanel(horizontalPadding, content) else RecordFilterSheet(onDismiss, content)
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun RecordFilterSheet(onDismiss: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
   ModalBottomSheet(
     onDismissRequest = onDismiss,
     sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
   ) {
     Column(
-      modifier = Modifier.fillMaxWidth()
-        .padding(horizontal = Spacing.xLarge),
+      modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.xLarge),
       verticalArrangement = Arrangement.spacedBy(Spacing.large),
     ) {
-      Column {
-        Text(title, style = MaterialTheme.typography.titleLarge)
-        Text(
-          stringResource(Res.string.filter_scope_note),
-          style = MaterialTheme.typography.bodySmall,
-          color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-      }
-
-      if (showComponentFilter) {
-        FilterSection(stringResource(Res.string.filter_component)) {
-          COMPONENT_OPTIONS.forEach { component ->
-            ChoiceChip(
-              label = componentLabel(component),
-              selected = component in filter.components,
-              onClick = { onComponentToggle(component) },
-            )
-          }
-        }
-      }
-
-      TimeSection(
-        time = filter.time,
-        dueWithin = dueWithin,
-        note = timeNote,
-        onTimeWindowChange = onTimeWindowChange,
-      )
-
-      facetSection?.invoke(this)
-
-      Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(Spacing.small),
-        verticalAlignment = Alignment.CenterVertically,
-      ) {
-        TextButton(onClick = onClear) { Text(stringResource(Res.string.clear)) }
-        Spacer(Modifier.weight(1f))
-        Button(onClick = onDismiss) { Text(stringResource(CoreRes.string.done)) }
-      }
+      content()
       Spacer(Modifier.height(Spacing.large))
     }
+  }
+}
+
+@Composable
+private fun RecordFilterPanel(horizontalPadding: Dp, content: @Composable ColumnScope.() -> Unit) {
+  Surface(
+    shape = RoundedCornerShape(Spacing.smallCornerRadius),
+    color = MaterialTheme.colorScheme.surfaceContainer,
+    border = BorderStroke(Spacing.hairline, MaterialTheme.colorScheme.outlineVariant),
+    modifier = Modifier
+      .fillMaxWidth()
+      .padding(start = horizontalPadding, end = horizontalPadding, bottom = Spacing.small),
+  ) {
+    Column(
+      modifier = Modifier.fillMaxWidth().padding(Spacing.large),
+      verticalArrangement = Arrangement.spacedBy(Spacing.large),
+      content = content,
+    )
+  }
+}
+
+/** Component, period, then the tab’s own [facetSection]. Choices apply immediately. */
+@Composable
+private fun RecordFilterPanelContent(
+  title: String,
+  filter: RecordFilter,
+  showComponentFilter: Boolean,
+  componentLabel: @Composable (ComponentType) -> String,
+  onComponentToggle: (ComponentType) -> Unit,
+  onTimeWindowChange: (TimeWindow) -> Unit,
+  onClear: () -> Unit,
+  onDone: () -> Unit,
+  dueWithin: Boolean,
+  timeNote: String?,
+  facetSection: (@Composable ColumnScope.() -> Unit)?,
+) {
+  Column {
+    Text(title, style = MaterialTheme.typography.titleLarge)
+    Text(
+      stringResource(Res.string.filter_scope_note),
+      style = MaterialTheme.typography.bodySmall,
+      color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+  }
+
+  if (showComponentFilter) {
+    FilterSection(stringResource(Res.string.filter_component)) {
+      COMPONENT_OPTIONS.forEach { component ->
+        ChoiceChip(
+          label = componentLabel(component),
+          selected = component in filter.components,
+          onClick = { onComponentToggle(component) },
+        )
+      }
+    }
+  }
+
+  TimeSection(
+    time = filter.time,
+    dueWithin = dueWithin,
+    note = timeNote,
+    onTimeWindowChange = onTimeWindowChange,
+  )
+
+  facetSection?.let { Column(content = it) }
+
+  Row(
+    modifier = Modifier.fillMaxWidth(),
+    horizontalArrangement = Arrangement.spacedBy(Spacing.small),
+    verticalAlignment = Alignment.CenterVertically,
+  ) {
+    TextButton(onClick = onClear) { Text(stringResource(Res.string.clear)) }
+    Spacer(Modifier.weight(1f))
+    Button(onClick = onDone) { Text(stringResource(CoreRes.string.done)) }
   }
 }
 

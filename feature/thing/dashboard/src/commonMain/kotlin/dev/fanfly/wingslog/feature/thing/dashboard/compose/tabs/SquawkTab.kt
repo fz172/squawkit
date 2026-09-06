@@ -27,7 +27,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.text.font.FontWeight
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.fanfly.wingslog.core.analytics.LocalAnalytics
+import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.squawkEmptyHint
@@ -46,23 +48,35 @@ import dev.fanfly.wingslog.feature.ads.model.withAdSlots
 import dev.fanfly.wingslog.feature.ads.viewing.AdSlot
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
 import dev.fanfly.wingslog.feature.attachment.datamanager.OpenState
+import dev.fanfly.wingslog.feature.logs.sharedassets.util.displayName
+import dev.fanfly.wingslog.feature.search.model.TimeWindow
+import dev.fanfly.wingslog.feature.search.viewing.NoRecordsMatch
+import dev.fanfly.wingslog.feature.search.viewing.RecordCountRow
+import dev.fanfly.wingslog.feature.search.viewing.RecordFilterBar
+import dev.fanfly.wingslog.feature.search.viewing.RecordFilterControls
 import dev.fanfly.wingslog.feature.squawk.model.SquawkStatus
 import dev.fanfly.wingslog.feature.squawk.model.SquawkWithStatus
 import dev.fanfly.wingslog.feature.squawk.viewing.SquawkCard
 import dev.fanfly.wingslog.feature.squawk.viewing.SquawkDetailSheet
+import dev.fanfly.wingslog.feature.thing.dashboard.data.SquawkTabViewModel
 import dev.fanfly.wingslog.feature.thing.dashboard.data.ThingOverviewAction
 import dev.fanfly.wingslog.feature.thing.dashboard.data.ThingOverviewUiState
+import kotlin.math.roundToInt
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
+import wingslog.feature.search.sharedassets.generated.resources.Res as SearchRes
+import wingslog.feature.search.sharedassets.generated.resources.filter_records
+import wingslog.feature.search.sharedassets.generated.resources.search_placeholder
 import wingslog.feature.squawk.sharedassets.generated.resources.Res
 import wingslog.feature.squawk.sharedassets.generated.resources.closed_with_count
 import wingslog.feature.squawk.sharedassets.generated.resources.no_closed_squawks
 import wingslog.feature.squawk.sharedassets.generated.resources.no_open_squawks
 import wingslog.feature.squawk.sharedassets.generated.resources.open_with_count
-import kotlin.math.roundToInt
 
 private val squawkOrder = compareByDescending<SquawkWithStatus> {
   it.squawk.priority
@@ -85,11 +99,19 @@ fun SquawkTab(
   val adsManager: AdsManager = koinInject()
   val coroutineScope = rememberCoroutineScope()
   var openError by remember { mutableStateOf<String?>(null) }
+  val useFilterBar = koinInject<AppCapability>().isSearchFilterSupported
+  var showFilterSheet by remember { mutableStateOf(false) }
+  val tabViewModel: SquawkTabViewModel =
+    koinViewModel(key = "squawks:${state.thing.id}", parameters = { parametersOf(state.thing.id) })
+  val tabState by tabViewModel.uiState.collectAsStateWithLifecycle()
+  val squawkFilter = tabState.filter
+  val setFilter = tabViewModel::onFilterChange
+  val squawkNoun = LocalThingLexicon.current.squawkNoun
 
-  val openSquawks = state.squawks
+  val openSquawks = tabState.squawks
     .filter { it.status == SquawkStatus.OPEN }
     .sortedWith(squawkOrder)
-  val closedSquawks = state.squawks
+  val closedSquawks = tabState.squawks
     .filter { it.status == SquawkStatus.ADDRESSED || it.status == SquawkStatus.DISMISSED }
     .sortedByDescending { it.squawk.created_at?.getEpochSecond() ?: 0L }
 
@@ -105,8 +127,12 @@ fun SquawkTab(
   // can first see the squawk as still OPEN. Re-running once the real status shows up (rather than
   // only once, on id alone) is what corrects showClosed and the scroll target instead of leaving both
   // stuck on Open.
+  // A jump target must be reachable whatever was filtered before.
+  LaunchedEffect(scrollToSquawkId) {
+    if (scrollToSquawkId != null && squawkFilter.isActive) tabViewModel.clearFilter()
+  }
   val scrollTarget =
-    scrollToSquawkId?.let { id -> state.squawks.find { it.squawk.id == id } }
+    scrollToSquawkId?.let { id -> tabState.squawks.find { it.squawk.id == id } }
   LaunchedEffect(scrollToSquawkId, scrollTarget?.status) {
     val target = scrollTarget ?: return@LaunchedEffect
     showClosed = target.status != SquawkStatus.OPEN
@@ -132,13 +158,43 @@ fun SquawkTab(
       .padding(bottom = LocalNavPillClearance.current),
     verticalArrangement = Arrangement.spacedBy(Spacing.medium),
   ) {
-    Spacer(Modifier.height(Spacing.medium))
+    // The bar carries its own top padding, matching the Logs tab; the spacer would double it.
+    if (!useFilterBar) Spacer(Modifier.height(Spacing.medium))
 
     if (showHeader) {
       Text(
         text = LexiconFormatter.titleCasePlural(LocalThingLexicon.current.squawkNoun),
         style = MaterialTheme.typography.titleMedium,
         fontWeight = FontWeight.Bold,
+      )
+    }
+
+    if (useFilterBar) {
+      RecordFilterBar(
+        filter = squawkFilter,
+        placeholder = stringResource(SearchRes.string.search_placeholder),
+        // Squawks are filed against the thing, not a component, so the section would be dead.
+        showComponentFilter = false,
+        componentLabel = { it.displayName() },
+        onQueryChange = { setFilter(squawkFilter.copy(query = it)) },
+        onOpenFilters = { showFilterSheet = true },
+        onRemoveComponent = { setFilter(squawkFilter.toggleComponent(it)) },
+        onClearTime = { setFilter(squawkFilter.copy(time = TimeWindow.All)) },
+        horizontalPadding = Spacing.none,
+      )
+      RecordFilterControls(
+        expanded = showFilterSheet,
+        inline = LocalLayoutTier.current.hasSideNav,
+        title = stringResource(SearchRes.string.filter_records, squawkNoun.plural),
+        filter = squawkFilter,
+        // Squawks are filed against the thing, not a component, so the section would be dead.
+        showComponentFilter = false,
+        componentLabel = { it.displayName() },
+        onComponentToggle = { setFilter(squawkFilter.toggleComponent(it)) },
+        onTimeWindowChange = { setFilter(squawkFilter.copy(time = it)) },
+        onClear = { setFilter(squawkFilter.withoutFilters()) },
+        onDismiss = { showFilterSheet = false },
+        horizontalPadding = Spacing.none,
       )
     }
 
@@ -156,6 +212,16 @@ fun SquawkTab(
     )
 
     val displayList = if (showClosed) closedSquawks else openSquawks
+    if (useFilterBar) {
+      RecordCountRow(
+        count = displayList.size,
+        nounSingular = squawkNoun.singular,
+        nounPlural = squawkNoun.plural,
+        filterActive = squawkFilter.isActive,
+        onClear = { tabViewModel.clearFilter() },
+        horizontalPadding = Spacing.none,
+      )
+    }
     // Each sub-view is its own list with its own counter — switching the toggle re-evaluates from
     // scratch, which falls out of wrapping the filtered list rather than the union.
     val showAds by adsManager.shouldShowsAds()
@@ -169,7 +235,9 @@ fun SquawkTab(
     }
 
     if (displayList.isEmpty()) {
-      if (!showClosed) {
+      if (useFilterBar && squawkFilter.isActive) {
+        NoRecordsMatch(nounPlural = squawkNoun.plural, onClearFilters = { tabViewModel.clearFilter() })
+      } else if (!showClosed) {
         EmptyState(
           title = stringResource(
             Res.string.no_open_squawks,

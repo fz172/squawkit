@@ -19,15 +19,37 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.fanfly.wingslog.core.analytics.LocalAnalytics
+import dev.fanfly.wingslog.core.appinfo.AppCapability
+import dev.fanfly.wingslog.core.template.LexiconFormatter
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.componentTypesApply
+import dev.fanfly.wingslog.core.template.taskNoun
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalNavPillClearance
+import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.feature.logs.sharedassets.util.displayName
+import dev.fanfly.wingslog.feature.search.model.TimeWindow
+import dev.fanfly.wingslog.feature.search.viewing.NoRecordsMatch
+import dev.fanfly.wingslog.feature.search.viewing.RecordCountRow
+import dev.fanfly.wingslog.feature.search.viewing.RecordFilterBar
+import dev.fanfly.wingslog.feature.search.viewing.RecordFilterControls
 import dev.fanfly.wingslog.feature.thing.dashboard.compose.ComplianceSection
+import dev.fanfly.wingslog.feature.thing.dashboard.data.TaskTabViewModel
 import dev.fanfly.wingslog.feature.thing.dashboard.data.ThingOverviewAction
 import dev.fanfly.wingslog.feature.thing.dashboard.data.ThingOverviewUiState
+import kotlin.math.roundToInt
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
-import kotlin.math.roundToInt
+import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
+import wingslog.feature.search.sharedassets.generated.resources.Res as SearchRes
+import wingslog.feature.search.sharedassets.generated.resources.filter_records
+import wingslog.feature.search.sharedassets.generated.resources.meter_task_note
+import wingslog.feature.search.sharedassets.generated.resources.search_placeholder
 
 @Composable
 fun MaintenanceTasksTab(
@@ -41,6 +63,16 @@ fun MaintenanceTasksTab(
   val scrollState = rememberScrollState()
   var showComplied by rememberSaveable { mutableStateOf(false) }
   val analytics = LocalAnalytics.current
+  val useFilterBar = koinInject<AppCapability>().isSearchFilterSupported
+  var showFilterSheet by remember { mutableStateOf(false) }
+  val tabViewModel: TaskTabViewModel =
+    koinViewModel(key = "tasks:${state.thing.id}", parameters = { parametersOf(state.thing.id) })
+  val tabState by tabViewModel.uiState.collectAsStateWithLifecycle()
+  val taskFilter = tabState.filter
+  val setFilter = tabViewModel::onFilterChange
+  val activeTasks = tabState.activeTasks
+  val completedTasks = tabState.completedTasks
+  val taskNoun = LocalThingLexicon.current.taskNoun
 
   // Jump-to-task from a log: switch to the sub-view holding the target, then scroll it into view.
   // See SquawkTab for the root-coordinate offset scheme.
@@ -50,6 +82,10 @@ fun MaintenanceTasksTab(
   // not-yet-synced tap and a status flip both re-trigger below (see SquawkTab for why: a tapped
   // notification can arrive and be acted on before the local sync pull carrying the very status
   // change it announced has landed).
+  // A jump target must be reachable whatever was filtered before.
+  LaunchedEffect(scrollToTaskId) {
+    if (scrollToTaskId != null && taskFilter.isActive) tabViewModel.clearFilter()
+  }
   val taskInHistory: Boolean? = scrollToTaskId?.let { id ->
     when {
       state.completedTasks.any { it.card.id == id } -> true
@@ -81,11 +117,12 @@ fun MaintenanceTasksTab(
       .padding(bottom = LocalNavPillClearance.current),
     verticalArrangement = Arrangement.spacedBy(Spacing.medium)
   ) {
-    Spacer(Modifier.height(Spacing.medium))
+    // The bar carries its own top padding, matching the Logs tab; the spacer would double it.
+    if (!useFilterBar) Spacer(Modifier.height(Spacing.medium))
 
     ComplianceSection(
-      activeTasks = state.activeTasks,
-      completedTasks = state.completedTasks,
+      activeTasks = activeTasks,
+      completedTasks = completedTasks,
       showComplied = showComplied,
       onToggleComplied = {
         showComplied = it
@@ -103,6 +140,55 @@ fun MaintenanceTasksTab(
       scrollTargetId = scrollToTaskId,
       onTargetPositioned = { targetCardY = it },
       showHeader = showHeader,
+      filterBar = if (useFilterBar) {
+        {
+          RecordFilterBar(
+            filter = taskFilter,
+            placeholder = stringResource(SearchRes.string.search_placeholder),
+            showComponentFilter = componentTypesApply,
+            componentLabel = { it.displayName() },
+            onQueryChange = { setFilter(taskFilter.copy(query = it)) },
+            onOpenFilters = { showFilterSheet = true },
+            onRemoveComponent = { setFilter(taskFilter.toggleComponent(it)) },
+            onClearTime = { setFilter(taskFilter.copy(time = TimeWindow.All)) },
+            dueWithin = !showComplied,
+            horizontalPadding = Spacing.none,
+          )
+          RecordFilterControls(
+            expanded = showFilterSheet,
+            inline = LocalLayoutTier.current.hasSideNav,
+            title = stringResource(SearchRes.string.filter_records, taskNoun.plural),
+            filter = taskFilter,
+            showComponentFilter = componentTypesApply,
+            componentLabel = { it.displayName() },
+            onComponentToggle = { setFilter(taskFilter.toggleComponent(it)) },
+            onTimeWindowChange = { setFilter(taskFilter.copy(time = it)) },
+            onClear = { setFilter(taskFilter.withoutFilters()) },
+            onDismiss = { showFilterSheet = false },
+            dueWithin = !showComplied,
+            timeNote = if (showComplied) null else stringResource(
+              SearchRes.string.meter_task_note,
+              LexiconFormatter.sentenceCasePlural(taskNoun),
+            ),
+            horizontalPadding = Spacing.none,
+          )
+        }
+      } else null,
+      countRow = if (useFilterBar) {
+        {
+          RecordCountRow(
+            count = (if (showComplied) completedTasks else activeTasks).size,
+            nounSingular = taskNoun.singular,
+            nounPlural = taskNoun.plural,
+            filterActive = taskFilter.isActive,
+            onClear = { tabViewModel.clearFilter() },
+            horizontalPadding = Spacing.none,
+          )
+        }
+      } else null,
+      noMatch = if (useFilterBar && taskFilter.isActive) {
+        { NoRecordsMatch(nounPlural = taskNoun.plural, onClearFilters = { tabViewModel.clearFilter() }) }
+      } else null,
     )
 
     Spacer(Modifier.height(Spacing.buttonHeight + Spacing.screenPadding))

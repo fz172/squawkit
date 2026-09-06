@@ -1,11 +1,31 @@
 # Design Doc: Search and Filter
 
 **PRD:** `docs/search/search_filter_PRD.md`
-**Status:** 📋 Proposed
-**Last updated:** 2026-09-05
+**Status:** 🚧 P1 built behind `AppCapability.isSearchFilterSupported` (developer builds), 2026-09-06
+**Last updated:** 2026-09-06
 **Tracking:** GitHub Project #11 “Search and Filter” — sub-issues #820–#844 follow the §10 order
 
 ---
+
+## Implementation status
+
+P1 (#817) landed 2026-09-06 across PRs #845, #846 and the milestone-3 PR, gated to developer
+builds by `AppCapability.isSearchFilterSupported`. Deltas from the design as written:
+
+- Modules are `feature/search/{model,datamanager,sharedassets,viewing}`, not `core/search` + `core/ui`.
+- `SearchEngine` is an interface bound in Koin (`searchModule`) and injected, not constructed per VM.
+- The squawk and task adapters live in `feature/thing/dashboard/data/RecordAdapters.kt`.
+- Each tab observes its own data and owns its filter: `SquawkTabViewModel` (squawks + logs, for
+  the addressed-squawk date) and `TaskTabViewModel` (tasks with status), both keyed per thing in
+  `feature/thing/dashboard/data`, beside the adapters. `ThingOverviewViewModel` carries no filter
+  state and no search dependency.
+- Due status is computed in one place, `TaskStatusManager` (`feature/tasks/datamanager`), which
+  the task tab and the overview both read; `refreshDueStatus()` replaces the overview’s resume tick.
+- The addressed-squawk date comes from the logs the squawk tab already observes (id → work date),
+  so no `observeLogDates` projection was needed (§12 Q1 resolved).
+- The count row reads "5 work logs", not "5 of 12".
+- `ComplianceSection` gained `filterBar` / `countRow` / `noMatch` slots rather than the Tasks tab
+  reaching into it.
 
 ## 1. Overview
 
