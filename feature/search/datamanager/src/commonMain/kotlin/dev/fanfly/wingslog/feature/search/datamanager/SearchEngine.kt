@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.search.datamanager
 
+import dev.fanfly.wingslog.feature.search.model.MatchExplanation
 import dev.fanfly.wingslog.feature.search.model.RecordAdapter
 import dev.fanfly.wingslog.feature.search.model.RecordFilter
 import dev.fanfly.wingslog.feature.search.model.SearchHit
@@ -15,7 +16,16 @@ interface SearchEngine {
   ): List<SearchHit<T>>
 }
 
-/** Grades one lowercase query token against a field’s text: 0 for no match, 1 for exact. */
+/** Grades one normalised query token against one field. */
 fun interface TokenMatcher {
-  fun grade(token: String, text: String): Double
+  fun match(token: String, field: FieldText): TokenMatch?
+}
+
+/** [grade] runs 0–1: exact 1, stem 0.95, prefix 0.8, synonym 0.7, fuzzy 0.5 (design §4.4). */
+data class TokenMatch(val grade: Double, val explanation: MatchExplanation? = null)
+
+/** A field’s text, normalised and tokenised once per search rather than once per query token. */
+class FieldText(text: String) {
+  val normalized: String = Tokenizer.normalize(text)
+  val tokens: List<String> by lazy { Tokenizer.tokens(normalized) }
 }

@@ -1,7 +1,12 @@
 package dev.fanfly.wingslog.feature.search.datamanager.impl
 
+import dev.fanfly.wingslog.feature.search.datamanager.AviationSynonyms
+import dev.fanfly.wingslog.feature.search.datamanager.FieldText
+import dev.fanfly.wingslog.feature.search.datamanager.GenericSynonyms
 import dev.fanfly.wingslog.feature.search.datamanager.SearchEngine
 import dev.fanfly.wingslog.feature.search.datamanager.TokenMatcher
+import dev.fanfly.wingslog.feature.search.datamanager.Tokenizer
+import dev.fanfly.wingslog.feature.search.model.MatchExplanation
 import dev.fanfly.wingslog.feature.search.model.RecordAdapter
 import dev.fanfly.wingslog.feature.search.model.RecordFilter
 import dev.fanfly.wingslog.feature.search.model.SearchField
@@ -12,7 +17,7 @@ import kotlinx.datetime.LocalDate
 
 /** Filters first, then the query. Every token must land in some field. */
 class SearchEngineImpl(
-  private val matcher: TokenMatcher = SubstringTokenMatcher,
+  private val matcher: TokenMatcher = TolerantTokenMatcher(GenericSynonyms + AviationSynonyms),
 ) : SearchEngine {
 
   override fun <T> search(
@@ -22,38 +27,33 @@ class SearchEngineImpl(
     today: LocalDate,
   ): List<SearchHit<T>> {
     val survivors = items.filter { adapter.passesFilters(it, filter, today) }
-    val tokens = filter.query.lowercase()
-      .split(WHITESPACE)
-      .filter { it.isNotEmpty() }
-      .distinct()
+    val tokens = Tokenizer.normalize(filter.query).split(WHITESPACE).filter { it.isNotEmpty() }.distinct()
     if (tokens.isEmpty()) return survivors.map { SearchHit(it) }
     return survivors
-      .mapNotNull { item ->
-        score(
-          adapter.fields(item),
-          tokens
-        )?.let { SearchHit(item, it) }
-      }
-      .sortedWith(compareByDescending<SearchHit<T>> { it.score }.thenByDescending {
-        adapter.date(
-          it.item
-        )
-      })
+      .mapNotNull { item -> score(adapter.fields(item), tokens)?.let { (score, why) -> SearchHit(item, score, why) } }
+      .sortedWith(compareByDescending<SearchHit<T>> { it.score }.thenByDescending { adapter.date(it.item) })
   }
 
-  private fun score(fields: List<SearchField>, tokens: List<String>): Double? {
+  private fun score(fields: List<SearchField>, tokens: List<String>): Pair<Double, List<MatchExplanation>>? {
+    val texts = fields.map { FieldText(it.text) }
     var total = 0.0
+    val explanations = ArrayList<MatchExplanation>(0)
     for (token in tokens) {
-      val best = fields.maxOf { field ->
-        matcher.grade(
-          token,
-          field.text
-        ) * field.weight
+      var best = 0.0
+      var bestExplanation: MatchExplanation? = null
+      fields.forEachIndexed { i, field ->
+        val m = matcher.match(token, texts[i]) ?: return@forEachIndexed
+        val weighted = m.grade * field.weight
+        if (weighted > best) {
+          best = weighted
+          bestExplanation = m.explanation
+        }
       }
       if (best == 0.0) return null
       total += best
+      bestExplanation?.let(explanations::add)
     }
-    return total
+    return total to explanations
   }
 
   private companion object {
@@ -61,27 +61,13 @@ class SearchEngineImpl(
   }
 }
 
-private fun <T> RecordAdapter<T>.passesFilters(
-  item: T,
-  filter: RecordFilter,
-  today: LocalDate
-): Boolean {
+private fun <T> RecordAdapter<T>.passesFilters(item: T, filter: RecordFilter, today: LocalDate): Boolean {
   if (filter.components.isNotEmpty() && component(item) !in filter.components) return false
   if (filter.time != TimeWindow.All) {
     val date = date(item)
-    val inWindow = if (date == null) nullDateMatches else filter.time.contains(
-      date,
-      today,
-      direction(item)
-    )
+    val inWindow = if (date == null) nullDateMatches else filter.time.contains(date, today, direction(item))
     if (!inWindow) return false
   }
   val facet = filter.facet
   return facet == null || facetMatches(item, facet)
-}
-
-/** Case-insensitive substring; the tolerant matcher (P2) replaces it. */
-object SubstringTokenMatcher : TokenMatcher {
-  override fun grade(token: String, text: String): Double =
-    if (text.contains(token, ignoreCase = true)) 1.0 else 0.0
 }
