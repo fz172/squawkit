@@ -25,6 +25,7 @@ import dev.fanfly.wingslog.core.template.SpecKeys
 import dev.fanfly.wingslog.core.template.allComponentsInSlot
 import dev.fanfly.wingslog.core.template.childInSlot
 import dev.fanfly.wingslog.core.template.childrenInSlot
+import dev.fanfly.wingslog.core.template.joinAsPhrase
 import dev.fanfly.wingslog.core.template.specValue
 import dev.fanfly.wingslog.core.template.thingNoun
 import dev.fanfly.wingslog.core.ui.theme.Spacing
@@ -108,9 +109,7 @@ fun ComponentSection(
         } else {
           val engines = thing.allComponentsInSlot(SlotKeys.ENGINE)
           val options = engines.map { engine ->
-            val makeModel = listOf(engine.make, engine.model)
-              .filter { it.isNotBlank() }
-              .joinToString(" ")
+            val makeModel = listOf(engine.make, engine.model).joinAsPhrase()
             val label = if (engine.serial.isNotEmpty()) {
               stringResource(
                 Res.string.make_model_serial,
@@ -169,9 +168,7 @@ fun ComponentSection(
               val prop = engine.childInSlot(SlotKeys.PROPELLER)
               val hub = prop
               if (hub?.serial?.isNotEmpty() == true) {
-                val makeModel = listOf(hub.make, hub.model)
-                  .filter { it.isNotBlank() }
-                  .joinToString(" ")
+                val makeModel = listOf(hub.make, hub.model).joinAsPhrase()
                 val label = stringResource(
                   Res.string.type_make_model_serial,
                   stringResource(LogRes.string.propeller_hub),
@@ -183,9 +180,7 @@ fun ComponentSection(
               prop?.childrenInSlot(SlotKeys.BLADE)
                 ?.forEach { blade ->
                   if (blade.serial.isNotEmpty()) {
-                    val makeModel = listOf(blade.make, blade.model)
-                      .filter { it.isNotBlank() }
-                      .joinToString(" ")
+                    val makeModel = listOf(blade.make, blade.model).joinAsPhrase()
                     val label = stringResource(
                       Res.string.type_make_model_serial,
                       stringResource(LogRes.string.blade),

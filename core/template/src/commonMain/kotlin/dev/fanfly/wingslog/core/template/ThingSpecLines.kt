@@ -82,8 +82,7 @@ fun ThingTemplate?.specLines(thing: Thing): ThingSpecLines {
       .sortedByDescending { it.title_candidate }
 
   val headline = headlineFields.map { thing.specValue(it.key) }
-    .filter { it.isNotBlank() }
-    .joinToString(" ")
+    .joinAsPhrase()
   val title = fields.firstOrNull { it.title_candidate }
     ?.let { thing.specValue(it.key) }
     .orEmpty()

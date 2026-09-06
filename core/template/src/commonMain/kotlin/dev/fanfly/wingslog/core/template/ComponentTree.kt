@@ -138,8 +138,7 @@ data class ComponentRow(
       val name = listOf(ComponentField.MAKE, ComponentField.MODEL)
         .filter { it in visible }
         .map { component.valueOf(it) }
-        .filter { it.isNotBlank() }
-        .joinToString(" ")
+        .joinAsPhrase()
       val serial =
         if (ComponentField.SERIAL in visible) component.serial else ""
       val naming = slot.spec_fields.firstOrNull { it.title_candidate }

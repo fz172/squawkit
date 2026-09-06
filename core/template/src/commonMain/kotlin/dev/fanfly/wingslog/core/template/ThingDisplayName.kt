@@ -56,6 +56,4 @@ fun Thing.displaySubtitle(template: ThingTemplate?): String {
 }
 
 private fun Thing.makeAndModel(): String =
-  listOf(specValue(SpecKeys.MAKE), specValue(SpecKeys.MODEL))
-    .filter { it.isNotBlank() }
-    .joinToString(" ")
+  listOf(specValue(SpecKeys.MAKE), specValue(SpecKeys.MODEL)).joinAsPhrase()

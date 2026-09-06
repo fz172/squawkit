@@ -10,6 +10,7 @@ import dev.fanfly.wingslog.core.storage.EntityStore
 import dev.fanfly.wingslog.core.storage.EntityStoreFactory
 import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.core.template.ThingInflater
+import dev.fanfly.wingslog.core.template.withNormalisedText
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetEntry
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.thing.Thing
@@ -155,12 +156,17 @@ class FleetManagerImpl(
       val isNew = thing.id.isEmpty()
       val withId =
         if (isNew) thing.copy(id = generateRandomId()) else thing
+      // Every write, not only the form's: a trailing space is invisible in a text field, and one
+      // typed after a make renders as "Sling  TSi" wherever make and model are joined. Cleaning
+      // it here rather than on each keystroke leaves the user free to type the space *between*
+      // two words, which trimming as they go would eat.
+      val cleaned = withId.withNormalisedText()
       // Inflate on every write, not just creation (#717). After the id is assigned: component
       // ids derive from it.
       val inflated =
         ThingInflater.inflate(
-          withId,
-          templateRegistry.forThingWithFallback(withId)
+          cleaned,
+          templateRegistry.forThingWithFallback(cleaned)
         )
       val scope =
         if (isNew) EntityScope.userRoot(uid) else rootScopeOf(inflated.id, uid)
