@@ -99,7 +99,7 @@ import wingslog.feature.logs.viewing.generated.resources.log_count_one_entry
 import wingslog.feature.logs.viewing.generated.resources.no_logs_match_filter
 import wingslog.feature.logs.viewing.generated.resources.search_logs
 import wingslog.feature.search.sharedassets.generated.resources.filter_records
-import wingslog.feature.search.sharedassets.generated.resources.search_records
+import wingslog.feature.search.sharedassets.generated.resources.search_placeholder
 import kotlin.time.Duration.Companion.milliseconds
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.logs.sharedassets.generated.resources.Res as SharedRes
@@ -232,10 +232,7 @@ fun MaintenanceLogListContent(
             if (useSharedFilterBar) {
               RecordFilterBar(
                 filter = uiState.filter,
-                placeholder = stringResource(
-                  SearchRes.string.search_records,
-                  logNounPlural
-                ),
+                placeholder = stringResource(SearchRes.string.search_placeholder),
                 showComponentFilter = componentTypesApply,
                 componentLabel = { it.displayName() },
                 onQueryChange = onSearchQueryChange,
