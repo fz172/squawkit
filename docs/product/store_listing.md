@@ -55,7 +55,7 @@ Log squawks, track due dates by hours or calendar, and keep every maintenance re
 **Keywords (100)**, comma separated, no spaces, do not repeat words from the name or subtitle:
 
 ```
-aircraft,airplane,pilot,mechanic,inspection,annual,car,boat,home,tracker,repair,service,logbook
+aircraft,airplane,pilot,mechanic,inspection,annual,car,boat,home,tracker,repair,service,aviation
 ```
 
 **Description (4000)**: `play_store_description.txt`, unchanged.
@@ -66,6 +66,7 @@ aircraft,airplane,pilot,mechanic,inspection,annual,car,boat,home,tracker,repair,
 |---|---|---|
 | App icon | built from the Xcode asset catalog (`AppIcon-1024.png`, no alpha) | 1024×1024 |
 | iPhone 6.9-inch screenshots | `store_assets/appstore/iphone_6_9/*.png` | 1320×2868, 1 to 10 |
+| iPhone 6.5-inch screenshots | `store_assets/appstore/iphone_6_5/*.png` | 1284×2778, 1 to 10 |
 | iPad 13-inch screenshots | `store_assets/appstore/ipad_13/*.png` | 2752×2064 or 2064×2752 |
 
 iPad screenshots are required because the target's device family includes

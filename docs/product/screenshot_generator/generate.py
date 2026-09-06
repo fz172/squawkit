@@ -17,6 +17,7 @@ Writes (all under docs/product/store_assets/):
                                              derived from ipad/ captures when tablet/ is empty)
   - play/feature_graphic.png                 1024x500
   - appstore/iphone_6_9/<NN>_<screen>.png    1320x2868
+  - appstore/iphone_6_5/<NN>_<screen>.png    1284x2778
   - appstore/ipad_13/<NN>_<screen>.png       2752x2064 (or 2064x2752 for a portrait capture)
 
 See README.md for the folder contract and the no-per-user-data rule.
@@ -156,6 +157,15 @@ TARGETS = {
         "store": "App Store · iPhone 6.9-inch",
         # With no iphone/ captures, reuse the Android phone captures: the Android status bar is
         # cropped off and an iOS one drawn in its place, so the frame reads as an iPhone.
+        "derive_from": "phone",
+        "derived_bar": "iphone",
+    },
+    "appstore_iphone_6_5": {
+        "src_dir": "iphone",
+        "out_dir": os.path.join("appstore", "iphone_6_5"),
+        "device": "phone iphone",
+        "canvas": {"portrait": (1284, 2778), "landscape": (2778, 1284)},
+        "store": "App Store · iPhone 6.5-inch (App Store Connect asks for this slot too)",
         "derive_from": "phone",
         "derived_bar": "iphone",
     },

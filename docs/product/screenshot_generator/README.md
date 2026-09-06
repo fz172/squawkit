@@ -33,6 +33,7 @@ Drop raw captures here, named by screen, one folder per device class:
 | `phone/` | Pixel 8 class Android phone | 1080×2364 | `store_assets/play/phone/` 1080×2364 |
 | `tablet/` | Pixel Tablet emulator, landscape, or leave empty to derive from `ipad/` | 2560×1600 | `store_assets/play/tablet/` 2560×1600 |
 | `iphone/` | iPhone 16 Pro Max simulator, or leave empty to derive from `phone/` | 1320×2868 | `store_assets/appstore/iphone_6_9/` 1320×2868 |
+| `iphone/` (same captures) | rendered again by `appstore_iphone_6_5` | | `store_assets/appstore/iphone_6_5/` 1284×2778 |
 | `ipad/` | Any iPad Pro simulator (the frame scales the capture) | e.g. 2420×1668 | `store_assets/appstore/ipad_13/` 2752×2064, or 2064×2752 for a portrait capture |
 
 Screen filenames, in upload order: `overview_1`, `tasks`, `squawks`, `logs`,
