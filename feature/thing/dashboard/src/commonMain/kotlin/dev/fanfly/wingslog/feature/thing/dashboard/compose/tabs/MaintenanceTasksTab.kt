@@ -116,7 +116,8 @@ fun MaintenanceTasksTab(
       .padding(bottom = LocalNavPillClearance.current),
     verticalArrangement = Arrangement.spacedBy(Spacing.medium)
   ) {
-    Spacer(Modifier.height(Spacing.medium))
+    // The bar carries its own top padding, matching the Logs tab; the spacer would double it.
+    if (!useFilterBar) Spacer(Modifier.height(Spacing.medium))
 
     ComplianceSection(
       activeTasks = activeTasks,
