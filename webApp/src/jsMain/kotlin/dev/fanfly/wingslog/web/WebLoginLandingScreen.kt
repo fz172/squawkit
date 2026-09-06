@@ -346,27 +346,19 @@ private fun LandingHeader(
   }
 }
 
-/** Blue tile with the brand plane, then the wordmark with "It" in blue. */
+/** The brand plane in the brand blue, no tile, then the wordmark with "It" in blue. */
 @Composable
 private fun Brand(colors: LandingColors, type: LandingType) {
   Row(
     verticalAlignment = Alignment.CenterVertically,
     horizontalArrangement = Arrangement.spacedBy(10.dp),
   ) {
-    Box(
-      modifier = Modifier
-        .size(32.dp)
-        .clip(RoundedCornerShape(8.dp))
-        .background(colors.blue),
-      contentAlignment = Alignment.Center,
-    ) {
-      Icon(
-        imageVector = BrandPlane,
-        contentDescription = null,
-        modifier = Modifier.size(20.dp),
-        tint = Color.White,
-      )
-    }
+    Icon(
+      imageVector = BrandPlane,
+      contentDescription = null,
+      modifier = Modifier.size(32.dp),
+      tint = colors.blue,
+    )
     Text(
       text = buildAnnotatedString {
         append("Squawk")
