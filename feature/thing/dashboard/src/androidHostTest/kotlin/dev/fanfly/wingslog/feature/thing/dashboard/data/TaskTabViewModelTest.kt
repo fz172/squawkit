@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.feature.thing.dashboard.data
 
 import com.google.common.truth.Truth.assertThat
+import dev.fanfly.wingslog.core.analytics.RecordingAnalyticsManager
 import dev.fanfly.wingslog.feature.search.datamanager.impl.SearchEngineImpl
 import dev.fanfly.wingslog.feature.search.model.Facet
 import dev.fanfly.wingslog.feature.search.model.RecordFilter
@@ -66,7 +67,8 @@ class TaskTabViewModelTest {
   fun tearDown() = Dispatchers.resetMain()
 
   private fun viewModel() = TaskTabViewModel(
-    statusManager, SearchEngineImpl(), SearchTuning(0, Dispatchers.Unconfined), THING_ID, fixedClock, TimeZone.UTC,
+    statusManager, SearchEngineImpl(), SearchTuning(0, Dispatchers.Unconfined), RecordingAnalyticsManager(),
+    THING_ID, "airplane", fixedClock, TimeZone.UTC,
   )
   private fun TaskTabViewModel.active() = uiState.value.activeTasks.map { it.card.id }
   private fun TaskTabViewModel.complied() = uiState.value.completedTasks.map { it.card.id }

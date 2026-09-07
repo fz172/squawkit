@@ -10,15 +10,38 @@ class TokenizerTest {
   @Test
   fun lowercasesAndFoldsAccents() {
     assertThat(Tokenizer.normalize("Réglage Été")).isEqualTo("reglage ete")
-    assertThat(tokens("Installed GTX 335")).containsExactly("installed", "gtx", "335").inOrder()
+    assertThat(tokens("Installed GTX 335")).containsExactly(
+      "installed",
+      "gtx",
+      "335"
+    )
+      .inOrder()
   }
 
   @Test
   fun keepsReferencesWholeAndSplitsThem() {
-    assertThat(tokens("per 91.413")).containsExactly("per", "91.413", "91", "413").inOrder()
-    assertThat(tokens("AD 2011-10-09")).containsExactly("ad", "2011-10-09", "2011", "10", "09").inOrder()
-    assertThat(tokens("u/s")).containsExactly("u/s", "u", "s").inOrder()
-    assertThat(tokens("serial 3AB012345.")).containsExactly("serial", "3ab012345").inOrder()
+    assertThat(tokens("per 91.413")).containsExactly(
+      "per",
+      "91.413",
+      "91",
+      "413"
+    )
+      .inOrder()
+    assertThat(tokens("AD 2011-10-09")).containsExactly(
+      "ad",
+      "2011-10-09",
+      "2011",
+      "10",
+      "09"
+    )
+      .inOrder()
+    assertThat(tokens("u/s")).containsExactly("u/s", "u", "s")
+      .inOrder()
+    assertThat(tokens("serial 3AB012345.")).containsExactly(
+      "serial",
+      "3ab012345"
+    )
+      .inOrder()
   }
 
   @Test

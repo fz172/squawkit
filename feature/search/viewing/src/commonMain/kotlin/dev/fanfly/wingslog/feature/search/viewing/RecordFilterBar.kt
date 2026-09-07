@@ -126,7 +126,9 @@ fun RecordFilterBar(
         }
         if (facetLabel != null) {
           items(facets) { facet ->
-            ActiveFilterChip(label = facetLabel(facet), onDismiss = { onRemoveFacet(facet) })
+            ActiveFilterChip(
+              label = facetLabel(facet),
+              onDismiss = { onRemoveFacet(facet) })
           }
         }
       }

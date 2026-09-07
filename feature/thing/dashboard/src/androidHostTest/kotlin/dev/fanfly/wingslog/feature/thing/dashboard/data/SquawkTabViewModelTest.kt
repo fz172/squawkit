@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.feature.thing.dashboard.data
 
 import com.google.common.truth.Truth.assertThat
+import dev.fanfly.wingslog.core.analytics.RecordingAnalyticsManager
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.search.datamanager.impl.SearchEngineImpl
@@ -40,6 +41,7 @@ class SquawkTabViewModelTest {
 
   private val squawkManager: SquawkManager = mockk()
   private val logManager: MaintenanceLogManager = mockk()
+  private val analytics = RecordingAnalyticsManager()
   private val fixedClock = object : Clock {
     override fun now() = Instant.parse("2026-09-06T12:00:00Z")
   }
@@ -62,7 +64,8 @@ class SquawkTabViewModelTest {
   fun tearDown() = Dispatchers.resetMain()
 
   private fun viewModel() = SquawkTabViewModel(
-    squawkManager, logManager, SearchEngineImpl(), SearchTuning(0, Dispatchers.Unconfined), THING_ID, fixedClock, TimeZone.UTC,
+    squawkManager, logManager, SearchEngineImpl(), SearchTuning(0, Dispatchers.Unconfined), analytics,
+    THING_ID, "airplane", fixedClock, TimeZone.UTC,
   )
   private fun SquawkTabViewModel.ids() = uiState.value.squawks.map { it.squawk.id }
 
@@ -96,8 +99,8 @@ class SquawkTabViewModelTest {
   fun typedQueryShowsAtOnce_resultsFollowAfterTheDebounce() = runTest {
     Dispatchers.setMain(StandardTestDispatcher(testScheduler))
     val vm = SquawkTabViewModel(
-      squawkManager, logManager, SearchEngineImpl(), SearchTuning(150, StandardTestDispatcher(testScheduler)),
-      THING_ID, fixedClock, TimeZone.UTC,
+      squawkManager, logManager, SearchEngineImpl(), SearchTuning(150, StandardTestDispatcher(testScheduler)), analytics,
+      THING_ID, "airplane", fixedClock, TimeZone.UTC,
     )
     runCurrent()
     vm.onFilterChange(RecordFilter(query = "transponder"))
@@ -118,6 +121,17 @@ class SquawkTabViewModelTest {
       RecordFilter(facets = setOf(Facet.Priority(SquawkPriority.SQUAWK_PRIORITY_HIGH), Facet.Priority(SquawkPriority.SQUAWK_PRIORITY_UNKNOWN))),
     )
     assertThat(vm.ids()).containsExactly("s1", "s2", "s3")
+  }
+
+  @Test
+  fun analytics_facetAndSearch() {
+    val vm = viewModel()
+    vm.onFilterChange(RecordFilter(facets = setOf(Facet.Priority(SquawkPriority.SQUAWK_PRIORITY_HIGH))))
+    vm.onFilterChange(RecordFilter(facets = setOf(Facet.Priority(SquawkPriority.SQUAWK_PRIORITY_HIGH)), query = "xpdr"))
+    assertThat(analytics.events.map { it.first }).containsExactly("record_filter_applied", "record_search").inOrder()
+    assertThat(analytics.events[0].second["value"]).isEqualTo("priority:high")
+    assertThat(analytics.events[1].second["explained"]).isEqualTo("true")
+    assertThat(analytics.events[1].second["results"]).isEqualTo("1-5")
   }
 
   @Test

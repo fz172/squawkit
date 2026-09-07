@@ -20,13 +20,22 @@ class TolerantTokenMatcher(private val synonyms: SynonymPack) : TokenMatcher {
     val numeric = Tokenizer.isNumeric(token)
     if (!numeric) {
       val stem = Stemmer.stem(token)
-      tokens.firstOrNull { Stemmer.stem(it) == stem }?.let { return TokenMatch(STEM, it) }
+      tokens.firstOrNull { Stemmer.stem(it) == stem }
+        ?.let { return TokenMatch(STEM, it) }
     }
 
-    tokens.firstOrNull { it.startsWith(token) }?.let { return TokenMatch(PREFIX, it, MatchExplanation.Prefix(token, it)) }
+    tokens.firstOrNull { it.startsWith(token) }
+      ?.let {
+        return TokenMatch(
+          PREFIX,
+          it,
+          MatchExplanation.Prefix(token, it)
+        )
+      }
     if (numeric) return null
 
-    val expansions = (synonyms.expansions(token) + synonyms.expansions(Stemmer.stem(token))).distinct()
+    val expansions =
+      (synonyms.expansions(token) + synonyms.expansions(Stemmer.stem(token))).distinct()
     for (expansion in expansions) {
       val matched = if (' ' in expansion) {
         expansion.takeIf { field.normalized.contains(it) }
@@ -34,13 +43,32 @@ class TolerantTokenMatcher(private val synonyms: SynonymPack) : TokenMatcher {
         val stem = Stemmer.stem(expansion)
         tokens.firstOrNull { it == expansion || Stemmer.stem(it) == stem }
       }
-      if (matched != null) return TokenMatch(SYNONYM, matched, MatchExplanation.Synonym(token, matched))
+      if (matched != null) return TokenMatch(
+        SYNONYM,
+        matched,
+        MatchExplanation.Synonym(
+          token,
+          matched
+        )
+      )
     }
 
     if (token.length >= MIN_FUZZY && Tokenizer.isAlphabetic(token)) {
       val cap = if (token.length >= LONG_TOKEN) 2 else 1
-      tokens.firstOrNull { it.length >= MIN_FUZZY && Tokenizer.isAlphabetic(it) && editDistance(token, it, cap) <= cap }
-        ?.let { return TokenMatch(FUZZY, it, MatchExplanation.Fuzzy(token, it)) }
+      tokens.firstOrNull {
+        it.length >= MIN_FUZZY && Tokenizer.isAlphabetic(it) && editDistance(
+          token,
+          it,
+          cap
+        ) <= cap
+      }
+        ?.let {
+          return TokenMatch(
+            FUZZY,
+            it,
+            MatchExplanation.Fuzzy(token, it)
+          )
+        }
     }
     return null
   }

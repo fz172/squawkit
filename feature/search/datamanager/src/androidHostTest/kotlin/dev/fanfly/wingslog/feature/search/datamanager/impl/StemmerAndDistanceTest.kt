@@ -19,7 +19,15 @@ class StemmerAndDistanceTest {
 
   @Test
   fun stemmer_leavesTechnicalWordsAlone() {
-    for (w in listOf("magneto", "bulletin", "annual", "ads", "pass", "gas", "elt")) {
+    for (w in listOf(
+      "magneto",
+      "bulletin",
+      "annual",
+      "ads",
+      "pass",
+      "gas",
+      "elt"
+    )) {
       assertThat(Stemmer.stem(w)).isEqualTo(w)
     }
     assertThat(Stemmer.stem("replace")).isEqualTo(Stemmer.stem("replaced"))

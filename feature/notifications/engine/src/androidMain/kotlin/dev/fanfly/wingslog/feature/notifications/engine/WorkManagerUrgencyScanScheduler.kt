@@ -33,8 +33,13 @@ class WorkManagerUrgencyScanScheduler(
     val request = PeriodicWorkRequestBuilder<UrgencyScanWorker>(
       repeatInterval = SCAN_INTERVAL.toJavaDuration(),
       flexTimeInterval = SCAN_FLEX.toJavaDuration(),
-    ).addTag(TAG_URGENCY_SCAN).build()
-    wm.enqueueUniquePeriodicWork(WORK_NAME, ExistingPeriodicWorkPolicy.KEEP, request)
+    ).addTag(TAG_URGENCY_SCAN)
+      .build()
+    wm.enqueueUniquePeriodicWork(
+      WORK_NAME,
+      ExistingPeriodicWorkPolicy.KEEP,
+      request
+    )
   }
 
   override fun cancel() {

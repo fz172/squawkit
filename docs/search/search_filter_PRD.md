@@ -1,12 +1,21 @@
 # PRD: Search and Filter
 
-**Status:** 🚧 P1 built (developer builds only, behind `AppCapability.isSearchFilterSupported`); P2 and P3 not started
-**Last updated:** 2026-09-06
+**Status:** ✅ P1–P3 built, 2026-09-06 → 09-07, behind `AppCapability.isSearchFilterSupported` (developer builds) pending the GA decision
+**Last updated:** 2026-09-07
 **Design doc:** `docs/search/search_filter_design.md`
 **Related:** `docs/search/intelligentsearch.md` (engine research; superseded for v1 by the design doc, kept as the escalation path)
 **Tracking:** GitHub Project #11 “Search and Filter” — epics #817 (P1), #818 (P2), #819 (P3)
 
 ---
+
+> **Implementation status.** All three phases are in `main` (project #11, epics #817 / #818 / #819).
+> Differences from the requirements as written: FR.13's explanation line became **highlighting of the
+> matched words** on the card, with a "S/N …" / "Ref. …" line when the only match is in a field the
+> card does not show; facets are **multi-select** (several of one kind OR together); the Squawks tab
+> has **no component filter** (squawks are filed against the thing); FR.28's web keyboard shortcuts
+> were dropped (#842, "will not implement"); FR.15's per-template synonym packs apply generic +
+> aviation everywhere until a second domain pack exists. On wide tiers the filters open **inline under
+> the bar** rather than as a sheet.
 
 ## 1. Overview
 

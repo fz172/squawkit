@@ -384,7 +384,9 @@ class UrgencyScanner(
   ): String =
     if (tier == UrgencyTier.PRIORITY_RAISED) {
       val fromLabel =
-        (crossing.previousRank ?: UrgencyRank.RESOLVED).squawkPriorityLabel(lexicon)
+        (crossing.previousRank ?: UrgencyRank.RESOLVED).squawkPriorityLabel(
+          lexicon
+        )
       // Computed per-crossing, not assumed: PRIORITY_RAISED reports at HIGH or AOG now that AOG
       // folds into it (design decision, 2026-08-26), so "to" can no longer be hardcoded to HIGH.
       // Only squawk crossings ever carry this tier, so newRank is always set here.

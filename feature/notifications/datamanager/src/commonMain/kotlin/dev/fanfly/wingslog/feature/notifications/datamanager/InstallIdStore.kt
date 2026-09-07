@@ -26,7 +26,8 @@ class InstallIdStore(
    * multiplatform UUID generator exists elsewhere in the tree to prefer over it.
    */
   suspend fun getOrCreate(): String {
-    val existing = db.schemaQueries.selectDeviceConfig(KEY_INSTALL_ID).awaitAsOneOrNull()
+    val existing = db.schemaQueries.selectDeviceConfig(KEY_INSTALL_ID)
+      .awaitAsOneOrNull()
     if (existing != null) return existing
 
     val minted = generateRandomId()
@@ -34,7 +35,8 @@ class InstallIdStore(
     // not each mint a different id and stomp the other's — the second write would silently orphan
     // the first id's Firestore doc if the two had already diverged.
     return writeLock.withLock {
-      val winner = db.schemaQueries.selectDeviceConfig(KEY_INSTALL_ID).awaitAsOneOrNull()
+      val winner = db.schemaQueries.selectDeviceConfig(KEY_INSTALL_ID)
+        .awaitAsOneOrNull()
       if (winner != null) return@withLock winner
       db.schemaQueries.upsertDeviceConfig(KEY_INSTALL_ID, minted)
       minted

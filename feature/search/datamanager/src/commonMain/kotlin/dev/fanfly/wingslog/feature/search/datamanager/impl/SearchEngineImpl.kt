@@ -28,14 +28,30 @@ class SearchEngineImpl(
     today: LocalDate,
   ): List<SearchHit<T>> {
     val survivors = items.filter { adapter.passesFilters(it, filter, today) }
-    val tokens = Tokenizer.normalize(filter.query).split(WHITESPACE).filter { it.isNotEmpty() }.distinct()
+    val tokens = Tokenizer.normalize(filter.query)
+      .split(WHITESPACE)
+      .filter { it.isNotEmpty() }
+      .distinct()
     if (tokens.isEmpty()) return survivors.map { SearchHit(it) }
     return survivors
-      .mapNotNull { item -> score(adapter.fields(item), tokens)?.let { SearchHit(item, it.score, it.explanations, it.matches) } }
-      .sortedWith(compareByDescending<SearchHit<T>> { it.score }.thenByDescending { adapter.date(it.item) })
+      .mapNotNull { item ->
+        score(
+          adapter.fields(item),
+          tokens
+        )?.let { SearchHit(item, it.score, it.explanations, it.matches) }
+      }
+      .sortedWith(compareByDescending<SearchHit<T>> { it.score }.thenByDescending {
+        adapter.date(
+          it.item
+        )
+      })
   }
 
-  private class Scored(val score: Double, val explanations: List<MatchExplanation>, val matches: List<FieldMatch>)
+  private class Scored(
+    val score: Double,
+    val explanations: List<MatchExplanation>,
+    val matches: List<FieldMatch>
+  )
 
   private fun score(fields: List<SearchField>, tokens: List<String>): Scored? {
     val texts = fields.map { FieldText(it.text) }
@@ -47,7 +63,8 @@ class SearchEngineImpl(
       var bestExplanation: MatchExplanation? = null
       fields.forEachIndexed { i, field ->
         val m = matcher.match(token, texts[i]) ?: return@forEachIndexed
-        wordsByField.getOrPut(field.name) { LinkedHashSet() }.add(m.matched)
+        wordsByField.getOrPut(field.name) { LinkedHashSet() }
+          .add(m.matched)
         val weighted = m.grade * field.weight
         if (weighted > best) {
           best = weighted
@@ -58,7 +75,15 @@ class SearchEngineImpl(
       total += best
       bestExplanation?.let(explanations::add)
     }
-    return Scored(total, explanations, wordsByField.map { (field, words) -> FieldMatch(field, words) })
+    return Scored(
+      total,
+      explanations,
+      wordsByField.map { (field, words) ->
+        FieldMatch(
+          field,
+          words
+        )
+      })
   }
 
   private companion object {
@@ -66,11 +91,19 @@ class SearchEngineImpl(
   }
 }
 
-private fun <T> RecordAdapter<T>.passesFilters(item: T, filter: RecordFilter, today: LocalDate): Boolean {
+private fun <T> RecordAdapter<T>.passesFilters(
+  item: T,
+  filter: RecordFilter,
+  today: LocalDate
+): Boolean {
   if (filter.components.isNotEmpty() && component(item) !in filter.components) return false
   if (filter.time != TimeWindow.All) {
     val date = date(item)
-    val inWindow = if (date == null) nullDateMatches else filter.time.contains(date, today, direction(item))
+    val inWindow = if (date == null) nullDateMatches else filter.time.contains(
+      date,
+      today,
+      direction(item)
+    )
     if (!inWindow) return false
   }
   return filter.facets.isEmpty() || filter.facets.any { facetMatches(item, it) }

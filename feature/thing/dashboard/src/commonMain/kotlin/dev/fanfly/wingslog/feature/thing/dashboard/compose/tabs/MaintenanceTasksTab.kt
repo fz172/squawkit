@@ -71,7 +71,10 @@ fun MaintenanceTasksTab(
   val useFilterBar = koinInject<AppCapability>().isSearchFilterSupported
   var showFilterSheet by remember { mutableStateOf(false) }
   val tabViewModel: TaskTabViewModel =
-    koinViewModel(key = "tasks:${state.thing.id}", parameters = { parametersOf(state.thing.id) })
+    koinViewModel(
+      key = "tasks:${state.thing.id}",
+      parameters = { parametersOf(state.thing.id, state.thing.template?.id.orEmpty()) },
+    )
   val tabState by tabViewModel.uiState.collectAsStateWithLifecycle()
   val taskFilter by tabViewModel.filter.collectAsStateWithLifecycle()
   val setFilter = tabViewModel::onFilterChange

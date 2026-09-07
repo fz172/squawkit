@@ -104,18 +104,25 @@ fun RecordFilterControls(
       facetSection = facetSection,
     )
   }
-  if (inline) RecordFilterPanel(horizontalPadding, content) else RecordFilterSheet(onDismiss, content)
+  if (inline) RecordFilterPanel(
+    horizontalPadding,
+    content
+  ) else RecordFilterSheet(onDismiss, content)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun RecordFilterSheet(onDismiss: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
+private fun RecordFilterSheet(
+  onDismiss: () -> Unit,
+  content: @Composable ColumnScope.() -> Unit
+) {
   ModalBottomSheet(
     onDismissRequest = onDismiss,
     sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
   ) {
     Column(
-      modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.xLarge),
+      modifier = Modifier.fillMaxWidth()
+        .padding(horizontal = Spacing.xLarge),
       verticalArrangement = Arrangement.spacedBy(Spacing.large),
     ) {
       content()
@@ -125,17 +132,28 @@ private fun RecordFilterSheet(onDismiss: () -> Unit, content: @Composable Column
 }
 
 @Composable
-private fun RecordFilterPanel(horizontalPadding: Dp, content: @Composable ColumnScope.() -> Unit) {
+private fun RecordFilterPanel(
+  horizontalPadding: Dp,
+  content: @Composable ColumnScope.() -> Unit
+) {
   Surface(
     shape = RoundedCornerShape(Spacing.smallCornerRadius),
     color = MaterialTheme.colorScheme.surfaceContainer,
-    border = BorderStroke(Spacing.hairline, MaterialTheme.colorScheme.outlineVariant),
+    border = BorderStroke(
+      Spacing.hairline,
+      MaterialTheme.colorScheme.outlineVariant
+    ),
     modifier = Modifier
       .fillMaxWidth()
-      .padding(start = horizontalPadding, end = horizontalPadding, bottom = Spacing.small),
+      .padding(
+        start = horizontalPadding,
+        end = horizontalPadding,
+        bottom = Spacing.small
+      ),
   ) {
     Column(
-      modifier = Modifier.fillMaxWidth().padding(Spacing.large),
+      modifier = Modifier.fillMaxWidth()
+        .padding(Spacing.large),
       verticalArrangement = Arrangement.spacedBy(Spacing.large),
       content = content,
     )

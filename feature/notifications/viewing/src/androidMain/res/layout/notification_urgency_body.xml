@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
   Expanded content for urgency notifications, used with DecoratedCustomViewStyle: the system still
   draws the header (app name, timestamp, expand affordance) and this supplies the title + body
   beneath it. Both are needed here — a custom big content view replaces the whole text block, so a
@@ -11,25 +10,25 @@
   subject to that normalisation, so the body keeps its blank lines verbatim.
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  android:layout_width="match_parent"
+  android:layout_height="wrap_content"
+  android:orientation="vertical">
+
+  <TextView
+    android:id="@+id/notification_urgency_title"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical">
+    android:ellipsize="end"
+    android:maxLines="1"
+    android:textAppearance="@style/TextAppearance.Compat.Notification.Title"
+    android:textStyle="bold" />
 
-    <TextView
-        android:id="@+id/notification_urgency_title"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textAppearance="@style/TextAppearance.Compat.Notification.Title"
-        android:textStyle="bold"
-        android:maxLines="1"
-        android:ellipsize="end" />
-
-    <TextView
-        android:id="@+id/notification_urgency_body_text"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="2dp"
-        android:textAppearance="@style/TextAppearance.Compat.Notification"
-        android:maxLines="9"
-        android:ellipsize="end" />
+  <TextView
+    android:id="@+id/notification_urgency_body_text"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="2dp"
+    android:ellipsize="end"
+    android:maxLines="9"
+    android:textAppearance="@style/TextAppearance.Compat.Notification" />
 </LinearLayout>

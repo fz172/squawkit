@@ -1,9 +1,9 @@
 package dev.fanfly.wingslog.feature.notifications.model
 
-import dev.fanfly.wingslog.thing.SquawkPriority
 import dev.fanfly.wingslog.feature.squawk.model.SquawkStatus
 import dev.fanfly.wingslog.feature.squawk.model.SquawkWithStatus
 import dev.fanfly.wingslog.feature.tasks.model.DueStatus
+import dev.fanfly.wingslog.thing.SquawkPriority
 import kotlin.jvm.JvmInline
 
 /**
@@ -90,6 +90,7 @@ fun SquawkWithStatus.reportableTier(): UrgencyTier? {
   return when (squawk.priority) {
     SquawkPriority.SQUAWK_PRIORITY_AOG,
     SquawkPriority.SQUAWK_PRIORITY_HIGH -> UrgencyTier.PRIORITY_RAISED
+
     SquawkPriority.SQUAWK_PRIORITY_MEDIUM,
     SquawkPriority.SQUAWK_PRIORITY_LOW,
     SquawkPriority.SQUAWK_PRIORITY_UNKNOWN -> null

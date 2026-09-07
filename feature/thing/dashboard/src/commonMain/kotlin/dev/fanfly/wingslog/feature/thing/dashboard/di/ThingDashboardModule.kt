@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.feature.thing.dashboard.di
 
 import androidx.lifecycle.SavedStateHandle
+import dev.fanfly.wingslog.core.analytics.AnalyticsManager
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.storage.ThingScopeResolver
 import dev.fanfly.wingslog.core.template.TemplateRegistry
@@ -28,11 +29,20 @@ val thingDashboardModule = module {
       get<MaintenanceLogManager>(),
       get<SearchEngine>(),
       get<SearchTuning>(),
-      params.get<String>(),
+      get<AnalyticsManager>(),
+      params.get<String>(0),
+      params.get<String>(1),
     )
   }
   viewModel { params ->
-    TaskTabViewModel(get<TaskStatusManager>(), get<SearchEngine>(), get<SearchTuning>(), params.get<String>())
+    TaskTabViewModel(
+      get<TaskStatusManager>(),
+      get<SearchEngine>(),
+      get<SearchTuning>(),
+      get<AnalyticsManager>(),
+      params.get<String>(0),
+      params.get<String>(1),
+    )
   }
   // thingId comes from an explicit parameter (adaptive shell, ambient selection) when present,
   // otherwise from the navigation SavedStateHandle (legacy maintenance_overview/{thingId} route).

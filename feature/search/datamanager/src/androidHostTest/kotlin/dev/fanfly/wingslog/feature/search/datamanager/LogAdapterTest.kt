@@ -53,9 +53,24 @@ class LogAdapterTest {
 
   @Test
   fun technicianFacet_matchesByName() {
-    assertThat(adapter.facetMatches(log, Facet.Technician("R. Alvarez"))).isTrue()
-    assertThat(adapter.facetMatches(log, Facet.Technician("Someone Else"))).isFalse()
-    assertThat(adapter.facetMatches(log.copy(technician = null), Facet.Technician("R. Alvarez"))).isFalse()
+    assertThat(
+      adapter.facetMatches(
+        log,
+        Facet.Technician("R. Alvarez")
+      )
+    ).isTrue()
+    assertThat(
+      adapter.facetMatches(
+        log,
+        Facet.Technician("Someone Else")
+      )
+    ).isFalse()
+    assertThat(
+      adapter.facetMatches(
+        log.copy(technician = null),
+        Facet.Technician("R. Alvarez")
+      )
+    ).isFalse()
   }
 
   @Test

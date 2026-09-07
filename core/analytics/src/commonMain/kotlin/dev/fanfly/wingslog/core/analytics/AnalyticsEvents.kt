@@ -190,3 +190,55 @@ data class ExportCompleted(
     Param.THING_COUNT to thingCount.toString(),
   )
 }
+
+// ---------------------------------------------------------------------------------------------
+// Search and filter (design §7). Buckets only, never the query text.
+// ---------------------------------------------------------------------------------------------
+
+/** A filter changed on a list tab: [kind] is component / time / facet / clear, [value] the choice. */
+data class RecordFilterApplied(
+  override val templateId: String,
+  val tab: String,
+  val kind: String,
+  val value: String,
+) : ThingScopedEvent {
+  override val name = Name.RECORD_FILTER_APPLIED
+  override val params = mapOf(
+    Param.TEMPLATE_ID to templateId,
+    Param.TAB to tab,
+    Param.KIND to kind,
+    Param.VALUE to value,
+  )
+}
+
+/** A debounced query produced results; [explained] is true when the top hit needed a synonym or fuzzy step. */
+data class RecordSearch(
+  override val templateId: String,
+  val tab: String,
+  val queryLength: Int,
+  val resultCount: Int,
+  val explained: Boolean,
+) : ThingScopedEvent {
+  override val name = Name.RECORD_SEARCH
+  override val params = mapOf(
+    Param.TEMPLATE_ID to templateId,
+    Param.TAB to tab,
+    Param.QUERY_LEN to queryLengthBucket(queryLength),
+    Param.RESULTS to resultsBucket(resultCount),
+    Param.EXPLAINED to explained.toString(),
+  )
+
+  companion object {
+    fun queryLengthBucket(length: Int): String = when {
+      length <= 3 -> "1-3"
+      length <= 8 -> "4-8"
+      else -> "9+"
+    }
+
+    fun resultsBucket(count: Int): String = when {
+      count == 0 -> "0"
+      count <= 5 -> "1-5"
+      else -> "6+"
+    }
+  }
+}

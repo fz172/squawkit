@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.feature.logs.viewing.log.data
 
 import com.google.common.truth.Truth.assertThat
+import dev.fanfly.wingslog.core.analytics.RecordingAnalyticsManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.logs.datamanager.authorship.LogAuthorship
 import dev.fanfly.wingslog.feature.search.datamanager.impl.SearchEngineImpl
@@ -75,7 +76,9 @@ class LogAuthorshipGatingTest {
     auth = auth,
     searchEngine = SearchEngineImpl(),
     tuning = SearchTuning(queryDebounceMillis = 0, dispatcher = dispatcher),
+    analytics = RecordingAnalyticsManager(),
     thingId = AC_ID,
+    templateId = "airplane",
   )
 
   private fun selectedAuthorship(): LogAuthorship {

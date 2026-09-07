@@ -1,6 +1,9 @@
 package dev.fanfly.wingslog.feature.ads.datamanager.impl
 
 import co.touchlab.kermit.Logger
+import dev.fanfly.wingslog.feature.ads.datamanager.impl.IosAdConsentBridge.isConsentRequired
+import dev.fanfly.wingslog.feature.ads.datamanager.impl.IosAdConsentBridge.presentConsentForm
+import dev.fanfly.wingslog.feature.ads.datamanager.impl.IosAdConsentBridge.resetConsent
 import dev.fanfly.wingslog.feature.ads.model.AdConsentState
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull
@@ -20,8 +23,10 @@ import kotlin.time.Duration.Companion.seconds
 object IosAdConsentBridge {
   private var consentInfoUpdateProvider: ((testDeviceHashedId: String?, onResult: (String) -> Unit) -> Unit)? =
     null
-  private var consentFormPresenter: ((testDeviceHashedId: String?, onResult: (String) -> Unit) -> Unit)? = null
-  private var privacyOptionsPresenter: ((onComplete: () -> Unit) -> Unit)? = null
+  private var consentFormPresenter: ((testDeviceHashedId: String?, onResult: (String) -> Unit) -> Unit)? =
+    null
+  private var privacyOptionsPresenter: ((onComplete: () -> Unit) -> Unit)? =
+    null
   private var privacyOptionsAvailableProvider: (() -> Boolean)? = null
   private var resetConsentAction: (() -> Unit)? = null
 
@@ -66,7 +71,13 @@ object IosAdConsentBridge {
       return false
     }
     val result = withTimeoutOrNull(RESOLUTION_TIMEOUT) {
-      suspendCancellableCoroutine { cont -> provider(testDeviceHashedId) { raw -> cont.resume(raw) } }
+      suspendCancellableCoroutine { cont ->
+        provider(testDeviceHashedId) { raw ->
+          cont.resume(
+            raw
+          )
+        }
+      }
     }
     if (result == null) {
       log.w { "isConsentRequired() timed out after $RESOLUTION_TIMEOUT" }
@@ -82,7 +93,13 @@ object IosAdConsentBridge {
       return AdConsentState.NON_PERSONALIZED
     }
     val result = withTimeoutOrNull(RESOLUTION_TIMEOUT) {
-      suspendCancellableCoroutine { cont -> presenter(testDeviceHashedId) { raw -> cont.resume(raw) } }
+      suspendCancellableCoroutine { cont ->
+        presenter(testDeviceHashedId) { raw ->
+          cont.resume(
+            raw
+          )
+        }
+      }
     }
     if (result == null) {
       log.w { "presentConsentForm() timed out after $RESOLUTION_TIMEOUT" }
@@ -95,7 +112,8 @@ object IosAdConsentBridge {
       }
   }
 
-  internal fun isPrivacyOptionsAvailable(): Boolean = privacyOptionsAvailableProvider?.invoke() ?: false
+  internal fun isPrivacyOptionsAvailable(): Boolean =
+    privacyOptionsAvailableProvider?.invoke() ?: false
 
   internal fun resetConsent() {
     val action = resetConsentAction

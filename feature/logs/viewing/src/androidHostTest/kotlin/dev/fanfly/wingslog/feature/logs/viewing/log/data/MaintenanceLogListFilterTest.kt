@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.feature.logs.viewing.log.data
 
 import com.google.common.truth.Truth.assertThat
+import dev.fanfly.wingslog.core.analytics.RecordingAnalyticsManager
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.search.datamanager.impl.SearchEngineImpl
@@ -44,6 +45,7 @@ class MaintenanceLogListFilterTest {
   private val technicians: TechnicianManager = mockk(relaxed = true)
   private val squawks: SquawkManager = mockk(relaxed = true)
   private val auth: FirebaseAuth = mockk(relaxed = true)
+  private val analytics = RecordingAnalyticsManager()
 
   private val fixedClock = object : Clock {
     override fun now() = Instant.parse("2026-09-06T12:00:00Z")
@@ -85,7 +87,9 @@ class MaintenanceLogListFilterTest {
     auth = auth,
     searchEngine = SearchEngineImpl(),
     tuning = SearchTuning(queryDebounceMillis = 0, dispatcher = dispatcher),
+    analytics = analytics,
     thingId = THING_ID,
+    templateId = "airplane",
     clock = fixedClock,
     timeZone = TimeZone.UTC,
   )
@@ -140,6 +144,26 @@ class MaintenanceLogListFilterTest {
     vm.onFacetToggle(Facet.Technician("Sky Harbor Avionics"))
     vm.onFacetToggle(Facet.Technician("R. Alvarez"))
     assertThat(vm.ids()).hasSize(3)
+  }
+
+  @Test
+  fun analytics_filterChangesAndSearchesAreTyped() {
+    val vm = viewModel()
+    vm.onComponentFilterToggle(ComponentType.COMPONENT_ENGINE)
+    vm.onTimeWindowChange(TimeWindow.LastMonths(3))
+    vm.onSearchQueryChange("transponder")
+    vm.onSearchQueryChange("transponder")
+    vm.clearFilter()
+    assertThat(analytics.events.map { it.first })
+      .containsExactly("record_filter_applied", "record_filter_applied", "record_search", "record_filter_applied").inOrder()
+    assertThat(analytics.events[0].second).containsExactlyEntriesIn(
+      mapOf("template_id" to "airplane", "tab" to "logs", "kind" to "component", "value" to "engine"),
+    )
+    assertThat(analytics.events[1].second["value"]).isEqualTo("3m")
+    assertThat(analytics.events[2].second).containsExactlyEntriesIn(
+      mapOf("template_id" to "airplane", "tab" to "logs", "query_len" to "9+", "results" to "0", "explained" to "false"),
+    )
+    assertThat(analytics.events[3].second["kind"]).isEqualTo("clear")
   }
 
   @Test

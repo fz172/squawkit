@@ -276,7 +276,12 @@ class SearchEngineTest {
 
   @Test
   fun hits_carryMatchedWordsPerField() {
-    val hits = engine.search(records, Adapter(), RecordFilter(query = "transponder 91.413"), today)
+    val hits = engine.search(
+      records,
+      Adapter(),
+      RecordFilter(query = "transponder 91.413"),
+      today
+    )
     assertThat(hits).hasSize(1)
     assertThat(hits.single().matches).containsExactly(
       FieldMatch("title", setOf("transponder")),

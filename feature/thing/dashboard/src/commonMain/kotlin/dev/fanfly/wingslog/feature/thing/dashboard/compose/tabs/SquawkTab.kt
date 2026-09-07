@@ -114,7 +114,10 @@ fun SquawkTab(
   val useFilterBar = koinInject<AppCapability>().isSearchFilterSupported
   var showFilterSheet by remember { mutableStateOf(false) }
   val tabViewModel: SquawkTabViewModel =
-    koinViewModel(key = "squawks:${state.thing.id}", parameters = { parametersOf(state.thing.id) })
+    koinViewModel(
+      key = "squawks:${state.thing.id}",
+      parameters = { parametersOf(state.thing.id, state.thing.template?.id.orEmpty()) },
+    )
   val tabState by tabViewModel.uiState.collectAsStateWithLifecycle()
   val squawkFilter by tabViewModel.filter.collectAsStateWithLifecycle()
   val setFilter = tabViewModel::onFilterChange

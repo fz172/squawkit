@@ -9,5 +9,10 @@ import org.koin.dsl.module
 
 /** iOS resolves consent through the Swift bridge — see `IosAdConsentBridge`. */
 actual val platformAdConsentModule: Module = module {
-  single<AdConsentManager> { IosAdConsentManager(get<AppCapability>(), get<DeveloperOptionsManager>()) }
+  single<AdConsentManager> {
+    IosAdConsentManager(
+      get<AppCapability>(),
+      get<DeveloperOptionsManager>()
+    )
+  }
 }
