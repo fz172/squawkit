@@ -133,9 +133,12 @@ class MaintenanceLogListFilterTest {
   fun technicianFacet_listsNamesAndNarrows() {
     val vm = viewModel()
     assertThat(vm.success().technicians).containsExactly("R. Alvarez", "Sky Harbor Avionics").inOrder()
-    vm.onFacetChange(Facet.Technician("R. Alvarez"))
+    vm.onFacetToggle(Facet.Technician("R. Alvarez"))
     assertThat(vm.ids()).containsExactly("gasket")
-    vm.onFacetChange(null)
+    vm.onFacetToggle(Facet.Technician("Sky Harbor Avionics"))
+    assertThat(vm.ids()).containsExactly("gasket", "xpdr").inOrder()
+    vm.onFacetToggle(Facet.Technician("Sky Harbor Avionics"))
+    vm.onFacetToggle(Facet.Technician("R. Alvarez"))
     assertThat(vm.ids()).hasSize(3)
   }
 

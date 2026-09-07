@@ -112,8 +112,12 @@ class SquawkTabViewModelTest {
   @Test
   fun priorityFacet_narrows() {
     val vm = viewModel()
-    vm.onFilterChange(RecordFilter(facet = Facet.Priority(SquawkPriority.SQUAWK_PRIORITY_HIGH)))
+    vm.onFilterChange(RecordFilter(facets = setOf(Facet.Priority(SquawkPriority.SQUAWK_PRIORITY_HIGH))))
     assertThat(vm.ids()).containsExactly("s1")
+    vm.onFilterChange(
+      RecordFilter(facets = setOf(Facet.Priority(SquawkPriority.SQUAWK_PRIORITY_HIGH), Facet.Priority(SquawkPriority.SQUAWK_PRIORITY_UNKNOWN))),
+    )
+    assertThat(vm.ids()).containsExactly("s1", "s2", "s3")
   }
 
   @Test

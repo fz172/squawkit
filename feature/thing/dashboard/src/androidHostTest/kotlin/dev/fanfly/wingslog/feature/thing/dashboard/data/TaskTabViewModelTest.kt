@@ -92,7 +92,7 @@ class TaskTabViewModelTest {
   @Test
   fun complianceFacet_narrowsBothSubViews() {
     val vm = viewModel()
-    vm.onFilterChange(RecordFilter(facet = Facet.Compliance(ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE)))
+    vm.onFilterChange(RecordFilter(facets = setOf(Facet.Compliance(ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE))))
     assertThat(vm.active()).isEmpty()
     assertThat(vm.complied()).containsExactly("t4")
   }

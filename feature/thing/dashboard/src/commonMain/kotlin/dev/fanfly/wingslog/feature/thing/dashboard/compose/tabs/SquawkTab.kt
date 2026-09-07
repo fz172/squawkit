@@ -194,7 +194,7 @@ fun SquawkTab(
         onClearTime = { setFilter(squawkFilter.copy(time = TimeWindow.All)) },
         horizontalPadding = Spacing.none,
         facetLabel = { (it as? Facet.Priority)?.let { p -> priorityLabel(p.value) }.orEmpty() },
-        onClearFacet = { setFilter(squawkFilter.copy(facet = null)) },
+        onRemoveFacet = { setFilter(squawkFilter.toggleFacet(it)) },
       )
       RecordFilterControls(
         expanded = showFilterSheet,
@@ -212,11 +212,11 @@ fun SquawkTab(
         facetSection = {
           FilterSection(stringResource(Res.string.squawk_priority_label)) {
             PRIORITY_OPTIONS.forEach { priority ->
-              val selected = squawkFilter.facet == Facet.Priority(priority)
+              val facet = Facet.Priority(priority)
               ChoiceChip(
                 label = priorityLabel(priority),
-                selected = selected,
-                onClick = { setFilter(squawkFilter.copy(facet = if (selected) null else Facet.Priority(priority))) },
+                selected = facet in squawkFilter.facets,
+                onClick = { setFilter(squawkFilter.toggleFacet(facet)) },
               )
             }
           }

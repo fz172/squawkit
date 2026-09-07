@@ -224,8 +224,8 @@ class MaintenanceLogListViewModel(
     _filter.value = _filter.value.copy(time = window)
   }
 
-  fun onFacetChange(facet: Facet?) {
-    _filter.value = _filter.value.copy(facet = facet)
+  fun onFacetToggle(facet: Facet) {
+    _filter.value = _filter.value.toggleFacet(facet)
   }
 
   fun clearFilter() {

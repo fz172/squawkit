@@ -127,7 +127,7 @@ fun MaintenanceLogListContent(
   onSearchQueryChange: (String) -> Unit,
   onComponentFilterToggle: (ComponentType) -> Unit,
   onTimeWindowChange: (TimeWindow) -> Unit,
-  onFacetChange: (Facet?) -> Unit = {},
+  onFacetToggle: (Facet) -> Unit = {},
   onClearFilter: () -> Unit,
   onRetry: () -> Unit,
   onLogClick: (MaintenanceLog) -> Unit,
@@ -253,7 +253,7 @@ fun MaintenanceLogListContent(
                 onRemoveComponent = onComponentFilterToggle,
                 onClearTime = { onTimeWindowChange(TimeWindow.All) },
                 facetLabel = { (it as? Facet.Technician)?.name.orEmpty() },
-                onClearFacet = { onFacetChange(null) },
+                onRemoveFacet = onFacetToggle,
               )
               RecordFilterControls(
                 expanded = showFilterSheet,
@@ -270,11 +270,11 @@ fun MaintenanceLogListContent(
                   {
                     FilterSection(LexiconFormatter.titleCase(LocalThingLexicon.current.technicianNoun)) {
                       uiState.technicians.forEach { name ->
-                        val selected = filter.facet == Facet.Technician(name)
+                        val facet = Facet.Technician(name)
                         ChoiceChip(
                           label = name,
-                          selected = selected,
-                          onClick = { onFacetChange(if (selected) null else Facet.Technician(name)) },
+                          selected = facet in filter.facets,
+                          onClick = { onFacetToggle(facet) },
                         )
                       }
                     }

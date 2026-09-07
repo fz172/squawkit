@@ -159,7 +159,7 @@ fun MaintenanceTasksTab(
             dueWithin = !showComplied,
             horizontalPadding = Spacing.none,
             facetLabel = { (it as? Facet.Compliance)?.let { c -> complianceLabel(c.value) }.orEmpty() },
-            onClearFacet = { setFilter(taskFilter.copy(facet = null)) },
+            onRemoveFacet = { setFilter(taskFilter.toggleFacet(it)) },
           )
           RecordFilterControls(
             expanded = showFilterSheet,
@@ -181,11 +181,11 @@ fun MaintenanceTasksTab(
             facetSection = {
               FilterSection(stringResource(SearchRes.string.filter_type)) {
                 COMPLIANCE_OPTIONS.forEach { type ->
-                  val selected = taskFilter.facet == Facet.Compliance(type)
+                  val facet = Facet.Compliance(type)
                   ChoiceChip(
                     label = complianceLabel(type),
-                    selected = selected,
-                    onClick = { setFilter(taskFilter.copy(facet = if (selected) null else Facet.Compliance(type))) },
+                    selected = facet in taskFilter.facets,
+                    onClick = { setFilter(taskFilter.toggleFacet(facet)) },
                   )
                 }
               }

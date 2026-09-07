@@ -58,7 +58,7 @@ fun RecordFilterBar(
   horizontalPadding: Dp = Spacing.screenPadding,
   /** Label for the tab’s facet chip; null when the tab offers no facet. */
   facetLabel: (@Composable (Facet) -> String)? = null,
-  onClearFacet: () -> Unit = {},
+  onRemoveFacet: (Facet) -> Unit = {},
 ) {
   Column(modifier = modifier.fillMaxWidth()) {
     Row(
@@ -103,8 +103,8 @@ fun RecordFilterBar(
     val componentChips =
       if (showComponentFilter) filter.components.toList() else emptyList()
     val time = filter.time
-    val facet = filter.facet?.takeIf { facetLabel != null }
-    if (componentChips.isNotEmpty() || time != TimeWindow.All || facet != null) {
+    val facets = if (facetLabel != null) filter.facets.toList() else emptyList()
+    if (componentChips.isNotEmpty() || time != TimeWindow.All || facets.isNotEmpty()) {
       LazyRow(
         contentPadding = PaddingValues(horizontal = horizontalPadding),
         horizontalArrangement = Arrangement.spacedBy(Spacing.small),
@@ -124,8 +124,10 @@ fun RecordFilterBar(
             )
           }
         }
-        if (facet != null && facetLabel != null) {
-          item { ActiveFilterChip(label = facetLabel(facet), onDismiss = onClearFacet) }
+        if (facetLabel != null) {
+          items(facets) { facet ->
+            ActiveFilterChip(label = facetLabel(facet), onDismiss = { onRemoveFacet(facet) })
+          }
         }
       }
     }

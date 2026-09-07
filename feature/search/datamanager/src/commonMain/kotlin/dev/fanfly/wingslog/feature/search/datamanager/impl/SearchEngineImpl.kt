@@ -73,6 +73,5 @@ private fun <T> RecordAdapter<T>.passesFilters(item: T, filter: RecordFilter, to
     val inWindow = if (date == null) nullDateMatches else filter.time.contains(date, today, direction(item))
     if (!inWindow) return false
   }
-  val facet = filter.facet
-  return facet == null || facetMatches(item, facet)
+  return filter.facets.isEmpty() || filter.facets.any { facetMatches(item, it) }
 }
