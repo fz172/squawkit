@@ -42,12 +42,18 @@ class WebLocalNotifier : LocalNotifier {
     // this is an update to it, which must not buzz again.
     val renotify = !live.containsKey(notification.id)
     val instance =
-      createNotification(notification.title, notification.body, notification.id, renotify)
+      createNotification(
+        notification.title,
+        notification.body,
+        notification.id,
+        renotify
+      )
     live[notification.id] = instance
     // Identity-checked, because a replaced notification may fire `close` *after* its replacement is
     // already recorded here. Removing blindly would drop the live entry for a notification that is
     // still on screen, and the next update would then re-alert instead of replacing quietly.
-    instance.onclose = { if (live[notification.id] === instance) live.remove(notification.id) }
+    instance.onclose =
+      { if (live[notification.id] === instance) live.remove(notification.id) }
     // Where a click should land (design §5.3). Unlike Android's PendingIntent and iOS's userInfo,
     // nothing has to be serialised into the notification itself — this tab is the one that will
     // handle the click, so the handler simply closes over the target.

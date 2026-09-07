@@ -58,6 +58,10 @@ sealed interface AnalyticsEvent {
     DEFECT_CREATED("defect_created"),
     LOG_CREATED("log_created"),
     EXPORT_COMPLETED("export_completed"),
+
+    // --- Search and filter (docs/search/search_filter_design.md §7) ---
+    RECORD_FILTER_APPLIED("record_filter_applied"),
+    RECORD_SEARCH("record_search"),
     ;
   }
 
@@ -87,6 +91,14 @@ sealed interface AnalyticsEvent {
     FORMAT("format"),
     THING_COUNT("thing_count"),
     TASK_COUNT("task_count"),
+
+    // --- Search and filter ---
+    TAB("tab"),
+    KIND("kind"),
+    VALUE("value"),
+    QUERY_LEN("query_len"),
+    RESULTS("results"),
+    EXPLAINED("explained"),
     ;
   }
 }

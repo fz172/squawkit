@@ -22,11 +22,14 @@ sealed interface MatchExplanation {
   val matched: String
 
   /** [query] is an acronym or synonym of [matched] (`xpdr` → `transponder`). */
-  data class Synonym(override val query: String, override val matched: String) : MatchExplanation
+  data class Synonym(override val query: String, override val matched: String) :
+    MatchExplanation
 
   /** [matched] is within an edit or two of [query] (`trasnponder`). */
-  data class Fuzzy(override val query: String, override val matched: String) : MatchExplanation
+  data class Fuzzy(override val query: String, override val matched: String) :
+    MatchExplanation
 
   /** [matched] starts with [query]. */
-  data class Prefix(override val query: String, override val matched: String) : MatchExplanation
+  data class Prefix(override val query: String, override val matched: String) :
+    MatchExplanation
 }

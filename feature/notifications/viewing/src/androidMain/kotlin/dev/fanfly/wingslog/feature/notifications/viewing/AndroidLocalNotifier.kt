@@ -52,7 +52,12 @@ class AndroidLocalNotifier(
         // body flattened into a run-on sentence with the tap hint trailing off the end.
         .setContentText(notification.body.substringBefore(PARAGRAPH_BREAK))
         .setStyle(NotificationCompat.DecoratedCustomViewStyle())
-        .setCustomBigContentView(expandedContent(notification.title, notification.body))
+        .setCustomBigContentView(
+          expandedContent(
+            notification.title,
+            notification.body
+          )
+        )
         .setAutoCancel(true)
         .setPriority(
           if (notification.highPriority) NotificationCompat.PRIORITY_HIGH
@@ -101,10 +106,12 @@ class AndroidLocalNotifier(
    * gets a no-op — same tray entry, just not tappable, rather than a crash.
    */
   private fun tapPendingIntent(notification: PendingNotification): PendingIntent? {
-    val launchIntent = context.packageManager.getLaunchIntentForPackage(context.packageName)
-      ?: return null
+    val launchIntent =
+      context.packageManager.getLaunchIntentForPackage(context.packageName)
+        ?: return null
     launchIntent.action = Intent.ACTION_VIEW
-    launchIntent.data = Uri.parse(NotificationTapRouter.encode(notification.tapTarget))
+    launchIntent.data =
+      Uri.parse(NotificationTapRouter.encode(notification.tapTarget))
     launchIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
     return PendingIntent.getActivity(
       context,

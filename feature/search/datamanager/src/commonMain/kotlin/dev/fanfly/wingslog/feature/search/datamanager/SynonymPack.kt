@@ -4,18 +4,26 @@ package dev.fanfly.wingslog.feature.search.datamanager
 class SynonymPack(private val entries: List<Pair<String, String>>) {
   constructor(vararg entries: Pair<String, String>) : this(entries.toList())
 
-  private val forward: Map<String, List<String>> = entries.groupBy({ it.first }, { it.second })
+  private val forward: Map<String, List<String>> =
+    entries.groupBy({ it.first }, { it.second })
   private val reverse: Map<String, List<String>> =
-    entries.filter { ' ' !in it.second }.groupBy({ it.second }, { it.first })
+    entries.filter { ' ' !in it.second }
+      .groupBy({ it.second }, { it.first })
 
-  fun expansions(token: String): List<String> = forward[token].orEmpty() + reverse[token].orEmpty()
+  fun expansions(token: String): List<String> =
+    forward[token].orEmpty() + reverse[token].orEmpty()
 
-  operator fun plus(other: SynonymPack): SynonymPack = SynonymPack(entries + other.entries)
+  operator fun plus(other: SynonymPack): SynonymPack =
+    SynonymPack(entries + other.entries)
 
   companion object {
     /** Words that mean the same thing here; each expands to all the others. */
     fun group(vararg words: String): Array<Pair<String, String>> =
-      words.flatMap { w -> words.filter { it != w }.map { w to it } }.toTypedArray()
+      words.flatMap { w ->
+        words.filter { it != w }
+          .map { w to it }
+      }
+        .toTypedArray()
   }
 }
 
@@ -33,7 +41,15 @@ val GenericSynonyms = SynonymPack(
   "qty" to "quantity",
   "temp" to "temperature",
   "press" to "pressure",
-  *SynonymPack.group("check", "inspect", "inspection", "insp", "examine", "exam", "examination"),
+  *SynonymPack.group(
+    "check",
+    "inspect",
+    "inspection",
+    "insp",
+    "examine",
+    "exam",
+    "examination"
+  ),
 )
 
 val AviationSynonyms = SynonymPack(

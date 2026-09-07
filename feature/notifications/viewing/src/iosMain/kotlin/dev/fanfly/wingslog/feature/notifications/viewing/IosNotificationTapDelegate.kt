@@ -31,7 +31,8 @@ internal const val TAP_URI_USER_INFO_KEY = "wingslog_tap_uri"
  * launching or iOS drops a tap that cold-started the process — the exact case that matters most,
  * since that is what a pilot tapping a notification from the lock screen does.
  */
-class IosNotificationTapDelegate : NSObject(), UNUserNotificationCenterDelegateProtocol {
+class IosNotificationTapDelegate : NSObject(),
+  UNUserNotificationCenterDelegateProtocol {
 
   /**
    * A tap (or an action / dismissal, which carry their own identifiers we do not register — anything

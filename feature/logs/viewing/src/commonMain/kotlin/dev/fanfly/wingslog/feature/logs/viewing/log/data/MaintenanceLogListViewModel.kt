@@ -2,6 +2,10 @@ package dev.fanfly.wingslog.feature.logs.viewing.log.data
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dev.fanfly.wingslog.core.analytics.AnalyticsManager
+import dev.fanfly.wingslog.core.analytics.RecordFilterApplied
+import dev.fanfly.wingslog.core.analytics.RecordSearch
+import dev.fanfly.wingslog.core.analytics.log
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.logs.datamanager.authorship.LogAuthorship
 import dev.fanfly.wingslog.feature.logs.datamanager.authorship.authorship
@@ -9,8 +13,10 @@ import dev.fanfly.wingslog.feature.search.datamanager.LogAdapter
 import dev.fanfly.wingslog.feature.search.datamanager.SearchEngine
 import dev.fanfly.wingslog.feature.search.model.Facet
 import dev.fanfly.wingslog.feature.search.model.RecordFilter
+import dev.fanfly.wingslog.feature.search.model.SearchHit
 import dev.fanfly.wingslog.feature.search.model.SearchTuning
 import dev.fanfly.wingslog.feature.search.model.TimeWindow
+import dev.fanfly.wingslog.feature.search.model.changesFrom
 import dev.fanfly.wingslog.feature.search.model.debouncedQuery
 import dev.fanfly.wingslog.feature.search.model.matchesById
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
@@ -58,12 +64,15 @@ class MaintenanceLogListViewModel(
   private val auth: FirebaseAuth,
   private val searchEngine: SearchEngine,
   private val tuning: SearchTuning,
+  private val analytics: AnalyticsManager,
   val thingId: String,
+  private val templateId: String,
   private val clock: Clock = Clock.System,
   private val timeZone: TimeZone = TimeZone.currentSystemDefault(),
 ) : ViewModel() {
 
   private val logAdapter = LogAdapter(timeZone)
+  private var lastLoggedQuery = ""
 
   private val _uiState =
     MutableStateFlow<MaintenanceLogListUiState>(MaintenanceLogListUiState.Loading)
@@ -131,6 +140,7 @@ class MaintenanceLogListViewModel(
             val today = clock.now()
               .toLocalDateTime(timeZone).date
             val hits = searchEngine.search(sorted, logAdapter, applied, today)
+            trackSearch(applied.query, hits)
             MaintenanceLogListUiState.Success(
               logs = hits.map { it.item },
               matches = hits.matchesById { it.id },
@@ -216,20 +226,27 @@ class MaintenanceLogListViewModel(
     _filter.value = _filter.value.copy(query = query)
   }
 
-  fun onComponentFilterToggle(component: ComponentType) {
-    _filter.value = _filter.value.toggleComponent(component)
+  fun onComponentFilterToggle(component: ComponentType) = updateFilter { it.toggleComponent(component) }
+
+  fun onTimeWindowChange(window: TimeWindow) = updateFilter { it.copy(time = window) }
+
+  fun onFacetToggle(facet: Facet) = updateFilter { it.toggleFacet(facet) }
+
+  fun clearFilter() = updateFilter { RecordFilter() }
+
+  private fun updateFilter(transform: (RecordFilter) -> RecordFilter) {
+    val previous = _filter.value
+    val next = transform(previous)
+    _filter.value = next
+    next.changesFrom(previous).forEach {
+      analytics.log(RecordFilterApplied(templateId, TAB, it.kind, it.value))
+    }
   }
 
-  fun onTimeWindowChange(window: TimeWindow) {
-    _filter.value = _filter.value.copy(time = window)
-  }
-
-  fun onFacetToggle(facet: Facet) {
-    _filter.value = _filter.value.toggleFacet(facet)
-  }
-
-  fun clearFilter() {
-    _filter.value = RecordFilter()
+  private fun trackSearch(query: String, hits: List<SearchHit<MaintenanceLog>>) {
+    if (query.isBlank() || query == lastLoggedQuery) return
+    lastLoggedQuery = query
+    analytics.log(RecordSearch(templateId, TAB, query.length, hits.size, hits.firstOrNull()?.explanations?.isNotEmpty() == true))
   }
 
   fun retryLoading() {
@@ -264,6 +281,8 @@ class MaintenanceLogListViewModel(
     data class Loaded(val logs: List<MaintenanceLog>) : LogsLoadState
   }
 }
+
+private const val TAB = "logs"
 
 sealed interface MaintenanceLogListEvent {
   data class NavigateToCreateLog(val thingId: String) :

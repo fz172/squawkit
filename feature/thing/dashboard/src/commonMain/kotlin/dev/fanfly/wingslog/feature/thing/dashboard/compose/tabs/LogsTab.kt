@@ -10,6 +10,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.fanfly.wingslog.core.appinfo.AppCapability
+import dev.fanfly.wingslog.core.template.LocalThingTemplate
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
 import dev.fanfly.wingslog.feature.attachment.datamanager.OpenState
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
@@ -34,8 +35,9 @@ fun LogsTab(
 ) {
   // Key by thingId: in the adaptive shell the switcher swaps thing within the same
   // composition site, so an unkeyed ViewModel would be reused and keep the previous thing's logs.
+  val templateId = LocalThingTemplate.current?.id.orEmpty()
   val viewModel: MaintenanceLogListViewModel =
-    koinViewModel(key = thingId, parameters = { parametersOf(thingId) })
+    koinViewModel(key = thingId, parameters = { parametersOf(thingId, templateId) })
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
   val filter by viewModel.filter.collectAsStateWithLifecycle()
   val attachmentOpener: AttachmentOpener = koinInject()

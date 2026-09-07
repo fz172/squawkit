@@ -1,5 +1,8 @@
 package dev.fanfly.wingslog.feature.search.datamanager
 
+import dev.fanfly.wingslog.feature.search.datamanager.Tokenizer.normalize
+
+
 /** Lowercase, accent-folded tokens; serials and references are kept whole and also split. */
 object Tokenizer {
   private val SPLIT = Regex("[^a-z0-9./-]+")
@@ -26,7 +29,9 @@ object Tokenizer {
       val t = raw.trim('.', '/', '-')
       if (t.isEmpty()) continue
       out.add(t)
-      if (INNER.containsMatchIn(t)) t.split(INNER).filter { it.isNotEmpty() }.forEach(out::add)
+      if (INNER.containsMatchIn(t)) t.split(INNER)
+        .filter { it.isNotEmpty() }
+        .forEach(out::add)
     }
     return out
   }

@@ -70,7 +70,8 @@ data class PushPayload(
      * the first nothing can replace in the tray, and without the second a tap goes nowhere.
      */
     fun parse(data: Map<String, String>): PushPayload? {
-      val notificationId = data["notificationId"]?.takeIf { it.isNotBlank() } ?: return null
+      val notificationId =
+        data["notificationId"]?.takeIf { it.isNotBlank() } ?: return null
       val tapTarget = parseTapTarget(data["tapTarget"]) ?: return null
       return PushPayload(
         notificationId = notificationId,
@@ -102,7 +103,8 @@ data class PushPayload(
       val parts = raw?.split(":") ?: return null
       if (parts.size < 2) return null
       val thingId = parts[1].takeIf { it.isNotBlank() } ?: return null
-      val recordId = parts.getOrNull(2)?.takeIf { it.isNotBlank() }
+      val recordId = parts.getOrNull(2)
+        ?.takeIf { it.isNotBlank() }
       return when (parts[0]) {
         // Wire value: the server sends `aircraft:` and old clients only understand it (#638).
         "aircraft" -> NotificationTapTarget.Thing(thingId, tab = recordId)
@@ -111,10 +113,13 @@ data class PushPayload(
         // variant shares.
         "squawk" -> recordId?.let { NotificationTapTarget.Squawk(thingId, it) }
           ?: NotificationTapTarget.Thing(thingId, tab = "squawks")
+
         "task" -> recordId?.let { NotificationTapTarget.Task(thingId, it) }
           ?: NotificationTapTarget.Thing(thingId, tab = "tasks")
+
         "log" -> recordId?.let { NotificationTapTarget.Log(thingId, it) }
           ?: NotificationTapTarget.Thing(thingId, tab = "logs")
+
         else -> null
       }
     }

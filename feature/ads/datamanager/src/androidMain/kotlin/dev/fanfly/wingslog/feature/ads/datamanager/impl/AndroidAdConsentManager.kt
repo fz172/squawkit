@@ -12,9 +12,9 @@ import dev.fanfly.wingslog.core.lifecycle.CurrentActivityProvider
 import dev.fanfly.wingslog.feature.ads.datamanager.AdConsentManager
 import dev.fanfly.wingslog.feature.ads.model.AdConsentState
 import dev.fanfly.wingslog.feature.developeroptions.datamanager.DeveloperOptionsManager
-import kotlin.coroutines.resume
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlin.coroutines.resume
 
 /**
  * Google UMP, run against the foreground [android.app.Activity] via [CurrentActivityProvider] — the
@@ -59,7 +59,11 @@ internal class AndroidAdConsentManager(
       ?: return AdConsentState.NON_PERSONALIZED
 
     val formError = suspendCancellableCoroutine<FormError?> { cont ->
-      UserMessagingPlatform.loadAndShowConsentFormIfRequired(activity) { error -> cont.resume(error) }
+      UserMessagingPlatform.loadAndShowConsentFormIfRequired(activity) { error ->
+        cont.resume(
+          error
+        )
+      }
     }
     if (formError != null) {
       log.w { "Consent form failed to load/show: ${formError.message}" }
@@ -80,7 +84,8 @@ internal class AndroidAdConsentManager(
    */
   private suspend fun requestConsentInfoUpdateOrNull(): ConsentInformation? {
     val activity = activityProvider.current() ?: return null
-    val consentInformation = UserMessagingPlatform.getConsentInformation(application)
+    val consentInformation =
+      UserMessagingPlatform.getConsentInformation(application)
     val params = ConsentRequestParameters.Builder()
       .apply {
         // Forces the EEA form path on developer builds so the CMP is exercisable in dev/dogfood
@@ -89,7 +94,8 @@ internal class AndroidAdConsentManager(
         // are exempt, but a real phone needs addTestDeviceHashedId or the form never appears and
         // this resolves as if debug settings were never set at all.
         if (appCapability.isDeveloperOptionsSupported) {
-          val testDeviceHashedId = developerOptionsManager.observe().first().adConsentTestDeviceHashedId
+          val testDeviceHashedId = developerOptionsManager.observe()
+            .first().adConsentTestDeviceHashedId
           setConsentDebugSettings(
             ConsentDebugSettings.Builder(application)
               .setDebugGeography(ConsentDebugSettings.DebugGeography.DEBUG_GEOGRAPHY_EEA)
@@ -134,7 +140,8 @@ internal class AndroidAdConsentManager(
       ConsentInformation.PrivacyOptionsRequirementStatus.REQUIRED
 
   override suspend fun resetConsent() {
-    UserMessagingPlatform.getConsentInformation(application).reset()
+    UserMessagingPlatform.getConsentInformation(application)
+      .reset()
   }
 
   private val log = Logger.withTag("AndroidAdConsentManager")

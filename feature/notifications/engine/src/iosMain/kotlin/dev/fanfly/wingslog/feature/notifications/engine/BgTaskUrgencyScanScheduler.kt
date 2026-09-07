@@ -1,6 +1,8 @@
 package dev.fanfly.wingslog.feature.notifications.engine
 
 import co.touchlab.kermit.Logger
+import dev.fanfly.wingslog.feature.notifications.engine.BgTaskUrgencyScanScheduler.Companion.BG_SCAN_TASK_ID
+import dev.fanfly.wingslog.feature.notifications.engine.BgTaskUrgencyScanScheduler.Companion.SCAN_INTERVAL_SECONDS
 import dev.fanfly.wingslog.feature.notifications.model.ScanTrigger
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.CoroutineScope
@@ -54,7 +56,8 @@ class BgTaskUrgencyScanScheduler(
 
   override fun ensureScheduled() {
     val request = BGAppRefreshTaskRequest(identifier = BG_SCAN_TASK_ID).apply {
-      earliestBeginDate = NSDate.dateWithTimeIntervalSinceNow(SCAN_INTERVAL_SECONDS)
+      earliestBeginDate =
+        NSDate.dateWithTimeIntervalSinceNow(SCAN_INTERVAL_SECONDS)
     }
     try {
       BGTaskScheduler.sharedScheduler.submitTaskRequest(request, error = null)
@@ -65,7 +68,9 @@ class BgTaskUrgencyScanScheduler(
   }
 
   override fun cancel() {
-    BGTaskScheduler.sharedScheduler.cancelTaskRequestWithIdentifier(BG_SCAN_TASK_ID)
+    BGTaskScheduler.sharedScheduler.cancelTaskRequestWithIdentifier(
+      BG_SCAN_TASK_ID
+    )
   }
 
   private fun handleScanTask(task: BGAppRefreshTask) {

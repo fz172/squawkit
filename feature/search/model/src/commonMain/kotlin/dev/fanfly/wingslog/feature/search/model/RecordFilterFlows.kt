@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.map
 @OptIn(FlowPreview::class)
 fun Flow<RecordFilter>.debouncedQuery(millis: Long): Flow<RecordFilter> {
   val structure = map { it.copy(query = "") }.distinctUntilChanged()
-  val query = map { it.query }.distinctUntilChanged().debounce { if (it.isBlank()) 0L else millis }
+  val query = map { it.query }.distinctUntilChanged()
+    .debounce { if (it.isBlank()) 0L else millis }
   return combine(structure, query) { filter, q -> filter.copy(query = q) }
 }

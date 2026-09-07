@@ -1,16 +1,17 @@
 # Design Doc: Search and Filter
 
 **PRD:** `docs/search/search_filter_PRD.md`
-**Status:** 🚧 P1 built behind `AppCapability.isSearchFilterSupported` (developer builds), 2026-09-06
-**Last updated:** 2026-09-06
+**Status:** ✅ P1–P3 built, 2026-09-06 → 09-07, behind `AppCapability.isSearchFilterSupported` (developer builds)
+**Last updated:** 2026-09-07
 **Tracking:** GitHub Project #11 “Search and Filter” — sub-issues #820–#844 follow the §10 order
 
 ---
 
 ## Implementation status
 
-P1 (#817) landed 2026-09-06 across PRs #845, #846 and the milestone-3 PR, gated to developer
-builds by `AppCapability.isSearchFilterSupported`. Deltas from the design as written:
+P1 (#817: #845, #846, #847), P2 (#818: #848, #849, #850) and P3 (#819: #851 and the analytics PR)
+landed 2026-09-06 → 09-07, gated to developer builds by `AppCapability.isSearchFilterSupported`.
+Deltas from the design as written:
 
 - Modules are `feature/search/{model,datamanager,sharedassets,viewing}`, not `core/search` + `core/ui`.
 - `SearchEngine` is an interface bound in Koin (`searchModule`) and injected, not constructed per VM.
@@ -34,6 +35,11 @@ builds by `AppCapability.isSearchFilterSupported`. Deltas from the design as wri
   filter is exposed synchronously as `filter` on each ViewModel so the field never trails the caret.
 - P2: synonym packs apply generic + aviation on every thing; per-template selection waits for a second
   domain pack.
+- P3: facets are a **set** (`RecordFilter.facets`, several OR together), not the single `facet` of §3;
+  each tab supplies its section through `RecordFilterControls.facetSection`. The web keyboard
+  shortcuts of §6.5 were dropped (#842). Analytics events are the two typed events of §7, emitted by
+  the three list ViewModels with the template id passed in as a Koin parameter; `RecordFilter.changesFrom`
+  turns a filter edit into `kind` / `value` pairs (a technician facet reports only its kind).
 
 ## 1. Overview
 

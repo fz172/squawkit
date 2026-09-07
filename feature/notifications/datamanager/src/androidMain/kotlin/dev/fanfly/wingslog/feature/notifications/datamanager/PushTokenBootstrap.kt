@@ -3,14 +3,14 @@ package dev.fanfly.wingslog.feature.notifications.datamanager
 import co.touchlab.kermit.Logger
 import com.google.firebase.messaging.FirebaseMessaging
 import dev.fanfly.wingslog.feature.notifications.model.PushTokenSink
-import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 
 /**
  * Feeds the token this device *already has* into [PushTokenSink] at startup.
@@ -63,8 +63,9 @@ class PushTokenBootstrap(
   }
 }
 
-private suspend fun firebaseMessagingToken(): String? = suspendCancellableCoroutine { cont ->
-  FirebaseMessaging.getInstance().token
-    .addOnSuccessListener { token -> cont.resume(token) }
-    .addOnFailureListener { error -> cont.resumeWithException(error) }
-}
+private suspend fun firebaseMessagingToken(): String? =
+  suspendCancellableCoroutine { cont ->
+    FirebaseMessaging.getInstance().token
+      .addOnSuccessListener { token -> cont.resume(token) }
+      .addOnFailureListener { error -> cont.resumeWithException(error) }
+  }
