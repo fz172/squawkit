@@ -7,6 +7,7 @@ import dev.fanfly.wingslog.feature.logs.datamanager.authorship.LogAuthorship
 import dev.fanfly.wingslog.feature.logs.datamanager.authorship.authorship
 import dev.fanfly.wingslog.feature.search.datamanager.LogAdapter
 import dev.fanfly.wingslog.feature.search.datamanager.SearchEngine
+import dev.fanfly.wingslog.feature.search.model.Facet
 import dev.fanfly.wingslog.feature.search.model.RecordFilter
 import dev.fanfly.wingslog.feature.search.model.SearchTuning
 import dev.fanfly.wingslog.feature.search.model.TimeWindow
@@ -133,6 +134,7 @@ class MaintenanceLogListViewModel(
             MaintenanceLogListUiState.Success(
               logs = hits.map { it.item },
               matches = hits.matchesById { it.id },
+              technicians = logsState.logs.mapNotNull { it.technician?.name?.takeIf(String::isNotBlank) }.distinct().sorted(),
               totalCount = logsState.logs.size,
               filter = filter,
               selectedLog = selectedLog,
@@ -220,6 +222,10 @@ class MaintenanceLogListViewModel(
 
   fun onTimeWindowChange(window: TimeWindow) {
     _filter.value = _filter.value.copy(time = window)
+  }
+
+  fun onFacetChange(facet: Facet?) {
+    _filter.value = _filter.value.copy(facet = facet)
   }
 
   fun clearFilter() {

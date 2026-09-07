@@ -4,6 +4,7 @@ import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.search.datamanager.impl.SearchEngineImpl
+import dev.fanfly.wingslog.feature.search.model.Facet
 import dev.fanfly.wingslog.feature.search.model.RecordFilter
 import dev.fanfly.wingslog.feature.search.model.SearchTuning
 import dev.fanfly.wingslog.feature.search.model.TimeWindow
@@ -11,6 +12,7 @@ import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.thing.Squawk
+import dev.fanfly.wingslog.thing.SquawkPriority
 import dev.gitlive.firebase.auth.FirebaseAuth
 import io.mockk.every
 import io.mockk.mockk
@@ -44,7 +46,7 @@ class SquawkTabViewModelTest {
 
   private fun at(date: String) = toWireInstant(Instant.parse("${date}T12:00:00Z").epochSeconds)
 
-  private val openXpdr = Squawk(id = "s1", title = "Transponder intermittent", component_type = ComponentType.COMPONENT_AIRFRAME, created_at = at("2026-08-22"))
+  private val openXpdr = Squawk(id = "s1", title = "Transponder intermittent", component_type = ComponentType.COMPONENT_AIRFRAME, created_at = at("2026-08-22"), priority = SquawkPriority.SQUAWK_PRIORITY_HIGH)
   private val openOil = Squawk(id = "s2", title = "Oil seep at magneto", component_type = ComponentType.COMPONENT_ENGINE, created_at = at("2026-08-30"))
   private val addressedElt = Squawk(id = "s3", title = "ELT self-test fails", component_type = ComponentType.COMPONENT_AIRFRAME, created_at = at("2025-04-02"), addressed_by_log_id = "l5")
   private val eltLog = MaintenanceLog(id = "l5", timestamp = at("2026-04-05"), work_description = "Replaced ELT battery")
@@ -104,6 +106,13 @@ class SquawkTabViewModelTest {
     assertThat(vm.uiState.value.squawks).hasSize(3)
     advanceTimeBy(200)
     runCurrent()
+    assertThat(vm.ids()).containsExactly("s1")
+  }
+
+  @Test
+  fun priorityFacet_narrows() {
+    val vm = viewModel()
+    vm.onFilterChange(RecordFilter(facet = Facet.Priority(SquawkPriority.SQUAWK_PRIORITY_HIGH)))
     assertThat(vm.ids()).containsExactly("s1")
   }
 

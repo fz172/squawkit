@@ -49,7 +49,10 @@ import dev.fanfly.wingslog.feature.ads.viewing.AdSlot
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
 import dev.fanfly.wingslog.feature.attachment.datamanager.OpenState
 import dev.fanfly.wingslog.feature.logs.sharedassets.util.displayName
+import dev.fanfly.wingslog.feature.search.model.Facet
 import dev.fanfly.wingslog.feature.search.model.TimeWindow
+import dev.fanfly.wingslog.feature.search.viewing.ChoiceChip
+import dev.fanfly.wingslog.feature.search.viewing.FilterSection
 import dev.fanfly.wingslog.feature.search.viewing.NoRecordsMatch
 import dev.fanfly.wingslog.feature.search.viewing.RecordCountRow
 import dev.fanfly.wingslog.feature.search.viewing.RecordFilterBar
@@ -64,6 +67,7 @@ import dev.fanfly.wingslog.feature.thing.dashboard.data.SquawkAdapter
 import dev.fanfly.wingslog.feature.thing.dashboard.data.SquawkTabViewModel
 import dev.fanfly.wingslog.feature.thing.dashboard.data.ThingOverviewAction
 import dev.fanfly.wingslog.feature.thing.dashboard.data.ThingOverviewUiState
+import dev.fanfly.wingslog.thing.SquawkPriority
 import kotlin.math.roundToInt
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
@@ -81,6 +85,10 @@ import wingslog.feature.squawk.sharedassets.generated.resources.closed_with_coun
 import wingslog.feature.squawk.sharedassets.generated.resources.no_closed_squawks
 import wingslog.feature.squawk.sharedassets.generated.resources.no_open_squawks
 import wingslog.feature.squawk.sharedassets.generated.resources.open_with_count
+import wingslog.feature.squawk.sharedassets.generated.resources.priority_high
+import wingslog.feature.squawk.sharedassets.generated.resources.priority_low
+import wingslog.feature.squawk.sharedassets.generated.resources.priority_medium
+import wingslog.feature.squawk.sharedassets.generated.resources.squawk_priority_label
 
 private val squawkOrder = compareByDescending<SquawkWithStatus> {
   it.squawk.priority
@@ -185,6 +193,8 @@ fun SquawkTab(
         onRemoveComponent = { setFilter(squawkFilter.toggleComponent(it)) },
         onClearTime = { setFilter(squawkFilter.copy(time = TimeWindow.All)) },
         horizontalPadding = Spacing.none,
+        facetLabel = { (it as? Facet.Priority)?.let { p -> priorityLabel(p.value) }.orEmpty() },
+        onClearFacet = { setFilter(squawkFilter.copy(facet = null)) },
       )
       RecordFilterControls(
         expanded = showFilterSheet,
@@ -199,6 +209,18 @@ fun SquawkTab(
         onClear = { setFilter(squawkFilter.withoutFilters()) },
         onDismiss = { showFilterSheet = false },
         horizontalPadding = Spacing.none,
+        facetSection = {
+          FilterSection(stringResource(Res.string.squawk_priority_label)) {
+            PRIORITY_OPTIONS.forEach { priority ->
+              val selected = squawkFilter.facet == Facet.Priority(priority)
+              ChoiceChip(
+                label = priorityLabel(priority),
+                selected = selected,
+                onClick = { setFilter(squawkFilter.copy(facet = if (selected) null else Facet.Priority(priority))) },
+              )
+            }
+          }
+        },
       )
     }
 
@@ -340,4 +362,19 @@ fun SquawkTab(
       },
     )
   }
+}
+
+private val PRIORITY_OPTIONS = listOf(
+  SquawkPriority.SQUAWK_PRIORITY_AOG,
+  SquawkPriority.SQUAWK_PRIORITY_HIGH,
+  SquawkPriority.SQUAWK_PRIORITY_MEDIUM,
+  SquawkPriority.SQUAWK_PRIORITY_LOW,
+)
+
+@Composable
+private fun priorityLabel(priority: SquawkPriority): String = when (priority) {
+  SquawkPriority.SQUAWK_PRIORITY_AOG -> LexiconFormatter.titleCase(LocalThingLexicon.current.down_status)
+  SquawkPriority.SQUAWK_PRIORITY_HIGH -> stringResource(Res.string.priority_high)
+  SquawkPriority.SQUAWK_PRIORITY_MEDIUM -> stringResource(Res.string.priority_medium)
+  else -> stringResource(Res.string.priority_low)
 }

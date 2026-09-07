@@ -2,6 +2,7 @@ package dev.fanfly.wingslog.feature.thing.dashboard.data
 
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.feature.search.datamanager.impl.SearchEngineImpl
+import dev.fanfly.wingslog.feature.search.model.Facet
 import dev.fanfly.wingslog.feature.search.model.RecordFilter
 import dev.fanfly.wingslog.feature.search.model.SearchTuning
 import dev.fanfly.wingslog.feature.search.model.TimeWindow
@@ -9,6 +10,7 @@ import dev.fanfly.wingslog.feature.tasks.datamanager.TaskStatusManager
 import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
 import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
+import dev.fanfly.wingslog.thing.ComplianceType
 import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.MaintenanceTask
 import io.mockk.every
@@ -50,7 +52,7 @@ class TaskTabViewModelTest {
     DueMetadata(nextDueEngine = 2889f),
   )
   private val complied = MaintenanceTaskWithStatus(
-    MaintenanceTask(id = "t4", title = "Fuel selector AD", reference_number = "AD 2011-10-09", component = ComponentType.COMPONENT_AIRFRAME),
+    MaintenanceTask(id = "t4", title = "Fuel selector AD", reference_number = "AD 2011-10-09", component = ComponentType.COMPONENT_AIRFRAME, type = ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE),
     DueMetadata(status = DueStatus.COMPLIED, compliedDate = LocalDate(2026, 3, 14)),
   )
 
@@ -84,6 +86,14 @@ class TaskTabViewModelTest {
     assertThat(vm.complied()).isEmpty()
     vm.onFilterChange(RecordFilter(time = TimeWindow.LastMonths(12)))
     assertThat(vm.active()).containsExactly("t1", "t2", "t3").inOrder()
+    assertThat(vm.complied()).containsExactly("t4")
+  }
+
+  @Test
+  fun complianceFacet_narrowsBothSubViews() {
+    val vm = viewModel()
+    vm.onFilterChange(RecordFilter(facet = Facet.Compliance(ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE)))
+    assertThat(vm.active()).isEmpty()
     assertThat(vm.complied()).containsExactly("t4")
   }
 

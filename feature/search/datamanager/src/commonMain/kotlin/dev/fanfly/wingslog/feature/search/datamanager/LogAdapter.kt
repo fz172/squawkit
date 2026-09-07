@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.feature.search.datamanager
 
 import dev.fanfly.wingslog.core.datetime.toLocalDate
+import dev.fanfly.wingslog.feature.search.model.Facet
 import dev.fanfly.wingslog.feature.search.model.RecordAdapter
 import dev.fanfly.wingslog.feature.search.model.SearchField
 import dev.fanfly.wingslog.thing.ComponentType
@@ -24,6 +25,9 @@ class LogAdapter(
 
   override fun date(item: MaintenanceLog): LocalDate? =
     item.timestamp?.toLocalDate(timeZone)
+
+  override fun facetMatches(item: MaintenanceLog, facet: Facet): Boolean =
+    facet is Facet.Technician && item.technician?.name == facet.name
 
   companion object {
     const val FIELD_SERIAL = "component_serial"
