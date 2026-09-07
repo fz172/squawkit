@@ -413,7 +413,7 @@ their own subscription — the host's entitlement governs and the blob broker en
 
 `AppCapability` fields: `isDeveloperOptionsSupported`, `isStressTestSupported`,
 `isCameraCaptureSupported`, `isAnonymousLoginSupported`, `isAdsSupported`, `isSearchFilterSupported`
-(dev-only until the search and filter phases land — project #11). Constructed once per host
+(on for Android and web; iOS developer builds only until #854). Constructed once per host
 at Koin startup via `createAppCapability(isDeveloperBuild)`.
 
 `SubscriptionManager` gates: `status()`, `entitlement()`, `canUploadAttachments()` (links stay free),
