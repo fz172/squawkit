@@ -52,6 +52,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.core.template.LexiconFormatter
@@ -73,25 +74,33 @@ import dev.fanfly.wingslog.feature.ads.viewing.AdSlot
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
 import dev.fanfly.wingslog.feature.logs.sharedassets.util.displayName
 import dev.fanfly.wingslog.feature.logs.viewing.log.data.MaintenanceLogListUiState
+import dev.fanfly.wingslog.feature.search.datamanager.LogAdapter
+import dev.fanfly.wingslog.feature.search.model.FieldMatch
 import dev.fanfly.wingslog.feature.search.model.RecordFilter
 import dev.fanfly.wingslog.feature.search.model.TimeWindow
 import dev.fanfly.wingslog.feature.search.viewing.NoRecordsMatch
 import dev.fanfly.wingslog.feature.search.viewing.RecordCountRow
 import dev.fanfly.wingslog.feature.search.viewing.RecordFilterBar
 import dev.fanfly.wingslog.feature.search.viewing.RecordFilterControls
+import dev.fanfly.wingslog.feature.search.viewing.hiddenMatchNote
+import dev.fanfly.wingslog.feature.search.viewing.wordsIn
 import dev.fanfly.wingslog.thing.Attachment
 import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.MaintenanceLog
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
+import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.core.sharedassets.generated.resources.done
 import wingslog.core.sharedassets.generated.resources.retry
+import wingslog.feature.logs.sharedassets.generated.resources.Res as SharedRes
 import wingslog.feature.logs.sharedassets.generated.resources.add_first_maintenance_log
 import wingslog.feature.logs.sharedassets.generated.resources.no_maintenance_logs_title
+import wingslog.feature.logs.viewing.generated.resources.Res as MaintenanceRes
 import wingslog.feature.logs.viewing.generated.resources.clear_filter
 import wingslog.feature.logs.viewing.generated.resources.failed_to_load_logs
 import wingslog.feature.logs.viewing.generated.resources.filter_by_type
@@ -99,13 +108,10 @@ import wingslog.feature.logs.viewing.generated.resources.log_count_n_entries
 import wingslog.feature.logs.viewing.generated.resources.log_count_one_entry
 import wingslog.feature.logs.viewing.generated.resources.no_logs_match_filter
 import wingslog.feature.logs.viewing.generated.resources.search_logs
-import wingslog.feature.search.sharedassets.generated.resources.filter_records
-import wingslog.feature.search.sharedassets.generated.resources.search_placeholder
-import kotlin.time.Duration.Companion.milliseconds
-import wingslog.core.sharedassets.generated.resources.Res as CoreRes
-import wingslog.feature.logs.sharedassets.generated.resources.Res as SharedRes
-import wingslog.feature.logs.viewing.generated.resources.Res as MaintenanceRes
 import wingslog.feature.search.sharedassets.generated.resources.Res as SearchRes
+import wingslog.feature.search.sharedassets.generated.resources.filter_records
+import wingslog.feature.search.sharedassets.generated.resources.match_serial
+import wingslog.feature.search.sharedassets.generated.resources.search_placeholder
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -400,6 +406,8 @@ fun MaintenanceLogListContent(
                 onLogClick = onLogClick,
                 listState = logListState,
                 scrollToLogId = scrollToLogId,
+                highlightFor = { uiState.matches[it.id].orEmpty().wordsIn(LogAdapter.FIELD_DESCRIPTION, LogAdapter.FIELD_TECHNICIAN) },
+                noteFor = { logMatchNote(uiState.matches[it.id].orEmpty(), it) },
                 modifier = Modifier
                   // fill = false so the bordered table wraps its content height when there are
                   // few entries instead of stretching to fill the whole viewport; it still caps
@@ -444,6 +452,9 @@ fun MaintenanceLogListContent(
                     is ListRow.Item -> MaintenanceLogCard(
                       log = row.value,
                       onClick = { onLogClick(row.value) },
+                      highlight = uiState.matches[row.value.id].orEmpty()
+                        .wordsIn(LogAdapter.FIELD_DESCRIPTION, LogAdapter.FIELD_TECHNICIAN),
+                      matchNote = logMatchNote(uiState.matches[row.value.id].orEmpty(), row.value),
                       modifier = Modifier.jumpTargetHighlight(
                         active = row.value.id == scrollToLogId,
                       ),
@@ -653,3 +664,10 @@ private fun FilterTypeRow(
     }
   }
 }
+
+/** The serial is searched but not shown on a log card; say so when it is the only match. */
+@Composable
+private fun logMatchNote(matches: List<FieldMatch>, log: MaintenanceLog): AnnotatedString? =
+  hiddenMatchNote(matches, setOf(LogAdapter.FIELD_DESCRIPTION, LogAdapter.FIELD_TECHNICIAN)) { match ->
+    if (match.field == LogAdapter.FIELD_SERIAL) stringResource(SearchRes.string.match_serial, log.component_serial) else null
+  }

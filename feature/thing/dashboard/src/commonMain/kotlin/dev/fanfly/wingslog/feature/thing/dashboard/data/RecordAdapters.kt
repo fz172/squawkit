@@ -20,9 +20,9 @@ class SquawkAdapter(
 ) : RecordAdapter<SquawkWithStatus> {
 
   override fun fields(item: SquawkWithStatus): List<SearchField> = listOf(
-    SearchField("component_serial", item.squawk.component_serial, weight = 4),
-    SearchField("title", item.squawk.title, weight = 3),
-    SearchField("description", item.squawk.description, weight = 1),
+    SearchField(FIELD_SERIAL, item.squawk.component_serial, weight = 4),
+    SearchField(FIELD_TITLE, item.squawk.title, weight = 3),
+    SearchField(FIELD_DESCRIPTION, item.squawk.description, weight = 1),
   )
 
   override fun component(item: SquawkWithStatus): ComponentType =
@@ -39,6 +39,12 @@ class SquawkAdapter(
         ?: created
     }
   }
+
+  companion object {
+    const val FIELD_SERIAL = "component_serial"
+    const val FIELD_TITLE = "title"
+    const val FIELD_DESCRIPTION = "description"
+  }
 }
 
 /** Tasks: active ones read a preset as “due within”; complied ones date from compliance. A meter-only task has no date and always shows. */
@@ -46,16 +52,14 @@ class TaskAdapter : RecordAdapter<MaintenanceTaskWithStatus> {
 
   override fun fields(item: MaintenanceTaskWithStatus): List<SearchField> =
     listOf(
-      SearchField("reference_number", item.card.reference_number, weight = 4),
-      SearchField("title", item.card.title, weight = 3),
-      SearchField("notes", item.card.notes, weight = 1),
-      SearchField(
-        "compliance_authority",
+      SearchField(FIELD_REFERENCE, item.card.reference_number, weight = 4),
+      SearchField(FIELD_TITLE, item.card.title, weight = 3),
+      SearchField(FIELD_NOTES, item.card.notes, weight = 1),
+      SearchField(FIELD_AUTHORITY,
         item.card.compliance_authority,
         weight = 1
       ),
-      SearchField(
-        "compliance_details",
+      SearchField(FIELD_DETAILS,
         item.card.compliance_details,
         weight = 1
       ),
@@ -73,4 +77,12 @@ class TaskAdapter : RecordAdapter<MaintenanceTaskWithStatus> {
   override val nullDateMatches: Boolean get() = true
 
   private val MaintenanceTaskWithStatus.isComplied get() = dueStatus.status == DueStatus.COMPLIED
+
+  companion object {
+    const val FIELD_REFERENCE = "reference_number"
+    const val FIELD_TITLE = "title"
+    const val FIELD_NOTES = "notes"
+    const val FIELD_AUTHORITY = "compliance_authority"
+    const val FIELD_DETAILS = "compliance_details"
+  }
 }

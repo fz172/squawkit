@@ -6,6 +6,7 @@ import dev.fanfly.wingslog.feature.search.datamanager.GenericSynonyms
 import dev.fanfly.wingslog.feature.search.datamanager.SearchEngine
 import dev.fanfly.wingslog.feature.search.datamanager.TokenMatcher
 import dev.fanfly.wingslog.feature.search.datamanager.Tokenizer
+import dev.fanfly.wingslog.feature.search.model.FieldMatch
 import dev.fanfly.wingslog.feature.search.model.MatchExplanation
 import dev.fanfly.wingslog.feature.search.model.RecordAdapter
 import dev.fanfly.wingslog.feature.search.model.RecordFilter
@@ -30,19 +31,23 @@ class SearchEngineImpl(
     val tokens = Tokenizer.normalize(filter.query).split(WHITESPACE).filter { it.isNotEmpty() }.distinct()
     if (tokens.isEmpty()) return survivors.map { SearchHit(it) }
     return survivors
-      .mapNotNull { item -> score(adapter.fields(item), tokens)?.let { (score, why) -> SearchHit(item, score, why) } }
+      .mapNotNull { item -> score(adapter.fields(item), tokens)?.let { SearchHit(item, it.score, it.explanations, it.matches) } }
       .sortedWith(compareByDescending<SearchHit<T>> { it.score }.thenByDescending { adapter.date(it.item) })
   }
 
-  private fun score(fields: List<SearchField>, tokens: List<String>): Pair<Double, List<MatchExplanation>>? {
+  private class Scored(val score: Double, val explanations: List<MatchExplanation>, val matches: List<FieldMatch>)
+
+  private fun score(fields: List<SearchField>, tokens: List<String>): Scored? {
     val texts = fields.map { FieldText(it.text) }
     var total = 0.0
     val explanations = ArrayList<MatchExplanation>(0)
+    val wordsByField = LinkedHashMap<String, MutableSet<String>>()
     for (token in tokens) {
       var best = 0.0
       var bestExplanation: MatchExplanation? = null
       fields.forEachIndexed { i, field ->
         val m = matcher.match(token, texts[i]) ?: return@forEachIndexed
+        wordsByField.getOrPut(field.name) { LinkedHashSet() }.add(m.matched)
         val weighted = m.grade * field.weight
         if (weighted > best) {
           best = weighted
@@ -53,7 +58,7 @@ class SearchEngineImpl(
       total += best
       bestExplanation?.let(explanations::add)
     }
-    return total to explanations
+    return Scored(total, explanations, wordsByField.map { (field, words) -> FieldMatch(field, words) })
   }
 
   private companion object {

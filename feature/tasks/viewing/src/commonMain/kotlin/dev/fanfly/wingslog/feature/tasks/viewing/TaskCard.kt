@@ -22,10 +22,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.core.ui.common.compose.StatusChip
+import dev.fanfly.wingslog.core.ui.common.compose.highlightWords
+import dev.fanfly.wingslog.core.ui.common.compose.searchHighlightStyle
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.StatusTier
 import dev.fanfly.wingslog.core.ui.theme.statusColors
@@ -43,7 +46,12 @@ fun TaskCard(
   dueStatus: DueStatus = DueStatus.NORMAL,
   onClick: () -> Unit = {},
   modifier: Modifier = Modifier,
+  /** Words the active search matched, highlighted where they appear. */
+  highlight: Set<String> = emptySet(),
+  /** A match the card cannot otherwise show, e.g. a reference number. */
+  matchNote: AnnotatedString? = null,
 ) {
+  val highlightStyle = searchHighlightStyle()
   val isOverdue = dueStatus == DueStatus.OVERDUE
   val isDueSoon = dueStatus == DueStatus.DUE_SOON
   val isAlert = isOverdue || isDueSoon
@@ -102,15 +110,22 @@ fun TaskCard(
       // Row 2: title + subtitle (notes)
       Column(verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall)) {
         Text(
-          text = title,
+          text = highlightWords(title, highlight, highlightStyle),
           style = MaterialTheme.typography.titleMedium,
           fontWeight = FontWeight.Bold,
           color = MaterialTheme.colorScheme.onSurface,
         )
         if (subtitle.isNotBlank()) {
           Text(
-            text = subtitle,
+            text = highlightWords(subtitle, highlight, highlightStyle),
             style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+          )
+        }
+        matchNote?.let {
+          Text(
+            text = it,
+            style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
           )
         }

@@ -32,10 +32,16 @@ import dev.fanfly.wingslog.feature.ads.model.AdSurface
 import dev.fanfly.wingslog.feature.ads.model.ListRow
 import dev.fanfly.wingslog.feature.ads.model.withAdSlots
 import dev.fanfly.wingslog.feature.ads.viewing.AdSlot
+import dev.fanfly.wingslog.feature.search.model.FieldMatch
+import dev.fanfly.wingslog.feature.search.viewing.hiddenMatchNote
+import dev.fanfly.wingslog.feature.search.viewing.wordsIn
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
 import dev.fanfly.wingslog.feature.tasks.viewing.TaskCardItem
+import dev.fanfly.wingslog.feature.thing.dashboard.data.TaskAdapter
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
+import wingslog.feature.search.sharedassets.generated.resources.Res as SearchRes
+import wingslog.feature.search.sharedassets.generated.resources.match_reference
 import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedRes
 import wingslog.feature.tasks.sharedassets.generated.resources.due_with_count
 import wingslog.feature.tasks.sharedassets.generated.resources.history_with_count
@@ -60,6 +66,8 @@ fun ComplianceSection(
   countRow: (@Composable () -> Unit)? = null,
   /** Shown instead of the empty states when a filter left nothing to list. */
   noMatch: (@Composable () -> Unit)? = null,
+  /** The words the active search matched on a task, for highlighting. */
+  matchesFor: (MaintenanceTaskWithStatus) -> List<FieldMatch> = { emptyList() },
   modifier: Modifier = Modifier,
 ) {
   Column(
@@ -148,9 +156,19 @@ fun ComplianceSection(
           is ListRow.Item -> {
             val item = row.value
             val isJumpTarget = item.card.id == scrollTargetId
+            val matches = matchesFor(item)
             TaskCardItem(
               cardWithStatus = item,
               onClick = { onCardClick(item) },
+              highlight = matches.wordsIn(TaskAdapter.FIELD_TITLE, TaskAdapter.FIELD_NOTES),
+              matchNote = hiddenMatchNote(matches, setOf(TaskAdapter.FIELD_TITLE, TaskAdapter.FIELD_NOTES)) { match ->
+                when (match.field) {
+                  TaskAdapter.FIELD_REFERENCE -> stringResource(SearchRes.string.match_reference, item.card.reference_number)
+                  TaskAdapter.FIELD_AUTHORITY -> item.card.compliance_authority
+                  TaskAdapter.FIELD_DETAILS -> item.card.compliance_details
+                  else -> null
+                }
+              },
               modifier = Modifier.fillMaxWidth()
                 .then(
                   if (isJumpTarget) {

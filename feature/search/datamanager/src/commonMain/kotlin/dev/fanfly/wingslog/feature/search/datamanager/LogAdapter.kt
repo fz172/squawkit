@@ -14,9 +14,9 @@ class LogAdapter(
 ) : RecordAdapter<MaintenanceLog> {
 
   override fun fields(item: MaintenanceLog): List<SearchField> = listOf(
-    SearchField("component_serial", item.component_serial, weight = 4),
-    SearchField("work_description", item.work_description, weight = 1),
-    SearchField("technician", item.technician?.name.orEmpty(), weight = 1),
+    SearchField(FIELD_SERIAL, item.component_serial, weight = 4),
+    SearchField(FIELD_DESCRIPTION, item.work_description, weight = 1),
+    SearchField(FIELD_TECHNICIAN, item.technician?.name.orEmpty(), weight = 1),
   )
 
   override fun component(item: MaintenanceLog): ComponentType =
@@ -24,4 +24,10 @@ class LogAdapter(
 
   override fun date(item: MaintenanceLog): LocalDate? =
     item.timestamp?.toLocalDate(timeZone)
+
+  companion object {
+    const val FIELD_SERIAL = "component_serial"
+    const val FIELD_DESCRIPTION = "work_description"
+    const val FIELD_TECHNICIAN = "technician"
+  }
 }

@@ -21,8 +21,8 @@ fun interface TokenMatcher {
   fun match(token: String, field: FieldText): TokenMatch?
 }
 
-/** [grade] runs 0–1: exact 1, stem 0.95, prefix 0.8, synonym 0.7, fuzzy 0.5 (design §4.4). */
-data class TokenMatch(val grade: Double, val explanation: MatchExplanation? = null)
+/** [grade] runs 0–1: exact 1, stem 0.95, prefix 0.8, synonym 0.7, fuzzy 0.5; [matched] is the field’s word or phrase. */
+data class TokenMatch(val grade: Double, val matched: String, val explanation: MatchExplanation? = null)
 
 /** A field’s text, normalised and tokenised once per search rather than once per query token. */
 class FieldText(text: String) {
