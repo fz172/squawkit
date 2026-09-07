@@ -9,7 +9,7 @@ import dev.fanfly.wingslog.feature.search.datamanager.impl.text.Stemmer
 import dev.fanfly.wingslog.feature.search.datamanager.impl.text.editDistance
 import dev.fanfly.wingslog.feature.search.model.MatchExplanation
 
-/** Exact, stem, prefix, synonym, then fuzzy — the first that lands wins (design §4.4). */
+/** Exact, stem, prefix (any length, for typing), synonym, then fuzzy — the first that lands wins. */
 class TolerantTokenMatcher(private val synonyms: SynonymPack) : TokenMatcher {
 
   override fun match(token: String, field: FieldText): TokenMatch? {
@@ -23,9 +23,7 @@ class TolerantTokenMatcher(private val synonyms: SynonymPack) : TokenMatcher {
       if (tokens.any { Stemmer.stem(it) == stem }) return TokenMatch(STEM)
     }
 
-    if (token.length >= MIN_PREFIX) {
-      tokens.firstOrNull { it.startsWith(token) }?.let { return TokenMatch(PREFIX, MatchExplanation.Prefix(token, it)) }
-    }
+    tokens.firstOrNull { it.startsWith(token) }?.let { return TokenMatch(PREFIX, MatchExplanation.Prefix(token, it)) }
     if (numeric) return null
 
     for (expansion in synonyms.expansions(token)) {
@@ -52,7 +50,6 @@ class TolerantTokenMatcher(private val synonyms: SynonymPack) : TokenMatcher {
     const val PREFIX = 0.8
     const val SYNONYM = 0.7
     const val FUZZY = 0.5
-    const val MIN_PREFIX = 3
     const val MIN_FUZZY = 4
     const val LONG_TOKEN = 8
   }

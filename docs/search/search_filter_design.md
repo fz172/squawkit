@@ -255,7 +255,7 @@ For each query token `q` and each field, the best of:
 |---|---|---|
 | Exact | a field token equals `q` | 1.00 |
 | Stem | `stem(fieldToken) == stem(q)` | 0.95 |
-| Prefix | `q.length ≥ 3` and a field token starts with `q` | 0.80 |
+| Prefix | a field token starts with `q` (any length, so the list narrows from the first keystroke) | 0.80 |
 | Synonym | a field token (or phrase) equals an expansion of `q` | 0.70 |
 | Fuzzy | `q` alphabetic, `q.length ≥ 4`, a field token of length ≥ 4 within `cap` edits, where `cap = 1` below 8 letters and `2` from 8 | 0.50 |
 

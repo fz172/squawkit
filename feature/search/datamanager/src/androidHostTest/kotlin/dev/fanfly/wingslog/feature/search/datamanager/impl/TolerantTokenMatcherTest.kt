@@ -54,6 +54,14 @@ class TolerantTokenMatcherTest {
   }
 
   @Test
+  fun anyPrefixMatchesWhileTyping() {
+    val check = FieldText("Pitot static transponder check")
+    assertThat(matcher.match("c", check)?.grade).isEqualTo(0.8)
+    assertThat(matcher.match("ch", check)?.explanation).isEqualTo(MatchExplanation.Prefix("ch", "check"))
+    assertThat(matcher.match("chk", check)).isNull()
+  }
+
+  @Test
   fun shortTokensNeverFuzz() {
     assertThat(grade("gsk")).isNull()
     assertThat(grade("gax")).isNull()
