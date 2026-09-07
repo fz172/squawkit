@@ -896,3 +896,30 @@ feature/tasks/update	initial_due_section_label	First due · optional
 feature/tasks/update	initial_due_subtitle	Leave it empty and the first due is counted from today or the current reading. The schedule takes over after the first log.
 feature/tasks/update	due_summary_schedule_alone_date	Schedule alone: %1$s
 feature/tasks/update	due_summary_schedule_alone_meter	Schedule alone: %1$s %2$s
+feature/search/sharedassets	clear	Clear
+feature/search/sharedassets	clear_filters	Clear filters
+feature/search/sharedassets	clear_search	Clear search
+feature/search/sharedassets	custom_from	From
+feature/search/sharedassets	custom_range_chip	%1$s – %2$s
+feature/search/sharedassets	custom_to	To
+feature/search/sharedassets	due_within_12_months	12 months
+feature/search/sharedassets	due_within_3_months	3 months
+feature/search/sharedassets	due_within_any	Any time
+feature/search/sharedassets	filter_component	Component
+feature/search/sharedassets	filter_due_within	Due within
+feature/search/sharedassets	filter_period	Period
+feature/search/sharedassets	filter_records	Filter %1$s
+feature/search/sharedassets	filter_scope_note	Applies to this tab only
+feature/search/sharedassets	filter_type	Type
+feature/search/sharedassets	filters	Filters
+feature/search/sharedassets	match_reference	Ref. %1$s
+feature/search/sharedassets	match_serial	S/N %1$s
+feature/search/sharedassets	meter_task_note	%1$s tracked only by a meter have no date and always show.
+feature/search/sharedassets	no_records_match	No %1$s match these filters.
+feature/search/sharedassets	period_all	All time
+feature/search/sharedassets	period_custom	Custom range
+feature/search/sharedassets	period_last_12_months	Last 12 months
+feature/search/sharedassets	period_last_3_months	Last 3 months
+feature/search/sharedassets	record_count_one	1 %1$s
+feature/search/sharedassets	record_count_other	%1$d %2$s
+feature/search/sharedassets	search_placeholder	Search…
