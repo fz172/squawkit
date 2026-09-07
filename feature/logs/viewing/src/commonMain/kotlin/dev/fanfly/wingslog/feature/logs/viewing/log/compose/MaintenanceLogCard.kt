@@ -23,6 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
@@ -37,6 +38,8 @@ import dev.fanfly.wingslog.core.template.formatMeterValue
 import dev.fanfly.wingslog.core.template.primaryReading
 import dev.fanfly.wingslog.core.template.squawkNoun
 import dev.fanfly.wingslog.core.template.taskNoun
+import dev.fanfly.wingslog.core.ui.common.compose.highlightWords
+import dev.fanfly.wingslog.core.ui.common.compose.searchHighlightStyle
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.feature.logs.sharedassets.util.displayName
@@ -44,21 +47,25 @@ import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.thing.MeterReading
 import dev.fanfly.wingslog.thing.Technician
+import kotlin.time.Instant
 import org.jetbrains.compose.resources.stringResource
+import wingslog.feature.logs.viewing.generated.resources.Res as MaintenanceRes
 import wingslog.feature.logs.viewing.generated.resources.log_squawk_count_one
 import wingslog.feature.logs.viewing.generated.resources.log_squawk_count_plural
 import wingslog.feature.logs.viewing.generated.resources.log_task_count_one
 import wingslog.feature.logs.viewing.generated.resources.log_task_count_plural
-import wingslog.feature.tasks.sharedassets.generated.resources.unknown_date
-import kotlin.time.Instant
-import wingslog.feature.logs.viewing.generated.resources.Res as MaintenanceRes
 import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedRes
+import wingslog.feature.tasks.sharedassets.generated.resources.unknown_date
 
 @Composable
 fun MaintenanceLogCard(
   log: MaintenanceLog,
   onClick: () -> Unit,
   modifier: Modifier = Modifier,
+  /** Words the active search matched, highlighted where they appear. */
+  highlight: Set<String> = emptySet(),
+  /** A match the card cannot otherwise show, e.g. a serial. */
+  matchNote: AnnotatedString? = null,
 ) {
   val dateStr = log.timestamp?.toLocalDate()
     ?.toDisplayFormat()
@@ -113,10 +120,17 @@ fun MaintenanceLogCard(
 
       // Work description — full text, no truncation
       Text(
-        text = log.work_description,
+        text = highlightWords(log.work_description, highlight, searchHighlightStyle()),
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurface,
       )
+      matchNote?.let {
+        Text(
+          text = it,
+          style = MaterialTheme.typography.labelSmall,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+      }
 
       HorizontalDivider(
         color = MaterialTheme.colorScheme.outlineVariant.copy(

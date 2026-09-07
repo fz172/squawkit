@@ -3,12 +3,14 @@ package dev.fanfly.wingslog.feature.search.datamanager
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.feature.search.datamanager.impl.SearchEngineImpl
 import dev.fanfly.wingslog.feature.search.model.Facet
+import dev.fanfly.wingslog.feature.search.model.FieldMatch
 import dev.fanfly.wingslog.feature.search.model.RecordAdapter
 import dev.fanfly.wingslog.feature.search.model.RecordFilter
 import dev.fanfly.wingslog.feature.search.model.SearchField
 import dev.fanfly.wingslog.feature.search.model.SearchHit
 import dev.fanfly.wingslog.feature.search.model.TimeDirection
 import dev.fanfly.wingslog.feature.search.model.TimeWindow
+import dev.fanfly.wingslog.feature.search.model.matchesById
 import dev.fanfly.wingslog.thing.ComponentType
 import kotlinx.datetime.LocalDate
 import org.junit.Test
@@ -270,6 +272,18 @@ class SearchEngineTest {
         )
       )
     ).containsExactly("oil")
+  }
+
+  @Test
+  fun hits_carryMatchedWordsPerField() {
+    val hits = engine.search(records, Adapter(), RecordFilter(query = "transponder 91.413"), today)
+    assertThat(hits).hasSize(1)
+    assertThat(hits.single().matches).containsExactly(
+      FieldMatch("title", setOf("transponder")),
+      FieldMatch("body", setOf("91.413")),
+    )
+    val ids = hits.matchesById { it.id }
+    assertThat(ids.keys).containsExactly("xpdr")
   }
 
   @Test

@@ -26,6 +26,14 @@ builds by `AppCapability.isSearchFilterSupported`. Deltas from the design as wri
 - The count row reads "5 work logs", not "5 of 12".
 - `ComplianceSection` gained `filterBar` / `countRow` / `noMatch` slots rather than the Tasks tab
   reaching into it.
+- P2: matches are shown by **highlighting the matched words** on the card (§4.6 / §6.3’s explanation
+  row was dropped). `SearchHit.matches` carries the words per field; `highlightWords` in `core/ui`
+  spans them; a card whose only match is in a field it does not show (serial, reference, compliance
+  text) adds one “S/N …” / “Ref. …” line from `hiddenMatchNote`.
+- P2: the query is debounced 150 ms through `SearchTuning` (bound once in `searchModule`); the typed
+  filter is exposed synchronously as `filter` on each ViewModel so the field never trails the caret.
+- P2: synonym packs apply generic + aviation on every thing; per-template selection waits for a second
+  domain pack.
 
 ## 1. Overview
 

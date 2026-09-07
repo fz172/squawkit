@@ -8,6 +8,7 @@ import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.template.LocalThingTemplate
@@ -19,21 +20,23 @@ import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
 import dev.fanfly.wingslog.thing.MaintenanceTask
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringResource
+import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.core.sharedassets.generated.resources.dash
+import wingslog.feature.tasks.viewing.generated.resources.Res as ViewingRes
 import wingslog.feature.tasks.viewing.generated.resources.badge_due
 import wingslog.feature.tasks.viewing.generated.resources.badge_overdue
 import wingslog.feature.tasks.viewing.generated.resources.completed
 import wingslog.feature.tasks.viewing.generated.resources.label_deadline
 import wingslog.feature.tasks.viewing.generated.resources.label_due_engine
 import wingslog.feature.tasks.viewing.generated.resources.on_condition
-import wingslog.core.sharedassets.generated.resources.Res as CoreRes
-import wingslog.feature.tasks.viewing.generated.resources.Res as ViewingRes
 
 @Composable
 fun TaskCardItem(
   cardWithStatus: MaintenanceTaskWithStatus,
   onClick: () -> Unit = {},
   modifier: Modifier = Modifier,
+  highlight: Set<String> = emptySet(),
+  matchNote: AnnotatedString? = null,
 ) {
   val status = cardWithStatus.dueStatus.status
   val dueDate = cardWithStatus.dueStatus.nextDueDate
@@ -95,6 +98,8 @@ fun TaskCardItem(
     dueStatus = status,
     onClick = onClick,
     modifier = modifier,
+    highlight = highlight,
+    matchNote = matchNote,
   )
 }
 

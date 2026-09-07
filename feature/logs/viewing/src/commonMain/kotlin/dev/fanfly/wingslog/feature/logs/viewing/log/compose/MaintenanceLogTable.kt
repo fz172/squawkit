@@ -26,6 +26,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -36,7 +37,9 @@ import dev.fanfly.wingslog.core.template.LocalThingTemplate
 import dev.fanfly.wingslog.core.template.componentTypesApply
 import dev.fanfly.wingslog.core.template.formatMeterValue
 import dev.fanfly.wingslog.core.template.primaryReading
+import dev.fanfly.wingslog.core.ui.common.compose.highlightWords
 import dev.fanfly.wingslog.core.ui.common.compose.jumpTargetHighlight
+import dev.fanfly.wingslog.core.ui.common.compose.searchHighlightStyle
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.feature.ads.model.AdSurface
@@ -44,8 +47,8 @@ import dev.fanfly.wingslog.feature.ads.model.ListRow
 import dev.fanfly.wingslog.feature.ads.viewing.AdSlot
 import dev.fanfly.wingslog.thing.MaintenanceLog
 import org.jetbrains.compose.resources.stringResource
-import wingslog.feature.tasks.sharedassets.generated.resources.unknown_date
 import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedRes
+import wingslog.feature.tasks.sharedassets.generated.resources.unknown_date
 
 // Shared column weights so the header and every row stay aligned.
 private const val W_DATE = 0.9f
@@ -67,6 +70,8 @@ fun MaintenanceLogTable(
   /** See [MaintenanceLogListContent]'s parameter of the same name. */
   scrollToLogId: String? = null,
   modifier: Modifier = Modifier,
+  highlightFor: (MaintenanceLog) -> Set<String> = { emptySet() },
+  noteFor: @Composable (MaintenanceLog) -> AnnotatedString? = { null },
 ) {
   Surface(
     modifier = modifier.fillMaxWidth(),
@@ -111,6 +116,8 @@ fun MaintenanceLogTable(
               log = row.value,
               onClick = { onLogClick(row.value) },
               isJumpTarget = row.value.id == scrollToLogId,
+              highlight = highlightFor(row.value),
+              matchNote = noteFor(row.value),
             )
           }
           HorizontalDivider(
@@ -164,6 +171,8 @@ private fun LogRow(
   log: MaintenanceLog,
   onClick: () -> Unit,
   isJumpTarget: Boolean = false,
+  highlight: Set<String> = emptySet(),
+  matchNote: AnnotatedString? = null,
 ) {
   val dateStr = log.timestamp?.toLocalDate()
     ?.toDisplayFormat()
@@ -198,15 +207,27 @@ private fun LogRow(
         LogComponentBadge(log.component_type)
       }
     }
-    Text(
-      text = log.work_description,
-      style = MaterialTheme.typography.bodyMedium,
-      color = MaterialTheme.colorScheme.onSurface,
-      maxLines = 1,
-      overflow = TextOverflow.Ellipsis,
+    Column(
       modifier = Modifier.weight(W_DESC)
         .padding(end = Spacing.medium),
-    )
+    ) {
+      Text(
+        text = highlightWords(log.work_description, highlight, searchHighlightStyle()),
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurface,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+      )
+      matchNote?.let {
+        Text(
+          text = it,
+          style = MaterialTheme.typography.labelSmall,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+          maxLines = 1,
+          overflow = TextOverflow.Ellipsis,
+        )
+      }
+    }
     Text(
       text = primary
         ?.let { (meter, value) -> template.formatMeterValue(meter.key, value) }

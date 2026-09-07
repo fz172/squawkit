@@ -11,6 +11,7 @@ import dev.fanfly.wingslog.feature.search.model.RecordFilter
 import dev.fanfly.wingslog.feature.search.model.SearchTuning
 import dev.fanfly.wingslog.feature.search.model.TimeWindow
 import dev.fanfly.wingslog.feature.search.model.debouncedQuery
+import dev.fanfly.wingslog.feature.search.model.matchesById
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
@@ -128,11 +129,10 @@ class MaintenanceLogListViewModel(
             }
             val today = clock.now()
               .toLocalDateTime(timeZone).date
-            val filtered =
-              searchEngine.search(sorted, logAdapter, applied, today)
-                .map { it.item }
+            val hits = searchEngine.search(sorted, logAdapter, applied, today)
             MaintenanceLogListUiState.Success(
-              logs = filtered,
+              logs = hits.map { it.item },
+              matches = hits.matchesById { it.id },
               totalCount = logsState.logs.size,
               filter = filter,
               selectedLog = selectedLog,

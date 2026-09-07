@@ -54,10 +54,13 @@ import dev.fanfly.wingslog.feature.search.viewing.NoRecordsMatch
 import dev.fanfly.wingslog.feature.search.viewing.RecordCountRow
 import dev.fanfly.wingslog.feature.search.viewing.RecordFilterBar
 import dev.fanfly.wingslog.feature.search.viewing.RecordFilterControls
+import dev.fanfly.wingslog.feature.search.viewing.hiddenMatchNote
+import dev.fanfly.wingslog.feature.search.viewing.wordsIn
 import dev.fanfly.wingslog.feature.squawk.model.SquawkStatus
 import dev.fanfly.wingslog.feature.squawk.model.SquawkWithStatus
 import dev.fanfly.wingslog.feature.squawk.viewing.SquawkCard
 import dev.fanfly.wingslog.feature.squawk.viewing.SquawkDetailSheet
+import dev.fanfly.wingslog.feature.thing.dashboard.data.SquawkAdapter
 import dev.fanfly.wingslog.feature.thing.dashboard.data.SquawkTabViewModel
 import dev.fanfly.wingslog.feature.thing.dashboard.data.ThingOverviewAction
 import dev.fanfly.wingslog.feature.thing.dashboard.data.ThingOverviewUiState
@@ -71,6 +74,7 @@ import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import wingslog.feature.search.sharedassets.generated.resources.Res as SearchRes
 import wingslog.feature.search.sharedassets.generated.resources.filter_records
+import wingslog.feature.search.sharedassets.generated.resources.match_serial
 import wingslog.feature.search.sharedassets.generated.resources.search_placeholder
 import wingslog.feature.squawk.sharedassets.generated.resources.Res
 import wingslog.feature.squawk.sharedassets.generated.resources.closed_with_count
@@ -274,9 +278,14 @@ fun SquawkTab(
           is ListRow.Item -> {
             val item = row.value
             val isJumpTarget = item.squawk.id == scrollToSquawkId
+            val matches = tabState.matches[item.squawk.id].orEmpty()
             SquawkCard(
               item = item,
               onClick = { onAction(ThingOverviewAction.ShowSquawkDetail(item)) },
+              highlight = matches.wordsIn(SquawkAdapter.FIELD_TITLE, SquawkAdapter.FIELD_DESCRIPTION),
+              matchNote = hiddenMatchNote(matches, setOf(SquawkAdapter.FIELD_TITLE, SquawkAdapter.FIELD_DESCRIPTION)) { match ->
+                if (match.field == SquawkAdapter.FIELD_SERIAL) stringResource(SearchRes.string.match_serial, item.squawk.component_serial) else null
+              },
               modifier = Modifier.fillMaxWidth()
                 .then(
                   if (isJumpTarget) {

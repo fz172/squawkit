@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.feature.logs.viewing.log.data
 
 import dev.fanfly.wingslog.feature.logs.datamanager.authorship.LogAuthorship
+import dev.fanfly.wingslog.feature.search.model.FieldMatch
 import dev.fanfly.wingslog.feature.search.model.RecordFilter
 import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.thing.MaintenanceTask
@@ -10,6 +11,8 @@ sealed interface MaintenanceLogListUiState {
   data object Loading : MaintenanceLogListUiState
   data class Success(
     val logs: List<MaintenanceLog>,
+    /** Log id → the words the query matched, for highlighting. */
+    val matches: Map<String, List<FieldMatch>> = emptyMap(),
     val totalCount: Int,
     val filter: RecordFilter = RecordFilter(),
     val selectedLog: MaintenanceLog? = null,

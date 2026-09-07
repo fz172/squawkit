@@ -17,12 +17,15 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.datetime.toLocalDate
 import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.ui.common.compose.StatusChip
+import dev.fanfly.wingslog.core.ui.common.compose.highlightWords
+import dev.fanfly.wingslog.core.ui.common.compose.searchHighlightStyle
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.StatusTier
 import dev.fanfly.wingslog.core.ui.theme.statusColors
@@ -42,8 +45,13 @@ fun SquawkCard(
   item: SquawkWithStatus,
   onClick: () -> Unit,
   modifier: Modifier = Modifier,
+  /** Words the active search matched, highlighted where they appear. */
+  highlight: Set<String> = emptySet(),
+  /** A match the card cannot otherwise show, e.g. a serial. */
+  matchNote: AnnotatedString? = null,
 ) {
   val squawk = item.squawk
+  val highlightStyle = searchHighlightStyle()
   val isAog = squawk.priority == SquawkPriority.SQUAWK_PRIORITY_AOG
   val colors = MaterialTheme.statusColors
   val borderColor = if (isAog)
@@ -84,15 +92,22 @@ fun SquawkCard(
 
       Column(verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall)) {
         Text(
-          text = squawk.title,
+          text = highlightWords(squawk.title, highlight, highlightStyle),
           style = MaterialTheme.typography.titleMedium,
           fontWeight = FontWeight.Bold,
           color = MaterialTheme.colorScheme.onSurface,
         )
         if (squawk.description.isNotBlank()) {
           Text(
-            text = squawk.description,
+            text = highlightWords(squawk.description, highlight, highlightStyle),
             style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+          )
+        }
+        matchNote?.let {
+          Text(
+            text = it,
+            style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
           )
         }

@@ -3,17 +3,19 @@ package dev.fanfly.wingslog.feature.thing.dashboard.data
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.fanfly.wingslog.feature.search.datamanager.SearchEngine
+import dev.fanfly.wingslog.feature.search.model.FieldMatch
 import dev.fanfly.wingslog.feature.search.model.RecordFilter
 import dev.fanfly.wingslog.feature.search.model.SearchTuning
 import dev.fanfly.wingslog.feature.search.model.debouncedQuery
+import dev.fanfly.wingslog.feature.search.model.matchesById
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskStatusManager
 import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
 import kotlin.time.Clock
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
@@ -25,6 +27,8 @@ data class TaskTabUiState(
   val filter: RecordFilter = RecordFilter(),
   val activeTasks: List<MaintenanceTaskWithStatus> = emptyList(),
   val completedTasks: List<MaintenanceTaskWithStatus> = emptyList(),
+  /** Task id → the words the query matched, for highlighting. */
+  val matches: Map<String, List<FieldMatch>> = emptyMap(),
 )
 
 /** The Tasks tab’s own list and filter, read from the task feature’s due-status flow. */
@@ -51,10 +55,13 @@ class TaskTabViewModel(
     val today = clock.now().toLocalDateTime(timeZone).date
     val (complied, active) = tasks.partition { it.dueStatus.status == DueStatus.COMPLIED }
     // The state carries what was typed; the search runs on the debounced copy.
+    val activeHits = searchEngine.search(active, adapter, applied, today)
+    val compliedHits = searchEngine.search(complied, adapter, applied, today)
     TaskTabUiState(
       filter = typed,
-      activeTasks = searchEngine.search(active, adapter, applied, today).map { it.item },
-      completedTasks = searchEngine.search(complied, adapter, applied, today).map { it.item },
+      activeTasks = activeHits.map { it.item },
+      completedTasks = compliedHits.map { it.item },
+      matches = (activeHits + compliedHits).matchesById { it.card.id },
     )
   }.flowOn(tuning.dispatcher).stateIn(viewModelScope, SharingStarted.Eagerly, TaskTabUiState())
 
