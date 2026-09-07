@@ -20,7 +20,7 @@ data class AppCapability(
    * `SubscriptionManager.showsAds()` enforces this; see the design doc §6.
    */
   val isAdsSupported: Boolean,
-  /** Per-tab search and filter (project #11). Dev builds only until every phase lands. */
+  /** Per-tab search and filter (project #11). On for Android and web; iOS dev builds only until #854. */
   val isSearchFilterSupported: Boolean,
 )
 
