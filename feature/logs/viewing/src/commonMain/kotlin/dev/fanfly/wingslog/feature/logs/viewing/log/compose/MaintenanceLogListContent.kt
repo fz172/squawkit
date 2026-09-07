@@ -60,6 +60,7 @@ import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.componentTypesApply
 import dev.fanfly.wingslog.core.template.logEmptyHint
 import dev.fanfly.wingslog.core.template.logNoun
+import dev.fanfly.wingslog.core.template.technicianNoun
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalNavPillClearance
 import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
@@ -75,9 +76,12 @@ import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
 import dev.fanfly.wingslog.feature.logs.sharedassets.util.displayName
 import dev.fanfly.wingslog.feature.logs.viewing.log.data.MaintenanceLogListUiState
 import dev.fanfly.wingslog.feature.search.datamanager.LogAdapter
+import dev.fanfly.wingslog.feature.search.model.Facet
 import dev.fanfly.wingslog.feature.search.model.FieldMatch
 import dev.fanfly.wingslog.feature.search.model.RecordFilter
 import dev.fanfly.wingslog.feature.search.model.TimeWindow
+import dev.fanfly.wingslog.feature.search.viewing.ChoiceChip
+import dev.fanfly.wingslog.feature.search.viewing.FilterSection
 import dev.fanfly.wingslog.feature.search.viewing.NoRecordsMatch
 import dev.fanfly.wingslog.feature.search.viewing.RecordCountRow
 import dev.fanfly.wingslog.feature.search.viewing.RecordFilterBar
@@ -123,6 +127,7 @@ fun MaintenanceLogListContent(
   onSearchQueryChange: (String) -> Unit,
   onComponentFilterToggle: (ComponentType) -> Unit,
   onTimeWindowChange: (TimeWindow) -> Unit,
+  onFacetToggle: (Facet) -> Unit = {},
   onClearFilter: () -> Unit,
   onRetry: () -> Unit,
   onLogClick: (MaintenanceLog) -> Unit,
@@ -247,6 +252,8 @@ fun MaintenanceLogListContent(
                 onOpenFilters = { showFilterSheet = true },
                 onRemoveComponent = onComponentFilterToggle,
                 onClearTime = { onTimeWindowChange(TimeWindow.All) },
+                facetLabel = { (it as? Facet.Technician)?.name.orEmpty() },
+                onRemoveFacet = onFacetToggle,
               )
               RecordFilterControls(
                 expanded = showFilterSheet,
@@ -259,6 +266,20 @@ fun MaintenanceLogListContent(
                 onTimeWindowChange = onTimeWindowChange,
                 onClear = { onClearFilter() },
                 onDismiss = { showFilterSheet = false },
+                facetSection = if (uiState.technicians.isEmpty()) null else {
+                  {
+                    FilterSection(LexiconFormatter.titleCase(LocalThingLexicon.current.technicianNoun)) {
+                      uiState.technicians.forEach { name ->
+                        val facet = Facet.Technician(name)
+                        ChoiceChip(
+                          label = name,
+                          selected = facet in filter.facets,
+                          onClick = { onFacetToggle(facet) },
+                        )
+                      }
+                    }
+                  }
+                },
               )
               RecordCountRow(
                 count = uiState.logs.size,

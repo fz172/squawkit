@@ -30,6 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.feature.search.model.Facet
 import dev.fanfly.wingslog.feature.search.model.RecordFilter
 import dev.fanfly.wingslog.feature.search.model.TimeWindow
 import dev.fanfly.wingslog.thing.ComponentType
@@ -55,6 +56,9 @@ fun RecordFilterBar(
   modifier: Modifier = Modifier,
   dueWithin: Boolean = false,
   horizontalPadding: Dp = Spacing.screenPadding,
+  /** Label for the tab’s facet chip; null when the tab offers no facet. */
+  facetLabel: (@Composable (Facet) -> String)? = null,
+  onRemoveFacet: (Facet) -> Unit = {},
 ) {
   Column(modifier = modifier.fillMaxWidth()) {
     Row(
@@ -99,7 +103,8 @@ fun RecordFilterBar(
     val componentChips =
       if (showComponentFilter) filter.components.toList() else emptyList()
     val time = filter.time
-    if (componentChips.isNotEmpty() || time != TimeWindow.All) {
+    val facets = if (facetLabel != null) filter.facets.toList() else emptyList()
+    if (componentChips.isNotEmpty() || time != TimeWindow.All || facets.isNotEmpty()) {
       LazyRow(
         contentPadding = PaddingValues(horizontal = horizontalPadding),
         horizontalArrangement = Arrangement.spacedBy(Spacing.small),
@@ -117,6 +122,11 @@ fun RecordFilterBar(
               label = time.chipLabel(dueWithin),
               onDismiss = onClearTime
             )
+          }
+        }
+        if (facetLabel != null) {
+          items(facets) { facet ->
+            ActiveFilterChip(label = facetLabel(facet), onDismiss = { onRemoveFacet(facet) })
           }
         }
       }

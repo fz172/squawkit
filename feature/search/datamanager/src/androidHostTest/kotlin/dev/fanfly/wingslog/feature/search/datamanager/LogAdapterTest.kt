@@ -2,6 +2,7 @@ package dev.fanfly.wingslog.feature.search.datamanager
 
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.datetime.toWireInstant
+import dev.fanfly.wingslog.feature.search.model.Facet
 import dev.fanfly.wingslog.feature.search.model.TimeDirection
 import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.MaintenanceLog
@@ -48,6 +49,13 @@ class LogAdapterTest {
       adapter.fields(log.copy(technician = null))
         .last().text
     ).isEmpty()
+  }
+
+  @Test
+  fun technicianFacet_matchesByName() {
+    assertThat(adapter.facetMatches(log, Facet.Technician("R. Alvarez"))).isTrue()
+    assertThat(adapter.facetMatches(log, Facet.Technician("Someone Else"))).isFalse()
+    assertThat(adapter.facetMatches(log.copy(technician = null), Facet.Technician("R. Alvarez"))).isFalse()
   }
 
   @Test

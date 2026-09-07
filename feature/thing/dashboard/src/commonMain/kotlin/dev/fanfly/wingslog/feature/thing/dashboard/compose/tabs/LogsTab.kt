@@ -61,6 +61,7 @@ fun LogsTab(
     onSearchQueryChange = viewModel::onSearchQueryChange,
     onComponentFilterToggle = viewModel::onComponentFilterToggle,
     onTimeWindowChange = viewModel::onTimeWindowChange,
+    onFacetToggle = viewModel::onFacetToggle,
     onClearFilter = viewModel::clearFilter,
     onRetry = viewModel::retryLoading,
     onLogClick = viewModel::onLogClick,

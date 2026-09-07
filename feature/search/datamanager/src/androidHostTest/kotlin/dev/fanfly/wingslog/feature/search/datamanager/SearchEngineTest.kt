@@ -175,7 +175,7 @@ class SearchEngineTest {
 
   @Test
   fun facet_isAppliedThroughTheAdapter() {
-    val filter = RecordFilter(facet = Facet.Technician("Phillips"))
+    val filter = RecordFilter(facets = setOf(Facet.Technician("Phillips")))
     assertThat(
       ids(
         engine.search(

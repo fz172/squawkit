@@ -4,6 +4,7 @@ import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.search.datamanager.impl.SearchEngineImpl
+import dev.fanfly.wingslog.feature.search.model.Facet
 import dev.fanfly.wingslog.feature.search.model.RecordFilter
 import dev.fanfly.wingslog.feature.search.model.SearchTuning
 import dev.fanfly.wingslog.feature.search.model.TimeWindow
@@ -13,6 +14,7 @@ import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.MaintenanceLog
+import dev.fanfly.wingslog.thing.Technician
 import dev.gitlive.firebase.auth.FirebaseAuth
 import io.mockk.every
 import io.mockk.mockk
@@ -47,15 +49,16 @@ class MaintenanceLogListFilterTest {
     override fun now() = Instant.parse("2026-09-06T12:00:00Z")
   }
 
-  private fun log(id: String, date: String, description: String, component: ComponentType) = MaintenanceLog(
+  private fun log(id: String, date: String, description: String, component: ComponentType, tech: String? = null) = MaintenanceLog(
     id = id,
     timestamp = Instant.parse("${date}T12:00:00Z").let { toWireInstant(it.epochSeconds) },
     work_description = description,
     component_type = component,
+    technician = tech?.let { Technician(id = it, name = it) },
   )
 
-  private val gasket = log("gasket", "2026-09-01", "Replaced left magneto base gasket", ComponentType.COMPONENT_ENGINE)
-  private val xpdr = log("xpdr", "2026-08-25", "Installed GTX 335 transponder", ComponentType.COMPONENT_AIRFRAME)
+  private val gasket = log("gasket", "2026-09-01", "Replaced left magneto base gasket", ComponentType.COMPONENT_ENGINE, tech = "R. Alvarez")
+  private val xpdr = log("xpdr", "2026-08-25", "Installed GTX 335 transponder", ComponentType.COMPONENT_AIRFRAME, tech = "Sky Harbor Avionics")
   private val oil = log("oil", "2025-07-30", "Oil and filter change", ComponentType.COMPONENT_ENGINE)
 
   @Before
@@ -124,6 +127,19 @@ class MaintenanceLogListFilterTest {
     assertThat(vm.ids()).containsExactly("gasket", "xpdr").inOrder()
     vm.onTimeWindowChange(TimeWindow.Custom(LocalDate(2025, 1, 1), LocalDate(2025, 12, 31)))
     assertThat(vm.ids()).containsExactly("oil")
+  }
+
+  @Test
+  fun technicianFacet_listsNamesAndNarrows() {
+    val vm = viewModel()
+    assertThat(vm.success().technicians).containsExactly("R. Alvarez", "Sky Harbor Avionics").inOrder()
+    vm.onFacetToggle(Facet.Technician("R. Alvarez"))
+    assertThat(vm.ids()).containsExactly("gasket")
+    vm.onFacetToggle(Facet.Technician("Sky Harbor Avionics"))
+    assertThat(vm.ids()).containsExactly("gasket", "xpdr").inOrder()
+    vm.onFacetToggle(Facet.Technician("Sky Harbor Avionics"))
+    vm.onFacetToggle(Facet.Technician("R. Alvarez"))
+    assertThat(vm.ids()).hasSize(3)
   }
 
   @Test

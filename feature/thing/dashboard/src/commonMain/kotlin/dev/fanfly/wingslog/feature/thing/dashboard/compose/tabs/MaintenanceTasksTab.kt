@@ -30,7 +30,10 @@ import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalNavPillClearance
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.logs.sharedassets.util.displayName
+import dev.fanfly.wingslog.feature.search.model.Facet
 import dev.fanfly.wingslog.feature.search.model.TimeWindow
+import dev.fanfly.wingslog.feature.search.viewing.ChoiceChip
+import dev.fanfly.wingslog.feature.search.viewing.FilterSection
 import dev.fanfly.wingslog.feature.search.viewing.NoRecordsMatch
 import dev.fanfly.wingslog.feature.search.viewing.RecordCountRow
 import dev.fanfly.wingslog.feature.search.viewing.RecordFilterBar
@@ -39,6 +42,7 @@ import dev.fanfly.wingslog.feature.thing.dashboard.compose.ComplianceSection
 import dev.fanfly.wingslog.feature.thing.dashboard.data.TaskTabViewModel
 import dev.fanfly.wingslog.feature.thing.dashboard.data.ThingOverviewAction
 import dev.fanfly.wingslog.feature.thing.dashboard.data.ThingOverviewUiState
+import dev.fanfly.wingslog.thing.ComplianceType
 import kotlin.math.roundToInt
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
@@ -48,6 +52,7 @@ import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import wingslog.feature.search.sharedassets.generated.resources.Res as SearchRes
 import wingslog.feature.search.sharedassets.generated.resources.filter_records
+import wingslog.feature.search.sharedassets.generated.resources.filter_type
 import wingslog.feature.search.sharedassets.generated.resources.meter_task_note
 import wingslog.feature.search.sharedassets.generated.resources.search_placeholder
 
@@ -153,6 +158,8 @@ fun MaintenanceTasksTab(
             onClearTime = { setFilter(taskFilter.copy(time = TimeWindow.All)) },
             dueWithin = !showComplied,
             horizontalPadding = Spacing.none,
+            facetLabel = { (it as? Facet.Compliance)?.let { c -> complianceLabel(c.value) }.orEmpty() },
+            onRemoveFacet = { setFilter(taskFilter.toggleFacet(it)) },
           )
           RecordFilterControls(
             expanded = showFilterSheet,
@@ -171,6 +178,18 @@ fun MaintenanceTasksTab(
               LexiconFormatter.sentenceCasePlural(taskNoun),
             ),
             horizontalPadding = Spacing.none,
+            facetSection = {
+              FilterSection(stringResource(SearchRes.string.filter_type)) {
+                COMPLIANCE_OPTIONS.forEach { type ->
+                  val facet = Facet.Compliance(type)
+                  ChoiceChip(
+                    label = complianceLabel(type),
+                    selected = facet in taskFilter.facets,
+                    onClick = { setFilter(taskFilter.toggleFacet(facet)) },
+                  )
+                }
+              }
+            },
           )
         }
       } else null,
@@ -193,5 +212,22 @@ fun MaintenanceTasksTab(
     )
 
     Spacer(Modifier.height(Spacing.buttonHeight + Spacing.screenPadding))
+  }
+}
+
+private val COMPLIANCE_OPTIONS = listOf(
+  ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
+  ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE,
+  ComplianceType.COMPLIANCE_TYPE_SERVICE_BULLETIN,
+)
+
+/** The lexicon’s words: “Inspection” / “Airworthiness Directive” / “Service Bulletin” on an aircraft. */
+@Composable
+private fun complianceLabel(type: ComplianceType): String {
+  val lexicon = LocalThingLexicon.current
+  return when (type) {
+    ComplianceType.COMPLIANCE_TYPE_AIRWORTHINESS_DIRECTIVE -> lexicon.compliance_mandatory?.singular.orEmpty()
+    ComplianceType.COMPLIANCE_TYPE_SERVICE_BULLETIN -> lexicon.compliance_advisory?.singular.orEmpty()
+    else -> LexiconFormatter.titleCase(lexicon.taskNoun)
   }
 }

@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.feature.thing.dashboard.data
 
 import dev.fanfly.wingslog.core.datetime.toLocalDate
+import dev.fanfly.wingslog.feature.search.model.Facet
 import dev.fanfly.wingslog.feature.search.model.RecordAdapter
 import dev.fanfly.wingslog.feature.search.model.SearchField
 import dev.fanfly.wingslog.feature.search.model.TimeDirection
@@ -40,6 +41,9 @@ class SquawkAdapter(
     }
   }
 
+  override fun facetMatches(item: SquawkWithStatus, facet: Facet): Boolean =
+    facet is Facet.Priority && item.squawk.priority == facet.value
+
   companion object {
     const val FIELD_SERIAL = "component_serial"
     const val FIELD_TITLE = "title"
@@ -77,6 +81,9 @@ class TaskAdapter : RecordAdapter<MaintenanceTaskWithStatus> {
   override val nullDateMatches: Boolean get() = true
 
   private val MaintenanceTaskWithStatus.isComplied get() = dueStatus.status == DueStatus.COMPLIED
+
+  override fun facetMatches(item: MaintenanceTaskWithStatus, facet: Facet): Boolean =
+    facet is Facet.Compliance && item.card.type == facet.value
 
   companion object {
     const val FIELD_REFERENCE = "reference_number"

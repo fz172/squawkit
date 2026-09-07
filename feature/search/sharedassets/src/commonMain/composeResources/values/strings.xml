@@ -7,6 +7,7 @@
   <string name="filter_scope_note">Applies to this tab only</string>
   <string name="filter_component">Component</string>
   <string name="filter_period">Period</string>
+  <string name="filter_type">Type</string>
   <string name="filter_due_within">Due within</string>
   <string name="period_all">All time</string>
   <string name="period_last_3_months">Last 3 months</string>
