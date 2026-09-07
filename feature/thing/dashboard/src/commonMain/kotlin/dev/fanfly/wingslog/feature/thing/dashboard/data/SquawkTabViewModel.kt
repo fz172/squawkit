@@ -13,6 +13,7 @@ import dev.fanfly.wingslog.feature.squawk.model.SquawkWithStatus
 import dev.fanfly.wingslog.feature.squawk.model.toWithStatus
 import kotlin.time.Clock
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
@@ -41,6 +42,9 @@ class SquawkTabViewModel(
 ) : ViewModel() {
 
   private val _filter = MutableStateFlow(RecordFilter())
+
+  /** What is typed and chosen, updated synchronously so the search field never trails the caret. */
+  val filter: StateFlow<RecordFilter> = _filter.asStateFlow()
 
   val uiState: StateFlow<SquawkTabUiState> = combine(
     squawkManager.observeSquawks(thingId)

@@ -104,7 +104,7 @@ fun SquawkTab(
   val tabViewModel: SquawkTabViewModel =
     koinViewModel(key = "squawks:${state.thing.id}", parameters = { parametersOf(state.thing.id) })
   val tabState by tabViewModel.uiState.collectAsStateWithLifecycle()
-  val squawkFilter = tabState.filter
+  val squawkFilter by tabViewModel.filter.collectAsStateWithLifecycle()
   val setFilter = tabViewModel::onFilterChange
   val squawkNoun = LocalThingLexicon.current.squawkNoun
 

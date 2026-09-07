@@ -73,6 +73,9 @@ class MaintenanceLogListViewModel(
   private val _logsLoadState =
     MutableStateFlow<LogsLoadState>(LogsLoadState.Loading)
   private val _filter = MutableStateFlow(RecordFilter())
+
+  /** What is typed and chosen, updated synchronously so the search field never trails the caret. */
+  val filter: StateFlow<RecordFilter> = _filter.asStateFlow()
   private val _selectedLog = MutableStateFlow<MaintenanceLog?>(null)
   private val _availableCards =
     MutableStateFlow<List<MaintenanceTask>>(emptyList())

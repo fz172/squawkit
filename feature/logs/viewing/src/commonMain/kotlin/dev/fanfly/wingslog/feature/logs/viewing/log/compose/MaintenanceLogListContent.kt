@@ -73,6 +73,7 @@ import dev.fanfly.wingslog.feature.ads.viewing.AdSlot
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
 import dev.fanfly.wingslog.feature.logs.sharedassets.util.displayName
 import dev.fanfly.wingslog.feature.logs.viewing.log.data.MaintenanceLogListUiState
+import dev.fanfly.wingslog.feature.search.model.RecordFilter
 import dev.fanfly.wingslog.feature.search.model.TimeWindow
 import dev.fanfly.wingslog.feature.search.viewing.NoRecordsMatch
 import dev.fanfly.wingslog.feature.search.viewing.RecordCountRow
@@ -110,6 +111,8 @@ import wingslog.feature.search.sharedassets.generated.resources.Res as SearchRes
 @Composable
 fun MaintenanceLogListContent(
   uiState: MaintenanceLogListUiState,
+  /** The typed filter, read synchronously from the ViewModel; `uiState` carries the results. */
+  filter: RecordFilter,
   syncStates: Map<String, BlobSyncState> = emptyMap(),
   onSearchQueryChange: (String) -> Unit,
   onComponentFilterToggle: (ComponentType) -> Unit,
@@ -169,8 +172,7 @@ fun MaintenanceLogListContent(
     // or highlight — the same "stale narrowing state hides the jump target" gap the Squawks/Tasks
     // tabs have on their Open/Closed and Active/Complied splits, just via a filter here instead of a
     // segmented toggle.
-    val filter = (uiState as? MaintenanceLogListUiState.Success)?.filter
-    if (filter?.isActive == true) onClearFilter()
+    if (filter.isActive) onClearFilter()
     coroutineScope {
       val pinning = launch {
         // Resolve against the DISPLAY list. Using the item index would drift by the number of ads
@@ -231,7 +233,7 @@ fun MaintenanceLogListContent(
               LexiconFormatter.plural(LocalThingLexicon.current.logNoun)
             if (useSharedFilterBar) {
               RecordFilterBar(
-                filter = uiState.filter,
+                filter = filter,
                 placeholder = stringResource(SearchRes.string.search_placeholder),
                 showComponentFilter = componentTypesApply,
                 componentLabel = { it.displayName() },
@@ -244,7 +246,7 @@ fun MaintenanceLogListContent(
                 expanded = showFilterSheet,
                 inline = LocalLayoutTier.current.hasSideNav,
                 title = stringResource(SearchRes.string.filter_records, logNounPlural),
-                filter = uiState.filter,
+                filter = filter,
                 showComponentFilter = componentTypesApply,
                 componentLabel = { it.displayName() },
                 onComponentToggle = onComponentFilterToggle,
@@ -256,7 +258,7 @@ fun MaintenanceLogListContent(
                 count = uiState.logs.size,
                 nounSingular = LocalThingLexicon.current.logNoun.singular,
                 nounPlural = logNounPlural,
-                filterActive = uiState.filter.isActive,
+                filterActive = filter.isActive,
                 onClear = onClearFilter,
               )
             } else {
@@ -273,9 +275,9 @@ fun MaintenanceLogListContent(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(Spacing.small),
               ) {
-                val filterActive = uiState.filter.components.isNotEmpty()
+                val filterActive = filter.components.isNotEmpty()
                 OutlinedTextField(
-                  value = uiState.filter.query,
+                  value = filter.query,
                   onValueChange = onSearchQueryChange,
                   modifier = Modifier.weight(1f),
                   placeholder = { Text(stringResource(MaintenanceRes.string.search_logs)) },
@@ -286,7 +288,7 @@ fun MaintenanceLogListContent(
                     )
                   },
                   trailingIcon = {
-                    if (uiState.filter.query.isNotBlank()) {
+                    if (filter.query.isNotBlank()) {
                       IconButton(onClick = { onSearchQueryChange("") }) {
                         Icon(
                           Icons.Default.Close,
@@ -330,14 +332,14 @@ fun MaintenanceLogListContent(
               }
 
               // Active filter chips
-              if (componentTypesApply && uiState.filter.components.isNotEmpty()) {
+              if (componentTypesApply && filter.components.isNotEmpty()) {
                 LazyRow(
                   contentPadding = PaddingValues(horizontal = Spacing.screenPadding),
                   horizontalArrangement = Arrangement.spacedBy(Spacing.small),
                   modifier = Modifier.fillMaxWidth()
                     .padding(bottom = Spacing.small),
                 ) {
-                  items(uiState.filter.components.toList()) { component ->
+                  items(filter.components.toList()) { component ->
                     ActiveFilterChip(
                       label = component.displayName(),
                       onDismiss = { onComponentFilterToggle(component) },
@@ -490,7 +492,7 @@ fun MaintenanceLogListContent(
             sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
           ) {
             FilterSheetContent(
-              activeComponents = uiState.filter.components,
+              activeComponents = filter.components,
               onToggle = onComponentFilterToggle,
               onDone = { showFilterSheet = false },
             )

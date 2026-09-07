@@ -11,6 +11,7 @@ import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
 import kotlin.time.Clock
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
@@ -37,6 +38,9 @@ class TaskTabViewModel(
 ) : ViewModel() {
 
   private val _filter = MutableStateFlow(RecordFilter())
+
+  /** What is typed and chosen, updated synchronously so the search field never trails the caret. */
+  val filter: StateFlow<RecordFilter> = _filter.asStateFlow()
   private val adapter = TaskAdapter()
 
   val uiState: StateFlow<TaskTabUiState> = combine(
