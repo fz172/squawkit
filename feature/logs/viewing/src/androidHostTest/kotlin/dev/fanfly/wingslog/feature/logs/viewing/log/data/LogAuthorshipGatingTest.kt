@@ -4,6 +4,7 @@ import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.logs.datamanager.authorship.LogAuthorship
 import dev.fanfly.wingslog.feature.search.datamanager.impl.SearchEngineImpl
+import dev.fanfly.wingslog.feature.search.model.SearchTuning
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
@@ -73,8 +74,8 @@ class LogAuthorshipGatingTest {
     squawkManager = squawks,
     auth = auth,
     searchEngine = SearchEngineImpl(),
+    tuning = SearchTuning(queryDebounceMillis = 0, dispatcher = dispatcher),
     thingId = AC_ID,
-    searchDispatcher = dispatcher,
   )
 
   private fun selectedAuthorship(): LogAuthorship {

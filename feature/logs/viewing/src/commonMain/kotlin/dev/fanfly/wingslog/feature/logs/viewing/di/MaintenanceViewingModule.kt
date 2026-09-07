@@ -3,6 +3,7 @@ package dev.fanfly.wingslog.feature.logs.viewing.di
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.logs.viewing.log.data.MaintenanceLogListViewModel
 import dev.fanfly.wingslog.feature.search.datamanager.SearchEngine
+import dev.fanfly.wingslog.feature.search.model.SearchTuning
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
@@ -21,6 +22,7 @@ val maintenanceViewingModule = module {
       get<SquawkManager>(),
       get<FirebaseAuth>(),
       get<SearchEngine>(),
+      get<SearchTuning>(),
       params.get<String>()
     )
   }

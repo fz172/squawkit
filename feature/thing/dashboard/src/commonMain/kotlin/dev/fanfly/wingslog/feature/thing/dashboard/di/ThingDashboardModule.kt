@@ -9,6 +9,7 @@ import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.search.datamanager.SearchEngine
+import dev.fanfly.wingslog.feature.search.model.SearchTuning
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
@@ -26,11 +27,12 @@ val thingDashboardModule = module {
       get<SquawkManager>(),
       get<MaintenanceLogManager>(),
       get<SearchEngine>(),
+      get<SearchTuning>(),
       params.get<String>(),
     )
   }
   viewModel { params ->
-    TaskTabViewModel(get<TaskStatusManager>(), get<SearchEngine>(), params.get<String>())
+    TaskTabViewModel(get<TaskStatusManager>(), get<SearchEngine>(), get<SearchTuning>(), params.get<String>())
   }
   // thingId comes from an explicit parameter (adaptive shell, ambient selection) when present,
   // otherwise from the navigation SavedStateHandle (legacy maintenance_overview/{thingId} route).

@@ -8,6 +8,7 @@ import dev.fanfly.wingslog.feature.logs.datamanager.authorship.authorship
 import dev.fanfly.wingslog.feature.search.datamanager.LogAdapter
 import dev.fanfly.wingslog.feature.search.datamanager.SearchEngine
 import dev.fanfly.wingslog.feature.search.model.RecordFilter
+import dev.fanfly.wingslog.feature.search.model.SearchTuning
 import dev.fanfly.wingslog.feature.search.model.TimeWindow
 import dev.fanfly.wingslog.feature.search.model.debouncedQuery
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
@@ -20,8 +21,6 @@ import dev.fanfly.wingslog.thing.MaintenanceTask
 import dev.fanfly.wingslog.thing.Squawk
 import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlin.time.Clock
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -56,11 +55,10 @@ class MaintenanceLogListViewModel(
   private val squawkManager: SquawkManager,
   private val auth: FirebaseAuth,
   private val searchEngine: SearchEngine,
+  private val tuning: SearchTuning,
   val thingId: String,
   private val clock: Clock = Clock.System,
   private val timeZone: TimeZone = TimeZone.currentSystemDefault(),
-  private val queryDebounceMillis: Long = 150,
-  private val searchDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) : ViewModel() {
 
   private val logAdapter = LogAdapter(timeZone)
@@ -103,7 +101,7 @@ class MaintenanceLogListViewModel(
       combine(
         _logsLoadState,
         // The state carries what was typed; the search runs on the debounced copy.
-        combine(_filter, _filter.debouncedQuery(queryDebounceMillis)) { typed, applied -> typed to applied },
+        combine(_filter, _filter.debouncedQuery(tuning.queryDebounceMillis)) { typed, applied -> typed to applied },
         _selectedLog,
         combine(_availableCards, _availableSquawks) { cards, squawks ->
           LinkTargets(cards, squawks)
@@ -147,7 +145,7 @@ class MaintenanceLogListViewModel(
             )
           }
         }
-      }.flowOn(searchDispatcher).collect { _uiState.value = it }
+      }.flowOn(tuning.dispatcher).collect { _uiState.value = it }
     }
   }
 

@@ -6,13 +6,12 @@ import dev.fanfly.wingslog.core.datetime.toLocalDate
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.search.datamanager.SearchEngine
 import dev.fanfly.wingslog.feature.search.model.RecordFilter
+import dev.fanfly.wingslog.feature.search.model.SearchTuning
 import dev.fanfly.wingslog.feature.search.model.debouncedQuery
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.feature.squawk.model.SquawkWithStatus
 import dev.fanfly.wingslog.feature.squawk.model.toWithStatus
 import kotlin.time.Clock
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -35,11 +34,10 @@ class SquawkTabViewModel(
   squawkManager: SquawkManager,
   logManager: MaintenanceLogManager,
   private val searchEngine: SearchEngine,
+  private val tuning: SearchTuning,
   thingId: String,
   private val clock: Clock = Clock.System,
   private val timeZone: TimeZone = TimeZone.currentSystemDefault(),
-  private val queryDebounceMillis: Long = 150,
-  private val searchDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) : ViewModel() {
 
   private val _filter = MutableStateFlow(RecordFilter())
@@ -52,13 +50,13 @@ class SquawkTabViewModel(
       .map { logs -> logs.mapNotNull { log -> log.timestamp?.let { log.id to it.toLocalDate(timeZone) } }.toMap() }
       .catch { emit(emptyMap()) },
     _filter,
-    _filter.debouncedQuery(queryDebounceMillis),
+    _filter.debouncedQuery(tuning.queryDebounceMillis),
   ) { squawks, logDates, typed, applied ->
     val today = clock.now().toLocalDateTime(timeZone).date
     val adapter = SquawkAdapter(timeZone, logDates)
     // The state carries what was typed; the search runs on the debounced copy.
     SquawkTabUiState(typed, searchEngine.search(squawks, adapter, applied, today).map { it.item })
-  }.flowOn(searchDispatcher).stateIn(viewModelScope, SharingStarted.Eagerly, SquawkTabUiState())
+  }.flowOn(tuning.dispatcher).stateIn(viewModelScope, SharingStarted.Eagerly, SquawkTabUiState())
 
   fun onFilterChange(filter: RecordFilter) {
     _filter.value = filter
