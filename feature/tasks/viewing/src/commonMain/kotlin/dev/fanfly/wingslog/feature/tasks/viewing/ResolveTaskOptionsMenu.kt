@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.tasks.update.compose
+package dev.fanfly.wingslog.feature.tasks.viewing
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.NoteAdd
@@ -12,15 +12,15 @@ import dev.fanfly.wingslog.core.ui.common.compose.ResolveBubbleMenu
 import dev.fanfly.wingslog.core.ui.common.compose.ResolveMenuAction
 import dev.fanfly.wingslog.core.ui.theme.statusColors
 import org.jetbrains.compose.resources.stringResource
-import wingslog.feature.tasks.update.generated.resources.Res
-import wingslog.feature.tasks.update.generated.resources.create_work_log
-import wingslog.feature.tasks.update.generated.resources.create_work_log_subtitle
-import wingslog.feature.tasks.update.generated.resources.skip_this_cycle_option
-import wingslog.feature.tasks.update.generated.resources.skip_this_cycle_option_subtitle
+import wingslog.feature.tasks.sharedassets.generated.resources.Res
+import wingslog.feature.tasks.sharedassets.generated.resources.create_work_log
+import wingslog.feature.tasks.sharedassets.generated.resources.create_work_log_subtitle
+import wingslog.feature.tasks.sharedassets.generated.resources.skip_this_cycle_option
+import wingslog.feature.tasks.sharedassets.generated.resources.skip_this_cycle_option_subtitle
 
 /**
- * A contextual menu displayed when the user taps "Resolve" on the task editing screen — the task
- * counterpart to squawk's ResolveOptionsMenu, sharing the same bubble presentation.
+ * The Resolve bubble for a task (Create work log / Skip this cycle) — the task counterpart to
+ * squawk's ResolveOptionsMenu, sharing the same bubble presentation.
  */
 @Composable
 fun ResolveTaskOptionsMenu(

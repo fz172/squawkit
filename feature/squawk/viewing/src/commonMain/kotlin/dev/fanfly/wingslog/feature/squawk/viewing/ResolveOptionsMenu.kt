@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.squawk.update.compose
+package dev.fanfly.wingslog.feature.squawk.viewing
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -9,15 +9,11 @@ import dev.fanfly.wingslog.core.ui.common.compose.ResolveBubbleMenu
 import dev.fanfly.wingslog.core.ui.common.compose.ResolveMenuAction
 import dev.fanfly.wingslog.core.ui.theme.statusColors
 import org.jetbrains.compose.resources.stringResource
-import wingslog.feature.squawk.update.generated.resources.Res
-import wingslog.feature.squawk.update.generated.resources.dismiss_no_work_planned
-import wingslog.feature.squawk.update.generated.resources.fixed_option_label
+import wingslog.feature.squawk.sharedassets.generated.resources.Res
+import wingslog.feature.squawk.sharedassets.generated.resources.dismiss_no_work_planned
+import wingslog.feature.squawk.sharedassets.generated.resources.fixed_option_label
 
-/**
- * A contextual menu displayed when the user clicks "Resolve" button in squawk
- * editing page. The menu asks the user to choose resolution
- * type (dismissed/fixed).
- */
+/** The Resolve bubble for a squawk: the user picks a resolution type (dismissed / fixed). */
 @Composable
 fun ResolveOptionsMenu(
   expanded: Boolean,

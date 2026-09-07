@@ -16,4 +16,5 @@
   <string name="log_unverified_technician">Not verified — name entered manually</string>
   <string name="log_assigned_by">Logged by <xliff:g example="Alex">%1$s</xliff:g></string>
   <string name="log_assigned_by_unknown">Logged by another member</string>
+  <string name="delete_log">Delete Log?</string>
 </resources>

@@ -49,14 +49,14 @@ import dev.fanfly.wingslog.core.ui.common.compose.UnsavedChangesDialog
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.statusColors
 import dev.fanfly.wingslog.feature.logs.sharedassets.compose.LogPickerSheet
-import dev.fanfly.wingslog.feature.squawk.update.compose.DismissSquawkDialog
-import dev.fanfly.wingslog.feature.squawk.update.compose.ResolveOptionsMenu
 import dev.fanfly.wingslog.feature.squawk.update.compose.SquawkBasicSection
 import dev.fanfly.wingslog.feature.squawk.update.compose.SquawkDetailsSection
 import dev.fanfly.wingslog.feature.squawk.update.compose.SquawkFormTab
 import dev.fanfly.wingslog.feature.squawk.update.compose.SquawkTabRow
 import dev.fanfly.wingslog.feature.squawk.update.compose.squawkFormTabsFor
 import dev.fanfly.wingslog.feature.squawk.update.viewmodel.SquawkFormState
+import dev.fanfly.wingslog.feature.squawk.viewing.DismissSquawkDialog
+import dev.fanfly.wingslog.feature.squawk.viewing.ResolveOptionsMenu
 import dev.fanfly.wingslog.thing.SquawkDismissReason
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
@@ -64,9 +64,9 @@ import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.squawk.sharedassets.generated.resources.Res
 import wingslog.feature.squawk.sharedassets.generated.resources.add_squawk
 import wingslog.feature.squawk.sharedassets.generated.resources.edit_squawk
-import wingslog.feature.squawk.update.generated.resources.Res as UpdateRes
 import wingslog.feature.squawk.update.generated.resources.reopen_issue
 import wingslog.feature.squawk.update.generated.resources.resolve_issue
+import wingslog.feature.squawk.update.generated.resources.Res as UpdateRes
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
@@ -100,8 +100,9 @@ fun SquawkFormScreen(
     state.dismissReason != SquawkDismissReason.SQUAWK_DISMISS_REASON_UNKNOWN
   val showResolveButton = isEdit && !state.isAddressedReadOnly && !isDismissed
   val squawk = LocalThingLexicon.current.squawkNoun
-  val screenTitle = if (isEdit) stringResource(Res.string.edit_squawk, squawk.singular)
-  else stringResource(Res.string.add_squawk, squawk.singular)
+  val screenTitle =
+    if (isEdit) stringResource(Res.string.edit_squawk, squawk.singular)
+    else stringResource(Res.string.add_squawk, squawk.singular)
 
   val hasChanges = hasCommentDraft || if (isEdit) {
     state.title != state.initialTitle ||
@@ -141,7 +142,8 @@ fun SquawkFormScreen(
     snapshotFlow { pagerState.currentPage }
       .drop(1)
       .collect { page ->
-        tabs.getOrNull(page)?.let { analytics.logScreenView("squawk_form/${it.analyticsKey}") }
+        tabs.getOrNull(page)
+          ?.let { analytics.logScreenView("squawk_form/${it.analyticsKey}") }
       }
   }
 

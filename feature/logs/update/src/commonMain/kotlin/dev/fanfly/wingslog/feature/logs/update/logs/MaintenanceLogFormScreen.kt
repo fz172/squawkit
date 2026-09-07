@@ -13,7 +13,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -56,7 +55,6 @@ import dev.fanfly.wingslog.core.template.taskNoun
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedTopBar
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
 import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
-import dev.fanfly.wingslog.core.ui.common.compose.AlertDialog
 import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
 import dev.fanfly.wingslog.core.ui.common.compose.DatePickerDialog
 import dev.fanfly.wingslog.core.ui.common.compose.UnsavedChangesDialog
@@ -71,6 +69,7 @@ import dev.fanfly.wingslog.feature.logs.update.logs.compose.LogWorkTab
 import dev.fanfly.wingslog.feature.logs.update.logs.compose.logFormTabsFor
 import dev.fanfly.wingslog.feature.logs.update.logs.viewmodel.MaintenanceLogFormEvent
 import dev.fanfly.wingslog.feature.logs.update.logs.viewmodel.MaintenanceLogFormViewModel
+import dev.fanfly.wingslog.feature.logs.viewing.log.compose.DeleteLogConfirmDialog
 import dev.fanfly.wingslog.feature.squawk.viewing.SquawkPickerSheet
 import dev.fanfly.wingslog.feature.tasks.update.compose.TaskPickerSheet
 import dev.fanfly.wingslog.feature.technician.manage.compose.TechnicianPickerSheet
@@ -91,8 +90,6 @@ import wingslog.feature.logs.sharedassets.generated.resources.add_log
 import wingslog.feature.logs.sharedassets.generated.resources.edit_log
 import wingslog.feature.logs.sharedassets.generated.resources.resolve_squawk_work_description
 import wingslog.feature.logs.sharedassets.generated.resources.resolve_task_work_description
-import wingslog.feature.logs.sharedassets.generated.resources.this_action_cannot_be_undone
-import wingslog.feature.logs.update.generated.resources.delete_log
 import wingslog.feature.logs.update.generated.resources.log_deleted
 import wingslog.feature.logs.update.generated.resources.log_saved
 import wingslog.feature.logs.update.generated.resources.log_updated
@@ -313,8 +310,8 @@ fun MaintenanceLogFormScreen(
                 )
 
                 LogFormTab.HOURS -> LogTimeTab(
-              meterValues = uiState.meterValues,
-              onMeterChange = viewModel::onMeterChanged,
+                  meterValues = uiState.meterValues,
+                  onMeterChange = viewModel::onMeterChanged,
                 )
 
                 LogFormTab.RECORDS -> LogRecordsTab(
@@ -379,26 +376,12 @@ fun MaintenanceLogFormScreen(
   }
 
   if (showDeleteDialog) {
-    AlertDialog(
-      onDismissRequest = { showDeleteDialog = false },
-      title = { Text(stringResource(MaintenanceRes.string.delete_log)) },
-      text = { Text(stringResource(SharedRes.string.this_action_cannot_be_undone)) },
-      confirmButton = {
-        TextButton(
-          onClick = {
-            viewModel.deleteLog()
-            showDeleteDialog = false
-          },
-          colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
-        ) {
-          Text(stringResource(CoreRes.string.delete))
-        }
+    DeleteLogConfirmDialog(
+      onConfirm = {
+        viewModel.deleteLog()
+        showDeleteDialog = false
       },
-      dismissButton = {
-        TextButton(onClick = { showDeleteDialog = false }) {
-          Text(stringResource(CoreRes.string.cancel))
-        }
-      },
+      onDismiss = { showDeleteDialog = false },
     )
   }
 

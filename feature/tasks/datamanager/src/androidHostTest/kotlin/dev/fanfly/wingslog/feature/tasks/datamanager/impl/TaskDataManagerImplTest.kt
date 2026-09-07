@@ -1,21 +1,26 @@
 package dev.fanfly.wingslog.feature.tasks.datamanager.impl
 
 import com.google.common.truth.Truth.assertThat
-import dev.fanfly.wingslog.thing.MaintenanceTask
-import dev.fanfly.wingslog.core.storage.ThingScopeResolver
+import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.EntityStore
 import dev.fanfly.wingslog.core.storage.EntityStoreFactory
 import dev.fanfly.wingslog.core.storage.StorageEntity
-import dev.gitlive.firebase.auth.FirebaseAuth
-import dev.gitlive.firebase.auth.FirebaseUser
+import dev.fanfly.wingslog.core.storage.ThingScopeResolver
+import dev.fanfly.wingslog.core.template.MeterKeys
 import dev.fanfly.wingslog.feature.comments.datamanager.CommentManager
 import dev.fanfly.wingslog.feature.comments.model.CommentParentKind
 import dev.fanfly.wingslog.feature.comments.model.CommentTarget
+import dev.fanfly.wingslog.feature.tasks.datamanager.defaultMeterKey
+import dev.fanfly.wingslog.feature.tasks.datamanager.withForcedDueMeter
+import dev.fanfly.wingslog.thing.MaintenanceTask
+import dev.gitlive.firebase.auth.FirebaseAuth
+import dev.gitlive.firebase.auth.FirebaseUser
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.slot
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
@@ -52,7 +57,11 @@ class TaskDataManagerImplTest {
     every { firebaseAuth.authStateChanged } returns flowOf(mockUser)
 
     commentManager = mockk(relaxed = true)
-    manager = TaskDataManagerImpl(FakeScopeResolver(firebaseAuth), commentManager, storeFactory)
+    manager = TaskDataManagerImpl(
+      FakeScopeResolver(firebaseAuth),
+      commentManager,
+      storeFactory
+    )
   }
 
   @Test
@@ -177,6 +186,52 @@ class TaskDataManagerImplTest {
     assertThat(result.isFailure).isTrue()
   }
 
+  @Test
+  fun skipCycle_persistsForceCompliedStatusAtCurrentReading() = runTest {
+    val card = buildTestTask(id = TEST_TASK_ID)
+
+    val result = manager.skipCycle(TEST_THING_ID, card, currentReading = 42f)
+
+    assertThat(result.isSuccess).isTrue()
+    val persisted = slot<MaintenanceTask>()
+    coVerify { store.put(TEST_TASK_ID, capture(persisted), any()) }
+    val status = persisted.captured.force_complied_status
+    assertThat(status).isNotNull()
+    assertThat(status!!.complied_meter?.meter_key).isEqualTo(card.defaultMeterKey())
+    assertThat(status.complied_meter?.value_).isEqualTo(42.0)
+    assertThat(status.complied_date).isNotNull()
+  }
+
+  /**
+   * TaskDueManager resolves force-due overrides and returns before it reads force-complied
+   * state, so a skip that left an override in place would never move the next due — the user
+   * would see a "cycle skipped" toast and an unchanged due date.
+   */
+  @Test
+  fun skipCycle_clearsRescheduleOverride() = runTest {
+    val rescheduled = buildTestTask(id = TEST_TASK_ID)
+      .copy(force_due_date = toWireInstant(1_800_000_000L))
+      .withForcedDueMeter(MeterKeys.ENGINE_HOURS, 1_500f)
+
+    manager.skipCycle(TEST_THING_ID, rescheduled, currentReading = 42f)
+
+    val persisted = slot<MaintenanceTask>()
+    coVerify { store.put(TEST_TASK_ID, capture(persisted), any()) }
+    assertThat(persisted.captured.force_due_date).isNull()
+    assertThat(persisted.captured.force_due_meter).isNull()
+    assertThat(persisted.captured.force_complied_status).isNotNull()
+  }
+
+  @Test
+  fun skipCycle_withoutLoggedInUser_returnsFailure() = runTest {
+    every { firebaseAuth.currentUser } returns null
+
+    val result =
+      manager.skipCycle(TEST_THING_ID, buildTestTask(), currentReading = 42f)
+
+    assertThat(result.isFailure).isTrue()
+  }
+
   private fun buildTestTask(
     id: String = TEST_TASK_ID,
     title: String = "Annual Inspection",
@@ -189,7 +244,11 @@ class TaskDataManagerImplTest {
 
     coVerify {
       commentManager.deleteThread(
-        CommentTarget(TEST_THING_ID, TEST_TASK_ID, CommentParentKind.MAINTENANCE_TASK)
+        CommentTarget(
+          TEST_THING_ID,
+          TEST_TASK_ID,
+          CommentParentKind.MAINTENANCE_TASK
+        )
       )
     }
   }

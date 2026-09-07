@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.squawk.update.compose
+package dev.fanfly.wingslog.feature.squawk.viewing
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -28,10 +28,10 @@ import dev.fanfly.wingslog.feature.squawk.sharedassets.toLabel
 import dev.fanfly.wingslog.thing.SquawkDismissReason
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.cancel
-import wingslog.feature.squawk.update.generated.resources.Res
-import wingslog.feature.squawk.update.generated.resources.dismiss_issue
-import wingslog.feature.squawk.update.generated.resources.dismiss_squawk_title
-import wingslog.feature.squawk.update.generated.resources.dismiss_squawk_warning
+import wingslog.feature.squawk.sharedassets.generated.resources.Res
+import wingslog.feature.squawk.sharedassets.generated.resources.dismiss_issue
+import wingslog.feature.squawk.sharedassets.generated.resources.dismiss_squawk_title
+import wingslog.feature.squawk.sharedassets.generated.resources.dismiss_squawk_warning
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 
 @Composable

@@ -8,7 +8,6 @@
   <string name="propeller_component">Propeller Component</string>
   <string name="make_model_serial"><xliff:g example="Cessna">%1$s</xliff:g> (<xliff:g example="SN-1234">%2$s</xliff:g>)</string>
   <string name="type_make_model_serial"><xliff:g example="Engine">%1$s</xliff:g> - <xliff:g example="Lycoming O-320">%2$s</xliff:g> (<xliff:g example="SN-1234">%3$s</xliff:g>)</string>
-  <string name="delete_log">Delete Log?</string>
   <string name="tap_to_change_date">Tap to change date</string>
   <string name="log_not_found">Log not found</string>
   <string name="log_updated">Log updated</string>

@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Icon
@@ -36,9 +35,9 @@ import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.template.LocalThingTemplate
 import dev.fanfly.wingslog.core.template.meterForComponent
+import dev.fanfly.wingslog.core.ui.common.compose.DestructiveActionCard
 import dev.fanfly.wingslog.core.ui.common.compose.FormSectionLabel
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import dev.fanfly.wingslog.core.ui.theme.statusColors
 import dev.fanfly.wingslog.feature.tasks.datamanager.pickerMillisToDate
 import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
 import dev.fanfly.wingslog.thing.ComponentType
@@ -147,7 +146,12 @@ fun TaskAdjustmentsTab(
       label = stringResource(Res.string.delete_task_section_label),
       complete = false,
     )
-    DeleteTaskCard(onClick = onDeleteRequest)
+    DestructiveActionCard(
+      icon = Icons.Default.Delete,
+      title = stringResource(Res.string.delete_this_task_title),
+      subtitle = stringResource(Res.string.delete_this_task_subtitle),
+      onClick = onDeleteRequest,
+    )
   }
 }
 
@@ -310,65 +314,6 @@ internal fun RescheduleCard(
         }
       }
     }
-  }
-}
-
-// ─── Delete task section ─────────────────────────────────────────────────────
-
-@Composable
-private fun DeleteTaskCard(onClick: () -> Unit) {
-  val critical = MaterialTheme.statusColors.critical.accent
-
-  Row(
-    modifier = Modifier
-      .fillMaxWidth()
-      .clip(RoundedCornerShape(Spacing.cardCornerRadius))
-      .background(MaterialTheme.colorScheme.surfaceContainer)
-      .border(
-        Spacing.hairline,
-        critical.copy(alpha = 0.4f),
-        RoundedCornerShape(Spacing.cardCornerRadius)
-      )
-      .clickable(role = Role.Button, onClick = onClick)
-      .padding(
-        horizontal = Spacing.large,
-        vertical = Spacing.medium
-      ),
-    verticalAlignment = Alignment.CenterVertically,
-    horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
-  ) {
-    Box(
-      modifier = Modifier
-        .size(Spacing.huge)
-        .clip(RoundedCornerShape(percent = 50))
-        .background(critical.copy(alpha = 0.12f)),
-      contentAlignment = Alignment.Center,
-    ) {
-      Icon(
-        Icons.Default.Delete,
-        contentDescription = null,
-        modifier = Modifier.size(Spacing.large),
-        tint = critical,
-      )
-    }
-    Column(modifier = Modifier.weight(1f)) {
-      Text(
-        stringResource(Res.string.delete_this_task_title),
-        style = MaterialTheme.typography.bodyLarge,
-        fontWeight = FontWeight.SemiBold,
-        color = critical,
-      )
-      Text(
-        stringResource(Res.string.delete_this_task_subtitle),
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-      )
-    }
-    Icon(
-      Icons.AutoMirrored.Filled.KeyboardArrowRight,
-      contentDescription = null,
-      tint = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
   }
 }
 
