@@ -1,80 +1,78 @@
 package dev.fanfly.wingslog.feature.search.datamanager
 
-/** Acronyms and synonyms, expanded at query time in both directions for single-word targets. */
-class SynonymPack(private val forward: Map<String, List<String>>) {
-  private val reverse: Map<String, List<String>> = buildMap<String, MutableList<String>> {
-    forward.forEach { (key, targets) ->
-      targets.filter { ' ' !in it }.forEach { getOrPut(it) { mutableListOf() }.add(key) }
-    }
-  }
+/** Acronyms and synonyms as `word to expansion` pairs, expanded at query time in both directions. */
+class SynonymPack(private val entries: List<Pair<String, String>>) {
+  constructor(vararg entries: Pair<String, String>) : this(entries.toList())
+
+  private val forward: Map<String, List<String>> = entries.groupBy({ it.first }, { it.second })
+  private val reverse: Map<String, List<String>> =
+    entries.filter { ' ' !in it.second }.groupBy({ it.second }, { it.first })
 
   fun expansions(token: String): List<String> = forward[token].orEmpty() + reverse[token].orEmpty()
 
-  operator fun plus(other: SynonymPack): SynonymPack =
-    SynonymPack((forward.keys + other.forward.keys).associateWith { forward[it].orEmpty() + other.forward[it].orEmpty() })
+  operator fun plus(other: SynonymPack): SynonymPack = SynonymPack(entries + other.entries)
 
   companion object {
     /** Words that mean the same thing here; each expands to all the others. */
-    fun group(vararg words: String): Map<String, List<String>> =
-      words.associateWith { w -> words.filter { it != w } }
+    fun group(vararg words: String): Array<Pair<String, String>> =
+      words.flatMap { w -> words.filter { it != w }.map { w to it } }.toTypedArray()
   }
 }
 
 val GenericSynonyms = SynonymPack(
-  mapOf(
-    "inop" to listOf("inoperative", "not working"),
-    "u/s" to listOf("unserviceable"),
-    "batt" to listOf("battery"),
-    "mx" to listOf("maintenance"),
-    "maint" to listOf("maintenance"),
-    "repl" to listOf("replaced"),
-    "svc" to listOf("service"),
-    "hr" to listOf("hour"),
-    "hrs" to listOf("hours"),
-    "qty" to listOf("quantity"),
-    "temp" to listOf("temperature"),
-    "press" to listOf("pressure"),
-  ) + SynonymPack.group("check", "inspect", "inspection", "insp", "examine", "exam", "examination"),
+    "inop" to "inoperative",
+    "inop" to "not working",
+    "u/s" to "unserviceable",
+    "batt" to "battery",
+    "mx" to "maintenance",
+    "maint" to "maintenance",
+    "repl" to "replaced",
+    "svc" to "service",
+    "hr" to "hour",
+    "hrs" to "hours",
+    "qty" to "quantity",
+    "temp" to "temperature",
+    "press" to "pressure",
+  *SynonymPack.group("check", "inspect", "inspection", "insp", "examine", "exam", "examination"),
 )
 
 val AviationSynonyms = SynonymPack(
-  mapOf(
-    "xpdr" to listOf("transponder"),
-    "xpndr" to listOf("transponder"),
-    "elt" to listOf("emergency locator transmitter"),
-    "mag" to listOf("magneto"),
-    "mags" to listOf("magnetos"),
-    "prop" to listOf("propeller"),
-    "carb" to listOf("carburetor"),
-    "alt" to listOf("altimeter", "alternator"),
-    "ad" to listOf("airworthiness directive"),
-    "sb" to listOf("service bulletin"),
-    "aog" to listOf("aircraft on ground"),
-    "ia" to listOf("inspection authorization"),
-    "a&p" to listOf("airframe and powerplant"),
-    "tso" to listOf("time since overhaul"),
-    "smoh" to listOf("since major overhaul"),
-    "tbo" to listOf("time between overhaul"),
-    "tt" to listOf("total time"),
-    "ttaf" to listOf("total time airframe"),
-    "gph" to listOf("gallons per hour"),
-    "cht" to listOf("cylinder head temperature"),
-    "egt" to listOf("exhaust gas temperature"),
-    "rpm" to listOf("revolutions per minute"),
-    "vor" to listOf("vhf omnidirectional range"),
-    "ils" to listOf("instrument landing system"),
-    "gps" to listOf("global positioning system"),
-    "ahrs" to listOf("attitude heading reference system"),
-    "adsb" to listOf("ads-b"),
-    "pfd" to listOf("primary flight display"),
-    "mfd" to listOf("multi function display"),
-    "oat" to listOf("outside air temperature"),
-    "aoa" to listOf("angle of attack"),
-    "ias" to listOf("indicated airspeed"),
-    "tas" to listOf("true airspeed"),
-    "oil" to listOf("lubricant"),
-    "strut" to listOf("oleo"),
-    "nosewheel" to listOf("nose wheel"),
-    "spinner" to listOf("prop spinner"),
-  ),
+    "xpdr" to "transponder",
+    "xpndr" to "transponder",
+    "elt" to "emergency locator transmitter",
+    "mag" to "magneto",
+    "mags" to "magnetos",
+    "prop" to "propeller",
+    "carb" to "carburetor",
+    "alt" to "altimeter",
+    "alt" to "alternator",
+    "ad" to "airworthiness directive",
+    "sb" to "service bulletin",
+    "aog" to "aircraft on ground",
+    "ia" to "inspection authorization",
+    "a&p" to "airframe and powerplant",
+    "tso" to "time since overhaul",
+    "smoh" to "since major overhaul",
+    "tbo" to "time between overhaul",
+    "tt" to "total time",
+    "ttaf" to "total time airframe",
+    "gph" to "gallons per hour",
+    "cht" to "cylinder head temperature",
+    "egt" to "exhaust gas temperature",
+    "rpm" to "revolutions per minute",
+    "vor" to "vhf omnidirectional range",
+    "ils" to "instrument landing system",
+    "gps" to "global positioning system",
+    "ahrs" to "attitude heading reference system",
+    "adsb" to "ads-b",
+    "pfd" to "primary flight display",
+    "mfd" to "multi function display",
+    "oat" to "outside air temperature",
+    "aoa" to "angle of attack",
+    "ias" to "indicated airspeed",
+    "tas" to "true airspeed",
+    "oil" to "lubricant",
+    "strut" to "oleo",
+    "nosewheel" to "nose wheel",
+    "spinner" to "prop spinner",
 )
