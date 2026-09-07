@@ -1,7 +1,7 @@
 # Design Doc: Search and Filter
 
 **PRD:** `docs/search/search_filter_PRD.md`
-**Status:** ✅ P1–P3 built, 2026-09-06 → 09-07, behind `AppCapability.isSearchFilterSupported` (developer builds)
+**Status:** ✅ Shipped on Android and web 2026-09-07; iOS behind `AppCapability.isSearchFilterSupported` (developer builds) until #854
 **Last updated:** 2026-09-07
 **Tracking:** GitHub Project #11 “Search and Filter” — sub-issues #820–#844 follow the §10 order
 
