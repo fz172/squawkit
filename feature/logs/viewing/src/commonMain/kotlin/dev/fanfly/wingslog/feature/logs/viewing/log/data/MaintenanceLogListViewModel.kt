@@ -102,7 +102,8 @@ class MaintenanceLogListViewModel(
     viewModelScope.launch {
       combine(
         _logsLoadState,
-        _filter.debouncedQuery(queryDebounceMillis),
+        // The state carries what was typed; the search runs on the debounced copy.
+        combine(_filter, _filter.debouncedQuery(queryDebounceMillis)) { typed, applied -> typed to applied },
         _selectedLog,
         combine(_availableCards, _availableSquawks) { cards, squawks ->
           LinkTargets(cards, squawks)
@@ -114,7 +115,8 @@ class MaintenanceLogListViewModel(
         ) { authors, names, isShared ->
           AuthorshipContext(authors, names, isShared)
         },
-      ) { logsState, filter, selectedLog, linkTargets, ctx ->
+      ) { logsState, filters, selectedLog, linkTargets, ctx ->
+        val (filter, applied) = filters
         val (authors, names, isShared) = ctx
         when (logsState) {
           LogsLoadState.Loading -> MaintenanceLogListUiState.Loading
@@ -126,7 +128,7 @@ class MaintenanceLogListViewModel(
             val today = clock.now()
               .toLocalDateTime(timeZone).date
             val filtered =
-              searchEngine.search(sorted, logAdapter, filter, today)
+              searchEngine.search(sorted, logAdapter, applied, today)
                 .map { it.item }
             MaintenanceLogListUiState.Success(
               logs = filtered,

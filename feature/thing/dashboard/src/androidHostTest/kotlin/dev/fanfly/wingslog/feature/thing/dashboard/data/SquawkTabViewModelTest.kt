@@ -18,7 +18,11 @@ import kotlin.time.Instant
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.runCurrent
+import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import kotlinx.datetime.TimeZone
@@ -84,6 +88,23 @@ class SquawkTabViewModelTest {
     assertThat(vm.ids()).containsExactly("s1", "s2", "s3")
     vm.onFilterChange(RecordFilter(time = TimeWindow.LastMonths(3)))
     assertThat(vm.ids()).containsExactly("s1", "s2")
+  }
+
+  @Test
+  fun typedQueryShowsAtOnce_resultsFollowAfterTheDebounce() = runTest {
+    Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+    val vm = SquawkTabViewModel(
+      squawkManager, logManager, SearchEngineImpl(), THING_ID, fixedClock, TimeZone.UTC,
+      queryDebounceMillis = 150, searchDispatcher = StandardTestDispatcher(testScheduler),
+    )
+    runCurrent()
+    vm.onFilterChange(RecordFilter(query = "transponder"))
+    runCurrent()
+    assertThat(vm.uiState.value.filter.query).isEqualTo("transponder")
+    assertThat(vm.uiState.value.squawks).hasSize(3)
+    advanceTimeBy(200)
+    runCurrent()
+    assertThat(vm.ids()).containsExactly("s1")
   }
 
   @Test

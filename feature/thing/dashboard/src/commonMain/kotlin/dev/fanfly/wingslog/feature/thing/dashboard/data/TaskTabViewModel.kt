@@ -43,14 +43,16 @@ class TaskTabViewModel(
 
   val uiState: StateFlow<TaskTabUiState> = combine(
     taskStatusManager.observeTasksWithStatus(thingId).catch { emit(emptyList()) },
+    _filter,
     _filter.debouncedQuery(queryDebounceMillis),
-  ) { tasks, filter ->
+  ) { tasks, typed, applied ->
     val today = clock.now().toLocalDateTime(timeZone).date
     val (complied, active) = tasks.partition { it.dueStatus.status == DueStatus.COMPLIED }
+    // The state carries what was typed; the search runs on the debounced copy.
     TaskTabUiState(
-      filter = filter,
-      activeTasks = searchEngine.search(active, adapter, filter, today).map { it.item },
-      completedTasks = searchEngine.search(complied, adapter, filter, today).map { it.item },
+      filter = typed,
+      activeTasks = searchEngine.search(active, adapter, applied, today).map { it.item },
+      completedTasks = searchEngine.search(complied, adapter, applied, today).map { it.item },
     )
   }.flowOn(searchDispatcher).stateIn(viewModelScope, SharingStarted.Eagerly, TaskTabUiState())
 

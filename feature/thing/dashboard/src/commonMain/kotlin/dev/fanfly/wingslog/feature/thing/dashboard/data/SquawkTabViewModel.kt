@@ -51,11 +51,13 @@ class SquawkTabViewModel(
     logManager.observeLogs(thingId)
       .map { logs -> logs.mapNotNull { log -> log.timestamp?.let { log.id to it.toLocalDate(timeZone) } }.toMap() }
       .catch { emit(emptyMap()) },
+    _filter,
     _filter.debouncedQuery(queryDebounceMillis),
-  ) { squawks, logDates, filter ->
+  ) { squawks, logDates, typed, applied ->
     val today = clock.now().toLocalDateTime(timeZone).date
     val adapter = SquawkAdapter(timeZone, logDates)
-    SquawkTabUiState(filter, searchEngine.search(squawks, adapter, filter, today).map { it.item })
+    // The state carries what was typed; the search runs on the debounced copy.
+    SquawkTabUiState(typed, searchEngine.search(squawks, adapter, applied, today).map { it.item })
   }.flowOn(searchDispatcher).stateIn(viewModelScope, SharingStarted.Eagerly, SquawkTabUiState())
 
   fun onFilterChange(filter: RecordFilter) {
