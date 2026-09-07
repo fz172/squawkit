@@ -9,6 +9,7 @@ import dev.fanfly.wingslog.feature.search.datamanager.LogAdapter
 import dev.fanfly.wingslog.feature.search.datamanager.SearchEngine
 import dev.fanfly.wingslog.feature.search.model.RecordFilter
 import dev.fanfly.wingslog.feature.search.model.TimeWindow
+import dev.fanfly.wingslog.feature.search.model.debouncedQuery
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
@@ -18,18 +19,21 @@ import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.thing.MaintenanceTask
 import dev.fanfly.wingslog.thing.Squawk
 import dev.gitlive.firebase.auth.FirebaseAuth
+import kotlin.time.Clock
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import kotlin.time.Clock
 
 /** The share-derived facts the log list needs, combined so they fit one slot of the outer combine. */
 private data class AuthorshipContext(
@@ -55,6 +59,8 @@ class MaintenanceLogListViewModel(
   val thingId: String,
   private val clock: Clock = Clock.System,
   private val timeZone: TimeZone = TimeZone.currentSystemDefault(),
+  private val queryDebounceMillis: Long = 150,
+  private val searchDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) : ViewModel() {
 
   private val logAdapter = LogAdapter(timeZone)
@@ -96,7 +102,7 @@ class MaintenanceLogListViewModel(
     viewModelScope.launch {
       combine(
         _logsLoadState,
-        _filter,
+        _filter.debouncedQuery(queryDebounceMillis),
         _selectedLog,
         combine(_availableCards, _availableSquawks) { cards, squawks ->
           LinkTargets(cards, squawks)
@@ -139,7 +145,7 @@ class MaintenanceLogListViewModel(
             )
           }
         }
-      }.collect { _uiState.value = it }
+      }.flowOn(searchDispatcher).collect { _uiState.value = it }
     }
   }
 

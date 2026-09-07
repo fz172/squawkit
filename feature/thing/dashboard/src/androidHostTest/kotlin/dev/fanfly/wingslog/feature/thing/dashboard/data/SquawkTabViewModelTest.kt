@@ -54,7 +54,10 @@ class SquawkTabViewModelTest {
   @After
   fun tearDown() = Dispatchers.resetMain()
 
-  private fun viewModel() = SquawkTabViewModel(squawkManager, logManager, SearchEngineImpl(), THING_ID, fixedClock, TimeZone.UTC)
+  private fun viewModel() = SquawkTabViewModel(
+    squawkManager, logManager, SearchEngineImpl(), THING_ID, fixedClock, TimeZone.UTC,
+    queryDebounceMillis = 0, searchDispatcher = Dispatchers.Unconfined,
+  )
   private fun SquawkTabViewModel.ids() = uiState.value.squawks.map { it.squawk.id }
 
   @Test

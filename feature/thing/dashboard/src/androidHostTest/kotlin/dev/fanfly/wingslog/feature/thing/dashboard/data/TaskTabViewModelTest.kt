@@ -62,7 +62,10 @@ class TaskTabViewModelTest {
   @After
   fun tearDown() = Dispatchers.resetMain()
 
-  private fun viewModel() = TaskTabViewModel(statusManager, SearchEngineImpl(), THING_ID, fixedClock, TimeZone.UTC)
+  private fun viewModel() = TaskTabViewModel(
+    statusManager, SearchEngineImpl(), THING_ID, fixedClock, TimeZone.UTC,
+    queryDebounceMillis = 0, searchDispatcher = Dispatchers.Unconfined,
+  )
   private fun TaskTabViewModel.active() = uiState.value.activeTasks.map { it.card.id }
   private fun TaskTabViewModel.complied() = uiState.value.completedTasks.map { it.card.id }
 

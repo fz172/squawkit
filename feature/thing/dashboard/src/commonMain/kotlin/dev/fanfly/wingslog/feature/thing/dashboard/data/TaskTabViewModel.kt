@@ -4,15 +4,19 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.fanfly.wingslog.feature.search.datamanager.SearchEngine
 import dev.fanfly.wingslog.feature.search.model.RecordFilter
+import dev.fanfly.wingslog.feature.search.model.debouncedQuery
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskStatusManager
 import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
 import kotlin.time.Clock
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -30,6 +34,8 @@ class TaskTabViewModel(
   thingId: String,
   private val clock: Clock = Clock.System,
   private val timeZone: TimeZone = TimeZone.currentSystemDefault(),
+  private val queryDebounceMillis: Long = 150,
+  private val searchDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) : ViewModel() {
 
   private val _filter = MutableStateFlow(RecordFilter())
@@ -37,7 +43,7 @@ class TaskTabViewModel(
 
   val uiState: StateFlow<TaskTabUiState> = combine(
     taskStatusManager.observeTasksWithStatus(thingId).catch { emit(emptyList()) },
-    _filter,
+    _filter.debouncedQuery(queryDebounceMillis),
   ) { tasks, filter ->
     val today = clock.now().toLocalDateTime(timeZone).date
     val (complied, active) = tasks.partition { it.dueStatus.status == DueStatus.COMPLIED }
@@ -46,7 +52,7 @@ class TaskTabViewModel(
       activeTasks = searchEngine.search(active, adapter, filter, today).map { it.item },
       completedTasks = searchEngine.search(complied, adapter, filter, today).map { it.item },
     )
-  }.stateIn(viewModelScope, SharingStarted.Eagerly, TaskTabUiState())
+  }.flowOn(searchDispatcher).stateIn(viewModelScope, SharingStarted.Eagerly, TaskTabUiState())
 
   fun onFilterChange(filter: RecordFilter) {
     _filter.value = filter

@@ -83,6 +83,8 @@ class MaintenanceLogListFilterTest {
     thingId = THING_ID,
     clock = fixedClock,
     timeZone = TimeZone.UTC,
+    queryDebounceMillis = 0,
+    searchDispatcher = dispatcher,
   )
 
   private fun MaintenanceLogListViewModel.ids() =

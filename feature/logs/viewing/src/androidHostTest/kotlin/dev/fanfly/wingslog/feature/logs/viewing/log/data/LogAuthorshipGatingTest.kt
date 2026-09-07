@@ -74,6 +74,7 @@ class LogAuthorshipGatingTest {
     auth = auth,
     searchEngine = SearchEngineImpl(),
     thingId = AC_ID,
+    searchDispatcher = dispatcher,
   )
 
   private fun selectedAuthorship(): LogAuthorship {

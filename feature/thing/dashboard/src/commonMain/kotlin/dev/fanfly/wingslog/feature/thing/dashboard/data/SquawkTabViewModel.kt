@@ -6,15 +6,19 @@ import dev.fanfly.wingslog.core.datetime.toLocalDate
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.search.datamanager.SearchEngine
 import dev.fanfly.wingslog.feature.search.model.RecordFilter
+import dev.fanfly.wingslog.feature.search.model.debouncedQuery
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.feature.squawk.model.SquawkWithStatus
 import dev.fanfly.wingslog.feature.squawk.model.toWithStatus
 import kotlin.time.Clock
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.datetime.TimeZone
@@ -34,6 +38,8 @@ class SquawkTabViewModel(
   thingId: String,
   private val clock: Clock = Clock.System,
   private val timeZone: TimeZone = TimeZone.currentSystemDefault(),
+  private val queryDebounceMillis: Long = 150,
+  private val searchDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) : ViewModel() {
 
   private val _filter = MutableStateFlow(RecordFilter())
@@ -45,12 +51,12 @@ class SquawkTabViewModel(
     logManager.observeLogs(thingId)
       .map { logs -> logs.mapNotNull { log -> log.timestamp?.let { log.id to it.toLocalDate(timeZone) } }.toMap() }
       .catch { emit(emptyMap()) },
-    _filter,
+    _filter.debouncedQuery(queryDebounceMillis),
   ) { squawks, logDates, filter ->
     val today = clock.now().toLocalDateTime(timeZone).date
     val adapter = SquawkAdapter(timeZone, logDates)
     SquawkTabUiState(filter, searchEngine.search(squawks, adapter, filter, today).map { it.item })
-  }.stateIn(viewModelScope, SharingStarted.Eagerly, SquawkTabUiState())
+  }.flowOn(searchDispatcher).stateIn(viewModelScope, SharingStarted.Eagerly, SquawkTabUiState())
 
   fun onFilterChange(filter: RecordFilter) {
     _filter.value = filter

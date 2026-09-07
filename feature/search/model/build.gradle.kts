@@ -26,6 +26,7 @@ kotlin {
     commonMain.dependencies {
       api(project(":core:model"))
       api(libs.kotlinx.datetime)
+      api(libs.kotlinx.coroutines.core)
     }
   }
 }
@@ -33,4 +34,5 @@ kotlin {
 dependencies {
   "androidHostTestImplementation"(libs.junit)
   "androidHostTestImplementation"(libs.truth)
+  "androidHostTestImplementation"(libs.kotlinx.coroutines.test)
 }
