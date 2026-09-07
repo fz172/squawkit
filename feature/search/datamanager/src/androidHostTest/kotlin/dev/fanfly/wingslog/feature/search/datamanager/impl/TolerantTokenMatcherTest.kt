@@ -45,6 +45,16 @@ class TolerantTokenMatcherTest {
   }
 
   @Test
+  fun checkInspectExamineAreOneGroup_throughStems() {
+    val inspected = FieldText("Inspected the brakes")
+    for (q in listOf("check", "checks", "checked", "inspect", "inspection", "exam", "examine", "insp")) {
+      assertThat(matcher.match(q, inspected)?.grade ?: 0.0).isAtLeast(0.7)
+    }
+    assertThat(matcher.match("checks", inspected)?.explanation).isEqualTo(MatchExplanation.Synonym("checks", "inspected"))
+    assertThat(matcher.match("exam", FieldText("Mag check rough"))?.grade).isEqualTo(0.7)
+  }
+
+  @Test
   fun numbersMatchExactlyOrByPrefixOnly() {
     assertThat(grade("91.413")).isEqualTo(1.0)
     assertThat(grade("413")).isEqualTo(1.0)

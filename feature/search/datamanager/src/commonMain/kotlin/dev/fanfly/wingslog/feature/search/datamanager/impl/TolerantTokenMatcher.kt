@@ -26,7 +26,8 @@ class TolerantTokenMatcher(private val synonyms: SynonymPack) : TokenMatcher {
     tokens.firstOrNull { it.startsWith(token) }?.let { return TokenMatch(PREFIX, MatchExplanation.Prefix(token, it)) }
     if (numeric) return null
 
-    for (expansion in synonyms.expansions(token)) {
+    val expansions = (synonyms.expansions(token) + synonyms.expansions(Stemmer.stem(token))).distinct()
+    for (expansion in expansions) {
       val matched = if (' ' in expansion) {
         expansion.takeIf { field.normalized.contains(it) }
       } else {

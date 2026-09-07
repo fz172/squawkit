@@ -12,6 +12,12 @@ class SynonymPack(private val forward: Map<String, List<String>>) {
 
   operator fun plus(other: SynonymPack): SynonymPack =
     SynonymPack((forward.keys + other.forward.keys).associateWith { forward[it].orEmpty() + other.forward[it].orEmpty() })
+
+  companion object {
+    /** Words that mean the same thing here; each expands to all the others. */
+    fun group(vararg words: String): Map<String, List<String>> =
+      words.associateWith { w -> words.filter { it != w } }
+  }
 }
 
 val GenericSynonyms = SynonymPack(
@@ -21,7 +27,6 @@ val GenericSynonyms = SynonymPack(
     "batt" to listOf("battery"),
     "mx" to listOf("maintenance"),
     "maint" to listOf("maintenance"),
-    "insp" to listOf("inspection"),
     "repl" to listOf("replaced"),
     "svc" to listOf("service"),
     "hr" to listOf("hour"),
@@ -29,7 +34,7 @@ val GenericSynonyms = SynonymPack(
     "qty" to listOf("quantity"),
     "temp" to listOf("temperature"),
     "press" to listOf("pressure"),
-  ),
+  ) + SynonymPack.group("check", "inspect", "inspection", "insp", "examine", "exam", "examination"),
 )
 
 val AviationSynonyms = SynonymPack(

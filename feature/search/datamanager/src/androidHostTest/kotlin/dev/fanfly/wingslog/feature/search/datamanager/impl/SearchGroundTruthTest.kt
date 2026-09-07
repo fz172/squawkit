@@ -53,6 +53,9 @@ class SearchGroundTruthTest {
     "magneto" to "mags",
     "prop spinner" to "spinner",
     "inop" to "xpdrinop",
+    "exam" to "mags",
+    "inspect" to "annual",
+    "checked" to "annual",
     // exact serials and references
     "3AB012345" to "xpdr",
     "91.413" to "certs",
