@@ -2,7 +2,9 @@ package dev.fanfly.wingslog.feature.tasks.update.viewmodel
 
 import androidx.lifecycle.SavedStateHandle
 import com.google.common.truth.Truth.assertThat
+import dev.fanfly.wingslog.core.analytics.NoOpAnalyticsManager
 import dev.fanfly.wingslog.core.nav.Screen
+import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import dev.fanfly.wingslog.core.template.MeterKeys
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
@@ -507,6 +509,8 @@ class TaskViewModelTest {
       subscriptionManager = subscriptionManager,
       sharingManager = sharingManager,
       taskDueManager = taskDueManager,
+      analytics = NoOpAnalyticsManager,
+      currentThingTemplate = mockk<CurrentThingTemplate>(relaxed = true),
       savedStateHandle = SavedStateHandle(mapOf(Screen.THING_ID to TEST_THING_ID)),
     )
 
@@ -520,6 +524,8 @@ class TaskViewModelTest {
       subscriptionManager = subscriptionManager,
       sharingManager = sharingManager,
       taskDueManager = taskDueManager,
+      analytics = NoOpAnalyticsManager,
+      currentThingTemplate = mockk<CurrentThingTemplate>(relaxed = true),
       savedStateHandle = SavedStateHandle(
         mapOf(
           Screen.THING_ID to TEST_THING_ID,

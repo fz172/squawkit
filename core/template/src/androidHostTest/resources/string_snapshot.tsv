@@ -923,3 +923,8 @@ feature/search/sharedassets	period_last_3_months	Last 3 months
 feature/search/sharedassets	record_count_one	1 %1$s
 feature/search/sharedassets	record_count_other	%1$d %2$s
 feature/search/sharedassets	search_placeholder	Search…
+feature/squawk/sharedassets	delete_squawk_confirmation	“%1$s” is removed for everyone with access, along with its comments. The %2$s that addressed it, if any, is kept. Deletion is for entries made in error — if the problem was real but no longer applies, dismiss it instead. This cannot be undone.
+feature/squawk/sharedassets	delete_squawk_title	Delete %1$s?
+feature/squawk/sharedassets	delete_this_squawk_subtitle	Permanently removes it and its comments. %1$s are kept.
+feature/squawk/sharedassets	delete_this_squawk_title	Delete this %1$s
+feature/squawk/sharedassets	squawk_deleted	%1$s deleted

@@ -4,8 +4,15 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.squareup.wire.Instant
+import dev.fanfly.wingslog.core.analytics.AnalyticsManager
+import dev.fanfly.wingslog.core.analytics.QuickActionKind
+import dev.fanfly.wingslog.core.analytics.QuickActionSource
+import dev.fanfly.wingslog.core.analytics.QuickActionSurface
+import dev.fanfly.wingslog.core.analytics.RecordQuickAction
+import dev.fanfly.wingslog.core.analytics.log
 import dev.fanfly.wingslog.core.model.id.generateRandomId
 import dev.fanfly.wingslog.core.nav.Screen
+import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import dev.fanfly.wingslog.core.template.MeterKeys
 import dev.fanfly.wingslog.core.template.currentFor
 import dev.fanfly.wingslog.core.ui.common.UiText
@@ -172,6 +179,8 @@ class TaskViewModel(
   private val subscriptionManager: SubscriptionManager,
   private val sharingManager: SharingManager,
   private val taskDueManager: TaskDueManager,
+  private val analytics: AnalyticsManager,
+  private val currentThingTemplate: CurrentThingTemplate,
   savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
@@ -371,6 +380,7 @@ class TaskViewModel(
     if (createWorkLogRequested) return
     createWorkLogRequested = true
     _formState.update { it.copy(showResolveMenu = false) }
+    logQuickAction(QuickActionKind.RESOLVE)
     viewModelScope.launch {
       _events.send(TaskFormEvent.NavigateToCreateLog(thingId, id))
     }
@@ -390,9 +400,21 @@ class TaskViewModel(
     _formState.update { it.copy(showResolveMenu = false) }
     viewModelScope.launch {
       inspectionDataManager.skipCycle(thingId, card, currentEngineHours)
-        .onSuccess { onSuccess() }
+        .onSuccess {
+          logQuickAction(QuickActionKind.SKIP)
+          onSuccess()
+        }
     }
   }
+
+  private fun logQuickAction(action: QuickActionKind) = analytics.log(
+    RecordQuickAction(
+      templateId = currentThingTemplate.templateId,
+      surface = QuickActionSurface.TASKS,
+      action = action,
+      source = QuickActionSource.FORM,
+    )
+  )
 
   // ── Attachment management ────────────────────────────────────────────────
 
@@ -616,7 +638,10 @@ class TaskViewModel(
         thingId,
         cardId
       )
-        .onSuccess { onSuccess() }
+        .onSuccess {
+          logQuickAction(QuickActionKind.DELETE)
+          onSuccess()
+        }
     }
   }
 }

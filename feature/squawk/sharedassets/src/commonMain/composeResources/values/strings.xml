@@ -38,4 +38,11 @@
   <string name="fixed_option_label">Fixed</string>
   <string name="dismiss_squawk_title">Dismiss Without Addressing?</string>
   <string name="dismiss_squawk_warning">This <xliff:g example="squawks">%1$s</xliff:g> will be closed without recording corrective action. Please select a reason for dismissing this squawk.</string>
+
+  <!-- Delete (PRD §6.3, §6.4). %1$s is the squawk noun unless noted. -->
+  <string name="delete_squawk_title">Delete <xliff:g example="squawk">%1$s</xliff:g>?</string>
+  <string name="delete_squawk_confirmation">“<xliff:g example="Left brake dragging">%1$s</xliff:g>” is removed for everyone with access, along with its comments. The <xliff:g example="work log">%2$s</xliff:g> that addressed it, if any, is kept. Deletion is for entries made in error — if the problem was real but no longer applies, dismiss it instead. This cannot be undone.</string>
+  <string name="delete_this_squawk_title">Delete this <xliff:g example="squawk">%1$s</xliff:g></string>
+  <string name="delete_this_squawk_subtitle">Permanently removes it and its comments. <xliff:g example="Work logs">%1$s</xliff:g> are kept.</string>
+  <string name="squawk_deleted"><xliff:g example="Squawk">%1$s</xliff:g> deleted</string>
 </resources>
