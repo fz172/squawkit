@@ -37,6 +37,7 @@ fun LogsTab(
   val viewModel: MaintenanceLogListViewModel =
     koinViewModel(key = thingId, parameters = { parametersOf(thingId) })
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+  val filter by viewModel.filter.collectAsStateWithLifecycle()
   val attachmentOpener: AttachmentOpener = koinInject()
   val appCapability: AppCapability = koinInject()
   val coroutineScope = rememberCoroutineScope()
@@ -55,6 +56,7 @@ fun LogsTab(
 
   MaintenanceLogListContent(
     uiState = uiState,
+    filter = filter,
     syncStates = syncStates,
     onSearchQueryChange = viewModel::onSearchQueryChange,
     onComponentFilterToggle = viewModel::onComponentFilterToggle,

@@ -5,6 +5,7 @@ import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.search.datamanager.impl.SearchEngineImpl
 import dev.fanfly.wingslog.feature.search.model.RecordFilter
+import dev.fanfly.wingslog.feature.search.model.SearchTuning
 import dev.fanfly.wingslog.feature.search.model.TimeWindow
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.thing.ComponentType
@@ -18,8 +19,12 @@ import kotlin.time.Instant
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
+import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlinx.datetime.TimeZone
 import org.junit.After
@@ -54,7 +59,9 @@ class SquawkTabViewModelTest {
   @After
   fun tearDown() = Dispatchers.resetMain()
 
-  private fun viewModel() = SquawkTabViewModel(squawkManager, logManager, SearchEngineImpl(), THING_ID, fixedClock, TimeZone.UTC)
+  private fun viewModel() = SquawkTabViewModel(
+    squawkManager, logManager, SearchEngineImpl(), SearchTuning(0, Dispatchers.Unconfined), THING_ID, fixedClock, TimeZone.UTC,
+  )
   private fun SquawkTabViewModel.ids() = uiState.value.squawks.map { it.squawk.id }
 
   @Test
@@ -81,6 +88,23 @@ class SquawkTabViewModelTest {
     assertThat(vm.ids()).containsExactly("s1", "s2", "s3")
     vm.onFilterChange(RecordFilter(time = TimeWindow.LastMonths(3)))
     assertThat(vm.ids()).containsExactly("s1", "s2")
+  }
+
+  @Test
+  fun typedQueryShowsAtOnce_resultsFollowAfterTheDebounce() = runTest {
+    Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+    val vm = SquawkTabViewModel(
+      squawkManager, logManager, SearchEngineImpl(), SearchTuning(150, StandardTestDispatcher(testScheduler)),
+      THING_ID, fixedClock, TimeZone.UTC,
+    )
+    runCurrent()
+    vm.onFilterChange(RecordFilter(query = "transponder"))
+    runCurrent()
+    assertThat(vm.uiState.value.filter.query).isEqualTo("transponder")
+    assertThat(vm.uiState.value.squawks).hasSize(3)
+    advanceTimeBy(200)
+    runCurrent()
+    assertThat(vm.ids()).containsExactly("s1")
   }
 
   @Test

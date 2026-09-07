@@ -6,15 +6,19 @@ import dev.fanfly.wingslog.core.datetime.toLocalDate
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.search.datamanager.SearchEngine
 import dev.fanfly.wingslog.feature.search.model.RecordFilter
+import dev.fanfly.wingslog.feature.search.model.SearchTuning
+import dev.fanfly.wingslog.feature.search.model.debouncedQuery
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.feature.squawk.model.SquawkWithStatus
 import dev.fanfly.wingslog.feature.squawk.model.toWithStatus
 import kotlin.time.Clock
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.datetime.TimeZone
@@ -31,12 +35,16 @@ class SquawkTabViewModel(
   squawkManager: SquawkManager,
   logManager: MaintenanceLogManager,
   private val searchEngine: SearchEngine,
+  private val tuning: SearchTuning,
   thingId: String,
   private val clock: Clock = Clock.System,
   private val timeZone: TimeZone = TimeZone.currentSystemDefault(),
 ) : ViewModel() {
 
   private val _filter = MutableStateFlow(RecordFilter())
+
+  /** What is typed and chosen, updated synchronously so the search field never trails the caret. */
+  val filter: StateFlow<RecordFilter> = _filter.asStateFlow()
 
   val uiState: StateFlow<SquawkTabUiState> = combine(
     squawkManager.observeSquawks(thingId)
@@ -46,11 +54,13 @@ class SquawkTabViewModel(
       .map { logs -> logs.mapNotNull { log -> log.timestamp?.let { log.id to it.toLocalDate(timeZone) } }.toMap() }
       .catch { emit(emptyMap()) },
     _filter,
-  ) { squawks, logDates, filter ->
+    _filter.debouncedQuery(tuning.queryDebounceMillis),
+  ) { squawks, logDates, typed, applied ->
     val today = clock.now().toLocalDateTime(timeZone).date
     val adapter = SquawkAdapter(timeZone, logDates)
-    SquawkTabUiState(filter, searchEngine.search(squawks, adapter, filter, today).map { it.item })
-  }.stateIn(viewModelScope, SharingStarted.Eagerly, SquawkTabUiState())
+    // The state carries what was typed; the search runs on the debounced copy.
+    SquawkTabUiState(typed, searchEngine.search(squawks, adapter, applied, today).map { it.item })
+  }.flowOn(tuning.dispatcher).stateIn(viewModelScope, SharingStarted.Eagerly, SquawkTabUiState())
 
   fun onFilterChange(filter: RecordFilter) {
     _filter.value = filter

@@ -68,7 +68,7 @@ fun MaintenanceTasksTab(
   val tabViewModel: TaskTabViewModel =
     koinViewModel(key = "tasks:${state.thing.id}", parameters = { parametersOf(state.thing.id) })
   val tabState by tabViewModel.uiState.collectAsStateWithLifecycle()
-  val taskFilter = tabState.filter
+  val taskFilter by tabViewModel.filter.collectAsStateWithLifecycle()
   val setFilter = tabViewModel::onFilterChange
   val activeTasks = tabState.activeTasks
   val completedTasks = tabState.completedTasks

@@ -5,6 +5,7 @@ import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.search.datamanager.impl.SearchEngineImpl
 import dev.fanfly.wingslog.feature.search.model.RecordFilter
+import dev.fanfly.wingslog.feature.search.model.SearchTuning
 import dev.fanfly.wingslog.feature.search.model.TimeWindow
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
@@ -80,6 +81,7 @@ class MaintenanceLogListFilterTest {
     squawkManager = squawks,
     auth = auth,
     searchEngine = SearchEngineImpl(),
+    tuning = SearchTuning(queryDebounceMillis = 0, dispatcher = dispatcher),
     thingId = THING_ID,
     clock = fixedClock,
     timeZone = TimeZone.UTC,

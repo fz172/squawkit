@@ -8,7 +8,9 @@ import dev.fanfly.wingslog.feature.logs.datamanager.authorship.authorship
 import dev.fanfly.wingslog.feature.search.datamanager.LogAdapter
 import dev.fanfly.wingslog.feature.search.datamanager.SearchEngine
 import dev.fanfly.wingslog.feature.search.model.RecordFilter
+import dev.fanfly.wingslog.feature.search.model.SearchTuning
 import dev.fanfly.wingslog.feature.search.model.TimeWindow
+import dev.fanfly.wingslog.feature.search.model.debouncedQuery
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
@@ -18,18 +20,19 @@ import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.thing.MaintenanceTask
 import dev.fanfly.wingslog.thing.Squawk
 import dev.gitlive.firebase.auth.FirebaseAuth
+import kotlin.time.Clock
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import kotlin.time.Clock
 
 /** The share-derived facts the log list needs, combined so they fit one slot of the outer combine. */
 private data class AuthorshipContext(
@@ -52,6 +55,7 @@ class MaintenanceLogListViewModel(
   private val squawkManager: SquawkManager,
   private val auth: FirebaseAuth,
   private val searchEngine: SearchEngine,
+  private val tuning: SearchTuning,
   val thingId: String,
   private val clock: Clock = Clock.System,
   private val timeZone: TimeZone = TimeZone.currentSystemDefault(),
@@ -69,6 +73,9 @@ class MaintenanceLogListViewModel(
   private val _logsLoadState =
     MutableStateFlow<LogsLoadState>(LogsLoadState.Loading)
   private val _filter = MutableStateFlow(RecordFilter())
+
+  /** What is typed and chosen, updated synchronously so the search field never trails the caret. */
+  val filter: StateFlow<RecordFilter> = _filter.asStateFlow()
   private val _selectedLog = MutableStateFlow<MaintenanceLog?>(null)
   private val _availableCards =
     MutableStateFlow<List<MaintenanceTask>>(emptyList())
@@ -96,7 +103,8 @@ class MaintenanceLogListViewModel(
     viewModelScope.launch {
       combine(
         _logsLoadState,
-        _filter,
+        // The state carries what was typed; the search runs on the debounced copy.
+        combine(_filter, _filter.debouncedQuery(tuning.queryDebounceMillis)) { typed, applied -> typed to applied },
         _selectedLog,
         combine(_availableCards, _availableSquawks) { cards, squawks ->
           LinkTargets(cards, squawks)
@@ -108,7 +116,8 @@ class MaintenanceLogListViewModel(
         ) { authors, names, isShared ->
           AuthorshipContext(authors, names, isShared)
         },
-      ) { logsState, filter, selectedLog, linkTargets, ctx ->
+      ) { logsState, filters, selectedLog, linkTargets, ctx ->
+        val (filter, applied) = filters
         val (authors, names, isShared) = ctx
         when (logsState) {
           LogsLoadState.Loading -> MaintenanceLogListUiState.Loading
@@ -120,7 +129,7 @@ class MaintenanceLogListViewModel(
             val today = clock.now()
               .toLocalDateTime(timeZone).date
             val filtered =
-              searchEngine.search(sorted, logAdapter, filter, today)
+              searchEngine.search(sorted, logAdapter, applied, today)
                 .map { it.item }
             MaintenanceLogListUiState.Success(
               logs = filtered,
@@ -139,7 +148,7 @@ class MaintenanceLogListViewModel(
             )
           }
         }
-      }.collect { _uiState.value = it }
+      }.flowOn(tuning.dispatcher).collect { _uiState.value = it }
     }
   }
 
