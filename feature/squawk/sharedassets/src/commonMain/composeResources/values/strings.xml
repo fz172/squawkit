@@ -31,4 +31,11 @@
   <string name="squawk_status_addressed">Addressed</string>
   <string name="squawk_status_dismissed">Dismissed</string>
   <string name="dismissed_label">Dismissed — <xliff:g example="Work Logs">%1$s</xliff:g></string>
+
+  <!-- Resolve menu and dismiss dialog, shared by the form and the card quick actions -->
+  <string name="dismiss_issue">Dismiss Issue</string>
+  <string name="dismiss_no_work_planned">Dismiss, no work planned</string>
+  <string name="fixed_option_label">Fixed</string>
+  <string name="dismiss_squawk_title">Dismiss Without Addressing?</string>
+  <string name="dismiss_squawk_warning">This <xliff:g example="squawks">%1$s</xliff:g> will be closed without recording corrective action. Please select a reason for dismissing this squawk.</string>
 </resources>

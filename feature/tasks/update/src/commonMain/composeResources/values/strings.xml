@@ -126,10 +126,6 @@
 
   <!-- Resolve menu (bottom bar) -->
   <string name="resolve_task">Resolve</string>
-  <string name="create_work_log">Create <xliff:g example="work logs">%1$s</xliff:g></string>
-  <string name="create_work_log_subtitle">Opens a new log, pre-linked to this task</string>
-  <string name="skip_this_cycle_option">Skip This Cycle</string>
-  <string name="skip_this_cycle_option_subtitle">Marks complete without logging</string>
   <string name="task_skipped">Cycle skipped — next due rescheduled</string>
 
   <string name="no_log_history">No <xliff:g example="logs">%1$s</xliff:g> recorded for this <xliff:g example="task">%2$s</xliff:g>.</string>

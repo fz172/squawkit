@@ -4,7 +4,6 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.squareup.wire.Instant
-import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.model.id.generateRandomId
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.template.MeterKeys
@@ -25,7 +24,6 @@ import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDueManager
-import dev.fanfly.wingslog.feature.tasks.datamanager.defaultMeterKey
 import dev.fanfly.wingslog.feature.tasks.datamanager.forcedDueMeter
 import dev.fanfly.wingslog.feature.tasks.datamanager.meterKeyFor
 import dev.fanfly.wingslog.feature.tasks.datamanager.toDueDate
@@ -39,9 +37,7 @@ import dev.fanfly.wingslog.thing.ForceCompliedStatus
 import dev.fanfly.wingslog.thing.InspectionRule
 import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.thing.MaintenanceTask
-import dev.fanfly.wingslog.thing.MeterReading
 import dev.gitlive.firebase.auth.FirebaseAuth
-import kotlin.time.Clock
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -51,15 +47,15 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import wingslog.feature.attachment.sharedassets.generated.resources.Res as AttachRes
 import wingslog.feature.attachment.sharedassets.generated.resources.add_file_failed
 import wingslog.feature.attachment.sharedassets.generated.resources.duplicate_file_skipped
 import wingslog.feature.attachment.sharedassets.generated.resources.file_too_large
 import wingslog.feature.attachment.sharedassets.generated.resources.files_over_limit_skipped
-import wingslog.feature.comments.sharedassets.generated.resources.Res as CommentsRes
 import wingslog.feature.comments.sharedassets.generated.resources.comment_delete_failed
 import wingslog.feature.comments.sharedassets.generated.resources.comment_edit_failed
 import wingslog.feature.comments.sharedassets.generated.resources.comment_post_failed
+import wingslog.feature.attachment.sharedassets.generated.resources.Res as AttachRes
+import wingslog.feature.comments.sharedassets.generated.resources.Res as CommentsRes
 
 sealed interface TaskUiState {
   data object Loading : TaskUiState
@@ -137,7 +133,8 @@ data class TaskFormState(
       val forcedEngineHours = forcedDue?.second?.toString() ?: ""
       val forceOverrideDate = card.force_due_date != null
       val forcedDateMillis =
-        card.force_due_date?.toDueDate()?.toPickerMillis()
+        card.force_due_date?.toDueDate()
+          ?.toPickerMillis()
       return TaskFormState(
         title = card.title,
         component = card.component,
@@ -242,7 +239,11 @@ class TaskViewModel(
             CommentAction.DELETE -> CommentsRes.string.comment_delete_failed
           }
           _uiState.update { prev ->
-            (prev as? TaskUiState.Success)?.copy(error = UiText.StringRes(message))
+            (prev as? TaskUiState.Success)?.copy(
+              error = UiText.StringRes(
+                message
+              )
+            )
               ?: prev
           }
         }
@@ -310,11 +311,16 @@ class TaskViewModel(
    */
   fun previewDue(draft: MaintenanceTask): DueMetadata? {
     val loaded = _uiState.value as? TaskUiState.Success ?: return null
-    return taskDueManager.computeNextDue(draft, loaded.availableLogs, loaded.allInspections)
+    return taskDueManager.computeNextDue(
+      draft,
+      loaded.availableLogs,
+      loaded.allInspections
+    )
   }
 
   fun currentReading(meterKey: String): Float =
-    (_uiState.value as? TaskUiState.Success)?.currentReadings?.get(meterKey) ?: 0f
+    (_uiState.value as? TaskUiState.Success)?.currentReadings?.get(meterKey)
+      ?: 0f
 
   fun onTitleChange(value: String) =
     _formState.update { it.copy(title = value) }
@@ -374,10 +380,7 @@ class TaskViewModel(
    * Marks [card]'s current cycle complete without a log, persisting immediately against the
    * card as last saved (not any pending in-memory form edits) — mirrors
    * SquawkFormViewModel.confirmDismiss() calling squawkManager.dismissSquawk() directly.
-   *
-   * Clears any reschedule override as part of the same write, the way saving a linked
-   * maintenance log does: TaskDueManager resolves force-due dates before it ever looks at
-   * force-complied state, so a skip left alongside an override would never move the next due.
+   * The write itself is TaskDataManager.skipCycle, shared with the dashboard's quick action.
    */
   fun skipThisCycle(
     card: MaintenanceTask,
@@ -386,19 +389,7 @@ class TaskViewModel(
   ) {
     _formState.update { it.copy(showResolveMenu = false) }
     viewModelScope.launch {
-      val skipped = card.withForcedDueMeter(card.defaultMeterKey(), null)
-        .copy(
-          force_due_date = null,
-          force_complied_status = ForceCompliedStatus(
-            complied_date = toWireInstant(Clock.System.now().epochSeconds),
-            // Keyed, so a complied status records which meter it was measured in.
-            complied_meter = MeterReading(
-              meter_key = card.defaultMeterKey(),
-              value_ = currentEngineHours.toDouble(),
-            ),
-          )
-        )
-      inspectionDataManager.updateTask(thingId, skipped)
+      inspectionDataManager.skipCycle(thingId, card, currentEngineHours)
         .onSuccess { onSuccess() }
     }
   }

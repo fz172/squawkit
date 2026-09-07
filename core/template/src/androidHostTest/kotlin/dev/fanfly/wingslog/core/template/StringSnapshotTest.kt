@@ -221,7 +221,7 @@ class StringSnapshotTest {
       "component_type_description"
     ) { it.componentNoun.singular },
     frame(
-      "feature/tasks/update",
+      "feature/tasks/sharedassets",
       "create_work_log"
     ) { LexiconFormatter.titleCase(it.logNoun) },
     frame(
@@ -297,7 +297,10 @@ class StringSnapshotTest {
     // template and one from the app. Each of these reads longer for aviation than it did, because
     // the airplane task noun is "maintenance task": the snapshot rows below record that, and the
     // log detail sheet has rendered "Affected Maintenance Tasks" from the same noun since #656.
-    frame("feature/logs/viewing", "log_task_count_one") { it.taskNoun.singular },
+    frame(
+      "feature/logs/viewing",
+      "log_task_count_one"
+    ) { it.taskNoun.singular },
     "feature/logs/viewing:log_task_count_plural" to { l: Lexicon ->
       mapOf(2 to l.taskNoun.plural)
     },
@@ -348,7 +351,7 @@ class StringSnapshotTest {
       )
     },
     frame(
-      "feature/squawk/update",
+      "feature/squawk/sharedassets",
       "dismiss_squawk_warning"
     ) { it.squawkNoun.singular },
     // Positions 1 and 2 are the count and the member noun, both caller-supplied.

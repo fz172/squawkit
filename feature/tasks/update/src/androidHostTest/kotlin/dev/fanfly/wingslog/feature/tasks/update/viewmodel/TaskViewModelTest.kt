@@ -2,7 +2,6 @@ package dev.fanfly.wingslog.feature.tasks.update.viewmodel
 
 import androidx.lifecycle.SavedStateHandle
 import com.google.common.truth.Truth.assertThat
-import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.template.MeterKeys
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
@@ -315,15 +314,18 @@ class TaskViewModelTest {
       collectJob.cancel()
     }
 
+  /** The skip write lives in TaskDataManager.skipCycle (shared with the dashboard); the form only
+   * closes the menu, forwards the reading, and reports success. */
   @Test
-  fun skipThisCycle_persistsForceCompliedStatusAtCurrentEngineHours_andInvokesOnSuccess() =
+  fun skipThisCycle_delegatesToSkipCycle_closesMenu_andInvokesOnSuccess() =
     runTest(testDispatcher) {
+      val card = MaintenanceTask(id = TEST_CARD_ID, title = "Oil change")
       coEvery {
-        inspectionDataManager.updateTask(TEST_THING_ID, any())
+        inspectionDataManager.skipCycle(TEST_THING_ID, card, 42f)
       } returns Result.success(true)
       val viewModel = buildViewModelForEdit()
       advanceUntilIdle()
-      val card = MaintenanceTask(id = TEST_CARD_ID, title = "Oil change")
+      viewModel.showResolveMenu()
       var succeeded = false
 
       viewModel.skipThisCycle(
@@ -334,55 +336,29 @@ class TaskViewModelTest {
       advanceUntilIdle()
 
       assertThat(succeeded).isTrue()
-      val persisted = slot<MaintenanceTask>()
-      coVerify {
-        inspectionDataManager.updateTask(
-          TEST_THING_ID,
-          capture(persisted)
-        )
-      }
-      val status = persisted.captured.force_complied_status
-      assertThat(status).isNotNull()
-      assertThat(status!!.complied_meter?.value_).isEqualTo(42.0)
-      assertThat(status.complied_date).isNotNull()
+      assertThat(viewModel.formState.value.showResolveMenu).isFalse()
+      coVerify { inspectionDataManager.skipCycle(TEST_THING_ID, card, 42f) }
     }
 
-  /**
-   * TaskDueManager resolves force-due overrides and returns before it reads force-complied
-   * state, so a skip that left an override in place would never move the next due — the user
-   * would see a "cycle skipped" toast and an unchanged due date.
-   */
   @Test
-  fun skipThisCycle_clearsRescheduleOverride() = runTest(testDispatcher) {
-    coEvery {
-      inspectionDataManager.updateTask(TEST_THING_ID, any())
-    } returns Result.success(true)
-    val viewModel = buildViewModelForEdit()
-    advanceUntilIdle()
-    val rescheduled = MaintenanceTask(
-      id = TEST_CARD_ID,
-      title = "Oil change",
-      force_due_date = toWireInstant(1_800_000_000L),
-    )
+  fun skipThisCycle_doesNotInvokeOnSuccess_whenTheWriteFails() =
+    runTest(testDispatcher) {
+      val card = MaintenanceTask(id = TEST_CARD_ID, title = "Oil change")
+      coEvery {
+        inspectionDataManager.skipCycle(TEST_THING_ID, card, 42f)
+      } returns Result.failure(IllegalStateException("offline"))
+      val viewModel = buildViewModelForEdit()
+      advanceUntilIdle()
+      var succeeded = false
 
-    viewModel.skipThisCycle(
-      card = rescheduled,
-      currentEngineHours = 42f,
-      onSuccess = {},
-    )
-    advanceUntilIdle()
+      viewModel.skipThisCycle(
+        card = card,
+        currentEngineHours = 42f,
+        onSuccess = { succeeded = true })
+      advanceUntilIdle()
 
-    val persisted = slot<MaintenanceTask>()
-    coVerify {
-      inspectionDataManager.updateTask(
-        TEST_THING_ID,
-        capture(persisted)
-      )
+      assertThat(succeeded).isFalse()
     }
-    assertThat(persisted.captured.force_due_date).isNull()
-    assertThat(persisted.captured.force_due_meter).isNull()
-    assertThat(persisted.captured.force_complied_status).isNotNull()
-  }
 
   // ---- preview banner due readings (#347) ----
 
@@ -419,7 +395,13 @@ class TaskViewModelTest {
 
       // The form's banner asks for the draft as saved and the draft stripped of overrides; the
       // recorded skip makes those two different dates (#347).
-      assertThat(viewModel.previewDue(skipped)?.nextDueDate).isEqualTo(LocalDate(2026, 11, 30))
+      assertThat(viewModel.previewDue(skipped)?.nextDueDate).isEqualTo(
+        LocalDate(
+          2026,
+          11,
+          30
+        )
+      )
       assertThat(viewModel.previewDue(skipped.withoutOverrides())?.nextDueDate)
         .isEqualTo(LocalDate(2026, 9, 30))
     }
