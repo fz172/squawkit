@@ -18,12 +18,11 @@ import wingslog.feature.squawk.sharedassets.generated.resources.delete_squawk_ti
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 
 /**
- * Confirms deleting the squawk named [title]. The copy says what is kept (the addressing log) and
- * points at Dismiss for a defect that was real: deletion is for entries made in error (PRD R12).
+ * Confirms deleting a squawk. The copy says what is kept (the addressing log) and points at
+ * Dismiss for a defect that was real: deletion is for entries made in error (PRD R12).
  */
 @Composable
 fun DeleteSquawkConfirmDialog(
-  title: String,
   onConfirm: () -> Unit,
   onDismiss: () -> Unit,
 ) {
@@ -35,7 +34,7 @@ fun DeleteSquawkConfirmDialog(
       Text(
         stringResource(
           Res.string.delete_squawk_confirmation,
-          title,
+          lexicon.squawkNoun.singular,
           lexicon.logNoun.singular,
         )
       )

@@ -325,7 +325,6 @@ fun SquawkFormScreen(
 
   if (state.showDeleteDialog) {
     DeleteSquawkConfirmDialog(
-      title = state.initialTitle,
       onConfirm = onDeleteConfirm,
       onDismiss = onDeleteDialogDismiss,
     )

@@ -124,7 +124,7 @@ two most common actions one gesture away without adding chrome to the card.
 
 ### 5.3 Delete
 
-- **R11.** Delete on any card opens a confirmation dialog naming the record. Confirm is red and
+- **R11.** Delete on any card opens a confirmation dialog. Confirm is red and
   labelled *Delete*; cancel closes the reveal too.
 - **R12.** Squawk delete confirmation copy explains what is *not* removed: the addressing log (if
   any) stays, and comments on the squawk are removed. It also nudges toward Dismiss for a defect
@@ -236,7 +236,7 @@ edit form keeps its bottom-bar placement.
 ### 6.3 Squawk delete confirmation
 
 > **Delete squawk?**
-> "Left brake dragging" is removed for everyone with access, along with its comments. The work log
+> This squawk is removed for everyone with access, along with its comments. The work log
 > that addressed it, if any, is kept. Deletion is for entries made in error — if the problem was
 > real but no longer applies, Dismiss it instead. This cannot be undone.
 >
