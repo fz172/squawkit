@@ -5,6 +5,6 @@ import dev.fanfly.wingslog.core.ui.theme.IosAppearanceStore
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
-actual val appearanceStoreModule: Module = module {
+internal actual val platformAppearanceStoreModule: Module = module {
   single<AppearanceStore> { IosAppearanceStore() }
 }

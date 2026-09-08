@@ -9,6 +9,7 @@ import dev.fanfly.wingslog.core.ui.theme.AppearanceController
 import dev.fanfly.wingslog.feature.ads.datamanager.AdConsentManager
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.developeroptions.datamanager.DeveloperOptionsManager
+import dev.fanfly.wingslog.feature.developeroptions.datamanager.di.developerOptionsModule
 import dev.fanfly.wingslog.feature.notifications.datamanager.NotificationPrefsManager
 import dev.fanfly.wingslog.feature.notifications.datamanager.SignOutCoordinator
 import dev.fanfly.wingslog.feature.notifications.permission.NotificationPermission
@@ -18,6 +19,8 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 val settingsModule = module {
+  // Developer Options has no screen of its own; its manager is registered here with the screen.
+  includes(developerOptionsModule)
   viewModel {
     SettingsViewModel(
       get<AuthManager>(),

@@ -6,6 +6,6 @@ import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
-actual val appearanceStoreModule: Module = module {
+internal actual val platformAppearanceStoreModule: Module = module {
   single<AppearanceStore> { AndroidAppearanceStore(androidContext()) }
 }

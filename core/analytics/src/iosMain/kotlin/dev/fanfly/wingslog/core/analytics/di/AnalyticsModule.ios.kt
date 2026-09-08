@@ -9,10 +9,10 @@ import dev.gitlive.firebase.analytics.analytics
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
-actual val platformAnalyticsModule: Module = module {
+internal actual val platformAnalyticsModule: Module = module {
   single<AnalyticsManager> { FirebaseAnalyticsManager(Firebase.analytics) }
 }
 
-actual val analyticsPreferenceStoreModule: Module = module {
+internal actual val platformAnalyticsPreferenceStoreModule: Module = module {
   single<AnalyticsPreferenceStore> { IosAnalyticsPreferenceStore() }
 }

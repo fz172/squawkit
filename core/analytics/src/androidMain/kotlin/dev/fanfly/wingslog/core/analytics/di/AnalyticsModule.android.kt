@@ -14,13 +14,13 @@ import org.koin.dsl.module
 // measurement library merges into the consuming app's manifest at assembly time. This library
 // module has no manifest of its own, so lint can't see them here — suppress the false positive.
 @SuppressLint("MissingPermission")
-actual val platformAnalyticsModule: Module = module {
+internal actual val platformAnalyticsModule: Module = module {
   single<AnalyticsManager> {
     FirebaseAnalyticsManager(FirebaseAnalytics.getInstance(androidContext()))
   }
 }
 
-actual val analyticsPreferenceStoreModule: Module = module {
+internal actual val platformAnalyticsPreferenceStoreModule: Module = module {
   single<AnalyticsPreferenceStore> {
     AndroidAnalyticsPreferenceStore(
       androidContext()

@@ -1,0 +1,15 @@
+package dev.fanfly.wingslog.core.auth.di
+
+import dev.fanfly.wingslog.core.auth.AuthManager
+import dev.fanfly.wingslog.core.auth.AuthManagerImpl
+import dev.fanfly.wingslog.core.lifecycle.CurrentActivityProvider
+import dev.gitlive.firebase.auth.FirebaseAuth
+import org.koin.android.ext.koin.androidContext
+import org.koin.dsl.module
+
+internal actual val platformAuthModule = module {
+  // CurrentActivityProvider itself is registered by core:lifecycle's platformLifecycleModule.
+  single<AuthManager> {
+    AuthManagerImpl(androidContext(), get<FirebaseAuth>(), get<CurrentActivityProvider>())
+  }
+}
