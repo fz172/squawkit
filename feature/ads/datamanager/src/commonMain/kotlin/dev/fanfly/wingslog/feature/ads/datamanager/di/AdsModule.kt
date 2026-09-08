@@ -18,9 +18,9 @@ import org.koin.dsl.module
  *
  * `AdConsentManager`'s binding is `platformAdConsentModule`, registered alongside this one rather
  * than folded in — it needs no collaborator from here, and keeping it separate mirrors
- * `platformBillingModule` sitting next to `subscriptionModule`.
+ * `platformBillingModule` sitting next to `subscriptionDataManagerModule` in `subscriptionModule`.
  */
-val adsModule: Module = module {
+val adsDataManagerModule: Module = module {
   // `single`, not `factory`: the 5-unit cap is one budget shared by all three surfaces. A second
   // instance would be a second budget, silently multiplying a pilot's exposure. It resolves
   // AppForegroundObserver from `lifecycleModule`, registered ahead of this one.
@@ -36,7 +36,7 @@ val adsModule: Module = module {
       counter = get<AdSessionCounter>(),
       appCapability = get<AppCapability>(),
       // Developer Options → Force ads. Same shape as the force-subscription override in
-      // subscriptionModule, so the two dev overrides are wired identically.
+      // subscriptionDataManagerModule, so the two dev overrides are wired identically.
       forceAds = get<DeveloperOptionsManager>().observe()
         .map { it.forceAds },
     )

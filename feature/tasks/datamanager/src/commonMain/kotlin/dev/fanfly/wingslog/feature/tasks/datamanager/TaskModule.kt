@@ -8,7 +8,7 @@ import dev.fanfly.wingslog.feature.tasks.datamanager.impl.TaskDueManagerImpl
 import dev.fanfly.wingslog.feature.tasks.datamanager.impl.TaskStatusManagerImpl
 import org.koin.dsl.module
 
-val tasksModule = module {
+val tasksDataManagerModule = module {
   single<TaskDataManager> {
     TaskDataManagerImpl(
       get<ThingScopeResolver>(),

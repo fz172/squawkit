@@ -17,7 +17,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.map
 import org.koin.dsl.module
 
-val subscriptionModule = module {
+val subscriptionDataManagerModule = module {
   single<EntitlementReconciler> { FirebaseEntitlementReconciler(get<FirebaseFunctions>()) }
 
   single<SubscriptionManager> {

@@ -12,7 +12,7 @@ import dev.gitlive.firebase.firestore.FirebaseFirestore
 import dev.gitlive.firebase.functions.FirebaseFunctions
 import org.koin.dsl.module
 
-val sharingModule = module {
+val sharingDataManagerModule = module {
   single<SharingManager> {
     SharingManagerImpl(
       auth = get<FirebaseAuth>(),

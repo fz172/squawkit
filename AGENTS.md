@@ -130,21 +130,25 @@ feature/
     picker/data/        #   SelectedAircraftStore — the shell's current-aircraft selection
     sharedassets/       #   Strings, drawables shared across fleet UI
     viewing/            #   FleetEmptyState (rendered by the shell)
+    di/                 #   fleetModule
   aircraft/             # Aircraft detail view + aircraft CRUD (not part of fleet/)
     dashboard/          #   AircraftOverviewScreen, 4 tabs (Overview → Squawks → Tasks → Logs),
                         #   AircraftOverviewViewModel, AircraftTab enum
     update/             #   EditAircraftScreen (add/edit), EditAircraftViewModel, Engine/Airframe sections
+    di/                 #   thingModule
   logs/                 # Maintenance logs
     datamanager/        #   MaintenanceLogManager: CRUD for logs and maintenance overview
     sharedassets/       #   Strings, LogPickerSheet, MaintenanceDisplayExtensions
     viewing/            #   MaintenanceLogCard, MaintenanceLogDetailSheet, list ViewModel
     update/             #   MaintenanceLogFormScreen, form ViewModels
+    di/                 #   logsModule
   tasks/                # Inspection compliance (canonical layout — the reference implementation)
     model/              #   DueMetadata, MaintenanceTaskWithStatus, domain enums
     datamanager/        #   TaskDataManager + TaskDueManager, TaskStatusManager (the one due-status flow every screen reads), Koin module
     sharedassets/       #   Strings, drawables
     viewing/            #   TaskCard, TaskDetailSheet
     update/             #   AddTaskScreen, EditTaskScreen, ViewModels, form sections
+    di/                 #   tasksModule
   squawk/               # Defect/discrepancy tracking — Aircraft Overview tab 2
     model/              #   SquawkWithStatus, SquawkStatus (OPEN / ADDRESSED / DISMISSED)
     datamanager/        #   SquawkManager (CRUD + markAddressed + dismiss/reopen) over EntityStore<Squawk>
@@ -152,6 +156,7 @@ feature/
     viewing/            #   SquawkCard, SquawkDetailSheet, SquawkPickerSheet, AogAlertSection
     update/             #   SquawkFormScreen (Details / Comments tabs), DismissSquawkDialog,
                         #   SquawkFormViewModel
+    di/                 #   squawkModule
   search/               # Per-tab search and filter (docs/search/search_filter_design.md, project #11)
     model/              #   RecordFilter, TimeWindow, RecordAdapter, SearchHit — pure Kotlin
     datamanager/        #   SearchEngine (swappable TokenMatcher), LogAdapter
@@ -166,12 +171,14 @@ feature/
     datamanager/        #   TechnicianManager
     manage/             #   Combined list + edit screens and ViewModels
     sharedassets/       #   CertificateInputFields, TechnicianPickerSheet, strings
+    di/                 #   technicianModule
   attachment/           # File/image/link attachments (R2). Upload gated by SubscriptionManager; links free
     model/              #   AttachmentStatus, AttachmentWithState, BlobSyncState, PendingAttachment
     datamanager/        #   AttachmentManager, AttachmentFormController, AttachmentOpener, QuotaChecker,
                         #   platform BlobFilesystem impls (the blob store itself is core:storage/blob)
     sharedassets/       #   Strings, type icons
     viewing/            #   AttachmentRow, AttachmentSection, AttachmentFormSection
+    di/                 #   attachmentModule
   export/               # Logbook export (datamanager + sharedassets + update; no model/viewing)
     datamanager/        #   ExportManager (exportLogs Flow, listExports, delete, retry/resend delivery);
                         #   PDF/CSV/XLSX writers + ZipFileWriter; ExportHistoryRemoteRepository
@@ -179,12 +186,14 @@ feature/
                         #   requestExportDelivery Cloud Function (email delivery)
     sharedassets/       #   Strings for selection / progress / history / delivery
     update/             #   ExportSelectionScreen, ExportHistoryScreen, ViewModels, ExportFileSharer
+    di/                 #   exportModule
   sharing/              # Multi-user aircraft access (GA). See docs/sharing/
     model/              #   ShareRole, AircraftShareState, InviteLink, InvitePreview, RedeemOutcome, InviteCode
     datamanager/        #   SharingManager (+Impl), AircraftScopeResolverImpl, ThingShareDeepLinks
     sharedassets/       #   Shared strings
     viewing/            #   ManageAccessScreen, AccessPanelViews, EnterInviteCodeScreen, RedeemConfirmationSheet
     update/             #   ManageAccessRoute/ViewModel, RedeemHost/ViewModel, LinkSharer (per-platform)
+    di/                 #   sharingModule
   subscription/         # SquawkIt Pro (GA on Android + iOS; gating unconditional, no build flag)
     model/              #   BillingManager interface, SubscriptionResolution (entitlement → effective tier)
     datamanager/        #   SubscriptionManager (the feature gate), SubscriptionManagerImpl,
@@ -193,12 +202,14 @@ feature/
                         #   PaywallHost (per-platform), SubscriptionViewModel
     billing/            #   RevenueCat wrapper — Android + iOS ONLY (no Kotlin/JS variant is published);
                         #   web binds a no-purchase implementation via platformBillingModule
+    di/                 #   subscriptionModule
   ads/                  # Free-tier display ads (GA on Android + iOS; web has no ad product)
     model/              #   AdSlotKey, AdSlots, AdSlotFormat, AdSurface, AdUnitSize, AdConsentState, ListRow
     datamanager/        #   AdsManager + Impl, AdSessionCounter (session cap), AdConsentManager with
                         #   Android UMP / iOS bridge / web no-op actuals
     sharedassets/       #   Strings
     viewing/            #   AdSlot, AdView (AdMob on Android, Swift bridge on iOS, nothing on web)
+    di/                 #   adsModule
   sync/                 # Local-first sync engine — the only entity-path Firestore client
     data/               #   SyncEngine, HydrationRunner, PullListener, PushWorker, PushFailureClassifier,
                         #   SyncCursorStore, SyncPreferences (implements core:storage's CloudSyncSetting),
@@ -209,6 +220,7 @@ feature/
     logging/            #   SyncTelemetry
     settings/           #   SyncSettingsScreen, SyncSettingsViewModel (Cloud Sync + Sync-on-Cellular)
     sharedassets/       #   Sync-related shared strings/drawables
+    di/                 #   syncModule
   developeroptions/     # Runtime developer overrides (replaced the old FeatureLab)
     datamanager/        #   DeveloperOptionsManager, DeveloperFlags, Koin module
                         #   (synced as CollectionKind.DeveloperOptions; UI lives in feature/settings)
@@ -232,7 +244,8 @@ backend/firebase/       # NOT a Gradle module
   storage.rules
 ```
 
-Adding a module means editing `settings.gradle.kts` **and** `core/di/CommonAppModules.kt`.
+Adding a module means editing `settings.gradle.kts` **and** either its feature's `di/` uber module
+or, for a single-module feature, `core/di/CommonAppModules.kt`.
 
 ## Canonical Feature Module Pattern
 
@@ -246,6 +259,8 @@ feature/foobar/
   sharedassets/    # Strings, drawables shared across UI submodules within the feature
   viewing/         # Read-only display composables (cards, detail sheets, alert sections)
   update/          # Add/edit screens, ViewModels, Koin ViewModel module
+  di/              # Uber Koin module: `includes()` every submodule's Koin module (only when the
+                   #   feature has more than one — a single-module feature lists it directly)
 ```
 
 ### Dependency rules (strictly enforced)
@@ -257,6 +272,7 @@ model         →  core:model, kotlinx only
 datamanager   →  :model, core:storage, core:model, Koin, Coroutines (Firebase only where justified)
 viewing       →  :model, :sharedassets, core:ui, core:model
 update        →  :model, :datamanager, :viewing, :sharedassets, core:*
+di            →  every sibling submodule that declares a Koin module, Koin — nothing else
 ```
 
 **Hard rule:** a module must never be added as a dependency of another module solely because it
@@ -273,6 +289,7 @@ logic.
 | Resources | `sharedassets/` | `strings.xml` and drawables used by both `viewing/` and `update/`; may hold small leaf presentation helpers (label mappers, shared input fields) that other features consume without pulling in this feature's UI modules — may depend on `core:ui`/`core:model`, never on another feature |
 | Display | `viewing/` | Stateless composables — cards, list items, detail sheets, alert sections |
 | Edit | `update/` | Screens, routes, `viewmodel/` package with ViewModel + `UiState`, Koin ViewModel module, `compose/` package for form field components |
+| DI | `di/` | One `<Name>Module.kt` whose `<name>Module` bundles the sibling modules with `includes()`; no bindings of its own |
 
 ### Non-canonical exceptions (do not copy these for new features)
 
@@ -296,9 +313,14 @@ logic.
 
 ### Koin modules
 
-Each submodule that provides injectable objects declares its own `*Module.kt`. All modules shared by
-the hosts are aggregated in **`core/di/CommonAppModules.kt`** — add new modules there when creating a
-feature. `composeApp`'s `initKoin.kt` and `webApp`'s `main.kt` are thin wrappers that take that list
+Each submodule that provides injectable objects declares its own `*Module.kt`. A feature with more
+than one such module bundles them in a `feature/<name>/di` uber module (`<name>Module`, e.g.
+`syncModule` includes `syncDataModule` + `syncLoggingModule` + `blobSchedulerModule` +
+`syncSettingsModule`), so **`core/di/CommonAppModules.kt`** lists one entry per feature and
+`core/di/build.gradle.kts` depends on `:feature:<name>:di` alone. A feature with a single module
+(`searchModule`, `commentsModule`) is listed directly — don't add a `di/` submodule for one module.
+Datamanager modules are named `<name>DataManagerModule` so the bare `<name>Module` is free for the
+uber module. `composeApp`'s `initKoin.kt` and `webApp`'s `main.kt` are thin wrappers that take that list
 and add host bootstrap only (`createAppCapability`, `stressTestKoinModules()`, host-only singles like
 the web SQLite worker). The list is kept in one place because it drifted between hosts once before —
 a module registered in one host but not the other fails at *runtime*
@@ -308,7 +330,8 @@ a module registered in one host but not the other fails at *runtime*
 
 1. Create the submodules following the canonical layout.
 2. Register them in `settings.gradle.kts`.
-3. Add the Koin module(s) to `core/di/CommonAppModules.kt`.
+3. Add the feature's Koin module to `core/di/CommonAppModules.kt` — the `di/` uber module when the
+   feature has more than one, and `:feature:<name>:di` to `core/di/build.gradle.kts`.
 4. Add route constants to `core/nav`'s `Screen`, and register routes in `feature/shell`'s nav graph
    (`formDialogs` / `settingsDetailRoutes` / a sibling registrar).
 5. Put user-facing strings in the module's `strings.xml` (see the resource rules below).
@@ -435,7 +458,8 @@ three mechanisms above.
 
 - Central aggregation: `core/di/CommonAppModules.kt` (one list, all hosts); `initKoin.kt`
   (composeApp) and `main.kt` (webApp) add host-only bootstrap.
-- Each module has its own `di/*Module.kt`.
+- Each submodule has its own `di/*Module.kt`; each multi-module feature bundles them in a
+  `feature/<name>/di` uber module (§ Koin modules above).
 - Platform bindings via `androidMain` / `iosMain` / `jsMain` actuals — e.g.
   `platformBillingModule` (RevenueCat vs. no-purchase on web), `platformAdConsentModule` (UMP vs.
   Swift bridge vs. no-op), `platformStorageModule` (SQLite driver per host).

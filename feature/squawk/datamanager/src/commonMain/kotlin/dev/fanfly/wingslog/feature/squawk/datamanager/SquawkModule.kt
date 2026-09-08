@@ -6,7 +6,7 @@ import dev.fanfly.wingslog.feature.comments.datamanager.CommentManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.impl.SquawkManagerImpl
 import org.koin.dsl.module
 
-val squawkModule = module {
+val squawkDataManagerModule = module {
   single<SquawkManager> {
     SquawkManagerImpl(
       get<ThingScopeResolver>(),

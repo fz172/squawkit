@@ -43,7 +43,7 @@ import org.koin.dsl.module
  * depends on `storageModule` for the database + [EntityStoreFactory], and on `commonAuthModule`
  * for [FirebaseAuth].
  */
-val syncModule: Module = module {
+val syncDataModule: Module = module {
 
   single<FirebaseStorage> { Firebase.storage }
 
