@@ -18,6 +18,9 @@ kotlin {
     }
 
     withHostTest {
+      // The Compose layout tests render into a ComponentActivity, which needs the test manifest
+      // and the module's resources merged into the host-test run.
+      isIncludeAndroidResources = true
     }
   }
 
@@ -80,6 +83,11 @@ kotlin {
 dependencies {
   "androidMainImplementation"(platform(libs.firebase.bom))
   "androidHostTestImplementation"(libs.junit)
+  "androidHostTestImplementation"(platform(libs.androidx.compose.bom))
+  "androidHostTestImplementation"(libs.androidx.compose.ui.test.junit4)
+  "androidHostTestImplementation"(libs.androidx.compose.ui.test.manifest)
+  "androidHostTestImplementation"(libs.robolectric)
+  "androidRuntimeClasspath"(libs.androidx.compose.ui.test.manifest)
   "androidHostTestImplementation"(libs.truth)
   "androidHostTestImplementation"(libs.mockk)
   "androidHostTestImplementation"(libs.kotlinx.coroutines.test)

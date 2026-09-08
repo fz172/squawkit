@@ -3,6 +3,7 @@ package dev.fanfly.wingslog.feature.thing.dashboard.compose.tabs
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -472,7 +473,7 @@ private fun RailCard(
 }
 
 @Composable
-private fun RecentLogRow(log: MaintenanceLog, onClick: () -> Unit) {
+internal fun RecentLogRow(log: MaintenanceLog, onClick: () -> Unit) {
   val date = log.timestamp?.toLocalDate()
     ?.toDisplayFormat()
     ?: stringResource(TasksRes.string.unknown_date)
@@ -480,46 +481,69 @@ private fun RecentLogRow(log: MaintenanceLog, onClick: () -> Unit) {
   // across the three aviation hour fields left a car's log — which records an odometer — matching
   // no branch and showing nothing (#761).
   val primary = LocalThingTemplate.current.primaryReading(log)
-  Row(
+  // The pill, the description and the date sit on one baseline, so the words read along a single
+  // line however tall the pill's padding makes it. The Box carries the row's height and centres
+  // that baseline group, which a Row would otherwise pin to the top of the 64.dp minimum.
+  Box(
     modifier = Modifier
       .fillMaxWidth()
       .heightIn(min = 64.dp)
       .clickable(onClick = onClick)
       .padding(vertical = Spacing.small),
-    verticalAlignment = Alignment.CenterVertically,
-    horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
+    contentAlignment = Alignment.CenterStart,
   ) {
-    // Same rule as the log card: the pill names an aviation part, so a home or a car gets none.
-    if (componentTypesApply && log.component_type != ComponentType.COMPONENT_UNKNOWN) {
-      RailComponentTypeBadge(log.component_type)
-    }
-    Text(
-      text = log.work_description,
-      style = MaterialTheme.typography.titleSmall,
-      color = MaterialTheme.colorScheme.onSurface,
-      maxLines = 2,
-      overflow = TextOverflow.Ellipsis,
-      modifier = Modifier.weight(1f),
-    )
-    Column(horizontalAlignment = Alignment.End) {
-      Text(
-        date,
-        style = WingslogTypography.dataSmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant
-      )
-      if (primary != null) {
-        Text(
-          LocalThingTemplate.current.formatMeterValue(
-            primary.first.key,
-            primary.second
-          ),
-          style = WingslogTypography.dataSmall,
-          color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f),
+    Row(
+      modifier = Modifier.fillMaxWidth(),
+      horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
+    ) {
+      // Same rule as the log card: the pill names an aviation part, so a home or a car gets none.
+      if (componentTypesApply && log.component_type != ComponentType.COMPONENT_UNKNOWN) {
+        RailComponentTypeBadge(
+          type = log.component_type,
+          modifier = Modifier.alignByBaseline(),
         )
+      }
+      Text(
+        text = log.work_description.asSummaryLine(),
+        style = MaterialTheme.typography.titleSmall,
+        color = MaterialTheme.colorScheme.onSurface,
+        maxLines = 2,
+        overflow = TextOverflow.Ellipsis,
+        modifier = Modifier.weight(1f)
+          .alignByBaseline(),
+      )
+      Column(
+        horizontalAlignment = Alignment.End,
+        modifier = Modifier.alignByBaseline(),
+      ) {
+        Text(
+          date,
+          style = WingslogTypography.dataSmall,
+          color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        if (primary != null) {
+          Text(
+            LocalThingTemplate.current.formatMeterValue(
+              primary.first.key,
+              primary.second
+            ),
+            style = WingslogTypography.dataSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f),
+          )
+        }
       }
     }
   }
 }
+
+private val WHITESPACE_RUN = Regex("\\s+")
+
+/**
+ * Flattens a stored description to one run of text for the rail rows. A description that ends in a
+ * newline — or wraps a blank line — otherwise renders an empty extra line, making the text taller
+ * than the badge and date beside it, which the row then centres above them.
+ */
+internal fun String.asSummaryLine(): String = replace(WHITESPACE_RUN, " ").trim()
 
 @Composable
 private fun SquawkRailRow(
@@ -570,7 +594,7 @@ private fun SquawkRailRow(
 private val RAIL_BADGE_WIDTH = 88.dp
 
 @Composable
-private fun RailComponentTypeBadge(type: ComponentType) {
+private fun RailComponentTypeBadge(type: ComponentType, modifier: Modifier = Modifier) {
   val (background, content) = when (type) {
     ComponentType.COMPONENT_ENGINE -> MaterialTheme.colorScheme.primaryContainer to MaterialTheme.colorScheme.onPrimaryContainer
     ComponentType.COMPONENT_AIRFRAME -> MaterialTheme.statusColors.positive.container to MaterialTheme.statusColors.positive.onContainer
@@ -581,7 +605,7 @@ private fun RailComponentTypeBadge(type: ComponentType) {
   Surface(
     shape = RoundedCornerShape(Spacing.badgeCornerRadius),
     color = background,
-    modifier = Modifier.width(RAIL_BADGE_WIDTH),
+    modifier = modifier.width(RAIL_BADGE_WIDTH),
   ) {
     Text(
       text = type.displayName()
