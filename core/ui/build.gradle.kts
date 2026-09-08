@@ -22,6 +22,7 @@ kotlin {
     }
 
     withHostTest {
+      isIncludeAndroidResources = true
     }
     withDeviceTest {
       instrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -56,6 +57,10 @@ kotlin {
 dependencies {
   "androidHostTestImplementation"(libs.junit)
   "androidHostTestImplementation"(libs.truth)
+  "androidHostTestImplementation"(platform(libs.androidx.compose.bom))
+  "androidHostTestImplementation"(libs.androidx.compose.ui.test.junit4)
+  "androidHostTestImplementation"(libs.androidx.compose.ui.test.manifest)
+  "androidHostTestImplementation"(libs.robolectric)
   "androidRuntimeClasspath"(libs.androidx.compose.ui.tooling)
   "androidRuntimeClasspath"(libs.androidx.compose.ui.test.manifest)
 }

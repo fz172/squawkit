@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -26,6 +27,7 @@ import dev.fanfly.wingslog.core.analytics.trackScreenViews
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.nav.Screen.Companion.CROSS_SCREEN_SELECT_THING_ID
 import dev.fanfly.wingslog.core.nav.Screen.Companion.CROSS_SCREEN_SUCCESS_MESSAGE
+import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalSnackbarHostState
 import dev.fanfly.wingslog.core.ui.adaptive.AdaptiveAppShell
 import dev.fanfly.wingslog.core.ui.adaptive.ShellSection
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
@@ -178,21 +180,23 @@ fun AdaptiveShellRoute(
     onAddThing = onAddThing,
     onEnterInviteCode = onEnterInviteCode,
     sectionContent = { section, thingId ->
-      if (section == ShellSection.SETTINGS) {
-        SettingsSection(
-          rootNavController = navController,
-          upgradeViewModel = upgradeViewModel,
-          navigationMirror = navigationMirror,
-        )
-      } else {
-        ShellSectionBody(
-          section = section,
-          thingId = thingId,
-          navController = navController,
-          onNavigateToSection = viewModel::selectSection,
-          scrollToRecordId = scrollTargetId,
-          onScrollTargetConsumed = viewModel::consumeScrollTarget,
-        )
+      CompositionLocalProvider(LocalSnackbarHostState provides snackbarHostState) {
+        if (section == ShellSection.SETTINGS) {
+          SettingsSection(
+            rootNavController = navController,
+            upgradeViewModel = upgradeViewModel,
+            navigationMirror = navigationMirror,
+          )
+        } else {
+          ShellSectionBody(
+            section = section,
+            thingId = thingId,
+            navController = navController,
+            onNavigateToSection = viewModel::selectSection,
+            scrollToRecordId = scrollTargetId,
+            onScrollTargetConsumed = viewModel::consumeScrollTarget,
+          )
+        }
       }
     },
     emptyFleetContent = {

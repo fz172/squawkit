@@ -1,10 +1,13 @@
 package dev.fanfly.wingslog.feature.thing.dashboard.data
 
+import dev.fanfly.wingslog.core.ui.common.UiText
+
 sealed interface ThingOverviewEvent {
 
   data object NavigateBack : ThingOverviewEvent
 
-  data class ShowError(val message: String?) : ThingOverviewEvent
+  /** A snackbar for the section to post: a quick action's outcome, or a failure. */
+  data class ShowMessage(val message: UiText) : ThingOverviewEvent
   data class NavigateToEditThing(val thingId: String) :
     ThingOverviewEvent
 
