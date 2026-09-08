@@ -9,10 +9,12 @@ import dev.gitlive.firebase.functions.FirebaseFunctions
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
-expect val authModule: Module
+/** Binds `AuthManager` per host: the Android actual needs the current Activity for sign-in UI. */
+internal expect val platformAuthModule: Module
 
-val commonAuthModule = module {
-  // Multiplatform (GitLive) SDK Instances
+/** The one auth entry `commonAppModules` lists: shared GitLive SDK bindings + the platform actual. */
+val authModule: Module = module {
+  includes(platformAuthModule)
   single<FirebaseAuth> { Firebase.auth }
   single<AccountDeleter> { FirebaseAccountDeleter(get<FirebaseFunctions>()) }
 }

@@ -7,17 +7,18 @@ import org.koin.core.module.Module
 import org.koin.dsl.module
 
 /** Provides `single<AnalyticsManager>` bound to the platform's analytics backend. */
-expect val platformAnalyticsModule: Module
+internal expect val platformAnalyticsModule: Module
 
 /** Provides `single<AnalyticsPreferenceStore>` backed by device-local storage. */
-expect val analyticsPreferenceStoreModule: Module
+internal expect val platformAnalyticsPreferenceStoreModule: Module
 
 /**
- * Eager singleton (`createdAtStart = true`) so the persisted Firebase Logging preference is
- * applied to [dev.fanfly.wingslog.core.analytics.AnalyticsManager] at app launch, not only once
- * Settings is opened.
+ * The one analytics entry `commonAppModules` lists: both platform bindings plus the preference
+ * controller. The controller is eager (`createdAtStart = true`) so the persisted Firebase Logging
+ * preference is applied to [AnalyticsManager] at app launch, not only once Settings is opened.
  */
-val analyticsPreferenceModule = module {
+val analyticsModule: Module = module {
+  includes(platformAnalyticsModule, platformAnalyticsPreferenceStoreModule)
   single(createdAtStart = true) {
     AnalyticsPreferenceController(
       get<AnalyticsPreferenceStore>(),

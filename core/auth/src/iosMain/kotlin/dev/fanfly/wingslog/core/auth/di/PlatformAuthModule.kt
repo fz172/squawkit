@@ -6,6 +6,6 @@ import dev.gitlive.firebase.auth.FirebaseAuth
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
-actual val authModule: Module = module {
+internal actual val platformAuthModule: Module = module {
   single<AuthManager> { AuthManagerImpl(get<FirebaseAuth>()) }
 }

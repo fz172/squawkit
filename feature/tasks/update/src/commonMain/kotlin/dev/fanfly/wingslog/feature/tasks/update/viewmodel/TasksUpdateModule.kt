@@ -17,7 +17,7 @@ import dev.gitlive.firebase.auth.FirebaseAuth
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
-val tasksUiModule = module {
+val tasksUpdateModule = module {
   viewModel<TaskViewModel> {
     TaskViewModel(
       get<TaskDataManager>(),

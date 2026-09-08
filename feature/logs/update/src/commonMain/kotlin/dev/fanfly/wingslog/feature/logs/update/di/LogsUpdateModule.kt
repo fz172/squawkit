@@ -17,7 +17,7 @@ import dev.gitlive.firebase.auth.FirebaseAuth
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
-val maintenanceUpdateModule = module {
+val logsUpdateModule = module {
   viewModel {
     MaintenanceLogFormViewModel(
       logManager = get<MaintenanceLogManager>(),

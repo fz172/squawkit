@@ -1,7 +1,7 @@
 package dev.fanfly.wingslog.feature.sharing.di
 
 import dev.fanfly.wingslog.feature.sharing.datamanager.sharingDataManagerModule
-import dev.fanfly.wingslog.feature.sharing.update.di.sharingUiModule
+import dev.fanfly.wingslog.feature.sharing.update.di.sharingUpdateModule
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
@@ -12,6 +12,6 @@ import org.koin.dsl.module
 val sharingModule: Module = module {
   includes(
     sharingDataManagerModule,
-    sharingUiModule,
+    sharingUpdateModule,
   )
 }

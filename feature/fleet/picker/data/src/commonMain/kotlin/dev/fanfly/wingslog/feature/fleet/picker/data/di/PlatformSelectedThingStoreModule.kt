@@ -8,4 +8,4 @@ import org.koin.core.module.Module
  * the application [android.content.Context] via Koin's `androidContext()`, mirroring the other
  * platform preference stores.
  */
-expect val selectedThingStoreModule: Module
+expect val platformSelectedThingStoreModule: Module

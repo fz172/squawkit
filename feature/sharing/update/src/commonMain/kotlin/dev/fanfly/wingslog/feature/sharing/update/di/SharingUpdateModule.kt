@@ -12,7 +12,7 @@ import org.koin.core.module.Module
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
-val sharingUiModule: Module = module {
+val sharingUpdateModule: Module = module {
   viewModel {
     ManageAccessViewModel(
       sharingManager = get<SharingManager>(),

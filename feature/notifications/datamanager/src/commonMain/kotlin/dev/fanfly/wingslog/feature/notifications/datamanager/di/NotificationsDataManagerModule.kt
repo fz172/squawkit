@@ -13,7 +13,7 @@ import dev.gitlive.firebase.auth.FirebaseAuth
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
-val notificationPrefsModule: Module = module {
+val notificationsDataManagerModule: Module = module {
   single<NotificationPrefsManager> {
     NotificationPrefsManagerImpl(
       firebaseAuth = get<FirebaseAuth>(),

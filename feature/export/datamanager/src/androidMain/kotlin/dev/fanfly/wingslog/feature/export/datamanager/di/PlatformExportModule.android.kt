@@ -5,6 +5,6 @@ import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
-actual val exportPlatformModule: Module = module {
+actual val platformExportModule: Module = module {
   single { ExportFileStore(androidContext()) }
 }

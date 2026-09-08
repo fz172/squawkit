@@ -7,7 +7,7 @@ import dev.gitlive.firebase.auth.FirebaseAuth
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 
-actual val authModule = module {
+internal actual val platformAuthModule = module {
   // CurrentActivityProvider itself is registered by core:lifecycle's platformLifecycleModule.
   single<AuthManager> {
     AuthManagerImpl(androidContext(), get<FirebaseAuth>(), get<CurrentActivityProvider>())

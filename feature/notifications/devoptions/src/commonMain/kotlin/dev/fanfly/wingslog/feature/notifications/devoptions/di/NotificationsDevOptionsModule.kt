@@ -17,7 +17,7 @@ import org.koin.dsl.module
  * has no capability check of its own yet) is what gates visibility, same as any other Developer
  * Options row.
  */
-val notificationDevOptionsModule: Module = module {
+val notificationsDevOptionsModule: Module = module {
   single {
     NotificationDeveloperOptionsExtra(
       permission = get<NotificationPermission>(),

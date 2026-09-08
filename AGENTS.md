@@ -309,18 +309,27 @@ logic.
 - **`feature/subscription/`** — the ViewModel lives in `viewing/` (there is no `update`), plus an
   Android+iOS-only `billing/` submodule because RevenueCat publishes no Kotlin/JS variant.
 - **`feature/developeroptions/`** — `datamanager` only; its one screen lives in `feature/settings`,
-  the same reasoning that kept the old FeatureLab screen there.
+  the same reasoning that kept the old FeatureLab screen there, and `settingsModule` includes its
+  Koin module.
 
 ### Koin modules
 
 Each submodule that provides injectable objects declares its own `*Module.kt`. A feature with more
 than one such module bundles them in a `feature/<name>/di` uber module (`<name>Module`, e.g.
-`syncModule` includes `syncDataModule` + `syncLoggingModule` + `blobSchedulerModule` +
+`syncModule` includes `syncDataModule` + `syncLoggingModule` + `platformBlobSchedulerModule` +
 `syncSettingsModule`), so **`core/di/CommonAppModules.kt`** lists one entry per feature and
 `core/di/build.gradle.kts` depends on `:feature:<name>:di` alone. A feature with a single module
 (`searchModule`, `commentsModule`) is listed directly — don't add a `di/` submodule for one module.
-Datamanager modules are named `<name>DataManagerModule` so the bare `<name>Module` is free for the
-uber module. `composeApp`'s `initKoin.kt` and `webApp`'s `main.kt` are thin wrappers that take that list
+Module names follow one scheme, so `commonAppModules` reads without opening anything:
+`<feature>Module` is the feature's entry (the uber module, or the single module),
+`<feature><Submodule>Module` is a submodule's common module (`tasksDataManagerModule`,
+`logsViewingModule`, `squawkUpdateModule`, `syncDataModule`), and `platform<Binding>Module` is an
+`expect`/`actual` module with one actual per host (`platformAuthModule`, `platformBillingModule`,
+`platformBlobSchedulerModule`). The file is named after its val. A `platform*Module` is
+normally `internal` and reached only through its feature's or core module's bundle — `authModule`
+includes `platformAuthModule`, `analyticsModule` includes both analytics actuals — so
+`commonAppModules` lists no platform module except `platformStorageModule` and
+`platformLifecycleModule`. `composeApp`'s `initKoin.kt` and `webApp`'s `main.kt` are thin wrappers that take that list
 and add host bootstrap only (`createAppCapability`, `stressTestKoinModules()`, host-only singles like
 the web SQLite worker). The list is kept in one place because it drifted between hosts once before —
 a module registered in one host but not the other fails at *runtime*
@@ -460,9 +469,10 @@ three mechanisms above.
   (composeApp) and `main.kt` (webApp) add host-only bootstrap.
 - Each submodule has its own `di/*Module.kt`; each multi-module feature bundles them in a
   `feature/<name>/di` uber module (§ Koin modules above).
-- Platform bindings via `androidMain` / `iosMain` / `jsMain` actuals — e.g.
-  `platformBillingModule` (RevenueCat vs. no-purchase on web), `platformAdConsentModule` (UMP vs.
-  Swift bridge vs. no-op), `platformStorageModule` (SQLite driver per host).
+- Platform bindings via `androidMain` / `iosMain` / `jsMain` actuals, always named
+  `platform<Binding>Module` — e.g. `platformBillingModule` (RevenueCat vs. no-purchase on web),
+  `platformAdConsentModule` (UMP vs. Swift bridge vs. no-op), `platformStorageModule` (SQLite
+  driver per host), `platformAuthModule` (the Android `AuthManager` needs the current Activity).
 
 ### Multiplatform split
 

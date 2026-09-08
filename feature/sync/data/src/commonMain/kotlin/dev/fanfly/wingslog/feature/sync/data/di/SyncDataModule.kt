@@ -40,7 +40,7 @@ import org.koin.dsl.module
 
 /**
  * Wires the [SyncEngine] and its collaborators. Provides the [FirebaseFirestore] singleton itself,
- * depends on `storageModule` for the database + [EntityStoreFactory], and on `commonAuthModule`
+ * depends on `storageModule` for the database + [EntityStoreFactory], and on `authModule`
  * for [FirebaseAuth].
  */
 val syncDataModule: Module = module {

@@ -1,13 +1,13 @@
 package dev.fanfly.wingslog.feature.notifications.di
 
-import dev.fanfly.wingslog.feature.notifications.analytics.di.notificationAnalyticsModule
-import dev.fanfly.wingslog.feature.notifications.datamanager.di.notificationPrefsModule
+import dev.fanfly.wingslog.feature.notifications.analytics.di.notificationsAnalyticsModule
+import dev.fanfly.wingslog.feature.notifications.datamanager.di.notificationsDataManagerModule
 import dev.fanfly.wingslog.feature.notifications.datamanager.di.platformPushTokenModule
-import dev.fanfly.wingslog.feature.notifications.devoptions.di.notificationDevOptionsModule
-import dev.fanfly.wingslog.feature.notifications.engine.di.notificationEngineModule
+import dev.fanfly.wingslog.feature.notifications.devoptions.di.notificationsDevOptionsModule
+import dev.fanfly.wingslog.feature.notifications.engine.di.notificationsEngineModule
 import dev.fanfly.wingslog.feature.notifications.engine.di.platformNotificationEngineModule
 import dev.fanfly.wingslog.feature.notifications.permission.di.platformNotificationPermissionModule
-import dev.fanfly.wingslog.feature.notifications.settings.di.notificationSettingsModule
+import dev.fanfly.wingslog.feature.notifications.settings.di.notificationsSettingsModule
 import dev.fanfly.wingslog.feature.notifications.viewing.di.platformNotificationDisplayModule
 import org.koin.core.module.Module
 import org.koin.dsl.module
@@ -24,14 +24,14 @@ val notificationsModule: Module = module {
   includes(
     platformNotificationPermissionModule,
     platformNotificationDisplayModule,
-    notificationPrefsModule,
+    notificationsDataManagerModule,
     // Android only today — iOS is P5, web is P6 (design §8: web V1 has no push transport at all).
     platformPushTokenModule,
-    notificationSettingsModule,
+    notificationsSettingsModule,
     // Ahead of the engine module: the scanner consumes the telemetry, not the reverse.
-    notificationAnalyticsModule,
-    notificationEngineModule,
+    notificationsAnalyticsModule,
+    notificationsEngineModule,
     platformNotificationEngineModule,
-    notificationDevOptionsModule,
+    notificationsDevOptionsModule,
   )
 }

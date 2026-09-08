@@ -8,7 +8,7 @@ import dev.gitlive.firebase.auth.FirebaseAuth
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
-val notificationSettingsModule = module {
+val notificationsSettingsModule = module {
   viewModel {
     NotificationSettingsViewModel(
       prefsManager = get<NotificationPrefsManager>(),

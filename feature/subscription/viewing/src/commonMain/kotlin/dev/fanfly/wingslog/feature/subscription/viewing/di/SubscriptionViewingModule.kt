@@ -9,7 +9,7 @@ import dev.fanfly.wingslog.feature.subscription.viewing.viewmodel.SubscriptionVi
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
-val subscriptionUiModule = module {
+val subscriptionViewingModule = module {
   viewModel { SubscriptionViewModel(
       subscriptionManager = get<SubscriptionManager>(),
       billingManager = get<BillingManager>(),

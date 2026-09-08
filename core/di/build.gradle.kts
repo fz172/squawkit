@@ -36,7 +36,6 @@ kotlin {
       implementation(project(":feature:ads:di"))
       implementation(project(":feature:attachment:di"))
       implementation(project(":feature:comments:datamanager"))
-      implementation(project(":feature:developeroptions:datamanager"))
       implementation(project(":feature:export:di"))
       implementation(project(":feature:fleet:di"))
       implementation(project(":feature:login"))

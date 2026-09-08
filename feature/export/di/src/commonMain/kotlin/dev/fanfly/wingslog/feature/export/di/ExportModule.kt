@@ -1,8 +1,8 @@
 package dev.fanfly.wingslog.feature.export.di
 
 import dev.fanfly.wingslog.feature.export.datamanager.di.exportDataManagerModule
-import dev.fanfly.wingslog.feature.export.datamanager.di.exportPlatformModule
-import dev.fanfly.wingslog.feature.export.update.viewmodel.exportUiModule
+import dev.fanfly.wingslog.feature.export.datamanager.di.platformExportModule
+import dev.fanfly.wingslog.feature.export.update.viewmodel.exportUpdateModule
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
@@ -13,7 +13,7 @@ import org.koin.dsl.module
 val exportModule: Module = module {
   includes(
     exportDataManagerModule,
-    exportPlatformModule,
-    exportUiModule,
+    platformExportModule,
+    exportUpdateModule,
   )
 }

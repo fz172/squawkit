@@ -17,7 +17,7 @@ feature/<name>/
   datamanager/     # Manager interface + impl/ package + <Name>Module.kt (Koin)
   sharedassets/    # strings.xml and drawables, shared across viewing/ and update/
   viewing/         # Read-only @Composable display (cards, sheets, sections)
-  update/          # Add/edit screens + viewmodel/ package + <Name>UiModule.kt
+  update/          # Add/edit screens + viewmodel/ package + <Name>UpdateModule.kt
   di/              # <Name>Module.kt — uber Koin module bundling the sibling modules with includes()
 ```
 
@@ -47,8 +47,8 @@ Always read these first so you copy the current conventions (namespaces, compile
 - `feature/tasks/update/build.gradle.kts`
 - `feature/tasks/di/build.gradle.kts`
 - `feature/tasks/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/tasks/datamanager/TaskDataManager.kt`
-- `feature/tasks/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/tasks/datamanager/TaskModule.kt`
-- `feature/tasks/update/src/commonMain/kotlin/dev/fanfly/wingslog/feature/tasks/update/viewmodel/TaskUiModule.kt`
+- `feature/tasks/datamanager/src/commonMain/kotlin/dev/fanfly/wingslog/feature/tasks/datamanager/TasksDataManagerModule.kt`
+- `feature/tasks/update/src/commonMain/kotlin/dev/fanfly/wingslog/feature/tasks/update/viewmodel/TasksUpdateModule.kt`
 - `feature/tasks/di/src/commonMain/kotlin/dev/fanfly/wingslog/feature/tasks/di/TasksModule.kt` — the uber-module shape
 
 If the user's feature is more similar to `feature/logs` (no compute layer), read that one too.
@@ -71,8 +71,8 @@ For a feature named `<name>` (lowercase, single word — e.g. `export`, `notific
    - `datamanager/<Name>DataManagerModule.kt` — Koin `val <name>DataManagerModule = module { single<<Name>Manager> { <Name>ManagerImpl(get<ThingScopeResolver>(), get<EntityStoreFactory>()) } }`. The bare `<name>Module` name is reserved for the `di/` uber module.
    - `sharedassets/src/commonMain/composeResources/values/strings.xml` — empty `<resources/>`.
    - `viewing/` and `update/`: create the package directory only, no stub composables. The user will fill these in.
-   - If `update/` is included, also create `update/src/commonMain/kotlin/.../viewmodel/<Name>UiModule.kt` with an empty Koin module.
-   - If the feature has more than one Koin module, create `di/src/commonMain/kotlin/dev/fanfly/wingslog/feature/<name>/di/<Name>Module.kt` with `val <name>Module: Module = module { includes(<name>DataManagerModule, <name>UiModule) }`, copying `feature/tasks/di/build.gradle.kts` for the build file.
+   - If `update/` is included, also create `update/src/commonMain/kotlin/.../viewmodel/<Name>UpdateModule.kt` with an empty Koin module.
+   - If the feature has more than one Koin module, create `di/src/commonMain/kotlin/dev/fanfly/wingslog/feature/<name>/di/<Name>Module.kt` with `val <name>Module: Module = module { includes(<name>DataManagerModule, <name>UpdateModule) }`, copying `feature/tasks/di/build.gradle.kts` for the build file.
 
 4. **Wire into `settings.gradle.kts`**: add `include(":feature:<name>:<submodule>")` lines, keeping them grouped with the other feature modules in file order.
 

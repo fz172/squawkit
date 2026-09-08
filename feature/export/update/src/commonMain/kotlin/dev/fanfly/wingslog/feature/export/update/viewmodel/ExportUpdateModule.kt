@@ -13,7 +13,7 @@ import dev.gitlive.firebase.auth.FirebaseAuth
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
-val exportUiModule = module {
+val exportUpdateModule = module {
   viewModel {
     ExportViewModel(
       exportManager = get<ExportManager>(),

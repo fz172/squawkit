@@ -21,7 +21,7 @@ import dev.gitlive.firebase.auth.FirebaseAuth
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
-val notificationEngineModule: Module = module {
+val notificationsEngineModule: Module = module {
   single { UrgencyWatermarkStore(db = get<WingsLogDatabase>()) }
   single { LastScanStore(db = get<WingsLogDatabase>()) }
   single {

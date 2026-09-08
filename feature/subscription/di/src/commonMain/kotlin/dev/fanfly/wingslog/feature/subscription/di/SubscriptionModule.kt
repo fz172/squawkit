@@ -2,7 +2,7 @@ package dev.fanfly.wingslog.feature.subscription.di
 
 import dev.fanfly.wingslog.feature.subscription.datamanager.di.platformBillingModule
 import dev.fanfly.wingslog.feature.subscription.datamanager.di.subscriptionDataManagerModule
-import dev.fanfly.wingslog.feature.subscription.viewing.di.subscriptionUiModule
+import dev.fanfly.wingslog.feature.subscription.viewing.di.subscriptionViewingModule
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
@@ -15,6 +15,6 @@ val subscriptionModule: Module = module {
     subscriptionDataManagerModule,
     // RevenueCat on Android/iOS; the no-purchase binding on web (see PlatformBillingModule).
     platformBillingModule,
-    subscriptionUiModule,
+    subscriptionViewingModule,
   )
 }

@@ -13,7 +13,7 @@ import dev.gitlive.firebase.auth.FirebaseAuth
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
-val squawkUiModule = module {
+val squawkUpdateModule = module {
   viewModel {
     SquawkFormViewModel(
       squawkManager = get<SquawkManager>(),

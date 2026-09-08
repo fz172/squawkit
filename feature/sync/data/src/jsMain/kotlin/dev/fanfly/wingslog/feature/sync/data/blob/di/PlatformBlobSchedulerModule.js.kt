@@ -27,7 +27,7 @@ import org.koin.dsl.module
  * pending. REMOTE_ONLY rows are downloaded lazily on open (see
  * [UploadScheduler.prefetchRemoteOnly]).
  */
-actual val blobSchedulerModule: Module = module {
+actual val platformBlobSchedulerModule: Module = module {
   single { HttpClient(Js) }
 
   single<AppCheckTokenProvider> { WebAppCheckTokenProvider() }

@@ -1,6 +1,6 @@
 package dev.fanfly.wingslog.feature.sync.di
 
-import dev.fanfly.wingslog.feature.sync.data.blob.di.blobSchedulerModule
+import dev.fanfly.wingslog.feature.sync.data.blob.di.platformBlobSchedulerModule
 import dev.fanfly.wingslog.feature.sync.data.di.syncDataModule
 import dev.fanfly.wingslog.feature.sync.logging.di.syncLoggingModule
 import dev.fanfly.wingslog.feature.sync.settings.di.syncSettingsModule
@@ -15,7 +15,7 @@ val syncModule: Module = module {
   includes(
     syncDataModule,
     syncLoggingModule,
-    blobSchedulerModule,
+    platformBlobSchedulerModule,
     syncSettingsModule,
   )
 }

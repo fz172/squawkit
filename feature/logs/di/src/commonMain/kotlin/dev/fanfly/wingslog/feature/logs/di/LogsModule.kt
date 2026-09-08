@@ -1,8 +1,8 @@
 package dev.fanfly.wingslog.feature.logs.di
 
-import dev.fanfly.wingslog.feature.logs.datamanager.impl.maintenanceDataManagerModule
-import dev.fanfly.wingslog.feature.logs.update.di.maintenanceUpdateModule
-import dev.fanfly.wingslog.feature.logs.viewing.di.maintenanceViewingModule
+import dev.fanfly.wingslog.feature.logs.datamanager.impl.logsDataManagerModule
+import dev.fanfly.wingslog.feature.logs.update.di.logsUpdateModule
+import dev.fanfly.wingslog.feature.logs.viewing.di.logsViewingModule
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
@@ -12,8 +12,8 @@ import org.koin.dsl.module
  */
 val logsModule: Module = module {
   includes(
-    maintenanceDataManagerModule,
-    maintenanceViewingModule,
-    maintenanceUpdateModule,
+    logsDataManagerModule,
+    logsViewingModule,
+    logsUpdateModule,
   )
 }
