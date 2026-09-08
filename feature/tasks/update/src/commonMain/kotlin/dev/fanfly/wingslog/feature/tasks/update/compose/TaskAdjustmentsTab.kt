@@ -38,11 +38,13 @@ import dev.fanfly.wingslog.core.template.meterForComponent
 import dev.fanfly.wingslog.core.ui.common.compose.DestructiveActionCard
 import dev.fanfly.wingslog.core.ui.common.compose.FormSectionLabel
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.core.ui.theme.statusColors
 import dev.fanfly.wingslog.feature.tasks.datamanager.pickerMillisToDate
 import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
 import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.MeterDef
 import org.jetbrains.compose.resources.stringResource
+import wingslog.core.sharedassets.generated.resources.danger_zone
 import wingslog.core.sharedassets.generated.resources.select_date
 import wingslog.feature.tasks.update.generated.resources.Res
 import wingslog.feature.tasks.update.generated.resources.adj_reschedule_disabled_linked
@@ -53,7 +55,6 @@ import wingslog.feature.tasks.update.generated.resources.adj_reschedule_subtitle
 import wingslog.feature.tasks.update.generated.resources.adj_reschedule_title
 import wingslog.feature.tasks.update.generated.resources.adj_reschedule_was_date
 import wingslog.feature.tasks.update.generated.resources.adj_reschedule_was_hours
-import wingslog.feature.tasks.update.generated.resources.delete_task_section_label
 import wingslog.feature.tasks.update.generated.resources.delete_this_task_subtitle
 import wingslog.feature.tasks.update.generated.resources.delete_this_task_title
 import wingslog.feature.tasks.update.generated.resources.schedule_unit_tach_hours
@@ -141,10 +142,10 @@ fun TaskAdjustmentsTab(
     )
 
     // Delete task — kept separate from the Resolve menu (Create Work Log / Skip This Cycle)
-    // since deletion has no squawk-resolve analog.
-    AdjSectionLabel(
-      label = stringResource(Res.string.delete_task_section_label),
-      complete = false,
+    // since deletion has no squawk-resolve analog. Same red header as the squawk form.
+    FormSectionLabel(
+      text = stringResource(CoreRes.string.danger_zone),
+      color = MaterialTheme.statusColors.critical.accent,
     )
     DestructiveActionCard(
       icon = Icons.Default.Delete,

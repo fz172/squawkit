@@ -264,23 +264,30 @@ fun SquawkFormScreen(
                 // both forward steps (PRD R19). Edit only — there is nothing to delete yet.
                 if (isEdit) {
                   // A red header separates this from the attachment list just above it, so
-                  // "delete" cannot be read as deleting an attachment.
-                  FormSectionLabel(
-                    text = stringResource(CoreRes.string.danger_zone),
-                    color = MaterialTheme.statusColors.critical.accent,
-                  )
-                  DestructiveActionCard(
-                    icon = Icons.Default.Delete,
-                    title = stringResource(
-                      Res.string.delete_this_squawk_title,
-                      squawk.singular
-                    ),
-                    subtitle = stringResource(
-                      Res.string.delete_this_squawk_subtitle,
-                      LexiconFormatter.sentenceCasePlural(LocalThingLexicon.current.logNoun),
-                    ),
-                    onClick = onDeleteClick,
-                  )
+                  // "delete" cannot be read as deleting an attachment. Header and card are one
+                  // section (label-to-content gap like the others), set off from the attachments
+                  // by the task tab's wider section gap.
+                  Column(
+                    modifier = Modifier.padding(top = Spacing.small),
+                    verticalArrangement = Arrangement.spacedBy(Spacing.small),
+                  ) {
+                    FormSectionLabel(
+                      text = stringResource(CoreRes.string.danger_zone),
+                      color = MaterialTheme.statusColors.critical.accent,
+                    )
+                    DestructiveActionCard(
+                      icon = Icons.Default.Delete,
+                      title = stringResource(
+                        Res.string.delete_this_squawk_title,
+                        squawk.singular
+                      ),
+                      subtitle = stringResource(
+                        Res.string.delete_this_squawk_subtitle,
+                        LexiconFormatter.sentenceCasePlural(LocalThingLexicon.current.logNoun),
+                      ),
+                      onClick = onDeleteClick,
+                    )
+                  }
                 }
               }
 

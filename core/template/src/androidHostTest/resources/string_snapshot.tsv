@@ -720,7 +720,6 @@ feature/tasks/update	compliance_type_description	Regulatory nature of this task.
 feature/tasks/update	compliance_type_routine	Routine Tasks
 feature/tasks/update	compliance_type_routine_short	Routine
 feature/tasks/update	component_type_description	Select the primary system or component this task pertains to for accurate log grouping.
-feature/tasks/update	delete_task_section_label	Delete Task
 feature/tasks/update	delete_this_task_subtitle	Permanently removes this task and its maintenance schedule.
 feature/tasks/update	delete_this_task_title	Delete this task
 feature/tasks/update	no_log_history	No work logs recorded for this maintenance task.
