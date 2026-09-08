@@ -184,7 +184,8 @@ class ThingOverviewViewModel(
             )
           }
 
-          val active = cardsWithStatus.filter { it.dueStatus.status != DueStatus.COMPLIED }
+          val active =
+            cardsWithStatus.filter { it.dueStatus.status != DueStatus.COMPLIED }
           val complied =
             cardsWithStatus.filter { it.dueStatus.status == DueStatus.COMPLIED }
 
