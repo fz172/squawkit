@@ -5,6 +5,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.fanfly.wingslog.core.analytics.AnalyticsManager
 import dev.fanfly.wingslog.core.analytics.DefectCreated
+import dev.fanfly.wingslog.core.analytics.QuickActionKind
+import dev.fanfly.wingslog.core.analytics.QuickActionSource
+import dev.fanfly.wingslog.core.analytics.QuickActionSurface
+import dev.fanfly.wingslog.core.analytics.RecordQuickAction
 import dev.fanfly.wingslog.core.analytics.log
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.datetime.toLocalDate
@@ -49,6 +53,8 @@ import wingslog.feature.attachment.sharedassets.generated.resources.duplicate_fi
 import wingslog.feature.attachment.sharedassets.generated.resources.file_too_large
 import wingslog.feature.attachment.sharedassets.generated.resources.files_over_limit_skipped
 import kotlin.time.Clock
+import wingslog.core.sharedassets.generated.resources.delete_failed
+import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.attachment.sharedassets.generated.resources.Res as AttachRes
 import wingslog.feature.comments.sharedassets.generated.resources.Res as CommentsRes
 
@@ -69,6 +75,7 @@ data class SquawkFormState(
   val showLogPicker: Boolean = false,
   val showResolveMenu: Boolean = false,
   val showDismissDialog: Boolean = false,
+  val showDeleteDialog: Boolean = false,
   val isDismissing: Boolean = false,
   val dismissReason: SquawkDismissReason = SquawkDismissReason.SQUAWK_DISMISS_REASON_UNKNOWN,
   val dismissedAtFormatted: String = "",
@@ -351,7 +358,10 @@ class SquawkFormViewModel(
     _state.update { it.copy(showDismissDialog = false, isDismissing = true) }
     viewModelScope.launch {
       squawkManager.dismissSquawk(thingId, squawkId, reason)
-        .onSuccess { _events.send(SquawkFormEvent.SaveSuccess(onSuccessMessage)) }
+        .onSuccess {
+          logQuickAction(QuickActionKind.RESOLVE)
+          _events.send(SquawkFormEvent.SaveSuccess(onSuccessMessage))
+        }
       _state.update { it.copy(isDismissing = false) }
     }
   }
@@ -363,10 +373,45 @@ class SquawkFormViewModel(
     // the first call flips showResolveMenu synchronously, so a second call sees it already false.
     if (!current.showResolveMenu) return
     _state.update { it.copy(showResolveMenu = false) }
+    logQuickAction(QuickActionKind.RESOLVE)
     viewModelScope.launch {
       _events.send(SquawkFormEvent.NavigateToCreateLog(thingId, squawkId))
     }
   }
+
+  fun showDeleteDialog() = _state.update { it.copy(showDeleteDialog = true) }
+
+  fun hideDeleteDialog() = _state.update { it.copy(showDeleteDialog = false) }
+
+  /**
+   * Deletes the squawk as last saved, comments and attachments with it. Goes through the manager
+   * and nothing lower: the synced tombstone is what fans out the collaborator notification
+   * (design §8). Any comment draft is discarded with the record.
+   */
+  fun delete(onSuccessMessage: String) {
+    val squawkId = _state.value.squawkId ?: return
+    _state.update { it.copy(showDeleteDialog = false) }
+    viewModelScope.launch {
+      attachmentForm.deleteSavedFiles()
+      squawkManager.deleteSquawk(thingId, squawkId)
+        .onSuccess {
+          logQuickAction(QuickActionKind.DELETE)
+          _events.send(SquawkFormEvent.SaveSuccess(onSuccessMessage))
+        }
+        .onFailure {
+          _state.update { it.copy(error = UiText.StringRes(CoreRes.string.delete_failed)) }
+        }
+    }
+  }
+
+  private fun logQuickAction(action: QuickActionKind) = analytics.log(
+    RecordQuickAction(
+      templateId = currentThingTemplate.templateId,
+      surface = QuickActionSurface.SQUAWKS,
+      action = action,
+      source = QuickActionSource.FORM,
+    )
+  )
 
   fun onBack() {
     viewModelScope.launch { _events.send(SquawkFormEvent.NavigateBack) }

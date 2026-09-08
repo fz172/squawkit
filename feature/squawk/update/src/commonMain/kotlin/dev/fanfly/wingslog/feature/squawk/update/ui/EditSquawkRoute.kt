@@ -21,6 +21,7 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.feature.attachment.sharedassets.generated.resources.file_read_error
 import wingslog.feature.squawk.sharedassets.generated.resources.Res
+import wingslog.feature.squawk.sharedassets.generated.resources.squawk_deleted
 import wingslog.feature.squawk.sharedassets.generated.resources.squawk_dismissed
 import wingslog.feature.squawk.sharedassets.generated.resources.squawk_reopened
 import wingslog.feature.squawk.sharedassets.generated.resources.squawk_updated
@@ -40,6 +41,7 @@ fun EditSquawkRoute(
   val successMessage = stringResource(Res.string.squawk_updated, squawkWord)
   val dismissedMessage = stringResource(Res.string.squawk_dismissed, squawkWord)
   val reopenedMessage = stringResource(Res.string.squawk_reopened, squawkWord)
+  val deletedMessage = stringResource(Res.string.squawk_deleted, squawkWord)
   val fileReadErrorMessage = stringResource(AttachRes.string.file_read_error)
   val snackbarHostState = remember { SnackbarHostState() }
 
@@ -102,6 +104,9 @@ fun EditSquawkRoute(
       )
     },
     onReopenClick = { viewModel.reopen(reopenedMessage) },
+    onDeleteClick = viewModel::showDeleteDialog,
+    onDeleteConfirm = { viewModel.delete(deletedMessage) },
+    onDeleteDialogDismiss = viewModel::hideDeleteDialog,
     attachmentSection = {
       AttachmentFormSection(
         visibleAttachments = pendingAttachments.visible(),

@@ -242,3 +242,44 @@ data class RecordSearch(
     }
   }
 }
+
+// ---------------------------------------------------------------------------------------------
+// Card quick actions (design §11). Fired at commit — after a confirmation, on a bubble selection —
+// so a cancelled dialog logs nothing. The swipe-vs-form split is how PRD §7 reads discoverability.
+// ---------------------------------------------------------------------------------------------
+
+/** Which list the record belongs to. */
+enum class QuickActionSurface(val wire: String) {
+  SQUAWKS("squawks"),
+  TASKS("tasks"),
+  LOGS("logs"),
+}
+
+/** What the user did. Resolve covers Fixed / Dismiss on a squawk and Create work log on a task. */
+enum class QuickActionKind(val wire: String) {
+  RESOLVE("resolve"),
+  SKIP("skip"),
+  DELETE("delete"),
+}
+
+/** Where the action was taken from. */
+enum class QuickActionSource(val wire: String) {
+  SWIPE("swipe"),
+  FORM("form"),
+}
+
+/** A resolve, skip, or delete committed on a squawk, task, or log. */
+data class RecordQuickAction(
+  override val templateId: String,
+  val surface: QuickActionSurface,
+  val action: QuickActionKind,
+  val source: QuickActionSource,
+) : ThingScopedEvent {
+  override val name = Name.RECORD_QUICK_ACTION
+  override val params = mapOf(
+    Param.TEMPLATE_ID to templateId,
+    Param.SURFACE to surface.wire,
+    Param.ACTION to action.wire,
+    Param.SOURCE to source.wire,
+  )
+}

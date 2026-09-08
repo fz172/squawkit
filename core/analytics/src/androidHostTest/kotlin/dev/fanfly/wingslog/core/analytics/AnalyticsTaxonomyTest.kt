@@ -164,6 +164,12 @@ class AnalyticsTaxonomyTest {
       DefectCreated(templateId = "airplane"),
       LogCreated(templateId = "airplane"),
       ExportCompleted(templateId = "airplane", format = "pdf", thingCount = 2),
+      RecordQuickAction(
+        templateId = "airplane",
+        surface = QuickActionSurface.SQUAWKS,
+        action = QuickActionKind.DELETE,
+        source = QuickActionSource.FORM,
+      ),
     )
 
     events.forEach { event ->

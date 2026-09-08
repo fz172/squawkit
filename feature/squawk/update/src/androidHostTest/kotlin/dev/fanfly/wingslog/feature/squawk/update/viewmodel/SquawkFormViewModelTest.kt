@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.feature.squawk.update.viewmodel
 
 import dev.fanfly.wingslog.core.template.CurrentThingTemplate
+import dev.fanfly.wingslog.core.analytics.AnalyticsManager
 import dev.fanfly.wingslog.core.analytics.NoOpAnalyticsManager
 import androidx.lifecycle.SavedStateHandle
 import com.google.common.truth.Truth.assertThat
@@ -22,10 +23,12 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
+import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -261,6 +264,65 @@ class SquawkFormViewModelTest {
       // No squawkId means selectFixed returns early before hiding the menu or emitting.
       assertThat(viewModel.state.value.showResolveMenu).isFalse()
     }
+
+  // ---- delete ----
+
+  @Test
+  fun delete_callsDeleteSquawk_andEmitsSaveSuccess() = runTest(testDispatcher) {
+    coEvery { squawkManager.deleteSquawk(any(), any()) } returns Result.success(true)
+    val viewModel = buildViewModelForEdit()
+    viewModel.showDeleteDialog()
+
+    viewModel.delete("Squawk deleted")
+    val event = viewModel.events.first()
+
+    assertThat(viewModel.state.value.showDeleteDialog).isFalse()
+    coVerify { squawkManager.deleteSquawk(TEST_THING_ID, TEST_SQUAWK_ID) }
+    assertThat(event).isEqualTo(SquawkFormEvent.SaveSuccess("Squawk deleted"))
+  }
+
+  @Test
+  fun delete_onFailure_surfacesDeleteFailed_andStaysOnTheForm() = runTest(testDispatcher) {
+    coEvery { squawkManager.deleteSquawk(any(), any()) } returns
+      Result.failure(IllegalStateException("offline"))
+    val viewModel = buildViewModelForEdit()
+    val events = mutableListOf<SquawkFormEvent>()
+    val collecting = launch { viewModel.events.collect { events.add(it) } }
+
+    viewModel.delete("Squawk deleted")
+    advanceUntilIdle()
+
+    assertThat(events).isEmpty()
+    assertThat(viewModel.state.value.error).isNotNull()
+    collecting.cancel()
+  }
+
+  @Test
+  fun delete_withNoSquawkId_doesNotCallManager() = runTest(testDispatcher) {
+    val viewModel = buildViewModelForNew()
+
+    viewModel.delete("Squawk deleted")
+
+    coVerify(exactly = 0) { squawkManager.deleteSquawk(any(), any()) }
+  }
+
+  /** The form baseline for PRD §7: the swipe share only means something against form commits. */
+  @Test
+  fun delete_onSuccess_logsRecordQuickActionFromTheForm() = runTest(testDispatcher) {
+    coEvery { squawkManager.deleteSquawk(any(), any()) } returns Result.success(true)
+    val analytics = mockk<AnalyticsManager>(relaxed = true)
+    val viewModel = buildViewModelForEdit(analytics)
+
+    viewModel.delete("Squawk deleted")
+    advanceUntilIdle()
+
+    verify {
+      analytics.logEvent(
+        "record_quick_action",
+        match { it["surface"] == "squawks" && it["action"] == "delete" && it["source"] == "form" },
+      )
+    }
+  }
 
   // ---- reopen — success ----
 
@@ -547,11 +609,13 @@ class SquawkFormViewModelTest {
     }
   }
 
-  private fun buildViewModelForEdit(): SquawkFormViewModel =
+  private fun buildViewModelForEdit(
+    analytics: AnalyticsManager = NoOpAnalyticsManager,
+  ): SquawkFormViewModel =
     SquawkFormViewModel(
       squawkManager = squawkManager,
       currentThingTemplate = mockk<CurrentThingTemplate>(relaxed = true),
-      analytics = NoOpAnalyticsManager,
+      analytics = analytics,
       attachmentManager = attachmentManager,
       commentManager = commentManager,
       logManager = logManager,

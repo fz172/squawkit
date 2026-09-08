@@ -5,6 +5,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.fanfly.wingslog.core.analytics.AnalyticsManager
 import dev.fanfly.wingslog.core.analytics.LogCreated
+import dev.fanfly.wingslog.core.analytics.QuickActionKind
+import dev.fanfly.wingslog.core.analytics.QuickActionSource
+import dev.fanfly.wingslog.core.analytics.QuickActionSurface
+import dev.fanfly.wingslog.core.analytics.RecordQuickAction
 import dev.fanfly.wingslog.core.analytics.TaskCompleted
 import dev.fanfly.wingslog.core.analytics.log
 import dev.fanfly.wingslog.core.datetime.toWireInstant
@@ -673,7 +677,17 @@ class MaintenanceLogFormViewModel(
         thingId,
         id
       )
-        .onSuccess { _events.send(MaintenanceLogFormEvent.DeleteSuccess) }
+        .onSuccess {
+          analytics.log(
+            RecordQuickAction(
+              templateId = currentThingTemplate.templateId,
+              surface = QuickActionSurface.LOGS,
+              action = QuickActionKind.DELETE,
+              source = QuickActionSource.FORM,
+            )
+          )
+          _events.send(MaintenanceLogFormEvent.DeleteSuccess)
+        }
         .onFailure { e ->
           _uiState.update {
             it.copy(error = e.message?.let { UiText.DynamicString(it) }

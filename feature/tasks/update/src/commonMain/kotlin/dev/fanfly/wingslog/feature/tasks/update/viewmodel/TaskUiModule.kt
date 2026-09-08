@@ -2,6 +2,7 @@ package dev.fanfly.wingslog.feature.tasks.update.viewmodel
 
 import androidx.lifecycle.SavedStateHandle
 import dev.fanfly.wingslog.core.analytics.AnalyticsManager
+import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.comments.datamanager.CommentManager
@@ -27,6 +28,8 @@ val tasksUiModule = module {
       get<SubscriptionManager>(),
       get<SharingManager>(),
       get<TaskDueManager>(),
+      get<AnalyticsManager>(),
+      get<CurrentThingTemplate>(),
       get<SavedStateHandle>(),
     )
   }

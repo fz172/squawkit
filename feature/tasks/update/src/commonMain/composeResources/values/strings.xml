@@ -120,7 +120,6 @@
   <string name="initial_due_subtitle">Leave it empty and the first due is counted from today or the current reading. The schedule takes over after the first log.</string>
 
   <!-- Adjustments tab — delete task section -->
-  <string name="delete_task_section_label">Delete Task</string>
   <string name="delete_this_task_title">Delete this task</string>
   <string name="delete_this_task_subtitle">Permanently removes this task and its maintenance schedule.</string>
 

@@ -62,6 +62,9 @@ sealed interface AnalyticsEvent {
     // --- Search and filter (docs/search/search_filter_design.md §7) ---
     RECORD_FILTER_APPLIED("record_filter_applied"),
     RECORD_SEARCH("record_search"),
+
+    // --- Card quick actions (docs/cards/card_swipe_actions_design.md §11) ---
+    RECORD_QUICK_ACTION("record_quick_action"),
     ;
   }
 
@@ -99,6 +102,9 @@ sealed interface AnalyticsEvent {
     QUERY_LEN("query_len"),
     RESULTS("results"),
     EXPLAINED("explained"),
+
+    // --- Card quick actions ---
+    ACTION("action"),
     ;
   }
 }

@@ -14,6 +14,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -39,12 +40,16 @@ import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import dev.fanfly.wingslog.core.analytics.LocalAnalytics
+import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.logNoun
 import dev.fanfly.wingslog.core.template.squawkNoun
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedTopBar
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
 import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
+import dev.fanfly.wingslog.core.ui.common.compose.DestructiveActionCard
+import dev.fanfly.wingslog.core.ui.common.compose.FormSectionLabel
 import dev.fanfly.wingslog.core.ui.common.compose.UnsavedChangesDialog
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.statusColors
@@ -55,17 +60,22 @@ import dev.fanfly.wingslog.feature.squawk.update.compose.SquawkFormTab
 import dev.fanfly.wingslog.feature.squawk.update.compose.SquawkTabRow
 import dev.fanfly.wingslog.feature.squawk.update.compose.squawkFormTabsFor
 import dev.fanfly.wingslog.feature.squawk.update.viewmodel.SquawkFormState
+import dev.fanfly.wingslog.feature.squawk.viewing.DeleteSquawkConfirmDialog
 import dev.fanfly.wingslog.feature.squawk.viewing.DismissSquawkDialog
 import dev.fanfly.wingslog.feature.squawk.viewing.ResolveOptionsMenu
 import dev.fanfly.wingslog.thing.SquawkDismissReason
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
+import wingslog.core.sharedassets.generated.resources.danger_zone
 import wingslog.feature.squawk.sharedassets.generated.resources.Res
 import wingslog.feature.squawk.sharedassets.generated.resources.add_squawk
+import wingslog.feature.squawk.sharedassets.generated.resources.delete_this_squawk_subtitle
+import wingslog.feature.squawk.sharedassets.generated.resources.delete_this_squawk_title
 import wingslog.feature.squawk.sharedassets.generated.resources.edit_squawk
 import wingslog.feature.squawk.update.generated.resources.reopen_issue
 import wingslog.feature.squawk.update.generated.resources.resolve_issue
+import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.squawk.update.generated.resources.Res as UpdateRes
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
@@ -88,6 +98,9 @@ fun SquawkFormScreen(
   onDismissDialogDismiss: () -> Unit,
   onDismissConfirm: (SquawkDismissReason) -> Unit,
   onReopenClick: () -> Unit,
+  onDeleteClick: () -> Unit,
+  onDeleteConfirm: () -> Unit,
+  onDeleteDialogDismiss: () -> Unit,
   modifier: Modifier = Modifier,
   snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
   attachmentSection: @Composable () -> Unit = {},
@@ -246,6 +259,36 @@ fun SquawkFormScreen(
                   dismissedAtFormatted = state.dismissedAtFormatted,
                   attachmentSection = attachmentSection,
                 )
+
+                // Delete lives here, not in the bottom bar: the danger slot is Resolve / Reopen,
+                // both forward steps (PRD R19). Edit only — there is nothing to delete yet.
+                if (isEdit) {
+                  // A red header separates this from the attachment list just above it, so
+                  // "delete" cannot be read as deleting an attachment. Header and card are one
+                  // section (label-to-content gap like the others), set off from the attachments
+                  // by the task tab's wider section gap.
+                  Column(
+                    modifier = Modifier.padding(top = Spacing.small),
+                    verticalArrangement = Arrangement.spacedBy(Spacing.small),
+                  ) {
+                    FormSectionLabel(
+                      text = stringResource(CoreRes.string.danger_zone),
+                      color = MaterialTheme.statusColors.critical.accent,
+                    )
+                    DestructiveActionCard(
+                      icon = Icons.Default.Delete,
+                      title = stringResource(
+                        Res.string.delete_this_squawk_title,
+                        squawk.singular
+                      ),
+                      subtitle = stringResource(
+                        Res.string.delete_this_squawk_subtitle,
+                        LexiconFormatter.sentenceCasePlural(LocalThingLexicon.current.logNoun),
+                      ),
+                      onClick = onDeleteClick,
+                    )
+                  }
+                }
               }
 
               SquawkFormTab.COMMENTS -> commentsSection()
@@ -296,6 +339,13 @@ fun SquawkFormScreen(
     DismissSquawkDialog(
       onConfirm = onDismissConfirm,
       onDismiss = onDismissDialogDismiss,
+    )
+  }
+
+  if (state.showDeleteDialog) {
+    DeleteSquawkConfirmDialog(
+      onConfirm = onDeleteConfirm,
+      onDismiss = onDeleteDialogDismiss,
     )
   }
 }

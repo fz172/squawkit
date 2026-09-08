@@ -720,7 +720,6 @@ feature/tasks/update	compliance_type_description	Regulatory nature of this task.
 feature/tasks/update	compliance_type_routine	Routine Tasks
 feature/tasks/update	compliance_type_routine_short	Routine
 feature/tasks/update	component_type_description	Select the primary system or component this task pertains to for accurate log grouping.
-feature/tasks/update	delete_task_section_label	Delete Task
 feature/tasks/update	delete_this_task_subtitle	Permanently removes this task and its maintenance schedule.
 feature/tasks/update	delete_this_task_title	Delete this task
 feature/tasks/update	no_log_history	No work logs recorded for this maintenance task.
@@ -923,3 +922,9 @@ feature/search/sharedassets	period_last_3_months	Last 3 months
 feature/search/sharedassets	record_count_one	1 %1$s
 feature/search/sharedassets	record_count_other	%1$d %2$s
 feature/search/sharedassets	search_placeholder	Search…
+feature/squawk/sharedassets	delete_squawk_confirmation	This %1$s is removed for everyone with access, along with its comments. The %2$s that addressed it, if any, is kept. Deletion is for entries made in error — if the problem was real but no longer applies, dismiss it instead. This cannot be undone.
+feature/squawk/sharedassets	delete_squawk_title	Delete %1$s?
+feature/squawk/sharedassets	delete_this_squawk_subtitle	Permanently removes it and its comments. %1$s are kept.
+feature/squawk/sharedassets	delete_this_squawk_title	Delete this %1$s
+feature/squawk/sharedassets	squawk_deleted	%1$s deleted
+core/sharedassets	danger_zone	Danger Zone

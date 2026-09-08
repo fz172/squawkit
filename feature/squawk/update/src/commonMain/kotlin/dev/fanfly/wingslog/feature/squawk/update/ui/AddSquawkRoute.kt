@@ -86,6 +86,9 @@ fun AddSquawkRoute(
     onDismissDialogDismiss = {},
     onDismissConfirm = {},
     onReopenClick = {},
+    onDeleteClick = {},
+    onDeleteConfirm = {},
+    onDeleteDialogDismiss = {},
     attachmentSection = {
       AttachmentFormSection(
         visibleAttachments = pendingAttachments.visible(),
