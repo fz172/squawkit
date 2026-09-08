@@ -49,6 +49,7 @@ import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
 import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
 import dev.fanfly.wingslog.core.ui.common.compose.DestructiveActionCard
+import dev.fanfly.wingslog.core.ui.common.compose.FormSectionLabel
 import dev.fanfly.wingslog.core.ui.common.compose.UnsavedChangesDialog
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.statusColors
@@ -66,6 +67,7 @@ import dev.fanfly.wingslog.thing.SquawkDismissReason
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
+import wingslog.core.sharedassets.generated.resources.danger_zone
 import wingslog.feature.squawk.sharedassets.generated.resources.Res
 import wingslog.feature.squawk.sharedassets.generated.resources.add_squawk
 import wingslog.feature.squawk.sharedassets.generated.resources.delete_this_squawk_subtitle
@@ -73,6 +75,7 @@ import wingslog.feature.squawk.sharedassets.generated.resources.delete_this_squa
 import wingslog.feature.squawk.sharedassets.generated.resources.edit_squawk
 import wingslog.feature.squawk.update.generated.resources.reopen_issue
 import wingslog.feature.squawk.update.generated.resources.resolve_issue
+import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.squawk.update.generated.resources.Res as UpdateRes
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
@@ -260,9 +263,18 @@ fun SquawkFormScreen(
                 // Delete lives here, not in the bottom bar: the danger slot is Resolve / Reopen,
                 // both forward steps (PRD R19). Edit only — there is nothing to delete yet.
                 if (isEdit) {
+                  // A red header separates this from the attachment list just above it, so
+                  // "delete" cannot be read as deleting an attachment.
+                  FormSectionLabel(
+                    text = stringResource(CoreRes.string.danger_zone),
+                    color = MaterialTheme.statusColors.critical.accent,
+                  )
                   DestructiveActionCard(
                     icon = Icons.Default.Delete,
-                    title = stringResource(Res.string.delete_this_squawk_title, squawk.singular),
+                    title = stringResource(
+                      Res.string.delete_this_squawk_title,
+                      squawk.singular
+                    ),
                     subtitle = stringResource(
                       Res.string.delete_this_squawk_subtitle,
                       LexiconFormatter.sentenceCasePlural(LocalThingLexicon.current.logNoun),

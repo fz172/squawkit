@@ -19,6 +19,7 @@
   <string name="empty_add_thing">Add <xliff:g example="aircraft">%1$s</xliff:g> to get started</string>
   <string name="remove">Remove</string>
   <string name="delete">Delete</string>
+  <string name="danger_zone">Danger Zone</string>
   <string name="done">Done</string>
   <string name="continue_action">Continue</string>
   <string name="ok">OK</string>

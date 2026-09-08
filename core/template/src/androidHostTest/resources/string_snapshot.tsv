@@ -928,3 +928,4 @@ feature/squawk/sharedassets	delete_squawk_title	Delete %1$s?
 feature/squawk/sharedassets	delete_this_squawk_subtitle	Permanently removes it and its comments. %1$s are kept.
 feature/squawk/sharedassets	delete_this_squawk_title	Delete this %1$s
 feature/squawk/sharedassets	squawk_deleted	%1$s deleted
+core/sharedassets	danger_zone	Danger Zone
