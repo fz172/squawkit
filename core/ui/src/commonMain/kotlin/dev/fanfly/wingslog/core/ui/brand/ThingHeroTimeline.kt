@@ -34,7 +34,8 @@ object ThingHeroTimeline {
   private const val FAN_OUT_MS = 700
   const val FAN_OUT_START =
     FAN_START + (GLYPH_COUNT - 1) * FAN_STAGGER + FAN_MS + FAN_HOLD_MS
-  const val FAN_END = FAN_OUT_START + (GLYPH_COUNT - 1) * FAN_STAGGER / 2 + FAN_OUT_MS
+  const val FAN_END =
+    FAN_OUT_START + (GLYPH_COUNT - 1) * FAN_STAGGER / 2 + FAN_OUT_MS
   const val IDLE_START = FAN_START + 540
   const val TOTAL_MS = FAN_END
 
@@ -138,11 +139,9 @@ object ThingHeroTimeline {
   fun idleWeight(ms: Int): Float = progress(ms, IDLE_START, 600)
 
   /** The plane's bob, matching the pre-existing hero: about six points up and a degree of roll. */
-  fun planeBobY(phase: Float): Float =
-    -0.017f * (0.5f + 0.5f * sin(phase).toFloat())
+  fun planeBobY(phase: Float): Float = -0.017f * (0.5f + 0.5f * sin(phase))
 
-  fun planeBobRotation(phase: Float): Float =
-    -0.25f + 1.25f * sin(phase).toFloat()
+  fun planeBobRotation(phase: Float): Float = -0.25f + 1.25f * sin(phase)
 
   const val IDLE_PERIOD_MS = 3400
   const val TWO_PI = (2 * PI).toFloat()

@@ -34,6 +34,7 @@ sealed interface AnalyticsEvent {
   enum class Name(val wire: String) {
     // --- Ads (shipped) ---
     AD_SLOT_FILLED("ad_slot_filled"),
+
     // NOT "ad_impression"/"ad_click": both are reserved Firebase names, auto-collected from the
     // AdMob integration. Firebase silently renames a custom event using one to its internal `_ai`
     // / `_ac`, merging ours into AdMob's — the event arrives, the metric looks healthy, and the
@@ -122,7 +123,11 @@ sealed interface ThingScopedEvent : AnalyticsEvent {
 
 /** Flattens to the shape [AnalyticsManager.logEvent] takes, truncating values to GA4's 100 chars. */
 fun AnalyticsEvent.toParams(): Map<String, String> =
-  params.entries.associate { (key, value) -> key.wire to value.take(GA4_MAX_PARAM_VALUE_LENGTH) }
+  params.entries.associate { (key, value) ->
+    key.wire to value.take(
+      GA4_MAX_PARAM_VALUE_LENGTH
+    )
+  }
 
 /** Logs a taxonomy event. The typed counterpart to [AnalyticsManager.logEvent]. */
 fun AnalyticsManager.log(event: AnalyticsEvent) =

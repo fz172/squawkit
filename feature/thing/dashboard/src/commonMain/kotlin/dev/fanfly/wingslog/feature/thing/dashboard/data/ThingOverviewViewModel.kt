@@ -7,6 +7,7 @@ import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.core.template.TemplateResolution
 import dev.fanfly.wingslog.core.template.currentFor
 import dev.fanfly.wingslog.core.template.currentReadings
+import dev.fanfly.wingslog.core.ui.common.UiText
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
@@ -37,6 +38,8 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import wingslog.core.sharedassets.generated.resources.delete_failed
+import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 
 /** The share-related flows, combined so they fit in one slot of the outer [combine]. */
 private data class ShareContext(
@@ -181,7 +184,8 @@ class ThingOverviewViewModel(
             )
           }
 
-          val active = cardsWithStatus.filter { it.dueStatus.status != DueStatus.COMPLIED }
+          val active =
+            cardsWithStatus.filter { it.dueStatus.status != DueStatus.COMPLIED }
           val complied =
             cardsWithStatus.filter { it.dueStatus.status == DueStatus.COMPLIED }
 
@@ -430,8 +434,9 @@ class ThingOverviewViewModel(
         }
         .onFailure { error ->
           _events.send(
-            ThingOverviewEvent.ShowError(
-              error.message
+            ThingOverviewEvent.ShowMessage(
+              error.message?.let { UiText.DynamicString(it) }
+                ?: UiText.StringRes(CoreRes.string.delete_failed)
             )
           )
         }

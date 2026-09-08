@@ -5,6 +5,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.unit.dp
+import dev.fanfly.wingslog.core.ui.brand.BrandPlaneGeometry.SCALE
 
 /**
  * The SquawkIt brand plane as a single-colour vector, cropped tight from the app's
@@ -44,16 +45,25 @@ object BrandPlaneGeometry {
   )
 
   private fun ImageVector.Builder.plane(paths: List<String>): ImageVector {
-    addGroup(scaleX = SCALE, scaleY = SCALE, translationX = TRANSLATE_X, translationY = TRANSLATE_Y)
+    addGroup(
+      scaleX = SCALE,
+      scaleY = SCALE,
+      translationX = TRANSLATE_X,
+      translationY = TRANSLATE_Y
+    )
     for (d in paths) {
-      addPath(pathData = PathParser().parsePathString(d).toNodes(), fill = SolidColor(Color.Black))
+      addPath(
+        pathData = PathParser().parsePathString(d)
+          .toNodes(), fill = SolidColor(Color.Black)
+      )
     }
     clearGroup()
     return build()
   }
 
   /** The whole plane. */
-  val Plane: ImageVector = builder().plane(listOf(BODY_OUTLINE + DETAILS.first()) + DETAILS.drop(1))
+  val Plane: ImageVector =
+    builder().plane(listOf(BODY_OUTLINE + DETAILS.first()) + DETAILS.drop(1))
 
   /** The plane without its body, for fading the details in over a morphing silhouette. */
   val Details: ImageVector = builder().plane(DETAILS.drop(1))

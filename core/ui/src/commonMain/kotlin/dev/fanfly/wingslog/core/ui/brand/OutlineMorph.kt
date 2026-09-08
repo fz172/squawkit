@@ -3,6 +3,7 @@ package dev.fanfly.wingslog.core.ui.brand
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathMeasure
 import androidx.compose.ui.graphics.vector.PathParser
+import dev.fanfly.wingslog.core.ui.brand.OutlineMorph.Companion.sample
 
 /**
  * Pure geometry for morphing one closed outline into another. Both outlines arrive as the same
@@ -77,8 +78,7 @@ object OutlineMath {
  * of the vector each belongs to, so a morph frame at `t = 0` or `1` sits exactly over that vector
  * drawn at the same size. [pathAt] returns the interpolated outline scaled to [size].
  */
-class OutlineMorph(from: FloatArray, to: FloatArray) {
-  private val from: FloatArray = from
+class OutlineMorph(private val from: FloatArray, to: FloatArray) {
   private val to: FloatArray = OutlineMath.align(from, to)
   private val scratch = FloatArray(from.size)
 
@@ -97,8 +97,13 @@ class OutlineMorph(from: FloatArray, to: FloatArray) {
     const val SAMPLES = 240
 
     /** The first closed contour of [pathData], as [n] equidistant points mapped through [toUnit]. */
-    fun sample(pathData: String, n: Int = SAMPLES, toUnit: (Float, Float) -> Pair<Float, Float>): FloatArray {
-      val path = PathParser().parsePathString(firstContour(pathData)).toPath()
+    fun sample(
+      pathData: String,
+      n: Int = SAMPLES,
+      toUnit: (Float, Float) -> Pair<Float, Float>
+    ): FloatArray {
+      val path = PathParser().parsePathString(firstContour(pathData))
+        .toPath()
       val measure = PathMeasure().apply { setPath(path, forceClosed = true) }
       val length = measure.length
       return FloatArray(n * 2).also { out ->

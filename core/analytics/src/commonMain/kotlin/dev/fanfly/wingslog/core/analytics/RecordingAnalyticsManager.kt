@@ -44,7 +44,8 @@ class RecordingAnalyticsManager : AnalyticsManager {
 
   /** The params of every event with [name], for asserting a property such as `template_id`. */
   fun paramsFor(name: String): List<Map<String, String>> =
-    _events.filter { it.first == name }.map { it.second }
+    _events.filter { it.first == name }
+      .map { it.second }
 
   /** How many times [name] was emitted — the shape most of these assertions want. */
   fun countOf(name: String): Int = _events.count { it.first == name }

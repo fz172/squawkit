@@ -1,10 +1,10 @@
 package dev.fanfly.wingslog.feature.shell
 
-import dev.fanfly.wingslog.feature.thing.update.PickThingTypeSheet
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -29,6 +29,7 @@ import dev.fanfly.wingslog.core.nav.Screen.Companion.CROSS_SCREEN_SUCCESS_MESSAG
 import dev.fanfly.wingslog.core.ui.adaptive.AdaptiveAppShell
 import dev.fanfly.wingslog.core.ui.adaptive.ShellSection
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
+import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalSnackbarHostState
 import dev.fanfly.wingslog.feature.fleet.viewing.FleetEmptyState
 import dev.fanfly.wingslog.feature.login.upgrade.AccountUpgradeFlow
 import dev.fanfly.wingslog.feature.login.upgrade.AccountUpgradeViewModel
@@ -40,6 +41,7 @@ import dev.fanfly.wingslog.feature.subscription.viewing.UpsellTrigger
 import dev.fanfly.wingslog.feature.sync.data.SyncNotice
 import dev.fanfly.wingslog.feature.thing.dashboard.ShellSectionBody
 import dev.fanfly.wingslog.feature.thing.dashboard.ShellSectionFab
+import dev.fanfly.wingslog.feature.thing.update.PickThingTypeSheet
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -178,21 +180,23 @@ fun AdaptiveShellRoute(
     onAddThing = onAddThing,
     onEnterInviteCode = onEnterInviteCode,
     sectionContent = { section, thingId ->
-      if (section == ShellSection.SETTINGS) {
-        SettingsSection(
-          rootNavController = navController,
-          upgradeViewModel = upgradeViewModel,
-          navigationMirror = navigationMirror,
-        )
-      } else {
-        ShellSectionBody(
-          section = section,
-          thingId = thingId,
-          navController = navController,
-          onNavigateToSection = viewModel::selectSection,
-          scrollToRecordId = scrollTargetId,
-          onScrollTargetConsumed = viewModel::consumeScrollTarget,
-        )
+      CompositionLocalProvider(LocalSnackbarHostState provides snackbarHostState) {
+        if (section == ShellSection.SETTINGS) {
+          SettingsSection(
+            rootNavController = navController,
+            upgradeViewModel = upgradeViewModel,
+            navigationMirror = navigationMirror,
+          )
+        } else {
+          ShellSectionBody(
+            section = section,
+            thingId = thingId,
+            navController = navController,
+            onNavigateToSection = viewModel::selectSection,
+            scrollToRecordId = scrollTargetId,
+            onScrollTargetConsumed = viewModel::consumeScrollTarget,
+          )
+        }
       }
     },
     emptyFleetContent = {
