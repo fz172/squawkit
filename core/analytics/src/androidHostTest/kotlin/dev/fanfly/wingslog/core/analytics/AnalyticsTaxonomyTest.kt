@@ -32,12 +32,34 @@ class AnalyticsTaxonomyTest {
    * realistically tempted by; add more as they come up.
    */
   private val reservedNames = listOf(
-    "ad_activeview", "ad_click", "ad_exposure", "ad_impression", "ad_query", "ad_reward",
-    "adunit_exposure", "app_background", "app_clear_data", "app_exception", "app_remove",
-    "app_store_refund", "app_store_subscription_cancel", "app_store_subscription_convert",
-    "app_store_subscription_renew", "app_update", "app_upgrade", "error", "first_open",
-    "first_visit", "in_app_purchase", "notification_dismiss", "notification_foreground",
-    "notification_open", "notification_receive", "os_update", "screen_view", "session_start",
+    "ad_activeview",
+    "ad_click",
+    "ad_exposure",
+    "ad_impression",
+    "ad_query",
+    "ad_reward",
+    "adunit_exposure",
+    "app_background",
+    "app_clear_data",
+    "app_exception",
+    "app_remove",
+    "app_store_refund",
+    "app_store_subscription_cancel",
+    "app_store_subscription_convert",
+    "app_store_subscription_renew",
+    "app_update",
+    "app_upgrade",
+    "error",
+    "first_open",
+    "first_visit",
+    "in_app_purchase",
+    "notification_dismiss",
+    "notification_foreground",
+    "notification_open",
+    "notification_receive",
+    "os_update",
+    "screen_view",
+    "session_start",
     "user_engagement",
   )
 
@@ -86,9 +108,13 @@ class AnalyticsTaxonomyTest {
     // Two enum entries mapping to one wire name silently merge two different things into one GA4
     // series — worse than a missing event, because the number looks plausible.
     val eventDuplicates = AnalyticsEvent.Name.entries.map { it.wire }
-      .groupingBy { it }.eachCount().filterValues { it > 1 }.keys
+      .groupingBy { it }
+      .eachCount()
+      .filterValues { it > 1 }.keys
     val paramDuplicates = AnalyticsEvent.Param.entries.map { it.wire }
-      .groupingBy { it }.eachCount().filterValues { it > 1 }.keys
+      .groupingBy { it }
+      .eachCount()
+      .filterValues { it > 1 }.keys
 
     assertThat(eventDuplicates).isEmpty()
     assertThat(paramDuplicates).isEmpty()
@@ -133,14 +159,34 @@ class AnalyticsTaxonomyTest {
    */
   @Test
   fun shippedEventsFlattenToTheirCurrentWireShape() {
-    assertThat(AdSlotFilled(surface = "dashboard", slotIndex = 2, unitPosition = "inline_1")
-      .toParams())
+    assertThat(
+      AdSlotFilled(
+        surface = "dashboard",
+        slotIndex = 2,
+        unitPosition = "inline_1"
+      )
+        .toParams()
+    )
       .containsExactlyEntriesIn(
-        mapOf("surface" to "dashboard", "slot_index" to "2", "unit_position" to "inline_1")
+        mapOf(
+          "surface" to "dashboard",
+          "slot_index" to "2",
+          "unit_position" to "inline_1"
+        )
       )
 
-    assertThat(AdFillFailed(surface = "dashboard", reason = "no_fill").toParams())
-      .containsExactlyEntriesIn(mapOf("surface" to "dashboard", "reason" to "no_fill"))
+    assertThat(
+      AdFillFailed(
+        surface = "dashboard",
+        reason = "no_fill"
+      ).toParams()
+    )
+      .containsExactlyEntriesIn(
+        mapOf(
+          "surface" to "dashboard",
+          "reason" to "no_fill"
+        )
+      )
 
     assertThat(SyncPermissionDeniedWrite(shared = true).toParams())
       .containsExactlyEntriesIn(mapOf("scope" to "shared"))
@@ -150,8 +196,18 @@ class AnalyticsTaxonomyTest {
     assertThat(SyncShareReconciled(trigger = "denied_write").toParams())
       .containsExactlyEntriesIn(mapOf("trigger" to "denied_write"))
 
-    assertThat(UrgencyNotificationPosted(trigger = "scheduled", sharedFleet = true).toParams())
-      .containsExactlyEntriesIn(mapOf("trigger" to "scheduled", "shared_fleet" to "true"))
+    assertThat(
+      UrgencyNotificationPosted(
+        trigger = "scheduled",
+        sharedFleet = true
+      ).toParams()
+    )
+      .containsExactlyEntriesIn(
+        mapOf(
+          "trigger" to "scheduled",
+          "shared_fleet" to "true"
+        )
+      )
   }
 
   @Test
@@ -183,7 +239,8 @@ class AnalyticsTaxonomyTest {
     // it. An ad SDK's failure reason is the realistic source of one.
     val longReason = "x".repeat(250)
 
-    val flattened = AdFillFailed(surface = "dashboard", reason = longReason).toParams()
+    val flattened =
+      AdFillFailed(surface = "dashboard", reason = longReason).toParams()
 
     assertThat(flattened["reason"]).hasLength(GA4_MAX_PARAM_VALUE_LENGTH)
   }
@@ -192,7 +249,11 @@ class AnalyticsTaxonomyTest {
   fun logSendsTheEventNameAndFlattenedParams() {
     val recorded = mutableListOf<Pair<String, Map<String, String>>>()
     val analytics = object : AnalyticsManager {
-      override fun logScreenView(screenName: String, params: Map<String, String>) = Unit
+      override fun logScreenView(
+        screenName: String,
+        params: Map<String, String>
+      ) = Unit
+
       override fun logEvent(name: String, params: Map<String, String>) {
         recorded += name to params
       }

@@ -11,10 +11,17 @@ import dev.fanfly.wingslog.core.ui.common.text.highlightRanges
 /** Advisory Amber wash behind a matched search word; text colour is left to the caller. */
 @Composable
 fun searchHighlightStyle(): SpanStyle =
-  SpanStyle(background = MaterialTheme.colorScheme.tertiaryContainer, color = MaterialTheme.colorScheme.onTertiaryContainer)
+  SpanStyle(
+    background = MaterialTheme.colorScheme.tertiaryContainer,
+    color = MaterialTheme.colorScheme.onTertiaryContainer
+  )
 
 /** [text] with [style] on every whole-word occurrence of [words]. Plain text when nothing matches. */
-fun highlightWords(text: String, words: Set<String>, style: SpanStyle): AnnotatedString {
+fun highlightWords(
+  text: String,
+  words: Set<String>,
+  style: SpanStyle
+): AnnotatedString {
   val ranges = highlightRanges(text, words)
   if (ranges.isEmpty()) return AnnotatedString(text)
   return buildAnnotatedString {

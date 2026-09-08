@@ -70,7 +70,8 @@ val generateVersionKt by tasks.registering {
         .use { load(it) }
     }
     // One string on all three platforms: "1.0.260828(1400)".
-    val marketingVersion = "${props["major"]}.${props["minor"]}.${props["buildDate"]}"
+    val marketingVersion =
+      "${props["major"]}.${props["minor"]}.${props["buildDate"]}"
     val versionCode = (props["versionCode"] as? String)?.toIntOrNull() ?: 0
 
     outputDir.get().asFile.also { it.mkdirs() }

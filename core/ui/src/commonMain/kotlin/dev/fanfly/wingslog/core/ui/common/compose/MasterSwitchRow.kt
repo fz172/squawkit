@@ -68,6 +68,10 @@ fun MasterSwitchRow(
       )
     }
     Spacer(Modifier.width(Spacing.large))
-    Switch(checked = checked, enabled = enabled, onCheckedChange = onCheckedChange)
+    Switch(
+      checked = checked,
+      enabled = enabled,
+      onCheckedChange = onCheckedChange
+    )
   }
 }

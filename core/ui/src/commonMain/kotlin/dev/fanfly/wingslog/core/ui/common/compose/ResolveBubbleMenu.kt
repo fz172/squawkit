@@ -121,7 +121,10 @@ fun ResolveBubbleMenu(
         modifier = Modifier
           .width(BubbleWidth)
           .shadow(elevation = 8.dp, shape = bubbleShape, clip = false)
-          .background(MaterialTheme.colorScheme.surfaceContainerHigh, bubbleShape)
+          .background(
+            MaterialTheme.colorScheme.surfaceContainerHigh,
+            bubbleShape
+          )
           .border(
             Spacing.hairline,
             MaterialTheme.colorScheme.outlineVariant,
@@ -223,10 +226,13 @@ internal fun placeBubble(
   gapPx: Int,
   marginPx: Int,
 ): BubblePlacement {
-  val idealX = anchorBounds.left + (anchorBounds.width - popupContentSize.width) / 2
+  val idealX =
+    anchorBounds.left + (anchorBounds.width - popupContentSize.width) / 2
   val x = idealX.coerceIn(
     marginPx,
-    (windowSize.width - popupContentSize.width - marginPx).coerceAtLeast(marginPx),
+    (windowSize.width - popupContentSize.width - marginPx).coerceAtLeast(
+      marginPx
+    ),
   )
   val above = anchorBounds.top - popupContentSize.height - gapPx
   val (y, side) =
@@ -258,7 +264,8 @@ private class ResolveMenuPositionProvider(
     layoutDirection: LayoutDirection,
     popupContentSize: IntSize,
   ): IntOffset {
-    val placement = placeBubble(anchorBounds, windowSize, popupContentSize, gapPx, marginPx)
+    val placement =
+      placeBubble(anchorBounds, windowSize, popupContentSize, gapPx, marginPx)
     onPlaced(placement)
     return placement.offset
   }
@@ -290,7 +297,8 @@ private class SpeechBubbleShape(
       tailWidthPx = tailWidthPx,
     )
     val bodyTop = if (tailSide == BubbleTailSide.Top) tailHeightPx else 0f
-    val bodyBottom = if (tailSide == BubbleTailSide.Bottom) size.height - tailHeightPx else size.height
+    val bodyBottom =
+      if (tailSide == BubbleTailSide.Bottom) size.height - tailHeightPx else size.height
 
     val body = Path().apply {
       addRoundRect(

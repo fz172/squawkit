@@ -97,7 +97,10 @@ class SwipeRevealController {
 
   /** Closes the open card on the first vertical scroll delta. Install on the list with `Modifier.nestedScroll`. */
   val closeOnScroll: NestedScrollConnection = object : NestedScrollConnection {
-    override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+    override fun onPreScroll(
+      available: Offset,
+      source: NestedScrollSource
+    ): Offset {
       if (available.y != 0f) close()
       return Offset.Zero
     }
@@ -105,7 +108,8 @@ class SwipeRevealController {
 }
 
 @Composable
-fun rememberSwipeRevealController(): SwipeRevealController = remember { SwipeRevealController() }
+fun rememberSwipeRevealController(): SwipeRevealController =
+  remember { SwipeRevealController() }
 
 private val ActionMinWidth = 72.dp
 private const val PositionalThreshold = 0.4f
@@ -131,7 +135,8 @@ fun SwipeActionCard(
 ) {
   val enabled = actions.isNotEmpty()
   var panelWidthPx by remember { mutableIntStateOf(0) }
-  val state = remember(key) { AnchoredDraggableState(initialValue = SwipeRevealValue.Closed) }
+  val state =
+    remember(key) { AnchoredDraggableState(initialValue = SwipeRevealValue.Closed) }
   val scope = rememberCoroutineScope()
 
   LaunchedEffect(state, panelWidthPx, enabled) {
@@ -149,7 +154,9 @@ fun SwipeActionCard(
   // Settling open claims the controller; settling closed by hand releases it.
   LaunchedEffect(state, controller) {
     snapshotFlow { state.settledValue }.collect { settled ->
-      if (settled == SwipeRevealValue.Closed) controller.closeIf(key) else controller.open(key)
+      if (settled == SwipeRevealValue.Closed) controller.closeIf(key) else controller.open(
+        key
+      )
     }
   }
   // Another card opening, a scroll, or an outside tap moves the key away: close.
@@ -200,7 +207,10 @@ fun SwipeActionCard(
     }
     Box(
       modifier = Modifier
-        .offset { IntOffset(state.offset.takeUnless { it.isNaN() }?.roundToInt() ?: 0, 0) }
+        .offset {
+          IntOffset(state.offset.takeUnless { it.isNaN() }
+                      ?.roundToInt() ?: 0, 0)
+        }
         .anchoredDraggable(
           state = state,
           orientation = Orientation.Horizontal,

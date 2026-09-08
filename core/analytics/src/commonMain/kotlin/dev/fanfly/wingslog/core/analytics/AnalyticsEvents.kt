@@ -123,7 +123,8 @@ data class ThingCreated(
   val source: String,
 ) : ThingScopedEvent {
   override val name = Name.THING_CREATED
-  override val params = mapOf(Param.TEMPLATE_ID to templateId, Param.SOURCE to source)
+  override val params =
+    mapOf(Param.TEMPLATE_ID to templateId, Param.SOURCE to source)
 }
 
 /**

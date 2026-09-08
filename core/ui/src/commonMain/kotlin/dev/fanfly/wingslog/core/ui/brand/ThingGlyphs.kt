@@ -33,21 +33,24 @@ private fun GlyphSpec.toImageVector(): ImageVector =
     defaultHeight = 24.dp,
     viewportWidth = viewportSize,
     viewportHeight = viewportSize,
-  ).apply {
-    addGroup(translationX = -viewportX, translationY = -viewportY)
-    for (piece in paths) {
-      val nodes = PathParser().parsePathString(piece.data).toNodes()
-      if (piece.strokeWidth == null) {
-        addPath(pathData = nodes, fill = SolidColor(Color.Black))
-      } else {
-        addPath(
-          pathData = nodes,
-          stroke = SolidColor(Color.Black),
-          strokeLineWidth = piece.strokeWidth,
-          strokeLineCap = StrokeCap.Round,
-          strokeLineJoin = StrokeJoin.Round,
-        )
+  )
+    .apply {
+      addGroup(translationX = -viewportX, translationY = -viewportY)
+      for (piece in paths) {
+        val nodes = PathParser().parsePathString(piece.data)
+          .toNodes()
+        if (piece.strokeWidth == null) {
+          addPath(pathData = nodes, fill = SolidColor(Color.Black))
+        } else {
+          addPath(
+            pathData = nodes,
+            stroke = SolidColor(Color.Black),
+            strokeLineWidth = piece.strokeWidth,
+            strokeLineCap = StrokeCap.Round,
+            strokeLineJoin = StrokeJoin.Round,
+          )
+        }
       }
+      clearGroup()
     }
-    clearGroup()
-  }.build()
+    .build()
