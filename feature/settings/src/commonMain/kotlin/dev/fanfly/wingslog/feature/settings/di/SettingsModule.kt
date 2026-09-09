@@ -4,6 +4,7 @@ import dev.fanfly.wingslog.core.analytics.AnalyticsPreferenceController
 import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.core.auth.AccountDeleter
 import dev.fanfly.wingslog.core.auth.AuthManager
+import dev.fanfly.wingslog.core.crash.CrashReporter
 import dev.fanfly.wingslog.core.storage.DatabaseIntegrityChecker
 import dev.fanfly.wingslog.core.ui.theme.AppearanceController
 import dev.fanfly.wingslog.feature.ads.datamanager.AdConsentManager
@@ -37,5 +38,11 @@ val settingsModule = module {
       get<SignOutCoordinator>(),
     )
   }
-  viewModel { DeveloperOptionsViewModel(get<DeveloperOptionsManager>(), get<AdConsentManager>()) }
+  viewModel {
+    DeveloperOptionsViewModel(
+      get<DeveloperOptionsManager>(),
+      get<AdConsentManager>(),
+      get<CrashReporter>(),
+    )
+  }
 }

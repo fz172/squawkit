@@ -31,6 +31,9 @@ kotlin {
       api(libs.compose.runtime)
       api(libs.androidx.navigation.compose)
       api(libs.koin.core)
+      // AnalyticsPreferenceController applies the one "Help Us Improve" preference to crash
+      // collection as well as analytics collection; api because it is a constructor parameter.
+      api(project(":core:crash"))
       implementation(libs.kermit)
     }
 

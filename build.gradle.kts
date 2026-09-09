@@ -10,6 +10,7 @@ plugins {
   alias(libs.plugins.kover) apply false
   // Firebase
   id("com.google.gms.google-services") version "4.5.0" apply false
+  alias(libs.plugins.firebase.crashlytics) apply false
   id("com.google.protobuf") version "0.10.0" apply false
 }
 
@@ -41,8 +42,10 @@ subprojects {
 // cover it; the .claude hook runs the same script per edit.
 val checkPopupSelectionScopes by tasks.registering(Exec::class) {
   group = "verification"
-  description = "Checks every popup resets the text-selection scope at its boundary"
-  val script = layout.projectDirectory.file("scripts/check-popup-selection-scopes.sh")
+  description =
+    "Checks every popup resets the text-selection scope at its boundary"
+  val script =
+    layout.projectDirectory.file("scripts/check-popup-selection-scopes.sh")
   inputs.file(script)
   inputs.files(
     fileTree(layout.projectDirectory) {
@@ -61,5 +64,6 @@ val checkPopupSelectionScopes by tasks.registering(Exec::class) {
   }
 }
 allprojects {
-  tasks.matching { it.name == "lint" }.configureEach { dependsOn(checkPopupSelectionScopes) }
+  tasks.matching { it.name == "lint" }
+    .configureEach { dependsOn(checkPopupSelectionScopes) }
 }

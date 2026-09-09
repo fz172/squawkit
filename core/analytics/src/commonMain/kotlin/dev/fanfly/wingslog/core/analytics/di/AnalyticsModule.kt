@@ -3,6 +3,7 @@ package dev.fanfly.wingslog.core.analytics.di
 import dev.fanfly.wingslog.core.analytics.AnalyticsManager
 import dev.fanfly.wingslog.core.analytics.AnalyticsPreferenceController
 import dev.fanfly.wingslog.core.analytics.AnalyticsPreferenceStore
+import dev.fanfly.wingslog.core.crash.CrashReporter
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
@@ -22,7 +23,8 @@ val analyticsModule: Module = module {
   single(createdAtStart = true) {
     AnalyticsPreferenceController(
       get<AnalyticsPreferenceStore>(),
-      get<AnalyticsManager>()
+      get<AnalyticsManager>(),
+      get<CrashReporter>()
     )
   }
 }

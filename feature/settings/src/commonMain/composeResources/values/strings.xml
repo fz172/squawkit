@@ -52,4 +52,10 @@
   <string name="developer_options_reset_ad_consent_title">Reset ad consent</string>
   <string name="developer_options_reset_ad_consent_subtitle">Wipes this device's cached UMP consent state, so it resolves fresh next launch — as if this were a first install. The only way to re-test the onboarding consent explainer without clearing all local app data.</string>
   <string name="developer_options_reset_ad_consent_action">Reset</string>
+  <string name="developer_options_test_non_fatal_title">Record a test non-fatal</string>
+  <string name="developer_options_test_non_fatal_subtitle">Reports a caught exception to Crashlytics without crashing. Shows up in the console within a few minutes, under Non-fatals.</string>
+  <string name="developer_options_test_non_fatal_action">Record</string>
+  <string name="developer_options_test_crash_title">Force a crash</string>
+  <string name="developer_options_test_crash_subtitle">Crashes the app on purpose to check the Crashlytics wiring end to end. The report uploads on the next launch, so reopen the app afterwards.</string>
+  <string name="developer_options_test_crash_action">Crash</string>
 </resources>
