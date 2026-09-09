@@ -28,10 +28,11 @@ class SearchEngineImpl(
     today: LocalDate,
   ): List<SearchHit<T>> {
     val survivors = items.filter { adapter.passesFilters(it, filter, today) }
-    val tokens = Tokenizer.normalize(filter.query)
-      .split(WHITESPACE)
-      .filter { it.isNotEmpty() }
-      .distinct()
+    // Tokenized, not just split on whitespace: punctuation has to come off the same way it does
+    // on the field side ([FieldText]), or a token like `"conditioning` — let alone a lone `"` —
+    // could never land in any field and every result would vanish mid-word. Punctuation-only input
+    // tokenizes to nothing, which reads as a blank query.
+    val tokens = Tokenizer.queryTokens(Tokenizer.normalize(filter.query)).distinct()
     if (tokens.isEmpty()) return survivors.map { SearchHit(it) }
     return survivors
       .mapNotNull { item ->
@@ -84,10 +85,6 @@ class SearchEngineImpl(
           words
         )
       })
-  }
-
-  private companion object {
-    val WHITESPACE = Regex("\\s+")
   }
 }
 

@@ -223,6 +223,38 @@ class SearchEngineTest {
   }
 
   @Test
+  fun query_punctuationIsTokenizedAwayRatherThanRequiredToMatch() {
+    // Typing a quote (or any punctuation) around a phrase must not empty the results: the field
+    // text is tokenized with Tokenizer, which drops punctuation, so a query token that keeps it
+    // could never land in any field.
+    val quoted = RecordFilter(query = "\"transponder\"")
+    assertThat(ids(engine.search(records, Adapter(), quoted, today)))
+      .containsExactly("xpdr", "annual")
+
+    // The half-typed case the user actually hits: the closing quote is not there yet.
+    val halfTyped = RecordFilter(query = "transponder \"che")
+    assertThat(ids(engine.search(records, Adapter(), halfTyped, today)))
+      .containsExactly("annual")
+
+    // A query that is only punctuation constrains nothing, so it behaves like a blank one.
+    val punctuationOnly = RecordFilter(query = "\"")
+    assertThat(ids(engine.search(records, Adapter(), punctuationOnly, today)))
+      .containsExactly("gasket", "xpdr", "oil", "annual").inOrder()
+  }
+
+  @Test
+  fun query_straightQuoteFindsTextStoredWithTypographicQuotes() {
+    // The app writes ” and “; a keyboard types ". Dropping quotes on both sides is what makes the
+    // two agree — keeping them, on either side, would not.
+    val quoted = listOf(Record("resolve", "Resolve squawk “Conditioning the brakes”"))
+    val typed = "Resolve squawk \"Conditioning"
+    for (i in 1..typed.length) {
+      val hits = engine.search(quoted, Adapter(), RecordFilter(query = typed.take(i)), today)
+      assertThat(ids(hits)).containsExactly("resolve")
+    }
+  }
+
+  @Test
   fun query_ranksHeavierFieldFirst_thenNewer() {
     // "transponder" is in xpdr's title (weight 3) but only annual's body (weight 1).
     val hits = engine.search(
