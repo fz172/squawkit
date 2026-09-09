@@ -43,6 +43,7 @@ import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.feature.search.model.RecordFilter
 import dev.fanfly.wingslog.feature.search.model.TimeWindow
+import dev.fanfly.wingslog.feature.search.model.visibleComponentOptions
 import dev.fanfly.wingslog.thing.ComponentType
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
@@ -239,9 +240,16 @@ private fun RecordFilterPanelContent(
     }
   }
 
-  if (showComponentFilter) {
+  val components = if (!showComponentFilter) {
+    emptyList()
+  } else {
+    visibleComponentOptions(COMPONENT_OPTIONS, filter.components, componentCount)
+  }
+  // The whole section goes when nothing is left to ask about, rather than leaving the question
+  // standing over an empty row.
+  if (components.isNotEmpty()) {
     FilterSection(componentQuestion, pickOne = false) {
-      COMPONENT_OPTIONS.forEach { component ->
+      components.forEach { component ->
         ChoiceChip(
           label = componentLabel(component),
           selected = component in filter.components,
