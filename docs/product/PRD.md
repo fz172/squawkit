@@ -28,7 +28,7 @@ starter tasks. The product is the squawk / task / log triad: *something is wrong
 > | Analytics (Firebase → GA4, typed taxonomy)                                 | **Shipped** 2026-08-30                                                                              |
 > | Web app (adaptive shell, landing + support pages)                          | **Shipped** at squawkit.fanfly.dev                                                                  |
 > | Multi-domain pivot (Thing migration, lexicon, presets, template rendering) | **Shipped** 2026-08-28 → 09-04; template distribution still baked-in                                |
-> | Store publishing                                                           | **Android live** on Google Play (full production rollout, 2026-09-05); App Store review submission open |
+> | Store publishing                                                           | **Live on both stores** — Google Play 2026-09-05, App Store 2026-09-09 (`id6801955033`)              |
 > | Weight & Balance, intelligent search, life limits, forecasting             | **Not started**                                                                                     |
 >
 > Gating is one of exactly three mechanisms — `AppCapability` (build/platform), `SubscriptionManager`
@@ -212,12 +212,12 @@ starter tasks. The product is the squawk / task / log triad: *something is wrong
   verified in GA4. (The design doc's own status banner in `docs/analytics/` predates this and still reads
   "proposed".)
 
-### 3.14 Store Publishing (Android live; iOS in progress)
+### 3.14 Store Publishing (live on both stores)
 
 - Google Play: **fully launched to production on 2026-09-05** (#437). Internal testing, listing content, content
   rating, data safety, and the public listing all preceded it; the web landing page links to the listing.
-- App Store Connect: app record, subscription products, and TestFlight are done; listing, privacy label,
-  and App Review submission are tracked in #440.
+- App Store: **live on 2026-09-09** (#440), app id `6801955033`, bundle id `dev.fanfly.wingslog.iosApp`.
+  App record, subscription products, TestFlight, listing, privacy label and App Review all preceded it.
 - Store assets (phone, tablet, iPhone 6.5", iPad) render from `docs/product/screenshot_generator/`.
 
 ### 3.15 Future
@@ -262,7 +262,7 @@ starter tasks. The product is the squawk / task / log triad: *something is wrong
 9. ✅ **Phase 12** — Multi-domain pivot: Thing migration (08-28/29), lexicon plumbing and analytics taxonomy
    (08-29/30), presets, template-driven rendering, starter packs, certifications, create flow, and copy
    (08-31 → 09-04); comments (09-04). Remaining: template publishing / fetch / cache (#725–#727).
-10. 🔄 **Phase 13** — Store launch: Google Play production rollout ✅ (2026-09-05, #437); App Store review
-    submission (#440) still open.
+10. ✅ **Phase 13** — Store launch: Google Play production rollout (2026-09-05, #437) and App Store
+    release (2026-09-09, #440).
 11. 📋 **Later** — web ads (#387), promo-code Pro (#750), export background task and partial-success
     (#342, #343), multi-domain Phase 4, Weight & Balance, intelligent search, life limits, forecasting.
