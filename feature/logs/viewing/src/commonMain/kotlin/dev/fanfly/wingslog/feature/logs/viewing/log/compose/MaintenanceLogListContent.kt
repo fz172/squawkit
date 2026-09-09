@@ -80,6 +80,8 @@ import dev.fanfly.wingslog.feature.logs.sharedassets.util.displayName
 import dev.fanfly.wingslog.feature.logs.viewing.log.data.MaintenanceLogListUiState
 import dev.fanfly.wingslog.feature.search.datamanager.LogAdapter
 import dev.fanfly.wingslog.feature.search.model.Facet
+import dev.fanfly.wingslog.feature.search.model.countByComponent
+import dev.fanfly.wingslog.feature.search.model.countByTime
 import dev.fanfly.wingslog.feature.search.model.FieldMatch
 import dev.fanfly.wingslog.feature.search.model.RecordFilter
 import dev.fanfly.wingslog.feature.search.model.TimeWindow
@@ -94,7 +96,10 @@ import dev.fanfly.wingslog.feature.search.viewing.wordsIn
 import dev.fanfly.wingslog.thing.Attachment
 import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.MaintenanceLog
+import kotlin.time.Clock
 import kotlin.time.Duration.Companion.milliseconds
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -115,6 +120,9 @@ import wingslog.feature.logs.viewing.generated.resources.log_count_n_entries
 import wingslog.feature.logs.viewing.generated.resources.log_count_one_entry
 import wingslog.feature.logs.viewing.generated.resources.no_logs_match_filter
 import wingslog.feature.logs.viewing.generated.resources.search_logs
+import wingslog.feature.search.sharedassets.generated.resources.filter_q_who_signed
+import wingslog.feature.search.sharedassets.generated.resources.filter_q_when_happened
+import wingslog.feature.search.sharedassets.generated.resources.filter_q_worked_on
 import wingslog.feature.search.sharedassets.generated.resources.Res as SearchRes
 import wingslog.feature.search.sharedassets.generated.resources.filter_records
 import wingslog.feature.search.sharedassets.generated.resources.match_serial
@@ -162,6 +170,11 @@ fun MaintenanceLogListContent(
   // One controller for the list, so opening a card closes whichever was open (PRD R5); filtering
   // rebuilds what is on screen, so it closes there too.
   val revealController = rememberSwipeRevealController()
+  // Chip counts are measured against the tab's whole list with the same adapter the search uses,
+  // so "Airframe 18" means the same thing the filter will.
+  val zone = remember { TimeZone.currentSystemDefault() }
+  val countAdapter = remember(zone) { LogAdapter(zone) }
+  val today = remember { Clock.System.now().toLocalDateTime(zone).date }
   LaunchedEffect(filter) { revealController.close() }
 
   // Jump-to-log: pin the requested log and hold it through the tab's load churn. Right after the tab
@@ -269,22 +282,34 @@ fun MaintenanceLogListContent(
               RecordFilterControls(
                 expanded = showFilterSheet,
                 inline = LocalLayoutTier.current.hasSideNav,
-                title = stringResource(SearchRes.string.filter_records, logNounPlural),
+                scopeLabel = logNounPlural,
                 filter = filter,
                 showComponentFilter = componentTypesApply,
+                componentQuestion = stringResource(SearchRes.string.filter_q_worked_on),
                 componentLabel = { it.displayName() },
                 onComponentToggle = onComponentFilterToggle,
+                timeQuestion = stringResource(SearchRes.string.filter_q_when_happened),
                 onTimeWindowChange = onTimeWindowChange,
                 onClear = { onClearFilter() },
                 onDismiss = { showFilterSheet = false },
+                resultCount = uiState.logs.size,
+                totalCount = uiState.totalCount,
+                nounSingular = LocalThingLexicon.current.logNoun.singular,
+                nounPlural = logNounPlural,
+                componentCount = { c -> uiState.allLogs.countByComponent(countAdapter, c) },
+                timeCount = { w -> uiState.allLogs.countByTime(countAdapter, w, today) },
                 facetSection = if (uiState.technicians.isEmpty()) null else {
                   {
-                    FilterSection(LexiconFormatter.titleCase(LocalThingLexicon.current.technicianNoun)) {
+                    FilterSection(
+                      stringResource(SearchRes.string.filter_q_who_signed),
+                      pickOne = false,
+                    ) {
                       uiState.technicians.forEach { name ->
                         val facet = Facet.Technician(name)
                         ChoiceChip(
                           label = name,
                           selected = facet in filter.facets,
+                          count = uiState.allLogs.count { it.technician?.name == name },
                           onClick = { onFacetToggle(facet) },
                         )
                       }

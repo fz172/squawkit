@@ -16,6 +16,8 @@ sealed interface MaintenanceLogListUiState {
     /** Every technician named on this thing’s logs, for the technician facet. */
     val technicians: List<String> = emptyList(),
     val totalCount: Int,
+    /** Every log in the tab, before any filter — what a chip's count is measured against. */
+    val allLogs: List<MaintenanceLog> = emptyList(),
     val filter: RecordFilter = RecordFilter(),
     val selectedLog: MaintenanceLog? = null,
     /** Whether the technician named on the selected log actually wrote it (design §7.5). */

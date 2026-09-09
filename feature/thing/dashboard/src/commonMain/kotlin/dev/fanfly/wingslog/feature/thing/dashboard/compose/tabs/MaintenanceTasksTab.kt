@@ -27,12 +27,15 @@ import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.componentTypesApply
 import dev.fanfly.wingslog.core.template.taskNoun
+import dev.fanfly.wingslog.core.template.thingNoun
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalNavPillClearance
 import dev.fanfly.wingslog.core.ui.common.compose.rememberSwipeRevealController
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.logs.sharedassets.util.displayName
 import dev.fanfly.wingslog.feature.search.model.Facet
+import dev.fanfly.wingslog.feature.search.model.countByComponent
+import dev.fanfly.wingslog.feature.search.model.countByTime
 import dev.fanfly.wingslog.feature.search.model.TimeWindow
 import dev.fanfly.wingslog.feature.search.viewing.ChoiceChip
 import dev.fanfly.wingslog.feature.search.viewing.FilterSection
@@ -45,20 +48,29 @@ import dev.fanfly.wingslog.feature.tasks.viewing.SkipTaskConfirmDialog
 import dev.fanfly.wingslog.feature.tasks.viewing.TaskQuickActionCallbacks
 import dev.fanfly.wingslog.feature.tasks.viewing.quickActions
 import dev.fanfly.wingslog.feature.thing.dashboard.compose.ComplianceSection
+import dev.fanfly.wingslog.feature.thing.dashboard.data.TaskAdapter
 import dev.fanfly.wingslog.feature.thing.dashboard.data.TaskTabViewModel
 import dev.fanfly.wingslog.feature.thing.dashboard.data.ThingOverviewAction
 import dev.fanfly.wingslog.feature.thing.dashboard.data.ThingOverviewUiState
 import dev.fanfly.wingslog.thing.ComplianceType
 import kotlin.math.roundToInt
+import kotlin.time.Clock
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+import wingslog.feature.search.sharedassets.generated.resources.filter_scope_completed
+import wingslog.feature.search.sharedassets.generated.resources.filter_scope_due
+import wingslog.feature.search.sharedassets.generated.resources.filter_q_part_of
+import wingslog.feature.search.sharedassets.generated.resources.filter_q_when_happened
+import wingslog.feature.search.sharedassets.generated.resources.filter_q_due_before
+import wingslog.feature.search.sharedassets.generated.resources.filter_q_where_from
 import wingslog.feature.search.sharedassets.generated.resources.Res as SearchRes
 import wingslog.feature.search.sharedassets.generated.resources.filter_records
-import wingslog.feature.search.sharedassets.generated.resources.filter_type
 import wingslog.feature.search.sharedassets.generated.resources.meter_task_note
 import wingslog.feature.search.sharedassets.generated.resources.search_placeholder
 
@@ -91,6 +103,12 @@ fun MaintenanceTasksTab(
   val activeTasks = tabState.activeTasks
   val completedTasks = tabState.completedTasks
   val taskNoun = LocalThingLexicon.current.taskNoun
+  // Unfiltered, so a chip's count does not move every time another chip is tapped.
+  val subView = if (showComplied) state.completedTasks else state.activeTasks
+  val countAdapter = remember { TaskAdapter() }
+  val today = remember {
+    Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+  }
 
   // Jump-to-task from a log: switch to the sub-view holding the target, then scroll it into view.
   // See SquawkTab for the root-coordinate offset scheme.
@@ -178,14 +196,32 @@ fun MaintenanceTasksTab(
           RecordFilterControls(
             expanded = showFilterSheet,
             inline = LocalLayoutTier.current.hasSideNav,
-            title = stringResource(SearchRes.string.filter_records, taskNoun.plural),
+            scopeLabel = if (showComplied) {
+              stringResource(SearchRes.string.filter_scope_completed, taskNoun.plural)
+            } else {
+              stringResource(SearchRes.string.filter_scope_due, taskNoun.plural)
+            },
             filter = taskFilter,
             showComponentFilter = componentTypesApply,
+            // The thing's own noun: "Which part of the aircraft" on a plane, "of the car" on a car.
+            componentQuestion = stringResource(
+              SearchRes.string.filter_q_part_of,
+              LocalThingLexicon.current.thingNoun.singular,
+            ),
             componentLabel = { it.displayName() },
             onComponentToggle = { setFilter(taskFilter.toggleComponent(it)) },
+            timeQuestion = stringResource(
+              if (showComplied) SearchRes.string.filter_q_when_happened else SearchRes.string.filter_q_due_before
+            ),
             onTimeWindowChange = { setFilter(taskFilter.copy(time = it)) },
             onClear = { setFilter(taskFilter.withoutFilters()) },
             onDismiss = { showFilterSheet = false },
+            resultCount = (if (showComplied) completedTasks else activeTasks).size,
+            totalCount = subView.size,
+            nounSingular = taskNoun.singular,
+            nounPlural = taskNoun.plural,
+            componentCount = { c -> subView.countByComponent(countAdapter, c) },
+            timeCount = { w -> subView.countByTime(countAdapter, w, today) },
             dueWithin = !showComplied,
             timeNote = if (showComplied) null else stringResource(
               SearchRes.string.meter_task_note,
@@ -193,12 +229,16 @@ fun MaintenanceTasksTab(
             ),
             horizontalPadding = Spacing.none,
             facetSection = {
-              FilterSection(stringResource(SearchRes.string.filter_type)) {
+              FilterSection(
+                stringResource(SearchRes.string.filter_q_where_from),
+                pickOne = false,
+              ) {
                 COMPLIANCE_OPTIONS.forEach { type ->
                   val facet = Facet.Compliance(type)
                   ChoiceChip(
                     label = complianceLabel(type),
                     selected = facet in taskFilter.facets,
+                    count = subView.count { it.card.type == type },
                     onClick = { setFilter(taskFilter.toggleFacet(facet)) },
                   )
                 }
