@@ -17,6 +17,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -28,6 +29,7 @@ import dev.fanfly.wingslog.core.template.componentTypesApply
 import dev.fanfly.wingslog.core.template.taskNoun
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalNavPillClearance
+import dev.fanfly.wingslog.core.ui.common.compose.rememberSwipeRevealController
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.logs.sharedassets.util.displayName
 import dev.fanfly.wingslog.feature.search.model.Facet
@@ -38,6 +40,10 @@ import dev.fanfly.wingslog.feature.search.viewing.NoRecordsMatch
 import dev.fanfly.wingslog.feature.search.viewing.RecordCountRow
 import dev.fanfly.wingslog.feature.search.viewing.RecordFilterBar
 import dev.fanfly.wingslog.feature.search.viewing.RecordFilterControls
+import dev.fanfly.wingslog.feature.tasks.viewing.ResolveTaskOptionsMenu
+import dev.fanfly.wingslog.feature.tasks.viewing.SkipTaskConfirmDialog
+import dev.fanfly.wingslog.feature.tasks.viewing.TaskQuickActionCallbacks
+import dev.fanfly.wingslog.feature.tasks.viewing.quickActions
 import dev.fanfly.wingslog.feature.thing.dashboard.compose.ComplianceSection
 import dev.fanfly.wingslog.feature.thing.dashboard.data.TaskTabViewModel
 import dev.fanfly.wingslog.feature.thing.dashboard.data.ThingOverviewAction
@@ -67,6 +73,10 @@ fun MaintenanceTasksTab(
 ) {
   val scrollState = rememberScrollState()
   var showComplied by rememberSaveable { mutableStateOf(false) }
+  // One controller for the whole list, so opening a card closes whichever was open — across the
+  // grid's columns on a wide tier too (PRD R5).
+  val revealController = rememberSwipeRevealController()
+  LaunchedEffect(showComplied) { revealController.close() }
   val analytics = LocalAnalytics.current
   val useFilterBar = koinInject<AppCapability>().isSearchFilterSupported
   var showFilterSheet by remember { mutableStateOf(false) }
@@ -119,6 +129,7 @@ fun MaintenanceTasksTab(
     modifier = modifier
       .fillMaxSize()
       .verticalScroll(scrollState)
+      .nestedScroll(revealController.closeOnScroll)
       .onGloballyPositioned { contentTopY = it.positionInRoot().y }
       .padding(horizontal = Spacing.screenPadding)
       // Clear the floating pill this content now scrolls beneath (0 on non-compact tiers).
@@ -212,9 +223,47 @@ fun MaintenanceTasksTab(
       noMatch = if (useFilterBar && taskFilter.isActive) {
         { NoRecordsMatch(nounPlural = taskNoun.plural, onClearFilters = { tabViewModel.clearFilter() }) }
       } else null,
+      revealController = revealController,
+      quickActionsFor = { item ->
+        item.quickActions(
+          TaskQuickActionCallbacks(
+            onResolve = { onAction(ThingOverviewAction.TaskResolveClick(item)) },
+            onDelete = {
+              revealController.close()
+              onAction(ThingOverviewAction.DeleteTaskClick(item))
+            },
+            resolveMenu = {
+              ResolveTaskOptionsMenu(
+                expanded = state.resolvingTaskId == item.card.id,
+                onDismissRequest = {
+                  revealController.close()
+                  onAction(ThingOverviewAction.DismissTaskResolveMenu)
+                },
+                onCreateWorkLog = {
+                  revealController.close()
+                  onAction(ThingOverviewAction.TaskCreateLogClick(item.card.id))
+                },
+                onSkipThisCycle = {
+                  revealController.close()
+                  onAction(ThingOverviewAction.TaskSkipClick(item))
+                },
+              )
+            },
+          )
+        )
+      },
     )
 
     Spacer(Modifier.height(Spacing.buttonHeight + Spacing.screenPadding))
+  }
+
+  // At tab level, not inside the card, so the dialog is not clipped by the swipe container.
+  // ThingSectionContent renders the delete confirmation from `deletingTaskId`.
+  if (state.skippingTaskId != null) {
+    SkipTaskConfirmDialog(
+      onConfirm = { onAction(ThingOverviewAction.ConfirmSkipTask) },
+      onDismiss = { onAction(ThingOverviewAction.CancelSkipTask) },
+    )
   }
 }
 

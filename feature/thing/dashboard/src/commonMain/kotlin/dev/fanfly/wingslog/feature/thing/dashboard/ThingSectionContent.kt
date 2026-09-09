@@ -29,6 +29,8 @@ import dev.fanfly.wingslog.core.template.logNoun
 import dev.fanfly.wingslog.core.template.squawkNoun
 import dev.fanfly.wingslog.core.template.thingNoun
 import dev.fanfly.wingslog.core.ui.adaptive.ShellSection
+import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalSnackbarHostState
+import dev.fanfly.wingslog.core.ui.common.UiText
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
 import dev.fanfly.wingslog.feature.attachment.datamanager.OpenState
@@ -40,6 +42,7 @@ import dev.fanfly.wingslog.feature.thing.dashboard.compose.tabs.MaintenanceTasks
 import dev.fanfly.wingslog.feature.thing.dashboard.compose.tabs.OverviewTab
 import dev.fanfly.wingslog.feature.thing.dashboard.compose.tabs.SquawkTab
 import dev.fanfly.wingslog.feature.thing.dashboard.data.ThingOverviewAction
+import dev.fanfly.wingslog.feature.thing.dashboard.data.ThingOverviewEvent
 import dev.fanfly.wingslog.feature.thing.dashboard.data.ThingOverviewUiState
 import dev.fanfly.wingslog.feature.thing.dashboard.data.ThingOverviewViewModel
 import kotlinx.coroutines.launch
@@ -225,6 +228,24 @@ fun ThingSectionContent(
   val attachmentOpener: AttachmentOpener = koinInject()
   val coroutineScope = rememberCoroutineScope()
   var taskSheetOpenError by remember(thingId) { mutableStateOf<String?>(null) }
+  // A quick action runs inside the shell entry, so the cross-screen back-stack channel is the
+  // wrong shape for its snackbar; the shell provides its host here instead (design §7). Only the
+  // message events land here — navigation is driven from the onAction wrapper below.
+  val snackbarHostState = LocalSnackbarHostState.current
+  var pendingMessage by remember(thingId) { mutableStateOf<UiText?>(null) }
+  LaunchedEffect(viewModel) {
+    viewModel.events.collect { event ->
+      if (event is ThingOverviewEvent.ShowMessage) pendingMessage = event.message
+    }
+  }
+  // Resolved in composition, because a UiText needs the resource table; a host that provided no
+  // snackbar (a preview) drops it silently.
+  val messageText = pendingMessage?.asString()
+  LaunchedEffect(messageText) {
+    val text = messageText ?: return@LaunchedEffect
+    pendingMessage = null
+    snackbarHostState?.showSnackbar(text)
+  }
   // Set when the user taps a squawk's addressing log; consumed by the Logs section to scroll to it
   // after [onNavigateToSection] switches sections. It is cleared only while the Logs tab is OFF
   // screen (see below): toggling it back to null while LogsTab is mounted remounts that tab and drops
@@ -288,6 +309,28 @@ fun ThingSectionContent(
                 thingId
               )
             )
+
+          // Resolve → Fixed / Create work log: the ViewModel closes the bubble and logs the
+          // commit, then we open Create Log with the record pre-linked (design §5.1).
+          is ThingOverviewAction.SquawkFixedClick -> {
+            viewModel.onAction(action)
+            navController.navigate(
+              Screen.AddMaintenanceLog.createRoute(
+                thingId,
+                squawkId = action.squawkId,
+              )
+            )
+          }
+
+          is ThingOverviewAction.TaskCreateLogClick -> {
+            viewModel.onAction(action)
+            navController.navigate(
+              Screen.AddMaintenanceLog.createRoute(
+                thingId,
+                cardId = action.cardId,
+              )
+            )
+          }
 
           is ThingOverviewAction.EditLogClick ->
             navController.navigate(

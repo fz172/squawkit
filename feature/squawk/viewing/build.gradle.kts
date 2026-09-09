@@ -16,6 +16,9 @@ kotlin {
     androidResources {
       enable = true
     }
+
+    withHostTest {
+    }
   }
 
   js {
@@ -45,6 +48,8 @@ kotlin {
 
 dependencies {
   "androidMainImplementation"(platform(libs.firebase.bom))
+  "androidHostTestImplementation"(libs.junit)
+  "androidHostTestImplementation"(libs.truth)
 }
 
 compose.resources {

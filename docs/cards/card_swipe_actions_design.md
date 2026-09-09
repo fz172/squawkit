@@ -1,17 +1,33 @@
 # Design Doc: Card Swipe Actions and Squawk Deletion
 
 **PRD:** [`card_swipe_actions_PRD.md`](card_swipe_actions_PRD.md)
-**Status:** 📝 Proposed
-**Last updated:** 2026-09-06
+**Status:** ✅ Implemented
+**Last updated:** 2026-09-08
 
 ---
 
-## Implementation status — not started
+## Implementation status — ✅ shipped
 
-Nothing below is built. The one piece that already exists is `SquawkManager.deleteSquawk()`
-(`feature/squawk/datamanager/.../SquawkManagerImpl.kt`), which deletes the record from the
-`EntityStore` and takes its comment thread with it, exactly as `TaskDataManagerImpl.deleteTask()`
-does. It has a unit test and no caller.
+All four PRs of §13 landed, 2026-09-07 to 09-08 (project #12, epics #857 / #863 / #868 / #875).
+Everything below is built as written, with these deltas:
+
+- **Accessibility is out of scope.** PRD R21 and the `a11y` analytics source were dropped by
+  decision on 2026-09-06 (#871 closed as not planned). `SwipeActionCard` exposes no custom
+  accessibility actions; `QuickActionSource` has `SWIPE` and `FORM` only. §3.2's accessibility
+  bullet and §11's `a11y` value describe a version that was not built.
+- **`UiText.StringRes` gained an `args` list.** A quick action's snackbar names the record with the
+  lexicon noun, and the noun comes from the thing's template — which the ViewModel knows and the
+  composable showing the snackbar does not. `StringSnapshotTest.everyConvertedStringIsReadInline`
+  allows the reference only when the arguments are supplied in the same expression.
+- **`task_deleted` and `log_deleted` moved down to `sharedassets` and became lexicon frames**
+  ("%1$s deleted"), since the dashboard cannot depend on either feature's `update` module. Aviation
+  now reads "Maintenance task deleted" and "Work log deleted"; the snapshot rows record it.
+- **Both event channels are `Channel.BUFFERED`.** `ThingOverviewViewModel` exposed no `events` flow
+  at all before this and nothing collected it, so a rendezvous send parked forever; a snackbar
+  emitted while the section is being re-attached would do the same.
+- **`ComplianceSection` takes the controller and the action table as parameters** rather than
+  owning them, because the scroll container that closes the reveal is `MaintenanceTasksTab`'s.
+  Passing neither (the Overview tab's rail) leaves the section gesture-free.
 
 ---
 
@@ -416,9 +432,10 @@ Four PRs, each shippable on its own:
 4. **Wire the three tabs.** §5, the quick-action tables and their tests, analytics. Device pass on
    iOS for scroll-vs-drag before merge.
 
-After PR 4, update this doc's status block, `docs/squawks/squawk_design.md` (delete is now a
-squawk verb), and the AGENTS.md design-doc map entry for `docs/cards/`. #815 (stale *Addressed*
-after a log delete) is independent and can land before or after.
+All four landed. The post-PR-4 doc updates this section asked for are done: the status blocks here
+and in the PRD, `docs/squawks/squawk_design.md` (delete is now a squawk verb), and the AGENTS.md
+design-doc map entry for `docs/cards/`. #815 (stale *Addressed* after a log delete) is independent
+and still open.
 
 ## 14. Risks
 

@@ -88,9 +88,9 @@ import wingslog.core.sharedassets.generated.resources.save
 import wingslog.feature.attachment.sharedassets.generated.resources.file_read_error
 import wingslog.feature.logs.sharedassets.generated.resources.add_log
 import wingslog.feature.logs.sharedassets.generated.resources.edit_log
+import wingslog.feature.logs.sharedassets.generated.resources.log_deleted
 import wingslog.feature.logs.sharedassets.generated.resources.resolve_squawk_work_description
 import wingslog.feature.logs.sharedassets.generated.resources.resolve_task_work_description
-import wingslog.feature.logs.update.generated.resources.log_deleted
 import wingslog.feature.logs.update.generated.resources.log_saved
 import wingslog.feature.logs.update.generated.resources.log_updated
 import kotlin.time.Instant
@@ -136,7 +136,10 @@ fun MaintenanceLogFormScreen(
 
   val logUpdatedMessage = stringResource(MaintenanceRes.string.log_updated)
   val logSavedMessage = stringResource(MaintenanceRes.string.log_saved)
-  val logDeletedMessage = stringResource(MaintenanceRes.string.log_deleted)
+  val logDeletedMessage = stringResource(
+    SharedRes.string.log_deleted,
+    LexiconFormatter.sentenceCase(LocalThingLexicon.current.logNoun),
+  )
   val fileReadErrorMessage = stringResource(AttachRes.string.file_read_error)
 
   // Opened via the squawk edit screen's "Fixed" option: resolve the localized prefill once the

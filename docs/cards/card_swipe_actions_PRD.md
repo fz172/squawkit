@@ -1,12 +1,14 @@
 # PRD: Card Swipe Actions and Squawk Deletion
 
 **Design doc:** [`card_swipe_actions_design.md`](card_swipe_actions_design.md)
-**Status:** 📝 Proposed
-**Last updated:** 2026-09-06
+**Status:** ✅ Implemented
+**Last updated:** 2026-09-08
 
-> **Implementation status.** Not started. `SquawkManager.deleteSquawk()` already exists in
-> `feature/squawk/datamanager` (it deletes the record and its comment thread) but nothing in the UI
-> calls it. Task and log deletion ship today, reachable only from inside the edit forms.
+> **Implementation status.** ✅ Shipped 2026-09-07 → 09-08 (project #12). All three lists reveal
+> quick actions, and a squawk can be deleted from its card or from the edit form's Details tab.
+> **R21 (accessibility custom actions) was dropped** by decision on 2026-09-06 and is not built;
+> the `a11y` analytics source does not exist. §8's open question on discoverability stands: revisit
+> a text hint if the `swipe` share of `record_quick_action` stays negligible after release.
 
 ---
 

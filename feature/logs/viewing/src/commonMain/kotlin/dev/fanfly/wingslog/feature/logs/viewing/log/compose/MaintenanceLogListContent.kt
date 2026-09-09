@@ -52,6 +52,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -65,7 +66,9 @@ import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalNavPillClearance
 import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
 import dev.fanfly.wingslog.core.ui.common.compose.ModalBottomSheet
+import dev.fanfly.wingslog.core.ui.common.compose.SwipeActionCard
 import dev.fanfly.wingslog.core.ui.common.compose.jumpTargetHighlight
+import dev.fanfly.wingslog.core.ui.common.compose.rememberSwipeRevealController
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.ads.datamanager.AdsManager
 import dev.fanfly.wingslog.feature.ads.model.AdSurface
@@ -133,6 +136,10 @@ fun MaintenanceLogListContent(
   onLogClick: (MaintenanceLog) -> Unit,
   onDismissDetail: () -> Unit,
   onEditLog: ((String) -> Unit)?,
+  /** Delete from a card's swipe panel; null (a read-only caller) leaves the cards gesture-free. */
+  onDeleteLog: ((MaintenanceLog) -> Unit)? = null,
+  onCancelDeleteLog: () -> Unit = {},
+  onConfirmDeleteLog: () -> Unit = {},
   onAddLog: (() -> Unit)?,
   onAttachmentTap: (Attachment) -> Unit,
   openError: String? = null,
@@ -152,6 +159,10 @@ fun MaintenanceLogListContent(
   // shared by both the compact card list and the wide table (only one is composed at a time). A jump
   // from a squawk's work history can then scroll whichever layout is on screen.
   val logListState = rememberLazyListState()
+  // One controller for the list, so opening a card closes whichever was open (PRD R5); filtering
+  // rebuilds what is on screen, so it closes there too.
+  val revealController = rememberSwipeRevealController()
+  LaunchedEffect(filter) { revealController.close() }
 
   // Jump-to-log: pin the requested log and hold it through the tab's load churn. Right after the tab
   // opens the logs list can re-emit empty for a frame (the auth state re-settles, briefly nulling the
@@ -441,7 +452,8 @@ fun MaintenanceLogListContent(
               LazyColumn(
                 state = logListState,
                 modifier = Modifier.weight(1f)
-                  .fillMaxWidth(),
+                  .fillMaxWidth()
+                  .nestedScroll(revealController.closeOnScroll),
                 contentPadding = PaddingValues(
                   start = Spacing.screenPadding,
                   end = Spacing.screenPadding,
@@ -470,19 +482,40 @@ fun MaintenanceLogListContent(
                       slotIndex = row.slotIndex,
                     )
 
-                    is ListRow.Item -> MaintenanceLogCard(
-                      log = row.value,
-                      onClick = { onLogClick(row.value) },
-                      highlight = uiState.matches[row.value.id].orEmpty()
-                        .wordsIn(LogAdapter.FIELD_DESCRIPTION, LogAdapter.FIELD_TECHNICIAN),
-                      matchNote = logMatchNote(uiState.matches[row.value.id].orEmpty(), row.value),
-                      modifier = Modifier.jumpTargetHighlight(
-                        active = row.value.id == scrollToLogId,
+                    is ListRow.Item -> SwipeActionCard(
+                      // A null callback yields no actions, which disables the drag (PRD R20).
+                      actions = logQuickActions(
+                        onDelete = onDeleteLog?.let { delete ->
+                          {
+                            revealController.close()
+                            delete(row.value)
+                          }
+                        },
                       ),
-                    )
+                      controller = revealController,
+                      key = row.value.id,
+                    ) {
+                      MaintenanceLogCard(
+                        log = row.value,
+                        onClick = { onLogClick(row.value) },
+                        highlight = uiState.matches[row.value.id].orEmpty()
+                          .wordsIn(LogAdapter.FIELD_DESCRIPTION, LogAdapter.FIELD_TECHNICIAN),
+                        matchNote = logMatchNote(uiState.matches[row.value.id].orEmpty(), row.value),
+                        modifier = Modifier.jumpTargetHighlight(
+                          active = row.value.id == scrollToLogId,
+                        ),
+                      )
+                    }
                   }
                 }
               }
+            }
+
+            uiState.deletingLog?.let {
+              DeleteLogConfirmDialog(
+                onConfirm = onConfirmDeleteLog,
+                onDismiss = onCancelDeleteLog,
+              )
             }
 
             uiState.selectedLog?.let { log ->

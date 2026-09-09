@@ -30,6 +30,7 @@ core/sharedassets	continue_action	Continue
 core/sharedassets	dash	—
 core/sharedassets	delete	Delete
 core/sharedassets	delete_failed	Delete failed
+core/sharedassets	quick_action_resolve	Resolve
 core/sharedassets	discard	Discard
 core/sharedassets	dismiss	Dismiss
 core/sharedassets	done	Done
@@ -265,7 +266,7 @@ feature/logs/update	component_section_description	Which part of the aircraft was
 feature/logs/update	date_section_description	When this work was performed
 feature/logs/update	hours_section_description	Fill the fields that apply to this work event
 feature/logs/update	loading_thing	Loading aircraft…
-feature/logs/update	log_deleted	Log deleted
+feature/logs/sharedassets	log_deleted	Work log deleted
 feature/logs/update	log_not_found	Log not found
 feature/logs/update	log_saved	Log saved
 feature/logs/update	log_tab_hours	Hours
@@ -781,9 +782,9 @@ feature/tasks/update	schedule_with_another_work	Advanced · Link to another task
 feature/tasks/update	schedule_with_another_work_description	This task becomes due whenever the linked task is next due. Choosing a linked task replaces interval-based scheduling above.
 feature/tasks/update	select_task_work	Select Maintenance Work
 feature/tasks/update	task_added	Task added
-feature/tasks/update	task_deleted	Task deleted
+feature/tasks/sharedassets	task_deleted	Maintenance task deleted
 feature/tasks/update	task_description_placeholder	e.g. 100-Hour Inspection
-feature/tasks/update	task_skipped	Cycle skipped — next due rescheduled
+feature/tasks/sharedassets	task_skipped	Cycle skipped — next due rescheduled
 feature/tasks/update	task_title	Maintenance Task Title
 feature/tasks/update	task_title_helper	Provide a concise, technical name for this maintenance action as it appears in the service manual.
 feature/tasks/update	task_updated	Task updated
@@ -932,5 +933,5 @@ feature/squawk/sharedassets	delete_squawk_confirmation	This %1$s is removed for 
 feature/squawk/sharedassets	delete_squawk_title	Delete %1$s?
 feature/squawk/sharedassets	delete_this_squawk_subtitle	Permanently removes it and its comments. %1$s are kept.
 feature/squawk/sharedassets	delete_this_squawk_title	Delete this %1$s
-feature/squawk/sharedassets	squawk_deleted	%1$s deleted
+feature/squawk/sharedassets	squawk_deleted	Squawk deleted
 core/sharedassets	danger_zone	Danger Zone

@@ -116,6 +116,7 @@ class StringSnapshotTest {
     // deliberately: "Squawks", "AOG" and "Aircraft on Ground" are lexicon values in their
     // entirety rather than sentence frames, so they belong to #657's move-into-the-lexicon.
     squawkFrame("add_squawk") { it.singular },
+    squawkFrame("squawk_deleted") { LexiconFormatter.sentenceCase(it) },
     squawkFrame("edit_squawk") { it.singular },
     squawkFrame("no_open_squawks") { it.plural },
     squawkFrame("no_closed_squawks") { it.plural },
@@ -233,6 +234,9 @@ class StringSnapshotTest {
       "task_title"
     ) { LexiconFormatter.titleCase(it.taskNoun) },
     frame("feature/tasks/sharedassets", "no_tasks_yet") { it.taskNoun.plural },
+    frame("feature/tasks/sharedassets", "task_deleted") {
+      LexiconFormatter.sentenceCase(it.taskNoun)
+    },
     frame("feature/tasks/viewing", "maintenance_due_subtitle") {
       LexiconFormatter.sentenceCasePlural(it.taskNoun)
     },
@@ -285,6 +289,12 @@ class StringSnapshotTest {
       LexiconFormatter.titleCase(
         it.logNoun
       )
+    },
+    // The three quick-action delete snackbars. Aviation reads them longer than it did — "Work log
+    // deleted", "Maintenance task deleted" — because the noun is now the lexicon's, which is what
+    // R24 asks for; the rows below record that rendering rather than the pre-pivot wording.
+    frame("feature/logs/sharedassets", "log_deleted") {
+      LexiconFormatter.sentenceCase(it.logNoun)
     },
     // Position 1 is caller-supplied in each of these — a count, or the record's own title.
     "feature/logs/viewing:log_squawk_count_plural" to { l: Lexicon ->
@@ -591,7 +601,15 @@ class StringSnapshotTest {
           .filterNot { match ->
             val before = text.substring(0, match.range.first)
               .trimEnd()
-            before.endsWith("stringResource(") || before.endsWith("getString(")
+            val after = text.substring(match.range.last + 1)
+              .trimStart()
+            before.endsWith("stringResource(") || before.endsWith("getString(") ||
+              // `UiText.StringRes(res, listOf(noun))` carries the arguments *at the reference*,
+              // which is the only thing this check is really asking for. A ViewModel that names a
+              // record has to: the lexicon noun comes from the thing's template, which the
+              // composable showing the snackbar does not know. The trailing comma is load-bearing
+              // — `UiText.StringRes(res)` alone is the very hole above, and still fails.
+              (before.endsWith("UiText.StringRes(") && after.startsWith(","))
           }
           .map { "${file.name}: ${it.groupValues[1]}" }
       }

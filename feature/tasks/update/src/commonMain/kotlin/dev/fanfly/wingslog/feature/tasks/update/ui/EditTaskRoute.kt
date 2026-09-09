@@ -7,23 +7,27 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import dev.fanfly.wingslog.feature.tasks.datamanager.forcedDueMeter
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.nav.Screen.Companion.CROSS_SCREEN_SUCCESS_MESSAGE
+import dev.fanfly.wingslog.core.template.LexiconFormatter
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.taskNoun
 import dev.fanfly.wingslog.feature.attachment.model.visible
 import dev.fanfly.wingslog.feature.attachment.viewing.AttachmentFormSection
 import dev.fanfly.wingslog.feature.comments.viewing.CommentThreadSection
+import dev.fanfly.wingslog.feature.tasks.datamanager.forcedDueMeter
 import dev.fanfly.wingslog.feature.tasks.update.viewmodel.TaskFormEvent
 import dev.fanfly.wingslog.feature.tasks.update.viewmodel.TaskUiState
 import dev.fanfly.wingslog.feature.tasks.update.viewmodel.TaskViewModel
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.feature.attachment.sharedassets.generated.resources.file_read_error
+import wingslog.feature.tasks.sharedassets.generated.resources.task_deleted
+import wingslog.feature.tasks.sharedassets.generated.resources.task_skipped
 import wingslog.feature.tasks.update.generated.resources.Res
-import wingslog.feature.tasks.update.generated.resources.task_deleted
-import wingslog.feature.tasks.update.generated.resources.task_skipped
 import wingslog.feature.tasks.update.generated.resources.task_updated
 import wingslog.feature.attachment.sharedassets.generated.resources.Res as AttachRes
+import wingslog.feature.tasks.sharedassets.generated.resources.Res as TasksRes
 
 @Composable
 fun EditTaskRoute(
@@ -41,8 +45,11 @@ fun EditTaskRoute(
   val successState = uiState as? TaskUiState.Success
 
   val updatedMessage = stringResource(Res.string.task_updated)
-  val deletedMessage = stringResource(Res.string.task_deleted)
-  val skippedMessage = stringResource(Res.string.task_skipped)
+  val deletedMessage = stringResource(
+    TasksRes.string.task_deleted,
+    LexiconFormatter.sentenceCase(LocalThingLexicon.current.taskNoun),
+  )
+  val skippedMessage = stringResource(TasksRes.string.task_skipped)
   val fileReadErrorMessage = stringResource(AttachRes.string.file_read_error)
   val snackbarHostState = remember { SnackbarHostState() }
 

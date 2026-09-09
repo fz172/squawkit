@@ -17,4 +17,5 @@
   <string name="log_assigned_by">Logged by <xliff:g example="Alex">%1$s</xliff:g></string>
   <string name="log_assigned_by_unknown">Logged by another member</string>
   <string name="delete_log">Delete Log?</string>
+  <string name="log_deleted"><xliff:g example="Log">%1$s</xliff:g> deleted</string>
 </resources>

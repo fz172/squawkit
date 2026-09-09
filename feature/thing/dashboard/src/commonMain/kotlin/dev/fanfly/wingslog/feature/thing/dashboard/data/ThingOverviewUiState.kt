@@ -54,11 +54,20 @@ sealed interface ThingOverviewUiState {
     val selectedTask: MaintenanceTaskWithStatus? = null,
     val logsForSelectedTask: List<MaintenanceLog> = emptyList(),
     val deletingTaskId: String? = null,
+    /** Resolve bubble open for this task; its Skip confirmation is [skippingTaskId]. */
+    val resolvingTaskId: String? = null,
+    val skippingTaskId: String? = null,
     val syncStates: Map<String, BlobSyncState> = emptyMap(),
     val squawks: List<SquawkWithStatus> = emptyList(),
     val aogSquawks: List<Squawk> = emptyList(),
     val selectedSquawk: SquawkWithStatus? = null,
     val logForSelectedSquawk: MaintenanceLog? = null,
+    /** Resolve bubble open for this squawk (design §5.1). */
+    val resolvingSquawkId: String? = null,
+    /** Dismiss-reason dialog open for this squawk. */
+    val dismissingSquawkId: String? = null,
+    /** Delete confirmation open for this squawk. */
+    val deletingSquawkId: String? = null,
     /** Caller's role on this thing; drives owner-only gating. `null` while it resolves. */
     val myRole: ShareRole? = null,
     /**

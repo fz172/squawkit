@@ -28,4 +28,6 @@
   <string name="create_work_log_subtitle">Opens a new log, pre-linked to this task</string>
   <string name="skip_this_cycle_option">Skip This Cycle</string>
   <string name="skip_this_cycle_option_subtitle">Marks complete without logging</string>
+  <string name="task_deleted"><xliff:g example="Task">%1$s</xliff:g> deleted</string>
+  <string name="task_skipped">Cycle skipped — next due rescheduled</string>
 </resources>

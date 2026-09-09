@@ -125,11 +125,9 @@
 
   <!-- Resolve menu (bottom bar) -->
   <string name="resolve_task">Resolve</string>
-  <string name="task_skipped">Cycle skipped — next due rescheduled</string>
 
   <string name="no_log_history">No <xliff:g example="logs">%1$s</xliff:g> recorded for this <xliff:g example="task">%2$s</xliff:g>.</string>
   <string name="task_updated">Task updated</string>
-  <string name="task_deleted">Task deleted</string>
   <string name="task_added">Task added</string>
   <string name="no_tasks_configured">No tasks configured. Add them from the <xliff:g example="aircraft">%1$s</xliff:g> overview to track recurring maintenance.</string>
 
