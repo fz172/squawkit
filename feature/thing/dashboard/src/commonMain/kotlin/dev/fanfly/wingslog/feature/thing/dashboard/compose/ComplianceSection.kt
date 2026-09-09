@@ -25,6 +25,9 @@ import dev.fanfly.wingslog.core.ui.adaptive.compose.AdaptiveCardList
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.common.compose.DualSegmentedFilter
 import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
+import dev.fanfly.wingslog.core.ui.common.compose.SwipeAction
+import dev.fanfly.wingslog.core.ui.common.compose.SwipeActionCard
+import dev.fanfly.wingslog.core.ui.common.compose.SwipeRevealController
 import dev.fanfly.wingslog.core.ui.common.compose.jumpTargetHighlight
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.ads.datamanager.AdsManager
@@ -68,6 +71,12 @@ fun ComplianceSection(
   noMatch: (@Composable () -> Unit)? = null,
   /** The words the active search matched on a task, for highlighting. */
   matchesFor: (MaintenanceTaskWithStatus) -> List<FieldMatch> = { emptyList() },
+  /**
+   * Swipe quick actions per card, and the one-open-card controller the list shares. Both null (the
+   * default) leaves the section gesture-free, which is what the Overview tab's rail wants.
+   */
+  revealController: SwipeRevealController? = null,
+  quickActionsFor: (@Composable (MaintenanceTaskWithStatus) -> List<SwipeAction>)? = null,
   modifier: Modifier = Modifier,
 ) {
   Column(
@@ -157,28 +166,41 @@ fun ComplianceSection(
             val item = row.value
             val isJumpTarget = item.card.id == scrollTargetId
             val matches = matchesFor(item)
-            TaskCardItem(
-              cardWithStatus = item,
-              onClick = { onCardClick(item) },
-              highlight = matches.wordsIn(TaskAdapter.FIELD_TITLE, TaskAdapter.FIELD_NOTES),
-              matchNote = hiddenMatchNote(matches, setOf(TaskAdapter.FIELD_TITLE, TaskAdapter.FIELD_NOTES)) { match ->
-                when (match.field) {
-                  TaskAdapter.FIELD_REFERENCE -> stringResource(SearchRes.string.match_reference, item.card.reference_number)
-                  TaskAdapter.FIELD_AUTHORITY -> item.card.compliance_authority
-                  TaskAdapter.FIELD_DETAILS -> item.card.compliance_details
-                  else -> null
-                }
-              },
-              modifier = Modifier.fillMaxWidth()
-                .then(
-                  if (isJumpTarget) {
-                    Modifier.onGloballyPositioned { onTargetPositioned(it.positionInRoot().y) }
-                  } else {
-                    Modifier
+            val taskCard = @Composable {
+              TaskCardItem(
+                cardWithStatus = item,
+                onClick = { onCardClick(item) },
+                highlight = matches.wordsIn(TaskAdapter.FIELD_TITLE, TaskAdapter.FIELD_NOTES),
+                matchNote = hiddenMatchNote(matches, setOf(TaskAdapter.FIELD_TITLE, TaskAdapter.FIELD_NOTES)) { match ->
+                  when (match.field) {
+                    TaskAdapter.FIELD_REFERENCE -> stringResource(SearchRes.string.match_reference, item.card.reference_number)
+                    TaskAdapter.FIELD_AUTHORITY -> item.card.compliance_authority
+                    TaskAdapter.FIELD_DETAILS -> item.card.compliance_details
+                    else -> null
                   }
-                )
-                .jumpTargetHighlight(active = isJumpTarget),
-            )
+                },
+                modifier = Modifier.fillMaxWidth()
+                  .then(
+                    if (isJumpTarget) {
+                      Modifier.onGloballyPositioned { onTargetPositioned(it.positionInRoot().y) }
+                    } else {
+                      Modifier
+                    }
+                  )
+                  .jumpTargetHighlight(active = isJumpTarget),
+              )
+            }
+            if (revealController == null || quickActionsFor == null) {
+              taskCard()
+            } else {
+              SwipeActionCard(
+                actions = quickActionsFor(item),
+                controller = revealController,
+                key = item.card.id,
+                modifier = Modifier.fillMaxWidth(),
+                content = taskCard,
+              )
+            }
           }
         }
       }

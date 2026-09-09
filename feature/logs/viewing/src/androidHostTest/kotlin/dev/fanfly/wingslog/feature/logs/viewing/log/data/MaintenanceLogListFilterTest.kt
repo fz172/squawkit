@@ -3,6 +3,7 @@ package dev.fanfly.wingslog.feature.logs.viewing.log.data
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.analytics.RecordingAnalyticsManager
 import dev.fanfly.wingslog.core.datetime.toWireInstant
+import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.search.datamanager.impl.SearchEngineImpl
 import dev.fanfly.wingslog.feature.search.model.Facet
@@ -88,6 +89,7 @@ class MaintenanceLogListFilterTest {
     searchEngine = SearchEngineImpl(),
     tuning = SearchTuning(queryDebounceMillis = 0, dispatcher = dispatcher),
     analytics = analytics,
+    templateRegistry = BakedInTemplateRegistry(appVersionCode = Int.MAX_VALUE),
     thingId = THING_ID,
     templateId = "airplane",
     clock = fixedClock,

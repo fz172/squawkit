@@ -2,11 +2,20 @@ package dev.fanfly.wingslog.feature.thing.dashboard.data
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dev.fanfly.wingslog.core.analytics.AnalyticsManager
+import dev.fanfly.wingslog.core.analytics.QuickActionKind
+import dev.fanfly.wingslog.core.analytics.QuickActionSource
+import dev.fanfly.wingslog.core.analytics.QuickActionSurface
+import dev.fanfly.wingslog.core.analytics.RecordQuickAction
+import dev.fanfly.wingslog.core.analytics.log
 import dev.fanfly.wingslog.core.storage.ThingScopeResolver
+import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.core.template.TemplateResolution
 import dev.fanfly.wingslog.core.template.currentFor
 import dev.fanfly.wingslog.core.template.currentReadings
+import dev.fanfly.wingslog.core.template.squawkNoun
+import dev.fanfly.wingslog.core.template.taskNoun
 import dev.fanfly.wingslog.core.ui.common.UiText
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
@@ -20,11 +29,13 @@ import dev.fanfly.wingslog.feature.squawk.model.openAog
 import dev.fanfly.wingslog.feature.squawk.model.toWithStatus
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskStatusManager
+import dev.fanfly.wingslog.feature.tasks.datamanager.defaultMeterKey
 import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
 import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.thing.Squawk
+import dev.fanfly.wingslog.thing.SquawkDismissReason
 import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
@@ -36,10 +47,16 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import wingslog.core.sharedassets.generated.resources.delete_failed
+import wingslog.core.sharedassets.generated.resources.save_failed
+import wingslog.feature.squawk.sharedassets.generated.resources.squawk_deleted
+import wingslog.feature.tasks.sharedassets.generated.resources.task_deleted
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
+import wingslog.feature.squawk.sharedassets.generated.resources.Res as SquawkRes
+import wingslog.feature.tasks.sharedassets.generated.resources.Res as TasksRes
 
 /** The share-related flows, combined so they fit in one slot of the outer [combine]. */
 private data class ShareContext(
@@ -60,6 +77,7 @@ class ThingOverviewViewModel(
   private val sharingManager: SharingManager,
   private val thingScopeResolver: ThingScopeResolver,
   private val templateRegistry: TemplateRegistry,
+  private val analytics: AnalyticsManager,
   private val auth: FirebaseAuth,
   private val thingId: String,
 ) : ViewModel() {
@@ -68,7 +86,12 @@ class ThingOverviewViewModel(
     MutableStateFlow<ThingOverviewUiState>(ThingOverviewUiState.Loading)
   val uiState: StateFlow<ThingOverviewUiState> = _uiState.asStateFlow()
 
-  private val _events = Channel<ThingOverviewEvent>()
+  // Buffered, not rendezvous: a quick action's snackbar can be emitted between the section being
+  // torn down and the new one attaching its collector, and a rendezvous send would park there.
+  private val _events = Channel<ThingOverviewEvent>(Channel.BUFFERED)
+
+  /** Navigation and snackbar events; `ThingSectionContent` collects them (design §7). */
+  val events: Flow<ThingOverviewEvent> = _events.receiveAsFlow()
   private var cachedLogs: List<MaintenanceLog> = emptyList()
 
   /** Due status depends on the clock, not only on stored data; re-evaluate when the screen returns. */
@@ -213,9 +236,14 @@ class ThingOverviewViewModel(
             selectedTask = refreshedSelected,
             logsForSelectedTask = refreshedDetailLogs,
             deletingTaskId = current?.deletingTaskId,
+            resolvingTaskId = current?.resolvingTaskId,
+            skippingTaskId = current?.skippingTaskId,
             syncStates = syncStates,
             squawks = squawksWithStatus,
             aogSquawks = aogSquawks,
+            resolvingSquawkId = current?.resolvingSquawkId,
+            dismissingSquawkId = current?.dismissingSquawkId,
+            deletingSquawkId = current?.deletingSquawkId,
             myRole = myRole,
             shared = isShared,
             isAnonymous = auth.currentUser?.isAnonymous ?: true,
@@ -366,6 +394,161 @@ class ThingOverviewViewModel(
         }
       }
 
+      is ThingOverviewAction.SquawkResolveClick ->
+        updateSuccess { it.copy(resolvingSquawkId = action.squawk.squawk.id) }
+
+      ThingOverviewAction.DismissSquawkResolveMenu ->
+        updateSuccess { it.copy(resolvingSquawkId = null) }
+
+      // Navigation is the section's job; committing the analytics and closing the bubble is ours.
+      is ThingOverviewAction.SquawkFixedClick -> {
+        logQuickAction(QuickActionSurface.SQUAWKS, QuickActionKind.RESOLVE)
+        updateSuccess { it.copy(resolvingSquawkId = null) }
+      }
+
+      is ThingOverviewAction.SquawkDismissClick ->
+        updateSuccess {
+          it.copy(resolvingSquawkId = null, dismissingSquawkId = action.squawkId)
+        }
+
+      is ThingOverviewAction.ConfirmDismissSquawk -> dismissSquawk(action.reason)
+
+      ThingOverviewAction.CancelDismissSquawk ->
+        updateSuccess { it.copy(dismissingSquawkId = null) }
+
+      is ThingOverviewAction.DeleteSquawkClick ->
+        updateSuccess {
+          it.copy(resolvingSquawkId = null, deletingSquawkId = action.squawk.squawk.id)
+        }
+
+      ThingOverviewAction.ConfirmDeleteSquawk -> confirmDeleteSquawk()
+
+      ThingOverviewAction.CancelDeleteSquawk ->
+        updateSuccess { it.copy(deletingSquawkId = null) }
+
+      is ThingOverviewAction.TaskResolveClick ->
+        updateSuccess { it.copy(resolvingTaskId = action.card.card.id) }
+
+      ThingOverviewAction.DismissTaskResolveMenu ->
+        updateSuccess { it.copy(resolvingTaskId = null) }
+
+      is ThingOverviewAction.TaskCreateLogClick -> {
+        logQuickAction(QuickActionSurface.TASKS, QuickActionKind.RESOLVE)
+        updateSuccess { it.copy(resolvingTaskId = null) }
+      }
+
+      is ThingOverviewAction.TaskSkipClick ->
+        updateSuccess {
+          it.copy(resolvingTaskId = null, skippingTaskId = action.card.card.id)
+        }
+
+      ThingOverviewAction.ConfirmSkipTask -> confirmSkipTask()
+
+      ThingOverviewAction.CancelSkipTask ->
+        updateSuccess { it.copy(skippingTaskId = null) }
+
+      is ThingOverviewAction.DeleteTaskClick ->
+        updateSuccess {
+          it.copy(resolvingTaskId = null, deletingTaskId = action.card.card.id)
+        }
+    }
+  }
+
+  /** Rewrites [ThingOverviewUiState.Success]; a no-op in any other state. */
+  private inline fun updateSuccess(
+    crossinline transform: (ThingOverviewUiState.Success) -> ThingOverviewUiState.Success,
+  ) {
+    _uiState.update { state ->
+      if (state is ThingOverviewUiState.Success) transform(state) else state
+    }
+  }
+
+  /**
+   * Fired at commit — after the confirmation for Delete and Skip, on selection for Fixed /
+   * Dismiss / Create work log — so a cancelled confirmation logs nothing (PRD R25).
+   */
+  private fun logQuickAction(
+    surface: QuickActionSurface,
+    action: QuickActionKind,
+  ) {
+    val state = _uiState.value as? ThingOverviewUiState.Success ?: return
+    analytics.log(
+      RecordQuickAction(
+        templateId = state.thing.template?.id.orEmpty(),
+        surface = surface,
+        action = action,
+        source = QuickActionSource.SWIPE,
+      )
+    )
+  }
+
+  /** The words this build renders the thing in — what the snackbars name a record with (R24). */
+  private fun lexicon(state: ThingOverviewUiState.Success) =
+    templateRegistry.lexiconFor(templateRegistry.forThingWithFallback(state.thing))
+
+  private fun dismissSquawk(reason: SquawkDismissReason) {
+    val state = _uiState.value as? ThingOverviewUiState.Success ?: return
+    val squawkId = state.dismissingSquawkId ?: return
+    viewModelScope.launch {
+      // The manager, and nothing lower: the tombstone it writes is what fans the collaborator
+      // notification out (design §8).
+      squawkManager.dismissSquawk(state.thing.id, squawkId, reason)
+        .onSuccess { logQuickAction(QuickActionSurface.SQUAWKS, QuickActionKind.RESOLVE) }
+        .onFailure {
+          _events.send(
+            ThingOverviewEvent.ShowMessage(UiText.StringRes(CoreRes.string.save_failed))
+          )
+        }
+      updateSuccess { it.copy(dismissingSquawkId = null) }
+    }
+  }
+
+  private fun confirmDeleteSquawk() {
+    val state = _uiState.value as? ThingOverviewUiState.Success ?: return
+    val squawkId = state.deletingSquawkId ?: return
+    viewModelScope.launch {
+      squawkManager.deleteSquawk(state.thing.id, squawkId)
+        .onSuccess {
+          logQuickAction(QuickActionSurface.SQUAWKS, QuickActionKind.DELETE)
+          updateSuccess {
+            it.copy(
+              deletingSquawkId = null,
+              resolvingSquawkId = null,
+              selectedSquawk = null,
+              logForSelectedSquawk = null,
+            )
+          }
+          _events.send(
+            ThingOverviewEvent.ShowMessage(
+              UiText.StringRes(
+                SquawkRes.string.squawk_deleted,
+                listOf(LexiconFormatter.sentenceCase(lexicon(state).squawkNoun)),
+              )
+            )
+          )
+        }
+        // The card stays and the dialog closes: the record is still there to try again on (R14).
+        .onFailure {
+          updateSuccess { it.copy(deletingSquawkId = null) }
+          _events.send(
+            ThingOverviewEvent.ShowMessage(UiText.StringRes(CoreRes.string.delete_failed))
+          )
+        }
+    }
+  }
+
+  private fun confirmSkipTask() {
+    val state = _uiState.value as? ThingOverviewUiState.Success ?: return
+    val cardId = state.skippingTaskId ?: return
+    val card = (state.activeTasks + state.completedTasks)
+      .find { it.card.id == cardId }?.card ?: return
+    viewModelScope.launch {
+      // The dashboard already holds the reading the form derives, so the write is the same one
+      // TaskViewModel.skipThisCycle makes (design §5.1).
+      val reading = state.logStats?.valueFor(card.defaultMeterKey())?.toFloat() ?: 0f
+      taskDataManager.skipCycle(state.thing.id, card, reading)
+        .onSuccess { logQuickAction(QuickActionSurface.TASKS, QuickActionKind.SKIP) }
+      updateSuccess { it.copy(skippingTaskId = null) }
     }
   }
 
@@ -415,14 +598,24 @@ class ThingOverviewViewModel(
         state.thing.id,
         cardId
       )
-      _uiState.update { s ->
-        if (s is ThingOverviewUiState.Success) {
-          s.copy(
-            deletingTaskId = null,
-            selectedTask = null
+        .onSuccess {
+          logQuickAction(QuickActionSurface.TASKS, QuickActionKind.DELETE)
+          updateSuccess { it.copy(deletingTaskId = null, selectedTask = null) }
+          _events.send(
+            ThingOverviewEvent.ShowMessage(
+              UiText.StringRes(
+                TasksRes.string.task_deleted,
+                listOf(LexiconFormatter.sentenceCase(lexicon(state).taskNoun)),
+              )
+            )
           )
-        } else s
-      }
+        }
+        .onFailure {
+          updateSuccess { it.copy(deletingTaskId = null) }
+          _events.send(
+            ThingOverviewEvent.ShowMessage(UiText.StringRes(CoreRes.string.delete_failed))
+          )
+        }
     }
   }
 

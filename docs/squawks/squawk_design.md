@@ -2,7 +2,7 @@
 
 **PRD:** `docs/squawks/user_squawking_prd.md`
 **Status:** ✅ Implemented (with additions)
-**Last updated:** 2026-05-22
+**Last updated:** 2026-09-08
 
 ---
 
@@ -24,9 +24,12 @@ Implemented in `feature/squawk/` (canonical layout), local-first over `EntitySto
   visibility is provided by the Overview-tab `AogAlertSection`, which is considered sufficient; surfacing AOG on
   the fleet cards is not planned.
 - Attachment fields in the squawk form are gated behind the `attachmentUploadEnabled` feature-lab flag.
-- **Deletion is proposed, not built.** `SquawkManager.deleteSquawk()` exists with no UI caller; the card
-  swipe action and the edit-form delete card are specified in
-  [`../cards/card_swipe_actions_design.md`](../cards/card_swipe_actions_design.md).
+- **Delete is a squawk verb** (2026-09-08). Alongside dismiss and reopen, a squawk can be removed
+  outright, taking its comment thread with it: `SquawkManager.deleteSquawk()`, reachable from the
+  edit form's Details tab and from the card's swipe panel. Delete is for an entry made *in error* —
+  a duplicate, a test entry, the wrong Thing; a defect that was real but no longer applies is
+  **dismissed**, and the confirmation copy says so. Dismiss is still the only route that keeps the
+  record. See [`../cards/card_swipe_actions_design.md`](../cards/card_swipe_actions_design.md).
 
 ---
 

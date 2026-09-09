@@ -60,6 +60,7 @@ val thingDashboardModule = module {
       get<SharingManager>(),
       get<ThingScopeResolver>(),
       get<TemplateRegistry>(),
+      get<AnalyticsManager>(),
       get<FirebaseAuth>(),
       thingId,
     )

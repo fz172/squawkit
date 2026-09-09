@@ -3,9 +3,17 @@ package dev.fanfly.wingslog.feature.logs.viewing.log.data
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.fanfly.wingslog.core.analytics.AnalyticsManager
+import dev.fanfly.wingslog.core.analytics.QuickActionKind
+import dev.fanfly.wingslog.core.analytics.QuickActionSource
+import dev.fanfly.wingslog.core.analytics.QuickActionSurface
 import dev.fanfly.wingslog.core.analytics.RecordFilterApplied
+import dev.fanfly.wingslog.core.analytics.RecordQuickAction
 import dev.fanfly.wingslog.core.analytics.RecordSearch
 import dev.fanfly.wingslog.core.analytics.log
+import dev.fanfly.wingslog.core.template.LexiconFormatter
+import dev.fanfly.wingslog.core.template.TemplateRegistry
+import dev.fanfly.wingslog.core.template.logNoun
+import dev.fanfly.wingslog.core.ui.common.UiText
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.logs.datamanager.authorship.LogAuthorship
 import dev.fanfly.wingslog.feature.logs.datamanager.authorship.authorship
@@ -41,6 +49,10 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import wingslog.core.sharedassets.generated.resources.delete_failed
+import wingslog.feature.logs.sharedassets.generated.resources.log_deleted
+import wingslog.core.sharedassets.generated.resources.Res as CoreRes
+import wingslog.feature.logs.sharedassets.generated.resources.Res as LogsRes
 
 /** The share-derived facts the log list needs, combined so they fit one slot of the outer combine. */
 private data class AuthorshipContext(
@@ -65,6 +77,7 @@ class MaintenanceLogListViewModel(
   private val searchEngine: SearchEngine,
   private val tuning: SearchTuning,
   private val analytics: AnalyticsManager,
+  private val templateRegistry: TemplateRegistry,
   val thingId: String,
   private val templateId: String,
   private val clock: Clock = Clock.System,
@@ -78,7 +91,9 @@ class MaintenanceLogListViewModel(
     MutableStateFlow<MaintenanceLogListUiState>(MaintenanceLogListUiState.Loading)
   val uiState: StateFlow<MaintenanceLogListUiState> = _uiState.asStateFlow()
 
-  private val _events = Channel<MaintenanceLogListEvent>()
+  // Buffered, not rendezvous: a quick action's snackbar can be emitted between the tab being torn
+  // down and the new one attaching its collector, and a rendezvous send would park there.
+  private val _events = Channel<MaintenanceLogListEvent>(Channel.BUFFERED)
   val events = _events.receiveAsFlow()
 
   private val _logsLoadState =
@@ -88,6 +103,7 @@ class MaintenanceLogListViewModel(
   /** What is typed and chosen, updated synchronously so the search field never trails the caret. */
   val filter: StateFlow<RecordFilter> = _filter.asStateFlow()
   private val _selectedLog = MutableStateFlow<MaintenanceLog?>(null)
+  private val _deletingLog = MutableStateFlow<MaintenanceLog?>(null)
   private val _availableCards =
     MutableStateFlow<List<MaintenanceTask>>(emptyList())
   private val _availableSquawks = MutableStateFlow<List<Squawk>>(emptyList())
@@ -116,7 +132,7 @@ class MaintenanceLogListViewModel(
         _logsLoadState,
         // The state carries what was typed; the search runs on the debounced copy.
         combine(_filter, _filter.debouncedQuery(tuning.queryDebounceMillis)) { typed, applied -> typed to applied },
-        _selectedLog,
+        combine(_selectedLog, _deletingLog) { selected, deleting -> selected to deleting },
         combine(_availableCards, _availableSquawks) { cards, squawks ->
           LinkTargets(cards, squawks)
         },
@@ -127,8 +143,9 @@ class MaintenanceLogListViewModel(
         ) { authors, names, isShared ->
           AuthorshipContext(authors, names, isShared)
         },
-      ) { logsState, filters, selectedLog, linkTargets, ctx ->
+      ) { logsState, filters, pending, linkTargets, ctx ->
         val (filter, applied) = filters
+        val (selectedLog, deletingLog) = pending
         val (authors, names, isShared) = ctx
         when (logsState) {
           LogsLoadState.Loading -> MaintenanceLogListUiState.Loading
@@ -157,6 +174,7 @@ class MaintenanceLogListViewModel(
                 ?: LogAuthorship.Unknown,
               availableCards = linkTargets.cards,
               availableSquawks = linkTargets.squawks,
+              deletingLog = deletingLog,
             )
           }
         }
@@ -275,6 +293,55 @@ class MaintenanceLogListViewModel(
     }
   }
 
+  fun onDeleteLogClick(log: MaintenanceLog) {
+    _deletingLog.value = log
+  }
+
+  fun cancelDeleteLog() {
+    _deletingLog.value = null
+  }
+
+  /**
+   * Deletes through the manager and nothing lower: the tombstone it writes is what fans the
+   * collaborator notification out (design §8). Logged at commit, so a cancelled dialog logs
+   * nothing (PRD R25).
+   */
+  fun confirmDeleteLog() {
+    val log = _deletingLog.value ?: return
+    viewModelScope.launch {
+      logManager.deleteLog(thingId, log.id)
+        .onSuccess {
+          analytics.log(
+            RecordQuickAction(
+              templateId = templateId,
+              surface = QuickActionSurface.LOGS,
+              action = QuickActionKind.DELETE,
+              source = QuickActionSource.SWIPE,
+            )
+          )
+          _events.send(
+            MaintenanceLogListEvent.ShowMessage(
+              UiText.StringRes(LogsRes.string.log_deleted, listOf(logWord()))
+            )
+          )
+          if (_selectedLog.value?.id == log.id) _selectedLog.value = null
+          _deletingLog.value = null
+        }
+        // The card stays and the dialog closes: the record is still there to try again on (R14).
+        .onFailure {
+          _deletingLog.value = null
+          _events.send(
+            MaintenanceLogListEvent.ShowMessage(UiText.StringRes(CoreRes.string.delete_failed))
+          )
+        }
+    }
+  }
+
+  /** The word this build names a log with — the lexicon's, never a hard-coded "log" (R24). */
+  private fun logWord(): String = LexiconFormatter.sentenceCase(
+    templateRegistry.lexiconFor(templateRegistry.canonicalById(templateId)).logNoun
+  )
+
   private sealed interface LogsLoadState {
     data object Loading : LogsLoadState
     data object Error : LogsLoadState
@@ -285,6 +352,9 @@ class MaintenanceLogListViewModel(
 private const val TAB = "logs"
 
 sealed interface MaintenanceLogListEvent {
+  /** A snackbar for the section to post: a quick action's outcome, or a failure (design §7). */
+  data class ShowMessage(val message: UiText) : MaintenanceLogListEvent
+
   data class NavigateToCreateLog(val thingId: String) :
     MaintenanceLogListEvent
 

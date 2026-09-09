@@ -11,6 +11,8 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.core.template.LocalThingTemplate
+import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalSnackbarHostState
+import dev.fanfly.wingslog.core.ui.common.UiText
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
 import dev.fanfly.wingslog.feature.attachment.datamanager.OpenState
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
@@ -44,16 +46,29 @@ fun LogsTab(
   val appCapability: AppCapability = koinInject()
   val coroutineScope = rememberCoroutineScope()
   var openError by remember { mutableStateOf<String?>(null) }
+  // A quick action runs inside the shell entry, so the cross-screen back-stack channel is the
+  // wrong shape for its snackbar; the shell provides its host here instead (design §7).
+  val snackbarHostState = LocalSnackbarHostState.current
+  var pendingMessage by remember { mutableStateOf<UiText?>(null) }
 
   LaunchedEffect(viewModel) {
     viewModel.events.collect { event ->
       when (event) {
+        is MaintenanceLogListEvent.ShowMessage -> pendingMessage = event.message
         is MaintenanceLogListEvent.NavigateToCreateLog -> onNavigateToAddLog?.invoke()
         is MaintenanceLogListEvent.NavigateToEditLog -> onNavigateToEditLog?.invoke(
           event.logId
         )
       }
     }
+  }
+  // Resolved in composition, because a UiText needs the resource table; a host that provided no
+  // snackbar (a preview) drops it silently.
+  val messageText = pendingMessage?.asString()
+  LaunchedEffect(messageText) {
+    val text = messageText ?: return@LaunchedEffect
+    pendingMessage = null
+    snackbarHostState?.showSnackbar(text)
   }
 
   MaintenanceLogListContent(
@@ -72,6 +87,10 @@ fun LogsTab(
       viewModel.onDismissDetail()
     },
     onEditLog = onNavigateToEditLog?.let { viewModel::onEditLog },
+    // Same gate as edit: whoever may open the form may swipe (PRD R20).
+    onDeleteLog = onNavigateToEditLog?.let { viewModel::onDeleteLogClick },
+    onCancelDeleteLog = viewModel::cancelDeleteLog,
+    onConfirmDeleteLog = viewModel::confirmDeleteLog,
     onAddLog = onNavigateToAddLog?.let { viewModel::onAddLog },
     onAttachmentTap = { attachment ->
       openError = null

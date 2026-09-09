@@ -22,6 +22,8 @@ sealed interface MaintenanceLogListUiState {
     val selectedAuthorship: LogAuthorship = LogAuthorship.Unknown,
     val availableCards: List<MaintenanceTask> = emptyList(),
     val availableSquawks: List<Squawk> = emptyList(),
+    /** Delete confirmation open for this log (card swipe actions, design §5.2). */
+    val deletingLog: MaintenanceLog? = null,
   ) : MaintenanceLogListUiState
 
   data object Error : MaintenanceLogListUiState

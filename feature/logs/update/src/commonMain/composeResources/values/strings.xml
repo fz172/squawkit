@@ -12,7 +12,6 @@
   <string name="log_not_found">Log not found</string>
   <string name="log_updated">Log updated</string>
   <string name="log_saved">Log saved</string>
-  <string name="log_deleted">Log deleted</string>
   <string name="log_tab_work">Work</string>
   <string name="log_tab_hours">Hours</string>
   <string name="log_tab_records">Records</string>

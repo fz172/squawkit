@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.feature.logs.viewing.di
 
 import dev.fanfly.wingslog.core.analytics.AnalyticsManager
+import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.logs.viewing.log.data.MaintenanceLogListViewModel
 import dev.fanfly.wingslog.feature.search.datamanager.SearchEngine
@@ -25,6 +26,7 @@ val logsViewingModule = module {
       get<SearchEngine>(),
       get<SearchTuning>(),
       get<AnalyticsManager>(),
+      get<TemplateRegistry>(),
       params.get<String>(0),
       params.get<String>(1),
     )

@@ -44,6 +44,8 @@
   <string name="sync_changes_discarded">Unsaved changes to <xliff:g example="aircraft">%1$s</xliff:g> were discarded — your access was removed</string>
   <string name="save_failed">Save failed</string>
   <string name="delete_failed">Delete failed</string>
+  <!-- Swipe quick-action label; the record noun is on the card itself. -->
+  <string name="quick_action_resolve">Resolve</string>
   <string name="select_date">Select Date</string>
   <!-- Shell navigation tabs -->
   <string name="shell_tab_dashboard">Dashboard</string>

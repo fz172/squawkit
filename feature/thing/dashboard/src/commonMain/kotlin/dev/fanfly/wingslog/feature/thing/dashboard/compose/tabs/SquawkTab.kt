@@ -24,6 +24,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.text.font.FontWeight
@@ -39,7 +40,9 @@ import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalNavPillClearance
 import dev.fanfly.wingslog.core.ui.common.compose.DualSegmentedFilter
 import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
+import dev.fanfly.wingslog.core.ui.common.compose.SwipeActionCard
 import dev.fanfly.wingslog.core.ui.common.compose.jumpTargetHighlight
+import dev.fanfly.wingslog.core.ui.common.compose.rememberSwipeRevealController
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.ads.datamanager.AdsManager
 import dev.fanfly.wingslog.feature.ads.model.AdSurface
@@ -61,8 +64,13 @@ import dev.fanfly.wingslog.feature.search.viewing.hiddenMatchNote
 import dev.fanfly.wingslog.feature.search.viewing.wordsIn
 import dev.fanfly.wingslog.feature.squawk.model.SquawkStatus
 import dev.fanfly.wingslog.feature.squawk.model.SquawkWithStatus
+import dev.fanfly.wingslog.feature.squawk.viewing.DeleteSquawkConfirmDialog
+import dev.fanfly.wingslog.feature.squawk.viewing.DismissSquawkDialog
+import dev.fanfly.wingslog.feature.squawk.viewing.ResolveOptionsMenu
 import dev.fanfly.wingslog.feature.squawk.viewing.SquawkCard
 import dev.fanfly.wingslog.feature.squawk.viewing.SquawkDetailSheet
+import dev.fanfly.wingslog.feature.squawk.viewing.SquawkQuickActionCallbacks
+import dev.fanfly.wingslog.feature.squawk.viewing.quickActions
 import dev.fanfly.wingslog.feature.thing.dashboard.data.SquawkAdapter
 import dev.fanfly.wingslog.feature.thing.dashboard.data.SquawkTabViewModel
 import dev.fanfly.wingslog.feature.thing.dashboard.data.ThingOverviewAction
@@ -135,6 +143,10 @@ fun SquawkTab(
   // container each report their top, and the difference plus the current scroll is the content
   // offset to animate to.
   val scrollState = rememberScrollState()
+  // One controller for the whole list, so opening a card closes whichever was open — across the
+  // grid's columns on a wide tier too (PRD R5).
+  val revealController = rememberSwipeRevealController()
+  LaunchedEffect(showClosed) { revealController.close() }
   var contentTopY by remember { mutableStateOf(0f) }
   var targetCardY by remember(scrollToSquawkId) { mutableStateOf<Float?>(null) }
   // Keyed on the target's status too, not just its id: a tapped notification can arrive and be acted
@@ -167,6 +179,7 @@ fun SquawkTab(
     modifier = modifier
       .fillMaxSize()
       .verticalScroll(scrollState)
+      .nestedScroll(revealController.closeOnScroll)
       .onGloballyPositioned { contentTopY = it.positionInRoot().y }
       .padding(horizontal = Spacing.screenPadding)
       // Clear the floating pill this content now scrolls beneath (0 on non-compact tiers).
@@ -304,31 +317,82 @@ fun SquawkTab(
             val item = row.value
             val isJumpTarget = item.squawk.id == scrollToSquawkId
             val matches = tabState.matches[item.squawk.id].orEmpty()
-            SquawkCard(
-              item = item,
-              onClick = { onAction(ThingOverviewAction.ShowSquawkDetail(item)) },
-              highlight = matches.wordsIn(SquawkAdapter.FIELD_TITLE, SquawkAdapter.FIELD_DESCRIPTION),
-              matchNote = hiddenMatchNote(matches, setOf(SquawkAdapter.FIELD_TITLE, SquawkAdapter.FIELD_DESCRIPTION)) { match ->
-                if (match.field == SquawkAdapter.FIELD_SERIAL) stringResource(SearchRes.string.match_serial, item.squawk.component_serial) else null
-              },
-              modifier = Modifier.fillMaxWidth()
-                .then(
-                  if (isJumpTarget) {
-                    Modifier.onGloballyPositioned {
-                      targetCardY = it.positionInRoot().y
-                    }
-                  } else {
-                    Modifier
-                  }
+            // Whoever may open the edit form may swipe (PRD R20); a read-only caller gets an
+            // empty action list, which disables the drag.
+            val quickActions = onMutationAction?.let { mutate ->
+              item.quickActions(
+                SquawkQuickActionCallbacks(
+                  onResolve = { mutate(ThingOverviewAction.SquawkResolveClick(item)) },
+                  onDelete = {
+                    revealController.close()
+                    mutate(ThingOverviewAction.DeleteSquawkClick(item))
+                  },
+                  resolveMenu = {
+                    ResolveOptionsMenu(
+                      expanded = state.resolvingSquawkId == item.squawk.id,
+                      onDismissRequest = {
+                        revealController.close()
+                        mutate(ThingOverviewAction.DismissSquawkResolveMenu)
+                      },
+                      onDismissNoWorkPlanned = {
+                        revealController.close()
+                        mutate(ThingOverviewAction.SquawkDismissClick(item.squawk.id))
+                      },
+                      onFixedClick = {
+                        revealController.close()
+                        mutate(ThingOverviewAction.SquawkFixedClick(item.squawk.id))
+                      },
+                    )
+                  },
                 )
-                .jumpTargetHighlight(active = isJumpTarget),
-            )
+              )
+            }.orEmpty()
+            SwipeActionCard(
+              actions = quickActions,
+              controller = revealController,
+              key = item.squawk.id,
+              modifier = Modifier.fillMaxWidth(),
+            ) {
+              SquawkCard(
+                item = item,
+                onClick = { onAction(ThingOverviewAction.ShowSquawkDetail(item)) },
+                highlight = matches.wordsIn(SquawkAdapter.FIELD_TITLE, SquawkAdapter.FIELD_DESCRIPTION),
+                matchNote = hiddenMatchNote(matches, setOf(SquawkAdapter.FIELD_TITLE, SquawkAdapter.FIELD_DESCRIPTION)) { match ->
+                  if (match.field == SquawkAdapter.FIELD_SERIAL) stringResource(SearchRes.string.match_serial, item.squawk.component_serial) else null
+                },
+                modifier = Modifier.fillMaxWidth()
+                  .then(
+                    if (isJumpTarget) {
+                      Modifier.onGloballyPositioned {
+                        targetCardY = it.positionInRoot().y
+                      }
+                    } else {
+                      Modifier
+                    }
+                  )
+                  .jumpTargetHighlight(active = isJumpTarget),
+              )
+            }
           }
         }
       }
     }
 
     Spacer(Modifier.height(Spacing.buttonHeight + Spacing.screenPadding))
+  }
+
+  // Rendered at tab level, not inside the card, so they are not clipped by the swipe container.
+  if (state.dismissingSquawkId != null) {
+    DismissSquawkDialog(
+      onConfirm = { onAction(ThingOverviewAction.ConfirmDismissSquawk(it)) },
+      onDismiss = { onAction(ThingOverviewAction.CancelDismissSquawk) },
+    )
+  }
+  if (state.deletingSquawkId != null) {
+    DeleteSquawkConfirmDialog(
+      onConfirm = { onAction(ThingOverviewAction.ConfirmDeleteSquawk) },
+      onDismiss = { onAction(ThingOverviewAction.CancelDeleteSquawk) },
+    )
   }
 
   state.selectedSquawk?.let { selected ->
