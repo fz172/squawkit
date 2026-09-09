@@ -46,11 +46,9 @@ class SubscriptionManagerImplTest {
     ads: Boolean = false,
   ) = AppCapability(
     isDeveloperOptionsSupported = devBuild,
-    isStressTestSupported = false,
     isCameraCaptureSupported = false,
     isAnonymousLoginSupported = false,
     isAdsSupported = ads,
-    isSearchFilterSupported = false,
   )
 
   private fun manager(

@@ -9,7 +9,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.core.template.LocalThingTemplate
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalSnackbarHostState
 import dev.fanfly.wingslog.core.ui.common.UiText
@@ -43,7 +42,6 @@ fun LogsTab(
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
   val filter by viewModel.filter.collectAsStateWithLifecycle()
   val attachmentOpener: AttachmentOpener = koinInject()
-  val appCapability: AppCapability = koinInject()
   val coroutineScope = rememberCoroutineScope()
   var openError by remember { mutableStateOf<String?>(null) }
   // A quick action runs inside the shell entry, so the cross-screen back-stack channel is the
@@ -105,7 +103,6 @@ fun LogsTab(
       }
     },
     openError = openError,
-    useSharedFilterBar = appCapability.isSearchFilterSupported,
     onTaskClick = onTaskClick,
     onSquawkClick = onSquawkClick,
     scrollToLogId = scrollToLogId,

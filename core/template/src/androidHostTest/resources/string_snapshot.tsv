@@ -284,24 +284,18 @@ feature/logs/update	tasks_section_header	Maintenance Tasks Completed
 feature/logs/update	type_make_model_serial	%1$s - %2$s (%3$s)
 feature/logs/update	work_description_required	Work Description *
 feature/logs/viewing	affected_maintenance_tasks	Affected Maintenance Tasks
-feature/logs/viewing	clear_filter	Clear Filter
 feature/logs/viewing	collapse_details	Collapse details
 feature/logs/viewing	expand_details	Expand details
 feature/logs/viewing	failed_to_load_logs	Could not load maintenance logs
-feature/logs/viewing	filter_by_type	Filter by Type
-feature/logs/viewing	log_count_n_entries	%1$d Entries
-feature/logs/viewing	log_count_one_entry	1 Entry
 feature/logs/viewing	log_squawk_count_one	1 squawk
 feature/logs/viewing	log_squawk_count_plural	%1$d squawks
 feature/logs/viewing	log_task_count_one	1 maintenance task
 feature/logs/viewing	log_task_count_plural	%1$d maintenance tasks
 feature/logs/viewing	maintenance_summary	Maintenance Summary
-feature/logs/viewing	no_logs_match_filter	No logs match your filter.
 feature/logs/viewing	no_tasks_linked	No maintenance tasks linked to this work log
 feature/logs/viewing	resolved_squawks	Resolved Squawks
 feature/logs/viewing	s_n_empty	No S/N
 feature/logs/viewing	s_n_placeholder	S/N: %1$s
-feature/logs/viewing	search_logs	Search logs…
 feature/logs/viewing	thing_data	Aircraft Data
 feature/logs/viewing	total_logs	Total Logs
 feature/logs/viewing	unknown_squawk	Unknown squawk (%1$s)
@@ -911,7 +905,6 @@ feature/search/sharedassets	custom_to	To
 feature/search/sharedassets	due_within_12_months	Next 12 months
 feature/search/sharedassets	due_within_3_months	Next 3 months
 feature/search/sharedassets	due_within_any	No limit
-feature/search/sharedassets	filter_records	Filter %1$s
 feature/search/sharedassets	filter_all_people	All %1$d %2$s
 feature/search/sharedassets	filter_search_people	Search %1$d %2$s
 feature/search/sharedassets	filter_selected_none	No one selected

@@ -31,7 +31,7 @@ interface DeveloperOptionsNavContributor {
 
   /**
    * False registers nothing. The capability gate lives with the feature that owns the destination,
-   * which is why the shell no longer needs `isStressTestSupported` to decide for it.
+   * which is why the shell no longer needs a capability flag of its own to decide for it.
    */
   fun isAvailable(): Boolean = true
 

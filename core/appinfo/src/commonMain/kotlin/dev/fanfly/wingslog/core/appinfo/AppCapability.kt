@@ -6,7 +6,6 @@ package dev.fanfly.wingslog.core.appinfo
  */
 data class AppCapability(
   val isDeveloperOptionsSupported: Boolean,
-  val isStressTestSupported: Boolean,
   val isCameraCaptureSupported: Boolean,
   val isAnonymousLoginSupported: Boolean,
   /**
@@ -20,8 +19,6 @@ data class AppCapability(
    * `SubscriptionManager.showsAds()` enforces this; see the design doc §6.
    */
   val isAdsSupported: Boolean,
-  /** Per-tab search and filter (project #11). On for Android and web; iOS dev builds only until #854. */
-  val isSearchFilterSupported: Boolean,
 )
 
 /**

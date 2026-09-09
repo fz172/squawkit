@@ -1,7 +1,7 @@
 # Design Doc: Search and Filter
 
 **PRD:** `docs/search/search_filter_PRD.md`
-**Status:** ✅ Shipped on Android and web 2026-09-07; iOS behind `AppCapability.isSearchFilterSupported` (developer builds) until #854
+**Status:** ✅ Shipped on Android and web 2026-09-07; on for every host 2026-09-09 (#854), flag retired
 **Last updated:** 2026-09-07
 **Tracking:** GitHub Project #11 “Search and Filter” — sub-issues #820–#844 follow the §10 order
 
@@ -10,7 +10,8 @@
 ## Implementation status
 
 P1 (#817: #845, #846, #847), P2 (#818: #848, #849, #850) and P3 (#819: #851 and the analytics PR)
-landed 2026-09-06 → 09-07, gated to developer builds by `AppCapability.isSearchFilterSupported`.
+landed 2026-09-06 → 09-07, gated to developer builds by `AppCapability.isSearchFilterSupported`
+until #854 turned it on everywhere and removed the flag along with the pre-search Logs UI.
 Deltas from the design as written:
 
 - Modules are `feature/search/{model,datamanager,sharedassets,viewing}`, not `core/search` + `core/ui`.
