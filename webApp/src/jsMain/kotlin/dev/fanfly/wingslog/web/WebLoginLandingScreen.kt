@@ -101,7 +101,7 @@ private const val SupportUrl = "/support.html"
 /** The iOS app's App Store listing. */
 private const val AppStoreUrl = "https://apps.apple.com/us/app/squawkit/id6801955033"
 
-/** The "Now on iPhone and Android" tile inside the login card. */
+/** The "Now on iOS and Android" tile inside the login card. */
 private const val ShowHeroPromo = true
 
 /**
@@ -697,7 +697,7 @@ private fun LoginCard(
   }
 }
 
-/** The "Now on iPhone and Android" tile inside the login card; jumps to the Get-the-app section. */
+/** The "Now on iOS and Android" tile inside the login card; jumps to the Get-the-app section. */
 @Composable
 private fun HeroPromo(colors: LandingColors, onClick: () -> Unit) {
   Row(
@@ -730,7 +730,7 @@ private fun HeroPromo(colors: LandingColors, onClick: () -> Unit) {
       verticalArrangement = Arrangement.spacedBy(2.dp)
     ) {
       Text(
-        text = "Now on iPhone and Android",
+        text = "Now on iOS and Android",
         style = TextStyle(
           fontSize = 14.sp,
           fontWeight = FontWeight.SemiBold,
