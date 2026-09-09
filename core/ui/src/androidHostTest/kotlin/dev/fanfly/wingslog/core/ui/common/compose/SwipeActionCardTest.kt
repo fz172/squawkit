@@ -129,10 +129,11 @@ class SwipeActionCardTest {
 
     val resolveBounds = rule.onNodeWithText("Resolve").getUnclippedBoundsInRoot()
     val deleteBounds = rule.onNodeWithText("Delete").getUnclippedBoundsInRoot()
-    // The revealed row spans exactly the gap the card slid open: it starts where the card's
-    // trailing edge now is and ends at the card's original edge.
-    assertThat(resolveBounds.left).isEqualTo(320.dp + cardLeft("card"))
-    assertThat(deleteBounds.right).isEqualTo(320.dp)
+    // The revealed row spans exactly the gap the card slid open, inset by ActionRowInset at each
+    // end. Measuring the row inside its own inset is what made the card stop 4dp short and park
+    // over the first icon, so this pins both edges rather than just the width.
+    assertThat(resolveBounds.left).isEqualTo(320.dp + cardLeft("card") + ActionRowInset)
+    assertThat(deleteBounds.right).isEqualTo(320.dp - ActionRowInset)
   }
 
   @Test

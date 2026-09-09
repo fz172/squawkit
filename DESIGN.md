@@ -280,10 +280,10 @@ Overdue/DueSoon cards get a 1dp left-border accent at `statusTone.accent.copy(al
 - **Don't** use gradient text, glassmorphism fills, hero-metric grids (big number + label + supporting stats + gradient), or identical icon-card grids. These are the SaaS dashboard aesthetic this system rejects.
 - **Don't** use Instrument Amber for anything non-advisory: no brand accents, no empty-state illustrations, no "interesting" visual moments.
 - **Don't** use `border-left` or `border-right` stripes greater than 1dp as decorative callout accents. Rewrite with full-border containers or background tints.
-- **Don't** introduce custom shadow or `elevation` modifier values. Tonal elevation handles depth.
+- **Don't** introduce custom shadow or `elevation` modifier values. Tonal elevation handles depth. One sanctioned exception: `SwipeActionCard` lifts the dragged card on a shadow that exists only while the gesture is in flight, because tonal elevation tints and cannot say *above*, which is the whole point of a card sliding off its own controls.
 - **Don't** use Space Grotesk for body text, form field values, or dense data labels. It is for headings and titles only.
 - **Don't** use JetBrains Mono for anything that is not a technical measurement or identifier. No buttons, no labels, no body copy.
-- **Don't** add decorative motion: no orchestrated entrances, no elastic or bounce easing, no scroll-driven choreography. Motion is state feedback only (150–250ms, ease-out).
+- **Don't** add decorative motion: no orchestrated entrances, no elastic or bounce easing, no scroll-driven choreography. Motion is state feedback only (150–250ms, ease-out). A gesture the user is still holding may use a front-loaded ease-out curve inside that budget — `SwipeActionCard`'s `cubic-bezier(.32,.72,0,1)` — so the card reads as attached to the finger rather than played back at it.
 
 ---
 
