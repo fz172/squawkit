@@ -50,13 +50,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.PathEffect
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalUriHandler
@@ -102,13 +98,10 @@ private const val PlayStoreUrl =
 /** The static support page next to the app (`webApp/src/jsMain/resources/support.html`). */
 private const val SupportUrl = "/support.html"
 
-/** The App Store listing once the iOS build is approved. Null leaves the button out. */
-private val AppStoreUrl: String? = null
+/** The iOS app's App Store listing. */
+private const val AppStoreUrl = "https://apps.apple.com/us/app/squawkit/id6801955033"
 
-/** Show the App Store as a dashed "coming soon" placeholder while [AppStoreUrl] is null. */
-private const val ShowAppStoreComingSoon = false
-
-/** The "Now on Android" tile inside the login card. */
+/** The "Now on iOS and Android" tile inside the login card. */
 private const val ShowHeroPromo = true
 
 /**
@@ -704,7 +697,7 @@ private fun LoginCard(
   }
 }
 
-/** The "Now on Android" tile inside the login card; jumps to the Get-the-app section. */
+/** The "Now on iOS and Android" tile inside the login card; jumps to the Get-the-app section. */
 @Composable
 private fun HeroPromo(colors: LandingColors, onClick: () -> Unit) {
   Row(
@@ -737,7 +730,7 @@ private fun HeroPromo(colors: LandingColors, onClick: () -> Unit) {
       verticalArrangement = Arrangement.spacedBy(2.dp)
     ) {
       Text(
-        text = "Now on Android",
+        text = "Now on iOS and Android",
         style = TextStyle(
           fontSize = 14.sp,
           fontWeight = FontWeight.SemiBold,
@@ -1141,13 +1134,13 @@ private val Faqs = listOf(
   "Can I share a thing with someone else?" to
     "Yes. Invite a co-owner, mechanic or family member to a specific thing. They see its schedule and history and can log work against it; you stay the owner.",
   "Does SquawkIt work offline?" to
-    "The Android app keeps your records on the device and syncs when you reconnect. The web app needs a connection.",
+    "The iPhone and Android apps keep your records on the device and sync when you reconnect. The web app needs a connection.",
   "How does exporting work?" to
     "Any thing can be exported as a PDF or CSV of its full history from the Overview screen. Exports include every log entry, task and issue.",
   "Is SquawkIt a certified maintenance record system?" to
     "No. SquawkIt is a personal convenience tool. It does not replace official logbooks or records required by your aviation authority or any other regulator.",
   "Which platforms is SquawkIt available on?" to
-    "The web app works in any modern browser. The Android app is available on Google Play.",
+    "The web app works in any modern browser. The mobile app is on the App Store and Google Play.",
 )
 
 @Composable
@@ -1353,31 +1346,24 @@ private fun GetTheAppCopy(
         name = "Google Play",
         onClick = { uriHandler.openUri(PlayStoreUrl) },
       )
-      val appStoreUrl = AppStoreUrl
-      if (appStoreUrl != null) {
-        StoreButton(
-          colors = colors,
-          type = type,
-          icon = {
-            Icon(
-              AppleLogo,
-              null,
-              Modifier.size(22.dp),
-              tint = Color.White
-            )
-          },
-          eyebrow = "Download on the",
-          name = "App Store",
-          onClick = { uriHandler.openUri(appStoreUrl) },
-        )
-      } else if (ShowAppStoreComingSoon) {
-        ComingSoonStore(colors, type, name = "App Store") {
-          Icon(AppleLogo, null, Modifier.size(22.dp), tint = colors.slate)
-        }
-      }
+      StoreButton(
+        colors = colors,
+        type = type,
+        icon = {
+          Icon(
+            AppleLogo,
+            null,
+            Modifier.size(22.dp),
+            tint = Color.White
+          )
+        },
+        eyebrow = "Download on the",
+        name = "App Store",
+        onClick = { uriHandler.openUri(AppStoreUrl) },
+      )
     }
     Text(
-      text = "Android 13 or later.",
+      text = "Android 13 or later. iOS 26.2 or later.",
       style = TextStyle(
         fontSize = 12.sp,
         lineHeight = 18.sp,
@@ -1414,47 +1400,6 @@ private fun StoreButton(
       name,
       eyebrowColor = Color.White.copy(alpha = 0.85f),
       nameColor = Color.White
-    )
-  }
-}
-
-/** The dashed, inert stand-in for a store the app is not on yet. */
-@Composable
-private fun ComingSoonStore(
-  colors: LandingColors,
-  type: LandingType,
-  name: String,
-  icon: @Composable () -> Unit,
-) {
-  Row(
-    modifier = Modifier
-      .height(52.dp)
-      .drawBehind {
-        drawRoundRect(
-          color = colors.slate,
-          cornerRadius = CornerRadius(16.dp.toPx()),
-          style = Stroke(
-            width = 1.dp.toPx(),
-            pathEffect = PathEffect.dashPathEffect(
-              floatArrayOf(
-                6.dp.toPx(),
-                4.dp.toPx()
-              )
-            ),
-          ),
-        )
-      }
-      .padding(start = 14.dp, end = 18.dp),
-    verticalAlignment = Alignment.CenterVertically,
-    horizontalArrangement = Arrangement.spacedBy(10.dp),
-  ) {
-    icon()
-    StoreLabel(
-      type,
-      "Coming soon",
-      name,
-      eyebrowColor = colors.slate,
-      nameColor = colors.slate
     )
   }
 }
@@ -1706,7 +1651,7 @@ private fun FinalCta(
               tint = Color.White
             )
             Text(
-              text = "Get the Android app",
+              text = "Get the mobile app",
               style = TextStyle(
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Medium,
@@ -1745,7 +1690,7 @@ private fun LandingFooter(colors: LandingColors, onNavApp: () -> Unit) {
             uriHandler.openUri("/privacy.html")
           }
           FooterLink("Support", colors) { uriHandler.openUri(SupportUrl) }
-          FooterLink("Android app", colors, onNavApp)
+          FooterLink("Mobile app", colors, onNavApp)
         }
       }
     }
