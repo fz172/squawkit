@@ -7,6 +7,8 @@ class TokenizerTest {
 
   private fun tokens(s: String) = Tokenizer.tokens(Tokenizer.normalize(s))
 
+  private fun queryTokens(s: String) = Tokenizer.queryTokens(Tokenizer.normalize(s))
+
   @Test
   fun lowercasesAndFoldsAccents() {
     assertThat(Tokenizer.normalize("Réglage Été")).isEqualTo("reglage ete")
@@ -41,6 +43,34 @@ class TokenizerTest {
       "serial",
       "3ab012345"
     )
+      .inOrder()
+  }
+
+  @Test
+  fun queryTokensDropPunctuationWithoutSplittingReferences() {
+    // The reported bug: a quote the user typed must not survive into a token, because no field
+    // token can ever contain one.
+    assertThat(queryTokens("resolve squawk \"Conditioning the brakes\""))
+      .containsExactly("resolve", "squawk", "conditioning", "the", "brakes")
+      .inOrder()
+    assertThat(queryTokens("half-typed \"cond")).containsExactly("half-typed", "cond")
+      .inOrder()
+    assertThat(queryTokens("\"")).isEmpty()
+    assertThat(queryTokens("(parens), and: colons;")).containsExactly(
+      "parens",
+      "and",
+      "colons"
+    )
+      .inOrder()
+  }
+
+  @Test
+  fun queryTokensKeepReferencesWholeWhereFieldTokensAlsoSplitThem() {
+    // Only the field side expands into parts; expanding a query would add conditions the user
+    // never typed, and widen the highlighted words with them.
+    assertThat(queryTokens("per 91.413")).containsExactly("per", "91.413")
+      .inOrder()
+    assertThat(tokens("per 91.413")).containsExactly("per", "91.413", "91", "413")
       .inOrder()
   }
 

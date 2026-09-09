@@ -22,12 +22,30 @@ object Tokenizer {
     return sb.toString()
   }
 
-  /** Expects [normalize]d text. */
+  /**
+   * What the user typed, with punctuation dropped and `./-` kept inside a token. Expects
+   * [normalize]d text.
+   *
+   * Punctuation has to go: the field side drops it too, so a query token that kept a stray quote
+   * or comma could never land in any field, and every result would vanish mid-word.
+   */
+  fun queryTokens(normalized: String): List<String> =
+    normalized.split(SPLIT).mapNotNull { raw ->
+      raw.trim('.', '/', '-')
+        .takeIf(String::isNotEmpty)
+    }
+
+  /**
+   * [queryTokens] plus, for anything holding a `.`, `/` or `-`, its parts. Expects [normalize]d
+   * text.
+   *
+   * Only the field side expands: indexing `91.413` as `91.413`, `91` and `413` is what lets either
+   * spelling find it. Doing the same to a query would instead *add* conditions — every token has to
+   * land somewhere — and widen the highlighted words to parts the user never typed.
+   */
   fun tokens(normalized: String): List<String> {
     val out = ArrayList<String>()
-    for (raw in normalized.split(SPLIT)) {
-      val t = raw.trim('.', '/', '-')
-      if (t.isEmpty()) continue
+    for (t in queryTokens(normalized)) {
       out.add(t)
       if (INNER.containsMatchIn(t)) t.split(INNER)
         .filter { it.isNotEmpty() }
