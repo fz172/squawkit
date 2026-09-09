@@ -22,7 +22,6 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.fanfly.wingslog.core.analytics.LocalAnalytics
-import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.componentTypesApply
@@ -60,7 +59,6 @@ import kotlinx.datetime.toLocalDateTime
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import org.jetbrains.compose.resources.stringResource
-import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import wingslog.feature.search.sharedassets.generated.resources.filter_scope_completed
@@ -70,7 +68,6 @@ import wingslog.feature.search.sharedassets.generated.resources.filter_q_when_ha
 import wingslog.feature.search.sharedassets.generated.resources.filter_q_due_before
 import wingslog.feature.search.sharedassets.generated.resources.filter_q_where_from
 import wingslog.feature.search.sharedassets.generated.resources.Res as SearchRes
-import wingslog.feature.search.sharedassets.generated.resources.filter_records
 import wingslog.feature.search.sharedassets.generated.resources.meter_task_note
 import wingslog.feature.search.sharedassets.generated.resources.search_placeholder
 
@@ -90,7 +87,6 @@ fun MaintenanceTasksTab(
   val revealController = rememberSwipeRevealController()
   LaunchedEffect(showComplied) { revealController.close() }
   val analytics = LocalAnalytics.current
-  val useFilterBar = koinInject<AppCapability>().isSearchFilterSupported
   var showFilterSheet by remember { mutableStateOf(false) }
   val tabViewModel: TaskTabViewModel =
     koinViewModel(
@@ -154,9 +150,6 @@ fun MaintenanceTasksTab(
       .padding(bottom = LocalNavPillClearance.current),
     verticalArrangement = Arrangement.spacedBy(Spacing.medium)
   ) {
-    // The bar carries its own top padding, matching the Logs tab; the spacer would double it.
-    if (!useFilterBar) Spacer(Modifier.height(Spacing.medium))
-
     ComplianceSection(
       activeTasks = activeTasks,
       completedTasks = completedTasks,
@@ -177,90 +170,86 @@ fun MaintenanceTasksTab(
       scrollTargetId = scrollToTaskId,
       onTargetPositioned = { targetCardY = it },
       showHeader = showHeader,
-      filterBar = if (useFilterBar) {
-        {
-          RecordFilterBar(
-            filter = taskFilter,
-            placeholder = stringResource(SearchRes.string.search_placeholder),
-            showComponentFilter = componentTypesApply,
-            componentLabel = { it.displayName() },
-            onQueryChange = { setFilter(taskFilter.copy(query = it)) },
-            onOpenFilters = { showFilterSheet = true },
-            onRemoveComponent = { setFilter(taskFilter.toggleComponent(it)) },
-            onClearTime = { setFilter(taskFilter.copy(time = TimeWindow.All)) },
-            dueWithin = !showComplied,
-            horizontalPadding = Spacing.none,
-            facetLabel = { (it as? Facet.Compliance)?.let { c -> complianceLabel(c.value) }.orEmpty() },
-            onRemoveFacet = { setFilter(taskFilter.toggleFacet(it)) },
-          )
-          RecordFilterControls(
-            expanded = showFilterSheet,
-            inline = LocalLayoutTier.current.hasSideNav,
-            scopeLabel = if (showComplied) {
-              stringResource(SearchRes.string.filter_scope_completed, taskNoun.plural)
-            } else {
-              stringResource(SearchRes.string.filter_scope_due, taskNoun.plural)
-            },
-            filter = taskFilter,
-            showComponentFilter = componentTypesApply,
-            // The thing's own noun: "Which part of the aircraft" on a plane, "of the car" on a car.
-            componentQuestion = stringResource(
-              SearchRes.string.filter_q_part_of,
-              LocalThingLexicon.current.thingNoun.singular,
-            ),
-            componentLabel = { it.displayName() },
-            onComponentToggle = { setFilter(taskFilter.toggleComponent(it)) },
-            timeQuestion = stringResource(
-              if (showComplied) SearchRes.string.filter_q_when_happened else SearchRes.string.filter_q_due_before
-            ),
-            onTimeWindowChange = { setFilter(taskFilter.copy(time = it)) },
-            onClear = { setFilter(taskFilter.withoutFilters()) },
-            onDismiss = { showFilterSheet = false },
-            resultCount = (if (showComplied) completedTasks else activeTasks).size,
-            totalCount = subView.size,
-            nounSingular = taskNoun.singular,
-            nounPlural = taskNoun.plural,
-            componentCount = { c -> subView.countByComponent(countAdapter, c) },
-            timeCount = { w -> subView.countByTime(countAdapter, w, today) },
-            dueWithin = !showComplied,
-            timeNote = if (showComplied) null else stringResource(
-              SearchRes.string.meter_task_note,
-              LexiconFormatter.sentenceCasePlural(taskNoun),
-            ),
-            horizontalPadding = Spacing.none,
-            facetSection = {
-              FilterSection(
-                stringResource(SearchRes.string.filter_q_where_from),
-                pickOne = false,
-              ) {
-                COMPLIANCE_OPTIONS.forEach { type ->
-                  val facet = Facet.Compliance(type)
-                  ChoiceChip(
-                    label = complianceLabel(type),
-                    selected = facet in taskFilter.facets,
-                    count = subView.count { it.card.type == type },
-                    onClick = { setFilter(taskFilter.toggleFacet(facet)) },
-                  )
-                }
+      filterBar = {
+        RecordFilterBar(
+          filter = taskFilter,
+          placeholder = stringResource(SearchRes.string.search_placeholder),
+          showComponentFilter = componentTypesApply,
+          componentLabel = { it.displayName() },
+          onQueryChange = { setFilter(taskFilter.copy(query = it)) },
+          onOpenFilters = { showFilterSheet = true },
+          onRemoveComponent = { setFilter(taskFilter.toggleComponent(it)) },
+          onClearTime = { setFilter(taskFilter.copy(time = TimeWindow.All)) },
+          dueWithin = !showComplied,
+          horizontalPadding = Spacing.none,
+          facetLabel = { (it as? Facet.Compliance)?.let { c -> complianceLabel(c.value) }.orEmpty() },
+          onRemoveFacet = { setFilter(taskFilter.toggleFacet(it)) },
+        )
+        RecordFilterControls(
+          expanded = showFilterSheet,
+          inline = LocalLayoutTier.current.hasSideNav,
+          scopeLabel = if (showComplied) {
+            stringResource(SearchRes.string.filter_scope_completed, taskNoun.plural)
+          } else {
+            stringResource(SearchRes.string.filter_scope_due, taskNoun.plural)
+          },
+          filter = taskFilter,
+          showComponentFilter = componentTypesApply,
+          // The thing's own noun: "Which part of the aircraft" on a plane, "of the car" on a car.
+          componentQuestion = stringResource(
+            SearchRes.string.filter_q_part_of,
+            LocalThingLexicon.current.thingNoun.singular,
+          ),
+          componentLabel = { it.displayName() },
+          onComponentToggle = { setFilter(taskFilter.toggleComponent(it)) },
+          timeQuestion = stringResource(
+            if (showComplied) SearchRes.string.filter_q_when_happened else SearchRes.string.filter_q_due_before
+          ),
+          onTimeWindowChange = { setFilter(taskFilter.copy(time = it)) },
+          onClear = { setFilter(taskFilter.withoutFilters()) },
+          onDismiss = { showFilterSheet = false },
+          resultCount = (if (showComplied) completedTasks else activeTasks).size,
+          totalCount = subView.size,
+          nounSingular = taskNoun.singular,
+          nounPlural = taskNoun.plural,
+          componentCount = { c -> subView.countByComponent(countAdapter, c) },
+          timeCount = { w -> subView.countByTime(countAdapter, w, today) },
+          dueWithin = !showComplied,
+          timeNote = if (showComplied) null else stringResource(
+            SearchRes.string.meter_task_note,
+            LexiconFormatter.sentenceCasePlural(taskNoun),
+          ),
+          horizontalPadding = Spacing.none,
+          facetSection = {
+            FilterSection(
+              stringResource(SearchRes.string.filter_q_where_from),
+              pickOne = false,
+            ) {
+              COMPLIANCE_OPTIONS.forEach { type ->
+                val facet = Facet.Compliance(type)
+                ChoiceChip(
+                  label = complianceLabel(type),
+                  selected = facet in taskFilter.facets,
+                  count = subView.count { it.card.type == type },
+                  onClick = { setFilter(taskFilter.toggleFacet(facet)) },
+                )
               }
-            },
-          )
-        }
-      } else null,
-      countRow = if (useFilterBar) {
-        {
-          RecordCountRow(
-            count = (if (showComplied) completedTasks else activeTasks).size,
-            nounSingular = taskNoun.singular,
-            nounPlural = taskNoun.plural,
-            filterActive = taskFilter.isActive,
-            onClear = { tabViewModel.clearFilter() },
-            horizontalPadding = Spacing.none,
-          )
-        }
-      } else null,
+            }
+          },
+        )
+      },
+      countRow = {
+        RecordCountRow(
+          count = (if (showComplied) completedTasks else activeTasks).size,
+          nounSingular = taskNoun.singular,
+          nounPlural = taskNoun.plural,
+          filterActive = taskFilter.isActive,
+          onClear = { tabViewModel.clearFilter() },
+          horizontalPadding = Spacing.none,
+        )
+      },
       matchesFor = { tabState.matches[it.card.id].orEmpty() },
-      noMatch = if (useFilterBar && taskFilter.isActive) {
+      noMatch = if (taskFilter.isActive) {
         { NoRecordsMatch(nounPlural = taskNoun.plural, onClearFilters = { tabViewModel.clearFilter() }) }
       } else null,
       revealController = revealController,

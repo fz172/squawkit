@@ -30,7 +30,6 @@ import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.fanfly.wingslog.core.analytics.LocalAnalytics
-import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.squawkEmptyHint
@@ -125,7 +124,6 @@ fun SquawkTab(
   val adsManager: AdsManager = koinInject()
   val coroutineScope = rememberCoroutineScope()
   var openError by remember { mutableStateOf<String?>(null) }
-  val useFilterBar = koinInject<AppCapability>().isSearchFilterSupported
   var showFilterSheet by remember { mutableStateOf(false) }
   val tabViewModel: SquawkTabViewModel =
     koinViewModel(
@@ -197,9 +195,6 @@ fun SquawkTab(
       .padding(bottom = LocalNavPillClearance.current),
     verticalArrangement = Arrangement.spacedBy(Spacing.medium),
   ) {
-    // The bar carries its own top padding, matching the Logs tab; the spacer would double it.
-    if (!useFilterBar) Spacer(Modifier.height(Spacing.medium))
-
     if (showHeader) {
       Text(
         text = LexiconFormatter.titleCasePlural(LocalThingLexicon.current.squawkNoun),
@@ -208,84 +203,82 @@ fun SquawkTab(
       )
     }
 
-    if (useFilterBar) {
-      RecordFilterBar(
-        filter = squawkFilter,
-        placeholder = stringResource(SearchRes.string.search_placeholder),
-        // Squawks are filed against the thing, not a component, so the section would be dead.
-        showComponentFilter = false,
-        componentLabel = { it.displayName() },
-        onQueryChange = { setFilter(squawkFilter.copy(query = it)) },
-        onOpenFilters = { showFilterSheet = true },
-        onRemoveComponent = { setFilter(squawkFilter.toggleComponent(it)) },
-        onClearTime = { setFilter(squawkFilter.copy(time = TimeWindow.All)) },
-        horizontalPadding = Spacing.none,
-        facetLabel = {
-          (it as? Facet.Priority)?.let { p -> priorityLabel(p.value) }
-            .orEmpty()
-        },
-        onRemoveFacet = { setFilter(squawkFilter.toggleFacet(it)) },
-      )
-      // Unfiltered, so a chip's count does not move every time another chip is tapped.
-      val countAdapter =
-        remember { SquawkAdapter(TimeZone.currentSystemDefault()) }
-      val today = remember {
-        Clock.System.now()
-          .toLocalDateTime(TimeZone.currentSystemDefault()).date
-      }
-      val subView = if (showClosed) {
-        state.squawks.filter { it.status != SquawkStatus.OPEN }
-      } else {
-        state.squawks.filter { it.status == SquawkStatus.OPEN }
-      }
-      RecordFilterControls(
-        expanded = showFilterSheet,
-        inline = LocalLayoutTier.current.hasSideNav,
-        scopeLabel = if (showClosed) {
-          stringResource(SearchRes.string.filter_scope_closed, squawkNoun.plural)
-        } else {
-          stringResource(SearchRes.string.filter_scope_open, squawkNoun.plural)
-        },
-        filter = squawkFilter,
-        // Squawks are filed against the thing, not a component, so the section would be dead.
-        showComponentFilter = false,
-        componentQuestion = "",
-        componentLabel = { it.displayName() },
-        onComponentToggle = { setFilter(squawkFilter.toggleComponent(it)) },
-        timeQuestion = stringResource(SearchRes.string.filter_q_when_reported),
-        onTimeWindowChange = { setFilter(squawkFilter.copy(time = it)) },
-        onClear = { setFilter(squawkFilter.withoutFilters()) },
-        onDismiss = { showFilterSheet = false },
-        resultCount = (if (showClosed) closedSquawks else openSquawks).size,
-        totalCount = subView.size,
-        nounSingular = squawkNoun.singular,
-        nounPlural = squawkNoun.plural,
-        timeCount = { window ->
-          subView.countByTime(
-            countAdapter,
-            window,
-            today
-          )
-        },
-        horizontalPadding = Spacing.none,
-        facetSection = {
-          FilterSection(
-            stringResource(SearchRes.string.filter_q_how_urgent),
-            pickOne = false
-          ) {
-            PRIORITY_OPTIONS.forEach { priority ->
-              val facet = Facet.Priority(priority)
-              ChoiceChip(
-                label = priorityLabel(priority),
-                selected = facet in squawkFilter.facets,
-                count = subView.count { it.squawk.priority == priority },
-                onClick = { setFilter(squawkFilter.toggleFacet(facet)) },
-              )
-            }
-          }
-        },
-      )
+    RecordFilterBar(
+      filter = squawkFilter,
+      placeholder = stringResource(SearchRes.string.search_placeholder),
+      // Squawks are filed against the thing, not a component, so the section would be dead.
+      showComponentFilter = false,
+      componentLabel = { it.displayName() },
+      onQueryChange = { setFilter(squawkFilter.copy(query = it)) },
+      onOpenFilters = { showFilterSheet = true },
+      onRemoveComponent = { setFilter(squawkFilter.toggleComponent(it)) },
+      onClearTime = { setFilter(squawkFilter.copy(time = TimeWindow.All)) },
+      horizontalPadding = Spacing.none,
+      facetLabel = {
+        (it as? Facet.Priority)?.let { p -> priorityLabel(p.value) }
+          .orEmpty()
+      },
+      onRemoveFacet = { setFilter(squawkFilter.toggleFacet(it)) },
+    )
+    // Unfiltered, so a chip's count does not move every time another chip is tapped.
+    val countAdapter =
+      remember { SquawkAdapter(TimeZone.currentSystemDefault()) }
+    val today = remember {
+      Clock.System.now()
+        .toLocalDateTime(TimeZone.currentSystemDefault()).date
     }
+    val subView = if (showClosed) {
+      state.squawks.filter { it.status != SquawkStatus.OPEN }
+    } else {
+      state.squawks.filter { it.status == SquawkStatus.OPEN }
+    }
+    RecordFilterControls(
+      expanded = showFilterSheet,
+      inline = LocalLayoutTier.current.hasSideNav,
+      scopeLabel = if (showClosed) {
+        stringResource(SearchRes.string.filter_scope_closed, squawkNoun.plural)
+      } else {
+        stringResource(SearchRes.string.filter_scope_open, squawkNoun.plural)
+      },
+      filter = squawkFilter,
+      // Squawks are filed against the thing, not a component, so the section would be dead.
+      showComponentFilter = false,
+      componentQuestion = "",
+      componentLabel = { it.displayName() },
+      onComponentToggle = { setFilter(squawkFilter.toggleComponent(it)) },
+      timeQuestion = stringResource(SearchRes.string.filter_q_when_reported),
+      onTimeWindowChange = { setFilter(squawkFilter.copy(time = it)) },
+      onClear = { setFilter(squawkFilter.withoutFilters()) },
+      onDismiss = { showFilterSheet = false },
+      resultCount = (if (showClosed) closedSquawks else openSquawks).size,
+      totalCount = subView.size,
+      nounSingular = squawkNoun.singular,
+      nounPlural = squawkNoun.plural,
+      timeCount = { window ->
+        subView.countByTime(
+          countAdapter,
+          window,
+          today
+        )
+      },
+      horizontalPadding = Spacing.none,
+      facetSection = {
+        FilterSection(
+          stringResource(SearchRes.string.filter_q_how_urgent),
+          pickOne = false
+        ) {
+          PRIORITY_OPTIONS.forEach { priority ->
+            val facet = Facet.Priority(priority)
+            ChoiceChip(
+              label = priorityLabel(priority),
+              selected = facet in squawkFilter.facets,
+              count = subView.count { it.squawk.priority == priority },
+              onClick = { setFilter(squawkFilter.toggleFacet(facet)) },
+            )
+          }
+        }
+      },
+    )
 
     DualSegmentedFilter(
       option1 = stringResource(Res.string.open_with_count, openSquawks.size),
@@ -301,16 +294,14 @@ fun SquawkTab(
     )
 
     val displayList = if (showClosed) closedSquawks else openSquawks
-    if (useFilterBar) {
-      RecordCountRow(
-        count = displayList.size,
-        nounSingular = squawkNoun.singular,
-        nounPlural = squawkNoun.plural,
-        filterActive = squawkFilter.isActive,
-        onClear = { tabViewModel.clearFilter() },
-        horizontalPadding = Spacing.none,
-      )
-    }
+    RecordCountRow(
+      count = displayList.size,
+      nounSingular = squawkNoun.singular,
+      nounPlural = squawkNoun.plural,
+      filterActive = squawkFilter.isActive,
+      onClear = { tabViewModel.clearFilter() },
+      horizontalPadding = Spacing.none,
+    )
     // Each sub-view is its own list with its own counter — switching the toggle re-evaluates from
     // scratch, which falls out of wrapping the filtered list rather than the union.
     val showAds by adsManager.shouldShowsAds()
@@ -324,7 +315,7 @@ fun SquawkTab(
     }
 
     if (displayList.isEmpty()) {
-      if (useFilterBar && squawkFilter.isActive) {
+      if (squawkFilter.isActive) {
         NoRecordsMatch(
           nounPlural = squawkNoun.plural,
           onClearFilters = { tabViewModel.clearFilter() })

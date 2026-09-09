@@ -643,11 +643,9 @@ class SubscriptionUiStateTest {
     authManager = authManager(isGuest),
     appCapability = AppCapability(
       isDeveloperOptionsSupported = false,
-      isStressTestSupported = false,
       isCameraCaptureSupported = false,
       isAnonymousLoginSupported = false,
       isAdsSupported = isAdsSupported,
-      isSearchFilterSupported = false,
     ),
     activationGraceMillis = GRACE,
   )

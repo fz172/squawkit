@@ -57,14 +57,14 @@ private val stressTestPluginModule = module {
  *
  * Was `registerStressTestRoutes(builder, navController)`, called from `ShellNavGraph` — which is why
  * `feature:shell` depended on this module at all. Contributing it through Koin instead means the
- * shell registers a screen it has never heard of, and the `isStressTestSupported` argument it used
- * to thread down here disappears with it.
+ * shell registers a screen it has never heard of, and the availability argument it used to thread
+ * down here disappears with it.
  */
 class StressTestNavContributor(
   private val capability: AppCapability,
 ) : DeveloperOptionsNavContributor {
 
-  override fun isAvailable(): Boolean = capability.isStressTestSupported
+  override fun isAvailable(): Boolean = capability.isDeveloperOptionsSupported
 
   override fun register(
     builder: NavGraphBuilder,
@@ -83,10 +83,8 @@ class StressTestNavContributor(
  * slot, which meant `feature:shell` had to depend on this module and could host only one such
  * section. Now it is resolved from Koin like any other [DeveloperOptionsExtra].
  *
- * [isAvailable] is where `isStressTestSupported` lives now — the feature that owns a section knows
- * whether it applies, so the host no longer gates it on the caller's behalf. The shell still reads
- * the same capability for [registerStressTestRoutes]; that is a different question (may the route
- * exist) from this one (should the row render).
+ * [isAvailable] is where the gate lives now — the feature that owns a section knows whether it
+ * applies, so the host no longer gates it on the caller's behalf.
  */
 class StressTestDeveloperOptionsExtra(
   private val capability: AppCapability,
@@ -95,7 +93,7 @@ class StressTestDeveloperOptionsExtra(
   /** Trailing: "Debug tools" reads as the end of the screen. */
   override val order: Int = 900
 
-  override fun isAvailable(): Boolean = capability.isStressTestSupported
+  override fun isAvailable(): Boolean = capability.isDeveloperOptionsSupported
 
   @Composable
   override fun Content(onNavigate: (route: String) -> Unit) {

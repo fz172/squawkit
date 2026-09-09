@@ -232,7 +232,7 @@ feature/
                         #   DisplayAdsDeveloperSettings
   userprofile/          # Legacy profile remnant (sharedassets only) — being unified with Technician
   stresstest/           # Fake data generator, compiled into every build, runtime-gated by
-                        #   AppCapability.isStressTestSupported
+                        #   AppCapability.isDeveloperOptionsSupported
     config/             #   StressTestPlugin — shared composable UI + route registration
 backend/firebase/       # NOT a Gradle module
   functions/            #   TypeScript Cloud Functions (v2, Node 22) + vitest emulator suite:
@@ -445,10 +445,10 @@ their own subscription — the host's entitlement governs and the blob broker en
 | Is the account entitled to it? | `SubscriptionManager` flows |
 | Is a developer overriding it locally? | `DeveloperOptionsManager` / `DeveloperFlags` |
 
-`AppCapability` fields: `isDeveloperOptionsSupported`, `isStressTestSupported`,
-`isCameraCaptureSupported`, `isAnonymousLoginSupported`, `isAdsSupported`, `isSearchFilterSupported`
-(on for Android and web; iOS developer builds only until #854). Constructed once per host
-at Koin startup via `createAppCapability(isDeveloperBuild)`.
+`AppCapability` fields: `isDeveloperOptionsSupported`, `isCameraCaptureSupported`,
+`isAnonymousLoginSupported`, `isAdsSupported`. Constructed once per host at Koin startup via
+`createAppCapability(isDeveloperBuild)`. Search and filter is unconditional on every host as of
+#854 and carries no flag.
 
 `SubscriptionManager` gates: `status()`, `entitlement()`, `canUploadAttachments()` (links stay free),
 `canEmailExports()` (export-to-device stays free), `canHostShare()` (accepting an invite is never
@@ -582,10 +582,12 @@ self-contained HTML, is now the default.
 
 There is no compiled-out "dogfood" variant. The **Fake Data Generator** (`feature/stresstest`) is a
 normal dependency compiled into every build; its routes and the Developer Options entry are
-registered by the shared nav graph (`feature/shell`) and gated on a single runtime flag —
-`AppCapability.isStressTestSupported` — identically on Android, iOS, and web. `AppCapability` also
-carries `isDeveloperOptionsSupported` (the Developer Options settings row), the platform-capability
-constants (camera capture, anonymous login), and `isAdsSupported`.
+contributed through Koin (`StressTestPlugin`) and gated on `AppCapability.isDeveloperOptionsSupported`
+— identically on Android, iOS, and web. It had a second flag of its own, `isStressTestSupported`,
+until #854 retired it: every host set it to exactly `isDeveloperBuild`, which is what
+`isDeveloperOptionsSupported` already means, so the generator can only appear on a screen that flag
+has already opened. `AppCapability` also carries the platform-capability constants (camera capture,
+anonymous login) and `isAdsSupported`.
 
 `isDeveloperBuild` is computed once per host and passed to `createAppCapability`:
 

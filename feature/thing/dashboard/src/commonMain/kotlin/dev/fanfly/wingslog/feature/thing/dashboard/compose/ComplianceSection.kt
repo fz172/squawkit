@@ -64,9 +64,9 @@ fun ComplianceSection(
   scrollTargetId: String? = null,
   onTargetPositioned: (Float) -> Unit = {},
   showHeader: Boolean = true,
-  /** The per-tab search and filter bar, under the header; null keeps the section as it was. */
-  filterBar: (@Composable () -> Unit)? = null,
-  countRow: (@Composable () -> Unit)? = null,
+  /** The per-tab search and filter bar, under the header, and the result count below it. */
+  filterBar: @Composable () -> Unit,
+  countRow: @Composable () -> Unit,
   /** Shown instead of the empty states when a filter left nothing to list. */
   noMatch: (@Composable () -> Unit)? = null,
   /** The words the active search matched on a task, for highlighting. */
@@ -91,7 +91,7 @@ fun ComplianceSection(
       )
     }
 
-    filterBar?.invoke()
+    filterBar()
 
     DualSegmentedFilter(
       option1 = stringResource(
@@ -106,7 +106,7 @@ fun ComplianceSection(
       onSelect = { onToggleComplied(it == 1) },
     )
 
-    countRow?.invoke()
+    countRow()
 
     val displayList = if (showComplied) completedTasks else activeTasks
     // Due / History are independent lists with independent counters, exactly like squawks

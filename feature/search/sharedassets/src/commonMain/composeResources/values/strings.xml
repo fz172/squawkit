@@ -3,7 +3,6 @@
   <string name="search_placeholder">Search…</string>
   <string name="clear_search">Clear search</string>
   <string name="filters">Filters</string>
-  <string name="filter_records">Filter <xliff:g example="work logs">%1$s</xliff:g></string>
   <!-- Sheet header. The title says what the sheet does; the note says how far it reaches. -->
   <string name="filter_sheet_title">Narrow down</string>
   <string name="filter_scope_note">Only changes the <xliff:g example="open squawks">%1$s</xliff:g> list</string>

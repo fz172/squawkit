@@ -448,11 +448,9 @@ class SettingsViewModelTest {
     analyticsPreferenceController,
     AppCapability(
       isDeveloperOptionsSupported = false,
-      isStressTestSupported = false,
       isCameraCaptureSupported = false,
       isAnonymousLoginSupported = true,
       isAdsSupported = false,
-      isSearchFilterSupported = false,
     ),
     adConsentManager,
     notificationPermission,

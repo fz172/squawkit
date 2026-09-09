@@ -1,6 +1,6 @@
 # PRD: Search and Filter
 
-**Status:** ✅ Shipped on Android and web 2026-09-07; iOS behind `AppCapability.isSearchFilterSupported` (developer builds) until #854
+**Status:** ✅ Shipped on Android and web 2026-09-07; on for every host 2026-09-09 (#854), flag retired
 **Last updated:** 2026-09-07
 **Design doc:** `docs/search/search_filter_design.md`
 **Related:** `docs/search/intelligentsearch.md` (engine research; superseded for v1 by the design doc, kept as the escalation path)

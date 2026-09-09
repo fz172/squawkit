@@ -1,44 +1,25 @@
 package dev.fanfly.wingslog.feature.logs.viewing.log.compose
 
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.DragInteraction
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -51,11 +32,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.componentTypesApply
@@ -65,7 +43,6 @@ import dev.fanfly.wingslog.core.template.technicianNoun
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalNavPillClearance
 import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
-import dev.fanfly.wingslog.core.ui.common.compose.ModalBottomSheet
 import dev.fanfly.wingslog.core.ui.common.compose.SwipeActionCard
 import dev.fanfly.wingslog.core.ui.common.compose.jumpTargetHighlight
 import dev.fanfly.wingslog.core.ui.common.compose.rememberSwipeRevealController
@@ -109,25 +86,17 @@ import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
-import wingslog.core.sharedassets.generated.resources.done
 import wingslog.core.sharedassets.generated.resources.retry
 import wingslog.feature.logs.sharedassets.generated.resources.Res as SharedRes
 import wingslog.feature.logs.sharedassets.generated.resources.add_first_maintenance_log
 import wingslog.feature.logs.sharedassets.generated.resources.no_maintenance_logs_title
 import wingslog.feature.logs.viewing.generated.resources.Res as MaintenanceRes
-import wingslog.feature.logs.viewing.generated.resources.clear_filter
 import wingslog.feature.logs.viewing.generated.resources.failed_to_load_logs
-import wingslog.feature.logs.viewing.generated.resources.filter_by_type
-import wingslog.feature.logs.viewing.generated.resources.log_count_n_entries
-import wingslog.feature.logs.viewing.generated.resources.log_count_one_entry
-import wingslog.feature.logs.viewing.generated.resources.no_logs_match_filter
-import wingslog.feature.logs.viewing.generated.resources.search_logs
 import wingslog.feature.search.sharedassets.generated.resources.filter_all_people
 import wingslog.feature.search.sharedassets.generated.resources.filter_q_who_signed
 import wingslog.feature.search.sharedassets.generated.resources.filter_q_when_happened
 import wingslog.feature.search.sharedassets.generated.resources.filter_q_worked_on
 import wingslog.feature.search.sharedassets.generated.resources.Res as SearchRes
-import wingslog.feature.search.sharedassets.generated.resources.filter_records
 import wingslog.feature.search.sharedassets.generated.resources.match_serial
 import wingslog.feature.search.sharedassets.generated.resources.search_placeholder
 
@@ -162,8 +131,6 @@ fun MaintenanceLogListContent(
    * tab and drops its scroll position; it should be cleared only once the section is left.
    */
   scrollToLogId: String? = null,
-  /** The shared per-tab bar (`AppCapability.isSearchFilterSupported`); false keeps the original UI. */
-  useSharedFilterBar: Boolean = false,
   modifier: Modifier = Modifier,
 ) {
   // Hoisted above the when(uiState) so it is one stable instance across Loading→Success flips and is
@@ -271,225 +238,118 @@ fun MaintenanceLogListContent(
           Column(modifier = Modifier.fillMaxSize()) {
             val logNounPlural =
               LexiconFormatter.plural(LocalThingLexicon.current.logNoun)
-            if (useSharedFilterBar) {
-              RecordFilterBar(
-                filter = filter,
-                placeholder = stringResource(SearchRes.string.search_placeholder),
-                showComponentFilter = componentTypesApply,
-                componentLabel = { it.displayName() },
-                onQueryChange = onSearchQueryChange,
-                onOpenFilters = { showFilterSheet = true },
-                onRemoveComponent = onComponentFilterToggle,
-                onClearTime = { onTimeWindowChange(TimeWindow.All) },
-                facetLabel = { (it as? Facet.Technician)?.name.orEmpty() },
-                onRemoveFacet = onFacetToggle,
-              )
-              val allLogs = uiState.allLogs
-              val technicianNoun = LocalThingLexicon.current.technicianNoun
-              val technicianPlural = LexiconFormatter.plural(technicianNoun)
-              // Ordered by who signed the most recent log here, so "recent" means recent on this
-              // thing rather than whoever happens to sort first.
-              val people = remember(allLogs, filter.facets) {
-                allLogs.mapNotNull { it.technician?.name?.takeIf(String::isNotBlank) }
-                  .distinct()
-                  .map { name ->
-                    FacetOption(
-                      name = name,
-                      count = allLogs.count { it.technician?.name == name },
-                      selected = Facet.Technician(name) in filter.facets,
-                    )
-                  }
-              }
-              val recentPeople = remember(allLogs, people) {
-                val order = allLogs.mapNotNull { it.technician?.name }.distinct()
-                people.sortedBy { order.indexOf(it.name).takeIf { i -> i >= 0 } ?: Int.MAX_VALUE }
-              }
-              // Anyone already chosen is promoted into a chip slot, so a selection is never hidden
-              // behind "All 24 people" where it cannot be seen or undone.
-              val quickPeople = remember(recentPeople) {
-                (recentPeople.filter { it.selected } + recentPeople).distinct().take(2)
-              }
-              RecordFilterControls(
-                expanded = showFilterSheet,
-                inline = LocalLayoutTier.current.hasSideNav,
-                scopeLabel = logNounPlural,
-                filter = filter,
-                showComponentFilter = componentTypesApply,
-                componentQuestion = stringResource(SearchRes.string.filter_q_worked_on),
-                componentLabel = { it.displayName() },
-                onComponentToggle = onComponentFilterToggle,
-                timeQuestion = stringResource(SearchRes.string.filter_q_when_happened),
-                onTimeWindowChange = onTimeWindowChange,
-                onClear = { onClearFilter() },
-                onDismiss = { showFilterSheet = false },
-                resultCount = uiState.logs.size,
-                totalCount = uiState.totalCount,
-                nounSingular = LocalThingLexicon.current.logNoun.singular,
-                nounPlural = logNounPlural,
-                componentCount = { c -> uiState.allLogs.countByComponent(countAdapter, c) },
-                timeCount = { w -> uiState.allLogs.countByTime(countAdapter, w, today) },
-                facetSection = if (people.isEmpty()) null else {
-                  {
-                    FilterSection(
-                      stringResource(SearchRes.string.filter_q_who_signed),
-                      pickOne = false,
-                    ) {
-                      // Two chips, whatever the roster does; the rest live behind the picker.
-                      quickPeople.forEach { option ->
-                        val facet = Facet.Technician(option.name)
-                        ChoiceChip(
-                          label = option.name,
-                          selected = option.selected,
-                          count = option.count,
-                          onClick = { onFacetToggle(facet) },
-                        )
-                      }
-                      if (people.size > quickPeople.size) {
-                        ChoiceChip(
-                          label = stringResource(
-                            SearchRes.string.filter_all_people,
-                            people.size,
-                            technicianPlural,
-                          ),
-                          selected = false,
-                          onClick = { showPeoplePicker = true },
-                        )
-                      }
-                    }
-                  }
-                },
-                page = if (!showPeoplePicker) null else {
-                  {
-                    FacetPickerPage(
-                      title = stringResource(SearchRes.string.filter_q_who_signed),
-                      options = people,
-                      recent = recentPeople,
-                      nounSingular = technicianNoun.singular,
-                      nounPlural = technicianPlural,
-                      query = peopleQuery,
-                      onQueryChange = { peopleQuery = it },
-                      onToggle = { onFacetToggle(Facet.Technician(it.name)) },
-                      onBack = {
-                        peopleQuery = ""
-                        showPeoplePicker = false
-                      },
-                    )
-                  }
-                },
-              )
-              RecordCountRow(
-                count = uiState.logs.size,
-                nounSingular = LocalThingLexicon.current.logNoun.singular,
-                nounPlural = logNounPlural,
-                filterActive = filter.isActive,
-                onClear = onClearFilter,
-              )
-            } else {
-              // Search bar + filter button
-              Row(
-                modifier = Modifier
-                  .fillMaxWidth()
-                  .padding(
-                    start = Spacing.screenPadding,
-                    end = Spacing.small,
-                    top = Spacing.small,
-                    bottom = Spacing.small
-                  ),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(Spacing.small),
-              ) {
-                val filterActive = filter.components.isNotEmpty()
-                OutlinedTextField(
-                  value = filter.query,
-                  onValueChange = onSearchQueryChange,
-                  modifier = Modifier.weight(1f),
-                  placeholder = { Text(stringResource(MaintenanceRes.string.search_logs)) },
-                  leadingIcon = {
-                    Icon(
-                      Icons.Default.Search,
-                      contentDescription = null
-                    )
-                  },
-                  trailingIcon = {
-                    if (filter.query.isNotBlank()) {
-                      IconButton(onClick = { onSearchQueryChange("") }) {
-                        Icon(
-                          Icons.Default.Close,
-                          contentDescription = null
-                        )
-                      }
-                    }
-                  },
-                  singleLine = true,
-                  shape = RoundedCornerShape(Spacing.smallCornerRadius),
-                  colors = OutlinedTextFieldDefaults.colors(
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                    unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
-                  ),
-                )
-
-                // Filtering by airframe / engine / propeller means nothing to a thing that has no
-                // such parts — see [LogComponentBadge].
-                if (componentTypesApply) Surface(
-                  onClick = { showFilterSheet = true },
-                  shape = RoundedCornerShape(Spacing.smallCornerRadius),
-                  color = if (filterActive) MaterialTheme.colorScheme.primaryContainer
-                  else MaterialTheme.colorScheme.surfaceContainer,
-                  border = BorderStroke(
-                    Spacing.hairline,
-                    if (filterActive) MaterialTheme.colorScheme.primary
-                    else MaterialTheme.colorScheme.outlineVariant
-                  ),
-                  modifier = Modifier.size(Spacing.buttonHeight),
-                ) {
-                  Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                      Icons.Default.FilterList,
-                      contentDescription = stringResource(MaintenanceRes.string.filter_by_type),
-                      tint = if (filterActive) MaterialTheme.colorScheme.primary
-                      else MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                  }
+            RecordFilterBar(
+              filter = filter,
+              placeholder = stringResource(SearchRes.string.search_placeholder),
+              showComponentFilter = componentTypesApply,
+              componentLabel = { it.displayName() },
+              onQueryChange = onSearchQueryChange,
+              onOpenFilters = { showFilterSheet = true },
+              onRemoveComponent = onComponentFilterToggle,
+              onClearTime = { onTimeWindowChange(TimeWindow.All) },
+              facetLabel = { (it as? Facet.Technician)?.name.orEmpty() },
+              onRemoveFacet = onFacetToggle,
+            )
+            val allLogs = uiState.allLogs
+            val technicianNoun = LocalThingLexicon.current.technicianNoun
+            val technicianPlural = LexiconFormatter.plural(technicianNoun)
+            // Ordered by who signed the most recent log here, so "recent" means recent on this
+            // thing rather than whoever happens to sort first.
+            val people = remember(allLogs, filter.facets) {
+              allLogs.mapNotNull { it.technician?.name?.takeIf(String::isNotBlank) }
+                .distinct()
+                .map { name ->
+                  FacetOption(
+                    name = name,
+                    count = allLogs.count { it.technician?.name == name },
+                    selected = Facet.Technician(name) in filter.facets,
+                  )
                 }
-              }
-
-              // Active filter chips
-              if (componentTypesApply && filter.components.isNotEmpty()) {
-                LazyRow(
-                  contentPadding = PaddingValues(horizontal = Spacing.screenPadding),
-                  horizontalArrangement = Arrangement.spacedBy(Spacing.small),
-                  modifier = Modifier.fillMaxWidth()
-                    .padding(bottom = Spacing.small),
-                ) {
-                  items(filter.components.toList()) { component ->
-                    ActiveFilterChip(
-                      label = component.displayName(),
-                      onDismiss = { onComponentFilterToggle(component) },
-                    )
-                  }
-                }
-              }
-
-              // Entry count label
-              val count = uiState.logs.size
-              val countLabel =
-                if (count == 1) stringResource(MaintenanceRes.string.log_count_one_entry)
-                else stringResource(
-                  MaintenanceRes.string.log_count_n_entries,
-                  count
-                )
-              Text(
-                text = countLabel.uppercase(),
-                style = MaterialTheme.typography.labelMedium.copy(letterSpacing = 0.6.sp),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(
-                  horizontal = Spacing.screenPadding,
-                  vertical = Spacing.extraSmall
-                ),
-              )
-
             }
+            val recentPeople = remember(allLogs, people) {
+              val order = allLogs.mapNotNull { it.technician?.name }.distinct()
+              people.sortedBy { order.indexOf(it.name).takeIf { i -> i >= 0 } ?: Int.MAX_VALUE }
+            }
+            // Anyone already chosen is promoted into a chip slot, so a selection is never hidden
+            // behind "All 24 people" where it cannot be seen or undone.
+            val quickPeople = remember(recentPeople) {
+              (recentPeople.filter { it.selected } + recentPeople).distinct().take(2)
+            }
+            RecordFilterControls(
+              expanded = showFilterSheet,
+              inline = LocalLayoutTier.current.hasSideNav,
+              scopeLabel = logNounPlural,
+              filter = filter,
+              showComponentFilter = componentTypesApply,
+              componentQuestion = stringResource(SearchRes.string.filter_q_worked_on),
+              componentLabel = { it.displayName() },
+              onComponentToggle = onComponentFilterToggle,
+              timeQuestion = stringResource(SearchRes.string.filter_q_when_happened),
+              onTimeWindowChange = onTimeWindowChange,
+              onClear = { onClearFilter() },
+              onDismiss = { showFilterSheet = false },
+              resultCount = uiState.logs.size,
+              totalCount = uiState.totalCount,
+              nounSingular = LocalThingLexicon.current.logNoun.singular,
+              nounPlural = logNounPlural,
+              componentCount = { c -> uiState.allLogs.countByComponent(countAdapter, c) },
+              timeCount = { w -> uiState.allLogs.countByTime(countAdapter, w, today) },
+              facetSection = if (people.isEmpty()) null else {
+                {
+                  FilterSection(
+                    stringResource(SearchRes.string.filter_q_who_signed),
+                    pickOne = false,
+                  ) {
+                    // Two chips, whatever the roster does; the rest live behind the picker.
+                    quickPeople.forEach { option ->
+                      val facet = Facet.Technician(option.name)
+                      ChoiceChip(
+                        label = option.name,
+                        selected = option.selected,
+                        count = option.count,
+                        onClick = { onFacetToggle(facet) },
+                      )
+                    }
+                    if (people.size > quickPeople.size) {
+                      ChoiceChip(
+                        label = stringResource(
+                          SearchRes.string.filter_all_people,
+                          people.size,
+                          technicianPlural,
+                        ),
+                        selected = false,
+                        onClick = { showPeoplePicker = true },
+                      )
+                    }
+                  }
+                }
+              },
+              page = if (!showPeoplePicker) null else {
+                {
+                  FacetPickerPage(
+                    title = stringResource(SearchRes.string.filter_q_who_signed),
+                    options = people,
+                    recent = recentPeople,
+                    nounSingular = technicianNoun.singular,
+                    nounPlural = technicianPlural,
+                    query = peopleQuery,
+                    onQueryChange = { peopleQuery = it },
+                    onToggle = { onFacetToggle(Facet.Technician(it.name)) },
+                    onBack = {
+                      peopleQuery = ""
+                      showPeoplePicker = false
+                    },
+                  )
+                }
+              },
+            )
+            RecordCountRow(
+              count = uiState.logs.size,
+              nounSingular = LocalThingLexicon.current.logNoun.singular,
+              nounPlural = logNounPlural,
+              filterActive = filter.isActive,
+              onClear = onClearFilter,
+            )
 
             if (uiState.logs.isEmpty()) {
               Box(
@@ -497,24 +357,10 @@ fun MaintenanceLogListContent(
                   .fillMaxWidth(),
                 contentAlignment = Alignment.Center
               ) {
-                if (useSharedFilterBar) {
-                  NoRecordsMatch(
-                    nounPlural = logNounPlural,
-                    onClearFilters = onClearFilter
-                  )
-                } else Column(
-                  horizontalAlignment = Alignment.CenterHorizontally,
-                  verticalArrangement = Arrangement.spacedBy(Spacing.medium)
-                ) {
-                  Text(
-                    text = stringResource(MaintenanceRes.string.no_logs_match_filter),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                  )
-                  Button(onClick = onClearFilter) {
-                    Text(stringResource(MaintenanceRes.string.clear_filter))
-                  }
-                }
+                NoRecordsMatch(
+                  nounPlural = logNounPlural,
+                  onClearFilters = onClearFilter
+                )
               }
             } else if (LocalLayoutTier.current.hasSideNav) {
               // MEDIUM and wider: a real data table instead of cards.
@@ -633,170 +479,6 @@ fun MaintenanceLogListContent(
                 },
               )
             }
-          }
-        }
-
-        if (showFilterSheet && !useSharedFilterBar) {
-          ModalBottomSheet(
-            onDismissRequest = { showFilterSheet = false },
-            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-          ) {
-            FilterSheetContent(
-              activeComponents = filter.components,
-              onToggle = onComponentFilterToggle,
-              onDone = { showFilterSheet = false },
-            )
-          }
-        }
-      }
-    }
-  }
-}
-
-@Composable
-private fun ActiveFilterChip(
-  label: String,
-  onDismiss: () -> Unit,
-) {
-  Surface(
-    shape = RoundedCornerShape(Spacing.chipCornerRadius),
-    color = MaterialTheme.colorScheme.primaryContainer,
-    border = BorderStroke(
-      Spacing.hairline,
-      MaterialTheme.colorScheme.primary
-    ),
-  ) {
-    Row(
-      modifier = Modifier.padding(
-        start = Spacing.small,
-        end = Spacing.extraSmall,
-        top = Spacing.extraSmall,
-        bottom = Spacing.extraSmall
-      ),
-      verticalAlignment = Alignment.CenterVertically,
-      horizontalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
-    ) {
-      Text(
-        text = label,
-        style = MaterialTheme.typography.labelMedium,
-        color = MaterialTheme.colorScheme.onPrimaryContainer,
-      )
-      IconButton(
-        onClick = onDismiss,
-        modifier = Modifier.size(Spacing.large),
-      ) {
-        Icon(
-          Icons.Default.Close,
-          contentDescription = null,
-          tint = MaterialTheme.colorScheme.onPrimaryContainer,
-          modifier = Modifier.size(Spacing.small),
-        )
-      }
-    }
-  }
-}
-
-@Composable
-private fun FilterSheetContent(
-  activeComponents: Set<ComponentType>,
-  onToggle: (ComponentType) -> Unit,
-  onDone: () -> Unit,
-) {
-  Column {
-    Row(
-      modifier = Modifier
-        .fillMaxWidth()
-        .padding(
-          start = Spacing.xLarge,
-          end = Spacing.medium,
-          bottom = Spacing.medium
-        ),
-      verticalAlignment = Alignment.CenterVertically,
-    ) {
-      Text(
-        text = stringResource(MaintenanceRes.string.filter_by_type),
-        style = MaterialTheme.typography.titleMedium,
-        modifier = Modifier.weight(1f),
-      )
-      TextButton(onClick = onDone) {
-        Text(stringResource(CoreRes.string.done))
-      }
-    }
-
-    val filterTypes = listOf(
-      ComponentType.COMPONENT_AIRFRAME,
-      ComponentType.COMPONENT_ENGINE,
-      ComponentType.COMPONENT_PROPELLER,
-      ComponentType.COMPONENT_UNKNOWN,
-    )
-    filterTypes.forEachIndexed { index, type ->
-      FilterTypeRow(
-        type = type,
-        checked = type in activeComponents,
-        onClick = { onToggle(type) },
-      )
-      if (index < filterTypes.lastIndex) {
-        HorizontalDivider(
-          color = MaterialTheme.colorScheme.outlineVariant,
-          modifier = Modifier.padding(horizontal = Spacing.xLarge),
-        )
-      }
-    }
-
-    Spacer(Modifier.height(Spacing.huge))
-  }
-}
-
-@Composable
-private fun FilterTypeRow(
-  type: ComponentType,
-  checked: Boolean,
-  onClick: () -> Unit,
-) {
-  Row(
-    modifier = Modifier
-      .fillMaxWidth()
-      .clickable(onClick = onClick)
-      .padding(
-        horizontal = Spacing.xLarge,
-        vertical = Spacing.medium
-      ),
-    verticalAlignment = Alignment.CenterVertically,
-  ) {
-    ComponentTypeBadge(type)
-    Spacer(Modifier.weight(1f))
-    Box(
-      modifier = Modifier
-        .size(Spacing.xLarge)
-        .then(
-          if (checked) Modifier else Modifier.border(
-            width = 1.5.dp,
-            color = MaterialTheme.colorScheme.outline,
-            shape = RoundedCornerShape(Spacing.extraSmall),
-          )
-        )
-        .then(
-          if (checked) Modifier.border(
-            width = 1.5.dp,
-            color = MaterialTheme.colorScheme.primary,
-            shape = RoundedCornerShape(Spacing.extraSmall),
-          ) else Modifier
-        ),
-      contentAlignment = Alignment.Center,
-    ) {
-      if (checked) {
-        Surface(
-          modifier = Modifier.size(Spacing.xLarge),
-          color = MaterialTheme.colorScheme.primary,
-          shape = RoundedCornerShape(Spacing.extraSmall),
-        ) {
-          Box(contentAlignment = Alignment.Center) {
-            Icon(
-              Icons.Default.Check,
-              contentDescription = null,
-              tint = Color.White,
-              modifier = Modifier.size(Spacing.medium),
-            )
           }
         }
       }
