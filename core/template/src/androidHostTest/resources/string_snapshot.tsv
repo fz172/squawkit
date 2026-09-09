@@ -908,24 +908,46 @@ feature/search/sharedassets	clear_search	Clear search
 feature/search/sharedassets	custom_from	From
 feature/search/sharedassets	custom_range_chip	%1$s – %2$s
 feature/search/sharedassets	custom_to	To
-feature/search/sharedassets	due_within_12_months	12 months
-feature/search/sharedassets	due_within_3_months	3 months
-feature/search/sharedassets	due_within_any	Any time
-feature/search/sharedassets	filter_component	Component
-feature/search/sharedassets	filter_due_within	Due within
-feature/search/sharedassets	filter_period	Period
+feature/search/sharedassets	due_within_12_months	Next 12 months
+feature/search/sharedassets	due_within_3_months	Next 3 months
+feature/search/sharedassets	due_within_any	No limit
 feature/search/sharedassets	filter_records	Filter %1$s
-feature/search/sharedassets	filter_scope_note	Applies to this tab only
-feature/search/sharedassets	filter_type	Type
+feature/search/sharedassets	filter_all_people	All %1$d %2$s
+feature/search/sharedassets	filter_search_people	Search %1$d %2$s
+feature/search/sharedassets	filter_selected_none	No one selected
+feature/search/sharedassets	filter_selected_count	%1$d %2$s selected
+feature/search/sharedassets	filter_recent_here	Most recent here
+feature/search/sharedassets	filter_picker_back	Back to filters
+feature/search/sharedassets	filter_sheet_title	Narrow down
+feature/search/sharedassets	filter_scope_open	squawks that are open
+feature/search/sharedassets	filter_scope_closed	squawks that are closed
+feature/search/sharedassets	filter_scope_due	maintenance tasks coming due
+feature/search/sharedassets	filter_scope_completed	completed maintenance tasks
+feature/search/sharedassets	filter_close	Close filters
+feature/search/sharedassets	filter_pick_any	pick any
+feature/search/sharedassets	filter_pick_one	pick one
+feature/search/sharedassets	filter_q_worked_on	What was worked on
+feature/search/sharedassets	filter_q_part_of	Which part of the aircraft
+feature/search/sharedassets	filter_q_when_happened	When it happened
+feature/search/sharedassets	filter_q_when_reported	When it was reported
+feature/search/sharedassets	filter_q_due_before	Due before
+feature/search/sharedassets	filter_q_how_urgent	How urgent
+feature/search/sharedassets	filter_q_where_from	Where it comes from
+feature/search/sharedassets	filter_q_who_signed	Who signed it off
+feature/search/sharedassets	filter_show_all	Show all %1$d %2$s
+feature/search/sharedassets	filter_show_count	Show %1$d %2$s
+feature/search/sharedassets	filter_show_none	No %1$s match
+feature/search/sharedassets	clear_all	Clear all
+feature/search/sharedassets	filter_scope_note	Only changes the %1$s list
 feature/search/sharedassets	filters	Filters
 feature/search/sharedassets	match_reference	Ref. %1$s
 feature/search/sharedassets	match_serial	S/N %1$s
 feature/search/sharedassets	meter_task_note	%1$s tracked only by a meter have no date and always show.
 feature/search/sharedassets	no_records_match	No %1$s match these filters.
-feature/search/sharedassets	period_all	All time
-feature/search/sharedassets	period_custom	Custom range
-feature/search/sharedassets	period_last_12_months	Last 12 months
-feature/search/sharedassets	period_last_3_months	Last 3 months
+feature/search/sharedassets	period_all	Any date
+feature/search/sharedassets	period_custom	Choose dates…
+feature/search/sharedassets	period_last_12_months	Past year
+feature/search/sharedassets	period_last_3_months	Past 3 months
 feature/search/sharedassets	record_count_one	1 %1$s
 feature/search/sharedassets	record_count_other	%1$d %2$s
 feature/search/sharedassets	search_placeholder	Search…

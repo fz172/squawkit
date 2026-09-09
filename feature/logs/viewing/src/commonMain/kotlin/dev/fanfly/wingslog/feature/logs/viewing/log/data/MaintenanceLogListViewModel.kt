@@ -163,6 +163,7 @@ class MaintenanceLogListViewModel(
               matches = hits.matchesById { it.id },
               technicians = logsState.logs.mapNotNull { it.technician?.name?.takeIf(String::isNotBlank) }.distinct().sorted(),
               totalCount = logsState.logs.size,
+              allLogs = sorted,
               filter = filter,
               selectedLog = selectedLog,
               selectedAuthorship = selectedLog

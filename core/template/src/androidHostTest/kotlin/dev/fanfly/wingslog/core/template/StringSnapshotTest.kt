@@ -234,6 +234,14 @@ class StringSnapshotTest {
       "task_title"
     ) { LexiconFormatter.titleCase(it.taskNoun) },
     frame("feature/tasks/sharedassets", "no_tasks_yet") { it.taskNoun.plural },
+    // The filter sheet's scope note and its one thing-named question. The rest of the sheet's new
+    // copy is either fixed text or a frame the caller fills with whichever noun its tab uses, so
+    // those positions stay literal placeholders here exactly as record_count_other's do.
+    frame("feature/search/sharedassets", "filter_scope_open") { it.squawkNoun.plural },
+    frame("feature/search/sharedassets", "filter_scope_closed") { it.squawkNoun.plural },
+    frame("feature/search/sharedassets", "filter_scope_due") { it.taskNoun.plural },
+    frame("feature/search/sharedassets", "filter_scope_completed") { it.taskNoun.plural },
+    frame("feature/search/sharedassets", "filter_q_part_of") { it.thingNoun.singular },
     frame("feature/tasks/sharedassets", "task_deleted") {
       LexiconFormatter.sentenceCase(it.taskNoun)
     },
