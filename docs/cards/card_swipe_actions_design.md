@@ -116,18 +116,20 @@ fun SwipeActionCard(
 fun rememberSwipeRevealController(): SwipeRevealController
 ```
 
-- **Panel width.** The action row is composed once, off to the side, with
-  `Modifier.width(IntrinsicSize.Max)` and `onSizeChanged`; the measured width becomes the open
-  distance. Each button is `widthIn(min = 72.dp)` with `Spacing.medium` horizontal padding around
-  an icon-over-`labelMedium` column, so "Resolve" and "Delete" come out around 80 dp each, and the
-  two-action card opens about 160 dp. A label the caller passes that wraps to two lines is a
-  caller bug; labels are one or two short words (PRD R4).
+- **Panel width.** The action row is composed once, off to the side, with `onSizeChanged`; the
+  measured width becomes the open distance. Each button is a fixed 64 dp around a 24 dp
+  icon-over-`labelSmall` column, separated by a 1 dp × 34 dp `outlineVariant` hairline, and the row
+  is inset 4 dp at each end — so a two-action card opens 145 dp. **`onSizeChanged` sits outside
+  that inset**: measured inside it the card slides 4 dp short and parks over the first icon.
+  A label the caller passes that wraps to two lines is a caller bug; labels are one or two short
+  words (PRD R4).
 - **Anchors.** `Closed = 0f`, `OpenEnd = -panelWidth` (dragged toward start), `OpenStart =
   +panelWidth` (dragged toward end). Both open anchors exist whenever `actions` is non-empty, since
   both sides reveal the same row. Anchors are rebuilt when the measured width changes.
-- **Snap.** `positionalThreshold = { distance -> distance * 0.4f }`,
-  `velocityThreshold = { 125.dp.toPx() }`, `snapAnimationSpec = tween(200, easing = EaseOut)`.
-  Matches DESIGN.md §6 "150–250 ms, ease-out"; there is no bounce.
+- **Snap.** `positionalThreshold = { distance -> distance * 0.42f }`,
+  `snapAnimationSpec = tween(250, easing = CubicBezierEasing(0.32f, 0.72f, 0f, 1f))`. The duration
+  stays inside DESIGN.md §6's 150–250 ms; the curve is a front-loaded ease-out, which is what makes
+  a card the user is still holding feel attached to the finger. There is no bounce.
 - **Layout.** A `Box`. The action row is drawn twice, once aligned to each edge, each clipped to
   `RoundedCornerShape(Spacing.cardCornerRadius)` and each only visible while the card's offset
   uncovers it; the card is offset by `state.requireOffset()`. Nothing peeks when closed.
@@ -144,13 +146,24 @@ fun rememberSwipeRevealController(): SwipeRevealController
   from a `nestedScroll` connection on the first vertical scroll delta and when the filter toggle
   changes (PRD R5). It is `remember`ed, not saved: a revealed card is not state worth surviving
   process death.
-- **Accessibility.** `Modifier.semantics { customActions = actions.map {
-  CustomAccessibilityAction(it.label) { it.onClick(); true } } }` on the content. TalkBack and
-  VoiceOver present these in the actions menu; the analytics `source` for these is `a11y`.
-- **Tones.** `DESTRUCTIVE` → `colorScheme.errorContainer` / `onErrorContainer`. `POSITIVE` →
-  `statusColors.positive.container` / `.accent`. Same tokens `ResolveBubbleMenu` already uses for
-  its icon chips. Only these two exist; PRD §3 rules out Update and Reopen, which were the reasons
-  a primary tone might have been wanted.
+- **Accessibility.** Out of scope by decision (#871, closed as not planned); nothing here declares
+  custom accessibility actions and `QuickActionSource` has no `a11y` value.
+- **Tones live in the icon, not a block.** `DESTRUCTIVE` → `colorScheme.error`, `POSITIVE` →
+  `statusColors.positive.accent`, both on a bare icon; the label is `onSurfaceVariant` at
+  `labelSmall`, deliberately quieter than the icon. Only these two tones exist; PRD §3 rules out
+  Update and Reopen, which were the reasons a primary tone might have been wanted.
+
+  This replaced filled `errorContainer` / `positive.container` slabs (the "Lifted card" exploration,
+  2026-09-09). Two reasons the blocks went: a red slab sliding out under the thumb reads as *the
+  delete already happened* on a surface whose whole contract is reveal-and-tap, and two saturated
+  rectangles beside a status-coded card put the loudest color on the least important thing.
+- **The lift.** What separates the controls from the record is now the card, not a background. It
+  rides a shadow that grows with the drag (0 → 8 dp), dims under a black scrim to 16% at full
+  reveal, and the icons fade in across the middle half of the travel (`(p − 0.2) / 0.5`) while
+  sliding 14 dp in behind it. All three are driven off one `progress` value derived from the
+  offset, so they cannot disagree. The shadow is DESIGN.md §6's one sanctioned exception, recorded
+  there: it exists only while a gesture is in flight, and tonal elevation tints rather than
+  separates.
 
 ### 3.3 `ResolveBubbleMenu`: point at the button (PRD R8, R9, §6.2)
 
