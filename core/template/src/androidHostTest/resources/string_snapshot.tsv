@@ -912,6 +912,12 @@ feature/search/sharedassets	due_within_12_months	Next 12 months
 feature/search/sharedassets	due_within_3_months	Next 3 months
 feature/search/sharedassets	due_within_any	No limit
 feature/search/sharedassets	filter_records	Filter %1$s
+feature/search/sharedassets	filter_all_people	All %1$d %2$s
+feature/search/sharedassets	filter_search_people	Search %1$d %2$s
+feature/search/sharedassets	filter_selected_none	No one selected
+feature/search/sharedassets	filter_selected_count	%1$d %2$s selected
+feature/search/sharedassets	filter_recent_here	Most recent here
+feature/search/sharedassets	filter_picker_back	Back to filters
 feature/search/sharedassets	filter_sheet_title	Narrow down
 feature/search/sharedassets	filter_scope_open	squawks that are open
 feature/search/sharedassets	filter_scope_closed	squawks that are closed

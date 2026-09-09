@@ -105,9 +105,15 @@ fun RecordFilterControls(
   timeNote: String? = null,
   horizontalPadding: Dp = Spacing.screenPadding,
   facetSection: (@Composable ColumnScope.() -> Unit)? = null,
+  /**
+   * A sub-page shown *instead of* the sections — the people picker, reached from its own chip. It
+   * lives inside the same sheet rather than a second one stacked on top, because two sheets deep
+   * the dismiss gesture stops meaning anything predictable.
+   */
+  page: (@Composable ColumnScope.() -> Unit)? = null,
 ) {
   if (!expanded) return
-  val content: @Composable ColumnScope.() -> Unit = {
+  val content: @Composable ColumnScope.() -> Unit = page ?: {
     RecordFilterPanelContent(
       scopeLabel = scopeLabel,
       filter = filter,

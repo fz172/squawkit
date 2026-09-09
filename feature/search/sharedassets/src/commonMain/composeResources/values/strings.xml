@@ -29,6 +29,13 @@
   <string name="filter_show_count">Show <xliff:g example="21">%1$d</xliff:g> <xliff:g example="work logs">%2$s</xliff:g></string>
   <string name="filter_show_none">No <xliff:g example="work logs">%1$s</xliff:g> match</string>
   <string name="clear_all">Clear all</string>
+  <!-- People are an open list that grows, so they get a picker instead of a wall of chips. -->
+  <string name="filter_all_people">All <xliff:g example="24">%1$d</xliff:g> <xliff:g example="technicians">%2$s</xliff:g></string>
+  <string name="filter_search_people">Search <xliff:g example="24">%1$d</xliff:g> <xliff:g example="technicians">%2$s</xliff:g></string>
+  <string name="filter_selected_none">No one selected</string>
+  <string name="filter_selected_count"><xliff:g example="2">%1$d</xliff:g> <xliff:g example="technicians">%2$s</xliff:g> selected</string>
+  <string name="filter_recent_here">Most recent here</string>
+  <string name="filter_picker_back">Back to filters</string>
   <string name="period_all">Any date</string>
   <string name="period_last_3_months">Past 3 months</string>
   <string name="period_last_12_months">Past year</string>
