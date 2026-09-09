@@ -2,6 +2,7 @@ package dev.fanfly.wingslog.feature.settings.developeroptions
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dev.fanfly.wingslog.core.crash.CrashReporter
 import dev.fanfly.wingslog.core.model.settings.Subscription
 import dev.fanfly.wingslog.feature.ads.datamanager.AdConsentManager
 import dev.fanfly.wingslog.feature.developeroptions.datamanager.DeveloperFlags
@@ -14,6 +15,7 @@ import kotlinx.coroutines.launch
 class DeveloperOptionsViewModel(
   private val developerOptionsManager: DeveloperOptionsManager,
   private val adConsentManager: AdConsentManager,
+  private val crashReporter: CrashReporter,
 ) : ViewModel() {
 
   private val _flags = MutableStateFlow(DeveloperFlags())
@@ -64,6 +66,19 @@ class DeveloperOptionsViewModel(
   fun resetAdConsent() {
     viewModelScope.launch { adConsentManager.resetConsent() }
   }
+
+  /** Proves the Crashlytics pipeline end to end without crashing: shows up under Non-fatals. */
+  fun recordTestNonFatal() {
+    crashReporter.recordException(IllegalStateException("SquawkIt developer test non-fatal"))
+  }
+
+  /**
+   * Crashes on purpose, on the caller's thread rather than in [viewModelScope]: a coroutine's
+   * failure goes to the scope's handler, and this has to reach the platform's uncaught path — the
+   * one Crashlytics (and, on iOS, `installUnhandledExceptionHook`) actually listens on.
+   */
+  fun forceTestCrash(): Nothing =
+    throw RuntimeException("SquawkIt developer test crash")
 
   /**
    * Applies [flags] to the UI immediately and queues it for persistence.

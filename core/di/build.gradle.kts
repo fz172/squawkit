@@ -25,6 +25,7 @@ kotlin {
 
       implementation(project(":core:analytics"))
       implementation(project(":core:auth"))
+      implementation(project(":core:crash"))
       // functionsModule — the shared Cloud Functions client.
       implementation(project(":core:firebase"))
       implementation(project(":core:lifecycle"))
@@ -55,6 +56,6 @@ kotlin {
     sourceSets.getByName("androidMain")
       .dependencies {
         implementation(project.dependencies.platform(libs.firebase.bom))
-    }
+      }
   }
 }

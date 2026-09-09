@@ -8,17 +8,18 @@ composeMultiplatform = "1.12.0"
 
 activityKtx = "1.13.0"
 composeBom = "2026.08.00"
-robolectric = "4.15.1"
+robolectric = "4.16.1"
 coreKtx = "1.19.0"
 credentials = "1.6.0"
-firebaseBom = "34.17.0"
-gitlive = "2.6.0"
+firebaseBom = "34.18.0"
+firebaseCrashlyticsGradle = "3.0.8"
+gitlive = "2.7.0"
 googleid = "1.2.0"
 jetbrainsLifecycle = "2.11.0"
 junit = "4.13.2"
-kermit = "2.1.0"
+kermit = "2.2.0"
 koin = "4.2.2"
-kotlin = "2.4.10"
+kotlin = "2.4.20"
 kotlinxDatetime = "0.8.0"
 kover = "0.9.9"
 ktor = "3.5.2"
@@ -63,6 +64,7 @@ firebase-functions = { module = "com.google.firebase:firebase-functions" }
 firebase-messaging = { module = "com.google.firebase:firebase-messaging" }
 
 gitlive-firebase-analytics = { group = "dev.gitlive", name = "firebase-analytics", version.ref = "gitlive" }
+gitlive-firebase-crashlytics = { group = "dev.gitlive", name = "firebase-crashlytics", version.ref = "gitlive" }
 gitlive-firebase-firestore = { group = "dev.gitlive", name = "firebase-firestore", version.ref = "gitlive" }
 gitlive-firebase-auth = { group = "dev.gitlive", name = "firebase-auth", version.ref = "gitlive" }
 gitlive-firebase-functions = { group = "dev.gitlive", name = "firebase-functions", version.ref = "gitlive" }
@@ -124,5 +126,6 @@ kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref 
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 compose-multiplatform = { id = "org.jetbrains.compose", version.ref = "composeMultiplatform" }
 kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }
+firebase-crashlytics = { id = "com.google.firebase.crashlytics", version.ref = "firebaseCrashlyticsGradle" }
 sqldelight = { id = "app.cash.sqldelight", version.ref = "sqldelight" }
 wire = { id = "com.squareup.wire", version.ref = "wire" }

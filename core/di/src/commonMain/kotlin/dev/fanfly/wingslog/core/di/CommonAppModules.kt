@@ -2,6 +2,7 @@ package dev.fanfly.wingslog.core.di
 
 import dev.fanfly.wingslog.core.analytics.di.analyticsModule
 import dev.fanfly.wingslog.core.auth.di.authModule
+import dev.fanfly.wingslog.core.crash.di.crashModule
 import dev.fanfly.wingslog.core.firebase.functions.functionsModule
 import dev.fanfly.wingslog.core.lifecycle.di.lifecycleModule
 import dev.fanfly.wingslog.core.lifecycle.di.platformLifecycleModule
@@ -46,7 +47,11 @@ import org.koin.core.module.Module
  * (Koin resolves lazily), not a compile error.
  */
 val commonAppModules: List<Module> = listOf(
-  // ---- core/ infrastructure: analytics, lifecycle, Firebase clients, auth, storage, theme ----
+  // ---- core/ infrastructure: telemetry, lifecycle, Firebase clients, auth, storage, theme ----
+  // First: its eager breadcrumb writer wants installing before the rest of the graph logs
+  // anything worth attaching to a crash, and eager singletons are created in this order. The
+  // uid binder it also starts reads the FirebaseAuth that authModule registers below.
+  crashModule,
   analyticsModule,
   // Ahead of authModule: on Android this supplies the CurrentActivityProvider that
   // AuthManagerImpl takes. Koin resolves lazily so the order is not required, but the list is read

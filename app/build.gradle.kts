@@ -7,6 +7,7 @@ plugins {
   alias(libs.plugins.kotlin.android)
   alias(libs.plugins.kotlin.compose)
   id("com.google.gms.google-services")
+  alias(libs.plugins.firebase.crashlytics)
 }
 
 val versionPropsFile = rootProject.file("version.properties")
@@ -39,7 +40,8 @@ val currentVersionCode = versionProps.getProperty("versionCode", "0")
   .toInt()
 
 // Only a release build advances the counter; every other build reports what is already stamped.
-val nextVersionCode = if (isReleaseBuild) currentVersionCode + 1 else currentVersionCode
+val nextVersionCode =
+  if (isReleaseBuild) currentVersionCode + 1 else currentVersionCode
 
 if (isReleaseBuild) {
   versionProps["buildDate"] = today

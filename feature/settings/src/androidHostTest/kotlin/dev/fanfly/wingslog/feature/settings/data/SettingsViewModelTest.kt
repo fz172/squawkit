@@ -6,13 +6,14 @@ import dev.fanfly.wingslog.core.analytics.AnalyticsPreferenceStore
 import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.core.auth.AccountDeleter
 import dev.fanfly.wingslog.core.auth.AuthManager
+import dev.fanfly.wingslog.core.crash.NoOpCrashReporter
+import dev.fanfly.wingslog.core.model.settings.NotificationSettings
 import dev.fanfly.wingslog.core.storage.DatabaseIntegrityChecker
 import dev.fanfly.wingslog.core.ui.theme.AppearanceController
 import dev.fanfly.wingslog.core.ui.theme.AppearanceMode
 import dev.fanfly.wingslog.core.ui.theme.AppearanceStore
 import dev.fanfly.wingslog.feature.ads.datamanager.AdConsentManager
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
-import dev.fanfly.wingslog.core.model.settings.NotificationSettings
 import dev.fanfly.wingslog.feature.developeroptions.datamanager.DeveloperFlags
 import dev.fanfly.wingslog.feature.developeroptions.datamanager.DeveloperOptionsManager
 import dev.fanfly.wingslog.feature.notifications.datamanager.NotificationPrefsManager
@@ -100,6 +101,7 @@ class SettingsViewModelTest {
     analyticsPreferenceController = AnalyticsPreferenceController(
       InMemoryAnalyticsPreferenceStore(),
       mockk(relaxed = true),
+      NoOpCrashReporter,
     )
     every { featureLabManager.observe() } returns flowOf(DeveloperFlags())
 

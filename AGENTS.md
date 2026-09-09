@@ -98,6 +98,8 @@ core/
   nav/                  # Screen route definitions (Screen sealed class, route args)
   sharedassets/         # App-wide strings/drawables (brand name, generic actions, shell tab labels)
   analytics/            # AnalyticsManager, LocalAnalytics, AnalyticsPreference, screen-view feeder
+  crash/                # CrashReporter over Firebase Crashlytics (Android + iOS, one GitLive-backed
+                        #   impl in mobileMain; no-op on web), Kermit breadcrumb writer, uid binder
   di/                   # CommonAppModules.kt — the single list of Koin modules shared by all hosts
   ui/                   # Material 3 theme, color tokens, shared Compose components
     theme/              #   WingslogTheme, palette, Spacing, StatusColors, AppearanceController
@@ -499,21 +501,22 @@ the Firestore/Storage rules (`test/firestore-rules.test.ts`, `test/storage-rules
 
 | Library | Version |
 |---------|---------|
-| Kotlin | 2.4.10 |
-| Compose Multiplatform | 1.11.1 |
-| Android Gradle Plugin | 9.3.1 |
-| Firebase KMP (GitLive) | 2.5.0 |
+| Kotlin | 2.4.20 |
+| Compose Multiplatform | 1.12.0 |
+| Android Gradle Plugin | 9.3.2 |
+| Firebase KMP (GitLive) | 2.7.0 |
 | Koin | 4.2.2 |
-| Wire (protobuf) | 6.4.5 |
+| Wire (protobuf) | 6.4.7 |
 | SQLDelight | 2.3.2 |
 | Kotlinx Coroutines | 1.11.0 |
 | Kotlinx Datetime | 0.8.0 |
-| Ktor | 3.5.1 |
-| Coil | 3.5.0 |
-| RevenueCat KMP (Android/iOS only) | 3.3.1 |
-| Play Services Ads / UMP | 24.6.0 / 4.0.0 |
+| Ktor | 3.5.2 |
+| Coil | 3.6.0 |
+| RevenueCat KMP (Android/iOS only) | 3.6.0 |
+| Play Services Ads / UMP | 25.4.0 / 4.0.0 |
 | MockK | 1.14.11 |
 | Google Truth | 1.4.5 |
+| Firebase Crashlytics Gradle plugin | 3.0.8 |
 
 ## Design System
 
@@ -603,6 +606,10 @@ constants (camera capture, anonymous login), and `isAdsSupported`.
   Release does not. `forceDeveloperBuild` stays on the API as the iOS equivalent of
   `-PdeveloperBuild=true`; there is no Swift compile flag, because Swift cannot see
   `Platform.isDebugBinary`.
+- Crashlytics links as an SPM product on the `iosApp` target and uploads dSYMs from the
+  **Upload Crashlytics dSYMs** run-script phase, which shells out to the `Crashlytics/run` script
+  inside the resolved `firebase-ios-sdk` checkout. Only Release builds produce a dSYM
+  (`DEBUG_INFORMATION_FORMAT`), so the phase is a no-op under Debug.
 - Build: open `iosApp/iosApp.xcodeproj`, select **iosAppDebug**, run.
 
 ### Web

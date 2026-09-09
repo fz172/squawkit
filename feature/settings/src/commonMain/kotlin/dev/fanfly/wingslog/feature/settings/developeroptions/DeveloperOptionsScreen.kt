@@ -99,6 +99,12 @@ fun DeveloperOptionsScreen(
         )
         HorizontalDivider()
 
+        CrashReportingDeveloperSettings(
+          onRecordTestNonFatal = viewModel::recordTestNonFatal,
+          onForceTestCrash = { viewModel.forceTestCrash() },
+        )
+        HorizontalDivider()
+
         extras
           .filter { it.isAvailable() }
           .forEach { extra ->
