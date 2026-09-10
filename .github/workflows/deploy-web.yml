@@ -38,12 +38,15 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
+      # Only build/js — never kotlin-js-store. That directory holds the committed yarn.lock, and
+      # actions/cache restores over the workspace, so caching it would overwrite the checked-out
+      # lock with a stale one and fail kotlinStoreYarnLock ("Lock file was changed"). The key can
+      # hash the lock now that it is in the repo; while it was gitignored, hashFiles found nothing,
+      # every run shared the key `kotlinjs-<os>-`, and the stale cache was restored forever.
       - name: Cache Kotlin/JS node_modules
         uses: actions/cache@v4
         with:
-          path: |
-            build/js
-            kotlin-js-store
+          path: build/js
           key: kotlinjs-${{ runner.os }}-${{ hashFiles('kotlin-js-store/yarn.lock') }}
           restore-keys: |
             kotlinjs-${{ runner.os }}-
