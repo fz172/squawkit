@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.feature.login
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -25,6 +26,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
@@ -231,6 +233,17 @@ private fun LoginProviderButton(
   muted: Boolean = false,
   trailing: @Composable (() -> Unit)? = null,
 ) {
+  val content = if (muted) {
+    MaterialTheme.colorScheme.onSurfaceVariant
+  } else {
+    MaterialTheme.colorScheme.onPrimaryContainer
+  }
+  val container = if (muted) {
+    MaterialTheme.colorScheme.surface
+  } else {
+    MaterialTheme.colorScheme.primaryContainer
+  }
+
   OutlinedButton(
     modifier = Modifier
       .fillMaxWidth()
@@ -238,20 +251,27 @@ private fun LoginProviderButton(
     enabled = enabled,
     shape = LoginButtonShape,
     contentPadding = PaddingDefaults,
+    // A tonal fill and a little lift, rather than an outline on the card's own colour: on white the
+    // outlined form read as a placeholder rather than the page's primary thing to do. All three
+    // providers keep the same treatment — none of them is the "real" option (see the KDoc above).
+    elevation = ButtonDefaults.buttonElevation(
+      defaultElevation = if (muted) 0.dp else 1.dp,
+      pressedElevation = 0.dp,
+      disabledElevation = 0.dp,
+    ),
+    // Every one of these must be named. Material's ButtonColors leaves the ones you omit as
+    // Color.Unspecified, which paints *black* — and since a sign-in disables the whole column,
+    // omitting the disabled pair turned every other button into a black slab mid-request.
     colors = ButtonDefaults.outlinedButtonColors(
-      containerColor = MaterialTheme.colorScheme.surface,
-      contentColor = if (muted) {
-        MaterialTheme.colorScheme.onSurfaceVariant
-      } else {
-        MaterialTheme.colorScheme.onSurface
-      },
+      containerColor = container,
+      contentColor = content,
+      disabledContainerColor = container,
+      disabledContentColor = content,
     ),
     border = BorderStroke(
       Spacing.hairline,
-      if (muted) {
-        MaterialTheme.colorScheme.outlineVariant
-      } else {
-        MaterialTheme.colorScheme.outline
+      MaterialTheme.colorScheme.outlineVariant.let {
+        if (enabled) it else it.copy(alpha = it.alpha * DisabledAlpha)
       },
     ),
     onClick = onClick,
@@ -263,10 +283,22 @@ private fun LoginProviderButton(
         color = MaterialTheme.colorScheme.primary,
       )
     } else {
-      LoginButtonContent(label = label, labelStyle = labelStyle, trailing = trailing, icon = icon)
+      // Dim the whole row rather than the label alone: each icon sets its own tint (the Google mark
+      // keeps its brand colours), so a disabled content colour never reaches them and a busy card
+      // ended up with faded text beside full-strength marks.
+      Box(
+        modifier = Modifier
+          .fillMaxWidth()
+          .alpha(if (enabled) 1f else DisabledAlpha),
+      ) {
+        LoginButtonContent(label = label, labelStyle = labelStyle, trailing = trailing, icon = icon)
+      }
     }
   }
 }
 
 /** The button's own padding; [LoginButtonContent] owns the spacing inside it. */
 private val PaddingDefaults = PaddingValues(horizontal = 16.dp)
+
+/** Material's disabled opacity, applied to content and border so a busy card reads as busy, not broken. */
+private const val DisabledAlpha = 0.38f
