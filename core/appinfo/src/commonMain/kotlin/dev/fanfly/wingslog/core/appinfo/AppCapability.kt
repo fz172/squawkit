@@ -19,6 +19,17 @@ data class AppCapability(
    * `SubscriptionManager.showsAds()` enforces this; see the design doc §6.
    */
   val isAdsSupported: Boolean,
+  /**
+   * Where the login card's "back to the site" link goes, or null where there is nowhere to go
+   * back to.
+   *
+   * Only web has one: `/login` is reached from a static marketing page at `/`, so the card offers
+   * a way back to it. On Android and iOS the app *is* the destination — there is no page behind
+   * the login screen — so the link is absent rather than pointing a native user at a browser.
+   */
+  val promoSiteUrl: String? = null,
+  /** The support page the login card links, or null where the host has none to open. */
+  val supportUrl: String? = null,
 )
 
 /**

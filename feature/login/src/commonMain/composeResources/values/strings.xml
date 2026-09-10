@@ -8,6 +8,15 @@
   <string name="sign_in_with_apple">Log in with Apple</string>
   <string name="sign_in_with_email">Log in with email</string>
   <string name="continue_without_account">Continue Anonymously</string>
+  <string name="login_back_to_site">Back to <xliff:g example="squawkit.fanfly.dev">%1$s</xliff:g></string>
+  <string name="login_site_name">squawkit.fanfly.dev</string>
+  <string name="login_need_account">Need an account?</string>
+  <string name="login_signing_in_creates">Signing in creates one.</string>
+  <string name="support_link">Support</string>
+  <string name="email_entry_body">We’ll send a link that signs you in. No password to remember.</string>
+  <string name="email_address_label">Email address</string>
+  <string name="email_link_expiry_note">The link expires in 15 minutes and can only be used once.</string>
+  <string name="email_all_login_options">All log-in options</string>
   <string name="sign_in_error">Sign-in failed. Check your connection and try again.</string>
   <string name="sign_in_anonymous_error">Could not continue anonymously. Please try again.</string>
 
@@ -25,7 +34,7 @@
   <string name="email_finish_body">Confirm the email this link was sent to.</string>
   <string name="email_link_error">That link didn't work. Request a new one.</string>
   <string name="legal_disclaimer">SquawkIt is a personal convenience tool and is not a certified maintenance record system. It does not replace the official logbooks required by applicable authority.</string>
-  <string name="privacy_notice">Privacy Notice</string>
+  <string name="privacy_notice">Terms &amp; Privacy</string>
 
   <!-- Onboarding: name entry -->
   <string name="onboarding_name_eyebrow">QUICK HELLO</string>

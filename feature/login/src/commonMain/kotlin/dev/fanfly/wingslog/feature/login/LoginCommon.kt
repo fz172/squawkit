@@ -1,25 +1,36 @@
 package dev.fanfly.wingslog.feature.login
 
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.SpanStyle
@@ -27,36 +38,46 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
-import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
+import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.core.ui.brand.ThingHero
-import dev.fanfly.wingslog.core.ui.theme.AviationBlue10
-import dev.fanfly.wingslog.core.ui.theme.AviationBlue80
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.rememberBrandHeadlineFamily
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 import wingslog.core.sharedassets.generated.resources.app_name
 import wingslog.feature.login.generated.resources.Res
 import wingslog.feature.login.generated.resources.legal_disclaimer
+import wingslog.feature.login.generated.resources.login_back_to_site
+import wingslog.feature.login.generated.resources.login_need_account
+import wingslog.feature.login.generated.resources.login_signing_in_creates
+import wingslog.feature.login.generated.resources.login_site_name
 import wingslog.feature.login.generated.resources.mission_statement
 import wingslog.feature.login.generated.resources.privacy_notice
+import wingslog.feature.login.generated.resources.support_link
 import wingslog.core.sharedassets.generated.resources.Res as UiRes
 
-// Shared visual language for the sign-in surfaces (LoginScreen + EmailSignInScreen) so the header,
-// background, and footer are pixel-identical across Android, iOS, and web.
-internal val LoginBackground = AviationBlue10
-internal val LoginOnBackground = Color(0xFFF0F4FF)
-internal val LoginOnBackgroundMuted = Color(0xFF8AAAD4)
-internal val LoginErrorText = Color(0xFFFF8A80)
+// Shared visual language for the sign-in surfaces (LoginScreen + EmailSignInScreen) so the card,
+// buttons and footer are identical across Android, iOS, and web.
+//
+// Everything here reads MaterialTheme.colorScheme rather than fixed colours: the design canvas was
+// drawn from this app's own aviation palette (its #1A5FAE / #A7C8FF primaries and #D5E3FF / #004785
+// containers are AviationBlue40/80 and 90/30), so the light and dark artboards both fall out of the
+// scheme without a second set of constants to keep in step.
+
+/**
+ * Apple's button colours for the *upgrade* sheet, which still uses a black Apple button.
+ *
+ * The login card does not: the design canvas gives every provider the same neutral row, so
+ * `LoginScreen` tints the Apple mark with `onSurface` instead. These stay for `feature/login/upgrade`.
+ */
 internal val AppleButtonBackground = Color(0xFF000000)
 internal val AppleButtonContent = Color(0xFFFFFFFF)
 
-/** The part of the brand name set in blue, on every host. */
+/** The part of the brand name set in the primary colour, on every host. */
 private const val BRAND_SUFFIX = "It"
 
 internal val LoginButtonLabelStyle = TextStyle(
@@ -67,7 +88,13 @@ internal val LoginSecondaryLabelStyle = TextStyle(fontSize = 15.sp)
 internal val LoginErrorStyle = TextStyle(fontSize = 13.sp)
 
 /** Every sign-in button, on the login page and in the upgrade sheet, is this tall. */
-internal val LoginButtonHeight = 54.dp
+internal val LoginButtonHeight = 56.dp
+
+/** The card never grows past this, however wide the window is. */
+internal val LoginCardWidth = 452.dp
+
+internal val LoginCardShape = RoundedCornerShape(20.dp)
+internal val LoginButtonShape = RoundedCornerShape(16.dp)
 
 /**
  * The inside of a sign-in button: leading icon, then the label.
@@ -78,10 +105,8 @@ internal val LoginButtonHeight = 54.dp
  * label is centred in what is left, balanced by a spacer the icon's width so the label still sits in
  * the middle of the button rather than off to the right.
  *
- * Public, not internal, because the web host's landing page has its own sign-in buttons and had the
- * same defect. It cannot share the *button* — that page is a bespoke `Row`-as-button with its own
- * corner radius, colours and metrics — but this is the layout rule those buttons disagreed on, and
- * there is no reason for two copies of it.
+ * Public, not internal, because the upgrade sheet has its own buttons with the same defect. Keep
+ * the signature stable — `feature/login/upgrade` calls it too.
  *
  * [iconSize] must match what [icon] actually renders: it sizes the trailing spacer, and if the two
  * disagree the label stops being centred, which is the bug this exists to prevent.
@@ -91,6 +116,7 @@ fun LoginButtonContent(
   label: String,
   labelStyle: TextStyle = LoginButtonLabelStyle,
   iconSize: Dp = Spacing.xLarge,
+  trailing: @Composable (() -> Unit)? = null,
   icon: @Composable () -> Unit,
 ) {
   Row(
@@ -107,120 +133,208 @@ fun LoginButtonContent(
         .weight(1f)
         .padding(horizontal = Spacing.small),
     )
-    Spacer(Modifier.size(iconSize))
+    if (trailing != null) trailing() else Spacer(Modifier.size(iconSize))
   }
 }
 
 /**
- * The navy backdrop + soft radial glow + content column shared by every sign-in screen. [content]
- * is laid out in a full-height column with the standard auth content width and horizontal padding.
+ * The page every sign-in surface sits on: a plain background with the card centred in it, and an
+ * optional top bar above.
+ *
+ * The card scrolls rather than the page: a short window (a phone in landscape, a small browser)
+ * must still reach the buttons, and the top bar should stay put while it does.
  */
 @Composable
-internal fun LoginBackdrop(content: @Composable ColumnScope.() -> Unit) {
-  Box(
+internal fun LoginScaffold(
+  topBar: (@Composable () -> Unit)? = null,
+  content: @Composable ColumnScope.() -> Unit,
+) {
+  Column(
     modifier = Modifier
       .fillMaxSize()
-      .background(LoginBackground),
-    contentAlignment = Alignment.TopCenter,
+      .background(MaterialTheme.colorScheme.background)
+      .windowInsetsPadding(WindowInsets.safeDrawing),
   ) {
-    Canvas(modifier = Modifier.fillMaxSize()) {
-      drawCircle(
-        brush = Brush.radialGradient(
-          colors = listOf(
-            Color(0xFF2A6BC9).copy(alpha = 0.20f),
-            Color.Transparent,
-          ),
-          center = Offset(size.width / 2f, size.height * 0.30f),
-          radius = minOf(size.width, ContentWidth.Auth.toPx()) * 0.70f,
-        ),
+    topBar?.invoke()
+
+    Box(
+      modifier = Modifier
+        .fillMaxSize()
+        .verticalScroll(rememberScrollState())
+        .padding(horizontal = Spacing.large, vertical = Spacing.extraLarge),
+      contentAlignment = Alignment.Center,
+    ) {
+      Column(
+        modifier = Modifier
+          .widthIn(max = LoginCardWidth)
+          .fillMaxWidth()
+          .background(MaterialTheme.colorScheme.surface, LoginCardShape)
+          .border(
+            Spacing.hairline,
+            MaterialTheme.colorScheme.outlineVariant,
+            LoginCardShape,
+          )
+          .padding(horizontal = 32.dp, vertical = 32.dp)
+          .navigationBarsPadding(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        content = content,
       )
     }
+  }
+}
 
-    Column(
-      modifier = Modifier
-        .constrainedContentWidth(ContentWidth.Auth)
-        .fillMaxSize()
-        .navigationBarsPadding()
-        .padding(horizontal = 28.dp),
-      content = content,
+/**
+ * The bar above the card: a way back to the promotional site on the left, and a note that there is
+ * no separate sign-up on the right.
+ *
+ * The back link only exists where there is a site to go back to — `AppCapability.promoSiteUrl` is
+ * null on Android and iOS, where the app *is* the destination, and set on web, where `/login` was
+ * reached from a static marketing page that is still a browser-back away.
+ */
+@Composable
+internal fun LoginTopBar() {
+  val appCapability: AppCapability = koinInject()
+  val uriHandler = LocalUriHandler.current
+  val promoSite = appCapability.promoSiteUrl
+
+  Row(
+    modifier = Modifier
+      .fillMaxWidth()
+      .padding(horizontal = Spacing.large, vertical = Spacing.medium),
+    verticalAlignment = Alignment.CenterVertically,
+    horizontalArrangement = Arrangement.SpaceBetween,
+  ) {
+    if (promoSite != null) {
+      Row(
+        modifier = Modifier.clickable { uriHandler.openUri(promoSite) },
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(Spacing.small),
+      ) {
+        Icon(
+          imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+          contentDescription = null,
+          modifier = Modifier.size(Spacing.large),
+          tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Text(
+          text = stringResource(
+            Res.string.login_back_to_site,
+            stringResource(Res.string.login_site_name)
+          ),
+          style = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.Medium),
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+          maxLines = 1,
+        )
+      }
+    } else {
+      Spacer(Modifier.width(Spacing.extraSmall))
+    }
+
+    Text(
+      text = buildAnnotatedString {
+        append(stringResource(Res.string.login_need_account))
+        append(" ")
+        withStyle(
+          SpanStyle(
+            color = MaterialTheme.colorScheme.primary,
+            fontWeight = FontWeight.SemiBold,
+          ),
+        ) {
+          append(stringResource(Res.string.login_signing_in_creates))
+        }
+      },
+      style = TextStyle(fontSize = 14.sp),
+      color = MaterialTheme.colorScheme.onSurfaceVariant,
+      textAlign = TextAlign.End,
     )
   }
 }
 
 /**
- * The brand hero at the top of the sign-in surfaces: Thing glyphs fly into a crate that becomes the
- * plane (see `ThingHero`). [animate] false shows the resting state, for surfaces reached from the
- * login page where replaying the sequence would be noise.
+ * The brand mark at the top of the card: the plane hero, the wordmark, and the mission statement.
+ *
+ * The mark is [ThingHero] rather than a static icon — Thing glyphs fly into a crate that becomes
+ * the plane. [animate] false shows the resting state, for surfaces reached *from* the login page
+ * (the email step), where replaying the sequence would be noise.
  */
 @Composable
-internal fun LoginPlaneArt(animate: Boolean = true) {
+internal fun LoginMark(animate: Boolean = true) {
+  val headlineFamily = rememberBrandHeadlineFamily()
+  val appName = stringResource(UiRes.string.app_name)
+
   Box(
     modifier = Modifier
       .fillMaxWidth()
-      .height(240.dp),
+      .height(132.dp),
     contentAlignment = Alignment.Center,
   ) {
     ThingHero(
-      size = 220.dp,
-      tint = AviationBlue80,
-      fanTint = AviationBlue80.copy(alpha = 0.55f),
+      size = 124.dp,
+      tint = MaterialTheme.colorScheme.primary,
+      fanTint = MaterialTheme.colorScheme.primary.copy(alpha = 0.55f),
       animate = animate,
     )
   }
-}
-
-/** The "SquawkIt" wordmark, "It" in the brand light blue, plus the mission statement beneath it. */
-@Composable
-internal fun LoginWordmark() {
-  val headlineFamily = rememberBrandHeadlineFamily()
-  val appName = stringResource(UiRes.string.app_name)
-  Text(
-    text = buildAnnotatedString {
-      append(appName.removeSuffix(BRAND_SUFFIX))
-      withStyle(SpanStyle(color = AviationBlue80)) { append(BRAND_SUFFIX) }
-    },
-    style = TextStyle(
-      fontFamily = headlineFamily,
-      fontWeight = FontWeight.Bold,
-      fontSize = 44.sp,
-      lineHeight = 46.sp,
-      letterSpacing = (-1).sp,
-      color = LoginOnBackground,
-    ),
-  )
-
-  Spacer(Modifier.height(6.dp))
-
-  Text(
-    text = stringResource(Res.string.mission_statement),
-    style = TextStyle(
-      fontWeight = FontWeight.Medium,
-      fontSize = 16.sp,
-      lineHeight = 22.sp,
-      color = LoginOnBackgroundMuted,
-    ),
-  )
-}
-
-/** The legal disclaimer + tappable privacy notice shared at the bottom of the sign-in surfaces. */
-@Composable
-internal fun LoginLegalFooter() {
-  val uriHandler = LocalUriHandler.current
-  Text(
-    text = stringResource(Res.string.legal_disclaimer),
-    color = LoginOnBackgroundMuted.copy(alpha = 0.6f),
-    style = LoginErrorStyle,
-    modifier = Modifier.padding(horizontal = Spacing.extraSmall),
-  )
 
   Spacer(Modifier.height(Spacing.medium))
 
   Text(
-    text = stringResource(Res.string.privacy_notice),
-    color = LoginOnBackgroundMuted.copy(alpha = 0.85f),
-    style = LoginErrorStyle.copy(textDecoration = TextDecoration.Underline),
-    modifier = Modifier
-      .padding(horizontal = Spacing.extraSmall)
-      .clickable { uriHandler.openUri(privacyPolicyUrl) },
+    text = buildAnnotatedString {
+      append(appName.removeSuffix(BRAND_SUFFIX))
+      withStyle(SpanStyle(color = MaterialTheme.colorScheme.primary)) {
+        append(
+          BRAND_SUFFIX
+        )
+      }
+    },
+    style = TextStyle(
+      fontFamily = headlineFamily,
+      fontWeight = FontWeight.Bold,
+      fontSize = 28.sp,
+      lineHeight = 32.sp,
+      letterSpacing = (-0.5).sp,
+    ),
+    color = MaterialTheme.colorScheme.onPrimaryContainer,
   )
+
+  Spacer(Modifier.height(Spacing.extraSmall))
+
+  Text(
+    text = stringResource(Res.string.mission_statement),
+    style = TextStyle(fontSize = 14.sp, lineHeight = 20.sp),
+    color = MaterialTheme.colorScheme.onSurfaceVariant,
+  )
+}
+
+/** The disclaimer plus the Terms & Privacy / Support links at the bottom of the card. */
+@Composable
+internal fun LoginLegalFooter() {
+  val uriHandler = LocalUriHandler.current
+  val appCapability: AppCapability = koinInject()
+
+  Text(
+    text = stringResource(Res.string.legal_disclaimer),
+    style = TextStyle(fontSize = 12.sp, lineHeight = 17.sp),
+    color = MaterialTheme.colorScheme.onSurfaceVariant,
+    textAlign = TextAlign.Center,
+  )
+
+  Spacer(Modifier.height(Spacing.medium))
+
+  Row(horizontalArrangement = Arrangement.spacedBy(18.dp)) {
+    Text(
+      text = stringResource(Res.string.privacy_notice),
+      style = TextStyle(fontSize = 12.sp, fontWeight = FontWeight.Medium),
+      color = MaterialTheme.colorScheme.primary,
+      modifier = Modifier.clickable { uriHandler.openUri(privacyPolicyUrl) },
+    )
+    appCapability.supportUrl?.let { support ->
+      Text(
+        text = stringResource(Res.string.support_link),
+        style = TextStyle(fontSize = 12.sp, fontWeight = FontWeight.Medium),
+        color = MaterialTheme.colorScheme.primary,
+        modifier = Modifier.clickable { uriHandler.openUri(support) },
+      )
+    }
+  }
 }

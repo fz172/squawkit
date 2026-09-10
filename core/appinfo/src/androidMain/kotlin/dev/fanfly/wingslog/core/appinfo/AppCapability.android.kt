@@ -6,4 +6,7 @@ actual fun createAppCapability(isDeveloperBuild: Boolean) = AppCapability(
   isAnonymousLoginSupported = true,
   // GA (#386, P9): was dev + dogfood only until ads GA. Off = NO ads.
   isAdsSupported = true,
+  // The app is the destination on mobile; there is no page behind the login screen.
+  promoSiteUrl = null,
+  supportUrl = "https://squawkit.fanfly.dev/support.html",
 )
