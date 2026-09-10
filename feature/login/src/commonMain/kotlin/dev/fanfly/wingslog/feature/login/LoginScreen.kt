@@ -1,19 +1,20 @@
 package dev.fanfly.wingslog.feature.login
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -26,8 +27,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.login.data.LoginViewModel
@@ -42,7 +43,6 @@ import wingslog.feature.login.generated.resources.continue_without_account
 import wingslog.feature.login.generated.resources.google_logo
 import wingslog.feature.login.generated.resources.ic_apple
 import wingslog.feature.login.generated.resources.ic_google_rd_na
-import wingslog.feature.login.generated.resources.login_prompt
 import wingslog.feature.login.generated.resources.sign_in_anonymous_error
 import wingslog.feature.login.generated.resources.sign_in_error
 import wingslog.feature.login.generated.resources.sign_in_with_apple
@@ -59,6 +59,13 @@ import wingslog.feature.login.generated.resources.sign_in_with_google
  */
 private enum class PendingSignIn { Google, Apple, Anonymous }
 
+/**
+ * The sign-in card, shared by Android, iOS and web.
+ *
+ * Every provider is one row in a single column of identical buttons — the design canvas draws them
+ * that way deliberately: none of Google, Apple or email is the "real" option with the others as
+ * fallbacks, so none of them is styled as the primary action.
+ */
 @Composable
 fun LoginScreen(
   loginViewModel: LoginViewModel = koinViewModel(),
@@ -82,209 +89,184 @@ fun LoginScreen(
     }
   }
 
-  LoginBackdrop {
-    Spacer(Modifier.height(76.dp))
+  /** Runs one provider's sign-in, holding [signingIn] for the duration so the card locks. */
+  val signIn = { provider: PendingSignIn, failure: String, request: suspend () -> Any? ->
+    scope.launch {
+      signingIn = provider
+      error = null
+      try {
+        if (request() != null) onLoginSuccess() else error = failure
+      } finally {
+        signingIn = null
+      }
+    }
+    Unit
+  }
 
-    LoginPlaneArt()
-
-    Spacer(Modifier.weight(1f))
-
-    LoginWordmark()
-
-    Spacer(Modifier.height(Spacing.huge))
-
-    Text(
-      text = stringResource(Res.string.login_prompt),
-      style = TextStyle(
-        fontSize = 13.5.sp,
-        lineHeight = 20.sp,
-        color = LoginOnBackgroundMuted.copy(alpha = 0.7f),
-      ),
-    )
+  LoginScaffold(topBar = { LoginTopBar() }) {
+    LoginMark()
 
     Spacer(Modifier.height(Spacing.extraLarge))
 
-    Button(
-      modifier = Modifier
-        .fillMaxWidth()
-        .height(LoginButtonHeight),
+    LoginProviderButton(
+      label = stringResource(Res.string.sign_in_with_google),
       enabled = signingIn == null,
-      shape = RoundedCornerShape(Spacing.buttonCornerRadius),
-      colors = ButtonDefaults.buttonColors(
-        containerColor = LoginOnBackground,
-        contentColor = LoginBackground,
-        disabledContainerColor = LoginOnBackground.copy(alpha = 0.4f),
-        disabledContentColor = LoginBackground.copy(alpha = 0.4f),
-      ),
+      loading = signingIn == PendingSignIn.Google,
       onClick = {
-        scope.launch {
-          signingIn = PendingSignIn.Google
-          try {
-            val credential = loginViewModel.login()
-            if (credential != null) {
-              onLoginSuccess()
-            } else {
-              error = signInErrorMessage
-            }
-          } finally {
-            signingIn = null
-          }
-        }
+        signIn(PendingSignIn.Google, signInErrorMessage) { loginViewModel.login() }
       },
-    ) {
-      if (signingIn == PendingSignIn.Google) {
-        CircularProgressIndicator(
+      icon = {
+        Icon(
+          painter = painterResource(Res.drawable.ic_google_rd_na),
+          contentDescription = stringResource(Res.string.google_logo),
           modifier = Modifier.size(Spacing.xLarge),
-          strokeWidth = 2.dp,
-          color = LoginBackground,
+          tint = Color.Unspecified,
         )
-      } else {
-        LoginButtonContent(label = stringResource(Res.string.sign_in_with_google)) {
-          Icon(
-            painter = painterResource(Res.drawable.ic_google_rd_na),
-            contentDescription = stringResource(Res.string.google_logo),
-            modifier = Modifier.size(Spacing.xLarge),
-            tint = Color.Unspecified,
-          )
-        }
-      }
-    }
+      },
+    )
 
     // Continue with Apple — offered on every platform since #408 gave Android its Custom Tab flow.
     Spacer(Modifier.height(Spacing.medium))
 
-    Button(
-      modifier = Modifier
-        .fillMaxWidth()
-        .height(LoginButtonHeight),
+    LoginProviderButton(
+      label = stringResource(Res.string.sign_in_with_apple),
       enabled = signingIn == null,
-      shape = RoundedCornerShape(Spacing.buttonCornerRadius),
-      colors = ButtonDefaults.buttonColors(
-        containerColor = AppleButtonBackground,
-        contentColor = AppleButtonContent,
-        disabledContainerColor = AppleButtonBackground.copy(alpha = 0.4f),
-        disabledContentColor = AppleButtonContent.copy(alpha = 0.4f),
-      ),
+      loading = signingIn == PendingSignIn.Apple,
       onClick = {
-        scope.launch {
-          signingIn = PendingSignIn.Apple
-          try {
-            val credential = loginViewModel.loginWithApple()
-            if (credential != null) {
-              onLoginSuccess()
-            } else {
-              error = signInErrorMessage
-            }
-          } finally {
-            signingIn = null
-          }
-        }
+        signIn(PendingSignIn.Apple, signInErrorMessage) { loginViewModel.loginWithApple() }
       },
-    ) {
-      if (signingIn == PendingSignIn.Apple) {
-        CircularProgressIndicator(
+      icon = {
+        Icon(
+          painter = painterResource(Res.drawable.ic_apple),
+          contentDescription = stringResource(Res.string.apple_logo),
           modifier = Modifier.size(Spacing.xLarge),
-          strokeWidth = 2.dp,
-          color = AppleButtonContent,
+          tint = MaterialTheme.colorScheme.onSurface,
         )
-      } else {
-        LoginButtonContent(label = stringResource(Res.string.sign_in_with_apple)) {
-          Icon(
-            painter = painterResource(Res.drawable.ic_apple),
-            contentDescription = stringResource(Res.string.apple_logo),
-            modifier = Modifier.size(Spacing.xLarge),
-            tint = AppleButtonContent,
-          )
-        }
-      }
-    }
+      },
+    )
 
     Spacer(Modifier.height(Spacing.medium))
 
     // Passwordless email link — the neutral third option. Navigates to the shared Email Sign-In
-    // page (same on every platform); see EmailSignInScreen.
-    OutlinedButton(
-      modifier = Modifier
-        .fillMaxWidth()
-        .height(LoginButtonHeight),
+    // page (same on every platform); see EmailSignInScreen. The chevron says so: this one goes
+    // somewhere rather than starting a request here.
+    LoginProviderButton(
+      label = stringResource(Res.string.sign_in_with_email),
       enabled = signingIn == null,
-      shape = RoundedCornerShape(Spacing.buttonCornerRadius),
-      colors = ButtonDefaults.outlinedButtonColors(
-        contentColor = LoginOnBackground,
-      ),
-      border = BorderStroke(
-        Spacing.hairline,
-        LoginOnBackground.copy(alpha = 0.5f),
-      ),
+      loading = false,
       onClick = onChooseEmail,
-    ) {
-      LoginButtonContent(label = stringResource(Res.string.sign_in_with_email)) {
+      icon = {
         Icon(
           imageVector = Icons.Filled.Email,
           contentDescription = null,
           modifier = Modifier.size(Spacing.xLarge),
+          tint = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-      }
-    }
+      },
+      trailing = {
+        Icon(
+          imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+          contentDescription = null,
+          modifier = Modifier.size(Spacing.xLarge),
+          tint = MaterialTheme.colorScheme.outline,
+        )
+      },
+    )
 
+    // Web sets this false (AppCapability.js.kt): an anonymous account cannot be carried between
+    // browsers, so the option would strand records the user cannot get back.
     if (appCapability.isAnonymousLoginSupported) {
       Spacer(Modifier.height(Spacing.medium))
 
-      OutlinedButton(
-        modifier = Modifier
-          .fillMaxWidth()
-          .height(LoginButtonHeight),
+      LoginProviderButton(
+        label = stringResource(Res.string.continue_without_account),
+        labelStyle = LoginSecondaryLabelStyle,
         enabled = signingIn == null,
-        shape = RoundedCornerShape(Spacing.buttonCornerRadius),
-        colors = ButtonDefaults.outlinedButtonColors(
-          contentColor = LoginOnBackgroundMuted,
-        ),
-        border = BorderStroke(
-          Spacing.hairline,
-          LoginOnBackgroundMuted.copy(alpha = 0.4f),
-        ),
+        loading = signingIn == PendingSignIn.Anonymous,
+        muted = true,
         onClick = {
-          scope.launch {
-            signingIn = PendingSignIn.Anonymous
-            try {
-              val credential = loginViewModel.loginAnonymously()
-              if (credential != null) {
-                onLoginSuccess()
-              } else {
-                error = signInAnonymousErrorMessage
-              }
-            } finally {
-              signingIn = null
-            }
+          signIn(PendingSignIn.Anonymous, signInAnonymousErrorMessage) {
+            loginViewModel.loginAnonymously()
           }
         },
-      ) {
-        LoginButtonContent(
-          label = stringResource(Res.string.continue_without_account),
-          labelStyle = LoginSecondaryLabelStyle,
-        ) {
+        icon = {
           Icon(
             imageVector = Icons.Filled.Person,
             contentDescription = null,
             modifier = Modifier.size(Spacing.xLarge),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
           )
-        }
-      }
+        },
+      )
     }
 
-    Spacer(Modifier.height(Spacing.large))
-
-    LoginLegalFooter()
-
-    Spacer(Modifier.height(Spacing.large))
-
     error?.let {
+      Spacer(Modifier.height(Spacing.medium))
       Text(
         text = it,
-        color = LoginErrorText,
+        color = MaterialTheme.colorScheme.error,
         style = LoginErrorStyle,
-        modifier = Modifier.padding(bottom = Spacing.large),
+        textAlign = TextAlign.Center,
       )
+    }
+
+    Spacer(Modifier.height(Spacing.extraLarge))
+
+    LoginLegalFooter()
+  }
+}
+
+/**
+ * One row of the provider column. Identical geometry for every provider — the only differences are
+ * the icon, the label, and whether it is the muted anonymous option.
+ */
+@Composable
+private fun LoginProviderButton(
+  label: String,
+  enabled: Boolean,
+  loading: Boolean,
+  onClick: () -> Unit,
+  icon: @Composable () -> Unit,
+  labelStyle: TextStyle = LoginButtonLabelStyle,
+  muted: Boolean = false,
+  trailing: @Composable (() -> Unit)? = null,
+) {
+  OutlinedButton(
+    modifier = Modifier
+      .fillMaxWidth()
+      .height(LoginButtonHeight),
+    enabled = enabled,
+    shape = LoginButtonShape,
+    contentPadding = PaddingDefaults,
+    colors = ButtonDefaults.outlinedButtonColors(
+      containerColor = MaterialTheme.colorScheme.surface,
+      contentColor = if (muted) {
+        MaterialTheme.colorScheme.onSurfaceVariant
+      } else {
+        MaterialTheme.colorScheme.onSurface
+      },
+    ),
+    border = BorderStroke(
+      Spacing.hairline,
+      if (muted) {
+        MaterialTheme.colorScheme.outlineVariant
+      } else {
+        MaterialTheme.colorScheme.outline
+      },
+    ),
+    onClick = onClick,
+  ) {
+    if (loading) {
+      CircularProgressIndicator(
+        modifier = Modifier.size(Spacing.xLarge),
+        strokeWidth = 2.dp,
+        color = MaterialTheme.colorScheme.primary,
+      )
+    } else {
+      LoginButtonContent(label = label, labelStyle = labelStyle, trailing = trailing, icon = icon)
     }
   }
 }
+
+/** The button's own padding; [LoginButtonContent] owns the spacing inside it. */
+private val PaddingDefaults = PaddingValues(horizontal = 16.dp)

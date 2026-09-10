@@ -11,6 +11,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
@@ -32,9 +33,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.fanfly.wingslog.core.auth.EmailLinkDeepLinks
 import dev.fanfly.wingslog.core.auth.SendLinkResult
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import dev.fanfly.wingslog.core.auth.EmailLinkDeepLinks
 import dev.fanfly.wingslog.feature.login.data.LoginViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -167,16 +168,12 @@ fun EmailSignInScreen(
     }
   }
 
-  LoginBackdrop {
-    Spacer(Modifier.height(76.dp))
+  // No top bar and a resting mark: this screen is reached *from* the login card, so the way back is
+  // the step's own "All log-in options" button, and replaying the hero sequence would be noise.
+  LoginScaffold {
+    LoginMark(animate = false)
 
-    LoginPlaneArt(animate = false)
-
-    Spacer(Modifier.weight(1f))
-
-    LoginWordmark()
-
-    Spacer(Modifier.height(Spacing.huge))
+    Spacer(Modifier.height(Spacing.extraLarge))
 
     when (step) {
       EmailStep.Enter -> EnterEmailContent(
@@ -211,11 +208,9 @@ fun EmailSignInScreen(
       )
     }
 
-    Spacer(Modifier.height(Spacing.large))
+    Spacer(Modifier.height(Spacing.extraLarge))
 
     LoginLegalFooter()
-
-    Spacer(Modifier.height(Spacing.large))
   }
 }
 
@@ -256,7 +251,7 @@ private fun EnterEmailContent(
   TextButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) {
     Text(
       stringResource(CoreRes.string.back),
-      color = LoginOnBackgroundMuted,
+      color = MaterialTheme.colorScheme.onSurfaceVariant,
       style = LoginSecondaryLabelStyle
     )
   }
@@ -296,7 +291,7 @@ private fun LinkSentContent(
   TextButton(onClick = onUseDifferent, modifier = Modifier.fillMaxWidth()) {
     Text(
       stringResource(Res.string.email_use_different),
-      color = LoginOnBackgroundMuted,
+      color = MaterialTheme.colorScheme.onSurfaceVariant,
       style = LoginSecondaryLabelStyle
     )
   }
@@ -345,7 +340,7 @@ private fun StepHeading(title: String, subtitle: String? = null) {
     style = TextStyle(
       fontWeight = FontWeight.SemiBold,
       fontSize = 20.sp,
-      color = LoginOnBackground
+      color = MaterialTheme.colorScheme.onSurface
     ),
   )
   if (subtitle != null) {
@@ -355,7 +350,7 @@ private fun StepHeading(title: String, subtitle: String? = null) {
       style = TextStyle(
         fontSize = 14.sp,
         lineHeight = 20.sp,
-        color = LoginOnBackgroundMuted
+        color = MaterialTheme.colorScheme.onSurfaceVariant
       ),
     )
   }
@@ -379,7 +374,7 @@ private fun EmailField(
     placeholder = {
       Text(
         stringResource(Res.string.email_entry_hint),
-        color = LoginOnBackgroundMuted.copy(alpha = 0.6f)
+        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
       )
     },
     keyboardOptions = KeyboardOptions(
@@ -389,11 +384,13 @@ private fun EmailField(
     keyboardActions = KeyboardActions(onGo = { onImeAction() }),
     shape = RoundedCornerShape(Spacing.buttonCornerRadius),
     colors = OutlinedTextFieldDefaults.colors(
-      focusedTextColor = LoginOnBackground,
-      unfocusedTextColor = LoginOnBackground,
-      cursorColor = LoginOnBackground,
-      focusedBorderColor = LoginOnBackground.copy(alpha = 0.7f),
-      unfocusedBorderColor = LoginOnBackgroundMuted.copy(alpha = 0.4f),
+      focusedTextColor = MaterialTheme.colorScheme.onSurface,
+      unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+      cursorColor = MaterialTheme.colorScheme.onSurface,
+      focusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+      unfocusedBorderColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(
+        alpha = 0.4f
+      ),
     ),
   )
 }
@@ -412,10 +409,10 @@ private fun PrimaryButton(
     enabled = enabled,
     shape = RoundedCornerShape(Spacing.buttonCornerRadius),
     colors = ButtonDefaults.buttonColors(
-      containerColor = LoginOnBackground,
-      contentColor = LoginBackground,
-      disabledContainerColor = LoginOnBackground.copy(alpha = 0.4f),
-      disabledContentColor = LoginBackground.copy(alpha = 0.4f),
+      containerColor = MaterialTheme.colorScheme.onSurface,
+      contentColor = MaterialTheme.colorScheme.surface,
+      disabledContainerColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+      disabledContentColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.4f),
     ),
     onClick = onClick,
   ) {
@@ -423,7 +420,7 @@ private fun PrimaryButton(
       CircularProgressIndicator(
         modifier = Modifier.size(Spacing.xLarge),
         strokeWidth = 2.dp,
-        color = LoginBackground,
+        color = MaterialTheme.colorScheme.surface,
       )
     } else {
       Text(text = label, style = LoginButtonLabelStyle)
@@ -436,7 +433,7 @@ private fun ErrorLine(message: String) {
   Box(modifier = Modifier.fillMaxWidth()) {
     Text(
       text = message,
-      color = LoginErrorText,
+      color = MaterialTheme.colorScheme.error,
       style = LoginErrorStyle,
       textAlign = TextAlign.Start,
       modifier = Modifier.align(Alignment.CenterStart),

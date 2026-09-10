@@ -221,7 +221,7 @@ feature/login	onboarding_notifications_headline	Know when it matters
 feature/login	onboarding_welcome_aboard	Welcome aboard
 feature/login	onboarding_welcome_no_name	there
 feature/login	onboarding_welcome_tagline	Let's get your hangar set up.
-feature/login	privacy_notice	Privacy Notice
+feature/login	privacy_notice	Terms &amp; Privacy
 feature/login	sign_in_anonymous_error	Could not continue anonymously. Please try again.
 feature/login	sign_in_error	Sign-in failed. Check your connection and try again.
 feature/login	sign_in_with_apple	Log in with Apple
@@ -247,6 +247,15 @@ feature/login	upgrade_picker_title	Keep your records
 feature/login	upgrade_provider_apple	Apple ID
 feature/login	upgrade_provider_email	email address
 feature/login	upgrade_provider_google	Google account
+feature/login	login_back_to_site	Back to %1$s
+feature/login	login_site_name	squawkit.fanfly.dev
+feature/login	login_need_account	Need an account?
+feature/login	login_signing_in_creates	Signing in creates one.
+feature/login	support_link	Support
+feature/login	email_entry_body	We’ll send a link that signs you in. No password to remember.
+feature/login	email_address_label	Email address
+feature/login	email_link_expiry_note	The link expires in 15 minutes and can only be used once.
+feature/login	email_all_login_options	All log-in options
 feature/logs/sharedassets	add_first_maintenance_log	Log First Entry
 feature/logs/sharedassets	add_log	Add Work Log
 feature/logs/sharedassets	blade	Blade
