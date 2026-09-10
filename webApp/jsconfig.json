@@ -1,0 +1,11 @@
+{
+  "//": "Type-checks the hand-written promo page script without a build step. See docs/web/login_page_split_design.md §6.1.",
+  "compilerOptions": {
+    "target": "ES2017",
+    "lib": ["ES2017", "DOM"],
+    "checkJs": true,
+    "noEmit": true,
+    "strict": true
+  },
+  "include": ["src/jsMain/resources/promo.js"]
+}
