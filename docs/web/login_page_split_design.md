@@ -1,6 +1,6 @@
 # Design Doc: Splitting the Web Landing Page from the Login Page
 
-**Status:** 📋 Proposed
+**Status:** 📋 Proposed — mocks done, all open questions resolved (§9); ready to build
 **Last updated:** 2026-09-09
 **Scope:** `webApp` + a new static promo site; `feature/login` gains the redesigned card shared with native
 **Mocks:** Claude Design project `03e5a809-b352-4b85-9979-5126024f10db` — *SquawkIt Login Split.dc.html*
@@ -15,6 +15,12 @@
 
 Nothing built. Mocks are done (see above); this doc covers architecture, routing, build wiring and
 sequencing. Layout, type, spacing and color come from the mocks.
+
+Decisions taken 2026-09-09: the site stays **`squawkit.fanfly.dev`** (the mocks' "squawkit.com" is
+placeholder copy); **anonymous sign-in stays off on web**; the mocks' placeholder app icons resolve
+to the two real brand marks in §3.1; **"Terms & Privacy" points at the existing `privacy.html`**,
+which already covers both; and the **promo page carries no login form at all** — every sign-in
+control on it is a link to `/login`.
 
 ---
 
@@ -68,6 +74,9 @@ page is a bigger one of those.
 - The promo page is fully readable by crawlers and by a browser with JS disabled.
 - Sign-in has a stable, linkable, bookmarkable URL.
 - The login card is **one design on web, Android and iOS** (the mocks show it shared — see §4).
+- **All sign-in logic lives on `/login`.** The promo page holds no form, no provider buttons and no
+  auth SDK — its header button and footer link are ordinary links. That is what keeps it a static
+  file, and it is why the desktop hero card of today's page does not survive the split.
 
 ### 2.2 Non-goals
 
@@ -93,10 +102,42 @@ Both promo and login have full dark variants, so the static page needs a real
 Deltas the mocks introduce beyond the split itself — each is new work, not a port:
 
 1. The hero **product preview** does not exist today. It is the largest single piece of new markup.
-2. Footer says **"Terms & Privacy"**; the app ships a Privacy Notice and no Terms page.
+2. Footer says **"Terms & Privacy"** — the page already exists. `privacy.html` is titled "Terms of
+   Use & Privacy Policy" and runs 18 numbered sections covering both, so this is a **label** change,
+   not a new page: the shared string `privacy_notice` ("Privacy Notice", in
+   `feature/login/.../strings.xml`) becomes "Terms & Privacy" and every host picks it up.
 3. The login card's subtitle is **"Track the important stuff"** — new copy.
-4. Back-links read **"squawkit.com"**, not `squawkit.fanfly.dev` (see §9 Q1).
-5. The login card shows **"Continue anonymously"**, which web does not support (see §9 Q2).
+4. Back-links read **"squawkit.com"** — placeholder. The site stays `squawkit.fanfly.dev`, which is
+   what every canonical URL, the App Store listing and `promo_site_design.html` already use, so the
+   copy reads "← Back to squawkit.fanfly.dev" (desktop) / "← squawkit.fanfly.dev" (mobile).
+5. The login card shows **"Continue anonymously"** — web hides that row, and needs no work to do it
+   (§4.1).
+6. Both surfaces use a **placeholder app icon**; the real marks differ per surface (§3.1).
+
+### 3.1 Brand marks
+
+The mocks stand in a placeholder app icon on both surfaces. They take **different real marks**,
+and neither is the one the web header uses today.
+
+**Promo page — the coloured airplane, static.** The launcher artwork in colour:
+`core/sharedassets/src/commonMain/composeResources/drawable/ic_launcher_foreground.xml` is the
+multiplatform vector, `docs/product/store_assets/appstore/app_icon_1024.png` the raster master, and
+`favicon-192.png` / `apple-touch-icon.png` already ship beside `index.html`. Export an SVG from the
+launcher foreground for the static page — crisp at any size, a couple of KB, no Kotlin involved.
+
+Do **not** reach for `BrandPlane` here. It is deliberately single-colour — the same artwork cropped
+tight for `Icon()` tinting — which is why today's web header mark is monochrome. Its docstring is
+worth reading before anyone "fixes" the colour by tinting it.
+
+**Login card — the motion hero.** `LoginPlaneArt()` in `feature/login/LoginCommon.kt`, which renders
+`ThingHero`: five Thing glyphs fly into a crate, the crate morphs into the plane, the glyphs fan out
+behind it for a beat and drift away, and the plane bobs alone. `animate = false` gives the resting
+state, which is what surfaces reached *from* the login page should use so the sequence does not
+replay — the email step included.
+
+This falls out of §4 rather than costing anything: because web drops its `loginContent` override and
+falls back to the shared `LoginScreen`, **the motion hero arrives for free** — it is already what
+Android and iOS render. The coloured SVG for the promo page is the only new brand asset in this doc.
 
 ## 4. The login card is shared, not web-only
 
@@ -114,8 +155,16 @@ So `WebLoginLandingScreen.kt` is **deleted**, not split — the static site take
 and the shared `LoginScreen` takes its login half. `WebLandingAssets.kt` goes with it once its
 colors are ported to CSS custom properties.
 
-The only web-specific addition is the "← Back to squawkit.com" affordance, which is a link out of
-the SPA. Gate it on a capability rather than a platform check, in the spirit of `AppCapability`.
+The only web-specific addition is the "← Back to squawkit.fanfly.dev" affordance, which is a link
+out of the SPA. Gate it on a capability rather than a platform check, in the spirit of
+`AppCapability`.
+
+### 4.1 Anonymous sign-in needs no work
+
+`LoginScreen` already wraps that row in `if (appCapability.isAnonymousLoginSupported)`, and
+`AppCapability.js.kt` sets it `false` while Android and iOS set it `true`. Artboards `c` and `d` are
+showing the native variant of the card; web hides the row on its own. Nothing to build, and nothing
+to add to the redesign beyond keeping the existing gate.
 
 This does mean the Android and iOS login screens change visually. That is what the mocks ask for,
 and it is the reason the total work here is smaller than "build a web login page".
@@ -257,6 +306,8 @@ and sign-in starts stop being one number.
 | `feature/login/.../LoginScreen.kt` | redesigned to the mocks; shared by all three platforms |
 | `feature/login/.../EmailSignInScreen.kt` | restyled to the mocks' email step |
 | `core/appinfo/.../AppCapability*.kt` | a capability for the "back to the promo site" link (web only) |
+| `feature/login/.../composeResources/values/strings.xml` | `privacy_notice` relabelled "Terms & Privacy" |
+| `webApp/src/jsMain/resources/brand-plane.svg` | new — the coloured launcher mark for the promo page (§3.1) |
 
 `core/nav` and `feature/shell` are untouched: `Screen.Login` keeps its route string, and everything
 that navigates to it keeps working.
@@ -278,22 +329,16 @@ Four PRs, each shippable on its own:
 
 PR 1 and PR 2 are independent and can run in parallel. PR 3 depends on both.
 
-## 9. Open questions
+## 9. Decisions
 
-1. **Which domain?** The mocks say "Back to squawkit.com"; the site is `squawkit.fanfly.dev`, which
-   is what every canonical URL, the App Store listing and `promo_site_design.html` reference. Is
-   `squawkit.com` a domain you hold and intend to move to, or placeholder copy? A domain change is a
-   much larger job than this split (canonicals, OAuth redirect domains, Firebase Hosting, the store
-   listings) and should not ride along with it.
-2. **"Continue anonymously" on web.** The mocks show it on the desktop and mobile-web login cards,
-   but `AppCapability.js.kt` sets `isAnonymousLoginSupported = false` (Android and iOS set it true).
-   Either the mock is showing the native card for all three and web should hide that row, or web is
-   meant to gain anonymous sign-in — which is a product decision with sync and account-upgrade
-   consequences, not a styling one.
-3. **"Terms & Privacy" implies a Terms page** that does not exist; today the footer links a Privacy
-   Notice only. Write one, or relabel the link?
-4. **Does the promo page keep a login form anywhere?** The mocks say no — header button and footer
-   link only. Worth confirming, since the desktop hero card works well today.
-5. **Bookmarks.** Users who bookmarked `squawkit.fanfly.dev/` as the app get the promo page, and
-   only the §5.3 flag sends them onward. Acceptable, or should `/app` be advertised as the app
-   entry?
+Every question this doc opened was settled on 2026-09-09; recorded here so the reasoning is not
+re-litigated during implementation.
+
+| Question | Decision |
+|---|---|
+| Domain — the mocks say "squawkit.com" | Placeholder. Stays `squawkit.fanfly.dev`; a domain move is its own project (canonicals, OAuth redirect domains, Hosting, both store listings) and must not ride along. |
+| "Continue anonymously" on web | Stays off. The existing `isAnonymousLoginSupported` gate already handles it (§4.1) — the artboards show the native variant. |
+| Brand marks | Coloured launcher SVG on the promo page, the `ThingHero` motion mark on the login card (§3.1). |
+| "Terms & Privacy" | Points at the existing `privacy.html`, already titled "Terms of Use & Privacy Policy". A string relabel, not a new page. |
+| A login form on the promo page | None. Every sign-in control there is a link to `/login`; the desktop hero card does not survive the split. |
+| Bookmarks of `/` | Landing on the promo page is fine. The §5.3 flag carries returners onward; no `/app` alias is advertised. |
