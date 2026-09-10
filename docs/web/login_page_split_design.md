@@ -2,8 +2,10 @@
 
 **Status:** 📋 Proposed
 **Last updated:** 2026-09-09
-**Scope:** `webApp` only — Android and iOS are untouched
-**Related:** [`promo_site_design.html`](promo_site_design.html) (the landing page this splits),
+**Scope:** `webApp` + a new static promo site; `feature/login` gains the redesigned card shared with native
+**Mocks:** Claude Design project `03e5a809-b352-4b85-9979-5126024f10db` — *SquawkIt Login Split.dc.html*
+(screens `1a`–`1e` light, `2a`–`2e` dark)
+**Related:** [`promo_site_design.html`](promo_site_design.html) (the page this replaces),
 [`web_target_expansion_plan.md`](web_target_expansion_plan.md),
 [`../account/email_link_signin_design.html`](../account/email_link_signin_design.html)
 
@@ -11,19 +13,18 @@
 
 ## Implementation status
 
-Nothing built. Visual design is **owned by separate mocks** (in progress) — this doc deliberately
-specifies routing, state and sequencing only, and defers layout, type and spacing to those mocks.
-§3 names the two surfaces and what each must contain; it does not say what they look like.
+Nothing built. Mocks are done (see above); this doc covers architecture, routing, build wiring and
+sequencing. Layout, type, spacing and color come from the mocks.
 
 ---
 
 ## 1. Problem
 
 `squawkit.fanfly.dev` is both the marketing site and the app. One Compose destination
-(`Screen.Login`, the web host's `WebLoginLandingScreen`) has to be both the SEO landing page and the
-sign-in form, and at narrow widths those two jobs conflict.
+(`Screen.Login`, rendered by the web host's `WebLoginLandingScreen`) is both the SEO landing page and
+the sign-in form, and the two jobs conflict in two separate ways.
 
-Measured on the current build at Chrome's minimum window width (500 CSS px):
+**Layout.** Measured on the current build:
 
 | | Desktop (1440 px) | Minimum width (500 px) |
 |---|---|---|
@@ -31,115 +32,148 @@ Measured on the current build at Chrome's minimum window width (500 CSS px):
 | Login card top | ~110 px — in the hero, top-right | ~505 px |
 | Card fully visible | immediately | ~1,000 px down |
 
-On desktop the card sits in the hero beside the headline and there is no problem. At 500 px the
-two-column hero stacks, so the headline, the subhead and six thing-type chips all come first; on a
-typical phone viewport (~700 px tall) the card's heading is at the fold and its buttons are below
-it. Every fix that raises the card on mobile pushes the marketing story beneath it, which defeats
-the page's other job — so this is structural, not a spacing bug.
+At 1440 px the card sits in the hero beside the headline and there is no problem. At 500 px the
+two-column hero stacks, so headline, subhead and six thing-type chips all come first; on a typical
+phone viewport (~700 px tall) the card's heading is at the fold and its buttons are below it. Any
+fix that raises the card on mobile pushes the marketing story beneath it, so this is structural.
 
-The traffic argument is stronger than the layout one. `WebLoginLandingScreen` calls
-`loginViewModel.silentLogin()` on mount and skips straight through for anyone with a live session,
-so **signed-in users never see the marketing page at all**. The people who do see it are signed-out
-returners — cleared storage, a new browser, a second device, someone who just signed out — and they
-are made to scroll a 5,600 px pitch to reach a form they have already decided to use.
+**Audience.** `WebLoginLandingScreen` calls `loginViewModel.silentLogin()` on mount and skips
+straight through for anyone with a live session, so signed-in users never see the marketing page.
+The people who do see it are signed-out returners — cleared storage, a new browser, a second device,
+someone who just signed out — made to scroll a 5,600 px pitch to reach a form they already chose.
 
-## 2. Goals
+**Crawlability.** This one is invisible in a browser and is arguably the biggest cost. Compose
+Multiplatform renders into a WebGL `<canvas>` inside a shadow root — the page has **no DOM text at
+all**. Everything a crawler can read today lives in `index.html`'s `<head>`: the meta tags, the
+`SoftwareApplication` and `FAQPage` JSON-LD, and a one-line `<noscript>`. The six feature cards, the
+three how-it-works steps, the six FAQ answers and every heading are pixels. The JSON-LD is doing all
+the work, and it is asserting content that no crawler can corroborate on the page.
 
-- A returning, signed-out user reaches a sign-in control without scrolling, at any width.
-- The landing page keeps its full marketing and SEO payload, and stops competing with a form.
-- Sign-in has a **stable, linkable, bookmarkable URL**.
-- No change to the shared `AuthFlow`, to `LoginScreen`, or to Android/iOS behaviour.
+## 2. Approach
 
-### Non-goals
+Split by **technology**, not just by route:
 
-- Redesigning the marketing content itself (the sections, copy, and their order stay as they are).
-- Changing the auth providers, the onboarding tail, or `feature/login` in any way.
-- Server-side rendering or prerendering. The landing page stays a Compose canvas.
+- **`/` — a hand-written static promo site.** Plain HTML, CSS and a little JavaScript. Real DOM
+  text, crawlable, no Kotlin bundle, fast first paint.
+- **`/login` and the app — the KMP bundle**, entered directly at the login card.
 
-## 3. The two surfaces
+This is not a new pattern in the repo: `support.html`, `privacy.html` and
+`account_delete_request.html` are already hand-written static pages living in
+`webApp/src/jsMain/resources/` and served from the same origin next to the Compose bundle. The promo
+page is a bigger one of those.
 
-**`/` — the landing page.** Everything `WebLoginLandingScreen` renders today, minus the login card:
-hero, features, how-it-works, FAQ, get-the-app, final CTA, footer. It gains a primary **Log in**
-control in the sticky header (today the header's only button is "Get the app"), and every existing
-sign-in CTA on the page routes to `/login` instead of scrolling.
+### 2.1 Goals
 
-**`/login` — the login page.** The card alone, centred at every width: the four provider buttons,
-the "Now on iOS and Android" tile, the disclaimer, and a thin footer (Privacy Notice · Support). No
-page nav, no marketing sections, no scroll on a phone. Email sign-in and the whole onboarding tail
-(`AuthStep.EmailSignIn` → `NameEntry` → `Welcome` → `NotificationPrimer` → `AdsConsentExplainer`)
-stay exactly where they are inside `AuthFlow`.
+- A signed-out user reaches sign-in without scrolling, at any width.
+- The promo page is fully readable by crawlers and by a browser with JS disabled.
+- Sign-in has a stable, linkable, bookmarkable URL.
+- The login card is **one design on web, Android and iOS** (the mocks show it shared — see §4).
 
-Layout, type, spacing and the responsive behaviour of both come from the mocks, not from here.
+### 2.2 Non-goals
 
-## 4. Routing
+- A framework. No React, no bundler-heavy setup; see §6.
+- Server-side rendering of the app itself. The app stays a Compose canvas.
+- Redesigning the app shell, the auth providers, or the onboarding tail.
 
-### 4.1 The key point: `Screen.Login` already *is* the login page
+## 3. The mocks
 
-`Screen.Login` is a shared route in `core/nav`, and shared code navigates to it —
-`NavigateToLoginOnSignOut` sends every host there when `authStateChanged` emits null. So the split
-must **not** add a "login route". It adds a *web-only landing route* and lets `Screen.Login` become
-what its name says.
+Ten artboards, five screens in light (`1a`–`1e`) and dark (`2a`–`2e`):
 
-| Route | Destination | URL |
+| | Screen | Notes |
 |---|---|---|
-| `WebScreen.Landing` (new, `webApp` only) | marketing page | `/` |
-| `Screen.Login` (existing, shared) | `AuthFlow` with the card as `loginContent` | `/login` |
+| `a` | **Promo page — desktop** | Header: Features · Get the app · **Log in**. Hero with a product preview (meters `1243.5` / `987.2` / `412.0`, fleet cards, a NEXT 90 DAYS list, an "Oil change logged" toast). Six feature cards. Mobile-app band with both store badges. Footer: Log in · Terms & Privacy · Support · Mobile app. |
+| `b` | **Promo page — mobile** | Same content; hamburger + Log in in the header. |
+| `c` | **Login — desktop** | "← Back to squawkit.com", "Need an account? Signing in creates one.", logo + "Track the important stuff", provider buttons, disclaimer, Terms & Privacy · Support. Second state: the email step — "← All log-in options", "Log in with email", "We'll send a link that signs you in. No password to remember.", email field, "Send login link", "The link expires in 15 minutes and can only be used once." |
+| `d` | **Login — mobile web** | Same card; back link reads "← squawkit.com". |
+| `e` | **Native app login — iOS** | The same card, native. This is what makes the login screen shared rather than web-only. |
 
-`WebLoginLandingScreen` splits into two composables in `webApp/src/jsMain/.../web/`:
-`WebLandingScreen` (the marketing sections; keeps the section anchors and in-page scrolling) and
-`WebLoginCard` (the card, centred). Both keep reading `WebLandingAssets`.
+Both promo and login have full dark variants, so the static page needs a real
+`prefers-color-scheme` palette, not an afterthought.
 
-`AuthFlow`'s `loginContent` slot now receives `WebLoginCard` rather than the whole page — a smaller
-override than today's, and `AuthFlow` itself is unchanged.
+Deltas the mocks introduce beyond the split itself — each is new work, not a port:
 
-### 4.2 Start destination
+1. The hero **product preview** does not exist today. It is the largest single piece of new markup.
+2. Footer says **"Terms & Privacy"**; the app ships a Privacy Notice and no Terms page.
+3. The login card's subtitle is **"Track the important stuff"** — new copy.
+4. Back-links read **"squawkit.com"**, not `squawkit.fanfly.dev` (see §9 Q1).
+5. The login card shows **"Continue anonymously"**, which web does not support (see §9 Q2).
 
-`WebApp`'s `NavHost` currently hardcodes `startDestination = Screen.Login.route`. It becomes a
-decision made once at composition from the path and one stored flag:
+## 4. The login card is shared, not web-only
 
-| Path | Has returned before? | Start destination |
+Artboard `e` shows the same card running natively on iOS. That changes the shape of the work in a
+way that *reduces* it: rather than building a web-only login card, redesign the **shared**
+`LoginScreen` in `feature/login` to the mocks, and have the web host **drop its `loginContent`
+override entirely** so `AuthFlow` falls back to its default:
+
+```kotlin
+loginContent: @Composable (onLoginSuccess: () -> Unit, onChooseEmail: () -> Unit) -> Unit =
+  { onLoginSuccess, onChooseEmail -> LoginScreen(...) }   // AuthFlow's existing default
+```
+
+So `WebLoginLandingScreen.kt` is **deleted**, not split — the static site takes its marketing half
+and the shared `LoginScreen` takes its login half. `WebLandingAssets.kt` goes with it once its
+colors are ported to CSS custom properties.
+
+The only web-specific addition is the "← Back to squawkit.com" affordance, which is a link out of
+the SPA. Gate it on a capability rather than a platform check, in the spirit of `AppCapability`.
+
+This does mean the Android and iOS login screens change visually. That is what the mocks ask for,
+and it is the reason the total work here is smaller than "build a web login page".
+
+## 5. Routing and hosting
+
+### 5.1 Entry points
+
+Today `index.html` is the Compose bundle host and `firebase.json` has a single catch-all rewrite
+(`"source": "**"` → `/index.html`). Static files are served before rewrites, which is why
+`/support.html` resolves. The split inverts which HTML is which:
+
+| Path | Served by | Contents |
 |---|---|---|
-| `/login` | either | `Screen.Login` |
-| `/` | no | `WebScreen.Landing` |
-| `/` | yes | `Screen.Login` |
-| anything else | either | `WebScreen.Landing` |
+| `/` | `index.html` (**rewritten** — now static) | the promo page; loads no Kotlin |
+| `/login` | `app.html` via catch-all | KMP bundle, starts at `Screen.Login` |
+| `/share#…` | `app.html` via catch-all | unchanged; `main.kt` parks the invite |
+| `/support.html`, `/privacy.html` | themselves | unchanged |
+| anything else | `app.html` via catch-all | the app |
 
-Reading the URL at startup is an established pattern here: `main.kt` already branches on
-`window.location.href` twice before the app composes — once for
-`Firebase.auth.isSignInWithEmailLink(href)` and once to park a `/share#…` invite through
-`ThingShareDeepLinks.deliver(href)`. The catch-all Hosting rewrite (`"source": "**"` →
-`/index.html`) already serves any path, which is how `/share` works today, so `/login` needs no
-hosting change to *resolve*.
+`app.html` is today's `index.html` minus the SEO payload, plus `<meta name="robots"
+content="noindex">`. All the marketing meta, Open Graph, Twitter card and JSON-LD move to the new
+static `index.html`, where for the first time they describe content that is actually on the page.
 
-Signed-in users are unaffected either way: `silentLogin()` runs on the login card as it does on the
-landing page today, and completes the flow before either surface matters.
+```jsonc
+"rewrites": [
+  { "source": "**", "destination": "/app.html" }
+]
+```
 
-### 4.3 The returning-visitor flag
+No rewrite entry is needed for `/` — the static `index.html` wins as a file. This also means the
+`noindex` problem from the earlier draft disappears: the app's HTML host is a different file, so it
+simply carries a different robots tag. No second rewrite, no JS meta patching.
 
-Without this the split just costs returners one extra tap, so it is part of the feature, not a
-follow-up.
+### 5.2 Start destination
 
-On a successful sign-in, write a flag to `localStorage` (`squawkit.hasSignedIn`). A later visit to
-`/` with the flag set and no live session starts at `Screen.Login`. A visitor without the flag gets
-the landing page. The flag is a hint, not auth state — it is never read for anything but this
-routing choice, so its worst failure (a cleared storage, a shared machine) is one extra page.
+`WebApp`'s `NavHost` hardcodes `startDestination = Screen.Login.route`, and with `/` no longer part
+of the SPA that stays correct as-is. Every path that boots the bundle wants the login card first
+(the app itself is unreachable signed-out anyway), so **no start-destination logic is needed** —
+another simplification over the earlier draft.
 
-Escape hatch: the login page's footer carries a quiet link back to `/` ("What is SquawkIt?"), so a
-returner who wants the pitch can still reach it.
+### 5.3 The returner redirect
 
-### 4.4 Sign-out and deep links
+A signed-out returner should not have to click through the pitch, and a *signed-in* user visiting
+`/` should not be stranded on a marketing page — today `silentLogin()` carries them into the app.
 
-- **Sign-out** already works: `NavigateToLoginOnSignOut` → `Screen.Login` → `/login`, which is the
-  clean card. This is strictly better than today, where sign-out drops you at the top of a 5,600 px
-  marketing page.
-- **Invite links** (`/share#{thingId}.{secret}`, parked in `main.kt`, redeemed by `RedeemHost` above
-  the nav graph) are unaffected — `RedeemHost` sits at the app root, not inside a login destination.
-  A signed-out invitee should start at `Screen.Login`, not the landing page: they arrived with
-  intent. Add `/share` to the "has intent" set in the §4.2 table.
-- **Email-link sign-in** completes in its own tab via `EmailLinkCompletionScreen`, returning before
-  `WebApp` composes at all. Untouched.
+Both are handled by the static page, before any Kotlin loads:
 
-### 4.5 The `appAddress` trap
+```js
+if (localStorage.getItem('squawkit.hasSignedIn')) location.replace('/login');
+```
+
+The flag is written by the app on first successful sign-in. It is a hint, never auth state: its
+worst failure (cleared storage, a shared machine) is one extra page. Crawlers never have it set, so
+indexing is unaffected. Doing it in static JS rather than in Kotlin means the redirect fires in
+milliseconds instead of after a multi-megabyte bundle download.
+
+### 5.4 The `appAddress` trap
 
 `BrowserHistoryBinding` pins its URL base once, at construction:
 
@@ -147,82 +181,119 @@ returner who wants the pitch can still reach it.
 private val appAddress = with(window.location) { origin + pathname }
 ```
 
-Today `pathname` is always `/` when the binding starts, because history binding only switches on
-**after** sign-in (`browserNavigationBound = true` in `AuthFlow`'s `onComplete`). Once `/login`
-exists, a user who signs in from `/login` would pin the base to `/login` and every in-app URL would
-become `/login#fleet…`.
+That is safe today only because history binding switches on **after** sign-in
+(`browserNavigationBound = true` in `AuthFlow`'s `onComplete`), when `pathname` is always `/`. Once
+sign-in happens at `/login`, every in-app URL would become `/login#fleet…`. Pin the base to the app
+root explicitly (`origin + "/"`), with a comment — the current form reads like deliberate subpath
+support.
 
-Fix: pin the base to the app root explicitly (`origin + "/"`) rather than to whatever path the
-session happened to start on. Worth a comment saying why, since the current form reads like
-deliberate subpath support.
+### 5.5 Unaffected
 
-## 5. SEO
+- **Email-link sign-in** completes in its own tab: `main.kt` checks
+  `Firebase.auth.isSignInWithEmailLink(href)` and renders `EmailLinkCompletionScreen` before `WebApp`
+  composes. Reached through the catch-all like any other app path.
+- **Invite redemption**: `RedeemHost` sits above the nav graph at the app root, not inside a login
+  destination.
+- **Sign-out**: `NavigateToLoginOnSignOut` → `Screen.Login` → the clean card. Strictly better than
+  today, which drops you at the top of a 5,600 px marketing page.
 
-The landing page keeps every meta tag, the `SoftwareApplication` and `FAQPage` JSON-LD, and the
-canonical URL it has now — and improves, because its `<h1>` and its primary action finally agree.
+## 6. Building the static site
 
-`/login` should not be indexed. There is exactly one `index.html`, and it declares
-`<meta content="index, follow" name="robots">`, so a per-route directive needs one of:
+### 6.1 Where the source lives
 
-1. **A second HTML file** (`login.html`, same bundle script tags, `noindex` in the head) plus a
-   Hosting rewrite for `/login` ahead of the catch-all. Static, correct for crawlers that do not run
-   JS, and the recommended option.
-2. **Patching the meta tag from Kotlin** at startup when the path is `/login`. One line, but
-   crawlers that read the pre-JS HTML see `index, follow`.
+`webApp/src/jsMain/resources/` is copied verbatim into the distribution, which is how the existing
+static pages ship. Two options:
 
-Option 1 costs one file and one rewrite entry; take it. The web app ships no `robots.txt` of its own today (only
-`fanfly.dev` has one), so add one alongside `index.html` with `Disallow: /login`.
+1. **Author directly in `resources/`** — plain `.html`, `.css`, `.js`. Zero build wiring, matches
+   `support.html` exactly, works with the existing `./gradlew :webApp:jsBrowserDistribution` and the
+   deploy workflow untouched.
+2. **A `webPromo/` source tree** with `package.json` + esbuild, output copied into the distribution
+   by a Gradle task wired ahead of `jsBrowserDistribution`, plus one step in the deploy workflow.
 
-## 6. Analytics
+**Recommendation: start with (1).** The page needs very little script — theme handling, the mobile
+menu, the returner redirect, smooth scroll — and inline `<style>` is already the house pattern for
+these pages. Type-check it without a build step by adding `// @ts-check` at the top of the JS and a
+`jsconfig.json`; you get editor and CI type errors with no toolchain. Move to (2) only if the script
+grows past roughly a hundred lines or wants real modules. The repo already runs npm/TypeScript in
+`backend/firebase/functions`, so (2) is available, just not yet earned.
 
-`TrackRootScreenViews` logs every root route, and `BrowserTitleAnalytics` retitles the tab per
-screen view, so the split produces two distinct screen views where there is one today — which is
-the point: landing-page traffic and sign-in starts stop being the same number. Name them so the
-funnel reads cleanly (`web_landing` and `login`), and keep the existing login events unchanged so
-the sign-in success rate stays comparable across the change.
+The one thing not to do is inline everything into a single file: the promo page's CSS is
+substantially larger than `support.html`'s, and the dark palette doubles it. A separate
+`promo.css` keeps it reviewable.
+
+### 6.2 Fonts
+
+The mocks use Space Grotesk and JetBrains Mono, which the app already loads as brand faces
+(`rememberBrandHeadlineFamily` / `rememberBrandMonoFamily`). Serve the same files from the promo
+page rather than pulling Google Fonts, so the two surfaces cannot drift and the page keeps one
+fewer third-party origin.
+
+### 6.3 Analytics
+
+Worth calling out because the split silently removes it. Web analytics today is Firebase Analytics
+initialized inside the Kotlin bundle (`measurementId` in `main.kt`), and `TrackRootScreenViews` logs
+the login route as a screen view. A static page loads none of that, so **promo-page traffic would
+disappear from analytics entirely** unless a `gtag.js` snippet with the same measurement ID is added
+to `index.html`. Add it as part of the build, not as a follow-up — otherwise the split's own effect
+on sign-in conversion is unmeasurable.
+
+Name the two surfaces distinctly (`web_promo` vs the existing login screen view) so landing traffic
+and sign-in starts stop being one number.
 
 ## 7. Files touched
 
 | File | Change |
 |---|---|
-| `web/WebLoginLandingScreen.kt` | split into `WebLandingScreen` + `WebLoginCard`; header gains the Log in button; CTAs route instead of scrolling |
-| `web/WebApp.kt` | `startDestination` decided by path + flag; new `WebScreen.Landing` composable; `loginContent` = `WebLoginCard` |
+| `webApp/src/jsMain/resources/index.html` | **rewritten** — the static promo page, carrying all SEO meta + JSON-LD |
+| `webApp/src/jsMain/resources/promo.css` | new — promo styles, light + dark |
+| `webApp/src/jsMain/resources/promo.js` | new — theme, menu, returner redirect (`// @ts-check`) |
+| `webApp/src/jsMain/resources/app.html` | new — today's `index.html` minus SEO, plus `noindex` |
+| `webApp/src/jsMain/resources/robots.txt` | new — the web app ships none today; `Disallow: /app.html` |
+| `firebase.json` | catch-all rewrite retargeted to `/app.html` |
+| `web/WebLoginLandingScreen.kt` | **deleted** |
+| `web/WebLandingAssets.kt` | deleted once its palette is ported to CSS custom properties |
+| `web/WebApp.kt` | drops the `loginContent` override; `AuthFlow` falls back to `LoginScreen` |
 | `web/ShellBrowserHistory.kt` | pin `appAddress` to `origin + "/"` |
-| `main.kt` | (only if the flag read moves earlier than composition) |
-| `webApp/src/jsMain/resources/index.html` | unchanged |
-| `webApp/src/jsMain/resources/login.html` | new — `noindex` shell for the same bundle |
-| `firebase.json` | rewrite `/login` → `/login.html` ahead of the catch-all |
-| `webApp/src/jsMain/resources/robots.txt` | new — the web app ships no `robots.txt` today; add one with `Disallow: /login` |
+| `feature/login/.../LoginScreen.kt` | redesigned to the mocks; shared by all three platforms |
+| `feature/login/.../EmailSignInScreen.kt` | restyled to the mocks' email step |
+| `core/appinfo/.../AppCapability*.kt` | a capability for the "back to the promo site" link (web only) |
 
-Nothing in `feature/login`, `core/nav`, or `feature/shell` changes. `Screen.Login` keeps its route
-string; only what the web host renders for it changes.
+`core/nav` and `feature/shell` are untouched: `Screen.Login` keeps its route string, and everything
+that navigates to it keeps working.
 
 ## 8. Sequencing
 
-Three PRs, each shippable on its own:
+Four PRs, each shippable on its own:
 
-1. **Split the composable.** `WebLandingScreen` + `WebLoginCard` out of one file, still on one
-   route, still rendering exactly what it renders today. No behaviour change, no URL change — a
-   pure refactor that makes the next PR small.
-2. **Add the route.** `WebScreen.Landing`, the path-based start destination, the header Log in
-   button, CTA routing, the `appAddress` fix, `login.html` + the rewrite + `robots.txt`. This is the
-   PR that changes what users see.
-3. **Remember returners.** The `localStorage` flag and the `/` → `/login` decision, plus the
-   "What is SquawkIt?" link back. Deliberately last: it is the piece most likely to want tuning once
-   the first two are live, and the split is still an improvement without it.
+1. **The static promo page.** New `index.html` + `promo.css` + `promo.js` + `app.html` + the rewrite
+   + `robots.txt` + the gtag snippet. At the end of this PR `/` is static and crawlable and `/login`
+   boots the app into the existing (old-looking) card. The biggest visible win, and it does not
+   touch Kotlin at all beyond the HTML host.
+2. **Redesign the shared login card.** `LoginScreen` + `EmailSignInScreen` to the mocks, on all
+   three platforms.
+3. **Delete the web landing screen.** Drop the `loginContent` override and `WebLoginLandingScreen`
+   / `WebLandingAssets`; fix `appAddress`. Pure removal once (1) and (2) have landed.
+4. **Remember returners.** Write the `localStorage` flag on sign-in; the redirect in `promo.js`.
+   Last because it is the piece most likely to want tuning once the rest is live.
 
-The mocks gate PR 2's layout, not PR 1.
+PR 1 and PR 2 are independent and can run in parallel. PR 3 depends on both.
 
 ## 9. Open questions
 
-1. **Does `/` keep a login card at all on desktop?** The hero card works well at 1440 px, and
-   removing it costs a click for desktop visitors who are ready. Keeping it means the card lives in
-   two places; dropping it makes the two surfaces genuinely single-purpose. Leaning toward dropping
-   it — the header button is always visible and the page has three other CTAs — but this is a mock
-   decision.
-2. **Does `/login` need a back-to-marketing affordance beyond the footer link?** Depends on how the
-   mocks handle the header.
-3. **Should the landing page redirect signed-in users, or keep silently completing?** Today
-   `silentLogin()` lands them in the app from wherever they were. Keeping that means a signed-in
-   user who deliberately visits `/` to read the FAQ gets bounced into the app. Worth deciding
-   explicitly rather than inheriting.
+1. **Which domain?** The mocks say "Back to squawkit.com"; the site is `squawkit.fanfly.dev`, which
+   is what every canonical URL, the App Store listing and `promo_site_design.html` reference. Is
+   `squawkit.com` a domain you hold and intend to move to, or placeholder copy? A domain change is a
+   much larger job than this split (canonicals, OAuth redirect domains, Firebase Hosting, the store
+   listings) and should not ride along with it.
+2. **"Continue anonymously" on web.** The mocks show it on the desktop and mobile-web login cards,
+   but `AppCapability.js.kt` sets `isAnonymousLoginSupported = false` (Android and iOS set it true).
+   Either the mock is showing the native card for all three and web should hide that row, or web is
+   meant to gain anonymous sign-in — which is a product decision with sync and account-upgrade
+   consequences, not a styling one.
+3. **"Terms & Privacy" implies a Terms page** that does not exist; today the footer links a Privacy
+   Notice only. Write one, or relabel the link?
+4. **Does the promo page keep a login form anywhere?** The mocks say no — header button and footer
+   link only. Worth confirming, since the desktop hero card works well today.
+5. **Bookmarks.** Users who bookmarked `squawkit.fanfly.dev/` as the app get the promo page, and
+   only the §5.3 flag sends them onward. Acceptable, or should `/app` be advertised as the app
+   entry?
