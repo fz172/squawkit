@@ -73,7 +73,16 @@ private class BrowserHistoryBinding(
   private val mirror: ShellNavigationMirror,
   private val scope: CoroutineScope,
 ) {
-  private val appAddress = with(window.location) { origin + pathname }
+  /**
+   * The base every in-app URL is written against — the app root, not wherever this session started.
+   *
+   * It used to be `origin + pathname`, which was only ever right by accident: history binding does
+   * not switch on until after sign-in, and until `/login` existed the path at that moment was always
+   * `/`. Sign in at `/login` and that reading pins the base there, so every subsequent in-app URL
+   * becomes `/login#fleet…`. Read as deliberate subpath support before changing it — it is not; the
+   * app is served from the origin root by the catch-all rewrite in `firebase.json`.
+   */
+  private val appAddress = window.location.origin + "/"
 
   /** The snapshot a popstate is restoring; entries are replaced, not pushed, until the app matches it. */
   private var restoreTarget: String? = null
