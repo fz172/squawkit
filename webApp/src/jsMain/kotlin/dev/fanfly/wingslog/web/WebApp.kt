@@ -31,6 +31,7 @@ import dev.fanfly.wingslog.core.ui.theme.AppearanceController
 import dev.fanfly.wingslog.core.ui.theme.WingslogTheme
 import dev.fanfly.wingslog.core.ui.theme.resolveDarkTheme
 import dev.fanfly.wingslog.feature.login.AuthFlow
+import dev.fanfly.wingslog.feature.login.warmLoginCardResources
 import dev.fanfly.wingslog.feature.sharing.update.RedeemHost
 import dev.fanfly.wingslog.feature.shell.AdaptiveShellRoute
 import dev.fanfly.wingslog.feature.shell.NavigateToLoginOnSignOut
@@ -79,10 +80,15 @@ fun WebApp() {
         // cache. Warm the shared table once up front (using the same ResourceEnvironment the UI reads
         // from, so the cache key matches) and hold content until it's ready, so labels are populated
         // on the first composition. The themed Surface stays as the background during this brief load.
+        // The sign-in card's own resources are warmed alongside, now that the shared LoginScreen —
+        // not a landing page with hardcoded copy — is what /login renders. Without it the card paints
+        // with blank button labels and no provider marks, and does not recover until an input event
+        // forces a frame. See warmLoginCardResources.
         val resourceEnvironment = rememberResourceEnvironment()
         var resourcesReady by remember { mutableStateOf(false) }
         LaunchedEffect(resourceEnvironment) {
           runCatching { getString(resourceEnvironment, UiRes.string.app_name) }
+          warmLoginCardResources(resourceEnvironment)
           resourcesReady = true
         }
         if (!resourcesReady) return@Surface
@@ -137,14 +143,6 @@ fun WebApp() {
                       popUpTo(Screen.Login.route) { inclusive = true }
                     }
                     browserNavigationBound = true
-                  },
-                  // Web swaps the shared LoginScreen for the SEO landing page; the onboarding tail
-                  // (name entry + welcome) and Firebase auth wiring are reused unchanged.
-                  loginContent = { onLoginSuccess, onChooseEmail ->
-                    WebLoginLandingScreen(
-                      onLoginSuccess = onLoginSuccess,
-                      onChooseEmail = onChooseEmail,
-                    )
                   },
                 )
               }
