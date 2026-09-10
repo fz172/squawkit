@@ -20,15 +20,12 @@ data class AppCapability(
    */
   val isAdsSupported: Boolean,
   /**
-   * Where the login card's "back to the site" link goes, or null where there is nowhere to go
-   * back to.
+   * The support page the login card links, or null where the host has none to open.
    *
-   * Only web has one: `/login` is reached from a static marketing page at `/`, so the card offers
-   * a way back to it. On Android and iOS the app *is* the destination — there is no page behind
-   * the login screen — so the link is absent rather than pointing a native user at a browser.
+   * Defaults to null, unlike every other field here: it is a link a host may or may not have
+   * rather than a capability it must decide about, and the default keeps the many test fixtures
+   * that build an [AppCapability] by hand from having to care.
    */
-  val promoSiteUrl: String? = null,
-  /** The support page the login card links, or null where the host has none to open. */
   val supportUrl: String? = null,
 )
 

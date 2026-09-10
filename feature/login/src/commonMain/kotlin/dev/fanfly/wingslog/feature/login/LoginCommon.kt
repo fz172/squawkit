@@ -17,15 +17,11 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -51,10 +47,8 @@ import org.koin.compose.koinInject
 import wingslog.core.sharedassets.generated.resources.app_name
 import wingslog.feature.login.generated.resources.Res
 import wingslog.feature.login.generated.resources.legal_disclaimer
-import wingslog.feature.login.generated.resources.login_back_to_site
 import wingslog.feature.login.generated.resources.login_need_account
 import wingslog.feature.login.generated.resources.login_signing_in_creates
-import wingslog.feature.login.generated.resources.login_site_name
 import wingslog.feature.login.generated.resources.mission_statement
 import wingslog.feature.login.generated.resources.privacy_notice
 import wingslog.feature.login.generated.resources.support_link
@@ -184,52 +178,22 @@ internal fun LoginScaffold(
 }
 
 /**
- * The bar above the card: a way back to the promotional site on the left, and a note that there is
- * no separate sign-up on the right.
+ * The bar above the card: a note that there is no separate sign-up.
  *
- * The back link only exists where there is a site to go back to — `AppCapability.promoSiteUrl` is
- * null on Android and iOS, where the app *is* the destination, and set on web, where `/login` was
- * reached from a static marketing page that is still a browser-back away.
+ * No back control of its own. The design canvas draws one, but going back is the browser's job on
+ * web and the system gesture's on mobile — an app-drawn "back" would be a third way to do what
+ * those already do, and on the hosts where nothing sits behind the card it would be a button to
+ * nowhere.
  */
 @Composable
 internal fun LoginTopBar() {
-  val appCapability: AppCapability = koinInject()
-  val uriHandler = LocalUriHandler.current
-  val promoSite = appCapability.promoSiteUrl
-
   Row(
     modifier = Modifier
       .fillMaxWidth()
       .padding(horizontal = Spacing.large, vertical = Spacing.medium),
     verticalAlignment = Alignment.CenterVertically,
-    horizontalArrangement = Arrangement.SpaceBetween,
+    horizontalArrangement = Arrangement.End,
   ) {
-    if (promoSite != null) {
-      Row(
-        modifier = Modifier.clickable { uriHandler.openUri(promoSite) },
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(Spacing.small),
-      ) {
-        Icon(
-          imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-          contentDescription = null,
-          modifier = Modifier.size(Spacing.large),
-          tint = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Text(
-          text = stringResource(
-            Res.string.login_back_to_site,
-            stringResource(Res.string.login_site_name)
-          ),
-          style = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.Medium),
-          color = MaterialTheme.colorScheme.onSurfaceVariant,
-          maxLines = 1,
-        )
-      }
-    } else {
-      Spacer(Modifier.width(Spacing.extraSmall))
-    }
-
     Text(
       text = buildAnnotatedString {
         append(stringResource(Res.string.login_need_account))

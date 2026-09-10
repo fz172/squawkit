@@ -247,8 +247,6 @@ feature/login	upgrade_picker_title	Keep your records
 feature/login	upgrade_provider_apple	Apple ID
 feature/login	upgrade_provider_email	email address
 feature/login	upgrade_provider_google	Google account
-feature/login	login_back_to_site	Back to %1$s
-feature/login	login_site_name	squawkit.fanfly.dev
 feature/login	login_need_account	Need an account?
 feature/login	login_signing_in_creates	Signing in creates one.
 feature/login	support_link	Support
