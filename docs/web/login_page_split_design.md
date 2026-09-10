@@ -1,6 +1,6 @@
 # Design Doc: Splitting the Web Landing Page from the Login Page
 
-**Status:** 📋 Proposed — mocks done, all open questions resolved (§9); ready to build
+**Status:** 📋 Proposed — mocks done, all open questions resolved (§10); ready to build
 **Last updated:** 2026-09-09
 **Scope:** `webApp` + a new static promo site; `feature/login` gains the redesigned card shared with native
 **Mocks:** <https://claude.ai/design/p/03e5a809-b352-4b85-9979-5126024f10db?file=SquawkIt+Login+Split.dc.html>
@@ -297,7 +297,102 @@ on sign-in conversion is unmeasurable.
 Name the two surfaces distinctly (`web_promo` vs the existing login screen view) so landing traffic
 and sign-in starts stop being one number.
 
-## 7. Files touched
+## 7. SEO
+
+The split is the largest SEO change this site can make, and it is worth being precise about what it
+does and does not buy — because as the mocks stand, one part of it is a **regression**.
+
+### 7.1 What the split buys
+
+Today the page has no crawlable body text at all (§1). Everything below is downstream of fixing
+that:
+
+| | Today | After |
+|---|---|---|
+| Body text a crawler can read | none — canvas pixels | all of it |
+| First paint | after a multi-MB Skiko/Compose bundle downloads and initialises | a static document |
+| Third-party origins | Google Fonts | none (fonts self-hosted, §6.2) |
+| Indexable surface | `/` (thin), `support.html`, `privacy.html` | same, but `/` is real |
+
+Core Web Vitals move from "gated on a WebGL app booting" to "static HTML", which is the difference
+between failing LCP and not thinking about it.
+
+### 7.2 Build blocker: the FAQ and its schema must agree
+
+`index.html` ships **`FAQPage` JSON-LD** carrying six questions and answers, and today's page renders
+those six answers on screen. **The mocks contain no FAQ section and no how-it-works section** — both
+were checked against the artboards; neither appears. That leaves two problems:
+
+1. **A structured-data violation.** Keeping `FAQPage` markup for content that is not on the page is
+   against Google's structured data guidelines ("don't mark up content that is not visible to
+   users"). At best the markup is ignored; at worst it earns a manual action.
+2. **A content cut.** The six answers are 191 words, and they are the page's only long-tail surface —
+   "does it work offline", "which platforms is it available on", "can I share a thing with someone
+   else" are close to verbatim search queries. The three how-it-works steps go with them.
+
+Either the FAQ comes back onto the promo page, or the `FAQPage` schema is deleted. **Carry the
+content**: it is already written, it is the highest-value text on the site, and dropping it makes
+the new page thinner than the one it replaces (~400 words against ~700). The mocks are the authority
+on how the FAQ *looks*; they are not a decision to remove it.
+
+### 7.3 Content floor for `/`
+
+Whatever the final layout, the promo page must carry, as real DOM text:
+
+- One `<h1>`, and `<h2>`s per section — the canvas has no heading semantics today, so this is new.
+- The six feature cards, the three how-it-works steps, and the six FAQ answers (§7.2).
+- `alt` text on the store badges and the app mark; the hero product preview is markup rather than an
+  image (§3), so its labels are already text — keep them as text rather than "optimising" them into
+  a screenshot.
+- The footer disclaimer, which is the page's only statement of what SquawkIt legally is not.
+
+### 7.4 The ceiling: per-vertical pages
+
+This is the highest-leverage item in the whole document, and the static architecture makes it nearly
+free — one hand-written HTML file each, no Kotlin, no build step.
+
+The product targets six presets (`CanonicalTemplates.ALL`: airplane, automotive, bike, boat, home,
+custom) and sells to all of them through **one generic page**. A person searching "aircraft
+maintenance logbook app" and a person searching "car maintenance tracker" are different markets, and
+today they land on identical copy that dilutes both.
+
+Five static pages — `/aircraft`, `/car`, `/bike`, `/boat`, `/home` — each with its own `<title>`,
+description, canonical, `SoftwareApplication` JSON-LD and, most importantly, that template's real
+vocabulary: squawks, tach time and annuals on `/aircraft`; odometer, oil changes and registration on
+`/car`. The templates already carry that vocabulary (`ThingTemplate` lexicons), so the copy is
+grounded in the product rather than invented for SEO.
+
+Not in scope for the split itself — but the split is what makes it cheap, and it should be the next
+piece of work rather than a someday item.
+
+### 7.5 Crawl infrastructure
+
+The web app ships **no `robots.txt` and no `sitemap.xml`** today, and `index.html` carries no
+Search Console or Bing verification tag. All four are one-line additions and all four are missing:
+
+- `robots.txt` — `Disallow: /app.html`, plus a `Sitemap:` line.
+- `sitemap.xml` — `/`, `/support.html`, `/privacy.html`, and each vertical page as it lands.
+- `google-site-verification` and `msvalidate.01` meta tags, so indexing is observable at all.
+  (`fanfly.dev` already has the Bing tag; this site has neither.)
+
+### 7.6 Schema worth adding
+
+The existing `SoftwareApplication` block has `name`, `url`, `applicationCategory`, `operatingSystem`,
+`description` and a free `offers`. Add:
+
+- `downloadUrl` for both store listings (the App Store URL landed in #899; Play has been live longer).
+- `aggregateRating`, once there are enough store reviews to quote honestly — never fabricated.
+- `BreadcrumbList` on the vertical pages once §7.4 exists.
+
+### 7.7 What this does not fix
+
+SEO outcome is roughly content × authority, and the split changes neither — it removes the technical
+blocker that was making the existing content invisible. `squawkit.fanfly.dev` is a new subdomain of a
+low-authority personal domain with a handful of inbound links (the two store listings and the
+`fanfly.dev` card). Realistically that ranks for "SquawkIt" and long-tail phrases. Moving past it is
+a content programme — §7.4 first — not an architecture change, and no amount of markup substitutes.
+
+## 8. Files touched
 
 | File | Change |
 |---|---|
@@ -305,7 +400,8 @@ and sign-in starts stop being one number.
 | `webApp/src/jsMain/resources/promo.css` | new — promo styles, light + dark |
 | `webApp/src/jsMain/resources/promo.js` | new — theme, menu, returner redirect (`// @ts-check`) |
 | `webApp/src/jsMain/resources/app.html` | new — today's `index.html` minus SEO, plus `noindex` |
-| `webApp/src/jsMain/resources/robots.txt` | new — the web app ships none today; `Disallow: /app.html` |
+| `webApp/src/jsMain/resources/robots.txt` | new — the web app ships none today; `Disallow: /app.html` + a `Sitemap:` line |
+| `webApp/src/jsMain/resources/sitemap.xml` | new — `/`, `/support.html`, `/privacy.html` (§7.5) |
 | `firebase.json` | catch-all rewrite retargeted to `/app.html` |
 | `web/WebLoginLandingScreen.kt` | **deleted** |
 | `web/WebLandingAssets.kt` | deleted once its palette is ported to CSS custom properties |
@@ -320,12 +416,13 @@ and sign-in starts stop being one number.
 `core/nav` and `feature/shell` are untouched: `Screen.Login` keeps its route string, and everything
 that navigates to it keeps working.
 
-## 8. Sequencing
+## 9. Sequencing
 
 Four PRs, each shippable on its own:
 
 1. **The static promo page.** New `index.html` + `promo.css` + `promo.js` + `app.html` + the rewrite
-   + `robots.txt` + the gtag snippet. At the end of this PR `/` is static and crawlable and `/login`
+   + `robots.txt` + `sitemap.xml` + the gtag snippet, carrying the FAQ and how-it-works content
+   forward (§7.2). At the end of this PR `/` is static and crawlable and `/login`
    boots the app into the existing (old-looking) card. The biggest visible win, and it does not
    touch Kotlin at all beyond the HTML host.
 2. **Redesign the shared login card.** `LoginScreen` + `EmailSignInScreen` to the mocks, on all
@@ -337,7 +434,7 @@ Four PRs, each shippable on its own:
 
 PR 1 and PR 2 are independent and can run in parallel. PR 3 depends on both.
 
-## 9. Decisions
+## 10. Decisions
 
 Every question this doc opened was settled on 2026-09-09; recorded here so the reasoning is not
 re-litigated during implementation.
