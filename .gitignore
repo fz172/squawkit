@@ -16,7 +16,9 @@
 .cxx
 local.properties
 .kotlin/
-kotlin-js-store/
+# The Kotlin/JS lock file is committed, not ignored — see kotlin-js-store/yarn.lock.
+kotlin-js-store/*
+!kotlin-js-store/yarn.lock
 
 # Xcode
 **/xcuserdata/
