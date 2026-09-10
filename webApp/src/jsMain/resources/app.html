@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+
+    <!-- The Compose bundle host. Every path except the static pages rewrites here (firebase.json),
+         so this is what serves /login, /share, and the app itself.
+
+         No SEO payload lives here on purpose: the marketing content and its structured data are on
+         the static index.html, where a crawler can actually read the page they describe. This
+         document renders to a canvas and has nothing to index. -->
+    <title>SquawkIt</title>
+    <meta content="noindex, nofollow" name="robots">
+
+    <link href="favicon.ico" rel="icon" sizes="32x32">
+    <link href="favicon-192.png" rel="icon" sizes="192x192" type="image/png">
+    <link href="apple-touch-icon.png" rel="apple-touch-icon">
+
+    <!-- Browser chrome follows the resolved app theme (see updateBrowserGutterColor). -->
+    <meta content="#F3EDF7" media="(prefers-color-scheme: light)" name="theme-color">
+    <meta content="#211F26" media="(prefers-color-scheme: dark)" name="theme-color">
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { width: 100%; height: 100%; overflow: hidden; background: #F3EDF7; }
+        @media (prefers-color-scheme: dark) {
+            html, body { background: #211F26; }
+        }
+        #ComposeTarget { display: block; width: 100%; height: 100%; }
+    </style>
+</head>
+<body>
+<script>
+    (function(){
+        var m=localStorage.getItem('appearance_mode');
+        if(m==='DARK'||m==='LIGHT'){
+            var c=m==='DARK'?'#211F26':'#F3EDF7';
+            document.documentElement.style.background=c;
+            document.body.style.background=c;
+        }
+    })();
+</script>
+
+<noscript>
+    <main style="max-width:640px;margin:0 auto;padding:48px 24px;font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;color:#0E1726;background:#F8F9FC;overflow:auto;height:auto">
+        <h1>SquawkIt needs JavaScript</h1>
+        <p>The SquawkIt app runs in your browser and needs JavaScript to sign you in. Please enable
+            it, or read about SquawkIt on <a href="/">the home page</a>.</p>
+    </main>
+</noscript>
+
+<div id="ComposeTarget"></div>
+<script src="webApp.js"></script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+# The Compose bundle host. Renders to a canvas and has nothing to index; the marketing
+# content lives on / as real text.
+Disallow: /app.html
+
+Sitemap: https://squawkit.fanfly.dev/sitemap.xml

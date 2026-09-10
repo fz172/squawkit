@@ -1,0 +1,716 @@
+/* SquawkIt promo page. Hand-written; no build step, no framework.
+   Palette and type scale come from the "SquawkIt Login Split" design canvas, artboards 1a/1b
+   (light) and 2a/2b (dark). The navy hero and footer are the same colour in both schemes —
+   they already read as dark. */
+
+/* ---------------------------------------------------------------- tokens */
+
+:root {
+  --text: #1C1C1E;
+  --muted: #636366;
+  --accent: #1A5FAE;
+  --accent-hover: #14508F;
+  --accent-container: #D5E3FF;
+  --surface: #FFFFFF;
+  --surface-alt: #F2F2F7;
+  --page: #FAFAFA;
+  --nav-muted: #525E72;
+  --line: rgba(0, 24, 73, 0.10);
+  --warn-text: #8B5E00;
+  --warn-bg: #FFECB3;
+  --error-text: #BA1A1A;
+  --error-bg: #FFDAD6;
+  --success: #276B39;
+  --card-shadow: 0 20px 44px rgba(0, 4, 24, 0.42);
+
+  /* Same in both schemes. */
+  --navy: #001849;
+  --navy-deep: #001233;
+  --on-navy: #FFFFFF;
+  --on-navy-accent: #A7C8FF;
+  --on-navy-body: #C9D8F2;
+  --on-navy-muted: #9FB6DC;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --text: #F2F2F7;
+    --muted: #A1A1A6;
+    --accent: #A7C8FF;
+    --accent-hover: #C5DAFF;
+    --accent-container: #004785;
+    --surface: #1C1C1E;
+    --surface-alt: #26262A;
+    --page: #131316;
+    --nav-muted: #BAC8E0;
+    --line: rgba(255, 255, 255, 0.12);
+    --warn-text: #FFCA28;
+    --warn-bg: #4A3600;
+    --error-text: #FFB4AB;
+    --error-bg: #93000A;
+    --success: #81C784;
+  }
+}
+
+@font-face {
+  font-family: 'Space Grotesk';
+  font-weight: 600;
+  font-display: swap;
+  src: url('fonts/space_grotesk_semibold.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Space Grotesk';
+  font-weight: 700;
+  font-display: swap;
+  src: url('fonts/space_grotesk_bold.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-weight: 700;
+  font-display: swap;
+  src: url('fonts/jetbrains_mono_bold.woff2') format('woff2');
+}
+
+/* ---------------------------------------------------------------- base */
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+}
+
+body {
+  margin: 0;
+  background: var(--page);
+  color: var(--text);
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3 {
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  line-height: 1.12;
+  margin: 0;
+  text-wrap: balance;
+}
+
+p { margin: 0; text-wrap: pretty; }
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { color: var(--accent-hover); text-decoration: underline; }
+
+img, svg { display: block; max-width: 100%; }
+
+/* Visible only to screen readers, and to keyboard users once focused. */
+.skip {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  background: var(--surface);
+  color: var(--text);
+  padding: 12px 18px;
+  border-radius: 0 0 10px 0;
+  z-index: 100;
+}
+.skip:focus { left: 0; }
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+.wrap {
+  max-width: 1184px;
+  margin: 0 auto;
+  padding-inline: 48px;
+}
+@media (max-width: 720px) {
+  .wrap { padding-inline: 20px; }
+}
+
+.eyebrow {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.4px;
+  color: var(--accent);
+  margin: 0 0 14px;
+}
+
+/* ---------------------------------------------------------------- header */
+
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+}
+
+.site-header > .wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 64px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+.brand:hover { text-decoration: none; color: var(--text); }
+.brand img { width: 28px; height: 28px; }
+.brand .it { color: var(--accent); }
+
+.site-nav {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  font-size: 14px;
+  font-weight: 500;
+}
+.site-nav a { color: var(--nav-muted); }
+
+.header-actions { display: flex; align-items: center; gap: 10px; }
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 40px;
+  padding-inline: 20px;
+  border-radius: 16px;
+  border: 1px solid transparent;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.btn:hover { text-decoration: none; }
+
+.btn-primary { background: var(--accent); color: var(--surface); }
+.btn-primary:hover { background: var(--accent-hover); color: var(--surface); }
+
+.btn-ghost {
+  background: transparent;
+  border-color: var(--line);
+  color: var(--nav-muted);
+}
+.btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+/* The hamburger only exists below the nav breakpoint. */
+.nav-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  color: var(--nav-muted);
+  cursor: pointer;
+}
+.nav-toggle svg { width: 18px; height: 18px; }
+
+@media (max-width: 860px) {
+  .site-nav {
+    display: none;
+    position: absolute;
+    inset-inline: 0;
+    top: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    padding: 8px 20px 16px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--line);
+  }
+  .site-nav[data-open='true'] { display: flex; }
+  .site-nav a { padding: 12px 0; font-size: 16px; }
+  .nav-toggle { display: inline-flex; }
+  .header-actions .btn-ghost { display: none; }
+}
+
+/* ---------------------------------------------------------------- hero */
+
+.hero {
+  background: var(--navy);
+  color: var(--on-navy);
+  padding-block: 76px 84px;
+  overflow: hidden;
+}
+@media (max-width: 860px) {
+  .hero { padding-block: 40px 44px; }
+}
+
+.hero-grid {
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  gap: 56px;
+  align-items: center;
+}
+@media (max-width: 960px) {
+  .hero-grid { grid-template-columns: 1fr; gap: 40px; }
+}
+
+.hero h1 {
+  font-size: clamp(32px, 4.1vw, 50px);
+  color: var(--on-navy);
+}
+.hero h1 .accent { color: var(--on-navy-accent); }
+
+.hero-sub {
+  max-width: 520px;
+  margin-top: 20px;
+  font-size: clamp(15px, 1.4vw, 17px);
+  line-height: 1.6;
+  color: var(--on-navy-body);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 28px;
+  padding: 0;
+  list-style: none;
+}
+.chips li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--on-navy);
+}
+.chips svg { width: 16px; height: 16px; color: var(--on-navy-accent); }
+
+/* --- the floating preview stage ---------------------------------------
+   Six cards from the app, fanned out. Decorative: the real content is the
+   copy beside it, so the stage is aria-hidden and the cards carry no
+   headings. Sized in a fixed 560x470 box and scaled down as the column
+   narrows, so the composition never reflows into a pile. */
+
+.stage-wrap { display: flex; justify-content: center; }
+
+.stage {
+  position: relative;
+  width: 560px;
+  height: 470px;
+  flex: none;
+}
+
+.card {
+  position: absolute;
+  background: var(--surface);
+  border-radius: 14px;
+  box-shadow: var(--card-shadow);
+  overflow: hidden;
+}
+
+.card-meters  { left: 306px; top: 0;    width: 254px; z-index: 2; transform: rotate(2.2deg); }
+.card-fleet   { left: 0;     top: 56px; width: 300px; z-index: 3; transform: rotate(-1.6deg); }
+.card-toast   { left: 300px; top: 80px; width: 260px; z-index: 5; transform: rotate(-1.4deg); }
+.card-next    { left: 298px; top: 190px; width: 262px; z-index: 4; transform: rotate(1.6deg); }
+.card-shared  { left: 2px;   top: 290px; width: 268px; z-index: 6; transform: rotate(1.8deg); }
+.card-log     { left: 104px; top: 352px; width: 292px; z-index: 7; transform: rotate(-2deg); }
+
+/* Once the hero stacks there is no wide column to fan six cards across, so the stage switches to
+   the mock's mobile composition: three cards in a 342x392 box (artboard 1b). The rest are dropped
+   rather than shrunk — they are decorative, and every word in them is real copy further down. */
+@media (max-width: 960px) {
+  .stage { width: 342px; height: 392px; margin-top: 28px; }
+  .card-next, .card-shared, .card-log { display: none; }
+  .card-fleet  { left: 0;    top: 0;    width: 300px; }
+  .card-meters { left: 42px; top: 238px; width: 300px; }
+  .card-toast  { left: 20px; top: 318px; width: 296px; }
+}
+
+/* Narrower than the composition itself: scale it down as a unit, and take the same factor off the
+   wrapper's height so the section below does not inherit a gap. */
+@media (max-width: 400px) {
+  .stage { transform: scale(0.88); transform-origin: top center; height: 345px; }
+}
+
+.meters { display: flex; gap: 12px; padding: 15px 16px; }
+.meters div { flex: 1; min-width: 0; }
+.meter-value {
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.2px;
+}
+.meter-label {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.6px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 13px 10px;
+}
+.card-head b {
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.3;
+  color: var(--text);
+}
+.card-head span {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 13px;
+  border-top: 1px solid var(--line);
+}
+.row-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  border-radius: 9px;
+  background: var(--accent-container);
+  color: var(--accent);
+}
+.row-icon svg { width: 18px; height: 18px; }
+.row-body { flex: 1; min-width: 0; }
+.row-title {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--text);
+}
+.row-title small { font-family: inherit; font-size: 10px; font-weight: 500; color: var(--muted); }
+.row-sub { font-size: 12px; line-height: 1.35; color: var(--muted); }
+
+.pill {
+  padding: 3px 7px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+.pill-due { background: var(--warn-bg); color: var(--warn-text); }
+.pill-ok { color: var(--success); }
+
+.mini { display: flex; align-items: center; gap: 11px; padding: 13px 15px; }
+.mini-title { font-size: 13px; font-weight: 600; color: var(--text); }
+.mini-sub { font-size: 10px; letter-spacing: 0.4px; color: var(--muted); }
+.mini svg { width: 20px; height: 20px; flex: none; }
+
+.next { padding: 14px 16px; }
+.next-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.next-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 0;
+  font-size: 12px;
+  color: var(--text);
+}
+.next-row b { font-size: 11px; font-weight: 700; }
+.next-row .over { color: var(--error-text); }
+.next-row .soon { color: var(--warn-text); }
+
+.logcard { padding: 13px 15px; }
+.logcard-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+.logcard-head small { font-family: inherit; font-size: 10px; font-weight: 500; color: var(--muted); }
+.logcard p { font-size: 12px; color: var(--text); margin-top: 4px; }
+.logcard-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--muted);
+}
+.logcard-meta svg { width: 15px; height: 15px; }
+
+/* ---------------------------------------------------------------- sections */
+
+.section { padding-block: 80px; }
+@media (max-width: 720px) {
+  .section { padding-block: 48px; }
+}
+.section-alt { background: var(--surface-alt); }
+
+.section h2 {
+  max-width: 640px;
+  font-size: clamp(26px, 3.2vw, 38px);
+}
+.section > .wrap > p.lede {
+  max-width: 640px;
+  margin-top: 16px;
+  font-size: 16px;
+  color: var(--muted);
+}
+
+.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 40px;
+}
+@media (max-width: 960px) { .grid-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) { .grid-3 { grid-template-columns: 1fr; } }
+
+.feature {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 24px;
+}
+.feature-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: var(--accent-container);
+  color: var(--accent);
+  margin-bottom: 18px;
+}
+.feature-icon svg { width: 22px; height: 22px; }
+.feature h3 {
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  margin-bottom: 8px;
+}
+.feature p { font-size: 14px; color: var(--muted); }
+
+.step {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 24px;
+}
+.step-num {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 18px;
+}
+.step h3 { font-size: 17px; font-weight: 600; margin-bottom: 8px; }
+.step p { font-size: 14px; color: var(--muted); }
+
+/* ---------------------------------------------------------------- faq */
+
+.faq-grid {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 48px;
+  align-items: start;
+}
+@media (max-width: 860px) {
+  .faq-grid { grid-template-columns: 1fr; gap: 24px; }
+}
+
+.faq details {
+  border-top: 1px solid var(--line);
+  padding: 4px 0;
+}
+.faq details:last-child { border-bottom: 1px solid var(--line); }
+
+.faq summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 0;
+  cursor: pointer;
+  list-style: none;
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+}
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary::after {
+  content: '';
+  flex: none;
+  width: 9px;
+  height: 9px;
+  border-right: 2px solid var(--accent);
+  border-bottom: 2px solid var(--accent);
+  transform: rotate(45deg) translate(-2px, -2px);
+  transition: transform 150ms ease;
+}
+.faq details[open] summary::after { transform: rotate(-135deg) translate(-3px, -3px); }
+.faq details p { padding-bottom: 18px; font-size: 15px; color: var(--muted); }
+
+/* ---------------------------------------------------------------- app band */
+
+.app-band {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 48px;
+  align-items: center;
+  background: var(--accent-container);
+  border-radius: 20px;
+  padding: 56px 48px;
+}
+@media (max-width: 860px) {
+  .app-band { grid-template-columns: 1fr; padding: 32px 24px; gap: 32px; }
+}
+.app-band h2 { font-size: clamp(24px, 3vw, 34px); color: var(--text); }
+.app-band .lede { max-width: 460px; margin-top: 16px; font-size: 16px; color: var(--text); }
+
+/* Equal columns rather than intrinsic widths: "GET IT ON / Google Play" and "DOWNLOAD ON THE /
+   App Store" are different lengths, and two badges of different widths read as a mistake — most
+   obviously once they stack. */
+.store-links {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  max-width: 440px;
+  margin-top: 28px;
+}
+@media (max-width: 560px) {
+  .store-links { grid-template-columns: 1fr; }
+}
+
+.store {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 18px;
+  border-radius: 12px;
+  background: var(--navy);
+  color: var(--on-navy);
+}
+.store:hover { background: var(--navy-deep); color: var(--on-navy); text-decoration: none; }
+.store svg { width: 22px; height: 22px; flex: none; }
+.store small { display: block; font-size: 9px; letter-spacing: 0.5px; opacity: 0.85; }
+.store b {
+  display: block;
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.requirements { margin-top: 16px; font-size: 12px; color: var(--muted); }
+
+.phone {
+  width: 272px;
+  flex: none;
+  background: #0E1C2B;
+  border-radius: 36px;
+  padding: 10px;
+  justify-self: center;
+}
+.phone-screen {
+  background: var(--surface);
+  border-radius: 28px;
+  padding: 18px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.phone-title {
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+  padding: 4px 4px 0;
+}
+.phone-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--surface-alt);
+}
+/* Block, not the default inline: an inline wrapper round a block <b> never claims the row's free
+   width, so the sub-line wrapped even with room to spare. */
+.phone-row > span:first-child { display: block; flex: 1; min-width: 0; }
+.phone-row .pill { flex: none; }
+.phone-row b {
+  display: block;
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-size: 13px;
+  color: var(--text);
+}
+.phone-row span { font-size: 11px; line-height: 1.4; color: var(--muted); }
+.pill-over { background: var(--error-bg); color: var(--error-text); }
+
+/* ---------------------------------------------------------------- footer */
+
+.site-footer {
+  background: var(--navy);
+  color: var(--on-navy-muted);
+  padding-block: 36px;
+}
+.site-footer > .wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px 48px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+.site-footer p { max-width: 620px; font-size: 12px; line-height: 1.65; }
+.footer-links { display: flex; flex-wrap: wrap; gap: 22px; font-size: 13px; font-weight: 500; }
+.footer-links a { color: var(--on-navy-accent); }
