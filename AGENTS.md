@@ -564,7 +564,9 @@ Feature PRDs and architecture design docs live in `docs/`, organized into per-to
   and squawk deletion)
 - `docs/search/` — `search_filter_PRD.md`, `search_filter_design.md` (📋 proposed — per-tab search and filter bars with a tolerant in-memory matcher), `intelligentsearch.md` (engine research, kept as the escalation path)
 - `docs/web/` — `web_target_expansion_plan.md`, `web_attachments_design.md`,
-  `web_adaptive_layout_design.html`, `promo_site_design.html`
+  `web_adaptive_layout_design.html`, `promo_site_design.html`,
+  `login_page_split_design.md` (📋 proposed — a hand-written static promo page at `/` and the KMP
+  bundle entered at `/login`, so the marketing page is crawlable and sign-in stops being buried)
 - `docs/cleanup/` — `codebase_cleanup_plan.md` (the 2026-07 cleanup; phases 1–5 executed, kept as the
   record of what moved where and why)
 - `docs/branding/` — brand assets
