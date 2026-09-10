@@ -3,8 +3,10 @@
 **Status:** 📋 Proposed — mocks done, all open questions resolved (§9); ready to build
 **Last updated:** 2026-09-09
 **Scope:** `webApp` + a new static promo site; `feature/login` gains the redesigned card shared with native
-**Mocks:** Claude Design project `03e5a809-b352-4b85-9979-5126024f10db` — *SquawkIt Login Split.dc.html*
-(screens `1a`–`1e` light, `2a`–`2e` dark)
+**Mocks:** <https://claude.ai/design/p/03e5a809-b352-4b85-9979-5126024f10db?file=SquawkIt+Login+Split.dc.html>
+— *SquawkIt Login Split.dc.html* (screens `1a`–`1e` light, `2a`–`2e` dark).
+**Fetch the mock fresh before writing any UI** — it is edited in place, so §3's inventory below is a
+summary of one point in time, not the source of truth for layout, type, spacing or colour.
 **Related:** [`promo_site_design.html`](promo_site_design.html) (the page this replaces),
 [`web_target_expansion_plan.md`](web_target_expansion_plan.md),
 [`../account/email_link_signin_design.html`](../account/email_link_signin_design.html)
@@ -85,6 +87,12 @@ page is a bigger one of those.
 - Redesigning the app shell, the auth providers, or the onboarding tail.
 
 ## 3. The mocks
+
+> **Before implementing any screen, re-fetch the design project** — see the link in the header. The
+> canvas is edited in place and carries no version stamp, so anything below may have moved on. Read
+> `SquawkIt Login Split.dc.html` (and `support.js`, which it imports) and treat that as authoritative
+> for every visual decision; this section exists to explain *what the screens are for*, not to
+> stand in for them.
 
 Ten artboards, five screens in light (`1a`–`1e`) and dark (`2a`–`2e`):
 
