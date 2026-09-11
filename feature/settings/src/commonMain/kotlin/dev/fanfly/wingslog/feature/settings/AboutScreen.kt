@@ -13,6 +13,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Policy
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.SupportAgent
@@ -33,6 +34,8 @@ import dev.fanfly.wingslog.core.appinfo.getAppVersion
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedTopBar
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
 import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
+import dev.fanfly.wingslog.core.ui.common.compose.GroupedLeadingIconChip
+import dev.fanfly.wingslog.core.ui.common.compose.GroupedRow
 import dev.fanfly.wingslog.core.ui.common.compose.GroupedSection
 import dev.fanfly.wingslog.core.ui.common.compose.heroBob
 import dev.fanfly.wingslog.core.ui.common.compose.rememberHeroPulse
@@ -49,9 +52,9 @@ import wingslog.feature.settings.generated.resources.about_contact_support_subti
 import wingslog.feature.settings.generated.resources.about_copyright
 import wingslog.feature.settings.generated.resources.about_rate
 import wingslog.feature.settings.generated.resources.about_section_help
-import wingslog.feature.settings.generated.resources.about_section_legal
+import wingslog.feature.settings.generated.resources.about_section_notes
 import wingslog.feature.settings.generated.resources.about_terms
-import wingslog.feature.settings.generated.resources.app_version
+import wingslog.feature.settings.generated.resources.about_version_title
 import wingslog.feature.settings.generated.resources.settings_about
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.settings.generated.resources.Res as SettingsRes
@@ -59,8 +62,8 @@ import wingslog.feature.settings.generated.resources.Res as SettingsRes
 private val AppIconSize = 96.dp
 
 /**
- * About SquawkIt: the version, the legal page, and the ways to reach us. Every row is a link out,
- * so the rows exist only where the host has somewhere to send them — web has no store to rate in.
+ * About SquawkIt: the ways to reach us, then the notes — version and the legal page. Link rows exist
+ * only where the host has somewhere to send them — web has no store to rate in.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -96,21 +99,6 @@ fun AboutScreen(
       ) {
         AppIdentity()
 
-        val termsUrl = appCapability.termsUrl
-        if (termsUrl != null) {
-          GroupedSection(stringResource(SettingsRes.string.about_section_legal)) {
-            SettingsRowGroup(
-              listOf {
-                SettingsRow(
-                  icon = Icons.Default.Policy,
-                  title = stringResource(SettingsRes.string.about_terms),
-                  onClick = { uriHandler.openUri(termsUrl) },
-                )
-              }
-            )
-          }
-        }
-
         val supportUrl = appCapability.supportUrl
         val storeListingUrl = appCapability.storeListingUrl
         if (supportUrl != null || storeListingUrl != null) {
@@ -141,6 +129,39 @@ fun AboutScreen(
           }
         }
 
+        GroupedSection(stringResource(SettingsRes.string.about_section_notes)) {
+          SettingsRowGroup(
+            buildList {
+              add {
+                val title = stringResource(SettingsRes.string.about_version_title)
+                GroupedRow(
+                  title = title,
+                  leading = {
+                    GroupedLeadingIconChip(icon = Icons.Default.Info, contentDescription = title)
+                  },
+                  trailing = {
+                    Text(
+                      text = getAppVersion(),
+                      style = WingslogTypography.dataMedium,
+                      color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                  },
+                )
+              }
+              val termsUrl = appCapability.termsUrl
+              if (termsUrl != null) {
+                add {
+                  SettingsRow(
+                    icon = Icons.Default.Policy,
+                    title = stringResource(SettingsRes.string.about_terms),
+                    onClick = { uriHandler.openUri(termsUrl) },
+                  )
+                }
+              }
+            }
+          )
+        }
+
         Spacer(Modifier.weight(1f))
         Text(
           text = stringResource(SettingsRes.string.about_copyright),
@@ -154,7 +175,7 @@ fun AboutScreen(
   }
 }
 
-/** The app mark (bobbing, like the heroes), name and version — the version in mono, since it is an identifier. */
+/** The app mark (bobbing, like the heroes) and its name; the version is a Notes row below. */
 @Composable
 private fun AppIdentity() {
   val pulse = rememberHeroPulse()
@@ -182,11 +203,6 @@ private fun AppIdentity() {
         text = stringResource(CoreRes.string.app_name),
         style = MaterialTheme.typography.headlineSmall,
         color = MaterialTheme.colorScheme.onSurface,
-      )
-      Text(
-        text = stringResource(SettingsRes.string.app_version, getAppVersion()),
-        style = WingslogTypography.dataMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
       )
     }
   }

@@ -390,7 +390,6 @@ feature/notifications/viewing	notification_channel_urgency_update_description	A 
 feature/notifications/viewing	notification_channel_urgency_update_name	Due reminder
 feature/settings	account_upgrade_link_cta	Link to an account
 feature/settings	account_upgrade_link_subtitle	Your records are on this device only. Link an account to sync and back them up.
-feature/settings	app_version	Version %1$s
 feature/settings	appearance_dark	Dark
 feature/settings	appearance_light	Light
 feature/settings	appearance_subtitle	Choose how SquawkIt looks on this device
@@ -456,7 +455,8 @@ feature/settings	settings_plan_pro_renews	Pro plan · Renews %1$s
 feature/settings	settings_plan_pro_ends	Pro plan · Ends %1$s
 feature/settings	settings_about	About SquawkIt
 feature/settings	settings_about_subtitle	Version, terms and support
-feature/settings	about_section_legal	Disclaimers
+feature/settings	about_section_notes	Notes
+feature/settings	about_version_title	Version
 feature/settings	about_terms	Terms &amp; Privacy
 feature/settings	about_section_help	Help
 feature/settings	about_contact_support	Contact support
