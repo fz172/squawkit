@@ -124,10 +124,7 @@ feature/export/sharedassets	export_error_subtitle	Something went wrong while bui
 feature/export/sharedassets	export_error_title	Export failed
 feature/export/sharedassets	export_estimated_size	~%1$s
 feature/export/sharedassets	export_footer_thing_count	%1$d selected
-feature/export/sharedassets	export_format_csv_sub	Plain text
-feature/export/sharedassets	export_format_pdf_sub	Print-ready
 feature/export/sharedassets	export_format_pick_one	Pick at least one format
-feature/export/sharedassets	export_format_xlsx_sub	Spreadsheet
 feature/export/sharedassets	export_formats_section	Report formats
 feature/export/sharedassets	export_history_action	Export history
 feature/export/sharedassets	export_history_delete_confirm_body	%1$s will be permanently removed from this device.
@@ -176,6 +173,8 @@ feature/export/sharedassets	export_success_delivery_failed	Delivery failed. Use 
 feature/export/sharedassets	export_success_delivery_failed_title	Delivery failed
 feature/export/sharedassets	export_success_title	Export ready
 feature/export/sharedassets	export_thing_summary_more	%1$s + %2$d more
+feature/export/sharedassets	export_thing_log_count	%1$d logs
+feature/export/sharedassets	export_thing_log_count_one	1 log
 feature/export/sharedassets	export_view_exports	View exports
 feature/export/sharedassets	feature_name_export_logs	Export Logs
 feature/fleet/sharedassets	add_first_thing	Add Your First Aircraft

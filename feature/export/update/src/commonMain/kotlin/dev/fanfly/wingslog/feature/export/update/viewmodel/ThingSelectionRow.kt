@@ -16,4 +16,6 @@ data class ThingSelectionRow(
   val subtitle: String,
   val logCount: Int,
   val attachmentSizeBytes: Long,
+  /** The template's icon key, drawn by `thingIcon`; blank falls back to the generic mark. */
+  val iconKey: String = "",
 )

@@ -407,6 +407,7 @@ class ExportViewModel(
       subtitle = displaySubtitle(template),
       logCount = logCount,
       attachmentSizeBytes = attachmentSizeBytes,
+      iconKey = template.icon,
     )
   }
 
