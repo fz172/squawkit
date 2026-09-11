@@ -20,7 +20,9 @@
  *
  * Credentials & project (Application Default Credentials; nothing is hardcoded):
  *   gcloud auth application-default login
- *   export GOOGLE_CLOUD_PROJECT=wingslog-9ca4e          # or GOOGLE_APPLICATION_CREDENTIALS=<sa.json>
+ *   # The project defaults to backend/firebase/.firebaserc. Override it, or point at a
+ *   # service-account key, with:
+ *   export GOOGLE_CLOUD_PROJECT=<project>               # or GOOGLE_APPLICATION_CREDENTIALS=<sa.json>
  *   # To target the local emulator instead of prod: export FIRESTORE_EMULATOR_HOST=localhost:8080
  *
  * The resolved project id is printed and confirmed before any write, so a mis-pointed credential is
@@ -30,7 +32,7 @@
 import { writeFileSync } from "node:fs";
 import { createInterface } from "node:readline/promises";
 
-import { adminAuth, adminDb } from "../lib/config/firebaseAdmin.js";
+import { requireProjectId } from "./projectId.mjs";
 import {
   formatPromoCode,
   generatePromoCode,
@@ -134,7 +136,7 @@ function mintCodes(count) {
   return [...codes];
 }
 
-async function generate(args, projectId) {
+async function generate(db, args, projectId) {
   const now = Date.now();
   const expiresAtMillis = args.expiresDays > 0 ? now + args.expiresDays * MS_PER_DAY : 0;
   const emulator = process.env.FIRESTORE_EMULATOR_HOST;
@@ -156,10 +158,10 @@ async function generate(args, projectId) {
   const codes = mintCodes(args.count);
   for (let i = 0; i < codes.length; i += WRITE_BATCH_LIMIT) {
     const chunk = codes.slice(i, i + WRITE_BATCH_LIMIT);
-    const batch = adminDb.batch();
+    const batch = db.batch();
     for (const code of chunk) {
       // create, not set: a collision with an existing code must fail the run, never overwrite it.
-      batch.create(adminDb.doc(promoCodeDocPath(code)), {
+      batch.create(db.doc(promoCodeDocPath(code)), {
         durationDays: args.days,
         batch: args.batch,
         createdAtMillis: now,
@@ -185,8 +187,8 @@ async function generate(args, projectId) {
   }
 }
 
-async function report(args) {
-  let query = adminDb.collection(PROMO_CODES_COLLECTION);
+async function report(db, args) {
+  let query = db.collection(PROMO_CODES_COLLECTION);
   if (args.batch) query = query.where("batch", "==", args.batch);
   const snap = await query.get();
 
@@ -230,19 +232,16 @@ async function report(args) {
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
-  const projectId = adminAuth.app.options.projectId ?? process.env.GOOGLE_CLOUD_PROJECT;
-  if (!projectId) {
-    console.error(
-      "No project id resolved. Set GOOGLE_CLOUD_PROJECT (or GOOGLE_APPLICATION_CREDENTIALS to a " +
-        "service-account key) and try again.",
-    );
-    process.exit(1);
-  }
+  // Resolved and published to the environment BEFORE firebaseAdmin is loaded: it calls
+  // initializeApp() at module load, and under user ADC that is the only chance to tell it which
+  // project it is talking to. Hence the dynamic import.
+  const projectId = requireProjectId();
+  const { adminDb } = await import("../lib/config/firebaseAdmin.js");
 
   if (args.command === "generate") {
-    await generate(args, projectId);
+    await generate(adminDb, args, projectId);
   } else {
-    await report(args);
+    await report(adminDb, args);
   }
   process.exit(0);
 }

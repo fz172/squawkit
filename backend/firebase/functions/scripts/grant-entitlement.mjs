@@ -18,7 +18,9 @@
  *
  * Credentials & project (Application Default Credentials; nothing is hardcoded):
  *   gcloud auth application-default login
- *   export GOOGLE_CLOUD_PROJECT=wingslog-9ca4e          # or GOOGLE_APPLICATION_CREDENTIALS=<sa.json>
+ *   # The project defaults to backend/firebase/.firebaserc. Override it, or point at a
+ *   # service-account key, with:
+ *   export GOOGLE_CLOUD_PROJECT=<project>               # or GOOGLE_APPLICATION_CREDENTIALS=<sa.json>
  *   # To target the local emulator instead of prod: export FIRESTORE_EMULATOR_HOST=localhost:8080
  *
  * The resolved project id is printed and confirmed before any write, so a mis-pointed credential is
@@ -27,8 +29,7 @@
 
 import { createInterface } from "node:readline/promises";
 
-import { adminAuth } from "../lib/config/firebaseAdmin.js";
-import { applyEntitlement } from "../lib/subscription/applyEntitlement.js";
+import { requireProjectId } from "./projectId.mjs";
 import {
   ENTITLEMENT_SOURCE,
   SUBSCRIPTION_LIFECYCLE,
@@ -63,9 +64,9 @@ function parseArgs(argv) {
   return args;
 }
 
-async function resolveUid({ uid, email }) {
+async function resolveUid(auth, { uid, email }) {
   if (uid) return uid;
-  const user = await adminAuth.getUserByEmail(email);
+  const user = await auth.getUserByEmail(email);
   return user.uid;
 }
 
@@ -113,16 +114,14 @@ async function confirm(question) {
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
-  const projectId = adminAuth.app.options.projectId ?? process.env.GOOGLE_CLOUD_PROJECT;
-  if (!projectId) {
-    console.error(
-      "No project id resolved. Set GOOGLE_CLOUD_PROJECT (or GOOGLE_APPLICATION_CREDENTIALS to a " +
-        "service-account key) and try again.",
-    );
-    process.exit(1);
-  }
+  // Resolved and published to the environment BEFORE firebaseAdmin is loaded: it calls
+  // initializeApp() at module load, and under user ADC that is the only chance to tell it which
+  // project it is talking to. Hence the dynamic imports.
+  const projectId = requireProjectId();
+  const { adminAuth } = await import("../lib/config/firebaseAdmin.js");
+  const { applyEntitlement } = await import("../lib/subscription/applyEntitlement.js");
 
-  const uid = await resolveUid(args);
+  const uid = await resolveUid(adminAuth, args);
   const target = args.email ? `${args.email} (${uid})` : uid;
   const emulator = process.env.FIRESTORE_EMULATOR_HOST;
   const action = args.revoke ? "REVOKE → Free (Expired)" : `GRANT Pro for ${args.days} day(s)`;
