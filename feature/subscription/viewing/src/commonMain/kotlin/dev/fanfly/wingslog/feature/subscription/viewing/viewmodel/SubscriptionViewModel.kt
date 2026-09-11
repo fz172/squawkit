@@ -535,7 +535,7 @@ class SubscriptionViewModel(
      * whose entitlement is genuinely never coming is told so while they are still on the page,
      * rather than left with a spinner that had no end state at all.
      */
-    private const val ACTIVATION_STALL_MILLIS = 90_000L
+    private const val ACTIVATION_STALL_MILLIS = 60_000L
   }
 }
 
