@@ -141,6 +141,7 @@ fun SubscriptionScreen(
               state = uiState,
               onSubscribe = { sheet = BillingSheet.Paywall },
               onRedeemPromo = viewModel::onPromoEntryOpened,
+              onActivationRecheck = viewModel::onActivationRecheck,
             )
           }
         }
@@ -237,3 +238,12 @@ internal fun SubscriptionCaption(
 }
 
 internal val SECTION_LABEL_TRACKING = 0.9.sp
+
+/**
+ * The caution-tinted notice panel's washes, shared by the two surfaces that raise one: "managed on
+ * another platform" on the membership page, and a stalled activation on the paywall. Here rather
+ * than file-private to either, since a second notice in a different tint would read as a different
+ * severity.
+ */
+internal const val NOTICE_BORDER_TINT = 0.32f
+internal const val NOTICE_SURFACE_TINT = 0.07f
