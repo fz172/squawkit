@@ -50,9 +50,14 @@ class FirebasePromoCodeRedeemer(
       FunctionsExceptionCode.INVALID_ARGUMENT -> PromoRedemptionResult.NotValid
       FunctionsExceptionCode.RESOURCE_EXHAUSTED -> PromoRedemptionResult.TooManyAttempts
       FunctionsExceptionCode.FAILED_PRECONDITION -> PromoRedemptionResult.AlreadySubscribed
-      FunctionsExceptionCode.PERMISSION_DENIED,
-      FunctionsExceptionCode.UNAUTHENTICATED,
-      -> PromoRedemptionResult.SignInRequired
+      // The server's own refusals: a guest account, or an app id not on the allowlist.
+      FunctionsExceptionCode.PERMISSION_DENIED -> PromoRedemptionResult.SignInRequired
+      // In practice this is App Check, not sign-in. `request.auth == null` cannot happen from a
+      // real client — the subscription page is unreachable without an account — whereas a build
+      // whose App Check token is missing, unregistered or unexchanged is rejected here with exactly
+      // this code, before the function body runs. Reporting that as "sign in" sent a signed-in
+      // pilot to re-check the one thing that was fine.
+      FunctionsExceptionCode.UNAUTHENTICATED -> PromoRedemptionResult.AppUnverified
       else -> PromoRedemptionResult.Unavailable
     }
   } catch (e: Exception) {

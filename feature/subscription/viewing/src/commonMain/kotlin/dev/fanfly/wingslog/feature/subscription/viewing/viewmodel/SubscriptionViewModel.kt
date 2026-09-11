@@ -181,6 +181,8 @@ enum class PromoCodeError {
   /** Already on a paid store subscription. The code was left unspent. */
   ALREADY_SUBSCRIBED,
   SIGN_IN_REQUIRED,
+  /** App Check could not attest this build, so the server refused it. Nothing was spent. */
+  APP_UNVERIFIED,
   /** Offline or a failed call. Nothing was spent. */
   UNAVAILABLE,
 }
@@ -447,6 +449,7 @@ class SubscriptionViewModel(
         PromoRedemptionResult.TooManyAttempts -> failPromo(PromoCodeError.TOO_MANY_ATTEMPTS)
         PromoRedemptionResult.AlreadySubscribed -> failPromo(PromoCodeError.ALREADY_SUBSCRIBED)
         PromoRedemptionResult.SignInRequired -> failPromo(PromoCodeError.SIGN_IN_REQUIRED)
+        PromoRedemptionResult.AppUnverified -> failPromo(PromoCodeError.APP_UNVERIFIED)
         PromoRedemptionResult.Unavailable -> failPromo(PromoCodeError.UNAVAILABLE)
       }
     }
