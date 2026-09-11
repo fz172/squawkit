@@ -60,6 +60,7 @@ core/sharedassets	switcher_select_thing	Select
 core/sharedassets	sync_changes_discarded	Unsaved changes to %1$s were discarded — your access was removed
 core/sharedassets	term_with_abbreviation	%1$s (%2$s)
 core/sharedassets	thing_shared_badge	Shared
+core/sharedassets	pro_badge	PRO
 core/sharedassets	unknown	Unknown
 core/sharedassets	unsaved_changes	Unsaved Changes
 core/sharedassets	unsaved_changes_message	You have unsaved changes. Are you sure you want to leave?

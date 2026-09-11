@@ -2,12 +2,11 @@ package dev.fanfly.wingslog.feature.settings
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
+import dev.fanfly.wingslog.core.ui.common.compose.GroupedChevron
 import dev.fanfly.wingslog.core.ui.common.compose.GroupedLeadingIconChip
 import dev.fanfly.wingslog.core.ui.common.compose.GroupedRow
 import dev.fanfly.wingslog.core.ui.theme.WingslogTheme
@@ -52,13 +51,7 @@ fun SettingsRow(
         iconTint = iconTint,
       )
     },
-    trailing = if (danger) null else ({
-      Icon(
-        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-        contentDescription = null,
-        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-      )
-    }),
+    trailing = if (danger) null else ({ GroupedChevron() }),
   )
 }
 
