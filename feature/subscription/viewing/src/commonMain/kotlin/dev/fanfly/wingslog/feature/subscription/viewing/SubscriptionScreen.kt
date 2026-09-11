@@ -31,7 +31,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedTopBar
@@ -204,23 +203,6 @@ internal fun SubscribeButton(
   }
 }
 
-/**
- * An uppercase section marker ("What's included", "Unlocked with Pro").
- *
- * Uppercased at render rather than in the string resource so translations stay sentence case and a
- * language without letter case is unaffected.
- */
-@Composable
-internal fun SectionLabel(text: String, modifier: Modifier = Modifier) {
-  Text(
-    text = text.uppercase(),
-    style = MaterialTheme.typography.labelSmall,
-    letterSpacing = SECTION_LABEL_TRACKING,
-    color = MaterialTheme.colorScheme.onSurfaceVariant,
-    modifier = modifier,
-  )
-}
-
 /** Fine print under a button — never the only place a state is communicated. */
 @Composable
 internal fun SubscriptionCaption(
@@ -236,8 +218,6 @@ internal fun SubscriptionCaption(
     modifier = modifier.fillMaxWidth(),
   )
 }
-
-internal val SECTION_LABEL_TRACKING = 0.9.sp
 
 /**
  * The caution-tinted notice panel's washes, shared by the two surfaces that raise one: "managed on

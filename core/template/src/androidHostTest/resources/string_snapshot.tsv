@@ -624,13 +624,10 @@ feature/subscription/viewing	subscription_activating	Payment received. Activatin
 feature/subscription/viewing	subscription_activation_recheck	Check again
 feature/subscription/viewing	subscription_activation_stalled	This is taking longer than usual. Your purchase went through and nothing is lost — Pro unlocks automatically once it completes.
 feature/subscription/viewing	subscription_activation_stalled_promo	This is taking longer than usual. Your promo code was applied — Pro unlocks automatically once it completes.
-feature/subscription/viewing	subscription_cell_excluded	—
-feature/subscription/viewing	subscription_cell_unlimited	∞
 feature/subscription/viewing	subscription_col_free	Basic
 feature/subscription/viewing	subscription_col_pro	Pro
-feature/subscription/viewing	subscription_compare_header	Your all-access pass
 feature/subscription/viewing	subscription_cta_caption	Price shown at checkout. Cancel anytime.
-feature/subscription/viewing	subscription_cta_subscribe	Subscribe
+feature/subscription/viewing	subscription_cta_subscribe	Upgrade to Pro
 feature/subscription/viewing	subscription_ends	Ends
 feature/subscription/viewing	subscription_feature_ads	Ad-free experience
 feature/subscription/viewing	subscription_feature_attachments	Photo &amp; file attachments
@@ -641,6 +638,8 @@ feature/subscription/viewing	subscription_feature_records	Logs, tasks &amp; issu
 feature/subscription/viewing	subscription_feature_sharing	Share &amp; collaborate with others
 feature/subscription/viewing	subscription_feature_thing	Things
 feature/subscription/viewing	subscription_includes_header	What’s included
+feature/subscription/viewing	subscription_your_plan	Your plan
+feature/subscription/viewing	subscription_plan_basic_body	Logbook, tasks and technicians for everything you track — on this device and your account.
 feature/subscription/viewing	subscription_manage	Manage subscription
 feature/subscription/viewing	subscription_manage_caption	Plan changes and cancellation are handled by the store.
 feature/subscription/viewing	subscription_manage_link_caption	Opens the store page where this subscription is billed.
@@ -650,12 +649,6 @@ feature/subscription/viewing	subscription_managed_elsewhere_body_web	Subscriptio
 feature/subscription/viewing	subscription_managed_elsewhere_caption	Your Pro features stay active everywhere you sign in.
 feature/subscription/viewing	subscription_managed_elsewhere_title	Managed on another platform
 feature/subscription/viewing	subscription_member_since	Member since
-feature/subscription/viewing	subscription_perk_attachments_body	Photos and files on any log
-feature/subscription/viewing	subscription_perk_attachments_title	Attachments
-feature/subscription/viewing	subscription_perk_sharing_body	Invite owners and collaborators
-feature/subscription/viewing	subscription_perk_sharing_title	Sharing
-feature/subscription/viewing	subscription_perk_thing_body	All your things logged in one book
-feature/subscription/viewing	subscription_perk_thing_title	Unlimited things
 feature/subscription/viewing	subscription_platform_amazon	Amazon Appstore
 feature/subscription/viewing	subscription_platform_app_store	App Store
 feature/subscription/viewing	subscription_platform_mac_app_store	Mac App Store
