@@ -82,6 +82,29 @@ beforeEach(async () => {
 const as = (uid: string | null) =>
   (uid ? testEnv.authenticatedContext(uid) : testEnv.unauthenticatedContext()).firestore();
 
+describe("shareRole is total (never throws)", () => {
+  // `.data` on a missing doc and `map[key]` on an absent key throw, and a thrown rule is
+  // PERMISSION_DENIED — the same code the client reads as "you were revoked" before purging its
+  // local copy of the share. These assert the deny; the point of exists()/.get(uid, null) is that
+  // it is now a deny rather than an evaluation error.
+  it("denies a member-shaped read when the ACL doc does not exist", async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await deleteDoc(doc(ctx.firestore(), shareDoc));
+    });
+    await assertFails(getDoc(doc(as(TECH), thingDoc)));
+    await assertFails(getDocs(collection(as(TECH), `${thingDoc}/maintenance_log`)));
+  });
+
+  it("denies a uid absent from memberRoles", async () => {
+    await assertFails(getDoc(doc(as(STRANGER), thingDoc)));
+    await assertFails(getDocs(collection(as(STRANGER), `${thingDoc}/maintenance_log`)));
+  });
+
+  it("still allows a member once the ACL is back", async () => {
+    await assertSucceeds(getDoc(doc(as(TECH), thingDoc)));
+  });
+});
+
 describe("shared aircraft document", () => {
   it("member may GET the shared aircraft doc", async () => {
     await assertSucceeds(getDoc(doc(as(TECH), thingDoc)));

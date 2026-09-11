@@ -171,6 +171,76 @@ class SyncEngineTest {
     }
 
   @Test
+  fun permissionDenied_butRefStillLive_keepsTheShareAndBanners() =
+    runTest(ioContext) {
+      seedRef()
+      seedEntity(CollectionKind.Thing, EntityScope.userRoot(HOST), SHARED_AC)
+      seedSharedCursor()
+      // The server still says we are a member; only the host-tree read is denied.
+      pull.singleDocs[
+        Triple(
+          CollectionKind.SharedAircraftRef,
+          EntityScope.userRoot(MEMBER)
+            .toPath(),
+          SHARED_AC,
+        ),
+      ] = liveRefEntity()
+      pull.denyScopes += EntityScope.userRoot(HOST)
+        .toPath()
+
+      val job = engine.start()
+      testScheduler.advanceUntilIdle()
+
+      assertThat(
+        refStore().observeAll(EntityScope.userRoot(MEMBER))
+          .first()
+      ).hasSize(1)
+      assertThat(
+        rowsAt(
+          CollectionKind.Thing,
+          EntityScope.userRoot(HOST)
+        )
+      ).hasSize(1)
+      // Bounded: it exhausted its retries and surfaced that, rather than looping forever.
+      assertThat(engine.failureState.value?.message).contains("not accepting changes")
+
+      job.cancel()
+    }
+
+  @Test
+  fun permissionDenied_withTombstonedRef_revokesLocally() = runTest(ioContext) {
+    seedRef()
+    seedEntity(CollectionKind.Thing, EntityScope.userRoot(HOST), SHARED_AC)
+    seedSharedCursor()
+    pull.singleDocs[
+      Triple(
+        CollectionKind.SharedAircraftRef,
+        EntityScope.userRoot(MEMBER)
+          .toPath(),
+        SHARED_AC,
+      ),
+    ] = liveRefEntity(deleted = true)
+    pull.denyScopes += EntityScope.userRoot(HOST)
+      .toPath()
+
+    val job = engine.start()
+    testScheduler.advanceUntilIdle()
+
+    assertThat(
+      refStore().observeAll(EntityScope.userRoot(MEMBER))
+        .first()
+    ).isEmpty()
+    assertThat(
+      rowsAt(
+        CollectionKind.Thing,
+        EntityScope.userRoot(HOST)
+      )
+    ).isEmpty()
+
+    job.cancel()
+  }
+
+  @Test
   fun schedulePendingBlobs_widensToSharedThingScope() = runTest(ioContext) {
     seedRef()
     // A member's own pending upload, and one on the shared thing (host's tree). The old
@@ -307,6 +377,13 @@ class SyncEngineTest {
   private fun rowsAt(kind: CollectionKind, scope: EntityScope) =
     db.schemaQueries.selectAll(kind, scope.toPath())
       .executeAsList()
+
+  private fun liveRefEntity(deleted: Boolean = false) = RemoteEntity(
+    id = SHARED_AC,
+    payload = byteArrayOf(0x01),
+    deleted = deleted,
+    remoteTsMs = 2000L,
+  )
 }
 
 /** Records the blob ids handed to each schedule call so tests can assert what the scan enqueued. */
@@ -341,6 +418,13 @@ private class FakePullSubscription : PullSubscription {
   /** Scope paths whose subscription throws PERMISSION_DENIED on collect. */
   val denyScopes = mutableSetOf<String>()
 
+  /**
+   * Remote state for [observeSingleDoc], keyed `(kind, scopePath, id)`. An absent key models a
+   * document that does not exist — which is what the share-status probe reads as "revoked".
+   */
+  val singleDocs =
+    mutableMapOf<Triple<CollectionKind, String, String>, RemoteEntity>()
+
   private fun track(
     kind: CollectionKind,
     scopePath: String
@@ -360,11 +444,26 @@ private class FakePullSubscription : PullSubscription {
     sinceRemoteTsMs: Long?,
   ): Flow<List<RemoteEntity>> = track(kind, scope.toPath())
 
+  /**
+   * Emits the seeded doc (or an empty batch when there is none) and then stays subscribed, the way
+   * a real single-doc snapshot listener does. The emission matters: the share-status probe takes
+   * `.first()`, so a fake that only awaited cancellation would hang it until its timeout.
+   */
   override fun observeSingleDoc(
     kind: CollectionKind,
     scope: EntityScope,
     id: String,
-  ): Flow<List<RemoteEntity>> = track(kind, scope.toPath())
+  ): Flow<List<RemoteEntity>> = flow {
+    val scopePath = scope.toPath()
+    if (scopePath in denyScopes) throw permissionDenied()
+    emit(listOfNotNull(singleDocs[Triple(kind, scopePath, id)]))
+    active.update { it + (kind to scopePath) }
+    try {
+      awaitCancellation()
+    } finally {
+      active.update { it - (kind to scopePath) }
+    }
+  }
 }
 
 private fun permissionDenied(): FirebaseFirestoreException =

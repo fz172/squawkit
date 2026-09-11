@@ -15,7 +15,7 @@ service cloud.firestore {
 
     // --- Sharing helpers -----------------------------------------------------------------------
 
-    // The caller's role on a shared aircraft, or null/error if they aren't in the ACL.
+    // The caller's role on a shared aircraft, or null if they aren't in the ACL.
     // A single get() per shared-scope request (billed as one read, cached per request).
     //
     // [hostUid] is ALWAYS taken from the path of the resource being accessed — never from a field,
@@ -34,9 +34,15 @@ service cloud.firestore {
     //
     // The aircraft_shares match block below stays live until G6, so the old tree remains readable
     // through the grace window even though nothing authorizes against it any more.
+    // TOTAL, on purpose. `.data` on a missing doc and `map[key]` on an absent key both THROW, and a
+    // thrown rule reaches the client as PERMISSION_DENIED — indistinguishable from an honest denial
+    // (4,226 rules ERRORs and zero DENYs in one week). The client reads a denial on a shared scope
+    // as "revoked" and purges, so an erroring rule feeds that path a signal it never earned.
     function shareRole(hostUid, acId) {
-      return get(/databases/$(database)/documents/thing_shares/$(hostUid)/thing/$(acId))
-        .data.memberRoles[request.auth.uid];
+      let sharePath = /databases/$(database)/documents/thing_shares/$(hostUid)/thing/$(acId);
+      return exists(sharePath)
+        ? get(sharePath).data.memberRoles.get(request.auth.uid, null)
+        : null;
     }
     function isShareOwner(hostUid, acId) {
       return shareRole(hostUid, acId) == 'owner';

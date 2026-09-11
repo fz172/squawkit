@@ -12,6 +12,7 @@ import dev.fanfly.wingslog.core.storage.EntityStoreFactory
 import dev.fanfly.wingslog.core.storage.blob.BlobId
 import dev.fanfly.wingslog.core.storage.blob.UploadScheduler
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
+import dev.fanfly.wingslog.feature.sync.data.SyncEngine.Companion.MAX_DENIAL_RETRIES
 import dev.fanfly.wingslog.feature.sync.data.SyncEngine.Companion.PUSH_FAILURE_KEY
 import dev.fanfly.wingslog.feature.sync.logging.SyncTelemetry
 import dev.fanfly.wingslog.thing.Thing
@@ -36,6 +37,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -256,11 +258,17 @@ class SyncEngine(
         if (failure == null) it - PUSH_FAILURE_KEY else it + (PUSH_FAILURE_KEY to failure)
       }
     }
-    // A denied push into a host's tree means the same thing a denied read does — we were revoked —
-    // so it reconciles the same way (§5.4).
+    // Same suspicion a denied read is, confirmed the same way (§5.4). A member is legitimately
+    // refused some writes — a comment they didn't author, a tombstone on the thing doc — so false
+    // hands the row back to the normal failure path rather than costing them the share.
     pushWorker.sharedScopeRevokedSink = { _, thingId ->
-      if (revokeSharedLocally(uid, thingId)) {
-        telemetry.sharedScopeReconciled(SyncTelemetry.TRIGGER_DENIED_WRITE)
+      if (probeShareStatus(uid, thingId) == ShareStatus.REVOKED) {
+        if (revokeSharedLocally(uid, thingId)) {
+          telemetry.sharedScopeReconciled(SyncTelemetry.TRIGGER_DENIED_WRITE)
+        }
+        true
+      } else {
+        false
       }
     }
     scope.launch { pushWorker.run(uid) }
@@ -368,36 +376,94 @@ class SyncEngine(
   }
 
   /**
-   * Launches one shared-scope watcher, translating a Firestore `PERMISSION_DENIED` into a local
-   * revoke. Belt-and-braces for the race in docs/sharing §5.4: if a member is revoked while offline
-   * and the listeners resume before the ref tombstone is delivered, the shared scope denies us. We
-   * treat that as "revoked" and reconcile locally (see [revokeSharedLocally]) instead of surfacing an
-   * auth banner. Any other failure propagates to the per-scope supervisor as before; cancellation
-   * (a ref-set change tearing this cycle down) is re-thrown untouched.
+   * Launches one shared-scope watcher. `PERMISSION_DENIED` is a suspicion of revocation, not a
+   * verdict — rules throw as well as deny (`.data` on a missing doc, `map[key]` on an absent key),
+   * and both reach the client the same way — so it is confirmed via [probeShareStatus] before the
+   * unrecoverable [revokeSharedLocally]. Cancellation is re-thrown; other failures propagate.
+   *
+   * Unconfirmed denials retry [MAX_DENIAL_RETRIES] times on the [backoffMs] schedule (~30 min),
+   * then stop with a banner. They never purge.
    */
   private fun CoroutineScope.launchSharedWatch(
     memberUid: String,
     thingId: String,
     block: suspend () -> Unit,
   ): Job = launch {
-    try {
-      block()
-    } catch (e: CancellationException) {
-      throw e
-    } catch (e: Throwable) {
-      if (isPermissionDenied(e)) {
-        log.i { "PERMISSION_DENIED on a shared aircraft; treating as revoked (§5.4)" }
-        // Every watcher on the scope is denied at once, so they all land here — but one revocation
-        // happened, not five. Only the watcher that actually removes the ref reports it, or the
-        // metric would count listeners instead of revocations.
-        if (revokeSharedLocally(memberUid, thingId)) {
-          telemetry.sharedScopeReconciled(SyncTelemetry.TRIGGER_DENIED_READ)
-        }
-      } else {
+    // A new cycle (sign-in, refs change) clears a previous cycle's give-up banner.
+    failures.update { it - SHARED_DENIAL_FAILURE_KEY }
+    var denials = 0
+    while (true) {
+      try {
+        block()
+        return@launch
+      } catch (e: CancellationException) {
         throw e
+      } catch (e: Throwable) {
+        if (!isPermissionDenied(e)) throw e
+
+        if (probeShareStatus(memberUid, thingId) == ShareStatus.REVOKED) {
+          log.i { "shared aircraft confirmed revoked; reconciling locally (§5.4)" }
+          // Every watcher on the scope is denied at once, so they all land here — but one revocation
+          // happened, not five. Only the watcher that actually removes the ref reports it, or the
+          // metric would count listeners instead of revocations.
+          if (revokeSharedLocally(memberUid, thingId)) {
+            telemetry.sharedScopeReconciled(SyncTelemetry.TRIGGER_DENIED_READ)
+          }
+          return@launch
+        }
+
+        // Still live, or no verdict. Neither is a revocation, so nothing is purged here.
+        denials++
+        if (denials >= MAX_DENIAL_RETRIES) {
+          log.w { "shared scope denied $denials× but the share is still live; giving up" }
+          failures.update {
+            it + (SHARED_DENIAL_FAILURE_KEY to SyncFailure.Push(
+              SHARED_DENIAL_MESSAGE
+            ))
+          }
+          return@launch
+        }
+        log.i { "shared scope denied but the share is still live; retry $denials/$MAX_DENIAL_RETRIES" }
+        delay(backoffMs(denials).milliseconds)
       }
     }
   }
+
+  /** Only [REVOKED] may destroy local data. */
+  private enum class ShareStatus { REVOKED, LIVE, UNKNOWN }
+
+  /**
+   * Is the share still live? Asks the member's own `shared_aircraft_ref`, which `revokeThingShare`
+   * tombstones when a share really ends. It sits under `users/{memberUid}/`, so it stays readable
+   * when we are revoked — unlike the host-tree ACL, which is the read that is failing — and a single
+   * `get` needs no watermark.
+   *
+   * [UNKNOWN] on timeout or error: "could not check" must not read as "revoked". A cached snapshot
+   * may answer, which only biases toward LIVE — one extra retry, versus an unrecoverable purge.
+   */
+  private suspend fun probeShareStatus(
+    memberUid: String,
+    thingId: String,
+  ): ShareStatus =
+    withTimeoutOrNull(PROBE_TIMEOUT_MS.milliseconds) {
+      runCatching {
+        val remote = pullSubscription.observeSingleDoc(
+          CollectionKind.SharedAircraftRef,
+          EntityScope.userRoot(memberUid),
+          thingId,
+        )
+          .first()
+          .firstOrNull()
+        // Absent counts too: a ref hard-deleted by an older revoke path is just as gone.
+        if (remote == null || remote.deleted) ShareStatus.REVOKED else ShareStatus.LIVE
+      }.getOrElse { e ->
+        if (e is CancellationException) throw e
+        log.w(e) { "could not confirm share status; treating as unknown" }
+        ShareStatus.UNKNOWN
+      }
+    } ?: ShareStatus.UNKNOWN.also {
+      log.i { "share-status probe timed out; not treating the denial as a revocation" }
+    }
 
   /**
    * Hard-deletes the member's stale local ref for [thingId]. This drops the thing from the
@@ -624,6 +690,19 @@ class SyncEngine(
 
     /** Sentinel key for push-class entries in the [failures] map (push isn't per-scope). */
     private val PUSH_FAILURE_KEY = Any()
+
+    /** Sentinel key for a shared scope we gave up retrying after repeated unconfirmed denials. */
+    private val SHARED_DENIAL_FAILURE_KEY = Any()
+
+    /** Denials tolerated per shared scope before the watcher stops; ~30 min via [backoffMs]. */
+    private const val MAX_DENIAL_RETRIES = 5
+
+    /** Ceiling on the share-status probe, so an offline device can't stall a watcher on it. */
+    private const val PROBE_TIMEOUT_MS = 15_000L
+
+    /** Generic push message, not [SyncFailure.AuthExpired]: the session is fine, one scope is not. */
+    private const val SHARED_DENIAL_MESSAGE =
+      "Sync error: a shared item is not accepting changes"
 
     /** Collections that live at `users/{uid}/<wire>/...`. Hydrated on sign-in. */
     private val TOP_LEVEL_KINDS: List<CollectionKind> = listOf(

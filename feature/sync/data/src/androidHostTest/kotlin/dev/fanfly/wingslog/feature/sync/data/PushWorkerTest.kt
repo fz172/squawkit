@@ -276,7 +276,7 @@ class PushWorkerTest {
         writer = writer,
         ioContext = ioContext,
         storeFactory = storeFactory,
-      ).apply { sharedScopeRevokedSink = { host, ac -> revoked += host to ac } }
+      ).apply { sharedScopeRevokedSink = { host, ac -> revoked += host to ac; true } }
 
       val job = launch { worker.run(TEST_USER_ID) }
       testScheduler.advanceUntilIdle()
@@ -310,7 +310,7 @@ class PushWorkerTest {
         telemetry = telemetry,
       ).apply {
         failureSink = { failures += it }
-        sharedScopeRevokedSink = { host, ac -> revoked += host to ac }
+        sharedScopeRevokedSink = { host, ac -> revoked += host to ac; true }
       }
 
       val job = launch { sharedWorker.run(TEST_USER_ID) }
@@ -344,7 +344,7 @@ class PushWorkerTest {
         telemetry = telemetry,
       ).apply {
         failureSink = { failures += it }
-        sharedScopeRevokedSink = { host, ac -> revoked += host to ac }
+        sharedScopeRevokedSink = { host, ac -> revoked += host to ac; true }
       }
 
       val job = launch { ownWorker.run(TEST_USER_ID) }
