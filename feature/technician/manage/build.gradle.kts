@@ -35,6 +35,9 @@ kotlin {
       implementation(project(":core:ui:adaptive"))
       implementation(project(":core:ui:theme"))
       implementation(project(":core:sharedassets"))
+      // The profile editor names the signed-in account's email beside the editable name.
+      implementation(project(":core:auth"))
+      implementation(project(":core:ui:widget:avataricon"))
       implementation(project(":feature:technician:datamanager"))
       implementation(project(":feature:technician:sharedassets"))
       // Editing the self-record republishes the technician mirror to every share (design §7.2).

@@ -3,6 +3,7 @@ package dev.fanfly.wingslog.feature.technician.manage.viewmodel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.model.technician.resolvedCertifications
 import dev.fanfly.wingslog.core.nav.Screen
@@ -32,6 +33,8 @@ data class EditTechnicianUiState(
   /** What the account's templates declare — empty means the form offers no certifications at all. */
   val offered: List<OfferedCertification> = emptyList(),
   val isSelf: Boolean = false,
+  /** The signed-in account's address, shown read-only on the self profile; null when it has none. */
+  val email: String? = null,
   val isLoading: Boolean = false,
   val isSaving: Boolean = false,
   val saveSuccess: Boolean = false,
@@ -44,6 +47,7 @@ class EditTechnicianViewModel(
   private val sharingManager: SharingManager,
   private val fleetManager: FleetManager,
   private val templateRegistry: TemplateRegistry,
+  authManager: AuthManager,
   savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
@@ -62,7 +66,12 @@ class EditTechnicianViewModel(
   private var loaded: Technician = Technician()
 
   private val _uiState =
-    MutableStateFlow(EditTechnicianUiState(isLoading = technicianId != null))
+    MutableStateFlow(
+      EditTechnicianUiState(
+        isLoading = technicianId != null,
+        email = authManager.getCurrentUser()?.email?.takeIf { it.isNotBlank() },
+      )
+    )
   val uiState = _uiState.asStateFlow()
 
   init {

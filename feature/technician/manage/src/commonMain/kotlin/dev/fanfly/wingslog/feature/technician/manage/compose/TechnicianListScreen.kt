@@ -1,20 +1,19 @@
 package dev.fanfly.wingslog.feature.technician.manage.compose
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Engineering
 import androidx.compose.material.icons.filled.Merge
@@ -28,7 +27,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -38,31 +36,36 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.text.font.FontWeight
-import dev.fanfly.wingslog.core.ui.common.compose.AlertDialog
-import dev.fanfly.wingslog.thing.Technician
+import dev.fanfly.wingslog.core.template.OfferedCertification
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedFloatingAction
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedTopBar
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
 import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
+import dev.fanfly.wingslog.core.ui.common.compose.AlertDialog
 import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
+import dev.fanfly.wingslog.core.ui.common.compose.GroupedRowGroup
+import dev.fanfly.wingslog.core.ui.common.compose.GroupedSection
+import dev.fanfly.wingslog.core.ui.common.compose.SettingsHero
+import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.technician.manage.viewmodel.TechnicianListViewModel
+import dev.fanfly.wingslog.thing.Technician
 import org.jetbrains.compose.resources.stringResource
-import wingslog.feature.technician.sharedassets.generated.resources.manage_technicians_description
 import wingslog.feature.technician.sharedassets.generated.resources.add_technician
-import wingslog.feature.technician.sharedassets.generated.resources.empty_technicians_desc
-import wingslog.feature.technician.sharedassets.generated.resources.empty_technicians_title
 import wingslog.feature.technician.sharedassets.generated.resources.duplicates_prompt_action
 import wingslog.feature.technician.sharedassets.generated.resources.duplicates_prompt_dismiss
 import wingslog.feature.technician.sharedassets.generated.resources.duplicates_prompt_title
 import wingslog.feature.technician.sharedassets.generated.resources.duplicates_review_title
+import wingslog.feature.technician.sharedassets.generated.resources.empty_technicians_desc
+import wingslog.feature.technician.sharedassets.generated.resources.empty_technicians_title
 import wingslog.feature.technician.sharedassets.generated.resources.linked_technician_info_body
 import wingslog.feature.technician.sharedassets.generated.resources.linked_technician_info_dismiss
 import wingslog.feature.technician.sharedassets.generated.resources.linked_technician_info_title
 import wingslog.feature.technician.sharedassets.generated.resources.linked_technicians_header
 import wingslog.feature.technician.sharedassets.generated.resources.manage_technicians
+import wingslog.feature.technician.sharedassets.generated.resources.manage_technicians_description
 import wingslog.feature.technician.sharedassets.generated.resources.my_technicians_header
+import wingslog.feature.technician.sharedassets.generated.resources.technician_hero_title
 import wingslog.feature.technician.sharedassets.generated.resources.Res as TechnicianRes
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -104,16 +107,9 @@ fun TechnicianListScreen(
     modifier = modifier,
     topBar = {
       ConstrainedTopBar {
-        TopAppBar(
-          title = { Text(stringResource(TechnicianRes.string.manage_technicians)) },
-          navigationIcon = {
-            IconButton(onClick = onNavigateBack) {
-              Icon(
-                Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = null
-              )
-            }
-          },
+        WingsLogTopAppBar(
+          title = stringResource(TechnicianRes.string.manage_technicians),
+          onBackClick = onNavigateBack,
           actions = {
             // The prompt is dismissible, so it can't be the only way in: once dismissed, a user who
             // changes their mind would have no route back to the review while the duplicates remain.
@@ -131,7 +127,10 @@ fun TechnicianListScreen(
     },
     floatingActionButton = {
       ConstrainedFloatingAction(ContentWidth.Reading) {
-        FloatingActionButton(onClick = { onNavigateToEdit(null) }) {
+        FloatingActionButton(
+          onClick = { onNavigateToEdit(null) },
+          shape = RoundedCornerShape(Spacing.buttonCornerRadius),
+        ) {
           Icon(
             Icons.Default.Add,
             contentDescription = stringResource(TechnicianRes.string.add_technician)
@@ -169,12 +168,13 @@ fun TechnicianListScreen(
             .fillMaxHeight()
             .constrainedContentWidth(ContentWidth.Reading),
           contentPadding = PaddingValues(
-            start = Spacing.large,
-            end = Spacing.large,
+            start = Spacing.screenPadding,
+            end = Spacing.screenPadding,
             top = Spacing.large,
-            bottom = Spacing.large + paddingValues.calculateBottomPadding(),
+            // Clears the FAB as well as the gesture bar.
+            bottom = Spacing.massive + Spacing.huge + paddingValues.calculateBottomPadding(),
           ),
-          verticalArrangement = Arrangement.spacedBy(Spacing.medium),
+          verticalArrangement = Arrangement.spacedBy(Spacing.extraLarge),
         ) {
           // Fixed text, no lexicon. This page aggregates technicians across the whole account —
           // they are account-scoped, not per-thing — so the selected thing's words are the wrong
@@ -185,11 +185,11 @@ fun TechnicianListScreen(
           // by a template, and the domain is *derived* from it — an A&P means aviation, an
           // electrician's licence means home. Rows carry tags read off that. Nothing asks the user
           // which domain someone belongs to. That is where the domain speaks on this screen.
-          item(key = "description") {
-            Text(
-              text = stringResource(TechnicianRes.string.manage_technicians_description),
-              style = MaterialTheme.typography.bodyMedium,
-              color = MaterialTheme.colorScheme.onSurfaceVariant,
+          item(key = "hero") {
+            SettingsHero(
+              icon = Icons.Default.Engineering,
+              title = stringResource(TechnicianRes.string.technician_hero_title),
+              body = stringResource(TechnicianRes.string.manage_technicians_description),
             )
           }
 
@@ -202,33 +202,26 @@ fun TechnicianListScreen(
             }
           }
 
-          // Only headline the personal list when there's a linked section to distinguish it from.
-          if (state.linkedTechnicians.isNotEmpty() && state.technicians.isNotEmpty()) {
-            item(key = "own-header") {
-              SectionHeader(stringResource(TechnicianRes.string.my_technicians_header))
+          if (state.technicians.isNotEmpty()) {
+            item(key = "own") {
+              TechnicianGroup(
+                title = stringResource(TechnicianRes.string.my_technicians_header),
+                technicians = state.technicians,
+                offered = state.knownCertifications,
+                selfId = state.selfId,
+                onClick = { onNavigateToEdit(it.id) },
+              )
             }
-          }
-          items(state.technicians, key = { it.id }) { technician ->
-            TechnicianCard(
-              technician = technician,
-              offered = state.knownCertifications,
-              onClick = { onNavigateToEdit(technician.id) },
-              isSelf = technician.id == state.selfId,
-            )
           }
 
           if (state.linkedTechnicians.isNotEmpty()) {
-            item(key = "linked-header") {
-              SectionHeader(stringResource(TechnicianRes.string.linked_technicians_header))
-            }
-            // Keyed by source_uid: a linked profile is identified by the account that owns it, and
-            // that's what keeps it distinct from any manual entry of the same person.
-            items(state.linkedTechnicians, key = { "linked-${it.source_uid}" }) { linked ->
-              TechnicianCard(
-                technician = linked,
+            item(key = "linked") {
+              TechnicianGroup(
+                title = stringResource(TechnicianRes.string.linked_technicians_header),
+                technicians = state.linkedTechnicians,
                 offered = state.knownCertifications,
-                onClick = { infoFor = linked },
                 isLinked = true,
+                onClick = { infoFor = it },
               )
             }
           }
@@ -238,15 +231,31 @@ fun TechnicianListScreen(
   }
 }
 
+/** One labelled card of roster rows. */
 @Composable
-private fun SectionHeader(text: String) {
-  Text(
-    text = text,
-    style = MaterialTheme.typography.titleSmall,
-    fontWeight = FontWeight.SemiBold,
-    color = MaterialTheme.colorScheme.onSurfaceVariant,
-    modifier = Modifier.padding(top = Spacing.small, bottom = Spacing.extraSmall),
-  )
+private fun TechnicianGroup(
+  title: String,
+  technicians: List<Technician>,
+  offered: List<OfferedCertification>,
+  onClick: (Technician) -> Unit,
+  selfId: String? = null,
+  isLinked: Boolean = false,
+) {
+  GroupedSection(title) {
+    GroupedRowGroup(
+      rows = technicians.map { technician ->
+        {
+          TechnicianRow(
+            technician = technician,
+            offered = offered,
+            onClick = { onClick(technician) },
+            isSelf = technician.id == selfId,
+            isLinked = isLinked,
+          )
+        }
+      },
+    )
+  }
 }
 
 /**

@@ -82,6 +82,7 @@ class EditTechnicianViewModelTest {
     sharingManager = sharingManager,
     fleetManager = fleetManager,
     templateRegistry = registry,
+    authManager = mockk(relaxed = true),
     savedStateHandle = SavedStateHandle(mapOf(Screen.TECHNICIAN_ID to (id ?: "new"))),
   )
 
