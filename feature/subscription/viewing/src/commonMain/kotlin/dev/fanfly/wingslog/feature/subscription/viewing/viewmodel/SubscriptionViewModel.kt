@@ -8,18 +8,25 @@ import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.model.settings.Subscription
 import dev.fanfly.wingslog.feature.subscription.datamanager.EntitlementReconciler
 import dev.fanfly.wingslog.feature.subscription.datamanager.NoOpEntitlementReconciler
+import dev.fanfly.wingslog.feature.subscription.datamanager.NoOpPromoCodeRedeemer
+import dev.fanfly.wingslog.feature.subscription.datamanager.PromoCodeRedeemer
+import dev.fanfly.wingslog.feature.subscription.datamanager.PromoRedemptionResult
 import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
 import dev.fanfly.wingslog.feature.subscription.model.BillingManager
+import dev.fanfly.wingslog.feature.subscription.model.PROMO_CODE_LENGTH
 import dev.fanfly.wingslog.feature.subscription.model.PurchasePlatform
+import dev.fanfly.wingslog.feature.subscription.model.normalizePromoCode
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -115,6 +122,23 @@ data class SubscriptionUiState(
    */
   val isGuest: Boolean = false,
   /**
+   * The term a promo code just granted, while its entitlement is still syncing down.
+   *
+   * `null` at every other moment, including once Pro lands — so it doubles as "the activation in
+   * flight came from a code, not the store", which is the only thing separating two otherwise
+   * identical waits with very different copy. See [PromoTerm].
+   */
+  val promoActivationTerm: PromoTerm? = null,
+  /**
+   * Whether the page should offer promo-code entry at all.
+   *
+   * True on the paywall, and on a *comped* membership — a second code stacks onto comp time the
+   * account still holds, so hiding the entry there would make a term the server supports
+   * unreachable. Deliberately false for a store subscriber, whose redemption the server refuses:
+   * offering a control that can only be turned down is worse than not offering it.
+   */
+  val canRedeemPromo: Boolean = false,
+  /**
    * Whether this build ships ads at all — the comparison table's "Ad-free experience" row must
    * describe the build the pilot is actually holding, not a hypothetical one (#384). Sourced from
    * [dev.fanfly.wingslog.core.appinfo.AppCapability.isAdsSupported] rather than
@@ -124,6 +148,66 @@ data class SubscriptionUiState(
    */
   val isAdsSupported: Boolean = false,
 )
+
+/**
+ * The promo-code entry dialog's own state (#750).
+ *
+ * Held in the ViewModel rather than in the dialog's `remember`, so a half-typed code survives the
+ * composition being torn down — a real hazard on Android, where the entry sits behind a system
+ * keyboard and, on web, behind a page that re-lays-out on resize. The same rule the form screens
+ * follow.
+ */
+data class PromoCodeUiState(
+  val isOpen: Boolean = false,
+  /** Canonical, undashed: uppercase, alphabet-cropped, at most [PROMO_CODE_LENGTH]. */
+  val code: String = "",
+  val isSubmitting: Boolean = false,
+  val error: PromoCodeError? = null,
+) {
+  /** Whether the code is *shaped* like one. The server decides whether it is one. */
+  val isComplete: Boolean get() = normalizePromoCode(code) != null
+}
+
+/**
+ * Why a redemption was refused, in the four flavours that change what the pilot should do next.
+ *
+ * Distinct from the server's English: the callable's status code is the stable half of that
+ * contract, and the copy lives in `strings.xml` where it can be translated.
+ */
+enum class PromoCodeError {
+  /** Unknown, already spent, or past its redemption window — the server does not say which. */
+  NOT_VALID,
+  TOO_MANY_ATTEMPTS,
+  /** Already on a paid store subscription. The code was left unspent. */
+  ALREADY_SUBSCRIBED,
+  SIGN_IN_REQUIRED,
+  /** Offline or a failed call. Nothing was spent. */
+  UNAVAILABLE,
+}
+
+/**
+ * The term a redeemed code was worth, reduced to the three the pool is minted in plus a catch-all.
+ *
+ * An enum rather than the raw day count so the page needs no plural forms for a number it did not
+ * choose: the three named terms get copy that reads naturally, and anything else gets a line that
+ * names no duration at all. The membership card's end date is the precise answer either way.
+ */
+enum class PromoTerm {
+  ONE_MONTH,
+  THREE_MONTHS,
+  ONE_YEAR,
+  OTHER,
+  ;
+
+  internal companion object {
+    fun ofDays(days: Int): PromoTerm = when (days) {
+      30 -> ONE_MONTH
+      90 -> THREE_MONTHS
+      365 -> ONE_YEAR
+      else -> OTHER
+    }
+  }
+}
 
 /**
  * Maps the entitlement's `origin_platform` onto a store worth naming.
@@ -203,12 +287,19 @@ class SubscriptionViewModel(
   private val authManager: AuthManager,
   private val appCapability: AppCapability,
   private val entitlementReconciler: EntitlementReconciler = NoOpEntitlementReconciler,
+  private val promoCodeRedeemer: PromoCodeRedeemer = NoOpPromoCodeRedeemer,
   /** How long to wait for the webhook before asking the server to re-check. Overridden in tests. */
   private val activationGraceMillis: Long = ACTIVATION_GRACE_MILLIS,
 ) : ViewModel() {
 
   private val purchasePending = MutableStateFlow(false)
   private var activationWatchdog: Job? = null
+
+  /** The term a just-redeemed code granted, held until the entitlement it bought syncs down. */
+  private val promoPending = MutableStateFlow<PromoTerm?>(null)
+
+  private val _promoCodeState = MutableStateFlow(PromoCodeUiState())
+  val promoCodeState: StateFlow<PromoCodeUiState> = _promoCodeState.asStateFlow()
 
   init {
     requestManagementUrlIfMissing()
@@ -255,15 +346,18 @@ class SubscriptionViewModel(
       subscriptionManager.status(),
       subscriptionManager.entitlement(),
       purchasePending,
-    ) { status, subscription, pending ->
+      promoPending,
+    ) { status, subscription, pending, promoTerm ->
       toSubscriptionUiState(
         status = status,
         subscription = subscription,
         isPurchaseSupported = billingManager.isPurchaseSupported,
         store = billingManager.store,
-        // Once the entitlement lands, the pending flag is moot — resolve it from the tier rather
-        // than trusting a flag to be cleared, so the UI can never stick on "activating".
-        isActivating = pending && status != Subscription.Status.STATUS_PRO,
+        // Once the entitlement lands, the pending flags are moot — resolve them from the tier
+        // rather than trusting a flag to be cleared, so the UI can never stick on "activating".
+        isActivating = (pending || promoTerm != null) &&
+          status != Subscription.Status.STATUS_PRO,
+        promoActivationTerm = promoTerm.takeIf { status != Subscription.Status.STATUS_PRO },
         // Re-read on every emission rather than held: `status()` is auth-scoped, so signing in or
         // out re-runs this. Linking a guest account to a real one does NOT fire authStateChanged
         // (see SettingsViewModel), so an in-session upgrade is reflected when the page is revisited.
@@ -305,6 +399,64 @@ class SubscriptionViewModel(
     }
   }
 
+  fun onPromoEntryOpened() {
+    _promoCodeState.value = PromoCodeUiState(isOpen = true)
+  }
+
+  fun onPromoEntryDismissed() {
+    _promoCodeState.value = PromoCodeUiState()
+  }
+
+  /**
+   * Accepts a keystroke into the code field.
+   *
+   * Cropped to A–Z and 0–9 rather than to the code alphabet: an allowlist that drifted from the
+   * server's would silently swallow a *valid* code, which is worse than letting a wrong keystroke
+   * through. [normalizePromoCode] is the single source of truth and gates the submit button.
+   *
+   * Clears any previous error — the pilot is acting on it, and leaving "not valid" under a code
+   * they are in the middle of retyping reads as a verdict on the new one.
+   */
+  fun onPromoCodeChanged(raw: String) {
+    val cleaned = raw.uppercase()
+      .filter { it in 'A'..'Z' || it in '0'..'9' }
+      .take(PROMO_CODE_LENGTH)
+    _promoCodeState.update { it.copy(code = cleaned, error = null) }
+  }
+
+  /**
+   * Sends the code. Grants nothing locally: on success the dialog closes and the page waits for the
+   * server-written entitlement to sync, exactly as it waits after a purchase.
+   *
+   * Guarded against a double submit, because a second in-flight redemption of the same code is at
+   * best wasted and at worst a second attempt against the failed-guess budget.
+   */
+  fun onPromoCodeSubmitted() {
+    val current = _promoCodeState.value
+    if (current.isSubmitting || !current.isComplete) return
+
+    _promoCodeState.update { it.copy(isSubmitting = true, error = null) }
+    viewModelScope.launch {
+      when (val result = promoCodeRedeemer.redeem(current.code)) {
+        is PromoRedemptionResult.Granted -> {
+          _promoCodeState.value = PromoCodeUiState()
+          promoPending.value = PromoTerm.ofDays(result.durationDays)
+        }
+
+        PromoRedemptionResult.NotValid -> failPromo(PromoCodeError.NOT_VALID)
+        PromoRedemptionResult.TooManyAttempts -> failPromo(PromoCodeError.TOO_MANY_ATTEMPTS)
+        PromoRedemptionResult.AlreadySubscribed -> failPromo(PromoCodeError.ALREADY_SUBSCRIBED)
+        PromoRedemptionResult.SignInRequired -> failPromo(PromoCodeError.SIGN_IN_REQUIRED)
+        PromoRedemptionResult.Unavailable -> failPromo(PromoCodeError.UNAVAILABLE)
+      }
+    }
+  }
+
+  /** Keeps the dialog open with the code intact, so a mistyped character can be fixed in place. */
+  private fun failPromo(error: PromoCodeError) {
+    _promoCodeState.update { it.copy(isSubmitting = false, error = error) }
+  }
+
   private companion object {
     /**
      * Long enough that the webhook round trip — store → provider → webhook → Firestore → sync —
@@ -323,6 +475,7 @@ internal fun toSubscriptionUiState(
   isPurchaseSupported: Boolean = false,
   store: PurchasePlatform? = null,
   isActivating: Boolean = false,
+  promoActivationTerm: PromoTerm? = null,
   isGuest: Boolean = false,
   isAdsSupported: Boolean = false,
 ): SubscriptionUiState {
@@ -345,6 +498,10 @@ internal fun toSubscriptionUiState(
     storageBytesUsed = subscription.storage_bytes_used,
     isPurchaseSupported = isPurchaseSupported,
     isActivating = isActivating,
+    promoActivationTerm = promoActivationTerm,
+    // A store subscriber is refused server-side; everyone else — free, and comped, who can stack a
+    // second term onto the comp time they still hold — is offered the entry.
+    canRedeemPromo = !isGuest && (status != Subscription.Status.STATUS_PRO || isComped),
     purchasePlatform = purchasePlatform,
     canManage = !isComped && canManageHere(purchasePlatform, store),
     managementUrl = providerUrl ?: derivedUrl,

@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ReceiptLong
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -35,13 +34,11 @@ import dev.fanfly.wingslog.feature.subscription.viewing.viewmodel.SubscriptionUi
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.subscription.viewing.generated.resources.Res
 import wingslog.feature.subscription.viewing.generated.resources.subscription_activating
-import wingslog.feature.subscription.viewing.generated.resources.subscription_billing_note
 import wingslog.feature.subscription.viewing.generated.resources.subscription_cell_excluded
 import wingslog.feature.subscription.viewing.generated.resources.subscription_cell_unlimited
 import wingslog.feature.subscription.viewing.generated.resources.subscription_col_free
 import wingslog.feature.subscription.viewing.generated.resources.subscription_col_pro
 import wingslog.feature.subscription.viewing.generated.resources.subscription_compare_header
-import wingslog.feature.subscription.viewing.generated.resources.subscription_compare_subhead
 import wingslog.feature.subscription.viewing.generated.resources.subscription_cta_caption
 import wingslog.feature.subscription.viewing.generated.resources.subscription_feature_ads
 import wingslog.feature.subscription.viewing.generated.resources.subscription_feature_attachments
@@ -68,19 +65,13 @@ import wingslog.feature.subscription.viewing.generated.resources.subscription_th
 @Composable
 internal fun ProPaywallContent(
   state: SubscriptionUiState,
-  onSubscribe: () -> Unit
+  onSubscribe: () -> Unit,
+  onRedeemPromo: () -> Unit,
 ) {
   Text(
     text = stringResource(Res.string.subscription_compare_header),
     style = MaterialTheme.typography.headlineMedium,
   )
-  Text(
-    text = stringResource(Res.string.subscription_compare_subhead),
-    style = MaterialTheme.typography.bodyMedium,
-    color = MaterialTheme.colorScheme.onSurfaceVariant,
-  )
-
-  BillingNote()
   ComparisonTable(isAdsSupported = state.isAdsSupported)
 
   SubscribeButton(
@@ -92,10 +83,14 @@ internal fun ProPaywallContent(
   )
 
   // Most actionable first: a guest can fix their case, and until they do nothing else about the
-  // button matters. The default line sets expectations for the store sheet that is about to open.
+  // button matters. A promo activation outranks the purchase line because it names what the pilot
+  // just did; the default line sets expectations for the store sheet that is about to open.
   SubscriptionCaption(
     text = when {
       state.isGuest -> stringResource(Res.string.subscription_sign_in_to_subscribe)
+      state.promoActivationTerm != null ->
+        stringResource(state.promoActivationTerm.activatingRes)
+
       state.isActivating -> stringResource(Res.string.subscription_activating)
       // Web: purchasing is mobile-only, but a subscription bought there unlocks Pro here too.
       !state.isPurchaseSupported -> stringResource(Res.string.subscription_purchase_on_mobile)
@@ -103,6 +98,13 @@ internal fun ProPaywallContent(
     },
     textAlign = TextAlign.Center,
   )
+
+  // A second way in, not a second pitch — quiet enough that it never competes with the CTA above,
+  // and present even where purchasing is not (web can redeem a code perfectly well). Hidden while a
+  // redemption is already landing, so the page cannot invite a second one over the first.
+  if (state.canRedeemPromo && state.promoActivationTerm == null) {
+    PromoCodeEntryButton(onRedeemPromo)
+  }
 
   HorizontalDivider()
   Row(
@@ -119,38 +121,6 @@ internal fun ProPaywallContent(
       text = state.storageBytesUsed.formatFileSize(),
       style = WingslogTypography.dataMedium
     )
-  }
-}
-
-/**
- * Says where pricing lives before the pilot taps through.
- *
- * A paywall that shows no price reads as evasive unless it explains itself, and the store genuinely
- * owns the number — plan, currency, tax and any introductory offer are decided there.
- */
-@Composable
-private fun BillingNote() {
-  SubscriptionPanel {
-    Row(
-      modifier = Modifier.padding(
-        horizontal = Spacing.large,
-        vertical = Spacing.medium
-      ),
-      horizontalArrangement = Arrangement.spacedBy(Spacing.small),
-      verticalAlignment = Alignment.CenterVertically,
-    ) {
-      Icon(
-        imageVector = Icons.AutoMirrored.Filled.ReceiptLong,
-        contentDescription = null,
-        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.size(Spacing.xLarge),
-      )
-      Text(
-        text = stringResource(Res.string.subscription_billing_note),
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-      )
-    }
   }
 }
 

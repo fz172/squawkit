@@ -12,6 +12,7 @@
     "serve": "firebase emulators:start --only functions",
     "deploy": "firebase deploy --only functions",
     "grant": "npm run build && node scripts/grant-entitlement.mjs",
+    "promo": "npm run build && node scripts/promo-codes.mjs",
     "test": "firebase emulators:exec --only auth,firestore,storage --project demo-squawkit \"$(command -v node) node_modules/vitest/vitest.mjs run\"",
     "dna-audit": "npm run build && node scripts/thing-dna-audit.mjs",
     "share-cutover": "npm run build && node scripts/thing-share-cutover.mjs",

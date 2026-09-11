@@ -147,6 +147,20 @@ service cloud.firestore {
       allow read, write: if false; // functions only
     }
 
+    // The minted promo-code pool (#750). The code IS the secret and it is the document id, so a
+    // client allowed to list this collection would hold every unredeemed code in it — the whole
+    // point of a pool is that it is larger than any one code, which cuts both ways. Only
+    // `redeemPromoCode` dereferences one, as admin.
+    match /promo_codes/{code} {
+      allow read, write: if false; // functions only
+    }
+
+    // Failed-redemption counters behind the promo limiter, for the same reasons as
+    // invite_attempts: reading them reveals the remaining guessing budget, writing them resets it.
+    match /promo_attempts/{uid} {
+      allow read, write: if false; // functions only
+    }
+
     // --- Pairing-code invites (#164) -----------------------------------------------------------
 
     // The code IS the secret: the document holds the aircraft id, the host uid, and the role, keyed

@@ -67,6 +67,7 @@ fun SubscriptionScreen(
   viewModel: SubscriptionViewModel = koinViewModel(),
 ) {
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+  val promoState by viewModel.promoCodeState.collectAsStateWithLifecycle()
   var sheet by remember { mutableStateOf(BillingSheet.None) }
 
   // Full-screen, replacing the page rather than layering over it: both RevenueCat surfaces bring
@@ -86,6 +87,18 @@ fun SubscriptionScreen(
     }
 
     BillingSheet.None -> Unit
+  }
+
+  // Layered over the page rather than replacing it, unlike the store surfaces above: redeeming a
+  // code is a detour from the decision the page is presenting, and the comparison behind it is
+  // still the context for it.
+  if (promoState.isOpen) {
+    PromoCodeDialog(
+      state = promoState,
+      onCodeChange = viewModel::onPromoCodeChanged,
+      onSubmit = viewModel::onPromoCodeSubmitted,
+      onDismiss = viewModel::onPromoEntryDismissed,
+    )
   }
 
   Scaffold(
@@ -121,11 +134,13 @@ fun SubscriptionScreen(
             ProMembershipContent(
               state = uiState,
               onManage = { sheet = BillingSheet.CustomerCenter },
+              onRedeemPromo = viewModel::onPromoEntryOpened,
             )
           } else {
             ProPaywallContent(
               state = uiState,
               onSubscribe = { sheet = BillingSheet.Paywall },
+              onRedeemPromo = viewModel::onPromoEntryOpened,
             )
           }
         }

@@ -4,9 +4,7 @@
 
   <!-- Non-subscriber comparison view -->
   <string name="subscription_compare_header">Your all-access pass</string>
-  <string name="subscription_compare_subhead">The Basic bundle is free and provides the essential functional feature set, backed up and synced. The Pro bundle adds scale, attachments, collaboration and more.</string>
   <!-- Sets expectations before the store paywall opens: SquawkIt never shows a price itself. -->
-  <string name="subscription_billing_note">Monthly and annual billing, price and payment method are chosen in the store.</string>
   <string name="subscription_cta_caption">Price shown at checkout. Cancel anytime.</string>
   <string name="subscription_includes_header">What’s included</string>
   <string name="subscription_col_free">Basic</string>
@@ -33,6 +31,25 @@
   <string name="subscription_purchase_on_mobile">Subscribe in the SquawkIt app on iOS or Android. Your subscription works everywhere, including here.</string>
   <!-- The store took payment; the entitlement is still syncing back from the server. -->
   <string name="subscription_activating">Payment received. Activating SquawkIt Pro…</string>
+
+  <!-- Promo codes: redeem a pre-minted code instead of buying. -->
+  <string name="subscription_promo_entry">Have a promo code?</string>
+  <string name="subscription_promo_title">Redeem a promo code</string>
+  <string name="subscription_promo_instructions">Enter the code exactly as it was given to you. It unlocks SquawkIt Pro for a set period.</string>
+  <string name="subscription_promo_field_label">Promo code</string>
+  <string name="subscription_promo_redeem">Redeem</string>
+  <!-- Unknown, already used, or past its redemption window — deliberately not distinguished. -->
+  <string name="subscription_promo_error_invalid">That code can’t be redeemed. Check it and try again.</string>
+  <string name="subscription_promo_error_throttled">Too many attempts. Wait a little while and try again.</string>
+  <string name="subscription_promo_error_subscribed">This account already has a paid subscription, so the code wasn’t used. Redeem it after the subscription ends.</string>
+  <string name="subscription_promo_error_sign_in">Sign in first, so the promo is tied to your account and works on every device.</string>
+  <string name="subscription_promo_error_offline">Couldn’t reach SquawkIt. Check your connection and try again.</string>
+  <!-- The code was accepted; the entitlement is still syncing back from the server. -->
+  <string name="subscription_promo_activating_month">Promo code applied — 1 month of SquawkIt Pro. Activating…</string>
+  <string name="subscription_promo_activating_quarter">Promo code applied — 3 months of SquawkIt Pro. Activating…</string>
+  <string name="subscription_promo_activating_year">Promo code applied — 1 year of SquawkIt Pro. Activating…</string>
+  <!-- Any other term: the membership card names the exact end date once it lands. -->
+  <string name="subscription_promo_activating_other">Promo code applied. Activating SquawkIt Pro…</string>
 
   <!-- Subscriber status view -->
   <string name="subscription_member_since">Member since</string>
@@ -61,6 +78,9 @@
   <!-- Replaces "Renews" once the subscription is set to end rather than renew. -->
   <string name="subscription_ends">Ends</string>
   <string name="subscription_purchased_on">Purchased on</string>
+  <!-- Replaces the "Purchased on <store>" row for a granted subscription, which had no purchase. -->
+  <string name="subscription_source">Source</string>
+  <string name="subscription_source_promotion">Promotion</string>
   <string name="subscription_unlocked_header">Unlocked with Pro</string>
   <string name="subscription_perk_thing_title">Unlimited things</string>
   <string name="subscription_perk_thing_body">All your things logged in one book</string>

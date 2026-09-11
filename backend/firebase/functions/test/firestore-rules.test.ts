@@ -8,7 +8,7 @@ import {
   initializeTestEnvironment,
   type RulesTestEnvironment,
 } from "@firebase/rules-unit-testing";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs, setDoc } from "firebase/firestore";
 import { afterAll, beforeAll, beforeEach, describe, it } from "vitest";
 
 // firestore.rules lives at backend/firebase/firestore.rules — two levels up from this test.
@@ -152,6 +152,45 @@ describe("entitlement_reconcile/{uid} rules", () => {
     await assertFails(
       setDoc(doc(alice, "entitlement_reconcile/alice"), { lastReconciledAtMillis: 0 }),
     );
+  });
+});
+
+// The minted promo-code pool (#750). The code IS the secret and it is also the document id, so a
+// client able to read — still worse, to LIST — this collection would walk away with every
+// unredeemed code in it. Only `redeemPromoCode` dereferences one, as admin.
+describe("promo_codes/{code} rules", () => {
+  beforeEach(async () => {
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "promo_codes/PRQK8H3MXTVB"), {
+        durationDays: 365,
+        batch: "test",
+        redeemedByUid: null,
+      });
+      await setDoc(doc(ctx.firestore(), "promo_attempts/alice"), { failures: 3 });
+    });
+  });
+
+  it("denies a signed-in user reading a code", async () => {
+    const alice = testEnv.authenticatedContext("alice").firestore();
+    await assertFails(getDoc(doc(alice, "promo_codes/PRQK8H3MXTVB")));
+  });
+
+  it("denies listing the pool (no fishing for live codes)", async () => {
+    const alice = testEnv.authenticatedContext("alice").firestore();
+    await assertFails(getDocs(collection(alice, "promo_codes")));
+  });
+
+  it("denies minting one", async () => {
+    const alice = testEnv.authenticatedContext("alice").firestore();
+    await assertFails(
+      setDoc(doc(alice, "promo_codes/EVILEVILEVIL"), { durationDays: 3650, batch: "self" }),
+    );
+  });
+
+  it("denies reading or resetting the failed-redemption budget", async () => {
+    const alice = testEnv.authenticatedContext("alice").firestore();
+    await assertFails(getDoc(doc(alice, "promo_attempts/alice")));
+    await assertFails(setDoc(doc(alice, "promo_attempts/alice"), { failures: 0 }));
   });
 });
 
