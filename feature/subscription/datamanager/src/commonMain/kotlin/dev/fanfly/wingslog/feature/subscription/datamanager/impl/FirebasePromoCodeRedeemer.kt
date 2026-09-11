@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.feature.subscription.datamanager.impl
 
 import co.touchlab.kermit.Logger
+import dev.fanfly.wingslog.core.firebase.functions.isCallableClientDefect
 import dev.fanfly.wingslog.feature.subscription.datamanager.PromoCodeRedeemer
 import dev.fanfly.wingslog.feature.subscription.datamanager.PromoRedemptionResult
 import dev.gitlive.firebase.functions.FirebaseFunctions
@@ -40,7 +41,15 @@ class FirebasePromoCodeRedeemer(
   } catch (e: FirebaseFunctionsException) {
     // The code itself is never logged: it is a bearer secret, and a failed redeem is exactly the
     // case where it is most likely to be someone else's. The status code and message are ours.
-    logger.w(e) { "Promo redeem refused: ${e.code}" }
+    //
+    // Most refusals here are ordinary traffic — an invalid code, a throttled caller, an account
+    // already subscribed — and reporting those would drown the dashboard. Only a build the server
+    // will not accept is escalated to a non-fatal.
+    if (e.isCallableClientDefect()) {
+      logger.e(e) { "Promo redeem rejected this build: ${e.code}" }
+    } else {
+      logger.w(e) { "Promo redeem refused: ${e.code}" }
+    }
     when (e.code) {
       // Unknown, spent, or expired — the server refuses to say which.
       FunctionsExceptionCode.NOT_FOUND -> PromoRedemptionResult.NotValid
@@ -65,7 +74,10 @@ class FirebasePromoCodeRedeemer(
     // debugging session — a request that failed to serialize, which never leaves the device and so
     // leaves no trace server-side. Both surface to the pilot as "couldn't reach SquawkIt", which is
     // only honest for the first, so the log has to name which it was.
-    logger.w(e) { "Promo redeem failed before the server answered: ${e::class.simpleName}" }
+    // Error, not Warn: nothing here ever became a callable error, so the request died on the
+    // device. That is always our fault, and it is the exact shape of the serialization bug that
+    // shipped — which produced one Warn line and no report.
+    logger.e(e) { "Promo redeem failed before the server answered: ${e::class.simpleName}" }
     PromoRedemptionResult.Unavailable
   }
 
