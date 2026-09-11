@@ -31,12 +31,11 @@ import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import kotlin.math.roundToInt
 
-private val HaloSize = 120.dp
 private val DiscSize = 88.dp
 private val HeroIconSize = 44.dp
 private val BobAmplitude = 3.dp
 private const val InactiveAlpha = 0.55f
-private const val HaloBreath = 0.06f
+private const val DiscBreath = 0.04f
 private const val HeroPeriodMillis = 2_400
 
 /**
@@ -63,9 +62,8 @@ fun Modifier.heroBob(pulse: () -> Float): Modifier = offset {
 }
 
 /**
- * The head of a settings detail page: one subject in a breathing ringed disc, a title and a
- * sentence — the halo swells and the icon bobs, the way the sync and notification heroes always
- * have.
+ * The head of a settings detail page: one subject on a breathing disc, a title and a sentence —
+ * the disc swells and the icon bobs, the way the sync and notification heroes always have.
  *
  * @param active false when the setting the page governs is off; the subject dims and holds still.
  */
@@ -88,32 +86,24 @@ fun SettingsHero(
   ) {
     Box(
       modifier = Modifier
-        .size(HaloSize)
+        .size(DiscSize)
         .graphicsLayer {
-          val scale = 1f + HaloBreath * pulse.value
+          val scale = 1f + DiscBreath * pulse.value
           scaleX = scale
           scaleY = scale
         }
         .clip(CircleShape)
-        .background(cs.surfaceVariant),
+        .background(if (active) cs.primaryContainer else cs.surfaceContainerHigh),
       contentAlignment = Alignment.Center,
     ) {
-      Box(
+      Icon(
+        imageVector = icon,
+        contentDescription = null,
         modifier = Modifier
-          .size(DiscSize)
-          .clip(CircleShape)
-          .background(if (active) cs.primaryContainer else cs.surfaceContainerHigh),
-        contentAlignment = Alignment.Center,
-      ) {
-        Icon(
-          imageVector = icon,
-          contentDescription = null,
-          modifier = Modifier
-            .size(HeroIconSize)
-            .heroBob { pulse.value },
-          tint = if (active) cs.primary else cs.onSurfaceVariant.copy(alpha = InactiveAlpha),
-        )
-      }
+          .size(HeroIconSize)
+          .heroBob { pulse.value },
+        tint = if (active) cs.primary else cs.onSurfaceVariant.copy(alpha = InactiveAlpha),
+      )
     }
     Column(
       horizontalAlignment = Alignment.CenterHorizontally,

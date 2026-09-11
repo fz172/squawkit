@@ -40,7 +40,8 @@ data class SettingsUiState(
   val displayName: String? = null,
   val email: String? = null,
   val photoUrl: String? = null,
-  val plan: PlanRow = PlanRow.Basic,
+  /** Null until the entitlement has been read — the row says nothing rather than guessing Basic. */
+  val plan: PlanRow? = null,
   /**
    * Whether "Ad privacy settings" has a CMP form to re-present right now (#384) — not just whether
    * this build ships ads. False until some ad slot has resolved consent this session (the CMP call

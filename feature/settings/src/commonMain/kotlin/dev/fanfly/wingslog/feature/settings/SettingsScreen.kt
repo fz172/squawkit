@@ -421,6 +421,7 @@ private fun ProfileCard(
         GroupedRow(
           title = stringResource(SettingsRes.string.settings_subscription),
           subtitle = when (plan) {
+            null -> null
             PlanRow.Basic -> stringResource(SettingsRes.string.settings_plan_basic)
             is PlanRow.Pro -> when {
               plan.periodEnd == null -> stringResource(SettingsRes.string.settings_plan_pro)

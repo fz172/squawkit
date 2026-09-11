@@ -207,10 +207,16 @@ class SettingsViewModel(
    * only control that could have corrected it.
    */
   private fun loadUserProfile() {
+    val current = authManager.getCurrentUser()
     _user.value = SettingsUiState(
       userStatus = UserStatus.LOADING,
-      isAnonymous = authManager.getCurrentUser()?.isAnonymous == true,
+      isAnonymous = current?.isAnonymous == true,
       isDeveloperOptionsSupported = appCapability.isDeveloperOptionsSupported,
+      // Seeded from the account so the card never reads "Guest" while the self record loads;
+      // observeSelf refines the name once the technician arrives.
+      displayName = selfDisplayName(null, current),
+      email = current?.email?.takeIf { it.isNotBlank() },
+      photoUrl = current?.photoURL,
     )
   }
 

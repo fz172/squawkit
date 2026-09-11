@@ -1,6 +1,6 @@
 package dev.fanfly.wingslog.feature.settings
 
-import androidx.compose.foundation.background
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,7 +17,6 @@ import androidx.compose.material.icons.filled.Policy
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.SupportAgent
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -44,7 +43,7 @@ import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import wingslog.core.sharedassets.generated.resources.app_name
-import wingslog.core.sharedassets.generated.resources.ic_launcher_foreground
+import wingslog.core.sharedassets.generated.resources.app_icon
 import wingslog.feature.settings.generated.resources.about_contact_support
 import wingslog.feature.settings.generated.resources.about_contact_support_subtitle
 import wingslog.feature.settings.generated.resources.about_copyright
@@ -57,10 +56,7 @@ import wingslog.feature.settings.generated.resources.settings_about
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.settings.generated.resources.Res as SettingsRes
 
-private val AppTileSize = 96.dp
-// The launcher foreground keeps its adaptive-icon safe zone, so it is drawn larger than the tile
-// and clipped to it, the way the launcher itself does.
-private val AppTileIconSize = 144.dp
+private val AppIconSize = 96.dp
 
 /**
  * About SquawkIt: the version, the legal page, and the ways to reach us. Every row is a link out,
@@ -169,22 +165,15 @@ private fun AppIdentity() {
     horizontalAlignment = Alignment.CenterHorizontally,
     verticalArrangement = Arrangement.spacedBy(Spacing.large),
   ) {
-    Box(
+    // The store icon itself, in colour; only the corners are ours — the same radius the launchers use.
+    Image(
+      painter = painterResource(CoreRes.drawable.app_icon),
+      contentDescription = null,
       modifier = Modifier
-        .size(AppTileSize)
-        .clip(RoundedCornerShape(Spacing.extraLarge))
-        .background(MaterialTheme.colorScheme.primaryContainer),
-      contentAlignment = Alignment.Center,
-    ) {
-      Icon(
-        painter = painterResource(CoreRes.drawable.ic_launcher_foreground),
-        contentDescription = null,
-        modifier = Modifier
-          .size(AppTileIconSize)
-          .heroBob { pulse.value },
-        tint = MaterialTheme.colorScheme.primary,
-      )
-    }
+        .size(AppIconSize)
+        .heroBob { pulse.value }
+        .clip(RoundedCornerShape(Spacing.extraLarge)),
+    )
     Column(
       horizontalAlignment = Alignment.CenterHorizontally,
       verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
