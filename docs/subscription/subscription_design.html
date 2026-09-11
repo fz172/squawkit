@@ -234,13 +234,24 @@ function applyEntitlement(update: NormalizedEntitlement): Promise&lt;void&gt;</c
       <ul>
         <li><b>Ingest:</b> an HTTPS webhook (aggregator) <i>or</i> store notifications (Apple ASSN v2, Play RTDN via Pub/Sub, Stripe) — decided later. Each validates the receipt/signature server-side and hands a <code>NormalizedEntitlement</code> to <code>applyEntitlement</code>.</li>
         <li><b>Idempotency:</b> keyed on the provider's transaction/event id so retries and re-delivery don't double-apply.</li>
-        <li><b>Promos (<code>SERVER_GRANT</code>):</b> an admin-only callable (or console script) writes a comp'd entitlement with an end date and no store purchase — no billing provider involved.</li>
+        <li><b>Promos (<code>SERVER_GRANT</code>):</b> an admin-only callable (or console script) writes a comp'd entitlement with an end date and no store purchase — no billing provider involved. A pre-minted, pilot-redeemable pool of the same grants is below.</li>
         <li><b>Client never self-grants</b> from a local receipt; it only reads the synced result.</li>
       </ul>
       <div class="callout note">
         <strong>v1 scope of the pipeline</strong>
         Build the <code>applyEntitlement</code> writer, the security rules, the promo callable, and a <b>stub</b> ingest that the Force-subscription dev toggle and manual promo grants exercise end-to-end. The real provider webhook + purchase/paywall UI land after the billing decision.
       </div>
+
+      <h3>Promo codes (#750)</h3>
+      <p>A pre-minted pool of single-use codes, each worth a fixed term of Pro. It is the second ingest into <code>applyEntitlement</code> that involves no billing provider, and it reuses the admin grant's shape exactly: <code>SERVER_GRANT</code>, <code>ACTIVE</code>, <code>willRenew: false</code>, an end date, and <code>origin_platform: "promotional"</code> so the client already reads it as a comp with nothing to manage.</p>
+      <ul>
+        <li><b>Pool:</b> <code>promo_codes/{code}</code>, top-level and functions-only. The code <i>is</i> the document id and the secret, so clients are denied read <i>and list</i> — a readable pool is every unredeemed code in it. Fields: <code>durationDays</code>, <code>batch</code>, <code>expiresAtMillis</code> (0 = never), <code>redeemedByUid</code>, <code>redeemedAtMillis</code>, <code>grantedUntilMillis</code>.</li>
+        <li><b>Minting:</b> out of band, via <code>npm run promo -- generate --count N --duration 1m|3m|1y --batch &lt;label&gt;</code>. Same access-control story as <code>grant-entitlement.mjs</code>: whoever holds the credentials. <code>npm run promo -- report</code> answers "how many of this batch converted, and who redeemed which".</li>
+        <li><b>Redemption:</b> <code>redeemPromoCode</code>, a callable any signed-in (non-guest) pilot may reach. It sends only the code. The code is <b>claimed in a transaction</b> and the entitlement written after it, because <code>applyEntitlement</code> transacts of its own; a failed grant releases the claim, and a code already claimed by the same uid replays as a success rather than as a loss.</li>
+        <li><b>Entropy:</b> 12 symbols over the invite alphabet ≈ 59 bits, four symbols more than a share pairing code — an invite dies in a day, a promo code sits redeemable for a campaign, and a pool is a bigger target than one invite. Failed redemptions are metered per account through the shared <code>attemptLimiter</code>, in its own <code>promo_attempts</code> budget.</li>
+        <li><b>Stacking, and the one refusal:</b> a code redeemed against remaining comp time extends it. An account on a live <i>store</i> subscription is refused without spending the code — writing a comp over a paying subscriber would promise them a lapse date while the store kept billing.</li>
+        <li><b>Failure copy:</b> unknown, spent and expired collapse into one message, as invite codes do, so a guesser cannot learn which codes are live. The client classifies on the gRPC status code, never on the server's English.</li>
+      </ul>
 
       <h3>Storage-usage sweep</h3>
       <p>Per PRD §6, usage is summed server-side. Extend the scheduled storage sweep: for each account, one paginated <b><code>LIST</code> on the single prefix <code>users/{uid}/</code></b> (where all blobs live), sum <code>file.metadata.size</code>, and write <code>storage_bytes_used</code> onto the <code>subscriptions/{uid}</code> doc via field merge. Authoritative, drift-free, no upload-path hook. Real-time incremental counting (<code>onObjectFinalized</code>/<code>onObjectDeleted</code>, reconciled by the sweep) is deferred to hard-quota enforcement. Because blobs live under the owner/host uid, shared-aircraft bytes accrue to the host.</p>

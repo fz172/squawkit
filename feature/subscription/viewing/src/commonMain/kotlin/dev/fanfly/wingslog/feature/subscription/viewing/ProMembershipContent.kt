@@ -26,6 +26,7 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Laptop
 import androidx.compose.material.icons.filled.PhoneIphone
+import androidx.compose.material.icons.filled.Redeem
 import androidx.compose.material.icons.filled.Science
 import androidx.compose.material.icons.filled.ShoppingBag
 import androidx.compose.material3.HorizontalDivider
@@ -81,6 +82,8 @@ import wingslog.feature.subscription.viewing.generated.resources.subscription_pl
 import wingslog.feature.subscription.viewing.generated.resources.subscription_platform_web
 import wingslog.feature.subscription.viewing.generated.resources.subscription_purchased_on
 import wingslog.feature.subscription.viewing.generated.resources.subscription_renews
+import wingslog.feature.subscription.viewing.generated.resources.subscription_source
+import wingslog.feature.subscription.viewing.generated.resources.subscription_source_promotion
 import wingslog.feature.subscription.viewing.generated.resources.subscription_status_active
 import wingslog.feature.subscription.viewing.generated.resources.subscription_status_canceled
 import wingslog.feature.subscription.viewing.generated.resources.subscription_status_grace
@@ -99,7 +102,8 @@ import wingslog.feature.subscription.viewing.generated.resources.subscription_un
 @Composable
 internal fun ProMembershipContent(
   state: SubscriptionUiState,
-  onManage: () -> Unit
+  onManage: () -> Unit,
+  onRedeemPromo: () -> Unit,
 ) {
   MembershipCard(state)
 
@@ -125,6 +129,13 @@ internal fun ProMembershipContent(
     )
 
     else -> ManagedElsewhere(isPurchaseSupported = state.isPurchaseSupported)
+  }
+
+  // Only a comped member sees this: a second code stacks onto the comp time they still hold, and
+  // the server refuses one from a store subscriber outright. Offering it to them would be a control
+  // that can only say no.
+  if (state.canRedeemPromo) {
+    PromoCodeEntryButton(onRedeemPromo)
   }
 }
 
@@ -184,6 +195,27 @@ private fun MembershipCard(state: SubscriptionUiState) {
             state.storageBytesUsed.formatFileSize(),
             style = WingslogTypography.dataSmall
           )
+        }
+        // A granted subscription names its source instead of a store (#750). "Purchased on" would
+        // be false — nothing was purchased — and leaving the row out entirely, as this page used
+        // to, left a comped member with no account of where their Pro came from.
+        if (state.isComped) {
+          FactRow(
+            label = stringResource(Res.string.subscription_source),
+            modifier = Modifier.padding(top = Spacing.small),
+          ) {
+            Icon(
+              imageVector = Icons.Default.Redeem,
+              contentDescription = null,
+              tint = MaterialTheme.colorScheme.onSurfaceVariant,
+              modifier = Modifier.size(Spacing.large),
+            )
+            Spacer(Modifier.width(Spacing.small))
+            Text(
+              stringResource(Res.string.subscription_source_promotion),
+              style = WingslogTypography.dataSmall
+            )
+          }
         }
         // Omitted entirely when there is no store to name (a comp, or an unrecognised platform) —
         // see purchasePlatformOf. Sourced from the synced entitlement, so it names the store that

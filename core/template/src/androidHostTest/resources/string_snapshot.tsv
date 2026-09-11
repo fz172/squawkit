@@ -642,10 +642,26 @@ feature/subscription/viewing	subscription_platform_mac_app_store	Mac App Store
 feature/subscription/viewing	subscription_platform_play_store	Google Play
 feature/subscription/viewing	subscription_platform_test_store	Test Store (developer build)
 feature/subscription/viewing	subscription_platform_web	Web
+feature/subscription/viewing	subscription_promo_activating_month	Promo code applied — 1 month of SquawkIt Pro. Activating…
+feature/subscription/viewing	subscription_promo_activating_other	Promo code applied. Activating SquawkIt Pro…
+feature/subscription/viewing	subscription_promo_activating_quarter	Promo code applied — 3 months of SquawkIt Pro. Activating…
+feature/subscription/viewing	subscription_promo_activating_year	Promo code applied — 1 year of SquawkIt Pro. Activating…
+feature/subscription/viewing	subscription_promo_entry	Have a promo code?
+feature/subscription/viewing	subscription_promo_error_invalid	That code can’t be redeemed. Check it and try again.
+feature/subscription/viewing	subscription_promo_error_offline	Couldn’t reach SquawkIt. Check your connection and try again.
+feature/subscription/viewing	subscription_promo_error_sign_in	Sign in first, so the promo is tied to your account and works on every device.
+feature/subscription/viewing	subscription_promo_error_subscribed	This account already has a paid subscription, so the code wasn’t used. Redeem it after the subscription ends.
+feature/subscription/viewing	subscription_promo_error_throttled	Too many attempts. Wait a little while and try again.
+feature/subscription/viewing	subscription_promo_field_label	Promo code
+feature/subscription/viewing	subscription_promo_instructions	Enter the code exactly as it was given to you. It unlocks SquawkIt Pro for a set period — there is nothing to cancel.
+feature/subscription/viewing	subscription_promo_redeem	Redeem
+feature/subscription/viewing	subscription_promo_title	Redeem a promo code
 feature/subscription/viewing	subscription_purchase_on_mobile	Subscribe in the SquawkIt app on iOS or Android. Your subscription works everywhere, including here.
 feature/subscription/viewing	subscription_purchased_on	Purchased on
 feature/subscription/viewing	subscription_renews	Renews
 feature/subscription/viewing	subscription_sign_in_to_subscribe	Sign in to subscribe, so your subscription is tied to your account and works on every device.
+feature/subscription/viewing	subscription_source	Source
+feature/subscription/viewing	subscription_source_promotion	Promotion
 feature/subscription/viewing	subscription_status_active	Active
 feature/subscription/viewing	subscription_status_canceled	Canceled
 feature/subscription/viewing	subscription_status_grace	Payment problem

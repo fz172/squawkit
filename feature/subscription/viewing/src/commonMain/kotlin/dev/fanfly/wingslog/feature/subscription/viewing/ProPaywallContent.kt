@@ -68,7 +68,8 @@ import wingslog.feature.subscription.viewing.generated.resources.subscription_th
 @Composable
 internal fun ProPaywallContent(
   state: SubscriptionUiState,
-  onSubscribe: () -> Unit
+  onSubscribe: () -> Unit,
+  onRedeemPromo: () -> Unit,
 ) {
   Text(
     text = stringResource(Res.string.subscription_compare_header),
@@ -92,10 +93,14 @@ internal fun ProPaywallContent(
   )
 
   // Most actionable first: a guest can fix their case, and until they do nothing else about the
-  // button matters. The default line sets expectations for the store sheet that is about to open.
+  // button matters. A promo activation outranks the purchase line because it names what the pilot
+  // just did; the default line sets expectations for the store sheet that is about to open.
   SubscriptionCaption(
     text = when {
       state.isGuest -> stringResource(Res.string.subscription_sign_in_to_subscribe)
+      state.promoActivationTerm != null ->
+        stringResource(state.promoActivationTerm.activatingRes)
+
       state.isActivating -> stringResource(Res.string.subscription_activating)
       // Web: purchasing is mobile-only, but a subscription bought there unlocks Pro here too.
       !state.isPurchaseSupported -> stringResource(Res.string.subscription_purchase_on_mobile)
@@ -103,6 +108,13 @@ internal fun ProPaywallContent(
     },
     textAlign = TextAlign.Center,
   )
+
+  // A second way in, not a second pitch — quiet enough that it never competes with the CTA above,
+  // and present even where purchasing is not (web can redeem a code perfectly well). Hidden while a
+  // redemption is already landing, so the page cannot invite a second one over the first.
+  if (state.canRedeemPromo && state.promoActivationTerm == null) {
+    PromoCodeEntryButton(onRedeemPromo)
+  }
 
   HorizontalDivider()
   Row(

@@ -101,6 +101,28 @@ export function effectiveStatusAt(
 }
 
 /**
+ * Whether Pro was granted rather than bought, mirroring the client's `isCompedEntitlement`
+ * (SubscriptionViewModel.kt) so the two never disagree about which accounts have "nothing to
+ * manage" — and, since #750, about which may redeem a promo code.
+ *
+ * Two grant paths that do not agree on `source`, so both are checked. Our own server grants
+ * (`grantPromoEntitlement`, `redeemPromoCode`) write `SERVER_GRANT`; a promo granted from the
+ * RevenueCat dashboard arrives as a webhook, and the webhook path always writes `STORE_PURCHASE` —
+ * only its `origin_platform` of `"promotional"` gives it away.
+ *
+ * An unrecognised or absent `origin_platform` is deliberately NOT a comp: that is a real purchase
+ * from a store this code is too old to name, and treating it as a grant would let a promo code
+ * overwrite a paying subscription.
+ */
+export function isCompedEntitlement(data: Record<string, unknown> | undefined): boolean {
+  return (
+    intField(data?.source) === ENTITLEMENT_SOURCE.SERVER_GRANT ||
+    data?.originPlatform === "promotional" ||
+    data?.originPlatform === "server"
+  );
+}
+
+/**
  * Whether the entitlement grants paid attachments at [nowMillis]. The attachment gate is the Pro
  * tier (mirrors `SubscriptionManager.canUploadAttachments`), projected onto the ACL root for members
  * to read without ever seeing the host's billing (design §9.7).
