@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
@@ -92,20 +91,21 @@ fun LoginScreen(
   }
 
   /** Runs one provider's sign-in, holding [signingIn] for the duration so the card locks. */
-  val signIn = { provider: PendingSignIn, failure: String, request: suspend () -> Any? ->
-    scope.launch {
-      signingIn = provider
-      error = null
-      try {
-        if (request() != null) onLoginSuccess() else error = failure
-      } finally {
-        signingIn = null
+  val signIn =
+    { provider: PendingSignIn, failure: String, request: suspend () -> Any? ->
+      scope.launch {
+        signingIn = provider
+        error = null
+        try {
+          if (request() != null) onLoginSuccess() else error = failure
+        } finally {
+          signingIn = null
+        }
       }
+      Unit
     }
-    Unit
-  }
 
-  LoginScaffold(topBar = { LoginTopBar() }) {
+  LoginScaffold {
     LoginMark()
 
     Spacer(Modifier.height(Spacing.extraLarge))
@@ -115,7 +115,10 @@ fun LoginScreen(
       enabled = signingIn == null,
       loading = signingIn == PendingSignIn.Google,
       onClick = {
-        signIn(PendingSignIn.Google, signInErrorMessage) { loginViewModel.login() }
+        signIn(
+          PendingSignIn.Google,
+          signInErrorMessage
+        ) { loginViewModel.login() }
       },
       icon = {
         Icon(
@@ -135,7 +138,10 @@ fun LoginScreen(
       enabled = signingIn == null,
       loading = signingIn == PendingSignIn.Apple,
       onClick = {
-        signIn(PendingSignIn.Apple, signInErrorMessage) { loginViewModel.loginWithApple() }
+        signIn(
+          PendingSignIn.Apple,
+          signInErrorMessage
+        ) { loginViewModel.loginWithApple() }
       },
       icon = {
         Icon(
@@ -291,7 +297,12 @@ private fun LoginProviderButton(
           .fillMaxWidth()
           .alpha(if (enabled) 1f else DisabledAlpha),
       ) {
-        LoginButtonContent(label = label, labelStyle = labelStyle, trailing = trailing, icon = icon)
+        LoginButtonContent(
+          label = label,
+          labelStyle = labelStyle,
+          trailing = trailing,
+          icon = icon
+        )
       }
     }
   }

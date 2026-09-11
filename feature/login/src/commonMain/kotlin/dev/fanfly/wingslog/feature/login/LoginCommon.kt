@@ -47,8 +47,6 @@ import org.koin.compose.koinInject
 import wingslog.core.sharedassets.generated.resources.app_name
 import wingslog.feature.login.generated.resources.Res
 import wingslog.feature.login.generated.resources.legal_disclaimer
-import wingslog.feature.login.generated.resources.login_need_account
-import wingslog.feature.login.generated.resources.login_signing_in_creates
 import wingslog.feature.login.generated.resources.mission_statement
 import wingslog.feature.login.generated.resources.privacy_notice
 import wingslog.feature.login.generated.resources.support_link
@@ -140,7 +138,6 @@ fun LoginButtonContent(
  */
 @Composable
 internal fun LoginScaffold(
-  topBar: (@Composable () -> Unit)? = null,
   content: @Composable ColumnScope.() -> Unit,
 ) {
   Column(
@@ -149,8 +146,6 @@ internal fun LoginScaffold(
       .background(MaterialTheme.colorScheme.background)
       .windowInsetsPadding(WindowInsets.safeDrawing),
   ) {
-    topBar?.invoke()
-
     Box(
       modifier = Modifier
         .fillMaxSize()
@@ -174,43 +169,6 @@ internal fun LoginScaffold(
         content = content,
       )
     }
-  }
-}
-
-/**
- * The bar above the card: a note that there is no separate sign-up.
- *
- * No back control of its own. The design canvas draws one, but going back is the browser's job on
- * web and the system gesture's on mobile — an app-drawn "back" would be a third way to do what
- * those already do, and on the hosts where nothing sits behind the card it would be a button to
- * nowhere.
- */
-@Composable
-internal fun LoginTopBar() {
-  Row(
-    modifier = Modifier
-      .fillMaxWidth()
-      .padding(horizontal = Spacing.large, vertical = Spacing.medium),
-    verticalAlignment = Alignment.CenterVertically,
-    horizontalArrangement = Arrangement.End,
-  ) {
-    Text(
-      text = buildAnnotatedString {
-        append(stringResource(Res.string.login_need_account))
-        append(" ")
-        withStyle(
-          SpanStyle(
-            color = MaterialTheme.colorScheme.primary,
-            fontWeight = FontWeight.SemiBold,
-          ),
-        ) {
-          append(stringResource(Res.string.login_signing_in_creates))
-        }
-      },
-      style = TextStyle(fontSize = 14.sp),
-      color = MaterialTheme.colorScheme.onSurfaceVariant,
-      textAlign = TextAlign.End,
-    )
   }
 }
 
