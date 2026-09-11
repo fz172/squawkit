@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ReceiptLong
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -35,13 +34,11 @@ import dev.fanfly.wingslog.feature.subscription.viewing.viewmodel.SubscriptionUi
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.subscription.viewing.generated.resources.Res
 import wingslog.feature.subscription.viewing.generated.resources.subscription_activating
-import wingslog.feature.subscription.viewing.generated.resources.subscription_billing_note
 import wingslog.feature.subscription.viewing.generated.resources.subscription_cell_excluded
 import wingslog.feature.subscription.viewing.generated.resources.subscription_cell_unlimited
 import wingslog.feature.subscription.viewing.generated.resources.subscription_col_free
 import wingslog.feature.subscription.viewing.generated.resources.subscription_col_pro
 import wingslog.feature.subscription.viewing.generated.resources.subscription_compare_header
-import wingslog.feature.subscription.viewing.generated.resources.subscription_compare_subhead
 import wingslog.feature.subscription.viewing.generated.resources.subscription_cta_caption
 import wingslog.feature.subscription.viewing.generated.resources.subscription_feature_ads
 import wingslog.feature.subscription.viewing.generated.resources.subscription_feature_attachments
@@ -75,13 +72,6 @@ internal fun ProPaywallContent(
     text = stringResource(Res.string.subscription_compare_header),
     style = MaterialTheme.typography.headlineMedium,
   )
-  Text(
-    text = stringResource(Res.string.subscription_compare_subhead),
-    style = MaterialTheme.typography.bodyMedium,
-    color = MaterialTheme.colorScheme.onSurfaceVariant,
-  )
-
-  BillingNote()
   ComparisonTable(isAdsSupported = state.isAdsSupported)
 
   SubscribeButton(
@@ -131,38 +121,6 @@ internal fun ProPaywallContent(
       text = state.storageBytesUsed.formatFileSize(),
       style = WingslogTypography.dataMedium
     )
-  }
-}
-
-/**
- * Says where pricing lives before the pilot taps through.
- *
- * A paywall that shows no price reads as evasive unless it explains itself, and the store genuinely
- * owns the number — plan, currency, tax and any introductory offer are decided there.
- */
-@Composable
-private fun BillingNote() {
-  SubscriptionPanel {
-    Row(
-      modifier = Modifier.padding(
-        horizontal = Spacing.large,
-        vertical = Spacing.medium
-      ),
-      horizontalArrangement = Arrangement.spacedBy(Spacing.small),
-      verticalAlignment = Alignment.CenterVertically,
-    ) {
-      Icon(
-        imageVector = Icons.AutoMirrored.Filled.ReceiptLong,
-        contentDescription = null,
-        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.size(Spacing.xLarge),
-      )
-      Text(
-        text = stringResource(Res.string.subscription_billing_note),
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-      )
-    }
   }
 }
 
