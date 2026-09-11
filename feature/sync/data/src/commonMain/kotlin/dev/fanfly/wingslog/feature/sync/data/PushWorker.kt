@@ -58,11 +58,13 @@ class PushWorker(
   var failureSink: (SyncFailure?) -> Unit = {}
 
   /**
-   * Invoked with `(hostUid, thingId)` when a push into a shared thing's subtree is denied by
-   * the rules — i.e. we were revoked. [SyncEngine] wires this to the same local reconcile the read
-   * path uses. Defaults to no-op, which leaves the rows dirty (the pre-sharing behavior).
+   * Invoked with `(hostUid, thingId)` when a push into a shared thing's subtree is denied — a
+   * suspicion of revocation, not a verdict, since a member is legitimately refused some writes.
+   * [SyncEngine] confirms against the member's own ref doc and returns true only when the share has
+   * really ended; false leaves the row dirty for the next drain. Defaults to `false`.
    */
-  var sharedScopeRevokedSink: suspend (String, String) -> Unit = { _, _ -> }
+  var sharedScopeRevokedSink: suspend (String, String) -> Boolean =
+    { _, _ -> false }
 
   /**
    * Suspends forever, draining `dirty=1` rows as they appear. Cancel the surrounding scope to stop.
@@ -179,14 +181,13 @@ class PushWorker(
         val shared = sharedThingIn(row, uid)
         telemetry.permissionDeniedWrite(sharedScope = shared != null)
         if (shared != null) {
-          // We were revoked while this edit sat in the queue, and the push beat the ref tombstone to
-          // us. This is the write-side twin of the §5.4 read race: reconcile locally rather than
-          // accuse the user of an expired session, and let the janitor purge the scope — which drops
-          // these rows, so we don't retry a write we will never be allowed to make.
+          // Either we were revoked while this edit sat queued (the write-side twin of the §5.4 read
+          // race), or it is a write a member may never make. Only a confirmed revocation reconciles,
+          // letting the janitor drop these rows instead of retrying forever.
           val (hostUid, thingId) = shared
-          log.i { "PERMISSION_DENIED pushing to a shared aircraft; treating as revoked (§5.4)" }
-          sharedScopeRevokedSink(hostUid, thingId)
-          return@getOrElse false
+          log.i { "PERMISSION_DENIED pushing to a shared aircraft; confirming (§5.4)" }
+          if (sharedScopeRevokedSink(hostUid, thingId)) return@getOrElse false
+          log.w { "denied pushing to a shared aircraft we are still a member of; leaving it dirty" }
         }
       }
       val classified = classifyPushFailure(e)
