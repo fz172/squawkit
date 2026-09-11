@@ -4,7 +4,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -26,7 +25,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalUriHandler
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.core.appinfo.AppCapability
@@ -37,19 +35,18 @@ import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.common.compose.GroupedLeadingIconChip
 import dev.fanfly.wingslog.core.ui.common.compose.GroupedRow
 import dev.fanfly.wingslog.core.ui.common.compose.GroupedSection
+import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
 import dev.fanfly.wingslog.core.ui.common.compose.heroBob
 import dev.fanfly.wingslog.core.ui.common.compose.rememberHeroPulse
-import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
-import wingslog.core.sharedassets.generated.resources.app_name
 import wingslog.core.sharedassets.generated.resources.app_icon
+import wingslog.core.sharedassets.generated.resources.app_name
 import wingslog.feature.settings.generated.resources.about_contact_support
 import wingslog.feature.settings.generated.resources.about_contact_support_subtitle
-import wingslog.feature.settings.generated.resources.about_copyright
 import wingslog.feature.settings.generated.resources.about_rate
 import wingslog.feature.settings.generated.resources.about_section_help
 import wingslog.feature.settings.generated.resources.about_section_notes
@@ -161,15 +158,6 @@ fun AboutScreen(
             }
           )
         }
-
-        Spacer(Modifier.weight(1f))
-        Text(
-          text = stringResource(SettingsRes.string.about_copyright),
-          style = MaterialTheme.typography.bodySmall,
-          color = MaterialTheme.colorScheme.onSurfaceVariant,
-          textAlign = TextAlign.Center,
-          modifier = Modifier.fillMaxWidth(),
-        )
       }
     }
   }

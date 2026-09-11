@@ -462,7 +462,6 @@ feature/settings	about_section_help	Help
 feature/settings	about_contact_support	Contact support
 feature/settings	about_contact_support_subtitle	Get help or send feedback
 feature/settings	about_rate	Rate SquawkIt
-feature/settings	about_copyright	© 2026 SquawkIt
 feature/sharing/sharedassets	enter_code_field_label	Invite code
 feature/sharing/sharedassets	enter_code_instructions	Enter the invite code the aircraft owner gave you. It looks like EFA2-GGTH.
 feature/sharing/sharedassets	enter_code_title	Join a shared aircraft
