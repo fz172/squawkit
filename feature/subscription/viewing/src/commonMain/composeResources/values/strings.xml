@@ -43,6 +43,8 @@
   <string name="subscription_promo_error_throttled">Too many attempts. Wait a little while and try again.</string>
   <string name="subscription_promo_error_subscribed">This account already has a paid subscription, so the code wasn’t used. Redeem it after the subscription ends.</string>
   <string name="subscription_promo_error_sign_in">Sign in first, so the promo is tied to your account and works on every device.</string>
+  <!-- App Check refused the build. Not the pilot's fault and not fixable by signing in again. -->
+  <string name="subscription_promo_error_unverified">SquawkIt couldn’t verify this copy of the app. Make sure you’re on the latest version, then try again.</string>
   <string name="subscription_promo_error_offline">Couldn’t reach SquawkIt. Check your connection and try again.</string>
   <!-- The code was accepted; the entitlement is still syncing back from the server. -->
   <string name="subscription_promo_activating_month">Promo code applied — 1 month of SquawkIt Pro. Activating…</string>

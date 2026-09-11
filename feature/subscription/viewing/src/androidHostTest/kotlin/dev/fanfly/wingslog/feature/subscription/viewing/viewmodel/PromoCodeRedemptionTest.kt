@@ -108,6 +108,9 @@ class PromoCodeRedemptionTest {
       PromoRedemptionResult.TooManyAttempts to PromoCodeError.TOO_MANY_ATTEMPTS,
       PromoRedemptionResult.AlreadySubscribed to PromoCodeError.ALREADY_SUBSCRIBED,
       PromoRedemptionResult.SignInRequired to PromoCodeError.SIGN_IN_REQUIRED,
+      // Distinct from SIGN_IN_REQUIRED on purpose: App Check rejecting the build and the pilot
+      // being signed out look the same to the account and share no remedy.
+      PromoRedemptionResult.AppUnverified to PromoCodeError.APP_UNVERIFIED,
       PromoRedemptionResult.Unavailable to PromoCodeError.UNAVAILABLE,
     )
     for ((result, expected) in cases) {

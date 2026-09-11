@@ -1,6 +1,11 @@
 plugins {
   alias(libs.plugins.android.kmp.library)
   alias(libs.plugins.kotlin.multiplatform)
+  // Load-bearing, and its absence is silent: the callable clients here exchange `@Serializable`
+  // wire types, and without this plugin that annotation generates nothing. The code still compiles
+  // — `serializer<T>()` falls back to a runtime reflective lookup — and then throws
+  // `SerializationException` at the call. See SubscriptionWireSerializationTest.
+  alias(libs.plugins.kotlin.serialization)
 }
 
 kotlin {

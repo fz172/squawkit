@@ -45,6 +45,7 @@ import wingslog.feature.subscription.viewing.generated.resources.subscription_pr
 import wingslog.feature.subscription.viewing.generated.resources.subscription_promo_error_sign_in
 import wingslog.feature.subscription.viewing.generated.resources.subscription_promo_error_subscribed
 import wingslog.feature.subscription.viewing.generated.resources.subscription_promo_error_throttled
+import wingslog.feature.subscription.viewing.generated.resources.subscription_promo_error_unverified
 import wingslog.feature.subscription.viewing.generated.resources.subscription_promo_field_label
 import wingslog.feature.subscription.viewing.generated.resources.subscription_promo_instructions
 import wingslog.feature.subscription.viewing.generated.resources.subscription_promo_redeem
@@ -170,6 +171,7 @@ private val PromoCodeError.messageRes: StringResource
     PromoCodeError.TOO_MANY_ATTEMPTS -> Res.string.subscription_promo_error_throttled
     PromoCodeError.ALREADY_SUBSCRIBED -> Res.string.subscription_promo_error_subscribed
     PromoCodeError.SIGN_IN_REQUIRED -> Res.string.subscription_promo_error_sign_in
+    PromoCodeError.APP_UNVERIFIED -> Res.string.subscription_promo_error_unverified
     PromoCodeError.UNAVAILABLE -> Res.string.subscription_promo_error_offline
   }
 

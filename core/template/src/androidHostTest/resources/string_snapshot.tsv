@@ -650,6 +650,7 @@ feature/subscription/viewing	subscription_promo_error_offline	Couldn’t reach S
 feature/subscription/viewing	subscription_promo_error_sign_in	Sign in first, so the promo is tied to your account and works on every device.
 feature/subscription/viewing	subscription_promo_error_subscribed	This account already has a paid subscription, so the code wasn’t used. Redeem it after the subscription ends.
 feature/subscription/viewing	subscription_promo_error_throttled	Too many attempts. Wait a little while and try again.
+feature/subscription/viewing	subscription_promo_error_unverified	SquawkIt couldn’t verify this copy of the app. Make sure you’re on the latest version, then try again.
 feature/subscription/viewing	subscription_promo_field_label	Promo code
 feature/subscription/viewing	subscription_promo_instructions	Enter the code exactly as it was given to you. It unlocks SquawkIt Pro for a set period.
 feature/subscription/viewing	subscription_promo_redeem	Redeem

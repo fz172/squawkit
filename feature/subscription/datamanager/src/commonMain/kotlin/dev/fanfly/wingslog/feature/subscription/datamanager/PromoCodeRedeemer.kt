@@ -49,6 +49,16 @@ sealed interface PromoRedemptionResult {
   /** Signed in as a guest. A guest account cannot outlive the device, so it holds no entitlement. */
   data object SignInRequired : PromoRedemptionResult
 
+  /**
+   * The server would not accept this copy of the app — App Check could not attest it.
+   *
+   * Kept apart from [SignInRequired] because the two look identical from the account's point of
+   * view and have nothing in common as remedies: one is "sign in", the other is "this build cannot
+   * prove it is SquawkIt". Telling a signed-in pilot to sign in sends them to re-check the one thing
+   * that was never wrong.
+   */
+  data object AppUnverified : PromoRedemptionResult
+
   /** Offline, or the call failed. Nothing was spent; retrying is safe. */
   data object Unavailable : PromoRedemptionResult
 }
