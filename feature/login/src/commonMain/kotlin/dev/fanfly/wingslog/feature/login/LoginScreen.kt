@@ -43,7 +43,8 @@ import wingslog.feature.login.generated.resources.apple_logo
 import wingslog.feature.login.generated.resources.google_logo
 import wingslog.feature.login.generated.resources.ic_apple
 import wingslog.feature.login.generated.resources.ic_google_rd_na
-import wingslog.feature.login.generated.resources.provider_anonymous
+import wingslog.feature.login.generated.resources.continue_as_guest
+import wingslog.feature.login.generated.resources.continuing_as_guest
 import wingslog.feature.login.generated.resources.provider_apple
 import wingslog.feature.login.generated.resources.provider_email
 import wingslog.feature.login.generated.resources.provider_google
@@ -112,7 +113,7 @@ fun LoginScreen(
   val idle = signingIn == null
   val google = stringResource(Res.string.provider_google)
   val apple = stringResource(Res.string.provider_apple)
-  val anonymous = stringResource(Res.string.provider_anonymous)
+  val guest = stringResource(Res.string.continue_as_guest)
 
   LoginScaffold {
     LoginMark()
@@ -194,13 +195,11 @@ fun LoginScreen(
       if (appCapability.isAnonymousLoginSupported) {
         LoginRowDivider()
 
+        // Not "Signing in with Continue as guest": this row is an escape hatch rather than a
+        // provider, so it carries its own progress wording instead of the shared frame.
         val anonRunning = signingIn == PendingSignIn.Anonymous
         LoginRow(
-          label = if (anonRunning) {
-            stringResource(Res.string.signing_in_with, anonymous)
-          } else {
-            anonymous
-          },
+          label = if (anonRunning) stringResource(Res.string.continuing_as_guest) else guest,
           enabled = idle,
           inProgress = anonRunning,
           onClick = {

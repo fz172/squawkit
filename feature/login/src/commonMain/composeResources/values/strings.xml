@@ -7,7 +7,6 @@
   <string name="sign_in_with_google">Log in with Google</string>
   <string name="sign_in_with_apple">Log in with Apple</string>
   <string name="sign_in_with_email">Log in with email</string>
-  <string name="continue_without_account">Continue Anonymously</string>
   <string name="support_link">Support</string>
   <string name="email_entry_body">We’ll send a link that signs you in. No password to remember.</string>
   <string name="email_address_label">Email address</string>
@@ -17,7 +16,8 @@
   <string name="provider_google">Google</string>
   <string name="provider_apple">Apple</string>
   <string name="provider_email">Email</string>
-  <string name="provider_anonymous">Anonymous</string>
+  <string name="continue_as_guest">Continue as guest</string>
+  <string name="continuing_as_guest">Continuing as guest</string>
   <string name="sign_in_section_label">SIGN IN</string>
   <string name="sign_in_connecting">CONNECTING</string>
   <string name="signing_in_with">Signing in with <xliff:g example="Google">%1$s</xliff:g></string>

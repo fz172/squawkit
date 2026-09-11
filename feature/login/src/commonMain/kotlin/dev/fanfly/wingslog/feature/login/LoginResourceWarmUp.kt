@@ -12,7 +12,8 @@ import wingslog.feature.login.generated.resources.ic_google_rd_na
 import wingslog.feature.login.generated.resources.legal_disclaimer
 import wingslog.feature.login.generated.resources.mission_statement
 import wingslog.feature.login.generated.resources.privacy_notice
-import wingslog.feature.login.generated.resources.provider_anonymous
+import wingslog.feature.login.generated.resources.continue_as_guest
+import wingslog.feature.login.generated.resources.continuing_as_guest
 import wingslog.feature.login.generated.resources.provider_apple
 import wingslog.feature.login.generated.resources.provider_email
 import wingslog.feature.login.generated.resources.provider_google
@@ -45,7 +46,8 @@ suspend fun warmLoginCardResources(environment: ResourceEnvironment) {
     Res.string.provider_google,
     Res.string.provider_apple,
     Res.string.provider_email,
-    Res.string.provider_anonymous,
+    Res.string.continue_as_guest,
+    Res.string.continuing_as_guest,
     Res.string.google_logo,
     Res.string.apple_logo,
     Res.string.legal_disclaimer,

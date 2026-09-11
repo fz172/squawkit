@@ -185,7 +185,6 @@ feature/login	account_upgrade_error	Couldn't complete sync. Please try again.
 feature/login	account_upgrade_success	Syncing complete
 feature/login	account_upgrade_working	Syncing your records…
 feature/login	apple_logo	Apple Logo
-feature/login	continue_without_account	Continue Anonymously
 feature/login	email_entry_hint	you@example.com
 feature/login	email_entry_title	Log in with email
 feature/login	email_finish_body	Confirm the email this link was sent to.
@@ -255,7 +254,8 @@ feature/login	email_all_login_options	All log-in options
 feature/login	provider_google	Google
 feature/login	provider_apple	Apple
 feature/login	provider_email	Email
-feature/login	provider_anonymous	Anonymous
+feature/login	continue_as_guest	Continue as guest
+feature/login	continuing_as_guest	Continuing as guest
 feature/login	sign_in_section_label	SIGN IN
 feature/login	sign_in_connecting	CONNECTING
 feature/login	signing_in_with	Signing in with %1$s
