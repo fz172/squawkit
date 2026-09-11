@@ -145,6 +145,35 @@
     </script>
 
     <link href="promo.css" rel="stylesheet">
+
+    <!-- ============ ANALYTICS ============
+         Analytics is initialised inside the Kotlin bundle (main.kt), which this page never loads,
+         so without a snippet of its own the promo half of the site is invisible to GA4 (design
+         §6.3).
+
+         Same measurement id as main.kt, deliberately: one stream and one first-party cookie, so a
+         visit that starts here and signs in at /login stays a single session rather than two
+         unrelated ones. Keep the two in step. app.html must not repeat this snippet — the bundle
+         loads gtag.js there itself, and a second copy would double-count every event.
+
+         This fires before promo.js, so a returning visitor redirected to /login is counted as
+         having landed here first. Known and accepted. -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-VPNQ92VG8F"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            window.dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+        gtag('config', 'G-VPNQ92VG8F');
+
+        // Name this surface distinctly so landing traffic and sign-in starts stop being one
+        // number: the app logs `login` for the card at /login (TrackRootScreenViews), this page
+        // logs `web_promo`.
+        gtag('event', 'screen_view', {screen_name: 'web_promo'});
+    </script>
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>

@@ -28,11 +28,11 @@
   }
 
   // --- mobile nav ---------------------------------------------------------
-  var toggle = document.getElementById('nav-toggle');
-  var nav = document.getElementById('site-nav');
+  const toggle = document.getElementById('nav-toggle');
+  const nav = document.getElementById('site-nav');
 
   if (toggle && nav) {
-    var setOpen = function (/** @type {boolean} */ open) {
+    const setOpen = function (/** @type {boolean} */ open) {
       nav.setAttribute('data-open', String(open));
       toggle.setAttribute('aria-expanded', String(open));
       toggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
@@ -55,7 +55,7 @@
     });
 
     // The sheet is a mobile-only affordance; leaving it open across the breakpoint strands it.
-    var wide = window.matchMedia('(min-width: 861px)');
+    const wide = window.matchMedia('(min-width: 861px)');
     wide.addEventListener('change', function (event) {
       if (event.matches) setOpen(false);
     });
