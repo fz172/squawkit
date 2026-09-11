@@ -146,9 +146,54 @@
 
     <link href="promo.css" rel="stylesheet">
 
-    <!-- Analytics is not in this head. gtag.js is loaded from promo.js instead, so that it fires
-         after the returning-visitor redirect and a visitor bounced to /login is not counted as
-         having landed here. Same measurement id as the app's. -->
+    <!-- ============ ANALYTICS ============
+         Analytics is initialised inside the Kotlin bundle (main.kt), which this page never loads,
+         so without a snippet of its own the promo half of the site is invisible to GA4 (design
+         §6.3).
+
+         Same measurement id as main.kt, deliberately: one stream and one first-party cookie, so a
+         visit that starts here and signs in at /login stays a single session rather than two
+         unrelated ones. Keep the two in step. app.html must not repeat this snippet — the bundle
+         loads gtag.js there itself, and a second copy would double-count every event.
+
+         This fires before promo.js, so a returning visitor redirected to /login is counted as
+         having landed here first. Known and accepted: the alternative is deferring the whole
+         snippet to the bottom of the page to save one event. -->
+    <script>
+        (function () {
+            var MEASUREMENT_ID = 'G-VPNQ92VG8F';
+
+            // The diagnostics opt-out the app's settings row writes (JsAnalyticsPreferenceStore).
+            // Device-local, not account state — the same localStorage on the same origin the
+            // bundle uses — so it is readable here with nobody signed in. The app can only apply
+            // it once it has booted, so this page gates its own load. Absent means enabled, which
+            // is also the app's default, so a first-time visitor is always measured.
+            try {
+                if (localStorage.getItem('firebase_logging_enabled') === 'false') return;
+            } catch (e) {
+                // Storage blocked entirely. Fall through to the default.
+            }
+
+            var script = document.createElement('script');
+            script.async = true;
+            script.src = 'https://www.googletagmanager.com/gtag/js?id=' + MEASUREMENT_ID;
+            document.head.appendChild(script);
+
+            window.dataLayer = window.dataLayer || [];
+
+            function gtag() {
+                window.dataLayer.push(arguments);
+            }
+
+            gtag('js', new Date());
+            gtag('config', MEASUREMENT_ID);
+
+            // Name this surface distinctly so landing traffic and sign-in starts stop being one
+            // number: the app logs `login` for the card at /login (TrackRootScreenViews), this
+            // page logs `web_promo`.
+            gtag('event', 'screen_view', {screen_name: 'web_promo'});
+        })();
+    </script>
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
