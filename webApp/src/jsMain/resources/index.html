@@ -145,6 +145,10 @@
     </script>
 
     <link href="promo.css" rel="stylesheet">
+
+    <!-- Analytics is not in this head. gtag.js is loaded from promo.js instead, so that it fires
+         after the returning-visitor redirect and a visitor bounced to /login is not counted as
+         having landed here. Same measurement id as the app's. -->
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>

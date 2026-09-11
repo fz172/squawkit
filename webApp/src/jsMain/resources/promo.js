@@ -28,11 +28,11 @@
   }
 
   // --- mobile nav ---------------------------------------------------------
-  var toggle = document.getElementById('nav-toggle');
-  var nav = document.getElementById('site-nav');
+  const toggle = document.getElementById('nav-toggle');
+  const nav = document.getElementById('site-nav');
 
   if (toggle && nav) {
-    var setOpen = function (/** @type {boolean} */ open) {
+    const setOpen = function (/** @type {boolean} */ open) {
       nav.setAttribute('data-open', String(open));
       toggle.setAttribute('aria-expanded', String(open));
       toggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
@@ -55,9 +55,47 @@
     });
 
     // The sheet is a mobile-only affordance; leaving it open across the breakpoint strands it.
-    var wide = window.matchMedia('(min-width: 861px)');
+    const wide = window.matchMedia('(min-width: 861px)');
     wide.addEventListener('change', function (event) {
       if (event.matches) setOpen(false);
     });
   }
+
+  // --- analytics ----------------------------------------------------------
+  // Analytics lives inside the Kotlin bundle (main.kt), which this page never loads — without a
+  // snippet of its own the promo half of the site is invisible to GA4. Design §6.3.
+  //
+  // Here rather than in the head so it runs after the returner redirect above: a visitor bounced
+  // to /login never saw this page and must not count as having landed on it.
+  //
+  // Same measurement id as main.kt, deliberately — one stream and one first-party cookie, so a
+  // visit that starts at / and signs in at /login stays one session. app.html must not repeat the
+  // snippet; Firebase Analytics loads gtag.js there itself.
+  const MEASUREMENT_ID = 'G-VPNQ92VG8F';
+
+  // The device-local opt-out the app's diagnostics setting writes (JsAnalyticsPreferenceStore).
+  // Absent means enabled, matching the app's default.
+  try {
+    if (localStorage.getItem('firebase_logging_enabled') === 'false') return;
+  } catch (e) {
+    // Storage blocked. Fall through to the default.
+  }
+
+  const w = /** @type {any} */ (window);
+  const script = document.createElement('script');
+  script.async = true;
+  script.src = 'https://www.googletagmanager.com/gtag/js?id=' + MEASUREMENT_ID;
+  document.head.appendChild(script);
+
+  w.dataLayer = w.dataLayer || [];
+  /** @type {(...args: any[]) => void} */
+  const gtag = function () {
+    w.dataLayer.push(arguments);
+  };
+  gtag('js', new Date());
+  gtag('config', MEASUREMENT_ID);
+
+  // Name this surface distinctly so landing traffic and sign-in starts stop being one number: the
+  // app logs `login` for the card at /login (TrackRootScreenViews), this page logs `web_promo`.
+  gtag('event', 'screen_view', { screen_name: 'web_promo' });
 })();

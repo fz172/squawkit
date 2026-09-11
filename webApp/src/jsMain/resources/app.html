@@ -9,7 +9,11 @@
 
          No SEO payload lives here on purpose: the marketing content and its structured data are on
          the static index.html, where a crawler can actually read the page they describe. This
-         document renders to a canvas and has nothing to index. -->
+         document renders to a canvas and has nothing to index.
+
+         No gtag.js snippet here either: the bundle initialises Firebase Analytics itself (main.kt),
+         which loads gtag on the same measurement id. Adding one would double-count every event.
+         The static index.html does carry a snippet, because nothing there loads Kotlin. -->
     <title>SquawkIt</title>
     <meta content="noindex, nofollow" name="robots">
 
