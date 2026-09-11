@@ -252,6 +252,13 @@ feature/login	email_entry_body	We’ll send a link that signs you in. No passwor
 feature/login	email_address_label	Email address
 feature/login	email_link_expiry_note	The link expires in 15 minutes and can only be used once.
 feature/login	email_all_login_options	All log-in options
+feature/login	provider_google	Google
+feature/login	provider_apple	Apple
+feature/login	provider_email	Email
+feature/login	provider_anonymous	Anonymous
+feature/login	sign_in_section_label	SIGN IN
+feature/login	sign_in_connecting	CONNECTING
+feature/login	signing_in_with	Signing in with %1$s
 feature/logs/sharedassets	add_first_maintenance_log	Log First Entry
 feature/logs/sharedassets	add_log	Add Work Log
 feature/logs/sharedassets	blade	Blade
