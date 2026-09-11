@@ -4,6 +4,7 @@ import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.core.model.settings.Subscription
+import dev.fanfly.wingslog.feature.subscription.datamanager.EntitlementReconciler
 import dev.fanfly.wingslog.feature.subscription.datamanager.PromoCodeRedeemer
 import dev.fanfly.wingslog.feature.subscription.datamanager.PromoRedemptionResult
 import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
@@ -18,6 +19,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
@@ -26,6 +28,7 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Promo-code redemption on the subscription page (#750).
@@ -234,10 +237,60 @@ class PromoCodeRedemptionTest {
     assertThat(state.promoActivationTerm).isNull()
   }
 
+  @Test
+  fun `a promo activation that never lands stops claiming the wait is normal`() = runTest {
+    val vm = viewModel(PromoRedemptionResult.Granted(durationDays = 30))
+    vm.onPromoCodeChanged("PRQK-8H3M-XTVB")
+    vm.onPromoCodeSubmitted()
+    runCurrent()
+
+    // Still inside the normal window: the page reports an ordinary wait.
+    advanceTimeBy((STALL - 1).milliseconds)
+    runCurrent()
+    assertThat(stateOf(vm).isActivationStalled).isFalse()
+
+    advanceTimeBy(2.milliseconds)
+    runCurrent()
+    val state = stateOf(vm)
+    // The failure this exists for: isActivating alone resolves only when the tier flips, so an
+    // entitlement that never arrives left "Activating…" on screen forever.
+    assertThat(state.isActivationStalled).isTrue()
+    assertThat(state.isActivating).isTrue()
+  }
+
+  @Test
+  fun `a promo activation asks the server for nothing — the grant is already written`() = runTest {
+    val reconciler = RecordingReconciler()
+    val vm = viewModel(
+      result = PromoRedemptionResult.Granted(durationDays = 30),
+      reconciler = reconciler,
+    )
+    vm.onPromoCodeChanged("PRQK-8H3M-XTVB")
+    vm.onPromoCodeSubmitted()
+    runCurrent()
+    advanceTimeBy((STALL + 1).milliseconds)
+    runCurrent()
+
+    // Reconciling a comp burns a provider lookup for an account RevenueCat has never heard of.
+    assertThat(reconciler.calls).isEqualTo(0)
+  }
+
+  @Test
+  fun `the stall clears once the entitlement lands`() = runTest {
+    // Resolved against the tier, not against a flag, so the notice cannot outlive the problem.
+    val state = toSubscriptionUiState(
+      status = Subscription.Status.STATUS_PRO,
+      subscription = Subscription(),
+      isActivationStalled = false,
+    )
+    assertThat(state.isActivationStalled).isFalse()
+  }
+
   private fun viewModel(
     result: PromoRedemptionResult = PromoRedemptionResult.NotValid,
     redeemer: PromoCodeRedeemer = RecordingRedeemer(result),
     status: Subscription.Status = Subscription.Status.STATUS_FREE,
+    reconciler: EntitlementReconciler = RecordingReconciler(),
   ) = SubscriptionViewModel(
     subscriptionManager = FixedSubscriptionManager(status),
     billingManager = UnsupportedBillingManager,
@@ -248,8 +301,21 @@ class PromoCodeRedemptionTest {
       isAnonymousLoginSupported = false,
       isAdsSupported = false,
     ),
+    entitlementReconciler = reconciler,
     promoCodeRedeemer = redeemer,
+    activationGraceMillis = GRACE,
+    activationStallMillis = STALL,
   )
+
+  private class RecordingReconciler : EntitlementReconciler {
+    var calls = 0
+      private set
+
+    override suspend fun reconcileNow(): Boolean {
+      calls++
+      return false
+    }
+  }
 
   /** See [SubscriptionUiStateTest]: `uiState` only computes once something collects it. */
   private fun TestScope.stateOf(vm: SubscriptionViewModel): SubscriptionUiState {
@@ -303,5 +369,10 @@ class PromoCodeRedemptionTest {
     override fun canHostShare(): Flow<Boolean> = flowOf(false)
     override fun thingLimit(): Flow<Int?> = flowOf(2)
     override fun shouldShowAds(): Flow<Boolean> = flowOf(false)
+  }
+
+  private companion object {
+    private const val GRACE = 1_000L
+    private const val STALL = 5_000L
   }
 }

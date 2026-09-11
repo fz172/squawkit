@@ -31,6 +31,15 @@
   <string name="subscription_purchase_on_mobile">Subscribe in the SquawkIt app on iOS or Android. Your subscription works everywhere, including here.</string>
   <!-- The store took payment; the entitlement is still syncing back from the server. -->
   <string name="subscription_activating">Payment received. Activating SquawkIt Pro…</string>
+  <!--
+    The wait has outlived "Activating…". Leads with reassurance about the money, because the pilot
+    has paid and a vague "something went wrong" here reads as "your payment failed" — which would be
+    false, and would invite a second purchase or a refund request.
+  -->
+  <string name="subscription_activation_stalled">This is taking longer than usual. Your purchase went through and nothing is lost — Pro unlocks automatically once it completes.</string>
+  <!-- The same wait after a promo code, where there was no payment to reassure anyone about. -->
+  <string name="subscription_activation_stalled_promo">This is taking longer than usual. Your promo code was applied — Pro unlocks automatically once it completes.</string>
+  <string name="subscription_activation_recheck">Check again</string>
 
   <!-- Promo codes: redeem a pre-minted code instead of buying. -->
   <string name="subscription_promo_entry">Have a promo code?</string>

@@ -596,5 +596,3 @@ private val STATUS_TRACKING = 1.1.sp
 private const val CARD_BORDER_TINT = 0.28f
 private const val CARD_SURFACE_TINT = 0.06f
 private const val CARD_RULE_TINT = 0.16f
-private const val NOTICE_BORDER_TINT = 0.32f
-private const val NOTICE_SURFACE_TINT = 0.07f

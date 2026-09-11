@@ -130,6 +130,19 @@ data class SubscriptionUiState(
    */
   val promoActivationTerm: PromoTerm? = null,
   /**
+   * The activation has been pending long enough that "Activating…" has stopped being informative.
+   *
+   * Keyed on the observable state — still not Pro, this long after paying — and deliberately **not**
+   * on whether the reconcile RPC succeeded. Those come apart in both directions: a reconcile that
+   * returns `reconciled: false` leaves the pilot equally stuck, and one that fails a second before
+   * the webhook lands is no problem at all. What the pilot is asking is "am I Pro yet", so that is
+   * what the UI answers.
+   *
+   * Without this the page span forever: [isActivating] resolves only when the tier flips, so an
+   * entitlement that never arrived left "Activating SquawkIt Pro…" on screen indefinitely.
+   */
+  val isActivationStalled: Boolean = false,
+  /**
    * Whether the page should offer promo-code entry at all.
    *
    * True on the paywall, and on a *comped* membership — a second code stacks onto comp time the
@@ -292,10 +305,15 @@ class SubscriptionViewModel(
   private val promoCodeRedeemer: PromoCodeRedeemer = NoOpPromoCodeRedeemer,
   /** How long to wait for the webhook before asking the server to re-check. Overridden in tests. */
   private val activationGraceMillis: Long = ACTIVATION_GRACE_MILLIS,
+  /** How long before the wait stops being reported as normal. Overridden in tests. */
+  private val activationStallMillis: Long = ACTIVATION_STALL_MILLIS,
 ) : ViewModel() {
 
   private val purchasePending = MutableStateFlow(false)
   private var activationWatchdog: Job? = null
+
+  /** The activation has outlived [activationStallMillis]; see [SubscriptionUiState.isActivationStalled]. */
+  private val activationStalled = MutableStateFlow(false)
 
   /** The term a just-redeemed code granted, held until the entitlement it bought syncs down. */
   private val promoPending = MutableStateFlow<PromoTerm?>(null)
@@ -349,7 +367,8 @@ class SubscriptionViewModel(
       subscriptionManager.entitlement(),
       purchasePending,
       promoPending,
-    ) { status, subscription, pending, promoTerm ->
+      activationStalled,
+    ) { status, subscription, pending, promoTerm, stalled ->
       toSubscriptionUiState(
         status = status,
         subscription = subscription,
@@ -360,6 +379,7 @@ class SubscriptionViewModel(
         isActivating = (pending || promoTerm != null) &&
           status != Subscription.Status.STATUS_PRO,
         promoActivationTerm = promoTerm.takeIf { status != Subscription.Status.STATUS_PRO },
+        isActivationStalled = stalled && status != Subscription.Status.STATUS_PRO,
         // Re-read on every emission rather than held: `status()` is auth-scoped, so signing in or
         // out re-runs this. Linking a guest account to a real one does NOT fire authStateChanged
         // (see SettingsViewModel), so an in-session upgrade is reflected when the page is revisited.
@@ -387,19 +407,55 @@ class SubscriptionViewModel(
    */
   fun onPurchaseCompleted() {
     purchasePending.value = true
+    watchActivation(isPurchase = true)
+  }
+
+  /**
+   * Runs the two timers behind an in-flight activation: nudge the server, then stop claiming the
+   * wait is normal.
+   *
+   * @param isPurchase the activation came from the store, so the server has something to reconcile
+   *   against. A promo grant is already written server-side — RevenueCat has likely never heard of
+   *   the account — so it gets the stall timer and no provider lookup.
+   */
+  private fun watchActivation(isPurchase: Boolean) {
     activationWatchdog?.cancel()
+    activationStalled.value = false
     activationWatchdog = viewModelScope.launch {
       delay(activationGraceMillis.milliseconds)
       // Re-read rather than trusting the flag: by now the webhook has usually landed, and asking
       // the server to re-check an account that is already Pro would burn a provider lookup for
       // nothing.
-      if (subscriptionManager.status()
-          .first() != Subscription.Status.STATUS_PRO
-      ) {
-        entitlementReconciler.reconcileNow()
+      if (isStillFree()) {
+        if (isPurchase) entitlementReconciler.reconcileNow()
+        delay((activationStallMillis - activationGraceMillis).coerceAtLeast(0).milliseconds)
+        // Deliberately independent of what reconcileNow returned. Its result answers a different
+        // question; this one asks only whether the pilot got what they paid for.
+        if (isStillFree()) activationStalled.value = true
       }
     }
   }
+
+  /**
+   * Re-checks a stalled activation, from the pilot's "Check again".
+   *
+   * Asks the server to re-check where there is something to re-check, then gives it a short window
+   * rather than the full stall period — a manual retry that went quiet for another minute and a half
+   * would read as a second failure.
+   */
+  fun onActivationRecheck() {
+    val isPurchase = promoPending.value == null
+    activationWatchdog?.cancel()
+    activationStalled.value = false
+    activationWatchdog = viewModelScope.launch {
+      if (isPurchase) entitlementReconciler.reconcileNow()
+      delay(activationGraceMillis.milliseconds)
+      if (isStillFree()) activationStalled.value = true
+    }
+  }
+
+  private suspend fun isStillFree(): Boolean =
+    subscriptionManager.status().first() != Subscription.Status.STATUS_PRO
 
   fun onPromoEntryOpened() {
     _promoCodeState.value = PromoCodeUiState(isOpen = true)
@@ -443,6 +499,9 @@ class SubscriptionViewModel(
         is PromoRedemptionResult.Granted -> {
           _promoCodeState.value = PromoCodeUiState()
           promoPending.value = PromoTerm.ofDays(result.durationDays)
+          // The grant is already written server-side, so a wait here is the sync layer, not billing
+          // — but it must still end in something other than a permanent spinner.
+          watchActivation(isPurchase = false)
         }
 
         PromoRedemptionResult.NotValid -> failPromo(PromoCodeError.NOT_VALID)
@@ -467,6 +526,16 @@ class SubscriptionViewModel(
      * Observed round trips in testing were under two seconds.
      */
     private const val ACTIVATION_GRACE_MILLIS = 10_000L
+
+    /**
+     * When the wait stops being reported as normal.
+     *
+     * Long enough to clear a slow webhook plus a reconcile plus the sync round trip — well past the
+     * observed couple of seconds, so an ordinary purchase never sees this. Short enough that a pilot
+     * whose entitlement is genuinely never coming is told so while they are still on the page,
+     * rather than left with a spinner that had no end state at all.
+     */
+    private const val ACTIVATION_STALL_MILLIS = 60_000L
   }
 }
 
@@ -479,6 +548,7 @@ internal fun toSubscriptionUiState(
   store: PurchasePlatform? = null,
   isActivating: Boolean = false,
   promoActivationTerm: PromoTerm? = null,
+  isActivationStalled: Boolean = false,
   isGuest: Boolean = false,
   isAdsSupported: Boolean = false,
 ): SubscriptionUiState {
@@ -502,6 +572,7 @@ internal fun toSubscriptionUiState(
     isPurchaseSupported = isPurchaseSupported,
     isActivating = isActivating,
     promoActivationTerm = promoActivationTerm,
+    isActivationStalled = isActivationStalled,
     // A store subscriber is refused server-side; everyone else — free, and comped, who can stack a
     // second term onto the comp time they still hold — is offered the entry.
     canRedeemPromo = !isGuest && (status != Subscription.Status.STATUS_PRO || isComped),

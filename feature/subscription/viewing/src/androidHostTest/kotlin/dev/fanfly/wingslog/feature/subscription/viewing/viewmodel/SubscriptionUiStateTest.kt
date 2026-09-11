@@ -202,6 +202,59 @@ class SubscriptionUiStateTest {
     }
 
   @Test
+  fun `a purchase that never activates stops claiming the wait is normal`() =
+    runTest {
+      val vm = viewModel(status = Subscription.Status.STATUS_FREE, reconciler = RecordingReconciler())
+      vm.onPurchaseCompleted()
+
+      advanceTimeBy((STALL - 1).milliseconds)
+      runCurrent()
+      assertThat(stateOf(vm).isActivationStalled).isFalse()
+
+      advanceTimeBy(2.milliseconds)
+      runCurrent()
+      // The spinner had no end state before this: isActivating resolves only when the tier flips,
+      // so a webhook that never arrived left "Activating SquawkIt Pro…" on screen indefinitely.
+      assertThat(stateOf(vm).isActivationStalled).isTrue()
+    }
+
+  @Test
+  fun `an activation that lands in time never stalls`() =
+    runTest {
+      val vm = viewModel(status = Subscription.Status.STATUS_PRO, reconciler = RecordingReconciler())
+      vm.onPurchaseCompleted()
+
+      advanceTimeBy((STALL * 2).milliseconds)
+      runCurrent()
+
+      assertThat(stateOf(vm).isActivationStalled).isFalse()
+    }
+
+  @Test
+  fun `Check again re-asks the server and gives it a short window, not another full stall`() =
+    runTest {
+      val reconciler = RecordingReconciler()
+      val vm = viewModel(status = Subscription.Status.STATUS_FREE, reconciler = reconciler)
+      vm.onPurchaseCompleted()
+      advanceTimeBy((STALL + 1).milliseconds)
+      runCurrent()
+      assertThat(stateOf(vm).isActivationStalled).isTrue()
+
+      vm.onActivationRecheck()
+      runCurrent()
+      // Cleared immediately, so the tap visibly does something.
+      assertThat(stateOf(vm).isActivationStalled).isFalse()
+      // One from the watchdog, one from the retry.
+      assertThat(reconciler.calls).isEqualTo(2)
+
+      // Back to stalled after the short window — a manual retry that went quiet for another full
+      // stall period would read as a second failure.
+      advanceTimeBy((GRACE + 1).milliseconds)
+      runCurrent()
+      assertThat(stateOf(vm).isActivationStalled).isTrue()
+    }
+
+  @Test
   fun `purchase platform is read from the entitlement`() {
     val state = toSubscriptionUiState(
       Subscription.Status.STATUS_PRO,
@@ -599,6 +652,7 @@ class SubscriptionUiStateTest {
 
   private companion object {
     private const val GRACE = 10_000L
+    private const val STALL = 60_000L
 
     /**
      * The default fixture entitlement: Pro with a management link already known.
@@ -648,6 +702,7 @@ class SubscriptionUiStateTest {
       isAdsSupported = isAdsSupported,
     ),
     activationGraceMillis = GRACE,
+    activationStallMillis = STALL,
   )
 
   /**

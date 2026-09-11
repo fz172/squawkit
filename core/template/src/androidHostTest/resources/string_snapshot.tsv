@@ -602,6 +602,9 @@ feature/stresstest	stress_test_working	Working…
 feature/stresstest/config	debug_tools_header	DEBUG TOOLS
 feature/stresstest/config	fake_data_generator_description	Populate fake things, logs, squawks, and tasks for UI testing
 feature/subscription/viewing	subscription_activating	Payment received. Activating SquawkIt Pro…
+feature/subscription/viewing	subscription_activation_recheck	Check again
+feature/subscription/viewing	subscription_activation_stalled	This is taking longer than usual. Your purchase went through and nothing is lost — Pro unlocks automatically once it completes.
+feature/subscription/viewing	subscription_activation_stalled_promo	This is taking longer than usual. Your promo code was applied — Pro unlocks automatically once it completes.
 feature/subscription/viewing	subscription_cell_excluded	—
 feature/subscription/viewing	subscription_cell_unlimited	∞
 feature/subscription/viewing	subscription_col_free	Basic
