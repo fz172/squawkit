@@ -157,42 +157,22 @@
          loads gtag.js there itself, and a second copy would double-count every event.
 
          This fires before promo.js, so a returning visitor redirected to /login is counted as
-         having landed here first. Known and accepted: the alternative is deferring the whole
-         snippet to the bottom of the page to save one event. -->
+         having landed here first. Known and accepted. -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-VPNQ92VG8F"></script>
     <script>
-        (function () {
-            var MEASUREMENT_ID = 'G-VPNQ92VG8F';
+        window.dataLayer = window.dataLayer || [];
 
-            // The diagnostics opt-out the app's settings row writes (JsAnalyticsPreferenceStore).
-            // Device-local, not account state — the same localStorage on the same origin the
-            // bundle uses — so it is readable here with nobody signed in. The app can only apply
-            // it once it has booted, so this page gates its own load. Absent means enabled, which
-            // is also the app's default, so a first-time visitor is always measured.
-            try {
-                if (localStorage.getItem('firebase_logging_enabled') === 'false') return;
-            } catch (e) {
-                // Storage blocked entirely. Fall through to the default.
-            }
+        function gtag() {
+            window.dataLayer.push(arguments);
+        }
 
-            var script = document.createElement('script');
-            script.async = true;
-            script.src = 'https://www.googletagmanager.com/gtag/js?id=' + MEASUREMENT_ID;
-            document.head.appendChild(script);
+        gtag('js', new Date());
+        gtag('config', 'G-VPNQ92VG8F');
 
-            window.dataLayer = window.dataLayer || [];
-
-            function gtag() {
-                window.dataLayer.push(arguments);
-            }
-
-            gtag('js', new Date());
-            gtag('config', MEASUREMENT_ID);
-
-            // Name this surface distinctly so landing traffic and sign-in starts stop being one
-            // number: the app logs `login` for the card at /login (TrackRootScreenViews), this
-            // page logs `web_promo`.
-            gtag('event', 'screen_view', {screen_name: 'web_promo'});
-        })();
+        // Name this surface distinctly so landing traffic and sign-in starts stop being one
+        // number: the app logs `login` for the card at /login (TrackRootScreenViews), this page
+        // logs `web_promo`.
+        gtag('event', 'screen_view', {screen_name: 'web_promo'});
     </script>
 </head>
 <body>
