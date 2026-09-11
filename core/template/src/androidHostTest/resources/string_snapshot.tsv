@@ -449,8 +449,6 @@ feature/settings	settings_section_preferences	Preferences
 feature/settings	settings_section_data	Data
 feature/settings	settings_section_support	Support
 feature/settings	settings_section_account	Account
-feature/settings	settings_profile_edit	Edit profile
-feature/settings	settings_profile_subtitle	%1$s · Edit profile
 feature/settings	settings_profile_guest	Guest
 feature/settings	settings_plan_basic	Basic plan · Your plan, benefits, and storage
 feature/settings	settings_plan_pro	Pro plan
@@ -716,7 +714,6 @@ feature/sync/settings	sync_section_status	Status
 feature/sync/settings	sync_last_synced_title	Last synced
 feature/sync/settings	sync_last_synced_up_to_date	Everything is up to date
 feature/sync/settings	sync_last_synced_pending	Waiting for the first sync
-feature/sync/settings	sync_account_title	Account
 feature/sync/sharedassets	feature_name_backup_and_sync	Backup &amp; Sync
 feature/tasks/sharedassets	add_task	Add task
 feature/tasks/sharedassets	compliance_authority	Compliance authority

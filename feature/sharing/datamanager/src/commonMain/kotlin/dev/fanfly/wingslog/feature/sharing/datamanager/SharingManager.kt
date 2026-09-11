@@ -119,4 +119,11 @@ interface SharingManager {
    * thing's members are selectable (§7.3).
    */
   fun observeLinkedTechnicians(acId: String): Flow<List<Technician>>
+
+  /**
+   * The account photo of every technician [observeLinkedTechnicians] lists, keyed by their uid (the
+   * mirror's id). The mirror itself carries no photo — it is the member doc beside it that does —
+   * so the roster asks here to draw the same avatar the share screens draw. Blank photos are absent.
+   */
+  fun observeLinkedTechnicianPhotos(): Flow<Map<String, String>>
 }

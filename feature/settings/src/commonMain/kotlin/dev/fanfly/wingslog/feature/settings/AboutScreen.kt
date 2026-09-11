@@ -13,8 +13,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Flight
-import androidx.compose.material.icons.filled.Gavel
+import androidx.compose.material.icons.filled.Policy
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.SupportAgent
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -36,12 +35,16 @@ import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedTopBar
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
 import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.common.compose.GroupedSection
+import dev.fanfly.wingslog.core.ui.common.compose.heroBob
+import dev.fanfly.wingslog.core.ui.common.compose.rememberHeroPulse
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import wingslog.core.sharedassets.generated.resources.app_name
+import wingslog.core.sharedassets.generated.resources.ic_launcher_foreground
 import wingslog.feature.settings.generated.resources.about_contact_support
 import wingslog.feature.settings.generated.resources.about_contact_support_subtitle
 import wingslog.feature.settings.generated.resources.about_copyright
@@ -55,7 +58,9 @@ import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.settings.generated.resources.Res as SettingsRes
 
 private val AppTileSize = 96.dp
-private val AppTileIconSize = 48.dp
+// The launcher foreground keeps its adaptive-icon safe zone, so it is drawn larger than the tile
+// and clipped to it, the way the launcher itself does.
+private val AppTileIconSize = 144.dp
 
 /**
  * About SquawkIt: the version, the legal page, and the ways to reach us. Every row is a link out,
@@ -101,7 +106,7 @@ fun AboutScreen(
             SettingsRowGroup(
               listOf {
                 SettingsRow(
-                  icon = Icons.Default.Gavel,
+                  icon = Icons.Default.Policy,
                   title = stringResource(SettingsRes.string.about_terms),
                   onClick = { uriHandler.openUri(termsUrl) },
                 )
@@ -153,9 +158,10 @@ fun AboutScreen(
   }
 }
 
-/** The app mark, name and version — the version in mono, since it is an identifier. */
+/** The app mark (bobbing, like the heroes), name and version — the version in mono, since it is an identifier. */
 @Composable
 private fun AppIdentity() {
+  val pulse = rememberHeroPulse()
   Column(
     modifier = Modifier
       .fillMaxWidth()
@@ -171,9 +177,11 @@ private fun AppIdentity() {
       contentAlignment = Alignment.Center,
     ) {
       Icon(
-        imageVector = Icons.Default.Flight,
+        painter = painterResource(CoreRes.drawable.ic_launcher_foreground),
         contentDescription = null,
-        modifier = Modifier.size(AppTileIconSize),
+        modifier = Modifier
+          .size(AppTileIconSize)
+          .heroBob { pulse.value },
         tint = MaterialTheme.colorScheme.primary,
       )
     }

@@ -49,7 +49,6 @@ import wingslog.feature.subscription.viewing.generated.resources.subscription_ma
 internal fun ProMembershipContent(
   state: SubscriptionUiState,
   onManage: () -> Unit,
-  onRedeemPromo: () -> Unit,
 ) {
   PlanCard(state)
   FeatureSections(state)
@@ -75,12 +74,6 @@ internal fun ProMembershipContent(
     else -> ManagedElsewhere(isPurchaseSupported = state.isPurchaseSupported)
   }
 
-  // Only a comped member sees this: a second code stacks onto the comp time they still hold, and
-  // the server refuses one from a store subscriber outright. Offering it to them would be a control
-  // that can only say no.
-  if (state.canRedeemPromo) {
-    PromoCodeEntryButton(onRedeemPromo)
-  }
 }
 
 @Composable

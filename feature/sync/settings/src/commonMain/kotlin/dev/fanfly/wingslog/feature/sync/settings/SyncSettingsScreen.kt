@@ -19,7 +19,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.CloudSync
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.SignalCellularAlt
 import androidx.compose.material.icons.filled.Warning
@@ -61,7 +60,6 @@ import org.koin.compose.viewmodel.koinViewModel
 import wingslog.feature.sync.settings.generated.resources.Res
 import wingslog.feature.sync.settings.generated.resources.setting_item_sync
 import wingslog.feature.sync.settings.generated.resources.setting_item_sync_on_cellular
-import wingslog.feature.sync.settings.generated.resources.sync_account_title
 import wingslog.feature.sync.settings.generated.resources.sync_hero_body_active
 import wingslog.feature.sync.settings.generated.resources.sync_hero_body_paused
 import wingslog.feature.sync.settings.generated.resources.sync_hero_body_signin
@@ -177,22 +175,7 @@ fun SyncSettingsScreen(
 
         GroupedSection(stringResource(Res.string.sync_section_status)) {
           GroupedRowGroup(
-            rows = listOf(
-              { LastSyncedRow(state) },
-              {
-                val title = stringResource(Res.string.sync_account_title)
-                GroupedRow(
-                  title = title,
-                  subtitle = state.email ?: stringResource(Res.string.sync_subtitle_signin),
-                  leading = {
-                    GroupedLeadingIconChip(
-                      icon = Icons.Default.Person,
-                      contentDescription = title,
-                    )
-                  },
-                )
-              },
-            ),
+            rows = listOf { LastSyncedRow(state) },
           )
         }
 

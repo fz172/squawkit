@@ -133,7 +133,6 @@ fun SubscriptionScreen(
             ProMembershipContent(
               state = uiState,
               onManage = { sheet = BillingSheet.CustomerCenter },
-              onRedeemPromo = viewModel::onPromoEntryOpened,
             )
           } else {
             ProPaywallContent(

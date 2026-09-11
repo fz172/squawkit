@@ -31,14 +31,13 @@ import dev.fanfly.wingslog.thing.Technician
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.technician.sharedassets.generated.resources.Res
 import wingslog.feature.technician.sharedassets.generated.resources.linked_badge
-import wingslog.feature.technician.sharedassets.generated.resources.no_certifications
 import wingslog.feature.technician.sharedassets.generated.resources.you_badge
 
 private val RowAvatarSize = 40.dp
 private const val LinkedInfoAlpha = 0.6f
 
 /**
- * One person on the roster: initials, name, and every credential on its own line. Your own record
+ * One person on the roster: photo or initials, name, and every credential on its own line. Your own record
  * carries a "You" stamp; a profile mirrored from someone's share carries "Linked" and opens an
  * explanation rather than an editor (§7.3).
  */
@@ -49,13 +48,17 @@ fun TechnicianRow(
   offered: List<OfferedCertification>,
   onClick: () -> Unit,
   modifier: Modifier = Modifier,
+  /** The person's account photo, when their account has one; initials otherwise. */
+  photoUri: String? = null,
   isSelf: Boolean = false,
   isLinked: Boolean = false,
 ) {
   val certifications = technician.certificationLines(offered)
-  // One line per credential, expiry inline — "A&P Mechanic · A7584747 (Exp 08/31/2031)".
-  val subtitle = if (certifications.isEmpty()) stringResource(Res.string.no_certifications)
-  else certifications.map { it.summary() }.joinToString("\n")
+  // One line per credential, expiry inline — "A&P Mechanic · A7584747 (Exp 08/31/2031)". Someone
+  // uncertified just has a name; saying "none" would read as a gap to fill.
+  val subtitle = certifications.takeIf { it.isNotEmpty() }
+    ?.map { it.summary() }
+    ?.joinToString("\n")
 
   GroupedRow(
     title = technician.name,
@@ -65,7 +68,7 @@ fun TechnicianRow(
     leading = {
       AvatarIcon(
         displayName = technician.name,
-        photoUri = null,
+        photoUri = photoUri,
         size = RowAvatarSize,
         textStyle = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
       )

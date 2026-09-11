@@ -28,5 +28,4 @@
   <string name="sync_last_synced_up_to_date">Everything is up to date</string>
   <!-- The engine tracks the last sync per session only, so this reads "not yet", never "never". -->
   <string name="sync_last_synced_pending">Waiting for the first sync</string>
-  <string name="sync_account_title">Account</string>
 </resources>

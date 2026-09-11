@@ -17,7 +17,7 @@ import kotlin.time.Instant
 /**
  * Drives the dedicated sync settings page. Reads three sources:
  * - [FirebaseAuth.authStateChanged] → whether we're signed in / anonymous (controls whether sync
- *   can be enabled at all) and the account the Status card names.
+ *   can be enabled at all).
  * - [SyncPreferences.state] → the user's choice.
  * - [SyncEngine.failureState] / [SyncEngine.hydrationState] / [SyncEngine.lastSyncedAt] → live
  *   status for the Status card.
@@ -41,7 +41,6 @@ class SyncSettingsViewModel(
       val signedIn = user != null && !user.isAnonymous
       SyncSettingsUiState(
         signedIn = signedIn,
-        email = user?.email?.takeIf { signedIn && it.isNotBlank() },
         cloudSyncEnabled = prefs.cloudSyncEnabled,
         allowUploadOnCellular = prefs.allowUploadOnCellular,
         failure = failure,
@@ -66,8 +65,6 @@ class SyncSettingsViewModel(
 /** Pure render input for [SyncSettingsScreen]. */
 data class SyncSettingsUiState(
   val signedIn: Boolean,
-  /** The permanent account's address, for the Status card; null for a guest or an address-less account. */
-  val email: String?,
   val cloudSyncEnabled: Boolean,
   val allowUploadOnCellular: Boolean,
   val failure: SyncFailure?,
@@ -78,7 +75,6 @@ data class SyncSettingsUiState(
   companion object {
     val Initial = SyncSettingsUiState(
       signedIn = false,
-      email = null,
       cloudSyncEnabled = true,
       allowUploadOnCellular = false,
       failure = null,

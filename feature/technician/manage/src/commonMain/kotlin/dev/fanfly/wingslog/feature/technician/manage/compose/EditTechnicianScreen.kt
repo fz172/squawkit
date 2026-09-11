@@ -171,7 +171,7 @@ fun EditTechnicianScreen(
           ) {
             AvatarIcon(
               displayName = uiState.name.takeIf { it.isNotBlank() },
-              photoUri = null,
+              photoUri = if (uiState.isSelf) uiState.photoUrl else null,
               size = ProfileAvatarSize,
               textStyle = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
             )

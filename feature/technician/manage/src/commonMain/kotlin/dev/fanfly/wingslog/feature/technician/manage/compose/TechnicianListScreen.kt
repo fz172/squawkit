@@ -209,6 +209,7 @@ fun TechnicianListScreen(
                 technicians = state.technicians,
                 offered = state.knownCertifications,
                 selfId = state.selfId,
+                photoFor = { if (it.id == state.selfId) state.selfPhotoUrl else null },
                 onClick = { onNavigateToEdit(it.id) },
               )
             }
@@ -221,6 +222,7 @@ fun TechnicianListScreen(
                 technicians = state.linkedTechnicians,
                 offered = state.knownCertifications,
                 isLinked = true,
+                photoFor = { state.linkedPhotos[it.id] },
                 onClick = { infoFor = it },
               )
             }
@@ -238,6 +240,7 @@ private fun TechnicianGroup(
   technicians: List<Technician>,
   offered: List<OfferedCertification>,
   onClick: (Technician) -> Unit,
+  photoFor: (Technician) -> String?,
   selfId: String? = null,
   isLinked: Boolean = false,
 ) {
@@ -249,6 +252,7 @@ private fun TechnicianGroup(
             technician = technician,
             offered = offered,
             onClick = { onClick(technician) },
+            photoUri = photoFor(technician),
             isSelf = technician.id == selfId,
             isLinked = isLinked,
           )

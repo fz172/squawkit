@@ -35,6 +35,8 @@ data class EditTechnicianUiState(
   val isSelf: Boolean = false,
   /** The signed-in account's address, shown read-only on the self profile; null when it has none. */
   val email: String? = null,
+  /** The signed-in account's photo, drawn on the self profile; null when it has none. */
+  val photoUrl: String? = null,
   val isLoading: Boolean = false,
   val isSaving: Boolean = false,
   val saveSuccess: Boolean = false,
@@ -70,6 +72,7 @@ class EditTechnicianViewModel(
       EditTechnicianUiState(
         isLoading = technicianId != null,
         email = authManager.getCurrentUser()?.email?.takeIf { it.isNotBlank() },
+        photoUrl = authManager.getCurrentUser()?.photoURL?.takeIf { it.isNotBlank() },
       )
     )
   val uiState = _uiState.asStateFlow()

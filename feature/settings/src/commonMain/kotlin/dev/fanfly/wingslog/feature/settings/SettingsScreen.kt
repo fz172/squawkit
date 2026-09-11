@@ -84,9 +84,7 @@ import wingslog.feature.settings.generated.resources.settings_plan_basic
 import wingslog.feature.settings.generated.resources.settings_plan_pro
 import wingslog.feature.settings.generated.resources.settings_plan_pro_ends
 import wingslog.feature.settings.generated.resources.settings_plan_pro_renews
-import wingslog.feature.settings.generated.resources.settings_profile_edit
 import wingslog.feature.settings.generated.resources.settings_profile_guest
-import wingslog.feature.settings.generated.resources.settings_profile_subtitle
 import wingslog.feature.settings.generated.resources.settings_section_account
 import wingslog.feature.settings.generated.resources.settings_section_data
 import wingslog.feature.settings.generated.resources.settings_section_preferences
@@ -387,7 +385,8 @@ fun SettingsContent(
 
 /**
  * Who is signed in and what they are paying for, in one card at the top: the avatar row opens the
- * profile editor, the plan row opens Subscription. Dividers inset to the row padding rather than
+ * profile editor (the chevron says so; the subtitle is just the account), the plan row opens
+ * Subscription. Dividers inset to the row padding rather than
  * the chip column — the avatar is not a chip, so a chip-aligned rule would float.
  */
 @Composable
@@ -396,7 +395,6 @@ private fun ProfileCard(
   onOpenProfile: () -> Unit,
   onOpenSubscription: () -> Unit,
 ) {
-  val editProfile = stringResource(SettingsRes.string.settings_profile_edit)
   SettingsRowGroup(
     dividerStartInset = Spacing.xLarge,
     rows = listOf(
@@ -405,14 +403,7 @@ private fun ProfileCard(
           title = user.displayName
             ?: stringResource(SettingsRes.string.settings_profile_guest),
           titleStyle = MaterialTheme.typography.titleLarge,
-          subtitle = user.email
-            ?.let {
-              stringResource(
-                SettingsRes.string.settings_profile_subtitle,
-                it
-              )
-            }
-            ?: editProfile,
+          subtitle = user.email,
           onClick = onOpenProfile,
           leading = {
             AvatarIcon(

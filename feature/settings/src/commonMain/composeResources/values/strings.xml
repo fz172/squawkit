@@ -31,9 +31,7 @@
   <string name="settings_section_data">Data</string>
   <string name="settings_section_support">Support</string>
   <string name="settings_section_account">Account</string>
-  <!-- The profile card. The subtitle carries the account email when there is one. -->
-  <string name="settings_profile_edit">Edit profile</string>
-  <string name="settings_profile_subtitle"><xliff:g example="pilot@example.com">%1$s</xliff:g> · Edit profile</string>
+  <!-- The profile card. -->
   <string name="settings_profile_guest">Guest</string>
   <string name="settings_plan_basic">Basic plan · Your plan, benefits, and storage</string>
   <string name="settings_plan_pro">Pro plan</string>
