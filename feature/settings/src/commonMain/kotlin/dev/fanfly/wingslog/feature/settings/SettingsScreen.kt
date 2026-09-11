@@ -402,10 +402,16 @@ private fun ProfileCard(
     rows = listOf(
       {
         GroupedRow(
-          title = user.displayName ?: stringResource(SettingsRes.string.settings_profile_guest),
+          title = user.displayName
+            ?: stringResource(SettingsRes.string.settings_profile_guest),
           titleStyle = MaterialTheme.typography.titleLarge,
           subtitle = user.email
-            ?.let { stringResource(SettingsRes.string.settings_profile_subtitle, it) }
+            ?.let {
+              stringResource(
+                SettingsRes.string.settings_profile_subtitle,
+                it
+              )
+            }
             ?: editProfile,
           onClick = onOpenProfile,
           leading = {
@@ -428,9 +434,15 @@ private fun ProfileCard(
             is PlanRow.Pro -> when {
               plan.periodEnd == null -> stringResource(SettingsRes.string.settings_plan_pro)
               plan.willRenew ->
-                stringResource(SettingsRes.string.settings_plan_pro_renews, plan.periodEnd)
+                stringResource(
+                  SettingsRes.string.settings_plan_pro_renews,
+                  plan.periodEnd
+                )
 
-              else -> stringResource(SettingsRes.string.settings_plan_pro_ends, plan.periodEnd)
+              else -> stringResource(
+                SettingsRes.string.settings_plan_pro_ends,
+                plan.periodEnd
+              )
             }
           },
           onClick = onOpenSubscription,
