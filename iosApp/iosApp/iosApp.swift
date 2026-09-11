@@ -29,6 +29,16 @@ class AppDelegate: NSObject, UIApplicationDelegate, MessagingDelegate {
       }
     }
     MainEntry.shared.startSyncEngine()
+    // Google Sign-In carries its *own* App Check stack — AppCheckCore, not FirebaseAppCheck, with a
+    // separate App Attest key and a separate debug token — and it attests to oauth2.googleapis.com,
+    // which App Check enforces independently of identitytoolkit. GIDSignIn only attaches that token
+    // when it has been configured, so without this call the factory set in init() below buys
+    // nothing and enforcing oauth2.googleapis.com denies every sign-in.
+    //
+    // Safe while that service is UNENFORCED: a failed token fetch is passed to the completion but
+    // GIDSignIn ignores it and presents the request without the assertion. Preparing at launch
+    // rather than at the sign-in tap also keeps the SDK's loading spinner out of the flow.
+    configureGoogleSignInAppCheck()
     MainEntry.shared.installGoogleSignInHandler { [weak self] in
       self?.googleSignInProvider.signIn()
     }
@@ -69,6 +79,21 @@ class AppDelegate: NSObject, UIApplicationDelegate, MessagingDelegate {
       MainEntry.shared.onPushTokenReceived(token: token)
     }
     return true
+  }
+
+  /// Pre-warms the App Check provider GIDSignIn attaches to its oauth2.googleapis.com request.
+  ///
+  /// Mirrors the Firebase split in `iosApp.init()` for the same reason — the Simulator has no
+  /// Secure Enclave to attest with — but the two stacks share nothing. This debug provider prints
+  /// its own token, which has to be registered under App Check → Manage debug tokens *in addition*
+  /// to Firebase's, and it needs an explicit API key where Firebase's reads its own config.
+  private func configureGoogleSignInAppCheck() {
+    #if targetEnvironment(simulator) || DEBUG
+    guard let apiKey = FirebaseApp.app()?.options.apiKey else { return }
+    GIDSignIn.sharedInstance.configureDebugProvider(withAPIKey: apiKey) { _ in }
+    #else
+    GIDSignIn.sharedInstance.configure { _ in }
+    #endif
   }
 
   // FCM's APNs bridge: hands the raw APNs device token to Messaging so it can mint/attach the FCM
