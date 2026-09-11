@@ -21,6 +21,14 @@ enum class NotificationsRowState {
   BLOCKED,
 }
 
+/** What the Subscription row says under its title. */
+sealed interface PlanRow {
+  data object Basic : PlanRow
+
+  /** [periodEnd] is the display date the plan renews or ends on, or null when the store gave none. */
+  data class Pro(val periodEnd: String?, val willRenew: Boolean) : PlanRow
+}
+
 data class SettingsUiState(
   val userStatus: UserStatus = UserStatus.UNKNOWN,
   val featureFlags: DeveloperFlags = DeveloperFlags(),
@@ -28,6 +36,11 @@ data class SettingsUiState(
   // Guest (anonymous) accounts keep all data on-device only; logging out erases it permanently.
   val isAnonymous: Boolean = false,
   val isDeveloperOptionsSupported: Boolean = false,
+  /** The profile card: the self-technician's name (falling back through the account), its email and photo. */
+  val displayName: String? = null,
+  val email: String? = null,
+  val photoUrl: String? = null,
+  val plan: PlanRow = PlanRow.Basic,
   /**
    * Whether "Ad privacy settings" has a CMP form to re-present right now (#384) — not just whether
    * this build ships ads. False until some ad slot has resolved consent this session (the CMP call

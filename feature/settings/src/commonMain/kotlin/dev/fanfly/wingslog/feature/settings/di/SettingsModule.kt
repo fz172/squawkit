@@ -16,6 +16,8 @@ import dev.fanfly.wingslog.feature.notifications.datamanager.SignOutCoordinator
 import dev.fanfly.wingslog.feature.notifications.permission.NotificationPermission
 import dev.fanfly.wingslog.feature.settings.data.SettingsViewModel
 import dev.fanfly.wingslog.feature.settings.developeroptions.DeveloperOptionsViewModel
+import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
+import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
@@ -36,6 +38,8 @@ val settingsModule = module {
       get<NotificationPermission>(),
       get<NotificationPrefsManager>(),
       get<SignOutCoordinator>(),
+      get<TechnicianManager>(),
+      get<SubscriptionManager>(),
     )
   }
   viewModel {

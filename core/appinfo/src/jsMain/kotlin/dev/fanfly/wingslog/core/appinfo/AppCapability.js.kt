@@ -9,4 +9,7 @@ actual fun createAppCapability(isDeveloperBuild: Boolean) = AppCapability(
   // regardless of this flag's value.
   isAdsSupported = false,
   supportUrl = "/support.html",
+  termsUrl = "/privacy.html",
+  // No store on web, so nothing to rate.
+  storeListingUrl = null,
 )

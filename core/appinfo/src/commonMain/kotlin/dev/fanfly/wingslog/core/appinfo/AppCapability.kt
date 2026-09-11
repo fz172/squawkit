@@ -27,6 +27,10 @@ data class AppCapability(
    * that build an [AppCapability] by hand from having to care.
    */
   val supportUrl: String? = null,
+  /** The combined terms-and-privacy page, or null where the host has none to open. */
+  val termsUrl: String? = null,
+  /** This build's store listing, for "Rate SquawkIt"; null where there is no store (web). */
+  val storeListingUrl: String? = null,
 )
 
 /**

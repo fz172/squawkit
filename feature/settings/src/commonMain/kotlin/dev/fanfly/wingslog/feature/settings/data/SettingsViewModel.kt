@@ -6,6 +6,8 @@ import dev.fanfly.wingslog.core.analytics.AnalyticsPreferenceController
 import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.core.auth.AccountDeleter
 import dev.fanfly.wingslog.core.auth.AuthManager
+import dev.fanfly.wingslog.core.datetime.toDisplayFormat
+import dev.fanfly.wingslog.core.model.settings.Subscription
 import dev.fanfly.wingslog.core.storage.DatabaseIntegrityChecker
 import dev.fanfly.wingslog.core.ui.theme.AppearanceController
 import dev.fanfly.wingslog.core.ui.theme.AppearanceMode
@@ -18,12 +20,22 @@ import dev.fanfly.wingslog.feature.notifications.datamanager.SignOutCoordinator
 import dev.fanfly.wingslog.feature.notifications.model.allEnabled
 import dev.fanfly.wingslog.feature.notifications.permission.NotificationPermission
 import dev.fanfly.wingslog.feature.notifications.permission.PermissionState
+import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
+import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
+import dev.fanfly.wingslog.feature.technician.datamanager.selfDisplayName
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Instant
 
 /**
  * Apple Hide My Email hands us an alias at this domain. We know the string; the pilot does not —
@@ -49,6 +61,8 @@ class SettingsViewModel(
    * (#550) — see [SignOutCoordinator].
    */
   private val signOutCoordinator: SignOutCoordinator,
+  private val technicianManager: TechnicianManager,
+  private val subscriptionManager: SubscriptionManager,
 ) : ViewModel() {
 
   private val _user =
@@ -58,6 +72,11 @@ class SettingsViewModel(
       )
     )
   val user: StateFlow<SettingsUiState> = _user.asStateFlow()
+
+  private val _profileRequests = MutableSharedFlow<ProfileTarget>(extraBufferCapacity = 1)
+
+  /** Where a tap on the profile card should go, once [openProfile] has resolved it. */
+  val profileRequests: SharedFlow<ProfileTarget> = _profileRequests.asSharedFlow()
 
   /** Device-local light/dark/system preference, shared with the root theme. */
   val appearanceMode: StateFlow<AppearanceMode> = appearanceController.mode
@@ -78,6 +97,58 @@ class SettingsViewModel(
     observeDeveloperFlags()
     refreshAdPrivacyOptionsAvailability()
     observeNotificationsRowState()
+    observeSelf()
+    observePlan()
+  }
+
+  /** The profile card's name, email and photo — the same resolution the sidebar account row uses. */
+  private fun observeSelf() {
+    observeSelfJob = viewModelScope.launch {
+      technicianManager.observeSelf().collect { self ->
+        val current = authManager.getCurrentUser()
+        _user.value = _user.value.copy(
+          displayName = selfDisplayName(self, current),
+          email = current?.email?.takeIf { it.isNotBlank() },
+          photoUrl = current?.photoURL,
+        )
+      }
+    }
+  }
+
+  private fun observePlan() {
+    viewModelScope.launch {
+      subscriptionManager.entitlement().collect { subscription ->
+        _user.value = _user.value.copy(plan = subscription.toPlanRow())
+      }
+    }
+  }
+
+  private fun Subscription.toPlanRow(): PlanRow =
+    if (status != Subscription.Status.STATUS_PRO) PlanRow.Basic
+    else PlanRow.Pro(
+      periodEnd = current_period_end_millis.takeIf { it > 0 }?.let { millis ->
+        Instant.fromEpochMilliseconds(millis)
+          .toLocalDateTime(TimeZone.currentSystemDefault())
+          .date
+          .toDisplayFormat(numberOnly = false)
+      },
+      willRenew = will_renew,
+    )
+
+  /**
+   * Resolves the profile card's destination. The self-technician *is* the profile, so this makes
+   * sure one exists (a permanent account that never had one gets it seeded here) and hands back its
+   * id. A guest with no record yet has nothing to edit, so they land on the roster instead — the
+   * tap is never dead.
+   */
+  fun openProfile() {
+    viewModelScope.launch {
+      technicianManager.ensureSelfProfile()
+      val selfId = technicianManager.observeSelfId().first()
+      _profileRequests.emit(
+        if (selfId.isNullOrBlank()) ProfileTarget.Roster else ProfileTarget.Self(selfId)
+      )
+    }
   }
 
   /**
@@ -157,6 +228,8 @@ class SettingsViewModel(
     val current = authManager.getCurrentUser()
     _user.value = _user.value.copy(
       isAnonymous = current?.isAnonymous == true,
+      email = current?.email?.takeIf { it.isNotBlank() },
+      photoUrl = current?.photoURL,
     )
   }
 
@@ -274,5 +347,12 @@ class SettingsViewModel(
       }
     }
   }
+}
 
+/** What [SettingsViewModel.openProfile] resolved the profile card's tap to. */
+sealed interface ProfileTarget {
+  data class Self(val technicianId: String) : ProfileTarget
+
+  /** No self record to edit yet — a guest who never named themselves. */
+  data object Roster : ProfileTarget
 }

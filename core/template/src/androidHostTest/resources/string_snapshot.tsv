@@ -391,7 +391,7 @@ feature/notifications/viewing	notification_channel_urgency_update_description	A 
 feature/notifications/viewing	notification_channel_urgency_update_name	Due reminder
 feature/settings	account_upgrade_link_cta	Link to an account
 feature/settings	account_upgrade_link_subtitle	Your records are on this device only. Link an account to sync and back them up.
-feature/settings	app_version	App Version: %1$s
+feature/settings	app_version	Version %1$s
 feature/settings	appearance_dark	Dark
 feature/settings	appearance_light	Light
 feature/settings	appearance_subtitle	Choose how SquawkIt looks on this device
@@ -418,7 +418,7 @@ feature/settings	developer_options_test_crash_title	Force a crash
 feature/settings	developer_options_test_non_fatal_action	Record
 feature/settings	developer_options_test_non_fatal_subtitle	Reports a caught exception to Crashlytics without crashing. Shows up in the console within a few minutes, under Non-fatals.
 feature/settings	developer_options_test_non_fatal_title	Record a test non-fatal
-feature/settings	firebase_logging_subtitle	Share anonymous diagnostics and usage data to help us improve SquawkIt
+feature/settings	firebase_logging_subtitle	Share anonymous diagnostics and usage data
 feature/settings	firebase_logging_title	Help Us Improve
 feature/settings	settings_ad_privacy	Ad privacy settings
 feature/settings	settings_ad_privacy_subtitle	Review or change your ad consent choice
@@ -442,11 +442,30 @@ feature/settings	settings_notifications_subtitle_blocked	Blocked in system setti
 feature/settings	settings_notifications_subtitle_default	Collaboration and urgency alerts
 feature/settings	settings_notifications_subtitle_off	Off — turn on to hear about changes
 feature/settings	settings_subscription	Subscription
-feature/settings	settings_subscription_subtitle	Your plan, benefits, and storage
 feature/settings	settings_subtitle	Account, appearance &amp; preferences
 feature/settings	settings_sync_subtitle	Keep your records synced across devices
 feature/settings	settings_technicians_subtitle	People you can name when recording work
 feature/settings	sign_out	Log out
+feature/settings	settings_section_preferences	Preferences
+feature/settings	settings_section_data	Data
+feature/settings	settings_section_support	Support
+feature/settings	settings_section_account	Account
+feature/settings	settings_profile_edit	Edit profile
+feature/settings	settings_profile_subtitle	%1$s · Edit profile
+feature/settings	settings_profile_guest	Guest
+feature/settings	settings_plan_basic	Basic plan · Your plan, benefits, and storage
+feature/settings	settings_plan_pro	Pro plan
+feature/settings	settings_plan_pro_renews	Pro plan · Renews %1$s
+feature/settings	settings_plan_pro_ends	Pro plan · Ends %1$s
+feature/settings	settings_about	About SquawkIt
+feature/settings	settings_about_subtitle	Version, terms and support
+feature/settings	about_section_legal	Disclaimers
+feature/settings	about_terms	Terms &amp; Privacy
+feature/settings	about_section_help	Help
+feature/settings	about_contact_support	Contact support
+feature/settings	about_contact_support_subtitle	Get help or send feedback
+feature/settings	about_rate	Rate SquawkIt
+feature/settings	about_copyright	© 2026 SquawkIt
 feature/sharing/sharedassets	enter_code_field_label	Invite code
 feature/sharing/sharedassets	enter_code_instructions	Enter the invite code the aircraft owner gave you. It looks like EFA2-GGTH.
 feature/sharing/sharedassets	enter_code_title	Join a shared aircraft
