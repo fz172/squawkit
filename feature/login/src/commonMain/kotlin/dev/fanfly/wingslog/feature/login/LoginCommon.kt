@@ -59,7 +59,6 @@ import wingslog.feature.login.generated.resources.Res
 import wingslog.feature.login.generated.resources.legal_disclaimer
 import wingslog.feature.login.generated.resources.mission_statement
 import wingslog.feature.login.generated.resources.privacy_notice
-import wingslog.feature.login.generated.resources.sign_in_section_label
 import wingslog.feature.login.generated.resources.support_link
 import wingslog.core.sharedassets.generated.resources.Res as UiRes
 
@@ -109,7 +108,8 @@ internal val LoginErrorStyle = TextStyle(fontSize = 13.sp, lineHeight = 19.sp)
  */
 @Composable
 @ReadOnlyComposable
-private fun isDarkScheme(): Boolean = MaterialTheme.colorScheme.surface.luminance() < 0.5f
+private fun isDarkScheme(): Boolean =
+  MaterialTheme.colorScheme.surface.luminance() < 0.5f
 
 /** The pressed/active row's background: the strongest blue each theme has that white text sits on. */
 @Composable
@@ -194,7 +194,11 @@ internal fun LoginMark(animate: Boolean = true) {
   Text(
     text = buildAnnotatedString {
       append(appName.removeSuffix(BRAND_SUFFIX))
-      withStyle(SpanStyle(color = MaterialTheme.colorScheme.primary)) { append(BRAND_SUFFIX) }
+      withStyle(SpanStyle(color = MaterialTheme.colorScheme.primary)) {
+        append(
+          BRAND_SUFFIX
+        )
+      }
     },
     style = TextStyle(
       fontFamily = headlineFamily,
@@ -231,6 +235,7 @@ internal fun LoginMark(animate: Boolean = true) {
  */
 @Composable
 internal fun LoginCard(
+  heading: String? = null,
   status: String? = null,
   content: @Composable ColumnScope.() -> Unit,
 ) {
@@ -247,22 +252,40 @@ internal fun LoginCard(
       .fillMaxWidth()
       .clip(LoginCardShape)
       .background(MaterialTheme.colorScheme.surface)
-      .border(Spacing.hairline, MaterialTheme.colorScheme.outlineVariant, LoginCardShape),
+      .border(
+        Spacing.hairline,
+        MaterialTheme.colorScheme.outlineVariant,
+        LoginCardShape
+      ),
   ) {
-    Row(
-      modifier = Modifier
-        .fillMaxWidth()
-        .padding(start = RowPadding, end = RowPadding, top = 20.dp, bottom = 12.dp),
-      horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-      Text(
-        text = stringResource(Res.string.sign_in_section_label),
-        style = labelStyle,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-      )
-      if (status != null) {
-        Text(text = status, style = labelStyle, color = MaterialTheme.colorScheme.primary)
+    // Omitted where the surface already says what the rows are for — the upgrade sheet has its own
+    // title above the card, and a second "SIGN IN" under it would just be a label on a label.
+    if (heading != null || status != null) {
+      Row(
+        modifier = Modifier
+          .fillMaxWidth()
+          .padding(
+            start = RowPadding,
+            end = RowPadding,
+            top = 20.dp,
+            bottom = 12.dp
+          ),
+        horizontalArrangement = Arrangement.SpaceBetween,
+      ) {
+        Text(
+          text = heading.orEmpty(),
+          style = labelStyle,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        if (status != null) {
+          Text(
+            text = status,
+            style = labelStyle,
+            color = MaterialTheme.colorScheme.primary
+          )
+        }
       }
+      LoginRowDivider()
     }
     content()
   }
@@ -301,8 +324,10 @@ internal fun LoginRow(
   val accented = pressed || inProgress
 
   val background = if (accented) accentRowColor() else Color.Transparent
-  val content = if (accented) Color.White else MaterialTheme.colorScheme.onSurface
-  val chevron = if (accented) accentRowChevronColor() else MaterialTheme.colorScheme.onSurfaceVariant
+  val content =
+    if (accented) Color.White else MaterialTheme.colorScheme.onSurface
+  val chevron =
+    if (accented) accentRowChevronColor() else MaterialTheme.colorScheme.onSurfaceVariant
 
   Box(
     modifier = Modifier
@@ -311,7 +336,11 @@ internal fun LoginRow(
       .background(background)
       .then(
         if (enabled) {
-          Modifier.clickable(interactionSource = interactionSource, indication = null, onClick = onClick)
+          Modifier.clickable(
+            interactionSource = interactionSource,
+            indication = null,
+            onClick = onClick
+          )
         } else {
           Modifier
         },

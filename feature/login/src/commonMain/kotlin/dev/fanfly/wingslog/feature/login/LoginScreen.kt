@@ -50,6 +50,7 @@ import wingslog.feature.login.generated.resources.provider_google
 import wingslog.feature.login.generated.resources.sign_in_anonymous_error
 import wingslog.feature.login.generated.resources.sign_in_connecting
 import wingslog.feature.login.generated.resources.sign_in_error
+import wingslog.feature.login.generated.resources.sign_in_section_label
 import wingslog.feature.login.generated.resources.signing_in_with
 
 /**
@@ -81,7 +82,8 @@ fun LoginScreen(
   var error by remember { mutableStateOf<String?>(null) }
   var signingIn by remember { mutableStateOf<PendingSignIn?>(null) }
   val signInErrorMessage = stringResource(Res.string.sign_in_error)
-  val signInAnonymousErrorMessage = stringResource(Res.string.sign_in_anonymous_error)
+  val signInAnonymousErrorMessage =
+    stringResource(Res.string.sign_in_anonymous_error)
 
   LaunchedEffect(Unit) {
     scope.launch {
@@ -93,18 +95,19 @@ fun LoginScreen(
   }
 
   /** Runs one provider's sign-in, holding [signingIn] for the duration so the card locks. */
-  val signIn = { provider: PendingSignIn, failure: String, request: suspend () -> Any? ->
-    scope.launch {
-      signingIn = provider
-      error = null
-      try {
-        if (request() != null) onLoginSuccess() else error = failure
-      } finally {
-        signingIn = null
+  val signIn =
+    { provider: PendingSignIn, failure: String, request: suspend () -> Any? ->
+      scope.launch {
+        signingIn = provider
+        error = null
+        try {
+          if (request() != null) onLoginSuccess() else error = failure
+        } finally {
+          signingIn = null
+        }
       }
+      Unit
     }
-    Unit
-  }
 
   val idle = signingIn == null
   val google = stringResource(Res.string.provider_google)
@@ -116,15 +119,24 @@ fun LoginScreen(
 
     Spacer(Modifier.height(Spacing.extraLarge))
 
-    LoginCard(status = if (idle) null else stringResource(Res.string.sign_in_connecting)) {
-      LoginRowDivider()
-
+    LoginCard(
+      heading = stringResource(Res.string.sign_in_section_label),
+      status = if (idle) null else stringResource(Res.string.sign_in_connecting),
+    ) {
       val googleRunning = signingIn == PendingSignIn.Google
       LoginRow(
-        label = if (googleRunning) stringResource(Res.string.signing_in_with, google) else google,
+        label = if (googleRunning) stringResource(
+          Res.string.signing_in_with,
+          google
+        ) else google,
         enabled = idle,
         inProgress = googleRunning,
-        onClick = { signIn(PendingSignIn.Google, signInErrorMessage) { loginViewModel.login() } },
+        onClick = {
+          signIn(
+            PendingSignIn.Google,
+            signInErrorMessage
+          ) { loginViewModel.login() }
+        },
         icon = {
           // Google's mark keeps its own colours, so it needs a light disc to sit on whenever the row
           // takes the accent fill — which is precisely when it is pressed or connecting.
@@ -137,11 +149,17 @@ fun LoginScreen(
       // Continue with Apple — offered on every platform since #408 gave Android its Custom Tab flow.
       val appleRunning = signingIn == PendingSignIn.Apple
       LoginRow(
-        label = if (appleRunning) stringResource(Res.string.signing_in_with, apple) else apple,
+        label = if (appleRunning) stringResource(
+          Res.string.signing_in_with,
+          apple
+        ) else apple,
         enabled = idle,
         inProgress = appleRunning,
         onClick = {
-          signIn(PendingSignIn.Apple, signInErrorMessage) { loginViewModel.loginWithApple() }
+          signIn(
+            PendingSignIn.Apple,
+            signInErrorMessage
+          ) { loginViewModel.loginWithApple() }
         },
         icon = {
           Icon(
@@ -245,7 +263,11 @@ private fun LoginAdvisory(message: String) {
     modifier = Modifier
       .fillMaxWidth()
       .background(MaterialTheme.colorScheme.errorContainer, shape)
-      .border(Spacing.hairline, MaterialTheme.colorScheme.error.copy(alpha = 0.4f), shape)
+      .border(
+        Spacing.hairline,
+        MaterialTheme.colorScheme.error.copy(alpha = 0.4f),
+        shape
+      )
       .padding(horizontal = 14.dp, vertical = 12.dp),
     horizontalArrangement = Arrangement.spacedBy(10.dp),
   ) {

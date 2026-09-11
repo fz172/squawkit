@@ -31,9 +31,9 @@ import dev.fanfly.wingslog.core.auth.AuthProvider
 import dev.fanfly.wingslog.core.ui.common.compose.AlertDialog
 import dev.fanfly.wingslog.core.ui.common.compose.ModalBottomSheet
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import dev.fanfly.wingslog.feature.login.AppleButtonBackground
-import dev.fanfly.wingslog.feature.login.AppleButtonContent
-import dev.fanfly.wingslog.feature.login.LoginButtonContent
+import dev.fanfly.wingslog.feature.login.LoginCard
+import dev.fanfly.wingslog.feature.login.LoginRow
+import dev.fanfly.wingslog.feature.login.LoginRowDivider
 import dev.fanfly.wingslog.feature.login.LoginButtonHeight
 import dev.fanfly.wingslog.feature.login.LoginButtonLabelStyle
 import org.jetbrains.compose.resources.painterResource
@@ -41,11 +41,12 @@ import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.login.generated.resources.Res
 import wingslog.feature.login.generated.resources.apple_logo
 import wingslog.feature.login.generated.resources.google_logo
+import wingslog.feature.login.generated.resources.provider_apple
+import wingslog.feature.login.generated.resources.provider_email
+import wingslog.feature.login.generated.resources.provider_google
 import wingslog.feature.login.generated.resources.ic_apple
 import wingslog.feature.login.generated.resources.ic_google_rd_na
-import wingslog.feature.login.generated.resources.sign_in_with_apple
 import wingslog.feature.login.generated.resources.sign_in_with_email
-import wingslog.feature.login.generated.resources.sign_in_with_google
 import wingslog.feature.login.generated.resources.upgrade_confirm_link_body
 import wingslog.feature.login.generated.resources.upgrade_confirm_link_confirm
 import wingslog.feature.login.generated.resources.upgrade_confirm_link_title
@@ -105,86 +106,60 @@ internal fun UpgradeProviderSheet(
 
       Spacer(Modifier.height(Spacing.small))
 
-      providers.forEach { provider ->
-        when (provider) {
-          AuthProvider.Apple -> ProviderButton(
-            container = AppleButtonBackground,
-            content = AppleButtonContent,
-            icon = { tint ->
-              Icon(
-                painter = painterResource(Res.drawable.ic_apple),
-                contentDescription = stringResource(Res.string.apple_logo),
-                modifier = Modifier.size(Spacing.xLarge),
-                tint = tint,
-              )
-            },
-            label = stringResource(Res.string.sign_in_with_apple),
-            onClick = { onSelect(AuthProvider.Apple) },
-          )
+      // The same card and rows the login page draws, so the two surfaces cannot drift. No heading:
+      // the sheet's own title is right above it.
+      LoginCard {
+        providers.forEachIndexed { index, provider ->
+          if (index > 0) LoginRowDivider()
+          when (provider) {
+            AuthProvider.Google -> LoginRow(
+              label = stringResource(Res.string.provider_google),
+              enabled = true,
+              onClick = { onSelect(AuthProvider.Google) },
+              icon = {
+                // The multi-colour mark must not be tinted.
+                Icon(
+                  painter = painterResource(Res.drawable.ic_google_rd_na),
+                  contentDescription = stringResource(Res.string.google_logo),
+                  modifier = Modifier.size(16.dp),
+                  tint = Color.Unspecified,
+                )
+              },
+            )
 
-          // The login page's Google button is near-white with the multi-colour mark, which must not
-          // be tinted — so the icon slot takes the tint rather than assuming it.
-          AuthProvider.Google -> ProviderButton(
-            container = MaterialTheme.colorScheme.surface,
-            content = MaterialTheme.colorScheme.onSurface,
-            icon = {
-              Icon(
-                painter = painterResource(Res.drawable.ic_google_rd_na),
-                contentDescription = stringResource(Res.string.google_logo),
-                modifier = Modifier.size(Spacing.xLarge),
-                tint = Color.Unspecified,
-              )
-            },
-            label = stringResource(Res.string.sign_in_with_google),
-            onClick = { onSelect(AuthProvider.Google) },
-          )
+            AuthProvider.Apple -> LoginRow(
+              label = stringResource(Res.string.provider_apple),
+              enabled = true,
+              onClick = { onSelect(AuthProvider.Apple) },
+              icon = {
+                Icon(
+                  painter = painterResource(Res.drawable.ic_apple),
+                  contentDescription = stringResource(Res.string.apple_logo),
+                  modifier = Modifier.size(18.dp),
+                  tint = MaterialTheme.colorScheme.onSurface,
+                )
+              },
+            )
 
-          // Email is deliberately the quieter option: it opens an address form rather than signing
-          // in, so giving it a branded provider button would overstate what tapping it does.
-          AuthProvider.Email -> OutlinedButton(
-            modifier = Modifier
-              .fillMaxWidth()
-              .height(LoginButtonHeight),
-            shape = RoundedCornerShape(Spacing.buttonCornerRadius),
-            onClick = { onSelect(AuthProvider.Email) },
-          ) {
-            LoginButtonContent(label = stringResource(Res.string.sign_in_with_email)) {
-              Icon(
-                imageVector = Icons.Filled.Email,
-                contentDescription = null,
-                modifier = Modifier.size(Spacing.xLarge),
-              )
-            }
+            // Email opens an address form rather than signing in. It used to be styled quieter to
+            // say so; the row's chevron says it now, the same as on the login page.
+            AuthProvider.Email -> LoginRow(
+              label = stringResource(Res.string.provider_email),
+              enabled = true,
+              onClick = { onSelect(AuthProvider.Email) },
+              icon = {
+                Icon(
+                  imageVector = Icons.Filled.Email,
+                  contentDescription = null,
+                  modifier = Modifier.size(20.dp),
+                  tint = MaterialTheme.colorScheme.primary,
+                )
+              },
+            )
           }
         }
       }
     }
-  }
-}
-
-/** The login page's button shape, factored out so the three entries here stay identical. */
-@Composable
-private fun ProviderButton(
-  container: Color,
-  content: Color,
-  icon: @Composable (tint: Color) -> Unit,
-  label: String,
-  onClick: () -> Unit,
-) {
-  Button(
-    modifier = Modifier
-      .fillMaxWidth()
-      .height(LoginButtonHeight),
-    shape = RoundedCornerShape(Spacing.buttonCornerRadius),
-    colors = ButtonDefaults.buttonColors(
-      containerColor = container,
-      contentColor = content,
-      disabledContainerColor = container.copy(alpha = 0.4f),
-      disabledContentColor = content.copy(alpha = 0.4f),
-    ),
-    onClick = onClick,
-  ) {
-    LoginButtonContent(label = label) { icon(content) }
   }
 }
 
