@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.feature.subscription.datamanager.impl
 
 import co.touchlab.kermit.Logger
+import dev.fanfly.wingslog.core.firebase.functions.isCallableClientDefect
 import dev.fanfly.wingslog.feature.subscription.datamanager.EntitlementReconciler
 import dev.gitlive.firebase.functions.FirebaseFunctions
 import kotlinx.coroutines.CancellationException
@@ -26,10 +27,19 @@ class FirebaseEntitlementReconciler(
   } catch (e: CancellationException) {
     throw e
   } catch (e: Exception) {
-    // Deliberately swallowed. This runs behind a purchase that already succeeded; the entitlement
-    // still arrives on its own once the webhook lands or the daily reconciler runs, so a failure
-    // here is a missed optimisation, not something to put in front of the pilot.
-    logger.w(e) { "Entitlement reconcile request failed." }
+    // Still swallowed, and still never shown to the pilot: this runs behind a purchase that already
+    // succeeded, and the entitlement arrives on its own once the webhook lands or the daily
+    // reconciler runs. What changed is that it is no longer swallowed *silently*.
+    //
+    // Severity is the routing decision — Error carrying a throwable becomes a Crashlytics non-fatal
+    // (CrashBreadcrumbLogWriter) — so a defect is reported and weather is not. Before this, every
+    // failure was one Warn line, which is how this call spent its whole life broken twice over
+    // without anyone noticing (#951).
+    if (e.isCallableClientDefect()) {
+      logger.e(e) { "Entitlement reconcile is broken, not merely unavailable." }
+    } else {
+      logger.w(e) { "Entitlement reconcile request failed." }
+    }
     false
   }
 

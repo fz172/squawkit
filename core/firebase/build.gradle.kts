@@ -10,6 +10,9 @@ kotlin {
     namespace = "dev.fanfly.wingslog.core.firebase"
     compileSdk = 37
     minSdk = 33
+
+    withHostTest {
+    }
   }
 
   iosArm64()
@@ -29,4 +32,9 @@ kotlin {
       implementation(project.dependencies.platform(libs.firebase.bom))
     }
   }
+}
+
+dependencies {
+  "androidHostTestImplementation"(libs.junit)
+  "androidHostTestImplementation"(libs.truth)
 }
