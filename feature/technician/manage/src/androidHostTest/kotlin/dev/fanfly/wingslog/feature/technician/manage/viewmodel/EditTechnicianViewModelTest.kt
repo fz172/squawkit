@@ -170,7 +170,6 @@ class EditTechnicianViewModelTest {
     assertThat(saved.number).isEqualTo("CWI-88")
   }
 
-
   @Test
   fun aPre684RecordLoadsAsOneCertification() = runTest(testDispatcher) {
     // Nothing migrates fields 3-7; the read derives. Loading straight from `certifications` would
