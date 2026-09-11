@@ -16,6 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 
 /**
@@ -59,6 +60,7 @@ fun MasterSwitchRow(
       Text(
         text = title,
         style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.SemiBold,
         color = onContainerColor.copy(alpha = contentAlpha),
       )
       Text(

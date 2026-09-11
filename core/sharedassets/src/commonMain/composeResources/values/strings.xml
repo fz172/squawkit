@@ -52,6 +52,8 @@
   <string name="shell_nav_tasks_narrow">Maint. Tasks</string>
   <!-- Aircraft sharing -->
   <string name="thing_shared_badge">Shared</string>
+  <!-- Stamp beside anything the paid tier unlocks. Not translated: it is the tier's mark. -->
+  <string name="pro_badge">PRO</string>
   <!-- Component names -->
   <string name="component_type">Component Type</string>
   <string name="component_airframe">Airframe</string>

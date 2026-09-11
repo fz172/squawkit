@@ -99,13 +99,17 @@ fun CertificationInputFields(
   onExpireLimitChanged: (Int, CertExpireLimit) -> Unit,
   onExpirationChanged: (Int, Instant) -> Unit,
   modifier: Modifier = Modifier,
+  /** False when the caller already labels the section — a grouped card with its own header. */
+  showHeader: Boolean = true,
 ) {
 
   Column(
     modifier = modifier,
     verticalArrangement = Arrangement.spacedBy(Spacing.columnGap),
   ) {
-    FormSectionLabel(text = stringResource(Res.string.certifications))
+    if (showHeader) {
+      FormSectionLabel(text = stringResource(Res.string.certifications))
+    }
 
     entries.forEachIndexed { index, entry ->
       CertificationRow(

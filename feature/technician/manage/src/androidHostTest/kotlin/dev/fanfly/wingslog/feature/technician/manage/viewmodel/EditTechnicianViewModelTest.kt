@@ -82,6 +82,7 @@ class EditTechnicianViewModelTest {
     sharingManager = sharingManager,
     fleetManager = fleetManager,
     templateRegistry = registry,
+    authManager = mockk(relaxed = true),
     savedStateHandle = SavedStateHandle(mapOf(Screen.TECHNICIAN_ID to (id ?: "new"))),
   )
 
@@ -168,7 +169,6 @@ class EditTechnicianViewModelTest {
     assertThat(saved.label).isEqualTo("Certified Welding Inspector")
     assertThat(saved.number).isEqualTo("CWI-88")
   }
-
 
   @Test
   fun aPre684RecordLoadsAsOneCertification() = runTest(testDispatcher) {

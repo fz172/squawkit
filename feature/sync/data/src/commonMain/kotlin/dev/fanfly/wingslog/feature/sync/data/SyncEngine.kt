@@ -39,7 +39,9 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.coroutines.CoroutineContext
+import kotlin.time.Clock
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Instant
 
 /**
  * Top-level orchestrator that wires Firestore sync to the local store for the signed-in user.
@@ -73,6 +75,8 @@ class SyncEngine(
   private val telemetry: SyncTelemetry = SyncTelemetry.NoOp,
   /** Mirrors the top-level `subscriptions/{uid}` entitlement into the local store (read-only). */
   private val subscriptionSyncListener: SubscriptionSyncListener? = null,
+  /** What [lastSyncedAt] reads; injectable so tests can pin it. */
+  private val clock: () -> Instant = { Clock.System.now() },
 ) {
 
   private val log = Logger.withTag(TAG)
@@ -151,6 +155,20 @@ class SyncEngine(
     _notices.value = null
   }
 
+  private val _lastSyncedAt = MutableStateFlow<Instant?>(null)
+
+  /**
+   * When this session last confirmed the cloud and the device agreed — a hydration finishing, a
+   * remote change applied, or a local change acknowledged. In-memory only, and cleared on sign-out
+   * or user change: the engine re-hydrates on every start, so it repopulates as soon as the device
+   * is online. `null` until then.
+   */
+  val lastSyncedAt: StateFlow<Instant?> = _lastSyncedAt.asStateFlow()
+
+  private fun markSynced() {
+    _lastSyncedAt.value = clock()
+  }
+
   /** `null` when sync is healthy. The most recent unresolved failure otherwise. */
   val failureState: StateFlow<SyncFailure?> =
     MutableStateFlow<SyncFailure?>(null).also { state ->
@@ -216,6 +234,7 @@ class SyncEngine(
             0,
             0
           )
+          _lastSyncedAt.value = null
           when {
             user == null || user.isAnonymous -> {
               log.i { "auth state: signed out (or anonymous); sync idle" }
@@ -258,6 +277,7 @@ class SyncEngine(
         if (failure == null) it - PUSH_FAILURE_KEY else it + (PUSH_FAILURE_KEY to failure)
       }
     }
+    pushWorker.successSink = ::markSynced
     // Same suspicion a denied read is, confirmed the same way (§5.4). A member is legitimately
     // refused some writes — a comment they didn't author, a tombstone on the thing doc — so false
     // hands the row back to the normal failure path rather than costing them the share.
@@ -569,6 +589,7 @@ class SyncEngine(
         scope
       )
       hydrationCounters.update { it.copy(completed = it.completed + 1) }
+      markSynced()
     }
     val watermark = cursors.get(
       uid,
@@ -598,6 +619,7 @@ class SyncEngine(
             scope,
             maxTs
           )
+          markSynced()
         }
       }
   }
@@ -629,6 +651,7 @@ class SyncEngine(
             scope,
             maxTs
           )
+          markSynced()
         }
       }
   }

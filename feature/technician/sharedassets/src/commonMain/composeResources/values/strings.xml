@@ -24,6 +24,15 @@
   <!-- Trails the certification on a list row: "A&amp;P Mechanic · A7584747 (Exp 08/31/2031)". -->
   <string name="certification_expires_on">(Exp <xliff:g example="08/31/2031">%1$s</xliff:g>)</string>
 
+  <!-- The roster page's hero and the profile editor's grouped cards. -->
+  <string name="technician_hero_title">Your crew</string>
+  <string name="edit_profile">Edit Profile</string>
+  <string name="technician_section_details">Details</string>
+  <string name="technician_name_label">Name</string>
+  <string name="technician_update_name">Update name</string>
+  <string name="technician_email_label">Email</string>
+  <string name="technician_email_managed">Managed by your sign-in provider</string>
+  <string name="technician_delete_hint">Past logs keep their record of this person</string>
   <string name="you_badge">You</string>
   <string name="my_profile">My Profile</string>
 

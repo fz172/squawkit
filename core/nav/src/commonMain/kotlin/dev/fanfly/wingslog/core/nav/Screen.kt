@@ -2,7 +2,6 @@ package dev.fanfly.wingslog.core.nav
 
 import dev.fanfly.wingslog.core.nav.Screen.Companion.TEMPLATE_ID
 
-
 sealed class Screen(val route: String) {
 
   // Canonical navigation parameters
@@ -52,6 +51,7 @@ sealed class Screen(val route: String) {
 
   data object DeveloperOptions : Screen("developer_options")
   data object Subscription : Screen("subscription")
+  data object About : Screen("about")
 
   data object EditTechnician : Screen("edit_technician/{$TECHNICIAN_ID}") {
     fun createRoute(technicianId: String?) =

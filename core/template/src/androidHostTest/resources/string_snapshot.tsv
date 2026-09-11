@@ -60,6 +60,7 @@ core/sharedassets	switcher_select_thing	Select
 core/sharedassets	sync_changes_discarded	Unsaved changes to %1$s were discarded — your access was removed
 core/sharedassets	term_with_abbreviation	%1$s (%2$s)
 core/sharedassets	thing_shared_badge	Shared
+core/sharedassets	pro_badge	PRO
 core/sharedassets	unknown	Unknown
 core/sharedassets	unsaved_changes	Unsaved Changes
 core/sharedassets	unsaved_changes_message	You have unsaved changes. Are you sure you want to leave?
@@ -123,10 +124,7 @@ feature/export/sharedassets	export_error_subtitle	Something went wrong while bui
 feature/export/sharedassets	export_error_title	Export failed
 feature/export/sharedassets	export_estimated_size	~%1$s
 feature/export/sharedassets	export_footer_thing_count	%1$d selected
-feature/export/sharedassets	export_format_csv_sub	Plain text
-feature/export/sharedassets	export_format_pdf_sub	Print-ready
 feature/export/sharedassets	export_format_pick_one	Pick at least one format
-feature/export/sharedassets	export_format_xlsx_sub	Spreadsheet
 feature/export/sharedassets	export_formats_section	Report formats
 feature/export/sharedassets	export_history_action	Export history
 feature/export/sharedassets	export_history_delete_confirm_body	%1$s will be permanently removed from this device.
@@ -175,6 +173,8 @@ feature/export/sharedassets	export_success_delivery_failed	Delivery failed. Use 
 feature/export/sharedassets	export_success_delivery_failed_title	Delivery failed
 feature/export/sharedassets	export_success_title	Export ready
 feature/export/sharedassets	export_thing_summary_more	%1$s + %2$d more
+feature/export/sharedassets	export_thing_log_count	%1$d logs
+feature/export/sharedassets	export_thing_log_count_one	1 log
 feature/export/sharedassets	export_view_exports	View exports
 feature/export/sharedassets	feature_name_export_logs	Export Logs
 feature/fleet/sharedassets	add_first_thing	Add Your First Aircraft
@@ -223,9 +223,7 @@ feature/login	onboarding_welcome_tagline	Let's get your hangar set up.
 feature/login	privacy_notice	Terms &amp; Privacy
 feature/login	sign_in_anonymous_error	Could not continue anonymously. Please try again.
 feature/login	sign_in_error	Sign-in failed. Check your connection and try again.
-feature/login	sign_in_with_apple	Log in with Apple
 feature/login	sign_in_with_email	Log in with email
-feature/login	sign_in_with_google	Log in with Google
 feature/login	upgrade_confirm_link_body	Your records on this device will be connected to %1$s and backed up. If that isn't your address, cancel and start again.
 feature/login	upgrade_confirm_link_confirm	Connect
 feature/login	upgrade_confirm_link_title	Connect this account?
@@ -247,10 +245,6 @@ feature/login	upgrade_provider_apple	Apple ID
 feature/login	upgrade_provider_email	email address
 feature/login	upgrade_provider_google	Google account
 feature/login	support_link	Support
-feature/login	email_entry_body	We’ll send a link that signs you in. No password to remember.
-feature/login	email_address_label	Email address
-feature/login	email_link_expiry_note	The link expires in 15 minutes and can only be used once.
-feature/login	email_all_login_options	All log-in options
 feature/login	provider_google	Google
 feature/login	provider_apple	Apple
 feature/login	provider_email	Email
@@ -390,7 +384,6 @@ feature/notifications/viewing	notification_channel_urgency_update_description	A 
 feature/notifications/viewing	notification_channel_urgency_update_name	Due reminder
 feature/settings	account_upgrade_link_cta	Link to an account
 feature/settings	account_upgrade_link_subtitle	Your records are on this device only. Link an account to sync and back them up.
-feature/settings	app_version	App Version: %1$s
 feature/settings	appearance_dark	Dark
 feature/settings	appearance_light	Light
 feature/settings	appearance_subtitle	Choose how SquawkIt looks on this device
@@ -417,7 +410,7 @@ feature/settings	developer_options_test_crash_title	Force a crash
 feature/settings	developer_options_test_non_fatal_action	Record
 feature/settings	developer_options_test_non_fatal_subtitle	Reports a caught exception to Crashlytics without crashing. Shows up in the console within a few minutes, under Non-fatals.
 feature/settings	developer_options_test_non_fatal_title	Record a test non-fatal
-feature/settings	firebase_logging_subtitle	Share anonymous diagnostics and usage data to help us improve SquawkIt
+feature/settings	firebase_logging_subtitle	Share anonymous diagnostics and usage data
 feature/settings	firebase_logging_title	Help Us Improve
 feature/settings	settings_ad_privacy	Ad privacy settings
 feature/settings	settings_ad_privacy_subtitle	Review or change your ad consent choice
@@ -441,11 +434,26 @@ feature/settings	settings_notifications_subtitle_blocked	Blocked in system setti
 feature/settings	settings_notifications_subtitle_default	Collaboration and urgency alerts
 feature/settings	settings_notifications_subtitle_off	Off — turn on to hear about changes
 feature/settings	settings_subscription	Subscription
-feature/settings	settings_subscription_subtitle	Your plan, benefits, and storage
 feature/settings	settings_subtitle	Account, appearance &amp; preferences
 feature/settings	settings_sync_subtitle	Keep your records synced across devices
 feature/settings	settings_technicians_subtitle	People you can name when recording work
 feature/settings	sign_out	Log out
+feature/settings	settings_section_preferences	Preferences
+feature/settings	settings_section_data	Data
+feature/settings	settings_section_support	Support
+feature/settings	settings_section_account	Account
+feature/settings	settings_profile_guest	Guest
+feature/settings	settings_plan_basic	Basic plan · Your plan, benefits, and storage
+feature/settings	settings_plan_pro	Pro plan
+feature/settings	settings_plan_pro_renews	Pro plan · Renews %1$s
+feature/settings	settings_plan_pro_ends	Pro plan · Ends %1$s
+feature/settings	settings_about	About SquawkIt
+feature/settings	settings_about_subtitle	Version, terms and support
+feature/settings	about_version_title	Version
+feature/settings	about_terms	Terms &amp; Privacy
+feature/settings	about_contact_support	Contact support
+feature/settings	about_contact_support_subtitle	Get help or send feedback
+feature/settings	about_rate	Rate SquawkIt
 feature/sharing/sharedassets	enter_code_field_label	Invite code
 feature/sharing/sharedassets	enter_code_instructions	Enter the invite code the aircraft owner gave you. It looks like EFA2-GGTH.
 feature/sharing/sharedassets	enter_code_title	Join a shared aircraft
@@ -605,13 +613,10 @@ feature/subscription/viewing	subscription_activating	Payment received. Activatin
 feature/subscription/viewing	subscription_activation_recheck	Check again
 feature/subscription/viewing	subscription_activation_stalled	This is taking longer than usual. Your purchase went through and nothing is lost — Pro unlocks automatically once it completes.
 feature/subscription/viewing	subscription_activation_stalled_promo	This is taking longer than usual. Your promo code was applied — Pro unlocks automatically once it completes.
-feature/subscription/viewing	subscription_cell_excluded	—
-feature/subscription/viewing	subscription_cell_unlimited	∞
 feature/subscription/viewing	subscription_col_free	Basic
 feature/subscription/viewing	subscription_col_pro	Pro
-feature/subscription/viewing	subscription_compare_header	Your all-access pass
 feature/subscription/viewing	subscription_cta_caption	Price shown at checkout. Cancel anytime.
-feature/subscription/viewing	subscription_cta_subscribe	Subscribe
+feature/subscription/viewing	subscription_cta_subscribe	Upgrade to Pro
 feature/subscription/viewing	subscription_ends	Ends
 feature/subscription/viewing	subscription_feature_ads	Ad-free experience
 feature/subscription/viewing	subscription_feature_attachments	Photo &amp; file attachments
@@ -622,6 +627,8 @@ feature/subscription/viewing	subscription_feature_records	Logs, tasks &amp; issu
 feature/subscription/viewing	subscription_feature_sharing	Share &amp; collaborate with others
 feature/subscription/viewing	subscription_feature_thing	Things
 feature/subscription/viewing	subscription_includes_header	What’s included
+feature/subscription/viewing	subscription_your_plan	Your plan
+feature/subscription/viewing	subscription_plan_basic_body	Logbook, tasks and technicians for everything you track — on this device and your account.
 feature/subscription/viewing	subscription_manage	Manage subscription
 feature/subscription/viewing	subscription_manage_caption	Plan changes and cancellation are handled by the store.
 feature/subscription/viewing	subscription_manage_link_caption	Opens the store page where this subscription is billed.
@@ -631,12 +638,6 @@ feature/subscription/viewing	subscription_managed_elsewhere_body_web	Subscriptio
 feature/subscription/viewing	subscription_managed_elsewhere_caption	Your Pro features stay active everywhere you sign in.
 feature/subscription/viewing	subscription_managed_elsewhere_title	Managed on another platform
 feature/subscription/viewing	subscription_member_since	Member since
-feature/subscription/viewing	subscription_perk_attachments_body	Photos and files on any log
-feature/subscription/viewing	subscription_perk_attachments_title	Attachments
-feature/subscription/viewing	subscription_perk_sharing_body	Invite owners and collaborators
-feature/subscription/viewing	subscription_perk_sharing_title	Sharing
-feature/subscription/viewing	subscription_perk_thing_body	All your things logged in one book
-feature/subscription/viewing	subscription_perk_thing_title	Unlimited things
 feature/subscription/viewing	subscription_platform_amazon	Amazon Appstore
 feature/subscription/viewing	subscription_platform_app_store	App Store
 feature/subscription/viewing	subscription_platform_mac_app_store	Mac App Store
@@ -685,8 +686,6 @@ feature/sync/settings	sync_hero_body_signin	You're using the app anonymously. Al
 feature/sync/settings	sync_hero_title_active	Backed up across your devices
 feature/sync/settings	sync_hero_title_paused	Sync is paused
 feature/sync/settings	sync_hero_title_signin	Sign in to enable sync
-feature/sync/settings	sync_status_anonymous_body	Sync requires signing in.
-feature/sync/settings	sync_status_anonymous_title	Anonymous account
 feature/sync/settings	sync_status_auth_expired_body	Authentication expired. Sign in again to resume sync.
 feature/sync/settings	sync_status_error_title	Sync error
 feature/sync/settings	sync_status_hydration_error_body	Could not restore %1$s after %2$d retries.
@@ -699,6 +698,11 @@ feature/sync/settings	sync_subtitle_cellular_disabled	Attachments upload over Wi
 feature/sync/settings	sync_subtitle_cellular_enabled	Attachments upload over Wi-Fi and cellular.
 feature/sync/settings	sync_subtitle_off	Your data stays on this device only.
 feature/sync/settings	sync_subtitle_signin	Sign in to enable cloud sync.
+feature/sync/settings	sync_section_options	Options
+feature/sync/settings	sync_section_status	Status
+feature/sync/settings	sync_last_synced_title	Last synced
+feature/sync/settings	sync_last_synced_up_to_date	Everything is up to date
+feature/sync/settings	sync_last_synced_pending	Waiting for the first sync
 feature/sync/sharedassets	feature_name_backup_and_sync	Backup &amp; Sync
 feature/tasks/sharedassets	add_task	Add task
 feature/tasks/sharedassets	compliance_authority	Compliance authority
@@ -873,6 +877,14 @@ feature/technician/sharedassets	remove_certification	Remove certification
 feature/technician/sharedassets	select_technician	Select Technician
 feature/technician/sharedassets	unnamed_certification	Certification
 feature/technician/sharedassets	you_badge	You
+feature/technician/sharedassets	technician_hero_title	Your crew
+feature/technician/sharedassets	edit_profile	Edit Profile
+feature/technician/sharedassets	technician_section_details	Details
+feature/technician/sharedassets	technician_name_label	Name
+feature/technician/sharedassets	technician_update_name	Update name
+feature/technician/sharedassets	technician_email_label	Email
+feature/technician/sharedassets	technician_email_managed	Managed by your sign-in provider
+feature/technician/sharedassets	technician_delete_hint	Past logs keep their record of this person
 feature/thing/dashboard	degraded_body	This was set up on a device running a newer version. Nothing has been lost — but this version cannot show or edit it properly, so it is shown exactly as stored.
 feature/thing/dashboard	degraded_no_stored_details	No details stored.
 feature/thing/dashboard	degraded_reload	Reload

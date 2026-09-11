@@ -2,6 +2,7 @@ package dev.fanfly.wingslog.feature.technician.manage.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.core.template.OfferedCertification
 import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.core.template.knownCertifications
@@ -28,6 +29,10 @@ data class TechnicianListUiState(
    */
   val linkedTechnicians: List<Technician> = emptyList(),
   val selfId: String? = null,
+  /** The signed-in account's photo, drawn on the self row; null when the account has none. */
+  val selfPhotoUrl: String? = null,
+  /** Linked members' account photos by uid — see [SharingManager.observeLinkedTechnicianPhotos]. */
+  val linkedPhotos: Map<String, String> = emptyMap(),
   /**
    * Every certification this build knows, so a stored key renders as its word rather than as
    * itself — and so a role tag can be derived from it (PRD §8.6).
@@ -58,6 +63,7 @@ class TechnicianListViewModel(
   private val technicianManager: TechnicianManager,
   sharingManager: SharingManager,
   templateRegistry: TemplateRegistry,
+  private val authManager: AuthManager,
 ) : ViewModel() {
 
   private val localState = MutableStateFlow(LocalState())
@@ -68,10 +74,13 @@ class TechnicianListViewModel(
   val uiState: StateFlow<TechnicianListUiState> = combine(
     technicianManager.observeTechnicians(),
     technicianManager.observeSelfId(),
-    sharingManager.observeLinkedTechnicians(),
+    combine(
+      sharingManager.observeLinkedTechnicians(),
+      sharingManager.observeLinkedTechnicianPhotos(),
+    ) { linked, photos -> linked to photos },
     technicianManager.observeReviewedDuplicatesSignature(),
     localState,
-  ) { technicians, selfId, linked, reviewedSignature, local ->
+  ) { technicians, selfId, (linked, linkedPhotos), reviewedSignature, local ->
     val self = technicians.find { it.id == selfId }
     val others = technicians.filter { it.id != selfId }
       .sortedBy { it.name.lowercase() }
@@ -84,6 +93,8 @@ class TechnicianListViewModel(
       technicians = listOfNotNull(self) + others,
       linkedTechnicians = linked,
       selfId = selfId,
+      selfPhotoUrl = authManager.getCurrentUser()?.photoURL?.takeIf { it.isNotBlank() },
+      linkedPhotos = linkedPhotos,
       knownCertifications = knownCertifications,
       duplicates = duplicates,
       duplicatesSignature = duplicates.signature(),

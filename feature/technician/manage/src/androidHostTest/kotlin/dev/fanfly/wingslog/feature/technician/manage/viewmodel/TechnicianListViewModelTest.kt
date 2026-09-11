@@ -39,6 +39,7 @@ class TechnicianListViewModelTest {
     every { technicianManager.observeTechnicians() } returns flowOf(emptyList())
     every { technicianManager.observeSelfId() } returns flowOf(null)
     every { sharingManager.observeLinkedTechnicians() } returns flowOf(emptyList())
+    every { sharingManager.observeLinkedTechnicianPhotos() } returns flowOf(emptyMap())
     // A relaxed mock hands back an EMPTY flow, and an empty source in a combine means the state
     // never emits at all — stub it so the combine can produce. Null = never reviewed.
     every { technicianManager.observeReviewedDuplicatesSignature() } returns flowOf(
@@ -260,5 +261,6 @@ class TechnicianListViewModelTest {
     sharingManager = sharingManager,
     // Real, not mocked: the certification labels a row renders come out of the baked-in presets.
     templateRegistry = BakedInTemplateRegistry(appVersionCode = 1),
+    authManager = mockk(relaxed = true),
   )
 }

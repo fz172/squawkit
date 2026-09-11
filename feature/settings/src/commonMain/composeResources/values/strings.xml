@@ -24,19 +24,35 @@
   <string name="settings_export_subtitle">Export and share your logbook</string>
   <string name="settings_developer_options_subtitle">Advanced controls, synced across your devices</string>
   <string name="settings_subscription">Subscription</string>
-  <string name="settings_subscription_subtitle">Your plan, benefits, and storage</string>
   <string name="settings_ad_privacy">Ad privacy settings</string>
   <string name="settings_ad_privacy_subtitle">Review or change your ad consent choice</string>
+  <!-- Hub section markers; uppercased at render. -->
+  <string name="settings_section_preferences">Preferences</string>
+  <string name="settings_section_data">Data</string>
+  <string name="settings_section_support">Support</string>
+  <string name="settings_section_account">Account</string>
+  <!-- The profile card. -->
+  <string name="settings_profile_guest">Guest</string>
+  <string name="settings_plan_basic">Basic plan · Your plan, benefits, and storage</string>
+  <string name="settings_plan_pro">Pro plan</string>
+  <string name="settings_plan_pro_renews">Pro plan · Renews <xliff:g example="Oct 2, 2026">%1$s</xliff:g></string>
+  <string name="settings_plan_pro_ends">Pro plan · Ends <xliff:g example="Oct 2, 2026">%1$s</xliff:g></string>
+  <string name="settings_about">About SquawkIt</string>
+  <string name="settings_about_subtitle">Version, terms and support</string>
+  <string name="about_version_title">Version</string>
+  <string name="about_terms">Terms &amp; Privacy</string>
+  <string name="about_contact_support">Contact support</string>
+  <string name="about_contact_support_subtitle">Get help or send feedback</string>
+  <string name="about_rate">Rate SquawkIt</string>
   <string name="account_upgrade_link_cta">Link to an account</string>
   <string name="account_upgrade_link_subtitle">Your records are on this device only. Link an account to sync and back them up.</string>
-  <string name="app_version">App Version: <xliff:g example="1.0.260826">%1$s</xliff:g></string>
   <string name="appearance_title">Appearance</string>
   <string name="appearance_subtitle">Choose how SquawkIt looks on this device</string>
   <string name="appearance_light">Light</string>
   <string name="appearance_system">System</string>
   <string name="appearance_dark">Dark</string>
   <string name="firebase_logging_title">Help Us Improve</string>
-  <string name="firebase_logging_subtitle">Share anonymous diagnostics and usage data to help us improve SquawkIt</string>
+  <string name="firebase_logging_subtitle">Share anonymous diagnostics and usage data</string>
   <string name="developer_options">Developer Options</string>
   <string name="developer_options_subtitle">Advanced controls. Changes sync across your devices.</string>
   <string name="developer_options_force_subscription_title">Force subscription status</string>

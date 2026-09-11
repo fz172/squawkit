@@ -3,9 +3,11 @@
   <string name="subscription_title">Subscription</string>
 
   <!-- Non-subscriber comparison view -->
-  <string name="subscription_compare_header">Your all-access pass</string>
   <!-- Sets expectations before the store paywall opens: SquawkIt never shows a price itself. -->
   <string name="subscription_cta_caption">Price shown at checkout. Cancel anytime.</string>
+  <!-- The plan card: the tier in large type, with what Basic already is for a non-subscriber. -->
+  <string name="subscription_your_plan">Your plan</string>
+  <string name="subscription_plan_basic_body">Logbook, tasks and technicians for everything you track — on this device and your account.</string>
   <string name="subscription_includes_header">What’s included</string>
   <string name="subscription_col_free">Basic</string>
   <string name="subscription_col_pro">Pro</string>
@@ -18,13 +20,8 @@
   <string name="subscription_feature_email">Email a copy of exports</string>
   <string name="subscription_feature_sharing">Share &amp; collaborate with others</string>
   <string name="subscription_thing_free">2</string>
-  <!-- Announced in place of subscription_cell_unlimited, which is the glyph shown in its cell. -->
   <string name="subscription_thing_unlimited">Unlimited</string>
-  <!-- Comparison table: the tier does not include this feature. An em dash, not a crossed box. -->
-  <string name="subscription_cell_excluded">—</string>
-  <!-- Comparison table: no limit on Things. Reads as the infinity glyph, speaks as "Unlimited". -->
-  <string name="subscription_cell_unlimited">∞</string>
-  <string name="subscription_cta_subscribe">Subscribe</string>
+  <string name="subscription_cta_subscribe">Upgrade to Pro</string>
   <!-- A guest account cannot be recovered on another device, so it must not hold a subscription. -->
   <string name="subscription_sign_in_to_subscribe">Sign in to subscribe, so your subscription is tied to your account and works on every device.</string>
   <!-- Shown on web, which can use a subscription but never buy one. -->
@@ -93,12 +90,6 @@
   <string name="subscription_source">Source</string>
   <string name="subscription_source_promotion">Promotion</string>
   <string name="subscription_unlocked_header">Unlocked with Pro</string>
-  <string name="subscription_perk_thing_title">Unlimited things</string>
-  <string name="subscription_perk_thing_body">All your things logged in one book</string>
-  <string name="subscription_perk_attachments_title">Attachments</string>
-  <string name="subscription_perk_attachments_body">Photos and files on any log</string>
-  <string name="subscription_perk_sharing_title">Sharing</string>
-  <string name="subscription_perk_sharing_body">Invite owners and collaborators</string>
 
   <!-- The subscription is real and Pro is unlocked here, but this device's store did not sell it. -->
   <string name="subscription_managed_elsewhere_title">Managed on another platform</string>

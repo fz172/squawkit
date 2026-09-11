@@ -3,6 +3,7 @@ package dev.fanfly.wingslog.feature.technician.manage.viewmodel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.model.technician.resolvedCertifications
 import dev.fanfly.wingslog.core.nav.Screen
@@ -32,6 +33,12 @@ data class EditTechnicianUiState(
   /** What the account's templates declare — empty means the form offers no certifications at all. */
   val offered: List<OfferedCertification> = emptyList(),
   val isSelf: Boolean = false,
+  /** The signed-in account's address, shown read-only on the self profile; null when it has none. */
+  val email: String? = null,
+  /** The signed-in account's photo, drawn on the self profile; null when it has none. */
+  val photoUrl: String? = null,
+  /** The name being typed in the rename dialog; null while the dialog is closed. */
+  val nameDraft: String? = null,
   val isLoading: Boolean = false,
   val isSaving: Boolean = false,
   val saveSuccess: Boolean = false,
@@ -44,6 +51,7 @@ class EditTechnicianViewModel(
   private val sharingManager: SharingManager,
   private val fleetManager: FleetManager,
   private val templateRegistry: TemplateRegistry,
+  authManager: AuthManager,
   savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
@@ -62,7 +70,13 @@ class EditTechnicianViewModel(
   private var loaded: Technician = Technician()
 
   private val _uiState =
-    MutableStateFlow(EditTechnicianUiState(isLoading = technicianId != null))
+    MutableStateFlow(
+      EditTechnicianUiState(
+        isLoading = technicianId != null,
+        email = authManager.getCurrentUser()?.email?.takeIf { it.isNotBlank() },
+        photoUrl = authManager.getCurrentUser()?.photoURL?.takeIf { it.isNotBlank() },
+      )
+    )
   val uiState = _uiState.asStateFlow()
 
   init {
@@ -139,6 +153,27 @@ class EditTechnicianViewModel(
 
   fun updateName(name: String) {
     _uiState.update { it.copy(name = name) }
+  }
+
+  // The rename dialog's draft lives here, not in a composable `remember`, so a recomposition or a
+  // rotation cannot drop half-typed input (#254).
+  fun openNameEditor() {
+    _uiState.update { it.copy(nameDraft = it.name) }
+  }
+
+  fun updateNameDraft(draft: String) {
+    _uiState.update { it.copy(nameDraft = draft) }
+  }
+
+  fun confirmNameDraft() {
+    _uiState.update { state ->
+      val draft = state.nameDraft?.trim() ?: return@update state
+      state.copy(name = draft, nameDraft = null)
+    }
+  }
+
+  fun dismissNameEditor() {
+    _uiState.update { it.copy(nameDraft = null) }
   }
 
   fun addCertification(type: String) {

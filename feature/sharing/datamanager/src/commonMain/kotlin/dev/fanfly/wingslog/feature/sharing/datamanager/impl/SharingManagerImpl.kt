@@ -476,8 +476,13 @@ class SharingManagerImpl(
     }
   }
 
+  override fun observeLinkedTechnicians(): Flow<List<Technician>> =
+    // The same person can be in several of your shares — list them once.
+    linkedMembersAcrossShares().map { members -> members.map { it.technician }.dedupedByOwner() }
+
+  /** Every other member with a mirror, across every share the user is in — one entry per share. */
   @OptIn(ExperimentalCoroutinesApi::class)
-  override fun observeLinkedTechnicians(): Flow<List<Technician>> {
+  private fun linkedMembersAcrossShares(): Flow<List<LinkedMember>> {
     val uid = auth.currentUser?.uid ?: return flowOf(emptyList())
     val scope = EntityScope.userRoot(uid)
     return combine(
@@ -497,14 +502,18 @@ class SharingManagerImpl(
             .flatten()
         }
       }
-      // The same person can be in several of your shares — list them once.
-      .map { linked -> linked.dedupedByOwner() }
   }
 
   override fun observeLinkedTechnicians(acId: String): Flow<List<Technician>> {
     val uid = auth.currentUser?.uid ?: return flowOf(emptyList())
-    return linkedTechniciansIn(acId, uid).map { it.dedupedByOwner() }
+    return linkedTechniciansIn(acId, uid).map { members -> members.map { it.technician }.dedupedByOwner() }
   }
+
+  override fun observeLinkedTechnicianPhotos(): Flow<Map<String, String>> =
+    linkedMembersAcrossShares().map { members ->
+      members.mapNotNull { m -> m.photoUrl?.takeIf { it.isNotBlank() }?.let { m.technician.id to it } }
+        .toMap()
+    }
 
   /**
    * The members of one share who have published a mirror, excluding [selfUid] — the caller's own
@@ -516,7 +525,7 @@ class SharingManagerImpl(
   private fun linkedTechniciansIn(
     acId: String,
     selfUid: String
-  ): Flow<List<Technician>> =
+  ): Flow<List<LinkedMember>> =
     observeHostUid(acId).flatMapLatest { hostUid ->
       if (hostUid == null) flowOf(emptyList()) else membersOf(
         hostUid,
@@ -529,15 +538,19 @@ class SharingManagerImpl(
     hostUid: String,
     acId: String,
     selfUid: String,
-  ): Flow<List<Technician>> =
+  ): Flow<List<LinkedMember>> =
     shareDoc(hostUid, acId).collection(MEMBERS).snapshots
       .map { snaps ->
         snaps.documents.mapNotNull { doc ->
           if (doc.id == selfUid) return@mapNotNull null
-          doc.data<MemberWire>().technicianMirror?.toTechnician(doc.id)
+          val member = doc.data<MemberWire>()
+          member.technicianMirror?.toTechnician(doc.id)?.let { LinkedMember(it, member.photoUrl) }
         }
       }
       .catch { emit(emptyList()) }
+
+  /** A member's mirror plus the account photo the member doc carries beside it. */
+  private data class LinkedMember(val technician: Technician, val photoUrl: String?)
 
   /**
    * Every share the user is a member of: thing shared *with* them (the local refs store, per

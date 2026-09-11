@@ -12,6 +12,7 @@ import dev.fanfly.wingslog.feature.export.update.ExportHistoryRoute
 import dev.fanfly.wingslog.feature.export.update.ExportSelectionRoute
 import dev.fanfly.wingslog.feature.logs.update.logs.MaintenanceLogFormScreen
 import dev.fanfly.wingslog.feature.notifications.settings.NotificationSettingsScreen
+import dev.fanfly.wingslog.feature.settings.AboutScreen
 import dev.fanfly.wingslog.feature.settings.developeroptions.DeveloperOptionsScreen
 import dev.fanfly.wingslog.feature.sharing.update.EnterInviteCodeRoute
 import dev.fanfly.wingslog.feature.sharing.update.ManageAccessRoute
@@ -214,6 +215,9 @@ fun NavGraphBuilder.settingsDetailRoutes(
   }
   composable(Screen.DeveloperOptions.route) {
     DeveloperOptionsScreen(navController = navController)
+  }
+  composable(Screen.About.route) {
+    AboutScreen(navController = navController)
   }
   // Developer-only destinations, resolved rather than imported, so this module has no compile
   // dependency on the features that own them. Non-composable builder scope, hence KoinPlatform

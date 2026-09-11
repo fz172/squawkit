@@ -35,6 +35,8 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
+import kotlin.time.Clock
+import kotlin.time.Instant
 
 private const val MEMBER = "member-eng-001"
 private const val HOST = "host-eng-001"
@@ -272,13 +274,41 @@ class SyncEngineTest {
 
   // --- harness ---------------------------------------------------------------------------------
 
-  private fun buildEngine(scheduler: UploadScheduler? = null): SyncEngine {
+  @Test
+  fun lastSyncedAt_isStampedWhenHydrationLands_andClearedOnSignOut() = runTest(ioContext) {
+    val user = mockk<FirebaseUser> {
+      every { uid } returns MEMBER
+      every { isAnonymous } returns false
+    }
+    val authState = MutableStateFlow<FirebaseUser?>(user)
+    val now = Instant.fromEpochMilliseconds(1_700_000_000_000L)
+    engine = buildEngine(authState = authState, clock = { now })
+    assertThat(engine.lastSyncedAt.value).isNull()
+
+    val job = engine.start()
+    testScheduler.advanceUntilIdle()
+    // Every top-level kind hydrates (the runner is stubbed to succeed), and each landing stamps it.
+    assertThat(engine.lastSyncedAt.value).isEqualTo(now)
+
+    authState.value = null
+    testScheduler.advanceUntilIdle()
+    // A signed-out device has nothing it agrees with the cloud about.
+    assertThat(engine.lastSyncedAt.value).isNull()
+
+    job.cancel()
+  }
+
+  private fun buildEngine(
+    scheduler: UploadScheduler? = null,
+    authState: Flow<FirebaseUser?>? = null,
+    clock: () -> Instant = { Clock.System.now() },
+  ): SyncEngine {
     val user = mockk<FirebaseUser> {
       every { uid } returns MEMBER
       every { isAnonymous } returns false
     }
     val auth = mockk<FirebaseAuth> {
-      every { authStateChanged } returns flowOf(user)
+      every { authStateChanged } returns (authState ?: flowOf(user))
       every { currentUser } returns user
     }
     val prefs = mockk<SyncPreferences> {
@@ -311,6 +341,7 @@ class SyncEngineTest {
       uploadScheduler = scheduler,
       sharedScopeJanitor = SharedScopeJanitor(db, writeLock),
       writeLock = writeLock,
+      clock = clock,
     )
   }
 

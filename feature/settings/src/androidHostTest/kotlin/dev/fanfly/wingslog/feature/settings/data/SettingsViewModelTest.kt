@@ -8,6 +8,7 @@ import dev.fanfly.wingslog.core.auth.AccountDeleter
 import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.core.crash.NoOpCrashReporter
 import dev.fanfly.wingslog.core.model.settings.NotificationSettings
+import dev.fanfly.wingslog.core.model.settings.Subscription
 import dev.fanfly.wingslog.core.storage.DatabaseIntegrityChecker
 import dev.fanfly.wingslog.core.ui.theme.AppearanceController
 import dev.fanfly.wingslog.core.ui.theme.AppearanceMode
@@ -21,6 +22,9 @@ import dev.fanfly.wingslog.feature.notifications.datamanager.PrefsState
 import dev.fanfly.wingslog.feature.notifications.datamanager.SignOutCoordinator
 import dev.fanfly.wingslog.feature.notifications.permission.NotificationPermission
 import dev.fanfly.wingslog.feature.notifications.permission.PermissionState
+import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
+import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
+import dev.fanfly.wingslog.thing.Technician
 import dev.gitlive.firebase.auth.FirebaseUser
 import io.mockk.coEvery
 import io.mockk.coJustRun
@@ -31,6 +35,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -59,6 +64,8 @@ class SettingsViewModelTest {
   private lateinit var notificationPermission: NotificationPermission
   private lateinit var notificationPrefsManager: NotificationPrefsManager
   private lateinit var signOutCoordinator: SignOutCoordinator
+  private lateinit var technicianManager: TechnicianManager
+  private lateinit var subscriptionManager: SubscriptionManager
   private lateinit var viewModel: SettingsViewModel
 
   /** In-memory [AppearanceStore] so the controller needs no platform backing in tests. */
@@ -92,6 +99,11 @@ class SettingsViewModelTest {
     notificationPermission = mockk(relaxed = true)
     notificationPrefsManager = mockk(relaxed = true)
     signOutCoordinator = mockk(relaxed = true)
+    technicianManager = mockk(relaxed = true)
+    subscriptionManager = mockk(relaxed = true)
+    every { technicianManager.observeSelf() } returns flowOf(null)
+    every { technicianManager.observeSelfId() } returns flowOf(null)
+    every { subscriptionManager.entitlement() } returns flowOf(Subscription())
     every { notificationPermission.observe() } returns MutableStateFlow(
       PermissionState.GRANTED
     )
@@ -183,7 +195,7 @@ class SettingsViewModelTest {
    */
   @Test
   fun init_readsAnonymousStateFromTheCurrentUser() = runTest(testDispatcher) {
-    val guest = mockk<FirebaseUser>()
+    val guest = mockk<FirebaseUser>(relaxed = true)
     every { guest.uid } returns TEST_USER_ID
     every { guest.isAnonymous } returns true
     every { authManager.getCurrentUser() } returns guest
@@ -432,10 +444,100 @@ class SettingsViewModelTest {
       )
     }
 
+  @Test
+  fun profileCard_prefersTheSelfTechnicianName_overTheAccount() = runTest(testDispatcher) {
+    every { technicianManager.observeSelf() } returns
+      flowOf(Technician(id = "self-1", name = "Jordan Reyes"))
+    viewModel = buildViewModel()
+    advanceUntilIdle()
+
+    assertThat(viewModel.user.value.displayName).isEqualTo("Jordan Reyes")
+    assertThat(viewModel.user.value.email).isEqualTo(TEST_USER_EMAIL)
+  }
+
+  @Test
+  fun profileCard_fallsBackToTheAccountEmail_whenNothingElseNamesTheUser() =
+    runTest(testDispatcher) {
+      viewModel = buildViewModel()
+      advanceUntilIdle()
+
+      assertThat(viewModel.user.value.displayName).isEqualTo(TEST_USER_EMAIL)
+    }
+
+  @Test
+  fun planRow_isBasic_untilTheEntitlementSaysPro() = runTest(testDispatcher) {
+    viewModel = buildViewModel()
+    advanceUntilIdle()
+
+    assertThat(viewModel.user.value.plan).isEqualTo(PlanRow.Basic)
+  }
+
+  @Test
+  fun planRow_carriesTheRenewalDate_forAProSubscription() = runTest(testDispatcher) {
+    every { subscriptionManager.entitlement() } returns flowOf(
+      Subscription(
+        status = Subscription.Status.STATUS_PRO,
+        // 2026-10-02T12:00:00Z — noon, so no zone puts it on a different day.
+        current_period_end_millis = 1_790_942_400_000L,
+        will_renew = true,
+      )
+    )
+    viewModel = buildViewModel()
+    advanceUntilIdle()
+
+    val plan = viewModel.user.value.plan
+    assertThat(plan).isInstanceOf(PlanRow.Pro::class.java)
+    plan as PlanRow.Pro
+    assertThat(plan.willRenew).isTrue()
+    assertThat(plan.periodEnd).isEqualTo("Oct 02, 2026")
+  }
+
+  @Test
+  fun planRow_hasNoDate_whenTheStoreGaveNone() = runTest(testDispatcher) {
+    every { subscriptionManager.entitlement() } returns
+      flowOf(Subscription(status = Subscription.Status.STATUS_PRO))
+    viewModel = buildViewModel()
+    advanceUntilIdle()
+
+    assertThat(viewModel.user.value.plan).isEqualTo(PlanRow.Pro(periodEnd = null, willRenew = false))
+  }
+
+  @Test
+  fun openProfile_seedsTheSelfRecord_thenOpensIt() = runTest(testDispatcher) {
+    coEvery { technicianManager.ensureSelfProfile() } returns Result.success(Unit)
+    every { technicianManager.observeSelfId() } returns flowOf("self-1")
+    viewModel = buildViewModel()
+    val targets = mutableListOf<ProfileTarget>()
+    val collector = launch { viewModel.profileRequests.collect { targets += it } }
+
+    viewModel.openProfile()
+    advanceUntilIdle()
+    collector.cancel()
+
+    coVerify { technicianManager.ensureSelfProfile() }
+    assertThat(targets).containsExactly(ProfileTarget.Self("self-1"))
+  }
+
+  @Test
+  fun openProfile_fallsBackToTheRoster_whenThereIsNoSelfRecord() = runTest(testDispatcher) {
+    coEvery { technicianManager.ensureSelfProfile() } returns Result.success(Unit)
+    viewModel = buildViewModel()
+    val targets = mutableListOf<ProfileTarget>()
+    val collector = launch { viewModel.profileRequests.collect { targets += it } }
+
+    viewModel.openProfile()
+    advanceUntilIdle()
+    collector.cancel()
+
+    assertThat(targets).containsExactly(ProfileTarget.Roster)
+  }
+
   private fun userWithEmail(email: String?) = mockk<FirebaseUser> {
     every { uid } returns TEST_USER_ID
     every { isAnonymous } returns false
     every { this@mockk.email } returns email
+    every { displayName } returns null
+    every { photoURL } returns null
   }
 
   private fun buildViewModel() = SettingsViewModel(
@@ -456,5 +558,7 @@ class SettingsViewModelTest {
     notificationPermission,
     notificationPrefsManager,
     signOutCoordinator,
+    technicianManager,
+    subscriptionManager,
   )
 }

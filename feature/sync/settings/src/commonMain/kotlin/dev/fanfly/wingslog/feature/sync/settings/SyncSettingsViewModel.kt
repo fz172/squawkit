@@ -12,13 +12,15 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlin.time.Instant
 
 /**
  * Drives the dedicated sync settings page. Reads three sources:
- * - [FirebaseAuth.authStateChanged] → tells us whether we're signed in / anonymous (controls
- *   whether sync can be enabled at all).
- * - [dev.fanfly.wingslog.core.sync.data.SyncPreferences.state] → the user's choice.
- * - [dev.fanfly.wingslog.core.sync.data.SyncEngine.failureState] / [dev.fanfly.wingslog.core.sync.data.SyncEngine.hydrationState] → live status for the info panel.
+ * - [FirebaseAuth.authStateChanged] → whether we're signed in / anonymous (controls whether sync
+ *   can be enabled at all).
+ * - [SyncPreferences.state] → the user's choice.
+ * - [SyncEngine.failureState] / [SyncEngine.hydrationState] / [SyncEngine.lastSyncedAt] → live
+ *   status for the Status card.
  *
  * The combined [SyncSettingsUiState] is a pure render input.
  */
@@ -34,7 +36,8 @@ class SyncSettingsViewModel(
       syncPreferences.state,
       syncEngine.failureState,
       syncEngine.hydrationState,
-    ) { user, prefs, failure, hydration ->
+      syncEngine.lastSyncedAt,
+    ) { user, prefs, failure, hydration, lastSyncedAt ->
       val signedIn = user != null && !user.isAnonymous
       SyncSettingsUiState(
         signedIn = signedIn,
@@ -42,6 +45,7 @@ class SyncSettingsViewModel(
         allowUploadOnCellular = prefs.allowUploadOnCellular,
         failure = failure,
         hydration = hydration,
+        lastSyncedAt = lastSyncedAt,
       )
     }.stateIn(
       scope = viewModelScope,
@@ -65,6 +69,8 @@ data class SyncSettingsUiState(
   val allowUploadOnCellular: Boolean,
   val failure: SyncFailure?,
   val hydration: HydrationState,
+  /** See [SyncEngine.lastSyncedAt]. */
+  val lastSyncedAt: Instant?,
 ) {
   companion object {
     val Initial = SyncSettingsUiState(
@@ -73,6 +79,7 @@ data class SyncSettingsUiState(
       allowUploadOnCellular = false,
       failure = null,
       hydration = HydrationState.Idle,
+      lastSyncedAt = null,
     )
   }
 }

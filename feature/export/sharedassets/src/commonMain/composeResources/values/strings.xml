@@ -4,9 +4,6 @@
 
   <!-- Setup: report formats -->
   <string name="export_formats_section">Report formats</string>
-  <string name="export_format_pdf_sub">Print-ready</string>
-  <string name="export_format_csv_sub">Plain text</string>
-  <string name="export_format_xlsx_sub">Spreadsheet</string>
   <string name="export_format_pick_one">Pick at least one format</string>
 
   <!-- Setup: what to export. The section title is core:sharedassets' your_stuff — the list spans
@@ -53,6 +50,9 @@
   <string name="export_receipt_range">Range</string>
   <string name="export_receipt_attachments">Attachments</string>
   <string name="export_receipt_attachments_included">Included</string>
+  <!-- Under a Thing in the export picker: "Sling TSi · 124 logs". -->
+  <string name="export_thing_log_count"><xliff:g example="124">%1$d</xliff:g> logs</string>
+  <string name="export_thing_log_count_one">1 log</string>
   <string name="export_thing_summary_more"><xliff:g example="N123AA">%1$s</xliff:g> + <xliff:g example="3">%2$d</xliff:g> more</string>
 
   <!-- Result: actions -->

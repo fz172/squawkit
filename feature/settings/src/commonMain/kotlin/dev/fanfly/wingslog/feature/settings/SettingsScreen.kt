@@ -1,21 +1,18 @@
 package dev.fanfly.wingslog.feature.settings
 
-
-import dev.fanfly.wingslog.core.template.LexiconFormatter
-import dev.fanfly.wingslog.core.template.LocalThingLexicon
-import dev.fanfly.wingslog.core.template.technicianNoun
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -23,12 +20,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.CloudSync
+import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.Engineering
 import androidx.compose.material.icons.filled.FileDownload
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.PrivacyTip
-import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.WorkspacePremium
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
@@ -40,16 +38,26 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import dev.fanfly.wingslog.core.appinfo.getAppVersion
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
+import dev.fanfly.wingslog.core.ui.common.compose.GroupedChevron
+import dev.fanfly.wingslog.core.ui.common.compose.GroupedLeadingIconChip
+import dev.fanfly.wingslog.core.ui.common.compose.GroupedRow
+import dev.fanfly.wingslog.core.ui.common.compose.GroupedSection
+import dev.fanfly.wingslog.core.ui.common.compose.ProBadge
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.core.ui.widget.avataricon.compose.AvatarIcon
 import dev.fanfly.wingslog.feature.login.upgrade.AccountUpgradeViewModel
 import dev.fanfly.wingslog.feature.settings.data.NotificationsRowState
+import dev.fanfly.wingslog.feature.settings.data.PlanRow
+import dev.fanfly.wingslog.feature.settings.data.ProfileTarget
+import dev.fanfly.wingslog.feature.settings.data.SettingsUiState
 import dev.fanfly.wingslog.feature.settings.data.SettingsViewModel
 import dev.fanfly.wingslog.feature.settings.data.UserStatus
 import org.jetbrains.compose.resources.stringResource
@@ -58,8 +66,9 @@ import wingslog.core.sharedassets.generated.resources.settings
 import wingslog.feature.export.sharedassets.generated.resources.feature_name_export_logs
 import wingslog.feature.settings.generated.resources.account_upgrade_link_cta
 import wingslog.feature.settings.generated.resources.account_upgrade_link_subtitle
-import wingslog.feature.settings.generated.resources.app_version
 import wingslog.feature.settings.generated.resources.developer_options
+import wingslog.feature.settings.generated.resources.settings_about
+import wingslog.feature.settings.generated.resources.settings_about_subtitle
 import wingslog.feature.settings.generated.resources.settings_ad_privacy
 import wingslog.feature.settings.generated.resources.settings_ad_privacy_subtitle
 import wingslog.feature.settings.generated.resources.settings_delete_account
@@ -71,8 +80,16 @@ import wingslog.feature.settings.generated.resources.settings_notifications
 import wingslog.feature.settings.generated.resources.settings_notifications_subtitle_blocked
 import wingslog.feature.settings.generated.resources.settings_notifications_subtitle_default
 import wingslog.feature.settings.generated.resources.settings_notifications_subtitle_off
+import wingslog.feature.settings.generated.resources.settings_plan_basic
+import wingslog.feature.settings.generated.resources.settings_plan_pro
+import wingslog.feature.settings.generated.resources.settings_plan_pro_ends
+import wingslog.feature.settings.generated.resources.settings_plan_pro_renews
+import wingslog.feature.settings.generated.resources.settings_profile_guest
+import wingslog.feature.settings.generated.resources.settings_section_account
+import wingslog.feature.settings.generated.resources.settings_section_data
+import wingslog.feature.settings.generated.resources.settings_section_preferences
+import wingslog.feature.settings.generated.resources.settings_section_support
 import wingslog.feature.settings.generated.resources.settings_subscription
-import wingslog.feature.settings.generated.resources.settings_subscription_subtitle
 import wingslog.feature.settings.generated.resources.settings_subtitle
 import wingslog.feature.settings.generated.resources.settings_sync_subtitle
 import wingslog.feature.settings.generated.resources.settings_technicians_subtitle
@@ -85,10 +102,11 @@ import wingslog.feature.settings.generated.resources.Res as SettingsRes
 import wingslog.feature.sync.sharedassets.generated.resources.Res as SyncRes
 import wingslog.feature.technician.sharedassets.generated.resources.Res as TechnicianRes
 
+private val ProfileAvatarSize = 56.dp
 
 /**
- * The settings body — profile card, technician profiles, sync/cloud backup, Export entry point,
- * Developer Options, account action, and app version.
+ * The settings body — the profile card (who you are, what plan you are on), then Preferences,
+ * Data, Support and Account groups.
  *
  * Detail pages embed in the content pane next to the sidebar when one is present: in that case the
  * caller passes a [sectionNavController] scoped to a nested NavHost, and the rows navigate it so the
@@ -123,6 +141,18 @@ fun SettingsContent(
     accountUpgradeViewModel.completions.collect { settingsViewModel.refreshAccountState() }
   }
 
+  // The profile card resolves its destination asynchronously (the self record may need seeding).
+  LaunchedEffect(settingsViewModel) {
+    settingsViewModel.profileRequests.collect { target ->
+      when (target) {
+        is ProfileTarget.Self ->
+          detailNav.navigate(Screen.EditTechnician.createRoute(target.technicianId))
+
+        ProfileTarget.Roster -> detailNav.navigate(Screen.ManageTechnicians.route)
+      }
+    }
+  }
+
   LaunchedEffect(user) {
     if (user.userStatus == UserStatus.LOGGED_OUT) {
       navController.navigate(Screen.Login.route) {
@@ -144,10 +174,10 @@ fun SettingsContent(
         .fillMaxSize()
         .padding(Spacing.screenPadding),
     ) {
-      // The whole page scrolls as one, version footer included, so every row stays reachable on
-      // short screens. On compact tiers the shell runs Settings edge-to-edge under the transparent
-      // system navigation bar, so the scroll content re-adds that bottom inset (after verticalScroll
-      // so it scrolls with the content) to keep the last row above the gesture bar.
+      // The whole page scrolls as one, so every row stays reachable on short screens. On compact
+      // tiers the shell runs Settings edge-to-edge under the transparent system navigation bar, so
+      // the scroll content re-adds that bottom inset (after verticalScroll so it scrolls with the
+      // content) to keep the last row above the gesture bar.
       Column(
         modifier = Modifier
           .weight(1f)
@@ -159,7 +189,7 @@ fun SettingsContent(
               WindowInsets.navigationBars.only(WindowInsetsSides.Bottom)
             )
           ),
-        verticalArrangement = Arrangement.spacedBy(Spacing.columnGap),
+        verticalArrangement = Arrangement.spacedBy(Spacing.extraLarge),
       ) {
         // In sidebar mode the shell drops its "Settings" top bar (the section owns its chrome), so
         // the page renders its own title/subtitle. Compact tiers still get the title from the shell.
@@ -167,156 +197,170 @@ fun SettingsContent(
           SettingsHeader()
         }
 
-        val generalRows = buildList<@Composable () -> Unit> {
-          add {
-            AppearanceSettingRow(
-              mode = appearanceMode,
-              onModeChange = settingsViewModel::setAppearance,
-            )
-          }
-          add {
-            SettingsRow(
-              icon = Icons.Default.WorkspacePremium,
-              title = stringResource(SettingsRes.string.settings_subscription),
-              subtitle = stringResource(SettingsRes.string.settings_subscription_subtitle),
-              onClick = { detailNav.navigate(Screen.Subscription.route) },
-            )
-          }
-          add {
-            SettingsRow(
-              icon = Icons.Default.CloudSync,
-              title = stringResource(SyncRes.string.feature_name_backup_and_sync),
-              subtitle = stringResource(SettingsRes.string.settings_sync_subtitle),
-              onClick = { detailNav.navigate(Screen.SyncSettings.route) },
-            )
-          }
-          add {
-            SettingsRow(
-              icon = Icons.Default.Notifications,
-              title = stringResource(SettingsRes.string.settings_notifications),
-              subtitle = stringResource(
-                when (user.notificationsRowState) {
-                  NotificationsRowState.BLOCKED -> SettingsRes.string.settings_notifications_subtitle_blocked
-                  NotificationsRowState.OFF -> SettingsRes.string.settings_notifications_subtitle_off
-                  NotificationsRowState.DEFAULT -> SettingsRes.string.settings_notifications_subtitle_default
-                }
-              ),
-              onClick = { detailNav.navigate(Screen.Notifications.route) },
-            )
-          }
-        }
-        val supportRows = buildList<@Composable () -> Unit> {
-          add {
-            FirebaseLoggingSettingRow(
-              enabled = firebaseLoggingEnabled,
-              onEnabledChange = settingsViewModel::setFirebaseLoggingEnabled,
-            )
-          }
-          // Only when there's actually a CMP form to re-present right now — not just wherever this
-          // build ships ads — so tapping the row never silently does nothing (#384).
-          if (user.isAdPrivacyOptionsAvailable) {
-            add {
-              SettingsRow(
-                icon = Icons.Default.PrivacyTip,
-                title = stringResource(SettingsRes.string.settings_ad_privacy),
-                subtitle = stringResource(SettingsRes.string.settings_ad_privacy_subtitle),
-                onClick = settingsViewModel::presentAdPrivacyOptions,
-              )
-            }
-          }
-          // Developer Options is a developer surface: only on debug and dogfood-style builds, never in release.
-          if (user.isDeveloperOptionsSupported) {
-            add {
-              SettingsRow(
-                icon = Icons.Default.Tune,
-                title = stringResource(SettingsRes.string.developer_options),
-                subtitle = stringResource(SettingsRes.string.settings_developer_options_subtitle),
-                onClick = { detailNav.navigate(Screen.DeveloperOptions.route) },
-              )
-            }
-          }
-        }
-        val dataManagementRows = buildList<@Composable () -> Unit> {
-          add {
-            SettingsRow(
-              icon = Icons.Default.Engineering,
-              // Fixed text, not a lexicon substitution. Settings should read the same whatever
-              // the picker holds, and no lexicon noun is right here anyway: the generic word is
-              // "person", so this row would say "Person Profiles". The domain-specific framing
-              // lives inside the screen this opens (manage_technicians_description).
-              title = stringResource(TechnicianRes.string.manage_technicians),
-              subtitle = stringResource(SettingsRes.string.settings_technicians_subtitle),
-              onClick = { detailNav.navigate(Screen.ManageTechnicians.route) },
-            )
-          }
-          add {
-            SettingsRow(
-              icon = Icons.Default.FileDownload,
-              title = stringResource(ExportRes.string.feature_name_export_logs),
-              subtitle = stringResource(SettingsRes.string.settings_export_subtitle),
-              onClick = { detailNav.navigate(Screen.ExportLogs.route) },
-            )
-          }
-        }
-        val accountRows = buildList<@Composable () -> Unit> {
-          // Guest shows "Link to an account" (runs the upgrade); real accounts show "Log out".
-          //
-          // The branch is load-bearing, not cosmetic: a guest has no cloud copy, so logOut()'s wipe
-          // would destroy every thing, log, task, squawk, and attachment unrecoverably — and
-          // "Sign out of your account on this device" says the opposite of what that does. Guests
-          // are offered the way *in* instead, which is also the only thing that makes their data
-          // recoverable. Keep it that way: a guest sign-out needs an explicit erase warning ahead of
-          // it, never this row (#413).
-          if (user.isAnonymous) {
-            add {
-              SettingsRow(
-                icon = Icons.AutoMirrored.Filled.Login,
-                title = stringResource(SettingsRes.string.account_upgrade_link_cta),
-                subtitle =
-                  stringResource(SettingsRes.string.account_upgrade_link_subtitle),
-                onClick = { accountUpgradeViewModel.choose() },
-              )
-            }
-          } else {
-            add {
-              SettingsRow(
-                icon = Icons.AutoMirrored.Filled.Logout,
-                title = stringResource(SettingsRes.string.sign_out),
-                subtitle = stringResource(SettingsRes.string.settings_logout_subtitle),
-                onClick = { settingsViewModel.logOut() },
-              )
-            }
-            // Below Log out, and only for a permanent account. Required by App Store Review
-            // Guideline 5.1.1(v) — which applies to any app offering account creation, not just
-            // Apple sign-in (#418). A guest has no account to delete: their exit is the upgrade row
-            // above, and logOut()'s wipe is already off-limits to them (#413).
-            add {
-              SettingsRow(
-                icon = Icons.Default.DeleteForever,
-                title = stringResource(SettingsRes.string.settings_delete_account),
-                subtitle = stringResource(SettingsRes.string.settings_delete_account_subtitle),
-                settingsLevel = SettingsLevel.DANGER,
-                onClick = { settingsViewModel.askToDeleteAccount() },
-              )
-            }
-          }
-        }
-        SettingsRowGroup(generalRows)
-        SettingsRowGroup(dataManagementRows)
-        SettingsRowGroup(supportRows)
-        SettingsRowGroup(accountRows)
-
-        Spacer(modifier = Modifier.height(Spacing.columnGap))
-
-        Text(
-          text = stringResource(
-            SettingsRes.string.app_version,
-            getAppVersion()
-          ),
-          style = MaterialTheme.typography.bodySmall,
-          color = MaterialTheme.colorScheme.onSurfaceVariant,
-          modifier = Modifier.align(Alignment.CenterHorizontally),
+        ProfileCard(
+          user = user,
+          onOpenProfile = settingsViewModel::openProfile,
+          onOpenSubscription = { detailNav.navigate(Screen.Subscription.route) },
         )
+
+        GroupedSection(stringResource(SettingsRes.string.settings_section_preferences)) {
+          SettingsRowGroup(
+            listOf(
+              {
+                SettingsRow(
+                  icon = Icons.Default.Notifications,
+                  title = stringResource(SettingsRes.string.settings_notifications),
+                  subtitle = stringResource(
+                    when (user.notificationsRowState) {
+                      NotificationsRowState.BLOCKED ->
+                        SettingsRes.string.settings_notifications_subtitle_blocked
+
+                      NotificationsRowState.OFF ->
+                        SettingsRes.string.settings_notifications_subtitle_off
+
+                      NotificationsRowState.DEFAULT ->
+                        SettingsRes.string.settings_notifications_subtitle_default
+                    }
+                  ),
+                  onClick = { detailNav.navigate(Screen.Notifications.route) },
+                )
+              },
+              {
+                SettingsRow(
+                  icon = Icons.Default.CloudSync,
+                  title = stringResource(SyncRes.string.feature_name_backup_and_sync),
+                  subtitle = stringResource(SettingsRes.string.settings_sync_subtitle),
+                  onClick = { detailNav.navigate(Screen.SyncSettings.route) },
+                )
+              },
+              {
+                AppearanceSettingRow(
+                  mode = appearanceMode,
+                  onModeChange = settingsViewModel::setAppearance,
+                )
+              },
+            )
+          )
+        }
+
+        GroupedSection(stringResource(SettingsRes.string.settings_section_data)) {
+          SettingsRowGroup(
+            listOf(
+              {
+                SettingsRow(
+                  icon = Icons.Default.Engineering,
+                  // Fixed text, not a lexicon substitution. Settings should read the same whatever
+                  // the picker holds, and no lexicon noun is right here anyway: the generic word is
+                  // "person", so this row would say "Person Profiles". The domain-specific framing
+                  // lives inside the screen this opens (manage_technicians_description).
+                  title = stringResource(TechnicianRes.string.manage_technicians),
+                  subtitle = stringResource(SettingsRes.string.settings_technicians_subtitle),
+                  onClick = { detailNav.navigate(Screen.ManageTechnicians.route) },
+                )
+              },
+              {
+                SettingsRow(
+                  icon = Icons.Default.FileDownload,
+                  title = stringResource(ExportRes.string.feature_name_export_logs),
+                  subtitle = stringResource(SettingsRes.string.settings_export_subtitle),
+                  onClick = { detailNav.navigate(Screen.ExportLogs.route) },
+                )
+              },
+            )
+          )
+        }
+
+        GroupedSection(stringResource(SettingsRes.string.settings_section_support)) {
+          SettingsRowGroup(
+            buildList {
+              add {
+                FirebaseLoggingSettingRow(
+                  enabled = firebaseLoggingEnabled,
+                  onEnabledChange = settingsViewModel::setFirebaseLoggingEnabled,
+                )
+              }
+              // Only when there's actually a CMP form to re-present right now — not just wherever
+              // this build ships ads — so tapping the row never silently does nothing (#384).
+              if (user.isAdPrivacyOptionsAvailable) {
+                add {
+                  SettingsRow(
+                    icon = Icons.Default.PrivacyTip,
+                    title = stringResource(SettingsRes.string.settings_ad_privacy),
+                    subtitle = stringResource(SettingsRes.string.settings_ad_privacy_subtitle),
+                    onClick = settingsViewModel::presentAdPrivacyOptions,
+                  )
+                }
+              }
+              add {
+                SettingsRow(
+                  icon = Icons.Default.Info,
+                  title = stringResource(SettingsRes.string.settings_about),
+                  subtitle = stringResource(SettingsRes.string.settings_about_subtitle),
+                  onClick = { detailNav.navigate(Screen.About.route) },
+                )
+              }
+              // Developer Options is a developer surface: only on debug and dogfood-style builds,
+              // never in release.
+              if (user.isDeveloperOptionsSupported) {
+                add {
+                  SettingsRow(
+                    icon = Icons.Default.Code,
+                    title = stringResource(SettingsRes.string.developer_options),
+                    subtitle = stringResource(SettingsRes.string.settings_developer_options_subtitle),
+                    onClick = { detailNav.navigate(Screen.DeveloperOptions.route) },
+                  )
+                }
+              }
+            }
+          )
+        }
+
+        GroupedSection(stringResource(SettingsRes.string.settings_section_account)) {
+          SettingsRowGroup(
+            buildList {
+              // Guest shows "Link to an account" (runs the upgrade); real accounts show "Log out".
+              //
+              // The branch is load-bearing, not cosmetic: a guest has no cloud copy, so logOut()'s
+              // wipe would destroy every thing, log, task, squawk, and attachment unrecoverably —
+              // and "Sign out of your account on this device" says the opposite of what that does.
+              // Guests are offered the way *in* instead, which is also the only thing that makes
+              // their data recoverable. Keep it that way: a guest sign-out needs an explicit erase
+              // warning ahead of it, never this row (#413).
+              if (user.isAnonymous) {
+                add {
+                  SettingsRow(
+                    icon = Icons.AutoMirrored.Filled.Login,
+                    title = stringResource(SettingsRes.string.account_upgrade_link_cta),
+                    subtitle = stringResource(SettingsRes.string.account_upgrade_link_subtitle),
+                    onClick = { accountUpgradeViewModel.choose() },
+                  )
+                }
+              } else {
+                add {
+                  SettingsRow(
+                    icon = Icons.AutoMirrored.Filled.Logout,
+                    title = stringResource(SettingsRes.string.sign_out),
+                    subtitle = stringResource(SettingsRes.string.settings_logout_subtitle),
+                    onClick = { settingsViewModel.logOut() },
+                  )
+                }
+                // Below Log out, and only for a permanent account. Required by App Store Review
+                // Guideline 5.1.1(v) — which applies to any app offering account creation, not
+                // just Apple sign-in (#418). A guest has no account to delete: their exit is the
+                // upgrade row above, and logOut()'s wipe is already off-limits to them (#413).
+                add {
+                  SettingsRow(
+                    icon = Icons.Default.DeleteForever,
+                    title = stringResource(SettingsRes.string.settings_delete_account),
+                    subtitle = stringResource(SettingsRes.string.settings_delete_account_subtitle),
+                    settingsLevel = SettingsLevel.DANGER,
+                    onClick = { settingsViewModel.askToDeleteAccount() },
+                  )
+                }
+              }
+            }
+          )
+        }
       }
     }
 
@@ -337,8 +381,82 @@ fun SettingsContent(
       modifier = Modifier.align(Alignment.BottomCenter)
     )
   }
+}
 
+/**
+ * Who is signed in and what they are paying for, in one card at the top: the avatar row opens the
+ * profile editor (the chevron says so; the subtitle is just the account), the plan row opens
+ * Subscription. Dividers inset to the row padding rather than
+ * the chip column — the avatar is not a chip, so a chip-aligned rule would float.
+ */
+@Composable
+private fun ProfileCard(
+  user: SettingsUiState,
+  onOpenProfile: () -> Unit,
+  onOpenSubscription: () -> Unit,
+) {
+  SettingsRowGroup(
+    dividerStartInset = Spacing.xLarge,
+    rows = listOf(
+      {
+        GroupedRow(
+          title = user.displayName
+            ?: stringResource(SettingsRes.string.settings_profile_guest),
+          titleStyle = MaterialTheme.typography.titleLarge,
+          subtitle = user.email,
+          onClick = onOpenProfile,
+          leading = {
+            AvatarIcon(
+              displayName = user.displayName,
+              photoUri = user.photoUrl,
+              size = ProfileAvatarSize,
+              textStyle = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+            )
+          },
+          trailing = { GroupedChevron() },
+        )
+      },
+      {
+        val plan = user.plan
+        GroupedRow(
+          title = stringResource(SettingsRes.string.settings_subscription),
+          subtitle = when (plan) {
+            null -> null
+            PlanRow.Basic -> stringResource(SettingsRes.string.settings_plan_basic)
+            is PlanRow.Pro -> when {
+              plan.periodEnd == null -> stringResource(SettingsRes.string.settings_plan_pro)
+              plan.willRenew ->
+                stringResource(
+                  SettingsRes.string.settings_plan_pro_renews,
+                  plan.periodEnd
+                )
 
+              else -> stringResource(
+                SettingsRes.string.settings_plan_pro_ends,
+                plan.periodEnd
+              )
+            }
+          },
+          onClick = onOpenSubscription,
+          leading = {
+            GroupedLeadingIconChip(
+              icon = Icons.Default.WorkspacePremium,
+              contentDescription = null,
+            )
+          },
+          trailing = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+              if (plan is PlanRow.Pro) {
+                ProBadge()
+                Spacer(Modifier.width(Spacing.small))
+              }
+              GroupedChevron()
+            }
+          },
+        )
+      },
+    ),
+  )
 }
 
 /**

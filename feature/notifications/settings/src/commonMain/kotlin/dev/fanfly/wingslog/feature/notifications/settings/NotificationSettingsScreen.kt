@@ -13,6 +13,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Group
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.NotificationsOff
+import androidx.compose.material.icons.filled.PriorityHigh
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -34,9 +39,12 @@ import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedTopBar
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
 import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
+import dev.fanfly.wingslog.core.ui.common.compose.GroupedLeadingIconChip
+import dev.fanfly.wingslog.core.ui.common.compose.GroupedRowGroup
+import dev.fanfly.wingslog.core.ui.common.compose.GroupedSection
+import dev.fanfly.wingslog.core.ui.common.compose.GroupedSwitchRow
 import dev.fanfly.wingslog.core.ui.common.compose.MasterSwitchRow
-import dev.fanfly.wingslog.core.ui.common.compose.SwitchRowCard
-import dev.fanfly.wingslog.core.ui.common.compose.SwitchRowItem
+import dev.fanfly.wingslog.core.ui.common.compose.SettingsHero
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.statusColors
@@ -44,7 +52,6 @@ import dev.fanfly.wingslog.feature.notifications.model.allEnabled
 import dev.fanfly.wingslog.feature.notifications.model.collaborationEnabled
 import dev.fanfly.wingslog.feature.notifications.model.priorityDueEnabled
 import dev.fanfly.wingslog.feature.notifications.permission.PermissionState
-import dev.fanfly.wingslog.feature.notifications.settings.compose.NotificationHeroIllustration
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.feature.notifications.settings.generated.resources.Res
@@ -74,15 +81,14 @@ import wingslog.feature.notifications.settings.generated.resources.notification_
 
 /**
  * The real notifications settings screen (design §9.1–9.4), simplified to three toggles total
- * (design decision, 2026-08-26). Follows the house settings-screen shape — hero, description,
- * master switch, individual switches, notes & warnings — that Backup & Sync's settings screen
- * established first: [NotificationHeroIllustration] + [HeroCaption] introduce the surface,
- * [MasterSwitchRow] is visually senior to the plain [SwitchRowCard] rows below it under a
- * "Notification types" label, and [PermissionBanner] / [CollaborationFooter] — the "notes &
- * warnings" — sit last rather than up front, so a working setup reads as controls first, caveats
- * only if one applies. Priority & due updates work for anyone with OS permission — including a
- * signed-out guest, who must never see that row dimmed (§9.3, §6.8) — while collaboration needs a
- * real account with cloud sync on.
+ * (design decision, 2026-08-26). Follows the house settings-screen shape — hero, master switch,
+ * a labelled group of individual switches, then notes & warnings — that Backup & Sync's settings
+ * screen established first: [SettingsHero] introduces the surface, [MasterSwitchRow] is visually
+ * senior to the plain grouped rows below it under a "Notification types" label, and
+ * [PermissionBanner] / [CollaborationFooter] — the "notes & warnings" — sit last rather than up
+ * front, so a working setup reads as controls first, caveats only if one applies. Priority & due
+ * updates work for anyone with OS permission — including a signed-out guest, who must never see
+ * that row dimmed (§9.3, §6.8) — while collaboration needs a real account with cloud sync on.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -130,58 +136,73 @@ fun NotificationSettingsScreen(
           LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
         }
 
-        Spacer(Modifier.height(Spacing.medium))
-        NotificationHeroIllustration(active = state.settings.allEnabled)
-
+        val allEnabled = state.settings.allEnabled
         Column(
           modifier = Modifier.padding(Spacing.screenPadding),
-          verticalArrangement = Arrangement.spacedBy(Spacing.large),
+          verticalArrangement = Arrangement.spacedBy(Spacing.extraLarge),
         ) {
-          HeroCaption(allEnabled = state.settings.allEnabled)
+          SettingsHero(
+            icon = if (allEnabled) Icons.Default.Notifications else Icons.Default.NotificationsOff,
+            title = stringResource(
+              if (allEnabled) Res.string.notification_settings_hero_title_on
+              else Res.string.notification_settings_hero_title_off
+            ),
+            body = stringResource(
+              if (allEnabled) Res.string.notification_settings_hero_body_on
+              else Res.string.notification_settings_hero_body_off
+            ),
+            active = allEnabled,
+          )
 
           MasterSwitchRow(
             title = stringResource(Res.string.notification_settings_all_title),
-            subtitle = if (state.settings.allEnabled)
+            subtitle = if (allEnabled)
               stringResource(Res.string.notification_settings_all_subtitle_on)
             else
               stringResource(Res.string.notification_settings_all_subtitle_off),
-            checked = state.settings.allEnabled,
+            checked = allEnabled,
             enabled = !state.isLoading,
             onCheckedChange = viewModel::onAllNotificationsToggled,
           )
 
-          val urgencyEnabled = !state.isLoading && state.settings.allEnabled
+          val urgencyEnabled = !state.isLoading && allEnabled
           val collaborationEnabled =
             urgencyEnabled && state.isSignedIn && state.isCloudSyncEnabled
-          Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
-            Text(
-              text = stringResource(Res.string.notification_settings_types_label),
-              style = MaterialTheme.typography.titleSmall,
-              color = MaterialTheme.colorScheme.onSurfaceVariant,
-              modifier = Modifier.padding(start = Spacing.small),
-            )
-
-            SwitchRowCard(
-              items = listOf(
-                SwitchRowItem(
-                  title = stringResource(Res.string.notification_settings_priority_due_title),
-                  subtitle = stringResource(Res.string.notification_settings_priority_due_subtitle),
-                  checked = state.settings.priorityDueEnabled,
-                  enabled = urgencyEnabled,
-                  onCheckedChange = viewModel::onPriorityDueToggled,
-                ),
-              ),
-            )
-
-            SwitchRowCard(
-              items = listOf(
-                SwitchRowItem(
-                  title = stringResource(Res.string.notification_settings_collaboration_title),
-                  subtitle = stringResource(Res.string.notification_settings_collaboration_subtitle),
-                  checked = state.settings.collaborationEnabled,
-                  enabled = collaborationEnabled,
-                  onCheckedChange = viewModel::onCollaborationToggled,
-                ),
+          GroupedSection(stringResource(Res.string.notification_settings_types_label)) {
+            GroupedRowGroup(
+              rows = listOf(
+                {
+                  val title = stringResource(Res.string.notification_settings_priority_due_title)
+                  GroupedSwitchRow(
+                    title = title,
+                    subtitle = stringResource(Res.string.notification_settings_priority_due_subtitle),
+                    checked = state.settings.priorityDueEnabled,
+                    enabled = urgencyEnabled,
+                    onCheckedChange = viewModel::onPriorityDueToggled,
+                    leading = {
+                      GroupedLeadingIconChip(
+                        icon = Icons.Default.PriorityHigh,
+                        contentDescription = title,
+                      )
+                    },
+                  )
+                },
+                {
+                  val title = stringResource(Res.string.notification_settings_collaboration_title)
+                  GroupedSwitchRow(
+                    title = title,
+                    subtitle = stringResource(Res.string.notification_settings_collaboration_subtitle),
+                    checked = state.settings.collaborationEnabled,
+                    enabled = collaborationEnabled,
+                    onCheckedChange = viewModel::onCollaborationToggled,
+                    leading = {
+                      GroupedLeadingIconChip(
+                        icon = Icons.Default.Group,
+                        contentDescription = title,
+                      )
+                    },
+                  )
+                },
               ),
             )
           }
@@ -198,29 +219,6 @@ fun NotificationSettingsScreen(
         }
       }
     }
-  }
-}
-
-/** The "description" step of the house settings shape, paired with [NotificationHeroIllustration]. */
-@Composable
-private fun HeroCaption(allEnabled: Boolean) {
-  val (title, body) = if (allEnabled)
-    stringResource(Res.string.notification_settings_hero_title_on) to
-      stringResource(Res.string.notification_settings_hero_body_on)
-  else
-    stringResource(Res.string.notification_settings_hero_title_off) to
-      stringResource(Res.string.notification_settings_hero_body_off)
-
-  Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
-    Text(
-      text = title,
-      style = MaterialTheme.typography.headlineSmall
-    )
-    Text(
-      text = body,
-      style = MaterialTheme.typography.bodyMedium,
-      color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
   }
 }
 

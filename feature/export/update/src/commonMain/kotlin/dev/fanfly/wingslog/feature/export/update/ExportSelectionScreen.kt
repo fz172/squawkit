@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.calculateEndPadding
@@ -97,6 +96,8 @@ import dev.fanfly.wingslog.core.ui.common.compose.DatePickerDialog
 import dev.fanfly.wingslog.core.ui.common.compose.GroupedCheckboxRow
 import dev.fanfly.wingslog.core.ui.common.compose.GroupedLeadingIconChip
 import dev.fanfly.wingslog.core.ui.common.compose.GroupedRowGroup
+import dev.fanfly.wingslog.core.ui.common.compose.GroupedSection
+import dev.fanfly.wingslog.core.ui.adaptive.thingIcon
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
 import dev.fanfly.wingslog.core.ui.common.compose.formatFileSize
 import dev.fanfly.wingslog.core.ui.theme.Spacing
@@ -115,7 +116,6 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
-import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.cancel
 import wingslog.core.sharedassets.generated.resources.done
@@ -138,10 +138,7 @@ import wingslog.feature.export.sharedassets.generated.resources.export_error_sub
 import wingslog.feature.export.sharedassets.generated.resources.export_error_title
 import wingslog.feature.export.sharedassets.generated.resources.export_estimated_size
 import wingslog.feature.export.sharedassets.generated.resources.export_footer_thing_count
-import wingslog.feature.export.sharedassets.generated.resources.export_format_csv_sub
-import wingslog.feature.export.sharedassets.generated.resources.export_format_pdf_sub
 import wingslog.feature.export.sharedassets.generated.resources.export_format_pick_one
-import wingslog.feature.export.sharedassets.generated.resources.export_format_xlsx_sub
 import wingslog.feature.export.sharedassets.generated.resources.export_formats_section
 import wingslog.feature.export.sharedassets.generated.resources.export_history_action
 import wingslog.feature.export.sharedassets.generated.resources.export_last_12_months
@@ -168,6 +165,8 @@ import wingslog.feature.export.sharedassets.generated.resources.export_success_d
 import wingslog.feature.export.sharedassets.generated.resources.export_success_delivery_failed
 import wingslog.feature.export.sharedassets.generated.resources.export_success_delivery_failed_title
 import wingslog.feature.export.sharedassets.generated.resources.export_success_title
+import wingslog.feature.export.sharedassets.generated.resources.export_thing_log_count
+import wingslog.feature.export.sharedassets.generated.resources.export_thing_log_count_one
 import wingslog.feature.export.sharedassets.generated.resources.export_thing_summary_more
 import wingslog.feature.export.sharedassets.generated.resources.export_view_exports
 import wingslog.feature.export.sharedassets.generated.resources.feature_name_export_logs
@@ -347,25 +346,23 @@ private fun ExportSetupList(
     verticalArrangement = Arrangement.spacedBy(Spacing.extraLarge),
   ) {
     item {
-      Spacer(Modifier.height(Spacing.small))
-      FormatSection(formats = state.formats, onToggleFormat = onToggleFormat)
-    }
-
-    item {
       val allSelected = state.selectedThingIds.size == state.things.size
-      Section(
+      Spacer(Modifier.height(Spacing.small))
+      GroupedSection(
         // Neutral: the list spans every template on the account, so no one Thing's word
         // describes it — the same rule as the switcher's own chrome (§6).
         title = stringResource(CoreRes.string.your_stuff),
         action = if (state.things.size > 1) {
           {
-            TextButton(onClick = if (allSelected) onClearAll else onSelectAll) {
-              Text(
-                stringResource(
-                  if (allSelected) Res.string.export_clear_all else Res.string.export_select_all
-                )
-              )
-            }
+            Text(
+              text = stringResource(
+                if (allSelected) Res.string.export_clear_all else Res.string.export_select_all
+              ),
+              style = MaterialTheme.typography.labelLarge,
+              fontWeight = FontWeight.SemiBold,
+              color = MaterialTheme.colorScheme.primary,
+              modifier = Modifier.clickable(onClick = if (allSelected) onClearAll else onSelectAll),
+            )
           }
         } else {
           null
@@ -394,6 +391,10 @@ private fun ExportSetupList(
     }
 
     item {
+      FormatSection(formats = state.formats, onToggleFormat = onToggleFormat)
+    }
+
+    item {
       Spacer(Modifier.height(bottomPadding))
     }
   }
@@ -404,59 +405,40 @@ private fun ExportSetupList(
 private data class FormatChoice(
   val format: ExportFormat,
   val icon: ImageVector,
-  val sub: StringResource,
 )
 
 private val FORMAT_CHOICES = listOf(
-  FormatChoice(
-    ExportFormat.PDF,
-    Icons.Default.PictureAsPdf,
-    Res.string.export_format_pdf_sub
-  ),
-  FormatChoice(
-    ExportFormat.CSV,
-    Icons.Default.Description,
-    Res.string.export_format_csv_sub
-  ),
-  FormatChoice(
-    ExportFormat.XLSX,
-    Icons.Default.TableView,
-    Res.string.export_format_xlsx_sub
-  ),
+  FormatChoice(ExportFormat.PDF, Icons.Default.PictureAsPdf),
+  FormatChoice(ExportFormat.CSV, Icons.Default.Description),
+  FormatChoice(ExportFormat.XLSX, Icons.Default.TableView),
 )
 
 private val ExportBottomBarReservedHeight = 176.dp
+private val FormatTileIconSize = 18.dp
 
 @Composable
 private fun FormatSection(
   formats: Set<ExportFormat>,
   onToggleFormat: (ExportFormat) -> Unit,
 ) {
-  Section(title = stringResource(Res.string.export_formats_section)) {
-    GroupedRowGroup(
-      rows = FORMAT_CHOICES.map { choice ->
-        {
-          val selected = choice.format in formats
-          val isLastSelected = selected && formats.size == 1
-          GroupedCheckboxRow(
-            title = choice.format.name,
-            subtitle = stringResource(choice.sub),
-            checked = selected,
-            onCheckedChange = {
-              if (!isLastSelected) {
-                onToggleFormat(choice.format)
-              }
-            },
-            leading = {
-              GroupedLeadingIconChip(
-                icon = choice.icon,
-                contentDescription = choice.format.name,
-              )
-            },
-          )
-        }
+  GroupedSection(title = stringResource(Res.string.export_formats_section)) {
+    Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
+      FORMAT_CHOICES.forEach { choice ->
+        val selected = choice.format in formats
+        val isLastSelected = selected && formats.size == 1
+        FormatTile(
+          label = choice.format.name,
+          icon = choice.icon,
+          selected = selected,
+          onClick = {
+            if (!isLastSelected) {
+              onToggleFormat(choice.format)
+            }
+          },
+          modifier = Modifier.weight(1f),
+        )
       }
-    )
+    }
     // The picker enforces at least one format; the advisory only surfaces in the edge case.
     if (formats.isEmpty()) {
       Spacer(Modifier.height(Spacing.small))
@@ -470,6 +452,42 @@ private fun FormatSection(
   }
 }
 
+/** One format as an equal-width tile: filled with a check when chosen, outlined with its icon when not. */
+@Composable
+private fun FormatTile(
+  label: String,
+  icon: ImageVector,
+  selected: Boolean,
+  onClick: () -> Unit,
+  modifier: Modifier = Modifier,
+) {
+  val shape = RoundedCornerShape(Spacing.chipCornerRadius)
+  val cs = MaterialTheme.colorScheme
+  Row(
+    modifier = modifier
+      .clip(shape)
+      .background(if (selected) cs.primaryContainer else Color.Transparent)
+      .border(Spacing.hairline, if (selected) Color.Transparent else cs.outlineVariant, shape)
+      .clickable(onClick = onClick)
+      .padding(horizontal = Spacing.small, vertical = Spacing.medium),
+    horizontalArrangement = Arrangement.spacedBy(Spacing.small, Alignment.CenterHorizontally),
+    verticalAlignment = Alignment.CenterVertically,
+  ) {
+    Icon(
+      imageVector = if (selected) Icons.Default.Check else icon,
+      contentDescription = null,
+      modifier = Modifier.size(FormatTileIconSize),
+      tint = if (selected) cs.onPrimaryContainer else cs.onSurfaceVariant,
+    )
+    Text(
+      text = label,
+      style = MaterialTheme.typography.titleSmall,
+      fontWeight = FontWeight.SemiBold,
+      color = if (selected) cs.onPrimaryContainer else cs.onSurface,
+    )
+  }
+}
+
 // ─── Setup · Things ─────────────────────────────────────────────────────────
 
 @Composable
@@ -478,14 +496,23 @@ private fun ThingOptionRow(
   selected: Boolean,
   onClick: () -> Unit,
 ) {
+  val logCount =
+    if (thing.logCount == 1) stringResource(Res.string.export_thing_log_count_one)
+    else stringResource(Res.string.export_thing_log_count, thing.logCount)
   GroupedCheckboxRow(
     // Already resolved per row by the ViewModel, which is the only place that knows each Thing's
     // own template. The label chain guarantees a line, so there is no "Untitled" case left.
     title = thing.label,
-    subtitle = thing.subtitle,
+    subtitle = listOf(thing.subtitle, logCount).filter { it.isNotBlank() }.joinToString(" · "),
     titleStyle = WingslogTypography.dataLarge,
     checked = selected,
     onCheckedChange = { onClick() },
+    leading = {
+      GroupedLeadingIconChip(
+        icon = thingIcon(thing.iconKey),
+        contentDescription = null,
+      )
+    },
   )
 }
 
@@ -497,7 +524,7 @@ private fun DateRangeSection(
   onDateRangeChange: (DateRangeOption) -> Unit,
   onCustomRangeChange: (LocalDate, LocalDate) -> Unit,
 ) {
-  Section(title = stringResource(Res.string.export_date_range_section)) {
+  GroupedSection(title = stringResource(Res.string.export_date_range_section)) {
     Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
       RangePill(
         label = stringResource(Res.string.export_all_time),
@@ -742,33 +769,28 @@ private fun ExportBottomBar(
         .padding(top = Spacing.medium, bottom = Spacing.large),
       verticalArrangement = Arrangement.spacedBy(Spacing.small),
     ) {
-      FlowRow(
-        horizontalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
-        verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
+      Row(
+        modifier = Modifier.padding(horizontal = Spacing.extraSmall),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(Spacing.small),
       ) {
         Icon(
-          // Counts a selection that may hold any mix of types, so not an aeroplane.
-          imageVector = Icons.Default.Category,
+          imageVector = Icons.Default.FolderZip,
           contentDescription = null,
           tint = MaterialTheme.colorScheme.onSurfaceVariant,
-          modifier = Modifier.size(14.dp),
+          modifier = Modifier.size(FormatTileIconSize),
         )
         Text(
-          text = stringResource(
-            Res.string.export_footer_thing_count,
-            state.selectedThingIds.size,
-          ),
-          style = MaterialTheme.typography.bodySmall,
-          color = MaterialTheme.colorScheme.onSurface,
-          maxLines = 1,
-        )
-        MetaDot()
-        Text(
-          text = rangeSummary(state),
-          style = MaterialTheme.typography.bodySmall,
+          text = listOf(
+            stringResource(Res.string.export_footer_thing_count, state.selectedThingIds.size),
+            rangeSummary(state),
+            joinFormats(state.formats),
+          ).joinToString(" · "),
+          style = MaterialTheme.typography.bodyMedium,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
           maxLines = 1,
           overflow = TextOverflow.Ellipsis,
+          modifier = Modifier.weight(1f, fill = false),
         )
         MetaDot()
         Text(
@@ -776,8 +798,8 @@ private fun ExportBottomBar(
             Res.string.export_estimated_size,
             state.estimatedSizeBytes.formatFileSize()
           ),
-          style = MaterialTheme.typography.bodySmall,
-          color = MaterialTheme.colorScheme.onSurfaceVariant,
+          style = WingslogTypography.dataMedium,
+          color = MaterialTheme.colorScheme.onSurface,
           maxLines = 1,
         )
       }
@@ -791,14 +813,15 @@ private fun ExportBottomBar(
         shape = RoundedCornerShape(Spacing.buttonCornerRadius),
       ) {
         Icon(
-          imageVector = Icons.Default.FolderZip,
+          imageVector = Icons.Default.Download,
           contentDescription = null,
-          modifier = Modifier.size(20.dp),
+          modifier = Modifier.size(Spacing.xLarge),
         )
         Spacer(Modifier.width(Spacing.small))
         Text(
-          text = stringResource(Res.string.export_primary_action),
+          text = stringResource(Res.string.export_primary_action).uppercase(),
           style = MaterialTheme.typography.titleMedium,
+          fontWeight = FontWeight.Bold,
         )
       }
     }
@@ -1494,40 +1517,6 @@ private fun EmptyThingContent(
 }
 
 // ─── Shared helpers ─────────────────────────────────────────────────────────
-
-/** A section header with a consistent gap above its content, regardless of where it sits. */
-@Composable
-private fun Section(
-  title: String,
-  action: (@Composable () -> Unit)? = null,
-  content: @Composable ColumnScope.() -> Unit,
-) {
-  Column {
-    SectionHeader(title = title, action = action)
-    Spacer(Modifier.height(Spacing.medium))
-    content()
-  }
-}
-
-@Composable
-private fun SectionHeader(
-  title: String,
-  action: (@Composable () -> Unit)? = null
-) {
-  Row(
-    modifier = Modifier.fillMaxWidth(),
-    verticalAlignment = Alignment.CenterVertically,
-    horizontalArrangement = Arrangement.SpaceBetween,
-  ) {
-    Text(
-      text = title.uppercase(),
-      style = MaterialTheme.typography.labelLarge,
-      color = MaterialTheme.colorScheme.primary,
-      fontWeight = FontWeight.Bold,
-    )
-    action?.invoke()
-  }
-}
 
 /** Joins formats in canonical order: "PDF", "PDF + CSV", "PDF, CSV + XLSX". */
 private fun joinFormats(formats: Set<ExportFormat>): String {
