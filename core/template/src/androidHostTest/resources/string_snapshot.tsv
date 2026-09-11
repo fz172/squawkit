@@ -891,6 +891,7 @@ feature/technician/sharedassets	technician_hero_title	Your crew
 feature/technician/sharedassets	edit_profile	Edit Profile
 feature/technician/sharedassets	technician_section_details	Details
 feature/technician/sharedassets	technician_name_label	Name
+feature/technician/sharedassets	technician_update_name	Update name
 feature/technician/sharedassets	technician_email_label	Email
 feature/technician/sharedassets	technician_email_managed	Managed by your sign-in provider
 feature/technician/sharedassets	technician_delete_hint	Past logs keep their record of this person

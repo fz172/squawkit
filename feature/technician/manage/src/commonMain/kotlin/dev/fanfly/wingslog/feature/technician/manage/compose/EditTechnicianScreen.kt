@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.technician.manage.compose
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,7 +13,6 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -21,7 +21,6 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -35,7 +34,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
@@ -46,6 +44,7 @@ import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.common.compose.AlertDialog
 import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
 import dev.fanfly.wingslog.core.ui.common.compose.DestructiveActionCard
+import dev.fanfly.wingslog.core.ui.common.compose.FormTextField
 import dev.fanfly.wingslog.core.ui.common.compose.GroupedCard
 import dev.fanfly.wingslog.core.ui.common.compose.GroupedRowGroup
 import dev.fanfly.wingslog.core.ui.common.compose.GroupedSection
@@ -56,6 +55,7 @@ import dev.fanfly.wingslog.feature.technician.manage.viewmodel.EditTechnicianVie
 import dev.fanfly.wingslog.feature.technician.sharedassets.compose.CertificationInputFields
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.cancel
+import wingslog.core.sharedassets.generated.resources.save
 import wingslog.feature.technician.sharedassets.generated.resources.add_technician
 import wingslog.feature.technician.sharedassets.generated.resources.certifications
 import wingslog.feature.technician.sharedassets.generated.resources.delete_technician
@@ -68,6 +68,7 @@ import wingslog.feature.technician.sharedassets.generated.resources.technician_e
 import wingslog.feature.technician.sharedassets.generated.resources.technician_email_managed
 import wingslog.feature.technician.sharedassets.generated.resources.technician_name_label
 import wingslog.feature.technician.sharedassets.generated.resources.technician_section_details
+import wingslog.feature.technician.sharedassets.generated.resources.technician_update_name
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.technician.sharedassets.generated.resources.Res as TechnicianRes
 
@@ -118,6 +119,16 @@ fun EditTechnicianScreen(
           Text(stringResource(CoreRes.string.cancel))
         }
       }
+    )
+  }
+
+  val nameDraft = uiState.nameDraft
+  if (nameDraft != null) {
+    RenameDialog(
+      draft = nameDraft,
+      onDraftChange = viewModel::updateNameDraft,
+      onConfirm = viewModel::confirmNameDraft,
+      onDismiss = viewModel::dismissNameEditor,
     )
   }
 
@@ -185,8 +196,8 @@ fun EditTechnicianScreen(
                   ProfileFieldRow(
                     label = stringResource(TechnicianRes.string.technician_name_label),
                     value = uiState.name,
-                    onValueChange = viewModel::updateName,
                     placeholder = stringResource(TechnicianRes.string.name_required),
+                    onEdit = viewModel::openNameEditor,
                   )
                 }
                 val email = uiState.email
@@ -244,22 +255,54 @@ fun EditTechnicianScreen(
   }
 }
 
+/** The name editor: one field in a dialog, so the Details card stays a record rather than a form. */
+@Composable
+private fun RenameDialog(
+  draft: String,
+  onDraftChange: (String) -> Unit,
+  onConfirm: () -> Unit,
+  onDismiss: () -> Unit,
+) {
+  AlertDialog(
+    onDismissRequest = onDismiss,
+    title = { Text(stringResource(TechnicianRes.string.technician_update_name)) },
+    text = {
+      FormTextField(
+        value = draft,
+        onValueChange = onDraftChange,
+        label = stringResource(TechnicianRes.string.name_required),
+        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
+        modifier = Modifier.fillMaxWidth(),
+        singleLine = true,
+      )
+    },
+    confirmButton = {
+      TextButton(onClick = onConfirm, enabled = draft.isNotBlank()) {
+        Text(stringResource(CoreRes.string.save))
+      }
+    },
+    dismissButton = {
+      TextButton(onClick = onDismiss) { Text(stringResource(CoreRes.string.cancel)) }
+    },
+  )
+}
+
 /**
- * A labelled value inside the Details card. Editable when [onValueChange] is given — the value is
- * a bare text field with an edit glyph, so the card reads as a record, not a form — and locked
- * (with a lock glyph and a [supporting] line saying who owns it) otherwise.
+ * A labelled value inside the Details card. With [onEdit] the row opens an editor and carries a
+ * pencil; without it the value is locked (a lock glyph and a [supporting] line saying who owns it).
  */
 @Composable
 private fun ProfileFieldRow(
   label: String,
   value: String,
-  onValueChange: ((String) -> Unit)? = null,
+  onEdit: (() -> Unit)? = null,
   placeholder: String? = null,
   supporting: String? = null,
 ) {
   Row(
     modifier = Modifier
       .fillMaxWidth()
+      .then(if (onEdit != null) Modifier.clickable(onClick = onEdit) else Modifier)
       .padding(horizontal = Spacing.xLarge, vertical = Spacing.large),
     verticalAlignment = Alignment.CenterVertically,
   ) {
@@ -274,35 +317,14 @@ private fun ProfileFieldRow(
         letterSpacing = FieldLabelTracking,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
       )
-      val valueStyle = MaterialTheme.typography.titleMedium.copy(
+      val empty = value.isBlank() && placeholder != null
+      Text(
+        text = if (empty) placeholder.orEmpty() else value,
+        style = MaterialTheme.typography.titleMedium,
         fontWeight = FontWeight.SemiBold,
-        color = MaterialTheme.colorScheme.onSurface,
+        color = if (empty) MaterialTheme.colorScheme.onSurfaceVariant
+        else MaterialTheme.colorScheme.onSurface,
       )
-      if (onValueChange != null) {
-        BasicTextField(
-          value = value,
-          onValueChange = onValueChange,
-          textStyle = valueStyle,
-          singleLine = true,
-          keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
-          cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-          modifier = Modifier.fillMaxWidth(),
-          decorationBox = { inner ->
-            Box {
-              if (value.isEmpty() && placeholder != null) {
-                Text(
-                  text = placeholder,
-                  style = LocalTextStyle.current.merge(valueStyle),
-                  color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-              }
-              inner()
-            }
-          },
-        )
-      } else {
-        Text(text = value, style = valueStyle)
-      }
       if (supporting != null) {
         Text(
           text = supporting,
@@ -313,7 +335,7 @@ private fun ProfileFieldRow(
     }
     Spacer(Modifier.width(Spacing.large))
     Icon(
-      imageVector = if (onValueChange != null) Icons.Default.Edit else Icons.Default.Lock,
+      imageVector = if (onEdit != null) Icons.Default.Edit else Icons.Default.Lock,
       contentDescription = null,
       tint = MaterialTheme.colorScheme.onSurfaceVariant,
       modifier = Modifier.padding(end = Spacing.extraSmall),

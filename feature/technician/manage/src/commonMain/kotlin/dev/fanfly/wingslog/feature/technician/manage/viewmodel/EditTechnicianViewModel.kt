@@ -37,6 +37,8 @@ data class EditTechnicianUiState(
   val email: String? = null,
   /** The signed-in account's photo, drawn on the self profile; null when it has none. */
   val photoUrl: String? = null,
+  /** The name being typed in the rename dialog; null while the dialog is closed. */
+  val nameDraft: String? = null,
   val isLoading: Boolean = false,
   val isSaving: Boolean = false,
   val saveSuccess: Boolean = false,
@@ -151,6 +153,27 @@ class EditTechnicianViewModel(
 
   fun updateName(name: String) {
     _uiState.update { it.copy(name = name) }
+  }
+
+  // The rename dialog's draft lives here, not in a composable `remember`, so a recomposition or a
+  // rotation cannot drop half-typed input (#254).
+  fun openNameEditor() {
+    _uiState.update { it.copy(nameDraft = it.name) }
+  }
+
+  fun updateNameDraft(draft: String) {
+    _uiState.update { it.copy(nameDraft = draft) }
+  }
+
+  fun confirmNameDraft() {
+    _uiState.update { state ->
+      val draft = state.nameDraft?.trim() ?: return@update state
+      state.copy(name = draft, nameDraft = null)
+    }
+  }
+
+  fun dismissNameEditor() {
+    _uiState.update { it.copy(nameDraft = null) }
   }
 
   fun addCertification(type: String) {
