@@ -34,7 +34,6 @@ import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
 import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.common.compose.GroupedLeadingIconChip
 import dev.fanfly.wingslog.core.ui.common.compose.GroupedRow
-import dev.fanfly.wingslog.core.ui.common.compose.GroupedSection
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
 import dev.fanfly.wingslog.core.ui.common.compose.heroBob
 import dev.fanfly.wingslog.core.ui.common.compose.rememberHeroPulse
@@ -48,8 +47,6 @@ import wingslog.core.sharedassets.generated.resources.app_name
 import wingslog.feature.settings.generated.resources.about_contact_support
 import wingslog.feature.settings.generated.resources.about_contact_support_subtitle
 import wingslog.feature.settings.generated.resources.about_rate
-import wingslog.feature.settings.generated.resources.about_section_help
-import wingslog.feature.settings.generated.resources.about_section_notes
 import wingslog.feature.settings.generated.resources.about_terms
 import wingslog.feature.settings.generated.resources.about_version_title
 import wingslog.feature.settings.generated.resources.settings_about
@@ -59,8 +56,8 @@ import wingslog.feature.settings.generated.resources.Res as SettingsRes
 private val AppIconSize = 96.dp
 
 /**
- * About SquawkIt: the ways to reach us, then the notes — version and the legal page. Link rows exist
- * only where the host has somewhere to send them — web has no store to rate in.
+ * About SquawkIt: the legal page, the ways to reach us, and the version, in one group. Link rows
+ * exist only where the host has somewhere to send them — web has no store to rate in.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -96,74 +93,64 @@ fun AboutScreen(
       ) {
         AppIdentity()
 
+        val termsUrl = appCapability.termsUrl
         val supportUrl = appCapability.supportUrl
         val storeListingUrl = appCapability.storeListingUrl
-        if (supportUrl != null || storeListingUrl != null) {
-          GroupedSection(stringResource(SettingsRes.string.about_section_help)) {
-            SettingsRowGroup(
-              buildList {
-                if (supportUrl != null) {
-                  add {
-                    SettingsRow(
-                      icon = Icons.Default.SupportAgent,
-                      title = stringResource(SettingsRes.string.about_contact_support),
-                      subtitle = stringResource(SettingsRes.string.about_contact_support_subtitle),
-                      onClick = { uriHandler.openUri(supportUrl) },
-                    )
-                  }
-                }
-                if (storeListingUrl != null) {
-                  add {
-                    SettingsRow(
-                      icon = Icons.Default.Star,
-                      title = stringResource(SettingsRes.string.about_rate),
-                      onClick = { uriHandler.openUri(storeListingUrl) },
-                    )
-                  }
-                }
-              }
-            )
-          }
-        }
-
-        GroupedSection(stringResource(SettingsRes.string.about_section_notes)) {
-          SettingsRowGroup(
-            buildList {
+        // One group, no labels: four rows do not need sorting into sections.
+        SettingsRowGroup(
+          buildList {
+            if (termsUrl != null) {
               add {
-                val title = stringResource(SettingsRes.string.about_version_title)
-                GroupedRow(
-                  title = title,
-                  leading = {
-                    GroupedLeadingIconChip(icon = Icons.Default.Info, contentDescription = title)
-                  },
-                  trailing = {
-                    Text(
-                      text = getAppVersion(),
-                      style = WingslogTypography.dataMedium,
-                      color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                  },
+                SettingsRow(
+                  icon = Icons.Default.Policy,
+                  title = stringResource(SettingsRes.string.about_terms),
+                  onClick = { uriHandler.openUri(termsUrl) },
                 )
               }
-              val termsUrl = appCapability.termsUrl
-              if (termsUrl != null) {
-                add {
-                  SettingsRow(
-                    icon = Icons.Default.Policy,
-                    title = stringResource(SettingsRes.string.about_terms),
-                    onClick = { uriHandler.openUri(termsUrl) },
-                  )
-                }
+            }
+            if (supportUrl != null) {
+              add {
+                SettingsRow(
+                  icon = Icons.Default.SupportAgent,
+                  title = stringResource(SettingsRes.string.about_contact_support),
+                  subtitle = stringResource(SettingsRes.string.about_contact_support_subtitle),
+                  onClick = { uriHandler.openUri(supportUrl) },
+                )
               }
             }
-          )
-        }
+            if (storeListingUrl != null) {
+              add {
+                SettingsRow(
+                  icon = Icons.Default.Star,
+                  title = stringResource(SettingsRes.string.about_rate),
+                  onClick = { uriHandler.openUri(storeListingUrl) },
+                )
+              }
+            }
+            add {
+              val title = stringResource(SettingsRes.string.about_version_title)
+              GroupedRow(
+                title = title,
+                leading = {
+                  GroupedLeadingIconChip(icon = Icons.Default.Info, contentDescription = title)
+                },
+                trailing = {
+                  Text(
+                    text = getAppVersion(),
+                    style = WingslogTypography.dataMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                  )
+                },
+              )
+            }
+          }
+        )
       }
     }
   }
 }
 
-/** The app mark (bobbing, like the heroes) and its name; the version is a Notes row below. */
+/** The app mark (bobbing, like the heroes) and its name; the version is a row below. */
 @Composable
 private fun AppIdentity() {
   val pulse = rememberHeroPulse()

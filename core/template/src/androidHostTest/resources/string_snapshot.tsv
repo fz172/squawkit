@@ -455,10 +455,8 @@ feature/settings	settings_plan_pro_renews	Pro plan · Renews %1$s
 feature/settings	settings_plan_pro_ends	Pro plan · Ends %1$s
 feature/settings	settings_about	About SquawkIt
 feature/settings	settings_about_subtitle	Version, terms and support
-feature/settings	about_section_notes	Notes
 feature/settings	about_version_title	Version
 feature/settings	about_terms	Terms &amp; Privacy
-feature/settings	about_section_help	Help
 feature/settings	about_contact_support	Contact support
 feature/settings	about_contact_support_subtitle	Get help or send feedback
 feature/settings	about_rate	Rate SquawkIt

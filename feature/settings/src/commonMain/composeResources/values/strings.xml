@@ -39,10 +39,8 @@
   <string name="settings_plan_pro_ends">Pro plan · Ends <xliff:g example="Oct 2, 2026">%1$s</xliff:g></string>
   <string name="settings_about">About SquawkIt</string>
   <string name="settings_about_subtitle">Version, terms and support</string>
-  <string name="about_section_notes">Notes</string>
   <string name="about_version_title">Version</string>
   <string name="about_terms">Terms &amp; Privacy</string>
-  <string name="about_section_help">Help</string>
   <string name="about_contact_support">Contact support</string>
   <string name="about_contact_support_subtitle">Get help or send feedback</string>
   <string name="about_rate">Rate SquawkIt</string>
