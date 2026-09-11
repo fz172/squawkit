@@ -719,6 +719,12 @@ feature/sync/settings	sync_subtitle_cellular_disabled	Attachments upload over Wi
 feature/sync/settings	sync_subtitle_cellular_enabled	Attachments upload over Wi-Fi and cellular.
 feature/sync/settings	sync_subtitle_off	Your data stays on this device only.
 feature/sync/settings	sync_subtitle_signin	Sign in to enable cloud sync.
+feature/sync/settings	sync_section_options	Options
+feature/sync/settings	sync_section_status	Status
+feature/sync/settings	sync_last_synced_title	Last synced
+feature/sync/settings	sync_last_synced_up_to_date	Everything is up to date
+feature/sync/settings	sync_last_synced_pending	Waiting for the first sync
+feature/sync/settings	sync_account_title	Account
 feature/sync/sharedassets	feature_name_backup_and_sync	Backup &amp; Sync
 feature/tasks/sharedassets	add_task	Add task
 feature/tasks/sharedassets	compliance_authority	Compliance authority

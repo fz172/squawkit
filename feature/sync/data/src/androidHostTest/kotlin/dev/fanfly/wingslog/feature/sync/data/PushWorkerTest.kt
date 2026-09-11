@@ -361,6 +361,26 @@ class PushWorkerTest {
     }
 
   @Test
+  fun run_acknowledgedPush_reportsSuccess_andAFailedOneDoesNot() = runTest(ioContext) {
+    // The engine stamps "last synced" off this — it must fire once per acknowledged row and never
+    // for one the server refused, or the timestamp would claim agreement that never happened.
+    insertDirtyRow("log-ok")
+    insertDirtyRow("log-bad")
+    coEvery { writer.push(match { it.id == "log-ok" }) } returns Unit
+    coEvery { writer.push(match { it.id == "log-bad" }) } throws IllegalStateException("refused")
+
+    var successes = 0
+    val worker = PushWorker(db = db, writer = writer, ioContext = ioContext)
+      .apply { successSink = { successes++ } }
+
+    val job = launch { worker.run(TEST_USER_ID) }
+    testScheduler.advanceUntilIdle()
+    job.cancel()
+
+    assertThat(successes).isEqualTo(1)
+  }
+
+  @Test
   fun run_pushCancelled_isNotReportedAsAFailure() = runTest(ioContext) {
     // Tearing down a shared scope cancels the in-flight push. runCatching swallows everything,
     // including CancellationException, and that got classified as SyncFailure.Push — putting a

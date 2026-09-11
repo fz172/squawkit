@@ -2,6 +2,7 @@ package dev.fanfly.wingslog.core.datetime
 
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.format.MonthNames
 import kotlinx.datetime.format.char
@@ -74,3 +75,16 @@ private val DisplayDateTimeFormat = LocalDateTime.Format {
 fun Instant.toDisplayDateTime(
   timeZone: TimeZone = TimeZone.currentSystemDefault(),
 ): String = DisplayDateTimeFormat.format(toLocalDateTime(timeZone))
+
+private val DisplayTimeFormat = LocalTime.Format {
+  amPmHour()
+  char(':')
+  minute()
+  char(' ')
+  amPmMarker("AM", "PM")
+}
+
+/** Just the wall-clock time, `1:30 AM`, for a moment the reader knows was today. */
+fun Instant.toDisplayTime(
+  timeZone: TimeZone = TimeZone.currentSystemDefault(),
+): String = DisplayTimeFormat.format(toLocalDateTime(timeZone).time)

@@ -57,6 +57,9 @@ class PushWorker(
    */
   var failureSink: (SyncFailure?) -> Unit = {}
 
+  /** Invoked after each acknowledged push, so [SyncEngine] can stamp when the cloud last agreed. */
+  var successSink: () -> Unit = {}
+
   /**
    * Invoked with `(hostUid, thingId)` when a push into a shared thing's subtree is denied — a
    * suspicion of revocation, not a verdict, since a member is legitimately refused some writes.
@@ -168,6 +171,7 @@ class PushWorker(
         )
       }
       failureSink(null) // success — clear any previously-surfaced push failure.
+      successSink()
       true
     }.getOrElse { e ->
       // runCatching catches everything, cancellation included — and cancellation is not a failure.
