@@ -531,7 +531,7 @@ The flow is a single forward-only journey: Settings → Selection → Progress �
 | User has zero aircraft in their fleet | The Selection screen renders an empty-state card (`No aircraft to export. Add an aircraft in Fleet to get started.`) instead of the aircraft list. The Export button is hidden. |
 | User clears all aircraft selections | Export button disabled with helper text `Select at least one aircraft`. |
 | Very large multi-aircraft selection (e.g. 50+ aircraft) | Generation is per-aircraft and streams to the ZIP; memory remains bounded. Progress indicator includes "Aircraft N of M" prefix. |
-| User backgrounds the app during export | iOS: the export stops, nothing is kept, and the screen explains it must be started again (the app is suspended too quickly to finish). The progress screen warns up front to stay on it. Android: generation keeps running until process death; a background-safe runner with a progress notification is future work — see §10 and #343. |
+| User backgrounds the app during export | Android: the export continues as a background job with a progress notification; a finished/failed notification follows, and tapping either opens the export screen. iOS: the export stops, nothing is kept, and the screen explains it must be started again (the app is suspended too quickly to finish). The progress screen warns up front to stay on it. |
 | User navigates back from the Selection screen mid-configuration | Selections are not persisted across navigation. Re-entering Settings → Export logs starts with defaults. |
 | Filename collision (re-export same day) | Overwrite without prompting. Different dates keep distinct files. |
 | Disk full during write | Abort, surface error toast, no partial file left on disk (write to temp, rename on completion). |
@@ -618,7 +618,7 @@ The CSV + ZIP writer lives in `commonMain` using `kotlinx.io` primitives. Platfo
 | **Direct push to Google Sheets via OAuth** | Best UX (one tap → workbook opens in Sheets), but adds an OAuth flow, new scopes, and a token store. |
 | **PDF facsimile** | A printable logbook-page rendering would close the loop for users who still file paper. Adds a PDF generator dependency. |
 | **Scheduled / automated exports** | "Email me a backup zip every quarter." Server pipeline needed; out of scope for an on-device-only feature. |
-| **Background completion notification** | If the export runs while the app is backgrounded or terminated, post a system notification with the saved path. Needs platform-specific notification plumbing. |
+| **Background completion notification** | Shipped on Android (#343): the export runs as a WorkManager job with a foreground progress notification and a finished/failed notification that opens the export screen. iOS stops the export on background instead (see §7 edge cases); a true background continuation there is not planned. |
 | **Persist last-used selection across sessions** | Remember which aircraft and date range were picked last time. Skipped in MVP to keep state model simple; revisit if users report repetitive picking. |
 | **Re-import / round-trip from CSV** | Risk surface is large (data validation, conflict resolution with sync). |
 | **Cross-component duplication of compliance entries** | Driven by user feedback after MVP — see §8 Decision 3. |

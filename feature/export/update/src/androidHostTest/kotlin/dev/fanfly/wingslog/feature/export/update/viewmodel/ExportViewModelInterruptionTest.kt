@@ -5,6 +5,7 @@ import dev.fanfly.wingslog.core.analytics.NoOpAnalyticsManager
 import dev.fanfly.wingslog.core.model.sharing.ShareRole
 import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
+import dev.fanfly.wingslog.feature.export.datamanager.ExportDisplayLocation
 import dev.fanfly.wingslog.feature.export.datamanager.ExportManager
 import dev.fanfly.wingslog.feature.export.datamanager.ExportProgress
 import dev.fanfly.wingslog.feature.export.datamanager.ExportProgressStep
@@ -23,9 +24,7 @@ import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -37,8 +36,9 @@ import org.junit.Before
 import org.junit.Test
 
 /**
- * `ExportRunPolicy.stopWhenBackgrounded` (#343): leaving the foreground abandons an in-flight
- * export on platforms that cannot keep it alive, and the user restarts from the same setup.
+ * The ViewModel against `ExportJobCoordinator` and `ExportRunPolicy` (#343): leaving the
+ * foreground abandons an in-flight export on platforms that cannot keep it alive, the user restarts
+ * from the same setup, and a job that outlives the screen is picked up on the way back in.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class ExportViewModelInterruptionTest {
@@ -49,33 +49,18 @@ class ExportViewModelInterruptionTest {
     id = "thing-1",
     spec = listOf(Spec(key = "tail_number", value_ = "N12345")),
   )
-  private val exportManager: ExportManager = mockk()
-  private var exportStarts = 0
-  private var exportCancelled = false
+  private val coordinator = FakeExportJobCoordinator()
 
   @Before
-  fun setUp() {
-    Dispatchers.setMain(dispatcher)
-    // A long-running export: emits one progress step, then sits until cancelled.
-    every { exportManager.exportLogs(any()) } answers {
-      flow {
-        exportStarts++
-        emit(ExportProgress.Running(ExportProgressStep.COLLECTING_DATA, 8))
-        try {
-          awaitCancellation()
-        } finally {
-          exportCancelled = true
-        }
-      }
-    }
-  }
+  fun setUp() = Dispatchers.setMain(dispatcher)
 
   @After
-  fun tearDown() {
-    Dispatchers.resetMain()
-  }
+  fun tearDown() = Dispatchers.resetMain()
 
-  private fun buildViewModel(stopWhenBackgrounded: Boolean): ExportViewModel {
+  private fun buildViewModel(
+    stopWhenBackgrounded: Boolean,
+    survivesLeavingScreen: Boolean = false,
+  ): ExportViewModel {
     val user: FirebaseUser = mockk {
       every { isAnonymous } returns true
       every { email } returns null
@@ -84,7 +69,8 @@ class ExportViewModelInterruptionTest {
       every { authStateChanged } returns MutableStateFlow(user)
     }
     return ExportViewModel(
-      exportManager = exportManager,
+      exportManager = mockk<ExportManager>(relaxed = true),
+      jobCoordinator = coordinator,
       fleetManager = mockk<FleetManager> {
         every { observeFleetDashboard() } returns flowOf(
           listOf(FleetEntry(thing = thing, shared = false, role = ShareRole.SHARE_ROLE_OWNER))
@@ -106,21 +92,22 @@ class ExportViewModelInterruptionTest {
       currentThingTemplate = mockk<CurrentThingTemplate>(relaxed = true),
       templateRegistry = BakedInTemplateRegistry(appVersionCode = Int.MAX_VALUE),
       analytics = NoOpAnalyticsManager,
-      runPolicy = ExportRunPolicy(stopWhenBackgrounded = stopWhenBackgrounded),
+      runPolicy = ExportRunPolicy(
+        stopWhenBackgrounded = stopWhenBackgrounded,
+        survivesLeavingScreen = survivesLeavingScreen,
+      ),
     )
   }
 
   private fun startExport(vm: ExportViewModel) {
-    advanceUntilIdleOnMain()
+    dispatcher.scheduler.advanceUntilIdle()
     vm.onExport()
-    advanceUntilIdleOnMain()
+    dispatcher.scheduler.advanceUntilIdle()
     assertThat(vm.state.value).isInstanceOf(ExportUiState.Running::class.java)
   }
 
-  private fun advanceUntilIdleOnMain() = dispatcher.scheduler.advanceUntilIdle()
-
   @Test
-  fun `backgrounding under a stop policy cancels the export and shows Interrupted`() =
+  fun `backgrounding under a stop policy cancels the job and shows Interrupted`() =
     runTest(dispatcher) {
       val vm = buildViewModel(stopWhenBackgrounded = true)
       startExport(vm)
@@ -129,11 +116,12 @@ class ExportViewModelInterruptionTest {
       advanceUntilIdle()
 
       assertThat(vm.state.value).isEqualTo(ExportUiState.Interrupted)
-      assertThat(exportCancelled).isTrue()
+      assertThat(coordinator.cancels).isEqualTo(1)
+      assertThat(coordinator.job.value).isNull()
     }
 
   @Test
-  fun `backgrounding under a keep-running policy leaves the export alone`() =
+  fun `backgrounding under a keep-running policy leaves the job alone`() =
     runTest(dispatcher) {
       val vm = buildViewModel(stopWhenBackgrounded = false)
       startExport(vm)
@@ -142,7 +130,7 @@ class ExportViewModelInterruptionTest {
       advanceUntilIdle()
 
       assertThat(vm.state.value).isInstanceOf(ExportUiState.Running::class.java)
-      assertThat(exportCancelled).isFalse()
+      assertThat(coordinator.cancels).isEqualTo(0)
     }
 
   @Test
@@ -156,7 +144,8 @@ class ExportViewModelInterruptionTest {
     advanceUntilIdle()
 
     assertThat(vm.state.value).isEqualTo(before)
-    assertThat(exportStarts).isEqualTo(0)
+    assertThat(coordinator.starts).isEqualTo(0)
+    assertThat(coordinator.cancels).isEqualTo(0)
   }
 
   @Test
@@ -171,7 +160,8 @@ class ExportViewModelInterruptionTest {
     advanceUntilIdle()
 
     assertThat(vm.state.value).isInstanceOf(ExportUiState.Running::class.java)
-    assertThat(exportStarts).isEqualTo(2)
+    assertThat(coordinator.starts).isEqualTo(2)
+    assertThat(coordinator.job.value?.request?.thingIds).containsExactly(thing.id)
   }
 
   @Test
@@ -186,4 +176,80 @@ class ExportViewModelInterruptionTest {
     val configuring = vm.state.value as ExportUiState.Configuring
     assertThat(configuring.selectedThingIds).containsExactly(thing.id)
   }
+
+  @Test
+  fun `progress and success arrive from the coordinator with the job's own scope`() =
+    runTest(dispatcher) {
+      val vm = buildViewModel(stopWhenBackgrounded = false)
+      startExport(vm)
+
+      coordinator.emit(ExportProgress.Running(ExportProgressStep.SAVING_FILE, 74))
+      advanceUntilIdle()
+      assertThat(vm.state.value).isEqualTo(
+        ExportUiState.Running(ExportProgressStep.SAVING_FILE, 74)
+      )
+
+      coordinator.emit(success())
+      advanceUntilIdle()
+      val shown = vm.state.value as ExportUiState.Success
+      assertThat(shown.exportId).isEqualTo("exp-1")
+      assertThat(shown.selectedTailNumbers).containsExactly("N12345")
+      assertThat(shown.dateRange).isEqualTo(DateRangeOption.AllTime)
+    }
+
+  @Test
+  fun `a screen opened after the job finished shows the result`() = runTest(dispatcher) {
+    // Simulates Android: the worker ran to completion while no screen was attached.
+    coordinator.start(
+      dev.fanfly.wingslog.feature.export.datamanager.ExportRequest(
+        thingIds = listOf(thing.id),
+        dateRange = dev.fanfly.wingslog.feature.export.datamanager.ExportDateRange.AllTime,
+        includeOpenSquawks = true,
+      )
+    )
+    coordinator.emit(success())
+
+    val vm = buildViewModel(stopWhenBackgrounded = false, survivesLeavingScreen = true)
+    advanceUntilIdle()
+
+    val shown = vm.state.value as ExportUiState.Success
+    assertThat(shown.exportId).isEqualTo("exp-1")
+    // Filled in once the fleet rows arrived, even though the result was there first.
+    assertThat(shown.selectedTailNumbers).containsExactly("N12345")
+  }
+
+  @Test
+  fun `done clears a finished job and returns to setup`() = runTest(dispatcher) {
+    val vm = buildViewModel(stopWhenBackgrounded = false)
+    startExport(vm)
+    coordinator.emit(success())
+    advanceUntilIdle()
+
+    vm.onDone()
+    advanceUntilIdle()
+
+    assertThat(vm.state.value).isInstanceOf(ExportUiState.Configuring::class.java)
+    assertThat(coordinator.clears).isEqualTo(1)
+    assertThat(coordinator.job.value).isNull()
+  }
+
+  @Test
+  fun `a failure in the pipeline lands on the error screen`() = runTest(dispatcher) {
+    val vm = buildViewModel(stopWhenBackgrounded = false)
+    startExport(vm)
+
+    coordinator.emit(ExportProgress.Error("disk full"))
+    advanceUntilIdle()
+
+    assertThat(vm.state.value).isEqualTo(ExportUiState.Error("disk full"))
+  }
+
+  private fun success() = ExportProgress.Success(
+    exportId = "exp-1",
+    filePath = "content://downloads/1",
+    fileName = "SquawkIt_Logs_N12345_20260912.zip",
+    displayLocation = "",
+    sizeBytes = 1234L,
+    displayLocationKind = ExportDisplayLocation.DOWNLOADS_SQUAWKIT,
+  )
 }

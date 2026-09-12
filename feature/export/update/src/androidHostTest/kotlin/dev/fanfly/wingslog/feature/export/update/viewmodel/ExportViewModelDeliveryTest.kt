@@ -70,6 +70,7 @@ class ExportViewModelDeliveryTest {
     every { subscriptionManager.canEmailExports() } returns flowOf(canEmail)
     return ExportViewModel(
       exportManager = exportManager,
+      jobCoordinator = FakeExportJobCoordinator(),
       fleetManager = fleetManager,
       logsManager = logsManager,
       taskDataManager = taskDataManager,
@@ -79,7 +80,7 @@ class ExportViewModelDeliveryTest {
       currentThingTemplate = mockk<CurrentThingTemplate>(relaxed = true),
       templateRegistry = BakedInTemplateRegistry(appVersionCode = Int.MAX_VALUE),
       analytics = NoOpAnalyticsManager,
-      runPolicy = ExportRunPolicy(stopWhenBackgrounded = false),
+      runPolicy = ExportRunPolicy(stopWhenBackgrounded = false, survivesLeavingScreen = false),
     )
   }
 

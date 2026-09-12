@@ -35,6 +35,7 @@ import dev.fanfly.wingslog.feature.notifications.datamanager.SignOutCoordinator
 import dev.fanfly.wingslog.feature.sharing.update.RedeemHost
 import dev.fanfly.wingslog.feature.shell.AdaptiveShellRoute
 import dev.fanfly.wingslog.feature.shell.NavigateToLoginOnSignOut
+import dev.fanfly.wingslog.feature.shell.OpenExportOnNotificationTap
 import dev.fanfly.wingslog.feature.shell.PopToShellOnNotificationTap
 import dev.fanfly.wingslog.feature.shell.TrackRootScreenViews
 import dev.fanfly.wingslog.feature.shell.formDialogs
@@ -97,6 +98,7 @@ fun AppEntry() {
 
       NavigateToLoginOnSignOut(navController)
       PopToShellOnNotificationTap(navController)
+      OpenExportOnNotificationTap(navController)
       TrackRootScreenViews(navController, analytics)
 
       // Above the NavHost so the per-thing form dialogs see it too: they are root

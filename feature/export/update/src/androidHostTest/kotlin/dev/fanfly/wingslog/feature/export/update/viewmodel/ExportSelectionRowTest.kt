@@ -56,6 +56,7 @@ class ExportSelectionRowTest {
   private fun viewModel(): ExportViewModel =
     ExportViewModel(
       exportManager = mockk(relaxed = true),
+      jobCoordinator = FakeExportJobCoordinator(),
       fleetManager = mockk<FleetManager> { every { observeFleetDashboard() } returns fleet },
       logsManager = mockk<MaintenanceLogManager> {
         every { observeLogs(any()) } returns flowOf(emptyList())
@@ -75,7 +76,7 @@ class ExportSelectionRowTest {
       currentThingTemplate = mockk<CurrentThingTemplate>(relaxed = true),
       templateRegistry = BakedInTemplateRegistry(appVersionCode = Int.MAX_VALUE),
       analytics = NoOpAnalyticsManager,
-      runPolicy = ExportRunPolicy(stopWhenBackgrounded = false),
+      runPolicy = ExportRunPolicy(stopWhenBackgrounded = false, survivesLeavingScreen = false),
     )
 
   private fun rows(vm: ExportViewModel): List<ThingSelectionRow> =
