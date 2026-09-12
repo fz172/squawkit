@@ -697,6 +697,48 @@ img, svg { display: block; max-width: 100%; }
 .phone-row span { font-size: 11px; line-height: 1.4; color: var(--muted); }
 .pill-over { background: var(--error-bg); color: var(--error-text); }
 
+/* ---------------------------------------------------------------- cross links */
+/* Six pages linking to each other is most of the internal structure this subdomain has (§7.7).
+   Five cards fit one row inside .wrap at the minimum below; the cards stretch to the tallest so a
+   two-line anchor does not leave its neighbours short. */
+.verticals {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+  margin: 26px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.verticals li { display: flex; }
+
+.verticals a {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 15px 17px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.verticals a:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.verticals svg {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  color: var(--accent);
+}
+
 /* ---------------------------------------------------------------- footer */
 
 .site-footer {
@@ -714,3 +756,7 @@ img, svg { display: block; max-width: 100%; }
 .site-footer p { max-width: 620px; font-size: 12px; line-height: 1.65; }
 .footer-links { display: flex; flex-wrap: wrap; gap: 22px; font-size: 13px; font-weight: 500; }
 .footer-links a { color: var(--on-navy-accent); }
+
+/* Two link rows: the five vertical pages, then the site links. Stacked so the footer stays one
+   row on wide screens and the rows keep their order when it wraps. */
+.footer-navs { display: grid; gap: 12px; }

@@ -1,0 +1,240 @@
+/* The per-vertical landing pages (#908, docs/web/login_page_split_design.md §7.4).
+ *
+ * Loaded AFTER promo.css, never instead of it: the tokens, header, footer, buttons, FAQ and
+ * section rhythm all come from there, and the five pages are deliberately the same page with
+ * different content. What lives here is only what the promo page has no use for — the breadcrumb,
+ * the single-column hero, the story band and the starter-pack table. The cross-link grid is in
+ * promo.css because the promo page links the five verticals with it too.
+ *
+ * One stylesheet for all five is the point of SEO.1: five hand-written pages are cheap, five
+ * divergent stylesheets are not. */
+
+/* ---------------------------------------------------------------- breadcrumb */
+/* Sits on the header's underside and above the navy hero, so it takes the deep navy rather than
+   the surface: a light strip between the two reads as a seam. Visible text, because the
+   BreadcrumbList JSON-LD on each page marks up exactly what a visitor can see. */
+.crumbs {
+  background: var(--navy-deep);
+  color: var(--on-navy-muted);
+  font-size: 13px;
+}
+
+.crumbs > .wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-block: 9px;
+}
+
+.crumbs a { color: var(--on-navy-accent); }
+
+.crumbs [aria-current] { color: var(--on-navy); }
+
+.crumbs .sep { opacity: 0.5; }
+
+/* ---------------------------------------------------------------- hero */
+/* The promo page's hero is two columns because it carries the product preview. These pages lead
+   with words instead — the vertical's own vocabulary is the thing worth showing. */
+.hero-simple {
+  background: var(--navy);
+  color: var(--on-navy);
+  padding-block: 64px 68px;
+}
+
+.hero-simple h1 {
+  font-size: clamp(30px, 4.4vw, 46px);
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  max-width: 22ch;
+  text-wrap: balance;
+}
+
+.hero-simple h1 .accent { color: var(--on-navy-accent); }
+
+.hero-simple .hero-sub { max-width: 62ch; }
+
+.hero-cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 30px;
+}
+
+/* The accent blue is a link colour on white; on navy it fails contrast. These two are the hero's
+   own pair and exist nowhere else. */
+.btn-light { background: var(--on-navy); color: var(--navy); }
+.btn-light:hover { background: var(--on-navy-body); color: var(--navy); }
+
+.btn-outline-light {
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.38);
+  color: var(--on-navy);
+}
+
+.btn-outline-light:hover { border-color: var(--on-navy); color: var(--on-navy); }
+
+/* ---------------------------------------------------------------- story */
+.story {
+  max-width: 64ch;
+  margin-top: 26px;
+  padding-left: 24px;
+  border-left: 3px solid var(--accent);
+  font-size: 17.5px;
+  line-height: 1.68;
+}
+
+@media (max-width: 720px) {
+  .story { padding-left: 18px; font-size: 16.5px; }
+}
+
+/* ---------------------------------------------------------------- definition cards */
+/* What the app calls things in this vertical: the lexicon, rendered as the words themselves. */
+.defs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 16px;
+  margin-top: 30px;
+}
+
+.def {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 16px 18px;
+}
+
+.def dt {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.def dd {
+  margin: 6px 0 0;
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.def dd small {
+  display: block;
+  margin-top: 7px;
+  font-size: 13.5px;
+  font-weight: 400;
+  line-height: 1.55;
+  color: var(--muted);
+}
+
+/* ---------------------------------------------------------------- starter pack table */
+.table-scroll { overflow-x: auto; margin-top: 28px; }
+
+.pack {
+  width: 100%;
+  min-width: 460px;
+  border-collapse: collapse;
+  font-size: 14.5px;
+}
+
+.pack th {
+  padding: 0 16px 10px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+  color: var(--muted);
+  text-align: left;
+}
+
+.pack td {
+  padding: 13px 16px 13px 0;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+  line-height: 1.6;
+}
+
+.pack tbody th {
+  padding: 13px 16px 13px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 14.5px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text);
+  vertical-align: top;
+}
+
+.pack .when {
+  white-space: nowrap;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.pack .note { color: var(--muted); }
+
+/* Off by default in the app, so it is off in the table too rather than being quietly promoted. */
+.pack .opt {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--surface-alt);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--muted);
+  vertical-align: 2px;
+}
+
+.section-alt .pack .opt { background: var(--surface); }
+
+/* ---------------------------------------------------------------- tag row */
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 18px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tags li {
+  padding: 6px 13px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.section-alt .tags li { background: var(--page); }
+
+/* ---------------------------------------------------------------- two columns */
+.cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+  margin-top: 30px;
+}
+
+@media (max-width: 720px) {
+  .cols { grid-template-columns: 1fr; gap: 26px; }
+}
+
+.cols h3 { font-size: 17px; font-weight: 600; margin-bottom: 10px; }
+
+.cols p { font-size: 14.5px; color: var(--muted); }
+
+/* ---------------------------------------------------------------- disclaimer strip */
+.note-strip {
+  max-width: 68ch;
+  margin-top: 30px;
+  padding: 15px 17px;
+  border: 1px dashed var(--line);
+  border-radius: 12px;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--muted);
+}

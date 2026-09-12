@@ -1,7 +1,9 @@
 User-agent: *
 Allow: /
-# The Compose bundle host. Renders to a canvas and has nothing to index; the marketing
-# content lives on / as real text.
-Disallow: /app.html
+
+# app.html (the Compose bundle host) is kept out of the index by its own noindex meta, not by a
+# Disallow here: a crawler that is forbidden from fetching a page never sees the noindex, and a
+# stray inbound link could still index the bare URL. Every path that rewrites onto it (/login and
+# the rest) serves the same meta.
 
 Sitemap: https://squawkit.fanfly.dev/sitemap.xml

@@ -10,11 +10,11 @@
          static pages rewrites there (firebase.json). Nothing on this page loads Kotlin. -->
 
     <!-- ============ PRIMARY SEO ============ -->
-    <title>SquawkIt — Maintenance Records for Your Aircraft, Car, Boat, Bike &amp; Home</title>
-    <meta content="SquawkIt keeps everything you own in service — track inspections, recurring tasks, issues, and meter readings for your aircraft, car, boat, bike, or home. Local-first, works offline, syncs everywhere. Free to start."
+    <title>Maintenance Log App for Aircraft, Cars, Boats &amp; Homes | SquawkIt</title>
+    <meta content="Track inspections, recurring tasks, issues and meter readings for your aircraft, car, boat, bike or home. Works offline, syncs everywhere. Free to start."
           name="description">
     <link href="https://squawkit.fanfly.dev/" rel="canonical">
-    <meta content="index, follow" name="robots">
+    <meta content="index, follow, max-image-preview:large" name="robots">
     <meta content="SquawkIt" name="author">
 
     <!-- ============ ICONS ============ -->
@@ -55,7 +55,21 @@
     <script type="application/ld+json">
         {
             "@context": "https://schema.org",
+            "@type": "WebSite",
+            "@id": "https://squawkit.fanfly.dev/#website",
+            "url": "https://squawkit.fanfly.dev/",
+            "name": "SquawkIt",
+            "inLanguage": "en",
+            "publisher": {
+                "@id": "https://squawkit.fanfly.dev/#org"
+            }
+        }
+    </script>
+    <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
             "@type": "SoftwareApplication",
+            "@id": "https://squawkit.fanfly.dev/#app",
             "name": "SquawkIt",
             "description": "Maintenance records for everything you own. Track inspections, recurring tasks, issues, and meter readings for your aircraft, car, boat, bike, or home.",
             "url": "https://squawkit.fanfly.dev/",
@@ -78,6 +92,7 @@
         {
             "@context": "https://schema.org",
             "@type": "Organization",
+            "@id": "https://squawkit.fanfly.dev/#org",
             "name": "SquawkIt",
             "url": "https://squawkit.fanfly.dev/",
             "logo": "https://squawkit.fanfly.dev/favicon-192.png",
@@ -121,7 +136,7 @@
                     "name": "How does exporting work?",
                     "acceptedAnswer": {
                         "@type": "Answer",
-                        "text": "Any thing can be exported as a PDF or CSV of its full history from the Overview screen. Exports include every log entry, task and issue."
+                        "text": "Any thing can be exported from the Overview screen as a ZIP holding its full history as a PDF, a CSV and a spreadsheet. Exports include every log entry, task and issue, and the attachments you added to them."
                     }
                 },
                 {
@@ -272,6 +287,20 @@
             stroke-linecap="round" stroke-linejoin="round">
         <path d="M12 5v14M5 12h14"/>
     </symbol>
+    <symbol id="ic-bike" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+            stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="5.6" cy="17.2" r="3.4"/>
+        <circle cx="18.4" cy="17.2" r="3.4"/>
+        <path d="M5.6 17.2 10.2 8.8h4.4l3.8 8.4"/>
+        <path d="M8.6 8.8h4.2"/>
+        <path d="M12 17.2 14.6 8.8"/>
+    </symbol>
+    <symbol id="ic-boat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+            stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3.4 16.4h17.2l-2.3 3.3a2 2 0 0 1-1.6.8H7.3a2 2 0 0 1-1.6-.8Z"/>
+        <path d="M12 3.2v13.2"/>
+        <path d="M12 5.4 18.2 13.4H12"/>
+    </symbol>
 </svg>
 
 <header class="site-header">
@@ -293,7 +322,7 @@
                 <svg width="18" height="18" aria-hidden="true"><use href="#ic-phone"></use></svg>
                 Get the app
             </a>
-            <a class="btn btn-primary" href="/login" target="_blank" rel="noopener">Log in</a>
+            <a class="btn btn-primary" href="/login">Log in</a>
             <button class="nav-toggle" id="nav-toggle" type="button" aria-expanded="false"
                     aria-controls="site-nav" aria-label="Open menu">
                 <svg aria-hidden="true"><use href="#ic-menu"></use></svg>
@@ -421,6 +450,27 @@
         </div>
     </section>
 
+    <!-- ---------------------------------------------------------- built for -->
+    <!-- The five vertical pages (#908) are this site's whole internal structure, so they are linked
+         from the first section under the hero with anchors that name the target, not from one
+         sentence inside a feature card. -->
+    <section class="section" id="built-for">
+        <div class="wrap">
+            <p class="eyebrow">BUILT FOR WHAT YOU OWN</p>
+            <h2>A maintenance log in the words of each thing</h2>
+            <p class="lede">Pick the type and the whole app speaks its language — the tabs, the
+                statuses, the reminders and the starter schedule.</p>
+
+            <ul class="verticals">
+                <li><a href="/aircraft"><svg aria-hidden="true"><use href="#ic-plane"></use></svg>Aircraft maintenance log</a></li>
+                <li><a href="/car"><svg aria-hidden="true"><use href="#ic-car"></use></svg>Car &amp; motorcycle maintenance</a></li>
+                <li><a href="/boat"><svg aria-hidden="true"><use href="#ic-boat"></use></svg>Boat maintenance log</a></li>
+                <li><a href="/bike"><svg aria-hidden="true"><use href="#ic-bike"></use></svg>Bike maintenance log</a></li>
+                <li><a href="/home"><svg aria-hidden="true"><use href="#ic-home"></use></svg>Home maintenance schedule</a></li>
+            </ul>
+        </div>
+    </section>
+
     <!-- ---------------------------------------------------------- features -->
     <section class="section section-alt" id="features">
         <div class="wrap">
@@ -433,8 +483,10 @@
                 <article class="feature">
                     <div class="feature-icon"><svg><use href="#ic-box"></use></svg></div>
                     <h3>Track anything you want</h3>
-                    <p>Airplane, car, bike, boat, home — or a custom type. Each brings its own
-                        fields, meters and a recommended starter schedule.</p>
+                    <p><a href="/aircraft">Airplane</a>, <a href="/car">car</a>,
+                        <a href="/bike">bike</a>, <a href="/boat">boat</a>,
+                        <a href="/home">home</a> — or a custom type. Each brings its own fields,
+                        meters and a recommended starter schedule.</p>
                 </article>
                 <article class="feature">
                     <div class="feature-icon"><svg><use href="#ic-repeat"></use></svg></div>
@@ -463,7 +515,8 @@
                 <article class="feature">
                     <div class="feature-icon"><svg><use href="#ic-download"></use></svg></div>
                     <h3>Export your records</h3>
-                    <p>PDF or CSV of a thing’s full history, any time. Your data is yours.</p>
+                    <p>A ZIP of a thing’s full history — PDF, CSV and spreadsheet, with every
+                        attachment. Your data is yours.</p>
                 </article>
             </div>
         </div>
@@ -528,8 +581,9 @@
                 </details>
                 <details>
                     <summary>How does exporting work?</summary>
-                    <p>Any thing can be exported as a PDF or CSV of its full history from the
-                        Overview screen. Exports include every log entry, task and issue.</p>
+                    <p>Any thing can be exported from the Overview screen as a ZIP holding its
+                        full history as a PDF, a CSV and a spreadsheet. Exports include every log
+                        entry, task and issue, and the attachments you added to them.</p>
                 </details>
                 <details>
                     <summary>Is SquawkIt a certified maintenance record system?</summary>
@@ -603,12 +657,21 @@
         <p>© 2026 SquawkIt. A personal convenience tool — not a certified maintenance record system,
             and not a replacement for the official aircraft logbooks required by your aviation
             authority or any other record you are required to keep.</p>
-        <nav class="footer-links" aria-label="Footer">
-            <a href="/login" target="_blank" rel="noopener">Log in</a>
-            <a href="/privacy.html" target="_blank" rel="noopener">Terms &amp; Privacy</a>
-            <a href="/support.html" target="_blank" rel="noopener">Support</a>
-            <a href="#get-the-app">Mobile app</a>
-        </nav>
+        <div class="footer-navs">
+            <nav class="footer-links" aria-label="Maintenance logs by type">
+                <a href="/aircraft">Aircraft</a>
+                <a href="/car">Cars &amp; motorcycles</a>
+                <a href="/boat">Boats</a>
+                <a href="/bike">Bikes</a>
+                <a href="/home">Homes</a>
+            </nav>
+            <nav class="footer-links" aria-label="Footer">
+                <a href="/login">Log in</a>
+                <a href="/privacy.html" target="_blank" rel="noopener">Terms &amp; Privacy</a>
+                <a href="/support.html" target="_blank" rel="noopener">Support</a>
+                <a href="#get-the-app">Mobile app</a>
+            </nav>
+        </div>
     </div>
 </footer>
 
