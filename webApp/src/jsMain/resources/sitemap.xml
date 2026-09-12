@@ -5,6 +5,34 @@
     <changefreq>monthly</changefreq>
     <priority>1.0</priority>
   </url>
+  <!-- The per-vertical landing pages. Listed at their clean paths, which is what each page's own
+       canonical points at; firebase.json rewrites them onto the .html files, and the .html URLs
+       are deliberately not listed here. -->
+  <url>
+    <loc>https://squawkit.fanfly.dev/aircraft</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://squawkit.fanfly.dev/car</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://squawkit.fanfly.dev/boat</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://squawkit.fanfly.dev/bike</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://squawkit.fanfly.dev/home</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
   <url>
     <loc>https://squawkit.fanfly.dev/support.html</loc>
     <changefreq>yearly</changefreq>

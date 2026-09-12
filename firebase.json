@@ -8,6 +8,26 @@
     ],
     "rewrites": [
       {
+        "source": "/aircraft",
+        "destination": "/aircraft.html"
+      },
+      {
+        "source": "/car",
+        "destination": "/car.html"
+      },
+      {
+        "source": "/boat",
+        "destination": "/boat.html"
+      },
+      {
+        "source": "/bike",
+        "destination": "/bike.html"
+      },
+      {
+        "source": "/home",
+        "destination": "/home.html"
+      },
+      {
         "source": "**",
         "destination": "/app.html"
       }

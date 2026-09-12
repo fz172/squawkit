@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+
+    <!-- The boat vertical page (#937). Hand-written static HTML, served at /boat by a rewrite in
+         firebase.json. Nothing here loads Kotlin.
+
+         EVERY WORD OF THE PRODUCT COPY COMES FROM core/template/templates/boat.v13.textproto —
+         lexicon, meters, spec fields, component slots, starter pack, certifications. -->
+
+    <!-- ============ PRIMARY SEO ============ -->
+    <title>Boat Maintenance Log — Engine Hours, Impellers &amp; Winterizing | SquawkIt</title>
+    <meta content="Track engine hours, impeller changes, anodes, bottom paint and winterizing in one boat record. Seasonal upkeep logged, and shareable with your yard."
+          name="description">
+    <link href="https://squawkit.fanfly.dev/boat" rel="canonical">
+    <meta content="index, follow" name="robots">
+    <meta content="SquawkIt" name="author">
+
+    <!-- ============ ICONS ============ -->
+    <link href="favicon.ico" rel="icon" sizes="32x32">
+    <link href="favicon-192.png" rel="icon" sizes="192x192" type="image/png">
+    <link href="apple-touch-icon.png" rel="apple-touch-icon">
+
+    <meta content="#FFFFFF" media="(prefers-color-scheme: light)" name="theme-color">
+    <meta content="#131316" media="(prefers-color-scheme: dark)" name="theme-color">
+
+    <!-- ============ OPEN GRAPH ============ -->
+    <meta content="Boat maintenance — engine hours, impellers and winterizing" property="og:title">
+    <meta content="Engine hours, impeller changes, anodes, bottom paint and winterizing in one boat record. Seasonal upkeep logged, and shareable with your yard."
+          property="og:description">
+    <meta content="website" property="og:type">
+    <meta content="https://squawkit.fanfly.dev/boat" property="og:url">
+    <meta content="SquawkIt" property="og:site_name">
+    <meta content="https://squawkit.fanfly.dev/og-image.png" property="og:image">
+    <meta content="image/png" property="og:image:type">
+    <meta content="1200" property="og:image:width">
+    <meta content="630" property="og:image:height">
+    <meta content="SquawkIt — maintenance records for everything you own" property="og:image:alt">
+
+    <!-- ============ TWITTER CARD ============ -->
+    <meta content="summary_large_image" name="twitter:card">
+    <meta content="Boat maintenance — engine hours, impellers and winterizing" name="twitter:title">
+    <meta content="Engine hours, impeller changes, anodes, bottom paint and winterizing in one boat record. Seasonal upkeep logged, and shareable with your yard."
+          name="twitter:description">
+    <meta content="https://squawkit.fanfly.dev/og-image.png" name="twitter:image">
+    <meta content="SquawkIt — maintenance records for everything you own" name="twitter:image:alt">
+
+    <!-- ============ STRUCTURED DATA ============ -->
+    <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "SoftwareApplication",
+            "name": "SquawkIt",
+            "description": "Boat maintenance records. Track engine hours, seasonal service, impellers, anodes and safety gear in one record, and share it with your yard or mechanic.",
+            "url": "https://squawkit.fanfly.dev/boat",
+            "applicationCategory": "UtilitiesApplication",
+            "operatingSystem": "Web, iOS, Android",
+            "browserRequirements": "Requires a modern browser. Sign in with Google, Apple, or email.",
+            "image": "https://squawkit.fanfly.dev/og-image.png",
+            "downloadUrl": [
+                "https://apps.apple.com/us/app/squawkit/id6801955033",
+                "https://play.google.com/store/apps/details?id=dev.fanfly.wingslog"
+            ],
+            "offers": {
+                "@type": "Offer",
+                "price": "0",
+                "priceCurrency": "USD"
+            }
+        }
+    </script>
+    <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+                {
+                    "@type": "ListItem",
+                    "position": 1,
+                    "name": "SquawkIt",
+                    "item": "https://squawkit.fanfly.dev/"
+                },
+                {
+                    "@type": "ListItem",
+                    "position": 2,
+                    "name": "Boats",
+                    "item": "https://squawkit.fanfly.dev/boat"
+                }
+            ]
+        }
+    </script>
+    <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            "mainEntity": [
+                {
+                    "@type": "Question",
+                    "name": "Does it work for outboards and inboards?",
+                    "acceptedAnswer": {
+                        "@type": "Answer",
+                        "text": "Both. Propulsion is a repeatable part, so a single outboard, twin outboards, or an inboard with a shaft and running gear all fit the same record. Engine Hours belong to the propulsion part rather than the hull."
+                    }
+                },
+                {
+                    "@type": "Question",
+                    "name": "Can it remind me to winterize?",
+                    "acceptedAnswer": {
+                        "@type": "Answer",
+                        "text": "Winterizing is in the starter schedule as an annual service, with due-soon reminders before the date. Move it to the month your first freeze usually lands and it comes round on that schedule every year."
+                    }
+                },
+                {
+                    "@type": "Question",
+                    "name": "Does it work at the dock without a signal?",
+                    "acceptedAnswer": {
+                        "@type": "Answer",
+                        "text": "The iPhone and Android apps keep your records on the device and sync when you reconnect, so you can log work and check the schedule out of signal. Attachment files need a connection to open, and the web app needs one throughout."
+                    }
+                },
+                {
+                    "@type": "Question",
+                    "name": "Can I share the record with my yard?",
+                    "acceptedAnswer": {
+                        "@type": "Answer",
+                        "text": "Yes. Invite a mechanic to that specific boat and they can see its schedule and history and log work against it. SquawkIt records an ABYC certification number against a mechanic who holds one."
+                    }
+                }
+            ]
+        }
+    </script>
+
+    <link href="promo.css" rel="stylesheet">
+    <link href="vertical.css" rel="stylesheet">
+
+    <!-- ============ ANALYTICS ============ Same stream as index.html; this page's own screen name. -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-VPNQ92VG8F"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            window.dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+        gtag('config', 'G-VPNQ92VG8F');
+        gtag('event', 'screen_view', {screen_name: 'web_vertical_boat'});
+    </script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+    <symbol id="ic-plane" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+            stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10.2 9 4 6.4l-1.4 1.4 4.5 3.4-2.3 2.6-2.2-.5-.9.9 2.3 1.6 1.6 2.3.9-.9-.5-2.2 2.6-2.3 3.4 4.5 1.4-1.4L13 13.8l3.9-3.9c1-1 2.6-2.6 3.6-3.6a1.9 1.9 0 0 0-2.7-2.7c-1 1-2.6 2.6-3.6 3.6Z"/>
+    </symbol>
+    <symbol id="ic-car" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+            stroke-linecap="round" stroke-linejoin="round">
+        <path d="M5 17h14M4 17v-4.2a2 2 0 0 1 .2-.9l1.9-3.7A2 2 0 0 1 7.9 7h8.2a2 2 0 0 1 1.8 1.2l1.9 3.7c.1.3.2.6.2.9V17"/>
+        <path d="M4.5 12h15"/>
+        <circle cx="7.5" cy="17" r="1.8"/>
+        <circle cx="16.5" cy="17" r="1.8"/>
+    </symbol>
+    <symbol id="ic-bike" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+            stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="5.6" cy="17.2" r="3.4"/>
+        <circle cx="18.4" cy="17.2" r="3.4"/>
+        <path d="M5.6 17.2 10.2 8.8h4.4l3.8 8.4"/>
+        <path d="M8.6 8.8h4.2"/>
+        <path d="M12 17.2 14.6 8.8"/>
+    </symbol>
+    <symbol id="ic-boat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+            stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3.4 16.4h17.2l-2.3 3.3a2 2 0 0 1-1.6.8H7.3a2 2 0 0 1-1.6-.8Z"/>
+        <path d="M12 3.2v13.2"/>
+        <path d="M12 5.4 18.2 13.4H12"/>
+    </symbol>
+    <symbol id="ic-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+            stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 10.5 12 4l8 6.5V19a1 1 0 0 1-1 1h-4v-5H9v5H5a1 1 0 0 1-1-1Z"/>
+    </symbol>
+    <symbol id="ic-phone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+            stroke-linecap="round" stroke-linejoin="round">
+        <rect x="6.5" y="2.5" width="11" height="19" rx="2.5"/>
+        <path d="M10.8 18.4h2.4"/>
+    </symbol>
+    <symbol id="ic-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+            stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 7h16M4 12h16M4 17h16"/>
+    </symbol>
+</svg>
+
+<header class="site-header">
+    <div class="wrap">
+        <a class="brand" href="/">
+            <img alt="" src="brand-plane.svg" width="28" height="28">
+            <span>Squawk<span class="it">It</span></span>
+        </a>
+
+        <nav class="site-nav" id="site-nav" aria-label="Sections">
+            <a href="#track">What you track</a>
+            <a href="#pack">Starter schedule</a>
+            <a href="#faq">FAQ</a>
+            <a href="#get-the-app">Get the app</a>
+        </nav>
+
+        <div class="header-actions">
+            <a class="btn btn-ghost" href="#get-the-app">
+                <svg width="18" height="18" aria-hidden="true"><use href="#ic-phone"></use></svg>
+                Get the app
+            </a>
+            <a class="btn btn-primary" href="/login" target="_blank" rel="noopener">Log in</a>
+            <button class="nav-toggle" id="nav-toggle" type="button" aria-expanded="false"
+                    aria-controls="site-nav" aria-label="Open menu">
+                <svg aria-hidden="true"><use href="#ic-menu"></use></svg>
+            </button>
+        </div>
+    </div>
+</header>
+
+<nav class="crumbs" aria-label="Breadcrumb">
+    <div class="wrap">
+        <a href="/">SquawkIt</a>
+        <span class="sep" aria-hidden="true">›</span>
+        <span aria-current="page">Boats</span>
+    </div>
+</nav>
+
+<main id="main">
+
+    <!-- ---------------------------------------------------------- hero -->
+    <section class="hero-simple">
+        <div class="wrap">
+            <h1>Easy starts at the dock.<br><span class="accent">All season long.</span></h1>
+            <p class="hero-sub">
+                Engine hours off the propulsion itself. Impellers, anodes, bottom paint and
+                winterizing on a schedule that comes round every year. Safety gear checked before
+                anyone asks.
+            </p>
+            <ul class="chips">
+                <li>Engine Hours</li>
+                <li>Impeller</li>
+                <li>Anodes</li>
+                <li>Winterize</li>
+            </ul>
+            <div class="hero-cta">
+                <a class="btn btn-light" href="/login" target="_blank" rel="noopener">Start free in your browser</a>
+                <a class="btn btn-outline-light" href="#get-the-app">Get the iPhone or Android app</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- ---------------------------------------------------------- story -->
+    <section class="section">
+        <div class="wrap">
+            <p class="eyebrow">WHY SKIPPERS USE IT</p>
+            <h2>Carefree days on the water</h2>
+            <p class="story">
+                The season starts easy when the last one ended right. Impeller yearly, before the
+                vanes give out. Lower-unit oil, checked for milk before you refill. Anodes replaced
+                at half gone. Bottom paint and through-hulls while she is out. Safety gear checked
+                against the flare dates. Winterizing before the first freeze. Oil and filter at 100
+                engine hours or twelve months, the hours counted off the propulsion itself. Add what
+                is yours: battery conditioning over the winter, a bilge pump test each spring. Then
+                turn the key on the first warm Saturday and go.
+            </p>
+        </div>
+    </section>
+
+    <!-- ---------------------------------------------------------- vocabulary -->
+    <section class="section section-alt" id="track">
+        <div class="wrap">
+            <p class="eyebrow">WHAT YOU TRACK</p>
+            <h2>A boat record that talks like a boat</h2>
+            <p class="lede">Pick the boat type and the app follows: services and service records,
+                propulsion and rigging, and a status that means what it says on the water.</p>
+
+            <dl class="defs">
+                <div class="def">
+                    <dt>The thing</dt>
+                    <dd>Boat<small>Grouped into your Fleet, each with its make, model, year and hull
+                        ID.</small></dd>
+                </div>
+                <div class="def">
+                    <dt>Something is wrong</dt>
+                    <dd>Issues<small>A fault, a leak, anything not working right — logged with a
+                        photo and a priority.</small></dd>
+                </div>
+                <div class="def">
+                    <dt>Something recurs</dt>
+                    <dd>Services<small>Impeller changes, bottom paint and other recurring work, due
+                        by date or by engine hours.</small></dd>
+                </div>
+                <div class="def">
+                    <dt>Something was done</dt>
+                    <dd>Service records<small>The haul-out, the impeller, the fuel treatment — with
+                        the yard invoice attached.</small></dd>
+                </div>
+                <div class="def">
+                    <dt>Who did it</dt>
+                    <dd>Mechanics<small>Your yard, your ABYC-certified tech, or you on the
+                        hard.</small></dd>
+                </div>
+                <div class="def">
+                    <dt>What it is made of</dt>
+                    <dd>Parts<small>Propulsion, electrical and safety, steering and rigging — each
+                        with its own serial.</small></dd>
+                </div>
+            </dl>
+
+            <ul class="tags">
+                <li>Ready</li>
+                <li>DIW — Dead in the Water</li>
+                <li>Service due</li>
+                <li>Engine Hours</li>
+            </ul>
+            <p class="note-strip">A dead-in-the-water issue sits at the top of the list and stays
+                there: dead-in-the-water issues must be fixed before leaving the dock.</p>
+        </div>
+    </section>
+
+    <!-- ---------------------------------------------------------- starter pack -->
+    <section class="section" id="pack">
+        <div class="wrap">
+            <p class="eyebrow">STARTER SCHEDULE</p>
+            <h2>The season, already laid out</h2>
+            <p class="lede">Add a boat and the recurring marine jobs are there waiting. Keep them,
+                move them to the months your season actually runs, or turn off what does not apply.</p>
+
+            <div class="table-scroll">
+                <table class="pack">
+                    <thead>
+                    <tr>
+                        <th scope="col">Service</th>
+                        <th scope="col">Comes due</th>
+                        <th scope="col">Why</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <th scope="row">Engine oil &amp; filter</th>
+                        <td class="when">100 hrs or 12 months</td>
+                        <td class="note">Whichever comes first. Check the manual for the interval
+                            that applies to your engine.</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Raw-water pump impeller</th>
+                        <td class="when">12 months</td>
+                        <td class="note">Rubber vanes fail without warning and take the engine’s
+                            cooling with them.</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Lower unit / gear oil</th>
+                        <td class="when">12 months</td>
+                        <td class="note">Milky oil means a failed seal — check the drained oil
+                            before refilling.</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Winterize</th>
+                        <td class="when">12 months</td>
+                        <td class="note">Before the first freeze: drain or antifreeze the raw-water
+                            side, fog the engine, stabilize the fuel.</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Sacrificial anodes</th>
+                        <td class="when">12 months</td>
+                        <td class="note">Replace at half gone. Sooner in a marina with stray
+                            current.</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Bottom paint &amp; hull inspection</th>
+                        <td class="when">12 months</td>
+                        <td class="note">Antifouling, through-hulls, and a look at the running gear
+                            while it is out.</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Safety gear check</th>
+                        <td class="when">12 months</td>
+                        <td class="note">Fire extinguisher gauge, flare expiry dates, life jacket
+                            condition.</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Registration renewal</th>
+                        <td class="when">12 months</td>
+                        <td class="note">Annual in most places; some states register for two or
+                            three years.</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <p class="note-strip">Recommendations, not authority — your engine manual and your water
+                win. Anything else is a service you add with your own interval: battery conditioning
+                over the winter, a bilge pump test each spring, a rig check before a long passage.</p>
+        </div>
+    </section>
+
+    <!-- ---------------------------------------------------------- meters -->
+    <section class="section section-alt" id="meters">
+        <div class="wrap">
+            <p class="eyebrow">HOURS</p>
+            <h2>Hours that belong to the engine, not the hull</h2>
+
+            <div class="cols">
+                <div>
+                    <h3>Engine Hours</h3>
+                    <p>The meter is attached to the propulsion part, so on a twin the hours are each
+                        engine’s own and a 100-hour service counts the right ones. You record the
+                        reading on the service record; the dashboard keeps the current figure and
+                        the number of records beside it.</p>
+                </div>
+                <div>
+                    <h3>Seasons and hours together</h3>
+                    <p>Marine work is mostly calendar — winterize, haul out, paint — with the engine
+                        jobs on hours. A service recurs on either, or on whichever comes first, and
+                        due-soon reminders arrive before the freeze rather than after it.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ---------------------------------------------------------- setup -->
+    <section class="section" id="setup">
+        <div class="wrap">
+            <p class="eyebrow">SETTING ONE UP</p>
+            <h2>What it asks for, and nothing it does not</h2>
+
+            <div class="cols">
+                <div>
+                    <h3>The boat</h3>
+                    <p>Make, model, year and hull ID. That is the whole identity block — a centre
+                        console and a forty-foot sloop take the same four fields.</p>
+                </div>
+                <div>
+                    <h3>What hangs off it</h3>
+                    <p>Propulsion, electrical and safety, steering and rigging. Propulsion and the
+                        electrical and safety gear repeat, so twin engines, two batteries and the
+                        bilge pumps each get their own entry with their own serials.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ---------------------------------------------------------- sharing -->
+    <section class="section section-alt" id="share">
+        <div class="wrap">
+            <p class="eyebrow">THE PEOPLE WHO HELP</p>
+            <h2>The yard, the co-owner, the next owner</h2>
+
+            <div class="cols">
+                <div>
+                    <h3>Invite them to one boat</h3>
+                    <p>Sharing is per boat. Invite a mechanic or a co-owner: they see that boat’s
+                        schedule, issues and history and can log work against it, while you stay the
+                        owner and can end access at any time. SquawkIt records an ABYC certification
+                        number against a mechanic who holds one.</p>
+                </div>
+                <div>
+                    <h3>At the dock, out of signal</h3>
+                    <p>The iPhone and Android apps keep your records on the device and sync when you
+                        reconnect, so the checklist works where the bars do not. Attachment files
+                        need a connection to open, and the web app needs one throughout. Export any
+                        boat as a ZIP — PDF, CSV and spreadsheet, attachments included.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ---------------------------------------------------------- faq -->
+    <section class="section" id="faq">
+        <div class="wrap faq-grid">
+            <div>
+                <p class="eyebrow">QUESTIONS</p>
+                <h2>Boat questions</h2>
+                <p class="lede">Something else? <a href="/support.html" target="_blank" rel="noopener">Contact support</a>.</p>
+            </div>
+
+            <div class="faq">
+                <details open>
+                    <summary>Does it work for outboards and inboards?</summary>
+                    <p>Both. Propulsion is a repeatable part, so a single outboard, twin outboards,
+                        or an inboard with a shaft and running gear all fit the same record. Engine
+                        Hours belong to the propulsion part rather than the hull.</p>
+                </details>
+                <details>
+                    <summary>Can it remind me to winterize?</summary>
+                    <p>Winterizing is in the starter schedule as an annual service, with due-soon
+                        reminders before the date. Move it to the month your first freeze usually
+                        lands and it comes round on that schedule every year.</p>
+                </details>
+                <details>
+                    <summary>Does it work at the dock without a signal?</summary>
+                    <p>The iPhone and Android apps keep your records on the device and sync when you
+                        reconnect, so you can log work and check the schedule out of signal.
+                        Attachment files need a connection to open, and the web app needs one
+                        throughout.</p>
+                </details>
+                <details>
+                    <summary>Can I share the record with my yard?</summary>
+                    <p>Yes. Invite a mechanic to that specific boat and they can see its schedule
+                        and history and log work against it. SquawkIt records an ABYC certification
+                        number against a mechanic who holds one.</p>
+                </details>
+            </div>
+        </div>
+    </section>
+
+    <!-- ---------------------------------------------------------- cross links + app -->
+    <section class="section section-alt" id="get-the-app">
+        <div class="wrap">
+            <p class="eyebrow">EVERYTHING ELSE YOU OWN</p>
+            <h2>The slip is not the only thing with a schedule</h2>
+            <p class="lede">One account, one app. Each type brings its own vocabulary, meters and
+                starter schedule.</p>
+
+            <ul class="verticals">
+                <li><a href="/aircraft"><svg aria-hidden="true"><use href="#ic-plane"></use></svg>Aircraft</a></li>
+                <li><a href="/car"><svg aria-hidden="true"><use href="#ic-car"></use></svg>Cars &amp; motorcycles</a></li>
+                <li><a href="/bike"><svg aria-hidden="true"><use href="#ic-bike"></use></svg>Bikes</a></li>
+                <li><a href="/home"><svg aria-hidden="true"><use href="#ic-home"></use></svg>Homes</a></li>
+                <li><a href="/"><svg aria-hidden="true"><use href="#ic-boat"></use></svg>All of it</a></li>
+            </ul>
+
+            <div class="store-links">
+                <a class="store" href="https://play.google.com/store/apps/details?id=dev.fanfly.wingslog" target="_blank" rel="noopener">
+                    <svg width="22" height="22" viewBox="0 0 512 512" aria-hidden="true">
+                        <path fill="#00A0FF" d="M25.3 35.3v441.3c0 16.1 8.7 28.5 21.7 35.3l256.6-256L47 0C34 6.8 25.3 19.2 25.3 35.3z"/>
+                        <path fill="#00E676" d="M325.3 234.3L104.6 13c-9.9-5.7-21.2-6.9-30.9-3.6l229.8 229.8 21.8-4.9z"/>
+                        <path fill="#FFC400" d="M472.2 225.6l-86.8-49.8-63.3 63.3 65.7 64.5 84.4-48.4c18-14.3 18-15.3 0-29.6z"/>
+                        <path fill="#FF3A44" d="M73.7 502.6c9.7 3.3 21 2.1 30.9-3.6l280.8-161.2-60.1-60.1L73.7 502.6z"/>
+                    </svg>
+                    <span><small>GET IT ON</small><b>Google Play</b></span>
+                </a>
+                <a class="store" href="https://apps.apple.com/us/app/squawkit/id6801955033" target="_blank" rel="noopener">
+                    <svg width="21" height="21" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                        <path d="M16.365 1.43c0 1.14-.42 2.2-1.26 3.01-.9.87-1.98 1.38-3.08 1.29-.13-1.1.41-2.24 1.2-3.01.87-.86 2.09-1.44 3.14-1.29zM20.5 17.06c-.5 1.16-.74 1.68-1.39 2.7-.9 1.43-2.17 3.2-3.74 3.22-1.4.01-1.76-.91-3.66-.9-1.9.01-2.29.92-3.69.9-1.57-.02-2.77-1.62-3.67-3.04-2.52-3.99-2.79-8.68-1.23-11.17 1.1-1.77 2.85-2.8 4.49-2.8 1.67 0 2.72.92 4.1.92 1.34 0 2.16-.92 4.09-.92 1.46 0 3.01.8 4.11 2.17-3.61 1.98-3.02 7.13.59 8.92z"/>
+                    </svg>
+                    <span><small>DOWNLOAD ON THE</small><b>App Store</b></span>
+                </a>
+            </div>
+            <p class="requirements">Android 13 or later. iOS 26.2 or later. The web app works in any
+                modern browser.</p>
+        </div>
+    </section>
+</main>
+
+<footer class="site-footer">
+    <div class="wrap">
+        <p>© 2026 SquawkIt. A personal convenience tool — not a certified maintenance record system,
+            and not a replacement for the official aircraft logbooks required by your aviation
+            authority or any other record you are required to keep.</p>
+        <nav class="footer-links" aria-label="Footer">
+            <a href="/login" target="_blank" rel="noopener">Log in</a>
+            <a href="/privacy.html" target="_blank" rel="noopener">Terms &amp; Privacy</a>
+            <a href="/support.html" target="_blank" rel="noopener">Support</a>
+            <a href="/">All of SquawkIt</a>
+        </nav>
+    </div>
+</footer>
+
+<script src="promo.js"></script>
+</body>
+</html>
