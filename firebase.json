@@ -6,6 +6,33 @@
       "**/.*",
       "**/node_modules/**"
     ],
+    "redirects": [
+      {
+        "source": "/aircraft.html",
+        "destination": "/aircraft",
+        "type": 301
+      },
+      {
+        "source": "/car.html",
+        "destination": "/car",
+        "type": 301
+      },
+      {
+        "source": "/boat.html",
+        "destination": "/boat",
+        "type": 301
+      },
+      {
+        "source": "/bike.html",
+        "destination": "/bike",
+        "type": 301
+      },
+      {
+        "source": "/home.html",
+        "destination": "/home",
+        "type": 301
+      }
+    ],
     "rewrites": [
       {
         "source": "/aircraft",

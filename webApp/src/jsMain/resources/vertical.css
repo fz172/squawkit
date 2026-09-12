@@ -3,7 +3,8 @@
  * Loaded AFTER promo.css, never instead of it: the tokens, header, footer, buttons, FAQ and
  * section rhythm all come from there, and the five pages are deliberately the same page with
  * different content. What lives here is only what the promo page has no use for — the breadcrumb,
- * the single-column hero, the story band, the starter-pack table and the cross-links.
+ * the single-column hero, the story band and the starter-pack table. The cross-link grid is in
+ * promo.css because the promo page links the five verticals with it too.
  *
  * One stylesheet for all five is the point of SEO.1: five hand-written pages are cheap, five
  * divergent stylesheets are not. */
@@ -44,7 +45,8 @@
   font-size: clamp(30px, 4.4vw, 46px);
   line-height: 1.08;
   letter-spacing: -0.02em;
-  max-width: 18ch;
+  max-width: 22ch;
+  text-wrap: balance;
 }
 
 .hero-simple h1 .accent { color: var(--on-navy-accent); }
@@ -224,43 +226,6 @@
 .cols h3 { font-size: 17px; font-weight: 600; margin-bottom: 10px; }
 
 .cols p { font-size: 14.5px; color: var(--muted); }
-
-/* ---------------------------------------------------------------- cross links */
-/* Five pages linking to each other is most of the internal structure this subdomain has (§7.7). */
-.verticals {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-  gap: 14px;
-  margin: 26px 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.verticals a {
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  padding: 15px 17px;
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  background: var(--surface);
-  color: var(--text);
-  font-weight: 600;
-  font-size: 15px;
-}
-
-.verticals a:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-  text-decoration: none;
-}
-
-.verticals svg {
-  width: 20px;
-  height: 20px;
-  flex: none;
-  color: var(--accent);
-}
 
 /* ---------------------------------------------------------------- disclaimer strip */
 .note-strip {

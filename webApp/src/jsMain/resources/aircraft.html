@@ -15,11 +15,11 @@
          and should be updated from it rather than rewritten freehand. -->
 
     <!-- ============ PRIMARY SEO ============ -->
-    <title>Aircraft Maintenance Log App — Squawks, Hours &amp; Inspections | SquawkIt</title>
+    <title>Aircraft Maintenance Log — Squawks &amp; Inspections | SquawkIt</title>
     <meta content="Track squawks, airframe, engine and prop hours, and every inspection in one aircraft record. Share it with your A&amp;P and get reminders before anything lapses."
           name="description">
     <link href="https://squawkit.fanfly.dev/aircraft" rel="canonical">
-    <meta content="index, follow" name="robots">
+    <meta content="index, follow, max-image-preview:large" name="robots">
     <meta content="SquawkIt" name="author">
 
     <!-- ============ ICONS ============ -->
@@ -58,10 +58,31 @@
     <script type="application/ld+json">
         {
             "@context": "https://schema.org",
+            "@type": "WebPage",
+            "@id": "https://squawkit.fanfly.dev/aircraft",
+            "url": "https://squawkit.fanfly.dev/aircraft",
+            "name": "Aircraft Maintenance Log — Squawks & Inspections",
+            "description": "Track squawks, airframe, engine and prop hours, and every inspection in one aircraft record. Share it with your A&P and get reminders before anything lapses.",
+            "inLanguage": "en",
+            "isPartOf": {
+                "@id": "https://squawkit.fanfly.dev/#website"
+            },
+            "about": {
+                "@id": "https://squawkit.fanfly.dev/#app"
+            },
+            "breadcrumb": {
+                "@id": "https://squawkit.fanfly.dev/aircraft#breadcrumb"
+            }
+        }
+    </script>
+    <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
             "@type": "SoftwareApplication",
+            "@id": "https://squawkit.fanfly.dev/#app",
             "name": "SquawkIt",
             "description": "Aircraft maintenance records. Track squawks, airframe, engine and prop hours, inspections and work logs, and share the record with your mechanic.",
-            "url": "https://squawkit.fanfly.dev/aircraft",
+            "url": "https://squawkit.fanfly.dev/",
             "applicationCategory": "UtilitiesApplication",
             "operatingSystem": "Web, iOS, Android",
             "browserRequirements": "Requires a modern browser. Sign in with Google, Apple, or email.",
@@ -81,6 +102,7 @@
         {
             "@context": "https://schema.org",
             "@type": "BreadcrumbList",
+            "@id": "https://squawkit.fanfly.dev/aircraft#breadcrumb",
             "itemListElement": [
                 {
                     "@type": "ListItem",
@@ -246,7 +268,7 @@
     <!-- ---------------------------------------------------------- hero -->
     <section class="hero-simple">
         <div class="wrap">
-            <h1>Squawks, times and inspections.<br><span class="accent">One aircraft record.</span></h1>
+            <h1>Squawks, hours and inspections.<br><span class="accent">One aircraft maintenance log.</span></h1>
             <p class="hero-sub">
                 Airframe, engine and prop hours. Squawks tagged to the component that has them.
                 A starter schedule the day you add the aircraft, and your A&amp;P invited to the
@@ -269,7 +291,7 @@
     <section class="section">
         <div class="wrap">
             <p class="eyebrow">WHY OWNERS USE IT</p>
-            <h2>Flight readiness and peak performance</h2>
+            <h2>Airworthiness is a maintenance schedule, kept</h2>
             <p class="story">
                 Airworthy is the normal state, and it is a schedule. The condition inspection every
                 12 months, the ELT alongside it, the transponder every 24, altimeter and
@@ -523,11 +545,11 @@
                 starter schedule.</p>
 
             <ul class="verticals">
-                <li><a href="/car"><svg aria-hidden="true"><use href="#ic-car"></use></svg>Cars &amp; motorcycles</a></li>
-                <li><a href="/boat"><svg aria-hidden="true"><use href="#ic-boat"></use></svg>Boats</a></li>
-                <li><a href="/bike"><svg aria-hidden="true"><use href="#ic-bike"></use></svg>Bikes</a></li>
-                <li><a href="/home"><svg aria-hidden="true"><use href="#ic-home"></use></svg>Homes</a></li>
-                <li><a href="/"><svg aria-hidden="true"><use href="#ic-plane"></use></svg>All of it</a></li>
+                <li><a href="/car"><svg aria-hidden="true"><use href="#ic-car"></use></svg>Car &amp; motorcycle maintenance</a></li>
+                <li><a href="/boat"><svg aria-hidden="true"><use href="#ic-boat"></use></svg>Boat maintenance log</a></li>
+                <li><a href="/bike"><svg aria-hidden="true"><use href="#ic-bike"></use></svg>Bike maintenance log</a></li>
+                <li><a href="/home"><svg aria-hidden="true"><use href="#ic-home"></use></svg>Home maintenance schedule</a></li>
+                <li><a href="/"><svg aria-hidden="true"><use href="#ic-plane"></use></svg>Everything SquawkIt tracks</a></li>
             </ul>
 
             <div class="store-links">
@@ -558,12 +580,21 @@
         <p>© 2026 SquawkIt. A personal convenience tool — not a certified maintenance record system,
             and not a replacement for the official aircraft logbooks required by your aviation
             authority or any other record you are required to keep.</p>
-        <nav class="footer-links" aria-label="Footer">
-            <a href="/login" target="_blank" rel="noopener">Log in</a>
-            <a href="/privacy.html" target="_blank" rel="noopener">Terms &amp; Privacy</a>
-            <a href="/support.html" target="_blank" rel="noopener">Support</a>
-            <a href="/">All of SquawkIt</a>
-        </nav>
+        <div class="footer-navs">
+            <nav class="footer-links" aria-label="Maintenance logs by type">
+                <a href="/aircraft">Aircraft</a>
+                <a href="/car">Cars &amp; motorcycles</a>
+                <a href="/boat">Boats</a>
+                <a href="/bike">Bikes</a>
+                <a href="/home">Homes</a>
+            </nav>
+            <nav class="footer-links" aria-label="Footer">
+                <a href="/login" target="_blank" rel="noopener">Log in</a>
+                <a href="/privacy.html" target="_blank" rel="noopener">Terms &amp; Privacy</a>
+                <a href="/support.html" target="_blank" rel="noopener">Support</a>
+                <a href="/">All of SquawkIt</a>
+            </nav>
+        </div>
     </div>
 </footer>
 
