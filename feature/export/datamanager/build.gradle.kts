@@ -85,6 +85,11 @@ kotlin {
     compileSdk = 37
     minSdk = 33
 
+    // ExportWorker's notification needs platform resources (icon, channel and body strings).
+    androidResources {
+      enable = true
+    }
+
     withHostTest {
     }
   }
@@ -143,6 +148,7 @@ kotlin {
 
 dependencies {
   "androidMainImplementation"(libs.koin.android)
+  "androidMainImplementation"(libs.work.runtime.ktx)
   "androidMainImplementation"(platform(libs.firebase.bom))
   "androidHostTestImplementation"(libs.junit)
   "androidHostTestImplementation"(libs.mockk)

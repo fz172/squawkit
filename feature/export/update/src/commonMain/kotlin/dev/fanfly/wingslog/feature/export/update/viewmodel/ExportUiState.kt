@@ -34,6 +34,12 @@ sealed interface ExportUiState {
     ExportUiState
 
   /**
+   * The app left the foreground mid-export on a platform whose policy stops the work. Nothing was
+   * kept; the user restarts from the last configuration or goes back to edit it.
+   */
+  data object Interrupted : ExportUiState
+
+  /**
    * Completed export details shown on the result screen after the archive is saved.
    *
    * Delivery is never automatic: [deliveryInfo] non-null just means the signed-in user is

@@ -8,8 +8,10 @@ import androidx.navigation.NavController
 import dev.fanfly.wingslog.core.analytics.AnalyticsManager
 import dev.fanfly.wingslog.core.analytics.trackScreenViews
 import dev.fanfly.wingslog.core.nav.Screen
+import dev.fanfly.wingslog.feature.export.datamanager.ExportDeepLinks
 import dev.fanfly.wingslog.feature.notifications.viewing.NotificationTapRouter
 import dev.gitlive.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.flow.first
 import org.koin.compose.koinInject
 
 /** Pops the whole back stack to the login route whenever Firebase reports a signed-out state. */
@@ -95,5 +97,24 @@ fun PopToShellOnNotificationTap(navController: NavController) {
   LaunchedEffect(pending) {
     if (pending == null) return@LaunchedEffect
     navController.popBackStack(Screen.AdaptiveShell.route, inclusive = false)
+  }
+}
+
+/**
+ * Opens the export screen for a tapped export notification (#343). Waits until the shell is on the
+ * back stack — a cold-start tap arrives while the auth graph is still the only thing there, and
+ * navigating then would just be popped by the sign-in handoff — and never stacks a second copy on
+ * a screen that is already showing.
+ */
+@Composable
+fun OpenExportOnNotificationTap(navController: NavController) {
+  val pending by ExportDeepLinks.pendingOpen.collectAsStateWithLifecycle()
+  LaunchedEffect(pending) {
+    if (!pending) return@LaunchedEffect
+    navController.currentBackStackEntryFlow.first {
+      runCatching { navController.getBackStackEntry(Screen.AdaptiveShell.route) }.isSuccess
+    }
+    ExportDeepLinks.consume()
+    navController.navigate(Screen.ExportLogs.route) { launchSingleTop = true }
   }
 }

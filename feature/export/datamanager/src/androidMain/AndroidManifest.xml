@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:tools="http://schemas.android.com/tools">
+
+  <!-- ExportWorker runs as a foreground service so a long export outlives the screen (#343).
+       Declared by the module that hosts the worker, as feature/notifications/viewing does for
+       POST_NOTIFICATIONS; the manifest merger unions it into every host. -->
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+
+  <application>
+    <!-- Android 14+ requires the type on WorkManager's own service to match ForegroundInfo's. -->
+    <service
+      android:name="androidx.work.impl.foreground.SystemForegroundService"
+      android:foregroundServiceType="dataSync"
+      tools:node="merge" />
+  </application>
+
+</manifest>
