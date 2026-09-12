@@ -910,7 +910,9 @@ class ExportViewModel(
 
 ### 10.4 Cancellation
 
-`exportJob?.cancel()` cancels the cold Flow's coroutine. The orchestrator's `try/finally` deletes `<file>.partial`. The ViewModel restores its previously-cached `Configuring` state.
+`exportJob?.cancel()` cancels the cold Flow's coroutine. Nothing is on disk before the `SAVING_FILE` step; that step writes the archive and its history record under `NonCancellable` so they land together, and a cancellation after it (during upload) deletes both again, so a cancelled export never shows up in history. The ViewModel restores its previously-cached `Configuring` state.
+
+**Backgrounding (#343).** `ExportRunPolicy` (Koin, per platform) says whether leaving the foreground stops an in-flight export. iOS sets `stopWhenBackgrounded = true`: the app is suspended within seconds of backgrounding, so the export would stall on the upload step and be killed at the OS's discretion. `ExportSelectionRoute` reports ON_STOP (not ON_PAUSE, which also fires for Control Center and incoming calls) to `ExportViewModel.onAppBackgrounded()`, which cancels the job and moves to `ExportUiState.Interrupted` — a "start again / back to setup" screen. The `Running` screen carries a "stay on this screen" hint, worded more strongly when the policy stops the work. Android and web keep `false` until a WorkManager-backed runner replaces the ViewModel-scoped job.
 
 ---
 
@@ -999,11 +1001,11 @@ modules(
 | Orphaned engine/prop serial (component replaced) | Routed to `02_Engine_Unknown.csv` / `03_Propeller_Unknown.csv`. README explains. |
 | Deleted task referenced by `inspection_ids` | Title cell rendered as `[deleted]`; reference number omitted. |
 | Deleted squawk referenced by `squawk_ids` | Same: `[deleted]`. |
-| Cancel mid-export | Orchestrator's `finally` deletes `<file>.partial`; ViewModel restores last `Configuring`. |
+| Cancel mid-export | Nothing on disk before `SAVING_FILE`; after it, the archive and record are deleted again. ViewModel restores last `Configuring`. |
 | Disk full / write error | Orchestrator emits `Error`; partial file deleted. UI shows `Error` state with retry. |
 | Filename collision (same day) | `SystemFileSystem.atomicMove` overwrites; no prompt. |
 | Two aircraft share tail number | Folder names disambiguate with `(2)` suffix in `folderName(bundle.aircraft, isMulti)`. |
-| Backgrounded app during export | `viewModelScope` survives screen rotation but not process death. Process death mid-export ⇒ partial file remains until next export run cleans it. (Background-safe completion via foreground service is future work — see PRD §10.) |
+| Backgrounded app during export | iOS (`ExportRunPolicy.stopWhenBackgrounded`): the export is cancelled on ON_STOP, its file/record discarded, and the screen shows `Interrupted` with a restart action. Android/web: `viewModelScope` keeps running until process death (background-safe completion via WorkManager is future work — see PRD §10 and #343). |
 | Legacy logs missing `technician` embed but with `technician_id` | Aggregator looks up via `TechnicianManager.loadTechnician(id).first()`. Cached per-export. |
 | Logs with neither `technician` nor `technician_id` | Technician columns blank; row omitted from Technicians tab. |
 

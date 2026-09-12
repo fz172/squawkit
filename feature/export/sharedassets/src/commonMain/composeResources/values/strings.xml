@@ -68,6 +68,12 @@
   <string name="export_error_subtitle">Something went wrong while building the ZIP. Try again in a moment.</string>
   <string name="export_error_details">If this keeps happening, contact support@fanfly.dev so we can look into it.</string>
   <string name="export_back_to_setup">Back to setup</string>
+  <string name="export_running_stay_hint">Stay on this screen until the export finishes.</string>
+  <string name="export_running_stay_hint_background">Stay on this screen and keep the app open. Switching apps stops the export.</string>
+  <string name="export_interrupted_title">Export stopped</string>
+  <string name="export_interrupted_subtitle">The app went to the background before the export finished, so it was stopped.</string>
+  <string name="export_interrupted_details">Nothing was saved. Start again and keep the app open until it finishes.</string>
+  <string name="export_interrupted_restart">Start again</string>
 
   <!-- History -->
   <string name="export_history_action">Export history</string>

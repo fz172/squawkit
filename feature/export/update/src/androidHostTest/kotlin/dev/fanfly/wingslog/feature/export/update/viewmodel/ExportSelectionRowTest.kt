@@ -7,6 +7,7 @@ import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import dev.fanfly.wingslog.core.template.ThingInflater
 import dev.fanfly.wingslog.core.template.canonical.CanonicalTemplates
 import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
+import dev.fanfly.wingslog.feature.export.datamanager.ExportRunPolicy
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetEntry
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
@@ -74,6 +75,7 @@ class ExportSelectionRowTest {
       currentThingTemplate = mockk<CurrentThingTemplate>(relaxed = true),
       templateRegistry = BakedInTemplateRegistry(appVersionCode = Int.MAX_VALUE),
       analytics = NoOpAnalyticsManager,
+      runPolicy = ExportRunPolicy(stopWhenBackgrounded = false),
     )
 
   private fun rows(vm: ExportViewModel): List<ThingSelectionRow> =

@@ -43,10 +43,13 @@ import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.FolderZip
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Mail
+import androidx.compose.material.icons.filled.PauseCircleOutline
 import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.TableView
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.Button
@@ -141,6 +144,12 @@ import wingslog.feature.export.sharedassets.generated.resources.export_footer_th
 import wingslog.feature.export.sharedassets.generated.resources.export_format_pick_one
 import wingslog.feature.export.sharedassets.generated.resources.export_formats_section
 import wingslog.feature.export.sharedassets.generated.resources.export_history_action
+import wingslog.feature.export.sharedassets.generated.resources.export_interrupted_details
+import wingslog.feature.export.sharedassets.generated.resources.export_interrupted_restart
+import wingslog.feature.export.sharedassets.generated.resources.export_interrupted_subtitle
+import wingslog.feature.export.sharedassets.generated.resources.export_interrupted_title
+import wingslog.feature.export.sharedassets.generated.resources.export_running_stay_hint
+import wingslog.feature.export.sharedassets.generated.resources.export_running_stay_hint_background
 import wingslog.feature.export.sharedassets.generated.resources.export_last_12_months
 import wingslog.feature.export.sharedassets.generated.resources.export_location_downloads_squawkit
 import wingslog.feature.export.sharedassets.generated.resources.export_location_files_squawkit
@@ -190,12 +199,15 @@ fun ExportSelectionScreen(
   onSendToEmail: () -> Unit,
   onDone: () -> Unit,
   onRetry: () -> Unit,
+  onRestart: () -> Unit,
   onSeePlans: () -> Unit,
   snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
   // There's no explicit "Done" action on the success screen anymore — the same cleanup (reset to
   // the last editable configuration) now happens on back navigation, gesture included.
   BackHandler(enabled = state is ExportUiState.Success) { onDone() }
+  // Back from the interrupted screen returns to setup rather than leaving the feature.
+  BackHandler(enabled = state is ExportUiState.Interrupted) { onRetry() }
 
   // The success screen's action bar isn't a real Scaffold bottomBar (it's pinned to the bottom of
   // the content column instead, matching ConfiguringContent's pattern), so Scaffold can't push the
@@ -210,6 +222,7 @@ fun ExportSelectionScreen(
           onBackClick = when (state) {
             is ExportUiState.Running -> onCancel
             is ExportUiState.Success -> onDone
+            is ExportUiState.Interrupted -> onRetry
             else -> onNavigateBack
           },
           actions = {
@@ -270,6 +283,12 @@ fun ExportSelectionScreen(
         onHistory = onNavigateToHistory,
         onSeePlans = onSeePlans,
         onActionsHeightChanged = { successActionsHeight = it },
+      )
+
+      is ExportUiState.Interrupted -> InterruptedResult(
+        modifier = Modifier.padding(innerPadding),
+        onRestart = onRestart,
+        onBackToSetup = onRetry,
       )
 
       is ExportUiState.Error -> ErrorResult(
@@ -903,6 +922,7 @@ private fun RunningContent(
             )
           }
         }
+        StayHereHint(stopsWhenBackgrounded = state.stopsWhenBackgrounded)
       }
     },
     actions = {
@@ -913,6 +933,30 @@ private fun RunningContent(
       )
     },
   )
+}
+
+@Composable
+private fun StayHereHint(stopsWhenBackgrounded: Boolean) {
+  Row(
+    modifier = Modifier.fillMaxWidth(),
+    horizontalArrangement = Arrangement.spacedBy(Spacing.small),
+    verticalAlignment = Alignment.Top,
+  ) {
+    Icon(
+      imageVector = Icons.Default.Info,
+      contentDescription = null,
+      tint = MaterialTheme.colorScheme.onSurfaceVariant,
+      modifier = Modifier.size(18.dp),
+    )
+    Text(
+      text = stringResource(
+        if (stopsWhenBackgrounded) Res.string.export_running_stay_hint_background
+        else Res.string.export_running_stay_hint
+      ),
+      style = MaterialTheme.typography.bodySmall,
+      color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+  }
 }
 
 @Composable
@@ -1299,6 +1343,54 @@ private fun ReceiptRow(
 }
 
 // ─── Result · Error ─────────────────────────────────────────────────────────
+
+@Composable
+private fun InterruptedResult(
+  modifier: Modifier,
+  onRestart: () -> Unit,
+  onBackToSetup: () -> Unit,
+) {
+  ResultShell(
+    modifier = modifier,
+    heroIcon = Icons.Default.PauseCircleOutline,
+    heroColor = MaterialTheme.statusColors.caution.accent,
+    heroContainer = MaterialTheme.statusColors.caution.container,
+    title = stringResource(Res.string.export_interrupted_title),
+    subtitle = stringResource(Res.string.export_interrupted_subtitle),
+    body = {
+      Column(
+        modifier = Modifier
+          .fillMaxWidth()
+          .clip(RoundedCornerShape(Spacing.cardCornerRadius))
+          .background(MaterialTheme.colorScheme.surfaceContainer)
+          .border(
+            width = Spacing.hairline,
+            color = MaterialTheme.colorScheme.outlineVariant,
+            shape = RoundedCornerShape(Spacing.cardCornerRadius),
+          )
+          .padding(Spacing.large),
+      ) {
+        Text(
+          text = stringResource(Res.string.export_interrupted_details),
+          style = MaterialTheme.typography.bodyMedium,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+      }
+    },
+    actions = {
+      ResultPrimaryButton(
+        label = stringResource(Res.string.export_interrupted_restart),
+        icon = Icons.Default.Refresh,
+        onClick = onRestart,
+      )
+      ResultSecondaryButton(
+        label = stringResource(Res.string.export_back_to_setup),
+        icon = Icons.Default.Tune,
+        onClick = onBackToSetup,
+      )
+    },
+  )
+}
 
 @Composable
 private fun ErrorResult(

@@ -6,6 +6,7 @@ import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDeliveryEmailSource
 import dev.fanfly.wingslog.feature.export.datamanager.ExportManager
+import dev.fanfly.wingslog.feature.export.datamanager.ExportRunPolicy
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
@@ -78,6 +79,7 @@ class ExportViewModelDeliveryTest {
       currentThingTemplate = mockk<CurrentThingTemplate>(relaxed = true),
       templateRegistry = BakedInTemplateRegistry(appVersionCode = Int.MAX_VALUE),
       analytics = NoOpAnalyticsManager,
+      runPolicy = ExportRunPolicy(stopWhenBackgrounded = false),
     )
   }
 

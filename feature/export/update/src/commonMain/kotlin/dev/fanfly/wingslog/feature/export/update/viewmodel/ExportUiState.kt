@@ -30,8 +30,21 @@ sealed interface ExportUiState {
     val isLoadingThings: Boolean = true,
   ) : ExportUiState
 
-  data class Running(val step: ExportProgressStep, val percent: Int) :
-    ExportUiState
+  /**
+   * Export in flight. [stopsWhenBackgrounded] mirrors the platform's `ExportRunPolicy` so the
+   * screen can say up front that switching apps abandons the export.
+   */
+  data class Running(
+    val step: ExportProgressStep,
+    val percent: Int,
+    val stopsWhenBackgrounded: Boolean = false,
+  ) : ExportUiState
+
+  /**
+   * The app left the foreground mid-export on a platform whose policy stops the work. Nothing was
+   * kept; the user restarts from the last configuration or goes back to edit it.
+   */
+  data object Interrupted : ExportUiState
 
   /**
    * Completed export details shown on the result screen after the archive is saved.

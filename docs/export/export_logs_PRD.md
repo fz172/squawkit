@@ -531,7 +531,7 @@ The flow is a single forward-only journey: Settings → Selection → Progress �
 | User has zero aircraft in their fleet | The Selection screen renders an empty-state card (`No aircraft to export. Add an aircraft in Fleet to get started.`) instead of the aircraft list. The Export button is hidden. |
 | User clears all aircraft selections | Export button disabled with helper text `Select at least one aircraft`. |
 | Very large multi-aircraft selection (e.g. 50+ aircraft) | Generation is per-aircraft and streams to the ZIP; memory remains bounded. Progress indicator includes "Aircraft N of M" prefix. |
-| User backgrounds the app during export | Generation continues in the foreground service / appropriate platform mechanism; success state is presented when the user returns. (Background completion notification is future work — see §10.) |
+| User backgrounds the app during export | iOS: the export stops, nothing is kept, and the screen explains it must be started again (the app is suspended too quickly to finish). The progress screen warns up front to stay on it. Android: generation keeps running until process death; a background-safe runner with a progress notification is future work — see §10 and #343. |
 | User navigates back from the Selection screen mid-configuration | Selections are not persisted across navigation. Re-entering Settings → Export logs starts with defaults. |
 | Filename collision (re-export same day) | Overwrite without prompting. Different dates keep distinct files. |
 | Disk full during write | Abort, surface error toast, no partial file left on disk (write to temp, rename on completion). |

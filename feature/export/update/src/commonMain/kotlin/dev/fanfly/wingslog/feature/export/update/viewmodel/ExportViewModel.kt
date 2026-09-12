@@ -17,6 +17,7 @@ import dev.fanfly.wingslog.feature.export.datamanager.ExportFormat
 import dev.fanfly.wingslog.feature.export.datamanager.ExportManager
 import dev.fanfly.wingslog.feature.export.datamanager.ExportProgress
 import dev.fanfly.wingslog.feature.export.datamanager.ExportRequest
+import dev.fanfly.wingslog.feature.export.datamanager.ExportRunPolicy
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
@@ -59,6 +60,7 @@ class ExportViewModel(
   private val currentThingTemplate: CurrentThingTemplate,
   private val templateRegistry: TemplateRegistry,
   private val analytics: AnalyticsManager,
+  private val runPolicy: ExportRunPolicy,
   clock: Clock = Clock.System,
   timeZone: TimeZone = TimeZone.currentSystemDefault(),
 ) : ViewModel() {
@@ -271,6 +273,28 @@ class ExportViewModel(
   }
 
   /**
+   * The host reports the app left the foreground. On platforms whose [ExportRunPolicy] stops the
+   * work, an in-flight export is abandoned and the screen explains that it has to be restarted.
+   * Any other state, or a platform that keeps running, is untouched.
+   */
+  fun onAppBackgrounded() {
+    if (!runPolicy.stopWhenBackgrounded) return
+    if (_state.value !is ExportUiState.Running) return
+    exportJob?.cancel()
+    exportJob = null
+    _state.value = ExportUiState.Interrupted
+  }
+
+  /**
+   * Re-runs the export that was interrupted, with the configuration it was started from.
+   */
+  fun onRestart() {
+    if (_state.value !is ExportUiState.Interrupted) return
+    _state.value = lastConfiguring
+    onExport()
+  }
+
+  /**
    * Cancels an in-flight export and restores the last editable configuration.
    */
   fun onCancel() {
@@ -318,7 +342,7 @@ class ExportViewModel(
   }
 
   /**
-   * Returns from an error state to the last editable configuration.
+   * Returns from an error or interrupted state to the last editable configuration.
    */
   fun onRetry() {
     _state.value = lastConfiguring
@@ -354,7 +378,11 @@ class ExportViewModel(
   )
 
   private fun ExportProgress.toUiState(): ExportUiState = when (this) {
-    is ExportProgress.Running -> ExportUiState.Running(step, percent)
+    is ExportProgress.Running -> ExportUiState.Running(
+      step = step,
+      percent = percent,
+      stopsWhenBackgrounded = runPolicy.stopWhenBackgrounded,
+    )
     is ExportProgress.Success -> ExportUiState.Success(
       exportId = exportId,
       fileName = fileName,
