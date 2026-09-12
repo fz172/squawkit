@@ -230,6 +230,10 @@ worst failure (cleared storage, a shared machine) is one extra page. Crawlers ne
 indexing is unaffected. Doing it in static JS rather than in Kotlin means the redirect fires in
 milliseconds instead of after a multi-megabyte bundle download.
 
+The redirect fires on `/` only. The per-vertical pages (§7.4) load the same script but are landing
+pages a reader chose to open — from a search result or a link on this site — and skipping a
+signed-in reader past `/car` to `/login` would turn every one of those links into a dead end.
+
 ### 5.4 The `appAddress` trap
 
 `BrowserHistoryBinding` pins its URL base once, at construction:

@@ -18,8 +18,13 @@
   // The flag is a hint, never auth state: it is read for this one decision and nothing else, so its
   // worst failure (cleared storage, a shared machine) is one extra page. Crawlers never have it,
   // so indexing is unaffected.
+  //
+  // Only the promo page skips ahead. The vertical pages (/aircraft, /car, ...) share this script
+  // but are landing pages someone chose to open — from a search result, or from a link on this
+  // site — and bouncing a signed-in reader to /login would make every one of those links a dead end.
+  const isPromoPage = location.pathname === '/' || location.pathname === '/index.html';
   try {
-    if (localStorage.getItem('squawkit.hasSignedIn') === '1') {
+    if (isPromoPage && localStorage.getItem('squawkit.hasSignedIn') === '1') {
       location.replace('/login');
       return;
     }
