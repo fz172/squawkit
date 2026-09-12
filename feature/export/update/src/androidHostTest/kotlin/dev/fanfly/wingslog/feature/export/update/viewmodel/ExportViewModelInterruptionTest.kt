@@ -133,16 +133,6 @@ class ExportViewModelInterruptionTest {
     }
 
   @Test
-  fun `running state advertises the stop policy for the stay-here hint`() =
-    runTest(dispatcher) {
-      val vm = buildViewModel(stopWhenBackgrounded = true)
-      startExport(vm)
-
-      val running = vm.state.value as ExportUiState.Running
-      assertThat(running.stopsWhenBackgrounded).isTrue()
-    }
-
-  @Test
   fun `backgrounding under a keep-running policy leaves the export alone`() =
     runTest(dispatcher) {
       val vm = buildViewModel(stopWhenBackgrounded = false)
@@ -151,8 +141,7 @@ class ExportViewModelInterruptionTest {
       vm.onAppBackgrounded()
       advanceUntilIdle()
 
-      val running = vm.state.value as ExportUiState.Running
-      assertThat(running.stopsWhenBackgrounded).isFalse()
+      assertThat(vm.state.value).isInstanceOf(ExportUiState.Running::class.java)
       assertThat(exportCancelled).isFalse()
     }
 

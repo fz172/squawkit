@@ -378,11 +378,7 @@ class ExportViewModel(
   )
 
   private fun ExportProgress.toUiState(): ExportUiState = when (this) {
-    is ExportProgress.Running -> ExportUiState.Running(
-      step = step,
-      percent = percent,
-      stopsWhenBackgrounded = runPolicy.stopWhenBackgrounded,
-    )
+    is ExportProgress.Running -> ExportUiState.Running(step, percent)
     is ExportProgress.Success -> ExportUiState.Success(
       exportId = exportId,
       fileName = fileName,
