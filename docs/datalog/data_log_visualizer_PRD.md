@@ -286,17 +286,32 @@ Three mechanisms, kept separate, per [AGENTS.md § Gating](../../AGENTS.md#gatin
 - **R42 (P0). Template — no data migration.** The section and the attachment option exist only on
   Things whose template declares the section. The airplane preset declares it in a new version (the
   bump-on-every-edit rule); no other preset does. **Verified constraint:** a Thing carries its
-  template inline as DNA, and a canonical preset edit reaches only Things created after it. Every
-  previous preset version was followed by the DNA refresh script, which rewrites every Thing
-  document. That is a data backfill, and this feature must not depend on one:
-  - The proto changes are additive (a new `Section` value, new lexicon fields); no schema migration
-    and no rules change. Older builds drop the unknown section, which the shell already handles.
-  - **Fallback for existing DNA.** When a Thing's DNA is the airplane preset at a version before the
-    one that declares the section, the shell appends the section and the lexicon resolves the new
-    words from the baked-in airplane preset. Things created before templates existed already resolve
-    to the baked-in preset and need nothing.
-  - The DNA refresh becomes optional housekeeping that removes the fallback's work, run whenever
-    convenient, never a launch gate.
+  template inline as DNA, and a canonical preset edit reaches only Things created after it, unless
+  the DNA refresh script rewrites every Thing document. That is a data backfill, and this feature
+  must not depend on one.
+  - **How the lexicon already avoids this.** The words a Thing renders do not come from its DNA.
+    `TemplateRegistry.lexiconFor` resolves the lexicon **by template id** from the canonical preset
+    baked into the running build, and reads the stored copy only for an id the build does not carry.
+    The rationale recorded there: a lexicon is app UI, written against a release's screens, so it
+    belongs to the app like `strings.xml`; freezing a copy per Thing made every user a fork of the
+    vocabulary. Old Things keep carrying a lexicon nobody reads, and every release's words reach
+    every Thing with no migration.
+  - **Capabilities get the same rule.** Today `CurrentThingTemplate` reads capabilities straight
+    from the DNA. This feature adds `TemplateRegistry.capabilitiesFor`, mirroring `lexiconFor`:
+    canonical by id first, the stored copy only for an unknown id, `ALL_ENABLED` when nothing
+    applies. Declaring the section in the new airplane preset then reaches every existing airplane
+    the moment the build ships. Same for `scheduleTypesOffered`'s legacy default, which becomes
+    unnecessary.
+  - This is safe for the same reason the DNA refresh script is: a stored template can currently
+    only be an unmodified copy of a canonical one, because custom and fetched templates are designed
+    but unbuilt. When they arrive, the rule narrows to "canonical wins for an unmodified copy" and
+    the design doc for that work decides how a copy declares itself modified.
+  - **Degradation.** `TemplateResolution` marks a Thing degraded when its DNA names a `Section` value
+    the build has no code for. New Things created from the new preset carry that value, so an older
+    build would render them degraded. With capabilities resolved by id, a build that carries the id
+    renders from its own canonical and skips that check; degradation stays only for ids the build
+    does not carry. The proto change itself is additive: no schema migration, no rules change.
+  - The DNA refresh becomes optional housekeeping, run whenever convenient, never a launch gate.
 - **R43 (P0). Platform and rollout.** A new `AppCapability.isDataLogsSupported` flag gates the
   section, the attachment option, and the parser registration. It is **true on developer builds
   only** while the feature is built, and flipped to true on every host when V1 is complete. It is a
@@ -582,8 +597,8 @@ Settled by product direction on 2026-09-13.
    design doc picks the concrete provider (§8.5 notes the one-versus-three-integrations trade-off).
 8. **Rollout is an app capability**, true on developer builds until V1 is complete (R43).
 9. **The bottom bar goes variable-width** on every preset to make room for the fifth item (R2b).
-10. **No data migration** for the new section: template fallback for existing DNA, refresh optional
-    (R42).
+10. **No data migration** for the new section: capabilities resolve by template id from the build,
+    exactly as the lexicon already does (R42).
 
 ### Still open
 
