@@ -1,47 +1,46 @@
-SquawkIt keeps a maintenance record for everything you own — an aircraft, a car or motorcycle, a bike, a boat, a home — in one app that works wherever you are, with or without a signal.
+SquawkIt is one maintenance log for everything you own: an aircraft logbook with squawks and inspections, a car and motorcycle maintenance tracker, a boat and bike maintenance log, and a home maintenance schedule. Records live on your device first, so it works fully offline and syncs across phone, tablet and the web when you're back online.
 
-Records are written to your device first, so SquawkIt works fully offline. Note a squawk after landing, log an oil change in the driveway, or check whether the furnace service is due without waiting on a connection. When you're signed in and back online, everything syncs automatically across every device you use.
+Pick what you maintain and the whole app speaks its language: fields, meters, the words on every screen and a recommended starter schedule come with the type.
 
-Every Thing speaks its own language
-Pick what you're maintaining and SquawkIt adapts: an airplane has an airframe, engines and propellers, tail numbers and tach time, squawks and AOG; a car has a VIN and an odometer; a home has no meters at all, just chores and attention items. The fields, the words, and the schedule come with the type.
+AIRCRAFT MAINTENANCE LOG
+Squawks from Low through AOG, tagged to the engine, propeller or blade that has the problem. Airframe, engine and prop time as three separate meters, logged as you go. A starter schedule of the universal items: the 12-month annual or condition inspection, ELT, transponder and pitot-static checks, oil and filter every 50 engine hours, and the 100-hour if you fly for hire. ADs and service bulletins are tasks you add, with the intervals you choose. Invite your A&P or IA to the aircraft and they log against the same record.
 
-Start with a recommended schedule
-Each type ships a starter pack: the annual, ELT, transponder and pitot-static checks for an airplane; oil changes, tire rotation and brake fluid for a car; HVAC filters, gutters and water-heater flush for a house. Keep what applies, skip what doesn't, edit anything later. Recommendations, not authority — your manufacturer's manual is the source of truth.
+CAR AND MOTORCYCLE MAINTENANCE TRACKER
+Oil and filter, tire rotation, air filters, brake fluid, coolant and registration, each due by odometer or by date, whichever comes first. Every record carries the mileage and the receipt, so years of care become a service history you can hand to a buyer.
 
-Never miss a due date
-Recurring tasks track by calendar time, by meter — engine hours, odometer, ride distance — or on condition. OVERDUE and DUE SOON items surface at the top of every list.
+BOAT MAINTENANCE LOG
+Engine hours that belong to the engine, not the hull. Impeller, lower-unit oil, anodes, bottom paint, safety gear and winterizing on a schedule that comes round every season. Share the record with your yard.
 
-Log issues the moment you spot them
-Squawks on an airplane, issues on a car, attention items at home — record what's wrong, track it to resolution, and let anything that grounds the airplane or takes the car off the road jump to the top.
+BIKE MAINTENANCE LOG
+Chain lube by distance, chain wear, brake and cable checks, sealant and the annual tune-up, with suspension service due on ride hours rather than the calendar. One record per bike, for the whole stable.
 
-Keep a real history
-Every piece of work is logged against the Thing it belongs to, with a summary of counts and current readings — for a pre-buy inspection, an annual, a resale, or handing the keys to a new owner.
+HOME MAINTENANCE SCHEDULE
+HVAC filters, spring and fall service, gutters, the water-heater flush, the dryer vent and detector batteries, anchored to the months they belong in. No meters, no jargon, and a schedule written for you the day you add the house.
 
-Attribute work to the right person
-Keep a roster of the people who work on your things — an A&P, an ASE mechanic, an electrician, or yourself — with their certifications, and attach their sign-offs to the work they performed.
+NEVER MISS A DUE DATE
+Recurring tasks come due by calendar, by meter (engine hours, odometer, ride distance) or on condition. Overdue and due-soon work rises to the top of every list, and anything that grounds the airplane sits above it.
 
-Attach the paperwork
-Photos and documents — logbook pages, invoices, inspection reports, receipts — attach directly to the record they belong to.
+LOG ISSUES THE MOMENT YOU SPOT THEM
+A squawk on the airplane, an issue on the car, an attention item at home. Record what's wrong with a photo, track it to resolution, and close it from the work log that fixed it.
 
-Export anytime
-Generate PDF, CSV, and XLSX exports for one Thing or all of them, optionally filtered by date, in a single download. Email a copy to yourself, your mechanic, or a buyer.
+SHARE WITH THE PEOPLE WHO HELP
+Invite a mechanic, co-owner or family member to one thing, not your whole account. They see its schedule and history and log work against it; you stay the owner. Technicians keep their certifications on file, and their sign-offs stay attached to the work they did.
 
-Built to feel like an instrument, not a spreadsheet
-A calm blue palette, clear status colors, and monospaced technical data so identifiers and readings are always easy to scan. No clutter, no hunting through menus.
+ATTACH THE PAPERWORK
+Photos and documents (logbook pages, invoices, inspection reports, receipts) attach to the entry they belong to.
 
-One app, every screen size
-The same interface adapts from phone to tablet to the web — a focused single-column view in your pocket, a full sidebar and multi-pane layout on a bigger screen.
+EXPORT ANYTIME
+Download a thing's full history as a ZIP holding a PDF, a CSV and a spreadsheet, with every attachment. Email it to yourself, your mechanic or a buyer.
 
-YOUR DATA, BACKED UP AND UNDER YOUR CONTROL
-
-Sign in with Google or Apple and your records are backed up to the cloud and kept in sync across phone, tablet, and the web. Prefer to work fully offline? SquawkIt keeps working; sync picks up the moment you're back online.
-
-Your records are yours. We don't sell your data, and you can export a complete copy at any time.
+YOUR DATA, UNDER YOUR CONTROL
+Sign in with Google or Apple and your records are backed up and kept in sync across phone, tablet and the web. Your records are yours: we don't sell your data, and you can export a complete copy at any time.
 
 A NOTE ON CERTIFIED RECORDS
-
-SquawkIt is a personal convenience tool — it doesn't replace the official aircraft logbooks required by your aviation authority, or any other record you're required to keep. Treat SquawkIt's exports as backups and snapshots, not the legal source of truth.
+SquawkIt is a personal convenience tool. It doesn't replace the official aircraft logbooks required by your aviation authority, or any other record you're required to keep. Treat exports as backups and snapshots, not the legal source of truth.
 
 WHO IT'S FOR
+Aircraft owners tracking inspections and squawks. Mechanics managing sign-offs across a shop's worth of aircraft. Anyone with a car, a boat, a bike or a house who wants to stop finding out about maintenance the expensive way.
 
-Aircraft owners tracking inspections and squawks. Mechanics managing sign-offs across a shop's worth of aircraft. Anyone who owns a car, a boat, a bike, or a house and wants to stop finding out about maintenance the expensive way.
+TERMS
+Terms of Use: https://squawkit.fanfly.dev/privacy.html
+Privacy Policy: https://squawkit.fanfly.dev/privacy.html

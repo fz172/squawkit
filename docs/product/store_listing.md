@@ -4,6 +4,14 @@ Text fields for Google Play Console and App Store Connect. The long
 description for both stores is `play_store_description.txt`. Images come from
 `store_assets/` (see `screenshot_generator/README.md`).
 
+The two stores index differently, and the copy is split accordingly. Google
+Play indexes the full description, so it carries the same head terms and
+per-type vocabulary as the web landing pages (`/aircraft`, `/car`, `/boat`,
+`/bike`, `/home`): one section per type, each named for the phrase people
+search. The App Store does not index the description at all; only the name,
+subtitle and keyword field rank. So the subtitle names the types, the keyword
+field carries everything else, and neither repeats a word the other has.
+
 Character limits are checked by `screenshot_generator/check_listing.py`.
 
 **Launch status (2026-09-09):** live on both stores. Google Play — in production since 2026-09-05.
@@ -26,7 +34,7 @@ App Store — released 2026-09-09, app id `6801955033`.
 **Short description (80)**
 
 ```
-Maintenance records for your aircraft, car, boat, and home. Offline-first.
+Maintenance log for your aircraft, car, boat, bike and home. Works offline.
 ```
 
 **Full description (4000)**: `play_store_description.txt`.
@@ -43,25 +51,31 @@ Maintenance records for your aircraft, car, boat, and home. Offline-first.
 
 ## App Store
 
-**Subtitle (30)**
+**Subtitle (30)**, indexed alongside the name, so it names the types rather than
+repeating "maintenance" or "logbook":
 
 ```
-Squawks, tasks, and logs
+Aircraft, car, boat & home
 ```
 
 **Promotional text (170)**, editable without a new build:
 
 ```
-Log squawks, track due dates by hours or calendar, and keep every maintenance record in sync across iPhone, iPad, and the web. Works fully offline.
+One maintenance log for everything you own: squawks on the airplane, oil changes by odometer on the car, engine hours on the boat, filters at home. Works offline.
 ```
 
 **Keywords (100)**, comma separated, no spaces, do not repeat words from the name or subtitle:
 
 ```
-aircraft,airplane,pilot,mechanic,inspection,annual,car,boat,home,tracker,repair,service,aviation
+airplane,pilot,aviation,mechanic,inspection,annual,squawk,tracker,service,motorcycle,bike,vehicle
 ```
 
-**Description (4000)**: `play_store_description.txt`, unchanged.
+**Description (4000)**: `play_store_description.txt`, unchanged. Not indexed by
+App Store search; its job is conversion, and the first three lines are all that
+shows before "more". Its closing TERMS block is required here: App Review
+guideline 3.1.2 wants a working Terms of Use (EULA) and Privacy Policy link in
+the description of any app with an auto-renewable subscription. Keep it in
+every revision.
 
 **Assets**
 
