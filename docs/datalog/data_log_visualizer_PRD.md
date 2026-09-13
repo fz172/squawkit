@@ -120,6 +120,11 @@ which case it is the first follow-up; **P2** is designed for, not built.
   Settings already lives in the top bar at that width, so the bar stays within five.
 - **R2a (P1).** On phones the section header carries a search action that filters the list by date,
   identifier, or attached-record title, matching the other sections' search bars.
+- **R2b (P0).** **Variable-width bottom bar.** Five labelled items do not fit the floating pill on a
+  320 dp phone without truncating even the short plurals. As part of this project the pill changes on
+  every preset: only the selected item shows icon and label; the others show their icon alone, with
+  the label as the icon's accessibility name. Today the unselected items are text-only, so this is a
+  swap, not an addition, and it frees the width the fifth item needs.
 - **R3 (P0).** *Flight data log* is a new attachment type wherever attachments exist today (log
   entries, tasks, squawks). The add-attachment sheet gains a third option beside *Choose file* and
   *Add link*. Choosing it opens a picker that lists the Thing's existing data logs, marks any on the
@@ -151,7 +156,7 @@ which case it is the first follow-up; **P2** is designed for, not built.
   record and in the visualizer; it never blocks import.
 - **R12 (P1).** If the mismatched identity matches *another* Thing in the account, the import offers
   to file the log there instead.
-- **R13 (P1).** A log with no airborne segment is labelled *Ground run* in the list instead of a
+- **R13 (P0).** A log with no airborne segment is labelled *Ground run* in the list instead of a
   route. Airborne is any sample with GPS ground speed above 30 kt or height above ground above
   50 ft, when the source has those series.
 - **R14 (P0).** No product limit on the number of data logs per Thing or the size of a file. The
@@ -187,12 +192,23 @@ which case it is the first follow-up; **P2** is designed for, not built.
   pane reads on the left axis, the second on the right; further units read only in the legend. Scales
   fit the *visible* time range with a small pad and refit on zoom. Splitting units across panes is the
   user's choice, not a limitation.
-- **R23 (P0).** **Time.** All panes share one time domain and one cursor. Drag horizontally to
-  brush-zoom; wheel or pinch to zoom around the pointer; a *Reset* control shows the zoomed range and
-  returns to the full log. Minimum zoom span is 5 seconds. The axis is elapsed time (`mm:ss`,
-  `h:mm:ss`) with tick density chosen from the chart width (about one label per 72 dp, steps from
-  5 s to 1 h) and edge labels kept inside the chart; the cursor shows its time on the axis and every
-  series' value at that instant in its legend entry.
+- **R23 (P0).** **Time.** All panes share one time domain and one cursor. Three navigation gestures,
+  each with a pointer equivalent:
+
+  | Intent | Touch | Mouse / trackpad |
+  |---|---|---|
+  | **Brush zoom** — select a span, zoom to it | One-finger horizontal drag; release zooms | Left-button drag; release zooms |
+  | **Pan** — move along the timeline at the current zoom | Two-finger horizontal scroll | Horizontal wheel or two-finger trackpad swipe; Shift + vertical wheel |
+  | **Zoom** — change the zoom level around a point | Two-finger pinch, centred on the fingers' midpoint | Ctrl/⌘ + vertical wheel, or trackpad pinch, centred on the pointer |
+
+  A plain vertical wheel or one-finger vertical drag scrolls the pane stack and never touches the
+  time domain, so the page stays scrollable. Pan is clamped to the log's bounds and does nothing at
+  full zoom-out. A *Reset* control shows the zoomed range and returns to the full log. Minimum zoom
+  span is 5 seconds.
+- **R23a (P0).** The axis is elapsed time (`mm:ss`, `h:mm:ss`) with tick density chosen from the chart
+  width (about one label per 72 dp, steps from 5 s to 1 h) and edge labels kept inside the chart.
+  Hovering or touching a pane places the cursor; it shows its time on the axis and every series'
+  value at that instant in its legend entry.
 - **R24 (P0).** **Legend.** The legend is a row of chips in the pane header. Each chip shows a colour
   swatch, short name, live value at the cursor, unit, and a remove control; the chip is also the drag
   handle. Chips drag onto another pane to move, onto *New pane* to split.
@@ -208,8 +224,8 @@ which case it is the first follow-up; **P2** is designed for, not built.
   id, airframe and engine hours as recorded), plus the identity match or mismatch notice.
 - **R27 (P0).** **Narrow layouts.** Below tablet width the sidebar becomes a right-hand drawer behind
   a *tune* control (mock 2c); the header's *Upload* and *Reset* controls collapse to icons; panes
-  stack full-width at about 170 dp; one-finger horizontal drag brush-zooms, two-finger pinch zooms
-  around the midpoint, and vertical scroll is never captured by the chart.
+  stack full-width at about 170 dp; the R23 touch gestures apply, and vertical scroll is never
+  captured by the chart.
 - **R28 (P0).** **Performance.** Rendering decimates to the pixel column (min/max per column), so a
   6-hour log pans and zooms at frame rate on a phone. Zoom re-decimates from the full-resolution data.
 - **R29 (P1).** **Map pane.** When the source has latitude and longitude, they collapse into one
@@ -243,19 +259,23 @@ which case it is the first follow-up; **P2** is designed for, not built.
   and Storage rules are the enforcement, as everywhere else.
 - **R38 (P0).** Sharing adds no gating: a member's tier and the host's tier are both irrelevant to
   uploading or viewing a data log.
-- **R39 (P2).** Collaborator notification on upload ("*Name* added a flight data log"). Not in V1;
-  every write today sends its own notification and this one is high-volume and low-urgency.
+- **R39 (P1).** Uploading or deleting a data log sends the collaboration notification other members
+  already receive for record writes: "*Name* added a flight data log · Sep 2 · Ground run" and
+  "*Name* removed a flight data log …". Same fan-out as logs, tasks, and squawks, one notification per
+  write, noun from the lexicon. Layout edits inside the visualizer never notify.
 
 ### 5.7 Gating
 
 Three mechanisms, kept separate, per [AGENTS.md § Gating](../../AGENTS.md#gating-three-mechanisms-kept-separate).
 
 - **R40 (P0). Account.** Upload requires a signed-in, non-anonymous account, because data logs are
-  stored and synced per account like attachments. The section itself is browsable without one.
-  - **Web, signed out** (mock 3a): the section renders a *Sign in to upload logs* card offering the
-    login screen's providers (Google, Apple, email link), a *What gets charted* list, and a preview
-    of the visualizer. No drop zone.
-  - **Mobile, guest** (mocks 3b–3c): tapping *Upload Log* opens a sheet, *Link to an account to
+  stored and synced per account like attachments. The section itself is browsable by a guest. Web has
+  no guest mode at all (the app is entered through sign-in), so the guest states below are mobile
+  only:
+  - **Guest on a wide layout** (tablet; mock 3a's layout): the section renders a *Sign in to upload
+    logs* card offering the login screen's providers (Google, Apple, email link), a *What gets
+    charted* list, and a preview of the visualizer. No drop zone.
+  - **Guest on a phone** (mocks 3b–3c): tapping *Upload Log* opens a sheet, *Link to an account to
     upload logs*, with *Open Settings* and *Not now*. *Open Settings* lands on Settings with the
     existing *Link to an account* sheet already open; on return the user taps Upload again. Nothing
     picked before sign-in is kept.
@@ -263,12 +283,26 @@ Three mechanisms, kept separate, per [AGENTS.md § Gating](../../AGENTS.md#gatin
 - **R41 (P0). Entitlement.** None. Upload and viewing are free on Basic and Pro alike, with no count
   or size allowance. `SubscriptionManager` gains no method for this feature, and data logs do not
   appear on the storage-usage line of the subscription page.
-- **R42 (P0). Template.** The section and the attachment option exist only on templates that declare
-  the section. The airplane preset declares it in V1 (a new template version, per the
-  bump-on-every-edit rule); no other preset does.
-- **R43 (P0). Platform.** No `AppCapability` flag: every host has a file picker and a canvas. If a
-  host ever cannot, add the flag then.
-- **R44 (P0).** No developer flag; there is nothing to override.
+- **R42 (P0). Template — no data migration.** The section and the attachment option exist only on
+  Things whose template declares the section. The airplane preset declares it in a new version (the
+  bump-on-every-edit rule); no other preset does. **Verified constraint:** a Thing carries its
+  template inline as DNA, and a canonical preset edit reaches only Things created after it. Every
+  previous preset version was followed by the DNA refresh script, which rewrites every Thing
+  document. That is a data backfill, and this feature must not depend on one:
+  - The proto changes are additive (a new `Section` value, new lexicon fields); no schema migration
+    and no rules change. Older builds drop the unknown section, which the shell already handles.
+  - **Fallback for existing DNA.** When a Thing's DNA is the airplane preset at a version before the
+    one that declares the section, the shell appends the section and the lexicon resolves the new
+    words from the baked-in airplane preset. Things created before templates existed already resolve
+    to the baked-in preset and need nothing.
+  - The DNA refresh becomes optional housekeeping that removes the fallback's work, run whenever
+    convenient, never a launch gate.
+- **R43 (P0). Platform and rollout.** A new `AppCapability.isDataLogsSupported` flag gates the
+  section, the attachment option, and the parser registration. It is **true on developer builds
+  only** while the feature is built, and flipped to true on every host when V1 is complete. It is a
+  rollout switch, not a per-user flag; it never reaches Firestore.
+- **R44 (P0).** No `DeveloperFlags` entry and no subscription hook; the app capability is the only
+  switch.
 
 ### 5.8 Ads
 
@@ -409,16 +443,17 @@ A log already attached elsewhere is dimmed for information only and remains sele
 │    09:12 · 1h 04m                  │  │  │  Sponsored        Subscribe to remove ads │
 └────────────────────────────────────┘  │  │  [        AD · 320 × 50        ]          │
                       [⬆ Upload Log]    │  └──────────────────────────────────────────┘
- Dashboard Squawks Tasks Logs [Flight Data]
+   ▦    ⚠    ☑    ▤   [📈 Flight Data]
 ```
 
-The list card's attached-record line is a link in the primary colour with the record's icon. The
-*tune* control opens the Series / Flight drawer from the right (2c).
+The bottom pill shows icons for the unselected sections and icon plus label for the selected one
+(R2b). The list card's attached-record line is a link in the primary colour with the record's icon.
+The *tune* control opens the Series / Flight drawer from the right (2c).
 
-### 6.5 Signed-out and guest (mocks 3a–3c)
+### 6.5 Guest (mocks 3a–3c)
 
-Web, signed out: the sidebar shows the app mark instead of a Thing, and the section body is a
-two-column card, sign-in on the left, *What gets charted* on the right:
+Guest on a tablet-width layout (the mock draws it in the web frame, but web has no guest mode): the
+section body is a two-column card, sign-in on the left, *What gets charted* on the right:
 
 ```
 🔒  Sign in to upload logs                    WHAT GETS CHARTED
@@ -440,16 +475,16 @@ Every format needs a real sample file checked into `docs/datalog/samples/` (iden
 anonymised, per the no-real-data rule), a parser fixture test on that file, and a row in this table
 before it is called supported.
 
-| Format | Detect by | Shape | Notes | Phase |
-|---|---|---|---|---|
-| **Garmin G3X / G3X Touch (GDU 4xx, GDU 37x)** | Line 1 `#airframe_info,` with `product="GDU …"` | 3 header lines: metadata; long names with `(unit)`; G1000-style short names. Then 1 Hz rows, local date/time + UTC + offset first. | Empty cells; text columns (GPS fix, nav annunciation, CAS alerts); `(discrete)` 0/1 flags; signed `+lat`. One file per power cycle, so a flight with a restart is two files, uploaded separately. Filename suffix is the nearest airport ident. | **V1** |
-| **Garmin G1000 / G1000 NXi / Perspective** | Line 1 `#airframe_info,` with `airframe_name=` and no `product="GDU 4` | 3 header lines: metadata; `#`-prefixed units row; short names — the *same vocabulary* as G3X line 3, with leading spaces. | Shares the Garmin parser; column mapping by short name. | **V1.1** |
-| **Dynon SkyView (HDX / Classic / SE)** | Header row beginning `Session Time,` with Dynon column names (`GPS Fix Quality`, `Thermocouple N`) | Single header row with `(unit)`; user-configurable rate (1/16 s to 10 s); may restart mid-file at a power cycle. | Engine columns are generic (`Thermocouple 1`) and need per-install mapping to CHT/EGT — offer a one-time mapping prompt, remembered per source unit. | **V1.1** |
-| Avidyne IFD / Entegra | CSV header signature | Single header row | Low effort once the canonical schema exists. | V1.2 |
-| JPI EDM 700 / 730 / 830 / 900 series | EzTrends export header | Engine-only, no GPS | Very common in the certified fleet; high value for the CHT/EGT stories. | V1.2 |
-| Advanced Flight Systems, GRT, MGL | CSV header signatures | Single header row | Experimental fleet. | V1.2 |
-| ForeFlight / Garmin Pilot track logs | GPX / KML / CSV | Position and altitude only | Feeds the map pane; no engine data. | V1.2 |
-| OBD-II app exports (Torque, Car Scanner, OBD Fusion); track loggers (RaceChrono, AiM) | CSV header signatures | Single header row, variable rate | Automotive template. Needs the automotive lexicon and section declaration. | Later |
+| Format                                                                                | Detect by                                                                                          | Shape                                                                                                                              | Notes                                                                                                                                                                                                                                           | Phase    |
+|---------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------|
+| **Garmin G3X / G3X Touch (GDU 4xx, GDU 37x)**                                         | Line 1 `#airframe_info,` with `product="GDU …"`                                                    | 3 header lines: metadata; long names with `(unit)`; G1000-style short names. Then 1 Hz rows, local date/time + UTC + offset first. | Empty cells; text columns (GPS fix, nav annunciation, CAS alerts); `(discrete)` 0/1 flags; signed `+lat`. One file per power cycle, so a flight with a restart is two files, uploaded separately. Filename suffix is the nearest airport ident. | **V1**   |
+| **Garmin G1000 / G1000 NXi / Perspective**                                            | Line 1 `#airframe_info,` with `airframe_name=` and no `product="GDU 4`                             | 3 header lines: metadata; `#`-prefixed units row; short names — the *same vocabulary* as G3X line 3, with leading spaces.          | Shares the Garmin parser; column mapping by short name.                                                                                                                                                                                         | **V1.1** |
+| **Dynon SkyView (HDX / Classic / SE)**                                                | Header row beginning `Session Time,` with Dynon column names (`GPS Fix Quality`, `Thermocouple N`) | Single header row with `(unit)`; user-configurable rate (1/16 s to 10 s); may restart mid-file at a power cycle.                   | Engine columns are generic (`Thermocouple 1`) and need per-install mapping to CHT/EGT — offer a one-time mapping prompt, remembered per source unit.                                                                                            | **V1.1** |
+| Avidyne IFD / Entegra                                                                 | CSV header signature                                                                               | Single header row                                                                                                                  | Low effort once the canonical schema exists.                                                                                                                                                                                                    | V1.2     |
+| JPI EDM 700 / 730 / 830 / 900 series                                                  | EzTrends export header                                                                             | Engine-only, no GPS                                                                                                                | Very common in the certified fleet; high value for the CHT/EGT stories.                                                                                                                                                                         | V1.2     |
+| Advanced Flight Systems, GRT, MGL                                                     | CSV header signatures                                                                              | Single header row                                                                                                                  | Experimental fleet.                                                                                                                                                                                                                             | V1.2     |
+| ForeFlight / Garmin Pilot track logs                                                  | GPX / KML / CSV                                                                                    | Position and altitude only                                                                                                         | Feeds the map pane; no engine data.                                                                                                                                                                                                             | V1.2     |
+| OBD-II app exports (Torque, Car Scanner, OBD Fusion); track loggers (RaceChrono, AiM) | CSV header signatures                                                                              | Single header row, variable rate                                                                                                   | Automotive template. Needs the automotive lexicon and section declaration.                                                                                                                                                                      | Later    |
 
 **The G3X sample** (a 4 m 15 s ground run, 260 rows, 121 KB — about 465 bytes per row) yields 108
 series, 67 numeric. Categories the sidebar groups by, derived from the header text: Engine, Fuel,
@@ -463,18 +498,10 @@ Pointers for the design doc; the design doc decides the details.
 
 A canonical feature module, `feature/datalog`, with `model` / `datamanager` / `sharedassets` /
 `viewing` / `update` and a `di/` uber module, following `feature/tasks` and the five-step checklist.
-Parsers live in `datamanager` behind one interface:
-
-```
-interface DataLogFormat {
-  val id: String                              // "garmin_g3x", "dynon_skyview"
-  fun sniff(header: ByteArray): Confidence    // NONE / POSSIBLE / DEFINITE, header bytes only
-  suspend fun parse(bytes: Source): ParsedDataLog
-}
-```
-
-`ParsedDataLog` is the format-neutral result: metadata, a time column, and a list of series with
-canonical ids where known (§8.3) and raw names always.
+Parsers live in `datamanager` behind one interface with two responsibilities: recognise a file from
+its header alone, and parse it into a format-neutral result (metadata, a time column, series with
+canonical ids where known and raw names always). Formats are identified by an enum, stored on the
+record, so a re-parse knows which parser produced it. Types and signatures are the design doc's.
 
 ### 8.2 Storage
 
@@ -510,18 +537,20 @@ a car is the same id).
 ### 8.5 Rendering
 
 Compose `Canvas` on all three hosts; no chart library dependency exists in the project and none is
-proposed. Decimation (R28) is computed per pane per frame from the visible range. Map tiles load
-through Coil, which is already a dependency.
+proposed. Decimation (R28) is computed per pane per frame from the visible range. For the map pane,
+a raster-tile provider drawn through Coil (already a dependency) is one implementation for three
+hosts; a native map SDK is three. The design doc weighs that against the provider chosen under
+§11 decision 7.
 
 ## 9. Rollout
 
-| Phase | Scope | Exit |
-|---|---|---|
-| **A — Foundation** | Module, record, blob path, G3X parser with fixture, canonical registry, account gate (R40, mocks 3a–3c), template bump | Upload from the section on all three hosts; record syncs; opens to a placeholder |
-| **B — Visualizer** | R20–R28, R34–R35; chips legend | Mock 1c reproduced on web and phone with the sample file |
-| **C — Attach** | R3–R5; attachment type, picker, badge, row | Mock 1b reproduced |
-| **D — Polish** | R12, R13, R29–R32, R36, presets, ad slot (R44a), `NEW` pill, analytics review | V1 release |
-| **E — Formats** | G1000, Dynon, then §7's V1.2 row | Each behind its fixture |
+| Phase              | Scope                                                                                                                  | Exit                                                                             |
+|--------------------|------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------|
+| **A — Foundation** | Module, record, blob path, G3X parser with fixture, canonical registry, `isDataLogsSupported` (R43), account gate (R40, mocks 3a–3c), template bump and DNA fallback (R42) | Upload from the section on developer builds of all three hosts; record syncs; opens to a placeholder |
+| **B — Visualizer** | R20–R28, R34–R35; chips legend; variable-width bottom bar (R2b) | Mock 1c reproduced on web and phone with the sample file |
+| **C — Attach**     | R3–R5; attachment type, picker, badge, row                                                                             | Mock 1b reproduced                                                               |
+| **D — Polish** | R12, R13, R29–R32, R36, R39 notifications, presets, ad slot (R44a), `NEW` pill, analytics review | Flip `isDataLogsSupported` on every host; V1 release |
+| **E — Formats**    | G1000, Dynon, then §7's V1.2 row                                                                                       | Each behind its fixture                                                          |
 
 Phases A–D are one epic with a project board, one PR per phase; E is a rolling epic.
 
@@ -548,10 +577,16 @@ Settled by product direction on 2026-09-13.
 5. **The visualizer follows the app theme**, and a series keeps one colour within a theme (R24a).
 6. **Units are the source's units in V1.** V2 adds a preferences screen for unit preferences and a
    display-theme preference for the visualizer (§12).
+7. **Map tiles come from whichever provider is free and simple to integrate.** Google Maps Platform
+   is acceptable; so is any raster-tile provider with a free tier and required attribution. The
+   design doc picks the concrete provider (§8.5 notes the one-versus-three-integrations trade-off).
+8. **Rollout is an app capability**, true on developer builds until V1 is complete (R43).
+9. **The bottom bar goes variable-width** on every preset to make room for the fifth item (R2b).
+10. **No data migration** for the new section: template fallback for existing DNA, refresh optional
+    (R42).
 
 ### Still open
 
-- **Tile provider for the map pane** (R29): attribution, cost, and offline behaviour. Design doc.
 - **Dynon engine-channel mapping** (§7): how the one-time thermocouple-to-CHT/EGT prompt is worded
   and where the mapping is stored. Decide with the Dynon parser.
 
@@ -562,7 +597,6 @@ Settled by product direction on 2026-09-13.
   flights. The canonical vocabulary is what makes this possible without per-format work.
 - **Event strip** for text and discrete series (R33).
 - **Export.** Include attached data logs in the logbook export bundle as CSV, or as links.
-- **Collaborator notification on upload** (R39).
 - **Destination identifier.** A Cloud Function resolves the nearest location identifier from the
   end position on the record and writes it back; the list then reads `E16 → KWVI`.
 - **Preferences.** A settings screen for unit preferences (temperature, volume, distance, pressure)
