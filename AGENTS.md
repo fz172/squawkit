@@ -562,6 +562,8 @@ Feature PRDs and architecture design docs live in `docs/`, organized into per-to
 - `docs/cards/` — `card_swipe_actions_PRD.md`, `card_swipe_actions_design.md` (**shipped** 2026-09-07 → 09-08,
   project #12 — swipe-to-reveal quick actions on squawk/task/log cards, `SwipeActionCard` in `core/ui`,
   and squawk deletion)
+- `docs/datalog/` — `data_log_visualizer_PRD.md` (📋 proposed — avionics data-log import and a multi-pane
+  time-series visualizer; "Flight Data" on the airplane preset, G3X first, then G1000 and Dynon)
 - `docs/search/` — `search_filter_PRD.md`, `search_filter_design.md` (📋 proposed — per-tab search and filter bars with a tolerant in-memory matcher), `intelligentsearch.md` (engine research, kept as the escalation path)
 - `docs/web/` — `web_target_expansion_plan.md`, `web_attachments_design.md`,
   `web_adaptive_layout_design.html`, `promo_site_design.html`,
