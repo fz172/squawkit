@@ -52,6 +52,8 @@ class AppDelegate: NSObject, UIApplicationDelegate, MessagingDelegate {
     // GoogleMobileAds is now linked (P8) — installs MainEntry.installAdViewFactory. See
     // AdViewFactory.swift.
     installAdViewFactory()
+    // Settings → About → "Rate SquawkIt". See AppReviewPresenter.swift.
+    installAppReviewRequester()
     // Register BGProcessingTask identifier "dev.fanfly.wingslog.blob-scan" with the OS.
     // Must be called before this method returns.
     MainEntry.shared.registerBgTasks()

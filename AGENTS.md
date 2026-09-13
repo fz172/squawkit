@@ -90,7 +90,7 @@ composeApp/             # Android/iOS host — DB-integrity gate, theme wrapper,
 webApp/                 # Kotlin/JS web host — browser delta around the shared graph: history binding,
                         #   OPFS SQLite worker, single-tab gate, email-link completion tab, Firebase JS +
                         #   App Check bootstrap, share deep-link parking, SEO login landing
-iosApp/                 # Xcode project (schemes: iosAppDebug / iosAppRelease) + Swift bridges (ads, consent)
+iosApp/                 # Xcode project (schemes: iosAppDebug / iosAppRelease) + Swift bridges (ads, consent, review)
 core/
   model/                # Wire-generated protobuf models (Aircraft, MaintenanceLog, Squawk, Technician,
                         #   UserInfo, Subscription, DeveloperSettings, SharedAircraftRef…);

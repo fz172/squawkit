@@ -49,6 +49,9 @@ kotlin {
     androidMain.dependencies {
       implementation(libs.compose.ui)
       implementation(project.dependencies.platform(libs.androidx.compose.bom))
+      // LocalActivity, for the in-app review flow (Play needs an Activity to attach its sheet to).
+      implementation(libs.androidx.activity.compose)
+      implementation(libs.play.review.ktx)
     }
   }
 }

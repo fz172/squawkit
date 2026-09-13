@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.core.appinfo.getAppVersion
+import dev.fanfly.wingslog.core.appinfo.rememberAppReviewPrompt
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedTopBar
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
 import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
@@ -57,7 +58,8 @@ private val AppIconSize = 96.dp
 
 /**
  * About SquawkIt: the legal page, the ways to reach us, and the version, in one group. Link rows
- * exist only where the host has somewhere to send them — web has no store to rate in.
+ * exist only where the host has somewhere to send them — web has no store to rate in. Rating
+ * happens in-product (`AppReviewPrompt`), not on the listing.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -66,6 +68,7 @@ fun AboutScreen(
   appCapability: AppCapability = koinInject(),
 ) {
   val uriHandler = LocalUriHandler.current
+  val reviewPrompt = rememberAppReviewPrompt()
 
   Scaffold(
     topBar = {
@@ -95,7 +98,6 @@ fun AboutScreen(
 
         val termsUrl = appCapability.termsUrl
         val supportUrl = appCapability.supportUrl
-        val storeListingUrl = appCapability.storeListingUrl
         // One group, no labels: four rows do not need sorting into sections.
         SettingsRowGroup(
           buildList {
@@ -118,12 +120,12 @@ fun AboutScreen(
                 )
               }
             }
-            if (storeListingUrl != null) {
+            if (reviewPrompt != null) {
               add {
                 SettingsRow(
                   icon = Icons.Default.Star,
                   title = stringResource(SettingsRes.string.about_rate),
-                  onClick = { uriHandler.openUri(storeListingUrl) },
+                  onClick = reviewPrompt.launch,
                 )
               }
             }

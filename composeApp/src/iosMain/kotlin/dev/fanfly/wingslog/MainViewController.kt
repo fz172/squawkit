@@ -2,6 +2,7 @@ package dev.fanfly.wingslog
 
 import androidx.compose.ui.window.ComposeUIViewController
 import co.touchlab.kermit.Logger
+import dev.fanfly.wingslog.core.appinfo.IosAppReviewBridge
 import dev.fanfly.wingslog.core.auth.EmailLinkDeepLinks
 import dev.fanfly.wingslog.core.auth.IosAppleSignInBridge
 import dev.fanfly.wingslog.core.auth.IosGoogleSignInBridge
@@ -49,6 +50,15 @@ object MainEntry {
    */
   fun installAppleSignInHandler(handler: () -> Unit) {
     IosAppleSignInBridge.install(handler)
+  }
+
+  /**
+   * Installs the in-app review request owned by the Swift app (`AppStore.requestReview(in:)` is
+   * Swift-only StoreKit — see `IosAppReviewBridge`). [requester] returns true once it has handed
+   * the request to StoreKit, which then decides on its own whether to show the card.
+   */
+  fun installAppReviewRequester(requester: () -> Boolean) {
+    IosAppReviewBridge.install(requester)
   }
 
   /**

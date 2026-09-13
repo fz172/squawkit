@@ -11,5 +11,4 @@ actual fun createAppCapability(isDeveloperBuild: Boolean) = AppCapability(
   isAdsSupported = true,
   supportUrl = "https://squawkit.fanfly.dev/support.html",
   termsUrl = "https://squawkit.fanfly.dev/privacy.html",
-  storeListingUrl = PLAY_LISTING,
 )
