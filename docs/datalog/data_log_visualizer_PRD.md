@@ -1,6 +1,6 @@
 # PRD: Data Log Visualizer (Flight Data)
 
-**Design doc:** `data_log_visualizer_design.md` (to be written)
+**Design doc:** [`data_log_visualizer_design.md`](data_log_visualizer_design.md)
 **Mock:** [Flight Data Design — Claude Design](https://claude.ai/design/p/dfe4d880-6486-4790-a8d3-63830a1d7c6d?file=Flight+Data+Design.dc.html)
 (`Flight Data Design.dc.html`: frames 1a–1d entry points and visualizer, 2a–2c phone, 3a–3c signed-out
 gate and ad placement; `Flight Data Visualizer.dc.html` is the live chart component)
