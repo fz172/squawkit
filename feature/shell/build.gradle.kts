@@ -41,6 +41,7 @@ kotlin {
       implementation(project(":feature:thing:dashboard"))
       implementation(project(":feature:thing:update"))
       implementation(project(":feature:export:update"))
+      implementation(project(":feature:export:datamanager"))
       implementation(project(":feature:fleet:datamanager"))
       implementation(project(":feature:fleet:picker:data"))
       implementation(project(":feature:fleet:viewing"))

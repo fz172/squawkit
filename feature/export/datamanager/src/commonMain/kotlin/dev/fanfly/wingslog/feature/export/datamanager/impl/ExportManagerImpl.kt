@@ -1,12 +1,10 @@
 package dev.fanfly.wingslog.feature.export.datamanager.impl
 
+import co.touchlab.kermit.Logger
+import dev.fanfly.wingslog.core.model.id.generateRandomId
 import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.core.template.displayLabel
 import dev.fanfly.wingslog.core.template.displaySubtitle
-import co.touchlab.kermit.Logger
-import dev.fanfly.wingslog.core.model.id.generateRandomId
-import dev.fanfly.wingslog.core.template.SpecKeys
-import dev.fanfly.wingslog.core.template.specValue
 import dev.fanfly.wingslog.export.ExportRecord
 import dev.fanfly.wingslog.export.ExportRecordAircraft
 import dev.fanfly.wingslog.export.ExportRecordDateRange
@@ -18,8 +16,11 @@ import dev.fanfly.wingslog.feature.export.datamanager.ExportProgress
 import dev.fanfly.wingslog.feature.export.datamanager.ExportProgressStep
 import dev.fanfly.wingslog.feature.export.datamanager.ExportRequest
 import dev.gitlive.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.withContext
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
@@ -108,47 +109,68 @@ class ExportManagerImpl(
         percent = 74
       )
     )
-    val saved = exportFileStore.writeZip(fileName, zipBytes)
     val ownerUid = currentOwnerUid()
-    // Persist the full scope so export history can rediscover it without parsing the file name.
-    val localRecord = buildRecord(
-      request = request,
-      bundles = bundles,
-      saved = saved,
-      createdAtEpochMillis = clock.now()
-        .toEpochMilliseconds(),
-    )
-    if (ownerUid != null) {
-      exportFileStore.saveRecord(ownerUid, localRecord)
-    }
-    emit(
-      ExportProgress.Running(
-        step = ExportProgressStep.UPLOADING_ARCHIVE,
-        percent = 86
+    // File and record land together or not at all: a cancellation that struck between them would
+    // leave an archive in Downloads with no record, which history then rediscovers as a finished
+    // export. NonCancellable defers the cancel by one disk write, and the catch below undoes both.
+    val (saved, localRecord) = withContext(NonCancellable) {
+      val saved = exportFileStore.writeZip(fileName, zipBytes)
+      // Persist the full scope so export history can rediscover it without parsing the file name.
+      val localRecord = buildRecord(
+        request = request,
+        bundles = bundles,
+        saved = saved,
+        createdAtEpochMillis = clock.now()
+          .toEpochMilliseconds(),
       )
-    )
-    // Uploads to cloud storage when the user is email-eligible, so a later explicit "Send to my
-    // email" tap (see ExportManager.resendDelivery) has an archive to attach without re-uploading.
-    // Delivery itself is never triggered here — only an explicit user action requests it.
-    val remoteRecord = remoteRepository.uploadAndSync(localRecord, zipBytes)
-    // Keep the on-device file after upload so every export stays available both locally and in
-    // the cloud. The persisted local record carries the remote ref once synced.
-    if (ownerUid != null && remoteRecord != localRecord) {
-      exportFileStore.saveRecord(ownerUid, remoteRecord)
+      if (ownerUid != null) {
+        exportFileStore.saveRecord(ownerUid, localRecord)
+      }
+      saved to localRecord
     }
-    emit(
-      ExportProgress.Success(
-        exportId = remoteRecord.export_id,
-        filePath = saved.filePath,
-        fileName = saved.fileName,
-        // Left blank so the UI renders the localized label from displayLocationKind.
-        displayLocation = "",
-        sizeBytes = saved.sizeBytes,
-        displayLocationKind = saved.displayLocationKind,
-        persistedDeliveryState = remoteRecord.persisted_delivery_state,
-        deliveryFailureMessage = remoteRecord.delivery_failure_message,
+    try {
+      emit(
+        ExportProgress.Running(
+          step = ExportProgressStep.UPLOADING_ARCHIVE,
+          percent = 86
+        )
       )
-    )
+      // Uploads to cloud storage when the user is email-eligible, so a later explicit "Send to my
+      // email" tap (see ExportManager.resendDelivery) has an archive to attach without re-uploading.
+      // Delivery itself is never triggered here — only an explicit user action requests it.
+      val remoteRecord = remoteRepository.uploadAndSync(localRecord, zipBytes)
+      // Keep the on-device file after upload so every export stays available both locally and in
+      // the cloud. The persisted local record carries the remote ref once synced.
+      if (ownerUid != null && remoteRecord != localRecord) {
+        exportFileStore.saveRecord(ownerUid, remoteRecord)
+      }
+      emit(
+        ExportProgress.Success(
+          exportId = remoteRecord.export_id,
+          filePath = saved.filePath,
+          fileName = saved.fileName,
+          // Left blank so the UI renders the localized label from displayLocationKind.
+          displayLocation = "",
+          sizeBytes = saved.sizeBytes,
+          displayLocationKind = saved.displayLocationKind,
+          persistedDeliveryState = remoteRecord.persisted_delivery_state,
+          deliveryFailureMessage = remoteRecord.delivery_failure_message,
+        )
+      )
+    } catch (e: CancellationException) {
+      // Cancelled after the archive was saved (Cancel tap, or the app backgrounded under an
+      // ExportRunPolicy that stops the work). The screen tells the user nothing was kept, so make
+      // that true. Guests have no record to drop; their file is invisible to history anyway.
+      if (ownerUid != null) discardCancelled(ownerUid, localRecord.export_id)
+      throw e
+    }
+  }
+
+  private suspend fun discardCancelled(ownerUid: String, exportId: String) {
+    withContext(NonCancellable) {
+      runCatching { exportFileStore.deleteExport(ownerUid, exportId) }
+        .onFailure { log.w(it) { "failed to discard cancelled export $exportId" } }
+    }
   }
 
   override suspend fun listExports(): List<ExportRecord> {

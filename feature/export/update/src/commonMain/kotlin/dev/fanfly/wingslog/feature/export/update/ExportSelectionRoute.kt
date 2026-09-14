@@ -7,6 +7,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDeliveryOutcome
@@ -58,6 +59,13 @@ fun ExportSelectionRoute(
     }
   }
 
+  // ON_STOP, not ON_PAUSE: on iOS a pause also fires for Control Center, the notification shade
+  // and an incoming call, none of which should abandon an export. Stop is the real "left the app"
+  // edge (didEnterBackground). The ViewModel decides whether the platform policy acts on it.
+  LifecycleStartEffect(viewModel) {
+    onStopOrDispose { viewModel.onAppBackgrounded() }
+  }
+
   ExportSelectionScreen(
     state = state,
     onNavigateBack = { navController.popBackStack() },
@@ -84,6 +92,7 @@ fun ExportSelectionRoute(
       navController.popBackStack()
     },
     onRetry = viewModel::onRetry,
+    onRestart = viewModel::onRestart,
     onSeePlans = onSeePlans,
     snackbarHostState = snackbarHostState,
   )

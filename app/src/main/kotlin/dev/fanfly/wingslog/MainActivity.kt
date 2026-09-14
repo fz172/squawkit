@@ -8,6 +8,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import dev.fanfly.wingslog.core.auth.EmailLinkDeepLinks
 import dev.fanfly.wingslog.feature.notifications.permission.AndroidNotificationPermissionBridge
+import dev.fanfly.wingslog.feature.export.datamanager.ExportDeepLinks
 import dev.fanfly.wingslog.feature.notifications.viewing.NotificationTapRouter
 import dev.fanfly.wingslog.feature.sharing.datamanager.ThingShareDeepLinks
 
@@ -50,6 +51,7 @@ class MainActivity : ComponentActivity() {
     // NotificationTapRouter (design §5.3); anything else (email sign-in) goes to AuthFlow.
     if (ThingShareDeepLinks.deliver(data)) return
     if (NotificationTapRouter.deliver(data)) return
+    if (ExportDeepLinks.deliver(data)) return
     EmailLinkDeepLinks.deliver(data)
   }
 }

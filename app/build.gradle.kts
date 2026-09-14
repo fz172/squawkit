@@ -143,6 +143,7 @@ dependencies {
   // EmailLinkDeepLinks: MainActivity hands the launch intent's URL to the shared auth channel.
   implementation(project(":core:auth"))
   implementation(project(":feature:sharing:datamanager"))
+  implementation(project(":feature:export:datamanager"))
   // AndroidNotificationPermissionBridge: MainActivity registers the runtime-permission launcher
   // this actual needs, since registerForActivityResult must happen before STARTED.
   implementation(project(":feature:notifications:permission"))

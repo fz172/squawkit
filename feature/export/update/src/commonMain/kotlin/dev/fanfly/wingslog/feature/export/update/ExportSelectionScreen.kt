@@ -31,9 +31,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Attachment
+import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Download
@@ -43,10 +43,13 @@ import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.FolderZip
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Mail
+import androidx.compose.material.icons.filled.PauseCircleOutline
 import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.TableView
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.Button
@@ -92,12 +95,12 @@ import dev.fanfly.wingslog.core.template.thingNoun
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedTopBar
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
 import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
+import dev.fanfly.wingslog.core.ui.adaptive.thingIcon
 import dev.fanfly.wingslog.core.ui.common.compose.DatePickerDialog
 import dev.fanfly.wingslog.core.ui.common.compose.GroupedCheckboxRow
 import dev.fanfly.wingslog.core.ui.common.compose.GroupedLeadingIconChip
 import dev.fanfly.wingslog.core.ui.common.compose.GroupedRowGroup
 import dev.fanfly.wingslog.core.ui.common.compose.GroupedSection
-import dev.fanfly.wingslog.core.ui.adaptive.thingIcon
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
 import dev.fanfly.wingslog.core.ui.common.compose.formatFileSize
 import dev.fanfly.wingslog.core.ui.theme.Spacing
@@ -141,6 +144,10 @@ import wingslog.feature.export.sharedassets.generated.resources.export_footer_th
 import wingslog.feature.export.sharedassets.generated.resources.export_format_pick_one
 import wingslog.feature.export.sharedassets.generated.resources.export_formats_section
 import wingslog.feature.export.sharedassets.generated.resources.export_history_action
+import wingslog.feature.export.sharedassets.generated.resources.export_interrupted_details
+import wingslog.feature.export.sharedassets.generated.resources.export_interrupted_restart
+import wingslog.feature.export.sharedassets.generated.resources.export_interrupted_subtitle
+import wingslog.feature.export.sharedassets.generated.resources.export_interrupted_title
 import wingslog.feature.export.sharedassets.generated.resources.export_last_12_months
 import wingslog.feature.export.sharedassets.generated.resources.export_location_downloads_squawkit
 import wingslog.feature.export.sharedassets.generated.resources.export_location_files_squawkit
@@ -156,6 +163,7 @@ import wingslog.feature.export.sharedassets.generated.resources.export_receipt_a
 import wingslog.feature.export.sharedassets.generated.resources.export_receipt_file_subtitle
 import wingslog.feature.export.sharedassets.generated.resources.export_receipt_range
 import wingslog.feature.export.sharedassets.generated.resources.export_running_stage_counter
+import wingslog.feature.export.sharedassets.generated.resources.export_running_stay_hint
 import wingslog.feature.export.sharedassets.generated.resources.export_running_title
 import wingslog.feature.export.sharedassets.generated.resources.export_select_all
 import wingslog.feature.export.sharedassets.generated.resources.export_send_to_email_action
@@ -190,12 +198,15 @@ fun ExportSelectionScreen(
   onSendToEmail: () -> Unit,
   onDone: () -> Unit,
   onRetry: () -> Unit,
+  onRestart: () -> Unit,
   onSeePlans: () -> Unit,
   snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
   // There's no explicit "Done" action on the success screen anymore — the same cleanup (reset to
   // the last editable configuration) now happens on back navigation, gesture included.
   BackHandler(enabled = state is ExportUiState.Success) { onDone() }
+  // Back from the interrupted screen returns to setup rather than leaving the feature.
+  BackHandler(enabled = state is ExportUiState.Interrupted) { onRetry() }
 
   // The success screen's action bar isn't a real Scaffold bottomBar (it's pinned to the bottom of
   // the content column instead, matching ConfiguringContent's pattern), so Scaffold can't push the
@@ -210,6 +221,7 @@ fun ExportSelectionScreen(
           onBackClick = when (state) {
             is ExportUiState.Running -> onCancel
             is ExportUiState.Success -> onDone
+            is ExportUiState.Interrupted -> onRetry
             else -> onNavigateBack
           },
           actions = {
@@ -270,6 +282,12 @@ fun ExportSelectionScreen(
         onHistory = onNavigateToHistory,
         onSeePlans = onSeePlans,
         onActionsHeightChanged = { successActionsHeight = it },
+      )
+
+      is ExportUiState.Interrupted -> InterruptedResult(
+        modifier = Modifier.padding(innerPadding),
+        onRestart = onRestart,
+        onBackToSetup = onRetry,
       )
 
       is ExportUiState.Error -> ErrorResult(
@@ -467,10 +485,17 @@ private fun FormatTile(
     modifier = modifier
       .clip(shape)
       .background(if (selected) cs.primaryContainer else Color.Transparent)
-      .border(Spacing.hairline, if (selected) Color.Transparent else cs.outlineVariant, shape)
+      .border(
+        Spacing.hairline,
+        if (selected) Color.Transparent else cs.outlineVariant,
+        shape
+      )
       .clickable(onClick = onClick)
       .padding(horizontal = Spacing.small, vertical = Spacing.medium),
-    horizontalArrangement = Arrangement.spacedBy(Spacing.small, Alignment.CenterHorizontally),
+    horizontalArrangement = Arrangement.spacedBy(
+      Spacing.small,
+      Alignment.CenterHorizontally
+    ),
     verticalAlignment = Alignment.CenterVertically,
   ) {
     Icon(
@@ -503,7 +528,8 @@ private fun ThingOptionRow(
     // Already resolved per row by the ViewModel, which is the only place that knows each Thing's
     // own template. The label chain guarantees a line, so there is no "Untitled" case left.
     title = thing.label,
-    subtitle = listOf(thing.subtitle, logCount).filter { it.isNotBlank() }.joinToString(" · "),
+    subtitle = listOf(thing.subtitle, logCount).filter { it.isNotBlank() }
+      .joinToString(" · "),
     titleStyle = WingslogTypography.dataLarge,
     checked = selected,
     onCheckedChange = { onClick() },
@@ -782,7 +808,10 @@ private fun ExportBottomBar(
         )
         Text(
           text = listOf(
-            stringResource(Res.string.export_footer_thing_count, state.selectedThingIds.size),
+            stringResource(
+              Res.string.export_footer_thing_count,
+              state.selectedThingIds.size
+            ),
             rangeSummary(state),
             joinFormats(state.formats),
           ).joinToString(" · "),
@@ -903,6 +932,7 @@ private fun RunningContent(
             )
           }
         }
+        StayHereHint()
       }
     },
     actions = {
@@ -913,6 +943,27 @@ private fun RunningContent(
       )
     },
   )
+}
+
+@Composable
+private fun StayHereHint() {
+  Row(
+    modifier = Modifier.fillMaxWidth(),
+    horizontalArrangement = Arrangement.spacedBy(Spacing.small),
+    verticalAlignment = Alignment.Top,
+  ) {
+    Icon(
+      imageVector = Icons.Default.Info,
+      contentDescription = null,
+      tint = MaterialTheme.colorScheme.onSurfaceVariant,
+      modifier = Modifier.size(18.dp),
+    )
+    Text(
+      text = stringResource(Res.string.export_running_stay_hint),
+      style = MaterialTheme.typography.bodySmall,
+      color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+  }
 }
 
 @Composable
@@ -1299,6 +1350,54 @@ private fun ReceiptRow(
 }
 
 // ─── Result · Error ─────────────────────────────────────────────────────────
+
+@Composable
+private fun InterruptedResult(
+  modifier: Modifier,
+  onRestart: () -> Unit,
+  onBackToSetup: () -> Unit,
+) {
+  ResultShell(
+    modifier = modifier,
+    heroIcon = Icons.Default.PauseCircleOutline,
+    heroColor = MaterialTheme.statusColors.caution.accent,
+    heroContainer = MaterialTheme.statusColors.caution.container,
+    title = stringResource(Res.string.export_interrupted_title),
+    subtitle = stringResource(Res.string.export_interrupted_subtitle),
+    body = {
+      Column(
+        modifier = Modifier
+          .fillMaxWidth()
+          .clip(RoundedCornerShape(Spacing.cardCornerRadius))
+          .background(MaterialTheme.colorScheme.surfaceContainer)
+          .border(
+            width = Spacing.hairline,
+            color = MaterialTheme.colorScheme.outlineVariant,
+            shape = RoundedCornerShape(Spacing.cardCornerRadius),
+          )
+          .padding(Spacing.large),
+      ) {
+        Text(
+          text = stringResource(Res.string.export_interrupted_details),
+          style = MaterialTheme.typography.bodyMedium,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+      }
+    },
+    actions = {
+      ResultPrimaryButton(
+        label = stringResource(Res.string.export_interrupted_restart),
+        icon = Icons.Default.Refresh,
+        onClick = onRestart,
+      )
+      ResultSecondaryButton(
+        label = stringResource(Res.string.export_back_to_setup),
+        icon = Icons.Default.Tune,
+        onClick = onBackToSetup,
+      )
+    },
+  )
+}
 
 @Composable
 private fun ErrorResult(

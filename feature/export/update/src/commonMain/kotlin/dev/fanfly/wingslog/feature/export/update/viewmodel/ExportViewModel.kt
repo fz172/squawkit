@@ -14,9 +14,12 @@ import dev.fanfly.wingslog.feature.export.datamanager.ExportDeliveryEmailSource
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDeliveryInfo
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDeliveryOutcome
 import dev.fanfly.wingslog.feature.export.datamanager.ExportFormat
+import dev.fanfly.wingslog.feature.export.datamanager.ExportJobCoordinator
 import dev.fanfly.wingslog.feature.export.datamanager.ExportManager
 import dev.fanfly.wingslog.feature.export.datamanager.ExportProgress
+import dev.fanfly.wingslog.feature.export.datamanager.ExportProgressStep
 import dev.fanfly.wingslog.feature.export.datamanager.ExportRequest
+import dev.fanfly.wingslog.feature.export.datamanager.ExportRunPolicy
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
@@ -27,7 +30,6 @@ import dev.fanfly.wingslog.thing.AttachmentType.ATTACHMENT_TYPE_LINK
 import dev.fanfly.wingslog.thing.Thing
 import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -36,7 +38,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
@@ -50,6 +51,7 @@ import kotlin.time.Clock
  */
 class ExportViewModel(
   private val exportManager: ExportManager,
+  private val jobCoordinator: ExportJobCoordinator,
   private val fleetManager: FleetManager,
   private val logsManager: MaintenanceLogManager,
   private val taskDataManager: TaskDataManager,
@@ -59,6 +61,7 @@ class ExportViewModel(
   private val currentThingTemplate: CurrentThingTemplate,
   private val templateRegistry: TemplateRegistry,
   private val analytics: AnalyticsManager,
+  private val runPolicy: ExportRunPolicy,
   clock: Clock = Clock.System,
   timeZone: TimeZone = TimeZone.currentSystemDefault(),
 ) : ViewModel() {
@@ -78,13 +81,15 @@ class ExportViewModel(
   val deliveryEvents = _deliveryEvents.receiveAsFlow()
 
   private var lastConfiguring: ExportUiState.Configuring = defaultConfiguring
-  private var exportJob: Job? = null
   private var hasInitializedSelection = false
   private var latestDeliveryInfo: ExportDeliveryInfo? = null
+  // The job whose completion has already been counted, so re-observing it never double-logs.
+  private var loggedJobId: String? = null
 
   init {
     observeThing()
     observeDeliveryInfo()
+    observeJob()
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)
@@ -120,29 +125,36 @@ class ExportViewModel(
           }
         }
         .collect { rows ->
-          _state.update { current ->
-            val currentConfig =
-              current as? ExportUiState.Configuring ?: lastConfiguring
-            val rowIds = rows.map { it.thingId }
-              .toSet()
-            val selectedIds = if (!hasInitializedSelection) {
-              hasInitializedSelection = true
-              rowIds
-            } else {
-              currentConfig.selectedThingIds.intersect(rowIds)
-            }
-            currentConfig.copy(
-              things = rows,
-              selectedThingIds = selectedIds,
-              isLoadingThings = false,
-            )
-              .recomputeEstimates()
+          val currentConfig =
+            _state.value as? ExportUiState.Configuring ?: lastConfiguring
+          val rowIds = rows.map { it.thingId }
+            .toSet()
+          val selectedIds = if (!hasInitializedSelection) {
+            hasInitializedSelection = true
+            rowIds
+          } else {
+            currentConfig.selectedThingIds.intersect(rowIds)
           }
-            .also {
-              (_state.value as? ExportUiState.Configuring)?.let {
-                lastConfiguring = it
-              }
+          lastConfiguring = currentConfig.copy(
+            things = rows,
+            selectedThingIds = selectedIds,
+            isLoadingThings = false,
+          )
+            .recomputeEstimates()
+          // Only the setup screen shows the rows. A running, finished, or interrupted export keeps
+          // its own state; the refreshed setup waits in lastConfiguring for when it comes back.
+          when (val current = _state.value) {
+            is ExportUiState.Configuring -> _state.value = lastConfiguring
+            // A result screen composed before the rows arrived (process death, cold notification
+            // tap) fills in the names now.
+            is ExportUiState.Success -> jobCoordinator.job.value?.let { job ->
+              _state.value = current.copy(
+                selectedTailNumbers = lastConfiguring.labelsFor(job.request.thingIds)
+              )
             }
+
+            else -> Unit
+          }
         }
     }
   }
@@ -243,48 +255,88 @@ class ExportViewModel(
     }
 
   /**
+   * Mirrors the coordinator's job into screen state. The job outlives this ViewModel where the
+   * platform allows it (#343), so a screen opened mid-export or after completion picks it up here.
+   */
+  private fun observeJob() {
+    viewModelScope.launch {
+      jobCoordinator.job.collect { job ->
+        if (job == null) {
+          // Cancelled or cleared. Setup-side states (Configuring, Interrupted) are not the job's
+          // to change; only a stale job-derived screen falls back to setup.
+          if (_state.value.isJobDerived()) _state.value = lastConfiguring
+          return@collect
+        }
+        val progress = job.progress
+        // On the terminal success only: a cancelled or failed export produced no archive, and
+        // §13 counts exports that finished.
+        if (progress is ExportProgress.Success && loggedJobId != job.id) {
+          loggedJobId = job.id
+          analytics.log(
+            ExportCompleted(
+              templateId = currentThingTemplate.templateId,
+              format = job.request.formats.joinToString("+") { it.name.lowercase() },
+              thingCount = job.request.thingIds.size,
+            )
+          )
+        }
+        val current = _state.value
+        // The result screen already on show may carry a "send to email" in flight; keep it.
+        if (current is ExportUiState.Success && progress is ExportProgress.Success &&
+          current.exportId == progress.exportId
+        ) return@collect
+        _state.value = progress.toUiState(job.request)
+      }
+    }
+  }
+
+  /**
    * Starts export generation using the current configuration.
    */
   fun onExport() {
     val configuring = _state.value as? ExportUiState.Configuring ?: return
     if (configuring.selectedThingIds.isEmpty()) return
     lastConfiguring = configuring
-    exportJob?.cancel()
-    exportJob = viewModelScope.launch {
-      val request = configuring.toRequest()
-      exportManager.exportLogs(request)
-        .collect { progress ->
-          // On the terminal success only: a cancelled or failed export produced no archive, and
-          // §13 counts exports that finished.
-          if (progress is ExportProgress.Success) {
-            analytics.log(
-              ExportCompleted(
-                templateId = currentThingTemplate.templateId,
-                format = request.formats.joinToString("+") { it.name.lowercase() },
-                thingCount = request.thingIds.size,
-              )
-            )
-          }
-          _state.value = progress.toUiState()
-        }
-    }
+    // Shown at once rather than waiting for the coordinator's first emission.
+    _state.value = ExportUiState.Running(ExportProgressStep.COLLECTING_DATA, 0)
+    jobCoordinator.start(configuring.toRequest())
+  }
+
+  /**
+   * The host reports the app left the foreground. On platforms whose [ExportRunPolicy] stops the
+   * work, an in-flight export is abandoned and the screen explains that it has to be restarted.
+   * Any other state, or a platform that keeps running, is untouched.
+   */
+  fun onAppBackgrounded() {
+    if (!runPolicy.stopWhenBackgrounded) return
+    if (_state.value !is ExportUiState.Running) return
+    _state.value = ExportUiState.Interrupted
+    jobCoordinator.cancel()
+  }
+
+  /**
+   * Re-runs the export that was interrupted, with the configuration it was started from.
+   */
+  fun onRestart() {
+    if (_state.value !is ExportUiState.Interrupted) return
+    _state.value = lastConfiguring
+    onExport()
   }
 
   /**
    * Cancels an in-flight export and restores the last editable configuration.
    */
   fun onCancel() {
-    exportJob?.cancel()
-    exportJob = null
     _state.value = lastConfiguring
+    jobCoordinator.cancel()
   }
 
   /**
    * Dismisses terminal export state without discarding the previous configuration.
    */
   fun onDone() {
-    exportJob = null
     _state.value = lastConfiguring
+    jobCoordinator.clear()
   }
 
   /**
@@ -318,10 +370,17 @@ class ExportViewModel(
   }
 
   /**
-   * Returns from an error state to the last editable configuration.
+   * Returns from an error or interrupted state to the last editable configuration.
    */
   fun onRetry() {
     _state.value = lastConfiguring
+    jobCoordinator.clear()
+  }
+
+  override fun onCleared() {
+    // Screen-bound platforms (iOS, web) end the export with the screen; Android's worker carries on.
+    if (!runPolicy.survivesLeavingScreen) jobCoordinator.cancel()
+    super.onCleared()
   }
 
   /**
@@ -353,7 +412,16 @@ class ExportViewModel(
     destinationEmailSource = latestDeliveryInfo?.source?.name,
   )
 
-  private fun ExportProgress.toUiState(): ExportUiState = when (this) {
+  private fun ExportUiState.isJobDerived(): Boolean =
+    this is ExportUiState.Running || this is ExportUiState.Success || this is ExportUiState.Error
+
+  private fun ExportUiState.Configuring.labelsFor(thingIds: List<String>): List<String> =
+    things.filter { it.thingId in thingIds }
+      .map { it.label }
+
+  // Summary fields come from the job's own request, not the current setup: after process death or
+  // a notification tap, the setup is still at its defaults.
+  private fun ExportProgress.toUiState(request: ExportRequest): ExportUiState = when (this) {
     is ExportProgress.Running -> ExportUiState.Running(step, percent)
     is ExportProgress.Success -> ExportUiState.Success(
       exportId = exportId,
@@ -362,13 +430,17 @@ class ExportViewModel(
       displayLocationKind = displayLocationKind,
       filePath = filePath,
       sizeBytes = sizeBytes,
-      formats = lastConfiguring.formats,
-      selectedTailNumbers = lastConfiguring.things
-        .filter { it.thingId in lastConfiguring.selectedThingIds }
-        .map { it.label },
-      dateRange = lastConfiguring.dateRange,
-      customStart = lastConfiguring.customStart,
-      customEnd = lastConfiguring.customEnd,
+      formats = request.formats,
+      selectedTailNumbers = lastConfiguring.labelsFor(request.thingIds),
+      dateRange = when (request.dateRange) {
+        ExportDateRange.AllTime -> DateRangeOption.AllTime
+        is ExportDateRange.LastNMonths -> DateRangeOption.Last12Months
+        is ExportDateRange.Custom -> DateRangeOption.Custom
+      },
+      customStart = (request.dateRange as? ExportDateRange.Custom)?.start
+        ?: lastConfiguring.customStart,
+      customEnd = (request.dateRange as? ExportDateRange.Custom)?.endInclusive
+        ?: lastConfiguring.customEnd,
       deliveryInfo = latestDeliveryInfo,
       emailDeliveryLocked = lastConfiguring.emailDeliveryLocked,
       persistedDeliveryState = persistedDeliveryState,

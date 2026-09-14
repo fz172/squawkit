@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android notification strings for ExportWorker. Platform resources, not Compose resources,
+     because a Notification is built outside Compose from a CoroutineWorker. -->
+<resources>
+  <string name="export_notification_channel_name">Exports</string>
+  <string name="export_notification_channel_description">Progress and completion of logbook exports.</string>
+  <string name="export_notification_progress_title">Preparing export</string>
+  <string name="export_notification_step_collecting">Collecting data...</string>
+  <string name="export_notification_step_building">Generating reports...</string>
+  <string name="export_notification_step_compressing">Compressing files...</string>
+  <string name="export_notification_step_saving">Saving export...</string>
+  <string name="export_notification_step_uploading">Syncing to the cloud...</string>
+  <string name="export_notification_done_title">Export ready</string>
+  <string name="export_notification_done_body">%1$s saved to Downloads/SquawkIt. Tap to open.</string>
+  <string name="export_notification_failed_title">Export failed</string>
+  <string name="export_notification_failed_body">Tap to open SquawkIt and try again.</string>
+</resources>
