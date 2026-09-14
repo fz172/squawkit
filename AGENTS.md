@@ -446,7 +446,8 @@ their own subscription — the host's entitlement governs and the blob broker en
 | Is a developer overriding it locally? | `DeveloperOptionsManager` / `DeveloperFlags` |
 
 `AppCapability` fields: `isDeveloperOptionsSupported`, `isCameraCaptureSupported`,
-`isAnonymousLoginSupported`, `isAdsSupported`. Constructed once per host at Koin startup via
+`isAnonymousLoginSupported`, `isAdsSupported`, `isDataLogsSupported` (the data-log rollout switch:
+developer builds only until V1 ships, see `docs/datalog/`). Constructed once per host at Koin startup via
 `createAppCapability(isDeveloperBuild)`. Search and filter is unconditional on every host as of
 #854 and carries no flag.
 

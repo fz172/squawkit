@@ -20,6 +20,13 @@ data class AppCapability(
    */
   val isAdsSupported: Boolean,
   /**
+   * The data log section, its attachment type, and the parser registration
+   * (`docs/datalog/data_log_visualizer_PRD.md` R43). A rollout switch, not a per-user flag: true on
+   * developer builds while the feature is built, flipped to true on every host when V1 is complete.
+   * It never reaches Firestore, and there is no `DeveloperFlags` override — this is the only switch.
+   */
+  val isDataLogsSupported: Boolean,
+  /**
    * The support page the login card links, or null where the host has none to open.
    *
    * Defaults to null, unlike every other field here: it is a link a host may or may not have
