@@ -1,7 +1,6 @@
-package dev.fanfly.wingslog.feature.attachment.datamanager
+package dev.fanfly.wingslog.core.file
 
 import com.google.common.truth.Truth.assertThat
-import dev.fanfly.wingslog.core.storage.blob.sha256Hex
 import org.junit.Test
 
 /**
