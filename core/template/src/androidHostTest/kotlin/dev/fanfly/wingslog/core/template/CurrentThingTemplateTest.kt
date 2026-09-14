@@ -42,6 +42,7 @@ class CurrentThingTemplateTest {
       Section.SECTION_SQUAWKS,
       Section.SECTION_TASKS,
       Section.SECTION_LOGS,
+      Section.SECTION_DATA_LOGS,
     )
       .inOrder()
   }

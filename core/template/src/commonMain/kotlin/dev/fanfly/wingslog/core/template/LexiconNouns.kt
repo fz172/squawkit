@@ -16,7 +16,7 @@ import dev.fanfly.wingslog.thing.Noun
  * blank screen. A missing noun is a bad template, not a bad app state.
  */
 
-/** The generic fallbacks, resolved once. Non-null by construction — [GenericLexicon] sets all six. */
+/** The generic fallbacks, resolved once. Non-null by construction — [GenericLexicon] sets all seven. */
 private val GENERIC = GenericLexicon.LEXICON
 
 val Lexicon.thingNoun: Noun get() = thing ?: GENERIC.thing!!
@@ -30,3 +30,6 @@ val Lexicon.logNoun: Noun get() = log ?: GENERIC.log!!
 val Lexicon.componentNoun: Noun get() = component ?: GENERIC.component!!
 
 val Lexicon.technicianNoun: Noun get() = technician ?: GENERIC.technician!!
+
+/** Null on every preset that predates the data-log section; the generic word reads right there. */
+val Lexicon.dataLogNoun: Noun get() = data_log ?: GENERIC.data_log!!

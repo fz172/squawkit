@@ -1,0 +1,92 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+import "thing/attachment.proto";
+import "id/ids.proto";
+
+option java_package = "dev.fanfly.wingslog.datalog";
+option java_multiple_files = true;
+
+// A flight data log: the recorder's own file, kept byte-exact in a blob, plus the metadata needed
+// to list it and to parse it again (docs/datalog/data_log_visualizer_design.md §4.1). The raw file
+// is the only thing stored beyond this record; every series drawn on screen is derived from it on
+// the device that draws, and the server never parses it.
+
+enum DataLogFormat {
+  DATA_LOG_FORMAT_UNKNOWN = 0;
+  DATA_LOG_FORMAT_GARMIN_G3X = 1;
+  DATA_LOG_FORMAT_GARMIN_G1000 = 2;
+  DATA_LOG_FORMAT_DYNON_SKYVIEW = 3;
+}
+
+enum DataLogSeriesKind {
+  DATA_LOG_SERIES_KIND_UNKNOWN = 0;
+  DATA_LOG_SERIES_KIND_NUMERIC = 1;
+  DATA_LOG_SERIES_KIND_DISCRETE = 2;
+  DATA_LOG_SERIES_KIND_TEXT = 3;
+  DATA_LOG_SERIES_KIND_POSITION = 4;
+}
+
+// How `DataLog.raw_file`'s stored bytes wrap the original file.
+enum DataLogEncoding {
+  DATA_LOG_ENCODING_UNKNOWN = 0;
+  DATA_LOG_ENCODING_NONE = 1;
+  DATA_LOG_ENCODING_GZIP = 2;
+}
+
+// The recorder's own header, verbatim strings.
+message DataLogSource {
+  string product = 1;           // "GDU 460"
+  string unit = 2;              // "PFD1"
+  string software_version = 3;
+  string system_id = 4;
+  string identity = 5;          // aircraft_ident on Garmin; compared with the Thing (PRD R11)
+  string airframe_hours = 6;
+  string engine_hours = 7;
+}
+
+// One column of the source file: the catalogue entry the list and sidebar render without touching
+// the bytes.
+message DataLogSeries {
+  int32 column = 1;             // index in the source file
+  string name = 2;              // "Oil Press"
+  string short_name = 3;        // "E1 OilP"
+  string unit = 4;              // "PSI", as recorded (PRD decision 6)
+  DataLogSeriesKind kind = 5;
+  string canonical_id = 6;      // "engine[1].oil_press" or "" (design §6.3)
+  double min = 7;
+  double max = 8;
+  int32 sample_count = 9;       // non-empty cells
+}
+
+message DataLog {
+  DataLogId id = 1;             // boxed, never a bare string (design §4.4)
+  DataLogFormat format = 2;
+  int32 parser_version = 3;     // bumps when the parser changes what it emits
+  DataLogSource source = 4;
+  google.protobuf.Timestamp start = 5;
+  int32 utc_offset_minutes = 6;
+  int32 duration_seconds = 7;
+  int32 sample_count = 8;       // rows
+  float sample_rate_hz = 9;     // median of 1/dt
+  repeated DataLogSeries series = 10;
+
+  // The stored bytes, as an Attachment so every blob mechanism (reconciler, tombstone GC, server
+  // GC, upload drivers, broker) applies unchanged. Type FILE, id = blob id; `sha256` and
+  // `size_bytes` describe the STORED bytes, which is what the download driver verifies.
+  Attachment raw_file = 11;
+  DataLogEncoding encoding = 12;
+  string raw_sha256 = 13;       // of the original file, for duplicate detection (PRD R10)
+  int64 raw_size_bytes = 14;
+  string file_name = 15;
+
+  bool identity_mismatch = 16;
+  bool airborne = 17;           // false => "Ground run" (PRD R13)
+  string start_location_ident = 18;  // from the filename where the format carries one (PRD R36)
+  double end_latitude = 19;     // for the V2 server lookup
+  double end_longitude = 20;
+  string end_location_ident = 21;    // written by the server in V2, empty until then
+
+  google.protobuf.Timestamp created_at = 22;
+  UserId created_by = 23;
+}

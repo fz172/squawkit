@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+option java_package = "dev.fanfly.wingslog.id";
+option java_multiple_files = true;
+
+// Boxed identifiers (docs/datalog/data_log_visualizer_design.md §4.4).
+//
+// A new message never carries an id as a bare string: boxing it in the schema makes the generated
+// Kotlin and TypeScript class the dedicated type, so a ThingId and a DataLogId cannot be swapped in
+// a call or a field. Existing messages (Thing.id, Attachment.id, Squawk.id, …) are grandfathered
+// and convert once at the edge with `.value`.
+//
+// FROZEN AT ONE FIELD. Wire's equality includes unknown fields, so an id message that grew a second
+// field would compare unequal across builds; the proto lint in core/model refuses any id message
+// with more than `value`.
+
+message ThingId {
+  string value = 1;
+}
+
+message DataLogId {
+  string value = 1;
+}
+
+message UserId {
+  string value = 1;
+}

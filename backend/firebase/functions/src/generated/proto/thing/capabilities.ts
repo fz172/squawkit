@@ -12,7 +12,7 @@ export const protobufPackage = "";
 
 /**
  * The per-Thing sections of the adaptive shell, in the order a template wants them. Mirrors
- * ShellSection's first four values; SETTINGS is account-level and never template-controlled.
+ * ShellSection's per-thing values; SETTINGS is account-level and never template-controlled.
  */
 export enum Section {
   SECTION_UNKNOWN = 0,
@@ -21,6 +21,8 @@ export enum Section {
   SECTION_SQUAWKS = 2,
   SECTION_TASKS = 3,
   SECTION_LOGS = 4,
+  /** SECTION_DATA_LOGS - named by Lexicon.data_log — "Flight Data" on the airplane preset */
+  SECTION_DATA_LOGS = 5,
   UNRECOGNIZED = -1,
 }
 
@@ -41,6 +43,9 @@ export function sectionFromJSON(object: any): Section {
     case 4:
     case "SECTION_LOGS":
       return Section.SECTION_LOGS;
+    case 5:
+    case "SECTION_DATA_LOGS":
+      return Section.SECTION_DATA_LOGS;
     case -1:
     case "UNRECOGNIZED":
     default:
@@ -60,6 +65,8 @@ export function sectionToJSON(object: Section): string {
       return "SECTION_TASKS";
     case Section.SECTION_LOGS:
       return "SECTION_LOGS";
+    case Section.SECTION_DATA_LOGS:
+      return "SECTION_DATA_LOGS";
     case Section.UNRECOGNIZED:
     default:
       return "UNRECOGNIZED";

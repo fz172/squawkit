@@ -4,6 +4,7 @@ import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.appinfo.APP_VERSION_CODE
 import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
 import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
+import dev.fanfly.wingslog.thing.Capabilities
 import dev.fanfly.wingslog.thing.Lexicon
 import dev.fanfly.wingslog.thing.Noun
 import dev.fanfly.wingslog.thing.Section
@@ -101,6 +102,33 @@ class TemplateRegistryTest {
   }
 
   @Test
+  fun capabilitiesResolveByIdLikeTheLexicon() {
+    // PRD R42: a Thing inflated from airplane v11 froze four sections into its DNA. The section
+    // added in v12 must reach it without a DNA refresh, so capabilities come from this build's
+    // canonical by id, exactly as the lexicon does — the stored copy is only the fallback for an
+    // id this build lacks.
+    val stale = AirplaneTemplate.TEMPLATE.copy(
+      version = AirplaneTemplate.VERSION - 1,
+      capabilities = Capabilities(
+        sections = listOf(
+          Section.SECTION_DASHBOARD,
+          Section.SECTION_SQUAWKS,
+          Section.SECTION_TASKS,
+          Section.SECTION_LOGS,
+        ),
+      ),
+    )
+
+    assertThat(registry.capabilitiesFor(stale))
+      .isEqualTo(AirplaneTemplate.AIRPLANE_CAPABILITIES)
+    assertThat(registry.capabilitiesFor(stale).sections).contains(Section.SECTION_DATA_LOGS)
+
+    val foreign = stale.copy(id = "hovercraft")
+    assertThat(registry.capabilitiesFor(foreign)).isEqualTo(foreign.capabilities)
+    assertThat(registry.capabilitiesFor(null)).isEqualTo(CurrentThingTemplate.ALL_ENABLED)
+  }
+
+  @Test
   fun anIdNoPresetClaimsStillResolvesToNothing() {
     // Null is the answer a fetched-template lookup will need once #726 exists; it must not start
     // returning a fallback just because the pool grew.
@@ -170,14 +198,15 @@ class AirplaneTemplateTest {
   }
 
   @Test
-  fun allFourPerThingSectionsAppearInShellOrder() {
-    // Mirrors PER_THING_SECTIONS in AdaptiveAppShell. Order is the contract, not just membership —
-    // this list is what the shell renders.
+  fun allFivePerThingSectionsAppearInShellOrder() {
+    // Mirrors the shell's section order. Order is the contract, not just membership — this list is
+    // what the shell renders.
     assertThat(AirplaneTemplate.AIRPLANE_CAPABILITIES.sections).containsExactly(
       Section.SECTION_DASHBOARD,
       Section.SECTION_SQUAWKS,
       Section.SECTION_TASKS,
       Section.SECTION_LOGS,
+      Section.SECTION_DATA_LOGS,
     )
       .inOrder()
   }

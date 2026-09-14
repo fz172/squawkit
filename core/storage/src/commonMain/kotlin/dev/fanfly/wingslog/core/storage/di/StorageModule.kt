@@ -1,12 +1,6 @@
 package dev.fanfly.wingslog.core.storage.di
 
 import app.cash.sqldelight.db.SqlDriver
-import dev.fanfly.wingslog.thing.Comment
-import dev.fanfly.wingslog.thing.MaintenanceLog
-import dev.fanfly.wingslog.thing.MaintenanceOverview
-import dev.fanfly.wingslog.thing.MaintenanceTask
-import dev.fanfly.wingslog.thing.Squawk
-import dev.fanfly.wingslog.thing.Technician
 import dev.fanfly.wingslog.core.model.settings.DeveloperSettings
 import dev.fanfly.wingslog.core.model.settings.NotificationSettings
 import dev.fanfly.wingslog.core.model.settings.Subscription
@@ -28,6 +22,13 @@ import dev.fanfly.wingslog.core.storage.blob.LocalBlobStore
 import dev.fanfly.wingslog.core.storage.createWingsLogDatabase
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
 import dev.fanfly.wingslog.core.storage.storageIoContext
+import dev.fanfly.wingslog.datalog.DataLog
+import dev.fanfly.wingslog.thing.Comment
+import dev.fanfly.wingslog.thing.MaintenanceLog
+import dev.fanfly.wingslog.thing.MaintenanceOverview
+import dev.fanfly.wingslog.thing.MaintenanceTask
+import dev.fanfly.wingslog.thing.Squawk
+import dev.fanfly.wingslog.thing.Technician
 import dev.fanfly.wingslog.thing.Thing
 import org.koin.core.module.Module
 import org.koin.dsl.module
@@ -99,6 +100,10 @@ val storageModule: Module = module {
       register(
         CollectionKind.NotificationSettings,
         WireCodec(NotificationSettings.ADAPTER)
+      )
+      register(
+        CollectionKind.DataLog,
+        WireCodec(DataLog.ADAPTER)
       )
       verifyCoverage()
     }

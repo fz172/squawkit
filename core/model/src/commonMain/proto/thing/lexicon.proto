@@ -98,6 +98,9 @@ message EmptyStates {
   // not offer. So a meterless preset writes a sentence about the record instead, which is the
   // capability shaping the copy rather than a noun being swapped into it.
   string log_onboarding_hint = 10;
+
+  // The data-log section's empty state — the line under "No <data logs> yet".
+  string data_log_hint = 11;
 }
 
 message Lexicon {
@@ -144,4 +147,9 @@ message Lexicon {
   // `down_status`: "AOG squawks must be resolved before flight" has no slot a noun could fill —
   // "before flight" is the aviation part, and a house has no equivalent verb. Blank hides the line.
   string down_alert_hint = 18;  // "AOG squawks must be resolved before flight" · "Down issues must be fixed before driving"
+
+  // The data-log section (PRD R45): "flight data log" · "data log". Short plural names the section.
+  Noun data_log = 19;
+  // The section subtitle — a whole sentence, like `down_alert_hint`.
+  string data_log_description = 20;
 }

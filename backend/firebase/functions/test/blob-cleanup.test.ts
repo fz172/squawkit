@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { adminDb, adminStorage, fft } from "./helpers.js";
 
 import { Attachment, AttachmentType } from "../src/generated/proto/thing/attachment.js";
+import { DataLog } from "../src/generated/proto/datalog/data_log.js";
 import { MaintenanceLog } from "../src/generated/proto/thing/maintenance_log.js";
 import { Squawk } from "../src/generated/proto/thing/squawk.js";
 import { onThingDeleted } from "../src/sharing/onThingDeleted.js";
@@ -32,6 +33,21 @@ function attachment(id: string, type = AttachmentType.ATTACHMENT_TYPE_IMAGE): At
 function logPayload(...attachments: Attachment[]): string {
   return Buffer.from(
     MaintenanceLog.encode(MaintenanceLog.fromPartial({ id: LOG, attachments })).finish(),
+  ).toString("base64");
+}
+
+const DATA_LOG = "dl-1";
+const dataLogPath = (id = DATA_LOG) => `users/${UID}/thing/${AC}/data_log/${id}`;
+
+/** A DataLog record whose raw file lives in the blob [blobId] (data log design §4.1). */
+function dataLogPayload(blobId: string): string {
+  return Buffer.from(
+    DataLog.encode(
+      DataLog.fromPartial({
+        id: { value: DATA_LOG },
+        rawFile: attachment(blobId, AttachmentType.ATTACHMENT_TYPE_FILE),
+      }),
+    ).finish(),
   ).toString("base64");
 }
 
@@ -103,6 +119,34 @@ describe("onRecordDeleted — a deleted record takes its photos with it (#158)",
     await wrappedRecord(deletion(logPath(), payload) as never);
 
     expect(await blobExists("real-blob")).toBe(false);
+  });
+
+  it("a deleted data log takes its raw file with it", async () => {
+    await putBlob("dl-blob");
+    const payload = dataLogPayload("dl-blob");
+
+    await wrappedRecord(
+      deletion(dataLogPath(), payload, "datalog.DataLog", DATA_LOG) as never,
+    );
+
+    expect(await blobExists("dl-blob")).toBe(false);
+  });
+
+  it("a deleted log never reclaims the data log it referenced", async () => {
+    // A DATA_LOG attachment is a reference: the DataLog record owns the bytes and outlives the log
+    // entry that pointed at it (data log design §4.2).
+    await putBlob("dl-blob");
+    const ref = Attachment.fromPartial({
+      id: "dl-blob",
+      name: "flight.csv",
+      type: AttachmentType.ATTACHMENT_TYPE_DATA_LOG,
+      dataLogId: { value: DATA_LOG },
+    });
+    const payload = logPayload(ref);
+
+    await wrappedRecord(deletion(logPath(), payload) as never);
+
+    expect(await blobExists("dl-blob")).toBe(true);
   });
 
   it("collects NOTHING when the deleted payload will not decode", async () => {

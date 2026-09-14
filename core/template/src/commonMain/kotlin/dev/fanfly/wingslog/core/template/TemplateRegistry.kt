@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.core.template
 
+import dev.fanfly.wingslog.thing.Capabilities
 import dev.fanfly.wingslog.thing.Lexicon
 import dev.fanfly.wingslog.thing.Thing
 import dev.fanfly.wingslog.thing.ThingTemplate
@@ -62,6 +63,18 @@ interface TemplateRegistry {
    * degraded anyway (§6.2); having the right nouns there is better than generic ones.
    */
   fun lexiconFor(template: ThingTemplate?): Lexicon
+
+  /**
+   * The capabilities to render [template] with — by **id from this build**, the same rule as
+   * [lexiconFor] and for the same reason (PRD R42): a section added to a preset must reach every
+   * Thing created from it, not only the ones inflated after the release. The stored copy is the
+   * fallback for an id this build lacks; everything enabled when there is no template at all.
+   *
+   * Safe while custom templates are unbuilt, because a stored template can only be an unmodified
+   * copy of a canonical one. When they land the rule becomes "canonical wins for an unmodified
+   * copy", decided there.
+   */
+  fun capabilitiesFor(template: ThingTemplate?): Capabilities
 
   /**
    * Templates a picker may offer, in [ThingTemplate.sort_order].

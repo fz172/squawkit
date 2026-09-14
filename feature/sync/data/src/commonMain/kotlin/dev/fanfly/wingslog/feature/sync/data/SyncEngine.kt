@@ -747,6 +747,7 @@ class SyncEngine(
       CollectionKind.MaintenanceOverview,
       CollectionKind.Squawk,
       CollectionKind.Comment,
+      CollectionKind.DataLog,
     )
   }
 }

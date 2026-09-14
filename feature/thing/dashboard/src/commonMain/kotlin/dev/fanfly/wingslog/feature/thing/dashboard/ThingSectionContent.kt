@@ -175,7 +175,8 @@ fun ShellSectionFab(
         },
       )
 
-    ShellSection.DASHBOARD, ShellSection.SETTINGS -> Unit
+    // DATA_LOGS: the Upload Log FAB lands with the section list (data log design §10.2).
+    ShellSection.DASHBOARD, ShellSection.DATA_LOGS, ShellSection.SETTINGS -> Unit
   }
 }
 
@@ -235,7 +236,8 @@ fun ThingSectionContent(
   var pendingMessage by remember(thingId) { mutableStateOf<UiText?>(null) }
   LaunchedEffect(viewModel) {
     viewModel.events.collect { event ->
-      if (event is ThingOverviewEvent.ShowMessage) pendingMessage = event.message
+      if (event is ThingOverviewEvent.ShowMessage) pendingMessage =
+        event.message
     }
   }
   // Resolved in composition, because a UiText needs the resource table; a host that provided no
@@ -289,7 +291,7 @@ fun ThingSectionContent(
       ShellSection.SQUAWKS -> pendingSquawkScrollTarget = id
       ShellSection.LOGS -> pendingLogScrollTarget = id
       // Nothing to scroll to in a section with no record list; drop it rather than stranding it.
-      ShellSection.DASHBOARD, ShellSection.SETTINGS -> Unit
+      ShellSection.DASHBOARD, ShellSection.DATA_LOGS, ShellSection.SETTINGS -> Unit
     }
     onScrollTargetConsumed()
   }
@@ -469,7 +471,8 @@ fun ThingSectionContent(
           scrollToLogId = pendingLogScrollTarget,
         )
 
-        ShellSection.SETTINGS -> Unit
+        // Empty until the list lands (data log design §10.2); developer builds only until then.
+        ShellSection.DATA_LOGS, ShellSection.SETTINGS -> Unit
       }
 
       // Task detail + delete confirmation overlays. SquawkTab and LogsTab render their own detail

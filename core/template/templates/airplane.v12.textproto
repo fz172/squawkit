@@ -47,9 +47,13 @@
 #
 # v11 adds `down_alert_hint` — the sentence under the Dashboard down-tier alert. It was one aviation
 # string in strings.xml, "AOG squawks must be resolved before flight", shown to every preset.
+#
+# v12 adds the Flight Data section (docs/datalog/data_log_visualizer_PRD.md R1, R45): `data_log`
+# noun, `data_log_description`, `empty_states.data_log_hint`, and the fifth section after Logs.
+# Existing aeroplanes need no DNA refresh — capabilities resolve by id from the build (R42).
 
 id: "airplane"
-version: 11
+version: 12
 
 # No floor. This template ships inside every build that can read it, so a client can never
 # encounter it from the future — the floor exists for FETCHED templates (§6), and a baked-in one is
@@ -78,6 +82,9 @@ lexicon {
   log { singular: "work log" plural: "work logs" article: "a" short_plural: "Logs" }
   component { singular: "component" plural: "components" article: "a" }
   technician { singular: "technician" plural: "technicians" article: "a" }
+  # "Data Archive" is the pill label and "Data Logs Archive" the section title; the singular is what
+  # every string about one file substitutes.
+  data_log { singular: "data log" plural: "data logs archive" article: "a" short_plural: "Data Archive" }
 
   ready_status: "Airworthy"
 
@@ -91,6 +98,7 @@ lexicon {
 
   collection_label: "Fleet"
   authority_label: "FAA"
+  data_log_description: "Flight data recorded by the avionics, charted on this device."
 
   compliance_mandatory {
     singular: "Airworthiness Directive"
@@ -119,6 +127,8 @@ lexicon {
     overview_squawk_hint: "No active discrepancies for this aircraft."
 
     log_onboarding_hint: "Log your current airframe, engine, and prop times to start tracking maintenance intervals accurately. This will serve as your logbook's baseline."
+
+    data_log_hint: "Upload a data log from the avionics to chart it here."
   }
 }
 
@@ -142,6 +152,7 @@ capabilities {
   sections: SECTION_SQUAWKS
   sections: SECTION_TASKS
   sections: SECTION_LOGS
+  sections: SECTION_DATA_LOGS
 
   export_layout: EXPORT_LAYOUT_LOGBOOK
 

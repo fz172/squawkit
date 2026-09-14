@@ -58,6 +58,13 @@ include(":feature:tasks:sharedassets")
 include(":feature:tasks:datamanager")
 include(":feature:tasks:di")
 
+include(":feature:datalog:model")
+include(":feature:datalog:datamanager")
+include(":feature:datalog:sharedassets")
+include(":feature:datalog:viewing")
+include(":feature:datalog:update")
+include(":feature:datalog:di")
+
 include(":feature:sharing:model")
 include(":feature:sharing:datamanager")
 include(":feature:sharing:sharedassets")
