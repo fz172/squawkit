@@ -5,6 +5,8 @@ import dev.fanfly.wingslog.thing.Attachment
 import dev.fanfly.wingslog.thing.AttachmentType
 import dev.fanfly.wingslog.feature.attachment.model.PendingAttachment
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
+import dev.fanfly.wingslog.feature.attachment.model.fileCount
+import dev.fanfly.wingslog.id.DataLogId
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -521,7 +523,70 @@ class AttachmentFormControllerTest {
     coVerify(exactly = 0) { attachmentManager.delete(link) }
   }
 
+  // ---- DATA_LOG references ----
+
+  @Test
+  fun everyTypeBranchHandlesDataLogRef() = runTest {
+    // AttachmentType has no exhaustive `when`, so each branch is checked here by hand: a reference
+    // never counts as a file, never becomes a PendingDelete, and never reaches the blob store.
+    val savedRef = dataLogAttachment("r1", "dl-1")
+    val file = fileAttachment("f1")
+    controller.seedIfEmpty(listOf(savedRef, file))
+    every { attachmentManager.makeDataLogRef(DataLogId("dl-2"), "Second log") } returns
+      dataLogAttachment("r2", "dl-2")
+
+    controller.addDataLogRef(DataLogId("dl-2"), "Second log")
+
+    val pending = controller.pendingAttachments.value
+    assertThat(pending.map { it.id }).containsExactly("r1", "f1", "r2").inOrder()
+    assertThat(pending.last()).isInstanceOf(PendingAttachment.LocalDataLogRef::class.java)
+    assertThat(pending.fileCount()).isEqualTo(1)
+    assertThat(controller.filesAtLimit).isFalse()
+
+    // resolveForSave carries both references through, after the saved and local files.
+    assertThat(controller.resolveForSave().map { it.id }).containsExactly("r1", "f1", "r2").inOrder()
+
+    // Removing a saved reference drops it outright instead of tombstoning it.
+    controller.remove("r1")
+    assertThat(controller.pendingAttachments.value.map { it.id }).containsExactly("f1", "r2").inOrder()
+    controller.remove("r2")
+    assertThat(controller.pendingAttachments.value.map { it.id }).containsExactly("f1")
+
+    // Deleting the parent tombstones the file only.
+    controller.deleteSavedFiles()
+    coVerify(exactly = 1) { attachmentManager.delete(file) }
+    coVerify(exactly = 0) { attachmentManager.delete(match { it.type == AttachmentType.ATTACHMENT_TYPE_DATA_LOG }) }
+  }
+
+  @Test
+  fun addDataLogRef_sameLogTwice_isNoOp() {
+    every { attachmentManager.makeDataLogRef(any(), any()) } returns dataLogAttachment("r1", "dl-1")
+
+    controller.addDataLogRef(DataLogId("dl-1"), "Log")
+    controller.addDataLogRef(DataLogId("dl-1"), "Log again")
+
+    assertThat(controller.pendingAttachments.value).hasSize(1)
+  }
+
+  @Test
+  fun addDataLogRef_afterRemovingTheSameLog_addsItAgain() = runTest {
+    controller.seedIfEmpty(listOf(dataLogAttachment("r1", "dl-1")))
+    every { attachmentManager.makeDataLogRef(any(), any()) } returns dataLogAttachment("r2", "dl-1")
+
+    controller.remove("r1")
+    controller.addDataLogRef(DataLogId("dl-1"), "Log")
+
+    assertThat(controller.pendingAttachments.value.map { it.id }).containsExactly("r2")
+  }
+
   // ---- helpers ----
+
+  private fun dataLogAttachment(id: String, dataLogId: String) = Attachment(
+    id = id,
+    name = "$dataLogId log",
+    type = AttachmentType.ATTACHMENT_TYPE_DATA_LOG,
+    data_log_id = DataLogId(dataLogId),
+  )
 
   private fun fileAttachment(id: String, sha256: String = "") = Attachment(
     id = id,

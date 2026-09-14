@@ -10,6 +10,7 @@ import dev.fanfly.wingslog.thing.AttachmentType
  *
  * - [Local]         — newly added by `addPickedFile`; already on disk, will be uploaded out-of-band.
  * - [LocalLink]     — hyperlink added this session.
+ * - [LocalDataLogRef] — reference to a DataLog record added this session; owns no blob.
  * - [Saved]         — already in the parent proto (includes previously-saved links).
  * - [PendingDelete] — a [Saved] file marked for tombstone on save.
  */
@@ -28,6 +29,11 @@ sealed class PendingAttachment {
     override val name: String get() = attachment.name
   }
 
+  data class LocalDataLogRef(val attachment: Attachment) : PendingAttachment() {
+    override val id: String get() = attachment.id
+    override val name: String get() = attachment.name
+  }
+
   data class Saved(val attachment: Attachment) : PendingAttachment() {
     override val id: String get() = attachment.id
     override val name: String get() = attachment.name
@@ -40,14 +46,21 @@ sealed class PendingAttachment {
   }
 }
 
-/** Counts file attachments (not links, not pending-delete) — enforces the per-parent file cap. */
+/**
+ * Counts file attachments (not links, not data log references, not pending-delete) — enforces the
+ * per-parent file cap.
+ */
 fun List<PendingAttachment>.fileCount(): Int = count { pending ->
   when (pending) {
     is PendingAttachment.Local -> true
-    is PendingAttachment.Saved -> pending.attachment.type != AttachmentType.ATTACHMENT_TYPE_LINK
+    is PendingAttachment.Saved -> pending.attachment.type.isFile
     else -> false
   }
 }
+
+/** True for the types that carry a blob; LINK and DATA_LOG are references and own nothing. */
+val AttachmentType.isFile: Boolean
+  get() = this != AttachmentType.ATTACHMENT_TYPE_LINK && this != AttachmentType.ATTACHMENT_TYPE_DATA_LOG
 
 /** Visible items (excludes [PendingAttachment.PendingDelete]) for rendering. */
 fun List<PendingAttachment>.visible(): List<PendingAttachment> =
