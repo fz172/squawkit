@@ -24,6 +24,7 @@ kotlin {
   sourceSets {
     commonMain.dependencies {
       implementation(libs.compose.runtime)
+      implementation(project(":core:model"))
     }
   }
 }

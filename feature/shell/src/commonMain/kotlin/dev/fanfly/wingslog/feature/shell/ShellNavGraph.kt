@@ -6,6 +6,9 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import dev.fanfly.wingslog.core.nav.Screen
+import dev.fanfly.wingslog.feature.datalog.update.viewer.DataLogViewerScreen
+import dev.fanfly.wingslog.id.DataLogId
+import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.core.ui.adaptive.compose.AdaptiveFormDialogFrame
 import dev.fanfly.wingslog.feature.developeroptions.plugin.DeveloperOptionsNavContributor
 import dev.fanfly.wingslog.feature.export.update.ExportHistoryRoute
@@ -177,6 +180,25 @@ fun NavGraphBuilder.formDialogs(navController: NavController) {
  * Per-thing sharing destinations, registered once on the root graph so both hosts render them.
  * Reached from a thing's context (the entry point + role-gated visibility land with #133).
  */
+/** The data log visualizer: a full-screen root with typed ids (data log design §10.4). */
+fun NavGraphBuilder.dataLogRoutes(navController: NavController) {
+  composable(
+    route = Screen.DataLogViewer.route,
+    arguments = listOf(
+      navArgument(Screen.THING_ID) { type = NavType.StringType },
+      navArgument(Screen.DATA_LOG_ID) { type = NavType.StringType },
+    ),
+  ) { entry ->
+    DataLogViewerScreen(
+      // savedStateHandle carries the nav arguments on every target; `arguments` is a
+      // platform SavedState with no common getString.
+      thingId = ThingId(checkNotNull(entry.savedStateHandle.get<String>(Screen.THING_ID))),
+      dataLogId = DataLogId(checkNotNull(entry.savedStateHandle.get<String>(Screen.DATA_LOG_ID))),
+      navController = navController,
+    )
+  }
+}
+
 fun NavGraphBuilder.sharingRoutes(navController: NavController) {
   selectionDialog(
     route = Screen.ManageAccess.route,

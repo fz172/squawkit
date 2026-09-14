@@ -482,8 +482,7 @@ fun ThingSectionContent(
 
         ShellSection.DATA_LOGS -> DataLogSectionContent(
           thingId = ThingId(thingId),
-          // The viewer route lands in PR 4 (data log design §10.4).
-          onOpen = {},
+          onOpen = { id -> navController.navigate(Screen.DataLogViewer.createRoute(ThingId(thingId), id)) },
           onLinkAccount = onLinkAccount,
         )
 

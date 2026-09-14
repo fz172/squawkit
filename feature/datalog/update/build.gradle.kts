@@ -30,6 +30,8 @@ kotlin {
 
   sourceSets {
     commonMain.dependencies {
+      implementation(project(":core:model"))
+      implementation(project(":feature:attachment:model"))
       implementation(project(":feature:datalog:model"))
       implementation(project(":feature:datalog:datamanager"))
       implementation(project(":feature:datalog:viewing"))
@@ -43,7 +45,12 @@ kotlin {
       implementation(project(":core:ui:theme"))
       implementation(project(":core:datetime"))
 
+      implementation(libs.koin.core)
       implementation(libs.koin.compose.viewmodel)
+      implementation(libs.jetbrains.lifecycle.viewmodel.compose)
+      implementation(libs.kotlinx.coroutines.core)
+      implementation(libs.material3)
+      implementation(libs.material.icons.extended)
       implementation(libs.kermit)
       implementation(libs.compose.foundation)
       implementation(libs.androidx.navigation.compose)

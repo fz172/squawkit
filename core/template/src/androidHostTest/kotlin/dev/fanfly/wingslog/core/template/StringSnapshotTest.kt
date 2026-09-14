@@ -244,6 +244,8 @@ class StringSnapshotTest {
     frame("feature/datalog/sharedassets", "data_log_empty_title") { it.dataLogNoun.singular },
     frame("feature/datalog/sharedassets", "data_log_gate_title") { it.dataLogNoun.singular },
     frame("feature/datalog/sharedassets", "data_log_gate_sheet_body") { it.dataLogNoun.singular },
+    frame("feature/datalog/sharedassets", "data_log_deleted") { LexiconFormatter.sentenceCase(it.dataLogNoun) },
+    frame("feature/datalog/sharedassets", "data_log_viewer_missing") { it.dataLogNoun.singular },
     frame("feature/search/sharedassets", "filter_scope_open") { it.squawkNoun.plural },
     frame("feature/search/sharedassets", "filter_scope_closed") { it.squawkNoun.plural },
     frame("feature/search/sharedassets", "filter_scope_due") { it.taskNoun.plural },

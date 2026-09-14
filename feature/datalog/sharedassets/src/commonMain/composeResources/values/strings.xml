@@ -9,6 +9,13 @@
   <string name="data_log_tail_mismatch">Tail mismatch</string>
   <string name="data_log_delete_title">Delete <xliff:g example="Data Log">%1$s</xliff:g>?</string>
   <string name="data_log_delete_body">The file and its charts are removed from every device.</string>
+  <string name="data_log_deleted"><xliff:g example="Data log">%1$s</xliff:g> deleted</string>
+
+  <!-- Viewer (design §10.4, §11.1) -->
+  <string name="data_log_viewer_downloading">Downloading the file…</string>
+  <string name="data_log_viewer_load_failed">This file could not be opened.</string>
+  <string name="data_log_viewer_missing">This <xliff:g example="data log">%1$s</xliff:g> was deleted.</string>
+  <string name="data_log_viewer_utc_offset"><xliff:g example="14:47">%1$s</xliff:g> local (<xliff:g example="UTC-07:00">%2$s</xliff:g>)</string>
 
   <!-- Inline import rows (R35) -->
   <string name="data_log_import_reading">Reading <xliff:g example="log_20260902.csv">%1$s</xliff:g>…</string>

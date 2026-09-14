@@ -1,6 +1,9 @@
 package dev.fanfly.wingslog.core.nav
 
+import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.nav.Screen.Companion.TEMPLATE_ID
+import dev.fanfly.wingslog.id.DataLogId
+import dev.fanfly.wingslog.id.ThingId
 
 sealed class Screen(val route: String) {
 
@@ -12,6 +15,7 @@ sealed class Screen(val route: String) {
     const val TECHNICIAN_ID = "technicianId"
     const val SQUAWK_ID = "squawkId"
     const val TEMPLATE_ID = "templateId"
+    const val DATA_LOG_ID = "dataLogId"
 
     const val CROSS_SCREEN_SUCCESS_MESSAGE = "success_message"
     /** A Thing the shell should switch to once a dialog closes — set by the create form. */
@@ -52,6 +56,12 @@ sealed class Screen(val route: String) {
   data object DeveloperOptions : Screen("developer_options")
   data object Subscription : Screen("subscription")
   data object About : Screen("about")
+
+  /** The data log visualizer, a full-screen root (data log design §10.4). Ids are boxed (§4.4). */
+  data object DataLogViewer : Screen("data_log/{$THING_ID}/{$DATA_LOG_ID}") {
+    fun createRoute(thingId: ThingId, dataLogId: DataLogId) =
+      "data_log/${thingId.value}/${dataLogId.value}"
+  }
 
   data object EditTechnician : Screen("edit_technician/{$TECHNICIAN_ID}") {
     fun createRoute(technicianId: String?) =
