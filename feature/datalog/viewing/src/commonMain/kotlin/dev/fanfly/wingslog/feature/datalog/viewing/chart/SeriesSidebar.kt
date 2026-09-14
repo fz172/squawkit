@@ -1,10 +1,10 @@
 package dev.fanfly.wingslog.feature.datalog.viewing.chart
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.text.selection.DisableSelection
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -27,7 +27,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.unit.Dp
@@ -140,19 +139,14 @@ private fun SeriesRow(
       .fillMaxWidth()
       .onGloballyPositioned { origin = it.positionInWindow() }
       .clickable { onAdd(key) }
-      .pointerInput(key) {
-        // A row is a drag source too: a dropped row lands on that pane rather than the target.
-        detectDragGesturesAfterLongPress(
-          onDragStart = { offset -> dragState.start(key, label, from = null, position = origin + offset) },
-          onDrag = { change, delta -> change.consume(); dragState.move(delta) },
-          onDragEnd = { dragState.drop()?.let { (drag, target) -> onDrop(drag, target) } },
-          onDragCancel = { dragState.cancel() },
-        )
-      }
+      // A row is a drag source too: a dropped row lands on that pane rather than the target.
+      .seriesDragSource(key, label, from = null, origin = { origin }, dragState = dragState, onDrop = onDrop)
       .padding(horizontal = Spacing.large, vertical = Spacing.medium),
     verticalAlignment = Alignment.CenterVertically,
     horizontalArrangement = Arrangement.spacedBy(Spacing.small),
   ) {
+    // Text selection would otherwise claim a mouse drag on the label before the row sees it.
+    DisableSelection {
     Column(modifier = Modifier.weight(1f)) {
       Text(series.name, style = MaterialTheme.typography.bodyMedium)
       Text(
@@ -161,6 +155,7 @@ private fun SeriesRow(
         style = WingslogTypography.dataSmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
       )
+    }
     }
     if (inTarget) {
       Icon(Icons.Filled.Check, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(Spacing.large))

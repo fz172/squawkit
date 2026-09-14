@@ -1,11 +1,20 @@
 package dev.fanfly.wingslog.feature.datalog.viewing.chart
 
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.awaitLongPressOrCancellation
+import androidx.compose.foundation.gestures.awaitTouchSlopOrCancellation
+import androidx.compose.foundation.gestures.drag
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.PointerType
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.positionChange
 import dev.fanfly.wingslog.feature.datalog.model.PaneId
 import dev.fanfly.wingslog.feature.datalog.model.SeriesKey
 
@@ -58,5 +67,34 @@ class SeriesDragState {
 
   fun cancel() {
     drag = null
+  }
+}
+
+/**
+ * Makes a chip or sidebar row a drag source. A mouse begins the drag as soon as it moves past
+ * touch slop, the way desktop and web users expect; touch waits for a long press so a quick swipe
+ * still scrolls the row or the list underneath. [origin] is the source's window position.
+ */
+fun Modifier.seriesDragSource(
+  key: SeriesKey,
+  label: String,
+  from: PaneId?,
+  origin: () -> Offset,
+  dragState: SeriesDragState,
+  onDrop: (SeriesDrag, DropTarget?) -> Unit,
+): Modifier = pointerInput(key, from) {
+  awaitEachGesture {
+    val down = awaitFirstDown(requireUnconsumed = false)
+    val start = if (down.type == PointerType.Mouse) {
+      awaitTouchSlopOrCancellation(down.id) { change, _ -> change.consume() }
+    } else {
+      awaitLongPressOrCancellation(down.id)
+    } ?: return@awaitEachGesture
+    dragState.start(key, label, from, origin() + start.position)
+    val completed = drag(start.id) { change ->
+      dragState.move(change.positionChange())
+      change.consume()
+    }
+    if (completed) dragState.drop()?.let { (d, target) -> onDrop(d, target) } else dragState.cancel()
   }
 }

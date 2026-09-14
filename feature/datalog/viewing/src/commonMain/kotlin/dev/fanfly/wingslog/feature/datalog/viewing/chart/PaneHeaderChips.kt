@@ -1,11 +1,11 @@
 package dev.fanfly.wingslog.feature.datalog.viewing.chart
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.text.selection.DisableSelection
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -31,7 +31,6 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.semantics.contentDescription
@@ -121,16 +120,11 @@ private fun SeriesChip(
       .alpha(if (dragging) DRAGGING_ALPHA else 1f)
       .onGloballyPositioned { origin = it.positionInWindow() }
       .semantics { contentDescription = dragDescription }
-      .pointerInput(chip.key, pane) {
-        detectDragGesturesAfterLongPress(
-          onDragStart = { offset -> dragState.start(chip.key, chip.shortName, pane, origin + offset) },
-          onDrag = { change, delta -> change.consume(); dragState.move(delta) },
-          onDragEnd = { dragState.drop()?.let { (drag, target) -> onDrop(drag, target) } },
-          onDragCancel = { dragState.cancel() },
-        )
-      },
+      .seriesDragSource(chip.key, chip.shortName, pane, { origin }, dragState, onDrop),
   ) {
-    Row(
+    // Text selection would otherwise claim a mouse drag on the label before the chip sees it.
+    DisableSelection {
+      Row(
       modifier = Modifier.padding(start = Spacing.small, top = Spacing.extraSmall, bottom = Spacing.extraSmall),
       verticalAlignment = Alignment.CenterVertically,
       horizontalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
@@ -151,6 +145,7 @@ private fun SeriesChip(
           modifier = Modifier.size(Spacing.large),
         )
       }
+    }
     }
   }
 }
