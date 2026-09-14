@@ -7,6 +7,7 @@ import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.file.GzipCodec
 import dev.fanfly.wingslog.core.file.sha256Hex
 import dev.fanfly.wingslog.core.model.id.generateRandomId
+import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.storage.EntityStore
 import dev.fanfly.wingslog.core.storage.ThingScopeResolver
 import dev.fanfly.wingslog.core.storage.blob.BlobId
@@ -25,7 +26,6 @@ import dev.fanfly.wingslog.feature.datalog.model.ImportFailure
 import dev.fanfly.wingslog.feature.datalog.model.ImportProgress
 import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.id.ThingId
-import dev.fanfly.wingslog.id.value
 import dev.fanfly.wingslog.id.UserId
 import dev.fanfly.wingslog.thing.Attachment
 import dev.fanfly.wingslog.thing.AttachmentType
@@ -56,10 +56,15 @@ class DataLogImporterImpl(
   private val dispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) : DataLogImporter {
 
-  override fun import(thingId: ThingId, picked: PickedFile, confirmDuplicate: Boolean): Flow<ImportProgress> =
+  override fun import(
+    thingId: ThingId,
+    picked: PickedFile,
+    confirmDuplicate: Boolean
+  ): Flow<ImportProgress> =
     flow {
       emit(ImportProgress.Reading)
-      val bytes = withContext(dispatcher) { fileByteReader.readBytes(picked.uri) }
+      val bytes =
+        withContext(dispatcher) { fileByteReader.readBytes(picked.uri) }
       if (bytes == null || bytes.isEmpty()) {
         emit(ImportProgress.Failed(ImportFailure.UNREADABLE))
         return@flow
@@ -81,7 +86,9 @@ class DataLogImporterImpl(
 
       val rawSha256 = withContext(dispatcher) { sha256Hex(bytes) }
       val scope = scopeResolver.resolveNow(thingId.value)
-      val existing = store.observeAll(scope).first().map { it.value }
+      val existing = store.observeAll(scope)
+        .first()
+        .map { it.value }
       if (existing.any { it.raw_sha256 == rawSha256 }) {
         emit(ImportProgress.Failed(ImportFailure.DUPLICATE))
         return@flow
@@ -106,7 +113,8 @@ class DataLogImporterImpl(
       val ref = blobs.put(BlobId(blobId), stored, contentType, scope)
       scheduler?.scheduleUpload(BlobId(blobId))
 
-      val now = clock.now().toWireInstant()
+      val now = clock.now()
+        .toWireInstant()
       val end = DerivedFields.endPosition(parsed)
       val id = DataLogId(generateRandomId())
       val record = DataLog(
@@ -124,7 +132,10 @@ class DataLogImporterImpl(
           id = blobId,
           name = picked.name,
           type = AttachmentType.ATTACHMENT_TYPE_FILE,
-          storage_path = "${scope.toPath().trim('/')}/blobs/$blobId",
+          storage_path = "${
+            scope.toPath()
+              .trim('/')
+          }/blobs/$blobId",
           mime_type = contentType,
           size_bytes = ref.sizeBytes,
           sha256 = ref.sha256,
@@ -134,7 +145,12 @@ class DataLogImporterImpl(
         raw_sha256 = rawSha256,
         raw_size_bytes = bytes.size.toLong(),
         file_name = picked.name,
-        identity_mismatch = DerivedFields.identityMismatch(parsed.source.identity, identifiers.identifierOf(thingId)),
+        identity_mismatch = DerivedFields.identityMismatch(
+          parsed.source.identity,
+          identifiers.identifierOf(
+            thingId
+          )
+        ),
         airborne = DerivedFields.airborne(parsed),
         start_location_ident = DerivedFields.startLocationIdent(picked.name),
         end_latitude = end?.first ?: 0.0,

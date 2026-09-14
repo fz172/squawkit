@@ -1,4 +1,8 @@
-package dev.fanfly.wingslog.id
+package dev.fanfly.wingslog.core.model.id
+
+import dev.fanfly.wingslog.id.DataLogId
+import dev.fanfly.wingslog.id.ThingId
+import dev.fanfly.wingslog.id.UserId
 
 /**
  * Wire renames a proto field called `value` to `value_` because `value` is a Kotlin soft keyword.
