@@ -5,7 +5,11 @@ import dev.fanfly.wingslog.datalog.DataLog
 import dev.fanfly.wingslog.feature.attachment.model.DownloadState
 import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogManager
 import dev.fanfly.wingslog.feature.datalog.model.DataLogSeriesData
+import dev.fanfly.wingslog.datalog.DataLogSeries
+import dev.fanfly.wingslog.datalog.DataLogSeriesKind
 import dev.fanfly.wingslog.feature.datalog.model.GestureIntent
+import dev.fanfly.wingslog.feature.datalog.model.PaneId
+import dev.fanfly.wingslog.feature.datalog.model.SeriesKey
 import dev.fanfly.wingslog.feature.datalog.model.ViewWindow
 import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.id.ThingId
@@ -187,5 +191,45 @@ class DataLogViewerViewModelTest {
         LoadFailure.NOT_FOUND
       )
     )
+  }
+
+  @Test
+  fun layoutEditsFlowThroughTheReadyState() = runTest {
+    val catalogue = listOf(
+      DataLogSeries(column = 1, kind = DataLogSeriesKind.DATA_LOG_SERIES_KIND_NUMERIC, canonical_id = "engine[1].rpm"),
+      DataLogSeries(column = 2, kind = DataLogSeriesKind.DATA_LOG_SERIES_KIND_NUMERIC),
+      DataLogSeries(column = 3, kind = DataLogSeriesKind.DATA_LOG_SERIES_KIND_POSITION),
+    )
+    every { manager.observeOne(thingId, id) } returns flowOf(record.copy(series = catalogue))
+    val vm = viewModel()
+    fun layout() = (vm.uiState.value as DataLogViewerUiState.Ready).layout
+
+    // Opens on RPM in pane 0, the target.
+    assertThat(layout().panes.single().series).containsExactly(SeriesKey(1))
+    assertThat(layout().targetPane).isEqualTo(PaneId(0))
+
+    vm.addSeries(PaneId(0), SeriesKey(2))
+    assertThat(layout().panes[0].series).containsExactly(SeriesKey(1), SeriesKey(2)).inOrder()
+
+    vm.spawnPane()
+    assertThat(layout().panes).hasSize(2)
+    assertThat(layout().targetPane).isEqualTo(PaneId(1))
+
+    vm.moveSeries(SeriesKey(2), PaneId(0), PaneId(1))
+    assertThat(layout().panes[0].series).containsExactly(SeriesKey(1))
+    assertThat(layout().panes[1].series).containsExactly(SeriesKey(2))
+
+    // A map series dropped on a chart pane spawns a pane of its own.
+    vm.addSeries(PaneId(1), SeriesKey(3))
+    vm.moveSeries(SeriesKey(3), PaneId(1), PaneId(0))
+    assertThat(layout().panes).hasSize(3)
+    assertThat(layout().panes[2].series).containsExactly(SeriesKey(3))
+
+    vm.removeSeries(PaneId(0), SeriesKey(1))
+    assertThat(layout().panes[0].series).isEmpty()
+    vm.setTargetPane(PaneId(0))
+    vm.removePane(PaneId(0))
+    assertThat(layout().panes.map { it.id }).containsExactly(PaneId(1), PaneId(2)).inOrder()
+    assertThat(layout().targetPane).isEqualTo(PaneId(1))
   }
 }

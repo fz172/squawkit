@@ -1031,3 +1031,8 @@ feature/datalog/sharedassets	data_log_viewer_missing	This data log was deleted.
 feature/datalog/sharedassets	data_log_viewer_utc_offset	%1$s local (%2$s)
 feature/datalog/sharedassets	data_log_pane_empty	No series in this pane
 feature/datalog/sharedassets	data_log_viewer_reset	Reset
+feature/datalog/sharedassets	data_log_drag_series	Hold and drag to move %1$s
+feature/datalog/sharedassets	data_log_new_pane	New pane
+feature/datalog/sharedassets	data_log_new_pane_hint	Tap, or drop a series here
+feature/datalog/sharedassets	data_log_remove_pane	Remove pane
+feature/datalog/sharedassets	data_log_remove_series	Remove %1$s

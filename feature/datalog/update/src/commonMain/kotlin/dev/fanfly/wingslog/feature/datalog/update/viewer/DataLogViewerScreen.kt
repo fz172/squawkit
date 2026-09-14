@@ -1,6 +1,27 @@
 package dev.fanfly.wingslog.feature.datalog.update.viewer
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Surface
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInWindow
+import androidx.compose.ui.unit.IntOffset
+import dev.fanfly.wingslog.feature.datalog.model.chart.Decimation
+import dev.fanfly.wingslog.feature.datalog.viewing.chart.ChipInfo
+import dev.fanfly.wingslog.feature.datalog.viewing.chart.DropTarget
+import dev.fanfly.wingslog.feature.datalog.viewing.chart.NewPaneTarget
+import dev.fanfly.wingslog.feature.datalog.viewing.chart.PaneHeaderChips
+import dev.fanfly.wingslog.feature.datalog.viewing.chart.SeriesDrag
+import dev.fanfly.wingslog.feature.datalog.viewing.chart.SeriesDragState
+import dev.fanfly.wingslog.feature.datalog.viewing.chart.SeriesPalette
+import dev.fanfly.wingslog.feature.datalog.viewing.chart.dropTarget
+import dev.fanfly.wingslog.feature.datalog.viewing.chart.formatSeriesValue
+import kotlin.math.roundToInt
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -191,8 +212,26 @@ fun DataLogViewerScreen(
             }
             .toMap()
         }
+        val infoByColumn = remember(s.record) { s.record.series.associateBy { it.column } }
+        val dragState = remember(s.record) { SeriesDragState() }
+        val dark = isSystemInDarkTheme()
+        val cursorIndex = remember(s.cursorT, s.data) {
+          s.cursorT?.let { Decimation.indexAt(s.data.timeSeconds, it) } ?: -1
+        }
+        var boxOrigin by remember { mutableStateOf(Offset.Zero) }
+        val onDrop: (SeriesDrag, DropTarget?) -> Unit = { drag, target ->
+          when (target) {
+            is DropTarget.OnPane -> viewModel.moveSeries(drag.key, drag.from, target.pane)
+            DropTarget.NewPane -> {
+              viewModel.removeSeries(drag.from, drag.key)
+              viewModel.spawnPane(drag.key)
+            }
+            null -> Unit
+          }
+        }
+        Box(modifier = content.onGloballyPositioned { boxOrigin = it.positionInWindow() }) {
         LazyColumn(
-          modifier = content,
+          modifier = Modifier.fillMaxSize(),
           contentPadding = PaddingValues(
             horizontal = Spacing.screenPadding,
             vertical = Spacing.large
@@ -247,15 +286,44 @@ fun DataLogViewerScreen(
             }
           }
           items(s.layout.panes, key = { it.id.value }) { pane ->
-            ChartPane(
-              series = pane.series.mapNotNull { key -> byColumn[key.column] },
-              timeSeconds = s.data.timeSeconds,
-              durationSeconds = s.record.duration_seconds,
-              view = s.view,
-              cursorT = s.cursorT,
-              isTarget = pane.id == s.layout.targetPane,
-              onGesture = viewModel::onGesture,
-            )
+            val chips = pane.series.mapNotNull { key ->
+              val info = infoByColumn[key.column] ?: return@mapNotNull null
+              val column = s.data.numeric[key.column]
+              val value = if (cursorIndex >= 0 && column != null) column.raw[cursorIndex].takeUnless { it.isNaN() } else null
+              ChipInfo(
+                key = key,
+                shortName = info.short_name.ifBlank { info.name },
+                unit = info.unit,
+                color = SeriesPalette.colorFor(key, info.canonical_id, dark),
+                value = value?.let(::formatSeriesValue),
+              )
+            }
+            Column(
+              modifier = Modifier.dropTarget(DropTarget.OnPane(pane.id), dragState),
+              verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
+            ) {
+              PaneHeaderChips(
+                pane = pane.id,
+                chips = chips,
+                dragState = dragState,
+                onRemoveSeries = { key -> viewModel.removeSeries(pane.id, key) },
+                onRemovePane = { viewModel.removePane(pane.id) },
+                onDrop = onDrop,
+              )
+              ChartPane(
+                series = pane.series.mapNotNull { key -> byColumn[key.column] },
+                timeSeconds = s.data.timeSeconds,
+                durationSeconds = s.record.duration_seconds,
+                view = s.view,
+                cursorT = s.cursorT,
+                isTarget = pane.id == s.layout.targetPane,
+                onGesture = { intent ->
+                  // The last pane touched is where the sidebar adds series (PRD R25).
+                  viewModel.setTargetPane(pane.id)
+                  viewModel.onGesture(intent)
+                },
+              )
+            }
           }
           item {
             TimeAxis(
@@ -264,6 +332,27 @@ fun DataLogViewerScreen(
               cursorT = s.cursorT
             )
           }
+          item {
+            NewPaneTarget(dragState = dragState, onTap = { viewModel.spawnPane() })
+          }
+        }
+        // The chip in flight, following the pointer above everything else.
+        dragState.drag?.let { drag ->
+          val local = drag.position - boxOrigin
+          Surface(
+            shape = RoundedCornerShape(Spacing.smallCornerRadius),
+            color = MaterialTheme.colorScheme.surfaceContainerHighest,
+            tonalElevation = Spacing.extraSmall,
+            shadowElevation = Spacing.extraSmall,
+            modifier = Modifier.offset { IntOffset(local.x.roundToInt(), local.y.roundToInt()) },
+          ) {
+            Text(
+              drag.label,
+              style = MaterialTheme.typography.labelMedium,
+              modifier = Modifier.padding(horizontal = Spacing.medium, vertical = Spacing.small),
+            )
+          }
+        }
         }
         if (s.deleting) {
           AlertDialog(
