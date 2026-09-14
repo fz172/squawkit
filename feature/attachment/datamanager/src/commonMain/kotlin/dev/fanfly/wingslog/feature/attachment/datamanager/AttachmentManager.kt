@@ -1,11 +1,12 @@
 package dev.fanfly.wingslog.feature.attachment.datamanager
 
-import dev.fanfly.wingslog.thing.Attachment
 import dev.fanfly.wingslog.core.storage.blob.LocalBlobStore
 import dev.fanfly.wingslog.feature.attachment.model.AttachmentStatus
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
 import dev.fanfly.wingslog.feature.attachment.model.DownloadState
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
+import dev.fanfly.wingslog.id.DataLogId
+import dev.fanfly.wingslog.thing.Attachment
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -47,6 +48,9 @@ interface AttachmentManager {
 
   /** Build a LINK [Attachment] with no blob. */
   fun makeLink(url: String, displayName: String): Attachment
+
+  /** Build a DATA_LOG [Attachment]: a reference to a DataLog record, with no blob of its own. */
+  fun makeDataLogRef(dataLogId: DataLogId, displayName: String): Attachment
 
   /**
    * Mark [attachment] for deletion. Tombstones the corresponding `blob_object` row so the

@@ -1,22 +1,23 @@
 package dev.fanfly.wingslog.feature.attachment.datamanager.impl
 
 import com.google.common.truth.Truth.assertThat
-import dev.fanfly.wingslog.thing.Attachment
-import dev.fanfly.wingslog.thing.AttachmentType
 import dev.fanfly.wingslog.core.auth.AuthManager
-import dev.fanfly.wingslog.core.storage.ThingScopeResolver
 import dev.fanfly.wingslog.core.storage.EntityScope
+import dev.fanfly.wingslog.core.storage.ThingScopeResolver
 import dev.fanfly.wingslog.core.storage.blob.BlobId
-import dev.fanfly.wingslog.core.storage.blob.UploadScheduler
-import dev.fanfly.wingslog.core.storage.blob.RemoteState
 import dev.fanfly.wingslog.core.storage.blob.BlobRef
+import dev.fanfly.wingslog.core.storage.blob.LocalBlobStore
+import dev.fanfly.wingslog.core.storage.blob.RemoteState
+import dev.fanfly.wingslog.core.storage.blob.UploadScheduler
 import dev.fanfly.wingslog.feature.attachment.datamanager.FileByteReader
 import dev.fanfly.wingslog.feature.attachment.datamanager.FileTooLargeException
 import dev.fanfly.wingslog.feature.attachment.datamanager.ImageCompressor
-import dev.fanfly.wingslog.core.storage.blob.LocalBlobStore
 import dev.fanfly.wingslog.feature.attachment.model.AttachmentStatus
 import dev.fanfly.wingslog.feature.attachment.model.DownloadState
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
+import dev.fanfly.wingslog.id.DataLogId
+import dev.fanfly.wingslog.thing.Attachment
+import dev.fanfly.wingslog.thing.AttachmentType
 import dev.gitlive.firebase.auth.FirebaseUser
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -475,6 +476,36 @@ class LocalFirstAttachmentManagerImplTest {
   }
 
   // ---- delete ----
+
+  @Test
+  fun makeDataLogRef_buildsReference_withNoBlobFields() {
+    val result =
+      manager.makeDataLogRef(DataLogId("dl-1"), displayName = "Ground run")
+
+    assertThat(result.type).isEqualTo(AttachmentType.ATTACHMENT_TYPE_DATA_LOG)
+    assertThat(result.data_log_id).isEqualTo(DataLogId("dl-1"))
+    assertThat(result.name).isEqualTo("Ground run")
+    assertThat(result.id).isNotEmpty()
+    assertThat(result.sha256).isEmpty()
+    assertThat(result.storage_path).isEmpty()
+    assertThat(result.size_bytes).isEqualTo(0L)
+    assertThat(result.created_at!!.getEpochSecond()).isEqualTo(
+      FIXED_EPOCH_SECONDS
+    )
+  }
+
+  @Test
+  fun delete_isNoOp_forDataLogRef() = runTest {
+    manager.delete(
+      manager.makeDataLogRef(
+        DataLogId("dl-1"),
+        displayName = "Ground run"
+      )
+    )
+
+    coVerify(exactly = 0) { blobs.delete(any()) }
+    verify(exactly = 0) { uploadScheduler.scheduleDelete(any()) }
+  }
 
   @Test
   fun delete_isNoOp_forLinkAttachment() = runTest {

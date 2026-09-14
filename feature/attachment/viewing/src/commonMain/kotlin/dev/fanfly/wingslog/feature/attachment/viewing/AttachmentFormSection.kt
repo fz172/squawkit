@@ -18,6 +18,7 @@ import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material.icons.outlined.Link
 import androidx.compose.material.icons.outlined.PhotoCamera
 import androidx.compose.material.icons.outlined.PictureAsPdf
+import androidx.compose.material.icons.outlined.ShowChart
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
@@ -37,17 +38,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import dev.fanfly.wingslog.core.ui.common.compose.AlertDialog
-import dev.fanfly.wingslog.core.ui.common.compose.ModalBottomSheet
-import dev.fanfly.wingslog.thing.AttachmentType
 import dev.fanfly.wingslog.core.appinfo.AppCapability
+import dev.fanfly.wingslog.core.ui.common.compose.AlertDialog
 import dev.fanfly.wingslog.core.ui.common.compose.FormSectionLabel
 import dev.fanfly.wingslog.core.ui.common.compose.FormTextField
+import dev.fanfly.wingslog.core.ui.common.compose.ModalBottomSheet
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.attachment.model.PendingAttachment
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
+import dev.fanfly.wingslog.feature.attachment.model.isFile
 import dev.fanfly.wingslog.feature.subscription.viewing.ProUpsellSheet
 import dev.fanfly.wingslog.feature.subscription.viewing.UpsellTrigger
+import dev.fanfly.wingslog.thing.AttachmentType
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import wingslog.core.sharedassets.generated.resources.add
@@ -194,8 +196,9 @@ private fun PendingAttachmentRow(
   onRemove: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
-  val isSavedFile = pending is PendingAttachment.Saved &&
-    pending.attachment.type != AttachmentType.ATTACHMENT_TYPE_LINK
+  // Only a saved file needs the warning: links and data log references own no bytes.
+  val isSavedFile =
+    pending is PendingAttachment.Saved && pending.attachment.type.isFile
   var showConfirmDialog by remember { mutableStateOf(false) }
 
   if (showConfirmDialog) {
@@ -256,6 +259,7 @@ private fun PendingAttachmentRow(
 
 private fun PendingAttachment.typeIcon() = when (this) {
   is PendingAttachment.LocalLink -> Icons.Outlined.Link
+  is PendingAttachment.LocalDataLogRef -> Icons.Outlined.ShowChart
   is PendingAttachment.Saved -> attachment.type.toIcon()
   is PendingAttachment.Local -> attachment.type.toIcon()
   is PendingAttachment.PendingDelete -> attachment.type.toIcon()
@@ -265,6 +269,7 @@ private fun AttachmentType.toIcon() = when (this) {
   AttachmentType.ATTACHMENT_TYPE_PDF -> Icons.Outlined.PictureAsPdf
   AttachmentType.ATTACHMENT_TYPE_IMAGE -> Icons.Outlined.Image
   AttachmentType.ATTACHMENT_TYPE_LINK -> Icons.Outlined.Link
+  AttachmentType.ATTACHMENT_TYPE_DATA_LOG -> Icons.Outlined.ShowChart
   else -> Icons.AutoMirrored.Outlined.InsertDriveFile
 }
 

@@ -1,26 +1,28 @@
 package dev.fanfly.wingslog.feature.attachment.datamanager.impl
 
-import dev.fanfly.wingslog.thing.Attachment
-import dev.fanfly.wingslog.thing.AttachmentType
 import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.model.id.generateRandomId
 import dev.fanfly.wingslog.core.storage.ThingScopeResolver
 import dev.fanfly.wingslog.core.storage.blob.BlobId
-import dev.fanfly.wingslog.core.storage.blob.RemoteState
-import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.core.storage.blob.BlobRef
+import dev.fanfly.wingslog.core.storage.blob.LocalBlobStore
+import dev.fanfly.wingslog.core.storage.blob.RemoteState
+import dev.fanfly.wingslog.core.storage.blob.UploadScheduler
+import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.datamanager.FileByteReader
 import dev.fanfly.wingslog.feature.attachment.datamanager.FileTooLargeException
 import dev.fanfly.wingslog.feature.attachment.datamanager.ImageCompressor
 import dev.fanfly.wingslog.feature.attachment.datamanager.QuotaChecker.Companion.MAX_FILE_SIZE_BYTES
 import dev.fanfly.wingslog.feature.attachment.datamanager.isCompressiblePhotoMime
-import dev.fanfly.wingslog.core.storage.blob.LocalBlobStore
-import dev.fanfly.wingslog.core.storage.blob.UploadScheduler
 import dev.fanfly.wingslog.feature.attachment.model.AttachmentStatus
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
 import dev.fanfly.wingslog.feature.attachment.model.DownloadState
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
+import dev.fanfly.wingslog.feature.attachment.model.isFile
+import dev.fanfly.wingslog.id.DataLogId
+import dev.fanfly.wingslog.thing.Attachment
+import dev.fanfly.wingslog.thing.AttachmentType
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flow
@@ -64,11 +66,14 @@ class LocalFirstAttachmentManagerImpl(
     // re-encode, shrink it to JPEG. The compressor returns null when it declines (not a photo we
     // touch, already small, or a decode failure), and we store the original bytes unchanged.
     val compressed =
-      if (isCompressiblePhotoMime(picked.mimeType)) imageCompressor.compressToJpeg(rawBytes)
+      if (isCompressiblePhotoMime(picked.mimeType)) imageCompressor.compressToJpeg(
+        rawBytes
+      )
       else null
     val bytes = compressed ?: rawBytes
     val mimeType = if (compressed != null) "image/jpeg" else picked.mimeType
-    val name = if (compressed != null) displayName.withJpegExtension() else displayName
+    val name =
+      if (compressed != null) displayName.withJpegExtension() else displayName
 
     // Enforce the per-file cap on the *stored* size. Non-photos were already gated on their
     // picked size before we read them; photos are gated here so compression gets to rescue a
@@ -109,7 +114,11 @@ class LocalFirstAttachmentManagerImpl(
 
   /** Swap (or add) a `.jpg` extension so the stored name matches the re-encoded JPEG bytes. */
   private fun String.withJpegExtension(): String {
-    if (endsWith(".jpg", ignoreCase = true) || endsWith(".jpeg", ignoreCase = true)) return this
+    if (endsWith(".jpg", ignoreCase = true) || endsWith(
+        ".jpeg",
+        ignoreCase = true
+      )
+    ) return this
     val dot = lastIndexOf('.')
     val base = if (dot > 0) substring(0, dot) else this
     return "$base.jpg"
@@ -135,8 +144,27 @@ class LocalFirstAttachmentManagerImpl(
     )
   }
 
+  override fun makeDataLogRef(
+    dataLogId: DataLogId,
+    displayName: String,
+  ): Attachment = Attachment(
+    id = generateRandomId(),
+    name = displayName,
+    type = AttachmentType.ATTACHMENT_TYPE_DATA_LOG,
+    storage_path = "",
+    download_url = "",
+    url = "",
+    mime_type = "",
+    size_bytes = 0L,
+    created_at = clock.now()
+      .toWireInstant(),
+    sha256 = "",
+    data_log_id = dataLogId,
+  )
+
   override suspend fun delete(attachment: Attachment) {
-    if (attachment.type == AttachmentType.ATTACHMENT_TYPE_LINK) return
+    // References own no blob: there is nothing to tombstone.
+    if (!attachment.type.isFile) return
     val id = BlobId(attachment.id)
     blobs.delete(id)
     // Kick the delete driver now, exactly as addPickedFile schedules the upload. Without this the

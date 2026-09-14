@@ -1,12 +1,13 @@
 package dev.fanfly.wingslog.feature.attachment.datamanager
 
-import dev.fanfly.wingslog.thing.Attachment
-import dev.fanfly.wingslog.thing.AttachmentType
 import dev.fanfly.wingslog.feature.attachment.datamanager.QuotaChecker.Companion.MAX_FILE_ATTACHMENTS
 import dev.fanfly.wingslog.feature.attachment.datamanager.QuotaChecker.Companion.MAX_FILE_SIZE_BYTES
 import dev.fanfly.wingslog.feature.attachment.model.PendingAttachment
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
 import dev.fanfly.wingslog.feature.attachment.model.fileCount
+import dev.fanfly.wingslog.feature.attachment.model.isFile
+import dev.fanfly.wingslog.id.DataLogId
+import dev.fanfly.wingslog.thing.Attachment
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -188,8 +189,37 @@ class AttachmentFormController(
   }
 
   /**
-   * Removes the attachment with [id]: session-local items and saved links disappear outright;
-   * saved files become [PendingAttachment.PendingDelete] and are tombstoned on save.
+   * Appends a reference to the DataLog [dataLogId]. No quota and no error case: a reference owns
+   * no bytes. Re-attaching a log already on this parent is a no-op.
+   */
+  fun addDataLogRef(
+    dataLogId: DataLogId,
+    name: String,
+  ) {
+    val alreadyAttached = _pendingAttachments.value.any {
+      it !is PendingAttachment.PendingDelete && it.attachmentOrNull()?.data_log_id == dataLogId
+    }
+    if (alreadyAttached) return
+    val attachment = attachmentManager.makeDataLogRef(dataLogId, name)
+    _pendingAttachments.update {
+      it + PendingAttachment.LocalDataLogRef(
+        attachment
+      )
+    }
+  }
+
+  private fun PendingAttachment.attachmentOrNull(): Attachment? = when (this) {
+    is PendingAttachment.Local -> attachment
+    is PendingAttachment.LocalLink -> attachment
+    is PendingAttachment.LocalDataLogRef -> attachment
+    is PendingAttachment.Saved -> attachment
+    is PendingAttachment.PendingDelete -> attachment
+  }
+
+  /**
+   * Removes the attachment with [id]: session-local items and saved references (links, data logs)
+   * disappear outright; saved files become [PendingAttachment.PendingDelete] and are tombstoned on
+   * save.
    *
    * A [PendingAttachment.Local] is not just a list entry — `addPickedFile` already wrote its blob
    * to the store and scheduled an upload. Dropping it from the UI would leave that blob orphaned
@@ -204,7 +234,8 @@ class AttachmentFormController(
           pending.id != id -> pending
           pending is PendingAttachment.Local -> null
           pending is PendingAttachment.LocalLink -> null
-          pending is PendingAttachment.Saved && pending.attachment.type == AttachmentType.ATTACHMENT_TYPE_LINK -> null
+          pending is PendingAttachment.LocalDataLogRef -> null
+          pending is PendingAttachment.Saved && !pending.attachment.type.isFile -> null
           pending is PendingAttachment.Saved -> PendingAttachment.PendingDelete(
             pending.attachment
           )
@@ -240,6 +271,9 @@ class AttachmentFormController(
       addAll(
         pending.filterIsInstance<PendingAttachment.LocalLink>()
           .map { it.attachment })
+      addAll(
+        pending.filterIsInstance<PendingAttachment.LocalDataLogRef>()
+          .map { it.attachment })
     }
   }
 
@@ -255,7 +289,8 @@ class AttachmentFormController(
    */
   fun discardUnsavedLocalBlobs() {
     if (committed) return
-    val locals = _pendingAttachments.value.filterIsInstance<PendingAttachment.Local>()
+    val locals =
+      _pendingAttachments.value.filterIsInstance<PendingAttachment.Local>()
     if (locals.isEmpty()) return
     cleanupScope.launch {
       locals.forEach { attachmentManager.delete(it.attachment) }
@@ -263,13 +298,13 @@ class AttachmentFormController(
   }
 
   /**
-   * Tombstones every saved file attachment (links excluded) — called when the parent entity
-   * itself is deleted.
+   * Tombstones every saved file attachment (links and data log references excluded) — called when
+   * the parent entity itself is deleted.
    */
   suspend fun deleteSavedFiles() {
     _pendingAttachments.value
       .filterIsInstance<PendingAttachment.Saved>()
-      .filter { it.attachment.type != AttachmentType.ATTACHMENT_TYPE_LINK }
+      .filter { it.attachment.type.isFile }
       .forEach { attachmentManager.delete(it.attachment) }
   }
 }
