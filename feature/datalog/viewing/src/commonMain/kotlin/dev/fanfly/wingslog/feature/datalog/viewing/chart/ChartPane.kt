@@ -219,7 +219,12 @@ fun ChartPane(
   }
 }
 
-/** Two points per pixel column: the column's min then its max, so spikes survive decimation. */
+/**
+ * Two points per pixel column, the column's min then its max, so spikes survive decimation. Empty
+ * columns are skipped, not broken on: when the samples are sparser than the pixels (a short log,
+ * or a deep zoom) most columns are empty and a path that restarted at each would be nothing but
+ * isolated points. Consecutive samples join, which is what the forward-filled column is for.
+ */
 private fun DrawScope.drawSeries(
   decimated: DecimatedSeries,
   range: YRange,
@@ -232,9 +237,7 @@ private fun DrawScope.drawSeries(
   for (i in 0 until decimated.width) {
     val lo = decimated.minY[i]
     val hi = decimated.maxY[i]
-    if (lo.isNaN()) {
-      open = false; continue
-    }
+    if (lo.isNaN()) continue
     val x = (i + 0.5f) * columnWidth
     val yLo = size.height * (1f - range.fraction(lo))
     val yHi = size.height * (1f - range.fraction(hi))
