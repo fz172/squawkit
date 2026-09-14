@@ -8,7 +8,7 @@ import dev.fanfly.wingslog.core.storage.blob.BlobId
 import dev.fanfly.wingslog.core.storage.blob.IntegrityError
 import dev.fanfly.wingslog.core.storage.blob.RemoteState
 import dev.fanfly.wingslog.core.storage.blob.SqlDelightLocalBlobStore
-import dev.fanfly.wingslog.core.storage.blob.sha256Hex
+import dev.fanfly.wingslog.core.file.sha256Hex
 import dev.fanfly.wingslog.core.storage.createWingsLogDatabase
 import dev.fanfly.wingslog.core.storage.db.WingsLogDatabase
 import dev.fanfly.wingslog.feature.attachment.datamanager.FileBlobFilesystem

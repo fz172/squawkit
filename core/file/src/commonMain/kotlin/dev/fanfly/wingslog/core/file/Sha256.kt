@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.core.storage.blob
+package dev.fanfly.wingslog.core.file
 
 /**
  * SHA-256 of [bytes], lowercase hex (no separators). Used by [LocalBlobStore.put] to compute the
