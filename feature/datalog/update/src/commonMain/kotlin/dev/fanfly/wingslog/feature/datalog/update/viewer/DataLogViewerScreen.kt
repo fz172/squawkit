@@ -1,6 +1,27 @@
 package dev.fanfly.wingslog.feature.datalog.update.viewer
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.VerticalDivider
+import androidx.compose.material3.rememberDrawerState
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.runtime.CompositionLocalProvider
+import dev.fanfly.wingslog.core.ui.adaptive.compose.layoutTierFor
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.LayoutDirection
+import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
+import dev.fanfly.wingslog.core.ui.adaptive.compose.TextSelectionLayer
+import dev.fanfly.wingslog.datalog.DataLog
+import dev.fanfly.wingslog.feature.datalog.viewing.chart.InfoFact
+import dev.fanfly.wingslog.feature.datalog.viewing.chart.SeriesSidebar
+import dev.fanfly.wingslog.feature.datalog.viewing.chart.SidebarWidth
+import dev.fanfly.wingslog.feature.datalog.viewing.list.DataLogRow
+import kotlinx.coroutines.launch
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -87,6 +108,24 @@ import wingslog.core.sharedassets.generated.resources.retry
 import wingslog.feature.datalog.sharedassets.generated.resources.Res
 import wingslog.feature.datalog.sharedassets.generated.resources.data_log_delete_body
 import wingslog.feature.datalog.sharedassets.generated.resources.data_log_delete_title
+import wingslog.feature.datalog.sharedassets.generated.resources.data_log_fact_airframe_hours
+import wingslog.feature.datalog.sharedassets.generated.resources.data_log_fact_date
+import wingslog.feature.datalog.sharedassets.generated.resources.data_log_fact_duration
+import wingslog.feature.datalog.sharedassets.generated.resources.data_log_fact_engine_hours
+import wingslog.feature.datalog.sharedassets.generated.resources.data_log_fact_file
+import wingslog.feature.datalog.sharedassets.generated.resources.data_log_fact_identity
+import wingslog.feature.datalog.sharedassets.generated.resources.data_log_fact_offset
+import wingslog.feature.datalog.sharedassets.generated.resources.data_log_fact_product
+import wingslog.feature.datalog.sharedassets.generated.resources.data_log_fact_rate
+import wingslog.feature.datalog.sharedassets.generated.resources.data_log_fact_rate_value
+import wingslog.feature.datalog.sharedassets.generated.resources.data_log_fact_samples
+import wingslog.feature.datalog.sharedassets.generated.resources.data_log_fact_series
+import wingslog.feature.datalog.sharedassets.generated.resources.data_log_fact_series_value
+import wingslog.feature.datalog.sharedassets.generated.resources.data_log_fact_software
+import wingslog.feature.datalog.sharedassets.generated.resources.data_log_fact_start
+import wingslog.feature.datalog.sharedassets.generated.resources.data_log_fact_system_id
+import wingslog.feature.datalog.sharedassets.generated.resources.data_log_fact_unit
+import wingslog.feature.datalog.sharedassets.generated.resources.data_log_sidebar_open
 import wingslog.feature.datalog.sharedassets.generated.resources.data_log_deleted
 import wingslog.feature.datalog.sharedassets.generated.resources.data_log_tail_mismatch
 import wingslog.feature.datalog.sharedassets.generated.resources.data_log_viewer_downloading
@@ -114,6 +153,8 @@ fun DataLogViewerScreen(
   val state by viewModel.uiState.collectAsStateWithLifecycle()
   val lexicon = LocalThingLexicon.current
   val snackbarHostState = remember { SnackbarHostState() }
+  val drawerState = rememberDrawerState(DrawerValue.Closed)
+  val scope = rememberCoroutineScope()
   val deletedMessage = stringResource(
     Res.string.data_log_deleted,
     LexiconFormatter.sentenceCase(lexicon.dataLogNoun)
@@ -140,246 +181,304 @@ fun DataLogViewerScreen(
 
   val ready = state as? DataLogViewerUiState.Ready
   val row = ready?.record?.toDataLogRow()
-  Scaffold(
-    topBar = {
-      WingsLogTopAppBar(
-        title = row?.startLocal?.date?.toDisplayFormat(numberOnly = false)
-          ?: LexiconFormatter.titleCase(lexicon.dataLogNoun),
-        onBackClick = { navController.popBackStack() },
-        actions = {
-          if (ready != null) {
-            IconButton(onClick = viewModel::requestDelete) {
-              Icon(
-                Icons.Filled.Delete,
-                contentDescription = stringResource(CoreRes.string.delete)
-              )
-            }
-          }
-        },
-      )
-    },
-    snackbarHost = { SnackbarHost(snackbarHostState) },
-  ) { innerPadding ->
-    val content = Modifier.padding(innerPadding)
-      .fillMaxSize()
-    when (val s = state) {
-      is DataLogViewerUiState.Loading -> Box(
-        content,
-        contentAlignment = Alignment.Center
-      ) {
-        Column(
-          horizontalAlignment = Alignment.CenterHorizontally,
-          verticalArrangement = Arrangement.spacedBy(Spacing.medium)
-        ) {
-          CircularProgressIndicator()
-          if (s.download != null) {
-            Text(
-              stringResource(Res.string.data_log_viewer_downloading),
-              style = MaterialTheme.typography.bodyMedium
-            )
-          }
-        }
-      }
-
-      is DataLogViewerUiState.Failed -> EmptyState(
-        title = if (s.reason == LoadFailure.NOT_FOUND) stringResource(
-          Res.string.data_log_viewer_missing,
-          lexicon.dataLogNoun.singular
-        )
-        else stringResource(Res.string.data_log_viewer_load_failed),
-        description = "",
-        icon = Icons.Filled.ShowChart,
-        actionText = if (s.reason == LoadFailure.NOT_FOUND) null else stringResource(
-          CoreRes.string.retry
-        ),
-        onActionClick = if (s.reason == LoadFailure.NOT_FOUND) null else viewModel::retry,
-        modifier = content,
-      )
-
-      is DataLogViewerUiState.Ready -> {
-        val r = checkNotNull(row)
-        val byColumn = remember(s.record, s.data) {
-          s.record.series.filter { it.isPlottable }
-            .mapNotNull { info ->
-              s.data.numeric[info.column]?.let { column ->
-                info.column to PaneSeries(
-                  SeriesKey(info.column),
-                  info.unit,
-                  info.canonical_id,
-                  column.filled
-                )
-              }
-            }
-            .toMap()
-        }
-        val infoByColumn = remember(s.record) { s.record.series.associateBy { it.column } }
-        val dragState = remember(s.record) { SeriesDragState() }
-        val dark = isSystemInDarkTheme()
-        val cursorIndex = remember(s.cursorT, s.data) {
-          s.cursorT?.let { Decimation.indexAt(s.data.timeSeconds, it) } ?: -1
-        }
-        var boxOrigin by remember { mutableStateOf(Offset.Zero) }
-        val onDrop: (SeriesDrag, DropTarget?) -> Unit = { drag, target ->
-          when (target) {
-            is DropTarget.OnPane -> viewModel.moveSeries(drag.key, drag.from, target.pane)
-            DropTarget.NewPane -> {
-              viewModel.removeSeries(drag.from, drag.key)
-              viewModel.spawnPane(drag.key)
-            }
-            null -> Unit
-          }
-        }
-        Box(modifier = content.onGloballyPositioned { boxOrigin = it.positionInWindow() }) {
-        LazyColumn(
-          modifier = Modifier.fillMaxSize(),
-          contentPadding = PaddingValues(
-            horizontal = Spacing.screenPadding,
-            vertical = Spacing.large
-          ),
-          verticalArrangement = Arrangement.spacedBy(Spacing.small),
-        ) {
-          item {
-            if (r.identity.isNotBlank()) Text(
-              r.identity,
-              style = WingslogTypography.dataMedium
-            )
-            if (r.identityMismatch) StatusChip(
-              label = stringResource(Res.string.data_log_tail_mismatch),
-              tier = StatusTier.CAUTION,
-              modifier = Modifier.padding(top = Spacing.medium)
-            )
-            Text(
-              text = listOf(
-                stringResource(
-                  Res.string.data_log_viewer_utc_offset,
-                  r.startLocal.time.toClockText(),
-                  offsetText(s.record.utc_offset_minutes)
-                ),
-                formatDuration(r.durationSeconds),
-                r.product,
-              ).filter { it.isNotBlank() }
-                .joinToString(" · "),
-              style = MaterialTheme.typography.bodySmall,
-              color = MaterialTheme.colorScheme.onSurfaceVariant,
-              modifier = Modifier.padding(vertical = Spacing.medium),
-            )
-          }
-          if (s.view != null) {
-            item {
-              Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(Spacing.small),
-              ) {
-                Text(
-                  text = "${TimeTicks.label(s.view.startSeconds)} – ${
-                    TimeTicks.label(
-                      s.view.endSeconds
-                    )
-                  }",
-                  style = WingslogTypography.dataSmall,
-                  color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                TextButton(onClick = { viewModel.onGesture(GestureIntent.Reset) }) {
-                  Text(stringResource(Res.string.data_log_viewer_reset))
+  // The viewer is a top-level route outside the adaptive shell, so it derives its own tier;
+  // otherwise every window would take the phone layout and hide the sidebar in a drawer.
+  BoxWithConstraints {
+    CompositionLocalProvider(LocalLayoutTier provides layoutTierFor(maxWidth)) {
+      Scaffold(
+        topBar = {
+          WingsLogTopAppBar(
+            title = row?.startLocal?.date?.toDisplayFormat(numberOnly = false)
+              ?: LexiconFormatter.titleCase(lexicon.dataLogNoun),
+            onBackClick = { navController.popBackStack() },
+            actions = {
+              if (ready != null && LocalLayoutTier.current.isCompact) {
+                IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                  Icon(Icons.Filled.Tune, contentDescription = stringResource(Res.string.data_log_sidebar_open))
                 }
               }
+              if (ready != null) {
+                IconButton(onClick = viewModel::requestDelete) {
+                  Icon(
+                    Icons.Filled.Delete,
+                    contentDescription = stringResource(CoreRes.string.delete)
+                  )
+                }
+              }
+            },
+          )
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+      ) { innerPadding ->
+        val content = Modifier.padding(innerPadding)
+          .fillMaxSize()
+        when (val s = state) {
+          is DataLogViewerUiState.Loading -> Box(
+            content,
+            contentAlignment = Alignment.Center
+          ) {
+            Column(
+              horizontalAlignment = Alignment.CenterHorizontally,
+              verticalArrangement = Arrangement.spacedBy(Spacing.medium)
+            ) {
+              CircularProgressIndicator()
+              if (s.download != null) {
+                Text(
+                  stringResource(Res.string.data_log_viewer_downloading),
+                  style = MaterialTheme.typography.bodyMedium
+                )
+              }
             }
           }
-          items(s.layout.panes, key = { it.id.value }) { pane ->
-            val chips = pane.series.mapNotNull { key ->
-              val info = infoByColumn[key.column] ?: return@mapNotNull null
-              val column = s.data.numeric[key.column]
-              val value = if (cursorIndex >= 0 && column != null) column.raw[cursorIndex].takeUnless { it.isNaN() } else null
-              ChipInfo(
-                key = key,
-                shortName = info.short_name.ifBlank { info.name },
-                unit = info.unit,
-                color = SeriesPalette.colorFor(key, info.canonical_id, dark),
-                value = value?.let(::formatSeriesValue),
+
+          is DataLogViewerUiState.Failed -> EmptyState(
+            title = if (s.reason == LoadFailure.NOT_FOUND) stringResource(
+              Res.string.data_log_viewer_missing,
+              lexicon.dataLogNoun.singular
+            )
+            else stringResource(Res.string.data_log_viewer_load_failed),
+            description = "",
+            icon = Icons.Filled.ShowChart,
+            actionText = if (s.reason == LoadFailure.NOT_FOUND) null else stringResource(
+              CoreRes.string.retry
+            ),
+            onActionClick = if (s.reason == LoadFailure.NOT_FOUND) null else viewModel::retry,
+            modifier = content,
+          )
+
+          is DataLogViewerUiState.Ready -> {
+            val r = checkNotNull(row)
+            val byColumn = remember(s.record, s.data) {
+              s.record.series.filter { it.isPlottable }
+                .mapNotNull { info ->
+                  s.data.numeric[info.column]?.let { column ->
+                    info.column to PaneSeries(
+                      SeriesKey(info.column),
+                      info.unit,
+                      info.canonical_id,
+                      column.filled
+                    )
+                  }
+                }
+                .toMap()
+            }
+            val infoByColumn = remember(s.record) { s.record.series.associateBy { it.column } }
+            val dragState = remember(s.record) { SeriesDragState() }
+            val dark = isSystemInDarkTheme()
+            val cursorIndex = remember(s.cursorT, s.data) {
+              s.cursorT?.let { Decimation.indexAt(s.data.timeSeconds, it) } ?: -1
+            }
+            var boxOrigin by remember { mutableStateOf(Offset.Zero) }
+            val onDrop: (SeriesDrag, DropTarget?) -> Unit = { drag, target ->
+              val from = drag.from
+              when (target) {
+                is DropTarget.OnPane ->
+                  if (from == null) viewModel.addSeries(target.pane, drag.key) else viewModel.moveSeries(drag.key, from, target.pane)
+                DropTarget.NewPane -> {
+                  if (from != null) viewModel.removeSeries(from, drag.key)
+                  viewModel.spawnPane(drag.key)
+                }
+                null -> Unit
+              }
+            }
+            val compact = LocalLayoutTier.current.isCompact
+            val facts = viewerFacts(s.record, r)
+            val sidebar: @Composable () -> Unit = {
+              SeriesSidebar(
+                catalogue = s.record.series,
+                inTargetPane = s.layout.panes.firstOrNull { it.id == s.layout.targetPane }?.series?.toSet().orEmpty(),
+                tab = s.sidebarTab,
+                onTab = viewModel::setSidebarTab,
+                query = s.seriesQuery,
+                onQuery = viewModel::setSeriesQuery,
+                onAdd = { key -> s.layout.targetPane?.let { viewModel.addSeries(it, key) } ?: viewModel.spawnPane(key) },
+                dragState = dragState,
+                onDrop = onDrop,
+                facts = facts,
+                identityMismatch = r.identityMismatch,
               )
             }
-            Column(
-              modifier = Modifier.dropTarget(DropTarget.OnPane(pane.id), dragState),
-              verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
+            val panes: @Composable (Modifier) -> Unit = { paneModifier ->
+            Box(modifier = paneModifier.onGloballyPositioned { boxOrigin = it.positionInWindow() }) {
+            LazyColumn(
+              modifier = Modifier.fillMaxSize(),
+              contentPadding = PaddingValues(
+                horizontal = Spacing.screenPadding,
+                vertical = Spacing.large
+              ),
+              verticalArrangement = Arrangement.spacedBy(Spacing.small),
             ) {
-              PaneHeaderChips(
-                pane = pane.id,
-                chips = chips,
-                dragState = dragState,
-                onRemoveSeries = { key -> viewModel.removeSeries(pane.id, key) },
-                onRemovePane = { viewModel.removePane(pane.id) },
-                onDrop = onDrop,
-              )
-              ChartPane(
-                series = pane.series.mapNotNull { key -> byColumn[key.column] },
-                timeSeconds = s.data.timeSeconds,
-                durationSeconds = s.record.duration_seconds,
-                view = s.view,
-                cursorT = s.cursorT,
-                isTarget = pane.id == s.layout.targetPane,
-                onGesture = { intent ->
-                  // The last pane touched is where the sidebar adds series (PRD R25).
-                  viewModel.setTargetPane(pane.id)
-                  viewModel.onGesture(intent)
+              item {
+                if (r.identity.isNotBlank()) Text(
+                  r.identity,
+                  style = WingslogTypography.dataMedium
+                )
+                if (r.identityMismatch) StatusChip(
+                  label = stringResource(Res.string.data_log_tail_mismatch),
+                  tier = StatusTier.CAUTION,
+                  modifier = Modifier.padding(top = Spacing.medium)
+                )
+                Text(
+                  text = listOf(
+                    stringResource(
+                      Res.string.data_log_viewer_utc_offset,
+                      r.startLocal.time.toClockText(),
+                      offsetText(s.record.utc_offset_minutes)
+                    ),
+                    formatDuration(r.durationSeconds),
+                    r.product,
+                  ).filter { it.isNotBlank() }
+                    .joinToString(" · "),
+                  style = MaterialTheme.typography.bodySmall,
+                  color = MaterialTheme.colorScheme.onSurfaceVariant,
+                  modifier = Modifier.padding(vertical = Spacing.medium),
+                )
+              }
+              if (s.view != null) {
+                item {
+                  Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.small),
+                  ) {
+                    Text(
+                      text = "${TimeTicks.label(s.view.startSeconds)} – ${
+                        TimeTicks.label(
+                          s.view.endSeconds
+                        )
+                      }",
+                      style = WingslogTypography.dataSmall,
+                      color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    TextButton(onClick = { viewModel.onGesture(GestureIntent.Reset) }) {
+                      Text(stringResource(Res.string.data_log_viewer_reset))
+                    }
+                  }
+                }
+              }
+              items(s.layout.panes, key = { it.id.value }) { pane ->
+                val chips = pane.series.mapNotNull { key ->
+                  val info = infoByColumn[key.column] ?: return@mapNotNull null
+                  val column = s.data.numeric[key.column]
+                  val value = if (cursorIndex >= 0 && column != null) column.raw[cursorIndex].takeUnless { it.isNaN() } else null
+                  ChipInfo(
+                    key = key,
+                    shortName = info.short_name.ifBlank { info.name },
+                    unit = info.unit,
+                    color = SeriesPalette.colorFor(key, info.canonical_id, dark),
+                    value = value?.let(::formatSeriesValue),
+                  )
+                }
+                Column(
+                  modifier = Modifier.dropTarget(DropTarget.OnPane(pane.id), dragState),
+                  verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
+                ) {
+                  PaneHeaderChips(
+                    pane = pane.id,
+                    chips = chips,
+                    dragState = dragState,
+                    onRemoveSeries = { key -> viewModel.removeSeries(pane.id, key) },
+                    onRemovePane = { viewModel.removePane(pane.id) },
+                    onDrop = onDrop,
+                  )
+                  ChartPane(
+                    series = pane.series.mapNotNull { key -> byColumn[key.column] },
+                    timeSeconds = s.data.timeSeconds,
+                    durationSeconds = s.record.duration_seconds,
+                    view = s.view,
+                    cursorT = s.cursorT,
+                    isTarget = pane.id == s.layout.targetPane,
+                    onGesture = { intent ->
+                      // The last pane touched is where the sidebar adds series (PRD R25).
+                      viewModel.setTargetPane(pane.id)
+                      viewModel.onGesture(intent)
+                    },
+                  )
+                }
+              }
+              item {
+                TimeAxis(
+                  view = s.view,
+                  durationSeconds = s.record.duration_seconds,
+                  cursorT = s.cursorT
+                )
+              }
+              item {
+                NewPaneTarget(dragState = dragState, onTap = { viewModel.spawnPane() })
+              }
+            }
+            // The chip in flight, following the pointer above everything else.
+            dragState.drag?.let { drag ->
+              val local = drag.position - boxOrigin
+              Surface(
+                shape = RoundedCornerShape(Spacing.smallCornerRadius),
+                color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                tonalElevation = Spacing.extraSmall,
+                shadowElevation = Spacing.extraSmall,
+                modifier = Modifier.offset { IntOffset(local.x.roundToInt(), local.y.roundToInt()) },
+              ) {
+                Text(
+                  drag.label,
+                  style = MaterialTheme.typography.labelMedium,
+                  modifier = Modifier.padding(horizontal = Spacing.medium, vertical = Spacing.small),
+                )
+              }
+            }
+            }
+            }
+            if (compact) {
+              // A right-hand drawer behind the tune control (PRD R27, design §11.7): the drawer is laid
+              // out right-to-left and its content flipped back, the standard trick for an end drawer.
+              CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+                ModalNavigationDrawer(
+                  drawerState = drawerState,
+                  drawerContent = {
+                    ModalDrawerSheet(modifier = Modifier.width(SidebarWidth)) {
+                      CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+                        TextSelectionLayer { sidebar() }
+                      }
+                    }
+                  },
+                ) {
+                  CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+                    panes(content)
+                  }
+                }
+              }
+            } else {
+              Row(modifier = content) {
+                panes(Modifier.weight(1f).fillMaxSize())
+                VerticalDivider()
+                Box(Modifier.width(SidebarWidth).fillMaxSize()) { sidebar() }
+              }
+            }
+            if (s.deleting) {
+              AlertDialog(
+                onDismissRequest = viewModel::cancelDelete,
+                title = {
+                  Text(
+                    stringResource(
+                      Res.string.data_log_delete_title,
+                      LexiconFormatter.titleCase(lexicon.dataLogNoun)
+                    )
+                  )
+                },
+                text = { Text(stringResource(Res.string.data_log_delete_body)) },
+                confirmButton = {
+                  TextButton(
+                    onClick = viewModel::confirmDelete,
+                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                  ) { Text(stringResource(CoreRes.string.delete)) }
+                },
+                dismissButton = {
+                  TextButton(onClick = viewModel::cancelDelete) {
+                    Text(
+                      stringResource(CoreRes.string.cancel)
+                    )
+                  }
                 },
               )
             }
           }
-          item {
-            TimeAxis(
-              view = s.view,
-              durationSeconds = s.record.duration_seconds,
-              cursorT = s.cursorT
-            )
-          }
-          item {
-            NewPaneTarget(dragState = dragState, onTap = { viewModel.spawnPane() })
-          }
-        }
-        // The chip in flight, following the pointer above everything else.
-        dragState.drag?.let { drag ->
-          val local = drag.position - boxOrigin
-          Surface(
-            shape = RoundedCornerShape(Spacing.smallCornerRadius),
-            color = MaterialTheme.colorScheme.surfaceContainerHighest,
-            tonalElevation = Spacing.extraSmall,
-            shadowElevation = Spacing.extraSmall,
-            modifier = Modifier.offset { IntOffset(local.x.roundToInt(), local.y.roundToInt()) },
-          ) {
-            Text(
-              drag.label,
-              style = MaterialTheme.typography.labelMedium,
-              modifier = Modifier.padding(horizontal = Spacing.medium, vertical = Spacing.small),
-            )
-          }
-        }
-        }
-        if (s.deleting) {
-          AlertDialog(
-            onDismissRequest = viewModel::cancelDelete,
-            title = {
-              Text(
-                stringResource(
-                  Res.string.data_log_delete_title,
-                  LexiconFormatter.titleCase(lexicon.dataLogNoun)
-                )
-              )
-            },
-            text = { Text(stringResource(Res.string.data_log_delete_body)) },
-            confirmButton = {
-              TextButton(
-                onClick = viewModel::confirmDelete,
-                colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
-              ) { Text(stringResource(CoreRes.string.delete)) }
-            },
-            dismissButton = {
-              TextButton(onClick = viewModel::cancelDelete) {
-                Text(
-                  stringResource(CoreRes.string.cancel)
-                )
-              }
-            },
-          )
         }
       }
     }
@@ -397,4 +496,28 @@ private fun offsetText(minutes: Int): String {
     (abs % 60).toString()
       .padStart(2, '0')
   }"
+}
+
+/** The Info tab's lines (PRD R26), in the order the mock lists them. */
+@Composable
+private fun viewerFacts(record: DataLog, row: DataLogRow): List<InfoFact> {
+  val source = record.source
+  val plottable = record.series.count { it.isPlottable }
+  return listOfNotNull(
+    InfoFact(stringResource(Res.string.data_log_fact_date), row.startLocal.date.toDisplayFormat(numberOnly = false)),
+    InfoFact(stringResource(Res.string.data_log_fact_start), row.startLocal.time.toClockText()),
+    InfoFact(stringResource(Res.string.data_log_fact_offset), offsetText(record.utc_offset_minutes)),
+    InfoFact(stringResource(Res.string.data_log_fact_duration), formatDuration(row.durationSeconds)),
+    InfoFact(stringResource(Res.string.data_log_fact_samples), record.sample_count.toString()),
+    InfoFact(stringResource(Res.string.data_log_fact_rate), stringResource(Res.string.data_log_fact_rate_value, formatSeriesValue(record.sample_rate_hz))),
+    InfoFact(stringResource(Res.string.data_log_fact_series), stringResource(Res.string.data_log_fact_series_value, plottable, record.series.size - plottable)),
+    InfoFact(stringResource(Res.string.data_log_fact_file), record.file_name),
+    source?.product?.takeIf { it.isNotBlank() }?.let { InfoFact(stringResource(Res.string.data_log_fact_product), it) },
+    source?.unit?.takeIf { it.isNotBlank() }?.let { InfoFact(stringResource(Res.string.data_log_fact_unit), it) },
+    source?.software_version?.takeIf { it.isNotBlank() }?.let { InfoFact(stringResource(Res.string.data_log_fact_software), it) },
+    source?.system_id?.takeIf { it.isNotBlank() }?.let { InfoFact(stringResource(Res.string.data_log_fact_system_id), it) },
+    source?.identity?.takeIf { it.isNotBlank() }?.let { InfoFact(stringResource(Res.string.data_log_fact_identity), it) },
+    source?.airframe_hours?.takeIf { it.isNotBlank() }?.let { InfoFact(stringResource(Res.string.data_log_fact_airframe_hours), it) },
+    source?.engine_hours?.takeIf { it.isNotBlank() }?.let { InfoFact(stringResource(Res.string.data_log_fact_engine_hours), it) },
+  )
 }
