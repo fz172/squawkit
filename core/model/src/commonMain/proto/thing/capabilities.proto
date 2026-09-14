@@ -13,13 +13,14 @@ option java_multiple_files = true;
 // a capability guards whether a composable emits anything, not whether it passes enabled = false.
 
 // The per-Thing sections of the adaptive shell, in the order a template wants them. Mirrors
-// ShellSection's first four values; SETTINGS is account-level and never template-controlled.
+// ShellSection's per-thing values; SETTINGS is account-level and never template-controlled.
 enum Section {
   SECTION_UNKNOWN = 0;
   SECTION_DASHBOARD = 1;
   SECTION_SQUAWKS = 2;  // named by Lexicon.squawk at render — "Issues", "Attention", ...
   SECTION_TASKS = 3;
   SECTION_LOGS = 4;
+  SECTION_DATA_LOGS = 5;  // named by Lexicon.data_log — "Flight Data" on the airplane preset
 }
 
 enum ExportLayout {

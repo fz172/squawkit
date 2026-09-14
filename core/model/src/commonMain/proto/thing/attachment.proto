@@ -1,6 +1,7 @@
 syntax = "proto3";
 
 import "google/protobuf/timestamp.proto";
+import "id/ids.proto";
 
 option java_package = "dev.fanfly.wingslog.thing";
 option java_multiple_files = true;
@@ -11,6 +12,9 @@ enum AttachmentType {
   ATTACHMENT_TYPE_PDF = 2;
   ATTACHMENT_TYPE_LINK = 3;
   ATTACHMENT_TYPE_FILE = 4;
+  // A reference to a DataLog record, like LINK: no blob, empty `sha256`, `size_bytes` 0. The
+  // referenced record owns the bytes and outlives the reference (data log design §4.2).
+  ATTACHMENT_TYPE_DATA_LOG = 5;
 }
 
 message Attachment {
@@ -30,4 +34,7 @@ message Attachment {
   // empty for LINK and for R1-era attachments (those become Failed(LegacyAttachment) in
   // the R2 opener — see design §10).
   string sha256 = 10;
+  // Set only for DATA_LOG; null on every other type. A new field on an old message still uses the
+  // boxed id (id/ids.proto).
+  DataLogId data_log_id = 11;
 }

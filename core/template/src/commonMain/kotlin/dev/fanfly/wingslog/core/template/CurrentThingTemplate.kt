@@ -104,8 +104,9 @@ class CurrentThingTemplate(private val registry: TemplateRegistry) {
   private fun ThingTemplate?.lexiconOrGeneric(): Lexicon =
     registry.lexiconFor(this)
 
+  /** By id from this build, like the lexicon — see [TemplateRegistry.capabilitiesFor]. */
   private fun ThingTemplate?.capabilitiesOrAllEnabled(): Capabilities =
-    this?.capabilities ?: ALL_ENABLED
+    registry.capabilitiesFor(this)
 
   companion object {
     /** `template_id` when no single template applies — never an empty dimension in GA4. */

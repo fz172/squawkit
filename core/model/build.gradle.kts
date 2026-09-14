@@ -11,6 +11,9 @@ kotlin {
     namespace = "dev.fanfly.wingslog.core.model"
     compileSdk = 37
     minSdk = 33
+
+    withHostTest {
+    }
   }
 
   iosArm64()
@@ -28,6 +31,11 @@ kotlin {
       }
       kotlin.srcDir(layout.buildDirectory.dir("generated/source/wire/kmp"))
     }
+    sourceSets.getByName("androidHostTest")
+      .dependencies {
+        implementation(libs.junit)
+        implementation(libs.truth)
+      }
   }
 }
 

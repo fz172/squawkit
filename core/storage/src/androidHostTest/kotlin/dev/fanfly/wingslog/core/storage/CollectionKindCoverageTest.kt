@@ -18,6 +18,7 @@ class CollectionKindCoverageTest {
     CollectionKind.Comment,
     CollectionKind.SharedAircraftRef,
     CollectionKind.NotificationSettings,
+    CollectionKind.DataLog,
   )
 
   @Test

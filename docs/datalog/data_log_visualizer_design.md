@@ -55,7 +55,7 @@ that draws, and the server never parses it.
  ⑨ schedule    core/storage  UploadScheduler                     ─
         │                      │
         ▼ PushWorker           ▼ BlobUploadDriver                (feature/sync/data)
- FIRESTORE  users/{uid}/thing/{thingId}/data_log/{id}            SyncDocWire{payload: base64(DataLog), schema: "thing.DataLog", …}
+ FIRESTORE  users/{uid}/thing/{thingId}/data_log/{id}            SyncDocWire{payload: base64(DataLog), schema: "datalog.DataLog", …}
  STORAGE    users/{uid}/thing/{thingId}/blobs/{blobId}           gzip bytes, contentType application/gzip
         │
  SERVER (Cloud Functions, backend/firebase/functions)
@@ -104,7 +104,7 @@ that draws, and the server never parses it.
    `Attachment` (`sha256` and `size_bytes` of the *stored* bytes, which is what the download driver
    verifies).
 5. **`SyncDocWire`** (Firestore document). The generic envelope: `payload` is base64 of shape 3,
-   `schema` is `"thing.DataLog"`. Nothing DataLog-specific here; it is what every record kind uses.
+   `schema` is `"datalog.DataLog"`. Nothing DataLog-specific here; it is what every record kind uses.
 6. **`DataLog` again, on another device.** Decoded by `WireCodec(DataLog.ADAPTER)` into the same
    Wire class. The list renders from it directly.
 7. **`DataLogSeriesData` again.** Only when a viewer opens: download shape 4, verify, decompress,
@@ -163,9 +163,9 @@ how a function writes a field without racing the owning client's last-writer-win
 
 ```
 core/
+  model/src/commonMain/proto/id/ids.proto  # NEW: boxed id messages ThingId, DataLogId, UserId (§4.4)
+  model/src/commonMain/proto/datalog/data_log.proto  # NEW (§4.1)
   model/src/commonMain/proto/thing/
-    ids.proto                            # NEW: boxed id messages ThingId, DataLogId, UserId (§4.4)
-    data_log.proto                       # NEW (§4.1)
     attachment.proto                     # +ATTACHMENT_TYPE_DATA_LOG, +data_log_id (§4.2)
     capabilities.proto                   # +SECTION_DATA_LOGS
     lexicon.proto                        # +Noun data_log, +EmptyStates.data_log_hint, +data_log_description
@@ -204,7 +204,7 @@ routes in `core/nav` and `feature/shell`, strings in `sharedassets`.
 
 ## 4. Data model
 
-### 4.1 `data_log.proto`
+### 4.1 `datalog/data_log.proto`
 
 ```proto
 enum DataLogFormat {
@@ -289,7 +289,7 @@ explicit exclusion listed in §9.
 
 ### 4.3 `CollectionKind.DataLog`
 
-`wireName = "data_log"`, `schemaName = "thing.DataLog"`. Path
+`wireName = "data_log"`, `schemaName = "datalog.DataLog"`. Path
 `users/{uid}/thing/{thingId}/data_log/{id}`. Touch points, following the Comment addition in
 `4299ec2c6`:
 
@@ -301,8 +301,8 @@ explicit exclusion listed in §9.
 | `blob/AttachmentRefs.kt`                              | `DataLog -> listOfNotNull(payload.raw_file)`; and in the attachment-bearing kinds, filter `type != DATA_LOG` out of `blobIdsIn` (a reference owns nothing) |
 | `feature/sync/data/.../SyncEngine.kt`                 | add to `PER_THING_KINDS`                                                                                                                                   |
 | `backend/firebase/firestore.rules:65-68`              | add `"data_log"` to `isSharedAircraftKind`                                                                                                                 |
-| `backend/.../functions/package.json` `generate:proto` | add `thing/ids.proto` and `thing/data_log.proto` |
-| `backend/.../storage/blobRefs.ts`                     | `SCHEMA["thing.DataLog"]`, `schemaCanOwnBlobs` true, `blobIdsInPayload` returns `[raw_file.id]`; `blobIds()` excludes `DATA_LOG` alongside `LINK`          |
+| `backend/.../functions/package.json` `generate:proto` | add `id/ids.proto` and `datalog/data_log.proto` |
+| `backend/.../storage/blobRefs.ts`                     | `SCHEMA["datalog.DataLog"]`, `schemaCanOwnBlobs` true, `blobIdsInPayload` returns `[raw_file.id]`; `blobIds()` excludes `DATA_LOG` alongside `LINK`          |
 | `backend/.../notifications/*`                         | §11                                                                                                                                                        |
 | `backend/.../test/blob-cleanup.test.ts`               | a DataLog delete reclaims its blob; a log delete never reclaims a referenced DataLog's blob                                                                |
 
@@ -319,7 +319,7 @@ field; new types go one step further and box the id in the schema itself, so the
 class is already the dedicated type and there is exactly one `DataLogId` in the codebase.
 
 ```proto
-// core/model/src/commonMain/proto/thing/ids.proto
+// core/model/src/commonMain/proto/id/ids.proto
 message ThingId   { string value = 1; }
 message DataLogId { string value = 1; }
 message UserId    { string value = 1; }
@@ -357,7 +357,7 @@ cleanup; this feature sets the precedent and does not do the sweep.
 - No name collides. There is no `ThingId` or `UserId` class, alias, or proto message anywhere in
   the Kotlin sources, the functions' TypeScript, or the proto tree today. Wire compiles every file
   under `core/model/src/commonMain/proto` automatically; the functions' `generate:proto` list is
-  explicit and gains `thing/ids.proto`.
+  explicit and gains `id/ids.proto`.
 - What it does create is a **second representation** of the same concept until the grandfathered
   APIs are migrated: `ThingScopeResolver.resolve(thingId: String)` and the shell's `selectedThingId`
   stay strings while this feature's APIs take `ThingId`. The seam is one `.value` or one `ThingId(…)`

@@ -53,6 +53,9 @@ object GenericLexicon {
     // is "buy milk" and whoever did it is nobody's technician. A generic word that only reads
     // right for machinery is the airplane lexicon wearing a disguise.
     technician = Noun(singular = "person", plural = "people", article = "a"),
+    // Neutral: "flight" is the airplane preset's word (PRD R45). The short plural names the section.
+    data_log = Noun(singular = "data log", plural = "data logs", article = "a", short_plural = "Data"),
+    data_log_description = "Upload a data log recorded by the thing to chart it.",
     ready_status = "Ready",
     // The OS notification channel name on a mixed account resolves here rather than picking a
     // template's word arbitrarily (PRD §8.5). The channel *id* stays "GROUNDED" regardless —
@@ -91,6 +94,7 @@ object GenericLexicon {
       // no "baseline" either, since that word names a starting meter reading.
       log_onboarding_hint = "Log whatever has already been done. Recurring tasks are scheduled " +
         "from the date of the most recent entry.",
+      data_log_hint = "Upload a data log recorded by the thing to chart it here.",
     ),
   )
 }

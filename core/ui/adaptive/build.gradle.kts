@@ -39,6 +39,7 @@ kotlin {
       // For AppCapability.isDataLogsSupported: the shell drops the data log section while the
       // rollout switch is off (docs/datalog/data_log_visualizer_design.md §8.3).
       implementation(project(":core:appinfo"))
+      implementation(libs.koin.compose)
       // For LocalThingLexicon: the shell is where a Thing's lexicon enters the composition.
       api(project(":core:template"))
       api(libs.compose.ui)

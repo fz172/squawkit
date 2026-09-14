@@ -1,4 +1,5 @@
 import { Attachment, AttachmentType } from "../generated/proto/thing/attachment.js";
+import { DataLog } from "../generated/proto/datalog/data_log.js";
 import { MaintenanceLog } from "../generated/proto/thing/maintenance_log.js";
 import { MaintenanceTask } from "../generated/proto/thing/maintenance_task.js";
 import { Squawk } from "../generated/proto/thing/squawk.js";
@@ -20,6 +21,7 @@ const SCHEMA = {
   MAINTENANCE_LOG: "aircraft.MaintenanceLog",
   MAINTENANCE_TASK: "aircraft.MaintenanceTask",
   SQUAWK: "aircraft.Squawk",
+  DATA_LOG: "datalog.DataLog",
 } as const;
 
 /** Records that can carry attachments. Everything else owns no bytes and is skipped. */
@@ -55,6 +57,11 @@ export function blobIdsInPayload(
         return blobIds(MaintenanceTask.decode(bytes).attachments);
       case SCHEMA.SQUAWK:
         return blobIds(Squawk.decode(bytes).attachments);
+      case SCHEMA.DATA_LOG: {
+        // The record's one blob is its embedded raw file (data log design §4.3).
+        const rawFile = DataLog.decode(bytes).rawFile;
+        return blobIds(rawFile ? [rawFile] : []);
+      }
       default:
         return null; // unknown schema — say so rather than claim it owns nothing
     }
@@ -84,11 +91,17 @@ function payloadBytes(payload: string | Uint8Array | Buffer | undefined): Uint8A
 
 /**
  * A LINK attachment is just a URL living in the payload — it owns no bytes in Storage, so there is
- * nothing to collect. Everything else is backed by a blob whose id IS the attachment id.
+ * nothing to collect. A DATA_LOG attachment is a reference to a DataLog record whose own `raw_file`
+ * owns the bytes, and the record outlives the reference. Everything else is backed by a blob whose
+ * id IS the attachment id.
  */
 function blobIds(attachments: Attachment[]): string[] {
   return attachments
-    .filter((a) => a.type !== AttachmentType.ATTACHMENT_TYPE_LINK)
+    .filter(
+      (a) =>
+        a.type !== AttachmentType.ATTACHMENT_TYPE_LINK &&
+        a.type !== AttachmentType.ATTACHMENT_TYPE_DATA_LOG,
+    )
     .map((a) => a.id)
     .filter((id) => id.length > 0);
 }

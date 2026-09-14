@@ -7,6 +7,7 @@
 /* eslint-disable */
 import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
 import { Timestamp } from "../google/protobuf/timestamp";
+import { DataLogId } from "../id/ids";
 
 export const protobufPackage = "";
 
@@ -16,6 +17,11 @@ export enum AttachmentType {
   ATTACHMENT_TYPE_PDF = 2,
   ATTACHMENT_TYPE_LINK = 3,
   ATTACHMENT_TYPE_FILE = 4,
+  /**
+   * ATTACHMENT_TYPE_DATA_LOG - A reference to a DataLog record, like LINK: no blob, empty `sha256`, `size_bytes` 0. The
+   * referenced record owns the bytes and outlives the reference (data log design §4.2).
+   */
+  ATTACHMENT_TYPE_DATA_LOG = 5,
   UNRECOGNIZED = -1,
 }
 
@@ -36,6 +42,9 @@ export function attachmentTypeFromJSON(object: any): AttachmentType {
     case 4:
     case "ATTACHMENT_TYPE_FILE":
       return AttachmentType.ATTACHMENT_TYPE_FILE;
+    case 5:
+    case "ATTACHMENT_TYPE_DATA_LOG":
+      return AttachmentType.ATTACHMENT_TYPE_DATA_LOG;
     case -1:
     case "UNRECOGNIZED":
     default:
@@ -55,6 +64,8 @@ export function attachmentTypeToJSON(object: AttachmentType): string {
       return "ATTACHMENT_TYPE_LINK";
     case AttachmentType.ATTACHMENT_TYPE_FILE:
       return "ATTACHMENT_TYPE_FILE";
+    case AttachmentType.ATTACHMENT_TYPE_DATA_LOG:
+      return "ATTACHMENT_TYPE_DATA_LOG";
     case AttachmentType.UNRECOGNIZED:
     default:
       return "UNRECOGNIZED";
@@ -84,6 +95,11 @@ export interface Attachment {
    * the R2 opener — see design §10).
    */
   sha256: string;
+  /**
+   * Set only for DATA_LOG; null on every other type. A new field on an old message still uses the
+   * boxed id (id/ids.proto).
+   */
+  dataLogId: DataLogId | undefined;
 }
 
 function createBaseAttachment(): Attachment {
@@ -98,6 +114,7 @@ function createBaseAttachment(): Attachment {
     sizeBytes: 0,
     createdAt: undefined,
     sha256: "",
+    dataLogId: undefined,
   };
 }
 
@@ -132,6 +149,9 @@ export const Attachment: MessageFns<Attachment> = {
     }
     if (message.sha256 !== "") {
       writer.uint32(82).string(message.sha256);
+    }
+    if (message.dataLogId !== undefined) {
+      DataLogId.encode(message.dataLogId, writer.uint32(90).fork()).join();
     }
     return writer;
   },
@@ -223,6 +243,14 @@ export const Attachment: MessageFns<Attachment> = {
           message.sha256 = reader.string();
           continue;
         }
+        case 11: {
+          if (tag !== 90) {
+            break;
+          }
+
+          message.dataLogId = DataLogId.decode(reader, reader.uint32());
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -264,6 +292,11 @@ export const Attachment: MessageFns<Attachment> = {
         ? fromJsonTimestamp(object.created_at)
         : undefined,
       sha256: isSet(object.sha256) ? globalThis.String(object.sha256) : "",
+      dataLogId: isSet(object.dataLogId)
+        ? DataLogId.fromJSON(object.dataLogId)
+        : isSet(object.data_log_id)
+        ? DataLogId.fromJSON(object.data_log_id)
+        : undefined,
     };
   },
 
@@ -299,6 +332,9 @@ export const Attachment: MessageFns<Attachment> = {
     if (message.sha256 !== "") {
       obj.sha256 = message.sha256;
     }
+    if (message.dataLogId !== undefined) {
+      obj.dataLogId = DataLogId.toJSON(message.dataLogId);
+    }
     return obj;
   },
 
@@ -317,6 +353,9 @@ export const Attachment: MessageFns<Attachment> = {
     message.sizeBytes = object.sizeBytes ?? 0;
     message.createdAt = object.createdAt ?? undefined;
     message.sha256 = object.sha256 ?? "";
+    message.dataLogId = (object.dataLogId !== undefined && object.dataLogId !== null)
+      ? DataLogId.fromPartial(object.dataLogId)
+      : undefined;
     return message;
   },
 };

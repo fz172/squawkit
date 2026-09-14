@@ -30,6 +30,7 @@ import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Keyboard
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.ShowChart
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -68,9 +69,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.template.GenericLexicon
+import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.LocalThingCapabilities
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.dataLogNoun
 import dev.fanfly.wingslog.core.template.logNoun
 import dev.fanfly.wingslog.core.template.squawkNoun
 import dev.fanfly.wingslog.core.template.taskNoun
@@ -92,6 +95,7 @@ import dev.fanfly.wingslog.thing.Section
 import dev.fanfly.wingslog.thing.ThingTemplate
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 import wingslog.core.sharedassets.generated.resources.app_name
 import wingslog.core.sharedassets.generated.resources.back
 import wingslog.core.sharedassets.generated.resources.enter_invite_code
@@ -138,13 +142,15 @@ data class ShellThing(
 )
 
 /**
- * Top-level sections of the adaptive shell. The first four are per-thing; [SETTINGS] is global.
+ * Top-level sections of the adaptive shell. All but [SETTINGS] are per-thing; [SETTINGS] is global.
  */
 enum class ShellSection(val icon: ImageVector) {
   DASHBOARD(Icons.Filled.Dashboard),
   SQUAWKS(Icons.Filled.Warning),
   TASKS(Icons.Filled.Checklist),
   LOGS(Icons.Filled.Description),
+  /** Flight data on the airplane preset; declared by the template and gated by the build. */
+  DATA_LOGS(Icons.Filled.ShowChart),
   SETTINGS(Icons.Filled.Settings),
 }
 
@@ -170,6 +176,7 @@ fun ShellSection.label(): String = when (this) {
   ShellSection.SQUAWKS -> LexiconFormatter.shortPlural(LocalThingLexicon.current.squawkNoun)
   ShellSection.TASKS -> LexiconFormatter.shortPlural(LocalThingLexicon.current.taskNoun)
   ShellSection.LOGS -> LexiconFormatter.shortPlural(LocalThingLexicon.current.logNoun)
+  ShellSection.DATA_LOGS -> LexiconFormatter.shortPlural(LocalThingLexicon.current.dataLogNoun)
   ShellSection.SETTINGS -> stringResource(UiRes.string.settings)
 }
 
@@ -178,6 +185,7 @@ fun ShellSection.label(): String = when (this) {
 fun ShellSection.title(): String = when (this) {
   ShellSection.TASKS -> LexiconFormatter.titleCasePlural(LocalThingLexicon.current.taskNoun)
   ShellSection.LOGS -> LexiconFormatter.titleCasePlural(LocalThingLexicon.current.logNoun)
+  ShellSection.DATA_LOGS -> LexiconFormatter.titleCasePlural(LocalThingLexicon.current.dataLogNoun)
   else -> label()
 }
 
@@ -202,13 +210,13 @@ private val DEFAULT_PER_THING_SECTIONS =
  * An ordered list rather than a bool per section, so the shell reads one list instead of every
  * screen checking a flag — and so a template can *reorder*, which a set of bools cannot express.
  *
- * Falls back to all four when the template names none. That is the fail-open rule
+ * Falls back to the original four when the template names none. That is the fail-open rule
  * [LocalThingCapabilities] documents: a missing declaration should show a section, not silently
  * remove navigation. SETTINGS is absent from both — it is account-level and never template-owned.
  */
 @Composable
 private fun perThingSections(): List<ShellSection> =
-  perThingSectionsFor(LocalThingCapabilities.current)
+  perThingSectionsFor(LocalThingCapabilities.current, koinInject<AppCapability>())
 
 /**
  * The decision, separated from the composition so it can be tested with a capability turned *off*.
@@ -218,8 +226,13 @@ private fun perThingSections(): List<ShellSection> =
  * indistinguishable on screen and in any test that only exercises the shipped template. Only calling
  * this with a narrower set can tell them apart.
  */
-internal fun perThingSectionsFor(capabilities: Capabilities): List<ShellSection> =
+internal fun perThingSectionsFor(
+  capabilities: Capabilities,
+  appCapability: AppCapability,
+): List<ShellSection> =
   capabilities.sections.mapNotNull { it.toShellSection() }
+    // The rollout switch (PRD R43): a template may declare the section before every host ships it.
+    .filter { it != ShellSection.DATA_LOGS || appCapability.isDataLogsSupported }
     .ifEmpty { DEFAULT_PER_THING_SECTIONS }
 
 private fun Section.toShellSection(): ShellSection? = when (this) {
@@ -227,6 +240,7 @@ private fun Section.toShellSection(): ShellSection? = when (this) {
   Section.SECTION_SQUAWKS -> ShellSection.SQUAWKS
   Section.SECTION_TASKS -> ShellSection.TASKS
   Section.SECTION_LOGS -> ShellSection.LOGS
+  Section.SECTION_DATA_LOGS -> ShellSection.DATA_LOGS
   // A template built by a newer client naming a section this build has no screen for. Dropping it
   // is the only safe reading: the alternative is a tab that navigates nowhere.
   Section.SECTION_UNKNOWN -> null

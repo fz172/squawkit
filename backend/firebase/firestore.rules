@@ -64,7 +64,7 @@ service cloud.firestore {
     // a squawk but not comment on it has a read-only thread.
     function isSharedAircraftKind(kind) {
       return kind in ['maintenance_log', 'maintenance_task', 'maintenance_overview', 'squawk',
-                      'comment'];
+                      'comment', 'data_log'];
     }
 
     // --- Default deny --------------------------------------------------------------------------

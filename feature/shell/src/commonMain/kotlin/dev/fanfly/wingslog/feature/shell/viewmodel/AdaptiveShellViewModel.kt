@@ -217,6 +217,7 @@ class AdaptiveShellViewModel(
     "squawks" -> ShellSection.SQUAWKS
     "tasks" -> ShellSection.TASKS
     "logs" -> ShellSection.LOGS
+    "datalogs" -> ShellSection.DATA_LOGS
     "overview" -> ShellSection.DASHBOARD
     else -> null
   }

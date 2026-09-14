@@ -107,6 +107,8 @@ export interface EmptyStates {
    * capability shaping the copy rather than a noun being swapped into it.
    */
   logOnboardingHint: string;
+  /** The data-log section's empty state — the line under "No <data logs> yet". */
+  dataLogHint: string;
 }
 
 export interface Lexicon {
@@ -176,6 +178,12 @@ export interface Lexicon {
    * "before flight" is the aviation part, and a house has no equivalent verb. Blank hides the line.
    */
   downAlertHint: string;
+  /** The data-log section (PRD R45): "flight data log" · "data log". Short plural names the section. */
+  dataLog:
+    | Noun
+    | undefined;
+  /** The section subtitle — a whole sentence, like `down_alert_hint`. */
+  dataLogDescription: string;
 }
 
 function createBaseNoun(): Noun {
@@ -394,6 +402,7 @@ function createBaseEmptyStates(): EmptyStates {
     overviewTaskHint: "",
     overviewSquawkHint: "",
     logOnboardingHint: "",
+    dataLogHint: "",
   };
 }
 
@@ -428,6 +437,9 @@ export const EmptyStates: MessageFns<EmptyStates> = {
     }
     if (message.logOnboardingHint !== "") {
       writer.uint32(82).string(message.logOnboardingHint);
+    }
+    if (message.dataLogHint !== "") {
+      writer.uint32(90).string(message.dataLogHint);
     }
     return writer;
   },
@@ -519,6 +531,14 @@ export const EmptyStates: MessageFns<EmptyStates> = {
           message.logOnboardingHint = reader.string();
           continue;
         }
+        case 11: {
+          if (tag !== 90) {
+            break;
+          }
+
+          message.dataLogHint = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -580,6 +600,11 @@ export const EmptyStates: MessageFns<EmptyStates> = {
         : isSet(object.log_onboarding_hint)
         ? globalThis.String(object.log_onboarding_hint)
         : "",
+      dataLogHint: isSet(object.dataLogHint)
+        ? globalThis.String(object.dataLogHint)
+        : isSet(object.data_log_hint)
+        ? globalThis.String(object.data_log_hint)
+        : "",
     };
   },
 
@@ -615,6 +640,9 @@ export const EmptyStates: MessageFns<EmptyStates> = {
     if (message.logOnboardingHint !== "") {
       obj.logOnboardingHint = message.logOnboardingHint;
     }
+    if (message.dataLogHint !== "") {
+      obj.dataLogHint = message.dataLogHint;
+    }
     return obj;
   },
 
@@ -633,6 +661,7 @@ export const EmptyStates: MessageFns<EmptyStates> = {
     message.overviewTaskHint = object.overviewTaskHint ?? "";
     message.overviewSquawkHint = object.overviewSquawkHint ?? "";
     message.logOnboardingHint = object.logOnboardingHint ?? "";
+    message.dataLogHint = object.dataLogHint ?? "";
     return message;
   },
 };
@@ -655,6 +684,8 @@ function createBaseLexicon(): Lexicon {
     emptyStates: undefined,
     dueStatus: "",
     downAlertHint: "",
+    dataLog: undefined,
+    dataLogDescription: "",
   };
 }
 
@@ -707,6 +738,12 @@ export const Lexicon: MessageFns<Lexicon> = {
     }
     if (message.downAlertHint !== "") {
       writer.uint32(146).string(message.downAlertHint);
+    }
+    if (message.dataLog !== undefined) {
+      Noun.encode(message.dataLog, writer.uint32(154).fork()).join();
+    }
+    if (message.dataLogDescription !== "") {
+      writer.uint32(162).string(message.dataLogDescription);
     }
     return writer;
   },
@@ -846,6 +883,22 @@ export const Lexicon: MessageFns<Lexicon> = {
           message.downAlertHint = reader.string();
           continue;
         }
+        case 19: {
+          if (tag !== 154) {
+            break;
+          }
+
+          message.dataLog = Noun.decode(reader, reader.uint32());
+          continue;
+        }
+        case 20: {
+          if (tag !== 162) {
+            break;
+          }
+
+          message.dataLogDescription = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -913,6 +966,16 @@ export const Lexicon: MessageFns<Lexicon> = {
         : isSet(object.down_alert_hint)
         ? globalThis.String(object.down_alert_hint)
         : "",
+      dataLog: isSet(object.dataLog)
+        ? Noun.fromJSON(object.dataLog)
+        : isSet(object.data_log)
+        ? Noun.fromJSON(object.data_log)
+        : undefined,
+      dataLogDescription: isSet(object.dataLogDescription)
+        ? globalThis.String(object.dataLogDescription)
+        : isSet(object.data_log_description)
+        ? globalThis.String(object.data_log_description)
+        : "",
     };
   },
 
@@ -966,6 +1029,12 @@ export const Lexicon: MessageFns<Lexicon> = {
     if (message.downAlertHint !== "") {
       obj.downAlertHint = message.downAlertHint;
     }
+    if (message.dataLog !== undefined) {
+      obj.dataLog = Noun.toJSON(message.dataLog);
+    }
+    if (message.dataLogDescription !== "") {
+      obj.dataLogDescription = message.dataLogDescription;
+    }
     return obj;
   },
 
@@ -1002,6 +1071,10 @@ export const Lexicon: MessageFns<Lexicon> = {
       : undefined;
     message.dueStatus = object.dueStatus ?? "";
     message.downAlertHint = object.downAlertHint ?? "";
+    message.dataLog = (object.dataLog !== undefined && object.dataLog !== null)
+      ? Noun.fromPartial(object.dataLog)
+      : undefined;
+    message.dataLogDescription = object.dataLogDescription ?? "";
     return message;
   },
 };

@@ -117,6 +117,16 @@ sealed interface CollectionKind {
     override val schemaName = "sharing.SharedAircraftRef"
   }
 
+  /**
+   * A flight data log recorded by the Thing (docs/datalog/data_log_visualizer_design.md §4.3). The
+   * record is the catalogue; the raw file is a blob the record's embedded `raw_file` attachment
+   * names, so `AttachmentRefs` and the tombstone GC treat it like a photo on a log.
+   */
+  data object DataLog : CollectionKind {
+    override val wireName = "data_log"
+    override val schemaName = "datalog.DataLog"
+  }
+
   companion object {
     /**
      * The complete, ordered list of [CollectionKind] subtypes. The CollectionKindCoverageTest in
@@ -136,6 +146,7 @@ sealed interface CollectionKind {
       Comment,
       SharedAircraftRef,
       NotificationSettings,
+      DataLog,
     )
 
     private val byWire: Map<String, CollectionKind> =

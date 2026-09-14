@@ -187,6 +187,16 @@ describe("nested maintenance data", () => {
     );
   });
 
+  it("member may write a data log (attested)", async () => {
+    // Uploading a flight data log to a shared aircraft is a member action (data log design §4.3).
+    await assertSucceeds(
+      setDoc(doc(as(TECH), `${thingDoc}/data_log/d1`), {
+        payload: "x",
+        writerUid: TECH,
+      }),
+    );
+  });
+
   it("member may update their own comment", async () => {
     await testEnv.withSecurityRulesDisabled(async (ctx) => {
       await setDoc(doc(ctx.firestore(), `${thingDoc}/comment/mine`), {

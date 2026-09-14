@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.core.template.impl
 
 import co.touchlab.kermit.Logger
+import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import dev.fanfly.wingslog.core.template.DegradedReason
 import dev.fanfly.wingslog.core.template.GenericLexicon
 import dev.fanfly.wingslog.core.template.TemplateRegistry
@@ -9,6 +10,7 @@ import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
 import dev.fanfly.wingslog.core.template.canonical.CanonicalTemplates
 import dev.fanfly.wingslog.core.template.namesUnrecognisedEnumValue
 import dev.fanfly.wingslog.core.template.structuralProblems
+import dev.fanfly.wingslog.thing.Capabilities
 import dev.fanfly.wingslog.thing.Lexicon
 import dev.fanfly.wingslog.thing.Thing
 import dev.fanfly.wingslog.thing.ThingTemplate
@@ -52,6 +54,9 @@ class BakedInTemplateRegistry(
     val template = forThingWithFallback(thing)
     val reason = when {
       template.min_app_version > appVersionCode -> DegradedReason.APP_TOO_OLD
+      // An id this build carries renders from its own canonical ([capabilitiesFor]), so the stored
+      // enum values are never read and cannot degrade it. Degradation stays for ids the build lacks.
+      byId.containsKey(template.id) -> return TemplateResolution.Renderable(template)
       template.capabilities?.namesUnrecognisedEnumValue() == true ->
         DegradedReason.UNRECOGNISED_CAPABILITY
       // A Thing with no DNA resolves to the baked-in fallback, which this build ships and can
@@ -65,6 +70,11 @@ class BakedInTemplateRegistry(
     val id = template?.id ?: return GenericLexicon.LEXICON
     // byId first, always: this build's words win over whatever the Thing froze at creation.
     return byId[id]?.lexicon ?: template.lexicon ?: GenericLexicon.LEXICON
+  }
+
+  override fun capabilitiesFor(template: ThingTemplate?): Capabilities {
+    val id = template?.id ?: return CurrentThingTemplate.ALL_ENABLED
+    return byId[id]?.capabilities ?: template.capabilities ?: CurrentThingTemplate.ALL_ENABLED
   }
 
   override fun canonical(): List<ThingTemplate> =

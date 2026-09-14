@@ -27,11 +27,20 @@ class TemplateResolutionTest {
     var minAppVersion: Int = 0
     var capabilities: Capabilities? = AirplaneTemplate.TEMPLATE.capabilities
 
+    /**
+     * An id this build does not carry. A known id renders from the build's own canonical, so the
+     * stored enum values are never read (`capabilitiesFor`); only a foreign id can degrade on them.
+     */
+    var id: String = AirplaneTemplate.ID
+
     fun build() = AirplaneTemplate.TEMPLATE.copy(
+      id = id,
       min_app_version = minAppVersion,
       capabilities = capabilities,
     )
   }
+
+  private val futurePreset = "airplane-from-a-newer-build"
 
   /**
    * Hand-encodes a Capabilities carrying [values] on [fieldNumber], bypassing the generated
@@ -91,6 +100,7 @@ class TemplateResolutionTest {
 
     val resolution = registry.resolve(
       thingWith {
+        id = futurePreset
         minAppVersion = 0
         this.capabilities = capabilities
       },
@@ -112,10 +122,28 @@ class TemplateResolutionTest {
     assertThat(capabilities.export_layout).isEqualTo(ExportLayout.EXPORT_LAYOUT_UNKNOWN)
 
     val resolution =
-      registry.resolve(thingWith { this.capabilities = capabilities })
+      registry.resolve(
+        thingWith {
+          id = futurePreset
+          this.capabilities = capabilities
+        },
+      )
 
     assertThat((resolution as TemplateResolution.Degraded).reason)
       .isEqualTo(DegradedReason.UNRECOGNISED_CAPABILITY)
+  }
+
+  @Test
+  fun aKnownIdNeverDegradesOnEnumValues() {
+    // PRD R42: an aeroplane created before SECTION_DATA_LOGS existed carries DNA whose sections an
+    // older build could not name — yet on this build it renders from the canonical by id, so a
+    // stored value it has no code for is never read. Only a floor can degrade a known preset.
+    val unknownSection = Section.values().maxOf { it.value } + 1
+    val resolution = registry.resolve(
+      thingWith { this.capabilities = capabilitiesWithRawEnum(8, unknownSection) },
+    )
+
+    assertThat(resolution).isInstanceOf(TemplateResolution.Renderable::class.java)
   }
 
   @Test
