@@ -68,6 +68,9 @@ feature/ads/sharedassets	ads_a11y_advertisement	Advertisement
 feature/ads/sharedassets	ads_sponsored_label	Sponsored
 feature/attachment/sharedassets	add_file_failed	Failed to add file
 feature/attachment/sharedassets	add_link	Add link
+feature/attachment/sharedassets	attachment_data_log_opens	Opens in visualizer
+feature/attachment/sharedassets	attachment_data_log_product	%1$s log
+feature/attachment/sharedassets	attachment_data_log_removed	Removed
 feature/attachment/sharedassets	attachment_limits_hint	Up to 3 files · Max 5 MB each
 feature/attachment/sharedassets	attachment_type_image	Image
 feature/attachment/sharedassets	attachment_type_pdf	PDF
@@ -1030,6 +1033,11 @@ feature/datalog/sharedassets	data_log_viewer_load_failed	This file could not be 
 feature/datalog/sharedassets	data_log_viewer_missing	This data log was deleted.
 feature/datalog/sharedassets	data_log_viewer_utc_offset	%1$s local (%2$s)
 feature/datalog/sharedassets	data_log_pane_empty	No series in this pane
+feature/datalog/sharedassets	data_log_picker_attach	Attach
+feature/datalog/sharedassets	data_log_picker_attached	Attached
+feature/datalog/sharedassets	data_log_picker_same_day	Same day
+feature/datalog/sharedassets	data_log_picker_title	Attach data log
+feature/datalog/sharedassets	data_log_picker_upload	Upload log file
 feature/datalog/sharedassets	data_log_viewer_reset	Reset
 feature/datalog/sharedassets	data_log_drag_series	Hold and drag to move %1$s
 feature/datalog/sharedassets	data_log_new_pane	New pane

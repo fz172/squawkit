@@ -25,6 +25,12 @@
   <string name="data_log_viewer_utc_offset"><xliff:g example="14:47">%1$s</xliff:g> local (<xliff:g example="UTC-07:00">%2$s</xliff:g>)</string>
 
   <!-- Inline import rows (R35) -->
+  <!-- Attachment picker (design §9.2) -->
+  <string name="data_log_picker_title">Attach <xliff:g example="data log">%1$s</xliff:g></string>
+  <string name="data_log_picker_upload">Upload log file</string>
+  <string name="data_log_picker_attach">Attach</string>
+  <string name="data_log_picker_same_day">Same day</string>
+  <string name="data_log_picker_attached">Attached</string>
   <string name="data_log_import_reading">Reading <xliff:g example="log_20260902.csv">%1$s</xliff:g>…</string>
   <string name="data_log_import_parsing">Parsing <xliff:g example="log_20260902.csv">%1$s</xliff:g>…</string>
   <string name="data_log_import_storing">Saving <xliff:g example="log_20260902.csv">%1$s</xliff:g>…</string>

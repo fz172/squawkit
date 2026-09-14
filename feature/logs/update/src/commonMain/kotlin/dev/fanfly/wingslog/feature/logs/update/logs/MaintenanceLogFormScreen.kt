@@ -59,7 +59,10 @@ import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
 import dev.fanfly.wingslog.core.ui.common.compose.DatePickerDialog
 import dev.fanfly.wingslog.core.ui.common.compose.UnsavedChangesDialog
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.feature.attachment.model.dataLogIds
 import dev.fanfly.wingslog.feature.attachment.viewing.AttachmentFormSection
+import dev.fanfly.wingslog.feature.datalog.viewing.attach.rememberDataLogPickerSlot
+import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.feature.logs.update.logs.compose.LOG_FORM_TAB_KEYS
 import dev.fanfly.wingslog.feature.logs.update.logs.compose.LogFormTab
 import dev.fanfly.wingslog.feature.logs.update.logs.compose.LogRecordsTab
@@ -342,6 +345,8 @@ fun MaintenanceLogFormScreen(
                       onDismissSheet = viewModel::hideAttachmentPicker,
                       onPickError = viewModel::onFilePickError,
                       onSeePlans = { navController.navigate(Screen.Subscription.route) },
+                      dataLogPicker = rememberDataLogPickerSlot(ThingId(viewModel.thingId), uiState.maintenanceDate, uiState.pendingAttachments.dataLogIds()),
+                      onAttachDataLog = viewModel::attachDataLog,
                       modifier = Modifier,
                     )
                   },

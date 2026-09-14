@@ -13,7 +13,10 @@ import androidx.navigation.NavController
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.nav.Screen.Companion.CROSS_SCREEN_SUCCESS_MESSAGE
 import dev.fanfly.wingslog.feature.attachment.model.visible
+import dev.fanfly.wingslog.feature.attachment.model.dataLogIds
 import dev.fanfly.wingslog.feature.attachment.viewing.AttachmentFormSection
+import dev.fanfly.wingslog.feature.datalog.viewing.attach.rememberDataLogPickerSlot
+import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.feature.squawk.update.viewmodel.SquawkFormEvent
 import dev.fanfly.wingslog.feature.squawk.update.viewmodel.SquawkFormViewModel
 import org.jetbrains.compose.resources.stringResource
@@ -103,6 +106,8 @@ fun AddSquawkRoute(
         onDismissSheet = viewModel::hideAttachmentPicker,
         onPickError = viewModel::onFilePickError,
         onSeePlans = { navController.navigate(Screen.Subscription.route) },
+        dataLogPicker = rememberDataLogPickerSlot(ThingId(viewModel.thingId), null, pendingAttachments.dataLogIds()),
+        onAttachDataLog = viewModel::attachDataLog,
       )
     },
   )

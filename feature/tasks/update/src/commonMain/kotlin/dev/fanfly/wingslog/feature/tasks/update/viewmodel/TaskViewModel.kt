@@ -20,6 +20,7 @@ import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentFormControll
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.model.PendingAttachment
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
+import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.feature.comments.datamanager.CommentManager
 import dev.fanfly.wingslog.feature.comments.datamanager.CommentThreadController
 import dev.fanfly.wingslog.feature.comments.model.CommentAction
@@ -184,7 +185,7 @@ class TaskViewModel(
   savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
-  private val thingId: String =
+  val thingId: String =
     checkNotNull(savedStateHandle[Screen.THING_ID])
   val cardId: String? = savedStateHandle[Screen.CARD_ID]
 
@@ -482,6 +483,10 @@ class TaskViewModel(
     name: String,
   ) {
     attachmentForm.addLink(url, name)
+  }
+
+  fun attachDataLog(id: DataLogId, name: String) {
+    attachmentForm.addDataLogRef(id, name)
   }
 
   fun removeAttachment(id: String) {

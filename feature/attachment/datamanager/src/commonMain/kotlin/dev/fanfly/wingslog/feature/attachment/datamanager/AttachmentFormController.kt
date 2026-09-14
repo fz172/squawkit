@@ -4,6 +4,7 @@ import dev.fanfly.wingslog.feature.attachment.datamanager.QuotaChecker.Companion
 import dev.fanfly.wingslog.feature.attachment.datamanager.QuotaChecker.Companion.MAX_FILE_SIZE_BYTES
 import dev.fanfly.wingslog.feature.attachment.model.PendingAttachment
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
+import dev.fanfly.wingslog.feature.attachment.model.dataLogIds
 import dev.fanfly.wingslog.feature.attachment.model.fileCount
 import dev.fanfly.wingslog.feature.attachment.model.isFile
 import dev.fanfly.wingslog.id.DataLogId
@@ -196,24 +197,13 @@ class AttachmentFormController(
     dataLogId: DataLogId,
     name: String,
   ) {
-    val alreadyAttached = _pendingAttachments.value.any {
-      it !is PendingAttachment.PendingDelete && it.attachmentOrNull()?.data_log_id == dataLogId
-    }
-    if (alreadyAttached) return
+    if (dataLogId in _pendingAttachments.value.dataLogIds()) return
     val attachment = attachmentManager.makeDataLogRef(dataLogId, name)
     _pendingAttachments.update {
       it + PendingAttachment.LocalDataLogRef(
         attachment
       )
     }
-  }
-
-  private fun PendingAttachment.attachmentOrNull(): Attachment? = when (this) {
-    is PendingAttachment.Local -> attachment
-    is PendingAttachment.LocalLink -> attachment
-    is PendingAttachment.LocalDataLogRef -> attachment
-    is PendingAttachment.Saved -> attachment
-    is PendingAttachment.PendingDelete -> attachment
   }
 
   /**
