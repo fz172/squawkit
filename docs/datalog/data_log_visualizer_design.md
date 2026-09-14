@@ -301,7 +301,7 @@ explicit exclusion listed in §9.
 | `blob/AttachmentRefs.kt`                              | `DataLog -> listOfNotNull(payload.raw_file)`; and in the attachment-bearing kinds, filter `type != DATA_LOG` out of `blobIdsIn` (a reference owns nothing) |
 | `feature/sync/data/.../SyncEngine.kt`                 | add to `PER_THING_KINDS`                                                                                                                                   |
 | `backend/firebase/firestore.rules:65-68`              | add `"data_log"` to `isSharedAircraftKind`                                                                                                                 |
-| `backend/.../functions/package.json` `generate:proto` | add `thing/data_log.proto`                                                                                                                                 |
+| `backend/.../functions/package.json` `generate:proto` | add `thing/ids.proto` and `thing/data_log.proto` |
 | `backend/.../storage/blobRefs.ts`                     | `SCHEMA["thing.DataLog"]`, `schemaCanOwnBlobs` true, `blobIdsInPayload` returns `[raw_file.id]`; `blobIds()` excludes `DATA_LOG` alongside `LINK`          |
 | `backend/.../notifications/*`                         | §11                                                                                                                                                        |
 | `backend/.../test/blob-cleanup.test.ts`               | a DataLog delete reclaims its blob; a log delete never reclaims a referenced DataLog's blob                                                                |
@@ -347,6 +347,31 @@ Rules for this feature:
 A `ThingId` and a `DataLogId` can no longer be swapped in a call or in a proto field, which is the
 whole point. Migrating the grandfathered messages and the existing string-id APIs is a separate
 cleanup; this feature sets the precedent and does not do the sweep.
+
+**`ThingId` and `UserId` name pre-existing concepts. What introducing them touches, verified:**
+
+- No existing proto field changes type. `Thing.id`, every `thing_id`, every uid on the wire, the
+  Firestore document paths, the rules, and the `SyncDocWire` envelope stay strings. Existing stored
+  data decodes exactly as before, and older builds are unaffected because no old message gains a
+  message-typed field they would have to skip.
+- No name collides. There is no `ThingId` or `UserId` class, alias, or proto message anywhere in
+  the Kotlin sources, the functions' TypeScript, or the proto tree today. Wire compiles every file
+  under `core/model/src/commonMain/proto` automatically; the functions' `generate:proto` list is
+  explicit and gains `thing/ids.proto`.
+- What it does create is a **second representation** of the same concept until the grandfathered
+  APIs are migrated: `ThingScopeResolver.resolve(thingId: String)` and the shell's `selectedThingId`
+  stay strings while this feature's APIs take `ThingId`. The seam is one `.value` or one `ThingId(…)`
+  per edge, always at a module boundary, never inside a manager. That is a known half-state, not a
+  break, and the sweep that ends it is the same cleanup either way.
+- **Nullability changes.** A proto3 `string id` generates a non-null `String` defaulting to `""`; a
+  message-typed `DataLogId id` generates `DataLogId?`. Every read of `dataLog.id` therefore needs a
+  null decision. The rule here: a record without an id is corrupt, so `DataLogManager` drops such
+  rows on read with a logged error and exposes `val DataLog.dataLogId: DataLogId` as a non-null
+  accessor for everything above it; the same for `Attachment.data_log_id`, which is null by design on
+  every other type and read only through `dataLogIdOrNull()`.
+- Id messages are frozen at one field. Wire's equality includes unknown fields, so an id message
+  that ever grew a second field would compare unequal across builds; the proto lint in §14 refuses
+  any id message with more than `value`.
 
 ## 5. Storage and transfer
 
