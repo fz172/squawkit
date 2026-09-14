@@ -57,15 +57,19 @@ data class FloatingNavItem(
  * the Google Photos redesign (github.com/fz172/squawkit/issues/187).
  *
  * The pill is a rounded [Surface] inset from the screen edges rather than a docked, full-width
- * `NavigationBar`. The selected destination expands into a filled chip (icon + label) in the
- * primary-container tone; the rest stay as plain text labels. It is rendered as a bottom **overlay**
- * (not a `Scaffold` `bottomBar`) so section content scrolls edge-to-edge underneath it; content
- * clears the pill via [LocalNavPillClearance] rather than by the scaffold reserving its height.
+ * `NavigationBar`. The bar is variable-width: the selected destination expands into a filled chip
+ * (icon + label) in the primary-container tone, and every other item collapses to its icon alone
+ * with the label as its accessibility name. That is what lets a fifth section join the bar: five
+ * labelled items did not fit a 320dp phone (iPhone SE) even with the short plurals. Should a chip
+ * still push the bar past the screen margins, the chip shrinks and ellipsizes its label; the icons
+ * never lose their touch targets. It is rendered as a bottom **overlay** (not a `Scaffold`
+ * `bottomBar`) so section content scrolls edge-to-edge underneath it; content clears the pill via
+ * [LocalNavPillClearance] rather than by the scaffold reserving its height.
  *
  * The section add-FAB is intentionally left to the scaffold's own floating-action slot (it rides
  * above the pill) rather than being welded to the bar: not every section has an add action, and a
- * detached button beside a four-item labelled pill does not fit a 320dp phone (iPhone SE) without
- * overflow. Keeping them separate holds the pill centered and stable across sections.
+ * detached button beside the pill would push it off-centre. Keeping them separate holds the pill
+ * centered and stable across sections.
  */
 @Composable
 fun FloatingPillNavigationBar(
@@ -92,16 +96,21 @@ fun FloatingPillNavigationBar(
         horizontalArrangement = Arrangement.spacedBy(4.dp),
         verticalAlignment = Alignment.CenterVertically,
       ) {
-        items.forEach { item -> PillItem(item) }
+        items.forEach { item ->
+          // The chip is the only item that can shrink: when the bar would overflow, its label
+          // ellipsizes while the icons keep their full touch targets.
+          val itemModifier = if (item.selected) Modifier.weight(1f, fill = false) else Modifier
+          PillItem(item, itemModifier)
+        }
       }
     }
   }
 }
 
 @Composable
-private fun PillItem(item: FloatingNavItem) {
+private fun PillItem(item: FloatingNavItem, modifier: Modifier = Modifier) {
   // clip before selectable so the tap ripple is bounded to the pill / circle shape.
-  val base = Modifier.clip(CircleShape)
+  val base = modifier.clip(CircleShape)
     .selectable(
       selected = item.selected,
       onClick = item.onClick,
@@ -135,17 +144,16 @@ private fun PillItem(item: FloatingNavItem) {
     }
   } else {
     Box(
-      // Text-only when collapsed; keep a comfortable touch target height.
+      // Icon-only when collapsed; 12dp padding around a 20dp icon gives a 44dp touch target.
       modifier = base.heightIn(min = 40.dp)
         .padding(horizontal = 12.dp),
       contentAlignment = Alignment.Center,
     ) {
-      Text(
-        item.label,
-        style = MaterialTheme.typography.labelLarge,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis,
+      Icon(
+        item.icon,
+        contentDescription = item.label,
+        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.size(20.dp),
       )
     }
   }
