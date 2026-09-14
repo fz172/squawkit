@@ -8,6 +8,7 @@ import dev.fanfly.wingslog.feature.datalog.datamanager.CanonicalSeriesRegistry
 import dev.fanfly.wingslog.feature.datalog.datamanager.Confidence
 import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogParseException
 import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogParser
+import dev.fanfly.wingslog.feature.datalog.datamanager.garmin.GarminParser.Companion.YIELD_EVERY_ROWS
 import dev.fanfly.wingslog.feature.datalog.model.CanonicalSeries
 import dev.fanfly.wingslog.feature.datalog.model.DataLogSeriesData
 import dev.fanfly.wingslog.feature.datalog.model.NumericColumn

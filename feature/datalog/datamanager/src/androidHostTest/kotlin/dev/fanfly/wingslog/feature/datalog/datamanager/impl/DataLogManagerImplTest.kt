@@ -88,7 +88,8 @@ class DataLogManagerImplTest {
     DataLog(
       id = DataLogId(id), format = DataLogFormat.DATA_LOG_FORMAT_GARMIN_G3X,
       start = Instant.parse(start)
-        .toWireInstant(), encoding = encoding, file_name = Fixtures.GROUND_RUN,
+        .toWireInstant(),
+      encoding = encoding, file_name = Fixtures.GROUND_RUN,
       raw_file = Attachment(
         id = blobId.value,
         type = AttachmentType.ATTACHMENT_TYPE_FILE
