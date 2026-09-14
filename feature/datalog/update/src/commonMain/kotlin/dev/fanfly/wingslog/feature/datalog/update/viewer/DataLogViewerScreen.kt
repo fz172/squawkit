@@ -4,9 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -47,6 +45,11 @@ import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.StatusTier
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
+import dev.fanfly.wingslog.feature.datalog.model.SeriesKey
+import dev.fanfly.wingslog.feature.datalog.model.chart.isPlottable
+import dev.fanfly.wingslog.feature.datalog.viewing.chart.ChartPane
+import dev.fanfly.wingslog.feature.datalog.viewing.chart.PaneSeries
+import dev.fanfly.wingslog.feature.datalog.viewing.chart.TimeAxis
 import dev.fanfly.wingslog.feature.datalog.viewing.list.toDataLogRow
 import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.id.ThingId
@@ -170,6 +173,20 @@ fun DataLogViewerScreen(
 
       is DataLogViewerUiState.Ready -> {
         val r = checkNotNull(row)
+        val byColumn = remember(s.record, s.data) {
+          s.record.series.filter { it.isPlottable }
+            .mapNotNull { info ->
+              s.data.numeric[info.column]?.let { column ->
+                info.column to PaneSeries(
+                  SeriesKey(info.column),
+                  info.unit,
+                  info.canonical_id,
+                  column.filled
+                )
+              }
+            }
+            .toMap()
+        }
         LazyColumn(
           modifier = content,
           contentPadding = PaddingValues(
@@ -185,7 +202,8 @@ fun DataLogViewerScreen(
             )
             if (r.identityMismatch) StatusChip(
               label = stringResource(Res.string.data_log_tail_mismatch),
-              tier = StatusTier.CAUTION
+              tier = StatusTier.CAUTION,
+              modifier = Modifier.padding(top = Spacing.medium)
             )
             Text(
               text = listOf(
@@ -200,21 +218,26 @@ fun DataLogViewerScreen(
                 .joinToString(" · "),
               style = MaterialTheme.typography.bodySmall,
               color = MaterialTheme.colorScheme.onSurfaceVariant,
-              modifier = Modifier.padding(bottom = Spacing.medium),
+              modifier = Modifier.padding(vertical = Spacing.medium),
             )
           }
-          items(s.record.series, key = { it.column }) { series ->
-            Row(
-              modifier = Modifier.fillMaxWidth(),
-              horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-              Text(series.name, style = MaterialTheme.typography.bodyMedium)
-              Text(
-                text = if (series.unit.isBlank()) series.short_name else "${series.short_name} · ${series.unit}",
-                style = WingslogTypography.dataSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-              )
-            }
+          items(s.layout.panes, key = { it.id.value }) { pane ->
+            ChartPane(
+              series = pane.series.mapNotNull { key -> byColumn[key.column] },
+              timeSeconds = s.data.timeSeconds,
+              durationSeconds = s.record.duration_seconds,
+              view = s.view,
+              cursorT = s.cursorT,
+              isTarget = pane.id == s.layout.targetPane,
+              onCursor = viewModel::setCursor,
+            )
+          }
+          item {
+            TimeAxis(
+              view = s.view,
+              durationSeconds = s.record.duration_seconds,
+              cursorT = s.cursorT
+            )
           }
         }
         if (s.deleting) {

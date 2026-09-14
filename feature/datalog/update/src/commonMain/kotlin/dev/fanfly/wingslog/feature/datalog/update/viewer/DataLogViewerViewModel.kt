@@ -9,6 +9,7 @@ import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogManager
 import dev.fanfly.wingslog.feature.datalog.model.ChartLayout
 import dev.fanfly.wingslog.feature.datalog.model.DataLogSeriesData
 import dev.fanfly.wingslog.feature.datalog.model.ViewWindow
+import dev.fanfly.wingslog.feature.datalog.model.chart.defaultLayout
 import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.id.ThingId
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -109,7 +110,7 @@ class DataLogViewerViewModel(
       manager.load(thingId, dataLogId)
         .onSuccess { data ->
           _uiState.value = DataLogViewerUiState.Ready(
-            record = record, data = data, layout = ChartLayout.EMPTY, view = null, cursorT = null, deleting = false,
+            record = record, data = data, layout = defaultLayout(record.series), view = null, cursorT = null, deleting = false,
           )
         }
         .onFailure { _uiState.value = DataLogViewerUiState.Failed(LoadFailure.PARSE_FAILED) }
