@@ -8,6 +8,8 @@ actual fun createAppCapability(isDeveloperBuild: Boolean) = AppCapability(
   // puts one on Ad Manager (design §7.3, PRD D5) — the `jsMain` AdView actual renders nothing
   // regardless of this flag's value.
   isAdsSupported = false,
+  // Data logs: developer builds only until V1 is complete, then true everywhere.
+  isDataLogsSupported = isDeveloperBuild,
   supportUrl = "/support.html",
   termsUrl = "/privacy.html",
   // No store on web, so nothing to rate.

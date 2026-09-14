@@ -41,6 +41,7 @@ class AdsManagerImplTest {
     isCameraCaptureSupported = false,
     isAnonymousLoginSupported = false,
     isAdsSupported = ads,
+    isDataLogsSupported = false,
   )
 
   /** Stands in for SubscriptionManager.showsAds(), which is tested on its own in the subscription module. */

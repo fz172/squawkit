@@ -700,6 +700,7 @@ class SubscriptionUiStateTest {
       isCameraCaptureSupported = false,
       isAnonymousLoginSupported = false,
       isAdsSupported = isAdsSupported,
+      isDataLogsSupported = false,
     ),
     activationGraceMillis = GRACE,
     activationStallMillis = STALL,
