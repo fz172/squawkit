@@ -178,7 +178,7 @@ fun ChartPane(
             .forEachIndexed { i, value ->
               val y = size.height * (1f - i / 4f)
               val label = measurer.measure(
-                formatAxisValue(value),
+                formatSeriesValue(value),
                 labelStyle.copy(color = color)
               )
               val x =
@@ -249,8 +249,8 @@ private fun DrawScope.drawSeries(
   drawPath(path, color, style = Stroke(width = strokePx))
 }
 
-/** Axis labels: integers as written, fractions to one decimal, thousands without separators. */
-internal fun formatAxisValue(value: Float): String {
+/** Axis labels and chip readings: integers as written, fractions to one decimal, no separators. */
+fun formatSeriesValue(value: Float): String {
   val rounded = kotlin.math.round(value)
   return if (kotlin.math.abs(value - rounded) < 0.05f) rounded.toInt()
     .toString()

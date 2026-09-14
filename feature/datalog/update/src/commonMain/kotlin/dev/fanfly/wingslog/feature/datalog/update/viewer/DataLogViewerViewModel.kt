@@ -10,6 +10,9 @@ import dev.fanfly.wingslog.feature.datalog.model.ChartLayout
 import dev.fanfly.wingslog.feature.datalog.model.DataLogSeriesData
 import dev.fanfly.wingslog.feature.datalog.model.GestureIntent
 import dev.fanfly.wingslog.feature.datalog.model.ViewWindow
+import dev.fanfly.wingslog.feature.datalog.model.PaneId
+import dev.fanfly.wingslog.feature.datalog.model.SeriesKey
+import dev.fanfly.wingslog.feature.datalog.model.chart.LayoutEdits
 import dev.fanfly.wingslog.feature.datalog.model.chart.Navigation
 import dev.fanfly.wingslog.feature.datalog.model.chart.defaultLayout
 import dev.fanfly.wingslog.id.DataLogId
@@ -127,6 +130,23 @@ class DataLogViewerViewModel(
   fun setCursor(t: Double?) = updateReady { it.copy(cursorT = t) }
 
   fun setLayout(layout: ChartLayout) = updateReady { it.copy(layout = layout) }
+
+  // Layout edits (design §11.5, PRD R21, R24): each is a pure LayoutEdits call on the Ready state.
+
+  fun setTargetPane(pane: PaneId) = updateReady { it.copy(layout = LayoutEdits.target(it.layout, pane)) }
+
+  fun addSeries(pane: PaneId, key: SeriesKey) = updateReady { it.copy(layout = LayoutEdits.add(it.layout, pane, key)) }
+
+  fun removeSeries(pane: PaneId, key: SeriesKey) = updateReady { it.copy(layout = LayoutEdits.remove(it.layout, pane, key)) }
+
+  fun moveSeries(key: SeriesKey, from: PaneId, to: PaneId) = updateReady {
+    it.copy(layout = LayoutEdits.move(it.layout, key, from, to, it.record.series.associateBy { s -> s.column }))
+  }
+
+  /** The *New pane* target: a dropped series lands in a fresh pane; a tap opens an empty one. */
+  fun spawnPane(key: SeriesKey? = null) = updateReady { it.copy(layout = LayoutEdits.spawn(it.layout, key)) }
+
+  fun removePane(pane: PaneId) = updateReady { it.copy(layout = LayoutEdits.removePane(it.layout, pane)) }
 
   fun requestDelete() = updateReady { it.copy(deleting = true) }
 
