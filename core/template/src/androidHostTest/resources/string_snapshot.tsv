@@ -1029,3 +1029,4 @@ feature/datalog/sharedassets	data_log_viewer_downloading	Downloading the file…
 feature/datalog/sharedassets	data_log_viewer_load_failed	This file could not be opened.
 feature/datalog/sharedassets	data_log_viewer_missing	This data log was deleted.
 feature/datalog/sharedassets	data_log_viewer_utc_offset	%1$s local (%2$s)
+feature/datalog/sharedassets	data_log_pane_empty	No series in this pane
