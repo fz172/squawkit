@@ -1,7 +1,19 @@
 package dev.fanfly.wingslog.feature.datalog.update.viewmodel
 
+import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogManager
+import dev.fanfly.wingslog.feature.datalog.update.viewer.DataLogViewerViewModel
+import dev.fanfly.wingslog.id.DataLogId
+import dev.fanfly.wingslog.id.ThingId
 import org.koin.core.module.Module
+import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
-/** Koin module for the data log visualizer's update layer. Empty until P2 (design §7). */
-val dataLogUpdateModule: Module = module { }
+val dataLogUpdateModule: Module = module {
+  viewModel { params ->
+    DataLogViewerViewModel(
+      get<DataLogManager>(),
+      ThingId(params.get<String>(0)),
+      DataLogId(params.get<String>(1)),
+    )
+  }
+}

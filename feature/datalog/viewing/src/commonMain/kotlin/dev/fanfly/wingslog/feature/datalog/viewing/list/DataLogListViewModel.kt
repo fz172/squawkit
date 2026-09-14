@@ -101,7 +101,7 @@ class DataLogListViewModel(
     ) { logs, q, imports, loaded, deleting ->
       DataLogListUiState(
         isLoading = !loaded,
-        rows = logs.map { it.toRow() },
+        rows = logs.map { it.toDataLogRow() },
         uploadGate = currentGate(),
         query = q,
         imports = imports,
@@ -209,7 +209,7 @@ class DataLogListViewModel(
   }
 }
 
-internal fun DataLog.toRow(): DataLogRow {
+fun DataLog.toDataLogRow(): DataLogRow {
   val zone: TimeZone = UtcOffset(minutes = utc_offset_minutes).asTimeZone()
   val start = start?.toInstant()
     ?.toLocalDateTime(zone) ?: LocalDateTime(1970, 1, 1, 0, 0)

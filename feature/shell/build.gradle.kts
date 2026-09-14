@@ -45,6 +45,7 @@ kotlin {
       implementation(project(":feature:fleet:picker:data"))
       implementation(project(":feature:fleet:viewing"))
       implementation(project(":feature:logs:update"))
+      implementation(project(":feature:datalog:update"))
       implementation(project(":feature:settings"))
       // The DeveloperOptionsNavContributor interface only — NOT the features that implement it.
       // This is what replaced the dependency on feature:stresstest:config.
