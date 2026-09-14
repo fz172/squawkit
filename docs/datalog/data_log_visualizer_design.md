@@ -32,38 +32,128 @@ No Firestore rules change is needed for size: the storage rules carry no size or
 at all (`backend/firebase/storage.rules:19-24`). One rules edit adds the new kind to the shared-Thing
 member allow-list.
 
+### 1.1 Data flow, end to end
+
+Read this before the protos in §4. One principle runs through it: **the raw file is the only thing
+stored beyond the record's metadata.** Everything drawn on screen is derived from it on the device
+that draws, and the server never parses it.
+
+```
+ CLIENT A (uploads)                                              shapes
+ ─────────────────────────────────────────────────────────────  ───────────────────────────────
+ ① pick        feature/attachment/viewing  FilePicker           PickedFile(uri, name, mime, size)
+ ② read        feature/attachment/datamanager  FileByteReader   ByteArray — raw CSV
+ ③ sniff       feature/datalog/datamanager  HeaderSniffer       DataLogFormat (proto enum)
+ ④ parse       feature/datalog/datamanager  GarminParser        ParsedDataLog (Kotlin, transient)
+                                                                 ├ record fields (source, start, …)
+                                                                 └ DataLogSeriesData (columnar arrays)
+ ⑤ enrich      feature/datalog/datamanager  CanonicalSeriesRegistry, identity, airborne, raw_sha256
+ ⑥ encode      feature/datalog/datamanager  GzipCodec           ByteArray — gzip
+ ⑦ store bytes core/storage  LocalBlobStore.put                  blob_object row LOCAL_ONLY + file on disk
+                                                                 → Attachment proto (raw_file)
+ ⑧ store record core/storage  EntityStore.put                    DataLog proto → entity row, dirty=1
+ ⑨ schedule    core/storage  UploadScheduler                     ─
+        │                      │
+        ▼ PushWorker           ▼ BlobUploadDriver                (feature/sync/data)
+ FIRESTORE  users/{uid}/thing/{thingId}/data_log/{id}            SyncDocWire{payload: base64(DataLog), schema: "thing.DataLog", …}
+ STORAGE    users/{uid}/thing/{thingId}/blobs/{blobId}           gzip bytes, contentType application/gzip
+        │
+ SERVER (Cloud Functions, backend/firebase/functions)
+ ⑩ onRecordWritten   decode SyncDocWire → DataLog (ts-proto)    → push notification to other members
+ ⑪ onRecordDeleted   tombstone → blobRefs.ts → delete Storage object
+ ⑫ V2 only           nearest-ident lookup from end_latitude/longitude → end_location_ident
+        │
+ CLIENT B (any device with access, including A after reinstall)
+ ⑬ pull        feature/sync/data  PullListener                  SyncDocWire → base64 decode → WireCodec(DataLog.ADAPTER) → entity row
+ ⑭ index       feature/attachment/datamanager  BlobIndexReconciler  AttachmentRefs.of(DataLog) → blob_object row REMOTE_ONLY (no bytes)
+ ⑮ list        feature/datalog/viewing  DataLogListViewModel   List<DataLog> proto → rows, straight from catalogue fields
+ ⑯ open        feature/datalog/update  DataLogViewerViewModel  ensureLocal → BlobDownloadDriver (broker if foreign) → sha256 verified
+ ⑰ decode      feature/datalog/datamanager  GzipCodec, parser by DataLog.format → DataLogSeriesData → DataLogCache (memory)
+ ⑱ draw        feature/datalog/viewing  ChartPane              ChartLayout + DataLogSeriesData → decimate(window, width) → Path → Canvas
+ ⑲ remember    feature/datalog/datamanager  ChartLayoutStore    ChartLayout → JSON on the device, unsynced
+ ⑳ attach      feature/attachment/*                            Attachment{type = DATA_LOG, data_log_id} inside a log/task/squawk proto
+```
+
+**Who owns what.**
+
+| Concern | Module | Notes |
+|---|---|---|
+| Picking and reading a file | `feature/attachment` (existing) | Reused as is. `PickedFile` and `FileByteReader` are already platform-neutral. |
+| Recognising and parsing a format | `feature/datalog/datamanager` | The only code that knows CSV. Output is a Kotlin data class, never a proto. |
+| Deciding what a column *means* | `feature/datalog/datamanager` `CanonicalSeriesRegistry` | Fills `canonical_id`; presets and defaults speak only canonical ids. |
+| Persisting bytes | `core/storage` `LocalBlobStore` + `feature/sync/data` drivers (existing) | The record's embedded `Attachment` is what every blob mechanism reads. |
+| Persisting and syncing the record | `core/storage` `EntityStore` + `feature/sync/data` (existing) | One new `CollectionKind`; the wire envelope and codec are generic. |
+| Server behaviour | `backend/firebase/functions` | Notification title and blob GC only. No parsing, no derived data in V1. |
+| Reading on another device | `feature/sync/data`, `feature/attachment/datamanager` (existing) | Pull writes the record; the reconciler indexes the blob as remote-only. |
+| Turning bytes back into series | `feature/datalog/datamanager` `DataLogManager.load` | Same parser as import, chosen by the stored `format`; result cached in memory. |
+| Drawing | `feature/datalog/viewing` | Pure functions from `(DataLogSeriesData, ChartLayout, window, width)` to paths. |
+| What the user changed | `feature/datalog/update` ViewModel, `ChartLayoutStore` | Layout is device state, not a record. |
+
+**The shapes, in order.**
+
+1. **Raw CSV bytes.** Exactly what the avionics wrote. Kept byte-exact inside the gzip blob so a
+   future parser can re-read it (PRD R9).
+2. **`ParsedDataLog`** (Kotlin, `feature/datalog/model`). Two halves: the record-shaped metadata
+   (source header, start, offset, duration, catalogue) and `DataLogSeriesData`, the columnar arrays.
+   Transient: it exists during import and while a viewer is open, and is rebuilt from shape 1.
+3. **`DataLog` proto** (`core/model`, §4.1). The metadata half of shape 2, plus the embedded
+   `Attachment` pointing at the blob, `raw_sha256`, encoding, and derived flags. Persisted in the
+   `entity` table and synced. About 7 KB for a G3X file. It is enough to render the list and the
+   sidebar's *Flight* tab without touching the bytes.
+4. **Gzip blob.** Shape 1 compressed, addressed by a fresh blob id, described by the record's
+   `Attachment` (`sha256` and `size_bytes` of the *stored* bytes, which is what the download driver
+   verifies).
+5. **`SyncDocWire`** (Firestore document). The generic envelope: `payload` is base64 of shape 3,
+   `schema` is `"thing.DataLog"`. Nothing DataLog-specific here; it is what every record kind uses.
+6. **`DataLog` again, on another device.** Decoded by `WireCodec(DataLog.ADAPTER)` into the same
+   Wire class. The list renders from it directly.
+7. **`DataLogSeriesData` again.** Only when a viewer opens: download shape 4, verify, decompress,
+   parse with the parser named by `format`. Cached in memory, never written back.
+8. **`ChartLayout`** (Kotlin, `feature/datalog/model`). Panes and series keys, the time window, the
+   target pane. ViewModel state, remembered per device as JSON. Never a proto, never synced.
+9. **`Attachment{type = DATA_LOG, data_log_id}`** inside a `MaintenanceLog`, `MaintenanceTask`, or
+   `Squawk`. A pointer to shape 3's id, with no bytes and an empty `sha256`, so the blob machinery
+   ignores it and the DataLog record outlives the reference.
+
+Two things worth noticing before reading §4. First, shapes 2 and 7 are the same class produced by
+the same parser; import and open differ only in where the bytes come from, which is why the parser
+version is stored on the record. Second, the server sees only shapes 5 and 4, and reads shape 5
+purely to name the record in a notification and to find the blob on delete. The V2 destination
+lookup is the first server-side write into a DataLog record and will need its own design note on
+how a function writes a field without racing the owning client's last-writer-wins push.
+
 ## 2. What exists today, verified
 
-| Piece | Where | Notes |
-|---|---|---|
-| Kind registry | `core/storage/.../CollectionKind.kt:12,123-136`, `CollectionKindCoverageTest.kt:8-21`, `EntityCodecRegistry.kt:14-34`, `di/StorageModule.kt:55-100` | `TEXT` column, zero-migration; coverage test and `verifyCoverage()` force registration |
-| Per-Thing sync | `feature/sync/data/.../SyncEngine.kt:744-750` `PER_THING_KINDS` | One list entry; `HydrationRunner`, `FirestoreRefs` are kind-agnostic |
-| Blob ownership | `core/storage/.../blob/AttachmentRefs.kt:24` `of(kind, payload)` | Exhaustive `when`; adding a kind breaks the build until it says whether the kind owns blobs |
-| Blob store | `core/storage/.../blob/LocalBlobStore.kt:25-131` | `put(id, bytes, contentType, scope)` takes a whole `ByteArray`; `installDownloaded` verifies sha256 |
-| Blob path | `feature/sync/data/.../blob/BlobUploadDriver.kt:79-101` | `users/{uid}/thing/{thingId}/blobs/{blobId}`; foreign scope goes through `HttpsAttachmentBroker` |
-| Remote-only index | `feature/attachment/datamanager/.../BlobIndexReconciler.kt:31-55` | Upserts `REMOTE_ONLY` for every attachment with non-blank `id` and `sha256` that `AttachmentRefs.of` returns |
-| Lazy fetch | `core/storage/.../blob/UploadScheduler.kt:12` `prefetchRemoteOnly = false` | Bytes download on open, which is PRD R18 |
-| Server GC | `backend/.../storage/onRecordDeleted.ts:48-151`, `blobRefs.ts:20-94` | `{kind}` wildcard trigger; `schemaCanOwnBlobs` and `blobIdsInPayload` keyed on `schemaName`; `null` means delete nothing (#428) |
-| Payload ceiling | `FirestoreSyncWriter.kt:29` base64 envelope | About 750 KB of proto bytes; a 108-series catalogue is roughly 7 KB |
-| Attachment type sites | §9 table | Every branch is `LINK` versus everything else; none is exhaustive |
-| Add-attachment sheet | `feature/attachment/viewing/.../AttachmentFormSection.kt:305-423` | Three options; "Add link" swaps the sheet body in place |
-| Form controllers | `AttachmentFormController.kt:33-274`; `MaintenanceLogFormViewModel.kt:118-569`, `SquawkFormViewModel.kt:128-440`, `TaskViewModel.kt:204-219` | `addLink` is the blobless template to copy |
-| Detail taps | `LogsTab.kt:93-105`, `SquawkTab.kt:466-476`, `ThingSectionContent.kt:494-505` | `attachmentOpener.open` called synchronously inside the click for the web `window.open` gesture rule |
-| File picking | `feature/attachment/viewing/.../FilePicker.kt` (android SAF, iOS `UIDocumentPickerViewController`, web `<input type=file>` with eager `arrayBuffer()` into `WebPickedFileRegistry`) | No `accept` filter; no drag-and-drop anywhere in the repo |
-| Routes | `core/nav/.../Screen.kt:5-113`; `feature/shell/.../ShellNavGraph.kt:194-255` | Full-screen roots are plain `composable(...)`; forms are `selectionDialog` |
-| Shell | `core/ui/adaptive/.../AdaptiveAppShell.kt:143-233,632-682,798-808`; `feature/thing/dashboard/.../ThingSectionContent.kt:73-179` | Sections are ViewModel state under one route; FAB is a per-section slot |
-| Pill | `core/ui/adaptive/.../compose/FloatingPillNavigationBar.kt:101-152` | Selected: icon + label chip. Unselected: **text only**, no icon |
-| Template resolution | `core/template/.../CurrentThingTemplate.kt:91-96`, `impl/BakedInTemplateRegistry.kt:48-70`, `TemplateResolution.kt:39-68` | Lexicon resolves by id from the build; capabilities read straight from DNA; `ENUM_FIELDS = {7, 8, 9}` degrades a Thing whose DNA names an unknown `Section` |
-| Template assets | `core/template/templates/airplane.v11.textproto:140-144`, `templates/README.md:23-60`, `compile-template.sh` | Every edit is a new version; `AirplaneTemplateAssetTest.kt:202-208` pins the four sections in order |
-| Notifications | `backend/.../notifications/onRecordWritten.ts:68-131`, `notificationModels.ts:66-108`, `recordPayloads.ts:86-110`, `pushMessages.ts:97-124` | Body key is `notification_n1_body_record_{kind}`; generic per activity kind, so no new server string |
-| Notification client | `feature/notifications/viewing/.../PushPayloadRendering.kt:144-157`, `PushPayload.kt:102-121`, `NotificationTapRouter.kt:63-104`, `AdaptiveShellViewModel.kt:169-194` | `noun()` falls through to the log noun; unknown tap kinds fall back to the Thing |
-| Analytics | `core/analytics/.../AnalyticsEvent.kt:34-110`, `AnalyticsEvents.kt`, `AnalyticsTaxonomyTest.kt:214-235` | Append-only enums; new `ThingScopedEvent`s must join the template-id list |
-| Ads | `feature/ads/model/.../AdSurface.kt:12-16`, `feature/ads/viewing/.../AdSlot.kt:80-169`, `AdView.js.kt:19-29` | Three list surfaces only; `AdSlot` requests `LARGE_BANNER`; web is a deliberate no-op |
-| Theme | `core/ui/theme/.../Theme.kt:11-70`, `Color.kt`, `StatusColors.kt` | No categorical palette; no chart or sparkline code anywhere |
-| Coil | `core/ui/widget/avataricon/.../CircularImage.kt:64-74` | `rememberAsyncImagePainter` is the house pattern; default singleton loader; ktor engine bound for Android and iOS, **not** in `webApp` |
-| Dispatchers | `core/storage/.../StorageDispatchers.kt`, `feature/search/model/.../SearchTuning.kt:7-10` | Injected dispatcher defaulting to `Dispatchers.Default`; JS is single-threaded |
-| Compression | `feature/export/datamanager/.../StoredZipArchive.kt`, `ZipFileWriter.android.kt` | Android has `java.util.zip`; iOS and web zip with STORE only. A `Crc32` exists, `internal` to export |
-| Local prefs | `core/ui/theme/.../Appearance.kt:23-26` `AppearanceStore` | Per-platform key-value store; the only unsynced preference mechanism |
+| Piece                 | Where                                                                                                                                                                               | Notes                                                                                                                                                       |
+|-----------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Kind registry         | `core/storage/.../CollectionKind.kt:12,123-136`, `CollectionKindCoverageTest.kt:8-21`, `EntityCodecRegistry.kt:14-34`, `di/StorageModule.kt:55-100`                                 | `TEXT` column, zero-migration; coverage test and `verifyCoverage()` force registration                                                                      |
+| Per-Thing sync        | `feature/sync/data/.../SyncEngine.kt:744-750` `PER_THING_KINDS`                                                                                                                     | One list entry; `HydrationRunner`, `FirestoreRefs` are kind-agnostic                                                                                        |
+| Blob ownership        | `core/storage/.../blob/AttachmentRefs.kt:24` `of(kind, payload)`                                                                                                                    | Exhaustive `when`; adding a kind breaks the build until it says whether the kind owns blobs                                                                 |
+| Blob store            | `core/storage/.../blob/LocalBlobStore.kt:25-131`                                                                                                                                    | `put(id, bytes, contentType, scope)` takes a whole `ByteArray`; `installDownloaded` verifies sha256                                                         |
+| Blob path             | `feature/sync/data/.../blob/BlobUploadDriver.kt:79-101`                                                                                                                             | `users/{uid}/thing/{thingId}/blobs/{blobId}`; foreign scope goes through `HttpsAttachmentBroker`                                                            |
+| Remote-only index     | `feature/attachment/datamanager/.../BlobIndexReconciler.kt:31-55`                                                                                                                   | Upserts `REMOTE_ONLY` for every attachment with non-blank `id` and `sha256` that `AttachmentRefs.of` returns                                                |
+| Lazy fetch            | `core/storage/.../blob/UploadScheduler.kt:12` `prefetchRemoteOnly = false`                                                                                                          | Bytes download on open, which is PRD R18                                                                                                                    |
+| Server GC             | `backend/.../storage/onRecordDeleted.ts:48-151`, `blobRefs.ts:20-94`                                                                                                                | `{kind}` wildcard trigger; `schemaCanOwnBlobs` and `blobIdsInPayload` keyed on `schemaName`; `null` means delete nothing (#428)                             |
+| Payload ceiling       | `FirestoreSyncWriter.kt:29` base64 envelope                                                                                                                                         | About 750 KB of proto bytes; a 108-series catalogue is roughly 7 KB                                                                                         |
+| Attachment type sites | §9 table                                                                                                                                                                            | Every branch is `LINK` versus everything else; none is exhaustive                                                                                           |
+| Add-attachment sheet  | `feature/attachment/viewing/.../AttachmentFormSection.kt:305-423`                                                                                                                   | Three options; "Add link" swaps the sheet body in place                                                                                                     |
+| Form controllers      | `AttachmentFormController.kt:33-274`; `MaintenanceLogFormViewModel.kt:118-569`, `SquawkFormViewModel.kt:128-440`, `TaskViewModel.kt:204-219`                                        | `addLink` is the blobless template to copy                                                                                                                  |
+| Detail taps           | `LogsTab.kt:93-105`, `SquawkTab.kt:466-476`, `ThingSectionContent.kt:494-505`                                                                                                       | `attachmentOpener.open` called synchronously inside the click for the web `window.open` gesture rule                                                        |
+| File picking          | `feature/attachment/viewing/.../FilePicker.kt` (android SAF, iOS `UIDocumentPickerViewController`, web `<input type=file>` with eager `arrayBuffer()` into `WebPickedFileRegistry`) | No `accept` filter; no drag-and-drop anywhere in the repo                                                                                                   |
+| Routes                | `core/nav/.../Screen.kt:5-113`; `feature/shell/.../ShellNavGraph.kt:194-255`                                                                                                        | Full-screen roots are plain `composable(...)`; forms are `selectionDialog`                                                                                  |
+| Shell                 | `core/ui/adaptive/.../AdaptiveAppShell.kt:143-233,632-682,798-808`; `feature/thing/dashboard/.../ThingSectionContent.kt:73-179`                                                     | Sections are ViewModel state under one route; FAB is a per-section slot                                                                                     |
+| Pill                  | `core/ui/adaptive/.../compose/FloatingPillNavigationBar.kt:101-152`                                                                                                                 | Selected: icon + label chip. Unselected: **text only**, no icon                                                                                             |
+| Template resolution   | `core/template/.../CurrentThingTemplate.kt:91-96`, `impl/BakedInTemplateRegistry.kt:48-70`, `TemplateResolution.kt:39-68`                                                           | Lexicon resolves by id from the build; capabilities read straight from DNA; `ENUM_FIELDS = {7, 8, 9}` degrades a Thing whose DNA names an unknown `Section` |
+| Template assets       | `core/template/templates/airplane.v11.textproto:140-144`, `templates/README.md:23-60`, `compile-template.sh`                                                                        | Every edit is a new version; `AirplaneTemplateAssetTest.kt:202-208` pins the four sections in order                                                         |
+| Notifications         | `backend/.../notifications/onRecordWritten.ts:68-131`, `notificationModels.ts:66-108`, `recordPayloads.ts:86-110`, `pushMessages.ts:97-124`                                         | Body key is `notification_n1_body_record_{kind}`; generic per activity kind, so no new server string                                                        |
+| Notification client   | `feature/notifications/viewing/.../PushPayloadRendering.kt:144-157`, `PushPayload.kt:102-121`, `NotificationTapRouter.kt:63-104`, `AdaptiveShellViewModel.kt:169-194`               | `noun()` falls through to the log noun; unknown tap kinds fall back to the Thing                                                                            |
+| Analytics             | `core/analytics/.../AnalyticsEvent.kt:34-110`, `AnalyticsEvents.kt`, `AnalyticsTaxonomyTest.kt:214-235`                                                                             | Append-only enums; new `ThingScopedEvent`s must join the template-id list                                                                                   |
+| Ads                   | `feature/ads/model/.../AdSurface.kt:12-16`, `feature/ads/viewing/.../AdSlot.kt:80-169`, `AdView.js.kt:19-29`                                                                        | Three list surfaces only; `AdSlot` requests `LARGE_BANNER`; web is a deliberate no-op                                                                       |
+| Theme                 | `core/ui/theme/.../Theme.kt:11-70`, `Color.kt`, `StatusColors.kt`                                                                                                                   | No categorical palette; no chart or sparkline code anywhere                                                                                                 |
+| Coil                  | `core/ui/widget/avataricon/.../CircularImage.kt:64-74`                                                                                                                              | `rememberAsyncImagePainter` is the house pattern; default singleton loader; ktor engine bound for Android and iOS, **not** in `webApp`                      |
+| Dispatchers           | `core/storage/.../StorageDispatchers.kt`, `feature/search/model/.../SearchTuning.kt:7-10`                                                                                           | Injected dispatcher defaulting to `Dispatchers.Default`; JS is single-threaded                                                                              |
+| Compression           | `feature/export/datamanager/.../StoredZipArchive.kt`, `ZipFileWriter.android.kt`                                                                                                    | Android has `java.util.zip`; iOS and web zip with STORE only. A `Crc32` exists, `internal` to export                                                        |
+| Local prefs           | `core/ui/theme/.../Appearance.kt:23-26` `AppearanceStore`                                                                                                                           | Per-platform key-value store; the only unsynced preference mechanism                                                                                        |
 
 ## 3. Module layout
 
@@ -198,18 +288,18 @@ explicit exclusion listed in §9.
 `users/{uid}/thing/{thingId}/data_log/{id}`. Touch points, following the Comment addition in
 `4299ec2c6`:
 
-| File | Change |
-|---|---|
-| `core/storage/.../CollectionKind.kt` | `data object DataLog`; append to `ALL` |
-| `CollectionKindCoverageTest.kt` | add to `allKnownKinds` |
-| `di/StorageModule.kt` | `register(CollectionKind.DataLog, WireCodec(DataLog.ADAPTER))` |
-| `blob/AttachmentRefs.kt` | `DataLog -> listOfNotNull(payload.raw_file)`; and in the attachment-bearing kinds, filter `type != DATA_LOG` out of `blobIdsIn` (a reference owns nothing) |
-| `feature/sync/data/.../SyncEngine.kt` | add to `PER_THING_KINDS` |
-| `backend/firebase/firestore.rules:65-68` | add `"data_log"` to `isSharedAircraftKind` |
-| `backend/.../functions/package.json` `generate:proto` | add `thing/data_log.proto` |
-| `backend/.../storage/blobRefs.ts` | `SCHEMA["thing.DataLog"]`, `schemaCanOwnBlobs` true, `blobIdsInPayload` returns `[raw_file.id]`; `blobIds()` excludes `DATA_LOG` alongside `LINK` |
-| `backend/.../notifications/*` | §11 |
-| `backend/.../test/blob-cleanup.test.ts` | a DataLog delete reclaims its blob; a log delete never reclaims a referenced DataLog's blob |
+| File                                                  | Change                                                                                                                                                     |
+|-------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `core/storage/.../CollectionKind.kt`                  | `data object DataLog`; append to `ALL`                                                                                                                     |
+| `CollectionKindCoverageTest.kt`                       | add to `allKnownKinds`                                                                                                                                     |
+| `di/StorageModule.kt`                                 | `register(CollectionKind.DataLog, WireCodec(DataLog.ADAPTER))`                                                                                             |
+| `blob/AttachmentRefs.kt`                              | `DataLog -> listOfNotNull(payload.raw_file)`; and in the attachment-bearing kinds, filter `type != DATA_LOG` out of `blobIdsIn` (a reference owns nothing) |
+| `feature/sync/data/.../SyncEngine.kt`                 | add to `PER_THING_KINDS`                                                                                                                                   |
+| `backend/firebase/firestore.rules:65-68`              | add `"data_log"` to `isSharedAircraftKind`                                                                                                                 |
+| `backend/.../functions/package.json` `generate:proto` | add `thing/data_log.proto`                                                                                                                                 |
+| `backend/.../storage/blobRefs.ts`                     | `SCHEMA["thing.DataLog"]`, `schemaCanOwnBlobs` true, `blobIdsInPayload` returns `[raw_file.id]`; `blobIds()` excludes `DATA_LOG` alongside `LINK`          |
+| `backend/.../notifications/*`                         | §11                                                                                                                                                        |
+| `backend/.../test/blob-cleanup.test.ts`               | a DataLog delete reclaims its blob; a log delete never reclaims a referenced DataLog's blob                                                                |
 
 `TombstoneGc` (`core/storage/.../TombstoneGc.kt:64-102`) is kind-agnostic once `AttachmentRefs` knows
 the kind, and its `stillReferenced` cross-check already protects a blob another live record shows,
