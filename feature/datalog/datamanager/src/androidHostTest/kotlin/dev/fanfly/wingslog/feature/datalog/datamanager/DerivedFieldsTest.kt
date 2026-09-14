@@ -16,26 +16,45 @@ class DerivedFieldsTest {
   )
 
   private suspend fun parse(rows: List<List<String>>) =
-    parser.parse(Fixtures.synthetic(columns, rows), "log_20260902_144756_XX1.csv")
+    parser.parse(
+      Fixtures.synthetic(columns, rows),
+      "log_20260902_144756_XX1.csv"
+    )
 
   @Test
   fun theFixtureIsAGroundRun() = runTest {
-    val parsed = parser.parse(Fixtures.bytes(Fixtures.GROUND_RUN), Fixtures.GROUND_RUN)
+    val parsed =
+      parser.parse(Fixtures.bytes(Fixtures.GROUND_RUN), Fixtures.GROUND_RUN)
     assertThat(DerivedFields.airborne(parsed)).isFalse()
     assertThat(DerivedFields.endPosition(parsed)).isEqualTo(39.0810252 to -114.1003005)
   }
 
   @Test
   fun groundSpeedAboveThirtyKnotsMeansAirborne() = runTest {
-    val slow = parse(Fixtures.syntheticRows(5) { listOf("12.5", "", "+37.1", "-121.6") })
-    val fast = parse(Fixtures.syntheticRows(5) { i -> listOf(if (i == 3) "31" else "5", "", "+37.1", "-121.6") })
+    val slow =
+      parse(Fixtures.syntheticRows(5) { listOf("12.5", "", "+37.1", "-121.6") })
+    val fast = parse(Fixtures.syntheticRows(5) { i ->
+      listOf(
+        if (i == 3) "31" else "5",
+        "",
+        "+37.1",
+        "-121.6"
+      )
+    })
     assertThat(DerivedFields.airborne(slow)).isFalse()
     assertThat(DerivedFields.airborne(fast)).isTrue()
   }
 
   @Test
   fun heightAboveGroundAboveFiftyFeetMeansAirborneEvenWhenSlow() = runTest {
-    val hover = parse(Fixtures.syntheticRows(5) { i -> listOf("2", if (i == 4) "51" else "3", "", "") })
+    val hover = parse(Fixtures.syntheticRows(5) { i ->
+      listOf(
+        "2",
+        if (i == 4) "51" else "3",
+        "",
+        ""
+      )
+    })
     assertThat(DerivedFields.airborne(hover)).isTrue()
     assertThat(DerivedFields.endPosition(hover)).isNull()
   }
@@ -55,8 +74,12 @@ class DerivedFieldsTest {
 
   @Test
   fun theFilenameIdentIsReadOnlyFromTheGarminPattern() {
-    assertThat(DerivedFields.startLocationIdent("log_20260902_144756_XX1.csv")).isEqualTo("XX1")
-    assertThat(DerivedFields.startLocationIdent("log_20260902_144756_KSQL.CSV")).isEqualTo("KSQL")
+    assertThat(DerivedFields.startLocationIdent("log_20260902_144756_XX1.csv")).isEqualTo(
+      "XX1"
+    )
+    assertThat(DerivedFields.startLocationIdent("log_20260902_144756_KSQL.CSV")).isEqualTo(
+      "KSQL"
+    )
     assertThat(DerivedFields.startLocationIdent("flight.csv")).isEmpty()
     assertThat(DerivedFields.startLocationIdent("log_2026_KSQL.csv")).isEmpty()
   }

@@ -47,7 +47,8 @@ class DataLogImporterImplTest {
 
   private val thingId = ThingId("thing-1")
   private val scope = EntityScope.thingChildUnsafe("host-uid", "thing-1")
-  private val picked = PickedFile("content://x", Fixtures.GROUND_RUN, "text/csv", 120_968)
+  private val picked =
+    PickedFile("content://x", Fixtures.GROUND_RUN, "text/csv", 120_968)
   private val fixture = Fixtures.bytes(Fixtures.GROUND_RUN)
 
   private lateinit var reader: FileByteReader
@@ -70,9 +71,17 @@ class DataLogImporterImplTest {
       // MockK unboxes the BlobId value class here, so the ref carries a fixed id; the record's blob
       // id is asserted against the record itself below.
       BlobRef(
-        id = BlobId("stored-blob"), scope = scope, relativePath = "blobs/x.bin", sizeBytes = bytes.size.toLong(),
-        sha256 = sha256Hex(bytes), contentType = thirdArg(), remoteState = RemoteState.LocalOnly,
-        remotePath = null, uploadAttempts = 0, deleted = false, updatedAt = Instant.DISTANT_PAST,
+        id = BlobId("stored-blob"),
+        scope = scope,
+        relativePath = "blobs/x.bin",
+        sizeBytes = bytes.size.toLong(),
+        sha256 = sha256Hex(bytes),
+        contentType = thirdArg(),
+        remoteState = RemoteState.LocalOnly,
+        remotePath = null,
+        uploadAttempts = 0,
+        deleted = false,
+        updatedAt = Instant.DISTANT_PAST,
       )
     }
     scheduler = mockk(relaxed = true)
@@ -97,7 +106,9 @@ class DataLogImporterImplTest {
     )
   }
 
-  private suspend fun run(confirm: Boolean = false) = importer.import(thingId, picked, confirm).toList()
+  private suspend fun run(confirm: Boolean = false) =
+    importer.import(thingId, picked, confirm)
+      .toList()
 
   @Test
   fun aFreshFileBecomesAGzipBlobAndARecordInTheThingsScope() = runTest {
@@ -126,7 +137,8 @@ class DataLogImporterImplTest {
       assertThat(identity_mismatch).isFalse()
       assertThat(sample_count).isEqualTo(256)
       assertThat(series).isNotEmpty()
-      assertThat(end_latitude).isWithin(1e-9).of(39.0810252)
+      assertThat(end_latitude).isWithin(1e-9)
+        .of(39.0810252)
       assertThat(created_by?.value_).isEqualTo("member-uid")
       val raw = raw_file!!
       // The blob id is fresh — never the record id — and the attachment describes the STORED bytes.
@@ -148,7 +160,15 @@ class DataLogImporterImplTest {
 
   @Test
   fun theSameBytesAgainIsADuplicate() = runTest {
-    every { store.observeAll(scope) } returns flowOf(listOf(existing(rawSha256 = sha256Hex(fixture))))
+    every { store.observeAll(scope) } returns flowOf(
+      listOf(
+        existing(
+          rawSha256 = sha256Hex(
+            fixture
+          )
+        )
+      )
+    )
 
     assertThat(run().last()).isEqualTo(ImportProgress.Failed(ImportFailure.DUPLICATE))
     coVerify(exactly = 0) { blobs.put(any(), any(), any(), any()) }
@@ -157,9 +177,21 @@ class DataLogImporterImplTest {
   @Test
   fun sameRecorderAndStartNeedsConfirmationUntilConfirmed() = runTest {
     val start = Instant.parse("2026-09-02T21:47:56Z")
-    every { store.observeAll(scope) } returns flowOf(listOf(existing(id = "older", systemId = "6000ABCD01234", start = start)))
+    every { store.observeAll(scope) } returns flowOf(
+      listOf(
+        existing(
+          id = "older",
+          systemId = "6000ABCD01234",
+          start = start
+        )
+      )
+    )
 
-    assertThat(run().last()).isEqualTo(ImportProgress.NeedsConfirmation(DataLogId("older")))
+    assertThat(run().last()).isEqualTo(
+      ImportProgress.NeedsConfirmation(
+        DataLogId("older")
+      )
+    )
     coVerify(exactly = 0) { blobs.put(any(), any(), any(), any()) }
 
     assertThat(run(confirm = true).last()).isInstanceOf(ImportProgress.Done::class.java)
@@ -186,8 +218,10 @@ class DataLogImporterImplTest {
   ) = StorageEntity(
     id,
     DataLog(
-      id = DataLogId(id), raw_sha256 = rawSha256,
-      source = DataLogSource(system_id = systemId), start = start.toWireInstant(),
+      id = DataLogId(id),
+      raw_sha256 = rawSha256,
+      source = DataLogSource(system_id = systemId),
+      start = start.toWireInstant(),
     ),
     Instant.DISTANT_PAST,
   )

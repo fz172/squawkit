@@ -171,6 +171,12 @@ fun AdaptiveShellRoute(
     viewModel.dismissNotice()
   }
 
+  // A guest asked to upload a data log (PRD R40): land on Settings with the link-account sheet
+  // already open. The upgrade flow is hosted here, so choose() shows the sheet wherever we are.
+  val linkAccount = {
+    viewModel.openSettings()
+    upgradeViewModel.choose()
+  }
   AdaptiveAppShell(
     state = state,
     snackbarHostState = snackbarHostState,
@@ -195,6 +201,7 @@ fun AdaptiveShellRoute(
             onNavigateToSection = viewModel::selectSection,
             scrollToRecordId = scrollTargetId,
             onScrollTargetConsumed = viewModel::consumeScrollTarget,
+            onLinkAccount = linkAccount,
           )
         }
       }
@@ -211,6 +218,7 @@ fun AdaptiveShellRoute(
         thingId = thingId,
         navController = navController,
         renderable = state.things.find { it.id == thingId }?.renderable != false,
+        onLinkAccount = linkAccount,
       )
     },
   )

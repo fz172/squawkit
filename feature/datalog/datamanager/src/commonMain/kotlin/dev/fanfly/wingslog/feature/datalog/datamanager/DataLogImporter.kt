@@ -11,7 +11,11 @@ interface DataLogImporter {
    * Emits [ImportProgress] until a terminal state. A probable duplicate (same recorder, same start)
    * ends in `NeedsConfirmation`; re-running with [confirmDuplicate] keeps both.
    */
-  fun import(thingId: ThingId, picked: PickedFile, confirmDuplicate: Boolean = false): Flow<ImportProgress>
+  fun import(
+    thingId: ThingId,
+    picked: PickedFile,
+    confirmDuplicate: Boolean = false
+  ): Flow<ImportProgress>
 }
 
 /** The Thing's own identifier (its tail number on the airplane preset), for PRD R11. */

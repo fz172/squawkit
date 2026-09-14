@@ -47,18 +47,27 @@ object CanonicalSeriesRegistry {
   fun canonicalIdFor(shortName: String): String {
     val key = shortName.trim()
     fixed[key]?.let { return it }
-    engine.matchEntire(key)?.let { m ->
-      val n = m.groupValues[1].toInt()
-      val field = m.groupValues[2]
-      engineFields[field]?.let { return CanonicalSeries.engine(n, it) }
-      engineIndexed.matchEntire(field)?.let { i ->
-        return CanonicalSeries.engine(n, i.groupValues[1].lowercase(), i.groupValues[2].toInt())
+    engine.matchEntire(key)
+      ?.let { m ->
+        val n = m.groupValues[1].toInt()
+        val field = m.groupValues[2]
+        engineFields[field]?.let { return CanonicalSeries.engine(n, it) }
+        engineIndexed.matchEntire(field)
+          ?.let { i ->
+            return CanonicalSeries.engine(
+              n,
+              i.groupValues[1].lowercase(),
+              i.groupValues[2].toInt()
+            )
+          }
+        return ""
       }
-      return ""
-    }
-    fuelQty.matchEntire(key)?.let { return CanonicalSeries.fuelQty(it.groupValues[1].toInt()) }
-    volts.matchEntire(key)?.let { return CanonicalSeries.volts(it.groupValues[1].toInt()) }
-    amps.matchEntire(key)?.let { return CanonicalSeries.amps(it.groupValues[1].toInt()) }
+    fuelQty.matchEntire(key)
+      ?.let { return CanonicalSeries.fuelQty(it.groupValues[1].toInt()) }
+    volts.matchEntire(key)
+      ?.let { return CanonicalSeries.volts(it.groupValues[1].toInt()) }
+    amps.matchEntire(key)
+      ?.let { return CanonicalSeries.amps(it.groupValues[1].toInt()) }
     return ""
   }
 }

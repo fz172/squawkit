@@ -33,6 +33,9 @@ import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalSnackbarHostState
 import dev.fanfly.wingslog.core.ui.common.UiText
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
+import dev.fanfly.wingslog.feature.datalog.viewing.list.DataLogSectionContent
+import dev.fanfly.wingslog.feature.datalog.viewing.list.DataLogUploadFab
+import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.feature.attachment.datamanager.OpenState
 import dev.fanfly.wingslog.feature.tasks.viewing.DeleteTaskConfirmDialog
 import dev.fanfly.wingslog.feature.tasks.viewing.TaskDetailSheet
@@ -84,6 +87,8 @@ fun ShellSectionBody(
    */
   scrollToRecordId: String? = null,
   onScrollTargetConsumed: () -> Unit = {},
+  /** A guest asked to link an account (data log design §8.4): the host opens Settings on its sheet. */
+  onLinkAccount: () -> Unit = {},
 ) {
   if (thingId != null) {
     ThingSectionContent(
@@ -93,6 +98,7 @@ fun ShellSectionBody(
       onNavigateToSection = onNavigateToSection,
       scrollToRecordId = scrollToRecordId,
       onScrollTargetConsumed = onScrollTargetConsumed,
+      onLinkAccount = onLinkAccount,
     )
   } else {
     Box(
@@ -130,9 +136,12 @@ fun ShellSectionFab(
    * from the template, so offering one here would write under rules we cannot read (design §6.2).
    */
   renderable: Boolean = true,
+  onLinkAccount: () -> Unit = {},
 ) {
   if (thingId == null || !renderable) return
   when (section) {
+    ShellSection.DATA_LOGS -> DataLogUploadFab(thingId = ThingId(thingId), onLinkAccount = onLinkAccount)
+
     ShellSection.SQUAWKS ->
       SectionAddFab(
         label = stringResource(
@@ -175,8 +184,7 @@ fun ShellSectionFab(
         },
       )
 
-    // DATA_LOGS: the Upload Log FAB lands with the section list (data log design §10.2).
-    ShellSection.DASHBOARD, ShellSection.DATA_LOGS, ShellSection.SETTINGS -> Unit
+    ShellSection.DASHBOARD, ShellSection.SETTINGS -> Unit
   }
 }
 
@@ -215,6 +223,7 @@ fun ThingSectionContent(
   /** See [ShellSectionBody]'s parameter of the same name. */
   scrollToRecordId: String? = null,
   onScrollTargetConsumed: () -> Unit = {},
+  onLinkAccount: () -> Unit = {},
 ) {
   val viewModel: ThingOverviewViewModel =
     koinViewModel(key = thingId, parameters = { parametersOf(thingId) })
@@ -471,8 +480,14 @@ fun ThingSectionContent(
           scrollToLogId = pendingLogScrollTarget,
         )
 
-        // Empty until the list lands (data log design §10.2); developer builds only until then.
-        ShellSection.DATA_LOGS, ShellSection.SETTINGS -> Unit
+        ShellSection.DATA_LOGS -> DataLogSectionContent(
+          thingId = ThingId(thingId),
+          // The viewer route lands in PR 4 (data log design §10.4).
+          onOpen = {},
+          onLinkAccount = onLinkAccount,
+        )
+
+        ShellSection.SETTINGS -> Unit
       }
 
       // Task detail + delete confirmation overlays. SquawkTab and LogsTab render their own detail

@@ -69,21 +69,43 @@ class DataLogManagerImplTest {
     importer = mockk()
     cache = DataLogCache()
     manager = DataLogManagerImpl(
-      scopeResolver = resolver, storeFactory = factory, blobs = blobs, filesystem = filesystem,
-      scheduler = scheduler, importer = importer, cache = cache, parsers = listOf(GarminParser()),
+      scopeResolver = resolver,
+      storeFactory = factory,
+      blobs = blobs,
+      filesystem = filesystem,
+      scheduler = scheduler,
+      importer = importer,
+      cache = cache,
+      parsers = listOf(GarminParser()),
     )
   }
 
-  private fun record(id: String, start: String, encoding: DataLogEncoding = DataLogEncoding.DATA_LOG_ENCODING_GZIP) =
+  private fun record(
+    id: String,
+    start: String,
+    encoding: DataLogEncoding = DataLogEncoding.DATA_LOG_ENCODING_GZIP
+  ) =
     DataLog(
       id = DataLogId(id), format = DataLogFormat.DATA_LOG_FORMAT_GARMIN_G3X,
-      start = Instant.parse(start).toWireInstant(), encoding = encoding, file_name = Fixtures.GROUND_RUN,
-      raw_file = Attachment(id = blobId.value, type = AttachmentType.ATTACHMENT_TYPE_FILE),
+      start = Instant.parse(start)
+        .toWireInstant(), encoding = encoding, file_name = Fixtures.GROUND_RUN,
+      raw_file = Attachment(
+        id = blobId.value,
+        type = AttachmentType.ATTACHMENT_TYPE_FILE
+      ),
     )
 
   private fun ref(state: RemoteState) = BlobRef(
-    id = blobId, scope = scope, relativePath = "blobs/blob-1.bin", sizeBytes = 1, sha256 = "x",
-    contentType = null, remoteState = state, remotePath = null, uploadAttempts = 0, deleted = false,
+    id = blobId,
+    scope = scope,
+    relativePath = "blobs/blob-1.bin",
+    sizeBytes = 1,
+    sha256 = "x",
+    contentType = null,
+    remoteState = state,
+    remotePath = null,
+    uploadAttempts = 0,
+    deleted = false,
     updatedAt = Instant.DISTANT_PAST,
   )
 
@@ -91,33 +113,62 @@ class DataLogManagerImplTest {
   fun observeIsNewestFirstAndDropsRowsWithoutAnId() = runTest {
     every { store.observeAll(scope) } returns flowOf(
       listOf(
-        StorageEntity("a", record("a", "2026-09-01T00:00:00Z"), Instant.DISTANT_PAST),
-        StorageEntity("b", record("b", "2026-09-03T00:00:00Z"), Instant.DISTANT_PAST),
+        StorageEntity(
+          "a",
+          record("a", "2026-09-01T00:00:00Z"),
+          Instant.DISTANT_PAST
+        ),
+        StorageEntity(
+          "b",
+          record("b", "2026-09-03T00:00:00Z"),
+          Instant.DISTANT_PAST
+        ),
         StorageEntity("corrupt", DataLog(id = null), Instant.DISTANT_PAST),
       ),
     )
 
-    val logs = manager.observe(thingId).first()
+    val logs = manager.observe(thingId)
+      .first()
 
-    assertThat(logs.map { it.id }).containsExactly(DataLogId("b"), DataLogId("a")).inOrder()
-    assertThat(manager.observeOne(thingId, DataLogId("a")).first()?.id).isEqualTo(DataLogId("a"))
-    assertThat(manager.observeOne(thingId, DataLogId("zzz")).first()).isNull()
+    assertThat(logs.map { it.id }).containsExactly(
+      DataLogId("b"),
+      DataLogId("a")
+    )
+      .inOrder()
+    assertThat(
+      manager.observeOne(thingId, DataLogId("a"))
+        .first()?.id
+    ).isEqualTo(DataLogId("a"))
+    assertThat(
+      manager.observeOne(thingId, DataLogId("zzz"))
+        .first()
+    ).isNull()
   }
 
   @Test
   fun loadReadsTheLocalBlobDecodesParsesAndCaches() = runTest {
     every { store.observeAll(scope) } returns flowOf(
-      listOf(StorageEntity("a", record("a", "2026-09-02T21:47:56Z"), Instant.DISTANT_PAST)),
+      listOf(
+        StorageEntity(
+          "a",
+          record("a", "2026-09-02T21:47:56Z"),
+          Instant.DISTANT_PAST
+        )
+      ),
     )
     coEvery { blobs.get(blobId) } returns ref(RemoteState.Synced)
-    coEvery { filesystem.read("blobs/blob-1.bin") } returns GzipCodec.compress(Fixtures.bytes(Fixtures.GROUND_RUN))
+    coEvery { filesystem.read("blobs/blob-1.bin") } returns GzipCodec.compress(
+      Fixtures.bytes(Fixtures.GROUND_RUN)
+    )
 
-    val data = manager.load(thingId, DataLogId("a")).getOrThrow()
+    val data = manager.load(thingId, DataLogId("a"))
+      .getOrThrow()
     assertThat(data.rowCount).isEqualTo(256)
     assertThat(cache.get(DataLogId("a"))).isSameInstanceAs(data)
 
     // Second load is the cache: no filesystem read.
-    val again = manager.load(thingId, DataLogId("a")).getOrThrow()
+    val again = manager.load(thingId, DataLogId("a"))
+      .getOrThrow()
     assertThat(again).isSameInstanceAs(data)
     coVerify(exactly = 1) { filesystem.read(any()) }
   }
@@ -125,7 +176,13 @@ class DataLogManagerImplTest {
   @Test
   fun loadFailsWhileTheBytesAreStillRemote() = runTest {
     every { store.observeAll(scope) } returns flowOf(
-      listOf(StorageEntity("a", record("a", "2026-09-02T21:47:56Z"), Instant.DISTANT_PAST)),
+      listOf(
+        StorageEntity(
+          "a",
+          record("a", "2026-09-02T21:47:56Z"),
+          Instant.DISTANT_PAST
+        )
+      ),
     )
     coEvery { blobs.get(blobId) } returns ref(RemoteState.RemoteOnly)
 
@@ -134,20 +191,36 @@ class DataLogManagerImplTest {
   }
 
   @Test
-  fun ensureLocalSchedulesADownloadForARemoteOnlyBlobAndReportsDone() = runTest {
-    every { store.observeAll(scope) } returns flowOf(
-      listOf(StorageEntity("a", record("a", "2026-09-02T21:47:56Z"), Instant.DISTANT_PAST)),
-    )
-    val blob = MutableStateFlow<BlobRef?>(ref(RemoteState.RemoteOnly))
-    every { blobs.observe(blobId) } returns blob
+  fun ensureLocalSchedulesADownloadForARemoteOnlyBlobAndReportsDone() =
+    runTest {
+      every { store.observeAll(scope) } returns flowOf(
+        listOf(
+          StorageEntity(
+            "a",
+            record("a", "2026-09-02T21:47:56Z"),
+            Instant.DISTANT_PAST
+          )
+        ),
+      )
+      val blob = MutableStateFlow<BlobRef?>(ref(RemoteState.RemoteOnly))
+      every { blobs.observe(blobId) } returns blob
 
-    assertThat(manager.ensureLocal(thingId, DataLogId("a")).first()).isEqualTo(DownloadState.Downloading(0f))
-    verify { scheduler.scheduleDownload(blobId) }
+      assertThat(
+        manager.ensureLocal(thingId, DataLogId("a"))
+          .first()
+      ).isEqualTo(DownloadState.Downloading(0f))
+      verify { scheduler.scheduleDownload(blobId) }
 
-    blob.value = ref(RemoteState.Synced)
-    assertThat(manager.ensureLocal(thingId, DataLogId("a")).first()).isEqualTo(DownloadState.Done)
-    assertThat(manager.observeBlobState(thingId, DataLogId("a")).first()).isEqualTo(BlobSyncState.Synced)
-  }
+      blob.value = ref(RemoteState.Synced)
+      assertThat(
+        manager.ensureLocal(thingId, DataLogId("a"))
+          .first()
+      ).isEqualTo(DownloadState.Done)
+      assertThat(
+        manager.observeBlobState(thingId, DataLogId("a"))
+          .first()
+      ).isEqualTo(BlobSyncState.Synced)
+    }
 
   @Test
   fun deleteTombstonesTheRecordInTheResolvedScope() = runTest {

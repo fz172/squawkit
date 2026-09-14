@@ -33,19 +33,29 @@ object DerivedFields {
    * PRD R11: the recorder's `aircraft_ident` against the Thing's identifier, compared without case
    * or punctuation. False when either side is blank — an unknown is not a mismatch.
    */
-  fun identityMismatch(recorderIdentity: String, thingIdentifier: String?): Boolean {
+  fun identityMismatch(
+    recorderIdentity: String,
+    thingIdentifier: String?
+  ): Boolean {
     val a = recorderIdentity.normalised()
-    val b = thingIdentifier.orEmpty().normalised()
+    val b = thingIdentifier.orEmpty()
+      .normalised()
     return a.isNotEmpty() && b.isNotEmpty() && a != b
   }
 
-  private fun String.normalised(): String = filter { it.isLetterOrDigit() }.uppercase()
+  private fun String.normalised(): String =
+    filter { it.isLetterOrDigit() }.uppercase()
 
-  private fun ParsedDataLog.anyAbove(canonicalId: String, threshold: Float): Boolean {
-    val column = series.firstOrNull { it.canonical_id == canonicalId }?.column ?: return false
+  private fun ParsedDataLog.anyAbove(
+    canonicalId: String,
+    threshold: Float
+  ): Boolean {
+    val column = series.firstOrNull { it.canonical_id == canonicalId }?.column
+      ?: return false
     val values = data.numeric[column]?.raw ?: return false
     return values.any { !it.isNaN() && it > threshold }
   }
 
-  private val FILE_NAME_IDENT = Regex("""^log_\d{8}_\d{6}_([A-Za-z0-9]+)\.csv$""", RegexOption.IGNORE_CASE)
+  private val FILE_NAME_IDENT =
+    Regex("""^log_\d{8}_\d{6}_([A-Za-z0-9]+)\.csv$""", RegexOption.IGNORE_CASE)
 }

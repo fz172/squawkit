@@ -15,7 +15,11 @@ interface DataLogManager {
   /** Newest first. Rows without an id are corrupt and dropped. */
   fun observe(thingId: ThingId): Flow<List<DataLog>>
   fun observeOne(thingId: ThingId, id: DataLogId): Flow<DataLog?>
-  fun import(thingId: ThingId, file: PickedFile, confirmDuplicate: Boolean = false): Flow<ImportProgress>
+  fun import(
+    thingId: ThingId,
+    file: PickedFile,
+    confirmDuplicate: Boolean = false
+  ): Flow<ImportProgress>
 
   /** Schedules the download of a remote-only raw file and reports until the bytes are local. */
   fun ensureLocal(thingId: ThingId, id: DataLogId): Flow<DownloadState>

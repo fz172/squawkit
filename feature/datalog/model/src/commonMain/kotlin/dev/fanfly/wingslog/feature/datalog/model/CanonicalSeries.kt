@@ -25,7 +25,9 @@ object CanonicalSeries {
   const val HEADING = "nav.heading"
 
   fun engine(n: Int, field: String): String = "engine[$n].$field"
-  fun engine(n: Int, field: String, index: Int): String = "engine[$n].$field[$index]"
+  fun engine(n: Int, field: String, index: Int): String =
+    "engine[$n].$field[$index]"
+
   fun fuelQty(n: Int): String = "fuel.qty[$n]"
   fun volts(n: Int): String = "elec.volts[$n]"
   fun amps(n: Int): String = "elec.amps[$n]"

@@ -992,3 +992,35 @@ feature/squawk/sharedassets	delete_this_squawk_subtitle	Permanently removes it a
 feature/squawk/sharedassets	delete_this_squawk_title	Delete this %1$s
 feature/squawk/sharedassets	squawk_deleted	Squawk deleted
 core/sharedassets	danger_zone	Danger Zone
+feature/datalog/sharedassets	data_log_empty_title	No data log uploaded yet
+feature/datalog/sharedassets	data_log_gate_body	Anything you upload is stored with the account and available on every device.
+feature/datalog/sharedassets	data_log_gate_bullet_attach	Attach to any record
+feature/datalog/sharedassets	data_log_gate_bullet_columns	Every numeric column in the file: engine, fuel, electrical, air data, GPS
+feature/datalog/sharedassets	data_log_gate_bullet_map	Position on a map, following the cursor
+feature/datalog/sharedassets	data_log_gate_bullet_panes	Unlimited panes and series per pane, with a shared time cursor and zoom
+feature/datalog/sharedassets	data_log_gate_link_cta	Link to an account
+feature/datalog/sharedassets	data_log_gate_not_now	Not now
+feature/datalog/sharedassets	data_log_gate_open_settings	Open Settings
+feature/datalog/sharedassets	data_log_gate_sheet_body	A data log is stored with the account and synced to every device. Linking keeps everything already on this device.
+feature/datalog/sharedassets	data_log_gate_sheet_title	Link to an account to upload
+feature/datalog/sharedassets	data_log_gate_title	Sign in to upload a data log
+feature/datalog/sharedassets	data_log_gate_what_title	What gets charted
+feature/datalog/sharedassets	data_log_ground_run	Ground run
+feature/datalog/sharedassets	data_log_import_confirm_body	Same recorder and start time as an upload already here.
+feature/datalog/sharedassets	data_log_import_confirm_title	Looks like a duplicate
+feature/datalog/sharedassets	data_log_import_dismiss	Dismiss
+feature/datalog/sharedassets	data_log_import_failed_duplicate	This file is already uploaded.
+feature/datalog/sharedassets	data_log_import_failed_parse	The file could not be parsed.
+feature/datalog/sharedassets	data_log_import_failed_unreadable	The file could not be read.
+feature/datalog/sharedassets	data_log_import_failed_unrecognized	Not a recognised data log. Supported: Garmin G3X.
+feature/datalog/sharedassets	data_log_import_keep_both	Keep both
+feature/datalog/sharedassets	data_log_import_parsing	Parsing %1$s…
+feature/datalog/sharedassets	data_log_import_reading	Reading %1$s…
+feature/datalog/sharedassets	data_log_import_storing	Saving %1$s…
+feature/datalog/sharedassets	data_log_recent_uploads	Recent uploads
+feature/datalog/sharedassets	data_log_series_count	%1$d series
+feature/datalog/sharedassets	data_log_supported_formats	Supported: Garmin G3X · G3X Touch
+feature/datalog/sharedassets	data_log_tail_mismatch	Tail mismatch
+feature/datalog/sharedassets	data_log_upload	Upload Data Log
+feature/datalog/sharedassets	data_log_delete_body	The file and its charts are removed from every device.
+feature/datalog/sharedassets	data_log_delete_title	Delete Data Log?

@@ -18,7 +18,8 @@ class GarminParserTest {
 
   private val parser = GarminParser()
 
-  private suspend fun groundRun() = parser.parse(Fixtures.bytes(Fixtures.GROUND_RUN), Fixtures.GROUND_RUN)
+  private suspend fun groundRun() =
+    parser.parse(Fixtures.bytes(Fixtures.GROUND_RUN), Fixtures.GROUND_RUN)
 
   @Test
   fun readsTheHeaderVerbatim() = runTest {
@@ -54,27 +55,44 @@ class GarminParserTest {
     val parsed = groundRun()
     // 112 columns: 4 time columns, 34 entirely empty, latitude + longitude collapsed into one.
     assertThat(parsed.series).hasSize(73)
-    val byKind = parsed.series.groupingBy { it.kind }.eachCount()
-    assertThat(byKind[DataLogSeriesKind.DATA_LOG_SERIES_KIND_NUMERIC]).isEqualTo(55)
-    assertThat(byKind[DataLogSeriesKind.DATA_LOG_SERIES_KIND_DISCRETE]).isEqualTo(7)
+    val byKind = parsed.series.groupingBy { it.kind }
+      .eachCount()
+    assertThat(byKind[DataLogSeriesKind.DATA_LOG_SERIES_KIND_NUMERIC]).isEqualTo(
+      55
+    )
+    assertThat(byKind[DataLogSeriesKind.DATA_LOG_SERIES_KIND_DISCRETE]).isEqualTo(
+      7
+    )
     assertThat(byKind[DataLogSeriesKind.DATA_LOG_SERIES_KIND_TEXT]).isEqualTo(10)
-    assertThat(byKind[DataLogSeriesKind.DATA_LOG_SERIES_KIND_POSITION]).isEqualTo(1)
+    assertThat(byKind[DataLogSeriesKind.DATA_LOG_SERIES_KIND_POSITION]).isEqualTo(
+      1
+    )
     assertThat(parsed.series.map { it.name }).doesNotContain("Height Above Ground")
-    assertThat(parsed.series.map { it.name }).containsNoneOf("Date", "Time", "UTC Time", "UTC Offset")
+    assertThat(parsed.series.map { it.name }).containsNoneOf(
+      "Date",
+      "Time",
+      "UTC Time",
+      "UTC Offset"
+    )
   }
 
   @Test
   fun positionSitsWhereLatitudeWasAndKeepsEveryFix() = runTest {
     val parsed = groundRun()
-    val position = parsed.series.single { it.kind == DataLogSeriesKind.DATA_LOG_SERIES_KIND_POSITION }
+    val position =
+      parsed.series.single { it.kind == DataLogSeriesKind.DATA_LOG_SERIES_KIND_POSITION }
     assertThat(position.column).isEqualTo(4)
     assertThat(position.canonical_id).isEqualTo(CanonicalSeries.POSITION)
     assertThat(position.sample_count).isEqualTo(256)
     val data = parsed.data.position!!
-    assertThat(data.latitude.first()).isWithin(1e-9).of(39.0809735)
-    assertThat(data.longitude.first()).isWithin(1e-9).of(-114.1003992)
-    assertThat(data.latitude.last()).isWithin(1e-9).of(39.0810252)
-    assertThat(data.longitude.last()).isWithin(1e-9).of(-114.1003005)
+    assertThat(data.latitude.first()).isWithin(1e-9)
+      .of(39.0809735)
+    assertThat(data.longitude.first()).isWithin(1e-9)
+      .of(-114.1003992)
+    assertThat(data.latitude.last()).isWithin(1e-9)
+      .of(39.0810252)
+    assertThat(data.longitude.last()).isWithin(1e-9)
+      .of(-114.1003005)
     assertThat(parsed.data.numeric).doesNotContainKey(4)
     assertThat(parsed.data.numeric).doesNotContainKey(5)
   }
@@ -100,7 +118,8 @@ class GarminParserTest {
   @Test
   fun cellsParseInPlaceWithNaNForEmptyAndForwardFillForDrawing() = runTest {
     val parsed = groundRun()
-    val ias = parsed.data.numeric.getValue(parsed.series.single { it.short_name == "IAS" }.column)
+    val ias =
+      parsed.data.numeric.getValue(parsed.series.single { it.short_name == "IAS" }.column)
     assertThat(ias.raw[0]).isEqualTo(15.3f)
     assertThat(ias.raw[10]).isEqualTo(16.2f)
     val rpm = parsed.data.numeric.getValue(81)
@@ -110,7 +129,8 @@ class GarminParserTest {
     assertThat(rpm.filled.last()).isEqualTo(1960f)
     // The first values are empty, so forward fill has nothing to carry yet.
     assertThat(rpm.filled[0].isNaN()).isTrue()
-    val volts = parsed.data.numeric.getValue(parsed.series.single { it.short_name == "Volts1" }.column)
+    val volts =
+      parsed.data.numeric.getValue(parsed.series.single { it.short_name == "Volts1" }.column)
     assertThat(volts.raw.last()).isEqualTo(13.5f)
   }
 
@@ -133,21 +153,37 @@ class GarminParserTest {
 
   @Test
   fun everySampleParsesAndIsAGroundRun() = runTest {
-    Fixtures.sampleDir().listFiles { f -> f.extension == "csv" }!!.forEach { file ->
-      val parsed = parser.parse(file.readBytes(), file.name)
-      assertThat(parsed.sampleCount).isGreaterThan(30)
-      assertThat(parsed.series.size).isGreaterThan(60)
-      assertThat(parsed.source.identity).isEqualTo("N1234X")
-    }
+    Fixtures.sampleDir()
+      .listFiles { f -> f.extension == "csv" }!!
+      .forEach { file ->
+        val parsed = parser.parse(file.readBytes(), file.name)
+        assertThat(parsed.sampleCount).isGreaterThan(30)
+        assertThat(parsed.series.size).isGreaterThan(60)
+        assertThat(parsed.source.identity).isEqualTo("N1234X")
+      }
   }
 
   @Test
   fun aClockStepKeepsRowOrderAndUsesTheMedianPeriod() = runTest {
-    val rows = Fixtures.syntheticRows(6) { listOf("$it") }.toMutableList()
+    val rows = Fixtures.syntheticRows(6) { listOf("$it") }
+      .toMutableList()
     // Row 3 jumps back two seconds, as a GPS time correction does.
     rows[3] = listOf("2026-09-02", "10:00:01", "-07:00", "3")
-    val parsed = parser.parse(Fixtures.synthetic(listOf(Triple("RPM", "", "E1 RPM")), rows), "x.csv")
-    assertThat(parsed.data.timeSeconds.toList()).containsExactly(0, 1, 2, 3, 4, 5).inOrder()
+    val parsed = parser.parse(
+      Fixtures.synthetic(
+        listOf(Triple("RPM", "", "E1 RPM")),
+        rows
+      ), "x.csv"
+    )
+    assertThat(parsed.data.timeSeconds.toList()).containsExactly(
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    )
+      .inOrder()
     assertThat(parsed.durationSeconds).isEqualTo(5)
   }
 

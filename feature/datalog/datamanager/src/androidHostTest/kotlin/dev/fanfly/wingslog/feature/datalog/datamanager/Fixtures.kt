@@ -12,7 +12,8 @@ object Fixtures {
 
   private fun repoRoot(): File {
     var dir = File(System.getProperty("user.dir"))
-    while (!File(dir, "settings.gradle.kts").exists()) dir = requireNotNull(dir.parentFile)
+    while (!File(dir, "settings.gradle.kts").exists()) dir =
+      requireNotNull(dir.parentFile)
     return dir
   }
 
@@ -22,21 +23,33 @@ object Fixtures {
     rows: List<List<String>>,
     product: String = "GDU 460",
   ): ByteArray {
-    val header = "#airframe_info,log_version=\"1.00\",product=\"$product\",aircraft_ident=\"N1234X\"," +
-      "system_id=\"6000ABCD01234\",unit=\"PFD1\""
-    val longs = listOf("Date (yyyy-mm-dd)", "Time (hh:mm:ss)", "UTC Offset (hh:mm)") +
-      columns.map { (n, u, _) -> if (u.isEmpty()) n else "$n ($u)" }
-    val shorts = listOf("Lcl Date", "Lcl Time", "UTCOfst") + columns.map { it.third }
+    val header =
+      "#airframe_info,log_version=\"1.00\",product=\"$product\",aircraft_ident=\"N1234X\"," +
+        "system_id=\"6000ABCD01234\",unit=\"PFD1\""
+    val longs =
+      listOf("Date (yyyy-mm-dd)", "Time (hh:mm:ss)", "UTC Offset (hh:mm)") +
+        columns.map { (n, u, _) -> if (u.isEmpty()) n else "$n ($u)" }
+    val shorts =
+      listOf("Lcl Date", "Lcl Time", "UTCOfst") + columns.map { it.third }
     val body = rows.joinToString("\n") { it.joinToString(",") }
-    return (header + "\n" + longs.joinToString(",") + "\n" + shorts.joinToString(",") + "\n" + body + "\n")
+    return (header + "\n" + longs.joinToString(",") + "\n" + shorts.joinToString(
+      ","
+    ) + "\n" + body + "\n")
       .encodeToByteArray()
   }
 
-  fun syntheticRows(count: Int, cells: (Int) -> List<String>): List<List<String>> =
+  fun syntheticRows(
+    count: Int,
+    cells: (Int) -> List<String>
+  ): List<List<String>> =
     (0 until count).map { i ->
       val h = 10 + i / 3600
       val m = (i / 60) % 60
       val s = i % 60
-      listOf("2026-09-02", "%02d:%02d:%02d".format(h, m, s), "-07:00") + cells(i)
+      listOf(
+        "2026-09-02",
+        "%02d:%02d:%02d".format(h, m, s),
+        "-07:00"
+      ) + cells(i)
     }
 }
