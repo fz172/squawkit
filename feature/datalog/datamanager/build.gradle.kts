@@ -27,7 +27,13 @@ kotlin {
     commonMain.dependencies {
       implementation(project(":core:model"))
       implementation(project(":core:storage"))
+      implementation(project(":core:datetime"))
+      implementation(project(":core:auth"))
       implementation(project(":feature:datalog:model"))
+      implementation(project(":feature:attachment:model"))
+      implementation(project(":feature:attachment:datamanager"))
+      implementation(libs.gitlive.firebase.auth)
+      implementation(libs.kotlinx.datetime)
       implementation(libs.koin.core)
       implementation(libs.kotlinx.coroutines.core)
       implementation(libs.kermit)
