@@ -30,8 +30,10 @@ class DataLogViewerViewModelTest {
 
   private val thingId = ThingId("thing-1")
   private val id = DataLogId("dl-1")
-  private val record = DataLog(id = id, file_name = "x.csv", duration_seconds = 3600)
-  private val data = DataLogSeriesData(IntArray(3), emptyMap(), emptyMap(), null)
+  private val record =
+    DataLog(id = id, file_name = "x.csv", duration_seconds = 3600)
+  private val data =
+    DataLogSeriesData(IntArray(3), emptyMap(), emptyMap(), null)
   private lateinit var manager: DataLogManager
 
   @Before
@@ -39,7 +41,12 @@ class DataLogViewerViewModelTest {
     Dispatchers.setMain(UnconfinedTestDispatcher())
     manager = mockk()
     every { manager.observeOne(thingId, id) } returns flowOf(record)
-    every { manager.ensureLocal(thingId, id) } returns flowOf(DownloadState.Done)
+    every {
+      manager.ensureLocal(
+        thingId,
+        id
+      )
+    } returns flowOf(DownloadState.Done)
     coEvery { manager.load(thingId, id) } returns Result.success(data)
     coEvery { manager.delete(thingId, id) } returns Result.success(Unit)
   }
@@ -60,11 +67,16 @@ class DataLogViewerViewModelTest {
 
   @Test
   fun aRemoteFileShowsDownloadProgressThenLoads() = runTest {
-    val download = MutableStateFlow<DownloadState>(DownloadState.Downloading(0f))
+    val download =
+      MutableStateFlow<DownloadState>(DownloadState.Downloading(0f))
     every { manager.ensureLocal(thingId, id) } returns download
     val vm = viewModel()
 
-    assertThat(vm.uiState.value).isEqualTo(DataLogViewerUiState.Loading(DownloadState.Downloading(0f)))
+    assertThat(vm.uiState.value).isEqualTo(
+      DataLogViewerUiState.Loading(
+        DownloadState.Downloading(0f)
+      )
+    )
     download.value = DownloadState.Done
     assertThat(vm.uiState.value).isInstanceOf(DataLogViewerUiState.Ready::class.java)
   }
@@ -72,16 +84,40 @@ class DataLogViewerViewModelTest {
   @Test
   fun eachFailureHasItsOwnReason() = runTest {
     every { manager.observeOne(thingId, id) } returns flowOf(null)
-    assertThat(viewModel().uiState.value).isEqualTo(DataLogViewerUiState.Failed(LoadFailure.NOT_FOUND))
+    assertThat(viewModel().uiState.value).isEqualTo(
+      DataLogViewerUiState.Failed(
+        LoadFailure.NOT_FOUND
+      )
+    )
 
     every { manager.observeOne(thingId, id) } returns flowOf(record)
-    every { manager.ensureLocal(thingId, id) } returns flowOf(DownloadState.Failed(Exception("gone")))
-    assertThat(viewModel().uiState.value).isEqualTo(DataLogViewerUiState.Failed(LoadFailure.DOWNLOAD_FAILED))
+    every {
+      manager.ensureLocal(
+        thingId,
+        id
+      )
+    } returns flowOf(DownloadState.Failed(Exception("gone")))
+    assertThat(viewModel().uiState.value).isEqualTo(
+      DataLogViewerUiState.Failed(
+        LoadFailure.DOWNLOAD_FAILED
+      )
+    )
 
-    every { manager.ensureLocal(thingId, id) } returns flowOf(DownloadState.Done)
-    coEvery { manager.load(thingId, id) } returns Result.failure(IllegalStateException("corrupt"))
+    every {
+      manager.ensureLocal(
+        thingId,
+        id
+      )
+    } returns flowOf(DownloadState.Done)
+    coEvery { manager.load(thingId, id) } returns Result.failure(
+      IllegalStateException("corrupt")
+    )
     val vm = viewModel()
-    assertThat(vm.uiState.value).isEqualTo(DataLogViewerUiState.Failed(LoadFailure.PARSE_FAILED))
+    assertThat(vm.uiState.value).isEqualTo(
+      DataLogViewerUiState.Failed(
+        LoadFailure.PARSE_FAILED
+      )
+    )
 
     coEvery { manager.load(thingId, id) } returns Result.success(data)
     vm.retry()
@@ -104,9 +140,14 @@ class DataLogViewerViewModelTest {
     vm.confirmDelete()
     assertThat(events).containsExactly(DataLogViewerEvent.Deleted)
 
-    coEvery { manager.delete(thingId, id) } returns Result.failure(IllegalStateException("offline"))
+    coEvery { manager.delete(thingId, id) } returns Result.failure(
+      IllegalStateException("offline")
+    )
     vm.confirmDelete()
-    assertThat(events).containsExactly(DataLogViewerEvent.Deleted, DataLogViewerEvent.DeleteFailed)
+    assertThat(events).containsExactly(
+      DataLogViewerEvent.Deleted,
+      DataLogViewerEvent.DeleteFailed
+    )
   }
 
   @Test
@@ -125,7 +166,8 @@ class DataLogViewerViewModelTest {
     assertThat(ready().view).isEqualTo(ViewWindow(1215, 1665))
     // The cursor lands inside the visible window.
     vm.onGesture(GestureIntent.Cursor(0.5))
-    assertThat(ready().cursorT).isWithin(0.01).of(1440.0)
+    assertThat(ready().cursorT).isWithin(0.01)
+      .of(1440.0)
     vm.onGesture(GestureIntent.Cursor(null))
     assertThat(ready().cursorT).isNull()
     // Reset returns to the whole log, and pan at full zoom-out changes nothing.
@@ -140,6 +182,10 @@ class DataLogViewerViewModelTest {
     every { manager.observeOne(thingId, id) } returns flowOf(null)
     val vm = viewModel()
     vm.onGesture(GestureIntent.Zoom(0.5, 2.0))
-    assertThat(vm.uiState.value).isEqualTo(DataLogViewerUiState.Failed(LoadFailure.NOT_FOUND))
+    assertThat(vm.uiState.value).isEqualTo(
+      DataLogViewerUiState.Failed(
+        LoadFailure.NOT_FOUND
+      )
+    )
   }
 }

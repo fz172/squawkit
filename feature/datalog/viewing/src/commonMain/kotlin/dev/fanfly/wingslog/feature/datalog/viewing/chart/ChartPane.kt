@@ -20,11 +20,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
@@ -68,7 +68,8 @@ private const val BRUSH_ALPHA = 0.18f
 
 /** The axis label style: JetBrains Mono at 10 sp (design §11.2). */
 @Composable
-internal fun axisLabelStyle(): TextStyle = WingslogTypography.dataSmall.copy(fontSize = AxisLabelSize)
+internal fun axisLabelStyle(): TextStyle =
+  WingslogTypography.dataSmall.copy(fontSize = AxisLabelSize)
 
 /**
  * One Canvas per pane (design §11.2). Per frame each series is decimated to the pixel column over
@@ -89,9 +90,12 @@ fun ChartPane(
   modifier: Modifier = Modifier,
 ) {
   val dark = isSystemInDarkTheme()
-  val height = if (LocalLayoutTier.current.isCompact) PaneHeightCompact else PaneHeightWide
-  val borderColor = if (isTarget) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.outlineVariant
-  val gridColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = GRID_ALPHA)
+  val height =
+    if (LocalLayoutTier.current.isCompact) PaneHeightCompact else PaneHeightWide
+  val borderColor =
+    if (isTarget) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.outlineVariant
+  val gridColor =
+    MaterialTheme.colorScheme.outlineVariant.copy(alpha = GRID_ALPHA)
   val cursorColor = MaterialTheme.colorScheme.tertiary
   val surface = MaterialTheme.colorScheme.surface
   val measurer = rememberTextMeasurer()
@@ -101,16 +105,31 @@ fun ChartPane(
   val window = Navigation.effective(view, durationSeconds)
 
   // Decimation runs synchronously here: O(rows) per series, well under a millisecond (R28).
-  val columns: Map<SeriesKey, DecimatedSeries> = remember(view, widthPx, series) {
-    if (widthPx <= 0) emptyMap()
-    else series.associate { it.key to Decimation.decimate(it.values, timeSeconds, view, widthPx) }
-  }
-  val groups = remember(series) { UnitGroups.group(series.map { it.key to it.unit }) }
+  val columns: Map<SeriesKey, DecimatedSeries> =
+    remember(view, widthPx, series) {
+      if (widthPx <= 0) emptyMap()
+      else series.associate {
+        it.key to Decimation.decimate(
+          it.values,
+          timeSeconds,
+          view,
+          widthPx
+        )
+      }
+    }
+  val groups =
+    remember(series) { UnitGroups.group(series.map { it.key to it.unit }) }
   val ranges: Map<String, YRange> = remember(columns, groups) {
     groups.associate { g -> g.unit to UnitGroups.fit(g.series.mapNotNull { columns[it] }) }
   }
   val colors: Map<SeriesKey, Color> = remember(series, dark) {
-    series.associate { it.key to SeriesPalette.colorFor(it.key, it.canonicalId, dark) }
+    series.associate {
+      it.key to SeriesPalette.colorFor(
+        it.key,
+        it.canonicalId,
+        dark
+      )
+    }
   }
 
   Box(
@@ -118,7 +137,11 @@ fun ChartPane(
       .fillMaxWidth()
       .height(height)
       .clip(RoundedCornerShape(Spacing.cardCornerRadius))
-      .border(Spacing.hairline, borderColor, RoundedCornerShape(Spacing.cardCornerRadius)),
+      .border(
+        Spacing.hairline,
+        borderColor,
+        RoundedCornerShape(Spacing.cardCornerRadius)
+      ),
   ) {
     Canvas(
       modifier = Modifier
@@ -131,23 +154,41 @@ fun ChartPane(
       // Grid at quartiles of the height; the left group's values label them.
       for (i in 0..4) {
         val y = size.height * i / 4f
-        drawLine(gridColor, Offset(0f, y), Offset(size.width, y), strokeWidth = cursorStrokePx)
+        drawLine(
+          gridColor,
+          Offset(0f, y),
+          Offset(size.width, y),
+          strokeWidth = cursorStrokePx
+        )
       }
       groups.forEach { group ->
         val range = ranges[group.unit] ?: return@forEach
         group.series.forEach { key ->
           val decimated = columns[key] ?: return@forEach
-          drawSeries(decimated, range, colors[key] ?: cursorColor, SeriesStroke.toPx())
+          drawSeries(
+            decimated,
+            range,
+            colors[key] ?: cursorColor,
+            SeriesStroke.toPx()
+          )
         }
         if (group.axis != Axis.NONE) {
           val color = colors[group.series.first()] ?: cursorColor
-          UnitGroups.gridValues(range).forEachIndexed { i, value ->
-            val y = size.height * (1f - i / 4f)
-            val label = measurer.measure(formatAxisValue(value), labelStyle.copy(color = color))
-            val x = if (group.axis == Axis.LEFT) Spacing.extraSmall.toPx() else size.width - label.size.width - Spacing.extraSmall.toPx()
-            val top = (y - label.size.height / 2f).coerceIn(0f, size.height - label.size.height)
-            drawText(label, topLeft = Offset(x, top))
-          }
+          UnitGroups.gridValues(range)
+            .forEachIndexed { i, value ->
+              val y = size.height * (1f - i / 4f)
+              val label = measurer.measure(
+                formatAxisValue(value),
+                labelStyle.copy(color = color)
+              )
+              val x =
+                if (group.axis == Axis.LEFT) Spacing.extraSmall.toPx() else size.width - label.size.width - Spacing.extraSmall.toPx()
+              val top = (y - label.size.height / 2f).coerceIn(
+                0f,
+                size.height - label.size.height
+              )
+              drawText(label, topLeft = Offset(x, top))
+            }
         }
       }
       brush?.let { range ->
@@ -159,7 +200,12 @@ fun ChartPane(
       }
       if (cursorT != null && widthPx > 0) {
         val x = TimeTicks.xOf(cursorT, window, widthPx)
-        if (x in 0f..size.width) drawLine(cursorColor, Offset(x, 0f), Offset(x, size.height), strokeWidth = cursorStrokePx)
+        if (x in 0f..size.width) drawLine(
+          cursorColor,
+          Offset(x, 0f),
+          Offset(x, size.height),
+          strokeWidth = cursorStrokePx
+        )
       }
     }
     if (series.isEmpty()) {
@@ -174,18 +220,27 @@ fun ChartPane(
 }
 
 /** Two points per pixel column: the column's min then its max, so spikes survive decimation. */
-private fun DrawScope.drawSeries(decimated: DecimatedSeries, range: YRange, color: Color, strokePx: Float) {
+private fun DrawScope.drawSeries(
+  decimated: DecimatedSeries,
+  range: YRange,
+  color: Color,
+  strokePx: Float
+) {
   val path = Path()
   var open = false
   val columnWidth = size.width / decimated.width
   for (i in 0 until decimated.width) {
     val lo = decimated.minY[i]
     val hi = decimated.maxY[i]
-    if (lo.isNaN()) { open = false; continue }
+    if (lo.isNaN()) {
+      open = false; continue
+    }
     val x = (i + 0.5f) * columnWidth
     val yLo = size.height * (1f - range.fraction(lo))
     val yHi = size.height * (1f - range.fraction(hi))
-    if (!open) { path.moveTo(x, yLo); open = true } else path.lineTo(x, yLo)
+    if (!open) {
+      path.moveTo(x, yLo); open = true
+    } else path.lineTo(x, yLo)
     if (yHi != yLo) path.lineTo(x, yHi)
   }
   drawPath(path, color, style = Stroke(width = strokePx))
@@ -194,6 +249,7 @@ private fun DrawScope.drawSeries(decimated: DecimatedSeries, range: YRange, colo
 /** Axis labels: integers as written, fractions to one decimal, thousands without separators. */
 internal fun formatAxisValue(value: Float): String {
   val rounded = kotlin.math.round(value)
-  return if (kotlin.math.abs(value - rounded) < 0.05f) rounded.toInt().toString()
+  return if (kotlin.math.abs(value - rounded) < 0.05f) rounded.toInt()
+    .toString()
   else ((kotlin.math.round(value * 10f)) / 10f).toString()
 }

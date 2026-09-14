@@ -232,7 +232,11 @@ fun DataLogViewerScreen(
                 horizontalArrangement = Arrangement.spacedBy(Spacing.small),
               ) {
                 Text(
-                  text = "${TimeTicks.label(s.view.startSeconds)} – ${TimeTicks.label(s.view.endSeconds)}",
+                  text = "${TimeTicks.label(s.view.startSeconds)} – ${
+                    TimeTicks.label(
+                      s.view.endSeconds
+                    )
+                  }",
                   style = WingslogTypography.dataSmall,
                   color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
