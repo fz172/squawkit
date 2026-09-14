@@ -15,6 +15,7 @@ import dev.fanfly.wingslog.feature.datalog.model.SeriesKey
 import dev.fanfly.wingslog.feature.datalog.model.chart.LayoutEdits
 import dev.fanfly.wingslog.feature.datalog.model.chart.Navigation
 import dev.fanfly.wingslog.feature.datalog.model.chart.defaultLayout
+import dev.fanfly.wingslog.feature.datalog.viewing.chart.SidebarTab
 import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.id.ThingId
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -42,6 +43,8 @@ sealed interface DataLogViewerUiState {
     /** Elapsed seconds under the cursor, or null. */
     val cursorT: Double?,
     val deleting: Boolean,
+    val sidebarTab: SidebarTab = SidebarTab.SERIES,
+    val seriesQuery: String = "",
   ) : DataLogViewerUiState
 
   data class Failed(val reason: LoadFailure) : DataLogViewerUiState
@@ -145,6 +148,10 @@ class DataLogViewerViewModel(
 
   /** The *New pane* target: a dropped series lands in a fresh pane; a tap opens an empty one. */
   fun spawnPane(key: SeriesKey? = null) = updateReady { it.copy(layout = LayoutEdits.spawn(it.layout, key)) }
+
+  fun setSidebarTab(tab: SidebarTab) = updateReady { it.copy(sidebarTab = tab) }
+
+  fun setSeriesQuery(query: String) = updateReady { it.copy(seriesQuery = query) }
 
   fun removePane(pane: PaneId) = updateReady { it.copy(layout = LayoutEdits.removePane(it.layout, pane)) }
 

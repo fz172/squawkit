@@ -50,4 +50,26 @@
   <string name="data_log_gate_bullet_panes">Unlimited panes and series per pane, with a shared time cursor and zoom</string>
   <string name="data_log_gate_bullet_map">Position on a map, following the cursor</string>
   <string name="data_log_gate_bullet_attach">Attach to any record</string>
+  <!-- Sidebar (PRD R25, R26, R27) -->
+  <string name="data_log_sidebar_series">Series</string>
+  <string name="data_log_sidebar_info">Info</string>
+  <string name="data_log_sidebar_hint">Tap adds to the highlighted pane</string>
+  <string name="data_log_sidebar_open">Series and info</string>
+  <string name="data_log_fact_date">Date</string>
+  <string name="data_log_fact_start">Start</string>
+  <string name="data_log_fact_offset">UTC offset</string>
+  <string name="data_log_fact_duration">Duration</string>
+  <string name="data_log_fact_samples">Samples</string>
+  <string name="data_log_fact_rate">Sample rate</string>
+  <string name="data_log_fact_rate_value"><xliff:g example="1.0">%1$s</xliff:g> Hz</string>
+  <string name="data_log_fact_series">Series</string>
+  <string name="data_log_fact_series_value"><xliff:g example="62">%1$d</xliff:g> plottable · <xliff:g example="10">%2$d</xliff:g> text</string>
+  <string name="data_log_fact_file">File</string>
+  <string name="data_log_fact_product">Product</string>
+  <string name="data_log_fact_unit">Unit</string>
+  <string name="data_log_fact_software">Software</string>
+  <string name="data_log_fact_system_id">System ID</string>
+  <string name="data_log_fact_identity">Recorded tail</string>
+  <string name="data_log_fact_airframe_hours">Airframe hours</string>
+  <string name="data_log_fact_engine_hours">Engine hours</string>
 </resources>

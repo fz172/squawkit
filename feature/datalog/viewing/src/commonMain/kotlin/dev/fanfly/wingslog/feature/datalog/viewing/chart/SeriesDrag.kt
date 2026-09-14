@@ -15,8 +15,8 @@ sealed interface DropTarget {
   data object NewPane : DropTarget
 }
 
-/** A chip in flight: what it carries and where the pointer is, in window coordinates. */
-data class SeriesDrag(val key: SeriesKey, val label: String, val from: PaneId, val position: Offset)
+/** A chip in flight: what it carries and where the pointer is, in window coordinates. [from] is null for a sidebar row. */
+data class SeriesDrag(val key: SeriesKey, val label: String, val from: PaneId?, val position: Offset)
 
 /**
  * One drag at a time across the viewer. Chips report their gesture here; panes and the *New pane*
@@ -37,7 +37,7 @@ class SeriesDragState {
     targets.remove(target)
   }
 
-  fun start(key: SeriesKey, label: String, from: PaneId, position: Offset) {
+  fun start(key: SeriesKey, label: String, from: PaneId?, position: Offset) {
     drag = SeriesDrag(key, label, from, position)
   }
 

@@ -1036,3 +1036,24 @@ feature/datalog/sharedassets	data_log_new_pane	New pane
 feature/datalog/sharedassets	data_log_new_pane_hint	Tap, or drop a series here
 feature/datalog/sharedassets	data_log_remove_pane	Remove pane
 feature/datalog/sharedassets	data_log_remove_series	Remove %1$s
+feature/datalog/sharedassets	data_log_fact_airframe_hours	Airframe hours
+feature/datalog/sharedassets	data_log_fact_date	Date
+feature/datalog/sharedassets	data_log_fact_duration	Duration
+feature/datalog/sharedassets	data_log_fact_engine_hours	Engine hours
+feature/datalog/sharedassets	data_log_fact_file	File
+feature/datalog/sharedassets	data_log_fact_identity	Recorded tail
+feature/datalog/sharedassets	data_log_fact_offset	UTC offset
+feature/datalog/sharedassets	data_log_fact_product	Product
+feature/datalog/sharedassets	data_log_fact_rate	Sample rate
+feature/datalog/sharedassets	data_log_fact_rate_value	%1$s Hz
+feature/datalog/sharedassets	data_log_fact_samples	Samples
+feature/datalog/sharedassets	data_log_fact_series	Series
+feature/datalog/sharedassets	data_log_fact_series_value	%1$d plottable · %2$d text
+feature/datalog/sharedassets	data_log_fact_software	Software
+feature/datalog/sharedassets	data_log_fact_start	Start
+feature/datalog/sharedassets	data_log_fact_system_id	System ID
+feature/datalog/sharedassets	data_log_fact_unit	Unit
+feature/datalog/sharedassets	data_log_sidebar_hint	Tap adds to the highlighted pane
+feature/datalog/sharedassets	data_log_sidebar_info	Info
+feature/datalog/sharedassets	data_log_sidebar_open	Series and info
+feature/datalog/sharedassets	data_log_sidebar_series	Series
