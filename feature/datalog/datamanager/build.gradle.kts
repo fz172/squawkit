@@ -30,6 +30,8 @@ kotlin {
       implementation(project(":core:file"))
       implementation(project(":core:datetime"))
       implementation(project(":core:auth"))
+      implementation(project(":core:template"))
+      implementation(project(":feature:fleet:datamanager"))
       implementation(project(":feature:datalog:model"))
       implementation(project(":feature:attachment:model"))
       implementation(project(":feature:attachment:datamanager"))
