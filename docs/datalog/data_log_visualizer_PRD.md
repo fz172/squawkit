@@ -114,10 +114,13 @@ which case it is the first follow-up; **P2** is designed for, not built.
   after Logs and before Settings, titled by the lexicon ("Flight Data" on the airplane preset). The
   section is absent — not disabled — on templates that do not declare it, following the
   capabilities-remove-not-disable rule.
-- **R2 (P0).** The section shows an upload control (a drop zone plus an *Upload Log* button on wide
-  layouts, the shell's context FAB on phones), the list of the Thing's data logs newest first, and an
-  empty state written in the lexicon. On phones the section joins the bottom bar as its fifth item;
-  Settings already lives in the top bar at that width, so the bar stays within five.
+- **R2 (P0).** The section shows an upload control (an *Upload Log* button on wide layouts, the
+  shell's context FAB on phones), the list of the Thing's data logs newest first, and an empty state
+  written in the lexicon. On phones the section joins the bottom bar as its fifth item; Settings
+  already lives in the top bar at that width, so the bar stays within five.
+- **R2c (P2).** Drag-and-drop upload is a nice-to-have, not part of V1. If built, it is one mechanism
+  that serves both ordinary attachments (on the add-attachment sheet and record forms) and data-log
+  upload, never a data-log-only feature. The mock's dashed drop zone is this affordance.
 - **R2a (P1).** On phones the section header carries a search action that filters the list by date,
   identifier, or attached-record title, matching the other sections' search bars.
 - **R2b (P0).** **Variable-width bottom bar.** Five labelled items do not fit the floating pill on a
@@ -325,8 +328,9 @@ Three mechanisms, kept separate, per [AGENTS.md § Gating](../../AGENTS.md#gatin
   display-ads PRD's card: a *Sponsored* label, a *Subscribe to remove ads* link, and no adaptive
   sizing. On wide layouts it sits in the sidebar footer; on phones it sits below the *New pane*
   target, under the panes. It is never inside a pane, never over a chart, and counts toward the
-  session cap. It is hidden whenever `shouldShowAds()` is false, including on hosts without ad
-  support. The section's list shows no ads in V1.
+  session cap. It is hidden whenever `shouldShowAds()` is false. **Required on Android and iOS
+  only**; web carries no ad product and none is required for this feature. The section's list shows
+  no ads in V1.
 - **R44b (P0).** The unit reports through the existing ad events with a new surface value,
   `data_logs`, added to `AdSurface`.
 
@@ -375,8 +379,9 @@ theme (R24a).
                      └───────────────────────────────────────────────────────────────┘
 ```
 
-The description line, the drop-zone copy, and "Recent flights" are lexicon strings. The `NEW`
-pill is a release-launch affordance that goes away after the first open. `E16 → KWVI` depends on
+The description line, the drop-zone copy, and "Recent flights" are lexicon strings. The dashed drop
+zone is the P2 drag-and-drop affordance (R2c); V1 ships the button alone. The `NEW` pill is a
+release-launch affordance that goes away after the first open. `E16 → KWVI` depends on
 the V2 server lookup (R36); V1 renders `E16` alone.
 
 ### 6.2 Attachment type (mock 1b)
@@ -599,6 +604,8 @@ Settled by product direction on 2026-09-13.
 9. **The bottom bar goes variable-width** on every preset to make room for the fifth item (R2b).
 10. **No data migration** for the new section: capabilities resolve by template id from the build,
     exactly as the lexicon already does (R42).
+11. **Drag-and-drop is P2** and, when built, shared between attachments and data logs (R2c).
+12. **Ads are required on mobile only** (R44a).
 
 ### Still open
 

@@ -18,15 +18,15 @@ Six pieces, in dependency order. Each is one or two PRs (§15).
 2. **Import.** A `DataLogParser` seam with the Garmin parser behind it (G3X now, G1000 later), a
    canonical-series registry, gzip through a three-line `expect`/`actual`, and a `DataLogManager`
    that turns a picked file into a synced record plus a blob.
-3. **Section.** `ShellSection.DATA_LOGS`, the list, the upload FAB and drop zone, the guest gate, and
+3. **Section.** `ShellSection.DATA_LOGS`, the list, the upload button and FAB, the guest gate, and
    the variable-width bottom pill (PRD R2b).
 4. **Visualizer.** A full-screen `Screen.DataLogViewer` route: Compose `Canvas` panes with min/max
    decimation, the three gestures with pointer equivalents (PRD R23), unit-grouped axes, chips
    legend, series sidebar, stable per-series colours per theme, map pane through Coil.
 5. **Attachment type.** `ATTACHMENT_TYPE_DATA_LOG` as a blobless reference, handled at every
    link-versus-file branch the codebase has (there are fifteen; §9).
-6. **Cross-cutting.** Collaboration notifications, four analytics events, the free-tier banner,
-   strings and the snapshot, web drop zone, the rollout flip.
+6. **Cross-cutting.** Collaboration notifications, four analytics events, the mobile free-tier
+   banner, strings and the snapshot, the rollout flip. Drag-and-drop is a later, shared piece (§13.3).
 
 No Firestore rules change is needed for size: the storage rules carry no size or content constraints
 at all (`backend/firebase/storage.rules:19-24`). One rules edit adds the new kind to the shared-Thing
@@ -543,8 +543,8 @@ highlights the row like the other sections.
 
 `ShellSectionFab` for `DATA_LOGS` renders *Upload Log* with `rememberFilePicker` (no `accept`
 filter is possible today; the sniffer rejects wrong files fast). On `Guest` it opens the prompt
-sheet instead. Wide layouts also draw the dashed drop zone above the list; it is a real drop target
-only on web (§13.3) and decorative elsewhere, with the same button beside it.
+sheet instead. Wide layouts show the same button in the header; the mock's dashed drop zone is
+not drawn until drag-and-drop exists (§13.3), so the section never shows a target that does nothing.
 
 ### 10.3 Variable-width pill (PRD R2b)
 
@@ -711,21 +711,23 @@ kind for its web-only detector.
 `everyThingScopedEventCarriesTemplateId`. Logged from `DataLogListViewModel` (import, failure) and
 `DataLogViewerViewModel` (open, preset) through the injected `AnalyticsManager`.
 
-### 13.2 Ads (PRD R44a)
+### 13.2 Ads (PRD R44a) — mobile only
 
 `AdSurface.DATA_LOGS("data_logs")`, with the enum's doc comment updated to admit one fixed slot.
 `AdSlot` gains `size: AdUnitSize = LARGE_BANNER`; the viewer calls `AdSlot(DATA_LOGS, 0, size = BANNER)`
-in the sidebar footer on wide layouts and under the *New pane* strip on compact, inside
-`if (showAds)` from `AdsManager.shouldShowsAds()`. Web is a no-op by the existing `AdView.js.kt`.
+in the sidebar footer on tablet layouts and under the *New pane* strip on phones, inside
+`if (showAds)` from `AdsManager.shouldShowsAds()`. Web is out of scope by requirement, and
+`AdView.js.kt` is already a no-op with `isAdsSupported = false`, so no web code is touched.
 
-### 13.3 Web drop zone
+### 13.3 Drag-and-drop (PRD R2c, P2, not in V1)
 
 Nothing in the repo handles external drag-and-drop, and `web_attachments_design.md:30` listed it as
-a non-goal. For this feature the web host adds `WebFileDrop` in `webApp`: `document`-level
-`dragover`/`drop` listeners that `preventDefault`, read `DataTransfer.files`, stash bytes in
-`WebPickedFileRegistry` exactly as the picker does, and emit `List<PickedFile>` on a
-`MutableSharedFlow` exposed through Koin. `DataLogSectionContent` collects it while the section is
-active and on web; the dashed zone highlights on `dragover`. Phase D.
+a non-goal. When it is built it is one shared mechanism, not a data-log feature: a
+`FileDropTarget` in `feature/attachment/viewing` that exposes dropped files as `List<PickedFile>`
+through the same `WebPickedFileRegistry` path the picker uses, consumed by `AttachmentFormSection`
+(record forms and the add-attachment sheet) and by `DataLogSectionContent` alike. On web it is a
+`document`-level `dragover`/`drop` listener in `webApp`; on Android and iOS tablets it is Compose's
+`dragAndDropTarget` for external content where the platform supports it. Sequenced after V1.
 
 ### 13.4 Strings
 
@@ -770,9 +772,9 @@ commit (`StringSnapshotTest` fails on `added` otherwise), with lexicon-bearing o
 | 4 | Viewer route, panes, decimation, gestures, chips, sidebar, colours | mock 1c reproduced; gesture matrix passed |
 | 5 | Attachment type end to end (§9) | mock 1b; `everyTypeBranchHandlesDataLogRef` |
 | 6 | Map pane, presets, layout memory, clock axis, R12, R13 | mock 1d |
-| 7 | Notifications, analytics, ad slot, web drop zone | fan-out tests; events visible in DebugView |
+| 7 | Notifications, analytics, mobile ad slot | fan-out tests; events visible in DebugView |
 | 8 | Flip `isDataLogsSupported` on every host; release notes | V1 |
-| 9+ | G1000 sniff and mapping; Dynon parser with the channel-mapping prompt | per fixture |
+| 9+ | G1000 sniff and mapping; Dynon parser with the channel-mapping prompt; shared drag-and-drop (§13.3) | per fixture |
 
 Each PR runs `lint`, `testDebugUnitTest`, `testAndroidHostTest` locally (CI's Kotlin build is
 manual-dispatch) and the post-task cleanup pass over changed `.kt` files.
