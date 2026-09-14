@@ -962,3 +962,67 @@ manual-dispatch) and the post-task cleanup pass over changed `.kt` files.
   the promise honest rather than silently broken.
 - **Coil on web.** Tiles need the JS ktor engine on the viewing module; if Coil's JS fetcher
   misbehaves, the map pane on web falls back to track-only until fixed, which R29 permits.
+
+## 17. Task breakdown
+
+One row per unit of work small enough to review alone. `PR` matches §15. Size: **S** under half a
+day, **M** one to two days, **L** three days or more. `Needs` lists task ids that must land first.
+Rows map one-to-one onto sub-issues when the project board is created; PRs 1 to 8 are the V1 epic,
+PR 9+ the formats epic.
+
+| Id | PR | Task | Where | Size | Needs | PRD |
+|---|---|---|---|---|---|---|
+| T01 | 1 | `ids.proto` with `ThingId`, `DataLogId`, `UserId`; proto lint test for bare string ids on new messages | `core/model` proto + test | S | — | §4.4 |
+| T02 | 1 | `data_log.proto` (`DataLog`, `DataLogSource`, `DataLogSeries`, three enums); `ATTACHMENT_TYPE_DATA_LOG` and `Attachment.data_log_id` | `core/model` proto | S | T01 | R15, §4.1–4.2 |
+| T03 | 1 | `CollectionKind.DataLog`, coverage test, codec registration, `AttachmentRefs.of(DataLog)` and the `DATA_LOG` exclusion in `blobIdsIn` | `core/storage` | S | T02 | R16, R17 |
+| T04 | 1 | `PER_THING_KINDS` entry; `isSharedAircraftKind` rules entry; `sharing-rules.test.ts` member write | `feature/sync/data`, `backend/firebase` | S | T03 | R37 |
+| T05 | 1 | Backend proto generation for `ids.proto` and `data_log.proto`; `blobRefs.ts` schema, `schemaCanOwnBlobs`, `blobIdsInPayload`, `DATA_LOG` exclusion in `blobIds()`; `blob-cleanup.test.ts` cases | `backend/firebase/functions` | M | T02 | R19, §4.3 |
+| T06 | 1 | `SECTION_DATA_LOGS`; `Lexicon.data_log`, `data_log_description`, `EmptyStates.data_log_hint`; `GenericLexicon` defaults; `LexiconNouns.dataLogNoun` | `core/model` proto, `core/template` | S | — | R42, R45 |
+| T07 | 1 | `airplane.v12.textproto` with the section and lexicon lines; compile; asset test pins five sections | `core/template/templates` | S | T06 | R42 |
+| T08 | 1 | `TemplateRegistry.capabilitiesFor`; `CurrentThingTemplate` uses it; `resolve()` skips the enum check for a known id; registry tests | `core/template` | M | T06 | R42 |
+| T09 | 1 | `AppCapability.isDataLogsSupported`, three actuals set to `isDeveloperBuild`; `core/ui/adaptive` depends on `core/appinfo` | `core/appinfo`, hosts | S | — | R43 |
+| T10 | 1 | `ShellSection.DATA_LOGS`: enum, `label`/`title`, `toShellSection`, `perThingSectionsFor` with the flag, `PerThingSectionsTest`; empty section body and no-op FAB | `core/ui/adaptive`, `feature/thing/dashboard` | M | T07, T08, T09 | R1 |
+| T11 | 1 | `feature/datalog` module skeleton: six submodules, Gradle, `dataLogModule`, `settings.gradle.kts`, `CommonAppModules` (use the scaffolder) | `feature/datalog`, `core/di` | S | — | §3 |
+| T12 | 2 | `DataLogParser` interface, `Confidence`, `HeaderSniffer`; `ParsedDataLog` and `DataLogSeriesData` models | `feature/datalog/model`, `datamanager` | S | T11 | §6.2 |
+| T13 | 2 | Anonymised G3X fixture in `docs/datalog/samples/` | docs | S | — | §6.4 |
+| T14 | 2 | Garmin parser: header, three-line columns, time base, cell typing, position collapse, allocation-free row walk, `yield()` every 500 rows | `feature/datalog/datamanager` | L | T12, T13 | R6, R8, §6.2 |
+| T15 | 2 | `CanonicalSeriesRegistry` and the fixed-index table; derived `airborne`, identity mismatch, `start_location_ident`, end position | `feature/datalog/datamanager` | M | T14 | R11, R13, R36, §6.3 |
+| T16 | 2 | `GzipCodec` expect/actual (Android, iOS with `Crc32` moved to `core/storage`, web) with `isAvailable()`; round-trip tests | `feature/datalog/datamanager`, `core/storage`, `feature/export` | M | T11 | R9, §5.2 |
+| T17 | 2 | `DataLogImporter` pipeline with `ImportProgress`, duplicate and probable-duplicate checks | `feature/datalog/datamanager` | M | T14, T15, T16 | R7, R10 |
+| T18 | 2 | `DataLogManager` and impl: observe, import, `ensureLocal`, `load` with `DataLogCache`, delete, blob state; scope through the resolver; MockK tests | `feature/datalog/datamanager` | M | T03, T17 | R16–R19, §7 |
+| T19 | 2 | `GarminParserTest` on the fixture; sniff table; 20,000-row synthetic timing test | tests | S | T14 | R8 |
+| T20 | 3 | `DataLogListViewModel` and `DataLogSectionContent`: rows, empty state, inline import progress and errors, pending scroll target | `feature/datalog/viewing` | M | T18, T10 | R2, R34, R35 |
+| T21 | 3 | `ShellSectionFab` for `DATA_LOGS` with `rememberFilePicker`; wide-layout header button | `feature/thing/dashboard` | S | T20 | R2 |
+| T22 | 3 | Guest gate: `UploadGate` state, phone prompt sheet, `OPEN_LINK_ACCOUNT` hand-off to Settings, wide `UploadGateCard` (provider picker reuse or single CTA) | `feature/datalog/viewing`, `feature/shell`, `feature/settings` | M | T20 | R40 |
+| T23 | 3 | Variable-width pill: icon-only unselected items, doc block rewrite, 320 dp screenshot | `core/ui/adaptive` | S | — | R2b |
+| T24 | 3 | Strings for the section and picker; `string_snapshot.tsv` rows and `LEXICON_ARGS` entries | `feature/datalog/sharedassets`, `core/template` test resources | S | T20 | R45 |
+| T25 | 3 | Phone search action on the list (filter by date, identifier, attached title) | `feature/datalog/viewing` | S | T20 | R2a |
+| T26 | 4 | `Screen.DataLogViewer` route and registration; `DataLogViewerViewModel` load path through download states; delete with snackbar | `core/nav`, `feature/shell`, `feature/datalog/update` | M | T18 | R20, §10.4, §11.1 |
+| T27 | 4 | Chart model as pure functions: decimation, unit grouping and axis assignment, tick ladder, `zoomAround`/`pan` clamping, brush-to-window; unit tests | `feature/datalog/model` | M | T12 | R22, R23, R23a, R28 |
+| T28 | 4 | `ChartPane` Canvas drawing, `TimeAxis`, cursor line and pill, target-pane border | `feature/datalog/viewing` | L | T27 | R20–R23 |
+| T29 | 4 | Gesture state machine: one-pointer brush with vertical pass-through, two-pointer pan and pinch, scroll handler with modifiers; per-browser ctrl+wheel check | `feature/datalog/viewing` | L | T28 | R23 |
+| T30 | 4 | `PaneHeaderChips` with drag between panes and the *New pane* target; mixed-kind spawn rule | `feature/datalog/viewing` | M | T28 | R21, R24 |
+| T31 | 4 | `SeriesPalette` light and dark, fixed-index table, hash fallback; contrast check; colour stability test | `feature/datalog/viewing` | S | T15 | R24a |
+| T32 | 4 | `SeriesSidebar` (Series and Flight tabs, search, range, target-pane hint) and the compact right-hand drawer; icon-only header on narrow | `feature/datalog/viewing` | M | T28 | R25–R27 |
+| T33 | 5 | `PendingAttachment.LocalDataLogRef`; `AttachmentFormController.addDataLogRef`, `remove`, `resolveForSave`, `deleteSavedFiles`; `makeDataLogRef`; `delete` early return; `everyTypeBranchHandlesDataLogRef` test | `feature/attachment/model`, `datamanager` | M | T02 | R3, R5, §9.1 |
+| T34 | 5 | `AttachmentRow` icon and subtitle, *Removed* state; `AttachmentSection` keyed by `data_log_id`; form-section icon and no-confirm removal | `feature/attachment/viewing` | S | T33 | R4 |
+| T35 | 5 | Picker sheet fourth option behind capability and flag; `DataLogAttachmentPicker` body as a slot; *Upload log file* inside the picker | `feature/attachment/viewing`, `feature/datalog/viewing`, three form screens | M | T33, T18 | R3, §9.2 |
+| T36 | 5 | Three form ViewModels `attachDataLog`; three tap handlers branch to the viewer route; `ThingOverviewViewModel.dataLogs` | `feature/logs`, `feature/tasks`, `feature/squawk`, `feature/thing/dashboard` | M | T35, T26 | R4, §9.3 |
+| T37 | 5 | Export and backend exclusions: `attachmentCell`, `AttachmentExportResolver`, `exportedBytes` | `feature/export` | S | T02 | §9.1 |
+| T38 | 6 | `MapPane`: tile provider binding, Mercator layout, track path, cursor dot, attribution, web ktor engine | `feature/datalog/viewing` | L | T28 | R29 |
+| T39 | 6 | `ChartPresets` and default layout; preset chips in the sidebar | `feature/datalog/model`, `viewing` | S | T31, T32 | R21, R30 |
+| T40 | 6 | `ChartLayoutStore` per-device layout memory; clock-time axis toggle | `feature/datalog/datamanager`, `viewing` | S | T26 | R31, R32 |
+| T41 | 6 | R12 "file it under the other Thing" confirmation | `feature/datalog/datamanager`, `viewing` | S | T17 | R12 |
+| T42 | 7 | Server: `RECORD_TYPE.DATA_LOG`, `recordTypeForKind`, `thingTabForRecordType`, `recordTitleOf`; fan-out tests | `backend/firebase/functions` | S | T05 | R39 |
+| T43 | 7 | Client notifications: `noun()`/`sectionTitle()`, `parseTapTarget`, `NotificationTapTarget.DataLog`, router, shell tap routing, web detector | `feature/notifications`, `feature/shell` | M | T10, T42 | R39 |
+| T44 | 7 | Analytics: four `Name`s, four `Param`s, four events, taxonomy test list, ViewModel logging | `core/analytics`, `feature/datalog` | S | T20, T26 | R46 |
+| T45 | 7 | `AdSurface.DATA_LOGS`, `AdSlot` size parameter, placement in sidebar footer and under *New pane* on Android and iOS | `feature/ads`, `feature/datalog/viewing` | S | T32 | R44a |
+| T46 | 8 | Flip `isDataLogsSupported` on every host; release notes; `NEW` pill | hosts, `feature/datalog/viewing` | S | T20–T45 | R43 |
+| T47 | 9+ | G1000 sniff, units row, short-name mapping; fixture; tests | `feature/datalog/datamanager` | M | T14 | §7 |
+| T48 | 9+ | Dynon SkyView parser; thermocouple channel-mapping prompt and per-unit storage | `feature/datalog/datamanager`, `viewing` | L | T14 | §7 |
+| T49 | 9+ | Shared drag-and-drop `FileDropTarget` for attachments and data logs (web document listener, tablet `dragAndDropTarget`) | `feature/attachment/viewing`, `webApp` | M | T21, T35 | R2c |
+| T50 | 9+ | V2 server destination lookup design note (server write into a client-owned record) | docs | S | T42 | R36 |
+
+Critical path to a usable developer build: T01 → T02 → T03 → T11 → T12 → T14 → T17 → T18 → T20 → T26 →
+T27 → T28 → T29. Everything in PRs 1 and 2 except T14 is parallelisable; T23 and T31 have no
+dependencies and can land any time.
