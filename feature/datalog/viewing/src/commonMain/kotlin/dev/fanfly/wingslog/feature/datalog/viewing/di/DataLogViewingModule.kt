@@ -10,6 +10,10 @@ import org.koin.dsl.module
 
 val dataLogViewingModule: Module = module {
   viewModel { params ->
-    DataLogListViewModel(get<DataLogManager>(), get<AuthManager>(), ThingId(params.get<String>(0)))
+    DataLogListViewModel(
+      get<DataLogManager>(),
+      get<AuthManager>(),
+      ThingId(params.get<String>(0))
+    )
   }
 }

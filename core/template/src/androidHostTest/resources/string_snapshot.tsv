@@ -1022,3 +1022,5 @@ feature/datalog/sharedassets	data_log_series_count	%1$d series
 feature/datalog/sharedassets	data_log_supported_formats	Supported: Garmin G3X · G3X Touch
 feature/datalog/sharedassets	data_log_tail_mismatch	Tail mismatch
 feature/datalog/sharedassets	data_log_upload	Upload Data Log
+feature/datalog/sharedassets	data_log_delete_body	The file and its charts are removed from every device.
+feature/datalog/sharedassets	data_log_delete_title	Delete Data Log?

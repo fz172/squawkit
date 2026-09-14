@@ -13,6 +13,8 @@ import dev.fanfly.wingslog.feature.datalog.model.ImportProgress
 import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.id.ThingId
 import dev.gitlive.firebase.auth.FirebaseUser
+import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -22,6 +24,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -188,5 +191,39 @@ class DataLogListViewModelTest {
     vm.confirmImport(row.key)
     verify { manager.import(thingId, any(), true) }
     assertThat(vm.uiState.value.imports).isEmpty()
+  }
+
+  @Test
+  fun swipeDeleteAsksFirstThenDeletesThroughTheManager() = runTest {
+    logs.value = listOf(log("a", "2026-09-02T21:47:56Z"))
+    coEvery { manager.delete(thingId, DataLogId("a")) } returns Result.success(Unit)
+    val vm = viewModel()
+    val row = vm.uiState.first { !it.isLoading }.rows.single()
+
+    vm.onDeleteClick(row)
+    assertThat(vm.uiState.value.deleting).isEqualTo(row)
+    vm.cancelDelete()
+    assertThat(vm.uiState.value.deleting).isNull()
+    coVerify(exactly = 0) { manager.delete(any(), any()) }
+
+    vm.onDeleteClick(row)
+    vm.confirmDelete()
+    assertThat(vm.uiState.value.deleting).isNull()
+    coVerify { manager.delete(thingId, DataLogId("a")) }
+  }
+
+  @Test
+  fun aFailedDeleteRaisesAnEvent() = runTest {
+    logs.value = listOf(log("a", "2026-09-02T21:47:56Z"))
+    coEvery { manager.delete(thingId, DataLogId("a")) } returns Result.failure(IllegalStateException("offline"))
+    val vm = viewModel()
+    val row = vm.uiState.first { !it.isLoading }.rows.single()
+    val events = mutableListOf<DataLogListEvent>()
+    backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.events.collect { events += it } }
+
+    vm.onDeleteClick(row)
+    vm.confirmDelete()
+
+    assertThat(events).containsExactly(DataLogListEvent.DeleteFailed)
   }
 }

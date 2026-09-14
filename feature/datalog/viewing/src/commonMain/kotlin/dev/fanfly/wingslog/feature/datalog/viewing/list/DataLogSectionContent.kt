@@ -12,23 +12,28 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.ShowChart
 import androidx.compose.material.icons.filled.UploadFile
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.fanfly.wingslog.core.template.LexiconFormatter
@@ -36,6 +41,12 @@ import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.dataLogNoun
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalNavPillClearance
+import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalSnackbarHostState
+import dev.fanfly.wingslog.core.ui.common.compose.AlertDialog
+import dev.fanfly.wingslog.core.ui.common.compose.SwipeAction
+import dev.fanfly.wingslog.core.ui.common.compose.SwipeActionCard
+import dev.fanfly.wingslog.core.ui.common.compose.SwipeActionTone
+import dev.fanfly.wingslog.core.ui.common.compose.rememberSwipeRevealController
 import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.attachment.viewing.rememberFilePicker
@@ -44,6 +55,12 @@ import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.id.ThingId
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.datalog.sharedassets.generated.resources.Res
+import wingslog.core.sharedassets.generated.resources.Res as CoreRes
+import wingslog.core.sharedassets.generated.resources.cancel
+import wingslog.core.sharedassets.generated.resources.delete
+import wingslog.core.sharedassets.generated.resources.delete_failed
+import wingslog.feature.datalog.sharedassets.generated.resources.data_log_delete_body
+import wingslog.feature.datalog.sharedassets.generated.resources.data_log_delete_title
 import wingslog.feature.datalog.sharedassets.generated.resources.data_log_empty_title
 import wingslog.feature.datalog.sharedassets.generated.resources.data_log_recent_uploads
 import wingslog.feature.datalog.sharedassets.generated.resources.data_log_supported_formats
@@ -69,6 +86,16 @@ fun DataLogSectionContent(
   val compact = LocalLayoutTier.current.isCompact
   val pick = rememberFilePicker(onResult = viewModel::upload)
   var searching by remember { mutableStateOf(false) }
+  val revealController = rememberSwipeRevealController()
+  val snackbarHostState = LocalSnackbarHostState.current
+  val deleteFailed = stringResource(CoreRes.string.delete_failed)
+  LaunchedEffect(viewModel) {
+    viewModel.events.collect { event ->
+      when (event) {
+        DataLogListEvent.DeleteFailed -> snackbarHostState?.showSnackbar(deleteFailed)
+      }
+    }
+  }
 
   Column(modifier = modifier.fillMaxSize()) {
     if (!compact) {
@@ -175,7 +202,7 @@ fun DataLogSectionContent(
       }
 
       else -> LazyColumn(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize().nestedScroll(revealController.closeOnScroll),
         contentPadding = PaddingValues(
           start = Spacing.screenPadding,
           end = Spacing.screenPadding,
@@ -216,13 +243,44 @@ fun DataLogSectionContent(
           }
         }
         items(visible, key = { it.id.value_ }) { row ->
-          DataLogCard(
-            row = row,
-            onClick = { onOpen(row.id) },
-            showDetails = !compact
-          )
+          SwipeActionCard(
+            // Whoever may upload may delete; a guest browses only, so the drag is disabled.
+            actions = dataLogQuickActions(
+              onDelete = if (state.uploadGate == UploadGate.SignedIn) {
+                { revealController.close(); viewModel.onDeleteClick(row) }
+              } else null,
+            ),
+            controller = revealController,
+            key = row.id.value_,
+          ) {
+            DataLogCard(row = row, onClick = { onOpen(row.id) }, showDetails = !compact)
+          }
         }
       }
     }
   }
+
+  state.deleting?.let {
+    AlertDialog(
+      onDismissRequest = viewModel::cancelDelete,
+      title = { Text(stringResource(Res.string.data_log_delete_title, LexiconFormatter.titleCase(lexicon.dataLogNoun))) },
+      text = { Text(stringResource(Res.string.data_log_delete_body)) },
+      confirmButton = {
+        TextButton(
+          onClick = viewModel::confirmDelete,
+          colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
+        ) { Text(stringResource(CoreRes.string.delete)) }
+      },
+      dismissButton = {
+        TextButton(onClick = viewModel::cancelDelete) { Text(stringResource(CoreRes.string.cancel)) }
+      },
+    )
+  }
+}
+
+@Composable
+private fun dataLogQuickActions(onDelete: (() -> Unit)?): List<SwipeAction> {
+  val label = stringResource(CoreRes.string.delete)
+  return if (onDelete == null) emptyList()
+  else listOf(SwipeAction(icon = Icons.Filled.Delete, label = label, tone = SwipeActionTone.DESTRUCTIVE, onClick = onDelete))
 }

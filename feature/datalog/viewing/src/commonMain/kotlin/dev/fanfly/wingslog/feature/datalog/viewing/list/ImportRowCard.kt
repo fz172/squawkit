@@ -51,38 +51,76 @@ fun ImportRowCard(
     modifier = modifier.fillMaxWidth(),
     shape = RoundedCornerShape(Spacing.cardCornerRadius),
     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-    border = BorderStroke(Spacing.hairline, MaterialTheme.colorScheme.outlineVariant),
+    border = BorderStroke(
+      Spacing.hairline,
+      MaterialTheme.colorScheme.outlineVariant
+    ),
     elevation = CardDefaults.cardElevation(defaultElevation = Spacing.none),
   ) {
     Row(
-      modifier = Modifier.fillMaxWidth().padding(Spacing.large),
+      modifier = Modifier.fillMaxWidth()
+        .padding(Spacing.large),
       verticalAlignment = Alignment.CenterVertically,
       horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
     ) {
       when (progress) {
         is ImportProgress.Failed -> Icon(
-          Icons.Filled.ErrorOutline, contentDescription = null,
-          tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(24.dp),
+          Icons.Filled.ErrorOutline,
+          contentDescription = null,
+          tint = MaterialTheme.colorScheme.error,
+          modifier = Modifier.size(24.dp),
         )
+
         is ImportProgress.NeedsConfirmation -> Icon(
-          Icons.Filled.ErrorOutline, contentDescription = null,
-          tint = MaterialTheme.colorScheme.tertiary, modifier = Modifier.size(24.dp),
+          Icons.Filled.ErrorOutline,
+          contentDescription = null,
+          tint = MaterialTheme.colorScheme.tertiary,
+          modifier = Modifier.size(24.dp),
         )
-        else -> CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+
+        else -> CircularProgressIndicator(
+          modifier = Modifier.size(24.dp),
+          strokeWidth = 2.dp
+        )
       }
-      Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall)) {
+      Column(
+        modifier = Modifier.weight(1f),
+        verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall)
+      ) {
         when (progress) {
-          ImportProgress.Reading -> Text(stringResource(Res.string.data_log_import_reading, row.file.name), style = MaterialTheme.typography.bodyMedium)
-          is ImportProgress.Parsing -> Text(stringResource(Res.string.data_log_import_parsing, row.file.name), style = MaterialTheme.typography.bodyMedium)
-          ImportProgress.Storing -> Text(stringResource(Res.string.data_log_import_storing, row.file.name), style = MaterialTheme.typography.bodyMedium)
+          ImportProgress.Reading -> Text(
+            stringResource(
+              Res.string.data_log_import_reading,
+              row.file.name
+            ), style = MaterialTheme.typography.bodyMedium
+          )
+
+          is ImportProgress.Parsing -> Text(
+            stringResource(
+              Res.string.data_log_import_parsing,
+              row.file.name
+            ), style = MaterialTheme.typography.bodyMedium
+          )
+
+          ImportProgress.Storing -> Text(
+            stringResource(
+              Res.string.data_log_import_storing,
+              row.file.name
+            ), style = MaterialTheme.typography.bodyMedium
+          )
+
           is ImportProgress.NeedsConfirmation -> {
-            Text(stringResource(Res.string.data_log_import_confirm_title), style = MaterialTheme.typography.titleSmall)
+            Text(
+              stringResource(Res.string.data_log_import_confirm_title),
+              style = MaterialTheme.typography.titleSmall
+            )
             Text(
               stringResource(Res.string.data_log_import_confirm_body),
               style = MaterialTheme.typography.bodySmall,
               color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
           }
+
           is ImportProgress.Failed -> {
             Text(row.file.name, style = MaterialTheme.typography.titleSmall)
             Text(
@@ -91,6 +129,7 @@ fun ImportRowCard(
               color = MaterialTheme.colorScheme.error,
             )
           }
+
           is ImportProgress.Done -> Unit
         }
       }
@@ -99,7 +138,13 @@ fun ImportRowCard(
           TextButton(onClick = onDismiss) { Text(stringResource(Res.string.data_log_import_dismiss)) }
           TextButton(onClick = onKeepBoth) { Text(stringResource(Res.string.data_log_import_keep_both)) }
         }
-        is ImportProgress.Failed -> TextButton(onClick = onDismiss) { Text(stringResource(Res.string.data_log_import_dismiss)) }
+
+        is ImportProgress.Failed -> TextButton(onClick = onDismiss) {
+          Text(
+            stringResource(Res.string.data_log_import_dismiss)
+          )
+        }
+
         else -> Unit
       }
     }

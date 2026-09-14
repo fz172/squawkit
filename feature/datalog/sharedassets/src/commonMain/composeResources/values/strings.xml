@@ -7,6 +7,8 @@
   <string name="data_log_ground_run">Ground run</string>
   <string name="data_log_series_count"><xliff:g example="108">%1$d</xliff:g> series</string>
   <string name="data_log_tail_mismatch">Tail mismatch</string>
+  <string name="data_log_delete_title">Delete <xliff:g example="Data Log">%1$s</xliff:g>?</string>
+  <string name="data_log_delete_body">The file and its charts are removed from every device.</string>
 
   <!-- Inline import rows (R35) -->
   <string name="data_log_import_reading">Reading <xliff:g example="log_20260902.csv">%1$s</xliff:g>…</string>

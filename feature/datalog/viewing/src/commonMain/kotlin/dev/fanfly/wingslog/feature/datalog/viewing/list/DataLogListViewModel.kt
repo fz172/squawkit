@@ -13,7 +13,9 @@ import dev.fanfly.wingslog.feature.datalog.model.ImportProgress
 import dev.fanfly.wingslog.feature.datalog.model.dataLogId
 import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.id.ThingId
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -51,12 +53,18 @@ data class ImportRow(
   val progress: ImportProgress,
 )
 
+sealed interface DataLogListEvent {
+  data object DeleteFailed : DataLogListEvent
+}
+
 data class DataLogListUiState(
   val isLoading: Boolean = true,
   val rows: List<DataLogRow> = emptyList(),
   val uploadGate: UploadGate = UploadGate.Guest,
   val query: String = "",
   val imports: List<ImportRow> = emptyList(),
+  /** The row whose delete is awaiting confirmation. */
+  val deleting: DataLogRow? = null,
 ) {
   /** Rows that match [query]; every row when the query is blank (PRD R2a). */
   val visibleRows: List<DataLogRow>
@@ -76,21 +84,21 @@ class DataLogListViewModel(
   private val query = MutableStateFlow("")
   private val imports = MutableStateFlow<List<ImportRow>>(emptyList())
   private val loaded = MutableStateFlow(false)
+  private val deleting = MutableStateFlow<DataLogRow?>(null)
   private var nextImportKey = 0L
 
+  private val _events = MutableSharedFlow<DataLogListEvent>(extraBufferCapacity = 1)
+  val events: SharedFlow<DataLogListEvent> = _events
+
   val uiState: StateFlow<DataLogListUiState> =
-    combine(
-      manager.observe(thingId),
-      query,
-      imports,
-      loaded
-    ) { logs, q, imports, loaded ->
+    combine(manager.observe(thingId), query, imports, loaded, deleting) { logs, q, imports, loaded, deleting ->
       DataLogListUiState(
         isLoading = !loaded,
         rows = logs.map { it.toRow() },
         uploadGate = currentGate(),
         query = q,
         imports = imports,
+        deleting = deleting,
       )
     }.stateIn(
       viewModelScope,
@@ -131,6 +139,23 @@ class DataLogListViewModel(
 
   fun dismissImport(key: Long) {
     imports.update { rows -> rows.filterNot { it.key == key } }
+  }
+
+  /** Swipe reveals Delete; the dialog it opens is what commits (the same shape as the other lists). */
+  fun onDeleteClick(row: DataLogRow) {
+    deleting.value = row
+  }
+
+  fun cancelDelete() {
+    deleting.value = null
+  }
+
+  fun confirmDelete() {
+    val row = deleting.value ?: return
+    deleting.value = null
+    viewModelScope.launch {
+      manager.delete(thingId, row.id).onFailure { _events.tryEmit(DataLogListEvent.DeleteFailed) }
+    }
   }
 
   private fun start(row: ImportRow, confirmDuplicate: Boolean) {

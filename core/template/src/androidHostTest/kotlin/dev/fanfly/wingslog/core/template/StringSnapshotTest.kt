@@ -240,6 +240,7 @@ class StringSnapshotTest {
     // feature/datalog/sharedassets: the section names the concept through the data-log noun
     // (PRD R45); the airplane preset's singular is "data log".
     frame("feature/datalog/sharedassets", "data_log_upload") { LexiconFormatter.titleCase(it.dataLogNoun) },
+    frame("feature/datalog/sharedassets", "data_log_delete_title") { LexiconFormatter.titleCase(it.dataLogNoun) },
     frame("feature/datalog/sharedassets", "data_log_empty_title") { it.dataLogNoun.singular },
     frame("feature/datalog/sharedassets", "data_log_gate_title") { it.dataLogNoun.singular },
     frame("feature/datalog/sharedassets", "data_log_gate_sheet_body") { it.dataLogNoun.singular },
