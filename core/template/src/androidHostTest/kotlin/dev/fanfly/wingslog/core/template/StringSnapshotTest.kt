@@ -237,6 +237,12 @@ class StringSnapshotTest {
     // The filter sheet's scope note and its one thing-named question. The rest of the sheet's new
     // copy is either fixed text or a frame the caller fills with whichever noun its tab uses, so
     // those positions stay literal placeholders here exactly as record_count_other's do.
+    // feature/datalog/sharedassets: the section names the concept through the data-log noun
+    // (PRD R45); the airplane preset's singular is "data log".
+    frame("feature/datalog/sharedassets", "data_log_upload") { LexiconFormatter.titleCase(it.dataLogNoun) },
+    frame("feature/datalog/sharedassets", "data_log_empty_title") { it.dataLogNoun.singular },
+    frame("feature/datalog/sharedassets", "data_log_gate_title") { it.dataLogNoun.singular },
+    frame("feature/datalog/sharedassets", "data_log_gate_sheet_body") { it.dataLogNoun.singular },
     frame("feature/search/sharedassets", "filter_scope_open") { it.squawkNoun.plural },
     frame("feature/search/sharedassets", "filter_scope_closed") { it.squawkNoun.plural },
     frame("feature/search/sharedassets", "filter_scope_due") { it.taskNoun.plural },

@@ -1,1 +1,37 @@
-<resources></resources>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+  <!-- Data log section (design §10, PRD R2, R34, R35, R40). The noun comes from the lexicon. -->
+  <string name="data_log_upload">Upload <xliff:g example="Data Log">%1$s</xliff:g></string>
+  <string name="data_log_recent_uploads">Recent uploads</string>
+  <string name="data_log_empty_title">No <xliff:g example="data log">%1$s</xliff:g> uploaded yet</string>
+  <string name="data_log_supported_formats">Supported: Garmin G3X · G3X Touch</string>
+  <string name="data_log_ground_run">Ground run</string>
+  <string name="data_log_series_count"><xliff:g example="108">%1$d</xliff:g> series</string>
+  <string name="data_log_tail_mismatch">Tail mismatch</string>
+
+  <!-- Inline import rows (R35) -->
+  <string name="data_log_import_reading">Reading <xliff:g example="log_20260902.csv">%1$s</xliff:g>…</string>
+  <string name="data_log_import_parsing">Parsing <xliff:g example="log_20260902.csv">%1$s</xliff:g>…</string>
+  <string name="data_log_import_storing">Saving <xliff:g example="log_20260902.csv">%1$s</xliff:g>…</string>
+  <string name="data_log_import_failed_unreadable">The file could not be read.</string>
+  <string name="data_log_import_failed_unrecognized">Not a recognised data log. Supported: Garmin G3X.</string>
+  <string name="data_log_import_failed_duplicate">This file is already uploaded.</string>
+  <string name="data_log_import_failed_parse">The file could not be parsed.</string>
+  <string name="data_log_import_confirm_title">Looks like a duplicate</string>
+  <string name="data_log_import_confirm_body">Same recorder and start time as an upload already here.</string>
+  <string name="data_log_import_keep_both">Keep both</string>
+  <string name="data_log_import_dismiss">Dismiss</string>
+
+  <!-- Account gate (R40) -->
+  <string name="data_log_gate_title">Sign in to upload a <xliff:g example="data log">%1$s</xliff:g></string>
+  <string name="data_log_gate_body">Anything you upload is stored with the account and available on every device.</string>
+  <string name="data_log_gate_link_cta">Link to an account</string>
+  <string name="data_log_gate_not_now">Not now</string>
+  <string name="data_log_gate_open_settings">Open Settings</string>
+  <string name="data_log_gate_sheet_title">Link to an account to upload</string>
+  <string name="data_log_gate_sheet_body">A <xliff:g example="data log">%1$s</xliff:g> is stored with the account and synced to every device. Linking keeps everything already on this device.</string>
+  <string name="data_log_gate_what_title">What gets charted</string>
+  <string name="data_log_gate_bullet_columns">Every numeric column in the file: engine, fuel, electrical, air data, GPS</string>
+  <string name="data_log_gate_bullet_panes">Unlimited panes and series per pane, with a shared time cursor and zoom</string>
+  <string name="data_log_gate_bullet_map">Position on a map, following the cursor</string>
+  <string name="data_log_gate_bullet_attach">Attach to any record</string>
+</resources>
