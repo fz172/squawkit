@@ -1,7 +1,54 @@
 package dev.fanfly.wingslog.feature.datalog.datamanager
 
+import dev.fanfly.wingslog.core.auth.AuthManager
+import dev.fanfly.wingslog.core.storage.CollectionKind
+import dev.fanfly.wingslog.core.storage.EntityStoreFactory
+import dev.fanfly.wingslog.core.storage.ThingScopeResolver
+import dev.fanfly.wingslog.core.storage.blob.BlobFilesystem
+import dev.fanfly.wingslog.core.storage.blob.LocalBlobStore
+import dev.fanfly.wingslog.core.storage.blob.UploadScheduler
+import dev.fanfly.wingslog.core.template.TemplateRegistry
+import dev.fanfly.wingslog.datalog.DataLog
+import dev.fanfly.wingslog.feature.attachment.datamanager.FileByteReader
+import dev.fanfly.wingslog.feature.datalog.datamanager.garmin.GarminParser
+import dev.fanfly.wingslog.feature.datalog.datamanager.impl.DataLogImporterImpl
+import dev.fanfly.wingslog.feature.datalog.datamanager.impl.DataLogManagerImpl
+import dev.fanfly.wingslog.feature.datalog.datamanager.impl.TemplateThingIdentifierLookup
+import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
-/** Koin module for the data log visualizer's data layer. Empty until P2 (design §7). */
-val dataLogDataManagerModule: Module = module { }
+/** Every format this build reads, in sniff order. */
+private val dataLogParsers: List<DataLogParser> = listOf(GarminParser())
+
+val dataLogDataManagerModule: Module = module {
+  single<DataLogCache> { DataLogCache() }
+  single<HeaderSniffer> { HeaderSniffer(dataLogParsers) }
+  single<ThingIdentifierLookup> {
+    TemplateThingIdentifierLookup(get<FleetManager>(), get<TemplateRegistry>())
+  }
+  single<DataLogImporter> {
+    DataLogImporterImpl(
+      fileByteReader = get<FileByteReader>(),
+      sniffer = get<HeaderSniffer>(),
+      scopeResolver = get<ThingScopeResolver>(),
+      store = get<EntityStoreFactory>().create<DataLog>(CollectionKind.DataLog),
+      blobs = get<LocalBlobStore>(),
+      scheduler = getOrNull<UploadScheduler>(),
+      identifiers = get<ThingIdentifierLookup>(),
+      auth = get<AuthManager>(),
+    )
+  }
+  single<DataLogManager> {
+    DataLogManagerImpl(
+      scopeResolver = get<ThingScopeResolver>(),
+      storeFactory = get<EntityStoreFactory>(),
+      blobs = get<LocalBlobStore>(),
+      filesystem = get<BlobFilesystem>(),
+      scheduler = getOrNull<UploadScheduler>(),
+      importer = get<DataLogImporter>(),
+      cache = get<DataLogCache>(),
+      parsers = dataLogParsers,
+    )
+  }
+}
