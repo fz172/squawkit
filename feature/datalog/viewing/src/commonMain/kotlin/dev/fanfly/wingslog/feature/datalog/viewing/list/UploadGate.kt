@@ -14,6 +14,7 @@ import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -24,7 +25,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.dataLogNoun
 import dev.fanfly.wingslog.core.ui.common.compose.ModalBottomSheet
@@ -75,7 +75,7 @@ fun UploadGateCard(onLinkAccount: () -> Unit, modifier: Modifier = Modifier) {
           Icons.Filled.Lock,
           contentDescription = null,
           tint = MaterialTheme.colorScheme.primary,
-          modifier = Modifier.size(28.dp)
+          modifier = Modifier.size(Spacing.extraLarge)
         )
         Text(
           stringResource(Res.string.data_log_gate_title, noun),
@@ -90,7 +90,7 @@ fun UploadGateCard(onLinkAccount: () -> Unit, modifier: Modifier = Modifier) {
           Icon(
             Icons.Filled.Link,
             contentDescription = null,
-            modifier = Modifier.size(18.dp)
+            modifier = Modifier.size(ButtonDefaults.IconSize)
           )
           Text(
             stringResource(Res.string.data_log_gate_link_cta),
@@ -121,7 +121,7 @@ fun UploadGateCard(onLinkAccount: () -> Unit, modifier: Modifier = Modifier) {
               Icons.Filled.Check,
               contentDescription = null,
               tint = MaterialTheme.colorScheme.primary,
-              modifier = Modifier.size(18.dp)
+              modifier = Modifier.size(ButtonDefaults.IconSize)
             )
             Text(
               stringResource(line),
@@ -149,7 +149,7 @@ fun LinkAccountPromptSheet(onOpenSettings: () -> Unit, onDismiss: () -> Unit) {
         Icons.Filled.Link,
         contentDescription = null,
         tint = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.size(28.dp)
+        modifier = Modifier.size(Spacing.extraLarge)
       )
       Text(
         stringResource(Res.string.data_log_gate_sheet_title),
@@ -164,7 +164,7 @@ fun LinkAccountPromptSheet(onOpenSettings: () -> Unit, onDismiss: () -> Unit) {
         Icon(
           Icons.Filled.Settings,
           contentDescription = null,
-          modifier = Modifier.size(18.dp)
+          modifier = Modifier.size(ButtonDefaults.IconSize)
         )
         Text(
           stringResource(Res.string.data_log_gate_open_settings),

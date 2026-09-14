@@ -20,7 +20,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.datalog.model.ImportFailure
 import dev.fanfly.wingslog.feature.datalog.model.ImportProgress
@@ -68,19 +67,18 @@ fun ImportRowCard(
           Icons.Filled.ErrorOutline,
           contentDescription = null,
           tint = MaterialTheme.colorScheme.error,
-          modifier = Modifier.size(24.dp),
+          modifier = Modifier.size(Spacing.extraLarge),
         )
 
         is ImportProgress.NeedsConfirmation -> Icon(
           Icons.Filled.ErrorOutline,
           contentDescription = null,
           tint = MaterialTheme.colorScheme.tertiary,
-          modifier = Modifier.size(24.dp),
+          modifier = Modifier.size(Spacing.extraLarge),
         )
 
         else -> CircularProgressIndicator(
-          modifier = Modifier.size(24.dp),
-          strokeWidth = 2.dp
+          modifier = Modifier.size(Spacing.extraLarge)
         )
       }
       Column(

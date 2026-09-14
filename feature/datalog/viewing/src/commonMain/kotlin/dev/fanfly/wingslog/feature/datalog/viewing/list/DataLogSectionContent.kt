@@ -34,7 +34,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
@@ -119,7 +118,7 @@ fun DataLogSectionContent(
             Icon(
               Icons.Filled.UploadFile,
               contentDescription = null,
-              modifier = Modifier.size(18.dp)
+              modifier = Modifier.size(ButtonDefaults.IconSize)
             )
             Text(
               stringResource(

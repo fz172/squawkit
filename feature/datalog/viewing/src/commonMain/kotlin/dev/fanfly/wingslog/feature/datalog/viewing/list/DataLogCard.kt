@@ -22,7 +22,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.datetime.formatDuration
 import dev.fanfly.wingslog.core.datetime.toClockText
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
@@ -80,7 +79,7 @@ fun DataLogCard(
         Icons.Filled.ShowChart,
         contentDescription = null,
         tint = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.size(24.dp),
+        modifier = Modifier.size(Spacing.extraLarge),
       )
       Column(
         modifier = Modifier.weight(1f),
