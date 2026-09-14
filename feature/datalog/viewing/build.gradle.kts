@@ -30,22 +30,46 @@ kotlin {
 
   sourceSets {
     commonMain.dependencies {
+      implementation(project(":core:model"))
+      implementation(project(":core:auth"))
+      implementation(project(":core:datetime"))
       implementation(project(":core:template"))
       implementation(project(":core:ui"))
+      implementation(project(":core:ui:adaptive"))
+      implementation(project(":core:ui:theme"))
+      implementation(project(":feature:attachment:model"))
+      implementation(project(":feature:attachment:viewing"))
+      implementation(project(":feature:search:sharedassets"))
+      implementation(project(":feature:search:viewing"))
       implementation(project(":feature:datalog:model"))
       implementation(project(":feature:datalog:datamanager"))
       implementation(project(":feature:datalog:sharedassets"))
       implementation(libs.kotlinx.datetime)
-      implementation(libs.kermit)
+      implementation(libs.kotlinx.coroutines.core)
+      implementation(libs.compose.runtime)
+      implementation(libs.compose.foundation)
+      implementation(libs.compose.ui)
+      implementation(libs.material3)
+      implementation(libs.material.icons.extended)
       implementation(libs.components.resources)
+      implementation(libs.jetbrains.lifecycle.viewmodel.compose)
+      implementation(libs.jetbrains.lifecycle.runtime.compose)
+      implementation(libs.koin.core)
+      implementation(libs.koin.compose)
+      implementation(libs.koin.compose.viewmodel)
+      implementation(libs.gitlive.firebase.auth)
+      implementation(libs.kermit)
     }
   }
 }
 
 dependencies {
   "androidMainImplementation"(platform(libs.firebase.bom))
+  "androidMainImplementation"(platform(libs.androidx.compose.bom))
   "androidHostTestImplementation"(libs.junit)
   "androidHostTestImplementation"(libs.truth)
+  "androidHostTestImplementation"(libs.mockk)
+  "androidHostTestImplementation"(libs.kotlinx.coroutines.test)
 }
 
 compose.resources {

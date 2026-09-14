@@ -88,3 +88,21 @@ private val DisplayTimeFormat = LocalTime.Format {
 fun Instant.toDisplayTime(
   timeZone: TimeZone = TimeZone.currentSystemDefault(),
 ): String = DisplayTimeFormat.format(toLocalDateTime(timeZone).time)
+
+private val ClockFormat = LocalTime.Format {
+  hour()
+  char(':')
+  minute()
+}
+
+/** `14:47` — a 24-hour wall clock, for a moment shown the way a recorder or instrument shows it. */
+fun LocalTime.toClockText(): String = ClockFormat.format(this)
+
+/** `4m 15s` under an hour, `1h 04m` from an hour up. Negative input reads as zero. */
+fun formatDuration(seconds: Int): String {
+  val s = seconds.coerceAtLeast(0)
+  val h = s / 3600
+  val m = (s % 3600) / 60
+  val sec = s % 60
+  return if (h > 0) "${h}h ${m.toString().padStart(2, '0')}m" else "${m}m ${sec.toString().padStart(2, '0')}s"
+}
