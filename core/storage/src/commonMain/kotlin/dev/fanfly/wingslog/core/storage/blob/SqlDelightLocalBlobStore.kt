@@ -1,5 +1,7 @@
 package dev.fanfly.wingslog.core.storage.blob
 
+import dev.fanfly.wingslog.core.file.sha256Hex
+
 import app.cash.sqldelight.async.coroutines.awaitAsList
 import app.cash.sqldelight.async.coroutines.awaitAsOneOrNull
 import app.cash.sqldelight.coroutines.asFlow

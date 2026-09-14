@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.core.storage.blob
+package dev.fanfly.wingslog.core.file
 
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.addressOf
