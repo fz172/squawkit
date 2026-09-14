@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -45,7 +46,9 @@ import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.StatusTier
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
+import dev.fanfly.wingslog.feature.datalog.model.GestureIntent
 import dev.fanfly.wingslog.feature.datalog.model.SeriesKey
+import dev.fanfly.wingslog.feature.datalog.model.chart.TimeTicks
 import dev.fanfly.wingslog.feature.datalog.model.chart.isPlottable
 import dev.fanfly.wingslog.feature.datalog.viewing.chart.ChartPane
 import dev.fanfly.wingslog.feature.datalog.viewing.chart.PaneSeries
@@ -68,6 +71,7 @@ import wingslog.feature.datalog.sharedassets.generated.resources.data_log_tail_m
 import wingslog.feature.datalog.sharedassets.generated.resources.data_log_viewer_downloading
 import wingslog.feature.datalog.sharedassets.generated.resources.data_log_viewer_load_failed
 import wingslog.feature.datalog.sharedassets.generated.resources.data_log_viewer_missing
+import wingslog.feature.datalog.sharedassets.generated.resources.data_log_viewer_reset
 import wingslog.feature.datalog.sharedassets.generated.resources.data_log_viewer_utc_offset
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 
@@ -221,6 +225,23 @@ fun DataLogViewerScreen(
               modifier = Modifier.padding(vertical = Spacing.medium),
             )
           }
+          if (s.view != null) {
+            item {
+              Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(Spacing.small),
+              ) {
+                Text(
+                  text = "${TimeTicks.label(s.view.startSeconds)} – ${TimeTicks.label(s.view.endSeconds)}",
+                  style = WingslogTypography.dataSmall,
+                  color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                TextButton(onClick = { viewModel.onGesture(GestureIntent.Reset) }) {
+                  Text(stringResource(Res.string.data_log_viewer_reset))
+                }
+              }
+            }
+          }
           items(s.layout.panes, key = { it.id.value }) { pane ->
             ChartPane(
               series = pane.series.mapNotNull { key -> byColumn[key.column] },
@@ -229,7 +250,7 @@ fun DataLogViewerScreen(
               view = s.view,
               cursorT = s.cursorT,
               isTarget = pane.id == s.layout.targetPane,
-              onCursor = viewModel::setCursor,
+              onGesture = viewModel::onGesture,
             )
           }
           item {

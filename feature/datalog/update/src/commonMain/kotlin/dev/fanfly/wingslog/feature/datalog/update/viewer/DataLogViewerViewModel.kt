@@ -8,7 +8,9 @@ import dev.fanfly.wingslog.feature.attachment.model.DownloadState
 import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogManager
 import dev.fanfly.wingslog.feature.datalog.model.ChartLayout
 import dev.fanfly.wingslog.feature.datalog.model.DataLogSeriesData
+import dev.fanfly.wingslog.feature.datalog.model.GestureIntent
 import dev.fanfly.wingslog.feature.datalog.model.ViewWindow
+import dev.fanfly.wingslog.feature.datalog.model.chart.Navigation
 import dev.fanfly.wingslog.feature.datalog.model.chart.defaultLayout
 import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.id.ThingId
@@ -74,6 +76,27 @@ class DataLogViewerViewModel(
   }
 
   fun setView(view: ViewWindow?) = updateReady { it.copy(view = view) }
+
+  /** Applies a pane gesture to the shared time domain (design §11.4); every pane sees the result. */
+  fun onGesture(intent: GestureIntent) = updateReady { state ->
+    val duration = state.record.duration_seconds
+    val window = Navigation.effective(state.view, duration)
+    when (intent) {
+      is GestureIntent.Brush -> state.copy(
+        view = Navigation.brushToWindow(state.view, duration, intent.x0Px, intent.x1Px, intent.widthPx),
+      )
+      is GestureIntent.Pan -> state.copy(
+        view = Navigation.pan(state.view, duration, intent.spanFraction * window.lengthSeconds),
+      )
+      is GestureIntent.Zoom -> state.copy(
+        view = Navigation.zoomAround(state.view, duration, intent.anchorFraction, intent.factor),
+      )
+      is GestureIntent.Cursor -> state.copy(
+        cursorT = intent.fraction?.let { window.startSeconds + it.coerceIn(0.0, 1.0) * window.lengthSeconds },
+      )
+      GestureIntent.Reset -> state.copy(view = null)
+    }
+  }
 
   fun setCursor(t: Double?) = updateReady { it.copy(cursorT = t) }
 

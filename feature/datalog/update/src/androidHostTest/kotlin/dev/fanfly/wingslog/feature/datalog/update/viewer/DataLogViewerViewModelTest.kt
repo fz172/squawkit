@@ -5,6 +5,8 @@ import dev.fanfly.wingslog.datalog.DataLog
 import dev.fanfly.wingslog.feature.attachment.model.DownloadState
 import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogManager
 import dev.fanfly.wingslog.feature.datalog.model.DataLogSeriesData
+import dev.fanfly.wingslog.feature.datalog.model.GestureIntent
+import dev.fanfly.wingslog.feature.datalog.model.ViewWindow
 import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.id.ThingId
 import io.mockk.coEvery
@@ -28,7 +30,7 @@ class DataLogViewerViewModelTest {
 
   private val thingId = ThingId("thing-1")
   private val id = DataLogId("dl-1")
-  private val record = DataLog(id = id, file_name = "x.csv")
+  private val record = DataLog(id = id, file_name = "x.csv", duration_seconds = 3600)
   private val data = DataLogSeriesData(IntArray(3), emptyMap(), emptyMap(), null)
   private lateinit var manager: DataLogManager
 
@@ -105,5 +107,39 @@ class DataLogViewerViewModelTest {
     coEvery { manager.delete(thingId, id) } returns Result.failure(IllegalStateException("offline"))
     vm.confirmDelete()
     assertThat(events).containsExactly(DataLogViewerEvent.Deleted, DataLogViewerEvent.DeleteFailed)
+  }
+
+  @Test
+  fun gesturesMoveTheSharedTimeDomain() = runTest {
+    val vm = viewModel()
+    fun ready() = vm.uiState.value as DataLogViewerUiState.Ready
+
+    // Brush 25%..50% of the full log.
+    vm.onGesture(GestureIntent.Brush(250f, 500f, 1000))
+    assertThat(ready().view).isEqualTo(ViewWindow(900, 1800))
+    // Pan by a tenth of the visible span.
+    vm.onGesture(GestureIntent.Pan(0.1))
+    assertThat(ready().view).isEqualTo(ViewWindow(990, 1890))
+    // Zoom in twice around the centre.
+    vm.onGesture(GestureIntent.Zoom(0.5, 2.0))
+    assertThat(ready().view).isEqualTo(ViewWindow(1215, 1665))
+    // The cursor lands inside the visible window.
+    vm.onGesture(GestureIntent.Cursor(0.5))
+    assertThat(ready().cursorT).isWithin(0.01).of(1440.0)
+    vm.onGesture(GestureIntent.Cursor(null))
+    assertThat(ready().cursorT).isNull()
+    // Reset returns to the whole log, and pan at full zoom-out changes nothing.
+    vm.onGesture(GestureIntent.Reset)
+    assertThat(ready().view).isNull()
+    vm.onGesture(GestureIntent.Pan(0.5))
+    assertThat(ready().view).isNull()
+  }
+
+  @Test
+  fun gesturesAreIgnoredUntilReady() = runTest {
+    every { manager.observeOne(thingId, id) } returns flowOf(null)
+    val vm = viewModel()
+    vm.onGesture(GestureIntent.Zoom(0.5, 2.0))
+    assertThat(vm.uiState.value).isEqualTo(DataLogViewerUiState.Failed(LoadFailure.NOT_FOUND))
   }
 }

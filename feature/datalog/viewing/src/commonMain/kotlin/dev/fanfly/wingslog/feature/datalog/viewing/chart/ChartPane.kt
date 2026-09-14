@@ -2,7 +2,6 @@ package dev.fanfly.wingslog.feature.datalog.viewing.chart
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.border
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,6 +13,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -24,7 +24,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
+import dev.fanfly.wingslog.feature.datalog.model.GestureIntent
 import dev.fanfly.wingslog.feature.datalog.model.SeriesKey
 import dev.fanfly.wingslog.feature.datalog.model.ViewWindow
 import dev.fanfly.wingslog.feature.datalog.model.chart.Axis
@@ -63,6 +64,7 @@ private val AxisLabelSize = 10.sp
 private val CursorStroke = 1.dp
 private val SeriesStroke = 1.5.dp
 private const val GRID_ALPHA = 0.6f
+private const val BRUSH_ALPHA = 0.18f
 
 /** The axis label style: JetBrains Mono at 10 sp (design §11.2). */
 @Composable
@@ -72,8 +74,8 @@ internal fun axisLabelStyle(): TextStyle = WingslogTypography.dataSmall.copy(fon
  * One Canvas per pane (design §11.2). Per frame each series is decimated to the pixel column over
  * the visible window and drawn as a path with two points per column. The first unit group reads
  * on the left axis, the second on the right; grid at quartiles; the cursor is a 1 dp `tertiary`
- * line; the target pane carries a `tertiary` border. Tap places the cursor; the gesture state
- * machine (T29) adds brush, pan and pinch.
+ * line; the target pane carries a `tertiary` border. Gestures come from [chartGestures]; a live
+ * brush draws as a translucent `tertiary` band.
  */
 @Composable
 fun ChartPane(
@@ -83,7 +85,7 @@ fun ChartPane(
   view: ViewWindow?,
   cursorT: Double?,
   isTarget: Boolean,
-  onCursor: (Double?) -> Unit,
+  onGesture: (GestureIntent) -> Unit,
   modifier: Modifier = Modifier,
 ) {
   val dark = isSystemInDarkTheme()
@@ -95,6 +97,7 @@ fun ChartPane(
   val measurer = rememberTextMeasurer()
   val labelStyle = axisLabelStyle()
   var widthPx by remember { mutableIntStateOf(0) }
+  var brush by remember { mutableStateOf<ClosedFloatingPointRange<Float>?>(null) }
   val window = Navigation.effective(view, durationSeconds)
 
   // Decimation runs synchronously here: O(rows) per series, well under a millisecond (R28).
@@ -121,11 +124,7 @@ fun ChartPane(
       modifier = Modifier
         .fillMaxSize()
         .onSizeChanged { widthPx = it.width }
-        .pointerInput(window, widthPx) {
-          detectTapGestures { offset ->
-            if (widthPx > 0) onCursor(window.startSeconds + offset.x / widthPx * window.lengthSeconds.toDouble())
-          }
-        },
+        .chartGestures(onIntent = onGesture, onBrush = { brush = it }),
     ) {
       drawRect(surface)
       val cursorStrokePx = CursorStroke.toPx()
@@ -150,6 +149,13 @@ fun ChartPane(
             drawText(label, topLeft = Offset(x, top))
           }
         }
+      }
+      brush?.let { range ->
+        drawRect(
+          cursorColor.copy(alpha = BRUSH_ALPHA),
+          topLeft = Offset(range.start, 0f),
+          size = Size(range.endInclusive - range.start, size.height),
+        )
       }
       if (cursorT != null && widthPx > 0) {
         val x = TimeTicks.xOf(cursorT, window, widthPx)
