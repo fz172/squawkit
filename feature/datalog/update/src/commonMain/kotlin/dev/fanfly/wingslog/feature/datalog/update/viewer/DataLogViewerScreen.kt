@@ -35,6 +35,7 @@ import androidx.navigation.NavController
 import dev.fanfly.wingslog.core.datetime.formatDuration
 import dev.fanfly.wingslog.core.datetime.toClockText
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
+import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.nav.Screen.Companion.CROSS_SCREEN_SUCCESS_MESSAGE
 import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
@@ -49,11 +50,9 @@ import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.feature.datalog.viewing.list.toDataLogRow
 import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.id.ThingId
-import dev.fanfly.wingslog.core.model.id.value
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
-import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.core.sharedassets.generated.resources.cancel
 import wingslog.core.sharedassets.generated.resources.delete
 import wingslog.core.sharedassets.generated.resources.delete_failed
@@ -67,6 +66,7 @@ import wingslog.feature.datalog.sharedassets.generated.resources.data_log_viewer
 import wingslog.feature.datalog.sharedassets.generated.resources.data_log_viewer_load_failed
 import wingslog.feature.datalog.sharedassets.generated.resources.data_log_viewer_missing
 import wingslog.feature.datalog.sharedassets.generated.resources.data_log_viewer_utc_offset
+import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 
 /**
  * The full-screen viewer route (design §10.4). Until the panes land (T28), the body lists the
@@ -86,17 +86,26 @@ fun DataLogViewerScreen(
   val state by viewModel.uiState.collectAsStateWithLifecycle()
   val lexicon = LocalThingLexicon.current
   val snackbarHostState = remember { SnackbarHostState() }
-  val deletedMessage = stringResource(Res.string.data_log_deleted, LexiconFormatter.sentenceCase(lexicon.dataLogNoun))
+  val deletedMessage = stringResource(
+    Res.string.data_log_deleted,
+    LexiconFormatter.sentenceCase(lexicon.dataLogNoun)
+  )
   val deleteFailedMessage = stringResource(CoreRes.string.delete_failed)
 
   LaunchedEffect(viewModel) {
     viewModel.events.collect { event ->
       when (event) {
         DataLogViewerEvent.Deleted -> {
-          navController.previousBackStackEntry?.savedStateHandle?.set(CROSS_SCREEN_SUCCESS_MESSAGE, deletedMessage)
+          navController.previousBackStackEntry?.savedStateHandle?.set(
+            CROSS_SCREEN_SUCCESS_MESSAGE,
+            deletedMessage
+          )
           navController.popBackStack()
         }
-        DataLogViewerEvent.DeleteFailed -> snackbarHostState.showSnackbar(deleteFailedMessage)
+
+        DataLogViewerEvent.DeleteFailed -> snackbarHostState.showSnackbar(
+          deleteFailedMessage
+        )
       }
     }
   }
@@ -106,12 +115,16 @@ fun DataLogViewerScreen(
   Scaffold(
     topBar = {
       WingsLogTopAppBar(
-        title = row?.startLocal?.date?.toDisplayFormat(numberOnly = false) ?: LexiconFormatter.titleCase(lexicon.dataLogNoun),
+        title = row?.startLocal?.date?.toDisplayFormat(numberOnly = false)
+          ?: LexiconFormatter.titleCase(lexicon.dataLogNoun),
         onBackClick = { navController.popBackStack() },
         actions = {
           if (ready != null) {
             IconButton(onClick = viewModel::requestDelete) {
-              Icon(Icons.Filled.Delete, contentDescription = stringResource(CoreRes.string.delete))
+              Icon(
+                Icons.Filled.Delete,
+                contentDescription = stringResource(CoreRes.string.delete)
+              )
             }
           }
         },
@@ -119,23 +132,38 @@ fun DataLogViewerScreen(
     },
     snackbarHost = { SnackbarHost(snackbarHostState) },
   ) { innerPadding ->
-    val content = Modifier.padding(innerPadding).fillMaxSize()
+    val content = Modifier.padding(innerPadding)
+      .fillMaxSize()
     when (val s = state) {
-      is DataLogViewerUiState.Loading -> Box(content, contentAlignment = Alignment.Center) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(Spacing.medium)) {
+      is DataLogViewerUiState.Loading -> Box(
+        content,
+        contentAlignment = Alignment.Center
+      ) {
+        Column(
+          horizontalAlignment = Alignment.CenterHorizontally,
+          verticalArrangement = Arrangement.spacedBy(Spacing.medium)
+        ) {
           CircularProgressIndicator()
           if (s.download != null) {
-            Text(stringResource(Res.string.data_log_viewer_downloading), style = MaterialTheme.typography.bodyMedium)
+            Text(
+              stringResource(Res.string.data_log_viewer_downloading),
+              style = MaterialTheme.typography.bodyMedium
+            )
           }
         }
       }
 
       is DataLogViewerUiState.Failed -> EmptyState(
-        title = if (s.reason == LoadFailure.NOT_FOUND) stringResource(Res.string.data_log_viewer_missing, lexicon.dataLogNoun.singular)
+        title = if (s.reason == LoadFailure.NOT_FOUND) stringResource(
+          Res.string.data_log_viewer_missing,
+          lexicon.dataLogNoun.singular
+        )
         else stringResource(Res.string.data_log_viewer_load_failed),
         description = "",
         icon = Icons.Filled.ShowChart,
-        actionText = if (s.reason == LoadFailure.NOT_FOUND) null else stringResource(CoreRes.string.retry),
+        actionText = if (s.reason == LoadFailure.NOT_FOUND) null else stringResource(
+          CoreRes.string.retry
+        ),
         onActionClick = if (s.reason == LoadFailure.NOT_FOUND) null else viewModel::retry,
         modifier = content,
       )
@@ -144,27 +172,42 @@ fun DataLogViewerScreen(
         val r = checkNotNull(row)
         LazyColumn(
           modifier = content,
-          contentPadding = PaddingValues(horizontal = Spacing.screenPadding, vertical = Spacing.large),
+          contentPadding = PaddingValues(
+            horizontal = Spacing.screenPadding,
+            vertical = Spacing.large
+          ),
           verticalArrangement = Arrangement.spacedBy(Spacing.small),
         ) {
           item {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
-              if (r.identity.isNotBlank()) Text(r.identity, style = WingslogTypography.dataMedium)
-              if (r.identityMismatch) StatusChip(label = stringResource(Res.string.data_log_tail_mismatch), tier = StatusTier.CAUTION)
-            }
+            if (r.identity.isNotBlank()) Text(
+              r.identity,
+              style = WingslogTypography.dataMedium
+            )
+            if (r.identityMismatch) StatusChip(
+              label = stringResource(Res.string.data_log_tail_mismatch),
+              tier = StatusTier.CAUTION
+            )
             Text(
               text = listOf(
-                stringResource(Res.string.data_log_viewer_utc_offset, r.startLocal.time.toClockText(), offsetText(s.record.utc_offset_minutes)),
+                stringResource(
+                  Res.string.data_log_viewer_utc_offset,
+                  r.startLocal.time.toClockText(),
+                  offsetText(s.record.utc_offset_minutes)
+                ),
                 formatDuration(r.durationSeconds),
                 r.product,
-              ).filter { it.isNotBlank() }.joinToString(" · "),
+              ).filter { it.isNotBlank() }
+                .joinToString(" · "),
               style = MaterialTheme.typography.bodySmall,
               color = MaterialTheme.colorScheme.onSurfaceVariant,
               modifier = Modifier.padding(bottom = Spacing.medium),
             )
           }
           items(s.record.series, key = { it.column }) { series ->
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Row(
+              modifier = Modifier.fillMaxWidth(),
+              horizontalArrangement = Arrangement.SpaceBetween
+            ) {
               Text(series.name, style = MaterialTheme.typography.bodyMedium)
               Text(
                 text = if (series.unit.isBlank()) series.short_name else "${series.short_name} · ${series.unit}",
@@ -177,7 +220,14 @@ fun DataLogViewerScreen(
         if (s.deleting) {
           AlertDialog(
             onDismissRequest = viewModel::cancelDelete,
-            title = { Text(stringResource(Res.string.data_log_delete_title, LexiconFormatter.titleCase(lexicon.dataLogNoun))) },
+            title = {
+              Text(
+                stringResource(
+                  Res.string.data_log_delete_title,
+                  LexiconFormatter.titleCase(lexicon.dataLogNoun)
+                )
+              )
+            },
             text = { Text(stringResource(Res.string.data_log_delete_body)) },
             confirmButton = {
               TextButton(
@@ -185,7 +235,13 @@ fun DataLogViewerScreen(
                 colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
               ) { Text(stringResource(CoreRes.string.delete)) }
             },
-            dismissButton = { TextButton(onClick = viewModel::cancelDelete) { Text(stringResource(CoreRes.string.cancel)) } },
+            dismissButton = {
+              TextButton(onClick = viewModel::cancelDelete) {
+                Text(
+                  stringResource(CoreRes.string.cancel)
+                )
+              }
+            },
           )
         }
       }
@@ -197,5 +253,11 @@ fun DataLogViewerScreen(
 private fun offsetText(minutes: Int): String {
   val sign = if (minutes < 0) "-" else "+"
   val abs = kotlin.math.abs(minutes)
-  return "UTC$sign${(abs / 60).toString().padStart(2, '0')}:${(abs % 60).toString().padStart(2, '0')}"
+  return "UTC$sign${
+    (abs / 60).toString()
+      .padStart(2, '0')
+  }:${
+    (abs % 60).toString()
+      .padStart(2, '0')
+  }"
 }

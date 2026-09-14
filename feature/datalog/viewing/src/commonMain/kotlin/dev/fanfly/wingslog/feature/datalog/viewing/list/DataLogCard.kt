@@ -64,8 +64,7 @@ fun DataLogCard(
     shape = RoundedCornerShape(Spacing.cardCornerRadius),
     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
     border = BorderStroke(
-      Spacing.hairline,
-      MaterialTheme.colorScheme.outlineVariant
+      Spacing.hairline, MaterialTheme.colorScheme.outlineVariant
     ),
     elevation = CardDefaults.cardElevation(defaultElevation = Spacing.none),
   ) {
@@ -85,23 +84,18 @@ fun DataLogCard(
         modifier = Modifier.weight(1f),
         verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall)
       ) {
-        Row(
-          verticalAlignment = Alignment.CenterVertically,
-          horizontalArrangement = Arrangement.spacedBy(Spacing.small)
-        ) {
-          Text(
-            text = title,
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurface,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
+        Text(
+          text = title,
+          style = MaterialTheme.typography.titleMedium,
+          color = MaterialTheme.colorScheme.onSurface,
+          maxLines = 1,
+          overflow = TextOverflow.Ellipsis,
+        )
+        if (row.identityMismatch) {
+          StatusChip(
+            label = stringResource(Res.string.data_log_tail_mismatch),
+            tier = StatusTier.CAUTION
           )
-          if (row.identityMismatch) {
-            StatusChip(
-              label = stringResource(Res.string.data_log_tail_mismatch),
-              tier = StatusTier.CAUTION
-            )
-          }
         }
         Text(
           text = details.joinToString(" · "),
@@ -114,8 +108,7 @@ fun DataLogCard(
       if (showDetails) {
         Text(
           text = stringResource(
-            Res.string.data_log_series_count,
-            row.seriesCount
+            Res.string.data_log_series_count, row.seriesCount
           ),
           style = MaterialTheme.typography.labelMedium,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
