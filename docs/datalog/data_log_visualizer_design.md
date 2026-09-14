@@ -115,6 +115,9 @@ that draws, and the server never parses it.
    `Squawk`. A pointer to shape 3's id, with no bytes and an empty `sha256`, so the blob machinery
    ignores it and the DataLog record outlives the reference.
 
+Every id above is a string inside its proto and a value class (`ThingId`, `DataLogId`, `BlobId`)
+everywhere Kotlin code passes it around; see §4.4.
+
 Two things worth noticing before reading §4. First, shapes 2 and 7 are the same class produced by
 the same parser; import and open differ only in where the bytes come from, which is why the parser
 version is stored on the record. Second, the server sees only shapes 5 and 4, and reads shape 5
@@ -305,6 +308,34 @@ explicit exclusion listed in §9.
 the kind, and its `stillReferenced` cross-check already protects a blob another live record shows,
 which is the case for a data log referenced from a log entry.
 
+### 4.4 Typed identifiers
+
+Protos carry ids as strings because that is what Wire and Firestore store. **No Kotlin API in this
+feature takes or returns a raw `String` id.** Every id crosses a module boundary as a value class,
+following `BlobId` (`core/storage/.../blob/BlobId.kt:13`, the one typed id the codebase has today):
+
+```kotlin
+// core/model — new, shared: the Thing this feature's APIs are scoped to
+@JvmInline value class ThingId(val value: String)
+
+// feature/datalog/model
+@JvmInline value class DataLogId(val value: String)
+@JvmInline value class PaneId(val value: Int)
+@JvmInline value class SeriesKey(val value: String)   // catalogue key: canonical_id, else short_name
+```
+
+Conversion happens once, at the edge: `DataLog.toDataLogId()`, `Attachment.dataLogIdOrNull()`,
+`Screen.DataLogViewer.createRoute(thingId: ThingId, dataLogId: DataLogId)`, and the nav-argument
+reader wraps the string it receives. Existing callers that hold a `String` thing id (the shell,
+`ThingScopeResolver.resolve(thingId: String)`) are wrapped at the call into this feature; migrating
+those existing APIs to `ThingId` is a separate cleanup, and this feature sets the precedent rather
+than doing the sweep. A `ThingId` and a `DataLogId` can no longer be swapped in a call, which is the
+whole point: `import(thingId, dataLogId)` with the arguments reversed does not compile.
+
+The same rule applies to the ViewModels, `ImportProgress`, `NotificationTapTarget.DataLog`,
+`ChartLayout`, and the analytics events' constructor parameters. Only the proto classes and the
+nav-argument strings hold bare strings.
+
 ## 5. Storage and transfer
 
 ### 5.1 Bytes
@@ -375,8 +406,8 @@ Storing      LocalBlobStore.put → DataLog record → EntityStore.put → sched
 Done(id)
 ```
 
-`ImportProgress` is a sealed class: `Reading, Parsing(rowsSoFar), Storing, Done(id),
-NeedsConfirmation(existingId), Failed(reason)` with `reason` an enum that maps one-to-one onto the
+`ImportProgress` is a sealed class: `Reading, Parsing(rowsSoFar), Storing, Done(id: DataLogId),
+NeedsConfirmation(existing: DataLogId), Failed(reason)` with `reason` an enum that maps one-to-one onto the
 `data_log_import_failed` analytics values (`unrecognized`, `duplicate`, `parse_error`).
 
 Threading follows the house pattern: an injected `CoroutineDispatcher` defaulting to
@@ -459,13 +490,13 @@ columns, 108 series, 67 numeric, the position collapse), the time base (`14:47:5
 
 ```kotlin
 interface DataLogManager {
-  fun observe(thingId: String): Flow<List<DataLog>>            // newest first
-  fun observeOne(thingId: String, id: String): Flow<DataLog?>
-  fun import(thingId: String, file: PickedFile, confirmDuplicate: Boolean = false): Flow<ImportProgress>
-  fun ensureLocal(id: String): Flow<DownloadState>
-  suspend fun load(id: String): Result<DataLogSeriesData>        // cache → blob → parse
-  suspend fun delete(thingId: String, id: String): Result<Unit>
-  fun observeBlobState(id: String): Flow<BlobSyncState?>
+  fun observe(thingId: ThingId): Flow<List<DataLog>>                       // newest first
+  fun observeOne(thingId: ThingId, id: DataLogId): Flow<DataLog?>
+  fun import(thingId: ThingId, file: PickedFile, confirmDuplicate: Boolean = false): Flow<ImportProgress>
+  fun ensureLocal(thingId: ThingId, id: DataLogId): Flow<DownloadState>
+  suspend fun load(thingId: ThingId, id: DataLogId): Result<DataLogSeriesData>   // cache → blob → parse
+  suspend fun delete(thingId: ThingId, id: DataLogId): Result<Unit>
+  fun observeBlobState(thingId: ThingId, id: DataLogId): Flow<BlobSyncState?>
 }
 ```
 
@@ -571,7 +602,7 @@ Viewing is never gated: a member opening a shared Thing's data log needs only Th
 | `AttachmentFormController.kt:205-212` `remove` | tombstones saved files | a ref drops outright |
 | `AttachmentFormController.kt:236-255` `resolveForSave` | three variants | include `LocalDataLogRef` |
 | `AttachmentFormController.kt:269-274` `deleteSavedFiles` | `type != LINK` | also `!= DATA_LOG` |
-| `LocalFirstAttachmentManagerImpl.kt:117-136` `makeLink` | template | add `makeDataLogRef(dataLogId, name)` |
+| `LocalFirstAttachmentManagerImpl.kt:117-136` `makeLink` | template | add `makeDataLogRef(dataLogId: DataLogId, name)` |
 | `LocalFirstAttachmentManagerImpl.kt:139` `delete` | `LINK` early return | also `DATA_LOG` |
 | `LogbookExportArchiveBuilder.kt:1301-1311` `attachmentCell` | `[attachment unavailable]` | "name (flight data log, 4m 15s)" text; bytes are not exported in V1 |
 | `AttachmentExportResolver.kt:55` | `type != LINK` | also `!= DATA_LOG` |
@@ -595,19 +626,19 @@ same-day rows annotated, rows already attached elsewhere dimmed but selectable, 
 `feature/datalog/viewing`; `feature/attachment/viewing` cannot depend on it, so the sheet takes the
 body as a slot lambda supplied by the form screens, which already depend on both.
 
-The three form ViewModels add `attachDataLog(id, name)` calling
+The three form ViewModels add `attachDataLog(id: DataLogId, name)` calling
 `controller.addDataLogRef(id, name)`, a non-suspending sibling of `addLink` with no quota and no
 error case.
 
 ### 9.3 Opening from a row
 
-The three tap handlers branch before `attachmentOpener.open`: `if (attachment.type == DATA_LOG)
-onOpenDataLog(attachment.data_log_id)`, where the tab already receives cross-navigation lambdas
+The three tap handlers branch before `attachmentOpener.open`:
+`attachment.dataLogIdOrNull()?.let(onOpenDataLog)`, where the tab already receives cross-navigation lambdas
 (`LogsTab.kt:107-108`). The handler dismisses the detail sheet and navigates to
 `Screen.DataLogViewer.createRoute(thingId, dataLogId)`.
 
-`ThingOverviewViewModel` observes `DataLogManager.observe(thingId)` and exposes `dataLogs` so rows can
-render subtitles and *Removed*. `feature/thing/dashboard` depends on `feature/datalog/model`,
+`ThingOverviewViewModel` observes `DataLogManager.observe(ThingId(thingId))` and exposes
+`dataLogs: Map<DataLogId, DataLogRowInfo>` so rows can render subtitles and *Removed*. `feature/thing/dashboard` depends on `feature/datalog/model`,
 `datamanager`, `sharedassets`, `viewing`, never `update`.
 
 ## 10. Section, list, and shell
@@ -624,8 +655,8 @@ needs nothing, it matches enum names; `PerThingSectionsTest` gains the capabilit
 
 ### 10.2 Body and FAB
 
-`ShellSectionBody` renders `DataLogSectionContent(thingId, onOpen, onNavigateToSettings)` from
-`feature/datalog/viewing`. `DataLogListViewModel(thingId)` combines `DataLogManager.observe`, the
+`ShellSectionBody` renders `DataLogSectionContent(thingId: ThingId, onOpen: (DataLogId) -> Unit,
+onNavigateToSettings)` from `feature/datalog/viewing`. `DataLogListViewModel(thingId: ThingId)` combines `DataLogManager.observe`, the
 upload gate, and `ImportProgress` of any in-flight imports into `uiState`. Rows show date and route
 or *Ground run*, start time, duration in mono, product, series count, the attached-to line, and an
 inline progress or error row during import (R34, R35). A pending scroll target from a notification
@@ -650,7 +681,7 @@ preset's bar, which is the PRD's intent; a screenshot in the PR shows a 320 dp p
 ```kotlin
 const val DATA_LOG_ID = "dataLogId"
 data object DataLogViewer : Screen("data_log/{$THING_ID}/{$DATA_LOG_ID}") {
-  fun createRoute(thingId: String, dataLogId: String) = "data_log/$thingId/$dataLogId"
+  fun createRoute(thingId: ThingId, dataLogId: DataLogId) = "data_log/${thingId.value}/${dataLogId.value}"
 }
 ```
 
@@ -662,8 +693,9 @@ Registered as a plain `composable` in `ShellNavGraph.settingsDetailRoutes`' styl
 
 ### 11.1 State
 
-`DataLogViewerViewModel(thingId, dataLogId)` owns everything the user can change, per the
-hoist-to-ViewModel rule: `ChartLayout(panes: List<Pane(id, seriesKeys)>, targetPaneId)`,
+`DataLogViewerViewModel(thingId: ThingId, dataLogId: DataLogId)` owns everything the user can change,
+per the hoist-to-ViewModel rule: `ChartLayout(panes: List<Pane(id: PaneId, series: List<SeriesKey>)>,
+targetPane: PaneId?)`,
 `view: TimeWindow?` (null = full), `cursorT: Double?`, `sidebarTab`, `query`. It loads through
 `DataLogManager.ensureLocal` then `load`, exposing `uiState: Loading(download progress) | Ready(record,
 data, layout, view, cursor) | Failed`. Layout edits debounce into `ChartLayoutStore`. Delete goes
@@ -786,7 +818,9 @@ never write the record, so only import and delete notify. Test: `dataLogEdit()` 
 create and delete body-key assertions mirroring `notification-fanout.test.ts:253-282`.
 
 Client: `PushPayload.noun()` and `sectionTitle()` branches for `"data_log"` using `dataLogNoun`;
-`parseTapTarget` prefix `data_log`; `NotificationTapTarget.DataLog(thingId, dataLogId)`;
+`parseTapTarget` prefix `data_log`; `NotificationTapTarget.DataLog(thingId, dataLogId: DataLogId)`
+(the existing targets hold a `String` thing id; this one matches them for `thingId` and types its own
+id, until the sealed interface is migrated to `ThingId` as a whole);
 `NotificationTapRouter` `wingslog://…/data_log/{thingId}/{id}`; `AdaptiveShellViewModel.onNotificationTap`
 selects the Thing, `DATA_LOGS`, and sets the pending scroll id; `WebForeignWriteDetector` gets the
 kind for its web-only detector.
@@ -831,6 +865,8 @@ commit (`StringSnapshotTest` fails on `added` otherwise), with lexicon-bearing o
 - **Parser:** `GarminParserTest` on the fixture (§6.4); header sniffing table for G3X, G1000, Dynon
   headers and three wrong files; malformed rows; a 20,000-row synthetic file under a time budget.
 - **Registry:** every canonical id round-trips; presets resolve against the fixture catalogue.
+- **Ids:** a compile-time check by construction; plus a small test that `Attachment.dataLogIdOrNull()`
+  is null for every other type and that route round-trips preserve `ThingId` and `DataLogId`.
 - **Importer / manager:** MockK `LocalBlobStore`, `EntityStoreFactory`, `UploadScheduler`;
   duplicate by `raw_sha256`; probable duplicate needs confirmation; scope from the resolver, never
   the uid; gzip round-trip on Android host tests; `NONE` path when `isAvailable()` is false.
