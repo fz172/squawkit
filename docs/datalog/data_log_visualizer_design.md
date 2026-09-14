@@ -163,8 +163,8 @@ how a function writes a field without racing the owning client's last-writer-win
 
 ```
 core/
-  model/src/commonMain/proto/id/ids.proto  # NEW: boxed id messages ThingId, DataLogId, UserId (§4.4)
-  model/src/commonMain/proto/datalog/data_log.proto  # NEW (§4.1)
+  model/src/commonMain/proto/id/ids.proto            # NEW: ThingId, DataLogId, UserId — package dev.fanfly.wingslog.id (§4.4)
+  model/src/commonMain/proto/datalog/data_log.proto  # NEW — package dev.fanfly.wingslog.datalog (§4.1)
   model/src/commonMain/proto/thing/
     attachment.proto                     # +ATTACHMENT_TYPE_DATA_LOG, +data_log_id (§4.2)
     capabilities.proto                   # +SECTION_DATA_LOGS
@@ -207,6 +207,9 @@ routes in `core/nav` and `feature/shell`, strings in `sharedassets`.
 ### 4.1 `datalog/data_log.proto`
 
 ```proto
+// core/model/src/commonMain/proto/datalog/data_log.proto
+option java_package = "dev.fanfly.wingslog.datalog";
+
 enum DataLogFormat {
   DATA_LOG_FORMAT_UNKNOWN = 0;
   DATA_LOG_FORMAT_GARMIN_G3X = 1;
@@ -320,12 +323,15 @@ class is already the dedicated type and there is exactly one `DataLogId` in the 
 
 ```proto
 // core/model/src/commonMain/proto/id/ids.proto
+option java_package = "dev.fanfly.wingslog.id";
+
 message ThingId   { string value = 1; }
 message DataLogId { string value = 1; }
 message UserId    { string value = 1; }
 ```
 
-Wire generates `DataLogId(value: String)` and friends as ordinary message classes with structural
+Wire generates `DataLogId(value: String)` and friends in `dev.fanfly.wingslog.id` (and `DataLog`
+with its enums in `dev.fanfly.wingslog.datalog`) as ordinary message classes with structural
 equality, so they serve as map keys and `StateFlow` values without a parallel Kotlin wrapper; ts-proto
 generates the matching interfaces for the functions, which read `doc.id.value`. The wire cost is two
 bytes per id.
@@ -972,11 +978,11 @@ PR 9+ the formats epic.
 
 | Id | PR | Task | Where | Size | Needs | PRD |
 |---|---|---|---|---|---|---|
-| T01 | 1 | `ids.proto` with `ThingId`, `DataLogId`, `UserId`; proto lint test for bare string ids on new messages | `core/model` proto + test | S | — | §4.4 |
-| T02 | 1 | `data_log.proto` (`DataLog`, `DataLogSource`, `DataLogSeries`, three enums); `ATTACHMENT_TYPE_DATA_LOG` and `Attachment.data_log_id` | `core/model` proto | S | T01 | R15, §4.1–4.2 |
+| T01 | 1 | `id/ids.proto` with `ThingId`, `DataLogId`, `UserId`; proto lint test for bare string ids on new messages | `core/model` proto + test | S | — | §4.4 |
+| T02 | 1 | `datalog/data_log.proto` (`DataLog`, `DataLogSource`, `DataLogSeries`, three enums); `ATTACHMENT_TYPE_DATA_LOG` and `Attachment.data_log_id` | `core/model` proto | S | T01 | R15, §4.1–4.2 |
 | T03 | 1 | `CollectionKind.DataLog`, coverage test, codec registration, `AttachmentRefs.of(DataLog)` and the `DATA_LOG` exclusion in `blobIdsIn` | `core/storage` | S | T02 | R16, R17 |
 | T04 | 1 | `PER_THING_KINDS` entry; `isSharedAircraftKind` rules entry; `sharing-rules.test.ts` member write | `feature/sync/data`, `backend/firebase` | S | T03 | R37 |
-| T05 | 1 | Backend proto generation for `ids.proto` and `data_log.proto`; `blobRefs.ts` schema, `schemaCanOwnBlobs`, `blobIdsInPayload`, `DATA_LOG` exclusion in `blobIds()`; `blob-cleanup.test.ts` cases | `backend/firebase/functions` | M | T02 | R19, §4.3 |
+| T05 | 1 | Backend proto generation for `id/ids.proto` and `datalog/data_log.proto`; `blobRefs.ts` schema, `schemaCanOwnBlobs`, `blobIdsInPayload`, `DATA_LOG` exclusion in `blobIds()`; `blob-cleanup.test.ts` cases | `backend/firebase/functions` | M | T02 | R19, §4.3 |
 | T06 | 1 | `SECTION_DATA_LOGS`; `Lexicon.data_log`, `data_log_description`, `EmptyStates.data_log_hint`; `GenericLexicon` defaults; `LexiconNouns.dataLogNoun` | `core/model` proto, `core/template` | S | — | R42, R45 |
 | T07 | 1 | `airplane.v12.textproto` with the section and lexicon lines; compile; asset test pins five sections | `core/template/templates` | S | T06 | R42 |
 | T08 | 1 | `TemplateRegistry.capabilitiesFor`; `CurrentThingTemplate` uses it; `resolve()` skips the enum check for a known id; registry tests | `core/template` | M | T06 | R42 |
