@@ -27,6 +27,7 @@ kotlin {
     commonMain.dependencies {
       implementation(project(":core:model"))
       implementation(project(":core:storage"))
+      implementation(project(":core:file"))
       implementation(project(":core:datetime"))
       implementation(project(":core:auth"))
       implementation(project(":feature:datalog:model"))
