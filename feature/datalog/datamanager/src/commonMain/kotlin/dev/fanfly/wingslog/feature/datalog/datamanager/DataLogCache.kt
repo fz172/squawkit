@@ -11,7 +11,8 @@ class DataLogCache(private val capacity: Int = 2) {
   private val entries = LinkedHashMap<DataLogId, DataLogSeriesData>()
 
   suspend fun get(id: DataLogId): DataLogSeriesData? = mutex.withLock {
-    entries.remove(id)?.also { entries[id] = it }
+    entries.remove(id)
+      ?.also { entries[id] = it }
   }
 
   suspend fun put(id: DataLogId, data: DataLogSeriesData) = mutex.withLock {

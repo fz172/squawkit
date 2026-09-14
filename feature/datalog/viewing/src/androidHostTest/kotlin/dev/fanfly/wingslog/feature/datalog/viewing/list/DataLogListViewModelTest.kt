@@ -196,7 +196,9 @@ class DataLogListViewModelTest {
   @Test
   fun swipeDeleteAsksFirstThenDeletesThroughTheManager() = runTest {
     logs.value = listOf(log("a", "2026-09-02T21:47:56Z"))
-    coEvery { manager.delete(thingId, DataLogId("a")) } returns Result.success(Unit)
+    coEvery { manager.delete(thingId, DataLogId("a")) } returns Result.success(
+      Unit
+    )
     val vm = viewModel()
     val row = vm.uiState.first { !it.isLoading }.rows.single()
 
@@ -215,7 +217,9 @@ class DataLogListViewModelTest {
   @Test
   fun aFailedDeleteRaisesAnEvent() = runTest {
     logs.value = listOf(log("a", "2026-09-02T21:47:56Z"))
-    coEvery { manager.delete(thingId, DataLogId("a")) } returns Result.failure(IllegalStateException("offline"))
+    coEvery { manager.delete(thingId, DataLogId("a")) } returns Result.failure(
+      IllegalStateException("offline")
+    )
     val vm = viewModel()
     val row = vm.uiState.first { !it.isLoading }.rows.single()
     val events = mutableListOf<DataLogListEvent>()

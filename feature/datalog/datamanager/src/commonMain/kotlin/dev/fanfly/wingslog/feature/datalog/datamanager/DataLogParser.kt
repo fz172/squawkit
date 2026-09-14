@@ -22,4 +22,5 @@ interface DataLogParser {
   suspend fun parse(bytes: ByteArray, fileName: String): ParsedDataLog
 }
 
-class DataLogParseException(message: String, cause: Throwable? = null) : Exception(message, cause)
+class DataLogParseException(message: String, cause: Throwable? = null) :
+  Exception(message, cause)

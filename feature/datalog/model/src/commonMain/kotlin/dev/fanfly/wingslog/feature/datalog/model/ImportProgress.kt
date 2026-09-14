@@ -18,8 +18,10 @@ sealed class ImportProgress {
 enum class ImportFailure {
   /** The file could not be opened or read. */
   UNREADABLE,
-  /** No parser recognised the header. */
+
+  /** No parser recognized the header. */
   UNRECOGNIZED,
+
   /** The same file (by content hash) is already on this Thing. */
   DUPLICATE,
   PARSE_ERROR,

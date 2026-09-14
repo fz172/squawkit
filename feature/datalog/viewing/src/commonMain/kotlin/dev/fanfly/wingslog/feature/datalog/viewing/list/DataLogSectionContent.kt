@@ -42,22 +42,21 @@ import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalNavPillClearance
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalSnackbarHostState
 import dev.fanfly.wingslog.core.ui.common.compose.AlertDialog
+import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
 import dev.fanfly.wingslog.core.ui.common.compose.SwipeAction
 import dev.fanfly.wingslog.core.ui.common.compose.SwipeActionCard
 import dev.fanfly.wingslog.core.ui.common.compose.SwipeActionTone
 import dev.fanfly.wingslog.core.ui.common.compose.rememberSwipeRevealController
-import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.attachment.viewing.rememberFilePicker
 import dev.fanfly.wingslog.feature.search.viewing.NoRecordsMatch
 import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.id.ThingId
 import org.jetbrains.compose.resources.stringResource
-import wingslog.feature.datalog.sharedassets.generated.resources.Res
-import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.core.sharedassets.generated.resources.cancel
 import wingslog.core.sharedassets.generated.resources.delete
 import wingslog.core.sharedassets.generated.resources.delete_failed
+import wingslog.feature.datalog.sharedassets.generated.resources.Res
 import wingslog.feature.datalog.sharedassets.generated.resources.data_log_delete_body
 import wingslog.feature.datalog.sharedassets.generated.resources.data_log_delete_title
 import wingslog.feature.datalog.sharedassets.generated.resources.data_log_empty_title
@@ -65,6 +64,7 @@ import wingslog.feature.datalog.sharedassets.generated.resources.data_log_recent
 import wingslog.feature.datalog.sharedassets.generated.resources.data_log_supported_formats
 import wingslog.feature.datalog.sharedassets.generated.resources.data_log_upload
 import wingslog.feature.search.sharedassets.generated.resources.search_placeholder
+import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.search.sharedassets.generated.resources.Res as SearchRes
 
 /**
@@ -91,7 +91,9 @@ fun DataLogSectionContent(
   LaunchedEffect(viewModel) {
     viewModel.events.collect { event ->
       when (event) {
-        DataLogListEvent.DeleteFailed -> snackbarHostState?.showSnackbar(deleteFailed)
+        DataLogListEvent.DeleteFailed -> snackbarHostState?.showSnackbar(
+          deleteFailed
+        )
       }
     }
   }
@@ -201,7 +203,8 @@ fun DataLogSectionContent(
       }
 
       else -> LazyColumn(
-        modifier = Modifier.fillMaxSize().nestedScroll(revealController.closeOnScroll),
+        modifier = Modifier.fillMaxSize()
+          .nestedScroll(revealController.closeOnScroll),
         contentPadding = PaddingValues(
           start = Spacing.screenPadding,
           end = Spacing.screenPadding,
@@ -252,7 +255,11 @@ fun DataLogSectionContent(
             controller = revealController,
             key = row.id.value_,
           ) {
-            DataLogCard(row = row, onClick = { onOpen(row.id) }, showDetails = !compact)
+            DataLogCard(
+              row = row,
+              onClick = { onOpen(row.id) },
+              showDetails = !compact
+            )
           }
         }
       }
@@ -262,7 +269,14 @@ fun DataLogSectionContent(
   state.deleting?.let {
     AlertDialog(
       onDismissRequest = viewModel::cancelDelete,
-      title = { Text(stringResource(Res.string.data_log_delete_title, LexiconFormatter.titleCase(lexicon.dataLogNoun))) },
+      title = {
+        Text(
+          stringResource(
+            Res.string.data_log_delete_title,
+            LexiconFormatter.titleCase(lexicon.dataLogNoun)
+          )
+        )
+      },
       text = { Text(stringResource(Res.string.data_log_delete_body)) },
       confirmButton = {
         TextButton(
@@ -271,7 +285,13 @@ fun DataLogSectionContent(
         ) { Text(stringResource(CoreRes.string.delete)) }
       },
       dismissButton = {
-        TextButton(onClick = viewModel::cancelDelete) { Text(stringResource(CoreRes.string.cancel)) }
+        TextButton(onClick = viewModel::cancelDelete) {
+          Text(
+            stringResource(
+              CoreRes.string.cancel
+            )
+          )
+        }
       },
     )
   }
@@ -281,5 +301,12 @@ fun DataLogSectionContent(
 private fun dataLogQuickActions(onDelete: (() -> Unit)?): List<SwipeAction> {
   val label = stringResource(CoreRes.string.delete)
   return if (onDelete == null) emptyList()
-  else listOf(SwipeAction(icon = Icons.Filled.Delete, label = label, tone = SwipeActionTone.DESTRUCTIVE, onClick = onDelete))
+  else listOf(
+    SwipeAction(
+      icon = Icons.Filled.Delete,
+      label = label,
+      tone = SwipeActionTone.DESTRUCTIVE,
+      onClick = onDelete
+    )
+  )
 }

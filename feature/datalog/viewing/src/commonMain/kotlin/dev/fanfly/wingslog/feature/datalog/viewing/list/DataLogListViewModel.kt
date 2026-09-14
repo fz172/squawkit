@@ -87,11 +87,18 @@ class DataLogListViewModel(
   private val deleting = MutableStateFlow<DataLogRow?>(null)
   private var nextImportKey = 0L
 
-  private val _events = MutableSharedFlow<DataLogListEvent>(extraBufferCapacity = 1)
+  private val _events =
+    MutableSharedFlow<DataLogListEvent>(extraBufferCapacity = 1)
   val events: SharedFlow<DataLogListEvent> = _events
 
   val uiState: StateFlow<DataLogListUiState> =
-    combine(manager.observe(thingId), query, imports, loaded, deleting) { logs, q, imports, loaded, deleting ->
+    combine(
+      manager.observe(thingId),
+      query,
+      imports,
+      loaded,
+      deleting
+    ) { logs, q, imports, loaded, deleting ->
       DataLogListUiState(
         isLoading = !loaded,
         rows = logs.map { it.toRow() },
@@ -154,7 +161,8 @@ class DataLogListViewModel(
     val row = deleting.value ?: return
     deleting.value = null
     viewModelScope.launch {
-      manager.delete(thingId, row.id).onFailure { _events.tryEmit(DataLogListEvent.DeleteFailed) }
+      manager.delete(thingId, row.id)
+        .onFailure { _events.tryEmit(DataLogListEvent.DeleteFailed) }
     }
   }
 
