@@ -115,8 +115,9 @@ that draws, and the server never parses it.
    `Squawk`. A pointer to shape 3's id, with no bytes and an empty `sha256`, so the blob machinery
    ignores it and the DataLog record outlives the reference.
 
-Every id above is a string inside its proto and a value class (`ThingId`, `DataLogId`, `BlobId`)
-everywhere Kotlin code passes it around; see §4.4.
+Every id above that belongs to a new type is a boxed proto message (`ThingId`, `DataLogId`, `UserId`)
+in the schema and therefore in the generated Kotlin and TypeScript; only the grandfathered
+`Attachment.id` stays a string, wrapped as `BlobId` where the blob store reads it. See §4.4.
 
 Two things worth noticing before reading §4. First, shapes 2 and 7 are the same class produced by
 the same parser; import and open differ only in where the bytes come from, which is why the parser
@@ -163,6 +164,7 @@ how a function writes a field without racing the owning client's last-writer-win
 ```
 core/
   model/src/commonMain/proto/thing/
+    ids.proto                            # NEW: boxed id messages ThingId, DataLogId, UserId (§4.4)
     data_log.proto                       # NEW (§4.1)
     attachment.proto                     # +ATTACHMENT_TYPE_DATA_LOG, +data_log_id (§4.2)
     capabilities.proto                   # +SECTION_DATA_LOGS
@@ -237,7 +239,7 @@ message DataLogSeries {
 }
 
 message DataLog {
-  string id = 1;
+  DataLogId id = 1;                  // boxed, never a bare string (§4.4)
   DataLogFormat format = 2;
   int32 parser_version = 3;          // bumps when the parser changes what it emits
   DataLogSource source = 4;
@@ -259,7 +261,7 @@ message DataLog {
   double end_longitude = 20;
   string end_location_ident = 21;    // written by the server in V2, empty until then
   google.protobuf.Timestamp created_at = 22;
-  string created_by_uid = 23;
+  UserId created_by = 23;
 }
 ```
 
@@ -278,7 +280,7 @@ hash lives in `raw_sha256`.
 
 ```proto
 enum AttachmentType { ...; ATTACHMENT_TYPE_DATA_LOG = 5; }
-message Attachment { ...; string data_log_id = 11; }   // set only for DATA_LOG; sha256 stays empty
+message Attachment { ...; DataLogId data_log_id = 11; }   // set only for DATA_LOG; sha256 stays empty
 ```
 
 A `DATA_LOG` attachment is a reference like `LINK`: no blob, empty `sha256`, `size_bytes = 0`,
@@ -308,33 +310,43 @@ explicit exclusion listed in §9.
 the kind, and its `stillReferenced` cross-check already protects a blob another live record shows,
 which is the case for a data log referenced from a log entry.
 
-### 4.4 Typed identifiers
+### 4.4 Typed identifiers, at the model level
 
-Protos carry ids as strings because that is what Wire and Firestore store. **No Kotlin API in this
-feature takes or returns a raw `String` id.** Every id crosses a module boundary as a value class,
-following `BlobId` (`core/storage/.../blob/BlobId.kt:13`, the one typed id the codebase has today):
+**New model types never carry an id as a bare string, in the proto or in Kotlin.** Existing messages
+(`Thing`, `Attachment.id`, `Squawk`, …) are grandfathered. The one typed id the codebase has today,
+`BlobId` (`core/storage/.../blob/BlobId.kt:13`), is a Kotlin value class over a grandfathered string
+field; new types go one step further and box the id in the schema itself, so the generated model
+class is already the dedicated type and there is exactly one `DataLogId` in the codebase.
 
-```kotlin
-// core/model — new, shared: the Thing this feature's APIs are scoped to
-@JvmInline value class ThingId(val value: String)
-
-// feature/datalog/model
-@JvmInline value class DataLogId(val value: String)
-@JvmInline value class PaneId(val value: Int)
-@JvmInline value class SeriesKey(val value: String)   // catalogue key: canonical_id, else short_name
+```proto
+// core/model/src/commonMain/proto/thing/ids.proto
+message ThingId   { string value = 1; }
+message DataLogId { string value = 1; }
+message UserId    { string value = 1; }
 ```
 
-Conversion happens once, at the edge: `DataLog.toDataLogId()`, `Attachment.dataLogIdOrNull()`,
-`Screen.DataLogViewer.createRoute(thingId: ThingId, dataLogId: DataLogId)`, and the nav-argument
-reader wraps the string it receives. Existing callers that hold a `String` thing id (the shell,
-`ThingScopeResolver.resolve(thingId: String)`) are wrapped at the call into this feature; migrating
-those existing APIs to `ThingId` is a separate cleanup, and this feature sets the precedent rather
-than doing the sweep. A `ThingId` and a `DataLogId` can no longer be swapped in a call, which is the
-whole point: `import(thingId, dataLogId)` with the arguments reversed does not compile.
+Wire generates `DataLogId(value: String)` and friends as ordinary message classes with structural
+equality, so they serve as map keys and `StateFlow` values without a parallel Kotlin wrapper; ts-proto
+generates the matching interfaces for the functions, which read `doc.id.value`. The wire cost is two
+bytes per id.
 
-The same rule applies to the ViewModels, `ImportProgress`, `NotificationTapTarget.DataLog`,
-`ChartLayout`, and the analytics events' constructor parameters. Only the proto classes and the
-nav-argument strings hold bare strings.
+Rules for this feature:
+
+- Every id field on a **new** message is a boxed message: `DataLog.id`, `DataLog.created_by`,
+  `Attachment.data_log_id` (a new field on an old message still uses the boxed type).
+- Every Kotlin API takes and returns the generated types: `DataLogManager`, `ImportProgress`,
+  the ViewModels, `NotificationTapTarget.DataLog`, `Screen.DataLogViewer.createRoute(thingId:
+  ThingId, dataLogId: DataLogId)`, analytics event constructors.
+- Ids that are not persisted and not shared, `PaneId` and `SeriesKey` inside `ChartLayout`, are
+  Kotlin value classes in `feature/datalog/model`, because a proto message for device-local UI state
+  would be schema for schema's sake.
+- Conversion to the grandfathered string world happens once, at the edge: `EntityStore.put(id.value,
+  …)`, `ThingScopeResolver.resolve(thingId.value)`, the nav-argument reader wrapping into `ThingId(…)`
+  and `DataLogId(…)`, and `BlobId(rawFile.id)` for the embedded attachment's blob.
+
+A `ThingId` and a `DataLogId` can no longer be swapped in a call or in a proto field, which is the
+whole point. Migrating the grandfathered messages and the existing string-id APIs is a separate
+cleanup; this feature sets the precedent and does not do the sweep.
 
 ## 5. Storage and transfer
 
@@ -865,8 +877,10 @@ commit (`StringSnapshotTest` fails on `added` otherwise), with lexicon-bearing o
 - **Parser:** `GarminParserTest` on the fixture (§6.4); header sniffing table for G3X, G1000, Dynon
   headers and three wrong files; malformed rows; a 20,000-row synthetic file under a time budget.
 - **Registry:** every canonical id round-trips; presets resolve against the fixture catalogue.
-- **Ids:** a compile-time check by construction; plus a small test that `Attachment.dataLogIdOrNull()`
-  is null for every other type and that route round-trips preserve `ThingId` and `DataLogId`.
+- **Ids:** a compile-time check by construction; plus a small test that `Attachment.data_log_id` is
+  null for every other type, that route round-trips preserve `ThingId` and `DataLogId`, and a proto
+  lint in `core/model` tests that every `string` field on a new message whose name ends in `_id` or
+  is `id` fails (grandfathered messages listed explicitly).
 - **Importer / manager:** MockK `LocalBlobStore`, `EntityStoreFactory`, `UploadScheduler`;
   duplicate by `raw_sha256`; probable duplicate needs confirmation; scope from the resolver, never
   the uid; gzip round-trip on Android host tests; `NONE` path when `isAvailable()` is false.
