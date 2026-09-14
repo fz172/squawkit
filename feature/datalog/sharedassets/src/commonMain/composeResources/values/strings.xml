@@ -16,6 +16,7 @@
   <string name="data_log_viewer_load_failed">This file could not be opened.</string>
   <string name="data_log_viewer_missing">This <xliff:g example="data log">%1$s</xliff:g> was deleted.</string>
   <string name="data_log_pane_empty">No series in this pane</string>
+  <string name="data_log_viewer_reset">Reset</string>
   <string name="data_log_viewer_utc_offset"><xliff:g example="14:47">%1$s</xliff:g> local (<xliff:g example="UTC-07:00">%2$s</xliff:g>)</string>
 
   <!-- Inline import rows (R35) -->
