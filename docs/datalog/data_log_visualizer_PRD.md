@@ -336,8 +336,8 @@ Three mechanisms, kept separate, per [AGENTS.md § Gating](../../AGENTS.md#gatin
 
 ### 5.9 Lexicon
 
-- **R45 (P0).** New lexicon entries: the data-log noun (airplane: "flight data log" / "flight data
-  logs", short plural "Flight Data"), and the empty-state hint. Every string that names the concept —
+- **R45 (P0).** New lexicon entries: the data-log noun (airplane: "data log" / "data logs archive",
+  short plural "Data Archive"), and the empty-state hint. Every string that names the concept —
   section title, attachment option, badge, picker title, delete confirmation, snackbars — resolves
   from these. No string hard-codes "flight".
 

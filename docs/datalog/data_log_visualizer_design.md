@@ -561,8 +561,8 @@ a `NeedsConfirmation` variant carrying the candidate Thing id.
 
 - `capabilities.proto`: `SECTION_DATA_LOGS = 5`; update the comment that says the enum mirrors
   `ShellSection`'s first four.
-- `lexicon.proto`: `Noun data_log = 19` (airplane: "flight data log" / "flight data logs" /
-  short plural "Flight Data"), `string data_log_description = 20` (the section subtitle),
+- `lexicon.proto`: `Noun data_log = 19` (airplane: "data log" / "data logs archive" / short plural
+  "Data Archive"), `string data_log_description = 20` (the section subtitle),
   `EmptyStates.data_log_hint = 11`.
 - `airplane.v12.textproto`: `sections` gains `SECTION_DATA_LOGS` after `SECTION_LOGS`; the lexicon
   and empty-state lines above; `git mv`, `version: 12`, `git rm binary/airplane.v11.pb`,
