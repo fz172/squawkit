@@ -16,6 +16,17 @@ sealed interface TimeWindow {
   data class Custom(val start: LocalDate, val end: LocalDate) : TimeWindow
 }
 
+/**
+ * What a chip tap leaves selected: tapping the window already in force clears back to [TimeWindow.All],
+ * so a pick-one section can be emptied where it was set instead of through *Clear all*. The custom
+ * chip stands for any custom range, so it compares by kind rather than by its dates.
+ */
+fun timeWindowAfterTap(current: TimeWindow, tapped: TimeWindow): TimeWindow = when {
+  current == tapped -> TimeWindow.All
+  current is TimeWindow.Custom && tapped is TimeWindow.Custom -> TimeWindow.All
+  else -> tapped
+}
+
 /** Back from today (work done) or forward (task due). */
 enum class TimeDirection { PAST, FUTURE }
 

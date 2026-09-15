@@ -134,4 +134,31 @@ class TimeWindowTest {
       )
     ).isFalse()
   }
+
+  @Test
+  fun tappingTheWindowAlreadyInForceClearsItBackToAll() {
+    val threeMonths = TimeWindow.LastMonths(3)
+
+    // A fresh option is selected; the same one again clears.
+    assertThat(timeWindowAfterTap(TimeWindow.All, threeMonths)).isEqualTo(threeMonths)
+    assertThat(timeWindowAfterTap(threeMonths, threeMonths)).isEqualTo(TimeWindow.All)
+
+    // Switching between options still switches rather than clearing.
+    assertThat(timeWindowAfterTap(threeMonths, TimeWindow.LastMonths(12)))
+      .isEqualTo(TimeWindow.LastMonths(12))
+
+    // "Any time" is the cleared state, so tapping it while selected is a no-op.
+    assertThat(timeWindowAfterTap(TimeWindow.All, TimeWindow.All)).isEqualTo(TimeWindow.All)
+  }
+
+  @Test
+  fun theCustomChipClearsWhateverRangeItHolds() {
+    val current = TimeWindow.Custom(LocalDate(2026, 1, 1), LocalDate(2026, 3, 1))
+    // The chip always offers a default range, so it never equals the range on screen.
+    val tapped = TimeWindow.Custom(LocalDate(2026, 6, 15), LocalDate(2026, 9, 15))
+
+    assertThat(timeWindowAfterTap(current, tapped)).isEqualTo(TimeWindow.All)
+    assertThat(timeWindowAfterTap(TimeWindow.All, tapped)).isEqualTo(tapped)
+    assertThat(timeWindowAfterTap(TimeWindow.LastMonths(3), tapped)).isEqualTo(tapped)
+  }
 }

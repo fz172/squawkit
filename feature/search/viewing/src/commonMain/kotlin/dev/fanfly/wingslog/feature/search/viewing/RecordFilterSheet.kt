@@ -43,6 +43,7 @@ import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.feature.search.model.RecordFilter
 import dev.fanfly.wingslog.feature.search.model.TimeWindow
+import dev.fanfly.wingslog.feature.search.model.timeWindowAfterTap
 import dev.fanfly.wingslog.feature.search.model.visibleComponentOptions
 import dev.fanfly.wingslog.thing.ComponentType
 import kotlinx.datetime.DateTimeUnit
@@ -404,7 +405,7 @@ private fun TimeSection(
         label = preset.optionLabel(dueWithin),
         selected = time == preset,
         count = count?.invoke(preset),
-        onClick = { onTimeWindowChange(preset) },
+        onClick = { onTimeWindowChange(timeWindowAfterTap(time, preset)) },
       )
     }
     ChoiceChip(
@@ -412,14 +413,8 @@ private fun TimeSection(
         .optionLabel(dueWithin),
       selected = custom != null,
       onClick = {
-        if (custom == null) onTimeWindowChange(
-          TimeWindow.Custom(
-            today.minus(
-              3,
-              DateTimeUnit.MONTH
-            ), today
-          )
-        )
+        val tapped = TimeWindow.Custom(today.minus(3, DateTimeUnit.MONTH), today)
+        onTimeWindowChange(timeWindowAfterTap(time, tapped))
       },
     )
   }
