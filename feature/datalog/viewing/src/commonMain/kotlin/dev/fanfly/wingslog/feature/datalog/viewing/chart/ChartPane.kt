@@ -57,9 +57,13 @@ class PaneSeries(
   val values: FloatArray,
 )
 
-/** Pane heights from design §11.7; no Spacing token covers them. */
+/**
+ * Pane heights from design §11.7; no Spacing token covers them. The wide tier is half again the
+ * compact one rather than shorter: a phone shows one pane at a time and a desktop shows the whole
+ * stack, so the desktop pane was the one being squeezed.
+ */
 internal val PaneHeightCompact: Dp = 170.dp
-internal val PaneHeightWide: Dp = 150.dp
+internal val PaneHeightWide: Dp = 225.dp
 private val AxisLabelSize = 10.sp
 private val CursorStroke = 1.dp
 private val SeriesStroke = 1.5.dp

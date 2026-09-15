@@ -858,8 +858,9 @@ toggled by the *tune* action. The drawer is Material's `ModalNavigationDrawer` l
 (a drawer is not one of the scoped popups, but its content still sits inside a `TextSelectionLayer`
 because it hosts a text field). Tabs
 *Series* (search, range, add or check) and *Flight* (record facts, source facts, identity notice).
-Narrow header collapses *Upload* and *Reset* to icons; pane height 170 dp on compact, 150 dp
-otherwise.
+Narrow header collapses *Upload* and *Reset* to icons; pane height 170 dp on compact, 225 dp
+otherwise (the wide tier shows the whole stack at once, so it is the one with room to spare). The
+map pane is 1.5× whichever applies.
 
 ### 11.8 Presets and default layout (R21, R30)
 
