@@ -22,6 +22,8 @@ import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+import dev.fanfly.wingslog.feature.datalog.model.dataLogIdOrNull
+import dev.fanfly.wingslog.id.DataLogId
 
 @Composable
 fun LogsTab(
@@ -29,6 +31,7 @@ fun LogsTab(
   syncStates: Map<String, BlobSyncState> = emptyMap(),
   onNavigateToAddLog: (() -> Unit)?,
   onNavigateToEditLog: ((logId: String) -> Unit)?,
+  onOpenDataLog: (DataLogId) -> Unit,
   onTaskClick: (taskId: String) -> Unit,
   onSquawkClick: (squawkId: String) -> Unit,
   scrollToLogId: String? = null,
@@ -92,6 +95,11 @@ fun LogsTab(
     onAddLog = onNavigateToAddLog?.let { viewModel::onAddLog },
     onAttachmentTap = { attachment ->
       openError = null
+      attachment.dataLogIdOrNull()?.let { dataLogId ->
+        viewModel.onDismissDetail()
+        onOpenDataLog(dataLogId)
+        return@MaintenanceLogListContent
+      }
       // Call open() synchronously inside the click handler so AttachmentOpenerWeb can
       // reserve window.open() during the user-gesture stack. Only the flow collection
       // moves into the coroutine.

@@ -329,6 +329,9 @@ class ThingOverviewViewModel(
         hideTaskDetail()
       }
 
+      // Navigation only; ThingSectionContent routes it.
+      is ThingOverviewAction.OpenDataLogClick -> Unit
+
       is ThingOverviewAction.EditTaskClick -> {
         hideTaskDetail()
         viewModelScope.launch {

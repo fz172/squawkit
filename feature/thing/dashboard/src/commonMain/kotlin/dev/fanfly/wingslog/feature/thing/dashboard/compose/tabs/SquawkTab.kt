@@ -14,6 +14,8 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import dev.fanfly.wingslog.feature.datalog.model.dataLogIdOrNull
+import dev.fanfly.wingslog.id.DataLogId
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -113,6 +115,7 @@ fun SquawkTab(
   onAction: (ThingOverviewAction) -> Unit,
   onMutationAction: ((ThingOverviewAction) -> Unit)? = onAction,
   onLogClick: ((logId: String) -> Unit)? = null,
+  onOpenDataLog: ((DataLogId) -> Unit)? = null,
   /** Jumped-to squawk (from a log's Resolved Squawks): switch to its sub-view and scroll to it. */
   scrollToSquawkId: String? = null,
   showHeader: Boolean = true,
@@ -465,6 +468,11 @@ fun SquawkTab(
       },
       onAttachmentTap = { attachment ->
         openError = null
+        attachment.dataLogIdOrNull()?.let { dataLogId ->
+          onAction(ThingOverviewAction.DismissSquawkDetail)
+          onOpenDataLog?.invoke(dataLogId)
+          return@SquawkDetailSheet
+        }
         val openFlow = attachmentOpener.open(attachment)
         coroutineScope.launch {
           openFlow.collect { openState ->
