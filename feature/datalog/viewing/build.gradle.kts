@@ -30,6 +30,7 @@ kotlin {
 
   sourceSets {
     commonMain.dependencies {
+      implementation(project(":core:analytics"))
       implementation(project(":core:appinfo"))
       implementation(project(":core:model"))
       implementation(project(":core:auth"))

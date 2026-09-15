@@ -3,14 +3,18 @@ package dev.fanfly.wingslog.feature.datalog.viewing.list
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
+import dev.fanfly.wingslog.core.analytics.AnalyticsManager
+import dev.fanfly.wingslog.core.analytics.DataLogImportSource
 import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.core.datetime.toInstant
+import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import dev.fanfly.wingslog.datalog.DataLog
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
 import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogManager
 import dev.fanfly.wingslog.feature.datalog.model.ImportFailure
 import dev.fanfly.wingslog.feature.datalog.model.ImportProgress
 import dev.fanfly.wingslog.feature.datalog.model.dataLogId
+import dev.fanfly.wingslog.feature.datalog.viewing.analytics.DataLogImportTelemetry
 import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.id.ThingId
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -19,6 +23,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -78,8 +83,13 @@ data class DataLogListUiState(
 class DataLogListViewModel(
   private val manager: DataLogManager,
   private val auth: AuthManager,
+  analytics: AnalyticsManager,
+  templates: CurrentThingTemplate,
   private val thingId: ThingId,
 ) : ViewModel() {
+
+  private val telemetry =
+    DataLogImportTelemetry(analytics, templates, DataLogImportSource.LIST)
 
   private val query = MutableStateFlow("")
   private val imports = MutableStateFlow<List<ImportRow>>(emptyList())
@@ -192,7 +202,11 @@ class DataLogListViewModel(
           .collect { progress ->
             if (progress is ImportProgress.Done) {
               dismissImport(row.key)
+              // The parser's answer for duration and series, so it is read back from the store.
+              manager.observeOne(thingId, progress.id).first()
+                ?.let { telemetry.imported(it, row.file) }
             } else {
+              if (progress is ImportProgress.Failed) telemetry.failed(progress.reason, row.file)
               imports.update { rows ->
                 rows.map {
                   if (it.key == row.key) it.copy(
@@ -204,6 +218,7 @@ class DataLogListViewModel(
           }
       } catch (e: Exception) {
         logger.w(e) { "Import failed" }
+        telemetry.failed(ImportFailure.PARSE_ERROR, row.file)
         imports.update { rows ->
           rows.map {
             if (it.key == row.key) it.copy(

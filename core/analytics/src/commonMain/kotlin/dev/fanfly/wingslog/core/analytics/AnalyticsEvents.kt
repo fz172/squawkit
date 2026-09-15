@@ -284,3 +284,103 @@ data class RecordQuickAction(
     Param.SOURCE to source.wire,
   )
 }
+
+// ---------------------------------------------------------------------------------------------
+// Data logs (docs/datalog/data_log_visualizer_design.md §13.1). The design also lists
+// `data_log_layout_applied` / `preset`; T39 (chart presets) was closed as obsolete, so there is no
+// call site for either and neither is defined — a name with nothing emitting it is a GA4 series
+// that reads as zero rather than as absent.
+// ---------------------------------------------------------------------------------------------
+
+/** Where an import was started from. The two pickers differ in intent, not in what they store. */
+enum class DataLogImportSource(val wire: String) {
+  /** The upload button on the Thing's data log list. */
+  LIST("list"),
+
+  /** Picking a file while attaching a log to a squawk, task, or work log. */
+  ATTACHMENT("attachment"),
+}
+
+/** Why an import stopped. One value per `ImportFailure`, which the call site maps. */
+enum class DataLogImportFailureReason(val wire: String) {
+  UNREADABLE("unreadable"),
+  UNRECOGNIZED("unrecognized"),
+  DUPLICATE("duplicate"),
+  PARSE_ERROR("parse_error"),
+}
+
+/**
+ * A file was parsed and stored. [format] is the recorder product the parser identified, which is
+ * what PRD §13 reads to decide which recorders are worth a dedicated parser next.
+ */
+data class DataLogImported(
+  override val templateId: String,
+  val source: DataLogImportSource,
+  val format: String,
+  val durationSeconds: Int,
+  val sizeBytes: Long,
+  val seriesCount: Int,
+) : ThingScopedEvent {
+  override val name = Name.DATA_LOG_IMPORTED
+  override val params = mapOf(
+    Param.TEMPLATE_ID to templateId,
+    Param.SOURCE to source.wire,
+    Param.FORMAT to format,
+    Param.DURATION_BUCKET to DataLogBuckets.duration(durationSeconds),
+    Param.SIZE_BUCKET to DataLogBuckets.size(sizeBytes),
+    Param.SERIES_COUNT to seriesCount.toString(),
+  )
+}
+
+/**
+ * An import ended without a stored log. [sizeBytes] rather than a duration or a series count
+ * because those come from a parse that did not finish.
+ */
+data class DataLogImportFailed(
+  override val templateId: String,
+  val source: DataLogImportSource,
+  val reason: DataLogImportFailureReason,
+  val sizeBytes: Long,
+) : ThingScopedEvent {
+  override val name = Name.DATA_LOG_IMPORT_FAILED
+  override val params = mapOf(
+    Param.TEMPLATE_ID to templateId,
+    Param.SOURCE to source.wire,
+    Param.REASON to reason.wire,
+    Param.SIZE_BUCKET to DataLogBuckets.size(sizeBytes),
+  )
+}
+
+/** The viewer finished loading a log. Fires once per open, not per chart or pane edit. */
+data class DataLogOpened(
+  override val templateId: String,
+  val durationSeconds: Int,
+  val seriesCount: Int,
+) : ThingScopedEvent {
+  override val name = Name.DATA_LOG_OPENED
+  override val params = mapOf(
+    Param.TEMPLATE_ID to templateId,
+    Param.DURATION_BUCKET to DataLogBuckets.duration(durationSeconds),
+    Param.SERIES_COUNT to seriesCount.toString(),
+  )
+}
+
+/** Shared by the data log events so one import and its later open land in the same bucket. */
+object DataLogBuckets {
+
+  fun duration(seconds: Int): String = when {
+    seconds < 15 * 60 -> "0-15m"
+    seconds < 60 * 60 -> "15-60m"
+    seconds < 3 * 60 * 60 -> "1-3h"
+    else -> "3h+"
+  }
+
+  fun size(bytes: Long): String = when {
+    bytes < MEGABYTE -> "0-1mb"
+    bytes < 5 * MEGABYTE -> "1-5mb"
+    bytes < 20 * MEGABYTE -> "5-20mb"
+    else -> "20mb+"
+  }
+
+  private const val MEGABYTE = 1024L * 1024
+}

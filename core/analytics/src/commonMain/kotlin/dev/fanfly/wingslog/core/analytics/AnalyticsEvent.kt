@@ -66,6 +66,11 @@ sealed interface AnalyticsEvent {
 
     // --- Card quick actions (docs/cards/card_swipe_actions_design.md §11) ---
     RECORD_QUICK_ACTION("record_quick_action"),
+
+    // --- Data logs (docs/datalog/data_log_visualizer_design.md §13.1) ---
+    DATA_LOG_IMPORTED("data_log_imported"),
+    DATA_LOG_IMPORT_FAILED("data_log_import_failed"),
+    DATA_LOG_OPENED("data_log_opened"),
     ;
   }
 
@@ -106,6 +111,13 @@ sealed interface AnalyticsEvent {
 
     // --- Card quick actions ---
     ACTION("action"),
+
+    // --- Data logs ---
+    // Buckets, not the raw number: a second or byte count is unique per log, so GA4 would hold one
+    // row per import and no dimension anyone can group by.
+    DURATION_BUCKET("duration_bucket"),
+    SIZE_BUCKET("size_bucket"),
+    SERIES_COUNT("series_count"),
     ;
   }
 }

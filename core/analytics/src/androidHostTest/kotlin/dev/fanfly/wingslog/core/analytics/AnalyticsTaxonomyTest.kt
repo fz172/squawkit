@@ -226,11 +226,48 @@ class AnalyticsTaxonomyTest {
         action = QuickActionKind.DELETE,
         source = QuickActionSource.FORM,
       ),
+      DataLogImported(
+        templateId = "airplane",
+        source = DataLogImportSource.LIST,
+        format = "g1000",
+        durationSeconds = 3_600,
+        sizeBytes = 2_000_000,
+        seriesCount = 24,
+      ),
+      DataLogImportFailed(
+        templateId = "airplane",
+        source = DataLogImportSource.ATTACHMENT,
+        reason = DataLogImportFailureReason.UNRECOGNIZED,
+        sizeBytes = 900_000,
+      ),
+      DataLogOpened(templateId = "airplane", durationSeconds = 600, seriesCount = 12),
     )
 
     events.forEach { event ->
       assertThat(event.toParams()).containsEntry("template_id", "airplane")
     }
+  }
+
+  @Test
+  fun dataLogBucketsCoverEveryInputWithoutOverlap() {
+    // A raw duration or size would be a unique GA4 dimension value per import; these are the only
+    // values those two parameters may take, so a gap or an overlap would be invisible in a report.
+    assertThat(DataLogBuckets.duration(0)).isEqualTo("0-15m")
+    assertThat(DataLogBuckets.duration(15 * 60 - 1)).isEqualTo("0-15m")
+    assertThat(DataLogBuckets.duration(15 * 60)).isEqualTo("15-60m")
+    assertThat(DataLogBuckets.duration(60 * 60 - 1)).isEqualTo("15-60m")
+    assertThat(DataLogBuckets.duration(60 * 60)).isEqualTo("1-3h")
+    assertThat(DataLogBuckets.duration(3 * 60 * 60 - 1)).isEqualTo("1-3h")
+    assertThat(DataLogBuckets.duration(3 * 60 * 60)).isEqualTo("3h+")
+
+    val mb = 1024L * 1024
+    assertThat(DataLogBuckets.size(0)).isEqualTo("0-1mb")
+    assertThat(DataLogBuckets.size(mb - 1)).isEqualTo("0-1mb")
+    assertThat(DataLogBuckets.size(mb)).isEqualTo("1-5mb")
+    assertThat(DataLogBuckets.size(5 * mb - 1)).isEqualTo("1-5mb")
+    assertThat(DataLogBuckets.size(5 * mb)).isEqualTo("5-20mb")
+    assertThat(DataLogBuckets.size(20 * mb - 1)).isEqualTo("5-20mb")
+    assertThat(DataLogBuckets.size(20 * mb)).isEqualTo("20mb+")
   }
 
   @Test

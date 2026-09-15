@@ -1,6 +1,8 @@
 package dev.fanfly.wingslog.feature.datalog.viewing.di
 
+import dev.fanfly.wingslog.core.analytics.AnalyticsManager
 import dev.fanfly.wingslog.core.auth.AuthManager
+import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogManager
 import dev.fanfly.wingslog.feature.datalog.model.MapTileProvider
 import dev.fanfly.wingslog.feature.datalog.viewing.attach.DataLogAttachmentPickerViewModel
@@ -17,6 +19,8 @@ val dataLogViewingModule: Module = module {
     DataLogListViewModel(
       get<DataLogManager>(),
       get<AuthManager>(),
+      get<AnalyticsManager>(),
+      get<CurrentThingTemplate>(),
       ThingId(params.get<String>(0))
     )
   }
@@ -24,6 +28,8 @@ val dataLogViewingModule: Module = module {
     DataLogAttachmentPickerViewModel(
       get<DataLogManager>(),
       get<AuthManager>(),
+      get<AnalyticsManager>(),
+      get<CurrentThingTemplate>(),
       ThingId(params.get<String>(0))
     )
   }

@@ -3,6 +3,10 @@ package dev.fanfly.wingslog.feature.datalog.update.viewer
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
+import dev.fanfly.wingslog.core.analytics.AnalyticsManager
+import dev.fanfly.wingslog.core.analytics.DataLogOpened
+import dev.fanfly.wingslog.core.analytics.log
+import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import dev.fanfly.wingslog.datalog.DataLog
 import dev.fanfly.wingslog.datalog.DataLogSeries
 import dev.fanfly.wingslog.feature.attachment.model.DownloadState
@@ -72,6 +76,8 @@ sealed interface DataLogViewerEvent {
 class DataLogViewerViewModel(
   private val manager: DataLogManager,
   private val layouts: ChartLayoutStore,
+  private val analytics: AnalyticsManager,
+  private val templates: CurrentThingTemplate,
   private val thingId: ThingId,
   private val dataLogId: DataLogId,
 ) : ViewModel() {
@@ -242,6 +248,15 @@ class DataLogViewerViewModel(
       val remembered = layouts.load(dataLogId)?.let { LayoutMemoryCodec.decode(it, record.series) }
       manager.load(thingId, dataLogId)
         .onSuccess { data ->
+          // Design §13.1: one event per successful open, after the parse, so a failed load is not
+          // counted as a view. A retry logs again, which is what "opened" means here.
+          analytics.log(
+            DataLogOpened(
+              templateId = templates.templateId,
+              durationSeconds = record.duration_seconds,
+              seriesCount = record.series.size,
+            )
+          )
           _uiState.value = DataLogViewerUiState.Ready(
             record = record,
             data = data,
