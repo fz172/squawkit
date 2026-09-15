@@ -116,6 +116,24 @@ class GarminParserTest {
   }
 
   @Test
+  fun theParserVersionIsPinnedSoChangingTheOutputMeansChangingIt() {
+    // Deliberately a hard-coded number rather than a reference to the parser's own. Every stored
+    // record keeps the catalogue it was imported with, and only a bump here rewrites it, so this
+    // failing is the reminder to ask whether `parse` now emits something different. If it does,
+    // raise both. If it does not, raise only this line.
+    assertThat(GarminParser().version).isEqualTo(3)
+  }
+
+  @Test
+  fun aG3XPercentColumnIsAlreadyAPercentAndIsLeftAlone() = runTest {
+    // The G1000 fraction correction is scoped to that format for this reason: a G3X reaches 43 on
+    // the same column, so scaling it would report an engine at 4,300% power.
+    val power = groundRun().series.single { it.short_name == "E1 %Pwr" }
+    assertThat(power.unit).isEqualTo("%")
+    assertThat(power.max).isEqualTo(43.0)
+  }
+
+  @Test
   fun cellsParseInPlaceWithNaNForEmptyAndForwardFillForDrawing() = runTest {
     val parsed = groundRun()
     val ias =

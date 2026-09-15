@@ -32,6 +32,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.slot
 import io.mockk.verify
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
@@ -83,10 +84,12 @@ class DataLogManagerImplTest {
   private fun record(
     id: String,
     start: String,
-    encoding: DataLogEncoding = DataLogEncoding.DATA_LOG_ENCODING_GZIP
+    encoding: DataLogEncoding = DataLogEncoding.DATA_LOG_ENCODING_GZIP,
+    parserVersion: Int = GarminParser().version,
   ) =
     DataLog(
       id = DataLogId(id), format = DataLogFormat.DATA_LOG_FORMAT_GARMIN_G3X,
+      parser_version = parserVersion,
       start = Instant.parse(start)
         .toWireInstant(),
       encoding = encoding, file_name = Fixtures.GROUND_RUN,
@@ -172,6 +175,56 @@ class DataLogManagerImplTest {
       .getOrThrow()
     assertThat(again).isSameInstanceAs(data)
     coVerify(exactly = 1) { filesystem.read(any()) }
+  }
+
+  @Test
+  fun aCatalogueOlderThanTheParserIsRewrittenOnOpen() = runTest {
+    // The catalogue is frozen into the record at import while the values are re-parsed on every
+    // open, so without this a parser fix reaches the chart and never reaches the sidebar beside it.
+    val stale = record("a", "2026-09-02T21:47:56Z", parserVersion = 1)
+      .copy(series = emptyList(), duration_seconds = 0, sample_count = 0)
+    every { store.observeAll(scope) } returns flowOf(
+      listOf(StorageEntity("a", stale, Instant.DISTANT_PAST))
+    )
+    coEvery { blobs.get(blobId) } returns ref(RemoteState.Synced)
+    coEvery { filesystem.read("blobs/blob-1.bin") } returns GzipCodec.compress(
+      Fixtures.bytes(Fixtures.GROUND_RUN)
+    )
+
+    manager.load(thingId, DataLogId("a"))
+      .getOrThrow()
+
+    val written = slot<DataLog>()
+    coVerify { store.put("a", capture(written), scope) }
+    assertThat(written.captured.parser_version).isEqualTo(GarminParser().version)
+    assertThat(written.captured.series).isNotEmpty()
+    assertThat(written.captured.sample_count).isEqualTo(256)
+    assertThat(written.captured.duration_seconds).isEqualTo(255)
+    // Not the parser's to change: the comparison against the Thing, and the stored bytes.
+    assertThat(written.captured.raw_file).isEqualTo(stale.raw_file)
+    assertThat(written.captured.identity_mismatch).isEqualTo(stale.identity_mismatch)
+  }
+
+  @Test
+  fun aCatalogueTheParserAgreesWithIsLeftAlone() = runTest {
+    every { store.observeAll(scope) } returns flowOf(
+      listOf(
+        StorageEntity(
+          "a",
+          record("a", "2026-09-02T21:47:56Z"),
+          Instant.DISTANT_PAST
+        )
+      ),
+    )
+    coEvery { blobs.get(blobId) } returns ref(RemoteState.Synced)
+    coEvery { filesystem.read("blobs/blob-1.bin") } returns GzipCodec.compress(
+      Fixtures.bytes(Fixtures.GROUND_RUN)
+    )
+
+    manager.load(thingId, DataLogId("a"))
+      .getOrThrow()
+
+    coVerify(exactly = 0) { store.put(any(), any(), any()) }
   }
 
   @Test

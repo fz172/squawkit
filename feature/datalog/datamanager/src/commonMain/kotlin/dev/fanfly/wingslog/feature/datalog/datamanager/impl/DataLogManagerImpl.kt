@@ -23,6 +23,9 @@ import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogCache
 import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogImporter
 import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogManager
 import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogParser
+import dev.fanfly.wingslog.core.datetime.toWireInstant
+import dev.fanfly.wingslog.feature.datalog.datamanager.DerivedFields
+import dev.fanfly.wingslog.feature.datalog.model.ParsedDataLog
 import dev.fanfly.wingslog.feature.datalog.model.DataLogSeriesData
 import dev.fanfly.wingslog.feature.datalog.model.ImportProgress
 import dev.fanfly.wingslog.id.DataLogId
@@ -136,13 +139,58 @@ class DataLogManagerImpl(
       DataLogEncoding.DATA_LOG_ENCODING_GZIP -> GzipCodec.decompress(stored)
       else -> stored
     }
-    val parser = parsers.firstOrNull { it.format == record.format }
+    val parser = parsers.firstOrNull { record.format in it.formats }
       ?: error("No parser for ${record.format}")
     val parsed =
       withContext(dispatcher) { parser.parse(bytes, record.file_name) }
+    refreshStaleCatalogue(thingId, record, parsed)
     cache.put(id, parsed.data)
     parsed.data
   }.onFailure { logger.w(it) { "Error loading data log" } }
+
+  /**
+   * Writes a re-parse back over a record whose catalogue predates the current parser.
+   *
+   * The catalogue — every series' name, unit, range and canonical id — is frozen into the record at
+   * import, while the values are re-parsed on every open. So a parser fix reaches the charts
+   * immediately and never reaches the sidebar, and a log imported before the fix shows a range that
+   * disagrees with the line drawn beside it. That is what `parser_version` is stored for.
+   *
+   * Only what the parse produces is rewritten. `identity_mismatch` is left alone because it is a
+   * comparison against the Thing rather than a property of the file, and the blob, hashes and
+   * filename are not the parser's to change.
+   *
+   * A failure here is logged and swallowed: the caller asked for the data, which it already has.
+   */
+  private suspend fun refreshStaleCatalogue(
+    thingId: ThingId,
+    record: DataLog,
+    parsed: ParsedDataLog,
+  ) {
+    if (record.parser_version == parsed.parserVersion) return
+    val id = record.id ?: return
+    runCatching {
+      val end = DerivedFields.endPosition(parsed)
+      val scope = scopeResolver.resolveNow(thingId.value)
+      store.put(
+        id.value,
+        record.copy(
+          parser_version = parsed.parserVersion,
+          source = parsed.source,
+          start = parsed.start.toWireInstant(),
+          utc_offset_minutes = parsed.utcOffsetMinutes,
+          duration_seconds = parsed.durationSeconds,
+          sample_count = parsed.sampleCount,
+          sample_rate_hz = parsed.sampleRateHz,
+          series = parsed.series,
+          airborne = DerivedFields.airborne(parsed),
+          end_latitude = end?.first ?: 0.0,
+          end_longitude = end?.second ?: 0.0,
+        ),
+        scope,
+      )
+    }.onFailure { logger.w(it) { "Could not refresh a stale data log catalogue" } }
+  }
 
   override suspend fun delete(thingId: ThingId, id: DataLogId): Result<Unit> =
     runCatching {

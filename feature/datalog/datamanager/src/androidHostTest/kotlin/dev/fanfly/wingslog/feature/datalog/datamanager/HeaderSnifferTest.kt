@@ -26,8 +26,26 @@ class HeaderSnifferTest {
   }
 
   @Test
-  fun g1000HeaderIsPossibleUntilItsParserLands() {
+  fun g1000HeaderIsDefinite() {
+    // `airframe_name` is only ever written by a G1000, so the key alone settles it.
     assertThat(sniff("#airframe_info, log_version=\"1.00\", airframe_name=\"Cessna 172S\"\n#yyy-mm-dd\n"))
+      .isEqualTo(Confidence.DEFINITE)
+    listOf(Fixtures.G1000_PISTON, Fixtures.G1000_TURBINE, Fixtures.G1000_CRUISE)
+      .forEach { name ->
+        assertThat(
+          garmin.sniff(
+            Fixtures.g1000Bytes(name)
+              .copyOf(HeaderSniffer.SNIFF_BYTES)
+          )
+        ).isEqualTo(Confidence.DEFINITE)
+      }
+  }
+
+  @Test
+  fun aGarminHeaderNamingNeitherKeyIsStillWorthATry() {
+    // Every Garmin log starts this way; a variant we have not seen goes to the Garmin parser rather
+    // than to nobody, and fails in parse() if the body contradicts the guess.
+    assertThat(sniff("#airframe_info, log_version=\"9.99\"\nDate\n"))
       .isEqualTo(Confidence.POSSIBLE)
   }
 

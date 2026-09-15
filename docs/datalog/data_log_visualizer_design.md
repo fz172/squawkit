@@ -480,19 +480,39 @@ the position pseudo-series.
 **Garmin parser** (`DATA_LOG_FORMAT_GARMIN_G3X`, and G1000 as a second format sharing the code):
 
 - Sniff: line 1 starts `#airframe_info,`. `product="GDU` gives G3X `DEFINITE`; `airframe_name=`
-  gives G1000 `DEFINITE`; either bare prefix gives `POSSIBLE` for the Garmin parser.
-- Header: `key="value"` pairs into `DataLogSource`; `aircraft_ident` into `identity`.
+  gives G1000 `DEFINITE`; either bare prefix gives `POSSIBLE` for the Garmin parser. `DataLogParser`
+  therefore answers for a *set* of formats; which one a file is lands on the `ParsedDataLog`.
+- Header: `key="value"` pairs into `DataLogSource`; `aircraft_ident` into `identity`. Keys are
+  lower-cased, because a G1000 writes `Product` where a G3X writes `product` and spells its version
+  `unit_software_version`. A G1000 has no `aircraft_ident` — it names the airframe type, not the
+  aircraft — so those files can never raise an identity mismatch. `airframe_name` has no field on
+  `DataLogSource` and is dropped; it is the one thing to add if a surface ever wants to name the
+  airframe.
 - Columns: G3X has long names with `(unit)` on line 2 and short names on line 3; G1000 has a `#`
-  units row then short names with leading spaces. Both normalise to `(name, shortName, unit)`; the
-  short name is the canonical-registry key (§6.3) because it is the vocabulary the two share.
+  units row then short names with leading spaces, and no long names at all, so its short name is the
+  display name too. Both normalise to `(name, shortName, unit)` in `GarminParser.Layout` before a
+  single row walk, and the short name is the canonical-registry key (§6.3) because it is the
+  vocabulary the two share — which is also why the date, time, offset and position columns are found
+  by short name, with the long name only as a fallback.
 - Time: `Date` + `Time` columns to a local wall clock; `UTC Offset` column to
   `utc_offset_minutes`; `start` = first row as an `Instant` via `kotlin.time.Instant`
   (never `kotlinx.datetime.Instant`, per conventions). Elapsed seconds per row; `sample_rate_hz` is
   the median reciprocal of row deltas; rows with a non-monotonic clock (a GPS time step) keep their
-  index order and the elapsed axis uses row index times the median period in that region.
+  index order and the elapsed axis uses row index times the median period in that region. A G1000
+  starts recording before its clock is valid, so its opening rows carry no date or time at all;
+  those are extrapolated backwards from the first real reading at the median period, because left
+  at zero they would date the whole log to 1970.
 - Cells: `parseFloat` semantics with a leading `+` accepted (latitude is `+37.08…`); a column is
-  `NUMERIC` if any cell parses, `DISCRETE` if its unit is `discrete`, `TEXT` if only non-numeric
-  non-empty cells, and dropped from the catalogue if entirely empty.
+  `NUMERIC` if any cell parses, `DISCRETE` if its unit is `discrete` (G3X) or `bool` (G1000), `TEXT`
+  if only non-numeric non-empty cells, and dropped from the catalogue if entirely empty. A G1000's
+  `enum` columns hold words, so they fall out as `TEXT` under the same rule.
+- Percent scale: a G1000 records a `%` column as a **fraction of one** — `0.93` for 93% N1, `1.14`
+  for 114% engine power — under a units row that says `%` in both cases. The file disagrees with
+  itself, and at face value the viewer draws an engine at cruise as a flat line near zero. Those
+  columns are multiplied by 100 and keep the `%` unit. The correction is scoped to the format, not
+  guessed from the numbers: a G3X's percent columns reach 43 and 345 on the same fixtures, so
+  scaling one would report 4,300% power. An observed maximum above 1.5 leaves the column alone, so
+  a G1000 variant that one day records true percentages is not multiplied a hundredfold.
 - Position: `Latitude` plus `Longitude` collapse into one `POSITION` series named from the lexicon
   ("Aircraft Position" on airplane), inserted where latitude was.
 - Derived: `airborne` is true when any row has GPS ground speed above 30 kt or height above ground
@@ -526,11 +546,16 @@ into the same ids, which is the whole point of the indirection.
 
 ### 6.4 Fixture
 
-`docs/datalog/samples/g3x_ground_run.csv`: the real sample with `aircraft_ident` replaced by a
-fictitious tail, `system_id` scrambled, and every latitude and longitude offset by a constant so the
-track shape survives but the location does not. `GarminParserTest` asserts the catalogue (112
-columns, 108 series, 67 numeric, the position collapse), the time base (`14:47:56`, `-07:00`,
-255 seconds), `airborne = false`, and exact values for a handful of cells.
+`docs/datalog/samples/g3x/`: the real samples with `aircraft_ident` replaced by a fictitious tail,
+`system_id` scrambled, and every latitude and longitude offset by a constant so the track shape
+survives but the location does not. `GarminParserTest` asserts the catalogue (112 columns, 73 series,
+the position collapse), the time base (`14:47:56`, `-07:00`, 255 seconds), `airborne = false`, and
+exact values for a handful of cells.
+
+`docs/datalog/samples/g1000/`: three 240-row windows from two real G1000 logs under the same rule,
+with a README recording their provenance. A piston airframe covers the units row, the CHT/EGT/TIT
+banks and the tanks named by side; a turbine one covers the clockless opening rows at power-up and,
+in a second window, the spool speeds and `airborne = true`. `GarminG1000ParserTest` reads them.
 
 ## 7. `DataLogManager`
 
@@ -545,6 +570,15 @@ interface DataLogManager {
   fun observeBlobState(thingId: ThingId, id: DataLogId): Flow<BlobSyncState?>
 }
 ```
+
+**Stale catalogues.** The catalogue — every series' name, unit, range and canonical id — is frozen
+into the record at import, while the values are re-parsed on every open. A parser fix therefore
+reaches the charts immediately and never reaches the sidebar, and a log imported before the fix shows
+a range that disagrees with the line drawn beside it. `load` compares the record's `parser_version`
+with the parser's own and rewrites the record when they differ: the catalogue, the time base, the
+counts and the derived flags, but not `identity_mismatch` (a comparison against the Thing, not a
+property of the file) and not the blob, hashes or filename. That is what `parser_version` is stored
+for. The write is best-effort — the caller asked for the data, which it already has.
 
 `DataLogManagerImpl(scopeResolver: ThingScopeResolver, storeFactory: EntityStoreFactory,
 blobs: LocalBlobStore, scheduler: UploadScheduler, importer: DataLogImporter, cache: DataLogCache,
@@ -1065,7 +1099,7 @@ PR 9+ the formats epic.
 | T44 | 7 | Analytics: three `Name`s, three `Param`s, three events, taxonomy test list, ViewModel logging | `core/analytics`, `feature/datalog` | S | T20, T26 | R46 |
 | T45 | 7 | `AdSurface.DATA_LOGS`, `AdSlot` size parameter, placement in sidebar footer and under *New pane* on Android and iOS | `feature/ads`, `feature/datalog/viewing` | S | T32 | R44a |
 | T46 | 8 | Flip `isDataLogsSupported` on every host; release notes; `NEW` pill | hosts, `feature/datalog/viewing` | S | T20–T45 | R43 |
-| T47 | 9+ | G1000 sniff, units row, short-name mapping; fixture; tests | `feature/datalog/datamanager` | M | T14 | §7 |
+| T47 | 9+ | G1000 sniff, units row, short-name mapping; fixtures; tests | `feature/datalog/datamanager` | M | T14 | §6.2, §6.4 |
 | T48 | 9+ | Dynon SkyView parser; thermocouple channel-mapping prompt and per-unit storage | `feature/datalog/datamanager`, `viewing` | L | T14 | §7 |
 | T49 | 9+ | Shared drag-and-drop `FileDropTarget` for attachments and data logs (web document listener, tablet `dragAndDropTarget`) | `feature/attachment/viewing`, `webApp` | M | T21, T35 | R2c |
 | T50 | 9+ | V2 server destination lookup design note (server write into a client-owned record) | docs | S | T42 | R36 |

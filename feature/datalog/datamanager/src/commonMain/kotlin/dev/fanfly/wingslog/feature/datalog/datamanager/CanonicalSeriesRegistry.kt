@@ -5,7 +5,8 @@ import dev.fanfly.wingslog.feature.datalog.model.CanonicalSeries
 /**
  * Source short names to canonical ids (design §6.3). The short name is the vocabulary G3X and
  * G1000 share, which is why it is the key. Unknown columns map to `""` and stay plottable by
- * their raw name.
+ * their raw name — an unmapped column loses the preset and the palette slot, nothing else, so a
+ * name whose meaning is not certain is better left out than guessed at.
  */
 object CanonicalSeriesRegistry {
 
@@ -17,6 +18,13 @@ object CanonicalSeriesRegistry {
     "AltGPS" to CanonicalSeries.ALT_GPS,
     "AltP" to CanonicalSeries.ALT_PRESSURE,
     "AltInd" to CanonicalSeries.ALT_BARO,
+    // The G1000's name for the same trace. `AltMSL` is deliberately absent: it is a third altitude
+    // with no canonical id of its own, and mapping it onto one of these would put two different
+    // measurements on one series.
+    "AltB" to CanonicalSeries.ALT_BARO,
+    // A G1000 names its two tanks by side rather than by number.
+    "FQtyL" to CanonicalSeries.fuelQty(1),
+    "FQtyR" to CanonicalSeries.fuelQty(2),
     "VSpd" to CanonicalSeries.VERTICAL_SPEED,
     "GndSpd" to CanonicalSeries.GROUND_SPEED,
     "AGL" to CanonicalSeries.AGL,
@@ -36,13 +44,21 @@ object CanonicalSeriesRegistry {
     "FFlow" to "fuel_flow",
     "%Pwr" to "power_pct",
     "FPres" to "fuel_press",
+    // Turbines. A G1000 in an SF50 writes these instead of the piston set above, and an airframe
+    // with two engines writes each of them twice.
+    "Torq" to "torque",
+    "NG" to "ng",
+    "ITT" to "itt",
+    "N1" to "n1",
+    "N2" to "n2",
   )
 
   private val engine = Regex("""^E(\d+) (.+)$""")
-  private val engineIndexed = Regex("""^(CHT|EGT)(\d+)$""")
+  private val engineIndexed = Regex("""^(CHT|EGT|TIT)(\d+)$""")
   private val fuelQty = Regex("""^FQty(\d+)$""")
-  private val volts = Regex("""^Volts(\d+)$""")
-  private val amps = Regex("""^Amps(\d+)$""")
+  // `Volts1` on a G3X, `volt1` on a G1000 — the same reading under two spellings of one name.
+  private val volts = Regex("""^[Vv]olts?(\d+)$""")
+  private val amps = Regex("""^[Aa]mps?(\d+)$""")
 
   fun canonicalIdFor(shortName: String): String {
     val key = shortName.trim()

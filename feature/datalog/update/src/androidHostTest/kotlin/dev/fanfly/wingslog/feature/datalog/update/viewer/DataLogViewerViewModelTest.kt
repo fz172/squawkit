@@ -440,6 +440,22 @@ class DataLogViewerViewModelTest {
   }
 
   @Test
+  fun theRecordIsReReadAfterLoadingSoARewrittenCatalogueIsWhatTheSidebarSees() = runTest {
+    // Loading rewrites a catalogue the parser has outgrown. The copy read before that write is the
+    // one the fix was meant to replace, so the viewer must not keep it for the session.
+    val refreshed = record.copy(series = engineCatalogue, duration_seconds = 7200)
+    every { manager.observeOne(thingId, id) } returnsMany listOf(
+      flowOf(record),
+      flowOf(refreshed),
+    )
+
+    val state = ready(viewModel())
+
+    assertThat(state.record.series).hasSize(3)
+    assertThat(state.record.duration_seconds).isEqualTo(7200)
+  }
+
+  @Test
   fun aFailedLoadIsNotAnOpen() = runTest {
     coEvery { manager.load(thingId, id) } returns Result.failure(IllegalStateException("bad csv"))
 

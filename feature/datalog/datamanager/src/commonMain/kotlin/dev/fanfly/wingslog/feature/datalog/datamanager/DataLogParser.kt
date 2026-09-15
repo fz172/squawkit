@@ -7,12 +7,16 @@ import dev.fanfly.wingslog.feature.datalog.model.ParsedDataLog
 enum class Confidence { NONE, POSSIBLE, DEFINITE }
 
 /**
- * One recorder format. The only code that knows a file layout; everything above speaks
+ * One recorder family. The only code that knows a file layout; everything above speaks
  * [ParsedDataLog]. [version] is stored on the record and bumps when the parser changes what it
  * emits, so a viewer can tell a stale catalogue from a fresh one.
+ *
+ * [formats] is a set rather than one value because two formats can be near enough to share a parser
+ * — Garmin's G3X and G1000 differ only in how their two header lines are laid out. The format a
+ * given file turns out to be is on the [ParsedDataLog]; this is what the parser will answer for.
  */
 interface DataLogParser {
-  val format: DataLogFormat
+  val formats: Set<DataLogFormat>
   val version: Int
 
   /** Judged on the first few KB of the file. Must not throw on garbage. */

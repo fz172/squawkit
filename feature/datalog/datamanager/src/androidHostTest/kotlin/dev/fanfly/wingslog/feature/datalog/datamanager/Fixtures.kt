@@ -2,13 +2,26 @@ package dev.fanfly.wingslog.feature.datalog.datamanager
 
 import java.io.File
 
-/** The anonymised G3X samples in `docs/datalog/samples/g3x` (design §6.4). */
+/** The anonymised Garmin samples in `docs/datalog/samples` (design §6.4). */
 object Fixtures {
   const val GROUND_RUN = "log_20260902_144756_XX1.csv"
 
+  /** A piston G1000: a `#` units row, CHT/EGT/TIT banks, and tanks named by side. */
+  const val G1000_PISTON = "log_150513_081128_XX1.csv"
+
+  /** A turbine G1000 from power-up: four opening rows carry no clock at all. */
+  const val G1000_TURBINE = "log_240810_104802_XX2.csv"
+
+  /** The same turbine in the climb: ITT and the spool speeds are alive, and it is airborne. */
+  const val G1000_CRUISE = "log_240810_110536_XX3.csv"
+
   fun bytes(name: String): ByteArray = File(sampleDir(), name).readBytes()
 
+  fun g1000Bytes(name: String): ByteArray = File(g1000Dir(), name).readBytes()
+
   fun sampleDir(): File = File(repoRoot(), "docs/datalog/samples/g3x")
+
+  fun g1000Dir(): File = File(repoRoot(), "docs/datalog/samples/g1000")
 
   private fun repoRoot(): File {
     var dir = File(System.getProperty("user.dir"))
