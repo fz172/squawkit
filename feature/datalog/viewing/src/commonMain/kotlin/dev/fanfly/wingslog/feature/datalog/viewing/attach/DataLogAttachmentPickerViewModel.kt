@@ -3,11 +3,15 @@ package dev.fanfly.wingslog.feature.datalog.viewing.attach
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
+import dev.fanfly.wingslog.core.analytics.AnalyticsManager
+import dev.fanfly.wingslog.core.analytics.DataLogImportSource
 import dev.fanfly.wingslog.core.auth.AuthManager
+import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
 import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogManager
 import dev.fanfly.wingslog.feature.datalog.model.ImportFailure
 import dev.fanfly.wingslog.feature.datalog.model.ImportProgress
+import dev.fanfly.wingslog.feature.datalog.viewing.analytics.DataLogImportTelemetry
 import dev.fanfly.wingslog.feature.datalog.viewing.list.DataLogRow
 import dev.fanfly.wingslog.feature.datalog.viewing.list.ImportRow
 import dev.fanfly.wingslog.feature.datalog.viewing.list.toDataLogRow
@@ -17,6 +21,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -35,8 +40,13 @@ data class DataLogPickerUiState(
 class DataLogAttachmentPickerViewModel(
   private val manager: DataLogManager,
   private val auth: AuthManager,
+  analytics: AnalyticsManager,
+  templates: CurrentThingTemplate,
   private val thingId: ThingId,
 ) : ViewModel() {
+
+  private val telemetry =
+    DataLogImportTelemetry(analytics, templates, DataLogImportSource.ATTACHMENT)
 
   private val selected = MutableStateFlow<DataLogId?>(null)
   private val import = MutableStateFlow<ImportRow?>(null)
@@ -86,12 +96,16 @@ class DataLogAttachmentPickerViewModel(
           if (progress is ImportProgress.Done) {
             selected.value = progress.id
             import.value = null
+            manager.observeOne(thingId, progress.id).first()
+              ?.let { telemetry.imported(it, row.file) }
           } else {
+            if (progress is ImportProgress.Failed) telemetry.failed(progress.reason, row.file)
             import.update { it?.copy(progress = progress) }
           }
         }
       } catch (e: Exception) {
         logger.w(e) { "Import failed" }
+        telemetry.failed(ImportFailure.PARSE_ERROR, row.file)
         import.update { it?.copy(progress = ImportProgress.Failed(ImportFailure.PARSE_ERROR)) }
       }
     }

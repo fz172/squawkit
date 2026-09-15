@@ -892,11 +892,20 @@ kind for its web-only detector.
 
 ### 13.1 Analytics
 
-`Name`: `DATA_LOG_IMPORTED("data_log_imported")`, `DATA_LOG_IMPORT_FAILED`, `DATA_LOG_OPENED`,
-`DATA_LOG_LAYOUT_APPLIED`. `Param` additions: `DURATION_BUCKET`, `SIZE_BUCKET`, `SERIES_COUNT`,
-`PRESET`; `FORMAT`, `SOURCE`, `REASON` exist. Four `ThingScopedEvent` data classes, appended to
-`everyThingScopedEventCarriesTemplateId`. Logged from `DataLogListViewModel` (import, failure) and
-`DataLogViewerViewModel` (open, preset) through the injected `AnalyticsManager`.
+`Name`: `DATA_LOG_IMPORTED("data_log_imported")`, `DATA_LOG_IMPORT_FAILED`, `DATA_LOG_OPENED`.
+`Param` additions: `DURATION_BUCKET`, `SIZE_BUCKET`, `SERIES_COUNT`; `FORMAT`, `SOURCE`, `REASON`
+exist. Three `ThingScopedEvent` data classes, appended to `everyThingScopedEventCarriesTemplateId`.
+Logged from `DataLogListViewModel` and `DataLogAttachmentPickerViewModel` (import, failure — `SOURCE`
+separates the two pickers) and `DataLogViewerViewModel` (open) through the injected
+`AnalyticsManager`.
+
+`DATA_LOG_LAYOUT_APPLIED` and `PRESET` were planned here and are **not defined**: T39 (chart presets)
+was closed as obsolete, so nothing would emit them, and a taxonomy entry with no call site reads in
+GA4 as a series at zero rather than as one that does not exist. Add both with the feature if presets
+ever return.
+
+Durations and sizes are bucketed (`DataLogBuckets`) because the raw values are unique per import,
+which would give GA4 one dimension row per file and nothing to group by.
 
 ### 13.2 Ads (PRD R44a) — mobile only
 
@@ -1041,7 +1050,7 @@ PR 9+ the formats epic.
 | T41 | 6 | R12 "file it under the other Thing" confirmation | `feature/datalog/datamanager`, `viewing` | S | T17 | R12 |
 | T42 | 7 | Server: `RECORD_TYPE.DATA_LOG`, `recordTypeForKind`, `thingTabForRecordType`, `recordTitleOf`; fan-out tests | `backend/firebase/functions` | S | T05 | R39 |
 | T43 | 7 | Client notifications: `noun()`/`sectionTitle()`, `parseTapTarget`, `NotificationTapTarget.DataLog`, router, shell tap routing, web detector | `feature/notifications`, `feature/shell` | M | T10, T42 | R39 |
-| T44 | 7 | Analytics: four `Name`s, four `Param`s, four events, taxonomy test list, ViewModel logging | `core/analytics`, `feature/datalog` | S | T20, T26 | R46 |
+| T44 | 7 | Analytics: three `Name`s, three `Param`s, three events, taxonomy test list, ViewModel logging | `core/analytics`, `feature/datalog` | S | T20, T26 | R46 |
 | T45 | 7 | `AdSurface.DATA_LOGS`, `AdSlot` size parameter, placement in sidebar footer and under *New pane* on Android and iOS | `feature/ads`, `feature/datalog/viewing` | S | T32 | R44a |
 | T46 | 8 | Flip `isDataLogsSupported` on every host; release notes; `NEW` pill | hosts, `feature/datalog/viewing` | S | T20–T45 | R43 |
 | T47 | 9+ | G1000 sniff, units row, short-name mapping; fixture; tests | `feature/datalog/datamanager` | M | T14 | §7 |

@@ -3,6 +3,7 @@ package dev.fanfly.wingslog.feature.datalog.viewing.list
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.core.datetime.toWireInstant
+import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import dev.fanfly.wingslog.datalog.DataLog
 import dev.fanfly.wingslog.datalog.DataLogSeries
 import dev.fanfly.wingslog.datalog.DataLogSource
@@ -10,6 +11,7 @@ import dev.fanfly.wingslog.feature.attachment.model.PickedFile
 import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogManager
 import dev.fanfly.wingslog.feature.datalog.model.ImportFailure
 import dev.fanfly.wingslog.feature.datalog.model.ImportProgress
+import dev.fanfly.wingslog.feature.datalog.viewing.analytics.RecordingAnalytics
 import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.id.ThingId
 import dev.gitlive.firebase.auth.FirebaseUser
@@ -42,13 +44,20 @@ class DataLogListViewModelTest {
   private val logs = MutableStateFlow<List<DataLog>>(emptyList())
   private lateinit var manager: DataLogManager
   private lateinit var auth: AuthManager
+  private lateinit var analytics: RecordingAnalytics
+  private lateinit var templates: CurrentThingTemplate
 
   @Before
   fun setUp() {
     Dispatchers.setMain(UnconfinedTestDispatcher())
     manager = mockk()
     every { manager.observe(thingId) } returns logs
+    // The import telemetry reads the stored record back; most tests never store one.
+    every { manager.observeOne(any(), any()) } returns flowOf(null)
     auth = mockk()
+    analytics = RecordingAnalytics()
+    templates = mockk()
+    every { templates.templateId } returns "airplane"
     signIn(anonymous = false)
   }
 
@@ -61,7 +70,8 @@ class DataLogListViewModelTest {
     every { auth.getCurrentUser() } returns user
   }
 
-  private fun viewModel() = DataLogListViewModel(manager, auth, thingId)
+  private fun viewModel() =
+    DataLogListViewModel(manager, auth, analytics, templates, thingId)
 
   private fun log(
     id: String,
@@ -257,5 +267,61 @@ class DataLogListViewModelTest {
     vm.confirmDelete()
 
     assertThat(events).containsExactly(DataLogListEvent.DeleteFailed)
+  }
+
+  @Test
+  fun aFinishedImportLogsItWithTheStoredRecordsShape() = runTest {
+    val stored = log("new", "2026-09-02T21:47:56Z")
+    every { manager.observeOne(thingId, DataLogId("new")) } returns flowOf(stored)
+    every { manager.import(thingId, any(), false, false) } returns
+      flowOf(ImportProgress.Done(DataLogId("new")))
+    val vm = viewModel()
+    vm.uiState.first { !it.isLoading }
+
+    vm.upload(listOf(PickedFile("content://x", "x.csv", "text/csv", 2_000_000)))
+
+    assertThat(analytics.events).containsExactly(
+      "data_log_imported" to mapOf(
+        "template_id" to "airplane",
+        "source" to "list",
+        "format" to "GDU 460",
+        "duration_bucket" to "0-15m",
+        "size_bucket" to "1-5mb",
+        "series_count" to "2",
+      )
+    )
+  }
+
+  @Test
+  fun aFailedImportLogsItsReasonAndSize() = runTest {
+    every { manager.import(thingId, any(), false, false) } returns
+      flowOf(ImportProgress.Failed(ImportFailure.UNRECOGNIZED))
+    val vm = viewModel()
+    vm.uiState.first { !it.isLoading }
+
+    vm.upload(listOf(PickedFile("content://x", "x.csv", "text/csv", 500)))
+
+    assertThat(analytics.events).containsExactly(
+      "data_log_import_failed" to mapOf(
+        "template_id" to "airplane",
+        "source" to "list",
+        "reason" to "unrecognized",
+        "size_bucket" to "0-1mb",
+      )
+    )
+  }
+
+  @Test
+  fun aPromptIsNotAFailure() = runTest {
+    // NeedsConfirmation and OtherThing are questions, not outcomes; logging them would double-count
+    // every import the user answers.
+    every { manager.import(thingId, any(), false, false) } returns
+      flowOf(ImportProgress.NeedsConfirmation(DataLogId("older")))
+    val vm = viewModel()
+    vm.uiState.first { !it.isLoading }
+
+    vm.upload(listOf(PickedFile("content://x", "x.csv", "text/csv", 500)))
+
+    assertThat(analytics.events).isEmpty()
   }
 }

@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.feature.datalog.update.viewer
 
 import com.google.common.truth.Truth.assertThat
+import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import dev.fanfly.wingslog.datalog.DataLog
 import dev.fanfly.wingslog.feature.attachment.model.DownloadState
 import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogManager
@@ -13,6 +14,7 @@ import dev.fanfly.wingslog.feature.datalog.model.GestureIntent
 import dev.fanfly.wingslog.feature.datalog.model.PaneId
 import dev.fanfly.wingslog.feature.datalog.model.SeriesKey
 import dev.fanfly.wingslog.feature.datalog.model.ViewWindow
+import dev.fanfly.wingslog.feature.datalog.update.analytics.RecordingAnalytics
 import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.id.ThingId
 import io.mockk.coEvery
@@ -43,6 +45,8 @@ class DataLogViewerViewModelTest {
     DataLogSeriesData(IntArray(3), emptyMap(), emptyMap(), null)
   private lateinit var manager: DataLogManager
   private lateinit var layouts: ChartLayoutStore
+  private lateinit var analytics: RecordingAnalytics
+  private lateinit var templates: CurrentThingTemplate
   private var remembered: String? = null
 
   @Before
@@ -50,6 +54,9 @@ class DataLogViewerViewModelTest {
     Dispatchers.setMain(UnconfinedTestDispatcher())
     manager = mockk()
     layouts = mockk()
+    analytics = RecordingAnalytics()
+    templates = mockk()
+    every { templates.templateId } returns "airplane"
     every { layouts.load(id) } answers { remembered }
     every { layouts.save(id, any()) } answers { remembered = secondArg() }
     every { manager.observeOne(thingId, id) } returns flowOf(record)
@@ -66,7 +73,8 @@ class DataLogViewerViewModelTest {
   @After
   fun tearDown() = Dispatchers.resetMain()
 
-  private fun viewModel() = DataLogViewerViewModel(manager, layouts, thingId, id)
+  private fun viewModel() =
+    DataLogViewerViewModel(manager, layouts, analytics, templates, thingId, id)
 
   private val engineCatalogue = listOf(
     DataLogSeries(column = 1, kind = DataLogSeriesKind.DATA_LOG_SERIES_KIND_NUMERIC, canonical_id = CanonicalSeries.engine(1, "rpm")),
@@ -414,5 +422,29 @@ class DataLogViewerViewModelTest {
     vm.removePane(PaneId(0))
     assertThat(layout().panes.map { it.id }).containsExactly(PaneId(2), PaneId(1)).inOrder()
     assertThat(layout().targetPane).isEqualTo(PaneId(1))
+  }
+
+  @Test
+  fun aSuccessfulOpenIsLoggedOnceWithTheLogsShape() = runTest {
+    every { manager.observeOne(thingId, id) } returns flowOf(record.copy(series = engineCatalogue))
+
+    viewModel()
+
+    assertThat(analytics.events).containsExactly(
+      "data_log_opened" to mapOf(
+        "template_id" to "airplane",
+        "duration_bucket" to "1-3h",
+        "series_count" to "3",
+      )
+    )
+  }
+
+  @Test
+  fun aFailedLoadIsNotAnOpen() = runTest {
+    coEvery { manager.load(thingId, id) } returns Result.failure(IllegalStateException("bad csv"))
+
+    viewModel()
+
+    assertThat(analytics.events).isEmpty()
   }
 }
