@@ -58,9 +58,21 @@ kotlin {
       implementation(libs.jetbrains.lifecycle.runtime.compose)
       implementation(libs.koin.core)
       implementation(libs.koin.compose)
+      implementation(libs.coil.compose)
+      implementation(libs.coil.network.ktor3)
+      implementation(libs.ktor.client.core)
       implementation(libs.koin.compose.viewmodel)
       implementation(libs.gitlive.firebase.auth)
       implementation(libs.kermit)
+    }
+    androidMain.dependencies {
+      implementation(libs.ktor.client.okhttp)
+    }
+    iosMain.dependencies {
+      implementation(libs.ktor.client.darwin)
+    }
+    jsMain.dependencies {
+      implementation(libs.ktor.client.js)
     }
   }
 }

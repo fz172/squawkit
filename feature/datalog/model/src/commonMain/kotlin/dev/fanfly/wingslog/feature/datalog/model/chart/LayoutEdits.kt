@@ -20,6 +20,19 @@ fun ChartLayout.kindOf(pane: PaneId, catalogue: Map<Int, DataLogSeries>): PaneKi
 /** The next pane id: one above the highest in use, so a removed pane's id is never reused mid-session. */
 fun ChartLayout.nextPaneId(): PaneId = PaneId((panes.maxOfOrNull { it.id.value } ?: -1) + 1)
 
+/**
+ * Map panes lead, charts follow, and each group keeps the order it had. The map is the one pane
+ * that answers "where", so it reads first; it is also the tallest, which puts the ragged edge at
+ * the bottom of the stack rather than in the middle.
+ */
+fun ChartLayout.withMapFirst(catalogue: Map<Int, DataLogSeries>): ChartLayout {
+  val ordered = panes.sortedBy { pane ->
+    val kind = pane.series.firstOrNull()?.let { catalogue[it.column]?.paneKind() }
+    if (kind == PaneKind.MAP) 0 else 1
+  }
+  return if (ordered == panes) this else copy(panes = ordered)
+}
+
 /** Pure edits to a layout (design §11.1, §11.5). Every result keeps [ChartLayout.targetPane] valid. */
 object LayoutEdits {
 
@@ -34,6 +47,35 @@ object LayoutEdits {
 
   fun remove(layout: ChartLayout, pane: PaneId, key: SeriesKey): ChartLayout =
     layout.copy(panes = layout.panes.map { p -> if (p.id == pane) p.copy(series = p.series - key) else p })
+
+  /**
+   * Puts [key] where it belongs rather than where it was dropped: map and chart series never share
+   * a pane (PRD R29), and the map gets exactly one pane, so a position series joins the map pane
+   * that already exists and otherwise opens one.
+   */
+  fun place(
+    layout: ChartLayout,
+    pane: PaneId,
+    key: SeriesKey,
+    catalogue: Map<Int, DataLogSeries>,
+  ): ChartLayout {
+    val destination = layout.destinationFor(pane, key, catalogue)
+    return if (destination == null) spawn(layout, key) else add(layout, destination, key)
+  }
+
+  /**
+   * The pane [key] lands in when placed on [pane], or null when it needs one of its own. A map
+   * series ignores [pane] entirely: it goes to the map pane wherever that is.
+   */
+  fun ChartLayout.destinationFor(
+    pane: PaneId,
+    key: SeriesKey,
+    catalogue: Map<Int, DataLogSeries>,
+  ): PaneId? {
+    val seriesKind = catalogue[key.column]?.paneKind() ?: PaneKind.CHART
+    if (seriesKind == PaneKind.MAP) return panes.firstOrNull { kindOf(it.id, catalogue) == PaneKind.MAP }?.id
+    return if (kindOf(pane, catalogue) == PaneKind.MAP) null else pane
+  }
 
   /** A new pane at the bottom holding [key] (or empty), which becomes the target. */
   fun spawn(layout: ChartLayout, key: SeriesKey? = null): ChartLayout {
@@ -54,10 +96,10 @@ object LayoutEdits {
     catalogue: Map<Int, DataLogSeries>,
   ): ChartLayout {
     if (from == to) return layout
-    val seriesKind = catalogue[key.column]?.paneKind() ?: PaneKind.CHART
-    val targetKind = layout.kindOf(to, catalogue)
-    val without = remove(layout, from, key)
-    return if (targetKind != null && targetKind != seriesKind) spawn(without, key) else add(without, to, key)
+    // The position series has exactly one pane it can live in, so dragging it anywhere else is not
+    // a move at all; without this it would leave the map pane behind and open a second one.
+    if (catalogue[key.column]?.paneKind() == PaneKind.MAP) return layout
+    return place(remove(layout, from, key), to, key, catalogue)
   }
 
   /** Drops a pane; the target moves to the nearest remaining pane, or clears. */

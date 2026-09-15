@@ -34,6 +34,9 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.unit.IntOffset
 import dev.fanfly.wingslog.feature.datalog.model.chart.Decimation
+import dev.fanfly.wingslog.feature.datalog.model.MapTileProvider
+import dev.fanfly.wingslog.feature.datalog.model.chart.PaneKind
+import dev.fanfly.wingslog.feature.datalog.model.chart.paneKind
 import dev.fanfly.wingslog.feature.datalog.viewing.chart.ChipInfo
 import dev.fanfly.wingslog.feature.datalog.viewing.chart.DropTarget
 import dev.fanfly.wingslog.feature.datalog.viewing.chart.NewPaneTarget
@@ -95,6 +98,7 @@ import dev.fanfly.wingslog.feature.datalog.model.SeriesKey
 import dev.fanfly.wingslog.feature.datalog.model.chart.TimeTicks
 import dev.fanfly.wingslog.feature.datalog.model.chart.isPlottable
 import dev.fanfly.wingslog.feature.datalog.viewing.chart.ChartPane
+import dev.fanfly.wingslog.feature.datalog.viewing.chart.MapPane
 import dev.fanfly.wingslog.feature.datalog.viewing.chart.PaneSeries
 import dev.fanfly.wingslog.feature.datalog.viewing.chart.TimeAxis
 import dev.fanfly.wingslog.feature.datalog.viewing.list.toDataLogRow
@@ -102,6 +106,7 @@ import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.id.ThingId
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import org.koin.compose.koinInject
 import org.koin.core.parameter.parametersOf
 import wingslog.core.sharedassets.generated.resources.cancel
 import wingslog.core.sharedassets.generated.resources.delete
@@ -277,6 +282,7 @@ fun DataLogViewerScreen(
             }
             val infoByColumn = remember(s.record) { s.record.series.associateBy { it.column } }
             val dragState = remember(s.record) { SeriesDragState() }
+            val tileProvider: MapTileProvider = koinInject()
             val dark = isSystemInDarkTheme()
             val cursorIndex = remember(s.cursorT, s.data) {
               s.cursorT?.let { Decimation.indexAt(s.data.timeSeconds, it) } ?: -1
@@ -299,7 +305,12 @@ fun DataLogViewerScreen(
             val sidebar: @Composable () -> Unit = {
               SeriesSidebar(
                 catalogue = s.record.series,
-                inTargetPane = s.layout.panes.firstOrNull { it.id == s.layout.targetPane }?.series?.toSet().orEmpty(),
+                // The map pane's series reads as charted wherever the target happens to be: it is
+                // the only pane a position series can be in, so the target says nothing about it.
+                inTargetPane = s.layout.panes.firstOrNull { it.id == s.layout.targetPane }?.series?.toSet().orEmpty() +
+                  s.layout.panes.filter { pane ->
+                    pane.series.firstOrNull()?.let { infoByColumn[it.column]?.paneKind() } == PaneKind.MAP
+                  }.flatMap { it.series },
                 tab = s.sidebarTab,
                 onTab = viewModel::setSidebarTab,
                 query = s.seriesQuery,
@@ -393,6 +404,20 @@ fun DataLogViewerScreen(
                     onRemovePane = { viewModel.removePane(pane.id) },
                     onDrop = onDrop,
                   )
+                  val paneKind = pane.series.firstOrNull()
+                    ?.let { infoByColumn[it.column]?.paneKind() } ?: PaneKind.CHART
+                  val positions = s.data.position
+                  if (paneKind == PaneKind.MAP && positions != null) {
+                    MapPane(
+                      position = positions,
+                      timeSeconds = s.data.timeSeconds,
+                      durationSeconds = s.record.duration_seconds,
+                      view = s.view,
+                      cursorIndex = cursorIndex,
+                      isTarget = pane.id == s.layout.targetPane,
+                      provider = tileProvider,
+                    )
+                  } else {
                   ChartPane(
                     series = pane.series.mapNotNull { key -> byColumn[key.column] },
                     timeSeconds = s.data.timeSeconds,
@@ -406,6 +431,7 @@ fun DataLogViewerScreen(
                       viewModel.onGesture(intent)
                     },
                   )
+                  }
                 }
               }
               item {
@@ -415,6 +441,7 @@ fun DataLogViewerScreen(
                   cursorT = s.cursorT,
                   clockAxis = s.clockAxis,
                   originSecondsOfDay = r.startLocal.time.toSecondOfDay(),
+                  onScrub = { fraction -> viewModel.onGesture(GestureIntent.Cursor(fraction)) },
                 )
               }
               item {

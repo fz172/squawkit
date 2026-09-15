@@ -305,6 +305,75 @@ class DataLogViewerViewModelTest {
   }
 
   @Test
+  fun thePositionSeriesGetsItsOwnPaneAndNeverASecondOne() = runTest {
+    val catalogue = listOf(
+      DataLogSeries(column = 1, kind = DataLogSeriesKind.DATA_LOG_SERIES_KIND_NUMERIC, canonical_id = "engine[1].rpm"),
+      DataLogSeries(column = 2, kind = DataLogSeriesKind.DATA_LOG_SERIES_KIND_NUMERIC),
+      DataLogSeries(column = 9, kind = DataLogSeriesKind.DATA_LOG_SERIES_KIND_POSITION),
+    )
+    every { manager.observeOne(thingId, id) } returns flowOf(record.copy(series = catalogue))
+    val vm = viewModel()
+    fun layout() = (vm.uiState.value as DataLogViewerUiState.Ready).layout
+
+    // Tapping position while a chart pane is the target opens a map pane rather than joining it.
+    vm.toggleSeries(PaneId(0), SeriesKey(9))
+    assertThat(layout().panes.map { it.series }).containsExactly(
+      listOf(SeriesKey(9)),
+      listOf(SeriesKey(1)),
+    ).inOrder()
+
+    // Tapping it again from a chart pane takes it out instead of opening a second map pane.
+    vm.toggleSeries(PaneId(0), SeriesKey(9))
+    assertThat(layout().panes.map { it.series }).containsExactly(listOf(SeriesKey(1)))
+  }
+
+  @Test
+  fun noChartSeriesEverJoinsTheMapPane() = runTest {
+    val catalogue = listOf(
+      DataLogSeries(column = 1, kind = DataLogSeriesKind.DATA_LOG_SERIES_KIND_NUMERIC, canonical_id = "engine[1].rpm"),
+      DataLogSeries(column = 2, kind = DataLogSeriesKind.DATA_LOG_SERIES_KIND_NUMERIC),
+      DataLogSeries(column = 9, kind = DataLogSeriesKind.DATA_LOG_SERIES_KIND_POSITION),
+    )
+    every { manager.observeOne(thingId, id) } returns flowOf(record.copy(series = catalogue))
+    val vm = viewModel()
+    fun layout() = (vm.uiState.value as DataLogViewerUiState.Ready).layout
+
+    vm.toggleSeries(PaneId(0), SeriesKey(9))
+    val mapPane = layout().panes.first().id
+
+    // Aimed straight at the map pane, by tap and by drag: both land in a chart pane instead.
+    vm.addSeries(mapPane, SeriesKey(2))
+    assertThat(layout().panes.first { it.id == mapPane }.series).containsExactly(SeriesKey(9))
+    assertThat(layout().panes.flatMap { it.series }).contains(SeriesKey(2))
+
+    vm.moveSeries(SeriesKey(1), PaneId(0), mapPane)
+    assertThat(layout().panes.first { it.id == mapPane }.series).containsExactly(SeriesKey(9))
+    assertThat(layout().panes.first().id).isEqualTo(mapPane)
+  }
+
+  @Test
+  fun aMapPaneAddedLastStillOpensFirst() = runTest {
+    val catalogue = listOf(
+      DataLogSeries(column = 1, kind = DataLogSeriesKind.DATA_LOG_SERIES_KIND_NUMERIC, canonical_id = "engine[1].rpm"),
+      DataLogSeries(column = 9, kind = DataLogSeriesKind.DATA_LOG_SERIES_KIND_POSITION),
+    )
+    every { manager.observeOne(thingId, id) } returns flowOf(record.copy(series = catalogue))
+    val vm = viewModel()
+    fun layout() = (vm.uiState.value as DataLogViewerUiState.Ready).layout
+
+    // Opens on RPM alone; the position series spawns a map pane at the end of the list.
+    assertThat(layout().panes.single().series).containsExactly(SeriesKey(1))
+    vm.spawnPane(SeriesKey(9))
+
+    assertThat(layout().panes.map { it.series }).containsExactly(
+      listOf(SeriesKey(9)),
+      listOf(SeriesKey(1)),
+    ).inOrder()
+    // Re-ordering does not steal the target from the pane the user just made.
+    assertThat(layout().targetPane).isEqualTo(layout().panes.first().id)
+  }
+
+  @Test
   fun layoutEditsFlowThroughTheReadyState() = runTest {
     val catalogue = listOf(
       DataLogSeries(column = 1, kind = DataLogSeriesKind.DATA_LOG_SERIES_KIND_NUMERIC, canonical_id = "engine[1].rpm"),
@@ -330,17 +399,20 @@ class DataLogViewerViewModelTest {
     assertThat(layout().panes[0].series).containsExactly(SeriesKey(1))
     assertThat(layout().panes[1].series).containsExactly(SeriesKey(2))
 
-    // A map series dropped on a chart pane spawns a pane of its own.
+    // The position series opens a pane of its own, which leads the stack; dragging it onto a chart
+    // pane afterwards changes nothing, because that one pane is the only place it can be.
     vm.addSeries(PaneId(1), SeriesKey(3))
     vm.moveSeries(SeriesKey(3), PaneId(1), PaneId(0))
     assertThat(layout().panes).hasSize(3)
-    assertThat(layout().panes[2].series).containsExactly(SeriesKey(3))
+    assertThat(layout().panes.first().series).containsExactly(SeriesKey(3))
+    assertThat(layout().panes.map { it.id })
+      .containsExactly(PaneId(2), PaneId(0), PaneId(1)).inOrder()
 
     vm.removeSeries(PaneId(0), SeriesKey(1))
-    assertThat(layout().panes[0].series).isEmpty()
+    assertThat(layout().panes.first { it.id == PaneId(0) }.series).isEmpty()
     vm.setTargetPane(PaneId(0))
     vm.removePane(PaneId(0))
-    assertThat(layout().panes.map { it.id }).containsExactly(PaneId(1), PaneId(2)).inOrder()
+    assertThat(layout().panes.map { it.id }).containsExactly(PaneId(2), PaneId(1)).inOrder()
     assertThat(layout().targetPane).isEqualTo(PaneId(1))
   }
 }

@@ -38,6 +38,7 @@ import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.datalog.DataLogSeries
 import dev.fanfly.wingslog.feature.datalog.model.SeriesKey
 import dev.fanfly.wingslog.feature.datalog.model.chart.isPlottable
+import dev.fanfly.wingslog.feature.datalog.model.chart.isSelectable
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.datalog.sharedassets.generated.resources.Res
 import wingslog.feature.datalog.sharedassets.generated.resources.data_log_sidebar_hint
@@ -99,7 +100,7 @@ private fun SeriesTab(
 ) {
   val plottable = remember(catalogue, query) {
     val q = query.trim().lowercase()
-    catalogue.filter { it.isPlottable }.filter {
+    catalogue.filter { it.isSelectable }.filter {
       q.isEmpty() || it.name.lowercase().contains(q) || it.short_name.lowercase().contains(q) || it.unit.lowercase().contains(q)
     }
   }
@@ -150,8 +151,12 @@ private fun SeriesRow(
     Column(modifier = Modifier.weight(1f)) {
       Text(series.name, style = MaterialTheme.typography.bodyMedium)
       Text(
-        text = listOf(series.unit, "${formatSeriesValue(series.min.toFloat())} – ${formatSeriesValue(series.max.toFloat())}")
-          .filter { it.isNotBlank() }.joinToString(" · "),
+        // A position series has no range to state; its min and max are both zero.
+        text = listOfNotNull(
+          series.unit.takeIf { it.isNotBlank() },
+          "${formatSeriesValue(series.min.toFloat())} – ${formatSeriesValue(series.max.toFloat())}"
+            .takeIf { series.isPlottable },
+        ).joinToString(" · "),
         style = WingslogTypography.dataSmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
       )

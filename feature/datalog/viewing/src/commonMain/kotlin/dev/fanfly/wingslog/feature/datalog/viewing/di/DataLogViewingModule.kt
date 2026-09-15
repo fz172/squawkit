@@ -2,6 +2,7 @@ package dev.fanfly.wingslog.feature.datalog.viewing.di
 
 import dev.fanfly.wingslog.core.auth.AuthManager
 import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogManager
+import dev.fanfly.wingslog.feature.datalog.model.MapTileProvider
 import dev.fanfly.wingslog.feature.datalog.viewing.attach.DataLogAttachmentPickerViewModel
 import dev.fanfly.wingslog.feature.datalog.viewing.list.DataLogListViewModel
 import dev.fanfly.wingslog.id.ThingId
@@ -10,6 +11,8 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 val dataLogViewingModule: Module = module {
+  // The tile source the map pane draws (design §11.6); a host can swap it without touching the pane.
+  single<MapTileProvider> { MapTileProvider.OpenStreetMap }
   viewModel { params ->
     DataLogListViewModel(
       get<DataLogManager>(),

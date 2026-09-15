@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.datalog.DataLog
+import dev.fanfly.wingslog.datalog.DataLogSeries
 import dev.fanfly.wingslog.feature.attachment.model.DownloadState
 import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogManager
 import dev.fanfly.wingslog.feature.datalog.datamanager.ChartLayoutStore
@@ -14,10 +15,13 @@ import dev.fanfly.wingslog.feature.datalog.model.ViewWindow
 import dev.fanfly.wingslog.feature.datalog.model.PaneId
 import dev.fanfly.wingslog.feature.datalog.model.SeriesKey
 import dev.fanfly.wingslog.feature.datalog.model.chart.LayoutEdits
+import dev.fanfly.wingslog.feature.datalog.model.chart.kindOf
+import dev.fanfly.wingslog.feature.datalog.model.chart.PaneKind
 import dev.fanfly.wingslog.feature.datalog.model.chart.LayoutMemory
 import dev.fanfly.wingslog.feature.datalog.model.chart.LayoutMemoryCodec
 import dev.fanfly.wingslog.feature.datalog.model.chart.Navigation
 import dev.fanfly.wingslog.feature.datalog.model.chart.defaultLayout
+import dev.fanfly.wingslog.feature.datalog.model.chart.withMapFirst
 import dev.fanfly.wingslog.feature.datalog.viewing.chart.SidebarTab
 import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.id.ThingId
@@ -138,17 +142,30 @@ class DataLogViewerViewModel(
 
   fun setCursor(t: Double?) = updateReady { it.copy(cursorT = t) }
 
-  fun setLayout(layout: ChartLayout) = updateReady { it.copy(layout = layout) }
+  fun setLayout(layout: ChartLayout) = updateReady { it.withLayout(layout) }
+
+  /**
+   * Every layout edit goes through here so the map pane stays first (design §11.6): the edits
+   * themselves are pure and order-blind, and re-sorting in one place beats remembering to do it in
+   * each of them.
+   */
+  private fun DataLogViewerUiState.Ready.withLayout(layout: ChartLayout): DataLogViewerUiState.Ready =
+    copy(layout = layout.withMapFirst(catalogue()))
+
+  private fun DataLogViewerUiState.Ready.catalogue(): Map<Int, DataLogSeries> =
+    record.series.associateBy { it.column }
 
   fun toggleClockAxis() = updateReady { it.copy(clockAxis = !it.clockAxis) }
 
   // Layout edits (design §11.5, PRD R21, R24): each is a pure LayoutEdits call on the Ready state.
 
-  fun setTargetPane(pane: PaneId) = updateReady { it.copy(layout = LayoutEdits.target(it.layout, pane)) }
+  fun setTargetPane(pane: PaneId) = updateReady { it.withLayout(LayoutEdits.target(it.layout, pane)) }
 
-  fun addSeries(pane: PaneId, key: SeriesKey) = updateReady { it.copy(layout = LayoutEdits.add(it.layout, pane, key)) }
+  fun addSeries(pane: PaneId, key: SeriesKey) = updateReady {
+    it.withLayout(LayoutEdits.place(it.layout, pane, key, it.catalogue()))
+  }
 
-  fun removeSeries(pane: PaneId, key: SeriesKey) = updateReady { it.copy(layout = LayoutEdits.remove(it.layout, pane, key)) }
+  fun removeSeries(pane: PaneId, key: SeriesKey) = updateReady { it.withLayout(LayoutEdits.remove(it.layout, pane, key)) }
 
   /**
    * What a tap in the series list means: a series already in [pane] comes out, anything else goes
@@ -156,24 +173,37 @@ class DataLogViewerViewModel(
    * and the only way to drop a series was its chip's close button.
    */
   fun toggleSeries(pane: PaneId, key: SeriesKey) = updateReady { state ->
-    val present = state.layout.panes.firstOrNull { it.id == pane }?.series?.contains(key) == true
-    val layout = if (present) LayoutEdits.remove(state.layout, pane, key)
-    else LayoutEdits.add(state.layout, pane, key)
-    state.copy(layout = layout)
+    val catalogue = state.catalogue()
+    // Against the pane it would land in, not the one that was tapped: the position series always
+    // lands on the map pane, so that is the pane whose tap must take it back out.
+    val destination = with(LayoutEdits) { state.layout.destinationFor(pane, key, catalogue) }
+    val present = destination != null &&
+      state.layout.panes.firstOrNull { it.id == destination }?.series?.contains(key) == true
+    val layout = if (present) {
+      val removed = LayoutEdits.remove(state.layout, destination, key)
+      // The map pane exists only to hold the map, so emptying it closes it rather than leaving a
+      // pane and a half of blank behind. A chart pane stays: it is still somewhere to drop a series.
+      val emptied = removed.panes.firstOrNull { it.id == destination }?.series?.isEmpty() == true
+      val wasMap = state.layout.kindOf(destination, catalogue) == PaneKind.MAP
+      if (emptied && wasMap) LayoutEdits.removePane(removed, destination) else removed
+    } else {
+      LayoutEdits.place(state.layout, pane, key, catalogue)
+    }
+    state.withLayout(layout)
   }
 
   fun moveSeries(key: SeriesKey, from: PaneId, to: PaneId) = updateReady {
-    it.copy(layout = LayoutEdits.move(it.layout, key, from, to, it.record.series.associateBy { s -> s.column }))
+    it.withLayout(LayoutEdits.move(it.layout, key, from, to, it.catalogue()))
   }
 
   /** The *New pane* target: a dropped series lands in a fresh pane; a tap opens an empty one. */
-  fun spawnPane(key: SeriesKey? = null) = updateReady { it.copy(layout = LayoutEdits.spawn(it.layout, key)) }
+  fun spawnPane(key: SeriesKey? = null) = updateReady { it.withLayout(LayoutEdits.spawn(it.layout, key)) }
 
   fun setSidebarTab(tab: SidebarTab) = updateReady { it.copy(sidebarTab = tab) }
 
   fun setSeriesQuery(query: String) = updateReady { it.copy(seriesQuery = query) }
 
-  fun removePane(pane: PaneId) = updateReady { it.copy(layout = LayoutEdits.removePane(it.layout, pane)) }
+  fun removePane(pane: PaneId) = updateReady { it.withLayout(LayoutEdits.removePane(it.layout, pane)) }
 
   fun requestDelete() = updateReady { it.copy(deleting = true) }
 
@@ -215,7 +245,8 @@ class DataLogViewerViewModel(
           _uiState.value = DataLogViewerUiState.Ready(
             record = record,
             data = data,
-            layout = remembered?.layout ?: defaultLayout(record.series),
+            layout = (remembered?.layout ?: defaultLayout(record.series))
+              .withMapFirst(record.series.associateBy { it.column }),
             view = null,
             cursorT = null,
             deleting = false,
