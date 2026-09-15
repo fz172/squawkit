@@ -49,9 +49,15 @@ enum class AdSlotFormat(val unitCount: Int) {
      * and so a slot that already held a grant showed nothing once the cap was reached. Only
      * `AdsManager.reserve` may decide what a slot renders, because only it knows what that slot was
      * already given.
+     *
+     * [maxUnits] is a property of the container, not of the budget: a slot in a fixed-width column —
+     * the data log viewer's sidebar footer — has room for one unit however wide the window is, and
+     * two would be laid out past its edge.
      */
-    fun desiredUnits(tier: AdLayoutTier): Int =
-      if (tier == AdLayoutTier.WIDE) TWO_UP.unitCount else SINGLE.unitCount
+    fun desiredUnits(tier: AdLayoutTier, maxUnits: Int = TWO_UP.unitCount): Int {
+      val byTier = if (tier == AdLayoutTier.WIDE) TWO_UP.unitCount else SINGLE.unitCount
+      return minOf(byTier, maxUnits)
+    }
 
     /**
      * The format to render for a grant of [grantedUnits], as returned by `AdsManager.reserve`.

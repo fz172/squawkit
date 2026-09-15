@@ -2,6 +2,7 @@ package dev.fanfly.wingslog.feature.ads.viewing
 
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -57,6 +58,13 @@ actual fun AdView(
   val currentFailed by rememberUpdatedState(onFailed)
   val currentClicked by rememberUpdatedState(onClicked)
   val gmsSize = remember(size) { size.toGmsAdSize() }
+  val unitId = adUnitIdFor(surface, useTestAds)
+  if (unitId == null) {
+    // Nothing to request. Reporting a no-fill is what gives the unit back to the session budget and
+    // collapses the card; rendering an empty view would hold a pixel and a reservation for nothing.
+    LaunchedEffect(surface) { currentFailed(AD_REASON_NO_UNIT) }
+    return
+  }
 
   AndroidView(
     modifier = modifier.size(
@@ -69,7 +77,7 @@ actual fun AdView(
       }
       GmsAdView(context).apply {
         setAdSize(gmsSize)
-        adUnitId = adUnitIdFor(surface, useTestAds)
+        adUnitId = unitId
         adListener = object : AdListener() {
           override fun onAdLoaded() = currentFilled()
           override fun onAdFailedToLoad(error: LoadAdError) {
@@ -106,8 +114,12 @@ actual fun AdView(
  *
  * Not secrets — ad unit ids ship in every APK — but they are live inventory, which is why the
  * developer-build branch exists.
+ *
+ * Null means no unit has been created for that surface yet. A made-up or borrowed id is worse than
+ * none: a borrowed one bills another surface's inventory and merges the two in AdMob's reports, and
+ * an invented one fails on every request with no hint of why.
  */
-private fun adUnitIdFor(surface: AdSurface, useTestAds: Boolean): String =
+private fun adUnitIdFor(surface: AdSurface, useTestAds: Boolean): String? =
   if (useTestAds) {
     GOOGLE_TEST_BANNER_UNIT
   } else {
@@ -115,6 +127,8 @@ private fun adUnitIdFor(surface: AdSurface, useTestAds: Boolean): String =
       AdSurface.SQUAWKS -> "ca-app-pub-1367143209408464/3781294453"
       AdSurface.TASKS -> "ca-app-pub-1367143209408464/2468212789"
       AdSurface.LOGS -> "ca-app-pub-1367143209408464/8842049449"
+      // Awaiting an AdMob unit for the data log viewer; the slot collapses until one exists.
+      AdSurface.DATA_LOGS -> null
     }
   }
 

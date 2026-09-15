@@ -31,6 +31,9 @@ kotlin {
   sourceSets {
     commonMain.dependencies {
       implementation(project(":core:model"))
+      implementation(project(":feature:ads:model"))
+      implementation(project(":feature:ads:datamanager"))
+      implementation(project(":feature:ads:viewing"))
       implementation(project(":feature:attachment:model"))
       implementation(project(":feature:datalog:model"))
       implementation(project(":feature:datalog:datamanager"))
