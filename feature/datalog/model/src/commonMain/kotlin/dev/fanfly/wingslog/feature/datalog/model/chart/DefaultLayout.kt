@@ -8,6 +8,10 @@ import dev.fanfly.wingslog.feature.datalog.model.Pane
 import dev.fanfly.wingslog.feature.datalog.model.PaneId
 import dev.fanfly.wingslog.feature.datalog.model.SeriesKey
 
+/** True for anything the user can put in the layout: a chart pane's kinds, plus the map's position. */
+val DataLogSeries.isSelectable: Boolean
+  get() = isPlottable || kind == DataLogSeriesKind.DATA_LOG_SERIES_KIND_POSITION
+
 /** True for the kinds a chart pane can draw. */
 val DataLogSeries.isPlottable: Boolean
   get() = kind == DataLogSeriesKind.DATA_LOG_SERIES_KIND_NUMERIC ||

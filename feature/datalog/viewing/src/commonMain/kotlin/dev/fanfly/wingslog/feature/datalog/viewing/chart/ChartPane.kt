@@ -58,8 +58,8 @@ class PaneSeries(
 )
 
 /** Pane heights from design §11.7; no Spacing token covers them. */
-private val PaneHeightCompact: Dp = 170.dp
-private val PaneHeightWide: Dp = 150.dp
+internal val PaneHeightCompact: Dp = 170.dp
+internal val PaneHeightWide: Dp = 150.dp
 private val AxisLabelSize = 10.sp
 private val CursorStroke = 1.dp
 private val SeriesStroke = 1.5.dp

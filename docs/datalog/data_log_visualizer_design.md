@@ -831,13 +831,25 @@ strip. Moving onto a pane whose kind (chart vs map) differs spawns a new pane, m
 ### 11.6 Map pane (R29)
 
 `MapPane` draws raster tiles fetched through Coil (`rememberAsyncImagePainter`, house pattern) laid
-out with Web Mercator math, the track as a `Path`, the cursor dot in `tertiary`. Zoom level fits the
-track's bounding box to 80% of the pane. Provider is a `MapTileProvider(urlTemplate, attribution)`
-value bound in Koin; PRD decision 7 says free and simple, so the default is a raster provider with a
-free tier and required attribution shown in the pane corner, and Google Maps Platform is acceptable
-through its raster Map Tiles API. Web needs `ktor-client-js` added to `feature/datalog/viewing`'s
-`jsMain` for Coil's fetcher; Coil has no disk cache on JS, so memory only there. Failed tiles leave
-the dark surface and the track still draws (R29's degrade rule).
+out with Web Mercator math, the track as a `Path`, the cursor dot in `tertiary`. Provider is a
+`MapTileProvider(urlTemplate, attribution, tileSizePx, maxZoom)` bound in Koin; the default is
+OpenStreetMap's own tiles, whose usage policy requires the identifying `User-Agent` the pane's
+`ImageLoader` sets and the attribution shown in the pane's corner. Web needs `ktor-client-js` added
+to `feature/datalog/viewing`'s `jsMain` for Coil's fetcher; Coil has no disk cache on JS, so memory
+only there. Failed tiles leave the pane's surface and the track still draws (R29's degrade rule).
+
+**Scale is continuous, tile zoom is not.** `MapCamera` holds a centre and a world size in pixels;
+`fitCamera` opens it with the track's bounding box filling 80% of the pane, and the user pinches,
+drags or wheels from there. The tile zoom is derived from the camera and capped at the provider's
+`maxZoom`, so a short taxi track — tens of metres, well past zoom 19 — keeps filling the pane with
+the deepest tiles stretched rather than rendering as a speck at the last integer zoom. `MAX_OVER_ZOOM`
+bounds that stretch; a wheel event is damped so one flick cannot jump from the fit to the ceiling.
+
+**The map pane is first and taller.** `ChartLayout.withMapFirst` sorts map panes to the top after
+every edit, and the pane renders at 1.5× a chart pane's height. `LayoutEdits.place` sends the
+position series to the one map pane that exists (opening it if there is none) and keeps every chart
+series out of it, so R29's "map and chart series never share a pane" holds for taps and drags alike;
+moving the position series is a no-op for the same reason.
 
 ### 11.7 Sidebar and narrow layouts
 
@@ -1022,7 +1034,7 @@ PR 9+ the formats epic.
 | T35 | 5 | Picker sheet fourth option behind capability and flag; `DataLogAttachmentPicker` body as a slot; *Upload log file* inside the picker | `feature/attachment/viewing`, `feature/datalog/viewing`, three form screens | M | T33, T18 | R3, §9.2 |
 | T36 | 5 | Three form ViewModels `attachDataLog`; three tap handlers branch to the viewer route; `ThingOverviewViewModel.dataLogs` | `feature/logs`, `feature/tasks`, `feature/squawk`, `feature/thing/dashboard` | M | T35, T26 | R4, §9.3 |
 | T37 | 5 | Export and backend exclusions: `attachmentCell`, `AttachmentExportResolver`, `exportedBytes` | `feature/export` | S | T02 | §9.1 |
-| T38 | 6 | `MapPane`: tile provider binding, Mercator layout, track path, cursor dot, attribution, web ktor engine | `feature/datalog/viewing` | L | T28 | R29 |
+| T38 | 6 | `MapPane`: tile provider binding, Mercator layout, track path, cursor dot, attribution, web ktor engine, continuous zoom with pinch and wheel | `feature/datalog/viewing` | L | T28 | R29 |
 | T39 | 6 | `ChartPresets` and default layout; preset chips in the sidebar | `feature/datalog/model`, `viewing` | S | T31, T32 | R21, R30 |
 | T40 | 6 | `ChartLayoutStore` per-device layout memory; clock-time axis toggle | `feature/datalog/datamanager`, `viewing` | S | T26 | R31, R32 |
 | T41 | 6 | R12 "file it under the other Thing" confirmation | `feature/datalog/datamanager`, `viewing` | S | T17 | R12 |
