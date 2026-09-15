@@ -50,7 +50,15 @@ class DynonParser : DataLogParser {
   override val formats: Set<DataLogFormat> =
     setOf(DataLogFormat.DATA_LOG_FORMAT_DYNON_SKYVIEW)
 
-  override val version: Int = 1
+  /**
+   * 1 the first SkyView release. 2 labelled `Percent Power` as a percentage.
+   *
+   * **Bump this in the same commit as any change to what `parse` emits** — a value, a unit, a name,
+   * a canonical id, the set of columns. A stored record keeps the catalogue it was imported with
+   * and `DataLogManagerImpl.load` rewrites it only when this number has moved, so a change that
+   * leaves it alone reaches the charts and never reaches the sidebar.
+   */
+  override val version: Int = 2
 
   override fun sniff(header: ByteArray): Confidence {
     val text = header.decodeToString(throwOnInvalidSequence = false)
