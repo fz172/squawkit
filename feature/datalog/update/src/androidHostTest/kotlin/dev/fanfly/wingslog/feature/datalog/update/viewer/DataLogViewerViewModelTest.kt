@@ -194,6 +194,46 @@ class DataLogViewerViewModelTest {
   }
 
   @Test
+  fun tappingASeriesAlreadyInTheTargetPaneTakesItOut() = runTest {
+    val catalogue = listOf(
+      DataLogSeries(column = 1, kind = DataLogSeriesKind.DATA_LOG_SERIES_KIND_NUMERIC, canonical_id = "engine[1].rpm"),
+      DataLogSeries(column = 2, kind = DataLogSeriesKind.DATA_LOG_SERIES_KIND_NUMERIC),
+    )
+    every { manager.observeOne(thingId, id) } returns flowOf(record.copy(series = catalogue))
+    val vm = viewModel()
+    fun layout() = (vm.uiState.value as DataLogViewerUiState.Ready).layout
+
+    // Opens on RPM; tapping it again in the list takes it back out rather than doing nothing.
+    assertThat(layout().panes.single().series).containsExactly(SeriesKey(1))
+    vm.toggleSeries(PaneId(0), SeriesKey(1))
+    assertThat(layout().panes.single().series).isEmpty()
+
+    // A series the pane does not hold still goes in, and can come straight back out.
+    vm.toggleSeries(PaneId(0), SeriesKey(2))
+    assertThat(layout().panes.single().series).containsExactly(SeriesKey(2))
+    vm.toggleSeries(PaneId(0), SeriesKey(2))
+    assertThat(layout().panes.single().series).isEmpty()
+  }
+
+  @Test
+  fun aSeriesInAnotherPaneIsAddedToTheTargetRatherThanRemoved() = runTest {
+    val catalogue = listOf(
+      DataLogSeries(column = 1, kind = DataLogSeriesKind.DATA_LOG_SERIES_KIND_NUMERIC, canonical_id = "engine[1].rpm"),
+      DataLogSeries(column = 2, kind = DataLogSeriesKind.DATA_LOG_SERIES_KIND_NUMERIC),
+    )
+    every { manager.observeOne(thingId, id) } returns flowOf(record.copy(series = catalogue))
+    val vm = viewModel()
+    fun layout() = (vm.uiState.value as DataLogViewerUiState.Ready).layout
+
+    vm.spawnPane()
+    // RPM sits in pane 0; the target is pane 1, so the same tap adds it there.
+    vm.toggleSeries(PaneId(1), SeriesKey(1))
+
+    assertThat(layout().panes[0].series).containsExactly(SeriesKey(1))
+    assertThat(layout().panes[1].series).containsExactly(SeriesKey(1))
+  }
+
+  @Test
   fun layoutEditsFlowThroughTheReadyState() = runTest {
     val catalogue = listOf(
       DataLogSeries(column = 1, kind = DataLogSeriesKind.DATA_LOG_SERIES_KIND_NUMERIC, canonical_id = "engine[1].rpm"),

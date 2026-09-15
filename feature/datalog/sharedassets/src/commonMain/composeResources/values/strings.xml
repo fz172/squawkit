@@ -59,7 +59,7 @@
   <!-- Sidebar (PRD R25, R26, R27) -->
   <string name="data_log_sidebar_series">Series</string>
   <string name="data_log_sidebar_info">Info</string>
-  <string name="data_log_sidebar_hint">Tap adds to the highlighted pane</string>
+  <string name="data_log_sidebar_hint">Tap adds to the highlighted pane, tap again to remove</string>
   <string name="data_log_sidebar_open">Series and info</string>
   <string name="data_log_fact_date">Date</string>
   <string name="data_log_fact_start">Start</string>

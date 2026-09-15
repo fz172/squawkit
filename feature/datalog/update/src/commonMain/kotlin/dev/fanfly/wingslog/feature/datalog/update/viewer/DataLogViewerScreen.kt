@@ -291,7 +291,7 @@ fun DataLogViewerScreen(
                 onTab = viewModel::setSidebarTab,
                 query = s.seriesQuery,
                 onQuery = viewModel::setSeriesQuery,
-                onAdd = { key -> s.layout.targetPane?.let { viewModel.addSeries(it, key) } ?: viewModel.spawnPane(key) },
+                onAdd = { key -> s.layout.targetPane?.let { viewModel.toggleSeries(it, key) } ?: viewModel.spawnPane(key) },
                 dragState = dragState,
                 onDrop = onDrop,
                 facts = facts,

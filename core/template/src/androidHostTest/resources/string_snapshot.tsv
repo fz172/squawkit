@@ -1061,7 +1061,7 @@ feature/datalog/sharedassets	data_log_fact_software	Software
 feature/datalog/sharedassets	data_log_fact_start	Start
 feature/datalog/sharedassets	data_log_fact_system_id	System ID
 feature/datalog/sharedassets	data_log_fact_unit	Unit
-feature/datalog/sharedassets	data_log_sidebar_hint	Tap adds to the highlighted pane
+feature/datalog/sharedassets	data_log_sidebar_hint	Tap adds to the highlighted pane, tap again to remove
 feature/datalog/sharedassets	data_log_sidebar_info	Info
 feature/datalog/sharedassets	data_log_sidebar_open	Series and info
 feature/datalog/sharedassets	data_log_sidebar_series	Series
