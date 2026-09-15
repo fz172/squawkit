@@ -441,6 +441,7 @@ fun DataLogViewerScreen(
                   cursorT = s.cursorT,
                   clockAxis = s.clockAxis,
                   originSecondsOfDay = r.startLocal.time.toSecondOfDay(),
+                  onScrub = { fraction -> viewModel.onGesture(GestureIntent.Cursor(fraction)) },
                 )
               }
               item {
