@@ -13,6 +13,7 @@ import dev.fanfly.wingslog.core.ui.theme.AppearanceController
 import dev.fanfly.wingslog.core.ui.theme.AppearanceMode
 import dev.fanfly.wingslog.feature.ads.datamanager.AdConsentManager
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
+import dev.fanfly.wingslog.feature.datalog.datamanager.ChartLayoutStore
 import dev.fanfly.wingslog.feature.developeroptions.datamanager.DeveloperOptionsManager
 import dev.fanfly.wingslog.feature.notifications.datamanager.NotificationPrefsManager
 import dev.fanfly.wingslog.feature.notifications.datamanager.PrefsState
@@ -47,6 +48,7 @@ class SettingsViewModel(
   private val authManager: AuthManager,
   private val accountDeleter: AccountDeleter,
   private val attachmentManager: AttachmentManager,
+  private val chartLayouts: ChartLayoutStore,
   private val dbChecker: DatabaseIntegrityChecker,
   private val featureLabManager: DeveloperOptionsManager,
   private val appearanceController: AppearanceController,
@@ -319,6 +321,8 @@ class SettingsViewModel(
       authManager.logOut()
       _user.value = SettingsUiState(userStatus = UserStatus.LOGGED_OUT)
       attachmentManager.wipeLocalData(uid)
+      // Device-local chart layouts are not user-scoped storage, so the wipes above miss them.
+      chartLayouts.clear()
       dbChecker.wipeDataForUser(uid)
     }
   }
@@ -349,6 +353,7 @@ class SettingsViewModel(
         SettingsUiState(userStatus = UserStatus.LOGGED_OUT)
       if (uid != null) {
         attachmentManager.wipeLocalData(uid)
+        chartLayouts.clear()
         dbChecker.wipeDataForUser(uid)
       }
     }

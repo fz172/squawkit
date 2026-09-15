@@ -4,6 +4,8 @@ import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.datalog.DataLog
 import dev.fanfly.wingslog.feature.attachment.model.DownloadState
 import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogManager
+import dev.fanfly.wingslog.feature.datalog.datamanager.ChartLayoutStore
+import dev.fanfly.wingslog.feature.datalog.model.CanonicalSeries
 import dev.fanfly.wingslog.feature.datalog.model.DataLogSeriesData
 import dev.fanfly.wingslog.datalog.DataLogSeries
 import dev.fanfly.wingslog.datalog.DataLogSeriesKind
@@ -16,6 +18,7 @@ import dev.fanfly.wingslog.id.ThingId
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -39,11 +42,16 @@ class DataLogViewerViewModelTest {
   private val data =
     DataLogSeriesData(IntArray(3), emptyMap(), emptyMap(), null)
   private lateinit var manager: DataLogManager
+  private lateinit var layouts: ChartLayoutStore
+  private var remembered: String? = null
 
   @Before
   fun setUp() {
     Dispatchers.setMain(UnconfinedTestDispatcher())
     manager = mockk()
+    layouts = mockk()
+    every { layouts.load(id) } answers { remembered }
+    every { layouts.save(id, any()) } answers { remembered = secondArg() }
     every { manager.observeOne(thingId, id) } returns flowOf(record)
     every {
       manager.ensureLocal(
@@ -58,7 +66,70 @@ class DataLogViewerViewModelTest {
   @After
   fun tearDown() = Dispatchers.resetMain()
 
-  private fun viewModel() = DataLogViewerViewModel(manager, thingId, id)
+  private fun viewModel() = DataLogViewerViewModel(manager, layouts, thingId, id)
+
+  private val engineCatalogue = listOf(
+    DataLogSeries(column = 1, kind = DataLogSeriesKind.DATA_LOG_SERIES_KIND_NUMERIC, canonical_id = CanonicalSeries.engine(1, "rpm")),
+    DataLogSeries(column = 2, kind = DataLogSeriesKind.DATA_LOG_SERIES_KIND_NUMERIC, canonical_id = CanonicalSeries.engine(1, "oil_temp")),
+    DataLogSeries(column = 3, kind = DataLogSeriesKind.DATA_LOG_SERIES_KIND_NUMERIC, canonical_id = CanonicalSeries.IAS),
+  )
+
+  private fun ready(vm: DataLogViewerViewModel) = vm.uiState.value as DataLogViewerUiState.Ready
+
+  @Test
+  fun theLayoutThisDeviceLeftIsWhatTheNextOpenRestores() = runTest {
+    every { manager.observeOne(thingId, id) } returns flowOf(record.copy(series = engineCatalogue))
+
+    val first = viewModel()
+    first.addSeries(PaneId(0), SeriesKey(3))
+    first.toggleClockAxis()
+    assertThat(remembered).isNotNull()
+
+    val reopened = ready(viewModel())
+    assertThat(reopened.layout.panes.single().series)
+      .containsExactly(SeriesKey(1), SeriesKey(3)).inOrder()
+    assertThat(reopened.clockAxis).isTrue()
+  }
+
+  @Test
+  fun aRememberedLayoutNamingSeriesTheLogLostFallsBackToTheDefault() = runTest {
+    every { manager.observeOne(thingId, id) } returns flowOf(record.copy(series = engineCatalogue))
+    remembered = "v1;c=0;t=0;p=41,42"
+
+    val state = ready(viewModel())
+
+    assertThat(state.layout.panes.single().series).containsExactly(SeriesKey(1))
+    assertThat(state.clockAxis).isFalse()
+  }
+
+  @Test
+  fun movingTheCursorNeverRewritesTheRememberedLayout() = runTest {
+    // updateReady runs on every pointer frame; only a real layout or axis change may hit the store.
+    val vm = viewModel()
+    vm.toggleClockAxis()
+    val afterToggle = remembered
+
+    vm.setCursor(12.0)
+    vm.setCursor(13.0)
+    vm.setCursor(null)
+
+    assertThat(remembered).isEqualTo(afterToggle)
+    verify(exactly = 1) { layouts.save(id, any()) }
+  }
+
+  @Test
+  fun theClockAxisTogglesAndIsRemembered() = runTest {
+    val vm = viewModel()
+    assertThat(ready(vm).clockAxis).isFalse()
+
+    vm.toggleClockAxis()
+    assertThat(ready(vm).clockAxis).isTrue()
+    assertThat(remembered).contains("c=1")
+
+    vm.toggleClockAxis()
+    assertThat(ready(vm).clockAxis).isFalse()
+    assertThat(remembered).contains("c=0")
+  }
 
   @Test
   fun localBytesLoadStraightToReady() = runTest {

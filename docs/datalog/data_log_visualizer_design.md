@@ -430,9 +430,12 @@ by `(id, parser_version)`.
 
 ### 5.5 Layout memory
 
-`ChartLayoutStore` keeps the last layout per data log on the device (PRD R31) as a small JSON string
-through the same per-platform key-value seam `AppearanceStore` uses (SharedPreferences,
-`NSUserDefaults`, `localStorage`). Not synced, not a `CollectionKind`; wiped with `wipeLocalData`.
+`ChartLayoutStore` keeps the last layout per data log on the device (PRD R31) as one compact line
+(`v1;c=1;t=0;p=3,5|7` — version, clock axis, target pane, panes of columns) through the same
+per-platform key-value seam `AppearanceStore` uses (SharedPreferences, `NSUserDefaults`,
+`localStorage`). `LayoutMemoryCodec.decode` re-resolves every column against the record's catalogue,
+so a re-parsed log that renumbered or dropped a series still opens. Not synced, not a
+`CollectionKind`; cleared alongside `wipeLocalData`.
 
 ## 6. Import and parsing
 
@@ -552,8 +555,11 @@ the blob goes through `TombstoneGc` locally and `onRecordDeleted` remotely, both
 
 Identity: the Thing's tail comes from its spec through `ThingSpecAccess` (the airplane template's
 identifier field); `identity_mismatch = identity.isNotBlank() && !identity.equals(tail, ignoreCase)`.
-R12's "file it under the other Thing" offer compares against every Thing the user can see and is
-a `NeedsConfirmation` variant carrying the candidate Thing id.
+R12's "file it under the other Thing" offer compares against every Thing the user can see
+(`OtherThingLookup`) and is an `ImportProgress.OtherThing` carrying the candidate's id and display
+name. The caller re-runs the import against that Thing, or with `keepIdentity` to keep it here with
+the mismatch flag set. The attachment picker always passes `keepIdentity`: the Thing is already
+chosen there.
 
 ## 8. Template, capability, and gating
 
@@ -846,7 +852,8 @@ otherwise.
 ### 11.8 Presets and default layout (R21, R30)
 
 `ChartPresets` in `feature/datalog/model`: `Engine`, `Fuel`, `Flight`, `Electrical`, each a list of
-pane lists of canonical ids. Default layout on first open: one pane with the template's default
+pane lists of canonical ids. **Not built** — dropped from PR 6 on 2026-09-15; the default layout
+below ships without it. Default layout on first open: one pane with the template's default
 series (`engine[1].rpm` on airplane, declared as a lexicon-adjacent template field later; hard-coded
 per format in V1 with a TODO to move into the template when automotive arrives), or the first numeric
 series.

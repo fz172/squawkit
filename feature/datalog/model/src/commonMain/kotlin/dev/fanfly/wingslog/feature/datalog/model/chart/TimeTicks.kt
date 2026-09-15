@@ -22,6 +22,28 @@ object TimeTicks {
     return generateSequence(first) { it + step }.takeWhile { it <= window.endSeconds }.toList()
   }
 
+  /**
+   * Tick times aligned to the wall clock (PRD R32): every elapsed second inside the window at
+   * which the clock, [originSecondsOfDay] at t = 0, reads a multiple of [step].
+   */
+  fun clockTicks(window: ViewWindow, step: Int, originSecondsOfDay: Int): List<Int> {
+    if (step <= 0 || window.lengthSeconds < 0) return emptyList()
+    val phase = ((step - originSecondsOfDay % step) % step + step) % step
+    val first = window.startSeconds + ((phase - window.startSeconds) % step + step) % step
+    return generateSequence(first) { it + step }.takeWhile { it <= window.endSeconds }.toList()
+  }
+
+  /** `HH:MM` for whole-minute steps, `HH:MM:SS` below that, wrapping past midnight. */
+  fun clockLabel(secondsOfDay: Int, step: Int = 60): String {
+    val s = ((secondsOfDay % SECONDS_PER_DAY) + SECONDS_PER_DAY) % SECONDS_PER_DAY
+    val hh = (s / 3600).toString().padStart(2, '0')
+    val mm = ((s % 3600) / 60).toString().padStart(2, '0')
+    if (step >= 60) return "$hh:$mm"
+    return "$hh:$mm:${(s % 60).toString().padStart(2, '0')}"
+  }
+
+  private const val SECONDS_PER_DAY = 86_400
+
   /** `mm:ss` under an hour, `h:mm:ss` from an hour up. */
   fun label(seconds: Int): String {
     val s = seconds.coerceAtLeast(0)

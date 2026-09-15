@@ -995,7 +995,28 @@ feature/squawk/sharedassets	delete_this_squawk_subtitle	Permanently removes it a
 feature/squawk/sharedassets	delete_this_squawk_title	Delete this %1$s
 feature/squawk/sharedassets	squawk_deleted	Squawk deleted
 core/sharedassets	danger_zone	Danger Zone
+feature/datalog/sharedassets	data_log_delete_body	The file and its charts are removed from every device.
+feature/datalog/sharedassets	data_log_delete_title	Delete Data Log?
+feature/datalog/sharedassets	data_log_deleted	Data log deleted
+feature/datalog/sharedassets	data_log_drag_series	Hold and drag to move %1$s
 feature/datalog/sharedassets	data_log_empty_title	No data log uploaded yet
+feature/datalog/sharedassets	data_log_fact_airframe_hours	Airframe hours
+feature/datalog/sharedassets	data_log_fact_date	Date
+feature/datalog/sharedassets	data_log_fact_duration	Duration
+feature/datalog/sharedassets	data_log_fact_engine_hours	Engine hours
+feature/datalog/sharedassets	data_log_fact_file	File
+feature/datalog/sharedassets	data_log_fact_identity	Recorded tail
+feature/datalog/sharedassets	data_log_fact_offset	UTC offset
+feature/datalog/sharedassets	data_log_fact_product	Product
+feature/datalog/sharedassets	data_log_fact_rate	Sample rate
+feature/datalog/sharedassets	data_log_fact_rate_value	%1$s Hz
+feature/datalog/sharedassets	data_log_fact_samples	Samples
+feature/datalog/sharedassets	data_log_fact_series	Series
+feature/datalog/sharedassets	data_log_fact_series_value	%1$d plottable · %2$d text
+feature/datalog/sharedassets	data_log_fact_software	Software
+feature/datalog/sharedassets	data_log_fact_start	Start
+feature/datalog/sharedassets	data_log_fact_system_id	System ID
+feature/datalog/sharedassets	data_log_fact_unit	Unit
 feature/datalog/sharedassets	data_log_gate_body	Anything you upload is stored with the account and available on every device.
 feature/datalog/sharedassets	data_log_gate_bullet_attach	Attach to any record
 feature/datalog/sharedassets	data_log_gate_bullet_columns	Every numeric column in the file: engine, fuel, electrical, air data, GPS
@@ -1020,28 +1041,19 @@ feature/datalog/sharedassets	data_log_import_keep_both	Keep both
 feature/datalog/sharedassets	data_log_import_parsing	Parsing %1$s…
 feature/datalog/sharedassets	data_log_import_reading	Reading %1$s…
 feature/datalog/sharedassets	data_log_import_storing	Saving %1$s…
-feature/datalog/sharedassets	data_log_recent_uploads	Recent uploads
-feature/datalog/sharedassets	data_log_series_count	%1$d series
-feature/datalog/sharedassets	data_log_supported_formats	Supported: Garmin G3X · G3X Touch
-feature/datalog/sharedassets	data_log_tail_mismatch	Tail mismatch
-feature/datalog/sharedassets	data_log_upload	Upload Data Log
-feature/datalog/sharedassets	data_log_delete_body	The file and its charts are removed from every device.
-feature/datalog/sharedassets	data_log_delete_title	Delete Data Log?
-feature/datalog/sharedassets	data_log_deleted	Data log deleted
-feature/datalog/sharedassets	data_log_viewer_downloading	Downloading the file…
-feature/datalog/sharedassets	data_log_viewer_load_failed	This file could not be opened.
-feature/datalog/sharedassets	data_log_viewer_missing	This data log was deleted.
-feature/datalog/sharedassets	data_log_viewer_utc_offset	%1$s local (%2$s)
+feature/datalog/sharedassets	data_log_new_pane	New pane
+feature/datalog/sharedassets	data_log_new_pane_hint	Tap, or drop a series here
+feature/datalog/sharedassets	data_log_other_thing_body	This file names %1$s. File it there instead?
+feature/datalog/sharedassets	data_log_other_thing_keep	Keep here
+feature/datalog/sharedassets	data_log_other_thing_move	File it there
+feature/datalog/sharedassets	data_log_other_thing_title	Recorded by %1$s?
 feature/datalog/sharedassets	data_log_pane_empty	No series in this pane
 feature/datalog/sharedassets	data_log_picker_attach	Attach
 feature/datalog/sharedassets	data_log_picker_attached	Attached
 feature/datalog/sharedassets	data_log_picker_same_day	Same day
 feature/datalog/sharedassets	data_log_picker_title	Attach data log
 feature/datalog/sharedassets	data_log_picker_upload	Upload log file
-feature/datalog/sharedassets	data_log_viewer_reset	Reset
-feature/datalog/sharedassets	data_log_drag_series	Hold and drag to move %1$s
-feature/datalog/sharedassets	data_log_new_pane	New pane
-feature/datalog/sharedassets	data_log_new_pane_hint	Tap, or drop a series here
+feature/datalog/sharedassets	data_log_recent_uploads	Recent uploads
 feature/datalog/sharedassets	data_log_remove_pane	Remove pane
 feature/datalog/sharedassets	data_log_remove_series	Remove %1$s
 feature/datalog/sharedassets	data_log_fact_airframe_hours	Airframe hours
@@ -1061,7 +1073,17 @@ feature/datalog/sharedassets	data_log_fact_software	Software
 feature/datalog/sharedassets	data_log_fact_start	Start
 feature/datalog/sharedassets	data_log_fact_system_id	System ID
 feature/datalog/sharedassets	data_log_fact_unit	Unit
+feature/datalog/sharedassets	data_log_series_count	%1$d series
 feature/datalog/sharedassets	data_log_sidebar_hint	Tap adds to the highlighted pane, tap again to remove
 feature/datalog/sharedassets	data_log_sidebar_info	Info
 feature/datalog/sharedassets	data_log_sidebar_open	Series and info
 feature/datalog/sharedassets	data_log_sidebar_series	Series
+feature/datalog/sharedassets	data_log_supported_formats	Supported: Garmin G3X · G3X Touch
+feature/datalog/sharedassets	data_log_tail_mismatch	Tail mismatch
+feature/datalog/sharedassets	data_log_upload	Upload Data Log
+feature/datalog/sharedassets	data_log_viewer_clock_axis	Clock time axis
+feature/datalog/sharedassets	data_log_viewer_downloading	Downloading the file…
+feature/datalog/sharedassets	data_log_viewer_load_failed	This file could not be opened.
+feature/datalog/sharedassets	data_log_viewer_missing	This data log was deleted.
+feature/datalog/sharedassets	data_log_viewer_reset	Reset
+feature/datalog/sharedassets	data_log_viewer_utc_offset	%1$s local (%2$s)

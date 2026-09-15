@@ -221,6 +221,8 @@ fun DataLogSectionContent(
             row = row,
             onKeepBoth = { viewModel.confirmImport(row.key) },
             onDismiss = { viewModel.dismissImport(row.key) },
+            onFileUnderOtherThing = { viewModel.fileUnderOtherThing(row.key) },
+            onKeepHere = { viewModel.keepHere(row.key) },
           )
         }
         if (!compact && state.rows.isNotEmpty()) {

@@ -22,11 +22,14 @@ import org.koin.dsl.module
 private val dataLogParsers: List<DataLogParser> = listOf(GarminParser())
 
 val dataLogDataManagerModule: Module = module {
+  includes(platformChartLayoutStoreModule)
   single<DataLogCache> { DataLogCache() }
   single<HeaderSniffer> { HeaderSniffer(dataLogParsers) }
-  single<ThingIdentifierLookup> {
+  single<TemplateThingIdentifierLookup> {
     TemplateThingIdentifierLookup(get<FleetManager>(), get<TemplateRegistry>())
   }
+  single<ThingIdentifierLookup> { get<TemplateThingIdentifierLookup>() }
+  single<OtherThingLookup> { get<TemplateThingIdentifierLookup>() }
   single<DataLogImporter> {
     DataLogImporterImpl(
       fileByteReader = get<FileByteReader>(),
@@ -37,6 +40,7 @@ val dataLogDataManagerModule: Module = module {
       scheduler = getOrNull<UploadScheduler>(),
       identifiers = get<ThingIdentifierLookup>(),
       auth = get<AuthManager>(),
+      otherThings = get<OtherThingLookup>(),
     )
   }
   single<DataLogManager> {

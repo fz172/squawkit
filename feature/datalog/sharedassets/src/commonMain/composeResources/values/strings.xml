@@ -25,6 +25,13 @@
   <string name="data_log_viewer_utc_offset"><xliff:g example="14:47">%1$s</xliff:g> local (<xliff:g example="UTC-07:00">%2$s</xliff:g>)</string>
 
   <!-- Inline import rows (R35) -->
+  <!-- Clock axis (PRD R32) -->
+  <string name="data_log_viewer_clock_axis">Clock time axis</string>
+  <!-- Filing a log under the Thing whose identifier it carries (PRD R12) -->
+  <string name="data_log_other_thing_title">Recorded by <xliff:g example="N1234X">%1$s</xliff:g>?</string>
+  <string name="data_log_other_thing_body">This file names <xliff:g example="N1234X">%1$s</xliff:g>. File it there instead?</string>
+  <string name="data_log_other_thing_move">File it there</string>
+  <string name="data_log_other_thing_keep">Keep here</string>
   <!-- Attachment picker (design §9.2) -->
   <string name="data_log_picker_title">Attach <xliff:g example="data log">%1$s</xliff:g></string>
   <string name="data_log_picker_upload">Upload log file</string>

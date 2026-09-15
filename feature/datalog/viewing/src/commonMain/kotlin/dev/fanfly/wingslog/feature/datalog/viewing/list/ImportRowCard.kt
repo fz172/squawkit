@@ -36,6 +36,10 @@ import wingslog.feature.datalog.sharedassets.generated.resources.data_log_import
 import wingslog.feature.datalog.sharedassets.generated.resources.data_log_import_parsing
 import wingslog.feature.datalog.sharedassets.generated.resources.data_log_import_reading
 import wingslog.feature.datalog.sharedassets.generated.resources.data_log_import_storing
+import wingslog.feature.datalog.sharedassets.generated.resources.data_log_other_thing_body
+import wingslog.feature.datalog.sharedassets.generated.resources.data_log_other_thing_keep
+import wingslog.feature.datalog.sharedassets.generated.resources.data_log_other_thing_move
+import wingslog.feature.datalog.sharedassets.generated.resources.data_log_other_thing_title
 
 /** Progress, a probable-duplicate question, or a failure, inline in the list (PRD R35). */
 @Composable
@@ -44,6 +48,9 @@ fun ImportRowCard(
   onKeepBoth: () -> Unit,
   onDismiss: () -> Unit,
   modifier: Modifier = Modifier,
+  /** PRD R12: file the log under the Thing its identity names. Null hides the offer. */
+  onFileUnderOtherThing: (() -> Unit)? = null,
+  onKeepHere: () -> Unit = {},
 ) {
   val progress = row.progress
   Card(
@@ -70,7 +77,9 @@ fun ImportRowCard(
           modifier = Modifier.size(Spacing.extraLarge),
         )
 
-        is ImportProgress.NeedsConfirmation -> Icon(
+        is ImportProgress.NeedsConfirmation,
+        is ImportProgress.OtherThing,
+          -> Icon(
           Icons.Filled.ErrorOutline,
           contentDescription = null,
           tint = MaterialTheme.colorScheme.tertiary,
@@ -119,6 +128,18 @@ fun ImportRowCard(
             )
           }
 
+          is ImportProgress.OtherThing -> {
+            Text(
+              stringResource(Res.string.data_log_other_thing_title, progress.candidateName),
+              style = MaterialTheme.typography.titleSmall
+            )
+            Text(
+              stringResource(Res.string.data_log_other_thing_body, progress.candidateName),
+              style = MaterialTheme.typography.bodySmall,
+              color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+          }
+
           is ImportProgress.Failed -> {
             Text(row.file.name, style = MaterialTheme.typography.titleSmall)
             Text(
@@ -135,6 +156,15 @@ fun ImportRowCard(
         is ImportProgress.NeedsConfirmation -> {
           TextButton(onClick = onDismiss) { Text(stringResource(Res.string.data_log_import_dismiss)) }
           TextButton(onClick = onKeepBoth) { Text(stringResource(Res.string.data_log_import_keep_both)) }
+        }
+
+        is ImportProgress.OtherThing -> {
+          TextButton(onClick = onKeepHere) { Text(stringResource(Res.string.data_log_other_thing_keep)) }
+          if (onFileUnderOtherThing != null) {
+            TextButton(onClick = onFileUnderOtherThing) {
+              Text(stringResource(Res.string.data_log_other_thing_move))
+            }
+          }
         }
 
         is ImportProgress.Failed -> TextButton(onClick = onDismiss) {

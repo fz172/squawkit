@@ -144,6 +144,19 @@ class DataLogListViewModel(
     start(row.copy(progress = ImportProgress.Reading), confirmDuplicate = true)
   }
 
+  /** PRD R12: re-run the import against the Thing whose identifier the file carries. */
+  fun fileUnderOtherThing(key: Long) {
+    val row = imports.value.firstOrNull { it.key == key } ?: return
+    val target = (row.progress as? ImportProgress.OtherThing)?.candidate ?: return
+    start(row.copy(progress = ImportProgress.Reading), confirmDuplicate = true, thingId = target)
+  }
+
+  /** PRD R12: the identity is wrong but the Thing is right; keep it here, mismatch flag and all. */
+  fun keepHere(key: Long) {
+    val row = imports.value.firstOrNull { it.key == key } ?: return
+    start(row.copy(progress = ImportProgress.Reading), confirmDuplicate = true, keepIdentity = true)
+  }
+
   fun dismissImport(key: Long) {
     imports.update { rows -> rows.filterNot { it.key == key } }
   }
@@ -166,11 +179,16 @@ class DataLogListViewModel(
     }
   }
 
-  private fun start(row: ImportRow, confirmDuplicate: Boolean) {
+  private fun start(
+    row: ImportRow,
+    confirmDuplicate: Boolean,
+    keepIdentity: Boolean = false,
+    thingId: ThingId = this.thingId,
+  ) {
     imports.update { rows -> rows.filterNot { it.key == row.key } + row }
     viewModelScope.launch {
       try {
-        manager.import(thingId, row.file, confirmDuplicate)
+        manager.import(thingId, row.file, confirmDuplicate, keepIdentity)
           .collect { progress ->
             if (progress is ImportProgress.Done) {
               dismissImport(row.key)
