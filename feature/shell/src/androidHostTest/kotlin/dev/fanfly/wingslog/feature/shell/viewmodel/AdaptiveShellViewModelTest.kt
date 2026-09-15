@@ -18,6 +18,7 @@ import dev.fanfly.wingslog.feature.fleet.datamanager.FleetEntry
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.fleet.picker.data.SelectedThingStore
 import dev.fanfly.wingslog.feature.notifications.model.NotificationTapTarget
+import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
 import dev.fanfly.wingslog.feature.sync.data.SyncEngine
@@ -480,6 +481,25 @@ class AdaptiveShellViewModelTest {
       assertThat(vm.uiState.value.selectedThingId).isEqualTo("a2")
       assertThat(vm.uiState.value.section).isEqualTo(ShellSection.SQUAWKS)
       assertThat(vm.pendingScrollTargetId.value).isEqualTo("sq-1")
+    }
+
+  @Test
+  fun notificationTap_dataLog_selectsTheArchiveAndScrollsToTheLog() =
+    runTest(testDispatcher) {
+      fleet.value = listOf(thing("a1", "N1"), thing("a2", "N2"))
+      val vm = viewModel()
+
+      vm.onNotificationTap(
+        NotificationTapTarget.DataLog(
+          thingId = "a2",
+          dataLogId = DataLogId("dl-1")
+        )
+      )
+
+      assertThat(vm.uiState.value.selectedThingId).isEqualTo("a2")
+      assertThat(vm.uiState.value.section).isEqualTo(ShellSection.DATA_LOGS)
+      // The scroll target is the plain id: the list keys its rows by the same string.
+      assertThat(vm.pendingScrollTargetId.value).isEqualTo("dl-1")
     }
 
   @Test

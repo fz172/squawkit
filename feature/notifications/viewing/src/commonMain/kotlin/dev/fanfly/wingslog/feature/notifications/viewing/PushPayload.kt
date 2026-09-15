@@ -2,6 +2,7 @@ package dev.fanfly.wingslog.feature.notifications.viewing
 
 import dev.fanfly.wingslog.feature.notifications.model.NotificationChannel
 import dev.fanfly.wingslog.feature.notifications.model.NotificationTapTarget
+import dev.fanfly.wingslog.id.DataLogId
 
 /**
  * A decoded N1 push payload (design §7.6) — everything the server sent, resolved into the app's own
@@ -119,6 +120,9 @@ data class PushPayload(
 
         "log" -> recordId?.let { NotificationTapTarget.Log(thingId, it) }
           ?: NotificationTapTarget.Thing(thingId, tab = "logs")
+
+        "data_log" -> recordId?.let { NotificationTapTarget.DataLog(thingId, DataLogId(it)) }
+          ?: NotificationTapTarget.Thing(thingId, tab = "datalogs")
 
         else -> null
       }

@@ -7,6 +7,7 @@ import dev.fanfly.wingslog.core.storage.ForeignWriteListener
 import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.core.template.displayLabel
+import dev.fanfly.wingslog.core.template.dataLogNoun
 import dev.fanfly.wingslog.core.template.logNoun
 import dev.fanfly.wingslog.core.template.squawkNoun
 import dev.fanfly.wingslog.core.template.taskNoun
@@ -16,6 +17,7 @@ import dev.fanfly.wingslog.feature.notifications.datamanager.PrefsState
 import dev.fanfly.wingslog.feature.notifications.engine.WebForeignWriteDetector.Companion.ROSTER_READ_TIMEOUT
 import dev.fanfly.wingslog.feature.notifications.model.NotificationChannel
 import dev.fanfly.wingslog.feature.notifications.model.NotificationTapTarget
+import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.feature.notifications.model.PendingNotification
 import dev.fanfly.wingslog.feature.notifications.model.allEnabled
 import dev.fanfly.wingslog.feature.notifications.model.collaborationEnabled
@@ -247,6 +249,7 @@ class WebForeignWriteDetector(
     RecordType.SQUAWK -> LexiconFormatter.titleCasePlural(lexicon.squawkNoun)
     RecordType.TASK -> LexiconFormatter.titleCasePlural(lexicon.taskNoun)
     RecordType.LOG -> LexiconFormatter.titleCasePlural(lexicon.logNoun)
+    RecordType.DATA_LOG -> LexiconFormatter.titleCasePlural(lexicon.dataLogNoun)
   }
 
   /** The lower-case plural the body reads: "… changed two work logs". */
@@ -254,6 +257,7 @@ class WebForeignWriteDetector(
     RecordType.SQUAWK -> lexicon.squawkNoun.plural
     RecordType.TASK -> lexicon.taskNoun.plural
     RecordType.LOG -> lexicon.logNoun.plural
+    RecordType.DATA_LOG -> lexicon.dataLogNoun.plural
   }
 
   private enum class RecordType(
@@ -287,12 +291,22 @@ class WebForeignWriteDetector(
         )
       },
     ),
+    DATA_LOG(
+      "data_log",
+      { thingId, recordId ->
+        NotificationTapTarget.DataLog(
+          thingId,
+          DataLogId(recordId)
+        )
+      },
+    ),
   }
 
   private fun CollectionKind.toRecordType(): RecordType? = when (this) {
     CollectionKind.Squawk -> RecordType.SQUAWK
     CollectionKind.MaintenanceTask -> RecordType.TASK
     CollectionKind.MaintenanceLog -> RecordType.LOG
+    CollectionKind.DataLog -> RecordType.DATA_LOG
     // Aircraft edits, overviews, technicians and the rest are not collaboration *activity* in the
     // sense §8 means — no settings toggle covers them, so notifying would be unmutable.
     else -> null

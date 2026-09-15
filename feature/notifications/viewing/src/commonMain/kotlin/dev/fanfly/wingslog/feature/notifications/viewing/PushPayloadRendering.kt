@@ -2,6 +2,7 @@ package dev.fanfly.wingslog.feature.notifications.viewing
 
 import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.logNoun
+import dev.fanfly.wingslog.core.template.dataLogNoun
 import dev.fanfly.wingslog.core.template.squawkNoun
 import dev.fanfly.wingslog.core.template.taskNoun
 import dev.fanfly.wingslog.core.template.thingNoun
@@ -146,6 +147,7 @@ private fun PushPayload.sectionTitle(lexicon: Lexicon): String =
     "squawk" -> LexiconFormatter.titleCasePlural(lexicon.squawkNoun)
     "task" -> LexiconFormatter.titleCasePlural(lexicon.taskNoun)
     "log" -> LexiconFormatter.titleCasePlural(lexicon.logNoun)
+    "data_log" -> LexiconFormatter.titleCasePlural(lexicon.dataLogNoun)
     else -> LexiconFormatter.titleCase(lexicon.thingNoun)
   }
 
@@ -153,5 +155,6 @@ private fun PushPayload.sectionTitle(lexicon: Lexicon): String =
 private fun PushPayload.noun(lexicon: Lexicon): String = when (recordType) {
   "squawk" -> lexicon.squawkNoun.singular
   "task" -> lexicon.taskNoun.singular
+  "data_log" -> lexicon.dataLogNoun.singular
   else -> lexicon.logNoun.singular
 }
