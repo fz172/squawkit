@@ -2,6 +2,7 @@ import { logger } from "firebase-functions/v2";
 
 import { Thing } from "../generated/proto/thing/thing.js";
 import { MaintenanceLog } from "../generated/proto/thing/maintenance_log.js";
+import { DataLog } from "../generated/proto/datalog/data_log.js";
 import { MaintenanceTask } from "../generated/proto/thing/maintenance_task.js";
 import { Squawk, SquawkDismissReason, SquawkPriority } from "../generated/proto/thing/squawk.js";
 import { payloadBytes, type SyncDocWire } from "../shared/syncDocWire.js";
@@ -100,6 +101,8 @@ export function recordTitleOf(recordType: RecordType, doc: SyncDocWire | undefin
         const description = MaintenanceLog.decode(bytes).workDescription;
         return description.length > 0 ? description : null;
       }
+      case RECORD_TYPE.DATA_LOG:
+        return dataLogTitle(DataLog.decode(bytes));
       case RECORD_TYPE.AIRCRAFT:
         return null;
     }
@@ -108,6 +111,32 @@ export function recordTitleOf(recordType: RecordType, doc: SyncDocWire | undefin
     return null;
   }
 }
+
+/**
+ * A data log has no title of its own, so one is built the way the list builds it: the recorder's
+ * date, then where it started or that it never left the ground.
+ *
+ * English, unlike every other record title, which is text a person typed. The alternative is
+ * sending the parts and localizing on the client, which the payload has no room for; revisit when
+ * the app ships a second language.
+ */
+function dataLogTitle(log: DataLog): string | null {
+  const start = log.start;
+  if (start == null) return null;
+  // The recorder's own wall clock: shift by the log's offset, then read the UTC parts of that.
+  const local = new Date(start.getTime() + log.utcOffsetMinutes * 60_000);
+  const day = String(local.getUTCDate()).padStart(2, "0");
+  const date = `${MONTHS[local.getUTCMonth()]} ${day}, ${local.getUTCFullYear()}`;
+  const where = log.airborne ? log.startLocationIdent : GROUND_RUN;
+  return where.length > 0 ? `${date} · ${where}` : date;
+}
+
+const MONTHS = [
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+] as const;
+
+const GROUND_RUN = "Ground run";
 
 /**
  * `UrgencyRank` for a squawk, the same ladder `UrgencyRank.kt` defines — the only ladder the server

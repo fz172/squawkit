@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { adminDb, fft } from "./helpers.js";
 
 import { Thing } from "../src/generated/proto/thing/thing.js";
+import { DataLog } from "../src/generated/proto/datalog/data_log.js";
 import { NotificationSettings } from "../src/generated/proto/settings/notification_settings.js";
 import {
   Squawk,
@@ -148,6 +149,33 @@ function taskEnvelope(revision: number, writerUid = HOST) {
   return envelope(new Uint8Array([revision & 0xff]), "aircraft.MaintenanceTask", writerUid);
 }
 
+/**
+ * A real encoded DataLog, unlike the other envelopes: a data log carries no title a person typed,
+ * so the server builds one from the record and the test has to give it something to read.
+ */
+function dataLogEnvelope(
+  { airborne = false, ident = "", writerUid = HOST }: {
+    airborne?: boolean;
+    ident?: string;
+    writerUid?: string;
+  } = {},
+) {
+  return envelope(
+    DataLog.encode(
+      DataLog.fromPartial({
+        id: { value: "dl-1" },
+        // 21:47 UTC on the 2nd, seven hours west: the recorder's own clock still reads the 2nd.
+        start: new Date("2026-09-02T21:47:56Z"),
+        utcOffsetMinutes: -420,
+        airborne,
+        startLocationIdent: ident,
+      }),
+    ).finish(),
+    "datalog.DataLog",
+    writerUid,
+  );
+}
+
 async function shareThing(acId: string, memberRoles: Record<string, string>) {
   await adminDb.doc(thingShareDocPath(HOST, acId)).set({
     hostUid: HOST,
@@ -224,6 +252,13 @@ async function taskEdit(acId: string, revision: number, actor = HOST) {
   );
 }
 
+/** One data log imported by the host. Only an import or a delete writes the record (design §12). */
+async function dataLogImport(acId: string, options: Parameters<typeof dataLogEnvelope>[0] = {}) {
+  await wrappedRecord(
+    recordWrite(acId, "data_log", "dl-1", null, dataLogEnvelope(options)),
+  );
+}
+
 const idsOf = () => sentMessages.map((m) => m.data.notificationId);
 
 beforeEach(async () => {
@@ -267,6 +302,40 @@ describe("§7.2 one concrete notification per write (coalescing removed, 2026-08
     await taskEdit(AC_A, 2);
 
     expect(sentMessages[1].data.bodyKey).toBe("notification_n1_body_record_updated");
+  });
+
+  it("names an imported data log by its date and where it started", async () => {
+    await shareThing(AC_A, { [HOST]: "owner", [MEMBER]: "technician" });
+
+    await dataLogImport(AC_A, { airborne: true, ident: "KSQL" });
+
+    expect(sentMessages).toHaveLength(1);
+    expect(sentMessages[0].data.bodyKey).toBe("notification_n1_body_record_created");
+    expect(sentMessages[0].data.recordId).toBe("dl-1");
+    // The recorder's clock, not the server's: 21:47 UTC at −07:00 is still the 2nd.
+    expect(sentMessages[0].data.recordTitle).toBe("Sep 02, 2026 · KSQL");
+  });
+
+  it("calls a data log that never left the ground a ground run", async () => {
+    await shareThing(AC_A, { [HOST]: "owner", [MEMBER]: "technician" });
+
+    await dataLogImport(AC_A);
+
+    expect(sentMessages[0].data.recordTitle).toBe("Sep 02, 2026 · Ground run");
+  });
+
+  it("taps a deleted data log through to the archive", async () => {
+    await shareThing(AC_A, { [HOST]: "owner", [MEMBER]: "technician" });
+
+    await wrappedRecord(
+      recordWrite(AC_A, "data_log", "dl-1", dataLogEnvelope(), {
+        ...dataLogEnvelope(),
+        deleted: true,
+      }),
+    );
+
+    expect(sentMessages[0].data.bodyKey).toBe("notification_n1_body_record_deleted");
+    expect(sentMessages[0].data.tapTarget).toBe(`aircraft:${AC_A}:datalogs`);
   });
 
   it("names the record it deletes, and taps to the aircraft/tab instead of the gone record", async () => {
