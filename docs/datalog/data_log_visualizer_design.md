@@ -571,6 +571,15 @@ interface DataLogManager {
 }
 ```
 
+**Stale catalogues.** The catalogue — every series' name, unit, range and canonical id — is frozen
+into the record at import, while the values are re-parsed on every open. A parser fix therefore
+reaches the charts immediately and never reaches the sidebar, and a log imported before the fix shows
+a range that disagrees with the line drawn beside it. `load` compares the record's `parser_version`
+with the parser's own and rewrites the record when they differ: the catalogue, the time base, the
+counts and the derived flags, but not `identity_mismatch` (a comparison against the Thing, not a
+property of the file) and not the blob, hashes or filename. That is what `parser_version` is stored
+for. The write is best-effort — the caller asked for the data, which it already has.
+
 `DataLogManagerImpl(scopeResolver: ThingScopeResolver, storeFactory: EntityStoreFactory,
 blobs: LocalBlobStore, scheduler: UploadScheduler, importer: DataLogImporter, cache: DataLogCache,
 auth: AuthManager, dispatcher)` follows `SquawkManagerImpl`: `store = storeFactory.create(
