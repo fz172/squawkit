@@ -25,6 +25,7 @@ import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogManager
 import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogParser
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.feature.datalog.datamanager.DerivedFields
+import dev.fanfly.wingslog.feature.datalog.datamanager.ThingIdentifierLookup
 import dev.fanfly.wingslog.feature.datalog.model.ParsedDataLog
 import dev.fanfly.wingslog.feature.datalog.model.DataLogSeriesData
 import dev.fanfly.wingslog.feature.datalog.model.ImportProgress
@@ -53,6 +54,7 @@ class DataLogManagerImpl(
   private val scheduler: UploadScheduler?,
   private val importer: DataLogImporter,
   private val cache: DataLogCache,
+  private val identifiers: ThingIdentifierLookup,
   private val parsers: List<DataLogParser>,
   private val dispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) : DataLogManager {
@@ -143,37 +145,45 @@ class DataLogManagerImpl(
       ?: error("No parser for ${record.format}")
     val parsed =
       withContext(dispatcher) { parser.parse(bytes, record.file_name) }
-    refreshStaleCatalogue(thingId, record, parsed)
+    refreshStoredRecord(thingId, record, parsed)
     cache.put(id, parsed.data)
     parsed.data
   }.onFailure { logger.w(it) { "Error loading data log" } }
 
   /**
-   * Writes a re-parse back over a record whose catalogue predates the current parser.
+   * Brings a stored record back in line with what this build would import today, on open.
    *
-   * The catalogue — every series' name, unit, range and canonical id — is frozen into the record at
-   * import, while the values are re-parsed on every open. So a parser fix reaches the charts
+   * Two things go stale, for two different reasons.
+   *
+   * **The catalogue** — every series' name, unit, range and canonical id — is frozen into the record
+   * at import, while the values are re-parsed on every open. So a parser fix reaches the charts
    * immediately and never reaches the sidebar, and a log imported before the fix shows a range that
-   * disagrees with the line drawn beside it. That is what `parser_version` is stored for.
+   * disagrees with the line drawn beside it. `parser_version` is what tells those apart.
    *
-   * Only what the parse produces is rewritten. `identity_mismatch` is left alone because it is a
-   * comparison against the Thing rather than a property of the file, and the blob, hashes and
-   * filename are not the parser's to change.
+   * **The identity mismatch** is a comparison against the Thing, so it goes stale when the Thing
+   * changes rather than when the parser does — renaming a tail number never used to clear the flag
+   * it invalidated. It is recomputed every time and written only when the answer moved.
    *
-   * A failure here is logged and swallowed: the caller asked for the data, which it already has.
+   * The blob, hashes and filename are nobody's to rewrite here.
+   *
+   * A failure is logged and swallowed: the caller asked for the data, which it already has.
    */
-  private suspend fun refreshStaleCatalogue(
+  private suspend fun refreshStoredRecord(
     thingId: ThingId,
     record: DataLog,
     parsed: ParsedDataLog,
   ) {
-    if (record.parser_version == parsed.parserVersion) return
-    val id = record.id ?: return
     runCatching {
+      val staleCatalogue = record.parser_version != parsed.parserVersion
+      val mismatch = DerivedFields.identityMismatch(
+        parsed.source.identity,
+        identifiers.identifierOf(thingId),
+      )
+      if (!staleCatalogue && mismatch == record.identity_mismatch) return
+      val id = record.id ?: return
       val end = DerivedFields.endPosition(parsed)
       val scope = scopeResolver.resolveNow(thingId.value)
-      store.put(
-        id.value,
+      val refreshed = if (staleCatalogue) {
         record.copy(
           parser_version = parsed.parserVersion,
           source = parsed.source,
@@ -186,10 +196,12 @@ class DataLogManagerImpl(
           airborne = DerivedFields.airborne(parsed),
           end_latitude = end?.first ?: 0.0,
           end_longitude = end?.second ?: 0.0,
-        ),
-        scope,
-      )
-    }.onFailure { logger.w(it) { "Could not refresh a stale data log catalogue" } }
+        )
+      } else {
+        record
+      }
+      store.put(id.value, refreshed.copy(identity_mismatch = mismatch), scope)
+    }.onFailure { logger.w(it) { "Could not refresh a stored data log" } }
   }
 
   override suspend fun delete(thingId: ThingId, id: DataLogId): Result<Unit> =

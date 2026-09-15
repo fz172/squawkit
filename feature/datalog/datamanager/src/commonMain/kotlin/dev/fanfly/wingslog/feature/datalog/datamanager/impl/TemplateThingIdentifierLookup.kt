@@ -10,9 +10,10 @@ import dev.fanfly.wingslog.feature.datalog.datamanager.OtherThing
 import dev.fanfly.wingslog.feature.datalog.datamanager.OtherThingLookup
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.id.ThingId
+import dev.fanfly.wingslog.thing.ThingTemplate
 import kotlinx.coroutines.flow.first
 
-/** The value of the template's `is_identifier` spec field — the tail number on an aeroplane. */
+/** The value of the spec field that names the Thing — the tail number on an aeroplane. */
 class TemplateThingIdentifierLookup(
   private val fleet: FleetManager,
   private val templates: TemplateRegistry,
@@ -27,7 +28,7 @@ class TemplateThingIdentifierLookup(
       .filter { it.id != excluding.value }
       .firstNotNullOfOrNull { thing ->
         val template = templates.forThingWithFallback(thing)
-        val key = template.spec_fields.firstOrNull { it.is_identifier }?.key ?: return@firstNotNullOfOrNull null
+        val key = template.identifierKey() ?: return@firstNotNullOfOrNull null
         if (thing.specValue(key).equals(identity, ignoreCase = true)) OtherThing(ThingId(thing.id), thing.displayLabel(template))
         else null
       }
@@ -36,10 +37,24 @@ class TemplateThingIdentifierLookup(
   override suspend fun identifierOf(thingId: ThingId): String? {
     val thing = fleet.loadThing(thingId.value)
       .first() ?: return null
-    val key =
-      templates.forThingWithFallback(thing).spec_fields.firstOrNull { it.is_identifier }?.key
-        ?: return null
+    val key = templates.forThingWithFallback(thing)
+      .identifierKey() ?: return null
     return thing.specValue(key)
       .takeIf { it.isNotBlank() }
   }
+
+  /**
+   * The field a recorder's `aircraft_ident` is compared against: the template's `title_candidate`
+   * first, and only then whichever field happens to be marked `is_identifier`.
+   *
+   * **`is_identifier` is a typography flag, not an identity.** Its own proto comment calls it a
+   * readability hint — it means "render this in a monospace face", and an airplane sets it on both
+   * the serial number and the tail number. Taking the first one declared compared the tail number a
+   * Garmin records against the *airframe serial*, so a log from the aeroplane it was recorded on
+   * raised a mismatch. `title_candidate` is the flag that says which value the owner calls the
+   * thing by, and it exists because the Thing switcher hit this same trap first.
+   */
+  private fun ThingTemplate.identifierKey(): String? =
+    spec_fields.firstOrNull { it.title_candidate }?.key
+      ?: spec_fields.firstOrNull { it.is_identifier }?.key
 }
