@@ -142,6 +142,18 @@ class DataLogViewerViewModel(
 
   fun removeSeries(pane: PaneId, key: SeriesKey) = updateReady { it.copy(layout = LayoutEdits.remove(it.layout, pane, key)) }
 
+  /**
+   * What a tap in the series list means: a series already in [pane] comes out, anything else goes
+   * in. Adding one that is already there is a no-op, so without this the checked row ate its tap
+   * and the only way to drop a series was its chip's close button.
+   */
+  fun toggleSeries(pane: PaneId, key: SeriesKey) = updateReady { state ->
+    val present = state.layout.panes.firstOrNull { it.id == pane }?.series?.contains(key) == true
+    val layout = if (present) LayoutEdits.remove(state.layout, pane, key)
+    else LayoutEdits.add(state.layout, pane, key)
+    state.copy(layout = layout)
+  }
+
   fun moveSeries(key: SeriesKey, from: PaneId, to: PaneId) = updateReady {
     it.copy(layout = LayoutEdits.move(it.layout, key, from, to, it.record.series.associateBy { s -> s.column }))
   }
