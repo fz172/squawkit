@@ -25,6 +25,34 @@ object CanonicalSeriesRegistry {
     // A G1000 names its two tanks by side rather than by number.
     "FQtyL" to CanonicalSeries.fuelQty(1),
     "FQtyR" to CanonicalSeries.fuelQty(2),
+
+    // --- Dynon SkyView ---
+    // A SkyView has no short names at all, so its full column name is the key. They are spelled out
+    // where a Garmin abbreviates, which is the whole of the difference.
+    "Indicated Airspeed" to CanonicalSeries.IAS,
+    "True Airspeed" to CanonicalSeries.TAS,
+    "Ground Speed" to CanonicalSeries.GROUND_SPEED,
+    "GPS Altitude" to CanonicalSeries.ALT_GPS,
+    "Pressure Altitude" to CanonicalSeries.ALT_PRESSURE,
+    "Vertical Speed" to CanonicalSeries.VERTICAL_SPEED,
+    "Magnetic Heading" to CanonicalSeries.HEADING,
+    "Vertical Accel" to CanonicalSeries.G_NORMAL,
+    "Lateral Accel" to CanonicalSeries.G_LATERAL,
+    "Oil Pressure" to CanonicalSeries.engine(1, "oil_press"),
+    "Oil Temp" to CanonicalSeries.engine(1, "oil_temp"),
+    "Manifold Pressure" to CanonicalSeries.engine(1, "map"),
+    "Fuel Pressure" to CanonicalSeries.engine(1, "fuel_press"),
+    "Percent Power" to CanonicalSeries.engine(1, "power_pct"),
+    // Left and right, not one and two: a SkyView names an engine by which side it is on.
+    "RPM L" to CanonicalSeries.engine(1, "rpm"),
+    "RPM R" to CanonicalSeries.engine(2, "rpm"),
+    "Fuel Flow 1" to CanonicalSeries.engine(1, "fuel_flow"),
+    "Fuel Flow 2" to CanonicalSeries.engine(2, "fuel_flow"),
+    "Fuel Level L" to CanonicalSeries.fuelQty(1),
+    "Fuel Level R" to CanonicalSeries.fuelQty(2),
+    "Volts 1" to CanonicalSeries.volts(1),
+    "Volts 2" to CanonicalSeries.volts(2),
+    "Amps" to CanonicalSeries.amps(1),
     "VSpd" to CanonicalSeries.VERTICAL_SPEED,
     "GndSpd" to CanonicalSeries.GROUND_SPEED,
     "AGL" to CanonicalSeries.AGL,
@@ -54,6 +82,10 @@ object CanonicalSeriesRegistry {
   )
 
   private val engine = Regex("""^E(\d+) (.+)$""")
+
+  // A SkyView spells its cylinder banks with a space and no engine number: "CHT 3", never "E1 CHT3".
+  // Single-engine is the only airframe that writes them this way, so they are engine one's.
+  private val dynonIndexed = Regex("""^(CHT|EGT|TIT) (\d+)$""")
   private val engineIndexed = Regex("""^(CHT|EGT|TIT)(\d+)$""")
   private val fuelQty = Regex("""^FQty(\d+)$""")
   // `Volts1` on a G3X, `volt1` on a G1000 — the same reading under two spellings of one name.
@@ -77,6 +109,14 @@ object CanonicalSeriesRegistry {
             )
           }
         return ""
+      }
+    dynonIndexed.matchEntire(key)
+      ?.let {
+        return CanonicalSeries.engine(
+          1,
+          it.groupValues[1].lowercase(),
+          it.groupValues[2].toInt(),
+        )
       }
     fuelQty.matchEntire(key)
       ?.let { return CanonicalSeries.fuelQty(it.groupValues[1].toInt()) }

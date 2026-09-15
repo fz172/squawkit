@@ -15,7 +15,17 @@ object Fixtures {
   /** The same turbine in the climb: ITT and the spool speeds are alive, and it is airborne. */
   const val G1000_CRUISE = "log_240810_110536_XX3.csv"
 
+  /** One SkyView power-on, every row dated. The file name is not the exporter's own. */
+  const val DYNON_SINGLE = "skyview_single_session.csv"
+
+  /** Four power-on sessions in one download; the last two never got a GPS fix. */
+  const val DYNON_SESSIONS = "2019-04-28-N1234X-SN0001-15_3_4_4867-USER_LOG_DATA.csv"
+
   fun bytes(name: String): ByteArray = File(sampleDir(), name).readBytes()
+
+  fun dynonBytes(name: String): ByteArray = File(dynonDir(), name).readBytes()
+
+  fun dynonDir(): File = File(repoRoot(), "docs/datalog/samples/dynon")
 
   fun g1000Bytes(name: String): ByteArray = File(g1000Dir(), name).readBytes()
 

@@ -8,7 +8,11 @@ sealed class ImportProgress {
   data object Reading : ImportProgress()
   data class Parsing(val rowsSoFar: Int) : ImportProgress()
   data object Storing : ImportProgress()
-  data class Done(val id: DataLogId) : ImportProgress()
+  /**
+   * [id] is the first session stored. [sessionCount] is how many the file held — one for a Garmin,
+   * as many as the pilot flew between downloads for a SkyView.
+   */
+  data class Done(val id: DataLogId, val sessionCount: Int = 1) : ImportProgress()
 
   /** The same recorder and start as [existing]; the caller re-runs with confirmation to keep both. */
   data class NeedsConfirmation(val existing: DataLogId) : ImportProgress()

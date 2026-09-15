@@ -143,8 +143,13 @@ class DataLogManagerImpl(
     }
     val parser = parsers.firstOrNull { record.format in it.formats }
       ?: error("No parser for ${record.format}")
-    val parsed =
-      withContext(dispatcher) { parser.parse(bytes, record.file_name) }
+    // Only this record's session is materialised. A SkyView download holds every power-on since
+    // the last one, and building all of them to draw one is the difference between a second and a
+    // minute on a phone.
+    val parsed = withContext(dispatcher) {
+      parser.parse(bytes, record.file_name, session = record.session_index)
+    }.firstOrNull()
+      ?: error("Data log $id has no session ${record.session_index}")
     refreshStoredRecord(thingId, record, parsed)
     cache.put(id, parsed.data)
     parsed.data
@@ -188,6 +193,7 @@ class DataLogManagerImpl(
           parser_version = parsed.parserVersion,
           source = parsed.source,
           start = parsed.start.toWireInstant(),
+          start_approximate = parsed.startApproximate,
           utc_offset_minutes = parsed.utcOffsetMinutes,
           duration_seconds = parsed.durationSeconds,
           sample_count = parsed.sampleCount,

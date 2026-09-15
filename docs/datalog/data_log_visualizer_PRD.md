@@ -609,8 +609,16 @@ Settled by product direction on 2026-09-13.
 
 ### Still open
 
-- **Dynon engine-channel mapping** (§7): how the one-time thermocouple-to-CHT/EGT prompt is worded
-  and where the mapping is stored. Decide with the Dynon parser.
+- **Dynon engine-channel mapping** (§7): **still open, and no longer urgent.** Both sample files
+  leave every generic `Thermocouple N` column empty — the installer labels the channels in the unit
+  and the export writes those labels instead — so nothing yet reaches a prompt. Decide it when a
+  file turns up that needs one; the mapping belongs against the unit serial, which the file name
+  supplies.
+- **Dynon multi-session files** (decided with the parser): `Session Time` resets at every power
+  cycle and one download holds every session since the last one. Each becomes its own log, all
+  sharing one stored file, with no minimum duration — a four-second power-on appears in the list
+  like any other. A session that never got a GPS fix takes its date from the file name and is
+  marked approximate.
 
 ## 12. Later
 

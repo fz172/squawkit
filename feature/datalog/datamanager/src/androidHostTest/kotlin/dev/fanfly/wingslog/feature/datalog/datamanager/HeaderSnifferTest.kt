@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.feature.datalog.datamanager
 
 import com.google.common.truth.Truth.assertThat
+import dev.fanfly.wingslog.feature.datalog.datamanager.dynon.DynonParser
 import dev.fanfly.wingslog.feature.datalog.datamanager.garmin.GarminParser
 import org.junit.Test
 
@@ -8,7 +9,8 @@ import org.junit.Test
 class HeaderSnifferTest {
 
   private val garmin = GarminParser()
-  private val sniffer = HeaderSniffer(listOf(garmin))
+  private val dynon = DynonParser()
+  private val sniffer = HeaderSniffer(listOf(garmin, dynon))
 
   private fun sniff(text: String) = garmin.sniff(text.encodeToByteArray())
 
@@ -79,6 +81,21 @@ class HeaderSnifferTest {
     assertThat(sniff("\uFEFF#airframe_info,product=\"GDU 460\"\n")).isEqualTo(
       Confidence.DEFINITE
     )
+  }
+
+  @Test
+  fun aSkyViewGoesToTheDynonParserAndNeverToTheGarminOne() {
+    val skyView = Fixtures.dynonBytes(Fixtures.DYNON_SINGLE)
+      .copyOf(HeaderSniffer.SNIFF_BYTES)
+    assertThat(dynon.sniff(skyView)).isEqualTo(Confidence.DEFINITE)
+    assertThat(garmin.sniff(skyView)).isEqualTo(Confidence.NONE)
+    assertThat(sniffer.sniff(skyView)).isSameInstanceAs(dynon)
+
+    // And the reverse, so two parsers in one list cannot start claiming each other's files.
+    val g3x = Fixtures.bytes(Fixtures.GROUND_RUN)
+      .copyOf(HeaderSniffer.SNIFF_BYTES)
+    assertThat(dynon.sniff(g3x)).isEqualTo(Confidence.NONE)
+    assertThat(sniffer.sniff(g3x)).isSameInstanceAs(garmin)
   }
 
   @Test

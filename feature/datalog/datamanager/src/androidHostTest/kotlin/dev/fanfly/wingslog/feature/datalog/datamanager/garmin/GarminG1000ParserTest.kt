@@ -22,13 +22,13 @@ class GarminG1000ParserTest {
   private val parser = GarminParser()
 
   private suspend fun piston() =
-    parser.parse(Fixtures.g1000Bytes(Fixtures.G1000_PISTON), Fixtures.G1000_PISTON)
+    parser.parse(Fixtures.g1000Bytes(Fixtures.G1000_PISTON), Fixtures.G1000_PISTON).single()
 
   private suspend fun turbineStart() =
-    parser.parse(Fixtures.g1000Bytes(Fixtures.G1000_TURBINE), Fixtures.G1000_TURBINE)
+    parser.parse(Fixtures.g1000Bytes(Fixtures.G1000_TURBINE), Fixtures.G1000_TURBINE).single()
 
   private suspend fun turbineCruise() =
-    parser.parse(Fixtures.g1000Bytes(Fixtures.G1000_CRUISE), Fixtures.G1000_CRUISE)
+    parser.parse(Fixtures.g1000Bytes(Fixtures.G1000_CRUISE), Fixtures.G1000_CRUISE).single()
 
   @Test
   fun aUnitsRowMakesTheFileAG1000() = runTest {
@@ -208,7 +208,7 @@ class GarminG1000ParserTest {
     Fixtures.g1000Dir()
       .listFiles { f -> f.extension == "csv" }!!
       .forEach { file ->
-        val parsed = parser.parse(file.readBytes(), file.name)
+        val parsed = parser.parse(file.readBytes(), file.name).single()
         assertThat(parsed.format).isEqualTo(DataLogFormat.DATA_LOG_FORMAT_GARMIN_G1000)
         assertThat(parsed.sampleCount).isEqualTo(240)
         assertThat(parsed.series.size).isGreaterThan(40)

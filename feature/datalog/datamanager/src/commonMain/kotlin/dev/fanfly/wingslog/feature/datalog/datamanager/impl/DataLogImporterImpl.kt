@@ -79,13 +79,20 @@ class DataLogImporterImpl(
       }
 
       emit(ImportProgress.Parsing(0))
-      val parsed = try {
+      val sessions = try {
         withContext(dispatcher) { parser.parse(bytes, picked.name) }
       } catch (e: DataLogParseException) {
         logger.w(e) { "Data log parse failed for ${picked.name}" }
         emit(ImportProgress.Failed(ImportFailure.PARSE_ERROR))
         return@flow
       }
+      if (sessions.isEmpty()) {
+        emit(ImportProgress.Failed(ImportFailure.PARSE_ERROR))
+        return@flow
+      }
+      // Everything before the write is about the file, so it is asked once for the whole file and
+      // not once per session: the same bytes, the same recorder, the same aeroplane.
+      val parsed = sessions.first()
 
       val rawSha256 = withContext(dispatcher) { sha256Hex(bytes) }
       val scope = scopeResolver.resolveNow(thingId.value)
@@ -128,46 +135,59 @@ class DataLogImporterImpl(
 
       val now = clock.now()
         .toWireInstant()
-      val end = DerivedFields.endPosition(parsed)
-      val id = DataLogId(generateRandomId())
-      val record = DataLog(
-        id = id,
-        format = parsed.format,
-        parser_version = parsed.parserVersion,
-        source = parsed.source,
-        start = parsed.start.toWireInstant(),
-        utc_offset_minutes = parsed.utcOffsetMinutes,
-        duration_seconds = parsed.durationSeconds,
-        sample_count = parsed.sampleCount,
-        sample_rate_hz = parsed.sampleRateHz,
-        series = parsed.series,
-        raw_file = Attachment(
-          id = blobId,
-          name = picked.name,
-          type = AttachmentType.ATTACHMENT_TYPE_FILE,
-          storage_path = "${
-            scope.toPath()
-              .trim('/')
-          }/blobs/$blobId",
-          mime_type = contentType,
-          size_bytes = ref.sizeBytes,
-          sha256 = ref.sha256,
-          created_at = now,
-        ),
-        encoding = if (gzip) DataLogEncoding.DATA_LOG_ENCODING_GZIP else DataLogEncoding.DATA_LOG_ENCODING_NONE,
-        raw_sha256 = rawSha256,
-        raw_size_bytes = bytes.size.toLong(),
-        file_name = picked.name,
-        identity_mismatch = identityMismatch,
-        airborne = DerivedFields.airborne(parsed),
-        start_location_ident = DerivedFields.startLocationIdent(picked.name),
-        end_latitude = end?.first ?: 0.0,
-        end_longitude = end?.second ?: 0.0,
+      val rawFile = Attachment(
+        id = blobId,
+        name = picked.name,
+        type = AttachmentType.ATTACHMENT_TYPE_FILE,
+        storage_path = "${
+          scope.toPath()
+            .trim('/')
+        }/blobs/$blobId",
+        mime_type = contentType,
+        size_bytes = ref.sizeBytes,
+        sha256 = ref.sha256,
         created_at = now,
-        created_by = auth.getCurrentUser()?.uid?.let { UserId(it) },
       )
-      store.put(id.value, record, scope)
-      emit(ImportProgress.Done(id))
+      val createdBy = auth.getCurrentUser()?.uid?.let { UserId(it) }
+      // One record per session, all naming the one blob. A SkyView download holds every power-on
+      // since the last one, and a month-wide time axis with a fortnight of empty space in the
+      // middle is not a chart anyone can read.
+      val ids = sessions.mapIndexed { index, session ->
+        val end = DerivedFields.endPosition(session)
+        val id = DataLogId(generateRandomId())
+        store.put(
+          id.value,
+          DataLog(
+            id = id,
+            format = session.format,
+            parser_version = session.parserVersion,
+            source = session.source,
+            start = session.start.toWireInstant(),
+            start_approximate = session.startApproximate,
+            session_index = index,
+            utc_offset_minutes = session.utcOffsetMinutes,
+            duration_seconds = session.durationSeconds,
+            sample_count = session.sampleCount,
+            sample_rate_hz = session.sampleRateHz,
+            series = session.series,
+            raw_file = rawFile,
+            encoding = if (gzip) DataLogEncoding.DATA_LOG_ENCODING_GZIP else DataLogEncoding.DATA_LOG_ENCODING_NONE,
+            raw_sha256 = rawSha256,
+            raw_size_bytes = bytes.size.toLong(),
+            file_name = picked.name,
+            identity_mismatch = identityMismatch,
+            airborne = DerivedFields.airborne(session),
+            start_location_ident = DerivedFields.startLocationIdent(picked.name),
+            end_latitude = end?.first ?: 0.0,
+            end_longitude = end?.second ?: 0.0,
+            created_at = now,
+            created_by = createdBy,
+          ),
+          scope,
+        )
+        id
+      }
+      emit(ImportProgress.Done(ids.first(), sessionCount = ids.size))
     }
 
   private companion object {

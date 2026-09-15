@@ -89,4 +89,15 @@ message DataLog {
 
   google.protobuf.Timestamp created_at = 22;
   UserId created_by = 23;
+
+  // Which power-on session of the source file this record is (design §6.2). A SkyView restarts its
+  // clock at every power cycle and one download holds every session since the last one, so such a
+  // file yields one record per session and all of them name the same blob. Zero for a format that
+  // holds one session per file, which is every Garmin.
+  int32 session_index = 24;
+
+  // `start` was inferred rather than read. A SkyView session that never got a GPS fix carries a
+  // time of day and no date at all, so the date comes from the file name. The list says the date is
+  // approximate rather than presenting a guess as a reading.
+  bool start_approximate = 25;
 }
