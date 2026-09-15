@@ -116,6 +116,15 @@ class GarminParserTest {
   }
 
   @Test
+  fun aG3XPercentColumnIsAlreadyAPercentAndIsLeftAlone() = runTest {
+    // The G1000 fraction correction is scoped to that format for this reason: a G3X reaches 43 on
+    // the same column, so scaling it would report an engine at 4,300% power.
+    val power = groundRun().series.single { it.short_name == "E1 %Pwr" }
+    assertThat(power.unit).isEqualTo("%")
+    assertThat(power.max).isEqualTo(43.0)
+  }
+
+  @Test
   fun cellsParseInPlaceWithNaNForEmptyAndForwardFillForDrawing() = runTest {
     val parsed = groundRun()
     val ias =

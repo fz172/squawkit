@@ -506,6 +506,13 @@ the position pseudo-series.
   `NUMERIC` if any cell parses, `DISCRETE` if its unit is `discrete` (G3X) or `bool` (G1000), `TEXT`
   if only non-numeric non-empty cells, and dropped from the catalogue if entirely empty. A G1000's
   `enum` columns hold words, so they fall out as `TEXT` under the same rule.
+- Percent scale: a G1000 records a `%` column as a **fraction of one** — `0.93` for 93% N1, `1.14`
+  for 114% engine power — under a units row that says `%` in both cases. The file disagrees with
+  itself, and at face value the viewer draws an engine at cruise as a flat line near zero. Those
+  columns are multiplied by 100 and keep the `%` unit. The correction is scoped to the format, not
+  guessed from the numbers: a G3X's percent columns reach 43 and 345 on the same fixtures, so
+  scaling one would report 4,300% power. An observed maximum above 1.5 leaves the column alone, so
+  a G1000 variant that one day records true percentages is not multiplied a hundredfold.
 - Position: `Latitude` plus `Longitude` collapse into one `POSITION` series named from the lexicon
   ("Aircraft Position" on airplane), inserted where latitude was.
 - Derived: `airborne` is true when any row has GPS ground speed above 30 kt or height above ground

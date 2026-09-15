@@ -102,6 +102,28 @@ class GarminG1000ParserTest {
   }
 
   @Test
+  fun percentColumnsRecordedAsAFractionAreScaledToPercent() = runTest {
+    // A G1000 writes 0.93 for 93% N1 under a units row that says `%`. Taken at face value the
+    // viewer draws an engine at cruise as a flat line just above zero.
+    val cruise = turbineCruise()
+    val n1 = cruise.series.single { it.short_name == "E1 N1" }
+    assertThat(n1.unit).isEqualTo("%")
+    assertThat(n1.min).isWithin(1e-3)
+      .of(93.0)
+    assertThat(n1.max).isWithin(1e-3)
+      .of(94.0)
+    assertThat(cruise.data.numeric.getValue(n1.column).raw[0]).isWithin(1e-3f)
+      .of(93.0f)
+    assertThat(cruise.series.single { it.short_name == "E1 N2" }.max).isWithin(1e-3)
+      .of(94.0)
+
+    // Not only the spool speeds: engine power on the piston airframe is recorded the same way.
+    val power = piston().series.single { it.short_name == "E1 %Pwr" }
+    assertThat(power.max).isWithin(1e-3)
+      .of(37.0)
+  }
+
+  @Test
   fun theTimeBaseReadsTheLocalClockAndItsOffset() = runTest {
     val parsed = piston()
     // 08:11:16 at -04:00 is 12:11:16Z.

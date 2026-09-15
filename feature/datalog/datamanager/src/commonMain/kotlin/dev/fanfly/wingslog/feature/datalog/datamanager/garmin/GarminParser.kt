@@ -237,6 +237,8 @@ class GarminParser : DataLogParser {
       val shortName = layout.shortNames.getOrElse(col) { "" }
       if (acc.numericCount > 0) {
         val raw = acc.floats!!.copyOf(rows)
+        val scale = layout.percentScale(unit, acc.min, acc.max)
+        if (scale != 1f) for (i in raw.indices) raw[i] *= scale
         numeric[col] = NumericColumn(raw, forwardFilled(raw))
         val kind =
           if (unit in DISCRETE_UNITS) DataLogSeriesKind.DATA_LOG_SERIES_KIND_DISCRETE
@@ -248,8 +250,8 @@ class GarminParser : DataLogParser {
           unit = unit,
           kind = kind,
           canonical_id = CanonicalSeriesRegistry.canonicalIdFor(shortName),
-          min = acc.min.toDouble(),
-          max = acc.max.toDouble(),
+          min = (acc.min * scale).toDouble(),
+          max = (acc.max * scale).toDouble(),
           sample_count = acc.numericCount,
         )
       } else {
@@ -322,6 +324,24 @@ class GarminParser : DataLogParser {
     val shortNames: List<String>,
     val units: List<String>,
   ) {
+
+    /**
+     * 100 for a G1000 column that labels itself `%` but records a fraction of one, 1 otherwise.
+     *
+     * A G1000 writes `0.93` for 93% N1 and `1.14` for 114% power, under a units row that says `%`
+     * in both cases — the file disagrees with itself, and taken at face value the viewer draws an
+     * engine at cruise as a flat line near zero. A G3X does not do this: its percent columns reach
+     * 43 and 345, so the correction is scoped to the format rather than guessed from the numbers.
+     *
+     * The observed range is still a guard rather than the rule. It only ever prevents scaling, so a
+     * G1000 variant that one day records true percentages is left alone instead of multiplied to a
+     * hundred times its real reading.
+     */
+    fun percentScale(unit: String, min: Float, max: Float): Float {
+      if (format != DataLogFormat.DATA_LOG_FORMAT_GARMIN_G1000 || unit != PERCENT_UNIT) return 1f
+      val largest = maxOf(if (min.isFinite()) -min else 0f, if (max.isFinite()) max else 0f)
+      return if (largest <= PERCENT_FRACTION_CEILING) 100f else 1f
+    }
 
     /**
      * The column playing a given role, by its short name first. The short names are the vocabulary
@@ -437,6 +457,10 @@ class GarminParser : DataLogParser {
 
     /** G3X spells an on/off column `discrete`; a G1000 spells the same thing `bool`. */
     val DISCRETE_UNITS = setOf("discrete", "bool")
+    const val PERCENT_UNIT = "%"
+
+    /** Above this a G1000 percent column is already a percentage, so it is left alone. */
+    const val PERCENT_FRACTION_CEILING = 1.5f
     const val POSITION_NAME = "Position"
     const val YIELD_EVERY_ROWS = 500
 
