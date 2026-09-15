@@ -65,15 +65,16 @@ class DynonParserTest {
     // Session Time resets to zero at each power-on, and a download holds every session since the
     // last one. Merged they would be one chart with a month of empty space across the middle.
     val sessions = download()
-    assertThat(sessions).hasSize(4)
-    assertThat(sessions.map { it.sampleCount }).containsExactly(19, 300, 300, 300)
+    assertThat(sessions).hasSize(5)
+    assertThat(sessions.map { it.sampleCount }).containsExactly(19, 300, 364, 300, 300)
       .inOrder()
     // The first session spans 4.5 seconds and rounds up, the way a half always does here; the
     // reference script that produced these numbers rounds halves to even and said 4.
-    assertThat(sessions.map { it.durationSeconds }).containsExactly(5, 75, 75, 75)
+    assertThat(sessions.map { it.durationSeconds }).containsExactly(5, 75, 91, 75, 75)
       .inOrder()
     assertThat(sessions[0].start).isEqualTo(Instant.parse("2019-03-30T12:28:44Z"))
     assertThat(sessions[1].start).isEqualTo(Instant.parse("2019-03-30T20:15:13Z"))
+    assertThat(sessions[2].start).isEqualTo(Instant.parse("2019-04-06T21:35:52Z"))
   }
 
   @Test
@@ -81,27 +82,27 @@ class DynonParserTest {
     // The recorder writes UNKNOWN_DATE_TIME and its own clock, which gives a time of day and
     // nothing that says which day. The file name carries the download date.
     val sessions = download()
-    val undated = sessions[2]
+    val undated = sessions[3]
     assertThat(undated.startApproximate).isTrue()
     assertThat(undated.start).isEqualTo(Instant.parse("2019-04-28T17:04:02Z"))
-    assertThat(sessions[3].startApproximate).isTrue()
+    assertThat(sessions[4].startApproximate).isTrue()
     // And the ones that did get a fix are not marked, so the flag means what it says.
-    assertThat(sessions[0].startApproximate).isFalse()
-    assertThat(sessions[1].startApproximate).isFalse()
+    assertThat(sessions.take(3).map { it.startApproximate })
+      .containsExactly(false, false, false)
   }
 
   @Test
   fun onlyTheRequestedSessionIsBuilt() = runTest {
     // What the viewer asks for: one record out of a file holding many, without paying to build the
     // other twenty.
-    val third = parser.parse(
+    val fourth = parser.parse(
       Fixtures.dynonBytes(Fixtures.DYNON_SESSIONS),
       Fixtures.DYNON_SESSIONS,
-      session = 2,
+      session = 3,
     )
-    assertThat(third).hasSize(1)
-    assertThat(third.single().sampleCount).isEqualTo(300)
-    assertThat(third.single().startApproximate).isTrue()
+    assertThat(fourth).hasSize(1)
+    assertThat(fourth.single().sampleCount).isEqualTo(300)
+    assertThat(fourth.single().startApproximate).isTrue()
 
     assertThat(
       parser.parse(
@@ -143,6 +144,18 @@ class DynonParserTest {
     assertThat(series("RPM L").canonical_id).isEqualTo("engine[1].rpm")
     assertThat(series("Fuel Level L").canonical_id).isEqualTo(CanonicalSeries.fuelQty(1))
     assertThat(series("Ground Speed").canonical_id).isEqualTo(CanonicalSeries.GROUND_SPEED)
+  }
+
+  @Test
+  fun percentPowerIsAPercentageTheHeaderNeverLabels() = runTest {
+    // The column is named for its unit rather than carrying one in parentheses, which left the
+    // sidebar showing a bare range. The values are already 0 to 100-odd, so this is a label and
+    // nothing is scaled — unlike a G1000, whose percent columns really do hold a fraction.
+    val power = download()[2].series.single { it.name == "Percent Power" }
+    assertThat(power.unit).isEqualTo("%")
+    assertThat(power.canonical_id).isEqualTo("engine[1].power_pct")
+    assertThat(power.min).isEqualTo(0.0)
+    assertThat(power.max).isEqualTo(33.0)
   }
 
   @Test

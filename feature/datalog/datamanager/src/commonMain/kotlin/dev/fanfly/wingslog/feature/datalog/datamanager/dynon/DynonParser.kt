@@ -298,7 +298,7 @@ class DynonParser : DataLogParser {
       if (layout.skip[col]) continue
       val acc = columns[col] ?: continue
       val name = layout.names[col]
-      val unit = layout.units[col]
+      val unit = layout.units[col].ifEmpty { IMPLIED_UNITS[name].orEmpty() }
       if (acc.numericCount > 0) {
         val raw = acc.floats!!.copyOf(rows)
         numeric[col] = NumericColumn(raw, forwardFilled(raw))
@@ -399,6 +399,15 @@ class DynonParser : DataLogParser {
 
     /** A SkyView marks an on/off channel `bool`; nothing else in the file uses that unit. */
     val DISCRETE_UNITS = setOf("bool")
+
+    /**
+     * Units a SkyView states in the column name instead of in parentheses.
+     *
+     * `Percent Power` is already a percentage — 0 to 106 over a flight — and the header simply
+     * never says so, which left the sidebar showing a bare range. This is a label and nothing more:
+     * no value is touched, unlike the G1000's percent columns, which really do hold a fraction.
+     */
+    val IMPLIED_UNITS = mapOf("Percent Power" to "%")
 
     /** Any one of these beside `Session Time` is a SkyView and nothing else. */
     val SNIFF_COLUMNS = listOf("GPS Fix Quality", "Thermocouple 1", "EGT Leaning State")

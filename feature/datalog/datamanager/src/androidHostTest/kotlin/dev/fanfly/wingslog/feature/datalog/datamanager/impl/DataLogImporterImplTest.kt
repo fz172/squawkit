@@ -212,10 +212,10 @@ class DataLogImporterImplTest {
       .toList()
 
     val done = states.last() as ImportProgress.Done
-    assertThat(done.sessionCount).isEqualTo(4)
+    assertThat(done.sessionCount).isEqualTo(5)
     val records = mutableListOf<DataLog>()
-    coVerify(exactly = 4) { store.put(any(), capture(records), scope) }
-    assertThat(records.map { it.session_index }).containsExactly(0, 1, 2, 3)
+    coVerify(exactly = 5) { store.put(any(), capture(records), scope) }
+    assertThat(records.map { it.session_index }).containsExactly(0, 1, 2, 3, 4)
       .inOrder()
     assertThat(records.first().id).isEqualTo(done.id)
     // One file, one upload: every record names the same blob and the same original bytes.
@@ -224,7 +224,7 @@ class DataLogImporterImplTest {
     coVerify(exactly = 1) { blobs.put(any(), any(), any(), any()) }
     // The two sessions that never got a fix say their date was inferred.
     assertThat(records.map { it.start_approximate })
-      .containsExactly(false, false, true, true)
+      .containsExactly(false, false, false, true, true)
       .inOrder()
     assertThat(records.map { it.format }.toSet())
       .containsExactly(DataLogFormat.DATA_LOG_FORMAT_DYNON_SKYVIEW)
