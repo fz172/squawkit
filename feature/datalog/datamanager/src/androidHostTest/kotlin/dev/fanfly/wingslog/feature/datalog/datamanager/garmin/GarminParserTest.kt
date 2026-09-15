@@ -19,7 +19,7 @@ class GarminParserTest {
   private val parser = GarminParser()
 
   private suspend fun groundRun() =
-    parser.parse(Fixtures.bytes(Fixtures.GROUND_RUN), Fixtures.GROUND_RUN)
+    parser.parse(Fixtures.bytes(Fixtures.GROUND_RUN), Fixtures.GROUND_RUN).single()
 
   @Test
   fun readsTheHeaderVerbatim() = runTest {
@@ -174,7 +174,7 @@ class GarminParserTest {
     Fixtures.sampleDir()
       .listFiles { f -> f.extension == "csv" }!!
       .forEach { file ->
-        val parsed = parser.parse(file.readBytes(), file.name)
+        val parsed = parser.parse(file.readBytes(), file.name).single()
         assertThat(parsed.sampleCount).isGreaterThan(30)
         assertThat(parsed.series.size).isGreaterThan(60)
         assertThat(parsed.source.identity).isEqualTo("N1234X")
@@ -192,7 +192,7 @@ class GarminParserTest {
         listOf(Triple("RPM", "", "E1 RPM")),
         rows
       ), "x.csv"
-    )
+    ).single()
     assertThat(parsed.data.timeSeconds.toList()).containsExactly(
       0,
       1,

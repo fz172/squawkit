@@ -8,6 +8,14 @@ import dev.fanfly.wingslog.feature.datalog.datamanager.CanonicalSeriesRegistry
 import dev.fanfly.wingslog.feature.datalog.datamanager.Confidence
 import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogParseException
 import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogParser
+import dev.fanfly.wingslog.feature.datalog.datamanager.csv.ColumnAccumulator
+import dev.fanfly.wingslog.feature.datalog.datamanager.csv.LineCursor
+import dev.fanfly.wingslog.feature.datalog.datamanager.csv.forwardFilled
+import dev.fanfly.wingslog.feature.datalog.datamanager.csv.medianPositiveDelta
+import dev.fanfly.wingslog.feature.datalog.datamanager.csv.parseDoubleAt
+import dev.fanfly.wingslog.feature.datalog.datamanager.csv.parseIntAt
+import dev.fanfly.wingslog.feature.datalog.datamanager.csv.parseOffsetMinutes
+import dev.fanfly.wingslog.feature.datalog.datamanager.csv.splitUnit
 import dev.fanfly.wingslog.feature.datalog.datamanager.garmin.GarminParser.Companion.YIELD_EVERY_ROWS
 import dev.fanfly.wingslog.feature.datalog.model.CanonicalSeries
 import dev.fanfly.wingslog.feature.datalog.model.DataLogSeriesData
@@ -70,10 +78,17 @@ class GarminParser : DataLogParser {
     return if (definite) Confidence.DEFINITE else Confidence.POSSIBLE
   }
 
+  /** A Garmin file is one recording, so this is always a list of one — or none, past its end. */
   override suspend fun parse(
     bytes: ByteArray,
-    fileName: String
-  ): ParsedDataLog {
+    fileName: String,
+    session: Int?,
+  ): List<ParsedDataLog> {
+    if (session != null && session != 0) return emptyList()
+    return listOf(parseOne(bytes, fileName))
+  }
+
+  private suspend fun parseOne(bytes: ByteArray, fileName: String): ParsedDataLog {
     val text = bytes.decodeToString(throwOnInvalidSequence = false)
       .removePrefix(BOM)
     val lines = LineCursor(text)
@@ -393,66 +408,6 @@ class GarminParser : DataLogParser {
         )
       }
 
-      /** "Oil Press (PSI)" → ("Oil Press", "PSI"); a name without parentheses keeps an empty unit. */
-      private fun splitUnit(longName: String): Pair<String, String> {
-        val open = longName.lastIndexOf('(')
-        if (open <= 0 || !longName.endsWith(")")) return longName to ""
-        return longName.substring(0, open)
-          .trim() to longName.substring(open + 1, longName.length - 1)
-          .trim()
-      }
-    }
-  }
-
-  /** One column while rows stream past: numbers and text both land here until the kind is known. */
-  private class ColumnAccumulator(private val capacity: Int) {
-    var floats: FloatArray? = null
-    var texts: Array<String?>? = null
-    var numericCount = 0
-    var textCount = 0
-    var min = Float.POSITIVE_INFINITY
-    var max = Float.NEGATIVE_INFINITY
-    private var lastText: String? = null
-
-    fun number(row: Int, v: Float) {
-      val f = floats ?: FloatArray(capacity) { Float.NaN }.also { floats = it }
-      f[row] = v
-      numericCount++
-      if (v < min) min = v
-      if (v > max) max = v
-    }
-
-    fun text(row: Int, v: String) {
-      val t = texts ?: arrayOfNulls<String>(capacity).also { texts = it }
-      // Statuses repeat for hundreds of rows; sharing the instance keeps a text column cheap.
-      val shared = if (v == lastText) lastText!! else v.also { lastText = it }
-      t[row] = shared
-      textCount++
-    }
-  }
-
-  private class LineCursor(private val text: String) {
-    private var pos = 0
-
-    fun next(): String? {
-      if (pos >= text.length) return null
-      var end = text.indexOf('\n', pos)
-      if (end < 0) end = text.length
-      var stop = end
-      if (stop > pos && text[stop - 1] == '\r') stop--
-      val line = text.substring(pos, stop)
-      pos = end + 1
-      return line
-    }
-
-    fun remainingLineCount(): Int {
-      var count = 0
-      var i = pos
-      while (i < text.length) {
-        if (text[i] == '\n') count++
-        i++
-      }
-      return count + 1
     }
   }
 
@@ -473,90 +428,5 @@ class GarminParser : DataLogParser {
     const val PERCENT_FRACTION_CEILING = 1.5f
     const val POSITION_NAME = "Position"
     const val YIELD_EVERY_ROWS = 500
-
-    fun parseIntAt(s: String, start: Int, end: Int): Int {
-      var v = 0
-      for (i in start until end) {
-        val c = s[i]
-        if (c !in '0'..'9') return -1
-        v = v * 10 + (c - '0')
-      }
-      return v
-    }
-
-    /** "-07:00" → -420; "+05:30" → 330; anything else → 0. */
-    fun parseOffsetMinutes(s: String, start: Int, end: Int): Int {
-      if (end - start < 5) return 0
-      val sign = when (s[start]) {
-        '-' -> -1; '+' -> 1; else -> return 0
-      }
-      val colon = s.indexOf(':', start)
-      if (colon !in 0..<end) return 0
-      val h = parseIntAt(s, start + 1, colon)
-      val m = parseIntAt(s, colon + 1, end)
-      if (h < 0 || m < 0) return 0
-      return sign * (h * 60 + m)
-    }
-
-    /** Strict: optional sign, digits, optional fraction. Anything else is NaN, so "3D-" stays text. */
-    fun parseDoubleAt(s: String, start: Int, end: Int): Double {
-      var i = start
-      var negative = false
-      when (s[i]) {
-        '-' -> {
-          negative = true; i++
-        }; '+' -> i++
-      }
-      if (i >= end) return Double.NaN
-      // One integer mantissa and one division keeps "114.1003005" exact; summing scaled digits
-      // does not.
-      var mantissa = 0L
-      var digits = 0
-      var fraction = 0
-      while (i < end && s[i] in '0'..'9') {
-        mantissa = mantissa * 10 + (s[i] - '0'); i++; digits++
-      }
-      if (i < end && s[i] == '.') {
-        i++
-        while (i < end && s[i] in '0'..'9') {
-          mantissa = mantissa * 10 + (s[i] - '0'); i++; digits++; fraction++
-        }
-      }
-      if (i != end || digits == 0) return Double.NaN
-      if (digits > 18) return s.substring(start, end)
-        .toDoubleOrNull() ?: Double.NaN
-      val value =
-        if (fraction == 0) mantissa.toDouble() else mantissa / POWERS_OF_TEN[fraction]
-      return if (negative) -value else value
-    }
-
-    val POWERS_OF_TEN = DoubleArray(19).also {
-      var p = 1.0; for (i in it.indices) {
-      it[i] = p; p *= 10.0
-    }
-    }
-
-    fun medianPositiveDelta(epoch: LongArray, rows: Int): Int {
-      if (rows < 2) return 1
-      val deltas = IntArray(rows - 1)
-      var n = 0
-      for (i in 1 until rows) {
-        val d = epoch[i] - epoch[i - 1]
-        if (d > 0 && d < Int.MAX_VALUE) deltas[n++] = d.toInt()
-      }
-      if (n == 0) return 1
-      deltas.copyOf(n)
-        .sorted()
-        .let { return it[n / 2] }
-    }
-
-    fun forwardFilled(raw: FloatArray): FloatArray {
-      val out = raw.copyOf()
-      var last = Float.NaN
-      for (i in out.indices) {
-        if (out[i].isNaN()) out[i] = last else last = out[i]
-      }
-      return out
-    }
   }
 }

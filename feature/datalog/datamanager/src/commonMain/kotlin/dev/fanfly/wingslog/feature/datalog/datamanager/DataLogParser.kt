@@ -22,8 +22,25 @@ interface DataLogParser {
   /** Judged on the first few KB of the file. Must not throw on garbage. */
   fun sniff(header: ByteArray): Confidence
 
-  /** Throws [DataLogParseException] on a file the sniffer accepted but the body contradicts. */
-  suspend fun parse(bytes: ByteArray, fileName: String): ParsedDataLog
+  /**
+   * Every power-on session in the file, in file order.
+   *
+   * Most formats hold exactly one and return a single-element list. A Dynon SkyView restarts its
+   * clock at each power cycle and one download holds every session since the last one, so a single
+   * file can hold twenty — which is why this is a list rather than one log with a month-wide time
+   * axis and a fortnight of empty space in the middle.
+   *
+   * [session] materialises only that session, for a viewer opening one record out of a file with
+   * many. Out of range, the list comes back empty. Null builds them all, which is what an import
+   * needs.
+   *
+   * Throws [DataLogParseException] on a file the sniffer accepted but the body contradicts.
+   */
+  suspend fun parse(
+    bytes: ByteArray,
+    fileName: String,
+    session: Int? = null,
+  ): List<ParsedDataLog>
 }
 
 class DataLogParseException(message: String, cause: Throwable? = null) :

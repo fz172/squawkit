@@ -30,7 +30,7 @@ class GarminParserPerformanceTest {
     runBlocking { parser.parse(bytes, "warm.csv") }
     val elapsed =
       measureTime { runBlocking { parser.parse(bytes, "timed.csv") } }
-    val parsed = runBlocking { parser.parse(bytes, "check.csv") }
+    val parsed = runBlocking { parser.parse(bytes, "check.csv") }.single()
 
     assertThat(parsed.sampleCount).isEqualTo(20_000)
     assertThat(parsed.series).hasSize(31)

@@ -552,6 +552,46 @@ survives but the location does not. `GarminParserTest` asserts the catalogue (11
 the position collapse), the time base (`14:47:56`, `-07:00`, 255 seconds), `airborne = false`, and
 exact values for a handful of cells.
 
+**Dynon SkyView parser** (`DATA_LOG_FORMAT_DYNON_SKYVIEW`):
+
+- Sniff: line 1 starts `Session Time,`. A second Dynon column name in the same row — `GPS Fix
+  Quality`, `Thermocouple 1`, `EGT Leaning State` — makes it `DEFINITE`; the first column alone is
+  `POSSIBLE`.
+- Header: **there is none.** One row of long names with the unit in parentheses, then samples. Not
+  the recorder, not its software, not the aeroplane. The exporter's own file name,
+  `<date>-<tail>-SN<serial>-<firmware>-USER_LOG_DATA.csv`, is the only place a SkyView states any of
+  that, so `sourceFromFileName` reads it and a hand-renamed file simply yields nothing.
+- **Sessions.** `Session Time` counts seconds since power-on and resets at every power cycle; a
+  download holds every session since the last one, twenty-one of them across a month in the file
+  this parser was written against. `DataLogParser.parse` therefore returns a *list*, the importer
+  writes one record per session, and every record names the same blob and the same `raw_sha256`.
+  Merging them instead would put a fortnight of empty space across the middle of one chart.
+  `DataLog.session_index` says which session a record is, and `load` passes it back so a viewer
+  builds only the session it is showing.
+- **Undated sessions.** A SkyView that never gets a fix writes `UNKNOWN_DATE_TIME` and leaves its
+  own clock, which gives a time of day and nothing that says which day — twelve of those twenty-one.
+  The date comes from the file name and `DataLog.start_approximate` marks it, because a date the
+  reader knows is inferred beats no date at all.
+- Time: `Session Time` is already elapsed seconds and is the unit's own monotonic clock, so it needs
+  none of the step-and-rewind handling a Garmin's wall clock does. The UTC offset is local minus
+  GPS, read from one row that carries both and rounded to a quarter hour.
+- Names: no short names exist, so the column name is both the display name and the canonical-registry
+  key. A SkyView spells out what a Garmin abbreviates (`Indicated Airspeed`, `Oil Pressure`) and
+  names its engines by side (`RPM L`, `Fuel Level L`).
+
+**Known limit.** `DataLogSeriesData.timeSeconds` is an `IntArray`, so the elapsed axis is whole
+seconds. A SkyView samples at four a second here and up to sixteen by configuration, which means
+several rows share an x position at deep zoom. Every row is kept and `sample_rate_hz` reports the
+true rate; widening the axis is a change to the chart engine rather than to a parser, and waits for
+a reason better than this.
+
+**The thermocouple channel-mapping prompt is not built.** §7 of the PRD assumes a SkyView needs one
+because its engine columns are generic, and both sample files leave every `Thermocouple 1` to
+`Thermocouple 14` column *empty*: the installer labels the channels in the unit and the export
+writes those labels instead (`CHT 1`, `EGT 1`, `CHT L TEMPERATURE`). Nothing in the data reaches a
+prompt, so building one would mean shipping a flow no sample can exercise. The mapping, when it is
+needed, belongs against `DataLogSource.system_id`, which the file name supplies.
+
 `docs/datalog/samples/g1000/`: three 240-row windows from two real G1000 logs under the same rule,
 with a README recording their provenance. A piston airframe covers the units row, the CHT/EGT/TIT
 banks and the tanks named by side; a turbine one covers the clockless opening rows at power-up and,
@@ -1116,7 +1156,7 @@ PR 9+ the formats epic.
 | T45 | 7 | `AdSurface.DATA_LOGS`, `AdSlot` size parameter, placement in sidebar footer and under *New pane* on Android and iOS | `feature/ads`, `feature/datalog/viewing` | S | T32 | R44a |
 | T46 | 8 | Flip `isDataLogsSupported` on every host; release notes; `NEW` pill | hosts, `feature/datalog/viewing` | S | T20–T45 | R43 |
 | T47 | 9+ | G1000 sniff, units row, short-name mapping; fixtures; tests | `feature/datalog/datamanager` | M | T14 | §6.2, §6.4 |
-| T48 | 9+ | Dynon SkyView parser; thermocouple channel-mapping prompt and per-unit storage | `feature/datalog/datamanager`, `viewing` | L | T14 | §7 |
+| T48 | 9+ | Dynon SkyView parser; multi-session import; the channel-mapping prompt deferred, see §6.2 | `feature/datalog/datamanager` | L | T14 | §6.2 |
 | T49 | 9+ | Shared drag-and-drop `FileDropTarget` for attachments and data logs (web document listener, tablet `dragAndDropTarget`) | `feature/attachment/viewing`, `webApp` | M | T21, T35 | R2c |
 | T50 | 9+ | V2 server destination lookup design note (server write into a client-owned record) | docs | S | T42 | R36 |
 

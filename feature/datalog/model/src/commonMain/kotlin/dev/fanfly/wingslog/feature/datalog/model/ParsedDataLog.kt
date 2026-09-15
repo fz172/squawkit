@@ -17,6 +17,11 @@ data class ParsedDataLog(
   val parserVersion: Int,
   val source: DataLogSource,
   val start: Instant,
+  /**
+   * [start] was inferred rather than read. A SkyView session that never got a GPS fix carries a
+   * time of day and no date, so the date comes from the file name.
+   */
+  val startApproximate: Boolean = false,
   val utcOffsetMinutes: Int,
   val durationSeconds: Int,
   val sampleCount: Int,
