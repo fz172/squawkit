@@ -851,9 +851,9 @@ otherwise.
 
 ### 11.8 Presets and default layout (R21, R30)
 
-`ChartPreset` in `feature/datalog/model`: `ENGINE`, `FUEL`, `FLIGHT`, `ELECTRICAL`, each a list of
-pane lists of canonical ids. `resolve(catalogue)` drops the ids the log lacks and the panes that
-empty, and returns null when the log carries none of them, so the chip is not offered at all. Default layout on first open: one pane with the template's default
+`ChartPresets` in `feature/datalog/model`: `Engine`, `Fuel`, `Flight`, `Electrical`, each a list of
+pane lists of canonical ids. **Not built** — dropped from PR 6 on 2026-09-15; the default layout
+below ships without it. Default layout on first open: one pane with the template's default
 series (`engine[1].rpm` on airplane, declared as a lexicon-adjacent template field later; hard-coded
 per format in V1 with a TODO to move into the template when automotive arrives), or the first numeric
 series.

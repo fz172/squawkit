@@ -1053,10 +1053,6 @@ feature/datalog/sharedassets	data_log_picker_attached	Attached
 feature/datalog/sharedassets	data_log_picker_same_day	Same day
 feature/datalog/sharedassets	data_log_picker_title	Attach data log
 feature/datalog/sharedassets	data_log_picker_upload	Upload log file
-feature/datalog/sharedassets	data_log_preset_electrical	Electrical
-feature/datalog/sharedassets	data_log_preset_engine	Engine
-feature/datalog/sharedassets	data_log_preset_flight	Flight
-feature/datalog/sharedassets	data_log_preset_fuel	Fuel
 feature/datalog/sharedassets	data_log_recent_uploads	Recent uploads
 feature/datalog/sharedassets	data_log_remove_pane	Remove pane
 feature/datalog/sharedassets	data_log_remove_series	Remove %1$s

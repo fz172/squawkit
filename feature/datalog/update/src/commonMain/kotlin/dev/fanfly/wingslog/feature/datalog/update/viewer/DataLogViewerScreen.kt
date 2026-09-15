@@ -307,7 +307,6 @@ fun DataLogViewerScreen(
                 onAdd = { key -> s.layout.targetPane?.let { viewModel.toggleSeries(it, key) } ?: viewModel.spawnPane(key) },
                 dragState = dragState,
                 onDrop = onDrop,
-                onPreset = viewModel::applyPreset,
                 facts = facts,
                 identityMismatch = r.identityMismatch,
               )

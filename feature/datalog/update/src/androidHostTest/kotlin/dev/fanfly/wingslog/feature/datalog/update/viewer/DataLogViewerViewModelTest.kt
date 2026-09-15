@@ -6,7 +6,6 @@ import dev.fanfly.wingslog.feature.attachment.model.DownloadState
 import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogManager
 import dev.fanfly.wingslog.feature.datalog.datamanager.ChartLayoutStore
 import dev.fanfly.wingslog.feature.datalog.model.CanonicalSeries
-import dev.fanfly.wingslog.feature.datalog.model.chart.ChartPreset
 import dev.fanfly.wingslog.feature.datalog.model.DataLogSeriesData
 import dev.fanfly.wingslog.datalog.DataLogSeries
 import dev.fanfly.wingslog.datalog.DataLogSeriesKind
@@ -101,22 +100,6 @@ class DataLogViewerViewModelTest {
 
     assertThat(state.layout.panes.single().series).containsExactly(SeriesKey(1))
     assertThat(state.clockAxis).isFalse()
-  }
-
-  @Test
-  fun aPresetReplacesTheLayoutAndOneTheLogCannotFillIsIgnored() = runTest {
-    every { manager.observeOne(thingId, id) } returns flowOf(record.copy(series = engineCatalogue))
-    val vm = viewModel()
-
-    vm.applyPreset(ChartPreset.ENGINE)
-    assertThat(ready(vm).layout.panes.map { it.series }).containsExactly(
-      listOf(SeriesKey(1)),
-      listOf(SeriesKey(2)),
-    ).inOrder()
-
-    val before = ready(vm).layout
-    vm.applyPreset(ChartPreset.ELECTRICAL)
-    assertThat(ready(vm).layout).isEqualTo(before)
   }
 
   @Test

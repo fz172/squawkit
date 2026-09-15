@@ -4,8 +4,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.selection.DisableSelection
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -17,7 +15,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.AssistChip
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
@@ -40,15 +37,10 @@ import dev.fanfly.wingslog.core.ui.theme.StatusTier
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.datalog.DataLogSeries
 import dev.fanfly.wingslog.feature.datalog.model.SeriesKey
-import dev.fanfly.wingslog.feature.datalog.model.chart.ChartPreset
 import dev.fanfly.wingslog.feature.datalog.model.chart.isPlottable
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.datalog.sharedassets.generated.resources.Res
 import wingslog.feature.datalog.sharedassets.generated.resources.data_log_sidebar_hint
-import wingslog.feature.datalog.sharedassets.generated.resources.data_log_preset_electrical
-import wingslog.feature.datalog.sharedassets.generated.resources.data_log_preset_engine
-import wingslog.feature.datalog.sharedassets.generated.resources.data_log_preset_flight
-import wingslog.feature.datalog.sharedassets.generated.resources.data_log_preset_fuel
 import wingslog.feature.datalog.sharedassets.generated.resources.data_log_sidebar_info
 import wingslog.feature.datalog.sharedassets.generated.resources.data_log_sidebar_series
 import wingslog.feature.datalog.sharedassets.generated.resources.data_log_tail_mismatch
@@ -79,7 +71,6 @@ fun SeriesSidebar(
   onAdd: (SeriesKey) -> Unit,
   dragState: SeriesDragState,
   onDrop: (SeriesDrag, DropTarget?) -> Unit,
-  onPreset: (ChartPreset) -> Unit,
   facts: List<InfoFact>,
   identityMismatch: Boolean,
   modifier: Modifier = Modifier,
@@ -90,35 +81,10 @@ fun SeriesSidebar(
       Tab(selected = tab == SidebarTab.INFO, onClick = { onTab(SidebarTab.INFO) }, text = { Text(stringResource(Res.string.data_log_sidebar_info)) })
     }
     when (tab) {
-      SidebarTab.SERIES -> SeriesTab(catalogue, inTargetPane, query, onQuery, onAdd, dragState, onDrop, onPreset)
+      SidebarTab.SERIES -> SeriesTab(catalogue, inTargetPane, query, onQuery, onAdd, dragState, onDrop)
       SidebarTab.INFO -> InfoTab(facts, identityMismatch)
     }
   }
-}
-
-/** PRD R30: one tap replaces the whole layout; a preset this log has no series for is not shown. */
-@Composable
-private fun PresetChips(catalogue: List<DataLogSeries>, onPreset: (ChartPreset) -> Unit) {
-  val available = remember(catalogue) { ChartPreset.entries.filter { it.resolve(catalogue) != null } }
-  if (available.isEmpty()) return
-  Row(
-    modifier = Modifier
-      .fillMaxWidth()
-      .horizontalScroll(rememberScrollState())
-      .padding(horizontal = Spacing.large, vertical = Spacing.small),
-    horizontalArrangement = Arrangement.spacedBy(Spacing.small),
-  ) {
-    available.forEach { preset ->
-      AssistChip(onClick = { onPreset(preset) }, label = { Text(stringResource(preset.label())) })
-    }
-  }
-}
-
-private fun ChartPreset.label() = when (this) {
-  ChartPreset.ENGINE -> Res.string.data_log_preset_engine
-  ChartPreset.FUEL -> Res.string.data_log_preset_fuel
-  ChartPreset.FLIGHT -> Res.string.data_log_preset_flight
-  ChartPreset.ELECTRICAL -> Res.string.data_log_preset_electrical
 }
 
 @Composable
@@ -130,9 +96,7 @@ private fun SeriesTab(
   onAdd: (SeriesKey) -> Unit,
   dragState: SeriesDragState,
   onDrop: (SeriesDrag, DropTarget?) -> Unit,
-  onPreset: (ChartPreset) -> Unit,
 ) {
-  PresetChips(catalogue, onPreset)
   val plottable = remember(catalogue, query) {
     val q = query.trim().lowercase()
     catalogue.filter { it.isPlottable }.filter {

@@ -14,7 +14,6 @@ import dev.fanfly.wingslog.feature.datalog.model.ViewWindow
 import dev.fanfly.wingslog.feature.datalog.model.PaneId
 import dev.fanfly.wingslog.feature.datalog.model.SeriesKey
 import dev.fanfly.wingslog.feature.datalog.model.chart.LayoutEdits
-import dev.fanfly.wingslog.feature.datalog.model.chart.ChartPreset
 import dev.fanfly.wingslog.feature.datalog.model.chart.LayoutMemory
 import dev.fanfly.wingslog.feature.datalog.model.chart.LayoutMemoryCodec
 import dev.fanfly.wingslog.feature.datalog.model.chart.Navigation
@@ -140,11 +139,6 @@ class DataLogViewerViewModel(
   fun setCursor(t: Double?) = updateReady { it.copy(cursorT = t) }
 
   fun setLayout(layout: ChartLayout) = updateReady { it.copy(layout = layout) }
-
-  /** PRD R30: a preset the log carries no series for is left alone rather than clearing the panes. */
-  fun applyPreset(preset: ChartPreset) = updateReady { state ->
-    preset.resolve(state.record.series)?.let { state.copy(layout = it) } ?: state
-  }
 
   fun toggleClockAxis() = updateReady { it.copy(clockAxis = !it.clockAxis) }
 

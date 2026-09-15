@@ -25,11 +25,7 @@
   <string name="data_log_viewer_utc_offset"><xliff:g example="14:47">%1$s</xliff:g> local (<xliff:g example="UTC-07:00">%2$s</xliff:g>)</string>
 
   <!-- Inline import rows (R35) -->
-  <!-- Layout presets and the clock axis (design §11.8, PRD R30, R32) -->
-  <string name="data_log_preset_engine">Engine</string>
-  <string name="data_log_preset_fuel">Fuel</string>
-  <string name="data_log_preset_flight">Flight</string>
-  <string name="data_log_preset_electrical">Electrical</string>
+  <!-- Clock axis (PRD R32) -->
   <string name="data_log_viewer_clock_axis">Clock time axis</string>
   <!-- Filing a log under the Thing whose identifier it carries (PRD R12) -->
   <string name="data_log_other_thing_title">Recorded by <xliff:g example="N1234X">%1$s</xliff:g>?</string>
