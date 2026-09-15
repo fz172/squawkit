@@ -57,7 +57,8 @@ export function notificationSettingsDocPath(uid: string): string {
 // --- Record types (§7.2) -----------------------------------------------------------------------
 
 /**
- * The four classes of collaboration activity, one per toggle in `notification_settings.proto`.
+ * The classes of collaboration activity. One `collaboration_disabled` toggle covers them all
+ * (design decision, 2026-08-26); the type is what the push payload names, not what gates it.
  *
  * These are the wire values the notification id and the FCM payload carry, and they are **not** the
  * Firestore path segments: `maintenance_task` is `task` here, matching `WebForeignWriteDetector`'s
@@ -68,6 +69,7 @@ export const RECORD_TYPE = {
   SQUAWK: "squawk",
   TASK: "task",
   LOG: "log",
+  DATA_LOG: "data_log",
 } as const;
 
 export type RecordType = (typeof RECORD_TYPE)[keyof typeof RECORD_TYPE];
@@ -88,6 +90,8 @@ export function recordTypeForKind(kind: string): RecordType | null {
       return RECORD_TYPE.TASK;
     case "maintenance_log":
       return RECORD_TYPE.LOG;
+    case "data_log":
+      return RECORD_TYPE.DATA_LOG;
     default:
       return null;
   }
@@ -102,6 +106,8 @@ export function thingTabForRecordType(recordType: RecordType): string {
       return "tasks";
     case RECORD_TYPE.LOG:
       return "logs";
+    case RECORD_TYPE.DATA_LOG:
+      return "datalogs";
     case RECORD_TYPE.AIRCRAFT:
       return "overview";
   }
