@@ -587,8 +587,24 @@ CollectionKind.DataLog)`, reads through `scopeResolver.resolve(thingId).flatMapL
 writes through `resolveNow`. Never the signed-in uid for scope. `delete` tombstones the record;
 the blob goes through `TombstoneGc` locally and `onRecordDeleted` remotely, both already built.
 
-Identity: the Thing's tail comes from its spec through `ThingSpecAccess` (the airplane template's
-identifier field); `identity_mismatch = identity.isNotBlank() && !identity.equals(tail, ignoreCase)`.
+Identity: the Thing's tail comes from its spec through the field the template marks
+`title_candidate`, falling back to the first `is_identifier` field;
+`identity_mismatch = identity.isNotBlank() && !identity.equals(tail, ignoreCase)`.
+
+**Not the first `is_identifier` field.** That flag is a typography hint — its proto comment says so —
+and an airplane sets it on both the serial number and the tail number, declaring the serial first.
+Reading the first one compared a Garmin's `aircraft_ident` against the airframe *serial*, so every
+log raised a mismatch against the aeroplane it was recorded on. `title_candidate` is the flag that
+says which value the owner calls the thing by; the Thing switcher hit the same trap first, which is
+why the flag exists.
+
+The flag also goes stale differently from the catalogue: it is a comparison against the Thing, so
+editing a tail number invalidates it while the parser is untouched. `load` recomputes it on every
+open and writes only when the answer moved.
+
+A G1000 file carries no `aircraft_ident` at all — its header names the airframe type, not the
+aircraft — so a G1000 import can never raise a mismatch, in either direction. There is nothing in
+the file to compare.
 R12's "file it under the other Thing" offer compares against every Thing the user can see
 (`OtherThingLookup`) and is an `ImportProgress.OtherThing` carrying the candidate's id and display
 name. The caller re-runs the import against that Thing, or with `keepIdentity` to keep it here with

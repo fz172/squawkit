@@ -52,6 +52,7 @@ val dataLogDataManagerModule: Module = module {
       scheduler = getOrNull<UploadScheduler>(),
       importer = get<DataLogImporter>(),
       cache = get<DataLogCache>(),
+      identifiers = get<ThingIdentifierLookup>(),
       parsers = dataLogParsers,
     )
   }

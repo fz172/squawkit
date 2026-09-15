@@ -22,6 +22,7 @@ import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
 import dev.fanfly.wingslog.feature.attachment.model.DownloadState
 import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogCache
 import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogImporter
+import dev.fanfly.wingslog.feature.datalog.datamanager.ThingIdentifierLookup
 import dev.fanfly.wingslog.feature.datalog.datamanager.Fixtures
 import dev.fanfly.wingslog.feature.datalog.datamanager.garmin.GarminParser
 import dev.fanfly.wingslog.id.DataLogId
@@ -54,6 +55,7 @@ class DataLogManagerImplTest {
   private lateinit var scheduler: UploadScheduler
   private lateinit var importer: DataLogImporter
   private lateinit var cache: DataLogCache
+  private lateinit var identifiers: ThingIdentifierLookup
   private lateinit var manager: DataLogManagerImpl
 
   @Before
@@ -69,6 +71,9 @@ class DataLogManagerImplTest {
     scheduler = mockk(relaxed = true)
     importer = mockk()
     cache = DataLogCache()
+    identifiers = mockk()
+    // The G3X fixture records N1234X; a Thing that agrees is the no-mismatch baseline.
+    coEvery { identifiers.identifierOf(thingId) } returns "N1234X"
     manager = DataLogManagerImpl(
       scopeResolver = resolver,
       storeFactory = factory,
@@ -77,6 +82,7 @@ class DataLogManagerImplTest {
       scheduler = scheduler,
       importer = importer,
       cache = cache,
+      identifiers = identifiers,
       parsers = listOf(GarminParser()),
     )
   }
@@ -203,6 +209,52 @@ class DataLogManagerImplTest {
     // Not the parser's to change: the comparison against the Thing, and the stored bytes.
     assertThat(written.captured.raw_file).isEqualTo(stale.raw_file)
     assertThat(written.captured.identity_mismatch).isEqualTo(stale.identity_mismatch)
+  }
+
+  @Test
+  fun anIdentityMismatchIsRecomputedAgainstTheThingAsItIsNow() = runTest {
+    // The flag is a comparison against the Thing, so it goes stale when the Thing changes rather
+    // than when the parser does. Renaming a tail number used to leave the chip it invalidated.
+    val flagged = record("a", "2026-09-02T21:47:56Z").copy(identity_mismatch = true)
+    every { store.observeAll(scope) } returns flowOf(
+      listOf(StorageEntity("a", flagged, Instant.DISTANT_PAST))
+    )
+    coEvery { blobs.get(blobId) } returns ref(RemoteState.Synced)
+    coEvery { filesystem.read("blobs/blob-1.bin") } returns GzipCodec.compress(
+      Fixtures.bytes(Fixtures.GROUND_RUN)
+    )
+
+    manager.load(thingId, DataLogId("a"))
+      .getOrThrow()
+
+    val written = slot<DataLog>()
+    coVerify { store.put("a", capture(written), scope) }
+    assertThat(written.captured.identity_mismatch).isFalse()
+  }
+
+  @Test
+  fun aThingThatReallyDoesNotMatchStillRaisesTheFlag() = runTest {
+    coEvery { identifiers.identifierOf(thingId) } returns "N999ZZ"
+    every { store.observeAll(scope) } returns flowOf(
+      listOf(
+        StorageEntity(
+          "a",
+          record("a", "2026-09-02T21:47:56Z"),
+          Instant.DISTANT_PAST
+        )
+      ),
+    )
+    coEvery { blobs.get(blobId) } returns ref(RemoteState.Synced)
+    coEvery { filesystem.read("blobs/blob-1.bin") } returns GzipCodec.compress(
+      Fixtures.bytes(Fixtures.GROUND_RUN)
+    )
+
+    manager.load(thingId, DataLogId("a"))
+      .getOrThrow()
+
+    val written = slot<DataLog>()
+    coVerify { store.put("a", capture(written), scope) }
+    assertThat(written.captured.identity_mismatch).isTrue()
   }
 
   @Test
