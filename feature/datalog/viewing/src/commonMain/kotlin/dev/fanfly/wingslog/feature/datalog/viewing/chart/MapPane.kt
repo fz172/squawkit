@@ -24,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerEventType
@@ -127,8 +128,7 @@ fun MapPane(
               HttpClient {
                 install(UserAgent) { agent = MapTileProvider.OSM_USER_AGENT }
               }
-            }
-          )
+            })
         )
       }
       .build()
@@ -138,21 +138,17 @@ fun MapPane(
   var size by remember { mutableStateOf(IntSize.Zero) }
   val limits = remember(provider) {
     scaleLimits(
-      provider.tileSizePx,
-      provider.maxZoom,
-      MAX_OVER_ZOOM
+      provider.tileSizePx, provider.maxZoom, MAX_OVER_ZOOM
     )
   }
   // Null until the pane has been measured; the first measure fits the track, and every gesture
   // after that is the user's, so a recomposition must not snap the view back.
   var camera by remember(
-    position,
-    provider
+    position, provider
   ) { mutableStateOf<MapCamera?>(null) }
 
   Box(
-    modifier = modifier
-      .fillMaxWidth()
+    modifier = modifier.fillMaxWidth()
       .height(height)
       .clip(RoundedCornerShape(Spacing.cardCornerRadius))
       .border(
@@ -184,8 +180,11 @@ fun MapPane(
             if (event.type != PointerEventType.Scroll) continue
             val change = event.changes.first()
             val current = camera ?: continue
-            val factor = (1f - change.scrollDelta.y * SCROLL_ZOOM_STEP)
-              .coerceIn(1f / MAX_SCROLL_FACTOR, MAX_SCROLL_FACTOR)
+            val factor =
+              (1f - change.scrollDelta.y * SCROLL_ZOOM_STEP).coerceIn(
+                1f / MAX_SCROLL_FACTOR,
+                MAX_SCROLL_FACTOR
+              )
             camera = current.scaleBy(
               factor = factor,
               focusX = change.position.x,
@@ -199,10 +198,9 @@ fun MapPane(
         }
       },
   ) {
-    val bounds = trackBounds
-    if (bounds != null && camera == null && size.width > 0 && size.height > 0) {
+    if (trackBounds != null && camera == null && size.width > 0 && size.height > 0) {
       camera = fitCamera(
-        bounds,
+        trackBounds,
         size.width.toFloat(),
         size.height.toFloat(),
         FIT_FRACTION,
@@ -297,8 +295,7 @@ fun MapPane(
       text = provider.attribution,
       style = WingslogTypography.dataSmall,
       color = MaterialTheme.colorScheme.onSurfaceVariant,
-      modifier = Modifier
-        .align(Alignment.BottomEnd)
+      modifier = Modifier.align(Alignment.BottomEnd)
         .padding(Spacing.extraSmall),
     )
   }
@@ -308,7 +305,7 @@ fun MapPane(
  * The track as one path, broken wherever a row had no fix or falls outside [inWindow], so a gap in
  * the log is a gap on the map rather than a straight line across it.
  */
-private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawTrack(
+private fun DrawScope.drawTrack(
   position: PositionColumn,
   viewport: MapViewport,
   inWindow: (Int) -> Boolean,
