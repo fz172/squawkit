@@ -482,6 +482,7 @@ fun SquawkTab(
         }
       },
       syncStates = state.syncStates,
+      dataLogs = state.dataLogs,
       openError = openError,
       onEditClick = onMutationAction?.let { mutate ->
         {

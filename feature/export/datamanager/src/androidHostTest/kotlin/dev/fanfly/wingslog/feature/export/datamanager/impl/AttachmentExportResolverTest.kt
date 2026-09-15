@@ -4,6 +4,7 @@ import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.thing.Thing
 import dev.fanfly.wingslog.thing.Attachment
 import dev.fanfly.wingslog.thing.AttachmentType
+import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.blob.BlobFilesystem
@@ -128,6 +129,21 @@ class AttachmentExportResolverTest {
     assertThat(manifest.notes).hasSize(12)
     // One budget, not twelve timeouts. Sequentially this was 12 × ensureLocal's own 30s.
     assertThat(elapsed).isAtMost(70_000L)
+  }
+
+  /** A data log reference owns no bytes either; the record's own file is not exported in V1. */
+  @Test
+  fun resolve_ignoresDataLogReferences() = runTest {
+    val manager = mockk<AttachmentManager>()
+    val ref = attachment("ref1").copy(
+      type = AttachmentType.ATTACHMENT_TYPE_DATA_LOG,
+      data_log_id = DataLogId("dl-1"),
+    )
+
+    val manifest = resolver(manager).resolve(bundle(ref))
+
+    assertThat(manifest.byAttachmentId).isEmpty()
+    assertThat(manifest.notes).isEmpty()
   }
 
   /** Link attachments have no bytes to fetch and must not consume the budget. */

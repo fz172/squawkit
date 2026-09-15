@@ -29,6 +29,8 @@ import dev.fanfly.wingslog.core.datetime.toLocalDate
 import dev.fanfly.wingslog.core.ui.common.compose.DetailSheet
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
+import dev.fanfly.wingslog.feature.attachment.model.DataLogRowInfo
+import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.feature.attachment.viewing.AttachmentSection
 import dev.fanfly.wingslog.feature.squawk.model.SquawkStatus
 import dev.fanfly.wingslog.feature.squawk.model.SquawkWithStatus
@@ -52,6 +54,7 @@ fun SquawkDetailSheet(
   onLogClick: ((logId: String) -> Unit)? = null,
   onAttachmentTap: (Attachment) -> Unit = {},
   syncStates: Map<String, BlobSyncState> = emptyMap(),
+  dataLogs: Map<DataLogId, DataLogRowInfo>? = null,
   openError: String? = null,
   modifier: Modifier = Modifier,
 ) {
@@ -138,6 +141,7 @@ fun SquawkDetailSheet(
       attachments = squawk.attachments,
       onAttachmentTap = onAttachmentTap,
       syncStates = syncStates,
+      dataLogs = dataLogs,
       openError = openError,
     )
   }

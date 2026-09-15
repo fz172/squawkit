@@ -20,4 +20,6 @@ data class ThingBundle(
   val tasksById: Map<String, MaintenanceTask>,
   val squawksById: Map<String, Squawk>,
   val techniciansById: Map<String, Technician>,
+  /** Duration in seconds of every data log, keyed by id, so a DATA_LOG attachment cell can name it. */
+  val dataLogDurationsById: Map<String, Int> = emptyMap(),
 )

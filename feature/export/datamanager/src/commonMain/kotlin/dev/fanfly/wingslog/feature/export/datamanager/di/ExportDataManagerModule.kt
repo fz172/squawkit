@@ -14,6 +14,7 @@ import dev.fanfly.wingslog.feature.export.datamanager.impl.LogbookExportAggregat
 import dev.fanfly.wingslog.feature.export.datamanager.impl.LogbookExportArchiveBuilder
 import dev.fanfly.wingslog.feature.export.datamanager.impl.ZipFileWriter
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
+import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
@@ -44,6 +45,7 @@ val exportDataManagerModule = module {
       get<TaskDueManager>(),
       get<SquawkManager>(),
       get<TechnicianManager>(),
+      get<DataLogManager>(),
     )
   }
   single {

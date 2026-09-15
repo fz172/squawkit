@@ -467,6 +467,7 @@ fun ThingSectionContent(
         ShellSection.LOGS -> LogsTab(
           thingId = thingId,
           syncStates = state.syncStates,
+          dataLogs = state.dataLogs,
           // Route through the same onAction wrapper as every other section, which navigates directly.
           onNavigateToAddLog = {
             onAction(
@@ -536,6 +537,7 @@ fun ThingSectionContent(
             }
           },
           syncStates = state.syncStates,
+          dataLogs = state.dataLogs,
           openError = taskSheetOpenError,
         )
       }

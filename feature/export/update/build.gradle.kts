@@ -31,6 +31,7 @@ kotlin {
   sourceSets {
     commonMain.dependencies {
       implementation(project(":feature:export:datamanager"))
+      implementation(project(":feature:attachment:model"))
       implementation(project(":feature:export:sharedassets"))
       implementation(project(":feature:subscription:datamanager"))
       implementation(project(":feature:subscription:viewing"))

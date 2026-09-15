@@ -33,6 +33,8 @@ import dev.fanfly.wingslog.core.ui.theme.StatusTier
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.core.ui.theme.statusColors
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
+import dev.fanfly.wingslog.feature.attachment.model.DataLogRowInfo
+import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.feature.attachment.viewing.AttachmentSection
 import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
 import dev.fanfly.wingslog.feature.tasks.model.DueStatus
@@ -73,6 +75,7 @@ fun TaskDetailSheet(
   onEditClick: (() -> Unit)?,
   onAttachmentTap: (Attachment) -> Unit = {},
   syncStates: Map<String, BlobSyncState> = emptyMap(),
+  dataLogs: Map<DataLogId, DataLogRowInfo>? = null,
   openError: String? = null,
   modifier: Modifier = Modifier,
 ) {
@@ -194,6 +197,7 @@ fun TaskDetailSheet(
       attachments = card.attachments,
       onAttachmentTap = onAttachmentTap,
       syncStates = syncStates,
+      dataLogs = dataLogs,
       openError = openError,
     )
 

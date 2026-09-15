@@ -53,6 +53,8 @@ import dev.fanfly.wingslog.feature.ads.model.ListRow
 import dev.fanfly.wingslog.feature.ads.model.withAdSlots
 import dev.fanfly.wingslog.feature.ads.viewing.AdSlot
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
+import dev.fanfly.wingslog.feature.attachment.model.DataLogRowInfo
+import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.feature.logs.sharedassets.util.displayName
 import dev.fanfly.wingslog.feature.logs.viewing.log.data.MaintenanceLogListUiState
 import dev.fanfly.wingslog.feature.search.datamanager.LogAdapter
@@ -107,6 +109,7 @@ fun MaintenanceLogListContent(
   /** The typed filter, read synchronously from the ViewModel; `uiState` carries the results. */
   filter: RecordFilter,
   syncStates: Map<String, BlobSyncState> = emptyMap(),
+  dataLogs: Map<DataLogId, DataLogRowInfo>? = null,
   onSearchQueryChange: (String) -> Unit,
   onComponentFilterToggle: (ComponentType) -> Unit,
   onTimeWindowChange: (TimeWindow) -> Unit,
@@ -464,6 +467,7 @@ fun MaintenanceLogListContent(
                 },
                 onAttachmentTap = onAttachmentTap,
                 syncStates = syncStates,
+                dataLogs = dataLogs,
                 openError = openError,
                 onTaskClick = onTaskClick?.let { cb ->
                   { taskId ->

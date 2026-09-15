@@ -31,6 +31,8 @@ import dev.fanfly.wingslog.feature.export.datamanager.ExportFormat
 import dev.fanfly.wingslog.feature.export.datamanager.ExportRequest
 import dev.fanfly.wingslog.feature.tasks.datamanager.meterKeyFor
 import dev.fanfly.wingslog.thing.Attachment
+import dev.fanfly.wingslog.core.datetime.formatDuration
+import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.thing.AttachmentType
 import dev.fanfly.wingslog.thing.CertExpireLimit
 import dev.fanfly.wingslog.thing.Certification
@@ -493,7 +495,7 @@ class LogbookExportArchiveBuilder(
               technician?.name.orEmpty(),
               technician.certTypeLabel(),
               technician.certNumbers(),
-              log.attachments.attachmentCell(attachments),
+              log.attachments.attachmentCell(attachments, bundle),
             )
           )
         }
@@ -1194,7 +1196,7 @@ class LogbookExportArchiveBuilder(
             if (showReferences) add(log.referenceNumbers(bundle))
             add(log.squawkTitles(bundle))
             add(technician?.name.orEmpty())
-            add(log.attachments.attachmentCell(attachments))
+            add(log.attachments.attachmentCell(attachments, bundle))
           }
         )
       }
@@ -1239,7 +1241,7 @@ class LogbookExportArchiveBuilder(
       technician?.name.orEmpty(),
       technician.certTypeLabel(),
       technician.certNumbers(),
-      log.attachments.attachmentCell(attachments),
+      log.attachments.attachmentCell(attachments, bundle),
     )
   }
 
@@ -1298,12 +1300,19 @@ class LogbookExportArchiveBuilder(
       bundle.squawksById[id]?.title ?: "[deleted]"
     }
 
-  private fun List<Attachment>.attachmentCell(manifest: AttachmentExportManifest): String =
+  private fun List<Attachment>.attachmentCell(
+    manifest: AttachmentExportManifest,
+    bundle: ThingBundle,
+  ): String =
     joinToString("\n") { attachment ->
       val name =
         attachment.name.ifBlank { attachment.id.ifBlank { "Attachment" } }
       if (attachment.type == AttachmentType.ATTACHMENT_TYPE_LINK) {
         "$name -> ${attachment.url.ifBlank { attachment.download_url }}"
+      } else if (attachment.type == AttachmentType.ATTACHMENT_TYPE_DATA_LOG) {
+        // The bytes stay with the record in V1 (data log design §9.1); name it so the row is legible.
+        val duration = attachment.data_log_id?.value?.let { bundle.dataLogDurationsById[it] }
+        if (duration != null) "$name (data log, ${formatDuration(duration)})" else "$name (data log)"
       } else {
         val payload = manifest.byAttachmentId[attachment.id]
         if (payload != null) "$name -> ${payload.relativePath}" else "$name -> [attachment unavailable]"
