@@ -13,6 +13,25 @@ class AdSlotFormatTest {
   }
 
   @Test
+  fun `a container ceiling holds a wide tier to one unit`() {
+    // The data log viewer's sidebar footer is a fixed 328 dp column, so a two-up band would be laid
+    // out past its edge no matter how wide the window is.
+    assertThat(AdSlotFormat.desiredUnits(AdLayoutTier.WIDE, maxUnits = 1)).isEqualTo(1)
+    assertThat(AdSlotFormat.desiredUnits(AdLayoutTier.COMPACT, maxUnits = 1)).isEqualTo(1)
+    // A ceiling above what the tier wants changes nothing: width buys count, and the tier is still
+    // the one that decides how much width there is.
+    assertThat(AdSlotFormat.desiredUnits(AdLayoutTier.MEDIUM, maxUnits = 2)).isEqualTo(1)
+  }
+
+  @Test
+  fun `every surface spells its analytics name once and distinctly`() {
+    // The `surface` param is a wire format; two surfaces sharing a name would merge their series.
+    val names = AdSurface.entries.map { it.analyticsName }
+    assertThat(names).containsNoDuplicates()
+    assertThat(AdSurface.DATA_LOGS.analyticsName).isEqualTo("data_logs")
+  }
+
+  @Test
   fun `the format follows the grant, not the tier`() {
     // §7.1's "near the cap" rule: a wide slot granted one unit renders it centred, exactly as the
     // MEDIUM case. That falls out of reading the grant instead of re-deciding from the tier.

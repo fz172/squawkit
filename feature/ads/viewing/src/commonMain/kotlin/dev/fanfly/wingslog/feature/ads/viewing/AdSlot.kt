@@ -76,12 +76,20 @@ internal fun LayoutTier.toAdLayoutTier(): AdLayoutTier = when (this) {
  * When no unit is granted the composable emits **nothing at all** — not an empty box, not a
  * placeholder. A slot the pilot cannot see must not occupy a pixel or shift a record under their
  * finger (G5).
+ *
+ * @param size the creative's fixed size. Width buys count, never size (§7.1), so this is the caller's
+ *   choice of inventory rather than something the tier decides.
+ * @param maxUnits a ceiling on the band, below whatever the tier would otherwise ask for. A slot in
+ *   a fixed-width container — the data log viewer's sidebar footer — has room for one unit however
+ *   wide the window is, and two would be laid out past its edge.
  */
 @Composable
 fun AdSlot(
   surface: AdSurface,
   slotIndex: Int,
   modifier: Modifier = Modifier,
+  size: AdUnitSize = AdUnitSize.LARGE_BANNER,
+  maxUnits: Int = AdSlotFormat.TWO_UP.unitCount,
 ) {
   val adsManager: AdsManager = koinInject()
   val adConsentManager: AdConsentManager = koinInject()
@@ -107,7 +115,7 @@ fun AdSlot(
   // the slot returned before reserve() could hand back the grant it already held, so an ad the pilot
   // had already seen vanished when they scrolled back to it.
   val granted = remember(key) {
-    adsManager.reserve(key, AdSlotFormat.desiredUnits(adTier))
+    adsManager.reserve(key, AdSlotFormat.desiredUnits(adTier, maxUnits))
   }
   val format = AdSlotFormat.forGrant(granted) ?: return
 
@@ -163,10 +171,10 @@ fun AdSlot(
       ) {
         repeat(granted) { unit ->
           AdView(
-            // Confirmed on-device against real card content (#389's visual spot-check); a full
-            // sweep against the shortest COMPACT-tier cards across all three surfaces is still open
-            // on that issue before calling G10 fully cleared.
-            size = AdUnitSize.LARGE_BANNER,
+            // The default is confirmed on-device against real card content (#389's visual
+            // spot-check); a full sweep against the shortest COMPACT-tier cards across all three
+            // list surfaces is still open on that issue before calling G10 fully cleared.
+            size = size,
             surface = surface,
             // Developer builds request test inventory: real impressions from development are
             // invalid traffic, which AdMob suspends accounts for.

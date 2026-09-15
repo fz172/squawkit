@@ -53,8 +53,13 @@ enum class SidebarTab { SERIES, INFO }
 /** One label and value line of the Info tab (PRD R26). */
 data class InfoFact(val label: String, val value: String)
 
-/** Sidebar width on layouts with side navigation (design §11.7); no Spacing token covers it. */
-val SidebarWidth: Dp = 300.dp
+/**
+ * Sidebar width on layouts with side navigation (design §11.7); no Spacing token covers it.
+ *
+ * 328 rather than a round 300 so the footer's fixed 320 dp ad unit (PRD R44a) fits inside the ad
+ * card's own 4 dp insets. The unit does not adapt, so the column has to.
+ */
+val SidebarWidth: Dp = 328.dp
 
 /**
  * The series sidebar (PRD R25, R26): a *Series* tab listing every plottable series with unit and

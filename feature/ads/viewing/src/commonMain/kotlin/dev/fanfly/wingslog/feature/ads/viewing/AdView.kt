@@ -42,3 +42,10 @@ expect fun AdView(
   onClicked: () -> Unit,
   modifier: Modifier = Modifier,
 )
+
+/**
+ * The `ad_fill_failed` reason a platform reports when [AdSurface] has no ad unit provisioned on it
+ * yet. Reported rather than swallowed so the slot releases its budget and collapses, and so the gap
+ * is a number in GA4 instead of a silent blank.
+ */
+const val AD_REASON_NO_UNIT = "no_unit_configured"

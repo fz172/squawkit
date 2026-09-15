@@ -20,6 +20,10 @@ import dev.fanfly.wingslog.core.ui.adaptive.compose.TextSelectionLayer
 import dev.fanfly.wingslog.datalog.DataLog
 import dev.fanfly.wingslog.feature.datalog.viewing.chart.InfoFact
 import dev.fanfly.wingslog.feature.datalog.viewing.chart.SeriesSidebar
+import dev.fanfly.wingslog.feature.ads.datamanager.AdsManager
+import dev.fanfly.wingslog.feature.ads.model.AdSurface
+import dev.fanfly.wingslog.feature.ads.model.AdUnitSize
+import dev.fanfly.wingslog.feature.ads.viewing.AdSlot
 import dev.fanfly.wingslog.feature.datalog.viewing.chart.SidebarWidth
 import dev.fanfly.wingslog.feature.datalog.viewing.list.DataLogRow
 import kotlinx.coroutines.launch
@@ -71,6 +75,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -301,6 +306,22 @@ fun DataLogViewerScreen(
               }
             }
             val compact = LocalLayoutTier.current.isCompact
+            val adsManager: AdsManager = koinInject()
+            val showAds by adsManager.shouldShowsAds()
+              .collectAsState(initial = false)
+            // PRD R44a: one fixed unit, never in a pane and never over a chart. Android and iOS
+            // only — shouldShowsAds() is already false where AppCapability has no ad product.
+            val adSlot: @Composable () -> Unit = {
+              if (showAds) {
+                AdSlot(
+                  surface = AdSurface.DATA_LOGS,
+                  slotIndex = 0,
+                  size = AdUnitSize.BANNER,
+                  // The sidebar footer is a fixed column; a two-up band would run past its edge.
+                  maxUnits = 1,
+                )
+              }
+            }
             val facts = viewerFacts(s.record, r)
             val sidebar: @Composable () -> Unit = {
               SeriesSidebar(
@@ -447,6 +468,8 @@ fun DataLogViewerScreen(
               item {
                 NewPaneTarget(dragState = dragState, onTap = { viewModel.spawnPane() })
               }
+              // Phones carry the slot here, under the panes. Wider layouts have a sidebar footer.
+              if (compact) item { adSlot() }
             }
             // The chip in flight, following the pointer above everything else.
             dragState.drag?.let { drag ->
@@ -490,7 +513,10 @@ fun DataLogViewerScreen(
               Row(modifier = content) {
                 panes(Modifier.weight(1f).fillMaxSize())
                 VerticalDivider()
-                Box(Modifier.width(SidebarWidth).fillMaxSize()) { sidebar() }
+                Column(Modifier.width(SidebarWidth).fillMaxSize()) {
+                  Box(Modifier.weight(1f)) { sidebar() }
+                  adSlot()
+                }
               }
             }
             if (s.deleting) {

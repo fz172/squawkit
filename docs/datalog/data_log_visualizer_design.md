@@ -910,10 +910,22 @@ which would give GA4 one dimension row per file and nothing to group by.
 ### 13.2 Ads (PRD R44a) — mobile only
 
 `AdSurface.DATA_LOGS("data_logs")`, with the enum's doc comment updated to admit one fixed slot.
-`AdSlot` gains `size: AdUnitSize = LARGE_BANNER`; the viewer calls `AdSlot(DATA_LOGS, 0, size = BANNER)`
-in the sidebar footer on tablet layouts and under the *New pane* strip on phones, inside
-`if (showAds)` from `AdsManager.shouldShowsAds()`. Web is out of scope by requirement, and
-`AdView.js.kt` is already a no-op with `isAdsSupported = false`, so no web code is touched.
+`AdSlot` gains `size: AdUnitSize = LARGE_BANNER` and `maxUnits: Int = TWO_UP.unitCount`; the viewer
+calls `AdSlot(DATA_LOGS, 0, size = BANNER, maxUnits = 1)` in the sidebar footer on tablet layouts and
+under the *New pane* strip on phones, inside `if (showAds)` from `AdsManager.shouldShowsAds()`. Web
+is out of scope by requirement, and `AdView.js.kt` is already a no-op with `isAdsSupported = false`,
+so no web code is touched.
+
+`maxUnits` exists because the sidebar is a fixed column: a wide tier asks for a two-up band, which
+would be laid out past its edge. `AdSlotFormat.desiredUnits(tier, maxUnits)` clamps it, so the rule
+is testable without a composable. `SidebarWidth` moves from 300 dp to 328 dp, which is the fixed
+320 dp unit plus the ad card's own 4 dp insets — the unit does not adapt, so the column has to.
+
+**The two AdMob unit ids do not exist yet.** `adUnitIdFor` returns null for `DATA_LOGS` on both
+Android and iOS, and `AdView` reports `ad_fill_failed` with reason `no_unit_configured` rather than
+rendering, so the slot releases its budget and collapses. A borrowed id would bill another surface's
+inventory and merge the two in AdMob's reports; an invented one would fail every request with no
+hint of why. Create one unit per platform and drop the ids into the two tables.
 
 ### 13.3 Drag-and-drop (PRD R2c, P2, not in V1)
 

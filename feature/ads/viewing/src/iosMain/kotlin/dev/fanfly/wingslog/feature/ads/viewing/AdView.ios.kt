@@ -2,6 +2,7 @@ package dev.fanfly.wingslog.feature.ads.viewing
 
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -36,6 +37,12 @@ actual fun AdView(
   val currentClicked by rememberUpdatedState(onClicked)
   val adUnitId =
     remember(surface, useTestAds) { adUnitIdFor(surface, useTestAds) }
+  if (adUnitId == null) {
+    // No unit for this surface yet. Reporting a no-fill hands the unit back to the session budget
+    // and collapses the card, the same outcome as a request that comes back empty.
+    LaunchedEffect(surface) { currentFailed(AD_REASON_NO_UNIT) }
+    return
+  }
 
   UIKitView(
     factory = {
@@ -60,7 +67,7 @@ actual fun AdView(
  * invalid traffic and AdMob suspends accounts for it. iOS has its own ids under its own app id
  * (`GADApplicationIdentifier` in Info.plist), separate from Android's.
  */
-private fun adUnitIdFor(surface: AdSurface, useTestAds: Boolean): String =
+private fun adUnitIdFor(surface: AdSurface, useTestAds: Boolean): String? =
   if (useTestAds) {
     GOOGLE_TEST_BANNER_UNIT_IOS
   } else {
@@ -68,6 +75,8 @@ private fun adUnitIdFor(surface: AdSurface, useTestAds: Boolean): String =
       AdSurface.SQUAWKS -> "ca-app-pub-1367143209408464/7354960967"
       AdSurface.TASKS -> "ca-app-pub-1367143209408464/3415715954"
       AdSurface.LOGS -> "ca-app-pub-1367143209408464/4728797628"
+      // Awaiting an AdMob unit for the data log viewer; the slot collapses until one exists.
+      AdSurface.DATA_LOGS -> null
     }
   }
 
