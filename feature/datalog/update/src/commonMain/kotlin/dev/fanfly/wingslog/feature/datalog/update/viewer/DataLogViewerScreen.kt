@@ -3,6 +3,7 @@ package dev.fanfly.wingslog.feature.datalog.update.viewer
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
@@ -60,6 +61,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -126,6 +128,7 @@ import wingslog.feature.datalog.sharedassets.generated.resources.data_log_fact_s
 import wingslog.feature.datalog.sharedassets.generated.resources.data_log_fact_system_id
 import wingslog.feature.datalog.sharedassets.generated.resources.data_log_fact_unit
 import wingslog.feature.datalog.sharedassets.generated.resources.data_log_sidebar_open
+import wingslog.feature.datalog.sharedassets.generated.resources.data_log_viewer_clock_axis
 import wingslog.feature.datalog.sharedassets.generated.resources.data_log_deleted
 import wingslog.feature.datalog.sharedassets.generated.resources.data_log_tail_mismatch
 import wingslog.feature.datalog.sharedassets.generated.resources.data_log_viewer_downloading
@@ -192,6 +195,16 @@ fun DataLogViewerScreen(
               ?: LexiconFormatter.titleCase(lexicon.dataLogNoun),
             onBackClick = { navController.popBackStack() },
             actions = {
+              if (ready != null) {
+                IconButton(onClick = viewModel::toggleClockAxis) {
+                  Icon(
+                    Icons.Filled.Schedule,
+                    contentDescription = stringResource(Res.string.data_log_viewer_clock_axis),
+                    tint = if (ready.clockAxis) MaterialTheme.colorScheme.primary
+                    else LocalContentColor.current,
+                  )
+                }
+              }
               if (ready != null && LocalLayoutTier.current.isCompact) {
                 IconButton(onClick = { scope.launch { drawerState.open() } }) {
                   Icon(Icons.Filled.Tune, contentDescription = stringResource(Res.string.data_log_sidebar_open))
@@ -294,6 +307,7 @@ fun DataLogViewerScreen(
                 onAdd = { key -> s.layout.targetPane?.let { viewModel.toggleSeries(it, key) } ?: viewModel.spawnPane(key) },
                 dragState = dragState,
                 onDrop = onDrop,
+                onPreset = viewModel::applyPreset,
                 facts = facts,
                 identityMismatch = r.identityMismatch,
               )
@@ -399,7 +413,9 @@ fun DataLogViewerScreen(
                 TimeAxis(
                   view = s.view,
                   durationSeconds = s.record.duration_seconds,
-                  cursorT = s.cursorT
+                  cursorT = s.cursorT,
+                  clockAxis = s.clockAxis,
+                  originSecondsOfDay = r.startLocal.time.toSecondOfDay(),
                 )
               }
               item {

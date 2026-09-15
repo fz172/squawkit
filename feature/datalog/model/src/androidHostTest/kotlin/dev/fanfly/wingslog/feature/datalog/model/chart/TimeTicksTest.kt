@@ -39,4 +39,31 @@ class TimeTicksTest {
     assertThat(TimeTicks.labelCenterX(150f, 40f, 300)).isEqualTo(150f)
     assertThat(TimeTicks.xOf(127.5, ViewWindow(0, 255), 1000)).isWithin(1e-3f).of(500f)
   }
+
+  @Test
+  fun clockTicksLandOnWallClockMultiplesNotElapsedOnes() {
+    // The log starts at 14:47:56; a 60 s step must label 14:48:00, 14:49:00, … not 14:47:56 + 60.
+    val origin = 14 * 3600 + 47 * 60 + 56
+    val ticks = TimeTicks.clockTicks(ViewWindow(0, 200), step = 60, originSecondsOfDay = origin)
+
+    assertThat(ticks).containsExactly(4, 64, 124, 184).inOrder()
+    ticks.forEach { assertThat((origin + it) % 60).isEqualTo(0) }
+  }
+
+  @Test
+  fun clockLabelsShowSecondsOnlyBelowAMinuteStepAndWrapPastMidnight() {
+    assertThat(TimeTicks.clockLabel(14 * 3600 + 48 * 60, step = 60)).isEqualTo("14:48")
+    assertThat(TimeTicks.clockLabel(14 * 3600 + 48 * 60 + 5, step = 5)).isEqualTo("14:48:05")
+    assertThat(TimeTicks.clockLabel(9 * 60, step = 3600)).isEqualTo("00:09")
+    // A log that runs past midnight keeps counting; the label wraps rather than reading 24:30.
+    assertThat(TimeTicks.clockLabel(24 * 3600 + 30 * 60, step = 60)).isEqualTo("00:30")
+  }
+
+  @Test
+  fun clockTicksOnAnAlignedStartMatchTheElapsedTicks() {
+    val window = ViewWindow(0, 300)
+    assertThat(TimeTicks.clockTicks(window, step = 60, originSecondsOfDay = 0))
+      .isEqualTo(TimeTicks.ticks(window, step = 60))
+    assertThat(TimeTicks.clockTicks(window, step = 0, originSecondsOfDay = 10)).isEmpty()
+  }
 }

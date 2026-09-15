@@ -83,9 +83,10 @@ class DataLogManagerImpl(
   override fun import(
     thingId: ThingId,
     file: PickedFile,
-    confirmDuplicate: Boolean
+    confirmDuplicate: Boolean,
+    keepIdentity: Boolean,
   ): Flow<ImportProgress> =
-    importer.import(thingId, file, confirmDuplicate)
+    importer.import(thingId, file, confirmDuplicate, keepIdentity)
 
   override fun ensureLocal(
     thingId: ThingId,

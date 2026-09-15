@@ -14,8 +14,17 @@ interface DataLogImporter {
   fun import(
     thingId: ThingId,
     picked: PickedFile,
-    confirmDuplicate: Boolean = false
+    confirmDuplicate: Boolean = false,
+    /** PRD R12: keep the log here although its identity names another Thing. */
+    keepIdentity: Boolean = false,
   ): Flow<ImportProgress>
+}
+
+/** Another Thing the user can see whose identifier a log carries (PRD R12). */
+data class OtherThing(val id: ThingId, val name: String)
+
+fun interface OtherThingLookup {
+  suspend fun thingWithIdentifier(identity: String, excluding: ThingId): OtherThing?
 }
 
 /** The Thing's own identifier (its tail number on the airplane preset), for PRD R11. */

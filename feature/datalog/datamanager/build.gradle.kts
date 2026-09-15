@@ -41,6 +41,9 @@ kotlin {
       implementation(libs.kotlinx.coroutines.core)
       implementation(libs.kermit)
     }
+    androidMain.dependencies {
+      implementation(libs.koin.android)
+    }
   }
 }
 

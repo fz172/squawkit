@@ -19,6 +19,9 @@ import dev.fanfly.wingslog.feature.datalog.model.chart.TimeTicks
 
 private val AxisHeight = 28.dp
 private val MinLabelSpacing = 72.dp
+
+/** `14:48:00` is about twice the width of `00:10`, so the clock axis needs its ticks further apart. */
+private val MinClockLabelSpacing = 132.dp
 private val TickHeight = 4.dp
 
 /**
@@ -32,6 +35,9 @@ fun TimeAxis(
   durationSeconds: Int,
   cursorT: Double?,
   modifier: Modifier = Modifier,
+  /** PRD R32: label the recorder's wall clock, [originSecondsOfDay] at elapsed zero. */
+  clockAxis: Boolean = false,
+  originSecondsOfDay: Int = 0,
 ) {
   val measurer = rememberTextMeasurer()
   val labelStyle = axisLabelStyle()
@@ -44,19 +50,24 @@ fun TimeAxis(
   Canvas(modifier = modifier.fillMaxWidth().height(AxisHeight)) {
     val width = size.width.toInt()
     if (width <= 0 || window.lengthSeconds <= 0) return@Canvas
-    val step = TimeTicks.step(window.lengthSeconds, width, MinLabelSpacing.toPx())
+    val minSpacing = if (clockAxis) MinClockLabelSpacing else MinLabelSpacing
+    val step = TimeTicks.step(window.lengthSeconds, width, minSpacing.toPx())
     val tickPx = TickHeight.toPx()
-    TimeTicks.ticks(window, step).forEach { t ->
+    val ticks =
+      if (clockAxis) TimeTicks.clockTicks(window, step, originSecondsOfDay) else TimeTicks.ticks(window, step)
+    fun textFor(t: Int) =
+      if (clockAxis) TimeTicks.clockLabel(originSecondsOfDay + t, step) else TimeTicks.label(t)
+    ticks.forEach { t ->
       val x = TimeTicks.xOf(t.toDouble(), window, width)
       drawLine(tickColor, Offset(x, 0f), Offset(x, tickPx), strokeWidth = Spacing.hairline.toPx())
-      val label = measurer.measure(TimeTicks.label(t), labelStyle.copy(color = labelColor))
+      val label = measurer.measure(textFor(t), labelStyle.copy(color = labelColor))
       val centre = TimeTicks.labelCenterX(x, label.size.width.toFloat(), width)
       drawText(label, topLeft = Offset(centre - label.size.width / 2f, tickPx + Spacing.extraSmall.toPx()))
     }
     if (cursorT != null) {
       val x = TimeTicks.xOf(cursorT, window, width)
       if (x in 0f..size.width) {
-        val label = measurer.measure(TimeTicks.label(cursorT.toInt()), labelStyle.copy(color = onPill))
+        val label = measurer.measure(textFor(cursorT.toInt()), labelStyle.copy(color = onPill))
         val padX = Spacing.small.toPx()
         val pillWidth = label.size.width + padX * 2
         val left = (x - pillWidth / 2f).coerceIn(0f, (size.width - pillWidth).coerceAtLeast(0f))

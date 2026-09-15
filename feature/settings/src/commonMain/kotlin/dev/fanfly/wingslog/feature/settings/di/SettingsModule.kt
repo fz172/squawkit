@@ -9,6 +9,7 @@ import dev.fanfly.wingslog.core.storage.DatabaseIntegrityChecker
 import dev.fanfly.wingslog.core.ui.theme.AppearanceController
 import dev.fanfly.wingslog.feature.ads.datamanager.AdConsentManager
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
+import dev.fanfly.wingslog.feature.datalog.datamanager.ChartLayoutStore
 import dev.fanfly.wingslog.feature.developeroptions.datamanager.DeveloperOptionsManager
 import dev.fanfly.wingslog.feature.developeroptions.datamanager.di.developerOptionsModule
 import dev.fanfly.wingslog.feature.notifications.datamanager.NotificationPrefsManager
@@ -29,6 +30,7 @@ val settingsModule = module {
       get<AuthManager>(),
       get<AccountDeleter>(),
       get<AttachmentManager>(),
+      get<ChartLayoutStore>(),
       get<DatabaseIntegrityChecker>(),
       get<DeveloperOptionsManager>(),
       get<AppearanceController>(),

@@ -80,7 +80,7 @@ class DataLogAttachmentPickerViewModelTest {
 
   @Test
   fun aFinishedUploadSelectsTheNewRecord() = runTest {
-    every { manager.import(thingId, file, false) } returns
+    every { manager.import(thingId, file, false, true) } returns
       flowOf(ImportProgress.Reading, ImportProgress.Storing, ImportProgress.Done(DataLogId("new")))
     val vm = viewModel()
     val collecting = launch { vm.uiState.collect {} }
@@ -95,9 +95,9 @@ class DataLogAttachmentPickerViewModelTest {
 
   @Test
   fun aProbableDuplicateWaitsForKeepBoth() = runTest {
-    every { manager.import(thingId, file, false) } returns
+    every { manager.import(thingId, file, false, true) } returns
       flowOf(ImportProgress.Reading, ImportProgress.NeedsConfirmation(DataLogId("old")))
-    every { manager.import(thingId, file, true) } returns flowOf(ImportProgress.Done(DataLogId("new")))
+    every { manager.import(thingId, file, true, true) } returns flowOf(ImportProgress.Done(DataLogId("new")))
     val vm = viewModel()
     val collecting = launch { vm.uiState.collect {} }
     vm.uiState.first { it.loaded }
@@ -114,7 +114,7 @@ class DataLogAttachmentPickerViewModelTest {
 
   @Test
   fun aFailedUploadStaysUntilDismissed() = runTest {
-    every { manager.import(thingId, file, false) } returns flow { throw IllegalStateException("boom") }
+    every { manager.import(thingId, file, false, true) } returns flow { throw IllegalStateException("boom") }
     val vm = viewModel()
     val collecting = launch { vm.uiState.collect {} }
     vm.uiState.first { it.loaded }
@@ -134,6 +134,6 @@ class DataLogAttachmentPickerViewModelTest {
     assertThat(vm.uiState.value.canUpload).isFalse()
 
     vm.upload(listOf(file))
-    verify(exactly = 0) { manager.import(any(), any(), any()) }
+    verify(exactly = 0) { manager.import(any(), any(), any(), any()) }
   }
 }

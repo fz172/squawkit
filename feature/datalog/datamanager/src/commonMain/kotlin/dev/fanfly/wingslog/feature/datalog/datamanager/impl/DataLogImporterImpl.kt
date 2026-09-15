@@ -22,6 +22,7 @@ import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogParseException
 import dev.fanfly.wingslog.feature.datalog.datamanager.DerivedFields
 import dev.fanfly.wingslog.feature.datalog.datamanager.HeaderSniffer
 import dev.fanfly.wingslog.feature.datalog.datamanager.ThingIdentifierLookup
+import dev.fanfly.wingslog.feature.datalog.datamanager.OtherThingLookup
 import dev.fanfly.wingslog.feature.datalog.model.ImportFailure
 import dev.fanfly.wingslog.feature.datalog.model.ImportProgress
 import dev.fanfly.wingslog.id.DataLogId
@@ -52,6 +53,7 @@ class DataLogImporterImpl(
   private val scheduler: UploadScheduler?,
   private val identifiers: ThingIdentifierLookup,
   private val auth: AuthManager,
+  private val otherThings: OtherThingLookup = OtherThingLookup { _, _ -> null },
   private val clock: Clock = Clock.System,
   private val dispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) : DataLogImporter {
@@ -59,7 +61,8 @@ class DataLogImporterImpl(
   override fun import(
     thingId: ThingId,
     picked: PickedFile,
-    confirmDuplicate: Boolean
+    confirmDuplicate: Boolean,
+    keepIdentity: Boolean,
   ): Flow<ImportProgress> =
     flow {
       emit(ImportProgress.Reading)
@@ -100,6 +103,16 @@ class DataLogImporterImpl(
         val probableId = probable?.id
         if (probableId != null) {
           emit(ImportProgress.NeedsConfirmation(probableId))
+          return@flow
+        }
+      }
+
+      val ownIdentifier = identifiers.identifierOf(thingId)
+      val identityMismatch = DerivedFields.identityMismatch(parsed.source.identity, ownIdentifier)
+      if (identityMismatch && !keepIdentity) {
+        val other = otherThings.thingWithIdentifier(parsed.source.identity, thingId)
+        if (other != null) {
+          emit(ImportProgress.OtherThing(other.id, other.name))
           return@flow
         }
       }
@@ -145,12 +158,7 @@ class DataLogImporterImpl(
         raw_sha256 = rawSha256,
         raw_size_bytes = bytes.size.toLong(),
         file_name = picked.name,
-        identity_mismatch = DerivedFields.identityMismatch(
-          parsed.source.identity,
-          identifiers.identifierOf(
-            thingId
-          )
-        ),
+        identity_mismatch = identityMismatch,
         airborne = DerivedFields.airborne(parsed),
         start_location_ident = DerivedFields.startLocationIdent(picked.name),
         end_latitude = end?.first ?: 0.0,

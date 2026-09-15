@@ -6,6 +6,7 @@ import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.datalog.DataLog
 import dev.fanfly.wingslog.feature.attachment.model.DownloadState
 import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogManager
+import dev.fanfly.wingslog.feature.datalog.datamanager.ChartLayoutStore
 import dev.fanfly.wingslog.feature.datalog.model.ChartLayout
 import dev.fanfly.wingslog.feature.datalog.model.DataLogSeriesData
 import dev.fanfly.wingslog.feature.datalog.model.GestureIntent
@@ -13,6 +14,9 @@ import dev.fanfly.wingslog.feature.datalog.model.ViewWindow
 import dev.fanfly.wingslog.feature.datalog.model.PaneId
 import dev.fanfly.wingslog.feature.datalog.model.SeriesKey
 import dev.fanfly.wingslog.feature.datalog.model.chart.LayoutEdits
+import dev.fanfly.wingslog.feature.datalog.model.chart.ChartPreset
+import dev.fanfly.wingslog.feature.datalog.model.chart.LayoutMemory
+import dev.fanfly.wingslog.feature.datalog.model.chart.LayoutMemoryCodec
 import dev.fanfly.wingslog.feature.datalog.model.chart.Navigation
 import dev.fanfly.wingslog.feature.datalog.model.chart.defaultLayout
 import dev.fanfly.wingslog.feature.datalog.viewing.chart.SidebarTab
@@ -45,6 +49,8 @@ sealed interface DataLogViewerUiState {
     val deleting: Boolean,
     val sidebarTab: SidebarTab = SidebarTab.SERIES,
     val seriesQuery: String = "",
+    /** PRD R32: the axis reads the recorder's wall clock instead of elapsed time. */
+    val clockAxis: Boolean = false,
   ) : DataLogViewerUiState
 
   data class Failed(val reason: LoadFailure) : DataLogViewerUiState
@@ -62,6 +68,7 @@ sealed interface DataLogViewerEvent {
  */
 class DataLogViewerViewModel(
   private val manager: DataLogManager,
+  private val layouts: ChartLayoutStore,
   private val thingId: ThingId,
   private val dataLogId: DataLogId,
 ) : ViewModel() {
@@ -134,6 +141,13 @@ class DataLogViewerViewModel(
 
   fun setLayout(layout: ChartLayout) = updateReady { it.copy(layout = layout) }
 
+  /** PRD R30: a preset the log carries no series for is left alone rather than clearing the panes. */
+  fun applyPreset(preset: ChartPreset) = updateReady { state ->
+    preset.resolve(state.record.series)?.let { state.copy(layout = it) } ?: state
+  }
+
+  fun toggleClockAxis() = updateReady { it.copy(clockAxis = !it.clockAxis) }
+
   // Layout edits (design §11.5, PRD R21, R24): each is a pure LayoutEdits call on the Ready state.
 
   fun setTargetPane(pane: PaneId) = updateReady { it.copy(layout = LayoutEdits.target(it.layout, pane)) }
@@ -200,15 +214,18 @@ class DataLogViewerViewModel(
           DataLogViewerUiState.Failed(LoadFailure.DOWNLOAD_FAILED)
         return@launch
       }
+      // PRD R31: what this device last arranged for this log, re-resolved against its series.
+      val remembered = layouts.load(dataLogId)?.let { LayoutMemoryCodec.decode(it, record.series) }
       manager.load(thingId, dataLogId)
         .onSuccess { data ->
           _uiState.value = DataLogViewerUiState.Ready(
             record = record,
             data = data,
-            layout = defaultLayout(record.series),
+            layout = remembered?.layout ?: defaultLayout(record.series),
             view = null,
             cursorT = null,
             deleting = false,
+            clockAxis = remembered?.clockAxis == true,
           )
         }
         .onFailure {
@@ -219,10 +236,21 @@ class DataLogViewerViewModel(
 
   private inline fun updateReady(transform: (DataLogViewerUiState.Ready) -> DataLogViewerUiState.Ready) {
     _uiState.update { state ->
-      if (state is DataLogViewerUiState.Ready) transform(
-        state
-      ) else state
+      if (state !is DataLogViewerUiState.Ready) return@update state
+      transform(state).also { next -> remember(state, next) }
     }
+  }
+
+  /**
+   * Writes the arrangement this device restores next time (PRD R31) — only when it actually
+   * changed, because a cursor move runs through here on every pointer frame.
+   */
+  private fun remember(
+    before: DataLogViewerUiState.Ready,
+    after: DataLogViewerUiState.Ready,
+  ) {
+    if (before.layout == after.layout && before.clockAxis == after.clockAxis) return
+    layouts.save(dataLogId, LayoutMemoryCodec.encode(LayoutMemory(after.layout, after.clockAxis)))
   }
 
   private companion object {

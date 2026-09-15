@@ -81,7 +81,8 @@ class DataLogAttachmentPickerViewModel(
     import.value = row
     viewModelScope.launch {
       try {
-        manager.import(thingId, row.file, confirmDuplicate).collect { progress ->
+        // keepIdentity: the user picked this record's Thing, so R12's offer would be noise here.
+        manager.import(thingId, row.file, confirmDuplicate, keepIdentity = true).collect { progress ->
           if (progress is ImportProgress.Done) {
             selected.value = progress.id
             import.value = null

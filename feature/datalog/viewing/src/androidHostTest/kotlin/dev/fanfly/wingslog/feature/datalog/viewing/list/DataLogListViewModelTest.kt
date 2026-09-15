@@ -24,6 +24,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -103,7 +104,7 @@ class DataLogListViewModelTest {
     assertThat(state.uploadGate).isEqualTo(UploadGate.Guest)
 
     vm.upload(listOf(PickedFile("content://x", "x.csv", "text/csv", 1)))
-    verify(exactly = 0) { manager.import(any(), any(), any()) }
+    verify(exactly = 0) { manager.import(any(), any(), any(), any()) }
   }
 
   @Test
@@ -141,7 +142,7 @@ class DataLogListViewModelTest {
   @Test
   fun anImportShowsInlineUntilDoneAndAFailureStaysUntilDismissed() = runTest {
     val progress = MutableSharedFlow<ImportProgress>()
-    every { manager.import(thingId, any(), false) } returns progress
+    every { manager.import(thingId, any(), false, false) } returns progress
     val vm = viewModel()
     vm.uiState.first { !it.isLoading }
     val file = PickedFile("content://x", "x.csv", "text/csv", 1)
@@ -167,12 +168,12 @@ class DataLogListViewModelTest {
 
   @Test
   fun keepBothRerunsTheImportWithConfirmation() = runTest {
-    every { manager.import(thingId, any(), false) } returns flow {
+    every { manager.import(thingId, any(), false, false) } returns flow {
       emit(
         ImportProgress.NeedsConfirmation(DataLogId("older"))
       )
     }
-    every { manager.import(thingId, any(), true) } returns flow {
+    every { manager.import(thingId, any(), true, false) } returns flow {
       emit(
         ImportProgress.Storing
       ); emit(ImportProgress.Done(DataLogId("new")))
@@ -189,7 +190,34 @@ class DataLogListViewModelTest {
     )
 
     vm.confirmImport(row.key)
-    verify { manager.import(thingId, any(), true) }
+    verify { manager.import(thingId, any(), true, false) }
+    assertThat(vm.uiState.value.imports).isEmpty()
+  }
+
+  @Test
+  fun aLogNamingAnotherThingCanBeFiledThereOrKeptHere() = runTest {
+    val other = ThingId("thing-2")
+    val file = PickedFile("content://x", "x.csv", "text/csv", 1)
+    every { manager.import(thingId, any(), false, false) } returns
+      flowOf(ImportProgress.OtherThing(other, "N5678Y Cub"))
+    every { manager.import(other, any(), true, false) } returns flowOf(ImportProgress.Done(DataLogId("moved")))
+    every { manager.import(thingId, any(), true, true) } returns flowOf(ImportProgress.Done(DataLogId("kept")))
+    val vm = viewModel()
+    vm.uiState.first { !it.isLoading }
+
+    vm.upload(listOf(file))
+    val offered = vm.uiState.value.imports.single()
+    assertThat(offered.progress).isEqualTo(ImportProgress.OtherThing(other, "N5678Y Cub"))
+
+    // Filing it there imports against the other Thing, so nothing lands on this one.
+    vm.fileUnderOtherThing(offered.key)
+    verify { manager.import(other, any(), true, false) }
+    assertThat(vm.uiState.value.imports).isEmpty()
+
+    vm.upload(listOf(file))
+    val again = vm.uiState.value.imports.single()
+    vm.keepHere(again.key)
+    verify { manager.import(thingId, any(), true, true) }
     assertThat(vm.uiState.value.imports).isEmpty()
   }
 

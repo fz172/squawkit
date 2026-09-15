@@ -18,7 +18,8 @@ interface DataLogManager {
   fun import(
     thingId: ThingId,
     file: PickedFile,
-    confirmDuplicate: Boolean = false
+    confirmDuplicate: Boolean = false,
+    keepIdentity: Boolean = false,
   ): Flow<ImportProgress>
 
   /** Schedules the download of a remote-only raw file and reports until the bytes are local. */

@@ -23,6 +23,7 @@ import dev.fanfly.wingslog.feature.attachment.model.PickedFile
 import dev.fanfly.wingslog.feature.datalog.datamanager.Fixtures
 import dev.fanfly.wingslog.feature.datalog.datamanager.HeaderSniffer
 import dev.fanfly.wingslog.feature.datalog.datamanager.ThingIdentifierLookup
+import dev.fanfly.wingslog.feature.datalog.datamanager.OtherThing
 import dev.fanfly.wingslog.feature.datalog.datamanager.garmin.GarminParser
 import dev.fanfly.wingslog.feature.datalog.model.ImportFailure
 import dev.fanfly.wingslog.feature.datalog.model.ImportProgress
@@ -57,6 +58,7 @@ class DataLogImporterImplTest {
   private lateinit var scheduler: UploadScheduler
   private lateinit var auth: AuthManager
   private var identifier: String? = "N1234X"
+  private var otherThing: OtherThing? = null
   private lateinit var importer: DataLogImporterImpl
 
   @Before
@@ -102,13 +104,53 @@ class DataLogImporterImplTest {
       scheduler = scheduler,
       identifiers = ThingIdentifierLookup { identifier },
       auth = auth,
+      otherThings = { _, _ -> otherThing },
       clock = clock,
     )
   }
 
-  private suspend fun run(confirm: Boolean = false) =
-    importer.import(thingId, picked, confirm)
+  private suspend fun run(confirm: Boolean = false, keepIdentity: Boolean = false) =
+    importer.import(thingId, picked, confirm, keepIdentity)
       .toList()
+
+  @Test
+  fun aTailThatNamesAnotherThingOffersToFileItThereAndStoresNothing() = runTest {
+    identifier = "N5678Y"
+    otherThing = OtherThing(ThingId("thing-2"), "N1234X Sling TSi")
+
+    val states = run()
+
+    assertThat(states.last()).isEqualTo(
+      ImportProgress.OtherThing(ThingId("thing-2"), "N1234X Sling TSi")
+    )
+    assertThat(states).doesNotContain(ImportProgress.Storing)
+    coVerify(exactly = 0) { store.put(any(), any(), any()) }
+    coVerify(exactly = 0) { blobs.put(any(), any(), any(), any()) }
+  }
+
+  @Test
+  fun keepingItHereStoresTheRecordWithTheMismatchFlagStillSet() = runTest {
+    identifier = "N5678Y"
+    otherThing = OtherThing(ThingId("thing-2"), "N1234X Sling TSi")
+
+    val done = run(keepIdentity = true).last() as ImportProgress.Done
+
+    val record = slot<DataLog>()
+    coVerify { store.put(done.id.value_, capture(record), scope) }
+    assertThat(record.captured.identity_mismatch).isTrue()
+  }
+
+  @Test
+  fun noOtherThingCarriesThatTailSoTheImportJustProceeds() = runTest {
+    identifier = "N5678Y"
+    otherThing = null
+
+    val done = run().last() as ImportProgress.Done
+
+    val record = slot<DataLog>()
+    coVerify { store.put(done.id.value_, capture(record), scope) }
+    assertThat(record.captured.identity_mismatch).isTrue()
+  }
 
   @Test
   fun aFreshFileBecomesAGzipBlobAndARecordInTheThingsScope() = runTest {
