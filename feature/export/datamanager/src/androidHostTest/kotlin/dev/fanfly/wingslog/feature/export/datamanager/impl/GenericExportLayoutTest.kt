@@ -288,12 +288,12 @@ class GenericExportLayoutTest {
     )
     assertThat(folder(cessna, AirplaneTemplate.TEMPLATE)).isEqualTo("N12345_Cessna_172")
 
-    // A blank make used to leave "N532SL__Sling_TSi" — an empty segment between two separators.
+    // A blank make used to leave "N1234X__Volar_T2i" — an empty segment between two separators.
     val noMake = Thing(
       id = "p2",
       spec = listOf(
-        Spec(key = "tail_number", value_ = "N532SL"),
-        Spec(key = "model", value_ = "Sling TSi"),
+        Spec(key = "tail_number", value_ = "N1234X"),
+        Spec(key = "model", value_ = "Volar T2i"),
       ),
     )
     assertThat(folder(noMake, AirplaneTemplate.TEMPLATE)).doesNotContain("__")

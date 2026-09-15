@@ -406,13 +406,13 @@ class FleetManagerImplTest {
   @Test
   fun updateThing_trimsTheWhitespaceTheFormLetThrough() = runTest {
     // A trailing space is invisible in a text field, and the value is only ever seen joined to the
-    // next one — "Sling  TSi". The form cannot trim as the user types without eating the space
+    // next one — "Volar  T2i". The form cannot trim as the user types without eating the space
     // between two words, so the write path does it.
     val typed = Thing(
       id = "own-1",
       spec = listOf(
-        Spec(key = SpecKeys.MAKE, value_ = "Sling "),
-        Spec(key = SpecKeys.MODEL, value_ = "TSi"),
+        Spec(key = SpecKeys.MAKE, value_ = "Volar "),
+        Spec(key = SpecKeys.MODEL, value_ = "T2i"),
       ),
       components = listOf(
         Component(
@@ -428,9 +428,9 @@ class FleetManagerImplTest {
 
     val stored = slot<Thing>()
     coVerify { store.put("own-1", capture(stored), any()) }
-    assertThat(stored.captured.specValue(SpecKeys.MAKE)).isEqualTo("Sling")
+    assertThat(stored.captured.specValue(SpecKeys.MAKE)).isEqualTo("Volar")
     assertThat(stored.captured.components.single().make).isEqualTo("Rotax")
-    assertThat(stored.captured.name).isEqualTo("Sling TSi")
+    assertThat(stored.captured.name).isEqualTo("Volar T2i")
   }
 
   @Test

@@ -394,8 +394,8 @@ The selected Thing **is** the page. There is no hero-metrics fleet grid; the swi
 ```
 COMPACT                                   MEDIUM and up
 ┌───────────────────────────┐             ┌──────────┬──────────────────────────────┐
-│ ▾ Sling TSi   [Avatar]    │ ← top bar   │ ✈ Sling  │  Sling TSi          N532SL   │
-│   (tap: switcher sheet)   │             │   TSi    │  ┌──── DATA ─────────────┐   │
+│ ▾ Volar T2i   [Avatar]    │ ← top bar   │ ✈ Volar  │  Volar T2i          N1234X   │
+│   (tap: switcher sheet)   │             │   T2i    │  ┌──── DATA ─────────────┐   │
 │                           │             │ 🚗 Golf  │  │ …                     │   │
 │   … section content …     │             │ 🏠 Home  │  └───────────────────────┘   │
 │                           │             │ ──────── │  … section content …         │
@@ -424,10 +424,10 @@ The shell switches to the new Thing when the form closes.
 
 ```
 ┌──────────────────────────────────────────────┐
-│ Sling TSi        N532SL                      │ ← OverviewHero (title + identifier, heroDisplay)
+│ Volar T2i        N1234X                      │ ← OverviewHero (title + identifier, heroDisplay)
 │                                              │
 │ ┌──────── AIRCRAFT DATA (collapsible) ──────┐│ ← ThingDataCard; heading = the lexicon's thing noun
-│ │ Make  Sling     Model  TSi     S/N  …      ││ ← ThingSpecBlock: the template's spec fields
+│ │ Make  Volar     Model  T2i     S/N  …      ││ ← ThingSpecBlock: the template's spec fields
 │ │ ENGINE 1         Rotax 915       S/N  …    ││ ← ComponentChips: the slot tree, one row per
 │ │ Propeller        Airmaster       S/N  …    ││   component (a home has none of this section)
 │ └─────────────────────────────────────────────┘│

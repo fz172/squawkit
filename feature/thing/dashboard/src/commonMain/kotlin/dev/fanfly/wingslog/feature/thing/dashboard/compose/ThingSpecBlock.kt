@@ -53,7 +53,7 @@ fun ThingSpecBlock(spec: ThingSpecLines, modifier: Modifier = Modifier) {
 }
 
 /**
- * "Tail Number: N532SL" — the label and its value as one piece of text.
+ * "Tail Number: N1234X" — the label and its value as one piece of text.
  *
  * One [Text] rather than a Row of two: the label and the value are set in different faces and
  * sizes, and a Row aligns their boxes rather than their baselines. It is also what lets a long

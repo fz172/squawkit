@@ -28,13 +28,13 @@ data class SpecLine(
  */
 data class ThingSpecLines(
   /**
-   * "Sling TSi" — make and model, the phrase that names the product itself. Empty for a preset
+   * "Volar T2i" — make and model, the phrase that names the product itself. Empty for a preset
    * that declares neither.
    */
   val headline: String,
   val lines: List<SpecLine>,
   /**
-   * "N532SL" — the value of whichever field the template marks `title_candidate`, the one an
+   * "N1234X" — the value of whichever field the template marks `title_candidate`, the one an
    * owner calls the thing by. Empty for a preset that marks none: every preset but airplane.
    *
    * Also in [lines] under its label — unless there is no headline above it, in which case the
@@ -50,7 +50,7 @@ data class ThingSpecLines(
  * The two keys that read as a phrase rather than as data.
  *
  * Every other field is a datum shown beside its label — a year, an address, a VIN. Make and model
- * are the exception because together they name the product itself: "Sling TSi", "Honda Civic".
+ * are the exception because together they name the product itself: "Volar T2i", "Honda Civic".
  * Naming them here is not an aviation assumption creeping back in — they are the conventional
  * keys [SpecKeys] already declares, they are the pair `AdaptiveShellViewModel` already composes
  * a display label from, and a preset declaring neither (home) simply has no headline.
@@ -89,7 +89,7 @@ fun ThingTemplate?.specLines(thing: Thing): ThingSpecLines {
   // With no make and model above it, the hero renders the title itself — so a labelled row
   // repeating it two lines below is the same string twice. `custom` is the case: its only declared
   // field IS the name. An airplane keeps its "Tail Number" row, because there the hero is showing
-  // "Sling TSi" and the row says which of two identifiers this one is.
+  // "Volar T2i" and the row says which of two identifiers this one is.
   val titleIsTheHero = headline.isBlank() && title.isNotBlank()
 
   return ThingSpecLines(

@@ -157,7 +157,7 @@ class FleetManagerImpl(
       val withId =
         if (isNew) thing.copy(id = generateRandomId()) else thing
       // Every write, not only the form's: a trailing space is invisible in a text field, and one
-      // typed after a make renders as "Sling  TSi" wherever make and model are joined. Cleaning
+      // typed after a make renders as "Volar  T2i" wherever make and model are joined. Cleaning
       // it here rather than on each keystroke leaves the user free to type the space *between*
       // two words, which trimming as they go would eat.
       val cleaned = withId.withNormalisedText()
