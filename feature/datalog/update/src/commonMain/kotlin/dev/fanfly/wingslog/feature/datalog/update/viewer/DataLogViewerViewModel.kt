@@ -248,20 +248,25 @@ class DataLogViewerViewModel(
       val remembered = layouts.load(dataLogId)?.let { LayoutMemoryCodec.decode(it, record.series) }
       manager.load(thingId, dataLogId)
         .onSuccess { data ->
+          // Re-read the record: loading rewrites a catalogue the parser has outgrown, and the copy
+          // read above was taken before that write. Without this the sidebar spends the whole
+          // session showing the ranges the fix was meant to replace.
+          val current = manager.observeOne(thingId, dataLogId)
+            .first() ?: record
           // Design §13.1: one event per successful open, after the parse, so a failed load is not
           // counted as a view. A retry logs again, which is what "opened" means here.
           analytics.log(
             DataLogOpened(
               templateId = templates.templateId,
-              durationSeconds = record.duration_seconds,
-              seriesCount = record.series.size,
+              durationSeconds = current.duration_seconds,
+              seriesCount = current.series.size,
             )
           )
           _uiState.value = DataLogViewerUiState.Ready(
-            record = record,
+            record = current,
             data = data,
-            layout = (remembered?.layout ?: defaultLayout(record.series))
-              .withMapFirst(record.series.associateBy { it.column }),
+            layout = (remembered?.layout ?: defaultLayout(current.series))
+              .withMapFirst(current.series.associateBy { it.column }),
             view = null,
             cursorT = null,
             deleting = false,

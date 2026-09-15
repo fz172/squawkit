@@ -44,7 +44,17 @@ class GarminParser : DataLogParser {
     DataLogFormat.DATA_LOG_FORMAT_GARMIN_G1000,
   )
 
-  override val version: Int = 2
+  /**
+   * 1 G3X only. 2 added G1000. 3 scaled the G1000 percent columns.
+   *
+   * **Bump this in the same commit as any change to what `parse` emits** — a value, a unit, a name,
+   * a canonical id, the set of columns. A stored record keeps the catalogue it was imported with and
+   * `DataLogManagerImpl.load` rewrites it only when this number has moved, so a change that leaves
+   * it alone reaches the charts and never reaches the sidebar. That is not a hypothetical: version 2
+   * shipped the percent scaling without a bump, and every log imported in between kept reporting N1
+   * as 0 to 1 beside a line drawn 0 to 100.
+   */
+  override val version: Int = 3
 
   override fun sniff(header: ByteArray): Confidence {
     val text = header.decodeToString(throwOnInvalidSequence = false)
@@ -481,7 +491,7 @@ class GarminParser : DataLogParser {
         '-' -> -1; '+' -> 1; else -> return 0
       }
       val colon = s.indexOf(':', start)
-      if (colon < 0 || colon >= end) return 0
+      if (colon !in 0..<end) return 0
       val h = parseIntAt(s, start + 1, colon)
       val m = parseIntAt(s, colon + 1, end)
       if (h < 0 || m < 0) return 0
