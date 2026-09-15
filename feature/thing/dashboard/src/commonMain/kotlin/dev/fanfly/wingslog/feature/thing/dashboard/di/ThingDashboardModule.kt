@@ -6,6 +6,7 @@ import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.storage.ThingScopeResolver
 import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
+import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogManager
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
@@ -56,6 +57,7 @@ val thingDashboardModule = module {
       get<TaskStatusManager>(),
       get<AttachmentOpener>(),
       get<AttachmentManager>(),
+      get<DataLogManager>(),
       get<SquawkManager>(),
       get<SharingManager>(),
       get<ThingScopeResolver>(),

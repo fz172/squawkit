@@ -8,6 +8,10 @@ import dev.fanfly.wingslog.core.datetime.toLocalDate
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDateRange
 import dev.fanfly.wingslog.feature.export.datamanager.ExportRequest
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
+import dev.fanfly.wingslog.core.model.id.value
+import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogManager
+import dev.fanfly.wingslog.feature.datalog.model.dataLogId
+import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
@@ -34,6 +38,7 @@ class LogbookExportAggregator(
   private val taskDueManager: TaskDueManager,
   private val squawkManager: SquawkManager,
   private val technicianManager: TechnicianManager,
+  private val dataLogManager: DataLogManager,
   private val clock: Clock = Clock.System,
   private val timeZone: TimeZone = TimeZone.currentSystemDefault(),
 ) {
@@ -61,6 +66,10 @@ class LogbookExportAggregator(
     }
     val squawksDeferred = async {
       squawkManager.observeSquawks(thingId)
+        .first()
+    }
+    val dataLogsDeferred = async {
+      dataLogManager.observe(ThingId(thingId))
         .first()
     }
 
@@ -116,6 +125,7 @@ class LogbookExportAggregator(
       tasksById = allTasks.associateBy { it.id },
       squawksById = allSquawks.associateBy { it.id },
       techniciansById = techniciansById,
+      dataLogDurationsById = dataLogsDeferred.await().associate { it.dataLogId.value to it.duration_seconds },
     )
   }
 

@@ -2,7 +2,7 @@ package dev.fanfly.wingslog.feature.export.datamanager.impl
 
 import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.thing.Attachment
-import dev.fanfly.wingslog.thing.AttachmentType
+import dev.fanfly.wingslog.feature.attachment.model.isFile
 import dev.fanfly.wingslog.core.storage.blob.BlobId
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.core.storage.blob.BlobFilesystem
@@ -52,7 +52,8 @@ class AttachmentExportResolver(
       // Deduped, and in bundle order: the ZIP's entry order should not depend on which download
       // happened to finish first.
       val targets = bundle.exportedAttachments()
-        .filter { it.type != AttachmentType.ATTACHMENT_TYPE_LINK && it.id.isNotBlank() }
+        // LINK and DATA_LOG are references and own no bytes (data log design §9.1).
+        .filter { it.type.isFile && it.id.isNotBlank() }
         .distinctBy { it.id }
 
       val limit = Semaphore(MAX_CONCURRENT_ATTACHMENTS)

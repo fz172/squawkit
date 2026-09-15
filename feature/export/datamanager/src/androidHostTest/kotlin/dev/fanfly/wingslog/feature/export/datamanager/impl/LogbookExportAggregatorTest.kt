@@ -9,6 +9,8 @@ import dev.fanfly.wingslog.thing.Squawk
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDateRange
 import dev.fanfly.wingslog.feature.export.datamanager.ExportRequest
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
+import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogManager
+import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
@@ -84,6 +86,9 @@ class LogbookExportAggregatorTest {
       taskDueManager = mockk<TaskDueManager>(relaxed = true),
       squawkManager = squawkManager,
       technicianManager = mockk<TechnicianManager>(relaxed = true),
+      dataLogManager = mockk<DataLogManager> {
+        every { observe(ThingId(thingId)) } returns flowOf(emptyList())
+      },
       timeZone = TimeZone.UTC,
     )
   }

@@ -23,7 +23,7 @@ import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.thing.Attachment
-import dev.fanfly.wingslog.thing.AttachmentType.ATTACHMENT_TYPE_LINK
+import dev.fanfly.wingslog.feature.attachment.model.isFile
 import dev.fanfly.wingslog.thing.Thing
 import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -411,8 +411,9 @@ class ExportViewModel(
     )
   }
 
+  // References (LINK, DATA_LOG) own no bytes; a data log's file is not exported in V1.
   private fun List<Attachment>.exportedBytes(): Long = filter { attachment ->
-    attachment.type != ATTACHMENT_TYPE_LINK
+    attachment.type.isFile
   }.sumOf { attachment ->
     attachment.size_bytes.coerceAtLeast(0L)
   }

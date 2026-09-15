@@ -8,6 +8,13 @@ import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
 import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
 import dev.fanfly.wingslog.core.ui.common.UiText
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
+import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogManager
+import dev.fanfly.wingslog.datalog.DataLog
+import dev.fanfly.wingslog.datalog.DataLogSource
+import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
+import dev.fanfly.wingslog.feature.attachment.model.DataLogRowInfo
+import dev.fanfly.wingslog.id.DataLogId
+import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
@@ -62,6 +69,9 @@ class ThingOverviewViewModelTest {
   private val taskStatusManager: TaskStatusManager = mockk()
   private val attachmentOpener: AttachmentOpener = mockk()
   private val attachmentManager: AttachmentManager = mockk()
+  private val dataLogManager: DataLogManager = mockk {
+    every { observe(ThingId(THING_ID)) } returns flowOf(emptyList())
+  }
   private val squawkManager: SquawkManager = mockk()
   private val sharingManager: SharingManager = mockk()
   private val thingScopeResolver: ThingScopeResolver = mockk()
@@ -101,12 +111,37 @@ class ThingOverviewViewModelTest {
 
   private fun viewModel() = ThingOverviewViewModel(
     fleetManager, logManager, taskDataManager, taskStatusManager, attachmentOpener,
-    attachmentManager, squawkManager, sharingManager, thingScopeResolver,
+    attachmentManager, dataLogManager, squawkManager, sharingManager, thingScopeResolver,
     BakedInTemplateRegistry(appVersionCode = APP_VERSION_CODE), analytics, auth, THING_ID,
   )
 
   private val ThingOverviewViewModel.success: ThingOverviewUiState.Success
     get() = uiState.value as ThingOverviewUiState.Success
+
+  @Test
+  fun dataLogs_carryEachRecordsProductDurationAndBlobState() = runTest {
+    val typedThingId = ThingId(THING_ID)
+    every { dataLogManager.observe(typedThingId) } returns flowOf(
+      listOf(
+        DataLog(id = DataLogId("dl-1"), duration_seconds = 255, source = DataLogSource(product = "GDU 460")),
+        DataLog(id = DataLogId("dl-2"), duration_seconds = 60),
+      )
+    )
+    every { dataLogManager.observeBlobState(typedThingId, DataLogId("dl-1")) } returns flowOf(BlobSyncState.Synced)
+    every { dataLogManager.observeBlobState(typedThingId, DataLogId("dl-2")) } returns flowOf(BlobSyncState.RemoteOnly)
+
+    val dataLogs = viewModel().success.dataLogs
+
+    assertThat(dataLogs).containsExactly(
+      DataLogId("dl-1"), DataLogRowInfo("GDU 460", 255, BlobSyncState.Synced),
+      DataLogId("dl-2"), DataLogRowInfo("", 60, BlobSyncState.RemoteOnly),
+    )
+  }
+
+  @Test
+  fun dataLogs_isEmptyNotNullOnceTheThingHasNone() = runTest {
+    assertThat(viewModel().success.dataLogs).isEmpty()
+  }
 
   @Test
   fun confirmDeleteSquawk_deletesThroughTheManager_clearsTheIdsAndSaysSo() = runTest {

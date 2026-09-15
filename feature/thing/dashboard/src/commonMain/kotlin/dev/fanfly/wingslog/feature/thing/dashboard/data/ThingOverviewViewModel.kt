@@ -20,6 +20,11 @@ import dev.fanfly.wingslog.core.ui.common.UiText
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
+import dev.fanfly.wingslog.feature.attachment.model.DataLogRowInfo
+import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogManager
+import dev.fanfly.wingslog.feature.datalog.model.dataLogId
+import dev.fanfly.wingslog.id.DataLogId
+import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
@@ -47,6 +52,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -64,6 +70,7 @@ private data class ShareContext(
   val syncStates: Map<String, BlobSyncState>,
   val myRole: ShareRole?,
   val shared: Boolean,
+  val dataLogs: Map<DataLogId, DataLogRowInfo>,
 )
 
 class ThingOverviewViewModel(
@@ -73,6 +80,7 @@ class ThingOverviewViewModel(
   private val taskStatusManager: TaskStatusManager,
   private val attachmentOpener: AttachmentOpener,
   private val attachmentManager: AttachmentManager,
+  private val dataLogManager: DataLogManager,
   private val squawkManager: SquawkManager,
   private val sharingManager: SharingManager,
   private val thingScopeResolver: ThingScopeResolver,
@@ -116,6 +124,22 @@ class ThingOverviewViewModel(
         else attachmentManager.observeBlobStates(scope.toPath())
       }
 
+  /** Every data log with its raw file's blob state, keyed by id, for DATA_LOG attachment rows. */
+  @OptIn(ExperimentalCoroutinesApi::class)
+  private fun dataLogsFlow(): Flow<Map<DataLogId, DataLogRowInfo>> {
+    val typedThingId = ThingId(thingId)
+    return dataLogManager.observe(typedThingId).flatMapLatest { logs ->
+      if (logs.isEmpty()) return@flatMapLatest flowOf(emptyMap())
+      combine(
+        logs.map { log ->
+          dataLogManager.observeBlobState(typedThingId, log.dataLogId).map { state ->
+            log.dataLogId to DataLogRowInfo(log.source?.product.orEmpty(), log.duration_seconds, state)
+          }
+        }
+      ) { entries -> entries.toMap() }
+    }
+  }
+
   private fun loadThingAndStats() {
     viewModelScope.launch {
       _uiState.update { ThingOverviewUiState.Loading }
@@ -157,11 +181,12 @@ class ThingOverviewViewModel(
             .distinctUntilChanged(),
           sharingManager.observeIsShared(thingId)
             .distinctUntilChanged(),
-        ) { squawks, syncs, myRole, shared ->
-          ShareContext(squawks, syncs, myRole, shared)
+          dataLogsFlow().distinctUntilChanged(),
+        ) { squawks, syncs, myRole, shared, dataLogs ->
+          ShareContext(squawks, syncs, myRole, shared, dataLogs)
         }
       ) { thing, logs, cardsWithStatus, overview, shareContext ->
-        val (squawkList, syncStates, myRole, isShared) = shareContext
+        val (squawkList, syncStates, myRole, isShared, dataLogs) = shareContext
         cachedLogs = logs
         val degraded = thing?.let {
           templateRegistry.resolve(it) as? TemplateResolution.Degraded
@@ -239,6 +264,7 @@ class ThingOverviewViewModel(
             resolvingTaskId = current?.resolvingTaskId,
             skippingTaskId = current?.skippingTaskId,
             syncStates = syncStates,
+            dataLogs = dataLogs,
             squawks = squawksWithStatus,
             aogSquawks = aogSquawks,
             resolvingSquawkId = current?.resolvingSquawkId,

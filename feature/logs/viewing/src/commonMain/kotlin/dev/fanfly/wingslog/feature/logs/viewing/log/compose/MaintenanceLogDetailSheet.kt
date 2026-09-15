@@ -44,6 +44,8 @@ import dev.fanfly.wingslog.core.ui.common.compose.DetailSheet
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
+import dev.fanfly.wingslog.feature.attachment.model.DataLogRowInfo
+import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.feature.attachment.viewing.AttachmentSection
 import dev.fanfly.wingslog.feature.logs.datamanager.authorship.LogAuthorship
 import dev.fanfly.wingslog.thing.Attachment
@@ -75,6 +77,7 @@ fun MaintenanceLogDetailSheet(
   onEditClick: (() -> Unit)?,
   onAttachmentTap: (Attachment) -> Unit = {},
   syncStates: Map<String, BlobSyncState> = emptyMap(),
+  dataLogs: Map<DataLogId, DataLogRowInfo>? = null,
   openError: String? = null,
   onTaskClick: ((String) -> Unit)? = null,
   availableSquawks: List<Squawk> = emptyList(),
@@ -144,6 +147,7 @@ fun MaintenanceLogDetailSheet(
       attachments = log.attachments,
       onAttachmentTap = onAttachmentTap,
       syncStates = syncStates,
+      dataLogs = dataLogs,
       openError = openError,
     )
 

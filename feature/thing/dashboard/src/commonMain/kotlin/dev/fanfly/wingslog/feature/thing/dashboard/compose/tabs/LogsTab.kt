@@ -24,11 +24,13 @@ import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import dev.fanfly.wingslog.feature.datalog.model.dataLogIdOrNull
 import dev.fanfly.wingslog.id.DataLogId
+import dev.fanfly.wingslog.feature.attachment.model.DataLogRowInfo
 
 @Composable
 fun LogsTab(
   thingId: String,
   syncStates: Map<String, BlobSyncState> = emptyMap(),
+  dataLogs: Map<DataLogId, DataLogRowInfo>? = null,
   onNavigateToAddLog: (() -> Unit)?,
   onNavigateToEditLog: ((logId: String) -> Unit)?,
   onOpenDataLog: (DataLogId) -> Unit,
@@ -76,6 +78,7 @@ fun LogsTab(
     uiState = uiState,
     filter = filter,
     syncStates = syncStates,
+    dataLogs = dataLogs,
     onSearchQueryChange = viewModel::onSearchQueryChange,
     onComponentFilterToggle = viewModel::onComponentFilterToggle,
     onTimeWindowChange = viewModel::onTimeWindowChange,

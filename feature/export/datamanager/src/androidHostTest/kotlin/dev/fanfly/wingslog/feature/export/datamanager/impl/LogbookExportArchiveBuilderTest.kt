@@ -23,6 +23,7 @@ import dev.fanfly.wingslog.thing.Spec
 import dev.fanfly.wingslog.thing.Squawk
 import dev.fanfly.wingslog.thing.SquawkDismissReason
 import dev.fanfly.wingslog.thing.Thing
+import dev.fanfly.wingslog.id.DataLogId
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import org.junit.Test
@@ -555,10 +556,50 @@ class LogbookExportArchiveBuilderTest {
     assertThat(tasksCsv).contains("Engine")
   }
 
+  @Test
+  fun buildEntries_namesDataLogReferencesWithTheirDuration() {
+    val known = attachment(id = "ref-1", name = "Sep 02, 2026 · Ground run").copy(
+      type = AttachmentType.ATTACHMENT_TYPE_DATA_LOG, mime_type = "", size_bytes = 0L, sha256 = "",
+      data_log_id = DataLogId("dl-1"),
+    )
+    val gone = known.copy(id = "ref-2", name = "Deleted log", data_log_id = DataLogId("dl-9"))
+    val bundle = thingBundle(
+      logs = listOf(
+        MaintenanceLog(
+          id = "log-1",
+          work_description = "Ground run",
+          component_type = ComponentType.COMPONENT_AIRFRAME,
+          attachments = listOf(known, gone),
+        )
+      ),
+      dataLogDurationsById = mapOf("dl-1" to 255),
+    )
+
+    val entries = LogbookExportArchiveBuilder(
+      templateRegistry = BakedInTemplateRegistry(appVersionCode = Int.MAX_VALUE),
+      appVersion = "SquawkIt 1.0 (1)",
+    ).buildEntries(
+      request = ExportRequest(
+        thingIds = listOf(bundle.thing.id),
+        dateRange = ExportDateRange.AllTime,
+        includeOpenSquawks = true,
+      ),
+      bundles = listOf(bundle),
+      attachmentManifests = mapOf(bundle.thing.id to AttachmentExportManifest(emptyMap(), emptyList())),
+      generatedAt = LocalDateTime(2026, 9, 14, 12, 0),
+      timeZone = TimeZone.UTC,
+    ).associateBy { entry -> entry.path }
+
+    val csv = entries["$thingFolder/csv/01_Airframe.csv"]?.bytes?.decodeToString()
+    assertThat(csv).contains("Sep 02, 2026 · Ground run (data log, 4m 15s)\nDeleted log (data log)")
+    assertThat(entries.keys.filter { it.contains("/attachments/") }).isEmpty()
+  }
+
   private fun thingBundle(
     logs: List<MaintenanceLog>,
     squawks: List<Squawk> = emptyList(),
     thing: Thing = airplane("thing-1", "Cessna", "172", "172001", "N12345"),
+    dataLogDurationsById: Map<String, Int> = emptyMap(),
   ) = ThingBundle(
     logs = logs,
     thing = ThingInflater.inflate(thing, AirplaneTemplate.TEMPLATE),
@@ -569,6 +610,7 @@ class LogbookExportArchiveBuilderTest {
     tasksById = emptyMap(),
     squawksById = squawks.associateBy { it.id },
     techniciansById = emptyMap(),
+    dataLogDurationsById = dataLogDurationsById,
   )
 
   private fun attachment(id: String, name: String) = Attachment(
