@@ -22,6 +22,16 @@ object SeriesPalette {
     Color(0xFF00696F), Color(0xFF6A3F9D), Color(0xFF8B5E00), Color(0xFF525E72),
   )
 
+  /**
+   * The map track, and the chip that names it. Outside the eight — the position series never shares
+   * a pane with a chart series, so it is not competing with them — and magenta because the track is
+   * drawn over a basemap rather than a dark pane: no road, water or landuse fill is this colour,
+   * and it is the same on both themes because the tiles are light on both. Deeper than a pure
+   * magenta, which is too light to clear 3:1 on OpenStreetMap's land fill; this one clears it on
+   * the tiles and on either app surface, which the chip sits on.
+   */
+  val MAP_TRACK: Color = Color(0xFFD6008F)
+
   /** Indices for the ids a preset co-plots, distinct within each preset (Engine, Fuel, Flight, Electrical). */
   val FIXED_INDEX: Map<String, Int> = mapOf(
     CanonicalSeries.engine(1, "rpm") to 1,
@@ -59,6 +69,7 @@ object SeriesPalette {
   )
 
   fun colorFor(key: SeriesKey, canonicalId: String, dark: Boolean): Color {
+    if (canonicalId == CanonicalSeries.POSITION) return MAP_TRACK
     val palette = if (dark) DARK else LIGHT
     return palette[index(key, canonicalId)]
   }

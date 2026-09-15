@@ -60,4 +60,27 @@ class SeriesPaletteTest {
     assertThat(a).isIn(0 until 8)
     assertThat(SeriesPalette.index(SeriesKey(55), "")).isNotEqualTo(SeriesPalette.index(SeriesKey(56), "").takeIf { it != a } ?: -1)
   }
+
+  @Test
+  fun theMapTrackReadsOnTheBasemapAndOnBothAppSurfaces() {
+    // OpenStreetMap's land fill, which most of a track crosses.
+    val tiles = Color(0xFFF2EFE9)
+
+    assertWithMessage("on tiles").that(contrast(SeriesPalette.MAP_TRACK, tiles)).isAtLeast(3.0)
+    assertWithMessage("on light").that(contrast(SeriesPalette.MAP_TRACK, lightSurface)).isAtLeast(3.0)
+    assertWithMessage("on dark").that(contrast(SeriesPalette.MAP_TRACK, darkSurface)).isAtLeast(3.0)
+  }
+
+  @Test
+  fun thePositionSeriesTakesTheTrackColourOnEitherTheme() {
+    val key = SeriesKey(9)
+
+    assertThat(SeriesPalette.colorFor(key, CanonicalSeries.POSITION, dark = true))
+      .isEqualTo(SeriesPalette.MAP_TRACK)
+    assertThat(SeriesPalette.colorFor(key, CanonicalSeries.POSITION, dark = false))
+      .isEqualTo(SeriesPalette.MAP_TRACK)
+    // It is not one of the eight, so it can never be handed to a chart series by the hash either.
+    assertThat(SeriesPalette.DARK).doesNotContain(SeriesPalette.MAP_TRACK)
+    assertThat(SeriesPalette.LIGHT).doesNotContain(SeriesPalette.MAP_TRACK)
+  }
 }

@@ -1,9 +1,9 @@
 package dev.fanfly.wingslog.feature.datalog.viewing.chart
 
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -25,10 +25,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntSize
@@ -109,7 +109,9 @@ fun MapPane(
   val borderColor =
     if (isTarget) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.outlineVariant
   val surface = MaterialTheme.colorScheme.surface
-  val trackColor = MaterialTheme.colorScheme.primary
+  // The same color its chip carries, rather than the theme's primary: the trail and the chip that
+  // names it should agree, and a blue trail competes with every road and river on the basemap.
+  val trackColor = SeriesPalette.MAP_TRACK
   val cursorColor = MaterialTheme.colorScheme.tertiary
   val density = LocalDensity.current
 
@@ -134,17 +136,30 @@ fun MapPane(
 
   val trackBounds = remember(position) { position.bounds() }
   var size by remember { mutableStateOf(IntSize.Zero) }
-  val limits = remember(provider) { scaleLimits(provider.tileSizePx, provider.maxZoom, MAX_OVER_ZOOM) }
+  val limits = remember(provider) {
+    scaleLimits(
+      provider.tileSizePx,
+      provider.maxZoom,
+      MAX_OVER_ZOOM
+    )
+  }
   // Null until the pane has been measured; the first measure fits the track, and every gesture
   // after that is the user's, so a recomposition must not snap the view back.
-  var camera by remember(position, provider) { mutableStateOf<MapCamera?>(null) }
+  var camera by remember(
+    position,
+    provider
+  ) { mutableStateOf<MapCamera?>(null) }
 
   Box(
     modifier = modifier
       .fillMaxWidth()
       .height(height)
       .clip(RoundedCornerShape(Spacing.cardCornerRadius))
-      .border(Spacing.hairline, borderColor, RoundedCornerShape(Spacing.cardCornerRadius))
+      .border(
+        Spacing.hairline,
+        borderColor,
+        RoundedCornerShape(Spacing.cardCornerRadius)
+      )
       .onSizeChanged { size = it }
       .pointerInput(provider, limits) {
         detectTransformGestures { centroid, pan, zoom, _ ->
@@ -186,14 +201,22 @@ fun MapPane(
   ) {
     val bounds = trackBounds
     if (bounds != null && camera == null && size.width > 0 && size.height > 0) {
-      camera = fitCamera(bounds, size.width.toFloat(), size.height.toFloat(), FIT_FRACTION, limits)
+      camera = fitCamera(
+        bounds,
+        size.width.toFloat(),
+        size.height.toFloat(),
+        FIT_FRACTION,
+        limits
+      )
     }
-    val viewport: MapViewport? = camera?.takeIf { size.width > 0 && size.height > 0 }?.viewport(
-      widthPx = size.width.toFloat(),
-      heightPx = size.height.toFloat(),
-      tileSizePx = provider.tileSizePx,
-      maxZoom = provider.maxZoom,
-    )
+    val viewport: MapViewport? =
+      camera?.takeIf { size.width > 0 && size.height > 0 }
+        ?.viewport(
+          widthPx = size.width.toFloat(),
+          heightPx = size.height.toFloat(),
+          tileSizePx = provider.tileSizePx,
+          maxZoom = provider.maxZoom,
+        )
 
     Canvas(Modifier.fillMaxSize()) { drawRect(surface) }
 
@@ -226,13 +249,32 @@ fun MapPane(
       Canvas(Modifier.fillMaxSize()) {
         val window = view
         val inWindow = { index: Int ->
-          window == null || (timeSeconds.getOrNull(index)?.let { it >= window.startSeconds && it <= window.endSeconds } == true)
+          window == null || (timeSeconds.getOrNull(index)
+            ?.let { it >= window.startSeconds && it <= window.endSeconds } == true)
         }
-        drawTrack(position, viewport, inWindow = { false }, color = trackColor.copy(alpha = OUTSIDE_WINDOW_ALPHA), strokeWidth = TrackStrokeOutsideWindow.toPx())
+        drawTrack(
+          position,
+          viewport,
+          inWindow = { false },
+          color = trackColor.copy(alpha = OUTSIDE_WINDOW_ALPHA),
+          strokeWidth = TrackStrokeOutsideWindow.toPx()
+        )
         if (window != null) {
-          drawTrack(position, viewport, inWindow = inWindow, color = trackColor, strokeWidth = TrackStroke.toPx())
+          drawTrack(
+            position,
+            viewport,
+            inWindow = inWindow,
+            color = trackColor,
+            strokeWidth = TrackStroke.toPx()
+          )
         } else {
-          drawTrack(position, viewport, inWindow = { true }, color = trackColor, strokeWidth = TrackStroke.toPx())
+          drawTrack(
+            position,
+            viewport,
+            inWindow = { true },
+            color = trackColor,
+            strokeWidth = TrackStroke.toPx()
+          )
         }
         if (cursorIndex >= 0 && cursorIndex < position.latitude.size) {
           val lat = position.latitude[cursorIndex]
@@ -284,7 +326,8 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawTrack(
     }
     val x = viewport.screenX(WebMercator.normalizedX(lon))
     val y = viewport.screenY(WebMercator.normalizedY(lat))
-    if (started) path.lineTo(x, y) else path.moveTo(x, y).also { started = true }
+    if (started) path.lineTo(x, y) else path.moveTo(x, y)
+      .also { started = true }
   }
   drawPath(path, color, style = Stroke(width = strokeWidth))
 }
