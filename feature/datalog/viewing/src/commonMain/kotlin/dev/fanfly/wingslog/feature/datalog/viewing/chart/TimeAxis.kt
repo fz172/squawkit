@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
@@ -123,27 +124,30 @@ fun TimeAxis(
     )
   }
 
+  // Read inside the gesture rather than captured by it, so the handler outlives the pill it grabs.
+  val currentPill = rememberUpdatedState(pill)
+
   Canvas(
     modifier = modifier
       .fillMaxWidth()
       .height(AxisHeight)
       .onSizeChanged { widthPx = it.width }
-      .pointerInput(pill, window, widthPx, onScrub) {
+      // Keyed on nothing a scrub changes: the pill moves with the cursor, and keying this on it
+      // rebuilt the handler on the first move, which ended the drag a few pixels in.
+      .pointerInput(onScrub) {
         val scrub = onScrub ?: return@pointerInput
-        val handle = pill?.handle(
-          size.height.toFloat(),
-          with(density) { MinHandleWidth.toPx() },
-          size.width.toFloat()
-        )
-          ?: return@pointerInput
         awaitEachGesture {
-          // Everything here runs on the initial pass and consumes: the axis sits inside the pane
-          // stack's scroller, which otherwise claims the drag after the first move and leaves the
-          // cursor stranded a few pixels from where it started.
+          // Everything here runs on the initial pass and consumes, so neither the pane stack's
+          // scroller nor the phone's filter drawer can claim the drag once it has started.
           val down = awaitFirstDown(
             requireUnconsumed = false,
             pass = PointerEventPass.Initial
           )
+          val handle = currentPill.value?.handle(
+            size.height.toFloat(),
+            with(density) { MinHandleWidth.toPx() },
+            size.width.toFloat()
+          ) ?: return@awaitEachGesture
           if (!handle.contains(down.position)) return@awaitEachGesture
           down.consume()
           scrub(
