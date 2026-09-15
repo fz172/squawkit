@@ -2,6 +2,7 @@ package dev.fanfly.wingslog.feature.notifications.viewing
 
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.feature.notifications.model.NotificationTapTarget
+import dev.fanfly.wingslog.id.DataLogId
 import org.junit.After
 import org.junit.Test
 
@@ -99,5 +100,14 @@ class NotificationTapRouterTest {
     NotificationTapRouter.consume()
 
     assertThat(NotificationTapRouter.pending.value).isNull()
+  }
+
+  @Test
+  fun encodeThenDeliver_dataLog_roundTrips() {
+    val target = NotificationTapTarget.DataLog(thingId = "ac-1", dataLogId = DataLogId("dl-1"))
+
+    NotificationTapRouter.deliver(NotificationTapRouter.encode(target))
+
+    assertThat(NotificationTapRouter.pending.value).isEqualTo(target)
   }
 }

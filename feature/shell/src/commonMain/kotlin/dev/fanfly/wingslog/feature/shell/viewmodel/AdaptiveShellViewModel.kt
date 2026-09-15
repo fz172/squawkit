@@ -14,6 +14,7 @@ import dev.fanfly.wingslog.core.ui.adaptive.ShellThing
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.fleet.picker.data.SelectedThingStore
 import dev.fanfly.wingslog.feature.notifications.model.NotificationTapTarget
+import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
 import dev.fanfly.wingslog.feature.sync.data.SyncEngine
@@ -189,6 +190,11 @@ class AdaptiveShellViewModel(
       is NotificationTapTarget.Log -> {
         selectSection(ShellSection.LOGS)
         _pendingScrollTargetId.value = target.logId
+      }
+
+      is NotificationTapTarget.DataLog -> {
+        selectSection(ShellSection.DATA_LOGS)
+        _pendingScrollTargetId.value = target.dataLogId.value
       }
     }
   }

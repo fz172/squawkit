@@ -2,6 +2,8 @@ package dev.fanfly.wingslog.feature.notifications.viewing
 
 import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.feature.notifications.model.NotificationTapTarget
+import dev.fanfly.wingslog.core.model.id.value
+import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.feature.notifications.viewing.NotificationTapRouter.decode
 import dev.fanfly.wingslog.feature.notifications.viewing.NotificationTapRouter.deliver
 import dev.fanfly.wingslog.feature.notifications.viewing.NotificationTapRouter.encode
@@ -64,6 +66,8 @@ object NotificationTapRouter {
     is NotificationTapTarget.Squawk -> "$SCHEME://$HOST/squawk/${target.thingId}/${target.squawkId}"
     is NotificationTapTarget.Task -> "$SCHEME://$HOST/task/${target.thingId}/${target.taskId}"
     is NotificationTapTarget.Log -> "$SCHEME://$HOST/log/${target.thingId}/${target.logId}"
+    is NotificationTapTarget.DataLog ->
+      "$SCHEME://$HOST/data_log/${target.thingId}/${target.dataLogId.value}"
     is NotificationTapTarget.Thing ->
       "$SCHEME://$HOST/thing/${target.thingId}" + (target.tab?.let { "?tab=$it" }
         ?: "")
@@ -97,6 +101,9 @@ object NotificationTapRouter {
 
       "log" -> segments.getOrNull(2)
         ?.let { NotificationTapTarget.Log(thingId, it) }
+
+      "data_log" -> segments.getOrNull(2)
+        ?.let { NotificationTapTarget.DataLog(thingId, DataLogId(it)) }
 
       "thing" -> NotificationTapTarget.Thing(thingId, tab)
       else -> null

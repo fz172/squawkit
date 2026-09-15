@@ -3,6 +3,7 @@ package dev.fanfly.wingslog.feature.notifications.viewing
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.feature.notifications.model.NotificationChannel
 import dev.fanfly.wingslog.feature.notifications.model.NotificationTapTarget
+import dev.fanfly.wingslog.id.DataLogId
 import org.junit.Test
 
 /**
@@ -204,5 +205,25 @@ class PushPayloadParsingTest {
 
     assertThat(parsed.recipientUid).isNull()
     assertThat(parsed.isAddressedTo("user-a")).isTrue()
+  }
+
+  @Test
+  fun aDataLogTapTargetKeepsItsTypedId() {
+    val parsed = PushPayload.parse(
+      activityData(mapOf("recordType" to "data_log", "tapTarget" to "data_log:ac-1:dl-7")),
+    )!!
+
+    assertThat(parsed.tapTarget)
+      .isEqualTo(NotificationTapTarget.DataLog("ac-1", DataLogId("dl-7")))
+  }
+
+  @Test
+  fun aDeletedDataLogFallsBackToTheArchive() {
+    // The server sends the thing-and-tab form once the record is gone, so there is nothing to open.
+    val parsed = PushPayload.parse(
+      activityData(mapOf("recordType" to "data_log", "tapTarget" to "aircraft:ac-1:datalogs")),
+    )!!
+
+    assertThat(parsed.tapTarget).isEqualTo(NotificationTapTarget.Thing("ac-1", tab = "datalogs"))
   }
 }

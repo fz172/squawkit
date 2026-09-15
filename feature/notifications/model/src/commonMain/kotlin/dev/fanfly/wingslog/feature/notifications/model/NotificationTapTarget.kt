@@ -1,5 +1,7 @@
 package dev.fanfly.wingslog.feature.notifications.model
 
+import dev.fanfly.wingslog.id.DataLogId
+
 /**
  * Where a tap on a [PendingNotification] should land. Carried over the wire by
  * `NotificationTapRouter` and applied to shell state by `AdaptiveShellViewModel` (design §5.3).
@@ -31,5 +33,13 @@ sealed interface NotificationTapTarget {
     NotificationTapTarget
 
   data class Log(override val thingId: String, val logId: String) :
+    NotificationTapTarget
+
+  /**
+   * The one variant with a typed id. Data logs were built after ids were boxed (design §4.4), so
+   * there is no untyped [DataLogId] anywhere above this to match; [thingId] stays a `String` like
+   * its siblings until the whole interface moves to `ThingId`.
+   */
+  data class DataLog(override val thingId: String, val dataLogId: DataLogId) :
     NotificationTapTarget
 }
