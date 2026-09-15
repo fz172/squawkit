@@ -138,8 +138,8 @@ spec_fields {
 # shape is the template system's opinion — each preset describes its own domain, which is the point.
 # THERE IS NO HULL SLOT. The hull IS the boat: its make and model are the ones declared as spec
 # fields above, and its identifying number is `hull_id` there too. A slot for it repeated the boat's
-# own identity verbatim under a second heading, so an owner read "Sling · TSi" at the top of the
-# card and "HULL / Sling TSi" immediately under it. Removed for the reason the airplane's airframe
+# own identity verbatim under a second heading, so an owner read "Volar · T2i" at the top of the
+# card and "HULL / Volar T2i" immediately under it. Removed for the reason the airplane's airframe
 # slot was: the thing does not need a component row standing in for itself, and unlike the airframe
 # this one did not even have children to parent.
 # Zero or more: an engine, an outboard, a sail drive. The meter below is scoped to this slot, so a

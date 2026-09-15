@@ -11,13 +11,13 @@ private val WHITESPACE_RUN = Regex("\\s+")
  * The value with its edges trimmed and every internal run of whitespace collapsed to one space.
  *
  * A form field takes whatever is typed into it, and a trailing space is invisible in one: nothing
- * about "Sling " on screen says it is not "Sling". It only shows up once the value is joined to
- * another — "Sling  TSi" — where the double gap reads as a layout fault rather than as a typo.
+ * about "Volar " on screen says it is not "Volar". It only shows up once the value is joined to
+ * another — "Volar  T2i" — where the double gap reads as a layout fault rather than as a typo.
  */
 fun String.collapseWhitespace(): String = trim().replace(WHITESPACE_RUN, " ")
 
 /**
- * Joins the parts into one phrase — "Sling TSi", "Airmaster AP430" — one space between each.
+ * Joins the parts into one phrase — "Volar T2i", "Airmaster AP430" — one space between each.
  *
  * Blanks are dropped rather than joined, so a Thing carrying only a make renders it alone instead
  * of trailed by a space, and each part is [collapseWhitespace]d so a value stored before saves

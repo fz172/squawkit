@@ -28,7 +28,7 @@ class ThingSpecLinesTest {
     spec = spec.map { (key, value) -> Spec(key = key, value_ = value) },
   )
 
-  /** "Tail Number: N532SL" — how the block reads, in one string per line. */
+  /** "Tail Number: N1234X" — how the block reads, in one string per line. */
   private fun ThingSpecLines.rendered(): List<String> =
     listOfNotNull(headline.takeIf { it.isNotBlank() }) +
       lines.map { "${it.label}: ${it.value}" }
@@ -37,26 +37,26 @@ class ThingSpecLinesTest {
   fun anAirplaneShowsBothIdentifiersUnderTheirOwnWords() {
     val spec = airplane.specLines(
       thing(
-        SpecKeys.MAKE to "Sling",
-        SpecKeys.MODEL to "TSi",
-        SpecKeys.SERIAL to "532SK",
-        SpecKeys.TAIL_NUMBER to "N532SL",
+        SpecKeys.MAKE to "Volar",
+        SpecKeys.MODEL to "T2i",
+        SpecKeys.SERIAL to "9001A",
+        SpecKeys.TAIL_NUMBER to "N1234X",
       ),
     )
 
     // Make and model name what it is; neither identifier is allowed into that run, and the tail
     // number leads the serial because it is what an owner calls the aeroplane by.
     assertThat(spec.rendered()).containsExactly(
-      "Sling TSi",
-      "Tail Number: N532SL",
-      "Serial Number: 532SK",
+      "Volar T2i",
+      "Tail Number: N1234X",
+      "Serial Number: 9001A",
     )
       .inOrder()
     // Both identifiers render in mono; there is nothing else on the block to render otherwise.
     assertThat(spec.lines.map { it.isIdentifier }).containsExactly(true, true)
     // The hero above the card shows this one big and unlabelled — the tail number, never the
     // serial, because the template marks it title_candidate rather than declaring it first.
-    assertThat(spec.title).isEqualTo("N532SL")
+    assertThat(spec.title).isEqualTo("N1234X")
   }
 
   /**
@@ -66,20 +66,20 @@ class ThingSpecLinesTest {
   @Test
   fun aHeadlineJoinsWithOneSpaceEvenWhenTheStoredMakeCarriesItsOwn() {
     val spec = airplane.specLines(
-      thing(SpecKeys.MAKE to "Sling ", SpecKeys.MODEL to "TSi"),
+      thing(SpecKeys.MAKE to "Volar ", SpecKeys.MODEL to "T2i"),
     )
 
-    assertThat(spec.headline).isEqualTo("Sling TSi")
+    assertThat(spec.headline).isEqualTo("Volar T2i")
   }
 
   @Test
   fun anUnfilledFieldIsDroppedRatherThanLabelled() {
     val spec = airplane.specLines(
-      thing(SpecKeys.MAKE to "Sling", SpecKeys.TAIL_NUMBER to "N532SL"),
+      thing(SpecKeys.MAKE to "Volar", SpecKeys.TAIL_NUMBER to "N1234X"),
     )
 
     // "Serial Number:" with nothing after it reads as a load that failed, not as a blank field.
-    assertThat(spec.rendered()).containsExactly("Sling", "Tail Number: N532SL")
+    assertThat(spec.rendered()).containsExactly("Volar", "Tail Number: N1234X")
       .inOrder()
   }
 
@@ -162,11 +162,11 @@ class ThingSpecLinesTest {
   fun aTemplateDeclaringNoSpecFieldsYieldsNothingToDraw() {
     // `custom` is the floor: a Thing with a name and nothing else the template asked for. A value
     // stored under a key it never declared stays out of the block rather than appearing unlabelled.
-    assertThat(CanonicalTemplates.CUSTOM.specLines(thing(SpecKeys.MAKE to "Sling")).isEmpty)
+    assertThat(CanonicalTemplates.CUSTOM.specLines(thing(SpecKeys.MAKE to "Volar")).isEmpty)
       .isTrue()
     // The account-level screen, where nothing is selected and there is no template at all.
     val nothingSelected: ThingTemplate? = null
-    assertThat(nothingSelected.specLines(thing(SpecKeys.MAKE to "Sling")).isEmpty).isTrue()
+    assertThat(nothingSelected.specLines(thing(SpecKeys.MAKE to "Volar")).isEmpty).isTrue()
   }
 
   @Test
@@ -212,20 +212,20 @@ class ThingSpecLinesTest {
 
   @Test
   fun anIdentifierUnderAHeadlineKeepsItsRow() {
-    // The airplane case the rule must not break: the hero shows "Sling TSi", and the row says
+    // The airplane case the rule must not break: the hero shows "Volar T2i", and the row says
     // which of the two identifiers the tail number is.
     val airplane = AirplaneTemplate.TEMPLATE
     val thing = Thing(
       spec = listOf(
-        Spec(key = "make", value_ = "Sling"),
-        Spec(key = "model", value_ = "TSi"),
-        Spec(key = "tail_number", value_ = "N532SL"),
+        Spec(key = "make", value_ = "Volar"),
+        Spec(key = "model", value_ = "T2i"),
+        Spec(key = "tail_number", value_ = "N1234X"),
       ),
     )
 
     val lines = airplane.specLines(thing)
 
-    assertThat(lines.headline).isEqualTo("Sling TSi")
-    assertThat(lines.lines.map { it.value }).contains("N532SL")
+    assertThat(lines.headline).isEqualTo("Volar T2i")
+    assertThat(lines.lines.map { it.value }).contains("N1234X")
   }
 }

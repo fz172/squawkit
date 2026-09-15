@@ -50,7 +50,7 @@
   <string name="export_receipt_range">Range</string>
   <string name="export_receipt_attachments">Attachments</string>
   <string name="export_receipt_attachments_included">Included</string>
-  <!-- Under a Thing in the export picker: "Sling TSi · 124 logs". -->
+  <!-- Under a Thing in the export picker: "Volar T2i · 124 logs". -->
   <string name="export_thing_log_count"><xliff:g example="124">%1$d</xliff:g> logs</string>
   <string name="export_thing_log_count_one">1 log</string>
   <string name="export_thing_summary_more"><xliff:g example="N123AA">%1$s</xliff:g> + <xliff:g example="3">%2$d</xliff:g> more</string>

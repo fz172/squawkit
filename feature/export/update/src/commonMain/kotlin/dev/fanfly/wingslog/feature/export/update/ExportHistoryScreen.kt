@@ -489,7 +489,7 @@ private fun deleteConfirmBody(record: ExportRecord): String = when {
     )
 }
 
-/** Aircraft tail summary ("N532SL" / "N532SL +2"), falling back to the file name for legacy records. */
+/** Aircraft tail summary ("N1234X" / "N1234X +2"), falling back to the file name for legacy records. */
 private fun thingSummary(record: ExportRecord): String {
   // Records written before the label fix carry a blank tail number for anything that is not an
   // aeroplane. Fall through rather than showing a dash for each one.

@@ -359,8 +359,8 @@ theme (R24a).
 
 ```
 ┌ Sidebar ─────────┐┌───────────────────────────────────────────────────────────────┐
-│ ✈ Sling TSi       ││ Flight Data                                    [⬆ Upload Log] │
-│   N532SL          ││ Engine and flight logs from the G3X, linked by tail number.   │
+│ ✈ Volar T2i       ││ Flight Data                                    [⬆ Upload Log] │
+│   N1234X          ││ Engine and flight logs from the G3X, linked by tail number.   │
 │ ▫ Dashboard       ││ ┌ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┐ │
 │ ▫ Squawks         ││ │  ☁  Drop a G3X data log here (log_YYYYMMDD_HHMMSS_*.csv)  │ │
 │ ▫ Tasks           ││ │     Garmin G3X · G3X Touch · GDU 4xx. More formats coming. │ │
@@ -402,7 +402,7 @@ Add-attachment sheet, then the data-log picker it leads to:
 
 ```
 Add attachment                    ← Attach flight data log
- 📁 Choose file                     Logs already uploaded for N532SL
+ 📁 Choose file                     Logs already uploaded for N1234X
  🔗 Add link                        ○ Sep 3, 2026 · E16 → E16     10:06 · 17m 13s
  📈 Flight data log       NEW       ● Sep 2, 2026 · Ground run    14:47 · 4m 15s · same day as this log
     G3X CSV — parsed and            ○ Aug 28, 2026 · E16 → KWVI   09:12 · 1h 04m · attached to "Oil change"
@@ -414,7 +414,7 @@ A log already attached elsewhere is dimmed for information only and remains sele
 ### 6.3 Visualizer (mocks 1c and 1d)
 
 ```
-← Sep 2, 2026  [N532SL] ⚠ TAIL MISMATCH     14:47 local (UTC-07:00) · 4m 15s · Garmin GDU 460
+← Sep 2, 2026  [N1234X] ⚠ TAIL MISMATCH     14:47 local (UTC-07:00) · 4m 15s · Garmin GDU 460
                                           [⤢ 01:10 – 02:40 Reset] [⬆ Upload log] [⚙]
 ┌ Pane 1 ────────────────────────────────────────────────┐┌ Series ─────┬ Flight ┐
 │ ⠿ [■ E1 RPM 4,930 rpm ×] [■ E1 MAP 29.1 inHg ×] [+ Series] 🗑 ││ 🔍 Search series      │
@@ -449,8 +449,8 @@ A log already attached elsewhere is dimmed for information only and remains sele
 ### 6.4 Phone (mocks 2a–2c)
 
 ```
-← Flight Data                    🔍     │  ← Sep 2, 2026 [N532SL]      [⤢] [⬆] [⚙]
-  N532SL · Sling TSi                    │  14:47 local (UTC-07:00) · 4m 15s · Garmin GDU 460
+← Flight Data                    🔍     │  ← Sep 2, 2026 [N1234X]      [⤢] [⬆] [⚙]
+  N1234X · Volar T2i                    │  14:47 local (UTC-07:00) · 4m 15s · Garmin GDU 460
 ┌────────────────────────────────────┐  │  ┌ ⠿ [■ E1 RPM 4,930 rpm ×] [+ Series]   🗑 ┐
 │ 📈 Sep 3 · E16 → E16             › │  │  │  ╭──╮     ╭───╮                          │
 │    10:06 · 17m 13s                 │  │  │──╯  ╰─────╯   ╰──────── ┊                │

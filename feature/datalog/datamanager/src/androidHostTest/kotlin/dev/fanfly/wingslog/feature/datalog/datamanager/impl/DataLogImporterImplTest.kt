@@ -116,12 +116,12 @@ class DataLogImporterImplTest {
   @Test
   fun aTailThatNamesAnotherThingOffersToFileItThereAndStoresNothing() = runTest {
     identifier = "N5678Y"
-    otherThing = OtherThing(ThingId("thing-2"), "N1234X Sling TSi")
+    otherThing = OtherThing(ThingId("thing-2"), "N1234X Volar T2i")
 
     val states = run()
 
     assertThat(states.last()).isEqualTo(
-      ImportProgress.OtherThing(ThingId("thing-2"), "N1234X Sling TSi")
+      ImportProgress.OtherThing(ThingId("thing-2"), "N1234X Volar T2i")
     )
     assertThat(states).doesNotContain(ImportProgress.Storing)
     coVerify(exactly = 0) { store.put(any(), any(), any()) }
@@ -131,7 +131,7 @@ class DataLogImporterImplTest {
   @Test
   fun keepingItHereStoresTheRecordWithTheMismatchFlagStillSet() = runTest {
     identifier = "N5678Y"
-    otherThing = OtherThing(ThingId("thing-2"), "N1234X Sling TSi")
+    otherThing = OtherThing(ThingId("thing-2"), "N1234X Volar T2i")
 
     val done = run(keepIdentity = true).last() as ImportProgress.Done
 
