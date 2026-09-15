@@ -45,6 +45,7 @@ import dev.fanfly.wingslog.core.ui.common.compose.FormTextField
 import dev.fanfly.wingslog.core.ui.common.compose.ModalBottomSheet
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.attachment.model.PendingAttachment
+import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
 import dev.fanfly.wingslog.feature.attachment.model.isFile
 import dev.fanfly.wingslog.feature.subscription.viewing.ProUpsellSheet
@@ -99,6 +100,11 @@ fun AttachmentFormSection(
   // When attachments are gated off, tapping a locked upload option routes here (navigate to the
   // subscription page). Null keeps the pre-subscription behavior (options simply disabled).
   onSeePlans: (() -> Unit)? = null,
+  // Null hides the data log option: the Thing has no data logs section or this build has no
+  // visualizer (design §9.2). The form screen supplies the body because this module cannot
+  // depend on feature/datalog.
+  dataLogPicker: DataLogPickerSlot? = null,
+  onAttachDataLog: (DataLogId, String) -> Unit = { _, _ -> },
 ) {
   var showUpsell by remember { mutableStateOf(false) }
   val pickFiles = rememberFilePicker(
@@ -178,6 +184,8 @@ fun AttachmentFormSection(
       // Locked upload option tapped: close the picker, then surface the promo (avoids a nested sheet).
       onUpsell = onSeePlans?.let { { onDismissSheet(); showUpsell = true } },
       onDismiss = onDismissSheet,
+      dataLogPicker = dataLogPicker,
+      onAttachDataLog = { id, name -> onAttachDataLog(id, name); onDismissSheet() },
     )
   }
 
@@ -317,12 +325,15 @@ private fun AttachmentPickerSheet(
   onAddLink: (url: String, name: String) -> Unit,
   onUpsell: (() -> Unit)?,
   onDismiss: () -> Unit,
+  dataLogPicker: DataLogPickerSlot?,
+  onAttachDataLog: (DataLogId, String) -> Unit,
 ) {
   // When upload is gated off but an upsell is available, the file/photo options stay tappable and
   // route to the promo instead of the picker.
   val upsellLocked = !uploadEnabled && onUpsell != null
   val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
   var showLinkField by remember { mutableStateOf(false) }
+  var showDataLogPicker by remember { mutableStateOf(false) }
   var linkUrl by remember { mutableStateOf("") }
   var linkName by remember { mutableStateOf("") }
   var urlError by remember { mutableStateOf(false) }
@@ -337,7 +348,9 @@ private fun AttachmentPickerSheet(
         .padding(horizontal = Spacing.extraLarge),
       verticalArrangement = Arrangement.spacedBy(Spacing.medium),
     ) {
-      if (!showLinkField) {
+      if (showDataLogPicker && dataLogPicker != null) {
+        dataLogPicker.body(onAttachDataLog) { showDataLogPicker = false }
+      } else if (!showLinkField) {
         val appCapability: AppCapability = koinInject()
         Row(
           modifier = Modifier.fillMaxWidth(),
@@ -365,6 +378,14 @@ private fun AttachmentPickerSheet(
             onClick = { showLinkField = true },
             modifier = Modifier.weight(1f),
           )
+          if (dataLogPicker != null) {
+            AttachmentPickerOption(
+              icon = Icons.Outlined.ShowChart,
+              label = dataLogPicker.label,
+              onClick = { showDataLogPicker = true },
+              modifier = Modifier.weight(1f),
+            )
+          }
         }
         Text(
           text = when {
@@ -430,6 +451,15 @@ private fun AttachmentPickerSheet(
     }
   }
 }
+
+/**
+ * The data log picker a form screen supplies: the option's label and the sheet body that replaces
+ * the options once it is chosen, exactly as *Add link* swaps to the URL field (design §9.2).
+ */
+class DataLogPickerSlot(
+  val label: String,
+  val body: @Composable (onAttach: (DataLogId, String) -> Unit, onCancel: () -> Unit) -> Unit,
+)
 
 private fun String.extractDomain(): String {
   val withoutScheme = if (contains("://")) substringAfter("://") else this

@@ -44,11 +44,7 @@ fun DataLogCard(
   /** Wide layouts show the source product and series count; phones keep the row to two lines. */
   showDetails: Boolean = true,
 ) {
-  val date = row.startLocal.date.toDisplayFormat(numberOnly = false)
-  val route =
-    if (row.airborne && row.startLocationIdent.isNotBlank()) row.startLocationIdent
-    else if (row.airborne) "" else stringResource(Res.string.data_log_ground_run)
-  val title = if (route.isEmpty()) date else "$date · $route"
+  val title = row.titleText(stringResource(Res.string.data_log_ground_run))
   val details = buildList {
     add(row.startLocal.time.toClockText())
     if (showDetails && row.airborne && row.startLocationIdent.isNotBlank()) add(
@@ -122,4 +118,13 @@ fun DataLogCard(
       )
     }
   }
+}
+
+/** "Sep 02, 2026 · KPAO", or the date alone for an airborne log with no ident; ground runs say so. */
+fun DataLogRow.titleText(groundRun: String): String {
+  val date = startLocal.date.toDisplayFormat(numberOnly = false)
+  val route =
+    if (airborne && startLocationIdent.isNotBlank()) startLocationIdent
+    else if (airborne) "" else groundRun
+  return if (route.isEmpty()) date else "$date · $route"
 }

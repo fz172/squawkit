@@ -11,7 +11,10 @@ import dev.fanfly.wingslog.feature.tasks.datamanager.forcedDueMeter
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.nav.Screen.Companion.CROSS_SCREEN_SUCCESS_MESSAGE
 import dev.fanfly.wingslog.feature.attachment.model.visible
+import dev.fanfly.wingslog.feature.attachment.model.dataLogIds
 import dev.fanfly.wingslog.feature.attachment.viewing.AttachmentFormSection
+import dev.fanfly.wingslog.feature.datalog.viewing.attach.rememberDataLogPickerSlot
+import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.feature.tasks.update.viewmodel.TaskFormEvent
 import dev.fanfly.wingslog.feature.tasks.update.viewmodel.TaskUiState
 import dev.fanfly.wingslog.feature.tasks.update.viewmodel.TaskViewModel
@@ -116,6 +119,8 @@ fun AddTaskRoute(
           onDismissSheet = viewModel::hideAttachmentPicker,
           onPickError = viewModel::onFilePickError,
           onSeePlans = { navController.navigate(Screen.Subscription.route) },
+          dataLogPicker = rememberDataLogPickerSlot(ThingId(viewModel.thingId), null, pendingAttachments.dataLogIds()),
+          onAttachDataLog = viewModel::attachDataLog,
         )
       },
     )

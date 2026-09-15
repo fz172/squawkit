@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.attachment.model
 
+import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.thing.Attachment
 import dev.fanfly.wingslog.thing.AttachmentType
 
@@ -15,36 +16,26 @@ import dev.fanfly.wingslog.thing.AttachmentType
  * - [PendingDelete] — a [Saved] file marked for tombstone on save.
  */
 sealed class PendingAttachment {
-  abstract val id: String
-  abstract val name: String
+  abstract val attachment: Attachment
+  val id: String get() = attachment.id
+  val name: String get() = attachment.name
 
   /** A locally-stored attachment whose proto is fully populated (sha256 included). */
-  data class Local(val attachment: Attachment) : PendingAttachment() {
-    override val id: String get() = attachment.id
-    override val name: String get() = attachment.name
-  }
+  data class Local(override val attachment: Attachment) : PendingAttachment()
 
-  data class LocalLink(val attachment: Attachment) : PendingAttachment() {
-    override val id: String get() = attachment.id
-    override val name: String get() = attachment.name
-  }
+  data class LocalLink(override val attachment: Attachment) : PendingAttachment()
 
-  data class LocalDataLogRef(val attachment: Attachment) : PendingAttachment() {
-    override val id: String get() = attachment.id
-    override val name: String get() = attachment.name
-  }
+  data class LocalDataLogRef(override val attachment: Attachment) : PendingAttachment()
 
-  data class Saved(val attachment: Attachment) : PendingAttachment() {
-    override val id: String get() = attachment.id
-    override val name: String get() = attachment.name
-  }
+  data class Saved(override val attachment: Attachment) : PendingAttachment()
 
   /** Shown as removed in the list; tombstoned on save. */
-  data class PendingDelete(val attachment: Attachment) : PendingAttachment() {
-    override val id: String get() = attachment.id
-    override val name: String get() = attachment.name
-  }
+  data class PendingDelete(override val attachment: Attachment) : PendingAttachment()
 }
+
+/** The data logs referenced from this parent, pending deletes excluded. */
+fun List<PendingAttachment>.dataLogIds(): Set<DataLogId> =
+  filter { it !is PendingAttachment.PendingDelete }.mapNotNull { it.attachment.data_log_id }.toSet()
 
 /**
  * Counts file attachments (not links, not data log references, not pending-delete) — enforces the

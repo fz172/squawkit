@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.feature.thing.dashboard.data
 
 import dev.fanfly.wingslog.feature.squawk.model.SquawkWithStatus
+import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
 import dev.fanfly.wingslog.thing.SquawkDismissReason
 
@@ -21,6 +22,9 @@ sealed interface ThingOverviewAction {
     ThingOverviewAction
 
   data object DismissTaskDetail : ThingOverviewAction
+  /** A DATA_LOG attachment row was tapped: dismiss the sheet and open the viewer (design §9.3). */
+  data class OpenDataLogClick(val thingId: String, val dataLogId: DataLogId) : ThingOverviewAction
+
   data class EditTaskClick(val thingId: String, val cardId: String) :
     ThingOverviewAction
 

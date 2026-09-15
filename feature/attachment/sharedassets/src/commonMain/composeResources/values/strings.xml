@@ -25,6 +25,9 @@
   <string name="attachment_type_image">Image</string>
   <string name="attachment_type_text">Text</string>
   <string name="subtitle_separator"> · </string>
+  <string name="attachment_data_log_product">%1$s log</string>
+  <string name="attachment_data_log_opens">Opens in visualizer</string>
+  <string name="attachment_data_log_removed">Removed</string>
   <!-- Design §9: v1 shares record data only, not blobs. A member sees the attachment exists but
        cannot fetch it — say so plainly instead of offering a tap that does nothing. -->
 </resources>

@@ -9,11 +9,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import dev.fanfly.wingslog.thing.Attachment
-import dev.fanfly.wingslog.thing.AttachmentType
 import dev.fanfly.wingslog.core.ui.common.compose.FormSectionLabel
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.statusColors
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
+import dev.fanfly.wingslog.feature.attachment.model.DataLogRowInfo
+import dev.fanfly.wingslog.feature.attachment.model.isFile
+import dev.fanfly.wingslog.id.DataLogId
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.attachment.sharedassets.generated.resources.Res
 import wingslog.feature.attachment.sharedassets.generated.resources.attachments
@@ -30,6 +32,8 @@ fun AttachmentSection(
   modifier: Modifier = Modifier,
   syncStates: Map<String, BlobSyncState> = emptyMap(),
   openError: String? = null,
+  /** The records DATA_LOG references point at, keyed by data log id; null while not loaded. */
+  dataLogs: Map<DataLogId, DataLogRowInfo>? = null,
 ) {
   if (attachments.isEmpty()) return
 
@@ -39,9 +43,10 @@ fun AttachmentSection(
     attachments.forEach { attachment ->
       AttachmentRow(
         attachment = attachment,
-        syncState = if (attachment.type == AttachmentType.ATTACHMENT_TYPE_LINK) null
-        else syncStates[attachment.id],
+        // A reference has no blob of its own; the row reads the DataLog's state from [dataLogs].
+        syncState = if (attachment.type.isFile) syncStates[attachment.id] else null,
         onTap = onAttachmentTap,
+        dataLogs = dataLogs,
       )
       HorizontalDivider()
     }

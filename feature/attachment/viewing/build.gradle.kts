@@ -28,6 +28,7 @@ kotlin {
   sourceSets {
     commonMain.dependencies {
       implementation(project(":core:appinfo"))
+      implementation(project(":core:datetime"))
       implementation(project(":core:ui"))
       implementation(project(":core:ui:theme"))
       implementation(project(":feature:subscription:viewing"))

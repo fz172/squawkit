@@ -34,6 +34,7 @@ import dev.fanfly.wingslog.core.ui.common.UiText
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
 import dev.fanfly.wingslog.feature.datalog.viewing.list.DataLogSectionContent
+import dev.fanfly.wingslog.feature.datalog.model.dataLogIdOrNull
 import dev.fanfly.wingslog.feature.datalog.viewing.list.DataLogUploadFab
 import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.feature.attachment.datamanager.OpenState
@@ -384,6 +385,11 @@ fun ThingSectionContent(
             )
           }
 
+          is ThingOverviewAction.OpenDataLogClick ->
+            navController.navigate(
+              Screen.DataLogViewer.createRoute(ThingId(action.thingId), action.dataLogId)
+            )
+
           is ThingOverviewAction.EditClick ->
             navController.navigate(Screen.EditThing.createRoute(thingId))
 
@@ -450,6 +456,9 @@ fun ThingSectionContent(
             pendingLogScrollTarget = logId
             onNavigateToSection(ShellSection.LOGS)
           },
+          onOpenDataLog = { dataLogId ->
+            onAction(ThingOverviewAction.OpenDataLogClick(thingId, dataLogId))
+          },
           scrollToSquawkId = pendingSquawkScrollTarget,
           // The shell top bar already shows the section title; avoid duplicating it.
           showHeader = false,
@@ -468,6 +477,9 @@ fun ThingSectionContent(
           },
           onNavigateToEditLog = { logId ->
             onAction(ThingOverviewAction.EditLogClick(thingId, logId))
+          },
+          onOpenDataLog = { dataLogId ->
+            onAction(ThingOverviewAction.OpenDataLogClick(thingId, dataLogId))
           },
           onTaskClick = { taskId ->
             pendingTaskScrollTarget = taskId
@@ -510,6 +522,11 @@ fun ThingSectionContent(
           },
           onAttachmentTap = { attachment ->
             taskSheetOpenError = null
+            attachment.dataLogIdOrNull()?.let { dataLogId ->
+              onAction(ThingOverviewAction.DismissTaskDetail)
+              onAction(ThingOverviewAction.OpenDataLogClick(thingId, dataLogId))
+              return@TaskDetailSheet
+            }
             val openFlow = attachmentOpener.open(attachment)
             coroutineScope.launch {
               openFlow.collect { openState ->
