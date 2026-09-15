@@ -3,7 +3,6 @@ package dev.fanfly.wingslog.feature.datalog.viewing.chart
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.drag
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.MaterialTheme
@@ -17,6 +16,7 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
@@ -41,7 +41,12 @@ private val TickHeight = 4.dp
 private val MinHandleWidth = 48.dp
 
 /** Where the cursor pill sits, so the painter and the drag handle cannot disagree about it. */
-private data class CursorPill(val text: String, val left: Float, val width: Float, val height: Float) {
+private data class CursorPill(
+  val text: String,
+  val left: Float,
+  val width: Float,
+  val height: Float
+) {
   /** The pill itself, widened for a fingertip and given the axis's full height to be grabbed by. */
   fun handle(axisHeightPx: Float, minWidthPx: Float, axisWidthPx: Float): Rect {
     val centre = left + width / 2f
@@ -86,14 +91,36 @@ fun TimeAxis(
   var widthPx by remember { mutableIntStateOf(0) }
 
   val step = remember(window, widthPx, clockAxis, density) {
-    val minSpacing = with(density) { (if (clockAxis) MinClockLabelSpacing else MinLabelSpacing).toPx() }
+    val minSpacing =
+      with(density) { (if (clockAxis) MinClockLabelSpacing else MinLabelSpacing).toPx() }
     TimeTicks.step(window.lengthSeconds, widthPx, minSpacing)
   }
-  fun textFor(t: Int) =
-    if (clockAxis) TimeTicks.clockLabel(originSecondsOfDay + t, step) else TimeTicks.label(t)
 
-  val pill = remember(cursorT, window, widthPx, step, clockAxis, originSecondsOfDay, labelStyle, density) {
-    cursorPill(cursorT, window, widthPx, ::textFor, measurer, labelStyle, density)
+  fun textFor(t: Int) =
+    if (clockAxis) TimeTicks.clockLabel(
+      originSecondsOfDay + t,
+      step
+    ) else TimeTicks.label(t)
+
+  val pill = remember(
+    cursorT,
+    window,
+    widthPx,
+    step,
+    clockAxis,
+    originSecondsOfDay,
+    labelStyle,
+    density
+  ) {
+    cursorPill(
+      cursorT,
+      window,
+      widthPx,
+      ::textFor,
+      measurer,
+      labelStyle,
+      density
+    )
   }
 
   Canvas(
@@ -103,15 +130,38 @@ fun TimeAxis(
       .onSizeChanged { widthPx = it.width }
       .pointerInput(pill, window, widthPx, onScrub) {
         val scrub = onScrub ?: return@pointerInput
-        val handle = pill?.handle(size.height.toFloat(), with(density) { MinHandleWidth.toPx() }, size.width.toFloat())
+        val handle = pill?.handle(
+          size.height.toFloat(),
+          with(density) { MinHandleWidth.toPx() },
+          size.width.toFloat()
+        )
           ?: return@pointerInput
         awaitEachGesture {
-          val down = awaitFirstDown(requireUnconsumed = false)
+          // Everything here runs on the initial pass and consumes: the axis sits inside the pane
+          // stack's scroller, which otherwise claims the drag after the first move and leaves the
+          // cursor stranded a few pixels from where it started.
+          val down = awaitFirstDown(
+            requireUnconsumed = false,
+            pass = PointerEventPass.Initial
+          )
           if (!handle.contains(down.position)) return@awaitEachGesture
           down.consume()
-          drag(down.id) { change ->
+          scrub(
+            (down.position.x / size.width).coerceIn(0f, 1f)
+              .toDouble()
+          )
+          while (true) {
+            val event = awaitPointerEvent(PointerEventPass.Initial)
+            val change = event.changes.firstOrNull { it.id == down.id } ?: break
+            if (!change.pressed) {
+              change.consume()
+              break
+            }
+            scrub(
+              (change.position.x / size.width).coerceIn(0f, 1f)
+                .toDouble()
+            )
             change.consume()
-            scrub((change.position.x / size.width).coerceIn(0f, 1f).toDouble())
           }
         }
       },
@@ -120,13 +170,29 @@ fun TimeAxis(
     if (width <= 0 || window.lengthSeconds <= 0) return@Canvas
     val tickPx = TickHeight.toPx()
     val ticks =
-      if (clockAxis) TimeTicks.clockTicks(window, step, originSecondsOfDay) else TimeTicks.ticks(window, step)
+      if (clockAxis) TimeTicks.clockTicks(
+        window,
+        step,
+        originSecondsOfDay
+      ) else TimeTicks.ticks(window, step)
     ticks.forEach { t ->
       val x = TimeTicks.xOf(t.toDouble(), window, width)
-      drawLine(tickColor, Offset(x, 0f), Offset(x, tickPx), strokeWidth = Spacing.hairline.toPx())
-      val label = measurer.measure(textFor(t), labelStyle.copy(color = labelColor))
+      drawLine(
+        tickColor,
+        Offset(x, 0f),
+        Offset(x, tickPx),
+        strokeWidth = Spacing.hairline.toPx()
+      )
+      val label =
+        measurer.measure(textFor(t), labelStyle.copy(color = labelColor))
       val centre = TimeTicks.labelCenterX(x, label.size.width.toFloat(), width)
-      drawText(label, topLeft = Offset(centre - label.size.width / 2f, tickPx + Spacing.extraSmall.toPx()))
+      drawText(
+        label,
+        topLeft = Offset(
+          centre - label.size.width / 2f,
+          tickPx + Spacing.extraSmall.toPx()
+        )
+      )
     }
     if (pill != null) {
       drawRoundRect(
@@ -137,7 +203,10 @@ fun TimeAxis(
       )
       drawText(
         measurer.measure(pill.text, labelStyle.copy(color = onPill)),
-        topLeft = Offset(pill.left + Spacing.small.toPx(), Spacing.extraSmall.toPx() / 2f),
+        topLeft = Offset(
+          pill.left + Spacing.small.toPx(),
+          Spacing.extraSmall.toPx() / 2f
+        ),
       )
     }
   }
