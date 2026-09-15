@@ -136,7 +136,7 @@ class DataLogManagerImpl(
       DataLogEncoding.DATA_LOG_ENCODING_GZIP -> GzipCodec.decompress(stored)
       else -> stored
     }
-    val parser = parsers.firstOrNull { it.format == record.format }
+    val parser = parsers.firstOrNull { record.format in it.formats }
       ?: error("No parser for ${record.format}")
     val parsed =
       withContext(dispatcher) { parser.parse(bytes, record.file_name) }

@@ -49,10 +49,36 @@ class CanonicalSeriesRegistryTest {
   }
 
   @Test
+  fun theG1000SpellingsReachTheSameIdsAsTheG3XOnes() {
+    // Same reading, different name on each recorder. The point of the registry is that a preset or
+    // a derived rule written once works on both.
+    assertThat(id("AltB")).isEqualTo(id("AltInd"))
+    assertThat(id("volt1")).isEqualTo(id("Volts1"))
+    assertThat(id("volt2")).isEqualTo("elec.volts[2]")
+    assertThat(id("amp1")).isEqualTo(id("Amps1"))
+    assertThat(id("FQtyL")).isEqualTo(id("FQty1"))
+    assertThat(id("FQtyR")).isEqualTo(id("FQty2"))
+  }
+
+  @Test
+  fun turbineAndTitColumnsHaveTheirOwnFields() {
+    assertThat(id("E1 TIT1")).isEqualTo("engine[1].tit[1]")
+    assertThat(id("E1 TIT2")).isEqualTo("engine[1].tit[2]")
+    assertThat(id("E1 ITT")).isEqualTo("engine[1].itt")
+    assertThat(id("E1 NG")).isEqualTo("engine[1].ng")
+    assertThat(id("E1 Torq")).isEqualTo("engine[1].torque")
+    assertThat(id("E1 N1")).isEqualTo("engine[1].n1")
+    assertThat(id("E2 N2")).isEqualTo("engine[2].n2")
+  }
+
+  @Test
   fun unknownColumnsStayUnmapped() {
     assertThat(id("E1 CarbT")).isEmpty()
     assertThat(id("PTrim")).isEmpty()
     assertThat(id("")).isEmpty()
     assertThat(id("Flaps")).isEmpty()
+    // A G1000 records three altitudes and only two of them have a canonical id. Guessing which of
+    // the two AltMSL is would put two different measurements on one series.
+    assertThat(id("AltMSL")).isEmpty()
   }
 }

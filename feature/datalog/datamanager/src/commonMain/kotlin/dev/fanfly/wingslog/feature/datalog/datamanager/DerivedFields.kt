@@ -25,7 +25,7 @@ object DerivedFields {
     return null
   }
 
-  /** PRD R36: the ident a Garmin recorder puts in `log_YYYYMMDD_HHMMSS_<ident>.csv`, else "". */
+  /** PRD R36: the ident a Garmin recorder puts in `log_<date>_<time>_<ident>.csv`, else "". */
   fun startLocationIdent(fileName: String): String =
     FILE_NAME_IDENT.matchEntire(fileName.trim())?.groupValues?.get(1) ?: ""
 
@@ -56,6 +56,8 @@ object DerivedFields {
     return values.any { !it.isNaN() && it > threshold }
   }
 
+  // A G3X writes an eight-digit date, a G1000 a six-digit one: log_20260902_144756_KXYZ.csv and
+  // log_240810_104802_KXYZ.csv are the same filename in two dialects.
   private val FILE_NAME_IDENT =
-    Regex("""^log_\d{8}_\d{6}_([A-Za-z0-9]+)\.csv$""", RegexOption.IGNORE_CASE)
+    Regex("""^log_\d{6}(?:\d{2})?_\d{6}_([A-Za-z0-9]+)\.csv$""", RegexOption.IGNORE_CASE)
 }

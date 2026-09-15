@@ -80,8 +80,13 @@ class DerivedFieldsTest {
     assertThat(DerivedFields.startLocationIdent("log_20260902_144756_KSQL.CSV")).isEqualTo(
       "KSQL"
     )
+    // A G1000 writes a six-digit date where a G3X writes eight.
+    assertThat(DerivedFields.startLocationIdent("log_240810_104802_KAPA.csv")).isEqualTo(
+      "KAPA"
+    )
     assertThat(DerivedFields.startLocationIdent("flight.csv")).isEmpty()
     assertThat(DerivedFields.startLocationIdent("log_2026_KSQL.csv")).isEmpty()
+    assertThat(DerivedFields.startLocationIdent("log_2408_104802_KAPA.csv")).isEmpty()
   }
 
   @Test
