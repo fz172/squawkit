@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.feature.datalog.model.chart
 
 import dev.fanfly.wingslog.feature.datalog.model.ViewWindow
+import dev.fanfly.wingslog.feature.datalog.model.chart.Navigation.MIN_SPAN_SECONDS
 import kotlin.math.roundToInt
 
 /**
@@ -19,17 +20,31 @@ object Navigation {
    * Scales the span by `1 / factor` (so a pinch that doubled the finger distance halves the span)
    * keeping the time under [anchorFraction] of the width where it is. Full span returns null.
    */
-  fun zoomAround(view: ViewWindow?, durationSeconds: Int, anchorFraction: Double, factor: Double): ViewWindow? {
+  fun zoomAround(
+    view: ViewWindow?,
+    durationSeconds: Int,
+    anchorFraction: Double,
+    factor: Double
+  ): ViewWindow? {
     if (durationSeconds <= MIN_SPAN_SECONDS || factor <= 0.0 || factor.isNaN()) return view
     val current = effective(view, durationSeconds)
-    val anchorT = current.startSeconds + anchorFraction.coerceIn(0.0, 1.0) * current.lengthSeconds
-    val span = (current.lengthSeconds / factor).roundToInt().coerceIn(MIN_SPAN_SECONDS, durationSeconds)
-    val start = (anchorT - anchorFraction.coerceIn(0.0, 1.0) * span).roundToInt()
+    val anchorT = current.startSeconds + anchorFraction.coerceIn(
+      0.0,
+      1.0
+    ) * current.lengthSeconds
+    val span = (current.lengthSeconds / factor).roundToInt()
+      .coerceIn(MIN_SPAN_SECONDS, durationSeconds)
+    val start =
+      (anchorT - anchorFraction.coerceIn(0.0, 1.0) * span).roundToInt()
     return clamp(start, span, durationSeconds)
   }
 
   /** Moves the view by [deltaSeconds]; a no-op at full zoom-out and at either end. */
-  fun pan(view: ViewWindow?, durationSeconds: Int, deltaSeconds: Double): ViewWindow? {
+  fun pan(
+    view: ViewWindow?,
+    durationSeconds: Int,
+    deltaSeconds: Double
+  ): ViewWindow? {
     if (view == null) return null
     val span = view.lengthSeconds
     val start = (view.startSeconds + deltaSeconds).roundToInt()
@@ -40,7 +55,13 @@ object Navigation {
    * Zooms to the span between two x positions inside the current view. A brush shorter than the
    * minimum expands around its centre. Returns the current view unchanged when the brush is empty.
    */
-  fun brushToWindow(view: ViewWindow?, durationSeconds: Int, x0Px: Float, x1Px: Float, widthPx: Int): ViewWindow? {
+  fun brushToWindow(
+    view: ViewWindow?,
+    durationSeconds: Int,
+    x0Px: Float,
+    x1Px: Float,
+    widthPx: Int
+  ): ViewWindow? {
     if (widthPx <= 0 || x0Px == x1Px) return view
     val current = effective(view, durationSeconds)
     val lo = minOf(x0Px, x1Px).coerceIn(0f, widthPx.toFloat())

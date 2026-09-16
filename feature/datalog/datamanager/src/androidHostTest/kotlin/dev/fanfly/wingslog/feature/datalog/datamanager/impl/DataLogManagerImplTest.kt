@@ -22,8 +22,8 @@ import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
 import dev.fanfly.wingslog.feature.attachment.model.DownloadState
 import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogCache
 import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogImporter
-import dev.fanfly.wingslog.feature.datalog.datamanager.ThingIdentifierLookup
 import dev.fanfly.wingslog.feature.datalog.datamanager.Fixtures
+import dev.fanfly.wingslog.feature.datalog.datamanager.ThingIdentifierLookup
 import dev.fanfly.wingslog.feature.datalog.datamanager.garmin.GarminParser
 import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.id.ThingId
@@ -37,10 +37,13 @@ import io.mockk.slot
 import io.mockk.verify
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Instant
 
 class DataLogManagerImplTest {
@@ -61,6 +64,13 @@ class DataLogManagerImplTest {
   @Before
   fun setUp() {
     store = mockk(relaxed = true)
+    // The manager reads one row by id rather than filtering the list down to it, so the single-row
+    // query has to answer from whatever rows a test put on the list query.
+    every { store.observe(any(), scope) } answers {
+      val wanted = firstArg<String>()
+      store.observeAll(scope)
+        .map { rows -> rows.firstOrNull { it.id == wanted } }
+    }
     val factory = mockk<EntityStoreFactory>()
     every { factory.create<DataLog>(CollectionKind.DataLog) } returns store
     val resolver = mockk<ThingScopeResolver>()
@@ -215,7 +225,8 @@ class DataLogManagerImplTest {
   fun anIdentityMismatchIsRecomputedAgainstTheThingAsItIsNow() = runTest {
     // The flag is a comparison against the Thing, so it goes stale when the Thing changes rather
     // than when the parser does. Renaming a tail number used to leave the chip it invalidated.
-    val flagged = record("a", "2026-09-02T21:47:56Z").copy(identity_mismatch = true)
+    val flagged =
+      record("a", "2026-09-02T21:47:56Z").copy(identity_mismatch = true)
     every { store.observeAll(scope) } returns flowOf(
       listOf(StorageEntity("a", flagged, Instant.DISTANT_PAST))
     )
@@ -277,6 +288,59 @@ class DataLogManagerImplTest {
       .getOrThrow()
 
     coVerify(exactly = 0) { store.put(any(), any(), any()) }
+  }
+
+  @Test
+  fun readingAndInflatingTheFileLeaveTheCallersThread() = runTest {
+    // The viewer calls this from viewModelScope, so the caller's thread is the one drawing. Reading
+    // a 6 MB blob and inflating it to 46 MB there froze the screen for seconds before it could show
+    // so much as a spinner — the parse was already off the main thread and was never the whole cost.
+    every { store.observeAll(scope) } returns flowOf(
+      listOf(
+        StorageEntity(
+          "a",
+          record("a", "2026-09-02T21:47:56Z"),
+          Instant.DISTANT_PAST
+        )
+      ),
+    )
+    coEvery { blobs.get(blobId) } returns ref(RemoteState.Synced)
+    val readThread = AtomicReference<String>()
+    val blobBytes = GzipCodec.compress(Fixtures.bytes(Fixtures.GROUND_RUN))
+    coEvery { filesystem.read("blobs/blob-1.bin") } coAnswers {
+      readThread.set(Thread.currentThread().name)
+      blobBytes
+    }
+    val callerThread = Thread.currentThread().name
+
+    manager.load(thingId, DataLogId("a"))
+      .getOrThrow()
+
+    assertThat(readThread.get()).isNotNull()
+    assertThat(readThread.get()).isNotEqualTo(callerThread)
+  }
+
+  @Test
+  fun openingOneLogNeverReadsTheWholeCollection() = runTest {
+    // The list query decodes every record the Thing has — a hundred series apiece, and twenty-one
+    // records for one SkyView download. Opening a log went through it four times over: here, in
+    // ensureLocal for the blob id, inside load, and again afterwards for the rewritten catalogue.
+    // On the web build's one thread that was seconds of frozen UI before the viewer drew anything.
+    //
+    // Both stubs are set here rather than in setUp, so the list query throwing is the assertion.
+    every { store.observeAll(scope) } returns flow { error("the whole collection was read") }
+    every { store.observe("a", scope) } returns flowOf(
+      StorageEntity("a", record("a", "2026-09-02T21:47:56Z"), Instant.DISTANT_PAST)
+    )
+    coEvery { blobs.get(blobId) } returns ref(RemoteState.Synced)
+    coEvery { filesystem.read("blobs/blob-1.bin") } returns GzipCodec.compress(
+      Fixtures.bytes(Fixtures.GROUND_RUN)
+    )
+
+    val data = manager.load(thingId, DataLogId("a"))
+      .getOrThrow()
+
+    assertThat(data.rowCount).isEqualTo(256)
   }
 
   @Test

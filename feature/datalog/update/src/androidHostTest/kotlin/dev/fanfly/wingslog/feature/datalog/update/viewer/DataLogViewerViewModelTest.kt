@@ -3,13 +3,13 @@ package dev.fanfly.wingslog.feature.datalog.update.viewer
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import dev.fanfly.wingslog.datalog.DataLog
-import dev.fanfly.wingslog.feature.attachment.model.DownloadState
-import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogManager
-import dev.fanfly.wingslog.feature.datalog.datamanager.ChartLayoutStore
-import dev.fanfly.wingslog.feature.datalog.model.CanonicalSeries
-import dev.fanfly.wingslog.feature.datalog.model.DataLogSeriesData
 import dev.fanfly.wingslog.datalog.DataLogSeries
 import dev.fanfly.wingslog.datalog.DataLogSeriesKind
+import dev.fanfly.wingslog.feature.attachment.model.DownloadState
+import dev.fanfly.wingslog.feature.datalog.datamanager.ChartLayoutStore
+import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogManager
+import dev.fanfly.wingslog.feature.datalog.model.CanonicalSeries
+import dev.fanfly.wingslog.feature.datalog.model.DataLogSeriesData
 import dev.fanfly.wingslog.feature.datalog.model.GestureIntent
 import dev.fanfly.wingslog.feature.datalog.model.PaneId
 import dev.fanfly.wingslog.feature.datalog.model.SeriesKey
@@ -77,16 +77,34 @@ class DataLogViewerViewModelTest {
     DataLogViewerViewModel(manager, layouts, analytics, templates, thingId, id)
 
   private val engineCatalogue = listOf(
-    DataLogSeries(column = 1, kind = DataLogSeriesKind.DATA_LOG_SERIES_KIND_NUMERIC, canonical_id = CanonicalSeries.engine(1, "rpm")),
-    DataLogSeries(column = 2, kind = DataLogSeriesKind.DATA_LOG_SERIES_KIND_NUMERIC, canonical_id = CanonicalSeries.engine(1, "oil_temp")),
-    DataLogSeries(column = 3, kind = DataLogSeriesKind.DATA_LOG_SERIES_KIND_NUMERIC, canonical_id = CanonicalSeries.IAS),
+    DataLogSeries(
+      column = 1,
+      kind = DataLogSeriesKind.DATA_LOG_SERIES_KIND_NUMERIC,
+      canonical_id = CanonicalSeries.engine(1, "rpm")
+    ),
+    DataLogSeries(
+      column = 2,
+      kind = DataLogSeriesKind.DATA_LOG_SERIES_KIND_NUMERIC,
+      canonical_id = CanonicalSeries.engine(1, "oil_temp")
+    ),
+    DataLogSeries(
+      column = 3,
+      kind = DataLogSeriesKind.DATA_LOG_SERIES_KIND_NUMERIC,
+      canonical_id = CanonicalSeries.IAS
+    ),
   )
 
-  private fun ready(vm: DataLogViewerViewModel) = vm.uiState.value as DataLogViewerUiState.Ready
+  private fun ready(vm: DataLogViewerViewModel) =
+    vm.uiState.value as DataLogViewerUiState.Ready
 
   @Test
   fun theLayoutThisDeviceLeftIsWhatTheNextOpenRestores() = runTest {
-    every { manager.observeOne(thingId, id) } returns flowOf(record.copy(series = engineCatalogue))
+    every {
+      manager.observeOne(
+        thingId,
+        id
+      )
+    } returns flowOf(record.copy(series = engineCatalogue))
 
     val first = viewModel()
     first.addSeries(PaneId(0), SeriesKey(3))
@@ -95,13 +113,19 @@ class DataLogViewerViewModelTest {
 
     val reopened = ready(viewModel())
     assertThat(reopened.layout.panes.single().series)
-      .containsExactly(SeriesKey(1), SeriesKey(3)).inOrder()
+      .containsExactly(SeriesKey(1), SeriesKey(3))
+      .inOrder()
     assertThat(reopened.clockAxis).isTrue()
   }
 
   @Test
   fun aRememberedLayoutNamingSeriesTheLogLostFallsBackToTheDefault() = runTest {
-    every { manager.observeOne(thingId, id) } returns flowOf(record.copy(series = engineCatalogue))
+    every {
+      manager.observeOne(
+        thingId,
+        id
+      )
+    } returns flowOf(record.copy(series = engineCatalogue))
     remembered = "v1;c=0;t=0;p=41,42"
 
     val state = ready(viewModel())
@@ -275,10 +299,22 @@ class DataLogViewerViewModelTest {
   @Test
   fun tappingASeriesAlreadyInTheTargetPaneTakesItOut() = runTest {
     val catalogue = listOf(
-      DataLogSeries(column = 1, kind = DataLogSeriesKind.DATA_LOG_SERIES_KIND_NUMERIC, canonical_id = "engine[1].rpm"),
-      DataLogSeries(column = 2, kind = DataLogSeriesKind.DATA_LOG_SERIES_KIND_NUMERIC),
+      DataLogSeries(
+        column = 1,
+        kind = DataLogSeriesKind.DATA_LOG_SERIES_KIND_NUMERIC,
+        canonical_id = "engine[1].rpm"
+      ),
+      DataLogSeries(
+        column = 2,
+        kind = DataLogSeriesKind.DATA_LOG_SERIES_KIND_NUMERIC
+      ),
     )
-    every { manager.observeOne(thingId, id) } returns flowOf(record.copy(series = catalogue))
+    every {
+      manager.observeOne(
+        thingId,
+        id
+      )
+    } returns flowOf(record.copy(series = catalogue))
     val vm = viewModel()
     fun layout() = (vm.uiState.value as DataLogViewerUiState.Ready).layout
 
@@ -297,10 +333,22 @@ class DataLogViewerViewModelTest {
   @Test
   fun aSeriesInAnotherPaneIsAddedToTheTargetRatherThanRemoved() = runTest {
     val catalogue = listOf(
-      DataLogSeries(column = 1, kind = DataLogSeriesKind.DATA_LOG_SERIES_KIND_NUMERIC, canonical_id = "engine[1].rpm"),
-      DataLogSeries(column = 2, kind = DataLogSeriesKind.DATA_LOG_SERIES_KIND_NUMERIC),
+      DataLogSeries(
+        column = 1,
+        kind = DataLogSeriesKind.DATA_LOG_SERIES_KIND_NUMERIC,
+        canonical_id = "engine[1].rpm"
+      ),
+      DataLogSeries(
+        column = 2,
+        kind = DataLogSeriesKind.DATA_LOG_SERIES_KIND_NUMERIC
+      ),
     )
-    every { manager.observeOne(thingId, id) } returns flowOf(record.copy(series = catalogue))
+    every {
+      manager.observeOne(
+        thingId,
+        id
+      )
+    } returns flowOf(record.copy(series = catalogue))
     val vm = viewModel()
     fun layout() = (vm.uiState.value as DataLogViewerUiState.Ready).layout
 
@@ -315,11 +363,26 @@ class DataLogViewerViewModelTest {
   @Test
   fun thePositionSeriesGetsItsOwnPaneAndNeverASecondOne() = runTest {
     val catalogue = listOf(
-      DataLogSeries(column = 1, kind = DataLogSeriesKind.DATA_LOG_SERIES_KIND_NUMERIC, canonical_id = "engine[1].rpm"),
-      DataLogSeries(column = 2, kind = DataLogSeriesKind.DATA_LOG_SERIES_KIND_NUMERIC),
-      DataLogSeries(column = 9, kind = DataLogSeriesKind.DATA_LOG_SERIES_KIND_POSITION),
+      DataLogSeries(
+        column = 1,
+        kind = DataLogSeriesKind.DATA_LOG_SERIES_KIND_NUMERIC,
+        canonical_id = "engine[1].rpm"
+      ),
+      DataLogSeries(
+        column = 2,
+        kind = DataLogSeriesKind.DATA_LOG_SERIES_KIND_NUMERIC
+      ),
+      DataLogSeries(
+        column = 9,
+        kind = DataLogSeriesKind.DATA_LOG_SERIES_KIND_POSITION
+      ),
     )
-    every { manager.observeOne(thingId, id) } returns flowOf(record.copy(series = catalogue))
+    every {
+      manager.observeOne(
+        thingId,
+        id
+      )
+    } returns flowOf(record.copy(series = catalogue))
     val vm = viewModel()
     fun layout() = (vm.uiState.value as DataLogViewerUiState.Ready).layout
 
@@ -328,21 +391,41 @@ class DataLogViewerViewModelTest {
     assertThat(layout().panes.map { it.series }).containsExactly(
       listOf(SeriesKey(9)),
       listOf(SeriesKey(1)),
-    ).inOrder()
+    )
+      .inOrder()
 
     // Tapping it again from a chart pane takes it out instead of opening a second map pane.
     vm.toggleSeries(PaneId(0), SeriesKey(9))
-    assertThat(layout().panes.map { it.series }).containsExactly(listOf(SeriesKey(1)))
+    assertThat(layout().panes.map { it.series }).containsExactly(
+      listOf(
+        SeriesKey(1)
+      )
+    )
   }
 
   @Test
   fun noChartSeriesEverJoinsTheMapPane() = runTest {
     val catalogue = listOf(
-      DataLogSeries(column = 1, kind = DataLogSeriesKind.DATA_LOG_SERIES_KIND_NUMERIC, canonical_id = "engine[1].rpm"),
-      DataLogSeries(column = 2, kind = DataLogSeriesKind.DATA_LOG_SERIES_KIND_NUMERIC),
-      DataLogSeries(column = 9, kind = DataLogSeriesKind.DATA_LOG_SERIES_KIND_POSITION),
+      DataLogSeries(
+        column = 1,
+        kind = DataLogSeriesKind.DATA_LOG_SERIES_KIND_NUMERIC,
+        canonical_id = "engine[1].rpm"
+      ),
+      DataLogSeries(
+        column = 2,
+        kind = DataLogSeriesKind.DATA_LOG_SERIES_KIND_NUMERIC
+      ),
+      DataLogSeries(
+        column = 9,
+        kind = DataLogSeriesKind.DATA_LOG_SERIES_KIND_POSITION
+      ),
     )
-    every { manager.observeOne(thingId, id) } returns flowOf(record.copy(series = catalogue))
+    every {
+      manager.observeOne(
+        thingId,
+        id
+      )
+    } returns flowOf(record.copy(series = catalogue))
     val vm = viewModel()
     fun layout() = (vm.uiState.value as DataLogViewerUiState.Ready).layout
 
@@ -351,21 +434,37 @@ class DataLogViewerViewModelTest {
 
     // Aimed straight at the map pane, by tap and by drag: both land in a chart pane instead.
     vm.addSeries(mapPane, SeriesKey(2))
-    assertThat(layout().panes.first { it.id == mapPane }.series).containsExactly(SeriesKey(9))
+    assertThat(layout().panes.first { it.id == mapPane }.series).containsExactly(
+      SeriesKey(9)
+    )
     assertThat(layout().panes.flatMap { it.series }).contains(SeriesKey(2))
 
     vm.moveSeries(SeriesKey(1), PaneId(0), mapPane)
-    assertThat(layout().panes.first { it.id == mapPane }.series).containsExactly(SeriesKey(9))
+    assertThat(layout().panes.first { it.id == mapPane }.series).containsExactly(
+      SeriesKey(9)
+    )
     assertThat(layout().panes.first().id).isEqualTo(mapPane)
   }
 
   @Test
   fun aMapPaneAddedLastStillOpensFirst() = runTest {
     val catalogue = listOf(
-      DataLogSeries(column = 1, kind = DataLogSeriesKind.DATA_LOG_SERIES_KIND_NUMERIC, canonical_id = "engine[1].rpm"),
-      DataLogSeries(column = 9, kind = DataLogSeriesKind.DATA_LOG_SERIES_KIND_POSITION),
+      DataLogSeries(
+        column = 1,
+        kind = DataLogSeriesKind.DATA_LOG_SERIES_KIND_NUMERIC,
+        canonical_id = "engine[1].rpm"
+      ),
+      DataLogSeries(
+        column = 9,
+        kind = DataLogSeriesKind.DATA_LOG_SERIES_KIND_POSITION
+      ),
     )
-    every { manager.observeOne(thingId, id) } returns flowOf(record.copy(series = catalogue))
+    every {
+      manager.observeOne(
+        thingId,
+        id
+      )
+    } returns flowOf(record.copy(series = catalogue))
     val vm = viewModel()
     fun layout() = (vm.uiState.value as DataLogViewerUiState.Ready).layout
 
@@ -376,7 +475,8 @@ class DataLogViewerViewModelTest {
     assertThat(layout().panes.map { it.series }).containsExactly(
       listOf(SeriesKey(9)),
       listOf(SeriesKey(1)),
-    ).inOrder()
+    )
+      .inOrder()
     // Re-ordering does not steal the target from the pane the user just made.
     assertThat(layout().targetPane).isEqualTo(layout().panes.first().id)
   }
@@ -384,11 +484,26 @@ class DataLogViewerViewModelTest {
   @Test
   fun layoutEditsFlowThroughTheReadyState() = runTest {
     val catalogue = listOf(
-      DataLogSeries(column = 1, kind = DataLogSeriesKind.DATA_LOG_SERIES_KIND_NUMERIC, canonical_id = "engine[1].rpm"),
-      DataLogSeries(column = 2, kind = DataLogSeriesKind.DATA_LOG_SERIES_KIND_NUMERIC),
-      DataLogSeries(column = 3, kind = DataLogSeriesKind.DATA_LOG_SERIES_KIND_POSITION),
+      DataLogSeries(
+        column = 1,
+        kind = DataLogSeriesKind.DATA_LOG_SERIES_KIND_NUMERIC,
+        canonical_id = "engine[1].rpm"
+      ),
+      DataLogSeries(
+        column = 2,
+        kind = DataLogSeriesKind.DATA_LOG_SERIES_KIND_NUMERIC
+      ),
+      DataLogSeries(
+        column = 3,
+        kind = DataLogSeriesKind.DATA_LOG_SERIES_KIND_POSITION
+      ),
     )
-    every { manager.observeOne(thingId, id) } returns flowOf(record.copy(series = catalogue))
+    every {
+      manager.observeOne(
+        thingId,
+        id
+      )
+    } returns flowOf(record.copy(series = catalogue))
     val vm = viewModel()
     fun layout() = (vm.uiState.value as DataLogViewerUiState.Ready).layout
 
@@ -397,7 +512,11 @@ class DataLogViewerViewModelTest {
     assertThat(layout().targetPane).isEqualTo(PaneId(0))
 
     vm.addSeries(PaneId(0), SeriesKey(2))
-    assertThat(layout().panes[0].series).containsExactly(SeriesKey(1), SeriesKey(2)).inOrder()
+    assertThat(layout().panes[0].series).containsExactly(
+      SeriesKey(1),
+      SeriesKey(2)
+    )
+      .inOrder()
 
     vm.spawnPane()
     assertThat(layout().panes).hasSize(2)
@@ -414,19 +533,29 @@ class DataLogViewerViewModelTest {
     assertThat(layout().panes).hasSize(3)
     assertThat(layout().panes.first().series).containsExactly(SeriesKey(3))
     assertThat(layout().panes.map { it.id })
-      .containsExactly(PaneId(2), PaneId(0), PaneId(1)).inOrder()
+      .containsExactly(PaneId(2), PaneId(0), PaneId(1))
+      .inOrder()
 
     vm.removeSeries(PaneId(0), SeriesKey(1))
     assertThat(layout().panes.first { it.id == PaneId(0) }.series).isEmpty()
     vm.setTargetPane(PaneId(0))
     vm.removePane(PaneId(0))
-    assertThat(layout().panes.map { it.id }).containsExactly(PaneId(2), PaneId(1)).inOrder()
+    assertThat(layout().panes.map { it.id }).containsExactly(
+      PaneId(2),
+      PaneId(1)
+    )
+      .inOrder()
     assertThat(layout().targetPane).isEqualTo(PaneId(1))
   }
 
   @Test
   fun aSuccessfulOpenIsLoggedOnceWithTheLogsShape() = runTest {
-    every { manager.observeOne(thingId, id) } returns flowOf(record.copy(series = engineCatalogue))
+    every {
+      manager.observeOne(
+        thingId,
+        id
+      )
+    } returns flowOf(record.copy(series = engineCatalogue))
 
     viewModel()
 
@@ -440,24 +569,46 @@ class DataLogViewerViewModelTest {
   }
 
   @Test
-  fun theRecordIsReReadAfterLoadingSoARewrittenCatalogueIsWhatTheSidebarSees() = runTest {
-    // Loading rewrites a catalogue the parser has outgrown. The copy read before that write is the
-    // one the fix was meant to replace, so the viewer must not keep it for the session.
-    val refreshed = record.copy(series = engineCatalogue, duration_seconds = 7200)
-    every { manager.observeOne(thingId, id) } returnsMany listOf(
-      flowOf(record),
-      flowOf(refreshed),
-    )
+  fun theRecordIsReReadAfterLoadingSoARewrittenCatalogueIsWhatTheSidebarSees() =
+    runTest {
+      // Loading rewrites a catalogue the parser has outgrown. The copy read before that write is the
+      // one the fix was meant to replace, so the viewer must not keep it for the session.
+      val refreshed =
+        record.copy(series = engineCatalogue, duration_seconds = 7200)
+      every { manager.observeOne(thingId, id) } returnsMany listOf(
+        flowOf(record),
+        flowOf(refreshed),
+      )
 
-    val state = ready(viewModel())
+      val state = ready(viewModel())
 
-    assertThat(state.record.series).hasSize(3)
-    assertThat(state.record.duration_seconds).isEqualTo(7200)
+      assertThat(state.record.series).hasSize(3)
+      assertThat(state.record.duration_seconds).isEqualTo(7200)
+    }
+
+  @Test
+  fun theViewerSaysItIsReadingTheFileBeforeTheParseStarts() = runTest {
+    // On the web build the parse runs on the only thread there is, so the screen has to be told
+    // what is happening before the work begins rather than after it. Read from inside the load
+    // itself: a StateFlow conflates, so a collector here would only ever see where it ended up.
+    val vm = viewModel()
+    var whileLoading: DataLogViewerUiState? = null
+    coEvery { manager.load(thingId, id) } coAnswers {
+      whileLoading = vm.uiState.value
+      Result.success(data)
+    }
+
+    vm.retry()
+
+    assertThat(whileLoading).isEqualTo(DataLogViewerUiState.Loading(reading = true))
+    assertThat(vm.uiState.value).isInstanceOf(DataLogViewerUiState.Ready::class.java)
   }
 
   @Test
   fun aFailedLoadIsNotAnOpen() = runTest {
-    coEvery { manager.load(thingId, id) } returns Result.failure(IllegalStateException("bad csv"))
+    coEvery { manager.load(thingId, id) } returns Result.failure(
+      IllegalStateException("bad csv")
+    )
 
     viewModel()
 

@@ -19,7 +19,8 @@ object Fixtures {
   const val DYNON_SINGLE = "skyview_single_session.csv"
 
   /** Four power-on sessions in one download; the last two never got a GPS fix. */
-  const val DYNON_SESSIONS = "2019-04-28-N1234X-SN0001-15_3_4_4867-USER_LOG_DATA.csv"
+  const val DYNON_SESSIONS =
+    "2019-04-28-N1234X-SN0001-15_3_4_4867-USER_LOG_DATA.csv"
 
   /** An older 27-column Avidyne: no software id, no turbo columns. */
   const val AVIDYNE_PLAIN = "Engine_060212_152326_out.log"
@@ -35,7 +36,8 @@ object Fixtures {
 
   fun bytes(name: String): ByteArray = File(sampleDir(), name).readBytes()
 
-  fun avidyneBytes(name: String): ByteArray = File(avidyneDir(), name).readBytes()
+  fun avidyneBytes(name: String): ByteArray =
+    File(avidyneDir(), name).readBytes()
 
   fun avidyneDir(): File = File(repoRoot(), "docs/datalog/samples/avidyne")
 

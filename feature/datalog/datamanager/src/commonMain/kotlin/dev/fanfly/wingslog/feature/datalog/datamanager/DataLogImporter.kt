@@ -24,7 +24,10 @@ interface DataLogImporter {
 data class OtherThing(val id: ThingId, val name: String)
 
 fun interface OtherThingLookup {
-  suspend fun thingWithIdentifier(identity: String, excluding: ThingId): OtherThing?
+  suspend fun thingWithIdentifier(
+    identity: String,
+    excluding: ThingId
+  ): OtherThing?
 }
 
 /** The Thing's own identifier (its tail number on the airplane preset), for PRD R11. */

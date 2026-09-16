@@ -22,13 +22,25 @@ class GarminG1000ParserTest {
   private val parser = GarminParser()
 
   private suspend fun piston() =
-    parser.parse(Fixtures.g1000Bytes(Fixtures.G1000_PISTON), Fixtures.G1000_PISTON).single()
+    parser.parse(
+      Fixtures.g1000Bytes(Fixtures.G1000_PISTON),
+      Fixtures.G1000_PISTON
+    )
+      .single()
 
   private suspend fun turbineStart() =
-    parser.parse(Fixtures.g1000Bytes(Fixtures.G1000_TURBINE), Fixtures.G1000_TURBINE).single()
+    parser.parse(
+      Fixtures.g1000Bytes(Fixtures.G1000_TURBINE),
+      Fixtures.G1000_TURBINE
+    )
+      .single()
 
   private suspend fun turbineCruise() =
-    parser.parse(Fixtures.g1000Bytes(Fixtures.G1000_CRUISE), Fixtures.G1000_CRUISE).single()
+    parser.parse(
+      Fixtures.g1000Bytes(Fixtures.G1000_CRUISE),
+      Fixtures.G1000_CRUISE
+    )
+      .single()
 
   @Test
   fun aUnitsRowMakesTheFileAG1000() = runTest {
@@ -114,7 +126,9 @@ class GarminG1000ParserTest {
       .of(94.0)
     assertThat(cruise.data.numeric.getValue(n1.column).raw[0]).isWithin(1e-3f)
       .of(93.0f)
-    assertThat(cruise.series.single { it.short_name == "E1 N2" }.max).isWithin(1e-3)
+    assertThat(cruise.series.single { it.short_name == "E1 N2" }.max).isWithin(
+      1e-3
+    )
       .of(94.0)
 
     // Not only the spool speeds: engine power on the piston airframe is recorded the same way.
@@ -135,16 +149,17 @@ class GarminG1000ParserTest {
   }
 
   @Test
-  fun rowsRecordedBeforeTheClockIsValidAreDatedBackwardsNotToEpochZero() = runTest {
-    // The turbine log opens with four rows that carry no date, time or offset at all — the recorder
-    // is running before its clock is. Left at zero they would date the whole log to 1970.
-    val parsed = turbineStart()
-    assertThat(parsed.start).isEqualTo(Instant.parse("2024-08-10T15:46:35Z"))
-    assertThat(parsed.utcOffsetMinutes).isEqualTo(-300)
-    assertThat(parsed.data.timeSeconds.first()).isEqualTo(0)
-    assertThat(parsed.data.timeSeconds[4]).isEqualTo(4)
-    assertThat(parsed.durationSeconds).isEqualTo(240)
-  }
+  fun rowsRecordedBeforeTheClockIsValidAreDatedBackwardsNotToEpochZero() =
+    runTest {
+      // The turbine log opens with four rows that carry no date, time or offset at all — the recorder
+      // is running before its clock is. Left at zero they would date the whole log to 1970.
+      val parsed = turbineStart()
+      assertThat(parsed.start).isEqualTo(Instant.parse("2024-08-10T15:46:35Z"))
+      assertThat(parsed.utcOffsetMinutes).isEqualTo(-300)
+      assertThat(parsed.data.timeSeconds.first()).isEqualTo(0)
+      assertThat(parsed.data.timeSeconds[4]).isEqualTo(4)
+      assertThat(parsed.durationSeconds).isEqualTo(240)
+    }
 
   @Test
   fun positionCollapsesAndKeepsOnlyTheRowsWithAFix() = runTest {
@@ -172,10 +187,16 @@ class GarminG1000ParserTest {
     assertThat(parsed.series).hasSize(55)
     val byKind = parsed.series.groupingBy { it.kind }
       .eachCount()
-    assertThat(byKind[DataLogSeriesKind.DATA_LOG_SERIES_KIND_NUMERIC]).isEqualTo(49)
-    assertThat(byKind[DataLogSeriesKind.DATA_LOG_SERIES_KIND_DISCRETE]).isEqualTo(1)
+    assertThat(byKind[DataLogSeriesKind.DATA_LOG_SERIES_KIND_NUMERIC]).isEqualTo(
+      49
+    )
+    assertThat(byKind[DataLogSeriesKind.DATA_LOG_SERIES_KIND_DISCRETE]).isEqualTo(
+      1
+    )
     assertThat(byKind[DataLogSeriesKind.DATA_LOG_SERIES_KIND_TEXT]).isEqualTo(4)
-    assertThat(byKind[DataLogSeriesKind.DATA_LOG_SERIES_KIND_POSITION]).isEqualTo(1)
+    assertThat(byKind[DataLogSeriesKind.DATA_LOG_SERIES_KIND_POSITION]).isEqualTo(
+      1
+    )
     assertThat(parsed.series.map { it.short_name }).containsNoneOf(
       "Lcl Date",
       "Lcl Time",
@@ -208,7 +229,8 @@ class GarminG1000ParserTest {
     Fixtures.g1000Dir()
       .listFiles { f -> f.extension == "csv" }!!
       .forEach { file ->
-        val parsed = parser.parse(file.readBytes(), file.name).single()
+        val parsed = parser.parse(file.readBytes(), file.name)
+          .single()
         assertThat(parsed.format).isEqualTo(DataLogFormat.DATA_LOG_FORMAT_GARMIN_G1000)
         assertThat(parsed.sampleCount).isEqualTo(240)
         assertThat(parsed.series.size).isGreaterThan(40)

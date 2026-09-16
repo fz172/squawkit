@@ -2,6 +2,7 @@ package dev.fanfly.wingslog.feature.datalog.datamanager.impl
 
 import co.touchlab.kermit.Logger
 import dev.fanfly.wingslog.core.datetime.toInstant
+import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.file.GzipCodec
 import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.storage.CollectionKind
@@ -23,12 +24,11 @@ import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogCache
 import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogImporter
 import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogManager
 import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogParser
-import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.feature.datalog.datamanager.DerivedFields
 import dev.fanfly.wingslog.feature.datalog.datamanager.ThingIdentifierLookup
-import dev.fanfly.wingslog.feature.datalog.model.ParsedDataLog
 import dev.fanfly.wingslog.feature.datalog.model.DataLogSeriesData
 import dev.fanfly.wingslog.feature.datalog.model.ImportProgress
+import dev.fanfly.wingslog.feature.datalog.model.ParsedDataLog
 import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.id.ThingId
 import kotlinx.coroutines.CoroutineDispatcher
@@ -82,8 +82,32 @@ class DataLogManagerImpl(
         }
       }
 
+  /**
+   * One row, by id — never the list filtered down to it.
+   *
+   * It read `observe(thingId).map { first { … } }` before, which decodes every data log the Thing
+   * has to answer a question about one of them. Opening a log asks four times over: once here, once
+   * through `ensureLocal` for the blob id, once inside `load`, and once more afterwards to pick up
+   * a rewritten catalogue. On an account holding a SkyView download's worth of records — twenty-one
+   * of them, a hundred series each — that was four passes of a few thousand protobuf objects before
+   * the screen could draw, and on the web build's one thread it was seconds of frozen UI *before*
+   * the viewer even said it was reading anything.
+   */
+  @OptIn(ExperimentalCoroutinesApi::class)
   override fun observeOne(thingId: ThingId, id: DataLogId): Flow<DataLog?> =
-    observe(thingId).map { logs -> logs.firstOrNull { it.id == id } }
+    scopeResolver.resolve(thingId.value)
+      .flatMapLatest { scope ->
+        if (scope == null) {
+          flowOf(null)
+        } else {
+          store.observe(id.value, scope)
+            .map { it?.value }
+            .catch { e ->
+              logger.w(e) { "Error observing data log $id" }
+              emit(null)
+            }
+        }
+      }
 
   override fun import(
     thingId: ThingId,
@@ -136,17 +160,22 @@ class DataLogManagerImpl(
     if (ref.remoteState == RemoteState.RemoteOnly || ref.remoteState == RemoteState.RemoteMissing) {
       error("Data log $id is not downloaded")
     }
-    val stored = filesystem.read(ref.relativePath)
-    val bytes = when (record.encoding) {
-      DataLogEncoding.DATA_LOG_ENCODING_GZIP -> GzipCodec.decompress(stored)
-      else -> stored
-    }
     val parser = parsers.firstOrNull { record.format in it.formats }
       ?: error("No parser for ${record.format}")
-    // Only this record's session is materialised. A SkyView download holds every power-on since
-    // the last one, and building all of them to draw one is the difference between a second and a
+    // Reading the file and inflating it are part of the work, not preliminaries to it. A 46 MB
+    // SkyView download is about 6 MB on disk, and doing either on the caller's dispatcher froze the
+    // viewer for seconds before it could draw so much as a spinner — the parse was already off the
+    // main thread and was never the whole cost.
+    //
+    // Only this record's session is materialised. A SkyView download holds every power-on since the
+    // last one, and building all of them to draw one is the difference between a second and a
     // minute on a phone.
     val parsed = withContext(dispatcher) {
+      val stored = filesystem.read(ref.relativePath)
+      val bytes = when (record.encoding) {
+        DataLogEncoding.DATA_LOG_ENCODING_GZIP -> GzipCodec.decompress(stored)
+        else -> stored
+      }
       parser.parse(bytes, record.file_name, session = record.session_index)
     }.firstOrNull()
       ?: error("Data log $id has no session ${record.session_index}")

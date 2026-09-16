@@ -8,21 +8,21 @@ import dev.fanfly.wingslog.feature.datalog.datamanager.CanonicalSeriesRegistry
 import dev.fanfly.wingslog.feature.datalog.datamanager.Confidence
 import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogParseException
 import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogParser
+import dev.fanfly.wingslog.feature.datalog.datamanager.csv.Breather
 import dev.fanfly.wingslog.feature.datalog.datamanager.csv.ColumnAccumulator
 import dev.fanfly.wingslog.feature.datalog.datamanager.csv.LineCursor
+import dev.fanfly.wingslog.feature.datalog.datamanager.csv.decodeText
 import dev.fanfly.wingslog.feature.datalog.datamanager.csv.forwardFilled
 import dev.fanfly.wingslog.feature.datalog.datamanager.csv.medianPositiveDelta
 import dev.fanfly.wingslog.feature.datalog.datamanager.csv.parseDoubleAt
 import dev.fanfly.wingslog.feature.datalog.datamanager.csv.parseIntAt
 import dev.fanfly.wingslog.feature.datalog.datamanager.csv.parseOffsetMinutes
 import dev.fanfly.wingslog.feature.datalog.datamanager.csv.splitUnit
-import dev.fanfly.wingslog.feature.datalog.datamanager.garmin.GarminParser.Companion.YIELD_EVERY_ROWS
 import dev.fanfly.wingslog.feature.datalog.model.CanonicalSeries
 import dev.fanfly.wingslog.feature.datalog.model.DataLogSeriesData
 import dev.fanfly.wingslog.feature.datalog.model.NumericColumn
 import dev.fanfly.wingslog.feature.datalog.model.ParsedDataLog
 import dev.fanfly.wingslog.feature.datalog.model.PositionColumn
-import kotlinx.coroutines.yield
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
@@ -43,7 +43,8 @@ import kotlin.time.Instant
  *
  * The row walk indexes into each line and parses numbers in place rather than splitting cells into
  * strings — the difference between a phone parsing a 20,000-row file in under a second and in ten.
- * `yield()` every [YIELD_EVERY_ROWS] keeps the web UI thread responsive.
+ * A [Breather] hands the thread back once a frame's worth of work has gone by, which is what keeps
+ * the web build's one thread able to draw.
  */
 class GarminParser : DataLogParser {
 
@@ -65,7 +66,7 @@ class GarminParser : DataLogParser {
   override val version: Int = 3
 
   override fun sniff(header: ByteArray): Confidence {
-    val text = header.decodeToString(throwOnInvalidSequence = false)
+    val text = decodeText(header)
       .removePrefix(BOM)
     val first = text.substringBefore('\n')
       .trimEnd('\r')
@@ -88,8 +89,11 @@ class GarminParser : DataLogParser {
     return listOf(parseOne(bytes, fileName))
   }
 
-  private suspend fun parseOne(bytes: ByteArray, fileName: String): ParsedDataLog {
-    val text = bytes.decodeToString(throwOnInvalidSequence = false)
+  private suspend fun parseOne(
+    bytes: ByteArray,
+    fileName: String
+  ): ParsedDataLog {
+    val text = decodeText(bytes)
       .removePrefix(BOM)
     val lines = LineCursor(text)
     val header = lines.next()
@@ -132,6 +136,7 @@ class GarminParser : DataLogParser {
     var offsetSeen = false
     var rows = 0
     var firstClockedRow = -1
+    val breather = Breather()
     var year = 0;
     var month = 0;
     var day = 0
@@ -208,7 +213,7 @@ class GarminParser : DataLogParser {
           utcOffsetMinutes * 60L
       } else if (rows > 0) epochSeconds[rows - 1] else 0L
       rows++
-      if (rows % YIELD_EVERY_ROWS == 0) yield()
+      breather.breathe()
     }
     if (rows == 0) throw DataLogParseException("no rows")
 
@@ -364,7 +369,8 @@ class GarminParser : DataLogParser {
      */
     fun percentScale(unit: String, min: Float, max: Float): Float {
       if (format != DataLogFormat.DATA_LOG_FORMAT_GARMIN_G1000 || unit != PERCENT_UNIT) return 1f
-      val largest = maxOf(if (min.isFinite()) -min else 0f, if (max.isFinite()) max else 0f)
+      val largest =
+        maxOf(if (min.isFinite()) -min else 0f, if (max.isFinite()) max else 0f)
       return if (largest <= PERCENT_FRACTION_CEILING) 100f else 1f
     }
 
@@ -427,6 +433,5 @@ class GarminParser : DataLogParser {
     /** Above this a G1000 percent column is already a percentage, so it is left alone. */
     const val PERCENT_FRACTION_CEILING = 1.5f
     const val POSITION_NAME = "Position"
-    const val YIELD_EVERY_ROWS = 500
   }
 }

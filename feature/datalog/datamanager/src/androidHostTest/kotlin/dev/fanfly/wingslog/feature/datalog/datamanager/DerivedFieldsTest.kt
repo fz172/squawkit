@@ -19,12 +19,14 @@ class DerivedFieldsTest {
     parser.parse(
       Fixtures.synthetic(columns, rows),
       "log_20260902_144756_XX1.csv"
-    ).single()
+    )
+      .single()
 
   @Test
   fun theFixtureIsAGroundRun() = runTest {
     val parsed =
-      parser.parse(Fixtures.bytes(Fixtures.GROUND_RUN), Fixtures.GROUND_RUN).single()
+      parser.parse(Fixtures.bytes(Fixtures.GROUND_RUN), Fixtures.GROUND_RUN)
+        .single()
     assertThat(DerivedFields.airborne(parsed)).isFalse()
     assertThat(DerivedFields.endPosition(parsed)).isEqualTo(39.0810252 to -114.1003005)
   }

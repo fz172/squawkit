@@ -5,14 +5,19 @@ import dev.fanfly.wingslog.feature.datalog.model.SeriesKey
 enum class Axis { LEFT, RIGHT, NONE }
 
 /** The series of a pane that share a [unit], and the axis they read on (PRD R22). */
-data class UnitGroup(val unit: String, val series: List<SeriesKey>, val axis: Axis)
+data class UnitGroup(
+  val unit: String,
+  val series: List<SeriesKey>,
+  val axis: Axis
+)
 
 /** A fitted Y scale. */
 data class YRange(val min: Float, val max: Float) {
   val span: Float get() = max - min
 
   /** 0 at [min], 1 at [max]. */
-  fun fraction(value: Float): Float = if (span == 0f) 0.5f else (value - min) / span
+  fun fraction(value: Float): Float =
+    if (span == 0f) 0.5f else (value - min) / span
 }
 
 object UnitGroups {
@@ -27,7 +32,11 @@ object UnitGroups {
     val order = LinkedHashMap<String, MutableList<SeriesKey>>()
     series.forEach { (key, unit) -> order.getOrPut(unit) { mutableListOf() } += key }
     return order.entries.mapIndexed { index, (unit, keys) ->
-      UnitGroup(unit, keys, when (index) { 0 -> Axis.LEFT; 1 -> Axis.RIGHT; else -> Axis.NONE })
+      UnitGroup(
+        unit, keys, when (index) {
+          0 -> Axis.LEFT; 1 -> Axis.RIGHT; else -> Axis.NONE
+        }
+      )
     }
   }
 
@@ -57,5 +66,6 @@ object UnitGroups {
   }
 
   /** Grid lines at quartiles of [range] (design §11.2). */
-  fun gridValues(range: YRange): List<Float> = (0..4).map { range.min + range.span * it / 4f }
+  fun gridValues(range: YRange): List<Float> =
+    (0..4).map { range.min + range.span * it / 4f }
 }

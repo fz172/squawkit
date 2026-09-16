@@ -16,33 +16,59 @@ class SeriesPaletteTest {
 
   /** WCAG 2 contrast ratio. */
   private fun contrast(a: Color, b: Color): Double {
-    val la = a.luminance().toDouble()
-    val lb = b.luminance().toDouble()
+    val la = a.luminance()
+      .toDouble()
+    val lb = b.luminance()
+      .toDouble()
     return (maxOf(la, lb) + 0.05) / (minOf(la, lb) + 0.05)
   }
 
   @Test
   fun everyColourClearsThreeToOneOnItsSurface() {
     SeriesPalette.LIGHT.forEachIndexed { i, c ->
-      assertWithMessage("light[$i]").that(contrast(c, lightSurface)).isAtLeast(3.0)
+      assertWithMessage("light[$i]").that(contrast(c, lightSurface))
+        .isAtLeast(3.0)
     }
     SeriesPalette.DARK.forEachIndexed { i, c ->
-      assertWithMessage("dark[$i]").that(contrast(c, darkSurface)).isAtLeast(3.0)
+      assertWithMessage("dark[$i]").that(contrast(c, darkSurface))
+        .isAtLeast(3.0)
     }
   }
 
   @Test
   fun presetSeriesNeverCollideWithinTheirPreset() {
-    fun indices(vararg ids: String) = ids.map { SeriesPalette.index(SeriesKey(0), it) }
+    fun indices(vararg ids: String) =
+      ids.map { SeriesPalette.index(SeriesKey(0), it) }
+
     val engine = indices(
-      CanonicalSeries.engine(1, "rpm"), CanonicalSeries.engine(1, "map"),
-      CanonicalSeries.engine(1, "oil_press"), CanonicalSeries.engine(1, "oil_temp"),
+      CanonicalSeries.engine(1, "rpm"),
+      CanonicalSeries.engine(1, "map"),
+      CanonicalSeries.engine(1, "oil_press"),
+      CanonicalSeries.engine(1, "oil_temp"),
     )
-    val cylinders = indices(*(1..4).map { CanonicalSeries.engine(1, "cht", it) }.toTypedArray() +
-      (1..4).map { CanonicalSeries.engine(1, "egt", it) }.toTypedArray())
-    val flight = indices(CanonicalSeries.ALT_GPS, CanonicalSeries.IAS, CanonicalSeries.VERTICAL_SPEED)
-    val electrical = indices(CanonicalSeries.volts(1), CanonicalSeries.volts(2), CanonicalSeries.amps(1), CanonicalSeries.amps(2))
-    listOf(engine, cylinders, flight, electrical).forEach { assertThat(it.toSet()).hasSize(it.size) }
+    val cylinders = indices(
+      *(1..4).map { CanonicalSeries.engine(1, "cht", it) }
+      .toTypedArray() +
+      (1..4).map { CanonicalSeries.engine(1, "egt", it) }
+        .toTypedArray()
+    )
+    val flight = indices(
+      CanonicalSeries.ALT_GPS,
+      CanonicalSeries.IAS,
+      CanonicalSeries.VERTICAL_SPEED
+    )
+    val electrical = indices(
+      CanonicalSeries.volts(1),
+      CanonicalSeries.volts(2),
+      CanonicalSeries.amps(1),
+      CanonicalSeries.amps(2)
+    )
+    listOf(
+      engine,
+      cylinders,
+      flight,
+      electrical
+    ).forEach { assertThat(it.toSet()).hasSize(it.size) }
   }
 
   @Test
@@ -58,7 +84,9 @@ class SeriesPaletteTest {
     val a = SeriesPalette.index(SeriesKey(55), "")
     assertThat(a).isEqualTo(SeriesPalette.index(SeriesKey(55), ""))
     assertThat(a).isIn(0 until 8)
-    assertThat(SeriesPalette.index(SeriesKey(55), "")).isNotEqualTo(SeriesPalette.index(SeriesKey(56), "").takeIf { it != a } ?: -1)
+    assertThat(SeriesPalette.index(SeriesKey(55), "")).isNotEqualTo(
+      SeriesPalette.index(SeriesKey(56), "")
+        .takeIf { it != a } ?: -1)
   }
 
   @Test
@@ -66,18 +94,43 @@ class SeriesPaletteTest {
     // OpenStreetMap's land fill, which most of a track crosses.
     val tiles = Color(0xFFF2EFE9)
 
-    assertWithMessage("on tiles").that(contrast(SeriesPalette.MAP_TRACK, tiles)).isAtLeast(3.0)
-    assertWithMessage("on light").that(contrast(SeriesPalette.MAP_TRACK, lightSurface)).isAtLeast(3.0)
-    assertWithMessage("on dark").that(contrast(SeriesPalette.MAP_TRACK, darkSurface)).isAtLeast(3.0)
+    assertWithMessage("on tiles").that(contrast(SeriesPalette.MAP_TRACK, tiles))
+      .isAtLeast(3.0)
+    assertWithMessage("on light").that(
+      contrast(
+        SeriesPalette.MAP_TRACK,
+        lightSurface
+      )
+    )
+      .isAtLeast(3.0)
+    assertWithMessage("on dark").that(
+      contrast(
+        SeriesPalette.MAP_TRACK,
+        darkSurface
+      )
+    )
+      .isAtLeast(3.0)
   }
 
   @Test
   fun thePositionSeriesTakesTheTrackColourOnEitherTheme() {
     val key = SeriesKey(9)
 
-    assertThat(SeriesPalette.colorFor(key, CanonicalSeries.POSITION, dark = true))
+    assertThat(
+      SeriesPalette.colorFor(
+        key,
+        CanonicalSeries.POSITION,
+        dark = true
+      )
+    )
       .isEqualTo(SeriesPalette.MAP_TRACK)
-    assertThat(SeriesPalette.colorFor(key, CanonicalSeries.POSITION, dark = false))
+    assertThat(
+      SeriesPalette.colorFor(
+        key,
+        CanonicalSeries.POSITION,
+        dark = false
+      )
+    )
       .isEqualTo(SeriesPalette.MAP_TRACK)
     // It is not one of the eight, so it can never be handed to a chart series by the hash either.
     assertThat(SeriesPalette.DARK).doesNotContain(SeriesPalette.MAP_TRACK)

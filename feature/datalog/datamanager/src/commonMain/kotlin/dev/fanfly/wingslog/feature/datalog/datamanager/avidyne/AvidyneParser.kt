@@ -8,8 +8,11 @@ import dev.fanfly.wingslog.feature.datalog.datamanager.CanonicalSeriesRegistry
 import dev.fanfly.wingslog.feature.datalog.datamanager.Confidence
 import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogParseException
 import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogParser
+import dev.fanfly.wingslog.feature.datalog.datamanager.avidyne.AvidyneParser.Companion.UNITS
+import dev.fanfly.wingslog.feature.datalog.datamanager.csv.Breather
 import dev.fanfly.wingslog.feature.datalog.datamanager.csv.ColumnAccumulator
 import dev.fanfly.wingslog.feature.datalog.datamanager.csv.LineCursor
+import dev.fanfly.wingslog.feature.datalog.datamanager.csv.decodeText
 import dev.fanfly.wingslog.feature.datalog.datamanager.csv.forwardFilled
 import dev.fanfly.wingslog.feature.datalog.datamanager.csv.parseDoubleAt
 import dev.fanfly.wingslog.feature.datalog.datamanager.csv.parseIntAt
@@ -18,14 +21,12 @@ import dev.fanfly.wingslog.feature.datalog.model.DataLogSeriesData
 import dev.fanfly.wingslog.feature.datalog.model.NumericColumn
 import dev.fanfly.wingslog.feature.datalog.model.ParsedDataLog
 import dev.fanfly.wingslog.feature.datalog.model.PositionColumn
-import kotlinx.coroutines.yield
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
 import kotlin.math.abs
-import kotlin.time.Instant
 
 /**
  * Avidyne Entegra / EX5000 `Engine_*_out.log` (design §6.2).
@@ -67,7 +68,7 @@ class AvidyneParser : DataLogParser {
   override val version: Int = 1
 
   override fun sniff(header: ByteArray): Confidence {
-    val text = header.decodeToString(throwOnInvalidSequence = false)
+    val text = decodeText(header)
       .removePrefix(BOM)
     val first = text.substringBefore('\n')
       .trimEnd('\r')
@@ -85,7 +86,7 @@ class AvidyneParser : DataLogParser {
   }
 
   private suspend fun parseOne(bytes: ByteArray): ParsedDataLog {
-    val text = bytes.decodeToString(throwOnInvalidSequence = false)
+    val text = decodeText(bytes)
       .removePrefix(BOM)
     val lines = LineCursor(text)
     val title = lines.next()
@@ -96,7 +97,10 @@ class AvidyneParser : DataLogParser {
       ?: throw DataLogParseException("not an Avidyne log: no start date on line 2")
     val names = lines.next()
       ?.split(',')
-      ?.map { it.trim().trim('"') }
+      ?.map {
+        it.trim()
+          .trim('"')
+      }
       ?: throw DataLogParseException("missing column names")
     val columnCount = names.size
     if (columnCount < 2) throw DataLogParseException("no columns")
@@ -115,12 +119,15 @@ class AvidyneParser : DataLogParser {
     val columns = arrayOfNulls<ColumnAccumulator>(columnCount)
     val secondsOfDay = IntArray(capacity)
     val dayOffsets = IntArray(capacity)
-    val latitude = if (hasPosition) DoubleArray(capacity) { Double.NaN } else null
-    val longitude = if (hasPosition) DoubleArray(capacity) { Double.NaN } else null
+    val latitude =
+      if (hasPosition) DoubleArray(capacity) { Double.NaN } else null
+    val longitude =
+      if (hasPosition) DoubleArray(capacity) { Double.NaN } else null
     var rows = 0
     var previousClock = -1
     var day = 0
     var started = false
+    val breather = Breather()
 
     while (true) {
       val line = lines.next() ?: break
@@ -156,8 +163,12 @@ class AvidyneParser : DataLogParser {
         if (e > s) {
           when {
             col == timeCol -> Unit
-            hasPosition && col == latCol -> latitudeHere = parseDoubleAt(line, s, e)
-            hasPosition && col == lonCol -> longitudeHere = parseDoubleAt(line, s, e)
+            hasPosition && col == latCol -> latitudeHere =
+              parseDoubleAt(line, s, e)
+
+            hasPosition && col == lonCol -> longitudeHere =
+              parseDoubleAt(line, s, e)
+
             else -> {
               val quoted = line[s] == '"' && line[e - 1] == '"' && e - s >= 2
               val acc = columns[col]
@@ -194,7 +205,7 @@ class AvidyneParser : DataLogParser {
         }
       }
       rows++
-      if (rows % YIELD_EVERY_ROWS == 0) yield()
+      breather.breathe()
     }
     if (rows == 0) throw DataLogParseException("no rows")
 
@@ -298,7 +309,6 @@ class AvidyneParser : DataLogParser {
     const val LATITUDE_NAME = "LAT"
     const val LONGITUDE_NAME = "LON"
     const val POSITION_NAME = "Position"
-    const val YIELD_EVERY_ROWS = 500
     const val SECONDS_PER_DAY = 24 * 60 * 60
 
     /** Below this a backwards clock is the unit correcting itself, not a new day. */
@@ -360,7 +370,8 @@ class AvidyneParser : DataLogParser {
       if (month !in 1..12 || day !in 1..31 || shortYear !in 0..99) return null
       // These units shipped from the late nineties; a two-digit year rolls at the same point every
       // other reader of this format does.
-      val year = if (shortYear >= NINETEEN_HUNDREDS_FROM) 1900 + shortYear else 2000 + shortYear
+      val year =
+        if (shortYear >= NINETEEN_HUNDREDS_FROM) 1900 + shortYear else 2000 + shortYear
       val clock = parseClock(text, space + 1, text.length)
       if (clock < 0) return null
       return HeaderStamp(LocalDate(year, month, day), clock)

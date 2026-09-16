@@ -11,10 +11,14 @@ class MapGeometryTest {
 
   @Test
   fun mercatorPutsTheOriginInTheMiddleAndGreenwichOnTheSeam() {
-    assertThat(WebMercator.normalizedX(0.0)).isWithin(1e-9).of(0.5)
-    assertThat(WebMercator.normalizedX(-180.0)).isWithin(1e-9).of(0.0)
-    assertThat(WebMercator.normalizedX(180.0)).isWithin(1e-9).of(1.0)
-    assertThat(WebMercator.normalizedY(0.0)).isWithin(1e-9).of(0.5)
+    assertThat(WebMercator.normalizedX(0.0)).isWithin(1e-9)
+      .of(0.5)
+    assertThat(WebMercator.normalizedX(-180.0)).isWithin(1e-9)
+      .of(0.0)
+    assertThat(WebMercator.normalizedX(180.0)).isWithin(1e-9)
+      .of(1.0)
+    assertThat(WebMercator.normalizedY(0.0)).isWithin(1e-9)
+      .of(0.5)
     // North is up: a higher latitude is a smaller y.
     assertThat(WebMercator.normalizedY(45.0)).isLessThan(0.5)
     assertThat(WebMercator.normalizedY(-45.0)).isGreaterThan(0.5)
@@ -23,7 +27,8 @@ class MapGeometryTest {
   @Test
   fun latitudesPastTheMercatorLimitClampInsteadOfDiverging() {
     val atLimit = WebMercator.normalizedY(WebMercator.MAX_LATITUDE)
-    assertThat(WebMercator.normalizedY(89.9)).isWithin(1e-9).of(atLimit)
+    assertThat(WebMercator.normalizedY(89.9)).isWithin(1e-9)
+      .of(atLimit)
     assertThat(atLimit).isAtLeast(0.0)
     assertThat(atLimit).isAtMost(1.0)
   }
@@ -37,17 +42,22 @@ class MapGeometryTest {
 
     val bounds = position.bounds()!!
 
-    assertThat(bounds.minX).isWithin(1e-9).of(WebMercator.normalizedX(-122.0))
-    assertThat(bounds.maxX).isWithin(1e-9).of(WebMercator.normalizedX(-121.0))
+    assertThat(bounds.minX).isWithin(1e-9)
+      .of(WebMercator.normalizedX(-122.0))
+    assertThat(bounds.maxX).isWithin(1e-9)
+      .of(WebMercator.normalizedX(-121.0))
     // A longitude with no latitude beside it is not a fix, so 5°E is not in the box.
     assertThat(bounds.maxX).isLessThan(WebMercator.normalizedX(5.0))
-    assertThat(bounds.minY).isWithin(1e-9).of(WebMercator.normalizedY(38.0))
-    assertThat(bounds.maxY).isWithin(1e-9).of(WebMercator.normalizedY(37.0))
+    assertThat(bounds.minY).isWithin(1e-9)
+      .of(WebMercator.normalizedY(38.0))
+    assertThat(bounds.maxY).isWithin(1e-9)
+      .of(WebMercator.normalizedY(37.0))
   }
 
   @Test
   fun aLogWithNoFixHasNoBounds() {
-    val empty = PositionColumn(doubleArrayOf(Double.NaN), doubleArrayOf(Double.NaN))
+    val empty =
+      PositionColumn(doubleArrayOf(Double.NaN), doubleArrayOf(Double.NaN))
     assertThat(empty.bounds()).isNull()
     assertThat(PositionColumn(DoubleArray(0), DoubleArray(0)).bounds()).isNull()
   }
@@ -64,16 +74,22 @@ class MapGeometryTest {
     val width = 800f
     val height = 400f
 
-    val viewport = fitCamera(bounds, width, height, fitFraction = 0.8, limits = limits)
-      .viewport(width, height, tile, maxZoom = 19)
+    val viewport =
+      fitCamera(bounds, width, height, fitFraction = 0.8, limits = limits)
+        .viewport(width, height, tile, maxZoom = 19)
 
-    assertThat(viewport.screenX(bounds.centerX)).isWithin(1e-3f).of(width / 2f)
-    assertThat(viewport.screenY(bounds.centerY)).isWithin(1e-3f).of(height / 2f)
+    assertThat(viewport.screenX(bounds.centerX)).isWithin(1e-3f)
+      .of(width / 2f)
+    assertThat(viewport.screenY(bounds.centerY)).isWithin(1e-3f)
+      .of(height / 2f)
     // Scale is continuous, so the track fills the fraction exactly on its tighter axis rather than
     // falling back to the next whole tile zoom.
-    val spanXPx = abs(viewport.screenX(bounds.maxX) - viewport.screenX(bounds.minX))
-    val spanYPx = abs(viewport.screenY(bounds.maxY) - viewport.screenY(bounds.minY))
-    assertThat(maxOf(spanXPx / width, spanYPx / height)).isWithin(1e-3f).of(0.8f)
+    val spanXPx =
+      abs(viewport.screenX(bounds.maxX) - viewport.screenX(bounds.minX))
+    val spanYPx =
+      abs(viewport.screenY(bounds.maxY) - viewport.screenY(bounds.minY))
+    assertThat(maxOf(spanXPx / width, spanYPx / height)).isWithin(1e-3f)
+      .of(0.8f)
   }
 
   @Test
@@ -86,12 +102,15 @@ class MapGeometryTest {
     val bounds = position.bounds()!!
     val height = 300f
 
-    val camera = fitCamera(bounds, 800f, height, fitFraction = 0.8, limits = limits)
+    val camera =
+      fitCamera(bounds, 800f, height, fitFraction = 0.8, limits = limits)
     val viewport = camera.viewport(800f, height, tile, maxZoom = 19)
 
     // The camera zooms past what the tiles carry, so the track still fills the pane...
-    val spanYPx = abs(viewport.screenY(bounds.maxY) - viewport.screenY(bounds.minY))
-    assertThat(spanYPx).isWithin(1f).of(height * 0.8f)
+    val spanYPx =
+      abs(viewport.screenY(bounds.maxY) - viewport.screenY(bounds.minY))
+    assertThat(spanYPx).isWithin(1f)
+      .of(height * 0.8f)
     // ...while the tiles fetched stay at the deepest zoom that exists, drawn larger than they were cut.
     assertThat(viewport.zoom).isEqualTo(19)
     assertThat(viewport.tileScreenSizePx()).isGreaterThan(tile.toDouble())
@@ -99,9 +118,16 @@ class MapGeometryTest {
 
   @Test
   fun aTrackThatNeverMovedOpensAtTheDeepestScaleAllowed() {
-    val still = PositionColumn(doubleArrayOf(37.0, 37.0), doubleArrayOf(-122.0, -122.0))
+    val still =
+      PositionColumn(doubleArrayOf(37.0, 37.0), doubleArrayOf(-122.0, -122.0))
 
-    val camera = fitCamera(still.bounds()!!, 800f, 400f, fitFraction = 0.8, limits = limits)
+    val camera = fitCamera(
+      still.bounds()!!,
+      800f,
+      400f,
+      fitFraction = 0.8,
+      limits = limits
+    )
 
     assertThat(camera.worldSizePx).isEqualTo(limits.endInclusive)
   }
@@ -121,9 +147,12 @@ class MapGeometryTest {
     val zoomed = camera.scaleBy(2f, focusX, focusY, width, height, limits)
     val after = zoomed.viewport(width, height, tile, maxZoom = 19)
 
-    assertThat(zoomed.worldSizePx).isWithin(1e-6).of(8192.0)
-    assertThat(after.screenX(underFinger)).isWithin(1e-2f).of(focusX)
-    assertThat(after.screenY(underFingerY)).isWithin(1e-2f).of(focusY)
+    assertThat(zoomed.worldSizePx).isWithin(1e-6)
+      .of(8192.0)
+    assertThat(after.screenX(underFinger)).isWithin(1e-2f)
+      .of(focusX)
+    assertThat(after.screenY(underFingerY)).isWithin(1e-2f)
+      .of(focusY)
   }
 
   @Test
@@ -143,7 +172,8 @@ class MapGeometryTest {
 
     // Dragging the map right moves the centre left by the same share of the world.
     val panned = camera.panBy(100f, 0f)
-    assertThat(panned.centerX).isWithin(1e-9).of(0.4)
+    assertThat(panned.centerX).isWithin(1e-9)
+      .of(0.4)
 
     assertThat(camera.panBy(-1e6f, -1e6f).centerX).isEqualTo(1.0)
     assertThat(camera.panBy(1e6f, 1e6f).centerY).isEqualTo(0.0)
@@ -151,7 +181,8 @@ class MapGeometryTest {
 
   @Test
   fun tilesCoverThePaneAndStopAtTheEdgeOfTheWorld() {
-    val viewport = MapViewport(zoom = 1, worldSizePx = 512.0, leftPx = 0.0, topPx = 0.0)
+    val viewport =
+      MapViewport(zoom = 1, worldSizePx = 512.0, leftPx = 0.0, topPx = 0.0)
 
     val tiles = viewport.tiles(widthPx = 512f, heightPx = 512f)
 
@@ -159,14 +190,21 @@ class MapGeometryTest {
     assertThat(tiles).hasSize(4)
     assertThat(tiles.map { it.x to it.y })
       .containsExactly(0 to 0, 1 to 0, 0 to 1, 1 to 1)
-    assertThat(tiles.first { it.x == 1 && it.y == 1 }.leftPx).isWithin(1e-3f).of(256f)
-    assertThat(tiles.first().sizePx).isWithin(1e-3f).of(256f)
+    assertThat(tiles.first { it.x == 1 && it.y == 1 }.leftPx).isWithin(1e-3f)
+      .of(256f)
+    assertThat(tiles.first().sizePx).isWithin(1e-3f)
+      .of(256f)
   }
 
   @Test
   fun tilesOffTheWorldAreNotRequested() {
     // Scrolled past the north-west corner: the tiles that would sit there do not exist.
-    val viewport = MapViewport(zoom = 1, worldSizePx = 512.0, leftPx = -300.0, topPx = -300.0)
+    val viewport = MapViewport(
+      zoom = 1,
+      worldSizePx = 512.0,
+      leftPx = -300.0,
+      topPx = -300.0
+    )
 
     val tiles = viewport.tiles(widthPx = 400f, heightPx = 400f)
 

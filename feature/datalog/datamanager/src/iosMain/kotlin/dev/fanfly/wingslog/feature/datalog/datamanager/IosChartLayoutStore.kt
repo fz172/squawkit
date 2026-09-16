@@ -8,7 +8,8 @@ import platform.Foundation.NSUserDefaults
 class IosChartLayoutStore : ChartLayoutStore {
   private val defaults = NSUserDefaults.standardUserDefaults
 
-  override fun load(id: DataLogId): String? = defaults.stringForKey(PREFIX + id.value)
+  override fun load(id: DataLogId): String? =
+    defaults.stringForKey(PREFIX + id.value)
 
   override fun save(id: DataLogId, encoded: String) {
     defaults.setObject(encoded, PREFIX + id.value)

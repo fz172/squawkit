@@ -9,9 +9,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
@@ -25,7 +25,12 @@ sealed interface DropTarget {
 }
 
 /** A chip in flight: what it carries and where the pointer is, in window coordinates. [from] is null for a sidebar row. */
-data class SeriesDrag(val key: SeriesKey, val label: String, val from: PaneId?, val position: Offset)
+data class SeriesDrag(
+  val key: SeriesKey,
+  val label: String,
+  val from: PaneId?,
+  val position: Offset
+)
 
 /**
  * One drag at a time across the viewer. Chips report their gesture here; panes and the *New pane*
@@ -55,7 +60,8 @@ class SeriesDragState {
   }
 
   /** The target under the pointer, if any. */
-  fun hovered(): DropTarget? = drag?.let { d -> targets.entries.firstOrNull { it.value.contains(d.position) }?.key }
+  fun hovered(): DropTarget? =
+    drag?.let { d -> targets.entries.firstOrNull { it.value.contains(d.position) }?.key }
 
   /** Ends the drag and returns what it landed on. */
   fun drop(): Pair<SeriesDrag, DropTarget?>? {
@@ -95,6 +101,7 @@ fun Modifier.seriesDragSource(
       dragState.move(change.positionChange())
       change.consume()
     }
-    if (completed) dragState.drop()?.let { (d, target) -> onDrop(d, target) } else dragState.cancel()
+    if (completed) dragState.drop()
+      ?.let { (d, target) -> onDrop(d, target) } else dragState.cancel()
   }
 }

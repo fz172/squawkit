@@ -639,6 +639,48 @@ interface DataLogManager {
 }
 ```
 
+**Reading one log, not all of them.** `observeOne` is a single-row query on the store, never the
+list filtered down to one. The difference is the whole collection's payloads being decoded or not:
+opening a log asks four times over — in the viewer, in `ensureLocal` for the blob id, inside `load`,
+and again afterwards for the rewritten catalogue — and an account holding one SkyView download has
+twenty-one records of a hundred series each. On the web build's one thread that was seconds of
+frozen UI *before* the viewer drew anything, which is why the spinner appeared only after the freeze
+rather than during it.
+
+**Opening a large log.** `load` does the file read, the inflate and the parse inside one
+`withContext(dispatcher)`. On Android and iOS that is belt and braces — the blob filesystem and the
+gzip codec each hop a dispatcher of their own — but it puts the whole job in one place rather than
+three.
+
+**The web build has one thread**, so none of that helps there and the work has to hand the thread
+back instead. Two things about how are not obvious, and both were got wrong before they were got
+right.
+
+*A yield is not a release.* The JS coroutine dispatcher drains its own queue inside the task it is
+already running in, so a yielded coroutine resumes without the browser ever rendering. Only ending
+the task lets a frame be painted, and only a timer ends it — `releaseThread` is therefore `delay(1)`
+on JS and `yield()` everywhere else.
+
+*A row count is not a budget.* Releasing every N rows says nothing about how long N rows took: it is
+hundreds of needless releases on a phone and still a freeze on the web. `Breather` measures instead,
+and hands the thread back once a frame's worth of work has actually gone by. Every parser's row walk
+uses one, as does `DynonParser.sessionBounds`, which scans the whole file to find the power-on
+boundaries.
+
+The viewer announces `Loading(reading = true)` before calling `load` and needs nothing else: reading
+the file and inflating it both suspend, and the parse breathes within a frame of starting.
+
+**Decoding the file is `decodeText`, not `decodeToString`.** Measured rather than assumed: a browser
+profile of opening one session of a 46 MB download showed a single 3.2-second task on the main
+thread, two thirds of it inside one `toString` and a further fifth collecting the garbage that
+`toString` made. That is the Kotlin standard library's `ByteArray.decodeToString` on the web build —
+a hand-written UTF-8 loop appending to a `StringBuilder`. The same call is 10 ms on the JVM, which is
+why nothing caught it until someone recorded the browser doing it.
+
+`decodeText` is that call everywhere except the web, where it is the browser's own `TextDecoder`:
+native code instead of a loop, and non-fatal on a bad byte, which is the behaviour a recorder's file
+deserves anyway.
+
 **Stale catalogues.** The catalogue — every series' name, unit, range and canonical id — is frozen
 into the record at import, while the values are re-parsed on every open. A parser fix therefore
 reaches the charts immediately and never reaches the sidebar, and a log imported before the fix shows

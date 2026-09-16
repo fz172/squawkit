@@ -7,7 +7,8 @@ class RecordingAnalytics : AnalyticsManager {
 
   val events = mutableListOf<Pair<String, Map<String, String>>>()
 
-  override fun logScreenView(screenName: String, params: Map<String, String>) = Unit
+  override fun logScreenView(screenName: String, params: Map<String, String>) =
+    Unit
 
   override fun logEvent(name: String, params: Map<String, String>) {
     events += name to params

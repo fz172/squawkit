@@ -20,7 +20,8 @@ object LayoutMemoryCodec {
   fun encode(memory: LayoutMemory): String {
     val layout = memory.layout
     val target = layout.panes.indexOfFirst { it.id == layout.targetPane }
-    val panes = layout.panes.joinToString("|") { pane -> pane.series.joinToString(",") { it.column.toString() } }
+    val panes =
+      layout.panes.joinToString("|") { pane -> pane.series.joinToString(",") { it.column.toString() } }
     return "$VERSION;c=${if (memory.clockAxis) 1 else 0};t=$target;p=$panes"
   }
 
@@ -28,16 +29,29 @@ object LayoutMemoryCodec {
   fun decode(text: String, catalogue: List<DataLogSeries>): LayoutMemory? {
     val parts = text.split(';')
     if (parts.firstOrNull() != VERSION) return null
-    val fields = parts.drop(1).associate { it.substringBefore('=') to it.substringAfter('=', "") }
-    val known = catalogue.filter { it.isPlottable }.map { it.column }.toSet()
+    val fields = parts.drop(1)
+      .associate { it.substringBefore('=') to it.substringAfter('=', "") }
+    val known = catalogue.filter { it.isPlottable }
+      .map { it.column }
+      .toSet()
     val panes = fields["p"].orEmpty()
       .split('|')
-      .map { pane -> pane.split(',').mapNotNull { it.toIntOrNull() }.filter { it in known }.distinct().map(::SeriesKey) }
+      .map { pane ->
+        pane.split(',')
+          .mapNotNull { it.toIntOrNull() }
+          .filter { it in known }
+          .distinct()
+          .map(::SeriesKey)
+      }
     val targetIndex = fields["t"]?.toIntOrNull() ?: -1
     val targetKeys = panes.getOrNull(targetIndex)
-    val kept = panes.filter { it.isNotEmpty() }.mapIndexed { index, keys -> Pane(PaneId(index), keys) }
+    val kept = panes.filter { it.isNotEmpty() }
+      .mapIndexed { index, keys -> Pane(PaneId(index), keys) }
     if (kept.isEmpty()) return null
     val target = kept.firstOrNull { it.series == targetKeys } ?: kept.first()
-    return LayoutMemory(ChartLayout(kept, target.id), clockAxis = fields["c"] == "1")
+    return LayoutMemory(
+      ChartLayout(kept, target.id),
+      clockAxis = fields["c"] == "1"
+    )
   }
 }

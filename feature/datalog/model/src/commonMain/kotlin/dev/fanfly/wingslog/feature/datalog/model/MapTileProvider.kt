@@ -1,5 +1,8 @@
 package dev.fanfly.wingslog.feature.datalog.model
 
+import dev.fanfly.wingslog.feature.datalog.model.MapTileProvider.Companion.OSM_USER_AGENT
+
+
 /**
  * Where map tiles come from and what must be shown for them (design §11.6). Bound in Koin so a
  * host can swap providers without the pane knowing.

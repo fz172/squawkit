@@ -8,8 +8,10 @@ import dev.fanfly.wingslog.feature.datalog.datamanager.CanonicalSeriesRegistry
 import dev.fanfly.wingslog.feature.datalog.datamanager.Confidence
 import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogParseException
 import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogParser
+import dev.fanfly.wingslog.feature.datalog.datamanager.csv.Breather
 import dev.fanfly.wingslog.feature.datalog.datamanager.csv.ColumnAccumulator
 import dev.fanfly.wingslog.feature.datalog.datamanager.csv.LineCursor
+import dev.fanfly.wingslog.feature.datalog.datamanager.csv.decodeText
 import dev.fanfly.wingslog.feature.datalog.datamanager.csv.forwardFilled
 import dev.fanfly.wingslog.feature.datalog.datamanager.csv.parseDoubleAt
 import dev.fanfly.wingslog.feature.datalog.datamanager.csv.parseIntAt
@@ -19,7 +21,6 @@ import dev.fanfly.wingslog.feature.datalog.model.DataLogSeriesData
 import dev.fanfly.wingslog.feature.datalog.model.NumericColumn
 import dev.fanfly.wingslog.feature.datalog.model.ParsedDataLog
 import dev.fanfly.wingslog.feature.datalog.model.PositionColumn
-import kotlinx.coroutines.yield
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
@@ -61,7 +62,7 @@ class DynonParser : DataLogParser {
   override val version: Int = 2
 
   override fun sniff(header: ByteArray): Confidence {
-    val text = header.decodeToString(throwOnInvalidSequence = false)
+    val text = decodeText(header)
       .removePrefix(BOM)
     val first = text.substringBefore('\n')
       .trimEnd('\r')
@@ -77,7 +78,7 @@ class DynonParser : DataLogParser {
     fileName: String,
     session: Int?,
   ): List<ParsedDataLog> {
-    val text = bytes.decodeToString(throwOnInvalidSequence = false)
+    val text = decodeText(bytes)
       .removePrefix(BOM)
     val header = LineCursor(text)
     val headerLine = header.next()
@@ -110,12 +111,13 @@ class DynonParser : DataLogParser {
    * Growing them instead would mean copying a 20,000-row column every time it doubled, on a file
    * that already costs a full scan to read.
    */
-  private fun sessionBounds(
+  private suspend fun sessionBounds(
     text: String,
     bodyStart: Int,
     layout: Layout,
   ): List<Bounds> {
     val bounds = ArrayList<Bounds>()
+    val breather = Breather()
     val lines = LineCursor(text, bodyStart)
     var offset = lines.position
     var start = -1
@@ -136,6 +138,9 @@ class DynonParser : DataLogParser {
       }
       previous = elapsed
       rows++
+      // The web build has one thread, so a full scan of a 46 MB download without this is a freeze
+      // the spinner never gets to paint through. Everywhere else this costs nothing.
+      breather.breathe()
     }
     if (start >= 0) bounds += Bounds(startOffset, rows)
     return bounds
@@ -173,14 +178,17 @@ class DynonParser : DataLogParser {
     val columns = arrayOfNulls<ColumnAccumulator>(columnCount)
     val elapsed = DoubleArray(capacity)
     val hasPosition = layout.latitudeColumn >= 0 && layout.longitudeColumn >= 0
-    val latitude = if (hasPosition) DoubleArray(capacity) { Double.NaN } else null
-    val longitude = if (hasPosition) DoubleArray(capacity) { Double.NaN } else null
+    val latitude =
+      if (hasPosition) DoubleArray(capacity) { Double.NaN } else null
+    val longitude =
+      if (hasPosition) DoubleArray(capacity) { Double.NaN } else null
     var rows = 0
     var gpsClock: LocalDateTime? = null
     var gpsClockRow = -1
     var systemClockSeconds = -1
     var systemClockRow = -1
     var gpsClockSeconds = -1
+    val breather = Breather()
 
     val lines = LineCursor(text, bounds.offset)
     while (rows < capacity) {
@@ -197,7 +205,8 @@ class DynonParser : DataLogParser {
         while (e > s && line[e - 1] == ' ') e--
         if (e > s) {
           when (col) {
-            layout.sessionTimeColumn -> elapsed[rows] = parseDoubleAt(line, s, e)
+            layout.sessionTimeColumn -> elapsed[rows] =
+              parseDoubleAt(line, s, e)
 
             layout.gpsDateTimeColumn -> if (gpsClock == null) {
               parseGpsDateTime(line, s, e)?.let {
@@ -236,7 +245,7 @@ class DynonParser : DataLogParser {
         col++
       }
       rows++
-      if (rows % YIELD_EVERY_ROWS == 0) yield()
+      breather.breathe()
     }
     if (rows == 0) throw DataLogParseException("no rows")
 
@@ -244,9 +253,13 @@ class DynonParser : DataLogParser {
     // than a wall clock, so it needs none of the step-and-rewind handling a Garmin's date and time
     // columns do.
     val base = elapsed[0]
-    val timeSeconds = IntArray(rows) { (elapsed[it] - base).roundToInt().coerceAtLeast(0) }
+    val timeSeconds = IntArray(rows) {
+      (elapsed[it] - base).roundToInt()
+        .coerceAtLeast(0)
+    }
     for (i in 1 until rows) {
-      if (timeSeconds[i] < timeSeconds[i - 1]) timeSeconds[i] = timeSeconds[i - 1]
+      if (timeSeconds[i] < timeSeconds[i - 1]) timeSeconds[i] =
+        timeSeconds[i - 1]
     }
     val span = elapsed[rows - 1] - base
     val sampleRateHz =
@@ -273,7 +286,10 @@ class DynonParser : DataLogParser {
         Instant.fromEpochSeconds(0)
       } else {
         Instant.fromEpochSeconds(
-          LocalDateTime(date, kotlinx.datetime.LocalTime.fromSecondOfDay(secondOfDay))
+          LocalDateTime(
+            date,
+            kotlinx.datetime.LocalTime.fromSecondOfDay(secondOfDay)
+          )
             .toInstant(TimeZone.UTC).epochSeconds - offsetMinutes * 60L -
             (if (systemClockRow > 0) timeSeconds[systemClockRow].toLong() else 0L)
         )
@@ -363,7 +379,11 @@ class DynonParser : DataLogParser {
     val longitudeColumn: Int,
   ) {
     val skip: BooleanArray = BooleanArray(names.size).also {
-      for (c in listOf(sessionTimeColumn, gpsDateTimeColumn, systemTimeColumn)) {
+      for (c in listOf(
+        sessionTimeColumn,
+        gpsDateTimeColumn,
+        systemTimeColumn
+      )) {
         if (c in names.indices) it[c] = true
       }
       if (longitudeColumn in names.indices) it[longitudeColumn] = true
@@ -375,7 +395,9 @@ class DynonParser : DataLogParser {
         // that never carries a value.
         val raw = headerLine.split(',')
           .map { it.trim() }
-        val cells = if (raw.isNotEmpty() && raw.last().isEmpty()) raw.dropLast(1) else raw
+        val cells = if (raw.isNotEmpty() && raw.last()
+            .isEmpty()
+        ) raw.dropLast(1) else raw
         if (cells.size < 2) throw DataLogParseException("no columns")
         val split = cells.map(::splitUnit)
         val names = split.map { it.first }
@@ -403,7 +425,6 @@ class DynonParser : DataLogParser {
     const val LATITUDE_NAME = "Latitude"
     const val LONGITUDE_NAME = "Longitude"
     const val POSITION_NAME = "Position"
-    const val YIELD_EVERY_ROWS = 500
 
     /** A SkyView marks an on/off channel `bool`; nothing else in the file uses that unit. */
     val DISCRETE_UNITS = setOf("bool")
@@ -418,7 +439,8 @@ class DynonParser : DataLogParser {
     val IMPLIED_UNITS = mapOf("Percent Power" to "%")
 
     /** Any one of these beside `Session Time` is a SkyView and nothing else. */
-    val SNIFF_COLUMNS = listOf("GPS Fix Quality", "Thermocouple 1", "EGT Leaning State")
+    val SNIFF_COLUMNS =
+      listOf("GPS Fix Quality", "Thermocouple 1", "EGT Leaning State")
 
     /** `2019-03-30 12:28:44` in UTC; `UNKNOWN_DATE_TIME` and a truncated row give null. */
     fun parseGpsDateTime(s: String, start: Int, end: Int): LocalDateTime? {
@@ -431,7 +453,14 @@ class DynonParser : DataLogParser {
       val second = parseIntAt(s, start + 17, start + 19)
       if (year <= 0 || month !in 1..12 || day !in 1..31) return null
       if (hour !in 0..23 || minute !in 0..59 || second !in 0..60) return null
-      return LocalDateTime(year, month, day, hour, minute, second.coerceAtMost(59))
+      return LocalDateTime(
+        year,
+        month,
+        day,
+        hour,
+        minute,
+        second.coerceAtMost(59)
+      )
     }
 
     /** `12:28:43` to seconds of day, or -1. */
@@ -470,7 +499,9 @@ class DynonParser : DataLogParser {
     )
 
     fun sourceFromFileName(fileName: String): DataLogSource {
-      val m = FILE_NAME.matchEntire(fileName.trim()) ?: return DataLogSource(product = PRODUCT)
+      val m = FILE_NAME.matchEntire(fileName.trim()) ?: return DataLogSource(
+        product = PRODUCT
+      )
       return DataLogSource(
         product = PRODUCT,
         identity = m.groupValues[2],
@@ -480,10 +511,14 @@ class DynonParser : DataLogParser {
     }
 
     fun dateFromFileName(fileName: String): LocalDateTime? {
-      val stamp = FILE_NAME.matchEntire(fileName.trim())?.groupValues?.get(1) ?: return null
-      val year = stamp.substring(0, 4).toIntOrNull() ?: return null
-      val month = stamp.substring(5, 7).toIntOrNull() ?: return null
-      val day = stamp.substring(8, 10).toIntOrNull() ?: return null
+      val stamp = FILE_NAME.matchEntire(fileName.trim())?.groupValues?.get(1)
+        ?: return null
+      val year = stamp.substring(0, 4)
+        .toIntOrNull() ?: return null
+      val month = stamp.substring(5, 7)
+        .toIntOrNull() ?: return null
+      val day = stamp.substring(8, 10)
+        .toIntOrNull() ?: return null
       if (month !in 1..12 || day !in 1..31) return null
       return LocalDateTime(year, month, day, 0, 0)
     }

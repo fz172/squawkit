@@ -130,11 +130,17 @@ fun ImportRowCard(
 
           is ImportProgress.OtherThing -> {
             Text(
-              stringResource(Res.string.data_log_other_thing_title, progress.candidateName),
+              stringResource(
+                Res.string.data_log_other_thing_title,
+                progress.candidateName
+              ),
               style = MaterialTheme.typography.titleSmall
             )
             Text(
-              stringResource(Res.string.data_log_other_thing_body, progress.candidateName),
+              stringResource(
+                Res.string.data_log_other_thing_body,
+                progress.candidateName
+              ),
               style = MaterialTheme.typography.bodySmall,
               color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
