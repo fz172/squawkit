@@ -315,12 +315,12 @@ Three mechanisms, kept separate, per [AGENTS.md § Gating](../../AGENTS.md#gatin
     renders from its own canonical and skips that check; degradation stays only for ids the build
     does not carry. The proto change itself is additive: no schema migration, no rules change.
   - The DNA refresh becomes optional housekeeping, run whenever convenient, never a launch gate.
-- **R43 (P0). Platform and rollout.** A new `AppCapability.isDataLogsSupported` flag gates the
-  section, the attachment option, and the parser registration. It is **true on developer builds
-  only** while the feature is built, and flipped to true on every host when V1 is complete. It is a
-  rollout switch, not a per-user flag; it never reaches Firestore.
-- **R44 (P0).** No `DeveloperFlags` entry and no subscription hook; the app capability is the only
-  switch.
+- **R43 (P0). Platform and rollout.** `AppCapability.isDataLogsSupported` gated the section, the
+  attachment option and the parser registration while the feature was built: true on developer
+  builds only. **Done, and the flag is deleted** (T46) rather than left flipped. The Thing
+  template's own section list is the only thing that decides now.
+- **R44 (P0).** No `DeveloperFlags` entry and no subscription hook. There was one rollout switch and
+  there is now none.
 
 ### 5.8 Ads
 

@@ -300,7 +300,6 @@ class PromoCodeRedemptionTest {
       isCameraCaptureSupported = false,
       isAnonymousLoginSupported = false,
       isAdsSupported = false,
-      isDataLogsSupported = false,
     ),
     entitlementReconciler = reconciler,
     promoCodeRedeemer = redeemer,

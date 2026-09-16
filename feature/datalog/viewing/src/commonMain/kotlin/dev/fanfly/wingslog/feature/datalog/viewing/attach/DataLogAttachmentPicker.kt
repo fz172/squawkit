@@ -25,7 +25,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.core.datetime.formatDuration
 import dev.fanfly.wingslog.core.datetime.toClockText
 import dev.fanfly.wingslog.core.model.id.value
@@ -72,10 +71,10 @@ fun rememberDataLogPickerSlot(
   recordDate: LocalDate?,
   attachedIds: Set<DataLogId>,
 ): DataLogPickerSlot? {
-  val appCapability: AppCapability = koinInject()
+  // The Thing's own template decides, and nothing else does since the rollout switch went (T46).
   val hasSection =
     LocalThingCapabilities.current.sections.contains(Section.SECTION_DATA_LOGS)
-  if (!hasSection || !appCapability.isDataLogsSupported) return null
+  if (!hasSection) return null
   val label =
     LexiconFormatter.sentenceCase(LocalThingLexicon.current.dataLogNoun)
   return DataLogPickerSlot(label) { onAttach, onCancel ->
