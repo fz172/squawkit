@@ -126,7 +126,9 @@ class DataLogImporterImpl(
 
       emit(ImportProgress.Storing)
       val gzip = GzipCodec.isAvailable()
-      val stored = if (gzip) GzipCodec.compress(bytes) else bytes
+      // Compressing the picked file is the same size of job as parsing it, and belongs in the same
+      // place: off the caller's dispatcher.
+      val stored = withContext(dispatcher) { if (gzip) GzipCodec.compress(bytes) else bytes }
       val contentType = if (gzip) "application/gzip" else "text/csv"
       // A fresh id, never the record's: a log payload can then never name a real data-log blob.
       val blobId = generateRandomId()

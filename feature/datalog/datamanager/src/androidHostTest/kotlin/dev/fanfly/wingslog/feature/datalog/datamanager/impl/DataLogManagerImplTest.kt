@@ -41,6 +41,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Instant
 
 class DataLogManagerImplTest {
@@ -277,6 +278,36 @@ class DataLogManagerImplTest {
       .getOrThrow()
 
     coVerify(exactly = 0) { store.put(any(), any(), any()) }
+  }
+
+  @Test
+  fun readingAndInflatingTheFileLeaveTheCallersThread() = runTest {
+    // The viewer calls this from viewModelScope, so the caller's thread is the one drawing. Reading
+    // a 6 MB blob and inflating it to 46 MB there froze the screen for seconds before it could show
+    // so much as a spinner — the parse was already off the main thread and was never the whole cost.
+    every { store.observeAll(scope) } returns flowOf(
+      listOf(
+        StorageEntity(
+          "a",
+          record("a", "2026-09-02T21:47:56Z"),
+          Instant.DISTANT_PAST
+        )
+      ),
+    )
+    coEvery { blobs.get(blobId) } returns ref(RemoteState.Synced)
+    val readThread = AtomicReference<String>()
+    val blobBytes = GzipCodec.compress(Fixtures.bytes(Fixtures.GROUND_RUN))
+    coEvery { filesystem.read("blobs/blob-1.bin") } coAnswers {
+      readThread.set(Thread.currentThread().name)
+      blobBytes
+    }
+    val callerThread = Thread.currentThread().name
+
+    manager.load(thingId, DataLogId("a"))
+      .getOrThrow()
+
+    assertThat(readThread.get()).isNotNull()
+    assertThat(readThread.get()).isNotEqualTo(callerThread)
   }
 
   @Test

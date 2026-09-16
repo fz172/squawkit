@@ -136,17 +136,22 @@ class DataLogManagerImpl(
     if (ref.remoteState == RemoteState.RemoteOnly || ref.remoteState == RemoteState.RemoteMissing) {
       error("Data log $id is not downloaded")
     }
-    val stored = filesystem.read(ref.relativePath)
-    val bytes = when (record.encoding) {
-      DataLogEncoding.DATA_LOG_ENCODING_GZIP -> GzipCodec.decompress(stored)
-      else -> stored
-    }
     val parser = parsers.firstOrNull { record.format in it.formats }
       ?: error("No parser for ${record.format}")
-    // Only this record's session is materialised. A SkyView download holds every power-on since
-    // the last one, and building all of them to draw one is the difference between a second and a
+    // Reading the file and inflating it are part of the work, not preliminaries to it. A 46 MB
+    // SkyView download is about 6 MB on disk, and doing either on the caller's dispatcher froze the
+    // viewer for seconds before it could draw so much as a spinner — the parse was already off the
+    // main thread and was never the whole cost.
+    //
+    // Only this record's session is materialised. A SkyView download holds every power-on since the
+    // last one, and building all of them to draw one is the difference between a second and a
     // minute on a phone.
     val parsed = withContext(dispatcher) {
+      val stored = filesystem.read(ref.relativePath)
+      val bytes = when (record.encoding) {
+        DataLogEncoding.DATA_LOG_ENCODING_GZIP -> GzipCodec.decompress(stored)
+        else -> stored
+      }
       parser.parse(bytes, record.file_name, session = record.session_index)
     }.firstOrNull()
       ?: error("Data log $id has no session ${record.session_index}")

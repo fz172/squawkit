@@ -456,6 +456,21 @@ class DataLogViewerViewModelTest {
   }
 
   @Test
+  fun theViewerSaysItIsReadingTheFileBeforeTheParseStarts() = runTest {
+    // On the web build the parse runs on the only thread there is, so the screen has to be told
+    // what is happening, and given a turn of the loop to draw it in, before the work begins.
+    val vm = viewModel()
+    val seen = mutableListOf<DataLogViewerUiState>()
+    backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+      vm.uiState.collect { seen += it }
+    }
+    vm.retry()
+
+    assertThat(seen.any { it == DataLogViewerUiState.Loading(reading = true) }).isTrue()
+    assertThat(seen.last()).isInstanceOf(DataLogViewerUiState.Ready::class.java)
+  }
+
+  @Test
   fun aFailedLoadIsNotAnOpen() = runTest {
     coEvery { manager.load(thingId, id) } returns Result.failure(IllegalStateException("bad csv"))
 

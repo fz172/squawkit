@@ -13,6 +13,7 @@
 
   <!-- Viewer (design §10.4, §11.1) -->
   <string name="data_log_viewer_downloading">Downloading the file…</string>
+  <string name="data_log_viewer_reading">Reading the file…</string>
   <string name="data_log_viewer_load_failed">This file could not be opened.</string>
   <string name="data_log_viewer_missing">This <xliff:g example="data log">%1$s</xliff:g> was deleted.</string>
   <string name="data_log_pane_empty">No series in this pane</string>

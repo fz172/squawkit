@@ -144,6 +144,7 @@ import wingslog.feature.datalog.sharedassets.generated.resources.data_log_tail_m
 import wingslog.feature.datalog.sharedassets.generated.resources.data_log_viewer_downloading
 import wingslog.feature.datalog.sharedassets.generated.resources.data_log_viewer_load_failed
 import wingslog.feature.datalog.sharedassets.generated.resources.data_log_viewer_missing
+import wingslog.feature.datalog.sharedassets.generated.resources.data_log_viewer_reading
 import wingslog.feature.datalog.sharedassets.generated.resources.data_log_viewer_reset
 import wingslog.feature.datalog.sharedassets.generated.resources.data_log_viewer_utc_offset
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
@@ -245,9 +246,14 @@ fun DataLogViewerScreen(
               verticalArrangement = Arrangement.spacedBy(Spacing.medium)
             ) {
               CircularProgressIndicator()
-              if (s.download != null) {
+              val phase = when {
+                s.reading -> Res.string.data_log_viewer_reading
+                s.download != null -> Res.string.data_log_viewer_downloading
+                else -> null
+              }
+              if (phase != null) {
                 Text(
-                  stringResource(Res.string.data_log_viewer_downloading),
+                  stringResource(phase),
                   style = MaterialTheme.typography.bodyMedium
                 )
               }

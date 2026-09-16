@@ -110,7 +110,7 @@ class DynonParser : DataLogParser {
    * Growing them instead would mean copying a 20,000-row column every time it doubled, on a file
    * that already costs a full scan to read.
    */
-  private fun sessionBounds(
+  private suspend fun sessionBounds(
     text: String,
     bodyStart: Int,
     layout: Layout,
@@ -136,6 +136,9 @@ class DynonParser : DataLogParser {
       }
       previous = elapsed
       rows++
+      // The web build has one thread, so a full scan of a 46 MB download without this is a freeze
+      // the spinner never gets to paint through. Everywhere else this costs nothing.
+      if (rows % YIELD_EVERY_ROWS == 0) yield()
     }
     if (start >= 0) bounds += Bounds(startOffset, rows)
     return bounds

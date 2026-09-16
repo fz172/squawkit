@@ -38,12 +38,22 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.yield
 
 enum class LoadFailure { NOT_FOUND, DOWNLOAD_FAILED, PARSE_FAILED }
 
 sealed interface DataLogViewerUiState {
-  /** Waiting on the bytes: [download] is null until the manager reports a state. */
-  data class Loading(val download: DownloadState? = null) : DataLogViewerUiState
+  /**
+   * Waiting on the file. [download] is null until the manager reports a state; [reading] is the
+   * phase after it, where the bytes are inflated and parsed.
+   *
+   * The two are named separately because they take different amounts of time for different reasons,
+   * and a spinner that says nothing for five seconds on a large file reads as a hang.
+   */
+  data class Loading(
+    val download: DownloadState? = null,
+    val reading: Boolean = false,
+  ) : DataLogViewerUiState
 
   data class Ready(
     val record: DataLog,
@@ -246,6 +256,11 @@ class DataLogViewerViewModel(
       }
       // PRD R31: what this device last arranged for this log, re-resolved against its series.
       val remembered = layouts.load(dataLogId)?.let { LayoutMemoryCodec.decode(it, record.series) }
+      // Announce the phase and then let a frame happen before the work starts. On the web build
+      // there is one thread, so without the yield the state change and the parse land in the same
+      // turn of the event loop and the spinner never gets drawn.
+      _uiState.value = DataLogViewerUiState.Loading(reading = true)
+      yield()
       manager.load(thingId, dataLogId)
         .onSuccess { data ->
           // Re-read the record: loading rewrites a catalogue the parser has outgrown, and the copy

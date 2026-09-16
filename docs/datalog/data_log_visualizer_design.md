@@ -639,6 +639,21 @@ interface DataLogManager {
 }
 ```
 
+**Opening a large log.** `load` does the file read, the inflate and the parse inside one
+`withContext(dispatcher)`. On Android and iOS that is belt and braces — the blob filesystem and the
+gzip codec each hop a dispatcher of their own — but it puts the whole job in one place rather than
+three.
+
+**The web build has one thread**, so none of that helps there and the work has to yield instead. The
+row walks already do, every 500 rows; `DynonParser.sessionBounds` does too, because a full scan of a
+46 MB download is otherwise a multi-second freeze the spinner never gets to paint through. The
+viewer announces `Loading(reading = true)` and yields once before calling `load`, so the frame that
+says what is happening is drawn before the work starts.
+
+What is still synchronous on web is `decodeToString` over the whole file. Chunking it means slicing
+UTF-8 by hand, and the real answer is a Web Worker; neither is worth doing before someone measures
+it as the remaining cost.
+
 **Stale catalogues.** The catalogue — every series' name, unit, range and canonical id — is frozen
 into the record at import, while the values are re-parsed on every open. A parser fix therefore
 reaches the charts immediately and never reaches the sidebar, and a log imported before the fix shows

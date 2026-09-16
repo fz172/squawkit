@@ -1083,6 +1083,7 @@ feature/datalog/sharedassets	data_log_tail_mismatch	Tail mismatch
 feature/datalog/sharedassets	data_log_upload	Upload Data Log
 feature/datalog/sharedassets	data_log_viewer_clock_axis	Clock time axis
 feature/datalog/sharedassets	data_log_viewer_downloading	Downloading the file…
+feature/datalog/sharedassets	data_log_viewer_reading	Reading the file…
 feature/datalog/sharedassets	data_log_viewer_load_failed	This file could not be opened.
 feature/datalog/sharedassets	data_log_viewer_missing	This data log was deleted.
 feature/datalog/sharedassets	data_log_viewer_reset	Reset
