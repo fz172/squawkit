@@ -555,7 +555,6 @@ class SettingsViewModelTest {
       isCameraCaptureSupported = false,
       isAnonymousLoginSupported = true,
       isAdsSupported = false,
-      isDataLogsSupported = false,
     ),
     adConsentManager,
     notificationPermission,

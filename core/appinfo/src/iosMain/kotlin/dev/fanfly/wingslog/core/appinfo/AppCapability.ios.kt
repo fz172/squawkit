@@ -16,8 +16,6 @@ actual fun createAppCapability(isDeveloperBuild: Boolean) = AppCapability(
   // GA (#386, P9): was dev + dogfood only until ads GA, gated on the P8 Swift-bridge device
   // validation (done — see #385) since iOS has no CI build. Off = NO ads.
   isAdsSupported = true,
-  // Data logs: developer builds only until V1 is complete, then true everywhere.
-  isDataLogsSupported = isDeveloperBuild,
   supportUrl = "https://squawkit.fanfly.dev/support.html",
   termsUrl = "https://squawkit.fanfly.dev/privacy.html",
   storeListingUrl = APP_STORE_LISTING,

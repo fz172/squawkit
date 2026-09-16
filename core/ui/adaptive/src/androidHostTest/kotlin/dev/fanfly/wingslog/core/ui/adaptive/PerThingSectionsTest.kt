@@ -1,7 +1,6 @@
 package dev.fanfly.wingslog.core.ui.adaptive
 
 import com.google.common.truth.Truth.assertThat
-import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import dev.fanfly.wingslog.thing.Capabilities
 import dev.fanfly.wingslog.thing.Section
@@ -16,17 +15,6 @@ import org.junit.Test
  * could tell the two apart. These cases exist to tell them apart.
  */
 class PerThingSectionsTest {
-
-  private fun appCapability(isDataLogsSupported: Boolean) = AppCapability(
-    isDeveloperOptionsSupported = false,
-    isCameraCaptureSupported = false,
-    isAnonymousLoginSupported = false,
-    isAdsSupported = false,
-    isDataLogsSupported = isDataLogsSupported,
-  )
-
-  private val supported = appCapability(isDataLogsSupported = true)
-  private val unsupported = appCapability(isDataLogsSupported = false)
 
   private val airplaneWithDataLogs = Capabilities(
     sections = listOf(
@@ -44,7 +32,7 @@ class PerThingSectionsTest {
     // registry resolves, outside a provider, or from a template that declares nothing — silently
     // removing a section for aviation users. A missing tab is far less noticeable in review than a
     // wrong word, so the default is asserted to be as harmless as the airplane set.
-    assertThat(perThingSectionsFor(CurrentThingTemplate.ALL_ENABLED, supported)).containsExactly(
+    assertThat(perThingSectionsFor(CurrentThingTemplate.ALL_ENABLED)).containsExactly(
       ShellSection.DASHBOARD,
       ShellSection.SQUAWKS,
       ShellSection.TASKS,
@@ -56,7 +44,6 @@ class PerThingSectionsTest {
   fun aTemplateThatDeclaresFewerSectionsGetsFewerTabs() {
     val sections = perThingSectionsFor(
       Capabilities(sections = listOf(Section.SECTION_DASHBOARD, Section.SECTION_LOGS)),
-      supported,
     )
 
     assertThat(sections).containsExactly(ShellSection.DASHBOARD, ShellSection.LOGS).inOrder()
@@ -68,7 +55,6 @@ class PerThingSectionsTest {
     // The reason this is a list and not a bool per section: a set of flags cannot express order.
     val sections = perThingSectionsFor(
       Capabilities(sections = listOf(Section.SECTION_LOGS, Section.SECTION_DASHBOARD)),
-      supported,
     )
 
     assertThat(sections).containsExactly(ShellSection.LOGS, ShellSection.DASHBOARD).inOrder()
@@ -79,7 +65,6 @@ class PerThingSectionsTest {
     // A template written by a newer client. Rendering the tab would navigate nowhere.
     val sections = perThingSectionsFor(
       Capabilities(sections = listOf(Section.SECTION_DASHBOARD, Section.SECTION_UNKNOWN)),
-      supported,
     )
 
     assertThat(sections).containsExactly(ShellSection.DASHBOARD)
@@ -89,7 +74,7 @@ class PerThingSectionsTest {
   fun declaringNothingFailsOpenRatherThanRemovingAllNavigation() {
     // Fail open: a template with no sections is a broken template, and a shell with no tabs is a
     // dead end. Showing the original four is recoverable; showing none is not.
-    assertThat(perThingSectionsFor(Capabilities(), supported)).containsExactly(
+    assertThat(perThingSectionsFor(Capabilities())).containsExactly(
       ShellSection.DASHBOARD,
       ShellSection.SQUAWKS,
       ShellSection.TASKS,
@@ -98,8 +83,10 @@ class PerThingSectionsTest {
   }
 
   @Test
-  fun aDeclaredDataLogSectionRendersWhenTheBuildSupportsIt() {
-    assertThat(perThingSectionsFor(airplaneWithDataLogs, supported)).containsExactly(
+  fun aDeclaredDataLogSectionRenders() {
+    // It used to depend on a rollout switch as well as on the template. The switch is gone (T46)
+    // and the template's own list is the only thing that decides.
+    assertThat(perThingSectionsFor(airplaneWithDataLogs)).containsExactly(
       ShellSection.DASHBOARD,
       ShellSection.SQUAWKS,
       ShellSection.TASKS,
@@ -109,14 +96,16 @@ class PerThingSectionsTest {
   }
 
   @Test
-  fun theRolloutSwitchDropsTheDataLogSectionButNothingElse() {
-    // PRD R43: the template declares the section ahead of every host shipping it. Off, the section
-    // is absent — never disabled — and the other four are untouched.
-    assertThat(perThingSectionsFor(airplaneWithDataLogs, unsupported)).containsExactly(
-      ShellSection.DASHBOARD,
-      ShellSection.SQUAWKS,
-      ShellSection.TASKS,
-      ShellSection.LOGS,
-    ).inOrder()
+  fun aTemplateThatDoesNotDeclareItDoesNotGetIt() {
+    val withoutDataLogs = Capabilities(
+      sections = listOf(
+        Section.SECTION_DASHBOARD,
+        Section.SECTION_SQUAWKS,
+        Section.SECTION_TASKS,
+        Section.SECTION_LOGS,
+      ),
+    )
+
+    assertThat(perThingSectionsFor(withoutDataLogs)).doesNotContain(ShellSection.DATA_LOGS)
   }
 }

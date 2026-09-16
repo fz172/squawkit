@@ -69,7 +69,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.template.GenericLexicon
-import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.LocalThingCapabilities
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
@@ -216,23 +215,21 @@ private val DEFAULT_PER_THING_SECTIONS =
  */
 @Composable
 private fun perThingSections(): List<ShellSection> =
-  perThingSectionsFor(LocalThingCapabilities.current, koinInject<AppCapability>())
+  perThingSectionsFor(LocalThingCapabilities.current)
 
 /**
- * The decision, separated from the composition so it can be tested with a capability turned *off*.
+ * The decision, separated from the composition so it can be tested with a narrower capability set
+ * than the shipped templates declare.
  *
- * That separation is the point. With the airplane set every section is declared, so a gate that
+ * That separation is the point. With the airplane set every section is declared, so a rule that
  * ignored its input would produce exactly the same navigation as one that read it — the two are
- * indistinguishable on screen and in any test that only exercises the shipped template. Only calling
- * this with a narrower set can tell them apart.
+ * indistinguishable on screen and in any test that only exercises the shipped template.
+ *
+ * The data log rollout switch used to sit here as a second filter. It is gone: the template's own
+ * section list is the only thing that decides now (T46).
  */
-internal fun perThingSectionsFor(
-  capabilities: Capabilities,
-  appCapability: AppCapability,
-): List<ShellSection> =
+internal fun perThingSectionsFor(capabilities: Capabilities): List<ShellSection> =
   capabilities.sections.mapNotNull { it.toShellSection() }
-    // The rollout switch (PRD R43): a template may declare the section before every host ships it.
-    .filter { it != ShellSection.DATA_LOGS || appCapability.isDataLogsSupported }
     .ifEmpty { DEFAULT_PER_THING_SECTIONS }
 
 private fun Section.toShellSection(): ShellSection? = when (this) {

@@ -763,18 +763,18 @@ refresh script gives: a stored template can only be an unmodified copy of a cano
 custom templates are unbuilt. When they land, the rule becomes "canonical wins for an unmodified
 copy", decided there.
 
-### 8.3 `AppCapability.isDataLogsSupported` (PRD R43)
+### 8.3 Rollout (PRD R43) — the switch is gone
 
-`AppCapability` gains the field; each `createAppCapability(isDeveloperBuild)` actual sets it to
-`isDeveloperBuild` until launch, then `true`. It gates:
+`AppCapability.isDataLogsSupported` existed for the build: `isDeveloperBuild` on each host until V1.
+**T46 deleted it** rather than leaving it flipped to true. Its two gates now read the Thing's own
+capabilities and nothing else:
 
-- `perThingSectionsFor(capabilities, appCapability)` drops `DATA_LOGS` when false.
-  `core/ui/adaptive` gets a `core/appinfo` dependency and reads the singleton through `koinInject`,
-  the way `AdSlot` does.
-- The attachment picker's fourth option (§9.2).
-- `ShellNavGraph` registers `Screen.DataLogViewer` regardless; an unreachable route is harmless and
-  keeps the graph static.
-- Notification taps for `data_log` when false fall back to `NotificationTapTarget.Thing`.
+- `perThingSectionsFor(capabilities)` — the template's section list is the only thing that decides,
+  which is what it was always for. `core/ui/adaptive` no longer depends on `core/appinfo`.
+- The attachment picker's fourth option (§9.2) checks the same list.
+
+`ShellNavGraph` registered `Screen.DataLogViewer` regardless and still does. Notification taps for
+`data_log` no longer have a "when off" case to fall back from.
 
 ### 8.4 Account gate (PRD R40)
 
@@ -1224,7 +1224,7 @@ PR 9+ the formats epic.
 | T43 | 7 | Client notifications: `noun()`/`sectionTitle()`, `parseTapTarget`, `NotificationTapTarget.DataLog`, router, shell tap routing, web detector | `feature/notifications`, `feature/shell` | M | T10, T42 | R39 |
 | T44 | 7 | Analytics: three `Name`s, three `Param`s, three events, taxonomy test list, ViewModel logging | `core/analytics`, `feature/datalog` | S | T20, T26 | R46 |
 | T45 | 7 | `AdSurface.DATA_LOGS`, `AdSlot` size parameter, placement in sidebar footer and under *New pane* on Android and iOS | `feature/ads`, `feature/datalog/viewing` | S | T32 | R44a |
-| T46 | 8 | Flip `isDataLogsSupported` on every host; release notes; `NEW` pill | hosts, `feature/datalog/viewing` | S | T20–T45 | R43 |
+| T46 | 8 | Delete `isDataLogsSupported` and its two gates; release notes | hosts, `core/ui/adaptive`, `feature/datalog/viewing` | S | T20–T45 | R43 |
 | T47 | 9+ | G1000 sniff, units row, short-name mapping; fixtures; tests | `feature/datalog/datamanager` | M | T14 | §6.2, §6.4 |
 | T48 | 9+ | Dynon SkyView parser; multi-session import; the channel-mapping prompt deferred, see §6.2 | `feature/datalog/datamanager` | L | T14 | §6.2 |
 | T49 | 9+ | Shared drag-and-drop `FileDropTarget` for attachments and data logs (web document listener, tablet `dragAndDropTarget`) | `feature/attachment/viewing`, `webApp` | M | T21, T35 | R2c |
