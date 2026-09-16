@@ -22,6 +22,7 @@ import dev.fanfly.wingslog.core.template.allComponentsInSlot
 import dev.fanfly.wingslog.core.template.childInSlot
 import dev.fanfly.wingslog.core.template.childrenInSlot
 import dev.fanfly.wingslog.core.template.currentFor
+import dev.fanfly.wingslog.core.template.formatMeterNumber
 import dev.fanfly.wingslog.core.template.knownCertifications
 import dev.fanfly.wingslog.core.template.readingFor
 import dev.fanfly.wingslog.core.template.specValue
@@ -114,6 +115,11 @@ class MaintenanceLogFormViewModel(
   // Latches once the meter fields have been prefilled from the overview, so a field the user
   // clears stays cleared when the next overview emission arrives.
   private var metersSeeded = false
+
+  // Where each meter stood when the form opened — the prefill for a new log, the log's own
+  // readings for an edit. The suggestions below measure movement from here, so it is the form's
+  // memory of "before", not a second copy of what the fields say.
+  private var baselineReadings: Map<String, Double> = emptyMap()
 
   // All three flags gate captureInitialSnapshot() below, so the unsaved-changes baseline isn't
   // captured until the squawk/task-preselect flows have had a chance to seed their selections.
@@ -347,16 +353,16 @@ class MaintenanceLogFormViewModel(
         // seeding a form that never shows the values would save readings nobody was asked for.
         // Read from the holder because it publishes capabilities with the template above.
         if (!currentThingTemplate.capabilities.value.meters) return@onEach
-        val seeds = template?.meters.orEmpty()
-          .mapNotNull { meter ->
-            overview.currentFor(meter.key)
-              ?.let { meter.key to meter.formatValue(it) }
-          }
-        if (seeds.isEmpty()) return@onEach
+        val readings = template?.meters.orEmpty()
+          .mapNotNull { meter -> overview.currentFor(meter.key)?.let { meter to it } }
+        if (readings.isEmpty()) return@onEach
         metersSeeded = true
+        baselineReadings = readings.associate { (meter, value) -> meter.key to value }
+        val seeds =
+          readings.associate { (meter, value) -> meter.key to meter.formatValue(value) }
         _uiState.update { state ->
           // Anything already typed wins — the overview can arrive after the user reached the tab.
-          state.copy(meterValues = seeds.toMap() + state.meterValues)
+          state.withMeterValues(seeds + state.meterValues)
         }
       }
       .launchIn(viewModelScope)
@@ -392,6 +398,13 @@ class MaintenanceLogFormViewModel(
         // initial snapshot below already includes the saved attachments.
         attachmentForm.seedIfEmpty(log.attachments)
         val existingAttachments = attachmentForm.pendingAttachments.value
+        // Every meter this template declares that the log recorded. An edit measures movement
+        // from what this log already said, not from today's totals.
+        val loadedReadings = currentThingTemplate.template.value?.meters.orEmpty()
+          .mapNotNull { meter -> log.readingFor(meter.key)?.let { meter to it } }
+        baselineReadings = loadedReadings.associate { (meter, value) -> meter.key to value }
+        val loadedMeterValues =
+          loadedReadings.associate { (meter, value) -> meter.key to meter.formatValue(value) }
         _uiState.update {
           it.copy(
             isLoading = false,
@@ -399,18 +412,12 @@ class MaintenanceLogFormViewModel(
             selectedSquawkIds = log.squawk_ids,
             selectedInspectionIds = log.inspection_ids,
             selectedTechnician = log.technician ?: it.selectedTechnician,
-            // Every meter this template declares that the log recorded, by key.
-            meterValues = currentThingTemplate.template.value?.meters.orEmpty()
-              .mapNotNull { meter ->
-                log.readingFor(meter.key)
-                  ?.let { reading -> meter.key to meter.formatValue(reading) }
-              }
-              .toMap(),
             selectedComponentType = log.component_type,
             selectedSubComponent = log.component_serial.ifEmpty { null },
             maintenanceDate = logDate,
             pendingAttachments = existingAttachments,
           )
+            .withMeterValues(loadedMeterValues)
         }
         captureInitialSnapshot()
       } else {
@@ -493,8 +500,53 @@ class MaintenanceLogFormViewModel(
    */
   fun onMeterChanged(meterKey: String, value: String) {
     _uiState.update { state ->
-      state.copy(meterValues = state.meterValues + (meterKey to value))
+      state.withMeterValues(state.meterValues + (meterKey to value))
     }
+  }
+
+  /**
+   * [values] with the suggestions that follow from them.
+   *
+   * Every write to the meter fields goes through here, so the offers beside them can never
+   * describe a value the form no longer holds.
+   */
+  private fun MaintenanceLogFormUiState.withMeterValues(
+    values: Map<String, String>,
+  ): MaintenanceLogFormUiState =
+    copy(meterValues = values, meterSuggestions = suggestionsFor(values))
+
+  /**
+   * What each meter would read if it had moved with the leading one.
+   *
+   * An aeroplane flown 1.9 hours puts 1.9 on the airframe, the engine and the propeller alike, so
+   * a user who has typed the airframe reading has already said what the other two are — and typing
+   * them again from a number they have to work out by hand is where the transcription errors come
+   * from. The offer is the arithmetic, not a decision: the field stays editable, and a meter that
+   * genuinely moved differently is typed.
+   *
+   * **The first meter the template declares leads**, the same rule `primaryReading` uses to pick a
+   * log's headline number. **Only meters in the leading one's unit follow it**: a bike declares an
+   * odometer and ride hours, and 50 more miles says nothing about hours.
+   *
+   * Nothing is offered when the leading meter has not moved forward, when a meter already reads
+   * its suggestion, or when the form never learned where a meter started.
+   */
+  private fun suggestionsFor(values: Map<String, String>): Map<String, String> {
+    val template = currentThingTemplate.template.value ?: return emptyMap()
+    val lead = template.meters.firstOrNull() ?: return emptyMap()
+    val leadBaseline = baselineReadings[lead.key] ?: return emptyMap()
+    val leadNow = values[lead.key]?.toDoubleOrNull() ?: return emptyMap()
+    val moved = leadNow - leadBaseline
+    if (moved <= 0.0) return emptyMap()
+    return template.meters
+      .drop(1)
+      .filter { it.unit_label == lead.unit_label }
+      .mapNotNull { meter ->
+        val baseline = baselineReadings[meter.key] ?: return@mapNotNull null
+        val suggested = template.formatMeterNumber(meter.key, baseline + moved)
+        if (values[meter.key] == suggested) null else meter.key to suggested
+      }
+      .toMap()
   }
 
   fun onComponentTypeChange(value: ComponentType) {

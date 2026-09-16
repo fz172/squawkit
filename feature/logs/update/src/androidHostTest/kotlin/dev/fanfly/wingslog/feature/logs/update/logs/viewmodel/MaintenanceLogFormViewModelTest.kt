@@ -75,6 +75,11 @@ class MaintenanceLogFormViewModelTest {
     templateRegistry,
   ).apply { set(CanonicalTemplates.HOME) }
 
+  /** Two meters in different units — miles and hours — so one cannot follow the other. */
+  private fun bikeTemplateHolder() = CurrentThingTemplate(
+    templateRegistry,
+  ).apply { set(CanonicalTemplates.BIKE) }
+
   /** Real, not mocked: the picker's certification labels come out of the baked-in preset pool. */
   private val templateRegistry = BakedInTemplateRegistry(appVersionCode = 1)
 
@@ -742,6 +747,120 @@ class MaintenanceLogFormViewModelTest {
       advanceUntilIdle()
 
       assertThat(viewModel.uiState.value.meterValues).isEmpty()
+    }
+
+  // ---- meter suggestions (the other meters follow the leading one's increment) ----
+
+  /** The example from the request: 1.1 / 1.7 / 2.0 on the clock, airframe flown to 3.0. */
+  private fun flownAirplane(): MaintenanceLogFormViewModel {
+    every { logManager.observeMaintenanceOverview(TEST_THING_ID) } returns flowOf(
+      overviewOf(
+        MeterKeys.AIRFRAME_HOURS to 1.1,
+        MeterKeys.ENGINE_HOURS to 1.7,
+        MeterKeys.PROP_HOURS to 2.0,
+      )
+    )
+    return buildViewModelForNew()
+  }
+
+  @Test
+  fun changingTheLeadingMeter_offersTheSameIncrementOnTheOthers() =
+    runTest(testDispatcher) {
+      val viewModel = flownAirplane()
+      advanceUntilIdle()
+
+      viewModel.onMeterChanged(MeterKeys.AIRFRAME_HOURS, "3.0")
+
+      // 1.9 hours flown, so the engine and the propeller turned for 1.9 hours too. The airframe
+      // itself is absent: it is the meter the user just typed.
+      assertThat(viewModel.uiState.value.meterSuggestions).containsExactly(
+        MeterKeys.ENGINE_HOURS, "3.6",
+        MeterKeys.PROP_HOURS, "3.9",
+      )
+    }
+
+  @Test
+  fun aMeterThatAlreadyReadsItsSuggestion_isNoLongerOffered() =
+    runTest(testDispatcher) {
+      val viewModel = flownAirplane()
+      advanceUntilIdle()
+      viewModel.onMeterChanged(MeterKeys.AIRFRAME_HOURS, "3.0")
+
+      // What tapping "Use 3.9" does.
+      viewModel.onMeterChanged(MeterKeys.PROP_HOURS, "3.9")
+
+      assertThat(viewModel.uiState.value.meterSuggestions.keys)
+        .containsExactly(MeterKeys.ENGINE_HOURS)
+    }
+
+  @Test
+  fun aLeadingMeterThatHasNotMovedForward_offersNothing() =
+    runTest(testDispatcher) {
+      val viewModel = flownAirplane()
+      advanceUntilIdle()
+
+      // Back to where it started, then below it. Meters run forward; neither says anything about
+      // how long the engine ran.
+      viewModel.onMeterChanged(MeterKeys.AIRFRAME_HOURS, "1.1")
+      assertThat(viewModel.uiState.value.meterSuggestions).isEmpty()
+      viewModel.onMeterChanged(MeterKeys.AIRFRAME_HOURS, "0.5")
+      assertThat(viewModel.uiState.value.meterSuggestions).isEmpty()
+    }
+
+  @Test
+  fun aHalfTypedLeadingMeter_offersNothing() =
+    runTest(testDispatcher) {
+      val viewModel = flownAirplane()
+      advanceUntilIdle()
+
+      // Mid-edit: the field is cleared before the new number is typed, and "" is not a reading.
+      viewModel.onMeterChanged(MeterKeys.AIRFRAME_HOURS, "")
+
+      assertThat(viewModel.uiState.value.meterSuggestions).isEmpty()
+    }
+
+  @Test
+  fun aMeterInAnotherUnit_doesNotFollowTheLeadingOne() =
+    runTest(testDispatcher) {
+      // A bike counts miles and hours. Fifty more miles says nothing about how long it was ridden,
+      // and "Use 1050" beside a field measured in hours would be worse than no offer at all.
+      every { logManager.observeMaintenanceOverview(TEST_THING_ID) } returns flowOf(
+        overviewOf("odometer" to 1000.0, "ride_hours" to 50.0)
+      )
+
+      val viewModel = buildViewModelForNew(templateHolder = bikeTemplateHolder())
+      advanceUntilIdle()
+      viewModel.onMeterChanged("odometer", "1050")
+
+      assertThat(viewModel.uiState.value.meterSuggestions).isEmpty()
+    }
+
+  @Test
+  fun editingALog_measuresTheIncrementFromWhatThatLogSaid() =
+    runTest(testDispatcher) {
+      every { logManager.observeMaintenanceOverview(TEST_THING_ID) } returns flowOf(
+        overviewOf(MeterKeys.AIRFRAME_HOURS to 900.0, MeterKeys.PROP_HOURS to 900.0)
+      )
+      every { logManager.observeLogs(TEST_THING_ID) } returns flowOf(
+        listOf(
+          MaintenanceLog(
+            id = TEST_LOG_ID,
+            work_description = "Annual",
+            readings = listOf(
+              MeterReading(MeterKeys.AIRFRAME_HOURS, value_ = 100.0),
+              MeterReading(MeterKeys.PROP_HOURS, value_ = 80.0),
+            ),
+          )
+        )
+      )
+
+      val viewModel = buildViewModelForEdit()
+      advanceUntilIdle()
+      viewModel.onMeterChanged(MeterKeys.AIRFRAME_HOURS, "102.0")
+
+      // From this log's own 100.0, not from the 900.0 the thing reads today.
+      assertThat(viewModel.uiState.value.meterSuggestions)
+        .containsExactly(MeterKeys.PROP_HOURS, "82.0")
     }
 
   // ---- helpers ----

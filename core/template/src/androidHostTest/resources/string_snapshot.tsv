@@ -274,6 +274,7 @@ feature/logs/update	airframe_serial	Airframe Serial
 feature/logs/update	component_section_description	Which part of the aircraft was serviced
 feature/logs/update	date_section_description	When this work was performed
 feature/logs/update	hours_section_description	Fill the fields that apply to this work event
+feature/logs/update	meter_use_suggestion	Use %1$s
 feature/logs/update	loading_thing	Loading aircraft…
 feature/logs/sharedassets	log_deleted	Work log deleted
 feature/logs/update	log_not_found	Log not found

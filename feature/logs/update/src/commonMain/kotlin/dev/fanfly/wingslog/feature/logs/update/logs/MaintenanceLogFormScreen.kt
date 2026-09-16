@@ -317,6 +317,7 @@ fun MaintenanceLogFormScreen(
 
                 LogFormTab.HOURS -> LogTimeTab(
                   meterValues = uiState.meterValues,
+                  meterSuggestions = uiState.meterSuggestions,
                   onMeterChange = viewModel::onMeterChanged,
                 )
 

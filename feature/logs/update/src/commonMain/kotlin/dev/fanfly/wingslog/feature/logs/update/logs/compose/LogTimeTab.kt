@@ -1,11 +1,18 @@
 package dev.fanfly.wingslog.feature.logs.update.logs.compose
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import dev.fanfly.wingslog.core.template.LocalThingCapabilities
 import dev.fanfly.wingslog.core.template.LocalThingTemplate
@@ -17,11 +24,14 @@ import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.logs.update.generated.resources.Res
 import wingslog.feature.logs.update.generated.resources.hours_section_description
 import wingslog.feature.logs.update.generated.resources.log_tab_hours
+import wingslog.feature.logs.update.generated.resources.meter_use_suggestion
 
 @Composable
 fun LogTimeTab(
   /** The value typed for each meter the template declares, by key (#730). */
   meterValues: Map<String, String>,
+  /** What a meter would read if it had moved with the leading one, by key — offered, not applied. */
+  meterSuggestions: Map<String, String>,
   onMeterChange: (String, String) -> Unit,
   modifier: Modifier = Modifier,
 ) {
@@ -71,10 +81,51 @@ fun LogTimeTab(
                   KeyboardType.Number
                 },
               ),
+              // Inside the field rather than under it: the offer belongs to this meter, and a row
+              // of its own would push the next field down every time the leading meter changes.
+              trailingIcon = meterSuggestions[meter.key]?.let { suggested ->
+                {
+                  UseMeterSuggestion(
+                    suggested = suggested,
+                    onClick = { onMeterChange(meter.key, suggested) },
+                  )
+                }
+              },
             )
           }
         }
       }
     }
+  }
+}
+
+/**
+ * "Use 3.9" — the reading this meter would show if it had moved with the leading one.
+ *
+ * An offer, not a correction: it fills the field the user would otherwise work out by hand, and
+ * disappears once the field says what it suggests.
+ */
+@Composable
+private fun UseMeterSuggestion(
+  suggested: String,
+  onClick: () -> Unit,
+) {
+  Surface(
+    onClick = onClick,
+    shape = RoundedCornerShape(Spacing.chipCornerRadius),
+    color = Color.Transparent,
+    contentColor = MaterialTheme.colorScheme.primary,
+    border = BorderStroke(Spacing.hairline, MaterialTheme.colorScheme.primary),
+    modifier = Modifier.padding(end = Spacing.small),
+  ) {
+    Text(
+      text = stringResource(Res.string.meter_use_suggestion, suggested),
+      style = MaterialTheme.typography.labelMedium,
+      maxLines = 1,
+      modifier = Modifier.padding(
+        horizontal = Spacing.small,
+        vertical = Spacing.extraSmall,
+      ),
+    )
   }
 }

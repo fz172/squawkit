@@ -18,6 +18,9 @@ kotlin {
     }
 
     withHostTest {
+      // The hours-tab layout test renders into a ComponentActivity, which needs the test manifest
+      // and the module's resources merged into the host-test run.
+      isIncludeAndroidResources = true
     }
   }
 
@@ -99,6 +102,12 @@ dependencies {
   "androidHostTestImplementation"(libs.mockk)
   "androidHostTestImplementation"(libs.truth)
   "androidHostTestImplementation"(libs.kotlinx.coroutines.test)
+  // Compose rule: the hours tab's suggestion button is a layout claim, not a state one.
+  "androidHostTestImplementation"(platform(libs.androidx.compose.bom))
+  "androidHostTestImplementation"(libs.androidx.compose.ui.test.junit4)
+  "androidHostTestImplementation"(libs.androidx.compose.ui.test.manifest)
+  "androidHostTestImplementation"(libs.robolectric)
+  "androidRuntimeClasspath"(libs.androidx.compose.ui.test.manifest)
 }
 
 compose.resources {

@@ -18,6 +18,7 @@
   <string name="date_section_description">When this work was performed</string>
   <string name="component_section_description">Which part of the <xliff:g example="aircraft">%1$s</xliff:g> was serviced</string>
   <string name="hours_section_description">Fill the fields that apply to this work event</string>
+  <string name="meter_use_suggestion">Use <xliff:g example="3.9">%1$s</xliff:g></string>
   <string name="performed_by_description">The <xliff:g example="technician">%1$s</xliff:g> who performed this work</string>
   <string name="squawks_section_header"><xliff:g example="squawks">%1$s</xliff:g> Addressed</string>
   <string name="tasks_section_header"><xliff:g example="maintenance tasks">%1$s</xliff:g> Completed</string>
