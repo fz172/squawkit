@@ -14,11 +14,16 @@ fun DataLogSeries.paneKind(): PaneKind =
   if (kind == DataLogSeriesKind.DATA_LOG_SERIES_KIND_POSITION) PaneKind.MAP else PaneKind.CHART
 
 /** The kind of [pane] from its first series; an empty pane accepts either. */
-fun ChartLayout.kindOf(pane: PaneId, catalogue: Map<Int, DataLogSeries>): PaneKind? =
-  panes.firstOrNull { it.id == pane }?.series?.firstOrNull()?.let { catalogue[it.column]?.paneKind() }
+fun ChartLayout.kindOf(
+  pane: PaneId,
+  catalogue: Map<Int, DataLogSeries>
+): PaneKind? =
+  panes.firstOrNull { it.id == pane }?.series?.firstOrNull()
+    ?.let { catalogue[it.column]?.paneKind() }
 
 /** The next pane id: one above the highest in use, so a removed pane's id is never reused mid-session. */
-fun ChartLayout.nextPaneId(): PaneId = PaneId((panes.maxOfOrNull { it.id.value } ?: -1) + 1)
+fun ChartLayout.nextPaneId(): PaneId =
+  PaneId((panes.maxOfOrNull { it.id.value } ?: -1) + 1)
 
 /**
  * Map panes lead, charts follow, and each group keeps the order it had. The map is the one pane
@@ -27,7 +32,8 @@ fun ChartLayout.nextPaneId(): PaneId = PaneId((panes.maxOfOrNull { it.id.value }
  */
 fun ChartLayout.withMapFirst(catalogue: Map<Int, DataLogSeries>): ChartLayout {
   val ordered = panes.sortedBy { pane ->
-    val kind = pane.series.firstOrNull()?.let { catalogue[it.column]?.paneKind() }
+    val kind = pane.series.firstOrNull()
+      ?.let { catalogue[it.column]?.paneKind() }
     if (kind == PaneKind.MAP) 0 else 1
   }
   return if (ordered == panes) this else copy(panes = ordered)
@@ -60,7 +66,11 @@ object LayoutEdits {
     catalogue: Map<Int, DataLogSeries>,
   ): ChartLayout {
     val destination = layout.destinationFor(pane, key, catalogue)
-    return if (destination == null) spawn(layout, key) else add(layout, destination, key)
+    return if (destination == null) spawn(layout, key) else add(
+      layout,
+      destination,
+      key
+    )
   }
 
   /**
@@ -73,14 +83,22 @@ object LayoutEdits {
     catalogue: Map<Int, DataLogSeries>,
   ): PaneId? {
     val seriesKind = catalogue[key.column]?.paneKind() ?: PaneKind.CHART
-    if (seriesKind == PaneKind.MAP) return panes.firstOrNull { kindOf(it.id, catalogue) == PaneKind.MAP }?.id
+    if (seriesKind == PaneKind.MAP) return panes.firstOrNull {
+      kindOf(
+        it.id,
+        catalogue
+      ) == PaneKind.MAP
+    }?.id
     return if (kindOf(pane, catalogue) == PaneKind.MAP) null else pane
   }
 
   /** A new pane at the bottom holding [key] (or empty), which becomes the target. */
   fun spawn(layout: ChartLayout, key: SeriesKey? = null): ChartLayout {
     val id = layout.nextPaneId()
-    return layout.copy(panes = layout.panes + Pane(id, listOfNotNull(key)), targetPane = id)
+    return layout.copy(
+      panes = layout.panes + Pane(id, listOfNotNull(key)),
+      targetPane = id
+    )
   }
 
   /**
@@ -107,7 +125,9 @@ object LayoutEdits {
     val index = layout.panes.indexOfFirst { it.id == pane }
     if (index < 0) return layout
     val remaining = layout.panes.filterNot { it.id == pane }
-    val target = if (layout.targetPane == pane) remaining.getOrNull(index.coerceAtMost(remaining.lastIndex))?.id
+    val target = if (layout.targetPane == pane) remaining.getOrNull(
+      index.coerceAtMost(remaining.lastIndex)
+    )?.id
     else layout.targetPane
     return layout.copy(panes = remaining, targetPane = target)
   }

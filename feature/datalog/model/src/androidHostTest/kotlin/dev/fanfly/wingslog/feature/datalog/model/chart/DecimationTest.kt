@@ -29,7 +29,8 @@ class DecimationTest {
 
   @Test
   fun gapsAndEmptyCellsLeaveColumnsNaN() {
-    val sparse = FloatArray(100) { if (it in 20..29) Float.NaN else it.toFloat() }
+    val sparse =
+      FloatArray(100) { if (it in 20..29) Float.NaN else it.toFloat() }
     val d = Decimation.decimate(sparse, time, window = null, widthPx = 10)
     assertThat(d.minY[2].isNaN()).isTrue()
     assertThat(d.maxY[2].isNaN()).isTrue()
@@ -44,9 +45,24 @@ class DecimationTest {
 
   @Test
   fun visibleRangeAndCursorIndexUseBinarySearch() {
-    assertThat(Decimation.visibleIndexRange(time, ViewWindow(10, 20))).isEqualTo(IndexRange(10, 20))
-    assertThat(Decimation.visibleIndexRange(time, null)).isEqualTo(IndexRange(0, 99))
-    assertThat(Decimation.visibleIndexRange(time, ViewWindow(200, 300)).isEmpty).isTrue()
+    assertThat(
+      Decimation.visibleIndexRange(
+        time,
+        ViewWindow(10, 20)
+      )
+    ).isEqualTo(IndexRange(10, 20))
+    assertThat(Decimation.visibleIndexRange(time, null)).isEqualTo(
+      IndexRange(
+        0,
+        99
+      )
+    )
+    assertThat(
+      Decimation.visibleIndexRange(
+        time,
+        ViewWindow(200, 300)
+      ).isEmpty
+    ).isTrue()
     assertThat(Decimation.indexAt(time, 41.4)).isEqualTo(41)
     assertThat(Decimation.indexAt(time, 41.6)).isEqualTo(42)
     assertThat(Decimation.indexAt(time, -5.0)).isEqualTo(0)
@@ -56,9 +72,23 @@ class DecimationTest {
 
   @Test
   fun degenerateWidthsAndEmptyLogsAreSafe() {
-    assertThat(Decimation.decimate(values, time, null, widthPx = 0).width).isEqualTo(0)
-    assertThat(Decimation.decimate(FloatArray(0), IntArray(0), null, widthPx = 4).minY.all { it.isNaN() }).isTrue()
-    val one = Decimation.decimate(floatArrayOf(7f), intArrayOf(0), null, widthPx = 3)
+    assertThat(
+      Decimation.decimate(
+        values,
+        time,
+        null,
+        widthPx = 0
+      ).width
+    ).isEqualTo(0)
+    assertThat(
+      Decimation.decimate(
+        FloatArray(0),
+        IntArray(0),
+        null,
+        widthPx = 4
+      ).minY.all { it.isNaN() }).isTrue()
+    val one =
+      Decimation.decimate(floatArrayOf(7f), intArrayOf(0), null, widthPx = 3)
     assertThat(one.minY[0]).isEqualTo(7f)
   }
 }

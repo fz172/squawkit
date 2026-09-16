@@ -644,15 +644,27 @@ interface DataLogManager {
 gzip codec each hop a dispatcher of their own — but it puts the whole job in one place rather than
 three.
 
-**The web build has one thread**, so none of that helps there and the work has to yield instead. The
-row walks already do, every 500 rows; `DynonParser.sessionBounds` does too, because a full scan of a
-46 MB download is otherwise a multi-second freeze the spinner never gets to paint through. The
-viewer announces `Loading(reading = true)` and yields once before calling `load`, so the frame that
-says what is happening is drawn before the work starts.
+**The web build has one thread**, so none of that helps there and the work has to hand the thread
+back instead. Two things about how are not obvious, and both were got wrong before they were got
+right.
 
-What is still synchronous on web is `decodeToString` over the whole file. Chunking it means slicing
-UTF-8 by hand, and the real answer is a Web Worker; neither is worth doing before someone measures
-it as the remaining cost.
+*A yield is not a release.* The JS coroutine dispatcher drains its own queue inside the task it is
+already running in, so a yielded coroutine resumes without the browser ever rendering. Only ending
+the task lets a frame be painted, and only a timer ends it — `releaseThread` is therefore `delay(1)`
+on JS and `yield()` everywhere else.
+
+*A row count is not a budget.* Releasing every N rows says nothing about how long N rows took: it is
+hundreds of needless releases on a phone and still a freeze on the web. `Breather` measures instead,
+and hands the thread back once a frame's worth of work has actually gone by. Every parser's row walk
+uses one, as does `DynonParser.sessionBounds`, which scans the whole file to find the power-on
+boundaries.
+
+The viewer announces `Loading(reading = true)` before calling `load` and needs nothing else: reading
+the file and inflating it both suspend, and the parse breathes within a frame of starting.
+
+What is still one synchronous call on web is `decodeToString` over the whole file — 10 ms on the JVM
+for 46 MB, unmeasured on JS. Chunking it means slicing UTF-8 by hand and the real answer is a Web
+Worker; neither is worth doing before someone measures it as the remaining cost.
 
 **Stale catalogues.** The catalogue — every series' name, unit, range and canonical id — is frozen
 into the record at import, while the values are re-parsed on every open. A parser fix therefore

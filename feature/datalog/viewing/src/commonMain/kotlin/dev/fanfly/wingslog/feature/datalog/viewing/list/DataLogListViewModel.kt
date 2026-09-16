@@ -157,14 +157,23 @@ class DataLogListViewModel(
   /** PRD R12: re-run the import against the Thing whose identifier the file carries. */
   fun fileUnderOtherThing(key: Long) {
     val row = imports.value.firstOrNull { it.key == key } ?: return
-    val target = (row.progress as? ImportProgress.OtherThing)?.candidate ?: return
-    start(row.copy(progress = ImportProgress.Reading), confirmDuplicate = true, thingId = target)
+    val target =
+      (row.progress as? ImportProgress.OtherThing)?.candidate ?: return
+    start(
+      row.copy(progress = ImportProgress.Reading),
+      confirmDuplicate = true,
+      thingId = target
+    )
   }
 
   /** PRD R12: the identity is wrong but the Thing is right; keep it here, mismatch flag and all. */
   fun keepHere(key: Long) {
     val row = imports.value.firstOrNull { it.key == key } ?: return
-    start(row.copy(progress = ImportProgress.Reading), confirmDuplicate = true, keepIdentity = true)
+    start(
+      row.copy(progress = ImportProgress.Reading),
+      confirmDuplicate = true,
+      keepIdentity = true
+    )
   }
 
   fun dismissImport(key: Long) {
@@ -203,10 +212,14 @@ class DataLogListViewModel(
             if (progress is ImportProgress.Done) {
               dismissImport(row.key)
               // The parser's answer for duration and series, so it is read back from the store.
-              manager.observeOne(thingId, progress.id).first()
+              manager.observeOne(thingId, progress.id)
+                .first()
                 ?.let { telemetry.imported(it, row.file) }
             } else {
-              if (progress is ImportProgress.Failed) telemetry.failed(progress.reason, row.file)
+              if (progress is ImportProgress.Failed) telemetry.failed(
+                progress.reason,
+                row.file
+              )
               imports.update { rows ->
                 rows.map {
                   if (it.key == row.key) it.copy(

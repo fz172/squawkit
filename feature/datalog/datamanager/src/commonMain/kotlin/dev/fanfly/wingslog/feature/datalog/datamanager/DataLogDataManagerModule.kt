@@ -21,7 +21,8 @@ import org.koin.core.module.Module
 import org.koin.dsl.module
 
 /** Every format this build reads, in sniff order. */
-private val dataLogParsers: List<DataLogParser> = listOf(GarminParser(), DynonParser(), AvidyneParser())
+private val dataLogParsers: List<DataLogParser> =
+  listOf(GarminParser(), DynonParser(), AvidyneParser())
 
 val dataLogDataManagerModule: Module = module {
   includes(platformChartLayoutStoreModule)

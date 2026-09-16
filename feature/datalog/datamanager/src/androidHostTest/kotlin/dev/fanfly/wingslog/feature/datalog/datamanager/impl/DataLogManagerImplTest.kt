@@ -22,8 +22,8 @@ import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
 import dev.fanfly.wingslog.feature.attachment.model.DownloadState
 import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogCache
 import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogImporter
-import dev.fanfly.wingslog.feature.datalog.datamanager.ThingIdentifierLookup
 import dev.fanfly.wingslog.feature.datalog.datamanager.Fixtures
+import dev.fanfly.wingslog.feature.datalog.datamanager.ThingIdentifierLookup
 import dev.fanfly.wingslog.feature.datalog.datamanager.garmin.GarminParser
 import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.id.ThingId
@@ -216,7 +216,8 @@ class DataLogManagerImplTest {
   fun anIdentityMismatchIsRecomputedAgainstTheThingAsItIsNow() = runTest {
     // The flag is a comparison against the Thing, so it goes stale when the Thing changes rather
     // than when the parser does. Renaming a tail number used to leave the chip it invalidated.
-    val flagged = record("a", "2026-09-02T21:47:56Z").copy(identity_mismatch = true)
+    val flagged =
+      record("a", "2026-09-02T21:47:56Z").copy(identity_mismatch = true)
     every { store.observeAll(scope) } returns flowOf(
       listOf(StorageEntity("a", flagged, Instant.DISTANT_PAST))
     )

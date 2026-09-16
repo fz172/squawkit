@@ -52,7 +52,11 @@ class DataLogAttachmentPickerViewModel(
   private val import = MutableStateFlow<ImportRow?>(null)
 
   val uiState: StateFlow<DataLogPickerUiState> =
-    combine(manager.observe(thingId), selected, import) { logs, selected, import ->
+    combine(
+      manager.observe(thingId),
+      selected,
+      import
+    ) { logs, selected, import ->
       DataLogPickerUiState(
         loaded = true,
         rows = logs.map { it.toDataLogRow() },
@@ -92,17 +96,22 @@ class DataLogAttachmentPickerViewModel(
     viewModelScope.launch {
       try {
         // keepIdentity: the user picked this record's Thing, so R12's offer would be noise here.
-        manager.import(thingId, row.file, confirmDuplicate, keepIdentity = true).collect { progress ->
-          if (progress is ImportProgress.Done) {
-            selected.value = progress.id
-            import.value = null
-            manager.observeOne(thingId, progress.id).first()
-              ?.let { telemetry.imported(it, row.file) }
-          } else {
-            if (progress is ImportProgress.Failed) telemetry.failed(progress.reason, row.file)
-            import.update { it?.copy(progress = progress) }
+        manager.import(thingId, row.file, confirmDuplicate, keepIdentity = true)
+          .collect { progress ->
+            if (progress is ImportProgress.Done) {
+              selected.value = progress.id
+              import.value = null
+              manager.observeOne(thingId, progress.id)
+                .first()
+                ?.let { telemetry.imported(it, row.file) }
+            } else {
+              if (progress is ImportProgress.Failed) telemetry.failed(
+                progress.reason,
+                row.file
+              )
+              import.update { it?.copy(progress = progress) }
+            }
           }
-        }
       } catch (e: Exception) {
         logger.w(e) { "Import failed" }
         telemetry.failed(ImportFailure.PARSE_ERROR, row.file)

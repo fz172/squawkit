@@ -10,21 +10,21 @@ import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import dev.fanfly.wingslog.datalog.DataLog
 import dev.fanfly.wingslog.datalog.DataLogSeries
 import dev.fanfly.wingslog.feature.attachment.model.DownloadState
-import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogManager
 import dev.fanfly.wingslog.feature.datalog.datamanager.ChartLayoutStore
+import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogManager
 import dev.fanfly.wingslog.feature.datalog.model.ChartLayout
 import dev.fanfly.wingslog.feature.datalog.model.DataLogSeriesData
 import dev.fanfly.wingslog.feature.datalog.model.GestureIntent
-import dev.fanfly.wingslog.feature.datalog.model.ViewWindow
 import dev.fanfly.wingslog.feature.datalog.model.PaneId
 import dev.fanfly.wingslog.feature.datalog.model.SeriesKey
+import dev.fanfly.wingslog.feature.datalog.model.ViewWindow
 import dev.fanfly.wingslog.feature.datalog.model.chart.LayoutEdits
-import dev.fanfly.wingslog.feature.datalog.model.chart.kindOf
-import dev.fanfly.wingslog.feature.datalog.model.chart.PaneKind
 import dev.fanfly.wingslog.feature.datalog.model.chart.LayoutMemory
 import dev.fanfly.wingslog.feature.datalog.model.chart.LayoutMemoryCodec
 import dev.fanfly.wingslog.feature.datalog.model.chart.Navigation
+import dev.fanfly.wingslog.feature.datalog.model.chart.PaneKind
 import dev.fanfly.wingslog.feature.datalog.model.chart.defaultLayout
+import dev.fanfly.wingslog.feature.datalog.model.chart.kindOf
 import dev.fanfly.wingslog.feature.datalog.model.chart.withMapFirst
 import dev.fanfly.wingslog.feature.datalog.viewing.chart.SidebarTab
 import dev.fanfly.wingslog.id.DataLogId
@@ -38,7 +38,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.yield
 
 enum class LoadFailure { NOT_FOUND, DOWNLOAD_FAILED, PARSE_FAILED }
 
@@ -175,13 +174,15 @@ class DataLogViewerViewModel(
 
   // Layout edits (design §11.5, PRD R21, R24): each is a pure LayoutEdits call on the Ready state.
 
-  fun setTargetPane(pane: PaneId) = updateReady { it.withLayout(LayoutEdits.target(it.layout, pane)) }
+  fun setTargetPane(pane: PaneId) =
+    updateReady { it.withLayout(LayoutEdits.target(it.layout, pane)) }
 
   fun addSeries(pane: PaneId, key: SeriesKey) = updateReady {
     it.withLayout(LayoutEdits.place(it.layout, pane, key, it.catalogue()))
   }
 
-  fun removeSeries(pane: PaneId, key: SeriesKey) = updateReady { it.withLayout(LayoutEdits.remove(it.layout, pane, key)) }
+  fun removeSeries(pane: PaneId, key: SeriesKey) =
+    updateReady { it.withLayout(LayoutEdits.remove(it.layout, pane, key)) }
 
   /**
    * What a tap in the series list means: a series already in [pane] comes out, anything else goes
@@ -192,16 +193,23 @@ class DataLogViewerViewModel(
     val catalogue = state.catalogue()
     // Against the pane it would land in, not the one that was tapped: the position series always
     // lands on the map pane, so that is the pane whose tap must take it back out.
-    val destination = with(LayoutEdits) { state.layout.destinationFor(pane, key, catalogue) }
+    val destination =
+      with(LayoutEdits) { state.layout.destinationFor(pane, key, catalogue) }
     val present = destination != null &&
-      state.layout.panes.firstOrNull { it.id == destination }?.series?.contains(key) == true
+      state.layout.panes.firstOrNull { it.id == destination }?.series?.contains(
+        key
+      ) == true
     val layout = if (present) {
       val removed = LayoutEdits.remove(state.layout, destination, key)
       // The map pane exists only to hold the map, so emptying it closes it rather than leaving a
       // pane and a half of blank behind. A chart pane stays: it is still somewhere to drop a series.
-      val emptied = removed.panes.firstOrNull { it.id == destination }?.series?.isEmpty() == true
+      val emptied =
+        removed.panes.firstOrNull { it.id == destination }?.series?.isEmpty() == true
       val wasMap = state.layout.kindOf(destination, catalogue) == PaneKind.MAP
-      if (emptied && wasMap) LayoutEdits.removePane(removed, destination) else removed
+      if (emptied && wasMap) LayoutEdits.removePane(
+        removed,
+        destination
+      ) else removed
     } else {
       LayoutEdits.place(state.layout, pane, key, catalogue)
     }
@@ -213,13 +221,16 @@ class DataLogViewerViewModel(
   }
 
   /** The *New pane* target: a dropped series lands in a fresh pane; a tap opens an empty one. */
-  fun spawnPane(key: SeriesKey? = null) = updateReady { it.withLayout(LayoutEdits.spawn(it.layout, key)) }
+  fun spawnPane(key: SeriesKey? = null) =
+    updateReady { it.withLayout(LayoutEdits.spawn(it.layout, key)) }
 
   fun setSidebarTab(tab: SidebarTab) = updateReady { it.copy(sidebarTab = tab) }
 
-  fun setSeriesQuery(query: String) = updateReady { it.copy(seriesQuery = query) }
+  fun setSeriesQuery(query: String) =
+    updateReady { it.copy(seriesQuery = query) }
 
-  fun removePane(pane: PaneId) = updateReady { it.withLayout(LayoutEdits.removePane(it.layout, pane)) }
+  fun removePane(pane: PaneId) =
+    updateReady { it.withLayout(LayoutEdits.removePane(it.layout, pane)) }
 
   fun requestDelete() = updateReady { it.copy(deleting = true) }
 
@@ -255,12 +266,12 @@ class DataLogViewerViewModel(
         return@launch
       }
       // PRD R31: what this device last arranged for this log, re-resolved against its series.
-      val remembered = layouts.load(dataLogId)?.let { LayoutMemoryCodec.decode(it, record.series) }
-      // Announce the phase and then let a frame happen before the work starts. On the web build
-      // there is one thread, so without the yield the state change and the parse land in the same
-      // turn of the event loop and the spinner never gets drawn.
+      val remembered = layouts.load(dataLogId)
+        ?.let { LayoutMemoryCodec.decode(it, record.series) }
+      // Announce the phase before the work starts. Nothing has to be done to let the frame be
+      // drawn: reading the file and inflating it both suspend, and the parse hands the thread back
+      // within a frame of starting, so the browser gets its turn either way.
       _uiState.value = DataLogViewerUiState.Loading(reading = true)
-      yield()
       manager.load(thingId, dataLogId)
         .onSuccess { data ->
           // Re-read the record: loading rewrites a catalogue the parser has outgrown, and the copy
@@ -310,7 +321,15 @@ class DataLogViewerViewModel(
     after: DataLogViewerUiState.Ready,
   ) {
     if (before.layout == after.layout && before.clockAxis == after.clockAxis) return
-    layouts.save(dataLogId, LayoutMemoryCodec.encode(LayoutMemory(after.layout, after.clockAxis)))
+    layouts.save(
+      dataLogId,
+      LayoutMemoryCodec.encode(
+        LayoutMemory(
+          after.layout,
+          after.clockAxis
+        )
+      )
+    )
   }
 
   private companion object {

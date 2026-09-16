@@ -22,8 +22,8 @@ import dev.fanfly.wingslog.feature.attachment.datamanager.FileByteReader
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
 import dev.fanfly.wingslog.feature.datalog.datamanager.Fixtures
 import dev.fanfly.wingslog.feature.datalog.datamanager.HeaderSniffer
-import dev.fanfly.wingslog.feature.datalog.datamanager.ThingIdentifierLookup
 import dev.fanfly.wingslog.feature.datalog.datamanager.OtherThing
+import dev.fanfly.wingslog.feature.datalog.datamanager.ThingIdentifierLookup
 import dev.fanfly.wingslog.feature.datalog.datamanager.dynon.DynonParser
 import dev.fanfly.wingslog.feature.datalog.datamanager.garmin.GarminParser
 import dev.fanfly.wingslog.feature.datalog.model.ImportFailure
@@ -110,24 +110,28 @@ class DataLogImporterImplTest {
     )
   }
 
-  private suspend fun run(confirm: Boolean = false, keepIdentity: Boolean = false) =
+  private suspend fun run(
+    confirm: Boolean = false,
+    keepIdentity: Boolean = false
+  ) =
     importer.import(thingId, picked, confirm, keepIdentity)
       .toList()
 
   @Test
-  fun aTailThatNamesAnotherThingOffersToFileItThereAndStoresNothing() = runTest {
-    identifier = "N5678Y"
-    otherThing = OtherThing(ThingId("thing-2"), "N1234X Volar T2i")
+  fun aTailThatNamesAnotherThingOffersToFileItThereAndStoresNothing() =
+    runTest {
+      identifier = "N5678Y"
+      otherThing = OtherThing(ThingId("thing-2"), "N1234X Volar T2i")
 
-    val states = run()
+      val states = run()
 
-    assertThat(states.last()).isEqualTo(
-      ImportProgress.OtherThing(ThingId("thing-2"), "N1234X Volar T2i")
-    )
-    assertThat(states).doesNotContain(ImportProgress.Storing)
-    coVerify(exactly = 0) { store.put(any(), any(), any()) }
-    coVerify(exactly = 0) { blobs.put(any(), any(), any(), any()) }
-  }
+      assertThat(states.last()).isEqualTo(
+        ImportProgress.OtherThing(ThingId("thing-2"), "N1234X Volar T2i")
+      )
+      assertThat(states).doesNotContain(ImportProgress.Storing)
+      coVerify(exactly = 0) { store.put(any(), any(), any()) }
+      coVerify(exactly = 0) { blobs.put(any(), any(), any(), any()) }
+    }
 
   @Test
   fun keepingItHereStoresTheRecordWithTheMismatchFlagStillSet() = runTest {
@@ -206,9 +210,19 @@ class DataLogImporterImplTest {
     // Four sessions in one file (design §6.2). Merged they would be one chart spanning a month.
     val dynon = Fixtures.dynonBytes(Fixtures.DYNON_SESSIONS)
     every { reader.readBytes("content://x") } returns dynon
-    val skyView = PickedFile("content://x", Fixtures.DYNON_SESSIONS, "text/csv", dynon.size.toLong())
+    val skyView = PickedFile(
+      "content://x",
+      Fixtures.DYNON_SESSIONS,
+      "text/csv",
+      dynon.size.toLong()
+    )
 
-    val states = importer.import(thingId, skyView, confirmDuplicate = false, keepIdentity = true)
+    val states = importer.import(
+      thingId,
+      skyView,
+      confirmDuplicate = false,
+      keepIdentity = true
+    )
       .toList()
 
     val done = states.last() as ImportProgress.Done
@@ -219,14 +233,17 @@ class DataLogImporterImplTest {
       .inOrder()
     assertThat(records.first().id).isEqualTo(done.id)
     // One file, one upload: every record names the same blob and the same original bytes.
-    assertThat(records.map { it.raw_file?.id }.toSet()).hasSize(1)
-    assertThat(records.map { it.raw_sha256 }.toSet()).containsExactly(sha256Hex(dynon))
+    assertThat(records.map { it.raw_file?.id }
+                 .toSet()).hasSize(1)
+    assertThat(records.map { it.raw_sha256 }
+                 .toSet()).containsExactly(sha256Hex(dynon))
     coVerify(exactly = 1) { blobs.put(any(), any(), any(), any()) }
     // The two sessions that never got a fix say their date was inferred.
     assertThat(records.map { it.start_approximate })
       .containsExactly(false, false, false, true, true)
       .inOrder()
-    assertThat(records.map { it.format }.toSet())
+    assertThat(records.map { it.format }
+                 .toSet())
       .containsExactly(DataLogFormat.DATA_LOG_FORMAT_DYNON_SKYVIEW)
   }
 

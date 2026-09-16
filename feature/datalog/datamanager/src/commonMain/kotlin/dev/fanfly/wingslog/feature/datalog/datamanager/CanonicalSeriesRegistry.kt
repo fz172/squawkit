@@ -110,6 +110,7 @@ object CanonicalSeriesRegistry {
   private val avidyneIndexed = Regex("""^([EC])(\d+)$""")
   private val engineIndexed = Regex("""^(CHT|EGT|TIT)(\d+)$""")
   private val fuelQty = Regex("""^FQty(\d+)$""")
+
   // `Volts1` on a G3X, `volt1` on a G1000 — the same reading under two spellings of one name.
   private val volts = Regex("""^[Vv]olts?(\d+)$""")
   private val amps = Regex("""^[Aa]mps?(\d+)$""")

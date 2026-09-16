@@ -5,13 +5,13 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.text.selection.DisableSelection
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.selection.DisableSelection
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
@@ -78,7 +78,8 @@ fun PaneHeaderChips(
     verticalAlignment = Alignment.CenterVertically,
   ) {
     Row(
-      modifier = Modifier.weight(1f).horizontalScroll(rememberScrollState()),
+      modifier = Modifier.weight(1f)
+        .horizontalScroll(rememberScrollState()),
       horizontalArrangement = Arrangement.spacedBy(Spacing.small),
       verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -111,8 +112,10 @@ private fun SeriesChip(
   onDrop: (SeriesDrag, DropTarget?) -> Unit,
 ) {
   var origin by remember { mutableStateOf(Offset.Zero) }
-  val dragging = dragState.drag?.let { it.key == chip.key && it.from == pane } == true
-  val dragDescription = stringResource(Res.string.data_log_drag_series, chip.shortName)
+  val dragging =
+    dragState.drag?.let { it.key == chip.key && it.from == pane } == true
+  val dragDescription =
+    stringResource(Res.string.data_log_drag_series, chip.shortName)
   Surface(
     shape = RoundedCornerShape(Spacing.smallCornerRadius),
     color = MaterialTheme.colorScheme.surfaceContainerHigh,
@@ -120,32 +123,59 @@ private fun SeriesChip(
       .alpha(if (dragging) DRAGGING_ALPHA else 1f)
       .onGloballyPositioned { origin = it.positionInWindow() }
       .semantics { contentDescription = dragDescription }
-      .seriesDragSource(chip.key, chip.shortName, pane, { origin }, dragState, onDrop),
+      .seriesDragSource(
+        chip.key,
+        chip.shortName,
+        pane,
+        { origin },
+        dragState,
+        onDrop
+      ),
   ) {
     // Text selection would otherwise claim a mouse drag on the label before the chip sees it.
     DisableSelection {
       Row(
-      modifier = Modifier.padding(start = Spacing.small, top = Spacing.extraSmall, bottom = Spacing.extraSmall),
-      verticalAlignment = Alignment.CenterVertically,
-      horizontalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
-    ) {
-      Box(Modifier.size(SwatchSize).clip(CircleShape).background(chip.color))
-      Text(chip.shortName, style = MaterialTheme.typography.labelMedium)
-      val reading = buildString {
-        if (chip.value != null) append(chip.value)
-        if (chip.unit.isNotBlank() && chip.value != null) append(' ').append(chip.unit)
-      }
-      if (reading.isNotEmpty()) {
-        Text(reading, style = WingslogTypography.dataSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-      }
-      IconButton(onClick = onRemove, modifier = Modifier.size(Spacing.extraLarge)) {
-        Icon(
-          Icons.Filled.Close,
-          contentDescription = stringResource(Res.string.data_log_remove_series, chip.shortName),
-          modifier = Modifier.size(Spacing.large),
+        modifier = Modifier.padding(
+          start = Spacing.small,
+          top = Spacing.extraSmall,
+          bottom = Spacing.extraSmall
+        ),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
+      ) {
+        Box(
+          Modifier.size(SwatchSize)
+            .clip(CircleShape)
+            .background(chip.color)
         )
+        Text(chip.shortName, style = MaterialTheme.typography.labelMedium)
+        val reading = buildString {
+          if (chip.value != null) append(chip.value)
+          if (chip.unit.isNotBlank() && chip.value != null) append(' ').append(
+            chip.unit
+          )
+        }
+        if (reading.isNotEmpty()) {
+          Text(
+            reading,
+            style = WingslogTypography.dataSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+          )
+        }
+        IconButton(
+          onClick = onRemove,
+          modifier = Modifier.size(Spacing.extraLarge)
+        ) {
+          Icon(
+            Icons.Filled.Close,
+            contentDescription = stringResource(
+              Res.string.data_log_remove_series,
+              chip.shortName
+            ),
+            modifier = Modifier.size(Spacing.large),
+          )
+        }
       }
-    }
     }
   }
 }

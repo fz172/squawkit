@@ -28,11 +28,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.fanfly.wingslog.core.appinfo.AppCapability
 import dev.fanfly.wingslog.core.datetime.formatDuration
 import dev.fanfly.wingslog.core.datetime.toClockText
+import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.LocalThingCapabilities
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.dataLogNoun
-import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.ui.common.compose.StatusChip
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.StatusTier
@@ -73,11 +73,19 @@ fun rememberDataLogPickerSlot(
   attachedIds: Set<DataLogId>,
 ): DataLogPickerSlot? {
   val appCapability: AppCapability = koinInject()
-  val hasSection = LocalThingCapabilities.current.sections.contains(Section.SECTION_DATA_LOGS)
+  val hasSection =
+    LocalThingCapabilities.current.sections.contains(Section.SECTION_DATA_LOGS)
   if (!hasSection || !appCapability.isDataLogsSupported) return null
-  val label = LexiconFormatter.sentenceCase(LocalThingLexicon.current.dataLogNoun)
+  val label =
+    LexiconFormatter.sentenceCase(LocalThingLexicon.current.dataLogNoun)
   return DataLogPickerSlot(label) { onAttach, onCancel ->
-    DataLogAttachmentPicker(thingId, recordDate, attachedIds, onAttach, onCancel)
+    DataLogAttachmentPicker(
+      thingId,
+      recordDate,
+      attachedIds,
+      onAttach,
+      onCancel
+    )
   }
 }
 
@@ -108,7 +116,11 @@ fun DataLogAttachmentPicker(
       style = MaterialTheme.typography.titleMedium,
     )
     state.import?.let { row ->
-      ImportRowCard(row, onKeepBoth = viewModel::confirmImport, onDismiss = viewModel::dismissImport)
+      ImportRowCard(
+        row,
+        onKeepBoth = viewModel::confirmImport,
+        onDismiss = viewModel::dismissImport
+      )
     }
     if (state.loaded && state.rows.isEmpty()) {
       Text(
@@ -149,7 +161,14 @@ fun DataLogAttachmentPicker(
       TextButton(onClick = onCancel) { Text(stringResource(CoreRes.string.cancel)) }
       FilledTonalButton(
         enabled = selectedRow != null && selectedRow.id !in attachedIds,
-        onClick = { selectedRow?.let { onAttach(it.id, it.titleText(groundRun)) } },
+        onClick = {
+          selectedRow?.let {
+            onAttach(
+              it.id,
+              it.titleText(groundRun)
+            )
+          }
+        },
       ) {
         Text(stringResource(Res.string.data_log_picker_attach))
       }
@@ -179,7 +198,11 @@ private fun PickerRow(
     verticalAlignment = Alignment.CenterVertically,
     horizontalArrangement = Arrangement.spacedBy(Spacing.small),
   ) {
-    RadioButton(selected = selected || attached, onClick = null, enabled = !attached)
+    RadioButton(
+      selected = selected || attached,
+      onClick = null,
+      enabled = !attached
+    )
     Column(modifier = Modifier.weight(1f)) {
       Text(
         title,
@@ -194,9 +217,15 @@ private fun PickerRow(
       )
     }
     if (attached) {
-      StatusChip(stringResource(Res.string.data_log_picker_attached), StatusTier.NEUTRAL)
+      StatusChip(
+        stringResource(Res.string.data_log_picker_attached),
+        StatusTier.NEUTRAL
+      )
     } else if (sameDay) {
-      StatusChip(stringResource(Res.string.data_log_picker_same_day), StatusTier.POSITIVE)
+      StatusChip(
+        stringResource(Res.string.data_log_picker_same_day),
+        StatusTier.POSITIVE
+      )
     }
   }
 }

@@ -23,8 +23,14 @@ val DataLogSeries.isPlottable: Boolean
  * nothing to plot. T39 replaces the hard-wired canonical id with the template's presets.
  */
 fun defaultLayout(catalogue: List<DataLogSeries>): ChartLayout {
-  val rpm = catalogue.firstOrNull { it.canonical_id == CanonicalSeries.engine(1, "rpm") && it.isPlottable }
-  val first = rpm ?: catalogue.firstOrNull { it.isPlottable } ?: return ChartLayout.EMPTY
+  val rpm = catalogue.firstOrNull {
+    it.canonical_id == CanonicalSeries.engine(
+      1,
+      "rpm"
+    ) && it.isPlottable
+  }
+  val first =
+    rpm ?: catalogue.firstOrNull { it.isPlottable } ?: return ChartLayout.EMPTY
   val pane = Pane(PaneId(0), listOf(SeriesKey(first.column)))
   return ChartLayout(panes = listOf(pane), targetPane = pane.id)
 }

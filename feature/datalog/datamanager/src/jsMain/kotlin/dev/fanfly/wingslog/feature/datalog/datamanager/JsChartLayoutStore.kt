@@ -6,14 +6,16 @@ import kotlinx.browser.localStorage
 
 /** Layout memory in the browser's `localStorage`, one prefixed key per data log. */
 class JsChartLayoutStore : ChartLayoutStore {
-  override fun load(id: DataLogId): String? = localStorage.getItem(PREFIX + id.value)
+  override fun load(id: DataLogId): String? =
+    localStorage.getItem(PREFIX + id.value)
 
   override fun save(id: DataLogId, encoded: String) {
     localStorage.setItem(PREFIX + id.value, encoded)
   }
 
   override fun clear() {
-    val keys = (0 until localStorage.length).mapNotNull { localStorage.key(it) }.filter { it.startsWith(PREFIX) }
+    val keys = (0 until localStorage.length).mapNotNull { localStorage.key(it) }
+      .filter { it.startsWith(PREFIX) }
     keys.forEach { localStorage.removeItem(it) }
   }
 

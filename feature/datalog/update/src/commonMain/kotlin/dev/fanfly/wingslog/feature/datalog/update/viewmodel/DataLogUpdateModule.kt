@@ -2,8 +2,8 @@ package dev.fanfly.wingslog.feature.datalog.update.viewmodel
 
 import dev.fanfly.wingslog.core.analytics.AnalyticsManager
 import dev.fanfly.wingslog.core.template.CurrentThingTemplate
-import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogManager
 import dev.fanfly.wingslog.feature.datalog.datamanager.ChartLayoutStore
+import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogManager
 import dev.fanfly.wingslog.feature.datalog.update.viewer.DataLogViewerViewModel
 import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.id.ThingId

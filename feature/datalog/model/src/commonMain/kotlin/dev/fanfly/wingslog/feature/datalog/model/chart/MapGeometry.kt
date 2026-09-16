@@ -25,7 +25,10 @@ object WebMercator {
     val radians = latitudeDeg.coerceIn(-MAX_LATITUDE, MAX_LATITUDE) * PI / 180.0
     // At the limit itself the arithmetic lands a few parts in 1e12 outside the world; a tile index
     // derived from that underflows, so the range is enforced rather than assumed.
-    return ((1.0 - ln(tan(radians) + 1.0 / cos(radians)) / PI) / 2.0).coerceIn(0.0, 1.0)
+    return ((1.0 - ln(tan(radians) + 1.0 / cos(radians)) / PI) / 2.0).coerceIn(
+      0.0,
+      1.0
+    )
   }
 }
 
@@ -73,9 +76,11 @@ data class MapViewport(
   val leftPx: Double,
   val topPx: Double,
 ) {
-  fun screenX(normalizedX: Double): Float = (normalizedX * worldSizePx - leftPx).toFloat()
+  fun screenX(normalizedX: Double): Float =
+    (normalizedX * worldSizePx - leftPx).toFloat()
 
-  fun screenY(normalizedY: Double): Float = (normalizedY * worldSizePx - topPx).toFloat()
+  fun screenY(normalizedY: Double): Float =
+    (normalizedY * worldSizePx - topPx).toFloat()
 
   /** A tile's size on screen: bigger than the source tile once the camera is over-zoomed. */
   fun tileScreenSizePx(): Double = worldSizePx / (1 shl zoom)
@@ -123,20 +128,34 @@ data class MapCamera(
     heightPx: Float,
     limits: ClosedRange<Double>,
   ): MapCamera {
-    val next = (worldSizePx * factor).coerceIn(limits.start, limits.endInclusive)
+    val next =
+      (worldSizePx * factor).coerceIn(limits.start, limits.endInclusive)
     if (next == worldSizePx) return this
     // The focus holds still: its normalized position must land on the same pixel afterwards.
-    val focusNormalizedX = (centerX * worldSizePx - widthPx / 2.0 + focusX) / worldSizePx
-    val focusNormalizedY = (centerY * worldSizePx - heightPx / 2.0 + focusY) / worldSizePx
+    val focusNormalizedX =
+      (centerX * worldSizePx - widthPx / 2.0 + focusX) / worldSizePx
+    val focusNormalizedY =
+      (centerY * worldSizePx - heightPx / 2.0 + focusY) / worldSizePx
     return MapCamera(
-      centerX = (focusNormalizedX + (widthPx / 2.0 - focusX) / next).coerceIn(0.0, 1.0),
-      centerY = (focusNormalizedY + (heightPx / 2.0 - focusY) / next).coerceIn(0.0, 1.0),
+      centerX = (focusNormalizedX + (widthPx / 2.0 - focusX) / next).coerceIn(
+        0.0,
+        1.0
+      ),
+      centerY = (focusNormalizedY + (heightPx / 2.0 - focusY) / next).coerceIn(
+        0.0,
+        1.0
+      ),
       worldSizePx = next,
     )
   }
 
   /** The viewport this camera shows in a [widthPx] × [heightPx] pane. */
-  fun viewport(widthPx: Float, heightPx: Float, tileSizePx: Int, maxZoom: Int): MapViewport {
+  fun viewport(
+    widthPx: Float,
+    heightPx: Float,
+    tileSizePx: Int,
+    maxZoom: Int
+  ): MapViewport {
     val ideal = floor(log2(worldSizePx / tileSizePx)).toInt()
     return MapViewport(
       zoom = ideal.coerceIn(0, maxZoom),
@@ -148,7 +167,11 @@ data class MapCamera(
 }
 
 /** How far the camera may scale: one tile for the whole world, up to [overZoom] past [maxZoom]. */
-fun scaleLimits(tileSizePx: Int, maxZoom: Int, overZoom: Int): ClosedRange<Double> =
+fun scaleLimits(
+  tileSizePx: Int,
+  maxZoom: Int,
+  overZoom: Int
+): ClosedRange<Double> =
   tileSizePx.toDouble()..(tileSizePx.toDouble() * 2.0.pow(maxZoom + overZoom))
 
 /**
@@ -164,8 +187,10 @@ fun fitCamera(
   fitFraction: Double,
   limits: ClosedRange<Double>,
 ): MapCamera {
-  val byWidth = if (bounds.spanX > 0.0) fitFraction * widthPx / bounds.spanX else Double.MAX_VALUE
-  val byHeight = if (bounds.spanY > 0.0) fitFraction * heightPx / bounds.spanY else Double.MAX_VALUE
+  val byWidth =
+    if (bounds.spanX > 0.0) fitFraction * widthPx / bounds.spanX else Double.MAX_VALUE
+  val byHeight =
+    if (bounds.spanY > 0.0) fitFraction * heightPx / bounds.spanY else Double.MAX_VALUE
   val world = min(byWidth, byHeight)
   return MapCamera(
     centerX = bounds.centerX,

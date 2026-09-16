@@ -23,17 +23,22 @@ class AvidyneParserTest {
   private val parser = AvidyneParser()
 
   private suspend fun log(name: String) =
-    parser.parse(Fixtures.avidyneBytes(name), name).single()
+    parser.parse(Fixtures.avidyneBytes(name), name)
+      .single()
 
   @Test
   fun theTitleLineIsTheWholeSignature() {
     fun sniff(text: String) = parser.sniff(text.encodeToByteArray())
 
-    assertThat(sniff("Avidyne Engine Data Log\n1/1/09 10:00:00\n")).isEqualTo(Confidence.DEFINITE)
+    assertThat(sniff("Avidyne Engine Data Log\n1/1/09 10:00:00\n")).isEqualTo(
+      Confidence.DEFINITE
+    )
     assertThat(sniff("Avidyne Engine Data Log; DAU Software ID: 5.0\n"))
       .isEqualTo(Confidence.DEFINITE)
     assertThat(sniff("Session Time,GPS Fix Quality\n")).isEqualTo(Confidence.NONE)
-    assertThat(sniff("#airframe_info,product=\"GDU 460\"\n")).isEqualTo(Confidence.NONE)
+    assertThat(sniff("#airframe_info,product=\"GDU 460\"\n")).isEqualTo(
+      Confidence.NONE
+    )
     assertThat(sniff("")).isEqualTo(Confidence.NONE)
   }
 
@@ -81,7 +86,16 @@ class AvidyneParserTest {
     // backwards. It keeps row order and moves on by a nominal second, as a Garmin's GPS step does.
     val parsed = log(Fixtures.AVIDYNE_TIME_JUMP)
     assertThat(parsed.start).isEqualTo(Instant.parse("2009-01-21T19:18:12Z"))
-    assertThat(parsed.data.timeSeconds.take(8)).containsExactly(0, 6, 12, 13, 14, 15, 16, 17)
+    assertThat(parsed.data.timeSeconds.take(8)).containsExactly(
+      0,
+      6,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17
+    )
       .inOrder()
     assertThat(parsed.durationSeconds).isEqualTo(1716)
     assertThat(parsed.data.timeSeconds.toList()).isInOrder()
@@ -106,7 +120,8 @@ class AvidyneParserTest {
   @Test
   fun theTerseNamesReachTheSameCanonicalIdsTheOtherRecordersDo() = runTest {
     val parsed = log(Fixtures.AVIDYNE_TURBO)
-    fun canonical(name: String) = parsed.series.single { it.name == name }.canonical_id
+    fun canonical(name: String) =
+      parsed.series.single { it.name == name }.canonical_id
 
     assertThat(canonical("E4")).isEqualTo("engine[1].egt[4]")
     assertThat(canonical("C4")).isEqualTo("engine[1].cht[4]")
@@ -145,7 +160,9 @@ class AvidyneParserTest {
   @Test
   fun theSoftwareIdIsReadWhereTheUnitStatesOne() = runTest {
     assertThat(log(Fixtures.AVIDYNE_TURBO).source.software_version).isEqualTo("5.0")
-    assertThat(log(Fixtures.AVIDYNE_TIME_JUMP).source.software_version).isEqualTo("533")
+    assertThat(log(Fixtures.AVIDYNE_TIME_JUMP).source.software_version).isEqualTo(
+      "533"
+    )
     // The older units say nothing after the title.
     assertThat(log(Fixtures.AVIDYNE_PLAIN).source.software_version).isEmpty()
     assertThat(log(Fixtures.AVIDYNE_PLAIN).source.product).isEqualTo("Avidyne Entegra")

@@ -210,14 +210,23 @@ class DataLogListViewModelTest {
     val file = PickedFile("content://x", "x.csv", "text/csv", 1)
     every { manager.import(thingId, any(), false, false) } returns
       flowOf(ImportProgress.OtherThing(other, "N5678Y Cub"))
-    every { manager.import(other, any(), true, false) } returns flowOf(ImportProgress.Done(DataLogId("moved")))
-    every { manager.import(thingId, any(), true, true) } returns flowOf(ImportProgress.Done(DataLogId("kept")))
+    every { manager.import(other, any(), true, false) } returns flowOf(
+      ImportProgress.Done(DataLogId("moved"))
+    )
+    every { manager.import(thingId, any(), true, true) } returns flowOf(
+      ImportProgress.Done(DataLogId("kept"))
+    )
     val vm = viewModel()
     vm.uiState.first { !it.isLoading }
 
     vm.upload(listOf(file))
     val offered = vm.uiState.value.imports.single()
-    assertThat(offered.progress).isEqualTo(ImportProgress.OtherThing(other, "N5678Y Cub"))
+    assertThat(offered.progress).isEqualTo(
+      ImportProgress.OtherThing(
+        other,
+        "N5678Y Cub"
+      )
+    )
 
     // Filing it there imports against the other Thing, so nothing lands on this one.
     vm.fileUnderOtherThing(offered.key)
@@ -272,7 +281,9 @@ class DataLogListViewModelTest {
   @Test
   fun aFinishedImportLogsItWithTheStoredRecordsShape() = runTest {
     val stored = log("new", "2026-09-02T21:47:56Z")
-    every { manager.observeOne(thingId, DataLogId("new")) } returns flowOf(stored)
+    every { manager.observeOne(thingId, DataLogId("new")) } returns flowOf(
+      stored
+    )
     every { manager.import(thingId, any(), false, false) } returns
       flowOf(ImportProgress.Done(DataLogId("new")))
     val vm = viewModel()

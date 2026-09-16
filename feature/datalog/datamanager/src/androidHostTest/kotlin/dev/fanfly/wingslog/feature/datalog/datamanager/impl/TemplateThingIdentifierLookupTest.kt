@@ -54,8 +54,12 @@ class TemplateThingIdentifierLookupTest {
   fun theTemplateStillMarksBothFieldsSoTheOrderAloneCannotBeTrusted() {
     // A guard on the premise rather than on the code: if the airplane template ever stops marking
     // two fields, this test is what says the fix above is no longer load-bearing.
-    val identifiers = AirplaneTemplate.AIRPLANE_SPEC_FIELDS.filter { it.is_identifier }
-    assertThat(identifiers.map { it.key }).containsExactly("serial", "tail_number")
+    val identifiers =
+      AirplaneTemplate.AIRPLANE_SPEC_FIELDS.filter { it.is_identifier }
+    assertThat(identifiers.map { it.key }).containsExactly(
+      "serial",
+      "tail_number"
+    )
       .inOrder()
     assertThat(AirplaneTemplate.AIRPLANE_SPEC_FIELDS.filter { it.title_candidate }
                  .map { it.key })
@@ -64,7 +68,8 @@ class TemplateThingIdentifierLookupTest {
 
   @Test
   fun aThingWithNoTailNumberHasNoIdentifierRatherThanItsSerial() = runTest {
-    val noTail = airplane.copy(spec = airplane.spec.filterNot { it.key == "tail_number" })
+    val noTail =
+      airplane.copy(spec = airplane.spec.filterNot { it.key == "tail_number" })
 
     assertThat(lookup(noTail).identifierOf(thingId)).isNull()
   }

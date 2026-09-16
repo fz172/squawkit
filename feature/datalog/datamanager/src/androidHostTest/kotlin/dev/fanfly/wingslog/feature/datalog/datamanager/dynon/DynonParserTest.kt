@@ -24,10 +24,16 @@ class DynonParserTest {
   private val parser = DynonParser()
 
   private suspend fun single() =
-    parser.parse(Fixtures.dynonBytes(Fixtures.DYNON_SINGLE), Fixtures.DYNON_SINGLE)
+    parser.parse(
+      Fixtures.dynonBytes(Fixtures.DYNON_SINGLE),
+      Fixtures.DYNON_SINGLE
+    )
 
   private suspend fun download() =
-    parser.parse(Fixtures.dynonBytes(Fixtures.DYNON_SESSIONS), Fixtures.DYNON_SESSIONS)
+    parser.parse(
+      Fixtures.dynonBytes(Fixtures.DYNON_SESSIONS),
+      Fixtures.DYNON_SESSIONS
+    )
 
   @Test
   fun aSessionTimeHeaderIsASkyView() {
@@ -37,11 +43,18 @@ class DynonParserTest {
       .isEqualTo(Confidence.DEFINITE)
     // The first column alone is suggestive but not proof, so it goes to this parser and fails in
     // parse() if the body turns out to be something else.
-    assertThat(sniff("Session Time,Something Else\n0.25,1\n")).isEqualTo(Confidence.POSSIBLE)
-    assertThat(sniff("#airframe_info,product=\"GDU 460\"\n")).isEqualTo(Confidence.NONE)
+    assertThat(sniff("Session Time,Something Else\n0.25,1\n")).isEqualTo(
+      Confidence.POSSIBLE
+    )
+    assertThat(sniff("#airframe_info,product=\"GDU 460\"\n")).isEqualTo(
+      Confidence.NONE
+    )
     assertThat(sniff("")).isEqualTo(Confidence.NONE)
     assertThat(
-      parser.sniff(Fixtures.dynonBytes(Fixtures.DYNON_SESSIONS).copyOf(4096))
+      parser.sniff(
+        Fixtures.dynonBytes(Fixtures.DYNON_SESSIONS)
+          .copyOf(4096)
+      )
     ).isEqualTo(Confidence.DEFINITE)
   }
 
@@ -66,11 +79,23 @@ class DynonParserTest {
     // last one. Merged they would be one chart with a month of empty space across the middle.
     val sessions = download()
     assertThat(sessions).hasSize(5)
-    assertThat(sessions.map { it.sampleCount }).containsExactly(19, 300, 364, 300, 300)
+    assertThat(sessions.map { it.sampleCount }).containsExactly(
+      19,
+      300,
+      364,
+      300,
+      300
+    )
       .inOrder()
     // The first session spans 4.5 seconds and rounds up, the way a half always does here; the
     // reference script that produced these numbers rounds halves to even and said 4.
-    assertThat(sessions.map { it.durationSeconds }).containsExactly(5, 75, 91, 75, 75)
+    assertThat(sessions.map { it.durationSeconds }).containsExactly(
+      5,
+      75,
+      91,
+      75,
+      75
+    )
       .inOrder()
     assertThat(sessions[0].start).isEqualTo(Instant.parse("2019-03-30T12:28:44Z"))
     assertThat(sessions[1].start).isEqualTo(Instant.parse("2019-03-30T20:15:13Z"))
@@ -87,7 +112,9 @@ class DynonParserTest {
     assertThat(undated.start).isEqualTo(Instant.parse("2019-04-28T17:04:02Z"))
     assertThat(sessions[4].startApproximate).isTrue()
     // And the ones that did get a fix are not marked, so the flag means what it says.
-    assertThat(sessions.take(3).map { it.startApproximate })
+    assertThat(
+      sessions.take(3)
+        .map { it.startApproximate })
       .containsExactly(false, false, false)
   }
 
@@ -137,12 +164,18 @@ class DynonParserTest {
     fun series(name: String) = parsed.series.single { it.name == name }
 
     assertThat(series("Indicated Airspeed").unit).isEqualTo("knots")
-    assertThat(series("Indicated Airspeed").canonical_id).isEqualTo(CanonicalSeries.IAS)
+    assertThat(series("Indicated Airspeed").canonical_id).isEqualTo(
+      CanonicalSeries.IAS
+    )
     assertThat(series("Oil Pressure").unit).isEqualTo("PSI")
     assertThat(series("Oil Pressure").canonical_id).isEqualTo("engine[1].oil_press")
     // Left and right, not one and two.
     assertThat(series("RPM L").canonical_id).isEqualTo("engine[1].rpm")
-    assertThat(series("Fuel Level L").canonical_id).isEqualTo(CanonicalSeries.fuelQty(1))
+    assertThat(series("Fuel Level L").canonical_id).isEqualTo(
+      CanonicalSeries.fuelQty(
+        1
+      )
+    )
     assertThat(series("Ground Speed").canonical_id).isEqualTo(CanonicalSeries.GROUND_SPEED)
   }
 
@@ -175,15 +208,16 @@ class DynonParserTest {
   }
 
   @Test
-  fun theGenericThermocoupleChannelsAreEmptyInBothSamplesAndSoAreDropped() = runTest {
-    // The requirements assume a SkyView needs a channel-mapping prompt because its engine columns
-    // are generic. Neither sample populates one: the installer labels the channels in the unit, and
-    // the export writes those labels instead. Nothing here exercises a prompt, which is why none
-    // was built. See design §6.2.
-    val names = single().single().series.map { it.name }
-    assertThat(names.filter { it.startsWith("Thermocouple") }).isEmpty()
-    assertThat(names).contains("CHT L TEMPERATURE")
-  }
+  fun theGenericThermocoupleChannelsAreEmptyInBothSamplesAndSoAreDropped() =
+    runTest {
+      // The requirements assume a SkyView needs a channel-mapping prompt because its engine columns
+      // are generic. Neither sample populates one: the installer labels the channels in the unit, and
+      // the export writes those labels instead. Nothing here exercises a prompt, which is why none
+      // was built. See design §6.2.
+      val names = single().single().series.map { it.name }
+      assertThat(names.filter { it.startsWith("Thermocouple") }).isEmpty()
+      assertThat(names).contains("CHT L TEMPERATURE")
+    }
 
   @Test
   fun groundSpeedDecidesAirborneHereTheSameWayItDoesOnAGarmin() = runTest {

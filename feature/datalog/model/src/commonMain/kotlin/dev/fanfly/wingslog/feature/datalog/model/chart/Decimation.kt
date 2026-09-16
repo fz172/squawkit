@@ -15,7 +15,10 @@ data class IndexRange(val first: Int, val last: Int) {
 object Decimation {
 
   /** Binary searches the monotonic [timeSeconds] for the rows inside [window] (inclusive). */
-  fun visibleIndexRange(timeSeconds: IntArray, window: ViewWindow?): IndexRange {
+  fun visibleIndexRange(
+    timeSeconds: IntArray,
+    window: ViewWindow?
+  ): IndexRange {
     if (timeSeconds.isEmpty()) return IndexRange(0, -1)
     if (window == null) return IndexRange(0, timeSeconds.lastIndex)
     val first = lowerBound(timeSeconds, window.startSeconds)
@@ -36,7 +39,10 @@ object Decimation {
   ): DecimatedSeries {
     val minY = FloatArray(widthPx) { Float.NaN }
     val maxY = FloatArray(widthPx) { Float.NaN }
-    if (widthPx <= 0 || timeSeconds.isEmpty()) return DecimatedSeries(minY, maxY)
+    if (widthPx <= 0 || timeSeconds.isEmpty()) return DecimatedSeries(
+      minY,
+      maxY
+    )
     val start = window?.startSeconds ?: timeSeconds.first()
     val end = window?.endSeconds ?: timeSeconds.last()
     val span = (end - start).coerceAtLeast(1)
@@ -44,7 +50,9 @@ object Decimation {
     for (i in range.first..range.last) {
       val v = values[i]
       if (v.isNaN()) continue
-      val column = (((timeSeconds[i] - start).toLong() * widthPx) / span).toInt().coerceIn(0, widthPx - 1)
+      val column =
+        (((timeSeconds[i] - start).toLong() * widthPx) / span).toInt()
+          .coerceIn(0, widthPx - 1)
       if (minY[column].isNaN() || v < minY[column]) minY[column] = v
       if (maxY[column].isNaN() || v > maxY[column]) maxY[column] = v
     }
@@ -54,7 +62,11 @@ object Decimation {
   /** The row nearest [t] seconds, for the cursor's chip values (design §11.2). */
   fun indexAt(timeSeconds: IntArray, t: Double): Int {
     if (timeSeconds.isEmpty()) return -1
-    val hi = lowerBound(timeSeconds, kotlin.math.ceil(t).toInt())
+    val hi = lowerBound(
+      timeSeconds,
+      kotlin.math.ceil(t)
+        .toInt()
+    )
     if (hi >= timeSeconds.size) return timeSeconds.lastIndex
     if (hi == 0) return 0
     val lo = hi - 1
