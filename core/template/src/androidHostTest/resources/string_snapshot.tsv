@@ -1036,7 +1036,7 @@ feature/datalog/sharedassets	data_log_import_dismiss	Dismiss
 feature/datalog/sharedassets	data_log_import_failed_duplicate	This file is already uploaded.
 feature/datalog/sharedassets	data_log_import_failed_parse	The file could not be parsed.
 feature/datalog/sharedassets	data_log_import_failed_unreadable	The file could not be read.
-feature/datalog/sharedassets	data_log_import_failed_unrecognized	Not a recognised data log. Supported: Garmin G3X.
+feature/datalog/sharedassets	data_log_import_failed_unrecognized	Not a recognised data log. Supported: Garmin G3X, G1000 and Dynon SkyView.
 feature/datalog/sharedassets	data_log_import_keep_both	Keep both
 feature/datalog/sharedassets	data_log_import_parsing	Parsing %1$s…
 feature/datalog/sharedassets	data_log_import_reading	Reading %1$s…
@@ -1078,7 +1078,7 @@ feature/datalog/sharedassets	data_log_sidebar_hint	Tap adds to the highlighted p
 feature/datalog/sharedassets	data_log_sidebar_info	Info
 feature/datalog/sharedassets	data_log_sidebar_open	Series and info
 feature/datalog/sharedassets	data_log_sidebar_series	Series
-feature/datalog/sharedassets	data_log_supported_formats	Supported: Garmin G3X · G3X Touch
+feature/datalog/sharedassets	data_log_supported_formats	Supported: Garmin G3X · G1000 · Dynon SkyView
 feature/datalog/sharedassets	data_log_tail_mismatch	Tail mismatch
 feature/datalog/sharedassets	data_log_upload	Upload Data Log
 feature/datalog/sharedassets	data_log_viewer_clock_axis	Clock time axis
