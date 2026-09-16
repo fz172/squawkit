@@ -17,16 +17,9 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.SideEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.SolidColor
@@ -35,12 +28,10 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
@@ -144,27 +135,14 @@ fun FormTextField(
     unfocusedLabelColor = MaterialTheme.colorScheme.outline,
   )
 
-  // The same mirror the String-valued text-field overloads keep internally: the text is the
-  // caller's, the selection is the field's own. Explicit here because [selectAllOnFocus] has to
-  // write a selection, and a String value cannot carry one.
-  var fieldState by remember { mutableStateOf(TextFieldValue(value)) }
-  val fieldValue = fieldState.copy(text = value)
-  SideEffect { fieldState = fieldValue }
-  var focused by remember { mutableStateOf(false) }
-  LaunchedEffect(focused, selectAllOnFocus) {
-    if (!focused || !selectAllOnFocus) return@LaunchedEffect
-    // After the frame that focused the field, not during it: a tap asks for focus and then drops
-    // the caret where the finger landed, which would overwrite a selection written any earlier.
-    withFrameNanos { }
-    fieldState = fieldState.copy(selection = TextRange(0, fieldState.text.length))
-  }
+  val field = rememberSelectAllOnFocus(
+    value = value,
+    enabled = selectAllOnFocus,
+    onValueChange = onValueChange,
+  )
   val fieldModifier = modifier
     .fillMaxWidth()
-    .onFocusChanged { focused = it.isFocused }
-  val onFieldValueChange: (TextFieldValue) -> Unit = { next ->
-    fieldState = next
-    if (next.text != value) onValueChange(next.text)
-  }
+    .then(field.modifier)
 
   if (dense) {
     // M3 OutlinedTextField has no contentPadding knob, so build it from the decoration box to
@@ -180,8 +158,8 @@ fun FormTextField(
       (charSp * 0.75f).sp.toDp()
     }
     BasicTextField(
-      value = fieldValue,
-      onValueChange = onFieldValueChange,
+      value = field.value,
+      onValueChange = field.onValueChange,
       modifier = fieldModifier.padding(vertical = labelMargin),
       singleLine = singleLine,
       minLines = minLines,
@@ -225,8 +203,8 @@ fun FormTextField(
   }
 
   OutlinedTextField(
-    value = fieldValue,
-    onValueChange = onFieldValueChange,
+    value = field.value,
+    onValueChange = field.onValueChange,
     label = { Text(label.uppercase()) },
     modifier = fieldModifier,
     placeholder = placeholder?.let { { Text(it) } },
