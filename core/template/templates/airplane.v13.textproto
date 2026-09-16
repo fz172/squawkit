@@ -51,9 +51,14 @@
 # v12 adds the Flight Data section (docs/datalog/data_log_visualizer_PRD.md R1, R45): `data_log`
 # noun, `data_log_description`, `empty_states.data_log_hint`, and the fifth section after Logs.
 # Existing aeroplanes need no DNA refresh — capabilities resolve by id from the build (R42).
+#
+# v13 says the propeller follows the airframe: it turns for exactly as long as the aeroplane flies,
+# so the log form can offer a propeller reading that moved by the same amount. The engine names
+# nothing — its hours come off its own tach, at its own rate. This one DOES need a DNA refresh: the
+# meter set is read from the Thing's stored template, not resolved by id.
 
 id: "airplane"
-version: 12
+version: 13
 
 # No floor. This template ships inside every build that can read it, so a client can never
 # encounter it from the future — the floor exists for FETCHED templates (§6), and a baked-in one is
@@ -250,6 +255,9 @@ meters {
   unit_label: "hrs"
   decimal: true
   component_slot_key: "propeller"
+  # The propeller turns whenever the airframe flies, so an hour on one is an hour on the other.
+  # The engine above says nothing of the kind on purpose — see MeterDef.follows_meter_key.
+  follows_meter_key: "airframe_hours"
 }
 
 # See ThingTemplate.meters_label: the word for the SET, which no single meter above supplies.

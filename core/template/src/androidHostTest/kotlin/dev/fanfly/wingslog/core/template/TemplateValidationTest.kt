@@ -131,6 +131,30 @@ class TemplateValidationTest {
   }
 
   @Test
+  fun aMeterFollowingOneThatDoesNotExistIsAProblem() {
+    // The log form simply never offers the button, with nothing anywhere saying why.
+    val broken = valid().copy(
+      meters = listOf(
+        MeterDef(key = "odometer"),
+        MeterDef(key = "belt_miles", follows_meter_key = "odomter"),
+      ),
+    )
+
+    assertThat(broken.structuralProblems())
+      .containsExactly("car: meter 'belt_miles' follows 'odomter', which is not declared")
+  }
+
+  @Test
+  fun aMeterFollowingItselfIsAProblem() {
+    val broken = valid().copy(
+      meters = listOf(MeterDef(key = "odometer", follows_meter_key = "odometer")),
+    )
+
+    assertThat(broken.structuralProblems())
+      .containsExactly("car: meter 'odometer' follows itself")
+  }
+
+  @Test
   fun aNestedSlotIsCheckedLikeAnyOther() {
     // Slots nest, so a top-level scan would miss the duplicate and the meter would resolve.
     val broken = valid().copy(

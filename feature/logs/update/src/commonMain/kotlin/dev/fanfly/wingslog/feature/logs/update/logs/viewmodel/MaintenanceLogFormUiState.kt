@@ -26,11 +26,11 @@ data class MaintenanceLogFormUiState(
    */
   val meterValues: Map<String, String> = emptyMap(),
   /**
-   * What each meter would read if it had moved with the leading one, by key — the form's "Use 3.9"
+   * What a meter would read if it had moved with the one it follows, by key — the form's "Use 3.9"
    * offer beside the field.
    *
-   * A meter is absent from this map when there is nothing to offer: it already reads the suggested
-   * value, the form never learned where it started, or its unit is not the leading meter's. See
+   * A meter is absent from this map when there is nothing to offer: it follows no other meter, it
+   * already reads the suggested value, or the form never learned where it started. See
    * `MaintenanceLogFormViewModel.suggestionsFor`.
    */
   val meterSuggestions: Map<String, String> = emptyMap(),

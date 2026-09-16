@@ -749,7 +749,7 @@ class MaintenanceLogFormViewModelTest {
       assertThat(viewModel.uiState.value.meterValues).isEmpty()
     }
 
-  // ---- meter suggestions (the other meters follow the leading one's increment) ----
+  // ---- meter suggestions (a meter that follows another is offered its increment) ----
 
   /** The example from the request: 1.1 / 1.7 / 2.0 on the clock, airframe flown to 3.0. */
   private fun flownAirplane(): MaintenanceLogFormViewModel {
@@ -764,17 +764,17 @@ class MaintenanceLogFormViewModelTest {
   }
 
   @Test
-  fun changingTheLeadingMeter_offersTheSameIncrementOnTheOthers() =
+  fun changingTheAirframe_offersTheSameIncrementToThePropeller() =
     runTest(testDispatcher) {
       val viewModel = flownAirplane()
       advanceUntilIdle()
 
       viewModel.onMeterChanged(MeterKeys.AIRFRAME_HOURS, "3.0")
 
-      // 1.9 hours flown, so the engine and the propeller turned for 1.9 hours too. The airframe
-      // itself is absent: it is the meter the user just typed.
+      // 1.9 hours flown, so the propeller turned for 1.9 hours too. The engine is deliberately
+      // absent — its hours come off its own tach (airplane v13, `follows_meter_key`) — and so is
+      // the airframe, which is the meter the user just typed.
       assertThat(viewModel.uiState.value.meterSuggestions).containsExactly(
-        MeterKeys.ENGINE_HOURS, "3.6",
         MeterKeys.PROP_HOURS, "3.9",
       )
     }
@@ -789,12 +789,11 @@ class MaintenanceLogFormViewModelTest {
       // What tapping "Use 3.9" does.
       viewModel.onMeterChanged(MeterKeys.PROP_HOURS, "3.9")
 
-      assertThat(viewModel.uiState.value.meterSuggestions.keys)
-        .containsExactly(MeterKeys.ENGINE_HOURS)
+      assertThat(viewModel.uiState.value.meterSuggestions).isEmpty()
     }
 
   @Test
-  fun aLeadingMeterThatHasNotMovedForward_offersNothing() =
+  fun aFollowedMeterThatHasNotMovedForward_offersNothing() =
     runTest(testDispatcher) {
       val viewModel = flownAirplane()
       advanceUntilIdle()
@@ -808,7 +807,7 @@ class MaintenanceLogFormViewModelTest {
     }
 
   @Test
-  fun aHalfTypedLeadingMeter_offersNothing() =
+  fun aHalfTypedFollowedMeter_offersNothing() =
     runTest(testDispatcher) {
       val viewModel = flownAirplane()
       advanceUntilIdle()
@@ -820,10 +819,28 @@ class MaintenanceLogFormViewModelTest {
     }
 
   @Test
-  fun aMeterInAnotherUnit_doesNotFollowTheLeadingOne() =
+  fun changingTheAirframe_offersNothingToTheEngine() =
     runTest(testDispatcher) {
-      // A bike counts miles and hours. Fifty more miles says nothing about how long it was ridden,
-      // and "Use 1050" beside a field measured in hours would be worse than no offer at all.
+      val viewModel = flownAirplane()
+      advanceUntilIdle()
+
+      viewModel.onMeterChanged(MeterKeys.AIRFRAME_HOURS, "3.0")
+
+      // Engine hours are read off the engine tach, which runs at its own rate. A figure derived
+      // from the airframe would be wrong more often than right, so none is offered at any point.
+      assertThat(viewModel.uiState.value.meterSuggestions)
+        .doesNotContainKey(MeterKeys.ENGINE_HOURS)
+      viewModel.onMeterChanged(MeterKeys.ENGINE_HOURS, "2.0")
+      assertThat(viewModel.uiState.value.meterSuggestions)
+        .doesNotContainKey(MeterKeys.ENGINE_HOURS)
+    }
+
+  @Test
+  fun aPresetWhereNoMeterFollowsAnother_offersNothing() =
+    runTest(testDispatcher) {
+      // A bike counts miles and hours, and neither is derivable from the other: fifty more miles
+      // says nothing about how long it was ridden. Its template declares no follower, so the form
+      // asks for both and offers neither.
       every { logManager.observeMaintenanceOverview(TEST_THING_ID) } returns flowOf(
         overviewOf("odometer" to 1000.0, "ride_hours" to 50.0)
       )

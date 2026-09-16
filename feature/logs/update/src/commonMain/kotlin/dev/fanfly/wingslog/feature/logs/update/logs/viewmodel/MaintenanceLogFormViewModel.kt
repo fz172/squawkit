@@ -516,32 +516,31 @@ class MaintenanceLogFormViewModel(
     copy(meterValues = values, meterSuggestions = suggestionsFor(values))
 
   /**
-   * What each meter would read if it had moved with the leading one.
+   * What a meter would read if it had moved with the one it follows.
    *
-   * An aeroplane flown 1.9 hours puts 1.9 on the airframe, the engine and the propeller alike, so
-   * a user who has typed the airframe reading has already said what the other two are — and typing
-   * them again from a number they have to work out by hand is where the transcription errors come
-   * from. The offer is the arithmetic, not a decision: the field stays editable, and a meter that
-   * genuinely moved differently is typed.
+   * A propeller turns for exactly as long as the airframe flies, so a user who has typed 1.9 more
+   * airframe hours has already said what the propeller did — and working that out by hand is where
+   * the transcription errors come from. The offer is the arithmetic, not a decision: the field
+   * stays editable, and a meter that genuinely moved differently is typed.
    *
-   * **The first meter the template declares leads**, the same rule `primaryReading` uses to pick a
-   * log's headline number. **Only meters in the leading one's unit follow it**: a bike declares an
-   * odometer and ride hours, and 50 more miles says nothing about hours.
+   * **The template says which meter follows which** (`MeterDef.follows_meter_key`), so this holds
+   * no opinion about aeroplanes. The engine follows nothing on purpose: its hours come off its own
+   * tach, running at its own rate, and a figure derived from the airframe would be wrong more
+   * often than right.
    *
-   * Nothing is offered when the leading meter has not moved forward, when a meter already reads
-   * its suggestion, or when the form never learned where a meter started.
+   * Nothing is offered when the followed meter has not moved forward, when a meter already reads
+   * its suggestion, or when the form never learned where either of them started.
    */
   private fun suggestionsFor(values: Map<String, String>): Map<String, String> {
     val template = currentThingTemplate.template.value ?: return emptyMap()
-    val lead = template.meters.firstOrNull() ?: return emptyMap()
-    val leadBaseline = baselineReadings[lead.key] ?: return emptyMap()
-    val leadNow = values[lead.key]?.toDoubleOrNull() ?: return emptyMap()
-    val moved = leadNow - leadBaseline
-    if (moved <= 0.0) return emptyMap()
     return template.meters
-      .drop(1)
-      .filter { it.unit_label == lead.unit_label }
       .mapNotNull { meter ->
+        val followed = meter.follows_meter_key.takeIf { it.isNotEmpty() }
+          ?: return@mapNotNull null
+        val followedBaseline = baselineReadings[followed] ?: return@mapNotNull null
+        val followedNow = values[followed]?.toDoubleOrNull() ?: return@mapNotNull null
+        val moved = followedNow - followedBaseline
+        if (moved <= 0.0) return@mapNotNull null
         val baseline = baselineReadings[meter.key] ?: return@mapNotNull null
         val suggested = template.formatMeterNumber(meter.key, baseline + moved)
         if (values[meter.key] == suggested) null else meter.key to suggested

@@ -30,7 +30,7 @@ import wingslog.feature.logs.update.generated.resources.meter_use_suggestion
 fun LogTimeTab(
   /** The value typed for each meter the template declares, by key (#730). */
   meterValues: Map<String, String>,
-  /** What a meter would read if it had moved with the leading one, by key — offered, not applied. */
+  /** What a meter would read if it had moved with the one it follows, by key — offered, not applied. */
   meterSuggestions: Map<String, String>,
   onMeterChange: (String, String) -> Unit,
   modifier: Modifier = Modifier,
@@ -100,7 +100,7 @@ fun LogTimeTab(
 }
 
 /**
- * "Use 3.9" — the reading this meter would show if it had moved with the leading one.
+ * "Use 3.9" — the reading this meter would show if it had moved with the one it follows.
  *
  * An offer, not a correction: it fills the field the user would otherwise work out by hand, and
  * disappears once the field says what it suggests.
