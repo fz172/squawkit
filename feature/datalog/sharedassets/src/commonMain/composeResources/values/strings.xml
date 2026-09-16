@@ -3,7 +3,7 @@
   <string name="data_log_upload">Upload <xliff:g example="Data Log">%1$s</xliff:g></string>
   <string name="data_log_recent_uploads">Recent uploads</string>
   <string name="data_log_empty_title">No <xliff:g example="data log">%1$s</xliff:g> uploaded yet</string>
-  <string name="data_log_supported_formats">Supported: Garmin G3X · G3X Touch</string>
+  <string name="data_log_supported_formats">Supported: Garmin G3X · G1000 · Dynon SkyView · Avidyne Entegra</string>
   <string name="data_log_ground_run">Ground run</string>
   <string name="data_log_series_count"><xliff:g example="108">%1$d</xliff:g> series</string>
   <string name="data_log_tail_mismatch">Tail mismatch</string>
@@ -42,7 +42,7 @@
   <string name="data_log_import_parsing">Parsing <xliff:g example="log_20260902.csv">%1$s</xliff:g>…</string>
   <string name="data_log_import_storing">Saving <xliff:g example="log_20260902.csv">%1$s</xliff:g>…</string>
   <string name="data_log_import_failed_unreadable">The file could not be read.</string>
-  <string name="data_log_import_failed_unrecognized">Not a recognised data log. Supported: Garmin G3X.</string>
+  <string name="data_log_import_failed_unrecognized">Not a recognised data log. Supported: Garmin G3X, G1000, Dynon SkyView and Avidyne Entegra.</string>
   <string name="data_log_import_failed_duplicate">This file is already uploaded.</string>
   <string name="data_log_import_failed_parse">The file could not be parsed.</string>
   <string name="data_log_import_confirm_title">Looks like a duplicate</string>
