@@ -284,7 +284,13 @@ class DataLogListViewModelTest {
     every { manager.observeOne(thingId, DataLogId("new")) } returns flowOf(
       stored
     )
-    every { manager.import(thingId, any(), false, false) } returns
+    every {
+      manager.import(
+        thingId, any(),
+        confirmDuplicate = false,
+        keepIdentity = false
+      )
+    } returns
       flowOf(ImportProgress.Done(DataLogId("new")))
     val vm = viewModel()
     vm.uiState.first { !it.isLoading }
@@ -305,7 +311,13 @@ class DataLogListViewModelTest {
 
   @Test
   fun aFailedImportLogsItsReasonAndSize() = runTest {
-    every { manager.import(thingId, any(), false, false) } returns
+    every {
+      manager.import(
+        thingId, any(),
+        confirmDuplicate = false,
+        keepIdentity = false
+      )
+    } returns
       flowOf(ImportProgress.Failed(ImportFailure.UNRECOGNIZED))
     val vm = viewModel()
     vm.uiState.first { !it.isLoading }

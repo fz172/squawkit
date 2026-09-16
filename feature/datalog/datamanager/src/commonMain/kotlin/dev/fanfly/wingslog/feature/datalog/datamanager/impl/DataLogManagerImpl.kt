@@ -82,8 +82,32 @@ class DataLogManagerImpl(
         }
       }
 
+  /**
+   * One row, by id — never the list filtered down to it.
+   *
+   * It read `observe(thingId).map { first { … } }` before, which decodes every data log the Thing
+   * has to answer a question about one of them. Opening a log asks four times over: once here, once
+   * through `ensureLocal` for the blob id, once inside `load`, and once more afterwards to pick up
+   * a rewritten catalogue. On an account holding a SkyView download's worth of records — twenty-one
+   * of them, a hundred series each — that was four passes of a few thousand protobuf objects before
+   * the screen could draw, and on the web build's one thread it was seconds of frozen UI *before*
+   * the viewer even said it was reading anything.
+   */
+  @OptIn(ExperimentalCoroutinesApi::class)
   override fun observeOne(thingId: ThingId, id: DataLogId): Flow<DataLog?> =
-    observe(thingId).map { logs -> logs.firstOrNull { it.id == id } }
+    scopeResolver.resolve(thingId.value)
+      .flatMapLatest { scope ->
+        if (scope == null) {
+          flowOf(null)
+        } else {
+          store.observe(id.value, scope)
+            .map { it?.value }
+            .catch { e ->
+              logger.w(e) { "Error observing data log $id" }
+              emit(null)
+            }
+        }
+      }
 
   override fun import(
     thingId: ThingId,

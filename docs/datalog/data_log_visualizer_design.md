@@ -639,6 +639,14 @@ interface DataLogManager {
 }
 ```
 
+**Reading one log, not all of them.** `observeOne` is a single-row query on the store, never the
+list filtered down to one. The difference is the whole collection's payloads being decoded or not:
+opening a log asks four times over — in the viewer, in `ensureLocal` for the blob id, inside `load`,
+and again afterwards for the rewritten catalogue — and an account holding one SkyView download has
+twenty-one records of a hundred series each. On the web build's one thread that was seconds of
+frozen UI *before* the viewer drew anything, which is why the spinner appeared only after the freeze
+rather than during it.
+
 **Opening a large log.** `load` does the file read, the inflate and the parse inside one
 `withContext(dispatcher)`. On Android and iOS that is belt and braces — the blob filesystem and the
 gzip codec each hop a dispatcher of their own — but it puts the whole job in one place rather than
