@@ -21,6 +21,7 @@ import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.core.template.allComponentsInSlot
 import dev.fanfly.wingslog.core.template.childInSlot
 import dev.fanfly.wingslog.core.template.childrenInSlot
+import dev.fanfly.wingslog.core.template.currentFor
 import dev.fanfly.wingslog.core.template.knownCertifications
 import dev.fanfly.wingslog.core.template.readingFor
 import dev.fanfly.wingslog.core.template.specValue
@@ -42,6 +43,7 @@ import dev.fanfly.wingslog.feature.tasks.datamanager.withForcedDueMeter
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.MaintenanceLog
+import dev.fanfly.wingslog.thing.MeterDef
 import dev.fanfly.wingslog.thing.MeterReading
 import dev.fanfly.wingslog.thing.Technician
 import dev.gitlive.firebase.auth.FirebaseAuth
@@ -109,6 +111,10 @@ class MaintenanceLogFormViewModel(
   private val preselectedCardId: String? = savedStateHandle[Screen.CARD_ID]
   private var preselectedCardSeeded = false
 
+  // Latches once the meter fields have been prefilled from the overview, so a field the user
+  // clears stays cleared when the next overview emission arrives.
+  private var metersSeeded = false
+
   // All three flags gate captureInitialSnapshot() below, so the unsaved-changes baseline isn't
   // captured until the squawk/task-preselect flows have had a chance to seed their selections.
   private var techniciansLoaded = false
@@ -136,6 +142,7 @@ class MaintenanceLogFormViewModel(
     observeTechnicians()
     checkAuth()
     observeAttachmentAccess()
+    if (!isEditMode) observeCurrentReadings()
     // Mirror the shared attachment controller into UiState so the snapshot/dirty-check
     // logic keeps working off a single state object.
     attachmentForm.pendingAttachments
@@ -317,6 +324,44 @@ class MaintenanceLogFormViewModel(
     maybeCaptureInitialSnapshot()
   }
 
+  /**
+   * Prefill a new log's meter fields with the thing's current readings.
+   *
+   * The number a work event records is nearly always the last one plus a little, so the useful
+   * starting point is the current reading rather than an empty field the user has to go and look
+   * up. They overwrite whatever they actually read off the meter.
+   *
+   * **New logs only.** A saved log reports the readings it was written with, and dropping today's
+   * totals into a form opened to fix a typo would rewrite history — [loadLog] seeds edit mode from
+   * the log itself.
+   */
+  private fun observeCurrentReadings() {
+    combine(
+      logManager.observeMaintenanceOverview(thingId),
+      // The meters are the template's, and it may not be set yet when the overview lands.
+      currentThingTemplate.template,
+    ) { overview, template -> overview to template }
+      .onEach { (overview, template) ->
+        if (metersSeeded || overview == null) return@onEach
+        // The same gate the hours tab itself uses: a template with no meters has no tab, and
+        // seeding a form that never shows the values would save readings nobody was asked for.
+        // Read from the holder because it publishes capabilities with the template above.
+        if (!currentThingTemplate.capabilities.value.meters) return@onEach
+        val seeds = template?.meters.orEmpty()
+          .mapNotNull { meter ->
+            overview.currentFor(meter.key)
+              ?.let { meter.key to meter.formatValue(it) }
+          }
+        if (seeds.isEmpty()) return@onEach
+        metersSeeded = true
+        _uiState.update { state ->
+          // Anything already typed wins — the overview can arrive after the user reached the tab.
+          state.copy(meterValues = seeds.toMap() + state.meterValues)
+        }
+      }
+      .launchIn(viewModelScope)
+  }
+
   private fun loadThing() {
     viewModelScope.launch {
       fleetManager.loadThing(thingId)
@@ -354,20 +399,11 @@ class MaintenanceLogFormViewModel(
             selectedSquawkIds = log.squawk_ids,
             selectedInspectionIds = log.inspection_ids,
             selectedTechnician = log.technician ?: it.selectedTechnician,
-            // Every meter this template declares that the log recorded, by key. The meter says
-            // whether it takes a fraction: an odometer does not, and a car's log opened for edit
-            // showed "84512.0" in a field whose keyboard offers no decimal point.
+            // Every meter this template declares that the log recorded, by key.
             meterValues = currentThingTemplate.template.value?.meters.orEmpty()
               .mapNotNull { meter ->
                 log.readingFor(meter.key)
-                  ?.let { reading ->
-                    meter.key to if (meter.decimal) {
-                      reading.toString()
-                    } else {
-                      reading.toLong()
-                        .toString()
-                    }
-                  }
+                  ?.let { reading -> meter.key to meter.formatValue(reading) }
               }
               .toMap(),
             selectedComponentType = log.component_type,
@@ -723,3 +759,13 @@ private fun AttachmentFormController.AddFileError.toUiText(): UiText =
       message?.let { UiText.DynamicString(it) }
         ?: UiText.StringRes(AttachmentRes.string.add_file_failed)
   }
+
+/**
+ * The meter's own text for [value] — the meter says whether it takes a fraction.
+ *
+ * An odometer does not, and a car's log opened for edit showed "84512.0" in a field whose keyboard
+ * offers no decimal point.
+ */
+private fun MeterDef.formatValue(value: Double): String =
+  if (decimal) value.toString() else value.toLong()
+    .toString()

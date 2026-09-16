@@ -5,6 +5,7 @@ import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.analytics.NoOpAnalyticsManager
 import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.template.CurrentThingTemplate
+import dev.fanfly.wingslog.core.template.MeterKeys
 import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
 import dev.fanfly.wingslog.core.template.canonical.CanonicalTemplates
 import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
@@ -18,7 +19,9 @@ import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.MaintenanceLog
+import dev.fanfly.wingslog.thing.MaintenanceOverview
 import dev.fanfly.wingslog.thing.MaintenanceTask
+import dev.fanfly.wingslog.thing.MeterReading
 import dev.fanfly.wingslog.thing.Squawk
 import dev.fanfly.wingslog.thing.Technician
 import dev.gitlive.firebase.auth.FirebaseAuth
@@ -29,6 +32,7 @@ import io.mockk.mockk
 import io.mockk.slot
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -119,6 +123,10 @@ class MaintenanceLogFormViewModelTest {
       emptyList()
     )
     every { logManager.observeLogs(TEST_THING_ID) } returns flowOf(emptyList())
+    // Nothing recorded yet; the meter-prefill tests below supply their own overview.
+    every { logManager.observeMaintenanceOverview(TEST_THING_ID) } returns flowOf(
+      null
+    )
   }
 
   @After
@@ -658,6 +666,84 @@ class MaintenanceLogFormViewModelTest {
       assertThat(saved.captured.component_type).isEqualTo(ComponentType.COMPONENT_ENGINE)
     }
 
+  // ---- meter prefill (a new log starts from the current readings) ----
+
+  @Test
+  fun newLog_prefillsTheMeterFieldsFromTheCurrentReadings() =
+    runTest(testDispatcher) {
+      every { logManager.observeMaintenanceOverview(TEST_THING_ID) } returns flowOf(
+        overviewOf(
+          MeterKeys.AIRFRAME_HOURS to 1234.5,
+          MeterKeys.ENGINE_HOURS to 800.0,
+        )
+      )
+
+      val viewModel = buildViewModelForNew()
+      advanceUntilIdle()
+
+      // A reading is typed as a small edit of the current number, not looked up from scratch.
+      // Prop hours are absent from the overview, so the field stays empty rather than reading 0.
+      assertThat(viewModel.uiState.value.meterValues).containsExactly(
+        MeterKeys.AIRFRAME_HOURS, "1234.5",
+        MeterKeys.ENGINE_HOURS, "800.0",
+      )
+    }
+
+  @Test
+  fun newLog_prefill_doesNotComeBackAfterTheUserClearsTheField() =
+    runTest(testDispatcher) {
+      val overview = MutableStateFlow(overviewOf(MeterKeys.ENGINE_HOURS to 800.0))
+      every { logManager.observeMaintenanceOverview(TEST_THING_ID) } returns overview
+
+      val viewModel = buildViewModelForNew()
+      advanceUntilIdle()
+      viewModel.onMeterChanged(MeterKeys.ENGINE_HOURS, "")
+      // A later sync writes the overview again — the prefill is a starting point, not a default
+      // the form keeps reapplying over what the user did.
+      overview.value = overviewOf(MeterKeys.ENGINE_HOURS to 801.0)
+      advanceUntilIdle()
+
+      assertThat(viewModel.uiState.value.meterValues[MeterKeys.ENGINE_HOURS]).isEmpty()
+    }
+
+  @Test
+  fun editingALog_showsItsOwnReadings_notTodaysCurrentOnes() =
+    runTest(testDispatcher) {
+      every { logManager.observeMaintenanceOverview(TEST_THING_ID) } returns flowOf(
+        overviewOf(MeterKeys.ENGINE_HOURS to 800.0)
+      )
+      every { logManager.observeLogs(TEST_THING_ID) } returns flowOf(
+        listOf(
+          MaintenanceLog(
+            id = TEST_LOG_ID,
+            work_description = "Oil change",
+            readings = listOf(MeterReading(MeterKeys.ENGINE_HOURS, value_ = 640.2)),
+          )
+        )
+      )
+
+      val viewModel = buildViewModelForEdit()
+      advanceUntilIdle()
+
+      // Dropping today's totals into a form opened to fix a typo would rewrite what the log said.
+      assertThat(viewModel.uiState.value.meterValues[MeterKeys.ENGINE_HOURS]).isEqualTo("640.2")
+    }
+
+  @Test
+  fun newLog_onATemplateWithoutMeters_prefillsNothing() =
+    runTest(testDispatcher) {
+      // A home declares no meters and gets no hours tab, so there is no field to prefill — and a
+      // seeded value would be saved as a reading nobody was asked for.
+      every { logManager.observeMaintenanceOverview(TEST_THING_ID) } returns flowOf(
+        overviewOf(MeterKeys.ENGINE_HOURS to 800.0)
+      )
+
+      val viewModel = buildViewModelForNew(templateHolder = homeTemplateHolder())
+      advanceUntilIdle()
+
+      assertThat(viewModel.uiState.value.meterValues).isEmpty()
+    }
+
   // ---- helpers ----
 
   private fun buildViewModelForEdit(): MaintenanceLogFormViewModel =
@@ -714,4 +800,9 @@ class MaintenanceLogFormViewModelTest {
         }
       ),
     )
+
+  private fun overviewOf(vararg readings: Pair<String, Double>) = MaintenanceOverview(
+    aircraft_id = TEST_THING_ID,
+    current = readings.map { (key, value) -> MeterReading(key, value_ = value) },
+  )
 }
