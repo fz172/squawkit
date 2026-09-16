@@ -21,7 +21,23 @@ object Fixtures {
   /** Four power-on sessions in one download; the last two never got a GPS fix. */
   const val DYNON_SESSIONS = "2019-04-28-N1234X-SN0001-15_3_4_4867-USER_LOG_DATA.csv"
 
+  /** An older 27-column Avidyne: no software id, no turbo columns. */
+  const val AVIDYNE_PLAIN = "Engine_060212_152326_out.log"
+
+  /** The same unit, running past midnight — the only date in the file is on line 2. */
+  const val AVIDYNE_DATE_WRAP = "Engine_050911_233509_out.log"
+
+  /** A 32-column turbo unit: pressure and density altitude, turbine inlet, discrete channels. */
+  const val AVIDYNE_TURBO = "Engine_120313_184105_out.log"
+
+  /** A turbo unit whose clock steps back 84 seconds four rows in. */
+  const val AVIDYNE_TIME_JUMP = "Engine_090121_191809_out.log"
+
   fun bytes(name: String): ByteArray = File(sampleDir(), name).readBytes()
+
+  fun avidyneBytes(name: String): ByteArray = File(avidyneDir(), name).readBytes()
+
+  fun avidyneDir(): File = File(repoRoot(), "docs/datalog/samples/avidyne")
 
   fun dynonBytes(name: String): ByteArray = File(dynonDir(), name).readBytes()
 

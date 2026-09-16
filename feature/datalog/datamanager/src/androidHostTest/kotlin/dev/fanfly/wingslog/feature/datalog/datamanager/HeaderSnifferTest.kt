@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.feature.datalog.datamanager
 
 import com.google.common.truth.Truth.assertThat
+import dev.fanfly.wingslog.feature.datalog.datamanager.avidyne.AvidyneParser
 import dev.fanfly.wingslog.feature.datalog.datamanager.dynon.DynonParser
 import dev.fanfly.wingslog.feature.datalog.datamanager.garmin.GarminParser
 import org.junit.Test
@@ -10,7 +11,8 @@ class HeaderSnifferTest {
 
   private val garmin = GarminParser()
   private val dynon = DynonParser()
-  private val sniffer = HeaderSniffer(listOf(garmin, dynon))
+  private val avidyne = AvidyneParser()
+  private val sniffer = HeaderSniffer(listOf(garmin, dynon, avidyne))
 
   private fun sniff(text: String) = garmin.sniff(text.encodeToByteArray())
 
@@ -96,6 +98,25 @@ class HeaderSnifferTest {
       .copyOf(HeaderSniffer.SNIFF_BYTES)
     assertThat(dynon.sniff(g3x)).isEqualTo(Confidence.NONE)
     assertThat(sniffer.sniff(g3x)).isSameInstanceAs(garmin)
+  }
+
+  @Test
+  fun everyParserRecognisesOnlyItsOwnFormat() {
+    // Three parsers in one list, so the table matters more than any single verdict: each file must
+    // reach exactly one of them, and the other two must say NONE rather than POSSIBLE.
+    val files = mapOf(
+      garmin to Fixtures.bytes(Fixtures.GROUND_RUN),
+      dynon to Fixtures.dynonBytes(Fixtures.DYNON_SINGLE),
+      avidyne to Fixtures.avidyneBytes(Fixtures.AVIDYNE_PLAIN),
+    )
+
+    files.forEach { (owner, bytes) ->
+      val header = bytes.copyOf(HeaderSniffer.SNIFF_BYTES)
+      assertThat(owner.sniff(header)).isEqualTo(Confidence.DEFINITE)
+      assertThat(sniffer.sniff(header)).isSameInstanceAs(owner)
+      files.keys.filterNot { it == owner }
+        .forEach { other -> assertThat(other.sniff(header)).isEqualTo(Confidence.NONE) }
+    }
   }
 
   @Test
