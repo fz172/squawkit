@@ -579,6 +579,34 @@ exact values for a handful of cells.
   key. A SkyView spells out what a Garmin abbreviates (`Indicated Airspeed`, `Oil Pressure`) and
   names its engines by side (`RPM L`, `Fuel Level L`).
 
+**Avidyne Entegra parser** (`DATA_LOG_FORMAT_AVIDYNE`):
+
+- Sniff: line 1 starts `Avidyne Engine Data Log`. Nothing else does, so that alone is `DEFINITE`.
+- Header: three lines — the title, which may carry `; DAU Software ID: <version>`; the log's start
+  date and time as `M/D/YY HH:MM:SS`; then quoted column names. No metadata beyond that, and the
+  file name carries no tail number or serial, so nothing in the format identifies an aircraft.
+- **No row carries a date.** Every row has a time of day and the only date is on line 2, so a log
+  that runs past midnight has to be recognised: a clock going backwards by most of a day is the
+  rollover and the date advances; one going backwards by a minute is the unit correcting itself and
+  keeps its row order, the same rule the Garmin parser applies to a GPS time step. Both cases are in
+  the fixtures, and telling them apart is the whole difficulty of this format.
+- **The power-on frame.** Each file opens with one frame of sensor defaults — outside air at -40,
+  oil at -19, pressure altitude at -16000 — written *before* the log it just announced. Its clock is
+  earlier than the start on line 2, which is what identifies it; leading rows are dropped on that
+  basis rather than on being first, so a later clock correction survives. Without this every range
+  in the sidebar carried a sentinel.
+- **No column states a unit.** The names are a fixed vocabulary rather than free text, so the parser
+  holds the table, and each entry is settled by the data: exhaust gas reaches 1,500 and cylinder
+  heads 500, which are only Fahrenheit numbers, while outside air spans -40 to 26, which is only
+  Celsius. Anything not settled keeps an empty unit rather than a guess.
+- Cells: the format quotes exactly the discrete input and output columns, whose values are bit
+  patterns, so a quoted cell is text whatever it looks like. `"0001000"` read as a number is one
+  thousand, and a switch closing draws as a spike off the top of the pane.
+- Position: `0.0000` for both degrees is what the unit writes with no fix, not a position in the
+  Gulf of Guinea, so such a row is a gap.
+- The file states no time zone. Its clock is the aeroplane's local time and `utc_offset_minutes` is
+  zero, which is what makes the viewer's clock axis read back the times the recorder wrote.
+
 **Known limit.** `DataLogSeriesData.timeSeconds` is an `IntArray`, so the elapsed axis is whole
 seconds. A SkyView samples at four a second here and up to sixteen by configuration, which means
 several rows share an x position at deep zoom. Every row is kept and `sample_rate_hz` reports the

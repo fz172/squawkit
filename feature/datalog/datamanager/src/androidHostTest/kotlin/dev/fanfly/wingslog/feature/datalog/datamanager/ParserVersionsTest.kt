@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.feature.datalog.datamanager
 
 import com.google.common.truth.Truth.assertThat
+import dev.fanfly.wingslog.feature.datalog.datamanager.avidyne.AvidyneParser
 import dev.fanfly.wingslog.feature.datalog.datamanager.dynon.DynonParser
 import dev.fanfly.wingslog.feature.datalog.datamanager.garmin.GarminParser
 import org.junit.Test
@@ -27,12 +28,14 @@ class ParserVersionsTest {
     val versions = mapOf(
       "garmin" to GarminParser().version,
       "dynon" to DynonParser().version,
+      "avidyne" to AvidyneParser().version,
     )
 
     assertThat(versions).containsExactlyEntriesIn(
       mapOf(
         "garmin" to 3,
         "dynon" to 2,
+        "avidyne" to 1,
       )
     )
   }

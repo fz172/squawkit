@@ -53,6 +53,23 @@ object CanonicalSeriesRegistry {
     "Volts 1" to CanonicalSeries.volts(1),
     "Volts 2" to CanonicalSeries.volts(2),
     "Amps" to CanonicalSeries.amps(1),
+
+    // --- Avidyne Entegra ---
+    // Terse where the others are not: four characters at most, and no engine number because the
+    // format only ever described a single-engine airframe.
+    "OILT" to CanonicalSeries.engine(1, "oil_temp"),
+    "OILP" to CanonicalSeries.engine(1, "oil_press"),
+    "RPM" to CanonicalSeries.engine(1, "rpm"),
+    "MAP" to CanonicalSeries.engine(1, "map"),
+    "FF" to CanonicalSeries.engine(1, "fuel_flow"),
+    "TIT" to CanonicalSeries.engine(1, "tit", 1),
+    "PALT" to CanonicalSeries.ALT_PRESSURE,
+    "MBUS" to CanonicalSeries.volts(1),
+    "EBUS" to CanonicalSeries.volts(2),
+    "AMP1" to CanonicalSeries.amps(1),
+    "AMP2" to CanonicalSeries.amps(2),
+    "LAT" to CanonicalSeries.LATITUDE,
+    "LON" to CanonicalSeries.LONGITUDE,
     "VSpd" to CanonicalSeries.VERTICAL_SPEED,
     "GndSpd" to CanonicalSeries.GROUND_SPEED,
     "AGL" to CanonicalSeries.AGL,
@@ -86,6 +103,11 @@ object CanonicalSeriesRegistry {
   // A SkyView spells its cylinder banks with a space and no engine number: "CHT 3", never "E1 CHT3".
   // Single-engine is the only airframe that writes them this way, so they are engine one's.
   private val dynonIndexed = Regex("""^(CHT|EGT|TIT) (\d+)$""")
+
+  // Avidyne is terser still: E4 is exhaust gas on cylinder four and C4 is that cylinder's head.
+  // Unambiguous because a Garmin never writes a bare `E4` — its engine columns are `E1 <field>`,
+  // which needs the space.
+  private val avidyneIndexed = Regex("""^([EC])(\d+)$""")
   private val engineIndexed = Regex("""^(CHT|EGT|TIT)(\d+)$""")
   private val fuelQty = Regex("""^FQty(\d+)$""")
   // `Volts1` on a G3X, `volt1` on a G1000 — the same reading under two spellings of one name.
@@ -109,6 +131,11 @@ object CanonicalSeriesRegistry {
             )
           }
         return ""
+      }
+    avidyneIndexed.matchEntire(key)
+      ?.let {
+        val field = if (it.groupValues[1] == "E") "egt" else "cht"
+        return CanonicalSeries.engine(1, field, it.groupValues[2].toInt())
       }
     dynonIndexed.matchEntire(key)
       ?.let {
