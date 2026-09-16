@@ -670,9 +670,16 @@ boundaries.
 The viewer announces `Loading(reading = true)` before calling `load` and needs nothing else: reading
 the file and inflating it both suspend, and the parse breathes within a frame of starting.
 
-What is still one synchronous call on web is `decodeToString` over the whole file — 10 ms on the JVM
-for 46 MB, unmeasured on JS. Chunking it means slicing UTF-8 by hand and the real answer is a Web
-Worker; neither is worth doing before someone measures it as the remaining cost.
+**Decoding the file is `decodeText`, not `decodeToString`.** Measured rather than assumed: a browser
+profile of opening one session of a 46 MB download showed a single 3.2-second task on the main
+thread, two thirds of it inside one `toString` and a further fifth collecting the garbage that
+`toString` made. That is the Kotlin standard library's `ByteArray.decodeToString` on the web build —
+a hand-written UTF-8 loop appending to a `StringBuilder`. The same call is 10 ms on the JVM, which is
+why nothing caught it until someone recorded the browser doing it.
+
+`decodeText` is that call everywhere except the web, where it is the browser's own `TextDecoder`:
+native code instead of a loop, and non-fatal on a bad byte, which is the behaviour a recorder's file
+deserves anyway.
 
 **Stale catalogues.** The catalogue — every series' name, unit, range and canonical id — is frozen
 into the record at import, while the values are re-parsed on every open. A parser fix therefore

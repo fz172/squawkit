@@ -11,6 +11,7 @@ import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogParser
 import dev.fanfly.wingslog.feature.datalog.datamanager.csv.Breather
 import dev.fanfly.wingslog.feature.datalog.datamanager.csv.ColumnAccumulator
 import dev.fanfly.wingslog.feature.datalog.datamanager.csv.LineCursor
+import dev.fanfly.wingslog.feature.datalog.datamanager.csv.decodeText
 import dev.fanfly.wingslog.feature.datalog.datamanager.csv.forwardFilled
 import dev.fanfly.wingslog.feature.datalog.datamanager.csv.medianPositiveDelta
 import dev.fanfly.wingslog.feature.datalog.datamanager.csv.parseDoubleAt
@@ -65,7 +66,7 @@ class GarminParser : DataLogParser {
   override val version: Int = 3
 
   override fun sniff(header: ByteArray): Confidence {
-    val text = header.decodeToString(throwOnInvalidSequence = false)
+    val text = decodeText(header)
       .removePrefix(BOM)
     val first = text.substringBefore('\n')
       .trimEnd('\r')
@@ -92,7 +93,7 @@ class GarminParser : DataLogParser {
     bytes: ByteArray,
     fileName: String
   ): ParsedDataLog {
-    val text = bytes.decodeToString(throwOnInvalidSequence = false)
+    val text = decodeText(bytes)
       .removePrefix(BOM)
     val lines = LineCursor(text)
     val header = lines.next()

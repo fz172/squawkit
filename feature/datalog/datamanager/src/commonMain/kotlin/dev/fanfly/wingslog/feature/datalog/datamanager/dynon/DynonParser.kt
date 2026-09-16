@@ -11,6 +11,7 @@ import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogParser
 import dev.fanfly.wingslog.feature.datalog.datamanager.csv.Breather
 import dev.fanfly.wingslog.feature.datalog.datamanager.csv.ColumnAccumulator
 import dev.fanfly.wingslog.feature.datalog.datamanager.csv.LineCursor
+import dev.fanfly.wingslog.feature.datalog.datamanager.csv.decodeText
 import dev.fanfly.wingslog.feature.datalog.datamanager.csv.forwardFilled
 import dev.fanfly.wingslog.feature.datalog.datamanager.csv.parseDoubleAt
 import dev.fanfly.wingslog.feature.datalog.datamanager.csv.parseIntAt
@@ -61,7 +62,7 @@ class DynonParser : DataLogParser {
   override val version: Int = 2
 
   override fun sniff(header: ByteArray): Confidence {
-    val text = header.decodeToString(throwOnInvalidSequence = false)
+    val text = decodeText(header)
       .removePrefix(BOM)
     val first = text.substringBefore('\n')
       .trimEnd('\r')
@@ -77,7 +78,7 @@ class DynonParser : DataLogParser {
     fileName: String,
     session: Int?,
   ): List<ParsedDataLog> {
-    val text = bytes.decodeToString(throwOnInvalidSequence = false)
+    val text = decodeText(bytes)
       .removePrefix(BOM)
     val header = LineCursor(text)
     val headerLine = header.next()
