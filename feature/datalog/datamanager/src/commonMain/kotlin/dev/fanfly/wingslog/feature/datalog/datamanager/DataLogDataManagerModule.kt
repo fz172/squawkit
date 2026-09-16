@@ -10,6 +10,7 @@ import dev.fanfly.wingslog.core.storage.blob.UploadScheduler
 import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.datalog.DataLog
 import dev.fanfly.wingslog.feature.attachment.datamanager.FileByteReader
+import dev.fanfly.wingslog.feature.datalog.datamanager.avidyne.AvidyneParser
 import dev.fanfly.wingslog.feature.datalog.datamanager.dynon.DynonParser
 import dev.fanfly.wingslog.feature.datalog.datamanager.garmin.GarminParser
 import dev.fanfly.wingslog.feature.datalog.datamanager.impl.DataLogImporterImpl
@@ -20,7 +21,7 @@ import org.koin.core.module.Module
 import org.koin.dsl.module
 
 /** Every format this build reads, in sniff order. */
-private val dataLogParsers: List<DataLogParser> = listOf(GarminParser(), DynonParser())
+private val dataLogParsers: List<DataLogParser> = listOf(GarminParser(), DynonParser(), AvidyneParser())
 
 val dataLogDataManagerModule: Module = module {
   includes(platformChartLayoutStoreModule)
