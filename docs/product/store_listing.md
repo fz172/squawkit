@@ -19,15 +19,15 @@ App Store — released 2026-09-09, app id `6801955033`.
 
 ## Shared
 
-| Field | Value |
-|---|---|
-| App name (30) | `SquawkIt: Maintenance Logbook` |
-| Privacy policy URL | `https://squawkit.fanfly.dev/privacy.html` |
-| Support / marketing URL | `https://squawkit.fanfly.dev` |
-| Category | Productivity (Play) · Productivity, secondary Utilities (App Store) |
-| Age rating | Everyone / 4+ (no user-generated public content, no violence, no gambling) |
-| Contains ads | Yes on the free tier, Android and iOS. Declare it in both consoles. |
-| In-app purchases | Yes, subscription removes ads. |
+| Field                   | Value                                                                      |
+|-------------------------|----------------------------------------------------------------------------|
+| App name (30)           | `SquawkIt: Maintenance Logbook`                                            |
+| Privacy policy URL      | `https://squawkit.fanfly.dev/privacy.html`                                 |
+| Support / marketing URL | `https://squawkit.fanfly.dev`                                              |
+| Category                | Productivity (Play) · Productivity, secondary Utilities (App Store)        |
+| Age rating              | Everyone / 4+ (no user-generated public content, no violence, no gambling) |
+| Contains ads            | Yes on the free tier, Android and iOS. Declare it in both consoles.        |
+| In-app purchases        | Yes, subscription removes ads.                                             |
 
 ## Google Play
 
@@ -41,13 +41,13 @@ Maintenance log for your aircraft, car, boat, bike and home. Works offline.
 
 **Assets**
 
-| Slot | File | Size |
-|---|---|---|
-| App icon | `store_assets/play/icon_512.png` | 512×512 |
-| Feature graphic | `store_assets/play/feature_graphic.png` | 1024×500 |
-| Phone screenshots | `store_assets/play/phone/*.png` | 1080×2364, 2 to 8 |
-| 7-inch tablet screenshots | `store_assets/play/tablet/*.png` | 2560×1600 |
-| 10-inch tablet screenshots | same files as 7-inch | 2560×1600 |
+| Slot                       | File                                    | Size              |
+|----------------------------|-----------------------------------------|-------------------|
+| App icon                   | `store_assets/play/icon_512.png`        | 512×512           |
+| Feature graphic            | `store_assets/play/feature_graphic.png` | 1024×500          |
+| Phone screenshots          | `store_assets/play/phone/*.png`         | 1080×2364, 2 to 8 |
+| 7-inch tablet screenshots  | `store_assets/play/tablet/*.png`        | 2560×1600         |
+| 10-inch tablet screenshots | same files as 7-inch                    | 2560×1600         |
 
 ## App Store
 
@@ -61,7 +61,7 @@ Aircraft, car, boat & home
 **Promotional text (170)**, editable without a new build:
 
 ```
-One maintenance log for everything you own: squawks on the airplane, oil changes by odometer on the car, engine hours on the boat, filters at home. Works offline.
+One maintenance app for everything you own: squawks on the airplane, services on the car, upkeep on the boat, chores at home. Works offline.
 ```
 
 **Keywords (100)**, comma separated, no spaces, do not repeat words from the name or subtitle:
@@ -79,12 +79,12 @@ every revision.
 
 **Assets**
 
-| Slot | File | Size |
-|---|---|---|
-| App icon | built from the Xcode asset catalog (`AppIcon-1024.png`, no alpha) | 1024×1024 |
-| iPhone 6.9-inch screenshots | `store_assets/appstore/iphone_6_9/*.png` | 1320×2868, 1 to 10 |
-| iPhone 6.5-inch screenshots | `store_assets/appstore/iphone_6_5/*.png` | 1284×2778, 1 to 10 |
-| iPad 13-inch screenshots | `store_assets/appstore/ipad_13/*.png` | 2752×2064 or 2064×2752 |
+| Slot                        | File                                                              | Size                   |
+|-----------------------------|-------------------------------------------------------------------|------------------------|
+| App icon                    | built from the Xcode asset catalog (`AppIcon-1024.png`, no alpha) | 1024×1024              |
+| iPhone 6.9-inch screenshots | `store_assets/appstore/iphone_6_9/*.png`                          | 1320×2868, 1 to 10     |
+| iPhone 6.5-inch screenshots | `store_assets/appstore/iphone_6_5/*.png`                          | 1284×2778, 1 to 10     |
+| iPad 13-inch screenshots    | `store_assets/appstore/ipad_13/*.png`                             | 2752×2064 or 2064×2752 |
 
 iPad screenshots are required because the target's device family includes
 iPad.
