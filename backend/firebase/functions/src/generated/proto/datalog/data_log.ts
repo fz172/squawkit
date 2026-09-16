@@ -17,6 +17,7 @@ export enum DataLogFormat {
   DATA_LOG_FORMAT_GARMIN_G3X = 1,
   DATA_LOG_FORMAT_GARMIN_G1000 = 2,
   DATA_LOG_FORMAT_DYNON_SKYVIEW = 3,
+  DATA_LOG_FORMAT_AVIDYNE = 4,
   UNRECOGNIZED = -1,
 }
 
@@ -34,6 +35,9 @@ export function dataLogFormatFromJSON(object: any): DataLogFormat {
     case 3:
     case "DATA_LOG_FORMAT_DYNON_SKYVIEW":
       return DataLogFormat.DATA_LOG_FORMAT_DYNON_SKYVIEW;
+    case 4:
+    case "DATA_LOG_FORMAT_AVIDYNE":
+      return DataLogFormat.DATA_LOG_FORMAT_AVIDYNE;
     case -1:
     case "UNRECOGNIZED":
     default:
@@ -51,6 +55,8 @@ export function dataLogFormatToJSON(object: DataLogFormat): string {
       return "DATA_LOG_FORMAT_GARMIN_G1000";
     case DataLogFormat.DATA_LOG_FORMAT_DYNON_SKYVIEW:
       return "DATA_LOG_FORMAT_DYNON_SKYVIEW";
+    case DataLogFormat.DATA_LOG_FORMAT_AVIDYNE:
+      return "DATA_LOG_FORMAT_AVIDYNE";
     case DataLogFormat.UNRECOGNIZED:
     default:
       return "UNRECOGNIZED";
@@ -221,7 +227,22 @@ export interface DataLog {
   /** written by the server in V2, empty until then */
   endLocationIdent: string;
   createdAt: Date | undefined;
-  createdBy: UserId | undefined;
+  createdBy:
+    | UserId
+    | undefined;
+  /**
+   * Which power-on session of the source file this record is (design §6.2). A SkyView restarts its
+   * clock at every power cycle and one download holds every session since the last one, so such a
+   * file yields one record per session and all of them name the same blob. Zero for a format that
+   * holds one session per file, which is every Garmin.
+   */
+  sessionIndex: number;
+  /**
+   * `start` was inferred rather than read. A SkyView session that never got a GPS fix carries a
+   * time of day and no date at all, so the date comes from the file name. The list says the date is
+   * approximate rather than presenting a guess as a reading.
+   */
+  startApproximate: boolean;
 }
 
 function createBaseDataLogSource(): DataLogSource {
@@ -621,6 +642,8 @@ function createBaseDataLog(): DataLog {
     endLocationIdent: "",
     createdAt: undefined,
     createdBy: undefined,
+    sessionIndex: 0,
+    startApproximate: false,
   };
 }
 
@@ -694,6 +717,12 @@ export const DataLog: MessageFns<DataLog> = {
     }
     if (message.createdBy !== undefined) {
       UserId.encode(message.createdBy, writer.uint32(186).fork()).join();
+    }
+    if (message.sessionIndex !== 0) {
+      writer.uint32(192).int32(message.sessionIndex);
+    }
+    if (message.startApproximate !== false) {
+      writer.uint32(200).bool(message.startApproximate);
     }
     return writer;
   },
@@ -889,6 +918,22 @@ export const DataLog: MessageFns<DataLog> = {
           message.createdBy = UserId.decode(reader, reader.uint32());
           continue;
         }
+        case 24: {
+          if (tag !== 192) {
+            break;
+          }
+
+          message.sessionIndex = reader.int32();
+          continue;
+        }
+        case 25: {
+          if (tag !== 200) {
+            break;
+          }
+
+          message.startApproximate = reader.bool();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -989,6 +1034,16 @@ export const DataLog: MessageFns<DataLog> = {
         : isSet(object.created_by)
         ? UserId.fromJSON(object.created_by)
         : undefined,
+      sessionIndex: isSet(object.sessionIndex)
+        ? globalThis.Number(object.sessionIndex)
+        : isSet(object.session_index)
+        ? globalThis.Number(object.session_index)
+        : 0,
+      startApproximate: isSet(object.startApproximate)
+        ? globalThis.Boolean(object.startApproximate)
+        : isSet(object.start_approximate)
+        ? globalThis.Boolean(object.start_approximate)
+        : false,
     };
   },
 
@@ -1063,6 +1118,12 @@ export const DataLog: MessageFns<DataLog> = {
     if (message.createdBy !== undefined) {
       obj.createdBy = UserId.toJSON(message.createdBy);
     }
+    if (message.sessionIndex !== 0) {
+      obj.sessionIndex = Math.round(message.sessionIndex);
+    }
+    if (message.startApproximate !== false) {
+      obj.startApproximate = message.startApproximate;
+    }
     return obj;
   },
 
@@ -1100,6 +1161,8 @@ export const DataLog: MessageFns<DataLog> = {
     message.createdBy = (object.createdBy !== undefined && object.createdBy !== null)
       ? UserId.fromPartial(object.createdBy)
       : undefined;
+    message.sessionIndex = object.sessionIndex ?? 0;
+    message.startApproximate = object.startApproximate ?? false;
     return message;
   },
 };

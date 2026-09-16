@@ -21,6 +21,8 @@ import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.core.template.allComponentsInSlot
 import dev.fanfly.wingslog.core.template.childInSlot
 import dev.fanfly.wingslog.core.template.childrenInSlot
+import dev.fanfly.wingslog.core.template.currentFor
+import dev.fanfly.wingslog.core.template.formatMeterNumber
 import dev.fanfly.wingslog.core.template.knownCertifications
 import dev.fanfly.wingslog.core.template.readingFor
 import dev.fanfly.wingslog.core.template.specValue
@@ -42,6 +44,7 @@ import dev.fanfly.wingslog.feature.tasks.datamanager.withForcedDueMeter
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
 import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.MaintenanceLog
+import dev.fanfly.wingslog.thing.MeterDef
 import dev.fanfly.wingslog.thing.MeterReading
 import dev.fanfly.wingslog.thing.Technician
 import dev.gitlive.firebase.auth.FirebaseAuth
@@ -109,6 +112,15 @@ class MaintenanceLogFormViewModel(
   private val preselectedCardId: String? = savedStateHandle[Screen.CARD_ID]
   private var preselectedCardSeeded = false
 
+  // Latches once the meter fields have been prefilled from the overview, so a field the user
+  // clears stays cleared when the next overview emission arrives.
+  private var metersSeeded = false
+
+  // Where each meter stood when the form opened — the prefill for a new log, the log's own
+  // readings for an edit. The suggestions below measure movement from here, so it is the form's
+  // memory of "before", not a second copy of what the fields say.
+  private var baselineReadings: Map<String, Double> = emptyMap()
+
   // All three flags gate captureInitialSnapshot() below, so the unsaved-changes baseline isn't
   // captured until the squawk/task-preselect flows have had a chance to seed their selections.
   private var techniciansLoaded = false
@@ -136,6 +148,7 @@ class MaintenanceLogFormViewModel(
     observeTechnicians()
     checkAuth()
     observeAttachmentAccess()
+    if (!isEditMode) observeCurrentReadings()
     // Mirror the shared attachment controller into UiState so the snapshot/dirty-check
     // logic keeps working off a single state object.
     attachmentForm.pendingAttachments
@@ -317,6 +330,44 @@ class MaintenanceLogFormViewModel(
     maybeCaptureInitialSnapshot()
   }
 
+  /**
+   * Prefill a new log's meter fields with the thing's current readings.
+   *
+   * The number a work event records is nearly always the last one plus a little, so the useful
+   * starting point is the current reading rather than an empty field the user has to go and look
+   * up. They overwrite whatever they actually read off the meter.
+   *
+   * **New logs only.** A saved log reports the readings it was written with, and dropping today's
+   * totals into a form opened to fix a typo would rewrite history — [loadLog] seeds edit mode from
+   * the log itself.
+   */
+  private fun observeCurrentReadings() {
+    combine(
+      logManager.observeMaintenanceOverview(thingId),
+      // The meters are the template's, and it may not be set yet when the overview lands.
+      currentThingTemplate.template,
+    ) { overview, template -> overview to template }
+      .onEach { (overview, template) ->
+        if (metersSeeded || overview == null) return@onEach
+        // The same gate the hours tab itself uses: a template with no meters has no tab, and
+        // seeding a form that never shows the values would save readings nobody was asked for.
+        // Read from the holder because it publishes capabilities with the template above.
+        if (!currentThingTemplate.capabilities.value.meters) return@onEach
+        val readings = template?.meters.orEmpty()
+          .mapNotNull { meter -> overview.currentFor(meter.key)?.let { meter to it } }
+        if (readings.isEmpty()) return@onEach
+        metersSeeded = true
+        baselineReadings = readings.associate { (meter, value) -> meter.key to value }
+        val seeds =
+          readings.associate { (meter, value) -> meter.key to meter.formatValue(value) }
+        _uiState.update { state ->
+          // Anything already typed wins — the overview can arrive after the user reached the tab.
+          state.withMeterValues(seeds + state.meterValues)
+        }
+      }
+      .launchIn(viewModelScope)
+  }
+
   private fun loadThing() {
     viewModelScope.launch {
       fleetManager.loadThing(thingId)
@@ -347,6 +398,13 @@ class MaintenanceLogFormViewModel(
         // initial snapshot below already includes the saved attachments.
         attachmentForm.seedIfEmpty(log.attachments)
         val existingAttachments = attachmentForm.pendingAttachments.value
+        // Every meter this template declares that the log recorded. An edit measures movement
+        // from what this log already said, not from today's totals.
+        val loadedReadings = currentThingTemplate.template.value?.meters.orEmpty()
+          .mapNotNull { meter -> log.readingFor(meter.key)?.let { meter to it } }
+        baselineReadings = loadedReadings.associate { (meter, value) -> meter.key to value }
+        val loadedMeterValues =
+          loadedReadings.associate { (meter, value) -> meter.key to meter.formatValue(value) }
         _uiState.update {
           it.copy(
             isLoading = false,
@@ -354,27 +412,12 @@ class MaintenanceLogFormViewModel(
             selectedSquawkIds = log.squawk_ids,
             selectedInspectionIds = log.inspection_ids,
             selectedTechnician = log.technician ?: it.selectedTechnician,
-            // Every meter this template declares that the log recorded, by key. The meter says
-            // whether it takes a fraction: an odometer does not, and a car's log opened for edit
-            // showed "84512.0" in a field whose keyboard offers no decimal point.
-            meterValues = currentThingTemplate.template.value?.meters.orEmpty()
-              .mapNotNull { meter ->
-                log.readingFor(meter.key)
-                  ?.let { reading ->
-                    meter.key to if (meter.decimal) {
-                      reading.toString()
-                    } else {
-                      reading.toLong()
-                        .toString()
-                    }
-                  }
-              }
-              .toMap(),
             selectedComponentType = log.component_type,
             selectedSubComponent = log.component_serial.ifEmpty { null },
             maintenanceDate = logDate,
             pendingAttachments = existingAttachments,
           )
+            .withMeterValues(loadedMeterValues)
         }
         captureInitialSnapshot()
       } else {
@@ -457,8 +500,60 @@ class MaintenanceLogFormViewModel(
    */
   fun onMeterChanged(meterKey: String, value: String) {
     _uiState.update { state ->
-      state.copy(meterValues = state.meterValues + (meterKey to value))
+      state.withMeterValues(state.meterValues + (meterKey to value))
     }
+  }
+
+  /**
+   * [values] with the suggestions that follow from them.
+   *
+   * Every write to the meter fields goes through here, so the offers beside them can never
+   * describe a value the form no longer holds.
+   */
+  private fun MaintenanceLogFormUiState.withMeterValues(
+    values: Map<String, String>,
+  ): MaintenanceLogFormUiState =
+    copy(meterValues = values, meterSuggestions = suggestionsFor(values))
+
+  /**
+   * What a meter would read if it had moved with the one it follows.
+   *
+   * A propeller turns for exactly as long as the airframe flies, so a user who has typed 1.9 more
+   * airframe hours has already said what the propeller did — and working that out by hand is where
+   * the transcription errors come from. The offer is the arithmetic, not a decision: the field
+   * stays editable, and a meter that genuinely moved differently is typed.
+   *
+   * **The template says which meter follows which** (`MeterDef.follows_meter_key`), so this holds
+   * no opinion about aeroplanes. The engine follows nothing on purpose: its hours come off its own
+   * tach, running at its own rate, and a figure derived from the airframe would be wrong more
+   * often than right.
+   *
+   * **A meter no log has ever recorded is assumed to have run level with the one it follows**, so
+   * it is offered that meter's own new reading. A propeller fitted with the airframe has turned for
+   * every hour the airframe flew, and on a Thing whose propeller hours have never been written down
+   * that is the only figure there is — the alternative, offering nothing until someone types a
+   * first reading by hand, withholds the help exactly where it is needed. The same arithmetic
+   * covers a Thing with no readings at all: the first log offers what was just typed.
+   *
+   * Nothing is offered when the followed meter has not moved forward, or when a meter already
+   * reads its suggestion.
+   */
+  private fun suggestionsFor(values: Map<String, String>): Map<String, String> {
+    val template = currentThingTemplate.template.value ?: return emptyMap()
+    return template.meters
+      .mapNotNull { meter ->
+        val followed = meter.follows_meter_key.takeIf { it.isNotEmpty() }
+          ?: return@mapNotNull null
+        val followedNow = values[followed]?.toDoubleOrNull() ?: return@mapNotNull null
+        val followedBaseline = baselineReadings[followed] ?: 0.0
+        val moved = followedNow - followedBaseline
+        if (moved <= 0.0) return@mapNotNull null
+        // Level with what it follows when this Thing has never recorded it — see above.
+        val baseline = baselineReadings[meter.key] ?: followedBaseline
+        val suggested = template.formatMeterNumber(meter.key, baseline + moved)
+        if (values[meter.key] == suggested) null else meter.key to suggested
+      }
+      .toMap()
   }
 
   fun onComponentTypeChange(value: ComponentType) {
@@ -723,3 +818,13 @@ private fun AttachmentFormController.AddFileError.toUiText(): UiText =
       message?.let { UiText.DynamicString(it) }
         ?: UiText.StringRes(AttachmentRes.string.add_file_failed)
   }
+
+/**
+ * The meter's own text for [value] — the meter says whether it takes a fraction.
+ *
+ * An odometer does not, and a car's log opened for edit showed "84512.0" in a field whose keyboard
+ * offers no decimal point.
+ */
+private fun MeterDef.formatValue(value: Double): String =
+  if (decimal) value.toString() else value.toLong()
+    .toString()

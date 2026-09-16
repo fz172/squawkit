@@ -25,6 +25,15 @@ data class MaintenanceLogFormUiState(
    * a car has an odometer, a home has none and the section does not render at all.
    */
   val meterValues: Map<String, String> = emptyMap(),
+  /**
+   * What a meter would read if it had moved with the one it follows, by key — the form's "Use 3.9"
+   * offer beside the field.
+   *
+   * A meter is absent from this map when there is nothing to offer: it follows no other meter, it
+   * already reads the suggested value, or the form never learned where it started. See
+   * `MaintenanceLogFormViewModel.suggestionsFor`.
+   */
+  val meterSuggestions: Map<String, String> = emptyMap(),
   val thing: Thing? = null,
   val selectedComponentType: ComponentType = ComponentType.COMPONENT_AIRFRAME,
   val selectedSubComponent: String? = null,

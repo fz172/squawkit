@@ -161,6 +161,18 @@ export interface MeterDef {
    * are the engine's, not the airframe's, and a per-engine meter has to say so.
    */
   componentSlotKey: string;
+  /**
+   * The meter this one moves with, empty when it moves on its own.
+   *
+   * A propeller turns for exactly as long as the airframe flies, so a log that records 1.9 more
+   * airframe hours has already said what the propeller did — the log form offers the arithmetic
+   * rather than making the user do it. An engine is NOT that: its hours come off its own tach,
+   * which runs at its own rate, so it names nothing here and is never offered a figure.
+   *
+   * Only the log form reads this, and only as a suggestion: the field stays editable, because a
+   * meter that genuinely moved differently has to be typeable.
+   */
+  followsMeterKey: string;
 }
 
 /**
@@ -764,7 +776,7 @@ export const ComponentSlot: MessageFns<ComponentSlot> = {
 };
 
 function createBaseMeterDef(): MeterDef {
-  return { key: "", label: "", unitLabel: "", decimal: false, componentSlotKey: "" };
+  return { key: "", label: "", unitLabel: "", decimal: false, componentSlotKey: "", followsMeterKey: "" };
 }
 
 export const MeterDef: MessageFns<MeterDef> = {
@@ -783,6 +795,9 @@ export const MeterDef: MessageFns<MeterDef> = {
     }
     if (message.componentSlotKey !== "") {
       writer.uint32(42).string(message.componentSlotKey);
+    }
+    if (message.followsMeterKey !== "") {
+      writer.uint32(50).string(message.followsMeterKey);
     }
     return writer;
   },
@@ -834,6 +849,14 @@ export const MeterDef: MessageFns<MeterDef> = {
           message.componentSlotKey = reader.string();
           continue;
         }
+        case 6: {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.followsMeterKey = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -858,6 +881,11 @@ export const MeterDef: MessageFns<MeterDef> = {
         : isSet(object.component_slot_key)
         ? globalThis.String(object.component_slot_key)
         : "",
+      followsMeterKey: isSet(object.followsMeterKey)
+        ? globalThis.String(object.followsMeterKey)
+        : isSet(object.follows_meter_key)
+        ? globalThis.String(object.follows_meter_key)
+        : "",
     };
   },
 
@@ -878,6 +906,9 @@ export const MeterDef: MessageFns<MeterDef> = {
     if (message.componentSlotKey !== "") {
       obj.componentSlotKey = message.componentSlotKey;
     }
+    if (message.followsMeterKey !== "") {
+      obj.followsMeterKey = message.followsMeterKey;
+    }
     return obj;
   },
 
@@ -891,6 +922,7 @@ export const MeterDef: MessageFns<MeterDef> = {
     message.unitLabel = object.unitLabel ?? "";
     message.decimal = object.decimal ?? false;
     message.componentSlotKey = object.componentSlotKey ?? "";
+    message.followsMeterKey = object.followsMeterKey ?? "";
     return message;
   },
 };

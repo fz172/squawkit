@@ -55,6 +55,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.core.template.LocalThingCapabilities
 import dev.fanfly.wingslog.core.template.scheduleTypesOffered
+import dev.fanfly.wingslog.core.ui.common.compose.rememberSelectAllOnFocus
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.thing.MaintenanceTask
 import dev.fanfly.wingslog.thing.MeterDef
@@ -377,16 +378,19 @@ internal fun IntervalNumberInput(
       color = MaterialTheme.colorScheme.onSurfaceVariant,
       modifier = Modifier.padding(end = Spacing.small),
     )
+    // Selected whole on focus: these open holding a number — the preset's interval, the current
+    // reading — and the user is typing a different one, not editing this one digit by digit.
+    val field = rememberSelectAllOnFocus(value) { v ->
+      val filtered = if (keyboard == KeyboardType.Decimal) {
+        v.filter { it.isDigit() || it == '.' }
+      } else {
+        v.filter { it.isDigit() }
+      }
+      onChange(filtered)
+    }
     BasicTextField(
-      value = value,
-      onValueChange = { v ->
-        val filtered = if (keyboard == KeyboardType.Decimal) {
-          v.filter { it.isDigit() || it == '.' }
-        } else {
-          v.filter { it.isDigit() }
-        }
-        onChange(filtered)
-      },
+      value = field.value,
+      onValueChange = field.onValueChange,
       singleLine = true,
       keyboardOptions = KeyboardOptions(keyboardType = keyboard),
       cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
@@ -395,7 +399,8 @@ internal fun IntervalNumberInput(
         fontSize = 22.sp,
         color = MaterialTheme.colorScheme.onSurface,
       ),
-      modifier = Modifier.weight(1f),
+      modifier = Modifier.weight(1f)
+        .then(field.modifier),
       decorationBox = { inner ->
         Box(contentAlignment = Alignment.CenterStart) {
           if (value.isEmpty()) {

@@ -101,6 +101,13 @@ fun FormTextField(
   shape: Shape = RoundedCornerShape(Spacing.chipCornerRadius),
   // Compact variant: tightens vertical content padding so the field reads shorter than the default.
   dense: Boolean = false,
+  /**
+   * Select the whole value when the field takes focus, so typing replaces it.
+   *
+   * For fields that open already holding a number the user is about to overwrite — a meter
+   * reading, a count — where the alternative is deleting every digit by hand first.
+   */
+  selectAllOnFocus: Boolean = false,
   onValueChange: (String) -> Unit,
 ) {
   val errorText =
@@ -128,6 +135,15 @@ fun FormTextField(
     unfocusedLabelColor = MaterialTheme.colorScheme.outline,
   )
 
+  val field = rememberSelectAllOnFocus(
+    value = value,
+    enabled = selectAllOnFocus,
+    onValueChange = onValueChange,
+  )
+  val fieldModifier = modifier
+    .fillMaxWidth()
+    .then(field.modifier)
+
   if (dense) {
     // M3 OutlinedTextField has no contentPadding knob, so build it from the decoration box to
     // tighten the vertical padding (8dp vs the default 16dp) and shave the field height.
@@ -142,11 +158,9 @@ fun FormTextField(
       (charSp * 0.75f).sp.toDp()
     }
     BasicTextField(
-      value = value,
-      onValueChange = onValueChange,
-      modifier = modifier
-        .padding(vertical = labelMargin)
-        .fillMaxWidth(),
+      value = field.value,
+      onValueChange = field.onValueChange,
+      modifier = fieldModifier.padding(vertical = labelMargin),
       singleLine = singleLine,
       minLines = minLines,
       maxLines = maxLines,
@@ -189,10 +203,10 @@ fun FormTextField(
   }
 
   OutlinedTextField(
-    value = value,
-    onValueChange = onValueChange,
+    value = field.value,
+    onValueChange = field.onValueChange,
     label = { Text(label.uppercase()) },
-    modifier = modifier.fillMaxWidth(),
+    modifier = fieldModifier,
     placeholder = placeholder?.let { { Text(it) } },
     singleLine = singleLine,
     minLines = minLines,

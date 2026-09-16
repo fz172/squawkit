@@ -42,6 +42,21 @@ fun ThingTemplate.structuralProblems(): List<String> = buildList {
   meters.filter { it.component_slot_key.isNotEmpty() && it.component_slot_key !in slotKeys }
     .forEach { add("$id: meter '${it.key}' names slot '${it.component_slot_key}', which is not declared") }
 
+  // A meter following one this preset does not declare — or following itself — offers nothing, and
+  // does it silently: the log form simply never shows the button.
+  val meterKeys = meters.map { it.key }
+    .toSet()
+  meters.filter { it.follows_meter_key.isNotEmpty() }
+    .forEach { meter ->
+      if (meter.follows_meter_key == meter.key) {
+        add("$id: meter '${meter.key}' follows itself")
+      } else if (meter.follows_meter_key !in meterKeys) {
+        add(
+          "$id: meter '${meter.key}' follows '${meter.follows_meter_key}', which is not declared",
+        )
+      }
+    }
+
   // Explicit, not defaulted: a preset says which schedule types its form offers, and a type that
   // needs machinery the preset turned off is a form step that cannot complete.
   val declared = capabilities?.schedule_types.orEmpty()
@@ -55,7 +70,6 @@ fun ThingTemplate.structuralProblems(): List<String> = buildList {
 
   // A starter task becomes an ordinary MaintenanceTask the moment it is accepted, so anything the
   // task form would refuse — no title, no rule, a meter the Thing cannot read — is refused here.
-  val meterKeys = meters.map { it.key }
     .toSet()
   starter_tasks.forEach { task ->
     val label = task.title.ifEmpty { "(untitled)" }

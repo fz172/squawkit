@@ -146,6 +146,16 @@ message MeterDef {
   // Which component slot this meter belongs to, empty for Thing-level meters. An engine's hours
   // are the engine's, not the airframe's, and a per-engine meter has to say so.
   string component_slot_key = 5;
+  // The meter this one moves with, empty when it moves on its own.
+  //
+  // A propeller turns for exactly as long as the airframe flies, so a log that records 1.9 more
+  // airframe hours has already said what the propeller did — the log form offers the arithmetic
+  // rather than making the user do it. An engine is NOT that: its hours come off its own tach,
+  // which runs at its own rate, so it names nothing here and is never offered a figure.
+  //
+  // Only the log form reads this, and only as a suggestion: the field stays editable, because a
+  // meter that genuinely moved differently has to be typeable.
+  string follows_meter_key = 6;
 }
 
 // A task offered at creation so a new Thing is not an empty shell. PRD §4.9; the §13 metric that
