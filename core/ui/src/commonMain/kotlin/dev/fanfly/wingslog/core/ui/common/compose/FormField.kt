@@ -17,9 +17,16 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.SolidColor
@@ -28,10 +35,12 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
@@ -101,6 +110,13 @@ fun FormTextField(
   shape: Shape = RoundedCornerShape(Spacing.chipCornerRadius),
   // Compact variant: tightens vertical content padding so the field reads shorter than the default.
   dense: Boolean = false,
+  /**
+   * Select the whole value when the field takes focus, so typing replaces it.
+   *
+   * For fields that open already holding a number the user is about to overwrite — a meter
+   * reading, a count — where the alternative is deleting every digit by hand first.
+   */
+  selectAllOnFocus: Boolean = false,
   onValueChange: (String) -> Unit,
 ) {
   val errorText =
@@ -128,6 +144,28 @@ fun FormTextField(
     unfocusedLabelColor = MaterialTheme.colorScheme.outline,
   )
 
+  // The same mirror the String-valued text-field overloads keep internally: the text is the
+  // caller's, the selection is the field's own. Explicit here because [selectAllOnFocus] has to
+  // write a selection, and a String value cannot carry one.
+  var fieldState by remember { mutableStateOf(TextFieldValue(value)) }
+  val fieldValue = fieldState.copy(text = value)
+  SideEffect { fieldState = fieldValue }
+  var focused by remember { mutableStateOf(false) }
+  LaunchedEffect(focused, selectAllOnFocus) {
+    if (!focused || !selectAllOnFocus) return@LaunchedEffect
+    // After the frame that focused the field, not during it: a tap asks for focus and then drops
+    // the caret where the finger landed, which would overwrite a selection written any earlier.
+    withFrameNanos { }
+    fieldState = fieldState.copy(selection = TextRange(0, fieldState.text.length))
+  }
+  val fieldModifier = modifier
+    .fillMaxWidth()
+    .onFocusChanged { focused = it.isFocused }
+  val onFieldValueChange: (TextFieldValue) -> Unit = { next ->
+    fieldState = next
+    if (next.text != value) onValueChange(next.text)
+  }
+
   if (dense) {
     // M3 OutlinedTextField has no contentPadding knob, so build it from the decoration box to
     // tighten the vertical padding (8dp vs the default 16dp) and shave the field height.
@@ -142,11 +180,9 @@ fun FormTextField(
       (charSp * 0.75f).sp.toDp()
     }
     BasicTextField(
-      value = value,
-      onValueChange = onValueChange,
-      modifier = modifier
-        .padding(vertical = labelMargin)
-        .fillMaxWidth(),
+      value = fieldValue,
+      onValueChange = onFieldValueChange,
+      modifier = fieldModifier.padding(vertical = labelMargin),
       singleLine = singleLine,
       minLines = minLines,
       maxLines = maxLines,
@@ -189,10 +225,10 @@ fun FormTextField(
   }
 
   OutlinedTextField(
-    value = value,
-    onValueChange = onValueChange,
+    value = fieldValue,
+    onValueChange = onFieldValueChange,
     label = { Text(label.uppercase()) },
-    modifier = modifier.fillMaxWidth(),
+    modifier = fieldModifier,
     placeholder = placeholder?.let { { Text(it) } },
     singleLine = singleLine,
     minLines = minLines,

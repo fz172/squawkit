@@ -58,6 +58,10 @@ fun LogTimeTab(
               ),
               modifier = Modifier.fillMaxWidth(),
               singleLine = true,
+              // The field opens holding the current reading (the form prefills it), and the new
+              // one is a different number rather than an edit of this one — so tapping in offers
+              // the whole value for replacement instead of a caret after the last digit.
+              selectAllOnFocus = true,
               keyboardOptions = KeyboardOptions(
                 // The template says whether this meter takes decimals: an odometer does not, and
                 // a number pad that offers a point invites "84512.0 mi".
