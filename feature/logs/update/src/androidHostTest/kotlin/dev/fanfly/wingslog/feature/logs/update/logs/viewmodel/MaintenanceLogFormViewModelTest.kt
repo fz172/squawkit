@@ -836,6 +836,47 @@ class MaintenanceLogFormViewModelTest {
     }
 
   @Test
+  fun aMeterNoLogHasEverRecorded_isOfferedTheReadingItFollows() =
+    runTest(testDispatcher) {
+      // The real shape of a new aeroplane: the airframe and the engine have been written down, the
+      // propeller never has (its overview entry is absent, not zero). It was fitted with the
+      // airframe, so it has turned for every hour the airframe flew.
+      every { logManager.observeMaintenanceOverview(TEST_THING_ID) } returns flowOf(
+        overviewOf(
+          MeterKeys.AIRFRAME_HOURS to 0.7,
+          MeterKeys.ENGINE_HOURS to 1.1,
+        )
+      )
+
+      val viewModel = buildViewModelForNew()
+      advanceUntilIdle()
+      viewModel.onMeterChanged(MeterKeys.AIRFRAME_HOURS, "3.0")
+
+      // The airframe's own new reading, not the 2.3 it moved by — a propeller that has never been
+      // recorded has not been sitting at zero while the aeroplane flew.
+      assertThat(viewModel.uiState.value.meterSuggestions).containsExactly(
+        MeterKeys.PROP_HOURS, "3.0",
+      )
+    }
+
+  @Test
+  fun aThingWithNoReadingsAtAll_offersWhatWasJustTyped() =
+    runTest(testDispatcher) {
+      // Nothing to prefill, so the first log's propeller reading is the airframe reading.
+      every { logManager.observeMaintenanceOverview(TEST_THING_ID) } returns flowOf(
+        overviewOf()
+      )
+
+      val viewModel = buildViewModelForNew()
+      advanceUntilIdle()
+      viewModel.onMeterChanged(MeterKeys.AIRFRAME_HOURS, "12.5")
+
+      assertThat(viewModel.uiState.value.meterSuggestions).containsExactly(
+        MeterKeys.PROP_HOURS, "12.5",
+      )
+    }
+
+  @Test
   fun aPresetWhereNoMeterFollowsAnother_offersNothing() =
     runTest(testDispatcher) {
       // A bike counts miles and hours, and neither is derivable from the other: fifty more miles

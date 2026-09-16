@@ -528,8 +528,15 @@ class MaintenanceLogFormViewModel(
    * tach, running at its own rate, and a figure derived from the airframe would be wrong more
    * often than right.
    *
-   * Nothing is offered when the followed meter has not moved forward, when a meter already reads
-   * its suggestion, or when the form never learned where either of them started.
+   * **A meter no log has ever recorded is assumed to have run level with the one it follows**, so
+   * it is offered that meter's own new reading. A propeller fitted with the airframe has turned for
+   * every hour the airframe flew, and on a Thing whose propeller hours have never been written down
+   * that is the only figure there is — the alternative, offering nothing until someone types a
+   * first reading by hand, withholds the help exactly where it is needed. The same arithmetic
+   * covers a Thing with no readings at all: the first log offers what was just typed.
+   *
+   * Nothing is offered when the followed meter has not moved forward, or when a meter already
+   * reads its suggestion.
    */
   private fun suggestionsFor(values: Map<String, String>): Map<String, String> {
     val template = currentThingTemplate.template.value ?: return emptyMap()
@@ -537,11 +544,12 @@ class MaintenanceLogFormViewModel(
       .mapNotNull { meter ->
         val followed = meter.follows_meter_key.takeIf { it.isNotEmpty() }
           ?: return@mapNotNull null
-        val followedBaseline = baselineReadings[followed] ?: return@mapNotNull null
         val followedNow = values[followed]?.toDoubleOrNull() ?: return@mapNotNull null
+        val followedBaseline = baselineReadings[followed] ?: 0.0
         val moved = followedNow - followedBaseline
         if (moved <= 0.0) return@mapNotNull null
-        val baseline = baselineReadings[meter.key] ?: return@mapNotNull null
+        // Level with what it follows when this Thing has never recorded it — see above.
+        val baseline = baselineReadings[meter.key] ?: followedBaseline
         val suggested = template.formatMeterNumber(meter.key, baseline + moved)
         if (values[meter.key] == suggested) null else meter.key to suggested
       }
