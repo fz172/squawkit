@@ -826,7 +826,7 @@ call is made. The backend gets the mirror case in `blob-cleanup.test.ts`.
 
 ### 9.2 Picker
 
-`AttachmentPickerSheet` gains `onAttachDataLog` and a fourth `AttachmentPickerOption` shown when
+`AttachmentPickerSheet` gains `onAttachDataLogs` and a fourth `AttachmentPickerOption` shown when
 `LocalThingCapabilities.current.sections` contains `SECTION_DATA_LOGS` and `isDataLogsSupported`.
 Choosing it swaps the sheet body to `DataLogAttachmentPicker(thingId, recordDate)` exactly as
 "Add link" swaps to the URL field: a list of the Thing's data logs from `DataLogManager.observe`,
@@ -835,8 +835,8 @@ same-day rows annotated, rows already attached elsewhere dimmed but selectable, 
 `feature/datalog/viewing`; `feature/attachment/viewing` cannot depend on it, so the sheet takes the
 body as a slot lambda supplied by the form screens, which already depend on both.
 
-The three form ViewModels add `attachDataLog(id: DataLogId, name)` calling
-`controller.addDataLogRef(id, name)`, a non-suspending sibling of `addLink` with no quota and no
+The three form ViewModels add `attachDataLogs(logs: List<PickedDataLog>)` calling
+`controller.addDataLogRefs(logs)`, a non-suspending sibling of `addLink` with no quota and no
 error case.
 
 ### 9.3 Opening from a row
@@ -1121,7 +1121,7 @@ commit (`StringSnapshotTest` fails on `added` otherwise), with lexicon-bearing o
 - **Template:** `capabilitiesResolveByIdLikeTheLexicon`, `aKnownIdNeverDegradesOnEnumValues`,
   the airplane asset pins five sections, `PerThingSectionsTest` with the flag off and the section
   absent.
-- **Attachment:** `everyTypeBranchHandlesDataLogRef` (§9.1); form controller `addDataLogRef`
+- **Attachment:** `everyTypeBranchHandlesDataLogRef` (§9.1); form controller `addDataLogRefs`
   survives `resolveForSave`.
 - **Chart model:** pure functions for decimation (min/max per bucket on a known array), unit
   grouping and axis assignment, tick ladder, `zoomAround` and `pan` clamping, brush-to-window,
@@ -1211,10 +1211,10 @@ PR 9+ the formats epic.
 | T30 | 4 | `PaneHeaderChips` with drag between panes and the *New pane* target; mixed-kind spawn rule | `feature/datalog/viewing` | M | T28 | R21, R24 |
 | T31 | 4 | `SeriesPalette` light and dark, fixed-index table, hash fallback; contrast check; colour stability test | `feature/datalog/viewing` | S | T15 | R24a |
 | T32 | 4 | `SeriesSidebar` (Series and Flight tabs, search, range, target-pane hint) and the compact right-hand drawer; icon-only header on narrow | `feature/datalog/viewing` | M | T28 | R25–R27 |
-| T33 | 5 | `PendingAttachment.LocalDataLogRef`; `AttachmentFormController.addDataLogRef`, `remove`, `resolveForSave`, `deleteSavedFiles`; `makeDataLogRef`; `delete` early return; `everyTypeBranchHandlesDataLogRef` test | `feature/attachment/model`, `datamanager` | M | T02 | R3, R5, §9.1 |
+| T33 | 5 | `PendingAttachment.LocalDataLogRef`; `AttachmentFormController.addDataLogRefs`, `remove`, `resolveForSave`, `deleteSavedFiles`; `makeDataLogRef`; `delete` early return; `everyTypeBranchHandlesDataLogRef` test | `feature/attachment/model`, `datamanager` | M | T02 | R3, R5, §9.1 |
 | T34 | 5 | `AttachmentRow` icon and subtitle, *Removed* state; `AttachmentSection` keyed by `data_log_id`; form-section icon and no-confirm removal | `feature/attachment/viewing` | S | T33 | R4 |
 | T35 | 5 | Picker sheet fourth option behind capability and flag; `DataLogAttachmentPicker` body as a slot; *Upload log file* inside the picker | `feature/attachment/viewing`, `feature/datalog/viewing`, three form screens | M | T33, T18 | R3, §9.2 |
-| T36 | 5 | Three form ViewModels `attachDataLog`; three tap handlers branch to the viewer route; `ThingOverviewViewModel.dataLogs` | `feature/logs`, `feature/tasks`, `feature/squawk`, `feature/thing/dashboard` | M | T35, T26 | R4, §9.3 |
+| T36 | 5 | Three form ViewModels `attachDataLogs`; three tap handlers branch to the viewer route; `ThingOverviewViewModel.dataLogs` | `feature/logs`, `feature/tasks`, `feature/squawk`, `feature/thing/dashboard` | M | T35, T26 | R4, §9.3 |
 | T37 | 5 | Export and backend exclusions: `attachmentCell`, `AttachmentExportResolver`, `exportedBytes` | `feature/export` | S | T02 | §9.1 |
 | T38 | 6 | `MapPane`: tile provider binding, Mercator layout, track path, cursor dot, attribution, web ktor engine, continuous zoom with pinch and wheel | `feature/datalog/viewing` | L | T28 | R29 |
 | T39 | 6 | `ChartPresets` and default layout; preset chips in the sidebar | `feature/datalog/model`, `viewing` | S | T31, T32 | R21, R30 |

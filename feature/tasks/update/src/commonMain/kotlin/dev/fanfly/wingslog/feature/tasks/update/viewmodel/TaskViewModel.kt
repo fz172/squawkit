@@ -19,8 +19,8 @@ import dev.fanfly.wingslog.core.ui.common.UiText
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentFormController
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.model.PendingAttachment
+import dev.fanfly.wingslog.feature.attachment.model.PickedDataLog
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
-import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.feature.comments.datamanager.CommentManager
 import dev.fanfly.wingslog.feature.comments.datamanager.CommentThreadController
 import dev.fanfly.wingslog.feature.comments.model.CommentAction
@@ -485,8 +485,8 @@ class TaskViewModel(
     attachmentForm.addLink(url, name)
   }
 
-  fun attachDataLog(id: DataLogId, name: String) {
-    attachmentForm.addDataLogRef(id, name)
+  fun attachDataLogs(logs: List<PickedDataLog>) {
+    attachmentForm.addDataLogRefs(logs)
   }
 
   fun removeAttachment(id: String) {

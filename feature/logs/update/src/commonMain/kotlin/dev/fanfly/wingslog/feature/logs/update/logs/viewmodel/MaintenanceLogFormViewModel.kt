@@ -30,8 +30,8 @@ import dev.fanfly.wingslog.core.template.usesComponentTypes
 import dev.fanfly.wingslog.core.ui.common.UiText
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentFormController
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
+import dev.fanfly.wingslog.feature.attachment.model.PickedDataLog
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
-import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
@@ -632,8 +632,8 @@ class MaintenanceLogFormViewModel(
     viewModelScope.launch { _events.send(MaintenanceLogFormEvent.LinkAdded) }
   }
 
-  fun attachDataLog(id: DataLogId, name: String) {
-    attachmentForm.addDataLogRef(id, name)
+  fun attachDataLogs(logs: List<PickedDataLog>) {
+    attachmentForm.addDataLogRefs(logs)
   }
 
   fun removeAttachment(id: String) {
