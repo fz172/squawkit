@@ -185,7 +185,9 @@ internal fun AttachmentPicker(
         verticalArrangement = Arrangement.spacedBy(Spacing.medium),
       ) {
         PickerHeader(showClose = isDialog, onDismiss = onDismiss)
-        LinkForm(onAddLink = onAddLink, onCancel = { step = PickerStep.OPTIONS })
+        LinkForm(
+          onAddLink = onAddLink,
+          onCancel = { step = PickerStep.OPTIONS })
       }
 
       else -> Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
@@ -196,7 +198,11 @@ internal fun AttachmentPicker(
           columns = if (isDialog) 2 else 1,
           trailing = {
             if (uploadEnabled) {
-              DeviceLimits(fileCount = fileCount, filesAtLimit = filesAtLimit, full = isDialog)
+              DeviceLimits(
+                fileCount = fileCount,
+                filesAtLimit = filesAtLimit,
+                full = isDialog
+              )
             }
           },
           footer = if (uploadEnabled) null else {
@@ -236,7 +242,10 @@ internal fun AttachmentPicker(
           .fillMaxWidth(),
         shape = MaterialTheme.shapes.large,
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        border = BorderStroke(Spacing.hairline, MaterialTheme.colorScheme.secondaryContainer),
+        border = BorderStroke(
+          Spacing.hairline,
+          MaterialTheme.colorScheme.secondaryContainer
+        ),
       ) {
         DisableSelection {
           Column(
@@ -320,12 +329,13 @@ private fun PickerGroup(
       trailing()
     }
     if (isGrid) {
-      options.chunked(columns).forEach { row ->
-        Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
-          row.forEach { OptionCard(it, Modifier.weight(1f)) }
-          repeat(columns - row.size) { Spacer(Modifier.weight(1f)) }
+      options.chunked(columns)
+        .forEach { row ->
+          Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
+            row.forEach { OptionCard(it, Modifier.weight(1f)) }
+            repeat(columns - row.size) { Spacer(Modifier.weight(1f)) }
+          }
         }
-      }
     } else {
       options.forEach { OptionRow(it) }
     }
@@ -381,8 +391,11 @@ private fun RowScope.OptionContent(option: PickerOption) {
   Box(
     modifier = Modifier
       .clip(tileShape)
-      .background(MaterialTheme.colorScheme.surfaceContainerLowest)
-      .border(Spacing.hairline, MaterialTheme.colorScheme.secondaryContainer, tileShape)
+      .border(
+        Spacing.hairline,
+        MaterialTheme.colorScheme.secondaryContainer,
+        tileShape
+      )
       .padding(Spacing.small),
   ) {
     Icon(
@@ -494,7 +507,10 @@ private fun LinkForm(
             } else {
               "https://$trimmed"
             }
-          onAddLink(normalized, linkName.trim().ifBlank { normalized.extractDomain() })
+          onAddLink(
+            normalized,
+            linkName.trim()
+              .ifBlank { normalized.extractDomain() })
         }
       }) {
         Text(stringResource(AttachRes.string.add_link))
