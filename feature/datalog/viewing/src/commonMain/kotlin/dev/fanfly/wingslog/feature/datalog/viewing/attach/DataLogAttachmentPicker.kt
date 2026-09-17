@@ -37,6 +37,7 @@ import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.StatusTier
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.feature.attachment.viewing.DataLogPickerSlot
+import dev.fanfly.wingslog.feature.attachment.viewing.PickedDataLog
 import dev.fanfly.wingslog.feature.attachment.viewing.rememberFilePicker
 import dev.fanfly.wingslog.feature.datalog.viewing.list.DataLogRow
 import dev.fanfly.wingslog.feature.datalog.viewing.list.ImportRowCard
@@ -64,7 +65,7 @@ import wingslog.core.sharedassets.generated.resources.Res as CoreRes
  * The attachment picker's data log option for a form on [thingId], or null when the Thing has no
  * data logs section or this build has no visualizer (design §9.2). [attachedIds] are the logs
  * already on the parent, shown checked and not offered again; [recordDate] annotates same-day rows.
- * [onAttach] receives every checked log, keyed by id, with its display name.
+ * [onAttach] receives every checked log.
  */
 @Composable
 fun rememberDataLogPickerSlot(
@@ -94,7 +95,7 @@ fun DataLogAttachmentPicker(
   thingId: ThingId,
   recordDate: LocalDate?,
   attachedIds: Set<DataLogId>,
-  onAttach: (Map<DataLogId, String>) -> Unit,
+  onAttach: (List<PickedDataLog>) -> Unit,
   onCancel: () -> Unit,
 ) {
   val viewModel: DataLogAttachmentPickerViewModel = koinViewModel(
@@ -161,7 +162,7 @@ fun DataLogAttachmentPicker(
       TextButton(onClick = onCancel) { Text(stringResource(CoreRes.string.cancel)) }
       FilledTonalButton(
         enabled = toAttach.isNotEmpty(),
-        onClick = { onAttach(toAttach.associate { it.id to it.titleText(groundRun) }) },
+        onClick = { onAttach(toAttach.map { PickedDataLog(it.id, it.titleText(groundRun)) }) },
       ) {
         Text(stringResource(Res.string.data_log_picker_attach))
       }

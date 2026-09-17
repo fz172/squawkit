@@ -90,7 +90,13 @@ import wingslog.feature.attachment.sharedassets.generated.resources.Res as Attac
  */
 class DataLogPickerSlot(
   val label: String,
-  val body: @Composable (onAttach: (Map<DataLogId, String>) -> Unit, onCancel: () -> Unit) -> Unit,
+  val body: @Composable (onAttach: (List<PickedDataLog>) -> Unit, onCancel: () -> Unit) -> Unit,
+)
+
+/** A data log checked in the picker; [displayName] becomes the attachment's name. */
+sealed data class PickedDataLog(
+  val id: DataLogId,
+  val displayName: String,
 )
 
 private enum class PickerStep { OPTIONS, LINK, DATA_LOG }
@@ -119,7 +125,7 @@ internal fun AttachmentPicker(
   onUpsell: (() -> Unit)?,
   onDismiss: () -> Unit,
   dataLogPicker: DataLogPickerSlot?,
-  onAttachDataLogs: (Map<DataLogId, String>) -> Unit,
+  onAttachDataLogs: (List<PickedDataLog>) -> Unit,
 ) {
   // Gated upload with an upsell keeps the file/photo options tappable; they open the promo.
   val upsellLocked = !uploadEnabled && onUpsell != null
