@@ -38,6 +38,7 @@ import dev.fanfly.wingslog.core.ui.theme.StatusTier
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.feature.attachment.model.PickedDataLog
 import dev.fanfly.wingslog.feature.attachment.viewing.DataLogPickerSlot
+import dev.fanfly.wingslog.feature.attachment.viewing.FileDropTarget
 import dev.fanfly.wingslog.feature.attachment.viewing.rememberFilePicker
 import dev.fanfly.wingslog.feature.datalog.viewing.list.DataLogRow
 import dev.fanfly.wingslog.feature.datalog.viewing.list.ImportRowCard
@@ -108,70 +109,72 @@ fun DataLogAttachmentPicker(
   val toAttach =
     state.rows.filter { it.id in state.selected && it.id !in attachedIds }
 
-  Column(
-    modifier = Modifier.fillMaxWidth(),
-    verticalArrangement = Arrangement.spacedBy(Spacing.small),
-  ) {
-    Text(
-      stringResource(Res.string.data_log_picker_title, noun),
-      style = MaterialTheme.typography.titleMedium,
-    )
-    state.import?.let { row ->
-      ImportRowCard(
-        row,
-        onKeepBoth = viewModel::confirmImport,
-        onDismiss = viewModel::dismissImport
-      )
-    }
-    if (state.loaded && state.rows.isEmpty()) {
+  FileDropTarget(enabled = state.canUpload, onDrop = viewModel::upload) {
+    Column(
+      modifier = Modifier.fillMaxWidth(),
+      verticalArrangement = Arrangement.spacedBy(Spacing.small),
+    ) {
       Text(
-        stringResource(Res.string.data_log_empty_title, noun),
-        style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        stringResource(Res.string.data_log_picker_title, noun),
+        style = MaterialTheme.typography.titleMedium,
       )
-    }
-    LazyColumn(modifier = Modifier.weight(1f, fill = false)) {
-      items(state.rows, key = { it.id.value }) { row ->
-        PickerRow(
-          row = row,
-          title = row.titleText(groundRun),
-          selected = row.id in state.selected,
-          attached = row.id in attachedIds,
-          sameDay = recordDate != null && row.startLocal.date == recordDate,
-          onClick = { viewModel.toggle(row.id) },
+      state.import?.let { row ->
+        ImportRowCard(
+          row,
+          onKeepBoth = viewModel::confirmImport,
+          onDismiss = viewModel::dismissImport
         )
       }
-    }
-    Row(
-      modifier = Modifier.fillMaxWidth(),
-      verticalAlignment = Alignment.CenterVertically,
-      horizontalArrangement = Arrangement.spacedBy(Spacing.small),
-    ) {
-      if (state.canUpload) {
-        TextButton(onClick = pick) {
-          Icon(
-            Icons.Filled.Upload,
-            contentDescription = null,
-            modifier = Modifier.size(ButtonDefaults.IconSize),
+      if (state.loaded && state.rows.isEmpty()) {
+        Text(
+          stringResource(Res.string.data_log_empty_title, noun),
+          style = MaterialTheme.typography.bodyMedium,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+      }
+      LazyColumn(modifier = Modifier.weight(1f, fill = false)) {
+        items(state.rows, key = { it.id.value }) { row ->
+          PickerRow(
+            row = row,
+            title = row.titleText(groundRun),
+            selected = row.id in state.selected,
+            attached = row.id in attachedIds,
+            sameDay = recordDate != null && row.startLocal.date == recordDate,
+            onClick = { viewModel.toggle(row.id) },
           )
-          Spacer(Modifier.size(ButtonDefaults.IconSpacing))
-          Text(stringResource(Res.string.data_log_picker_upload))
         }
       }
-      Spacer(Modifier.weight(1f))
-      TextButton(onClick = onCancel) { Text(stringResource(CoreRes.string.cancel)) }
-      FilledTonalButton(
-        enabled = toAttach.isNotEmpty(),
-        onClick = {
-          onAttach(toAttach.map {
-            PickedDataLog(
-              it.id,
-              it.titleText(groundRun)
-            )
-          })
-        },
+      Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(Spacing.small),
       ) {
-        Text(stringResource(Res.string.data_log_picker_attach))
+        if (state.canUpload) {
+          TextButton(onClick = pick) {
+            Icon(
+              Icons.Filled.Upload,
+              contentDescription = null,
+              modifier = Modifier.size(ButtonDefaults.IconSize),
+            )
+            Spacer(Modifier.size(ButtonDefaults.IconSpacing))
+            Text(stringResource(Res.string.data_log_picker_upload))
+          }
+        }
+        Spacer(Modifier.weight(1f))
+        TextButton(onClick = onCancel) { Text(stringResource(CoreRes.string.cancel)) }
+        FilledTonalButton(
+          enabled = toAttach.isNotEmpty(),
+          onClick = {
+            onAttach(toAttach.map {
+              PickedDataLog(
+                it.id,
+                it.titleText(groundRun)
+              )
+            })
+          },
+        ) {
+          Text(stringResource(Res.string.data_log_picker_attach))
+        }
       }
     }
   }

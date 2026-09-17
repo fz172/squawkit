@@ -28,6 +28,7 @@
   <string name="no_attachments">No attachments yet</string>
   <string name="file_upload_coming_soon">Subscribe to SquawkIt Pro to attach photos &amp; files</string>
   <string name="file_read_error">Could not read selected file</string>
+  <string name="file_drop_hint">Drop files here</string>
   <string name="add_file_failed">Failed to add file</string>
   <string name="delete_saved_attachment_title">Remove file?</string>
   <string name="delete_saved_attachment_message">The file will be permanently deleted when you save.</string>

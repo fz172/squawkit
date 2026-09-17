@@ -4,16 +4,10 @@ package dev.fanfly.wingslog.feature.attachment.viewing
 
 import androidx.compose.runtime.Composable
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
-import platform.Foundation.NSFileManager
-import platform.Foundation.NSFileSize
-import platform.Foundation.NSNumber
-import platform.Foundation.NSTemporaryDirectory
 import platform.Foundation.NSURL
-import platform.Foundation.NSUUID
 import platform.UIKit.UIApplication
 import platform.UIKit.UIDocumentPickerDelegateProtocol
 import platform.UIKit.UIDocumentPickerViewController
-import platform.UniformTypeIdentifiers.UTType
 import platform.UniformTypeIdentifiers.UTTypeItem
 import platform.darwin.NSObject
 
@@ -25,8 +19,7 @@ private var activeDelegate: NSObject? = null
 /**
  * iOS file picker via [UIDocumentPickerViewController] in copy mode (`asCopy = true`), so the
  * picked URLs are app-readable copies and we don't have to juggle security-scoped resources. Each
- * pick is re-copied into the temp dir under its original name and handed back as a [PickedFile]
- * whose `uri` is an absolute path — the shape [FileByteReaderImpl] and the camera flow expect.
+ * pick is re-copied into the temp dir under its original name by [copyToTempPickedFile].
  */
 @Composable
 actual fun rememberFilePicker(
@@ -78,41 +71,13 @@ private class DocumentPickerDelegate(
     clearActive()
   }
 
-  /** Copy the picked file into our temp dir under its display name; null if it can't be read. */
   private fun NSURL.toPickedFile(): PickedFile? {
     val sourcePath = path ?: return null
-    val name = lastPathComponent ?: "file"
-    val destPath =
-      "${NSTemporaryDirectory()}picked_${NSUUID().UUIDString()}_$name"
-    val fm = NSFileManager.defaultManager
-    fm.removeItemAtPath(destPath, null)
-    if (!fm.copyItemAtPath(
-        sourcePath,
-        toPath = destPath,
-        error = null
-      )
-    ) return null
-    val size = (fm.attributesOfItemAtPath(destPath, null)
-      ?.get(NSFileSize) as? NSNumber)
-      ?.longLongValue ?: 0L
-    return PickedFile(
-      uri = destPath,
-      name = name,
-      mimeType = mimeTypeForName(name),
-      sizeBytes = size,
-    )
+    return copyToTempPickedFile(sourcePath, name = lastPathComponent ?: "file")
   }
 
   private fun clearActive() {
     activePicker = null
     activeDelegate = null
   }
-}
-
-/** Best-effort MIME from a filename's extension via the system UTType database. */
-private fun mimeTypeForName(name: String): String {
-  val ext = name.substringAfterLast('.', "")
-  if (ext.isEmpty()) return "application/octet-stream"
-  return UTType.typeWithFilenameExtension(ext)?.preferredMIMEType
-    ?: "application/octet-stream"
 }

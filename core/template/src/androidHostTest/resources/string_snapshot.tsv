@@ -89,6 +89,7 @@ feature/attachment/sharedassets	choose_file_description_ios	iCloud Drive, Google
 feature/attachment/sharedassets	delete_saved_attachment_message	The file will be permanently deleted when you save.
 feature/attachment/sharedassets	delete_saved_attachment_title	Remove file?
 feature/attachment/sharedassets	duplicate_file_skipped	Already attached — duplicate files were skipped
+feature/attachment/sharedassets	file_drop_hint	Drop files here
 feature/attachment/sharedassets	file_read_error	Could not read selected file
 feature/attachment/sharedassets	file_too_large	File exceeds 5 MB limit
 feature/attachment/sharedassets	file_upload_coming_soon	Subscribe to SquawkIt Pro to attach photos &amp; files
