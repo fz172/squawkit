@@ -873,8 +873,8 @@ highlights the row like the other sections.
 
 `ShellSectionFab` for `DATA_LOGS` renders *Upload Log* with `rememberFilePicker` (no `accept`
 filter is possible today; the sniffer rejects wrong files fast). On `Guest` it opens the prompt
-sheet instead. Wide layouts show the same button in the header. The mock's dashed drop zone is not
-drawn; the whole section takes drops instead (§13.3).
+sheet instead. The FAB shows on every tier, so the header carries no second upload button. The
+mock's dashed drop zone is not drawn; the whole section takes drops instead (§13.3).
 
 ### 10.3 Variable-width pill (PRD R2b)
 
@@ -1216,7 +1216,7 @@ PR 9+ the formats epic.
 | T22 | 3 | Guest gate: `UploadGate` state, phone prompt sheet, `OPEN_LINK_ACCOUNT` hand-off to Settings, wide `UploadGateCard` (provider picker reuse or single CTA) | `feature/datalog/viewing`, `feature/shell`, `feature/settings` | M | T20 | R40 |
 | T23 | 3 | Variable-width pill: icon-only unselected items, doc block rewrite, 320 dp screenshot | `core/ui/adaptive` | S | — | R2b |
 | T24 | 3 | Strings for the section and picker; `string_snapshot.tsv` rows and `LEXICON_ARGS` entries | `feature/datalog/sharedassets`, `core/template` test resources | S | T20 | R45 |
-| T25 | 3 | Phone search action on the list (filter by date, identifier, attached title) | `feature/datalog/viewing` | S | T20 | R2a |
+| T25 | 3 | Phone search action on the list (filter by date, identifier, attached title); removed 2026-09-16 | `feature/datalog/viewing` | S | T20 | R2a |
 | T26 | 4 | `Screen.DataLogViewer` route and registration; `DataLogViewerViewModel` load path through download states; delete with snackbar | `core/nav`, `feature/shell`, `feature/datalog/update` | M | T18 | R20, §10.4, §11.1 |
 | T27 | 4 | Chart model as pure functions: decimation, unit grouping and axis assignment, tick ladder, `zoomAround`/`pan` clamping, brush-to-window; unit tests | `feature/datalog/model` | M | T12 | R22, R23, R23a, R28 |
 | T28 | 4 | `ChartPane` Canvas drawing, `TimeAxis`, cursor line and pill, target-pane border | `feature/datalog/viewing` | L | T27 | R20–R23 |

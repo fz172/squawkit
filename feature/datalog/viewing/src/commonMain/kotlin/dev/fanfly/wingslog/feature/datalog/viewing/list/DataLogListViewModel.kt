@@ -66,19 +66,10 @@ data class DataLogListUiState(
   val isLoading: Boolean = true,
   val rows: List<DataLogRow> = emptyList(),
   val uploadGate: UploadGate = UploadGate.Guest,
-  val query: String = "",
   val imports: List<ImportRow> = emptyList(),
   /** The row whose delete is awaiting confirmation. */
   val deleting: DataLogRow? = null,
-) {
-  /** Rows that match [query]; every row when the query is blank (PRD R2a). */
-  val visibleRows: List<DataLogRow>
-    get() {
-      val q = query.trim()
-      if (q.isEmpty()) return rows
-      return rows.filter { it.matches(q) }
-    }
-}
+)
 
 class DataLogListViewModel(
   private val manager: DataLogManager,
@@ -91,7 +82,6 @@ class DataLogListViewModel(
   private val telemetry =
     DataLogImportTelemetry(analytics, templates, DataLogImportSource.LIST)
 
-  private val query = MutableStateFlow("")
   private val imports = MutableStateFlow<List<ImportRow>>(emptyList())
   private val loaded = MutableStateFlow(false)
   private val deleting = MutableStateFlow<DataLogRow?>(null)
@@ -104,16 +94,14 @@ class DataLogListViewModel(
   val uiState: StateFlow<DataLogListUiState> =
     combine(
       manager.observe(thingId),
-      query,
       imports,
       loaded,
       deleting
-    ) { logs, q, imports, loaded, deleting ->
+    ) { logs, imports, loaded, deleting ->
       DataLogListUiState(
         isLoading = !loaded,
         rows = logs.map { it.toDataLogRow() },
         uploadGate = currentGate(),
-        query = q,
         imports = imports,
         deleting = deleting,
       )
@@ -128,10 +116,6 @@ class DataLogListViewModel(
       manager.observe(thingId)
         .collect { loaded.value = true }
     }
-  }
-
-  fun onQueryChange(value: String) {
-    query.value = value
   }
 
   /** Starts one import per picked file; each becomes an [ImportRow] until it finishes cleanly. */
@@ -271,19 +255,4 @@ fun DataLog.toDataLogRow(): DataLogRow {
     fileName = file_name,
     identity = source?.identity.orEmpty(),
   )
-}
-
-/** Date, identifier, tail number, product or file name (PRD R2a). Attached-record titles join in P5. */
-internal fun DataLogRow.matches(query: String): Boolean {
-  val q = query.lowercase()
-  val date = startLocal.date.toString()
-  return date.contains(q) ||
-    startLocationIdent.lowercase()
-      .contains(q) ||
-    identity.lowercase()
-      .contains(q) ||
-    product.lowercase()
-      .contains(q) ||
-    fileName.lowercase()
-      .contains(q)
 }

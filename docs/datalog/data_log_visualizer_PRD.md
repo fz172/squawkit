@@ -114,15 +114,16 @@ which case it is the first follow-up; **P2** is designed for, not built.
   after Logs and before Settings, titled by the lexicon ("Flight Data" on the airplane preset). The
   section is absent — not disabled — on templates that do not declare it, following the
   capabilities-remove-not-disable rule.
-- **R2 (P0).** The section shows an upload control (an *Upload Log* button on wide layouts, the
-  shell's context FAB on phones), the list of the Thing's data logs newest first, and an empty state
+- **R2 (P0).** The section shows an upload control (the shell's context FAB on every layout; a
+  header button was dropped as a duplicate on 2026-09-16), the list of the Thing's data logs newest first, and an empty state
   written in the lexicon. On phones the section joins the bottom bar as its fifth item; Settings
   already lives in the top bar at that width, so the bar stays within five.
 - **R2c (P2).** Drag-and-drop upload is a nice-to-have, not part of V1. If built, it is one mechanism
   that serves both ordinary attachments (on the add-attachment sheet and record forms) and data-log
   upload, never a data-log-only feature. The mock's dashed drop zone is this affordance.
-- **R2a (P1).** On phones the section header carries a search action that filters the list by date,
-  identifier, or attached-record title, matching the other sections' search bars.
+- **R2a (P1).** ~~On phones the section header carries a search action that filters the list by date,
+  identifier, or attached-record title.~~ Removed 2026-09-16: the substring match served poorly, and
+  the list stays short enough to scan.
 - **R2b (P0).** **Variable-width bottom bar.** Five labelled items do not fit the floating pill on a
   320 dp phone without truncating even the short plurals. As part of this project the pill changes on
   every preset: only the selected item shows icon and label; the others show their icon alone, with

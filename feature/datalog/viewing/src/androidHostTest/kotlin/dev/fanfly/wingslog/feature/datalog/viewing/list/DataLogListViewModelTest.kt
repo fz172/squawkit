@@ -124,32 +124,6 @@ class DataLogListViewModelTest {
   }
 
   @Test
-  fun searchMatchesDateIdentTailProductOrFileName() = runTest {
-    logs.value = listOf(
-      log("a", "2026-09-02T21:47:56Z", ident = "KSQL"),
-      log("b", "2026-08-01T10:00:00Z", ident = "XX1")
-    )
-    val vm = viewModel()
-    vm.uiState.first { !it.isLoading }
-    vm.onQueryChange("ksql")
-    assertThat(vm.uiState.value.visibleRows.map { it.id }).containsExactly(
-      DataLogId("a")
-    )
-    vm.onQueryChange("2026-08")
-    assertThat(vm.uiState.value.visibleRows.map { it.id }).containsExactly(
-      DataLogId("b")
-    )
-    vm.onQueryChange("n1234x")
-    assertThat(vm.uiState.value.visibleRows).hasSize(2)
-    vm.onQueryChange("log_b")
-    assertThat(vm.uiState.value.visibleRows.map { it.id }).containsExactly(
-      DataLogId("b")
-    )
-    vm.onQueryChange("")
-    assertThat(vm.uiState.value.visibleRows).hasSize(2)
-  }
-
-  @Test
   fun anImportShowsInlineUntilDoneAndAFailureStaysUntilDismissed() = runTest {
     val progress = MutableSharedFlow<ImportProgress>()
     every { manager.import(thingId, any(), false, false) } returns progress
