@@ -16,6 +16,9 @@
   <string name="attachment_group_other">Other</string>
   <string name="take_photo_description">Use the camera</string>
   <string name="choose_file_description">Photos, PDFs and documents</string>
+  <!-- Mobile pickers reach cloud storage apps; name them, since iOS hides them under Browse. -->
+  <string name="choose_file_description_android">This device, Google Drive, Dropbox and more</string>
+  <string name="choose_file_description_ios">iCloud Drive, Google Drive, Dropbox and more</string>
   <string name="add_link_description">Paste a URL to reference</string>
   <string name="attach_data_log_description">Pick or import a recorded log</string>
   <string name="sign_in_to_add_attachments">Sign in to add attachments</string>
