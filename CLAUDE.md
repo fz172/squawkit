@@ -66,6 +66,8 @@ These are enforced or load-bearing; the reasoning for each is in AGENTS.md.
 - **Thing, not aircraft.** New types, properties, wire names, and schema names use Thing vocabulary; aviation words only for things that are permanently airplanes (`Engine`, `Propeller`). Surviving `aircraft` names are grandfathered — see #638 and [§ Coding Conventions](AGENTS.md#coding-conventions).
 - `kotlin.time.Instant`, never `kotlinx.datetime.Instant`.
 - `get<ClassType>()` in Koin modules, never bare `get()` — a repo hook rejects it.
+- No `Map`/`Pair`/`Triple` keyed or valued by a primitive — name the values with a data class and
+  pass a `List`. Hook-enforced on added lines; opt out with `// allow-primitive-tuple: <reason>`.
 - No `\'` in Kotlin strings or `strings.xml` — use `’`. Also hook-enforced.
 - User-facing strings always come from `strings.xml`; reuse before adding.
 - Popups (`AlertDialog`, `ModalBottomSheet`, `DropdownMenu`, `DatePickerDialog`) are imported from
