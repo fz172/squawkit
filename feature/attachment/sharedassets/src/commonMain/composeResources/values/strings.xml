@@ -12,7 +12,7 @@
   <string name="attachment_size_hint">Max 5 MB each</string>
   <string name="attachment_file_count">%1$d/3</string>
   <string name="attachment_picker_title">Add Attachment</string>
-  <string name="attachment_group_device">From this device</string>
+  <string name="attachment_group_device">Files</string>
   <string name="attachment_group_other">Other</string>
   <string name="take_photo_description">Use the camera</string>
   <string name="choose_file_description">Photos, PDFs and documents</string>

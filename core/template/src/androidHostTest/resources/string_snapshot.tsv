@@ -74,7 +74,7 @@ feature/attachment/sharedassets	attachment_data_log_opens	Opens in visualizer
 feature/attachment/sharedassets	attachment_data_log_product	%1$s log
 feature/attachment/sharedassets	attachment_data_log_removed	Removed
 feature/attachment/sharedassets	attachment_file_count	%1$d/3
-feature/attachment/sharedassets	attachment_group_device	From this device
+feature/attachment/sharedassets	attachment_group_device	Files
 feature/attachment/sharedassets	attachment_group_other	Other
 feature/attachment/sharedassets	attachment_picker_title	Add Attachment
 feature/attachment/sharedassets	attachment_size_hint	Max 5 MB each
