@@ -4,14 +4,13 @@ import android.content.Context
 import android.content.Intent
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
-import dev.fanfly.wingslog.thing.Attachment
-import dev.fanfly.wingslog.thing.AttachmentType
 import dev.fanfly.wingslog.core.storage.blob.BlobId
 import dev.fanfly.wingslog.core.storage.blob.LocalBlobStore
 import dev.fanfly.wingslog.core.storage.blob.RemoteState
 import dev.fanfly.wingslog.core.storage.blob.blobRelativePath
 import dev.fanfly.wingslog.feature.attachment.model.DownloadState
-import java.io.File
+import dev.fanfly.wingslog.thing.Attachment
+import dev.fanfly.wingslog.thing.AttachmentType
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,6 +18,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.update
+import java.io.File
 
 /**
  * R2 [AttachmentOpener] for Android. Routes through [LocalBlobStore] instead of using the
@@ -100,7 +100,10 @@ class AttachmentOpenerAndroid(
       // copy under the attachment's real display name (namespaced by id to avoid collisions between
       // two attachments that share a name) and hand THAT to the viewer.
       val namedFile = File(
-        File(context.cacheDir, "attachment_open/${attachment.id}").apply { mkdirs() },
+        File(
+          context.cacheDir,
+          "attachment_open/${attachment.id}"
+        ).apply { mkdirs() },
         attachment.displayName(),
       )
       if (!namedFile.exists() || namedFile.length() != blobFile.length()) {
@@ -133,6 +136,7 @@ class AttachmentOpenerAndroid(
  * to the id only when there is no usable name (never surfaced to the user in normal use).
  */
 private fun Attachment.displayName(): String {
-  val cleaned = name.trim().replace(Regex("""[/\\:*?"<>|\x00-\x1F]"""), "_")
+  val cleaned = name.trim()
+    .replace(Regex("""[/\\:*?"<>|\x00-\x1F]"""), "_")
   return cleaned.ifBlank { id }
 }

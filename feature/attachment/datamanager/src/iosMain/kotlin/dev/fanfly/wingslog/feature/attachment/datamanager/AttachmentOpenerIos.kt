@@ -1,13 +1,13 @@
 package dev.fanfly.wingslog.feature.attachment.datamanager
 
-import dev.fanfly.wingslog.thing.Attachment
-import dev.fanfly.wingslog.thing.AttachmentType
 import dev.fanfly.wingslog.core.storage.blob.BlobFilesystem
 import dev.fanfly.wingslog.core.storage.blob.BlobId
 import dev.fanfly.wingslog.core.storage.blob.LocalBlobStore
 import dev.fanfly.wingslog.core.storage.blob.RemoteState
 import dev.fanfly.wingslog.core.storage.blob.blobRelativePath
 import dev.fanfly.wingslog.feature.attachment.model.DownloadState
+import dev.fanfly.wingslog.thing.Attachment
+import dev.fanfly.wingslog.thing.AttachmentType
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -138,10 +138,12 @@ class AttachmentOpenerIos(
    * sheet ("Open in…" / Save). Must run on the main thread. Returns false only if there's no window.
    */
   private fun presentPreview(url: NSURL): Boolean {
-    val presenter = UIApplication.sharedApplication.keyWindow?.rootViewController
-      ?.topMostPresented() ?: return false
+    val presenter =
+      UIApplication.sharedApplication.keyWindow?.rootViewController
+        ?.topMostPresented() ?: return false
     val delegate = DocInteractionDelegate(presenter)
-    val controller = UIDocumentInteractionController.interactionControllerWithURL(url)
+    val controller =
+      UIDocumentInteractionController.interactionControllerWithURL(url)
     controller.delegate = delegate
     activeDocController = controller
     activeDocDelegate = delegate
@@ -149,10 +151,17 @@ class AttachmentOpenerIos(
     if (controller.presentPreviewAnimated(true)) return true
 
     // No QuickLook preview for this type — offer the share sheet instead.
-    val activity = UIActivityViewController(activityItems = listOf(url), applicationActivities = null)
+    val activity = UIActivityViewController(
+      activityItems = listOf(url),
+      applicationActivities = null
+    )
     // iPad requires a popover anchor or it throws.
     activity.popoverPresentationController?.sourceView = presenter.view
-    presenter.presentViewController(activity, animated = true, completion = null)
+    presenter.presentViewController(
+      activity,
+      animated = true,
+      completion = null
+    )
     return true
   }
 }

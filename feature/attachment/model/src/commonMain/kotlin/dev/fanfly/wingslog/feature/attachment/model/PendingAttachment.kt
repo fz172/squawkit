@@ -23,19 +23,23 @@ sealed class PendingAttachment {
   /** A locally-stored attachment whose proto is fully populated (sha256 included). */
   data class Local(override val attachment: Attachment) : PendingAttachment()
 
-  data class LocalLink(override val attachment: Attachment) : PendingAttachment()
+  data class LocalLink(override val attachment: Attachment) :
+    PendingAttachment()
 
-  data class LocalDataLogRef(override val attachment: Attachment) : PendingAttachment()
+  data class LocalDataLogRef(override val attachment: Attachment) :
+    PendingAttachment()
 
   data class Saved(override val attachment: Attachment) : PendingAttachment()
 
   /** Shown as removed in the list; tombstoned on save. */
-  data class PendingDelete(override val attachment: Attachment) : PendingAttachment()
+  data class PendingDelete(override val attachment: Attachment) :
+    PendingAttachment()
 }
 
 /** The data logs referenced from this parent, pending deletes excluded. */
 fun List<PendingAttachment>.dataLogIds(): Set<DataLogId> =
-  filter { it !is PendingAttachment.PendingDelete }.mapNotNull { it.attachment.data_log_id }.toSet()
+  filter { it !is PendingAttachment.PendingDelete }.mapNotNull { it.attachment.data_log_id }
+    .toSet()
 
 /**
  * Counts file attachments (not links, not data log references, not pending-delete) — enforces the

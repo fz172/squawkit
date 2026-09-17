@@ -1,10 +1,10 @@
 package dev.fanfly.wingslog.feature.attachment.datamanager
 
-import kotlin.js.Promise
 import kotlinx.coroutines.await
 import org.khronos.webgl.ArrayBuffer
 import org.khronos.webgl.Uint8Array
 import org.w3c.files.Blob
+import kotlin.js.Promise
 
 private const val MAX_DOWNSCALE_ATTEMPTS = 3
 
@@ -68,7 +68,8 @@ internal class ImageCompressorImpl : ImageCompressor {
     maxDimension: Int,
   ): ByteArray? {
     val longestSide = maxOf(srcW, srcH)
-    val scale = if (longestSide > maxDimension) maxDimension.toDouble() / longestSide else 1.0
+    val scale =
+      if (longestSide > maxDimension) maxDimension.toDouble() / longestSide else 1.0
     val targetW = maxOf(1, (srcW * scale).toInt())
     val targetH = maxOf(1, (srcH * scale).toInt())
 

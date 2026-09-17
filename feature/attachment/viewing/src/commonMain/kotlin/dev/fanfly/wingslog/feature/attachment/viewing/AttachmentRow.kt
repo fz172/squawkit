@@ -27,8 +27,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import dev.fanfly.wingslog.thing.Attachment
-import dev.fanfly.wingslog.thing.AttachmentType
 import dev.fanfly.wingslog.core.datetime.formatDuration
 import dev.fanfly.wingslog.core.ui.common.compose.formatFileSize
 import dev.fanfly.wingslog.core.ui.theme.Spacing
@@ -37,6 +35,8 @@ import dev.fanfly.wingslog.core.ui.theme.statusColors
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
 import dev.fanfly.wingslog.feature.attachment.model.DataLogRowInfo
 import dev.fanfly.wingslog.id.DataLogId
+import dev.fanfly.wingslog.thing.Attachment
+import dev.fanfly.wingslog.thing.AttachmentType
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.attachment.sharedassets.generated.resources.Res
 import wingslog.feature.attachment.sharedassets.generated.resources.attachment_data_log_opens
@@ -100,7 +100,10 @@ fun AttachmentRow(
         overflow = TextOverflow.Ellipsis,
       )
       Text(
-        text = if (isDataLog) dataLogSubtitle(dataLog, removed) else attachment.subtitle(),
+        text = if (isDataLog) dataLogSubtitle(
+          dataLog,
+          removed
+        ) else attachment.subtitle(),
         style = WingslogTypography.dataSmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
       )
@@ -164,7 +167,12 @@ private fun dataLogSubtitle(info: DataLogRowInfo?, removed: Boolean): String {
   if (removed) return stringResource(Res.string.attachment_data_log_removed)
   val separator = stringResource(Res.string.subtitle_separator)
   return buildList {
-    if (info != null && info.product.isNotBlank()) add(stringResource(Res.string.attachment_data_log_product, info.product))
+    if (info != null && info.product.isNotBlank()) add(
+      stringResource(
+        Res.string.attachment_data_log_product,
+        info.product
+      )
+    )
     if (info != null) add(formatDuration(info.durationSeconds))
     add(stringResource(Res.string.attachment_data_log_opens))
   }.joinToString(separator)

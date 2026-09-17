@@ -11,8 +11,8 @@ import platform.Foundation.NSTemporaryDirectory
 import platform.Foundation.NSURL
 import platform.Foundation.NSUUID
 import platform.UIKit.UIApplication
-import platform.UIKit.UIDocumentPickerViewController
 import platform.UIKit.UIDocumentPickerDelegateProtocol
+import platform.UIKit.UIDocumentPickerViewController
 import platform.UniformTypeIdentifiers.UTType
 import platform.UniformTypeIdentifiers.UTTypeItem
 import platform.darwin.NSObject
@@ -82,11 +82,18 @@ private class DocumentPickerDelegate(
   private fun NSURL.toPickedFile(): PickedFile? {
     val sourcePath = path ?: return null
     val name = lastPathComponent ?: "file"
-    val destPath = "${NSTemporaryDirectory()}picked_${NSUUID().UUIDString()}_$name"
+    val destPath =
+      "${NSTemporaryDirectory()}picked_${NSUUID().UUIDString()}_$name"
     val fm = NSFileManager.defaultManager
     fm.removeItemAtPath(destPath, null)
-    if (!fm.copyItemAtPath(sourcePath, toPath = destPath, error = null)) return null
-    val size = (fm.attributesOfItemAtPath(destPath, null)?.get(NSFileSize) as? NSNumber)
+    if (!fm.copyItemAtPath(
+        sourcePath,
+        toPath = destPath,
+        error = null
+      )
+    ) return null
+    val size = (fm.attributesOfItemAtPath(destPath, null)
+      ?.get(NSFileSize) as? NSNumber)
       ?.longLongValue ?: 0L
     return PickedFile(
       uri = destPath,
@@ -106,5 +113,6 @@ private class DocumentPickerDelegate(
 private fun mimeTypeForName(name: String): String {
   val ext = name.substringAfterLast('.', "")
   if (ext.isEmpty()) return "application/octet-stream"
-  return UTType.typeWithFilenameExtension(ext)?.preferredMIMEType ?: "application/octet-stream"
+  return UTType.typeWithFilenameExtension(ext)?.preferredMIMEType
+    ?: "application/octet-stream"
 }
