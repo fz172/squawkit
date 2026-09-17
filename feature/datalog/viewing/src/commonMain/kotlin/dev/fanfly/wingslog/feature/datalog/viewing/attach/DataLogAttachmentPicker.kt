@@ -16,7 +16,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -64,6 +64,7 @@ import wingslog.core.sharedassets.generated.resources.Res as CoreRes
  * The attachment picker's data log option for a form on [thingId], or null when the Thing has no
  * data logs section or this build has no visualizer (design §9.2). [attachedIds] are the logs
  * already on the parent, shown checked and not offered again; [recordDate] annotates same-day rows.
+ * [onAttach] receives every checked log, keyed by id, with its display name.
  */
 @Composable
 fun rememberDataLogPickerSlot(
@@ -93,7 +94,7 @@ fun DataLogAttachmentPicker(
   thingId: ThingId,
   recordDate: LocalDate?,
   attachedIds: Set<DataLogId>,
-  onAttach: (DataLogId, String) -> Unit,
+  onAttach: (Map<DataLogId, String>) -> Unit,
   onCancel: () -> Unit,
 ) {
   val viewModel: DataLogAttachmentPickerViewModel = koinViewModel(
@@ -104,7 +105,7 @@ fun DataLogAttachmentPicker(
   val pick = rememberFilePicker(onResult = viewModel::upload)
   val noun = LocalThingLexicon.current.dataLogNoun.singular
   val groundRun = stringResource(Res.string.data_log_ground_run)
-  val selectedRow = state.rows.firstOrNull { it.id == state.selected }
+  val toAttach = state.rows.filter { it.id in state.selected && it.id !in attachedIds }
 
   Column(
     modifier = Modifier.fillMaxWidth(),
@@ -133,10 +134,10 @@ fun DataLogAttachmentPicker(
         PickerRow(
           row = row,
           title = row.titleText(groundRun),
-          selected = row.id == state.selected,
+          selected = row.id in state.selected,
           attached = row.id in attachedIds,
           sameDay = recordDate != null && row.startLocal.date == recordDate,
-          onClick = { viewModel.select(row.id) },
+          onClick = { viewModel.toggle(row.id) },
         )
       }
     }
@@ -159,15 +160,8 @@ fun DataLogAttachmentPicker(
       Spacer(Modifier.weight(1f))
       TextButton(onClick = onCancel) { Text(stringResource(CoreRes.string.cancel)) }
       FilledTonalButton(
-        enabled = selectedRow != null && selectedRow.id !in attachedIds,
-        onClick = {
-          selectedRow?.let {
-            onAttach(
-              it.id,
-              it.titleText(groundRun)
-            )
-          }
-        },
+        enabled = toAttach.isNotEmpty(),
+        onClick = { onAttach(toAttach.associate { it.id to it.titleText(groundRun) }) },
       ) {
         Text(stringResource(Res.string.data_log_picker_attach))
       }
@@ -197,9 +191,9 @@ private fun PickerRow(
     verticalAlignment = Alignment.CenterVertically,
     horizontalArrangement = Arrangement.spacedBy(Spacing.small),
   ) {
-    RadioButton(
-      selected = selected || attached,
-      onClick = null,
+    Checkbox(
+      checked = selected || attached,
+      onCheckedChange = null,
       enabled = !attached
     )
     Column(modifier = Modifier.weight(1f)) {

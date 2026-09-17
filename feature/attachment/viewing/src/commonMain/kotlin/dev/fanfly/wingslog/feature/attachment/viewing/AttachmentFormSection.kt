@@ -167,7 +167,7 @@ fun AttachmentFormSection(
       onUpsell = onSeePlans?.let { { onDismissSheet(); showUpsell = true } },
       onDismiss = onDismissSheet,
       dataLogPicker = dataLogPicker,
-      onAttachDataLog = { id, name -> onAttachDataLog(id, name); onDismissSheet() },
+      onAttachDataLogs = { logs -> logs.forEach { (id, name) -> onAttachDataLog(id, name) }; onDismissSheet() },
     )
   }
 
