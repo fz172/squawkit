@@ -653,6 +653,12 @@ anonymous login) and `isAdsSupported`.
   against it, because renaming orphans the history rather than migrating it, exactly as with a wire
   identity (#638). `AnalyticsTaxonomyTest` pins the shipped names. Thing-scoped events implement
   `ThingScopedEvent`, which requires `template_id` — the dimension PRD §13 splits every metric by.
+- **No primitive-keyed maps or tuples**: values that travel together get a named data class passed as
+  a `List`, never `Map<DataLogId, String>`, `Map<String, Foo>`, `Pair<Int, Foo>` or a `Triple` with a
+  primitive — a bare `String` beside an id does not say what it holds, and positional values of one
+  type swap silently. A `PostToolUse` hook (`.claude/hooks/no-primitive-tuples.sh`) rejects lines an
+  edit adds (existing uses are grandfathered until touched; test source sets are exempt). A genuine
+  platform boundary opts out on the line with `// allow-primitive-tuple: <reason>`.
 - **Feature managers read/write `EntityStore` only** — the sync engine is the Firestore client, with
   the two documented online-only exceptions above.
 - **Per-thing scopes** come from `ThingScopeResolver`, never from the signed-in uid.
