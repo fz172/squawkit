@@ -14,7 +14,8 @@ Six pieces, in dependency order. Each is one or two PRs (§15).
    `Attachment` embedded in the record so every existing blob mechanism (reconciler, tombstone GC,
    server GC, upload drivers, broker) applies unchanged. A new `Section` value and lexicon fields,
    an airplane template bump, and `TemplateRegistry.capabilitiesFor` so the section reaches existing
-   Things without a DNA refresh (PRD R42). `AppCapability.isDataLogsSupported`, developer builds only.
+   Things without a DNA refresh (PRD R42). `AppCapability.isDataLogsSupported`, developer builds
+   only.
 2. **Import.** A `DataLogParser` seam with the Garmin parser behind it (G3X now, G1000 later), a
    canonical-series registry, gzip through a three-line `expect`/`actual`, and a `DataLogManager`
    that turns a picked file into a synced record plus a blob.
@@ -26,10 +27,12 @@ Six pieces, in dependency order. Each is one or two PRs (§15).
 5. **Attachment type.** `ATTACHMENT_TYPE_DATA_LOG` as a blobless reference, handled at every
    link-versus-file branch the codebase has (there are fifteen; §9).
 6. **Cross-cutting.** Collaboration notifications, four analytics events, the mobile free-tier
-   banner, strings and the snapshot, the rollout flip. Drag-and-drop is a later, shared piece (§13.3).
+   banner, strings and the snapshot, the rollout flip. Drag-and-drop is a later, shared piece (
+   §13.3).
 
 No Firestore rules change is needed for size: the storage rules carry no size or content constraints
-at all (`backend/firebase/storage.rules:19-24`). One rules edit adds the new kind to the shared-Thing
+at all (`backend/firebase/storage.rules:19-24`). One rules edit adds the new kind to the
+shared-Thing
 member allow-list.
 
 ### 1.1 Data flow, end to end
@@ -76,18 +79,18 @@ that draws, and the server never parses it.
 
 **Who owns what.**
 
-| Concern | Module | Notes |
-|---|---|---|
-| Picking and reading a file | `feature/attachment` (existing) | Reused as is. `PickedFile` and `FileByteReader` are already platform-neutral. |
-| Recognising and parsing a format | `feature/datalog/datamanager` | The only code that knows CSV. Output is a Kotlin data class, never a proto. |
-| Deciding what a column *means* | `feature/datalog/datamanager` `CanonicalSeriesRegistry` | Fills `canonical_id`; presets and defaults speak only canonical ids. |
-| Persisting bytes | `core/storage` `LocalBlobStore` + `feature/sync/data` drivers (existing) | The record's embedded `Attachment` is what every blob mechanism reads. |
-| Persisting and syncing the record | `core/storage` `EntityStore` + `feature/sync/data` (existing) | One new `CollectionKind`; the wire envelope and codec are generic. |
-| Server behaviour | `backend/firebase/functions` | Notification title and blob GC only. No parsing, no derived data in V1. |
-| Reading on another device | `feature/sync/data`, `feature/attachment/datamanager` (existing) | Pull writes the record; the reconciler indexes the blob as remote-only. |
-| Turning bytes back into series | `feature/datalog/datamanager` `DataLogManager.load` | Same parser as import, chosen by the stored `format`; result cached in memory. |
-| Drawing | `feature/datalog/viewing` | Pure functions from `(DataLogSeriesData, ChartLayout, window, width)` to paths. |
-| What the user changed | `feature/datalog/update` ViewModel, `ChartLayoutStore` | Layout is device state, not a record. |
+| Concern                           | Module                                                                   | Notes                                                                           |
+|-----------------------------------|--------------------------------------------------------------------------|---------------------------------------------------------------------------------|
+| Picking and reading a file        | `feature/attachment` (existing)                                          | Reused as is. `PickedFile` and `FileByteReader` are already platform-neutral.   |
+| Recognising and parsing a format  | `feature/datalog/datamanager`                                            | The only code that knows CSV. Output is a Kotlin data class, never a proto.     |
+| Deciding what a column *means*    | `feature/datalog/datamanager` `CanonicalSeriesRegistry`                  | Fills `canonical_id`; presets and defaults speak only canonical ids.            |
+| Persisting bytes                  | `core/storage` `LocalBlobStore` + `feature/sync/data` drivers (existing) | The record's embedded `Attachment` is what every blob mechanism reads.          |
+| Persisting and syncing the record | `core/storage` `EntityStore` + `feature/sync/data` (existing)            | One new `CollectionKind`; the wire envelope and codec are generic.              |
+| Server behaviour                  | `backend/firebase/functions`                                             | Notification title and blob GC only. No parsing, no derived data in V1.         |
+| Reading on another device         | `feature/sync/data`, `feature/attachment/datamanager` (existing)         | Pull writes the record; the reconciler indexes the blob as remote-only.         |
+| Turning bytes back into series    | `feature/datalog/datamanager` `DataLogManager.load`                      | Same parser as import, chosen by the stored `format`; result cached in memory.  |
+| Drawing                           | `feature/datalog/viewing`                                                | Pure functions from `(DataLogSeriesData, ChartLayout, window, width)` to paths. |
+| What the user changed             | `feature/datalog/update` ViewModel, `ChartLayoutStore`                   | Layout is device state, not a record.                                           |
 
 **The shapes, in order.**
 
@@ -104,7 +107,8 @@ that draws, and the server never parses it.
    `Attachment` (`sha256` and `size_bytes` of the *stored* bytes, which is what the download driver
    verifies).
 5. **`SyncDocWire`** (Firestore document). The generic envelope: `payload` is base64 of shape 3,
-   `schema` is `"datalog.DataLog"`. Nothing DataLog-specific here; it is what every record kind uses.
+   `schema` is `"datalog.DataLog"`. Nothing DataLog-specific here; it is what every record kind
+   uses.
 6. **`DataLog` again, on another device.** Decoded by `WireCodec(DataLog.ADAPTER)` into the same
    Wire class. The list renders from it directly.
 7. **`DataLogSeriesData` again.** Only when a viewer opens: download shape 4, verify, decompress,
@@ -115,7 +119,8 @@ that draws, and the server never parses it.
    `Squawk`. A pointer to shape 3's id, with no bytes and an empty `sha256`, so the blob machinery
    ignores it and the DataLog record outlives the reference.
 
-Every id above that belongs to a new type is a boxed proto message (`ThingId`, `DataLogId`, `UserId`)
+Every id above that belongs to a new type is a boxed proto message (`ThingId`, `DataLogId`,
+`UserId`)
 in the schema and therefore in the generated Kotlin and TypeScript; only the grandfathered
 `Attachment.id` stays a string, wrapped as `BlobId` where the blob store reads it. See §4.4.
 
@@ -198,7 +203,8 @@ attachment row's future sparkline and the dashboard's list both live in modules 
 `viewing` but never on `update`. The route and its ViewModel sit in `update` because they write
 (layout memory, delete), matching `feature/tasks`.
 
-Wiring per the five-step checklist: six `include(":feature:datalog:*")` lines in `settings.gradle.kts`,
+Wiring per the five-step checklist: six `include(":feature:datalog:*")` lines in
+`settings.gradle.kts`,
 `dataLogModule` in `core/di/CommonAppModules.kt` with the Gradle line in `core/di/build.gradle.kts`,
 routes in `core/nav` and `feature/shell`, strings in `sharedassets`.
 
@@ -270,13 +276,17 @@ message DataLog {
 
 **Why `raw_file` is an `Attachment`.** Every blob mechanism in the app keys off `Attachment` protos
 returned by `AttachmentRefs.of`: the remote-only reconciler, `TombstoneGc`, and the server's
-`blobIdsInPayload`. Embedding one means the bytes are indexed on a second device, garbage-collected on
-delete, uploaded through the same drivers and broker, and shown with the same sync-state badges, with
+`blobIdsInPayload`. Embedding one means the bytes are indexed on a second device, garbage-collected
+on
+delete, uploaded through the same drivers and broker, and shown with the same sync-state badges,
+with
 one `when` branch added rather than a parallel pipeline. Its `sha256` and `size_bytes` describe the
-*stored* bytes because `LocalBlobStore.put` and `installDownloaded` verify those; the original file's
+*stored* bytes because `LocalBlobStore.put` and `installDownloaded` verify those; the original
+file's
 hash lives in `raw_sha256`.
 
-**Size.** The sample's 108 series at about 60 bytes each is roughly 7 KB before base64, far under the
+**Size.** The sample's 108 series at about 60 bytes each is roughly 7 KB before base64, far under
+the
 750 KB envelope ceiling. A pathological 1,000-column source would still fit.
 
 ### 4.2 `attachment.proto`
@@ -304,12 +314,13 @@ explicit exclusion listed in §9.
 | `blob/AttachmentRefs.kt`                              | `DataLog -> listOfNotNull(payload.raw_file)`; and in the attachment-bearing kinds, filter `type != DATA_LOG` out of `blobIdsIn` (a reference owns nothing) |
 | `feature/sync/data/.../SyncEngine.kt`                 | add to `PER_THING_KINDS`                                                                                                                                   |
 | `backend/firebase/firestore.rules:65-68`              | add `"data_log"` to `isSharedAircraftKind`                                                                                                                 |
-| `backend/.../functions/package.json` `generate:proto` | add `id/ids.proto` and `datalog/data_log.proto` |
-| `backend/.../storage/blobRefs.ts`                     | `SCHEMA["datalog.DataLog"]`, `schemaCanOwnBlobs` true, `blobIdsInPayload` returns `[raw_file.id]`; `blobIds()` excludes `DATA_LOG` alongside `LINK`          |
+| `backend/.../functions/package.json` `generate:proto` | add `id/ids.proto` and `datalog/data_log.proto`                                                                                                            |
+| `backend/.../storage/blobRefs.ts`                     | `SCHEMA["datalog.DataLog"]`, `schemaCanOwnBlobs` true, `blobIdsInPayload` returns `[raw_file.id]`; `blobIds()` excludes `DATA_LOG` alongside `LINK`        |
 | `backend/.../notifications/*`                         | §11                                                                                                                                                        |
 | `backend/.../test/blob-cleanup.test.ts`               | a DataLog delete reclaims its blob; a log delete never reclaims a referenced DataLog's blob                                                                |
 
-`TombstoneGc` (`core/storage/.../TombstoneGc.kt:64-102`) is kind-agnostic once `AttachmentRefs` knows
+`TombstoneGc` (`core/storage/.../TombstoneGc.kt:64-102`) is kind-agnostic once `AttachmentRefs`
+knows
 the kind, and its `stillReferenced` cross-check already protects a blob another live record shows,
 which is the case for a data log referenced from a log entry.
 
@@ -332,7 +343,8 @@ message UserId    { string value = 1; }
 
 Wire generates `DataLogId(value: String)` and friends in `dev.fanfly.wingslog.id` (and `DataLog`
 with its enums in `dev.fanfly.wingslog.datalog`) as ordinary message classes with structural
-equality, so they serve as map keys and `StateFlow` values without a parallel Kotlin wrapper; ts-proto
+equality, so they serve as map keys and `StateFlow` values without a parallel Kotlin wrapper;
+ts-proto
 generates the matching interfaces for the functions, which read `doc.id.value`. The wire cost is two
 bytes per id.
 
@@ -347,7 +359,8 @@ Rules for this feature:
   Kotlin value classes in `feature/datalog/model`, because a proto message for device-local UI state
   would be schema for schema's sake.
 - Conversion to the grandfathered string world happens once, at the edge: `EntityStore.put(id.value,
-  …)`, `ThingScopeResolver.resolve(thingId.value)`, the nav-argument reader wrapping into `ThingId(…)`
+  …)`, `ThingScopeResolver.resolve(thingId.value)`, the nav-argument reader wrapping into
+  `ThingId(…)`
   and `DataLogId(…)`, and `BlobId(rawFile.id)` for the embedded attachment's blob.
 
 A `ThingId` and a `DataLogId` can no longer be swapped in a call or in a proto field, which is the
@@ -366,14 +379,16 @@ cleanup; this feature sets the precedent and does not do the sweep.
   explicit and gains `id/ids.proto`.
 - What it does create is a **second representation** of the same concept until the grandfathered
   APIs are migrated: `ThingScopeResolver.resolve(thingId: String)` and the shell's `selectedThingId`
-  stay strings while this feature's APIs take `ThingId`. The seam is one `.value` or one `ThingId(…)`
+  stay strings while this feature's APIs take `ThingId`. The seam is one `.value` or one
+  `ThingId(…)`
   per edge, always at a module boundary, never inside a manager. That is a known half-state, not a
   break, and the sweep that ends it is the same cleanup either way.
 - **Nullability changes.** A proto3 `string id` generates a non-null `String` defaulting to `""`; a
   message-typed `DataLogId id` generates `DataLogId?`. Every read of `dataLog.id` therefore needs a
   null decision. The rule here: a record without an id is corrupt, so `DataLogManager` drops such
   rows on read with a logged error and exposes `val DataLog.dataLogId: DataLogId` as a non-null
-  accessor for everything above it; the same for `Attachment.data_log_id`, which is null by design on
+  accessor for everything above it; the same for `Attachment.data_log_id`, which is null by design
+  on
   every other type and read only through `dataLogIdOrNull()`.
 - Id messages are frozen at one field. Wire's equality includes unknown fields, so an id message
   that ever grew a second field would compare unequal across builds; the proto lint in §14 refuses
@@ -390,7 +405,8 @@ data-log object. Upload is scheduled with the existing `UploadScheduler.schedule
 Thing `BlobUploadDriver` already routes a foreign scope through the broker.
 
 No `QuotaChecker` call. The checker is attachment-form logic with its own caps; the manager does not
-use it (PRD R14). `put` takes a whole `ByteArray`, which is fine for the tens of megabytes a data log
+use it (PRD R14). `put` takes a whole `ByteArray`, which is fine for the tens of megabytes a data
+log
 can reach; there is no streaming path and none is added.
 
 ### 5.2 Compression: `GzipCodec`
@@ -405,7 +421,8 @@ expect object GzipCodec {
 
 - **Android:** `java.util.zip.GZIPOutputStream` / `GZIPInputStream`.
 - **iOS:** Apple's Compression framework (`compression_encode_buffer` with `COMPRESSION_ZLIB`, which
-  is raw deflate) wrapped in a gzip header and trailer. The trailer needs a CRC-32; `Crc32` moves from
+  is raw deflate) wrapped in a gzip header and trailer. The trailer needs a CRC-32; `Crc32` moves
+  from
   `feature/export/datamanager` (where it is `internal`) into `core/storage` so both use one copy.
 - **Web:** `CompressionStream("gzip")` / `DecompressionStream`, available in every browser the web
   target supports. `isAvailable()` false where the API is missing.
@@ -417,7 +434,8 @@ three small actuals. Decompression of a 10 MB raw file is well under 200 ms on a
 ### 5.3 Download on open
 
 `DataLogManager.ensureLocal(id)` mirrors `AttachmentManager.ensureLocal`: if `blob_object` is
-`REMOTE_ONLY`, `scheduleDownload`, emit `Downloading`, then `Done`. `BlobDownloadDriver` verifies the
+`REMOTE_ONLY`, `scheduleDownload`, emit `Downloading`, then `Done`. `BlobDownloadDriver` verifies
+the
 stored sha256 through `installDownloaded`. The viewer shows the same badges the attachment rows do.
 
 ### 5.4 Parsed cache
@@ -453,12 +471,14 @@ Done(id)
 ```
 
 `ImportProgress` is a sealed class: `Reading, Parsing(rowsSoFar), Storing, Done(id: DataLogId),
-NeedsConfirmation(existing: DataLogId), Failed(reason)` with `reason` an enum that maps one-to-one onto the
+NeedsConfirmation(existing: DataLogId), Failed(reason)` with `reason` an enum that maps one-to-one
+onto the
 `data_log_import_failed` analytics values (`unrecognized`, `duplicate`, `parse_error`).
 
 Threading follows the house pattern: an injected `CoroutineDispatcher` defaulting to
 `Dispatchers.Default` (`SearchTuning.kt:7-10`). On web that is the UI thread, so the Garmin parser
-is written as a resumable loop that calls `yield()` every 500 rows; a 21,600-row file yields about 40
+is written as a resumable loop that calls `yield()` every 500 rows; a 21,600-row file yields about
+40
 times and the spinner keeps animating.
 
 ### 6.2 `DataLogParser`
@@ -473,7 +493,8 @@ interface DataLogParser {
 ```
 
 `ParsedDataLog` carries the record fields of §4.1 plus `DataLogSeriesData`: `timeSeconds: IntArray`
-(elapsed from row 0), one `FloatArray` per numeric or discrete series with `NaN` for empty cells and a
+(elapsed from row 0), one `FloatArray` per numeric or discrete series with `NaN` for empty cells and
+a
 forward-filled twin for drawing, `Array<String?>` for text series, and `lat`/`lon` `DoubleArray` for
 the position pseudo-series.
 
@@ -540,7 +561,8 @@ Latitude/Longitude → position.lat/lon
 ```
 
 Unknown columns keep `canonical_id = ""` and are still plottable by raw name. Presets (R30) and the
-default series (R21) are lists of canonical ids resolved against the record's catalogue at open time;
+default series (R21) are lists of canonical ids resolved against the record's catalogue at open
+time;
 a preset series the log lacks is skipped silently. The Dynon parser (later) supplies its own mapping
 into the same ids, which is the whole point of the indirection.
 
@@ -548,7 +570,8 @@ into the same ids, which is the whole point of the indirection.
 
 `docs/datalog/samples/g3x/`: the real samples with `aircraft_ident` replaced by a fictitious tail,
 `system_id` scrambled, and every latitude and longitude offset by a constant so the track shape
-survives but the location does not. `GarminParserTest` asserts the catalogue (112 columns, 73 series,
+survives but the location does not. `GarminParserTest` asserts the catalogue (112 columns, 73
+series,
 the position collapse), the time base (`14:47:56`, `-07:00`, 255 seconds), `airborne = false`, and
 exact values for a handful of cells.
 
@@ -575,7 +598,8 @@ exact values for a handful of cells.
 - Time: `Session Time` is already elapsed seconds and is the unit's own monotonic clock, so it needs
   none of the step-and-rewind handling a Garmin's wall clock does. The UTC offset is local minus
   GPS, read from one row that carries both and rounded to a quarter hour.
-- Names: no short names exist, so the column name is both the display name and the canonical-registry
+- Names: no short names exist, so the column name is both the display name and the
+  canonical-registry
   key. A SkyView spells out what a Garmin abbreviates (`Indicated Airspeed`, `Oil Pressure`) and
   names its engines by side (`RPM L`, `Fuel Level L`).
 
@@ -674,7 +698,8 @@ the file and inflating it both suspend, and the parse breathes within a frame of
 profile of opening one session of a 46 MB download showed a single 3.2-second task on the main
 thread, two thirds of it inside one `toString` and a further fifth collecting the garbage that
 `toString` made. That is the Kotlin standard library's `ByteArray.decodeToString` on the web build —
-a hand-written UTF-8 loop appending to a `StringBuilder`. The same call is 10 ms on the JVM, which is
+a hand-written UTF-8 loop appending to a `StringBuilder`. The same call is 10 ms on the JVM, which
+is
 why nothing caught it until someone recorded the browser doing it.
 
 `decodeText` is that call everywhere except the web, where it is the browser's own `TextDecoder`:
@@ -683,7 +708,8 @@ deserves anyway.
 
 **Stale catalogues.** The catalogue — every series' name, unit, range and canonical id — is frozen
 into the record at import, while the values are re-parsed on every open. A parser fix therefore
-reaches the charts immediately and never reaches the sidebar, and a log imported before the fix shows
+reaches the charts immediately and never reaches the sidebar, and a log imported before the fix
+shows
 a range that disagrees with the line drawn beside it. `load` compares the record's `parser_version`
 with the parser's own and rewrites the record when they differ: the catalogue, the time base, the
 counts and the derived flags, but not `identity_mismatch` (a comparison against the Thing, not a
@@ -693,7 +719,8 @@ for. The write is best-effort — the caller asked for the data, which it alread
 `DataLogManagerImpl(scopeResolver: ThingScopeResolver, storeFactory: EntityStoreFactory,
 blobs: LocalBlobStore, scheduler: UploadScheduler, importer: DataLogImporter, cache: DataLogCache,
 auth: AuthManager, dispatcher)` follows `SquawkManagerImpl`: `store = storeFactory.create(
-CollectionKind.DataLog)`, reads through `scopeResolver.resolve(thingId).flatMapLatest { store.observeAll }`,
+CollectionKind.DataLog)`, reads through
+`scopeResolver.resolve(thingId).flatMapLatest { store.observeAll }`,
 writes through `resolveNow`. Never the signed-in uid for scope. `delete` tombstones the record;
 the blob goes through `TombstoneGc` locally and `onRecordDeleted` remotely, both already built.
 
@@ -701,7 +728,8 @@ Identity: the Thing's tail comes from its spec through the field the template ma
 `title_candidate`, falling back to the first `is_identifier` field;
 `identity_mismatch = identity.isNotBlank() && !identity.equals(tail, ignoreCase)`.
 
-**Not the first `is_identifier` field.** That flag is a typography hint — its proto comment says so —
+**Not the first `is_identifier` field.** That flag is a typography hint — its proto comment says
+so —
 and an airplane sets it on both the serial number and the tail number, declaring the serial first.
 Reading the first one compared a Garmin's `aircraft_ident` against the airframe *serial*, so every
 log raised a mismatch against the aeroplane it was recorded on. `title_candidate` is the flag that
@@ -799,25 +827,25 @@ Viewing is never gated: a member opening a shared Thing's data log needs only Th
 
 ### 9.1 Every branch that must learn `DATA_LOG`
 
-| Site | Today | Change |
-|---|---|---|
-| `AttachmentRow.kt:131-149` `typeIcon`, `subtitle` | `else` = file | icon `ShowChart`; subtitle from the referenced record: "G3X log · 4m 15s · Opens in visualizer", or *Removed* when the record is gone |
-| `AttachmentRow.kt:48-60` enabled | null sync state = enabled | pass the DataLog's blob state, not the attachment's |
-| `AttachmentSection.kt:40-46` | `syncStates[attachment.id]` | look up by `data_log_id` through a `dataLogs: Map<String, DataLogRowInfo>` parameter |
-| `AttachmentFormSection.kt:197-198` remove confirm | warns for saved files | no warning for a reference |
-| `AttachmentFormSection.kt:264-269` `toIcon` | `else` | new branch |
-| `AttachmentFormSection.kt:305-374` picker sheet | three options | fourth option (§9.2) |
-| `PendingAttachment.kt:44-50` `fileCount` | `Local -> true` | new `LocalDataLogRef` variant, excluded; `Saved` excludes `DATA_LOG` |
-| `AttachmentFormController.kt:205-212` `remove` | tombstones saved files | a ref drops outright |
-| `AttachmentFormController.kt:236-255` `resolveForSave` | three variants | include `LocalDataLogRef` |
-| `AttachmentFormController.kt:269-274` `deleteSavedFiles` | `type != LINK` | also `!= DATA_LOG` |
-| `LocalFirstAttachmentManagerImpl.kt:117-136` `makeLink` | template | add `makeDataLogRef(dataLogId: DataLogId, name)` |
-| `LocalFirstAttachmentManagerImpl.kt:139` `delete` | `LINK` early return | also `DATA_LOG` |
-| `LogbookExportArchiveBuilder.kt:1301-1311` `attachmentCell` | `[attachment unavailable]` | "name (flight data log, 4m 15s)" text; bytes are not exported in V1 |
-| `AttachmentExportResolver.kt:55` | `type != LINK` | also `!= DATA_LOG` |
-| `ExportViewModel.kt:414-418` `exportedBytes` | sums non-LINK | exclude; `size_bytes` is 0 anyway |
-| `backend/.../blobRefs.ts:89-94` `blobIds` | `!== LINK` | also `!== DATA_LOG` |
-| `core/storage/.../AttachmentRefs.kt:49` `blobIdsIn` | non-LINK ids | also exclude `DATA_LOG` |
+| Site                                                        | Today                       | Change                                                                                                                                |
+|-------------------------------------------------------------|-----------------------------|---------------------------------------------------------------------------------------------------------------------------------------|
+| `AttachmentRow.kt:131-149` `typeIcon`, `subtitle`           | `else` = file               | icon `ShowChart`; subtitle from the referenced record: "G3X log · 4m 15s · Opens in visualizer", or *Removed* when the record is gone |
+| `AttachmentRow.kt:48-60` enabled                            | null sync state = enabled   | pass the DataLog's blob state, not the attachment's                                                                                   |
+| `AttachmentSection.kt:40-46`                                | `syncStates[attachment.id]` | look up by `data_log_id` through a `dataLogs: Map<String, DataLogRowInfo>` parameter                                                  |
+| `AttachmentFormSection.kt:197-198` remove confirm           | warns for saved files       | no warning for a reference                                                                                                            |
+| `AttachmentFormSection.kt:264-269` `toIcon`                 | `else`                      | new branch                                                                                                                            |
+| `AttachmentFormSection.kt:305-374` picker sheet             | three options               | fourth option (§9.2)                                                                                                                  |
+| `PendingAttachment.kt:44-50` `fileCount`                    | `Local -> true`             | new `LocalDataLogRef` variant, excluded; `Saved` excludes `DATA_LOG`                                                                  |
+| `AttachmentFormController.kt:205-212` `remove`              | tombstones saved files      | a ref drops outright                                                                                                                  |
+| `AttachmentFormController.kt:236-255` `resolveForSave`      | three variants              | include `LocalDataLogRef`                                                                                                             |
+| `AttachmentFormController.kt:269-274` `deleteSavedFiles`    | `type != LINK`              | also `!= DATA_LOG`                                                                                                                    |
+| `LocalFirstAttachmentManagerImpl.kt:117-136` `makeLink`     | template                    | add `makeDataLogRef(dataLogId: DataLogId, name)`                                                                                      |
+| `LocalFirstAttachmentManagerImpl.kt:139` `delete`           | `LINK` early return         | also `DATA_LOG`                                                                                                                       |
+| `LogbookExportArchiveBuilder.kt:1301-1311` `attachmentCell` | `[attachment unavailable]`  | "name (flight data log, 4m 15s)" text; bytes are not exported in V1                                                                   |
+| `AttachmentExportResolver.kt:55`                            | `type != LINK`              | also `!= DATA_LOG`                                                                                                                    |
+| `ExportViewModel.kt:414-418` `exportedBytes`                | sums non-LINK               | exclude; `size_bytes` is 0 anyway                                                                                                     |
+| `backend/.../blobRefs.ts:89-94` `blobIds`                   | `!== LINK`                  | also `!== DATA_LOG`                                                                                                                   |
+| `core/storage/.../AttachmentRefs.kt:49` `blobIdsIn`         | non-LINK ids                | also exclude `DATA_LOG`                                                                                                               |
 
 `AttachmentType` has no exhaustive `when` anywhere, so none of this is compiler-enforced. A
 `feature/attachment` test, `everyTypeBranchHandlesDataLogRef`, exercises `fileCount`, `remove`,
@@ -830,8 +858,10 @@ call is made. The backend gets the mirror case in `blob-cleanup.test.ts`.
 `LocalThingCapabilities.current.sections` contains `SECTION_DATA_LOGS` and `isDataLogsSupported`.
 Choosing it swaps the sheet body to `DataLogAttachmentPicker(thingId, recordDate)` exactly as
 "Add link" swaps to the URL field: a list of the Thing's data logs from `DataLogManager.observe`,
-same-day rows annotated, rows already attached elsewhere dimmed but selectable, a checkbox multi-selection,
-*Upload log file* (runs the importer, then checks the result) and *Attach* (attaches every checked log). The composable lives in
+same-day rows annotated, rows already attached elsewhere dimmed but selectable, a checkbox
+multi-selection,
+*Upload log file* (runs the importer, then checks the result) and *Attach* (attaches every checked
+log). The composable lives in
 `feature/datalog/viewing`; `feature/attachment/viewing` cannot depend on it, so the sheet takes the
 body as a slot lambda supplied by the form screens, which already depend on both.
 
@@ -842,12 +872,14 @@ error case.
 ### 9.3 Opening from a row
 
 The three tap handlers branch before `attachmentOpener.open`:
-`attachment.dataLogIdOrNull()?.let(onOpenDataLog)`, where the tab already receives cross-navigation lambdas
+`attachment.dataLogIdOrNull()?.let(onOpenDataLog)`, where the tab already receives cross-navigation
+lambdas
 (`LogsTab.kt:107-108`). The handler dismisses the detail sheet and navigates to
 `Screen.DataLogViewer.createRoute(thingId, dataLogId)`.
 
 `ThingOverviewViewModel` observes `DataLogManager.observe(ThingId(thingId))` and exposes
-`dataLogs: Map<DataLogId, DataLogRowInfo>` so rows can render subtitles and *Removed*. `feature/thing/dashboard` depends on `feature/datalog/model`,
+`dataLogs: Map<DataLogId, DataLogRowInfo>` so rows can render subtitles and *Removed*.
+`feature/thing/dashboard` depends on `feature/datalog/model`,
 `datamanager`, `sharedassets`, `viewing`, never `update`.
 
 ## 10. Section, list, and shell
@@ -855,7 +887,8 @@ The three tap handlers branch before `attachmentOpener.open`:
 ### 10.1 `ShellSection.DATA_LOGS`
 
 `DATA_LOGS(Icons.Filled.ShowChart)` between `LOGS` and `SETTINGS`. Switches to extend: `label()`
-returns `LexiconFormatter.shortPlural(LocalThingLexicon.current.dataLogNoun)`; `title()` the title-case
+returns `LexiconFormatter.shortPlural(LocalThingLexicon.current.dataLogNoun)`; `title()` the
+title-case
 plural; `Section.toShellSection()` maps `SECTION_DATA_LOGS`; `DEFAULT_PER_THING_SECTIONS` stays at
 four (fail-open is for missing declarations, and a template that names no sections is not an
 aeroplane with data logs); `ThingSectionContent.kt:135-179` FAB and `:287-293` scroll routing;
@@ -865,7 +898,8 @@ needs nothing, it matches enum names; `PerThingSectionsTest` gains the capabilit
 ### 10.2 Body and FAB
 
 `ShellSectionBody` renders `DataLogSectionContent(thingId: ThingId, onOpen: (DataLogId) -> Unit,
-onNavigateToSettings)` from `feature/datalog/viewing`. `DataLogListViewModel(thingId: ThingId)` combines `DataLogManager.observe`, the
+onNavigateToSettings)` from `feature/datalog/viewing`. `DataLogListViewModel(thingId: ThingId)`
+combines `DataLogManager.observe`, the
 upload gate, and `ImportProgress` of any in-flight imports into `uiState`. Rows show date and route
 or *Ground run*, start time, duration in mono, product, series count, the attached-to line, and an
 inline progress or error row during import (R34, R35). A pending scroll target from a notification
@@ -902,7 +936,8 @@ Registered as a plain `composable` in `ShellNavGraph.settingsDetailRoutes`' styl
 
 ### 11.1 State
 
-`DataLogViewerViewModel(thingId: ThingId, dataLogId: DataLogId)` owns everything the user can change,
+`DataLogViewerViewModel(thingId: ThingId, dataLogId: DataLogId)` owns everything the user can
+change,
 per the hoist-to-ViewModel rule: `ChartLayout(panes: List<Pane(id: PaneId, series: List<SeriesKey>)>,
 targetPane: PaneId?)`,
 `view: TimeWindow?` (null = full), `cursorT: Double?`, `sidebarTab`, `query`. It loads through
@@ -1002,7 +1037,8 @@ only there. Failed tiles leave the pane's surface and the track still draws (R29
 `fitCamera` opens it with the track's bounding box filling 80% of the pane, and the user pinches,
 drags or wheels from there. The tile zoom is derived from the camera and capped at the provider's
 `maxZoom`, so a short taxi track — tens of metres, well past zoom 19 — keeps filling the pane with
-the deepest tiles stretched rather than rendering as a speck at the last integer zoom. `MAX_OVER_ZOOM`
+the deepest tiles stretched rather than rendering as a speck at the last integer zoom.
+`MAX_OVER_ZOOM`
 bounds that stretch; a wheel event is damped so one flick cannot jump from the fit to the ceiling.
 
 **The map pane is first and taller.** `ChartLayout.withMapFirst` sorts map panes to the top after
@@ -1014,7 +1050,8 @@ moving the position series is a no-op for the same reason.
 ### 11.7 Sidebar and narrow layouts
 
 `SeriesSidebar` is 300 dp on layouts with side navigation and a right-hand drawer below that,
-toggled by the *tune* action. The drawer is Material's `ModalNavigationDrawer` laid out right-to-left
+toggled by the *tune* action. The drawer is Material's `ModalNavigationDrawer` laid out
+right-to-left
 (a drawer is not one of the scoped popups, but its content still sits inside a `TextSelectionLayer`
 because it hosts a text field). Tabs
 *Series* (search, range, add or check) and *Flight* (record facts, source facts, identity notice).
@@ -1028,7 +1065,8 @@ map pane is 1.5× whichever applies.
 pane lists of canonical ids. **Not built** — dropped from PR 6 on 2026-09-15; the default layout
 below ships without it. Default layout on first open: one pane with the template's default
 series (`engine[1].rpm` on airplane, declared as a lexicon-adjacent template field later; hard-coded
-per format in V1 with a TODO to move into the template when automotive arrives), or the first numeric
+per format in V1 with a TODO to move into the template when automotive arrives), or the first
+numeric
 series.
 
 ## 12. Notifications (PRD R39)
@@ -1042,9 +1080,11 @@ create and delete body-key assertions mirroring `notification-fanout.test.ts:253
 
 Client: `PushPayload.noun()` and `sectionTitle()` branches for `"data_log"` using `dataLogNoun`;
 `parseTapTarget` prefix `data_log`; `NotificationTapTarget.DataLog(thingId, dataLogId: DataLogId)`
-(the existing targets hold a `String` thing id; this one matches them for `thingId` and types its own
+(the existing targets hold a `String` thing id; this one matches them for `thingId` and types its
+own
 id, until the sealed interface is migrated to `ThingId` as a whole);
-`NotificationTapRouter` `wingslog://…/data_log/{thingId}/{id}`; `AdaptiveShellViewModel.onNotificationTap`
+`NotificationTapRouter` `wingslog://…/data_log/{thingId}/{id}`;
+`AdaptiveShellViewModel.onNotificationTap`
 selects the Thing, `DATA_LOGS`, and sets the pending scroll id; `WebForeignWriteDetector` gets the
 kind for its web-only detector.
 
@@ -1055,11 +1095,13 @@ kind for its web-only detector.
 `Name`: `DATA_LOG_IMPORTED("data_log_imported")`, `DATA_LOG_IMPORT_FAILED`, `DATA_LOG_OPENED`.
 `Param` additions: `DURATION_BUCKET`, `SIZE_BUCKET`, `SERIES_COUNT`; `FORMAT`, `SOURCE`, `REASON`
 exist. Three `ThingScopedEvent` data classes, appended to `everyThingScopedEventCarriesTemplateId`.
-Logged from `DataLogListViewModel` and `DataLogAttachmentPickerViewModel` (import, failure — `SOURCE`
+Logged from `DataLogListViewModel` and `DataLogAttachmentPickerViewModel` (import, failure —
+`SOURCE`
 separates the two pickers) and `DataLogViewerViewModel` (open) through the injected
 `AnalyticsManager`.
 
-`DATA_LOG_LAYOUT_APPLIED` and `PRESET` were planned here and are **not defined**: T39 (chart presets)
+`DATA_LOG_LAYOUT_APPLIED` and `PRESET` were planned here and are **not defined**: T39 (chart
+presets)
 was closed as obsolete, so nothing would emit them, and a taxonomy entry with no call site reads in
 GA4 as a series at zero rather than as one that does not exist. Add both with the feature if presets
 ever return.
@@ -1071,7 +1113,8 @@ which would give GA4 one dimension row per file and nothing to group by.
 
 `AdSurface.DATA_LOGS("data_logs")`, with the enum's doc comment updated to admit one fixed slot.
 `AdSlot` gains `size: AdUnitSize = LARGE_BANNER` and `maxUnits: Int = TWO_UP.unitCount`; the viewer
-calls `AdSlot(DATA_LOGS, 0, size = BANNER, maxUnits = 1)` in the sidebar footer on tablet layouts and
+calls `AdSlot(DATA_LOGS, 0, size = BANNER, maxUnits = 1)` in the sidebar footer on tablet layouts
+and
 under the *New pane* strip on phones, inside `if (showAds)` from `AdsManager.shouldShowsAds()`. Web
 is out of scope by requirement, and `AdView.js.kt` is already a no-op with `isAdsSupported = false`,
 so no web code is touched.
@@ -1149,17 +1192,17 @@ commit (`StringSnapshotTest` fails on `added` otherwise), with lexicon-bearing o
 
 ## 15. Sequencing
 
-| PR | Contents | Gate |
-|---|---|---|
-| 1 | Protos, `CollectionKind.DataLog`, `AttachmentRefs`, sync list, rules, backend proto and `blobRefs.ts`, `capabilitiesFor`, airplane v12, `isDataLogsSupported`, `ShellSection.DATA_LOGS` with an empty body | tests green; developer builds show an empty section |
-| 2 | Garmin parser, registry, `GzipCodec`, importer, manager, fixture | fixture tests; import from a developer build lists the record and it syncs |
-| 3 | Section list, FAB, guest gate, pill change, snapshot rows | mocks 1a, 2a, 3b, 3c on phone and web |
-| 4 | Viewer route, panes, decimation, gestures, chips, sidebar, colours | mock 1c reproduced; gesture matrix passed |
-| 5 | Attachment type end to end (§9) | mock 1b; `everyTypeBranchHandlesDataLogRef` |
-| 6 | Map pane, presets, layout memory, clock axis, R12, R13 | mock 1d |
-| 7 | Notifications, analytics, mobile ad slot | fan-out tests; events visible in DebugView |
-| 8 | Flip `isDataLogsSupported` on every host; release notes | V1 |
-| 9+ | G1000 sniff and mapping; Dynon parser with the channel-mapping prompt; shared drag-and-drop (§13.3) | per fixture |
+| PR | Contents                                                                                                                                                                                                   | Gate                                                                       |
+|----|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------|
+| 1  | Protos, `CollectionKind.DataLog`, `AttachmentRefs`, sync list, rules, backend proto and `blobRefs.ts`, `capabilitiesFor`, airplane v12, `isDataLogsSupported`, `ShellSection.DATA_LOGS` with an empty body | tests green; developer builds show an empty section                        |
+| 2  | Garmin parser, registry, `GzipCodec`, importer, manager, fixture                                                                                                                                           | fixture tests; import from a developer build lists the record and it syncs |
+| 3  | Section list, FAB, guest gate, pill change, snapshot rows                                                                                                                                                  | mocks 1a, 2a, 3b, 3c on phone and web                                      |
+| 4  | Viewer route, panes, decimation, gestures, chips, sidebar, colours                                                                                                                                         | mock 1c reproduced; gesture matrix passed                                  |
+| 5  | Attachment type end to end (§9)                                                                                                                                                                            | mock 1b; `everyTypeBranchHandlesDataLogRef`                                |
+| 6  | Map pane, presets, layout memory, clock axis, R12, R13                                                                                                                                                     | mock 1d                                                                    |
+| 7  | Notifications, analytics, mobile ad slot                                                                                                                                                                   | fan-out tests; events visible in DebugView                                 |
+| 8  | Flip `isDataLogsSupported` on every host; release notes                                                                                                                                                    | V1                                                                         |
+| 9+ | G1000 sniff and mapping; Dynon parser with the channel-mapping prompt; shared drag-and-drop (§13.3)                                                                                                        | per fixture                                                                |
 
 Each PR runs `lint`, `testDebugUnitTest`, `testAndroidHostTest` locally (CI's Kotlin build is
 manual-dispatch) and the post-task cleanup pass over changed `.kt` files.
@@ -1190,59 +1233,60 @@ day, **M** one to two days, **L** three days or more. `Needs` lists task ids tha
 Rows map one-to-one onto sub-issues when the project board is created; PRs 1 to 8 are the V1 epic,
 PR 9+ the formats epic.
 
-| Id | PR | Task | Where | Size | Needs | PRD |
-|---|---|---|---|---|---|---|
-| T01 | 1 | `id/ids.proto` with `ThingId`, `DataLogId`, `UserId`; proto lint test for bare string ids on new messages | `core/model` proto + test | S | — | §4.4 |
-| T02 | 1 | `datalog/data_log.proto` (`DataLog`, `DataLogSource`, `DataLogSeries`, three enums); `ATTACHMENT_TYPE_DATA_LOG` and `Attachment.data_log_id` | `core/model` proto | S | T01 | R15, §4.1–4.2 |
-| T03 | 1 | `CollectionKind.DataLog`, coverage test, codec registration, `AttachmentRefs.of(DataLog)` and the `DATA_LOG` exclusion in `blobIdsIn` | `core/storage` | S | T02 | R16, R17 |
-| T04 | 1 | `PER_THING_KINDS` entry; `isSharedAircraftKind` rules entry; `sharing-rules.test.ts` member write | `feature/sync/data`, `backend/firebase` | S | T03 | R37 |
-| T05 | 1 | Backend proto generation for `id/ids.proto` and `datalog/data_log.proto`; `blobRefs.ts` schema, `schemaCanOwnBlobs`, `blobIdsInPayload`, `DATA_LOG` exclusion in `blobIds()`; `blob-cleanup.test.ts` cases | `backend/firebase/functions` | M | T02 | R19, §4.3 |
-| T06 | 1 | `SECTION_DATA_LOGS`; `Lexicon.data_log`, `data_log_description`, `EmptyStates.data_log_hint`; `GenericLexicon` defaults; `LexiconNouns.dataLogNoun` | `core/model` proto, `core/template` | S | — | R42, R45 |
-| T07 | 1 | `airplane.v12.textproto` with the section and lexicon lines; compile; asset test pins five sections | `core/template/templates` | S | T06 | R42 |
-| T08 | 1 | `TemplateRegistry.capabilitiesFor`; `CurrentThingTemplate` uses it; `resolve()` skips the enum check for a known id; registry tests | `core/template` | M | T06 | R42 |
-| T09 | 1 | `AppCapability.isDataLogsSupported`, three actuals set to `isDeveloperBuild`; `core/ui/adaptive` depends on `core/appinfo` | `core/appinfo`, hosts | S | — | R43 |
-| T10 | 1 | `ShellSection.DATA_LOGS`: enum, `label`/`title`, `toShellSection`, `perThingSectionsFor` with the flag, `PerThingSectionsTest`; empty section body and no-op FAB | `core/ui/adaptive`, `feature/thing/dashboard` | M | T07, T08, T09 | R1 |
-| T11 | 1 | `feature/datalog` module skeleton: six submodules, Gradle, `dataLogModule`, `settings.gradle.kts`, `CommonAppModules` (use the scaffolder) | `feature/datalog`, `core/di` | S | — | §3 |
-| T12 | 2 | `DataLogParser` interface, `Confidence`, `HeaderSniffer`; `ParsedDataLog` and `DataLogSeriesData` models | `feature/datalog/model`, `datamanager` | S | T11 | §6.2 |
-| T13 | 2 | Anonymised G3X fixture in `docs/datalog/samples/` | docs | S | — | §6.4 |
-| T14 | 2 | Garmin parser: header, three-line columns, time base, cell typing, position collapse, allocation-free row walk, `yield()` every 500 rows | `feature/datalog/datamanager` | L | T12, T13 | R6, R8, §6.2 |
-| T15 | 2 | `CanonicalSeriesRegistry` and the fixed-index table; derived `airborne`, identity mismatch, `start_location_ident`, end position | `feature/datalog/datamanager` | M | T14 | R11, R13, R36, §6.3 |
-| T16 | 2 | `GzipCodec` expect/actual (Android, iOS with `Crc32` moved to `core/storage`, web) with `isAvailable()`; round-trip tests | `feature/datalog/datamanager`, `core/storage`, `feature/export` | M | T11 | R9, §5.2 |
-| T17 | 2 | `DataLogImporter` pipeline with `ImportProgress`, duplicate and probable-duplicate checks | `feature/datalog/datamanager` | M | T14, T15, T16 | R7, R10 |
-| T18 | 2 | `DataLogManager` and impl: observe, import, `ensureLocal`, `load` with `DataLogCache`, delete, blob state; scope through the resolver; MockK tests | `feature/datalog/datamanager` | M | T03, T17 | R16–R19, §7 |
-| T19 | 2 | `GarminParserTest` on the fixture; sniff table; 20,000-row synthetic timing test | tests | S | T14 | R8 |
-| T20 | 3 | `DataLogListViewModel` and `DataLogSectionContent`: rows, empty state, inline import progress and errors, pending scroll target | `feature/datalog/viewing` | M | T18, T10 | R2, R34, R35 |
-| T21 | 3 | `ShellSectionFab` for `DATA_LOGS` with `rememberFilePicker`; wide-layout header button | `feature/thing/dashboard` | S | T20 | R2 |
-| T22 | 3 | Guest gate: `UploadGate` state, phone prompt sheet, `OPEN_LINK_ACCOUNT` hand-off to Settings, wide `UploadGateCard` (provider picker reuse or single CTA) | `feature/datalog/viewing`, `feature/shell`, `feature/settings` | M | T20 | R40 |
-| T23 | 3 | Variable-width pill: icon-only unselected items, doc block rewrite, 320 dp screenshot | `core/ui/adaptive` | S | — | R2b |
-| T24 | 3 | Strings for the section and picker; `string_snapshot.tsv` rows and `LEXICON_ARGS` entries | `feature/datalog/sharedassets`, `core/template` test resources | S | T20 | R45 |
-| T25 | 3 | Phone search action on the list (filter by date, identifier, attached title); removed 2026-09-16 | `feature/datalog/viewing` | S | T20 | R2a |
-| T26 | 4 | `Screen.DataLogViewer` route and registration; `DataLogViewerViewModel` load path through download states; delete with snackbar | `core/nav`, `feature/shell`, `feature/datalog/update` | M | T18 | R20, §10.4, §11.1 |
-| T27 | 4 | Chart model as pure functions: decimation, unit grouping and axis assignment, tick ladder, `zoomAround`/`pan` clamping, brush-to-window; unit tests | `feature/datalog/model` | M | T12 | R22, R23, R23a, R28 |
-| T28 | 4 | `ChartPane` Canvas drawing, `TimeAxis`, cursor line and pill, target-pane border | `feature/datalog/viewing` | L | T27 | R20–R23 |
-| T29 | 4 | Gesture state machine: one-pointer brush with vertical pass-through, two-pointer pan and pinch, scroll handler with modifiers; per-browser ctrl+wheel check | `feature/datalog/viewing` | L | T28 | R23 |
-| T30 | 4 | `PaneHeaderChips` with drag between panes and the *New pane* target; mixed-kind spawn rule | `feature/datalog/viewing` | M | T28 | R21, R24 |
-| T31 | 4 | `SeriesPalette` light and dark, fixed-index table, hash fallback; contrast check; colour stability test | `feature/datalog/viewing` | S | T15 | R24a |
-| T32 | 4 | `SeriesSidebar` (Series and Flight tabs, search, range, target-pane hint) and the compact right-hand drawer; icon-only header on narrow | `feature/datalog/viewing` | M | T28 | R25–R27 |
-| T33 | 5 | `PendingAttachment.LocalDataLogRef`; `AttachmentFormController.addDataLogRefs`, `remove`, `resolveForSave`, `deleteSavedFiles`; `makeDataLogRef`; `delete` early return; `everyTypeBranchHandlesDataLogRef` test | `feature/attachment/model`, `datamanager` | M | T02 | R3, R5, §9.1 |
-| T34 | 5 | `AttachmentRow` icon and subtitle, *Removed* state; `AttachmentSection` keyed by `data_log_id`; form-section icon and no-confirm removal | `feature/attachment/viewing` | S | T33 | R4 |
-| T35 | 5 | Picker sheet fourth option behind capability and flag; `DataLogAttachmentPicker` body as a slot; *Upload log file* inside the picker | `feature/attachment/viewing`, `feature/datalog/viewing`, three form screens | M | T33, T18 | R3, §9.2 |
-| T36 | 5 | Three form ViewModels `attachDataLogs`; three tap handlers branch to the viewer route; `ThingOverviewViewModel.dataLogs` | `feature/logs`, `feature/tasks`, `feature/squawk`, `feature/thing/dashboard` | M | T35, T26 | R4, §9.3 |
-| T37 | 5 | Export and backend exclusions: `attachmentCell`, `AttachmentExportResolver`, `exportedBytes` | `feature/export` | S | T02 | §9.1 |
-| T38 | 6 | `MapPane`: tile provider binding, Mercator layout, track path, cursor dot, attribution, web ktor engine, continuous zoom with pinch and wheel | `feature/datalog/viewing` | L | T28 | R29 |
-| T39 | 6 | `ChartPresets` and default layout; preset chips in the sidebar | `feature/datalog/model`, `viewing` | S | T31, T32 | R21, R30 |
-| T40 | 6 | `ChartLayoutStore` per-device layout memory; clock-time axis toggle | `feature/datalog/datamanager`, `viewing` | S | T26 | R31, R32 |
-| T41 | 6 | R12 "file it under the other Thing" confirmation | `feature/datalog/datamanager`, `viewing` | S | T17 | R12 |
-| T42 | 7 | Server: `RECORD_TYPE.DATA_LOG`, `recordTypeForKind`, `thingTabForRecordType`, `recordTitleOf`; fan-out tests | `backend/firebase/functions` | S | T05 | R39 |
-| T43 | 7 | Client notifications: `noun()`/`sectionTitle()`, `parseTapTarget`, `NotificationTapTarget.DataLog`, router, shell tap routing, web detector | `feature/notifications`, `feature/shell` | M | T10, T42 | R39 |
-| T44 | 7 | Analytics: three `Name`s, three `Param`s, three events, taxonomy test list, ViewModel logging | `core/analytics`, `feature/datalog` | S | T20, T26 | R46 |
-| T45 | 7 | `AdSurface.DATA_LOGS`, `AdSlot` size parameter, placement in sidebar footer and under *New pane* on Android and iOS | `feature/ads`, `feature/datalog/viewing` | S | T32 | R44a |
-| T46 | 8 | Delete `isDataLogsSupported` and its two gates; release notes | hosts, `core/ui/adaptive`, `feature/datalog/viewing` | S | T20–T45 | R43 |
-| T47 | 9+ | G1000 sniff, units row, short-name mapping; fixtures; tests | `feature/datalog/datamanager` | M | T14 | §6.2, §6.4 |
-| T48 | 9+ | Dynon SkyView parser; multi-session import; the channel-mapping prompt deferred, see §6.2 | `feature/datalog/datamanager` | L | T14 | §6.2 |
-| T49 | 9+ | Shared drag-and-drop `FileDropTarget` for attachments and data logs (Compose `dragAndDropTarget` on every platform) | `feature/attachment/viewing` | M | T21, T35 | R2c |
-| T50 | 9+ | V2 server destination lookup design note (server write into a client-owned record) | docs | S | T42 | R36 |
+| Id  | PR | Task                                                                                                                                                                                                             | Where                                                                        | Size | Needs         | PRD                 |
+|-----|----|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------|------|---------------|---------------------|
+| T01 | 1  | `id/ids.proto` with `ThingId`, `DataLogId`, `UserId`; proto lint test for bare string ids on new messages                                                                                                        | `core/model` proto + test                                                    | S    | —             | §4.4                |
+| T02 | 1  | `datalog/data_log.proto` (`DataLog`, `DataLogSource`, `DataLogSeries`, three enums); `ATTACHMENT_TYPE_DATA_LOG` and `Attachment.data_log_id`                                                                     | `core/model` proto                                                           | S    | T01           | R15, §4.1–4.2       |
+| T03 | 1  | `CollectionKind.DataLog`, coverage test, codec registration, `AttachmentRefs.of(DataLog)` and the `DATA_LOG` exclusion in `blobIdsIn`                                                                            | `core/storage`                                                               | S    | T02           | R16, R17            |
+| T04 | 1  | `PER_THING_KINDS` entry; `isSharedAircraftKind` rules entry; `sharing-rules.test.ts` member write                                                                                                                | `feature/sync/data`, `backend/firebase`                                      | S    | T03           | R37                 |
+| T05 | 1  | Backend proto generation for `id/ids.proto` and `datalog/data_log.proto`; `blobRefs.ts` schema, `schemaCanOwnBlobs`, `blobIdsInPayload`, `DATA_LOG` exclusion in `blobIds()`; `blob-cleanup.test.ts` cases       | `backend/firebase/functions`                                                 | M    | T02           | R19, §4.3           |
+| T06 | 1  | `SECTION_DATA_LOGS`; `Lexicon.data_log`, `data_log_description`, `EmptyStates.data_log_hint`; `GenericLexicon` defaults; `LexiconNouns.dataLogNoun`                                                              | `core/model` proto, `core/template`                                          | S    | —             | R42, R45            |
+| T07 | 1  | `airplane.v12.textproto` with the section and lexicon lines; compile; asset test pins five sections                                                                                                              | `core/template/templates`                                                    | S    | T06           | R42                 |
+| T08 | 1  | `TemplateRegistry.capabilitiesFor`; `CurrentThingTemplate` uses it; `resolve()` skips the enum check for a known id; registry tests                                                                              | `core/template`                                                              | M    | T06           | R42                 |
+| T09 | 1  | `AppCapability.isDataLogsSupported`, three actuals set to `isDeveloperBuild`; `core/ui/adaptive` depends on `core/appinfo`                                                                                       | `core/appinfo`, hosts                                                        | S    | —             | R43                 |
+| T10 | 1  | `ShellSection.DATA_LOGS`: enum, `label`/`title`, `toShellSection`, `perThingSectionsFor` with the flag, `PerThingSectionsTest`; empty section body and no-op FAB                                                 | `core/ui/adaptive`, `feature/thing/dashboard`                                | M    | T07, T08, T09 | R1                  |
+| T11 | 1  | `feature/datalog` module skeleton: six submodules, Gradle, `dataLogModule`, `settings.gradle.kts`, `CommonAppModules` (use the scaffolder)                                                                       | `feature/datalog`, `core/di`                                                 | S    | —             | §3                  |
+| T12 | 2  | `DataLogParser` interface, `Confidence`, `HeaderSniffer`; `ParsedDataLog` and `DataLogSeriesData` models                                                                                                         | `feature/datalog/model`, `datamanager`                                       | S    | T11           | §6.2                |
+| T13 | 2  | Anonymised G3X fixture in `docs/datalog/samples/`                                                                                                                                                                | docs                                                                         | S    | —             | §6.4                |
+| T14 | 2  | Garmin parser: header, three-line columns, time base, cell typing, position collapse, allocation-free row walk, `yield()` every 500 rows                                                                         | `feature/datalog/datamanager`                                                | L    | T12, T13      | R6, R8, §6.2        |
+| T15 | 2  | `CanonicalSeriesRegistry` and the fixed-index table; derived `airborne`, identity mismatch, `start_location_ident`, end position                                                                                 | `feature/datalog/datamanager`                                                | M    | T14           | R11, R13, R36, §6.3 |
+| T16 | 2  | `GzipCodec` expect/actual (Android, iOS with `Crc32` moved to `core/storage`, web) with `isAvailable()`; round-trip tests                                                                                        | `feature/datalog/datamanager`, `core/storage`, `feature/export`              | M    | T11           | R9, §5.2            |
+| T17 | 2  | `DataLogImporter` pipeline with `ImportProgress`, duplicate and probable-duplicate checks                                                                                                                        | `feature/datalog/datamanager`                                                | M    | T14, T15, T16 | R7, R10             |
+| T18 | 2  | `DataLogManager` and impl: observe, import, `ensureLocal`, `load` with `DataLogCache`, delete, blob state; scope through the resolver; MockK tests                                                               | `feature/datalog/datamanager`                                                | M    | T03, T17      | R16–R19, §7         |
+| T19 | 2  | `GarminParserTest` on the fixture; sniff table; 20,000-row synthetic timing test                                                                                                                                 | tests                                                                        | S    | T14           | R8                  |
+| T20 | 3  | `DataLogListViewModel` and `DataLogSectionContent`: rows, empty state, inline import progress and errors, pending scroll target                                                                                  | `feature/datalog/viewing`                                                    | M    | T18, T10      | R2, R34, R35        |
+| T21 | 3  | `ShellSectionFab` for `DATA_LOGS` with `rememberFilePicker`; wide-layout header button                                                                                                                           | `feature/thing/dashboard`                                                    | S    | T20           | R2                  |
+| T22 | 3  | Guest gate: `UploadGate` state, phone prompt sheet, `OPEN_LINK_ACCOUNT` hand-off to Settings, wide `UploadGateCard` (provider picker reuse or single CTA)                                                        | `feature/datalog/viewing`, `feature/shell`, `feature/settings`               | M    | T20           | R40                 |
+| T23 | 3  | Variable-width pill: icon-only unselected items, doc block rewrite, 320 dp screenshot                                                                                                                            | `core/ui/adaptive`                                                           | S    | —             | R2b                 |
+| T24 | 3  | Strings for the section and picker; `string_snapshot.tsv` rows and `LEXICON_ARGS` entries                                                                                                                        | `feature/datalog/sharedassets`, `core/template` test resources               | S    | T20           | R45                 |
+| T25 | 3  | Phone search action on the list (filter by date, identifier, attached title); removed 2026-09-16                                                                                                                 | `feature/datalog/viewing`                                                    | S    | T20           | R2a                 |
+| T26 | 4  | `Screen.DataLogViewer` route and registration; `DataLogViewerViewModel` load path through download states; delete with snackbar                                                                                  | `core/nav`, `feature/shell`, `feature/datalog/update`                        | M    | T18           | R20, §10.4, §11.1   |
+| T27 | 4  | Chart model as pure functions: decimation, unit grouping and axis assignment, tick ladder, `zoomAround`/`pan` clamping, brush-to-window; unit tests                                                              | `feature/datalog/model`                                                      | M    | T12           | R22, R23, R23a, R28 |
+| T28 | 4  | `ChartPane` Canvas drawing, `TimeAxis`, cursor line and pill, target-pane border                                                                                                                                 | `feature/datalog/viewing`                                                    | L    | T27           | R20–R23             |
+| T29 | 4  | Gesture state machine: one-pointer brush with vertical pass-through, two-pointer pan and pinch, scroll handler with modifiers; per-browser ctrl+wheel check                                                      | `feature/datalog/viewing`                                                    | L    | T28           | R23                 |
+| T30 | 4  | `PaneHeaderChips` with drag between panes and the *New pane* target; mixed-kind spawn rule                                                                                                                       | `feature/datalog/viewing`                                                    | M    | T28           | R21, R24            |
+| T31 | 4  | `SeriesPalette` light and dark, fixed-index table, hash fallback; contrast check; colour stability test                                                                                                          | `feature/datalog/viewing`                                                    | S    | T15           | R24a                |
+| T32 | 4  | `SeriesSidebar` (Series and Flight tabs, search, range, target-pane hint) and the compact right-hand drawer; icon-only header on narrow                                                                          | `feature/datalog/viewing`                                                    | M    | T28           | R25–R27             |
+| T33 | 5  | `PendingAttachment.LocalDataLogRef`; `AttachmentFormController.addDataLogRefs`, `remove`, `resolveForSave`, `deleteSavedFiles`; `makeDataLogRef`; `delete` early return; `everyTypeBranchHandlesDataLogRef` test | `feature/attachment/model`, `datamanager`                                    | M    | T02           | R3, R5, §9.1        |
+| T34 | 5  | `AttachmentRow` icon and subtitle, *Removed* state; `AttachmentSection` keyed by `data_log_id`; form-section icon and no-confirm removal                                                                         | `feature/attachment/viewing`                                                 | S    | T33           | R4                  |
+| T35 | 5  | Picker sheet fourth option behind capability and flag; `DataLogAttachmentPicker` body as a slot; *Upload log file* inside the picker                                                                             | `feature/attachment/viewing`, `feature/datalog/viewing`, three form screens  | M    | T33, T18      | R3, §9.2            |
+| T36 | 5  | Three form ViewModels `attachDataLogs`; three tap handlers branch to the viewer route; `ThingOverviewViewModel.dataLogs`                                                                                         | `feature/logs`, `feature/tasks`, `feature/squawk`, `feature/thing/dashboard` | M    | T35, T26      | R4, §9.3            |
+| T37 | 5  | Export and backend exclusions: `attachmentCell`, `AttachmentExportResolver`, `exportedBytes`                                                                                                                     | `feature/export`                                                             | S    | T02           | §9.1                |
+| T38 | 6  | `MapPane`: tile provider binding, Mercator layout, track path, cursor dot, attribution, web ktor engine, continuous zoom with pinch and wheel                                                                    | `feature/datalog/viewing`                                                    | L    | T28           | R29                 |
+| T39 | 6  | `ChartPresets` and default layout; preset chips in the sidebar                                                                                                                                                   | `feature/datalog/model`, `viewing`                                           | S    | T31, T32      | R21, R30            |
+| T40 | 6  | `ChartLayoutStore` per-device layout memory; clock-time axis toggle                                                                                                                                              | `feature/datalog/datamanager`, `viewing`                                     | S    | T26           | R31, R32            |
+| T41 | 6  | R12 "file it under the other Thing" confirmation                                                                                                                                                                 | `feature/datalog/datamanager`, `viewing`                                     | S    | T17           | R12                 |
+| T42 | 7  | Server: `RECORD_TYPE.DATA_LOG`, `recordTypeForKind`, `thingTabForRecordType`, `recordTitleOf`; fan-out tests                                                                                                     | `backend/firebase/functions`                                                 | S    | T05           | R39                 |
+| T43 | 7  | Client notifications: `noun()`/`sectionTitle()`, `parseTapTarget`, `NotificationTapTarget.DataLog`, router, shell tap routing, web detector                                                                      | `feature/notifications`, `feature/shell`                                     | M    | T10, T42      | R39                 |
+| T44 | 7  | Analytics: three `Name`s, three `Param`s, three events, taxonomy test list, ViewModel logging                                                                                                                    | `core/analytics`, `feature/datalog`                                          | S    | T20, T26      | R46                 |
+| T45 | 7  | `AdSurface.DATA_LOGS`, `AdSlot` size parameter, placement in sidebar footer and under *New pane* on Android and iOS                                                                                              | `feature/ads`, `feature/datalog/viewing`                                     | S    | T32           | R44a                |
+| T46 | 8  | Delete `isDataLogsSupported` and its two gates; release notes                                                                                                                                                    | hosts, `core/ui/adaptive`, `feature/datalog/viewing`                         | S    | T20–T45       | R43                 |
+| T47 | 9+ | G1000 sniff, units row, short-name mapping; fixtures; tests                                                                                                                                                      | `feature/datalog/datamanager`                                                | M    | T14           | §6.2, §6.4          |
+| T48 | 9+ | Dynon SkyView parser; multi-session import; the channel-mapping prompt deferred, see §6.2                                                                                                                        | `feature/datalog/datamanager`                                                | L    | T14           | §6.2                |
+| T49 | 9+ | Shared drag-and-drop `FileDropTarget` for attachments and data logs (Compose `dragAndDropTarget` on every platform)                                                                                              | `feature/attachment/viewing`                                                 | M    | T21, T35      | R2c                 |
+| T50 | 9+ | V2 server destination lookup design note (server write into a client-owned record)                                                                                                                               | docs                                                                         | S    | T42           | R36                 |
 
-Critical path to a usable developer build: T01 → T02 → T03 → T11 → T12 → T14 → T17 → T18 → T20 → T26 →
+Critical path to a usable developer build: T01 → T02 → T03 → T11 → T12 → T14 → T17 → T18 → T20 →
+T26 →
 T27 → T28 → T29. Everything in PRs 1 and 2 except T14 is parallelisable; T23 and T31 have no
 dependencies and can land any time.
