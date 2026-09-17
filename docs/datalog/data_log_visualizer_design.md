@@ -830,8 +830,8 @@ call is made. The backend gets the mirror case in `blob-cleanup.test.ts`.
 `LocalThingCapabilities.current.sections` contains `SECTION_DATA_LOGS` and `isDataLogsSupported`.
 Choosing it swaps the sheet body to `DataLogAttachmentPicker(thingId, recordDate)` exactly as
 "Add link" swaps to the URL field: a list of the Thing's data logs from `DataLogManager.observe`,
-same-day rows annotated, rows already attached elsewhere dimmed but selectable, a radio selection,
-*Upload log file* (runs the importer, then selects the result) and *Attach*. The composable lives in
+same-day rows annotated, rows already attached elsewhere dimmed but selectable, a checkbox multi-selection,
+*Upload log file* (runs the importer, then checks the result) and *Attach* (attaches every checked log). The composable lives in
 `feature/datalog/viewing`; `feature/attachment/viewing` cannot depend on it, so the sheet takes the
 body as a slot lambda supplied by the form screens, which already depend on both.
 

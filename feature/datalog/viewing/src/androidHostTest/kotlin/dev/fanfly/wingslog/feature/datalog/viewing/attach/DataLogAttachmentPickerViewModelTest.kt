@@ -82,7 +82,7 @@ class DataLogAttachmentPickerViewModelTest {
   )
 
   @Test
-  fun rowsLoadAndATapSelects() = runTest {
+  fun rowsLoadAndTapsToggleASelectionOfMany() = runTest {
     logs.value = listOf(log("a"), log("b"))
     val vm = viewModel()
     val state = vm.uiState.first { it.loaded }
@@ -90,15 +90,19 @@ class DataLogAttachmentPickerViewModelTest {
       DataLogId("a"),
       DataLogId("b")
     )
-    assertThat(state.selected).isNull()
+    assertThat(state.selected).isEmpty()
     assertThat(state.canUpload).isTrue()
 
-    vm.select(DataLogId("b"))
-    assertThat(vm.uiState.value.selected).isEqualTo(DataLogId("b"))
+    vm.toggle(DataLogId("b"))
+    vm.toggle(DataLogId("a"))
+    assertThat(vm.uiState.value.selected).containsExactly(DataLogId("a"), DataLogId("b"))
+
+    vm.toggle(DataLogId("b"))
+    assertThat(vm.uiState.value.selected).containsExactly(DataLogId("a"))
   }
 
   @Test
-  fun aFinishedUploadSelectsTheNewRecord() = runTest {
+  fun aFinishedUploadAddsTheNewRecordToTheSelection() = runTest {
     every { manager.import(thingId, file, false, true) } returns
       flowOf(
         ImportProgress.Reading,
@@ -108,10 +112,11 @@ class DataLogAttachmentPickerViewModelTest {
     val vm = viewModel()
     val collecting = launch { vm.uiState.collect {} }
     vm.uiState.first { it.loaded }
+    vm.toggle(DataLogId("old"))
 
     vm.upload(listOf(file))
 
-    assertThat(vm.uiState.value.selected).isEqualTo(DataLogId("new"))
+    assertThat(vm.uiState.value.selected).containsExactly(DataLogId("old"), DataLogId("new"))
     assertThat(vm.uiState.value.import).isNull()
     collecting.cancel()
   }
@@ -136,10 +141,10 @@ class DataLogAttachmentPickerViewModelTest {
         DataLogId("old")
       )
     )
-    assertThat(vm.uiState.value.selected).isNull()
+    assertThat(vm.uiState.value.selected).isEmpty()
 
     vm.confirmImport()
-    assertThat(vm.uiState.value.selected).isEqualTo(DataLogId("new"))
+    assertThat(vm.uiState.value.selected).containsExactly(DataLogId("new"))
     assertThat(vm.uiState.value.import).isNull()
     collecting.cancel()
   }

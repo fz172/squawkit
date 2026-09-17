@@ -29,14 +29,14 @@ import kotlinx.coroutines.launch
 data class DataLogPickerUiState(
   val loaded: Boolean = false,
   val rows: List<DataLogRow> = emptyList(),
-  val selected: DataLogId? = null,
+  val selected: Set<DataLogId> = emptySet(),
   /** The one upload the picker runs at a time; null when idle. */
   val import: ImportRow? = null,
   /** PRD R40: upload needs a signed-in, non-anonymous account. */
   val canUpload: Boolean = false,
 )
 
-/** The attachment picker's data log list (design §9.2): a radio selection plus one inline upload. */
+/** The attachment picker's data log list (design §9.2): a multi-selection plus one inline upload. */
 class DataLogAttachmentPickerViewModel(
   private val manager: DataLogManager,
   private val auth: AuthManager,
@@ -48,7 +48,7 @@ class DataLogAttachmentPickerViewModel(
   private val telemetry =
     DataLogImportTelemetry(analytics, templates, DataLogImportSource.ATTACHMENT)
 
-  private val selected = MutableStateFlow<DataLogId?>(null)
+  private val selected = MutableStateFlow<Set<DataLogId>>(emptySet())
   private val import = MutableStateFlow<ImportRow?>(null)
 
   val uiState: StateFlow<DataLogPickerUiState> =
@@ -70,11 +70,11 @@ class DataLogAttachmentPickerViewModel(
       DataLogPickerUiState(canUpload = canUpload())
     )
 
-  fun select(id: DataLogId) {
-    selected.value = id
+  fun toggle(id: DataLogId) {
+    selected.update { if (id in it) it - id else it + id }
   }
 
-  /** Imports the first picked file; a finished import selects the new record. */
+  /** Imports the first picked file; a finished import adds the new record to the selection. */
   fun upload(files: List<PickedFile>) {
     val file = files.firstOrNull() ?: return
     if (!canUpload()) return
@@ -99,7 +99,7 @@ class DataLogAttachmentPickerViewModel(
         manager.import(thingId, row.file, confirmDuplicate, keepIdentity = true)
           .collect { progress ->
             if (progress is ImportProgress.Done) {
-              selected.value = progress.id
+              selected.update { it + progress.id }
               import.value = null
               manager.observeOne(thingId, progress.id)
                 .first()
