@@ -71,7 +71,6 @@ import wingslog.feature.attachment.sharedassets.generated.resources.attach_data_
 import wingslog.feature.attachment.sharedassets.generated.resources.attachment_file_count
 import wingslog.feature.attachment.sharedassets.generated.resources.attachment_group_device
 import wingslog.feature.attachment.sharedassets.generated.resources.attachment_group_other
-import wingslog.feature.attachment.sharedassets.generated.resources.attachment_limits_hint
 import wingslog.feature.attachment.sharedassets.generated.resources.attachment_picker_title
 import wingslog.feature.attachment.sharedassets.generated.resources.attachment_size_hint
 import wingslog.feature.attachment.sharedassets.generated.resources.choose_file
@@ -80,7 +79,6 @@ import wingslog.feature.attachment.sharedassets.generated.resources.file_upload_
 import wingslog.feature.attachment.sharedassets.generated.resources.invalid_url
 import wingslog.feature.attachment.sharedassets.generated.resources.link_name
 import wingslog.feature.attachment.sharedassets.generated.resources.link_url
-import wingslog.feature.attachment.sharedassets.generated.resources.max_files_reached
 import wingslog.feature.attachment.sharedassets.generated.resources.take_photo
 import wingslog.feature.attachment.sharedassets.generated.resources.take_photo_description
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
@@ -198,11 +196,7 @@ internal fun AttachmentPicker(
           columns = if (isDialog) 2 else 1,
           trailing = {
             if (uploadEnabled) {
-              DeviceLimits(
-                fileCount = fileCount,
-                filesAtLimit = filesAtLimit,
-                full = isDialog
-              )
+              DeviceLimits(fileCount = fileCount)
             }
           },
           footer = if (uploadEnabled) null else {
@@ -421,21 +415,15 @@ private fun RowScope.OptionContent(option: PickerOption) {
   }
 }
 
-/** Size hint plus the used/allowed file badge; [full] adds the file cap to the hint. */
+/** Size hint plus the used/allowed file badge, which also shows when the cap is reached. */
 @Composable
-private fun DeviceLimits(fileCount: Int, filesAtLimit: Boolean, full: Boolean) {
+private fun DeviceLimits(fileCount: Int) {
   Row(
     verticalAlignment = Alignment.CenterVertically,
     horizontalArrangement = Arrangement.spacedBy(Spacing.small),
   ) {
     Text(
-      text = stringResource(
-        when {
-          filesAtLimit -> AttachRes.string.max_files_reached
-          full -> AttachRes.string.attachment_limits_hint
-          else -> AttachRes.string.attachment_size_hint
-        }
-      ),
+      text = stringResource(AttachRes.string.attachment_size_hint),
       style = MaterialTheme.typography.bodySmall,
       color = MaterialTheme.colorScheme.onSurfaceVariant,
     )

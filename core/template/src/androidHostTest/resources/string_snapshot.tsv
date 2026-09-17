@@ -76,7 +76,6 @@ feature/attachment/sharedassets	attachment_data_log_removed	Removed
 feature/attachment/sharedassets	attachment_file_count	%1$d/3
 feature/attachment/sharedassets	attachment_group_device	From this device
 feature/attachment/sharedassets	attachment_group_other	Other
-feature/attachment/sharedassets	attachment_limits_hint	Up to 3 files · Max 5 MB each
 feature/attachment/sharedassets	attachment_picker_title	Add Attachment
 feature/attachment/sharedassets	attachment_size_hint	Max 5 MB each
 feature/attachment/sharedassets	attachment_type_image	Image
@@ -95,7 +94,6 @@ feature/attachment/sharedassets	files_over_limit_skipped	Only 3 files can be att
 feature/attachment/sharedassets	invalid_url	Enter a valid URL
 feature/attachment/sharedassets	link_name	Name (optional)
 feature/attachment/sharedassets	link_url	URL
-feature/attachment/sharedassets	max_files_reached	Maximum 3 files reached
 feature/attachment/sharedassets	no_attachments	No attachments yet
 feature/attachment/sharedassets	open_failed	Could not open attachment. Try again.
 feature/attachment/sharedassets	remove_attachment	Remove attachment
