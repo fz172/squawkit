@@ -48,6 +48,7 @@ import dev.fanfly.wingslog.core.ui.common.compose.SwipeActionCard
 import dev.fanfly.wingslog.core.ui.common.compose.SwipeActionTone
 import dev.fanfly.wingslog.core.ui.common.compose.rememberSwipeRevealController
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.feature.attachment.viewing.FileDropTarget
 import dev.fanfly.wingslog.feature.attachment.viewing.rememberFilePicker
 import dev.fanfly.wingslog.feature.search.viewing.NoRecordsMatch
 import dev.fanfly.wingslog.id.DataLogId
@@ -98,170 +99,176 @@ fun DataLogSectionContent(
     }
   }
 
-  Column(modifier = modifier.fillMaxSize()) {
-    if (!compact) {
-      Row(
-        modifier = Modifier.fillMaxWidth()
-          .padding(
-            horizontal = Spacing.screenPadding,
-            vertical = Spacing.large
-          ),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(Spacing.large),
-      ) {
-        Text(
-          text = lexicon.data_log_description,
-          style = MaterialTheme.typography.bodyMedium,
-          color = MaterialTheme.colorScheme.onSurfaceVariant,
-          modifier = Modifier.weight(1f),
-        )
-        if (state.uploadGate == UploadGate.SignedIn) {
-          Button(onClick = pick) {
-            Icon(
-              Icons.Filled.UploadFile,
-              contentDescription = null,
-              modifier = Modifier.size(ButtonDefaults.IconSize)
-            )
-            Text(
-              stringResource(
-                Res.string.data_log_upload,
-                LexiconFormatter.titleCase(lexicon.dataLogNoun)
-              ),
-              modifier = Modifier.padding(start = Spacing.small),
-            )
-          }
-        }
-      }
-    } else if (state.rows.isNotEmpty()) {
-      // PRD R2a: a search action on phones; the field appears in place when tapped.
-      Row(
-        modifier = Modifier.fillMaxWidth()
-          .padding(
-            horizontal = Spacing.screenPadding,
-            vertical = Spacing.small
-          ),
-        verticalAlignment = Alignment.CenterVertically,
-      ) {
-        if (searching) {
-          OutlinedTextField(
-            value = state.query,
-            onValueChange = viewModel::onQueryChange,
-            placeholder = { Text(stringResource(SearchRes.string.search_placeholder)) },
-            singleLine = true,
-            modifier = Modifier.weight(1f),
-          )
-        } else {
+  FileDropTarget(
+    enabled = state.uploadGate == UploadGate.SignedIn,
+    onDrop = viewModel::upload,
+    modifier = modifier.fillMaxSize(),
+  ) {
+    Column(modifier = Modifier.fillMaxSize()) {
+      if (!compact) {
+        Row(
+          modifier = Modifier.fillMaxWidth()
+            .padding(
+              horizontal = Spacing.screenPadding,
+              vertical = Spacing.large
+            ),
+          verticalAlignment = Alignment.CenterVertically,
+          horizontalArrangement = Arrangement.spacedBy(Spacing.large),
+        ) {
           Text(
             text = lexicon.data_log_description,
-            style = MaterialTheme.typography.bodySmall,
+            style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.weight(1f),
           )
+          if (state.uploadGate == UploadGate.SignedIn) {
+            Button(onClick = pick) {
+              Icon(
+                Icons.Filled.UploadFile,
+                contentDescription = null,
+                modifier = Modifier.size(ButtonDefaults.IconSize)
+              )
+              Text(
+                stringResource(
+                  Res.string.data_log_upload,
+                  LexiconFormatter.titleCase(lexicon.dataLogNoun)
+                ),
+                modifier = Modifier.padding(start = Spacing.small),
+              )
+            }
+          }
         }
-        IconButton(onClick = {
-          searching = !searching; if (!searching) viewModel.onQueryChange("")
-        }) {
-          Icon(
-            Icons.Filled.Search,
-            contentDescription = stringResource(SearchRes.string.search_placeholder)
-          )
-        }
-      }
-    }
-
-    when {
-      state.isLoading -> Box(
-        Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-      ) {
-        CircularProgressIndicator()
-      }
-
-      state.rows.isEmpty() && state.imports.isEmpty() -> {
-        if (!compact && state.uploadGate == UploadGate.Guest) {
-          UploadGateCard(
-            onLinkAccount = onLinkAccount,
-            modifier = Modifier.padding(Spacing.screenPadding)
-          )
-        } else {
-          EmptyState(
-            title = stringResource(
-              Res.string.data_log_empty_title,
-              lexicon.dataLogNoun.singular
+      } else if (state.rows.isNotEmpty()) {
+        // PRD R2a: a search action on phones; the field appears in place when tapped.
+        Row(
+          modifier = Modifier.fillMaxWidth()
+            .padding(
+              horizontal = Spacing.screenPadding,
+              vertical = Spacing.small
             ),
-            description = lexicon.empty_states?.data_log_hint.orEmpty() + "\n" +
-              stringResource(Res.string.data_log_supported_formats),
-            icon = Icons.Filled.ShowChart,
-            actionText = if (!compact && state.uploadGate == UploadGate.SignedIn)
-              stringResource(
-                Res.string.data_log_upload,
-                LexiconFormatter.titleCase(lexicon.dataLogNoun)
-              ) else null,
-            onActionClick = if (!compact && state.uploadGate == UploadGate.SignedIn) pick else null,
-          )
-        }
-      }
-
-      else -> LazyColumn(
-        modifier = Modifier.fillMaxSize()
-          .nestedScroll(revealController.closeOnScroll),
-        contentPadding = PaddingValues(
-          start = Spacing.screenPadding,
-          end = Spacing.screenPadding,
-          top = Spacing.small,
-          bottom = Spacing.buttonHeight + Spacing.extraLarge + LocalNavPillClearance.current,
-        ),
-        verticalArrangement = Arrangement.spacedBy(Spacing.medium),
-      ) {
-        if (!compact && state.uploadGate == UploadGate.Guest) {
-          item { UploadGateCard(onLinkAccount = onLinkAccount) }
-        }
-        items(state.imports, key = { "import-${it.key}" }) { row ->
-          ImportRowCard(
-            row = row,
-            onKeepBoth = { viewModel.confirmImport(row.key) },
-            onDismiss = { viewModel.dismissImport(row.key) },
-            onFileUnderOtherThing = { viewModel.fileUnderOtherThing(row.key) },
-            onKeepHere = { viewModel.keepHere(row.key) },
-          )
-        }
-        if (!compact && state.rows.isNotEmpty()) {
-          item {
+          verticalAlignment = Alignment.CenterVertically,
+        ) {
+          if (searching) {
+            OutlinedTextField(
+              value = state.query,
+              onValueChange = viewModel::onQueryChange,
+              placeholder = { Text(stringResource(SearchRes.string.search_placeholder)) },
+              singleLine = true,
+              modifier = Modifier.weight(1f),
+            )
+          } else {
             Text(
-              text = "${stringResource(Res.string.data_log_recent_uploads)}  ${state.rows.size}",
-              style = MaterialTheme.typography.labelLarge,
+              text = lexicon.data_log_description,
+              style = MaterialTheme.typography.bodySmall,
               color = MaterialTheme.colorScheme.onSurfaceVariant,
-              modifier = Modifier.padding(top = Spacing.small),
+              modifier = Modifier.weight(1f),
+            )
+          }
+          IconButton(onClick = {
+            searching = !searching; if (!searching) viewModel.onQueryChange("")
+          }) {
+            Icon(
+              Icons.Filled.Search,
+              contentDescription = stringResource(SearchRes.string.search_placeholder)
             )
           }
         }
-        val visible = state.visibleRows
-        if (visible.isEmpty() && state.query.isNotBlank()) {
-          item {
-            NoRecordsMatch(
-              nounPlural = LexiconFormatter.plural(lexicon.dataLogNoun),
-              onClearFilters = { viewModel.onQueryChange("") },
-              modifier = Modifier.fillMaxWidth()
-                .padding(top = Spacing.extraLarge),
+      }
+
+      when {
+        state.isLoading -> Box(
+          Modifier.fillMaxSize(),
+          contentAlignment = Alignment.Center
+        ) {
+          CircularProgressIndicator()
+        }
+
+        state.rows.isEmpty() && state.imports.isEmpty() -> {
+          if (!compact && state.uploadGate == UploadGate.Guest) {
+            UploadGateCard(
+              onLinkAccount = onLinkAccount,
+              modifier = Modifier.padding(Spacing.screenPadding)
+            )
+          } else {
+            EmptyState(
+              title = stringResource(
+                Res.string.data_log_empty_title,
+                lexicon.dataLogNoun.singular
+              ),
+              description = lexicon.empty_states?.data_log_hint.orEmpty() + "\n" +
+                stringResource(Res.string.data_log_supported_formats),
+              icon = Icons.Filled.ShowChart,
+              actionText = if (!compact && state.uploadGate == UploadGate.SignedIn)
+                stringResource(
+                  Res.string.data_log_upload,
+                  LexiconFormatter.titleCase(lexicon.dataLogNoun)
+                ) else null,
+              onActionClick = if (!compact && state.uploadGate == UploadGate.SignedIn) pick else null,
             )
           }
         }
-        items(visible, key = { it.id.value_ }) { row ->
-          SwipeActionCard(
-            // Whoever may upload may delete; a guest browses only, so the drag is disabled.
-            actions = dataLogQuickActions(
-              onDelete = if (state.uploadGate == UploadGate.SignedIn) {
-                { revealController.close(); viewModel.onDeleteClick(row) }
-              } else null,
-            ),
-            controller = revealController,
-            key = row.id.value_,
-          ) {
-            DataLogCard(
+
+        else -> LazyColumn(
+          modifier = Modifier.fillMaxSize()
+            .nestedScroll(revealController.closeOnScroll),
+          contentPadding = PaddingValues(
+            start = Spacing.screenPadding,
+            end = Spacing.screenPadding,
+            top = Spacing.small,
+            bottom = Spacing.buttonHeight + Spacing.extraLarge + LocalNavPillClearance.current,
+          ),
+          verticalArrangement = Arrangement.spacedBy(Spacing.medium),
+        ) {
+          if (!compact && state.uploadGate == UploadGate.Guest) {
+            item { UploadGateCard(onLinkAccount = onLinkAccount) }
+          }
+          items(state.imports, key = { "import-${it.key}" }) { row ->
+            ImportRowCard(
               row = row,
-              onClick = { onOpen(row.id) },
-              showDetails = !compact
+              onKeepBoth = { viewModel.confirmImport(row.key) },
+              onDismiss = { viewModel.dismissImport(row.key) },
+              onFileUnderOtherThing = { viewModel.fileUnderOtherThing(row.key) },
+              onKeepHere = { viewModel.keepHere(row.key) },
             )
+          }
+          if (!compact && state.rows.isNotEmpty()) {
+            item {
+              Text(
+                text = "${stringResource(Res.string.data_log_recent_uploads)}  ${state.rows.size}",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = Spacing.small),
+              )
+            }
+          }
+          val visible = state.visibleRows
+          if (visible.isEmpty() && state.query.isNotBlank()) {
+            item {
+              NoRecordsMatch(
+                nounPlural = LexiconFormatter.plural(lexicon.dataLogNoun),
+                onClearFilters = { viewModel.onQueryChange("") },
+                modifier = Modifier.fillMaxWidth()
+                  .padding(top = Spacing.extraLarge),
+              )
+            }
+          }
+          items(visible, key = { it.id.value_ }) { row ->
+            SwipeActionCard(
+              // Whoever may upload may delete; a guest browses only, so the drag is disabled.
+              actions = dataLogQuickActions(
+                onDelete = if (state.uploadGate == UploadGate.SignedIn) {
+                  { revealController.close(); viewModel.onDeleteClick(row) }
+                } else null,
+              ),
+              controller = revealController,
+              key = row.id.value_,
+            ) {
+              DataLogCard(
+                row = row,
+                onClick = { onOpen(row.id) },
+                showDetails = !compact
+              )
+            }
           }
         }
       }

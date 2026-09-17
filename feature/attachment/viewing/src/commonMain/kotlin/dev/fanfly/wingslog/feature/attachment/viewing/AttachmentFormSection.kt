@@ -96,55 +96,62 @@ fun AttachmentFormSection(
     onError = onPickError,
   )
 
-  Column(
+  // The open picker takes drops itself; the form section behind it steps aside.
+  FileDropTarget(
+    enabled = !isAnonymous && uploadEnabled && !showPickerSheet,
+    onDrop = onPickFiles,
+    onReadError = onPickError,
     modifier = modifier,
-    verticalArrangement = Arrangement.spacedBy(Spacing.small)
   ) {
-    Row(
-      modifier = Modifier.fillMaxWidth(),
-      verticalAlignment = Alignment.CenterVertically,
-      horizontalArrangement = Arrangement.SpaceBetween,
+    Column(
+      verticalArrangement = Arrangement.spacedBy(Spacing.small)
     ) {
-      FormSectionLabel(text = stringResource(AttachRes.string.attachments))
-      if (!isAnonymous) {
-        OutlinedButton(
-          onClick = onAddClick,
-          contentPadding = PaddingValues(
-            horizontal = Spacing.medium,
-            vertical = Spacing.extraSmall
-          ),
-        ) {
-          Icon(
-            Icons.Default.Add,
-            contentDescription = null,
-            modifier = Modifier.size(Spacing.large)
-          )
-          Spacer(Modifier.width(Spacing.extraSmall))
+      Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+      ) {
+        FormSectionLabel(text = stringResource(AttachRes.string.attachments))
+        if (!isAnonymous) {
+          OutlinedButton(
+            onClick = onAddClick,
+            contentPadding = PaddingValues(
+              horizontal = Spacing.medium,
+              vertical = Spacing.extraSmall
+            ),
+          ) {
+            Icon(
+              Icons.Default.Add,
+              contentDescription = null,
+              modifier = Modifier.size(Spacing.large)
+            )
+            Spacer(Modifier.width(Spacing.extraSmall))
+            Text(
+              stringResource(CoreRes.string.add),
+              style = MaterialTheme.typography.labelMedium,
+            )
+          }
+        } else {
           Text(
-            stringResource(CoreRes.string.add),
-            style = MaterialTheme.typography.labelMedium,
+            text = stringResource(AttachRes.string.sign_in_to_add_attachments),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
           )
         }
-      } else {
+      }
+
+      if (visibleAttachments.isEmpty()) {
         Text(
-          text = stringResource(AttachRes.string.sign_in_to_add_attachments),
+          text = stringResource(AttachRes.string.no_attachments),
           style = MaterialTheme.typography.bodySmall,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-      }
-    }
-
-    if (visibleAttachments.isEmpty()) {
-      Text(
-        text = stringResource(AttachRes.string.no_attachments),
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-      )
-    } else {
-      visibleAttachments.forEach { pending ->
-        PendingAttachmentRow(
-          pending = pending,
-          onRemove = { onRemove(pending.id) })
+      } else {
+        visibleAttachments.forEach { pending ->
+          PendingAttachmentRow(
+            pending = pending,
+            onRemove = { onRemove(pending.id) })
+        }
       }
     }
   }
@@ -155,6 +162,8 @@ fun AttachmentFormSection(
       filesAtLimit = filesAtLimit,
       uploadEnabled = uploadEnabled,
       onChooseFile = { onDismissSheet(); pickFiles() },
+      onDropFiles = { files -> onPickFiles(files); onDismissSheet() },
+      onDropError = onPickError,
       onTakePhoto = { onDismissSheet(); takePhoto() },
       onAddLink = { url, name ->
         onAddLink(

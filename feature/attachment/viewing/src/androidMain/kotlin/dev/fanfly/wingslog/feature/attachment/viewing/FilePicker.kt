@@ -5,7 +5,6 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
-import androidx.documentfile.provider.DocumentFile
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
 
 @Composable
@@ -17,32 +16,9 @@ actual fun rememberFilePicker(
   val launcher = rememberLauncherForActivityResult(
     contract = ActivityResultContracts.OpenMultipleDocuments(),
   ) { uris: List<Uri> ->
-    val files = uris.mapNotNull { uri ->
-      try {
-        val mimeType = context.contentResolver.getType(uri) ?: "*/*"
-        val documentFile = DocumentFile.fromSingleUri(
-          context,
-          uri
-        )
-        val name = documentFile?.name ?: "file"
-        val sizeBytes = context.contentResolver.openFileDescriptor(
-          uri,
-          "r"
-        )
-          ?.use { it.statSize } ?: 0L
-        PickedFile(
-          uri = uri.toString(),
-          name = name,
-          mimeType = mimeType,
-          sizeBytes = sizeBytes
-        )
-      } catch (e: Exception) {
-        // TODO: Log the error.
-        null
-      }
-    }
-    if (uris.isNotEmpty() && files.size < uris.size) onReadError()
-    onResult(files)
+    val picked = context.toPickedFiles(uris)
+    if (picked.anyFailed) onReadError()
+    onResult(picked.files)
   }
   return { launcher.launch(arrayOf("*/*")) }
 }

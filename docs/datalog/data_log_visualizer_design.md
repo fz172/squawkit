@@ -873,8 +873,8 @@ highlights the row like the other sections.
 
 `ShellSectionFab` for `DATA_LOGS` renders *Upload Log* with `rememberFilePicker` (no `accept`
 filter is possible today; the sniffer rejects wrong files fast). On `Guest` it opens the prompt
-sheet instead. Wide layouts show the same button in the header; the mock's dashed drop zone is
-not drawn until drag-and-drop exists (§13.3), so the section never shows a target that does nothing.
+sheet instead. Wide layouts show the same button in the header. The mock's dashed drop zone is not
+drawn; the whole section takes drops instead (§13.3).
 
 ### 10.3 Variable-width pill (PRD R2b)
 
@@ -1089,13 +1089,26 @@ hint of why. Create one unit per platform and drop the ids into the two tables.
 
 ### 13.3 Drag-and-drop (PRD R2c, P2, not in V1)
 
-Nothing in the repo handles external drag-and-drop, and `web_attachments_design.md:30` listed it as
-a non-goal. When it is built it is one shared mechanism, not a data-log feature: a
-`FileDropTarget` in `feature/attachment/viewing` that exposes dropped files as `List<PickedFile>`
-through the same `WebPickedFileRegistry` path the picker uses, consumed by `AttachmentFormSection`
-(record forms and the add-attachment sheet) and by `DataLogSectionContent` alike. On web it is a
-`document`-level `dragover`/`drop` listener in `webApp`; on Android and iOS tablets it is Compose's
-`dragAndDropTarget` for external content where the platform supports it. Sequenced after V1.
+One shared mechanism, not a data-log feature: `FileDropTarget` in `feature/attachment/viewing`
+(T49) wraps a surface and hands dropped files over as `List<PickedFile>`, the shape the picker
+returns, so each caller passes the handler it already gives `rememberFilePicker`. It wraps the
+attachment section of the record forms (off while the picker is open), the add-attachment picker's
+options, `DataLogSectionContent`, and the data log picker body. While a file drag is over it the
+surface shows a tinted outline and *Drop files here*; it is enabled only where the matching picker
+upload is.
+
+Compose Multiplatform 1.12 routes external drops through `Modifier.dragAndDropTarget` on all three
+targets, so no `webApp` listener was needed; a `DroppedFileReader` actual per platform reads the
+payload:
+
+- **Web:** the drop's `DataTransfer` files are read eagerly into `WebPickedFileRegistry`, the same
+  path as the picker. Compose for web handles no `dragleave`, so a `document` listener clears the
+  highlight when a drag leaves the window.
+- **Android:** `ClipData` URIs, readable after `requestDragAndDropPermissions` during the drop.
+- **iOS:** each `UIDragItem`'s `NSItemProvider` file representation, copied to the temp dir.
+
+The mock's dashed drop zone stays undrawn: the whole section is the target, so no idle affordance
+is needed.
 
 ### 13.4 Strings
 
@@ -1227,7 +1240,7 @@ PR 9+ the formats epic.
 | T46 | 8 | Delete `isDataLogsSupported` and its two gates; release notes | hosts, `core/ui/adaptive`, `feature/datalog/viewing` | S | T20–T45 | R43 |
 | T47 | 9+ | G1000 sniff, units row, short-name mapping; fixtures; tests | `feature/datalog/datamanager` | M | T14 | §6.2, §6.4 |
 | T48 | 9+ | Dynon SkyView parser; multi-session import; the channel-mapping prompt deferred, see §6.2 | `feature/datalog/datamanager` | L | T14 | §6.2 |
-| T49 | 9+ | Shared drag-and-drop `FileDropTarget` for attachments and data logs (web document listener, tablet `dragAndDropTarget`) | `feature/attachment/viewing`, `webApp` | M | T21, T35 | R2c |
+| T49 | 9+ | Shared drag-and-drop `FileDropTarget` for attachments and data logs (Compose `dragAndDropTarget` on every platform) | `feature/attachment/viewing` | M | T21, T35 | R2c |
 | T50 | 9+ | V2 server destination lookup design note (server write into a client-owned record) | docs | S | T42 | R36 |
 
 Critical path to a usable developer build: T01 → T02 → T03 → T11 → T12 → T14 → T17 → T18 → T20 → T26 →

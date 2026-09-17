@@ -61,6 +61,7 @@ import dev.fanfly.wingslog.core.ui.common.compose.ModalBottomSheet
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.feature.attachment.model.PickedDataLog
+import dev.fanfly.wingslog.feature.attachment.model.PickedFile
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import wingslog.core.sharedassets.generated.resources.cancel
@@ -114,6 +115,8 @@ internal fun AttachmentPicker(
   filesAtLimit: Boolean,
   uploadEnabled: Boolean,
   onChooseFile: () -> Unit,
+  onDropFiles: (List<PickedFile>) -> Unit,
+  onDropError: () -> Unit,
   onTakePhoto: () -> Unit,
   onAddLink: (url: String, name: String) -> Unit,
   onUpsell: (() -> Unit)?,
@@ -188,35 +191,41 @@ internal fun AttachmentPicker(
           onCancel = { step = PickerStep.OPTIONS })
       }
 
-      else -> Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-        PickerHeader(showClose = isDialog, onDismiss = onDismiss)
-        PickerGroup(
-          label = stringResource(AttachRes.string.attachment_group_device),
-          options = deviceOptions,
-          columns = if (isDialog) 2 else 1,
-          trailing = {
-            if (uploadEnabled) {
-              DeviceLimits(fileCount = fileCount)
-            }
-          },
-          footer = if (uploadEnabled) null else {
-            { UpsellHint() }
-          },
-        )
-        PickerGroup(
-          label = stringResource(AttachRes.string.attachment_group_other),
-          options = otherOptions,
-          columns = if (isDialog) 2 else 1,
-        )
-        if (isDialog) {
-          Row(
-            modifier = Modifier
-              .fillMaxWidth()
-              .padding(top = Spacing.xLarge),
-            horizontalArrangement = Arrangement.End,
-          ) {
-            OutlinedButton(onClick = onDismiss) {
-              Text(stringResource(CoreRes.string.cancel))
+      else -> FileDropTarget(
+        enabled = uploadEnabled && !filesAtLimit,
+        onDrop = onDropFiles,
+        onReadError = onDropError,
+      ) {
+        Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+          PickerHeader(showClose = isDialog, onDismiss = onDismiss)
+          PickerGroup(
+            label = stringResource(AttachRes.string.attachment_group_device),
+            options = deviceOptions,
+            columns = if (isDialog) 2 else 1,
+            trailing = {
+              if (uploadEnabled) {
+                DeviceLimits(fileCount = fileCount)
+              }
+            },
+            footer = if (uploadEnabled) null else {
+              { UpsellHint() }
+            },
+          )
+          PickerGroup(
+            label = stringResource(AttachRes.string.attachment_group_other),
+            options = otherOptions,
+            columns = if (isDialog) 2 else 1,
+          )
+          if (isDialog) {
+            Row(
+              modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = Spacing.xLarge),
+              horizontalArrangement = Arrangement.End,
+            ) {
+              OutlinedButton(onClick = onDismiss) {
+                Text(stringResource(CoreRes.string.cancel))
+              }
             }
           }
         }
