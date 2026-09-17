@@ -94,7 +94,7 @@ class DataLogPickerSlot(
 )
 
 /** A data log checked in the picker; [displayName] becomes the attachment's name. */
-sealed data class PickedDataLog(
+data class PickedDataLog(
   val id: DataLogId,
   val displayName: String,
 )
