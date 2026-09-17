@@ -34,6 +34,9 @@ object ContentWidth {
 
   /** Authentication and onboarding panels designed as short, focused single-column flows. */
   val Auth = 480.dp
+
+  /** Choice dialogs that replace a phone bottom sheet on wider tiers. */
+  val Dialog = 560.dp
 }
 
 /**
