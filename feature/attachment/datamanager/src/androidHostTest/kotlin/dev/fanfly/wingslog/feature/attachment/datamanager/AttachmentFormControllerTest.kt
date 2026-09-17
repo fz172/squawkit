@@ -4,6 +4,7 @@ import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.thing.Attachment
 import dev.fanfly.wingslog.thing.AttachmentType
 import dev.fanfly.wingslog.feature.attachment.model.PendingAttachment
+import dev.fanfly.wingslog.feature.attachment.model.PickedDataLog
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
 import dev.fanfly.wingslog.feature.attachment.model.fileCount
 import dev.fanfly.wingslog.id.DataLogId
@@ -535,7 +536,7 @@ class AttachmentFormControllerTest {
     every { attachmentManager.makeDataLogRef(DataLogId("dl-2"), "Second log") } returns
       dataLogAttachment("r2", "dl-2")
 
-    controller.addDataLogRef(DataLogId("dl-2"), "Second log")
+    controller.addDataLogRefs(listOf(PickedDataLog(DataLogId("dl-2"), "Second log")))
 
     val pending = controller.pendingAttachments.value
     assertThat(pending.map { it.id }).containsExactly("r1", "f1", "r2").inOrder()
@@ -559,22 +560,38 @@ class AttachmentFormControllerTest {
   }
 
   @Test
-  fun addDataLogRef_sameLogTwice_isNoOp() {
+  fun addDataLogRefs_sameLogTwice_isNoOp() {
     every { attachmentManager.makeDataLogRef(any(), any()) } returns dataLogAttachment("r1", "dl-1")
 
-    controller.addDataLogRef(DataLogId("dl-1"), "Log")
-    controller.addDataLogRef(DataLogId("dl-1"), "Log again")
+    controller.addDataLogRefs(listOf(PickedDataLog(DataLogId("dl-1"), "Log")))
+    controller.addDataLogRefs(listOf(PickedDataLog(DataLogId("dl-1"), "Log again")))
 
     assertThat(controller.pendingAttachments.value).hasSize(1)
   }
 
   @Test
-  fun addDataLogRef_afterRemovingTheSameLog_addsItAgain() = runTest {
+  fun addDataLogRefs_severalLogs_addsEachOnceInOrder() {
+    every { attachmentManager.makeDataLogRef(DataLogId("dl-1"), "One") } returns dataLogAttachment("r1", "dl-1")
+    every { attachmentManager.makeDataLogRef(DataLogId("dl-2"), "Two") } returns dataLogAttachment("r2", "dl-2")
+
+    controller.addDataLogRefs(
+      listOf(
+        PickedDataLog(DataLogId("dl-1"), "One"),
+        PickedDataLog(DataLogId("dl-2"), "Two"),
+        PickedDataLog(DataLogId("dl-1"), "One again"),
+      )
+    )
+
+    assertThat(controller.pendingAttachments.value.map { it.id }).containsExactly("r1", "r2").inOrder()
+  }
+
+  @Test
+  fun addDataLogRefs_afterRemovingTheSameLog_addsItAgain() = runTest {
     controller.seedIfEmpty(listOf(dataLogAttachment("r1", "dl-1")))
     every { attachmentManager.makeDataLogRef(any(), any()) } returns dataLogAttachment("r2", "dl-1")
 
     controller.remove("r1")
-    controller.addDataLogRef(DataLogId("dl-1"), "Log")
+    controller.addDataLogRefs(listOf(PickedDataLog(DataLogId("dl-1"), "Log")))
 
     assertThat(controller.pendingAttachments.value.map { it.id }).containsExactly("r2")
   }

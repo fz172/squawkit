@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
@@ -36,7 +35,7 @@ import dev.fanfly.wingslog.core.ui.common.compose.AlertDialog
 import dev.fanfly.wingslog.core.ui.common.compose.FormSectionLabel
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.attachment.model.PendingAttachment
-import dev.fanfly.wingslog.id.DataLogId
+import dev.fanfly.wingslog.feature.attachment.model.PickedDataLog
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
 import dev.fanfly.wingslog.feature.attachment.model.fileCount
 import dev.fanfly.wingslog.feature.attachment.model.isFile
@@ -85,7 +84,7 @@ fun AttachmentFormSection(
   // visualizer (design §9.2). The form screen supplies the body because this module cannot
   // depend on feature/datalog.
   dataLogPicker: DataLogPickerSlot? = null,
-  onAttachDataLog: (DataLogId, String) -> Unit = { _, _ -> },
+  onAttachDataLogs: (List<PickedDataLog>) -> Unit = {},
 ) {
   var showUpsell by remember { mutableStateOf(false) }
   val pickFiles = rememberFilePicker(
@@ -167,7 +166,7 @@ fun AttachmentFormSection(
       onUpsell = onSeePlans?.let { { onDismissSheet(); showUpsell = true } },
       onDismiss = onDismissSheet,
       dataLogPicker = dataLogPicker,
-      onAttachDataLogs = { logs -> logs.forEach { onAttachDataLog(it.id, it.displayName) }; onDismissSheet() },
+      onAttachDataLogs = { logs -> onAttachDataLogs(logs); onDismissSheet() },
     )
   }
 

@@ -12,16 +12,16 @@ import dev.fanfly.wingslog.core.nav.Screen.Companion.CROSS_SCREEN_SUCCESS_MESSAG
 import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.taskNoun
-import dev.fanfly.wingslog.feature.attachment.model.visible
 import dev.fanfly.wingslog.feature.attachment.model.dataLogIds
+import dev.fanfly.wingslog.feature.attachment.model.visible
 import dev.fanfly.wingslog.feature.attachment.viewing.AttachmentFormSection
-import dev.fanfly.wingslog.feature.datalog.viewing.attach.rememberDataLogPickerSlot
-import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.feature.comments.viewing.CommentThreadSection
+import dev.fanfly.wingslog.feature.datalog.viewing.attach.rememberDataLogPickerSlot
 import dev.fanfly.wingslog.feature.tasks.datamanager.forcedDueMeter
 import dev.fanfly.wingslog.feature.tasks.update.viewmodel.TaskFormEvent
 import dev.fanfly.wingslog.feature.tasks.update.viewmodel.TaskUiState
 import dev.fanfly.wingslog.feature.tasks.update.viewmodel.TaskViewModel
+import dev.fanfly.wingslog.id.ThingId
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.feature.attachment.sharedassets.generated.resources.file_read_error
@@ -192,8 +192,12 @@ fun EditTaskRoute(
           onDismissSheet = viewModel::hideAttachmentPicker,
           onPickError = viewModel::onFilePickError,
           onSeePlans = { navController.navigate(Screen.Subscription.route) },
-          dataLogPicker = rememberDataLogPickerSlot(ThingId(viewModel.thingId), null, pendingAttachments.dataLogIds()),
-          onAttachDataLog = viewModel::attachDataLog,
+          dataLogPicker = rememberDataLogPickerSlot(
+            ThingId(viewModel.thingId),
+            null,
+            pendingAttachments.dataLogIds()
+          ),
+          onAttachDataLogs = viewModel::attachDataLogs,
         )
       },
       hasCommentDraft = commentState.hasUnsavedInput,

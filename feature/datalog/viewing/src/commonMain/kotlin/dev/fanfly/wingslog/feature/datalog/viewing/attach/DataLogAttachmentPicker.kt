@@ -36,8 +36,8 @@ import dev.fanfly.wingslog.core.ui.common.compose.StatusChip
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.StatusTier
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
+import dev.fanfly.wingslog.feature.attachment.model.PickedDataLog
 import dev.fanfly.wingslog.feature.attachment.viewing.DataLogPickerSlot
-import dev.fanfly.wingslog.feature.attachment.viewing.PickedDataLog
 import dev.fanfly.wingslog.feature.attachment.viewing.rememberFilePicker
 import dev.fanfly.wingslog.feature.datalog.viewing.list.DataLogRow
 import dev.fanfly.wingslog.feature.datalog.viewing.list.ImportRowCard
@@ -105,7 +105,8 @@ fun DataLogAttachmentPicker(
   val pick = rememberFilePicker(onResult = viewModel::upload)
   val noun = LocalThingLexicon.current.dataLogNoun.singular
   val groundRun = stringResource(Res.string.data_log_ground_run)
-  val toAttach = state.rows.filter { it.id in state.selected && it.id !in attachedIds }
+  val toAttach =
+    state.rows.filter { it.id in state.selected && it.id !in attachedIds }
 
   Column(
     modifier = Modifier.fillMaxWidth(),
@@ -161,7 +162,14 @@ fun DataLogAttachmentPicker(
       TextButton(onClick = onCancel) { Text(stringResource(CoreRes.string.cancel)) }
       FilledTonalButton(
         enabled = toAttach.isNotEmpty(),
-        onClick = { onAttach(toAttach.map { PickedDataLog(it.id, it.titleText(groundRun)) }) },
+        onClick = {
+          onAttach(toAttach.map {
+            PickedDataLog(
+              it.id,
+              it.titleText(groundRun)
+            )
+          })
+        },
       ) {
         Text(stringResource(Res.string.data_log_picker_attach))
       }

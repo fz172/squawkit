@@ -62,7 +62,6 @@ import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.attachment.model.dataLogIds
 import dev.fanfly.wingslog.feature.attachment.viewing.AttachmentFormSection
 import dev.fanfly.wingslog.feature.datalog.viewing.attach.rememberDataLogPickerSlot
-import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.feature.logs.update.logs.compose.LOG_FORM_TAB_KEYS
 import dev.fanfly.wingslog.feature.logs.update.logs.compose.LogFormTab
 import dev.fanfly.wingslog.feature.logs.update.logs.compose.LogRecordsTab
@@ -76,6 +75,7 @@ import dev.fanfly.wingslog.feature.logs.viewing.log.compose.DeleteLogConfirmDial
 import dev.fanfly.wingslog.feature.squawk.viewing.SquawkPickerSheet
 import dev.fanfly.wingslog.feature.tasks.update.compose.TaskPickerSheet
 import dev.fanfly.wingslog.feature.technician.manage.compose.TechnicianPickerSheet
+import dev.fanfly.wingslog.id.ThingId
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDateTime
@@ -346,8 +346,14 @@ fun MaintenanceLogFormScreen(
                       onDismissSheet = viewModel::hideAttachmentPicker,
                       onPickError = viewModel::onFilePickError,
                       onSeePlans = { navController.navigate(Screen.Subscription.route) },
-                      dataLogPicker = rememberDataLogPickerSlot(ThingId(viewModel.thingId), uiState.maintenanceDate, uiState.pendingAttachments.dataLogIds()),
-                      onAttachDataLog = viewModel::attachDataLog,
+                      dataLogPicker = rememberDataLogPickerSlot(
+                        ThingId(
+                          viewModel.thingId
+                        ),
+                        uiState.maintenanceDate,
+                        uiState.pendingAttachments.dataLogIds()
+                      ),
+                      onAttachDataLogs = viewModel::attachDataLogs,
                       modifier = Modifier,
                     )
                   },

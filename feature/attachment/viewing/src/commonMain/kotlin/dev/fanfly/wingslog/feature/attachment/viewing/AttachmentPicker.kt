@@ -60,7 +60,7 @@ import dev.fanfly.wingslog.core.ui.common.compose.FormTextField
 import dev.fanfly.wingslog.core.ui.common.compose.ModalBottomSheet
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
-import dev.fanfly.wingslog.id.DataLogId
+import dev.fanfly.wingslog.feature.attachment.model.PickedDataLog
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import wingslog.core.sharedassets.generated.resources.cancel
@@ -93,11 +93,6 @@ class DataLogPickerSlot(
   val body: @Composable (onAttach: (List<PickedDataLog>) -> Unit, onCancel: () -> Unit) -> Unit,
 )
 
-/** A data log checked in the picker; [displayName] becomes the attachment's name. */
-data class PickedDataLog(
-  val id: DataLogId,
-  val displayName: String,
-)
 
 private enum class PickerStep { OPTIONS, LINK, DATA_LOG }
 

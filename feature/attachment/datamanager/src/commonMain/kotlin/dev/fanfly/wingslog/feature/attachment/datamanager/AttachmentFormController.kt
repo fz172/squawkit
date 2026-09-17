@@ -3,11 +3,11 @@ package dev.fanfly.wingslog.feature.attachment.datamanager
 import dev.fanfly.wingslog.feature.attachment.datamanager.QuotaChecker.Companion.MAX_FILE_ATTACHMENTS
 import dev.fanfly.wingslog.feature.attachment.datamanager.QuotaChecker.Companion.MAX_FILE_SIZE_BYTES
 import dev.fanfly.wingslog.feature.attachment.model.PendingAttachment
+import dev.fanfly.wingslog.feature.attachment.model.PickedDataLog
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
 import dev.fanfly.wingslog.feature.attachment.model.dataLogIds
 import dev.fanfly.wingslog.feature.attachment.model.fileCount
 import dev.fanfly.wingslog.feature.attachment.model.isFile
-import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.thing.Attachment
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -190,20 +190,23 @@ class AttachmentFormController(
   }
 
   /**
-   * Appends a reference to the DataLog [dataLogId]. No quota and no error case: a reference owns
-   * no bytes. Re-attaching a log already on this parent is a no-op.
+   * Appends a reference to each of [logs]. No quota and no error case: a reference owns no bytes.
+   * A log already on this parent, or repeated in [logs], is added once.
    */
-  fun addDataLogRef(
-    dataLogId: DataLogId,
-    name: String,
-  ) {
-    if (dataLogId in _pendingAttachments.value.dataLogIds()) return
-    val attachment = attachmentManager.makeDataLogRef(dataLogId, name)
-    _pendingAttachments.update {
-      it + PendingAttachment.LocalDataLogRef(
-        attachment
-      )
-    }
+  fun addDataLogRefs(logs: List<PickedDataLog>) {
+    val attached = _pendingAttachments.value.dataLogIds()
+    val refs = logs.distinctBy { it.id }
+      .filter { it.id !in attached }
+      .map {
+        PendingAttachment.LocalDataLogRef(
+          attachmentManager.makeDataLogRef(
+            it.id,
+            it.displayName
+          )
+        )
+      }
+    if (refs.isEmpty()) return
+    _pendingAttachments.update { it + refs }
   }
 
   /**
