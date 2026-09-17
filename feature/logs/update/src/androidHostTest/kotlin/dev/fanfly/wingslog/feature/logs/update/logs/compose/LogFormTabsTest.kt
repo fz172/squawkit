@@ -1,7 +1,7 @@
 package dev.fanfly.wingslog.feature.logs.update.logs.compose
 
-import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import com.google.common.truth.Truth.assertThat
+import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import dev.fanfly.wingslog.thing.Capabilities
 import org.junit.Test
 
@@ -20,7 +20,8 @@ class LogFormTabsTest {
       LogFormTab.WORK,
       LogFormTab.HOURS,
       LogFormTab.RECORDS,
-    ).inOrder()
+    )
+      .inOrder()
   }
 
   @Test

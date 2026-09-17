@@ -11,7 +11,8 @@ actual fun rememberLinkSharer(): LinkSharer = remember { IosLinkSharer() }
 private class IosLinkSharer : LinkSharer {
   override fun shareLink(url: String, chooserTitle: String): Boolean {
     val rootViewController =
-      UIApplication.sharedApplication.keyWindow?.rootViewController ?: return false
+      UIApplication.sharedApplication.keyWindow?.rootViewController
+        ?: return false
     val activityController = UIActivityViewController(
       activityItems = listOf(url),
       applicationActivities = null,

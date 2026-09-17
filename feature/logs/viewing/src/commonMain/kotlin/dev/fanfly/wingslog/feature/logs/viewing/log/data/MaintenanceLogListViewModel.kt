@@ -36,7 +36,6 @@ import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.thing.MaintenanceTask
 import dev.fanfly.wingslog.thing.Squawk
 import dev.gitlive.firebase.auth.FirebaseAuth
-import kotlin.time.Clock
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -51,6 +50,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import wingslog.core.sharedassets.generated.resources.delete_failed
 import wingslog.feature.logs.sharedassets.generated.resources.log_deleted
+import kotlin.time.Clock
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.logs.sharedassets.generated.resources.Res as LogsRes
 
@@ -131,8 +131,14 @@ class MaintenanceLogListViewModel(
       combine(
         _logsLoadState,
         // The state carries what was typed; the search runs on the debounced copy.
-        combine(_filter, _filter.debouncedQuery(tuning.queryDebounceMillis)) { typed, applied -> typed to applied },
-        combine(_selectedLog, _deletingLog) { selected, deleting -> selected to deleting },
+        combine(
+          _filter,
+          _filter.debouncedQuery(tuning.queryDebounceMillis)
+        ) { typed, applied -> typed to applied },
+        combine(
+          _selectedLog,
+          _deletingLog
+        ) { selected, deleting -> selected to deleting },
         combine(_availableCards, _availableSquawks) { cards, squawks ->
           LinkTargets(cards, squawks)
         },
@@ -161,7 +167,13 @@ class MaintenanceLogListViewModel(
             MaintenanceLogListUiState.Success(
               logs = hits.map { it.item },
               matches = hits.matchesById { it.id },
-              technicians = logsState.logs.mapNotNull { it.technician?.name?.takeIf(String::isNotBlank) }.distinct().sorted(),
+              technicians = logsState.logs.mapNotNull {
+                it.technician?.name?.takeIf(
+                  String::isNotBlank
+                )
+              }
+                .distinct()
+                .sorted(),
               totalCount = logsState.logs.size,
               allLogs = sorted,
               filter = filter,
@@ -179,7 +191,8 @@ class MaintenanceLogListViewModel(
             )
           }
         }
-      }.flowOn(tuning.dispatcher).collect { _uiState.value = it }
+      }.flowOn(tuning.dispatcher)
+        .collect { _uiState.value = it }
     }
   }
 
@@ -245,9 +258,11 @@ class MaintenanceLogListViewModel(
     _filter.value = _filter.value.copy(query = query)
   }
 
-  fun onComponentFilterToggle(component: ComponentType) = updateFilter { it.toggleComponent(component) }
+  fun onComponentFilterToggle(component: ComponentType) =
+    updateFilter { it.toggleComponent(component) }
 
-  fun onTimeWindowChange(window: TimeWindow) = updateFilter { it.copy(time = window) }
+  fun onTimeWindowChange(window: TimeWindow) =
+    updateFilter { it.copy(time = window) }
 
   fun onFacetToggle(facet: Facet) = updateFilter { it.toggleFacet(facet) }
 
@@ -257,15 +272,27 @@ class MaintenanceLogListViewModel(
     val previous = _filter.value
     val next = transform(previous)
     _filter.value = next
-    next.changesFrom(previous).forEach {
-      analytics.log(RecordFilterApplied(templateId, TAB, it.kind, it.value))
-    }
+    next.changesFrom(previous)
+      .forEach {
+        analytics.log(RecordFilterApplied(templateId, TAB, it.kind, it.value))
+      }
   }
 
-  private fun trackSearch(query: String, hits: List<SearchHit<MaintenanceLog>>) {
+  private fun trackSearch(
+    query: String,
+    hits: List<SearchHit<MaintenanceLog>>
+  ) {
     if (query.isBlank() || query == lastLoggedQuery) return
     lastLoggedQuery = query
-    analytics.log(RecordSearch(templateId, TAB, query.length, hits.size, hits.firstOrNull()?.explanations?.isNotEmpty() == true))
+    analytics.log(
+      RecordSearch(
+        templateId,
+        TAB,
+        query.length,
+        hits.size,
+        hits.firstOrNull()?.explanations?.isNotEmpty() == true
+      )
+    )
   }
 
   fun retryLoading() {

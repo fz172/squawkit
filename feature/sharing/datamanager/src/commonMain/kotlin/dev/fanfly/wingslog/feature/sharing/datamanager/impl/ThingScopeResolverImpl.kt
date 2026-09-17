@@ -1,11 +1,11 @@
 package dev.fanfly.wingslog.feature.sharing.datamanager.impl
 
 import dev.fanfly.wingslog.core.model.sharing.SharedAircraftRef
-import dev.fanfly.wingslog.core.storage.ThingScopeResolver
 import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.EntityStore
 import dev.fanfly.wingslog.core.storage.EntityStoreFactory
+import dev.fanfly.wingslog.core.storage.ThingScopeResolver
 import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -43,11 +43,16 @@ class ThingScopeResolverImpl(
   override suspend fun resolveNow(thingId: String): EntityScope {
     val uid = auth.currentUser?.uid
       ?: error("Cannot resolve thing scope when no user is signed in")
-    val hostUid = refStore.observe(thingId, EntityScope.userRoot(uid)).first()?.value?.host_uid
+    val hostUid = refStore.observe(thingId, EntityScope.userRoot(uid))
+      .first()?.value?.host_uid
     return scopeFor(uid, hostUid, thingId)
   }
 
   /** Shared when a ref names a foreign host; own otherwise. */
-  private fun scopeFor(uid: String, hostUid: String?, thingId: String): EntityScope =
+  private fun scopeFor(
+    uid: String,
+    hostUid: String?,
+    thingId: String
+  ): EntityScope =
     EntityScope.thingChildUnsafe(hostUid ?: uid, thingId)
 }

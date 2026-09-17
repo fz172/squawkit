@@ -45,7 +45,7 @@ fun SubComponentDropdown(
     ExposedDropdownMenu(
       expanded = expanded,
       onDismissRequest = { expanded = false }) {
-        DisableSelection {
+      DisableSelection {
         options.forEach { (displayLabel, serial) ->
           DropdownMenuItem(
             text = { Text(displayLabel) },
@@ -55,7 +55,7 @@ fun SubComponentDropdown(
             }
           )
         }
-        }
+      }
     }
   }
 }

@@ -32,7 +32,8 @@ class SearchEngineImpl(
     // on the field side ([FieldText]), or a token like `"conditioning` — let alone a lone `"` —
     // could never land in any field and every result would vanish mid-word. Punctuation-only input
     // tokenizes to nothing, which reads as a blank query.
-    val tokens = Tokenizer.queryTokens(Tokenizer.normalize(filter.query)).distinct()
+    val tokens = Tokenizer.queryTokens(Tokenizer.normalize(filter.query))
+      .distinct()
     if (tokens.isEmpty()) return survivors.map { SearchHit(it) }
     return survivors
       .mapNotNull { item ->

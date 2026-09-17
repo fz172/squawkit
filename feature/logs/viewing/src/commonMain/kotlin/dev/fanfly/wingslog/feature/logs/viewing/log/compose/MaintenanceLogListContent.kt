@@ -7,9 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -54,53 +52,53 @@ import dev.fanfly.wingslog.feature.ads.model.withAdSlots
 import dev.fanfly.wingslog.feature.ads.viewing.AdSlot
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
 import dev.fanfly.wingslog.feature.attachment.model.DataLogRowInfo
-import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.feature.logs.sharedassets.util.displayName
 import dev.fanfly.wingslog.feature.logs.viewing.log.data.MaintenanceLogListUiState
 import dev.fanfly.wingslog.feature.search.datamanager.LogAdapter
 import dev.fanfly.wingslog.feature.search.model.Facet
-import dev.fanfly.wingslog.feature.search.model.countByComponent
-import dev.fanfly.wingslog.feature.search.model.countByTime
 import dev.fanfly.wingslog.feature.search.model.FieldMatch
 import dev.fanfly.wingslog.feature.search.model.RecordFilter
 import dev.fanfly.wingslog.feature.search.model.TimeWindow
+import dev.fanfly.wingslog.feature.search.model.countByComponent
+import dev.fanfly.wingslog.feature.search.model.countByTime
 import dev.fanfly.wingslog.feature.search.viewing.ChoiceChip
+import dev.fanfly.wingslog.feature.search.viewing.FacetOption
+import dev.fanfly.wingslog.feature.search.viewing.FacetPickerPage
 import dev.fanfly.wingslog.feature.search.viewing.FilterSection
 import dev.fanfly.wingslog.feature.search.viewing.NoRecordsMatch
 import dev.fanfly.wingslog.feature.search.viewing.RecordCountRow
 import dev.fanfly.wingslog.feature.search.viewing.RecordFilterBar
 import dev.fanfly.wingslog.feature.search.viewing.RecordFilterControls
-import dev.fanfly.wingslog.feature.search.viewing.FacetOption
-import dev.fanfly.wingslog.feature.search.viewing.FacetPickerPage
 import dev.fanfly.wingslog.feature.search.viewing.hiddenMatchNote
 import dev.fanfly.wingslog.feature.search.viewing.wordsIn
+import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.thing.Attachment
 import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.MaintenanceLog
-import kotlin.time.Clock
-import kotlin.time.Duration.Companion.milliseconds
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
-import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.core.sharedassets.generated.resources.retry
-import wingslog.feature.logs.sharedassets.generated.resources.Res as SharedRes
 import wingslog.feature.logs.sharedassets.generated.resources.add_first_maintenance_log
 import wingslog.feature.logs.sharedassets.generated.resources.no_maintenance_logs_title
-import wingslog.feature.logs.viewing.generated.resources.Res as MaintenanceRes
 import wingslog.feature.logs.viewing.generated.resources.failed_to_load_logs
 import wingslog.feature.search.sharedassets.generated.resources.filter_all_people
-import wingslog.feature.search.sharedassets.generated.resources.filter_q_who_signed
 import wingslog.feature.search.sharedassets.generated.resources.filter_q_when_happened
+import wingslog.feature.search.sharedassets.generated.resources.filter_q_who_signed
 import wingslog.feature.search.sharedassets.generated.resources.filter_q_worked_on
-import wingslog.feature.search.sharedassets.generated.resources.Res as SearchRes
 import wingslog.feature.search.sharedassets.generated.resources.match_serial
 import wingslog.feature.search.sharedassets.generated.resources.search_placeholder
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.milliseconds
+import wingslog.core.sharedassets.generated.resources.Res as CoreRes
+import wingslog.feature.logs.sharedassets.generated.resources.Res as SharedRes
+import wingslog.feature.logs.viewing.generated.resources.Res as MaintenanceRes
+import wingslog.feature.search.sharedassets.generated.resources.Res as SearchRes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -147,7 +145,10 @@ fun MaintenanceLogListContent(
   // so "Airframe 18" means the same thing the filter will.
   val zone = remember { TimeZone.currentSystemDefault() }
   val countAdapter = remember(zone) { LogAdapter(zone) }
-  val today = remember { Clock.System.now().toLocalDateTime(zone).date }
+  val today = remember {
+    Clock.System.now()
+      .toLocalDateTime(zone).date
+  }
   var showPeoplePicker by remember { mutableStateOf(false) }
   var peopleQuery by remember { mutableStateOf("") }
   LaunchedEffect(filter) { revealController.close() }
@@ -270,13 +271,18 @@ fun MaintenanceLogListContent(
                 }
             }
             val recentPeople = remember(allLogs, people) {
-              val order = allLogs.mapNotNull { it.technician?.name }.distinct()
-              people.sortedBy { order.indexOf(it.name).takeIf { i -> i >= 0 } ?: Int.MAX_VALUE }
+              val order = allLogs.mapNotNull { it.technician?.name }
+                .distinct()
+              people.sortedBy {
+                order.indexOf(it.name)
+                  .takeIf { i -> i >= 0 } ?: Int.MAX_VALUE
+              }
             }
             // Anyone already chosen is promoted into a chip slot, so a selection is never hidden
             // behind "All 24 people" where it cannot be seen or undone.
             val quickPeople = remember(recentPeople) {
-              (recentPeople.filter { it.selected } + recentPeople).distinct().take(2)
+              (recentPeople.filter { it.selected } + recentPeople).distinct()
+                .take(2)
             }
             RecordFilterControls(
               expanded = showFilterSheet,
@@ -295,8 +301,19 @@ fun MaintenanceLogListContent(
               totalCount = uiState.totalCount,
               nounSingular = LocalThingLexicon.current.logNoun.singular,
               nounPlural = logNounPlural,
-              componentCount = { c -> uiState.allLogs.countByComponent(countAdapter, c) },
-              timeCount = { w -> uiState.allLogs.countByTime(countAdapter, w, today) },
+              componentCount = { c ->
+                uiState.allLogs.countByComponent(
+                  countAdapter,
+                  c
+                )
+              },
+              timeCount = { w ->
+                uiState.allLogs.countByTime(
+                  countAdapter,
+                  w,
+                  today
+                )
+              },
               facetSection = if (people.isEmpty()) null else {
                 {
                   FilterSection(
@@ -372,8 +389,19 @@ fun MaintenanceLogListContent(
                 onLogClick = onLogClick,
                 listState = logListState,
                 scrollToLogId = scrollToLogId,
-                highlightFor = { uiState.matches[it.id].orEmpty().wordsIn(LogAdapter.FIELD_DESCRIPTION, LogAdapter.FIELD_TECHNICIAN) },
-                noteFor = { logMatchNote(uiState.matches[it.id].orEmpty(), it) },
+                highlightFor = {
+                  uiState.matches[it.id].orEmpty()
+                    .wordsIn(
+                      LogAdapter.FIELD_DESCRIPTION,
+                      LogAdapter.FIELD_TECHNICIAN
+                    )
+                },
+                noteFor = {
+                  logMatchNote(
+                    uiState.matches[it.id].orEmpty(),
+                    it
+                  )
+                },
                 modifier = Modifier
                   // fill = false so the bordered table wraps its content height when there are
                   // few entries instead of stretching to fill the whole viewport; it still caps
@@ -433,8 +461,14 @@ fun MaintenanceLogListContent(
                         log = row.value,
                         onClick = { onLogClick(row.value) },
                         highlight = uiState.matches[row.value.id].orEmpty()
-                          .wordsIn(LogAdapter.FIELD_DESCRIPTION, LogAdapter.FIELD_TECHNICIAN),
-                        matchNote = logMatchNote(uiState.matches[row.value.id].orEmpty(), row.value),
+                          .wordsIn(
+                            LogAdapter.FIELD_DESCRIPTION,
+                            LogAdapter.FIELD_TECHNICIAN
+                          ),
+                        matchNote = logMatchNote(
+                          uiState.matches[row.value.id].orEmpty(),
+                          row.value
+                        ),
                         modifier = Modifier.jumpTargetHighlight(
                           active = row.value.id == scrollToLogId,
                         ),
@@ -492,7 +526,19 @@ fun MaintenanceLogListContent(
 
 /** The serial is searched but not shown on a log card; say so when it is the only match. */
 @Composable
-private fun logMatchNote(matches: List<FieldMatch>, log: MaintenanceLog): AnnotatedString? =
-  hiddenMatchNote(matches, setOf(LogAdapter.FIELD_DESCRIPTION, LogAdapter.FIELD_TECHNICIAN)) { match ->
-    if (match.field == LogAdapter.FIELD_SERIAL) stringResource(SearchRes.string.match_serial, log.component_serial) else null
+private fun logMatchNote(
+  matches: List<FieldMatch>,
+  log: MaintenanceLog
+): AnnotatedString? =
+  hiddenMatchNote(
+    matches,
+    setOf(
+      LogAdapter.FIELD_DESCRIPTION,
+      LogAdapter.FIELD_TECHNICIAN
+    )
+  ) { match ->
+    if (match.field == LogAdapter.FIELD_SERIAL) stringResource(
+      SearchRes.string.match_serial,
+      log.component_serial
+    ) else null
   }

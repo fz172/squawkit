@@ -243,7 +243,11 @@ private fun RecordFilterPanelContent(
   val components = if (!showComponentFilter) {
     emptyList()
   } else {
-    visibleComponentOptions(COMPONENT_OPTIONS, filter.components, componentCount)
+    visibleComponentOptions(
+      COMPONENT_OPTIONS,
+      filter.components,
+      componentCount
+    )
   }
   // The whole section goes when nothing is left to ask about, rather than leaving the question
   // standing over an empty row.

@@ -1,13 +1,13 @@
 package dev.fanfly.wingslog.feature.notifications.viewing
 
 import co.touchlab.kermit.Logger
-import dev.fanfly.wingslog.feature.notifications.model.NotificationTapTarget
 import dev.fanfly.wingslog.core.model.id.value
-import dev.fanfly.wingslog.id.DataLogId
+import dev.fanfly.wingslog.feature.notifications.model.NotificationTapTarget
 import dev.fanfly.wingslog.feature.notifications.viewing.NotificationTapRouter.decode
 import dev.fanfly.wingslog.feature.notifications.viewing.NotificationTapRouter.deliver
 import dev.fanfly.wingslog.feature.notifications.viewing.NotificationTapRouter.encode
 import dev.fanfly.wingslog.feature.notifications.viewing.NotificationTapRouter.pending
+import dev.fanfly.wingslog.id.DataLogId
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -68,6 +68,7 @@ object NotificationTapRouter {
     is NotificationTapTarget.Log -> "$SCHEME://$HOST/log/${target.thingId}/${target.logId}"
     is NotificationTapTarget.DataLog ->
       "$SCHEME://$HOST/data_log/${target.thingId}/${target.dataLogId.value}"
+
     is NotificationTapTarget.Thing ->
       "$SCHEME://$HOST/thing/${target.thingId}" + (target.tab?.let { "?tab=$it" }
         ?: "")

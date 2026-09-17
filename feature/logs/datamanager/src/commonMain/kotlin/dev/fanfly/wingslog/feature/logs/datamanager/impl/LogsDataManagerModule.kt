@@ -1,7 +1,7 @@
 package dev.fanfly.wingslog.feature.logs.datamanager.impl
 
-import dev.fanfly.wingslog.core.storage.ThingScopeResolver
 import dev.fanfly.wingslog.core.storage.EntityStoreFactory
+import dev.fanfly.wingslog.core.storage.ThingScopeResolver
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import org.koin.dsl.module
 

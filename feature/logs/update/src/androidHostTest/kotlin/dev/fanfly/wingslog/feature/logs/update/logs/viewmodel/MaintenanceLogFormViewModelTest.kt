@@ -697,7 +697,8 @@ class MaintenanceLogFormViewModelTest {
   @Test
   fun newLog_prefill_doesNotComeBackAfterTheUserClearsTheField() =
     runTest(testDispatcher) {
-      val overview = MutableStateFlow(overviewOf(MeterKeys.ENGINE_HOURS to 800.0))
+      val overview =
+        MutableStateFlow(overviewOf(MeterKeys.ENGINE_HOURS to 800.0))
       every { logManager.observeMaintenanceOverview(TEST_THING_ID) } returns overview
 
       val viewModel = buildViewModelForNew()
@@ -722,7 +723,12 @@ class MaintenanceLogFormViewModelTest {
           MaintenanceLog(
             id = TEST_LOG_ID,
             work_description = "Oil change",
-            readings = listOf(MeterReading(MeterKeys.ENGINE_HOURS, value_ = 640.2)),
+            readings = listOf(
+              MeterReading(
+                MeterKeys.ENGINE_HOURS,
+                value_ = 640.2
+              )
+            ),
           )
         )
       )
@@ -731,7 +737,9 @@ class MaintenanceLogFormViewModelTest {
       advanceUntilIdle()
 
       // Dropping today's totals into a form opened to fix a typo would rewrite what the log said.
-      assertThat(viewModel.uiState.value.meterValues[MeterKeys.ENGINE_HOURS]).isEqualTo("640.2")
+      assertThat(viewModel.uiState.value.meterValues[MeterKeys.ENGINE_HOURS]).isEqualTo(
+        "640.2"
+      )
     }
 
   @Test
@@ -743,7 +751,8 @@ class MaintenanceLogFormViewModelTest {
         overviewOf(MeterKeys.ENGINE_HOURS to 800.0)
       )
 
-      val viewModel = buildViewModelForNew(templateHolder = homeTemplateHolder())
+      val viewModel =
+        buildViewModelForNew(templateHolder = homeTemplateHolder())
       advanceUntilIdle()
 
       assertThat(viewModel.uiState.value.meterValues).isEmpty()
@@ -886,7 +895,8 @@ class MaintenanceLogFormViewModelTest {
         overviewOf("odometer" to 1000.0, "ride_hours" to 50.0)
       )
 
-      val viewModel = buildViewModelForNew(templateHolder = bikeTemplateHolder())
+      val viewModel =
+        buildViewModelForNew(templateHolder = bikeTemplateHolder())
       advanceUntilIdle()
       viewModel.onMeterChanged("odometer", "1050")
 
@@ -897,7 +907,10 @@ class MaintenanceLogFormViewModelTest {
   fun editingALog_measuresTheIncrementFromWhatThatLogSaid() =
     runTest(testDispatcher) {
       every { logManager.observeMaintenanceOverview(TEST_THING_ID) } returns flowOf(
-        overviewOf(MeterKeys.AIRFRAME_HOURS to 900.0, MeterKeys.PROP_HOURS to 900.0)
+        overviewOf(
+          MeterKeys.AIRFRAME_HOURS to 900.0,
+          MeterKeys.PROP_HOURS to 900.0
+        )
       )
       every { logManager.observeLogs(TEST_THING_ID) } returns flowOf(
         listOf(
@@ -978,8 +991,14 @@ class MaintenanceLogFormViewModelTest {
       ),
     )
 
-  private fun overviewOf(vararg readings: Pair<String, Double>) = MaintenanceOverview(
-    aircraft_id = TEST_THING_ID,
-    current = readings.map { (key, value) -> MeterReading(key, value_ = value) },
-  )
+  private fun overviewOf(vararg readings: Pair<String, Double>) =
+    MaintenanceOverview(
+      aircraft_id = TEST_THING_ID,
+      current = readings.map { (key, value) ->
+        MeterReading(
+          key,
+          value_ = value
+        )
+      },
+    )
 }

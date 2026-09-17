@@ -1,7 +1,5 @@
 package dev.fanfly.wingslog.feature.sharing.viewing
 
-import dev.fanfly.wingslog.core.template.LocalThingLexicon
-import dev.fanfly.wingslog.core.template.thingNoun
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -44,6 +42,8 @@ import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.thingNoun
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.sharing.model.normalizeInviteCode
 import org.jetbrains.compose.resources.stringResource
@@ -144,7 +144,9 @@ fun EnterInviteCodeScreen(
             // worse than letting a wrong keystroke through. normalizeInviteCode is the single source
             // of truth and gates the button below; here we only drop what can't be code content
             // (separators, symbols), uppercase for display, and cap at the code length.
-            code = raw.uppercase().filter { it in 'A'..'Z' || it in '0'..'9' }.take(CODE_LENGTH)
+            code = raw.uppercase()
+              .filter { it in 'A'..'Z' || it in '0'..'9' }
+              .take(CODE_LENGTH)
           },
           label = { Text(stringResource(Res.string.enter_code_field_label)) },
           singleLine = true,
@@ -181,8 +183,11 @@ private val InviteCodeGroupingTransformation = VisualTransformation { text ->
   val raw = text.text
   val formatted = if (raw.length > 4) "${raw.take(4)}-${raw.drop(4)}" else raw
   val mapping = object : OffsetMapping {
-    override fun originalToTransformed(offset: Int): Int = if (offset <= 4) offset else offset + 1
-    override fun transformedToOriginal(offset: Int): Int = if (offset <= 4) offset else offset - 1
+    override fun originalToTransformed(offset: Int): Int =
+      if (offset <= 4) offset else offset + 1
+
+    override fun transformedToOriginal(offset: Int): Int =
+      if (offset <= 4) offset else offset - 1
   }
   TransformedText(AnnotatedString(formatted), mapping)
 }

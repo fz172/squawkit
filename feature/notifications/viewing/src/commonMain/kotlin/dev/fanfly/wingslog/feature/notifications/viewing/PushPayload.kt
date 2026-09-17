@@ -121,7 +121,12 @@ data class PushPayload(
         "log" -> recordId?.let { NotificationTapTarget.Log(thingId, it) }
           ?: NotificationTapTarget.Thing(thingId, tab = "logs")
 
-        "data_log" -> recordId?.let { NotificationTapTarget.DataLog(thingId, DataLogId(it)) }
+        "data_log" -> recordId?.let {
+          NotificationTapTarget.DataLog(
+            thingId,
+            DataLogId(it)
+          )
+        }
           ?: NotificationTapTarget.Thing(thingId, tab = "datalogs")
 
         else -> null

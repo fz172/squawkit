@@ -47,8 +47,8 @@ import dev.fanfly.wingslog.feature.ads.model.ListRow
 import dev.fanfly.wingslog.feature.ads.viewing.AdSlot
 import dev.fanfly.wingslog.thing.MaintenanceLog
 import org.jetbrains.compose.resources.stringResource
-import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedRes
 import wingslog.feature.tasks.sharedassets.generated.resources.unknown_date
+import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedRes
 
 // Shared column weights so the header and every row stay aligned.
 private const val W_DATE = 0.9f
@@ -212,7 +212,11 @@ private fun LogRow(
         .padding(end = Spacing.medium),
     ) {
       Text(
-        text = highlightWords(log.work_description, highlight, searchHighlightStyle()),
+        text = highlightWords(
+          log.work_description,
+          highlight,
+          searchHighlightStyle()
+        ),
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurface,
         maxLines = 1,

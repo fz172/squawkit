@@ -1,7 +1,5 @@
 package dev.fanfly.wingslog.feature.sharing.update
 
-import dev.fanfly.wingslog.core.template.LocalThingLexicon
-import dev.fanfly.wingslog.core.template.thingNoun
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -13,6 +11,8 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.core.nav.Screen
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.thingNoun
 import dev.fanfly.wingslog.feature.sharing.viewing.ManageAccessScreen
 import dev.fanfly.wingslog.feature.subscription.viewing.ProUpsellSheet
 import dev.fanfly.wingslog.feature.subscription.viewing.UpsellTrigger
@@ -44,7 +44,10 @@ fun ManageAccessRoute(navController: NavController) {
   // so it fires once, and pop THIS screen by route so a stray fire can never remove the shell.
   val shouldLeave = state.leaveSuccess || state.accessRevoked
   LaunchedEffect(shouldLeave) {
-    if (shouldLeave) navController.popBackStack(Screen.ManageAccess.route, inclusive = true)
+    if (shouldLeave) navController.popBackStack(
+      Screen.ManageAccess.route,
+      inclusive = true
+    )
   }
 
   // Hosting a share is Pro-only: when locked, the "Create invite code" action opens the promo

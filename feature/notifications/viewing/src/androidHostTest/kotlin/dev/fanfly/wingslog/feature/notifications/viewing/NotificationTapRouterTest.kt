@@ -104,7 +104,10 @@ class NotificationTapRouterTest {
 
   @Test
   fun encodeThenDeliver_dataLog_roundTrips() {
-    val target = NotificationTapTarget.DataLog(thingId = "ac-1", dataLogId = DataLogId("dl-1"))
+    val target = NotificationTapTarget.DataLog(
+      thingId = "ac-1",
+      dataLogId = DataLogId("dl-1")
+    )
 
     NotificationTapRouter.deliver(NotificationTapRouter.encode(target))
 

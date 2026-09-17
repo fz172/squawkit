@@ -12,13 +12,12 @@ import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
+import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.gitlive.firebase.auth.FirebaseAuth
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
-import kotlin.time.Clock
-import kotlin.time.Instant
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -31,9 +30,10 @@ import kotlinx.datetime.TimeZone
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
-import dev.fanfly.wingslog.thing.MaintenanceLog
 import wingslog.core.sharedassets.generated.resources.delete_failed
 import wingslog.feature.logs.sharedassets.generated.resources.log_deleted
+import kotlin.time.Clock
+import kotlin.time.Instant
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.logs.sharedassets.generated.resources.Res as LogsRes
 
@@ -71,7 +71,9 @@ class MaintenanceLogListDeleteTest {
     every { logManager.observeLogs(THING_ID) } returns flowOf(listOf(oil))
     every { logManager.observeLogAuthors(THING_ID) } returns flowOf(emptyMap())
     every { tasks.observeTasks(THING_ID) } returns flowOf(emptyList())
-    every { sharing.observeLinkedTechnicians(THING_ID) } returns flowOf(emptyList())
+    every { sharing.observeLinkedTechnicians(THING_ID) } returns flowOf(
+      emptyList()
+    )
     every { sharing.observeIsShared(THING_ID) } returns flowOf(false)
     every { technicians.observeSelf() } returns flowOf(null)
     every { squawks.observeSquawks(THING_ID) } returns flowOf(emptyList())
@@ -103,7 +105,9 @@ class MaintenanceLogListDeleteTest {
 
   @Test
   fun confirmDeleteLog_deletesThroughTheManagerAndSaysSo() = runTest {
-    coEvery { logManager.deleteLog(THING_ID, "oil") } returns Result.success(true)
+    coEvery { logManager.deleteLog(THING_ID, "oil") } returns Result.success(
+      true
+    )
     val vm = viewModel()
     vm.onDeleteLogClick(oil)
     assertThat(vm.success().deletingLog).isEqualTo(oil)
@@ -118,7 +122,10 @@ class MaintenanceLogListDeleteTest {
         UiText.StringRes(LogsRes.string.log_deleted, listOf("Work log"))
       )
     )
-    assertThat(analytics.paramsFor("record_quick_action").single())
+    assertThat(
+      analytics.paramsFor("record_quick_action")
+        .single()
+    )
       .containsAtLeast("surface", "logs", "action", "delete", "source", "swipe")
   }
 

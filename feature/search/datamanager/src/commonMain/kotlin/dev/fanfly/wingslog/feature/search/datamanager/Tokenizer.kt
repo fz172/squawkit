@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.feature.search.datamanager
 
 import dev.fanfly.wingslog.feature.search.datamanager.Tokenizer.normalize
+import dev.fanfly.wingslog.feature.search.datamanager.Tokenizer.queryTokens
 
 
 /** Lowercase, accent-folded tokens; serials and references are kept whole and also split. */
@@ -30,10 +31,11 @@ object Tokenizer {
    * or comma could never land in any field, and every result would vanish mid-word.
    */
   fun queryTokens(normalized: String): List<String> =
-    normalized.split(SPLIT).mapNotNull { raw ->
-      raw.trim('.', '/', '-')
-        .takeIf(String::isNotEmpty)
-    }
+    normalized.split(SPLIT)
+      .mapNotNull { raw ->
+        raw.trim('.', '/', '-')
+          .takeIf(String::isNotEmpty)
+      }
 
   /**
    * [queryTokens] plus, for anything holding a `.`, `/` or `-`, its parts. Expects [normalize]d

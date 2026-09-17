@@ -354,12 +354,20 @@ class MaintenanceLogFormViewModel(
         // Read from the holder because it publishes capabilities with the template above.
         if (!currentThingTemplate.capabilities.value.meters) return@onEach
         val readings = template?.meters.orEmpty()
-          .mapNotNull { meter -> overview.currentFor(meter.key)?.let { meter to it } }
+          .mapNotNull { meter ->
+            overview.currentFor(meter.key)
+              ?.let { meter to it }
+          }
         if (readings.isEmpty()) return@onEach
         metersSeeded = true
-        baselineReadings = readings.associate { (meter, value) -> meter.key to value }
+        baselineReadings =
+          readings.associate { (meter, value) -> meter.key to value }
         val seeds =
-          readings.associate { (meter, value) -> meter.key to meter.formatValue(value) }
+          readings.associate { (meter, value) ->
+            meter.key to meter.formatValue(
+              value
+            )
+          }
         _uiState.update { state ->
           // Anything already typed wins — the overview can arrive after the user reached the tab.
           state.withMeterValues(seeds + state.meterValues)
@@ -400,11 +408,20 @@ class MaintenanceLogFormViewModel(
         val existingAttachments = attachmentForm.pendingAttachments.value
         // Every meter this template declares that the log recorded. An edit measures movement
         // from what this log already said, not from today's totals.
-        val loadedReadings = currentThingTemplate.template.value?.meters.orEmpty()
-          .mapNotNull { meter -> log.readingFor(meter.key)?.let { meter to it } }
-        baselineReadings = loadedReadings.associate { (meter, value) -> meter.key to value }
+        val loadedReadings =
+          currentThingTemplate.template.value?.meters.orEmpty()
+            .mapNotNull { meter ->
+              log.readingFor(meter.key)
+                ?.let { meter to it }
+            }
+        baselineReadings =
+          loadedReadings.associate { (meter, value) -> meter.key to value }
         val loadedMeterValues =
-          loadedReadings.associate { (meter, value) -> meter.key to meter.formatValue(value) }
+          loadedReadings.associate { (meter, value) ->
+            meter.key to meter.formatValue(
+              value
+            )
+          }
         _uiState.update {
           it.copy(
             isLoading = false,
@@ -544,7 +561,8 @@ class MaintenanceLogFormViewModel(
       .mapNotNull { meter ->
         val followed = meter.follows_meter_key.takeIf { it.isNotEmpty() }
           ?: return@mapNotNull null
-        val followedNow = values[followed]?.toDoubleOrNull() ?: return@mapNotNull null
+        val followedNow =
+          values[followed]?.toDoubleOrNull() ?: return@mapNotNull null
         val followedBaseline = baselineReadings[followed] ?: 0.0
         val moved = followedNow - followedBaseline
         if (moved <= 0.0) return@mapNotNull null

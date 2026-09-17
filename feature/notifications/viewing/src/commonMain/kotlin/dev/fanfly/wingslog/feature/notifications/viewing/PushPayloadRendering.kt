@@ -1,8 +1,8 @@
 package dev.fanfly.wingslog.feature.notifications.viewing
 
 import dev.fanfly.wingslog.core.template.LexiconFormatter
-import dev.fanfly.wingslog.core.template.logNoun
 import dev.fanfly.wingslog.core.template.dataLogNoun
+import dev.fanfly.wingslog.core.template.logNoun
 import dev.fanfly.wingslog.core.template.squawkNoun
 import dev.fanfly.wingslog.core.template.taskNoun
 import dev.fanfly.wingslog.core.template.thingNoun

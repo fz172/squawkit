@@ -7,7 +7,8 @@ class TokenizerTest {
 
   private fun tokens(s: String) = Tokenizer.tokens(Tokenizer.normalize(s))
 
-  private fun queryTokens(s: String) = Tokenizer.queryTokens(Tokenizer.normalize(s))
+  private fun queryTokens(s: String) =
+    Tokenizer.queryTokens(Tokenizer.normalize(s))
 
   @Test
   fun lowercasesAndFoldsAccents() {
@@ -53,7 +54,10 @@ class TokenizerTest {
     assertThat(queryTokens("resolve squawk \"Conditioning the brakes\""))
       .containsExactly("resolve", "squawk", "conditioning", "the", "brakes")
       .inOrder()
-    assertThat(queryTokens("half-typed \"cond")).containsExactly("half-typed", "cond")
+    assertThat(queryTokens("half-typed \"cond")).containsExactly(
+      "half-typed",
+      "cond"
+    )
       .inOrder()
     assertThat(queryTokens("\"")).isEmpty()
     assertThat(queryTokens("(parens), and: colons;")).containsExactly(
@@ -70,7 +74,12 @@ class TokenizerTest {
     // never typed, and widen the highlighted words with them.
     assertThat(queryTokens("per 91.413")).containsExactly("per", "91.413")
       .inOrder()
-    assertThat(tokens("per 91.413")).containsExactly("per", "91.413", "91", "413")
+    assertThat(tokens("per 91.413")).containsExactly(
+      "per",
+      "91.413",
+      "91",
+      "413"
+    )
       .inOrder()
   }
 

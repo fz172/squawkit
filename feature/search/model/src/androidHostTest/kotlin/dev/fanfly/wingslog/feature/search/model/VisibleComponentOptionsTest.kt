@@ -37,7 +37,8 @@ class VisibleComponentOptionsTest {
     assertThat(visible).containsExactly(
       ComponentType.COMPONENT_AIRFRAME,
       ComponentType.COMPONENT_ENGINE,
-    ).inOrder()
+    )
+      .inOrder()
   }
 
   @Test
@@ -59,13 +60,26 @@ class VisibleComponentOptionsTest {
   @Test
   fun withoutCountsNothingIsHidden() {
     // A caller that cannot count has not said an option is empty, only that it does not know.
-    assertThat(visibleComponentOptions(options, selected = emptySet(), count = null))
-      .containsExactlyElementsIn(options).inOrder()
+    assertThat(
+      visibleComponentOptions(
+        options,
+        selected = emptySet(),
+        count = null
+      )
+    )
+      .containsExactlyElementsIn(options)
+      .inOrder()
   }
 
   @Test
   fun everythingEmptyLeavesNothingToAsk() {
-    assertThat(visibleComponentOptions(options, selected = emptySet(), count = counts()))
+    assertThat(
+      visibleComponentOptions(
+        options,
+        selected = emptySet(),
+        count = counts()
+      )
+    )
       .isEmpty()
   }
 }

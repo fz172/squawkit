@@ -182,7 +182,8 @@ class SharingManagerImpl(
             ShareMember(
               uid = uid,
               displayName = if (uid == myUid) {
-                selfDisplayName(selfTech, auth.currentUser) ?: m?.displayName.orEmpty()
+                selfDisplayName(selfTech, auth.currentUser)
+                  ?: m?.displayName.orEmpty()
               } else {
                 m?.displayName.orEmpty()
               },
@@ -223,20 +224,21 @@ class SharingManagerImpl(
         if (hostUid == myUid) {
           val user = auth.currentUser
           emitAll(
-            technicianManager.observeSelf().map { selfTech ->
-              ThingShareState(
-                members = listOf(
-                  ShareMember(
-                    uid = hostUid,
-                    displayName = selfDisplayName(selfTech, user).orEmpty(),
-                    role = ShareRole.OWNER,
-                    photoUrl = user?.photoURL,
-                    isHost = true,
-                    isSelf = true,
+            technicianManager.observeSelf()
+              .map { selfTech ->
+                ThingShareState(
+                  members = listOf(
+                    ShareMember(
+                      uid = hostUid,
+                      displayName = selfDisplayName(selfTech, user).orEmpty(),
+                      role = ShareRole.OWNER,
+                      photoUrl = user?.photoURL,
+                      isHost = true,
+                      isSelf = true,
+                    ),
                   ),
-                ),
-              )
-            },
+                )
+              },
           )
         } else {
           emit(ThingShareState(accessDenied = true))
@@ -478,7 +480,10 @@ class SharingManagerImpl(
 
   override fun observeLinkedTechnicians(): Flow<List<Technician>> =
     // The same person can be in several of your shares — list them once.
-    linkedMembersAcrossShares().map { members -> members.map { it.technician }.dedupedByOwner() }
+    linkedMembersAcrossShares().map { members ->
+      members.map { it.technician }
+        .dedupedByOwner()
+    }
 
   /** Every other member with a mirror, across every share the user is in — one entry per share. */
   @OptIn(ExperimentalCoroutinesApi::class)
@@ -506,12 +511,21 @@ class SharingManagerImpl(
 
   override fun observeLinkedTechnicians(acId: String): Flow<List<Technician>> {
     val uid = auth.currentUser?.uid ?: return flowOf(emptyList())
-    return linkedTechniciansIn(acId, uid).map { members -> members.map { it.technician }.dedupedByOwner() }
+    return linkedTechniciansIn(
+      acId,
+      uid
+    ).map { members ->
+      members.map { it.technician }
+        .dedupedByOwner()
+    }
   }
 
   override fun observeLinkedTechnicianPhotos(): Flow<Map<String, String>> =
     linkedMembersAcrossShares().map { members ->
-      members.mapNotNull { m -> m.photoUrl?.takeIf { it.isNotBlank() }?.let { m.technician.id to it } }
+      members.mapNotNull { m ->
+        m.photoUrl?.takeIf { it.isNotBlank() }
+          ?.let { m.technician.id to it }
+      }
         .toMap()
     }
 
@@ -544,13 +558,17 @@ class SharingManagerImpl(
         snaps.documents.mapNotNull { doc ->
           if (doc.id == selfUid) return@mapNotNull null
           val member = doc.data<MemberWire>()
-          member.technicianMirror?.toTechnician(doc.id)?.let { LinkedMember(it, member.photoUrl) }
+          member.technicianMirror?.toTechnician(doc.id)
+            ?.let { LinkedMember(it, member.photoUrl) }
         }
       }
       .catch { emit(emptyList()) }
 
   /** A member's mirror plus the account photo the member doc carries beside it. */
-  private data class LinkedMember(val technician: Technician, val photoUrl: String?)
+  private data class LinkedMember(
+    val technician: Technician,
+    val photoUrl: String?
+  )
 
   /**
    * Every share the user is a member of: thing shared *with* them (the local refs store, per

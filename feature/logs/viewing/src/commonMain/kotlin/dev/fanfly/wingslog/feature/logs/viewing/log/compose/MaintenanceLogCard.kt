@@ -47,15 +47,15 @@ import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.thing.MeterReading
 import dev.fanfly.wingslog.thing.Technician
-import kotlin.time.Instant
 import org.jetbrains.compose.resources.stringResource
-import wingslog.feature.logs.viewing.generated.resources.Res as MaintenanceRes
 import wingslog.feature.logs.viewing.generated.resources.log_squawk_count_one
 import wingslog.feature.logs.viewing.generated.resources.log_squawk_count_plural
 import wingslog.feature.logs.viewing.generated.resources.log_task_count_one
 import wingslog.feature.logs.viewing.generated.resources.log_task_count_plural
-import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedRes
 import wingslog.feature.tasks.sharedassets.generated.resources.unknown_date
+import kotlin.time.Instant
+import wingslog.feature.logs.viewing.generated.resources.Res as MaintenanceRes
+import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedRes
 
 @Composable
 fun MaintenanceLogCard(
@@ -120,7 +120,11 @@ fun MaintenanceLogCard(
 
       // Work description — full text, no truncation
       Text(
-        text = highlightWords(log.work_description, highlight, searchHighlightStyle()),
+        text = highlightWords(
+          log.work_description,
+          highlight,
+          searchHighlightStyle()
+        ),
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurface,
       )

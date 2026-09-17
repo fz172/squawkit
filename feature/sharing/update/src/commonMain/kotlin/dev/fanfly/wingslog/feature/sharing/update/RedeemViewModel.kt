@@ -2,8 +2,8 @@ package dev.fanfly.wingslog.feature.sharing.update
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dev.fanfly.wingslog.feature.sharing.datamanager.ThingShareDeepLinks
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
+import dev.fanfly.wingslog.feature.sharing.datamanager.ThingShareDeepLinks
 import dev.fanfly.wingslog.feature.sharing.viewing.RedeemUiState
 import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,7 +29,10 @@ class RedeemViewModel(
 
   init {
     viewModelScope.launch {
-      combine(ThingShareDeepLinks.pendingInvite, auth.authStateChanged) { invite, user ->
+      combine(
+        ThingShareDeepLinks.pendingInvite,
+        auth.authStateChanged
+      ) { invite, user ->
         invite to user
       }.collect { (invite, user) ->
         when {
@@ -37,7 +40,8 @@ class RedeemViewModel(
 
           // Hold a resolved/in-flight outcome until the user dismisses it.
           _uiState.value.isHeld() -> Unit
-          user == null -> _uiState.value = RedeemUiState.Hidden // still on the sign-in screen
+          user == null -> _uiState.value =
+            RedeemUiState.Hidden // still on the sign-in screen
           user.isAnonymous -> _uiState.value = RedeemUiState.NeedsSignIn
           // Typed the code themselves (#209): the typing was the consent, so don't ask again — go
           // straight to redeeming. accept() sets Redeeming synchronously, which is held on the next

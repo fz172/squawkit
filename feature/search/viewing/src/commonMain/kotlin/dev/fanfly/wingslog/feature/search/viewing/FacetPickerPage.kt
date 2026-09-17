@@ -82,7 +82,10 @@ fun ColumnScope.FacetPickerPage(
   onBack: () -> Unit,
 ) {
   val selectedCount = options.count { it.selected }
-  Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+  Row(
+    verticalAlignment = Alignment.CenterVertically,
+    modifier = Modifier.fillMaxWidth()
+  ) {
     IconButton(onClick = onBack) {
       Icon(
         Icons.AutoMirrored.Filled.ArrowBack,
@@ -112,7 +115,13 @@ fun ColumnScope.FacetPickerPage(
       value = query,
       onValueChange = onQueryChange,
       placeholder = {
-        Text(stringResource(Res.string.filter_search_people, options.size, nounPlural))
+        Text(
+          stringResource(
+            Res.string.filter_search_people,
+            options.size,
+            nounPlural
+          )
+        )
       },
       leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
       singleLine = true,
@@ -128,23 +137,31 @@ fun ColumnScope.FacetPickerPage(
   }
   // Recency only earns its heading on the unfiltered list; once someone is searching, the one
   // ordering that helps is the one they are typing against.
-  val recentShown = if (query.isBlank()) recent.filter { it in matching } else emptyList()
+  val recentShown =
+    if (query.isBlank()) recent.filter { it in matching } else emptyList()
   val rest = matching.filterNot { it in recentShown }
 
   LazyColumn(modifier = Modifier.height(ListViewport)) {
     if (recentShown.isNotEmpty()) {
       item { PickerHeading(stringResource(Res.string.filter_recent_here)) }
-      items(recentShown, key = { "recent:${it.name}" }) { PickerRow(it, onToggle) }
+      items(recentShown, key = { "recent:${it.name}" }) {
+        PickerRow(
+          it,
+          onToggle
+        )
+      }
     }
     var letter: Char? = null
-    rest.sortedBy { it.name.lowercase() }.forEach { option ->
-      val initial = option.name.firstOrNull()?.uppercaseChar()
-      if (initial != null && initial != letter) {
-        letter = initial
-        item(key = "heading:$initial") { PickerHeading(initial.toString()) }
+    rest.sortedBy { it.name.lowercase() }
+      .forEach { option ->
+        val initial = option.name.firstOrNull()
+          ?.uppercaseChar()
+        if (initial != null && initial != letter) {
+          letter = initial
+          item(key = "heading:$initial") { PickerHeading(initial.toString()) }
+        }
+        item(key = "row:${option.name}") { PickerRow(option, onToggle) }
       }
-      item(key = "row:${option.name}") { PickerRow(option, onToggle) }
-    }
   }
 }
 
@@ -208,11 +225,16 @@ private fun PickerRow(option: FacetOption, onToggle: (FacetOption) -> Unit) {
 
 /** "Fan Zhang" → "FZ". One letter when there is only one word to take it from. */
 private fun String.initials(): String =
-  trim().split(" ").filter { it.isNotBlank() }
+  trim().split(" ")
+    .filter { it.isNotBlank() }
     .let { parts ->
       when (parts.size) {
         0 -> ""
-        1 -> parts[0].take(1).uppercase()
-        else -> (parts.first().take(1) + parts.last().take(1)).uppercase()
+        1 -> parts[0].take(1)
+          .uppercase()
+
+        else -> (parts.first()
+          .take(1) + parts.last()
+          .take(1)).uppercase()
       }
     }

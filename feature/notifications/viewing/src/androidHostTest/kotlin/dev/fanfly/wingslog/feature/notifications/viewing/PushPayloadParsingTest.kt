@@ -210,7 +210,12 @@ class PushPayloadParsingTest {
   @Test
   fun aDataLogTapTargetKeepsItsTypedId() {
     val parsed = PushPayload.parse(
-      activityData(mapOf("recordType" to "data_log", "tapTarget" to "data_log:ac-1:dl-7")),
+      activityData(
+        mapOf(
+          "recordType" to "data_log",
+          "tapTarget" to "data_log:ac-1:dl-7"
+        )
+      ),
     )!!
 
     assertThat(parsed.tapTarget)
@@ -221,9 +226,19 @@ class PushPayloadParsingTest {
   fun aDeletedDataLogFallsBackToTheArchive() {
     // The server sends the thing-and-tab form once the record is gone, so there is nothing to open.
     val parsed = PushPayload.parse(
-      activityData(mapOf("recordType" to "data_log", "tapTarget" to "aircraft:ac-1:datalogs")),
+      activityData(
+        mapOf(
+          "recordType" to "data_log",
+          "tapTarget" to "aircraft:ac-1:datalogs"
+        )
+      ),
     )!!
 
-    assertThat(parsed.tapTarget).isEqualTo(NotificationTapTarget.Thing("ac-1", tab = "datalogs"))
+    assertThat(parsed.tapTarget).isEqualTo(
+      NotificationTapTarget.Thing(
+        "ac-1",
+        tab = "datalogs"
+      )
+    )
   }
 }

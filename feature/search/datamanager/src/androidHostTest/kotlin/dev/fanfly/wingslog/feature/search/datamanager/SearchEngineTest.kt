@@ -239,17 +239,24 @@ class SearchEngineTest {
     // A query that is only punctuation constrains nothing, so it behaves like a blank one.
     val punctuationOnly = RecordFilter(query = "\"")
     assertThat(ids(engine.search(records, Adapter(), punctuationOnly, today)))
-      .containsExactly("gasket", "xpdr", "oil", "annual").inOrder()
+      .containsExactly("gasket", "xpdr", "oil", "annual")
+      .inOrder()
   }
 
   @Test
   fun query_straightQuoteFindsTextStoredWithTypographicQuotes() {
     // The app writes ” and “; a keyboard types ". Dropping quotes on both sides is what makes the
     // two agree — keeping them, on either side, would not.
-    val quoted = listOf(Record("resolve", "Resolve squawk “Conditioning the brakes”"))
+    val quoted =
+      listOf(Record("resolve", "Resolve squawk “Conditioning the brakes”"))
     val typed = "Resolve squawk \"Conditioning"
     for (i in 1..typed.length) {
-      val hits = engine.search(quoted, Adapter(), RecordFilter(query = typed.take(i)), today)
+      val hits = engine.search(
+        quoted,
+        Adapter(),
+        RecordFilter(query = typed.take(i)),
+        today
+      )
       assertThat(ids(hits)).containsExactly("resolve")
     }
   }

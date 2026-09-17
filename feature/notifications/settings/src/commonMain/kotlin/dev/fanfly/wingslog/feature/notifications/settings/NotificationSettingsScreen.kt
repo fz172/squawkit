@@ -172,7 +172,8 @@ fun NotificationSettingsScreen(
             GroupedRowGroup(
               rows = listOf(
                 {
-                  val title = stringResource(Res.string.notification_settings_priority_due_title)
+                  val title =
+                    stringResource(Res.string.notification_settings_priority_due_title)
                   GroupedSwitchRow(
                     title = title,
                     subtitle = stringResource(Res.string.notification_settings_priority_due_subtitle),
@@ -188,7 +189,8 @@ fun NotificationSettingsScreen(
                   )
                 },
                 {
-                  val title = stringResource(Res.string.notification_settings_collaboration_title)
+                  val title =
+                    stringResource(Res.string.notification_settings_collaboration_title)
                   GroupedSwitchRow(
                     title = title,
                     subtitle = stringResource(Res.string.notification_settings_collaboration_subtitle),

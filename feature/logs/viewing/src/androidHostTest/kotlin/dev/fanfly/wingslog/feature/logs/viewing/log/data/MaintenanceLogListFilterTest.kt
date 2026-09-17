@@ -20,8 +20,6 @@ import dev.fanfly.wingslog.thing.Technician
 import dev.gitlive.firebase.auth.FirebaseAuth
 import io.mockk.every
 import io.mockk.mockk
-import kotlin.time.Clock
-import kotlin.time.Instant
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
@@ -33,6 +31,8 @@ import kotlinx.datetime.TimeZone
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
+import kotlin.time.Clock
+import kotlin.time.Instant
 
 private const val THING_ID = "thing-1"
 
@@ -52,25 +52,57 @@ class MaintenanceLogListFilterTest {
     override fun now() = Instant.parse("2026-09-06T12:00:00Z")
   }
 
-  private fun log(id: String, date: String, description: String, component: ComponentType, tech: String? = null) = MaintenanceLog(
+  private fun log(
+    id: String,
+    date: String,
+    description: String,
+    component: ComponentType,
+    tech: String? = null
+  ) = MaintenanceLog(
     id = id,
-    timestamp = Instant.parse("${date}T12:00:00Z").let { toWireInstant(it.epochSeconds) },
+    timestamp = Instant.parse("${date}T12:00:00Z")
+      .let { toWireInstant(it.epochSeconds) },
     work_description = description,
     component_type = component,
     technician = tech?.let { Technician(id = it, name = it) },
   )
 
-  private val gasket = log("gasket", "2026-09-01", "Replaced left magneto base gasket", ComponentType.COMPONENT_ENGINE, tech = "R. Alvarez")
-  private val xpdr = log("xpdr", "2026-08-25", "Installed GTX 335 transponder", ComponentType.COMPONENT_AIRFRAME, tech = "Sky Harbor Avionics")
-  private val oil = log("oil", "2025-07-30", "Oil and filter change", ComponentType.COMPONENT_ENGINE)
+  private val gasket = log(
+    "gasket",
+    "2026-09-01",
+    "Replaced left magneto base gasket",
+    ComponentType.COMPONENT_ENGINE,
+    tech = "R. Alvarez"
+  )
+  private val xpdr = log(
+    "xpdr",
+    "2026-08-25",
+    "Installed GTX 335 transponder",
+    ComponentType.COMPONENT_AIRFRAME,
+    tech = "Sky Harbor Avionics"
+  )
+  private val oil = log(
+    "oil",
+    "2025-07-30",
+    "Oil and filter change",
+    ComponentType.COMPONENT_ENGINE
+  )
 
   @Before
   fun setUp() {
     Dispatchers.setMain(dispatcher)
-    every { logManager.observeLogs(THING_ID) } returns flowOf(listOf(oil, gasket, xpdr))
+    every { logManager.observeLogs(THING_ID) } returns flowOf(
+      listOf(
+        oil,
+        gasket,
+        xpdr
+      )
+    )
     every { logManager.observeLogAuthors(THING_ID) } returns flowOf(emptyMap())
     every { tasks.observeTasks(THING_ID) } returns flowOf(emptyList())
-    every { sharing.observeLinkedTechnicians(THING_ID) } returns flowOf(emptyList())
+    every { sharing.observeLinkedTechnicians(THING_ID) } returns flowOf(
+      emptyList()
+    )
     every { technicians.observeSelf() } returns flowOf(null)
     every { squawks.observeSquawks(THING_ID) } returns flowOf(emptyList())
     every { auth.currentUser } returns null
@@ -99,12 +131,14 @@ class MaintenanceLogListFilterTest {
   private fun MaintenanceLogListViewModel.ids() =
     (uiState.value as MaintenanceLogListUiState.Success).logs.map { it.id }
 
-  private fun MaintenanceLogListViewModel.success() = uiState.value as MaintenanceLogListUiState.Success
+  private fun MaintenanceLogListViewModel.success() =
+    uiState.value as MaintenanceLogListUiState.Success
 
   @Test
   fun noFilter_newestFirstWithTotal() {
     val vm = viewModel()
-    assertThat(vm.ids()).containsExactly("gasket", "xpdr", "oil").inOrder()
+    assertThat(vm.ids()).containsExactly("gasket", "xpdr", "oil")
+      .inOrder()
     assertThat(vm.success().totalCount).isEqualTo(3)
     assertThat(vm.success().filter.isActive).isFalse()
   }
@@ -121,7 +155,8 @@ class MaintenanceLogListFilterTest {
   fun componentToggle_addsThenRemoves() {
     val vm = viewModel()
     vm.onComponentFilterToggle(ComponentType.COMPONENT_ENGINE)
-    assertThat(vm.ids()).containsExactly("gasket", "oil").inOrder()
+    assertThat(vm.ids()).containsExactly("gasket", "oil")
+      .inOrder()
     vm.onComponentFilterToggle(ComponentType.COMPONENT_ENGINE)
     assertThat(vm.ids()).hasSize(3)
   }
@@ -130,19 +165,30 @@ class MaintenanceLogListFilterTest {
   fun timeWindow_filtersByWorkDate() {
     val vm = viewModel()
     vm.onTimeWindowChange(TimeWindow.LastMonths(3))
-    assertThat(vm.ids()).containsExactly("gasket", "xpdr").inOrder()
-    vm.onTimeWindowChange(TimeWindow.Custom(LocalDate(2025, 1, 1), LocalDate(2025, 12, 31)))
+    assertThat(vm.ids()).containsExactly("gasket", "xpdr")
+      .inOrder()
+    vm.onTimeWindowChange(
+      TimeWindow.Custom(
+        LocalDate(2025, 1, 1),
+        LocalDate(2025, 12, 31)
+      )
+    )
     assertThat(vm.ids()).containsExactly("oil")
   }
 
   @Test
   fun technicianFacet_listsNamesAndNarrows() {
     val vm = viewModel()
-    assertThat(vm.success().technicians).containsExactly("R. Alvarez", "Sky Harbor Avionics").inOrder()
+    assertThat(vm.success().technicians).containsExactly(
+      "R. Alvarez",
+      "Sky Harbor Avionics"
+    )
+      .inOrder()
     vm.onFacetToggle(Facet.Technician("R. Alvarez"))
     assertThat(vm.ids()).containsExactly("gasket")
     vm.onFacetToggle(Facet.Technician("Sky Harbor Avionics"))
-    assertThat(vm.ids()).containsExactly("gasket", "xpdr").inOrder()
+    assertThat(vm.ids()).containsExactly("gasket", "xpdr")
+      .inOrder()
     vm.onFacetToggle(Facet.Technician("Sky Harbor Avionics"))
     vm.onFacetToggle(Facet.Technician("R. Alvarez"))
     assertThat(vm.ids()).hasSize(3)
@@ -157,13 +203,30 @@ class MaintenanceLogListFilterTest {
     vm.onSearchQueryChange("transponder")
     vm.clearFilter()
     assertThat(analytics.events.map { it.first })
-      .containsExactly("record_filter_applied", "record_filter_applied", "record_search", "record_filter_applied").inOrder()
+      .containsExactly(
+        "record_filter_applied",
+        "record_filter_applied",
+        "record_search",
+        "record_filter_applied"
+      )
+      .inOrder()
     assertThat(analytics.events[0].second).containsExactlyEntriesIn(
-      mapOf("template_id" to "airplane", "tab" to "logs", "kind" to "component", "value" to "engine"),
+      mapOf(
+        "template_id" to "airplane",
+        "tab" to "logs",
+        "kind" to "component",
+        "value" to "engine"
+      ),
     )
     assertThat(analytics.events[1].second["value"]).isEqualTo("3m")
     assertThat(analytics.events[2].second).containsExactlyEntriesIn(
-      mapOf("template_id" to "airplane", "tab" to "logs", "query_len" to "9+", "results" to "0", "explained" to "false"),
+      mapOf(
+        "template_id" to "airplane",
+        "tab" to "logs",
+        "query_len" to "9+",
+        "results" to "0",
+        "explained" to "false"
+      ),
     )
     assertThat(analytics.events[3].second["kind"]).isEqualTo("clear")
   }

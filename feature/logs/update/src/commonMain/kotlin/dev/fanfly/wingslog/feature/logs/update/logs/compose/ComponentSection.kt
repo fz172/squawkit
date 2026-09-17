@@ -16,8 +16,6 @@ import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import dev.fanfly.wingslog.core.template.LocalThingTemplate
-import dev.fanfly.wingslog.core.template.slotSerialLabel
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.SlotKeys
@@ -180,7 +178,8 @@ fun ComponentSection(
               prop?.childrenInSlot(SlotKeys.BLADE)
                 ?.forEach { blade ->
                   if (blade.serial.isNotEmpty()) {
-                    val makeModel = listOf(blade.make, blade.model).joinAsPhrase()
+                    val makeModel =
+                      listOf(blade.make, blade.model).joinAsPhrase()
                     val label = stringResource(
                       Res.string.type_make_model_serial,
                       stringResource(LogRes.string.blade),
