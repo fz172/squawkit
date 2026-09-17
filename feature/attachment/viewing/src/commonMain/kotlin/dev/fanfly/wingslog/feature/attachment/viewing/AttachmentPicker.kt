@@ -74,7 +74,6 @@ import wingslog.feature.attachment.sharedassets.generated.resources.attachment_g
 import wingslog.feature.attachment.sharedassets.generated.resources.attachment_picker_title
 import wingslog.feature.attachment.sharedassets.generated.resources.attachment_size_hint
 import wingslog.feature.attachment.sharedassets.generated.resources.choose_file
-import wingslog.feature.attachment.sharedassets.generated.resources.choose_file_description
 import wingslog.feature.attachment.sharedassets.generated.resources.file_upload_coming_soon
 import wingslog.feature.attachment.sharedassets.generated.resources.invalid_url
 import wingslog.feature.attachment.sharedassets.generated.resources.link_name
@@ -144,7 +143,7 @@ internal fun AttachmentPicker(
       PickerOption(
         icon = Icons.Outlined.UploadFile,
         title = stringResource(AttachRes.string.choose_file),
-        description = stringResource(AttachRes.string.choose_file_description),
+        description = stringResource(chooseFileDescription),
         enabled = uploadOptionEnabled,
         onClick = if (upsellLocked) onUpsell else onChooseFile,
       )
