@@ -100,6 +100,17 @@ class ComponentTreeTest {
   }
 
   @Test
+  fun slotsUnderFollowsDeclarationOrder() {
+    // The edit form draws each slot's add button under that slot's components, in this order.
+    assertThat(CanonicalTemplates.BOAT.slotsUnder(emptyList()).map { it.slot_key })
+      .containsExactly("propulsion", "electrical_safety", "steering", "rigging")
+      .inOrder()
+    assertThat(airplane.slotsUnder(listOf("engine" to 0, "propeller" to 0)).map { it.slot_key })
+      .containsExactly("blade")
+    assertThat(airplane.slotsUnder(listOf("nope" to 0))).isEmpty()
+  }
+
+  @Test
   fun aBikeCannotBeGivenAnEngine() {
     // The reported bug, stated as a rule: what may be added comes from the template's slots, so a
     // preset that never declares an engine can never be offered one.
