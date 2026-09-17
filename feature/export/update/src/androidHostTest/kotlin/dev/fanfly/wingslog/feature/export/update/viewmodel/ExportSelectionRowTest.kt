@@ -149,22 +149,24 @@ class ExportSelectionRowTest {
 
       assertThat(rows(vm).single().label).isEqualTo("Home")
     }
-  @Test
-  fun `a mixed export names each row rather than a row of dashes`() = runTest(dispatcher) {
-    // The history row renders these as "{first} +{n}". Filled from the aviation spec keys, three
-    // mixed Things wrote three blanks and the title read "— +2".
-    fleet.value = listOf(
-      entry(Thing(id = "h1", name = "Lake house"), CanonicalTemplates.HOME),
-      entry(
-        Thing(id = "c1", spec = listOf(Spec(key = "make", value_ = "Honda"))),
-        CanonicalTemplates.AUTOMOTIVE,
-      ),
-      entry(Thing(id = "b1", name = "Commuter"), CanonicalTemplates.BIKE),
-    )
-    val vm = viewModel()
-    advanceUntilIdle()
 
-    assertThat(rows(vm).map { it.label }).containsNoneOf("", "—")
-  }
+  @Test
+  fun `a mixed export names each row rather than a row of dashes`() =
+    runTest(dispatcher) {
+      // The history row renders these as "{first} +{n}". Filled from the aviation spec keys, three
+      // mixed Things wrote three blanks and the title read "— +2".
+      fleet.value = listOf(
+        entry(Thing(id = "h1", name = "Lake house"), CanonicalTemplates.HOME),
+        entry(
+          Thing(id = "c1", spec = listOf(Spec(key = "make", value_ = "Honda"))),
+          CanonicalTemplates.AUTOMOTIVE,
+        ),
+        entry(Thing(id = "b1", name = "Commuter"), CanonicalTemplates.BIKE),
+      )
+      val vm = viewModel()
+      advanceUntilIdle()
+
+      assertThat(rows(vm).map { it.label }).containsNoneOf("", "—")
+    }
 
 }

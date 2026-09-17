@@ -4,9 +4,9 @@ import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.export.ExportRecord
 import dev.fanfly.wingslog.export.ExportRecordAircraft
 import dev.fanfly.wingslog.export.ExportRecordDateRange
+import org.junit.Test
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.full.primaryConstructor
-import org.junit.Test
 
 /**
  * Guards against silent proto→wire drift for the export-history docs. Each wire class is hand-

@@ -1,22 +1,22 @@
 package dev.fanfly.wingslog.feature.export.datamanager.impl
 
-import dev.fanfly.wingslog.thing.MaintenanceLog
-import dev.fanfly.wingslog.thing.Squawk
-import dev.fanfly.wingslog.thing.SquawkDismissReason
-import dev.fanfly.wingslog.thing.Technician
 import dev.fanfly.wingslog.core.datetime.toLocalDate
-import dev.fanfly.wingslog.feature.export.datamanager.ExportDateRange
-import dev.fanfly.wingslog.feature.export.datamanager.ExportRequest
-import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogManager
 import dev.fanfly.wingslog.feature.datalog.model.dataLogId
-import dev.fanfly.wingslog.id.ThingId
+import dev.fanfly.wingslog.feature.export.datamanager.ExportDateRange
+import dev.fanfly.wingslog.feature.export.datamanager.ExportRequest
+import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDueManager
 import dev.fanfly.wingslog.feature.technician.datamanager.TechnicianManager
+import dev.fanfly.wingslog.id.ThingId
+import dev.fanfly.wingslog.thing.MaintenanceLog
+import dev.fanfly.wingslog.thing.Squawk
+import dev.fanfly.wingslog.thing.SquawkDismissReason
+import dev.fanfly.wingslog.thing.Technician
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.first
@@ -125,7 +125,8 @@ class LogbookExportAggregator(
       tasksById = allTasks.associateBy { it.id },
       squawksById = allSquawks.associateBy { it.id },
       techniciansById = techniciansById,
-      dataLogDurationsById = dataLogsDeferred.await().associate { it.dataLogId.value to it.duration_seconds },
+      dataLogDurationsById = dataLogsDeferred.await()
+        .associate { it.dataLogId.value to it.duration_seconds },
     )
   }
 

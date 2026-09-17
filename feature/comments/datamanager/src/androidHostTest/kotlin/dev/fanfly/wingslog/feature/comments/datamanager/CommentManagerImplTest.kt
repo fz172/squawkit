@@ -69,7 +69,9 @@ class CommentManagerImplTest {
     every { auth.currentUser } returns null
 
     sharingManager = mockk(relaxed = true)
-    every { sharingManager.observeShareState(THING_ID) } returns flowOf(ThingShareState())
+    every { sharingManager.observeShareState(THING_ID) } returns flowOf(
+      ThingShareState()
+    )
 
     manager = CommentManagerImpl(
       scopeResolver = FixedScopeResolver(scope),
@@ -150,37 +152,48 @@ class CommentManagerImplTest {
   }
 
   @Test
-  fun observeComments_resolvesAuthorPhotosFromTheRosterAndTheAccount() = runTest {
-    every { store.observeAll(scope) } returns flowOf(
-      listOf(
-        row(comment("mine", authorUid = ME)),
-        row(comment("theirs", authorUid = THEM)),
-        row(comment("stranger", authorUid = "left-the-share")),
-      )
-    )
-    every { sharingManager.observeShareState(THING_ID) } returns flowOf(
-      ThingShareState(
-        members = listOf(
-          ShareMember(THEM, "Them", ShareRole.TECHNICIAN, photoUrl = "https://x/them.jpg"),
-          // A stale roster copy of my own photo: the account's is what the shell shows.
-          ShareMember(ME, "Me", ShareRole.OWNER, photoUrl = "https://x/me-old.jpg"),
+  fun observeComments_resolvesAuthorPhotosFromTheRosterAndTheAccount() =
+    runTest {
+      every { store.observeAll(scope) } returns flowOf(
+        listOf(
+          row(comment("mine", authorUid = ME)),
+          row(comment("theirs", authorUid = THEM)),
+          row(comment("stranger", authorUid = "left-the-share")),
         )
       )
-    )
-    val user = mockk<FirebaseUser>(relaxed = true)
-    every { user.photoURL } returns "https://x/me.jpg"
-    every { auth.currentUser } returns user
+      every { sharingManager.observeShareState(THING_ID) } returns flowOf(
+        ThingShareState(
+          members = listOf(
+            ShareMember(
+              THEM,
+              "Them",
+              ShareRole.TECHNICIAN,
+              photoUrl = "https://x/them.jpg"
+            ),
+            // A stale roster copy of my own photo: the account's is what the shell shows.
+            ShareMember(
+              ME,
+              "Me",
+              ShareRole.OWNER,
+              photoUrl = "https://x/me-old.jpg"
+            ),
+          )
+        )
+      )
+      val user = mockk<FirebaseUser>(relaxed = true)
+      every { user.photoURL } returns "https://x/me.jpg"
+      every { auth.currentUser } returns user
 
-    // The thread starts before the roster answers, so take the emission that has it.
-    val byId = manager.observeComments(target)
-      .toList()
-      .last()
-      .associateBy { it.id }
+      // The thread starts before the roster answers, so take the emission that has it.
+      val byId = manager.observeComments(target)
+        .toList()
+        .last()
+        .associateBy { it.id }
 
-    assertThat(byId.getValue("theirs").authorPhotoUrl).isEqualTo("https://x/them.jpg")
-    assertThat(byId.getValue("mine").authorPhotoUrl).isEqualTo("https://x/me.jpg")
-    assertThat(byId.getValue("stranger").authorPhotoUrl).isNull()
-  }
+      assertThat(byId.getValue("theirs").authorPhotoUrl).isEqualTo("https://x/them.jpg")
+      assertThat(byId.getValue("mine").authorPhotoUrl).isEqualTo("https://x/me.jpg")
+      assertThat(byId.getValue("stranger").authorPhotoUrl).isNull()
+    }
 
   @Test
   fun observeComments_rendersWithoutPhotosWhenTheRosterFails() = runTest {
@@ -220,22 +233,23 @@ class CommentManagerImplTest {
   }
 
   @Test
-  fun addComment_fallsBackToTheAccountNameThenEmailWhenTheProfileIsUnnamed() = runTest {
-    // The same precedence the share roster uses (SharingManagerImpl.publishTechnicianMirror), so
-    // a commenter is bylined the way the roster already shows them — and because the name is
-    // denormalized at post time, a blank here would be a permanent "Unknown".
-    every { technicianManager.observeSelf() } returns flowOf(null)
-    val user = mockk<FirebaseUser>(relaxed = true)
-    every { user.displayName } returns ""
-    every { user.email } returns "jordan@example.com"
-    every { auth.currentUser } returns user
-    val written = slot<Comment>()
+  fun addComment_fallsBackToTheAccountNameThenEmailWhenTheProfileIsUnnamed() =
+    runTest {
+      // The same precedence the share roster uses (SharingManagerImpl.publishTechnicianMirror), so
+      // a commenter is bylined the way the roster already shows them — and because the name is
+      // denormalized at post time, a blank here would be a permanent "Unknown".
+      every { technicianManager.observeSelf() } returns flowOf(null)
+      val user = mockk<FirebaseUser>(relaxed = true)
+      every { user.displayName } returns ""
+      every { user.email } returns "jordan@example.com"
+      every { auth.currentUser } returns user
+      val written = slot<Comment>()
 
-    manager.addComment(target, "hello")
+      manager.addComment(target, "hello")
 
-    coVerify { store.put(any(), capture(written), scope) }
-    assertThat(written.captured.author_name).isEqualTo("jordan@example.com")
-  }
+      coVerify { store.put(any(), capture(written), scope) }
+      assertThat(written.captured.author_name).isEqualTo("jordan@example.com")
+    }
 
   @Test
   fun addComment_writesNothingForABlankBody() = runTest {
@@ -362,7 +376,14 @@ class CommentManagerImplTest {
     every { store.observeAll(scope) } returns flowOf(
       listOf(
         row(comment("c1", parentId = SQUAWK_ID)),
-        row(comment("c2", parentId = SQUAWK_ID, authorUid = THEM, deletedAtSeconds = 5)),
+        row(
+          comment(
+            "c2",
+            parentId = SQUAWK_ID,
+            authorUid = THEM,
+            deletedAtSeconds = 5
+          )
+        ),
         row(comment("other", parentId = "other-squawk")),
       )
     )

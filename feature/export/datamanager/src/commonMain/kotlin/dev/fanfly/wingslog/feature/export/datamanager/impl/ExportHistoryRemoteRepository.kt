@@ -186,10 +186,12 @@ private fun ExportRecord.toWire(uid: String) = ExportRecordWire(
   destinationEmail = destination_email.nullIfBlank(),
   destinationEmailSource = destination_email_source.nullIfBlank(),
   persistedDeliveryState = persisted_delivery_state.ifBlank { ExportDeliveryStates.NOT_REQUESTED },
-  deliverySentAtEpochMillis = delivery_sent_at_epoch_millis.takeIf { it > 0L }?.toDouble(),
+  deliverySentAtEpochMillis = delivery_sent_at_epoch_millis.takeIf { it > 0L }
+    ?.toDouble(),
   deliveryFailureCode = delivery_failure_code.nullIfBlank(),
   deliveryFailureMessage = delivery_failure_message.nullIfBlank(),
-  remoteExpiresAtEpochMillis = remote_expires_at_epoch_millis.takeIf { it > 0L }?.toDouble(),
+  remoteExpiresAtEpochMillis = remote_expires_at_epoch_millis.takeIf { it > 0L }
+    ?.toDouble(),
 )
 
 internal fun ExportRecordWire.toExportRecord() = ExportRecord(

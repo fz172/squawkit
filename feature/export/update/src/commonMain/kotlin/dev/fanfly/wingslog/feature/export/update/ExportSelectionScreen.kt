@@ -31,9 +31,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Attachment
+import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Download
@@ -92,12 +92,12 @@ import dev.fanfly.wingslog.core.template.thingNoun
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedTopBar
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
 import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
+import dev.fanfly.wingslog.core.ui.adaptive.thingIcon
 import dev.fanfly.wingslog.core.ui.common.compose.DatePickerDialog
 import dev.fanfly.wingslog.core.ui.common.compose.GroupedCheckboxRow
 import dev.fanfly.wingslog.core.ui.common.compose.GroupedLeadingIconChip
 import dev.fanfly.wingslog.core.ui.common.compose.GroupedRowGroup
 import dev.fanfly.wingslog.core.ui.common.compose.GroupedSection
-import dev.fanfly.wingslog.core.ui.adaptive.thingIcon
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
 import dev.fanfly.wingslog.core.ui.common.compose.formatFileSize
 import dev.fanfly.wingslog.core.ui.theme.Spacing
@@ -467,10 +467,17 @@ private fun FormatTile(
     modifier = modifier
       .clip(shape)
       .background(if (selected) cs.primaryContainer else Color.Transparent)
-      .border(Spacing.hairline, if (selected) Color.Transparent else cs.outlineVariant, shape)
+      .border(
+        Spacing.hairline,
+        if (selected) Color.Transparent else cs.outlineVariant,
+        shape
+      )
       .clickable(onClick = onClick)
       .padding(horizontal = Spacing.small, vertical = Spacing.medium),
-    horizontalArrangement = Arrangement.spacedBy(Spacing.small, Alignment.CenterHorizontally),
+    horizontalArrangement = Arrangement.spacedBy(
+      Spacing.small,
+      Alignment.CenterHorizontally
+    ),
     verticalAlignment = Alignment.CenterVertically,
   ) {
     Icon(
@@ -503,7 +510,8 @@ private fun ThingOptionRow(
     // Already resolved per row by the ViewModel, which is the only place that knows each Thing's
     // own template. The label chain guarantees a line, so there is no "Untitled" case left.
     title = thing.label,
-    subtitle = listOf(thing.subtitle, logCount).filter { it.isNotBlank() }.joinToString(" · "),
+    subtitle = listOf(thing.subtitle, logCount).filter { it.isNotBlank() }
+      .joinToString(" · "),
     titleStyle = WingslogTypography.dataLarge,
     checked = selected,
     onCheckedChange = { onClick() },
@@ -782,7 +790,10 @@ private fun ExportBottomBar(
         )
         Text(
           text = listOf(
-            stringResource(Res.string.export_footer_thing_count, state.selectedThingIds.size),
+            stringResource(
+              Res.string.export_footer_thing_count,
+              state.selectedThingIds.size
+            ),
             rangeSummary(state),
             joinFormats(state.formats),
           ).joinToString(" · "),

@@ -177,7 +177,10 @@ class CommentManagerImpl(
 
   /** Denormalized at post time, so a blank here would be a permanent "Unknown". */
   private suspend fun authorDisplayName(): String =
-    selfDisplayName(technicianManager.observeSelf().first(), auth.currentUser).orEmpty()
+    selfDisplayName(
+      technicianManager.observeSelf()
+        .first(), auth.currentUser
+    ).orEmpty()
 
   /**
    * Author uid → photo URL from the share roster. Starts empty so the thread never waits on the

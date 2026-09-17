@@ -146,12 +146,19 @@ private fun ChildSlots(
   LocalThingTemplate.current.slotsUnder(node.row.path)
     .sortedBy { !it.inline_with_parent }
     .forEach { slot ->
-      val filling = node.children.filter { it.row.slot.slot_key == slot.slot_key }
+      val filling =
+        node.children.filter { it.row.slot.slot_key == slot.slot_key }
       if (filling.isNotEmpty()) {
         if (slot.inline_with_parent) {
           InlineGroup(filling, viewModel, showValidationErrors)
         } else {
-          filling.forEach { ComponentNodeCard(it, viewModel, showValidationErrors) }
+          filling.forEach {
+            ComponentNodeCard(
+              it,
+              viewModel,
+              showValidationErrors
+            )
+          }
         }
       }
       AddSlotButton(node.row.path, slot, existing, viewModel)
@@ -424,7 +431,8 @@ private fun AddSlotButton(
 ) {
   // `existing` is what caps a slot: a car's engine is repeatable so an EV can have none, and
   // `max_instances: 1` so a hatchback is not offered a second one.
-  val addable = LocalThingTemplate.current.addableSlotsUnder(parentPath, existing)
+  val addable =
+    LocalThingTemplate.current.addableSlotsUnder(parentPath, existing)
   if (addable.none { it.slot_key == slot.slot_key }) return
   // Dashed, as every add control on this form has been: it reads as a placeholder for
   // something not there yet rather than as an action on what is.

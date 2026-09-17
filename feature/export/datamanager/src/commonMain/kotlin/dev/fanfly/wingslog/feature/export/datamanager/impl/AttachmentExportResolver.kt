@@ -1,13 +1,13 @@
 package dev.fanfly.wingslog.feature.export.datamanager.impl
 
 import co.touchlab.kermit.Logger
-import dev.fanfly.wingslog.thing.Attachment
-import dev.fanfly.wingslog.feature.attachment.model.isFile
-import dev.fanfly.wingslog.core.storage.blob.BlobId
-import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.core.storage.blob.BlobFilesystem
+import dev.fanfly.wingslog.core.storage.blob.BlobId
 import dev.fanfly.wingslog.core.storage.blob.LocalBlobStore
+import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.model.DownloadState
+import dev.fanfly.wingslog.feature.attachment.model.isFile
+import dev.fanfly.wingslog.thing.Attachment
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.first
@@ -111,8 +111,9 @@ class AttachmentExportResolver(
     val ref = localBlobStore.get(BlobId(attachment.id))
       ?: return Resolved.Missing("Attachment ${attachment.id} has no local blob record.")
 
-    val bytes = runCatching { blobFilesystem.read(ref.relativePath) }.getOrNull()
-      ?: return Resolved.Missing("Attachment ${attachment.id} local file could not be read.")
+    val bytes =
+      runCatching { blobFilesystem.read(ref.relativePath) }.getOrNull()
+        ?: return Resolved.Missing("Attachment ${attachment.id} local file could not be read.")
 
     return Resolved.Payload(
       AttachmentExportPayload(

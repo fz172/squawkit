@@ -1,7 +1,8 @@
 package dev.fanfly.wingslog.feature.export.datamanager.impl
 
-import com.squareup.wire.Instant as WireInstant
+import dev.fanfly.wingslog.core.datetime.formatDuration
 import dev.fanfly.wingslog.core.datetime.toLocalDate
+import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.model.technician.resolvedCertifications
 import dev.fanfly.wingslog.core.template.ComponentField
 import dev.fanfly.wingslog.core.template.GenericLexicon
@@ -31,8 +32,6 @@ import dev.fanfly.wingslog.feature.export.datamanager.ExportFormat
 import dev.fanfly.wingslog.feature.export.datamanager.ExportRequest
 import dev.fanfly.wingslog.feature.tasks.datamanager.meterKeyFor
 import dev.fanfly.wingslog.thing.Attachment
-import dev.fanfly.wingslog.core.datetime.formatDuration
-import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.thing.AttachmentType
 import dev.fanfly.wingslog.thing.CertExpireLimit
 import dev.fanfly.wingslog.thing.Certification
@@ -56,6 +55,7 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.Month
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.number
+import com.squareup.wire.Instant as WireInstant
 
 /**
  * Builds the CSV entries that make up a SquawkIt logbook export archive.
@@ -1311,7 +1311,8 @@ class LogbookExportArchiveBuilder(
         "$name -> ${attachment.url.ifBlank { attachment.download_url }}"
       } else if (attachment.type == AttachmentType.ATTACHMENT_TYPE_DATA_LOG) {
         // The bytes stay with the record in V1 (data log design §9.1); name it so the row is legible.
-        val duration = attachment.data_log_id?.value?.let { bundle.dataLogDurationsById[it] }
+        val duration =
+          attachment.data_log_id?.value?.let { bundle.dataLogDurationsById[it] }
         if (duration != null) "$name (data log, ${formatDuration(duration)})" else "$name (data log)"
       } else {
         val payload = manifest.byAttachmentId[attachment.id]
@@ -1345,11 +1346,19 @@ class LogbookExportArchiveBuilder(
         }
 
         rule.seasonal_rule != null -> rule.seasonal_rule!!.months
-          .filter { it in 1..12 }.distinct().sorted()
-          .map { Month(it).name.lowercase().replaceFirstChar { c -> c.titlecase() } }
+          .filter { it in 1..12 }
+          .distinct()
+          .sorted()
+          .map {
+            Month(it).name.lowercase()
+              .replaceFirstChar { c -> c.titlecase() }
+          }
           .let { names ->
             if (names.size <= 1) "Every ${names.joinToString()}"
-            else "Every ${names.dropLast(1).joinToString(", ")} & ${names.last()}"
+            else "Every ${
+              names.dropLast(1)
+                .joinToString(", ")
+            } & ${names.last()}"
           }
 
         rule.on_condition_rule != null -> rule.on_condition_rule!!.description.ifBlank { "On condition" }

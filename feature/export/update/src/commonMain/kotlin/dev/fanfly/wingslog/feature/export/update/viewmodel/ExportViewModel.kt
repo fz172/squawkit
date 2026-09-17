@@ -9,6 +9,7 @@ import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.core.template.displayLabel
 import dev.fanfly.wingslog.core.template.displaySubtitle
+import dev.fanfly.wingslog.feature.attachment.model.isFile
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDateRange
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDeliveryEmailSource
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDeliveryInfo
@@ -23,7 +24,6 @@ import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.TaskDataManager
 import dev.fanfly.wingslog.thing.Attachment
-import dev.fanfly.wingslog.feature.attachment.model.isFile
 import dev.fanfly.wingslog.thing.Thing
 import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.ExperimentalCoroutinesApi

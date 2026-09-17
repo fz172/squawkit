@@ -95,7 +95,10 @@ class DataLogAttachmentPickerViewModelTest {
 
     vm.toggle(DataLogId("b"))
     vm.toggle(DataLogId("a"))
-    assertThat(vm.uiState.value.selected).containsExactly(DataLogId("a"), DataLogId("b"))
+    assertThat(vm.uiState.value.selected).containsExactly(
+      DataLogId("a"),
+      DataLogId("b")
+    )
 
     vm.toggle(DataLogId("b"))
     assertThat(vm.uiState.value.selected).containsExactly(DataLogId("a"))
@@ -116,7 +119,10 @@ class DataLogAttachmentPickerViewModelTest {
 
     vm.upload(listOf(file))
 
-    assertThat(vm.uiState.value.selected).containsExactly(DataLogId("old"), DataLogId("new"))
+    assertThat(vm.uiState.value.selected).containsExactly(
+      DataLogId("old"),
+      DataLogId("new")
+    )
     assertThat(vm.uiState.value.import).isNull()
     collecting.cancel()
   }

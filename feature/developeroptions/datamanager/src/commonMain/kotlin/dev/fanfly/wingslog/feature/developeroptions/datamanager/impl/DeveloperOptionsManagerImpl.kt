@@ -40,12 +40,13 @@ class DeveloperOptionsManagerImpl(
       }
     }
 
-  override suspend fun update(flags: DeveloperFlags): Result<Unit> = runCatching {
-    val uid = firebaseAuth.currentUser?.uid
-      ?: error("Cannot update feature lab settings when no user is signed in")
-    store.put(DOC_ID, flags.toProto(), EntityScope.userRoot(uid))
-  }.onFailure { logger.w(it) { "Error updating feature lab settings" } }
-    .map { }
+  override suspend fun update(flags: DeveloperFlags): Result<Unit> =
+    runCatching {
+      val uid = firebaseAuth.currentUser?.uid
+        ?: error("Cannot update feature lab settings when no user is signed in")
+      store.put(DOC_ID, flags.toProto(), EntityScope.userRoot(uid))
+    }.onFailure { logger.w(it) { "Error updating feature lab settings" } }
+      .map { }
 
   companion object {
     private val logger = Logger.withTag("DeveloperOptionsManagerImpl")

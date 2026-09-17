@@ -1,29 +1,29 @@
 package dev.fanfly.wingslog.feature.export.datamanager.impl
 
-import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
 import com.google.common.truth.Truth.assertThat
+import dev.fanfly.wingslog.core.template.MeterKeys
 import dev.fanfly.wingslog.core.template.ThingInflater
 import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
+import dev.fanfly.wingslog.core.template.canonical.CanonicalTemplates
+import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
 import dev.fanfly.wingslog.feature.export.datamanager.ExportDateRange
 import dev.fanfly.wingslog.feature.export.datamanager.ExportFormat
 import dev.fanfly.wingslog.feature.export.datamanager.ExportRequest
-import dev.fanfly.wingslog.core.template.MeterKeys
-import dev.fanfly.wingslog.core.template.canonical.CanonicalTemplates
 import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
-import dev.fanfly.wingslog.thing.MaintenanceTask
-import dev.fanfly.wingslog.thing.MeterReading
-import dev.fanfly.wingslog.thing.MeterRule
-import dev.fanfly.wingslog.thing.InspectionRule
+import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.thing.Attachment
 import dev.fanfly.wingslog.thing.AttachmentType
 import dev.fanfly.wingslog.thing.Component
 import dev.fanfly.wingslog.thing.ComponentType
+import dev.fanfly.wingslog.thing.InspectionRule
 import dev.fanfly.wingslog.thing.MaintenanceLog
+import dev.fanfly.wingslog.thing.MaintenanceTask
+import dev.fanfly.wingslog.thing.MeterReading
+import dev.fanfly.wingslog.thing.MeterRule
 import dev.fanfly.wingslog.thing.Spec
 import dev.fanfly.wingslog.thing.Squawk
 import dev.fanfly.wingslog.thing.SquawkDismissReason
 import dev.fanfly.wingslog.thing.Thing
-import dev.fanfly.wingslog.id.DataLogId
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import org.junit.Test
@@ -360,7 +360,8 @@ class LogbookExportArchiveBuilderTest {
 
   @Test
   fun buildEntries_multiThingUsesOneFolderPerThingAndRootReadme() {
-    val secondThing = airplane("thing-2", "Beechcraft", "Bonanza", "BE35-1", "N54321")
+    val secondThing =
+      airplane("thing-2", "Beechcraft", "Bonanza", "BE35-1", "N54321")
     val firstBundle = thingBundle(
       logs = listOf(
         MaintenanceLog(
@@ -464,14 +465,22 @@ class LogbookExportArchiveBuilderTest {
       title = "Oil and Filter Change",
       rules = listOf(
         InspectionRule(
-          meter_rule = MeterRule(meter_key = MeterKeys.ODOMETER, interval = 5000f)
+          meter_rule = MeterRule(
+            meter_key = MeterKeys.ODOMETER,
+            interval = 5000f
+          )
         )
       ),
     )
     val lastComplied = MaintenanceLog(
       id = "log-1",
       work_description = "Oil change",
-      readings = listOf(MeterReading(meter_key = MeterKeys.ODOMETER, value_ = 80000.0)),
+      readings = listOf(
+        MeterReading(
+          meter_key = MeterKeys.ODOMETER,
+          value_ = 80000.0
+        )
+      ),
       inspection_ids = listOf(task.id),
     )
     val bundle = ThingBundle(
@@ -558,11 +567,19 @@ class LogbookExportArchiveBuilderTest {
 
   @Test
   fun buildEntries_namesDataLogReferencesWithTheirDuration() {
-    val known = attachment(id = "ref-1", name = "Sep 02, 2026 · Ground run").copy(
-      type = AttachmentType.ATTACHMENT_TYPE_DATA_LOG, mime_type = "", size_bytes = 0L, sha256 = "",
-      data_log_id = DataLogId("dl-1"),
+    val known =
+      attachment(id = "ref-1", name = "Sep 02, 2026 · Ground run").copy(
+        type = AttachmentType.ATTACHMENT_TYPE_DATA_LOG,
+        mime_type = "",
+        size_bytes = 0L,
+        sha256 = "",
+        data_log_id = DataLogId("dl-1"),
+      )
+    val gone = known.copy(
+      id = "ref-2",
+      name = "Deleted log",
+      data_log_id = DataLogId("dl-9")
     )
-    val gone = known.copy(id = "ref-2", name = "Deleted log", data_log_id = DataLogId("dl-9"))
     val bundle = thingBundle(
       logs = listOf(
         MaintenanceLog(
@@ -585,12 +602,19 @@ class LogbookExportArchiveBuilderTest {
         includeOpenSquawks = true,
       ),
       bundles = listOf(bundle),
-      attachmentManifests = mapOf(bundle.thing.id to AttachmentExportManifest(emptyMap(), emptyList())),
+      attachmentManifests = mapOf(
+        bundle.thing.id to AttachmentExportManifest(
+          emptyMap(),
+          emptyList()
+        )
+      ),
       generatedAt = LocalDateTime(2026, 9, 14, 12, 0),
       timeZone = TimeZone.UTC,
-    ).associateBy { entry -> entry.path }
+    )
+      .associateBy { entry -> entry.path }
 
-    val csv = entries["$thingFolder/csv/01_Airframe.csv"]?.bytes?.decodeToString()
+    val csv =
+      entries["$thingFolder/csv/01_Airframe.csv"]?.bytes?.decodeToString()
     assertThat(csv).contains("Sep 02, 2026 · Ground run (data log, 4m 15s)\nDeleted log (data log)")
     assertThat(entries.keys.filter { it.contains("/attachments/") }).isEmpty()
   }

@@ -36,7 +36,8 @@ actual class ExportFileStore {
     )
   }
 
-  actual suspend fun readBytes(filePath: String): ByteArray? = cachedArchives[filePath]
+  actual suspend fun readBytes(filePath: String): ByteArray? =
+    cachedArchives[filePath]
 
   actual suspend fun saveRecord(ownerUid: String, record: ExportRecord) {
     writeIndex(

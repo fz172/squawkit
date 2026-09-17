@@ -48,9 +48,9 @@ class SeriesPaletteTest {
     )
     val cylinders = indices(
       *(1..4).map { CanonicalSeries.engine(1, "cht", it) }
-      .toTypedArray() +
-      (1..4).map { CanonicalSeries.engine(1, "egt", it) }
-        .toTypedArray()
+        .toTypedArray() +
+        (1..4).map { CanonicalSeries.engine(1, "egt", it) }
+          .toTypedArray()
     )
     val flight = indices(
       CanonicalSeries.ALT_GPS,

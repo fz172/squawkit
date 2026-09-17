@@ -26,7 +26,11 @@ import org.junit.Test
  */
 class GenericExportLayoutTest {
 
-  private fun paths(thing: Thing, template: ThingTemplate, logs: List<MaintenanceLog>): List<String> =
+  private fun paths(
+    thing: Thing,
+    template: ThingTemplate,
+    logs: List<MaintenanceLog>
+  ): List<String> =
     entries(thing, template, logs).keys.toList()
 
   /** The archive's per-thing directory — the root README sits beside it, not inside it. */
@@ -64,7 +68,8 @@ class GenericExportLayoutTest {
       attachmentManifests = emptyMap(),
       generatedAt = LocalDateTime(2026, 5, 19, 14, 45),
       timeZone = TimeZone.UTC,
-    ).associate { it.path to it.bytes.decodeToString() }
+    )
+      .associate { it.path to it.bytes.decodeToString() }
   }
 
   private fun car() = Thing(
@@ -119,7 +124,12 @@ class GenericExportLayoutTest {
     val log = MaintenanceLog(
       id = "log-1",
       work_description = "Oil change",
-      readings = listOf(MeterReading(meter_key = MeterKeys.ODOMETER, value_ = 80000.0)),
+      readings = listOf(
+        MeterReading(
+          meter_key = MeterKeys.ODOMETER,
+          value_ = 80000.0
+        )
+      ),
     )
     val csv = entries(car(), CanonicalTemplates.AUTOMOTIVE, listOf(log))
       .entries.first { it.key.endsWith("01_Service_Records.csv") }.value
@@ -138,7 +148,8 @@ class GenericExportLayoutTest {
     val log = MaintenanceLog(id = "log-1", work_description = "Gutters cleaned")
     val csv = entries(home(), CanonicalTemplates.HOME, listOf(log))
       .entries.first { it.key.endsWith(HOME_WORK_TABLE) }.value
-    val header = csv.lineSequence().first()
+    val header = csv.lineSequence()
+      .first()
 
     assertThat(header).doesNotContain("hrs")
     assertThat(header).doesNotContain("Odometer")
@@ -194,7 +205,9 @@ class GenericExportLayoutTest {
     assertThat(csv).doesNotContain("Orphan")
     // One Name row, not two: custom names itself through a declared field, so the Thing's own
     // name row would print the same string again.
-    assertThat(csv.lines().count { it.startsWith("Name,") }).isEqualTo(1)
+    assertThat(
+      csv.lines()
+        .count { it.startsWith("Name,") }).isEqualTo(1)
   }
 
   @Test
@@ -225,9 +238,14 @@ class GenericExportLayoutTest {
 
   @Test
   fun theWorkTableColumnsAreTheTemplatesWords() {
-    val car = entries(car(), CanonicalTemplates.AUTOMOTIVE, listOf(MaintenanceLog(id = "l")))
+    val car = entries(
+      car(),
+      CanonicalTemplates.AUTOMOTIVE,
+      listOf(MaintenanceLog(id = "l"))
+    )
       .entries.first { it.key.endsWith("01_Service_Records.csv") }.value
-      .lineSequence().first()
+      .lineSequence()
+      .first()
 
     assertThat(car).isEqualTo(
       "Date,Odometer (mi),Work Description,Services Completed,Reference Numbers," +
@@ -241,9 +259,16 @@ class GenericExportLayoutTest {
     // the column could only ever be empty — the same rule as the Component column.
     fun header(thing: Thing, template: ThingTemplate, table: String) =
       entries(thing, template, listOf(MaintenanceLog(id = "l")))
-        .entries.first { it.key.endsWith(table) }.value.lineSequence().first()
+        .entries.first { it.key.endsWith(table) }.value.lineSequence()
+        .first()
 
-    assertThat(header(car(), CanonicalTemplates.AUTOMOTIVE, "01_Service_Records.csv"))
+    assertThat(
+      header(
+        car(),
+        CanonicalTemplates.AUTOMOTIVE,
+        "01_Service_Records.csv"
+      )
+    )
       .contains("Reference Numbers")
     assertThat(header(home(), CanonicalTemplates.HOME, HOME_WORK_TABLE))
       .doesNotContain("Reference Numbers")
@@ -256,7 +281,8 @@ class GenericExportLayoutTest {
       Thing(id = "b-1", name = "Commuter"),
       CanonicalTemplates.BIKE,
       listOf(MaintenanceLog(id = "l")),
-    ).entries.first { it.key.endsWith("01_Service_Records.csv") }.value.lineSequence().first()
+    ).entries.first { it.key.endsWith("01_Service_Records.csv") }.value.lineSequence()
+      .first()
 
     assertThat(bike).contains("Distance (mi)")
     assertThat(bike).contains("Ride Hours (hrs)")
@@ -286,7 +312,12 @@ class GenericExportLayoutTest {
         Spec(key = "model", value_ = "172"),
       ),
     )
-    assertThat(folder(cessna, AirplaneTemplate.TEMPLATE)).isEqualTo("N12345_Cessna_172")
+    assertThat(
+      folder(
+        cessna,
+        AirplaneTemplate.TEMPLATE
+      )
+    ).isEqualTo("N12345_Cessna_172")
 
     // A blank make used to leave "N1234X__Volar_T2i" — an empty segment between two separators.
     val noMake = Thing(

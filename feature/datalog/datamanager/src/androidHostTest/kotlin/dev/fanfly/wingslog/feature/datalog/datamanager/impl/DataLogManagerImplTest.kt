@@ -330,7 +330,11 @@ class DataLogManagerImplTest {
     // Both stubs are set here rather than in setUp, so the list query throwing is the assertion.
     every { store.observeAll(scope) } returns flow { error("the whole collection was read") }
     every { store.observe("a", scope) } returns flowOf(
-      StorageEntity("a", record("a", "2026-09-02T21:47:56Z"), Instant.DISTANT_PAST)
+      StorageEntity(
+        "a",
+        record("a", "2026-09-02T21:47:56Z"),
+        Instant.DISTANT_PAST
+      )
     )
     coEvery { blobs.get(blobId) } returns ref(RemoteState.Synced)
     coEvery { filesystem.read("blobs/blob-1.bin") } returns GzipCodec.compress(

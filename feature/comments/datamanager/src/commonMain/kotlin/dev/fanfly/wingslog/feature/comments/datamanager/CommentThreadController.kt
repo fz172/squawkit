@@ -129,7 +129,12 @@ class CommentThreadController(
     scope.launch {
       val result = commentManager.updateComment(target, id, body)
       if (result.isSuccess) {
-        _state.update { if (it.editingId == id) it.copy(editingId = null, editDraft = "") else it }
+        _state.update {
+          if (it.editingId == id) it.copy(
+            editingId = null,
+            editDraft = ""
+          ) else it
+        }
       } else {
         _errors.emit(CommentAction.EDIT)
       }

@@ -20,7 +20,8 @@ private class IosExportFileDownloader : ExportFileDownloader {
   ): Boolean {
     if (filePath.isBlank()) return false
     val rootViewController =
-      UIApplication.sharedApplication.keyWindow?.rootViewController ?: return false
+      UIApplication.sharedApplication.keyWindow?.rootViewController
+        ?: return false
     // The archive already lives in the app's sandbox (ExportFileStore); presenting the export
     // picker is the standard iOS equivalent of a Chrome-style download — the user picks a
     // destination (On My iPhone, iCloud Drive, ...) and the file lands there, outside the sandbox.
