@@ -4,7 +4,7 @@
 # twin-engine boat has two of them accruing separately. That makes this the preset that exercises
 # `component_slot_key` outside the airplane, which is the field a single-engine assumption hides.
 #
-# See templates/README.md before editing, and compile with ./compile-template.sh boat.v12
+# See templates/README.md before editing, and compile with ./compile-template.sh boat.v14
 #
 # v4 adds `empty_states` — the per-domain empty-state copy that used to be fixed aviation
 # text in strings.xml. A noun could not fix those strings: what makes them useful is the
@@ -39,9 +39,12 @@
 #
 # v13 adds `down_alert_hint` — the sentence under the Dashboard down-tier alert. It was one aviation
 # string in strings.xml, "AOG squawks must be resolved before flight", shown to every preset.
+#
+# v14 makes steering and rigging optional, each capped at one: a powerboat has no rigging, and a
+# fixed slot put an empty card on the form that could not be removed.
 
 id: "boat"
-version: 13
+version: 14
 min_app_version: 0
 
 display_name: "Boat"
@@ -163,13 +166,19 @@ component_slots {
   # own make, model and serial; a chip carries all three, so nothing is lost by not being a card.
   compact_instances: true
 }
+# Optional and singular, like the car's engine: `repeatable` lets a boat have none, `max_instances`
+# stops the form offering a second.
 component_slots {
   slot_key: "steering"
   label: "Steering"
+  repeatable: true
+  max_instances: 1
 }
 component_slots {
   slot_key: "rigging"
   label: "Rigging"
+  repeatable: true
+  max_instances: 1
 }
 
 # Scoped to the propulsion slot, exactly as the airplane's engine hours are scoped to its engine. A Thing-level meter here

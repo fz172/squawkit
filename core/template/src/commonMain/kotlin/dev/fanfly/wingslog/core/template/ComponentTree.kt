@@ -257,22 +257,23 @@ fun ThingTemplate?.addableSlotsUnder(
   parentPath: ComponentPath,
   existing: List<ComponentRow> = emptyList(),
 ): List<ComponentSlot> {
-  if (this == null) return emptyList()
   fun notFull(slot: ComponentSlot): Boolean {
     if (!slot.repeatable) return false
     if (slot.max_instances <= 0) return true
     return existing.count { it.slot.slot_key == slot.slot_key && it.component != null } <
       slot.max_instances
   }
-  if (parentPath.isEmpty()) return component_slots.filter(::notFull)
+  return slotsUnder(parentPath).filter(::notFull)
+}
+
+/** Every slot the template declares directly under [parentPath], in declaration order. */
+fun ThingTemplate?.slotsUnder(parentPath: ComponentPath): List<ComponentSlot> {
+  if (this == null) return emptyList()
   var slots: List<ComponentSlot> = component_slots
-  var found: ComponentSlot? = null
   for ((slotKey, _) in parentPath) {
-    found = slots.firstOrNull { it.slot_key == slotKey } ?: return emptyList()
-    slots = found.children
+    slots = slots.firstOrNull { it.slot_key == slotKey }?.children ?: return emptyList()
   }
-  return found?.children.orEmpty()
-    .filter(::notFull)
+  return slots
 }
 
 /** A new component for [slot], with the non-repeatable descendants the template expects. */

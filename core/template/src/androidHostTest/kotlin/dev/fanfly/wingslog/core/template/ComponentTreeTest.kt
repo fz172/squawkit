@@ -30,14 +30,30 @@ class ComponentTreeTest {
     // decide and the add control belongs to the parent. A preset with a fixed slot does yield one.
     assertThat(airplane.componentRows(Thing(id = "t"))).isEmpty()
 
-    // A preset with fixed slots yields a row each, with no component behind them yet — the boat's
-    // steering and rigging. Its repeating categories yield none, for the same reason. There is no
-    // hull row: the hull IS the boat, so its make, model and number are the boat's spec fields.
-    val rows = CanonicalTemplates.BOAT.componentRows(Thing(id = "t"))
-    assertThat(rows.map { it.slot.slot_key })
-      .containsExactly("steering", "rigging")
+    // A preset with a fixed slot yields a row for it, with no component behind it yet — the bike's
+    // drivetrain. Its repeating wheels yield none, for the same reason.
+    val rows = bike.componentRows(Thing(id = "t"))
+    assertThat(rows.map { it.slot.slot_key }).containsExactly("drivetrain")
+    assertThat(rows.map { it.component }).containsExactly(null)
+
+    // Every boat slot is optional, so an empty boat has nothing to fill in until something is added.
+    assertThat(CanonicalTemplates.BOAT.componentRows(Thing(id = "t"))).isEmpty()
+  }
+
+  @Test
+  fun aBoatOffersOneSteeringAndOneRigging() {
+    fun addableWith(vararg slotKeys: String): List<String> {
+      val thing = Thing(id = "t", components = slotKeys.map { Component(slot_key = it) })
+      return CanonicalTemplates.BOAT
+        .addableSlotsUnder(emptyList(), CanonicalTemplates.BOAT.componentRows(thing))
+        .map { it.slot_key }
+    }
+
+    assertThat(addableWith())
+      .containsExactly("propulsion", "electrical_safety", "steering", "rigging")
       .inOrder()
-    assertThat(rows.map { it.component }).containsExactly(null, null)
+    assertThat(addableWith("steering", "rigging"))
+      .containsExactly("propulsion", "electrical_safety")
   }
 
   @Test
@@ -97,6 +113,17 @@ class ComponentTreeTest {
       .map { it.label }
 
     assertThat(labels).containsExactly("Drivetrain", "Wheel 1", "Wheel 2")
+  }
+
+  @Test
+  fun slotsUnderFollowsDeclarationOrder() {
+    // The edit form draws each slot's add button under that slot's components, in this order.
+    assertThat(CanonicalTemplates.BOAT.slotsUnder(emptyList()).map { it.slot_key })
+      .containsExactly("propulsion", "electrical_safety", "steering", "rigging")
+      .inOrder()
+    assertThat(airplane.slotsUnder(listOf("engine" to 0, "propeller" to 0)).map { it.slot_key })
+      .containsExactly("blade")
+    assertThat(airplane.slotsUnder(listOf("nope" to 0))).isEmpty()
   }
 
   @Test

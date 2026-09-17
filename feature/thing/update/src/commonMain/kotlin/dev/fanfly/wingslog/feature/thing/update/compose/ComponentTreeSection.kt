@@ -31,12 +31,14 @@ import dev.fanfly.wingslog.core.template.LocalThingCapabilities
 import dev.fanfly.wingslog.core.template.LocalThingTemplate
 import dev.fanfly.wingslog.core.template.addableSlotsUnder
 import dev.fanfly.wingslog.core.template.componentTree
+import dev.fanfly.wingslog.core.template.slotsUnder
 import dev.fanfly.wingslog.core.template.specValue
 import dev.fanfly.wingslog.core.template.valueOf
 import dev.fanfly.wingslog.core.ui.common.compose.DashedButton
 import dev.fanfly.wingslog.core.ui.common.compose.FormTextField
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.thing.update.viewmodel.EditThingViewModel
+import dev.fanfly.wingslog.thing.ComponentSlot
 import dev.fanfly.wingslog.thing.SpecField
 import dev.fanfly.wingslog.thing.Thing
 import org.jetbrains.compose.resources.stringResource
@@ -80,20 +82,25 @@ fun ComponentTreeSection(
   ) return
 
   Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
-    nodes.forEach { node ->
-      ComponentNodeCard(
-        node = node,
-        viewModel = viewModel,
-        showValidationErrors = showValidationErrors,
-      )
-    }
-    // Root-level adds. A slot nested under a component is offered on that component's own card,
-    // where the thing being added to is unambiguous.
-    AddSlotButtons(
-      parentPath = emptyList(),
-      existing = nodes.map { it.row },
-      viewModel = viewModel,
-    )
+    // Each slot's add button directly under that slot's components. All adds at the end put
+    // "Add Propulsion" below Steering while the new card appeared above it.
+    template.slotsUnder(emptyList())
+      .forEach { slot ->
+        nodes.filter { it.row.slot.slot_key == slot.slot_key }
+          .forEach { node ->
+            ComponentNodeCard(
+              node = node,
+              viewModel = viewModel,
+              showValidationErrors = showValidationErrors,
+            )
+          }
+        AddSlotButton(
+          parentPath = emptyList(),
+          slot = slot,
+          existing = nodes.map { it.row },
+          viewModel = viewModel,
+        )
+      }
   }
 }
 
@@ -118,24 +125,37 @@ private fun ComponentNodeCard(
       verticalArrangement = Arrangement.spacedBy(Spacing.medium),
     ) {
       ComponentBlock(node, viewModel, showValidationErrors)
-
-      // Slots the template marks inline flow underneath this card's own fields rather than into a
-      // card of their own — a propeller under its engine, its blades under that.
-      node.inlineGroups.forEach { group ->
-        InlineGroup(group, viewModel, showValidationErrors)
-      }
-
-      node.cardChildren.forEach { child ->
-        ComponentNodeCard(child, viewModel, showValidationErrors)
-      }
-
-      AddSlotButtons(
-        parentPath = node.row.path,
-        existing = node.children.map { it.row },
-        viewModel = viewModel,
-      )
+      ChildSlots(node, viewModel, showValidationErrors)
     }
   }
+}
+
+/**
+ * [node]'s children, slot by slot, each followed by its own add button.
+ *
+ * Inline slots come first — a propeller under its engine, its blades under that — then slots that
+ * nest into cards of their own.
+ */
+@Composable
+private fun ChildSlots(
+  node: ComponentNode,
+  viewModel: EditThingViewModel,
+  showValidationErrors: Boolean,
+) {
+  val existing = node.children.map { it.row }
+  LocalThingTemplate.current.slotsUnder(node.row.path)
+    .sortedBy { !it.inline_with_parent }
+    .forEach { slot ->
+      val filling = node.children.filter { it.row.slot.slot_key == slot.slot_key }
+      if (filling.isNotEmpty()) {
+        if (slot.inline_with_parent) {
+          InlineGroup(filling, viewModel, showValidationErrors)
+        } else {
+          filling.forEach { ComponentNodeCard(it, viewModel, showValidationErrors) }
+        }
+      }
+      AddSlotButton(node.row.path, slot, existing, viewModel)
+    }
 }
 
 /** One component's heading, remove control and fields — no card of its own. */
@@ -296,22 +316,8 @@ private fun InlineGroup(
     // rendering only this node's own fields dropped the blades entirely.
     group.forEach { node ->
       ComponentBlock(node, viewModel, showValidationErrors)
-      node.inlineGroups.forEach {
-        InlineGroup(
-          it,
-          viewModel,
-          showValidationErrors
-        )
-      }
-      node.cardChildren.forEach {
-        ComponentNodeCard(it, viewModel, showValidationErrors)
-      }
       // "Add Blade" belongs to the propeller, which has no card of its own to carry it.
-      AddSlotButtons(
-        parentPath = node.row.path,
-        existing = node.children.map { it.row },
-        viewModel = viewModel,
-      )
+      ChildSlots(node, viewModel, showValidationErrors)
     }
     return
   }
@@ -408,44 +414,41 @@ private fun ComponentField.isVisibleOn(row: ComponentRow): Boolean =
   this != ComponentField.SERIAL ||
     (row.slot.serial_expected && LocalThingCapabilities.current.component_serial_prompt)
 
+/** Add control for [slot] under [parentPath]; nothing when the slot cannot take another. */
 @Composable
-private fun AddSlotButtons(
+private fun AddSlotButton(
   parentPath: ComponentPath,
+  slot: ComponentSlot,
   existing: List<ComponentRow>,
   viewModel: EditThingViewModel
 ) {
   // `existing` is what caps a slot: a car's engine is repeatable so an EV can have none, and
   // `max_instances: 1` so a hatchback is not offered a second one.
-  val addable =
-    LocalThingTemplate.current.addableSlotsUnder(parentPath, existing)
-  if (addable.isEmpty()) return
-  Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
-    addable.forEach { slot ->
-      // Dashed, as every add control on this form has been: it reads as a placeholder for
-      // something not there yet rather than as an action on what is.
-      // Half width only for a slot whose instances pack into a group — Add Blade sits beside the
-      // serials it adds to. Add Engine spans the form as it always has.
-      //
-      // Keyed on the packing, not on `compact_fields`: the engine sets that too, because its own
-      // make, model and serial pair up. One flag was doing two jobs and shortened the wrong button.
-      if (slot.inline_with_parent && slot.repeatable) {
-        Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
-          DashedButton(
-            label = "${stringResource(CoreRes.string.add)} ${slot.label}",
-            onClick = { viewModel.onAddComponent(parentPath, slot) },
-            modifier = Modifier.weight(1f),
-            height = 44.dp,
-          )
-          Spacer(Modifier.weight(1f))
-        }
-      } else {
-        DashedButton(
-          label = "${stringResource(CoreRes.string.add)} ${slot.label}",
-          onClick = { viewModel.onAddComponent(parentPath, slot) },
-          modifier = Modifier.fillMaxWidth(),
-        )
-      }
+  val addable = LocalThingTemplate.current.addableSlotsUnder(parentPath, existing)
+  if (addable.none { it.slot_key == slot.slot_key }) return
+  // Dashed, as every add control on this form has been: it reads as a placeholder for
+  // something not there yet rather than as an action on what is.
+  // Half width only for a slot whose instances pack into a group — Add Blade sits beside the
+  // serials it adds to. Add Engine spans the form as it always has.
+  //
+  // Keyed on the packing, not on `compact_fields`: the engine sets that too, because its own
+  // make, model and serial pair up. One flag was doing two jobs and shortened the wrong button.
+  if (slot.inline_with_parent && slot.repeatable) {
+    Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
+      DashedButton(
+        label = "${stringResource(CoreRes.string.add)} ${slot.label}",
+        onClick = { viewModel.onAddComponent(parentPath, slot) },
+        modifier = Modifier.weight(1f),
+        height = 44.dp,
+      )
+      Spacer(Modifier.weight(1f))
     }
+  } else {
+    DashedButton(
+      label = "${stringResource(CoreRes.string.add)} ${slot.label}",
+      onClick = { viewModel.onAddComponent(parentPath, slot) },
+      modifier = Modifier.fillMaxWidth(),
+    )
   }
 }
 
