@@ -1,5 +1,8 @@
 package dev.fanfly.wingslog.feature.export.datamanager.impl
 
+import dev.fanfly.wingslog.core.file.ZipEntryPayload
+import dev.fanfly.wingslog.core.file.ZipFileWriter
+
 /**
  * Writes a minimal Office Open XML workbook with one worksheet per export table.
  */
@@ -10,7 +13,7 @@ class XlsxWorkbookWriter(
   /**
    * Serializes [sheets] into an `.xlsx` workbook.
    */
-  fun write(sheets: List<XlsxSheet>): ByteArray {
+  suspend fun write(sheets: List<XlsxSheet>): ByteArray {
     require(sheets.isNotEmpty()) { "XLSX workbook must contain at least one sheet." }
     val safeSheets = sheets.withUniqueNames()
     val entries = buildList {

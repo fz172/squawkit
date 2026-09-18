@@ -121,6 +121,7 @@ kotlin {
       implementation(project(":core:firebase"))
       implementation(project(":core:model"))
       implementation(project(":core:appinfo"))
+      implementation(project(":core:file"))
       implementation(project(":feature:fleet:datamanager"))
       implementation(project(":feature:logs:datamanager"))
       implementation(project(":feature:tasks:datamanager"))

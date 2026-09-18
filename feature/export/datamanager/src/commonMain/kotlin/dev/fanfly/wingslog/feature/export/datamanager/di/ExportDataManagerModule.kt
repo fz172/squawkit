@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.export.datamanager.di
 
+import dev.fanfly.wingslog.core.file.ZipFileWriter
 import dev.fanfly.wingslog.core.storage.blob.BlobFilesystem
 import dev.fanfly.wingslog.core.storage.blob.LocalBlobStore
 import dev.fanfly.wingslog.core.template.TemplateRegistry
@@ -13,7 +14,6 @@ import dev.fanfly.wingslog.feature.export.datamanager.impl.ExportHistoryRemoteRe
 import dev.fanfly.wingslog.feature.export.datamanager.impl.ExportManagerImpl
 import dev.fanfly.wingslog.feature.export.datamanager.impl.LogbookExportAggregator
 import dev.fanfly.wingslog.feature.export.datamanager.impl.LogbookExportArchiveBuilder
-import dev.fanfly.wingslog.feature.export.datamanager.impl.ZipFileWriter
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager

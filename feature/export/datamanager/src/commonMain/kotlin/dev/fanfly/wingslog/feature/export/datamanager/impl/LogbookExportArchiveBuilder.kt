@@ -2,6 +2,7 @@ package dev.fanfly.wingslog.feature.export.datamanager.impl
 
 import dev.fanfly.wingslog.core.datetime.formatDuration
 import dev.fanfly.wingslog.core.datetime.toLocalDate
+import dev.fanfly.wingslog.core.file.ZipEntryPayload
 import dev.fanfly.wingslog.core.model.id.value
 import dev.fanfly.wingslog.core.model.technician.resolvedCertifications
 import dev.fanfly.wingslog.core.template.ComponentField
@@ -85,7 +86,7 @@ class LogbookExportArchiveBuilder(
   /**
    * Creates all ZIP entry payloads for [bundles] using a root README and one directory per thing.
    */
-  fun buildEntries(
+  suspend fun buildEntries(
     request: ExportRequest,
     bundles: List<ThingBundle>,
     attachmentManifests: Map<String, AttachmentExportManifest> = emptyMap(),
@@ -1401,7 +1402,7 @@ class LogbookExportArchiveBuilder(
       .sanitizePathSegment()
       .ifBlank { id.sanitizePathSegment() }
 
-  private fun Thing.templateOf(): ThingTemplate? =
+  private fun Thing.templateOf(): ThingTemplate =
     templateRegistry.forThingWithFallback(this)
 
   private fun ComponentType.label(): String =

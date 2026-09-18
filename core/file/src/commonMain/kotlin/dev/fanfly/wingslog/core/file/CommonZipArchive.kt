@@ -1,46 +1,54 @@
-package dev.fanfly.wingslog.feature.export.datamanager.impl
+package dev.fanfly.wingslog.core.file
 
 import kotlin.experimental.and
 
 /**
- * Pure-Kotlin ZIP archive builder using the STORE method (no compression). Shared by the platforms
- * that have no `java.util.zip` available — currently iOS and the web (JS) target. Android keeps its
- * own `java.util.zip`-backed [ZipFileWriter] for deflate compression.
+ * Pure-Kotlin ZIP archive builder, shared by the platforms with no `java.util.zip` — currently iOS
+ * and the web (JS) target. Android keeps its own `java.util.zip`-backed [ZipFileWriter].
+ *
+ * Entries are deflated through [DeflateCodec] where the platform has it and stored uncompressed
+ * where it does not, or where deflating an entry would not make it smaller. The method is recorded
+ * per entry, so a single archive may mix the two.
  */
 @OptIn(ExperimentalUnsignedTypes::class)
-internal object StoredZipArchive {
+internal object CommonZipArchive {
   private const val LOCAL_FILE_HEADER_SIGNATURE = 0x04034b50
   private const val CENTRAL_DIRECTORY_SIGNATURE = 0x02014b50
   private const val END_OF_CENTRAL_DIRECTORY_SIGNATURE = 0x06054b50
   private const val VERSION_NEEDED_TO_EXTRACT = 20
   private const val GENERAL_PURPOSE_UTF8_FLAG = 1 shl 11
   private const val STORE_METHOD = 0
+  private const val DEFLATE_METHOD = 8
 
-  fun build(entries: List<ZipEntryPayload>): ByteArray {
+  suspend fun build(entries: List<ZipEntryPayload>): ByteArray {
     val out = LittleEndianByteSink()
     val centralDirectoryEntries = mutableListOf<CentralDirectoryEntry>()
 
     entries.forEach { entry ->
       val nameBytes = entry.path.encodeToByteArray()
+      // The CRC covers the original bytes whichever method the entry ends up using.
       val crc = Crc32.compute(entry.bytes)
+      val packed = pack(entry.bytes)
       val localHeaderOffset = out.size
       out.int(LOCAL_FILE_HEADER_SIGNATURE)
       out.short(VERSION_NEEDED_TO_EXTRACT)
       out.short(GENERAL_PURPOSE_UTF8_FLAG)
-      out.short(STORE_METHOD)
+      out.short(packed.method)
       out.short(0)
       out.short(0)
       out.int(crc.toInt())
-      out.int(entry.bytes.size)
+      out.int(packed.bytes.size)
       out.int(entry.bytes.size)
       out.short(nameBytes.size)
       out.short(0)
       out.bytes(nameBytes)
-      out.bytes(entry.bytes)
+      out.bytes(packed.bytes)
 
       centralDirectoryEntries += CentralDirectoryEntry(
         pathBytes = nameBytes,
         crc = crc,
+        method = packed.method,
+        compressedSize = packed.bytes.size,
         size = entry.bytes.size,
         localHeaderOffset = localHeaderOffset,
       )
@@ -52,11 +60,11 @@ internal object StoredZipArchive {
       out.short(VERSION_NEEDED_TO_EXTRACT)
       out.short(VERSION_NEEDED_TO_EXTRACT)
       out.short(GENERAL_PURPOSE_UTF8_FLAG)
-      out.short(STORE_METHOD)
+      out.short(entry.method)
       out.short(0)
       out.short(0)
       out.int(entry.crc.toInt())
-      out.int(entry.size)
+      out.int(entry.compressedSize)
       out.int(entry.size)
       out.short(entry.pathBytes.size)
       out.short(0)
@@ -80,36 +88,78 @@ internal object StoredZipArchive {
     return out.toByteArray()
   }
 
-  private data class CentralDirectoryEntry(
+  /**
+   * Deflates [bytes], falling back to STORE when the codec is missing, fails, or gives back
+   * something no smaller than the input — which is what already-compressed attachments do.
+   */
+  private suspend fun pack(bytes: ByteArray): PackedEntry {
+    if (bytes.isEmpty() || !DeflateCodec.isAvailable()) return PackedEntry(
+      STORE_METHOD,
+      bytes
+    )
+    val deflated = try {
+      DeflateCodec.compress(bytes)
+    } catch (e: DeflateException) {
+      return PackedEntry(STORE_METHOD, bytes)
+    }
+    return if (deflated.size < bytes.size) {
+      PackedEntry(DEFLATE_METHOD, deflated)
+    } else {
+      PackedEntry(STORE_METHOD, bytes)
+    }
+  }
+
+  private class PackedEntry(val method: Int, val bytes: ByteArray)
+
+  private class CentralDirectoryEntry(
     val pathBytes: ByteArray,
     val crc: UInt,
+    val method: Int,
+    val compressedSize: Int,
     val size: Int,
     val localHeaderOffset: Int,
   )
 }
 
+/** Grows by doubling; an export archive with attachments in it is megabytes of bytes. */
 private class LittleEndianByteSink {
-  private val bytes = mutableListOf<Byte>()
+  private var bytes = ByteArray(INITIAL_CAPACITY)
 
-  val size: Int get() = bytes.size
+  var size: Int = 0
+    private set
 
   fun short(value: Int) {
-    bytes += (value and 0xff).toByte()
-    bytes += ((value ushr 8) and 0xff).toByte()
+    reserve(2)
+    bytes[size++] = (value and 0xff).toByte()
+    bytes[size++] = ((value ushr 8) and 0xff).toByte()
   }
 
   fun int(value: Int) {
-    bytes += (value and 0xff).toByte()
-    bytes += ((value ushr 8) and 0xff).toByte()
-    bytes += ((value ushr 16) and 0xff).toByte()
-    bytes += ((value ushr 24) and 0xff).toByte()
+    reserve(4)
+    bytes[size++] = (value and 0xff).toByte()
+    bytes[size++] = ((value ushr 8) and 0xff).toByte()
+    bytes[size++] = ((value ushr 16) and 0xff).toByte()
+    bytes[size++] = ((value ushr 24) and 0xff).toByte()
   }
 
   fun bytes(value: ByteArray) {
-    value.forEach { bytes += it }
+    reserve(value.size)
+    value.copyInto(bytes, size)
+    size += value.size
   }
 
-  fun toByteArray(): ByteArray = bytes.toByteArray()
+  fun toByteArray(): ByteArray = bytes.copyOf(size)
+
+  private fun reserve(count: Int) {
+    if (size + count <= bytes.size) return
+    var capacity = bytes.size
+    while (capacity < size + count) capacity *= 2
+    bytes = bytes.copyOf(capacity)
+  }
+
+  private companion object {
+    const val INITIAL_CAPACITY = 4096
+  }
 }
 
 @OptIn(ExperimentalUnsignedTypes::class)

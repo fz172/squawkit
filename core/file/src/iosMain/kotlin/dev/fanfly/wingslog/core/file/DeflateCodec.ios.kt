@@ -3,11 +3,8 @@ package dev.fanfly.wingslog.core.file
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-/**
- * zlib ships with Kotlin/Native's Apple platform libs and writes the gzip header and CRC trailer
- * itself (windowBits + 16), so no hand-rolled framing is needed.
- */
-actual object GzipCodec {
+/** Same zlib as [GzipCodec], with a negative windowBits so no header or trailer is written. */
+actual object DeflateCodec {
   actual fun isAvailable(): Boolean = true
 
   actual suspend fun compress(bytes: ByteArray): ByteArray =
@@ -15,8 +12,8 @@ actual object GzipCodec {
       zlibRun(
         bytes,
         deflate = true,
-        windowBits = GZIP_WINDOW_BITS,
-        error = { GzipException(it) })
+        windowBits = RAW_WINDOW_BITS,
+        error = { DeflateException(it) })
     }
 
   actual suspend fun decompress(bytes: ByteArray): ByteArray =
@@ -24,7 +21,7 @@ actual object GzipCodec {
       zlibRun(
         bytes,
         deflate = false,
-        windowBits = AUTO_DETECT_WINDOW_BITS,
-        error = { GzipException(it) })
+        windowBits = RAW_WINDOW_BITS,
+        error = { DeflateException(it) })
     }
 }
