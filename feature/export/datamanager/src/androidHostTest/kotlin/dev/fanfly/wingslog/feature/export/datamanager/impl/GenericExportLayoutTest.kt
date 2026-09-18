@@ -13,6 +13,7 @@ import dev.fanfly.wingslog.thing.MeterReading
 import dev.fanfly.wingslog.thing.Spec
 import dev.fanfly.wingslog.thing.Thing
 import dev.fanfly.wingslog.thing.ThingTemplate
+import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import org.junit.Test
@@ -26,7 +27,7 @@ import org.junit.Test
  */
 class GenericExportLayoutTest {
 
-  private fun paths(
+  private suspend fun paths(
     thing: Thing,
     template: ThingTemplate,
     logs: List<MaintenanceLog>
@@ -34,12 +35,12 @@ class GenericExportLayoutTest {
     entries(thing, template, logs).keys.toList()
 
   /** The archive's per-thing directory — the root README sits beside it, not inside it. */
-  private fun folder(thing: Thing, template: ThingTemplate): String =
+  private suspend fun folder(thing: Thing, template: ThingTemplate): String =
     paths(thing, template, emptyList())
       .first { it.contains('/') }
       .substringBefore('/')
 
-  private fun entries(
+  private suspend fun entries(
     thing: Thing,
     template: ThingTemplate,
     logs: List<MaintenanceLog> = emptyList(),
@@ -91,7 +92,7 @@ class GenericExportLayoutTest {
   )
 
   @Test
-  fun aCarGetsNoAirframeEngineOrPropellerTabs() {
+  fun aCarGetsNoAirframeEngineOrPropellerTabs() = runTest {
     val csv = paths(car(), CanonicalTemplates.AUTOMOTIVE, emptyList())
       .filter { it.endsWith(".csv") }
 
@@ -101,7 +102,7 @@ class GenericExportLayoutTest {
   }
 
   @Test
-  fun theTablesAreNamedFromTheLexicon() {
+  fun theTablesAreNamedFromTheLexicon() = runTest {
     // A car's tasks are services and its defects are issues; a home's people are people. The words
     // are the template's, so the archive a user opens is not full of aviation nouns.
     val car = paths(car(), CanonicalTemplates.AUTOMOTIVE, emptyList())
@@ -120,7 +121,7 @@ class GenericExportLayoutTest {
   }
 
   @Test
-  fun theWorkTableCarriesTheTemplatesMetersAndNoOthers() {
+  fun theWorkTableCarriesTheTemplatesMetersAndNoOthers() = runTest {
     val log = MaintenanceLog(
       id = "log-1",
       work_description = "Oil change",
@@ -142,7 +143,7 @@ class GenericExportLayoutTest {
   }
 
   @Test
-  fun aHomeGetsNoMeterColumnAtAll() {
+  fun aHomeGetsNoMeterColumnAtAll() = runTest {
     // Home declares no meters (§4.4). A "0.0 hrs" column would be exactly the failure that warns
     // about — a number that looks like data and is not.
     val log = MaintenanceLog(id = "log-1", work_description = "Gutters cleaned")
@@ -157,7 +158,7 @@ class GenericExportLayoutTest {
   }
 
   @Test
-  fun everyLogAppearsRatherThanBeingFiledByComponentType() {
+  fun everyLogAppearsRatherThanBeingFiledByComponentType() = runTest {
     // The logbook layout files rows by ComponentType, which is COMPONENT_UNKNOWN on everything
     // outside aviation — so filtering by it here would silently drop every row.
     val logs = (1..3).map {
@@ -172,7 +173,7 @@ class GenericExportLayoutTest {
   }
 
   @Test
-  fun identityComesFromTheTemplatesSpecFields() {
+  fun identityComesFromTheTemplatesSpecFields() = runTest {
     val csv = entries(home(), CanonicalTemplates.HOME)
       .entries.first { it.key.endsWith("00_Home_Info.csv") }.value
 
@@ -184,7 +185,7 @@ class GenericExportLayoutTest {
   }
 
   @Test
-  fun theUsersOwnFieldsAreExportedUnderTheirOwnLabels() {
+  fun theUsersOwnFieldsAreExportedUnderTheirOwnLabels() = runTest {
     // A value the user can type and never see again is half a feature (#781). The template
     // declares none of these, so walking spec_fields alone would drop them.
     val thing = Thing(
@@ -211,7 +212,7 @@ class GenericExportLayoutTest {
   }
 
   @Test
-  fun anAeroplaneStillGetsThePaperLogbook() {
+  fun anAeroplaneStillGetsThePaperLogbook() = runTest {
     // The guarantee that makes the rest of this safe: the logbook renderer is untouched.
     val plane = Thing(
       id = "plane-1",
@@ -237,7 +238,7 @@ class GenericExportLayoutTest {
   }
 
   @Test
-  fun theWorkTableColumnsAreTheTemplatesWords() {
+  fun theWorkTableColumnsAreTheTemplatesWords() = runTest {
     val car = entries(
       car(),
       CanonicalTemplates.AUTOMOTIVE,
@@ -254,10 +255,10 @@ class GenericExportLayoutTest {
   }
 
   @Test
-  fun aReferenceNumberColumnOnlyAppearsWhereComplianceDoes() {
+  fun aReferenceNumberColumnOnlyAppearsWhereComplianceDoes() = runTest {
     // An AD or a service bulletin. A preset with compliance off has no field that fills one, so
     // the column could only ever be empty — the same rule as the Component column.
-    fun header(thing: Thing, template: ThingTemplate, table: String) =
+    suspend fun header(thing: Thing, template: ThingTemplate, table: String) =
       entries(thing, template, listOf(MaintenanceLog(id = "l")))
         .entries.first { it.key.endsWith(table) }.value.lineSequence()
         .first()
@@ -275,7 +276,7 @@ class GenericExportLayoutTest {
   }
 
   @Test
-  fun meterHeadersKeepTheAuthoredUnitCasing() {
+  fun meterHeadersKeepTheAuthoredUnitCasing() = runTest {
     // meterUnit upper-cases for value cells ("5000 MI"); a column header reads as shouting.
     val bike = entries(
       Thing(id = "b-1", name = "Commuter"),
@@ -290,7 +291,7 @@ class GenericExportLayoutTest {
   }
 
   @Test
-  fun theFolderIsNamedAfterTheThingNotItsGeneratedId() {
+  fun theFolderIsNamedAfterTheThingNotItsGeneratedId() = runTest {
     // A car exported as "y8WPyMmKR7Pz6HyVm5L3_Kuat_X675": the folder was tail number, make and
     // model read off the aviation spec keys, so anything else fell through to the random id.
     val folder = folder(
@@ -303,7 +304,7 @@ class GenericExportLayoutTest {
   }
 
   @Test
-  fun anAeroplaneFolderIsUnchangedAndLosesItsDoubleUnderscore() {
+  fun anAeroplaneFolderIsUnchangedAndLosesItsDoubleUnderscore() = runTest {
     val cessna = Thing(
       id = "p1",
       spec = listOf(

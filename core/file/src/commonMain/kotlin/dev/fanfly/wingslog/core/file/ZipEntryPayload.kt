@@ -1,4 +1,4 @@
-package dev.fanfly.wingslog.feature.export.datamanager.impl
+package dev.fanfly.wingslog.core.file
 
 /**
  * In-memory file payload to place inside an export ZIP archive.

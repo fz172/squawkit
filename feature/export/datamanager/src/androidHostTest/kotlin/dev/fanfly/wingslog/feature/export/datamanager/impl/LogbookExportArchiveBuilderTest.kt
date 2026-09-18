@@ -24,6 +24,7 @@ import dev.fanfly.wingslog.thing.Spec
 import dev.fanfly.wingslog.thing.Squawk
 import dev.fanfly.wingslog.thing.SquawkDismissReason
 import dev.fanfly.wingslog.thing.Thing
+import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import org.junit.Test
@@ -36,7 +37,7 @@ class LogbookExportArchiveBuilderTest {
   private val thingFolder = "N12345_Cessna_172"
 
   @Test
-  fun buildEntries_embedsAttachmentPayloadsAndLinksCsvRows() {
+  fun buildEntries_embedsAttachmentPayloadsAndLinksCsvRows() = runTest {
     val availableAttachment =
       attachment(id = "abcd1234", name = "inspection photo.jpg")
     val missingAttachment = attachment(id = "efgh5678", name = "missing.pdf")
@@ -132,7 +133,7 @@ class LogbookExportArchiveBuilderTest {
   }
 
   @Test
-  fun buildEntries_singleEngineAndPropellerUseUnnumberedTimeLabels() {
+  fun buildEntries_singleEngineAndPropellerUseUnnumberedTimeLabels() = runTest {
     // Built as a component tree, which is the only shape that exists since #668 part 3 — the
     // transitional fields are gone and nothing derives the tree from them any more.
     val thing = Thing(
@@ -240,7 +241,7 @@ class LogbookExportArchiveBuilderTest {
   }
 
   @Test
-  fun buildEntries_squawksUseCombinedStatusAndActionDateColumns() {
+  fun buildEntries_squawksUseCombinedStatusAndActionDateColumns() = runTest {
     val addressedLog = MaintenanceLog(
       id = "log-addressed",
       component_type = ComponentType.COMPONENT_AIRFRAME,
@@ -309,57 +310,58 @@ class LogbookExportArchiveBuilderTest {
   }
 
   @Test
-  fun buildEntries_onlyWritesSelectedReportFormatsButAlwaysKeepsAttachmentsAndReadme() {
-    val photo = attachment(id = "abcd1234", name = "inspection photo.jpg")
-    val bundle = thingBundle(
-      logs = listOf(
-        MaintenanceLog(
-          id = "log-1",
-          work_description = "Annual inspection",
-          component_type = ComponentType.COMPONENT_AIRFRAME,
-          attachments = listOf(photo),
+  fun buildEntries_onlyWritesSelectedReportFormatsButAlwaysKeepsAttachmentsAndReadme() =
+    runTest {
+      val photo = attachment(id = "abcd1234", name = "inspection photo.jpg")
+      val bundle = thingBundle(
+        logs = listOf(
+          MaintenanceLog(
+            id = "log-1",
+            work_description = "Annual inspection",
+            component_type = ComponentType.COMPONENT_AIRFRAME,
+            attachments = listOf(photo),
+          )
         )
       )
-    )
 
-    val entries = LogbookExportArchiveBuilder(
-      templateRegistry = BakedInTemplateRegistry(appVersionCode = Int.MAX_VALUE),
-    ).buildEntries(
-      request = ExportRequest(
-        thingIds = listOf(bundle.thing.id),
-        dateRange = ExportDateRange.AllTime,
-        includeOpenSquawks = true,
-        formats = setOf(ExportFormat.CSV),
-      ),
-      bundles = listOf(bundle),
-      attachmentManifests = mapOf(
-        bundle.thing.id to AttachmentExportManifest(
-          byAttachmentId = mapOf(
-            photo.id to AttachmentExportPayload(
-              attachmentId = photo.id,
-              relativePath = "attachments/abcd_inspection_photo.jpg",
-              bytes = "photo-bytes".encodeToByteArray(),
-            )
-          ),
-          notes = emptyList(),
-        )
-      ),
-      generatedAt = LocalDateTime(2026, 5, 20, 9, 30),
-      timeZone = TimeZone.UTC,
-    )
-      .associateBy { it.path }
+      val entries = LogbookExportArchiveBuilder(
+        templateRegistry = BakedInTemplateRegistry(appVersionCode = Int.MAX_VALUE),
+      ).buildEntries(
+        request = ExportRequest(
+          thingIds = listOf(bundle.thing.id),
+          dateRange = ExportDateRange.AllTime,
+          includeOpenSquawks = true,
+          formats = setOf(ExportFormat.CSV),
+        ),
+        bundles = listOf(bundle),
+        attachmentManifests = mapOf(
+          bundle.thing.id to AttachmentExportManifest(
+            byAttachmentId = mapOf(
+              photo.id to AttachmentExportPayload(
+                attachmentId = photo.id,
+                relativePath = "attachments/abcd_inspection_photo.jpg",
+                bytes = "photo-bytes".encodeToByteArray(),
+              )
+            ),
+            notes = emptyList(),
+          )
+        ),
+        generatedAt = LocalDateTime(2026, 5, 20, 9, 30),
+        timeZone = TimeZone.UTC,
+      )
+        .associateBy { it.path }
 
-    // CSV selected → CSV present; PDF and XLSX omitted.
-    assertThat(entries.keys).contains("$thingFolder/csv/00_Thing_Info.csv")
-    assertThat(entries.keys).doesNotContain("$thingFolder/N12345_Cessna_172.pdf")
-    assertThat(entries.keys).doesNotContain("$thingFolder/SquawkIt_Logs_N12345_20260520.xlsx")
-    // Attachments and README ride along regardless of the format selection.
-    assertThat(entries.keys).contains("$thingFolder/attachments/abcd_inspection_photo.jpg")
-    assertThat(entries.keys).contains("README.txt")
-  }
+      // CSV selected → CSV present; PDF and XLSX omitted.
+      assertThat(entries.keys).contains("$thingFolder/csv/00_Thing_Info.csv")
+      assertThat(entries.keys).doesNotContain("$thingFolder/N12345_Cessna_172.pdf")
+      assertThat(entries.keys).doesNotContain("$thingFolder/SquawkIt_Logs_N12345_20260520.xlsx")
+      // Attachments and README ride along regardless of the format selection.
+      assertThat(entries.keys).contains("$thingFolder/attachments/abcd_inspection_photo.jpg")
+      assertThat(entries.keys).contains("README.txt")
+    }
 
   @Test
-  fun buildEntries_multiThingUsesOneFolderPerThingAndRootReadme() {
+  fun buildEntries_multiThingUsesOneFolderPerThingAndRootReadme() = runTest {
     val secondThing =
       airplane("thing-2", "Beechcraft", "Bonanza", "BE35-1", "N54321")
     val firstBundle = thingBundle(
@@ -448,7 +450,7 @@ class LogbookExportArchiveBuilderTest {
   )
 
   @Test
-  fun buildEntries_writesAMileageTaskInItsOwnMeter() {
+  fun buildEntries_writesAMileageTaskInItsOwnMeter() = runTest {
     // A keyed rule used to fall through scheduleLabel's `else` and export as "Unknown", and both
     // meter columns read the three aeroplane hour doubles a car never writes — so a car's tasks
     // table was a column of blanks under a schedule nobody could act on.
@@ -530,7 +532,7 @@ class LogbookExportArchiveBuilderTest {
   }
 
   @Test
-  fun anAeroplanesTaskTableKeepsItsComponentColumn() {
+  fun anAeroplanesTaskTableKeepsItsComponentColumn() = runTest {
     // The other half of the rule above, and the one that matters: this column is real data on an
     // aeroplane — the task form sets it — so hiding it everywhere would have been a regression
     // dressed up as a cleanup.
@@ -566,7 +568,7 @@ class LogbookExportArchiveBuilderTest {
   }
 
   @Test
-  fun buildEntries_namesDataLogReferencesWithTheirDuration() {
+  fun buildEntries_namesDataLogReferencesWithTheirDuration() = runTest {
     val known =
       attachment(id = "ref-1", name = "Sep 02, 2026 · Ground run").copy(
         type = AttachmentType.ATTACHMENT_TYPE_DATA_LOG,
