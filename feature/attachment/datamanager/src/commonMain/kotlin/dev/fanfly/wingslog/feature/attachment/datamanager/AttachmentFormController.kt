@@ -8,14 +8,18 @@ import dev.fanfly.wingslog.feature.attachment.model.PickedFile
 import dev.fanfly.wingslog.feature.attachment.model.dataLogIds
 import dev.fanfly.wingslog.feature.attachment.model.fileCount
 import dev.fanfly.wingslog.feature.attachment.model.isFile
+import dev.fanfly.wingslog.feature.attachment.model.visible
 import dev.fanfly.wingslog.thing.Attachment
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -69,6 +73,19 @@ class AttachmentFormController(
   val pendingAttachments: StateFlow<List<PendingAttachment>> =
     _pendingAttachments.asStateFlow()
 
+  /** The list as the record last had it; stays empty on an add form, where nothing is saved yet. */
+  private val baseline = MutableStateFlow<List<PendingAttachment>>(emptyList())
+
+  /**
+   * True once the visible list differs from what [seedIfEmpty] loaded — an added file, link or
+   * data log reference, or a removal. Pending-deletes read as gone here, matching what the user
+   * sees. Owning ViewModels fold this into their own unsaved-changes check.
+   */
+  val hasChanges: Flow<Boolean> =
+    combine(_pendingAttachments, baseline) { pending, initial ->
+      pending.visible() != initial
+    }.distinctUntilChanged()
+
   private val _showPicker = MutableStateFlow(false)
   val showPicker: StateFlow<Boolean> = _showPicker.asStateFlow()
 
@@ -89,7 +106,9 @@ class AttachmentFormController(
    */
   fun seedIfEmpty(attachments: List<Attachment>) {
     if (_pendingAttachments.value.isNotEmpty()) return
-    _pendingAttachments.value = attachments.map { PendingAttachment.Saved(it) }
+    val seeded = attachments.map { PendingAttachment.Saved(it) }
+    _pendingAttachments.value = seeded
+    baseline.value = seeded
   }
 
   /**

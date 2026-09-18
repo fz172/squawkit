@@ -40,21 +40,23 @@ import dev.fanfly.wingslog.thing.SquawkPriority
 import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import wingslog.feature.comments.sharedassets.generated.resources.comment_delete_failed
-import wingslog.feature.comments.sharedassets.generated.resources.comment_edit_failed
-import wingslog.feature.comments.sharedassets.generated.resources.comment_post_failed
+import wingslog.core.sharedassets.generated.resources.delete_failed
 import wingslog.feature.attachment.sharedassets.generated.resources.add_file_failed
 import wingslog.feature.attachment.sharedassets.generated.resources.duplicate_file_skipped
 import wingslog.feature.attachment.sharedassets.generated.resources.file_too_large
 import wingslog.feature.attachment.sharedassets.generated.resources.files_over_limit_skipped
+import wingslog.feature.comments.sharedassets.generated.resources.comment_delete_failed
+import wingslog.feature.comments.sharedassets.generated.resources.comment_edit_failed
+import wingslog.feature.comments.sharedassets.generated.resources.comment_post_failed
 import kotlin.time.Clock
-import wingslog.core.sharedassets.generated.resources.delete_failed
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.attachment.sharedassets.generated.resources.Res as AttachRes
 import wingslog.feature.comments.sharedassets.generated.resources.Res as CommentsRes
@@ -131,6 +133,10 @@ class SquawkFormViewModel(
   val pendingAttachments: StateFlow<List<PendingAttachment>> =
     attachmentForm.pendingAttachments
   val showAttachmentPicker: StateFlow<Boolean> = attachmentForm.showPicker
+
+  /** Attachments added or removed since load — part of the form's unsaved-changes check. */
+  val hasAttachmentChanges: StateFlow<Boolean> = attachmentForm.hasChanges
+    .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
   private val _attachmentUploadEnabled = MutableStateFlow(false)
   val attachmentUploadEnabled: StateFlow<Boolean> =

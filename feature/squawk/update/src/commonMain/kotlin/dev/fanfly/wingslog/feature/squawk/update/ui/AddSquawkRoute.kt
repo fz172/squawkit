@@ -35,6 +35,7 @@ fun AddSquawkRoute(
   val pendingAttachments by viewModel.pendingAttachments.collectAsStateWithLifecycle()
   val showAttachmentPicker by viewModel.showAttachmentPicker.collectAsStateWithLifecycle()
   val attachmentUploadEnabled by viewModel.attachmentUploadEnabled.collectAsStateWithLifecycle()
+  val hasAttachmentChanges by viewModel.hasAttachmentChanges.collectAsStateWithLifecycle()
   val successMessage =
     stringResource(
       Res.string.squawk_added,
@@ -114,5 +115,6 @@ fun AddSquawkRoute(
         onAttachDataLogs = viewModel::attachDataLogs,
       )
     },
+    hasAttachmentChanges = hasAttachmentChanges,
   )
 }

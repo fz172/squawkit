@@ -104,6 +104,8 @@ fun SquawkFormScreen(
   modifier: Modifier = Modifier,
   snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
   attachmentSection: @Composable () -> Unit = {},
+  /** Attachments added or removed since load — unsaved until the form is saved. */
+  hasAttachmentChanges: Boolean = false,
   /** An unposted comment draft or an open inline editor — text that exists nowhere else yet. */
   hasCommentDraft: Boolean = false,
   commentsSection: @Composable () -> Unit = {},
@@ -117,7 +119,7 @@ fun SquawkFormScreen(
     if (isEdit) stringResource(Res.string.edit_squawk, squawk.singular)
     else stringResource(Res.string.add_squawk, squawk.singular)
 
-  val hasChanges = hasCommentDraft || if (isEdit) {
+  val hasChanges = hasCommentDraft || hasAttachmentChanges || if (isEdit) {
     state.title != state.initialTitle ||
       state.description != state.initialDescription ||
       state.priority != state.initialPriority ||

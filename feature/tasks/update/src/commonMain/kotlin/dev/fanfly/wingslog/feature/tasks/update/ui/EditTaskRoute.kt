@@ -44,6 +44,7 @@ fun EditTaskRoute(
   val showLogPicker by viewModel.showLogPicker.collectAsStateWithLifecycle()
   val isSaving by viewModel.isSaving.collectAsStateWithLifecycle()
   val attachmentUploadEnabled by viewModel.attachmentUploadEnabled.collectAsStateWithLifecycle()
+  val hasAttachmentChanges by viewModel.hasAttachmentChanges.collectAsStateWithLifecycle()
   val commentState by viewModel.commentState.collectAsStateWithLifecycle()
   val successState = uiState as? TaskUiState.Success
 
@@ -200,6 +201,7 @@ fun EditTaskRoute(
           onAttachDataLogs = viewModel::attachDataLogs,
         )
       },
+      hasAttachmentChanges = hasAttachmentChanges,
       hasCommentDraft = commentState.hasUnsavedInput,
       commentsSection = {
         val thread = viewModel.comments

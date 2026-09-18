@@ -13,6 +13,7 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
@@ -432,6 +433,59 @@ class AttachmentFormControllerTest {
 
     assertThat(controller.pendingAttachments.value).isEmpty()
     coVerify(exactly = 1) { attachmentManager.delete(local) }
+  }
+
+  // ---- hasChanges ----
+
+  @Test
+  fun hasChanges_afterSeedingOnly_isFalse() = runTest {
+    controller.seedIfEmpty(listOf(fileAttachment("a1"), linkAttachment("a2")))
+
+    assertThat(controller.hasChanges.first()).isFalse()
+  }
+
+  @Test
+  fun hasChanges_whenFileAdded_isTrue() = runTest {
+    controller.seedIfEmpty(listOf(fileAttachment("a1")))
+    coEvery {
+      attachmentManager.addPickedFile(THING_ID, any(), any())
+    } returns fileAttachment("new")
+
+    controller.addLocalFiles(listOf(pickedFile())) { }
+
+    assertThat(controller.hasChanges.first()).isTrue()
+  }
+
+  @Test
+  fun hasChanges_whenSavedFileRemoved_isTrue() = runTest {
+    controller.seedIfEmpty(listOf(fileAttachment("a1")))
+
+    controller.remove("a1")
+
+    assertThat(controller.hasChanges.first()).isTrue()
+  }
+
+  @Test
+  fun hasChanges_whenAddedFileIsRemovedAgain_isFalse() = runTest {
+    controller.seedIfEmpty(listOf(fileAttachment("a1")))
+    coEvery {
+      attachmentManager.addPickedFile(THING_ID, any(), any())
+    } returns fileAttachment("new")
+    controller.addLocalFiles(listOf(pickedFile())) { }
+
+    controller.remove("new")
+
+    assertThat(controller.hasChanges.first()).isFalse()
+  }
+
+  @Test
+  fun hasChanges_onAddFormWithNoSeed_isTrueOnceALinkIsAdded() = runTest {
+    every { attachmentManager.makeLink(any(), any()) } returns linkAttachment("l1")
+
+    assertThat(controller.hasChanges.first()).isFalse()
+    controller.addLink("https://example.com", "Example")
+
+    assertThat(controller.hasChanges.first()).isTrue()
   }
 
   // ---- resolveForSave ----
