@@ -5,10 +5,13 @@ import dev.fanfly.wingslog.core.storage.CollectionKind
 import dev.fanfly.wingslog.core.storage.EntityScope
 import dev.fanfly.wingslog.core.storage.EntityStore
 import dev.fanfly.wingslog.core.storage.EntityStoreFactory
+import dev.fanfly.wingslog.core.storage.StorageEntity
 import dev.fanfly.wingslog.core.storage.ThingScopeResolver
 import dev.fanfly.wingslog.thing.MaintenanceLog
+import dev.fanfly.wingslog.thing.Squawk
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.auth.FirebaseUser
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.flow.Flow
@@ -17,6 +20,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
+import kotlin.time.Instant
 
 private const val TEST_USER_ID = "test-user-123"
 private const val TEST_THING_ID = "thing-456"
@@ -27,6 +31,7 @@ class MaintenanceLogManagerImplTest {
   private lateinit var storeFactory: EntityStoreFactory
   private lateinit var logStore: EntityStore<MaintenanceLog>
   private lateinit var overviewStore: EntityStore<*>
+  private lateinit var squawkStore: EntityStore<Squawk>
   private lateinit var manager: MaintenanceLogManagerImpl
 
   @Before
@@ -34,12 +39,16 @@ class MaintenanceLogManagerImplTest {
     firebaseAuth = mockk(relaxed = true)
     logStore = mockk(relaxed = true)
     overviewStore = mockk(relaxed = true)
+    squawkStore = mockk(relaxed = true)
     storeFactory = mockk(relaxed = true)
 
     @Suppress("UNCHECKED_CAST")
     every { storeFactory.create<MaintenanceLog>(CollectionKind.MaintenanceLog) } returns logStore
     every { storeFactory.create<Any>(CollectionKind.MaintenanceOverview) } returns
       overviewStore as EntityStore<Any>
+    every { storeFactory.create<Squawk>(CollectionKind.Squawk) } returns squawkStore
+    every { logStore.observeAll(any()) } returns flowOf(emptyList())
+    every { squawkStore.observeAll(any()) } returns flowOf(emptyList())
 
     val mockUser = mockk<FirebaseUser>()
     every { mockUser.uid } returns TEST_USER_ID
@@ -90,6 +99,40 @@ class MaintenanceLogManagerImplTest {
       )
     }
   }
+
+  @Test
+  fun deleteLog_reopensTheSquawksItAddressed() = runTest {
+    val scope = EntityScope.thingChildUnsafe(TEST_USER_ID, TEST_THING_ID)
+    every { squawkStore.observeAll(scope) } returns flowOf(
+      listOf(
+        squawkRow("squawk-1", addressedBy = "log-1"),
+        squawkRow("squawk-2", addressedBy = "log-2"),
+        squawkRow("squawk-3", addressedBy = ""),
+      )
+    )
+
+    manager.deleteLog(TEST_THING_ID, "log-1")
+
+    coVerify(exactly = 1) {
+      squawkStore.put("squawk-1", Squawk(id = "squawk-1", addressed_by_log_id = ""), scope)
+    }
+    coVerify(exactly = 0) { squawkStore.put("squawk-2", any(), any()) }
+    coVerify(exactly = 0) { squawkStore.put("squawk-3", any(), any()) }
+  }
+
+  @Test
+  fun deleteLog_withNoAddressedSquawks_writesNoSquawks() = runTest {
+    manager.deleteLog(TEST_THING_ID, "log-1")
+
+    coVerify(exactly = 0) { squawkStore.put(any(), any(), any()) }
+  }
+
+  private fun squawkRow(id: String, addressedBy: String): StorageEntity<Squawk> =
+    StorageEntity(
+      id = id,
+      value = Squawk(id = id, addressed_by_log_id = addressedBy),
+      updatedAt = Instant.fromEpochSeconds(0),
+    )
 }
 
 /**
