@@ -13,6 +13,7 @@ import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.thing.MaintenanceOverview
 import dev.fanfly.wingslog.thing.MeterReading
+import dev.fanfly.wingslog.thing.Squawk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -30,6 +31,9 @@ class MaintenanceLogManagerImpl(
     storeFactory.create(CollectionKind.MaintenanceLog)
   private val overviewStore: EntityStore<MaintenanceOverview> =
     storeFactory.create(CollectionKind.MaintenanceOverview)
+  // Squawks are read here only to reopen the ones a deleted log addressed; see [reopenAddressed].
+  private val squawkStore: EntityStore<Squawk> =
+    storeFactory.create(CollectionKind.Squawk)
 
   @OptIn(ExperimentalCoroutinesApi::class)
   override fun observeLogAuthors(thingId: String): Flow<Map<String, String?>> =
@@ -111,9 +115,19 @@ class MaintenanceLogManagerImpl(
     runCatching {
       val scope = scopeResolver.resolveNow(thingId)
       logStore.delete(logId, scope)
+      reopenAddressed(logId, scope)
       refreshOverview(thingId, scope)
       true
     }.onFailure { logger.w(it) { "Error deleting log $logId" } }
+
+  // The fix was un-logged, so the squawks it closed are open again (#815). Matched on the stored
+  // `addressed_by_log_id` rather than the log's `squawk_ids`, which drifts when a log is edited.
+  private suspend fun reopenAddressed(logId: String, scope: EntityScope) {
+    squawkStore.observeAll(scope)
+      .first()
+      .filter { it.value.addressed_by_log_id == logId }
+      .forEach { squawkStore.put(it.id, it.value.copy(addressed_by_log_id = ""), scope) }
+  }
 
   // Overview is recomputed from the logs after every mutation. With local SQLite this is cheap,
   // and keeping the doc on disk lets observers read it without holding a logs-flow subscription.
