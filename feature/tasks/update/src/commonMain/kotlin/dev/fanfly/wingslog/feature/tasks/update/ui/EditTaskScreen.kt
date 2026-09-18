@@ -123,6 +123,8 @@ fun EditTaskScreen(
   onRemoveLog: (MaintenanceLog) -> Unit = {},
   snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
   attachmentSection: @Composable () -> Unit = {},
+  /** Attachments added or removed since load — unsaved until the form is saved. */
+  hasAttachmentChanges: Boolean = false,
   /** An unposted comment draft or an open inline editor — text that exists nowhere else yet. */
   hasCommentDraft: Boolean = false,
   commentsSection: @Composable () -> Unit = {},
@@ -135,7 +137,7 @@ fun EditTaskScreen(
   // cancel/back, so discarding continues into that option instead of just leaving the screen.
   var pendingResolveAction by remember { mutableStateOf<ResolveAction?>(null) }
 
-  val hasChanges = state.hasChanges || hasCommentDraft
+  val hasChanges = state.hasChanges || hasCommentDraft || hasAttachmentChanges
 
   val tryCancel = {
     if (hasChanges) showUnsavedChangesDialog = true else onCancel()

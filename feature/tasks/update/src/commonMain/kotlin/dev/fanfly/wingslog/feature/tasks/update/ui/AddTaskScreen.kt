@@ -104,11 +104,13 @@ fun AddTaskScreen(
   isSaving: Boolean = false,
   snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
   attachmentSection: @Composable () -> Unit = {},
+  /** Attachments added or removed since load — unsaved until the form is saved. */
+  hasAttachmentChanges: Boolean = false,
 ) {
   var showUnsavedChangesDialog by remember { mutableStateOf(false) }
   var showDatePicker by remember { mutableStateOf(false) }
 
-  val hasChanges = state.hasChanges
+  val hasChanges = state.hasChanges || hasAttachmentChanges
 
   val tryCancel = {
     if (hasChanges) showUnsavedChangesDialog = true else onCancel()

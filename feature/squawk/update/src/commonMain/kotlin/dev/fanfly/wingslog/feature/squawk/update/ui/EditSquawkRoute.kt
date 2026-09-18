@@ -39,6 +39,7 @@ fun EditSquawkRoute(
   val pendingAttachments by viewModel.pendingAttachments.collectAsStateWithLifecycle()
   val showAttachmentPicker by viewModel.showAttachmentPicker.collectAsStateWithLifecycle()
   val attachmentUploadEnabled by viewModel.attachmentUploadEnabled.collectAsStateWithLifecycle()
+  val hasAttachmentChanges by viewModel.hasAttachmentChanges.collectAsStateWithLifecycle()
   val commentState by viewModel.commentState.collectAsStateWithLifecycle()
   val squawkWord =
     LexiconFormatter.sentenceCase(LocalThingLexicon.current.squawkNoun)
@@ -133,6 +134,7 @@ fun EditSquawkRoute(
         onAttachDataLogs = viewModel::attachDataLogs,
       )
     },
+    hasAttachmentChanges = hasAttachmentChanges,
     hasCommentDraft = commentState.hasUnsavedInput,
     commentsSection = {
       val thread = viewModel.comments

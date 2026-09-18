@@ -49,10 +49,12 @@ import dev.gitlive.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import wingslog.feature.attachment.sharedassets.generated.resources.add_file_failed
@@ -209,6 +211,10 @@ class TaskViewModel(
   val pendingAttachments: StateFlow<List<PendingAttachment>> =
     attachmentForm.pendingAttachments
   val showAttachmentPicker: StateFlow<Boolean> = attachmentForm.showPicker
+
+  /** Attachments added or removed since load — part of the form’s unsaved-changes check. */
+  val hasAttachmentChanges: StateFlow<Boolean> = attachmentForm.hasChanges
+    .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
   private val _isSaving = MutableStateFlow(false)
   val isSaving: StateFlow<Boolean> = _isSaving.asStateFlow()

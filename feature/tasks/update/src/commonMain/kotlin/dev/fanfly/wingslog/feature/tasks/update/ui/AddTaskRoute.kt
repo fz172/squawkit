@@ -36,6 +36,7 @@ fun AddTaskRoute(
   val showAttachmentPicker by viewModel.showAttachmentPicker.collectAsStateWithLifecycle()
   val isSaving by viewModel.isSaving.collectAsStateWithLifecycle()
   val attachmentUploadEnabled by viewModel.attachmentUploadEnabled.collectAsStateWithLifecycle()
+  val hasAttachmentChanges by viewModel.hasAttachmentChanges.collectAsStateWithLifecycle()
   val successState = uiState as? TaskUiState.Success
 
   val successMessage = stringResource(Res.string.task_added)
@@ -127,6 +128,7 @@ fun AddTaskRoute(
           onAttachDataLogs = viewModel::attachDataLogs,
         )
       },
+      hasAttachmentChanges = hasAttachmentChanges,
     )
   }
 }
