@@ -314,12 +314,12 @@ deliberate step rather than the only way to learn anything about the file.
 
 These are defects, not design debt. Each is a small PR and none depends on anything above.
 
-| # | Bug | Where |
-|---|---|---|
-| UI-B1 | `FlightLand` icon renders unconditionally — the home dashboard shows an aeroplane landing on a house | `AogAlertSection.kt` |
+| #     | Bug                                                                                                                                           | Where                                                               |
+|-------|-----------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------|
+| UI-B1 | `FlightLand` icon renders unconditionally — the home dashboard shows an aeroplane landing on a house                                          | `AogAlertSection.kt`                                                |
 | UI-B2 | The section FAB overlaps the nav pill and the last list row on every compact list screen; `LocalNavPillClearance` exists and is not respected | `ThingSectionContent.kt:127-180`, `FloatingPillNavigationBar.kt:37` |
-| UI-B3 | Two *Upload Data Log* controls visible at once on desktop | data-log section content |
-| UI-B4 | New squawk's primary button reads `SAVE CHANGES` on a record that does not exist yet | `feature/squawk/update` |
+| UI-B3 | Two *Upload Data Log* controls visible at once on desktop                                                                                     | data-log section content                                            |
+| UI-B4 | New squawk's primary button reads `SAVE CHANGES` on a record that does not exist yet                                                          | `feature/squawk/update`                                             |
 
 ### UI-21 · Regenerate store screenshots
 
