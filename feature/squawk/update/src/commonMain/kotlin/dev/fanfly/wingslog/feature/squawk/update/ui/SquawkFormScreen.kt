@@ -68,6 +68,7 @@ import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.danger_zone
+import wingslog.core.sharedassets.generated.resources.save_changes
 import wingslog.feature.squawk.sharedassets.generated.resources.Res
 import wingslog.feature.squawk.sharedassets.generated.resources.add_squawk
 import wingslog.feature.squawk.sharedassets.generated.resources.delete_this_squawk_subtitle
@@ -302,6 +303,13 @@ fun SquawkFormScreen(
       BottomButtons(
         onPrimaryClick = onSave,
         onSecondaryClick = { tryBack() },
+        // "Save Changes" on a record that does not exist yet. New forms name the creation, the way
+        // the thing form already does; editing keeps the default.
+        primaryLabel = if (isEdit) {
+          stringResource(CoreRes.string.save_changes)
+        } else {
+          stringResource(Res.string.add_squawk, squawk.singular)
+        },
         primaryEnabled = !state.isSaving,
         isPrimaryFunctionInProgress = state.isSaving,
         onDangerClick = when {
