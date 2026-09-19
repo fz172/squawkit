@@ -202,13 +202,19 @@ Two structural tones, one personality accent used sparingly, two semantic anchor
 ### Named Rules
 **The Mono Rule.** JetBrains Mono is reserved for technical data: identifiers (tail numbers, VINs, hull IDs, frame numbers), serial numbers, and meter readings (tach/Hobbs time, odometer, engine hours). It never appears in UI chrome (buttons, labels, navigation, body copy).
 
-**The Uppercase Commitment Rule.** All button labels render UPPERCASE with Bold weight. Sentence case everywhere else. Uppercase signals commitment; a button is a decision, not an option.
+**The Uppercase Commitment Rule.** Uppercase belongs to exactly two things: **button labels** (Bold) and **status badges** (`StatusChip`, §5). Sentence case everywhere else — screen titles, section labels, field labels, field values, metadata, empty-state copy. Uppercase signals commitment; a button is a decision, not an option, and a badge is a verdict.
+
+The rule has always said "sentence case everywhere else"; what it lacked was the badge exception and a list of the places that drifted. Screen titles (`UPDATE WORK LOG`), section labels (`COMPONENT TYPE`), field labels (`FormTextField` calls `.uppercase()` on every one), read-only values (`AIRFRAME`, `ROUTINE`) and list counts (`36 ENTRIES`) are all outside the two permitted cases. Uniform emphasis is the same as no emphasis, and mass uppercase reads slower.
 
 ## 4. Elevation
 
-Material 3 tonal elevation throughout. Depth is expressed through surface color shifts, not cast shadows. No custom shadow vocabulary exists. Surfaces at higher effective elevation receive a stronger wash of the primary (instrument blue) tone via M3's tonal layering system.
+Material 3 tonal elevation throughout. Depth is expressed through surface color shifts, not cast shadows. No custom shadow vocabulary exists.
 
-Surface hierarchy, lightest to deepest: `background` → `surface` → `surfaceContainer` → `surfaceContainerHigh`. Each step is slightly warmer toward the primary blue. Cards live at `surfaceContainer`. Overlaid sheets (bottom sheets, dialogs) float above `surface` through M3's scrim.
+**The neutral roles are authored, not inherited.** `Theme.kt` declares every neutral — `background`, `surface`, `surfaceContainerLowest` through `surfaceContainerHighest`, `surfaceVariant`, `outline`, `outlineVariant` and their `on*` pairs — on the instrument hue (≈251 in oklch). It does **not** fall through to the Material 3 baseline scheme, whose neutrals are violet-leaning and belong to a different brand. A scheme that overrides only `primary`/`secondary`/`tertiary` leaves every surface in the app the wrong colour.
+
+Surface hierarchy, lightest to deepest in light mode and darkest to lightest in dark: `background` → `surface` → `surfaceContainerLow` → `surfaceContainer` → `surfaceContainerHigh` → `surfaceContainerHighest`. Each step is a cool blue-grey, one perceptible step from its neighbour. Cards live at `surfaceContainer`. Overlaid sheets (bottom sheets, dialogs) float above `surface` through M3's scrim.
+
+**The separation is the ramp's job, not a border's.** If a card needs a 1dp `outlineVariant` stroke to be visible against the surface behind it, the two surface assignments are wrong. Borders are for emphasis — a status accent, a selected state — never for making a container exist.
 
 **The No-Shadow Rule.** Do not introduce custom elevation parameters or manual shadow modifiers. If visual separation feels insufficient, the tonal hierarchy is not doing its job — fix the surface color assignment, not the shadow. Tonal elevation is the system; cast shadows are not.
 
@@ -277,13 +283,15 @@ Overdue/DueSoon cards get a 1dp left-border accent at `statusTone.accent.copy(al
 ### Don't:
 - **Don't** expose multi-step complexity on a single form. Use tabs or wizard flows; a single form is for simple, linear operations.
 - **Don't** use spreadsheet-style tables, dense grid layouts, or raw data dumps on primary screens. Complexity lives one level deeper.
-- **Don't** use gradient text, glassmorphism fills, hero-metric grids (big number + label + supporting stats + gradient), or identical icon-card grids. These are the SaaS dashboard aesthetic this system rejects.
+- **Don't** use gradient text, glassmorphism fills, hero-metric grids (big number + label + supporting stats + gradient), or identical icon-card grids. These are the SaaS dashboard aesthetic this system rejects. The target is the decorative marketing grid; a row of plain readings is not automatically one.
+- **Do** give every number on a dashboard something that makes it answerable. A bare `1174.9` beside `1124.9` beside `1109.9` is three near-identical figures the reader cannot act on. The minimum is when it was taken (`as of 5 Sep`, from the latest log); better is distance to a threshold, but **only where the Thing's DNA actually declares one**. Inventing an interval the template does not hold — a countdown to an overhaul nobody recorded — is worse than the bare number.
 - **Don't** use Instrument Amber for anything non-advisory: no brand accents, no empty-state illustrations, no "interesting" visual moments.
 - **Don't** use `border-left` or `border-right` stripes greater than 1dp as decorative callout accents. Rewrite with full-border containers or background tints.
 - **Don't** introduce custom shadow or `elevation` modifier values. Tonal elevation handles depth. One sanctioned exception: `SwipeActionCard` lifts the dragged card on a shadow that exists only while the gesture is in flight, because tonal elevation tints and cannot say *above*, which is the whole point of a card sliding off its own controls.
 - **Don't** use Space Grotesk for body text, form field values, or dense data labels. It is for headings and titles only.
 - **Don't** use JetBrains Mono for anything that is not a technical measurement or identifier. No buttons, no labels, no body copy.
-- **Don't** add decorative motion: no orchestrated entrances, no elastic or bounce easing, no scroll-driven choreography. Motion is state feedback only (150–250ms, ease-out). A gesture the user is still holding may use a front-loaded ease-out curve inside that budget — `SwipeActionCard`'s `cubic-bezier(.32,.72,0,1)` — so the card reads as attached to the finger rather than played back at it.
+- **Don't** add decorative motion: no orchestrated entrances, no elastic or bounce easing, no scroll-driven choreography. A gesture the user is still holding may use a front-loaded ease-out curve inside the standard budget — `SwipeActionCard`'s `cubic-bezier(.32,.72,0,1)` — so the card reads as attached to the finger rather than played back at it.
+- **Do** use continuity motion, which is not decoration. Motion that explains where something went is required, not optional: a shared-axis transition between sections, a container transform from a row into its detail, `animateItem` when a list gains or loses a row, a crossfade rather than a cut when content is replaced in place. A screen that teleports makes the user re-read it to find out what changed. Durations and easings come from `Motion.kt`, the same way spacing comes from `Spacing.kt`; the standard budget is 150–250ms, ease-out.
 
 ---
 
@@ -364,7 +372,7 @@ There is no fleet list screen. The **adaptive shell** (`core/ui/adaptive/Adaptiv
 
 | Section | Source | Layout |
 |-----|---|---|
-| Dashboard (`feature/thing/dashboard`) | Aggregated | Vertical flow: hero → data card → alerts → stats (compact); hero → data card → two-column rail (wide) |
+| Dashboard (`feature/thing/dashboard`) | Aggregated | Vertical flow: hero → alerts → data card → work logs (compact); the same order with a two-column rail (wide) |
 | Squawks (`feature/squawk/viewing`) | `SquawkWithStatus` | Vertical card list + segmented filter (Open/Closed) — named from the lexicon |
 | Tasks (`feature/tasks/viewing`) | `MaintenanceTaskWithStatus` | Vertical card list + segmented filter (Due/History) |
 | Logs (`feature/logs/viewing`) | `MaintenanceLog` | Vertical card list + segmented filter |
@@ -374,12 +382,16 @@ Which sections exist is a template capability (`capabilities.sections`); the lab
 **Dashboard layout priority (rule-driven, not alphabetical):**
 
 1. **Hero** — the Thing's title and, where the template marks one, its primary identifier (`OverviewHero`)
-2. **Data card** — collapsible spec and component tree (`ThingDataCard`, `ThingSpecBlock`, `ComponentChips`); Edit and Manage Access for owners
-3. **Down-state alert** — open top-priority defects (`AogAlertSection`) — **only if any exist**
-4. **Critical alerts** — overdue / due-soon tasks (`CriticalAlertSection`) — **only if any exist**
-5. **Maintenance summary** — log stats (`LogStatsSection`) once a log exists; otherwise `LogOnboardingCard`, whose copy is the template's `log_onboarding_hint`
+2. **Down-state alert** — open top-priority defects (`AogAlertSection`) — **only if any exist**
+3. **Needs attention** — overdue / due-soon tasks as tappable rows (`CriticalAlertSection`) — **only if any exist**. The header carries the full count and a link to the section; the dashboard aggregates, so it previews rather than lists.
+4. **Thing data card** — spec fields, the component tree and the current meter readings (`ThingDataCard`, `ThingSpecBlock`, `ComponentChips`); Update and Manage Access for owners
+5. **Work logs** — a section header carrying the log count and a link, plus the most recent entry; otherwise `LogOnboardingCard`, whose copy is the template's `log_onboarding_hint`
 
-When there are no overdue tasks, the data card expands by default. When work is overdue it collapses — attention goes to what matters first.
+**Status precedes identity.** Alerts sit above the data card, not below it, so a Thing that needs attention says so before the reader scrolls past a card describing it. The card is what the Thing *is*; the alerts are what it *needs*, and §10's hierarchy says need comes first.
+
+**The data card does not collapse.** It stays expanded, because the alerts are already above it and there is nothing left for collapsing to protect. The earlier rule — expand when healthy, collapse when overdue — existed only to stop the card burying the alerts, and reordering solves that directly. A dashboard that keeps its shape regardless of health is easier to read than one that rearranges itself, and Update and Manage Access stay one tap away instead of two.
+
+Meter readings live inside the data card rather than in a separate summary: they are facts about the Thing, like its serial number. See §6 on what a number needs beside it.
 
 A Thing whose DNA this build cannot interpret renders `DegradedThingContent` instead of the sections (`template_system_design.md` §6.2).
 
@@ -426,36 +438,43 @@ The shell switches to the new Thing when the form closes.
 ┌──────────────────────────────────────────────┐
 │ Volar T2i        N1234X                      │ ← OverviewHero (title + identifier, heroDisplay)
 │                                              │
-│ ┌──────── AIRCRAFT DATA (collapsible) ──────┐│ ← ThingDataCard; heading = the lexicon's thing noun
-│ │ Make  Volar     Model  T2i     S/N  …      ││ ← ThingSpecBlock: the template's spec fields
-│ │ ENGINE 1         Rotax 915       S/N  …    ││ ← ComponentChips: the slot tree, one row per
-│ │ Propeller        Airmaster       S/N  …    ││   component (a home has none of this section)
-│ └─────────────────────────────────────────────┘│
-│                                              │
-│ ┌─── ✈ AOG ALERT ────────────────┐          │ ← AogAlertSection (only if any); title is
-│ │ [●] O2 pressure leaking         │          │   down_status_long — "Aircraft on Ground",
-│ │            VIEW SQUAWKS         │          │   "Off the road", "Needs urgent attention"
-│ └──────────────────────────────────┘          │
-│                                              │
-│ ┌─── MAINTENANCE DUE ──────────────────────┐│ ← CriticalAlertSection (only if overdue / due soon)
-│ │ [●] 100-hour inspection  OVERDUE 03/15    ││
-│ │ [●] Annual                 DUE 14 DAYS     ││
+│ ┌─── ✈ AOG ALERT ──────────────────────────┐│ ← AogAlertSection (only if any); title is
+│ │ [●] O2 pressure leaking                   ││   down_status_long — "Aircraft on Ground",
+│ │            VIEW SQUAWKS                    ││   "Off the road", "Needs urgent attention"
 │ └────────────────────────────────────────────┘│
 │                                              │
-│ MAINTENANCE SUMMARY                          │ ← LogStatsSection: one cell per declared meter
-│ ┌──────────────┐ ┌──────────────┐            │   plus the log count — or LogOnboardingCard
-│ │ 1432.5 hrs   │ │ 1428.1 hrs   │            │   until the first log
-│ │ AIRFRAME     │ │ ENGINE       │            │
-│ └──────────────┘ └──────────────┘            │
+│ Needs attention · 4              All tasks   │ ← CriticalAlertSection (only if overdue /
+│  ● 100-hour inspection                     › │   due soon). Tappable rows, not bullets;
+│    Overdue by 12 days                        │   the header carries the count and the link
+│  ● Annual                                  › │
+│    Due in 14 days                            │
+│                                              │
+│ ┌──────── AIRCRAFT DATA ────────────────────┐│ ← ThingDataCard; heading = the lexicon's
+│ │ Make  Volar          Model  T2i            ││   thing noun. Always expanded (§8)
+│ │ Serial 4417          Year   2021           ││ ← ThingSpecBlock: the template's spec fields
+│ │ ───────────────────────────────────────    ││
+│ │ Meters                      as of 5 Sep    ││ ← the declared meters, each with the date
+│ │ 1432.5 hrs   1428.1 hrs   1410.2 hrs       ││   it was taken. No interval the DNA does
+│ │ Airframe     Engine       Propeller        ││   not hold (§6)
+│ │ ───────────────────────────────────────    ││
+│ │ Engine     Rotax 915           S/N  …      ││ ← ComponentChips: the slot tree, one row per
+│ │ Propeller  Airmaster           S/N  …      ││   component (a home has none of this section)
+│ │                  MANAGE ACCESS   UPDATE    ││
+│ └────────────────────────────────────────────┘│
+│                                              │
+│ Work logs · 8                     All logs   │ ← the log count as a header that also links;
+│  Replaced left magneto                       │   most recent entry beneath it — or
+│  5 Sep · J. Rivera                           │   LogOnboardingCard until the first log
 └──────────────────────────────────────────────┘
 ```
 
-On MEDIUM and wider tiers the same content lays out as hero → data card → a two-column rail (`DashboardLowerGrid`): recent logs and open defects side by side.
+On MEDIUM and wider tiers the same order holds — hero → alerts → data card — with a two-column rail beneath (`DashboardLowerGrid`): recent logs and open defects side by side.
 
 **Dashboard rules:**
 - Down-state alerts above all — immediate operational stop, in the template's word for it
-- Critical alerts below — compliance work requiring attention
-- Health determines card expansion: no overdue → expand the data card; overdue → collapse it
+- Needs attention below them — compliance work requiring attention, as tappable rows with a count and a link, not a bullet list
+- The data card sits under the alerts and stays expanded; health never changes the dashboard's shape (§8)
+- Meter readings live inside the data card, each with the date it was taken
 - Every heading, label and empty line comes from the template; `Spacing.screenPadding` = 16dp on all content
 
 ### 9D. Squawks section (`feature/squawk/viewing/`)
@@ -526,7 +545,7 @@ An empty Due list shows `EmptyState` with the template's `task_hint`, and — wh
 | FleetEmptyState | `feature/fleet/viewing/FleetEmptyState.kt` | Empty account: add a Thing or redeem an invite |
 | PickThingTypeSheet | `feature/thing/update/PickThingTypeSheet.kt` | Bottom sheet, preset grid |
 | StarterPackRoute | `feature/tasks/update/starter/StarterPackRoute.kt` | Checklist form with Add / Skip |
-| ThingDataCard | `feature/thing/dashboard/compose/ThingDataCard.kt` | Collapsible spec block + component chips |
+| ThingDataCard | `feature/thing/dashboard/compose/ThingDataCard.kt` | Spec block, meter readings and component chips; always expanded (§8) |
 | DegradedThingContent | `feature/thing/dashboard/compose/DegradedThingContent.kt` | Read-only fallback for uninterpretable DNA |
 | MaintenanceLogCard | `feature/logs/viewing/log/compose/MaintenanceLogCard.kt` | Card with optional component badge + divider |
 | TaskCard | `feature/tasks/viewing/TaskCard.kt` | Card with icon + label/value + status border |
@@ -534,10 +553,14 @@ An empty Due list shows `EmptyState` with the template's `task_hint`, and — wh
 | StatusChip | `core/ui/.../StatusChip.kt` | Pill, status-tier tinted |
 | AogAlertSection | `feature/squawk/viewing/AogAlertSection.kt` | Icon + title + list + action bar |
 | CriticalAlertSection | `feature/tasks/viewing/CriticalAlertSection.kt` | Title + list + action bar |
-| LogStatsSection | `feature/thing/dashboard/compose/LogStatsSection.kt` | Title + card with one stat cell per meter |
+| ~~LogStatsSection~~ | — | Removed. Meter readings moved into `ThingDataCard`; the log count became the Work logs section header (§8) |
 | DetailSheet | `core/ui/.../DetailSheet.kt` | Bottom sheet on compact, end drawer above |
 | EmptyState | `core/ui/.../EmptyState.kt` | Centered icon+title+desc+action |
 | GroupedRows | `core/ui/.../GroupedRows.kt` | Settings-style grouped rows, checkbox rows |
+| ListRow | `core/ui/.../ListRow.kt` | The list row: leading slot, title, metadata line, trailing slot. One implementation for every list |
+| SectionHeader | `core/ui/.../SectionHeader.kt` | Sticky group header — the tier on a squawk list, the month on a log list |
+| DangerZone | `core/ui/.../DangerZone.kt` | The one home for destructive actions, at the end of a form |
+| SkeletonList | `core/ui/.../SkeletonList.kt` | Loading placeholder shaped like the rows it replaces |
 | DualSegmentedFilter | `core/ui/.../DualSegmentedFilter.kt` | Two-segment list filter |
 
 ---
@@ -552,4 +575,4 @@ This is the non-negotiable information priority that shapes every screen, in eve
 4. **POSITIVE** (COMPLIED, green) — completed / ready, in the template's `ready_status` word
 5. **NEUTRAL** (normal, slate) — low-priority status
 
-The tiers and their colors are fixed; only the words on them come from the template. When health is fully positive (no OVERDUE, no DUE SOON), the data card expands by default. When anything is overdue, it collapses — attention goes to what matters.
+The tiers and their colors are fixed; only the words on them come from the template. On the dashboard this hierarchy is expressed by order, not by collapsing: alerts sit above the Thing data card, which stays expanded whatever the health (§8).

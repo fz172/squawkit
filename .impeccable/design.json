@@ -155,8 +155,9 @@
       { "name": "The Advisory Rule", "body": "Instrument Amber (tertiary) appears on ≤10% of any given screen. Its power comes from scarcity. A screen full of amber has no amber.", "section": "colors" },
       { "name": "The Semantic Lock Rule", "body": "Airworthy Green and Caution Amber are semantic signals, not decorative colors. They may not appear for brand moments, empty state illustrations, or visual interest.", "section": "colors" },
       { "name": "The Mono Rule", "body": "JetBrains Mono is reserved for technical data: identifiers (tail numbers, VINs, hull IDs), serial numbers, meter readings (tach/Hobbs time, odometer, engine hours). It never appears in UI chrome.", "section": "typography" },
-      { "name": "The Uppercase Commitment Rule", "body": "All button labels render UPPERCASE with Bold weight. Sentence case everywhere else. Uppercase signals commitment; a button is a decision, not an option.", "section": "typography" },
-      { "name": "The No-Shadow Rule", "body": "Do not introduce custom elevation parameters or manual shadow modifiers. Tonal elevation is the system. If separation feels insufficient, fix the surface color assignment.", "section": "elevation" }
+      { "name": "The Uppercase Commitment Rule", "body": "Uppercase belongs to exactly two things: button labels (Bold) and status badges. Sentence case everywhere else \u2014 screen titles, section labels, field labels, field values, metadata, empty-state copy. Uppercase signals commitment; a button is a decision, not an option, and a badge is a verdict.", "section": "typography" },
+      { "name": "The No-Shadow Rule", "body": "Do not introduce custom elevation parameters or manual shadow modifiers. Tonal elevation is the system. The neutral roles are authored on the instrument hue in Theme.kt, never inherited from the Material 3 baseline; if a card needs a 1dp border to be visible, the surface assignments are wrong, not the border.", "section": "elevation" },
+      { "name": "The Continuity Motion Rule", "body": "Motion that explains where something went is required, not decoration: shared-axis between sections, container transform from a row into its detail, animateItem on list change, crossfade rather than a cut. Decorative motion stays banned \u2014 no orchestrated entrances, no bounce, no scroll choreography. Durations and easings come from Motion.kt.", "section": "motion" }
     ],
     "dos": [
       "Do use WingslogTypography.dataLarge / dataMedium / dataSmall (JetBrains Mono) for every tail number, serial number, engine hour, tach time, and airframe hour.",
@@ -167,7 +168,9 @@
       "Do render button labels UPPERCASE + Bold.",
       "Do prefer tonal surface hierarchy over manual shadows.",
       "Do use DetailSheet (bottom sheet, always fully expanded) for record details.",
-      "Do disable dynamic color. The aviation palette is the brand."
+      "Do disable dynamic color. The aviation palette is the brand.",
+      "Do use continuity motion between states \u2014 shared axis, container transform, animateItem \u2014 from the Motion.kt tokens.",
+      "Do order the dashboard hero \u2192 alerts \u2192 data card \u2192 work logs. Status precedes identity, and the data card stays expanded whatever the health."
     ],
     "donts": [
       "Don't expose multi-step complexity on a single form. Use tabs or wizard flows.",
@@ -178,7 +181,8 @@
       "Don't introduce custom shadow or elevation modifier values.",
       "Don't use Space Grotesk for body text, form field values, or dense data labels.",
       "Don't use JetBrains Mono for anything that is not a technical measurement or identifier.",
-      "Don't add decorative motion: no orchestrated entrances, no elastic or bounce easing."
+      "Don't add decorative motion: no orchestrated entrances, no elastic or bounce easing. Continuity motion \u2014 shared axis, container transform, animateItem \u2014 is required, not decoration.",
+      "Don't leave a dashboard number bare. A reading needs at least the date it was taken; a countdown is allowed only where the Thing's DNA declares the interval."
     ]
   }
 }
