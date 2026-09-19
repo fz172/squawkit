@@ -1,6 +1,6 @@
 # Design Doc: UI Modernization
 
-**Status:** 📋 Proposed
+**Status:** 📋 Proposed — tracked in project #15, issues #1071–#1101
 **Last updated:** 2026-09-19
 **Mocks:** before/after canvas — https://claude.ai/artifact/C2MnVWeHCmMR9af1euAD1f
 
@@ -188,7 +188,9 @@ and move Delete into it at the end of the form for all four entities — tasks a
 one, work log and Thing gain it. Reserve bottom padding equal to the bar height so the bar never
 overlays fields (today `BLADE 1/2/3` sit behind it on the Thing form).
 
-Resolve leaves the bar; see §8 for the open question about where it lands.
+Resolve leaves the bar for the detail sheet (§9 D1), in the entity-specific shape D2 sets out:
+*Resolve* with Fixed / Dismiss on a squawk, *Log work* with *Skip this cycle* on a task. The two are
+not the same action and must not share a design.
 
 - **Files:** `BottomButtons.kt`, new `DangerZone.kt`, the four form screens.
 - **Ships alone:** all four forms move together, so the bar means one thing in every release.
@@ -349,13 +351,44 @@ Everything else can land in any order, including in parallel. Suggested sequence
 
 ---
 
-## 9. Open decisions
+## 9. Decisions
 
-| # | Question | Why it blocks |
+All three settled 2026-09-19.
+
+### D1 — Resolve moves to the detail sheet ✅
+
+Resolve leaves the action bar (UI-6) and becomes the detail sheet's primary action, alongside the
+swipe action `SwipeActionCard` already carries on squawk and task rows. It changes a record's state,
+not its fields, and edit forms are for fields. The decisive argument is that its current position is
+undefined rather than merely inconsistent: tapping Resolve beside Save with unsaved edits has no
+defined behaviour.
+
+### D2 — Resolve is **not** one action ✅
+
+It is two different things wearing one label, and the detail sheets must not share a design.
+
+| | Squawk | Task |
 |---|---|---|
-| D1 | Where does **Resolve** go once it leaves the action bar? Proposed: the detail sheet's primary action, plus the existing swipe action. | UI-6 removes it from the bar; it needs a home first. Today, tapping Resolve with unsaved edits has no defined behaviour, which is the real reason it cannot stay. |
-| D2 | Is **Resolve the same action as Log work** on a task? If logging work is how a task is complied, they are one action under two names. | Decides what the task detail pane's primary action says (UI-18). |
-| D3 | Do **attachment filenames** stay as-is in the detail sheet? Previews are settled out of the list; the sheet still shows `PXL_20260825_163459701.PORTRAIT.jpg · Image · 930 KB`. | Separate surface, separate decision; not in any unit above. |
+| Menu | `ResolveOptionsMenu` (`feature/squawk/viewing`) | `ResolveTaskOptionsMenu` (`feature/tasks/viewing`) |
+| Options | `fixed_option_label` → ADDRESSED, links `addressed_by_log_id` through `LogPickerSheet`; `dismiss_no_work_planned` → DISMISSED | `create_work_log_option` → comply by logging work; `skip_this_cycle_option` → skip |
+| Shape | A state machine with a terminal state | A recurring schedule being advanced |
+| Reverse | Yes — the button becomes **Reopen** when dismissed (`SquawkFormScreen.kt:308-315`) | None. A task has no end state; resolving produces the next due date |
+
+Consequences:
+
+- **Squawk detail sheet** — primary action *Resolve*, offering *Fixed* (pick the log that addressed
+  it) and *Dismiss — no work planned*. The primary action is **state-dependent**: it reads *Reopen*
+  on a dismissed squawk.
+- **Task detail sheet** — the primary action is **Log work**, not Resolve, with *Skip this cycle*
+  beside it. `LOG WORK` on the tablet detail pane mock is therefore right, but Skip has to sit with
+  it or the schedule cannot be advanced without logging work that never happened.
+
+This lands with UI-18 and UI-6.
+
+### D3 — Attachment filenames stay as they are ✅
+
+No previews and no thumbnails, in the list *or* the detail sheet. The sheet keeps filename and file
+type, as today. UI-12 already puts an `N files` count in the log row metadata; nothing else changes.
 
 ---
 
