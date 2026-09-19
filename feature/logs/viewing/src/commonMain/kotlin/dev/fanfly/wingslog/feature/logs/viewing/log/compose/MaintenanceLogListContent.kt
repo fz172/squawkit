@@ -39,7 +39,7 @@ import dev.fanfly.wingslog.core.template.logEmptyHint
 import dev.fanfly.wingslog.core.template.logNoun
 import dev.fanfly.wingslog.core.template.technicianNoun
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
-import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalNavPillClearance
+import dev.fanfly.wingslog.core.ui.adaptive.compose.navPillAndFabClearance
 import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
 import dev.fanfly.wingslog.core.ui.common.compose.SwipeActionCard
 import dev.fanfly.wingslog.core.ui.common.compose.jumpTargetHighlight
@@ -421,8 +421,7 @@ fun MaintenanceLogListContent(
                   end = Spacing.screenPadding,
                   top = Spacing.small,
                   // Room for the add-FAB, plus the floating pill this list now scrolls beneath
-                  // (LocalNavPillClearance is 0 on non-compact tiers, where there is no pill).
-                  bottom = Spacing.buttonHeight + Spacing.extraLarge + LocalNavPillClearance.current
+                  bottom = navPillAndFabClearance
                 ),
                 verticalArrangement = Arrangement.spacedBy(Spacing.medium)
               ) {

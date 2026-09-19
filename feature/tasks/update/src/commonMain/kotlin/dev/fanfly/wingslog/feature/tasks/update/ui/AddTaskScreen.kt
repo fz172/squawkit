@@ -329,6 +329,8 @@ fun AddTaskScreen(
       BottomButtons(
         onPrimaryClick = { onSave(buildDraft()) },
         onSecondaryClick = { tryCancel() },
+        // Nothing has been changed yet on a task that does not exist; name the creation instead.
+        primaryLabel = stringResource(SharedTaskRes.string.add_task),
         primaryEnabled = state.title.isNotBlank(),
         isPrimaryFunctionInProgress = isSaving
       )

@@ -28,7 +28,7 @@ import dev.fanfly.wingslog.core.template.componentTypesApply
 import dev.fanfly.wingslog.core.template.taskNoun
 import dev.fanfly.wingslog.core.template.thingNoun
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
-import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalNavPillClearance
+import dev.fanfly.wingslog.core.ui.adaptive.compose.navPillAndFabClearance
 import dev.fanfly.wingslog.core.ui.common.compose.rememberSwipeRevealController
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.logs.sharedassets.util.displayName
@@ -147,7 +147,7 @@ fun MaintenanceTasksTab(
       .onGloballyPositioned { contentTopY = it.positionInRoot().y }
       .padding(horizontal = Spacing.screenPadding)
       // Clear the floating pill this content now scrolls beneath (0 on non-compact tiers).
-      .padding(bottom = LocalNavPillClearance.current),
+      .padding(bottom = navPillAndFabClearance),
     verticalArrangement = Arrangement.spacedBy(Spacing.medium)
   ) {
     ComplianceSection(

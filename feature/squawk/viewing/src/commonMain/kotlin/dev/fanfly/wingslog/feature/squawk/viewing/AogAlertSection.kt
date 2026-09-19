@@ -13,7 +13,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.FlightLand
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -64,7 +64,11 @@ fun AogAlertSection(
         verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
       ) {
         Icon(
-          imageVector = Icons.Default.FlightLand,
+          // Not the thing's own icon and never a plane: this card is about a state, not a machine.
+          // FlightLand rendered a landing aeroplane on a house, a bike and a boat. The warning
+          // triangle is the same glyph the Squawks section carries in the nav bar, and it reads
+          // correctly for every preset.
+          imageVector = Icons.Default.Warning,
           contentDescription = null,
           tint = blocking.accent,
           modifier = Modifier.size(Spacing.huge),

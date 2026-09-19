@@ -38,7 +38,7 @@ import dev.fanfly.wingslog.core.template.squawkEmptyHint
 import dev.fanfly.wingslog.core.template.squawkNoun
 import dev.fanfly.wingslog.core.ui.adaptive.compose.AdaptiveCardList
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
-import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalNavPillClearance
+import dev.fanfly.wingslog.core.ui.adaptive.compose.navPillAndFabClearance
 import dev.fanfly.wingslog.core.ui.common.compose.DualSegmentedFilter
 import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
 import dev.fanfly.wingslog.core.ui.common.compose.SwipeActionCard
@@ -195,7 +195,7 @@ fun SquawkTab(
       .onGloballyPositioned { contentTopY = it.positionInRoot().y }
       .padding(horizontal = Spacing.screenPadding)
       // Clear the floating pill this content now scrolls beneath (0 on non-compact tiers).
-      .padding(bottom = LocalNavPillClearance.current),
+      .padding(bottom = navPillAndFabClearance),
     verticalArrangement = Arrangement.spacedBy(Spacing.medium),
   ) {
     if (showHeader) {
