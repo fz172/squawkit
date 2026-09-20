@@ -32,7 +32,8 @@ val Amber90 =
 val Amber10 = Color(0xFF271900)          // On tertiary container — light mode
 
 // --- Instrument Neutrals ---
-// Every M3 neutral role is authored here, on the primary's hue (~251 in oklch) at low chroma, so
+// Every M3 neutral role is authored here, on the primary's hue (~258 in oklch, matching
+// AviationBlue40's 255) at chroma 0.005-0.037, so
 // surfaces read as cool blue-grey instrument panel rather than the violet-leaning Material 3
 // baseline. A scheme that names only primary/secondary/tertiary inherits that baseline for every
 // surface in the app, which is what happened before (DESIGN.md §4).

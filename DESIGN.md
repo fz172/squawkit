@@ -12,12 +12,17 @@ colors:
   airworthy-green: "#276B39"
   caution-amber: "#8B5E00"
   caution-bg: "#FFECB3"
+  airworthy-bg: "#E3F2E8"
   neutral-surface: "#F7F9FC"
+  neutral-container-low: "#F1F4FA"
   neutral-container: "#E8EDF4"
   neutral-container-high: "#E4EAF2"
-  neutral-on-surface: "#141A24"
-  neutral-on-surface-variant: "#545F72"
+  neutral-container-highest: "#E0E6EF"
+  neutral-surface-variant: "#D3DBE7"
   neutral-outline-variant: "#C3CBD8"
+  neutral-outline: "#6B7A8F"
+  neutral-on-surface-variant: "#545F72"
+  neutral-on-surface: "#141A24"
 typography:
   display:
     fontFamily: "Space Grotesk, system-ui, sans-serif"
@@ -132,6 +137,28 @@ Two structural tones, one personality accent used sparingly, two semantic anchor
 - **Advisory Amber** (light text: #7A5200 / dark: #FFBA4E): The brand personality accent. References advisory annunciators and classic 6-pack gauge amber. Appears on ≤10% of any given screen. Light-mode text form is the deep muted amber (#7A5200) for WCAG contrast compliance; dark mode shows the full amber glow (#FFBA4E).
 - **Amber Haze** (#FFDFA6 / dark: #5B3D00): Warm advisory surface. Used as container background behind amber-tinted advisory elements.
 
+### Neutral
+
+Twenty tones on the primary's own hue at very low chroma (0.005–0.037), so every surface in the app
+reads as cool instrument panel rather than grey. They are **authored in `Theme.kt`, never
+inherited** — a scheme that names only primary, secondary and tertiary silently takes Material 3's
+violet-leaning baseline for every surface, which is what shipped until the ramp landed.
+
+- **Panel White** (#F7F9FC / dark: #0A0E14): `background` and `surface`. The page itself.
+- **Panel Card** (#E8EDF4 / dark: #1B2431): `surfaceContainer` — the card, the sheet, the filled
+  row. Sized so it separates from the page without a border (§4).
+- **Panel Recess** (#E0E6EF / dark: #293446): `surfaceContainerHighest`, the deepest fill; the light
+  end stops here because Caution Amber must still clear 4.5:1 on it.
+- **Panel Edge** (#C3CBD8 / dark: #313C4C): `outlineVariant` — dividers, and borders used for
+  *emphasis* rather than for making a container exist.
+- **Panel Stroke** (#6B7A8F, both schemes): `outline`. The only neutral shared by light and dark.
+- **Panel Ink** (#141A24 / dark: #E1E7F0): `onSurface`. Body text and headings.
+- **Panel Ink Muted** (#545F72 / dark: #9BA8BC): `onSurfaceVariant` — metadata, labels, supporting
+  text. Clears 4.5:1 on every container in both schemes.
+
+The full twenty-step ladder and each tone's role live in `Color.kt` and in the sidecar's tonal ramp;
+the seven above are the ones a new screen actually reaches for.
+
 ### Semantic
 - **Airworthy Green** (#276B39 / dark: #81C784): "In the green" — compliant, ready, go. The word it sits beside is the template's `ready_status` ("Airworthy", "Ready", "Good"); the color is the same everywhere. Passing inspections, compliant task indicators, success states. Always as text or icon on a neutral surface, never as a fill.
 - **Caution Amber** (#8B5E00 / surface: #FFECB3 / dark text: #FFCA28, dark surface: #514500): Advisory caution — action required, not immediate. The semantic amber paired with Airworthy Green. Matches the mental model of the amber annunciator panel light.
@@ -153,8 +180,17 @@ Two structural tones, one personality accent used sparingly, two semantic anchor
 | Caution text               | `#8B5E00` (StatusWarningLight)          | `#FFCA28` (StatusWarningDark)          | Due soon — text/icon                                                                            |
 | Caution container          | `#FFECB3` (StatusWarningContainerLight) | `#514500` (StatusWarningContainerDark) | Caution status chip bg                                                                          |
 | Blocking/Error             | M3 `error` / `errorContainer`           | M3 `error` / `errorContainer`          | The template's down state (AOG / Off the road / Urgent), overdue                                |
+| Background, Surface | `#F7F9FC` (Neutral98) | `#0A0E14` (Neutral06) | The page |
+| Surface Container | `#E8EDF4` (Neutral94) | `#1B2431` (Neutral15) | Cards, sheets, filled rows |
+| Surface Container High/Highest | `#E4EAF2` / `#E0E6EF` | `#222C3B` / `#293446` | Nested and deepest fills |
+| Surface Variant | `#D3DBE7` (Neutral86) | `#3A4557` (Neutral35) | Muted fills — note this is the same hex as the dark secondary container |
+| On Surface | `#141A24` (Neutral12) | `#E1E7F0` (Neutral90) | Body text, headings |
+| On Surface Variant | `#545F72` (Neutral40) | `#9BA8BC` (Neutral70) | Metadata, labels, supporting text |
+| Outline / Outline Variant | `#6B7A8F` / `#C3CBD8` | `#6B7A8F` / `#313C4C` | Strokes; dividers and emphasis borders |
 
 **The Advisory Rule.** Instrument Amber (tertiary) appears on ≤10% of any given screen. Its power comes from scarcity. A screen full of amber has no amber.
+
+**The Authored Neutral Rule.** Every neutral role is declared in `Theme.kt`. Naming only primary, secondary and tertiary hands every surface in the app to Material 3's baseline, and an omitted parameter is invisible in review — it shows up as a wrong colour nobody can grep for.
 
 **The Semantic Lock Rule.** Airworthy Green and Caution Amber are semantic signals, not decorative colors. They may not appear for brand moments, empty state illustrations, or visual interest. If a color looks like a status, it is a status.
 
