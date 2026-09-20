@@ -19,17 +19,22 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.LocalThingTemplate
+import dev.fanfly.wingslog.core.template.MeterKeys
 import dev.fanfly.wingslog.core.template.formatMeterValue
 import dev.fanfly.wingslog.core.template.taskNoun
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.statusColors
+import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
 import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
+import dev.fanfly.wingslog.thing.MaintenanceTask
+import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.tasks.viewing.generated.resources.critical_airworthiness
 import wingslog.feature.tasks.viewing.generated.resources.due_date
@@ -190,3 +195,50 @@ private fun CriticalAlertItem(
     }
   }
 }
+
+private fun previewTask(
+  title: String,
+  dueDate: LocalDate? = null,
+  dueEngine: Float? = null,
+  status: DueStatus = DueStatus.OVERDUE,
+) = MaintenanceTaskWithStatus(
+  card = MaintenanceTask(title = title),
+  dueStatus = DueMetadata(
+    nextDueDate = dueDate,
+    nextDueEngine = dueEngine,
+    nextDueMeterKey = dueEngine?.let { MeterKeys.ENGINE_HOURS },
+    status = status,
+  ),
+)
+
+/** One of each status line the section can draw: expired by date, expired by meter, and due soon. */
+@Preview
+@Composable
+private fun PreviewCriticalAlertsSection() = CriticalAlertsSection(
+  overdueTasks = listOf(
+    previewTask("Annual inspection", dueDate = LocalDate(2026, 5, 13)),
+    previewTask("100 hour inspection", dueEngine = 1250f),
+    previewTask(
+      "Transponder certification",
+      dueDate = LocalDate(2026, 10, 2),
+      status = DueStatus.DUE_SOON,
+    ),
+  ),
+  onCardClick = {},
+  modifier = Modifier.padding(Spacing.large),
+)
+
+/** The caution colouring: nothing is expired yet, so the heading is amber rather than red. */
+@Preview
+@Composable
+private fun PreviewCriticalAlertsSectionDueSoonOnly() = CriticalAlertsSection(
+  overdueTasks = listOf(
+    previewTask(
+      "Pitot-static check",
+      dueDate = LocalDate(2026, 10, 2),
+      status = DueStatus.DUE_SOON,
+    ),
+  ),
+  onCardClick = {},
+  modifier = Modifier.padding(Spacing.large),
+)

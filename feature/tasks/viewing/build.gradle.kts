@@ -50,6 +50,7 @@ dependencies {
   "androidMainImplementation"(platform(libs.firebase.bom))
   "androidHostTestImplementation"(libs.junit)
   "androidHostTestImplementation"(libs.truth)
+  "androidRuntimeClasspath"(libs.androidx.compose.ui.tooling)
 }
 
 compose.resources {
