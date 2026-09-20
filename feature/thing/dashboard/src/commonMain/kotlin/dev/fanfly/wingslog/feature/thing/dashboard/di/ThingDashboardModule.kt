@@ -6,9 +6,9 @@ import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.storage.ThingScopeResolver
 import dev.fanfly.wingslog.core.template.TemplateRegistry
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
-import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogManager
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
 import dev.fanfly.wingslog.feature.comments.datamanager.CommentManager
+import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogManager
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.search.datamanager.SearchEngine

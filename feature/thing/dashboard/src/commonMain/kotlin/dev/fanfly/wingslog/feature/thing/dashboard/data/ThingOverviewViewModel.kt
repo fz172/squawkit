@@ -63,13 +63,13 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import wingslog.core.sharedassets.generated.resources.delete_failed
 import wingslog.core.sharedassets.generated.resources.save_failed
+import wingslog.feature.comments.sharedassets.generated.resources.comment_delete_failed
+import wingslog.feature.comments.sharedassets.generated.resources.comment_edit_failed
+import wingslog.feature.comments.sharedassets.generated.resources.comment_post_failed
 import wingslog.feature.squawk.sharedassets.generated.resources.squawk_deleted
 import wingslog.feature.tasks.sharedassets.generated.resources.task_deleted
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.comments.sharedassets.generated.resources.Res as CommentsRes
-import wingslog.feature.comments.sharedassets.generated.resources.comment_delete_failed
-import wingslog.feature.comments.sharedassets.generated.resources.comment_edit_failed
-import wingslog.feature.comments.sharedassets.generated.resources.comment_post_failed
 import wingslog.feature.squawk.sharedassets.generated.resources.Res as SquawkRes
 import wingslog.feature.tasks.sharedassets.generated.resources.Res as TasksRes
 
@@ -741,5 +741,17 @@ class ThingOverviewViewModel(
 
 /** A squawk sheet wins if both are somehow set; in practice only one sheet is ever open. */
 private fun ThingOverviewUiState.Success.commentTarget(): CommentTarget? =
-  selectedSquawk?.let { CommentTarget(thing.id, it.squawk.id, CommentParentKind.SQUAWK) }
-    ?: selectedTask?.let { CommentTarget(thing.id, it.card.id, CommentParentKind.MAINTENANCE_TASK) }
+  selectedSquawk?.let {
+    CommentTarget(
+      thing.id,
+      it.squawk.id,
+      CommentParentKind.SQUAWK
+    )
+  }
+    ?: selectedTask?.let {
+      CommentTarget(
+        thing.id,
+        it.card.id,
+        CommentParentKind.MAINTENANCE_TASK
+      )
+    }

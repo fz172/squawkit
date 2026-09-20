@@ -107,7 +107,8 @@ private fun DetailBody(
 ) {
   TextSelectionLayer {
     Column(
-      modifier = Modifier.fillMaxWidth().then(if (fillHeight) Modifier.fillMaxHeight() else Modifier),
+      modifier = Modifier.fillMaxWidth()
+        .then(if (fillHeight) Modifier.fillMaxHeight() else Modifier),
     ) {
       Column(
         modifier = Modifier
@@ -148,7 +149,10 @@ private fun DetailBody(
           modifier = Modifier
             .fillMaxWidth()
             .imePadding()
-            .padding(horizontal = Spacing.extraLarge, vertical = Spacing.medium),
+            .padding(
+              horizontal = Spacing.extraLarge,
+              vertical = Spacing.medium
+            ),
         ) {
           bottomBar()
         }

@@ -256,23 +256,30 @@ class ThingOverviewViewModelTest {
   }
 
   @Test
-  fun openingASquawkSheet_opensThatSquawksThread_andClosingItClosesTheThread() = runTest {
-    val vm = viewModel()
-    assertThat(vm.commentThread.value).isNull()
+  fun openingASquawkSheet_opensThatSquawksThread_andClosingItClosesTheThread() =
+    runTest {
+      val vm = viewModel()
+      assertThat(vm.commentThread.value).isNull()
 
-    vm.onAction(ThingOverviewAction.ShowSquawkDetail(vm.success.squawks.first()))
-    advanceUntilIdle()
+      vm.onAction(ThingOverviewAction.ShowSquawkDetail(vm.success.squawks.first()))
+      advanceUntilIdle()
 
-    assertThat(vm.commentThread.value).isNotNull()
-    verify {
-      commentManager.observeComments(CommentTarget(THING_ID, "s1", CommentParentKind.SQUAWK))
+      assertThat(vm.commentThread.value).isNotNull()
+      verify {
+        commentManager.observeComments(
+          CommentTarget(
+            THING_ID,
+            "s1",
+            CommentParentKind.SQUAWK
+          )
+        )
+      }
+
+      vm.onAction(ThingOverviewAction.DismissSquawkDetail)
+      advanceUntilIdle()
+
+      assertThat(vm.commentThread.value).isNull()
     }
-
-    vm.onAction(ThingOverviewAction.DismissSquawkDetail)
-    advanceUntilIdle()
-
-    assertThat(vm.commentThread.value).isNull()
-  }
 
   @Test
   fun anUnpostedDraft_survivesClosingTheSheet() = runTest {

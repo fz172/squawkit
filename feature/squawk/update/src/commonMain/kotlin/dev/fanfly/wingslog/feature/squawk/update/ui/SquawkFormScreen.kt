@@ -155,7 +155,8 @@ fun SquawkFormScreen(
         .fillMaxSize(),
     ) {
       Box(
-        modifier = Modifier.weight(1f).fillMaxWidth(),
+        modifier = Modifier.weight(1f)
+          .fillMaxWidth(),
         contentAlignment = Alignment.TopCenter,
       ) {
         Column(

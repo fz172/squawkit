@@ -616,10 +616,25 @@ private fun DashboardSkeleton() {
       .padding(Spacing.screenPadding),
     verticalArrangement = Arrangement.spacedBy(Spacing.large),
   ) {
-    SkeletonBlock(Modifier.fillMaxWidth(0.5f).height(Spacing.huge))
-    SkeletonBlock(Modifier.fillMaxWidth().height(Spacing.buttonHeight))
-    SkeletonBlock(Modifier.fillMaxWidth().height(Spacing.massive * 3))
-    SkeletonBlock(Modifier.fillMaxWidth().height(Spacing.rowHeight))
-    SkeletonBlock(Modifier.fillMaxWidth().height(Spacing.massive * 4))
+    SkeletonBlock(
+      Modifier.fillMaxWidth(0.5f)
+        .height(Spacing.huge)
+    )
+    SkeletonBlock(
+      Modifier.fillMaxWidth()
+        .height(Spacing.buttonHeight)
+    )
+    SkeletonBlock(
+      Modifier.fillMaxWidth()
+        .height(Spacing.massive * 3)
+    )
+    SkeletonBlock(
+      Modifier.fillMaxWidth()
+        .height(Spacing.rowHeight)
+    )
+    SkeletonBlock(
+      Modifier.fillMaxWidth()
+        .height(Spacing.massive * 4)
+    )
   }
 }

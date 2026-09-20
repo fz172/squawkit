@@ -88,7 +88,6 @@ Two consequences follow, and both are enforced in `CommentManagerImpl`:
 - **Deleting twice does nothing.** Re-stamping would move the recorded time, which is the one fact
   the tombstone exists to pin down.
 
-
 ## 3. Who may write
 
 `firestore.rules` adds `comment` to `isSharedAircraftKind`, so a share member may write into the
@@ -128,7 +127,8 @@ can pin it under the scrolling body (`DetailSheet.bottomBar`), where it stays re
 the thread gets. The ⋮ menu appears only on a comment that is both yours and not already deleted.
 
 Both sheets are driven through `CommentThreadController`, a UI-free state machine in `datamanager`.
-The list screen hosts it: `RecordCommentHost` (in `feature/thing/dashboard`) opens one controller for
+The list screen hosts it: `RecordCommentHost` (in `feature/thing/dashboard`) opens one controller
+for
 whichever record's sheet is open — derived from the selected squawk or task, so every way a sheet
 closes also closes the thread — in a scope of its own, so closing the sheet stops the collection.
 

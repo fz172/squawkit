@@ -1,7 +1,7 @@
 package dev.fanfly.wingslog.feature.tasks.update.compose
 
-import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import com.google.common.truth.Truth.assertThat
+import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import dev.fanfly.wingslog.thing.Capabilities
 import org.junit.Test
 
@@ -30,7 +30,8 @@ class TaskFormTabsTest {
         TaskFormTab.COMPLIANCE,
         TaskFormTab.SCHEDULE,
         TaskFormTab.ADJUSTMENTS,
-      ).inOrder()
+      )
+      .inOrder()
   }
 
   @Test

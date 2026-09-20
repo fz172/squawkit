@@ -36,7 +36,8 @@ class RecordCommentHost(
 
   /** Failed writes of the open thread, for the owner to put into words. */
   @OptIn(ExperimentalCoroutinesApi::class)
-  val errors: Flow<CommentAction> = _thread.flatMapLatest { it?.errors ?: emptyFlow() }
+  val errors: Flow<CommentAction> =
+    _thread.flatMapLatest { it?.errors ?: emptyFlow() }
 
   private var open: CommentTarget? = null
   private var threadScope: CoroutineScope? = null
@@ -47,9 +48,11 @@ class RecordCommentHost(
     if (target == open) return
     close()
     if (target == null) return
-    val child = CoroutineScope(scope.coroutineContext + Job(scope.coroutineContext.job))
+    val child =
+      CoroutineScope(scope.coroutineContext + Job(scope.coroutineContext.job))
     val controller = CommentThreadController(commentManager, target, child)
-    drafts.firstOrNull { it.target == target }?.let { controller.onDraftChange(it.text) }
+    drafts.firstOrNull { it.target == target }
+      ?.let { controller.onDraftChange(it.text) }
     open = target
     threadScope = child
     _thread.value = controller

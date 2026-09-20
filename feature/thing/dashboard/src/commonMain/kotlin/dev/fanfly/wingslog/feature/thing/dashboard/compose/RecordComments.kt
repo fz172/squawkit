@@ -44,7 +44,10 @@ internal fun RecordCommentThread(thread: CommentThreadController) {
 
 /** The box pinned under the sheet. Posting is immediate; nothing here waits for a Save. */
 @Composable
-internal fun RecordCommentComposer(thread: CommentThreadController, isAnonymous: Boolean) {
+internal fun RecordCommentComposer(
+  thread: CommentThreadController,
+  isAnonymous: Boolean
+) {
   val state by thread.state.collectAsStateWithLifecycle()
   CommentComposer(
     state = state,
