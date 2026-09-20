@@ -22,6 +22,7 @@ import dev.fanfly.wingslog.core.template.taskEmptyHint
 import dev.fanfly.wingslog.core.template.taskHistoryEmptyHint
 import dev.fanfly.wingslog.core.template.taskNoun
 import dev.fanfly.wingslog.core.ui.adaptive.compose.AdaptiveCardList
+import dev.fanfly.wingslog.core.ui.common.compose.ListRowDivider
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.common.compose.DualSegmentedFilter
 import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
@@ -154,7 +155,10 @@ fun ComplianceSection(
         items = rows,
         columns = LocalLayoutTier.current.cardColumns,
         spacing = Spacing.medium,
+        // Rows are flat now, so the hairline between them does the separating a gap used to.
+        rowSpacing = Spacing.none,
         isSpanning = { it is ListRow.Ad },
+        separator = { ListRowDivider() },
       ) { row ->
         when (row) {
           is ListRow.Ad -> AdSlot(

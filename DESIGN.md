@@ -298,8 +298,33 @@ Material 3 `SingleChoiceSegmentedButtonRow` (two segments, full width). Used as 
 ### Cards
 - **Corner radius:** 12dp (gently curved; neither pill nor rectangle)
 - **Background:** `surfaceContainer` — one tonal step above `surface`
-- **Border:** Optional `outlineVariant` at 1dp for emphasis (empty-state cards, section delimiters)
+- **Border:** none. The ramp separates the card from what is behind it (§4). A stroke is emphasis — a status accent on a card that is genuinely set apart — and never the thing that makes the card visible
 - **Padding:** 16dp (`Spacing.large`) internal
+
+A card is a **container**: several things that belong together, grouped. One record in a list is not
+one of those — it is a `ListRow`. A container is a `Surface` carrying the colour, shape and padding
+above, not a `Card`, whose elevation vocabulary §4 rules out. The `Card` call sites that remain are
+being converted as the units that own them land.
+
+### List Rows (`core/ui/.../ListRow.kt`)
+
+One row, one implementation: leading slot, title, metadata line, trailing slot, 72dp tall
+(`Spacing.rowHeight`).
+
+**A row is not a card.** It draws `surface` — the colour of the list behind it — with no corner
+radius and no border, and `ListRowDivider` (an `outlineVariant` hairline, inset past the leading
+slot) separates one from the next, never appearing above the first or below the last. A record is a
+line in a list, not a tile on a tray. The row is filled rather than transparent only because
+`SwipeActionCard` reveals its controls underneath it.
+
+Both text lines truncate to one, so a list scans as a column of records rather than a stack of
+paragraphs. The row grows for exactly one thing — the note a search result needs to say what it
+matched on. Anything else a record cannot fit on those two lines belongs in its detail sheet.
+
+`accent` is the exception and it is rare: a record the list must not let you scroll past becomes a
+contained block, filled at `surfaceContainer`, rounded, and bordered in the accent colour. Today
+that is the down-state defect and nothing else. Status that merely needs noticing belongs in the
+leading icon and the `StatusChip`.
 
 ### Bottom Sheet (DetailSheet)
 Modal bottom sheet with `skipPartiallyExpanded = true` — always fully expanded, never half-state. Horizontal padding: 24dp (screen padding). Header: trailing `TextButton` action; headline fills remaining width. Internal vertical scroll with 32dp footer spacer to clear the system navigation bar.
@@ -328,7 +353,12 @@ Maps domain status to M3 roles. **No ad-hoc color choices in feature code.** Use
 
 ### Component Border Accent Rule
 
-Overdue/DueSoon cards get a 1dp left-border accent at `statusTone.accent.copy(alpha = 0.5f)`. Down-state defects get `blocking.accent`. Normal cards get `outlineVariant`. Component type badges use context-specific fills (ENGINE → primaryContainer, AIRFRAME → surfaceContainerHigh, PROPELLER → secondaryContainer) — and appear only on the airplane preset, whose parts the frozen `ComponentType` enum names; every other preset files records against the Thing itself (`usesComponentTypes`).
+A border is emphasis, never containment (§4), and a list row does not get one merely for having a
+status. Overdue and due-soon tasks are carried by the tinted leading icon and the `OVERDUE` / `DUE`
+badge; they stay flat like every other row. Only three things are bordered: the down-state defect
+row and the down-state alert, at `blocking.accent.copy(alpha = 0.5f)`, and the Thing data card, at
+`outlineVariant`, because it is a block of specification rather than a record in a list. Component
+type badges use context-specific fills (ENGINE → primaryContainer, AIRFRAME → surfaceContainerHigh, PROPELLER → secondaryContainer) — and appear only on the airplane preset, whose parts the frozen `ComponentType` enum names; every other preset files records against the Thing itself (`usesComponentTypes`).
 
 ## 6. Do's and Don'ts
 

@@ -1,19 +1,12 @@
 package dev.fanfly.wingslog.feature.tasks.viewing
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -23,9 +16,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.sp
+import dev.fanfly.wingslog.core.ui.common.compose.ListRow
 import dev.fanfly.wingslog.core.ui.common.compose.StatusChip
 import dev.fanfly.wingslog.core.ui.common.compose.highlightWords
 import dev.fanfly.wingslog.core.ui.common.compose.searchHighlightStyle
@@ -52,10 +45,6 @@ fun TaskCard(
   matchNote: AnnotatedString? = null,
 ) {
   val highlightStyle = searchHighlightStyle()
-  val isOverdue = dueStatus == DueStatus.OVERDUE
-  val isDueSoon = dueStatus == DueStatus.DUE_SOON
-  val isAlert = isOverdue || isDueSoon
-  val colors = MaterialTheme.statusColors
   val badgeTier = when (dueStatus) {
     DueStatus.OVERDUE -> StatusTier.CRITICAL
     DueStatus.DUE_SOON -> StatusTier.CAUTION
@@ -63,96 +52,57 @@ fun TaskCard(
     DueStatus.NORMAL -> StatusTier.NEUTRAL
   }
 
-  val borderColor = when {
-    isOverdue -> colors.critical.accent.copy(alpha = 0.5f)
-    isDueSoon -> statusColor.copy(alpha = 0.5f)
-    else -> MaterialTheme.colorScheme.outlineVariant
+  // The deadline and the notes share the metadata line: the label sits with its value as one
+  // phrase, where a caption on its own row cost the card a divider and two lines.
+  val metadata = buildAnnotatedString {
+    if (statusValue.isNotBlank()) {
+      append(listOf(statusLabel, statusValue).filter { it.isNotBlank() }.joinToString(" "))
+    }
+    if (subtitle.isNotBlank()) {
+      if (length > 0) append(" · ")
+      append(highlightWords(subtitle, highlight, highlightStyle))
+    }
   }
 
-  Card(
+  ListRow(
+    title = highlightWords(title, highlight, highlightStyle),
+    metadata = metadata.takeIf { it.isNotEmpty() },
     onClick = onClick,
-    modifier = modifier.fillMaxWidth(),
-    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-    border = BorderStroke(
-      Spacing.hairline,
-      borderColor
-    ),
-    shape = RoundedCornerShape(Spacing.cardCornerRadius),
-    elevation = CardDefaults.cardElevation(defaultElevation = Spacing.none),
-  ) {
-    Column(
-      modifier = Modifier.padding(Spacing.large),
-      verticalArrangement = Arrangement.spacedBy(Spacing.medium),
-    ) {
-      // Row 1: icon + status badge
+    modifier = modifier,
+    leading = {
+      Icon(
+        imageVector = icon,
+        contentDescription = null,
+        modifier = Modifier.size(Spacing.extraLarge),
+        // A normal task has nothing to say, so its icon stays neutral; every other state earns
+        // its colour, which used to live on the deadline line the metadata now absorbs.
+        tint = if (dueStatus == DueStatus.NORMAL) MaterialTheme.colorScheme.onSurfaceVariant
+        else statusColor,
+      )
+    },
+    trailing = {
       Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
+        horizontalArrangement = Arrangement.spacedBy(Spacing.small),
         verticalAlignment = Alignment.CenterVertically,
       ) {
-        if (badgeText.isNotBlank()) {
-          StatusChip(label = badgeText, tier = badgeTier)
-        } else {
-          Icon(
-            imageVector = icon,
-            contentDescription = null,
-            modifier = Modifier.size(Spacing.large),
-            tint = if (isAlert) statusColor else MaterialTheme.colorScheme.onSurfaceVariant,
-          )
-        }
+        if (badgeText.isNotBlank()) StatusChip(label = badgeText, tier = badgeTier)
         Icon(
           imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
           contentDescription = null,
           tint = MaterialTheme.colorScheme.onSurfaceVariant,
         )
       }
-
-      // Row 2: title + subtitle (notes)
-      Column(verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall)) {
+    },
+    supporting = matchNote?.let {
+      {
         Text(
-          text = highlightWords(title, highlight, highlightStyle),
-          style = MaterialTheme.typography.titleMedium,
-          fontWeight = FontWeight.Bold,
-          color = MaterialTheme.colorScheme.onSurface,
+          text = it,
+          style = MaterialTheme.typography.labelSmall,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        if (subtitle.isNotBlank()) {
-          Text(
-            text = highlightWords(subtitle, highlight, highlightStyle),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-          )
-        }
-        matchNote?.let {
-          Text(
-            text = it,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-          )
-        }
       }
-
-      // Row 3: divider + label / value + chevron
-      if (statusValue.isNotBlank()) {
-        HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.25f))
-        Column(verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall)) {
-          if (statusLabel.isNotBlank()) {
-            Text(
-              text = statusLabel,
-              style = MaterialTheme.typography.labelSmall,
-              color = MaterialTheme.colorScheme.onSurfaceVariant,
-              letterSpacing = 0.8.sp,
-            )
-          }
-          Text(
-            text = statusValue,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            color = statusColor,
-          )
-        }
-      }
-    }
-  }
+    },
+  )
 }
 
 @Preview
@@ -160,7 +110,7 @@ fun TaskCard(
 fun PreviewTaskCard() = TaskCard(
   title = "100 Hr Inspection",
   subtitle = "Routine engine and airframe check",
-  statusLabel = "DEADLINE",
+  statusLabel = "Deadline",
   statusValue = "05/13/2026",
   badgeText = "OVERDUE",
   icon = Icons.Default.Schedule,

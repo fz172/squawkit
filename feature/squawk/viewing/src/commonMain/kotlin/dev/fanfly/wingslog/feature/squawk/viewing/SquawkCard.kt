@@ -1,16 +1,9 @@
 package dev.fanfly.wingslog.feature.squawk.viewing
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -18,11 +11,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.buildAnnotatedString
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.datetime.toLocalDate
 import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.ui.common.compose.ListRow
 import dev.fanfly.wingslog.core.ui.common.compose.StatusChip
 import dev.fanfly.wingslog.core.ui.common.compose.highlightWords
 import dev.fanfly.wingslog.core.ui.common.compose.searchHighlightStyle
@@ -53,76 +47,52 @@ fun SquawkCard(
   val squawk = item.squawk
   val highlightStyle = searchHighlightStyle()
   val isAog = squawk.priority == SquawkPriority.SQUAWK_PRIORITY_AOG
-  val colors = MaterialTheme.statusColors
-  val borderColor = if (isAog)
-    colors.blocking.accent.copy(alpha = 0.5f)
-  else
-    MaterialTheme.colorScheme.outlineVariant
+  // The down-state defect is the one squawk genuinely set apart, so it is the one that keeps a
+  // border. Every other row is separated by the tonal ramp alone.
+  val accent = if (isAog) MaterialTheme.statusColors.blocking.accent.copy(alpha = 0.5f) else null
 
-  Card(
+  val raisedOn = squawk.created_at
+    ?.takeIf { it.getEpochSecond() > 0L }
+    ?.toLocalDate()
+    ?.toDisplayFormat()
+  val metadata = buildAnnotatedString {
+    if (raisedOn != null) append(raisedOn)
+    if (squawk.description.isNotBlank()) {
+      if (length > 0) append(" · ")
+      append(highlightWords(squawk.description, highlight, highlightStyle))
+    }
+  }
+
+  ListRow(
+    title = highlightWords(squawk.title, highlight, highlightStyle),
+    metadata = metadata.takeIf { it.isNotEmpty() },
     onClick = onClick,
-    modifier = modifier.fillMaxWidth(),
-    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-    border = BorderStroke(Spacing.hairline, borderColor),
-    shape = RoundedCornerShape(Spacing.cardCornerRadius),
-    elevation = CardDefaults.cardElevation(defaultElevation = Spacing.none),
-  ) {
-    Column(
-      modifier = Modifier.padding(Spacing.large),
-      verticalArrangement = Arrangement.spacedBy(Spacing.medium),
-    ) {
+    modifier = modifier,
+    accent = accent,
+    leading = { PriorityBadge(item) },
+    trailing = {
       Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
+        horizontalArrangement = Arrangement.spacedBy(Spacing.small),
         verticalAlignment = Alignment.CenterVertically,
       ) {
-        Row(
-          horizontalArrangement = Arrangement.spacedBy(Spacing.small),
-          verticalAlignment = Alignment.CenterVertically,
-        ) {
-          PriorityBadge(item)
-          StatusBadge(item.status)
-        }
+        StatusBadge(item.status)
         Icon(
           imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
           contentDescription = null,
           tint = MaterialTheme.colorScheme.onSurfaceVariant,
         )
       }
-
-      Column(verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall)) {
+    },
+    supporting = matchNote?.let {
+      {
         Text(
-          text = highlightWords(squawk.title, highlight, highlightStyle),
-          style = MaterialTheme.typography.titleMedium,
-          fontWeight = FontWeight.Bold,
-          color = MaterialTheme.colorScheme.onSurface,
-        )
-        if (squawk.description.isNotBlank()) {
-          Text(
-            text = highlightWords(squawk.description, highlight, highlightStyle),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-          )
-        }
-        matchNote?.let {
-          Text(
-            text = it,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-          )
-        }
-      }
-
-      if ((squawk.created_at?.getEpochSecond() ?: 0L) > 0L) {
-        Text(
-          text = squawk.created_at!!.toLocalDate()
-            .toDisplayFormat(),
+          text = it,
           style = MaterialTheme.typography.labelSmall,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
       }
-    }
-  }
+    },
+  )
 }
 
 @Composable

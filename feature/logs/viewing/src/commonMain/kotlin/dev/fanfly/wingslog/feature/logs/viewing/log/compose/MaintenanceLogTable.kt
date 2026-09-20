@@ -1,6 +1,5 @@
 package dev.fanfly.wingslog.feature.logs.viewing.log.compose
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -77,10 +76,6 @@ fun MaintenanceLogTable(
     modifier = modifier.fillMaxWidth(),
     shape = RoundedCornerShape(Spacing.cardCornerRadius),
     color = MaterialTheme.colorScheme.surfaceContainer,
-    border = BorderStroke(
-      Spacing.hairline,
-      MaterialTheme.colorScheme.outlineVariant
-    ),
   ) {
     Column(modifier = Modifier.fillMaxWidth()) {
       HeaderRow()
