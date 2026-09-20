@@ -13,7 +13,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.HorizontalDivider
@@ -73,10 +72,11 @@ fun MaintenanceLogTable(
   highlightFor: (MaintenanceLog) -> Set<String> = { emptySet() },
   noteFor: @Composable (MaintenanceLog) -> AnnotatedString? = { null },
 ) {
+  // Flat on the page like every other section's list; the header rule and row hairlines do the
+  // separating a filled card used to.
   Surface(
     modifier = modifier.fillMaxWidth(),
-    shape = RoundedCornerShape(Spacing.cardCornerRadius),
-    color = MaterialTheme.colorScheme.surfaceContainer,
+    color = MaterialTheme.colorScheme.surface,
   ) {
     Column(modifier = Modifier.fillMaxWidth()) {
       HeaderRow()

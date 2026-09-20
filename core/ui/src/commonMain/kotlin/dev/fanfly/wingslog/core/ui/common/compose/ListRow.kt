@@ -14,11 +14,13 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
@@ -42,6 +44,12 @@ import dev.fanfly.wingslog.core.ui.theme.Spacing
  * accent colour. Status that merely needs *noticing* belongs in the leading icon and the
  * [StatusChip], not in a container.
  */
+/**
+ * What a flat [ListRow] is sitting on. A row must be opaque — a swipe card slides it over its own
+ * controls — so it cannot simply be transparent; a card that hosts rows says what colour it is.
+ */
+val LocalListRowGround = compositionLocalOf<Color> { Color.Unspecified }
+
 @Composable
 fun ListRow(
   title: AnnotatedString,
@@ -65,7 +73,7 @@ fun ListRow(
       .fillMaxWidth()
       .background(
         color = if (contained) MaterialTheme.colorScheme.surfaceContainer
-        else MaterialTheme.colorScheme.surface,
+        else LocalListRowGround.current.takeOrElse { MaterialTheme.colorScheme.surface },
         shape = shape,
       )
       .then(if (accent != null) Modifier.border(Spacing.hairline, accent, shape) else Modifier)
