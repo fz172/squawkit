@@ -38,6 +38,7 @@ import dev.fanfly.wingslog.core.ui.common.compose.SwipeActionCard
 import dev.fanfly.wingslog.core.ui.common.compose.SwipeActionTone
 import dev.fanfly.wingslog.core.ui.common.compose.rememberSwipeRevealController
 import dev.fanfly.wingslog.core.ui.common.compose.ListRowDivider
+import dev.fanfly.wingslog.core.ui.common.compose.stickySectionHeader
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.motionItem
 import dev.fanfly.wingslog.feature.attachment.viewing.FileDropTarget
@@ -73,6 +74,7 @@ fun DataLogSectionContent(
   val state by viewModel.uiState.collectAsStateWithLifecycle()
   val lexicon = LocalThingLexicon.current
   val compact = LocalLayoutTier.current.isCompact
+  val recentUploads = stringResource(Res.string.data_log_recent_uploads)
   val pick = rememberFilePicker(onResult = viewModel::upload)
   val revealController = rememberSwipeRevealController()
   val snackbarHostState = LocalSnackbarHostState.current
@@ -175,14 +177,11 @@ fun DataLogSectionContent(
             )
           }
           if (!compact && state.rows.isNotEmpty()) {
-            item {
-              Text(
-                text = "${stringResource(Res.string.data_log_recent_uploads)}  ${state.rows.size}",
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = Spacing.small, bottom = Spacing.small),
-              )
-            }
+            stickySectionHeader(
+              key = "recent-uploads",
+              title = recentUploads,
+              count = state.rows.size,
+            )
           }
           itemsIndexed(state.rows, key = { _, row -> row.id.value_ }) { index, row ->
             // One animated node per key: the rule travels with its row.
