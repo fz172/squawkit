@@ -125,7 +125,6 @@
   <string name="delete_this_task_subtitle">Permanently removes this task and its maintenance schedule.</string>
 
   <!-- Resolve menu (bottom bar) -->
-  <string name="resolve_task">Resolve</string>
 
   <string name="no_log_history">No <xliff:g example="logs">%1$s</xliff:g> recorded for this <xliff:g example="task">%2$s</xliff:g>.</string>
   <string name="task_updated">Task updated</string>

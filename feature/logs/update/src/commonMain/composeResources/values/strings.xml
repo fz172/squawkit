@@ -21,4 +21,6 @@
   <string name="performed_by_description">The <xliff:g example="technician">%1$s</xliff:g> who performed this work</string>
   <string name="squawks_section_header"><xliff:g example="squawks">%1$s</xliff:g> addressed</string>
   <string name="tasks_section_header"><xliff:g example="maintenance tasks">%1$s</xliff:g> completed</string>
+  <string name="delete_this_log_title">Delete this <xliff:g example="work log">%1$s</xliff:g></string>
+  <string name="delete_this_log_subtitle">Permanently removes it. This cannot be undone.</string>
 </resources>

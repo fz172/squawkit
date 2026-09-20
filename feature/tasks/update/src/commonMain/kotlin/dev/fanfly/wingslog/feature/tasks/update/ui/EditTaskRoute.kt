@@ -26,7 +26,6 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.feature.attachment.sharedassets.generated.resources.file_read_error
 import wingslog.feature.tasks.sharedassets.generated.resources.task_deleted
-import wingslog.feature.tasks.sharedassets.generated.resources.task_skipped
 import wingslog.feature.tasks.update.generated.resources.Res
 import wingslog.feature.tasks.update.generated.resources.task_updated
 import wingslog.feature.attachment.sharedassets.generated.resources.Res as AttachRes
@@ -53,7 +52,6 @@ fun EditTaskRoute(
     TasksRes.string.task_deleted,
     LexiconFormatter.sentenceCase(LocalThingLexicon.current.taskNoun),
   )
-  val skippedMessage = stringResource(TasksRes.string.task_skipped)
   val fileReadErrorMessage = stringResource(AttachRes.string.file_read_error)
   val snackbarHostState = remember { SnackbarHostState() }
 
@@ -64,15 +62,6 @@ fun EditTaskRoute(
           fileReadErrorMessage
         )
 
-        is TaskFormEvent.NavigateToCreateLog -> {
-          navController.popBackStack()
-          navController.navigate(
-            Screen.AddMaintenanceLog.createRoute(
-              thingId = event.thingId,
-              cardId = event.cardId,
-            )
-          )
-        }
       }
     }
   }
@@ -158,22 +147,6 @@ fun EditTaskRoute(
             navController.previousBackStackEntry?.savedStateHandle?.set(
               CROSS_SCREEN_SUCCESS_MESSAGE,
               deletedMessage
-            )
-            navController.popBackStack()
-          }
-        )
-      },
-      onResolveClick = viewModel::showResolveMenu,
-      onResolveMenuDismiss = viewModel::hideResolveMenu,
-      onCreateWorkLogClick = viewModel::selectCreateWorkLog,
-      onSkipConfirm = {
-        viewModel.skipThisCycle(
-          card = card,
-          currentEngineHours = successState.currentEngineHours,
-          onSuccess = {
-            navController.previousBackStackEntry?.savedStateHandle?.set(
-              CROSS_SCREEN_SUCCESS_MESSAGE,
-              skippedMessage
             )
             navController.popBackStack()
           }

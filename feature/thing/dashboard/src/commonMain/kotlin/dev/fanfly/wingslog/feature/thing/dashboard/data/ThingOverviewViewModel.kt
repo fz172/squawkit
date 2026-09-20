@@ -23,8 +23,6 @@ import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
 import dev.fanfly.wingslog.feature.attachment.model.DataLogRowInfo
 import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogManager
 import dev.fanfly.wingslog.feature.datalog.model.dataLogId
-import dev.fanfly.wingslog.id.DataLogId
-import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
@@ -37,6 +35,8 @@ import dev.fanfly.wingslog.feature.tasks.datamanager.TaskStatusManager
 import dev.fanfly.wingslog.feature.tasks.datamanager.defaultMeterKey
 import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
+import dev.fanfly.wingslog.id.DataLogId
+import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.thing.Squawk
@@ -128,16 +128,22 @@ class ThingOverviewViewModel(
   @OptIn(ExperimentalCoroutinesApi::class)
   private fun dataLogsFlow(): Flow<Map<DataLogId, DataLogRowInfo>> {
     val typedThingId = ThingId(thingId)
-    return dataLogManager.observe(typedThingId).flatMapLatest { logs ->
-      if (logs.isEmpty()) return@flatMapLatest flowOf(emptyMap())
-      combine(
-        logs.map { log ->
-          dataLogManager.observeBlobState(typedThingId, log.dataLogId).map { state ->
-            log.dataLogId to DataLogRowInfo(log.source?.product.orEmpty(), log.duration_seconds, state)
+    return dataLogManager.observe(typedThingId)
+      .flatMapLatest { logs ->
+        if (logs.isEmpty()) return@flatMapLatest flowOf(emptyMap())
+        combine(
+          logs.map { log ->
+            dataLogManager.observeBlobState(typedThingId, log.dataLogId)
+              .map { state ->
+                log.dataLogId to DataLogRowInfo(
+                  log.source?.product.orEmpty(),
+                  log.duration_seconds,
+                  state
+                )
+              }
           }
-        }
-      ) { entries -> entries.toMap() }
-    }
+        ) { entries -> entries.toMap() }
+      }
   }
 
   private fun loadThingAndStats() {
@@ -437,17 +443,25 @@ class ThingOverviewViewModel(
 
       is ThingOverviewAction.SquawkDismissClick ->
         updateSuccess {
-          it.copy(resolvingSquawkId = null, dismissingSquawkId = action.squawkId)
+          it.copy(
+            resolvingSquawkId = null,
+            dismissingSquawkId = action.squawkId
+          )
         }
 
       is ThingOverviewAction.ConfirmDismissSquawk -> dismissSquawk(action.reason)
+
+      is ThingOverviewAction.SquawkReopenClick -> reopenSquawk(action.squawkId)
 
       ThingOverviewAction.CancelDismissSquawk ->
         updateSuccess { it.copy(dismissingSquawkId = null) }
 
       is ThingOverviewAction.DeleteSquawkClick ->
         updateSuccess {
-          it.copy(resolvingSquawkId = null, deletingSquawkId = action.squawk.squawk.id)
+          it.copy(
+            resolvingSquawkId = null,
+            deletingSquawkId = action.squawk.squawk.id
+          )
         }
 
       ThingOverviewAction.ConfirmDeleteSquawk -> confirmDeleteSquawk()
@@ -522,13 +536,30 @@ class ThingOverviewViewModel(
       // The manager, and nothing lower: the tombstone it writes is what fans the collaborator
       // notification out (design §8).
       squawkManager.dismissSquawk(state.thing.id, squawkId, reason)
-        .onSuccess { logQuickAction(QuickActionSurface.SQUAWKS, QuickActionKind.RESOLVE) }
+        .onSuccess {
+          logQuickAction(
+            QuickActionSurface.SQUAWKS,
+            QuickActionKind.RESOLVE
+          )
+        }
         .onFailure {
           _events.send(
             ThingOverviewEvent.ShowMessage(UiText.StringRes(CoreRes.string.save_failed))
           )
         }
       updateSuccess { it.copy(dismissingSquawkId = null) }
+    }
+  }
+
+  private fun reopenSquawk(squawkId: String) {
+    val state = _uiState.value as? ThingOverviewUiState.Success ?: return
+    viewModelScope.launch {
+      squawkManager.reopenSquawk(state.thing.id, squawkId)
+        .onFailure {
+          _events.send(
+            ThingOverviewEvent.ShowMessage(UiText.StringRes(CoreRes.string.save_failed))
+          )
+        }
     }
   }
 
@@ -574,9 +605,15 @@ class ThingOverviewViewModel(
     viewModelScope.launch {
       // The dashboard already holds the reading the form derives, so the write is the same one
       // TaskViewModel.skipThisCycle makes (design §5.1).
-      val reading = state.logStats?.valueFor(card.defaultMeterKey())?.toFloat() ?: 0f
+      val reading = state.logStats?.valueFor(card.defaultMeterKey())
+        ?.toFloat() ?: 0f
       taskDataManager.skipCycle(state.thing.id, card, reading)
-        .onSuccess { logQuickAction(QuickActionSurface.TASKS, QuickActionKind.SKIP) }
+        .onSuccess {
+          logQuickAction(
+            QuickActionSurface.TASKS,
+            QuickActionKind.SKIP
+          )
+        }
       updateSuccess { it.copy(skippingTaskId = null) }
     }
   }

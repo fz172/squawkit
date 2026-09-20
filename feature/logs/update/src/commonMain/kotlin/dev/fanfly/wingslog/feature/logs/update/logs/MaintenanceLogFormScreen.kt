@@ -2,9 +2,11 @@ package dev.fanfly.wingslog.feature.logs.update.logs
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
@@ -56,6 +58,7 @@ import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedTopBar
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
 import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
+import dev.fanfly.wingslog.core.ui.common.compose.DangerZone
 import dev.fanfly.wingslog.core.ui.common.compose.DatePickerDialog
 import dev.fanfly.wingslog.core.ui.common.compose.UnsavedChangesDialog
 import dev.fanfly.wingslog.core.ui.theme.Spacing
@@ -85,7 +88,6 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import wingslog.core.sharedassets.generated.resources.back
 import wingslog.core.sharedassets.generated.resources.cancel
-import wingslog.core.sharedassets.generated.resources.delete
 import wingslog.core.sharedassets.generated.resources.ok
 import wingslog.core.sharedassets.generated.resources.save
 import wingslog.feature.attachment.sharedassets.generated.resources.file_read_error
@@ -94,6 +96,8 @@ import wingslog.feature.logs.sharedassets.generated.resources.edit_log
 import wingslog.feature.logs.sharedassets.generated.resources.log_deleted
 import wingslog.feature.logs.sharedassets.generated.resources.resolve_squawk_work_description
 import wingslog.feature.logs.sharedassets.generated.resources.resolve_task_work_description
+import wingslog.feature.logs.update.generated.resources.delete_this_log_subtitle
+import wingslog.feature.logs.update.generated.resources.delete_this_log_title
 import wingslog.feature.logs.update.generated.resources.log_saved
 import wingslog.feature.logs.update.generated.resources.log_updated
 import kotlin.time.Instant
@@ -359,6 +363,18 @@ fun MaintenanceLogFormScreen(
                   },
                 )
               }
+              // Edit only, and last on the last tab: there is nothing to delete yet on a new log.
+              if (viewModel.isEditMode && tabs[page] == tabs.last()) {
+                Spacer(Modifier.height(Spacing.extraLarge))
+                DangerZone(
+                  title = stringResource(
+                    MaintenanceRes.string.delete_this_log_title,
+                    LocalThingLexicon.current.logNoun.singular,
+                  ),
+                  subtitle = stringResource(MaintenanceRes.string.delete_this_log_subtitle),
+                  onDelete = { showDeleteDialog = true },
+                )
+              }
             }
           }
         }
@@ -366,10 +382,6 @@ fun MaintenanceLogFormScreen(
         BottomButtons(
           onPrimaryClick = viewModel::save,
           onSecondaryClick = { tryNavigateBack() },
-          onDangerClick = if (viewModel.isEditMode) {
-            { showDeleteDialog = true }
-          } else null,
-          dangerLabel = stringResource(CoreRes.string.delete),
           primaryEnabled = !uiState.isSaving,
           isPrimaryFunctionInProgress = uiState.isSaving,
           primaryLabel = stringResource(CoreRes.string.save),

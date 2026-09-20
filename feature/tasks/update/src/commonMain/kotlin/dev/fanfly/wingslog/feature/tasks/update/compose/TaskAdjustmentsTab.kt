@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarToday
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
@@ -35,16 +34,14 @@ import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.template.LocalThingTemplate
 import dev.fanfly.wingslog.core.template.meterForComponent
-import dev.fanfly.wingslog.core.ui.common.compose.DestructiveActionCard
+import dev.fanfly.wingslog.core.ui.common.compose.DangerZone
 import dev.fanfly.wingslog.core.ui.common.compose.FormSectionLabel
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import dev.fanfly.wingslog.core.ui.theme.statusColors
 import dev.fanfly.wingslog.feature.tasks.datamanager.pickerMillisToDate
 import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
 import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.MeterDef
 import org.jetbrains.compose.resources.stringResource
-import wingslog.core.sharedassets.generated.resources.danger_zone
 import wingslog.core.sharedassets.generated.resources.select_date
 import wingslog.feature.tasks.update.generated.resources.Res
 import wingslog.feature.tasks.update.generated.resources.adj_reschedule_disabled_linked
@@ -141,17 +138,10 @@ fun TaskAdjustmentsTab(
       meterUnit = meterUnit,
     )
 
-    // Delete task — kept separate from the Resolve menu (Create Work Log / Skip This Cycle)
-    // since deletion has no squawk-resolve analog. Same red header as the squawk form.
-    FormSectionLabel(
-      text = stringResource(CoreRes.string.danger_zone),
-      color = MaterialTheme.statusColors.critical.accent,
-    )
-    DestructiveActionCard(
-      icon = Icons.Default.Delete,
+    DangerZone(
       title = stringResource(Res.string.delete_this_task_title),
       subtitle = stringResource(Res.string.delete_this_task_subtitle),
-      onClick = onDeleteRequest,
+      onDelete = onDeleteRequest,
     )
   }
 }

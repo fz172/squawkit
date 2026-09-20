@@ -19,4 +19,6 @@
   <string name="custom_field_add">Add a field</string>
   <string name="pick_type_title">New thing</string>
   <string name="pick_type_subtitle">The type sets which details and services get tracked.</string>
+  <string name="delete_this_thing_title">Delete this <xliff:g example="aircraft">%1$s</xliff:g></string>
+  <string name="delete_this_thing_subtitle">Permanently removes it and every record filed under it.</string>
 </resources>

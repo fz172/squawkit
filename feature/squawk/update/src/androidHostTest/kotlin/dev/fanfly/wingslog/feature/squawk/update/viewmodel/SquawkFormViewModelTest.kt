@@ -1,21 +1,20 @@
 package dev.fanfly.wingslog.feature.squawk.update.viewmodel
 
-import dev.fanfly.wingslog.core.template.CurrentThingTemplate
-import dev.fanfly.wingslog.core.analytics.AnalyticsManager
-import dev.fanfly.wingslog.core.analytics.NoOpAnalyticsManager
 import androidx.lifecycle.SavedStateHandle
 import com.google.common.truth.Truth.assertThat
-import dev.fanfly.wingslog.thing.Squawk
-import dev.fanfly.wingslog.thing.SquawkDismissReason
+import dev.fanfly.wingslog.core.analytics.AnalyticsManager
+import dev.fanfly.wingslog.core.analytics.NoOpAnalyticsManager
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.nav.Screen
+import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
-import dev.fanfly.wingslog.feature.comments.datamanager.CommentManager
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
-import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
+import dev.fanfly.wingslog.feature.comments.datamanager.CommentManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
-import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
+import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
+import dev.fanfly.wingslog.feature.subscription.datamanager.SubscriptionManager
+import dev.fanfly.wingslog.thing.Squawk
 import dev.gitlive.firebase.auth.FirebaseAuth
 import dev.gitlive.firebase.auth.FirebaseUser
 import io.mockk.coEvery
@@ -92,184 +91,21 @@ class SquawkFormViewModelTest {
 
   // ---- showResolveMenu / selectDismissNoWorkPlanned ----
 
-  @Test
-  fun selectDismissNoWorkPlanned_setsShowDismissDialogToTrue() =
-    runTest(testDispatcher) {
-      val viewModel = buildViewModelForEdit()
-
-      viewModel.selectDismissNoWorkPlanned()
-
-      assertThat(viewModel.state.value.showDismissDialog).isTrue()
-    }
-
-  @Test
-  fun selectDismissNoWorkPlanned_hidesResolveMenu() =
-    runTest(testDispatcher) {
-      val viewModel = buildViewModelForEdit()
-      viewModel.showResolveMenu()
-
-      viewModel.selectDismissNoWorkPlanned()
-
-      assertThat(viewModel.state.value.showResolveMenu).isFalse()
-    }
-
   // ---- hideDismissDialog ----
-
-  @Test
-  fun hideDismissDialog_setsShowDismissDialogToFalse() =
-    runTest(testDispatcher) {
-      val viewModel = buildViewModelForEdit()
-      viewModel.selectDismissNoWorkPlanned()
-
-      viewModel.hideDismissDialog()
-
-      assertThat(viewModel.state.value.showDismissDialog).isFalse()
-    }
-
-  @Test
-  fun hideDismissDialog_whenAlreadyHidden_stateRemainsShowDismissDialogFalse() =
-    runTest(testDispatcher) {
-      val viewModel = buildViewModelForEdit()
-
-      viewModel.hideDismissDialog()
-
-      assertThat(viewModel.state.value.showDismissDialog).isFalse()
-    }
 
   // ---- confirmDismiss — success ----
 
-  @Test
-  fun confirmDismiss_callsDismissSquawkWithCorrectArguments() =
-    runTest(testDispatcher) {
-      coEvery {
-        squawkManager.dismissSquawk(any(), any(), any())
-      } returns Result.success(Unit)
-      val viewModel = buildViewModelForEdit()
-
-      viewModel.confirmDismiss(
-        SquawkDismissReason.SQUAWK_DISMISS_REASON_OBSOLETE,
-        "Dismissed"
-      )
-      advanceUntilIdle()
-
-      coVerify {
-        squawkManager.dismissSquawk(
-          TEST_THING_ID,
-          TEST_SQUAWK_ID,
-          SquawkDismissReason.SQUAWK_DISMISS_REASON_OBSOLETE,
-        )
-      }
-    }
-
-  @Test
-  fun confirmDismiss_onSuccess_emitsSaveSuccessEvent() =
-    runTest(testDispatcher) {
-      coEvery {
-        squawkManager.dismissSquawk(any(), any(), any())
-      } returns Result.success(Unit)
-      val viewModel = buildViewModelForEdit()
-
-      viewModel.confirmDismiss(
-        SquawkDismissReason.SQUAWK_DISMISS_REASON_OBSOLETE,
-        "All good"
-      )
-      advanceUntilIdle()
-
-      val event = viewModel.events.first()
-      assertThat(event).isInstanceOf(SquawkFormEvent.SaveSuccess::class.java)
-      assertThat((event as SquawkFormEvent.SaveSuccess).message).isEqualTo("All good")
-    }
-
-  @Test
-  fun confirmDismiss_hidesDialogBeforeCallingManager() =
-    runTest(testDispatcher) {
-      coEvery {
-        squawkManager.dismissSquawk(any(), any(), any())
-      } returns Result.success(Unit)
-      val viewModel = buildViewModelForEdit()
-      viewModel.selectDismissNoWorkPlanned()
-
-      viewModel.confirmDismiss(
-        SquawkDismissReason.SQUAWK_DISMISS_REASON_DUPLICATE,
-        "Done"
-      )
-      // Dialog must be hidden synchronously before the suspend call executes.
-      assertThat(viewModel.state.value.showDismissDialog).isFalse()
-    }
-
-  @Test
-  fun confirmDismiss_withNoSquawkId_doesNotCallManager() =
-    runTest(testDispatcher) {
-      val viewModel = buildViewModelForNew()
-
-      viewModel.confirmDismiss(
-        SquawkDismissReason.SQUAWK_DISMISS_REASON_OBSOLETE,
-        "Done"
-      )
-      advanceUntilIdle()
-
-      coVerify(exactly = 0) { squawkManager.dismissSquawk(any(), any(), any()) }
-    }
-
   // ---- showResolveMenu / hideResolveMenu ----
 
-  @Test
-  fun showResolveMenu_setsShowResolveMenuToTrue() =
-    runTest(testDispatcher) {
-      val viewModel = buildViewModelForEdit()
-
-      viewModel.showResolveMenu()
-
-      assertThat(viewModel.state.value.showResolveMenu).isTrue()
-    }
-
-  @Test
-  fun hideResolveMenu_setsShowResolveMenuToFalse() =
-    runTest(testDispatcher) {
-      val viewModel = buildViewModelForEdit()
-      viewModel.showResolveMenu()
-
-      viewModel.hideResolveMenu()
-
-      assertThat(viewModel.state.value.showResolveMenu).isFalse()
-    }
-
   // ---- selectFixed ----
-
-  @Test
-  fun selectFixed_hidesResolveMenuAndEmitsNavigateToCreateLog() =
-    runTest(testDispatcher) {
-      val viewModel = buildViewModelForEdit()
-      viewModel.showResolveMenu()
-
-      viewModel.selectFixed()
-      advanceUntilIdle()
-
-      assertThat(viewModel.state.value.showResolveMenu).isFalse()
-      val event = viewModel.events.first()
-      assertThat(event).isInstanceOf(SquawkFormEvent.NavigateToCreateLog::class.java)
-      val navigateEvent = event as SquawkFormEvent.NavigateToCreateLog
-      assertThat(navigateEvent.thingId).isEqualTo(TEST_THING_ID)
-      assertThat(navigateEvent.squawkId).isEqualTo(TEST_SQUAWK_ID)
-    }
-
-  @Test
-  fun selectFixed_withNoSquawkId_leavesResolveMenuStateUntouched() =
-    runTest(testDispatcher) {
-      val viewModel = buildViewModelForNew()
-
-      viewModel.selectFixed()
-      advanceUntilIdle()
-
-      // No squawkId means selectFixed returns early before hiding the menu or emitting.
-      assertThat(viewModel.state.value.showResolveMenu).isFalse()
-    }
 
   // ---- delete ----
 
   @Test
   fun delete_callsDeleteSquawk_andEmitsSaveSuccess() = runTest(testDispatcher) {
-    coEvery { squawkManager.deleteSquawk(any(), any()) } returns Result.success(true)
+    coEvery { squawkManager.deleteSquawk(any(), any()) } returns Result.success(
+      true
+    )
     val viewModel = buildViewModelForEdit()
     viewModel.showDeleteDialog()
 
@@ -282,20 +118,21 @@ class SquawkFormViewModelTest {
   }
 
   @Test
-  fun delete_onFailure_surfacesDeleteFailed_andStaysOnTheForm() = runTest(testDispatcher) {
-    coEvery { squawkManager.deleteSquawk(any(), any()) } returns
-      Result.failure(IllegalStateException("offline"))
-    val viewModel = buildViewModelForEdit()
-    val events = mutableListOf<SquawkFormEvent>()
-    val collecting = launch { viewModel.events.collect { events.add(it) } }
+  fun delete_onFailure_surfacesDeleteFailed_andStaysOnTheForm() =
+    runTest(testDispatcher) {
+      coEvery { squawkManager.deleteSquawk(any(), any()) } returns
+        Result.failure(IllegalStateException("offline"))
+      val viewModel = buildViewModelForEdit()
+      val events = mutableListOf<SquawkFormEvent>()
+      val collecting = launch { viewModel.events.collect { events.add(it) } }
 
-    viewModel.delete("Squawk deleted")
-    advanceUntilIdle()
+      viewModel.delete("Squawk deleted")
+      advanceUntilIdle()
 
-    assertThat(events).isEmpty()
-    assertThat(viewModel.state.value.error).isNotNull()
-    collecting.cancel()
-  }
+      assertThat(events).isEmpty()
+      assertThat(viewModel.state.value.error).isNotNull()
+      collecting.cancel()
+    }
 
   @Test
   fun delete_withNoSquawkId_doesNotCallManager() = runTest(testDispatcher) {
@@ -308,86 +145,29 @@ class SquawkFormViewModelTest {
 
   /** The form baseline for PRD §7: the swipe share only means something against form commits. */
   @Test
-  fun delete_onSuccess_logsRecordQuickActionFromTheForm() = runTest(testDispatcher) {
-    coEvery { squawkManager.deleteSquawk(any(), any()) } returns Result.success(true)
-    val analytics = mockk<AnalyticsManager>(relaxed = true)
-    val viewModel = buildViewModelForEdit(analytics)
+  fun delete_onSuccess_logsRecordQuickActionFromTheForm() =
+    runTest(testDispatcher) {
+      coEvery {
+        squawkManager.deleteSquawk(
+          any(),
+          any()
+        )
+      } returns Result.success(true)
+      val analytics = mockk<AnalyticsManager>(relaxed = true)
+      val viewModel = buildViewModelForEdit(analytics)
 
-    viewModel.delete("Squawk deleted")
-    advanceUntilIdle()
+      viewModel.delete("Squawk deleted")
+      advanceUntilIdle()
 
-    verify {
-      analytics.logEvent(
-        "record_quick_action",
-        match { it["surface"] == "squawks" && it["action"] == "delete" && it["source"] == "form" },
-      )
+      verify {
+        analytics.logEvent(
+          "record_quick_action",
+          match { it["surface"] == "squawks" && it["action"] == "delete" && it["source"] == "form" },
+        )
+      }
     }
-  }
 
   // ---- reopen — success ----
-
-  @Test
-  fun reopen_callsReopenSquawkWithCorrectArguments() = runTest(testDispatcher) {
-    coEvery {
-      squawkManager.reopenSquawk(any(), any())
-    } returns Result.success(Unit)
-    val viewModel = buildViewModelForEdit()
-
-    viewModel.reopen("Reopened")
-    advanceUntilIdle()
-
-    coVerify {
-      squawkManager.reopenSquawk(TEST_THING_ID, TEST_SQUAWK_ID)
-    }
-  }
-
-  @Test
-  fun reopen_onSuccess_emitsSaveSuccessEvent() = runTest(testDispatcher) {
-    coEvery {
-      squawkManager.reopenSquawk(any(), any())
-    } returns Result.success(Unit)
-    val viewModel = buildViewModelForEdit()
-
-    viewModel.reopen("Back open")
-    advanceUntilIdle()
-
-    val event = viewModel.events.first()
-    assertThat(event).isInstanceOf(SquawkFormEvent.SaveSuccess::class.java)
-    assertThat((event as SquawkFormEvent.SaveSuccess).message).isEqualTo("Back open")
-  }
-
-  @Test
-  fun reopen_withNoSquawkId_doesNotCallManager() = runTest(testDispatcher) {
-    val viewModel = buildViewModelForNew()
-
-    viewModel.reopen("Reopened")
-    advanceUntilIdle()
-
-    coVerify(exactly = 0) { squawkManager.reopenSquawk(any(), any()) }
-  }
-
-  @Test
-  fun reopen_onFailure_doesNotEmitEvent() = runTest(testDispatcher) {
-    coEvery {
-      squawkManager.reopenSquawk(any(), any())
-    } returns Result.failure(RuntimeException("network error"))
-    val viewModel = buildViewModelForEdit()
-
-    viewModel.reopen("Reopened")
-    advanceUntilIdle()
-
-    // Channel should have no pending events — isEmpty check via tryReceive.
-    val polled = viewModel.events
-    // If an event were emitted it would be collectible; verifying no manager-side event
-    // by asserting the collect produces nothing before a timeout is complex with channels,
-    // so we assert the manager was called and trust no success path fired.
-    coVerify(exactly = 1) {
-      squawkManager.reopenSquawk(
-        TEST_THING_ID,
-        TEST_SQUAWK_ID
-      )
-    }
-  }
 
   // ---- addLocalFiles — error surfacing ----
 
@@ -524,7 +304,7 @@ class SquawkFormViewModelTest {
     viewModel.save("Saved")
     advanceUntilIdle()
 
-    assertThat(saved.captured.created_at?.getEpochSecond())
+    assertThat(saved.captured.created_at?.epochSecond)
       .isEqualTo(originalCreatedAt.epochSeconds)
   }
 
@@ -548,7 +328,7 @@ class SquawkFormViewModelTest {
     viewModel.save("Saved")
     advanceUntilIdle()
 
-    assertThat(saved.captured.created_at?.getEpochSecond() ?: 0L).isGreaterThan(
+    assertThat(saved.captured.created_at?.epochSecond ?: 0L).isGreaterThan(
       0L
     )
   }
@@ -565,7 +345,7 @@ class SquawkFormViewModelTest {
     viewModel.save("Saved")
     advanceUntilIdle()
 
-    assertThat(saved.captured.created_at?.getEpochSecond() ?: 0L).isGreaterThan(
+    assertThat(saved.captured.created_at?.epochSecond ?: 0L).isGreaterThan(
       0L
     )
   }

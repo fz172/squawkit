@@ -1,6 +1,5 @@
 package dev.fanfly.wingslog.core.ui.common.compose
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -31,29 +30,23 @@ import dev.fanfly.wingslog.core.ui.theme.Spacing
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.Res
 import wingslog.core.sharedassets.generated.resources.cancel
-import wingslog.core.sharedassets.generated.resources.delete
 import wingslog.core.sharedassets.generated.resources.save_changes
 
+/**
+ * A form's action bar: Cancel and one primary action, nothing else. Delete lives in [DangerZone]
+ * at the end of the form, and state changes (resolve, reopen, skip) live on the detail sheet —
+ * a third slot here meant Delete on one form and Resolve on the next, in the same position.
+ */
 @Composable
 fun BottomButtons(
   onPrimaryClick: () -> Unit,
   onSecondaryClick: (() -> Unit)? = null,
   modifier: Modifier = Modifier,
-  onDangerClick: (() -> Unit)? = null,
-  dangerLabel: String = stringResource(Res.string.delete),
-  /**
-   * The outlined third button's colour. Red by default, because its usual job is Delete; a form
-   * whose third action is a positive one — Resolve — passes the positive status tone instead.
-   */
-  dangerColor: Color = MaterialTheme.colorScheme.error,
   primaryEnabled: Boolean = true,
   secondaryEnabled: Boolean = true,
   isPrimaryFunctionInProgress: Boolean = false,
   primaryLabel: String = stringResource(Res.string.save_changes),
   secondaryLabel: String = stringResource(Res.string.cancel),
-  // Rendered anchored to the danger button (e.g. a DropdownMenu with sub-options). No-op by
-  // default so other callers of this shared component are unaffected.
-  dangerMenuContent: @Composable () -> Unit = {},
 ) {
   Box(
     modifier = modifier.fillMaxWidth()
@@ -91,40 +84,7 @@ fun BottomButtons(
         }
       }
 
-      // 2. Delete Button (Optional)
-      if (onDangerClick != null) {
-        Box(modifier = Modifier.weight(1f)) {
-          OutlinedButton(
-            onClick = onDangerClick,
-            enabled = !isPrimaryFunctionInProgress,
-            modifier = Modifier.fillMaxWidth()
-              .height(Spacing.buttonHeight),
-            shape = RoundedCornerShape(Spacing.buttonCornerRadius),
-            colors = ButtonDefaults.outlinedButtonColors(
-              containerColor = MaterialTheme.colorScheme.surface,
-              contentColor = dangerColor,
-              disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-              disabledContentColor = MaterialTheme.colorScheme.outline
-            ),
-            border = BorderStroke(
-              Spacing.hairline,
-              if (!isPrimaryFunctionInProgress) dangerColor
-              else MaterialTheme.colorScheme.outline
-            )
-          ) {
-            Text(
-              text = dangerLabel.uppercase(),
-              fontWeight = FontWeight.Bold,
-              maxLines = 1,
-              textAlign = TextAlign.Center,
-              modifier = Modifier.fillMaxWidth()
-            )
-          }
-          dangerMenuContent()
-        }
-      }
-
-      // 3. Save Button
+      // 2. Save Button
       Button(
         onClick = onPrimaryClick,
         modifier = Modifier.weight(1f)
@@ -168,5 +128,5 @@ fun BottomButtonsPreview() {
   BottomButtons(
     onPrimaryClick = {},
     onSecondaryClick = {},
-    onDangerClick = {})
+  )
 }

@@ -14,8 +14,6 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import dev.fanfly.wingslog.feature.datalog.model.dataLogIdOrNull
-import dev.fanfly.wingslog.id.DataLogId
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -37,11 +35,11 @@ import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.squawkEmptyHint
 import dev.fanfly.wingslog.core.template.squawkNoun
 import dev.fanfly.wingslog.core.ui.adaptive.compose.AdaptiveCardList
-import dev.fanfly.wingslog.core.ui.common.compose.ListRowDivider
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.adaptive.compose.navPillAndFabClearance
 import dev.fanfly.wingslog.core.ui.common.compose.DualSegmentedFilter
 import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
+import dev.fanfly.wingslog.core.ui.common.compose.ListRowDivider
 import dev.fanfly.wingslog.core.ui.common.compose.SwipeActionCard
 import dev.fanfly.wingslog.core.ui.common.compose.jumpTargetHighlight
 import dev.fanfly.wingslog.core.ui.common.compose.rememberSwipeRevealController
@@ -53,6 +51,7 @@ import dev.fanfly.wingslog.feature.ads.model.withAdSlots
 import dev.fanfly.wingslog.feature.ads.viewing.AdSlot
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
 import dev.fanfly.wingslog.feature.attachment.datamanager.OpenState
+import dev.fanfly.wingslog.feature.datalog.model.dataLogIdOrNull
 import dev.fanfly.wingslog.feature.logs.sharedassets.util.displayName
 import dev.fanfly.wingslog.feature.search.model.Facet
 import dev.fanfly.wingslog.feature.search.model.TimeWindow
@@ -78,6 +77,7 @@ import dev.fanfly.wingslog.feature.thing.dashboard.data.SquawkAdapter
 import dev.fanfly.wingslog.feature.thing.dashboard.data.SquawkTabViewModel
 import dev.fanfly.wingslog.feature.thing.dashboard.data.ThingOverviewAction
 import dev.fanfly.wingslog.feature.thing.dashboard.data.ThingOverviewUiState
+import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.thing.SquawkPriority
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
@@ -88,10 +88,10 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+import wingslog.feature.search.sharedassets.generated.resources.filter_q_how_urgent
+import wingslog.feature.search.sharedassets.generated.resources.filter_q_when_reported
 import wingslog.feature.search.sharedassets.generated.resources.filter_scope_closed
 import wingslog.feature.search.sharedassets.generated.resources.filter_scope_open
-import wingslog.feature.search.sharedassets.generated.resources.filter_q_when_reported
-import wingslog.feature.search.sharedassets.generated.resources.filter_q_how_urgent
 import wingslog.feature.search.sharedassets.generated.resources.match_serial
 import wingslog.feature.search.sharedassets.generated.resources.search_placeholder
 import wingslog.feature.squawk.sharedassets.generated.resources.Res
@@ -472,11 +472,12 @@ fun SquawkTab(
       },
       onAttachmentTap = { attachment ->
         openError = null
-        attachment.dataLogIdOrNull()?.let { dataLogId ->
-          onAction(ThingOverviewAction.DismissSquawkDetail)
-          onOpenDataLog?.invoke(dataLogId)
-          return@SquawkDetailSheet
-        }
+        attachment.dataLogIdOrNull()
+          ?.let { dataLogId ->
+            onAction(ThingOverviewAction.DismissSquawkDetail)
+            onOpenDataLog?.invoke(dataLogId)
+            return@SquawkDetailSheet
+          }
         val openFlow = attachmentOpener.open(attachment)
         coroutineScope.launch {
           openFlow.collect { openState ->
@@ -488,6 +489,24 @@ fun SquawkTab(
       syncStates = state.syncStates,
       dataLogs = state.dataLogs,
       openError = openError,
+      onFixedClick = onMutationAction?.let { mutate ->
+        {
+          onAction(ThingOverviewAction.DismissSquawkDetail)
+          mutate(ThingOverviewAction.SquawkFixedClick(selected.squawk.id))
+        }
+      },
+      onDismissNoWorkPlanned = onMutationAction?.let { mutate ->
+        {
+          onAction(ThingOverviewAction.DismissSquawkDetail)
+          mutate(ThingOverviewAction.SquawkDismissClick(selected.squawk.id))
+        }
+      },
+      onReopenClick = onMutationAction?.let { mutate ->
+        {
+          onAction(ThingOverviewAction.DismissSquawkDetail)
+          mutate(ThingOverviewAction.SquawkReopenClick(selected.squawk.id))
+        }
+      },
       onEditClick = onMutationAction?.let { mutate ->
         {
           onAction(ThingOverviewAction.DismissSquawkDetail)

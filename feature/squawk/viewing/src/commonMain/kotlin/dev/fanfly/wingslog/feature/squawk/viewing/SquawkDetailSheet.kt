@@ -1,7 +1,5 @@
 package dev.fanfly.wingslog.feature.squawk.viewing
 
-import dev.fanfly.wingslog.core.template.LocalThingLexicon
-import dev.fanfly.wingslog.core.template.squawkNoun
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -19,28 +17,37 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import dev.fanfly.wingslog.thing.Attachment
-import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.datetime.toLocalDate
+import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.squawkNoun
 import dev.fanfly.wingslog.core.ui.common.compose.DetailSheet
+import dev.fanfly.wingslog.core.ui.common.compose.DetailSheetAction
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
 import dev.fanfly.wingslog.feature.attachment.model.DataLogRowInfo
-import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.feature.attachment.viewing.AttachmentSection
 import dev.fanfly.wingslog.feature.squawk.model.SquawkStatus
 import dev.fanfly.wingslog.feature.squawk.model.SquawkWithStatus
 import dev.fanfly.wingslog.feature.squawk.sharedassets.toLabel
+import dev.fanfly.wingslog.id.DataLogId
+import dev.fanfly.wingslog.thing.Attachment
+import dev.fanfly.wingslog.thing.MaintenanceLog
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.squawk.sharedassets.generated.resources.Res
 import wingslog.feature.squawk.sharedassets.generated.resources.dismissed_label
 import wingslog.feature.squawk.sharedassets.generated.resources.edit_squawk
 import wingslog.feature.squawk.sharedassets.generated.resources.no_work_recorded
+import wingslog.feature.squawk.sharedassets.generated.resources.reopen_issue
 import wingslog.feature.squawk.sharedassets.generated.resources.reported
+import wingslog.feature.squawk.sharedassets.generated.resources.resolve_issue
 import wingslog.feature.squawk.sharedassets.generated.resources.work_history
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -56,9 +63,18 @@ fun SquawkDetailSheet(
   syncStates: Map<String, BlobSyncState> = emptyMap(),
   dataLogs: Map<DataLogId, DataLogRowInfo>? = null,
   openError: String? = null,
+  /**
+   * The squawk's next state, offered as the sheet's primary action: *Resolve* (Fixed / Dismiss)
+   * while it is open, *Reopen* once dismissed, nothing once a log has addressed it. All null for
+   * a caller who may not change the record.
+   */
+  onFixedClick: (() -> Unit)? = null,
+  onDismissNoWorkPlanned: (() -> Unit)? = null,
+  onReopenClick: (() -> Unit)? = null,
   modifier: Modifier = Modifier,
 ) {
   val squawk = item.squawk
+  var resolveMenuOpen by remember { mutableStateOf(false) }
 
   DetailSheet(
     onDismiss = onDismiss,
@@ -112,6 +128,41 @@ fun SquawkDetailSheet(
       )
     }
 
+    when (item.status) {
+      SquawkStatus.OPEN -> if (onFixedClick != null && onDismissNoWorkPlanned != null) {
+        DetailSheetAction(
+          label = stringResource(Res.string.resolve_issue),
+          onClick = { resolveMenuOpen = true },
+          modifier = Modifier.padding(top = Spacing.small),
+          menu = {
+            ResolveOptionsMenu(
+              expanded = resolveMenuOpen,
+              onDismissRequest = { resolveMenuOpen = false },
+              onDismissNoWorkPlanned = {
+                resolveMenuOpen = false
+                onDismissNoWorkPlanned()
+              },
+              onFixedClick = {
+                resolveMenuOpen = false
+                onFixedClick()
+              },
+            )
+          },
+        )
+      }
+
+      SquawkStatus.DISMISSED -> if (onReopenClick != null) {
+        DetailSheetAction(
+          label = stringResource(Res.string.reopen_issue),
+          onClick = onReopenClick,
+          primary = false,
+          modifier = Modifier.padding(top = Spacing.small),
+        )
+      }
+
+      else -> Unit
+    }
+
     Spacer(Modifier.height(Spacing.medium))
 
     // Work History section
@@ -128,6 +179,7 @@ fun SquawkDetailSheet(
         log = addressingLog,
         onClick = onLogClick?.let { jump -> { jump(addressingLog.id) } },
       )
+
       item.status == SquawkStatus.DISMISSED -> DismissedHistoryRow(item)
       else -> Text(
         text = stringResource(Res.string.no_work_recorded),

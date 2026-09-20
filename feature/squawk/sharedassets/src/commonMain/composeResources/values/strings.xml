@@ -45,4 +45,6 @@
   <string name="delete_this_squawk_title">Delete this <xliff:g example="squawk">%1$s</xliff:g></string>
   <string name="delete_this_squawk_subtitle">Permanently removes it and its comments. <xliff:g example="Work logs">%1$s</xliff:g> are kept.</string>
   <string name="squawk_deleted"><xliff:g example="Squawk">%1$s</xliff:g> deleted</string>
+  <string name="reopen_issue">Reopen issue</string>
+  <string name="resolve_issue">Resolve</string>
 </resources>

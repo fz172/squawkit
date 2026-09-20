@@ -33,12 +33,12 @@ import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalSnackbarHostState
 import dev.fanfly.wingslog.core.ui.common.UiText
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
-import dev.fanfly.wingslog.feature.datalog.viewing.list.DataLogSectionContent
-import dev.fanfly.wingslog.feature.datalog.model.dataLogIdOrNull
-import dev.fanfly.wingslog.feature.datalog.viewing.list.DataLogUploadFab
-import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.feature.attachment.datamanager.OpenState
+import dev.fanfly.wingslog.feature.datalog.model.dataLogIdOrNull
+import dev.fanfly.wingslog.feature.datalog.viewing.list.DataLogSectionContent
+import dev.fanfly.wingslog.feature.datalog.viewing.list.DataLogUploadFab
 import dev.fanfly.wingslog.feature.tasks.viewing.DeleteTaskConfirmDialog
+import dev.fanfly.wingslog.feature.tasks.viewing.SkipTaskConfirmDialog
 import dev.fanfly.wingslog.feature.tasks.viewing.TaskDetailSheet
 import dev.fanfly.wingslog.feature.thing.dashboard.compose.DegradedThingContent
 import dev.fanfly.wingslog.feature.thing.dashboard.compose.tabs.LogsTab
@@ -49,6 +49,7 @@ import dev.fanfly.wingslog.feature.thing.dashboard.data.ThingOverviewAction
 import dev.fanfly.wingslog.feature.thing.dashboard.data.ThingOverviewEvent
 import dev.fanfly.wingslog.feature.thing.dashboard.data.ThingOverviewUiState
 import dev.fanfly.wingslog.feature.thing.dashboard.data.ThingOverviewViewModel
+import dev.fanfly.wingslog.id.ThingId
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
@@ -141,7 +142,10 @@ fun ShellSectionFab(
 ) {
   if (thingId == null || !renderable) return
   when (section) {
-    ShellSection.DATA_LOGS -> DataLogUploadFab(thingId = ThingId(thingId), onLinkAccount = onLinkAccount)
+    ShellSection.DATA_LOGS -> DataLogUploadFab(
+      thingId = ThingId(thingId),
+      onLinkAccount = onLinkAccount
+    )
 
     ShellSection.SQUAWKS ->
       SectionAddFab(
@@ -387,7 +391,10 @@ fun ThingSectionContent(
 
           is ThingOverviewAction.OpenDataLogClick ->
             navController.navigate(
-              Screen.DataLogViewer.createRoute(ThingId(action.thingId), action.dataLogId)
+              Screen.DataLogViewer.createRoute(
+                ThingId(action.thingId),
+                action.dataLogId
+              )
             )
 
           is ThingOverviewAction.EditClick ->
@@ -495,7 +502,14 @@ fun ThingSectionContent(
 
         ShellSection.DATA_LOGS -> DataLogSectionContent(
           thingId = ThingId(thingId),
-          onOpen = { id -> navController.navigate(Screen.DataLogViewer.createRoute(ThingId(thingId), id)) },
+          onOpen = { id ->
+            navController.navigate(
+              Screen.DataLogViewer.createRoute(
+                ThingId(thingId),
+                id
+              )
+            )
+          },
           onLinkAccount = onLinkAccount,
         )
 
@@ -523,11 +537,17 @@ fun ThingSectionContent(
           },
           onAttachmentTap = { attachment ->
             taskSheetOpenError = null
-            attachment.dataLogIdOrNull()?.let { dataLogId ->
-              onAction(ThingOverviewAction.DismissTaskDetail)
-              onAction(ThingOverviewAction.OpenDataLogClick(thingId, dataLogId))
-              return@TaskDetailSheet
-            }
+            attachment.dataLogIdOrNull()
+              ?.let { dataLogId ->
+                onAction(ThingOverviewAction.DismissTaskDetail)
+                onAction(
+                  ThingOverviewAction.OpenDataLogClick(
+                    thingId,
+                    dataLogId
+                  )
+                )
+                return@TaskDetailSheet
+              }
             val openFlow = attachmentOpener.open(attachment)
             coroutineScope.launch {
               openFlow.collect { openState ->
@@ -539,6 +559,22 @@ fun ThingSectionContent(
           syncStates = state.syncStates,
           dataLogs = state.dataLogs,
           openError = taskSheetOpenError,
+          onLogWorkClick = {
+            onAction(ThingOverviewAction.DismissTaskDetail)
+            onAction(ThingOverviewAction.TaskCreateLogClick(selectedTask.card.id))
+          },
+          onSkipCycleClick = {
+            onAction(ThingOverviewAction.DismissTaskDetail)
+            onAction(ThingOverviewAction.TaskSkipClick(selectedTask))
+          },
+        )
+      }
+
+      // Here rather than in the Tasks tab: the sheet that raises it can be open over any section.
+      if (state.skippingTaskId != null) {
+        SkipTaskConfirmDialog(
+          onConfirm = { onAction(ThingOverviewAction.ConfirmSkipTask) },
+          onDismiss = { onAction(ThingOverviewAction.CancelSkipTask) },
         )
       }
 

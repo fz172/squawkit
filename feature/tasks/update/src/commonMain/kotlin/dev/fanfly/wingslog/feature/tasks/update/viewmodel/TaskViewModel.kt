@@ -82,8 +82,6 @@ sealed interface TaskUiState {
 
 sealed interface TaskFormEvent {
   data object PickError : TaskFormEvent
-  data class NavigateToCreateLog(val thingId: String, val cardId: String) :
-    TaskFormEvent
 }
 
 /**
@@ -104,10 +102,6 @@ data class TaskFormState(
   val forcedEngineHours: String = "",
   val forceOverrideDate: Boolean = false,
   val forcedDateMillis: Long? = null,
-  // "Resolve" popup off the bottom bar (Create Work Log / Skip This Cycle) — mirrors
-  // SquawkFormState.showResolveMenu. Skip is an immediate-persist action (see
-  // TaskViewModel.skipThisCycle), not a pending form field, so it isn't part of this form state.
-  val showResolveMenu: Boolean = false,
   val initialTitle: String = "",
   val initialComponent: ComponentType = ComponentType.COMPONENT_AIRFRAME,
   val initialType: ComplianceType = ComplianceType.COMPLIANCE_TYPE_ROUTINE_INSPECTION,
@@ -370,49 +364,6 @@ class TaskViewModel(
 
   fun onForcedDateMillisChange(value: Long?) =
     _formState.update { it.copy(forcedDateMillis = value) }
-
-  // ── Resolve menu (Create Work Log / Skip This Cycle) ─────────────────────
-
-  fun showResolveMenu() = _formState.update { it.copy(showResolveMenu = true) }
-
-  fun hideResolveMenu() = _formState.update { it.copy(showResolveMenu = false) }
-
-  // Latched by selectCreateWorkLog so a double-tap can't queue two navigation events. Not part
-  // of form state: the screen may raise an unsaved-changes prompt between the tap and this call,
-  // so the open/closed state of the menu is no longer a usable guard.
-  private var createWorkLogRequested = false
-
-  fun selectCreateWorkLog() {
-    val id = cardId ?: return
-    if (createWorkLogRequested) return
-    createWorkLogRequested = true
-    _formState.update { it.copy(showResolveMenu = false) }
-    logQuickAction(QuickActionKind.RESOLVE)
-    viewModelScope.launch {
-      _events.send(TaskFormEvent.NavigateToCreateLog(thingId, id))
-    }
-  }
-
-  /**
-   * Marks [card]'s current cycle complete without a log, persisting immediately against the
-   * card as last saved (not any pending in-memory form edits) — mirrors
-   * SquawkFormViewModel.confirmDismiss() calling squawkManager.dismissSquawk() directly.
-   * The write itself is TaskDataManager.skipCycle, shared with the dashboard's quick action.
-   */
-  fun skipThisCycle(
-    card: MaintenanceTask,
-    currentEngineHours: Float,
-    onSuccess: () -> Unit,
-  ) {
-    _formState.update { it.copy(showResolveMenu = false) }
-    viewModelScope.launch {
-      inspectionDataManager.skipCycle(thingId, card, currentEngineHours)
-        .onSuccess {
-          logQuickAction(QuickActionKind.SKIP)
-          onSuccess()
-        }
-    }
-  }
 
   private fun logQuickAction(action: QuickActionKind) = analytics.log(
     RecordQuickAction(
