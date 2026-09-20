@@ -133,20 +133,20 @@ Two structural tones, one personality accent used sparingly, two semantic anchor
 ### Named Rules
 #### Color Mapping (from `Color.kt`)
 
-| M3 Role | Light | Dark | Usage |
-|----------|-----|------|-------|
-| Primary | `#1A5FAE` (AviationBlue40) | `#A7C8FF` (AviationBlue80) | Filled buttons, focus, active state, the Thing's primary identifier (tail number, VIN, hull ID) |
-| Primary Container | `#D5E3FF` (AviationBlue90) | `#004785` (AviationBlue30) | Card backgrounds, chip fills, selected badges |
-| On Container | `#001849` (AviationBlue10) | — | On-primary text |
-| Secondary | `#525E72` (BlueGray40) | `#BAC8E0` (BlueGray80) | Secondary actions, inactive chrome |
-| Secondary Container | `#D6E4F5` (BlueGray90) | `#3A4557` (BlueGray30) | Secondary fills |
-| Tertiary (light) | `#7A5200` (Amber40) | `#FFBA4E` (Amber80) | Advisory — ≤10% of color moments |
-| Tertiary Container (light) | `#FFDFA6` (Amber90) | `#514500` (Amber30 dark) | Advisory background |
-| Positive text | `#276B39` (StatusOkLight) | `#81C784` (StatusOkDark) | Ready (`ready_status`) — text/icon only |
-| Positive container | `#E3F2E8` (StatusOkContainerLight) | `#1B4D2B` (StatusOkContainerDark) | Positive status chip bg |
-| Caution text | `#8B5E00` (StatusWarningLight) | `#FFCA28` (StatusWarningDark) | Due soon — text/icon |
-| Caution container | `#FFECB3` (StatusWarningContainerLight) | `#514500` (StatusWarningContainerDark) | Caution status chip bg |
-| Blocking/Error | M3 `error` / `errorContainer` | M3 `error` / `errorContainer` | The template's down state (AOG / Off the road / Urgent), overdue |
+| M3 Role                    | Light                                   | Dark                                   | Usage                                                                                           |
+|----------------------------|-----------------------------------------|----------------------------------------|-------------------------------------------------------------------------------------------------|
+| Primary                    | `#1A5FAE` (AviationBlue40)              | `#A7C8FF` (AviationBlue80)             | Filled buttons, focus, active state, the Thing's primary identifier (tail number, VIN, hull ID) |
+| Primary Container          | `#D5E3FF` (AviationBlue90)              | `#004785` (AviationBlue30)             | Card backgrounds, chip fills, selected badges                                                   |
+| On Container               | `#001849` (AviationBlue10)              | —                                      | On-primary text                                                                                 |
+| Secondary                  | `#525E72` (BlueGray40)                  | `#BAC8E0` (BlueGray80)                 | Secondary actions, inactive chrome                                                              |
+| Secondary Container        | `#D6E4F5` (BlueGray90)                  | `#3A4557` (BlueGray30)                 | Secondary fills                                                                                 |
+| Tertiary (light)           | `#7A5200` (Amber40)                     | `#FFBA4E` (Amber80)                    | Advisory — ≤10% of color moments                                                                |
+| Tertiary Container (light) | `#FFDFA6` (Amber90)                     | `#514500` (Amber30 dark)               | Advisory background                                                                             |
+| Positive text              | `#276B39` (StatusOkLight)               | `#81C784` (StatusOkDark)               | Ready (`ready_status`) — text/icon only                                                         |
+| Positive container         | `#E3F2E8` (StatusOkContainerLight)      | `#1B4D2B` (StatusOkContainerDark)      | Positive status chip bg                                                                         |
+| Caution text               | `#8B5E00` (StatusWarningLight)          | `#FFCA28` (StatusWarningDark)          | Due soon — text/icon                                                                            |
+| Caution container          | `#FFECB3` (StatusWarningContainerLight) | `#514500` (StatusWarningContainerDark) | Caution status chip bg                                                                          |
+| Blocking/Error             | M3 `error` / `errorContainer`           | M3 `error` / `errorContainer`          | The template's down state (AOG / Off the road / Urgent), overdue                                |
 
 **The Advisory Rule.** Instrument Amber (tertiary) appears on ≤10% of any given screen. Its power comes from scarcity. A screen full of amber has no amber.
 
@@ -179,25 +179,25 @@ Two structural tones, one personality accent used sparingly, two semantic anchor
 
 ### Exact M3 Typography Mappings (from `Type.kt`)
 
-| M3 Key | Weight | Size | Line Height | Use |
-|--------|------|------|---------|-----|
-| headlineLarge | Bold | 32sp | 40sp | Screen headings |
-| headlineMedium | Bold | 28sp | 36sp | Section headings |
-| headlineSmall | Bold | 24sp | 32sp | Detail titles, alert section headers |
-| titleLarge | SemiBold | 22sp | 28sp | Card headers, form titles |
-| titleMedium | SemiBold | 16sp | 24sp+0.15 | Tabs, secondary headings |
-| titleSmall | Medium | 14sp | 20sp+0.1 | Chip labels |
-| bodyLarge | Normal | 16sp | 24sp+0.5 | Primary paragraph content |
-| bodySmall | Normal | 12sp | 18sp+0.25 | Secondary card text |
-| bodyMedium | Normal | 14sp | 20sp+0.25 | List descriptions |
-| labelLarge | Medium | 14sp | 20sp+0.1 | **Button labels → UPPERCASE** |
-| labelMedium | Medium | 12sp | 16sp+0.5 | Badge labels, tech names |
-| labelSmall | Medium | 11sp | 16sp+0.5 | Timestamps, status values |
-| displaySmall | Black | 36sp | 40sp+0.0 | Hero display (primary identifier) |
-| heroDisplay | Black | 36sp | 40sp+0.0 | The Thing's title — make/model, or its name (Space Grotesk) |
-| dataLarge | JetBrains Mono Bold | 16sp | 24sp+0.0 | Meter readings — tach time, odometer, engine hours |
-| dataMedium | JetBrains Mono Medium | 14sp | 20sp+0.0 | Identifiers in cards |
-| dataSmall | JetBrains Mono Medium | 12sp | 16sp+0.0 | Inline technical data |
+| M3 Key         | Weight                | Size | Line Height | Use                                                         |
+|----------------|-----------------------|------|-------------|-------------------------------------------------------------|
+| headlineLarge  | Bold                  | 32sp | 40sp        | Screen headings                                             |
+| headlineMedium | Bold                  | 28sp | 36sp        | Section headings                                            |
+| headlineSmall  | Bold                  | 24sp | 32sp        | Detail titles, alert section headers                        |
+| titleLarge     | SemiBold              | 22sp | 28sp        | Card headers, form titles                                   |
+| titleMedium    | SemiBold              | 16sp | 24sp+0.15   | Tabs, secondary headings                                    |
+| titleSmall     | Medium                | 14sp | 20sp+0.1    | Chip labels                                                 |
+| bodyLarge      | Normal                | 16sp | 24sp+0.5    | Primary paragraph content                                   |
+| bodySmall      | Normal                | 12sp | 18sp+0.25   | Secondary card text                                         |
+| bodyMedium     | Normal                | 14sp | 20sp+0.25   | List descriptions                                           |
+| labelLarge     | Medium                | 14sp | 20sp+0.1    | **Button labels → UPPERCASE**                               |
+| labelMedium    | Medium                | 12sp | 16sp+0.5    | Badge labels, tech names                                    |
+| labelSmall     | Medium                | 11sp | 16sp+0.5    | Timestamps, status values                                   |
+| displaySmall   | Black                 | 36sp | 40sp+0.0    | Hero display (primary identifier)                           |
+| heroDisplay    | Black                 | 36sp | 40sp+0.0    | The Thing's title — make/model, or its name (Space Grotesk) |
+| dataLarge      | JetBrains Mono Bold   | 16sp | 24sp+0.0    | Meter readings — tach time, odometer, engine hours          |
+| dataMedium     | JetBrains Mono Medium | 14sp | 20sp+0.0    | Identifiers in cards                                        |
+| dataSmall      | JetBrains Mono Medium | 12sp | 16sp+0.0    | Inline technical data                                       |
 
 ### Named Rules
 **The Mono Rule.** JetBrains Mono is reserved for technical data: identifiers (tail numbers, VINs, hull IDs, frame numbers), serial numbers, and meter readings (tach/Hobbs time, odometer, engine hours). It never appears in UI chrome (buttons, labels, navigation, body copy).
@@ -213,6 +213,28 @@ Material 3 tonal elevation throughout. Depth is expressed through surface color 
 **The neutral roles are authored, not inherited.** `Theme.kt` declares every neutral — `background`, `surface`, `surfaceContainerLowest` through `surfaceContainerHighest`, `surfaceVariant`, `outline`, `outlineVariant` and their `on*` pairs — on the instrument hue (≈251 in oklch). It does **not** fall through to the Material 3 baseline scheme, whose neutrals are violet-leaning and belong to a different brand. A scheme that overrides only `primary`/`secondary`/`tertiary` leaves every surface in the app the wrong colour.
 
 Surface hierarchy, lightest to deepest in light mode and darkest to lightest in dark: `background` → `surface` → `surfaceContainerLow` → `surfaceContainer` → `surfaceContainerHigh` → `surfaceContainerHighest`. Each step is a cool blue-grey, one perceptible step from its neighbour. Cards live at `surfaceContainer`. Overlaid sheets (bottom sheets, dialogs) float above `surface` through M3's scrim.
+
+| Role                           | Light     | Dark      |
+|--------------------------------|-----------|-----------|
+| `background`, `surface`        | `#F7F9FC` | `#0A0E14` |
+| `surfaceContainerLowest`       | `#FFFFFF` | `#06090F` |
+| `surfaceContainerLow`          | `#F1F4FA` | `#151C27` |
+| `surfaceContainer` — **cards** | `#E8EDF4` | `#1B2431` |
+| `surfaceContainerHigh`         | `#E4EAF2` | `#222C3B` |
+| `surfaceContainerHighest`      | `#E0E6EF` | `#293446` |
+| `surfaceVariant`               | `#D3DBE7` | `#3A4557` |
+| `onSurface`                    | `#141A24` | `#E1E7F0` |
+| `onSurfaceVariant`             | `#545F72` | `#9BA8BC` |
+| `outline`                      | `#6B7A8F` | `#6B7A8F` |
+| `outlineVariant`               | `#C3CBD8` | `#313C4C` |
+
+Separation is measured as **ΔL\***, the right metric for a large flat edge — a WCAG contrast ratio is
+for text. `surface` to `surfaceContainer` is **10.0** in dark and **4.3** in light, against the
+Material 3 baseline's 6.4 and 3.5.
+
+The light ladder stops where it does deliberately: Caution Amber (`#8B5E00`, §2) must clear 4.5:1 as
+text on the deepest container, and it reaches 4.52 on `#E0E6EF`. Darkening the ramp further would buy
+separation by failing contrast.
 
 **The separation is the ramp's job, not a border's.** If a card needs a 1dp `outlineVariant` stroke to be visible against the surface behind it, the two surface assignments are wrong. Borders are for emphasis — a status accent, a selected state — never for making a container exist.
 
@@ -254,13 +276,13 @@ Centered column: 80dp icon at 60% primary alpha, `headlineSmall` Bold title, `bo
 
 Maps domain status to M3 roles. **No ad-hoc color choices in feature code.** Use: `toneFor(tier)` → `StatusTone(accent, container, onContainer)`.
 
-| Tier | Condition | Text/Icon Color | Chip Container |
-|-----|-------|-----------------|--------------------|
-| BLOCKING | The template's down state (AOG, Off the road, Urgent) | `error` | `errorContainer` |
-| CRITICAL | Overdue, high-priority | `error` | `errorContainer` |
-| CAUTION | Due soon, medium | `#8B5E00` / `#FFCA28` (dark) | `#FFECB3` / `#514500` (dark) |
-| POSITIVE | Compliant, current | `#276B39` / `#81C784` (dark) | `#E3F2E8` / `#1B4D2B` (dark) |
-| NEUTRAL | Low-priority, inactive | `onSurfaceVariant` | `surfaceVariant` |
+| Tier     | Condition                                             | Text/Icon Color              | Chip Container               |
+|----------|-------------------------------------------------------|------------------------------|------------------------------|
+| BLOCKING | The template's down state (AOG, Off the road, Urgent) | `error`                      | `errorContainer`             |
+| CRITICAL | Overdue, high-priority                                | `error`                      | `errorContainer`             |
+| CAUTION  | Due soon, medium                                      | `#8B5E00` / `#FFCA28` (dark) | `#FFECB3` / `#514500` (dark) |
+| POSITIVE | Compliant, current                                    | `#276B39` / `#81C784` (dark) | `#E3F2E8` / `#1B4D2B` (dark) |
+| NEUTRAL  | Low-priority, inactive                                | `onSurfaceVariant`           | `surfaceVariant`             |
 
 ### Component Border Accent Rule
 
@@ -299,25 +321,25 @@ Overdue/DueSoon cards get a 1dp left-border accent at `statusTone.accent.copy(al
 
 All values from `Spacing` object (`core/ui/theme/Spacing.kt`). These are the only spacing tokens — never invent new ones.
 
-| Token | Value | Use |
-|-------|----------|---
-| `none` | 0dp | — |
-| `extraSmall` | 4dp | Tiny gaps (chip→chip, label→value, row item gaps) |
-| `small` | 8dp | Row-level gaps within cards |
-| `medium` | 12dp | Multi-line card section gaps (most common card-level gap) |
-| `large` | 16dp | Internal card padding, screen-content row gaps |
-| `xLarge` | 20dp | Component row spacing |
+| Token        | Value    | Use                                                                        |
+|--------------|----------|----------------------------------------------------------------------------|
+| `none`       | 0dp      | —                                                                          |
+| `extraSmall` | 4dp      | Tiny gaps (chip→chip, label→value, row item gaps)                          |
+| `small`      | 8dp      | Row-level gaps within cards                                                |
+| `medium`     | 12dp     | Multi-line card section gaps (most common card-level gap)                  |
+| `large`      | 16dp     | Internal card padding, screen-content row gaps                             |
+| `xLarge`     | 20dp     | Component row spacing                                                      |
 | `extraLarge` | **24dp** | **Screen padding, card internal padding** (the primary structural spacing) |
-| `huge` | 32dp | Bottom-sheet footer spacer, large section gaps |
-| `massive` | 48dp | Rare — full page section gaps |
+| `huge`       | 32dp     | Bottom-sheet footer spacer, large section gaps                             |
+| `massive`    | 48dp     | Rare — full page section gaps                                              |
 
 ### Radius
-| Token | Value | Use |
-|-------|------|---|
-| `badgeCornerRadius` | 4dp | Status chips, component type badges (reads as a stamp) |
-| `cardCornerRadius` | 12dp | All card surfaces |
-| `chipCornerRadius` | 12dp | Form controls, dropdowns, outlined fields |
-| `buttonCornerRadius` | **16dp** | All buttons |
+| Token                | Value    | Use                                                    |
+|----------------------|----------|--------------------------------------------------------|
+| `badgeCornerRadius`  | 4dp      | Status chips, component type badges (reads as a stamp) |
+| `cardCornerRadius`   | 12dp     | All card surfaces                                      |
+| `chipCornerRadius`   | 12dp     | Form controls, dropdowns, outlined fields              |
+| `buttonCornerRadius` | **16dp** | All buttons                                            |
 
 **Screen-level horizontal inset:** `Spacing.screenPadding` = `Spacing.large` = 16dp. All screen-level content starts at this inset.
 
@@ -370,12 +392,12 @@ Account
 
 There is no fleet list screen. The **adaptive shell** (`core/ui/adaptive/AdaptiveAppShell.kt`, driven by `feature/shell`) holds one selected Thing at a time and renders four **sections** for it; the Thing is chosen in the **switcher** — sidebar rows on wide tiers, a picker behind the top bar on compact ones. Each section is a per-Thing entity type. The Dashboard **does not list entities** — it aggregates them.
 
-| Section | Source | Layout |
-|-----|---|---|
-| Dashboard (`feature/thing/dashboard`) | Aggregated | Vertical flow: hero → alerts → data card → work logs (compact); the same order with a two-column rail (wide) |
-| Squawks (`feature/squawk/viewing`) | `SquawkWithStatus` | Vertical card list + segmented filter (Open/Closed) — named from the lexicon |
-| Tasks (`feature/tasks/viewing`) | `MaintenanceTaskWithStatus` | Vertical card list + segmented filter (Due/History) |
-| Logs (`feature/logs/viewing`) | `MaintenanceLog` | Vertical card list + segmented filter |
+| Section                               | Source                      | Layout                                                                                                       |
+|---------------------------------------|-----------------------------|--------------------------------------------------------------------------------------------------------------|
+| Dashboard (`feature/thing/dashboard`) | Aggregated                  | Vertical flow: hero → alerts → data card → work logs (compact); the same order with a two-column rail (wide) |
+| Squawks (`feature/squawk/viewing`)    | `SquawkWithStatus`          | Vertical card list + segmented filter (Open/Closed) — named from the lexicon                                 |
+| Tasks (`feature/tasks/viewing`)       | `MaintenanceTaskWithStatus` | Vertical card list + segmented filter (Due/History)                                                          |
+| Logs (`feature/logs/viewing`)         | `MaintenanceLog`            | Vertical card list + segmented filter                                                                        |
 
 Which sections exist is a template capability (`capabilities.sections`); the labels are the lexicon's `short_plural` nouns.
 
@@ -413,7 +435,7 @@ COMPACT                                   MEDIUM and up
 │                           │             │ ──────── │  … section content …         │
 │                           │             │ Dashboard│                              │
 │ ┌───────────────────────┐ │             │ Squawks  │                              │
-│ │ ⌂  🐛  ✓  📜  ⚙      │ │ ← nav pill  │ Tasks    │                              │
+│ │ ⌂  🐛  ✓  📜  ⚙       │ │ ← nav pill  │ Tasks    │                              │
 │ └───────────────────────┘ │             │ Logs     │                              │
 └───────────────────────────┘             │ Settings │                              │
                                           └──────────┴──────────────────────────────┘
@@ -539,29 +561,29 @@ An empty Due list shows `EmptyState` with the template's `task_hint`, and — wh
 
 ### 9G. Components Reference
 
-| Component | Source File | Pattern |
-|-----------|-----------|---|
-| AdaptiveAppShell | `core/ui/adaptive/AdaptiveAppShell.kt` | Tier-adaptive chrome: nav pill / rail / sidebar + switcher |
-| FleetEmptyState | `feature/fleet/viewing/FleetEmptyState.kt` | Empty account: add a Thing or redeem an invite |
-| PickThingTypeSheet | `feature/thing/update/PickThingTypeSheet.kt` | Bottom sheet, preset grid |
-| StarterPackRoute | `feature/tasks/update/starter/StarterPackRoute.kt` | Checklist form with Add / Skip |
-| ThingDataCard | `feature/thing/dashboard/compose/ThingDataCard.kt` | Spec block, meter readings and component chips; always expanded (§8) |
-| DegradedThingContent | `feature/thing/dashboard/compose/DegradedThingContent.kt` | Read-only fallback for uninterpretable DNA |
-| MaintenanceLogCard | `feature/logs/viewing/log/compose/MaintenanceLogCard.kt` | Card with optional component badge + divider |
-| TaskCard | `feature/tasks/viewing/TaskCard.kt` | Card with icon + label/value + status border |
-| SquawkCard | `feature/squawk/viewing/SquawkCard.kt` | Card with dual badges + title/desc |
-| StatusChip | `core/ui/.../StatusChip.kt` | Pill, status-tier tinted |
-| AogAlertSection | `feature/squawk/viewing/AogAlertSection.kt` | Icon + title + list + action bar |
-| CriticalAlertSection | `feature/tasks/viewing/CriticalAlertSection.kt` | Title + list + action bar |
-| ~~LogStatsSection~~ | — | Removed. Meter readings moved into `ThingDataCard`; the log count became the Work logs section header (§8) |
-| DetailSheet | `core/ui/.../DetailSheet.kt` | Bottom sheet on compact, end drawer above |
-| EmptyState | `core/ui/.../EmptyState.kt` | Centered icon+title+desc+action |
-| GroupedRows | `core/ui/.../GroupedRows.kt` | Settings-style grouped rows, checkbox rows |
-| ListRow | `core/ui/.../ListRow.kt` | The list row: leading slot, title, metadata line, trailing slot. One implementation for every list |
-| SectionHeader | `core/ui/.../SectionHeader.kt` | Sticky group header — the tier on a squawk list, the month on a log list |
-| DangerZone | `core/ui/.../DangerZone.kt` | The one home for destructive actions, at the end of a form |
-| SkeletonList | `core/ui/.../SkeletonList.kt` | Loading placeholder shaped like the rows it replaces |
-| DualSegmentedFilter | `core/ui/.../DualSegmentedFilter.kt` | Two-segment list filter |
+| Component            | Source File                                               | Pattern                                                                                                    |
+|----------------------|-----------------------------------------------------------|------------------------------------------------------------------------------------------------------------|
+| AdaptiveAppShell     | `core/ui/adaptive/AdaptiveAppShell.kt`                    | Tier-adaptive chrome: nav pill / rail / sidebar + switcher                                                 |
+| FleetEmptyState      | `feature/fleet/viewing/FleetEmptyState.kt`                | Empty account: add a Thing or redeem an invite                                                             |
+| PickThingTypeSheet   | `feature/thing/update/PickThingTypeSheet.kt`              | Bottom sheet, preset grid                                                                                  |
+| StarterPackRoute     | `feature/tasks/update/starter/StarterPackRoute.kt`        | Checklist form with Add / Skip                                                                             |
+| ThingDataCard        | `feature/thing/dashboard/compose/ThingDataCard.kt`        | Spec block, meter readings and component chips; always expanded (§8)                                       |
+| DegradedThingContent | `feature/thing/dashboard/compose/DegradedThingContent.kt` | Read-only fallback for uninterpretable DNA                                                                 |
+| MaintenanceLogCard   | `feature/logs/viewing/log/compose/MaintenanceLogCard.kt`  | Card with optional component badge + divider                                                               |
+| TaskCard             | `feature/tasks/viewing/TaskCard.kt`                       | Card with icon + label/value + status border                                                               |
+| SquawkCard           | `feature/squawk/viewing/SquawkCard.kt`                    | Card with dual badges + title/desc                                                                         |
+| StatusChip           | `core/ui/.../StatusChip.kt`                               | Pill, status-tier tinted                                                                                   |
+| AogAlertSection      | `feature/squawk/viewing/AogAlertSection.kt`               | Icon + title + list + action bar                                                                           |
+| CriticalAlertSection | `feature/tasks/viewing/CriticalAlertSection.kt`           | Title + list + action bar                                                                                  |
+| ~~LogStatsSection~~  | —                                                         | Removed. Meter readings moved into `ThingDataCard`; the log count became the Work logs section header (§8) |
+| DetailSheet          | `core/ui/.../DetailSheet.kt`                              | Bottom sheet on compact, end drawer above                                                                  |
+| EmptyState           | `core/ui/.../EmptyState.kt`                               | Centered icon+title+desc+action                                                                            |
+| GroupedRows          | `core/ui/.../GroupedRows.kt`                              | Settings-style grouped rows, checkbox rows                                                                 |
+| ListRow              | `core/ui/.../ListRow.kt`                                  | The list row: leading slot, title, metadata line, trailing slot. One implementation for every list         |
+| SectionHeader        | `core/ui/.../SectionHeader.kt`                            | Sticky group header — the tier on a squawk list, the month on a log list                                   |
+| DangerZone           | `core/ui/.../DangerZone.kt`                               | The one home for destructive actions, at the end of a form                                                 |
+| SkeletonList         | `core/ui/.../SkeletonList.kt`                             | Loading placeholder shaped like the rows it replaces                                                       |
+| DualSegmentedFilter  | `core/ui/.../DualSegmentedFilter.kt`                      | Two-segment list filter                                                                                    |
 
 ---
 
