@@ -37,6 +37,7 @@ fun SubComponentDropdown(
     FormValueField(
       value = selectedLabel,
       label = label,
+      interactive = true,
       trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
       modifier = Modifier
         .fillMaxWidth()

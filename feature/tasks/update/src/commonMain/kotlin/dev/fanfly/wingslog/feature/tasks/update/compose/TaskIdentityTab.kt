@@ -37,6 +37,7 @@ import dev.fanfly.wingslog.core.template.logNoun
 import dev.fanfly.wingslog.core.template.taskNoun
 import dev.fanfly.wingslog.core.template.usesComponentTypes
 import dev.fanfly.wingslog.core.ui.common.compose.FormKeyboard
+import dev.fanfly.wingslog.core.ui.common.compose.FormLockedNote
 import dev.fanfly.wingslog.core.ui.common.compose.FormSectionLabel
 import dev.fanfly.wingslog.core.ui.common.compose.FormTextField
 import dev.fanfly.wingslog.core.ui.theme.Spacing
@@ -50,6 +51,7 @@ import wingslog.feature.tasks.update.generated.resources.Res
 import wingslog.feature.tasks.update.generated.resources.component_type_description
 import wingslog.feature.tasks.update.generated.resources.no_log_history
 import wingslog.feature.tasks.update.generated.resources.task_description_placeholder
+import wingslog.feature.tasks.update.generated.resources.task_locked_reason
 import wingslog.feature.tasks.update.generated.resources.task_title
 import wingslog.feature.tasks.update.generated.resources.task_title_helper
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
@@ -102,7 +104,12 @@ fun TaskIdentityTab(
     // [usesComponentTypes]. Every other preset gets no section: a boat and a car have parts the
     // three options cannot name, a home has none at all, and their tasks belong to the thing
     // itself, which is what a task with no component has always meant (#732).
-    if (LocalThingTemplate.current.usesComponentTypes) {
+    //
+    // Nor does a locked task that was never given one: a heading over a lock note and no value
+    // reads as a load that failed.
+    val lockedWithoutComponent =
+      onComponentChange == null && component == ComponentType.COMPONENT_UNKNOWN
+    if (LocalThingTemplate.current.usesComponentTypes && !lockedWithoutComponent) {
       val components = ComponentType.entries
         .filter { it != ComponentType.COMPONENT_UNKNOWN }
 
@@ -115,6 +122,7 @@ fun TaskIdentityTab(
           Res.string.component_type_description,
           LocalThingLexicon.current.componentNoun.singular,
         ),
+        lockedReason = taskLockedReason().takeIf { onComponentChange == null },
       ) {
         Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
           val componentEntries =
@@ -243,6 +251,8 @@ internal fun IdentitySection(
   header: String,
   description: String,
   modifier: Modifier = Modifier,
+  // Non-null when the choice was fixed at creation: the prompt to choose gives way to the reason.
+  lockedReason: String? = null,
   content: @Composable () -> Unit,
 ) {
   Column(
@@ -250,14 +260,23 @@ internal fun IdentitySection(
     verticalArrangement = Arrangement.spacedBy(Spacing.medium),
   ) {
     FormSectionLabel(header)
-    Text(
-      text = description,
-      style = MaterialTheme.typography.bodySmall,
-      color = MaterialTheme.colorScheme.outline,
-    )
+    if (lockedReason == null) {
+      Text(
+        text = description,
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.outline,
+      )
+    }
     content()
+    if (lockedReason != null) FormLockedNote(lockedReason)
   }
 }
+
+@Composable
+internal fun taskLockedReason(): String = stringResource(
+  Res.string.task_locked_reason,
+  LocalThingLexicon.current.taskNoun.singular,
+)
 
 @Composable
 internal fun IdentityRadioItem(

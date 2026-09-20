@@ -22,11 +22,11 @@ import dev.fanfly.wingslog.thing.Thing
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.component_type
+import wingslog.core.sharedassets.generated.resources.select_date
 import wingslog.feature.logs.sharedassets.generated.resources.maintenance_date
 import wingslog.feature.logs.update.generated.resources.Res
 import wingslog.feature.logs.update.generated.resources.component_section_description
 import wingslog.feature.logs.update.generated.resources.date_section_description
-import wingslog.feature.logs.update.generated.resources.tap_to_change_date
 import wingslog.feature.logs.update.generated.resources.work_description_required
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.logs.sharedassets.generated.resources.Res as SharedRes
@@ -54,7 +54,7 @@ fun LogWorkTab(
       description = stringResource(Res.string.date_section_description),
     ) {
       val dateText = maintenanceDate?.toDisplayFormat()
-        ?: stringResource(Res.string.tap_to_change_date)
+        ?: stringResource(CoreRes.string.select_date)
       FormValueField(
         value = dateText,
         label = stringResource(SharedRes.string.maintenance_date),

@@ -229,6 +229,7 @@ class StringSnapshotTest {
       "feature/tasks/update",
       "no_tasks_configured"
     ) { it.thingNoun.singular },
+    frame("feature/tasks/update", "task_locked_reason") { it.taskNoun.singular },
     frame(
       "feature/tasks/update",
       "task_title"
