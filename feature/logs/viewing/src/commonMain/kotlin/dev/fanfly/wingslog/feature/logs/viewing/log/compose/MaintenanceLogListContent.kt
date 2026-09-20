@@ -46,6 +46,7 @@ import dev.fanfly.wingslog.core.ui.common.compose.jumpTargetHighlight
 import dev.fanfly.wingslog.core.ui.common.compose.rememberSwipeRevealController
 import dev.fanfly.wingslog.core.ui.common.compose.ListRowDivider
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.core.ui.theme.motionItem
 import dev.fanfly.wingslog.feature.ads.datamanager.AdsManager
 import dev.fanfly.wingslog.feature.ads.model.AdSurface
 import dev.fanfly.wingslog.feature.ads.model.ListRow
@@ -438,44 +439,47 @@ fun MaintenanceLogListContent(
                     }
                   },
                 ) { index, row ->
-                  // Above every row but the first, so the list neither opens nor closes on a rule.
-                  if (index > 0) ListRowDivider()
-                  when (row) {
-                    is ListRow.Ad -> AdSlot(
-                      surface = AdSurface.LOGS,
-                      slotIndex = row.slotIndex,
-                      modifier = Modifier.padding(vertical = Spacing.small),
-                    )
-
-                    is ListRow.Item -> SwipeActionCard(
-                      // A null callback yields no actions, which disables the drag (PRD R20).
-                      actions = logQuickActions(
-                        onDelete = onDeleteLog?.let { delete ->
-                          {
-                            revealController.close()
-                            delete(row.value)
-                          }
-                        },
-                      ),
-                      controller = revealController,
-                      key = row.value.id,
-                    ) {
-                      MaintenanceLogCard(
-                        log = row.value,
-                        onClick = { onLogClick(row.value) },
-                        highlight = uiState.matches[row.value.id].orEmpty()
-                          .wordsIn(
-                            LogAdapter.FIELD_DESCRIPTION,
-                            LogAdapter.FIELD_TECHNICIAN
-                          ),
-                        matchNote = logMatchNote(
-                          uiState.matches[row.value.id].orEmpty(),
-                          row.value
-                        ),
-                        modifier = Modifier.jumpTargetHighlight(
-                          active = row.value.id == scrollToLogId,
-                        ),
+                  // One animated node per key: the rule travels with its row.
+                  Column(modifier = motionItem()) {
+                    // Above every row but the first, so the list neither opens nor closes on a rule.
+                    if (index > 0) ListRowDivider()
+                    when (row) {
+                      is ListRow.Ad -> AdSlot(
+                        surface = AdSurface.LOGS,
+                        slotIndex = row.slotIndex,
+                        modifier = Modifier.padding(vertical = Spacing.small),
                       )
+
+                      is ListRow.Item -> SwipeActionCard(
+                        // A null callback yields no actions, which disables the drag (PRD R20).
+                        actions = logQuickActions(
+                          onDelete = onDeleteLog?.let { delete ->
+                            {
+                              revealController.close()
+                              delete(row.value)
+                            }
+                          },
+                        ),
+                        controller = revealController,
+                        key = row.value.id,
+                      ) {
+                        MaintenanceLogCard(
+                          log = row.value,
+                          onClick = { onLogClick(row.value) },
+                          highlight = uiState.matches[row.value.id].orEmpty()
+                            .wordsIn(
+                              LogAdapter.FIELD_DESCRIPTION,
+                              LogAdapter.FIELD_TECHNICIAN
+                            ),
+                          matchNote = logMatchNote(
+                            uiState.matches[row.value.id].orEmpty(),
+                            row.value
+                          ),
+                          modifier = Modifier.jumpTargetHighlight(
+                            active = row.value.id == scrollToLogId,
+                          ),
+                        )
+                      }
                     }
                   }
                 }
