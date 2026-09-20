@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
   <string name="compliance_type_routine">Routine tasks</string>
+  <string name="task_locked_reason">Set when the <xliff:g example="maintenance task">%1$s</xliff:g> was created</string>
   <string name="task_title"><xliff:g example="maintenance tasks">%1$s</xliff:g> title</string>
   <string name="task_description_placeholder">e.g. 100-hour inspection</string>
   <string name="task_title_helper">Provide a concise, technical name for this maintenance action as it appears in the service manual.</string>

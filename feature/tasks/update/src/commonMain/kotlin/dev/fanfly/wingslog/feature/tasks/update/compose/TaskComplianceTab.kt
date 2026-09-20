@@ -39,6 +39,7 @@ fun TaskComplianceTab(
     IdentitySection(
       header = stringResource(Res.string.compliance_type),
       description = stringResource(Res.string.compliance_type_description),
+      lockedReason = taskLockedReason().takeIf { onComplianceTypeChange == null },
     ) {
       Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
         val complianceEntries =

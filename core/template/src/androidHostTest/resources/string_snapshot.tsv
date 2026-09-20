@@ -299,7 +299,6 @@ feature/logs/update	no_propeller_components_found	No propeller components found 
 feature/logs/update	performed_by_description	The technician who performed this work
 feature/logs/update	propeller_component	Propeller component
 feature/logs/update	squawks_section_header	Squawks addressed
-feature/logs/update	tap_to_change_date	Tap to change date
 feature/logs/update	tasks_section_header	Maintenance tasks completed
 feature/logs/update	type_make_model_serial	%1$s - %2$s (%3$s)
 feature/logs/update	work_description_required	Work description *
@@ -827,6 +826,7 @@ feature/tasks/update	task_added	Task added
 feature/tasks/sharedassets	task_deleted	Maintenance task deleted
 feature/tasks/update	task_description_placeholder	e.g. 100-hour inspection
 feature/tasks/sharedassets	task_skipped	Cycle skipped — next due rescheduled
+feature/tasks/update	task_locked_reason	Set when the maintenance task was created
 feature/tasks/update	task_title	Maintenance task title
 feature/tasks/update	task_title_helper	Provide a concise, technical name for this maintenance action as it appears in the service manual.
 feature/tasks/update	task_updated	Task updated

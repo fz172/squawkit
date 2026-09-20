@@ -59,6 +59,7 @@ internal fun SpecFieldInput(
       value = value,
       label = field.label,
       isError = isError,
+      interactive = true,
       trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
       modifier = Modifier.fillMaxWidth()
         .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),

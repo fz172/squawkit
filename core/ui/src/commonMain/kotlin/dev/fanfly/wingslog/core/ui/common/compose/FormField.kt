@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.core.ui.common.compose
 
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -7,11 +8,18 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -20,6 +28,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.SolidColor
@@ -223,10 +232,11 @@ fun FormTextField(
 }
 
 /**
- * Plain label-and-value presentation for values that cannot be edited in the current context.
+ * A form value that is not typed into: a picker, a dropdown anchor, or a locked read-out.
  *
- * Supplying [onClick] makes the value an action row for picker-backed selection while retaining
- * a display treatment instead of presenting a false text-entry affordance.
+ * The two must not look alike. An [interactive] field is a bordered, 48dp control with a trailing
+ * chevron; a read-out is plain text, and says why with [lockedReason] when the lock is by design.
+ * A dropdown anchored with `menuAnchor` has no [onClick] of its own, so it passes [interactive].
  */
 @Composable
 fun FormValueField(
@@ -238,21 +248,37 @@ fun FormValueField(
   supportingText: String? = null,
   isError: Boolean = false,
   onClick: (() -> Unit)? = null,
+  interactive: Boolean = onClick != null,
+  lockedReason: String? = null,
   accessibilityDescription: String = label,
   leadingIcon: (@Composable () -> Unit)? = null,
   trailingIcon: (@Composable () -> Unit)? = null,
   valueStyle: TextStyle = MaterialTheme.typography.bodyLarge,
   maxLines: Int = Int.MAX_VALUE,
 ) {
-  val actionModifier = if (onClick == null) {
-    Modifier
+  val shape = RoundedCornerShape(Spacing.chipCornerRadius)
+  val controlModifier = if (!interactive) {
+    Modifier.padding(vertical = Spacing.extraSmall)
   } else {
     Modifier
-      .semantics(mergeDescendants = true) {
-        contentDescription = accessibilityDescription
-        role = Role.Button
-      }
-      .clickable(onClick = onClick)
+      .heightIn(min = LocalMinimumInteractiveComponentSize.current)
+      .clip(shape)
+      .border(
+        width = Spacing.hairline,
+        color = if (isError) MaterialTheme.colorScheme.error
+        else MaterialTheme.colorScheme.outlineVariant,
+        shape = shape,
+      )
+      .then(
+        if (onClick == null) Modifier
+        else Modifier
+          .semantics(mergeDescendants = true) {
+            contentDescription = accessibilityDescription
+            role = Role.Button
+          }
+          .clickable(onClick = onClick)
+      )
+      .padding(horizontal = Spacing.large, vertical = Spacing.small)
   }
   val shownValue = value.ifEmpty { placeholder ?: "-" }
   val valueColor = when {
@@ -264,7 +290,6 @@ fun FormValueField(
   Column(
     modifier = modifier
       .fillMaxWidth()
-      .then(actionModifier)
       .padding(vertical = Spacing.extraSmall),
     verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
   ) {
@@ -277,7 +302,7 @@ fun FormValueField(
     }
     Row(
       modifier = Modifier.fillMaxWidth()
-        .padding(vertical = Spacing.extraSmall),
+        .then(controlModifier),
       verticalAlignment = Alignment.CenterVertically,
     ) {
       if (leadingIcon != null) {
@@ -295,6 +320,13 @@ fun FormValueField(
       if (trailingIcon != null) {
         Spacer(Modifier.width(Spacing.medium))
         trailingIcon()
+      } else if (interactive) {
+        Spacer(Modifier.width(Spacing.medium))
+        Icon(
+          imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+          contentDescription = null,
+          tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
       }
     }
     if (supportingText != null) {
@@ -305,6 +337,29 @@ fun FormValueField(
         else MaterialTheme.colorScheme.onSurfaceVariant,
       )
     }
+    if (lockedReason != null && !interactive) FormLockedNote(lockedReason)
+  }
+}
+
+/** Why a value cannot be changed — so a locked field reads as intent, not as a tap that missed. */
+@Composable
+fun FormLockedNote(text: String, modifier: Modifier = Modifier) {
+  Row(
+    modifier = modifier,
+    verticalAlignment = Alignment.CenterVertically,
+    horizontalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
+  ) {
+    Icon(
+      imageVector = Icons.Outlined.Lock,
+      contentDescription = null,
+      tint = MaterialTheme.colorScheme.onSurfaceVariant,
+      modifier = Modifier.size(Spacing.large),
+    )
+    Text(
+      text = text,
+      style = MaterialTheme.typography.bodySmall,
+      color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
   }
 }
 
