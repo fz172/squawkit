@@ -1102,3 +1102,4 @@ feature/logs/update	delete_this_log_subtitle	Permanently removes it. This cannot
 feature/logs/update	delete_this_log_title	Delete this %1$s
 feature/thing/update	delete_this_thing_subtitle	Permanently removes it and every record filed under it.
 feature/thing/update	delete_this_thing_title	Delete this %1$s
+core/sharedassets	loading	Loading

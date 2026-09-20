@@ -66,4 +66,5 @@
   <string name="file_size_mb"><xliff:g example="2.4">%1$s</xliff:g> MB</string>
 
   <string name="term_with_abbreviation"><xliff:g example="Airworthiness Directives">%1$s</xliff:g> (<xliff:g example="AD">%2$s</xliff:g>)</string>
+  <string name="loading">Loading</string>
 </resources>

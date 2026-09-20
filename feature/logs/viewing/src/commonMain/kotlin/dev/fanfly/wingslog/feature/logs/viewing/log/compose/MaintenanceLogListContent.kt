@@ -14,7 +14,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -45,6 +44,7 @@ import dev.fanfly.wingslog.core.ui.common.compose.SwipeActionCard
 import dev.fanfly.wingslog.core.ui.common.compose.jumpTargetHighlight
 import dev.fanfly.wingslog.core.ui.common.compose.rememberSwipeRevealController
 import dev.fanfly.wingslog.core.ui.common.compose.ListRowDivider
+import dev.fanfly.wingslog.core.ui.common.compose.SkeletonList
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.motionItem
 import dev.fanfly.wingslog.feature.ads.datamanager.AdsManager
@@ -210,7 +210,8 @@ fun MaintenanceLogListContent(
     contentAlignment = Alignment.Center
   ) {
     when (uiState) {
-      MaintenanceLogListUiState.Loading -> CircularProgressIndicator()
+      // In the shape of what is coming, filter bar included, so nothing jumps when it lands.
+      MaintenanceLogListUiState.Loading -> SkeletonList()
 
       MaintenanceLogListUiState.Error -> Column(
         horizontalAlignment = Alignment.CenterHorizontally,
