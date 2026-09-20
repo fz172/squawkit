@@ -1,81 +1,431 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-05-16T00:00:00Z",
+  "generatedAt": "2026-09-20T00:00:00Z",
   "title": "Design System: SquawkIt",
   "extensions": {
     "colorMeta": {
       "aviation-blue": {
         "role": "primary",
         "displayName": "Instrument Blue",
-        "canonical": "oklch(43% 0.16 251)",
-        "tonalRamp": ["#001849", "#004785", "#0A4A90", "#1A5FAE", "#3573C4", "#6096D8", "#A7C8FF", "#D5E3FF"]
+        "canonical": "oklch(49% 0.143 255)",
+        "tonalRamp": [
+          "#001849",
+          "#004785",
+          "#1A5FAE",
+          "#A7C8FF",
+          "#D5E3FF"
+        ]
       },
       "sky-container": {
         "role": "primary-container",
         "displayName": "Sky Container",
-        "canonical": "oklch(91% 0.05 251)",
-        "tonalRamp": ["#001849", "#004785", "#1A5FAE", "#4D86C8", "#7AAAD8", "#A7C8FF", "#C4D8FF", "#D5E3FF"]
+        "canonical": "oklch(91% 0.041 264)",
+        "tonalRamp": [
+          "#001849",
+          "#004785",
+          "#1A5FAE",
+          "#A7C8FF",
+          "#D5E3FF"
+        ]
       },
       "deep-navy": {
         "role": "on-primary-container",
         "displayName": "Deep Navy",
-        "canonical": "oklch(15% 0.08 251)",
-        "tonalRamp": ["#001849", "#002266", "#003380", "#00449A", "#1A5FAE", "#4D82C8", "#A7C8FF", "#D5E3FF"]
+        "canonical": "oklch(23% 0.097 261)",
+        "tonalRamp": [
+          "#001849",
+          "#004785",
+          "#1A5FAE",
+          "#A7C8FF",
+          "#D5E3FF"
+        ]
       },
       "panel-slate": {
         "role": "secondary",
         "displayName": "Panel Slate",
-        "canonical": "oklch(43% 0.05 243)",
-        "tonalRamp": ["#0E1C2B", "#1E2E42", "#2D3F57", "#3A4557", "#525E72", "#7A8799", "#BAC8E0", "#D6E4F5"]
+        "canonical": "oklch(48% 0.036 261)",
+        "tonalRamp": [
+          "#0E1C2B",
+          "#3A4557",
+          "#525E72",
+          "#BAC8E0",
+          "#D6E4F5"
+        ]
       },
       "slate-container": {
         "role": "secondary-container",
         "displayName": "Slate Container",
-        "canonical": "oklch(90% 0.03 243)",
-        "tonalRamp": ["#0E1C2B", "#253041", "#3A4557", "#526070", "#7A8FA8", "#9AAEC5", "#BAC8E0", "#D6E4F5"]
+        "canonical": "oklch(91% 0.028 253)",
+        "tonalRamp": [
+          "#0E1C2B",
+          "#3A4557",
+          "#525E72",
+          "#BAC8E0",
+          "#D6E4F5"
+        ]
       },
       "amber-glow": {
         "role": "tertiary",
         "displayName": "Advisory Amber",
-        "canonical": "oklch(79% 0.16 72)",
-        "tonalRamp": ["#271900", "#5B3D00", "#7A5200", "#9B6D00", "#C08800", "#E8A800", "#FFBA4E", "#FFDFA6"]
+        "canonical": "oklch(83% 0.145 75)",
+        "tonalRamp": [
+          "#271900",
+          "#5B3D00",
+          "#7A5200",
+          "#FFBA4E",
+          "#FFDFA6"
+        ]
       },
       "amber-haze": {
         "role": "tertiary-container",
         "displayName": "Amber Haze",
-        "canonical": "oklch(92% 0.07 72)",
-        "tonalRamp": ["#271900", "#5B3D00", "#7A5200", "#A87000", "#D09500", "#FFBA4E", "#FFCF7D", "#FFDFA6"]
+        "canonical": "oklch(92% 0.081 82)",
+        "tonalRamp": [
+          "#271900",
+          "#5B3D00",
+          "#7A5200",
+          "#FFBA4E",
+          "#FFDFA6"
+        ]
       },
       "airworthy-green": {
         "role": "semantic-success",
         "displayName": "Airworthy Green",
-        "canonical": "oklch(42% 0.12 145)",
-        "tonalRamp": ["#0A2D17", "#154825", "#1E6030", "#276B39", "#3A8A4E", "#5AAF6E", "#81C784", "#B8E4BB"]
+        "canonical": "oklch(47% 0.105 149)",
+        "tonalRamp": [
+          "#1B4D2B",
+          "#276B39",
+          "#81C784",
+          "#E3F2E8"
+        ]
+      },
+      "airworthy-bg": {
+        "role": "semantic-success-container",
+        "displayName": "Airworthy Surface",
+        "canonical": "oklch(95% 0.021 157)",
+        "tonalRamp": [
+          "#1B4D2B",
+          "#276B39",
+          "#81C784",
+          "#E3F2E8"
+        ]
       },
       "caution-amber": {
         "role": "semantic-warning",
         "displayName": "Caution Amber",
-        "canonical": "oklch(43% 0.12 68)",
-        "tonalRamp": ["#271900", "#4A3200", "#6B4800", "#8B5E00", "#AD7800", "#CC9A00", "#FFCA28", "#FFE082"]
+        "canonical": "oklch(52% 0.108 76)",
+        "tonalRamp": [
+          "#514500",
+          "#8B5E00",
+          "#FFCA28",
+          "#FFECB3"
+        ]
       },
       "caution-bg": {
         "role": "semantic-warning-container",
         "displayName": "Caution Surface",
-        "canonical": "oklch(94% 0.05 80)",
-        "tonalRamp": ["#271900", "#5B3D00", "#8B5E00", "#B07C00", "#D4A200", "#FFCA28", "#FFE082", "#FFECB3"]
+        "canonical": "oklch(94% 0.076 92)",
+        "tonalRamp": [
+          "#514500",
+          "#8B5E00",
+          "#FFCA28",
+          "#FFECB3"
+        ]
+      },
+      "neutral-surface": {
+        "role": "surface",
+        "displayName": "Panel White",
+        "canonical": "oklch(98% 0.005 258)",
+        "tonalRamp": [
+          "#06090F",
+          "#0A0E14",
+          "#151C27",
+          "#1B2431",
+          "#222C3B",
+          "#293446",
+          "#313C4C",
+          "#3A4557",
+          "#545F72",
+          "#6B7A8F",
+          "#9BA8BC",
+          "#C3CBD8",
+          "#D3DBE7",
+          "#E0E6EF",
+          "#E1E7F0",
+          "#E4EAF2",
+          "#E8EDF4",
+          "#F1F4FA",
+          "#F7F9FC"
+        ]
+      },
+      "neutral-container-low": {
+        "role": "surface-container-low",
+        "displayName": "Panel Card Low",
+        "canonical": "oklch(97% 0.009 265)",
+        "tonalRamp": [
+          "#06090F",
+          "#0A0E14",
+          "#151C27",
+          "#1B2431",
+          "#222C3B",
+          "#293446",
+          "#313C4C",
+          "#3A4557",
+          "#545F72",
+          "#6B7A8F",
+          "#9BA8BC",
+          "#C3CBD8",
+          "#D3DBE7",
+          "#E0E6EF",
+          "#E1E7F0",
+          "#E4EAF2",
+          "#E8EDF4",
+          "#F1F4FA",
+          "#F7F9FC"
+        ]
+      },
+      "neutral-container": {
+        "role": "surface-container",
+        "displayName": "Panel Card",
+        "canonical": "oklch(94% 0.011 257)",
+        "tonalRamp": [
+          "#06090F",
+          "#0A0E14",
+          "#151C27",
+          "#1B2431",
+          "#222C3B",
+          "#293446",
+          "#313C4C",
+          "#3A4557",
+          "#545F72",
+          "#6B7A8F",
+          "#9BA8BC",
+          "#C3CBD8",
+          "#D3DBE7",
+          "#E0E6EF",
+          "#E1E7F0",
+          "#E4EAF2",
+          "#E8EDF4",
+          "#F1F4FA",
+          "#F7F9FC"
+        ]
+      },
+      "neutral-container-high": {
+        "role": "surface-container-high",
+        "displayName": "Panel Card High",
+        "canonical": "oklch(93% 0.013 256)",
+        "tonalRamp": [
+          "#06090F",
+          "#0A0E14",
+          "#151C27",
+          "#1B2431",
+          "#222C3B",
+          "#293446",
+          "#313C4C",
+          "#3A4557",
+          "#545F72",
+          "#6B7A8F",
+          "#9BA8BC",
+          "#C3CBD8",
+          "#D3DBE7",
+          "#E0E6EF",
+          "#E1E7F0",
+          "#E4EAF2",
+          "#E8EDF4",
+          "#F1F4FA",
+          "#F7F9FC"
+        ]
+      },
+      "neutral-container-highest": {
+        "role": "surface-container-highest",
+        "displayName": "Panel Recess",
+        "canonical": "oklch(92% 0.014 258)",
+        "tonalRamp": [
+          "#06090F",
+          "#0A0E14",
+          "#151C27",
+          "#1B2431",
+          "#222C3B",
+          "#293446",
+          "#313C4C",
+          "#3A4557",
+          "#545F72",
+          "#6B7A8F",
+          "#9BA8BC",
+          "#C3CBD8",
+          "#D3DBE7",
+          "#E0E6EF",
+          "#E1E7F0",
+          "#E4EAF2",
+          "#E8EDF4",
+          "#F1F4FA",
+          "#F7F9FC"
+        ]
+      },
+      "neutral-surface-variant": {
+        "role": "surface-variant",
+        "displayName": "Panel Muted",
+        "canonical": "oklch(89% 0.019 258)",
+        "tonalRamp": [
+          "#06090F",
+          "#0A0E14",
+          "#151C27",
+          "#1B2431",
+          "#222C3B",
+          "#293446",
+          "#313C4C",
+          "#3A4557",
+          "#545F72",
+          "#6B7A8F",
+          "#9BA8BC",
+          "#C3CBD8",
+          "#D3DBE7",
+          "#E0E6EF",
+          "#E1E7F0",
+          "#E4EAF2",
+          "#E8EDF4",
+          "#F1F4FA",
+          "#F7F9FC"
+        ]
+      },
+      "neutral-outline-variant": {
+        "role": "outline-variant",
+        "displayName": "Panel Edge",
+        "canonical": "oklch(84% 0.020 260)",
+        "tonalRamp": [
+          "#06090F",
+          "#0A0E14",
+          "#151C27",
+          "#1B2431",
+          "#222C3B",
+          "#293446",
+          "#313C4C",
+          "#3A4557",
+          "#545F72",
+          "#6B7A8F",
+          "#9BA8BC",
+          "#C3CBD8",
+          "#D3DBE7",
+          "#E0E6EF",
+          "#E1E7F0",
+          "#E4EAF2",
+          "#E8EDF4",
+          "#F1F4FA",
+          "#F7F9FC"
+        ]
+      },
+      "neutral-outline": {
+        "role": "outline",
+        "displayName": "Panel Stroke",
+        "canonical": "oklch(57% 0.037 257)",
+        "tonalRamp": [
+          "#06090F",
+          "#0A0E14",
+          "#151C27",
+          "#1B2431",
+          "#222C3B",
+          "#293446",
+          "#313C4C",
+          "#3A4557",
+          "#545F72",
+          "#6B7A8F",
+          "#9BA8BC",
+          "#C3CBD8",
+          "#D3DBE7",
+          "#E0E6EF",
+          "#E1E7F0",
+          "#E4EAF2",
+          "#E8EDF4",
+          "#F1F4FA",
+          "#F7F9FC"
+        ]
+      },
+      "neutral-on-surface-variant": {
+        "role": "on-surface-variant",
+        "displayName": "Panel Ink Muted",
+        "canonical": "oklch(48% 0.034 261)",
+        "tonalRamp": [
+          "#06090F",
+          "#0A0E14",
+          "#151C27",
+          "#1B2431",
+          "#222C3B",
+          "#293446",
+          "#313C4C",
+          "#3A4557",
+          "#545F72",
+          "#6B7A8F",
+          "#9BA8BC",
+          "#C3CBD8",
+          "#D3DBE7",
+          "#E0E6EF",
+          "#E1E7F0",
+          "#E4EAF2",
+          "#E8EDF4",
+          "#F1F4FA",
+          "#F7F9FC"
+        ]
+      },
+      "neutral-on-surface": {
+        "role": "on-surface",
+        "displayName": "Panel Ink",
+        "canonical": "oklch(22% 0.022 261)",
+        "tonalRamp": [
+          "#06090F",
+          "#0A0E14",
+          "#151C27",
+          "#1B2431",
+          "#222C3B",
+          "#293446",
+          "#313C4C",
+          "#3A4557",
+          "#545F72",
+          "#6B7A8F",
+          "#9BA8BC",
+          "#C3CBD8",
+          "#D3DBE7",
+          "#E0E6EF",
+          "#E1E7F0",
+          "#E4EAF2",
+          "#E8EDF4",
+          "#F1F4FA",
+          "#F7F9FC"
+        ]
       }
     },
     "typographyMeta": {
-      "display": { "displayName": "Display", "purpose": "Dashboard hero data — next due dates, the Thing's primary identifier. Once per screen maximum." },
-      "headline": { "displayName": "Headline", "purpose": "Screen-level and section headings. Three sizes (Large/Medium/Small) for hierarchy within complex screens." },
-      "title": { "displayName": "Title", "purpose": "Card headings, form section labels, tab labels, toolbar titles." },
-      "body": { "displayName": "Body", "purpose": "Primary paragraph content and form values. System sans for native rendering quality in data-dense contexts." },
-      "label": { "displayName": "Label", "purpose": "Button labels (UPPERCASE), form field labels, badge text, timestamps." },
-      "data": { "displayName": "Technical Data", "purpose": "JetBrains Mono reserved for identifiers (tail numbers, VINs, hull IDs), serial numbers and meter readings (tach time, odometer, engine hours) — any value where character alignment is semantic." }
+      "display": {
+        "displayName": "Display",
+        "purpose": "Dashboard hero data \u2014 next due dates, the Thing's primary identifier. Once per screen maximum."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Screen-level and section headings. Three sizes (Large/Medium/Small) for hierarchy within complex screens."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Card headings, form section labels, tab labels, toolbar titles."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Primary paragraph content and form values. System sans for native rendering quality in data-dense contexts."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Button labels (UPPERCASE), form field labels, badge text, timestamps."
+      },
+      "data": {
+        "displayName": "Technical Data",
+        "purpose": "JetBrains Mono reserved for identifiers (tail numbers, VINs, hull IDs), serial numbers and meter readings (tach time, odometer, engine hours) \u2014 any value where character alignment is semantic."
+      }
     },
     "shadows": [],
     "motion": [
-      { "name": "standard", "value": "150–250ms ease-out", "purpose": "Default for all state transitions: hover, focus, selection, sheet reveal. Ease out; no bounce, no elastic." }
+      {
+        "name": "standard",
+        "value": "150\u2013250ms ease-out",
+        "purpose": "Default for all state transitions: hover, focus, selection, sheet reveal. Ease out; no bounce, no elastic."
+      }
     ],
     "breakpoints": []
   },
@@ -108,30 +458,30 @@
       "name": "Content Card",
       "kind": "card",
       "refersTo": "card",
-      "description": "Standard card surface — squawk cards, task cards, maintenance log entries. No shadow; tonal elevation only.",
+      "description": "Standard card surface \u2014 squawk cards, task cards, maintenance log entries. No shadow; tonal elevation only.",
       "html": "<div class=\"ds-card\"><div class=\"ds-card-title\">Oil leak on left engine</div><div class=\"ds-card-meta\">Added 3 days ago &bull; HIGH</div></div>",
-      "css": ".ds-card { background: #EEF1F6; border-radius: 12px; padding: 16px; font-family: system-ui, sans-serif; } .ds-card-title { font-size: 16px; font-weight: 600; color: #1C1B1F; margin-bottom: 4px; } .ds-card-meta { font-size: 12px; font-weight: 500; color: #525E72; letter-spacing: 0.04em; }"
+      "css": ".ds-card { background: #E8EDF4; border-radius: 12px; padding: 16px; font-family: system-ui, sans-serif; } .ds-card-title { font-size: 16px; font-weight: 600; color: #141A24; margin-bottom: 4px; } .ds-card-meta { font-size: 12px; font-weight: 500; color: #525E72; letter-spacing: 0.04em; }"
     },
     {
       "name": "Status Badge",
       "kind": "chip",
       "description": "Inline stamp-shaped badge for squawk status and task priority. 4dp radius reads as a label, not a pill.",
       "html": "<span class=\"ds-badge ds-badge--open\">OPEN</span><span class=\"ds-badge ds-badge--addressed\">ADDRESSED</span><span class=\"ds-badge ds-badge--dismissed\">DISMISSED</span>",
-      "css": ".ds-badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 4px; font-family: system-ui, sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; } .ds-badge--open { background: transparent; color: #525E72; } .ds-badge--addressed { background: #D5E3FF; color: #001849; } .ds-badge--dismissed { background: #E7E0EC; color: #49454F; }"
+      "css": ".ds-badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 4px; font-family: system-ui, sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; } .ds-badge--open { background: transparent; color: #525E72; } .ds-badge--addressed { background: #D5E3FF; color: #001849; } .ds-badge--dismissed { background: #D3DBE7; color: #545F72; }"
     },
     {
       "name": "Segmented Filter",
       "kind": "custom",
       "description": "Two-option tab filter used on list screens (Open / Closed squawks, Active / Completed tasks).",
       "html": "<div class=\"ds-seg-row\"><button class=\"ds-seg-btn ds-seg-btn--selected\">OPEN (3)</button><button class=\"ds-seg-btn\">CLOSED (7)</button></div>",
-      "css": ".ds-seg-row { display: flex; width: 100%; border: 1px solid #BCC4D0; border-radius: 40px; overflow: hidden; } .ds-seg-btn { flex: 1; height: 40px; background: transparent; color: #525E72; font-family: system-ui, sans-serif; font-size: 13px; font-weight: 500; letter-spacing: 0.04em; border: none; cursor: pointer; transition: background 0.15s ease-out, color 0.15s ease-out; } .ds-seg-btn--selected { background: #1A5FAE; color: #FFFFFF; font-weight: 700; }"
+      "css": ".ds-seg-row { display: flex; width: 100%; border: 1px solid #C3CBD8; border-radius: 40px; overflow: hidden; } .ds-seg-btn { flex: 1; height: 40px; background: transparent; color: #525E72; font-family: system-ui, sans-serif; font-size: 13px; font-weight: 500; letter-spacing: 0.04em; border: none; cursor: pointer; transition: background 0.15s ease-out, color 0.15s ease-out; } .ds-seg-btn--selected { background: #1A5FAE; color: #FFFFFF; font-weight: 700; }"
     },
     {
       "name": "Technical Data Field",
       "kind": "custom",
-      "description": "Monospace display for tail numbers, serial numbers, engine hours — any value where character alignment is semantic.",
+      "description": "Monospace display for tail numbers, serial numbers, engine hours \u2014 any value where character alignment is semantic.",
       "html": "<div class=\"ds-data-field\"><div class=\"ds-data-label\">Airframe Time</div><div class=\"ds-data-value\">2847.4</div></div>",
-      "css": ".ds-data-field { display: flex; flex-direction: column; gap: 2px; } .ds-data-label { font-family: system-ui, sans-serif; font-size: 11px; font-weight: 500; color: #525E72; letter-spacing: 0.05em; text-transform: uppercase; } .ds-data-value { font-family: 'JetBrains Mono', 'Courier New', monospace; font-size: 16px; font-weight: 700; color: #1C1B1F; letter-spacing: 0; }"
+      "css": ".ds-data-field { display: flex; flex-direction: column; gap: 2px; } .ds-data-label { font-family: system-ui, sans-serif; font-size: 11px; font-weight: 500; color: #525E72; letter-spacing: 0.05em; text-transform: uppercase; } .ds-data-value { font-family: 'JetBrains Mono', 'Courier New', monospace; font-size: 16px; font-weight: 700; color: #141A24; letter-spacing: 0; }"
     },
     {
       "name": "Status Indicator Row",
@@ -143,25 +493,49 @@
   ],
   "narrative": {
     "northStar": "The Logbook",
-    "overview": "Every screen is a page in a maintenance record kept to a regulatory standard, whatever the Thing — an aircraft, a car, a boat, a home. Nothing decorates; everything documents. The aviation blue is ink on vellum. Space Grotesk is the hand that signs the form. The interface does not hurry the user — it makes each entry feel considered and permanent.\n\nThe light theme is not a safe default. It is the deliberate choice: a logbook is a paper artifact, and this screen extends that physical register. The palette is derived from glass cockpit references — the Garmin G1000 panel blue, advisory amber annunciators, the green-and-amber visual language of IFR compliance charts.\n\nThe system explicitly rejects the SaaS dashboard aesthetic. No hero-metric grids, no identical icon-cards, no at-a-glance information packing that sacrifices trust for density.",
+    "overview": "Every screen is a page in a maintenance record kept to a regulatory standard, whatever the Thing \u2014 an aircraft, a car, a boat, a home. Nothing decorates; everything documents. The aviation blue is ink on vellum. Space Grotesk is the hand that signs the form. The interface does not hurry the user \u2014 it makes each entry feel considered and permanent.\n\nThe light theme is not a safe default. It is the deliberate choice: a logbook is a paper artifact, and this screen extends that physical register. The palette is derived from glass cockpit references \u2014 the Garmin G1000 panel blue, advisory amber annunciators, the green-and-amber visual language of IFR compliance charts.\n\nThe system explicitly rejects the SaaS dashboard aesthetic. No hero-metric grids, no identical icon-cards, no at-a-glance information packing that sacrifices trust for density.",
     "keyCharacteristics": [
       "Authoritative, archival, unhurried",
       "Instrument-panel color semantics carried consistently across every surface and every kind of Thing; only the words change per template",
       "Typographic hierarchy does the work; decoration does not",
-      "Confident, structured controls — every action feels committed",
+      "Confident, structured controls \u2014 every action feels committed",
       "Safety-critical status (OVERDUE, DUE SOON) always surfaces first"
     ],
     "rules": [
-      { "name": "The Advisory Rule", "body": "Instrument Amber (tertiary) appears on ≤10% of any given screen. Its power comes from scarcity. A screen full of amber has no amber.", "section": "colors" },
-      { "name": "The Semantic Lock Rule", "body": "Airworthy Green and Caution Amber are semantic signals, not decorative colors. They may not appear for brand moments, empty state illustrations, or visual interest.", "section": "colors" },
-      { "name": "The Mono Rule", "body": "JetBrains Mono is reserved for technical data: identifiers (tail numbers, VINs, hull IDs), serial numbers, meter readings (tach/Hobbs time, odometer, engine hours). It never appears in UI chrome.", "section": "typography" },
-      { "name": "The Uppercase Commitment Rule", "body": "Uppercase belongs to exactly two things: button labels (Bold) and status badges. Sentence case everywhere else \u2014 screen titles, section labels, field labels, field values, metadata, empty-state copy. Uppercase signals commitment; a button is a decision, not an option, and a badge is a verdict.", "section": "typography" },
-      { "name": "The No-Shadow Rule", "body": "Do not introduce custom elevation parameters or manual shadow modifiers. Tonal elevation is the system. The neutral roles are authored on the instrument hue in Theme.kt, never inherited from the Material 3 baseline; if a card needs a 1dp border to be visible, the surface assignments are wrong, not the border.", "section": "elevation" },
-      { "name": "The Continuity Motion Rule", "body": "Motion that explains where something went is required, not decoration: shared-axis between sections, container transform from a row into its detail, animateItem on list change, crossfade rather than a cut. Decorative motion stays banned \u2014 no orchestrated entrances, no bounce, no scroll choreography. Durations and easings come from Motion.kt.", "section": "motion" }
+      {
+        "name": "The Advisory Rule",
+        "body": "Instrument Amber (tertiary) appears on \u226410% of any given screen. Its power comes from scarcity. A screen full of amber has no amber.",
+        "section": "colors"
+      },
+      {
+        "name": "The Semantic Lock Rule",
+        "body": "Airworthy Green and Caution Amber are semantic signals, not decorative colors. They may not appear for brand moments, empty state illustrations, or visual interest.",
+        "section": "colors"
+      },
+      {
+        "name": "The Mono Rule",
+        "body": "JetBrains Mono is reserved for technical data: identifiers (tail numbers, VINs, hull IDs), serial numbers, meter readings (tach/Hobbs time, odometer, engine hours). It never appears in UI chrome.",
+        "section": "typography"
+      },
+      {
+        "name": "The Uppercase Commitment Rule",
+        "body": "Uppercase belongs to exactly two things: button labels (Bold) and status badges. Sentence case everywhere else \u2014 screen titles, section labels, field labels, field values, metadata, empty-state copy. Uppercase signals commitment; a button is a decision, not an option, and a badge is a verdict.",
+        "section": "typography"
+      },
+      {
+        "name": "The No-Shadow Rule",
+        "body": "Do not introduce custom elevation parameters or manual shadow modifiers. Tonal elevation is the system. The neutral roles are authored on the instrument hue in Theme.kt, never inherited from the Material 3 baseline; if a card needs a 1dp border to be visible, the surface assignments are wrong, not the border.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Continuity Motion Rule",
+        "body": "Motion that explains where something went is required, not decoration: shared-axis between sections, container transform from a row into its detail, animateItem on list change, crossfade rather than a cut. Decorative motion stays banned \u2014 no orchestrated entrances, no bounce, no scroll choreography. Durations and easings come from Motion.kt.",
+        "section": "motion"
+      }
     ],
     "dos": [
       "Do use WingslogTypography.dataLarge / dataMedium / dataSmall (JetBrains Mono) for every tail number, serial number, engine hour, tach time, and airframe hour.",
-      "Do keep Instrument Amber (tertiary) to ≤10% of any screen's color moments.",
+      "Do keep Instrument Amber (tertiary) to \u226410% of any screen's color moments.",
       "Do surface OVERDUE and DUE SOON status at the top of every list.",
       "Do use Spacing.screenPadding (24dp) as the horizontal inset for all screen-level content.",
       "Do reserve Airworthy Green (#276B39) and Caution Amber (#8B5E00) for compliance and status semantics only.",
