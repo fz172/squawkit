@@ -28,7 +28,7 @@ import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.dataLogNoun
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
-import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalNavPillClearance
+import dev.fanfly.wingslog.core.ui.adaptive.compose.navPillAndFabClearance
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalSnackbarHostState
 import dev.fanfly.wingslog.core.ui.common.compose.AlertDialog
 import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
@@ -148,7 +148,7 @@ fun DataLogSectionContent(
             start = Spacing.screenPadding,
             end = Spacing.screenPadding,
             top = Spacing.small,
-            bottom = Spacing.buttonHeight + Spacing.extraLarge + LocalNavPillClearance.current,
+            bottom = navPillAndFabClearance,
           ),
           verticalArrangement = Arrangement.spacedBy(Spacing.medium),
         ) {

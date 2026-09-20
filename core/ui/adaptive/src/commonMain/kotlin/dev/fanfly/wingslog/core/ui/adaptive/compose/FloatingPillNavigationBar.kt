@@ -25,6 +25,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import dev.fanfly.wingslog.core.ui.theme.Spacing
 import androidx.compose.ui.unit.dp
 
 /**
@@ -42,6 +43,19 @@ val LocalNavPillClearance = compositionLocalOf { 0.dp }
  * to this to derive [LocalNavPillClearance]. Keep in sync if the pill's paddings change.
  */
 val FloatingPillNavBarHeight: Dp = 72.dp
+
+/**
+ * Bottom padding for a section that shows the add-FAB **as well as** the pill — Squawks, Tasks,
+ * Logs and Data logs. [LocalNavPillClearance] alone clears the pill but not the FAB riding above it
+ * at the trailing edge, which is what hid the last row of every one of those lists behind it.
+ *
+ * Zero on tiers without a pill, where the FAB sits in the scaffold's own slot and needs no help.
+ */
+val navPillAndFabClearance: Dp
+  @Composable get() {
+    val pill = LocalNavPillClearance.current
+    return if (pill == 0.dp) pill else pill + Spacing.buttonHeight + Spacing.extraLarge
+  }
 
 /** One destination in the [FloatingPillNavigationBar]. */
 data class FloatingNavItem(
