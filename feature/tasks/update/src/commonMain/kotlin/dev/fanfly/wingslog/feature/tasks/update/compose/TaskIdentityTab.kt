@@ -104,7 +104,12 @@ fun TaskIdentityTab(
     // [usesComponentTypes]. Every other preset gets no section: a boat and a car have parts the
     // three options cannot name, a home has none at all, and their tasks belong to the thing
     // itself, which is what a task with no component has always meant (#732).
-    if (LocalThingTemplate.current.usesComponentTypes) {
+    //
+    // Nor does a locked task that was never given one: a heading over a lock note and no value
+    // reads as a load that failed.
+    val lockedWithoutComponent =
+      onComponentChange == null && component == ComponentType.COMPONENT_UNKNOWN
+    if (LocalThingTemplate.current.usesComponentTypes && !lockedWithoutComponent) {
       val components = ComponentType.entries
         .filter { it != ComponentType.COMPONENT_UNKNOWN }
 
