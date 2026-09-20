@@ -22,12 +22,6 @@ import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.model.PendingAttachment
 import dev.fanfly.wingslog.feature.attachment.model.PickedDataLog
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
-import dev.fanfly.wingslog.feature.comments.datamanager.CommentManager
-import dev.fanfly.wingslog.feature.comments.datamanager.CommentThreadController
-import dev.fanfly.wingslog.feature.comments.model.CommentAction
-import dev.fanfly.wingslog.feature.comments.model.CommentParentKind
-import dev.fanfly.wingslog.feature.comments.model.CommentTarget
-import dev.fanfly.wingslog.feature.comments.model.CommentThreadState
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
@@ -53,13 +47,9 @@ import wingslog.feature.attachment.sharedassets.generated.resources.add_file_fai
 import wingslog.feature.attachment.sharedassets.generated.resources.duplicate_file_skipped
 import wingslog.feature.attachment.sharedassets.generated.resources.file_too_large
 import wingslog.feature.attachment.sharedassets.generated.resources.files_over_limit_skipped
-import wingslog.feature.comments.sharedassets.generated.resources.comment_delete_failed
-import wingslog.feature.comments.sharedassets.generated.resources.comment_edit_failed
-import wingslog.feature.comments.sharedassets.generated.resources.comment_post_failed
 import kotlin.time.Clock
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.attachment.sharedassets.generated.resources.Res as AttachRes
-import wingslog.feature.comments.sharedassets.generated.resources.Res as CommentsRes
 
 data class SquawkFormState(
   val thingId: String = "",
@@ -100,7 +90,6 @@ class SquawkFormViewModel(
   private val currentThingTemplate: CurrentThingTemplate,
   private val analytics: AnalyticsManager,
   private val attachmentManager: AttachmentManager,
-  private val commentManager: CommentManager,
   private val logManager: MaintenanceLogManager,
   private val auth: FirebaseAuth,
   private val subscriptionManager: SubscriptionManager,
@@ -137,21 +126,6 @@ class SquawkFormViewModel(
   val attachmentUploadEnabled: StateFlow<Boolean> =
     _attachmentUploadEnabled.asStateFlow()
 
-  /**
-   * The comments thread, present only when editing: a squawk that has not been saved yet has no id
-   * for a comment to point at. Null on the add form, where the tab is absent too.
-   */
-  val comments: CommentThreadController? = squawkId?.let { id ->
-    CommentThreadController(
-      commentManager = commentManager,
-      target = CommentTarget(thingId, id, CommentParentKind.SQUAWK),
-      scope = viewModelScope,
-    )
-  }
-  val commentState: StateFlow<CommentThreadState> =
-    comments?.state ?: MutableStateFlow(CommentThreadState())
-      .asStateFlow()
-
   val isAnonymous: Boolean get() = auth.currentUser?.isAnonymous ?: true
   val filesAtLimit: Boolean get() = attachmentForm.filesAtLimit
 
@@ -159,18 +133,6 @@ class SquawkFormViewModel(
     if (squawkId != null) {
       loadExisting(squawkId)
       loadLogs()
-    }
-    comments?.let { thread ->
-      viewModelScope.launch {
-        thread.errors.collect { action ->
-          val message = when (action) {
-            CommentAction.POST -> CommentsRes.string.comment_post_failed
-            CommentAction.EDIT -> CommentsRes.string.comment_edit_failed
-            CommentAction.DELETE -> CommentsRes.string.comment_delete_failed
-          }
-          _state.update { it.copy(error = UiText.StringRes(message)) }
-        }
-      }
     }
     viewModelScope.launch {
       // The attachment gate is thing-scoped (§9.7): on a foreign host's thing the host pays and

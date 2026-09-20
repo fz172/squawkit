@@ -2,7 +2,8 @@
 
 **Status: shipped** (issue [#749](https://github.com/fz172/squawkit/issues/749)).
 
-A comments tab on the Update Squawk and Update Task forms. Anyone with access to the record —
+A comment thread on the detail sheet of every squawk and task (it began as a tab on the two edit
+forms; see §4). Anyone with access to the record —
 the host and every share member — can leave notes on it: troubleshooting steps, parts status,
 "holding this until the 100-hr".
 
@@ -116,21 +117,29 @@ the same treatment attachments get.
 
 ## 4. UI
 
-`CommentThreadSection` (in `feature/comments/viewing`) is stateless and renders the whole tab: the
-thread oldest-first, tombstones included, then the composer. The ⋮ menu appears only on a comment
-that is both yours and not already deleted. Both forms render the same composable, and both drive it
-through `CommentThreadController` — a UI-free state machine in `datamanager`, the same shape as
-`AttachmentFormController`, so neither ViewModel re-implements drafts, the inline editor or the
-menu.
+Comments live on the **detail sheet** of a squawk or a task, under its work history, not on the
+edit form (UI-22, #1115). They were a tab on both forms first; that put a thread which persists on
+post beside fields which wait for Save, made "Update squawk" the way to leave a note, and hid the
+thread from anyone who had not opened an edit form.
 
-The draft lives in the controller, not in a composable `remember`, so it survives the tab being
-swiped away and back ([#254](https://github.com/fz172/squawkit/issues/254)). A failed post leaves
-the draft in the box — the words the author typed exist nowhere else — and reports through
-`errors` so the owning screen can say so in its own words.
+`CommentThreadSection` (in `feature/comments/viewing`) is stateless and renders the thread oldest
+first, tombstones included. `CommentComposer` is the box it is written in — separate so the sheet
+can pin it under the scrolling body (`DetailSheet.bottomBar`), where it stays reachable however long
+the thread gets. The ⋮ menu appears only on a comment that is both yours and not already deleted.
 
-The tab is **edit-only** on both forms: a record that has not been saved yet has no id for a
-comment to point at. `taskFormTabsFor(includeComments = …)` and `squawkFormTabsFor(isEdit)` remove
-it rather than disabling it, the same removal-not-disabling rule the compliance tab follows.
+Both sheets are driven through `CommentThreadController`, a UI-free state machine in `datamanager`.
+The list screen hosts it: `RecordCommentHost` (in `feature/thing/dashboard`) opens one controller for
+whichever record's sheet is open — derived from the selected squawk or task, so every way a sheet
+closes also closes the thread — in a scope of its own, so closing the sheet stops the collection.
+
+The draft lives in the controller, not in a composable `remember`
+([#254](https://github.com/fz172/squawkit/issues/254)). A sheet closes on a stray tap outside it, so
+`RecordCommentHost` keeps an unposted draft per record and hands it back when that record is opened
+again; it lasts as long as the list screen's ViewModel. A failed post leaves the draft in the box —
+the words the author typed exist nowhere else — and reports through `errors` so the owning screen
+can say so in its own words.
+
+A record that has not been saved yet has no sheet, so the add forms need no special case.
 
 Timestamps render in the device's zone via `Instant.toDisplayDateTime()`. No zone abbreviation:
 kotlinx-datetime cannot name a zone on every target we build for, and a label that is right on

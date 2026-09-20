@@ -118,7 +118,7 @@ feature/comments/sharedassets	comment_post	Post comment
 feature/comments/sharedassets	comment_post_failed	Could not post your comment. It is still in the box — try again.
 feature/comments/sharedassets	comment_you	You
 feature/comments/sharedassets	comments_empty	No comments yet — be the first to add one.
-feature/comments/sharedassets	comments_tab	Comments
+feature/comments/sharedassets	comments_heading	Comments
 feature/comments/sharedassets	sign_in_to_add_comments	Sign in to add comments
 feature/export/sharedassets	export_all_time	All time
 feature/export/sharedassets	export_back_to_setup	Back to setup
@@ -576,7 +576,6 @@ feature/squawk/sharedassets	view_squawks	View Squawks
 feature/squawk/sharedassets	work_history	Work history
 feature/squawk/sharedassets	reopen_issue	Reopen issue
 feature/squawk/sharedassets	resolve_issue	Resolve
-feature/squawk/update	squawk_tab_details	Details
 feature/stresstest	stress_test_complete	Generation complete
 feature/stresstest	stress_test_config_blades_per_engine	Blades per engine
 feature/stresstest	stress_test_config_components	Components

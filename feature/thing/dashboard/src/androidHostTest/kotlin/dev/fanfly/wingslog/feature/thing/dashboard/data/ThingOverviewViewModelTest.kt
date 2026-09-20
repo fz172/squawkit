@@ -13,6 +13,9 @@ import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
 import dev.fanfly.wingslog.feature.attachment.model.DataLogRowInfo
+import dev.fanfly.wingslog.feature.comments.datamanager.CommentManager
+import dev.fanfly.wingslog.feature.comments.model.CommentParentKind
+import dev.fanfly.wingslog.feature.comments.model.CommentTarget
 import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogManager
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
@@ -36,12 +39,14 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -74,6 +79,9 @@ class ThingOverviewViewModelTest {
     every { observe(ThingId(THING_ID)) } returns flowOf(emptyList())
   }
   private val squawkManager: SquawkManager = mockk()
+  private val commentManager: CommentManager = mockk(relaxed = true) {
+    every { observeComments(any()) } returns flowOf(emptyList())
+  }
   private val sharingManager: SharingManager = mockk()
   private val thingScopeResolver: ThingScopeResolver = mockk()
   private val analytics = RecordingAnalyticsManager()
@@ -125,6 +133,7 @@ class ThingOverviewViewModelTest {
     attachmentManager,
     dataLogManager,
     squawkManager,
+    commentManager,
     sharingManager,
     thingScopeResolver,
     BakedInTemplateRegistry(appVersionCode = APP_VERSION_CODE),
@@ -244,6 +253,42 @@ class ThingOverviewViewModelTest {
       )
     }
     assertThat(vm.success.dismissingSquawkId).isNull()
+  }
+
+  @Test
+  fun openingASquawkSheet_opensThatSquawksThread_andClosingItClosesTheThread() = runTest {
+    val vm = viewModel()
+    assertThat(vm.commentThread.value).isNull()
+
+    vm.onAction(ThingOverviewAction.ShowSquawkDetail(vm.success.squawks.first()))
+    advanceUntilIdle()
+
+    assertThat(vm.commentThread.value).isNotNull()
+    verify {
+      commentManager.observeComments(CommentTarget(THING_ID, "s1", CommentParentKind.SQUAWK))
+    }
+
+    vm.onAction(ThingOverviewAction.DismissSquawkDetail)
+    advanceUntilIdle()
+
+    assertThat(vm.commentThread.value).isNull()
+  }
+
+  @Test
+  fun anUnpostedDraft_survivesClosingTheSheet() = runTest {
+    // A sheet closes on a stray tap outside it, and the words exist nowhere else.
+    val vm = viewModel()
+    val squawk = vm.success.squawks.first()
+    vm.onAction(ThingOverviewAction.ShowSquawkDetail(squawk))
+    advanceUntilIdle()
+    vm.commentThread.value!!.onDraftChange("Kit arrived")
+
+    vm.onAction(ThingOverviewAction.DismissSquawkDetail)
+    advanceUntilIdle()
+    vm.onAction(ThingOverviewAction.ShowSquawkDetail(squawk))
+    advanceUntilIdle()
+
+    assertThat(vm.commentThread.value!!.state.value.draft).isEqualTo("Kit arrived")
   }
 
   @Test

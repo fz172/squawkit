@@ -88,6 +88,12 @@ fun TaskDetailSheet(
    */
   onLogWorkClick: (() -> Unit)? = null,
   onSkipCycleClick: (() -> Unit)? = null,
+  /**
+   * The record's comment thread and the box it is written in, supplied by the host so this module
+   * need not know about comments. [commentComposer] is pinned under the scrolling sheet.
+   */
+  comments: (@Composable () -> Unit)? = null,
+  commentComposer: (@Composable () -> Unit)? = null,
   modifier: Modifier = Modifier,
 ) {
   val card = cardWithStatus.card
@@ -96,6 +102,7 @@ fun TaskDetailSheet(
   DetailSheet(
     onDismiss = onDismiss,
     modifier = modifier,
+    bottomBar = commentComposer,
     actionSlot = {
       if (onEditClick != null) {
         TextButton(onClick = onEditClick) {
@@ -263,6 +270,11 @@ fun TaskDetailSheet(
         LogHistoryItem(log)
         HorizontalDivider(modifier = Modifier.padding(vertical = Spacing.extraSmall))
       }
+    }
+
+    if (comments != null) {
+      Spacer(Modifier.height(Spacing.large))
+      comments()
     }
   }
 }

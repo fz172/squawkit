@@ -21,6 +21,11 @@ import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
 import dev.fanfly.wingslog.feature.attachment.model.DataLogRowInfo
+import dev.fanfly.wingslog.feature.comments.datamanager.CommentManager
+import dev.fanfly.wingslog.feature.comments.datamanager.CommentThreadController
+import dev.fanfly.wingslog.feature.comments.model.CommentAction
+import dev.fanfly.wingslog.feature.comments.model.CommentParentKind
+import dev.fanfly.wingslog.feature.comments.model.CommentTarget
 import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogManager
 import dev.fanfly.wingslog.feature.datalog.model.dataLogId
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
@@ -61,6 +66,10 @@ import wingslog.core.sharedassets.generated.resources.save_failed
 import wingslog.feature.squawk.sharedassets.generated.resources.squawk_deleted
 import wingslog.feature.tasks.sharedassets.generated.resources.task_deleted
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
+import wingslog.feature.comments.sharedassets.generated.resources.Res as CommentsRes
+import wingslog.feature.comments.sharedassets.generated.resources.comment_delete_failed
+import wingslog.feature.comments.sharedassets.generated.resources.comment_edit_failed
+import wingslog.feature.comments.sharedassets.generated.resources.comment_post_failed
 import wingslog.feature.squawk.sharedassets.generated.resources.Res as SquawkRes
 import wingslog.feature.tasks.sharedassets.generated.resources.Res as TasksRes
 
@@ -82,6 +91,7 @@ class ThingOverviewViewModel(
   private val attachmentManager: AttachmentManager,
   private val dataLogManager: DataLogManager,
   private val squawkManager: SquawkManager,
+  private val commentManager: CommentManager,
   private val sharingManager: SharingManager,
   private val thingScopeResolver: ThingScopeResolver,
   private val templateRegistry: TemplateRegistry,
@@ -94,6 +104,11 @@ class ThingOverviewViewModel(
     MutableStateFlow<ThingOverviewUiState>(ThingOverviewUiState.Loading)
   val uiState: StateFlow<ThingOverviewUiState> = _uiState.asStateFlow()
 
+  private val commentHost = RecordCommentHost(commentManager, viewModelScope)
+
+  /** The open detail sheet's comment thread; null while no squawk or task sheet is showing. */
+  val commentThread: StateFlow<CommentThreadController?> = commentHost.thread
+
   // Buffered, not rendezvous: a quick action's snackbar can be emitted between the section being
   // torn down and the new one attaching its collector, and a rendezvous send would park there.
   private val _events = Channel<ThingOverviewEvent>(Channel.BUFFERED)
@@ -105,6 +120,27 @@ class ThingOverviewViewModel(
   /** Due status depends on the clock, not only on stored data; re-evaluate when the screen returns. */
   fun onResumed() {
     taskStatusManager.refreshDueStatus()
+  }
+
+  init {
+    // Derived from the state rather than hooked into each action: a sheet closes in several ways
+    // (dismiss, delete, a resolve that navigates away) and every one of them clears the selection.
+    viewModelScope.launch {
+      _uiState
+        .map { (it as? ThingOverviewUiState.Success)?.commentTarget() }
+        .distinctUntilChanged()
+        .collect(commentHost::show)
+    }
+    viewModelScope.launch {
+      commentHost.errors.collect { action ->
+        val message = when (action) {
+          CommentAction.POST -> CommentsRes.string.comment_post_failed
+          CommentAction.EDIT -> CommentsRes.string.comment_edit_failed
+          CommentAction.DELETE -> CommentsRes.string.comment_delete_failed
+        }
+        _events.send(ThingOverviewEvent.ShowMessage(UiText.StringRes(message)))
+      }
+    }
   }
 
   init {
@@ -702,3 +738,8 @@ class ThingOverviewViewModel(
     }
   }
 }
+
+/** A squawk sheet wins if both are somehow set; in practice only one sheet is ever open. */
+private fun ThingOverviewUiState.Success.commentTarget(): CommentTarget? =
+  selectedSquawk?.let { CommentTarget(thing.id, it.squawk.id, CommentParentKind.SQUAWK) }
+    ?: selectedTask?.let { CommentTarget(thing.id, it.card.id, CommentParentKind.MAINTENANCE_TASK) }

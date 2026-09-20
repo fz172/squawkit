@@ -23,7 +23,6 @@ class TaskFormTabsTest {
       taskFormTabsFor(
         CurrentThingTemplate.ALL_ENABLED,
         includeAdjustments = true,
-        includeComments = true,
       )
     )
       .containsExactly(
@@ -31,14 +30,13 @@ class TaskFormTabsTest {
         TaskFormTab.COMPLIANCE,
         TaskFormTab.SCHEDULE,
         TaskFormTab.ADJUSTMENTS,
-        TaskFormTab.COMMENTS,
       ).inOrder()
   }
 
   @Test
   fun aTemplateWithoutComplianceHasNoComplianceTab() {
     val tabs =
-      taskFormTabsFor(house, includeAdjustments = false, includeComments = false)
+      taskFormTabsFor(house, includeAdjustments = false)
 
     assertThat(tabs).doesNotContain(TaskFormTab.COMPLIANCE)
     assertThat(tabs).containsExactly(TaskFormTab.IDENTITY, TaskFormTab.SCHEDULE)
@@ -51,7 +49,7 @@ class TaskFormTabsTest {
     // dropping compliance would have made page 1 the schedule tab while the row still labelled it
     // "Compliance" — the schedule form rendered under the wrong heading, with no error anywhere.
     val tabs =
-      taskFormTabsFor(house, includeAdjustments = true, includeComments = true)
+      taskFormTabsFor(house, includeAdjustments = true)
 
     assertThat(tabs[1]).isEqualTo(TaskFormTab.SCHEDULE)
     assertThat(tabs[1].spec).isEqualTo(SCHEDULE_TAB)
@@ -60,20 +58,17 @@ class TaskFormTabsTest {
 
   @Test
   fun theAirplaneSetIsUnchangedFromWhatShipped() {
-    // Phase 2's acceptance criterion, for this gate: the four tabs that shipped, in order, ahead
-    // of the comments tab #749 appended.
+    // Phase 2's acceptance criterion, for this gate: the four tabs that shipped, in order.
     assertThat(
       taskFormTabsFor(
         airplane,
         includeAdjustments = true,
-        includeComments = true,
       )
     ).containsExactly(
       TaskFormTab.IDENTITY,
       TaskFormTab.COMPLIANCE,
       TaskFormTab.SCHEDULE,
       TaskFormTab.ADJUSTMENTS,
-      TaskFormTab.COMMENTS,
     )
       .inOrder()
 
@@ -81,7 +76,6 @@ class TaskFormTabsTest {
       taskFormTabsFor(
         airplane,
         includeAdjustments = false,
-        includeComments = false,
       )
     ).containsExactly(
       TaskFormTab.IDENTITY,
@@ -97,25 +91,10 @@ class TaskFormTabsTest {
     assertThat(
       taskFormTabsFor(
         airplane,
-        includeAdjustments = false,
-        includeComments = false
+        includeAdjustments = false
       )
     )
       .doesNotContain(TaskFormTab.ADJUSTMENTS)
-  }
-
-  @Test
-  fun addNeverOffersComments() {
-    // Same reason, one step earlier: a comment needs a task id to point at, and the add form has
-    // none until the first save.
-    assertThat(
-      taskFormTabsFor(
-        airplane,
-        includeAdjustments = false,
-        includeComments = false
-      )
-    )
-      .doesNotContain(TaskFormTab.COMMENTS)
   }
 
   @Test
@@ -128,7 +107,6 @@ class TaskFormTabsTest {
         "compliance",
         "schedule",
         "adjustments",
-        "comments"
       )
       .inOrder()
   }

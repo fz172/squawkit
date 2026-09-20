@@ -3,7 +3,6 @@ package dev.fanfly.wingslog.feature.tasks.update.compose
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Forum
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.runtime.Composable
@@ -19,8 +18,6 @@ import wingslog.feature.tasks.update.generated.resources.adjustments
 import wingslog.feature.tasks.update.generated.resources.basics
 import wingslog.feature.tasks.update.generated.resources.compliance
 import wingslog.feature.tasks.update.generated.resources.schedule
-import wingslog.feature.comments.sharedassets.generated.resources.Res as CommentsRes
-import wingslog.feature.comments.sharedassets.generated.resources.comments_tab
 
 data class TaskTabSpec(
   val icon: ImageVector,
@@ -31,8 +28,6 @@ var BASIC_TAB = TaskTabSpec(Icons.Default.Edit, Res.string.basics)
 var COMPLIANCE_TAB = TaskTabSpec(Icons.Default.Info, Res.string.compliance)
 var SCHEDULE_TAB = TaskTabSpec(Icons.Default.DateRange, Res.string.schedule)
 var ADJUSTMENT_TAB = TaskTabSpec(Icons.Default.Tune, Res.string.adjustments)
-var COMMENTS_TAB =
-  TaskTabSpec(Icons.Default.Forum, CommentsRes.string.comments_tab)
 
 @Composable
 fun TaskTabRow(
@@ -64,9 +59,6 @@ enum class TaskFormTab {
 
   /** Edit only — there is nothing to adjust on a task that does not exist yet. */
   ADJUSTMENTS,
-
-  /** Edit only, same reason: a task that does not exist yet has no id to hang a thread on. */
-  COMMENTS,
   ;
 
   /** Stable, locale-independent analytics key. Tied to the identity, not to a tab's position. */
@@ -76,7 +68,6 @@ enum class TaskFormTab {
       COMPLIANCE -> "compliance"
       SCHEDULE -> "schedule"
       ADJUSTMENTS -> "adjustments"
-      COMMENTS -> "comments"
     }
 }
 
@@ -86,7 +77,6 @@ internal val TaskFormTab.spec: TaskTabSpec
     TaskFormTab.COMPLIANCE -> COMPLIANCE_TAB
     TaskFormTab.SCHEDULE -> SCHEDULE_TAB
     TaskFormTab.ADJUSTMENTS -> ADJUSTMENT_TAB
-    TaskFormTab.COMMENTS -> COMMENTS_TAB
   }
 
 /**
@@ -102,12 +92,10 @@ internal val TaskFormTab.spec: TaskTabSpec
 internal fun taskFormTabsFor(
   capabilities: Capabilities,
   includeAdjustments: Boolean,
-  includeComments: Boolean,
 ): List<TaskFormTab> = TaskFormTab.entries.filter {
   when (it) {
     TaskFormTab.COMPLIANCE -> capabilities.compliance
     TaskFormTab.ADJUSTMENTS -> includeAdjustments
-    TaskFormTab.COMMENTS -> includeComments
     else -> true
   }
 }

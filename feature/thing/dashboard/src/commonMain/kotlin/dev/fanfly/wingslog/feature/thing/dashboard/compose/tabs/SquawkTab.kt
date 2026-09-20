@@ -51,6 +51,7 @@ import dev.fanfly.wingslog.feature.ads.model.withAdSlots
 import dev.fanfly.wingslog.feature.ads.viewing.AdSlot
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
 import dev.fanfly.wingslog.feature.attachment.datamanager.OpenState
+import dev.fanfly.wingslog.feature.comments.datamanager.CommentThreadController
 import dev.fanfly.wingslog.feature.datalog.model.dataLogIdOrNull
 import dev.fanfly.wingslog.feature.logs.sharedassets.util.displayName
 import dev.fanfly.wingslog.feature.search.model.Facet
@@ -73,6 +74,8 @@ import dev.fanfly.wingslog.feature.squawk.viewing.SquawkCard
 import dev.fanfly.wingslog.feature.squawk.viewing.SquawkDetailSheet
 import dev.fanfly.wingslog.feature.squawk.viewing.SquawkQuickActionCallbacks
 import dev.fanfly.wingslog.feature.squawk.viewing.quickActions
+import dev.fanfly.wingslog.feature.thing.dashboard.compose.RecordCommentComposer
+import dev.fanfly.wingslog.feature.thing.dashboard.compose.RecordCommentThread
 import dev.fanfly.wingslog.feature.thing.dashboard.data.SquawkAdapter
 import dev.fanfly.wingslog.feature.thing.dashboard.data.SquawkTabViewModel
 import dev.fanfly.wingslog.feature.thing.dashboard.data.ThingOverviewAction
@@ -119,6 +122,8 @@ fun SquawkTab(
   onOpenDataLog: ((DataLogId) -> Unit)? = null,
   /** Jumped-to squawk (from a log's Resolved Squawks): switch to its sub-view and scroll to it. */
   scrollToSquawkId: String? = null,
+  /** The open squawk sheet's comment thread; null leaves the sheet without comments. */
+  commentThread: CommentThreadController? = null,
   showHeader: Boolean = true,
   modifier: Modifier = Modifier,
 ) {
@@ -500,6 +505,10 @@ fun SquawkTab(
           onAction(ThingOverviewAction.DismissSquawkDetail)
           mutate(ThingOverviewAction.SquawkDismissClick(selected.squawk.id))
         }
+      },
+      comments = commentThread?.let { thread -> { RecordCommentThread(thread) } },
+      commentComposer = commentThread?.let { thread ->
+        { RecordCommentComposer(thread, state.isAnonymous) }
       },
       onReopenClick = onMutationAction?.let { mutate ->
         {
