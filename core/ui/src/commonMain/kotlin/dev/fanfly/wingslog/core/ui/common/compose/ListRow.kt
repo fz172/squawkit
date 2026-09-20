@@ -136,6 +136,14 @@ fun ListRow(
 fun ListRowDivider(modifier: Modifier = Modifier) {
   HorizontalDivider(
     modifier = modifier.padding(start = Spacing.large),
-    color = MaterialTheme.colorScheme.outlineVariant,
+    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = DividerAlpha),
   )
 }
+
+/**
+ * `outlineVariant` at full strength is the weight a *card border* needs — it has to hold an edge
+ * against the surface behind it. A separator only has to say "next record", and at `#313C4C` on a
+ * `#0A0E14` list it shouted. Damped it lands on `#1A202A` in dark and `#E2E7EE` in light, a line
+ * you read past rather than at.
+ */
+private const val DividerAlpha = 0.4f

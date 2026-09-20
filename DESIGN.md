@@ -312,9 +312,11 @@ One row, one implementation: leading slot, title, metadata line, trailing slot, 
 (`Spacing.rowHeight`).
 
 **A row is not a card.** It draws `surface` — the colour of the list behind it — with no corner
-radius and no border, and `ListRowDivider` (an `outlineVariant` hairline, inset past the leading
-slot) separates one from the next, never appearing above the first or below the last. A record is a
-line in a list, not a tile on a tray. The row is filled rather than transparent only because
+radius and no border, and `ListRowDivider` (an `outlineVariant` hairline at 40%, inset past the
+leading slot) separates one from the next, never appearing above the first or below the last. A
+record is a line in a list, not a tile on a tray. The damping is the difference between a border and
+a separator: `outlineVariant` at full strength is the weight an edge needs to hold against the
+surface behind it, where a separator only has to say "next record". The row is filled rather than transparent only because
 `SwipeActionCard` reveals its controls underneath it.
 
 Both text lines truncate to one, so a list scans as a column of records rather than a stack of
