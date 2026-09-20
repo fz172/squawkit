@@ -26,6 +26,28 @@ private val LightColorScheme = lightColorScheme(
   onTertiary = Color(0xFFFFFFFF),
   tertiaryContainer = Amber90,             // Warm amber tint — advisory surfaces
   onTertiaryContainer = Amber10,
+
+  // Neutrals: authored, never inherited. Without these every surface falls through to the
+  // Material 3 baseline, which is violet-leaning (DESIGN.md §4).
+  background = Neutral98,
+  onBackground = Neutral12,
+  surface = Neutral98,
+  onSurface = Neutral12,
+  surfaceDim = Neutral86,
+  surfaceBright = Color(0xFFFFFFFF),
+  surfaceContainerLowest = Color(0xFFFFFFFF),
+  surfaceContainerLow = Neutral96,
+  surfaceContainer = Neutral94,
+  surfaceContainerHigh = Neutral91,
+  surfaceContainerHighest = Neutral88,
+  surfaceVariant = Neutral86,
+  onSurfaceVariant = Neutral40,
+  outline = Neutral55,
+  outlineVariant = Neutral80,
+  inverseSurface = Neutral20,
+  inverseOnSurface = Neutral96,
+  inversePrimary = AviationBlue80,
+  scrim = Color(0xFF000000),
 )
 
 private val DarkColorScheme = darkColorScheme(
@@ -43,6 +65,27 @@ private val DarkColorScheme = darkColorScheme(
   onTertiary = Amber10,
   tertiaryContainer = Amber30,
   onTertiaryContainer = Amber90,
+
+  // See the light scheme: the same ramp, read from the dark end.
+  background = Neutral06,
+  onBackground = Neutral90,
+  surface = Neutral06,
+  onSurface = Neutral90,
+  surfaceDim = Neutral04,
+  surfaceBright = Neutral35,
+  surfaceContainerLowest = Neutral04,
+  surfaceContainerLow = Neutral11,
+  surfaceContainer = Neutral15,
+  surfaceContainerHigh = Neutral20,
+  surfaceContainerHighest = Neutral25,
+  surfaceVariant = Neutral35,
+  onSurfaceVariant = Neutral70,
+  outline = Neutral55,
+  outlineVariant = Neutral30,
+  inverseSurface = Neutral90,
+  inverseOnSurface = Neutral20,
+  inversePrimary = AviationBlue40,
+  scrim = Color(0xFF000000),
 )
 
 @Composable

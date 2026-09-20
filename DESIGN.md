@@ -214,6 +214,28 @@ Material 3 tonal elevation throughout. Depth is expressed through surface color 
 
 Surface hierarchy, lightest to deepest in light mode and darkest to lightest in dark: `background` → `surface` → `surfaceContainerLow` → `surfaceContainer` → `surfaceContainerHigh` → `surfaceContainerHighest`. Each step is a cool blue-grey, one perceptible step from its neighbour. Cards live at `surfaceContainer`. Overlaid sheets (bottom sheets, dialogs) float above `surface` through M3's scrim.
 
+| Role | Light | Dark |
+|---|---|---|
+| `background`, `surface` | `#F7F9FC` | `#0A0E14` |
+| `surfaceContainerLowest` | `#FFFFFF` | `#06090F` |
+| `surfaceContainerLow` | `#F1F4FA` | `#151C27` |
+| `surfaceContainer` — **cards** | `#E8EDF4` | `#1B2431` |
+| `surfaceContainerHigh` | `#E4EAF2` | `#222C3B` |
+| `surfaceContainerHighest` | `#E0E6EF` | `#293446` |
+| `surfaceVariant` | `#D3DBE7` | `#3A4557` |
+| `onSurface` | `#141A24` | `#E1E7F0` |
+| `onSurfaceVariant` | `#545F72` | `#9BA8BC` |
+| `outline` | `#6B7A8F` | `#6B7A8F` |
+| `outlineVariant` | `#C3CBD8` | `#313C4C` |
+
+Separation is measured as **ΔL\***, the right metric for a large flat edge — a WCAG contrast ratio is
+for text. `surface` to `surfaceContainer` is **10.0** in dark and **4.3** in light, against the
+Material 3 baseline's 6.4 and 3.5.
+
+The light ladder stops where it does deliberately: Caution Amber (`#8B5E00`, §2) must clear 4.5:1 as
+text on the deepest container, and it reaches 4.52 on `#E0E6EF`. Darkening the ramp further would buy
+separation by failing contrast.
+
 **The separation is the ramp's job, not a border's.** If a card needs a 1dp `outlineVariant` stroke to be visible against the surface behind it, the two surface assignments are wrong. Borders are for emphasis — a status accent, a selected state — never for making a container exist.
 
 **The No-Shadow Rule.** Do not introduce custom elevation parameters or manual shadow modifiers. If visual separation feels insufficient, the tonal hierarchy is not doing its job — fix the surface color assignment, not the shadow. Tonal elevation is the system; cast shadows are not.
