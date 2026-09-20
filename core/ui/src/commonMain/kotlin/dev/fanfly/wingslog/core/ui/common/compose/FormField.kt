@@ -177,7 +177,7 @@ fun FormTextField(
           visualTransformation = VisualTransformation.None,
           interactionSource = interactionSource,
           isError = isError,
-          label = { Text(label.uppercase()) },
+          label = { Text(label) },
           placeholder = placeholder?.let { { Text(it) } },
           leadingIcon = leadingIcon,
           trailingIcon = trailingIcon,
@@ -205,7 +205,7 @@ fun FormTextField(
   OutlinedTextField(
     value = field.value,
     onValueChange = field.onValueChange,
-    label = { Text(label.uppercase()) },
+    label = { Text(label) },
     modifier = fieldModifier,
     placeholder = placeholder?.let { { Text(it) } },
     singleLine = singleLine,
@@ -318,11 +318,10 @@ fun FormSectionLabel(
   color: Color = MaterialTheme.colorScheme.primary,
 ) {
   Text(
-    text = text.uppercase(),
+    text = text,
     modifier = modifier,
     style = MaterialTheme.typography.labelSmall,
     fontWeight = FontWeight.Bold,
     color = color,
-    letterSpacing = 1.2.sp,
   )
 }

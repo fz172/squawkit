@@ -232,7 +232,7 @@ class StringSnapshotTest {
     frame(
       "feature/tasks/update",
       "task_title"
-    ) { LexiconFormatter.titleCase(it.taskNoun) },
+    ) { LexiconFormatter.sentenceCase(it.taskNoun) },
     frame("feature/tasks/sharedassets", "no_tasks_yet") { it.taskNoun.plural },
     // The filter sheet's scope note and its one thing-named question. The rest of the sheet's new
     // copy is either fixed text or a frame the caller fills with whichever noun its tab uses, so
@@ -276,10 +276,10 @@ class StringSnapshotTest {
       "performed_by_description"
     ) { it.technicianNoun.singular },
     frame("feature/logs/update", "squawks_section_header") {
-      LexiconFormatter.titleCasePlural(it.squawkNoun)
+      LexiconFormatter.sentenceCasePlural(it.squawkNoun)
     },
     frame("feature/logs/update", "tasks_section_header") {
-      LexiconFormatter.titleCasePlural(it.taskNoun)
+      LexiconFormatter.sentenceCasePlural(it.taskNoun)
     },
     frame("feature/logs/viewing", "affected_maintenance_tasks") {
       LexiconFormatter.titleCasePlural(it.taskNoun)
@@ -298,16 +298,8 @@ class StringSnapshotTest {
     frame("feature/logs/sharedassets", "no_maintenance_logs_title") {
       LexiconFormatter.sentenceCase(it.logNoun)
     },
-    frame("feature/logs/sharedassets", "add_log") {
-      LexiconFormatter.titleCase(
-        it.logNoun
-      )
-    },
-    frame("feature/logs/sharedassets", "edit_log") {
-      LexiconFormatter.titleCase(
-        it.logNoun
-      )
-    },
+    frame("feature/logs/sharedassets", "add_log") { it.logNoun.singular },
+    frame("feature/logs/sharedassets", "edit_log") { it.logNoun.singular },
     // The three quick-action delete snackbars. Aviation reads them longer than it did — "Work log
     // deleted", "Maintenance task deleted" — because the noun is now the lexicon's, which is what
     // R24 asks for; the rows below record that rendering rather than the pre-pivot wording.

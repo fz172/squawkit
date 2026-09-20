@@ -90,7 +90,7 @@ fun LogRecordsTab(
     LogSection(
       header = stringResource(
         Res.string.squawks_section_header,
-        LexiconFormatter.titleCasePlural(LocalThingLexicon.current.squawkNoun),
+        LexiconFormatter.sentenceCasePlural(LocalThingLexicon.current.squawkNoun),
       ),
       action = { LogSectionAddButton(onClick = onAddSquawkClick) },
     ) {
@@ -105,7 +105,7 @@ fun LogRecordsTab(
     LogSection(
       header = stringResource(
         Res.string.tasks_section_header,
-        LexiconFormatter.titleCasePlural(LocalThingLexicon.current.taskNoun),
+        LexiconFormatter.sentenceCasePlural(LocalThingLexicon.current.taskNoun),
       ),
       action = { LogSectionAddButton(onClick = onAddTaskClick) },
     ) {

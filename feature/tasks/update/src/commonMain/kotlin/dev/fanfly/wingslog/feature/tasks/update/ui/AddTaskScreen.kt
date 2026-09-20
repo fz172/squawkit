@@ -213,7 +213,7 @@ fun AddTaskScreen(
           TopAppBar(
             title = {
               Text(
-                stringResource(SharedTaskRes.string.add_task).uppercase(),
+                stringResource(SharedTaskRes.string.add_task),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
               )

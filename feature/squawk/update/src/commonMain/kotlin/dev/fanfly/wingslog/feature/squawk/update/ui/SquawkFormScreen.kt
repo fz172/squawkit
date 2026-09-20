@@ -172,7 +172,7 @@ fun SquawkFormScreen(
           TopAppBar(
             title = {
               Text(
-                text = screenTitle.uppercase(),
+                text = screenTitle,
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
               )

@@ -93,11 +93,10 @@ fun PreviewBanner(
         horizontalArrangement = Arrangement.spacedBy(Spacing.small),
       ) {
         Text(
-          label.uppercase(),
+          label,
           style = MaterialTheme.typography.labelSmall.copy(
             fontWeight = FontWeight.Bold,
             fontSize = 10.sp,
-            letterSpacing = 0.9.sp,
           ),
           color = accentColor,
         )

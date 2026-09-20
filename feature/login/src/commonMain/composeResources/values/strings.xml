@@ -2,8 +2,8 @@
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
   <string name="mission_statement">Track the important stuff</string>
   <string name="login_prompt">Log in or continue anonymously to manage your maintenance records.</string>
-  <string name="google_logo">Google Logo</string>
-  <string name="apple_logo">Apple Logo</string>
+  <string name="google_logo">Google logo</string>
+  <string name="apple_logo">Apple logo</string>
   <string name="sign_in_with_email">Log in with email</string>
   <string name="support_link">Support</string>
   <!-- The sign-in card's rows: one word each, with the provider's mark alongside. -->
@@ -32,7 +32,7 @@
   <string name="email_finish_body">Confirm the email this link was sent to.</string>
   <string name="email_link_error">That link didn't work. Request a new one.</string>
   <string name="legal_disclaimer">SquawkIt is a personal convenience tool and is not a certified maintenance record system. It does not replace the official logbooks required by applicable authority.</string>
-  <string name="privacy_notice">Terms &amp; Privacy</string>
+  <string name="privacy_notice">Terms &amp; privacy</string>
 
   <!-- Onboarding: name entry -->
   <string name="onboarding_name_eyebrow">QUICK HELLO</string>

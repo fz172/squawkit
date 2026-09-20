@@ -100,7 +100,7 @@ private fun ComponentChip(chip: ComponentChipLines, modifier: Modifier = Modifie
       ),
     ) {
       Text(
-        text = chip.label.uppercase(),
+        text = chip.label,
         style = TextStyle(
           fontFamily = FontFamily.SansSerif,
           fontWeight = FontWeight.Bold,

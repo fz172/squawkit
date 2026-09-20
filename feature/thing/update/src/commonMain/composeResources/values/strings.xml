@@ -3,7 +3,7 @@
   <string name="update_thing">Update <xliff:g example="aircraft">%1$s</xliff:g></string>
   <string name="make">Make</string>
   <string name="model">Model</string>
-  <string name="serial">Serial Number</string>
+  <string name="serial">Serial number</string>
   <string name="delete_thing">Delete <xliff:g example="aircraft">%1$s</xliff:g>?</string>
   <!-- PRD D5: deleting a shared aircraft tears the share down for everyone on it. Say how many
        people that is — "cannot be undone" does not convey that you are deleting someone else's
@@ -17,6 +17,6 @@
   <string name="custom_field_name">Field name</string>
   <string name="custom_field_value">Value</string>
   <string name="custom_field_add">Add a field</string>
-  <string name="pick_type_title">New Thing</string>
+  <string name="pick_type_title">New thing</string>
   <string name="pick_type_subtitle">The type sets which details and services get tracked.</string>
 </resources>

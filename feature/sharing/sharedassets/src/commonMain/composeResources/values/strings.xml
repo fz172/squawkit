@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
   <!-- Manage Access screen -->
-  <string name="manage_access_title">Manage Access</string>
+  <string name="manage_access_title">Manage access</string>
   <string name="manage_access_empty_title">No shared access</string>
   <string name="manage_access_empty_desc">Invite a co-owner or <xliff:g example="technician">%1$s</xliff:g> to share this <xliff:g example="aircraft">%2$s</xliff:g>.</string>
   <!-- "Owner" is only ever the hosting owner. Anyone you invite, promote, or who redeems an invite
@@ -95,6 +95,6 @@ The owner can invite you again.</string>
   <string name="enter_code_field_label">Invite code</string>
   <!-- PRD E2: sharing is a cloud feature. With Cloud Sync off there is nothing to share into and
        nothing to receive from, so management is disabled and says why rather than failing on tap. -->
-  <string name="sharing_sync_off_title">Cloud Sync is off</string>
+  <string name="sharing_sync_off_title">Cloud sync is off</string>
   <string name="sharing_sync_off_body">Sharing needs Cloud Sync. Turn it on in Settings to invite people or manage access. <xliff:g example="aircraft">%1$s</xliff:g> already shared with you stay readable, but will not update.</string>
 </resources>

@@ -16,17 +16,17 @@
   <string name="no_tasks_yet">No <xliff:g example="maintenance tasks">%1$s</xliff:g></string>
   <string name="no_task_work_recorded">No <xliff:g example="tasks">%1$s</xliff:g> addressed by this <xliff:g example="log">%2$s</xliff:g></string>
   <string name="unknown_task">Unknown <xliff:g example="task">%2$s</xliff:g> (<xliff:g example="tk_4b1c">%1$s</xliff:g>)</string>
-  <string name="delete_task">Delete Task</string>
+  <string name="delete_task">Delete task</string>
   <string name="delete_task_confirmation">Delete "<xliff:g example="Left brake dragging">%1$s</xliff:g>"? This cannot be undone. Maintenance logs that reference this task will not be deleted.</string>
 
-  <string name="skip_task_confirm_title">Skip This Cycle?</string>
+  <string name="skip_task_confirm_title">Skip this cycle?</string>
   <string name="skip_task_confirm_body">Marks complete without logging and snoozes one cycle to the next due target. This can’t be undone.</string>
   <string name="skip_task_confirm_action">Skip</string>
 
   <!-- Resolve menu, shared by the form and the card quick actions -->
   <string name="create_work_log">Create <xliff:g example="work logs">%1$s</xliff:g></string>
   <string name="create_work_log_subtitle">Opens a new log, pre-linked to this task</string>
-  <string name="skip_this_cycle_option">Skip This Cycle</string>
+  <string name="skip_this_cycle_option">Skip this cycle</string>
   <string name="skip_this_cycle_option_subtitle">Marks complete without logging</string>
   <string name="task_deleted"><xliff:g example="Task">%1$s</xliff:g> deleted</string>
   <string name="task_skipped">Cycle skipped — next due rescheduled</string>

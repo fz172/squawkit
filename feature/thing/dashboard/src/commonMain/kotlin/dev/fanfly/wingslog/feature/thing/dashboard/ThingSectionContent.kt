@@ -174,7 +174,7 @@ fun ShellSectionFab(
       SectionAddFab(
         label = stringResource(
           LogsRes.string.add_log,
-          LexiconFormatter.titleCase(LocalThingLexicon.current.logNoun),
+          LocalThingLexicon.current.logNoun.singular,
         ),
         onClick = {
           navController.navigate(

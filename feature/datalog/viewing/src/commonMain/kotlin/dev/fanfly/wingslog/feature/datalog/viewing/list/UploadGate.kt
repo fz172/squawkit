@@ -103,7 +103,7 @@ fun UploadGateCard(onLinkAccount: () -> Unit, modifier: Modifier = Modifier) {
         verticalArrangement = Arrangement.spacedBy(Spacing.small)
       ) {
         Text(
-          stringResource(Res.string.data_log_gate_what_title).uppercase(),
+          stringResource(Res.string.data_log_gate_what_title),
           style = MaterialTheme.typography.labelSmall,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
         )

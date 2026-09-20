@@ -1,32 +1,32 @@
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-  <string name="add_technician">Add Technician</string>
-  <string name="edit_technician">Update Technician</string>
+  <string name="add_technician">Add technician</string>
+  <string name="edit_technician">Update technician</string>
   <string name="manage_technicians_description">Everyone who works on what you track. Add them here so you can pick them when recording work.</string>
-  <string name="manage_technicians">Who Does the Work</string>
-  <string name="select_technician">Select Technician</string>
-  <string name="performed_by">Performed By</string>
+  <string name="manage_technicians">Who does the work</string>
+  <string name="select_technician">Select technician</string>
+  <string name="performed_by">Performed by</string>
 
   <string name="name_required">Name (Required)</string>
   <!-- Fallback only: a certification names its own number label, and this covers one whose template
        this build does not carry. -->
-  <string name="certificate_number">Certificate Number</string>
-  <string name="expiration_date">Expiration Date</string>
+  <string name="certificate_number">Certificate number</string>
+  <string name="expiration_date">Expiration date</string>
   <string name="never">Never</string>
 
   <string name="certifications">Certifications</string>
-  <string name="add_certification">Add Certification</string>
+  <string name="add_certification">Add certification</string>
   <string name="remove_certification">Remove certification</string>
   <!-- Header for a legacy row that carried a number and nothing naming what it is for. -->
   <string name="unnamed_certification">Certification</string>
   <!-- The add menu's last entry: a credential no template declares, named by the user. -->
   <string name="custom_certification">Custom</string>
-  <string name="certification_name">Certification Name</string>
+  <string name="certification_name">Certification name</string>
   <!-- Trails the certification on a list row: "A&amp;P Mechanic · A7584747 (Exp 08/31/2031)". -->
   <string name="certification_expires_on">(Exp <xliff:g example="08/31/2031">%1$s</xliff:g>)</string>
 
   <!-- The roster page's hero and the profile editor's grouped cards. -->
   <string name="technician_hero_title">Your crew</string>
-  <string name="edit_profile">Edit Profile</string>
+  <string name="edit_profile">Edit profile</string>
   <string name="technician_section_details">Details</string>
   <string name="technician_name_label">Name</string>
   <string name="technician_update_name">Update name</string>
@@ -34,7 +34,7 @@
   <string name="technician_email_managed">Managed by your sign-in provider</string>
   <string name="technician_delete_hint">Past logs keep their record of this person</string>
   <string name="you_badge">You</string>
-  <string name="my_profile">My Profile</string>
+  <string name="my_profile">My profile</string>
 
   <string name="linked_badge">Linked</string>
   <string name="linked_technicians_header">Linked from what others share with you</string>
@@ -57,8 +57,8 @@
   <string name="duplicates_no_selection">Nothing selected</string>
 
   <string name="no_certifications">No certifications recorded</string>
-  <string name="empty_technicians_title">No Technicians</string>
+  <string name="empty_technicians_title">No technicians</string>
   <string name="empty_technicians_desc">You haven't added any technicians yet. Add one to keep track of who performs your maintenance.</string>
-  <string name="delete_technician">Delete Technician</string>
+  <string name="delete_technician">Delete technician</string>
   <string name="delete_technician_confirmation">Are you sure you want to delete this technician? This will prevent them from being added to future logs, but it will not remove them from past logs.</string>
 </resources>

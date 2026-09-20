@@ -97,7 +97,7 @@ fun MaintenanceLogDetailSheet(
           Text(
             stringResource(
               MaintenanceRes.string.edit_log,
-              LexiconFormatter.titleCase(LocalThingLexicon.current.logNoun),
+              LocalThingLexicon.current.logNoun.singular,
             )
           )
         }
@@ -201,11 +201,8 @@ private fun SheetHeroMetric(log: MaintenanceLog) {
 
   Column {
     Text(
-      text = label.uppercase(),
-      style = MaterialTheme.typography.labelSmall.copy(
-        fontWeight = FontWeight.SemiBold,
-        letterSpacing = 0.9.sp,
-      ),
+      text = label,
+      style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
       color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
     Spacer(Modifier.height(Spacing.extraSmall))

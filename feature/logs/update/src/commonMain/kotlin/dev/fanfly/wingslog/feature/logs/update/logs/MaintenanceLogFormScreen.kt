@@ -225,13 +225,13 @@ fun MaintenanceLogFormScreen(
                 text = if (viewModel.isEditMode)
                   stringResource(
                     SharedRes.string.edit_log,
-                    LexiconFormatter.titleCase(LocalThingLexicon.current.logNoun),
-                  ).uppercase()
+                    LocalThingLexicon.current.logNoun.singular,
+                  )
                 else
                   stringResource(
                     SharedRes.string.add_log,
-                    LexiconFormatter.titleCase(LocalThingLexicon.current.logNoun),
-                  ).uppercase(),
+                    LocalThingLexicon.current.logNoun.singular,
+                  ),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
               )

@@ -1,8 +1,8 @@
 <resources>
   <!-- Database integrity recovery -->
-  <string name="database_error">Database Error</string>
+  <string name="database_error">Database error</string>
   <string name="clearing_local_data">Clearing local data…</string>
   <string name="database_problem_message">A problem was detected with the local database. Tap below to wipe your device's copy and re-sync from the cloud. Your cloud data is safe and will be restored.</string>
   <string name="wiping">Wiping…</string>
-  <string name="wipe_and_resync">Wipe and Re-sync</string>
+  <string name="wipe_and_resync">Wipe and re-sync</string>
 </resources>

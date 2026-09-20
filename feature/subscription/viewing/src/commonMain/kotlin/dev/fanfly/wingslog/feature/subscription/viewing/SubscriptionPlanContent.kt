@@ -46,7 +46,6 @@ import dev.fanfly.wingslog.core.ui.common.compose.GroupedRowGroup
 import dev.fanfly.wingslog.core.ui.common.compose.GroupedSection
 import dev.fanfly.wingslog.core.ui.common.compose.ProBadge
 import dev.fanfly.wingslog.core.ui.common.compose.SectionLabel
-import dev.fanfly.wingslog.core.ui.common.compose.SectionLabelTracking
 import dev.fanfly.wingslog.core.ui.common.compose.formatFileSize
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.StatusTier
@@ -275,10 +274,9 @@ private fun ProSectionLabel(text: String) {
       tint = MaterialTheme.colorScheme.tertiary,
     )
     Text(
-      text = text.uppercase(),
+      text = text,
       style = MaterialTheme.typography.labelSmall,
       fontWeight = FontWeight.SemiBold,
-      letterSpacing = SectionLabelTracking,
       color = MaterialTheme.colorScheme.tertiary,
     )
   }
@@ -362,9 +360,8 @@ private fun FactRow(
     verticalAlignment = Alignment.CenterVertically,
   ) {
     Text(
-      text = label.uppercase(),
+      text = label,
       style = MaterialTheme.typography.labelSmall,
-      letterSpacing = SectionLabelTracking,
       color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
     Row(verticalAlignment = Alignment.CenterVertically, content = value)

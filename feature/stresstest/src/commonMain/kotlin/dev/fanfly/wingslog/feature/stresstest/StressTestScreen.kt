@@ -362,7 +362,7 @@ private fun ConfigSection(
 ) {
   Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
     Text(
-      text = title.uppercase(),
+      text = title,
       style = MaterialTheme.typography.labelSmall,
       color = MaterialTheme.colorScheme.primary,
       fontWeight = FontWeight.SemiBold,

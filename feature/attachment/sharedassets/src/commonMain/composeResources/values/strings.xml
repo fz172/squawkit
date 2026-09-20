@@ -11,7 +11,7 @@
   <string name="files_over_limit_skipped">Only 3 files can be attached — the extra files were not added</string>
   <string name="attachment_size_hint">Max 5 MB each</string>
   <string name="attachment_file_count">%1$d/3</string>
-  <string name="attachment_picker_title">Add Attachment</string>
+  <string name="attachment_picker_title">Add attachment</string>
   <string name="attachment_group_device">Files</string>
   <string name="attachment_group_other">Other</string>
   <string name="take_photo_description">Use the camera</string>

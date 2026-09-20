@@ -623,7 +623,7 @@ private fun CombinedRangeField(
     )
     Column(modifier = Modifier.weight(1f)) {
       Text(
-        text = stringResource(Res.string.export_receipt_range).uppercase(),
+        text = stringResource(Res.string.export_receipt_range),
         style = MaterialTheme.typography.labelSmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
       )
@@ -740,7 +740,7 @@ private fun DateRangePickerHeadlineCell(
     verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
   ) {
     Text(
-      text = label.uppercase(),
+      text = label,
       style = MaterialTheme.typography.labelSmall,
       color = MaterialTheme.colorScheme.onSurfaceVariant,
       maxLines = 1,

@@ -73,7 +73,6 @@ import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.technician.sharedassets.generated.resources.Res as TechnicianRes
 
 private val ProfileAvatarSize = 96.dp
-private val FieldLabelTracking = 0.5.sp
 
 /**
  * One editor for every person on the roster, yourself included: an avatar, a Details card, a
@@ -311,10 +310,9 @@ private fun ProfileFieldRow(
       verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
     ) {
       Text(
-        text = label.uppercase(),
+        text = label,
         style = MaterialTheme.typography.labelSmall,
         fontWeight = FontWeight.SemiBold,
-        letterSpacing = FieldLabelTracking,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
       )
       val empty = value.isBlank() && placeholder != null

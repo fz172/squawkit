@@ -255,7 +255,7 @@ fun EditTaskScreen(
           TopAppBar(
             title = {
               Text(
-                stringResource(SharedTaskRes.string.edit_task).uppercase(),
+                stringResource(SharedTaskRes.string.edit_task),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
               )

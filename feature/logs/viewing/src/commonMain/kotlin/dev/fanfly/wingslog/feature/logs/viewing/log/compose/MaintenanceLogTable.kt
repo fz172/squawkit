@@ -154,7 +154,7 @@ private fun RowScope.HeaderCell(
   align: TextAlign = TextAlign.Start
 ) {
   Text(
-    text = text.uppercase(),
+    text = text,
     style = MaterialTheme.typography.labelSmall,
     fontWeight = FontWeight.SemiBold,
     color = MaterialTheme.colorScheme.onSurfaceVariant,

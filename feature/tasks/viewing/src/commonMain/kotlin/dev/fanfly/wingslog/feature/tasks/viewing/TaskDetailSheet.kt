@@ -305,8 +305,7 @@ private fun DueDateHero(dueStatus: DueMetadata) {
           color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Text(
-          text = nextDueDate.toDisplayFormat(numberOnly = false)
-            .uppercase(),
+          text = nextDueDate.toDisplayFormat(numberOnly = false),
           style = WingslogTypography.heroDisplay,
           color = accentColor,
         )
@@ -328,7 +327,7 @@ private fun DueDateHero(dueStatus: DueMetadata) {
             (
               LocalThingTemplate.current.meter(dueStatus.nextDueMeterKey.orEmpty())?.label
                 ?: stringResource(ViewingRes.string.engine_hours_label)
-              ).uppercase(),
+              ),
           ),
           style = MaterialTheme.typography.labelMedium.copy(
             fontWeight = FontWeight.SemiBold,
