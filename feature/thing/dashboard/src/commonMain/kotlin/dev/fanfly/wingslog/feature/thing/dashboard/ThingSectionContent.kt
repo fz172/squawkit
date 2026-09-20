@@ -1,11 +1,14 @@
 package dev.fanfly.wingslog.feature.thing.dashboard
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -31,6 +34,9 @@ import dev.fanfly.wingslog.core.template.thingNoun
 import dev.fanfly.wingslog.core.ui.adaptive.ShellSection
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalSnackbarHostState
 import dev.fanfly.wingslog.core.ui.common.UiText
+import dev.fanfly.wingslog.core.ui.common.compose.SkeletonBlock
+import dev.fanfly.wingslog.core.ui.common.compose.SkeletonList
+import dev.fanfly.wingslog.core.ui.common.compose.skeletonPulse
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
 import dev.fanfly.wingslog.feature.attachment.datamanager.OpenState
@@ -411,13 +417,14 @@ fun ThingSectionContent(
     }
 
   when (val state = uiState) {
-    ThingOverviewUiState.Loading ->
-      Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-      ) {
-        CircularProgressIndicator()
-      }
+    // The state is assembled from every flow at once, so Success never carries an empty list that
+    // is merely unloaded — this branch *is* the squawk and task tabs' loading state.
+    ThingOverviewUiState.Loading -> when (section) {
+      ShellSection.SQUAWKS, ShellSection.TASKS, ShellSection.LOGS -> SkeletonList()
+      ShellSection.DATA_LOGS -> SkeletonList(showFilterBar = false)
+      ShellSection.DASHBOARD -> DashboardSkeleton()
+      ShellSection.SETTINGS -> Unit
+    }
 
     // Every section, not just the dashboard: which sections a Thing has is itself template-declared,
     // so an uninterpretable template makes all four meaningless (design §6.2).
@@ -588,5 +595,23 @@ fun ThingSectionContent(
         )
       }
     }
+  }
+}
+
+/** The dashboard's outline: title, the status card, the meter strip, then activity. */
+@Composable
+private fun DashboardSkeleton() {
+  Column(
+    modifier = Modifier
+      .fillMaxSize()
+      .skeletonPulse()
+      .padding(Spacing.screenPadding),
+    verticalArrangement = Arrangement.spacedBy(Spacing.large),
+  ) {
+    SkeletonBlock(Modifier.fillMaxWidth(0.5f).height(Spacing.huge))
+    SkeletonBlock(Modifier.fillMaxWidth().height(Spacing.buttonHeight))
+    SkeletonBlock(Modifier.fillMaxWidth().height(Spacing.massive * 3))
+    SkeletonBlock(Modifier.fillMaxWidth().height(Spacing.rowHeight))
+    SkeletonBlock(Modifier.fillMaxWidth().height(Spacing.massive * 4))
   }
 }

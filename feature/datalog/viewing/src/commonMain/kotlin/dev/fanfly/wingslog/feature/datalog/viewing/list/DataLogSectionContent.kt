@@ -14,7 +14,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.ShowChart
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -38,6 +37,7 @@ import dev.fanfly.wingslog.core.ui.common.compose.SwipeActionCard
 import dev.fanfly.wingslog.core.ui.common.compose.SwipeActionTone
 import dev.fanfly.wingslog.core.ui.common.compose.rememberSwipeRevealController
 import dev.fanfly.wingslog.core.ui.common.compose.ListRowDivider
+import dev.fanfly.wingslog.core.ui.common.compose.SkeletonList
 import dev.fanfly.wingslog.core.ui.common.compose.stickySectionHeader
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.motionItem
@@ -114,12 +114,8 @@ fun DataLogSectionContent(
       }
 
       when {
-        state.isLoading -> Box(
-          Modifier.fillMaxSize(),
-          contentAlignment = Alignment.Center
-        ) {
-          CircularProgressIndicator()
-        }
+        // This section has no filter bar to hold a place for.
+        state.isLoading -> SkeletonList(showFilterBar = false)
 
         state.rows.isEmpty() && state.imports.isEmpty() -> {
           if (!compact && state.uploadGate == UploadGate.Guest) {
