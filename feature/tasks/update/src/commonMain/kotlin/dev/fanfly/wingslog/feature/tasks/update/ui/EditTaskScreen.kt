@@ -115,14 +115,11 @@ fun EditTaskScreen(
   attachmentSection: @Composable () -> Unit = {},
   /** Attachments added or removed since load — unsaved until the form is saved. */
   hasAttachmentChanges: Boolean = false,
-  /** An unposted comment draft or an open inline editor — text that exists nowhere else yet. */
-  hasCommentDraft: Boolean = false,
-  commentsSection: @Composable () -> Unit = {},
 ) {
   var showDatePicker by remember { mutableStateOf(false) }
   var showDeleteConfirm by remember { mutableStateOf(false) }
   var showUnsavedChangesDialog by remember { mutableStateOf(false) }
-  val hasChanges = state.hasChanges || hasCommentDraft || hasAttachmentChanges
+  val hasChanges = state.hasChanges || hasAttachmentChanges
 
   val tryCancel = {
     if (hasChanges) showUnsavedChangesDialog = true else onCancel()
@@ -193,7 +190,6 @@ fun EditTaskScreen(
   val tabs = taskFormTabsFor(
     capabilities,
     includeAdjustments = true,
-    includeComments = true,
   )
   val pagerState = rememberPagerState(pageCount = { tabs.size })
   val coroutineScope = rememberCoroutineScope()
@@ -331,8 +327,6 @@ fun EditTaskScreen(
                 component = state.component,
                 onDeleteRequest = { showDeleteConfirm = true },
               )
-
-              TaskFormTab.COMMENTS -> commentsSection()
             }
           }
         }

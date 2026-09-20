@@ -187,8 +187,6 @@ fun AddTaskScreen(
   val tabs = taskFormTabsFor(
     capabilities,
     includeAdjustments = false,
-    // A task that does not exist yet has no id for a comment to point at.
-    includeComments = false,
   )
   val pagerState = rememberPagerState(pageCount = { tabs.size })
   val coroutineScope = rememberCoroutineScope()
@@ -320,7 +318,7 @@ fun AddTaskScreen(
               // Unreachable: this screen passes includeAdjustments = false, so the tab is never in
               // the list. Spelled out rather than covered by an `else`, because an `else` would also
               // swallow a tab added later and render a blank page instead of failing the build.
-              TaskFormTab.ADJUSTMENTS, TaskFormTab.COMMENTS -> Unit
+              TaskFormTab.ADJUSTMENTS -> Unit
             }
           }
         }

@@ -9,7 +9,6 @@ import dev.fanfly.wingslog.core.nav.Screen
 import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
 import dev.fanfly.wingslog.feature.attachment.model.PickedFile
-import dev.fanfly.wingslog.feature.comments.datamanager.CommentManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
 import dev.fanfly.wingslog.feature.squawk.datamanager.SquawkManager
@@ -49,7 +48,6 @@ class SquawkFormViewModelTest {
 
   private lateinit var squawkManager: SquawkManager
   private lateinit var attachmentManager: AttachmentManager
-  private lateinit var commentManager: CommentManager
   private lateinit var logManager: MaintenanceLogManager
   private lateinit var auth: FirebaseAuth
   private lateinit var subscriptionManager: SubscriptionManager
@@ -63,8 +61,6 @@ class SquawkFormViewModelTest {
 
     squawkManager = mockk(relaxed = true)
     attachmentManager = mockk(relaxed = true)
-    commentManager = mockk(relaxed = true)
-    every { commentManager.observeComments(any()) } returns flowOf(emptyList())
     logManager = mockk(relaxed = true)
     auth = mockk(relaxed = true)
     subscriptionManager = mockk(relaxed = true)
@@ -397,7 +393,6 @@ class SquawkFormViewModelTest {
       currentThingTemplate = mockk<CurrentThingTemplate>(relaxed = true),
       analytics = analytics,
       attachmentManager = attachmentManager,
-      commentManager = commentManager,
       logManager = logManager,
       auth = auth,
       subscriptionManager = subscriptionManager,
@@ -416,7 +411,6 @@ class SquawkFormViewModelTest {
       currentThingTemplate = mockk<CurrentThingTemplate>(relaxed = true),
       analytics = NoOpAnalyticsManager,
       attachmentManager = attachmentManager,
-      commentManager = commentManager,
       logManager = logManager,
       auth = auth,
       subscriptionManager = subscriptionManager,

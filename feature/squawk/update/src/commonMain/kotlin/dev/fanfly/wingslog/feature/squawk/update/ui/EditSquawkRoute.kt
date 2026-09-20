@@ -15,7 +15,6 @@ import dev.fanfly.wingslog.core.template.squawkNoun
 import dev.fanfly.wingslog.feature.attachment.model.dataLogIds
 import dev.fanfly.wingslog.feature.attachment.model.visible
 import dev.fanfly.wingslog.feature.attachment.viewing.AttachmentFormSection
-import dev.fanfly.wingslog.feature.comments.viewing.CommentThreadSection
 import dev.fanfly.wingslog.feature.datalog.viewing.attach.rememberDataLogPickerSlot
 import dev.fanfly.wingslog.feature.squawk.update.viewmodel.SquawkFormEvent
 import dev.fanfly.wingslog.feature.squawk.update.viewmodel.SquawkFormViewModel
@@ -38,7 +37,6 @@ fun EditSquawkRoute(
   val showAttachmentPicker by viewModel.showAttachmentPicker.collectAsStateWithLifecycle()
   val attachmentUploadEnabled by viewModel.attachmentUploadEnabled.collectAsStateWithLifecycle()
   val hasAttachmentChanges by viewModel.hasAttachmentChanges.collectAsStateWithLifecycle()
-  val commentState by viewModel.commentState.collectAsStateWithLifecycle()
   val squawkWord =
     LexiconFormatter.sentenceCase(LocalThingLexicon.current.squawkNoun)
   val successMessage = stringResource(Res.string.squawk_updated, squawkWord)
@@ -109,24 +107,5 @@ fun EditSquawkRoute(
       )
     },
     hasAttachmentChanges = hasAttachmentChanges,
-    hasCommentDraft = commentState.hasUnsavedInput,
-    commentsSection = {
-      val thread = viewModel.comments
-      if (thread != null) {
-        CommentThreadSection(
-          state = commentState,
-          isAnonymous = viewModel.isAnonymous,
-          onDraftChange = thread::onDraftChange,
-          onPost = thread::post,
-          onToggleMenu = thread::toggleMenu,
-          onDismissMenu = thread::dismissMenu,
-          onEdit = thread::startEdit,
-          onDelete = thread::delete,
-          onEditDraftChange = thread::onEditDraftChange,
-          onCancelEdit = thread::cancelEdit,
-          onSaveEdit = thread::saveEdit,
-        )
-      }
-    },
   )
 }

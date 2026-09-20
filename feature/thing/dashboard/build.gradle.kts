@@ -71,6 +71,10 @@ kotlin {
       implementation(project(":feature:squawk:datamanager"))
       implementation(project(":feature:squawk:sharedassets"))
       implementation(project(":feature:squawk:viewing"))
+      implementation(project(":feature:comments:datamanager"))
+      implementation(project(":feature:comments:model"))
+      implementation(project(":feature:comments:sharedassets"))
+      implementation(project(":feature:comments:viewing"))
 
       implementation(libs.jetbrains.lifecycle.viewmodel.compose)
       implementation(libs.jetbrains.lifecycle.runtime.compose)

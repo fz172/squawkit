@@ -47,6 +47,8 @@ import dev.fanfly.wingslog.feature.tasks.viewing.DeleteTaskConfirmDialog
 import dev.fanfly.wingslog.feature.tasks.viewing.SkipTaskConfirmDialog
 import dev.fanfly.wingslog.feature.tasks.viewing.TaskDetailSheet
 import dev.fanfly.wingslog.feature.thing.dashboard.compose.DegradedThingContent
+import dev.fanfly.wingslog.feature.thing.dashboard.compose.RecordCommentComposer
+import dev.fanfly.wingslog.feature.thing.dashboard.compose.RecordCommentThread
 import dev.fanfly.wingslog.feature.thing.dashboard.compose.tabs.LogsTab
 import dev.fanfly.wingslog.feature.thing.dashboard.compose.tabs.MaintenanceTasksTab
 import dev.fanfly.wingslog.feature.thing.dashboard.compose.tabs.OverviewTab
@@ -239,6 +241,7 @@ fun ThingSectionContent(
   val viewModel: ThingOverviewViewModel =
     koinViewModel(key = thingId, parameters = { parametersOf(thingId) })
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+  val commentThread by viewModel.commentThread.collectAsStateWithLifecycle()
   // Due status depends on the wall clock, not just on stored data, so recompute it whenever the
   // dashboard comes back into view — otherwise an app resumed the next day still shows yesterday's
   // status. Common to all three hosts: UIKit foreground on iOS, document.visibilitychange on web.
@@ -474,6 +477,7 @@ fun ThingSectionContent(
             onAction(ThingOverviewAction.OpenDataLogClick(thingId, dataLogId))
           },
           scrollToSquawkId = pendingSquawkScrollTarget,
+          commentThread = commentThread,
           // The shell top bar already shows the section title; avoid duplicating it.
           showHeader = false,
         )
@@ -574,6 +578,10 @@ fun ThingSectionContent(
             onAction(ThingOverviewAction.DismissTaskDetail)
             onAction(ThingOverviewAction.TaskSkipClick(selectedTask))
           },
+          comments = commentThread?.let { thread -> { RecordCommentThread(thread) } },
+          commentComposer = commentThread?.let { thread ->
+            { RecordCommentComposer(thread, state.isAnonymous) }
+          },
         )
       }
 
@@ -608,10 +616,25 @@ private fun DashboardSkeleton() {
       .padding(Spacing.screenPadding),
     verticalArrangement = Arrangement.spacedBy(Spacing.large),
   ) {
-    SkeletonBlock(Modifier.fillMaxWidth(0.5f).height(Spacing.huge))
-    SkeletonBlock(Modifier.fillMaxWidth().height(Spacing.buttonHeight))
-    SkeletonBlock(Modifier.fillMaxWidth().height(Spacing.massive * 3))
-    SkeletonBlock(Modifier.fillMaxWidth().height(Spacing.rowHeight))
-    SkeletonBlock(Modifier.fillMaxWidth().height(Spacing.massive * 4))
+    SkeletonBlock(
+      Modifier.fillMaxWidth(0.5f)
+        .height(Spacing.huge)
+    )
+    SkeletonBlock(
+      Modifier.fillMaxWidth()
+        .height(Spacing.buttonHeight)
+    )
+    SkeletonBlock(
+      Modifier.fillMaxWidth()
+        .height(Spacing.massive * 3)
+    )
+    SkeletonBlock(
+      Modifier.fillMaxWidth()
+        .height(Spacing.rowHeight)
+    )
+    SkeletonBlock(
+      Modifier.fillMaxWidth()
+        .height(Spacing.massive * 4)
+    )
   }
 }

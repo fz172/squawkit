@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-  <string name="comments_tab">Comments</string>
+  <string name="comments_heading">Comments</string>
   <string name="comments_empty">No comments yet — be the first to add one.</string>
   <string name="comment_new_label">New comment</string>
   <string name="comment_placeholder">Add a comment for collaborators</string>

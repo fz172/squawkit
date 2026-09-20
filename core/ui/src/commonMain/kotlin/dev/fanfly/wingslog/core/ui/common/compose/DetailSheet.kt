@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
@@ -22,6 +23,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SheetState
@@ -62,6 +64,8 @@ fun DetailSheet(
   modifier: Modifier = Modifier,
   sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
   actionSlot: (@Composable () -> Unit)? = null,
+  /** Pinned under the scrolling body — for an input that must stay reachable, such as comments. */
+  bottomBar: (@Composable () -> Unit)? = null,
   headerSlot: @Composable ColumnScope.() -> Unit,
   content: @Composable ColumnScope.() -> Unit,
 ) {
@@ -73,6 +77,7 @@ fun DetailSheet(
     ) {
       DetailBody(
         actionSlot = actionSlot,
+        bottomBar = bottomBar,
         headerSlot = headerSlot,
         content = content
       )
@@ -80,7 +85,9 @@ fun DetailSheet(
   } else {
     DetailEndDrawer(onDismiss = onDismiss, modifier = modifier) {
       DetailBody(
+        fillHeight = true,
         actionSlot = actionSlot,
+        bottomBar = bottomBar,
         headerSlot = headerSlot,
         content = content
       )
@@ -91,40 +98,65 @@ fun DetailSheet(
 @Composable
 private fun DetailBody(
   actionSlot: (@Composable () -> Unit)?,
+  bottomBar: (@Composable () -> Unit)?,
   headerSlot: @Composable ColumnScope.() -> Unit,
   content: @Composable ColumnScope.() -> Unit,
+  // The drawer is full height, so its bar belongs at the bottom edge. A bottom sheet hugs its
+  // content instead: a short record keeps a short sheet, with the bar right under it.
+  fillHeight: Boolean = false,
 ) {
   TextSelectionLayer {
     Column(
-      modifier = Modifier
-        .fillMaxWidth()
-        .padding(horizontal = Spacing.extraLarge)
-        .verticalScroll(rememberScrollState()),
-      verticalArrangement = Arrangement.spacedBy(Spacing.small),
+      modifier = Modifier.fillMaxWidth()
+        .then(if (fillHeight) Modifier.fillMaxHeight() else Modifier),
     ) {
-      Spacer(Modifier.height(Spacing.large))
-
-      // Header Row
-      Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
+      Column(
+        modifier = Modifier
+          .fillMaxWidth()
+          .weight(1f, fill = fillHeight)
+          .padding(horizontal = Spacing.extraLarge)
+          .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(Spacing.small),
       ) {
-        Column(
-          modifier = Modifier
-            .weight(1f)
-            .padding(end = Spacing.small),
+        Spacer(Modifier.height(Spacing.large))
+
+        // Header Row
+        Row(
+          modifier = Modifier.fillMaxWidth(),
+          horizontalArrangement = Arrangement.SpaceBetween,
+          verticalAlignment = Alignment.CenterVertically,
         ) {
-          headerSlot()
+          Column(
+            modifier = Modifier
+              .weight(1f)
+              .padding(end = Spacing.small),
+          ) {
+            headerSlot()
+          }
+          actionSlot?.invoke()
         }
-        actionSlot?.invoke()
+
+        // Body Content
+        content()
+
+        // Footer Spacer
+        Spacer(Modifier.height(if (bottomBar == null) Spacing.huge else Spacing.large))
       }
 
-      // Body Content
-      content()
-
-      // Footer Spacer
-      Spacer(Modifier.height(Spacing.huge))
+      if (bottomBar != null) {
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+        Box(
+          modifier = Modifier
+            .fillMaxWidth()
+            .imePadding()
+            .padding(
+              horizontal = Spacing.extraLarge,
+              vertical = Spacing.medium
+            ),
+        ) {
+          bottomBar()
+        }
+      }
     }
   }
 }

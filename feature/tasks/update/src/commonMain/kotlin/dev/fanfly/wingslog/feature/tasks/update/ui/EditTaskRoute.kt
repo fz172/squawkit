@@ -15,7 +15,6 @@ import dev.fanfly.wingslog.core.template.taskNoun
 import dev.fanfly.wingslog.feature.attachment.model.dataLogIds
 import dev.fanfly.wingslog.feature.attachment.model.visible
 import dev.fanfly.wingslog.feature.attachment.viewing.AttachmentFormSection
-import dev.fanfly.wingslog.feature.comments.viewing.CommentThreadSection
 import dev.fanfly.wingslog.feature.datalog.viewing.attach.rememberDataLogPickerSlot
 import dev.fanfly.wingslog.feature.tasks.datamanager.forcedDueMeter
 import dev.fanfly.wingslog.feature.tasks.update.viewmodel.TaskFormEvent
@@ -44,7 +43,6 @@ fun EditTaskRoute(
   val isSaving by viewModel.isSaving.collectAsStateWithLifecycle()
   val attachmentUploadEnabled by viewModel.attachmentUploadEnabled.collectAsStateWithLifecycle()
   val hasAttachmentChanges by viewModel.hasAttachmentChanges.collectAsStateWithLifecycle()
-  val commentState by viewModel.commentState.collectAsStateWithLifecycle()
   val successState = uiState as? TaskUiState.Success
 
   val updatedMessage = stringResource(Res.string.task_updated)
@@ -175,25 +173,6 @@ fun EditTaskRoute(
         )
       },
       hasAttachmentChanges = hasAttachmentChanges,
-      hasCommentDraft = commentState.hasUnsavedInput,
-      commentsSection = {
-        val thread = viewModel.comments
-        if (thread != null) {
-          CommentThreadSection(
-            state = commentState,
-            isAnonymous = viewModel.isAnonymous,
-            onDraftChange = thread::onDraftChange,
-            onPost = thread::post,
-            onToggleMenu = thread::toggleMenu,
-            onDismissMenu = thread::dismissMenu,
-            onEdit = thread::startEdit,
-            onDelete = thread::delete,
-            onEditDraftChange = thread::onEditDraftChange,
-            onCancelEdit = thread::cancelEdit,
-            onSaveEdit = thread::saveEdit,
-          )
-        }
-      },
     )
   }
 }

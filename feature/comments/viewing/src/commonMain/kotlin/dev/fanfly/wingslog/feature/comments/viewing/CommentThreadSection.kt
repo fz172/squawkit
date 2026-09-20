@@ -1,6 +1,5 @@
 package dev.fanfly.wingslog.feature.comments.viewing
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,8 +13,6 @@ import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
@@ -42,6 +39,7 @@ import dev.fanfly.wingslog.core.ui.common.compose.AlertDialog
 import dev.fanfly.wingslog.core.ui.common.compose.DropdownMenu
 import dev.fanfly.wingslog.core.ui.common.compose.FormKeyboard
 import dev.fanfly.wingslog.core.ui.common.compose.FormTextField
+import dev.fanfly.wingslog.core.ui.common.compose.ListRowDivider
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTheme
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
@@ -71,24 +69,15 @@ import kotlin.time.Instant
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 
 /**
- * The Comments tab: the thread, oldest first, followed by the composer.
+ * A record's comments, oldest first. The box they are written in is [CommentComposer].
  *
  * Stateless. Every mutation goes back out through a callback to
- * `CommentThreadController`, which is what lets the squawk form and the task form render the same
+ * `CommentThreadController`, which is what lets the squawk sheet and the task sheet render the same
  * thread without either of them owning any of this.
  */
 @Composable
 fun CommentThreadSection(
   state: CommentThreadState,
-  /**
-   * A guest account is fully offline and its uid does not survive a merge into an existing
-   * account (the migrator rewrites scope paths, not payloads), so a comment it posted would be
-   * nobody's afterwards — no menu, no edit, no delete. The thread stays readable; the composer
-   * is replaced by a sign-in line, the same as attachments.
-   */
-  isAnonymous: Boolean,
-  onDraftChange: (String) -> Unit,
-  onPost: () -> Unit,
   onToggleMenu: (String) -> Unit,
   onDismissMenu: () -> Unit,
   onEdit: (String) -> Unit,
@@ -109,10 +98,7 @@ fun CommentThreadSection(
     )
   }
 
-  Column(
-    modifier = modifier.fillMaxWidth(),
-    verticalArrangement = Arrangement.spacedBy(Spacing.medium),
-  ) {
+  Column(modifier = modifier.fillMaxWidth()) {
     if (state.comments.isEmpty()) {
       Text(
         text = stringResource(Res.string.comments_empty),
@@ -120,8 +106,9 @@ fun CommentThreadSection(
         color = MaterialTheme.colorScheme.onSurfaceVariant,
       )
     } else {
-      state.comments.forEach { comment ->
-        CommentCard(
+      state.comments.forEachIndexed { index, comment ->
+        if (index > 0) ListRowDivider()
+        CommentRow(
           comment = comment,
           menuOpen = state.menuOpenId == comment.id,
           isEditing = state.editingId == comment.id,
@@ -138,41 +125,61 @@ fun CommentThreadSection(
       }
     }
 
-    if (isAnonymous) {
-      Text(
-        text = stringResource(Res.string.sign_in_to_add_comments),
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
+  }
+}
+
+/**
+ * Where a comment is written. Separate from [CommentThreadSection] so a host can pin it under a
+ * scrolling thread — it has to stay reachable however long the thread gets.
+ *
+ * A guest account is fully offline and its uid does not survive a merge into an existing account
+ * (the migrator rewrites scope paths, not payloads), so a comment it posted would be nobody's
+ * afterwards — no menu, no edit, no delete. The thread stays readable; the box is replaced by a
+ * sign-in line, the same as attachments.
+ */
+@Composable
+fun CommentComposer(
+  state: CommentThreadState,
+  isAnonymous: Boolean,
+  onDraftChange: (String) -> Unit,
+  onPost: () -> Unit,
+  modifier: Modifier = Modifier,
+) {
+  if (isAnonymous) {
+    Text(
+      text = stringResource(Res.string.sign_in_to_add_comments),
+      style = MaterialTheme.typography.bodySmall,
+      color = MaterialTheme.colorScheme.onSurfaceVariant,
+      modifier = modifier,
+    )
+    return
+  }
+  Row(
+    modifier = modifier.fillMaxWidth(),
+    horizontalArrangement = Arrangement.spacedBy(Spacing.small),
+    verticalAlignment = Alignment.CenterVertically,
+  ) {
+    FormTextField(
+      label = stringResource(Res.string.comment_new_label),
+      value = state.draft,
+      placeholder = stringResource(Res.string.comment_placeholder),
+      singleLine = false,
+      maxLines = 4,
+      onValueChange = onDraftChange,
+      modifier = Modifier.weight(1f),
+      keyboardOptions = FormKeyboard.Sentences,
+    )
+    FilledIconButton(
+      onClick = onPost,
+      enabled = state.canPost,
+      modifier = Modifier.size(Spacing.buttonHeight),
+      shape = RoundedCornerShape(Spacing.buttonCornerRadius),
+    ) {
+      Icon(
+        Icons.AutoMirrored.Filled.Send,
+        contentDescription = stringResource(Res.string.comment_post),
+        modifier = Modifier.size(Spacing.large),
       )
-    } else {
-      Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(Spacing.small),
-        verticalAlignment = Alignment.CenterVertically,
-      ) {
-        FormTextField(
-          label = stringResource(Res.string.comment_new_label),
-          value = state.draft,
-          placeholder = stringResource(Res.string.comment_placeholder),
-          singleLine = false,
-          minLines = 2,
-          onValueChange = onDraftChange,
-          modifier = Modifier.weight(1f),
-          keyboardOptions = FormKeyboard.Sentences,
-        )
-        FilledIconButton(
-          onClick = onPost,
-          enabled = state.canPost,
-          modifier = Modifier.size(Spacing.buttonHeight),
-          shape = RoundedCornerShape(Spacing.buttonCornerRadius),
-        ) {
-          Icon(
-            Icons.AutoMirrored.Filled.Send,
-            contentDescription = stringResource(Res.string.comment_post),
-            modifier = Modifier.size(Spacing.large),
-          )
-        }
-      }
     }
   }
 }
@@ -206,7 +213,7 @@ private fun DeleteCommentConfirmDialog(
 }
 
 @Composable
-private fun CommentCard(
+private fun CommentRow(
   comment: CommentEntry,
   menuOpen: Boolean,
   isEditing: Boolean,
@@ -220,152 +227,147 @@ private fun CommentCard(
   onCancelEdit: () -> Unit,
   onSaveEdit: () -> Unit,
 ) {
-  Card(
-    modifier = Modifier.fillMaxWidth(),
-    shape = RoundedCornerShape(Spacing.cardCornerRadius),
-    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-    border = BorderStroke(
-      Spacing.hairline,
-      MaterialTheme.colorScheme.outlineVariant
-    ),
+  // Flat, like every other row since UI-2: a hairline between comments does the separating a
+  // bordered card used to.
+  Column(
+    modifier = Modifier
+      .fillMaxWidth()
+      .padding(vertical = Spacing.medium),
+    verticalArrangement = Arrangement.spacedBy(Spacing.small),
   ) {
-    Column(
-      modifier = Modifier.padding(Spacing.large),
-      verticalArrangement = Arrangement.spacedBy(Spacing.medium),
+    Row(
+      modifier = Modifier.fillMaxWidth(),
+      horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
     ) {
-      Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
-      ) {
-        AvatarIcon(
-          displayName = comment.authorName,
-          photoUri = comment.authorPhotoUrl,
-          size = Spacing.huge,
-        )
-        Column(modifier = Modifier.weight(1f)) {
-          Row(
-            horizontalArrangement = Arrangement.spacedBy(Spacing.small),
-            verticalAlignment = Alignment.CenterVertically,
-          ) {
-            Text(
-              text = comment.authorName.ifBlank { stringResource(CoreRes.string.unknown) },
-              style = MaterialTheme.typography.titleSmall,
-              color = MaterialTheme.colorScheme.onSurface,
-              maxLines = 1,
-              overflow = TextOverflow.Ellipsis,
-              modifier = Modifier.weight(1f, fill = false),
-            )
-            if (comment.isMine) MineBadge()
-          }
+      AvatarIcon(
+        displayName = comment.authorName,
+        photoUri = comment.authorPhotoUrl,
+        size = Spacing.huge,
+      )
+      Column(modifier = Modifier.weight(1f)) {
+        Row(
+          horizontalArrangement = Arrangement.spacedBy(Spacing.small),
+          verticalAlignment = Alignment.CenterVertically,
+        ) {
           Text(
-            text = comment.createdAt.toDisplayDateTime(),
-            style = WingslogTypography.dataSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            text = comment.authorName.ifBlank { stringResource(CoreRes.string.unknown) },
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.onSurface,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f, fill = false),
           )
-          comment.editedAt?.takeIf { !comment.isDeleted }
-            ?.let { editedAt ->
-              // Caution, the app's "something changed here" tone — the same amber the due-state
-              // language uses. Never a fourth colour invented for this one line.
-              val editedTone = MaterialTheme.statusColors.caution.accent
-              Row(
-                horizontalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
-                verticalAlignment = Alignment.CenterVertically,
-              ) {
+          if (comment.isMine) MineBadge()
+        }
+        Text(
+          text = comment.createdAt.toDisplayDateTime(),
+          style = WingslogTypography.dataSmall,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        comment.editedAt?.takeIf { !comment.isDeleted }
+          ?.let { editedAt ->
+            // Caution, the app's "something changed here" tone — the same amber the due-state
+            // language uses. Never a fourth colour invented for this one line.
+            val editedTone = MaterialTheme.statusColors.caution.accent
+            Row(
+              horizontalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
+              verticalAlignment = Alignment.CenterVertically,
+            ) {
+              Icon(
+                Icons.Default.Edit,
+                contentDescription = null,
+                tint = editedTone,
+                modifier = Modifier.size(Spacing.medium),
+              )
+              Text(
+                text = stringResource(
+                  Res.string.comment_edited,
+                  editedAt.toDisplayDateTime()
+                ),
+                style = WingslogTypography.dataSmall,
+                color = editedTone,
+              )
+            }
+          }
+      }
+      if (comment.isActionable) {
+        Box {
+          IconButton(onClick = onToggleMenu) {
+            Icon(
+              Icons.Default.MoreVert,
+              contentDescription = stringResource(Res.string.comment_actions),
+              tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+          }
+          DropdownMenu(
+            expanded = menuOpen,
+            onDismissRequest = onDismissMenu
+          ) {
+            DropdownMenuItem(
+              text = { Text(stringResource(Res.string.comment_edit)) },
+              leadingIcon = {
                 Icon(
                   Icons.Default.Edit,
                   contentDescription = null,
-                  tint = editedTone,
-                  modifier = Modifier.size(Spacing.medium),
+                  tint = MaterialTheme.colorScheme.primary,
                 )
+              },
+              onClick = onEdit,
+            )
+            DropdownMenuItem(
+              text = {
                 Text(
-                  text = stringResource(
-                    Res.string.comment_edited,
-                    editedAt.toDisplayDateTime()
-                  ),
-                  style = WingslogTypography.dataSmall,
-                  color = editedTone,
+                  text = stringResource(CoreRes.string.delete),
+                  color = MaterialTheme.colorScheme.error,
                 )
-              }
-            }
-        }
-        if (comment.isActionable) {
-          Box {
-            IconButton(onClick = onToggleMenu) {
-              Icon(
-                Icons.Default.MoreVert,
-                contentDescription = stringResource(Res.string.comment_actions),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-              )
-            }
-            DropdownMenu(
-              expanded = menuOpen,
-              onDismissRequest = onDismissMenu
-            ) {
-              DropdownMenuItem(
-                text = { Text(stringResource(Res.string.comment_edit)) },
-                leadingIcon = {
-                  Icon(
-                    Icons.Default.Edit,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                  )
-                },
-                onClick = onEdit,
-              )
-              DropdownMenuItem(
-                text = {
-                  Text(
-                    text = stringResource(CoreRes.string.delete),
-                    color = MaterialTheme.colorScheme.error,
-                  )
-                },
-                leadingIcon = {
-                  Icon(
-                    Icons.Default.Delete,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.error,
-                  )
-                },
-                onClick = onDelete,
-              )
-            }
+              },
+              leadingIcon = {
+                Icon(
+                  Icons.Default.Delete,
+                  contentDescription = null,
+                  tint = MaterialTheme.colorScheme.error,
+                )
+              },
+              onClick = onDelete,
+            )
           }
         }
-      }
-
-      if (comment.isDeleted) {
-        DeletedBody(comment.deletedAt)
-      } else if (isEditing) {
-        FormTextField(
-          label = stringResource(Res.string.comment_edit),
-          value = editDraft,
-          singleLine = false,
-          minLines = 3,
-          onValueChange = onEditDraftChange,
-          modifier = Modifier.fillMaxWidth(),
-        )
-        Row(
-          modifier = Modifier.fillMaxWidth(),
-          horizontalArrangement = Arrangement.spacedBy(
-            Spacing.small,
-            Alignment.End
-          ),
-        ) {
-          TextButton(onClick = onCancelEdit) {
-            Text(stringResource(CoreRes.string.cancel))
-          }
-          TextButton(onClick = onSaveEdit, enabled = canSaveEdit) {
-            Text(stringResource(CoreRes.string.save))
-          }
-        }
-      } else {
-        Text(
-          text = comment.text,
-          style = MaterialTheme.typography.bodyMedium,
-          color = MaterialTheme.colorScheme.onSurface,
-        )
       }
     }
+
+    if (comment.isDeleted) {
+      DeletedBody(comment.deletedAt)
+    } else if (isEditing) {
+      FormTextField(
+        label = stringResource(Res.string.comment_edit),
+        value = editDraft,
+        singleLine = false,
+        minLines = 3,
+        onValueChange = onEditDraftChange,
+        modifier = Modifier.fillMaxWidth(),
+      )
+      Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(
+          Spacing.small,
+          Alignment.End
+        ),
+      ) {
+        TextButton(onClick = onCancelEdit) {
+          Text(stringResource(CoreRes.string.cancel))
+        }
+        TextButton(onClick = onSaveEdit, enabled = canSaveEdit) {
+          Text(stringResource(CoreRes.string.save))
+        }
+      }
+    } else {
+      Text(
+        text = comment.text,
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurface,
+      )
+    }
+
   }
 }
 
@@ -427,8 +429,8 @@ private fun CommentThreadSectionPreview() {
           ),
           CommentEntry(
             id = "c2",
-            authorName = "Fan Zhang",
-            authorPhotoUrl = "https://example.invalid/fan.jpg",
+            authorName = "Teo Varga",
+            authorPhotoUrl = "https://example.invalid/teo.jpg",
             text = "Holding this until the 100-hr next week so we only pull the panel once.",
             createdAt = Instant.fromEpochSeconds(1_787_100_000),
             editedAt = Instant.fromEpochSeconds(1_787_100_600),
@@ -446,9 +448,6 @@ private fun CommentThreadSectionPreview() {
           ),
         ),
       ),
-      isAnonymous = false,
-      onDraftChange = {},
-      onPost = {},
       onToggleMenu = {},
       onDismissMenu = {},
       onEdit = {},

@@ -71,6 +71,12 @@ fun SquawkDetailSheet(
   onFixedClick: (() -> Unit)? = null,
   onDismissNoWorkPlanned: (() -> Unit)? = null,
   onReopenClick: (() -> Unit)? = null,
+  /**
+   * The record's comment thread and the box it is written in, supplied by the host so this module
+   * need not know about comments. [commentComposer] is pinned under the scrolling sheet.
+   */
+  comments: (@Composable () -> Unit)? = null,
+  commentComposer: (@Composable () -> Unit)? = null,
   modifier: Modifier = Modifier,
 ) {
   val squawk = item.squawk
@@ -79,6 +85,7 @@ fun SquawkDetailSheet(
   DetailSheet(
     onDismiss = onDismiss,
     modifier = modifier,
+    bottomBar = commentComposer,
     actionSlot = {
       if (onEditClick != null) {
         TextButton(onClick = onEditClick) {
@@ -196,6 +203,11 @@ fun SquawkDetailSheet(
       dataLogs = dataLogs,
       openError = openError,
     )
+
+    if (comments != null) {
+      Spacer(Modifier.height(Spacing.large))
+      comments()
+    }
   }
 }
 
