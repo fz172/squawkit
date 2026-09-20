@@ -298,8 +298,25 @@ Material 3 `SingleChoiceSegmentedButtonRow` (two segments, full width). Used as 
 ### Cards
 - **Corner radius:** 12dp (gently curved; neither pill nor rectangle)
 - **Background:** `surfaceContainer` — one tonal step above `surface`
-- **Border:** Optional `outlineVariant` at 1dp for emphasis (empty-state cards, section delimiters)
+- **Border:** none. The ramp separates the card from what is behind it (§4). A stroke is emphasis — a status accent on a card that is genuinely set apart — and never the thing that makes the card visible
 - **Padding:** 16dp (`Spacing.large`) internal
+
+A card is a **container**: several things that belong together, grouped. One record in a list is not
+one of those — it is a `ListRow`. A container is a `Surface` carrying the colour, shape and padding
+above, not a `Card`, whose elevation vocabulary §4 rules out. The `Card` call sites that remain are
+being converted as the units that own them land.
+
+### List Rows (`core/ui/.../ListRow.kt`)
+
+One row, one implementation: leading slot, title, metadata line, trailing slot, on `surfaceContainer`
+at the card radius, 72dp tall (`Spacing.rowHeight`).
+
+Both text lines truncate to one, so a list scans as a column of records rather than a stack of
+paragraphs. The row grows for exactly one thing — the note a search result needs to say what it
+matched on. Anything else a record cannot fit on those two lines belongs in its detail sheet.
+
+`accent` draws the only border a row ever gets, and it says the record is set apart: a down-state
+defect, an overdue or due-soon task.
 
 ### Bottom Sheet (DetailSheet)
 Modal bottom sheet with `skipPartiallyExpanded = true` — always fully expanded, never half-state. Horizontal padding: 24dp (screen padding). Header: trailing `TextButton` action; headline fills remaining width. Internal vertical scroll with 32dp footer spacer to clear the system navigation bar.
@@ -328,7 +345,11 @@ Maps domain status to M3 roles. **No ad-hoc color choices in feature code.** Use
 
 ### Component Border Accent Rule
 
-Overdue/DueSoon cards get a 1dp left-border accent at `statusTone.accent.copy(alpha = 0.5f)`. Down-state defects get `blocking.accent`. Normal cards get `outlineVariant`. Component type badges use context-specific fills (ENGINE → primaryContainer, AIRFRAME → surfaceContainerHigh, PROPELLER → secondaryContainer) — and appear only on the airplane preset, whose parts the frozen `ComponentType` enum names; every other preset files records against the Thing itself (`usesComponentTypes`).
+A border is emphasis, never containment (§4), so only a record that is set apart carries one.
+Overdue/DueSoon rows get a 1dp accent at `statusTone.accent.copy(alpha = 0.5f)`; down-state defects
+and the down-state alert get `blocking.accent`; the Thing data card keeps an `outlineVariant` stroke
+because it is a block of specification rather than a record in a list. Every other card and row has
+no border at all. Component type badges use context-specific fills (ENGINE → primaryContainer, AIRFRAME → surfaceContainerHigh, PROPELLER → secondaryContainer) — and appear only on the airplane preset, whose parts the frozen `ComponentType` enum names; every other preset files records against the Thing itself (`usesComponentTypes`).
 
 ## 6. Do's and Don'ts
 

@@ -14,11 +14,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -45,15 +44,16 @@ fun AogAlertSection(
   if (aogSquawks.isEmpty()) return
   val blocking = MaterialTheme.statusColors.blocking
 
-  Card(
+  // The one alert that keeps a border: a thing that cannot be used is genuinely set apart, and the
+  // stroke is a status accent, never the hairline that used to make every card visible.
+  Surface(
     modifier = modifier.fillMaxWidth(),
     shape = RoundedCornerShape(Spacing.cardCornerRadius),
-    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+    color = MaterialTheme.colorScheme.surfaceContainer,
     border = BorderStroke(
       Spacing.hairline,
       blocking.accent.copy(alpha = 0.5f)
     ),
-    elevation = CardDefaults.cardElevation(defaultElevation = Spacing.none),
   ) {
     Column {
       Column(

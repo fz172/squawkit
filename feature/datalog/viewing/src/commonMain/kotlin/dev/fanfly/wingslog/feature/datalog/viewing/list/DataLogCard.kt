@@ -1,30 +1,21 @@
 package dev.fanfly.wingslog.feature.datalog.viewing.list
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.ShowChart
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextOverflow
 import dev.fanfly.wingslog.core.datetime.formatDuration
 import dev.fanfly.wingslog.core.datetime.toClockText
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
+import dev.fanfly.wingslog.core.ui.common.compose.ListRow
 import dev.fanfly.wingslog.core.ui.common.compose.StatusChip
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.StatusTier
@@ -54,70 +45,47 @@ fun DataLogCard(
     if (showDetails && row.product.isNotBlank()) add(row.product)
   }
 
-  Card(
+  ListRow(
+    title = title,
+    metadata = details.joinToString(" · "),
+    metadataStyle = WingslogTypography.dataSmall,
     onClick = onClick,
-    modifier = modifier.fillMaxWidth(),
-    shape = RoundedCornerShape(Spacing.cardCornerRadius),
-    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-    border = BorderStroke(
-      Spacing.hairline, MaterialTheme.colorScheme.outlineVariant
-    ),
-    elevation = CardDefaults.cardElevation(defaultElevation = Spacing.none),
-  ) {
-    Row(
-      modifier = Modifier.fillMaxWidth()
-        .padding(Spacing.large),
-      verticalAlignment = Alignment.CenterVertically,
-      horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
-    ) {
+    modifier = modifier,
+    leading = {
       Icon(
         Icons.Filled.ShowChart,
         contentDescription = null,
         tint = MaterialTheme.colorScheme.primary,
         modifier = Modifier.size(Spacing.extraLarge),
       )
-      Column(
-        modifier = Modifier.weight(1f),
-        verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall)
+    },
+    trailing = {
+      Row(
+        horizontalArrangement = Arrangement.spacedBy(Spacing.small),
+        verticalAlignment = Alignment.CenterVertically,
       ) {
-        Text(
-          text = title,
-          style = MaterialTheme.typography.titleMedium,
-          color = MaterialTheme.colorScheme.onSurface,
-          maxLines = 1,
-          overflow = TextOverflow.Ellipsis,
-        )
+        // A data-integrity warning, not decoration: the file says it belongs to another thing.
         if (row.identityMismatch) {
           StatusChip(
             label = stringResource(Res.string.data_log_tail_mismatch),
-            tier = StatusTier.CAUTION
+            tier = StatusTier.CAUTION,
           )
         }
-        Text(
-          text = details.joinToString(" · "),
-          style = WingslogTypography.dataSmall,
-          color = MaterialTheme.colorScheme.onSurfaceVariant,
-          maxLines = 1,
-          overflow = TextOverflow.Ellipsis,
+        if (showDetails) {
+          Text(
+            text = stringResource(Res.string.data_log_series_count, row.seriesCount),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+          )
+        }
+        Icon(
+          Icons.AutoMirrored.Filled.KeyboardArrowRight,
+          contentDescription = null,
+          tint = MaterialTheme.colorScheme.onSurfaceVariant,
         )
       }
-      if (showDetails) {
-        Text(
-          text = stringResource(
-            Res.string.data_log_series_count, row.seriesCount
-          ),
-          style = MaterialTheme.typography.labelMedium,
-          color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Spacer(Modifier.width(Spacing.extraSmall))
-      }
-      Icon(
-        Icons.AutoMirrored.Filled.KeyboardArrowRight,
-        contentDescription = null,
-        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-      )
-    }
-  }
+    },
+  )
 }
 
 /** "Sep 02, 2026 · KPAO", or the date alone for an airborne log with no ident; ground runs say so. */

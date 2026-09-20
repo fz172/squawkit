@@ -458,9 +458,17 @@
       "name": "Content Card",
       "kind": "card",
       "refersTo": "card",
-      "description": "Standard card surface \u2014 squawk cards, task cards, maintenance log entries. No shadow; tonal elevation only.",
-      "html": "<div class=\"ds-card\"><div class=\"ds-card-title\">Oil leak on left engine</div><div class=\"ds-card-meta\">Added 3 days ago &bull; HIGH</div></div>",
-      "css": ".ds-card { background: #E8EDF4; border-radius: 12px; padding: 16px; font-family: system-ui, sans-serif; } .ds-card-title { font-size: 16px; font-weight: 600; color: #141A24; margin-bottom: 4px; } .ds-card-meta { font-size: 12px; font-weight: 500; color: #525E72; letter-spacing: 0.04em; }"
+      "description": "A container that groups several things — the Thing data card, an alert block. No shadow, no border; tonal elevation only. One record in a list is a List Row, not a card.",
+      "html": "<div class=\"ds-card\"><div class=\"ds-card-title\">Aircraft data</div><div class=\"ds-card-meta\">Make &bull; Model &bull; Serial</div></div>",
+      "css": ".ds-card { background: #E8EDF4; border-radius: 12px; padding: 16px; font-family: system-ui, sans-serif; } .ds-card-title { font-size: 16px; font-weight: 600; color: #141A24; margin-bottom: 4px; } .ds-card-meta { font-size: 12px; font-weight: 500; color: #545F72; letter-spacing: 0.04em; }"
+    },
+    {
+      "name": "List Row",
+      "kind": "row",
+      "refersTo": "listRow",
+      "description": "The list row — squawks, tasks, work logs, data logs. Leading slot, title, metadata line, trailing slot. 72px tall, both lines truncated to one. A border appears only on a record that is set apart: a down-state defect, an overdue task.",
+      "html": "<div class=\"ds-row\"><span class=\"ds-row-lead\"></span><span class=\"ds-row-text\"><span class=\"ds-row-title\">Oil leak on left engine</span><span class=\"ds-row-meta\">12 Sep 2026 &middot; Weeping from the accessory case</span></span><span class=\"ds-row-trail\">&rsaquo;</span></div>",
+      "css": ".ds-row { display: flex; align-items: center; gap: 12px; min-height: 72px; background: #E8EDF4; border-radius: 12px; padding: 12px 16px; font-family: system-ui, sans-serif; } .ds-row-lead { width: 8px; height: 8px; border-radius: 50%; background: #1A5FAE; flex-shrink: 0; } .ds-row-text { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex-grow: 1; } .ds-row-title { font-size: 16px; font-weight: 600; color: #141A24; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .ds-row-meta { font-size: 12px; font-weight: 500; color: #545F72; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .ds-row-trail { color: #545F72; flex-shrink: 0; }"
     },
     {
       "name": "Status Badge",
