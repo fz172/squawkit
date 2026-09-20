@@ -58,6 +58,12 @@
         "canonical": "oklch(43% 0.12 68)",
         "tonalRamp": ["#271900", "#4A3200", "#6B4800", "#8B5E00", "#AD7800", "#CC9A00", "#FFCA28", "#FFE082"]
       },
+      "neutral": {
+        "role": "surface",
+        "displayName": "Instrument Neutral",
+        "canonical": "oklch(93% 0.012 251)",
+        "tonalRamp": ["#06090F", "#0A0E14", "#151C27", "#1B2431", "#222C3B", "#293446", "#3A4557", "#545F72", "#6B7A8F", "#9BA8BC", "#C3CBD8", "#D3DBE7", "#E0E6EF", "#E4EAF2", "#E8EDF4", "#F1F4FA", "#F7F9FC", "#FFFFFF"]
+      },
       "caution-bg": {
         "role": "semantic-warning-container",
         "displayName": "Caution Surface",
@@ -110,28 +116,28 @@
       "refersTo": "card",
       "description": "Standard card surface — squawk cards, task cards, maintenance log entries. No shadow; tonal elevation only.",
       "html": "<div class=\"ds-card\"><div class=\"ds-card-title\">Oil leak on left engine</div><div class=\"ds-card-meta\">Added 3 days ago &bull; HIGH</div></div>",
-      "css": ".ds-card { background: #EEF1F6; border-radius: 12px; padding: 16px; font-family: system-ui, sans-serif; } .ds-card-title { font-size: 16px; font-weight: 600; color: #1C1B1F; margin-bottom: 4px; } .ds-card-meta { font-size: 12px; font-weight: 500; color: #525E72; letter-spacing: 0.04em; }"
+      "css": ".ds-card { background: #E8EDF4; border-radius: 12px; padding: 16px; font-family: system-ui, sans-serif; } .ds-card-title { font-size: 16px; font-weight: 600; color: #141A24; margin-bottom: 4px; } .ds-card-meta { font-size: 12px; font-weight: 500; color: #525E72; letter-spacing: 0.04em; }"
     },
     {
       "name": "Status Badge",
       "kind": "chip",
       "description": "Inline stamp-shaped badge for squawk status and task priority. 4dp radius reads as a label, not a pill.",
       "html": "<span class=\"ds-badge ds-badge--open\">OPEN</span><span class=\"ds-badge ds-badge--addressed\">ADDRESSED</span><span class=\"ds-badge ds-badge--dismissed\">DISMISSED</span>",
-      "css": ".ds-badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 4px; font-family: system-ui, sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; } .ds-badge--open { background: transparent; color: #525E72; } .ds-badge--addressed { background: #D5E3FF; color: #001849; } .ds-badge--dismissed { background: #E7E0EC; color: #49454F; }"
+      "css": ".ds-badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 4px; font-family: system-ui, sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; } .ds-badge--open { background: transparent; color: #525E72; } .ds-badge--addressed { background: #D5E3FF; color: #001849; } .ds-badge--dismissed { background: #D3DBE7; color: #545F72; }"
     },
     {
       "name": "Segmented Filter",
       "kind": "custom",
       "description": "Two-option tab filter used on list screens (Open / Closed squawks, Active / Completed tasks).",
       "html": "<div class=\"ds-seg-row\"><button class=\"ds-seg-btn ds-seg-btn--selected\">OPEN (3)</button><button class=\"ds-seg-btn\">CLOSED (7)</button></div>",
-      "css": ".ds-seg-row { display: flex; width: 100%; border: 1px solid #BCC4D0; border-radius: 40px; overflow: hidden; } .ds-seg-btn { flex: 1; height: 40px; background: transparent; color: #525E72; font-family: system-ui, sans-serif; font-size: 13px; font-weight: 500; letter-spacing: 0.04em; border: none; cursor: pointer; transition: background 0.15s ease-out, color 0.15s ease-out; } .ds-seg-btn--selected { background: #1A5FAE; color: #FFFFFF; font-weight: 700; }"
+      "css": ".ds-seg-row { display: flex; width: 100%; border: 1px solid #C3CBD8; border-radius: 40px; overflow: hidden; } .ds-seg-btn { flex: 1; height: 40px; background: transparent; color: #525E72; font-family: system-ui, sans-serif; font-size: 13px; font-weight: 500; letter-spacing: 0.04em; border: none; cursor: pointer; transition: background 0.15s ease-out, color 0.15s ease-out; } .ds-seg-btn--selected { background: #1A5FAE; color: #FFFFFF; font-weight: 700; }"
     },
     {
       "name": "Technical Data Field",
       "kind": "custom",
       "description": "Monospace display for tail numbers, serial numbers, engine hours — any value where character alignment is semantic.",
       "html": "<div class=\"ds-data-field\"><div class=\"ds-data-label\">Airframe Time</div><div class=\"ds-data-value\">2847.4</div></div>",
-      "css": ".ds-data-field { display: flex; flex-direction: column; gap: 2px; } .ds-data-label { font-family: system-ui, sans-serif; font-size: 11px; font-weight: 500; color: #525E72; letter-spacing: 0.05em; text-transform: uppercase; } .ds-data-value { font-family: 'JetBrains Mono', 'Courier New', monospace; font-size: 16px; font-weight: 700; color: #1C1B1F; letter-spacing: 0; }"
+      "css": ".ds-data-field { display: flex; flex-direction: column; gap: 2px; } .ds-data-label { font-family: system-ui, sans-serif; font-size: 11px; font-weight: 500; color: #525E72; letter-spacing: 0.05em; text-transform: uppercase; } .ds-data-value { font-family: 'JetBrains Mono', 'Courier New', monospace; font-size: 16px; font-weight: 700; color: #141A24; letter-spacing: 0; }"
     },
     {
       "name": "Status Indicator Row",

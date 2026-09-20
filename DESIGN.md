@@ -12,6 +12,12 @@ colors:
   airworthy-green: "#276B39"
   caution-amber: "#8B5E00"
   caution-bg: "#FFECB3"
+  neutral-surface: "#F7F9FC"
+  neutral-container: "#E8EDF4"
+  neutral-container-high: "#E4EAF2"
+  neutral-on-surface: "#141A24"
+  neutral-on-surface-variant: "#545F72"
+  neutral-outline-variant: "#C3CBD8"
 typography:
   display:
     fontFamily: "Space Grotesk, system-ui, sans-serif"
@@ -85,7 +91,7 @@ components:
     rounded: "{rounded.button}"
     height: "56dp"
   card:
-    backgroundColor: "#EEF1F6"
+    backgroundColor: "{colors.neutral-container}"
     rounded: "{rounded.card}"
     padding: "{spacing.lg}"
 ---
