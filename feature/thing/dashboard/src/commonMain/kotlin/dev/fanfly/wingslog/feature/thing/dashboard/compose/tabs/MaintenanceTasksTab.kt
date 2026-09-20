@@ -33,9 +33,9 @@ import dev.fanfly.wingslog.core.ui.common.compose.rememberSwipeRevealController
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.logs.sharedassets.util.displayName
 import dev.fanfly.wingslog.feature.search.model.Facet
+import dev.fanfly.wingslog.feature.search.model.TimeWindow
 import dev.fanfly.wingslog.feature.search.model.countByComponent
 import dev.fanfly.wingslog.feature.search.model.countByTime
-import dev.fanfly.wingslog.feature.search.model.TimeWindow
 import dev.fanfly.wingslog.feature.search.viewing.ChoiceChip
 import dev.fanfly.wingslog.feature.search.viewing.FilterSection
 import dev.fanfly.wingslog.feature.search.viewing.NoRecordsMatch
@@ -43,7 +43,6 @@ import dev.fanfly.wingslog.feature.search.viewing.RecordCountRow
 import dev.fanfly.wingslog.feature.search.viewing.RecordFilterBar
 import dev.fanfly.wingslog.feature.search.viewing.RecordFilterControls
 import dev.fanfly.wingslog.feature.tasks.viewing.ResolveTaskOptionsMenu
-import dev.fanfly.wingslog.feature.tasks.viewing.SkipTaskConfirmDialog
 import dev.fanfly.wingslog.feature.tasks.viewing.TaskQuickActionCallbacks
 import dev.fanfly.wingslog.feature.tasks.viewing.quickActions
 import dev.fanfly.wingslog.feature.thing.dashboard.compose.ComplianceSection
@@ -52,24 +51,24 @@ import dev.fanfly.wingslog.feature.thing.dashboard.data.TaskTabViewModel
 import dev.fanfly.wingslog.feature.thing.dashboard.data.ThingOverviewAction
 import dev.fanfly.wingslog.feature.thing.dashboard.data.ThingOverviewUiState
 import dev.fanfly.wingslog.thing.ComplianceType
-import kotlin.math.roundToInt
-import kotlin.time.Clock
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
-import wingslog.feature.search.sharedassets.generated.resources.filter_scope_completed
-import wingslog.feature.search.sharedassets.generated.resources.filter_scope_due
+import wingslog.feature.search.sharedassets.generated.resources.filter_q_due_before
 import wingslog.feature.search.sharedassets.generated.resources.filter_q_part_of
 import wingslog.feature.search.sharedassets.generated.resources.filter_q_when_happened
-import wingslog.feature.search.sharedassets.generated.resources.filter_q_due_before
 import wingslog.feature.search.sharedassets.generated.resources.filter_q_where_from
-import wingslog.feature.search.sharedassets.generated.resources.Res as SearchRes
+import wingslog.feature.search.sharedassets.generated.resources.filter_scope_completed
+import wingslog.feature.search.sharedassets.generated.resources.filter_scope_due
 import wingslog.feature.search.sharedassets.generated.resources.meter_task_note
 import wingslog.feature.search.sharedassets.generated.resources.search_placeholder
+import kotlin.math.roundToInt
+import kotlin.time.Clock
+import wingslog.feature.search.sharedassets.generated.resources.Res as SearchRes
 
 @Composable
 fun MaintenanceTasksTab(
@@ -91,7 +90,12 @@ fun MaintenanceTasksTab(
   val tabViewModel: TaskTabViewModel =
     koinViewModel(
       key = "tasks:${state.thing.id}",
-      parameters = { parametersOf(state.thing.id, state.thing.template?.id.orEmpty()) },
+      parameters = {
+        parametersOf(
+          state.thing.id,
+          state.thing.template?.id.orEmpty()
+        )
+      },
     )
   val tabState by tabViewModel.uiState.collectAsStateWithLifecycle()
   val taskFilter by tabViewModel.filter.collectAsStateWithLifecycle()
@@ -103,7 +107,8 @@ fun MaintenanceTasksTab(
   val subView = if (showComplied) state.completedTasks else state.activeTasks
   val countAdapter = remember { TaskAdapter() }
   val today = remember {
-    Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+    Clock.System.now()
+      .toLocalDateTime(TimeZone.currentSystemDefault()).date
   }
 
   // Jump-to-task from a log: switch to the sub-view holding the target, then scroll it into view.
@@ -162,7 +167,8 @@ fun MaintenanceTasksTab(
       // "Can add it later from an empty Tasks tab" (PRD §4.9): only while the tab is empty in
       // both sub-views, and only when this Thing's own DNA still carries a pack.
       onAddStarterPack = if (
-        state.thing.template?.starter_tasks.orEmpty().isNotEmpty() &&
+        state.thing.template?.starter_tasks.orEmpty()
+          .isNotEmpty() &&
         state.activeTasks.isEmpty() && state.completedTasks.isEmpty()
       ) {
         { onAction(ThingOverviewAction.AddStarterPackClick(state.thing.id)) }
@@ -182,14 +188,20 @@ fun MaintenanceTasksTab(
           onClearTime = { setFilter(taskFilter.copy(time = TimeWindow.All)) },
           dueWithin = !showComplied,
           horizontalPadding = Spacing.none,
-          facetLabel = { (it as? Facet.Compliance)?.let { c -> complianceLabel(c.value) }.orEmpty() },
+          facetLabel = {
+            (it as? Facet.Compliance)?.let { c -> complianceLabel(c.value) }
+              .orEmpty()
+          },
           onRemoveFacet = { setFilter(taskFilter.toggleFacet(it)) },
         )
         RecordFilterControls(
           expanded = showFilterSheet,
           inline = LocalLayoutTier.current.hasSideNav,
           scopeLabel = if (showComplied) {
-            stringResource(SearchRes.string.filter_scope_completed, taskNoun.plural)
+            stringResource(
+              SearchRes.string.filter_scope_completed,
+              taskNoun.plural
+            )
           } else {
             stringResource(SearchRes.string.filter_scope_due, taskNoun.plural)
           },
@@ -250,7 +262,11 @@ fun MaintenanceTasksTab(
       },
       matchesFor = { tabState.matches[it.card.id].orEmpty() },
       noMatch = if (taskFilter.isActive) {
-        { NoRecordsMatch(nounPlural = taskNoun.plural, onClearFilters = { tabViewModel.clearFilter() }) }
+        {
+          NoRecordsMatch(
+            nounPlural = taskNoun.plural,
+            onClearFilters = { tabViewModel.clearFilter() })
+        }
       } else null,
       revealController = revealController,
       quickActionsFor = { item ->
@@ -286,14 +302,8 @@ fun MaintenanceTasksTab(
     Spacer(Modifier.height(Spacing.buttonHeight + Spacing.screenPadding))
   }
 
-  // At tab level, not inside the card, so the dialog is not clipped by the swipe container.
-  // ThingSectionContent renders the delete confirmation from `deletingTaskId`.
-  if (state.skippingTaskId != null) {
-    SkipTaskConfirmDialog(
-      onConfirm = { onAction(ThingOverviewAction.ConfirmSkipTask) },
-      onDismiss = { onAction(ThingOverviewAction.CancelSkipTask) },
-    )
-  }
+  // ThingSectionContent renders the skip and delete confirmations, so neither is clipped by the
+  // swipe container.
 }
 
 private val COMPLIANCE_OPTIONS = listOf(

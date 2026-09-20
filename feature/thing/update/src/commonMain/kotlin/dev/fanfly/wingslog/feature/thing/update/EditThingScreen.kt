@@ -1,16 +1,5 @@
 package dev.fanfly.wingslog.feature.thing.update
 
-import androidx.compose.runtime.CompositionLocalProvider
-import dev.fanfly.wingslog.core.template.CurrentThingTemplate
-import dev.fanfly.wingslog.core.template.LocalThingCapabilities
-import dev.fanfly.wingslog.core.template.LocalThingTemplate
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.Icon
-import dev.fanfly.wingslog.core.ui.adaptive.thingIcon
-import dev.fanfly.wingslog.core.ui.common.compose.AlertDialog
-import dev.fanfly.wingslog.thing.ThingTemplate
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,10 +15,12 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -43,13 +34,18 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import dev.fanfly.wingslog.core.nav.Screen
+import dev.fanfly.wingslog.core.template.CurrentThingTemplate
 import dev.fanfly.wingslog.core.template.LexiconFormatter
+import dev.fanfly.wingslog.core.template.LocalThingCapabilities
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
+import dev.fanfly.wingslog.core.template.LocalThingTemplate
 import dev.fanfly.wingslog.core.template.thingNoun
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ConstrainedTopBar
 import dev.fanfly.wingslog.core.ui.adaptive.compose.ContentWidth
 import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
+import dev.fanfly.wingslog.core.ui.common.compose.AlertDialog
 import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
+import dev.fanfly.wingslog.core.ui.common.compose.DangerZone
 import dev.fanfly.wingslog.core.ui.common.compose.UnsavedChangesDialog
 import dev.fanfly.wingslog.core.ui.common.compose.WingsLogTopAppBar
 import dev.fanfly.wingslog.core.ui.theme.Spacing
@@ -67,6 +63,8 @@ import wingslog.feature.thing.update.generated.resources.delete_thing
 import wingslog.feature.thing.update.generated.resources.delete_thing_member_plural
 import wingslog.feature.thing.update.generated.resources.delete_thing_member_singular
 import wingslog.feature.thing.update.generated.resources.delete_thing_shared_warning
+import wingslog.feature.thing.update.generated.resources.delete_this_thing_subtitle
+import wingslog.feature.thing.update.generated.resources.delete_this_thing_title
 import wingslog.feature.thing.update.generated.resources.update_thing
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.logs.sharedassets.generated.resources.Res as SharedRes
@@ -127,6 +125,7 @@ fun EditThingScreen(
         navController.navigate(Screen.StarterPack.createRoute(packThingId)) {
           popUpTo(Screen.AddThing.route) { inclusive = true }
         }
+
       uiState.isSaved -> navController.popBackStack()
     }
   }
@@ -188,84 +187,100 @@ fun EditThingScreen(
   CompositionLocalProvider(
     LocalThingLexicon provides uiState.lexicon,
     LocalThingTemplate provides uiState.template,
-    LocalThingCapabilities provides (uiState.template?.capabilities ?: CurrentThingTemplate.ALL_ENABLED),
+    LocalThingCapabilities provides (uiState.template?.capabilities
+      ?: CurrentThingTemplate.ALL_ENABLED),
   ) {
-  Scaffold(
-    modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-    topBar = {
-      ConstrainedTopBar(ContentWidth.Form) {
-        WingsLogTopAppBar(
-          title = if (uiState.thing.id == "") stringResource(
-            CoreRes.string.add_thing,
-            LexiconFormatter.titleCase(LocalThingLexicon.current.thingNoun),
+    Scaffold(
+      modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+      topBar = {
+        ConstrainedTopBar(ContentWidth.Form) {
+          WingsLogTopAppBar(
+            title = if (uiState.thing.id == "") stringResource(
+              CoreRes.string.add_thing,
+              LexiconFormatter.titleCase(LocalThingLexicon.current.thingNoun),
+            )
+            else stringResource(
+              ThingRes.string.update_thing,
+              LexiconFormatter.titleCase(LocalThingLexicon.current.thingNoun),
+            ),
+            onBackClick = { tryNavigateBack() },
+            scrollBehavior = scrollBehavior,
           )
-          else stringResource(
-            ThingRes.string.update_thing,
-            LexiconFormatter.titleCase(LocalThingLexicon.current.thingNoun),
-          ),
-          onBackClick = { tryNavigateBack() },
-          scrollBehavior = scrollBehavior,
-        )
+        }
       }
-    }
-  ) { innerPadding ->
-    Box(
-      modifier = Modifier.fillMaxSize()
-        .padding(innerPadding),
-      contentAlignment = Alignment.TopCenter,
-    ) {
-      Column(
-        modifier = Modifier
-          .fillMaxHeight()
-          .constrainedContentWidth(ContentWidth.Form)
-          .imePadding()
-          .verticalScroll(scrollState)
-          .padding(
-            horizontal = Spacing.screenPadding,
-            vertical = Spacing.extraLarge
-          ),
-        verticalArrangement = Arrangement.spacedBy(Spacing.extraLarge)
+    ) { innerPadding ->
+      Box(
+        modifier = Modifier.fillMaxSize()
+          .padding(innerPadding),
+        contentAlignment = Alignment.TopCenter,
       ) {
-        // Identity, then the component tree — both from what the template declares (#729). The
-        // fixed AIRFRAME and ENGINE headings went with the airplane-shaped sections: a heading
-        // naming one preset's slots is the same bug as a field naming them.
-        SpecFieldsSection(
-          uiState.thing,
-          viewModel,
-          uiState.showValidationErrors,
-        )
-        ComponentTreeSection(
-          uiState.thing,
-          viewModel,
-          uiState.showValidationErrors,
-        )
-        // Last: what the template declares comes before what the user invents.
-        CustomFieldsSection(uiState.thing, viewModel)
+        Column(
+          modifier = Modifier
+            .fillMaxHeight()
+            .constrainedContentWidth(ContentWidth.Form)
+            .imePadding()
+            .verticalScroll(scrollState)
+            .padding(
+              horizontal = Spacing.screenPadding,
+              vertical = Spacing.extraLarge
+            ),
+          verticalArrangement = Arrangement.spacedBy(Spacing.extraLarge)
+        ) {
+          // Identity, then the component tree — both from what the template declares (#729). The
+          // fixed AIRFRAME and ENGINE headings went with the airplane-shaped sections: a heading
+          // naming one preset's slots is the same bug as a field naming them.
+          SpecFieldsSection(
+            uiState.thing,
+            viewModel,
+            uiState.showValidationErrors,
+          )
+          ComponentTreeSection(
+            uiState.thing,
+            viewModel,
+            uiState.showValidationErrors,
+          )
+          // Last: what the template declares comes before what the user invents.
+          CustomFieldsSection(uiState.thing, viewModel)
 
-        Spacer(Modifier.height(Spacing.buttonHeight + Spacing.huge))
+          // Delete is the hosting owner's alone — a co-owner holds the same OWNER role but deleting
+          // would tear the share down for everyone, and the rules reject their tombstone anyway.
+          if (uiState.canDelete) {
+            DangerZone(
+              title = stringResource(
+                ThingRes.string.delete_this_thing_title,
+                LocalThingLexicon.current.thingNoun.singular,
+              ),
+              subtitle = stringResource(ThingRes.string.delete_this_thing_subtitle),
+              onDelete = { showDeleteDialog = true },
+            )
+          }
+
+          // The bar floats over this column, so the last field has to be able to scroll clear of it.
+          Spacer(Modifier.height(Spacing.buttonHeight + Spacing.huge))
+        }
+        // Opaque: a transparent bar let the last fields show through between the buttons. A Surface,
+        // not a background modifier, so it picks up the same tonal tint as the dialog it sits in.
+        Surface(
+          modifier = Modifier.align(Alignment.BottomCenter),
+          color = MaterialTheme.colorScheme.background,
+        ) {
+          BottomButtons(
+            primaryEnabled = !uiState.isLoading,
+            onPrimaryClick = { viewModel.saveThing() },
+            onSecondaryClick = { tryNavigateBack() },
+            primaryLabel = if (uiState.thing.id == "")
+              stringResource(
+                CoreRes.string.add_thing,
+                LexiconFormatter.titleCase(LocalThingLexicon.current.thingNoun),
+              )
+            else
+              stringResource(
+                ThingRes.string.update_thing,
+                LexiconFormatter.titleCase(LocalThingLexicon.current.thingNoun),
+              )
+          )
+        }
       }
-      BottomButtons(
-        modifier = Modifier.align(Alignment.BottomCenter),
-        primaryEnabled = !uiState.isLoading,
-        onPrimaryClick = { viewModel.saveThing() },
-        onSecondaryClick = { tryNavigateBack() },
-        // Delete is the hosting owner's alone — a co-owner holds the same OWNER role but deleting
-        // would tear the share down for everyone, and the rules reject their tombstone anyway.
-        onDangerClick = if (uiState.canDelete) {
-          { showDeleteDialog = true }
-        } else null,
-        primaryLabel = if (uiState.thing.id == "")
-          stringResource(
-            CoreRes.string.add_thing,
-            LexiconFormatter.titleCase(LocalThingLexicon.current.thingNoun),
-          )
-        else
-          stringResource(
-            ThingRes.string.update_thing,
-            LexiconFormatter.titleCase(LocalThingLexicon.current.thingNoun),
-          )
-      )
     }
-  }
   }
 }

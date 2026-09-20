@@ -54,8 +54,6 @@ fun AddSquawkRoute(
           navController.popBackStack()
         }
 
-        is SquawkFormEvent.NavigateToCreateLog -> Unit
-
         is SquawkFormEvent.PickError -> snackbarHostState.showSnackbar(
           fileReadErrorMessage
         )
@@ -83,13 +81,6 @@ fun AddSquawkRoute(
     onClearLog = viewModel::clearLog,
     onSelectLog = viewModel::selectLog,
     onHideLogPicker = viewModel::hideLogPicker,
-    onResolveClick = {},
-    onResolveMenuDismiss = {},
-    onSelectDismissNoWorkPlanned = {},
-    onFixedClick = {},
-    onDismissDialogDismiss = {},
-    onDismissConfirm = {},
-    onReopenClick = {},
     onDeleteClick = {},
     onDeleteConfirm = {},
     onDeleteDialogDismiss = {},

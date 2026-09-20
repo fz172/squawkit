@@ -51,7 +51,6 @@ fun AddTaskRoute(
         )
         // The Resolve menu (and its Create Work Log option) only exists on the edit screen —
         // there's no card yet to resolve while adding one.
-        is TaskFormEvent.NavigateToCreateLog -> Unit
       }
     }
   }

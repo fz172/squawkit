@@ -3,6 +3,7 @@ package dev.fanfly.wingslog.feature.tasks.viewing
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -27,6 +28,7 @@ import dev.fanfly.wingslog.core.template.logNoun
 import dev.fanfly.wingslog.core.template.meter
 import dev.fanfly.wingslog.core.template.taskNoun
 import dev.fanfly.wingslog.core.ui.common.compose.DetailSheet
+import dev.fanfly.wingslog.core.ui.common.compose.DetailSheetAction
 import dev.fanfly.wingslog.core.ui.common.compose.StatusChip
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.StatusTier
@@ -34,11 +36,11 @@ import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.core.ui.theme.statusColors
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
 import dev.fanfly.wingslog.feature.attachment.model.DataLogRowInfo
-import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.feature.attachment.viewing.AttachmentSection
 import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
 import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
+import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.thing.Attachment
 import dev.fanfly.wingslog.thing.ComplianceType
 import dev.fanfly.wingslog.thing.MaintenanceLog
@@ -48,7 +50,9 @@ import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.tasks.sharedassets.generated.resources.compliance_type_ad_short
 import wingslog.feature.tasks.sharedassets.generated.resources.compliance_type_sb_short
+import wingslog.feature.tasks.sharedassets.generated.resources.create_work_log
 import wingslog.feature.tasks.sharedassets.generated.resources.edit_task
+import wingslog.feature.tasks.sharedassets.generated.resources.skip_this_cycle_option
 import wingslog.feature.tasks.sharedassets.generated.resources.unknown_date
 import wingslog.feature.tasks.viewing.generated.resources.authority_reference_number
 import wingslog.feature.tasks.viewing.generated.resources.badge_overdue
@@ -77,6 +81,13 @@ fun TaskDetailSheet(
   syncStates: Map<String, BlobSyncState> = emptyMap(),
   dataLogs: Map<DataLogId, DataLogRowInfo>? = null,
   openError: String? = null,
+  /**
+   * Advancing the schedule. Not "Resolve": a task has no end state, only a next due date, so the
+   * primary action is logging the work — with Skip beside it, or the cycle could not be advanced
+   * without a log for work that never happened. Both null for a caller who may not change it.
+   */
+  onLogWorkClick: (() -> Unit)? = null,
+  onSkipCycleClick: (() -> Unit)? = null,
   modifier: Modifier = Modifier,
 ) {
   val card = cardWithStatus.card
@@ -190,6 +201,30 @@ fun TaskDetailSheet(
 
     // Due date hero
     DueDateHero(dueStatus)
+
+    if (
+      onLogWorkClick != null && onSkipCycleClick != null && dueStatus.status != DueStatus.COMPLIED
+    ) {
+      Row(
+        modifier = Modifier.padding(top = Spacing.small),
+        horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
+      ) {
+        DetailSheetAction(
+          label = stringResource(SharedRes.string.skip_this_cycle_option),
+          onClick = onSkipCycleClick,
+          primary = false,
+          modifier = Modifier.weight(1f),
+        )
+        DetailSheetAction(
+          label = stringResource(
+            SharedRes.string.create_work_log,
+            LocalThingLexicon.current.logNoun.singular,
+          ),
+          onClick = onLogWorkClick,
+          modifier = Modifier.weight(1f),
+        )
+      }
+    }
 
     Spacer(Modifier.height(Spacing.large))
 

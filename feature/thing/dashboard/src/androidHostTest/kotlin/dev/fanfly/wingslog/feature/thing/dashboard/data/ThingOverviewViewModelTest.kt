@@ -7,15 +7,13 @@ import dev.fanfly.wingslog.core.storage.ThingScopeResolver
 import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
 import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
 import dev.fanfly.wingslog.core.ui.common.UiText
-import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
-import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogManager
 import dev.fanfly.wingslog.datalog.DataLog
 import dev.fanfly.wingslog.datalog.DataLogSource
+import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentManager
+import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
 import dev.fanfly.wingslog.feature.attachment.model.DataLogRowInfo
-import dev.fanfly.wingslog.id.DataLogId
-import dev.fanfly.wingslog.id.ThingId
-import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
+import dev.fanfly.wingslog.feature.datalog.datamanager.DataLogManager
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.logs.datamanager.MaintenanceLogManager
 import dev.fanfly.wingslog.feature.sharing.datamanager.SharingManager
@@ -26,6 +24,8 @@ import dev.fanfly.wingslog.feature.tasks.datamanager.TaskStatusManager
 import dev.fanfly.wingslog.feature.tasks.model.DueMetadata
 import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
+import dev.fanfly.wingslog.id.DataLogId
+import dev.fanfly.wingslog.id.ThingId
 import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.MaintenanceTask
 import dev.fanfly.wingslog.thing.Squawk
@@ -49,6 +49,7 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import wingslog.core.sharedassets.generated.resources.delete_failed
+import wingslog.core.sharedassets.generated.resources.save_failed
 import wingslog.feature.squawk.sharedassets.generated.resources.squawk_deleted
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.squawk.sharedassets.generated.resources.Res as SquawkRes
@@ -95,10 +96,16 @@ class ThingOverviewViewModelTest {
     Dispatchers.setMain(UnconfinedTestDispatcher())
     every { fleetManager.loadThing(THING_ID) } returns flowOf(thing)
     every { logManager.observeLogs(THING_ID) } returns flowOf(emptyList())
-    every { logManager.observeMaintenanceOverview(THING_ID) } returns flowOf(null)
+    every { logManager.observeMaintenanceOverview(THING_ID) } returns flowOf(
+      null
+    )
     every { taskStatusManager.observeTasksWithStatus(THING_ID) } returns
       flowOf(listOf(dueOilChange))
-    every { squawkManager.observeSquawks(THING_ID) } returns flowOf(listOf(squawk))
+    every { squawkManager.observeSquawks(THING_ID) } returns flowOf(
+      listOf(
+        squawk
+      )
+    )
     every { thingScopeResolver.resolve(THING_ID) } returns flowOf(null)
     every { attachmentOpener.downloadingIds } returns MutableStateFlow(emptySet())
     every { sharingManager.observeMyRole(THING_ID) } returns flowOf(ShareRole.OWNER)
@@ -110,9 +117,20 @@ class ThingOverviewViewModelTest {
   fun tearDown() = Dispatchers.resetMain()
 
   private fun viewModel() = ThingOverviewViewModel(
-    fleetManager, logManager, taskDataManager, taskStatusManager, attachmentOpener,
-    attachmentManager, dataLogManager, squawkManager, sharingManager, thingScopeResolver,
-    BakedInTemplateRegistry(appVersionCode = APP_VERSION_CODE), analytics, auth, THING_ID,
+    fleetManager,
+    logManager,
+    taskDataManager,
+    taskStatusManager,
+    attachmentOpener,
+    attachmentManager,
+    dataLogManager,
+    squawkManager,
+    sharingManager,
+    thingScopeResolver,
+    BakedInTemplateRegistry(appVersionCode = APP_VERSION_CODE),
+    analytics,
+    auth,
+    THING_ID,
   )
 
   private val ThingOverviewViewModel.success: ThingOverviewUiState.Success
@@ -123,12 +141,26 @@ class ThingOverviewViewModelTest {
     val typedThingId = ThingId(THING_ID)
     every { dataLogManager.observe(typedThingId) } returns flowOf(
       listOf(
-        DataLog(id = DataLogId("dl-1"), duration_seconds = 255, source = DataLogSource(product = "GDU 460")),
+        DataLog(
+          id = DataLogId("dl-1"),
+          duration_seconds = 255,
+          source = DataLogSource(product = "GDU 460")
+        ),
         DataLog(id = DataLogId("dl-2"), duration_seconds = 60),
       )
     )
-    every { dataLogManager.observeBlobState(typedThingId, DataLogId("dl-1")) } returns flowOf(BlobSyncState.Synced)
-    every { dataLogManager.observeBlobState(typedThingId, DataLogId("dl-2")) } returns flowOf(BlobSyncState.RemoteOnly)
+    every {
+      dataLogManager.observeBlobState(
+        typedThingId,
+        DataLogId("dl-1")
+      )
+    } returns flowOf(BlobSyncState.Synced)
+    every {
+      dataLogManager.observeBlobState(
+        typedThingId,
+        DataLogId("dl-2")
+      )
+    } returns flowOf(BlobSyncState.RemoteOnly)
 
     val dataLogs = viewModel().success.dataLogs
 
@@ -144,25 +176,31 @@ class ThingOverviewViewModelTest {
   }
 
   @Test
-  fun confirmDeleteSquawk_deletesThroughTheManager_clearsTheIdsAndSaysSo() = runTest {
-    coEvery { squawkManager.deleteSquawk(THING_ID, "s1") } returns Result.success(true)
-    val vm = viewModel()
-    vm.onAction(ThingOverviewAction.ShowSquawkDetail(vm.success.squawks.first()))
-    vm.onAction(ThingOverviewAction.DeleteSquawkClick(vm.success.squawks.first()))
-    assertThat(vm.success.deletingSquawkId).isEqualTo("s1")
-
-    vm.onAction(ThingOverviewAction.ConfirmDeleteSquawk)
-
-    coVerify(exactly = 1) { squawkManager.deleteSquawk(THING_ID, "s1") }
-    assertThat(vm.success.deletingSquawkId).isNull()
-    assertThat(vm.success.selectedSquawk).isNull()
-    assertThat(vm.events.first())
-      .isEqualTo(
-        ThingOverviewEvent.ShowMessage(
-          UiText.StringRes(SquawkRes.string.squawk_deleted, listOf("Squawk"))
+  fun confirmDeleteSquawk_deletesThroughTheManager_clearsTheIdsAndSaysSo() =
+    runTest {
+      coEvery {
+        squawkManager.deleteSquawk(
+          THING_ID,
+          "s1"
         )
-      )
-  }
+      } returns Result.success(true)
+      val vm = viewModel()
+      vm.onAction(ThingOverviewAction.ShowSquawkDetail(vm.success.squawks.first()))
+      vm.onAction(ThingOverviewAction.DeleteSquawkClick(vm.success.squawks.first()))
+      assertThat(vm.success.deletingSquawkId).isEqualTo("s1")
+
+      vm.onAction(ThingOverviewAction.ConfirmDeleteSquawk)
+
+      coVerify(exactly = 1) { squawkManager.deleteSquawk(THING_ID, "s1") }
+      assertThat(vm.success.deletingSquawkId).isNull()
+      assertThat(vm.success.selectedSquawk).isNull()
+      assertThat(vm.events.first())
+        .isEqualTo(
+          ThingOverviewEvent.ShowMessage(
+            UiText.StringRes(SquawkRes.string.squawk_deleted, listOf("Squawk"))
+          )
+        )
+    }
 
   @Test
   fun deleteSquawkFailure_keepsTheCardAndReportsIt() = runTest {
@@ -183,7 +221,11 @@ class ThingOverviewViewModelTest {
   @Test
   fun confirmDismissSquawk_passesTheChosenReason() = runTest {
     coEvery {
-      squawkManager.dismissSquawk(THING_ID, "s1", SquawkDismissReason.SQUAWK_DISMISS_REASON_DUPLICATE)
+      squawkManager.dismissSquawk(
+        THING_ID,
+        "s1",
+        SquawkDismissReason.SQUAWK_DISMISS_REASON_DUPLICATE
+      )
     } returns Result.success(Unit)
     val vm = viewModel()
     vm.onAction(ThingOverviewAction.SquawkDismissClick("s1"))
@@ -195,9 +237,40 @@ class ThingOverviewViewModelTest {
     )
 
     coVerify(exactly = 1) {
-      squawkManager.dismissSquawk(THING_ID, "s1", SquawkDismissReason.SQUAWK_DISMISS_REASON_DUPLICATE)
+      squawkManager.dismissSquawk(
+        THING_ID,
+        "s1",
+        SquawkDismissReason.SQUAWK_DISMISS_REASON_DUPLICATE
+      )
     }
     assertThat(vm.success.dismissingSquawkId).isNull()
+  }
+
+  @Test
+  fun squawkReopenClick_reopensThroughTheManager() = runTest {
+    coEvery {
+      squawkManager.reopenSquawk(
+        THING_ID,
+        "s1"
+      )
+    } returns Result.success(Unit)
+    val vm = viewModel()
+
+    vm.onAction(ThingOverviewAction.SquawkReopenClick("s1"))
+
+    coVerify(exactly = 1) { squawkManager.reopenSquawk(THING_ID, "s1") }
+  }
+
+  @Test
+  fun squawkReopenClick_failing_saysSo() = runTest {
+    coEvery { squawkManager.reopenSquawk(THING_ID, "s1") } returns
+      Result.failure(IllegalStateException("offline"))
+    val vm = viewModel()
+
+    vm.onAction(ThingOverviewAction.SquawkReopenClick("s1"))
+
+    assertThat(vm.events.first())
+      .isEqualTo(ThingOverviewEvent.ShowMessage(UiText.StringRes(CoreRes.string.save_failed)))
   }
 
   @Test
@@ -217,7 +290,13 @@ class ThingOverviewViewModelTest {
   fun confirmSkipTask_skipsAgainstTheDashboardsCurrentReading() = runTest {
     // The dashboard already holds the reading TaskViewModel derives; the write must be the same.
     every { logManager.observeLogs(THING_ID) } returns flowOf(emptyList())
-    coEvery { taskDataManager.skipCycle(THING_ID, oilChange, any()) } returns Result.success(true)
+    coEvery {
+      taskDataManager.skipCycle(
+        THING_ID,
+        oilChange,
+        any()
+      )
+    } returns Result.success(true)
     val vm = viewModel()
     vm.onAction(ThingOverviewAction.TaskSkipClick(dueOilChange))
     assertThat(vm.success.skippingTaskId).isEqualTo("c1")
@@ -226,13 +305,21 @@ class ThingOverviewViewModelTest {
 
     coVerify(exactly = 1) { taskDataManager.skipCycle(THING_ID, oilChange, 0f) }
     assertThat(vm.success.skippingTaskId).isNull()
-    assertThat(analytics.paramsFor("record_quick_action").single())
+    assertThat(
+      analytics.paramsFor("record_quick_action")
+        .single()
+    )
       .containsAtLeast("surface", "tasks", "action", "skip")
   }
 
   @Test
   fun confirmDeleteTask_deletesThroughTheManager() = runTest {
-    coEvery { taskDataManager.deleteTask(THING_ID, "c1") } returns Result.success(true)
+    coEvery {
+      taskDataManager.deleteTask(
+        THING_ID,
+        "c1"
+      )
+    } returns Result.success(true)
     val vm = viewModel()
     vm.onAction(ThingOverviewAction.DeleteTaskClick(dueOilChange))
     assertThat(vm.success.deletingTaskId).isEqualTo("c1")
@@ -252,7 +339,17 @@ class ThingOverviewViewModelTest {
     vm.onAction(ThingOverviewAction.SquawkFixedClick("s1"))
 
     assertThat(vm.success.resolvingSquawkId).isNull()
-    assertThat(analytics.paramsFor("record_quick_action").single())
-      .containsAtLeast("surface", "squawks", "action", "resolve", "source", "swipe")
+    assertThat(
+      analytics.paramsFor("record_quick_action")
+        .single()
+    )
+      .containsAtLeast(
+        "surface",
+        "squawks",
+        "action",
+        "resolve",
+        "source",
+        "swipe"
+      )
   }
 }

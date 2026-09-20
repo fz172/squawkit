@@ -49,7 +49,6 @@ import dev.fanfly.wingslog.core.ui.common.compose.BottomButtons
 import dev.fanfly.wingslog.core.ui.common.compose.DatePickerDialog
 import dev.fanfly.wingslog.core.ui.common.compose.UnsavedChangesDialog
 import dev.fanfly.wingslog.core.ui.theme.Spacing
-import dev.fanfly.wingslog.core.ui.theme.statusColors
 import dev.fanfly.wingslog.feature.logs.sharedassets.compose.LogPickerSheet
 import dev.fanfly.wingslog.feature.tasks.datamanager.meterKeyFor
 import dev.fanfly.wingslog.feature.tasks.datamanager.pickerMillisToDate
@@ -68,8 +67,6 @@ import dev.fanfly.wingslog.feature.tasks.update.compose.spec
 import dev.fanfly.wingslog.feature.tasks.update.compose.taskFormTabsFor
 import dev.fanfly.wingslog.feature.tasks.update.viewmodel.TaskFormState
 import dev.fanfly.wingslog.feature.tasks.viewing.DeleteTaskConfirmDialog
-import dev.fanfly.wingslog.feature.tasks.viewing.ResolveTaskOptionsMenu
-import dev.fanfly.wingslog.feature.tasks.viewing.SkipTaskConfirmDialog
 import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.thing.MaintenanceTask
 import kotlinx.coroutines.flow.drop
@@ -78,13 +75,10 @@ import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.back
 import wingslog.core.sharedassets.generated.resources.ok
 import wingslog.feature.tasks.sharedassets.generated.resources.edit_task
-import wingslog.feature.tasks.update.generated.resources.Res
-import wingslog.feature.tasks.update.generated.resources.resolve_task
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedTaskRes
 
 /** The Resolve-menu options that leave the screen, and so have to pass the unsaved-changes gate. */
-private enum class ResolveAction { CreateWorkLog, Skip }
 
 @OptIn(
   ExperimentalMaterial3Api::class,
@@ -111,10 +105,6 @@ fun EditTaskScreen(
   onSave: (MaintenanceTask) -> Unit,
   onCancel: () -> Unit,
   onDeleteRequest: (String) -> Unit,
-  onResolveClick: () -> Unit,
-  onResolveMenuDismiss: () -> Unit,
-  onCreateWorkLogClick: () -> Unit,
-  onSkipConfirm: () -> Unit,
   isSaving: Boolean = false,
   showLogPicker: Boolean = false,
   onShowLogPicker: () -> Unit = {},
@@ -131,33 +121,11 @@ fun EditTaskScreen(
 ) {
   var showDatePicker by remember { mutableStateOf(false) }
   var showDeleteConfirm by remember { mutableStateOf(false) }
-  var showSkipConfirm by remember { mutableStateOf(false) }
   var showUnsavedChangesDialog by remember { mutableStateOf(false) }
-  // Set when the unsaved-changes prompt was raised by a Resolve option rather than by
-  // cancel/back, so discarding continues into that option instead of just leaving the screen.
-  var pendingResolveAction by remember { mutableStateOf<ResolveAction?>(null) }
-
   val hasChanges = state.hasChanges || hasCommentDraft || hasAttachmentChanges
 
   val tryCancel = {
     if (hasChanges) showUnsavedChangesDialog = true else onCancel()
-  }
-
-  // Both Resolve options persist against the card as last saved and then navigate away, so
-  // pending form edits would be dropped silently — prompt for them the same way back does.
-  val runResolveAction = { action: ResolveAction ->
-    when (action) {
-      ResolveAction.CreateWorkLog -> onCreateWorkLogClick()
-      ResolveAction.Skip -> showSkipConfirm = true
-    }
-  }
-  val tryResolveAction = { action: ResolveAction ->
-    if (hasChanges) {
-      pendingResolveAction = action
-      showUnsavedChangesDialog = true
-    } else {
-      runResolveAction(action)
-    }
   }
 
   BackHandler(enabled = hasChanges) {
@@ -169,14 +137,9 @@ fun EditTaskScreen(
     UnsavedChangesDialog(
       onConfirm = {
         showUnsavedChangesDialog = false
-        val pending = pendingResolveAction
-        pendingResolveAction = null
-        if (pending != null) runResolveAction(pending) else onCancel()
+        onCancel()
       },
-      onDismiss = {
-        showUnsavedChangesDialog = false
-        pendingResolveAction = null
-      },
+      onDismiss = { showUnsavedChangesDialog = false },
     )
   }
 
@@ -378,24 +341,6 @@ fun EditTaskScreen(
       BottomButtons(
         onPrimaryClick = { onSave(buildDraft()) },
         onSecondaryClick = { tryCancel() },
-        onDangerClick = onResolveClick,
-        dangerLabel = stringResource(Res.string.resolve_task),
-        // Resolving is the good outcome, not a destructive one: the same green the squawk form uses.
-        dangerColor = MaterialTheme.statusColors.positive.accent,
-        dangerMenuContent = {
-          ResolveTaskOptionsMenu(
-            expanded = state.showResolveMenu,
-            onDismissRequest = onResolveMenuDismiss,
-            onCreateWorkLog = {
-              onResolveMenuDismiss()
-              tryResolveAction(ResolveAction.CreateWorkLog)
-            },
-            onSkipThisCycle = {
-              onResolveMenuDismiss()
-              tryResolveAction(ResolveAction.Skip)
-            },
-          )
-        },
         primaryEnabled = state.title.isNotBlank(),
         isPrimaryFunctionInProgress = isSaving
       )
@@ -410,15 +355,6 @@ fun EditTaskScreen(
         onDeleteRequest(card.id)
       },
       onDismiss = { showDeleteConfirm = false })
-  }
-
-  if (showSkipConfirm) {
-    SkipTaskConfirmDialog(
-      onConfirm = {
-        showSkipConfirm = false
-        onSkipConfirm()
-      },
-      onDismiss = { showSkipConfirm = false })
   }
 
   if (showLogPicker) {

@@ -574,8 +574,8 @@ feature/squawk/sharedassets	squawk_title_required	Issue summary is required
 feature/squawk/sharedassets	squawk_updated	Squawk updated
 feature/squawk/sharedassets	view_squawks	View Squawks
 feature/squawk/sharedassets	work_history	Work history
-feature/squawk/update	reopen_issue	Reopen issue
-feature/squawk/update	resolve_issue	Resolve
+feature/squawk/sharedassets	reopen_issue	Reopen issue
+feature/squawk/sharedassets	resolve_issue	Resolve
 feature/squawk/update	squawk_tab_details	Details
 feature/stresstest	stress_test_complete	Generation complete
 feature/stresstest	stress_test_config_blades_per_engine	Blades per engine
@@ -775,7 +775,6 @@ feature/tasks/update	no_tasks_configured	No tasks configured. Add them from the 
 feature/tasks/update	reference_and_component	%1$s • %2$s
 feature/tasks/update	reference_number	Reference number
 feature/tasks/update	reference_number_hint	e.g. SB-001
-feature/tasks/update	resolve_task	Resolve
 feature/tasks/update	schedule	Schedule
 feature/tasks/update	schedule_pick_linked_task	Pick a task to link
 feature/tasks/update	schedule_prefix_every	Every
@@ -1099,3 +1098,7 @@ feature/datalog/sharedassets	data_log_viewer_load_failed	This file could not be 
 feature/datalog/sharedassets	data_log_viewer_missing	This data log was deleted.
 feature/datalog/sharedassets	data_log_viewer_reset	Reset
 feature/datalog/sharedassets	data_log_viewer_utc_offset	%1$s local (%2$s)
+feature/logs/update	delete_this_log_subtitle	Permanently removes it. This cannot be undone.
+feature/logs/update	delete_this_log_title	Delete this %1$s
+feature/thing/update	delete_this_thing_subtitle	Permanently removes it and every record filed under it.
+feature/thing/update	delete_this_thing_title	Delete this %1$s

@@ -35,7 +35,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -261,106 +260,14 @@ class TaskViewModelTest {
 
   // ---- resolve menu (Create Work Log / Skip This Cycle) ----
 
-  @Test
-  fun showResolveMenu_and_hideResolveMenu_toggleFormState() =
-    runTest(testDispatcher) {
-      val viewModel = buildViewModelForEdit()
-      advanceUntilIdle()
-
-      viewModel.showResolveMenu()
-      assertThat(viewModel.formState.value.showResolveMenu).isTrue()
-
-      viewModel.hideResolveMenu()
-      assertThat(viewModel.formState.value.showResolveMenu).isFalse()
-    }
-
-  @Test
-  fun selectCreateWorkLog_sendsNavigateToCreateLogEvent() =
-    runTest(testDispatcher) {
-      val viewModel = buildViewModelForEdit()
-      advanceUntilIdle()
-      val events = mutableListOf<TaskFormEvent>()
-      val collectJob = launch { viewModel.events.collect { events.add(it) } }
-      advanceUntilIdle()
-
-      viewModel.showResolveMenu()
-      viewModel.selectCreateWorkLog()
-      advanceUntilIdle()
-
-      assertThat(events).containsExactly(
-        TaskFormEvent.NavigateToCreateLog(TEST_THING_ID, TEST_CARD_ID)
-      )
-      assertThat(viewModel.formState.value.showResolveMenu).isFalse()
-      collectJob.cancel()
-    }
-
   /**
    * Guards against a double-tap queueing two navigations. The screen may raise an
    * unsaved-changes prompt between the tap and this call, so the guard can't key off the menu
    * still being open.
    */
-  @Test
-  fun selectCreateWorkLog_sendsOnlyOneEvent_whenInvokedTwice() =
-    runTest(testDispatcher) {
-      val viewModel = buildViewModelForEdit()
-      advanceUntilIdle()
-      val events = mutableListOf<TaskFormEvent>()
-      val collectJob = launch { viewModel.events.collect { events.add(it) } }
-      advanceUntilIdle()
-
-      viewModel.selectCreateWorkLog()
-      viewModel.selectCreateWorkLog()
-      advanceUntilIdle()
-
-      assertThat(events).hasSize(1)
-      collectJob.cancel()
-    }
 
   /** The skip write lives in TaskDataManager.skipCycle (shared with the dashboard); the form only
    * closes the menu, forwards the reading, and reports success. */
-  @Test
-  fun skipThisCycle_delegatesToSkipCycle_closesMenu_andInvokesOnSuccess() =
-    runTest(testDispatcher) {
-      val card = MaintenanceTask(id = TEST_CARD_ID, title = "Oil change")
-      coEvery {
-        inspectionDataManager.skipCycle(TEST_THING_ID, card, 42f)
-      } returns Result.success(true)
-      val viewModel = buildViewModelForEdit()
-      advanceUntilIdle()
-      viewModel.showResolveMenu()
-      var succeeded = false
-
-      viewModel.skipThisCycle(
-        card = card,
-        currentEngineHours = 42f,
-        onSuccess = { succeeded = true },
-      )
-      advanceUntilIdle()
-
-      assertThat(succeeded).isTrue()
-      assertThat(viewModel.formState.value.showResolveMenu).isFalse()
-      coVerify { inspectionDataManager.skipCycle(TEST_THING_ID, card, 42f) }
-    }
-
-  @Test
-  fun skipThisCycle_doesNotInvokeOnSuccess_whenTheWriteFails() =
-    runTest(testDispatcher) {
-      val card = MaintenanceTask(id = TEST_CARD_ID, title = "Oil change")
-      coEvery {
-        inspectionDataManager.skipCycle(TEST_THING_ID, card, 42f)
-      } returns Result.failure(IllegalStateException("offline"))
-      val viewModel = buildViewModelForEdit()
-      advanceUntilIdle()
-      var succeeded = false
-
-      viewModel.skipThisCycle(
-        card = card,
-        currentEngineHours = 42f,
-        onSuccess = { succeeded = true })
-      advanceUntilIdle()
-
-      assertThat(succeeded).isFalse()
-    }
 
   // ---- preview banner due readings (#347) ----
 
