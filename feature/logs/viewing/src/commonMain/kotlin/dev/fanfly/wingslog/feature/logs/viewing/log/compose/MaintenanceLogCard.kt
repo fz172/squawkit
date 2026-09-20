@@ -1,6 +1,7 @@
 package dev.fanfly.wingslog.feature.logs.viewing.log.compose
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,7 +15,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -76,121 +76,117 @@ fun MaintenanceLogCard(
   // An entry in a list, not a card: the row sits on the list's own colour and a `ListRowDivider`
   // separates it from the next. Filled rather than transparent so the swipe controls behind it do
   // not show through. UI-12 gives this row the month headers and the meter gutter.
-  Surface(
-    onClick = onClick,
-    modifier = modifier.fillMaxWidth(),
-    color = MaterialTheme.colorScheme.surface,
+  Column(
+    modifier = modifier
+      .fillMaxWidth()
+      .background(MaterialTheme.colorScheme.surface)
+      .clickable(onClick = onClick)
+      .padding(
+        horizontal = Spacing.large,
+        vertical = Spacing.large
+      ),
+    verticalArrangement = Arrangement.spacedBy(Spacing.medium),
   ) {
-    Column(
-      modifier = Modifier
-        .fillMaxWidth()
-        .padding(
-          horizontal = Spacing.large,
-          vertical = Spacing.large
-        ),
-      verticalArrangement = Arrangement.spacedBy(Spacing.medium),
+    // Top row: component badge | tach hours + chevron
+    Row(
+      modifier = Modifier.fillMaxWidth(),
+      verticalAlignment = Alignment.CenterVertically,
     ) {
-      // Top row: component badge | tach hours + chevron
-      Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-      ) {
-        LogComponentBadge(log.component_type)
-        Spacer(Modifier.weight(1f))
-        if (primary != null) {
-          Text(
-            text = template.formatMeterValue(primary.first.key, primary.second),
-            style = WingslogTypography.dataSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-          )
-          Spacer(Modifier.width(Spacing.small))
-        }
-        Icon(
-          imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-          contentDescription = null,
-          tint = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-      }
-
-      // Work description — full text, no truncation
-      Text(
-        text = highlightWords(
-          log.work_description,
-          highlight,
-          searchHighlightStyle()
-        ),
-        style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onSurface,
-      )
-      matchNote?.let {
+      LogComponentBadge(log.component_type)
+      Spacer(Modifier.weight(1f))
+      if (primary != null) {
         Text(
-          text = it,
-          style = MaterialTheme.typography.labelSmall,
-          color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-      }
-
-      // Footer: date | task count + technician
-      Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-      ) {
-        Text(
-          text = dateStr,
+          text = template.formatMeterValue(primary.first.key, primary.second),
           style = WingslogTypography.dataSmall,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        Spacer(Modifier.weight(1f))
-        val taskCount = log.inspection_ids.size
-        val squawkCount = log.squawk_ids.size
-        if (taskCount > 0) {
-          val taskLabel =
-            if (taskCount == 1) stringResource(
-              MaintenanceRes.string.log_task_count_one,
-              LocalThingLexicon.current.taskNoun.singular,
-            )
-            else stringResource(
-              MaintenanceRes.string.log_task_count_plural,
-              taskCount,
-              LocalThingLexicon.current.taskNoun.plural,
-            )
-          Text(
-            text = taskLabel,
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.primary,
+        Spacer(Modifier.width(Spacing.small))
+      }
+      Icon(
+        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+        contentDescription = null,
+        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+      )
+    }
+
+    // Work description — full text, no truncation
+    Text(
+      text = highlightWords(
+        log.work_description,
+        highlight,
+        searchHighlightStyle()
+      ),
+      style = MaterialTheme.typography.bodyMedium,
+      color = MaterialTheme.colorScheme.onSurface,
+    )
+    matchNote?.let {
+      Text(
+        text = it,
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+      )
+    }
+
+    // Footer: date | task count + technician
+    Row(
+      modifier = Modifier.fillMaxWidth(),
+      verticalAlignment = Alignment.CenterVertically,
+    ) {
+      Text(
+        text = dateStr,
+        style = WingslogTypography.dataSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+      )
+      Spacer(Modifier.weight(1f))
+      val taskCount = log.inspection_ids.size
+      val squawkCount = log.squawk_ids.size
+      if (taskCount > 0) {
+        val taskLabel =
+          if (taskCount == 1) stringResource(
+            MaintenanceRes.string.log_task_count_one,
+            LocalThingLexicon.current.taskNoun.singular,
           )
-        }
-        if (squawkCount > 0) {
-          if (taskCount > 0) Spacer(Modifier.width(Spacing.medium))
-          val squawkLabel =
-            if (squawkCount == 1) stringResource(
-              MaintenanceRes.string.log_squawk_count_one,
-              LocalThingLexicon.current.squawkNoun.singular,
-            )
-            else stringResource(
-              MaintenanceRes.string.log_squawk_count_plural,
-              squawkCount,
-              LocalThingLexicon.current.squawkNoun.plural,
-            )
-          Text(
-            text = squawkLabel,
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.primary,
+          else stringResource(
+            MaintenanceRes.string.log_task_count_plural,
+            taskCount,
+            LocalThingLexicon.current.taskNoun.plural,
           )
-        }
-        val techName = log.technician?.name?.takeIf { it.isNotBlank() }
-        if (techName != null) {
-          if (taskCount > 0 || squawkCount > 0) Spacer(Modifier.width(Spacing.medium))
-          Text(
-            text = techName,
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        Text(
+          text = taskLabel,
+          style = MaterialTheme.typography.labelMedium,
+          color = MaterialTheme.colorScheme.primary,
+        )
+      }
+      if (squawkCount > 0) {
+        if (taskCount > 0) Spacer(Modifier.width(Spacing.medium))
+        val squawkLabel =
+          if (squawkCount == 1) stringResource(
+            MaintenanceRes.string.log_squawk_count_one,
+            LocalThingLexicon.current.squawkNoun.singular,
           )
-        }
+          else stringResource(
+            MaintenanceRes.string.log_squawk_count_plural,
+            squawkCount,
+            LocalThingLexicon.current.squawkNoun.plural,
+          )
+        Text(
+          text = squawkLabel,
+          style = MaterialTheme.typography.labelMedium,
+          color = MaterialTheme.colorScheme.primary,
+        )
+      }
+      val techName = log.technician?.name?.takeIf { it.isNotBlank() }
+      if (techName != null) {
+        if (taskCount > 0 || squawkCount > 0) Spacer(Modifier.width(Spacing.medium))
+        Text(
+          text = techName,
+          style = MaterialTheme.typography.labelMedium,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+      }
       }
     }
   }
-}
 
 private data class BadgeScheme(
   val background: Color,
