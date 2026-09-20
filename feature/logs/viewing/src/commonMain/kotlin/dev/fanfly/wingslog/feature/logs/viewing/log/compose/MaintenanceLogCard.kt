@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -74,11 +73,13 @@ fun MaintenanceLogCard(
   val template = LocalThingTemplate.current
   val primary = template.primaryReading(log)
 
+  // An entry in a list, not a card: the row sits on the list's own colour and a `ListRowDivider`
+  // separates it from the next. Filled rather than transparent so the swipe controls behind it do
+  // not show through. UI-12 gives this row the month headers and the meter gutter.
   Surface(
     onClick = onClick,
     modifier = modifier.fillMaxWidth(),
-    shape = RoundedCornerShape(Spacing.cardCornerRadius),
-    color = MaterialTheme.colorScheme.surfaceContainer,
+    color = MaterialTheme.colorScheme.surface,
   ) {
     Column(
       modifier = Modifier
@@ -128,12 +129,6 @@ fun MaintenanceLogCard(
           color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
       }
-
-      HorizontalDivider(
-        color = MaterialTheme.colorScheme.outlineVariant.copy(
-          alpha = 0.3f
-        )
-      )
 
       // Footer: date | task count + technician
       Row(

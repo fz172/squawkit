@@ -25,6 +25,8 @@ fun <T> AdaptiveCardList(
   columns: Int,
   modifier: Modifier = Modifier,
   spacing: Dp = Spacing.medium,
+  /** Vertical gap between rows. Zero it when [separator] is doing the separating. */
+  rowSpacing: Dp = spacing,
   /**
    * Items answering `true` are laid out as their own **full-width row spanning every column**,
    * instead of taking a single grid cell. Defaults to nothing spanning, so existing callers are
@@ -35,58 +37,52 @@ fun <T> AdaptiveCardList(
    * `feature:ads`.
    */
   isSpanning: (T) -> Boolean = { false },
+  /**
+   * Drawn *between* rows and never before the first or after the last — a `ListRowDivider` for a
+   * list of flat rows. Rows of cards separate themselves and pass nothing.
+   */
+  separator: (@Composable () -> Unit)? = null,
   itemContent: @Composable (T) -> Unit,
 ) {
+  // One row per line of the grid: a spanning item alone, otherwise a run of up to `columns` cells.
+  // With one column that is simply one item per row.
+  val gridRows = buildList {
+    var index = 0
+    while (index < items.size) {
+      val item = items[index]
+      if (columns <= 1 || isSpanning(item)) {
+        add(listOf(item))
+        index++
+        continue
+      }
+      val run = ArrayList<T>(columns)
+      while (index < items.size && run.size < columns && !isSpanning(items[index])) {
+        run += items[index]
+        index++
+      }
+      add(run)
+    }
+  }
+
   Column(
     modifier = modifier,
-    verticalArrangement = Arrangement.spacedBy(spacing)
+    verticalArrangement = Arrangement.spacedBy(rowSpacing)
   ) {
-    if (columns <= 1) {
-      items.forEach { item ->
-        Box(modifier = Modifier.fillMaxWidth()) { itemContent(item) }
-      }
-    } else if (items.any(isSpanning)) {
-      // Chunk only the non-spanning runs, emitting each spanning item as its own full-width row so
-      // the grid resumes cleanly underneath it.
-      var index = 0
-      while (index < items.size) {
-        val item = items[index]
-        if (isSpanning(item)) {
-          Box(modifier = Modifier.fillMaxWidth()) { itemContent(item) }
-          index++
-          continue
-        }
-        val run = ArrayList<T>(columns)
-        while (index < items.size && run.size < columns && !isSpanning(items[index])) {
-          run += items[index]
-          index++
-        }
+    gridRows.forEachIndexed { index, rowItems ->
+      if (index > 0) separator?.invoke()
+      if (rowItems.size == 1 && (columns <= 1 || isSpanning(rowItems[0]))) {
+        Box(modifier = Modifier.fillMaxWidth()) { itemContent(rowItems[0]) }
+      } else {
         Row(horizontalArrangement = Arrangement.spacedBy(spacing)) {
-          run.forEach { cell ->
+          rowItems.forEach { cell ->
             Box(modifier = Modifier.weight(1f)) { itemContent(cell) }
           }
-          repeat(columns - run.size) {
+          // Keep the last (short) row's cells aligned with the grid above.
+          repeat(columns - rowItems.size) {
             Spacer(modifier = Modifier.weight(1f))
           }
         }
       }
-    } else {
-      items.chunked(columns)
-        .forEach { rowItems ->
-          Row(horizontalArrangement = Arrangement.spacedBy(spacing)) {
-            rowItems.forEach { item ->
-              Box(modifier = Modifier.weight(1f)) { itemContent(item) }
-            }
-            // Keep the last (short) row's cells aligned with the grid above.
-            repeat(columns - rowItems.size) {
-              Spacer(
-                modifier = Modifier.weight(
-                  1f
-                )
-              )
-            }
-          }
-        }
     }
   }
 }

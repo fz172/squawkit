@@ -37,6 +37,7 @@ import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.squawkEmptyHint
 import dev.fanfly.wingslog.core.template.squawkNoun
 import dev.fanfly.wingslog.core.ui.adaptive.compose.AdaptiveCardList
+import dev.fanfly.wingslog.core.ui.common.compose.ListRowDivider
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.adaptive.compose.navPillAndFabClearance
 import dev.fanfly.wingslog.core.ui.common.compose.DualSegmentedFilter
@@ -347,8 +348,11 @@ fun SquawkTab(
         items = rows,
         columns = LocalLayoutTier.current.cardColumns,
         spacing = Spacing.medium,
+        // Rows are flat now, so the hairline between them does the separating a gap used to.
+        rowSpacing = Spacing.none,
         // An ad is a full-width row, never one cell of the grid (design §5.2, PRD §6.5).
         isSpanning = { it is ListRow.Ad },
+        separator = { ListRowDivider() },
       ) { row ->
         when (row) {
           is ListRow.Ad -> AdSlot(

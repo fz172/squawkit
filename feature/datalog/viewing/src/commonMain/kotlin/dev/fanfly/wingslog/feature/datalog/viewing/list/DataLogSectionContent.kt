@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
@@ -36,6 +37,7 @@ import dev.fanfly.wingslog.core.ui.common.compose.SwipeAction
 import dev.fanfly.wingslog.core.ui.common.compose.SwipeActionCard
 import dev.fanfly.wingslog.core.ui.common.compose.SwipeActionTone
 import dev.fanfly.wingslog.core.ui.common.compose.rememberSwipeRevealController
+import dev.fanfly.wingslog.core.ui.common.compose.ListRowDivider
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.attachment.viewing.FileDropTarget
 import dev.fanfly.wingslog.feature.attachment.viewing.rememberFilePicker
@@ -150,10 +152,16 @@ fun DataLogSectionContent(
             top = Spacing.small,
             bottom = navPillAndFabClearance,
           ),
-          verticalArrangement = Arrangement.spacedBy(Spacing.medium),
+          // No arrangement gap: the log rows are flat and meet a hairline, so anything above them
+          // that is still a card carries its own spacing instead.
         ) {
           if (!compact && state.uploadGate == UploadGate.Guest) {
-            item { UploadGateCard(onLinkAccount = onLinkAccount) }
+            item {
+              UploadGateCard(
+                onLinkAccount = onLinkAccount,
+                modifier = Modifier.padding(bottom = Spacing.medium),
+              )
+            }
           }
           items(state.imports, key = { "import-${it.key}" }) { row ->
             ImportRowCard(
@@ -162,6 +170,7 @@ fun DataLogSectionContent(
               onDismiss = { viewModel.dismissImport(row.key) },
               onFileUnderOtherThing = { viewModel.fileUnderOtherThing(row.key) },
               onKeepHere = { viewModel.keepHere(row.key) },
+              modifier = Modifier.padding(bottom = Spacing.medium),
             )
           }
           if (!compact && state.rows.isNotEmpty()) {
@@ -170,11 +179,14 @@ fun DataLogSectionContent(
                 text = "${stringResource(Res.string.data_log_recent_uploads)}  ${state.rows.size}",
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = Spacing.small),
+                modifier = Modifier.padding(top = Spacing.small, bottom = Spacing.small),
               )
             }
           }
-          items(state.rows, key = { it.id.value_ }) { row ->
+          itemsIndexed(state.rows, key = { _, row -> row.id.value_ }) { index, row ->
+            // The hairline goes above every row but the first, so the list never opens or closes
+            // on a rule. Zeroing the arrangement is what lets the rows meet it.
+            if (index > 0) ListRowDivider()
             SwipeActionCard(
               // Whoever may upload may delete; a guest browses only, so the drag is disabled.
               actions = dataLogQuickActions(

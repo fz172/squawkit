@@ -45,19 +45,11 @@ fun TaskCard(
   matchNote: AnnotatedString? = null,
 ) {
   val highlightStyle = searchHighlightStyle()
-  val colors = MaterialTheme.statusColors
   val badgeTier = when (dueStatus) {
     DueStatus.OVERDUE -> StatusTier.CRITICAL
     DueStatus.DUE_SOON -> StatusTier.CAUTION
     DueStatus.COMPLIED -> StatusTier.POSITIVE
     DueStatus.NORMAL -> StatusTier.NEUTRAL
-  }
-
-  // Only a task that needs attention is set apart, and only then does it get a border.
-  val accent = when (dueStatus) {
-    DueStatus.OVERDUE -> colors.critical.accent.copy(alpha = 0.5f)
-    DueStatus.DUE_SOON -> statusColor.copy(alpha = 0.5f)
-    else -> null
   }
 
   // The deadline and the notes share the metadata line: the label sits with its value as one
@@ -77,7 +69,6 @@ fun TaskCard(
     metadata = metadata.takeIf { it.isNotEmpty() },
     onClick = onClick,
     modifier = modifier,
-    accent = accent,
     leading = {
       Icon(
         imageVector = icon,

@@ -9,7 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.History
@@ -44,6 +44,7 @@ import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
 import dev.fanfly.wingslog.core.ui.common.compose.SwipeActionCard
 import dev.fanfly.wingslog.core.ui.common.compose.jumpTargetHighlight
 import dev.fanfly.wingslog.core.ui.common.compose.rememberSwipeRevealController
+import dev.fanfly.wingslog.core.ui.common.compose.ListRowDivider
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.feature.ads.datamanager.AdsManager
 import dev.fanfly.wingslog.feature.ads.model.AdSurface
@@ -423,24 +424,27 @@ fun MaintenanceLogListContent(
                   // Room for the add-FAB, plus the floating pill this list now scrolls beneath
                   bottom = navPillAndFabClearance
                 ),
-                verticalArrangement = Arrangement.spacedBy(Spacing.medium)
+                // No arrangement gap: flat rows meet a hairline, and the ad band pads itself.
               ) {
-                items(
+                itemsIndexed(
                   rows,
                   // Stable keys matter here in a way they do not on the card surfaces: this is the
                   // one lazy list, so an identity that changed as logs loaded in would tear the slot
                   // down and re-request, burning cap on an ad nobody saw.
-                  key = { row ->
+                  key = { _, row ->
                     when (row) {
                       is ListRow.Ad -> "ad-${row.slotIndex}"
                       is ListRow.Item -> row.value.id
                     }
                   },
-                ) { row ->
+                ) { index, row ->
+                  // Above every row but the first, so the list neither opens nor closes on a rule.
+                  if (index > 0) ListRowDivider()
                   when (row) {
                     is ListRow.Ad -> AdSlot(
                       surface = AdSurface.LOGS,
                       slotIndex = row.slotIndex,
+                      modifier = Modifier.padding(vertical = Spacing.small),
                     )
 
                     is ListRow.Item -> SwipeActionCard(
