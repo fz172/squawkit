@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-  <string name="compliance_type_routine">Routine Tasks</string>
-  <string name="task_title"><xliff:g example="maintenance tasks">%1$s</xliff:g> Title</string>
-  <string name="task_description_placeholder">e.g. 100-Hour Inspection</string>
+  <string name="compliance_type_routine">Routine tasks</string>
+  <string name="task_title"><xliff:g example="maintenance tasks">%1$s</xliff:g> title</string>
+  <string name="task_description_placeholder">e.g. 100-hour inspection</string>
   <string name="task_title_helper">Provide a concise, technical name for this maintenance action as it appears in the service manual.</string>
   <string name="component_type_description">Select the primary system or <xliff:g example="component">%1$s</xliff:g> this task pertains to for accurate log grouping.</string>
   <string name="compliance_type_description">Regulatory nature of this task. Mandatory items will trigger critical system alerts.</string>
@@ -19,8 +19,8 @@
   <string name="schedule_step_interval_in_how_long">Step 3 · In how long?</string>
   <string name="schedule_step_recurrence_linked_label">Step 2 · Recurrence</string>
 
-  <string name="schedule_track_calendar_time">Calendar Time</string>
-  <string name="schedule_track_tach_hours">Tach Hours</string>
+  <string name="schedule_track_calendar_time">Calendar time</string>
+  <string name="schedule_track_tach_hours">Tach hours</string>
   <string name="schedule_track_seasonal">Seasonal</string>
   <string name="schedule_step_months_label">Step 3 · Which months?</string>
   <string name="schedule_recurrence_seasonal_repeating_sub">Every listed month</string>
@@ -69,15 +69,15 @@
 
   <string name="schedule_pick_linked_task">Pick a task to link</string>
 
-  <string name="select_task_work">Select Maintenance Work</string>
+  <string name="select_task_work">Select maintenance work</string>
   <string name="reference_and_component"><xliff:g example="AD-2024-11-07">%1$s</xliff:g> • <xliff:g example="Work Logs">%2$s</xliff:g></string>
 
-  <string name="compliance_type">Compliance Type</string>
+  <string name="compliance_type">Compliance type</string>
   <string name="compliance_type_routine_short">Routine</string>
-  <string name="reference_number">Reference Number</string>
+  <string name="reference_number">Reference number</string>
   <string name="reference_number_hint">e.g. SB-001</string>
   <string name="compliance_authority_hint">e.g. Rotax / Lycoming</string>
-  <string name="compliance_notes">Compliance Notes</string>
+  <string name="compliance_notes">Compliance notes</string>
   <string name="compliance_notes_hint">e.g. One-time inspection of fuel lines...</string>
 
   <string name="basics">Basics</string>

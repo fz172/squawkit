@@ -223,7 +223,7 @@ private fun PickerRow(option: FacetOption, onToggle: (FacetOption) -> Unit) {
   }
 }
 
-/** "Fan Zhang" → "FZ". One letter when there is only one word to take it from. */
+/** "Ada Lovelace" → "AL". One letter when there is only one word to take it from. */
 private fun String.initials(): String =
   trim().split(" ")
     .filter { it.isNotBlank() }

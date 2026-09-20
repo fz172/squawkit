@@ -24,7 +24,7 @@ import dev.fanfly.wingslog.core.ui.theme.Spacing
 fun ComponentDetails(node: ComponentNode) {
   val component = node.row.component ?: return
   ComponentCard(
-    category = node.row.label.uppercase(),
+    category = node.row.label,
     // Joined here rather than through the two-slot template string: a component with only a make
     // would otherwise render it followed by a dangling separator.
     name = listOf(component.make, component.model).joinAsPhrase(),
@@ -77,7 +77,7 @@ private fun InlineComponentBlock(node: ComponentNode) {
   val component = node.row.component ?: return
   Column(verticalArrangement = Arrangement.spacedBy(Spacing.large)) {
     ComponentSummary(
-      category = node.row.label.uppercase(),
+      category = node.row.label,
       name = listOf(component.make, component.model).joinAsPhrase(),
       serial = component.serial,
     )

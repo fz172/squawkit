@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-  <string name="feature_name_export_logs">Export Logs</string>
+  <string name="feature_name_export_logs">Export logs</string>
 
   <!-- Setup: report formats -->
   <string name="export_formats_section">Report formats</string>

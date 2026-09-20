@@ -14,15 +14,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 
-/** Tracking for uppercase section markers; wider than labelSmall's own so caps stay readable. */
-val SectionLabelTracking = 0.9.sp
-
 /**
- * An uppercase section marker above a grouped card — "Preferences", "Notification types".
- *
- * Uppercased at render rather than in the string resource so translations stay sentence case and
- * a language without letter case is unaffected. [action] is an optional trailing control on the
- * same baseline ("Clear all").
+ * A section marker above a grouped card — "Preferences", "Notification types". Sentence case:
+ * uppercase belongs to buttons and badges (DESIGN.md §3). [action] is an optional trailing control
+ * on the same baseline ("Clear all").
  */
 @Composable
 fun SectionLabel(
@@ -38,10 +33,9 @@ fun SectionLabel(
     verticalAlignment = Alignment.CenterVertically,
   ) {
     Text(
-      text = text.uppercase(),
+      text = text,
       style = MaterialTheme.typography.labelSmall,
       fontWeight = FontWeight.SemiBold,
-      letterSpacing = SectionLabelTracking,
       color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
     action?.invoke()

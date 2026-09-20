@@ -758,7 +758,7 @@ private fun SectionHeader(title: String, trailing: String? = null) {
     horizontalArrangement = Arrangement.SpaceBetween
   ) {
     Text(
-      title.uppercase(),
+      title,
       style = MaterialTheme.typography.labelSmall,
       color = MaterialTheme.colorScheme.onSurfaceVariant,
     )

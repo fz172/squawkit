@@ -14,29 +14,29 @@
   <!-- The account's whole collection, named neutrally. Used by the switcher and the export
        picker: both span every template, so neither takes a single Thing's word — it does not
        become "Fleet" because today's rows happen to be aircraft. -->
-  <string name="your_stuff">Your Stuff</string>
+  <string name="your_stuff">Your stuff</string>
   <string name="enter_invite_code">Enter invite code</string>
   <string name="empty_add_thing">Add <xliff:g example="aircraft">%1$s</xliff:g> to get started</string>
   <string name="remove">Remove</string>
   <string name="delete">Delete</string>
-  <string name="danger_zone">Danger Zone</string>
+  <string name="danger_zone">Danger zone</string>
   <string name="done">Done</string>
   <string name="continue_action">Continue</string>
   <string name="ok">OK</string>
   <string name="cancel">Cancel</string>
   <string name="accept">Accept</string>
   <string name="not_now">Not now</string>
-  <string name="manage_access">Manage Access</string>
+  <string name="manage_access">Manage access</string>
   <string name="save">Save</string>
-  <string name="save_changes">Save Changes</string>
-  <string name="retry">Try Again</string>
+  <string name="save_changes">Save changes</string>
+  <string name="retry">Try again</string>
   <!--Generate states -->
   <string name="none">None</string>
   <string name="unknown">Unknown</string>
   <string name="required">Required</string>
   <string name="all">All</string>
   <string name="dash">—</string>
-  <string name="unsaved_changes">Unsaved Changes</string>
+  <string name="unsaved_changes">Unsaved changes</string>
   <string name="unsaved_changes_message">You have unsaved changes. Are you sure you want to leave?</string>
   <string name="discard">Discard</string>
   <string name="dismiss">Dismiss</string>
@@ -46,16 +46,16 @@
   <string name="delete_failed">Delete failed</string>
   <!-- Swipe quick-action label; the record noun is on the card itself. -->
   <string name="quick_action_resolve">Resolve</string>
-  <string name="select_date">Select Date</string>
+  <string name="select_date">Select date</string>
   <!-- Shell navigation tabs -->
   <string name="shell_tab_dashboard">Dashboard</string>
-  <string name="shell_nav_tasks_narrow">Maint. Tasks</string>
+  <string name="shell_nav_tasks_narrow">Maint. tasks</string>
   <!-- Aircraft sharing -->
   <string name="thing_shared_badge">Shared</string>
   <!-- Stamp beside anything the paid tier unlocks. Not translated: it is the tier's mark. -->
   <string name="pro_badge">PRO</string>
   <!-- Component names -->
-  <string name="component_type">Component Type</string>
+  <string name="component_type">Component type</string>
   <string name="component_airframe">Airframe</string>
   <string name="component_engine">Engine</string>
   <string name="component_propeller">Propeller</string>

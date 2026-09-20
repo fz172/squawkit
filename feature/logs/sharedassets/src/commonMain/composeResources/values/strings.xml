@@ -1,10 +1,10 @@
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
   <string name="add_log">Add <xliff:g example="work logs">%1$s</xliff:g></string>
   <string name="edit_log">Update <xliff:g example="work logs">%1$s</xliff:g></string>
-  <string name="maintenance_date">Work Date</string>
-  <string name="add_first_maintenance_log">Log First Entry</string>
+  <string name="maintenance_date">Work date</string>
+  <string name="add_first_maintenance_log">Log first entry</string>
   <string name="no_maintenance_logs_title"><xliff:g example="Work log">%1$s</xliff:g> is empty</string>
-  <string name="propeller_hub">Propeller Hub</string>
+  <string name="propeller_hub">Propeller hub</string>
   <string name="blade">Blade</string>
   <string name="this_action_cannot_be_undone">This action cannot be undone.</string>
   <string name="resolve_squawk_work_description">Resolve <xliff:g example="squawks">%2$s</xliff:g> "<xliff:g example="Left brake dragging">%1$s</xliff:g>"</string>
@@ -16,6 +16,6 @@
   <string name="log_unverified_technician">Not verified — name entered manually</string>
   <string name="log_assigned_by">Logged by <xliff:g example="Alex">%1$s</xliff:g></string>
   <string name="log_assigned_by_unknown">Logged by another member</string>
-  <string name="delete_log">Delete Log?</string>
+  <string name="delete_log">Delete log?</string>
   <string name="log_deleted"><xliff:g example="Log">%1$s</xliff:g> deleted</string>
 </resources>

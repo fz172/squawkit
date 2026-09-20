@@ -192,8 +192,8 @@ fun RecordCountRow(
           nounSingular
         )
         else stringResource(Res.string.record_count_other, count, nounPlural)
-        ).uppercase(),
-      style = MaterialTheme.typography.labelMedium.copy(letterSpacing = 0.6.sp),
+        ),
+      style = MaterialTheme.typography.labelMedium,
       color = MaterialTheme.colorScheme.onSurfaceVariant,
       modifier = Modifier.weight(1f),
     )

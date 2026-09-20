@@ -3,7 +3,7 @@
   <string name="settings_subtitle">Account, appearance &amp; preferences</string>
   <string name="sign_out">Log out</string>
   <string name="settings_logout_subtitle">Sign out of your account on this device</string>
-  <string name="settings_delete_account">Delete Account</string>
+  <string name="settings_delete_account">Delete account</string>
   <string name="settings_delete_account_subtitle">Permanently delete your account and all its records</string>
   <string name="settings_delete_account_title">Delete your account?</string>
   <string name="settings_delete_account_body">This permanently deletes your account and all of your data. Anyone you have shared with will lose access. This cannot be undone.</string>
@@ -40,7 +40,7 @@
   <string name="settings_about">About SquawkIt</string>
   <string name="settings_about_subtitle">Version, terms and support</string>
   <string name="about_version_title">Version</string>
-  <string name="about_terms">Terms &amp; Privacy</string>
+  <string name="about_terms">Terms &amp; privacy</string>
   <string name="about_contact_support">Contact support</string>
   <string name="about_contact_support_subtitle">Get help or send feedback</string>
   <string name="about_rate">Rate SquawkIt</string>
@@ -51,9 +51,9 @@
   <string name="appearance_light">Light</string>
   <string name="appearance_system">System</string>
   <string name="appearance_dark">Dark</string>
-  <string name="firebase_logging_title">Help Us Improve</string>
+  <string name="firebase_logging_title">Help us improve</string>
   <string name="firebase_logging_subtitle">Share anonymous diagnostics and usage data</string>
-  <string name="developer_options">Developer Options</string>
+  <string name="developer_options">Developer options</string>
   <string name="developer_options_subtitle">Advanced controls. Changes sync across your devices.</string>
   <string name="developer_options_force_subscription_title">Force subscription status</string>
   <string name="developer_options_force_subscription_subtitle">Make this account behave as the chosen tier, ignoring the real entitlement.</string>

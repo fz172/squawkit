@@ -1,5 +1,5 @@
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-  <string name="stress_test_title">Fake Data Generator</string>
+  <string name="stress_test_title">Fake data generator</string>
   <string name="stress_test_description">Generates realistic records for the selected thing type, for UI stress testing. Data is written to your account.</string>
   <string name="stress_test_config_thing">Thing</string>
   <string name="stress_test_config_records">Maintenance records</string>
@@ -15,10 +15,10 @@
   <string name="stress_test_config_none">None</string>
   <string name="stress_test_config_slot_count"><xliff:g example="Tire">%1$s</xliff:g> ×<xliff:g example="4">%2$d</xliff:g></string>
   <string name="stress_test_config_future_dna">Write DNA from a newer build (degraded state)</string>
-  <string name="stress_test_generate">Generate Fake Data</string>
+  <string name="stress_test_generate">Generate fake data</string>
   <string name="stress_test_working">Working…</string>
   <string name="stress_test_complete">Generation complete</string>
-  <string name="stress_test_regenerate">Generate Another</string>
+  <string name="stress_test_regenerate">Generate another</string>
   <string name="stress_test_error_message">Error: <xliff:g example="Engine">%1$s</xliff:g></string>
   <string name="stress_test_unknown_error">Unknown error</string>
   <string name="stress_test_progress_count"><xliff:g example="3">%1$d</xliff:g> / <xliff:g example="3">%2$d</xliff:g></string>

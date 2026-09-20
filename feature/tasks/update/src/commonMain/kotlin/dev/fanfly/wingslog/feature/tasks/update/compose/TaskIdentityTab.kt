@@ -81,7 +81,7 @@ fun TaskIdentityTab(
       FormTextField(
         label = stringResource(
           Res.string.task_title,
-          LexiconFormatter.titleCase(LocalThingLexicon.current.taskNoun),
+          LexiconFormatter.sentenceCase(LocalThingLexicon.current.taskNoun),
         ),
         value = title,
         onValueChange = onTitleChange,
@@ -110,7 +110,7 @@ fun TaskIdentityTab(
         // The lexicon's own noun: "Component" on an airplane, "Part" everywhere else. The header
         // names the thing being picked, so a fixed "Component Type" was aviation leaking into a
         // screen the template already has a word for.
-        header = LexiconFormatter.titleCase(LocalThingLexicon.current.componentNoun),
+        header = LexiconFormatter.sentenceCase(LocalThingLexicon.current.componentNoun),
         description = stringResource(
           Res.string.component_type_description,
           LocalThingLexicon.current.componentNoun.singular,
@@ -165,7 +165,7 @@ private fun MaintenanceHistorySection(
       verticalAlignment = Alignment.CenterVertically,
       horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-      FormSectionLabel(LexiconFormatter.titleCasePlural(LocalThingLexicon.current.logNoun))
+      FormSectionLabel(LexiconFormatter.sentenceCasePlural(LocalThingLexicon.current.logNoun))
       OutlinedButton(
         onClick = onAddLog,
         contentPadding = PaddingValues(
@@ -273,15 +273,14 @@ internal fun IdentityRadioItem(
       verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
     ) {
       Text(
-        text = label.uppercase(),
+        text = label,
         style = MaterialTheme.typography.bodyMedium,
         fontWeight = FontWeight.Bold,
         color = MaterialTheme.colorScheme.onSurface,
-        letterSpacing = 0.5.sp,
       )
       if (subtitle.isNotBlank()) {
         Text(
-          text = subtitle.uppercase(),
+          text = subtitle,
           style = MaterialTheme.typography.labelSmall,
           color = MaterialTheme.colorScheme.outline,
         )
@@ -312,16 +311,15 @@ internal fun IdentityRadioItem(
     )
     Column(verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall)) {
       Text(
-        text = label.uppercase(),
+        text = label,
         style = MaterialTheme.typography.bodyMedium,
         fontWeight = FontWeight.Bold,
         color = if (selected) MaterialTheme.colorScheme.primary
         else MaterialTheme.colorScheme.onSurface,
-        letterSpacing = 0.5.sp,
       )
       if (subtitle.isNotBlank()) {
         Text(
-          text = subtitle.uppercase(),
+          text = subtitle,
           style = MaterialTheme.typography.labelSmall,
           color = MaterialTheme.colorScheme.outline,
         )

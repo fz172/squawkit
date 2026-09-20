@@ -246,7 +246,7 @@ the seven above are the ones a new screen actually reaches for.
 
 **The Uppercase Commitment Rule.** Uppercase belongs to exactly two things: **button labels** (Bold) and **status badges** (`StatusChip`, §5). Sentence case everywhere else — screen titles, section labels, field labels, field values, metadata, empty-state copy. Uppercase signals commitment; a button is a decision, not an option, and a badge is a verdict.
 
-The rule has always said "sentence case everywhere else"; what it lacked was the badge exception and a list of the places that drifted. Screen titles (`UPDATE WORK LOG`), section labels (`COMPONENT TYPE`), field labels (`FormTextField` calls `.uppercase()` on every one), read-only values (`AIRFRAME`, `ROUTINE`) and list counts (`36 ENTRIES`) are all outside the two permitted cases. Uniform emphasis is the same as no emphasis, and mass uppercase reads slower.
+The rule has always said "sentence case everywhere else"; what it lacked was the badge exception and a list of the places that drifted. Screen titles (`UPDATE WORK LOG`), section labels (`COMPONENT TYPE`), field labels (`FormTextField` called `.uppercase()` on every one), read-only values (`AIRFRAME`, `ROUTINE`) and list counts (`36 ENTRIES`) were all outside the two permitted cases, and have been rolled back. Identifiers are data, not emphasis: a serial or registration stays uppercase because that is how it is written on the part. Uniform emphasis is the same as no emphasis, and mass uppercase reads slower.
 
 ## 4. Elevation
 

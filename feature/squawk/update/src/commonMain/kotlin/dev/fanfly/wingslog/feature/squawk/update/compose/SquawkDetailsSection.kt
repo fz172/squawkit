@@ -84,7 +84,7 @@ fun SquawkDetailsSection(
           verticalAlignment = Alignment.CenterVertically,
           horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-          FormSectionLabel(LexiconFormatter.titleCasePlural(LocalThingLexicon.current.logNoun))
+          FormSectionLabel(LexiconFormatter.sentenceCasePlural(LocalThingLexicon.current.logNoun))
           if (addressedByLogId.isEmpty() && !isDismissed) {
             OutlinedButton(
               onClick = onAddLog,

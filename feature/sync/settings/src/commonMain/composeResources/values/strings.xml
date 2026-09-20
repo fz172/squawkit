@@ -1,5 +1,5 @@
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-  <string name="setting_item_sync">Cloud Sync</string>
+  <string name="setting_item_sync">Cloud sync</string>
   <string name="sync_hero_title_signin">Sign in to enable sync</string>
   <string name="sync_hero_body_signin">You're using the app anonymously. All data stays on this device. Sign in with a permanent account on the previous screen to back things up.</string>
   <string name="sync_hero_title_paused">Sync is paused</string>
@@ -16,7 +16,7 @@
   <string name="sync_subtitle_signin">Sign in to enable cloud sync.</string>
   <string name="sync_subtitle_active">Backed up to your account across devices.</string>
   <string name="sync_subtitle_off">Your data stays on this device only.</string>
-  <string name="setting_item_sync_on_cellular">Upload on Cellular</string>
+  <string name="setting_item_sync_on_cellular">Upload on cellular</string>
   <string name="sync_subtitle_cellular_enabled">Attachments upload over Wi-Fi and cellular.</string>
   <string name="sync_subtitle_cellular_disabled">Attachments upload over Wi-Fi only.</string>
   <!-- Section markers on the settings page; uppercased at render. -->

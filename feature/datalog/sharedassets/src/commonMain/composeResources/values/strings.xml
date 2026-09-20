@@ -56,7 +56,7 @@
   <string name="data_log_gate_body">Anything you upload is stored with the account and available on every device.</string>
   <string name="data_log_gate_link_cta">Link to an account</string>
   <string name="data_log_gate_not_now">Not now</string>
-  <string name="data_log_gate_open_settings">Open Settings</string>
+  <string name="data_log_gate_open_settings">Open settings</string>
   <string name="data_log_gate_sheet_title">Link to an account to upload</string>
   <string name="data_log_gate_sheet_body">A <xliff:g example="data log">%1$s</xliff:g> is stored with the account and synced to every device. Linking keeps everything already on this device.</string>
   <string name="data_log_gate_what_title">What gets charted</string>

@@ -10,7 +10,7 @@
   <string name="priority_medium">Medium</string>
   <string name="priority_high">High</string>
   <string name="view_squawks">View <xliff:g example="squawks">%1$s</xliff:g></string>
-  <string name="squawk_title_label">Issue Summary</string>
+  <string name="squawk_title_label">Issue summary</string>
   <string name="squawk_description_label">Description</string>
   <string name="squawk_priority_label">Priority</string>
   <string name="squawk_title_required">Issue summary is required</string>
@@ -18,7 +18,7 @@
   <string name="squawk_updated"><xliff:g example="squawk">%1$s</xliff:g> updated</string>
   <string name="no_squawk_work_recorded">No <xliff:g example="squawks">%1$s</xliff:g> addressed by this <xliff:g example="log">%2$s</xliff:g></string>
   <string name="reported">Reported</string>
-  <string name="work_history">Work History</string>
+  <string name="work_history">Work history</string>
   <string name="no_work_recorded">No work recorded yet.</string>
   <string name="squawk_reported_on">Reported on</string>
   <string name="squawk_not_yet_addressed">Not yet addressed by any log</string>
@@ -33,10 +33,10 @@
   <string name="dismissed_label">Dismissed — <xliff:g example="Work Logs">%1$s</xliff:g></string>
 
   <!-- Resolve menu and dismiss dialog, shared by the form and the card quick actions -->
-  <string name="dismiss_issue">Dismiss Issue</string>
+  <string name="dismiss_issue">Dismiss issue</string>
   <string name="dismiss_no_work_planned">Dismiss, no work planned</string>
   <string name="fixed_option_label">Fixed</string>
-  <string name="dismiss_squawk_title">Dismiss Without Addressing?</string>
+  <string name="dismiss_squawk_title">Dismiss without addressing?</string>
   <string name="dismiss_squawk_warning">This <xliff:g example="squawks">%1$s</xliff:g> will be closed without recording corrective action. Please select a reason for dismissing this squawk.</string>
 
   <!-- Delete (PRD §6.3, §6.4). %1$s is the squawk noun unless noted. -->
