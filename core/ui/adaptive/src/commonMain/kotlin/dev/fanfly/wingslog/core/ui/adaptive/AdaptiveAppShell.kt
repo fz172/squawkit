@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.core.ui.adaptive
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.animate
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -87,7 +88,9 @@ import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalNavPillClearance
 import dev.fanfly.wingslog.core.ui.adaptive.compose.constrainedContentWidth
 import dev.fanfly.wingslog.core.ui.adaptive.compose.layoutTierFor
+import dev.fanfly.wingslog.core.ui.theme.MotionAxis
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.core.ui.theme.rememberSharedAxis
 import dev.fanfly.wingslog.core.ui.widget.avataricon.compose.AvatarIcon
 import dev.fanfly.wingslog.thing.Capabilities
 import dev.fanfly.wingslog.thing.Section
@@ -307,19 +310,30 @@ fun AdaptiveAppShell(
     // keep the thing lexicon and can be domain-specific — see TechnicianListScreen.
     //
     // The FAB is wrapped too, since it says "New squawk".
-    val sectionLexicon =
-      if (state.section == ShellSection.SETTINGS) GenericLexicon.LEXICON
+    val thingLexicon = LocalThingLexicon.current
+    fun lexiconFor(section: ShellSection) =
+      if (section == ShellSection.SETTINGS) GenericLexicon.LEXICON
       // LocalThingLexicon, not the Thing's stored copy: the words are resolved once from this
       // build by CurrentThingTemplate and provided above both NavHosts. Reading the DNA here would
       // reintroduce the frozen-at-creation lexicon on exactly the per-thing surfaces that matter.
-      else LocalThingLexicon.current
+      else thingLexicon
+    // Sections travel along the axis their nav runs on: the bottom bar is a row, the sidebar a column.
+    val sharedAxis = rememberSharedAxis(if (tier.hasSideNav) MotionAxis.Y else MotionAxis.X)
     val content: @Composable () -> Unit = {
-      CompositionLocalProvider(LocalThingLexicon provides sectionLexicon) {
-        sectionContent(state.section, state.selectedThingId)
+      AnimatedContent(
+        targetState = state.section,
+        transitionSpec = { sharedAxis(targetState.ordinal > initialState.ordinal) },
+        modifier = Modifier.fillMaxSize(),
+        label = "shell-section",
+      ) { section ->
+        // The outgoing section keeps its own lexicon until it is gone.
+        CompositionLocalProvider(LocalThingLexicon provides lexiconFor(section)) {
+          sectionContent(section, state.selectedThingId)
+        }
       }
     }
     val fab: @Composable () -> Unit = {
-      CompositionLocalProvider(LocalThingLexicon provides sectionLexicon) {
+      CompositionLocalProvider(LocalThingLexicon provides lexiconFor(state.section)) {
         sectionFab(state.section, state.selectedThingId)
       }
     }

@@ -1,6 +1,5 @@
 package dev.fanfly.wingslog.core.ui.common.compose
 
-import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -52,6 +51,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.fanfly.wingslog.core.ui.theme.Motion
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.statusColors
 import kotlinx.coroutines.launch
@@ -126,15 +126,11 @@ private val LiftElevation = 8.dp
 private const val PositionalThreshold = 0.42f
 
 /**
- * The reveal's easing, and the one place this component departs from DESIGN.md §6.
- *
- * §6 asks for ease-out and 150–250 ms. The duration stays inside that; the curve is the design
- * spec's own `cubic-bezier(.32,.72,0,1)` — an ease-out that leaves almost all its travel in the
- * first third, which is what makes a dragged card feel attached to the finger rather than played
- * back. `EaseOut` decelerates too gently for a gesture the user is still holding.
+ * The reveal settles on `Motion.gestureEaseOut`, not the standard ease-out: it leaves almost all its
+ * travel in the first third, which is what makes a dragged card feel attached to the finger rather
+ * than played back. DESIGN.md §6 sanctions it for a gesture the user is still holding.
  */
-private val RevealEasing = CubicBezierEasing(0.32f, 0.72f, 0f, 1f)
-private const val SnapDurationMillis = 250
+private val RevealSpec = tween<Float>(Motion.long, easing = Motion.gestureEaseOut)
 
 /** How far the card dims at full reveal. The controls behind it become the lit thing. */
 private const val MaxDimAlpha = 0.16f
@@ -226,7 +222,7 @@ fun SwipeActionCard(
   val flingBehavior = AnchoredDraggableDefaults.flingBehavior(
     state = state,
     positionalThreshold = { distance -> distance * PositionalThreshold },
-    animationSpec = tween(SnapDurationMillis, easing = RevealEasing),
+    animationSpec = RevealSpec,
   )
 
   Box(modifier = modifier.clip(shape)) {

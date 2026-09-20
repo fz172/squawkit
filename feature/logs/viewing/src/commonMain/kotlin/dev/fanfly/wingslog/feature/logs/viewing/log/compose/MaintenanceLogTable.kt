@@ -41,6 +41,7 @@ import dev.fanfly.wingslog.core.ui.common.compose.jumpTargetHighlight
 import dev.fanfly.wingslog.core.ui.common.compose.searchHighlightStyle
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
+import dev.fanfly.wingslog.core.ui.theme.motionItem
 import dev.fanfly.wingslog.feature.ads.model.AdSurface
 import dev.fanfly.wingslog.feature.ads.model.ListRow
 import dev.fanfly.wingslog.feature.ads.viewing.AdSlot
@@ -94,32 +95,34 @@ fun MaintenanceLogTable(
             }
           },
         ) { row ->
-          when (row) {
-            // A band between rows, not a row. It keeps the table's horizontal insets but adopts
-            // none of its column rules, striping or row height — a pilot scanning a column of dates
-            // must never have to parse an ad as data (PRD §6.5, F16).
-            is ListRow.Ad -> AdSlot(
-              surface = AdSurface.LOGS,
-              slotIndex = row.slotIndex,
-              modifier = Modifier.padding(
-                horizontal = Spacing.medium,
-                vertical = Spacing.small,
-              ),
-            )
+          Column(modifier = motionItem()) {
+            when (row) {
+              // A band between rows, not a row. It keeps the table's horizontal insets but adopts
+              // none of its column rules, striping or row height — a pilot scanning a column of dates
+              // must never have to parse an ad as data (PRD §6.5, F16).
+              is ListRow.Ad -> AdSlot(
+                surface = AdSurface.LOGS,
+                slotIndex = row.slotIndex,
+                modifier = Modifier.padding(
+                  horizontal = Spacing.medium,
+                  vertical = Spacing.small,
+                ),
+              )
 
-            is ListRow.Item -> LogRow(
-              log = row.value,
-              onClick = { onLogClick(row.value) },
-              isJumpTarget = row.value.id == scrollToLogId,
-              highlight = highlightFor(row.value),
-              matchNote = noteFor(row.value),
+              is ListRow.Item -> LogRow(
+                log = row.value,
+                onClick = { onLogClick(row.value) },
+                isJumpTarget = row.value.id == scrollToLogId,
+                highlight = highlightFor(row.value),
+                matchNote = noteFor(row.value),
+              )
+            }
+            HorizontalDivider(
+              color = MaterialTheme.colorScheme.outlineVariant.copy(
+                alpha = 0.4f
+              )
             )
           }
-          HorizontalDivider(
-            color = MaterialTheme.colorScheme.outlineVariant.copy(
-              alpha = 0.4f
-            )
-          )
         }
       }
     }

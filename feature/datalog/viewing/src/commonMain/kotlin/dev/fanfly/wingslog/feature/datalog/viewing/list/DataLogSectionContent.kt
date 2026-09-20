@@ -39,6 +39,7 @@ import dev.fanfly.wingslog.core.ui.common.compose.SwipeActionTone
 import dev.fanfly.wingslog.core.ui.common.compose.rememberSwipeRevealController
 import dev.fanfly.wingslog.core.ui.common.compose.ListRowDivider
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.core.ui.theme.motionItem
 import dev.fanfly.wingslog.feature.attachment.viewing.FileDropTarget
 import dev.fanfly.wingslog.feature.attachment.viewing.rememberFilePicker
 import dev.fanfly.wingslog.id.DataLogId
@@ -170,7 +171,7 @@ fun DataLogSectionContent(
               onDismiss = { viewModel.dismissImport(row.key) },
               onFileUnderOtherThing = { viewModel.fileUnderOtherThing(row.key) },
               onKeepHere = { viewModel.keepHere(row.key) },
-              modifier = Modifier.padding(bottom = Spacing.medium),
+              modifier = motionItem().padding(bottom = Spacing.medium),
             )
           }
           if (!compact && state.rows.isNotEmpty()) {
@@ -184,24 +185,27 @@ fun DataLogSectionContent(
             }
           }
           itemsIndexed(state.rows, key = { _, row -> row.id.value_ }) { index, row ->
-            // The hairline goes above every row but the first, so the list never opens or closes
-            // on a rule. Zeroing the arrangement is what lets the rows meet it.
-            if (index > 0) ListRowDivider()
-            SwipeActionCard(
-              // Whoever may upload may delete; a guest browses only, so the drag is disabled.
-              actions = dataLogQuickActions(
-                onDelete = if (state.uploadGate == UploadGate.SignedIn) {
-                  { revealController.close(); viewModel.onDeleteClick(row) }
-                } else null,
-              ),
-              controller = revealController,
-              key = row.id.value_,
-            ) {
-              DataLogCard(
-                row = row,
-                onClick = { onOpen(row.id) },
-                showDetails = !compact
-              )
+            // One animated node per key: the rule travels with its row.
+            Column(modifier = motionItem()) {
+              // The hairline goes above every row but the first, so the list never opens or closes
+              // on a rule. Zeroing the arrangement is what lets the rows meet it.
+              if (index > 0) ListRowDivider()
+              SwipeActionCard(
+                // Whoever may upload may delete; a guest browses only, so the drag is disabled.
+                actions = dataLogQuickActions(
+                  onDelete = if (state.uploadGate == UploadGate.SignedIn) {
+                    { revealController.close(); viewModel.onDeleteClick(row) }
+                  } else null,
+                ),
+                controller = revealController,
+                key = row.id.value_,
+              ) {
+                DataLogCard(
+                  row = row,
+                  onClick = { onOpen(row.id) },
+                  showDetails = !compact
+                )
+              }
             }
           }
         }
