@@ -524,11 +524,15 @@ the Firestore/Storage rules (`test/firestore-rules.test.ts`, `test/storage-rules
 Defined in `core:ui`. Follows **Refined Minimalism**: Material 3 color scheme, intentional typography
 hierarchy, consistent spacing tokens. Prioritize clarity and readability over information density.
 
-**Read `PRODUCT.md`, `DESIGN.md`, and `.impeccable/design.json` before any UI work.** Together they
-define the required aviation palette (Aviation Blue primary, Instrument Amber accent ≤10% of color
-moments, semantic forest/amber status colors), required typography (Space Grotesk titles, JetBrains
-Mono for technical data, system sans for body), and brand principles (Dependability First, Clarity
-over Density, Progressive Disclosure). Dynamic color is disabled; the aviation palette is the brand.
+**Read `PRODUCT.md`, `DESIGN.md`, and `.impeccable/design.json` before any UI work.** `DESIGN.md` and
+its sidecar own the visual world: the required instrument palette (Aviation Blue primary, Instrument
+Amber accent ≤10% of color moments, semantic forest/amber status colors, the authored neutral ramp),
+the required typography (Space Grotesk titles, JetBrains Mono for technical data, system sans for
+body), spacing, elevation, motion and components. Dynamic color is disabled; the instrument palette
+is the brand. `PRODUCT.md` owns product truth — users, positioning, capabilities, constraints and the
+five product principles (Dependability First, The Template Speaks, Safety-Critical Status Wins,
+Minimal Friction, Share the Thing Not the Account). It deliberately holds no palette or type rules,
+so there is exactly one authority to change.
 
 ## Design Docs
 

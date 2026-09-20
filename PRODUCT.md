@@ -1,85 +1,153 @@
-## Design Context
+# Product
 
-### Users
-People who maintain something they own and want a reliable record of it: an aircraft owner
+<!-- impeccable:product-schema 1 -->
+
+## Platform
+
+android
+
+## Users
+
+People who maintain something they own and want a dependable record of it: an aircraft owner
 logging a condition inspection, a homeowner who has just learned the water heater wants a flush,
 someone tracking oil changes on a car, a boat, a bike. The founding audience is aviation and it
-stays first-class — every screen must still read as it did to a pilot or mechanic — but the app
-now serves seven kinds of Thing (airplane, car/motorcycle, bike, boat, home, custom) from one
-codebase. The job to be done is the same in every domain: dependable record-keeping and
-never missing a due date, with as little friction as possible.
+stays first-class — every screen must still read as it did to a pilot or mechanic — but one
+codebase now serves seven kinds of Thing (airplane, car, motorcycle, bike, boat, home, custom).
+The job is the same in every domain: dependable record-keeping and never missing a due date, with
+as little friction as possible.
 
-Each Thing speaks its own vocabulary. An airplane has squawks, an AOG state, tail numbers and
-tach time; a home has attention items, chores and no meters at all. The words, the fields, the
-meters and the component tree come from the Thing's template, never from the code — see
-`AGENTS.md` (Lexicon and capabilities). Copy that belongs to the whole account rather than to
-one Thing stays neutral.
+A second audience arrives by invitation: the A&P or IA, the co-owner, the yard, the family member.
+They are given access to one Thing rather than to an account, and they log work against the same
+record the owner sees. Technicians keep certifications on file, and a sign-off stays attached to
+the work it belongs to.
 
-### Brand Personality
-**Dependable, Precise, Calm**
-The interface must feel trustworthy above all else — users are relying on it to track
-safety-critical dates and back up records securely. It should feel like a well-made instrument,
-not an app trying to impress. Modern without being flashy; professional without being cold.
+## Product Purpose
 
-### Reference & Anti-Reference
-**Reference**: Modern note-taking apps (Notion, Bear, Apple Notes) — clean surfaces, generous
-whitespace, content-first layouts. The user is an owner with a job to log, not a power-user
-navigating a toolbar.
+SquawkIt is a maintenance logbook for anything worth maintaining. The product is the squawk / task
+/ log triad — *something is wrong*, *something is due*, *something was done*. Everything else is
+configuration.
 
-**Anti-reference**: Spreadsheets, Excel, complex editor UIs. Never expose raw complexity on a
-primary screen. Multi-step operations belong in tabs or wizard-style flows, never inline.
+Success is that the user never misses a due date, and that years of care add up to a history they
+can hand to a mechanic, a buyer, or their future self.
 
-### Aesthetic Direction
-**Refined Minimalism**
-High-quality typography and intentional whitespace carry the UI. Layout is uncluttered; density
-is earned, not assumed. Complexity is revealed progressively — primary views show only what
-matters now, detail and advanced actions emerge on demand.
+## Positioning
 
-The instrument palette is the brand and is shared by every domain — it is the app's heritage,
-not a per-preset theme:
-- **Primary**: Aviation Blue — instrument panel / Garmin G1000 reference
-- **Accent**: Instrument Amber — advisory annunciators, used sparingly (≤10% of color moments)
-- **Status**: Forest green (ready — "Airworthy" on an airplane, "Ready" on a car, "Good" on a
-  home), dark amber (caution) — semantic, not decorative
-- Dynamic color is disabled; the palette is the brand
+Three things a neighboring maintenance tracker could not truthfully copy:
 
-**Typography**
-- Space Grotesk for all headlines and titles — precision without coldness
-- JetBrains Mono for technical data (identifiers such as tail numbers, VINs and hull IDs;
-  serials; meter readings such as tach time and odometer) — character alignment is semantic
-- System sans for body and labels — readability in data-dense contexts
+- **The template is the product.** Each Thing carries a template that supplies its lexicon, spec
+  fields, component tree, meters, due rules, starter tasks and capability flags. The app speaks the
+  domain's own language — squawks and AOG and tach time on an airplane, attention items and chores
+  and no meters at all in a home — rather than offering one generic tracker with a category
+  dropdown. Roughly 230 user-facing strings resolve through the lexicon.
+- **Local-first, not offline-tolerant.** A SQLDelight entity store is the single source of truth for
+  every read and write; sync runs in the background. The app works fully offline because that is the
+  only data path, not because a cache was bolted on.
+- **Share the Thing, not the account.** An invitation grants access to one Thing. The host stays the
+  owner, shared data lives in place under the host's tree as pointers rather than copies, and the
+  host's storage entitlement governs — a member is never blocked by their own subscription.
 
-**Motion**
-Smooth, continuous transitions — no jumps or snaps. Animations should feel like pages turning,
-not views teleporting. Keep motion purposeful: guide attention, confirm actions, never decorate.
+## Operating Context
 
-### Information Hierarchy
-Safety-critical status (OVERDUE, DUE SOON, and the template's down state — AOG, Off the road,
-Urgent) is always surfaced at the top of any list or overview. Secondary data is available but
-not competing. Exploration is opt-in with a minimal learning curve — no hidden gestures, no
-unlabeled icons.
+Entries are made where the work happened and shortly after it happened: a hangar, a ramp, a
+driveway, a basement. Connectivity is unreliable in most of those places and the phone is often
+being used one-handed with dirty hands, which is why local-first is a product decision rather than
+an infrastructure one.
 
-### Design Principles
+A log entry is written against a component picked from the Thing's tree, carrying the meter reading
+and usually a photo of the receipt or the logbook page. Tasks come due by calendar, by meter
+(engine hours, odometer, ride distance) or on condition, and notifications are what brings the user
+back. A Thing's full history exports as a ZIP holding a PDF, a CSV and a spreadsheet with every
+attachment, to be emailed to a mechanic or a buyer.
 
-1. **Dependability First**: Every interaction should reinforce trust. Confirmations for
-   destructive actions, clear success states, offline-aware feedback. The user must never
-   wonder whether their data was saved.
+Aviation users are keeping this record *alongside* the official logbooks their authority requires,
+never instead of them.
 
-2. **Clarity over Density**: Visual hierarchy over information packing. One primary action per
-   screen. Status-critical information (overdue, due soon) always wins prominence.
+## Capabilities and Constraints
 
-3. **Minimal Friction**: Fast, intuitive data entry. Wizard or tab flows for complex operations
-   — never expose multi-step complexity on a single form. Every field and button earns its place.
+**Shipped.** Things and the template system; maintenance logs against a template-defined component
+tree; scheduled tasks with due-status computation; squawks with an Open → Addressed / Dismissed
+lifecycle and a "down" state where the template has one; attachments (files, photos, PDFs, links)
+with upload gated by Pro and links always free; logbook export with optional email delivery;
+per-Thing sharing with roles; technicians and certifications; comments on squawks and tasks;
+notifications on all three platforms; Basic (free, ad-supported) and Pro subscription tiers via
+RevenueCat; display ads on the free tier for Android and iOS; guest use with upgrade to a permanent
+account, Google / Apple / email-link sign-in, and account deletion; analytics.
 
-4. **Progressive Disclosure**: Keep primary views simple. Reveal advanced details and actions
-   only when the user navigates deeper. No collapsed accordions on first load.
+**Not started:** Weight and Balance, intelligent search, life limits, forecasting. Web display ads.
 
-5. **Reliable Visual Language**: Consistent icons, spacing tokens, and color semantics across
-   every screen. Predictability builds confidence. When in doubt, match existing patterns rather
-   than introducing new ones.
+**Navigation shape.** There is no fleet list screen. The adaptive shell owns the current Thing and
+the switcher, and renders Dashboard → Squawks → Tasks → Logs plus Settings.
 
-6. **The Template Speaks**: Nouns, field labels, meter names, empty-state copy and status words
-   come from the selected Thing's template. Never hard-code "aircraft", "tail number" or
-   "airframe hours" into a screen every preset renders; never put a per-Thing noun on an
-   account-level surface. A screen that reads right for a home and an airplane at once is the
-   test.
+**Terminology is load-bearing.** Nouns, field labels, meter names, empty-state copy and status words
+come from the Thing's template, never from the code. A string that says "aircraft" or "tail number"
+is a bug on six of the seven presets; a per-Thing noun on an account-level surface (login, settings,
+subscription) is a bug on all of them. Aviation words survive only for parts that are permanently
+airplanes. The test is a screen that reads right for a home and an airplane at once.
+
+**One design language, three shipping targets.** Android, iOS and web are built from one Compose
+Multiplatform codebase and all render Material 3 — iOS is deliberately not moved toward HIG. iOS and
+web are shipping products, not previews. Material everywhere does not waive the OS guarantees iOS
+owes on its own hardware: safe-area insets, Reduce Motion, and the edge-swipe back gesture.
+
+**Gating is exactly three mechanisms**, kept separate: `AppCapability` (build/platform),
+`SubscriptionManager` (entitlement), `DeveloperFlags` (developer override). FeatureLab was removed;
+a fourth must not be invented.
+
+**Scope resolution.** Per-Thing data resolves its scope through `ThingScopeResolver`, never from the
+signed-in uid.
+
+**Not a legal record.** SquawkIt is a personal convenience tool. It does not replace the official
+aircraft logbooks required by an aviation authority, or any other record the user is required to
+keep. Exports are backups and snapshots, not the legal source of truth. This is stated in the
+shipped store listing and must not be contradicted anywhere in the product.
+
+**Published identity is frozen.** The user-facing brand is SquawkIt; the Kotlin package
+(`dev.fanfly.wingslog`), the Gradle root project (`wingslog`) and the Firebase project
+(`wingslog-9ca4e`) keep the original WingsLog name because renaming would break Play Store, App
+Store and Firebase registration. Surviving `aircraft` identifiers in code are grandfathered.
+
+**Open from the pivot.** Every template is still baked into the build; template publishing, the
+`fetch_templates` RPC and the canonical template cache are undecided and untracked by any ship date.
+
+## Brand Commitments
+
+- **Name:** SquawkIt. Store name `SquawkIt: Maintenance Logbook`. Domain `squawkit.fanfly.dev`.
+- **Voice — Dependable, Precise, Calm.** It must feel trustworthy above all else; users are relying
+  on it to track safety-critical dates. It should read like a well-made instrument, not an app
+  trying to impress. Modern without being flashy, professional without being cold.
+- **Account-level copy stays neutral.** Anything that belongs to the whole account rather than to one
+  Thing uses no per-Thing vocabulary.
+- **The visual world lives in DESIGN.md** — palette, typography, motion, components, and the
+  "Logbook" north star. This file does not restate them, so that there is one authority to change.
+
+## Evidence on Hand
+
+- **Live on both stores.** Google Play in production since 2026-09-05; App Store released 2026-09-09,
+  app id `6801955033`. Category Productivity. Ads declared on the free tier; subscription removes them.
+- **Store copy**, written and character-checked: `docs/product/store_listing.md`,
+  `docs/product/play_store_description.txt`, validated by
+  `docs/product/screenshot_generator/check_listing.py`.
+- **Store imagery** in `docs/product/store_assets/`, generated from device captures.
+- **Web app and landing pages** live at `squawkit.fanfly.dev`, with a page per type (`/aircraft`,
+  `/car`, `/boat`, `/bike`, `/home`). Both search consoles verified; sitemap submitted.
+- **Brand assets:** app icon at `docs/branding/cloud-console-app-icon-120.{png,svg}`; per-type icons,
+  mono and colour, at `docs/branding/thing-icons/`.
+- **Product specs:** `docs/product/PRD.md` (overview as built) and
+  `docs/product/multi_domain_maintenance_PRD.md` (the pivot), plus per-topic folders under `docs/`.
+- **No testimonials, case studies, press, named customers, usage numbers, install counts, review
+  quotes or revenue figures exist.** None may be fabricated for any surface, including marketing.
+
+## Product Principles
+
+1. **Dependability first.** Every interaction reinforces trust. The user must never wonder whether
+   their data was saved — confirm destructive actions, show clear success, be honest about offline
+   state rather than optimistic.
+2. **The template speaks.** Vocabulary, fields, meters and status words come from the Thing, not from
+   the screen. Generalizing the product means teaching the template, never special-casing a domain.
+3. **Safety-critical status wins.** Overdue, due soon, and the template's down state surface above
+   everything else in any list or overview, and no user action may bury them.
+4. **Minimal friction at the moment of work.** Entry happens right after the job, often one-handed
+   and offline. Every field earns its place; multi-step work goes in tabs or wizard flows, never one
+   long form.
+5. **Share the Thing, not the account.** Access is granted per Thing. The host remains the owner and
+   the host's entitlement governs what a member can do.
