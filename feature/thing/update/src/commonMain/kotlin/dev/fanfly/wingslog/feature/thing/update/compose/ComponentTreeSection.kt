@@ -341,23 +341,38 @@ private fun InlineGroup(
         Row(horizontalArrangement = Arrangement.spacedBy(Spacing.small)) {
           pair.forEach { node ->
             val row = node.row
-            row.fields.filter { it.isVisibleOn(row) }
-              .forEach { field ->
-                ComponentFieldInput(
-                  row = row,
-                  field = field,
-                  viewModel = viewModel,
-                  showValidationErrors = showValidationErrors,
-                  modifier = Modifier.weight(1f),
-                  // Numbered by instance rather than by field: the heading already said "Blade", so
-                  // the input only has to say which one.
-                  labelOverride = row.label,
-                  dense = true,
-                  // A cross on the field itself, where the old form put it. A control below the group
-                  // could not say which one it drops.
-                  onRemove = { viewModel.onRemoveComponent(row.path) }.takeIf { row.canRemove },
-                )
+            // The field and its own remove control, as one cell. The cross sits beside the input
+            // rather than inside it: a dense field is shorter than a touch target, and two across
+            // is what leaves room for a full-size one.
+            Row(
+              modifier = Modifier.weight(1f),
+              verticalAlignment = Alignment.CenterVertically,
+            ) {
+              row.fields.filter { it.isVisibleOn(row) }
+                .forEach { field ->
+                  ComponentFieldInput(
+                    row = row,
+                    field = field,
+                    viewModel = viewModel,
+                    showValidationErrors = showValidationErrors,
+                    modifier = Modifier.weight(1f),
+                    // Numbered by instance rather than by field: the heading already said "Blade",
+                    // so the input only has to say which one.
+                    labelOverride = row.label,
+                    dense = true,
+                  )
+                }
+              if (row.canRemove) {
+                IconButton(onClick = { viewModel.onRemoveComponent(row.path) }) {
+                  Icon(
+                    Icons.Default.Close,
+                    // "Remove Blade 2" — a bare "Remove" four times over says nothing to a screen reader.
+                    contentDescription = "${stringResource(CoreRes.string.remove)} ${row.label}",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                  )
+                }
               }
+            }
           }
           if (pair.size == 1) Spacer(Modifier.weight(1f))
         }
@@ -374,7 +389,6 @@ private fun ComponentFieldInput(
   modifier: Modifier = Modifier,
   labelOverride: String? = null,
   dense: Boolean = false,
-  onRemove: (() -> Unit)? = null,
 ) {
   FormTextField(
     value = row.component?.valueOf(field)
@@ -397,16 +411,6 @@ private fun ComponentFieldInput(
       KeyboardOptions(capitalization = KeyboardCapitalization.Characters)
     } else {
       KeyboardOptions.Default
-    },
-    trailingIcon = onRemove?.let {
-      {
-        IconButton(onClick = it) {
-          Icon(
-            Icons.Default.Close,
-            contentDescription = stringResource(CoreRes.string.remove),
-          )
-        }
-      }
     },
   )
 }
