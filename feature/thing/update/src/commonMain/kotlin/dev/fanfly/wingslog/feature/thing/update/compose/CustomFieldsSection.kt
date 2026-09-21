@@ -1,16 +1,12 @@
 package dev.fanfly.wingslog.feature.thing.update.compose
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -52,65 +48,55 @@ fun CustomFieldsSection(
   if (limit <= 0) return
   val fields = thing.customSpecs()
 
-  Card(
+  // No card: the fields are already boxes, and a box of boxes is what the form used to be.
+  Column(
     modifier = Modifier.padding(vertical = Spacing.small),
-    shape = RoundedCornerShape(Spacing.cardCornerRadius),
-    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-    border = BorderStroke(
-      Spacing.hairline,
-      MaterialTheme.colorScheme.outlineVariant
-    ),
-    elevation = CardDefaults.cardElevation(defaultElevation = Spacing.none),
+    verticalArrangement = Arrangement.spacedBy(Spacing.small),
   ) {
-    Column(
-      modifier = Modifier.padding(Spacing.medium),
-      verticalArrangement = Arrangement.spacedBy(Spacing.small),
-    ) {
-      Text(
-        stringResource(UpdateRes.string.custom_fields_title),
-        style = MaterialTheme.typography.titleSmall,
-        fontWeight = FontWeight.SemiBold,
-      )
-      fields.forEach { field ->
-        Row(
-          horizontalArrangement = Arrangement.spacedBy(Spacing.small),
-          verticalAlignment = Alignment.CenterVertically,
-        ) {
-          FormTextField(
-            value = field.label.trim(),
-            onValueChange = {
-              viewModel.onCustomFieldChanged(field.key, it, field.value_)
-            },
-            label = stringResource(UpdateRes.string.custom_field_name),
-            modifier = Modifier.weight(1f),
-            keyboardOptions = FormKeyboard.WordsNext,
+    Text(
+      stringResource(UpdateRes.string.custom_fields_title),
+      style = MaterialTheme.typography.titleSmall,
+      fontWeight = FontWeight.SemiBold,
+    )
+    fields.forEach { field ->
+      Row(
+        horizontalArrangement = Arrangement.spacedBy(Spacing.small),
+        verticalAlignment = Alignment.CenterVertically,
+      ) {
+        FormTextField(
+          value = field.label.trim(),
+          onValueChange = {
+            viewModel.onCustomFieldChanged(field.key, it, field.value_)
+          },
+          label = stringResource(UpdateRes.string.custom_field_name),
+          modifier = Modifier.weight(1f),
+          keyboardOptions = FormKeyboard.WordsNext,
+        )
+        FormTextField(
+          value = field.value_,
+          onValueChange = {
+            viewModel.onCustomFieldChanged(field.key, field.label, it)
+          },
+          label = stringResource(UpdateRes.string.custom_field_value),
+          modifier = Modifier.weight(1f),
+          keyboardOptions = FormKeyboard.WordsDone,
+        )
+        IconButton(onClick = { viewModel.onRemoveCustomField(field.key) }) {
+          Icon(
+            Icons.Default.Close,
+            contentDescription = stringResource(CoreRes.string.remove),
           )
-          FormTextField(
-            value = field.value_,
-            onValueChange = {
-              viewModel.onCustomFieldChanged(field.key, field.label, it)
-            },
-            label = stringResource(UpdateRes.string.custom_field_value),
-            modifier = Modifier.weight(1f),
-            keyboardOptions = FormKeyboard.WordsDone,
-          )
-          IconButton(onClick = { viewModel.onRemoveCustomField(field.key) }) {
-            Icon(
-              Icons.Default.Close,
-              contentDescription = stringResource(CoreRes.string.remove),
-            )
-          }
         }
       }
-      // Gone rather than disabled once the allowance is spent: a button that never works is a
-      // question the user keeps asking.
-      if (fields.size < limit) {
-        DashedButton(
-          label = stringResource(UpdateRes.string.custom_field_add),
-          onClick = { viewModel.onAddCustomField() },
-          modifier = Modifier.fillMaxWidth(),
-        )
-      }
+    }
+    // Gone rather than disabled once the allowance is spent: a button that never works is a
+    // question the user keeps asking.
+    if (fields.size < limit) {
+      DashedButton(
+        label = stringResource(UpdateRes.string.custom_field_add),
+        onClick = { viewModel.onAddCustomField() },
+        modifier = Modifier.fillMaxWidth(),
+      )
     }
   }
 }

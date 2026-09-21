@@ -1,26 +1,22 @@
 package dev.fanfly.wingslog.feature.thing.update.compose
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.template.ComponentField
@@ -104,29 +100,23 @@ fun ComponentTreeSection(
   }
 }
 
+/**
+ * One component and what hangs off it, as a labelled run of fields. No card at any depth: the
+ * heading says where a component starts, and the fields are the only boxes on the form.
+ */
 @Composable
 private fun ComponentNodeCard(
   node: ComponentNode,
   viewModel: EditThingViewModel,
   showValidationErrors: Boolean,
 ) {
-  Card(
-    modifier = Modifier.fillMaxWidth(),
-    shape = RoundedCornerShape(Spacing.cardCornerRadius),
-    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-    border = BorderStroke(
-      Spacing.hairline,
-      MaterialTheme.colorScheme.outlineVariant
-    ),
-    elevation = CardDefaults.cardElevation(defaultElevation = Spacing.none),
+  Column(
+    modifier = Modifier.fillMaxWidth()
+      .padding(top = Spacing.medium),
+    verticalArrangement = Arrangement.spacedBy(Spacing.medium),
   ) {
-    Column(
-      modifier = Modifier.padding(Spacing.medium),
-      verticalArrangement = Arrangement.spacedBy(Spacing.medium),
-    ) {
-      ComponentBlock(node, viewModel, showValidationErrors)
-      ChildSlots(node, viewModel, showValidationErrors)
-    }
+    ComponentBlock(node, viewModel, showValidationErrors)
+    ChildSlots(node, viewModel, showValidationErrors)
   }
 }
 
@@ -183,15 +173,13 @@ private fun ComponentBlock(
       ) {
         Text(
           text = row.label,
-          style = MaterialTheme.typography.titleSmall,
-          fontWeight = FontWeight.SemiBold,
+          style = MaterialTheme.typography.labelLarge,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         if (row.canRemove) {
-          IconButton(onClick = { viewModel.onRemoveComponent(row.path) }) {
-            Icon(
-              Icons.Default.Close,
-              contentDescription = stringResource(CoreRes.string.remove),
-            )
+          // Named, not a bare cross: beside a heading it has to say what it does.
+          TextButton(onClick = { viewModel.onRemoveComponent(row.path) }) {
+            Text(stringResource(CoreRes.string.remove))
           }
         }
       }
@@ -331,7 +319,8 @@ private fun InlineGroup(
   Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
     Text(
       text = first.slot.label,
-      style = MaterialTheme.typography.labelSmall,
+      style = MaterialTheme.typography.labelLarge,
+      color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
     // chunked(2) into Rows, which is how this form has always laid these out. A weighted child in
     // a FlowRow takes the whole line instead of half of it, so the pairing silently never happens

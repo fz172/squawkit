@@ -34,8 +34,10 @@ class DataLogMonthsTest {
       LocalDate(2026, 9, 1),
       LocalDate(2026, 8, 1),
       LocalDate(2024, 8, 1),
-    ).inOrder()
-    assertThat(months.first().rows).containsExactly(sep03, sep02).inOrder()
+    )
+      .inOrder()
+    assertThat(months.first().rows).containsExactly(sep03, sep02)
+      .inOrder()
   }
 
   @Test
@@ -45,16 +47,24 @@ class DataLogMonthsTest {
 
   @Test
   fun keysAreUnique() {
-    assertThat(listOf(sep03, aug28, sep02).byMonth().map { it.key }).containsNoDuplicates()
+    assertThat(
+      listOf(sep03, aug28, sep02).byMonth()
+        .map { it.key }).containsNoDuplicates()
   }
 
   @Test
   fun headlineLeadsWithDurationThenWhereThenGroundRun() {
     val ground = sep03.copy(durationSeconds = 1033, startLocationIdent = "E16")
     assertThat(ground.headline("Ground run")).isEqualTo("17m 13s · E16 · Ground run")
-    assertThat(ground.copy(startLocationIdent = "").headline("Ground run"))
+    assertThat(
+      ground.copy(startLocationIdent = "")
+        .headline("Ground run")
+    )
       .isEqualTo("17m 13s · Ground run")
-    assertThat(ground.copy(airborne = true).headline("Ground run")).isEqualTo("17m 13s · E16")
+    assertThat(
+      ground.copy(airborne = true)
+        .headline("Ground run")
+    ).isEqualTo("17m 13s · E16")
   }
 
   @Test
