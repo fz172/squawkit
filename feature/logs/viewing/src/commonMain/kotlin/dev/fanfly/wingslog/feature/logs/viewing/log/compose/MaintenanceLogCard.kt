@@ -1,38 +1,45 @@
 package dev.fanfly.wingslog.feature.logs.viewing.log.compose
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.sp
-import dev.fanfly.wingslog.core.datetime.toDisplayFormat
+import dev.fanfly.wingslog.core.datetime.toDayOfMonth
 import dev.fanfly.wingslog.core.datetime.toLocalDate
 import dev.fanfly.wingslog.core.datetime.toWireInstant
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.LocalThingTemplate
 import dev.fanfly.wingslog.core.template.MeterKeys
 import dev.fanfly.wingslog.core.template.componentTypesApply
-import dev.fanfly.wingslog.core.template.formatMeterValue
-import dev.fanfly.wingslog.core.template.primaryReading
+import dev.fanfly.wingslog.core.template.formatMeterNumber
+import dev.fanfly.wingslog.core.template.timelineReading
 import dev.fanfly.wingslog.core.template.squawkNoun
 import dev.fanfly.wingslog.core.template.taskNoun
 import dev.fanfly.wingslog.core.ui.common.compose.highlightWords
@@ -45,6 +52,8 @@ import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.thing.MeterReading
 import dev.fanfly.wingslog.thing.Technician
 import org.jetbrains.compose.resources.stringResource
+import wingslog.feature.logs.viewing.generated.resources.log_file_count_one
+import wingslog.feature.logs.viewing.generated.resources.log_file_count_plural
 import wingslog.feature.logs.viewing.generated.resources.log_squawk_count_one
 import wingslog.feature.logs.viewing.generated.resources.log_squawk_count_plural
 import wingslog.feature.logs.viewing.generated.resources.log_task_count_one
@@ -54,139 +63,180 @@ import kotlin.time.Instant
 import wingslog.feature.logs.viewing.generated.resources.Res as MaintenanceRes
 import wingslog.feature.tasks.sharedassets.generated.resources.Res as SharedRes
 
+/**
+ * One work log on the spine: the meter reading in the gutter, a dot on the connector, a one-line
+ * summary and a metadata line. The full description is the detail sheet's job.
+ */
 @Composable
 fun MaintenanceLogCard(
   log: MaintenanceLog,
   onClick: () -> Unit,
   modifier: Modifier = Modifier,
+  /** Whether the spine reaches the entry directly above / below this one. */
+  connectsUp: Boolean = false,
+  connectsDown: Boolean = false,
+  /** The newest log, whose dot is lit. */
+  isLatest: Boolean = false,
   /** Words the active search matched, highlighted where they appear. */
   highlight: Set<String> = emptySet(),
   /** A match the card cannot otherwise show, e.g. a serial. */
   matchNote: AnnotatedString? = null,
 ) {
-  val dateStr = log.timestamp?.toLocalDate()
-    ?.toDisplayFormat()
-    ?: stringResource(SharedRes.string.unknown_date)
-  // The first meter this template declares that the log actually recorded. This used to switch on
-  // `component_type` across three aviation fields, so a car's log matched nothing and showed a
-  // blank where its odometer belonged (#761).
   val template = LocalThingTemplate.current
-  val primary = template.primaryReading(log)
+  // One meter down the whole gutter, so the column reads as a series; the detail sheet leads with
+  // the component's own.
+  val primary = template.timelineReading(log)
 
-  // An entry in a list, not a card: the row sits on the list's own colour and a `ListRowDivider`
-  // separates it from the next. Filled rather than transparent so the swipe controls behind it do
-  // not show through. UI-12 gives this row the month headers and the meter gutter.
-  Column(
+  // Filled rather than transparent so the swipe controls behind it do not show through.
+  Row(
     modifier = modifier
       .fillMaxWidth()
       .background(MaterialTheme.colorScheme.surface)
       .clickable(onClick = onClick)
-      .padding(
-        horizontal = Spacing.large,
-        vertical = Spacing.large
-      ),
-    verticalArrangement = Arrangement.spacedBy(Spacing.medium),
+      // Min, so the spine can fill exactly the height the text asks for.
+      .height(IntrinsicSize.Min)
+      // No leading inset: the gutter lines up under the month header.
+      .padding(end = Spacing.large),
   ) {
-    // Top row: component badge | tach hours + chevron
-    Row(
-      modifier = Modifier.fillMaxWidth(),
-      verticalAlignment = Alignment.CenterVertically,
-    ) {
-      LogComponentBadge(log.component_type)
-      Spacer(Modifier.weight(1f))
-      if (primary != null) {
-        Text(
-          text = template.formatMeterValue(primary.first.key, primary.second),
-          style = WingslogTypography.dataSmall,
-          color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Spacer(Modifier.width(Spacing.small))
-      }
-      Icon(
-        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-        contentDescription = null,
-        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-      )
-    }
-
-    // Work description — full text, no truncation
-    Text(
-      text = highlightWords(
-        log.work_description,
-        highlight,
-        searchHighlightStyle()
-      ),
-      style = MaterialTheme.typography.bodyMedium,
-      color = MaterialTheme.colorScheme.onSurface,
-    )
-    matchNote?.let {
-      Text(
-        text = it,
-        style = MaterialTheme.typography.labelSmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-      )
-    }
-
-    // Footer: date | task count + technician
-    Row(
-      modifier = Modifier.fillMaxWidth(),
-      verticalAlignment = Alignment.CenterVertically,
+    // The gutter: the number alone. The meter is the same down the whole column, and the detail
+    // sheet names it.
+    Box(
+      modifier = Modifier
+        .width(rememberGutterWidth())
+        .padding(top = Spacing.medium),
     ) {
       Text(
-        text = dateStr,
+        text = primary?.let { template.formatMeterNumber(it.first.key, it.second) }.orEmpty(),
         style = WingslogTypography.dataSmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
+        maxLines = 1,
+        softWrap = false,
+        // Pinned to the spine; a reading too long for the gutter grows into the screen's own
+        // padding rather than pushing the dots out of line.
+        modifier = Modifier
+          .fillMaxWidth()
+          .wrapContentWidth(Alignment.End, unbounded = true),
       )
-      Spacer(Modifier.weight(1f))
-      val taskCount = log.inspection_ids.size
-      val squawkCount = log.squawk_ids.size
-      if (taskCount > 0) {
-        val taskLabel =
-          if (taskCount == 1) stringResource(
-            MaintenanceRes.string.log_task_count_one,
-            LocalThingLexicon.current.taskNoun.singular,
-          )
-          else stringResource(
-            MaintenanceRes.string.log_task_count_plural,
-            taskCount,
-            LocalThingLexicon.current.taskNoun.plural,
-          )
+    }
+    Spine(connectsUp = connectsUp, connectsDown = connectsDown, lit = isLatest)
+    Column(
+      modifier = Modifier
+        .weight(1f)
+        .padding(vertical = Spacing.medium),
+      verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
+    ) {
+      Text(
+        text = highlightWords(log.work_description.asSummaryLine(), highlight, searchHighlightStyle()),
+        style = MaterialTheme.typography.titleMedium,
+        color = MaterialTheme.colorScheme.onSurface,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+      )
+      Text(
+        text = log.metadataLine(),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+      )
+      matchNote?.let {
         Text(
-          text = taskLabel,
-          style = MaterialTheme.typography.labelMedium,
-          color = MaterialTheme.colorScheme.primary,
-        )
-      }
-      if (squawkCount > 0) {
-        if (taskCount > 0) Spacer(Modifier.width(Spacing.medium))
-        val squawkLabel =
-          if (squawkCount == 1) stringResource(
-            MaintenanceRes.string.log_squawk_count_one,
-            LocalThingLexicon.current.squawkNoun.singular,
-          )
-          else stringResource(
-            MaintenanceRes.string.log_squawk_count_plural,
-            squawkCount,
-            LocalThingLexicon.current.squawkNoun.plural,
-          )
-        Text(
-          text = squawkLabel,
-          style = MaterialTheme.typography.labelMedium,
-          color = MaterialTheme.colorScheme.primary,
-        )
-      }
-      val techName = log.technician?.name?.takeIf { it.isNotBlank() }
-      if (techName != null) {
-        if (taskCount > 0 || squawkCount > 0) Spacer(Modifier.width(Spacing.medium))
-        Text(
-          text = techName,
-          style = MaterialTheme.typography.labelMedium,
+          text = it,
+          style = MaterialTheme.typography.labelSmall,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-      }
       }
     }
   }
+}
+
+/** The connector and this entry's dot, which sits level with the first line of text. */
+@Composable
+private fun Spine(connectsUp: Boolean, connectsDown: Boolean, lit: Boolean) {
+  val line = MaterialTheme.colorScheme.outlineVariant
+  val dot = if (lit) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
+  Canvas(
+    modifier = Modifier
+      .padding(end = Spacing.small)
+      .width(Spacing.medium)
+      .fillMaxHeight(),
+  ) {
+    val radius = size.width / 3
+    val centre = Offset(size.width / 2, Spacing.medium.toPx() + Spacing.small.toPx() + radius / 2)
+    val stroke = Spacing.hairline.toPx()
+    if (connectsUp) drawLine(line, Offset(centre.x, 0f), centre, stroke)
+    if (connectsDown) drawLine(line, centre, Offset(centre.x, size.height), stroke)
+    drawCircle(dot, radius, centre)
+  }
+}
+
+/** "Sep 5 · J. Rivera · 1 task · 5 files" — whichever of them this log has. */
+@Composable
+private fun MaintenanceLog.metadataLine(): String {
+  val lexicon = LocalThingLexicon.current
+  val date = timestamp?.toLocalDate()
+    ?.toDayOfMonth()
+    ?: stringResource(SharedRes.string.unknown_date)
+  val taskCount = inspection_ids.size
+  val squawkCount = squawk_ids.size
+  val fileCount = attachments.size
+  return listOfNotNull(
+    date,
+    technician?.name?.takeIf { it.isNotBlank() },
+    when {
+      taskCount == 1 ->
+        stringResource(MaintenanceRes.string.log_task_count_one, lexicon.taskNoun.singular)
+
+      taskCount > 1 -> stringResource(
+        MaintenanceRes.string.log_task_count_plural,
+        taskCount,
+        lexicon.taskNoun.plural,
+      )
+
+      else -> null
+    },
+    when {
+      squawkCount == 1 ->
+        stringResource(MaintenanceRes.string.log_squawk_count_one, lexicon.squawkNoun.singular)
+
+      squawkCount > 1 -> stringResource(
+        MaintenanceRes.string.log_squawk_count_plural,
+        squawkCount,
+        lexicon.squawkNoun.plural,
+      )
+
+      else -> null
+    },
+    // A count, never thumbnails: the list says a log has files, the detail sheet shows them.
+    when {
+      fileCount == 1 -> stringResource(MaintenanceRes.string.log_file_count_one)
+      fileCount > 1 -> stringResource(MaintenanceRes.string.log_file_count_plural, fileCount)
+      else -> null
+    },
+  ).joinToString(" · ")
+}
+
+private val WHITESPACE_RUN = Regex("\\s+")
+
+/** A stored description as one run of text: newlines and blank lines would cost the row its one line. */
+private fun String.asSummaryLine(): String = replace(WHITESPACE_RUN, " ").trim()
+
+/** The widest reading the gutter holds without overflowing: a five-digit hour meter. */
+private const val WIDEST_READING = "9999.9"
+
+/**
+ * Measured rather than a fixed dp, so [WIDEST_READING] fits whatever the font scale — plus a sliver
+ * so the digits never touch the dot.
+ */
+@Composable
+private fun rememberGutterWidth(): Dp {
+  val measurer = rememberTextMeasurer()
+  val density = LocalDensity.current
+  val style = WingslogTypography.dataSmall
+  return remember(measurer, density, style) {
+    with(density) { measurer.measure(WIDEST_READING, style, maxLines = 1).size.width.toDp() }
+  } + Spacing.small
+}
 
 private data class BadgeScheme(
   val background: Color,

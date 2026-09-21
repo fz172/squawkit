@@ -3,6 +3,7 @@ package dev.fanfly.wingslog.core.template
 import com.google.common.truth.Truth.assertThat
 import dev.fanfly.wingslog.core.template.canonical.AirplaneTemplate
 import dev.fanfly.wingslog.core.template.canonical.CanonicalTemplates
+import dev.fanfly.wingslog.thing.ComponentType
 import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.thing.MaintenanceOverview
 import dev.fanfly.wingslog.thing.MeterReading
@@ -224,6 +225,48 @@ class MeterReadingsTest {
 
     assertThat(AirplaneTemplate.TEMPLATE.primaryReading(log)?.first?.key)
       .isEqualTo(MeterKeys.AIRFRAME_HOURS)
+  }
+
+  @Test
+  fun anEngineLogLeadsWithEngineHours() {
+    // Work on the engine is read against the engine's tach, even when the log noted airframe time.
+    val log = MaintenanceLog(
+      id = "l1",
+      component_type = ComponentType.COMPONENT_ENGINE,
+      readings = listOf(
+        MeterReading(MeterKeys.ENGINE_HOURS, value_ = 1041.8),
+        MeterReading(MeterKeys.AIRFRAME_HOURS, value_ = 1111.0),
+      ),
+    )
+
+    assertThat(AirplaneTemplate.TEMPLATE.primaryReading(log)?.first?.key)
+      .isEqualTo(MeterKeys.ENGINE_HOURS)
+  }
+
+  @Test
+  fun anEngineLogWithoutEngineHoursFallsBackToWhatItRecorded() {
+    val log = MaintenanceLog(
+      id = "l1",
+      component_type = ComponentType.COMPONENT_ENGINE,
+      readings = listOf(MeterReading(MeterKeys.AIRFRAME_HOURS, value_ = 1111.0)),
+    )
+
+    assertThat(AirplaneTemplate.TEMPLATE.primaryReading(log)?.first?.key)
+      .isEqualTo(MeterKeys.AIRFRAME_HOURS)
+  }
+
+  @Test
+  fun theTimelineStaysOnTheFirstMeterWhateverTheComponent() {
+    val log = MaintenanceLog(
+      id = "l1",
+      component_type = ComponentType.COMPONENT_ENGINE,
+      readings = listOf(
+        MeterReading(MeterKeys.ENGINE_HOURS, value_ = 1041.8),
+        MeterReading(MeterKeys.AIRFRAME_HOURS, value_ = 1111.0),
+      ),
+    )
+
+    assertThat(AirplaneTemplate.TEMPLATE.timelineReading(log)?.second).isEqualTo(1111.0)
   }
 
   @Test

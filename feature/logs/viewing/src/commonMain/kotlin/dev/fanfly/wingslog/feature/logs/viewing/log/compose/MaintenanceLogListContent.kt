@@ -1,5 +1,9 @@
 package dev.fanfly.wingslog.feature.logs.viewing.log.compose
 
+import wingslog.feature.tasks.sharedassets.generated.resources.Res as TasksSharedRes
+import wingslog.feature.tasks.sharedassets.generated.resources.unknown_date
+import dev.fanfly.wingslog.core.datetime.toMonthHeading
+import dev.fanfly.wingslog.core.ui.common.compose.stickySectionHeader
 import androidx.compose.foundation.interaction.DragInteraction
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -9,7 +13,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.History
@@ -44,14 +47,11 @@ import dev.fanfly.wingslog.core.ui.common.compose.SwipeActionCard
 import dev.fanfly.wingslog.core.ui.common.compose.animateScrollToCenter
 import dev.fanfly.wingslog.core.ui.common.compose.jumpTargetHighlight
 import dev.fanfly.wingslog.core.ui.common.compose.rememberSwipeRevealController
-import dev.fanfly.wingslog.core.ui.common.compose.ListRowDivider
 import dev.fanfly.wingslog.core.ui.common.compose.SkeletonList
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.motionItem
 import dev.fanfly.wingslog.feature.ads.datamanager.AdsManager
 import dev.fanfly.wingslog.feature.ads.model.AdSurface
-import dev.fanfly.wingslog.feature.ads.model.ListRow
-import dev.fanfly.wingslog.feature.ads.model.withAdSlots
 import dev.fanfly.wingslog.feature.ads.viewing.AdSlot
 import dev.fanfly.wingslog.feature.attachment.model.BlobSyncState
 import dev.fanfly.wingslog.feature.attachment.model.DataLogRowInfo
@@ -168,23 +168,16 @@ fun MaintenanceLogListContent(
   val adsManager: AdsManager = koinInject()
   val showAds by adsManager.shouldShowsAds()
     .collectAsState(initial = false)
-  // The display list, not the item list. Everything index-based below must agree with what the
-  // LazyColumn actually renders — see the scroll target immediately after.
-  val rows by remember {
-    derivedStateOf {
-      if (showAds) withAdSlots(currentLogs) else currentLogs.map {
-        ListRow.Item(
-          it
-        )
-      }
-    }
-  }
   // Set once the scroll has landed, so the highlight plays on a row that is on screen.
   var landedLogId by remember(scrollToLogId) { mutableStateOf<String?>(null) }
+  // The display list, not the item list: logs under month headers, on a spine, on every tier.
+  // Everything index-based below must agree with what the LazyColumn actually renders.
+  val lines by remember { derivedStateOf { logListLines(currentLogs, showAds) } }
+  val undated = stringResource(TasksSharedRes.string.unknown_date)
   LaunchedEffect(scrollToLogId) {
     if (scrollToLogId == null) return@LaunchedEffect
     // A jump target must always be reachable: a search query or component filter left over from
-    // earlier browsing would otherwise silently exclude it from `rows`, leaving nothing to scroll to
+    // earlier browsing would otherwise silently exclude it from `lines`, leaving nothing to scroll to
     // or highlight — the same "stale narrowing state hides the jump target" gap the Squawks/Tasks
     // tabs have on their Open/Closed and Active/Complied splits, just via a filter here instead of a
     // segmented toggle.
@@ -194,10 +187,9 @@ fun MaintenanceLogListContent(
         // Resolve against the DISPLAY list. Using the item index would drift by the number of ads
         // above the target once slots are interleaved, landing the pilot on the wrong log — and the
         // error grows further down the list.
-        snapshotFlow { rows }.collect { displayRows ->
-          val index = displayRows.indexOfFirst {
-            it is ListRow.Item && it.value.id == scrollToLogId
-          }
+        snapshotFlow {
+          lines.indexOfFirst { it is LogListLine.Entry && it.log.id == scrollToLogId }
+        }.collect { index ->
           if (index >= 0) {
             logListState.animateScrollToCenter(index)
             landedLogId = scrollToLogId
@@ -391,34 +383,6 @@ fun MaintenanceLogListContent(
                   onClearFilters = onClearFilter
                 )
               }
-            } else if (LocalLayoutTier.current.hasSideNav) {
-              // MEDIUM and wider: a real data table instead of cards.
-              MaintenanceLogTable(
-                rows = rows,
-                onLogClick = onLogClick,
-                listState = logListState,
-                highlightedLogId = landedLogId,
-                highlightFor = {
-                  uiState.matches[it.id].orEmpty()
-                    .wordsIn(
-                      LogAdapter.FIELD_DESCRIPTION,
-                      LogAdapter.FIELD_TECHNICIAN
-                    )
-                },
-                noteFor = {
-                  logMatchNote(
-                    uiState.matches[it.id].orEmpty(),
-                    it
-                  )
-                },
-                modifier = Modifier
-                  // fill = false so the bordered table wraps its content height when there are
-                  // few entries instead of stretching to fill the whole viewport; it still caps
-                  // at the available space and scrolls internally once there are enough rows.
-                  .weight(1f, fill = false)
-                  .fillMaxWidth()
-                  .padding(horizontal = Spacing.screenPadding),
-              )
             } else {
               LazyColumn(
                 state = logListState,
@@ -432,59 +396,53 @@ fun MaintenanceLogListContent(
                   // Room for the add-FAB, plus the floating pill this list now scrolls beneath
                   bottom = navPillAndFabClearance
                 ),
-                // No arrangement gap: flat rows meet a hairline, and the ad band pads itself.
+                // No arrangement gap: the spine has to run unbroken from one entry into the next.
               ) {
-                itemsIndexed(
-                  rows,
-                  // Stable keys matter here in a way they do not on the card surfaces: this is the
-                  // one lazy list, so an identity that changed as logs loaded in would tear the slot
-                  // down and re-request, burning cap on an ad nobody saw.
-                  key = { _, row ->
-                    when (row) {
-                      is ListRow.Ad -> "ad-${row.slotIndex}"
-                      is ListRow.Item -> row.value.id
-                    }
-                  },
-                ) { index, row ->
-                  // One animated node per key: the rule travels with its row.
-                  Column(modifier = motionItem()) {
-                    // Above every row but the first, so the list neither opens nor closes on a rule.
-                    if (index > 0) ListRowDivider()
-                    when (row) {
-                      is ListRow.Ad -> AdSlot(
-                        surface = AdSurface.LOGS,
-                        slotIndex = row.slotIndex,
-                        modifier = Modifier.padding(vertical = Spacing.small),
-                      )
+                lines.forEach { line ->
+                  when (line) {
+                    is LogListLine.MonthHeader -> stickySectionHeader(
+                      key = line.key,
+                      title = line.month?.toMonthHeading() ?: undated,
+                      count = line.count,
+                    )
 
-                      is ListRow.Item -> SwipeActionCard(
+                    is LogListLine.Ad -> item(key = line.key, contentType = "ad") {
+                      AdSlot(
+                        surface = AdSurface.LOGS,
+                        slotIndex = line.slotIndex,
+                        modifier = motionItem().padding(vertical = Spacing.small),
+                      )
+                    }
+
+                    is LogListLine.Entry -> item(key = line.key, contentType = "entry") {
+                      val log = line.log
+                      SwipeActionCard(
                         // A null callback yields no actions, which disables the drag (PRD R20).
                         actions = logQuickActions(
                           onDelete = onDeleteLog?.let { delete ->
                             {
                               revealController.close()
-                              delete(row.value)
+                              delete(log)
                             }
                           },
                         ),
                         controller = revealController,
-                        key = row.value.id,
+                        key = log.id,
+                        modifier = motionItem(),
                       ) {
                         MaintenanceLogCard(
-                          log = row.value,
-                          onClick = { onLogClick(row.value) },
-                          highlight = uiState.matches[row.value.id].orEmpty()
+                          log = log,
+                          onClick = { onLogClick(log) },
+                          connectsUp = line.connectsUp,
+                          connectsDown = line.connectsDown,
+                          isLatest = line.isLatest,
+                          highlight = uiState.matches[log.id].orEmpty()
                             .wordsIn(
                               LogAdapter.FIELD_DESCRIPTION,
                               LogAdapter.FIELD_TECHNICIAN
                             ),
-                          matchNote = logMatchNote(
-                            uiState.matches[row.value.id].orEmpty(),
-                            row.value
-                          ),
-                          modifier = Modifier.jumpTargetHighlight(
-                            active = row.value.id == landedLogId,
-                          ),
+                          matchNote = logMatchNote(uiState.matches[log.id].orEmpty(), log),
+                          modifier = Modifier.jumpTargetHighlight(active = log.id == landedLogId),
                         )
                       }
                     }
