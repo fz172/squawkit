@@ -1,7 +1,6 @@
 package dev.fanfly.wingslog.core.ui.common.compose
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -9,7 +8,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -17,9 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
@@ -39,10 +35,8 @@ import dev.fanfly.wingslog.core.ui.theme.Spacing
  * [supporting], the line a search result needs to say what it matched on. Anything else a record
  * cannot fit on two lines belongs in its detail sheet.
  *
- * [accent] is the exception, and it is rare: a record the list must not let you scroll past — the
- * down-state defect — becomes a contained block, filled a step above the list and bordered in the
- * accent colour. Status that merely needs *noticing* belongs in the leading icon and the
- * [StatusChip], not in a container.
+ * No row is contained, not even the down-state defect: status is carried by the text's tone, the
+ * leading icon and the [StatusChip], so a list stays one column of records.
  */
 /**
  * What a flat [ListRow] is sitting on. A row must be opaque — a swipe card slides it over its own
@@ -56,14 +50,11 @@ fun ListRow(
   modifier: Modifier = Modifier,
   metadata: AnnotatedString? = null,
   onClick: (() -> Unit)? = null,
-  accent: Color? = null,
   metadataStyle: TextStyle = MaterialTheme.typography.bodySmall,
   leading: @Composable (() -> Unit)? = null,
   trailing: @Composable (() -> Unit)? = null,
   supporting: @Composable (() -> Unit)? = null,
 ) {
-  val contained = accent != null
-  val shape = if (contained) RoundedCornerShape(Spacing.cardCornerRadius) else RectangleShape
   // The row IS the Row. A `Surface` here would wrap every one of them in a second layout node, a
   // clip of a rectangle, a semantics traversal group and two composition-local writes, to reach
   // the one modifier a flat row actually needs. Slots are given explicit colours below rather than
@@ -71,14 +62,8 @@ fun ListRow(
   Row(
     modifier = modifier
       .fillMaxWidth()
-      .background(
-        color = if (contained) MaterialTheme.colorScheme.surfaceContainer
-        else LocalListRowGround.current.takeOrElse { MaterialTheme.colorScheme.surface },
-        shape = shape,
-      )
-      .then(if (accent != null) Modifier.border(Spacing.hairline, accent, shape) else Modifier)
-      // Clip before clickable, so the ripple stops at the corners of a contained row.
-      .then(if (onClick != null) Modifier.clip(shape).clickable(onClick = onClick) else Modifier)
+      .background(LocalListRowGround.current.takeOrElse { MaterialTheme.colorScheme.surface })
+      .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
       .heightIn(min = Spacing.rowHeight)
       .padding(horizontal = Spacing.large, vertical = Spacing.medium),
     verticalAlignment = Alignment.CenterVertically,
@@ -118,7 +103,6 @@ fun ListRow(
   modifier: Modifier = Modifier,
   metadata: String? = null,
   onClick: (() -> Unit)? = null,
-  accent: Color? = null,
   metadataStyle: TextStyle = MaterialTheme.typography.bodySmall,
   leading: @Composable (() -> Unit)? = null,
   trailing: @Composable (() -> Unit)? = null,
@@ -128,7 +112,6 @@ fun ListRow(
   modifier = modifier,
   metadata = metadata?.let { AnnotatedString(it) },
   onClick = onClick,
-  accent = accent,
   metadataStyle = metadataStyle,
   leading = leading,
   trailing = trailing,

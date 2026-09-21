@@ -2,85 +2,143 @@ package dev.fanfly.wingslog.feature.thing.dashboard.compose
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextOverflow
 import dev.fanfly.wingslog.core.template.ComponentGroup
 import dev.fanfly.wingslog.core.template.ComponentNode
 import dev.fanfly.wingslog.core.template.componentGroups
 import dev.fanfly.wingslog.core.template.joinAsPhrase
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 
 /**
- * One component and everything attached to it (#729).
- *
- * Nesting is drawn by containment, never by indentation — but a slot the template marks
- * `inline_with_parent` **flows underneath its parent's own details instead of into a card**. A
- * propeller is part of how an owner describes the engine, not somewhere to navigate into, so the
- * engine's card reads: engine, then propeller, then its blades as chips.
- *
- * Was `EngineDetails`, which reached four levels into an engine for exactly this shape. The
- * template says it now.
+ * The component tree as flat lines — slot, make and model, serial — in the order the template
+ * declares them (#729). No boxes: an engine's propeller and its blades simply follow it, and a
+ * hairline separates one top-level component from the next, so two engines read as two blocks.
  */
 @Composable
-fun ComponentDetails(node: ComponentNode) {
+fun ComponentTree(nodes: List<ComponentNode>, modifier: Modifier = Modifier) {
+  Column(
+    modifier = modifier,
+    verticalArrangement = Arrangement.spacedBy(Spacing.medium),
+  ) {
+    nodes.componentGroups()
+      .forEachIndexed { index, group ->
+        if (index > 0) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+        ComponentGroupLines(group)
+      }
+  }
+}
+
+@Composable
+private fun ComponentGroupLines(group: ComponentGroup) {
+  Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
+    when (group) {
+      is ComponentGroup.Card -> ComponentLines(group.node)
+      is ComponentGroup.Chips -> SetLines(group.nodes)
+    }
+  }
+}
+
+/** One component, then everything attached to it: inline slots first, as the template means. */
+@Composable
+private fun ComponentLines(node: ComponentNode) {
   val component = node.row.component ?: return
-  ComponentCard(
-    category = node.row.label,
-    // Joined here rather than through the two-slot template string: a component with only a make
-    // would otherwise render it followed by a dangling separator.
+  ComponentLine(
+    label = node.row.label,
+    // Joined here rather than through a two-slot string: a component with only a make would
+    // otherwise render it followed by a dangling separator.
     name = listOf(component.make, component.model).joinAsPhrase(),
     serial = component.serial,
-    content = if (node.children.isEmpty()) {
-      null
-    } else {
-      { ComponentChildren(node) }
-    },
   )
+  node.inlineBlockGroups.flatten()
+    .forEach { ComponentLines(it) }
+  node.groupedChildren.componentGroups()
+    .forEach { ComponentGroupLines(it) }
 }
 
 /**
- * Everything under a component: its inline blocks first, then its remaining children in the order
- * the template declares them.
- *
- * Inline blocks lead because that is what `inline_with_parent` means — they are part of describing
- * this component, not things beside it. The rest keeps declaration order, chips and cards
- * interleaved as the template wrote them.
+ * A matched set — blades, tyres. Parts known only by a serial share one line, "88228 · 88279";
+ * anything that names a make, a position or a declared value gets a line each.
  */
 @Composable
-private fun ComponentChildren(node: ComponentNode) {
-  Column(verticalArrangement = Arrangement.spacedBy(Spacing.large)) {
-    node.inlineBlockGroups.flatten()
-      .forEach { InlineComponentBlock(it) }
-    ComponentGroups(node.groupedChildren)
-  }
-}
-
-/**
- * A run of siblings, each drawn as whatever its slot asks for — a card, or a set of chips.
- *
- * The grouping is the template's, not this composable's: [componentGroups] merges a slot's
- * components into one chip block and leaves everything else standing alone, in order.
- */
-@Composable
-fun ComponentGroups(nodes: List<ComponentNode>) {
-  nodes.componentGroups()
-    .forEach { group ->
-      when (group) {
-        is ComponentGroup.Chips -> ComponentChips(group.nodes)
-        is ComponentGroup.Card -> ComponentDetails(group.node)
-      }
-    }
-}
-
-/** An inline component: the same three lines a card shows, without a card around them. */
-@Composable
-private fun InlineComponentBlock(node: ComponentNode) {
-  val component = node.row.component ?: return
-  Column(verticalArrangement = Arrangement.spacedBy(Spacing.large)) {
-    ComponentSummary(
-      category = node.row.label,
-      name = listOf(component.make, component.model).joinAsPhrase(),
-      serial = component.serial,
+private fun SetLines(nodes: List<ComponentNode>) {
+  val chips = nodes.mapNotNull { it.row.chipLines }
+  if (chips.isEmpty()) return
+  if (chips.all { it.serial.isBlank() && it.specs.isEmpty() }) {
+    ComponentLine(
+      label = nodes.first().row.slot.label,
+      name = chips.map { it.headline }.filter { it.isNotBlank() }.joinToString(SEPARATOR),
+      serial = "",
+      nameIsIdentifier = true,
     )
-    ComponentChildren(node)
+    return
+  }
+  chips.forEach { chip ->
+    val specs = chip.specs.map { "${it.label} ${it.value}" }
+    ComponentLine(
+      label = chip.label,
+      name = (listOf(chip.headline) + specs).filter { it.isNotBlank() }.joinToString(SEPARATOR),
+      serial = chip.serial,
+    )
   }
 }
+
+@Composable
+private fun ComponentLine(
+  label: String,
+  name: String,
+  serial: String,
+  /** The name is itself a serial, so it takes the mono face a serial gets. */
+  nameIsIdentifier: Boolean = false,
+) {
+  Row(
+    modifier = Modifier.fillMaxWidth(),
+    horizontalArrangement = Arrangement.spacedBy(Spacing.medium),
+  ) {
+    Text(
+      text = label,
+      style = MaterialTheme.typography.labelMedium,
+      color = MaterialTheme.colorScheme.onSurfaceVariant,
+      maxLines = 1,
+      overflow = TextOverflow.Ellipsis,
+      modifier = Modifier.width(LABEL_WIDTH)
+        .alignByBaseline(),
+    )
+    Text(
+      text = name,
+      style = if (nameIsIdentifier) WingslogTypography.dataSmall else MaterialTheme.typography.bodyMedium,
+      color = if (nameIsIdentifier) {
+        MaterialTheme.colorScheme.onSurfaceVariant
+      } else {
+        MaterialTheme.colorScheme.onSurface
+      },
+      maxLines = 2,
+      overflow = TextOverflow.Ellipsis,
+      modifier = Modifier.weight(1f)
+        .alignByBaseline(),
+    )
+    // Omitted when there is none: a home has no serial to give.
+    if (serial.isNotBlank()) {
+      Text(
+        text = serial,
+        style = WingslogTypography.dataSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        maxLines = 1,
+        modifier = Modifier.alignByBaseline(),
+      )
+    }
+  }
+}
+
+private const val SEPARATOR = " · "
+
+/** One column for every line, so names start on the same edge. Fits "Front Left" and "Propeller". */
+private val LABEL_WIDTH = Spacing.huge * 3

@@ -10,8 +10,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.datetime.toLocalDate
 import dev.fanfly.wingslog.core.template.LexiconFormatter
@@ -48,10 +51,12 @@ fun SquawkCard(
 ) {
   val squawk = item.squawk
   val highlightStyle = searchHighlightStyle()
-  val isAog = squawk.priority == SquawkPriority.SQUAWK_PRIORITY_AOG
-  // The down-state defect is the one squawk genuinely set apart, so it is the one that keeps a
-  // border. Every other row is separated by the tonal ramp alone.
-  val accent = if (isAog) MaterialTheme.statusColors.blocking.accent.copy(alpha = 0.5f) else null
+  // The down-state defect is set apart by the tone of its title, not by a box around the row.
+  val titleColor = if (squawk.priority == SquawkPriority.SQUAWK_PRIORITY_AOG) {
+    MaterialTheme.statusColors.blocking.accent
+  } else {
+    Color.Unspecified
+  }
 
   val raisedOn = squawk.created_at
     ?.takeIf { it.getEpochSecond() > 0L }
@@ -66,11 +71,14 @@ fun SquawkCard(
   }
 
   ListRow(
-    title = highlightWords(squawk.title, highlight, highlightStyle),
+    title = buildAnnotatedString {
+      withStyle(SpanStyle(color = titleColor)) {
+        append(highlightWords(squawk.title, highlight, highlightStyle))
+      }
+    },
     metadata = metadata.takeIf { it.isNotEmpty() },
     onClick = onClick,
     modifier = modifier,
-    accent = accent,
     leading = if (showPriority) ({ PriorityBadge(item) }) else null,
     trailing = {
       Row(

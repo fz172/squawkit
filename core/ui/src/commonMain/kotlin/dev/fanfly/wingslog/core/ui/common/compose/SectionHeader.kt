@@ -3,6 +3,7 @@ package dev.fanfly.wingslog.core.ui.common.compose
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListScope
@@ -24,6 +25,7 @@ import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
  * Opaque, on the same ground as the rows ([LocalListRowGround]), because it is built to be pinned:
  * rows scroll underneath it, and a transparent header would let them show through its text.
  * [color] is for a header that carries meaning of its own, such as a priority tier's tone.
+ * [trailing] sits at the far edge — the link to the full list this group previews.
  */
 @Composable
 fun SectionHeader(
@@ -31,6 +33,7 @@ fun SectionHeader(
   modifier: Modifier = Modifier,
   count: Int? = null,
   color: Color = MaterialTheme.colorScheme.onSurfaceVariant,
+  trailing: @Composable (() -> Unit)? = null,
 ) {
   Row(
     modifier = modifier
@@ -52,6 +55,10 @@ fun SectionHeader(
         style = WingslogTypography.dataSmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
       )
+    }
+    if (trailing != null) {
+      Spacer(Modifier.weight(1f))
+      trailing()
     }
   }
 }

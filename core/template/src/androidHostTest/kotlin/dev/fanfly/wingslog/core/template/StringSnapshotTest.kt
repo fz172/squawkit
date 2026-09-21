@@ -125,7 +125,6 @@ class StringSnapshotTest {
     "feature/squawk/sharedassets:no_squawk_work_recorded" to { l: Lexicon ->
       mapOf(1 to l.squawkNoun.plural, 2 to l.logNoun.singular)
     },
-    squawkFrame("view_squawks") { LexiconFormatter.titleCasePlural(it) },
     squawkFrame("squawk_added") { LexiconFormatter.sentenceCase(it) },
     squawkFrame("squawk_updated") { LexiconFormatter.sentenceCase(it) },
     squawkFrame("squawk_dismissed") { LexiconFormatter.sentenceCase(it) },
@@ -255,9 +254,6 @@ class StringSnapshotTest {
     frame("feature/search/sharedassets", "filter_q_part_of") { it.thingNoun.singular },
     frame("feature/tasks/sharedassets", "task_deleted") {
       LexiconFormatter.sentenceCase(it.taskNoun)
-    },
-    frame("feature/tasks/viewing", "maintenance_due_subtitle") {
-      LexiconFormatter.sentenceCasePlural(it.taskNoun)
     },
 
     // The log surfaces (#656). Per-thing: a log belongs to one thing. Absent on purpose —

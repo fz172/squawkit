@@ -10,6 +10,7 @@ import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
 import dev.fanfly.wingslog.thing.MaintenanceLog
 import dev.fanfly.wingslog.thing.Squawk
 import dev.fanfly.wingslog.thing.Thing
+import kotlinx.datetime.LocalDate
 
 data class LogStats(
   val total: Long,
@@ -18,6 +19,8 @@ data class LogStats(
   val propeller: Long,
   /** Current value per meter key, from `MaintenanceOverview.current` (#730). */
   val readings: Map<String, Double> = emptyMap(),
+  /** Date of the newest log that recorded any of [readings]; null when none has. */
+  val readingsAsOf: LocalDate? = null,
 ) {
   /**
    * The current reading for a meter key, or null when nothing has recorded one.

@@ -16,11 +16,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Dataset
 import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -29,39 +30,47 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.LocalThingCapabilities
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.LocalThingTemplate
 import dev.fanfly.wingslog.core.template.componentTree
+import dev.fanfly.wingslog.core.template.formatMeterValue
 import dev.fanfly.wingslog.core.template.specLines
 import dev.fanfly.wingslog.core.template.thingNoun
+import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
+import dev.fanfly.wingslog.feature.thing.dashboard.data.LogStats
+import dev.fanfly.wingslog.thing.MeterDef
 import dev.fanfly.wingslog.thing.Thing
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.edit
 import wingslog.core.sharedassets.generated.resources.manage_access
 import wingslog.feature.logs.viewing.generated.resources.collapse_details
 import wingslog.feature.logs.viewing.generated.resources.expand_details
-import wingslog.feature.logs.viewing.generated.resources.s_n_placeholder
 import wingslog.feature.logs.viewing.generated.resources.thing_data
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
+import wingslog.feature.thing.dashboard.generated.resources.Res as DashboardRes
+import wingslog.feature.thing.dashboard.generated.resources.overview_meters
+import wingslog.feature.thing.dashboard.generated.resources.overview_meters_as_of
 import wingslog.feature.logs.viewing.generated.resources.Res as MaintenanceRes
 
 
 @Composable
 fun ThingDataCard(
   thing: Thing,
-  initiallyExpanded: Boolean = true,
+  /** The meters' current readings; null hides the block, as does a template with no meters. */
+  stats: LogStats? = null,
   onEditClick: (() -> Unit)? = null,
   onManageAccessClick: (() -> Unit)? = null,
 ) {
-  var expanded by rememberSaveable { mutableStateOf(initiallyExpanded) }
+  var expanded by rememberSaveable { mutableStateOf(true) }
   val rotationState by animateFloatAsState(
     targetValue = if (expanded) 180f else 0f,
     animationSpec = tween(durationMillis = 200, easing = FastOutSlowInEasing),
@@ -144,32 +153,34 @@ fun ThingDataCard(
             ThingSpecBlock(spec)
           }
 
-          // Every stored component, walked from the template's slots. Drawn as a tree by
-          // containment — an engine's propeller sits inside its card — rather than as a flat
-          // stack that says nothing about what is attached to what.
-          //
-          // Top-level slots go through the same grouping as nested ones, which is the fix for a
-          // car listing four tyres and four brakes as eight full-width rows: a slot marked
-          // `compact_instances` draws its components as chips wherever it sits in the tree.
-          if (LocalThingCapabilities.current.components) {
-            ComponentGroups(
-              template.componentTree(thing)
-                .filter { it.row.component != null },
-            )
+          // The whole block is behind `meters` because a capability removes UI: a homeowner should
+          // never see a meter cell at all (PRD §4.8).
+          val meters = template?.meters.orEmpty()
+          if (stats != null && LocalThingCapabilities.current.meters && meters.isNotEmpty()) {
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            MeterReadings(meters, stats)
+          }
+
+          // Every stored component, walked from the template's slots.
+          val components = template.componentTree(thing)
+            .filter { it.row.component != null }
+          if (LocalThingCapabilities.current.components && components.isNotEmpty()) {
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            ComponentTree(components)
           }
 
           if (onEditClick != null || onManageAccessClick != null) {
             Row(
               modifier = Modifier.fillMaxWidth(),
-              horizontalArrangement = Arrangement.End,
+              horizontalArrangement = Arrangement.spacedBy(Spacing.small),
             ) {
               if (onManageAccessClick != null) {
-                TextButton(onClick = onManageAccessClick) {
+                OutlinedButton(onClick = onManageAccessClick, modifier = Modifier.weight(1f)) {
                   Text(text = stringResource(CoreRes.string.manage_access))
                 }
               }
               if (onEditClick != null) {
-                TextButton(onClick = onEditClick) {
+                OutlinedButton(onClick = onEditClick, modifier = Modifier.weight(1f)) {
                   Text(text = stringResource(CoreRes.string.edit))
                 }
               }
@@ -181,81 +192,53 @@ fun ThingDataCard(
   }
 }
 
+/**
+ * What each meter last read, and when. Plain numbers: the app knows no overhaul interval to count
+ * down to, so a progress bar here would be inventing one.
+ */
 @Composable
-fun ComponentCard(
-  category: String,
-  name: String,
-  serial: String,
-  modifier: Modifier = Modifier,
-  content: @Composable (() -> Unit)? = null,
-) {
-  Surface(
-    modifier = modifier.fillMaxWidth(),
-    shape = RoundedCornerShape(Spacing.cardCornerRadius),
-    color = Color.Transparent,
-    border = BorderStroke(
-      Spacing.hairline,
-      MaterialTheme.colorScheme.outlineVariant
-    )
-  ) {
-    Column(modifier = Modifier.padding(Spacing.large)) {
-      ComponentSummary(category = category, name = name, serial = serial)
-
-      if (content != null) {
-        Column(modifier = Modifier.padding(top = Spacing.large)) {
-          content()
+private fun MeterReadings(meters: List<MeterDef>, stats: LogStats) {
+  val template = LocalThingTemplate.current
+  Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+      Text(
+        text = stringResource(DashboardRes.string.overview_meters),
+        style = MaterialTheme.typography.labelLarge,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.weight(1f),
+      )
+      stats.readingsAsOf?.let { asOf ->
+        Text(
+          text = stringResource(DashboardRes.string.overview_meters_as_of, asOf.toDisplayFormat()),
+          style = MaterialTheme.typography.labelMedium,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+      }
+    }
+    Row(horizontalArrangement = Arrangement.spacedBy(Spacing.medium)) {
+      meters.forEach { meter ->
+        Column(modifier = Modifier.weight(1f)) {
+          Text(
+            // The template formats it: hours take a decimal place and "HRS", an odometer neither.
+            // A declared meter nothing has recorded shows a dash — zero would read as a measurement.
+            text = stats.valueFor(meter.key)
+              ?.let { template.formatMeterValue(meter.key, it) }
+              ?: NO_READING,
+            style = WingslogTypography.dataLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+          )
+          Text(
+            text = meter.label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+          )
         }
       }
     }
   }
 }
 
-/**
- * The category, make/model and serial lines a component shows.
- *
- * Extracted from [ComponentCard] so a slot the template marks `inline_with_parent` renders exactly
- * the same three lines inside its parent's card, with no card of its own — the propeller case.
- */
-@Composable
-fun ComponentSummary(category: String, name: String, serial: String) {
-  Column(modifier = Modifier.fillMaxWidth()) {
-    Text(
-      text = category,
-      style = TextStyle(
-        fontFamily = FontFamily.SansSerif,
-        fontWeight = FontWeight.Bold,
-        fontSize = 10.sp,
-        letterSpacing = 0.1.sp,
-      ),
-      color = MaterialTheme.colorScheme.primary,
-    )
-    // Same reasoning as the serial below: a component recorded with neither make nor model has
-    // nothing to show on this line, and a blank one reads as a load that failed.
-    if (name.isNotBlank()) {
-      Text(
-        text = name,
-        modifier = Modifier.padding(top = Spacing.extraSmall),
-        style = TextStyle(
-          fontFamily = FontFamily.SansSerif,
-          fontWeight = FontWeight.SemiBold,
-          fontSize = 16.sp,
-        ),
-        color = MaterialTheme.colorScheme.onSurface,
-      )
-    }
-    // Omitted entirely when there is none. A home has no serial to give, and "S/N:" followed by
-    // nothing reads as data that failed to load rather than data that does not exist.
-    if (serial.isNotBlank()) {
-      Text(
-        text = stringResource(MaintenanceRes.string.s_n_placeholder, serial),
-        modifier = Modifier.padding(top = Spacing.extraSmall),
-        style = TextStyle(
-          fontFamily = FontFamily.SansSerif,
-          fontWeight = FontWeight.Normal,
-          fontSize = 13.sp,
-        ),
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-      )
-    }
-  }
-}
+/** Shown for a meter the template declares but nothing has recorded a reading for yet. */
+private const val NO_READING = "\u2014"

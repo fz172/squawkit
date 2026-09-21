@@ -2,6 +2,8 @@ package dev.fanfly.wingslog.feature.thing.dashboard.data
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dev.fanfly.wingslog.core.datetime.toLocalDate
+import dev.fanfly.wingslog.core.template.readingFor
 import dev.fanfly.wingslog.core.analytics.AnalyticsManager
 import dev.fanfly.wingslog.core.analytics.QuickActionKind
 import dev.fanfly.wingslog.core.analytics.QuickActionSource
@@ -240,6 +242,11 @@ class ThingOverviewViewModel(
           ThingOverviewUiState.Degraded(thing, degraded.reason)
         } else if (thing != null) {
           val template = templateRegistry.forThingWithFallback(thing)
+          val readingsAsOf = logs
+            .filter { log -> template.meters.any { log.readingFor(it.key) != null } }
+            .maxByOrNull { it.timestamp?.getEpochSecond() ?: 0L }
+            ?.timestamp
+            ?.toLocalDate()
           val stats = if (overview != null) {
             LogStats(
               total = overview.total_log_count.toLong(),
@@ -254,6 +261,7 @@ class ThingOverviewViewModel(
                   ?.let { meter.key to it }
               }
                 .toMap(),
+              readingsAsOf = readingsAsOf,
             )
           } else {
             // No overview stored yet — compute the same readings straight from the logs.
@@ -271,6 +279,7 @@ class ThingOverviewViewModel(
                 fromLogs[meter.key]?.let { meter.key to it }
               }
                 .toMap(),
+              readingsAsOf = readingsAsOf,
             )
           }
 
