@@ -5,6 +5,7 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.format.MonthNames
+import kotlinx.datetime.format.Padding
 import kotlinx.datetime.format.char
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Instant
@@ -51,6 +52,24 @@ private val WordDateFormat = LocalDate.Format {
   char(' ')
   year()
 }
+
+private val MonthHeadingFormat = LocalDate.Format {
+  monthName(MonthNames.ENGLISH_FULL)
+  char(' ')
+  year()
+}
+
+private val DayOfMonthFormat = LocalDate.Format {
+  monthName(MonthNames.ENGLISH_ABBREVIATED)
+  char(' ')
+  day(Padding.NONE)
+}
+
+/** "September 2026" — the heading a list grouped by month gives each group. */
+fun LocalDate.toMonthHeading(): String = MonthHeadingFormat.format(this)
+
+/** "Sep 5" — a date under a [toMonthHeading], which already carries the year. */
+fun LocalDate.toDayOfMonth(): String = DayOfMonthFormat.format(this)
 
 fun LocalDate.toDisplayFormat(numberOnly: Boolean = true): String {
   return if (numberOnly) DisplayDateFormat.format(this)

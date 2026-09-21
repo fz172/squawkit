@@ -306,6 +306,8 @@ feature/logs/viewing	affected_maintenance_tasks	Affected Maintenance Tasks
 feature/logs/viewing	collapse_details	Collapse details
 feature/logs/viewing	expand_details	Expand details
 feature/logs/viewing	failed_to_load_logs	Could not load maintenance logs
+feature/logs/viewing	log_file_count_one	1 file
+feature/logs/viewing	log_file_count_plural	%1$d files
 feature/logs/viewing	log_squawk_count_one	1 squawk
 feature/logs/viewing	log_squawk_count_plural	%1$d squawks
 feature/logs/viewing	log_task_count_one	1 maintenance task
