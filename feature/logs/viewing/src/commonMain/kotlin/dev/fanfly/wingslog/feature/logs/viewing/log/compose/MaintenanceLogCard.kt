@@ -22,6 +22,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
@@ -39,6 +40,7 @@ import dev.fanfly.wingslog.core.template.LocalThingTemplate
 import dev.fanfly.wingslog.core.template.MeterKeys
 import dev.fanfly.wingslog.core.template.componentTypesApply
 import dev.fanfly.wingslog.core.template.formatMeterNumber
+import dev.fanfly.wingslog.core.template.logNoun
 import dev.fanfly.wingslog.core.template.timelineReading
 import dev.fanfly.wingslog.core.template.squawkNoun
 import dev.fanfly.wingslog.core.template.taskNoun
@@ -53,6 +55,8 @@ import dev.fanfly.wingslog.thing.MeterReading
 import dev.fanfly.wingslog.thing.Technician
 import org.jetbrains.compose.resources.stringResource
 import wingslog.feature.logs.viewing.generated.resources.log_file_count_one
+import wingslog.feature.logs.viewing.generated.resources.log_gap_one
+import wingslog.feature.logs.viewing.generated.resources.log_gap_plural
 import wingslog.feature.logs.viewing.generated.resources.log_file_count_plural
 import wingslog.feature.logs.viewing.generated.resources.log_squawk_count_one
 import wingslog.feature.logs.viewing.generated.resources.log_squawk_count_plural
@@ -147,6 +151,51 @@ fun MaintenanceLogCard(
         )
       }
     }
+  }
+}
+
+/**
+ * The logs a filter removed between two entries: the spine goes dashed and says how many, so a line
+ * spanning six months never implies nothing happened in them.
+ */
+@Composable
+fun LogGapRow(omitted: Int, modifier: Modifier = Modifier) {
+  val lexicon = LocalThingLexicon.current
+  val line = MaterialTheme.colorScheme.outline
+  Row(
+    modifier = modifier
+      .fillMaxWidth()
+      .background(MaterialTheme.colorScheme.surface)
+      .height(IntrinsicSize.Min)
+      .padding(end = Spacing.large),
+    verticalAlignment = Alignment.CenterVertically,
+  ) {
+    Box(Modifier.width(rememberGutterWidth()))
+    Canvas(
+      modifier = Modifier
+        .padding(end = Spacing.small)
+        .width(Spacing.medium)
+        .fillMaxHeight(),
+    ) {
+      val dash = Spacing.extraSmall.toPx()
+      drawLine(
+        color = line,
+        start = Offset(size.width / 2, 0f),
+        end = Offset(size.width / 2, size.height),
+        strokeWidth = Spacing.hairline.toPx(),
+        pathEffect = PathEffect.dashPathEffect(floatArrayOf(dash, dash)),
+      )
+    }
+    Text(
+      text = if (omitted == 1) {
+        stringResource(MaintenanceRes.string.log_gap_one, lexicon.logNoun.singular)
+      } else {
+        stringResource(MaintenanceRes.string.log_gap_plural, omitted, lexicon.logNoun.plural)
+      },
+      style = MaterialTheme.typography.labelMedium,
+      color = MaterialTheme.colorScheme.onSurfaceVariant,
+      modifier = Modifier.padding(vertical = Spacing.medium),
+    )
   }
 }
 
