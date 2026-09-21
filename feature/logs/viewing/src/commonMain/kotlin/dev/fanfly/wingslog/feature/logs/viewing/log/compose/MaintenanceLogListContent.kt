@@ -165,6 +165,9 @@ fun MaintenanceLogListContent(
   val currentLogs by rememberUpdatedState(
     (uiState as? MaintenanceLogListUiState.Success)?.logs.orEmpty()
   )
+  val currentAllLogs by rememberUpdatedState(
+    (uiState as? MaintenanceLogListUiState.Success)?.allLogs.orEmpty()
+  )
   val adsManager: AdsManager = koinInject()
   val showAds by adsManager.shouldShowsAds()
     .collectAsState(initial = false)
@@ -172,7 +175,9 @@ fun MaintenanceLogListContent(
   var landedLogId by remember(scrollToLogId) { mutableStateOf<String?>(null) }
   // The display list, not the item list: logs under month headers, on a spine, on every tier.
   // Everything index-based below must agree with what the LazyColumn actually renders.
-  val lines by remember { derivedStateOf { logListLines(currentLogs, showAds) } }
+  val lines by remember {
+    derivedStateOf { logListLines(currentLogs, showAds, allLogs = currentAllLogs) }
+  }
   val undated = stringResource(TasksSharedRes.string.unknown_date)
   LaunchedEffect(scrollToLogId) {
     if (scrollToLogId == null) return@LaunchedEffect
@@ -405,6 +410,10 @@ fun MaintenanceLogListContent(
                       title = line.month?.toMonthHeading() ?: undated,
                       count = line.count,
                     )
+
+                    is LogListLine.Gap -> item(key = line.key, contentType = "gap") {
+                      LogGapRow(omitted = line.omitted, modifier = motionItem())
+                    }
 
                     is LogListLine.Ad -> item(key = line.key, contentType = "ad") {
                       AdSlot(

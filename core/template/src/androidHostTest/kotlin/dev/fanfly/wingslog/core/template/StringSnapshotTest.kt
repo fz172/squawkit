@@ -318,6 +318,8 @@ class StringSnapshotTest {
       "feature/logs/viewing",
       "log_task_count_one"
     ) { it.taskNoun.singular },
+    frame("feature/logs/viewing", "log_gap_one") { it.logNoun.singular },
+    "feature/logs/viewing:log_gap_plural" to { l: Lexicon -> mapOf(2 to l.logNoun.plural) },
     "feature/logs/viewing:log_task_count_plural" to { l: Lexicon ->
       mapOf(2 to l.taskNoun.plural)
     },
