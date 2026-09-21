@@ -139,7 +139,8 @@ internal fun PriorityBadge(item: SquawkWithStatus) {
   StatusChip(label = label, tier = tier)
 }
 
-private fun SquawkPriority.statusTier(): StatusTier = when (this) {
+/** The one mapping from priority to tone: the badge, and the squawk list's tier headers. */
+fun SquawkPriority.statusTier(): StatusTier = when (this) {
   SquawkPriority.SQUAWK_PRIORITY_AOG -> StatusTier.BLOCKING
   SquawkPriority.SQUAWK_PRIORITY_HIGH -> StatusTier.CRITICAL
   SquawkPriority.SQUAWK_PRIORITY_MEDIUM -> StatusTier.CAUTION
