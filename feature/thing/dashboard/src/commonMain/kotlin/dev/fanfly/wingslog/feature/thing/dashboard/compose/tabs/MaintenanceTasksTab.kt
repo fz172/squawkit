@@ -115,6 +115,8 @@ fun MaintenanceTasksTab(
   // See SquawkTab for the root-coordinate offset scheme.
   var contentTopY by remember { mutableStateOf(0f) }
   var targetCardY by remember(scrollToTaskId) { mutableStateOf<Float?>(null) }
+  // Set once the scroll has landed, so the highlight plays on a card that is on screen.
+  var landedTaskId by remember(scrollToTaskId) { mutableStateOf<String?>(null) }
   // null = not found in either list yet, true = in history, false = active — three states so a
   // not-yet-synced tap and a status flip both re-trigger below (see SquawkTab for why: a tapped
   // notification can arrive and be acted on before the local sync pull carrying the very status
@@ -138,10 +140,13 @@ fun MaintenanceTasksTab(
     targetCardY = null
     val cardY = snapshotFlow { targetCardY }.filterNotNull()
       .first()
+    // Both positions move with the scroll, so their difference is the card's place in the content;
+    // half a viewport less puts its middle in the middle.
     scrollState.animateScrollTo(
-      (scrollState.value + (cardY - contentTopY)).roundToInt()
+      (cardY - contentTopY - scrollState.viewportSize / 2).roundToInt()
         .coerceAtLeast(0)
     )
+    landedTaskId = scrollToTaskId
   }
 
   Column(
@@ -174,6 +179,7 @@ fun MaintenanceTasksTab(
         { onAction(ThingOverviewAction.AddStarterPackClick(state.thing.id)) }
       } else null,
       scrollTargetId = scrollToTaskId,
+      highlightedId = landedTaskId,
       onTargetPositioned = { targetCardY = it },
       showHeader = showHeader,
       filterBar = {

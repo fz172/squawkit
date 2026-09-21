@@ -66,8 +66,8 @@ fun MaintenanceLogTable(
   rows: List<ListRow<MaintenanceLog>>,
   onLogClick: (MaintenanceLog) -> Unit,
   listState: LazyListState = rememberLazyListState(),
-  /** See [MaintenanceLogListContent]'s parameter of the same name. */
-  scrollToLogId: String? = null,
+  /** The jumped-to log, once the scroll to it has landed. */
+  highlightedLogId: String? = null,
   modifier: Modifier = Modifier,
   highlightFor: (MaintenanceLog) -> Set<String> = { emptySet() },
   noteFor: @Composable (MaintenanceLog) -> AnnotatedString? = { null },
@@ -112,7 +112,7 @@ fun MaintenanceLogTable(
               is ListRow.Item -> LogRow(
                 log = row.value,
                 onClick = { onLogClick(row.value) },
-                isJumpTarget = row.value.id == scrollToLogId,
+                isJumpTarget = row.value.id == highlightedLogId,
                 highlight = highlightFor(row.value),
                 matchNote = noteFor(row.value),
               )

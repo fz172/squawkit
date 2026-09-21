@@ -14,6 +14,7 @@ import dev.fanfly.wingslog.core.template.impl.BakedInTemplateRegistry
 import dev.fanfly.wingslog.core.template.squawkNoun
 import dev.fanfly.wingslog.core.template.thingNoun
 import dev.fanfly.wingslog.core.ui.adaptive.ShellSection
+import dev.fanfly.wingslog.feature.thing.dashboard.data.RecordJump
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetEntry
 import dev.fanfly.wingslog.feature.fleet.datamanager.FleetManager
 import dev.fanfly.wingslog.feature.fleet.picker.data.SelectedThingStore
@@ -531,6 +532,18 @@ class AdaptiveShellViewModelTest {
           logId = "log-1"
         )
       )
+
+      assertThat(vm.uiState.value.section).isEqualTo(ShellSection.LOGS)
+      assertThat(vm.pendingScrollTargetId.value).isEqualTo("log-1")
+    }
+
+  @Test
+  fun jumpToRecord_selectsSectionAndScrollTarget() =
+    runTest(testDispatcher) {
+      fleet.value = listOf(thing("a1", "N1"))
+      val vm = viewModel()
+
+      vm.jumpToRecord(RecordJump(ShellSection.LOGS, "log-1"))
 
       assertThat(vm.uiState.value.section).isEqualTo(ShellSection.LOGS)
       assertThat(vm.pendingScrollTargetId.value).isEqualTo("log-1")

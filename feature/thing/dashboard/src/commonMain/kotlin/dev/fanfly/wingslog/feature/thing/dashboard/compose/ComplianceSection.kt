@@ -63,7 +63,10 @@ fun ComplianceSection(
   onAddStarterPack: (() -> Unit)? = null,
   /** Task to report the on-screen position of, so the tab can scroll it into view. */
   scrollTargetId: String? = null,
+  /** Receives the vertical middle of the [scrollTargetId] card, in root coordinates. */
   onTargetPositioned: (Float) -> Unit = {},
+  /** The jumped-to card, once the scroll to it has landed. */
+  highlightedId: String? = null,
   showHeader: Boolean = true,
   /** The per-tab search and filter bar, under the header, and the result count below it. */
   filterBar: @Composable () -> Unit,
@@ -186,12 +189,14 @@ fun ComplianceSection(
                 modifier = Modifier.fillMaxWidth()
                   .then(
                     if (isJumpTarget) {
-                      Modifier.onGloballyPositioned { onTargetPositioned(it.positionInRoot().y) }
+                      Modifier.onGloballyPositioned {
+                        onTargetPositioned(it.positionInRoot().y + it.size.height / 2f)
+                      }
                     } else {
                       Modifier
                     }
                   )
-                  .jumpTargetHighlight(active = isJumpTarget),
+                  .jumpTargetHighlight(active = item.card.id == highlightedId),
               )
             }
             if (revealController == null || quickActionsFor == null) {

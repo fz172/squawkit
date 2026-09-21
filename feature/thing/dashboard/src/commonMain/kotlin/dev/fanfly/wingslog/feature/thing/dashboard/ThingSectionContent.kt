@@ -53,6 +53,7 @@ import dev.fanfly.wingslog.feature.thing.dashboard.compose.tabs.LogsTab
 import dev.fanfly.wingslog.feature.thing.dashboard.compose.tabs.MaintenanceTasksTab
 import dev.fanfly.wingslog.feature.thing.dashboard.compose.tabs.OverviewTab
 import dev.fanfly.wingslog.feature.thing.dashboard.compose.tabs.SquawkTab
+import dev.fanfly.wingslog.feature.thing.dashboard.data.RecordJump
 import dev.fanfly.wingslog.feature.thing.dashboard.data.ThingOverviewAction
 import dev.fanfly.wingslog.feature.thing.dashboard.data.ThingOverviewEvent
 import dev.fanfly.wingslog.feature.thing.dashboard.data.ThingOverviewUiState
@@ -88,6 +89,9 @@ fun ShellSectionBody(
   thingId: String?,
   navController: NavController,
   onNavigateToSection: (ShellSection) -> Unit,
+  /** Switch to an associated record's section and scroll to it. The host owns the target: each
+   * section is its own composition, so state remembered here would not survive the switch. */
+  onJumpToRecord: (RecordJump) -> Unit = {},
   /**
    * A record the host wants scrolled to and highlighted in [section]'s list — currently a tapped
    * urgency notification (notifications design §5.3). Interpreted against [section], which the host
@@ -106,6 +110,7 @@ fun ShellSectionBody(
       section = section,
       navController = navController,
       onNavigateToSection = onNavigateToSection,
+      onJumpToRecord = onJumpToRecord,
       scrollToRecordId = scrollToRecordId,
       onScrollTargetConsumed = onScrollTargetConsumed,
       onLinkAccount = onLinkAccount,
@@ -233,6 +238,7 @@ fun ThingSectionContent(
   section: ShellSection,
   navController: NavController,
   onNavigateToSection: (ShellSection) -> Unit = {},
+  onJumpToRecord: (RecordJump) -> Unit = {},
   /** See [ShellSectionBody]'s parameter of the same name. */
   scrollToRecordId: String? = null,
   onScrollTargetConsumed: () -> Unit = {},
@@ -271,8 +277,8 @@ fun ThingSectionContent(
     pendingMessage = null
     snackbarHostState?.showSnackbar(text)
   }
-  // Set when the user taps a squawk's addressing log; consumed by the Logs section to scroll to it
-  // after [onNavigateToSection] switches sections. It is cleared only while the Logs tab is OFF
+  // The log the Logs section should scroll to, handed down by the host (see [onJumpToRecord]). It
+  // is cleared only while the Logs tab is OFF
   // screen (see below): toggling it back to null while LogsTab is mounted remounts that tab and drops
   // its list ViewModel and scroll position, which would bounce the list back to the top.
   var pendingLogScrollTarget by remember(thingId) {
@@ -470,8 +476,7 @@ fun ThingSectionContent(
           onMutationAction = onAction,
           onLogClick = { logId ->
             onAction(ThingOverviewAction.DismissSquawkDetail)
-            pendingLogScrollTarget = logId
-            onNavigateToSection(ShellSection.LOGS)
+            onJumpToRecord(RecordJump(ShellSection.LOGS, logId))
           },
           onOpenDataLog = { dataLogId ->
             onAction(ThingOverviewAction.OpenDataLogClick(thingId, dataLogId))
@@ -501,12 +506,10 @@ fun ThingSectionContent(
             onAction(ThingOverviewAction.OpenDataLogClick(thingId, dataLogId))
           },
           onTaskClick = { taskId ->
-            pendingTaskScrollTarget = taskId
-            onNavigateToSection(ShellSection.TASKS)
+            onJumpToRecord(RecordJump(ShellSection.TASKS, taskId))
           },
           onSquawkClick = { squawkId ->
-            pendingSquawkScrollTarget = squawkId
-            onNavigateToSection(ShellSection.SQUAWKS)
+            onJumpToRecord(RecordJump(ShellSection.SQUAWKS, squawkId))
           },
           scrollToLogId = pendingLogScrollTarget,
         )
