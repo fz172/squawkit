@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -42,7 +43,8 @@ import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
  */
 @Composable
 fun TimelineRow(
-  /** Null for a list with nothing to put there: the gutter closes up and the spine leads the row. */
+  /** Null for a list with nothing to put there: the gutter closes up and the spine leads the row,
+   * inset just past the corner radius. */
   gutter: String?,
   modifier: Modifier = Modifier,
   connectsUp: Boolean = false,
@@ -60,7 +62,11 @@ fun TimelineRow(
       .height(IntrinsicSize.Min)
       .padding(end = Spacing.large),
   ) {
-    if (gutter != null) {
+    if (gutter == null) {
+      // A swipe card clips the row to its rounded corners. With no gutter the spine would run
+      // through that curve and lose a few pixels at every row boundary, so it starts clear of it.
+      Spacer(Modifier.width(Spacing.cardCornerRadius))
+    } else {
       Box(
         modifier = Modifier
           .width(rememberTimelineGutterWidth())
@@ -82,14 +88,23 @@ fun TimelineRow(
       }
     }
     val line = MaterialTheme.colorScheme.outlineVariant
-    val dot = if (lit) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
+    val dot =
+      if (lit) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
     Canvas(modifier = Modifier.spineColumn()) {
       // The dot sits level with the first line of text.
       val radius = size.width / 3
-      val centre = Offset(size.width / 2, Spacing.medium.toPx() + Spacing.small.toPx() + radius / 2)
+      val centre = Offset(
+        size.width / 2,
+        Spacing.medium.toPx() + Spacing.small.toPx() + radius / 2
+      )
       val stroke = Spacing.hairline.toPx()
       if (connectsUp) drawLine(line, Offset(centre.x, 0f), centre, stroke)
-      if (connectsDown) drawLine(line, centre, Offset(centre.x, size.height), stroke)
+      if (connectsDown) drawLine(
+        line,
+        centre,
+        Offset(centre.x, size.height),
+        stroke
+      )
       drawCircle(dot, radius, centre)
     }
     Column(
@@ -155,6 +170,12 @@ private fun rememberTimelineGutterWidth(): Dp {
   val density = LocalDensity.current
   val style = WingslogTypography.dataSmall
   return remember(measurer, density, style) {
-    with(density) { measurer.measure(WIDEST_GUTTER_VALUE, style, maxLines = 1).size.width.toDp() }
+    with(density) {
+      measurer.measure(
+        WIDEST_GUTTER_VALUE,
+        style,
+        maxLines = 1
+      ).size.width.toDp()
+    }
   } + Spacing.small
 }
