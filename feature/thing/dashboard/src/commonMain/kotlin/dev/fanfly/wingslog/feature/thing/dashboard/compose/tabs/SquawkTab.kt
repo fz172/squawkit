@@ -78,6 +78,7 @@ import dev.fanfly.wingslog.feature.squawk.viewing.SquawkCard
 import dev.fanfly.wingslog.feature.squawk.viewing.SquawkDetailSheet
 import dev.fanfly.wingslog.feature.squawk.viewing.SquawkQuickActionCallbacks
 import dev.fanfly.wingslog.feature.squawk.viewing.quickActions
+import dev.fanfly.wingslog.feature.squawk.viewing.statusTier
 import dev.fanfly.wingslog.feature.thing.dashboard.compose.RecordCommentComposer
 import dev.fanfly.wingslog.feature.thing.dashboard.compose.RecordCommentThread
 import dev.fanfly.wingslog.feature.thing.dashboard.data.SQUAWK_TIERS
@@ -371,6 +372,7 @@ fun SquawkTab(
             SectionHeader(
               title = priorityLabel(line.tier),
               count = line.count,
+              tier = line.tier.statusTier(),
             )
           }
 

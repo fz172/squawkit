@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.core.ui.theme.StatusTier
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 
 /**
@@ -25,6 +26,8 @@ import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
  * Opaque, on the same ground as the rows ([LocalListRowGround]), because it is built to be pinned:
  * rows scroll underneath it, and a transparent header would let them show through its text.
  * [color] is for a header that carries meaning of its own, such as a priority tier's tone.
+ * [tier] draws the title as that tier's [StatusChip] — the badge a row of the group would wear, so
+ * a header and its rows can never disagree about what a colour means.
  * [trailing] sits at the far edge — the link to the full list this group previews.
  */
 @Composable
@@ -33,6 +36,7 @@ fun SectionHeader(
   modifier: Modifier = Modifier,
   count: Int? = null,
   color: Color = MaterialTheme.colorScheme.onSurfaceVariant,
+  tier: StatusTier? = null,
   trailing: @Composable (() -> Unit)? = null,
 ) {
   Row(
@@ -44,11 +48,15 @@ fun SectionHeader(
     horizontalArrangement = Arrangement.spacedBy(Spacing.small),
     verticalAlignment = Alignment.CenterVertically,
   ) {
-    Text(
-      text = title,
-      style = MaterialTheme.typography.labelLarge,
-      color = color,
-    )
+    if (tier != null) {
+      StatusChip(label = title, tier = tier)
+    } else {
+      Text(
+        text = title,
+        style = MaterialTheme.typography.labelLarge,
+        color = color,
+      )
+    }
     if (count != null) {
       Text(
         text = count.toString(),
