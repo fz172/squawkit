@@ -24,11 +24,6 @@ fun WingsLogTopAppBar(
   onBackClick: () -> Unit,
   scrollBehavior: TopAppBarScrollBehavior? = null,
   actions: @Composable RowScope.() -> Unit = {},
-  /**
-   * Transparent for a screen that can be hosted in a dialog: there the scaffold's ground is tinted
-   * by the dialog's elevation and a bar painted in the raw background colour no longer matches it.
-   */
-  containerColor: Color = MaterialTheme.colorScheme.background,
 ) {
   TopAppBar(
     title = { Text(text = title) },
@@ -43,8 +38,11 @@ fun WingsLogTopAppBar(
     actions = actions,
     scrollBehavior = scrollBehavior,
     colors = TopAppBarDefaults.topAppBarColors(
-      containerColor = containerColor,
-      scrolledContainerColor = containerColor,
+      // Transparent, so the bar is whatever its scaffold is. A screen hosted in the web dialog has
+      // its ground tinted by the dialog's elevation, and a bar painted in the raw background
+      // colour stood out against it; full-screen, the scaffold's ground is the background anyway.
+      containerColor = Color.Transparent,
+      scrolledContainerColor = Color.Transparent,
     ),
   )
 }
