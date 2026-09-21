@@ -8,8 +8,6 @@
   <string name="log_squawk_count_one">1 <xliff:g example="squawks">%1$s</xliff:g></string>
   <string name="log_squawk_count_plural"><xliff:g example="3">%1$d</xliff:g> <xliff:g example="squawks">%2$s</xliff:g></string>
   <string name="failed_to_load_logs">Could not load maintenance logs</string>
-  <string name="maintenance_summary">Maintenance summary</string>
-  <string name="total_logs">Total logs</string>
   <string name="collapse_details">Collapse details</string>
   <string name="expand_details">Expand details</string>
   <string name="affected_maintenance_tasks">Affected <xliff:g example="maintenance tasks">%1$s</xliff:g></string>

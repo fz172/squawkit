@@ -41,6 +41,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.datetime.toLocalDate
+import dev.fanfly.wingslog.core.template.LexiconFormatter
+import dev.fanfly.wingslog.core.template.logNoun
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.LocalThingTemplate
 import dev.fanfly.wingslog.core.template.componentTypesApply
@@ -56,6 +58,8 @@ import dev.fanfly.wingslog.core.template.squawkNoun
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LayoutTier
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalNavPillClearance
+import dev.fanfly.wingslog.core.ui.common.compose.ListRowDivider
+import dev.fanfly.wingslog.core.ui.common.compose.SectionHeader
 import dev.fanfly.wingslog.core.ui.common.compose.LocalListRowGround
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
@@ -65,10 +69,9 @@ import dev.fanfly.wingslog.feature.squawk.model.SquawkStatus
 import dev.fanfly.wingslog.feature.squawk.viewing.AogAlertSection
 import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
-import dev.fanfly.wingslog.feature.tasks.viewing.CriticalAlertsSection
+import dev.fanfly.wingslog.feature.tasks.viewing.NeedsAttentionSection
 import dev.fanfly.wingslog.feature.tasks.viewing.TaskCardItem
 import dev.fanfly.wingslog.feature.thing.dashboard.compose.LogOnboardingCard
-import dev.fanfly.wingslog.feature.thing.dashboard.compose.LogStatsSection
 import dev.fanfly.wingslog.feature.thing.dashboard.compose.ThingDataCard
 import dev.fanfly.wingslog.feature.thing.dashboard.data.ThingOverviewAction
 import dev.fanfly.wingslog.feature.thing.dashboard.data.ThingOverviewUiState
@@ -83,7 +86,7 @@ import wingslog.feature.thing.dashboard.generated.resources.Res
 import wingslog.feature.thing.dashboard.generated.resources.overview_all_logs
 import wingslog.feature.thing.dashboard.generated.resources.overview_next_due
 import wingslog.feature.thing.dashboard.generated.resources.overview_open_squawks
-import wingslog.feature.thing.dashboard.generated.resources.overview_recent_activity
+import wingslog.feature.thing.dashboard.generated.resources.overview_title_with_count
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.squawk.sharedassets.generated.resources.Res as SquawkRes
 import wingslog.feature.tasks.sharedassets.generated.resources.Res as TasksRes
@@ -95,6 +98,7 @@ fun OverviewTab(
   onAction: (ThingOverviewAction) -> Unit,
   onViewSquawksTab: () -> Unit = {},
   onViewLogsTab: () -> Unit = {},
+  onViewTasksTab: () -> Unit = {},
   onMutationAction: ((ThingOverviewAction) -> Unit)? = onAction,
   modifier: Modifier = Modifier,
 ) {
@@ -105,6 +109,7 @@ fun OverviewTab(
       onAction = onAction,
       onViewSquawksTab = onViewSquawksTab,
       onViewLogsTab = onViewLogsTab,
+      onViewTasksTab = onViewTasksTab,
       onMutationAction = onMutationAction,
       modifier = modifier,
     )
@@ -120,7 +125,7 @@ fun OverviewTab(
     verticalArrangement = Arrangement.spacedBy(Spacing.extraLarge)
   ) {
     val overdueTasks =
-      state.activeTasks.filter { it.dueStatus.status == DueStatus.OVERDUE || it.dueStatus.status == DueStatus.DUE_SOON }
+      state.activeTasks.filter { it.needsAttention }
 
     OverviewHero(
       state,
@@ -128,10 +133,28 @@ fun OverviewTab(
         .padding(top = Spacing.medium)
     )
 
+    if (state.aogSquawks.isNotEmpty()) {
+      AogAlertSection(
+        aogSquawks = state.aogSquawks,
+        onViewSquawksClick = onViewSquawksTab,
+        modifier = Modifier.padding(horizontal = Spacing.screenPadding),
+      )
+    }
+
+    // Above the card, so what is due is the first thing read and the card has no reason to fold.
+    if (overdueTasks.isNotEmpty()) {
+      NeedsAttentionSection(
+        tasks = overdueTasks,
+        onTaskClick = { onAction(ThingOverviewAction.TaskCardClick(it)) },
+        onViewAllClick = onViewTasksTab,
+        modifier = Modifier.padding(horizontal = Spacing.screenPadding),
+      )
+    }
+
     Column(modifier = Modifier.padding(horizontal = Spacing.screenPadding)) {
       ThingDataCard(
         state.thing,
-        initiallyExpanded = overdueTasks.isEmpty(),
+        stats = state.logStats,
         // Edit + Manage Access are owner-only; technicians get a read-only thing card (§6.3).
         onEditClick = manageAction(state, onMutationAction) {
           ThingOverviewAction.EditClick(state.thing.id)
@@ -142,41 +165,12 @@ fun OverviewTab(
       )
     }
 
-    if (state.aogSquawks.isNotEmpty()) {
-      AogAlertSection(
-        aogSquawks = state.aogSquawks,
-        onViewSquawksClick = onViewSquawksTab,
-        modifier = Modifier.padding(horizontal = Spacing.screenPadding),
-      )
-    }
-
-    if (overdueTasks.isNotEmpty()) {
-      CriticalAlertsSection(
-        overdueTasks = overdueTasks,
-        onCardClick = { onAction(ThingOverviewAction.TaskCardClick(it)) },
-        modifier = Modifier.padding(horizontal = Spacing.screenPadding)
-      )
-    }
-
-    state.logStats?.let { stats ->
-      if (stats.total == 0L && onMutationAction != null) {
-        LogOnboardingCard(
-          onAddLogClick = {
-            onMutationAction(
-              ThingOverviewAction.AddLogClick(
-                state.thing.id
-              )
-            )
-          },
-          modifier = Modifier.padding(horizontal = Spacing.screenPadding)
-        )
-      } else if (stats.total > 0L) {
-        LogStatsSection(
-          stats = stats,
-          modifier = Modifier.padding(horizontal = Spacing.screenPadding)
-        )
-      }
-    }
+    WorkLogsSection(
+      state = state,
+      onViewLogsTab = onViewLogsTab,
+      onMutationAction = onMutationAction,
+      modifier = Modifier.padding(horizontal = Spacing.screenPadding),
+    )
 
     Spacer(Modifier.height(Spacing.screenPadding))
   }
@@ -188,11 +182,12 @@ private fun LargeOverviewTab(
   onAction: (ThingOverviewAction) -> Unit,
   onViewSquawksTab: () -> Unit,
   onViewLogsTab: () -> Unit,
+  onViewTasksTab: () -> Unit,
   onMutationAction: ((ThingOverviewAction) -> Unit)?,
   modifier: Modifier = Modifier,
 ) {
   val overdueTasks =
-    state.activeTasks.filter { it.dueStatus.status == DueStatus.OVERDUE || it.dueStatus.status == DueStatus.DUE_SOON }
+    state.activeTasks.filter { it.needsAttention }
   Column(
     modifier = modifier
       .fillMaxSize()
@@ -203,17 +198,6 @@ private fun LargeOverviewTab(
   ) {
     OverviewHero(state)
 
-    ThingDataCard(
-      state.thing,
-      initiallyExpanded = overdueTasks.isEmpty(),
-      onEditClick = manageAction(state, onMutationAction) {
-        ThingOverviewAction.EditClick(state.thing.id)
-      },
-      onManageAccessClick = memberAction(state, onMutationAction) {
-        ThingOverviewAction.ManageAccessClick(state.thing.id)
-      },
-    )
-
     if (state.aogSquawks.isNotEmpty()) {
       AogAlertSection(
         aogSquawks = state.aogSquawks,
@@ -222,26 +206,28 @@ private fun LargeOverviewTab(
     }
 
     if (overdueTasks.isNotEmpty()) {
-      CriticalAlertsSection(
-        overdueTasks = overdueTasks,
-        onCardClick = { onAction(ThingOverviewAction.TaskCardClick(it)) },
+      NeedsAttentionSection(
+        tasks = overdueTasks,
+        onTaskClick = { onAction(ThingOverviewAction.TaskCardClick(it)) },
+        onViewAllClick = onViewTasksTab,
       )
     }
 
-    state.logStats?.let { stats ->
-      if (stats.total == 0L && onMutationAction != null) {
-        LogOnboardingCard(
-          onAddLogClick = {
-            onMutationAction(
-              ThingOverviewAction.AddLogClick(
-                state.thing.id
-              )
-            )
-          },
-        )
-      } else if (stats.total > 0L) {
-        LogStatsSection(stats = stats)
-      }
+    ThingDataCard(
+      state.thing,
+      stats = state.logStats,
+      onEditClick = manageAction(state, onMutationAction) {
+        ThingOverviewAction.EditClick(state.thing.id)
+      },
+      onManageAccessClick = memberAction(state, onMutationAction) {
+        ThingOverviewAction.ManageAccessClick(state.thing.id)
+      },
+    )
+
+    if (state.logStats?.total == 0L && onMutationAction != null) {
+      LogOnboardingCard(
+        onAddLogClick = { onMutationAction(ThingOverviewAction.AddLogClick(state.thing.id)) },
+      )
     }
 
     DashboardLowerGrid(
@@ -321,6 +307,56 @@ private fun SharedMarker() {
   }
 }
 
+private val MaintenanceTaskWithStatus.needsAttention: Boolean
+  get() = dueStatus.status == DueStatus.OVERDUE || dueStatus.status == DueStatus.DUE_SOON
+
+/** The log noun and how many there are — "Work logs · 40". The count the stats strip used to hold. */
+@Composable
+private fun workLogsTitle(state: ThingOverviewUiState.Success): String {
+  val title = LexiconFormatter.titleCasePlural(LocalThingLexicon.current.logNoun)
+  val total = state.logStats?.total ?: return title
+  return stringResource(Res.string.overview_title_with_count, title, total.toInt())
+}
+
+/** The newest logs under a header that links to all of them; the onboarding card when there are none. */
+@Composable
+private fun WorkLogsSection(
+  state: ThingOverviewUiState.Success,
+  onViewLogsTab: () -> Unit,
+  onMutationAction: ((ThingOverviewAction) -> Unit)?,
+  modifier: Modifier = Modifier,
+) {
+  val total = state.logStats?.total ?: return
+  if (total == 0L) {
+    if (onMutationAction != null) {
+      LogOnboardingCard(
+        onAddLogClick = { onMutationAction(ThingOverviewAction.AddLogClick(state.thing.id)) },
+        modifier = modifier,
+      )
+    }
+    return
+  }
+  Column(modifier = modifier) {
+    SectionHeader(
+      title = LexiconFormatter.titleCasePlural(LocalThingLexicon.current.logNoun),
+      count = total.toInt(),
+      modifier = Modifier.clickable(onClick = onViewLogsTab),
+      trailing = {
+        Text(
+          text = stringResource(Res.string.overview_all_logs),
+          style = MaterialTheme.typography.labelLarge,
+          color = MaterialTheme.colorScheme.primary,
+          modifier = Modifier.padding(Spacing.extraSmall),
+        )
+      },
+    )
+    state.recentLogs.forEachIndexed { index, log ->
+      if (index > 0) ListRowDivider()
+      RecentLogRow(log = log, onClick = onViewLogsTab)
+    }
+  }
+}
+
 @Composable
 private fun DashboardLowerGrid(
   state: ThingOverviewUiState.Success,
@@ -329,7 +365,8 @@ private fun DashboardLowerGrid(
   onViewSquawksClick: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
-  val nextTask = state.activeTasks.firstOrNull()
+  // Overdue and due-soon tasks are already listed under Needs attention, above.
+  val nextTask = state.activeTasks.firstOrNull { !it.needsAttention }
   val openSquawks = state.squawks.filter { it.status == SquawkStatus.OPEN }
     .sortedByDescending { it.squawk.created_at?.getEpochSecond() ?: 0L }
 
@@ -338,7 +375,7 @@ private fun DashboardLowerGrid(
     horizontalArrangement = Arrangement.spacedBy(Spacing.extraLarge),
   ) {
     RailCard(
-      title = stringResource(Res.string.overview_recent_activity),
+      title = workLogsTitle(state),
       actionLabel = stringResource(Res.string.overview_all_logs),
       onActionClick = onLogsClick,
       modifier = Modifier.weight(1f),

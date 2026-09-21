@@ -16,11 +16,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Dataset
 import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -33,6 +34,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.LocalThingCapabilities
@@ -41,7 +43,12 @@ import dev.fanfly.wingslog.core.template.LocalThingTemplate
 import dev.fanfly.wingslog.core.template.componentTree
 import dev.fanfly.wingslog.core.template.specLines
 import dev.fanfly.wingslog.core.template.thingNoun
+import dev.fanfly.wingslog.core.datetime.toDisplayFormat
+import dev.fanfly.wingslog.core.ui.common.formatToOneDecimalPlace
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
+import dev.fanfly.wingslog.feature.thing.dashboard.data.LogStats
+import dev.fanfly.wingslog.thing.MeterDef
 import dev.fanfly.wingslog.thing.Thing
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.edit
@@ -51,17 +58,21 @@ import wingslog.feature.logs.viewing.generated.resources.expand_details
 import wingslog.feature.logs.viewing.generated.resources.s_n_placeholder
 import wingslog.feature.logs.viewing.generated.resources.thing_data
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
+import wingslog.feature.thing.dashboard.generated.resources.Res as DashboardRes
+import wingslog.feature.thing.dashboard.generated.resources.overview_meters
+import wingslog.feature.thing.dashboard.generated.resources.overview_meters_as_of
 import wingslog.feature.logs.viewing.generated.resources.Res as MaintenanceRes
 
 
 @Composable
 fun ThingDataCard(
   thing: Thing,
-  initiallyExpanded: Boolean = true,
+  /** The meters' current readings; null hides the block, as does a template with no meters. */
+  stats: LogStats? = null,
   onEditClick: (() -> Unit)? = null,
   onManageAccessClick: (() -> Unit)? = null,
 ) {
-  var expanded by rememberSaveable { mutableStateOf(initiallyExpanded) }
+  var expanded by rememberSaveable { mutableStateOf(true) }
   val rotationState by animateFloatAsState(
     targetValue = if (expanded) 180f else 0f,
     animationSpec = tween(durationMillis = 200, easing = FastOutSlowInEasing),
@@ -144,6 +155,15 @@ fun ThingDataCard(
             ThingSpecBlock(spec)
           }
 
+          // The whole block is behind `meters` because a capability removes UI: a homeowner should
+          // never see a meter cell at all (PRD §4.8).
+          val meters = template?.meters.orEmpty()
+          if (stats != null && LocalThingCapabilities.current.meters && meters.isNotEmpty()) {
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            MeterReadings(meters, stats)
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+          }
+
           // Every stored component, walked from the template's slots. Drawn as a tree by
           // containment — an engine's propeller sits inside its card — rather than as a flat
           // stack that says nothing about what is attached to what.
@@ -161,15 +181,15 @@ fun ThingDataCard(
           if (onEditClick != null || onManageAccessClick != null) {
             Row(
               modifier = Modifier.fillMaxWidth(),
-              horizontalArrangement = Arrangement.End,
+              horizontalArrangement = Arrangement.spacedBy(Spacing.small),
             ) {
               if (onManageAccessClick != null) {
-                TextButton(onClick = onManageAccessClick) {
+                OutlinedButton(onClick = onManageAccessClick, modifier = Modifier.weight(1f)) {
                   Text(text = stringResource(CoreRes.string.manage_access))
                 }
               }
               if (onEditClick != null) {
-                TextButton(onClick = onEditClick) {
+                OutlinedButton(onClick = onEditClick, modifier = Modifier.weight(1f)) {
                   Text(text = stringResource(CoreRes.string.edit))
                 }
               }
@@ -180,6 +200,56 @@ fun ThingDataCard(
     }
   }
 }
+
+/**
+ * What each meter last read, and when. Plain numbers: the app knows no overhaul interval to count
+ * down to, so a progress bar here would be inventing one.
+ */
+@Composable
+private fun MeterReadings(meters: List<MeterDef>, stats: LogStats) {
+  Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+      Text(
+        text = stringResource(DashboardRes.string.overview_meters),
+        style = MaterialTheme.typography.labelLarge,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.weight(1f),
+      )
+      stats.readingsAsOf?.let { asOf ->
+        Text(
+          text = stringResource(DashboardRes.string.overview_meters_as_of, asOf.toDisplayFormat()),
+          style = MaterialTheme.typography.labelMedium,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+      }
+    }
+    Row(horizontalArrangement = Arrangement.spacedBy(Spacing.medium)) {
+      meters.forEach { meter ->
+        Column(modifier = Modifier.weight(1f)) {
+          Text(
+            // `decimal` is the template's call: hours take a decimal place, an odometer does not.
+            // A declared meter nothing has recorded shows a dash — zero would read as a measurement.
+            text = stats.valueFor(meter.key)
+              ?.let { if (meter.decimal) it.formatToOneDecimalPlace() else it.toLong().toString() }
+              ?: NO_READING,
+            style = WingslogTypography.dataLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+          )
+          Text(
+            text = meter.label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+          )
+        }
+      }
+    }
+  }
+}
+
+/** Shown for a meter the template declares but nothing has recorded a reading for yet. */
+private const val NO_READING = "\u2014"
 
 @Composable
 fun ComponentCard(
@@ -249,11 +319,7 @@ fun ComponentSummary(category: String, name: String, serial: String) {
       Text(
         text = stringResource(MaintenanceRes.string.s_n_placeholder, serial),
         modifier = Modifier.padding(top = Spacing.extraSmall),
-        style = TextStyle(
-          fontFamily = FontFamily.SansSerif,
-          fontWeight = FontWeight.Normal,
-          fontSize = 13.sp,
-        ),
+        style = WingslogTypography.dataSmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
       )
     }

@@ -459,6 +459,7 @@ fun ThingSectionContent(
           onAction = onAction,
           onViewSquawksTab = { onNavigateToSection(ShellSection.SQUAWKS) },
           onViewLogsTab = { onNavigateToSection(ShellSection.LOGS) },
+          onViewTasksTab = { onNavigateToSection(ShellSection.TASKS) },
           onMutationAction = onAction,
         )
 

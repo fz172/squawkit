@@ -256,9 +256,6 @@ class StringSnapshotTest {
     frame("feature/tasks/sharedassets", "task_deleted") {
       LexiconFormatter.sentenceCase(it.taskNoun)
     },
-    frame("feature/tasks/viewing", "maintenance_due_subtitle") {
-      LexiconFormatter.sentenceCasePlural(it.taskNoun)
-    },
 
     // The log surfaces (#656). Per-thing: a log belongs to one thing. Absent on purpose —
     // airframe_serial, airframe_time_hours and airframe_time_label are a component-slot label and

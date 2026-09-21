@@ -13,8 +13,12 @@
   <!-- Thing data card: a spec value beside the word the template gives it, e.g. Tail Number: -->
   <string name="spec_line_label"><xliff:g example="Tail Number">%1$s</xliff:g>:</string>
   <!-- Overview tab cards -->
-  <string name="overview_recent_activity">Recent activity</string>
   <string name="overview_all_logs">All logs</string>
   <string name="overview_next_due">Next due</string>
+  <!-- A rail title with its count, e.g. Work logs · 40 -->
+  <string name="overview_title_with_count"><xliff:g example="Work logs">%1$s</xliff:g> · <xliff:g example="40">%2$d</xliff:g></string>
+  <!-- Thing data card: the meters block -->
+  <string name="overview_meters">Meters</string>
+  <string name="overview_meters_as_of">as of <xliff:g example="09/05/2026">%1$s</xliff:g></string>
   <string name="overview_open_squawks">Open <xliff:g example="squawks">%1$s</xliff:g></string>
 </resources>
