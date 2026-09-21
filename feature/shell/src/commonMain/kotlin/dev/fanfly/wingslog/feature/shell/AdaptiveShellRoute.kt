@@ -199,7 +199,9 @@ fun AdaptiveShellRoute(
             thingId = thingId,
             navController = navController,
             onNavigateToSection = viewModel::selectSection,
-            scrollToRecordId = scrollTargetId,
+            onJumpToRecord = viewModel::jumpToRecord,
+            // Only the section being shown: the one animating out would consume the target first.
+            scrollToRecordId = scrollTargetId.takeIf { section == state.section },
             onScrollTargetConsumed = viewModel::consumeScrollTarget,
             onLinkAccount = linkAccount,
           )

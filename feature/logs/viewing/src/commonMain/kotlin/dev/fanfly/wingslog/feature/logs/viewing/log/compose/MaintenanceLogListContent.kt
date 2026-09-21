@@ -41,6 +41,7 @@ import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.adaptive.compose.navPillAndFabClearance
 import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
 import dev.fanfly.wingslog.core.ui.common.compose.SwipeActionCard
+import dev.fanfly.wingslog.core.ui.common.compose.animateScrollToCenter
 import dev.fanfly.wingslog.core.ui.common.compose.jumpTargetHighlight
 import dev.fanfly.wingslog.core.ui.common.compose.rememberSwipeRevealController
 import dev.fanfly.wingslog.core.ui.common.compose.ListRowDivider
@@ -178,6 +179,8 @@ fun MaintenanceLogListContent(
       }
     }
   }
+  // Set once the scroll has landed, so the highlight plays on a row that is on screen.
+  var landedLogId by remember(scrollToLogId) { mutableStateOf<String?>(null) }
   LaunchedEffect(scrollToLogId) {
     if (scrollToLogId == null) return@LaunchedEffect
     // A jump target must always be reachable: a search query or component filter left over from
@@ -195,7 +198,10 @@ fun MaintenanceLogListContent(
           val index = displayRows.indexOfFirst {
             it is ListRow.Item && it.value.id == scrollToLogId
           }
-          if (index >= 0) logListState.animateScrollToItem(index)
+          if (index >= 0) {
+            logListState.animateScrollToCenter(index)
+            landedLogId = scrollToLogId
+          }
         }
       }
       withTimeoutOrNull(8000.milliseconds) {
@@ -391,7 +397,7 @@ fun MaintenanceLogListContent(
                 rows = rows,
                 onLogClick = onLogClick,
                 listState = logListState,
-                scrollToLogId = scrollToLogId,
+                highlightedLogId = landedLogId,
                 highlightFor = {
                   uiState.matches[it.id].orEmpty()
                     .wordsIn(
@@ -477,7 +483,7 @@ fun MaintenanceLogListContent(
                             row.value
                           ),
                           modifier = Modifier.jumpTargetHighlight(
-                            active = row.value.id == scrollToLogId,
+                            active = row.value.id == landedLogId,
                           ),
                         )
                       }

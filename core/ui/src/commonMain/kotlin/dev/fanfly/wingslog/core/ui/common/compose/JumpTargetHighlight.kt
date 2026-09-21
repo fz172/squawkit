@@ -3,6 +3,8 @@ package dev.fanfly.wingslog.core.ui.common.compose
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.gestures.animateScrollBy
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -15,11 +17,11 @@ import androidx.compose.ui.graphics.drawOutline
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 
 /** Total time the wash is visible: a beat at full strength, then a slow fade. */
-private const val HOLD_MILLIS = 450
-private const val FADE_MILLIS = 900
+private const val HOLD_MILLIS = 1200
+private const val FADE_MILLIS = 1200
 
 /** Peak opacity of the wash. Low enough that the card's own content stays fully legible. */
-private const val PEAK_ALPHA = 0.28f
+private const val PEAK_ALPHA = 0.32f
 
 /**
  * Briefly washes this element in the primary colour, then fades out — the "you landed here" cue for
@@ -33,6 +35,10 @@ private const val PEAK_ALPHA = 0.28f
  * nobody touched this card — reusing it here would say "you pressed this". This is an ambient
  * attention wash instead, and it is drawn *over* the content (not behind it) so it reads on cards
  * that paint their own opaque background.
+ *
+ * [active] must turn true only once the scroll has **landed** — see [animateScrollToCenter]. The
+ * wash starts when it does, so a caller that raises it as soon as the target is known spends it
+ * while the row is still off screen or the section is still sliding in.
  *
  * A no-op when [active] is false, and it re-runs whenever [active] flips back to true, so jumping to
  * the same record twice in a row highlights twice.
@@ -72,4 +78,20 @@ fun Modifier.jumpTargetHighlight(
       )
     }
   }
+}
+
+/**
+ * Scrolls until item [index] sits in the middle of the viewport, or as near as the ends of the list
+ * allow. A row parked at the top edge sits under a pinned header and reads as "the list moved";
+ * one in the middle reads as "this one".
+ */
+suspend fun LazyListState.animateScrollToCenter(index: Int) {
+  // An item's height is unknown until it is laid out: bring it on screen, then settle the rest.
+  if (layoutInfo.visibleItemsInfo.none { it.index == index }) {
+    val viewport = layoutInfo.viewportEndOffset - layoutInfo.viewportStartOffset
+    animateScrollToItem(index, scrollOffset = -viewport / 2)
+  }
+  val item = layoutInfo.visibleItemsInfo.firstOrNull { it.index == index } ?: return
+  val viewportCenter = (layoutInfo.viewportStartOffset + layoutInfo.viewportEndOffset) / 2
+  animateScrollBy((item.offset + item.size / 2 - viewportCenter).toFloat())
 }

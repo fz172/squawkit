@@ -1,5 +1,6 @@
 package dev.fanfly.wingslog.feature.shell.viewmodel
 
+import dev.fanfly.wingslog.feature.thing.dashboard.data.RecordJump
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.fanfly.wingslog.core.auth.AuthManager
@@ -138,7 +139,7 @@ class AdaptiveShellViewModel(
 
   /**
    * A record the shell should scroll to and highlight once its section renders, set by a tapped
-   * notification for a single record. Not a navigation argument for the same reason the thing
+   * notification for a single record or by [jumpToRecord]. Not a navigation argument for the same reason the thing
    * selection isn't one (see this class's doc comment); the section body reads it as plain state and
    * calls [consumeScrollTarget] once it has been handed to the list.
    */
@@ -267,6 +268,12 @@ class AdaptiveShellViewModel(
   /** Switches the active top-level section. */
   fun selectSection(section: ShellSection) {
     _uiState.update { it.copy(section = section) }
+  }
+
+  /** An in-app jump to an associated record: the same path a tapped notification takes. */
+  fun jumpToRecord(jump: RecordJump) {
+    _pendingScrollTargetId.value = jump.recordId
+    selectSection(jump.section)
   }
 
   /** Open the global Settings section in the shell. */
