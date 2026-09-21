@@ -9,7 +9,6 @@
   <string name="priority_low">Low</string>
   <string name="priority_medium">Medium</string>
   <string name="priority_high">High</string>
-  <string name="view_squawks">View <xliff:g example="squawks">%1$s</xliff:g></string>
   <string name="squawk_title_label">Issue summary</string>
   <string name="squawk_description_label">Description</string>
   <string name="squawk_priority_label">Priority</string>

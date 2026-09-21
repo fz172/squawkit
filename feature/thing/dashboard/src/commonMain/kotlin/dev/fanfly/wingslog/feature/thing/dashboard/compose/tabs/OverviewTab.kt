@@ -42,11 +42,11 @@ import androidx.compose.ui.unit.dp
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.datetime.toLocalDate
 import dev.fanfly.wingslog.core.template.LexiconFormatter
-import dev.fanfly.wingslog.core.template.logNoun
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.LocalThingTemplate
 import dev.fanfly.wingslog.core.template.componentTypesApply
 import dev.fanfly.wingslog.core.template.formatMeterValue
+import dev.fanfly.wingslog.core.template.logNoun
 import dev.fanfly.wingslog.core.template.overviewLogEmptyHint
 import dev.fanfly.wingslog.core.template.overviewLogEmptyTitle
 import dev.fanfly.wingslog.core.template.overviewSquawkEmptyHint
@@ -59,19 +59,18 @@ import dev.fanfly.wingslog.core.ui.adaptive.compose.LayoutTier
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalNavPillClearance
 import dev.fanfly.wingslog.core.ui.common.compose.ListRowDivider
-import dev.fanfly.wingslog.core.ui.common.compose.SectionHeader
 import dev.fanfly.wingslog.core.ui.common.compose.LocalListRowGround
+import dev.fanfly.wingslog.core.ui.common.compose.SectionHeader
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.core.ui.theme.statusColors
 import dev.fanfly.wingslog.feature.logs.sharedassets.util.displayName
 import dev.fanfly.wingslog.feature.squawk.model.SquawkStatus
-import dev.fanfly.wingslog.feature.squawk.viewing.AogAlertSection
 import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
-import dev.fanfly.wingslog.feature.tasks.viewing.NeedsAttentionSection
 import dev.fanfly.wingslog.feature.tasks.viewing.TaskCardItem
 import dev.fanfly.wingslog.feature.thing.dashboard.compose.LogOnboardingCard
+import dev.fanfly.wingslog.feature.thing.dashboard.compose.NeedsAttentionSection
 import dev.fanfly.wingslog.feature.thing.dashboard.compose.ThingDataCard
 import dev.fanfly.wingslog.feature.thing.dashboard.data.ThingOverviewAction
 import dev.fanfly.wingslog.feature.thing.dashboard.data.ThingOverviewUiState
@@ -98,7 +97,6 @@ fun OverviewTab(
   onAction: (ThingOverviewAction) -> Unit,
   onViewSquawksTab: () -> Unit = {},
   onViewLogsTab: () -> Unit = {},
-  onViewTasksTab: () -> Unit = {},
   onMutationAction: ((ThingOverviewAction) -> Unit)? = onAction,
   modifier: Modifier = Modifier,
 ) {
@@ -109,7 +107,6 @@ fun OverviewTab(
       onAction = onAction,
       onViewSquawksTab = onViewSquawksTab,
       onViewLogsTab = onViewLogsTab,
-      onViewTasksTab = onViewTasksTab,
       onMutationAction = onMutationAction,
       modifier = modifier,
     )
@@ -133,23 +130,14 @@ fun OverviewTab(
         .padding(top = Spacing.medium)
     )
 
-    if (state.aogSquawks.isNotEmpty()) {
-      AogAlertSection(
-        aogSquawks = state.aogSquawks,
-        onViewSquawksClick = onViewSquawksTab,
-        modifier = Modifier.padding(horizontal = Spacing.screenPadding),
-      )
-    }
-
     // Above the card, so what is due is the first thing read and the card has no reason to fold.
-    if (overdueTasks.isNotEmpty()) {
-      NeedsAttentionSection(
-        tasks = overdueTasks,
-        onTaskClick = { onAction(ThingOverviewAction.TaskCardClick(it)) },
-        onViewAllClick = onViewTasksTab,
-        modifier = Modifier.padding(horizontal = Spacing.screenPadding),
-      )
-    }
+    NeedsAttentionSection(
+      downSquawks = state.aogSquawks,
+      tasks = overdueTasks,
+      onSquawkClick = { onViewSquawksTab() },
+      onTaskClick = { onAction(ThingOverviewAction.TaskCardClick(it)) },
+      modifier = Modifier.padding(horizontal = Spacing.screenPadding),
+    )
 
     Column(modifier = Modifier.padding(horizontal = Spacing.screenPadding)) {
       ThingDataCard(
@@ -182,7 +170,6 @@ private fun LargeOverviewTab(
   onAction: (ThingOverviewAction) -> Unit,
   onViewSquawksTab: () -> Unit,
   onViewLogsTab: () -> Unit,
-  onViewTasksTab: () -> Unit,
   onMutationAction: ((ThingOverviewAction) -> Unit)?,
   modifier: Modifier = Modifier,
 ) {
@@ -198,20 +185,12 @@ private fun LargeOverviewTab(
   ) {
     OverviewHero(state)
 
-    if (state.aogSquawks.isNotEmpty()) {
-      AogAlertSection(
-        aogSquawks = state.aogSquawks,
-        onViewSquawksClick = onViewSquawksTab,
-      )
-    }
-
-    if (overdueTasks.isNotEmpty()) {
-      NeedsAttentionSection(
-        tasks = overdueTasks,
-        onTaskClick = { onAction(ThingOverviewAction.TaskCardClick(it)) },
-        onViewAllClick = onViewTasksTab,
-      )
-    }
+    NeedsAttentionSection(
+      downSquawks = state.aogSquawks,
+      tasks = overdueTasks,
+      onSquawkClick = { onViewSquawksTab() },
+      onTaskClick = { onAction(ThingOverviewAction.TaskCardClick(it)) },
+    )
 
     ThingDataCard(
       state.thing,
@@ -313,9 +292,14 @@ private val MaintenanceTaskWithStatus.needsAttention: Boolean
 /** The log noun and how many there are — "Work logs · 40". The count the stats strip used to hold. */
 @Composable
 private fun workLogsTitle(state: ThingOverviewUiState.Success): String {
-  val title = LexiconFormatter.titleCasePlural(LocalThingLexicon.current.logNoun)
+  val title =
+    LexiconFormatter.titleCasePlural(LocalThingLexicon.current.logNoun)
   val total = state.logStats?.total ?: return title
-  return stringResource(Res.string.overview_title_with_count, title, total.toInt())
+  return stringResource(
+    Res.string.overview_title_with_count,
+    title,
+    total.toInt()
+  )
 }
 
 /** The newest logs under a header that links to all of them; the onboarding card when there are none. */
@@ -585,7 +569,8 @@ private val WHITESPACE_RUN = Regex("\\s+")
  * newline — or wraps a blank line — otherwise renders an empty extra line, making the text taller
  * than the badge and date beside it, which the row then centres above them.
  */
-internal fun String.asSummaryLine(): String = replace(WHITESPACE_RUN, " ").trim()
+internal fun String.asSummaryLine(): String =
+  replace(WHITESPACE_RUN, " ").trim()
 
 @Composable
 private fun SquawkRailRow(
@@ -636,7 +621,10 @@ private fun SquawkRailRow(
 private val RAIL_BADGE_WIDTH = 88.dp
 
 @Composable
-private fun RailComponentTypeBadge(type: ComponentType, modifier: Modifier = Modifier) {
+private fun RailComponentTypeBadge(
+  type: ComponentType,
+  modifier: Modifier = Modifier
+) {
   val (background, content) = when (type) {
     ComponentType.COMPONENT_ENGINE -> MaterialTheme.colorScheme.primaryContainer to MaterialTheme.colorScheme.onPrimaryContainer
     ComponentType.COMPONENT_AIRFRAME -> MaterialTheme.statusColors.positive.container to MaterialTheme.statusColors.positive.onContainer

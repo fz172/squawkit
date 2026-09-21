@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
   <string name="thing_data"><xliff:g example="aircraft">%1$s</xliff:g> Data</string>
-  <string name="s_n_placeholder">S/N: <xliff:g example="SN-1234">%1$s</xliff:g></string>
-  <string name="s_n_empty">No S/N</string>
   <string name="log_task_count_one">1 <xliff:g example="task">%1$s</xliff:g></string>
   <string name="log_task_count_plural"><xliff:g example="3">%1$d</xliff:g> <xliff:g example="tasks">%2$s</xliff:g></string>
   <string name="log_squawk_count_one">1 <xliff:g example="squawks">%1$s</xliff:g></string>

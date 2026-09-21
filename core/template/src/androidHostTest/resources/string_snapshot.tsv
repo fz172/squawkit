@@ -312,8 +312,6 @@ feature/logs/viewing	log_task_count_one	1 maintenance task
 feature/logs/viewing	log_task_count_plural	%1$d maintenance tasks
 feature/logs/viewing	no_tasks_linked	No maintenance tasks linked to this work log
 feature/logs/viewing	resolved_squawks	Resolved Squawks
-feature/logs/viewing	s_n_empty	No S/N
-feature/logs/viewing	s_n_placeholder	S/N: %1$s
 feature/logs/viewing	thing_data	Aircraft Data
 feature/logs/viewing	unknown_squawk	Unknown squawk (%1$s)
 feature/notifications/devoptions	notifications_devoptions_diagnostics_at	Last scan: %1$s
@@ -570,7 +568,6 @@ feature/squawk/sharedassets	squawk_status_dismissed	Dismissed
 feature/squawk/sharedassets	squawk_title_label	Issue summary
 feature/squawk/sharedassets	squawk_title_required	Issue summary is required
 feature/squawk/sharedassets	squawk_updated	Squawk updated
-feature/squawk/sharedassets	view_squawks	View Squawks
 feature/squawk/sharedassets	work_history	Work history
 feature/squawk/sharedassets	reopen_issue	Reopen issue
 feature/squawk/sharedassets	resolve_issue	Resolve
@@ -839,7 +836,6 @@ feature/tasks/viewing	label_deadline	DEADLINE
 feature/tasks/viewing	label_due_engine	DUE @
 feature/tasks/viewing	label_due_engine_value	DUE @ %1$s
 feature/tasks/viewing	label_expired	EXPIRED %1$s
-feature/tasks/viewing	needs_attention	Needs attention
 feature/tasks/viewing	next_due_date	NEXT DUE DATE
 feature/tasks/viewing	next_due_meter	NEXT DUE %1$s
 feature/tasks/viewing	no_maintenance_logs_for_task	No work logs yet. Add one and tag this maintenance task to see history here.
@@ -903,6 +899,7 @@ feature/thing/dashboard	degraded_update	Update the app
 feature/thing/dashboard	overview_all_logs	All logs
 feature/thing/dashboard	overview_meters	Meters
 feature/thing/dashboard	overview_meters_as_of	as of %1$s
+feature/thing/dashboard	overview_needs_attention	Needs attention
 feature/thing/dashboard	overview_next_due	Next due
 feature/thing/dashboard	overview_open_squawks	Open squawks
 feature/thing/dashboard	overview_title_with_count	%1$s · %2$d

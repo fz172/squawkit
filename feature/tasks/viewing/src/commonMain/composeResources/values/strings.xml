@@ -4,7 +4,6 @@
   <string name="due_date">Due <xliff:g example="12 Mar 2026">%1$s</xliff:g></string>
   <string name="on_condition">On condition</string>
 
-  <string name="needs_attention">Needs attention</string>
   <string name="next_due_date">NEXT DUE DATE</string>
   <!-- Names whichever meter the task is scheduled against — "NEXT DUE ODOMETER" (#759). -->
   <string name="next_due_meter">NEXT DUE <xliff:g example="ODOMETER">%1$s</xliff:g></string>

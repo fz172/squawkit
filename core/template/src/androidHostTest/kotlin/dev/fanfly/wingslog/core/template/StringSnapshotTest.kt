@@ -125,7 +125,6 @@ class StringSnapshotTest {
     "feature/squawk/sharedassets:no_squawk_work_recorded" to { l: Lexicon ->
       mapOf(1 to l.squawkNoun.plural, 2 to l.logNoun.singular)
     },
-    squawkFrame("view_squawks") { LexiconFormatter.titleCasePlural(it) },
     squawkFrame("squawk_added") { LexiconFormatter.sentenceCase(it) },
     squawkFrame("squawk_updated") { LexiconFormatter.sentenceCase(it) },
     squawkFrame("squawk_dismissed") { LexiconFormatter.sentenceCase(it) },

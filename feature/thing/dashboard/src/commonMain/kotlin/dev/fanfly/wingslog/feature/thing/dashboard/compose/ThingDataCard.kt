@@ -30,7 +30,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -55,7 +54,6 @@ import wingslog.core.sharedassets.generated.resources.edit
 import wingslog.core.sharedassets.generated.resources.manage_access
 import wingslog.feature.logs.viewing.generated.resources.collapse_details
 import wingslog.feature.logs.viewing.generated.resources.expand_details
-import wingslog.feature.logs.viewing.generated.resources.s_n_placeholder
 import wingslog.feature.logs.viewing.generated.resources.thing_data
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 import wingslog.feature.thing.dashboard.generated.resources.Res as DashboardRes
@@ -161,21 +159,14 @@ fun ThingDataCard(
           if (stats != null && LocalThingCapabilities.current.meters && meters.isNotEmpty()) {
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             MeterReadings(meters, stats)
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
           }
 
-          // Every stored component, walked from the template's slots. Drawn as a tree by
-          // containment — an engine's propeller sits inside its card — rather than as a flat
-          // stack that says nothing about what is attached to what.
-          //
-          // Top-level slots go through the same grouping as nested ones, which is the fix for a
-          // car listing four tyres and four brakes as eight full-width rows: a slot marked
-          // `compact_instances` draws its components as chips wherever it sits in the tree.
-          if (LocalThingCapabilities.current.components) {
-            ComponentGroups(
-              template.componentTree(thing)
-                .filter { it.row.component != null },
-            )
+          // Every stored component, walked from the template's slots.
+          val components = template.componentTree(thing)
+            .filter { it.row.component != null }
+          if (LocalThingCapabilities.current.components && components.isNotEmpty()) {
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            ComponentTree(components)
           }
 
           if (onEditClick != null || onManageAccessClick != null) {
@@ -250,78 +241,3 @@ private fun MeterReadings(meters: List<MeterDef>, stats: LogStats) {
 
 /** Shown for a meter the template declares but nothing has recorded a reading for yet. */
 private const val NO_READING = "\u2014"
-
-@Composable
-fun ComponentCard(
-  category: String,
-  name: String,
-  serial: String,
-  modifier: Modifier = Modifier,
-  content: @Composable (() -> Unit)? = null,
-) {
-  Surface(
-    modifier = modifier.fillMaxWidth(),
-    shape = RoundedCornerShape(Spacing.cardCornerRadius),
-    color = Color.Transparent,
-    border = BorderStroke(
-      Spacing.hairline,
-      MaterialTheme.colorScheme.outlineVariant
-    )
-  ) {
-    Column(modifier = Modifier.padding(Spacing.large)) {
-      ComponentSummary(category = category, name = name, serial = serial)
-
-      if (content != null) {
-        Column(modifier = Modifier.padding(top = Spacing.large)) {
-          content()
-        }
-      }
-    }
-  }
-}
-
-/**
- * The category, make/model and serial lines a component shows.
- *
- * Extracted from [ComponentCard] so a slot the template marks `inline_with_parent` renders exactly
- * the same three lines inside its parent's card, with no card of its own — the propeller case.
- */
-@Composable
-fun ComponentSummary(category: String, name: String, serial: String) {
-  Column(modifier = Modifier.fillMaxWidth()) {
-    Text(
-      text = category,
-      style = TextStyle(
-        fontFamily = FontFamily.SansSerif,
-        fontWeight = FontWeight.Bold,
-        fontSize = 10.sp,
-        letterSpacing = 0.1.sp,
-      ),
-      color = MaterialTheme.colorScheme.primary,
-    )
-    // Same reasoning as the serial below: a component recorded with neither make nor model has
-    // nothing to show on this line, and a blank one reads as a load that failed.
-    if (name.isNotBlank()) {
-      Text(
-        text = name,
-        modifier = Modifier.padding(top = Spacing.extraSmall),
-        style = TextStyle(
-          fontFamily = FontFamily.SansSerif,
-          fontWeight = FontWeight.SemiBold,
-          fontSize = 16.sp,
-        ),
-        color = MaterialTheme.colorScheme.onSurface,
-      )
-    }
-    // Omitted entirely when there is none. A home has no serial to give, and "S/N:" followed by
-    // nothing reads as data that failed to load rather than data that does not exist.
-    if (serial.isNotBlank()) {
-      Text(
-        text = stringResource(MaintenanceRes.string.s_n_placeholder, serial),
-        modifier = Modifier.padding(top = Spacing.extraSmall),
-        style = WingslogTypography.dataSmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-      )
-    }
-  }
-}
