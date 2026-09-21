@@ -42,7 +42,8 @@ import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
  */
 @Composable
 fun TimelineRow(
-  gutter: String,
+  /** Null for a list with nothing to put there: the gutter closes up and the spine leads the row. */
+  gutter: String?,
   modifier: Modifier = Modifier,
   connectsUp: Boolean = false,
   connectsDown: Boolean = false,
@@ -59,24 +60,26 @@ fun TimelineRow(
       .height(IntrinsicSize.Min)
       .padding(end = Spacing.large),
   ) {
-    Box(
-      modifier = Modifier
-        .width(rememberTimelineGutterWidth())
-        // The end padding is the gap that keeps the digits off the dot.
-        .padding(top = Spacing.medium, end = Spacing.small),
-    ) {
-      Text(
-        text = gutter,
-        style = WingslogTypography.dataSmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        maxLines = 1,
-        softWrap = false,
-        // Pinned to the spine; a value too long for the gutter grows into the screen's own
-        // padding rather than pushing the dots out of line.
+    if (gutter != null) {
+      Box(
         modifier = Modifier
-          .fillMaxWidth()
-          .wrapContentWidth(Alignment.End, unbounded = true),
-      )
+          .width(rememberTimelineGutterWidth())
+          // The end padding is the gap that keeps the digits off the dot.
+          .padding(top = Spacing.medium, end = Spacing.small),
+      ) {
+        Text(
+          text = gutter,
+          style = WingslogTypography.dataSmall,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+          maxLines = 1,
+          softWrap = false,
+          // Pinned to the spine; a value too long for the gutter grows into the screen's own
+          // padding rather than pushing the dots out of line.
+          modifier = Modifier
+            .fillMaxWidth()
+            .wrapContentWidth(Alignment.End, unbounded = true),
+        )
+      }
     }
     val line = MaterialTheme.colorScheme.outlineVariant
     val dot = if (lit) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline

@@ -49,8 +49,16 @@ class DataLogMonthsTest {
   }
 
   @Test
-  fun titleDropsTheYearUnderAMonthHeader() {
-    assertThat(sep03.titleText("Ground run", underMonthHeader = true)).isEqualTo("Sep 3 · Ground run")
-    assertThat(sep03.titleText("Ground run")).isEqualTo("Sep 03, 2026 · Ground run")
+  fun headlineLeadsWithDurationThenWhereThenGroundRun() {
+    val ground = sep03.copy(durationSeconds = 1033, startLocationIdent = "E16")
+    assertThat(ground.headline("Ground run")).isEqualTo("17m 13s · E16 · Ground run")
+    assertThat(ground.copy(startLocationIdent = "").headline("Ground run"))
+      .isEqualTo("17m 13s · Ground run")
+    assertThat(ground.copy(airborne = true).headline("Ground run")).isEqualTo("17m 13s · E16")
+  }
+
+  @Test
+  fun startedTextIsDayAndClock() {
+    assertThat(sep03.startedText()).isEqualTo("Sep 3, 10:06")
   }
 }
