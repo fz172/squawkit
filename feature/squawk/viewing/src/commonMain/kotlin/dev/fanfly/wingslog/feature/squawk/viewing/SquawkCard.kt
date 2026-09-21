@@ -39,6 +39,8 @@ fun SquawkCard(
   item: SquawkWithStatus,
   onClick: () -> Unit,
   modifier: Modifier = Modifier,
+  /** False under a tier header, which already names the priority. */
+  showPriority: Boolean = true,
   /** Words the active search matched, highlighted where they appear. */
   highlight: Set<String> = emptySet(),
   /** A match the card cannot otherwise show, e.g. a serial. */
@@ -69,7 +71,7 @@ fun SquawkCard(
     onClick = onClick,
     modifier = modifier,
     accent = accent,
-    leading = { PriorityBadge(item) },
+    leading = if (showPriority) ({ PriorityBadge(item) }) else null,
     trailing = {
       Row(
         horizontalArrangement = Arrangement.spacedBy(Spacing.small),

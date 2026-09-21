@@ -28,11 +28,7 @@ fun <T> withAdSlots(
 /**
  * The same cadence over a list that already has group headers flattened into it.
  *
- * **No caller today.** The PRD describes the maintenance-tasks list as "grouped by status", but
- * `ComplianceSection` is in fact a Due/History toggle over two flat lists — the same shape as squawks
- * Open/Closed — so tasks use [withAdSlots] like every other surface. This is kept because the
- * grouping rules are a live requirement if that list ever gains headers, and because getting the
- * boundary behaviour right later is harder than keeping twenty tested lines now.
+ * Used by the squawk list, whose open view groups by priority tier.
  *
  * Two rules come out of this rather than needing a repair pass afterwards, which is worth stating
  * because the design doc sketched a `coalesceAcrossHeaders()` step that turns out to be unnecessary:
