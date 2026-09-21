@@ -39,7 +39,7 @@ import dev.fanfly.wingslog.core.template.LocalThingTemplate
 import dev.fanfly.wingslog.core.template.MeterKeys
 import dev.fanfly.wingslog.core.template.componentTypesApply
 import dev.fanfly.wingslog.core.template.formatMeterNumber
-import dev.fanfly.wingslog.core.template.primaryReading
+import dev.fanfly.wingslog.core.template.timelineReading
 import dev.fanfly.wingslog.core.template.squawkNoun
 import dev.fanfly.wingslog.core.template.taskNoun
 import dev.fanfly.wingslog.core.ui.common.compose.highlightWords
@@ -82,11 +82,10 @@ fun MaintenanceLogCard(
   /** A match the card cannot otherwise show, e.g. a serial. */
   matchNote: AnnotatedString? = null,
 ) {
-  // The first meter this template declares that the log actually recorded. This used to switch on
-  // `component_type` across three aviation fields, so a car's log matched nothing and showed a
-  // blank where its odometer belonged (#761).
   val template = LocalThingTemplate.current
-  val primary = template.primaryReading(log)
+  // One meter down the whole gutter, so the column reads as a series; the detail sheet leads with
+  // the component's own.
+  val primary = template.timelineReading(log)
 
   // Filled rather than transparent so the swipe controls behind it do not show through.
   Row(
@@ -99,7 +98,7 @@ fun MaintenanceLogCard(
       // No leading inset: the gutter lines up under the month header.
       .padding(end = Spacing.large),
   ) {
-    // The gutter: the number alone. The unit is the same down the whole column, and the detail
+    // The gutter: the number alone. The meter is the same down the whole column, and the detail
     // sheet names it.
     Box(
       modifier = Modifier

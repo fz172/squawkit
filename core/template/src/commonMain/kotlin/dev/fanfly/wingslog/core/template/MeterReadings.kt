@@ -112,19 +112,31 @@ fun ThingTemplate?.formatMeterValue(meterKey: String?, value: Double): String =
   "${formatMeterNumber(meterKey, value)} ${meterUnit(meterKey)}"
 
 /**
- * The one reading worth leading with for [log] — the first meter the template declares that this
- * log actually recorded.
+ * The one reading worth leading with for [log]: the meter of the component the work was done on,
+ * when the log recorded it, otherwise the first meter the template declares that it did record.
  *
- * Both the log detail sheet and the dashboard's recent-activity row show a single headline number.
- * They picked it from `component_type`, which meant an aeroplane's three hour fields and nothing
- * else: a car's log recorded an odometer reading and displayed a blank, because none of the three
- * branches matched and all three doubles were zero (#761).
- *
- * Declaration order decides, so a template leads with the meter it lists first.
+ * Both the log detail sheet and the log rows show a single headline number. They once picked it by
+ * switching on `component_type` across three aviation fields, so a car's log — an odometer reading —
+ * matched no branch and displayed a blank (#761). Declaration order alone fixed that and broke the
+ * airplane instead: an engine log that also noted airframe time led with the airframe's hours.
+ * [meterForComponent] answers for the airplane; everywhere else it is the template's first meter,
+ * which is where the fallback starts anyway.
  */
-fun ThingTemplate?.primaryReading(log: MaintenanceLog): Pair<MeterDef, Double>? =
-  this?.meters.orEmpty()
-    .firstNotNullOfOrNull { meter ->
-      log.readingFor(meter.key)
-        ?.let { meter to it }
-    }
+fun ThingTemplate?.primaryReading(log: MaintenanceLog): Pair<MeterDef, Double>? {
+  val meters = this?.meters.orEmpty()
+  val preferred = listOfNotNull(meterForComponent(log.component_type))
+  return (preferred + meters).firstNotNullOfOrNull { meter ->
+    log.readingFor(meter.key)
+      ?.let { meter to it }
+  }
+}
+
+/**
+ * What [log] recorded on the template's first meter — the one series a log timeline can run down
+ * its gutter. Not [primaryReading]: that follows the component, and an unlabelled column that mixes
+ * engine, propeller and airframe hours reads as one meter jumping about.
+ */
+fun ThingTemplate?.timelineReading(log: MaintenanceLog): Pair<MeterDef, Double>? {
+  val meter = this?.meters?.firstOrNull() ?: return null
+  return log.readingFor(meter.key)?.let { meter to it }
+}
