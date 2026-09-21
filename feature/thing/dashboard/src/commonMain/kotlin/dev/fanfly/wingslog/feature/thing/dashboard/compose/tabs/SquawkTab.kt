@@ -387,12 +387,7 @@ fun SquawkTab(
             val previous = lines.getOrNull(index - 1) as? SquawkListLine.Records
             // One animated node per key: the rule travels with its line.
             Column(modifier = motionItem()) {
-              // A contained down-state row is set apart by a gap; flat rows meet a hairline.
-              when {
-                previous == null -> Unit
-                line.isContained || previous.isContained -> Spacer(Modifier.height(Spacing.small))
-                else -> ListRowDivider()
-              }
+              if (previous != null) ListRowDivider()
               Row(horizontalArrangement = Arrangement.spacedBy(Spacing.medium)) {
                 line.items.forEach { item ->
                   SquawkRow(
@@ -495,10 +490,6 @@ fun SquawkTab(
     )
   }
 }
-
-/** A down-state squawk draws as a contained block rather than a flat row. */
-private val SquawkListLine.Records.isContained: Boolean
-  get() = items.any { it.squawk.priority == SquawkPriority.SQUAWK_PRIORITY_AOG }
 
 @Composable
 private fun SquawkRow(

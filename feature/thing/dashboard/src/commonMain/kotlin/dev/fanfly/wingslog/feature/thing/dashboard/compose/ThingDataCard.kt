@@ -40,10 +40,10 @@ import dev.fanfly.wingslog.core.template.LocalThingCapabilities
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.LocalThingTemplate
 import dev.fanfly.wingslog.core.template.componentTree
+import dev.fanfly.wingslog.core.template.formatMeterValue
 import dev.fanfly.wingslog.core.template.specLines
 import dev.fanfly.wingslog.core.template.thingNoun
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
-import dev.fanfly.wingslog.core.ui.common.formatToOneDecimalPlace
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
 import dev.fanfly.wingslog.feature.thing.dashboard.data.LogStats
@@ -198,6 +198,7 @@ fun ThingDataCard(
  */
 @Composable
 private fun MeterReadings(meters: List<MeterDef>, stats: LogStats) {
+  val template = LocalThingTemplate.current
   Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
     Row(verticalAlignment = Alignment.CenterVertically) {
       Text(
@@ -218,10 +219,10 @@ private fun MeterReadings(meters: List<MeterDef>, stats: LogStats) {
       meters.forEach { meter ->
         Column(modifier = Modifier.weight(1f)) {
           Text(
-            // `decimal` is the template's call: hours take a decimal place, an odometer does not.
+            // The template formats it: hours take a decimal place and "HRS", an odometer neither.
             // A declared meter nothing has recorded shows a dash — zero would read as a measurement.
             text = stats.valueFor(meter.key)
-              ?.let { if (meter.decimal) it.formatToOneDecimalPlace() else it.toLong().toString() }
+              ?.let { template.formatMeterValue(meter.key, it) }
               ?: NO_READING,
             style = WingslogTypography.dataLarge,
             color = MaterialTheme.colorScheme.onSurface,

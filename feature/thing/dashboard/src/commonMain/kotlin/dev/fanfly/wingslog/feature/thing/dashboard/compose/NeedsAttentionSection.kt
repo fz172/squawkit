@@ -1,8 +1,6 @@
 package dev.fanfly.wingslog.feature.thing.dashboard.compose
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.Icon
@@ -19,7 +17,6 @@ import dev.fanfly.wingslog.core.template.formatMeterValue
 import dev.fanfly.wingslog.core.ui.common.compose.ListRow
 import dev.fanfly.wingslog.core.ui.common.compose.ListRowDivider
 import dev.fanfly.wingslog.core.ui.common.compose.SectionHeader
-import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.statusColors
 import dev.fanfly.wingslog.feature.tasks.model.DueStatus
 import dev.fanfly.wingslog.feature.tasks.model.MaintenanceTaskWithStatus
@@ -56,20 +53,18 @@ fun NeedsAttentionSection(
       title = stringResource(DashboardRes.string.overview_needs_attention),
       count = downSquawks.size + tasks.size,
     )
-    // The down-state defect keeps its container here as it does in the squawk list: it is the one
-    // row the dashboard must not let you read past.
-    downSquawks.forEach { squawk ->
+    // One list of rows: the down-state squawks lead, told apart by tone rather than by a box.
+    downSquawks.forEachIndexed { index, squawk ->
+      if (index > 0) ListRowDivider()
       ListRow(
-        title = AnnotatedString(squawk.title),
+        title = AnnotatedString(squawk.title, SpanStyle(color = blocking)),
         metadata = AnnotatedString(downStatus, SpanStyle(color = blocking)),
         onClick = { onSquawkClick(squawk) },
-        accent = blocking.copy(alpha = DOWN_ACCENT_ALPHA),
         trailing = { RowChevron() },
       )
-      Spacer(Modifier.height(Spacing.small))
     }
     tasks.forEachIndexed { index, task ->
-      if (index > 0) ListRowDivider()
+      if (index > 0 || downSquawks.isNotEmpty()) ListRowDivider()
       ListRow(
         title = AnnotatedString(task.card.title),
         metadata = task.dueLine(),
@@ -111,6 +106,3 @@ private fun MaintenanceTaskWithStatus.dueLine(): AnnotatedString? {
   }
   return AnnotatedString(text, SpanStyle(color = color))
 }
-
-/** The same strength the squawk list gives the down-state row's border. */
-private const val DOWN_ACCENT_ALPHA = 0.5f
