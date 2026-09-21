@@ -18,14 +18,18 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.core.datetime.toDayOfMonth
 import dev.fanfly.wingslog.core.datetime.toLocalDate
@@ -99,7 +103,7 @@ fun MaintenanceLogCard(
     // sheet names it.
     Box(
       modifier = Modifier
-        .width(GUTTER_WIDTH)
+        .width(rememberGutterWidth())
         .padding(top = Spacing.medium),
     ) {
       Text(
@@ -218,8 +222,22 @@ private val WHITESPACE_RUN = Regex("\\s+")
 /** A stored description as one run of text: newlines and blank lines would cost the row its one line. */
 private fun String.asSummaryLine(): String = replace(WHITESPACE_RUN, " ").trim()
 
-/** Fits "1170.2"; the dot sits straight after it, so the spine stays close to the screen edge. */
-private val GUTTER_WIDTH = Spacing.huge + Spacing.medium
+/** The widest reading the gutter holds without overflowing: a five-digit hour meter. */
+private const val WIDEST_READING = "9999.9"
+
+/**
+ * Measured rather than a fixed dp, so [WIDEST_READING] fits whatever the font scale — plus a sliver
+ * so the digits never touch the dot.
+ */
+@Composable
+private fun rememberGutterWidth(): Dp {
+  val measurer = rememberTextMeasurer()
+  val density = LocalDensity.current
+  val style = WingslogTypography.dataSmall
+  return remember(measurer, density, style) {
+    with(density) { measurer.measure(WIDEST_READING, style, maxLines = 1).size.width.toDp() }
+  } + Spacing.small
+}
 
 private data class BadgeScheme(
   val background: Color,
