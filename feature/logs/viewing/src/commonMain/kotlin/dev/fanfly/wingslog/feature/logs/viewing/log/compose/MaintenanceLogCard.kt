@@ -5,28 +5,28 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
-import dev.fanfly.wingslog.core.datetime.toDisplayFormat
 import dev.fanfly.wingslog.core.datetime.toDayOfMonth
 import dev.fanfly.wingslog.core.datetime.toLocalDate
 import dev.fanfly.wingslog.core.datetime.toWireInstant
@@ -97,16 +97,24 @@ fun MaintenanceLogCard(
   ) {
     // The gutter: the number alone. The unit is the same down the whole column, and the detail
     // sheet names it.
-    Text(
-      text = primary?.let { template.formatMeterNumber(it.first.key, it.second) }.orEmpty(),
-      style = WingslogTypography.dataSmall,
-      color = MaterialTheme.colorScheme.onSurfaceVariant,
-      textAlign = TextAlign.End,
-      maxLines = 1,
+    Box(
       modifier = Modifier
         .width(GUTTER_WIDTH)
         .padding(top = Spacing.medium),
-    )
+    ) {
+      Text(
+        text = primary?.let { template.formatMeterNumber(it.first.key, it.second) }.orEmpty(),
+        style = WingslogTypography.dataSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        maxLines = 1,
+        softWrap = false,
+        // Pinned to the spine; a reading too long for the gutter grows into the screen's own
+        // padding rather than pushing the dots out of line.
+        modifier = Modifier
+          .fillMaxWidth()
+          .wrapContentWidth(Alignment.End, unbounded = true),
+      )
+    }
     Spine(connectsUp = connectsUp, connectsDown = connectsDown, lit = isLatest)
     Column(
       modifier = Modifier
@@ -146,7 +154,7 @@ private fun Spine(connectsUp: Boolean, connectsDown: Boolean, lit: Boolean) {
   val dot = if (lit) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
   Canvas(
     modifier = Modifier
-      .padding(horizontal = Spacing.small)
+      .padding(end = Spacing.small)
       .width(Spacing.medium)
       .fillMaxHeight(),
   ) {
@@ -210,8 +218,8 @@ private val WHITESPACE_RUN = Regex("\\s+")
 /** A stored description as one run of text: newlines and blank lines would cost the row its one line. */
 private fun String.asSummaryLine(): String = replace(WHITESPACE_RUN, " ").trim()
 
-/** Fits "12345.6", the longest reading an hour meter or an odometer shows. */
-private val GUTTER_WIDTH = Spacing.huge + Spacing.extraLarge
+/** Fits "1170.2"; the dot sits straight after it, so the spine stays close to the screen edge. */
+private val GUTTER_WIDTH = Spacing.huge + Spacing.medium
 
 private data class BadgeScheme(
   val background: Color,
