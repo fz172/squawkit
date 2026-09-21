@@ -1,17 +1,14 @@
 package dev.fanfly.wingslog.core.ui.common.compose
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -30,9 +27,9 @@ import dev.fanfly.wingslog.core.ui.theme.statusColors
 /**
  * Read-only informational banner for summarising a multi-step form's current state.
  *
- * Deliberately styled to look unlike actionable selection cards: left accent stripe only,
- * near-transparent surface, no full border. The shape (4dp left / 12dp right) reinforces that
- * this is a readout, not an input.
+ * Styled to look unlike an input: a faint tint of the tone with a hairline border of the same
+ * colour, and nothing to press. The tone rides the tint and the label — never a side stripe, which
+ * `DESIGN.md` rules out as a callout accent.
  *
  * Use [PreviewBannerTone] to communicate semantic state:
  * - [PreviewBannerTone.Neutral] — nothing configured yet, or no change from default
@@ -61,27 +58,22 @@ fun PreviewBanner(
     PreviewBannerTone.Neutral -> MaterialTheme.colorScheme.onSurfaceVariant
     else -> MaterialTheme.colorScheme.onSurface
   }
-  val bannerShape = RoundedCornerShape(
-    topStart = Spacing.badgeCornerRadius,
-    topEnd = Spacing.cardCornerRadius,
-    bottomEnd = Spacing.cardCornerRadius,
-    bottomStart = Spacing.badgeCornerRadius,
-  )
+  val bannerShape = RoundedCornerShape(Spacing.cardCornerRadius)
+  // Neutral has no tone to tint with, so it keeps the near-transparent wash it always had.
+  val tint = if (tone == PreviewBannerTone.Neutral) {
+    MaterialTheme.colorScheme.onSurface.copy(alpha = NEUTRAL_WASH)
+  } else {
+    accentColor.copy(alpha = TONE_WASH)
+  }
 
   Row(
     modifier = modifier
       .fillMaxWidth()
-      .height(IntrinsicSize.Min)
       .clip(bannerShape)
-      .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.03f)),
+      .background(tint)
+      .border(Spacing.hairline, accentColor.copy(alpha = TONE_BORDER), bannerShape),
     verticalAlignment = Alignment.CenterVertically,
   ) {
-    Box(
-      modifier = Modifier
-        .fillMaxHeight()
-        .width(3.dp)
-        .background(accentColor),
-    )
     Column(
       modifier = Modifier
         .weight(1f)
@@ -138,3 +130,7 @@ fun PreviewBanner(
     }
   }
 }
+
+private const val NEUTRAL_WASH = 0.03f
+private const val TONE_WASH = 0.08f
+private const val TONE_BORDER = 0.35f

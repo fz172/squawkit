@@ -805,11 +805,11 @@ feature/tasks/update	schedule_recurrence_one_time	One-time
 feature/tasks/update	schedule_recurrence_one_time_sub	In one interval
 feature/tasks/update	schedule_recurrence_repeating	Repeating
 feature/tasks/update	schedule_recurrence_repeating_sub	Every interval
-feature/tasks/update	schedule_step_interval_how_often	Step 3 · How often?
-feature/tasks/update	schedule_step_interval_in_how_long	Step 3 · In how long?
-feature/tasks/update	schedule_step_recurrence_label	Step 2 · When is it due?
-feature/tasks/update	schedule_step_recurrence_linked_label	Step 2 · Recurrence
-feature/tasks/update	schedule_step_track_label	Step 1 · How is this tracked?
+feature/tasks/update	schedule_step_interval_how_often	How often?
+feature/tasks/update	schedule_step_interval_in_how_long	In how long?
+feature/tasks/update	schedule_step_recurrence_label	When is it due?
+feature/tasks/update	schedule_step_recurrence_linked_label	Recurrence
+feature/tasks/update	schedule_step_track_label	How is this tracked?
 feature/tasks/update	schedule_track_calendar_time	Calendar time
 feature/tasks/update	schedule_track_tach_hours	Tach hours
 feature/tasks/update	schedule_unit_days	days
@@ -940,7 +940,7 @@ feature/tasks/update	starter_rule_either	%1$s or %2$s
 feature/tasks/sharedassets	starter_pack_empty_action	Add recommended %1$s
 feature/tasks/update	adj_reschedule_prefix_at	At
 feature/tasks/update	schedule_track_seasonal	Seasonal
-feature/tasks/update	schedule_step_months_label	Step 3 · Which months?
+feature/tasks/update	schedule_step_months_label	Which months?
 feature/tasks/update	schedule_recurrence_seasonal_repeating_sub	Every listed month
 feature/tasks/update	schedule_recurrence_seasonal_one_time_sub	Next listed month, then history
 feature/tasks/update	schedule_preview_set_months_primary	Pick the months
