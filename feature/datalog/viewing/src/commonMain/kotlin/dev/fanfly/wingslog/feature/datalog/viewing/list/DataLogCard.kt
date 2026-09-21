@@ -2,9 +2,6 @@ package dev.fanfly.wingslog.feature.datalog.viewing.list
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -15,8 +12,8 @@ import dev.fanfly.wingslog.core.datetime.formatDuration
 import dev.fanfly.wingslog.core.datetime.toClockText
 import dev.fanfly.wingslog.core.datetime.toDayOfMonth
 import dev.fanfly.wingslog.core.datetime.toDisplayFormat
-import dev.fanfly.wingslog.core.ui.common.compose.ListRow
 import dev.fanfly.wingslog.core.ui.common.compose.StatusChip
+import dev.fanfly.wingslog.core.ui.common.compose.TimelineRow
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.StatusTier
 import dev.fanfly.wingslog.core.ui.theme.WingslogTypography
@@ -30,65 +27,74 @@ import wingslog.feature.datalog.sharedassets.generated.resources.data_log_series
 import wingslog.feature.datalog.sharedassets.generated.resources.data_log_tail_mismatch
 
 /**
- * One row of the archive (PRD R34), under its month header: day and route or ground run, then
- * time · duration · series. A tail mismatch keeps its badge and says what the file was recorded as —
- * the badge alone says something is wrong, not what.
+ * One entry of the archive's timeline (PRD R34), under its month header: the start time in the
+ * gutter, day and route or ground run, then duration · series. A tail mismatch keeps its badge and
+ * says what the file was recorded as — the badge alone says something is wrong, not what.
  */
 @Composable
 fun DataLogCard(
   row: DataLogRow,
   onClick: () -> Unit,
   modifier: Modifier = Modifier,
-  /** Wide layouts add the departure ident and the source product to the metadata line. */
+  /** Whether the spine reaches the entry directly above / below this one. */
+  connectsUp: Boolean = false,
+  connectsDown: Boolean = false,
+  /** The newest log, whose dot is lit. */
+  isLatest: Boolean = false,
+  /** Wide layouts add the source product to the metadata line. */
   showDetails: Boolean = true,
 ) {
-  val title = row.titleText(stringResource(Res.string.data_log_ground_run), underMonthHeader = true)
   val details = buildList {
-    add(row.startLocal.time.toClockText())
     add(formatDuration(row.durationSeconds))
     add(stringResource(Res.string.data_log_series_count, row.seriesCount))
     if (showDetails && row.product.isNotBlank()) add(row.product)
   }
 
-  ListRow(
-    title = title,
-    metadata = details.joinToString(" · "),
-    metadataStyle = WingslogTypography.dataSmall,
-    onClick = onClick,
+  TimelineRow(
+    gutter = row.startLocal.time.toClockText(),
     modifier = modifier,
-    trailing = {
-      Row(
-        horizontalArrangement = Arrangement.spacedBy(Spacing.small),
-        verticalAlignment = Alignment.CenterVertically,
-      ) {
-        // A data-integrity warning, not decoration: the file says it belongs to another thing.
-        if (row.identityMismatch) {
-          StatusChip(
-            label = stringResource(Res.string.data_log_tail_mismatch),
-            tier = StatusTier.CAUTION,
-          )
-        }
-        Icon(
-          Icons.AutoMirrored.Filled.KeyboardArrowRight,
-          contentDescription = null,
-          tint = MaterialTheme.colorScheme.onSurfaceVariant,
+    connectsUp = connectsUp,
+    connectsDown = connectsDown,
+    lit = isLatest,
+    onClick = onClick,
+  ) {
+    Row(
+      horizontalArrangement = Arrangement.spacedBy(Spacing.small),
+      verticalAlignment = Alignment.CenterVertically,
+    ) {
+      Text(
+        text = row.titleText(stringResource(Res.string.data_log_ground_run), underMonthHeader = true),
+        style = MaterialTheme.typography.titleMedium,
+        color = MaterialTheme.colorScheme.onSurface,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+        modifier = Modifier.weight(1f, fill = false),
+      )
+      // A data-integrity warning, not decoration: the file says it belongs to another thing.
+      if (row.identityMismatch) {
+        StatusChip(
+          label = stringResource(Res.string.data_log_tail_mismatch),
+          tier = StatusTier.CAUTION,
         )
       }
-    },
-    supporting = if (row.identityMismatch && row.identity.isNotBlank()) {
-      {
-        Text(
-          text = stringResource(Res.string.data_log_recorded_as, row.identity),
-          style = MaterialTheme.typography.labelMedium,
-          color = MaterialTheme.statusColors.caution.accent,
-          maxLines = 1,
-          overflow = TextOverflow.Ellipsis,
-        )
-      }
-    } else {
-      null
-    },
-  )
+    }
+    Text(
+      text = details.joinToString(" · "),
+      style = WingslogTypography.dataSmall,
+      color = MaterialTheme.colorScheme.onSurfaceVariant,
+      maxLines = 1,
+      overflow = TextOverflow.Ellipsis,
+    )
+    if (row.identityMismatch && row.identity.isNotBlank()) {
+      Text(
+        text = stringResource(Res.string.data_log_recorded_as, row.identity),
+        style = MaterialTheme.typography.labelMedium,
+        color = MaterialTheme.statusColors.caution.accent,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+      )
+    }
+  }
 }
 
 /**

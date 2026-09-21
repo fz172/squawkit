@@ -30,7 +30,6 @@ import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalSnackbarHostState
 import dev.fanfly.wingslog.core.ui.adaptive.compose.navPillAndFabClearance
 import dev.fanfly.wingslog.core.ui.common.compose.AlertDialog
 import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
-import dev.fanfly.wingslog.core.ui.common.compose.ListRowDivider
 import dev.fanfly.wingslog.core.ui.common.compose.SkeletonList
 import dev.fanfly.wingslog.core.ui.common.compose.SwipeAction
 import dev.fanfly.wingslog.core.ui.common.compose.SwipeActionCard
@@ -138,8 +137,8 @@ fun DataLogSectionContent(
             top = Spacing.small,
             bottom = navPillAndFabClearance,
           ),
-          // No arrangement gap: the log rows are flat and meet a hairline, so anything above them
-          // that is still a card carries its own spacing instead.
+          // No arrangement gap: the spine has to run unbroken from one entry into the next, so
+          // anything above them that is still a card carries its own spacing instead.
         ) {
           if (!compact && state.uploadGate == UploadGate.Guest) {
             item {
@@ -166,27 +165,26 @@ fun DataLogSectionContent(
               count = month.rows.size,
             )
             itemsIndexed(month.rows, key = { _, row -> row.id.value_ }) { index, row ->
-              // One animated node per key: the rule travels with its row.
-              Column(modifier = motionItem()) {
-                // The hairline goes above every row of a month but the first, so a group never
-                // opens or closes on a rule.
-                if (index > 0) ListRowDivider()
-                SwipeActionCard(
-                  // Whoever may upload may delete; a guest browses only, so the drag is disabled.
-                  actions = dataLogQuickActions(
-                    onDelete = if (state.uploadGate == UploadGate.SignedIn) {
-                      { revealController.close(); viewModel.onDeleteClick(row) }
-                    } else null,
-                  ),
-                  controller = revealController,
-                  key = row.id.value_,
-                ) {
-                  DataLogCard(
-                    row = row,
-                    onClick = { onOpen(row.id) },
-                    showDetails = !compact
-                  )
-                }
+              SwipeActionCard(
+                // Whoever may upload may delete; a guest browses only, so the drag is disabled.
+                actions = dataLogQuickActions(
+                  onDelete = if (state.uploadGate == UploadGate.SignedIn) {
+                    { revealController.close(); viewModel.onDeleteClick(row) }
+                  } else null,
+                ),
+                controller = revealController,
+                key = row.id.value_,
+                modifier = motionItem(),
+              ) {
+                DataLogCard(
+                  row = row,
+                  onClick = { onOpen(row.id) },
+                  // The spine joins the entries of a month; the header above breaks it.
+                  connectsUp = index > 0,
+                  connectsDown = index < month.rows.lastIndex,
+                  isLatest = row.id == state.rows.first().id,
+                  showDetails = !compact
+                )
               }
             }
           }

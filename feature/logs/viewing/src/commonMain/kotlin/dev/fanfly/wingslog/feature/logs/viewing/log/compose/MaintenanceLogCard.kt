@@ -1,36 +1,24 @@
 package dev.fanfly.wingslog.feature.logs.viewing.log.compose
 
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.sp
 import dev.fanfly.wingslog.core.datetime.toDayOfMonth
 import dev.fanfly.wingslog.core.datetime.toLocalDate
@@ -44,6 +32,8 @@ import dev.fanfly.wingslog.core.template.logNoun
 import dev.fanfly.wingslog.core.template.timelineReading
 import dev.fanfly.wingslog.core.template.squawkNoun
 import dev.fanfly.wingslog.core.template.taskNoun
+import dev.fanfly.wingslog.core.ui.common.compose.TimelineGapRow
+import dev.fanfly.wingslog.core.ui.common.compose.TimelineRow
 import dev.fanfly.wingslog.core.ui.common.compose.highlightWords
 import dev.fanfly.wingslog.core.ui.common.compose.searchHighlightStyle
 import dev.fanfly.wingslog.core.ui.theme.Spacing
@@ -91,132 +81,51 @@ fun MaintenanceLogCard(
   // the component's own.
   val primary = template.timelineReading(log)
 
-  // Filled rather than transparent so the swipe controls behind it do not show through.
-  Row(
-    modifier = modifier
-      .fillMaxWidth()
-      .background(MaterialTheme.colorScheme.surface)
-      .clickable(onClick = onClick)
-      // Min, so the spine can fill exactly the height the text asks for.
-      .height(IntrinsicSize.Min)
-      // No leading inset: the gutter lines up under the month header.
-      .padding(end = Spacing.large),
+  TimelineRow(
+    // The number alone: the meter is the same down the whole column, and the detail sheet names it.
+    gutter = primary?.let { template.formatMeterNumber(it.first.key, it.second) }.orEmpty(),
+    modifier = modifier,
+    connectsUp = connectsUp,
+    connectsDown = connectsDown,
+    lit = isLatest,
+    onClick = onClick,
   ) {
-    // The gutter: the number alone. The meter is the same down the whole column, and the detail
-    // sheet names it.
-    Box(
-      modifier = Modifier
-        .width(rememberGutterWidth())
-        .padding(top = Spacing.medium),
-    ) {
+    Text(
+      text = highlightWords(log.work_description.asSummaryLine(), highlight, searchHighlightStyle()),
+      style = MaterialTheme.typography.titleMedium,
+      color = MaterialTheme.colorScheme.onSurface,
+      maxLines = 1,
+      overflow = TextOverflow.Ellipsis,
+    )
+    Text(
+      text = log.metadataLine(),
+      style = MaterialTheme.typography.bodySmall,
+      color = MaterialTheme.colorScheme.onSurfaceVariant,
+      maxLines = 1,
+      overflow = TextOverflow.Ellipsis,
+    )
+    matchNote?.let {
       Text(
-        text = primary?.let { template.formatMeterNumber(it.first.key, it.second) }.orEmpty(),
-        style = WingslogTypography.dataSmall,
+        text = it,
+        style = MaterialTheme.typography.labelSmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
-        maxLines = 1,
-        softWrap = false,
-        // Pinned to the spine; a reading too long for the gutter grows into the screen's own
-        // padding rather than pushing the dots out of line.
-        modifier = Modifier
-          .fillMaxWidth()
-          .wrapContentWidth(Alignment.End, unbounded = true),
       )
-    }
-    Spine(connectsUp = connectsUp, connectsDown = connectsDown, lit = isLatest)
-    Column(
-      modifier = Modifier
-        .weight(1f)
-        .padding(vertical = Spacing.medium),
-      verticalArrangement = Arrangement.spacedBy(Spacing.extraSmall),
-    ) {
-      Text(
-        text = highlightWords(log.work_description.asSummaryLine(), highlight, searchHighlightStyle()),
-        style = MaterialTheme.typography.titleMedium,
-        color = MaterialTheme.colorScheme.onSurface,
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis,
-      )
-      Text(
-        text = log.metadataLine(),
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis,
-      )
-      matchNote?.let {
-        Text(
-          text = it,
-          style = MaterialTheme.typography.labelSmall,
-          color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-      }
     }
   }
 }
 
-/**
- * The logs a filter removed between two entries: the spine goes dashed and says how many, so a line
- * spanning six months never implies nothing happened in them.
- */
+/** The logs a filter removed between two entries, counted in the template's own noun. */
 @Composable
 fun LogGapRow(omitted: Int, modifier: Modifier = Modifier) {
   val lexicon = LocalThingLexicon.current
-  val line = MaterialTheme.colorScheme.outline
-  Row(
-    modifier = modifier
-      .fillMaxWidth()
-      .background(MaterialTheme.colorScheme.surface)
-      .height(IntrinsicSize.Min)
-      .padding(end = Spacing.large),
-    verticalAlignment = Alignment.CenterVertically,
-  ) {
-    Box(Modifier.width(rememberGutterWidth()))
-    Canvas(
-      modifier = Modifier
-        .padding(end = Spacing.small)
-        .width(Spacing.medium)
-        .fillMaxHeight(),
-    ) {
-      val dash = Spacing.extraSmall.toPx()
-      drawLine(
-        color = line,
-        start = Offset(size.width / 2, 0f),
-        end = Offset(size.width / 2, size.height),
-        strokeWidth = Spacing.hairline.toPx(),
-        pathEffect = PathEffect.dashPathEffect(floatArrayOf(dash, dash)),
-      )
-    }
-    Text(
-      text = if (omitted == 1) {
-        stringResource(MaintenanceRes.string.log_gap_one, lexicon.logNoun.singular)
-      } else {
-        stringResource(MaintenanceRes.string.log_gap_plural, omitted, lexicon.logNoun.plural)
-      },
-      style = MaterialTheme.typography.labelMedium,
-      color = MaterialTheme.colorScheme.onSurfaceVariant,
-      modifier = Modifier.padding(vertical = Spacing.medium),
-    )
-  }
-}
-
-/** The connector and this entry's dot, which sits level with the first line of text. */
-@Composable
-private fun Spine(connectsUp: Boolean, connectsDown: Boolean, lit: Boolean) {
-  val line = MaterialTheme.colorScheme.outlineVariant
-  val dot = if (lit) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
-  Canvas(
-    modifier = Modifier
-      .padding(end = Spacing.small)
-      .width(Spacing.medium)
-      .fillMaxHeight(),
-  ) {
-    val radius = size.width / 3
-    val centre = Offset(size.width / 2, Spacing.medium.toPx() + Spacing.small.toPx() + radius / 2)
-    val stroke = Spacing.hairline.toPx()
-    if (connectsUp) drawLine(line, Offset(centre.x, 0f), centre, stroke)
-    if (connectsDown) drawLine(line, centre, Offset(centre.x, size.height), stroke)
-    drawCircle(dot, radius, centre)
-  }
+  TimelineGapRow(
+    text = if (omitted == 1) {
+      stringResource(MaintenanceRes.string.log_gap_one, lexicon.logNoun.singular)
+    } else {
+      stringResource(MaintenanceRes.string.log_gap_plural, omitted, lexicon.logNoun.plural)
+    },
+    modifier = modifier,
+  )
 }
 
 /** "Sep 5 · J. Rivera · 1 task · 5 files" — whichever of them this log has. */
@@ -269,23 +178,6 @@ private val WHITESPACE_RUN = Regex("\\s+")
 
 /** A stored description as one run of text: newlines and blank lines would cost the row its one line. */
 private fun String.asSummaryLine(): String = replace(WHITESPACE_RUN, " ").trim()
-
-/** The widest reading the gutter holds without overflowing: a five-digit hour meter. */
-private const val WIDEST_READING = "9999.9"
-
-/**
- * Measured rather than a fixed dp, so [WIDEST_READING] fits whatever the font scale — plus a sliver
- * so the digits never touch the dot.
- */
-@Composable
-private fun rememberGutterWidth(): Dp {
-  val measurer = rememberTextMeasurer()
-  val density = LocalDensity.current
-  val style = WingslogTypography.dataSmall
-  return remember(measurer, density, style) {
-    with(density) { measurer.measure(WIDEST_READING, style, maxLines = 1).size.width.toDp() }
-  } + Spacing.small
-}
 
 private data class BadgeScheme(
   val background: Color,
