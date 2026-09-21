@@ -1,12 +1,12 @@
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
   <!-- Data log section (design §10, PRD R2, R34, R35, R40). The noun comes from the lexicon. -->
   <string name="data_log_upload">Upload <xliff:g example="Data Log">%1$s</xliff:g></string>
-  <string name="data_log_recent_uploads">Recent uploads</string>
   <string name="data_log_empty_title">No <xliff:g example="data log">%1$s</xliff:g> uploaded yet</string>
   <string name="data_log_supported_formats">Supported: Garmin G3X · G1000 · Dynon SkyView · Avidyne Entegra</string>
   <string name="data_log_ground_run">Ground run</string>
   <string name="data_log_series_count"><xliff:g example="108">%1$d</xliff:g> series</string>
   <string name="data_log_tail_mismatch">Tail mismatch</string>
+  <string name="data_log_recorded_as">Recorded as <xliff:g example="N533SL">%1$s</xliff:g></string>
   <string name="data_log_delete_title">Delete <xliff:g example="Data Log">%1$s</xliff:g>?</string>
   <string name="data_log_delete_body">The file and its charts are removed from every device.</string>
   <string name="data_log_deleted"><xliff:g example="Data log">%1$s</xliff:g> deleted</string>
