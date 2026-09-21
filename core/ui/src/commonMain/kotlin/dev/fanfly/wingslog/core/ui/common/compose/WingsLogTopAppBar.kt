@@ -12,6 +12,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import org.jetbrains.compose.resources.stringResource
 import wingslog.core.sharedassets.generated.resources.Res
 import wingslog.core.sharedassets.generated.resources.back
@@ -23,6 +24,11 @@ fun WingsLogTopAppBar(
   onBackClick: () -> Unit,
   scrollBehavior: TopAppBarScrollBehavior? = null,
   actions: @Composable RowScope.() -> Unit = {},
+  /**
+   * Transparent for a screen that can be hosted in a dialog: there the scaffold's ground is tinted
+   * by the dialog's elevation and a bar painted in the raw background colour no longer matches it.
+   */
+  containerColor: Color = MaterialTheme.colorScheme.background,
 ) {
   TopAppBar(
     title = { Text(text = title) },
@@ -37,8 +43,8 @@ fun WingsLogTopAppBar(
     actions = actions,
     scrollBehavior = scrollBehavior,
     colors = TopAppBarDefaults.topAppBarColors(
-      containerColor = MaterialTheme.colorScheme.background,
-      scrolledContainerColor = MaterialTheme.colorScheme.background,
+      containerColor = containerColor,
+      scrolledContainerColor = containerColor,
     ),
   )
 }

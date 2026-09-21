@@ -77,7 +77,9 @@ fun ComponentTreeSection(
       .isEmpty()
   ) return
 
-  Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
+  // A wide gap between top-level components and their add buttons: without cards it is the only
+  // thing that says Add Blade belongs to the propeller above and Add Engine to the form.
+  Column(verticalArrangement = Arrangement.spacedBy(Spacing.extraLarge)) {
     // Each slot's add button directly under that slot's components. All adds at the end put
     // "Add Propulsion" below Steering while the new card appeared above it.
     template.slotsUnder(emptyList())
@@ -111,8 +113,7 @@ private fun ComponentNodeCard(
   showValidationErrors: Boolean,
 ) {
   Column(
-    modifier = Modifier.fillMaxWidth()
-      .padding(top = Spacing.medium),
+    modifier = Modifier.fillMaxWidth(),
     verticalArrangement = Arrangement.spacedBy(Spacing.medium),
   ) {
     ComponentBlock(node, viewModel, showValidationErrors)
