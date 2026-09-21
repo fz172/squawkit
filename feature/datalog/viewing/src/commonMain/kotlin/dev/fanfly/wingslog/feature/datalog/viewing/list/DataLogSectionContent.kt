@@ -1,15 +1,13 @@
 package dev.fanfly.wingslog.feature.datalog.viewing.list
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.ShowChart
@@ -20,29 +18,28 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import dev.fanfly.wingslog.core.datetime.toMonthHeading
 import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.dataLogNoun
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
-import dev.fanfly.wingslog.core.ui.adaptive.compose.navPillAndFabClearance
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalSnackbarHostState
+import dev.fanfly.wingslog.core.ui.adaptive.compose.navPillAndFabClearance
 import dev.fanfly.wingslog.core.ui.common.compose.AlertDialog
 import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
+import dev.fanfly.wingslog.core.ui.common.compose.ListRowDivider
+import dev.fanfly.wingslog.core.ui.common.compose.SkeletonList
 import dev.fanfly.wingslog.core.ui.common.compose.SwipeAction
 import dev.fanfly.wingslog.core.ui.common.compose.SwipeActionCard
 import dev.fanfly.wingslog.core.ui.common.compose.SwipeActionTone
 import dev.fanfly.wingslog.core.ui.common.compose.rememberSwipeRevealController
-import dev.fanfly.wingslog.core.ui.common.compose.ListRowDivider
-import dev.fanfly.wingslog.core.ui.common.compose.SkeletonList
 import dev.fanfly.wingslog.core.ui.common.compose.stickySectionHeader
 import dev.fanfly.wingslog.core.ui.theme.Spacing
 import dev.fanfly.wingslog.core.ui.theme.motionItem
 import dev.fanfly.wingslog.feature.attachment.viewing.FileDropTarget
-import dev.fanfly.wingslog.feature.attachment.viewing.rememberFilePicker
 import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.id.ThingId
 import org.jetbrains.compose.resources.stringResource
@@ -53,9 +50,7 @@ import wingslog.feature.datalog.sharedassets.generated.resources.Res
 import wingslog.feature.datalog.sharedassets.generated.resources.data_log_delete_body
 import wingslog.feature.datalog.sharedassets.generated.resources.data_log_delete_title
 import wingslog.feature.datalog.sharedassets.generated.resources.data_log_empty_title
-import wingslog.feature.datalog.sharedassets.generated.resources.data_log_recent_uploads
 import wingslog.feature.datalog.sharedassets.generated.resources.data_log_supported_formats
-import wingslog.feature.datalog.sharedassets.generated.resources.data_log_upload
 import wingslog.core.sharedassets.generated.resources.Res as CoreRes
 
 /**
@@ -74,8 +69,6 @@ fun DataLogSectionContent(
   val state by viewModel.uiState.collectAsStateWithLifecycle()
   val lexicon = LocalThingLexicon.current
   val compact = LocalLayoutTier.current.isCompact
-  val recentUploads = stringResource(Res.string.data_log_recent_uploads)
-  val pick = rememberFilePicker(onResult = viewModel::upload)
   val revealController = rememberSwipeRevealController()
   val snackbarHostState = LocalSnackbarHostState.current
   val deleteFailed = stringResource(CoreRes.string.delete_failed)
@@ -132,12 +125,6 @@ fun DataLogSectionContent(
               description = lexicon.empty_states?.data_log_hint.orEmpty() + "\n" +
                 stringResource(Res.string.data_log_supported_formats),
               icon = Icons.Filled.ShowChart,
-              actionText = if (!compact && state.uploadGate == UploadGate.SignedIn)
-                stringResource(
-                  Res.string.data_log_upload,
-                  LexiconFormatter.titleCase(lexicon.dataLogNoun)
-                ) else null,
-              onActionClick = if (!compact && state.uploadGate == UploadGate.SignedIn) pick else null,
             )
           }
         }
@@ -172,34 +159,34 @@ fun DataLogSectionContent(
               modifier = motionItem().padding(bottom = Spacing.medium),
             )
           }
-          if (!compact && state.rows.isNotEmpty()) {
+          state.rows.byMonth().forEach { month ->
             stickySectionHeader(
-              key = "recent-uploads",
-              title = recentUploads,
-              count = state.rows.size,
+              key = month.key,
+              title = month.month.toMonthHeading(),
+              count = month.rows.size,
             )
-          }
-          itemsIndexed(state.rows, key = { _, row -> row.id.value_ }) { index, row ->
-            // One animated node per key: the rule travels with its row.
-            Column(modifier = motionItem()) {
-              // The hairline goes above every row but the first, so the list never opens or closes
-              // on a rule. Zeroing the arrangement is what lets the rows meet it.
-              if (index > 0) ListRowDivider()
-              SwipeActionCard(
-                // Whoever may upload may delete; a guest browses only, so the drag is disabled.
-                actions = dataLogQuickActions(
-                  onDelete = if (state.uploadGate == UploadGate.SignedIn) {
-                    { revealController.close(); viewModel.onDeleteClick(row) }
-                  } else null,
-                ),
-                controller = revealController,
-                key = row.id.value_,
-              ) {
-                DataLogCard(
-                  row = row,
-                  onClick = { onOpen(row.id) },
-                  showDetails = !compact
-                )
+            itemsIndexed(month.rows, key = { _, row -> row.id.value_ }) { index, row ->
+              // One animated node per key: the rule travels with its row.
+              Column(modifier = motionItem()) {
+                // The hairline goes above every row of a month but the first, so a group never
+                // opens or closes on a rule.
+                if (index > 0) ListRowDivider()
+                SwipeActionCard(
+                  // Whoever may upload may delete; a guest browses only, so the drag is disabled.
+                  actions = dataLogQuickActions(
+                    onDelete = if (state.uploadGate == UploadGate.SignedIn) {
+                      { revealController.close(); viewModel.onDeleteClick(row) }
+                    } else null,
+                  ),
+                  controller = revealController,
+                  key = row.id.value_,
+                ) {
+                  DataLogCard(
+                    row = row,
+                    onClick = { onOpen(row.id) },
+                    showDetails = !compact
+                  )
+                }
               }
             }
           }
