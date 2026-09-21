@@ -2,13 +2,15 @@ package dev.fanfly.wingslog.feature.thing.dashboard.compose.tabs
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.MaterialTheme
@@ -20,13 +22,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.fanfly.wingslog.core.analytics.LocalAnalytics
@@ -34,20 +36,20 @@ import dev.fanfly.wingslog.core.template.LexiconFormatter
 import dev.fanfly.wingslog.core.template.LocalThingLexicon
 import dev.fanfly.wingslog.core.template.squawkEmptyHint
 import dev.fanfly.wingslog.core.template.squawkNoun
-import dev.fanfly.wingslog.core.ui.adaptive.compose.AdaptiveCardList
 import dev.fanfly.wingslog.core.ui.adaptive.compose.LocalLayoutTier
 import dev.fanfly.wingslog.core.ui.adaptive.compose.navPillAndFabClearance
 import dev.fanfly.wingslog.core.ui.common.compose.DualSegmentedFilter
 import dev.fanfly.wingslog.core.ui.common.compose.EmptyState
 import dev.fanfly.wingslog.core.ui.common.compose.ListRowDivider
+import dev.fanfly.wingslog.core.ui.common.compose.SectionHeader
 import dev.fanfly.wingslog.core.ui.common.compose.SwipeActionCard
+import dev.fanfly.wingslog.core.ui.common.compose.SwipeRevealController
 import dev.fanfly.wingslog.core.ui.common.compose.jumpTargetHighlight
 import dev.fanfly.wingslog.core.ui.common.compose.rememberSwipeRevealController
 import dev.fanfly.wingslog.core.ui.theme.Spacing
+import dev.fanfly.wingslog.core.ui.theme.motionItem
 import dev.fanfly.wingslog.feature.ads.datamanager.AdsManager
 import dev.fanfly.wingslog.feature.ads.model.AdSurface
-import dev.fanfly.wingslog.feature.ads.model.ListRow
-import dev.fanfly.wingslog.feature.ads.model.withAdSlots
 import dev.fanfly.wingslog.feature.ads.viewing.AdSlot
 import dev.fanfly.wingslog.feature.attachment.datamanager.AttachmentOpener
 import dev.fanfly.wingslog.feature.attachment.datamanager.OpenState
@@ -55,6 +57,7 @@ import dev.fanfly.wingslog.feature.comments.datamanager.CommentThreadController
 import dev.fanfly.wingslog.feature.datalog.model.dataLogIdOrNull
 import dev.fanfly.wingslog.feature.logs.sharedassets.util.displayName
 import dev.fanfly.wingslog.feature.search.model.Facet
+import dev.fanfly.wingslog.feature.search.model.FieldMatch
 import dev.fanfly.wingslog.feature.search.model.TimeWindow
 import dev.fanfly.wingslog.feature.search.model.countByTime
 import dev.fanfly.wingslog.feature.search.viewing.ChoiceChip
@@ -76,13 +79,15 @@ import dev.fanfly.wingslog.feature.squawk.viewing.SquawkQuickActionCallbacks
 import dev.fanfly.wingslog.feature.squawk.viewing.quickActions
 import dev.fanfly.wingslog.feature.thing.dashboard.compose.RecordCommentComposer
 import dev.fanfly.wingslog.feature.thing.dashboard.compose.RecordCommentThread
+import dev.fanfly.wingslog.feature.thing.dashboard.data.SQUAWK_TIERS
 import dev.fanfly.wingslog.feature.thing.dashboard.data.SquawkAdapter
+import dev.fanfly.wingslog.feature.thing.dashboard.data.SquawkListLine
 import dev.fanfly.wingslog.feature.thing.dashboard.data.SquawkTabViewModel
 import dev.fanfly.wingslog.feature.thing.dashboard.data.ThingOverviewAction
 import dev.fanfly.wingslog.feature.thing.dashboard.data.ThingOverviewUiState
+import dev.fanfly.wingslog.feature.thing.dashboard.data.squawkListLines
 import dev.fanfly.wingslog.id.DataLogId
 import dev.fanfly.wingslog.thing.SquawkPriority
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
@@ -105,7 +110,6 @@ import wingslog.feature.squawk.sharedassets.generated.resources.open_with_count
 import wingslog.feature.squawk.sharedassets.generated.resources.priority_high
 import wingslog.feature.squawk.sharedassets.generated.resources.priority_low
 import wingslog.feature.squawk.sharedassets.generated.resources.priority_medium
-import kotlin.math.roundToInt
 import kotlin.time.Clock
 import wingslog.feature.search.sharedassets.generated.resources.Res as SearchRes
 
@@ -156,300 +160,260 @@ fun SquawkTab(
     .filter { it.status == SquawkStatus.ADDRESSED || it.status == SquawkStatus.DISMISSED }
     .sortedByDescending { it.squawk.created_at?.getEpochSecond() ?: 0L }
 
-  // Jump-to-squawk from a log: switch to the sub-view that holds the target, then scroll it to the
-  // top of the (non-lazy) list. Scroll offsets use root coordinates — the target card and the scroll
-  // container each report their top, and the difference plus the current scroll is the content
-  // offset to animate to.
-  val scrollState = rememberScrollState()
+  val listState = rememberLazyListState()
   // One controller for the whole list, so opening a card closes whichever was open — across the
   // grid's columns on a wide tier too (PRD R5).
   val revealController = rememberSwipeRevealController()
   LaunchedEffect(showClosed) { revealController.close() }
-  var contentTopY by remember { mutableStateOf(0f) }
-  var targetCardY by remember(scrollToSquawkId) { mutableStateOf<Float?>(null) }
-  // Keyed on the target's status too, not just its id: a tapped notification can arrive and be acted
-  // on before the local sync pull carrying the very status change it announced has landed, so this
-  // can first see the squawk as still OPEN. Re-running once the real status shows up (rather than
-  // only once, on id alone) is what corrects showClosed and the scroll target instead of leaving both
-  // stuck on Open.
+
+  // Each sub-view is its own list with its own counter — switching the toggle re-evaluates from
+  // scratch, which falls out of wrapping the filtered list rather than the union.
+  val displayList = if (showClosed) closedSquawks else openSquawks
+  val showAds by adsManager.shouldShowsAds()
+    .collectAsState(initial = false)
+  val columns = LocalLayoutTier.current.cardColumns
+  // Only the open list is in priority order, so only it is grouped; closed is newest first.
+  val lines = remember(displayList, showClosed, columns, showAds) {
+    squawkListLines(displayList, grouped = !showClosed, columns = columns, showAds = showAds)
+  }
+  val currentLines by rememberUpdatedState(lines)
+  // Lazy items ahead of the lines: the optional title, then the controls.
+  val leadingItems = if (showHeader) 2 else 1
+  // A pinned tier header covers the top of the list, so a jump lands its target below it.
+  var tierHeaderHeight by remember { mutableStateOf(0) }
+
   // A jump target must be reachable whatever was filtered before.
   LaunchedEffect(scrollToSquawkId) {
     if (scrollToSquawkId != null && squawkFilter.isActive) tabViewModel.clearFilter()
   }
   val scrollTarget =
     scrollToSquawkId?.let { id -> tabState.squawks.find { it.squawk.id == id } }
+  // Keyed on the target's status too, not just its id: a tapped notification can arrive and be acted
+  // on before the local sync pull carrying the very status change it announced has landed, so this
+  // can first see the squawk as still OPEN. Re-running once the real status shows up is what
+  // corrects showClosed and the scroll target instead of leaving both stuck on Open.
   LaunchedEffect(scrollToSquawkId, scrollTarget?.status) {
     val target = scrollTarget ?: return@LaunchedEffect
-    showClosed = target.status != SquawkStatus.OPEN
-    // Reset (not just on a fresh id, but on the status flip re-run too) — the target card just moved
-    // between sub-views, so its old on-screen position no longer means anything.
-    targetCardY = null
-    // Wait until the target card lays out in the (possibly just-switched) sub-view, then scroll once.
-    val cardY = snapshotFlow { targetCardY }.filterNotNull()
-      .first()
-    scrollState.animateScrollTo(
-      (scrollState.value + (cardY - contentTopY)).roundToInt()
-        .coerceAtLeast(0)
+    val targetIsOpen = target.status == SquawkStatus.OPEN
+    showClosed = !targetIsOpen
+    // Wait for the (possibly just-switched) sub-view to hold the target, then scroll once.
+    val index = snapshotFlow {
+      currentLines.indexOfFirst { line ->
+        line is SquawkListLine.Records && line.items.any { it.squawk.id == target.squawk.id }
+      }
+    }.first { it >= 0 }
+    listState.animateScrollToItem(
+      index = leadingItems + index,
+      scrollOffset = if (targetIsOpen) -tierHeaderHeight else 0,
     )
   }
 
-  Column(
+  LazyColumn(
+    state = listState,
     modifier = modifier
       .fillMaxSize()
-      .verticalScroll(scrollState)
-      .nestedScroll(revealController.closeOnScroll)
-      .onGloballyPositioned { contentTopY = it.positionInRoot().y }
-      .padding(horizontal = Spacing.screenPadding)
-      // Clear the floating pill this content now scrolls beneath (0 on non-compact tiers).
-      .padding(bottom = navPillAndFabClearance),
-    verticalArrangement = Arrangement.spacedBy(Spacing.medium),
+      .nestedScroll(revealController.closeOnScroll),
+    contentPadding = PaddingValues(
+      start = Spacing.screenPadding,
+      end = Spacing.screenPadding,
+      // Clear the floating pill this content scrolls beneath (0 on non-compact tiers), and the FAB.
+      bottom = navPillAndFabClearance + Spacing.buttonHeight + Spacing.screenPadding,
+    ),
+    // No arrangement gap: flat rows meet a hairline, and the headers pad themselves.
   ) {
     if (showHeader) {
-      Text(
-        text = LexiconFormatter.titleCasePlural(LocalThingLexicon.current.squawkNoun),
-        style = MaterialTheme.typography.titleMedium,
-        fontWeight = FontWeight.Bold,
-      )
-    }
-
-    RecordFilterBar(
-      filter = squawkFilter,
-      placeholder = stringResource(SearchRes.string.search_placeholder),
-      // Squawks are filed against the thing, not a component, so the section would be dead.
-      showComponentFilter = false,
-      componentLabel = { it.displayName() },
-      onQueryChange = { setFilter(squawkFilter.copy(query = it)) },
-      onOpenFilters = { showFilterSheet = true },
-      onRemoveComponent = { setFilter(squawkFilter.toggleComponent(it)) },
-      onClearTime = { setFilter(squawkFilter.copy(time = TimeWindow.All)) },
-      horizontalPadding = Spacing.none,
-      facetLabel = {
-        (it as? Facet.Priority)?.let { p -> priorityLabel(p.value) }
-          .orEmpty()
-      },
-      onRemoveFacet = { setFilter(squawkFilter.toggleFacet(it)) },
-    )
-    // Unfiltered, so a chip's count does not move every time another chip is tapped.
-    val countAdapter =
-      remember { SquawkAdapter(TimeZone.currentSystemDefault()) }
-    val today = remember {
-      Clock.System.now()
-        .toLocalDateTime(TimeZone.currentSystemDefault()).date
-    }
-    val subView = if (showClosed) {
-      state.squawks.filter { it.status != SquawkStatus.OPEN }
-    } else {
-      state.squawks.filter { it.status == SquawkStatus.OPEN }
-    }
-    RecordFilterControls(
-      expanded = showFilterSheet,
-      inline = LocalLayoutTier.current.hasSideNav,
-      scopeLabel = if (showClosed) {
-        stringResource(SearchRes.string.filter_scope_closed, squawkNoun.plural)
-      } else {
-        stringResource(SearchRes.string.filter_scope_open, squawkNoun.plural)
-      },
-      filter = squawkFilter,
-      // Squawks are filed against the thing, not a component, so the section would be dead.
-      showComponentFilter = false,
-      componentQuestion = "",
-      componentLabel = { it.displayName() },
-      onComponentToggle = { setFilter(squawkFilter.toggleComponent(it)) },
-      timeQuestion = stringResource(SearchRes.string.filter_q_when_reported),
-      onTimeWindowChange = { setFilter(squawkFilter.copy(time = it)) },
-      onClear = { setFilter(squawkFilter.withoutFilters()) },
-      onDismiss = { showFilterSheet = false },
-      resultCount = (if (showClosed) closedSquawks else openSquawks).size,
-      totalCount = subView.size,
-      nounSingular = squawkNoun.singular,
-      nounPlural = squawkNoun.plural,
-      timeCount = { window ->
-        subView.countByTime(
-          countAdapter,
-          window,
-          today
+      item(key = "title") {
+        Text(
+          text = LexiconFormatter.titleCasePlural(squawkNoun),
+          style = MaterialTheme.typography.titleMedium,
+          fontWeight = FontWeight.Bold,
+          modifier = Modifier.padding(bottom = Spacing.medium),
         )
-      },
-      horizontalPadding = Spacing.none,
-      facetSection = {
-        FilterSection(
-          stringResource(SearchRes.string.filter_q_how_urgent),
-          pickOne = false
-        ) {
-          PRIORITY_OPTIONS.forEach { priority ->
-            val facet = Facet.Priority(priority)
-            ChoiceChip(
-              label = priorityLabel(priority),
-              selected = facet in squawkFilter.facets,
-              count = subView.count { it.squawk.priority == priority },
-              onClick = { setFilter(squawkFilter.toggleFacet(facet)) },
-            )
-          }
+      }
+    }
+
+    item(key = "controls") {
+      Column(verticalArrangement = Arrangement.spacedBy(Spacing.medium)) {
+        RecordFilterBar(
+          filter = squawkFilter,
+          placeholder = stringResource(SearchRes.string.search_placeholder),
+          // Squawks are filed against the thing, not a component, so the section would be dead.
+          showComponentFilter = false,
+          componentLabel = { it.displayName() },
+          onQueryChange = { setFilter(squawkFilter.copy(query = it)) },
+          onOpenFilters = { showFilterSheet = true },
+          onRemoveComponent = { setFilter(squawkFilter.toggleComponent(it)) },
+          onClearTime = { setFilter(squawkFilter.copy(time = TimeWindow.All)) },
+          horizontalPadding = Spacing.none,
+          facetLabel = {
+            (it as? Facet.Priority)?.let { p -> priorityLabel(p.value) }
+              .orEmpty()
+          },
+          onRemoveFacet = { setFilter(squawkFilter.toggleFacet(it)) },
+        )
+        // Unfiltered, so a chip's count does not move every time another chip is tapped.
+        val countAdapter =
+          remember { SquawkAdapter(TimeZone.currentSystemDefault()) }
+        val today = remember {
+          Clock.System.now()
+            .toLocalDateTime(TimeZone.currentSystemDefault()).date
         }
-      },
-    )
+        val subView = if (showClosed) {
+          state.squawks.filter { it.status != SquawkStatus.OPEN }
+        } else {
+          state.squawks.filter { it.status == SquawkStatus.OPEN }
+        }
+        RecordFilterControls(
+          expanded = showFilterSheet,
+          inline = LocalLayoutTier.current.hasSideNav,
+          scopeLabel = if (showClosed) {
+            stringResource(SearchRes.string.filter_scope_closed, squawkNoun.plural)
+          } else {
+            stringResource(SearchRes.string.filter_scope_open, squawkNoun.plural)
+          },
+          filter = squawkFilter,
+          // Squawks are filed against the thing, not a component, so the section would be dead.
+          showComponentFilter = false,
+          componentQuestion = "",
+          componentLabel = { it.displayName() },
+          onComponentToggle = { setFilter(squawkFilter.toggleComponent(it)) },
+          timeQuestion = stringResource(SearchRes.string.filter_q_when_reported),
+          onTimeWindowChange = { setFilter(squawkFilter.copy(time = it)) },
+          onClear = { setFilter(squawkFilter.withoutFilters()) },
+          onDismiss = { showFilterSheet = false },
+          resultCount = (if (showClosed) closedSquawks else openSquawks).size,
+          totalCount = subView.size,
+          nounSingular = squawkNoun.singular,
+          nounPlural = squawkNoun.plural,
+          timeCount = { window ->
+            subView.countByTime(
+              countAdapter,
+              window,
+              today
+            )
+          },
+          horizontalPadding = Spacing.none,
+          facetSection = {
+            FilterSection(
+              stringResource(SearchRes.string.filter_q_how_urgent),
+              pickOne = false
+            ) {
+              SQUAWK_TIERS.forEach { priority ->
+                val facet = Facet.Priority(priority)
+                ChoiceChip(
+                  label = priorityLabel(priority),
+                  selected = facet in squawkFilter.facets,
+                  count = subView.count { it.squawk.priority == priority },
+                  onClick = { setFilter(squawkFilter.toggleFacet(facet)) },
+                )
+              }
+            }
+          },
+        )
 
-    DualSegmentedFilter(
-      option1 = stringResource(Res.string.open_with_count, openSquawks.size),
-      option2 = stringResource(
-        Res.string.closed_with_count,
-        closedSquawks.size
-      ),
-      selectedIndex = if (showClosed) 1 else 0,
-      onSelect = {
-        showClosed = it == 1
-        analytics.logScreenView("shell/squawks/${if (it == 1) "closed" else "open"}")
-      },
-    )
+        DualSegmentedFilter(
+          option1 = stringResource(Res.string.open_with_count, openSquawks.size),
+          option2 = stringResource(
+            Res.string.closed_with_count,
+            closedSquawks.size
+          ),
+          selectedIndex = if (showClosed) 1 else 0,
+          onSelect = {
+            showClosed = it == 1
+            analytics.logScreenView("shell/squawks/${if (it == 1) "closed" else "open"}")
+          },
+        )
 
-    val displayList = if (showClosed) closedSquawks else openSquawks
-    RecordCountRow(
-      count = displayList.size,
-      nounSingular = squawkNoun.singular,
-      nounPlural = squawkNoun.plural,
-      filterActive = squawkFilter.isActive,
-      onClear = { tabViewModel.clearFilter() },
-      horizontalPadding = Spacing.none,
-    )
-    // Each sub-view is its own list with its own counter — switching the toggle re-evaluates from
-    // scratch, which falls out of wrapping the filtered list rather than the union.
-    val showAds by adsManager.shouldShowsAds()
-      .collectAsState(initial = false)
-    val rows = remember(displayList, showAds) {
-      if (showAds) withAdSlots(displayList) else displayList.map {
-        ListRow.Item(
-          it
+        RecordCountRow(
+          count = displayList.size,
+          nounSingular = squawkNoun.singular,
+          nounPlural = squawkNoun.plural,
+          filterActive = squawkFilter.isActive,
+          onClear = { tabViewModel.clearFilter() },
+          horizontalPadding = Spacing.none,
         )
       }
     }
 
     if (displayList.isEmpty()) {
-      if (squawkFilter.isActive) {
-        NoRecordsMatch(
-          nounPlural = squawkNoun.plural,
-          onClearFilters = { tabViewModel.clearFilter() })
-      } else if (!showClosed) {
-        EmptyState(
-          title = stringResource(
-            Res.string.no_open_squawks,
-            LocalThingLexicon.current.squawkNoun.plural,
-          ),
-          description = LocalThingLexicon.current.squawkEmptyHint,
-          icon = Icons.Default.CheckCircle,
-        )
-      } else {
-        Text(
-          text = stringResource(
-            Res.string.no_closed_squawks,
-            LocalThingLexicon.current.squawkNoun.plural,
-          ),
-          style = MaterialTheme.typography.bodyMedium,
-          color = MaterialTheme.colorScheme.onSurfaceVariant,
-          modifier = Modifier.padding(vertical = Spacing.large),
-        )
-      }
-    } else {
-      AdaptiveCardList(
-        items = rows,
-        columns = LocalLayoutTier.current.cardColumns,
-        spacing = Spacing.medium,
-        // Rows are flat now, so the hairline between them does the separating a gap used to.
-        rowSpacing = Spacing.none,
-        // An ad is a full-width row, never one cell of the grid (design §5.2, PRD §6.5).
-        isSpanning = { it is ListRow.Ad },
-        separator = { ListRowDivider() },
-      ) { row ->
-        when (row) {
-          is ListRow.Ad -> AdSlot(
-            surface = AdSurface.SQUAWKS,
-            slotIndex = row.slotIndex,
+      item(key = "empty") {
+        if (squawkFilter.isActive) {
+          NoRecordsMatch(
+            nounPlural = squawkNoun.plural,
+            onClearFilters = { tabViewModel.clearFilter() },
+            modifier = Modifier.padding(top = Spacing.medium),
           )
+        } else if (!showClosed) {
+          EmptyState(
+            title = stringResource(Res.string.no_open_squawks, squawkNoun.plural),
+            description = LocalThingLexicon.current.squawkEmptyHint,
+            icon = Icons.Default.CheckCircle,
+          )
+        } else {
+          Text(
+            text = stringResource(Res.string.no_closed_squawks, squawkNoun.plural),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(vertical = Spacing.large),
+          )
+        }
+      }
+    }
 
-          is ListRow.Item -> {
-            val item = row.value
-            val isJumpTarget = item.squawk.id == scrollToSquawkId
-            val matches = tabState.matches[item.squawk.id].orEmpty()
-            // Whoever may open the edit form may swipe (PRD R20); a read-only caller gets an
-            // empty action list, which disables the drag.
-            val quickActions = onMutationAction?.let { mutate ->
-              item.quickActions(
-                SquawkQuickActionCallbacks(
-                  onResolve = {
-                    mutate(
-                      ThingOverviewAction.SquawkResolveClick(
-                        item
-                      )
-                    )
-                  },
-                  onDelete = {
-                    revealController.close()
-                    mutate(ThingOverviewAction.DeleteSquawkClick(item))
-                  },
-                  resolveMenu = {
-                    ResolveOptionsMenu(
-                      expanded = state.resolvingSquawkId == item.squawk.id,
-                      onDismissRequest = {
-                        revealController.close()
-                        mutate(ThingOverviewAction.DismissSquawkResolveMenu)
-                      },
-                      onDismissNoWorkPlanned = {
-                        revealController.close()
-                        mutate(ThingOverviewAction.SquawkDismissClick(item.squawk.id))
-                      },
-                      onFixedClick = {
-                        revealController.close()
-                        mutate(ThingOverviewAction.SquawkFixedClick(item.squawk.id))
-                      },
-                    )
-                  },
-                )
-              )
+    lines.forEachIndexed { index, line ->
+      when (line) {
+        // The header carries the tier and its count, so the rows under it carry neither.
+        is SquawkListLine.TierHeader -> stickyHeader(
+          key = line.key,
+          contentType = "tier-header",
+        ) {
+          SectionHeader(
+            title = priorityLabel(line.tier),
+            count = line.count,
+            modifier = Modifier.onSizeChanged { tierHeaderHeight = it.height },
+          )
+        }
+
+        // An ad is a full-width line, never one cell of the grid (design §5.2, PRD §6.5).
+        is SquawkListLine.Ad -> item(key = line.key, contentType = "ad") {
+          AdSlot(
+            surface = AdSurface.SQUAWKS,
+            slotIndex = line.slotIndex,
+            modifier = Modifier.padding(vertical = Spacing.small),
+          )
+        }
+
+        is SquawkListLine.Records -> item(key = line.key, contentType = "records") {
+          val previous = lines.getOrNull(index - 1) as? SquawkListLine.Records
+          // One animated node per key: the rule travels with its line.
+          Column(modifier = motionItem()) {
+            // A contained down-state row is set apart by a gap; flat rows meet a hairline.
+            when {
+              previous == null -> Unit
+              line.isContained || previous.isContained -> Spacer(Modifier.height(Spacing.small))
+              else -> ListRowDivider()
             }
-              .orEmpty()
-            SwipeActionCard(
-              actions = quickActions,
-              controller = revealController,
-              key = item.squawk.id,
-              modifier = Modifier.fillMaxWidth(),
-            ) {
-              SquawkCard(
-                item = item,
-                onClick = { onAction(ThingOverviewAction.ShowSquawkDetail(item)) },
-                highlight = matches.wordsIn(
-                  SquawkAdapter.FIELD_TITLE,
-                  SquawkAdapter.FIELD_DESCRIPTION
-                ),
-                matchNote = hiddenMatchNote(
-                  matches,
-                  setOf(
-                    SquawkAdapter.FIELD_TITLE,
-                    SquawkAdapter.FIELD_DESCRIPTION
-                  )
-                ) { match ->
-                  if (match.field == SquawkAdapter.FIELD_SERIAL) stringResource(
-                    SearchRes.string.match_serial,
-                    item.squawk.component_serial
-                  ) else null
-                },
-                modifier = Modifier.fillMaxWidth()
-                  .then(
-                    if (isJumpTarget) {
-                      Modifier.onGloballyPositioned {
-                        targetCardY = it.positionInRoot().y
-                      }
-                    } else {
-                      Modifier
-                    }
-                  )
-                  .jumpTargetHighlight(active = isJumpTarget),
-              )
+            Row(horizontalArrangement = Arrangement.spacedBy(Spacing.medium)) {
+              line.items.forEach { item ->
+                SquawkRow(
+                  item = item,
+                  state = state,
+                  matches = tabState.matches[item.squawk.id].orEmpty(),
+                  showPriority = showClosed,
+                  isJumpTarget = item.squawk.id == scrollToSquawkId,
+                  revealController = revealController,
+                  onAction = onAction,
+                  onMutationAction = onMutationAction,
+                  modifier = Modifier.weight(1f),
+                )
+              }
+              // Keep a short last line's cells aligned with the grid above.
+              repeat(columns - line.items.size) { Spacer(Modifier.weight(1f)) }
             }
           }
         }
       }
     }
-
-    Spacer(Modifier.height(Spacing.buttonHeight + Spacing.screenPadding))
   }
 
   // Rendered at tab level, not inside the card, so they are not clipped by the swipe container.
@@ -531,12 +495,76 @@ fun SquawkTab(
   }
 }
 
-private val PRIORITY_OPTIONS = listOf(
-  SquawkPriority.SQUAWK_PRIORITY_AOG,
-  SquawkPriority.SQUAWK_PRIORITY_HIGH,
-  SquawkPriority.SQUAWK_PRIORITY_MEDIUM,
-  SquawkPriority.SQUAWK_PRIORITY_LOW,
-)
+/** A down-state squawk draws as a contained block rather than a flat row. */
+private val SquawkListLine.Records.isContained: Boolean
+  get() = items.any { it.squawk.priority == SquawkPriority.SQUAWK_PRIORITY_AOG }
+
+@Composable
+private fun SquawkRow(
+  item: SquawkWithStatus,
+  state: ThingOverviewUiState.Success,
+  matches: List<FieldMatch>,
+  showPriority: Boolean,
+  isJumpTarget: Boolean,
+  revealController: SwipeRevealController,
+  onAction: (ThingOverviewAction) -> Unit,
+  onMutationAction: ((ThingOverviewAction) -> Unit)?,
+  modifier: Modifier = Modifier,
+) {
+  // Whoever may open the edit form may swipe (PRD R20); a read-only caller gets an empty action
+  // list, which disables the drag.
+  val quickActions = onMutationAction?.let { mutate ->
+    item.quickActions(
+      SquawkQuickActionCallbacks(
+        onResolve = { mutate(ThingOverviewAction.SquawkResolveClick(item)) },
+        onDelete = {
+          revealController.close()
+          mutate(ThingOverviewAction.DeleteSquawkClick(item))
+        },
+        resolveMenu = {
+          ResolveOptionsMenu(
+            expanded = state.resolvingSquawkId == item.squawk.id,
+            onDismissRequest = {
+              revealController.close()
+              mutate(ThingOverviewAction.DismissSquawkResolveMenu)
+            },
+            onDismissNoWorkPlanned = {
+              revealController.close()
+              mutate(ThingOverviewAction.SquawkDismissClick(item.squawk.id))
+            },
+            onFixedClick = {
+              revealController.close()
+              mutate(ThingOverviewAction.SquawkFixedClick(item.squawk.id))
+            },
+          )
+        },
+      )
+    )
+  }
+    .orEmpty()
+  val shownFields = setOf(SquawkAdapter.FIELD_TITLE, SquawkAdapter.FIELD_DESCRIPTION)
+  SwipeActionCard(
+    actions = quickActions,
+    controller = revealController,
+    key = item.squawk.id,
+    modifier = modifier,
+  ) {
+    SquawkCard(
+      item = item,
+      onClick = { onAction(ThingOverviewAction.ShowSquawkDetail(item)) },
+      showPriority = showPriority,
+      highlight = matches.wordsIn(SquawkAdapter.FIELD_TITLE, SquawkAdapter.FIELD_DESCRIPTION),
+      matchNote = hiddenMatchNote(matches, shownFields) { match ->
+        if (match.field == SquawkAdapter.FIELD_SERIAL) stringResource(
+          SearchRes.string.match_serial,
+          item.squawk.component_serial
+        ) else null
+      },
+      modifier = Modifier.fillMaxWidth()
+        .jumpTargetHighlight(active = isJumpTarget),
+    )
+  }
+}
 
 @Composable
 private fun priorityLabel(priority: SquawkPriority): String = when (priority) {
